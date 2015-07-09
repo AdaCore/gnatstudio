@@ -47,14 +47,13 @@ package body Language.Libclang is
 
    LRU_Size : constant := 16;
    Nb_Tasks : constant := 4;
-
-   Diagnostics : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG.DIAGNOSTICS", On);
-
    Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
 
    Activate_Clang_XRef : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("LIBCLANG_XREF", On);
+
+   Diagnostics : constant Trace_Handle :=
+     GNATCOLL.Traces.Create ("LIBCLANG_DIAGNOSTICS", Off);
 
    function Parsing_Timeout_Handler return Boolean;
 
@@ -325,6 +324,7 @@ package body Language.Libclang is
    ----------------
    -- Diagnostic --
    ----------------
+
    procedure Diagnostic
      (Client_Data : in out Indexer_Data;
       Diags : Clang_Diagnostic_Set);
@@ -339,8 +339,14 @@ package body Language.Libclang is
          declare
             D : constant CXDiagnostic :=
               clang_getDiagnosticInSet (Diags, I);
+            use type Interfaces.C.unsigned;
          begin
-            Trace (Diagnostics, To_String (clang_formatDiagnostic (D, 0)));
+            Trace
+              (Diagnostics,
+               To_String
+                 (clang_formatDiagnostic
+                      (D, DisplaySourceLocationh
+                       or DisplayColumn or DisplaySourceRanges)));
          end;
       end loop;
    end Diagnostic;
@@ -706,6 +712,15 @@ package body Language.Libclang is
                  & (if Lang in "c++" | "cpp" then (+"-x", +"c++")
                     else Empty_String_Array);
             begin
+
+               Trace (Diagnostics, "=== FILE     : " & File_Name);
+               Trace (Diagnostics, "=== LANGUAGE : " & Lang);
+               Trace (Diagnostics, "======= BEGIN SWITCHES ==============");
+               for Sw of Switches loop
+                  Trace (Diagnostics, +Sw);
+               end loop;
+               Trace (Diagnostics, "======= END SWITCHES ==============");
+
                Request := new Parsing_Request_Record'
                  (Kind         => Parse,
                   Context      => Context,

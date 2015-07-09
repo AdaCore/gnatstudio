@@ -657,8 +657,9 @@ package Libclang.Index is
         | CXCursor_FunctionTemplate);
 
    function Is_Container
-     (K : Clang_Cursor_Kind) return Boolean is
-     (Is_Array (K) or else Is_Object_Type (K));
+     (K : Clang_Cursor_Kind) return Boolean
+   is
+     (Is_Object_Type (K) or else Is_Function (K));
 
    function Is_Generic
      (K : Clang_Cursor_Kind) return Boolean is

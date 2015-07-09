@@ -46,6 +46,8 @@ package Clang_Xref is
       Clang_Type_Inst : Clang_Type;
    end record;
 
+   No_Clang_Entity : constant Clang_Entity;
+
    overriding function "=" (L, R : Clang_Entity) return Boolean;
 
    overriding function Get_Entity
@@ -401,5 +403,10 @@ private
 
    overriding function "="
      (Left, Right : Clang_Reference_Iterator) return Boolean;
+
+   No_Clang_Entity : constant Clang_Entity :=
+     (null, (Kernel => null),
+      Null_Unbounded_String, No_Location, No_Location,
+      Null_Unbounded_String, False, (others => <>));
 
 end Clang_Xref;

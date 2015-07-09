@@ -260,12 +260,12 @@ package clang_c_Index_h is
    pragma Import (C, clang_disposeDiagnostic, "clang_disposeDiagnostic");
 
    subtype CXDiagnosticDisplayOptions is unsigned;
-   CXDiagnostic_DisplaySourceLocationh : constant CXDiagnosticDisplayOptions := 1;
-   CXDiagnostic_DisplayColumn : constant CXDiagnosticDisplayOptions := 2;
-   CXDiagnostic_DisplaySourceRanges : constant CXDiagnosticDisplayOptions := 4;
-   CXDiagnostic_DisplayOption : constant CXDiagnosticDisplayOptions := 8;
-   CXDiagnostic_DisplayCategoryId : constant CXDiagnosticDisplayOptions := 16;
-   CXDiagnostic_DisplayCategoryName : constant CXDiagnosticDisplayOptions := 32;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:800
+   DisplaySourceLocationh : constant CXDiagnosticDisplayOptions := 1;
+   DisplayColumn : constant CXDiagnosticDisplayOptions := 2;
+   DisplaySourceRanges : constant CXDiagnosticDisplayOptions := 4;
+   DisplayOption : constant CXDiagnosticDisplayOptions := 8;
+   DisplayCategoryId : constant CXDiagnosticDisplayOptions := 16;
+   DisplayCategoryName : constant CXDiagnosticDisplayOptions := 32;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:800
 
    function clang_formatDiagnostic (Diagnostic : CXDiagnostic; Options : unsigned) return clang_c_CXString_h.CXString;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:877
    pragma Import (C, clang_formatDiagnostic, "clang_formatDiagnostic");

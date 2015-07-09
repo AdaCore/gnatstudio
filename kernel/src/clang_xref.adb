@@ -31,15 +31,14 @@ with GPS.Kernel.Properties; use GPS.Kernel.Properties;
 with GPS.Kernel; use GPS.Kernel;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 with Language; use Language;
-with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Containers; use Ada.Containers;
+with Ada.Unchecked_Conversion;
 
 ----------------
 -- Clang_Xref --
 ----------------
 
 package body Clang_Xref is
-
-   Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
 
    --  Quick design notes about clang cross references:
    --
@@ -53,7 +52,10 @@ package body Clang_Xref is
    --    operations on every reference might, by definition, be costly in terms
    --    of computation power.
 
+   Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
+
    use Libclang.Index;
+   use GNATCOLL.VFS;
 
    function Get_Clang_Cursor (E : Clang_Entity) return Clang_Cursor;
    function Get_Clang_Cursor
@@ -96,8 +98,6 @@ package body Clang_Xref is
       Unique : Boolean := False) return Entity_Array;
    --  Convenience function to convert a vector of clang cursors to an array of
    --  clang entities
-
-   use GNATCOLL.VFS;
 
    function To_General_Location
      (K : Core_Kernel; F : Virtual_File;
@@ -144,25 +144,48 @@ package body Clang_Xref is
 
    function Overrides
      (Cursor : Clang_Cursor) return Cursors_Arrays.Array_Type;
+   --  Returns an array of clang cursors, with a cursor for every entity which
+   --  overrides Cursor
 
    function Parent_Types
      (C : Clang_Cursor; Recursive : Boolean) return Cursors_Arrays.Array_Type;
+   --  Return an array of clang_cursors that is the chain of types that are
+   --  parents of the type pointed to by C
 
    function Find_All_References_In_Scope
      (Entity : Clang_Entity;
       In_Scope : Clang_Entity) return Clang_Reference_Iterator;
+   --  Return an iterator containing all the references to Entity in the scope
+   --  of In_Scope, where In_Scope needs to be an entity with a Body.
 
    function Child_Types
      (Entity    : Clang_Entity;
       Recursive : Boolean) return Cursors_Arrays.Array_Type;
+   --  Return an array of type that is the flattened tree of all the children
+   --  types of Entity, where entity is a type. If Recursive is true, the
+   --  search for child types will be recursive, and so the returned array will
+   --  contain the whole tree of child types. If false, it will contain only
+   --  the first level of the tree.
 
    use type Clang_Cursor_Kind;
 
    function Get_Line_Offset
      (K : Core_Kernel; L : General_Location) return Natural;
+   --  Return the line offset corresponding to the Location L
 
    function Get_Body (Entity : Clang_Entity) return Clang_Entity;
    --  Helper to get the first body of an entity if entity is a decl
+
+   function To_Root_Entity (Entity : Clang_Entity) return Root_Entity'Class;
+   --  Converts a Clang_Entity to Root_Entity. In effect, this amounts to
+   --  checking if the Clang_Entity is Null, and converting to the proper
+   --  No_Root_Entity constant in that case
+
+   function Get_Caller
+     (Clang_Db : Clang_Database;
+      Ref_Loc : General_Location) return Root_Entity'Class;
+   --  Get the entity in which the call corresponding to the location Ref_Loc
+   --  is made
 
    ---------
    -- "=" --
@@ -173,6 +196,12 @@ package body Clang_Xref is
       if L.Loc = R.Loc then
          return True;
       else
+         --  The Locs are not equal, so if either of L or R is equal to
+         --  No_Clang_Entity, then the entities are not the same by definition.
+         if L.Loc = No_Location or R.Loc = No_Location then
+            return False;
+         end if;
+
          --  We want a special case in the equal function, so that the decl of
          --  a function is equal to the body of a function
          --  ??? Why not use the USR here from the start ?
@@ -200,7 +229,6 @@ package body Clang_Xref is
    overriding function "="
      (Left, Right : Clang_Reference_Iterator) return Boolean is
    begin
-      Put_Line ("IN = for Clang_Reference_Iterators");
       return Left.Elements.Element (Left.Current_Index)
         = Right.Elements.Element (Right.Current_Index);
    end "=";
@@ -354,7 +382,7 @@ package body Clang_Xref is
       --  USR is not really a qualified name per se, but it is unique per
       --  entity, which is what is needed in this case
 
-      return USR (Get_Clang_Cursor (Entity));
+      return Get_Name (Entity);
    end Qualified_Name;
 
    ----------
@@ -364,8 +392,17 @@ package body Clang_Xref is
    overriding function Hash
      (Entity : Clang_Entity) return Integer
    is
+      Curs : constant Clang_Cursor := Get_Clang_Cursor (Entity);
+      H : constant Hash_Type := Hash (Curs);
+
+      --  Why on earth would you have a Hash function that returns an Integer
+      --  I don't know. Normal conversion expectedly raises an exception on the
+      --  high half of the Hash_Type so we use Unchecked_Conversion.
+
+      function Convert
+      is new Ada.Unchecked_Conversion (Hash_Type, Integer);
    begin
-      return Integer (Hash (Get_Clang_Cursor (Entity)));
+      return Convert (H);
    end Hash;
 
    -------------------------
@@ -445,7 +482,8 @@ package body Clang_Xref is
          Set_Language_From_File
            (Kernel_Handle (Kernel), Res.Loc.File, Lang);
       end if;
-      return Res;
+      return (if Cursor /= No_Cursor then Res
+              else No_Clang_Entity);
    end Cursor_As_Entity;
 
    ---------------------
@@ -506,10 +544,8 @@ package body Clang_Xref is
    overriding function Caller_At_Declaration
      (Entity : Clang_Entity) return Root_Entity'Class
    is
-      Decl_Cursor : constant Clang_Cursor :=
-        Get_Clang_Cursor (Entity.Kernel, Entity.Get_Declaration.Loc);
    begin
-      return Cursor_As_Entity (Entity, Lexical_Parent (Decl_Cursor));
+      return Get_Caller (Entity.Db, Entity.Get_Declaration.Loc);
    end Caller_At_Declaration;
 
    -------------------------
@@ -1958,6 +1994,43 @@ package body Clang_Xref is
    overriding function Get_Display_Kind
      (Ref  : Clang_Reference) return String is ("");
 
+   --------------------
+   -- To_Root_Entity --
+   --------------------
+
+   function To_Root_Entity (Entity : Clang_Entity) return Root_Entity'Class is
+     (if Entity = No_Clang_Entity then No_Root_Entity
+      else Entity);
+
+   ----------------
+   -- Get_Caller --
+   ----------------
+
+   function Get_Caller
+     (Clang_Db : Clang_Database;
+      Ref_Loc : General_Location) return Root_Entity'Class
+   is
+      Sloc : constant Sloc_T := Sloc_T'(Line   => Ref_Loc.Line,
+                                        Column => Ref_Loc.Column,
+                                        -- TODO: KLUDGE ???
+                                        Index  => 0);
+
+      File_Tree : constant Semantic_Tree'Class :=
+        Clang_Db.Kernel.Get_Abstract_Tree_For_File (Ref_Loc.File);
+
+      Parent : constant Clang_Node := Clang_Node
+        (File_Tree.Node_At
+           (Sloc, (Cat_Function, Cat_Method, Cat_Constructor)));
+
+      Ret : constant Clang_Entity :=
+        Cursor_As_Entity
+          (Clang_Db, Clang_Db.Kernel, Parent.Cursor);
+   begin
+      return
+        (if Ret.Ref_Loc = Ref_Loc then No_Root_Entity
+            else To_Root_Entity (Ret));
+   end Get_Caller;
+
    ----------------
    -- Get_Caller --
    ----------------
@@ -1965,20 +2038,6 @@ package body Clang_Xref is
    overriding function Get_Caller
      (Ref : Clang_Reference) return Root_Entity'Class
    is
-      Loc : constant General_Location := Get_Location (Ref);
-      Sloc : constant Sloc_T := Sloc_T'(Line   => Loc.Line,
-                                        Column => Loc.Column,
-                                        -- TODO: KLUDGE ???
-                                        Index  => 0);
-
-      File_Tree : constant Semantic_Tree'Class :=
-        Ref.Clang_Db.Kernel.Get_Abstract_Tree_For_File (Ref.Loc.File);
-      Parent : constant Clang_Node := Clang_Node
-        (File_Tree.Node_At
-           (Sloc, (Cat_Function, Cat_Method, Cat_Constructor)));
-   begin
-      return Cursor_As_Entity
-        (Ref.Clang_Db, Ref.Clang_Db.Kernel, Parent.Cursor);
-   end Get_Caller;
+     (Get_Caller (Ref.Clang_Db, Get_Location (Ref)));
 
 end Clang_Xref;

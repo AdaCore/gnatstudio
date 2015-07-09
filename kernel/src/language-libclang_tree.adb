@@ -256,40 +256,43 @@ package body Language.Libclang_Tree is
         (Is_In (Clang_Cursor_Kind_To_Category (C.kind), Category_Filter));
 
    begin
-      Parent := Lexical_Parent (Cursor);
+      --  If we are in a case in which we don't have a filter, let's try to use
+      --  clang's lexical parent first.
+      --  NOTE: The only reason we do that is for potential performance gains,
+      --  but their need has not been proven yet. It might be better to have an
+      --  unified algorithm
 
-      if Parent /= No_Cursor then
-         return Clang_Node'(Self.Kernel, Parent, Self.File);
-      end if;
-
-      if Category_Filter /= Null_Category_Array then
-
-         --  Get the topmost cursor just before translation unit
-         loop
-            Parent := Semantic_Parent (Cursor);
-            exit when Parent = No_Cursor
-              or else Parent.kind = CXCursor_TranslationUnit;
-            Cursor := Parent;
-         end loop;
-
-         --  Semantic parent did jump to a non lexical containing cursor
-         if not In_Range (Cursor, Top_Cursor) then
-            Cursor := Root_Cursor (Self.Tu);
+      if Category_Filter = Null_Category_Array then
+         Parent := Lexical_Parent (Cursor);
+         if Parent /= No_Cursor then
+            return Clang_Node'(Self.Kernel, Parent, Self.File);
          end if;
-
-         --  Now explore down to cursor, and keep the list
-         declare
-            C1 : constant Array_Type := Cursor & Children_Chain (Cursor);
-            C : constant Array_Type
-              := Filter (C1, Fullfills_Filter'Access);
-         begin
-            return (if C = Empty_Array then No_Semantic_Node
-                    else Clang_Node'(Self.Kernel, C (C'Last), Self.File));
-         end;
-      else
-         return Clang_Node'(Self.Kernel,
-                            Semantic_Parent (Top_Cursor), Self.File);
       end if;
+
+      --  Get the topmost cursor just before translation unit
+      loop
+         Parent := Semantic_Parent (Cursor);
+         exit when Parent = No_Cursor
+           or else Parent.kind = CXCursor_TranslationUnit;
+         Cursor := Parent;
+      end loop;
+
+      --  Semantic parent did jump to a non lexical containing cursor
+      if not In_Range (Cursor, Top_Cursor) then
+         Cursor := Root_Cursor (Self.Tu);
+      end if;
+
+      --  Now explore down to cursor, and keep the list
+      declare
+         C1 : constant Array_Type := Cursor & Children_Chain (Cursor);
+         C  : constant Array_Type
+           := (if Category_Filter /= Null_Category_Array
+               then Filter (C1, Fullfills_Filter'Access)
+               else C1);
+      begin
+         return (if C = Empty_Array then No_Semantic_Node
+                 else Clang_Node'(Self.Kernel, C (C'Last), Self.File));
+      end;
 
    end Node_At;
 

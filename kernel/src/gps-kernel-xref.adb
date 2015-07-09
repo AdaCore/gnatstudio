@@ -244,10 +244,15 @@ package body GPS.Kernel.Xref is
                   if Parent /= No_Root_Entity
                     and then Ref.Show_In_Callgraph
                   then
-                     while Parent /= No_Root_Entity
-                       and then not Is_Container (Parent)
                      loop
-                        Parent := Caller_At_Declaration (Parent);
+                        declare
+                           New_Parent : constant Root_Entity'Class
+                             := Caller_At_Declaration (Parent);
+                        begin
+                           exit when New_Parent = No_Root_Entity
+                             or else Is_Container (Parent);
+                           Parent := New_Parent;
+                        end;
                      end loop;
 
                      if Parent /= No_Root_Entity then
