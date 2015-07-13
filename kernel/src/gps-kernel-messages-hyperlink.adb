@@ -18,6 +18,8 @@
 with Ada.Strings.Fixed;
 
 with Glib.Convert;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+with Gtkada.Style; use Gtkada.Style;
 
 package body GPS.Kernel.Messages.Hyperlink is
 
@@ -127,7 +129,8 @@ package body GPS.Kernel.Messages.Hyperlink is
          return
            To_Unbounded_String
              (Escape_Text (Slice (Self.Text, 1, Self.First - 1))
-              & "<span color=""blue""><u>"
+              & "<span color="""
+              & To_Hex (Hyper_Links_Style.Get_Pref_Fg) & """><u>"
               & Escape_Text (Slice (Self.Text, Self.First, Self.Last))
               & "</u></span>"
               & Escape_Text
