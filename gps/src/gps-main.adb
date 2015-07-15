@@ -25,7 +25,6 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Text_IO;               use Ada.Text_IO;
-with ALI;
 with Interfaces.C;              use Interfaces.C;
 
 with GNAT.Command_Line;                use GNAT.Command_Line;
@@ -1489,17 +1488,6 @@ procedure GPS.Main is
       Free_Modules (Kernel);
       Destroy (Kernel);
       GNATCOLL.Traces.Finalize;
-
-      --  Memory used by the xref database.
-      --  ??? This should be done in the ali_reader package
-
-      ALI.ALIs.Free;
-      ALI.Units.Free;
-      ALI.Withs.Free;
-      ALI.Args.Free;
-      ALI.Linker_Options.Free;
-      ALI.Sdep.Free;
-      ALI.Xref.Free;
 
       --  In case of a normal exit, rename log.<pid> as log to avoid
       --  generating a new log file for each session; this way we still
