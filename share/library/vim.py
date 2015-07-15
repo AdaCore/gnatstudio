@@ -78,22 +78,15 @@ def forward_vim_word(loc, fwd=True):
     fw_ws = partial(forward_until, pred=lambda c: not c.isspace(),
                     backwards=not fwd)
 
-    print loc.get_char()
-
     if loc.get_char().isspace():
         if fwd:
             return fw_ws(loc)
         loc = fw_ws(loc)
 
-    print loc.get_char()
-
     c = cat(loc.get_char())
     while c == cat(loc.get_char()):
-        print "IN DALOOP"
         in_alpha = isword(loc.get_char())
         loc = loc.forward_char(offset)
-
-    print loc.get_char()
 
     return fw_ws(loc) if fwd else loc.forward_char(1)
 
@@ -112,7 +105,6 @@ def forward_until(loc, pred,
         cur_loc = cur_loc.forward_char(step)
 
     while not pred(cur_loc.get_char()):
-        print "OY : "
         cur_loc.get_char()
 
         if cur_loc.get_char() == "\n" and stop_at_eol:
@@ -281,8 +273,6 @@ class VimState(object):
         if key in override_keys_map:
             key = override_keys_map[key]
 
-        # print "Key : ", key
-
         # Escape always returns back to normal mode
         if key == KEY_ESC:
             self.action_stack = []
@@ -297,18 +287,14 @@ class VimState(object):
                 if remember_action:
                     if remember_action.is_a(composed_movement):
                         self.last_movement_command = remember_action
-                        # print "MOVEMENT COMMAND:", self.last_movement_command
                     elif remember_action.is_a(write_command)\
                             or remember_action.is_a(insert_command):
                         self.last_write_command = remember_action
-                        # print "LAST WRITE COMMAND:", self.last_write_command
                     if remember_action.is_a(insert_command):
                         self.current_insert_command = remember_action
 
-            # print self.state
             # Extend the state's selection if we are in visual
             if self.state in [VisualState, VisualStateLine, VisualStateBox]:
-                # print "IN VISUAL STATE"
                 self.extend_selection()
 
             return True
@@ -346,7 +332,6 @@ class BaseAction(object):
     def replay(self):
         self.apply_action()
         if self.is_a(insert_command):
-            # print self.vim_state.state
             for key, hw_kc, string in self.key_presses:
                 send_key_event(
                     key, hardware_keycode=hw_kc, window=self.vim_state.gtk_view
@@ -359,7 +344,6 @@ class BaseAction(object):
         else:
             try:
                 action = self.vim_state.action_stack.pop().compose(self)
-                # print "ACTION : ", action
                 action.apply_action()
                 return action
             except Exception, e:
@@ -478,7 +462,7 @@ def is_symbol_char(char):
 
 
 def is_keyword_char(char):
-    return is_keyword_re.match(char) != None
+    return is_keyword_re.match(char) is not None
 
 
 class SimpleMovement(Movement):
@@ -643,7 +627,6 @@ class ReplayAction(BaseAction):
 class ReplayMove(BaseAction):
 
     def apply(self):
-        # print "IN REPLAYMOVE"
         self.vim_state.last_movement_command.replay()
 
 
