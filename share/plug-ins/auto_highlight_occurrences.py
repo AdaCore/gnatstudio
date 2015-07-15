@@ -31,6 +31,7 @@ like "TODO", or special comments for instance.
 import GPS
 from gps_utils import *
 from gps_utils.highlighter import Location_Highlighter, OverlayStyle
+import traceback
 
 GPS.Preference(
     "Plugins/auto_highlight_occurrences/highlight_entities").create(
@@ -244,7 +245,18 @@ class Current_Entity_Highlighter(Location_Highlighter):
             if location and buffer:
                 location = GPS.EditorLocation(
                     buffer, location.line(), location.column())
-                word = location.get_word()
+
+                if location.inside_word():
+                    start_loc = location
+                    while not start_loc.starts_word():
+                        start_loc = start_loc.forward_char(-1)
+
+                    end_loc = location
+                    while not end_loc.ends_word():
+                        end_loc = end_loc.forward_char()
+
+                    word = buffer.get_chars(start_loc, end_loc).strip()
+                    word = word.decode("utf8")  # make unicode-string
 
         # Exit if we are highlighting the word or the entity that we were
         # already highlighting.
