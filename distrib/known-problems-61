@@ -609,6 +609,18 @@ KP-61-O119-017 GB: absolute path generated in GPR files
   Workaround: Set definitions relative, editing the GPR file using a text
               editor.
 
+KP-61-NB12-001 GB: exception building headlessly in workbench.
+
+  Problem:     When a workspace is created using wrws_import, plugin
+               org.eclipse.ui.workbench is not created in the .metadata/
+               .plugins directory. As a result there is exception when trying
+               to build the project in headless mode.
+
+  Status:      This is fixed in 2.9.2 on 2015-06-19.
+
+  Workaround:  To use the "on file save" check semantics builder target,
+               instead of the GNATbench builder launched automatically.
+
 KP-61-NB10-025 GPS: problems when clicking on Ada files outside of GPS
 
   Problem:    Under Windows, when clicking on Ada files in the Windows explorer
