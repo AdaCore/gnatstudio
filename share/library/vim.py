@@ -105,8 +105,6 @@ def forward_until(loc, pred,
         cur_loc = cur_loc.forward_char(step)
 
     while not pred(cur_loc.get_char()):
-        cur_loc.get_char()
-
         if cur_loc.get_char() == "\n" and stop_at_eol:
             return loc
 
