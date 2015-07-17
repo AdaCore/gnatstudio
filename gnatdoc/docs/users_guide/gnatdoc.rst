@@ -511,12 +511,26 @@ If this attribute is not specified, all comments are considered to be doc.
 This has the same semantics as the *-R* command-line switch. The command-line
 switch has precedence over the project attribute.
 
-HTML templates
---------------
+HTML output customization
+-------------------------
 
-GNATdoc uses a set of templates files to control the final rendering. Modifying
-these templates you can control the rendering of the generated documentation.
-The templates used for generating the documentation can be found under
-:file:`<install_dir>/share/gps/gnatdoc`. If you need a different layout as the
-proposed one, you can change directly those files.
+GNATdoc uses a set of static resources and templates files to control the final
+rendering. Modifying these static resources and templates you can control the
+rendering of the generated documentation. The files used for generating the
+documentation can be found under :file:`<install_dir>/share/gps/gnatdoc/html`.
+If you need a different layout from the proposed one, you can override those
+files and provides new files. The directory for user defined static resources
+and templates can be specified via the string attribute `HTTP_Custom_Dir` of the
+`Documentation` package in your project file::
 
+   package Documentation is
+      for HTML_Custom_Dir use "docs/gnatdoc_html";
+   end Documentation;
+
+All files in :file:`static` subdirectory will be copied to result documentation
+directory. This can be used to provide additional files like CSS, images, etc.
+
+Files in :file:`templates` subdirectory are used as templates when documentation
+is generated. You can put modified versions of default files in this directory
+with same name as original file. Adding new files has no effect on generated
+documentation.
