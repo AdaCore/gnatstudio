@@ -42,6 +42,8 @@ with Remote;           use Remote;
 with Switches_Chooser; use Switches_Chooser;
 with XML_Utils;        use XML_Utils;
 
+with String_List_Utils;
+
 package Build_Configurations is
 
    type Build_Config_Registry is tagged private;
@@ -312,8 +314,8 @@ package Build_Configurations is
       --  Name of the messages category to be used to create messages in
       --  the messages container.
 
-      Output_Parsers    : Unbounded_String;
-      --  Names of output parsers separated by space.
+      Parser_List       : String_List_Utils.String_List.List;
+      --  Names of output parsers.
    end record;
 
    function Get_Properties (Target : Target_Access) return Target_Properties;
@@ -600,6 +602,9 @@ package Build_Configurations is
      (Registry : Build_Config_Registry_Access;
       Model_Name : String) return Target_Model_Access;
    --  Return the target model (given by its name)
+
+   End_Of_Build_Name : constant String := "end_of_build";
+   --  Name of special output parser
 
 private
 

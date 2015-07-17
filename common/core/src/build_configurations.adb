@@ -15,15 +15,39 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Characters.Latin_1;   use Ada.Characters.Latin_1;
+with Ada.Strings.Fixed;
+with Ada.Strings.Maps;
+with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Switches_Parser;
-with String_Utils;    use String_Utils;
+with String_Utils;             use String_Utils;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 
 package body Build_Configurations is
 
    use GNAT.OS_Lib;
    use Target_List;
+
+   procedure Set_Parsers_For_Target
+     (Target : Target_Access;
+      Value  : String_Ptr);
+   --  Convert Value to list of strings and assign as Target's parser list.
+
+   function To_String
+     (List : String_List_Utils.String_List.List) return String;
+   --  Convert list of strings to textual representation.
+
+   function Default_Parser_Names (Is_Run_Target : Boolean) return String;
+   --  List of parsers used by default by a target. Is_Run_Target specifies
+   --  if target of the interest is a run target or not. Run targets have
+   --  the simplest output processing.
+
+   Default_Macro : constant String := "[default]";
+   --  Macro to represent Default_Parser_Names in list of parser names
+
+   Space : constant Ada.Strings.Maps.Character_Set :=
+     Ada.Strings.Maps.To_Set (" " & CR & LF & HT);
+   --  Character set to separate parser names in a list
 
    Me          : constant Trace_Handle := Create ("Build_Configurations");
 
@@ -1143,12 +1167,10 @@ package body Build_Configurations is
       C.Tag := new String'("server");
       C.Value := new String'(Target.Properties.Server'Img);
 
-      if Target.Properties.Output_Parsers /= "" then
-         C.Next := new Node;
-         C := C.Next;
-         C.Tag := new String'("output-parsers");
-         C.Value := new String'(To_String (Target.Properties.Output_Parsers));
-      end if;
+      C.Next := new Node;
+      C := C.Next;
+      C.Tag := new String'("output-parsers");
+      C.Value := new String'(To_String (Target.Properties.Parser_List));
 
       if Target.Command_Line /= null then
          C.Next := Command_Line_To_XML
@@ -1170,6 +1192,7 @@ package body Build_Configurations is
       Child  : Node_Ptr;
       Target : Target_Access;
 
+      Output_Parsers : String_Ptr;
    begin
       if XML = null
         or else XML.Tag = null
@@ -1314,8 +1337,7 @@ package body Build_Configurations is
             Target.Properties.Server := Server_Type'Value (Child.Value.all);
 
          elsif Child.Tag.all = "output-parsers" then
-            Target.Properties.Output_Parsers :=
-              To_Unbounded_String (Child.Value.all);
+            Output_Parsers := Child.Value;
 
          else
             Log (Registry, (-"Warning: invalid child to <target> node: ")
@@ -1324,6 +1346,8 @@ package body Build_Configurations is
 
          Child := Child.Next;
       end loop;
+
+      Set_Parsers_For_Target (Target, Output_Parsers);
 
       --  At this point, the target data has been updated. If this target is
       --  not from the user configuration, copy it to the original targets.
@@ -2009,5 +2033,149 @@ package body Build_Configurations is
          Unchecked_Free (Registry);
       end if;
    end Free;
+
+   ----------------------------
+   -- Set_Parsers_For_Target --
+   ----------------------------
+
+   procedure Set_Parsers_For_Target
+     (Target : Target_Access;
+      Value  : String_Ptr)
+   is
+      function Has_Parser
+        (Parsers       : String_List_Utils.String_List.List;
+         Parser_Name   : String) return Boolean;
+      --  Check if Parser_Name belongs to Parsers list
+
+      function To_Parser_List
+        (Parser_List : String;
+         Default     : String) return String_List_Utils.String_List.List;
+      --  Convert string with parser_names to list of parser.
+      --  Substitute [default] macro with Default text if found
+
+      ----------------
+      -- Has_Parser --
+      ----------------
+
+      function Has_Parser
+        (Parsers       : String_List_Utils.String_List.List;
+         Parser_Name   : String) return Boolean
+      is
+         use String_List_Utils.String_List;
+
+         Node    : String_List_Utils.String_List.List_Node := First (Parsers);
+         Found   : Boolean := False;
+      begin
+         while Node /= Null_Node loop
+            if Data (Node) = Parser_Name then
+               Found := True;
+               exit;
+            end if;
+
+            Node := Next (Node);
+         end loop;
+
+         return Found;
+      end Has_Parser;
+
+      --------------------
+      -- To_Parser_List --
+      --------------------
+
+      function To_Parser_List
+        (Parser_List : String;
+         Default     : String) return String_List_Utils.String_List.List
+      is
+         use Ada.Strings;
+         use Ada.Strings.Fixed;
+         use String_List_Utils.String_List;
+
+         Macro  : constant Natural := Index (Parser_List, Default_Macro);
+         First  : Positive;
+         Last   : Natural := 0;
+         Result : String_List_Utils.String_List.List;
+      begin
+         if Macro > 0 then
+            return To_Parser_List
+              (Replace_Slice
+                 (Parser_List,
+                  Low  => Macro,
+                  High => Macro + Default_Macro'Length - 1,
+                  By   => Default),
+               Default);
+         end if;
+
+         loop
+            exit when Last >= Parser_List'Last;
+            Find_Token (Parser_List, Space, Last + 1, Outside, First, Last);
+            exit when First > Last;
+            Prepend (Result, Parser_List (First .. Last));
+         end loop;
+
+         return Result;
+      end To_Parser_List;
+
+   begin
+      if Value = null then
+         Target.Properties.Parser_List :=
+           To_Parser_List (Default_Parser_Names (Is_Run (Target)), "");
+      else
+         Target.Properties.Parser_List :=
+           To_Parser_List (Value.all, Default_Parser_Names (Is_Run (Target)));
+      end if;
+
+      if not Has_Parser (Target.Properties.Parser_List, End_Of_Build_Name) then
+         String_List_Utils.String_List.Prepend
+           (Target.Properties.Parser_List, End_Of_Build_Name);
+      end if;
+   end Set_Parsers_For_Target;
+
+   --------------------------
+   -- Default_Parser_Names --
+   --------------------------
+
+   function Default_Parser_Names (Is_Run_Target : Boolean) return String is
+   begin
+      if Is_Run_Target then
+         return
+           "console_writer"     & " " &
+           "end_of_build";
+      else
+         return
+           "output_chopper"     & " " &
+           "utf_converter"      & " " &
+           "progress_parser"    & " " &
+           "console_writer"     & " " &
+           "location_parser"    & " " &
+           "text_splitter"      & " " &
+           "output_collector"   & " " &
+           "elaboration_cycles" & " " &
+           "end_of_build";
+      end if;
+   end Default_Parser_Names;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String
+     (List : String_List_Utils.String_List.List) return String
+   is
+      use String_List_Utils.String_List;
+
+      Node    : String_List_Utils.String_List.List_Node := First (List);
+      Result  : Unbounded_String;
+   begin
+      while Node /= Null_Node loop
+         if Result /= "" then
+            Result := " " & Result;
+         end if;
+
+         Result := Data (Node) & Result;
+         Node := Next (Node);
+      end loop;
+
+      return To_String (Result);
+   end To_String;
 
 end Build_Configurations;

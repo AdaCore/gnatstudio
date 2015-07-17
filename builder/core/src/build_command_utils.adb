@@ -15,10 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Latin_1;           use Ada.Characters.Latin_1;
 with Ada.Strings;                      use Ada.Strings;
 with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
-with Ada.Strings.Maps;
 with Ada.Unchecked_Deallocation;
 
 with Custom_Tools_Output;
@@ -42,16 +40,6 @@ package body Build_Command_Utils is
    Max_Number_Of_Mains : constant := 128;
    --  The maximum number of Mains that we accept to display in the Menus
    --  and toolbar.
-
-   Space : constant Ada.Strings.Maps.Character_Set :=
-     Ada.Strings.Maps.To_Set (" " & CR & LF & HT);
-   --  Character set to separate parser names in a list
-
-   function To_Parser_List
-     (Parser_List : String;
-      Default     : String) return List;
-   --  Convert string with parser_names to list of parser.
-   --  Substitute [default] macro with Default text if found
 
    package Projects_Stack is new Generic_Stack (Project_Type);
 
@@ -1672,125 +1660,6 @@ package body Build_Command_Utils is
    begin
       Self.Build := Build;
    end Set_Last_Build;
-
-   --------------------
-   -- To_Parser_List --
-   --------------------
-
-   function To_Parser_List
-     (Parser_List : String;
-      Default     : String) return List
-   is
-      Macros : constant Natural := Index (Parser_List, Default_Macros);
-      First  : Positive;
-      Last   : Natural := 0;
-      Result : List;
-   begin
-      if Macros > 0 then
-         return To_Parser_List
-           (Replace_Slice
-              (Parser_List,
-               Low  => Macros,
-               High => Macros + Default_Macros'Length - 1,
-               By   => Default),
-            Default);
-      end if;
-      loop
-         exit when Last >= Parser_List'Last;
-         Find_Token (Parser_List, Space, Last + 1, Outside, First, Last);
-         exit when First > Last;
-         Prepend (Result, Parser_List (First .. Last));
-      end loop;
-
-      return Result;
-   end To_Parser_List;
-
-   ----------------
-   -- Has_Parser --
-   ----------------
-
-   function Has_Parser
-     (Parser_List   : String;
-      Parser_Name   : String;
-      Is_Run_Target : Boolean) return Boolean
-   is
-      Parsers : List := To_Parser_List
-        (Parser_List, Default_Parser_Names (Is_Run_Target));
-      Node    : List_Node := First (Parsers);
-      Found   : Boolean := False;
-   begin
-      while Node /= Null_Node loop
-         if Data (Node) = Parser_Name then
-            Found := True;
-            exit;
-         end if;
-
-         Node := Next (Node);
-      end loop;
-
-      Free (Parsers);
-      return Found;
-   end Has_Parser;
-
-   Default_Parsers : constant array (Boolean) of List :=
-     (True  => To_Parser_List
-                 (Default_Parser_Names (Is_Run_Target => True), ""),
-      False => To_Parser_List
-                 (Default_Parser_Names (Is_Run_Target => False), ""));
-
-   ----------------------
-   -- New_Parser_Chain --
-   ----------------------
-
-   function New_Parser_Chain
-     (Self        : access Builder_Context_Record;
-      Target      : Target_Access) return Tools_Output_Parser_Access
-   is
-      function Get_Parser_List (Target : Target_Access) return List;
-      --  Return list of parser names for given target
-
-      ---------------------
-      -- Get_Parser_List --
-      ---------------------
-
-      function Get_Parser_List (Target : Target_Access) return List is
-         Target_Name : constant String := Get_Name (Target);
-      begin
-         if Self.Target_Parsers.Contains (Target_Name) then
-            return Self.Target_Parsers (Target_Name);
-         else
-            return Default_Parsers (Is_Run (Target));
-         end if;
-      end Get_Parser_List;
-
-      Name_List : constant List := Get_Parser_List (Target);
-   begin
-      return New_Parser_Chain (Name_List);
-   end New_Parser_Chain;
-
-   -----------------
-   -- Set_Parsers --
-   -----------------
-
-   procedure Set_Parsers
-     (Self        : access Builder_Context_Record;
-      Target      : Target_Access;
-      Parser_List : String)
-   is
-      Target_Name : constant String := Get_Name (Target);
-   begin
-      if Parser_List = "" then
-         if Self.Target_Parsers.Contains (Target_Name) then
-            Self.Target_Parsers.Delete (Target_Name);
-         end if;
-      else
-         Self.Target_Parsers.Include
-           (Target_Name,
-            To_Parser_List
-              (Parser_List,
-               Default_Parser_Names (Is_Run (Target))));
-      end if;
-   end Set_Parsers;
 
    -------------------------
    -- Expand_Command_Line --

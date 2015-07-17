@@ -90,8 +90,6 @@ package body Builder_Facility_Module is
    Modes_Trace : constant Trace_Handle :=
                    Create ("Builder.Modes", GNATCOLL.Traces.Off);
 
-   End_Of_Build_Name : constant String := "end_of_build";
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
       (Any_Type, Any_Type_Access);
 
@@ -300,9 +298,6 @@ package body Builder_Facility_Module is
 
    procedure Clear_Actions_And_Menus;
    --  Remove the target build menus
-
-   procedure Set_Parsers_For_Target (Target : Target_Access);
-   --  Set list of output parser for given Target
 
    function Get_Targets_File return GNATCOLL.VFS.Virtual_File;
    --  Return the file where user targets are stored
@@ -1193,7 +1188,6 @@ package body Builder_Facility_Module is
          then
             Add_Action_And_Menu_For_Target (T);
             Install_Button_For_Target (T);
-            Set_Parsers_For_Target (T);
          end if;
 
       else
@@ -1443,25 +1437,6 @@ package body Builder_Facility_Module is
          Button_For_Target (Get_Name (Target), Empty_Any_Type);
       end if;
    end Install_Button_For_Target;
-
-   ----------------------------
-   -- Set_Parsers_For_Target --
-   ----------------------------
-
-   procedure Set_Parsers_For_Target (Target : Target_Access) is
-      P    : constant Target_Properties := Get_Properties (Target);
-      List : constant String := To_String (P.Output_Parsers);
-   begin
-      if List = ""
-        or else Has_Parser (List, End_Of_Build_Name, Is_Run (Target))
-      then
-         Builder_Module_ID.Builder.Set_Parsers (Target, List);
-      else
-         --  Force adding end_of_build parser to parser list
-         Builder_Module_ID.Builder.Set_Parsers
-           (Target, List & " " & End_Of_Build_Name);
-      end if;
-   end Set_Parsers_For_Target;
 
    -----------------------------
    -- Clear_Actions_And_Menus --

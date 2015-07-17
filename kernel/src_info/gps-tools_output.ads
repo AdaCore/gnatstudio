@@ -97,16 +97,4 @@ package GPS.Tools_Output is
      (Value : External_Parser_Fabric_Access);
    --  Define external parser fabric
 
-   function Default_Parser_Names (Is_Run_Target : Boolean) return String;
-   --  List of parsers used by default by a target. Is_Run_Target specifies
-   --  if target of the interest is a run target or not. Run targets have
-   --  the simplest output processing
-
-   Default_Macros : constant String;
-   --  Macro to represent Default_Parser_Names in list of parser names
-
-private
-
-   Default_Macros : constant String := "[default]";
-
 end GPS.Tools_Output;

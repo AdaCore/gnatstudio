@@ -33,7 +33,8 @@ package body GPS.CLI_Target_Loaders is
    is
       pragma Unreferenced (File);
 
-      Target   : Target_Access;
+      Target    : Target_Access;
+      pragma Unreferenced (Target);
       Mode      : Mode_Record;
       pragma Unreferenced (Mode);
 
@@ -43,12 +44,6 @@ package body GPS.CLI_Target_Loaders is
    begin
       if Node.Tag.all = "target" then
          Target := Load_Target_From_XML (Builder.Registry, Node, From_User);
-
-         declare
-            P : constant Target_Properties := Get_Properties (Target);
-         begin
-            Builder.Set_Parsers (Target, To_String (P.Output_Parsers));
-         end;
 
       elsif Node.Tag.all = "target-model" then
          Create_Model_From_XML (Builder.Registry, Node);

@@ -32,30 +32,6 @@ package body GPS.Tools_Output is
 
    External_Parsers_Fabric : External_Parser_Fabric_Access;
 
-   --------------------------
-   -- Default_Parser_Names --
-   --------------------------
-
-   function Default_Parser_Names (Is_Run_Target : Boolean) return String is
-   begin
-      if Is_Run_Target then
-         return
-           "console_writer"   & " " &
-           "end_of_build";
-      else
-         return
-           "output_chopper"   & " " &
-           "utf_converter"    & " " &
-           "progress_parser"  & " " &
-           "console_writer"   & " " &
-           "location_parser"  & " " &
-           "text_splitter"    & " " &
-           "output_collector" & " " &
-           "elaboration_cycles" & " " &
-           "end_of_build";
-      end if;
-   end Default_Parser_Names;
-
    -------------
    -- Destroy --
    -------------

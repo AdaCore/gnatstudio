@@ -22,7 +22,6 @@
 --  See spec of Builder_Facility_Module for an overview of the build system.
 
 with Ada.Containers.Hashed_Maps;
-with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
 
@@ -35,7 +34,6 @@ with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
 
 with GPS.Core_Kernels;                 use GPS.Core_Kernels;
 with GPS.Messages_Windows;             use GPS.Messages_Windows;
-with GPS.Tools_Output;                 use GPS.Tools_Output;
 
 with Build_Configurations;             use Build_Configurations;
 with Commands;                         use Commands;
@@ -44,7 +42,6 @@ with GPS_Preferences_Types;            use GPS_Preferences_Types;
 with Projects;                         use Projects;
 with Remote;                           use Remote;
 with Toolchains;                       use Toolchains;
-with String_List_Utils;
 
 package Build_Command_Utils is
 
@@ -377,24 +374,6 @@ package Build_Command_Utils is
       Build  : Build_Information);
    --  Get/Set the last built target
 
-   function New_Parser_Chain
-     (Self        : access Builder_Context_Record;
-      Target      : Target_Access) return Tools_Output_Parser_Access;
-   --  Create new chain of Tools_Output_Parsers.
-   --  Result should be deallocated after use
-
-   function Has_Parser
-     (Parser_List   : String;
-      Parser_Name   : String;
-      Is_Run_Target : Boolean) return Boolean;
-   --  Check if list of parser contains given parser
-
-   procedure Set_Parsers
-     (Self        : access Builder_Context_Record;
-      Target      : Target_Access;
-      Parser_List : String);
-   --  Assign parser name list to given target
-
    overriding procedure Destroy (Self : in out Builder_Context_Record);
    --  Cleanup internal data
 
@@ -454,11 +433,6 @@ private
    type Target_Output_Array is array (Target_Output_Type) of
      Target_Outputs.Map;
 
-   use String_List_Utils.String_List;
-
-   package Target_Maps is new Ada.Containers.Indefinite_Ordered_Maps
-     (String, List);
-
    type Builder_Context_Record is new Abstract_Module_Record with record
       Kernel : GPS.Core_Kernels.Core_Kernel;
       --  Kernel handle
@@ -474,8 +448,6 @@ private
       --  Save output for target builds
       Build : Build_Information;
       --  The last build target
-      Target_Parsers : Target_Maps.Map;
-      --  Map from target name to list of output parser names
    end record;
 
 end Build_Command_Utils;

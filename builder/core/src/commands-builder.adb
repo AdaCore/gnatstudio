@@ -233,7 +233,8 @@ package body Commands.Builder is
       --  Store last build information into Builder
       Builder.Set_Last_Build (Build);
 
-      Output_Parser  := Builder.New_Parser_Chain (Build.Target);
+      Output_Parser  :=
+        New_Parser_Chain (Get_Properties (Build.Target).Parser_List);
 
       --  Retrive build information modified by parsers
       Result := Builder.Get_Last_Build;
