@@ -42,7 +42,6 @@ ada_module/ui/obj/ada_semantic_tree-test
 docs/Makefile
 docs/programmers_guide/_build/
 docs/users_guide/_build/
-docs/users_guide/GPS/generated_hooks.py
 docs/tutorial/_build/
 docs/release_notes/build/
 docs/gps-welcome.html
