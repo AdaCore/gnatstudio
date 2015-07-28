@@ -1468,7 +1468,7 @@ class Command(object):
 
     def get_result(self):
         """
-        Returns the result of the command, if any. Must be overriden by
+        Returns the result of the command, if any. Must be overridden by
         children.
         """
         pass  # implemented in Ada
@@ -7830,7 +7830,7 @@ class Project(object):
         the list of source files. The directory is added for the current
         value of the scenario variables only. Note that if the current source
         directory for the project is not specified explicitly in the .gpr
-        file), it is overriden by the new directory you are adding. If the
+        file), it is overridden by the new directory you are adding. If the
         directory is already part of the source directories for the project,
         it is not added a second time.
 

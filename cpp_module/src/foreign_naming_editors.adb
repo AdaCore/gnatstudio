@@ -120,7 +120,7 @@ package body Foreign_Naming_Editors is
 
       --  If the project is null, we get the default values from the current
       --  top-level project. It will automatically have the default extensions
-      --  set when a project was registered, unless overriden by the user
+      --  set when a project was registered, unless overridden by the user
 
       if Project = No_Project then
          P := Get_Project (Kernel);

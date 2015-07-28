@@ -319,7 +319,7 @@ package Default_Preferences is
      (Pref     : access Variant_Preference_Record)
       return Variant_Enum;
    --  Get the value for a preference. The default value is returned if the
-   --  user hasn't explicitely overriden it.
+   --  user hasn't explicitely overridden it.
    --  Colors have already been allocated when they are returned.
    --  The Font_Description must not be freed by the caller
    --  For enumeration, it returns the 'Pos of the enumeration value.

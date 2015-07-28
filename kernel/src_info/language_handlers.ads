@@ -90,7 +90,7 @@ package Language_Handlers is
    --  See the function GPS.Kernel.Properties.Set_Language_From_File for more
    --  info on how to override this language
 
-   function Language_Is_Overriden
+   function Language_Is_Overridden
      (Handler  : access Language_Handler_Record;
       Filename : GNATCOLL.VFS.Virtual_File) return Boolean;
    --  Return True if the language for Filename doesn't come from the project,

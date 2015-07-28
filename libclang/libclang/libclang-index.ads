@@ -564,7 +564,7 @@ package Libclang.Index is
    function In_Range (Sought, Containing : Clang_Cursor) return Boolean;
    pragma Inline (In_Range);
 
-   procedure Dispose_Overriden
+   procedure Dispose_Overridden
      (overridden : access Clang_Cursor) renames clang_disposeOverriddenCursors;
 
    generic

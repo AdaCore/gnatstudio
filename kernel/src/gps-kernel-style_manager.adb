@@ -108,7 +108,7 @@ package body GPS.Kernel.Style_Manager is
      (Source : Source_Shade_Or_Lighten;
       Style  : in out Style_Record);
 
-   --  Styles overriden by code
+   --  Styles overridden by code
 
    type Source_Override is new Root_Source with null record;
    overriding function Depends_On_Pref

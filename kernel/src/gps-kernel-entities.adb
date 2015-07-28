@@ -991,7 +991,7 @@ package body GPS.Kernel.Entities is
                  Show_Caller);
 
       Gtk_New
-        (Include_Overriding, -"Include overriding and overriden operations");
+        (Include_Overriding, -"Include overriding and overridden operations");
       Pack_Start (Box, Include_Overriding);
       Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, "Find_Prefs_Include_Overriding", False);

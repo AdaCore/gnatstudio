@@ -53,7 +53,7 @@ package Ada_Semantic_Tree.Type_Tree is
    function Extract_Primitives
      (Ada_Type : Ada_Type_Access) return Primitive_Array;
    --  Return all the primitives known for this type - it includes inherited
-   --  but not overriden primitives.
+   --  but not overridden primitives.
 
    function Is_Tagged
      (Ada_Type : Ada_Type_Access; From_Visibility : Visibility_Context)
@@ -76,11 +76,11 @@ package Ada_Semantic_Tree.Type_Tree is
    --  If this type has got a tagged type parent, then it's returned by this
    --  function, otherwise null is returned.
 
-   function Get_Entity_Or_Overriden
+   function Get_Entity_Or_Overridden
      (Primitive : Ada_Primitive_Access)
       return Entity_Access;
    --  Return either the entity pointed by this primitive if it's explicitely
-   --  declared, or the closed overriden subprogram. If serveal matches (e.g.
+   --  declared, or the closed overridden subprogram. If serveal matches (e.g.
    --  in the case of multiple interfaces inheritence), one is picked up
    --  randomly.
 
@@ -119,10 +119,10 @@ private
 
    type Primitive_Subprogram is record
       Entity                : Entity_Persistent_Access;
-      --  If the primitive is declared or overriden for this type, this holds
+      --  If the primitive is declared or overridden for this type, this holds
       --  the corresponding entity. Otherwise, it's null.
 
-      Overriden_Entities : Primitive_Array_Access;
+      Overridden_Entities : Primitive_Array_Access;
 
       Is_Returned_Primitive : Boolean := False;
       --  This is true when the returned type is a primitive type.

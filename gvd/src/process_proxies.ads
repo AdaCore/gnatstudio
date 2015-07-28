@@ -100,7 +100,7 @@ package Process_Proxies is
       Pattern : GNAT.Regpat.Pattern_Matcher;
       Timeout : Integer := 1000);
    --  Wait until some output from the debugger matches Pattern.
-   --  This functions waits at least Timeout ms, and is overriden
+   --  This functions waits at least Timeout ms, and is overridden
    --  in simple graphic mode so that Gtk+ events are handled by hand.
    --  The procedure can actually wait longer, depending on
    --  what is processed between each iteration.

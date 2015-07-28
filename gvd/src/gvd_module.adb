@@ -225,7 +225,7 @@ package body GVD_Module is
       overriding function Execute
         (Command : access Debugger_Command;
          Context : Interactive_Command_Context) return Command_Return_Type;
-      --  Overriden Execute primitive to take care of Debugger_Command
+      --  Overridden Execute primitive to take care of Debugger_Command
       --  boilerplate, do not override
 
       function Execute_Dbg

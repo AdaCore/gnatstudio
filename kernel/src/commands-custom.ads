@@ -108,7 +108,7 @@ package Commands.Custom is
    --  Each of the commands is executed in turn. Output from one command is
    --  made available to the next through %1, %2,...
    --  Default_Output specifies where the output should be sent by default, if
-   --  not overriden by any "output" attribute in the XML tree.
+   --  not overridden by any "output" attribute in the XML tree.
    --  If Show_Command is true, then the command itself will be shown along
    --  with its output if the latter is not No_Output.
    --  If Show_In_Task_Manager is true, then the command will be shown in the

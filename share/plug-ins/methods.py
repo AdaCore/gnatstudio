@@ -35,7 +35,7 @@ class Methods_Contextual (GPS.Contextual):
     def filter(self, context):
         # Store the methods in the context, so that we do not have to
         # recompute them if the menu is selected, and so that we can
-        # handle overriden methods as well
+        # handle overridden methods as well
         if isinstance(context, GPS.EntityContext) and context.entity():
             context.methods_list = context.entity().methods(
                 include_inherited=True)

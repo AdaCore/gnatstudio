@@ -1090,7 +1090,7 @@ package body Remote.Db is
       Trace (Me, "Remote.Db.Get_Servers:");
       Cursor := Db.Sys_Machines.First;
       while Machine_Db.Has_Element (Cursor) loop
-         --  Take care of overriden system machines.
+         --  Take care of overridden system machines.
          if not Db.Machines.Contains
            (Machine_Db.Element (Cursor).Nickname.all)
          then
@@ -1116,7 +1116,7 @@ package body Remote.Db is
          Cursor := Db.Sys_Machines.First;
 
          while Machine_Db.Has_Element (Cursor) loop
-            --  Take care of overriden system machines.
+            --  Take care of overridden system machines.
             if not Db.Machines.Contains
               (Machine_Db.Element (Cursor).Nickname.all)
             then

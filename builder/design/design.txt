@@ -425,7 +425,7 @@ or if Object_Dir is an absolute path:
 OBJ_DIR = $(<PROJECT>_OBJ_DIR)
 
   The two variables are needed because when including other Makefiles, the
-  variable OBJ_DIR will be overriden, while the variable <PROJECT>_OBJ_DIR will
+  variable OBJ_DIR will be overridden, while the variable <PROJECT>_OBJ_DIR will
   never be.
 
 - Ada switches are ignored since they are handled by gnat tools directly

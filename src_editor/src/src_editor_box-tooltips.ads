@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 --  This package provides support for displaying tooltips in the editors.
---  These tooltips can be overriden by any module in GPS, but they also have
+--  These tooltips can be overridden by any module in GPS, but they also have
 --  a default value which is extracted from the cross-references information.
 
 with Tooltips;

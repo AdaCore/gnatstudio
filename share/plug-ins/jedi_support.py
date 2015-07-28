@@ -46,7 +46,7 @@ class PythonResolver(CompletionResolver):
 
     def get_completions(self, loc):
         """
-           Overriden method.
+           Overridden method.
            Returns a list of completion objects for GPS.
         """
 
@@ -97,7 +97,7 @@ class PythonResolver(CompletionResolver):
 
     def get_completion_prefix(self, loc):
         """
-           Overriden method.
+           Overridden method.
            Prefix is the head of the word to be completed.
 
               Prefix+complete = word

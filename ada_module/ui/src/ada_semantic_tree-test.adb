@@ -256,7 +256,7 @@ procedure Ada_Semantic_Tree.Test is
                   Entity     : Entity_Access;
                begin
                   for J in Primitives'Range loop
-                     Entity := Get_Entity_Or_Overriden (Primitives (J));
+                     Entity := Get_Entity_Or_Overridden (Primitives (J));
 
                      Put_Line
                        ("---> PRIMITIVE: "

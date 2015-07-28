@@ -12,7 +12,7 @@ XML = r"""<?xml version="1.0" ?>
        prefixed using their name (e.g. gnatmake will be transformed to
        name-gnatmake).
 
-       Those can be explicitly overriden in the toolchain definition, or
+       Those can be explicitly overridden in the toolchain definition, or
        nullified by using an empty value in the corresponding tag
   -->
   <toolchain_default>

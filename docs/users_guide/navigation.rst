@@ -419,8 +419,8 @@ cross-references.
   .. index:: overriding operations
   .. index:: methods
 
-  The option :guilabel:`Include overriding and overriden operations`
-  includes references to overriden or overriding entities.  This is
+  The option :guilabel:`Include overriding and overridden operations`
+  includes references to overridden or overriding entities.  This is
   particularly useful if you need to know whether you can easily modify
   the profile of a primitive operation or method since you can see what
   other entities would also be changed. If you select only the

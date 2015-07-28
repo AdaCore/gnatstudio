@@ -90,11 +90,11 @@ package body Language_Handlers is
       return 0;
    end Get_Index_From_Language;
 
-   ---------------------------
-   -- Language_Is_Overriden --
-   ---------------------------
+   ----------------------------
+   -- Language_Is_Overridden --
+   ----------------------------
 
-   function Language_Is_Overriden
+   function Language_Is_Overridden
      (Handler  : access Language_Handler_Record;
       Filename : GNATCOLL.VFS.Virtual_File) return Boolean
    is
@@ -104,7 +104,7 @@ package body Language_Handlers is
    begin
       Get_Property (Prop, Filename, "language", Found);
       return Found;
-   end Language_Is_Overriden;
+   end Language_Is_Overridden;
 
    ----------------------------
    -- Get_Language_From_File --

@@ -850,7 +850,7 @@ package body Switches_Chooser is
                         --  Recursive call to handle dependencies on slave
                         --  switch change of state.
                         --
-                        --  We need to do it now to prevent being overriden by
+                        --  We need to do it now to prevent being overridden by
                         --  another switch in the final call to
                         --  On_Command_Line_Changed:
                         --  adding "-gnatp" to "-gnatVa" is triggering

@@ -363,9 +363,9 @@ package body Ada_Semantic_Tree.Type_Tree is
       --  Returned type is not checked except if the flag is true. In that
       --  case, only a name match will be done, and no primitivity test.
 
-      function Find_Overriden_Primitive
+      function Find_Overridden_Primitive
         (Subprogram : Entity_Access) return Ada_Primitive_Access;
-      --  If there is a primitive overriden by the subprogram passed in
+      --  If there is a primitive overridden by the subprogram passed in
       --  parameter, return it.
 
       --------------------------------
@@ -457,11 +457,11 @@ package body Ada_Semantic_Tree.Type_Tree is
          return True;
       end Same_Overriding_Subprogram;
 
-      -------------------------------
-      --  Find_Overriden_Primitive --
-      -------------------------------
+      --------------------------------
+      --  Find_Overridden_Primitive --
+      --------------------------------
 
-      function Find_Overriden_Primitive
+      function Find_Overridden_Primitive
         (Subprogram : Entity_Access) return Ada_Primitive_Access
       is
          Return_Is_Primitive : Boolean := False;
@@ -485,7 +485,7 @@ package body Ada_Semantic_Tree.Type_Tree is
                 (Return_Is_Primitive
                  xor Element (C).Is_Returned_Primitive)
               and then Same_Overriding_Subprogram
-                (Get_Entity_Or_Overriden (Element (C)),
+                (Get_Entity_Or_Overridden (Element (C)),
                  Subprogram,
                  not Return_Is_Primitive)
             then
@@ -496,7 +496,7 @@ package body Ada_Semantic_Tree.Type_Tree is
          end loop;
 
          return null;
-      end Find_Overriden_Primitive;
+      end Find_Overridden_Primitive;
 
       Type_Info : Ada_Type_Access := Get_Type_Info (Ada_Type_Key, The_Type);
 
@@ -621,7 +621,7 @@ package body Ada_Semantic_Tree.Type_Tree is
 
       while Ref_Ids /= Null_Referenced_Identifiers_List loop
          --  Extracts all the inherited primitives and add them in the type's
-         --  list. We'll see later if the primitive is overriden.
+         --  list. We'll see later if the primitive is overridden.
 
          declare
             Expression : Parsed_Expression := Parse_Expression_Backward
@@ -672,7 +672,7 @@ package body Ada_Semantic_Tree.Type_Tree is
                         New_Primitive : Ada_Primitive_Access;
                      begin
                         for J in Primitives'Range loop
-                           if Find_Overriden_Primitive
+                           if Find_Overridden_Primitive
                              (To_Entity_Access (Primitives (J).Entity)) = null
                            then
                               --  Add the primitive to the primitive list, only
@@ -684,7 +684,7 @@ package body Ada_Semantic_Tree.Type_Tree is
                               New_Primitive := new Primitive_Subprogram'
                                 (Entity
                                  => Null_Entity_Persistent_Access,
-                                 Overriden_Entities
+                                 Overridden_Entities
                                  => new Primitive_Array'(1 => Primitives (J)),
                                  Is_Returned_Primitive =>
                                    Primitives (J).Is_Returned_Primitive,
@@ -811,7 +811,7 @@ package body Ada_Semantic_Tree.Type_Tree is
                   --  If this subprogram is a primitive of the given type,
                   --  then do its analysis and set the primitive annotation.
 
-                  Primitive_Info := Find_Overriden_Primitive (Subprogram);
+                  Primitive_Info := Find_Overridden_Primitive (Subprogram);
 
                   if Primitive_Info = null then
                      --  We are on a new primitive (not inherited)
@@ -875,9 +875,9 @@ package body Ada_Semantic_Tree.Type_Tree is
             Type_Info.Primitives (J) := Primitive_Info;
             Ref (Primitive_Info);
 
-            if Primitive_Info.Overriden_Entities /= null then
-               for J in Primitive_Info.Overriden_Entities'Range loop
-                  Ref (Primitive_Info.Overriden_Entities (J));
+            if Primitive_Info.Overridden_Entities /= null then
+               for J in Primitive_Info.Overridden_Entities'Range loop
+                  Ref (Primitive_Info.Overridden_Entities (J));
                end loop;
             end if;
 
@@ -1082,21 +1082,21 @@ package body Ada_Semantic_Tree.Type_Tree is
       return null;
    end Get_Tagged_Parent;
 
-   -----------------------------
-   -- Get_Entity_Or_Overriden --
-   -----------------------------
+   ------------------------------
+   -- Get_Entity_Or_Overridden --
+   ------------------------------
 
-   function Get_Entity_Or_Overriden
+   function Get_Entity_Or_Overridden
      (Primitive : Ada_Primitive_Access) return Entity_Access
    is
       Local_Primitive : Ada_Primitive_Access := Primitive;
    begin
       while Local_Primitive.Entity = Null_Entity_Persistent_Access loop
-         Local_Primitive := Local_Primitive.Overriden_Entities (1);
+         Local_Primitive := Local_Primitive.Overridden_Entities (1);
       end loop;
 
       return To_Entity_Access (Local_Primitive.Entity);
-   end Get_Entity_Or_Overriden;
+   end Get_Entity_Or_Overridden;
 
    ------------------
    -- Get_Children --
@@ -1262,12 +1262,12 @@ package body Ada_Semantic_Tree.Type_Tree is
       if Sb.Refs = 0 then
          Unref (Sb.Entity);
 
-         if Sb.Overriden_Entities /= null then
-            for J in Sb.Overriden_Entities'Range loop
-               Unref (Sb.Overriden_Entities (J));
+         if Sb.Overridden_Entities /= null then
+            for J in Sb.Overridden_Entities'Range loop
+               Unref (Sb.Overridden_Entities (J));
             end loop;
 
-            Free (Sb.Overriden_Entities);
+            Free (Sb.Overridden_Entities);
          end if;
 
          Free (Sb);

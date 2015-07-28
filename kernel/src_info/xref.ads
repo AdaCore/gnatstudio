@@ -810,7 +810,7 @@ package Xref is
    --  specified to limit the list of references to the ones that appear
    --  in the scope of In_Scope.
    --  If Include_Overriding or Include_Overridden are True, then all
-   --  references to an overriding or Overriden subprogram will also be
+   --  references to an overriding or Overridden subprogram will also be
    --  returned. If Entity is a parameter of subprogram A, this will also
    --  return the parameters of subprograms that override A.
    --

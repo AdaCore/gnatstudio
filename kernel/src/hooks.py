@@ -5,7 +5,6 @@ to generate code, so any change to it requires a rebuilding
 of GPS.
 '''
 
-
 class Mapping(object):
     '''
     Describe how to map an Ada type to a python type.

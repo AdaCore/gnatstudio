@@ -172,7 +172,7 @@ package Language.Tree.Database is
    type Abstract_Language_Handler_Record is abstract tagged null record;
    type Abstract_Language_Handler
      is access all Abstract_Language_Handler_Record'Class;
-   --  Type overriden in language_handlers.ads, which provide the necessary
+   --  Type overridden in language_handlers.ads, which provide the necessary
    --  primitive operations to query the language associated with a file.
 
    function Get_Language_From_File
@@ -224,7 +224,7 @@ package Language.Tree.Database is
    overriding function Get_Timestamp
      (Provider : access File_Buffer_Provider;
       File     : GNATCOLL.VFS.Virtual_File) return Integer;
-   --  See documentation of overriden declaration
+   --  See documentation of overridden declaration
 
    overriding function Get_Buffer
      (Provider : access File_Buffer_Provider;

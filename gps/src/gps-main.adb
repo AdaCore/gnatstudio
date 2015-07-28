@@ -1689,7 +1689,7 @@ procedure GPS.Main is
             Get_Registry (GPS_Main.Kernel).Tree.Set_Status (From_Executable);
          end if;
 
-         --  Project will be overriden when the executable is loaded
+         --  Project will be overridden when the executable is loaded
          Load_Sources;
 
          if Debugger_Name /= null then
@@ -2155,7 +2155,7 @@ procedure GPS.Main is
       end if;
 
       --  Load preferences, but only after loading custom files, to make sure
-      --  the themes loaded at startup are still overriden by the user's
+      --  the themes loaded at startup are still overridden by the user's
       --  local choices. Note that the preferences have already been loaded
       --  once before, to take into account the splash screen pref for instance
 
@@ -2207,7 +2207,7 @@ procedure GPS.Main is
       end;
 
       --  Apply the preferences to the MDI. In particular, we want to set the
-      --  default position for notebook tabs, since they can be overriden by
+      --  default position for notebook tabs, since they can be overridden by
       --  the desktop (and changing that default later on would switch all
       --  notebooks)
 

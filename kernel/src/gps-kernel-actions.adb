@@ -85,7 +85,7 @@ package body GPS.Kernel.Actions is
    is
       Old            : constant Action_Record_Access :=
         Lookup_Action (Kernel, Name);
-      Overriden      : Boolean := False;
+      Overridden      : Boolean := False;
       Cat            : GNAT.Strings.String_Access;
       Action         : Action_Record_Access;
       Stock          : GNAT.Strings.String_Access;
@@ -110,7 +110,7 @@ package body GPS.Kernel.Actions is
             Status_Changed := True;
          end if;
 
-         Overriden := True;
+         Overridden := True;
       end if;
 
       if Category /= "" then
@@ -146,7 +146,7 @@ package body GPS.Kernel.Actions is
          Name       => new String'(Name),
          Modified   => False,
          Category   => Cat,
-         Overriden  => Overriden,
+         Overridden  => Overridden,
          Disabled   => False,
          Menus      => null,
          Icon_Name  => Stock);

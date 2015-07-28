@@ -1699,7 +1699,7 @@ action.
 
 In each directory name below, :file:`INSTALL` is the name of the directory
 in which you have installed GPS. :file:`HOME` is your home directory, either
-by default or as overriden by the :file:`GPS_HOME` environment variable.
+by default or as overridden by the :file:`GPS_HOME` environment variable.
 In each directory, only files with :file:`.xml` or :file:`.py` extensions
 are used. Other files are ignored, although for compatibility with future
 versions of GPS you should not have keep other files in these directories.
@@ -1707,7 +1707,7 @@ versions of GPS you should not have keep other files in these directories.
 * Automatically-loaded, global modules
 
   The :file:`INSTALL/share/gps/plug-ins` directory contains the files GPS
-  automatically loads by default (unless overriden by the user via the
+  automatically loads by default (unless overridden by the user via the
   Plug-ins Editor). These plug-ins are visible to any user on the system
   using the same GPS installation.  Reserve this directory for critical
   plug-ins that almost everyone will use.
@@ -1725,7 +1725,7 @@ versions of GPS you should not have keep other files in these directories.
   directories, separated by semicolons (';') on Windows systems and colons
   (':') on Unix systems. All files in these directories with the
   appropriate extensions are automatically loaded by default by GPS, unless
-  overriden by the user through the :guilabel:`Plug-ins` editor.
+  overridden by the user through the :guilabel:`Plug-ins` editor.
 
   This is a convenient way to have project-specific customization
   files. You can, for example, create scripts or icons that set the
@@ -1736,7 +1736,7 @@ versions of GPS you should not have keep other files in these directories.
 * Automatically loaded user directory
 
   The directory :file:`HOME/.gps/plug-ins` is searched last. Any script in
-  it is loaded automatically unless overriden in the :guilabel:`Plug-ins`
+  it is loaded automatically unless overridden in the :guilabel:`Plug-ins`
   editor.
 
   This is a convenient way for you to create your own plug-ins or test them
@@ -4160,7 +4160,7 @@ which is indexed on the project attribute specifying the language used for
 each source file. Its default value depends on the language
 (:program:`gnatmake` for Ada, :program:`gcc` for C, etc.). This attribute
 requires one XML attribute, :file:`value`, which is the value of the
-attribute for which the type is overriden.
+attribute for which the type is overridden.
 
 Almost all the standard project attributes are defined through an XML file,
 :file:`projects.xml`, which is part of the GPS installation. Examine this
@@ -6675,7 +6675,7 @@ using the :file:`output` attribute of XML configuration files.
 
 However, there is a limitation in Python that the output of processes
 spawned through :func:`os.exec` or :func:`os.spawn` is redirected to the
-standard output instead of the usual Python output that GPS has overriden.
+standard output instead of the usual Python output that GPS has overridden.
 
 There are two solutions for this:
 

@@ -62,7 +62,7 @@ package body Language_Handlers.GUI is
             Case_Sensitive => False);
 
       elsif File /= GNATCOLL.VFS.No_File
-        and then Language_Is_Overriden (Handler, File)
+        and then Language_Is_Overridden (Handler, File)
       then
          Set_Active_Text
            (Combo          => Combo,

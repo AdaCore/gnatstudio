@@ -166,7 +166,7 @@ private
       Description : GNAT.Strings.String_Access;
       Name        : GNAT.Strings.String_Access;
       Modified    : Boolean;
-      Overriden   : Boolean;
+      Overridden   : Boolean;
       Category    : GNAT.Strings.String_Access;
 
       Disabled    : Boolean := False;

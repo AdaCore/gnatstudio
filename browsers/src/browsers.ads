@@ -124,7 +124,7 @@ package Browsers is
    type GPS_Link_Record is new Gtkada.Canvas_View.Canvas_Link_Record with
       record
          Default_Style : Gtkada.Style.Drawing_Style;
-         --  The default style to use for the item. This is overriden either
+         --  The default style to use for the item. This is overridden either
          --  when the link is made invisible by the user, or is a link to a
          --  selected item.
 

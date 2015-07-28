@@ -46,7 +46,7 @@ package Config is
 
    Prefix : constant String := "@prefix@";
    --  Default prefix used e.g for finding support files like po files.
-   --  Note that this prefix can be overriden by using the GPS_ROOT or
+   --  Note that this prefix can be overridden by using the GPS_ROOT or
    --  GNAT_ROOT environment variables.
 
    Host : constant Host_Type := @HOST_TYPE@;

@@ -689,7 +689,7 @@ package GPS.Kernel is
       Action      : String;
       Default_Key : String);
    --  Associate a default key binding with an action.
-   --  Default_Key is ignored if the key was previously overriden by the user.
+   --  Default_Key is ignored if the key was previously overridden by the user.
    --  Its format is something like "control-o" or "control-x control-k", the
    --  second form specifies that it uses a secondary keymap.
    --  Action need not exist when the key is bound. This is why we require
