@@ -566,9 +566,8 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
         <title line="1" column="2">Process control</title>
         <spin label="Multiprocessing" column="2" switch="-j"
               default="1" min="1" max="100"
-              tip="Use N processes to compile and prove.
-                   On a multiprocessor machine compilation and proof
-                   will occur in parallel" />
+              tip="Use N processes to carry out the processing
+ (0 means use as many cores as available on the machine)" />
       </switches>
     </tool>
 
@@ -597,13 +596,13 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          <spin label="Multiprocessing" switch="-j" min="0" max="1000"
           default="1" separator="" column="1"
           tip="Use N processes to carry out the processing
-               (0 means use as many cores as available on the machine)." />
+ (0 means use as many cores as available on the machine)" />
          <combo
            label="Warnings"
            switch="--warnings" noswitch="continue"
            separator="=" column="1"
            tip="Stop analysis after warnings or continue,
-                or do not issue warnings">
+ or do not issue warnings">
              <combo-entry label="stop after warnings" value="error"
               tip="Warnings are considered as errors and stop the analysis"/>
              <combo-entry label="continue when warnings" value="continue"
@@ -623,7 +622,7 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
            switch="--proof" noswitch="per_check"
            separator="=" column="2"
            tip="Formulas generated for each check (faster)
-                or each path (more precise)">
+ or each path (more precise)">
              <combo-entry label="One proof per check" value="per_check"
                           tip="Generate one formula per check"/>
              <combo-entry label="One proof per path" value="per_path"
@@ -632,13 +631,14 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
              label="Progressively split"
              value="progressive"
              tip="Start with one formula per check,
-                  then split into paths when needed"/>
+ then split into paths when needed"/>
          </combo>
          <spin label="Prover timeout" switch="--timeout=" column="2"
                 default="1" min="1" max="3600"
                 tip="Set the prover timeout (in s) for individual proofs" />
-         <field label="Alternate prover" switch="--prover=" column="2"
-                tip="Alternate prover to use instead of Alt-Ergo" />
+         <field label="Alternate provers" switch="--prover=" column="2"
+                tip="Alternate provers to use, instead of CVC4
+ followed by Alt-Ergo" />
        </switches>
        <persistent-history>False</persistent-history>
     </target-model>
