@@ -305,6 +305,21 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       </menu>
     </submenu>
 
+    <action name="spark2014_example_ipstack" category=""
+            show-command="false" output="none">
+      <shell lang="python">spark2014.load_example_ipstack()</shell>
+      <shell>Editor.edit "aip-udp.ads"</shell>
+      <shell>Editor.edit "aip-tcp.ads"</shell>
+      <shell>Editor.edit "aip-ip.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_ipstack">
+        <title>ipstack</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_linear_search" category=""
             show-command="false" output="none">
       <shell>Project.load "@EXAMPLE@/linear_search/test.gpr"</shell>
@@ -967,6 +982,26 @@ GPS.Preference(Color_Pref_Name).create(
     'color used to highlight trace lines.' +
     ' You must restart GPS to take changes into account.',
     Default_Trace_Color)
+
+
+def get_example_root():
+    """retrieve the full path to the directory containing the examples as
+       installed locally.
+    """
+    return os.path.dirname(os.path.dirname(gnatprove)).replace('\\', '/') \
+        + '/share/examples/spark'
+
+
+def load_example_ipstack():
+    """ load IPstack example project, which requires specific code to set
+        GPR_PROJECT_PATH and change working directory.
+    """
+    import os
+    ipstack_root = get_example_root() + '/ipstack'
+    os.environ["GPR_PROJECT_PATH"] = ipstack_root + '/projects:' \
+        + ipstack_root + '/projects.native'
+    os.chdir(ipstack_root + '/build')
+    GPS.Project.load(ipstack_root + '/projects.native/ipstack_dev.gpr')
 
 
 def get_trace_overlay(buf):
@@ -1695,10 +1730,7 @@ if gnatprove:
         prefix = 'SPARK 2014'
         menu_prefix = '/' + prefix
 
-    example_root = \
-        os.path.dirname(os.path.dirname(gnatprove)).replace('\\', '/') \
-        + '/share/examples/spark'
     xml_gnatprove_menus = \
-        xml_gnatprove_menus.replace('@EXAMPLE@', example_root)
+        xml_gnatprove_menus.replace('@EXAMPLE@', get_example_root())
 
     gnatprove_plug = GNATProve_Plugin()
