@@ -617,7 +617,9 @@ package body Breakpoints_Editor is
            (View.Editor.Breakpoint_List,
             Event, Iter, Col);
 
-         if Col = Get_Column (View.Editor.Breakpoint_List, Col_Enb) then
+         if Iter /= Null_Iter
+           and then Col = Get_Column (View.Editor.Breakpoint_List, Col_Enb)
+         then
             --  Click in the second column => change the enable/disable state
             --  For efficiency, no need to reparse the list of breakpoints,
             --  since only the state of one of them as changed and we know all
