@@ -30,6 +30,7 @@ with GNATdoc.Backend.HTML.JSON_Builder; use GNATdoc.Backend.HTML.JSON_Builder;
 with GNATdoc.Backend.HTML.Source_Code;  use GNATdoc.Backend.HTML.Source_Code;
 with GNATdoc.Backend.Text_Parser;       use GNATdoc.Backend.Text_Parser;
 with GNATdoc.Comment;                   use GNATdoc.Comment;
+with GNATdoc.Markup_Streams;            use GNATdoc.Markup_Streams;
 with GNATdoc.Utils;                     use GNATdoc.Utils;
 
 package body GNATdoc.Backend.HTML is
@@ -62,9 +63,8 @@ package body GNATdoc.Backend.HTML is
    --  Returns file name of the specified template.
 
    function To_JSON_Representation
-     (Text   : Ada.Strings.Unbounded.Unbounded_String;
-      Kernel : not null access GPS.Core_Kernels.Core_Kernel_Record'Class)
-      return GNATCOLL.JSON.JSON_Array;
+     (Text    : Ada.Strings.Unbounded.Unbounded_String;
+      Context : Docgen_Context) return GNATCOLL.JSON.JSON_Array;
    --  Parses Text and converts it into JSON representation.
 
    procedure Generate_Entities_Category
@@ -154,13 +154,13 @@ package body GNATdoc.Backend.HTML is
 
                if Tag.Tag = "summary" then
                   Summary :=
-                    To_JSON_Representation (Tag.Text, Self.Context.Kernel);
+                    To_JSON_Representation (Tag.Text, Self.Context.all);
 
                elsif Tag.Tag = "description"
                  or Tag.Tag = ""
                then
                   Description :=
-                    To_JSON_Representation (Tag.Text, Self.Context.Kernel);
+                    To_JSON_Representation (Tag.Text, Self.Context.all);
                end if;
 
                Next (Cursor);
@@ -918,7 +918,7 @@ package body GNATdoc.Backend.HTML is
 
             Result.Set_Field
               ("description",
-               To_JSON_Representation (Tag.Text, Self.Context.Kernel));
+               To_JSON_Representation (Tag.Text, Self.Context.all));
 
             return Result;
          end Entity_Data;
@@ -1019,7 +1019,7 @@ package body GNATdoc.Backend.HTML is
                         Returns.Set_Field
                           ("description",
                            To_JSON_Representation
-                             (Tag.Text, Self.Context.Kernel));
+                             (Tag.Text, Self.Context.all));
                         Entity_Entry.Set_Field ("exceptions", Returns);
                      end if;
 
@@ -1493,11 +1493,28 @@ package body GNATdoc.Backend.HTML is
    ----------------------------
 
    function To_JSON_Representation
-     (Text   : Ada.Strings.Unbounded.Unbounded_String;
-      Kernel : not null access GPS.Core_Kernels.Core_Kernel_Record'Class)
-      return GNATCOLL.JSON.JSON_Array is
+     (Text    : Ada.Strings.Unbounded.Unbounded_String;
+      Context : Docgen_Context) return GNATCOLL.JSON.JSON_Array is
    begin
-      return To_JSON_Representation (Parse_Text (To_String (Text)), Kernel);
+      if not Context.Options.Disable_Markup then
+         return
+           To_JSON_Representation
+             (Parse_Text (To_String (Text)), Context.Kernel);
+
+      else
+         declare
+            Stream     : GNATdoc.Markup_Streams.Event_Vectors.Vector;
+            Attributes : GNATdoc.Markup_Streams.Name_Value_Maps.Map;
+
+         begin
+            Attributes.Insert ("class", "preformatted");
+            Stream.Append ((Start_Tag, To_Unbounded_String ("p"), Attributes));
+            Stream.Append ((GNATdoc.Markup_Streams.Text, Text));
+            Stream.Append ((End_Tag, To_Unbounded_String ("p")));
+
+            return To_JSON_Representation (Stream, Context.Kernel);
+         end;
+      end if;
    end To_JSON_Representation;
 
 end GNATdoc.Backend.HTML;

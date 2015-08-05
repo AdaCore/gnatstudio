@@ -56,6 +56,7 @@ procedure GNATdoc_Main is
    Ignore_Files         : aliased GNAT.Strings.String_Access;
    Leading_Doc          : aliased Boolean := False;
    Regular_Expr         : aliased GNAT.Strings.String_Access;
+   Disable_Markup       : aliased Boolean := False;
    Encoding             : aliased GNAT.Strings.String_Access :=
                             new String'("iso-8859-1");
    Process_C_Files      : aliased Boolean := False;
@@ -261,6 +262,11 @@ begin
       Switch      => "-R:",
       Long_Switch => "--regexp=",
       Help        => "Regular expression to select documentation comments");
+   Define_Switch
+     (Cmdline,
+      Output      => Disable_Markup'Access,
+      Long_Switch => "--preserve-source-formatting",
+      Help        => "Preserve formatting of comments");
    Define_Switch
      (Cmdline,
       Output      => Encoding'Access,
@@ -550,6 +556,7 @@ begin
                               else new Pattern_Matcher'
                                          (Compile
                                            (Pattern, Single_Line))),
+         Disable_Markup   => Disable_Markup,
          Report_Errors    => (if Enable_Warnings then Errors_And_Warnings
                                                  else Errors_Only),
          Ignore_Files     => Ignore_Files,

@@ -61,20 +61,21 @@ switch --help::
   GNATdoc command line interface
   Usage: gnatdoc [switches] [arguments]
 
-  -P, --project=ARG  Load the given project (mandatory)
-  -X ARG             Specify an external reference in the project
-  -R, --regexp=ARG   Regular expression to select documentation comments
-  -b                 Process bodies
-  --ignore-files=ARG List of files ignored by GNATdoc
-  -l                 Leading documentation
-  --no-subprojects   Do not process subprojects
-  -p                 Process private part of packages
-  -q                 Be quiet/terse
-  --single-file=ARG  Single file processed by GNATdoc
-  -w                 Enable warnings for missing documentation
-  --enable-build     Rebuild the project before processing it
-  --output=ARG       Format of generated documentation
-  --symlinks         Take additional time to resolve symbolic links
+  -P, --project=ARG            Load the given project (mandatory)
+  -X ARG                       Specify an external reference in the project
+  -R, --regexp=ARG             Regular expression to select documentation comments
+  --preserve-source-formatting Preserve formatting of comments
+  -b                           Process bodies
+  --ignore-files=ARG           List of files ignored by GNATdoc
+  -l                           Leading documentation
+  --no-subprojects             Do not process subprojects
+  -p                           Process private part of packages
+  -q                           Be quiet/terse
+  --single-file=ARG            Single file processed by GNATdoc
+  -w                           Enable warnings for missing documentation
+  --enable-build               Rebuild the project before processing it
+  --output=ARG                 Format of generated documentation
+  --symlinks                   Take additional time to resolve symbolic links
 
 *Project (-P)*
 
@@ -84,6 +85,11 @@ switch --help::
 *External reference (-X)*
 
   Specify an external reference in the project.
+
+*Preserve formatting of comments (--preserve-source-formatting)*
+
+  When this switch is used, the line breaks and spaces present in the
+  source comments will be preserved in the HTML output.
 
 *Regular expression (-R)*
 

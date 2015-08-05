@@ -290,3 +290,8 @@ h2 {
 #body th.target {
     background-color: #FFFFBB;
 }
+
+p.preformatted {
+    white-space: pre;
+    font-family: monospace;
+}

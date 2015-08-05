@@ -65,6 +65,9 @@ package GNATdoc is
       Comments_Filter  : GNAT.Expect.Pattern_Matcher_Access := null;
       --  User-defined regular expression to filter comments
 
+      Disable_Markup   : Boolean := False;
+      --  Disable parsing of comments as markup
+
       Report_Errors    : Report_Errors_Kind := Errors_And_Warnings;
       --  Enables reporting errors and warnings on missing documentation,
       --  duplicated tags, etc.

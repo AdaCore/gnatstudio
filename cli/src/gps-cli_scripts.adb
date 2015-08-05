@@ -147,6 +147,7 @@ package body GPS.CLI_Scripts is
 
             Options : constant GNATdoc.Docgen_Options :=
               (Comments_Filter  => null,
+               Disable_Markup   => False,
                Report_Errors    => Report_Errors_Kind'Value (Report_Errors),
                Ignore_Files     => null,
                Leading_Doc      => False,
