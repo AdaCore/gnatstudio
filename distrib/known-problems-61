@@ -34,6 +34,15 @@ KP-61-O731-030 GPS: crash or freeze when using the Breakpoints editor
 
   Workaround: Only click on non-empty rows.
 
+KP-61-O730-030 GNATdoc: package renamings listed as nested packages
+
+  Problem:    Package renamings are included in list of nested packages of the
+              package.
+
+  Status:     This was fixed in 6.2.0 on 2015-08-07
+
+  Workaround: Not needed.
+
 KP-61-O624-029 GPS: debugger shows value even when variable out of scope
 
   Problem:    If you display a variable in the debugger, and then switch to
