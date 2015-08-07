@@ -65,7 +65,7 @@ GtkTextView.readonly {
    box-shadow: none;
 }
 GtkMenu {
-  border: 1px solid mix(@theme_base_color, @mdi_border_color, 0.5);
+  border: 2px solid mix(@theme_base_color, @mdi_border_color, 0.5);
 }
 
 /*********************
