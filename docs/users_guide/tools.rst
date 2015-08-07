@@ -115,21 +115,12 @@ The list of active entries includes:
 
 * :guilabel:`Consoles`
 
-  * :guilabel:`GPS Shell`
-
-    .. index:: shell
-
-    Open a shell console in the bottom area of the GPS window.  This
-    is not an OS shell console, but a GPS shell console, where you can
-    type GPS specific commands such as :command:`help`.  See
-    :ref:`The_Shell_and_Python_Consoles`.
-
   * :guilabel:`Python`
 
     .. index:: python
 
     Open a Python console to access the Python interpreter.  See
-    :ref:`The_Shell_and_Python_Consoles`.
+    :ref:`The_Python_Console`.
 
   * :guilabel:`OS Shell`
 
@@ -137,7 +128,7 @@ The list of active entries includes:
 
     Open an OS (Windows or Unix) console, using the environment variables
     :command:`SHELL` and :command:`COMSPEC` to determine which shell to
-    use. See :ref:`The_Shell_and_Python_Consoles`.
+    use. See :ref:`The_Python_Console`.
 
     On Unix, this terminal behaves a lot like a standard Unix terminal, but
     you need to make sure your shell will output all necessary

@@ -1410,10 +1410,10 @@ to act on bookmarks:
 .. index:: consoles; python console
 .. index:: consoles; shell console
 .. index:: python; console
-.. _The_Shell_and_Python_Consoles:
+.. _The_Python_Console:
 
-The :guilabel:`Shell` and :guilabel:`Python` Consoles
-=====================================================
+The :guilabel:`Python` Console
+==============================
 
 .. image:: shell-window.png
 .. image:: python-window.png
@@ -1429,12 +1429,6 @@ console. Python is the preferred language to customize GPS (many more
 details will be provided in later sections of this documentation).  The
 console is mostly useful for testing interactive commands before you use
 them in your own scripts.
-
-.. index:: menu; tools --> consoles --> GPS Shell
-
-The menu :menuselection:`Tools --> Consoles --> GPS Shell` opens the shell
-console. The GPS shell is a custom language that was mostly used before GPS
-had python support and is obsolete now.
 
 See :ref:`Scripting_GPS` for more information on using scripting languages
 within GPS.

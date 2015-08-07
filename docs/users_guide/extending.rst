@@ -6159,70 +6159,16 @@ pass a subprogram.  See :ref:`Subprogram_parameters`.
 The GPS Shell
 -------------
 
+.. warning::
+
+The GPS Shell is deprecated, and only accessible through XML commands now, for
+backward compatibility. Don't try to use it for any new development, and use
+the Python Shell instead.
+
 .. index:: gps shell
 
 The GPS shell is a very simple-minded, line-oriented language. It is
-accessible through the :guilabel:`Shell` window at the bottom of the GPS
-window and similar to a Unix shell or a command window on Windows
-systems.
-
-Type :command:`help` at the prompt to get the list of available commands,
-or :command:`help` followed by the name of a command to get more
-information on that command.
-
-.. highlight:: python
-
-The following example shows how to get some information on a source entity,
-and find all references to the entity in the application. It searches for
-the entity :command:`entity_name`, which has at least one reference
-somewhere in the file :file:`file_name.adb`. After the first command, GPS
-returns an identifier for this entity, which can be used for all commands
-that need an entity as a parameter, as is the case for the second
-command. When run, the second command automatically displays all matching
-references in the :guilabel:`Locations` view::
-
-  GPS> Entity my_entity file_name.adb
-  <Entity_0x09055790>
-  GPS> Entity.find_all_refs <Entity_0x09055790>
-
-Since the GPS shell is very simple, it does not provide any reference counting
-for the result types. As a result, all the values returned by a command, such
-as `<Entity_0x09055790>` in the example above, are kept in memory.
-
-.. index:: clear_cache command
-
-The GPS shell provides the command :func:`clear_cache` which removes all
-such values from the memory. After you run this command, you can no longer
-use references obtained from previous commands: you must run these commands
-again to get a new reference.
-
-You can reference the return value of the 9 previous commands by using
-:command:`%1` through :command:`%9` on the command line. The previous
-example could have been written as::
-
-  GPS> Entity my_entity file_name.adb
-  <Entity_0x09055790>
-  GPS> Entity.find_all_refs %1
-
-These return values are also modified for internal commands sent by GPS, so
-you should only use this when you emit multiple commands at the same time
-and do not perform any other action in GPS. This is mostly useful when used
-for command-line scripts (see the descriptions of :command:`--eval` and
-:command:`--load` above) and for custom files (see
-:ref:`Customizing_through_XML_and_Python_files`).
-
-Arguments to commands can, but need not, be quoted. If they do not contain
-any space, double-quote or newline characters you need not quote them.
-Otherwise, you should surround them with double-quotes and protect any
-double-quotes in the argument by preceding it with a backslash.
-
-Another way to quote a command is to use three double-quotes characters in
-a row. Any character loses its special meaning until the next set of three
-double-quote characters. This is useful if you do not know in advance the
-contents of the string you are quoting::
-
-  Locations.parse """%1 """ category_name
-
+not interactively accessible in GPS anymore.
 
 .. _The_Python_Interpreter:
 
@@ -7808,8 +7754,9 @@ Clients connecting through a standard socket have access to a simple shell
 using `GPS>>` as the prompt between each command. This is needed in order
 to determine when the output (result) of a command is completed.  All GPS
 shell commands (as defined in :ref:`The_GPS_Shell`) are available from this
-shell. In addition, the Python interpreter, if enabled, is also available
-through the use of the :command:`python` prefix before a Python command.
+shell, but their use is discouraged, in favor of the use of Python commands.
+Those are available through the use of the :command:`python` prefix before a
+Python command.
 
 For example, sending :command:`pwd` through the socket sends the
 :command:`pwd` command through the GPS shell and sends the result to the
@@ -7869,7 +7816,7 @@ GPS locates the default set in the :file:`share/gps/templates` directory of
 your GPS installation.
 
 You can register new directories in which GPS looks for templates by using
-the Shell/Python function :func:`GPS.ProjectTemplate.add_templates_{dir}`.
+the Python function :func:`GPS.ProjectTemplate.add_templates_{dir}`.
 
 To create a new project template, first create a subdirectory in the
 :file:`share/gps/templates/` directory or in one of the directories you have

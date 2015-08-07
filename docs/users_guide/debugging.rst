@@ -40,12 +40,11 @@ to a different debugger, select its corresponding console.
 
 After the debugger has been initialized, you have access to two new
 windows: the data browser (in the top of the working area) and the debugger
-console (in a new page, after the :guilabel:`Messages` and
-:guilabel:`Shell` windows).  You can now access any of the menus under
-:menuselection:`Debugger`, and you also have access to additional contextual
-menus, in particular in the source editor where you can easily display
-variables, set breakpoints, and get automatic displays (via tooltips) of
-object values.
+console (in a new page, after the :guilabel:`Messages` window).
+You can now access any of the menus under :menuselection:`Debugger`, and you
+also have access to additional contextual menus, in particular in the source
+editor where you can easily display variables, set breakpoints, and get
+automatic displays (via tooltips) of object values.
 
 .. index:: menu; debug --> terminate
 .. index:: menu; debug --> terminate current
