@@ -1476,10 +1476,9 @@ package body Src_Editor_View is
         View.Scrollbar_Stepper_Size + Get_Int (Value);
       Unset (Value);
 
-      Get_Style_Context (View.Area).Add_Class ("gutter");
-      Get_Style_Context (View.Scroll.Get_Vscrollbar).Add_Class ("gutter");
-      Get_Style_Context (View.Scroll.Get_Hscrollbar).Add_Class ("gutter");
-      Get_Style_Context (View.Scroll).Add_Class ("gutter");
+      Get_Style_Context (View.Area).Add_Class ("gps_gutter");
+      Get_Style_Context (View.Scroll.Get_Vscrollbar).Add_Class ("gps_gutter");
+      Get_Style_Context (View.Scroll.Get_Hscrollbar).Add_Class ("gps_gutter");
 
       Register_View (Buffer, Add => True);
 

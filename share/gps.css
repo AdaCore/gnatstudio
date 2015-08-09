@@ -357,7 +357,7 @@ GtkEntry.search {
  * Editors
  **********************************/
 
-.gutter {
+.gps_gutter {
   background-color: @gutter_background;
   color: @gutter_color;
 }
