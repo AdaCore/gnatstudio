@@ -129,11 +129,6 @@ package body Src_Editor_Module.Shell is
       2 => Line_Cst'Access,
       3 => Col_Cst'Access,
       4 => Length_Cst'Access);
-   File_Search_Parameters : constant Cst_Argument_List :=
-     (1 => Pattern_Cst'Access,
-      2 => Case_Cst'Access,
-      3 => Regexp_Cst'Access,
-      4 => Scope_Cst'Access);
    Save_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Interactive_Cst'Access,
       2 => All_Cst'Access);
@@ -705,7 +700,6 @@ package body Src_Editor_Module.Shell is
                  Nth_Arg (Data, 1, Get_File_Class (Kernel));
       Info   : constant Virtual_File := Get_Data (Inst);
    begin
-      Name_Parameters (Data, File_Search_Parameters);
       Common_Search_Command_Handler (Data, new File_Array'(1 => Info));
    end File_Search_Command_Handler;
 
@@ -718,10 +712,8 @@ package body Src_Editor_Module.Shell is
    is
       pragma Unreferenced (Command);
       Project   : constant Project_Type := Get_Data (Data, 1);
-      Recursive : Boolean;
+      Recursive : constant Boolean := Nth_Arg (Data, 6, True);
    begin
-      Name_Parameters (Data, File_Search_Parameters);
-      Recursive := Nth_Arg (Data, 5, True);
       Common_Search_Command_Handler
         (Data, Project.Source_Files (Recursive));
    end Project_Search_Command_Handler;
@@ -2880,15 +2872,26 @@ package body Src_Editor_Module.Shell is
 
       --  Searching
 
-      Register_Command
-        (Kernel, "search", 1, 3, File_Search_Command_Handler'Access,
-         Get_File_Class (Kernel));
+      Kernel.Scripts.Register_Command
+        ("search",
+         Params => (2 => Param ("pattern"),
+                    3 => Param ("case_sensitive", Optional => True),
+                    4 => Param ("regexp",         Optional => True),
+                    5 => Param ("scope",          Optional => True)),
+         Handler => File_Search_Command_Handler'Access,
+         Class   => Get_File_Class (Kernel));
       Register_Command
         (Kernel, "search_next", 1, 3, Current_Search_Command_Handler'Access,
          Get_File_Class (Kernel));
-      Register_Command
-        (Kernel, "search", 1, 5, Project_Search_Command_Handler'Access,
-         Get_Project_Class (Kernel));
+      Kernel.Scripts.Register_Command
+        ("search",
+         Params => (2 => Param ("pattern"),
+                    3 => Param ("case_sensitive", Optional => True),
+                    4 => Param ("regexp",         Optional => True),
+                    5 => Param ("scope",          Optional => True),
+                    6 => Param ("recursive",      Optional => True)),
+         Handler => Project_Search_Command_Handler'Access,
+         Class   => Get_Project_Class (Kernel));
 
       --  The old Editor class
       Register_Command

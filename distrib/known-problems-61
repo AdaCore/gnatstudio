@@ -25,6 +25,18 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O807-020 GPS: GPS.Project.search() rejects recursive parameter
+
+  Problem:    Contrary to what is documented, the "recursive" parameter to
+              GPS.Project.recursive is rejected by python.
+
+  Status:     This was fixed in 6.2 on 2015-08-10
+
+  Workaround: This parameter defaults to True, so you can omit it if you want
+              a recursive search. If you don't, you should get the list of
+              source files via GPS.Project.sources(), and search in those
+              files directly.
+
 KP-61-O731-030 GPS: crash or freeze when using the Breakpoints editor
 
   Problem:    Clicking on the 'Enb' column at an empty row of the breakpoint
