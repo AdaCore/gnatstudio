@@ -232,4 +232,11 @@ package Message_Kinds is
    --  Returns a subset of Original_Checks with only the check_kinds
    --  with the highest precedence (which add the strictest constraints)
 
+   function Improve_Number_Readability_In_Messages
+     (S      : String;
+      For_HTML_Output : Boolean := True)
+      return   String;
+   --  Make various improvements to numbers, such as
+   --  replacing near powers-of-2 by 2<sup>X +/- n
+   --  Depending on format, will use HTML or Text formats.
 end Message_Kinds;

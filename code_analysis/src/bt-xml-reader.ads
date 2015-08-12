@@ -66,8 +66,7 @@ package BT.Xml.Reader is
    function Get_Variable_Vn_Value (File : String;
       Variable      : String;
       Srcpos        : Source_Position;
-      Closest_Match : out Source_Position)
-     return String;
+      Closest_Match : out Source_Position) return String;
    --  Returns the value_set associated with Variable on the closest
    --  source location to Srcpos available.
 

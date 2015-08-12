@@ -112,10 +112,10 @@ package body BT.Xml.Reader is
 
    File_Vals : Srcpos_Vals_Mappings.Map;
 
-   package File_Set is new
+   package Name_Set is new
      Ada.Containers.Indefinite_Doubly_Linked_Lists (String);
 
-   Files_Read : File_Set.List;
+   Files_Read : Name_Set.List;
    --  Keep track of XML files that have been read
 
    --  extra precondition_event information
@@ -475,7 +475,9 @@ package body BT.Xml.Reader is
                   when Name =>
                      Vn_Vals.Vn_Image := To_Unbounded_String (Attr_Value);
                   when Vals =>
-                     Vn_Vals.Set_Image := To_Unbounded_String (Attr_Value);
+                     Vn_Vals.Set_Image := To_Unbounded_String
+                       (Improve_Number_Readability_In_Messages
+                         (Attr_Value, For_HTML_Output => False));
                   end case;
                end;
             end loop;
@@ -975,25 +977,6 @@ package body BT.Xml.Reader is
       end if;
    end Read_Xml_File;
 
-   --------------------------
-   -- Get_Srcpos_Vn_Values --
-   --------------------------
-
-   function Get_Srcpos_Vn_Values
-     (File_Name : String;
-      Srcpos    : Source_Position) return Vn_Values_Seqs.Vector
-   is
-      File_Exists : Boolean;
-   begin
-      --  Make sure we have read the corresponding Xml file
-      Read_Xml_File (File_Name, File_Exists);
-
-      if not File_Exists or else not File_Vals.Contains (Srcpos) then
-         return Vn_Values_Seqs.Empty_Vector;
-      end if;
-      return File_Vals.Element (Srcpos);
-   end Get_Srcpos_Vn_Values;
-
    package List_Of_Source_Positions is new
      Ada.Containers.Indefinite_Doubly_Linked_Lists
        (Element_Type   => Source_Position,
@@ -1278,6 +1261,10 @@ package body BT.Xml.Reader is
       end;
    end Get_Variable_Vn_Value;
 
+   --------------------------
+   -- Get_Srcpos_Vn_Values --
+   --------------------------
+
    function Get_Srcpos_Vn_Values
      (File_Name : String;
       Line      : Line_Number) return Vn_Values_Seqs.Vector is
@@ -1313,6 +1300,82 @@ package body BT.Xml.Reader is
          Curr := Srcpos_Vals_Mappings.Next (Curr);
       end loop;
       return Result;
+   end Get_Srcpos_Vn_Values;
+
+   function Get_Srcpos_Vn_Values
+     (File_Name : String;
+      Srcpos    : Source_Position) return Vn_Values_Seqs.Vector
+   is
+      File_Exists       : Boolean;
+      Line              : constant Line_Number := Srcpos.Line;
+      Variables_On_Line : Name_Set.List;
+      Curr              : Srcpos_Vals_Mappings.Cursor;
+      Result            : Vn_Values_Seqs.Vector;
+
+   begin
+      --  Make sure we have read the corresponding Xml file
+      Read_Xml_File (File_Name, File_Exists);
+
+      if not File_Exists or else not File_Vals.Contains (Srcpos) then
+         return Vn_Values_Seqs.Empty_Vector;
+      end if;
+
+      --  find the VN images on this line
+      Curr := Srcpos_Vals_Mappings.First (File_Vals);
+      while Srcpos_Vals_Mappings.Has_Element (Curr) loop
+         declare
+            Pos : constant Source_Position :=
+               Srcpos_Vals_Mappings.Key (Curr);
+
+            E  : constant Vector :=
+               Srcpos_Vals_Mappings.Element (Curr);
+         begin
+            if Pos.Line = Line then
+               for Info of E loop
+                  if not Variables_On_Line.Contains
+                    (To_String (Info.Vn_Image))
+                  then
+                     Variables_On_Line.Append
+                       (To_String (Info.Vn_Image));
+                  end if;
+               end loop;
+            end if;
+         end;
+         Curr := Srcpos_Vals_Mappings.Next (Curr);
+      end loop;
+
+      --  now find the value_sets associated with the closest source position
+      --  for each of these VNs
+      declare
+         procedure Find_One_Variable (Position : Name_Set.Cursor);
+
+         procedure Find_One_Variable (Position : Name_Set.Cursor) is
+            Var_Name      : constant String :=
+               Name_Set.Element (Position);
+            Closest_Match : Source_Position;
+            Var_Values : constant String :=
+               Get_Variable_Vn_Value
+                 (File_Name, Var_Name, Srcpos, Closest_Match);
+         begin
+            if Debug_On then
+               Put_Line ("checking variable " & Var_Name);
+            end if;
+            if Closest_Match /= No_Source_Position then
+               if Debug_On then
+                  Put_Line (" => " & Var_Values);
+               end if;
+               Vn_Values_Seqs.Append (Result,
+                 (To_Unbounded_String (Var_Name),
+                  To_Unbounded_String (Var_Values)));
+            end if;
+         end Find_One_Variable;
+
+      begin
+         Name_Set.Iterate (Variables_On_Line,
+           Find_One_Variable'Access);
+
+         return Result;
+      end;
    end Get_Srcpos_Vn_Values;
 
 end BT.Xml.Reader;
