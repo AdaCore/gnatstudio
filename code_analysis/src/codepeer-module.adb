@@ -44,6 +44,7 @@ with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Style_Manager;   use GPS.Kernel.Style_Manager;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Xref;
+with String_Utils;
 
 with BT.Xml.Reader;
 with CodePeer.Backtrace_View;
@@ -1859,19 +1860,64 @@ package body CodePeer.Module is
       Text   : Unbounded_String;
 
    begin
-      if not Has_File_Information (Context)
-        or not Has_Line_Information (Context)
-        or not Module.Display_Values
-        or Module.Tree = null
-        or not Module.Has_Backtraces
+      if not (Has_File_Information (Context)
+        and then Has_Line_Information (Context)
+        and then Has_Column_Information (Context)
+        and then Module.Display_Values
+        and then Module.Tree /= null
+        and then Module.Has_Backtraces)
       then
          return null;
       end if;
 
-      Values :=
-        BT.Xml.Reader.Get_Srcpos_Vn_Values
-          (String (File_Information (Context).Full_Name.all),
-           Line_Information (Context));
+      declare
+         File     : constant Virtual_File := File_Information (Context);
+         Buffer   : constant GPS.Editors.Editor_Buffer'Class :=
+           Module.Kernel.Get_Buffer_Factory.Get
+             (File        => File,
+              Force       => False,
+              Open_Buffer => False,
+              Open_View   => False);
+         Location : GPS.Editors.Editor_Location'Class :=
+           Buffer.New_Location
+             (Line_Information (Context), Column_Information (Context));
+
+      begin
+         --  CodePeer associates values with position close to start of
+         --  identifier. It can be:
+         --   - position of first character of direct name
+         --   - position of dot character in expanded name
+         --   - position of apostrophe character in attribute reference
+
+         while Values.Is_Empty loop
+            Values :=
+              BT.Xml.Reader.Get_Srcpos_Vn_Values
+                (String (File.Full_Name.all),
+                 (Location.Line, Natural (Location.Column)));
+
+            exit when not String_Utils.Is_Entity_Letter
+              (Wide_Wide_Character'Val (Location.Get_Char))
+                 and Wide_Wide_Character'Val (Location.Get_Char) /= '''
+                 and Wide_Wide_Character'Val (Location.Get_Char) /= '.';
+
+            Location := Location.Forward_Char (-1);
+         end loop;
+
+         --  CodePeer associates values of indexed component at position after
+         --  open bracket character.
+
+         Location := Location.Forward_Word (1);
+
+         if Values.Is_Empty
+           and then Wide_Wide_Character'Val (Location.Get_Char) = '('
+         then
+            Location := Location.Forward_Char (1);
+            Values :=
+              BT.Xml.Reader.Get_Srcpos_Vn_Values
+                (String (File.Full_Name.all),
+                 (Location.Line, Natural (Location.Column)));
+         end if;
+      end;
 
       if Values.Is_Empty then
          return null;
