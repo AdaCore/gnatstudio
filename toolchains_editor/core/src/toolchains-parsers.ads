@@ -61,8 +61,8 @@
 --  The parser is able to follow package renaming, and will offer update
 --  capabilities on the renamed package.
 
-with Prj;      use Prj;
-with Prj.Tree; use Prj.Tree;
+with GPR;      use GPR;
+with GPR.Tree; use GPR.Tree;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Ordered_Maps;
 
@@ -166,9 +166,9 @@ private
 
       Error            : String_Access;
 
-      IDE_Package              : Project_Node_Id := Empty_Node;
-      Toolchain_Case_Statement : Project_Node_Id := Empty_Node;
-      Variable_Node            : Project_Node_Id := Empty_Node;
+      IDE_Package              : Project_Node_Id := Empty_Project_Node;
+      Toolchain_Case_Statement : Project_Node_Id := Empty_Project_Node;
+      Variable_Node            : Project_Node_Id := Empty_Project_Node;
 
       Attributes       : Prj_Node_Sets.Set;
       Toolchains       : Toolchain_Maps.Map;

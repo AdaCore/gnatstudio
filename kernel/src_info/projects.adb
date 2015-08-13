@@ -18,10 +18,9 @@
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with Opt;                        use Opt;
-with Namet;                      use Namet;
-with Scans;                      use Scans;
-with Snames;                     use Snames;
+with GPR.Opt;                    use GPR.Opt;
+with GPR.Names;                  use GPR.Names;
+with GPR.Snames;                 use GPR.Snames;
 
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect, GNAT.Expect.TTY;
@@ -29,10 +28,6 @@ with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 
 package body Projects is
-
-   Keywords_Initialized : Boolean := False;
-   --  Whether we have already initialized the Ada keywords list. This is only
-   --  used by Is_Valid_Project_Name
 
    -----------------------
    -- Project_Name_Hash --
@@ -155,7 +150,7 @@ package body Projects is
 
          --  A project name cannot be an Ada95 reserved word
 
-         if Is_Keyword_Name (Name_Find) then
+         if Name_Find in Reserved_Ada_Project then
             return False;
          end if;
 
@@ -169,11 +164,6 @@ package body Projects is
 
       if Name'Length = 0 or else Name (Name'Last) = '.' then
          return False;
-      end if;
-
-      if not Keywords_Initialized then
-         Scans.Initialize_Ada_Keywords;
-         Keywords_Initialized := True;
       end if;
 
       Start := Name'First;
@@ -293,5 +283,5 @@ package body Projects is
 
 begin
    --  Use full path name so that the messages are sent to Locations view
-   Opt.Full_Path_Name_For_Brief_Errors := True;
+   GPR.Opt.Full_Path_Name_For_Brief_Errors := True;
 end Projects;

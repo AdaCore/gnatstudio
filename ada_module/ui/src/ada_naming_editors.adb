@@ -36,10 +36,9 @@ with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 
-with Casing;                   use Casing;
+with GPR;                      use GPR;
 with GPS.Intl;                 use GPS.Intl;
 with GUI_Utils;                use GUI_Utils;
-with Prj;
 
 with String_Hash;
 
@@ -105,7 +104,7 @@ package body Ada_Naming_Editors is
      (Self         : not null access Ada_Naming_Editor_Record;
       Kernel       : not null access Kernel_Handle_Record'Class;
       Read_Only    : Boolean;
-      Project      : Project_Type := No_Project)
+      Project      : Project_Type := GNATCOLL.Projects.No_Project)
    is
       Size_Group   : Gtk_Size_Group;
       Idx          : Gint := 0;
@@ -157,7 +156,7 @@ package body Ada_Naming_Editors is
 
       for Casing in Casing_Type loop
          if Casing /= Unknown then
-            Self.GUI.Casing.Append_Text (-Prj.Image (Casing));
+            Self.GUI.Casing.Append_Text (-GPR.Image (Casing));
 
             if Casing = All_Lower_Case then
                Self.GUI.Casing.Set_Active (Idx);
@@ -230,7 +229,7 @@ package body Ada_Naming_Editors is
       case Scheme_Num is
          when Gnat_Naming_Scheme =>
             --  GNAT Default
-            Set_Active_Text (Editor.Casing, -Prj.Image (All_Lower_Case));
+            Set_Active_Text (Editor.Casing, -GPR.Image (All_Lower_Case));
             Set_Text (Editor.Dot_Replacement, Default_Gnat_Dot_Replacement);
             Set_Active_Text (Editor.Spec_Extension, Default_Gnat_Spec_Suffix);
             Set_Active_Text (Editor.Body_Extension, Default_Gnat_Body_Suffix);
@@ -239,7 +238,7 @@ package body Ada_Naming_Editors is
 
          when Apex_Naming_Scheme =>
             --  APEX Default
-            Set_Active_Text (Editor.Casing, -Prj.Image (All_Lower_Case));
+            Set_Active_Text (Editor.Casing, -GPR.Image (All_Lower_Case));
             Set_Text (Editor.Dot_Replacement, ".");
             Set_Active_Text (Editor.Spec_Extension, ".1.ada");
             Set_Active_Text (Editor.Body_Extension, ".2.ada");
@@ -247,7 +246,7 @@ package body Ada_Naming_Editors is
 
          when Dec_Naming_Scheme =>
             --  DEC Ada Default
-            Set_Active_Text (Editor.Casing, -Prj.Image (All_Lower_Case));
+            Set_Active_Text (Editor.Casing, -GPR.Image (All_Lower_Case));
             Set_Text (Editor.Dot_Replacement, "__");
             Set_Active_Text (Editor.Spec_Extension, "_.ada");
             Set_Active_Text (Editor.Body_Extension, ".ada");
@@ -294,7 +293,7 @@ package body Ada_Naming_Editors is
       is
          Modified : Boolean := False;
       begin
-         if Project = No_Project then
+         if Project = GNATCOLL.Projects.No_Project then
             Modified := True;
 
          else
@@ -440,7 +439,7 @@ package body Ada_Naming_Editors is
          Get_Active_Text (Editor.GUI.Separate_Extension), "");
       Update_If_Required
         (Casing_Attribute,
-         Prj.Image (Casing_Type'Val
+         GPR.Image (Casing_Type'Val
                     (Get_Active (Editor.GUI.Casing))), "");
       Update_If_Required
         (Dot_Replacement_Attribute, Get_Text (Editor.GUI.Dot_Replacement), "");
@@ -478,7 +477,7 @@ package body Ada_Naming_Editors is
 
       --  Update the project if needed
 
-      Changed := Changed or else Project = No_Project;
+      Changed := Changed or else Project = GNATCOLL.Projects.No_Project;
 
       --  Computing whether a list has changed is extremely fast now that the
       --  hash table has been created. Much faster than updating the attributes
@@ -518,7 +517,7 @@ package body Ada_Naming_Editors is
       Casing          : constant String :=
                           Project.Attribute_Value
                             (Casing_Attribute,
-                             Default => -Prj.Image (All_Lower_Case));
+                             Default => -GPR.Image (All_Lower_Case));
       Separate_Suffix : constant String :=
                           Project.Attribute_Value
                             (Separate_Suffix_Attribute,
@@ -612,7 +611,7 @@ package body Ada_Naming_Editors is
       --  GNAT naming scheme ?
       if Get_Iter_First (Editor.GUI.Exception_List_Model) /= Null_Iter
         or else Get_Active_Text (Editor.GUI.Casing) /=
-          -Prj.Image (All_Lower_Case)
+          -GPR.Image (All_Lower_Case)
       then
          Set_Active (Editor.GUI.Standard_Scheme, Custom_Naming_Scheme);
 

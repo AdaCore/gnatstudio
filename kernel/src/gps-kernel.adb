@@ -72,8 +72,8 @@ with GPS.Properties;            use GPS.Properties;
 with Histories;                 use Histories;
 with Language_Handlers;         use Language_Handlers;
 with Language.Tree.Database;    use Language.Tree.Database;
-with Namet;                     use Namet;
-with Prj.Attr;                  use Prj.Attr;
+with GPR.Names;                 use GPR.Names;
+with GPR.Attr;                  use GPR.Attr;
 with Projects;                  use Projects;
 with Refactoring;               use Refactoring;
 with String_List_Utils;         use String_List_Utils;
@@ -1292,14 +1292,14 @@ package body GPS.Kernel is
             Register_New_Attribute
               (Name       => To_Lower (To_String (Tool.Project_Attribute)),
                In_Package => Pkg,
-               Attr_Kind  => Prj.Attr.Single,
-               Var_Kind   => Prj.List);
+               Attr_Kind  => GPR.Attr.Single,
+               Var_Kind   => GPR.List);
          else
             Register_New_Attribute
               (Name       => To_Lower (To_String (Tool.Project_Attribute)),
                In_Package => Pkg,
-               Attr_Kind  => Prj.Attr.Associative_Array,
-               Var_Kind   => Prj.List);
+               Attr_Kind  => GPR.Attr.Associative_Array,
+               Var_Kind   => GPR.List);
          end if;
       end if;
 

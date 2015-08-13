@@ -86,7 +86,7 @@ with Projects;                  use Projects;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Switches_Editors;          use Switches_Editors;
 with Toolchains_Editor;         use Toolchains_Editor;
-with Namet;
+with GPR;
 with Wizards;                   use Wizards;
 
 package body Project_Properties is
@@ -1078,7 +1078,7 @@ package body Project_Properties is
       Scenario_Variables : Scenario_Variable_Array;
       Project_Changed    : in out Boolean)
    is
-      use type Namet.Name_Id;
+      use type GPR.Name_Id;
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
       Attr  : constant Attribute_Pkg_String :=
                 Build

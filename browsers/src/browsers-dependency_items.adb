@@ -31,7 +31,6 @@ with Gtkada.MDI;               use Gtkada.MDI;
 with Browsers.Canvas;         use Browsers.Canvas;
 with Commands.Interactive;    use Commands, Commands.Interactive;
 with Default_Preferences;     use Default_Preferences;
-with Fname;                   use Fname;
 with Generic_Views;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
@@ -46,7 +45,6 @@ with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel;              use GPS.Kernel;
-with Namet;                   use Namet;
 with Projects;                use Projects;
 with Xref;                    use Xref;
 
@@ -621,15 +619,49 @@ package body Browsers.Dependency_Items is
    --------------------
 
    function Is_System_File (Source : Virtual_File) return Boolean is
-      Name : constant Filesystem_String := Source.Base_Name;
+      Name : constant String :=
+        Source.Display_Base_Name (Source.File_Extension);
+
+      subtype Str8 is String (1 .. 8);
+      Name_To_8 : Str8 := (others => ' ');
+
+      Predef_Names : constant array (1 .. 11) of Str8 :=
+        ("ada     ",       -- Ada
+         "interfac",       -- Interfaces
+         "system  ",       -- System
+         "calendar",       -- Calendar
+         "machcode",       -- Machine_Code
+         "unchconv",       -- Unchecked_Conversion
+         "unchdeal",       -- Unchecked_Deallocation
+         "directio",       -- Direct_IO
+         "ioexcept",       -- IO_Exceptions
+         "sequenio",       -- Sequential_IO
+         "text_io ");      -- Text_IO
    begin
-      Name_Len := Name'Length;
-      Name_Buffer (1 .. Name_Len) := +Name;
+      if Name'Length < 3 then
+         return False;
+      end if;
 
-      --  Check Language.Is_System_File as well, which does it depending on
-      --  the specific language.
+      if Name (Name'First .. Name'First + 1) in "g-" | "a-" | "s-" | "i-" then
+         if
+           Name (Name'First + 2) in 'a' .. 'z'
+           or else Name (Name'First + 2) in 'A' .. 'Z'
+         then
+            return True;
+         end if;
+      end if;
 
-      return Is_Internal_File_Name (Name_Find, Renamings_Included => True);
+      --  Check for renamings.
+      if Name'Length < 9 then
+         Name_To_8 (1 .. Name'Length) := Name;
+         for I in Predef_Names'Range loop
+            if Name_To_8 = Predef_Names (I) then
+               return True;
+            end if;
+         end loop;
+      end if;
+
+      return False;
    end Is_System_File;
 
    ------------

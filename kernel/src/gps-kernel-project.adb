@@ -29,8 +29,7 @@ with Ada.Unchecked_Deallocation;
 
 with Projects;                         use Projects;
 with Remote;                           use Remote;
-with Prj;
-with Types;                            use Types;
+with GPR;
 
 with Gtk.Window;                       use Gtk.Window;
 
@@ -290,7 +289,7 @@ package body GPS.Kernel.Project is
    procedure Do_Subdirs_Cleanup (Tree : Project_Tree'Class) is
    begin
       --  Nothing to do if Prj.Subdirs is not set
-      if Prj.Subdirs = null then
+      if GPR.Subdirs = null then
          return;
       end if;
 

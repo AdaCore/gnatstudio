@@ -60,7 +60,7 @@ with GPS.Search;                 use GPS.Search;
 with GUI_Utils;                  use GUI_Utils;
 with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;
-with Osint;                      use Osint;
+with GPR.Osint;
 with Projects;                   use Projects;
 with Src_Editor_Box;             use Src_Editor_Box;
 with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
@@ -1856,7 +1856,8 @@ package body Src_Contexts is
          Re := Compile
            (Get_Text (Extra.Files_Entry),
             Glob => True,
-            Case_Sensitive => Integer (Get_File_Names_Case_Sensitive) /= 0);
+            Case_Sensitive => Integer
+              (GPR.Osint.Get_File_Names_Case_Sensitive) /= 0);
          Set_File_List
            (Context,
             Files_Pattern => Re,

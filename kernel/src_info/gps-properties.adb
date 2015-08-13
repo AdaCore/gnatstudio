@@ -20,7 +20,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with XML_Utils;                  use XML_Utils;
-with Osint;                      use Osint;
+with GPR.Osint;                  use GPR.Osint;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 package body GPS.Properties is

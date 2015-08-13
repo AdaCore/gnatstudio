@@ -19,14 +19,14 @@ with Ada.Strings; use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
-with Namet; use Namet;
-with Types; use Types;
-with Sinput; use Sinput;
+with GPR.Names; use GPR.Names;
+with GPR.Sinput; use GPR.Sinput;
+with GPR.Osint; use GPR.Osint;
 with Ada.Containers; use Ada.Containers;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
-with Prj.Part; use Prj.Part;
-with Prj.Env; use Prj.Env;
-with Prj.PP; use Prj.PP;
+with GPR.Part; use GPR.Part;
+with GPR.Env; use GPR.Env;
+with GPR.PP; use GPR.PP;
 
 package body Toolchains.Parsers is
    Me : constant Trace_Handle := Create ("TOOLCHAIN_PARSER");
@@ -159,7 +159,7 @@ package body Toolchains.Parsers is
          Renamed_IDE_Project := Project_Of_Renamed_Package_Of
            (IDE_Package_Node, Node_Data);
 
-         if Renamed_IDE_Project /= Empty_Node then
+         if Renamed_IDE_Project /= Empty_Project_Node then
             This.Project :=
               Get_Parsed_Project
                 (This.Enclosing_Parser.all, Renamed_IDE_Project);
@@ -168,7 +168,7 @@ package body Toolchains.Parsers is
               (Project_Declaration_Of (Renamed_IDE_Project, Node_Data),
                Node_Data);
 
-            while Decl_Id /= Empty_Node loop
+            while Decl_Id /= Empty_Project_Node loop
                Item_Id := Current_Item_Node (Decl_Id, Node_Data);
 
                if Kind_Of (Item_Id, Node_Data) = N_Package_Declaration then
@@ -195,7 +195,7 @@ package body Toolchains.Parsers is
          Is_Attribute_Mode := False;
          Unique_Toolchain := null;
 
-         while Decl_Id /= Empty_Node loop
+         while Decl_Id /= Empty_Project_Node loop
             Item_Id := Current_Item_Node (Decl_Id, Node_Data);
 
             if Kind_Of (Item_Id, Node_Data) = N_Case_Construction then
@@ -295,7 +295,7 @@ package body Toolchains.Parsers is
               (Get_Label (Unique_Toolchain), Unique_Toolchain);
 
             Free (Dummy_Project_Tree);
-         elsif This.Variable_Node /= Empty_Node then
+         elsif This.Variable_Node /= Empty_Project_Node then
             --  The toolchain is controlled by a scenario variable. Read all
             --  the possible values of the scenario and use it to extract
             --  potential toolchains
@@ -306,7 +306,7 @@ package body Toolchains.Parsers is
                String_Node      : Project_Node_Id := First_Literal_String
                  (String_Type_Node, Node_Data);
             begin
-               while String_Node /= Empty_Node loop
+               while String_Node /= Empty_Project_Node loop
                   declare
                      Label : constant String := Get_Name_String
                        (String_Value_Of (String_Node, Node_Data));
@@ -341,14 +341,14 @@ package body Toolchains.Parsers is
          Error_Found        : String_Access;
          Attr               : Attribute;
       begin
-         while Cur_Case_Item /= Empty_Node loop
+         while Cur_Case_Item /= Empty_Project_Node loop
             Ada_Toolchain := null;
 
             --  Retreive the name of the toolchain if it's a named case
 
             Choice_Id := First_Choice_Of (Cur_Case_Item, Node_Data);
 
-            if Choice_Id /= Empty_Node then
+            if Choice_Id /= Empty_Project_Node then
                declare
                   Choice_Name : constant String := Get_Name_String
                     (String_Value_Of (Choice_Id, Node_Data));
@@ -375,7 +375,7 @@ package body Toolchains.Parsers is
 
             Error_Found := null;
 
-            while Decl_Id /= Empty_Node loop
+            while Decl_Id /= Empty_Project_Node loop
                Item_Id := Current_Item_Node (Decl_Id, Node_Data);
 
                if Kind_Of (Item_Id, Node_Data) = N_Attribute_Declaration then
@@ -498,7 +498,7 @@ package body Toolchains.Parsers is
          Exp_Id := Expression_Of (Attribute_Id, Node_Data);
          Term_Id := First_Term (Exp_Id, Node_Data);
          Cur_Term_Id := Current_Term (Term_Id, Node_Data);
-         Var_Ref := Empty_Node;
+         Var_Ref := Empty_Project_Node;
 
          if Attribute_Name = "gnatlist" then
             Result :=
@@ -556,7 +556,7 @@ package body Toolchains.Parsers is
 
             Term_Id := Next_Term (Term_Id, Node_Data);
 
-            if Term_Id = Empty_Node then
+            if Term_Id = Empty_Project_Node then
                Result.Error := Create_Error_Message
                  (Attribute_Id,
                   "only '""tool""' or 'Target & ""suffix""' format supported");
@@ -571,7 +571,7 @@ package body Toolchains.Parsers is
          --    String
          --    Var & String
 
-         if Next_Term (Term_Id, Node_Data) /= Empty_Node then
+         if Next_Term (Term_Id, Node_Data) /= Empty_Project_Node then
             Result.Error := Create_Error_Message
               (Attribute_Id,
                "only '""tool""' or 'Target & ""suffix""' format supported");
@@ -608,20 +608,20 @@ package body Toolchains.Parsers is
       begin
          Var_Node := Get_Variable (This.Project.all, Var_Name);
 
-         if Var_Node = Empty_Node then
+         if Var_Node = Empty_Project_Node then
             Result.Error := Create_Error_Message
               (Attribute_Id, "variable """ & Var_Name & """not found");
 
             return;
          end if;
 
-         if This.Variable_Node = Empty_Node then
+         if This.Variable_Node = Empty_Project_Node then
             This.Variable_Node := Var_Node;
 
             --  We currently only support target variables declared in the
             --  enclosing package, and referenced that way
 
-            if Package_Node_Of (Var_Ref, Node_Data) /= Empty_Node then
+            if Package_Node_Of (Var_Ref, Node_Data) /= Empty_Project_Node then
                Result.Error := Create_Error_Message
                  (Attribute_Id,
                   "target variable and toolchain definition "
@@ -630,7 +630,7 @@ package body Toolchains.Parsers is
                return;
             end if;
 
-            if Project_Node_Of (Var_Ref, Node_Data) /= Empty_Node then
+            if Project_Node_Of (Var_Ref, Node_Data) /= Empty_Project_Node then
                Result.Error := Create_Error_Message
                  (Attribute_Id,
                   "target variable and toolchain definition "
@@ -658,9 +658,9 @@ package body Toolchains.Parsers is
       is
          Location : constant Source_Ptr := Location_Of (Node, Node_Data);
          File     : constant String := Get_Name_String
-           (File_Name (Get_Source_File_Index (Location)));
-         Line     : constant Physical_Line_Number :=
-           Get_Physical_Line_Number (Location);
+           (Source_File.Table (Get_Source_File_Index (Location)).File_Name);
+         Line     : constant Line_Number :=
+           Get_Line_Number (Location);
          Col      : constant Column_Number := Get_Column_Number (Location);
       begin
          return new String'
@@ -672,7 +672,7 @@ package body Toolchains.Parsers is
       This.Node_Data := Node_Data;
       This.Project := Get_Root_Project (This.Enclosing_Parser.all);
 
-      if IDE_Node /= Empty_Node then
+      if IDE_Node /= Empty_Project_Node then
          Handle_IDE_Package (IDE_Node);
       end if;
 
@@ -730,16 +730,16 @@ package body Toolchains.Parsers is
       procedure Remove_Previous_Toolchain is
          Decl_Id      : Project_Node_Id := First_Declarative_Item_Of
            (This.IDE_Package, This.Node_Data);
-         Prev_Decl_Id : Project_Node_Id := Empty_Node;
+         Prev_Decl_Id : Project_Node_Id := Empty_Project_Node;
          Item_Id      : Project_Node_Id;
       begin
-         while Decl_Id /= Empty_Node loop
+         while Decl_Id /= Empty_Project_Node loop
             Item_Id := Current_Item_Node (Decl_Id, This.Node_Data);
 
             if Item_Id = This.Toolchain_Case_Statement
               or else This.Attributes.Contains (Item_Id)
             then
-               if Prev_Decl_Id = Empty_Node then
+               if Prev_Decl_Id = Empty_Project_Node then
                   Set_First_Declarative_Item_Of
                     (This.IDE_Package,
                      This.Node_Data,
@@ -774,7 +774,7 @@ package body Toolchains.Parsers is
       begin
          --  Create the type declaration and the variable if needed
 
-         if This.Variable_Node = Empty_Node then
+         if This.Variable_Node = Empty_Project_Node then
             --  If there's already a variable called "target", it's most
             --  likely the correct one, so use it. Otherwise, create a new
             --  one.
@@ -782,7 +782,7 @@ package body Toolchains.Parsers is
             This.Variable_Node :=
               Get_Variable (This.Project.all, "target");
 
-            if This.Variable_Node /= Empty_Node then
+            if This.Variable_Node /= Empty_Project_Node then
                Type_Declaration := String_Type_Of
                  (This.Variable_Node, This.Node_Data);
             elsif Toolchains'Length <= 1 then
@@ -834,7 +834,7 @@ package body Toolchains.Parsers is
 
          --  Set the toolchain list in the type
 
-         Prev_Node := Empty_Node;
+         Prev_Node := Empty_Project_Node;
 
          for J in Toolchains'Range loop
             declare
@@ -848,7 +848,7 @@ package body Toolchains.Parsers is
                  (Get_Name_Id (Get_Name (Toolchains (J))),
                   This.Node_Data);
 
-               if Prev_Node = Empty_Node then
+               if Prev_Node = Empty_Project_Node then
                   Set_First_Literal_String
                     (Type_Declaration,
                      This.Node_Data,
@@ -897,10 +897,10 @@ package body Toolchains.Parsers is
 
       function Get_Name_Id (Name : String) return Name_Id is
       begin
-         Namet.Name_Buffer (1 .. Name'Length) := Name;
-         Namet.Name_Len := Name'Length;
+         GPR.Names.Name_Buffer (1 .. Name'Length) := Name;
+         GPR.Names.Name_Len := Name'Length;
 
-         return Namet.Name_Find;
+         return GPR.Names.Name_Find;
       end Get_Name_Id;
 
       ----------------------------
@@ -947,7 +947,7 @@ package body Toolchains.Parsers is
          Decl_Type := First_Declarative_Item_Of
            (Get_Project_Declaration (This.Project.all), This.Node_Data);
 
-         while Decl_Type /= Empty_Node loop
+         while Decl_Type /= Empty_Project_Node loop
             Item_Node := Current_Item_Node
               (Decl_Type, This.Node_Data);
 
@@ -1038,7 +1038,7 @@ package body Toolchains.Parsers is
 
          declare
             Dummy : Project_Node_Id :=
-              Prj.Tree.Create_Attribute
+              GPR.Tree.Create_Attribute
                 (This.Node_Data,
                  Container,
                  Get_Name_Id (Attribute_Name),
@@ -1063,7 +1063,7 @@ package body Toolchains.Parsers is
          Case_Node           : Project_Node_Id;
          Name_Str            : Project_Node_Id;
       begin
-         Prev_Case_Node := Empty_Node;
+         Prev_Case_Node := Empty_Project_Node;
 
          Case_Construct_Node := Default_Project_Node
            (This.Node_Data,
@@ -1096,7 +1096,7 @@ package body Toolchains.Parsers is
                N_Case_Item,
                Undefined);
 
-            if Prev_Case_Node = Empty_Node then
+            if Prev_Case_Node = Empty_Project_Node then
                Set_First_Case_Item_Of
                  (Case_Construct_Node, This.Node_Data, Case_Node);
             else
@@ -1123,7 +1123,7 @@ package body Toolchains.Parsers is
    begin
       --  First, Create the IDE package if there's none
 
-      if This.IDE_Package = Empty_Node then
+      if This.IDE_Package = Empty_Project_Node then
          This.IDE_Package := Create_Package
            (This.Node_Data, Get_Project_Node (This.Project.all), "ide");
       end if;
@@ -1236,7 +1236,7 @@ package body Toolchains.Parsers is
       Item_Id : Project_Node_Id;
       Name    : Name_Id;
       Toolchain_Found : Boolean := False;
-      Env     : Prj.Tree.Environment;
+      Env     : GPR.Tree.Environment;
    begin
       if not Path.Is_Regular_File then
          raise Toolchain_Exception
@@ -1246,7 +1246,7 @@ package body Toolchains.Parsers is
 
       This.Manager := Manager;
       This.Tree_Data := new Project_Tree_Data;
-      Prj.Initialize (This.Tree_Data);
+      GPR.Initialize (This.Tree_Data);
 
       This.Node_Data := new Project_Node_Tree_Data;
       Initialize (This.Node_Data);
@@ -1291,7 +1291,7 @@ package body Toolchains.Parsers is
       --  Look for an ide package. Create a toolchain parser on this IDE
       --  package to extract the toolchain information for this project.
 
-      while Decl_Id /= Empty_Node loop
+      while Decl_Id /= Empty_Project_Node loop
          Item_Id := Current_Item_Node (Decl_Id, This.Node_Data);
 
          if Kind_Of (Item_Id, This.Node_Data) = N_Package_Declaration then
@@ -1308,7 +1308,7 @@ package body Toolchains.Parsers is
       end loop;
 
       if not Toolchain_Found then
-         Parse (This.Toolchain_Found, This.Node_Data, Empty_Node);
+         Parse (This.Toolchain_Found, This.Node_Data, Empty_Project_Node);
       end if;
 
       This.Is_Valid := True;
@@ -1426,7 +1426,7 @@ package body Toolchains.Parsers is
       if This.Variables.Contains (Name) then
          return This.Variables.Element (Name);
       else
-         return Empty_Node;
+         return Empty_Project_Node;
       end if;
    end Get_Variable;
 
@@ -1483,11 +1483,11 @@ package body Toolchains.Parsers is
 
       With_Id := First_With_Clause_Of (This.Project_Node, This.Node_Data);
 
-      while With_Id /= Empty_Node loop
+      while With_Id /= Empty_Project_Node loop
 
          --  consider only non-limited with
          if Non_Limited_Project_Node_Of
-           (With_Id, This.Node_Data) /= Empty_Node
+           (With_Id, This.Node_Data) /= Empty_Project_Node
          then
             With_Prj_Id := Project_Node_Of (With_Id, This.Node_Data);
 
@@ -1511,7 +1511,7 @@ package body Toolchains.Parsers is
         (Project_Declaration_Of
            (This.Project_Node, This.Node_Data), This.Node_Data);
 
-      while Decl_Id /= Empty_Node loop
+      while Decl_Id /= Empty_Project_Node loop
          Item_Id := Current_Item_Node (Decl_Id, This.Node_Data);
 
          if Kind_Of (Item_Id, This.Node_Data)
