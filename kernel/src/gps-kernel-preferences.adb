@@ -1885,6 +1885,9 @@ package body GPS.Kernel.Preferences is
          Widget := Dialog.Add_Button ("Cancel", Gtk_Response_Cancel);
       end if;
 
+      --  Show all pages for more convenient access
+      View.Expand_All;
+
       Dialog.Show_All;
       Resp := Dialog.Run;
 

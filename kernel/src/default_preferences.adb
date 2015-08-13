@@ -1708,19 +1708,23 @@ package body Default_Preferences is
       Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
+      Box    : Gtk_Box;
       Button : Gtk_Color_Button;
       P : constant Manager_Preference :=
         (Preferences_Manager (Manager), Preference (Pref));
    begin
+      Gtk_New_Hbox (Box, Homogeneous => False);
+
       Gtk_New_With_Rgba (Button, Get_Pref (Color_Preference (Pref)));
       Button.Set_Use_Alpha (True);
+      Box.Pack_Start (Button, Expand => False, Fill => False);
 
       Preference_Handlers.Connect
         (Button, Signal_Color_Set, Color_Changed'Access, P);
       Preference_Handlers.Object_Connect
         (Manager.Pref_Editor, Signal_Preferences_Changed,
          Update_Color'Access, Button, P);
-      return Gtk_Widget (Button);
+      return Gtk_Widget (Box);
    end Edit;
 
    ----------
