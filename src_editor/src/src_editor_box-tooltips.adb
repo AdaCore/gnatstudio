@@ -166,7 +166,7 @@ package body Src_Editor_Box.Tooltips is
          Get_Origin (View_Win, View_X, View_Y);
          LX := X + Box_X - View_X;
          LY := Y + Box_Y - View_Y;
-         In_Side_Area := LX < (View_X - Box_X);
+         In_Side_Area := X < (View_X - Box_X);
       end;
 
       if In_Side_Area then
