@@ -56,7 +56,7 @@ package GPS.Kernel.Search.Sources is
       Has_Next : out Boolean);
    overriding function Display_Name
      (Self     : not null access Single_Source_Search_Provider) return String
-     is ("Current file");
+     is ("Specific file");
    --  Searches in a specific source file
 
    procedure Set_File
@@ -64,6 +64,20 @@ package GPS.Kernel.Search.Sources is
       File    : GNATCOLL.VFS.Virtual_File;
       Project : GNATCOLL.Projects.Project_Type);
    --  Set the file to search
+
+   type Current_File_Search_Provider is new Single_Source_Search_Provider
+      with private;
+   overriding procedure Set_Pattern
+     (Self    : not null access Current_File_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class;
+      Limit   : Natural := Natural'Last);
+   overriding function Display_Name
+     (Self     : not null access Current_File_Search_Provider) return String
+     is ("Current file");
+   overriding function Documentation
+     (Self    : not null access Current_File_Search_Provider) return String
+     is ("Search for references in the current editor");
+   --  Search in the current editor, if there is one.
 
 private
    type Single_Source_Search_Provider is new Kernel_Search_Provider with record
@@ -86,4 +100,6 @@ private
       Current : aliased Single_Source_Search_Provider;
    end record;
 
+   type Current_File_Search_Provider is new Single_Source_Search_Provider
+      with null record;
 end GPS.Kernel.Search.Sources;

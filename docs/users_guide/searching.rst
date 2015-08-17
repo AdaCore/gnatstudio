@@ -238,3 +238,31 @@ menu, and either select :menuselection:`Window --> Floating` or
 If you save the desktop (:menuselection:`File --> Save More --> Desktop`),
 GPS automatically reopens the search dialog in its new place when it is next
 started.
+
+Searching in current file
+-------------------------
+
+The dialog we described above is convenient when you want to search in
+multiple files, or even in files that are not opened in GPS. However,
+the most frequent context is to search in the current file. GPS provides
+a number of facilities just for this:
+
+* Use the :file:`isearch.py` plug-in
+
+  This plugin provides an interactive search. When you press the key
+  shortcut (:kdb:`ctrl-s` by default when using Emacs mode, or use the
+  :menuselection:`Edit --> Key Shortcuts` to assign another shortcut), GPS
+  displays a small prompt window. As you start typing letters there, GPS
+  jumps to the next match for the word you are currently typing.
+  Press the same shortcut again to search for the next occurrence.
+
+* Use the omni-search
+
+  At the top-right corner of the GPS window, the search field is able to
+  search in all the sources of your project. But it can also search just
+  in the current source. The recommended approach is once again to define
+  a new key shortcut via :menuselection:`Edit --> Key Shortcuts`, for
+  the action `Global Search in context: current file`.
+  Whenever you press that shortcut from now on, GPS will move the keyboard
+  focus to the global search box, and when you type some text, a popup
+  window will show all occurrences of that text within the current file.

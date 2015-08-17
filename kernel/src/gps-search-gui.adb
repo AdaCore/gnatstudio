@@ -1464,6 +1464,9 @@ package body GPS.Search.GUI is
       P := new GPS.Kernel.Search.Sources.Sources_Search_Provider;
       Register_Provider_And_Action (Kernel, P);
 
+      P := new GPS.Kernel.Search.Sources.Current_File_Search_Provider;
+      Register_Provider_And_Action (Kernel, P);
+
       Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);
       Align.Set_Padding (0, 0, 0, 10);  --  to the right
       GPS_Window (Get_Main_Window (Kernel)).Toolbar_Box.Pack_End

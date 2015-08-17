@@ -38,6 +38,7 @@ with Pango.Enums;                use Pango.Enums;
 with Pango.Font;                 use Pango.Font;
 
 with Basic_Types;                use Basic_Types;
+with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
@@ -607,5 +608,23 @@ package body GPS.Kernel.Search.Sources is
                                       Locations   => True),
          Allow_Auto_Jump_To_First => True);
    end To_Message;
+
+   -----------------
+   -- Set_Pattern --
+   -----------------
+
+   overriding procedure Set_Pattern
+     (Self    : not null access Current_File_Search_Provider;
+      Pattern : not null access GPS.Search.Search_Pattern'Class;
+      Limit   : Natural := Natural'Last)
+   is
+      --  Get the current editor
+      Editor : constant Editor_Buffer'Class :=
+         Self.Kernel.Get_Buffer_Factory.Get (File => No_File);
+   begin
+      Self.Set_File (Editor.File, Project => No_Project);
+      Single_Source_Search_Provider (Self.all).Set_Pattern
+         (Pattern, Limit);  --  inherited
+   end Set_Pattern;
 
 end GPS.Kernel.Search.Sources;
