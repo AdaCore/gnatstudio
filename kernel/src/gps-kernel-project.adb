@@ -333,6 +333,7 @@ package body GPS.Kernel.Project is
          new GPS_Project_Environment'
             (Project_Environment with Kernel => Handle);
    begin
+      Env.Set_Save_Config_File ("gpsauto.cgpr");
       GPS_Project_Tree (Tree.all).Handle := Kernel_Handle (Handle);
       Result := Projects.Create (Tree => Tree, Env => Env);
    end Create_Registry;
