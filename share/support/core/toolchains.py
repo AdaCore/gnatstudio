@@ -125,6 +125,10 @@ XML = r"""<?xml version="1.0" ?>
   <toolchain name="powerpc-xcoff-lynxos"/>
   <toolchain name="powerpc-xcoff-lynxos178"/>
 
+  <toolchain name="x86_64-wrs-vxworks7">
+    <debugger/>
+  </toolchain>
+
   <toolchain name="erc32-elf"/>
 
   <toolchain name="leon-elf"/>
