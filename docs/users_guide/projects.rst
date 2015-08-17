@@ -931,6 +931,41 @@ For example, specifying :command:`file.ada at 1` for the spec and
 that the two components of the unit are in the same file, with the spec
 first, followed by the body.
 
+.. index:: --config
+.. index:: cross reference; custom languages
+
+A naming scheme needs to be duplicated in each of the project file that
+uses the corresponding source language. An alternative is to put the
+definition of the naming scheme in a configuration file (with the extension
+:file:`.cgpr`), and have GPS load this file on startup. The same config
+file can also be used with gprbuild for instance. In the context of GPS,
+for instance, you could create :file:`config.cgpr` with::
+
+   configuration project Config is
+      package Naming is
+         for Spec_Suffix ("MyLang") use ".ml";
+         for Body_Suffix ("MyLang") use ".ml2";
+      end Naming;
+      package Compiler is
+         for Object_File_Suffix ("MyLang") use ".ali";
+      end Compiler;
+   end Config;
+
+and start GPS with::
+
+   gps --config=config.cgpr
+
+Then if your project has the language "MyLang", as in::
+
+   project Default is
+      for Languages use ("Ada", "MyLang");
+   end Default;
+
+then all files with the extensions :file:`.ml` or :file:`.ml2` will
+automatically be part of the project. Furthermore, if there exists
+:file:`.ali` files for those sources, they will automatically be parsed
+to find cross-references information.
+
 .. index:: project; switches
 .. _Switches:
 

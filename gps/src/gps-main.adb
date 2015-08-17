@@ -278,6 +278,14 @@ procedure GPS.Main is
    package File_To_Open_Vectors is new Ada.Containers.Vectors
      (Positive, File_To_Open);
 
+   type Config_File_Setup is record
+      Autoconf    : Boolean := False;
+      Config_File : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      DB_Dirs     : GNATCOLL.VFS.File_Array_Access;
+   end record;
+
+   Config_Files : Config_File_Setup;
+
    Home_Dir               : Virtual_File;
    Prefix_Dir             : Virtual_File;
    GPS_Home_Dir           : Virtual_File;
@@ -908,6 +916,19 @@ procedure GPS.Main is
               new String '(Param (Column + 1 .. Param'Last));
          end;
 
+      elsif Switch = "--config" then
+         Config_Files.Config_File := Create_From_Base
+            (+ICS.Value (Value), Get_Current_Dir.Full_Name.all);
+
+      elsif Switch = "--configdb" then
+         Append
+            (Config_Files.DB_Dirs,
+             Create_From_Base
+               (+ICS.Value (Value), Get_Current_Dir.Full_Name.all));
+
+      elsif Switch = "--autoconf" then
+         Config_Files.Autoconf := True;
+
       elsif Switch = "--traceon" then
          GNATCOLL.Traces.Set_Active (Create (ICS.Value (Value)), True);
 
@@ -1153,6 +1174,37 @@ procedure GPS.Main is
                          Description     => ICS.New_String
                            ("List all available debug streams"),
                          Arg_Description => ICS.Null_Ptr);
+
+      --  Config files
+
+      Opt_Config : constant Glib.Option.GOption_Entry :=
+                        (Long_Name       => ICS.New_String ("config"),
+                         Short_Name      => To_Gchar (ASCII.NUL),
+                         Flags           => G_Option_Flag_Filename,
+                         Arg             => G_Option_Arg_Callback,
+                         Arg_Data        => On_Switch'Address,
+                         Description     => ICS.New_String
+                           ("Specify the configuration file (.cgpr) to load"),
+                         Arg_Description => ICS.New_String ("file"));
+      Opt_Autoconf : constant Glib.Option.GOption_Entry :=
+                        (Long_Name       => ICS.New_String ("autoconf"),
+                         Short_Name      => To_Gchar (ASCII.NUL),
+                         Flags           => G_Option_Flag_No_Arg,
+                         Arg             => G_Option_Arg_Callback,
+                         Arg_Data        => On_Switch'Address,
+                         Description     => ICS.New_String
+                           ("Generate .cgpr automatically if needed"),
+                         Arg_Description => ICS.Null_Ptr);
+      Opt_Configdb : constant Glib.Option.GOption_Entry :=
+                        (Long_Name       => ICS.New_String ("configdb"),
+                         Short_Name      => To_Gchar (ASCII.NUL),
+                         Flags           => G_Option_Flag_Filename,
+                         Arg             => G_Option_Arg_Callback,
+                         Arg_Data        => On_Switch'Address,
+                         Description     => ICS.New_String
+                           ("Extra directories for gprconfig"),
+                         Arg_Description => ICS.New_String ("dir"));
+
       --  Option for remaining arguments
       Opt_Remaining : constant Glib.Option.GOption_Entry :=
                         (Long_Name       => ICS.New_String (""),
@@ -1181,6 +1233,9 @@ procedure GPS.Main is
                          Opt_Traceoff,
                          Opt_Tracefile,
                          Opt_Tracelist,
+                         Opt_Config,
+                         Opt_Autoconf,
+                         Opt_Configdb,
                          Opt_Remaining,
                          Null_GOption_Entry);
 
@@ -2218,6 +2273,27 @@ procedure GPS.Main is
       Kernel_Callback.Connect
         (Get_MDI (GPS_Main.Kernel), Signal_Child_Selected,
          Child_Selected'Access, GPS_Main.Kernel);
+
+      --  Setup config files before we load projects
+
+      Get_Registry (GPS_Main.Kernel).Environment.Set_Config_File
+         (Config_Files.Config_File);
+      Get_Registry (GPS_Main.Kernel).Environment.Set_Automatic_Config_File
+         (Config_Files.Autoconf);
+
+      if Config_Files.DB_Dirs /= null then
+         for D of Config_Files.DB_Dirs.all loop
+            Get_Registry (GPS_Main.Kernel).Environment.Add_Config_Dir (D);
+         end loop;
+      end if;
+
+      if Config_Files.Autoconf
+         and then Config_Files.Config_File = GNATCOLL.VFS.No_File
+      then
+         Get_Registry (GPS_Main.Kernel).Environment.Set_Config_File
+            (Create_From_Base
+               ("auto.cgpr", Get_Current_Dir.Full_Name.all));
+      end if;
 
       --  We now make sure we have a project loaded, so that opening editors
       --  will work correctly.

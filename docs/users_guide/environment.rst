@@ -40,6 +40,10 @@ The command line options are::
      --traceoff=name     Deactivate the logs for a given module
      --tracefile=file    Parse an alternate configuration file for the logs
 
+     --config=file       Specify the configuration file (.cgpr) to load
+     --autoconf          Generate .cgpr automatically if needed
+     --configdb=dir      Extra directories for gprconfig
+
 Source files can be absolute or relative pathnames.
 If you prepend a file name with '=', this file will be
 searched anywhere on the project's source path

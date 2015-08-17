@@ -172,9 +172,17 @@ NF-62-N306-050 GPS: display of CWEs from CodePeer (2015-02-04)
   GPS displays CWEs (Common Weakness Enumeration) for CodePeer's messages in
   Locations view and provides corresponding filter in CodePeer Report view.
 
+NF-62-MC03-007 GPS: new switches --config and --autoconf (2015-08-17)
+
+  GPS can now optionally parse a config file (.cgpr) before loading the
+  project, like gprbuild does. Such a file is in particular useful to
+  specify naming schemes for programming languages, without having to
+  duplicate this information in a GPS plug-in. The file is automatically
+  passed to gnatinspect.
+
 NF-62-M304-034 GPS: xref for custom languages (2015-08-17)
 
-  GPS lets you describe programing languages via plug-ins. In particular,
+  GPS lets you describe programming languages via plug-ins. In particular,
   you can declare the rules used for syntax highlighting, and for the
   naming schemes of their source files. If you also declare the LI_Suffix
   to be .ali, GPS will now parse any .ali file it finds that relates to
