@@ -25,6 +25,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O813-040 GPS: Project editor mark tools as unavailable
+
+  Problem:    In some cases project editor marks some tools for automatically
+              detected toolsets as unavailable.
+
+  Status:     This was fixed in 6.2 on 2015-08-18
+
+  Workaround: This warning is incorrect and can be ignored.
+
 KP-61-O807-020 GPS: GPS.Project.search() rejects recursive parameter
 
   Problem:    Contrary to what is documented, the "recursive" parameter to

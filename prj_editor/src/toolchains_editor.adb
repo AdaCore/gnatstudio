@@ -1101,14 +1101,22 @@ package body Toolchains_Editor is
          Ypadding      => 5);
 
       for J in Tools range GNAT_Driver .. Debugger loop
-         Add_Detail
-           (Tool_Kind_Tool,
-            Tool        => J,
-            Lang        => "",
-            Value       => Get_Command (Tc, J),
-            Is_Default  => Is_Default (Tc, J),
-            Is_Valid    => Is_Valid (Tc, J),
-            Is_Editable => J /= GNAT_Driver);
+         declare
+            Value : constant String := Get_Command (Tc, J);
+            --  O813-040: Get_Command has side effects and must be executed
+            --  before other calls on Tc; otherwise last returns incorrect
+            --  results.
+
+         begin
+            Add_Detail
+              (Tool_Kind_Tool,
+               Tool        => J,
+               Lang        => "",
+               Value       => Value,
+               Is_Default  => Is_Default (Tc, J),
+               Is_Valid    => Is_Valid (Tc, J),
+               Is_Editable => J /= GNAT_Driver);
+         end;
       end loop;
 
       N_Rows := N_Rows + 1;
