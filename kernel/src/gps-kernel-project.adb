@@ -29,7 +29,6 @@ with Ada.Unchecked_Deallocation;
 
 with Projects;                         use Projects;
 with Remote;                           use Remote;
-with GPR;
 
 with Gtk.Window;                       use Gtk.Window;
 
@@ -83,10 +82,6 @@ package body GPS.Kernel.Project is
    overriding procedure Set_GNAT_Version
      (Self         : GPS_Project_Environment;
       Version      : String);
-
-   procedure Do_Subdirs_Cleanup (Tree : Project_Tree'Class);
-   --  Cleanup empty subdirs created when opening a project with prj.subdirs
-   --  set.
 
    package String_Maps is new Ada.Containers.Indefinite_Hashed_Maps
      (Key_Type        => String,   --  "section#key"
@@ -282,44 +277,6 @@ package body GPS.Kernel.Project is
       return Get_Nickname (Build_Server);
    end Gnatls_Host;
 
-   ------------------------
-   -- Do_Subdirs_Cleanup --
-   ------------------------
-
-   procedure Do_Subdirs_Cleanup (Tree : Project_Tree'Class) is
-   begin
-      --  Nothing to do if Prj.Subdirs is not set
-      if GPR.Subdirs = null then
-         return;
-      end if;
-
-      declare
-         Objs    : constant File_Array :=
-           Root_Project (Tree).Object_Path (Recursive => True);
-         Success : Boolean;
-      begin
-         for J in Objs'Range loop
-            declare
-               Dir : Virtual_File renames Objs (J);
-            begin
-               if Dir.Is_Directory then
-                  --  Remove emtpy directories (this call won't remove the dir
-                  --  if files or subdirectories are in it.
-                  Dir.Remove_Dir (Success => Success);
-               end if;
-            end;
-         end loop;
-      end;
-
-   exception
-      when Constraint_Error =>
-         --  Object_Path can raise Constraint_Error when project view was not
-         --  computed and aggreate project is loaded. Just ignore it, see
-         --  NA08-021.
-
-         null;
-   end Do_Subdirs_Cleanup;
-
    ---------------------
    -- Create_Registry --
    ---------------------
@@ -333,7 +290,7 @@ package body GPS.Kernel.Project is
          new GPS_Project_Environment'
             (Project_Environment with Kernel => Handle);
    begin
-      Env.Set_Save_Config_File ("gpsauto.cgpr");
+      Env.Set_Save_Config_File (Saved_Config_File);
       GPS_Project_Tree (Tree.all).Handle := Kernel_Handle (Handle);
       Result := Projects.Create (Tree => Tree, Env => Env);
    end Create_Registry;
@@ -359,7 +316,7 @@ package body GPS.Kernel.Project is
       Errors : Error_Report := null)
    is
    begin
-      Do_Subdirs_Cleanup (Self);
+      Cleanup_Subdirs (Self);
 
       Recompute_View (Project_Tree (Self), Errors);
 

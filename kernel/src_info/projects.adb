@@ -17,17 +17,20 @@
 
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GPR.Opt;                    use GPR.Opt;
 with GPR.Names;                  use GPR.Names;
 with GPR.Snames;                 use GPR.Snames;
+with GNAT.Strings;               use GNAT.Strings;
 
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect, GNAT.Expect.TTY;
 with GNAT.Expect.TTY.Remote;    use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+
 package body Projects is
+   Me : constant Trace_Handle := Create ("GPS.PROJECTS");
 
    -----------------------
    -- Project_Name_Hash --
@@ -225,6 +228,8 @@ package body Projects is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Project_Registry'Class, Project_Registry_Access);
    begin
+      Cleanup_Subdirs (Registry.Tree.all);
+
       Registry.Tree.Unload;
       Free (Registry.Tree);
       Free (Registry.Env);
@@ -280,6 +285,64 @@ package body Projects is
       end loop;
       return Result;
    end Source_Files_Non_Recursive;
+
+   ---------------------
+   -- Cleanup_Subdirs --
+   ---------------------
+
+   procedure Cleanup_Subdirs (Tree : GNATCOLL.Projects.Project_Tree'Class) is
+      F : Virtual_File;
+      Success : Boolean;
+   begin
+      --  Remove temporary files if needed
+
+      if Tree.Root_Project.Object_Dir /= No_File then
+         F := Create_From_Dir
+            (Tree.Root_Project.Object_Dir, Saved_Config_File);
+         if F.Is_Regular_File then
+            Trace (Me, "Deleting " & F.Display_Full_Name);
+            F.Delete (Success);
+         end if;
+      end if;
+
+      F := Create_From_Dir
+         (Tree.Root_Project.Project_Path.Dir, Saved_Config_File);
+      if F.Is_Regular_File then
+         Trace (Me, "Deleting " & F.Display_Full_Name);
+         F.Delete (Success);
+      end if;
+
+      --  Nothing to do if Prj.Subdirs is not set
+      if GPR.Subdirs = null then
+         return;
+      end if;
+
+      declare
+         Objs    : constant File_Array :=
+           Root_Project (Tree).Object_Path (Recursive => True);
+         Success : Boolean;
+      begin
+         for J in Objs'Range loop
+            declare
+               Dir : Virtual_File renames Objs (J);
+            begin
+               if Dir.Is_Directory then
+                  --  Remove emtpy directories (this call won't remove the dir
+                  --  if files or subdirectories are in it.
+                  Dir.Remove_Dir (Success => Success);
+               end if;
+            end;
+         end loop;
+      end;
+
+   exception
+      when Constraint_Error =>
+         --  Object_Path can raise Constraint_Error when project view was not
+         --  computed and aggreate project is loaded. Just ignore it, see
+         --  NA08-021.
+
+         null;
+   end Cleanup_Subdirs;
 
 begin
    --  Use full path name so that the messages are sent to Locations view
