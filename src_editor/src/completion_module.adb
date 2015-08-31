@@ -23,6 +23,7 @@ with Commands.Editor;           use Commands.Editor;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Completion.Ada.Constructs_Extractor;
 use Completion.Ada.Constructs_Extractor;
+
 with Completion.Ada;            use Completion.Ada;
 with Completion.C.Constructs_Extractor;
 use Completion.C.Constructs_Extractor;
@@ -34,6 +35,8 @@ with Completion.Python;         use Completion.Python;
 with Completion;                use Completion;
 with Completion_Window. Entity_Views; use Completion_Window.Entity_Views;
 with Completion_Window;         use Completion_Window;
+with Completion.Aliases;        use Completion.Aliases;
+
 with Default_Preferences.Enums; use Default_Preferences;
 with Engine_Wrappers;                 use Engine_Wrappers;
 with GNAT.Strings;              use GNAT.Strings;
@@ -215,6 +218,7 @@ package body Completion_Module is
 
       Completion_History  : Completion_History_Access;
       Completion_Keywords : Completion_Keywords_Access;
+      Completion_Aliases  : Completion_Aliases_Access;
    end record;
    type Completion_Module_Access is access all Completion_Module_Record'Class;
 
@@ -484,6 +488,7 @@ package body Completion_Module is
       Kill_File_Iteration (Get_Kernel (Module), Db_Loading_Queue);
       Free (Completion_Resolver_Access (Module.Completion_History));
       Free (Completion_Resolver_Access (Module.Completion_Keywords));
+      Free (Completion_Resolver_Access (Module.Completion_Aliases));
 
       Reset_Completion_Data;
       Completion_Module := null;
@@ -912,6 +917,8 @@ package body Completion_Module is
                  (Data.Manager, Completion_Module.Completion_History);
                Register_Resolver
                  (Data.Manager, Completion_Module.Completion_Keywords);
+               Register_Resolver
+                 (Data.Manager, Completion_Module.Completion_Aliases);
             end if;
 
             if Data.Constructs_Resolver /= null then
@@ -1282,6 +1289,7 @@ package body Completion_Module is
       Completion_Window.Entity_Views.Register_Module (Kernel);
 
       Completion_Module.Completion_History := new Completion_History;
+      Completion_Module.Completion_Aliases := new Completion_Aliases;
       Completion_Module.Completion_Keywords := new Completion_Keywords;
 
       --  Register the commands

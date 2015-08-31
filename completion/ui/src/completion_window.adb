@@ -1392,6 +1392,10 @@ package body Completion_Window is
                         Remaining_Repeat => 0));
                   Kernel : constant Kernel_Handle := Window.Explorer.Kernel;
                begin
+                  --  We have set In_Destruction above, planning to destroy the
+                  --  window, but Delete does nothing if In_Destruction, so
+                  --  lower the flag now.
+                  Window.In_Destruction := False;
                   Delete (Window);
                   Launch_Foreground_Command
                     (Kernel, Command, Destroy_On_Exit => True);
