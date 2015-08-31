@@ -6,52 +6,65 @@ It brings a behavior similar to the Windows default, that is:
   - Right expands the current node, and then selects its first child
     The Down key does not expand before it moves the cursor down.
 
-  - Left moves to the parent node, and then collapses it.
+  - Left collapse the current node if it is expanded otherwise it moves
+    the cursor to the parent node.
 """
 
 import GPS
-import pygps
 from gps_utils import interactive
 from gi.repository import Gtk
 
 
-def current_widget():
-    for w in Gtk.Window.list_toplevels():
-        if w.is_active():
-            return w.get_focus()
+logger = GPS.Logger("treemove")
+
+
+def current_tree():
+    """Return the current tree widget and path that has the focus or None"""
+    for widget in Gtk.Window.list_toplevels():
+        if widget.is_active():
+            result = widget.get_focus()
+            if isinstance(result, Gtk.TreeView):
+                return result, result.get_cursor()[0]
+            return None
     return None
 
 
-def in_gtktree(ctxt):
-    w = current_widget()
-    return w and isinstance(w, Gtk.TreeView)
+@interactive(category="General",
+             filter=lambda x: current_tree() is not None,
+             key="Left")
+def move_cursor_up_or_collapse():
+    current = current_tree()
+    if current is None:
+        return
+    tree, path = current
+    if tree and path:
+        if tree.row_expanded(path):
+            # The current cursor is on an expanded row, so collapse
+            # the row
+            logger.log("collapse row %s" % path)
+            tree.collapse_row(path)
+        else:
+            # The current cursor is not on an expanded row so try to
+            # to move up to the parent node.
+            path.up()
+            if path:
+                # Check that path is valid as path.up on the root
+                # node might return an invalid path ?
+                tree.set_cursor(path, tree.get_column(0))
 
 
-def current_row(tree):
-    path, column = tree.get_cursor()
-    if path:
-        return path
-    model, iter = tree.get_selection().get_selected()
-    if model:
-        return model.get_path(iter)
-
-
-@interactive(category="General", filter=in_gtktree, key="Left")
-def move_cursor_up_and_collapse():
-    w = current_widget()    # a GtkTreeView
-    path = current_row(w)
-    if path:
-        path.up()
-        w.set_cursor(path, w.get_column(0))
-        w.collapse_row(path)
-
-
-@interactive(category="General", filter=in_gtktree, key="Right")
+@interactive(category="General",
+             filter=lambda x: current_tree() is not None,
+             key="Right")
 def expand_and_move_cursor_down():
-    w = current_widget()    # a GtkTreeView
-    path = current_row(w)
-    if path:
-        p = path.copy()
-        path.down()
-        w.set_cursor(path, w.get_column(0))
-        w.expand_row(p, False)
+    current = current_tree()
+    if current is None:
+        return
+    tree, path = current
+    if tree and path:
+        logger.log("expand row %s" % path)
+        if tree.row_expanded(path):
+            path.down()
+            tree.set_cursor(path, tree.get_column(0))
+        else:
+            tree.expand_row(path, False)
