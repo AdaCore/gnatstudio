@@ -248,17 +248,20 @@ package body GPS.Kernel.Search.Sources is
          Self.File    := File;
          Self.Project := Project;
 
-         --  ??? This requires a lot of copies of the file text, but
-         --  unfortunately the conversion-to-utf8 routines are written in C.
+         if File /= No_File then
 
-         Read_File_With_Charset
-           (Self.File,
-            UTF8     => UTF8,
-            UTF8_Len => Length,
-            Props    => Props);
+            --  ??? This requires a lot of copies of the file text, but
+            --  unfortunately the conversion-to-utf8 routines are written in C.
 
-         Self.Text := new String'(Value (UTF8, size_t (Length)));
-         Free (UTF8);
+            Read_File_With_Charset
+              (Self.File,
+               UTF8     => UTF8,
+               UTF8_Len => Length,
+               Props    => Props);
+
+            Self.Text := new String'(Value (UTF8, size_t (Length)));
+            Free (UTF8);
+         end if;
       end if;
 
       Self.Restart := True;
@@ -343,12 +346,11 @@ package body GPS.Kernel.Search.Sources is
       L      : GNAT.Strings.String_Access;
    begin
       Result := null;
+      Has_Next := False;
 
       if Self.Text = null
-        or else (not Self.Restart
-                 and then Self.Context = GPS.Search.No_Match)
+        or else (not Self.Restart and then Self.Context = GPS.Search.No_Match)
       then
-         Has_Next := True;
          return;
       end if;
 
@@ -359,9 +361,7 @@ package body GPS.Kernel.Search.Sources is
          Self.Pattern.Next (Self.Text.all, Self.Context);
       end if;
 
-      if Self.Context = GPS.Search.No_Match then
-         Has_Next := False;
-      else
+      if Self.Context /= GPS.Search.No_Match then
          --  Find beginning of the line, but ignore leading spaces
          Start := Self.Context.Start.Index;
          while Start >= Self.Text'First
@@ -439,9 +439,9 @@ package body GPS.Kernel.Search.Sources is
       if Self.Index > Self.Files'Last then
          Has_Next := False;
          return;
-      else
-         Has_Next := True;
       end if;
+
+      Has_Next := True;
 
       Self.Current.Next (Result, Current_Has_Next);
       if Result /= null then
@@ -464,7 +464,6 @@ package body GPS.Kernel.Search.Sources is
       Self.Current.Set_File
         (Self.Files (Self.Index).File,
          Self.Files (Self.Index).Project);
-      Has_Next := True;
    end Next;
 
    -------------
@@ -475,15 +474,17 @@ package body GPS.Kernel.Search.Sources is
       (Self       : not null access Source_Search_Result;
        Give_Focus : Boolean) is
    begin
-      Open_File_Action_Hook.Run
-        (Self.Kernel,
-         File              => Self.File,
-         Project           => Self.Project,
-         Enable_Navigation => True,
-         New_File          => False,
-         Focus             => Give_Focus,
-         Line              => Self.Line,
-         Column            => Visible_Column (Self.Column));
+      if Self.File /= No_File then
+         Open_File_Action_Hook.Run
+           (Self.Kernel,
+            File              => Self.File,
+            Project           => Self.Project,
+            Enable_Navigation => True,
+            New_File          => False,
+            Focus             => Give_Focus,
+            Line              => Self.Line,
+            Column            => Visible_Column (Self.Column));
+      end if;
    end Execute;
 
    ----------------------
@@ -620,11 +621,12 @@ package body GPS.Kernel.Search.Sources is
    is
       --  Get the current editor
       Editor : constant Editor_Buffer'Class :=
-         Self.Kernel.Get_Buffer_Factory.Get (File => No_File);
+         Self.Kernel.Get_Buffer_Factory.Get
+            (File => No_File, Open_View => False);
    begin
-      Self.Set_File (Editor.File, Project => No_Project);
       Single_Source_Search_Provider (Self.all).Set_Pattern
          (Pattern, Limit);  --  inherited
+      Self.Set_File (Editor.File, Project => No_Project);
    end Set_Pattern;
 
 end GPS.Kernel.Search.Sources;
