@@ -28,10 +28,11 @@ package Projects is
    --  The registry is the name given to the set of currently loaded project
    --  files. Only one project hierarchy can be loaded at any given time.
 
-   Saved_Config_File : constant Filesystem_String := "gpsauto.cgpr";
+   Saved_Config_File : aliased constant Filesystem_String := "gpsauto.cgpr";
    --  Name of the config file that is saved when loading a project. This file
    --  includes the user's specified config file (or the default GNAT naming
    --  scheme), and any naming scheme defined in plug-ins.
+   --  Aliased in order to be accessible through AJIS.
 
    function Is_Valid_Project_Name (Name : String) return Boolean;
    --  Return True if Name is a valid project name
