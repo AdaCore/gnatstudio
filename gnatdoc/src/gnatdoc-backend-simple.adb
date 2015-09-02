@@ -909,6 +909,7 @@ package body GNATdoc.Backend.Simple is
 
             if No (S)
               or else Is_Standard_Entity (S)
+              or else No (Get_Scope (S))
               or else Is_Standard_Entity (Get_Scope (S))
             then
                return To_Lower (+LL.Get_Location (E).File.Base_Name);
