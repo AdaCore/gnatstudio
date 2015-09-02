@@ -460,8 +460,8 @@
       <button action="undo"/>
       <button action="redo"/>
       <separator id="navigation"/>
-      <button action="backward locations history"/>
-      <button action="forward locations history"/>
+      <button action="backward locations history" label='back'/>
+      <button action="forward locations history" label='forward'/>
       <separator id='build'/>
       <separator id='debug'/>
       <button action="debug continue" hide='true'/>

@@ -405,6 +405,7 @@ package GPS.Kernel.Modules.UI is
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Action   : String;
       Icon_Name : String := "";
+      Label    : String := "";
       Toolbar  : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
       Position : Glib.Gint := -1;
       Hide     : Boolean := False);
@@ -416,6 +417,9 @@ package GPS.Kernel.Modules.UI is
    --
    --  If Hide is true, the button is hidden when the action does not apply
    --  to the context, instead of being grayed out.
+   --
+   --  Label is used to override the label on the button, which by default
+   --  is the name of the action.
    --
    --  The toolbar defaults to the global toolbar in GPS.
    --  The position can be computed with Get_Toolbar_Separator_Position.

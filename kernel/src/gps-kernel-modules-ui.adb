@@ -388,10 +388,13 @@ package body GPS.Kernel.Modules.UI is
       Kernel   : not null access Kernel_Handle_Record'Class;
       Icon_Name : String := "";
       Action   : String;
+      Label    : String := "";
       Optional : Boolean := False;
       Hide     : Boolean := False);
    --  Create a new button so that it executes action when pressed.
    --  Hide and Optional are the same as for Data_Proxy
+   --  Label can be used to override the label of the button (which
+   --  by default is the name of the action)
 
    procedure On_Action_Button_Clicked
      (Button : access Gtk_Tool_Button_Record'Class);
@@ -1757,6 +1760,7 @@ package body GPS.Kernel.Modules.UI is
                  (Kernel,
                   Action    => Get_Attribute (N, "action"),
                   Icon_Name => Get_Attribute (N, "stock"),
+                  Label     => Get_Attribute (N, "label"),
                   Toolbar   => Toolbar,
                   Hide      => Hide);
 
@@ -1816,6 +1820,7 @@ package body GPS.Kernel.Modules.UI is
      (Kernel    : not null access Kernel_Handle_Record'Class;
       Action    : String;
       Icon_Name : String := "";
+      Label     : String := "";
       Toolbar   : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
       Position  : Glib.Gint := -1;
       Hide      : Boolean := False)
@@ -1823,7 +1828,7 @@ package body GPS.Kernel.Modules.UI is
       Button : Action_Tool_Button;
    begin
       Gtk_New (Button, Kernel, Icon_Name => Icon_Name, Action => Action,
-               Hide => Hide);
+               Label => Label, Hide => Hide);
 
       if Toolbar = null then
          Get_Toolbar (Kernel).Insert (Button, Position);
@@ -2377,6 +2382,7 @@ package body GPS.Kernel.Modules.UI is
       Kernel   : not null access Kernel_Handle_Record'Class;
       Icon_Name : String := "";
       Action   : String;
+      Label    : String := "";
       Optional : Boolean := False;
       Hide     : Boolean := False)
    is
@@ -2390,7 +2396,12 @@ package body GPS.Kernel.Modules.UI is
                       Action    => new String'(Action),
                       Looked_Up => null);
 
-      Gtk.Tool_Button.Initialize (Button, Label => Action);
+      if Label /= "" then
+         Gtk.Tool_Button.Initialize (Button, Label => Label);
+      else
+         Gtk.Tool_Button.Initialize (Button, Label => Action);
+      end if;
+
       if Icon_Name /= "" then
          Button.Set_Icon_Name (Icon_Name);
       end if;

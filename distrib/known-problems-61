@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O901-029 GPS: long labels in toolbar
+
+  Problem:    The "backward locations history" and "forward locations
+              history" buttons in the main toolbar have very long labels.
+
+  Status:     This was fixed in 6.2 on 2015-09-01
+
+  Workaround: Change the preference Windows/Toolbar Style to show icons
+              only.
+
 KP-61-O813-040 GPS: Project editor mark tools as unavailable
 
   Problem:    In some cases project editor marks some tools for automatically
