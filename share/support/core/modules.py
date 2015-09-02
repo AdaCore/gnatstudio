@@ -304,6 +304,14 @@ class Module(object):
             self.view_title = self.__class__.__name__.replace("_", " ")
         self.setup()
 
+        # Catch "gps_started" implementation in legacy or user-defined plugins
+        if hasattr(self, "gps_started"):
+            GPS.Console("Messages").write(
+                "warning: Python module '%s' defines class '%s' with a"
+                " method 'gps_started': this is no longer supported: instead,"
+                " you should override 'setup'\n." % (
+                    self.__module__, self.__class__.__name__))
+
     def _teardown(self):
         for h in self.auto_connect_hooks:
             self.__disconnect_hook(h)

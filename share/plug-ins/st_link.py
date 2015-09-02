@@ -185,9 +185,9 @@ class BoardLoader(Module):
             self.__reset_all()
             return
 
-    def gps_started(self):
+    def setup(self):
         """
-        When GPS start, add button (include creteria there)
+        When setting up the module, create target and buttons.
         """
         GPS.Hook("debugger_terminated").add(self.debugger_terminated)
 
