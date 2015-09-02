@@ -147,6 +147,11 @@ package body Outline_View is
       Event   : Gdk_Event_Button) return Boolean;
    --  Called every time a row is clicked
 
+   procedure On_Changed
+     (Outline : not null Outline_View_Access;
+      Context : Selection_Context);
+   --  Update outline with given Context
+
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
    overriding procedure Execute
      (Self   : On_Pref_Changed;
@@ -701,7 +706,7 @@ package body Outline_View is
       declare
          P : constant access On_Context_Changed := new On_Context_Changed;
       begin
-         P.Execute (Outline.Kernel, Get_Current_Context (Outline.Kernel));
+         On_Changed (Outline, Get_Current_Context (Outline.Kernel));
          Context_Changed_Hook.Add (P, Watch => Outline);
       end;
 
@@ -819,6 +824,32 @@ package body Outline_View is
       end if;
    end Execute;
 
+   ----------------
+   -- On_Changed --
+   ----------------
+
+   procedure On_Changed
+     (Outline : not null Outline_View_Access;
+      Context : Selection_Context)
+   is
+      File : Virtual_File;
+   begin
+      if Has_File_Information (Context) then
+         File := File_Information (Context);
+      else
+         --  Fallback to last used editor
+         File := Get_Kernel (Context).Get_Buffer_Factory
+           .Get (Open_View => False).File;
+      end if;
+
+      if File /= Outline.File then
+         Outline.Set_File (File);
+         Refresh (Outline);
+      elsif Outline.File = GNATCOLL.VFS.No_File then
+         Refresh (Outline);
+      end if;
+   end On_Changed;
+
    -------------
    -- Execute --
    -------------
@@ -832,7 +863,6 @@ package body Outline_View is
       Module  : constant Module_ID := Module_ID (Get_Creator (Context));
       Outline : constant Outline_View_Access :=
         Outline_Views.Retrieve_View (Kernel);
-      File    : Virtual_File;
    begin
       if Outline /= null
         and then Module /= null
@@ -840,18 +870,7 @@ package body Outline_View is
           (Get_Name (Module) = "Source_Editor"
            or else Get_Name (Module) = Outline_View_Module_Name)
       then
-         if Has_File_Information (Context) then
-            File := File_Information (Context);
-         else
-            File := GNATCOLL.VFS.No_File;
-         end if;
-
-         if File /= Outline.File then
-            Outline.Set_File (File);
-            Refresh (Outline);
-         elsif Outline.File = GNATCOLL.VFS.No_File then
-            Refresh (Outline);
-         end if;
+         On_Changed (Outline, Context);
       end if;
    end Execute;
 
