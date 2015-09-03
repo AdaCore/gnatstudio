@@ -19,9 +19,9 @@ GPS Messages window (which you can then save to a text file, or through a
 graphical tree widget, which you can dynamically manipulate.
 """
 
-############################################################################
+#
 # No user customization below this line
-############################################################################
+#
 
 from GPS import *
 from os.path import *
@@ -30,17 +30,22 @@ import re
 
 Preference("Plugins/dependencies/show_source").create(
     "Show source", "boolean",
-    """If enabled, show the file dependencies that explain project dependencies. If disabled, you only see the dependencies between the projects""",
+    "If enabled, show the file dependencies that explain project dependencies"
+    ". If disabled, you only see the dependencies between the projects",
     False)
 
 Preference("Plugins/dependencies/show_diff").create(
     "Show diff", "boolean",
-    """If enabled, show only the differences with the current project setup. This mode helps you clean up the with statements in your projects""",
+    "If enabled, show only the differences with the current project setup."
+    "This mode helps you clean up the with statements in your projects",
     True)
 
 Preference("Plugins/dependencies/no_src_prj").create(
     "Projects with no sources", "string",
-    """comma-separated list of project names that contain no sources, but are used to share common settings. Since this script looks at source files to find out dependencies, the dependencies on such projects would not be shown otherwise.""",
+    "comma-separated list of project names that contain no sources, but are "
+    "used to share common settings. Since this script looks at source files "
+    "to find out dependencies, the dependencies on such projects would not "
+    "be shown otherwise.",
     "shared")
 
 show_single_file = True
@@ -70,9 +75,11 @@ class Output:
     def explain_dependency(self, file, depends_on):
         """Explains the last add_dependency: file depends on depends_on"""
         if Preference("Plugins/dependencies/show_source").get():
-            Console().write \
-                ("   => " + basename(file.name()) +
-                 " depends on " + basename(depends_on.name()) + "\n")
+            Console().write(
+                "   => {} depends on {}\n".format(
+                    basename(file.name()), basename(depends_on.name())
+                )
+            )
 
     def close(self):
         pass
@@ -121,7 +128,7 @@ class XMLOutput:
     def parse_attrs(self, attrs):
         """Parse an XML attribute string  attr='foo' attr="bar" """
         attr = dict()
-        for a in re.findall ("""(\\w+)=['"](.*?)['"]\B""", attrs):
+        for a in re.findall("""(\\w+)=['"](.*?)['"]\B""", attrs):
             attr[a[0]] = a[1]
         return attr
 
@@ -156,7 +163,6 @@ class XMLOutput:
 
 
 def compute_project_dependencies(menu):
-    set_busy()
     try:
         depends_on = dict()
         current_deps = dict()
@@ -165,7 +171,8 @@ def compute_project_dependencies(menu):
             tmp = dict()
             previous = p
             for s in p.sources(recursive=False):
-                for imp in s.imports(include_implicit=True, include_system=False):
+                for imp in s.imports(include_implicit=True,
+                                     include_system=False):
                     ip = imp.project(default_to_root=False)
                     if ip and ip != p:
                         if show_single_file:
@@ -180,7 +187,9 @@ def compute_project_dependencies(menu):
             depends_on[p] = tmp
 
         no_source_projects = [
-            s.strip().lower() for s in Preference("Plugins/dependencies/no_src_prj").get().split(",")]
+            s.strip().lower() for s in
+            Preference("Plugins/dependencies/no_src_prj").get().split(",")
+        ]
 
         for p in depends_on:
             menu.out.set_current_project(p)
@@ -201,8 +210,6 @@ def compute_project_dependencies(menu):
         menu.out.close()
     except:
         Console().write("Unexpected exception " + traceback.format_exc())
-
-    unset_busy()
 
 
 def on_gps_started(hook):
