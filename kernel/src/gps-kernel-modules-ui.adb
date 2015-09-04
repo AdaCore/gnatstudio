@@ -51,13 +51,10 @@ with Gtk.Container;             use Gtk.Container;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Image;                 use Gtk.Image;
 with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Tool_Item;             use Gtk.Tool_Item;
 
 --  So that this type is correctly converted from C to Ada
-with Gtk.Image_Menu_Item;       use Gtk.Image_Menu_Item;
-pragma Warnings (Off, Gtk.Image_Menu_Item);
 
 with Gtk.Accel_Label;           use Gtk.Accel_Label;
 with Gtk.Label;                 use Gtk.Label;
@@ -404,7 +401,7 @@ package body GPS.Kernel.Modules.UI is
    -- Action_Menu_Item --
    ----------------------
 
-   type Action_Menu_Item_Record is new Gtk_Image_Menu_Item_Record with record
+   type Action_Menu_Item_Record is new Gtk_Menu_Item_Record with record
       Data : aliased Widget_Action_Proxy;
    end record;
    type Action_Menu_Item is access all Action_Menu_Item_Record'Class;
@@ -1336,7 +1333,6 @@ package body GPS.Kernel.Modules.UI is
       Label : Gtk_Accel_Label;
       Key   : Gdk_Key_Type;
       Mods  : Gdk_Modifier_Type;
-      Pix   : Gtk_Image;
       Action : access Action_Record;
       Data   : constant access Action_Proxy'Class := Get_Data (Self);
 
@@ -1368,16 +1364,11 @@ package body GPS.Kernel.Modules.UI is
             declare
                Icon : constant String :=  Get_Icon_Name (Action);
             begin
-               if Icon /= "" then
-                  if Self.all in Action_Menu_Item_Record'Class then
-                     Gtk_New_From_Icon_Name (Pix, Icon, Icon_Size_Menu);
-                     Action_Menu_Item (Self).Set_Image (Pix);
-                     Pix.Show;
-                  elsif Self.all in Action_Tool_Button_Record'Class
-                    and then not Action_Tool_Button (Self).Forced_Stock
-                  then
-                     Action_Tool_Button (Self).Set_Icon_Name (Icon);
-                  end if;
+               if Icon /= ""
+                 and then Self.all in Action_Tool_Button_Record'Class
+                 and then not Action_Tool_Button (Self).Forced_Stock
+               then
+                  Action_Tool_Button (Self).Set_Icon_Name (Icon);
                end if;
             end;
 
@@ -1613,7 +1604,7 @@ package body GPS.Kernel.Modules.UI is
       --  Create the menu item
       Self := new Action_Menu_Item_Record;
 
-      Gtk.Image_Menu_Item.Initialize_With_Mnemonic
+      Gtk.Menu_Item.Initialize_With_Mnemonic
         (Self, Label => Base_Menu_Name (Full_Path));
 
       Self.Data := (Action    => new String'(Action),
