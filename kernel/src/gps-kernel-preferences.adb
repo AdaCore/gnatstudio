@@ -352,6 +352,8 @@ package body GPS.Kernel.Preferences is
                Set_Error_Msg (Data, -"Invalid preference type");
                return;
             end if;
+
+            Set_Return_Value (Data, Inst);
          end;
       end if;
    end Get_Command_Handler;

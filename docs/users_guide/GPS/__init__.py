@@ -7381,6 +7381,8 @@ class Preference(object):
         :param doc: A string
         :param default: Depends on the type
         :param args: Additional parameters depending on the type
+
+        :returns: The preference itself
         """
         pass  # implemented in Ada
 
