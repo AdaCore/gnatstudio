@@ -848,7 +848,9 @@ package body Libclang.Index is
         := Addr_To_Vis_Data.To_Pointer (System.Address (UData));
    begin
       if
-         clang_Location_isFromMainFile (clang_getCursorLocation (Child)) /= 0
+        clang_Location_isFromMainFile (clang_getCursorLocation (Child)) /= 0
+        and then Semantic_Parent (Clang_Cursor (Child))
+          = Root_Cursor (clang_Cursor_getTranslationUnit (Child))
       then
          Data.Vec.Append (Clang_Cursor (Child));
       end if;
