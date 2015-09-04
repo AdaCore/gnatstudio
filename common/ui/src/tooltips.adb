@@ -28,7 +28,6 @@ with GNATCOLL.Traces;      use GNATCOLL.Traces;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Main;
-with Gtk.Settings;         use Gtk.Settings;
 with Gtk.Style_Context;    use Gtk.Style_Context;
 with Gtk.Tree_Model;       use Gtk.Tree_Model;
 with Gtk.Tree_View;        use Gtk.Tree_View;
@@ -215,7 +214,6 @@ package body Tooltips is
       Tooltip : access Tooltips'Class)
    is
       X, Y            : Gint;
-      Settings        : Gtk_Settings;
       Window, Ignored : Gdk_Window;
       Mask            : Gdk.Types.Gdk_Modifier_Type;
    begin
@@ -229,9 +227,9 @@ package body Tooltips is
          Global_Tooltip.Set_Name ("gtk-tooltip");
          Get_Style_Context (Global_Tooltip).Add_Class ("tooltip");
 
-         Settings := Gtk.Settings.Get_Default;
-         Global_Tooltip.Timeout := Int_Properties.Get_Property
-           (Settings, Int_Properties.Property (Gtk_Tooltip_Timeout_Property));
+         Global_Tooltip.Timeout := 500;
+         --  The above is now hard-coded in Gtk: gtktooltips.c:HOVER_TIMEOUT
+
          Trace (Me, "Timeout for tooltips is"
                 & Global_Tooltip.Timeout'Img);
       end if;
