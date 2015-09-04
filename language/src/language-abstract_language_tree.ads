@@ -236,6 +236,14 @@ package Language.Abstract_Language_Tree is
      with Pre'Class => (Self.Is_Valid);
    --  Return the name of node, if applicable
 
+   function Name
+     (Self : Semantic_Node'Class) return String
+   is
+     (if Self.Is_Valid
+      then Get (Self.Name).all
+      else "");
+   --  Return the name of node, if applicable
+
    function Sloc_Start
      (Self : Semantic_Node) return Sloc_T is abstract;
    --  Return the starting source location of node
