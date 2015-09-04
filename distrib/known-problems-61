@@ -35,6 +35,16 @@ KP-61-O901-029 GPS: long labels in toolbar
   Workaround: Change the preference Windows/Toolbar Style to show icons
               only.
 
+KP-61-O820-019 GPS: Exiting harness does not go back to the original project
+
+  Problem:    If you open harness for some subproject of a project tree then
+              exiting the harness causes to open this subproject instead of
+              returning to original root project.
+
+  Status:     This was fixed in 6.2 on 2015-09-04
+
+  Workaround: None
+
 KP-61-O813-040 GPS: Project editor mark tools as unavailable
 
   Problem:    In some cases project editor marks some tools for automatically

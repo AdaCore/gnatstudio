@@ -15,13 +15,16 @@ GPS.Preference("Plugins/gnattest/read_only_color"
                         """Background color for read-only areas""",
                         "#e0e0e0")
 
-last_gnattest_project = None
+last_gnattest = {
+    'project': None,  # project which gnattest run for
+    'root':    None,  # root project opened before switching to harness
+    'harness': None   # harness project name before switching to it
+}
 
 
 def run(project, target, extra_args=""):
     """ Run gnattest and switch to harness if success. """
-    global last_gnattest_project
-    last_gnattest_project = project
+    last_gnattest['project'] = project
     GPS.BuildTarget(target).execute(synchronous=False, extra_args=extra_args)
 
 
@@ -44,9 +47,11 @@ def open_harness_project(cur):
         harness_dir = "gnattest/harness"
 
     prj = os.path.join(cur.object_dirs()[0], harness_dir, "test_driver.gpr")
+    last_gnattest['root'] = GPS.Project.root().file().name()
     GPS.Project.load(prj, False, True)
     GPS.Console("Messages").write("Switched to harness project: " +
                                   GPS.Project.root().file().name() + "\n")
+    last_gnattest['harness'] = GPS.Project.root().file().name()
 
 
 def exit_harness_project():
@@ -57,11 +62,14 @@ def exit_harness_project():
         if p.name() != "AUnit":
             for d in p.dependencies():
                 if d.name() != "AUnit":
-                    user_project = d
+                    user_project = d.file().name()
                     break
 
-    GPS.Project.load(user_project.file().name(), False, True)
-    GPS.Console("Messages").write("Exit harness project: " +
+    if last_gnattest['harness'] == root_project.file().name():
+        user_project = last_gnattest['root']
+
+    GPS.Project.load(user_project, False, True)
+    GPS.Console("Messages").write("Exit harness project to: " +
                                   GPS.Project.root().file().name() + "\n")
 
 
@@ -69,15 +77,13 @@ def exit_harness_project():
 def __on_compilation_finished(category, target_name="",
                               mode_name="", status=""):
 
-    global last_gnattest_project
-
     if not target_name.startswith("GNATtest"):
         return
 
     if status:
         return
 
-    open_harness_project(last_gnattest_project)
+    open_harness_project(last_gnattest['project'])
 
 
 @hook('project_view_changed')
