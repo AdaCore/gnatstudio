@@ -389,9 +389,8 @@ package body Task_Manager.GUI is
       Dummy : Command_Return_Type;
       pragma Unreferenced (Dummy);
    begin
-      Task_Terminated_Hook.Run (GUI.Kernel, Queue_Id => Index);
-
       if GUI /= null then
+         Task_Terminated_Hook.Run (GUI.Kernel, Queue_Id => Index);
          Refresh (GUI);
          Unregister_Timeout (GUI);
       end if;
