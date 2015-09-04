@@ -34,12 +34,12 @@ with XML_Utils;                   use XML_Utils;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with Ada.Containers.Bounded_Hashed_Maps;
 with Ada.Characters.Handling;     use Ada.Characters.Handling;
-with Ada.Text_IO;                 use Ada.Text_IO;
 
 package body Outline_View.Model is
-   Me : constant Trace_Handle := Create ("OUTLINE");
 
-   use Sorted_Node_Set;
+   use Sorted_Node_Vector;
+
+   Me : constant Trace_Handle := Create ("OUTLINE");
 
    --  This array provide a way of sorting / grouping entities when order
    --  is required.
@@ -60,7 +60,7 @@ package body Outline_View.Model is
    --  Return False if the construct should be filtered out
 
    procedure Add_Recursive
-     (Model           : access Outline_Model_Record'Class;
+     (Model                : access Outline_Model_Record'Class;
       Sem_Node, Sem_Parent : Semantic_Node'Class);
    --  Add new nodes for New_Obj and its nested entities
 
@@ -76,7 +76,7 @@ package body Outline_View.Model is
    function Get_Path
      (Self : access Outline_Model_Record'Class;
       Node : Sorted_Node_Access) return Gtk.Tree_Model.Gtk_Tree_Path;
-   --  Retreives the path of a node
+   --  Retrieves the path of a node
 
    procedure Clear_Nodes
      (Model : access Outline_Model_Record'Class; Root : Sorted_Node_Access);
@@ -85,25 +85,44 @@ package body Outline_View.Model is
    function Get_Node
      (Model  : access Outline_Model_Record'Class;
       Node   : Semantic_Node'Class) return Sorted_Node_Access;
+   --  Returns the Sorted_Node_Access that corresponds to the Semantic_Node
+   --  Node
 
    function Get_Node_Next_Part
      (Model    : access Outline_Model_Record'Class;
       Node     : Semantic_Node'Class) return Sorted_Node_Access;
    --  Same as Get_Node, but for the body or full view of the entity.
 
-   function S_Unique_Id
-     (N : Semantic_Node'Class) return String
-   is
-     (N.Unique_Id & (if N.Is_Declaration then "" else "B"));
+   procedure Add_Array_Recursive
+     (Model      : access Outline_Model_Record'Class;
+      Sem_Nodes  : Semantic_Node_Array'Class;
+      Sem_Parent : Semantic_Node'Class);
 
-   function S_Unique_Id
-     (N : Semantic_Node_Info) return String;
-   function S_Unique_Id
-     (N : Semantic_Node_Info) return String
-   is
+   function S_Unique_Id (N : Semantic_Node'Class) return String
+   is (N.Unique_Id & (if N.Is_Declaration then "" else "B"));
+   --  Unique Id function that adds the information of wether the entity is a
+   --  spec or a body
+
+   function S_Unique_Id (N : Semantic_Node_Info) return String
+   is (+N.Unique_Id & (if N.Is_Decl then "" else "B"));
+   --  Unique Id function that adds the information of wether the entity is a
+   --  spec or a body
+
+   procedure Reindex (Vec  : Sorted_Node_Vector.Vector; From : Natural := 0);
+   --  Reindex every components in Vec starting at index From. Reindex
+   --  means that the Index_In_Siblings components is gonna be set to
+   --  the corresponding index in the vector
+
+   -------------
+   -- Reindex --
+   -------------
+
+   procedure Reindex (Vec  : Sorted_Node_Vector.Vector; From : Natural := 0) is
    begin
-      return +N.Unique_Id & (if N.Is_Decl then "" else "B");
-   end S_Unique_Id;
+      for I in From .. Vec.Last_Index loop
+         Vec.Element (I).Index_In_Siblings := I;
+      end loop;
+   end Reindex;
 
    --------------
    -- Get_Node --
@@ -164,7 +183,6 @@ package body Outline_View.Model is
       Node  : in out Sorted_Node_Access)
    is
       Path : constant Gtk_Tree_Path := Get_Path (Model, Node);
-      Cur  : Sorted_Node_Access;
    begin
       --  Kill the children if any
       Clear_Nodes (Model, Node);
@@ -177,25 +195,13 @@ package body Outline_View.Model is
          Model.Sem_To_Tree_Nodes.Exclude (S_Unique_Id (Node.Body_Info));
       end if;
 
-      --  Then update next siblings
-      if Node.Prev /= null then
-         Node.Prev.Next := Node.Next;
-      end if;
-
-      if Node.Next /= null then
-         Node.Next.Prev := Node.Prev;
-
-         Cur := Node.Next;
-         while Cur /= null loop
-            Cur.Index_In_Siblings := Cur.Index_In_Siblings - 1;
-            Cur := Cur.Next;
-         end loop;
-      end if;
-
-      --  Finally, free this node
+      --  Remove this node from the parent's list of children
       if Node.Parent /= null then
-         Node.Parent.Children.Delete (Node);
+         Node.Parent.Children.Delete (Node.Index_In_Siblings);
       end if;
+
+      --  Reindex the remaining children
+      Reindex (Node.Parent.Children, Node.Index_In_Siblings);
 
       --  Now unlink & destroy this node
       if Path /= Null_Gtk_Tree_Path then
@@ -273,7 +279,12 @@ package body Outline_View.Model is
    -- "<" --
    ---------
 
-   function "<" (Left, Right : Sorted_Node_Access) return Boolean is
+   function "<"
+     (L, R : Sorted_Node_Access) return Boolean
+   is
+
+      Left : Semantic_Node_Info renames Get_Info (L.all);
+      Right : Semantic_Node_Info renames Get_Info (R.all);
 
       function Compare (Left, Right : String) return Integer;
       --  Does a case-insensitive comparison, returns -1 if Left < Right, 0 if
@@ -309,27 +320,26 @@ package body Outline_View.Model is
 
       Comparison : Integer;
 
-      Left_Info  : Semantic_Node_Info renames Get_Info (Left.all);
-      Right_Info : Semantic_Node_Info renames Get_Info (Right.all);
+      function Sloc_Lt return Boolean is (Left.Sloc_Start < Right.Sloc_Start)
+        with Inline_Always;
+
    begin
-      if Left = Right then
-         return False;
-      elsif Left.Model.Filter.Sorted then
+      if L.Model.Filter.Sorted then
          --  Alphabetical sort
-         if Sort_Entities (Left_Info.Category)
-           < Sort_Entities (Right_Info.Category)
+         if Sort_Entities (Left.Category)
+           < Sort_Entities (Right.Category)
          then
             return True;
-         elsif Sort_Entities (Left_Info.Category)
-           = Sort_Entities (Right_Info.Category)
+         elsif Sort_Entities (Left.Category)
+           = Sort_Entities (Right.Category)
          then
-            Comparison := Compare (Get (Left_Info.Name).all,
-                                   Get (Right_Info.Name).all);
+            Comparison := Compare (Get (Left.Name).all,
+                                   Get (Right.Name).all);
             if Comparison = -1 then
                return True;
             elsif Comparison = 0 then
-               Comparison := Compare (S_Unique_Id (Left_Info),
-                                      S_Unique_Id (Right_Info));
+               Comparison := Compare (S_Unique_Id (Left),
+                                      S_Unique_Id (Right));
                if Comparison = -1 then
                   return True;
                elsif Comparison = 0 then
@@ -337,34 +347,62 @@ package body Outline_View.Model is
                   --  constructs, otherwise we'll have errors when adding them
                   --  to the set. If we can't do that alphabetically, then we
                   --  fall back to the sloc comparison.
-                  return Left_Info.Sloc_Start < Right_Info.Sloc_Start;
+                  return Sloc_Lt;
                end if;
             end if;
          end if;
          return False;
       else
          --  Positional sort
-         return Left_Info.Sloc_Start < Right_Info.Sloc_Start;
+         return Sloc_Lt;
       end if;
    end "<";
+
+   -------------------------
+   -- Add_Array_Recursive --
+   -------------------------
+
+   procedure Add_Array_Recursive
+     (Model      : access Outline_Model_Record'Class;
+      Sem_Nodes  : Semantic_Node_Array'Class;
+      Sem_Parent : Semantic_Node'Class) is
+   begin
+      for I in 1 .. Sem_Nodes.Length loop
+         Add_Recursive (Model, Sem_Nodes.Get (I), Sem_Parent);
+      end loop;
+   end Add_Array_Recursive;
 
    -------------------
    -- Add_Recursive --
    -------------------
 
    procedure Add_Recursive
-     (Model      : access Outline_Model_Record'Class;
-      Sem_Node,
-      Sem_Parent : Semantic_Node'Class)
+     (Model                : access Outline_Model_Record'Class;
+      Sem_Node, Sem_Parent : Semantic_Node'Class)
    is
       Parent_Node : Sorted_Node_Access;
       Root   : Sorted_Node_Access;  --  node for New_Obj
-      Dummy  : Sorted_Node_Access;
       Path   : Gtk_Tree_Path;
-      Position : Sorted_Node_Set.Cursor;
-      Inserted : Boolean;
       use Sem_Tree_Holders;
+      use Sorted_Node_Vector;
       Sem_Unique_Id : constant String := S_Unique_Id (Sem_Node);
+
+      procedure Sorted_Insert (Vec : in out Vector; El : Sorted_Node_Access);
+      --  Insert El in Vec
+      --  Pre  : Vec is sorted
+      --  Post : Vec is sorted
+
+      procedure Sorted_Insert (Vec : in out Vector; El : Sorted_Node_Access) is
+         Pos : Natural;
+      begin
+         Pos := Vec.First_Index;
+         while Pos <= Vec.Last_Index and then Vec.Element (Pos) < El loop
+            Pos := Pos + 1;
+         end loop;
+         Vec.Insert (Pos, El);
+         Reindex (Vec, Pos);
+      end Sorted_Insert;
+
    begin
       if Model = null
         or else Model.Semantic_Tree = Sem_Tree_Holders.Empty_Holder
@@ -383,29 +421,23 @@ package body Outline_View.Model is
         and then Get_Node (Model, Sem_Node) = null
       then
          if Sem_Unique_Id = "" then
-            Put_Line ("Cannot add a tree node with no Id");
+            Trace (Me, "Cannot add a tree node with no Id");
          end if;
 
-         if Model.Filter.Flat_View then
-            Parent_Node := Model.Phantom_Root'Access;
-         elsif Sem_Node.Category = Cat_With then
+         --  By default, the parent node is the phantom root
+         Parent_Node := Model.Phantom_Root'Access;
+
+         if not (Model.Filter.Flat_View or else Sem_Parent = No_Semantic_Node)
+         then
             --  Place any with-clause into top with-root node
-            Parent_Node := Model.Root_With;
-         else
-            if Sem_Parent = No_Semantic_Node then
-               Parent_Node := Model.Phantom_Root'Access;
-            else
-               Parent_Node := Get_Node (Model, Sem_Parent);
-               if Model.Filter.Group_Spec_And_Body
-                 and then Parent_Node = null
-               then
-                  Parent_Node := Get_Node_Next_Part (Model, Sem_Parent);
-               end if;
+            if Sem_Node.Category = Cat_With then
+               Parent_Node := Model.Root_With;
             end if;
 
-            if Parent_Node = null then
-               --  Parent node might have been filtered
-               Parent_Node := Model.Phantom_Root'Access;
+            Parent_Node := Get_Node (Model, Sem_Parent);
+            if Model.Filter.Group_Spec_And_Body and then Parent_Node = null
+            then
+               Parent_Node := Get_Node_Next_Part (Model, Sem_Parent);
             end if;
          end if;
 
@@ -419,23 +451,17 @@ package body Outline_View.Model is
             --  If it does exist, it means that we already have a node for this
             --  entity's counterpart in the tree, so use it.
             if Root /= null then
-               if Sem_Node.Is_Declaration then
-                  if Root.Spec_Info = No_Node_Info then
-                     Root.Spec_Info := Sem_Node.Info;
-                  else
-                     Root := null;  --  should not happen, create new node
-                  end if;
+               if
+                 Sem_Node.Is_Declaration and then Root.Spec_Info = No_Node_Info
+               then
+                  Root.Spec_Info := Sem_Node.Info;
+               elsif Root.Body_Info = No_Node_Info then
+                  Root.Body_Info := Sem_Node.Info;
                else
-                  if Root.Body_Info = No_Node_Info then
-                     Root.Body_Info := Sem_Node.Info;
-                  else
-                     Root := null;  --  should not happen, create new node
-                  end if;
+                  Root := null;  --  should not happen, create new node
                end if;
 
                if Root /= null then
-                  --  ??? Should we also update the SLOC ?
-
                   Path := Get_Path (Model, Root);
                   Row_Changed (+Model, Path, New_Iter (Root));
                   Path_Free (Path);
@@ -444,7 +470,9 @@ package body Outline_View.Model is
          end if;
 
          if Root = null then
-            Root := new Sorted_Node;
+            Root := new Sorted_Node'(Parent => Parent_Node,
+                                     Model => Outline_Model (Model),
+                                     others => <>);
 
             if Sem_Node.Is_Declaration then
                Root.Spec_Info := Sem_Node.Info;
@@ -452,46 +480,13 @@ package body Outline_View.Model is
                Root.Body_Info := Sem_Node.Info;
             end if;
 
-            Root.Parent   := Parent_Node;
-            Root.Model    := Outline_Model (Model);
+            Sorted_Insert (Root.Parent.Children, Root);
 
-            --  ??? Ordered_Index is only used to do the sorting of the
-            --  tree, perhaps we could be more efficient.
-            Insert
-              (Container => Root.Parent.Children,
-               New_Item  => Root,
-               Position  => Position,
-               Inserted  => Inserted);
+            --  Notify the model of the change
 
-            if Inserted then
-               if Previous (Position) = Sorted_Node_Set.No_Element then
-                  Root.Index_In_Siblings := 0;
-               else
-                  Dummy := Element (Previous (Position));
-                  Dummy.Next := Root;
-                  Root.Prev := Dummy;
-                  Root.Index_In_Siblings := Dummy.Index_In_Siblings + 1;
-               end if;
-
-               if Has_Element (Next (Position)) then
-                  Dummy := Element (Next (Position));
-                  Root.Next := Dummy;
-                  Dummy.Prev := Root;
-
-                  --  Adjust the indexes for the node and its siblings, to
-                  --  preserve sorting
-                  while Dummy /= null loop
-                     Dummy.Index_In_Siblings := Dummy.Index_In_Siblings + 1;
-                     Dummy := Dummy.Next;
-                  end loop;
-               end if;
-
-               --  Notify the model of the change
-
-               Path := Get_Path (Model, Root);
-               Row_Inserted (+Model, Path, New_Iter (Root));
-               Path_Free (Path);
-            end if;
+            Path := Get_Path (Model, Root);
+            Row_Inserted (+Model, Path, New_Iter (Root));
+            Path_Free (Path);
          end if;
 
          Model.Sem_To_Tree_Nodes.Include (Sem_Unique_Id, Root);
@@ -503,14 +498,7 @@ package body Outline_View.Model is
         --  If there is a text filter on the model, we want to recurse on
         --  children no matter if the current node is shown or not
       then
-         --  Then add all its children recursively
-         declare
-            A : constant Semantic_Node_Array'Class := Sem_Node.Children;
-         begin
-            for J in 1 .. A.Length loop
-               Add_Recursive (Model, A.Get (J), Sem_Node);
-            end loop;
-         end;
+         Add_Array_Recursive (Model, Sem_Node.Children, Sem_Node);
       end if;
 
    end Add_Recursive;
@@ -524,57 +512,37 @@ package body Outline_View.Model is
       Sem_Tree : Semantic_Tree'Class;
       Filter   : Tree_Filter)
    is
-      procedure Add_Root_With;
-      --  Create Root_With node and append it to model
-
-      -------------------
-      -- Add_Root_With --
-      -------------------
-
-      procedure Add_Root_With is
-         Path   : Gtk_Tree_Path;
-      begin
-         if Model.Filter.Hide_Withes then
-            return;
-         end if;
-
-         Model.Root_With := new Sorted_Node;
-         Model.Root_With.Parent := Model.Phantom_Root'Access;
-         Model.Root_With.Model := Outline_Model (Model);
-         Model.Root_With.Index_In_Siblings := 0;
-         Model.Root_With.Body_Info.Category := Cat_With;
-
-         Insert
-           (Container => Model.Phantom_Root.Children,
-            New_Item  => Model.Root_With);
-
-         Path := Get_Path (Model, Model.Root_With);
-         Row_Inserted (+Model, Path, New_Iter (Model.Root_With));
-         Path_Free (Path);
-      end Add_Root_With;
-
+      Path : Gtk_Tree_Path;
    begin
 
       --  First delete the nodes, with the previous filters, otherwise we might
       --  be changing the ordering and therefore all operations on .Children
       --  would not find the nodes and clearing the tree would not work well.
       Model.Clear_Nodes (Model.Phantom_Root'Access);
-
       Model.Filter := Filter;
-      Add_Root_With;
-
       Model.Semantic_Tree := Sem_Tree_Holders.To_Holder (Sem_Tree);
       if Sem_Tree = No_Semantic_Tree then
          return;
       end if;
 
-      declare
-         A : constant Semantic_Node_Array'Class := Sem_Tree.Root_Nodes;
-      begin
-         for J in 1 .. A.Length loop
-            Add_Recursive (Model, A.Get (J), No_Semantic_Node);
-         end loop;
-      end;
+      --  Create Root_With node and append it to model
+      if not Model.Filter.Hide_Withes then
+
+         Model.Root_With :=
+           new Sorted_Node'(Parent => Model.Phantom_Root'Access,
+                            Model => Outline_Model (Model),
+                            Index_In_Siblings => 0, others => <>);
+
+         Model.Root_With.Body_Info.Category := Cat_With;
+
+         Model.Phantom_Root.Children.Append (Model.Root_With);
+
+         Path := Get_Path (Model, Model.Root_With);
+         Row_Inserted (+Model, Path, New_Iter (Model.Root_With));
+         Path_Free (Path);
+      end if;
+
+      Add_Array_Recursive (Model, Sem_Tree.Root_Nodes, No_Semantic_Node);
    end Set_Tree;
 
    --------------
@@ -592,11 +560,7 @@ package body Outline_View.Model is
 
    overriding function Get_N_Columns
      (Self : access Outline_Model_Record) return Glib.Gint
-   is
-      pragma Unreferenced (Self);
-   begin
-      return 3;
-   end Get_N_Columns;
+   is (3);
 
    ---------------------
    -- Get_Column_Type --
@@ -605,19 +569,7 @@ package body Outline_View.Model is
    overriding function Get_Column_Type
      (Self  : access Outline_Model_Record;
       Index : Glib.Gint) return Glib.GType
-   is
-      pragma Unreferenced (Self);
-   begin
-      if Index = Spec_Pixbuf_Column then
-         return GType_String;
-      elsif Index = Body_Pixbuf_Column then
-         return GType_String;
-      elsif Index = Display_Name_Column then
-         return GType_String;
-      end if;
-
-      return GType_String;
-   end Get_Column_Type;
+   is (GType_String);
 
    --------------
    -- Get_Iter --
@@ -776,11 +728,15 @@ package body Outline_View.Model is
       Iter : in out Gtk.Tree_Model.Gtk_Tree_Iter)
    is
       pragma Unreferenced (Self);
+      SN : constant Sorted_Node_Access := Get_Sorted_Node (Iter);
    begin
-      if Iter = Null_Iter then
-         Iter := Null_Iter;
-      else
-         Iter := New_Iter (Get_Sorted_Node (Iter).Next);
+      Iter := Null_Iter;
+
+      if SN /= null
+        and then SN /= SN.Parent.Children.Last_Element
+      then
+         Iter := New_Iter
+           (SN.Parent.Children.Element (SN.Index_In_Siblings + 1));
       end if;
 
    exception
@@ -799,7 +755,7 @@ package body Outline_View.Model is
       return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       Node : Sorted_Node_Access;
-      C    : Sorted_Node_Set.Cursor;
+      C    : Sorted_Node_Vector.Cursor;
    begin
       if Parent = Null_Iter then
          Node := Self.Phantom_Root'Access;
@@ -858,7 +814,7 @@ package body Outline_View.Model is
       Node  : Sorted_Node_Access;
       Nth   : Gint) return Sorted_Node_Access
    is
-      C : Sorted_Node_Set.Cursor;
+      C : Sorted_Node_Vector.Cursor;
    begin
       if Node = null then
          C := Model.Phantom_Root.Children.First;
@@ -1030,18 +986,18 @@ package body Outline_View.Model is
    is
 
       procedure Update_Nodes
-        (Model_Nodes : Sorted_Node_Set.Set;
+        (Model_Nodes : Sorted_Node_Vector.Vector;
          Sem_Nodes : Semantic_Node_Array'Class;
          Sem_Parent : Semantic_Node'Class);
 
       procedure Update_Nodes
-        (Model_Nodes : Sorted_Node_Set.Set;
+        (Model_Nodes : Sorted_Node_Vector.Vector;
          Sem_Nodes : Semantic_Node_Array'Class;
          Sem_Parent : Semantic_Node'Class)
       is
          New_Nodes : array (1 .. Sem_Nodes.Length) of Boolean
            := (others => True);
-         C   : Sorted_Node_Set.Cursor;
+         C   : Sorted_Node_Vector.Cursor;
          To_Remove_Nodes : Sorted_Node_Vector.Vector;
 
          function Hash (H : Hash_Type) return Hash_Type is (H);
@@ -1117,8 +1073,9 @@ package body Outline_View.Model is
             Next (C);
          end loop;
 
-         for I in 1 .. To_Remove_Nodes.Length loop
-            Clean_Node (Outline_Model (Model), To_Remove_Nodes (Positive (I)));
+         for I in To_Remove_Nodes.First_Index .. To_Remove_Nodes.Last_Index
+         loop
+            Clean_Node (Outline_Model (Model), To_Remove_Nodes (I));
          end loop;
 
          for I in 1 .. Sem_Nodes.Length loop

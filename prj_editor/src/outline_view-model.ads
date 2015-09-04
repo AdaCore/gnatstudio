@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Ordered_Sets;
 with GPS.Search;
 
 with Glib;                       use Glib;
@@ -86,7 +85,6 @@ private package Outline_View.Model is
    type Sorted_Node is private;
 
    type Sorted_Node_Access is access all Sorted_Node;
-   pragma No_Strict_Aliasing (Sorted_Node_Access);
 
    function Get_Info (S : Sorted_Node) return Semantic_Node_Info;
 
@@ -185,27 +183,17 @@ private package Outline_View.Model is
 
 private
 
-   function "<" (Left, Right : Sorted_Node_Access) return Boolean;
+   function "<" (L, R : Sorted_Node_Access) return Boolean;
 
    package Sorted_Node_Vector is new
-     Ada.Containers.Vectors (Positive, Sorted_Node_Access);
-
-   package Sorted_Node_Set is new
-     Ada.Containers.Ordered_Sets (Sorted_Node_Access, "<");
+     Ada.Containers.Vectors (Natural, Sorted_Node_Access);
 
    type Sorted_Node is record
       Spec_Info, Body_Info : Semantic_Node_Info := No_Node_Info;
-      --  A node might be associated to up to two construct entities (the
-      --  spec and the body of an Ada entity). We keep pointers to these so
-      --  that the node is only freed when both entities are freed, but kept
-      --  if only one of them changes (for instance adding a parameter to a
-      --  spec creates a new construct entity, and thus a new node, but we
-      --  should still preserve the original node for the body).
-      --
-      --  Either of these might be null, but not both. When not grouping
-      --  spec and body, the body will always be null.
+      --  A node might be associated to up to two entities (the spec and the
+      --  body of an entity). Here we keep the persistent info about those
+      --  entities
 
-      Prev, Next   : Sorted_Node_Access;
       Parent : Sorted_Node_Access;
 
       Index_In_Siblings : Integer := -1;
@@ -213,7 +201,7 @@ private
 
       Model : Outline_Model;
 
-      Children : Sorted_Node_Set.Set;
+      Children : Sorted_Node_Vector.Vector;
    end record;
 
    function Get_Info (S : Sorted_Node) return Semantic_Node_Info is
@@ -235,6 +223,7 @@ private
       Phantom_Root      : aliased Sorted_Node;
       --  This is a 'dummy' root, not in the model. Actual roots are children
       --  of that node.
+
       Root_With         : Sorted_Node_Access;
       --  Container for with clauses.
 
