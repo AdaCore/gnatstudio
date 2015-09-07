@@ -4403,12 +4403,12 @@ package body Debugger.Gdb is
             new String'
               (Send (Debugger, "info wtx threads", Mode => Internal));
 
-         if Debugger.WTX_List'Length > Undefined_Info_Command'Length
-           and then
-             Debugger.WTX_List
-               (Debugger.WTX_List'First
-                 .. Debugger.WTX_List'First + Undefined_Command'Length - 1)
-              = Undefined_Command
+         if Starts_With (Debugger.WTX_List.all, Undefined_Info_Command)
+           or else
+             Starts_With (Debugger.WTX_List.all, Undefined_Command)
+           or else
+             Starts_With (Debugger.WTX_List.all,
+                          "warning: Unexpected arguments")
          then
             Free (Debugger.WTX_List);
             Debugger.WTX_List :=
