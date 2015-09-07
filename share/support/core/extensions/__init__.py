@@ -1,4 +1,3 @@
-from extensions.private.xml import X
 from GPS import *
 import GPS
 
@@ -59,7 +58,7 @@ class EditorBuffer(object):
 
         .. seealso:: :func:`GPS.EditorBuffer.delete`
         """
-        if isinstance(loc_or_text, EditorLocation):
+        if isinstance(loc_or_text, GPS.EditorLocation):
             assert isinstance(text, str) or isinstance(text, unicode)
             self._insert_at_location(loc_or_text, text)
         else:
@@ -67,6 +66,73 @@ class EditorBuffer(object):
             assert isinstance(text, str) or isinstance(text, unicode)
             self._insert_at_location(self.current_view().cursor(),
                                      loc_or_text)
+
+    def entity_under_cursor(self):
+        """
+        Shortcut to return a :class:`GPS.Entity` instance corresponding to the
+        entity under cursor
+
+        :rtype: :class:`GPS.Entity`
+        """
+        return self.main_cursor().location().entity()
+
+
+@extend_gps
+class Cursor(object):
+    def location(self):
+        """
+        Returns the cursor's location
+        :rtype: :class:`GPS.EditorLocation`
+        """
+        return self.mark().location()
+
+
+@extend_gps
+class EditorLocation(object):
+    def get_word(self):
+        """
+        This will return the word that contains this location, if there
+        is one, the empty string otherwise. This is a shortcut method that uses
+        the inside_word, starts_word and ends_word methods of
+        `GPS.EditorLocation`.
+
+        :returns: A tuple (word, start location, end location)
+        :rtype: (unicode,
+                 :class:`GPS.EditorLocation`, :class:`GPS.EditorLocation`)
+        """
+
+        word = ""
+        start_loc = None
+        end_loc = None
+
+        if self.inside_word():
+            start_loc = self
+            while not start_loc.starts_word():
+                start_loc = start_loc.forward_char(-1)
+
+            end_loc = self
+            while not end_loc.ends_word():
+                end_loc = end_loc.forward_char()
+
+            word = self.buffer().get_chars(start_loc, end_loc).strip()
+            word = word.decode("utf8")  # make unicode-string
+
+        return word, start_loc, end_loc
+
+    def entity(self):
+        """
+        Returns a :class:`GPS.Entity` instance at the given location.
+
+        If there is no entity that can be resolved at this location, returns None
+
+        :rtype: :class:`GPS.Entity`
+        """
+        try:
+            word, start_loc, end_loc = self.get_word()
+            return GPS.Entity(word, self.buffer().file(),
+                              start_loc.line(), start_loc.column())
+        except Exception:
+            return None
 
 
 @extend_gps

@@ -424,6 +424,8 @@ Classes
 
    .. automethod:: GPS.Cursor.__init__
 
+   .. automethod:: GPS.Cursor.location
+
    .. automethod:: GPS.Cursor.mark
 
    .. automethod:: GPS.Cursor.move
@@ -619,6 +621,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.end_of_buffer
 
+   .. automethod:: GPS.EditorBuffer.entity_under_cursor
+
    .. automethod:: GPS.EditorBuffer.expand_alias
 
    .. automethod:: GPS.EditorBuffer.file
@@ -737,6 +741,8 @@ Classes
 
    .. automethod:: GPS.EditorLocation.ends_word
 
+   .. automethod:: GPS.EditorLocation.entity
+
    .. automethod:: GPS.EditorLocation.forward_char
 
    .. automethod:: GPS.EditorLocation.forward_line
@@ -748,6 +754,8 @@ Classes
    .. automethod:: GPS.EditorLocation.get_char
 
    .. automethod:: GPS.EditorLocation.get_overlays
+
+   .. automethod:: GPS.EditorLocation.get_word
 
    .. automethod:: GPS.EditorLocation.has_overlay
 
