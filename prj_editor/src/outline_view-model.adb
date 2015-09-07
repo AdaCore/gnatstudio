@@ -33,7 +33,7 @@ with Language.Icons;              use Language.Icons;
 with XML_Utils;                   use XML_Utils;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with Ada.Containers.Bounded_Hashed_Maps;
-with Ada.Characters.Handling;     use Ada.Characters.Handling;
+with Ada.Strings.Less_Case_Insensitive;
 
 package body Outline_View.Model is
 
@@ -225,62 +225,35 @@ package body Outline_View.Model is
 
    function Construct_Filter
      (Model : not null access Outline_Model_Record'Class;
-      Node  : Semantic_Node'Class) return Boolean is
-   begin
-      --  No "with", "use", "#include"
-      --  No constructs ("loop", "if", ...)
+      Node  : Semantic_Node'Class) return Boolean
+   is (
+       --  Don't show entities with no name
+       Node.Name /= No_Symbol
 
-      case Node.Category is
-         when Cat_Package .. Cat_Entry
-            | Cat_Field | Cat_Variable
-            | Type_Category =>
+       --  Static category filter
+       and then (Node.Category in Cat_Package .. Cat_Entry
+                   | Cat_Field | Cat_Variable | Type_Category | Cat_With)
 
-            if Model.Filter.Hide_Types
-              and then Node.Category in Type_Category
-            then
-               return False;
-            end if;
+       --  Dynamic category filters
+       and then not
+         ((Node.Category in Type_Category and then Model.Filter.Hide_Types)
+          or else
+            (Node.Category in Data_Category
+             and then Model.Filter.Hide_Objects)
+          or else
+            (Node.Category in Cat_Task | Cat_Protected
+             and then Model.Filter.Hide_Tasks)
+          or else
+            (Node.Category in Subprogram_Category
+             and then Node.Is_Declaration
+             and then Model.Filter.Hide_Declarations)
+          or else
+            (Node.Category = Cat_With and then Model.Filter.Hide_Withes))
 
-            if Model.Filter.Hide_Objects
-              and then Node.Category in Data_Category
-            then
-               return False;
-            end if;
-
-            if Model.Filter.Hide_Tasks
-              and then (Node.Category = Cat_Task
-                          or Node.Category = Cat_Protected)
-            then
-               return False;
-            end if;
-
-            if Node.Category in Subprogram_Category
-              and then Model.Filter.Hide_Declarations
-              and then Node.Is_Declaration
-            then
-               return False;
-            end if;
-
-         when Cat_With =>
-            if Model.Filter.Hide_Withes then
-               return False;
-            end if;
-
-         when others =>
-            return False;
-      end case;
-
-      if Node.Name = No_Symbol then
-         return False;
-      end if;
-
-      if Model.Filter_Pattern /= null then
-         return Model.Filter_Pattern.Start
-           (Get (Node.Name).all) /= No_Match;
-      end if;
-
-      return True;
-   end Construct_Filter;
+       --  Filter entities by name if the user has entered such a filter
+       and then (Model.Filter_Pattern = null or else
+                 Model.Filter_Pattern.Start
+                   (Get (Node.Name).all) /= No_Match));
 
    ---------
    -- "<" --
@@ -289,79 +262,30 @@ package body Outline_View.Model is
    function "<"
      (L, R : Sorted_Node_Access) return Boolean
    is
-
       Left : Semantic_Node_Info renames Get_Info (L.all);
       Right : Semantic_Node_Info renames Get_Info (R.all);
 
-      function Compare (Left, Right : String) return Integer;
-      --  Does a case-insensitive comparison, returns -1 if Left < Right, 0 if
-      --  equals, 1 if Left > Right.
-
-      -------------
-      -- Compare --
-      -------------
-
-      function Compare (Left, Right : String) return Integer is
-         Left_I, Right_I : Integer;
-      begin
-         Left_I := Left'First;
-         Right_I := Right'First;
-
-         loop
-            if Left_I <= Left'Last and then Right_I > Right'Last then
-               return 1;
-            elsif Left_I > Left'Last and then Right_I <= Right'Last then
-               return -1;
-            elsif Left_I > Left'Last and then Right_I > Right'Last then
-               return 0;
-            elsif To_Lower (Left (Left_I)) < To_Lower (Right (Right_I)) then
-               return -1;
-            elsif To_Lower (Left (Left_I)) > To_Lower (Right (Right_I)) then
-               return 1;
-            end if;
-
-            Left_I := Left_I + 1;
-            Right_I := Right_I + 1;
-         end loop;
-      end Compare;
-
-      Comparison : Integer;
-
-      function Sloc_Lt return Boolean is (Left.Sloc_Start < Right.Sloc_Start)
-        with Inline_Always;
-
+      function Less_Than
+        (L, R : String) return Boolean
+         renames Ada.Strings.Less_Case_Insensitive;
    begin
       if L.Model.Filter.Sorted then
          --  Alphabetical sort
-         if Sort_Entities (Left.Category)
-           < Sort_Entities (Right.Category)
+         if Sort_Entities (Left.Category) < Sort_Entities (Right.Category)
          then
             return True;
-         elsif Sort_Entities (Left.Category)
-           = Sort_Entities (Right.Category)
+         elsif Sort_Entities (Left.Category) = Sort_Entities (Right.Category)
          then
-            Comparison := Compare (Get (Left.Name).all,
-                                   Get (Right.Name).all);
-            if Comparison = -1 then
+            if Left.Name = Right.Name then
+               return Less_Than (S_Unique_Id (Left), S_Unique_Id (Right));
+            elsif Less_Than (Get (Left.Name).all, Get (Right.Name).all) then
                return True;
-            elsif Comparison = 0 then
-               Comparison := Compare (S_Unique_Id (Left),
-                                      S_Unique_Id (Right));
-               if Comparison = -1 then
-                  return True;
-               elsif Comparison = 0 then
-                  --  We need to have a clear and definite way to differenciate
-                  --  constructs, otherwise we'll have errors when adding them
-                  --  to the set. If we can't do that alphabetically, then we
-                  --  fall back to the sloc comparison.
-                  return Sloc_Lt;
-               end if;
             end if;
          end if;
          return False;
       else
          --  Positional sort
-         return Sloc_Lt;
+         return Left.Sloc_Start < Right.Sloc_Start;
       end if;
    end "<";
 
