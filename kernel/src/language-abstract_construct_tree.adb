@@ -178,12 +178,30 @@ package body Language.Abstract_Construct_Tree is
       return Get_Construct (Self).Category;
    end Category;
 
+   ----------
+   -- Sort --
+   ----------
+
+   overriding procedure Sort
+     (Self : in out Construct_Node_Array;
+      Less_Than : access function (L, R : Semantic_Node'Class) return Boolean)
+   is
+      function "<" (L, R : Construct_Node) return Boolean
+      is (Less_Than (Semantic_Node'Class (L), Semantic_Node'Class (R)));
+
+      package Gen_Sort is new Construct_Node_Vectors.Generic_Sorting;
+
+   begin
+      Gen_Sort.Sort (Self.Nodes);
+   end Sort;
+
    --------------
    -- Children --
    --------------
 
    overriding function Children
-     (Self : Construct_Node) return Semantic_Node_Array'Class
+     (Self : Construct_Node)
+      return Semantic_Node_Array'Class
    is
       Self_It, It : Construct_Tree_Iterator;
       T : constant Construct_Tree := Get_Tree (Self.Construct_File);

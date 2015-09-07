@@ -34,12 +34,19 @@ with XML_Utils;                   use XML_Utils;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with Ada.Containers.Bounded_Hashed_Maps;
 with Ada.Strings.Less_Case_Insensitive;
+with Ada.Calendar; use Ada.Calendar;
 
 package body Outline_View.Model is
 
    use Sorted_Node_Vector;
 
    Me : constant Trace_Handle := Create ("OUTLINE");
+
+   Sort_Nodes_Threshold : constant := 1000;
+   --  Above a certain threshold, using Sorted_Insert to insert new nodes in
+   --  the outline tree becomes slower than sorting the children beforehand.
+   --  This is an heuristically determined threshold that has shown to give
+   --  good performance
 
    --  This array provide a way of sorting / grouping entities when order
    --  is required.
@@ -61,7 +68,8 @@ package body Outline_View.Model is
 
    procedure Add_Recursive
      (Model                : access Outline_Model_Record'Class;
-      Sem_Node, Sem_Parent : Semantic_Node'Class);
+      Sem_Node, Sem_Parent : Semantic_Node'Class;
+      Sort                 : Boolean := True);
    --  Add new nodes for New_Obj and its nested entities
 
    function New_Iter (Iter : Sorted_Node_Access) return Gtk_Tree_Iter;
@@ -124,6 +132,10 @@ package body Outline_View.Model is
      with Inline_Always;
    --  Helper for the semantic_tree_node to sorted node maps, that will return
    --  the element if it exists, or null
+
+   function Lt
+     (Left, Right : Semantic_Node_Info; Sorted : Boolean) return Boolean;
+   --  Less_Than comparison for Semantic_Node_Infos
 
    -------------
    -- Reindex --
@@ -255,39 +267,40 @@ package body Outline_View.Model is
                  Model.Filter_Pattern.Start
                    (Get (Node.Name).all) /= No_Match));
 
+   --------
+   -- Lt --
+   --------
+
+   function Lt
+     (Left, Right : Semantic_Node_Info; Sorted : Boolean) return Boolean
+   is
+      function Less_Than
+        (L, R : String) return Boolean
+         renames Ada.Strings.Less_Case_Insensitive;
+   begin
+      if Sorted then
+         --  Alphabetical sort
+         return Sort_Entities (Left.Category) < Sort_Entities (Right.Category)
+           or else
+             (Sort_Entities (Left.Category) = Sort_Entities (Right.Category)
+              and then
+                ((Left.Name = Right.Name and then
+                Less_Than (S_Unique_Id (Left), S_Unique_Id (Right)))
+                 or else
+                 Less_Than (Get (Left.Name).all, Get (Right.Name).all)));
+      else
+         --  Positional sort
+         return Left.Sloc_Start < Right.Sloc_Start;
+      end if;
+   end Lt;
+
    ---------
    -- "<" --
    ---------
 
    function "<"
      (L, R : Sorted_Node_Access) return Boolean
-   is
-      Left : Semantic_Node_Info renames Get_Info (L.all);
-      Right : Semantic_Node_Info renames Get_Info (R.all);
-
-      function Less_Than
-        (L, R : String) return Boolean
-         renames Ada.Strings.Less_Case_Insensitive;
-   begin
-      if L.Model.Filter.Sorted then
-         --  Alphabetical sort
-         if Sort_Entities (Left.Category) < Sort_Entities (Right.Category)
-         then
-            return True;
-         elsif Sort_Entities (Left.Category) = Sort_Entities (Right.Category)
-         then
-            if Left.Name = Right.Name then
-               return Less_Than (S_Unique_Id (Left), S_Unique_Id (Right));
-            elsif Less_Than (Get (Left.Name).all, Get (Right.Name).all) then
-               return True;
-            end if;
-         end if;
-         return False;
-      else
-         --  Positional sort
-         return Left.Sloc_Start < Right.Sloc_Start;
-      end if;
-   end "<";
+   is (Lt (Get_Info (L.all), Get_Info (R.all), L.Model.Filter.Sorted));
 
    -------------------------
    -- Add_Array_Recursive --
@@ -296,11 +309,29 @@ package body Outline_View.Model is
    procedure Add_Array_Recursive
      (Model      : access Outline_Model_Record'Class;
       Sem_Nodes  : Semantic_Node_Array'Class;
-      Sem_Parent : Semantic_Node'Class) is
+      Sem_Parent : Semantic_Node'Class)
+   is
    begin
-      for I in 1 .. Sem_Nodes.Length loop
-         Add_Recursive (Model, Sem_Nodes.Get (I), Sem_Parent);
-      end loop;
+      if Sem_Nodes.Length > Sort_Nodes_Threshold then
+         --  Above a certain threshold, we want to sort the array before
+         --  inserting
+         declare
+            N_Sem_Nodes : Semantic_Node_Array'Class := Sem_Nodes;
+
+            function "<"  (L, R : Semantic_Node'Class) return Boolean
+            is (Lt (L.Info, R.Info, Model.Filter.Sorted));
+         begin
+            N_Sem_Nodes.Sort ("<"'Access);
+            for I in 1 .. Sem_Nodes.Length loop
+               Add_Recursive (Model, N_Sem_Nodes.Get (I), Sem_Parent,
+                              Sort => False);
+            end loop;
+         end;
+      else
+         for I in 1 .. Sem_Nodes.Length loop
+            Add_Recursive (Model, Sem_Nodes.Get (I), Sem_Parent);
+         end loop;
+      end if;
    end Add_Array_Recursive;
 
    -------------------
@@ -309,7 +340,8 @@ package body Outline_View.Model is
 
    procedure Add_Recursive
      (Model                : access Outline_Model_Record'Class;
-      Sem_Node, Sem_Parent : Semantic_Node'Class)
+      Sem_Node, Sem_Parent : Semantic_Node'Class;
+      Sort                 : Boolean := True)
    is
       Parent_Node : Sorted_Node_Access;
       Root   : Sorted_Node_Access;  --  node for New_Obj
@@ -411,7 +443,13 @@ package body Outline_View.Model is
                Root.Body_Info := Sem_Node.Info;
             end if;
 
-            Sorted_Insert (Root.Parent.Children, Root);
+            if Sort then
+               Sorted_Insert (Root.Parent.Children, Root);
+            else
+               Root.Parent.Children.Append (Root);
+               Root.Index_In_Siblings :=
+                 Integer (Root.Parent.Children.Length - 1);
+            end if;
 
             --  Notify the model of the change
 
@@ -444,6 +482,7 @@ package body Outline_View.Model is
       Filter   : Tree_Filter)
    is
       Path : Gtk_Tree_Path;
+      T : constant Time := Clock;
    begin
 
       --  First delete the nodes, with the previous filters, otherwise we might
@@ -474,6 +513,8 @@ package body Outline_View.Model is
       end if;
 
       Add_Array_Recursive (Model, Sem_Tree.Root_Nodes, No_Semantic_Node);
+      Trace
+        (Me, "Time elapsed to compute outline: " & Duration'Image (Clock - T));
    end Set_Tree;
 
    --------------

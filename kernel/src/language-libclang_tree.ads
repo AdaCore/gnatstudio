@@ -112,7 +112,8 @@ package Language.Libclang_Tree is
      (Self : Clang_Node) return Semantic_Node'Class;
 
    overriding function Children
-     (Self : Clang_Node) return Semantic_Node_Array'Class;
+     (Self : Clang_Node)
+   return Semantic_Node_Array'Class;
 
    overriding function First_Child
      (Self : Clang_Node) return Semantic_Node'Class;
@@ -201,5 +202,9 @@ private
 
    overriding function Length (Self : Clang_Node_Array) return Natural is
      (Natural (Self.Nodes.Element'Length));
+
+   overriding procedure Sort
+     (Self : in out Clang_Node_Array;
+      Less_Than : access function (L, R : Semantic_Node'Class) return Boolean);
 
 end Language.Libclang_Tree;

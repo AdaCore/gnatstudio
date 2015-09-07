@@ -104,7 +104,8 @@ package Language.Abstract_Construct_Tree is
      (Self : Construct_Node) return Semantic_Node'Class;
 
    overriding function Children
-     (Self : Construct_Node) return Semantic_Node_Array'Class;
+     (Self : Construct_Node)
+      return Semantic_Node_Array'Class;
 
    overriding function First_Child
      (Self : Construct_Node) return Semantic_Node'Class;
@@ -174,5 +175,9 @@ private
 
    overriding function Length (Self : Construct_Node_Array) return Natural is
      (Natural (Self.Nodes.Length));
+
+   overriding procedure Sort
+     (Self : in out Construct_Node_Array;
+      Less_Than : access function (L, R : Semantic_Node'Class) return Boolean);
 
 end Language.Abstract_Construct_Tree;

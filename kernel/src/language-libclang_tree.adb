@@ -17,6 +17,7 @@
 
 with Interfaces.C; use Interfaces.C;
 with String_Utils;
+with Ada.Containers.Generic_Array_Sort;
 
 package body Language.Libclang_Tree is
 
@@ -313,7 +314,8 @@ package body Language.Libclang_Tree is
    --------------
 
    overriding function Children
-     (Self : Clang_Node) return Semantic_Node_Array'Class
+     (Self : Clang_Node)
+      return Semantic_Node_Array'Class
    is
       C : constant Cursors_Arrays.Array_Type := Get_Children (Self.Cursor);
    begin
@@ -572,5 +574,25 @@ package body Language.Libclang_Tree is
    begin
       return Not_Empty_Clang_Cursor;
    end Has_Element;
+
+   ----------
+   -- Sort --
+   ----------
+
+   overriding procedure Sort
+     (Self : in out Clang_Node_Array;
+      Less_Than : access function (L, R : Semantic_Node'Class) return Boolean)
+   is
+      function "<" (L, R : Clang_Cursor) return Boolean
+      is (Less_Than
+          (Semantic_Node'Class (Clang_Node'(Self.Kernel, L, Self.File)),
+           Semantic_Node'Class (Clang_Node'(Self.Kernel, R, Self.File))));
+
+      procedure Gen_Sort is new Ada.Containers.Generic_Array_Sort
+        (Positive, Clang_Cursor, Cursors_Arrays.Array_Type);
+
+   begin
+      Gen_Sort (Self.Nodes.Reference);
+   end Sort;
 
 end Language.Libclang_Tree;

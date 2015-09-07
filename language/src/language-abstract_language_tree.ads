@@ -141,9 +141,18 @@ package Language.Abstract_Language_Tree is
      (Cat_Unknown, No_Symbol, Null_Unbounded_String,
       Null_Unbounded_String, False, Visibility_Public, (0, 0, 0), (0, 0, 0));
 
+   type Sort_Pred is
+     access function (L, R : Semantic_Node'Class) return Boolean;
+
    ----------------------------------------
    -- Primitives for Semantic_Node_Array --
    ----------------------------------------
+
+   procedure Sort
+     (Self : in out Semantic_Node_Array;
+      Less_Than : access function (L, R : Semantic_Node'Class) return Boolean)
+   is abstract;
+   --  Sort the node array using Less_Than as an order function
 
    function Get
      (Self : Semantic_Node_Array; Index : Positive) return Semantic_Node'Class
@@ -219,7 +228,7 @@ package Language.Abstract_Language_Tree is
    --  Wether the node is a declaration or not
 
    function Children
-     (Self : Semantic_Node) return Semantic_Node_Array'Class
+     (Self      : Semantic_Node) return Semantic_Node_Array'Class
       is abstract
      with Pre'Class => (Self.Is_Valid);
    --  Return a collection of children of node
@@ -343,7 +352,12 @@ private
 
    overriding function Length
      (Self : Dummy_Semantic_Node_Array) return Natural
-      is (0);
+   is (0);
+
+   overriding procedure Sort
+     (Self : in out Dummy_Semantic_Node_Array;
+      Less_Than : access function (L, R : Semantic_Node'Class) return Boolean)
+   is null;
 
    -------------------------
    -- Dummy_Semantic_Node --
