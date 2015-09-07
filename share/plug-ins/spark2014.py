@@ -1212,7 +1212,17 @@ class GNATprove_Parser(tool_output.OutputParser):
     def build_msg_full_text(self, file, line, col, text):
         """Given a msg text and location, return the string
            "file:line:col:msg"
+           Note that the returned text must be identical to the text that is
+           produced by GNATprove - this  text is used to match the message
+           produced by GNATprove and extra information about this message
+           stored in *.spark file. See on_stdout and on_exit.
         """
+        str_col = str(col)
+
+        # In the message produced by GNATprove, '0' is always prepended
+        # to column number that is less than 10. Do it also here.
+        if col < 10:
+            str_col = '0' + str_col
         return file + ':' + str(line) + ':' + str(col) + ': ' + text
 
     def pass_output(self, text, command):
@@ -1334,7 +1344,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                                extra['vc_file'] + "\n")
 
     def on_exit(self, status, command):
-        """When gnatprove has finished, scan through messages to see if extra
+        """When GNATprove has finished, scan through messages to see if extra
            info has been attached to them. If so, parse the .flow and .proof
            files of the corresponding unit to get the extra info, and act on
            the extra info"""
@@ -1367,7 +1377,7 @@ class GNATprove_Parser(tool_output.OutputParser):
             self.child.on_exit(status, command)
 
     def on_stdout(self, text, command):
-        """for each gnatprove message, check for a msg_id tag of the form
+        """for each GNATprove message, check for a msg_id tag of the form
            [#id] where id is a number. If no such tag is found, just pass the
            text on to the next parser. Otherwise, add a mapping
               msg text -> msg id
