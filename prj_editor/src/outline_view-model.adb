@@ -113,6 +113,18 @@ package body Outline_View.Model is
    --  means that the Index_In_Siblings components is gonna be set to
    --  the corresponding index in the vector
 
+   procedure Clean_Node
+     (Model : Outline_Model; Node  : in out Sorted_Node_Access);
+   --  Completely clean the node, eg.:
+   --  - Recursively clean every child of node
+   --  - Free node
+
+   function Element_Or_Null
+     (Map : Sem_To_Tree_Maps.Map; Key : String) return Sorted_Node_Access
+     with Inline_Always;
+   --  Helper for the semantic_tree_node to sorted node maps, that will return
+   --  the element if it exists, or null
+
    -------------
    -- Reindex --
    -------------
@@ -124,6 +136,19 @@ package body Outline_View.Model is
       end loop;
    end Reindex;
 
+   ---------------------
+   -- Element_Or_Null --
+   ---------------------
+
+   function Element_Or_Null
+     (Map : Sem_To_Tree_Maps.Map; Key : String) return Sorted_Node_Access
+   is
+      use Sem_To_Tree_Maps;
+      C : constant Sem_To_Tree_Maps.Cursor := Map.Find (Key);
+   begin
+      return (if Has_Element (C) then Element (C) else null);
+   end Element_Or_Null;
+
    --------------
    -- Get_Node --
    --------------
@@ -132,12 +157,7 @@ package body Outline_View.Model is
      (Model  : access Outline_Model_Record'Class;
       Node     : Semantic_Node'Class) return Sorted_Node_Access
    is
-      use Sem_To_Tree_Maps;
-      C : constant Sem_To_Tree_Maps.Cursor := Model.Sem_To_Tree_Nodes.Find
-        (S_Unique_Id (Node));
-   begin
-      return (if C = Sem_To_Tree_Maps.No_Element then null else Element (C));
-   end Get_Node;
+     (Element_Or_Null (Model.Sem_To_Tree_Nodes, S_Unique_Id (Node)));
 
    ------------------------
    -- Get_Node_Next_Part --
@@ -150,29 +170,16 @@ package body Outline_View.Model is
       C : constant Semantic_Node'Class := Node.Definition;
    begin
       if Model.Filter.Group_Spec_And_Body
-        and then C.Is_Valid
-        and then C.File = Node.File
+        and then C.Is_Valid and then C.File = Node.File
       then
-         if Node.Is_Declaration then
-            return Get_Node (Model, C);
-         else
-            declare
-               UID : constant String := Node.Unique_Id;
-               use Sem_To_Tree_Maps;
-               C : constant Sem_To_Tree_Maps.Cursor :=
-                 Model.Sem_To_Tree_Nodes.Find (UID);
-            begin
-               return (if C = Sem_To_Tree_Maps.No_Element
-                       then null else Element (C));
-            end;
-         end if;
+         return
+           (if Node.Is_Declaration
+            then Get_Node (Model, C)
+            else Element_Or_Null (Model.Sem_To_Tree_Nodes, Node.Unique_Id));
       end if;
 
       return null;
    end Get_Node_Next_Part;
-
-   procedure Clean_Node (Model : Outline_Model;
-                         Node  : in out Sorted_Node_Access);
 
    ----------------
    -- Clean_Node --
@@ -778,12 +785,7 @@ package body Outline_View.Model is
    overriding function Has_Child
      (Self : access Outline_Model_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
-   is
-      Val : constant Boolean :=
-        Children (Self, Iter) /= Null_Iter;
-   begin
-      return Val;
-   end Has_Child;
+   is (Children (Self, Iter) /= Null_Iter);
 
    ----------------
    -- N_Children --
@@ -846,13 +848,9 @@ package body Outline_View.Model is
       Parent : Gtk.Tree_Model.Gtk_Tree_Iter;
       N      : Glib.Gint) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-   begin
-      if Parent = Null_Iter then
-         return New_Iter (Nth_Child (Self, null, N));
-      else
-         return New_Iter (Nth_Child (Self, Get_Sorted_Node (Parent), N));
-      end if;
-   end Nth_Child;
+     (if Parent = Null_Iter
+      then New_Iter (Nth_Child (Self, null, N))
+      else New_Iter (Nth_Child (Self, Get_Sorted_Node (Parent), N)));
 
    ------------
    -- Parent --
@@ -862,14 +860,9 @@ package body Outline_View.Model is
      (Self  : access Outline_Model_Record;
       Child : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
-      pragma Unreferenced (Self);
-   begin
-      if Child = Null_Iter then
-         return Null_Iter;
-      else
-         return New_Iter (Get_Sorted_Node (Child).Parent);
-      end if;
-   end Parent;
+     (if Child = Null_Iter
+      then Null_Iter
+      else New_Iter (Get_Sorted_Node (Child).Parent));
 
    ----------------
    -- Set_Filter --
@@ -894,24 +887,16 @@ package body Outline_View.Model is
    is
       pragma Unreferenced (Self);
       Node   : Sorted_Node_Access;
-      Info      : Semantic_Node_Info;
    begin
       if Iter = Null_Iter then
          return No_Node_Info;
       end if;
 
       Node := Get_Sorted_Node (Iter);
-      if Column = Body_Pixbuf_Column then
-         Info := Node.Body_Info;
-      else
-         if Node.Spec_Info /= No_Node_Info then
-            Info := Node.Spec_Info;
-         else
-            Info := Node.Body_Info;
-         end if;
-      end if;
-
-      return Info;
+      return
+        (if Column = Body_Pixbuf_Column or else Node.Spec_Info = No_Node_Info
+         then Node.Body_Info
+         else Node.Spec_Info);
    end Get_Info;
 
    ---------------------
