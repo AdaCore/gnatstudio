@@ -244,7 +244,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
             if location and buffer:
                 location = GPS.EditorLocation(
                     buffer, location.line(), location.column())
-                word = location.get_word()
+                word, _, _ = location.get_word()
 
         # Exit if we are highlighting the word or the entity that we were
         # already highlighting.
