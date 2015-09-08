@@ -44,6 +44,15 @@ KP-61-O901-029 GPS: long labels in toolbar
   Workaround: Change the preference Windows/Toolbar Style to show icons
               only.
 
+KP-61-O826-004 GNATdoc: crash on use of '@private' tag for package
+
+  Problem:    GNATdoc crashes when a library-level package is marked
+              with the '@private' tag.
+
+  Status:     This is fixed in 6.2 on 2015-09-08
+
+  Workaround: Remove '@private' tag from package's comment.
+
 KP-61-O820-019 GPS: Exiting harness does not go back to the original project
 
   Problem:    If you open harness for some subproject of a project tree then
