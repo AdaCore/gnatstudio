@@ -4896,6 +4896,18 @@ package body GNATdoc.Frontend is
       Stop (Comments_Time, Build_Comments_Time);
 
       Stop (My_Time, Frontend_Time);
+
+      if Context.Lang_Handler.Get_Language_From_File (Tree.File).all
+           in Language.Ada.Ada_Language'Class
+        and then Get_Entities (Tree.Tree_Root).Is_Empty
+      then
+         --  When Ada's compulation unit marked as excluded from documentation
+         --  by '@private' tag it doesn't include and entities except empty
+         --  'Standard' root package.
+
+         return No_Tree;
+      end if;
+
       return Tree;
 
    exception
