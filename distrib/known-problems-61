@@ -25,6 +25,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O903-012 GPS: dependencies.py referencing set_busy/unset_busy
+
+  Problem:    The dependencies plug-in was referencing obsolete functions, and
+              was thus raising an exception
+
+  Status:     This was fixed in 6.2 on 2015-09-08
+
+  Workaround: Edit the plug-in manually
+
 KP-61-O901-029 GPS: long labels in toolbar
 
   Problem:    The "backward locations history" and "forward locations
@@ -83,6 +92,15 @@ KP-61-O730-030 GNATdoc: package renamings listed as nested packages
   Status:     This was fixed in 6.2.0 on 2015-08-07
 
   Workaround: Not needed.
+
+KP-61-O730-004 GPS: bad behavior on select + enter in text editor
+
+  Problem:    When selecting text in the editor and then pressing enter, no
+              new-line was inserted, unlike in most text editors.
+
+  Status:     This was fixed in 6.2 on 2015-09-08
+
+  Workaround: Press enter twice
 
 KP-61-O624-029 GPS: debugger shows value even when variable out of scope
 
