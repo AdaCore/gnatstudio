@@ -329,6 +329,7 @@ package body GNATdoc.Backend.HTML.Source_Code is
       end if;
 
       if No (Entity)
+        or else Is_Excluded (Entity)
         or else not Is_Decorated (Entity)
         or else (Get_Kind (Entity) = E_Package
                  and then Present (LL.Get_Instance_Of (Entity)))

@@ -808,6 +808,10 @@ private package GNATdoc.Atree is
      (E : Entity_Id) return Boolean;
    --  Return true if E is the full view of a private or incomplete type
 
+   function Is_Excluded
+     (E : Entity_Id) return Boolean;
+   --  Return True when entity is excluded from generated documentation
+
    function Is_Generic
      (E : Entity_Id) return Boolean;
    function Is_Generic_Formal
@@ -910,6 +914,10 @@ private package GNATdoc.Atree is
 
    procedure Set_Is_Decorated
      (E : Entity_Id);
+
+   procedure Set_Is_Excluded (E : Entity_Id);
+   --  Mark entity as excluded from generated documentation
+
    procedure Set_Is_Generic_Formal
      (E : Entity_Id);
    procedure Set_Is_Incomplete
@@ -1262,6 +1270,8 @@ private
          Xref            : Xref_Info;
          --  Information retrieved directly from the Xref database.
 
+         Is_Excluded : Boolean;
+         --  Mark entity as excluded from documentation generation.
       end record;
 
    pragma Inline (Append_Array_Index_Type);
@@ -1347,6 +1357,7 @@ private
    pragma Inline (Set_Has_Unknown_Discriminants);
    pragma Inline (Set_Is_Alias);
    pragma Inline (Set_Is_Decorated);
+   pragma Inline (Set_Is_Excluded);
    pragma Inline (Set_Is_Generic_Formal);
    pragma Inline (Set_Is_Incomplete);
    pragma Inline (Set_Is_Private);

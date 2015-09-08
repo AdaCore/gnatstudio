@@ -1095,6 +1095,7 @@ package body GNATdoc.Frontend.Comment_Parser is
             end if;
 
             Remove_From_Scope (E);
+            Set_Is_Excluded (E);
          end loop;
 
          Private_Entities_List.Clear;

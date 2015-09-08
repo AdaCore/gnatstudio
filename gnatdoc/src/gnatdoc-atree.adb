@@ -1616,6 +1616,7 @@ package body GNATdoc.Atree is
               Is_Tagged_Type    => False,
               Is_Incomplete     => False,
               Is_Private        => False,
+              Is_Excluded       => False,
               Idepth_Level      => 0,
 
               Doc_After         => No_Comment_Result,
@@ -1734,6 +1735,25 @@ package body GNATdoc.Atree is
    begin
       return Present (Get_Partial_View (E));
    end Is_Full_View;
+
+   -----------------
+   -- Is_Excluded --
+   -----------------
+
+   function Is_Excluded (E : Entity_Id) return Boolean is
+      Scope : Entity_Id := E;
+
+   begin
+      while Scope /= null loop
+         if Scope.Is_Excluded then
+            return True;
+         end if;
+
+         Scope := Get_Scope (Scope);
+      end loop;
+
+      return False;
+   end Is_Excluded;
 
    ----------------
    -- Is_Generic --
@@ -2414,6 +2434,15 @@ package body GNATdoc.Atree is
    begin
       E.Is_Decorated := True;
    end Set_Is_Decorated;
+
+   ---------------------
+   -- Set_Is_Excluded --
+   ---------------------
+
+   procedure Set_Is_Excluded (E : Entity_Id) is
+   begin
+      E.Is_Excluded := True;
+   end Set_Is_Excluded;
 
    ---------------------------
    -- Set_Is_Generic_Formal --
