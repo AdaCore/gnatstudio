@@ -463,7 +463,7 @@ package body Clang_Xref is
       Res : constant Clang_Entity :=
         Clang_Entity'
           (Db              => Db,
-           Name            => +Spelling (Cursor),
+           Name            => +Spelling (Referenced (Cursor)),
            Loc             =>
              To_General_Location
                (Db.Kernel,
