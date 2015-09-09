@@ -193,11 +193,7 @@ server. This section also tells GPS how to keep those paths synchronized
 between the local machine and the remote server.
 
 All your project's dependencies must reside in a path defined here.  You
-retrieve those paths by using :command:`gnat list -v -Pyour_project`. In
-particular, the path to the GNAT run-time (:file:`adainclude` directory)
-needs to be mapped so that code completion and source navigation work
-properly on run-time entities.
-
+retrieve those paths by using :command:`gnat list -v -Pyour_project`.
 To add a new path, click on the :guilabel:`+` button and enter the
 corresponding local and remote paths.
 
@@ -234,6 +230,9 @@ The way those paths need to be configured depends on your network architecture:
   a too generic path translation leads to very slow synchronization. In
   that is the case, define the paths as specifically as possible in order to speed
   up the synchronization process.
+
+Note that navigation to entities of the run-time is not supported in
+remote mode.
 
 .. _Setup_a_remote_project:
 
