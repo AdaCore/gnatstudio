@@ -748,6 +748,16 @@ KP-61-N717-017 GB: Detect the nature of the project at import
                the necessary files. Also restarting WRWB or opening a
                closed project will auto-generate the missing gnat.makefile.
 
+KP-61-M909-022 GB: change build mode UI support
+
+  Problem:    There is no way for the user to know the current build mode
+              for a project.
+
+  Status:     This is fixed in 2.10 on 2015-08-19.
+
+  Workaround: Customize Perspective by checking the GNATbench Build Mode
+              option in the Command Groups Availability tab at the top.
+
 Known problems fixed in GPS 6.1.1 / GNATbench 2.9.1
 ---------------------------------------------------
 
