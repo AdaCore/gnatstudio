@@ -1223,7 +1223,7 @@ class GNATprove_Parser(tool_output.OutputParser):
         # to column number that is less than 10. Do it also here.
         if col < 10:
             str_col = '0' + str_col
-        return file + ':' + str(line) + ':' + str(col) + ': ' + text
+        return "%s:%s:%s: %s" % (file, line, str_col, text)
 
     def pass_output(self, text, command):
         """pass the text on to the next output parser"""
