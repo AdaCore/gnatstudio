@@ -111,6 +111,15 @@ KP-61-O730-004 GPS: bad behavior on select + enter in text editor
 
   Workaround: Press enter twice
 
+KP-61-O708-055 GPS: improve color of hyperlinks in the Locations view
+
+  Problem:    The color for hyperlinks in the Locations view does not follow
+              the preference and is difficult to read on dark themes.
+
+  Status:     This was fixed in 6.2 on 2015-07-15
+
+  Workaround: None.
+
 KP-61-O624-029 GPS: debugger shows value even when variable out of scope
 
   Problem:    If you display a variable in the debugger, and then switch to
