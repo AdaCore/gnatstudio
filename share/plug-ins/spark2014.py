@@ -1468,7 +1468,7 @@ def subprogram_start(cursor):
 
     # This function has been copied and modified from plug-in "expanded_code"
 
-    blocks = {'CAT_PROCEDURE': 1, 'CAT_FUNCTION': 1}
+    blocks = {'CAT_PROCEDURE': 1, 'CAT_FUNCTION': 1, 'CAT_ENTRY': 1}
 
     if cursor.block_type() == 'CAT_UNKNOWN':
         return None
