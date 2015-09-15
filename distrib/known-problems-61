@@ -86,6 +86,16 @@ KP-61-O820-019 GPS: Exiting harness does not go back to the original project
 
   Workaround: None
 
+KP-61-O819-017 GPS: Window stuck on top of other windows
+
+  Problem:    Under Windows, after switching from another application back
+              to GPS, the GPS window might be stuck in front of all other
+              windows.
+
+  Status:     This was fixed in 6.2 on 2015-09-12
+
+  Workaround: None
+
 KP-61-O813-040 GPS: Project editor mark tools as unavailable
 
   Problem:    In some cases project editor marks some tools for automatically
