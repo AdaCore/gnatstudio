@@ -375,8 +375,17 @@ arrow, as seen in the screenshot above).
 
       .. index:: smart completion
 
-      When enabled, GPS loads all the information needed for the Smart
-      completion to work on startup.
+      Controls the behavior of the Smart Completion in the editors.
+
+      When set to :guilabel:`Normal`, the completion is triggered by pressing
+      the completion key (by default, :guilabel:`ctrl+space`) or on some
+      characters such as dot or opening parenthesis.
+
+      When set to :guilabel:`Dynamic`, the completion window will offer
+      completions in the flow of typing.
+
+      When set to :guilabel:`Normal` or :guilabel:`Dynamic`, GPS loads all the
+      information needed for the Smart completion to work on startup.
 
     * :guilabel:`Smart completion timeout`
 
