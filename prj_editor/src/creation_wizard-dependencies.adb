@@ -17,7 +17,6 @@
 
 with Ada.Containers.Hashed_Sets;
 with Glib;                             use Glib;
-with Glib.Object;
 
 with Gtk.Box;                          use Gtk.Box;
 with Gtk.Button;                       use Gtk.Button;
@@ -440,7 +439,7 @@ package body Creation_Wizard.Dependencies is
       Label     : Gtk_Label;
       Button    : Gtk_Button;
       Scrolled  : Gtk_Scrolled_Window;
-      List      : Glib.Object.Object_Simple_List.Glist;
+      List      : Cell_Renderer_List.Glist;
    begin
       Page.Kernel := Get_Kernel (Wiz);
       Page.Project := Get_Project (Project_Wizard (Wiz));
@@ -477,9 +476,9 @@ package body Creation_Wizard.Dependencies is
       List := Get_Cells (+Get_Column (Page.Tree, Is_Limited_Column));
       Add_Attribute
         (Get_Column (Page.Tree, Is_Limited_Column),
-         Gtk_Cell_Renderer (Glib.Object.Object_Simple_List.Get_Data (List)),
+         Cell_Renderer_List.Get_Data (List),
          "activatable", Can_Change_Limited_Column);
-      Glib.Object.Object_Simple_List.Free (List);
+      Cell_Renderer_List.Free (List);
 
       Add_Imported_Projects (Get_Project (Project_Wizard (Wiz)), Model);
 

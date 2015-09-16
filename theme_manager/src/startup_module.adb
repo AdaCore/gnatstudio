@@ -345,7 +345,7 @@ package body Startup_Module is
       Box, B      : Gtk_Box;
       Pane        : Gtk_Paned;
       Text        : Gtk_Text_View;
-      List        : Glib.Object.Object_Simple_List.Glist;
+      List        : Cell_Renderer_List.Glist;
       Label       : Gtk_Label;
       Font        : Pango_Font_Description;
       pragma Unreferenced (Button);
@@ -432,20 +432,20 @@ package body Startup_Module is
       List := Get_Cells (+Get_Column (Editor.Tree, Column_Load));
       Add_Attribute
         (Get_Column (Editor.Tree, Column_Load),
-         Gtk_Cell_Renderer (Object_Simple_List.Get_Data (List)),
+         Cell_Renderer_List.Get_Data (List),
          "cell_background", Column_Background);
       Widget_Callback.Object_Connect
-        (Gtk_Cell_Renderer (Object_Simple_List.Get_Data (List)),
+        (Cell_Renderer_List.Get_Data (List),
          Gtk.Cell_Renderer_Toggle.Signal_Toggled,
          On_Load_Toggled'Access, Editor, After => True);
-      Object_Simple_List.Free (List);
+      Cell_Renderer_List.Free (List);
 
       List := Get_Cells (+Get_Column (Editor.Tree, Column_Name));
       Add_Attribute
         (Get_Column (Editor.Tree, Column_Name),
-         Gtk_Cell_Renderer (Object_Simple_List.Get_Data (List)),
+         Cell_Renderer_List.Get_Data (List),
          "cell_background", Column_Background);
-      Object_Simple_List.Free (List);
+      Cell_Renderer_List.Free (List);
 
       Widget_Callback.Object_Connect
         (Get_Selection (Editor.Tree), Gtk.Tree_Selection.Signal_Changed,

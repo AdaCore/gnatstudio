@@ -864,14 +864,14 @@ package body Revision_Views is
       -------------------
 
       procedure Set_Attribute (Col : Gint) is
-         List : Glib.Object.Object_Simple_List.Glist;
+         List : Cell_Renderer_List.Glist;
       begin
          List := Get_Cells (+Get_Column (View.Tree, Col));
          Add_Attribute
            (Get_Column (View.Tree, Col),
-            Gtk_Cell_Renderer (Object_Simple_List.Get_Data (List)),
+            Cell_Renderer_List.Get_Data (List),
             "foreground_rgba", Color_Column);
-         Object_Simple_List.Free (List);
+         Cell_Renderer_List.Free (List);
       end Set_Attribute;
 
       Names   : GNAT.Strings.String_List :=
