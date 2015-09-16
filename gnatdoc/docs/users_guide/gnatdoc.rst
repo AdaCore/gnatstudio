@@ -431,24 +431,24 @@ this case, the tag *@param* is not required::
 Text markup
 -----------
 
-GNATdoc recognizes several markup constructs inside description text to produce
-better formatted output.
+GNATdoc recognizes several markup constructs inside description text, that can
+be used to better control the format of the generated documentation.
 
-All markup constructs are based on paragraphs. Paragraph is one or more
-consecutive lines of text, separated by one blank line. All lines of same
-paragraph should have same indentation. Sequential paragraphs with same
-indentation level processed as list of paragraphs, this is most important to
-process list item with few paragraphs inside.
+All markup constructs are based on paragraphs. A paragraph is one or more
+consecutive lines of text, separated from the flow of comments by one blank
+line. All lines in a paragraph should have the same indentation. Sequential
+paragraphs with the same indentation level are processed as a list of
+paragraphs.
 
 Bulled lists
 ============
 
-Bulled lists starts by paragraph that begins with '-' or '*' characters. List
-items of the same list must have '-' or '*' character at same indentation. When
-text of list item occupy more than one line it should be aligned with first
-character on first line of list item. List item can have more than one
-paragraph, in this case all paragraphs should use same indentation with first
-paragraph::
+Bulled lists start by a paragraph that begins with the characters '-' or '*'. 
+List items of the same list must have the '-' or '*' character at same
+indentation. When the text of a list item occupies more than one line,
+it should be aligned with the first character on the first line of the list
+item. List items can have more than one paragraph, in which case all paragraphs
+should use the same indentation as the first paragraph::
 
    --  - This is the first bullet list item.  The blank line above the
    --    first list item is required; blank lines between list items
@@ -473,8 +473,8 @@ Code blocks
 ===========
 
 Code blocks can be used to include preformatted text into the documentation.
-Code block should use three or more spaces for lines indentation. Opposite to
-other constructs, code block doesn't end by empty line::
+A code block should have an indentation of three or more spaces. Contrary to
+other constructs, a code block doesn't end wth an empty line::
 
    --   with Ada.Text_IO;
    --
