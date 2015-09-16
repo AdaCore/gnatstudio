@@ -18,7 +18,6 @@
 with Language.Libclang.Utils; use Language.Libclang.Utils;
 with Ada.Unchecked_Deallocation;
 with GPS.Editors; use GPS.Editors;
-with clang_c_Index_h; use clang_c_Index_h;
 with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
 with GPS.Kernel; use GPS.Kernel;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
@@ -404,7 +403,7 @@ package body Language.Libclang is
          if Info.entityInfo.kind = CXIdxEntity_CXXClass then
             for C of
               Get_Children
-                (Clang_Cursor (Info.cursor), CXCursor_CXXBaseSpecifier)
+                (Clang_Cursor (Info.cursor), CXXBaseSpecifier)
             loop
                Sym :=
                  Client_Data.Sym_Table.Find (USR (Referenced (C)));

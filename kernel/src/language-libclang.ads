@@ -30,6 +30,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
 with Ada.Finalization;
 with Libclang.Task_Parser_Pool; use Libclang.Task_Parser_Pool;
+with clang_c_Index_h; use clang_c_Index_h;
 
 package Language.Libclang is
 
@@ -64,8 +65,7 @@ package Language.Libclang is
 
    --  NOTE: Those two types store Offsets for space efficiency reasons !
 
-   --  10 bits is enough to store the cursor kind
-   type Small_Cursor_Kind is mod 2 ** 10;
+   subtype Small_Cursor_Kind is CXCursorKind;
 
    type Decl_Info is record
       Loc        : Offset_T;

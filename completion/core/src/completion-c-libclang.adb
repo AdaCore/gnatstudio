@@ -184,22 +184,22 @@ package body Completion.C.Libclang is
       Proposal.Documentation := Strs.Doc;
 
       case Kind (The_Res) is
-         when CXCursor_EnumDecl | CXCursor_EnumConstantDecl =>
+         when EnumDecl | EnumConstantDecl =>
             Proposal.Category := Cat_Literal;
 
-         when CXCursor_FieldDecl =>
+         when FieldDecl =>
             Proposal.Category := Cat_Field;
 
-         when CXCursor_FunctionDecl | CXCursor_FunctionTemplate =>
+         when FunctionDecl | FunctionTemplate =>
             Proposal.Category := Cat_Function;
 
-         when CXCursor_ParmDecl =>
+         when ParmDecl =>
             Proposal.Category := Cat_Parameter;
 
-         when CXCursor_TypedefDecl | CXCursor_TypeAliasDecl =>
+         when TypedefDecl | TypeAliasDecl =>
             Proposal.Category := Cat_Type;
 
-         when CXCursor_VarDecl =>
+         when VarDecl =>
             Proposal.Category := Cat_Variable;
 
          when others =>

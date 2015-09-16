@@ -40,6 +40,8 @@ with Ada.Unchecked_Conversion;
 
 package body Clang_Xref is
 
+   use type Interfaces.C.unsigned;
+
    --  Quick design notes about clang cross references:
    --
    --  * Entities store a location, not a cursor. Either way that would mean
@@ -292,7 +294,7 @@ package body Clang_Xref is
       --  unsupported anyway, so no harm in trying to recover a meaningful
       --  cursor
 
-      if Ret.kind = CXCursor_UnexposedAttr then
+      if Ret.kind = UnexposedAttr then
          Ret := Cursor_At
            (TU, Loc.File, Loc.Line, Natural'Max (1, Line_Offset - 1));
       end if;
@@ -760,7 +762,7 @@ package body Clang_Xref is
 
          --  Straightforwardly get every children of decl that is a method
 
-         return Get_Children (Type_Decl, CXCursor_CXXMethod);
+         return Get_Children (Type_Decl, CXXMethod);
 
       else
          return Cursors_Arrays.Empty_Array;
@@ -979,7 +981,7 @@ package body Clang_Xref is
 
          --  An entity is a global if its parent is the translation unit.
 
-         return P.kind in CXCursor_TranslationUnit | CXCursor_Namespace
+         return P.kind in TranslationUnit | Namespace
            or else (Is_Type (P.kind) and then Internal (P));
       end Internal;
    begin
@@ -1088,7 +1090,7 @@ package body Clang_Xref is
       --  Since we store the declaration of the cursor in entity, if it's a
       --  parameter, its kind should be parmdecl
 
-      if C.kind = CXCursor_ParmDecl then
+      if C.kind = ParmDecl then
          return Cursor_As_Entity
            (Entity, Semantic_Parent (C));
       end if;
@@ -1226,7 +1228,7 @@ package body Clang_Xref is
       function Get_Fields (C : Clang_Cursor) return Array_Type
       is
       begin
-         return (Get_Children (C, CXCursor_FieldDecl)
+         return (Get_Children (C, FieldDecl)
                  & Id_Flat_Map (Parent_Types (C, True), Get_Fields'Access));
       end Get_Fields;
 
@@ -1252,7 +1254,7 @@ package body Clang_Xref is
       C : constant Clang_Cursor := Get_Clang_Cursor (Entity);
    begin
       return To_Entity_Array
-        (Entity, Get_Children (C, CXCursor_EnumConstantDecl));
+        (Entity, Get_Children (C, EnumConstantDecl));
    end Literals;
 
    -----------------------
@@ -1267,7 +1269,7 @@ package body Clang_Xref is
 
       if Entity.Is_Generic then
          return To_Entity_Array
-           (Entity, Get_Children (C, CXCursor_TemplateTypeParameter));
+           (Entity, Get_Children (C, TemplateTypeParameter));
       end if;
 
       return No_Entity_Array;
@@ -1367,7 +1369,7 @@ package body Clang_Xref is
 
    begin
       for Ref of Refs.all loop
-         if Ref.Kind = CXCursor_CXXBaseSpecifier then
+         if Ref.Kind = CXXBaseSpecifier then
             Cursors (Count) :=
               Get_Clang_Cursor (Entity.Kernel, Ref.Get_Location);
             Count := Count + 1;
@@ -1399,7 +1401,7 @@ package body Clang_Xref is
       is
       begin
          return (Id_Map
-                  (Get_Children (Type_Decl, CXCursor_CXXBaseSpecifier),
+                  (Get_Children (Type_Decl, CXXBaseSpecifier),
                    Referenced'Access));
       end Get_Base_Classes;
 
@@ -1485,7 +1487,7 @@ package body Clang_Xref is
       function Get_Calls (C : Clang_Cursor) return Array_Type
       is
       begin
-         return (Get_Children (C, CXCursor_CallExpr)
+         return (Get_Children (C, CallExpr)
                  & Id_Flat_Map (Get_Children (C), Get_Calls'Access));
       end Get_Calls;
 
@@ -1495,7 +1497,7 @@ package body Clang_Xref is
       Body_CC : Clang_Cursor := CC;
 
    begin
-      if Kind (CC) = CXCursor_FunctionDecl then
+      if Kind (CC) = FunctionDecl then
          Body_Entity := Get_Body (Entity);
          Body_CC := Get_Clang_Cursor (Body_Entity);
       end if;
@@ -1711,7 +1713,7 @@ package body Clang_Xref is
       --  be explored, we want to explore the body, not the decl.
       --  TODO ??? Explore other decls when it makes sense
       Real_Scope : constant Clang_Entity :=
-        (if Kind (Get_Clang_Cursor (In_Scope)) = CXCursor_FunctionDecl
+        (if Kind (Get_Clang_Cursor (In_Scope)) = FunctionDecl
          then Get_Body (In_Scope)
          else In_Scope);
 

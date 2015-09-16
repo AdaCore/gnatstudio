@@ -444,196 +444,70 @@ package clang_c_Index_h is
    procedure clang_disposeCXTUResourceUsage (usage : CXTUResourceUsage);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:1510
    pragma Import (C, clang_disposeCXTUResourceUsage, "clang_disposeCXTUResourceUsage");
 
-   subtype CXCursorKind is unsigned;
-   CXCursor_UnexposedDecl : constant CXCursorKind := 1;
-   CXCursor_StructDecl : constant CXCursorKind := 2;
-   CXCursor_UnionDecl : constant CXCursorKind := 3;
-   CXCursor_ClassDecl : constant CXCursorKind := 4;
-   CXCursor_EnumDecl : constant CXCursorKind := 5;
-   CXCursor_FieldDecl : constant CXCursorKind := 6;
-   CXCursor_EnumConstantDecl : constant CXCursorKind := 7;
-   CXCursor_FunctionDecl : constant CXCursorKind := 8;
-   CXCursor_VarDecl : constant CXCursorKind := 9;
-   CXCursor_ParmDecl : constant CXCursorKind := 10;
-   CXCursor_ObjCInterfaceDecl : constant CXCursorKind := 11;
-   CXCursor_ObjCCategoryDecl : constant CXCursorKind := 12;
-   CXCursor_ObjCProtocolDecl : constant CXCursorKind := 13;
-   CXCursor_ObjCPropertyDecl : constant CXCursorKind := 14;
-   CXCursor_ObjCIvarDecl : constant CXCursorKind := 15;
-   CXCursor_ObjCInstanceMethodDecl : constant CXCursorKind := 16;
-   CXCursor_ObjCClassMethodDecl : constant CXCursorKind := 17;
-   CXCursor_ObjCImplementationDecl : constant CXCursorKind := 18;
-   CXCursor_ObjCCategoryImplDecl : constant CXCursorKind := 19;
-   CXCursor_TypedefDecl : constant CXCursorKind := 20;
-   CXCursor_CXXMethod : constant CXCursorKind := 21;
-   CXCursor_Namespace : constant CXCursorKind := 22;
-   CXCursor_LinkageSpec : constant CXCursorKind := 23;
-   CXCursor_Constructor : constant CXCursorKind := 24;
-   CXCursor_Destructor : constant CXCursorKind := 25;
-   CXCursor_ConversionFunction : constant CXCursorKind := 26;
-   CXCursor_TemplateTypeParameter : constant CXCursorKind := 27;
-   CXCursor_NonTypeTemplateParameter : constant CXCursorKind := 28;
-   CXCursor_TemplateTemplateParameter : constant CXCursorKind := 29;
-   CXCursor_FunctionTemplate : constant CXCursorKind := 30;
-   CXCursor_ClassTemplate : constant CXCursorKind := 31;
-   CXCursor_ClassTemplatePartialSpecialization : constant CXCursorKind := 32;
-   CXCursor_NamespaceAlias : constant CXCursorKind := 33;
-   CXCursor_UsingDirective : constant CXCursorKind := 34;
-   CXCursor_UsingDeclaration : constant CXCursorKind := 35;
-   CXCursor_TypeAliasDecl : constant CXCursorKind := 36;
-   CXCursor_ObjCSynthesizeDecl : constant CXCursorKind := 37;
-   CXCursor_ObjCDynamicDecl : constant CXCursorKind := 38;
-   CXCursor_CXXAccessSpecifier : constant CXCursorKind := 39;
-   CXCursor_FirstDecl : constant CXCursorKind := 1;
-   CXCursor_LastDecl : constant CXCursorKind := 39;
-   CXCursor_FirstRef : constant CXCursorKind := 40;
-   CXCursor_ObjCSuperClassRef : constant CXCursorKind := 40;
-   CXCursor_ObjCProtocolRef : constant CXCursorKind := 41;
-   CXCursor_ObjCClassRef : constant CXCursorKind := 42;
-   CXCursor_TypeRef : constant CXCursorKind := 43;
-   CXCursor_CXXBaseSpecifier : constant CXCursorKind := 44;
-   CXCursor_TemplateRef : constant CXCursorKind := 45;
-   CXCursor_NamespaceRef : constant CXCursorKind := 46;
-   CXCursor_MemberRef : constant CXCursorKind := 47;
-   CXCursor_LabelRef : constant CXCursorKind := 48;
-   CXCursor_OverloadedDeclRef : constant CXCursorKind := 49;
-   CXCursor_VariableRef : constant CXCursorKind := 50;
-   CXCursor_LastRef : constant CXCursorKind := 50;
-   CXCursor_FirstInvalid : constant CXCursorKind := 70;
-   CXCursor_InvalidFile : constant CXCursorKind := 70;
-   CXCursor_NoDeclFound : constant CXCursorKind := 71;
-   CXCursor_NotImplemented : constant CXCursorKind := 72;
-   CXCursor_InvalidCode : constant CXCursorKind := 73;
-   CXCursor_LastInvalid : constant CXCursorKind := 73;
-   CXCursor_FirstExpr : constant CXCursorKind := 100;
-   CXCursor_UnexposedExpr : constant CXCursorKind := 100;
-   CXCursor_DeclRefExpr : constant CXCursorKind := 101;
-   CXCursor_MemberRefExpr : constant CXCursorKind := 102;
-   CXCursor_CallExpr : constant CXCursorKind := 103;
-   CXCursor_ObjCMessageExpr : constant CXCursorKind := 104;
-   CXCursor_BlockExpr : constant CXCursorKind := 105;
-   CXCursor_IntegerLiteral : constant CXCursorKind := 106;
-   CXCursor_FloatingLiteral : constant CXCursorKind := 107;
-   CXCursor_ImaginaryLiteral : constant CXCursorKind := 108;
-   CXCursor_StringLiteral : constant CXCursorKind := 109;
-   CXCursor_CharacterLiteral : constant CXCursorKind := 110;
-   CXCursor_ParenExpr : constant CXCursorKind := 111;
-   CXCursor_UnaryOperator : constant CXCursorKind := 112;
-   CXCursor_ArraySubscriptExpr : constant CXCursorKind := 113;
-   CXCursor_BinaryOperator : constant CXCursorKind := 114;
-   CXCursor_CompoundAssignOperator : constant CXCursorKind := 115;
-   CXCursor_ConditionalOperator : constant CXCursorKind := 116;
-   CXCursor_CStyleCastExpr : constant CXCursorKind := 117;
-   CXCursor_CompoundLiteralExpr : constant CXCursorKind := 118;
-   CXCursor_InitListExpr : constant CXCursorKind := 119;
-   CXCursor_AddrLabelExpr : constant CXCursorKind := 120;
-   CXCursor_StmtExpr : constant CXCursorKind := 121;
-   CXCursor_GenericSelectionExpr : constant CXCursorKind := 122;
-   CXCursor_GNUNullExpr : constant CXCursorKind := 123;
-   CXCursor_CXXStaticCastExpr : constant CXCursorKind := 124;
-   CXCursor_CXXDynamicCastExpr : constant CXCursorKind := 125;
-   CXCursor_CXXReinterpretCastExpr : constant CXCursorKind := 126;
-   CXCursor_CXXConstCastExpr : constant CXCursorKind := 127;
-   CXCursor_CXXFunctionalCastExpr : constant CXCursorKind := 128;
-   CXCursor_CXXTypeidExpr : constant CXCursorKind := 129;
-   CXCursor_CXXBoolLiteralExpr : constant CXCursorKind := 130;
-   CXCursor_CXXNullPtrLiteralExpr : constant CXCursorKind := 131;
-   CXCursor_CXXThisExpr : constant CXCursorKind := 132;
-   CXCursor_CXXThrowExpr : constant CXCursorKind := 133;
-   CXCursor_CXXNewExpr : constant CXCursorKind := 134;
-   CXCursor_CXXDeleteExpr : constant CXCursorKind := 135;
-   CXCursor_UnaryExpr : constant CXCursorKind := 136;
-   CXCursor_ObjCStringLiteral : constant CXCursorKind := 137;
-   CXCursor_ObjCEncodeExpr : constant CXCursorKind := 138;
-   CXCursor_ObjCSelectorExpr : constant CXCursorKind := 139;
-   CXCursor_ObjCProtocolExpr : constant CXCursorKind := 140;
-   CXCursor_ObjCBridgedCastExpr : constant CXCursorKind := 141;
-   CXCursor_PackExpansionExpr : constant CXCursorKind := 142;
-   CXCursor_SizeOfPackExpr : constant CXCursorKind := 143;
-   CXCursor_LambdaExpr : constant CXCursorKind := 144;
-   CXCursor_ObjCBoolLiteralExpr : constant CXCursorKind := 145;
-   CXCursor_ObjCSelfExpr : constant CXCursorKind := 146;
-   CXCursor_LastExpr : constant CXCursorKind := 146;
-   CXCursor_FirstStmt : constant CXCursorKind := 200;
-   CXCursor_UnexposedStmt : constant CXCursorKind := 200;
-   CXCursor_LabelStmt : constant CXCursorKind := 201;
-   CXCursor_CompoundStmt : constant CXCursorKind := 202;
-   CXCursor_CaseStmt : constant CXCursorKind := 203;
-   CXCursor_DefaultStmt : constant CXCursorKind := 204;
-   CXCursor_IfStmt : constant CXCursorKind := 205;
-   CXCursor_SwitchStmt : constant CXCursorKind := 206;
-   CXCursor_WhileStmt : constant CXCursorKind := 207;
-   CXCursor_DoStmt : constant CXCursorKind := 208;
-   CXCursor_ForStmt : constant CXCursorKind := 209;
-   CXCursor_GotoStmt : constant CXCursorKind := 210;
-   CXCursor_IndirectGotoStmt : constant CXCursorKind := 211;
-   CXCursor_ContinueStmt : constant CXCursorKind := 212;
-   CXCursor_BreakStmt : constant CXCursorKind := 213;
-   CXCursor_ReturnStmt : constant CXCursorKind := 214;
-   CXCursor_GCCAsmStmt : constant CXCursorKind := 215;
-   CXCursor_AsmStmt : constant CXCursorKind := 215;
-   CXCursor_ObjCAtTryStmt : constant CXCursorKind := 216;
-   CXCursor_ObjCAtCatchStmt : constant CXCursorKind := 217;
-   CXCursor_ObjCAtFinallyStmt : constant CXCursorKind := 218;
-   CXCursor_ObjCAtThrowStmt : constant CXCursorKind := 219;
-   CXCursor_ObjCAtSynchronizedStmt : constant CXCursorKind := 220;
-   CXCursor_ObjCAutoreleasePoolStmt : constant CXCursorKind := 221;
-   CXCursor_ObjCForCollectionStmt : constant CXCursorKind := 222;
-   CXCursor_CXXCatchStmt : constant CXCursorKind := 223;
-   CXCursor_CXXTryStmt : constant CXCursorKind := 224;
-   CXCursor_CXXForRangeStmt : constant CXCursorKind := 225;
-   CXCursor_SEHTryStmt : constant CXCursorKind := 226;
-   CXCursor_SEHExceptStmt : constant CXCursorKind := 227;
-   CXCursor_SEHFinallyStmt : constant CXCursorKind := 228;
-   CXCursor_MSAsmStmt : constant CXCursorKind := 229;
-   CXCursor_NullStmt : constant CXCursorKind := 230;
-   CXCursor_DeclStmt : constant CXCursorKind := 231;
-   CXCursor_OMPParallelDirective : constant CXCursorKind := 232;
-   CXCursor_OMPSimdDirective : constant CXCursorKind := 233;
-   CXCursor_OMPForDirective : constant CXCursorKind := 234;
-   CXCursor_OMPSectionsDirective : constant CXCursorKind := 235;
-   CXCursor_OMPSectionDirective : constant CXCursorKind := 236;
-   CXCursor_OMPSingleDirective : constant CXCursorKind := 237;
-   CXCursor_OMPParallelForDirective : constant CXCursorKind := 238;
-   CXCursor_OMPParallelSectionsDirective : constant CXCursorKind := 239;
-   CXCursor_OMPTaskDirective : constant CXCursorKind := 240;
-   CXCursor_OMPMasterDirective : constant CXCursorKind := 241;
-   CXCursor_OMPCriticalDirective : constant CXCursorKind := 242;
-   CXCursor_OMPTaskyieldDirective : constant CXCursorKind := 243;
-   CXCursor_OMPBarrierDirective : constant CXCursorKind := 244;
-   CXCursor_OMPTaskwaitDirective : constant CXCursorKind := 245;
-   CXCursor_OMPFlushDirective : constant CXCursorKind := 246;
-   CXCursor_SEHLeaveStmt : constant CXCursorKind := 247;
-   CXCursor_LastStmt : constant CXCursorKind := 247;
-   CXCursor_TranslationUnit : constant CXCursorKind := 300;
-   CXCursor_FirstAttr : constant CXCursorKind := 400;
-   CXCursor_UnexposedAttr : constant CXCursorKind := 400;
-   CXCursor_IBActionAttr : constant CXCursorKind := 401;
-   CXCursor_IBOutletAttr : constant CXCursorKind := 402;
-   CXCursor_IBOutletCollectionAttr : constant CXCursorKind := 403;
-   CXCursor_CXXFinalAttr : constant CXCursorKind := 404;
-   CXCursor_CXXOverrideAttr : constant CXCursorKind := 405;
-   CXCursor_AnnotateAttr : constant CXCursorKind := 406;
-   CXCursor_AsmLabelAttr : constant CXCursorKind := 407;
-   CXCursor_PackedAttr : constant CXCursorKind := 408;
-   CXCursor_PureAttr : constant CXCursorKind := 409;
-   CXCursor_ConstAttr : constant CXCursorKind := 410;
-   CXCursor_NoDuplicateAttr : constant CXCursorKind := 411;
-   CXCursor_CUDAConstantAttr : constant CXCursorKind := 412;
-   CXCursor_CUDADeviceAttr : constant CXCursorKind := 413;
-   CXCursor_CUDAGlobalAttr : constant CXCursorKind := 414;
-   CXCursor_CUDAHostAttr : constant CXCursorKind := 415;
-   CXCursor_LastAttr : constant CXCursorKind := 415;
-   CXCursor_PreprocessingDirective : constant CXCursorKind := 500;
-   CXCursor_MacroDefinition : constant CXCursorKind := 501;
-   CXCursor_MacroExpansion : constant CXCursorKind := 502;
-   CXCursor_MacroInstantiation : constant CXCursorKind := 502;
-   CXCursor_InclusionDirective : constant CXCursorKind := 503;
-   CXCursor_FirstPreprocessing : constant CXCursorKind := 500;
-   CXCursor_LastPreprocessing : constant CXCursorKind := 503;
-   CXCursor_ModuleImportDecl : constant CXCursorKind := 600;
-   CXCursor_FirstExtraDecl : constant CXCursorKind := 600;
-   CXCursor_LastExtraDecl : constant CXCursorKind := 600;  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/Index.h:1519
+   type CXCursorKind is
+     (UnexposedDecl, StructDecl, UnionDecl, ClassDecl, EnumDecl, FieldDecl,
+      EnumConstantDecl, FunctionDecl, VarDecl, ParmDecl, ObjCInterfaceDecl,
+      ObjCCategoryDecl, ObjCProtocolDecl, ObjCPropertyDecl, ObjCIvarDecl,
+      ObjCInstanceMethodDecl, ObjCClassMethodDecl, ObjCImplementationDecl,
+      ObjCCategoryImplDecl, TypedefDecl, CXXMethod, Namespace, LinkageSpec,
+      Constructor, Destructor, ConversionFunction, TemplateTypeParameter,
+      NonTypeTemplateParameter, TemplateTemplateParameter, FunctionTemplate,
+      ClassTemplate, ClassTemplatePartialSpecialization, NamespaceAlias,
+      UsingDirective, UsingDeclaration, TypeAliasDecl, ObjCSynthesizeDecl,
+      ObjCDynamicDecl, CXXAccessSpecifier, FirstRef,
+      ObjCProtocolRef, ObjCClassRef, TypeRef,
+      CXXBaseSpecifier, TemplateRef, NamespaceRef, MemberRef, LabelRef,
+      OverloadedDeclRef, VariableRef, InvalidFile,
+      NoDeclFound, NotImplemented, InvalidCode,
+      UnexposedExpr, DeclRefExpr, MemberRefExpr, CallExpr, ObjCMessageExpr,
+      BlockExpr, IntegerLiteral, FloatingLiteral, ImaginaryLiteral,
+      StringLiteral, CharacterLiteral, ParenExpr, UnaryOperator,
+      ArraySubscriptExpr, BinaryOperator, CompoundAssignOperator,
+      ConditionalOperator, CStyleCastExpr, CompoundLiteralExpr,
+      InitListExpr, AddrLabelExpr, StmtExpr, GenericSelectionExpr,
+      GNUNullExpr, CXXStaticCastExpr, CXXDynamicCastExpr,
+      CXXReinterpretCastExpr, CXXConstCastExpr, CXXFunctionalCastExpr,
+      CXXTypeidExpr, CXXBoolLiteralExpr, CXXNullPtrLiteralExpr,
+      CXXThisExpr, CXXThrowExpr, CXXNewExpr, CXXDeleteExpr, UnaryExpr,
+      ObjCStringLiteral, ObjCEncodeExpr, ObjCSelectorExpr, ObjCProtocolExpr,
+      ObjCBridgedCastExpr, PackExpansionExpr, SizeOfPackExpr, LambdaExpr,
+      ObjCBoolLiteralExpr, ObjCSelfExpr, UnexposedStmt,
+      LabelStmt, CompoundStmt, CaseStmt, DefaultStmt, IfStmt, SwitchStmt,
+      WhileStmt, DoStmt, ForStmt, GotoStmt, IndirectGotoStmt, ContinueStmt,
+      BreakStmt, ReturnStmt, AsmStmt, ObjCAtTryStmt,
+      ObjCAtCatchStmt, ObjCAtFinallyStmt, ObjCAtThrowStmt,
+      ObjCAtSynchronizedStmt, ObjCAutoreleasePoolStmt, ObjCForCollectionStmt,
+      CXXCatchStmt, CXXTryStmt, CXXForRangeStmt, SEHTryStmt, SEHExceptStmt,
+      SEHFinallyStmt, MSAsmStmt, NullStmt, DeclStmt, OMPParallelDirective,
+      OMPSimdDirective, OMPForDirective, OMPSectionsDirective,
+      OMPSectionDirective, OMPSingleDirective, OMPParallelForDirective,
+      OMPParallelSectionsDirective, OMPTaskDirective, OMPMasterDirective,
+      OMPCriticalDirective, OMPTaskyieldDirective, OMPBarrierDirective,
+      OMPTaskwaitDirective, OMPFlushDirective, SEHLeaveStmt,
+      TranslationUnit, UnexposedAttr, IBActionAttr, IBOutletAttr,
+      IBOutletCollectionAttr, CXXFinalAttr, CXXOverrideAttr, AnnotateAttr,
+      AsmLabelAttr, PackedAttr, PureAttr, ConstAttr, NoDuplicateAttr,
+      CUDAConstantAttr, CUDADeviceAttr, CUDAGlobalAttr, CUDAHostAttr,
+      PreprocessingDirective, MacroDefinition,
+      MacroInstantiation, InclusionDirective,
+      ModuleImportDecl);
+
+   for CXCursorKind use
+     (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
+      39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 70,
+      71, 72, 73, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
+      110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123,
+      124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137,
+      138, 139, 140, 141, 142, 143, 144, 145, 146, 200, 201, 202,
+      203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215,
+      216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229,
+      230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243,
+      244, 245, 246, 247, 300, 400, 401, 402, 403, 404, 405, 406,
+      407, 408, 409, 410, 411, 412, 413, 414, 415, 500, 501, 502,
+      503, 600);
+   --  This representation clause is used to assign values to correspond with
+   --  CXCursor's C representation
 
    type CXCursor_data_array is array (0 .. 2) of System.Address;
    type CXCursor is record
