@@ -1406,13 +1406,14 @@ package body GPS.Kernel.Modules.UI is
       Data          : Action_Proxy'Class;
       In_Foreground : Boolean := False)
    is
-      Context : constant Selection_Context :=
-        Get_Current_Context (Data.Kernel);
+      Context : Selection_Context;
       Action : constant access Action_Record := Lookup_Action (Self);
       Proxy  : Command_Access;
    begin
       Trace (Me, "Execute action " & Data.Action.all
              & " in foreground ? " & In_Foreground'Img);
+
+      Context := Get_Current_Context (Data.Kernel);
 
       if Action = null then
          Data.Kernel.Insert
