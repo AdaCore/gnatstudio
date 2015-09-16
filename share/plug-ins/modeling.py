@@ -195,7 +195,7 @@ PROJECT_DEFS = """<?xml version='1.0' ?>
          switch="%(option_library)s"
          separator=" "
          as-directory="true"
-         tip="Ask Matteo"/>
+         tip=""/>
 
         <combo
          line="2"
@@ -210,7 +210,7 @@ PROJECT_DEFS = """<?xml version='1.0' ?>
          line="2"
          label="Flatten model"
          switch="%(option_flatten)s"
-         tip="Ask Matteo"/>
+         tip=""/>
 
         <radio line="3">
           <radio-entry
