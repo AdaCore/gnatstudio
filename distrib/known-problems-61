@@ -58,6 +58,15 @@ KP-61-O901-029 GPS: long labels in toolbar
   Workaround: Change the preference Windows/Toolbar Style to show icons
               only.
 
+KP-61-O831-002 GPS: Sync lost in debugger with old GDB versions
+
+  Problem:    With some old gdb versions, when trying to get the task list, GPS
+              would loose sync with the debugger
+
+  Status:     This was fixed in 6.2 on 2015-09-07
+
+  Workaround: Change tasks via the gdb console
+
 KP-61-O826-004 GNATdoc: crash on use of '@private' tag for package
 
   Problem:    GNATdoc crashes when a library-level package is marked
