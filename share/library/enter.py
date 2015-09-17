@@ -12,23 +12,22 @@ indentation engine tries to do.
 
 
 import GPS
+import gps_utils
 
-XML = r"""<?xml version="1.0" ?>
-<enter>
-   <action name="newline no auto-indent" category="Editor">
-      <shell>current_context</shell>
-      <shell>FileContext.file %1</shell>
-      <shell>File.name %1</shell>
-      <shell>Editor.cursor_get_line %1</shell>
-      <shell>Editor.cursor_get_column %2</shell>
-      <shell>Editor.replace_text %3 %2 %1 "
-" 0 0</shell>
-      <shell>Editor.indent</shell>
-      <filter id="Source editor" />
-   </action>
 
-   <key action="newline no auto-indent">shift-Return</key>
-</enter>
-"""
-
-GPS.parse_xml(XML)
+@gps_utils.interactive(
+    name='newline no auto-indent',
+    category='Editor',
+    filter='Source editor',
+    key='shift-Return')
+def newline_no_auto_indent():
+    """
+    Insert a newline character, but do not auto-reindent the current
+    line first (as opposed to what <return> does).
+    """
+    ctx = GPS.current_context()
+    f = ctx.file().name()
+    GPS.Editor.replace_text(
+        f, GPS.Editor.cursor_get_line(f), GPS.Editor.cursor_get_column(f),
+        "\n", 0, 0)
+    GPS.Editor.indent()

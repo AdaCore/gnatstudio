@@ -528,9 +528,23 @@ class Context(object):
         """
         Returns a list containing the contextual menu labels of the currently
         focused window. The output has the form "depth - label".
-
         """
         pass  # implemented in Ada
+
+    def file(self):
+        """
+        Return the name of the file in the context.
+        This method used to be set only for a GPS.FileContext.
+
+        :rtype: :class:`GPS.File`
+        """
+        pass  # implemented in Ada
+
+    def set_file(self, file):
+        """
+        Set the file stored in the context.
+        :param GPS.File file:
+        """
 
 
 ###########################################################
@@ -559,14 +573,6 @@ class FileContext(Context):
         Return the current directory of the context.
 
         :rtype: string
-        """
-        pass  # implemented in Ada
-
-    def file(self):
-        """
-        Return the name of the file in the context.
-
-        :rtype: :class:`GPS.File`
         """
         pass  # implemented in Ada
 
@@ -8003,7 +8009,6 @@ class Preference(object):
 ###########################################################
 
 class Process(Command):
-
     """
     Interface to :program:`expect`-related commands. This class can be used
     to spawn new processes and communicate with them later. It is similar to

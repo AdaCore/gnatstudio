@@ -69,6 +69,8 @@ class Style(object):
         symbolToDist=16.0,
         symbolToWidth=1.0,
         shadowColor=None,
+        shadowOffsetX=2.0,
+        shadowOffsetY=2.0
     ):
         """
         Constructs a new style.
@@ -168,6 +170,19 @@ class Item(object):
     Overflow = enum('Item.Overflow', PREVENT=0, HIDE=1)
     Layout = enum('Item.Layout', HORIZONTAL=0, VERTICAL=1)
 
+    Size = enum('Item.Size', FIT=-1, AUTO=-2)
+    """
+    Describes the size of an item. In general, the size is given as a number
+    of pixels. There are however a few special values.
+    - FIT indicates that the item is sized so that it fits exactly in its
+      parent container, including the child margins. So for instance given a
+      parent with a vertical layout, of width 200px, and a child with
+      10px margins both on left and right, then the child's width will be
+      set to 180px.
+    - AUTO indicates that the item's size is computed so that all of its
+      children fit exactly inside the item.
+    """
+
     children = None
     """
     The list of :class:`GPS.Browsers.Item` that were added to the item.
@@ -245,14 +260,44 @@ class Item(object):
            put next to one another.
         """
 
-    def set_min_size(self, width=1.0, height=1.0):
+    def set_size(self, width=-1.0, height=-1.0):
         """
-        Forces a minimal size for self.
-        It could be make larger if its children request a larger size, but
-        will not smaller than the given size.
+        Forces a specific size for self.
+        This overrides any previous call to set_width_range and
+        set_height_range.
 
-        :param float width: minimal width
-        :param float height: minimal height
+        :param float width: actual width. If -1, the width will be
+           computed automatically.
+        :param float height: actual height. If -1, the height will be
+           computed automatically.
+        """
+
+    def set_width_range(self, min=-1.0, max=-1.0):
+        """
+        Constrain the range of width for self.
+        Self could be make larger if its children request a larger size, but
+        will not smaller than the given size.
+        The default is for items to use the full width of their parent (for
+        vertical layout) or the full height (for horizontal layout), and
+        the size required by their children for the other axis.
+        This overrides any previous call to set_size
+
+        :param float min:  minimal width
+        :param float max:  maximal width
+        """
+
+    def set_height_range(self, min=-1.0, max=-1.0):
+        """
+        Constrain the range of height for self.
+        Self could be make larger if its children request a larger size, but
+        will not smaller than the given size.
+        The default is for items to use the full width of their parent (for
+        vertical layout) or the full height (for horizontal layout), and
+        the size required by their children for the other axis.
+        This overrides any previous call to set_size
+
+        :param float min:  minimal height
+        :param float max:  maximal height
         """
 
     def add(self,
@@ -595,6 +640,14 @@ class Diagram(object):
         """
 
     @staticmethod
+    def load_json_data(data, diagramFactory=None):
+        """
+        Load a JSON description and display the corresponding data.
+        See :func:`GPS.Browsers.Diagram.load_json` for more information on the
+        format of the JSON file.
+        """
+
+    @staticmethod
     def load_json(file, diagramFactory=None):
         """
         Load a JSON file into a series of diagrams.
@@ -606,11 +659,9 @@ class Diagram(object):
         The JSON file should contain an object ("{...}") with the following
         attributes:
 
-            - `styles`: this is a list of style objects. Each style is itself
+            - `styles`: this is a dict of style objects. Each style is itself
               described as an object whose attributes are any of the valid
-              parameters for :func:`GPS.Browsers.Style.__init__`. In addition
-              the style should have an `id` attribute that can be referenced
-              elsewhere in the file, to avoid duplicating style information.
+              parameters for :func:`GPS.Browsers.Style.__init__`.
 
               There are a few special ids that can be used to set the default
               properties or styles for the items defined in this json
@@ -623,12 +674,31 @@ class Diagram(object):
 
               For instance::
 
-                  {"styles": [
-                     {"id": "__default_props_text", "margin": [0, 5, 0, 5]},
-                     {"id": "__default_props_rect", "minWidth": 200},
-                     {"id": "__default_style_text", "fontName": "arial 10"},
-                     {"id": "customStyle1", "stroke": "blue"}
-                  ]}
+                  {"styles": {
+                     '__default_props_text': {"margin": [0, 5, 0, 5]},
+                     '__default_props_rect': {"minWidth": 200},
+                     '__default_style_text': {"fontName": "arial 10"},
+                     'customStyle1': {"stroke": "blue"}
+                  }}
+
+            - `templates`: this is a dictionary of diagram objects (as
+              described below. They are not created or inserted in the
+              diagram. However, if a later description inside `diagrams`
+              contains an attribute 'template', then that attribute will be
+              replaced by all the attributes defined in the template. For
+              instance::
+
+                  'templates': {
+                      '#tmpl0': { 'type': 'rect'; 'width': 10 }
+                  },
+                  'diagrams': [
+                      { 'template': '#tmp10',
+                        'height': 20
+                      }
+                  ]
+
+              is equivalent to putting the type and the width inline in
+              the objet definition, but provide better sharing.
 
             - `diagrams`: this is a list of diagram object. A single file can
               contain multiple diagrams, but a browser window always only
@@ -654,6 +724,15 @@ class Diagram(object):
 
             - `x`, `y`, `anchorx`, `anchory`: optional float attributes. See
               the description of :func:`GPS.Browsers.Item.set_position()`.
+
+            - `width`, `height`: the size of the item. This can be specified
+              as a positive float to specify a size in pixels. Alternatively
+              it can be set to `GPS.Browsers.Item.Size.FIT` (-1) so that the
+              item and its margins occupy the full width of its parent (for a
+              vertical layout) or the full height (for a horizontal layout).
+              It can also be set to `GPS.Browsers.Item.Size.AUTO` (-2) so that
+              the item occupies the minimal size needed for all of its
+              children. The default is FIT.
 
             - `style`: an optional string (which then references the id of one
               of the styles defined in the "styles" attribute described above,
@@ -724,18 +803,9 @@ class Diagram(object):
               indicates whether the points are coordinates relative to the
               item's topleft corner, or are relative to the previous point.
 
-        Ellipse items (corresponding to :class:`GPS.Browsers.EllipseItem`)
-        have the following additional attributes:
-
-            - `width`, `height`: optional floats, which describe the rectangle
-              into which the ellipse is inscribed. When unspecified, the size
-              is computed from the list of children.
-
         Rect items (corresponding to :class:`GPS.Browsers.RectItem`) have the
         following additional attributes:
 
-            - `width`, `height`: optional floats.  When unspecified, the size
-              is computed from the list of children.
 
             - `radius`: optional float indicating the radius for the corners
               of the rectangle.

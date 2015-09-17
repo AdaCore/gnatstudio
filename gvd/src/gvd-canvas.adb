@@ -1746,9 +1746,10 @@ package body GVD.Canvas is
       Item.Update_Display;
 
       --  ??? Should be changed when preferences are changed
-      Item.Set_Size_Range
-        (Max_Width  => Gdouble (Max_Item_Width.Get_Pref),
-         Max_Height => Gdouble (Max_Item_Height.Get_Pref));
+      Item.Set_Width_Range
+        (Max => (Unit_Pixels, Gdouble (Max_Item_Width.Get_Pref)));
+      Item.Set_Height_Range
+        (Max => (Unit_Pixels, Gdouble (Max_Item_Width.Get_Pref)));
 
       if Get_Detect_Aliases (Debugger) then
          Recompute_All_Aliases (Debugger, False);

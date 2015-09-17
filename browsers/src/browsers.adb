@@ -35,21 +35,30 @@ package body Browsers is
    function On_Item_Event_Key_Scrolls is new On_Item_Event_Key_Scrolls_Generic
      (Modifier => Mod1_Mask);
 
-   function On_Click
+   function On_Item_Event
      (Self    : not null access GObject_Record'Class;
       Details : Event_Details_Access) return Boolean;
    --  Called when an item is clicked, to possibly execute its action
 
-   --------------
-   -- On_Click --
-   --------------
+   -------------------
+   -- On_Item_Event --
+   -------------------
 
-   function On_Click
+   function On_Item_Event
      (Self    : not null access GObject_Record'Class;
       Details : Event_Details_Access) return Boolean
    is
+      Canvas : constant GPS_Canvas_View := GPS_Canvas_View (Self);
       It : Abstract_Item;
    begin
+      if not Canvas.Read_Only
+         and then
+            (On_Item_Event_Move_Item (Self, Details)
+             or else On_Item_Event_Edit (Self, Details))
+      then
+         return True;
+      end if;
+
       if (Details.Event_Type = Button_Release
           or else Details.Event_Type = Double_Click)
         and then Details.Button = 1
@@ -67,7 +76,7 @@ package body Browsers is
          end loop;
       end if;
       return False;
-   end On_Click;
+   end On_Item_Event;
 
    -------------------
    -- Draw_Internal --
@@ -120,14 +129,13 @@ package body Browsers is
       Gtkada.Canvas_View.Initialize (Self, Model);
 
       --  Put this first
-      Self.On_Item_Event (On_Click'Access);
+      Self.On_Item_Event (On_Item_Event'Access);
 
       Self.On_Item_Event (On_Item_Event_Select'Access);
-      Self.On_Item_Event (On_Item_Event_Move_Item'Access);
       Self.On_Item_Event (On_Item_Event_Scroll_Background'Access);
+      Self.On_Item_Event (On_Item_Event_Zoom'Access);
       Self.On_Item_Event (On_Item_Event_Key_Navigate'Access);
       Self.On_Item_Event (On_Item_Event_Key_Scrolls'Access);
-      Self.On_Item_Event (On_Item_Event_Zoom'Access);
    end Gtk_New;
 
    ----------------
@@ -311,5 +319,26 @@ package body Browsers is
            (Stroke     => Selected,
             Line_Width => 3.0));
    end Create_Styles;
+
+   -------------------
+   -- Set_Read_Only --
+   -------------------
+
+   procedure Set_Read_Only
+      (Self : not null access GPS_Canvas_View_Record;
+       Read_Only : Boolean := True) is
+   begin
+      Self.Read_Only := Read_Only;
+   end Set_Read_Only;
+
+   ------------------
+   -- Is_Read_Only --
+   ------------------
+
+   function Is_Read_Only
+      (Self : not null access GPS_Canvas_View_Record) return Boolean is
+   begin
+      return Self.Read_Only;
+   end Is_Read_Only;
 
 end Browsers;

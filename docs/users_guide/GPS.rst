@@ -395,6 +395,10 @@ Classes
    .. autoattribute:: GPS.Context.module_name
 
 
+   .. automethod:: GPS.Context.file
+
+   .. automethod:: GPS.Context.set_file
+
 :class:`GPS.Contextual`
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -995,8 +999,6 @@ Classes
    .. automethod:: GPS.FileContext.__init__
 
    .. automethod:: GPS.FileContext.directory
-
-   .. automethod:: GPS.FileContext.file
 
    .. automethod:: GPS.FileContext.files
 

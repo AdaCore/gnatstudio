@@ -172,13 +172,13 @@ package body Items.Simples is
            and then Self.Type_Name /= null
          then
             T := Gtk_New_Text (S, Self.Get_Type_Name (Lang));
-            T.Set_Size_Range (Min_Height => 10.0);
+            T.Set_Height_Range (Min => (Unit_Pixels, 10.0));
             Rect.Add_Child (T);
          end if;
 
          if Show_Value (Mode) and then Self.Value /= null then
             T := Gtk_New_Text (S, Self.Value.all);
-            T.Set_Size_Range (Min_Height => 10.0);
+            T.Set_Height_Range (Min => (Unit_Pixels, 10.0));
             Rect.Add_Child (T);
          end if;
       end if;
@@ -226,13 +226,13 @@ package body Items.Simples is
            and then Self.Type_Name /= null
          then
             T := Gtk_New_Text (S, Self.Get_Type_Name (Lang));
-            T.Set_Size_Range (Min_Height => 10.0);
+            T.Set_Height_Range (Min => (Unit_Pixels, 10.0));
             Rect.Add_Child (T);
          end if;
 
          if Self.Value /= null and then Show_Value (Mode) then
             T := Gtk_New_Text (S, Self.Value.all);
-            T.Set_Size_Range (Min_Height => 10.0);
+            T.Set_Height_Range (Min => (Unit_Pixels, 10.0));
             Rect.Add_Child (T);
          end if;
       end if;

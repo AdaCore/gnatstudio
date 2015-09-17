@@ -640,6 +640,10 @@ package body GPS.Kernel.Scripts is
             Set_Error_Msg (Data, -"No file information stored in the context");
          end if;
 
+      elsif Command = "set_file" then
+         Context := Get_Data (Data, 1);
+         Set_File_Information (Context, Files => (1 => Nth_Arg (Data, 2)));
+
       elsif Command = "files" then
          Context := Get_Data (Data, 1);
          if Has_File_Information (Context) then
@@ -1428,8 +1432,13 @@ package body GPS.Kernel.Scripts is
          Handler      => Context_Command_Handler'Access);
       Register_Command
         (Kernel, "file",
-         Class        => Get_File_Context_Class (Kernel),
+         Class        => Get_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("set_file",
+         Class        => Get_Context_Class (Kernel),
+         Handler      => Context_Command_Handler'Access,
+         Params       => (1 => Param ("file")));
       Register_Command
         (Kernel, "files",
          Class        => Get_File_Context_Class (Kernel),

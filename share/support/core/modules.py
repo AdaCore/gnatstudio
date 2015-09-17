@@ -39,7 +39,7 @@ by GPS itself (for instance a :class:`GPS.Browsers.View`). Since
 :func:`GPS.Browsers.View.create` is putting the view directly in the MDI,
 the module does not get to call :func:`GPS.MDI.add`, and as such the modules
 :func:`save_desktop` function is never called by default. To work around this,
-you need to pass your module's :func:`_save_desktop` (not the leading
+you need to pass your module's :func:`_save_desktop` (note the leading
 underscore) as a parameter to :func:`GPS.Browsers.View.create`.
 """
 
@@ -195,17 +195,16 @@ class Module(object):
         """
         return ""
 
-    def load_desktop(self, child, data):
+    def load_desktop(self, data):
         """
         This function is called when loading a widget from the desktop. It
-        receives a newly created widget, and the data returned by
-        save_desktop() that can be used to initialize the widget.
+        receives the data returned by save_desktop() that can be used to
+        initialize a new window. Exceptions are handled and logged
+        automatically.
 
-        :param GPS.MDIWindow child: a new instance, that
-            contains the view created by self.create_view()
         :param str data: as returned by save_desktop
-        :return: the GPS.MDIWindow that was loaded. It defaults to the
-            child parameter, but the parameter might have been null
+        :return: the GPS.MDIWindow that was loaded, or null if it could not
+            be loaded.
         """
         pass
 
@@ -328,9 +327,14 @@ class Module(object):
 
     def _load_desktop(self, name, data):
         if name == self.name():
-            child = self.get_child(allow_create=True)
-            c = self.load_desktop(child, data)
-            return c or child
+            try:
+                c = self.load_desktop(data)
+                if not c:
+                    # Default behavior
+                    c = self.get_child(allow_create=True)
+                return c
+            except Exception as e:
+                GPS.Logger('MODULES').log('While loading desktop: %s' % (e, ))
 
     def get_child(self, allow_create=True):
         """

@@ -25,7 +25,6 @@ with Glib.Object;               use Glib.Object;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gdk.RGBA;                  use Gdk.RGBA;
-with Gdk.Types;                 use Gdk.Types;
 with Generic_Views;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
@@ -34,7 +33,6 @@ with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Strings;              use GNAT.Strings;
 with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
-with Gtkada.Canvas_View.Views;  use Gtkada.Canvas_View.Views;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Style;              use Gtkada.Style;
 with Gtk.Box;                   use Gtk.Box;
@@ -86,6 +84,8 @@ package body Browsers.Scripts is
    P_Symbol_To_Dist     : constant := 31;
    P_Symbol_To_Width    : constant := 32;
    P_Shadow_Color       : constant := 33;
+   P_Shadow_Offset_X    : constant := 34;
+   P_Shadow_Offset_Y    : constant := 35;
    --  All the parameters to GPS.Browsers.Style.__init__
 
    PA_Item              : constant := 2;
@@ -171,9 +171,7 @@ package body Browsers.Scripts is
    --  Handles all commands for the python classes in this package.
 
    type Browser_View_Record is new Browsers.Canvas.General_Browser_Record with
-      record
-         Read_Only : Boolean := True;
-      end record;
+      null record;
 
    function Initialize
      (Self : access Browser_View_Record'Class) return Gtk_Widget;
@@ -191,6 +189,8 @@ package body Browsers.Scripts is
       Formal_View_Record => Browser_View_Record,
       Formal_MDI_Child   => Script_Child_Record,
       Reuse_If_Exist     => False,
+      Local_Toolbar      => True,
+      Local_Config       => True,
       Initialize         => Initialize,
       Position           => Position_Automatic,
       Group              => Group_Default,
@@ -217,13 +217,6 @@ package body Browsers.Scripts is
       Event : Event_Details_Access)
       return Boolean;
    --  Called when an unhandled event occurs in the view
-
-   function On_Item_Event_Zoom is new On_Item_Event_Zoom_Generic
-     (Modifier => Mod1_Mask);
-   function On_Item_Event_Key_Navigate
-     is new On_Item_Event_Key_Navigate_Generic (Modifier => 0);
-   function On_Item_Event_Key_Scrolls is new On_Item_Event_Key_Scrolls_Generic
-     (Modifier => Mod1_Mask);
 
    function Get_Item (Inst : Class_Instance) return Abstract_Item;
    --  Set or get the style associated with an instance of GPS.Browsers.Item
@@ -800,14 +793,6 @@ package body Browsers.Scripts is
    is
       Self   : constant Browser_View := Browser_View (View);
    begin
-      if not Self.Read_Only
-        and then
-          (On_Item_Event_Move_Item (Self.Get_View, Event)
-           or else On_Item_Event_Edit (Self.Get_View, Event))
-      then
-         return True;
-      end if;
-
       if Event.Event_Type = Key_Press then
          return Call_Method (Self, "on_key", Event);
 
@@ -832,20 +817,13 @@ package body Browsers.Scripts is
      (Self : access Browser_View_Record'Class) return Gtk_Widget is
    begin
       Browsers.Canvas.Initialize (Self);
-
-      Self.Get_View.On_Item_Event (On_Item_Event_Select'Access);
-      Self.Get_View.On_Item_Event (On_Item_Event_Scroll_Background'Access);
-      Self.Get_View.On_Item_Event (On_Item_Event_Zoom'Access);
-      Self.Get_View.On_Item_Event (On_Item_Event_Key_Navigate'Access);
-      Self.Get_View.On_Item_Event (On_Item_Event_Key_Scrolls'Access);
+      Setup_Contextual_Menu
+        (Kernel          => Self.Kernel,
+         Event_On_Widget => Self.Get_View);
 
       --  Last event handler, so that the default behavior always takes
       --  precedence for consistency
       Self.Get_View.On_Item_Event (On_Item_Event'Access, Self);
-
-      Setup_Contextual_Menu
-        (Kernel          => Self.Kernel,
-         Event_On_Widget => Self.Get_View);
 
       return Gtk_Widget (Self.Get_View);
    end Initialize;
@@ -868,6 +846,8 @@ package body Browsers.Scripts is
       Context := Browser_Child_Record (Self.all).Build_Context (Event);
       if Event /= null then
          View.Get_View.Set_Details (Details, Event.Button);
+      else
+         View.Get_View.Initialize_Details (Details);
       end if;
       Set_Browser_Information (Context, Details);
       Dummy := Call_Method
@@ -932,7 +912,7 @@ package body Browsers.Scripts is
       elsif Command = "set_read_only" then
          Inst := Nth_Arg (Data, 1);
          View := Browser_View (GObject'(Get_Data (Inst)));
-         View.Read_Only := Nth_Arg (Data, 2, True);
+         View.Get_View.Set_Read_Only (Data.Nth_Arg (2, True));
 
       elsif Command = "scroll_into_view" then
          Inst := Nth_Arg (Data, 1);
@@ -1052,6 +1032,31 @@ package body Browsers.Scripts is
    procedure Item_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
+      function Get (Count : Integer) return Gtkada.Canvas_View.Size;
+      --  Read a size from the parameter
+
+      function Get (Count : Integer) return Gtkada.Canvas_View.Size is
+         R : Gtkada.Canvas_View.Size;
+         V : Gdouble;
+      begin
+         V := Gdouble (Data.Nth_Arg (Count, -1.0));
+
+         --  If the user provides a Gdouble, these are pixels
+         if V = Fit_Size_As_Double then
+            R := Fit_Size;
+         elsif V = Auto_Size_As_Double then
+            R := Auto_Size;
+         else
+            R := (Unit_Pixels, V);
+         end if;
+         return R;
+      exception
+         when others =>
+            --  Likely was not a double.
+            --  ??? Should interpret strings as percent
+            return Fit_Size;
+      end Get;
+
       Inst : Class_Instance;
       M    : Margins := No_Margins;
       Item : Container_Item;
@@ -1137,12 +1142,20 @@ package body Browsers.Scripts is
             end if;
          end;
 
-      elsif Command = "set_min_size" then
+      elsif Command = "set_width_range" then
          Inst := Nth_Arg (Data, 1);
+         Container_Item (Get_Item (Inst)).Set_Width_Range
+           (Min => Get (2), Max => Get (3));
 
-         Container_Item (Get_Item (Inst)).Set_Size_Range
-           (Min_Width  => Gdouble (Nth_Arg (Data, 2, 1.0)),
-            Min_Height => Gdouble (Nth_Arg (Data, 3, 1.0)));
+      elsif Command = "set_height_range" then
+         Inst := Nth_Arg (Data, 1);
+         Container_Item (Get_Item (Inst)).Set_Height_Range
+           (Min => Get (2), Max => Get (3));
+
+      elsif Command = "set_size" then
+         Inst := Nth_Arg (Data, 1);
+         Container_Item (Get_Item (Inst)).Set_Size
+           (Width  => Get (2), Height => Get (3));
 
       elsif Command = "add" then
          Inst := Nth_Arg (Data, 1);
@@ -1332,8 +1345,10 @@ package body Browsers.Scripts is
                        (Integer'(Nth_Arg (Data, P_Font_Halign,
                         Alignment'Pos (Pango_Align_Left))))),
             Shadow     =>
-              (Color  => Color_From_Param (P_Shadow_Color, Null_RGBA),
-               others => <>),
+              (Color    => Color_From_Param (P_Shadow_Color, Null_RGBA),
+               X_Offset => Gdouble (Data.Nth_Arg (P_Shadow_Offset_X, 2.0)),
+               Y_Offset => Gdouble (Data.Nth_Arg (P_Shadow_Offset_Y, 2.0))),
+
             Arrow_From =>
               (Head  => Arrow_Head'Val
                  (Nth_Arg (Data, P_Arrow_From_Head, Arrow_Head'Pos (None))),
@@ -1682,7 +1697,9 @@ package body Browsers.Scripts is
             P_Symbol_To_Stroke   => Param ("symbolToStroke", True),
             P_Symbol_To_Dist     => Param ("symbolToDist", True),
             P_Symbol_To_Width    => Param ("symbolToWidth", True),
-            P_Shadow_Color       => Param ("shadowColor", True)),
+            P_Shadow_Color       => Param ("shadowColor", True),
+            P_Shadow_Offset_X    => Param ("shadowOffsetX", True),
+            P_Shadow_Offset_Y    => Param ("shadowOffsetY", True)),
          Class   => Style_Class,
          Handler => Style_Handler'Access);
 
@@ -1901,9 +1918,23 @@ package body Browsers.Scripts is
          Handler => Item_Handler'Access);
       Register_Command
         (Kernel.Scripts,
-         "set_min_size",
+         "set_size",
          Params  => (1 => Param ("width", Optional => True),
                      2 => Param ("height", Optional => True)),
+         Class   => Module.Item_Class,
+         Handler => Item_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "set_width_range",
+         Params  => (2 => Param ("min",  Optional => True),
+                     3 => Param ("max", Optional => True)),
+         Class   => Module.Item_Class,
+         Handler => Item_Handler'Access);
+      Register_Command
+        (Kernel.Scripts,
+         "set_height_range",
+         Params  => (2 => Param ("min",  Optional => True),
+                     3 => Param ("max", Optional => True)),
          Class   => Module.Item_Class,
          Handler => Item_Handler'Access);
       Register_Command

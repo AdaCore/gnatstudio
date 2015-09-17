@@ -1126,9 +1126,8 @@ package body GPS.Main_Window is
               (Get_MDI (Kernel), Nth_Arg (Data, 1));
          elsif Command = "get_by_child" then
             Name_Parameters (Data, Get_By_Child_Cmd_Parameters);
-            Child := Find_MDI_Child
-              (Get_MDI (Kernel),
-               Widget => Gtk_Widget
+            Child := Find_MDI_Child_From_Widget
+              (Gtk_Widget
                  (GObject'
                     (Get_Data (Nth_Arg (Data, 1, Get_GUI_Class (Kernel))))));
          else

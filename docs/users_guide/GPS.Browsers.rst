@@ -43,6 +43,8 @@ Classes
 
    .. automethod:: GPS.Browsers.Diagram.load_json
 
+   .. automethod:: GPS.Browsers.Diagram.load_json_data
+
    .. automethod:: GPS.Browsers.Diagram.lower_item
 
    .. automethod:: GPS.Browsers.Diagram.raise_item
@@ -111,6 +113,10 @@ Classes
 
 
 
+   .. autoattribute:: GPS.Browsers.Item.Size
+
+
+
    .. autoattribute:: GPS.Browsers.Item.children
 
 
@@ -144,9 +150,13 @@ Classes
 
    .. automethod:: GPS.Browsers.Item.set_child_layout
 
-   .. automethod:: GPS.Browsers.Item.set_min_size
+   .. automethod:: GPS.Browsers.Item.set_height_range
 
    .. automethod:: GPS.Browsers.Item.set_position
+
+   .. automethod:: GPS.Browsers.Item.set_size
+
+   .. automethod:: GPS.Browsers.Item.set_width_range
 
 :class:`GPS.Browsers.Link`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -48,6 +48,7 @@ with Gtk.Tool_Button;                   use Gtk.Tool_Button;
 with Gtk.Widget;                        use Gtk.Widget;
 
 with Gtkada.Canvas_View;                use Gtkada.Canvas_View;
+with Gtkada.Canvas_View.Views;          use Gtkada.Canvas_View.Views;
 with Gtkada.Canvas_View.Models.Layers; use Gtkada.Canvas_View.Models.Layers;
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.Handlers;                   use Gtkada.Handlers;
@@ -72,7 +73,7 @@ with XML_Utils;                         use XML_Utils;
 package body Browsers.Canvas is
 
    Zoom_Levels : constant array (Positive range <>) of Gdouble :=
-                   (0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0);
+                   (0.0, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0);
    --  All the possible zoom levels. We have to use such an array, instead
    --  of doing the computation directly, so as to avoid rounding errors that
    --  would appear in the computation and make zoom_in not the reverse of
@@ -154,6 +155,12 @@ package body Browsers.Canvas is
      (Filter  : access Is_In_Browser;
       Context : Selection_Context) return Boolean;
    --  Whether the focus is currently on a browser
+
+   type Is_Writable_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Writable_Filter;
+      Context : Selection_Context) return Boolean;
+   --  Whether the browser is writable
 
    type Toggle_Links is new Interactive_Command with null record;
    overriding function Execute
@@ -440,9 +447,13 @@ package body Browsers.Canvas is
       Gtk_New (Zooms_Menu);
 
       for J in Zoom_Levels'Range loop
-         Gtk_New
-           (Mitem,
-            Label => Guint'Image (Guint (Zoom_Levels (J) * 100.0)) & '%');
+         if Zoom_Levels (J) = 0.0 then
+            Gtk_New (Mitem, Label => "Fit");
+         else
+            Gtk_New
+              (Mitem,
+               Label => Guint'Image (Guint (Zoom_Levels (J) * 100.0)) & '%');
+         end if;
          Zooms_Menu.Append (Mitem);
          Contextual_Cb.Connect
            (Mitem, Gtk.Menu_Item.Signal_Activate, Zoom_Level'Access,
@@ -454,7 +465,7 @@ package body Browsers.Canvas is
       Gtk_New_From_Icon_Name
          (Image, "gps-zoom-100-symbolic", Icon_Size_Local_Toolbar);
       Gtk.Menu_Tool_Button.Gtk_New (Menu, Gtk_Widget (Image), "100%");
-      Menu.Set_Tooltip_Text (-"Reset zoom level");
+      Menu.Set_Tooltip_Text (-"Reset zoom level (or Alt-mousewheel)");
       Menu.Set_Menu (Zooms_Menu);
       Zooms_Menu.Show_All;
       Toolbar.Insert (Menu, Get_Toolbar_Section (Kernel, Toolbar, "zoom"));
@@ -632,11 +643,14 @@ package body Browsers.Canvas is
       end On_Item;
 
    begin
-      B.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
-      B.Model.Remove (To_Remove);
-      B.Model.Refresh_Layout;
-      B.View.Queue_Draw;
-      return Commands.Success;
+      if not B.Get_View.Is_Read_Only then
+         B.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
+         B.Model.Remove (To_Remove);
+         B.Model.Refresh_Layout;
+         B.View.Queue_Draw;
+         return Commands.Success;
+      end if;
+      return Commands.Failure;
    end Execute;
 
    -------------
@@ -660,11 +674,14 @@ package body Browsers.Canvas is
       end On_Item;
 
    begin
-      B.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
-      B.Model.Remove (To_Remove);
-      B.Model.Refresh_Layout;
-      B.View.Queue_Draw;
-      return Commands.Success;
+      if not B.Get_View.Is_Read_Only then
+         B.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
+         B.Model.Remove (To_Remove);
+         B.Model.Refresh_Layout;
+         B.View.Queue_Draw;
+         return Commands.Success;
+      end if;
+      return Commands.Failure;
    end Execute;
 
    -------------
@@ -857,18 +874,20 @@ package body Browsers.Canvas is
       Space_Between_Layers : Gdouble := Default_Space_Between_Layers)
    is
    begin
-      --  Recompute the size of all boxes
-      Self.View.Model.Refresh_Layout;
+      if not Self.Get_View.Is_Read_Only then
+         --  Recompute the size of all boxes
+         Self.View.Model.Refresh_Layout;
 
-      --  Now compute the position of the boxes.
+         --  Now compute the position of the boxes.
 
-      Gtkada.Canvas_View.Models.Layers.Layout
-        (Self.View.Model,
-         View                 => Self.View,  --  animate
-         Horizontal           => Self.Horizontal_Layout,
-         Add_Waypoints        => Add_Waypoints.Get_Pref,
-         Space_Between_Items  => Space_Between_Items,
-         Space_Between_Layers => Space_Between_Layers);
+         Gtkada.Canvas_View.Models.Layers.Layout
+           (Self.View.Model,
+            View                 => Self.View,  --  animate
+            Horizontal           => Self.Horizontal_Layout,
+            Add_Waypoints        => Add_Waypoints.Get_Pref,
+            Space_Between_Items  => Space_Between_Items,
+            Space_Between_Layers => Space_Between_Layers);
+      end if;
 
       if Rescale then
          Self.View.Scale_To_Fit
@@ -887,7 +906,9 @@ package body Browsers.Canvas is
       pragma Unreferenced (Self);
       B : constant General_Browser := Browser_From_Context (Context.Context);
    begin
-      Refresh_Layout (B, Rescale => True);
+      if not B.Get_View.Is_Read_Only then
+         Refresh_Layout (B, Rescale => True);
+      end if;
       return Commands.Success;
    end Execute;
 
@@ -902,8 +923,10 @@ package body Browsers.Canvas is
       pragma Unreferenced (Self);
       B : constant General_Browser := Browser_From_Context (Context.Context);
    begin
-      Browser_Model (B.View.Model).Clear;
-      Browser_Model (B.View.Model).Refresh_Layout;
+      if not B.Get_View.Is_Read_Only then
+         Browser_Model (B.View.Model).Clear;
+         Browser_Model (B.View.Model).Refresh_Layout;
+      end if;
       return Commands.Success;
    end Execute;
 
@@ -1020,7 +1043,14 @@ package body Browsers.Canvas is
    is
       pragma Unreferenced (Item);
    begin
-      Data.Browser.View.Set_Scale (Data.Zoom);
+      if Data.Zoom = 0.0 then
+         Data.Browser.View.Scale_To_Fit (Duration => 0.4);
+      else
+         Animate_Scale
+            (View        => Data.Browser.View,
+             Final_Scale => Data.Zoom).Start (Data.Browser.View);
+         --  Data.Browser.View.Set_Scale (Data.Zoom);
+      end if;
    end Zoom_Level;
 
    ----------------
@@ -1151,6 +1181,7 @@ package body Browsers.Canvas is
 
    procedure Register_Actions (Kernel : access Kernel_Handle_Record'Class) is
       Filter : constant Action_Filter := new Is_In_Browser;
+      Is_Writable : constant Action_Filter := new Is_Writable_Filter;
    begin
       Register_Action
         (Kernel, "browser select all", new Select_All_Command,
@@ -1184,28 +1215,28 @@ package body Browsers.Canvas is
         (Kernel, "browser refresh", new Refresh_Command,
          -"Refresh layout",
          Icon_Name => "gps-refresh-symbolic",
-         Filter   => Filter,
+         Filter   => Filter and Is_Writable,
          Category => -"Browsers");
 
       Register_Action
         (Kernel, "browser clear", new Clear_Command,
          -"Clear the contents of the browser",
          Icon_Name => "gps-clear-symbolic",
-         Filter   => Filter,
+         Filter   => Filter and Is_Writable,
          Category => -"Browsers");
 
       Register_Action
         (Kernel, "browser remove unselected", new Remove_Unselected_Command,
          -"Remove unselected items",
          Icon_Name => "gps-remove-unselected-symbolic",
-         Filter   => Filter,
+         Filter   => Filter and Is_Writable,
          Category => -"Browsers");
 
       Register_Action
         (Kernel, "browser remove selected", new Remove_Selected_Command,
          -"Remove selected items",
          Icon_Name => "gps-remove-symbolic",
-         Filter   => Filter,
+         Filter   => Filter and Is_Writable,
          Category => -"Browsers");
    end Register_Actions;
 
@@ -1269,6 +1300,20 @@ package body Browsers.Canvas is
    begin
       return Get_Creator (Context) /= null
         and then Browser_From_Context (Context) /= null;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Is_Writable_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      return Get_Creator (Context) /= null
+        and then not Browser_From_Context (Context).Get_View.Read_Only;
    end Filter_Matches_Primitive;
 
    --------------------

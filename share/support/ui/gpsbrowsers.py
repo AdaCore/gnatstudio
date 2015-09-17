@@ -32,12 +32,7 @@ class Styles(object):
         minWidth, minHeight, alignment, margins,...
         """
 
-        self.default_item_props = dict(
-            text=dict(
-                #margin=[0, 5, 0, 5],
-                # align=2,
-            )
-        )
+        self.default_item_props = dict()
 
     def create_default_styles(self):
         """
@@ -63,7 +58,7 @@ class Styles(object):
             link=dict(
                 stroke='black'))
 
-    def parse(self, json, itemType):
+    def parse(self, json, itemType, id=None):
         """
         Return the style instance to use given a json description.
         This description is merged with the default properties for this
@@ -72,6 +67,8 @@ class Styles(object):
         :param json: a dict coming from JSON
         :param itemType: a string, the type of the item to which this style
            applies. Should be None when defining a style.
+        :param str id: the id the style we are defining. If this is
+           specified, the style is stored in self for later reuse.
         :return: an instance of GPS.Browsers.Style
         """
         if json is None:
@@ -85,7 +82,6 @@ class Styles(object):
         if isinstance(json, basestring):
             return self.styles[json]
 
-        id = json.get('id')
         if id and id.startswith('__default_props_'):
             id = id[16:]
             self.default_item_props[id] = json
@@ -103,7 +99,8 @@ class Styles(object):
                     "arrowToFill", "arrowToWidth", "symbolFrom",
                     "symbolFromStroke", "symbolFromDist", "symbolFromWidth",
                     "symbolTo", "symbolToStroke", "symbolToDist",
-                    "symbolToWidth", "shadowColor"):
+                    "symbolToWidth", "shadowColor", "shadowOffsetY",
+                    "shadowOffsetY"):
             if key in json:
                 # JSON 'null' gives a Python None, but we still want to use
                 # the non-default value for the parameter in this case
@@ -129,175 +126,135 @@ class Styles(object):
         return s
 
 
-def parse_item(items, json, styles):
+class JSON_Diagram_File():
     """
-    Create an item from JSON.
-
-    :param items: a dict of all items, indexed by id
-    :param json: a dict describing the style
-    :param styles: an instance of Styles
-    :return: the GPS.Browsers.Item
+    A JSON file that contains the definition of multiple diagrams.
     """
 
-    t = json.get('type', None)
-    if t is None:
-        if json.get('text') is not None:
-            t = 'text'
-        elif json.get('points') is not None:
-            t = 'polyline'
-        else:
-            t = 'rect'
-        json['type'] = t
+    def __init__(self, data, factory=None):
+        """
+        :param str data: the JSON data
+        :param factory: a function that creates a new empty diagram
+        """
+        self.styles = Styles()
+        self.templates = {}  # id -> template (JSON data)
+        self.diagrams = []
+        self.factory = factory
+        self.__load(data)
 
-    st = styles.parse(json.get('style'), t)
-    it_default = styles.default_item_props.get(t, {})
+    def get(self, id=None):
+        """
+        Retrieve a diagram by its id, and ensure it has been created
+        :param str id: if None, returns the first diagram
+        :return: an instance of JSON_Diagram
+        """
+        for d in self.diagrams:
+            if d.id == id:
+                d.ensure()
+                return d
 
-    if t == 'text':
-        it = B.TextItem(
-            style=st,
-            text=json.get('text', it_default.get('text', '')),
-            directed=json.get('directed'))
-    elif t == 'hr':
-        it = B.HrItem(
-            style=st,
-            text=json.get('text', it_default.get('text', '')))
-    elif t == 'polyline':
-        it = B.PolylineItem(
-            style=st,
-            points=json.get('points', []),
-            relative=json.get('relative', False),
-            close=json.get('close', it_default.get('close', False)))
-    elif t == 'ellipse':
-        it = B.EllipseItem(
-            style=st,
-            width=json.get('width', it_default.get('width', -1)),
-            height=json.get('height', it_default.get('height', -1)))
-    else:
-        it = B.RectItem(
-            style=st,
-            width=json.get('width', it_default.get('width', -1)),
-            height=json.get('height', it_default.get('height', -1)),
-            radius=json.get('radius', it_default.get('radius', 0)))
+        d = self.diagrams[0]
+        d.ensure()
+        return d
 
-    if json.get('hbox') is not None:
-        it.set_child_layout(B.Item.Layout.HORIZONTAL)
+    def __load(self, data):
+        """
+        Load a JSON string.
+        :param data: An object (dict, list) loaded from a JSON file,
+            or a string that is parsed as json.
+        :return: the list of GPS.Browsers.Diagram that were created
+        """
+        if isinstance(data, str):
+            try:
+                data = json.loads(data)
+            except ValueError as e:
+                GPS.Console().write("Error when parsing JSON: %s\n" % (
+                    e, ))
+                return
 
-    for o in json.get('vbox') or json.get('hbox') or []:
-        it2 = parse_item(items, o, styles)
-        it2_default = styles.default_item_props.get(o['type'], {})
+        for id, s in data.get('styles', {}).iteritems():
+            self.styles.parse(s, None, id=id)
 
-        margin = o.get('margin', it2_default.get('margin'))
-        if (margin is not None
-            and (isinstance(margin, float)
-                 or isinstance(margin, int))):
+        for id, t in data.get('templates', {}).iteritems():
+            self.templates[id] = t
 
-            margin = [margin, margin, margin, margin]
+        for d in data.get('diagrams', []):
+            # ??? should build diagrams only when they are displayed
 
-        it.add(it2,
-               margin=margin,
-               align=o.get('align', it2_default.get('align')),
-               float=o.get('float'),
-               overflow=o.get('overflow', it2_default.get('overflow')))
+            if self.factory is None:
+                diag = JSON_Diagram(file=self, json=d)   # A new diagram
+            else:
+                diag = self.factory(file=self, json=d)
 
-    it.set_min_size(
-        width=json.get('minWidth', it_default.get('minWidth')),
-        height=json.get('minHeight', it_default.get('minHeight')))
-    it.set_position(
-        x=json.get('x'),
-        y=json.get('y'),
-        anchorx=json.get('anchorx', 0),
-        anchory=json.get('anchory', 0))
-
-    data = json.get('data')
-    if data is not None:
-        it.data = data
-
-    id = json.get('id')
-    if id is not None:
-        it.id = id
-        items[id] = it
-
-    return it
+            self.diagrams.append(diag)
 
 
-def load_json_file(file, diagramFactory=None):
+class JSON_Diagram(B.Diagram):
     """
-    Load the contents of the JSON file into the specified diagram. See the
-    GPS.Browsers documentation for more information on the format.
-
-    :param file: A file-like object, or a string, the name of the file
-    :return: the list of GPS.Browsers.Diagram that were created
+    A diagram loaded from a JSON file.
+    Such a diagram is created lazily, via a call to ensure().
+    This allows loading big JSON files, and only create the
+    diagrams when they are actually needed.
     """
 
-    try:
-        if isinstance(file, str):
-            file = open(file)
+    def __init__(self, file, json):
+        """
+        :param JSON_Diagram_File file: a handle on the file
+        :param json: the JSON data for just this diagram
+        """
 
-        return load_json_data(json.load(file), diagramFactory)
-    except Exception as e:
-        GPS.Console().write("Unexpected exception %s\n%s\n" % (
-            e, traceback.format_exc()))
+        self.__file = file
+        self.__json = json
+        self.__items = {}  # id -> item
+        self.id = json.get('id', None)
+        super(JSON_Diagram, self).__init__()
 
+    def ensure(self):
+        """
+        Ensure that the diagram has actually been created from the
+        JSON information.
+        """
+        if not self.__json:
+            return
 
-def load_json_data(data, diagramFactory=None):
-    """
-    Load a JSON string.
-
-    :param data: An object (dict, list) loaded from a JSON file
-    :return: the list of GPS.Browsers.Diagram that were created
-    """
-    styles = Styles()
-    items = dict()
-    diagrams = []
-
-    for s in data.get('styles', []):
-        styles.parse(s, None)
-
-    for d in data.get('diagrams', []):
-        if diagramFactory is None:
-            diag = B.Diagram()   # A new diagram
-        else:
-            diag = diagramFactory()
-        diagrams.append(diag)
-
-        diag.ids = items
-        diag.id = d.get('id', None)
+        d = self.__json
+        self.__json = None
 
         for o in d.get('items', []):
-            it = parse_item(items, o, styles)
-            diag.add(it)
+            it = self.__parse_item(o)
+            self.add(it)
 
         for l in d.get('links', []):
             f = l.get('from')
-            fitem = items.get(f.get('ref'))
+            fitem = self.__items.get(f.get('ref'))
             if not fitem:
                 GPS.Console().write(
-                    "Object not found (id '%s')\n" % f.get('ref'))
+                    "Object not found ('%s')\n" % f.get('ref'))
                 continue
 
             t = l.get('to')
-            titem = items.get(t.get('ref'))
+            titem = self.__items.get(t.get('ref'))
             if not titem:
                 GPS.Console().write(
-                    "Object not found (id '%s')\n" % t.get('ref'))
+                    "Object not found ('%s')\n" % t.get('ref'))
                 continue
 
             label = None
             if l.get('label'):
-                label = parse_item(items, l.get('label'), styles)
+                label = self.__parse_item(l.get('label'))
 
             fromLabel = None
             if f.get('label'):
-                fromLabel = parse_item(items, f.get('label'), styles)
+                fromLabel = self.__parse_item(f.get('label'))
 
             toLabel = None
             if t.get('label'):
-                toLabel = parse_item(items, t.get('label'), styles)
+                toLabel = self.__parse_item(t.get('label'))
 
             link = B.Link(
                 origin=fitem,
                 to=titem,
-                style=styles.parse(l.get('style'), 'link'),
+                style=self.__file.styles.parse(l.get('style'), 'link'),
                 routing=l.get('route'),
                 label=label,
                 fromX=f.get('anchorx'),
@@ -318,11 +275,149 @@ def load_json_data(data, diagramFactory=None):
                     link.set_waypoints(
                         w['points'], relative=w.get('relative', False))
 
-            diag.add(link)
+            self.add(link)
 
             if link.id is not None:
-                items[link.id] = link
+                self.__items[link.id] = link
 
-    return diagrams
+    @staticmethod
+    def merge_template(orig, template):
+        """
+        Merge all data from the template into orig
+        """
+        for field, value in template.iteritems():
+            o = orig.get(field, None)
+            if o is None:
+                orig[field] = value
+            elif isinstance(o, dict):
+                merge_template(o, value)  # recursive merge
+            elif isinstance(o, list):
+                o.extend(value)  # add the values
+
+    def __parse_item(self, json):
+        """
+        Create an item from JSON.
+        :param json: the JSON data for the item
+        :return: the GPS.Browsers.Item
+        """
+
+        # Expand templates first, in case the type is defined there
+        if 'template' in json:
+            JSON_Diagram.merge_template(
+                json, self.__file.templates[json['template']])
+            del json['template']
+
+        t = json.get('type', None)
+        if t is None:
+            if json.get('text') is not None:
+                t = 'text'
+            elif json.get('points') is not None:
+                t = 'polyline'
+            else:
+                t = 'rect'
+            json['type'] = t
+
+        st = self.__file.styles.parse(json.get('style'), t)
+        it_default = self.__file.styles.default_item_props.get(t, {})
+
+        if t == 'text':
+            it = B.TextItem(
+                style=st,
+                text=json.get('text', it_default.get('text', '')),
+                directed=json.get('directed'))
+        elif t == 'hr':
+            it = B.HrItem(
+                style=st,
+                text=json.get('text', it_default.get('text', '')))
+        elif t == 'polyline':
+            it = B.PolylineItem(
+                style=st,
+                points=json.get('points', []),
+                relative=json.get('relative', False),
+                close=json.get('close', it_default.get('close', False)))
+        elif t == 'ellipse':
+            it = B.EllipseItem(style=st)
+        else:
+            it = B.RectItem(
+                style=st,
+                radius=json.get('radius', it_default.get('radius', 0)))
+
+        if json.get('hbox') is not None:
+            it.set_child_layout(B.Item.Layout.HORIZONTAL)
+
+        id = json.get('id')
+        if id is not None:
+            it.id = id
+            self.__items[id] = it
+
+        data = json.get('data')
+        if data is not None:
+            it.data = data
+
+        for o in json.get('vbox') or json.get('hbox') or []:
+            it2 = self.__parse_item(o)
+            it2_default = self.__file.styles.default_item_props.get(
+                o['type'], {})
+
+            margin = o.get('margin', it2_default.get('margin'))
+            if (margin is not None
+                and (isinstance(margin, float)
+                     or isinstance(margin, int))):
+
+                margin = [margin, margin, margin, margin]
+
+            it.add(it2,
+                   margin=margin,
+                   align=o.get('align', it2_default.get('align')),
+                   float=o.get('float'),
+                   overflow=o.get('overflow', it2_default.get('overflow')))
+
+        w = json.get('width', it_default.get('width', B.Item.Size.FIT))
+        h = json.get('height', it_default.get('height', B.Item.Size.FIT))
+        it.set_size(w, h)
+
+        w = json.get('minWidth', it_default.get('minWidth', None))
+        if w is not None:
+            it.set_width_range(min=w)
+
+        h = json.get('minHeight', it_default.get('minHeight', None))
+        if h is not None:
+            it.set_height_range(min=h)
+
+        it.set_position(
+            x=json.get('x'),
+            y=json.get('y'),
+            anchorx=json.get('anchorx', 0),
+            anchory=json.get('anchory', 0))
+
+        return it
+
+
+def load_json_file(file, diagramFactory=None):
+    """
+    Load the contents of the JSON file into the specified diagram. See the
+    GPS.Browsers documentation for more information on the format.
+
+    :param file: A file-like object, or a string, the name of the file
+    :return: an instance of JSON_Diagram_File
+    """
+
+    try:
+        if isinstance(file, str):
+            file = open(file)
+
+        return load_json_data(json.load(file), diagramFactory)
+    except Exception as e:
+        GPS.Console().write("Unexpected exception %s\n%s\n" % (
+            e, traceback.format_exc()))
+
+
+def load_json_data(data, diagramFactory=None):
+    """
+    :return: an instance of JSON_Diagram_File
+    """
+    return JSON_Diagram_File(data, diagramFactory)
+
 
 B.Diagram.load_json = staticmethod(load_json_file)
+B.Diagram.load_json_data = staticmethod(load_json_data)

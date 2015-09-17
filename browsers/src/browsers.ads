@@ -70,6 +70,14 @@ package Browsers is
    procedure Create_Styles (Self : not null access GPS_Canvas_View_Record);
    --  Recompute the styles for the canvas, based on user preferences.
 
+   procedure Set_Read_Only
+      (Self : not null access GPS_Canvas_View_Record;
+       Read_Only : Boolean := True);
+   function Is_Read_Only
+      (Self : not null access GPS_Canvas_View_Record) return Boolean;
+   --  Items in a read-only canvas cannot be moved, nor can the layout be
+   --  changed.
+
    function Get_Styles
      (Self : not null access GPS_Canvas_View_Record'Class)
       return access Browser_Styles;
@@ -147,6 +155,7 @@ private
       Background : Background_Type := Background_None;
       Grid_Style : Drawing_Style;
       Styles     : aliased Browser_Styles;
+      Read_Only  : Boolean := False;
    end record;
 
 end Browsers;
