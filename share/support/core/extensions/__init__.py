@@ -123,7 +123,8 @@ class EditorLocation(object):
         """
         Returns a :class:`GPS.Entity` instance at the given location.
 
-        If there is no entity that can be resolved at this location, returns None
+        If there is no entity that can be resolved at this location,
+        returns None
 
         :rtype: :class:`GPS.Entity`
         """
