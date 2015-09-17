@@ -175,7 +175,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_adacore_u">
-        <title>adacore_u</title>
+        <title>adacore__u</title>
       </menu>
     </submenu>
 
@@ -204,7 +204,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_binary_search">
-        <title>binary_search</title>
+        <title>binary__search</title>
       </menu>
     </submenu>
 
@@ -219,7 +219,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_binary_search_unconstrained">
-        <title>binary_search_unconstrained</title>
+        <title>binary__search__unconstrained</title>
       </menu>
     </submenu>
 
@@ -246,7 +246,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_euclidian_division">
-        <title>euclidian_division</title>
+        <title>euclidian__division</title>
       </menu>
     </submenu>
 
@@ -274,7 +274,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_formal_queue">
-        <title>formal_queue</title>
+        <title>formal__queue</title>
       </menu>
     </submenu>
 
@@ -286,7 +286,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_gnatprove_by_example">
-        <title>gnatprove_by_example</title>
+        <title>gnatprove__by__example</title>
       </menu>
     </submenu>
 
@@ -342,7 +342,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_linear_search">
-        <title>linear_search</title>
+        <title>linear__search</title>
       </menu>
     </submenu>
 
@@ -356,7 +356,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_longest_common_prefix">
-        <title>longest_common_prefix</title>
+        <title>longest__common__prefix</title>
       </menu>
     </submenu>
 
@@ -384,7 +384,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_n_queens">
-        <title>n_queens</title>
+        <title>n__queens</title>
       </menu>
     </submenu>
 
@@ -426,7 +426,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_railway_signaling">
-        <title>railway_signaling</title>
+        <title>railway__signaling</title>
       </menu>
     </submenu>
 
@@ -440,7 +440,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_ring_buffer">
-        <title>ring_buffer</title>
+        <title>ring__buffer</title>
       </menu>
     </submenu>
 
@@ -454,7 +454,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_search_linked_list">
-        <title>search_linked_list</title>
+        <title>search__linked__list</title>
       </menu>
     </submenu>
 
@@ -494,7 +494,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_spark_book">
-        <title>spark_book</title>
+        <title>spark__book</title>
       </menu>
     </submenu>
 
@@ -508,7 +508,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     <submenu before="About">
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_spark_io">
-        <title>spark_io</title>
+        <title>spark__io</title>
       </menu>
     </submenu>
 
