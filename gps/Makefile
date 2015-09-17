@@ -28,16 +28,10 @@ include ../Makefile.gnat
 # NOTE: we need to build gnatcoll separately, since we cannot use
 # gnat.adc (No_Tasking restriction) on all gnatcoll sources.
 all: resources do_links
-	$(MAKE) Gnatcoll_Build=${Build} -C ../gnatlib
 	cd ../kernel/src; ${PYTHON} hooks.py
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -ws -P../spark/spark
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws -XTP_TASKING=No_Tasking \
 	  $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps -largs `pkg-config gmodule-2.0 --libs`
-
-scil: do_links
-	$(MAKE) -s Gnatcoll_Build=${Build} -C ../gnatlib do_links
-	-gnatmake -q -k -j0 --subdirs=codepeer -gnatcC -m -p -ws \
-	  -XTP_TASKING=No_Tasking $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps
 
 resources:
 ifeq ($(OS),Windows_NT)

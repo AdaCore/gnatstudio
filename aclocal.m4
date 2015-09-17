@@ -19,7 +19,126 @@ for am_file in <<$1>>; do
 done<<>>dnl>>)
 changequote([,]))])
 
-sinclude(gnatlib/aclocal.m4)
+##############################################################
+# Usage: AM_HAS_GNAT_PROJECT(project)
+# Check whether a given project file is available, and set
+# HAVE_GNAT_PROJECT_<project> to "yes" or "no" accordingly.
+# (from PolyORB ada.m4)
+##############################################################
+
+AC_DEFUN([AM_HAS_GNAT_PROJECT],
+[
+cat > conftest.gpr <<EOF
+with "[$1]";
+project Conftest is for Source_Files use (); end Conftest;
+EOF
+if AC_TRY_COMMAND([gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out])
+then
+  HAVE_GNAT_PROJECT_$1=yes
+else
+  HAVE_GNAT_PROJECT_$1=no
+fi
+AC_MSG_RESULT($HAVE_GNAT_PROJECT_$1)
+AC_SUBST(HAVE_GNAT_PROJECT_$1)
+])
+
+##########################################################################
+## Detects GTK and GtkAda
+## Input:
+##   If CONFIGURE_SWITCH_WITH_GTK is set, it specifies the default value
+##     for gtk. Otherwise, configure will choose the most recent version.
+## This exports the following variables
+##     @PKG_CONFIG@: path to pkg-config, or "no" if not found
+##     @GTK_GCC_FLAGS@: cflags to pass to the compiler. It isn't call
+##                      GTK_CFLAGS for compatibility reasons with GPS
+##     @WITH_GTK@: Either "yes" or "no", depending on whether gtk+ was found
+##     @GTK_VERSION@: one of 2.0, 3.0 or "no"
+##########################################################################
+
+AC_DEFUN(AM_PATH_GTK,
+[
+   AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+   if test "$PKG_CONFIG" = "no" ; then
+      WITH_GTK=no
+      GTK_VERSION=no
+   else
+      AC_ARG_WITH(gtk,
+         AC_HELP_STRING(
+       [--with-gtk=version],
+       [Specify the version of GTK to support (3.0 or 2.0)])
+AC_HELP_STRING(
+       [--without-gtk],
+       [Disable support for GTK]),
+         [WITH_GTK=$withval],
+         [
+            AC_MSG_CHECKING(for default gtk+ version)
+            # Detect the version we should use, from the system
+            for WITH_GTK in "$CONFIGURE_SWITCH_WITH_GTK" "3.0" "2.0" "no"; do
+                if test "$WITH_GTK" != ""; then
+                   GTK_PREFIX=`$PKG_CONFIG gtk+-${WITH_GTK} --variable=prefix`
+                   if test "$GTK_PREFIX" != ""; then
+                      break
+                   fi
+                fi
+            done
+            AC_MSG_RESULT($WITH_GTK)
+         ])
+
+      if test "$WITH_GTK" != "no"; then
+          AC_MSG_CHECKING(for gtk+ ${WITH_GTK})
+          GTK_PREFIX=`$PKG_CONFIG gtk+-${WITH_GTK} --variable=prefix`
+          AC_MSG_RESULT($GTK_PREFIX)
+          GTK_GCC_FLAGS=`$PKG_CONFIG gtk+-${WITH_GTK} --cflags`
+          GTK_GCC_LIBS=`$PKG_CONFIG gtk+-${WITH_GTK} --libs`
+          if test x"$GTK_GCC_FLAGS" != x ; then
+             AC_MSG_CHECKING(for gtkada.gpr)
+             AM_HAS_GNAT_PROJECT(gtkada)
+             HAVE_GTKADA=$HAVE_GNAT_PROJECT_gtkada
+             GTK_VERSION=$WITH_GTK
+             WITH_GTK=${HAVE_GTKADA}
+          else
+             GTK_VERSION=no
+             WITH_GTK=no
+          fi
+      fi
+   fi
+
+   AC_SUBST(PKG_CONFIG)
+   AC_SUBST(GTK_GCC_FLAGS)
+   AC_SUBST(GTK_GCC_LIBS)
+   AC_SUBST(WITH_GTK)
+   AC_SUBST(GTK_VERSION)
+])
+
+##########################################################################
+## Converts a list of space-separated words into a list suitable for
+## inclusion in .gpr files
+##   $1=the list
+##   $2=exported name
+##########################################################################
+
+AC_DEFUN(AM_TO_GPR,
+[
+   value=[$1]
+
+   # Special handling on darwin for gcc 4.5 and 4.7
+   case "$build_os" in
+      *darwin*)
+         value=`echo $value | sed -e "s/-framework \([[^ ]]*\)/-Wl,-framework -Wl,\1/g"`
+   esac
+
+   output=$2
+   result=""
+   for v in $value; do
+      if test "$result" != ""; then
+         result="$result, "
+      fi
+      result="$result\"$v\""
+   done
+   $2=$result
+   AC_SUBST($2)
+
+])
 
 #############################################################
 #
@@ -101,6 +220,26 @@ AC_DEFUN(AM_PATH_LIBCLANG,
    LIBS=$_save_LIBS
    AC_SUBST(CLANG_LIBS)
 ])
+
+#############################################################
+#
+# Configure for gnatcoll build location
+#
+#############################################################
+
+AC_DEFUN(AM_PATH_GNATCOLL,
+[
+   AC_MSG_CHECKING(for gnatcoll_build)
+
+   AC_ARG_WITH(gnatcoll,
+     [AC_HELP_STRING(
+        [--with-gnatcoll_build=<path>],
+        [Specify the directory that contains the gnatcoll install])],
+      [GNATCOLL_INSTALL=$withval])
+
+   AC_SUBST(GNATCOLL_INSTALL)
+])
+
 
 #############################################################
 #

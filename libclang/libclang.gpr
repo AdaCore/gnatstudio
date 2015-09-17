@@ -1,4 +1,4 @@
-with "../gnatlib/src/gnatcoll";
+with "gnatcoll";
 with "../shared";
 with "../common/common";
 

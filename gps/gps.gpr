@@ -35,8 +35,6 @@ with "../views/views";
 with "../vfs/vfs";
 with "../vsearch/vsearch";
 
-with "../gnatlib/src/gnatcoll_tools.gpr";
-
 project GPS is
 
    for Languages use ("Ada");

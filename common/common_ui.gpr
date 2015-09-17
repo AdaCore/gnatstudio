@@ -1,6 +1,6 @@
 with "gtkada";
 with "common";
-with "../gnatlib/src/gnatcoll_gtk";
+with "gnatcoll_gtk";
 
 project Common_UI is
 

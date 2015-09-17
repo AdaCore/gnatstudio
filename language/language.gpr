@@ -3,7 +3,7 @@
 
 with "../common/common";
 with "../shared";
-with "../gnatlib/src/gnatcoll_sqlite";
+with "gnatcoll_sqlite";
 
 project Language is
 

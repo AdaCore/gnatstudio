@@ -1,5 +1,4 @@
-with "gnatlib/gnatcoll_shared";
-with "gnatlib/src/gnatcoll_gtk";
+with "gnatcoll_gtk";
 
 project Shared is
 
@@ -10,8 +9,8 @@ project Shared is
    Build : Build_Type := External ("Build", "Debug");
 
    for Source_Dirs use ();
-   for Object_Dir use Gnatcoll_Shared'Object_Dir;
-   for Library_Dir use Gnatcoll_Shared'Library_Dir;
+   for Object_Dir use "obj";
+   for Library_Dir use "lib";
 
    package IDE is
       for Documentation_Dir use Project'Object_Dir & "/html";
@@ -25,7 +24,7 @@ project Shared is
                "-gnatwaCJe", "-gnat2012", "-gnateE");
 
             for Default_Switches ("C") use
-              ("-g", "-O1", "-fdump-xref") & GnatColl_Gtk.Gtk_Include;
+              ("-g", "-O1") & GnatColl_Gtk.Gtk_Include;
 
          when "Production" =>
             for Default_Switches ("Ada") use
@@ -44,8 +43,9 @@ project Shared is
    Clang_Libs := (@CLANG_LIBS_GPR@);
 
    package Linker is
-      for Default_Switches ("Ada") use Gnatcoll_Shared.System_Linker_Flags &
-         Clang_Libs & ("-lstdc++");
+      --  ??? missing hack to force libiconv first (working around
+      --  a faulty libiconv in macports)
+      for Default_Switches ("Ada") use Clang_Libs & ("-lstdc++");
    end Linker;
 
 end Shared;

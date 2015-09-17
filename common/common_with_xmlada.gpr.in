@@ -1,4 +1,4 @@
-with "../gnatlib/src/gnatcoll_sqlite.gpr";
+with "gnatcoll_sqlite.gpr";
 with "../shared";
 with "xmlada_sax";
 

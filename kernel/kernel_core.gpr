@@ -1,8 +1,8 @@
 with "../libclang/libclang";
 with "../common/common";
 with "../shared";
-with "../gnatlib/src/gnatcoll";
-with "../gnatlib/src/gnatcoll_sqlite";
+with "gnatcoll";
+with "gnatcoll_sqlite";
 with "../language/language";
 with "../toolchains_editor/core/toolchains_core";
 
