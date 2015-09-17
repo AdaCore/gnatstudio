@@ -167,6 +167,18 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       <menu before="About">/Help/%(prefix)s/SPARK 2014 Reference Manual</menu>
     </documentation_file>
 
+    <action name="spark2014_example_adacore_u" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/adacore_u/Overview/overview.gpr"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_adacore_u">
+        <title>adacore_u</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_autopilot" category=""
             show-command="false" output="none">
       <shell>Project.load "@EXAMPLE@/autopilot/test.gpr"</shell>
@@ -474,6 +486,18 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       </menu>
     </submenu>
 
+    <action name="spark2014_example_spark_book" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/spark_book/test.gpr"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_spark_book">
+        <title>spark_book</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_spark_io" category=""
             show-command="false" output="none">
       <shell>Project.load "@EXAMPLE@/spark_io/test.gpr"</shell>
@@ -499,6 +523,19 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       <title>/Help/%(prefix)s/Examples</title>
       <menu action="spark2014_example_tetris">
         <title>tetris</title>
+      </menu>
+    </submenu>
+
+    <action name="spark2014_example_thumper" category=""
+            show-command="false" output="none">
+      <shell lang="python">spark2014.load_example_thumper()</shell>
+      <shell>Editor.edit "thumper/src/server/thumper_server.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_thumper">
+        <title>thumper</title>
       </menu>
     </submenu>
 
@@ -1041,16 +1078,40 @@ def get_example_root():
         + '/share/examples/spark'
 
 
+def update_project_path(paths):
+    """update GPR_PROJECT_PATH with the paths given as input, taking into account
+       the existing setting of both GPR_PROJECT_PATH and ADA_PROJECT_PATH.
+    """
+    import os
+    os.environ["GPR_PROJECT_PATH"] = \
+        ':'.join(paths) + ':' + \
+        os.environ["GPR_PROJECT_PATH"] + ':' + \
+        os.environ["ADA_PROJECT_PATH"]
+
+
 def load_example_ipstack():
     """ load IPstack example project, which requires specific code to set
         GPR_PROJECT_PATH and change working directory.
     """
     import os
-    ipstack_root = get_example_root() + '/ipstack'
-    os.environ["GPR_PROJECT_PATH"] = ipstack_root + '/projects:' \
-        + ipstack_root + '/projects.native'
-    os.chdir(ipstack_root + '/build')
-    GPS.Project.load(ipstack_root + '/projects.native/ipstack_dev.gpr')
+    ipstack_root = os.path.join(get_example_root(), 'ipstack')
+    update_project_path([os.path.join(ipstack_root, 'projects'),
+                         os.path.join(ipstack_root, 'projects.native')])
+    os.chdir(os.path.join(ipstack_root, 'build'))
+    GPS.Project.load(os.path.join(ipstack_root,
+                     'projects.native', 'ipstack_dev.gpr'))
+
+
+def load_example_thumper():
+    """ load Thumper example project, which requires specific code to set
+        MODE and GPR_PROJECT_PATH environment variables.
+    """
+    import os
+    thumper_root = os.path.join(get_example_root(), 'thumper')
+    update_project_path([os.path.join(thumper_root, 'dummy_projects')])
+    os.environ["MODE"] = 'Analyze'
+    GPS.Project.load(os.path.join(thumper_root,
+                     'thumper', 'src', 'thumper.gpr'))
 
 
 def get_trace_overlay(buf):
