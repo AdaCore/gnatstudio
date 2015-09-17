@@ -156,31 +156,24 @@ def wait_idle():
 
 class ProcessWrapper(object):
     """
-       ProcessWrapper is a advanced process manager
-       It makes a promise (yield object of the promise class) when user:
-           1 want to wait for match in output
-           2 want to wait until process finish
-       and the corresponding promises are answered with user defined
-       handler (functions) when:
-           1 the pattern matches or timeout.
-           2 the process is terminated by GPS.
+    ProcessWrapper is an advanced process manager
+    It makes a promise (yield object of the promise class) when user:
+        1 - want to wait for match in output
+        2 - want to wait until process finish
+    and the corresponding promises are answered with user defined
+    handler (functions) when:
+        1 - the pattern matches or timeout.
+        2 - the process is terminated by GPS.
     """
 
-    def __init__(self, cmdargs=[], messages=True):
+    def __init__(self, cmdargs=[]):
         """
-           Initialize and run a process with no promises,
-           no user-defined pattern to match,
-           but a omnipotent regexp that catches everything.
-           The process has empty output and two flags saying that
-           the process is unfinished and no pattern has matched yet.
+        Initialize and run a process with no promises,
+        no user-defined pattern to match,
+        but a omnipotent regexp that catches everything.
+        The process has empty output and two flags saying that
+        the process is unfinished and no pattern has matched yet.
         """
-
-        # input for constructor is a list for command and args
-        # concatenate them into a string
-        cmd = ""
-        for i in cmdargs:
-            cmd += (i+" ")
-        cmd = cmd.rstrip(" ")
 
         # __final_promise = about termination
         self.__final_promise = None
@@ -201,13 +194,14 @@ class ProcessWrapper(object):
         self.finished = False
 
         # handler of process will be created -> start running
-        self.__process = GPS.Process(cmd, ".+",
-                                     on_match=self.__on_match,
-                                     on_exit=self.__on_exit)
+        self.__process = GPS.Process(
+            ' '.join(cmdargs), ".+",
+            on_match=self.__on_match,
+            on_exit=self.__on_exit)
 
     def __on_match(self, process, match, unmatch):
         """
-           Called by GPS everytime there's output comming
+        Called by GPS everytime there's output comming
         """
 
         # Update all output returned by the process
@@ -218,7 +212,6 @@ class ProcessWrapper(object):
         # check if user has issued some pattern to match
 
         if self.__current_pattern is not None:
-
             p = re.search(self.__current_pattern, self.__output)
 
             # if the pattern is found, update the output to remaining and
@@ -252,9 +245,9 @@ class ProcessWrapper(object):
 
     def wait_until_match(self, pattern=None, timeout=0):
         """
-           Called by user. Make a promise to them that:
-           I'll let you know when the pattern is matched/never matches
-           * Promise made here will be answered with: True/False
+        Called by user. Make a promise to them that:
+        I'll let you know when the pattern is matched/never matches
+        * Promise made here will be answered with: True/False
         """
 
         # keep the pattern info and return my promise
@@ -271,9 +264,9 @@ class ProcessWrapper(object):
 
     def wait_until_terminate(self):
         """
-           Called by user. Make a promise to them that:
-           I'll let you know when the process is finished
-           * Promise made here will be answered with: exit status
+        Called by user. Make a promise to them that:
+        I'll let you know when the process is finished
+        * Promise made here will be answered with: exit status
         """
 
         # process has already terminated, return nothing
@@ -286,7 +279,7 @@ class ProcessWrapper(object):
 
     def __on_timeout(self, timeout):
         """
-           Called by GPS when it's timeout for a pattern to appear in output.
+        Called by GPS when it's timeout for a pattern to appear in output.
         """
 
         timeout.remove()
