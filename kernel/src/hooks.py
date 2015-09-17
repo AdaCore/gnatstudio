@@ -1190,22 +1190,34 @@ package body GPS.Kernel.Hooks is
 
             if t.returns is None:
                 subst['returns_body'] = ''
+                subst['run_body'] = '''
+                         declare
+                            Tmp : constant Boolean := F2.Execute (Data);
+                            pragma Unreferenced (Tmp);
+                         begin
+                            Free (Data);
+                         end;'''
             else:
                 subst['returns_body'] = '''
       if Active (Me) then
          Trace (Me, "Default handling for " & Name (Self));
       end if;''' % subst
+                subst['run_body'] = '''
+                         declare
+                            Tmp : constant Boolean := F2.Execute (Data);
+                         begin
+                            Free (Data);
+                            if Tmp /= %(returndefault)s then
+                               if Active (Me) then
+                                  Decrease_Indent (Me);
+                               end if;
+                               return;
+                            end if;
+                         end;''' % subst
 
             subst['run_from_python_var'] = ''
             subst['run_from_python_body'] = '''Self.Run   --  not dispatching
          (Kernel   => K%(p_in_run)s);''' % subst
-            subst['run_body'] = '''
-                     declare
-                        Tmp : constant Boolean := F2.Execute (Data);
-                        pragma Unreferenced (Tmp);
-                     begin
-                        Free (Data);
-                     end;'''
 
         # Output specs
 
