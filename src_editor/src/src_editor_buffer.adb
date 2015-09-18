@@ -6793,6 +6793,10 @@ package body Src_Editor_Buffer is
    begin
       Buffer.Start_Undo_Group;
 
+      if not As_Is then
+         Word_Added (Source_Buffer (Buffer));
+      end if;
+
       --  If there is a selection, delete it
       if Selection_Exists (Buffer) then
          Ignore := Delete_Selection (Buffer, True, True);

@@ -2350,10 +2350,6 @@ package body Src_Editor_View is
          when GDK_Return =>
             Clear_Typed_Chars (Buffer);
 
-            if not View.As_Is_Enabled then
-               Word_Added (Buffer);
-            end if;
-
             --  If we are in a smart completion, let the Return character be
             --  caught by the completion window.
 
