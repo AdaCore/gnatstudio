@@ -1,4 +1,5 @@
 with "gnatlib/gnatcoll_shared";
+with "gnatlib/src/gnatcoll_gtk";
 
 project Shared is
 
@@ -24,7 +25,7 @@ project Shared is
                "-gnatwaCJe", "-gnat2012", "-gnateE");
 
             for Default_Switches ("C") use
-              ("-g", "-O1", "-fdump-xref") & GnatColl_Shared.Gtk_Include;
+              ("-g", "-O1", "-fdump-xref") & GnatColl_Gtk.Gtk_Include;
 
          when "Production" =>
             for Default_Switches ("Ada") use
@@ -32,7 +33,7 @@ project Shared is
                "-gnatT3", --  Temporary, L403-023.
                "-gnatws", "-gnat12");
             for Default_Switches ("C") use
-              ("-g", "-O2") & GnatColl_Shared.Gtk_Include;
+              ("-g", "-O2") & GnatColl_Gtk.Gtk_Include;
       end case;
    end Compiler;
 
