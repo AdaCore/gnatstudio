@@ -19,6 +19,8 @@ with GPS.Editors; use GPS.Editors;
 with GPS.Kernel; use GPS.Kernel;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with GNATCOLL.Any_Types; use GNATCOLL.Any_Types;
+with String_Utils; use String_Utils;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Completion.Python is
 
@@ -236,18 +238,23 @@ package body Completion.Python is
 
       Component : Python_Component;
    begin
-      --  First get the completion prefix
-      Set_Nth_Arg (Args, 1, Resolver.Object);
-      Set_Nth_Arg (Args, 2, Loc_Inst);
-      Result.Searched_Identifier := new String'(Execute (Sub, Args));
+      if Resolver.Lang_Name = ""
+        or else To_Lower (+Resolver.Lang_Name)
+        = To_Lower (Context.Lang.Get_Name)
+      then
+         --  First get the completion prefix
+         Set_Nth_Arg (Args, 1, Resolver.Object);
+         Set_Nth_Arg (Args, 2, Loc_Inst);
+         Result.Searched_Identifier := new String'(Execute (Sub, Args));
 
-      --  And get the list of completions
-      Sub := Get_Method (Resolver.Object, "_ada_get_completions");
-      Set_Nth_Arg (Args, 1, Resolver.Object);
-      Set_Nth_Arg (Args, 2, Loc_Inst);
+         --  And get the list of completions
+         Sub := Get_Method (Resolver.Object, "_ada_get_completions");
+         Set_Nth_Arg (Args, 1, Resolver.Object);
+         Set_Nth_Arg (Args, 2, Loc_Inst);
 
-      Component := (Resolver, Execute (Sub, Args));
-      Completion_List_Pckg.Append (Result.List, Component);
+         Component := (Resolver, Execute (Sub, Args));
+         Completion_List_Pckg.Append (Result.List, Component);
+      end if;
    end Get_Completion_Root;
 
    ------------
@@ -330,14 +337,18 @@ package body Completion.Python is
    --  A counter to implement unicity of the identifiers for the registered
    --  resolvers. Positive overflow? unlikely.
 
-   function Create (Class : Class_Instance) return Completion_Python_Access is
-      R : Completion_Python_Access;
+   function Create
+     (Class : Class_Instance;
+      Lang_Name : String) return Completion_Python_Access
+   is
    begin
-      R := new Completion_Python;
-      R.Object := Class;
-      R.Id     := Counter;
       Counter := Counter + 1;
-      return R;
+
+      return new Completion_Python'
+        (Lang_Name => +Lang_Name,
+         Object    => Class,
+         Id        => Counter,
+         Manager   => <>);
    end Create;
 
    ---------------------------------

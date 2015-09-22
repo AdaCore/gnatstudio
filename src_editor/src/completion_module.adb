@@ -1308,7 +1308,8 @@ package body Completion_Module is
       Resolver : Completion_Python_Access;
    begin
       if Command = "register" then
-         Resolver := Completion.Python.Create (Nth_Arg (Data, 1));
+         Resolver := Completion.Python.Create (Nth_Arg (Data, 1),
+                                               Nth_Arg (Data, 2));
          Completion_Data.Python_Resolvers.Append (Resolver);
       end if;
    end Command_Handler;
@@ -1324,7 +1325,7 @@ package body Completion_Module is
         (Kernel, "Completion");
    begin
       Register_Command
-        (Kernel, "register", 1, 1,
+        (Kernel, "register", 1, 2,
          Command_Handler'Access, Completion_Class, Static_Method => True);
 
       --  ??? Need to implement the destructor

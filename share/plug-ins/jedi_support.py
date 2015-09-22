@@ -131,7 +131,7 @@ class Jedi_Module(Module):
            When GPS start, create and register a resolver
            and update its source dirs
         """
-        GPS.Completion.register(self.__resolver)
+        GPS.Completion.register(self.__resolver, "python")
 
     def project_changed(self):
         """

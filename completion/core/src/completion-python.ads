@@ -41,7 +41,9 @@ package Completion.Python is
    type Completion_Python is new Completion_Resolver with private;
    type Completion_Python_Access is access all Completion_Python'Class;
 
-   function Create (Class : Class_Instance) return Completion_Python_Access;
+   function Create
+     (Class : Class_Instance;
+      Lang_Name : String) return Completion_Python_Access;
    --  Initialize a resolver for the given class
 
    overriding
@@ -63,8 +65,9 @@ package Completion.Python is
 private
 
    type Completion_Python is new Completion_Resolver with record
-      Object : Class_Instance;
-      Id     : Positive;
+      Object    : Class_Instance;
+      Id        : Positive;
+      Lang_Name : Unbounded_String;
    end record;
 
    type Simple_Python_Completion_Proposal is new Simple_Completion_Proposal
