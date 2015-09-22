@@ -1161,9 +1161,10 @@ def remove_trace(lines):
 
 
 def get_ce_text_for_line(line_info):
-    """Generates the test to be displayed in counter-example for given
+    """Generates the text to be displayed in counter-example for given
        line."""
-    return " and ".join(['%s = %s' % (v, line_info[v]) for v in line_info])
+    return " and ".join(['%s = %s' % (ce_element["name"], ce_element["value"])
+                         for ce_element in line_info])
 
 
 def get_str_indent(buf, line):
@@ -1296,17 +1297,6 @@ class GNATprove_Parser(tool_output.OutputParser):
                                              1))
         return lines
 
-    def parse_cntexmp_file(self, filename):
-        """ parse the counter-example file and return the result """
-
-        if os.path.isfile(filename):
-            with open(filename, 'r') as f:
-                try:
-                    dict = json.load(f)
-                    return dict
-                except ValueError:
-                    return {}
-
     def handle_entry(self, unit, list):
         """code do handle one entry of the JSON file. See [parsejson] for the
            details of the format.
@@ -1343,15 +1333,15 @@ class GNATprove_Parser(tool_output.OutputParser):
 
     def act_on_extra_info(self, m, extra, objdir, command):
         """act on extra info for the message m. More precisely, if the message
-           has a tracefile, add an action to the message which will show/hide
-           the corresponding trace, and if the message has manual proof
-           information, run the external editor.
+           has a tracefile or counterexample, add an action to the message
+           which will show/hide the corresponding trace or counterexample,
+           and if the message has manual proof information, run the external
+           editor.
         """
 
         counterexample = {}
-        if 'cntexmpfile' in extra and extra['cntexmpfile'] != '':
-            cntexmpfile = os.path.join(objdir, extra['cntexmpfile'])
-            counterexample = self.parse_cntexmp_file(cntexmpfile)
+        if 'cntexmp' in extra:
+            counterexample = extra['cntexmp']
 
         lines = []
         if 'tracefile' in extra and extra['tracefile'] != '':
