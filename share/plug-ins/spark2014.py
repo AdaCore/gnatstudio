@@ -553,11 +553,14 @@ xml_gnatprove = """<?xml version="1.0"?>
           <combo-entry label="statistics" value="statistics"
                        tip="Detailed proof attempts"/>
         </combo>
+         <spin label="Proof level" switch="--level="
+             default="0" min="0" max="4"
+             tip="Set the proof level from 0 = faster to 4 = more powerful" />
 <combo
 label="Proof strategy"
 switch="--proof"
 noswitch="per_check"
-separator="=" column="2"
+separator="="
 tip="Formulas generated for each check (faster) or each path (more precise)" >
     <combo-entry label="One proof per check" value="per_check"
                  tip="Generate one formula per check"/>
@@ -632,6 +635,9 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
                 tip="Report the status of all checks, including those proved"
          />
          <title column="2" line="1" >Prover</title>
+         <spin label="Proof level" switch="--level=" column="2"
+             default="0" min="0" max="4"
+             tip="Set the proof level from 0 = faster to 4 = more powerful" />
          <combo
            label="Proof strategy"
            switch="--proof" noswitch="per_check"
