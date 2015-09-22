@@ -252,32 +252,32 @@ package body Buffer_Views is
       begin
          Count := Children'First;
 
-         Iter := Get_Iter_First (Get_Model (View.Tree));
+         Iter := Get_Iter_First (Model);
          while Iter /= Null_Iter loop
-            Iter2 := Gtk.Tree_Store.Children (Model, Iter);
+            Iter2 := Model.Children (Iter);
             while Iter2 /= Null_Iter loop
                if Iter_Is_Selected (Get_Selection (View.Tree), Iter2) then
                   Child := Find_MDI_Child_By_Name
-                    (Get_MDI (Kernel), Get_String (Model, Iter2, Data_Column));
+                    (Get_MDI (Kernel), Model.Get_String (Iter2, Data_Column));
                   if Child /= null then
                      Children (Count) := Child;
                      Count := Count + 1;
                   end if;
                end if;
 
-               Next (Model, Iter2);
+               Model.Next (Iter2);
             end loop;
 
             if Iter_Is_Selected (Get_Selection (View.Tree), Iter) then
                Child := Find_MDI_Child_By_Name
-                 (Get_MDI (Kernel), Get_String (Model, Iter, Data_Column));
+                 (Get_MDI (Kernel), Model.Get_String (Iter, Data_Column));
                if Child /= null then
                   Children (Count) := Child;
                   Count := Count + 1;
                end if;
             end if;
 
-            Next (Model, Iter);
+            Model.Next (Iter);
          end loop;
 
          for C in Children'Range loop
@@ -511,12 +511,12 @@ package body Buffer_Views is
          return;
       end if;
 
-      Clear (Model);
+      Model.Clear;
 
       if P_Show_Notebooks then
-         Column := Freeze_Sort (-Get_Model (V.Tree));
+         Column := Model.Freeze_Sort;
       else
-         Thaw_Sort (-Get_Model (V.Tree), 1);
+         Model.Thaw_Sort (1);
       end if;
 
       I_Child := First_Child
