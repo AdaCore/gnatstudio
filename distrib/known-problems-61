@@ -39,6 +39,15 @@ KP-61-O910-041 GB: error parsing GPR file
               Makefile can be changed through the enabled part of the GNATbench
               properties page.
 
+KP-61-O904-013 GPS: Crashes with double free or corruption
+
+  Problem:    Some aggregate projects could cause GPS crash with a message
+              of double free or corrupted memory.
+
+  Status:     This was fixed in 6.2 on 2015-09-16
+
+  Workaround: None
+
 KP-61-O903-012 GPS: dependencies.py referencing set_busy/unset_busy
 
   Problem:    The dependencies plug-in was referencing obsolete functions, and
