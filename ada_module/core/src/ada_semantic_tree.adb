@@ -21,6 +21,17 @@ with Language.Ada; use Language.Ada;
 
 package body Ada_Semantic_Tree is
 
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   function Get_Documentation
+     (E : access Entity_View_Record) return String is
+   begin
+      pragma Unreferenced (E);
+      return "";
+   end Get_Documentation;
+
    -------------------
    -- Get_Construct --
    -------------------

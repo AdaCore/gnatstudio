@@ -54,6 +54,10 @@ package body Ada_Semantic_Tree.Std_Entities is
       Db   : Construct_Database_Access;
    end record;
 
+   overriding function Get_Documentation
+     (E : access Std_Entity_Record) return String;
+   --  Return the documentation associaded to this standard entity view.
+
    overriding function Get_Name
      (E : access Std_Entity_Record) return Basic_Types.UTF8_String;
 
@@ -614,6 +618,16 @@ package body Ada_Semantic_Tree.Std_Entities is
 
       Entity_List_Pckg.Append (Result.Contents, New_List);
    end Get_Possible_ASCII_Entities;
+
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   overriding function Get_Documentation
+     (E : access Std_Entity_Record) return String is
+   begin
+      return E.Desc.Documentation.all;
+   end Get_Documentation;
 
    --------------
    -- Get_Name --

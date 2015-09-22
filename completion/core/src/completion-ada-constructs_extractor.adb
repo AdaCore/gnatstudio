@@ -137,6 +137,16 @@ package body Completion.Ada.Constructs_Extractor is
       Unref (Stored.Persistent_Entity);
    end Free;
 
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   overriding function Get_Documentation
+     (Proposal : Construct_Completion_Proposal) return UTF8_String is
+   begin
+      return Proposal.View.Get_Documentation;
+   end Get_Documentation;
+
    -------------------
    -- Is_Accessible --
    -------------------

@@ -57,6 +57,10 @@ package Ada_Semantic_Tree is
 
    Null_Entity_View : constant Entity_View;
 
+   function Get_Documentation
+     (E : access Entity_View_Record) return String;
+   --  Return the documentation associated to this declaration view
+
    function Get_Construct
      (E : access Entity_View_Record'Class)
       return access Simple_Construct_Information;

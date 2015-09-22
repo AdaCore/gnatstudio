@@ -116,6 +116,12 @@ private
    end record;
 
    overriding
+   function Get_Documentation
+     (Proposal : Construct_Completion_Proposal)
+      return UTF8_String;
+   --  Return custom documentation associated with this construct proposal
+
+   overriding
    function Is_Accessible
      (Proposal : Construct_Completion_Proposal)
      return Boolean;
