@@ -420,6 +420,9 @@ package Libclang.Index is
    subtype Clang_Type is clang_c_Index_h.CXType;
    subtype Clang_Location is CXSourceLocation;
 
+   procedure PP_Clang_Cursor (C : Clang_Cursor);
+   --  Debug helper, pretty print a clang cursor
+
    use Interfaces.C;
 
    overriding function "=" (Left, Right : Clang_Cursor) return Boolean is
@@ -515,6 +518,12 @@ package Libclang.Index is
    function USR (Cursor : Clang_Cursor) return String
    is
      (To_String (clang_getCursorUSR (Cursor)));
+
+   function Same_Entity (L, R : Clang_Cursor) return Boolean
+   is
+     (L = R
+      or else
+      (Kind (L) = Kind (R) and then USR (L) = USR (R)));
 
    function Get_Type (Cursor : Clang_Cursor) return Clang_Type
    is

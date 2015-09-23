@@ -259,7 +259,7 @@ package body Clang_Xref is
    is
       Ret : Clang_Cursor;
    begin
-      Ret := Get_Clang_Cursor (E.Kernel, E.Ref_Loc);
+      Ret := Get_Clang_Cursor (E.Kernel, E.Loc);
       if Offset (Location (Ret)) = 0 then
          Ret := Get_Clang_Cursor (E.Kernel, E.Ref_Loc);
       else
@@ -1483,6 +1483,15 @@ package body Clang_Xref is
    is
       use Cursors_Arrays;
 
+      function Get_Real_Ref (C : Clang_Cursor) return Clang_Cursor
+      is
+        (
+         --  When the call expr references a method, we actually want to get
+         --  the member reference expression to have correct locations.
+         if Kind (Referenced (C)) = CXXMethod
+         then Get_Children (C, MemberRefExpr) (1)
+         else C);
+
       function Get_Calls (C : Clang_Cursor) return Array_Type;
       function Get_Calls (C : Clang_Cursor) return Array_Type
       is
@@ -1503,7 +1512,9 @@ package body Clang_Xref is
       end if;
 
       declare
-         Calls : constant Array_Type := Get_Calls (Body_CC);
+         Calls : constant Array_Type :=
+           Id_Map (Get_Calls (Body_CC), Get_Real_Ref'Access);
+
          Call_Entities : constant Entity_Array := To_Entity_Array
            (Body_Entity, Calls, Unique => True);
       begin
@@ -1723,7 +1734,15 @@ package body Clang_Xref is
       use Cursors_Arrays;
 
       function Is_Reference (C : Clang_Cursor) return Boolean
-      is (Referenced (C) = Searched);
+      is (Same_Entity (Referenced (C), Searched)
+
+          --  For convenience, some clang cursor will return something via the
+          --  Referenced call, but the cursor is not a reference. We want to
+          --  consider only reference cursors.
+          and then Kind (C)
+          in DeclRefExpr | MemberRefExpr | TypeRef | TemplateRef
+            | NamespaceRef | MemberRef | LabelRef | OverloadedDeclRef
+              | VariableRef);
 
       function Find_References (Scope : Clang_Cursor) return Array_Type;
       function Find_References (Scope : Clang_Cursor) return Array_Type

@@ -28,6 +28,7 @@ with GNATCOLL.Traces; use GNATCOLL.Traces;
 with Ada.Unchecked_Deallocation;
 with String_Utils; use String_Utils;
 with GNAT.Regpat; use GNAT.Regpat;
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Libclang.Index is
 
@@ -1147,5 +1148,15 @@ package body Libclang.Index is
          return "";
       end if;
    end To_String;
+
+   ---------------------
+   -- PP_Clang_Cursor --
+   ---------------------
+
+   procedure PP_Clang_Cursor (C : Clang_Cursor) is
+   begin
+      Put_Line ("<Clang cursor " & Spelling (C) & " " & Kind (C)'Img
+                & Location (C).Line'Img & ":" & Location (C).Column'Img & ">");
+   end PP_Clang_Cursor;
 
 end Libclang.Index;
