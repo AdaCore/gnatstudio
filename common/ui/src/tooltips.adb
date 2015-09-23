@@ -164,20 +164,35 @@ package body Tooltips is
             Global_Tooltip.X, Global_Tooltip.Y,
             X, Y);
 
+         --  Small offset on the right/bottom of the current mouse position
+
+         X := X + 10;
+         Y := Y + 10;
+
+         --  Widget is realized and shown to ensure that the width/height are
+         --  properly retrieved below.
+
          Global_Tooltip.Realize;
+         Global_Tooltip.Show_All;
+
          W := Global_Tooltip.Get_Allocated_Width;
          H := Global_Tooltip.Get_Allocated_Height;
 
+         --  If it goes outside the right of the screen, move it back
+
          if X + W > Win_Width then
-            X := Win_Width - W - 12;
+            X := Win_Width - W - 10;
          end if;
+
+         --  If it goes outside the bottom of the screen, display it above
+         --  the mouse pointer.
 
          if Y + H > Win_Height then
-            Y := Win_Height - H - 12;
+            Y := Y - H - 20;
          end if;
 
-         Global_Tooltip.Move (X + 10, Y + 10);
-         Global_Tooltip.Show_All;
+         Global_Tooltip.Move (X, Y);
+
       else
          Trace (Me, "No tooltip to display at this location");
       end if;
