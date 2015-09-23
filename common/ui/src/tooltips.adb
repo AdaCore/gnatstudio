@@ -119,10 +119,10 @@ package body Tooltips is
    ----------------------
 
    function On_Tooltip_Delay return Boolean is
-      Widget : Gtk_Widget;
+      Widget                : Gtk_Widget;
       Win_Width, Win_Height : Gint;
-      X, Y, W, H : Gint;
-      Toplevel : Gtk_Widget;
+      X, Y, W, H            : Gint;
+      Toplevel              : Gtk_Widget;
    begin
       if Global_Tooltip /= null then
          Global_Tooltip.Timeout_Id := 0;
