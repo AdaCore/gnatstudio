@@ -111,14 +111,18 @@ ifeq ($(OS),Windows_NT)
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc.exe $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gps_cli.exe $(bindir)
 	$(INSTALL_PROGRAM) spark/obj/gnatspark.exe $(bindir)
+ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
 	$(INSTALL_PROGRAM) $(GNATCOLL_INSTALL)/bin/gnatinspect.exe $(bindir)
+endif
 	$(MAKE) -C common/expect install
 else
 	$(INSTALL_PROGRAM) gps/obj/gps $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gps_cli $(bindir)
 	$(INSTALL_PROGRAM) spark/obj/gnatspark $(bindir)
+ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
 	$(INSTALL_PROGRAM) $(GNATCOLL_INSTALL)/bin/gnatinspect $(bindir)
+endif
 endif
 
 install-strip: install-common
@@ -127,7 +131,9 @@ ifeq ($(OS),Windows_NT)
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc.exe $(bindir)
 	$(INSTALL_PROGRAM) -s cli/obj/gps_cli.exe $(bindir)
 	$(INSTALL_PROGRAM) -s spark/obj/gnatspark.exe $(bindir)
+ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
 	$(INSTALL_PROGRAM) -s $(GNATCOLL_INSTALL)/bin/gnatinspect.exe $(bindir)
+endif
 	$(INSTALL_PROGRAM) distrib/gps_run.cmd $(bindir)
 	$(MAKE) -C common/expect install-strip
 else
@@ -136,14 +142,18 @@ ifneq (, $(findstring darwin, $(SYS)))
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc $(bindir)
 	$(INSTALL_PROGRAM) cli/obj/gps_cli $(bindir)
 	$(INSTALL_PROGRAM) spark/obj/gnatspark $(bindir)
+ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
 	$(INSTALL_PROGRAM) $(GNATCOLL_INSTALL)/bin/gnatinspect $(bindir)
+endif
 	$(INSTALL_PROGRAM) distrib/gps_wrapper $(bindir)/gps
 else
 	$(INSTALL_PROGRAM) -s gps/obj/gps $(bindir)/gps_exe
 	$(INSTALL_PROGRAM) cli/obj/gnatdoc $(bindir)
 	$(INSTALL_PROGRAM) -s cli/obj/gps_cli $(bindir)
 	$(INSTALL_PROGRAM) -s spark/obj/gnatspark $(bindir)
+ifneq ($(GNATCOLL_INSTALL)/bin, $(bindir))
 	$(INSTALL_PROGRAM) -s $(GNATCOLL_INSTALL)/bin/gnatinspect $(bindir)
+endif
 	$(INSTALL_PROGRAM) distrib/gps_wrapper $(bindir)/gps
 endif
 endif
