@@ -553,21 +553,42 @@ xml_gnatprove = """<?xml version="1.0"?>
           <combo-entry label="statistics" value="statistics"
                        tip="Detailed proof attempts"/>
         </combo>
-         <spin label="Proof level" switch="--level="
-             default="0" min="0" max="4"
-             tip="Set the proof level from 0 = faster to 4 = more powerful" />
+<combo
+label="Proof level"
+switch="--level"
+noswitch="none"
+separator="="
+tip="Set the proof level from 0 = faster to 4 = more powerful" >
+    <combo-entry label="none" value="none"
+                 tip="No level set"/>
+    <combo-entry label="0 (fast, one prover)" value="0"
+                 tip="Equivalent to --prover=cvc4 --proof=per_check
+ --steps=100 --timeout=1"/>
+    <combo-entry label="1 (fast, all provers)" value="1"
+                 tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
+ --steps=100 --timeout=1"/>
+    <combo-entry label="2 (all provers)" value="2"
+                 tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
+ --steps=1000 --timeout=10"/>
+    <combo-entry label="3 (slower, all provers)" value="3"
+                 tip="Equivalent to --prover=cvc4,z3,altergo
+ --proof=progressive --steps=1000 --timeout=10"/>
+    <combo-entry label="4 (slowest, all provers)" value="4"
+                 tip="Equivalent to --prover=cvc4,z3,altergo
+ --proof=progressive --steps=10000 --timeout=60"/>
+</combo>
 <combo
 label="Proof strategy"
 switch="--proof"
 noswitch="per_check"
 separator="="
 tip="Formulas generated for each check (faster) or each path (more precise)" >
-    <combo-entry label="One proof per check" value="per_check"
+    <combo-entry label="one proof per check" value="per_check"
                  tip="Generate one formula per check"/>
-    <combo-entry label="One proof per path" value="per_path"
+    <combo-entry label="one proof per path" value="per_path"
                  tip="Generate one formula per path for each check"/>
     <combo-entry
-    label="Progressively split"
+    label="progressively split"
     value="progressive"
     tip="Start ith one formula per check, then split into paths when needed"/>
 </combo>
@@ -635,21 +656,43 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
                 tip="Report the status of all checks, including those proved"
          />
          <title column="2" line="1" >Prover</title>
-         <spin label="Proof level" switch="--level=" column="2"
-             default="0" min="0" max="4"
-             tip="Set the proof level from 0 = faster to 4 = more powerful" />
+<combo
+label="Proof level"
+switch="--level"
+noswitch="none"
+separator="="
+column="2"
+tip="Set the proof level from 0 = faster to 4 = more powerful" >
+    <combo-entry label="none" value="none"
+                 tip="No level set"/>
+    <combo-entry label="0 (fast, one prover)" value="0"
+                 tip="Equivalent to --prover=cvc4 --proof=per_check
+ --steps=100 --timeout=1"/>
+    <combo-entry label="1 (fast, all provers)" value="1"
+                 tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
+ --steps=100 --timeout=1"/>
+    <combo-entry label="2 (all provers)" value="2"
+                 tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
+ --steps=1000 --timeout=10"/>
+    <combo-entry label="3 (slower, all provers)" value="3"
+                 tip="Equivalent to --prover=cvc4,z3,altergo
+ --proof=progressive --steps=1000 --timeout=10"/>
+    <combo-entry label="4 (slowest, all provers)" value="4"
+                 tip="Equivalent to --prover=cvc4,z3,altergo
+ --proof=progressive --steps=10000 --timeout=60"/>
+</combo>
          <combo
            label="Proof strategy"
            switch="--proof" noswitch="per_check"
            separator="=" column="2"
            tip="Formulas generated for each check (faster)
  or each path (more precise)">
-             <combo-entry label="One proof per check" value="per_check"
+             <combo-entry label="one proof per check" value="per_check"
                           tip="Generate one formula per check"/>
-             <combo-entry label="One proof per path" value="per_path"
+             <combo-entry label="one proof per path" value="per_path"
                           tip="Generate one formula per path for each check"/>
              <combo-entry
-             label="Progressively split"
+             label="progressively split"
              value="progressive"
              tip="Start with one formula per check,
  then split into paths when needed"/>
