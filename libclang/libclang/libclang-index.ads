@@ -427,6 +427,10 @@ package Libclang.Index is
 
    overriding function "=" (Left, Right : Clang_Cursor) return Boolean is
      (clang_equalCursors (Left, Right) /= 0);
+   --  Returns true when Left and Right are considered equal by libclang.
+   --  BEWARE: If you have two cursors that point to the same underlying
+   --  entity, but come from different translation units, they *will not* be
+   --  equal. In this case you need to use Same_Entity.
 
    subtype Clang_Cursor_Kind is clang_c_Index_h.CXCursorKind;
 
@@ -439,6 +443,7 @@ package Libclang.Index is
 
    function Root_Cursor
      (TU : Clang_Translation_Unit) return Clang_Cursor;
+   --  Returns the root cursor for the translation unit
 
    package Cursors_Vectors is new Ada.Containers.Vectors
      (Positive, Clang_Cursor);
@@ -457,6 +462,9 @@ package Libclang.Index is
      (Cursor : Clang_Cursor;
       Filter : access function (Cursor : Clang_Cursor) return Boolean := null)
       return Cursors_Arrays.Array_Type;
+   --  Returns the children of Cursor. If Filter is provided, returns a
+   --  filtered collection that contains only the children fullfilling the
+   --  Filter predicate.
 
    function Get_Children
      (Cursor : Clang_Cursor;
@@ -467,46 +475,75 @@ package Libclang.Index is
    function Kind
      (Cursor : Clang_Cursor) return Clang_Cursor_Kind
    is (Clang_Cursor_Kind (Cursor.kind));
+   --  Returns the kind of Cursor
 
    function Is_Definition
      (Cursor : Clang_Cursor) return Boolean
    is
      (clang_isCursorDefinition (Cursor) /= 0);
+   --  Returns wether Cursor is a definition according to clang.
 
    function To_String
      (Clang_String : clang_c_CXString_h.CXString) return String;
+   --  Utility function to convert a Clang_String to a regular Ada String,
+   --  hiding the necessary allocation and deallocation
 
    function Spelling
      (Kind : Clang_Cursor_Kind) return String
    is
      (To_String (clang_getCursorKindSpelling (CXCursorKind (Kind))));
+   --  Return the spelling of a given kind. Note that now that cursor kinds are
+   --  enums, this is much less useful since you can just call 'Image on the
+   --  kinds.
 
    function Spelling
      (Cursor : Clang_Cursor) return String;
+   --  Returns the spelling of a given clang cursor
 
    function Referenced (Cursor : Clang_Cursor) return Clang_Cursor is
      (clang_getCursorReferenced (Cursor));
+   --  Returns the cursor that Cursor references. Note that for convenience,
+   --  this will return a result for a lot of cursors, even some that are not
+   --  reference cursors according to clang (call expression for example)
 
    function Canonical (Cursor : Clang_Cursor) return Clang_Cursor is
      (clang_getCanonicalCursor (Cursor));
+   --  Returns the canonical cursor for a given cursor. Given an entity that
+   --  can be declared several times (functions/classes/methods/etc), Canonical
+   --  (entity) will return the same cursor for any definition of entity.
 
    function Definition (Cursor : Clang_Cursor) return Clang_Cursor is
      (clang_getCursorDefinition (Cursor));
+   --  Returns the definition of the entity pointed by by Cursor. In ada
+   --  parlance, this will return the body.
+   --  BEWARE: The definition has to exist in the same translation unit as the
+   --  declaration cursor is pointing to ! If it doesn't, this method will
+   --  return null. To have a more advanced Get_Body operation, look at
+   --  the clang_xref module.
 
    function Semantic_Parent (Cursor : Clang_Cursor) return Clang_Cursor
    is
      (clang_getCursorSemanticParent (Cursor));
+   --  Return the semantic parent of cursor, if this operation has meaning for
+   --  the given cursor
 
    function Lexical_Parent (Cursor : Clang_Cursor) return Clang_Cursor
    is
      (clang_getCursorLexicalParent (Cursor));
+   --  Return the lexical parent of Cursor.
+   --  BEWARE: This operation has quite unpredictable results with libclang.
+   --  It's use is very restricted in client code.
 
    function Typedef_Underlying_Type
-     (T : Clang_Cursor) return Clang_Type is
+     (T : Clang_Cursor) return Clang_Type
+   is
      (clang_getTypedefDeclUnderlyingType (T));
+   --  Returns the underlying type for a typedef cursor
 
    function Is_Method_Pure_Virtual (Method : Clang_Cursor) return Boolean
    is (clang_CXXMethod_isPureVirtual (Method) /= 0);
+   --  Given a cursor that points to a method, this will return wether the
+   --  method is a pure virtual method or not .
 
    function Element_Type (Array_Type : Clang_Type) return Clang_Type
    is
@@ -514,30 +551,50 @@ package Libclang.Index is
 
    function Declaration
      (T : Clang_Type) return Clang_Cursor is (clang_getTypeDeclaration (T));
+   --  Given a Clang_Type T, return the declaration of it as a clang cursor
 
    function USR (Cursor : Clang_Cursor) return String
    is
      (To_String (clang_getCursorUSR (Cursor)));
+   --  Unified symbol resolution for Cursor. Provided Cursor is a definition,
+   --  USR will return an unique string representation for it.
 
    function Same_Entity (L, R : Clang_Cursor) return Boolean
    is
-     (L = R
+     (
+      --  Try direct cursor equality first
+      L = R
       or else
+
+      --  Then canonical cursors equality
+      Canonical (L) = Canonical (R)
+
+      or else
+
+      --  Then only USR equality if kinds are the same
       (Kind (L) = Kind (R) and then USR (L) = USR (R)));
+   --  This function returns true if cursors point to the same underlying
+   --  entity. "=" for clang cursor is just a wrapper around
+   --  clang_cursorsEqual, which is strict cursor equality (must be the exact
+   --  same node in the tree)
 
    function Get_Type (Cursor : Clang_Cursor) return Clang_Type
    is
      (clang_getCursorType (Cursor));
+   --  Given a reference or declaration cursor, return the C/C++ type of it.
 
    function Pointee_Type (T : Clang_Type) return Clang_Type
    is
      (clang_getPointeeType (T));
+   --  Given a pointer type, return the type pointed to
 
    function Result_Type (T : Clang_Type) return Clang_Type
    is (clang_getResultType (T));
+   --  Given a function/method type, return the type of the result
 
    function Hash (Cursor : Clang_Cursor) return Hash_Type
    is (Hash_Type (clang_hashCursor (Cursor)));
+   --  Return a hash value for the given cursor
 
    type Clang_Raw_Location is record
       File : Virtual_File;
