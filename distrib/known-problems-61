@@ -25,6 +25,19 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-O923-032 GPS: tooltips could be drawn outside of the screen
+
+  Problem:    When the mouse is over an entity close to the screen's right
+              or bottom border the tooltips window could be partly drawn
+              outside of the screen and so invisible.
+
+              The tooltips are also now properly drawn on the current
+              screen when using multiple monitors.
+
+  Status:     This was fixed in 6.2 on 2015-09-24
+
+  Workaround: Arrange the editor to avoid the entity to be close to borders.
+
 KP-61-O910-041 GB: error parsing GPR file
 
   Problem:    When displaying the GNATbench properties for a project having a

@@ -122,6 +122,7 @@ package body Tooltips is
       Widget                : Gtk_Widget;
       Win_Width, Win_Height : Gint;
       X, Y, W, H            : Gint;
+      Geom                  : Gdk.Rectangle.Gdk_Rectangle;
       Toplevel              : Gtk_Widget;
    begin
       if Global_Tooltip /= null then
@@ -156,13 +157,33 @@ package body Tooltips is
       if Widget /= null then
          Global_Tooltip.Add (Widget);
 
-         Win_Width := Get_Width (Gdk.Screen.Get_Default);
-         Win_Height := Get_Height (Gdk.Screen.Get_Default);
+         --  These X, Y coordinates are global to all physical monitors
 
          Gdk.Window.Get_Root_Coords
            (Global_Tooltip.On_Widget.Get_Window,
             Global_Tooltip.X, Global_Tooltip.Y,
             X, Y);
+
+         --  Get current active window width and height
+
+         declare
+            Screen  : constant Gdk.Screen.Gdk_Screen := Toplevel.Get_Screen;
+            Monitor : constant Gint :=
+                        Screen.Get_Monitor_At_Window
+                          (Screen.Get_Active_Window);
+         begin
+            Screen.Get_Monitor_Geometry (Monitor, Geom);
+
+            Win_Width  := Geom.Width;
+            Win_Height := Geom.Height;
+
+            --  Set X, Y into the physical monitor area, this is needed to
+            --  check if the tooltip actually fit into the current monitor
+            --  or not.
+
+            X := X - Geom.X;
+            Y := Y - Geom.Y;
+         end;
 
          --  Small offset on the right/bottom of the current mouse position
 
@@ -191,7 +212,10 @@ package body Tooltips is
             Y := Y - H - 20;
          end if;
 
-         Global_Tooltip.Move (X, Y);
+         --  Move the tooltip at the right place taking into account the
+         --  physical monitor offset.
+
+         Global_Tooltip.Move (X + Geom.X, Y + Geom.Y);
 
       else
          Trace (Me, "No tooltip to display at this location");
