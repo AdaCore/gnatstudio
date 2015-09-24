@@ -75,12 +75,35 @@ class Sqlite_Cross_References(object):
         GPS.Hook("preferences_changed").add(self.on_preferences_changed)
         GPS.Hook("rsync_finished").add(self.on_rsync_finished)
         self.gnatinspect_launch_registered = False
+        self.gnatinspect_already_running = False
 
         # Initialize self.trusted_mode and other preferences
         self.on_preferences_changed(None)
 
-    def recompute_xref(self):
-        """ Launch recompilation of the cross references """
+    def gnatinspect_completed(self):
+        """ Call this when gnatinspect completed working.
+        """
+        self.gnatinspect_already_running = False
+
+        if self.gnatinspect_launch_registered:
+            # Aha, someone had requested a launch of gnatinspect while
+            # this one was running. Launch this now.
+            self.gnatinspect_launch_registered = False
+            self.recompute_xref()
+
+    def recompute_xref(self, force=False):
+        """ Launch recompilation of the cross references.
+            if Force is True, run regardless of a running gnatinspect
+            (this flag is used to protect against reentry)"""
+
+        if self.gnatinspect_already_running:
+            # We are already running gnatinspect. If someone registers
+            # another gnatinspect launch, set up the corresponding flag,
+            # and wait for gnatinspect to complete before launching the
+            # next one.
+
+            self.gnatinspect_launch_registered = True
+            return
 
         # The testsuite can disable gnatinspect in some cases.
         # Similarly if the DB xref is frozen, do nothing.
@@ -93,18 +116,9 @@ class Sqlite_Cross_References(object):
         if not os.path.exists(GPS.Project.root().file().name()):
             return
 
-        # If we are already recomputing Xref info, do not launch another
-        # instance of gnatinspect, but register one to be launched
-
-        tasks = GPS.Task.list()
-
-        if tasks:
-            if "Recompute Xref info" in [t.name() for t in tasks]:
-                self.gnatinspect_launch_registered = True
-                return
-
         # We are about to launch gnatinspect
         self.gnatinspect_launch_registered = False
+        self.gnatinspect_already_running = True
         target = GPS.BuildTarget("Recompute Xref info")
 
         # This might fail if we have spaces in the name of the directory, but
@@ -128,13 +142,6 @@ class Sqlite_Cross_References(object):
                 or category in ["Makefile", "CodePeer"]):
             self.recompute_xref()
 
-        if (self.gnatinspect_launch_registered
-                and target_name == "Recompute Xref info"):
-            # A launch of gnatinspect was registered while this one was
-            # running: relaunch one now.
-
-            self.recompute_xref()
-
     def on_project_view_changed(self, hook):
         self.recompute_xref()
 
@@ -145,6 +152,9 @@ class Sqlite_Cross_References(object):
         self.recompute_xref()
 
 
+r = Sqlite_Cross_References()
+
+
 class GnatInspect_OnExit_Hook(tool_output.OutputParser):
     name = "gnatinspect_onexit_hook"
 
@@ -153,7 +163,7 @@ class GnatInspect_OnExit_Hook(tool_output.OutputParser):
             GPS.Logger("XREF").log(
                 "gnatinspect returned with status %s" % status)
 
-        GPS.Hook("xref_updated").run()
+        r.gnatinspect_completed()
 
-
-r = Sqlite_Cross_References()
+        if not r.gnatinspect_already_running:
+            GPS.Hook("xref_updated").run()
