@@ -259,7 +259,8 @@ package body Clang_Xref is
    is
       Ret : Clang_Cursor;
    begin
-      Ret := Get_Clang_Cursor (E.Kernel, E.Loc);
+      Ret := Get_Clang_Cursor (E.Kernel, E.Ref_Loc);
+
       if Offset (Location (Ret)) = 0 then
          Ret := Get_Clang_Cursor (E.Kernel, E.Ref_Loc);
       else
