@@ -472,6 +472,11 @@ package Libclang.Index is
    --  Get all the children of cursor that have the given kind. Utility
    --  function
 
+   function Dbg_Get_Children
+     (Cursor : Clang_Cursor) return Cursors_Arrays.Array_Type;
+   --  Convenience function to get the children of a cursor. Used because Gdb
+   --  doesn't handle function with default arguments very well
+
    function Kind
      (Cursor : Clang_Cursor) return Clang_Cursor_Kind
    is (Clang_Cursor_Kind (Cursor.kind));

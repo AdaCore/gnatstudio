@@ -857,6 +857,17 @@ package body Libclang.Index is
       return Returned;
    end Create_Unsaved_File;
 
+   ----------------------
+   -- Dbg_Get_Children --
+   ----------------------
+
+   function Dbg_Get_Children
+     (Cursor : Clang_Cursor) return Cursors_Arrays.Array_Type
+   is
+   begin
+      return Get_Children (Cursor);
+   end Dbg_Get_Children;
+
    ------------------
    -- Get_Children --
    ------------------
