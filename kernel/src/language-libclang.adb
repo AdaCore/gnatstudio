@@ -834,9 +834,6 @@ package body Language.Libclang is
       Filtered_Files : Virtual_File_Vectors.Vector;
 
    begin
-      while Parsing_Request_Queue.Length > 0 loop
-         delay 0.1;
-      end loop;
 
       --  Stop all the tasks
 
