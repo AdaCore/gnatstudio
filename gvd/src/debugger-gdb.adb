@@ -75,8 +75,22 @@ package body Debugger.Gdb is
    Gdb_Command               : constant String := "gdb";
    --  Name of the command to launch gdb
 
-   Gdb_Options               : constant String := "-nw -q";
-   --  Options always passed to gdb
+   Gdb_Options_NW             : aliased String := "-nw";
+   Gdb_Options_Q              : aliased String := "-q";
+   Gdb_Options_Ex             : aliased String := "-ex";
+   Gdb_Options_Set_Prompt     : aliased String := "set prompt (gdb) ";
+   Gdb_Options_Set_Ext_Prompt : aliased String :=
+      "set extended-prompt (gdb) ";
+   Gdb_Options                : constant Argument_List :=
+     (Gdb_Options_NW'Access,
+      Gdb_Options_Q'Access,
+      Gdb_Options_Ex'Access,
+      Gdb_Options_Set_Prompt'Access,
+      Gdb_Options_Ex'Access,
+      Gdb_Options_Set_Ext_Prompt'Access);
+   --  Options always passed to gdb: run GDB in terminal mode, keep it quiet
+   --  and override any user-defined prompt so that we can match the first
+   --  prompt.
 
    Highlight_Pattern         : constant Pattern_Matcher :=
      Compile ("^\(([^\s]*-)?gdb\) ", Multiple_Lines);
@@ -873,11 +887,11 @@ package body Debugger.Gdb is
       Remote_Protocol : String := "";
       Debugger_Name   : String := "")
    is
-      Gdb_Arguments   : Argument_List_Access :=
-                          Argument_String_To_List (Gdb_Options);
-      Num_Options     : constant Natural := Gdb_Arguments'Length;
-      Local_Arguments : Argument_List
-        (1 .. Debugger_Args'Length + Num_Options);
+      Local_Arguments : constant Argument_List := Gdb_Options & Debugger_Args;
+      --  The string accesses in Gdb_Options are statically allocated and the
+      --  caller owns the ones in Debugger_Args, so we have no memory
+      --  management to do here for these.
+
       Process         : Visual_Debugger;
 
       procedure Free is new Standard.Ada.Unchecked_Deallocation
@@ -902,11 +916,6 @@ package body Debugger.Gdb is
       end Contains;
 
    begin
-      Local_Arguments (1 .. Num_Options) := Gdb_Arguments.all;
-      Local_Arguments (Num_Options + 1 .. Local_Arguments'Last) :=
-        Debugger_Args;
-      Free (Gdb_Arguments);
-
       if Debugger_Name = "" then
          General_Spawn
            (Debugger, Kernel, Local_Arguments, Gdb_Command, Proxy);
@@ -918,10 +927,6 @@ package body Debugger.Gdb is
       Free (Debugger.Executable_Args);
       Free (Debugger.Remote_Target);
       Free (Debugger.Remote_Protocol);
-
-      for J in 1 .. Num_Options loop
-         Free (Local_Arguments (J));
-      end loop;
 
       Debugger.Executable := Executable;
 
