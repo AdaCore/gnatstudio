@@ -52,47 +52,6 @@ package body Expect_Interface is
 
    Process_Class_Name   : constant String := "Process";
 
-   Command_Cst          : aliased constant String := "command";
-   Regexp_Cst           : aliased constant String := "regexp";
-   Timeout_Cst          : aliased constant String := "timeout";
-   On_Match_Action_Cst  : aliased constant String := "on_match";
-   On_Exit_Action_Cst   : aliased constant String := "on_exit";
-   Add_Lf_Cst           : aliased constant String := "add_lf";
-   Task_Manager_Cst     : aliased constant String := "task_manager";
-   Progress_Regexp_Cst  : aliased constant String := "progress_regexp";
-   Progress_Current_Cst : aliased constant String := "progress_current";
-   Progress_Total_Cst   : aliased constant String := "progress_total";
-   Before_Kill_Cst      : aliased constant String := "before_kill";
-   Remote_Server_Cst    : aliased constant String := "remote_server";
-   Show_Command_Cst     : aliased constant String := "show_command";
-   Single_Line_Cst      : aliased constant String := "single_line_regexp";
-   Case_Sensitive_Cst   : aliased constant String := "case_sensitive_regexp";
-   Rows_Cst             : aliased constant String := "rows";
-   Columns_Cst          : aliased constant String := "columns";
-   Strip_CR_Cst         : aliased constant String := "strip_cr";
-
-   Constructor_Args : constant Cst_Argument_List :=
-                        (2  => Command_Cst'Access,
-                         3  => Regexp_Cst'Access,
-                         4  => On_Match_Action_Cst'Access,
-                         5  => On_Exit_Action_Cst'Access,
-                         6  => Task_Manager_Cst'Access,
-                         7  => Progress_Regexp_Cst'Access,
-                         8  => Progress_Current_Cst'Access,
-                         9  => Progress_Total_Cst'Access,
-                         10 => Before_Kill_Cst'Access,
-                         11 => Remote_Server_Cst'Access,
-                         12 => Show_Command_Cst'Access,
-                         13 => Single_Line_Cst'Access,
-                         14 => Case_Sensitive_Cst'Access,
-                         15 => Strip_CR_Cst'Access);
-
-   Send_Args : constant Cst_Argument_List :=
-                 (Command_Cst'Access, Add_Lf_Cst'Access);
-
-   Expect_Args : constant Cst_Argument_List :=
-                   (Regexp_Cst'Access, Timeout_Cst'Access);
-
    type End_Action_Record is new Root_Command with record
       Inst             : Class_Instance;
       Status           : Integer := 0;
@@ -370,7 +329,6 @@ package body Expect_Interface is
 
    exception
       when Process_Died =>
-
          if not Command.In_Expect and then Command.Pd /= null then
             if Command.Strip_CR then
                Output_Cb
@@ -925,8 +883,6 @@ package body Expect_Interface is
 
    begin
       if Command = Constructor_Method then
-         Name_Parameters (Data, Constructor_Args);
-
          declare
             Inst            : constant Class_Instance :=
                                 Nth_Arg (Data, 1, Process_Class);
@@ -938,6 +894,7 @@ package body Expect_Interface is
             Single_Line     : constant Boolean := Nth_Arg (Data, 13, False);
             Case_Sensitive  : constant Boolean := Nth_Arg (Data, 14, True);
             Strip_CR        : constant Boolean := Nth_Arg (Data, 15, True);
+            Active          : constant Boolean := Data.Nth_Arg (16, False);
             Success         : Boolean;
             Flags           : Regexp_Flags := Multiple_Lines;
 
@@ -1029,7 +986,7 @@ package body Expect_Interface is
                   return;
                end if;
 
-               if Active (Me) then
+               if GNATCOLL.Traces.Active (Me) then
                   Add_Filter
                     (D.Pd.all,
                      Filter => In_Trace_Filter'Access,
@@ -1049,7 +1006,7 @@ package body Expect_Interface is
             Created_Command := Launch_Background_Command
               (Kernel   => Kernel,
                Command  => D,
-               Active   => False,
+               Active   => Active,
                Show_Bar => Show_Bar,
                Queue_Id => Q_Id);
 
@@ -1086,7 +1043,6 @@ package body Expect_Interface is
          end;
 
       elsif Command = "send" then
-         Name_Parameters (Data, Send_Args);
          D := Get_Data (Data, 1);
          if D /= null and then D.Pd /= null then
             Send (D.Pd.all,
@@ -1121,8 +1077,6 @@ package body Expect_Interface is
          end if;
 
       elsif Command = "set_size" then
-         Name_Parameters (Data, (1 => Rows_Cst'Access,
-                                 2 => Columns_Cst'Access));
          D := Get_Data (Data, 1);
          if D /= null and then D.Pd /= null then
             Set_Size (TTY_Process_Descriptor'Class (D.Pd.all),
@@ -1130,7 +1084,6 @@ package body Expect_Interface is
          end if;
 
       elsif Command = "expect" then
-         Name_Parameters (Data, Expect_Args);
          D := Get_Data (Data, 1);
          if D /= null then
             Interactive_Expect
@@ -1200,44 +1153,58 @@ package body Expect_Interface is
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
       Process_Class : constant Class_Type := Get_Process_Class (Kernel);
    begin
-      Register_Command
-        (Kernel, Constructor_Method,
-         Minimum_Args => 1,
-         Maximum_Args => 15,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
+         Params => (2  => Param ("command"),
+                    3  => Param ("regexp",                Optional => True),
+                    4  => Param ("on_match",              Optional => True),
+                    5  => Param ("on_exit",               Optional => True),
+                    6  => Param ("task_manager",          Optional => True),
+                    7  => Param ("progress_regexp",       Optional => True),
+                    8  => Param ("progress_current",      Optional => True),
+                    9  => Param ("progress_total",        Optional => True),
+                    10 => Param ("before_kill",           Optional => True),
+                    11 => Param ("remote_server",         Optional => True),
+                    12 => Param ("show_command",          Optional => True),
+                    13 => Param ("single_line_regexp",    Optional => True),
+                    14 => Param ("case_sensitive_regexp", Optional => True),
+                    15 => Param ("strip_cr",              Optional => True),
+                    16 => Param ("active",                Optional => True)),
+
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
-      Register_Command
-        (Kernel, "send",
-         Minimum_Args => 1,
-         Maximum_Args => 2,
+      Kernel.Scripts.Register_Command
+        ("send",
+         Params => (2  => Param ("command"),
+                    3  => Param ("add_lf", Optional => True)),
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
-      Register_Command
-        (Kernel, "interrupt",
+      Kernel.Scripts.Register_Command
+        ("interrupt",
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
-      Register_Command
-        (Kernel, "kill",
+      Kernel.Scripts.Register_Command
+        ("kill",
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
-      Register_Command
-        (Kernel, "wait",
+      Kernel.Scripts.Register_Command
+        ("wait",
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
-      Register_Command
-        (Kernel, "get_result",
+      Kernel.Scripts.Register_Command
+        ("get_result",
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
-      Register_Command
-        (Kernel, "expect",
-         Minimum_Args => 1,
-         Maximum_Args => 2,
+      Kernel.Scripts.Register_Command
+        ("expect",
+         Params      => (2 => Param ("regexp"),
+                         3 => Param ("timeout", Optional => True)),
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
-      Register_Command
-        (Kernel, "set_size",
-         Minimum_Args => 2,
-         Maximum_Args => 2,
+      Kernel.Scripts.Register_Command
+        ("set_size",
+         Params      => (2 => Param ("rows"),
+                         3 => Param ("columns")),
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
    end Register_Commands;

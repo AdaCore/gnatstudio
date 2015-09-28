@@ -8072,7 +8072,7 @@ class Process(Command):
                  task_manager=True, progress_regexp='', progress_current=1,
                  progress_total=1, before_kill=None, remote_server='',
                  show_command=False, single_line_regexp=False,
-                 case_sensitive_regexp=True, strip_cr=True):
+                 case_sensitive_regexp=True, strip_cr=True, active=False):
         """
         Spawns ``command``, which can include triple-quoted strings, similar
         to Python, which are always preserved as one argument.
@@ -8157,10 +8157,14 @@ class Process(Command):
           :param remote_server: A string. Possible values are "GPS_Server",
              the empty string (equivalent to "GPS_Server"), "Build_Server",
              "Debug_Server", "Execution_Server" and "Tools_Server".
-          :param show_command: A boolean
-          :param single_line_regexp: A boolean
-          :param case_sensitive_regexp: A boolean
-          :param strip_cr: A boolean
+          :param bool show_command:
+          :param bool single_line_regexp:
+          :param bool case_sensitive_regexp:
+          :param bool strip_cr:
+          :param bool active: Whether GPS should actively monitor the state
+             of the process. This will require more CPU (and might make the
+             GUI less reactive while the process runs), but ensures that
+             events like on_exit will be called earlier.
 
           .. seealso:: :class:`GPS.Process`
         """
