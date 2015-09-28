@@ -43,9 +43,9 @@ endif
 # need, otherwise we assume that cron-src has put them in gnat/ already.
 # Those few files are needed to generate support plug-ins for GPS.
 do_links:
-ifneq ($(wildcard ../gnatlib/gnat_src),)
+ifneq ($(wildcard ../gnat_src),)
 	-@$(foreach f,$(GNAT_SOURCES), \
-	  $(LN) ../gnatlib/gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
+	  $(LN) ../gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
 endif
 
 install:

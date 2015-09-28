@@ -35,6 +35,12 @@ Once XML/Ada has been installed, extract the GPS sources:
   $ gzip -dc gps-*-src.tgz | tar xvf -
   $ cd gps*
 
+GPS needs to access a few of the GNAT sources to automatically find the list
+of supported switches for the compiler. This can be done by creating a
+link named 'gnat_src' to the directory that contains the gnat sources. This
+is optional. If you don't do this, GPS will not know about the GNAT
+command line switches.
+
 Then execute the following commands:
 
   $ ./configure --prefix=<prefix>
@@ -52,11 +58,3 @@ you can pass --disable-shared to configure.
 If you need to modify configure.in and then regenerate the configure script,
 you will need autoconf version 2.57 installed on your machine. Later versions
 may not be compatible.
-
-Building/Installing from Subversion
-===================================
-
-The instructions to build from subversion are similar to the instructions
-listed above, with a few additional steps:
-
-- You need to use the SVN version of GtkAda matching GPS sources (same date/tag)
