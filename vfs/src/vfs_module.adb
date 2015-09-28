@@ -291,10 +291,8 @@ package body VFS_Module is
             Writable  : Writable_File;
          begin
             Writable := Write_File (Temp_File);
-
             Write
-              (Writable, N => 1, LF => Nth_Arg (Data, 2, Default => False));
-
+               (Writable, N => 1, LF => Nth_Arg (Data, 2, Default => False));
             Close (Writable);
             Set_Return_Value (Data, Temp_File.Full_Name);
          end;
@@ -302,42 +300,35 @@ package body VFS_Module is
       elsif Command = "dump_file" then
          declare
             Filename : constant Filesystem_String := Nth_Arg (Data, 2);
-            File     : Virtual_File;
+            Tmp_Dir  : constant Virtual_File := Get_Tmp_Directory;
+            File     : Virtual_File := Create (Filename);
             Writable : Writable_File;
-            Tmp_Dir  : constant Virtual_File :=
-                         Get_Tmp_Directory;
          begin
-            File := Create (Filename);
-
-            if not Is_Absolute_Path (File) then
-               File := Create_From_Dir (Tmp_Dir, Full_Name (File));
+            if not File.Is_Absolute_Path then
+               File := Tmp_Dir / File;
             end if;
 
             Writable := Write_File (File, Append => True);
-
             Write
-              (Writable, N => 1, LF => Nth_Arg (Data, 3, Default => False));
-
+               (Writable, N => 1, LF => Nth_Arg (Data, 3, Default => False));
             Close (Writable);
-            Set_Return_Value (Data, Full_Name (File));
+            Set_Return_Value (Data, File.Full_Name);
          end;
 
       elsif Command = "base_name" then
          declare
             Filename : constant Filesystem_String := Nth_Arg (Data, 1);
-            File     : Virtual_File;
+            File     : constant Virtual_File := Create (Filename);
          begin
-            File := Create (Filename);
-            Set_Return_Value (Data, Base_Name (File));
+            Set_Return_Value (Data, File.Base_Name);
          end;
 
       elsif Command = "dir_name" then
          declare
             Filename : constant Filesystem_String := Nth_Arg (Data, 1);
-            File     : Virtual_File;
+            File     : constant Virtual_File := Create (Filename);
          begin
-            File := Create (Filename);
-            Set_Return_Value (Data, Dir_Name (File));
+            Set_Return_Value (Data, File.Dir_Name);
          end;
       end if;
    end VFS_Command_Handler;
