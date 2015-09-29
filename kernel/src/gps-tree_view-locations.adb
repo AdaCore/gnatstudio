@@ -42,13 +42,6 @@ package body GPS.Tree_View.Locations is
    --  Handle "button-press" event. It selects row on press of 3-rd mouse
    --  button to interact with contextual menu correctly.
 
-   function On_Button_Release
-     (Self  : access GPS_Locations_Tree_View_Record'Class;
-      Event : Gdk.Event.Gdk_Event) return Boolean;
-   --  Handle "button-release" event. Emit "action-clicked" or
-   --  "location-clicked" signal when click is done on action column or
-   --  location column.
-
    function On_Row_Expanded_Idle
      (Self : GPS_Locations_Tree_View) return Boolean;
    --  Idle callback used to ensure that the proper path is visible
@@ -94,6 +87,12 @@ package body GPS.Tree_View.Locations is
       2 => Interfaces.C.Strings.New_String (String (Signal_Location_Clicked)));
 
    function Signals_Parameters return Glib.Object.Signal_Parameter_Types;
+
+   procedure On_Row_Activated
+     (Self   : access GPS_Locations_Tree_View_Record'Class;
+      Path   : Gtk_Tree_Path;
+      Column : Gtk_Tree_View_Column);
+   --  Handles "row-activated" signal of the GtkTreeView
 
    --------------------
    -- Action_Clicked --
@@ -158,6 +157,7 @@ package body GPS.Tree_View.Locations is
       Self.Set_Rules_Hint (False);
       Self.Set_Headers_Visible (False);
       Self.Set_Enable_Search (False);
+      Self.Set_Activate_On_Single_Click (True);
 
       --  Action column
 
@@ -190,17 +190,16 @@ package body GPS.Tree_View.Locations is
       Set_Property (Self, Has_Tooltip_Property, True);
       Query_Tooltip_Callbacks.Connect
         (Self, Signal_Query_Tooltip, On_Query_Tooltip'Access);
+      GPS_Locations_Tree_View_Callbacks.Connect
+        (Self,
+         Gtk.Tree_View.Signal_Row_Activated,
+         GPS_Locations_Tree_View_Callbacks.To_Marshaller
+           (On_Row_Activated'Access));
       GPS_Locations_Tree_View_Boolean_Callbacks.Connect
         (Self,
          Signal_Button_Press_Event,
          GPS_Locations_Tree_View_Boolean_Callbacks.To_Marshaller
            (On_Button_Press'Access),
-         After => False);
-      GPS_Locations_Tree_View_Boolean_Callbacks.Connect
-        (Self,
-         Signal_Button_Release_Event,
-         GPS_Locations_Tree_View_Boolean_Callbacks.To_Marshaller
-           (On_Button_Release'Access),
          After => False);
 
       GPS.Location_View_Filter.Gtk_New (Self.Filter, Model);
@@ -279,66 +278,6 @@ package body GPS.Tree_View.Locations is
 
       return False;
    end On_Button_Press;
-
-   -----------------------
-   -- On_Button_Release --
-   -----------------------
-
-   function On_Button_Release
-     (Self  : access GPS_Locations_Tree_View_Record'Class;
-      Event : Gdk.Event.Gdk_Event) return Boolean
-   is
-      X         : constant Gint := Gint (Event.Button.X);
-      Y         : constant Gint := Gint (Event.Button.Y);
-      Path      : Gtk_Tree_Path;
-      Column    : Gtk_Tree_View_Column;
-      Buffer_X  : Gint;
-      Buffer_Y  : Gint;
-      Row_Found : Boolean;
-      Cell_Rect : Gdk_Rectangle;
-      Back_Rect : Gdk_Rectangle;
-
-   begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Release
-      then
-         Self.Get_Path_At_Pos
-           (X, Y, Path, Column, Buffer_X, Buffer_Y, Row_Found);
-
-         if Row_Found and then Column /= Self.Action_Column then
-            Self.Get_Cell_Area (Path, Self.Location_Column, Cell_Rect);
-            Self.Get_Background_Area (Path, Self.Location_Column, Back_Rect);
-
-            --  If we are clicking before the beginning of the cell, allow the
-            --  event to pass. This allows clicking on expanders.
-
-            if Buffer_X > Back_Rect.X
-              and then Buffer_X < Cell_Rect.X
-            then
-               Path_Free (Path);
-
-               return False;
-            end if;
-         end if;
-
-         if Path /= Null_Gtk_Tree_Path then
-            if Get_Depth (Path) > 2 then
-               if Self.On_Row_Click_Handler = No_Source_Id then
-                  Self.Column_Clicked := Column;
-                  Self.On_Row_Click_Path    := Copy (Path);
-                  Self.On_Row_Click_Handler :=
-                    View_Idles.Idle_Add
-                      (On_Row_Click_Idle'Access,
-                       GPS_Locations_Tree_View (Self));
-               end if;
-            end if;
-
-            Path_Free (Path);
-         end if;
-      end if;
-
-      return False;
-   end On_Button_Release;
 
    -----------------------------------
    -- On_Lowerst_Model_Row_Inserted --
@@ -452,6 +391,27 @@ package body GPS.Tree_View.Locations is
 
       return Column /= Glib.Gint'Last;
    end On_Query_Tooltip;
+
+   ----------------------
+   -- On_Row_Activated --
+   ----------------------
+
+   procedure On_Row_Activated
+     (Self   : access GPS_Locations_Tree_View_Record'Class;
+      Path   : Gtk_Tree_Path;
+      Column : Gtk_Tree_View_Column) is
+   begin
+      if Get_Depth (Path) > 2 then
+         if Self.On_Row_Click_Handler = No_Source_Id then
+            Self.Column_Clicked := Column;
+            Self.On_Row_Click_Path    := Copy (Path);
+            Self.On_Row_Click_Handler :=
+              View_Idles.Idle_Add
+                (On_Row_Click_Idle'Access,
+                 GPS_Locations_Tree_View (Self));
+         end if;
+      end if;
+   end On_Row_Activated;
 
    ---------------------
    -- On_Row_Expanded --
