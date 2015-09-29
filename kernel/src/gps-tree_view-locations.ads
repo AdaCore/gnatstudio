@@ -118,10 +118,6 @@ private
         Glib.Main.No_Source_Id;
       --  Context for scrolling after node expansion. Path points to the top
       --  expanded node. Handler is a Gtk+ idle handler.
-
-      Column_Clicked       : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
-      On_Row_Click_Path    : Gtk.Tree_Model.Gtk_Tree_Path;
-      On_Row_Click_Handler : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
    end record;
 
    overriding procedure On_Lowest_Model_Row_Inserted
