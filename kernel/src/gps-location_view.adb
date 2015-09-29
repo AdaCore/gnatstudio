@@ -15,21 +15,18 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;              use Ada.Strings, Ada.Strings.Fixed;
-with Ada.Text_IO;                    use Ada.Text_IO;
-
 with Ada.Containers.Vectors;
-with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
-with Generic_Views;
-with GPS.Search;                     use GPS.Search;
-with GPS.Tree_View.Locations;        use GPS.Tree_View.Locations;
+with Ada.Strings;                      use Ada.Strings;
+with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
+with Ada.Text_IO;                      use Ada.Text_IO;
+with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 
-with GNATCOLL.Projects;          use GNATCOLL.Projects;
-with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda;        use GNATCOLL.VFS.GtkAda;
+with GNATCOLL.Projects;                use GNATCOLL.Projects;
+with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
+with GNATCOLL.VFS;                     use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda;              use GNATCOLL.VFS.GtkAda;
 
-with Gdk.Event;                  use Gdk.Event;
+with Gdk.Event;                        use Gdk.Event;
 
 with Glib;                             use Glib;
 with Glib.Convert;
@@ -44,7 +41,6 @@ with Gtk.Handlers;
 with Gtk.Menu;                         use Gtk.Menu;
 with Gtk.Scrolled_Window;              use Gtk.Scrolled_Window;
 with Gtk.Toolbar;                      use Gtk.Toolbar;
-with GPS.Tree_View;                    use GPS.Tree_View;
 with Gtk.Tree_Selection;               use Gtk.Tree_Selection;
 
 with Gtkada.File_Selector;
@@ -54,6 +50,7 @@ with Gtkada.MDI;                       use Gtkada.MDI;
 with Basic_Types;                      use Basic_Types;
 with Commands.Interactive;             use Commands.Interactive;
 with Default_Preferences;              use Default_Preferences;
+with Generic_Views;
 with GPS.Editors;                      use GPS.Editors;
 with GPS.Editors.GtkAda;               use GPS.Editors.GtkAda;
 with GPS.Editors.Line_Information;     use GPS.Editors.Line_Information;
@@ -70,6 +67,9 @@ with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
 with GPS.Kernel.Style_Manager;         use GPS.Kernel.Style_Manager;
 with GPS.Location_View.Listener;       use GPS.Location_View.Listener;
+with GPS.Search;                       use GPS.Search;
+with GPS.Tree_View;                    use GPS.Tree_View;
+with GPS.Tree_View.Locations;          use GPS.Tree_View.Locations;
 with GUI_Utils;                        use GUI_Utils;
 with Histories;                        use Histories;
 
