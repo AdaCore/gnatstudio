@@ -20,7 +20,6 @@ with Ada.Strings;               use Ada.Strings;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Tags;                  use Ada.Tags;
-with Ada.Unchecked_Deallocation;
 
 with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
@@ -893,9 +892,6 @@ package body Debugger.Gdb is
       --  management to do here for these.
 
       Process         : Visual_Debugger;
-
-      procedure Free is new Standard.Ada.Unchecked_Deallocation
-        (Argument_List, Argument_List_Access);
 
       function Contains (S : String; Substring : String) return Boolean;
       --  Return True if S contains Substring
