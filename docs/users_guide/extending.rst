@@ -6170,9 +6170,9 @@ The GPS Shell
 
 .. warning::
 
-The GPS Shell is deprecated, and only accessible through XML commands now, for
-backward compatibility. Don't try to use it for any new development, and use
-the Python Shell instead.
+    The GPS Shell is deprecated, and only accessible through XML commands now, for
+    backward compatibility. Don't try to use it for any new development, and use
+    the Python Shell instead.
 
 .. index:: gps shell
 
