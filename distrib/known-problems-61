@@ -89,6 +89,16 @@ KP-61-O831-002 GPS: Sync lost in debugger with old GDB versions
 
   Workaround: Change tasks via the gdb console
 
+KP-61-O827-012 GPS: does not preserve file permissions on save
+
+  Problem:    When an executable file is edited via GPS (for instance a
+              shell script), its permissions are lost on saving. The
+              newly saved file is no longer executable.
+
+  Status:     This was fixed in 6.2 on 2015-09-29
+
+  Workaround: Update the permissions manually.
+
 KP-61-O826-004 GNATdoc: crash on use of '@private' tag for package
 
   Problem:    GNATdoc crashes when a library-level package is marked
