@@ -6175,9 +6175,9 @@ class Hook(object):
       return an empty list.
 
       :param name: A string, the target type.
-         Example of values are 'main', 'exec' and 'make' currently.
+          Example of values are 'main', 'exec' and 'make' currently.
       :return: A list of tuples, each of which has the following elements:
-         (display name for the target,
+          (display name for the target,
           full name for the target (typically a path),
           full path for the project (or the empty string))
 
