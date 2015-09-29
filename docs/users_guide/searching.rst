@@ -250,7 +250,7 @@ a number of facilities just for this:
 * Use the :file:`isearch.py` plug-in
 
   This plugin provides an interactive search. When you press the key
-  shortcut (:kdb:`ctrl-s` by default when using Emacs mode, or use the
+  shortcut (:kbd:`ctrl-s` by default when using Emacs mode, or use the
   :menuselection:`Edit --> Key Shortcuts` to assign another shortcut), GPS
   displays a small prompt window. As you start typing letters there, GPS
   jumps to the next match for the word you are currently typing.
