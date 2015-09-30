@@ -28,6 +28,7 @@ codepeer:
 
 clean:
 	$(MAKE) -C gps $@
+	$(MAKE) -C cli $@
 	$(RM) gnat/*.ad*
 
 test-clean:

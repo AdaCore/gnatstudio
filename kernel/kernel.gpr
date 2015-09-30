@@ -8,6 +8,7 @@ with "gnatcoll_gtk";
 with "../refactoring/core/refactoring_core";
 with "../toolchains_editor/core/toolchains_core";
 with "xmlada";
+with "../libclang/libclang";
 
 project Kernel is
 

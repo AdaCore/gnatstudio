@@ -35,14 +35,8 @@ project CLI is
 
    package Compiler renames Shared.Compiler;
    package Binder renames Shared.Binder;
+   package Linker renames Shared.Linker;
    package IDE renames Shared.IDE;
-
-   package Linker is
-      for Default_Switches ("Ada") use Linker'Default_Switches ("Ada")
-         & Shared.Linker'Default_Switches ("Ada");
-      --  for Default_Switches ("Ada") use ("-lgmem");
-      --  for Default_Switches ("Ada") use ("-pg");
-   end Linker;
 
    package Documentation is
       for Ignored_Subprojects use (

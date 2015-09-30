@@ -1,4 +1,3 @@
-with "../libclang/libclang";
 with "../common/common";
 with "../shared";
 with "gnatcoll";
