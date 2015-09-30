@@ -81,26 +81,45 @@ try:
             path = view.get_selection().get_selected_rows()[1][0]
         rect = view.get_cell_area(path, view.get_column(column))
 
+        x = float(rect.x + rect.width / 2)
+        y = float(rect.y + rect.height / 2)
+
+        if modifier is not None:
+            state = modifier
+        else:
+            state = Gdk.ModifierType(0)
+            if control:
+                if sys.platform == 'darwin':
+                    # on Mac, we need to also pass the Command key
+                    state |= Gdk.ModifierType.MOD2_MASK
+                else:
+                    state |= Gdk.ModifierType.CONTROL_MASK
+
+            if shift:
+                state |= Gdk.ModifierType.SHIFT_MASK
+            if alt:
+                state |= Gdk.ModifierType.MOD1_MASK
+
+        # TreeView doesn't handle single click well without
+        # getting "enter-notify-event" first
+        if through_gps:
+            GPS.send_crossing_event(
+                type=Gdk.EventType.ENTER_NOTIFY,
+                window=view.get_bin_window(),
+                x=int(x),
+                y=int(y),
+                state=0)
+        else:
+            event = Gdk.EventCrossing()
+            event.type = Gdk.EventType.ENTER_NOTIFY
+            event.window = view.get_bin_window()
+            event.device = pygps.default_event_device()
+            event.x = x
+            event.y = y
+            event.state = 0
+            event.put()
+
         for t in events:
-            if modifier is not None:
-                state = modifier
-            else:
-                state = Gdk.ModifierType(0)
-                if control:
-                    if sys.platform == 'darwin':
-                        # on Mac, we need to also pass the Command key
-                        state |= Gdk.ModifierType.MOD2_MASK
-                    else:
-                        state |= Gdk.ModifierType.CONTROL_MASK
-
-                if shift:
-                    state |= Gdk.ModifierType.SHIFT_MASK
-                if alt:
-                    state |= Gdk.ModifierType.MOD1_MASK
-
-            x = float(rect.x + rect.width / 2)
-            y = float(rect.y + rect.height / 2)
-
             if through_gps:
                 GPS.send_button_event(
                     button=button,

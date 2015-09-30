@@ -1905,6 +1905,36 @@ package body KeyManager_Module is
    procedure Keymanager_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
+      function Get_Window (Arg : Positive) return Gdk.Gdk_Window;
+      --  Return GdkWindow from argument Arg. Return first top level
+      --  window if Arg isn't provided.
+
+      ----------------
+      -- Get_Window --
+      ----------------
+
+      function Get_Window (Arg : Positive) return Gdk.Gdk_Window is
+         use Widget_List;
+         use type Gdk.Gdk_Window;
+
+         List   : Widget_List.Glist;
+         Win    : Gtk_Widget;
+         Window : Gdk.Gdk_Window := From_PyGtk (Data, Arg);
+      begin
+         if Window = null then
+            List := List_Toplevels;
+            Win := Get_Data (List);
+            Window := Get_Window (Win);
+            Free (List);
+         end if;
+
+         if Window /= null then
+            Ref (Window);
+         end if;
+
+         return Window;
+      end Get_Window;
+
    begin
       if Command = "last_command" then
          if Keymanager_Module.Last_User_Command /= null then
@@ -1992,29 +2022,17 @@ package body KeyManager_Module is
 
       elsif Command = "send_button_event" then
          declare
-            use type Gdk.Gdk_Window;
-            use Widget_List;
-
-            Window  : Gdk.Gdk_Window := From_PyGtk (Data, 1);
+            Window  : constant Gdk.Gdk_Window := Get_Window (Arg => 1);
             Typ     : constant Gdk_Event_Type :=
               Gdk_Event_Type'Val
-                (Nth_Arg (Data, 2, Gdk_Event_Type'Pos (Button_Press)) + 1);
+                (Nth_Arg (Data, 2, Gdk_Event_Type'Pos (Button_Press) - 1) + 1);
             Button  : constant Integer := Nth_Arg (Data, 3, 1);
             X       : constant Integer := Nth_Arg (Data, 4, 1);
             Y       : constant Integer := Nth_Arg (Data, 5, 1);
             State   : constant Integer := Nth_Arg (Data, 6, 0);
             Event   : Gdk_Event;
-            List    : Widget_List.Glist;
-            Win     : Gtk_Widget;
             Device  : Gdk_Device;
          begin
-            if Window = null then
-               List := List_Toplevels;
-               Win := Get_Data (List);
-               Window := Get_Window (Win);
-               Free (List);
-            end if;
-
             Device := Gtkada.Style.Get_First_Device
               (Widget => Get_Kernel (Data).Get_Main_Window,
                Source => Source_Mouse);
@@ -2034,10 +2052,48 @@ package body KeyManager_Module is
                 X_Root      => 0.0,
                 Y_Root      => 0.0);
 
-            if Event.Button.Window /= null then
-               Ref (Event.Button.Window);
-            end if;
+            Device.Ref;
+            Set_Device (Event, Device);
+            Device.Ref;
+            Set_Source_Device (Event, Device);
 
+            Main_Do_Event (Event);
+
+            Gdk.Event.Free (Event);
+         end;
+
+      elsif Command = "send_crossing_event" then
+         declare
+            Window  : constant Gdk.Gdk_Window := Get_Window (Arg => 1);
+            Typ     : constant Gdk_Event_Type :=
+              Gdk_Event_Type'Val
+                (Nth_Arg (Data, 2, Gdk_Event_Type'Pos (Enter_Notify) - 1)
+                   + 1);
+            X       : constant Integer := Nth_Arg (Data, 3, 1);
+            Y       : constant Integer := Nth_Arg (Data, 4, 1);
+            State   : constant Integer := Nth_Arg (Data, 5, 0);
+            Event   : Gdk_Event;
+            Device  : Gdk_Device;
+         begin
+            Gdk_New (Event, Typ);
+            Event.Crossing :=
+               (The_Type    => Typ,
+                Window      => Window,
+                Send_Event  => 1,
+                Time        => 0, --  CURRENT_TIME
+                X           => Gdouble (X),
+                Y           => Gdouble (Y),
+                State       => Gdk_Modifier_Type (State),
+                X_Root      => 0.0,
+                Y_Root      => 0.0,
+                Subwindow   => null,
+                Mode        => Crossing_Normal,
+                Detail      => Notify_Ancestor,
+                Focus       => False);
+
+            Device := Gtkada.Style.Get_First_Device
+              (Widget => Get_Kernel (Data).Get_Main_Window,
+               Source => Source_Mouse);
             Device.Ref;
             Set_Device (Event, Device);
             Device.Ref;
@@ -2289,6 +2345,14 @@ package body KeyManager_Module is
          (Param ("window", Optional => True),
           Param ("type", Optional => True),
           Param ("button", Optional => True),
+          Param ("x", Optional => True),
+          Param ("y", Optional => True),
+          Param ("state", Optional => True)),
+         Keymanager_Command_Handler'Access);
+      Register_Command
+        (Get_Scripts (Kernel), "send_crossing_event",
+         (Param ("window", Optional => True),
+          Param ("type", Optional => True),
           Param ("x", Optional => True),
           Param ("y", Optional => True),
           Param ("state", Optional => True)),
