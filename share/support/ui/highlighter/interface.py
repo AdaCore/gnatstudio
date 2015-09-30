@@ -170,25 +170,36 @@ API Documentation
 """
 from functools import partial
 import GPS
+import re
 
 
 ##############################
 # Highlight classes creation #
 ##############################
 
+def search_for_capturing_groups(regexp_string):
+    """
+    Return a list of matches for capturing groups in a regular expression.
+
+    :param str regexp_string: The regular expression we want to analyze.
+    """
+    return re.findall(r"[^\\]\((?!\?:)", regexp_string)
+
 
 def simple(regexp_string, tag):
     """
-    Return a simple matcher for a regexp string
+    Return a simple matcher for a regexp string.
+    Raises an exception if capturing groups are present in the
+    regular expression (not supported by the engine).
 
     :param str regexp_string: The regular expression for this matcher
     :rtype: SimpleMatcher
     """
-    try:
-        from highlighter.engine import SimpleMatcher
-        return SimpleMatcher(tag, regexp_string)
-    except Exception:
-        pass
+    if search_for_capturing_groups(regexp_string):
+        raise Exception("""Capturing groups are not supported.
+Please use non-capturing groups when defining regular expressions.""")
+    from highlighter.engine import SimpleMatcher
+    return SimpleMatcher(tag, regexp_string)
 
 
 def words(words_list, **kwargs):

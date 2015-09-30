@@ -24,7 +24,7 @@ c99_comment = region(r"//", r"$", tag=tag_comment, name="comment",
                      highlighter=comments_subhl)
 
 multiline_comment = region(r"/\*", r"\*/", tag=tag_comment, name="ml_comment",
-                           highlighter=comments_subhl)
+                           highlighter=(hl_comment_notes,))
 
 preprocessor_comment = region(
     r"^{0}#{1}if{2}0".format(ws, ws, ws), r"^{0}#{1}endif".format(ws, ws),
