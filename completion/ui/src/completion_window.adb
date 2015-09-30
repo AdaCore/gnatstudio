@@ -318,6 +318,7 @@ package body Completion_Window is
          N_Info : Notes_Window_Info;
       begin
          Gtk_New_Vbox (N_Info.Notes_Box);
+         N_Info.Notes_Box.Set_Name ("notes-doc-box");
          N_Info.C := Item.Proposals.First;
          N_Info.Multiple_Items := Natural (Item.Proposals.Length) > 1;
          Explorer.Notes_Info := N_Info;
