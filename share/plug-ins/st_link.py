@@ -136,7 +136,7 @@ class BoardLoader(Module):
 
         r2 = yield con.wait_until_match(
             "Starting verification of write complete",
-            15000)
+            120000)
         r3 = yield con.wait_until_match(
             "Flash written and verified! jolly good!",
             500)
