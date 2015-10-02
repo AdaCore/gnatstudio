@@ -82,14 +82,6 @@ This dialog contains three fields:
 Change the context to a different one by clicking on the arrow on the
 right, which displays the list of all possible contexts, including:
 
-  * :command:`Project View`
-
-    Search the :guilabel:`Project` view. An extra :guilabel:`Scope` box is
-    displayed where you can specify the scope of your search, a set of:
-    :guilabel:`Projects`, :guilabel:`Directories`, :guilabel:`Files`,
-    :guilabel:`Entities`.  Searching entities can take a long time since
-    GPS must parse every file during the search.
-
   * :command:`Open Files`
 
     Search all files currently open in the source editor.
@@ -123,17 +115,12 @@ right, which displays the list of all possible contexts, including:
 
     Search the current source editor.
 
-  * :command:`Project Browser`
-
-    Search the :guilabel:`Project` browser (see :ref:`The_Project_Browser`).
-
   .. index:: preferences; search --> preserve search context
 
   Normally, GPS sets the default value for :guilabel:`Look In` that matches
   the currently selected window. For example, if you are in an editor and
   open the search dialog, the context is set to :guilabel:`Current
-  File`. If the project view is the active window, the context is set to
-  the :guilabel:`Project` view.  Optionally, GPS can remember the last
+  File`. Optionally, GPS can remember the last
   context that was set (see the preference :menuselection:`Search -->
   Preserve Search Context`). In that case, if an editor is selected, GPS
   remembers whether the last time you started a search from an editor you
