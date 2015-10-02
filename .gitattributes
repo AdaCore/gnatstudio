@@ -2,6 +2,7 @@
 # yet (too old an install)
 
 docs/users_guide/conf.py          no-precommit-check
+gnatdoc/docs/users_guide/conf.py  no-precommit-check
 
 # this is generated
 

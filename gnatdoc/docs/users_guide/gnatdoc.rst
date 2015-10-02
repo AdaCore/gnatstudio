@@ -595,3 +595,82 @@ Files in :file:`templates` subdirectory are used as templates when documentation
 is generated. You can put modified versions of default files in this directory
 with same name as original file. Adding new files has no effect on generated
 documentation.
+
+***********************
+Handling of custom tags
+***********************
+
+It is possible to extend set of supported tag by providing custom tag handlers
+written in Python. To run GNATdoc with your custom tag handler use
+--load=python:mytags.py switch in command line.
+
+You need to declare Python class to handle each custom tags. This class should
+be inherited from :class:`GPS.InlineTagHandler` class. Its constructor must
+call constructor of inherited class and pass name of handled tag. Each tag
+handler class must be registered by call of :func:`GPS.register_tag_handler`.
+
+Custom tag handling class must implement :func:`to_markup` function. Inside
+this function it can use provided `writer` to generated documentation. Most
+methods of :class:`GPS.MarkupGenerator` class has 'start'/'end' pairs. These
+functions generates elements that can be nested. Custom tag handling class is
+responsible to call 'end' function for each 'start' function.
+
+Here is example of custom tag handler that define and register handler for
+'hello' tag and outputs 'Hello, <parameter>!' text to generated documentation.
+
+    class HelloTagHandler(GPS.InlineTagHandler):
+        def __init__(self):
+            super(MyTagHandler, self).__init__('hello')
+
+        def has_parameter(self):
+            return True
+
+        def to_markup(self, writer, parameter):
+            writer.text('Hello, %s!' % parameter)
+
+    GPS.register_tag_handler(HelloTagHandler())
+
+Python API
+----------
+
+GPS
+===
+
+.. autofunction:: GPS.register_tag_handler
+
+:class:`GPS.InlineTagHandler`
+=============================
+
+.. autoclass:: GPS.InlineTagHandler
+
+    .. automethod:: GPS.InlineTagHandler.__init__
+
+    .. automethod:: GPS.InlineTagHandler.has_parameter
+
+    .. automethod:: GPS.InlineTagHandler.to_markup
+
+:class:`GPS.MarkupGenerator`
+============================
+
+.. autoclass:: GPS.MarkupGenerator
+
+    .. automethod:: GPS.MarkupGenerator.start_paragraph
+
+    .. automethod:: GPS.MarkupGenerator.end_paragraph
+
+    .. automethod:: GPS.MarkupGenerator.start_list
+
+    .. automethod:: GPS.MarkupGenerator.end_list
+
+    .. automethod:: GPS.MarkupGenerator.start_list_item
+
+    .. automethod:: GPS.MarkupGenerator.end_list_item
+
+    .. automethod:: GPS.MarkupGenerator.text
+
+    .. automethod:: GPS.MarkupGenerator.html
+
+    .. automethod:: GPS.MarkupGenerator.generate_after_paragraph
+
+    .. automethod:: GPS.MarkupGenerator.generate_inline
+
