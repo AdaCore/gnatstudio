@@ -600,23 +600,28 @@ documentation.
 Handling of custom tags
 ***********************
 
-It is possible to extend set of supported tag by providing custom tag handlers
-written in Python. To run GNATdoc with your custom tag handler use
---load=python:mytags.py switch in command line.
+It is possible to extend the set of supported tags by providing custom tag
+handlers written in Python. Assuming you have written these in a file called
+`mytags.py`, you should add the switch `--load=python:mytags.py` to the
+gnatdoc command line.
 
-You need to declare Python class to handle each custom tags. This class should
-be inherited from :class:`GPS.InlineTagHandler` class. Its constructor must
-call constructor of inherited class and pass name of handled tag. Each tag
-handler class must be registered by call of :func:`GPS.register_tag_handler`.
+In your file, you will need to declare a Python class for each
+custom tag you wish to define. This class should be inherited from the
+:class:`GPS.InlineTagHandler` class. Its constructor must call the constructor
+of the inherited class and pass it the name of the tag you want
+to handle. Each tag handler class must be registered by calling
+:func:`GPS.register_tag_handler`.
 
-Custom tag handling class must implement :func:`to_markup` function. Inside
-this function it can use provided `writer` to generated documentation. Most
-methods of :class:`GPS.MarkupGenerator` class has 'start'/'end' pairs. These
-functions generates elements that can be nested. Custom tag handling class is
-responsible to call 'end' function for each 'start' function.
+Custom tag handling class must implement the function :func:`to_markup`. Inside
+this function, you should use the provided `writer` to generate documentation.
+Most methods of the class :class:`GPS.MarkupGenerator` have 'start'/'end' pairs.
+These functions generate elements that can be nested. The class for custom tag
+handling is responsible for generating one call to the 'end' function for each
+call 'start' function.
 
-Here is example of custom tag handler that define and register handler for
-'hello' tag and outputs 'Hello, <parameter>!' text to generated documentation.
+Here is an example of a custom tag handler that defines and registers a
+handler for the 'hello' tag, and outputs the text 'Hello, <parameter>!'
+to the generated documentation::
 
     class HelloTagHandler(GPS.InlineTagHandler):
         def __init__(self):

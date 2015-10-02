@@ -261,9 +261,14 @@ GtkNotebook.noTabs {
 .scrollbar.slider {
    background-color: @scrollbar_slider_color;
 }
+
 /**********************
  * Toolbars
  **********************/
+
+.toolbar GtkButton {
+  padding: 4px;
+}
 
 /* Let's condense things in the local toolbars of the views */
 .gps-local-toolbar {
