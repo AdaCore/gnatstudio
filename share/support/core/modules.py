@@ -74,10 +74,10 @@ class Module_Metaclass(type):
             if Module_Metaclass.gps_started:
                 inst = new_class()
                 Module_Metaclass.modules_instances.append(inst)
-                GLib.idle_add(lambda: inst()._setup())
+                GLib.idle_add(lambda: inst._setup())
 
                 # Simulate running the gps_started hook
-                pref = getattr(self, "gps_started", None)
+                pref = getattr(inst, "gps_started", None)
                 if pref:
                     pref()
 

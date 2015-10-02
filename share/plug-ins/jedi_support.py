@@ -56,8 +56,8 @@ class PythonResolver(CompletionResolver):
 
         # check if the current char can belong to an identifier
         current_char = loc.forward_char(-1).get_char()
-        if not (current_char
-                and (current_char in ['_', '.'] or current_char.isalnum())):
+        if not (current_char and
+                (current_char in ['_', '.'] or current_char.isalnum())):
             return []
 
         sys_path_backup = list(sys.path)
@@ -82,7 +82,7 @@ class PythonResolver(CompletionResolver):
                 documentation=i.docstring(),
                 language_category=TYPE_LABELS.get(
                     i.type, completion.CAT_UNKNOWN))
-                for i in script.complete()
+                for i in script.completions()
                 if i.name.startswith(self.__prefix)),
                 key=lambda d: d.name)
         except:
