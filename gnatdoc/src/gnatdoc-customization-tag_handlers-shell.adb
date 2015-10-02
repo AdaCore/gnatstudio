@@ -256,7 +256,7 @@ package body GNATdoc.Customization.Tag_Handlers.Shell is
 
    begin
       if Command = Text_Method then
-         Writer.Text (Text  => Nth_Arg (Data, 2));
+         Writer.Text (Text => Nth_Arg (Data, 2));
 
       elsif Command = HTML_Method then
          Writer.HTML (Nth_Arg (Data, 2));
