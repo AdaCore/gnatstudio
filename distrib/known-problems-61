@@ -25,6 +25,23 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-OA05-029 GPS: makefile.py fails to parse double colons
+
+  Problem:    If you are using a Makefile which includes the GNU syntax
+              "::" to force execution of targets, GPS does not parse
+              these correctly and as a result you cannot use that target
+              from GPS.
+
+  Status:     This was fixed in 6.2 on 2015-10-05
+
+  Workaround: use the traditional Makefile construct:
+                 target: force
+                     do something
+                 force:
+              instead of
+                 target::
+                     do something
+
 KP-61-O923-032 GPS: tooltips could be drawn outside of the screen
 
   Problem:    When the mouse is over an entity close to the screen's right

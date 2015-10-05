@@ -186,9 +186,24 @@ class Makefile (Builder):
         self.pkg_name = "make"
         self.build_file_attr = "makefile"
         self.default_build_files = ["Makefile"]
-        self.target_matcher = re.compile(
-            "^([^#.=%\t][^#=\(\)%]*?):[^#=:]*(#(.+))?$")
-        self.include_matcher = re.compile("^include (.*)$")
+
+        # The list of targets at the beginning of a line. Ignore
+        # special characters like #.= that are used by GNU make.
+        # The list of targets is stored in the 'target' capturing group.
+        targets = '^(?P<targets>[^#.=%\t][^#=\(\)%]*?)'
+
+        # The dependencies for these targets
+        deps = '[^#=:]*'
+
+        # Extra comments at the ened of the line. Adding #IGNORE is used
+        # to hide this target from GPS.
+        comments = '(?:#(?P<comments>.+))?$'
+
+        # It is valid for a target to be followed by two colons, in GNU
+        # make at least.
+        self.target_matcher = re.compile(targets + "::?" + deps + comments)
+
+        self.include_matcher = re.compile("^include (?P<file>.*)$")
 
         self.current_dir = None
         # The directory of the toplevel makefile. All include statements
@@ -215,13 +230,13 @@ class Makefile (Builder):
         for line in f:
             matches = self.target_matcher.match(line)
             if matches:
-                if matches.group(3):
-                    if matches.group(3).strip() != "IGNORE":
-                        target_name = matches.group(1)
+                if matches.group('comments'):
+                    if matches.group('comments').strip() != "IGNORE":
+                        target_name = matches.group('targets')
                         targets.add((target_name, target_name, ''))
                 else:
                     # Handle multiple targets on same line
-                    for target in matches.group(1).split():
+                    for target in matches.group('targets').split():
                         targets.add((target, target, ''))
 
             else:
@@ -229,7 +244,8 @@ class Makefile (Builder):
                 if matches:
                     # filenames are relative to the directory of the
                     # current Makefile
-                    targets.update(self.__read_targets(matches.group(1)))
+                    targets.update(
+                        self.__read_targets(matches.group('file')))
 
         f.close()
         return targets
