@@ -659,6 +659,52 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
        <persistent-history>False</persistent-history>
     </target-model>
 
+    <target-model name="gnatprove-basic-prove">
+       <description>Target model for GNATprove Basic Prove commands
+       </description>
+       <iconname>gps-build-all-symbolic</iconname>
+       <switches command="%(tool_name)s">
+         <title column="1" line="1" >General</title>
+         <check
+           label="Multiprocessing" switch="-j0" column="1"
+           tip="Use as many cores as available on the machine"
+         />
+         <check label="Do not report warnings" switch="--warnings=off"
+                column="1" tip="Do not issue warnings at all"
+         />
+         <check label="Report checks proved" switch="--report=all" column="1"
+                tip="Report the status of all checks, including those proved"
+         />
+         <title column="2" line="1" >Prover</title>
+<combo
+label="Proof level"
+switch="--level"
+noswitch="none"
+separator="="
+column="2"
+tip="Set the proof level from 0 = faster to 4 = more powerful" >
+    <combo-entry label="none" value="none"
+                 tip="No level set"/>
+    <combo-entry label="0 (fast, one prover)" value="0"
+                 tip="Equivalent to --prover=cvc4 --proof=per_check
+ --steps=100 --timeout=1"/>
+    <combo-entry label="1 (fast, all provers)" value="1"
+                 tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
+ --steps=100 --timeout=1"/>
+    <combo-entry label="2 (all provers)" value="2"
+                 tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
+ --steps=1000 --timeout=10"/>
+    <combo-entry label="3 (slower, all provers)" value="3"
+                 tip="Equivalent to --prover=cvc4,z3,altergo
+ --proof=progressive --steps=1000 --timeout=10"/>
+    <combo-entry label="4 (slowest, all provers)" value="4"
+                 tip="Equivalent to --prover=cvc4,z3,altergo
+ --proof=progressive --steps=10000 --timeout=60"/>
+</combo>
+       </switches>
+       <persistent-history>False</persistent-history>
+    </target-model>
+
     <target-model name="gnatprove-prove">
        <description>Target model for GNATprove Prove commands</description>
        <command-line>
@@ -693,31 +739,6 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
                 tip="Report the status of all checks, including those proved"
          />
          <title column="2" line="1" >Prover</title>
-<combo
-label="Proof level"
-switch="--level"
-noswitch="none"
-separator="="
-column="2"
-tip="Set the proof level from 0 = faster to 4 = more powerful" >
-    <combo-entry label="none" value="none"
-                 tip="No level set"/>
-    <combo-entry label="0 (fast, one prover)" value="0"
-                 tip="Equivalent to --prover=cvc4 --proof=per_check
- --steps=100 --timeout=1"/>
-    <combo-entry label="1 (fast, all provers)" value="1"
-                 tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
- --steps=100 --timeout=1"/>
-    <combo-entry label="2 (all provers)" value="2"
-                 tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
- --steps=1000 --timeout=10"/>
-    <combo-entry label="3 (slower, all provers)" value="3"
-                 tip="Equivalent to --prover=cvc4,z3,altergo
- --proof=progressive --steps=1000 --timeout=10"/>
-    <combo-entry label="4 (slowest, all provers)" value="4"
-                 tip="Equivalent to --prover=cvc4,z3,altergo
- --proof=progressive --steps=10000 --timeout=60"/>
-</combo>
          <combo
            label="Proof strategy"
            switch="--proof" noswitch="per_check"
@@ -842,6 +863,29 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        </output-parsers>
     </target>
 
+    <target model="gnatprove-basic-prove" name="Basic Prove All"
+     category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
     <target model="gnatprove-prove" name="Prove All" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <iconname>gps-build-all-symbolic</iconname>
@@ -852,6 +896,30 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-basic-prove" name="Basic Prove All Sources"
+            category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>-U</arg>
        </command-line>
        <output-parsers>
          output_chopper
@@ -888,6 +956,31 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        </output-parsers>
     </target>
 
+    <target model="gnatprove-basic-prove" name="Basic Prove File"
+     category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>-u</arg>
+          <arg>%fp</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
     <target model="gnatprove-prove" name="Prove File" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <iconname>gps-build-all-symbolic</iconname>
@@ -900,6 +993,29 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>--ide-progress-bar</arg>
           <arg>-u</arg>
           <arg>%fp</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-basic-prove" name="Basic Prove Subprogram"
+            category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
          output_chopper
@@ -935,6 +1051,30 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        </output-parsers>
     </target>
 
+    <target model="gnatprove-basic-prove" name="Basic Prove Line"
+     category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+          <arg>--limit-line=%f:%l</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
     <target model="gnatprove-prove" name="Prove Line" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <iconname>gps-build-all-symbolic</iconname>
@@ -946,6 +1086,29 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
           <arg>--limit-line=%f:%l</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
+    <target model="gnatprove-basic-prove" name="Basic Prove Line Location"
+            category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
          output_chopper
@@ -1005,6 +1168,29 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
        </command-line>
     </target>
 
+    <target model="gnatprove-basic-prove" name="Basic Prove Check"
+     category="GNATprove">
+       <in-menu>FALSE</in-menu>
+       <iconname>gps-build-all-symbolic</iconname>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+       <read-only>TRUE</read-only>
+       <command-line>
+          <arg>gnatprove</arg>
+          <arg>-P%PP</arg>
+          <arg>%X</arg>
+          <arg>--ide-progress-bar</arg>
+       </command-line>
+       <output-parsers>
+         output_chopper
+         utf_converter
+         progress_parser
+         gnatprove_parser
+         console_writer
+         location_parser
+         end_of_build
+       </output-parsers>
+    </target>
+
     <target model="gnatprove-prove" name="Prove Check" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <iconname>gps-build-all-symbolic</iconname>
@@ -1036,20 +1222,87 @@ obj_subdir_name = toolname
 report_file_name = toolname + '.out'
 prefix = 'SPARK'
 menu_prefix = '/' + prefix
+
 examine_all = 'Examine All'
 examine_root_project = 'Examine All Sources'
 examine_file = 'Examine Single File'
 examine_subp = 'Examine Subprogram'
-prove_all = 'Prove All'
-prove_root_project = 'Prove All Sources'
-prove_file = 'Prove File'
-prove_subp = 'Prove Subprogram'
-prove_line = 'Prove Line'
+
+# proof targets when user profile is 'Basic'
+
+basic_prove_all = 'Basic Prove All'
+basic_prove_root_project = 'Basic Prove All Sources'
+basic_prove_file = 'Basic Prove File'
+basic_prove_subp = 'Basic Prove Subprogram'
+basic_prove_line = 'Basic Prove Line'
+basic_prove_line_loc = 'Basic Prove Line Location'
+basic_prove_check = 'Basic Prove Check'
+
+# proof targets when user profile is 'Advanced'
+
+advanced_prove_all = 'Prove All'
+advanced_prove_root_project = 'Prove All Sources'
+advanced_prove_file = 'Prove File'
+advanced_prove_subp = 'Prove Subprogram'
+advanced_prove_line = 'Prove Line'
+advanced_prove_line_loc = 'Prove Line Location'
+advanced_prove_check = 'Prove Check'
+
+
+# getters for proof target depending on user profile
+
+
+def prove_all():
+    if GPS.Preference(User_Profile_Pref_Name).get() == 'Basic':
+        return basic_prove_all
+    elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
+        return advanced_prove_all
+
+
+def prove_root_project():
+    if GPS.Preference(User_Profile_Pref_Name).get() == 'Basic':
+        return basic_prove_root_project
+    elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
+        return advanced_prove_root_project
+
+
+def prove_file():
+    if GPS.Preference(User_Profile_Pref_Name).get() == 'Basic':
+        return basic_prove_file
+    elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
+        return advanced_prove_file
+
+
+def prove_subp():
+    if GPS.Preference(User_Profile_Pref_Name).get() == 'Basic':
+        return basic_prove_subp
+    elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
+        return advanced_prove_subp
+
+
+def prove_line():
+    if GPS.Preference(User_Profile_Pref_Name).get() == 'Basic':
+        return basic_prove_line
+    elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
+        return advanced_prove_line
+
+
 # used to launch Prove Line from Location View
-prove_line_loc = 'Prove Line Location'
+def prove_line_loc():
+    if GPS.Preference(User_Profile_Pref_Name).get() == 'Basic':
+        return basic_prove_line_loc
+    elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
+        return advanced_prove_line_loc
+
+
 # in case of manual provers, prove_check is
 # the only one allowed to open editors
-prove_check = 'Prove Check'
+def prove_check():
+    if GPS.Preference(User_Profile_Pref_Name).get() == 'Basic':
+        return basic_prove_check
+    elif GPS.Preference(User_Profile_Pref_Name).get() == 'Advanced':
+        return advanced_prove_check
+
 show_report = 'Show Report'
 clean_up = 'Clean Proofs'
 check_msg_prefix = 'medium: '
@@ -1068,6 +1321,17 @@ GPS.Preference(Color_Pref_Name).create(
     'color used to highlight trace lines.' +
     ' You must restart GPS to take changes into account.',
     Default_Trace_Color)
+
+User_Profile_Pref_Name = 'Plugins/gnatprove/user_profile'
+
+GPS.Preference(User_Profile_Pref_Name).create(
+    'User profile',
+    'enum',
+    'Basic user profile for simple proof panel,' +
+    ' advanced user profile for more complex proof panel.',
+    0,
+    'Basic',
+    'Advanced')
 
 
 def get_example_root():
@@ -1175,8 +1439,8 @@ def check_proof_after_close(proc, ex_st, outp):
         try:
             vc_kind = get_vc_kind(proc._proc_msg)
             llarg = limit_line_option(proc._proc_msg, vc_kind)
-            GPS.BuildTarget(prove_check).execute(extra_args=[llarg],
-                                                 synchronous=False)
+            GPS.BuildTarget(prove_check()).execute(extra_args=[llarg],
+                                                   synchronous=False)
         except TypeError:
             pass
 
@@ -1422,7 +1686,7 @@ class GNATprove_Parser(tool_output.OutputParser):
         editor_dialog = "The condition couldn't be verified\n" \
                         + "Would you like to edit the VC file?\n"
 
-        if command.name() == prove_check and 'vc_file' in extra \
+        if command.name() == prove_check() and 'vc_file' in extra \
            and GPS.MDI.yes_no_dialog(editor_dialog):
             if 'editor_cmd' in extra:
                 cmd = extra['editor_cmd']
@@ -1521,15 +1785,15 @@ def on_examine_file(self):
 
 
 def on_prove_all(self):
-    generic_on_analyze(prove_all)
+    generic_on_analyze(prove_all())
 
 
 def on_prove_root_project(self):
-    generic_on_analyze(prove_root_project)
+    generic_on_analyze(prove_root_project())
 
 
 def on_prove_file(self):
-    generic_on_analyze(prove_file)
+    generic_on_analyze(prove_file())
 
 
 def on_prove_line(self):
@@ -1543,9 +1807,9 @@ def on_prove_line(self):
                 + os.path.basename(self.message().get_file().name()) \
                 + ":" + str(self.message().get_line())
         args.append(llarg)
-        target = prove_line_loc
+        target = prove_line_loc()
     else:
-        target = prove_line
+        target = prove_line()
     generic_on_analyze(target, args=args)
 
 
@@ -1665,7 +1929,7 @@ def on_prove_subp(self):
     """execute the "prove subprogram" action on the the given subprogram entity
     """
 
-    generic_action_on_subp(self, prove_subp)
+    generic_action_on_subp(self, prove_subp())
 
 
 class GNATProve_Plugin:
@@ -1820,8 +2084,8 @@ def on_prove_check(context):
     msg = context._loc_msg
     vc_kind = get_vc_kind(msg)
     llarg = limit_line_option(msg, vc_kind)
-    GPS.BuildTarget(prove_check).execute(extra_args=[llarg],
-                                         synchronous=False)
+    GPS.BuildTarget(prove_check()).execute(extra_args=[llarg],
+                                           synchronous=False)
 
 # Check for GNAT toolchain: gnatprove
 
