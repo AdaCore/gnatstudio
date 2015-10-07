@@ -174,10 +174,26 @@ package body GNATdoc.Customization.Markup_Generators is
    -- Text --
    ----------
 
-   procedure Text (Self : not null access Markup_Generator; Text : String) is
+   procedure Text
+     (Self       : not null access Markup_Generator;
+      Text       : String;
+      Attributes : GNATdoc.Markup_Streams.Name_Value_Maps.Map) is
    begin
+      if not Attributes.Is_Empty then
+         Self.Streams (Self.Current).Append
+           ((Kind       => Start_Tag,
+             Name       => To_Unbounded_String ("span"),
+             Attributes => Attributes));
+      end if;
+
       Self.Streams (Self.Current).Append
         ((Markup_Streams.Text, To_Unbounded_String (Text)));
+
+      if not Attributes.Is_Empty then
+         Self.Streams (Self.Current).Append
+           ((Kind => End_Tag,
+             Name => To_Unbounded_String ("span")));
+      end if;
    end Text;
 
 end GNATdoc.Customization.Markup_Generators;

@@ -59,7 +59,10 @@ package GNATdoc.Customization.Markup_Generators is
    --  Switch generator to process events of stream that will be inserted
    --  inside current element.
 
-   procedure Text (Self : not null access Markup_Generator; Text : String);
+   procedure Text
+     (Self       : not null access Markup_Generator;
+      Text       : String;
+      Attributes : GNATdoc.Markup_Streams.Name_Value_Maps.Map);
    --  Generate text event.
 
    procedure HTML (Self : not null access Markup_Generator; HTML : String);

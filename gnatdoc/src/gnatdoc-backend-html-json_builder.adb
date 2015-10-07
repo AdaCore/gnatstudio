@@ -51,8 +51,13 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
       return GNATCOLL.JSON.JSON_Array
    is
       type State_Type is record
-         Object   : GNATCOLL.JSON.JSON_Value;
-         Children : GNATCOLL.JSON.JSON_Array;
+         Object          : GNATCOLL.JSON.JSON_Value;
+         Children        : GNATCOLL.JSON.JSON_Array;
+         Span_Mode       : Boolean := False;
+         Span_Attributes : Markup_Streams.Name_Value_Maps.Map;
+         --  Span mode means that start of 'span' element tag has been
+         --  processed and corresponding attributes has been stored in
+         --  Span_Attributes member.
       end record;
 
       package State_Vectors is
@@ -73,7 +78,11 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
          case Event.Kind is
             when GNATdoc.Markup_Streams.Start_Tag =>
                State_Stack.Append (State);
-               State := (Create_Object, Empty_Array);
+               State :=
+                 (Object          => Create_Object,
+                  Children        => Empty_Array,
+                  Span_Mode       => False,
+                  Span_Attributes => <>);
 
                if Event.Name = "p" then
                   State.Object.Set_Field ("kind", "paragraph");
@@ -113,6 +122,13 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
                   State.Object.Set_Field
                     ("src", "../images/" & String (File.Base_Name));
 
+               elsif Event.Name = "span" then
+                  --  Unwind stack
+                  State := State_Stack.Last_Element;
+                  State_Stack.Delete_Last;
+                  State.Span_Mode := True;
+                  State.Span_Attributes := Event.Attributes;
+
                else
                   State.Object.Set_Field ("kind", To_String (Event.Name));
 
@@ -122,11 +138,17 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
                end if;
 
             when GNATdoc.Markup_Streams.End_Tag =>
-               State.Object.Set_Field ("children", State.Children);
-               Object := State.Object;
-               State := State_Stack.Last_Element;
-               State_Stack.Delete_Last;
-               Append (State.Children, Object);
+               if not State.Span_Mode then
+                  State.Object.Set_Field ("children", State.Children);
+                  Object := State.Object;
+                  State := State_Stack.Last_Element;
+                  State_Stack.Delete_Last;
+                  Append (State.Children, Object);
+
+               else
+                  State.Span_Mode := False;
+                  State.Span_Attributes.Clear;
+               end if;
 
             when GNATdoc.Markup_Streams.Text =>
                if String'(State.Object.Get ("kind")) = "code" then
@@ -146,6 +168,12 @@ package body GNATdoc.Backend.HTML.JSON_Builder is
                   Object := Create_Object;
                   Object.Set_Field ("kind", "span");
                   Object.Set_Field ("text", To_String (Event.Text) & ASCII.LF);
+                  Set_CSS_Class (Object, State.Span_Attributes);
+
+                  if State.Span_Attributes.Contains ("href") then
+                     Object.Set_Field
+                       ("href", State.Span_Attributes.Element ("href"));
+                  end if;
                end if;
 
                Append (State.Children, Object);

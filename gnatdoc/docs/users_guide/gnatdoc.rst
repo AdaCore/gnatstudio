@@ -635,6 +635,19 @@ to the generated documentation::
 
     GPS.register_tag_handler(HelloTagHandler())
 
+HTML backend specific information
+---------------------------------
+
+HTML backend allows to specify CSS class to be applied to generated elements.
+All functions of :class:`GPS.MarkupGenerator` that have 'attributes' parameters
+use value of 'class' key to set CSS class name of generated element. See
+`HTML output customization`_ for more information how to provide your own CSS
+files and to modify default templates to link CSS files with generated
+documentation.
+
+`text` method of :class:`GPS.MarkupGenerator` accepts 'href' key to generate
+cross reference to URL specified by its value.
+
 Python API
 ----------
 

@@ -157,7 +157,14 @@ function buildText(root, data) {
 
                if (data[index].href !== undefined) {
                    var a = document.createElement('a');
-                   a.href = '../' + data[index].href;
+                   var isAbsoluteURL = new RegExp('^(?:[a-z]+:)?//', 'i');
+
+                   //  When URL is absolute use it as is, otherwise apply
+                   //  correction to point to expected location.
+                   a.href =
+                     isAbsoluteURL.test(data[index].href) ?
+                                          data[index].href :
+                                          '../' + data[index].href;
                    a.appendChild(document.createTextNode(data[index].text));
                    element.appendChild(a);
 

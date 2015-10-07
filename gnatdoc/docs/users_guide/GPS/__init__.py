@@ -105,11 +105,13 @@ class MarkupGenerator:
         """
         pass  # implemented in Ada
 
-    def text(text):
+    def text(text, attributes):
         """
         Outputs test to generated documentation.
 
         :param string text: Text to be output in generated documentation.
+        :param dict attributes: Additional attributes to be passed to
+          backend.
         """
         pass  # implemented in Ada
 
