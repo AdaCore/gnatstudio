@@ -34,11 +34,12 @@ package GNATdoc is
    --  Name of the package and attribute supported by GNATdoc to ignore
    --  subprojects
 
-   Pkg_Name                 : constant String := "documentation";
-   Image_Dir_Name           : constant String := "image_dir";
-   Doc_Pattern_Name         : constant String := "doc_pattern";
-   Ignored_Subprojects_Name : constant String := "ignored_subprojects";
-   HTML_Custom_Dir_Name     : constant String := "html_custom_dir";
+   Pkg_Name                    : constant String := "documentation";
+   Image_Dir_Name              : constant String := "image_dir";
+   Doc_Pattern_Name            : constant String := "doc_pattern";
+   Custom_Tags_Definition_Name : constant String := "custom_tags_definition";
+   Ignored_Subprojects_Name    : constant String := "ignored_subprojects";
+   HTML_Custom_Dir_Name        : constant String := "html_custom_dir";
 
    type Report_Errors_Kind is (None, Errors_Only, Errors_And_Warnings);
 

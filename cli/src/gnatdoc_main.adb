@@ -342,9 +342,8 @@ begin
    Define_Switch
      (Cmdline,
       Output      => Script_Name'Access,
-      Switch      => "-l:",
-      Long_Switch => "--load=",
-      Help        => "Execute an external file written in the language lang");
+      Switch      => "--custom-tags-definition=",
+      Help        => "Load custom tag definition from the file");
    Define_Switch
      (Cmdline,
       Output      => Follow_Symlinks'Access,
@@ -496,6 +495,23 @@ begin
       end if;
    end;
 
+   --  Register the package and attribute that can be used in project files to
+   --  specify file for custom tags definition.
+
+   declare
+      Result : constant String :=
+        GNATCOLL.Projects.Register_New_Attribute
+          (Name => Custom_Tags_Definition_Name,
+           Pkg  => Pkg_Name);
+
+   begin
+      --  Log the reported error (if any)
+
+      if Result /= "" then
+         Trace (DOCGEN_V31, Result);
+      end if;
+   end;
+
    --  Support symbolic links
    Kernel.Registry.Environment.Set_Trusted_Mode (not Follow_Symlinks);
 
@@ -528,11 +544,30 @@ begin
    GNATdoc.Customization.Tag_Handlers.Shell.Register_Commands (Kernel);
 
    --  Load script
+
    declare
-      Script : Scripting_Language;
+      Project : constant GNATCOLL.Projects.Project_Type :=
+        Kernel.Registry.Tree.Root_Project;
+      Value   : constant String :=
+        Project.Attribute_Value
+          (Attribute_Pkg_String'
+             (Build (Pkg_Name, Custom_Tags_Definition_Name)));
+      Script  : Scripting_Language;
       pragma Unreferenced (Script);
+
    begin
-      Parse_And_Execute_Script (Kernel, Script_Name.all, Script);
+      --  Command line switch has precedence other project attribute
+
+      if (Script_Name = null or else Script_Name.all = "")
+        and then Value /= ""
+      then
+         Script_Name := new String'(Value);
+      end if;
+
+      if Script_Name /= null and then Script_Name.all /= "" then
+         Parse_And_Execute_Script
+           (Kernel, "python:" & Script_Name.all, Script);
+      end if;
    end;
 
    --  Run GNATdoc

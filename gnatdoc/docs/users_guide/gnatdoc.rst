@@ -37,7 +37,7 @@ GNAT for Ada files). This means that you should ensure that cross-reference
 information has been generated before generating the documentation. For
 this purpose, before launching the tool compile your project.
 
-GNATdoc requires your project hierarchy to be described via GNAT project 
+GNATdoc requires your project hierarchy to be described via GNAT project
 files (.gpr).
 
 To launch GNATdoc, execute::
@@ -75,6 +75,7 @@ switch --help::
   -w                           Enable warnings for missing documentation
   --enable-build               Rebuild the project before processing it
   --output=ARG                 Format of generated documentation
+  --custom-tags-definition=ARG Load custom tag definitions from the given file
   --symlinks                   Take additional time to resolve symbolic links
 
 *Project (-P)*
@@ -100,7 +101,7 @@ switch --help::
   expression are used to generate the documentation.
 
   For example, the regular expression "^-<" can be used to select the
-  documentation of the following subprogram and skip the 
+  documentation of the following subprogram and skip the
   internal comment::
 
    function Set_Alarm
@@ -169,6 +170,12 @@ switch --help::
 *Output format (--output)*
 
   At current stage GNATdoc generates HTML files (*--output=html*).
+
+*Custom tags definition (--custom-tags-definition)*
+
+  Load custom tag definitions from the given file. This switch overrides
+  the value of the attribute Custom_Tag_Definition in the Documentation
+  package of the project file.
 
 *Take additional time to resolve symbolic links (--symlinks)*
 
@@ -572,6 +579,23 @@ If this attribute is not specified, all comments are considered to be doc.
 This has the same semantics as the *-R* command-line switch. The command-line
 switch has precedence over the project attribute.
 
+Custom tags definition
+----------------------
+
+Set of tags processed by GNATdoc can be extended by providing custom tags
+handlers. String attribute Custom_Tags_Definition allows to specify Python file
+that contains implementation of custom tags handlers::
+
+   package Documentation is
+      for Custom_Tags_Definition use "my_tags.py";
+      --  GNATdoc loads my_tags.py file on statup to process custom tags
+   end Documentation;
+
+If this attribute is not specified, there is no custom tags are processed.
+
+It is possible to use the *--custom-tags-definition* command-line switch to
+provide file name of custom tags handlers file.
+
 HTML output customization
 -------------------------
 
@@ -602,8 +626,8 @@ Handling of custom tags
 
 It is possible to extend the set of supported tags by providing custom tag
 handlers written in Python. Assuming you have written these in a file called
-`mytags.py`, you should add the switch `--load=python:mytags.py` to the
-gnatdoc command line.
+`mytags.py`, you should add the switch *--custom-tags-definition=mytags.py* to
+the gnatdoc command line.
 
 In your file, you will need to declare a Python class for each
 custom tag you wish to define. This class should be inherited from the
