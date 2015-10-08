@@ -1313,16 +1313,7 @@ Ce_Spec_Lines_Name = "Gnatprove_Ce_Special_Lines"
 Ce_Highlighting = "Gnatprove_Ce_Highlighting"
 Ce_Highlighting_Color = "#dddddd"  # light grey
 
-Color_Pref_Name = 'Plugins/gnatprove/color_trace'
-
-GPS.Preference(Color_Pref_Name).create(
-    'Highlight color for trace',
-    'color',
-    'color used to highlight trace lines.' +
-    ' You must restart GPS to take changes into account.',
-    Default_Trace_Color)
-
-User_Profile_Pref_Name = 'Plugins/gnatprove/user_profile'
+User_Profile_Pref_Name = 'SPARK/user_profile'
 
 GPS.Preference(User_Profile_Pref_Name).create(
     'User profile',
@@ -1332,6 +1323,15 @@ GPS.Preference(User_Profile_Pref_Name).create(
     0,
     'Basic',
     'Advanced')
+
+Color_Pref_Name = 'SPARK/color_trace'
+
+GPS.Preference(Color_Pref_Name).create(
+    'Highlight color for trace',
+    'color',
+    'color used to highlight trace lines.' +
+    ' You must restart GPS to take changes into account.',
+    Default_Trace_Color)
 
 
 def get_example_root():
