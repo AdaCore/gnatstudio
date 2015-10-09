@@ -59,13 +59,15 @@ package Default_Preferences.Enums is
         (Pref    : access Preference_Record;
          Manager : access Preferences_Manager_Record'Class;
          Value   : String);
+      overriding procedure Update_On_Pref_Changed
+        (Pref   : access Preference_Record;
+         Widget : access GObject_Record'Class);
    end Generics;
 
 private
    type Choice_Preference_Record is new Enum_Preference_Record with record
       Choices : GNAT.Strings.String_List_Access;
    end record;
-
    overriding function Edit
      (Pref               : access Choice_Preference_Record;
       Manager            : access Preferences_Manager_Record'Class)
@@ -77,5 +79,8 @@ private
       Manager : access Preferences_Manager_Record'Class;
       Value   : String);
    overriding procedure Free (Pref : in out Choice_Preference_Record);
+   overriding procedure Update_On_Pref_Changed
+     (Pref   : access Choice_Preference_Record;
+      Widget : access GObject_Record'Class);
 
 end Default_Preferences.Enums;

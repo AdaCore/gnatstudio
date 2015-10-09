@@ -25,15 +25,22 @@
 
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
+
 with GNAT.Strings;        use GNAT.Strings;
 
 with GNATCOLL.VFS;        use GNATCOLL.VFS;
 
 with Gdk.RGBA;            use Gdk.RGBA;
 with Glib;                use Glib;
-with Glib.Object;
+with Glib.Object;         use Glib.Object;
+
+with Gtk.Box;
+with Gtk.Color_Button;
+with Gtk.Combo_Box_Text;
+with Gtk.GEntry;
 with Gtk.Handlers;
 with Gtk.Widget;
+
 with Pango.Font;          use Pango.Font;
 
 package Default_Preferences is
@@ -53,13 +60,26 @@ package Default_Preferences is
    type Preference_Record is abstract tagged private;
    type Preference is access all Preference_Record'Class;
 
-   procedure On_Pref_Changed
+   procedure Set_GObject_To_Update
+     (Pref   : not null access Preference_Record;
+      Obj    : not null access GObject_Record'Class);
+   --  Add/Update the key association in the Preferemces_GObjects_Map
+   --  between the preference's name and the GObject which needs
+   --  to be updated when preferences changed.
+
+   function Get_GObject_To_Update
+     (Pref : not null access Preference_Record) return GObject;
+   --  Return the GObject associated with the preference's name in the
+   --  Preferences_GObject_Map. This function is used to retrieve the GObject
+   --  we want to update when preferences changed.
+
+   procedure Notify_Pref_Changed
      (Self : not null access Preferences_Manager_Record;
       Pref : not null access Preference_Record'Class) is null;
    --  Called when a preference is changed.
-   --  If the Preference dialog is displayed, emits the preferences_changed
-   --  signal to invite all widgets to refresh themselves. This is only useful
-   --  when writing your own type of preference and overriding Set_Pref.
+   --  If the Preference dialog is displayed, runs the
+   --  Preferences_Changed_Hook. This is only useful when writing
+   --  your own type of preference and overriding Set_Pref.
 
    procedure Set_Is_Loading_Prefs
      (Self : not null access Preferences_Manager_Record'Class;
@@ -75,7 +95,7 @@ package Default_Preferences is
 
    function Is_Frozen
      (Self : not null access Preferences_Manager_Record'Class) return Boolean;
-   --  Return True iff Self is frozen
+   --  Return True if Self is frozen
 
    ----------------
    -- Preference --
@@ -111,13 +131,22 @@ package Default_Preferences is
    --  changed (for instance the user has pressed Reset in the dialog).
    --  Likewise, if the value stored in the widget is changed, it should also
    --  change the value stored in Pref. Such connection to signals will
-   --  generally be done through Preference_Handlers below
+   --  generally be done through Preference_Handlers below.
 
    function Editor_Needs_Label
      (Pref : not null access Preference_Record) return Boolean is (True);
    --  Whether a separate label should be displayed for the preference in
    --  the editor. If False is returned, it is assumed that the widget returned
    --  by Edit already shows the label.
+
+   procedure Update_On_Pref_Changed
+     (Pref   : access Preference_Record;
+      Widget : access GObject_Record'Class) is abstract;
+   --  Called when preferences changed. This procedure allows to update
+   --  the GObject associated with the preference's name in the
+   --  Preferences_GObjects_Map.
+   --  Don't forget to insert/update the map when the widget you want to update
+   --  is created (in the Edit function).
 
    type Variant_Enum is (Default, Normal, Italic, Bold, Bold_Italic);
    --  Auxiliary type to list text variants offered in Variant_Preferences
@@ -495,7 +524,10 @@ private
       return Gtk.Widget.Gtk_Widget;
    overriding function Is_Default
      (Self : not null access Integer_Preference_Record) return Boolean
-     is (Self.Default = Self.Int_Value);
+   is (Self.Default = Self.Int_Value);
+   overriding procedure Update_On_Pref_Changed
+     (Pref   : access Integer_Preference_Record;
+      Widget : access GObject_Record'Class);
 
    type Boolean_Preference_Record is new Preference_Record with record
       Bool_Value    : Boolean;
@@ -516,7 +548,10 @@ private
      is (Self.Default = Self.Bool_Value);
    overriding function Editor_Needs_Label
      (Pref : not null access Boolean_Preference_Record) return Boolean
-     is (False);
+   is (False);
+   overriding procedure Update_On_Pref_Changed
+     (Pref   : access Boolean_Preference_Record;
+      Widget : access GObject_Record'Class);
 
    type String_Preference_Record is new Preference_Record with record
       Str_Value     : GNAT.Strings.String_Access;
@@ -534,7 +569,10 @@ private
    overriding procedure Free (Pref : in out String_Preference_Record);
    overriding function Is_Default
      (Self : not null access String_Preference_Record) return Boolean
-     is (Self.Default /= null and then Self.Default.all = Self.Str_Value.all);
+   is (Self.Default /= null and then Self.Default.all = Self.Str_Value.all);
+   overriding procedure Update_On_Pref_Changed
+     (Pref   : access String_Preference_Record;
+      Widget : access GObject_Record'Class);
 
    type Color_Preference_Record is new Preference_Record with record
       Default       : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
@@ -550,12 +588,19 @@ private
       return Gtk.Widget.Gtk_Widget;
    overriding function Is_Default
      (Self : not null access Color_Preference_Record) return Boolean
-     is (Self.Default = Self.Color);
+   is (Self.Default = Self.Color);
+   overriding procedure Update_On_Pref_Changed
+     (Pref   : access Color_Preference_Record;
+      Widget : access GObject_Record'Class);
 
    type Font_Preference_Record is new Preference_Record with record
       Default       : Pango.Font.Pango_Font_Description;
       Descr         : Pango.Font.Pango_Font_Description;
    end record;
+   type My_Font_Box_Record is new Gtk.Box.Gtk_Box_Record with record
+      Ent : Gtk.GEntry.Gtk_Entry;
+   end record;
+   type My_Font_Box is access all My_Font_Box_Record'Class;
    overriding procedure Set_Pref
      (Pref    : access Font_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
@@ -567,7 +612,10 @@ private
    overriding procedure Free (Pref : in out Font_Preference_Record);
    overriding function Is_Default
      (Self : not null access Font_Preference_Record) return Boolean
-     is (Equal (Self.Default, Self.Descr));
+   is (Equal (Self.Default, Self.Descr));
+   overriding procedure Update_On_Pref_Changed
+     (Pref   : access Font_Preference_Record;
+      Widget : access GObject_Record'Class);
 
    type Style_Preference_Record is new Preference_Record with record
       Font_Default  : Pango.Font.Pango_Font_Description;
@@ -579,6 +627,12 @@ private
       Bg_Color      : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
       Bg_Default    : Gdk.RGBA.Gdk_RGBA := Gdk.RGBA.Null_RGBA;
    end record;
+   type My_Style_Box_Record is new Gtk.Box.Gtk_Box_Record with record
+      Font_Box        : My_Font_Box;
+      Fg_Color_Button : Gtk.Color_Button.Gtk_Color_Button;
+      Bg_Color_Button : Gtk.Color_Button.Gtk_Color_Button;
+   end record;
+   type My_Style_Box is access all My_Style_Box_Record'Class;
    overriding procedure Set_Pref
      (Pref    : access Style_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
@@ -593,14 +647,21 @@ private
      is (Equal (Self.Font_Default, Self.Font_Descr)
          and then Self.Fg_Default = Self.Fg_Color
          and then Self.Bg_Default = Self.Bg_Color);
+   overriding procedure Update_On_Pref_Changed
+     (Pref   : access Style_Preference_Record;
+      Widget : access GObject_Record'Class);
 
    type Variant_Preference_Record is new Style_Preference_Record with record
       Base_Font     : Style_Preference;
       Variant       : Variant_Enum;
       Default_Variant : Variant_Enum;
-
       --  never sets the Style_Font and Font_Default fields
    end record;
+   type My_Variant_Box_Record is new Gtk.Box.Gtk_Box_Record with record
+      Style_Box : My_Style_Box;
+      Combo     : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
+   end record;
+   type My_Variant_Box is access all My_Variant_Box_Record'Class;
    overriding procedure Set_Pref
      (Pref    : access Variant_Preference_Record;
       Manager : access Preferences_Manager_Record'Class;
@@ -615,6 +676,9 @@ private
      is (Self.Variant = Self.Default_Variant
          and then Self.Fg_Default = Self.Fg_Color
          and then Self.Bg_Default = Self.Bg_Color);
+   overriding procedure Update_On_Pref_Changed
+     (Pref   : access Variant_Preference_Record;
+      Widget : access GObject_Record'Class);
 
    type Enum_Preference_Record is abstract new Preference_Record with record
       Enum_Value    : Integer;
@@ -628,7 +692,7 @@ private
       Value   : String);
    overriding function Is_Default
      (Self : not null access Enum_Preference_Record) return Boolean
-     is (Self.Enum_Value = Self.Default);
+   is (Self.Enum_Value = Self.Default);
 
    type Theme_Descr_Array is array (Natural range <>) of Theme_Descr;
    type Theme_Descr_Array_Access is access all Theme_Descr_Array;
@@ -648,6 +712,9 @@ private
       Manager : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
    overriding procedure Free (Pref : in out Theme_Preference_Record);
+   overriding procedure Update_On_Pref_Changed
+     (Pref   : access Theme_Preference_Record;
+      Widget : access GObject_Record'Class);
 
    package Preferences_Maps is new Ada.Containers.Doubly_Linked_Lists
      (Preference);

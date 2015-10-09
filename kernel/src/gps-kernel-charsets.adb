@@ -19,7 +19,6 @@ with Interfaces.C.Strings;       use Interfaces.C.Strings;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
 with Glib.Convert;               use Glib.Convert;
-with Glib.Object;                use Glib.Object;
 with Glib.Unicode;               use Glib.Unicode;
 
 with Gtk.Combo_Box;
@@ -83,10 +82,6 @@ package body GPS.Kernel.Charsets is
      (Combo : access GObject_Record'Class; Data : Manager_Preference);
    --  Called when the contents of the Combo has changed, to set the pref
 
-   procedure Update_Charset
-     (Combo : access GObject_Record'Class; Data : Manager_Preference);
-   --  Called when the pref has changed, to set the combo
-
    ---------------------
    -- Charset_Changed --
    ---------------------
@@ -106,18 +101,6 @@ package body GPS.Kernel.Charsets is
 
       Set_Pref (Data.Pref, Data.Manager, Value);
    end Charset_Changed;
-
-   --------------------
-   -- Update_Charset --
-   --------------------
-
-   procedure Update_Charset
-     (Combo : access GObject_Record'Class;
-      Data  : Manager_Preference) is
-   begin
-      Set_Text
-        (Gtk_Entry (Gtk_Combo_Box_Text (Combo).Get_Child), Data.Pref.Get_Pref);
-   end Update_Charset;
 
    --------------------------
    -- Create_Charset_Combo --
@@ -216,11 +199,8 @@ package body GPS.Kernel.Charsets is
          User_Data   => (Preferences_Manager (Manager), Preference (Pref)),
          Slot_Object => Combo,
          After       => True);
-      Preference_Handlers.Object_Connect
-        (Get_Editor (Manager), Signal_Preferences_Changed,
-         Update_Charset'Access,
-         Slot_Object => Combo,
-         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+
+      Set_GObject_To_Update (Pref, GObject (Combo));
 
       return Gtk_Widget (Combo);
    end Edit;
@@ -261,6 +241,19 @@ package body GPS.Kernel.Charsets is
                       & " unicode"),
          Default => "ISO-8859-1");
    end Register_Preferences;
+
+   ----------------------------
+   -- Update_On_Pref_Changed --
+   ----------------------------
+
+   overriding procedure Update_On_Pref_Changed
+     (Pref   : access Charset_Preference_Record;
+      Widget : access GObject_Record'Class) is
+   begin
+      Set_Text
+        (Gtk_Entry
+           (Gtk_Combo_Box_Text (Widget).Get_Child), Pref.Get_Pref);
+   end Update_On_Pref_Changed;
 
    ----------------------
    -- Get_File_Charset --

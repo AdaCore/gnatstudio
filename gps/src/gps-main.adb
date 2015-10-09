@@ -97,6 +97,7 @@ with GPS.Kernel.Messages.Shell;
 with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;            use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
+with GPS.Kernel.Preferences_Views;     use GPS.Kernel.Preferences_Views;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
 with GPS.Kernel.Remote;
 with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
@@ -2122,6 +2123,7 @@ procedure GPS.Main is
       end if;
 
       GPS.Kernel.Preferences.Register_Module (GPS_Main.Kernel);
+      GPS.Kernel.Preferences_Views.Register_Module (GPS_Main.Kernel);
 
       if Active (Custom_Trace) then
          Custom_Module.Register_Module (GPS_Main.Kernel);

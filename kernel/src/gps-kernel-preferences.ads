@@ -28,7 +28,7 @@ package GPS.Kernel.Preferences is
      with private;
    type GPS_Preferences is access all GPS_Preferences_Record'Class;
 
-   overriding procedure On_Pref_Changed
+   overriding procedure Notify_Pref_Changed
      (Self : not null access GPS_Preferences_Record;
       Pref : not null access Preference_Record'Class);
    overriding procedure Thaw (Self : not null access GPS_Preferences_Record);
@@ -37,9 +37,6 @@ package GPS.Kernel.Preferences is
      (Self   : not null access GPS_Preferences_Record;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Set the kernel
-
-   procedure Edit_Preferences (Kernel : access Kernel_Handle_Record'Class);
-   --  Graphically edit the preferences
 
    procedure Register_Global_Preferences
      (Kernel : access Kernel_Handle_Record'Class);

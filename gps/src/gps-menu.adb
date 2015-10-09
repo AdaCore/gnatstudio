@@ -95,12 +95,6 @@ package body GPS.Menu is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  File->Exit menu
 
-   type Preference_Dialog_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Preference_Dialog_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Edit->Preferences menu
-
    type Open_Project_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Open_Project_Command;
@@ -324,21 +318,6 @@ package body GPS.Menu is
       return Commands.Success;
    end Execute;
 
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Preference_Dialog_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-   begin
-      Edit_Preferences (Kernel);
-      return Commands.Success;
-   end Execute;
-
    ---------------------------
    -- Register_Common_Menus --
    ---------------------------
@@ -422,12 +401,6 @@ package body GPS.Menu is
          -("Cancel the previous Paste operation, and instead insert the text"
            & " copied before through Copy To Clipboard"),
          Icon_Name  => "gps-paste-symbolic");
-
-      Register_Action
-        (Kernel, "open Preferences", new Preference_Dialog_Command,
-         Category    => -"Views",
-         Icon_Name   => "gps-settings-symbolic",
-         Description => -"Open the preferences dialog");
    end Register_Common_Menus;
 
 end GPS.Menu;

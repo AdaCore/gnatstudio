@@ -21,30 +21,14 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNAT.Strings;              use GNAT.Strings;
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with XML_Utils;                 use XML_Utils;
 
 with Pango.Font;                use Pango.Font;
-with Glib.Object;               use Glib.Object;
-with Glib.Properties;           use Glib.Properties;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Event_Box;             use Gtk.Event_Box;
-with Gtk.Frame;                 use Gtk.Frame;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Separator;             use Gtk.Separator;
-with Gtk.Table;                 use Gtk.Table;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Config;
 with Defaults;
@@ -78,13 +62,6 @@ package body GPS.Kernel.Preferences is
       Level  : Customization_Level);
    --  Handle GPS customization files for this module
 
-   type Preferences_Editor_Record is new GPS_Dialog_Record with null record;
-   type Preferences_Editor is access all Preferences_Editor_Record'Class;
-   Preferences_Editor_Class_Record : Glib.Object.Ada_GObject_Class :=
-     Glib.Object.Uninitialized_Class;
-   Preferences_Editor_Signals : constant chars_ptr_array :=
-                       (1 => New_String (String (Signal_Preferences_Changed)));
-
    ----------------
    -- Set_Kernel --
    ----------------
@@ -96,11 +73,11 @@ package body GPS.Kernel.Preferences is
       Self.Kernel := Kernel_Handle (Kernel);
    end Set_Kernel;
 
-   ---------------------
-   -- On_Pref_Changed --
-   ---------------------
+   -------------------------
+   -- Notify_Pref_Changed --
+   -------------------------
 
-   overriding procedure On_Pref_Changed
+   overriding procedure Notify_Pref_Changed
      (Self : not null access GPS_Preferences_Record;
       Pref : not null access Preference_Record'Class)
    is
@@ -121,11 +98,6 @@ package body GPS.Kernel.Preferences is
             (Self.Kernel, Default_Preferences.Preference (Pref));
 
          if Self.Nested_Pref_Changed = 1 then
-            if Self.Get_Editor /= null then
-               Widget_Callback.Emit_By_Name
-                 (Self.Get_Editor, Signal_Preferences_Changed);
-            end if;
-
             Save_Preferences (Self.Kernel);
          end if;
       end if;
@@ -135,7 +107,7 @@ package body GPS.Kernel.Preferences is
    exception
       when others =>
          Self.Nested_Pref_Changed := Self.Nested_Pref_Changed - 1;
-   end On_Pref_Changed;
+   end Notify_Pref_Changed;
 
    -------------------------
    -- Get_Command_Handler --
@@ -1642,268 +1614,6 @@ package body GPS.Kernel.Preferences is
          Handler      => Get_Command_Handler'Access);
 
    end Register_Module;
-
-   ----------------------
-   -- Edit_Preferences --
-   ----------------------
-
-   procedure Edit_Preferences (Kernel : access Kernel_Handle_Record'Class) is
-      Manager : constant GPS_Preferences :=
-        GPS_Preferences (Kernel.Preferences);
-      Filename : constant Virtual_File := Kernel.Preferences_File;
-
-      Model             : Gtk_Tree_Store;
-      Main_Table        : Gtk_Table;
-      Current_Selection : Gtk_Widget;
-
-      function Find_Or_Create_Page
-        (Name : String; Widget : Gtk_Widget) return Gtk_Widget;
-      --  Return the iterator in Model matching Name.
-      --  If no such page already exists, then eithe Widget (if non null) is
-      --  inserted for it, or a new table is created and inserted
-
-      procedure Selection_Changed (Tree : access Gtk_Widget_Record'Class);
-      --  Called when the selected page has changed.
-
-      -------------------------
-      -- Find_Or_Create_Page --
-      -------------------------
-
-      function Find_Or_Create_Page
-        (Name : String; Widget : Gtk_Widget) return Gtk_Widget
-      is
-         Current     : Gtk_Tree_Iter := Null_Iter;
-         Child       : Gtk_Tree_Iter;
-         First, Last : Integer := Name'First;
-         Table       : Gtk_Table;
-         W           : Gtk_Widget;
-
-      begin
-         while First <= Name'Last loop
-            Last := First;
-
-            while Last <= Name'Last
-              and then Name (Last) /= '/'
-            loop
-               Last := Last + 1;
-            end loop;
-
-            if Current = Null_Iter then
-               Child := Get_Iter_First (Model);
-            else
-               Child := Children (Model, Current);
-            end if;
-
-            while Child /= Null_Iter
-              and then Get_String (Model, Child, 0) /= Name (First .. Last - 1)
-            loop
-               Next (Model, Child);
-            end loop;
-
-            if Child = Null_Iter then
-               if Widget = null then
-                  Gtk_New (Table, Rows => 0, Columns => 2,
-                           Homogeneous => False);
-                  Set_Row_Spacings (Table, 1);
-                  Set_Col_Spacings (Table, 5);
-                  W := Gtk_Widget (Table);
-
-               else
-                  W := Widget;
-               end if;
-
-               Append (Model, Child, Current);
-               Set (Model, Child, 0, Name (First .. Last - 1));
-               Set (Model, Child, 1, GObject (W));
-
-               Attach (Main_Table, W, 1, 2, 2, 3,
-                       Ypadding => 0, Xpadding => 10);
-               Set_Child_Visible (W, False);
-            end if;
-
-            Current := Child;
-
-            First := Last + 1;
-         end loop;
-
-         return Gtk_Widget (Get_Object (Model, Current, 1));
-      end Find_Or_Create_Page;
-
-      -----------------------
-      -- Selection_Changed --
-      -----------------------
-
-      procedure Selection_Changed (Tree : access Gtk_Widget_Record'Class) is
-         Iter : Gtk_Tree_Iter;
-         M    : Gtk_Tree_Model;
-      begin
-         if Current_Selection /= null then
-            Set_Child_Visible (Current_Selection, False);
-            Current_Selection := null;
-         end if;
-
-         Get_Selected (Get_Selection (Gtk_Tree_View (Tree)), M, Iter);
-
-         if Iter /= Null_Iter then
-            Current_Selection := Gtk_Widget (Get_Object (Model, Iter, 1));
-            Set_Child_Visible (Current_Selection, True);
-         end if;
-      end Selection_Changed;
-
-      Dialog     : Preferences_Editor;
-      Frame      : Gtk_Frame;
-      Table      : Gtk_Table;
-      View       : Gtk_Tree_View;
-      Col        : Gtk_Tree_View_Column;
-      Render     : Gtk_Cell_Renderer_Text;
-      Num        : Gint;
-      Scrolled   : Gtk_Scrolled_Window;
-      Pref       : Preference;
-      Row        : Guint;
-      Backup_Created : Boolean;
-      Widget     : Gtk_Widget;
-      Event      : Gtk_Event_Box;
-      Label      : Gtk_Label;
-      Separator  : Gtk_Separator;
-      Resp       : Gtk_Response_Type;
-      C          : Default_Preferences.Cursor;
-      Tmp        : Gtk_Widget;
-      Backup_File : constant Virtual_File :=
-        Create (Full_Filename => Filename.Full_Name & ".bkp");
-
-      Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
-        (1 => (1 => GType_None));
-
-      pragma Unreferenced (Tmp, Num);
-
-   begin
-      Filename.Copy (Backup_File.Full_Name, Success => Backup_Created);
-
-      Glib.Object.Initialize_Class_Record
-        (Ancestor     => Gtk.Dialog.Get_Type,
-         Signals      => Preferences_Editor_Signals,
-         Class_Record => Preferences_Editor_Class_Record,
-         Type_Name    => "PreferencesEditor",
-         Parameters   => Signal_Parameters);
-
-      Dialog := new Preferences_Editor_Record;
-      GPS.Kernel.MDI.Initialize
-         (Self   => Dialog,
-          Title  => -"Preferences",
-          Kernel => Kernel,
-          Flags  => Modal,
-          Typ    => Preferences_Editor_Class_Record.The_Type);
-
-      Dialog.Set_Name ("Preferences");  --  for the testsuite
-      Dialog.Set_Default_Size (620, 400);
-
-      --  ??? This has no effect, since the dialog has already been
-      --  "constructed" (in gtk term). We would need to do the initialization
-      --  differently, not clear how. Alternatively, we might not need our own
-      --  class and signals here.
-      --    Glib.Properties.Set_Property
-      --      (Dialog,
-      --       Property_Boolean (Use_Header_Bar_Property),
-      --       (if Use_Header_Bar_From_Settings (Kernel.Get_Main_Window) = 0
-      --        then False else True));
-
-      Manager.Set_Editor (Dialog);
-
-      Gtk_New (Main_Table, Rows => 3, Columns => 2, Homogeneous => False);
-      Dialog.Get_Content_Area.Pack_Start (Main_Table);
-
-      Gtk_New (Frame);
-      Main_Table.Attach (Frame, 0, 1, 0, 3);
-
-      Gtk_New_Hseparator (Separator);
-      Main_Table.Attach (Separator, 1, 2, 1, 2, Yoptions => 0, Ypadding => 1);
-
-      Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Never, Policy_Automatic);
-      Frame.Add (Scrolled);
-
-      Gtk_New (Model, (0 => GType_String, 1 => GType_Object));
-      Gtk_New (View, Model);
-      Scrolled.Add (View);
-      Unref (Model);
-      View.Set_Headers_Visible (False);
-
-      Gtk_New (Col);
-      Num := View.Append_Column (Col);
-      Gtk_New (Render);
-      Col.Pack_Start (Render, Expand => True);
-      Col.Add_Attribute (Render, "text", 0);
-
-      Widget_Callback.Object_Connect
-        (Get_Selection (View), Gtk.Tree_Selection.Signal_Changed,
-         Selection_Changed'Unrestricted_Access,
-         View);
-
-      C := Manager.Get_First_Reference;
-      loop
-         Pref := Get_Pref (C);
-         exit when Pref = null;
-
-         if Pref.Get_Page /= "" then
-            Table := Gtk_Table (Find_Or_Create_Page (Pref.Get_Page, null));
-            Row := Get_Property (Table, N_Rows_Property);
-            Resize (Table, Rows => Row + 1, Columns => 2);
-
-            if Pref.Editor_Needs_Label then
-               Gtk_New (Event);
-               Gtk_New (Label, Pref.Get_Label);
-               Event.Add (Label);
-               Event.Set_Tooltip_Text (Pref.Get_Doc);
-               Label.Set_Alignment (0.0, 0.5);
-               Table.Attach (Event, 0, 1, Row, Row + 1,
-                             Xoptions => Fill, Yoptions => 0);
-
-               Widget := Edit
-                 (Pref      => Pref,
-                  Manager   => Manager);
-
-               if Widget /= null then
-                  Table.Attach (Widget, 1, 2, Row, Row + 1, Yoptions => 0);
-               end if;
-
-            else
-               Widget := Edit
-                 (Pref      => Pref,
-                  Manager   => Manager);
-               Widget.Set_Tooltip_Text (Pref.Get_Doc);
-
-               if Widget /= null then
-                  Table.Attach (Widget, 0, 2, Row, Row + 1, Yoptions => 0);
-               end if;
-            end if;
-         end if;
-
-         Manager.Next (C);
-      end loop;
-
-      Widget := Dialog.Add_Button ("OK", Gtk_Response_OK);
-
-      if Backup_Created then
-         Widget := Dialog.Add_Button ("Cancel", Gtk_Response_Cancel);
-      end if;
-
-      --  Show all pages for more convenient access
-      View.Expand_All;
-
-      Dialog.Show_All;
-      Resp := Dialog.Run;
-
-      if Resp = Gtk_Response_Cancel then
-         if Backup_Created then
-            Backup_File.Copy (Filename.Full_Name, Success => Backup_Created);
-            Manager.Load_Preferences (Filename);
-            Preferences_Changed_Hook.Run (Kernel, null);
-         end if;
-      end if;
-
-      Manager.Set_Editor (null);
-      Dialog.Destroy;
-   end Edit_Preferences;
 
    ----------------------
    -- Save_Preferences --

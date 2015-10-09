@@ -30,11 +30,6 @@ package body Default_Preferences.Enums is
       Data  : Manager_Preference);
    --  Called when an enumeration preference has been changed.
 
-   procedure Update_Combo
-     (Ent  : access GObject_Record'Class;
-      Data : Manager_Preference);
-   --  Called when the preference Data has changed, to update Ent
-
    ------------------
    -- Enum_Changed --
    ------------------
@@ -46,20 +41,8 @@ package body Default_Preferences.Enums is
       C     : constant Gtk_Combo_Box_Text := Gtk_Combo_Box_Text (Combo);
    begin
       Enum_Preference (Data.Pref).Enum_Value := Integer (Get_Active (C));
-      Data.Manager.On_Pref_Changed (Data.Pref);
+      Data.Manager.Notify_Pref_Changed (Data.Pref);
    end Enum_Changed;
-
-   ------------------
-   -- Update_Combo --
-   ------------------
-
-   procedure Update_Combo
-     (Ent  : access GObject_Record'Class;
-      Data : Manager_Preference) is
-   begin
-      Set_Active_Text
-        (Gtk_Combo_Box_Text (Ent), String'(Get_Pref (Data.Pref)));
-   end Update_Combo;
 
    ------------
    -- Create --
@@ -119,11 +102,8 @@ package body Default_Preferences.Enums is
         (Combo, Gtk.Combo_Box.Signal_Changed,
          Enum_Changed'Access,
          User_Data   => (Preferences_Manager (Manager), Preference (Pref)));
-      Preference_Handlers.Object_Connect
-        (Manager.Pref_Editor, Signal_Preferences_Changed,
-         Update_Combo'Access,
-         Combo,
-         User_Data => (Preferences_Manager (Manager), Preference (Pref)));
+
+      Set_GObject_To_Update (Pref, GObject (Combo));
 
       return Gtk.Widget.Gtk_Widget (Combo);
    end Edit;
@@ -153,11 +133,23 @@ package body Default_Preferences.Enums is
       for C in Pref.Choices'Range loop
          if Equal (Pref.Choices (C).all, Value, Case_Sensitive => False) then
             Pref.Enum_Value := C - Pref.Choices'First;
-            Manager.On_Pref_Changed (Pref);
+            Manager.Notify_Pref_Changed (Pref);
             exit;
          end if;
       end loop;
    end Set_Pref;
+
+   ----------------------------
+   -- Update_On_Pref_Changed --
+   ----------------------------
+
+   overriding procedure Update_On_Pref_Changed
+     (Pref   : access Choice_Preference_Record;
+      Widget : access GObject_Record'Class) is
+   begin
+      Set_Active_Text
+        (Gtk_Combo_Box_Text (Widget), String'(Get_Pref (Pref)));
+   end Update_On_Pref_Changed;
 
    --------------
    -- Generics --
@@ -233,15 +225,23 @@ package body Default_Preferences.Enums is
             Enum_Changed'Access,
             User_Data   => (Preferences_Manager (Manager),
                             Default_Preferences.Preference (Pref)));
-         Preference_Handlers.Object_Connect
-           (Manager.Pref_Editor, Signal_Preferences_Changed,
-            Update_Combo'Access,
-            Combo,
-            User_Data => (Preferences_Manager (Manager),
-                          Default_Preferences.Preference (Pref)));
+
+         Set_GObject_To_Update (Pref, GObject (Combo));
 
          return Gtk.Widget.Gtk_Widget (Combo);
       end Edit;
+
+      ----------------------------
+      -- Update_On_Pref_Changed --
+      ----------------------------
+
+      overriding procedure Update_On_Pref_Changed
+        (Pref   : access Preference_Record;
+         Widget : access GObject_Record'Class) is
+      begin
+         Set_Active_Text
+           (Gtk_Combo_Box_Text (Widget), String'(Get_Pref (Pref)));
+      end Update_On_Pref_Changed;
 
       --------------
       -- Get_Pref --
@@ -278,7 +278,7 @@ package body Default_Preferences.Enums is
          --  Test if we have a string representation of the enumeration value
          Enum_Preference (Pref).Enum_Value :=
            Enumeration'Pos (Enumeration'Value (Value));
-         Manager.On_Pref_Changed (Pref);
+         Manager.Notify_Pref_Changed (Pref);
 
       exception
          when Constraint_Error =>

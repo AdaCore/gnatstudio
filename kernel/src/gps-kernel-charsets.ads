@@ -18,9 +18,12 @@
 --  This package handles the charsets supported by GPS
 
 with Default_Preferences;  use Default_Preferences;
+
+with Glib.Object;          use Glib.Object;
 with Gtk.Combo_Box_Text;
 with Gtk.Widget;
 with Gtkada.Types;
+
 with GNATCOLL.VFS;
 
 package GPS.Kernel.Charsets is
@@ -44,6 +47,10 @@ package GPS.Kernel.Charsets is
      (Pref               : access Charset_Preference_Record;
       Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget;
+
+   overriding procedure Update_On_Pref_Changed
+     (Pref   : access Charset_Preference_Record;
+      Widget : access GObject_Record'Class);
 
    procedure Register_Preferences
      (Kernel : access Kernel_Handle_Record'Class);
