@@ -625,7 +625,7 @@ to the generated documentation::
 
     class HelloTagHandler(GPS.InlineTagHandler):
         def __init__(self):
-            super(MyTagHandler, self).__init__('hello')
+            super(HelloTagHandler, self).__init__('hello')
 
         def has_parameter(self):
             return True
