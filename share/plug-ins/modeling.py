@@ -85,6 +85,18 @@ class Project_Support(object):
                 <string type="directory"/>
              </project_attribute>
 
+             <project_attribute
+              package="QGen"
+              name="Switches"
+              editor_page="QGen"
+              list="true"
+              label="Switches"
+              hide_in="wizard library_wizard">
+                <index attribute='Languages'>
+                   <string />
+                </index>
+             </project_attribute>
+
              <target-model name="QGenc" category="">
                <description>Generic launch of QGen</description>
                <iconname>gps-build-all-symbolic</iconname>
@@ -201,7 +213,9 @@ class Project_Support(object):
                 attribute='Switches', package='QGen',
                 index=os.path.basename(file.name()))
             if not switches:
-                switches = file.project().get_tool_switches_as_string("QGENC")
+                switches = file.project().get_attribute_as_string(
+                    attribute='Switches', package='QGen',
+                    index='simulink')
         except:
             switches = ''
 
@@ -228,6 +242,7 @@ class CLI(GPS.Process):
     OPTION_MATLAB = "-m"
     OPTION_OUTPUT = "-o"
     OPTION_TYPING = "-t"
+    OPTION_DEBUG = "--debug"
     # The names of various QGENC and CLI options
 
     @staticmethod
