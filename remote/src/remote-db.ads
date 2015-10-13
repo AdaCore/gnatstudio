@@ -68,8 +68,10 @@ package Remote.Db is
      (Machine : Machine_Type) return String;
    overriding function Shell
      (Machine : Machine_Type) return String;
-   overriding function Rsync_Func
+   overriding function Sync_Tool
      (Machine : Machine_Type) return String;
+   overriding function Sync_Tool_Args
+     (Machine : Machine_Type) return String_List;
    overriding function Extra_Init_Commands
      (Machine : Machine_Type) return String_List;
    overriding function User_Name
@@ -95,9 +97,9 @@ package Remote.Db is
    procedure Set_Shell
      (Machine : in out Machine_Type;
       Shell   : String);
-   procedure Set_Rsync_Func
-     (Machine    : in out Machine_Type;
-      Rsync_Func : String);
+   procedure Set_Sync_Tool
+     (Machine   : in out Machine_Type;
+      Sync_Func : String);
    procedure Set_Extra_Init_Commands
      (Machine : in out Machine_Type;
       Cmds    : String_List);
@@ -225,6 +227,11 @@ package Remote.Db is
      (Db       : Remote_Db_Type) return String_List;
    --  Get the list of all configured access tools.
 
+   function Get_Sync_Tools
+     (Db       : Remote_Db_Type) return String_List;
+   --  Get the list of all configured sync tools.
+   --  Caller must free the result value.
+
    overriding function Get_Server
      (Db       : Remote_Db_Type;
       Nickname : String) return Gexpect.Machine_Access;
@@ -319,6 +326,12 @@ private
    end record;
    type Access_Tool_Access is access all Access_Tool_Record;
 
+   type Sync_Tool_Record is record
+      Name  : String_Access      := null;
+      Args  : String_List_Access := null;
+   end record;
+   type Sync_Tool_Access is access all Sync_Tool_Record;
+
    type Machine_Type is new Gexpect.Machine_Type
      and GNATCOLL.Remote.Server_Record
    with record
@@ -346,7 +359,8 @@ private
       --  Whether we should send LF, CR/LF or determine it automatically
       Use_Dbg             : Boolean := False;
       --  Connection debug console.
-      Rsync_Func          : String_Access := null;
+      Sync_Tool_Name     : String_Access := null;
+      Sync_Tool          : Sync_Tool_Access;
       --  The remote sync tool used for file synchronisation
       User_Data           : Machine_User_Data_Access;
       --  User Data
@@ -373,6 +387,11 @@ private
       Element_Type    => Mount_Point_Array,
       Hash            => Ada.Strings.Hash,
       Equivalent_Keys => Standard."=");
+   package Sync_Tools_Db is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,
+      Element_Type    => Sync_Tool_Access,
+      Hash            => Ada.Strings.Hash,
+      Equivalent_Keys => Standard."=");
 
    type Remote_Db_Type is
      new Gexpect.Db.Machine_Db_Interface
@@ -380,6 +399,7 @@ private
    with record
       Shells           : Shell_Db.Map;
       Access_Tools     : Access_Tools_Db.Map;
+      Sync_Tools       : Sync_Tools_Db.Map;
       Machines         : Machine_Db.Map;
       Sys_Machines     : Machine_Db.Map;
       Mount_Points     : Mount_Points_Db.Map;

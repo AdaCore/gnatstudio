@@ -82,8 +82,14 @@ package Gexpect is
      (Machine : Machine_Type) return String is abstract;
    function Shell
      (Machine : Machine_Type) return String is abstract;
-   function Rsync_Func
+
+   function Sync_Tool
      (Machine : Machine_Type) return String is abstract;
+   --  The name of the synchronization tool
+   function Sync_Tool_Args
+     (Machine : Machine_Type) return String_List is abstract;
+   --  Arguments used by synchronization tool
+
    function Extra_Init_Commands
      (Machine : Machine_Type) return String_List is abstract;
    function User_Name

@@ -68,10 +68,9 @@ with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gexpect;                    use Gexpect;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GUI_Utils;                  use GUI_Utils;
 with String_Utils;               use String_Utils;
-with GNATCOLL.Traces;                     use GNATCOLL.Traces;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 
 with Remote.Db;                  use Remote, Remote.Db;
 with Remote_Module;              use Remote_Module;
@@ -834,6 +833,7 @@ package body Remote.Config_Dialog is
                        Get_Database.Get_Servers;
       Shells       : GNAT.Strings.String_List := Get_Database.Get_Shells;
       Access_Tools : GNAT.Strings.String_List := Get_Database.Get_Access_Tools;
+      Sync_Tools   : GNAT.Strings.String_List := Get_Database.Get_Sync_Tools;
       pragma Unreferenced (Tmp);
 
    begin
@@ -951,9 +951,9 @@ package body Remote.Config_Dialog is
          -("The remote access tool is the tool used to connect to this " &
            "server."));
 
-      for J in Access_Tools'Range loop
-         Dialog.Remote_Access_Combo.Append_Text (Access_Tools (J).all);
-         Free (Access_Tools (J));
+      for J of Access_Tools loop
+         Dialog.Remote_Access_Combo.Append_Text (J.all);
+         Free (J);
       end loop;
 
       if Access_Tools'Length = 0 then
@@ -992,9 +992,9 @@ package body Remote.Config_Dialog is
         (Dialog.Remote_Shell_Combo,
          -"The shell tells GPS what shell runs on the remote server.");
 
-      for J in Shells'Range loop
-         Dialog.Remote_Shell_Combo.Append_Text (Shells (J).all);
-         Free (Shells (J));
+      for J of Shells loop
+         Dialog.Remote_Shell_Combo.Append_Text (J.all);
+         Free (J);
       end loop;
 
       Line_Nb := Line_Nb + 1;
@@ -1012,15 +1012,10 @@ package body Remote.Config_Dialog is
          -("The sync tool is used to synchronize remote and local " &
            "filesystems, if these are not shared filesystems."));
 
-      declare
-         Rsync_List : GNAT.Strings.String_List :=
-            Rsync_Action_Hook.List_Functions;
-      begin
-         for J of Rsync_List loop
-            Dialog.Remote_Sync_Combo.Append_Text (J.all);
-         end loop;
-         Free (Rsync_List);
-      end;
+      for J of Sync_Tools loop
+         Dialog.Remote_Sync_Combo.Append_Text (J.all);
+         Free (J);
+      end loop;
 
       Line_Nb := Line_Nb + 1;
       Gtk_New (Label, -"Extra init commands:");
@@ -1283,7 +1278,7 @@ package body Remote.Config_Dialog is
          Iter  := Get_Iter_First (Model);
 
          while Iter /= Null_Iter loop
-            if Get_String (Model, Iter, 0) = Machine.Rsync_Func then
+            if Get_String (Model, Iter, 0) = Machine.Sync_Tool then
                Dialog.Remote_Sync_Combo.Set_Active_Iter (Iter);
                exit;
             end if;
@@ -1613,7 +1608,7 @@ package body Remote.Config_Dialog is
         (Get_Active_Text (Dialog.Remote_Access_Combo));
       Machine.Set_Shell
         (Get_Active_Text (Dialog.Remote_Shell_Combo));
-      Machine.Set_Rsync_Func
+      Machine.Set_Sync_Tool
         (Get_Active_Text (Dialog.Remote_Sync_Combo));
       Machine.Set_Extra_Init_Commands
         (Get_Command_List (Dialog.Init_Cmds_View));

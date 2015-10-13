@@ -612,7 +612,7 @@ package body GPS.Kernel.Remote is
 
       if not Rsync_Action_Hook.Run
          (Kernel        => Kernel,
-          Tool_Name     => Machine.Rsync_Func,
+          Tool_Name     => Machine.Sync_Tool,
           Host_Name     => Machine.Nickname,
           To_Remote     => Remote_Is_Dest,
           Queue_Id      => The_Queue_Id,
@@ -623,7 +623,7 @@ package body GPS.Kernel.Remote is
           File          => File)
       then
          Kernel.Insert
-           (Machine.Rsync_Func & (-" failure: ") &
+           (Machine.Sync_Tool & (-" failure: ") &
             (-"Please verify your network configuration"),
             Mode => Error);
 

@@ -23,7 +23,6 @@ with GNAT.Expect;           use GNAT.Expect;
 with GNAT.Strings;
 
 with Glib;                  use Glib;
-with XML_Utils;             use XML_Utils;
 with Gtk.Box;               use Gtk.Box;
 with Gtk.Button;            use Gtk.Button;
 with Gtk.Dialog;            use Gtk.Dialog;
@@ -34,12 +33,11 @@ with Gtk.Stock;             use Gtk.Stock;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 
-with GPS.Customizable_Modules;         use GPS.Customizable_Modules;
-with GPS.Intl;                         use GPS.Intl;
-with GPS.Kernel.Console;               use GPS.Kernel.Console;
-with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
-with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
+with GPS.Intl;              use GPS.Intl;
+with GPS.Kernel.Console;    use GPS.Kernel.Console;
+with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Kernel.Timeout;    use GPS.Kernel.Timeout;
 
 with Commands;              use Commands;
 with Password_Manager;      use Password_Manager;
@@ -52,7 +50,7 @@ with GNATCOLL.VFS_Types;    use GNATCOLL.VFS_Types;
 
 with Gexpect.Db;            use Gexpect, Gexpect.Db;
 
-with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
 
 package body Remote.Rsync is
 
@@ -64,20 +62,12 @@ package body Remote.Rsync is
    type Return_Data_Access is access all Return_Data;
 
    type Rsync_Module_Record is new Module_ID_Record with record
-      Kernel     : Kernel_Handle;
-      Rsync_Args : GNAT.Strings.String_List_Access;
-      Ret_Data   : Return_Data_Access;
+      Kernel   : Kernel_Handle;
+      Ret_Data : Return_Data_Access;
    end record;
    type Rsync_Module_ID is access all Rsync_Module_Record'Class;
 
    overriding procedure Destroy (Module : in out Rsync_Module_Record);
-
-   overriding procedure Customize
-     (Module : access Rsync_Module_Record;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Node   : Node_Ptr;
-      Level  : Customization_Level);
-   --  See doc for inherited subprogram
 
    Rsync_Module : Rsync_Module_ID := null;
 
@@ -147,31 +137,7 @@ package body Remote.Rsync is
         (Return_Data, Return_Data_Access);
    begin
       Unchecked_Free (Module.Ret_Data);
-      Free (Module.Rsync_Args);
    end Destroy;
-
-   ---------------
-   -- Customize --
-   ---------------
-
-   overriding procedure Customize
-     (Module : access Rsync_Module_Record;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Node   : Node_Ptr;
-      Level  : Customization_Level)
-   is
-      pragma Unreferenced (File, Level);
-      Child : Node_Ptr;
-   begin
-      if Node.Tag.all = "rsync_configuration" then
-         Trace (Me, "Customize: 'rsync_configuration'");
-         Child := Find_Tag (Node.Child, "arguments");
-
-         if Child /= null then
-            Module.Rsync_Args := Argument_String_To_List (Child.Value.all);
-         end if;
-      end if;
-   end Customize;
 
    -------------
    -- Gtk_New --
@@ -240,7 +206,7 @@ package body Remote.Rsync is
       function Build_Arg return GNAT.Strings.String_List is
 
          Rsync_Args : constant GNAT.Strings.String_List :=
-                        Clone (Rsync_Module.Rsync_Args.all);
+                        Clone (Machine.Sync_Tool_Args);
 
          function Transport_Arg return GNAT.Strings.String_List;
          --  Argument for transport
@@ -326,7 +292,7 @@ package body Remote.Rsync is
       end if;
 
       --  Check the module configuration
-      if Rsync_Module = null or else Rsync_Module.Rsync_Args = null then
+      if Rsync_Module = null then
          Insert (Kernel, "Invalid rsync configuration. Cannot use rsync.",
                  Mode => Error);
          return False;
@@ -340,6 +306,12 @@ package body Remote.Rsync is
       end if;
 
       Machine := Get_Server (Host_Name);
+
+      if Machine.Sync_Tool_Args'Length = 0 then
+         Insert (Kernel, "Invalid rsync configuration. Cannot use rsync.",
+                 Mode => Error);
+         return False;
+      end if;
 
       declare
          M_Points : constant Mount_Point_Array :=

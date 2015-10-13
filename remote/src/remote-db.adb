@@ -22,17 +22,17 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
 with GNAT.OS_Lib;
-with GNAT.Regpat;          use GNAT.Regpat;
+with GNAT.Regpat;            use GNAT.Regpat;
 
-with GPS.Intl;             use GPS.Intl;
-with GPS.Kernel.Interactive;   use GPS.Kernel.Interactive;
-with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
+with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Interactive; use GPS.Kernel.Interactive;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 
-with Basic_Types;          use Basic_Types;
-with Interactive_Consoles; use Interactive_Consoles;
-with Password_Manager;     use Password_Manager;
-with GNATCOLL.Traces;               use GNATCOLL.Traces;
-with XML_Utils;            use XML_Utils;
+with Basic_Types;            use Basic_Types;
+with Interactive_Consoles;   use Interactive_Consoles;
+with Password_Manager;       use Password_Manager;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
+with XML_Utils;              use XML_Utils;
 
 package body Remote.Db is
 
@@ -76,12 +76,20 @@ package body Remote.Db is
       Node      : XML_Utils.Node_Ptr);
    --  Parse a remote_connection_config node
 
-   procedure Free (Shell    : in out Shell_Access);
-   procedure Free (Tool     : in out Access_Tool_Access);
-   procedure Free (Shells   : in out Shell_Db.Map);
-   procedure Free (Tools    : in out Access_Tools_Db.Map);
-   procedure Free (Machines : in out Machine_Db.Map);
-   procedure Free (Points   : in out Mount_Points_Db.Map);
+   procedure Parse_Sync_Tool_Node
+     (Db        : access Remote_Db_Type;
+      Kernel    : access Kernel_Handle_Record'Class;
+      Node      : XML_Utils.Node_Ptr);
+   --  Parse a remote_sync_config node
+
+   procedure Free (Shell      : in out Shell_Access);
+   procedure Free (Tool       : in out Access_Tool_Access);
+   procedure Free (Sync_Tool  : in out Sync_Tool_Access);
+   procedure Free (Shells     : in out Shell_Db.Map);
+   procedure Free (Tools      : in out Access_Tools_Db.Map);
+   procedure Free (Sync_Tools : in out Sync_Tools_Db.Map);
+   procedure Free (Machines   : in out Machine_Db.Map);
+   procedure Free (Points     : in out Mount_Points_Db.Map);
    --  Free the memory used by the parameters
 
    ------------------------
@@ -231,7 +239,8 @@ package body Remote.Db is
          Access_Tool         => null,
          Shell_Name          => new String'(Remote_Shell),
          Shell               => null,
-         Rsync_Func          => new String'(Remote_Sync),
+         Sync_Tool_Name      => new String'(Remote_Sync),
+         Sync_Tool           => null,
          Max_Nb_Connections  => Max_Nb_Connections,
          User_Name           => User_Name,
          Timeout             => Timeout,
@@ -523,6 +532,7 @@ package body Remote.Db is
 
             if Machine_Desc.Access_Tool = null
               or else Machine_Desc.Shell = null
+              or else Machine_Desc.Sync_Tool = null
             then
                Db.Resolved := False;
             end if;
@@ -570,7 +580,7 @@ package body Remote.Db is
 
       elsif Db.Access_Tools.Contains (Name) then
          Kernel.Insert
-           (-("XML Error: remote_connection_config has a duplicated " &
+           (-("XML Error: remote_connection_config has a duplicate " &
               "configuration for " & Name),
             Add_LF => True, Mode => Error);
          return;
@@ -745,6 +755,7 @@ package body Remote.Db is
 
             if Machine_Desc.Access_Tool = null
               or else Machine_Desc.Shell = null
+              or else Machine_Desc.Sync_Tool = null
             then
                Db.Resolved := False;
             end if;
@@ -753,6 +764,80 @@ package body Remote.Db is
          end loop;
       end loop;
    end Parse_Access_Tool_Node;
+
+   --------------------------
+   -- Parse_Sync_Tool_Node --
+   --------------------------
+
+   procedure Parse_Sync_Tool_Node
+     (Db        : access Remote_Db_Type;
+      Kernel    : access Kernel_Handle_Record'Class;
+      Node      : XML_Utils.Node_Ptr)
+   is
+      Name         : constant String := Get_Attribute (Node, "name");
+      Child        : Node_Ptr;
+      Args         : String_List_Access;
+      Desc         : Sync_Tool_Access;
+      Cursor       : Machine_Db.Cursor;
+      Machine_Desc : Machine_Access;
+   begin
+      if Name = "" then
+         Kernel.Insert
+           (-("XML Error: remote_connection_config tag is missing a " &
+              "name attribute."),
+            Add_LF => True, Mode => Error);
+         return;
+
+      elsif Db.Access_Tools.Contains (Name) then
+         Kernel.Insert
+           (-("XML Error: remote_connection_config has a duplicate " &
+              "configuration for " & Name),
+            Add_LF => True, Mode => Error);
+         return;
+      end if;
+
+      Child := Find_Tag (Node.Child, "arguments");
+
+      if Child /= null then
+         Args := GNAT.OS_Lib.Argument_String_To_List (Child.Value.all);
+      end if;
+
+      Desc := new Sync_Tool_Record'
+        (Name => new String'(Name),
+         Args => Args);
+
+      Db.Sync_Tools.Insert (Name, Desc);
+
+      --  Let's assume the Db is now resolved with the added sync tool
+      Db.Resolved := True;
+
+      for J in 1 .. 2 loop
+         if J = 1 then
+            Cursor := Db.Machines.First;
+         else
+            Cursor := Db.Sys_Machines.First;
+         end if;
+
+         while Machine_Db.Has_Element (Cursor) loop
+            Machine_Desc := Machine_Db.Element (Cursor);
+
+            if Machine_Desc.Sync_Tool = null
+              and then Machine_Desc.Sync_Tool_Name.all = Name
+            then
+               Machine_Desc.Sync_Tool := Desc;
+            end if;
+
+            if Machine_Desc.Access_Tool = null
+              or else Machine_Desc.Shell = null
+              or else Machine_Desc.Sync_Tool = null
+            then
+               Db.Resolved := False;
+            end if;
+
+            Machine_Db.Next (Cursor);
+         end loop;
+      end loop;
+   end Parse_Sync_Tool_Node;
 
    -------------------------
    -- Initialize_Database --
@@ -847,16 +932,11 @@ package body Remote.Db is
    ----------
 
    procedure Free (Shells : in out Shell_Db.Map) is
-      use Shell_Db;
-      C : Shell_Db.Cursor := First (Shells);
-      A : Shell_Access;
    begin
-      while Has_Element (C) loop
-         A := Element (C);
-         Free (A);
-         Next (C);
+      for Item of Shells loop
+         Free (Item);
       end loop;
-      Clear (Shells);
+      Shell_Db.Clear (Shells);
    end Free;
 
    ----------
@@ -864,16 +944,38 @@ package body Remote.Db is
    ----------
 
    procedure Free (Tools : in out Access_Tools_Db.Map) is
-      use Access_Tools_Db;
-      C : Access_Tools_Db.Cursor := First (Tools);
-      A : Access_Tool_Access;
    begin
-      while Has_Element (C) loop
-         A := Element (C);
-         Free (A);
-         Next (C);
+      for Item of Tools loop
+         Free (Item);
       end loop;
-      Clear (Tools);
+      Access_Tools_Db.Clear (Tools);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Sync_Tool  : in out Sync_Tool_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Sync_Tool_Record, Sync_Tool_Access);
+   begin
+      if Sync_Tool /= null then
+         Free (Sync_Tool.Name);
+         Free (Sync_Tool.Args);
+         Unchecked_Free (Sync_Tool);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Sync_Tools : in out Sync_Tools_Db.Map) is
+   begin
+      for Item of Sync_Tools loop
+         Free (Item);
+      end loop;
+      Sync_Tools_Db.Clear (Sync_Tools);
    end Free;
 
    ----------
@@ -907,6 +1009,7 @@ package body Remote.Db is
       if DB /= null then
          Free (DB.Shells);
          Free (DB.Access_Tools);
+         Free (DB.Sync_Tools);
          Free (DB.Machines);
          Free (DB.Sys_Machines);
          Free (DB.Mount_Points);
@@ -937,6 +1040,9 @@ package body Remote.Db is
       elsif Node.Tag.all = "remote_connection_config" then
          Trace (Me, "Read_From_XML: 'remote_connection_config'");
          Parse_Access_Tool_Node (Db, Kernel, Node);
+      elsif Node.Tag.all = "remote_sync_config" then
+         Trace (Me, "Read_From_XML: 'remote_sync_config'");
+         Parse_Sync_Tool_Node (Db, Kernel, Node);
       end if;
    end Read_From_XML;
 
@@ -973,7 +1079,7 @@ package body Remote.Db is
          Set_Attribute
            (Main_Child, "remote_shell", Shell (Machine.all));
          Set_Attribute
-           (Main_Child, "remote_sync", Rsync_Func (Machine.all));
+           (Main_Child, "remote_sync", Sync_Tool (Machine.all));
          Set_Attribute
            (Main_Child, "debug_console", Use_Dbg (Machine.all)'Img);
 
@@ -1169,6 +1275,24 @@ package body Remote.Db is
       return Ret;
    end Get_Access_Tools;
 
+   ---------------------
+   -- Get_Sync_Tools --
+   ---------------------
+
+   function Get_Sync_Tools (Db : Remote_Db_Type) return String_List
+   is
+      Ret    : String_List (1 .. Natural (Db.Sync_Tools.Length));
+      Cursor : Sync_Tools_Db.Cursor;
+   begin
+      Cursor := Db.Sync_Tools.First;
+      for J in Ret'Range loop
+         Ret (J) := new String'(Sync_Tools_Db.Element (Cursor).Name.all);
+         Sync_Tools_Db.Next (Cursor);
+      end loop;
+
+      return Ret;
+   end Get_Sync_Tools;
+
    ----------------
    -- Get_Server --
    ----------------
@@ -1307,6 +1431,15 @@ package body Remote.Db is
          Config.Resolved := False;
       end if;
 
+      if Machine.Sync_Tool = null
+        and then Config.Sync_Tools.Contains (Machine.Sync_Tool_Name.all)
+      then
+         Machine.Sync_Tool :=
+           Config.Sync_Tools.Element (Machine.Sync_Tool_Name.all);
+      else
+         Config.Resolved := False;
+      end if;
+
       if Is_System then
          if Config.Sys_Machines.Contains (Machine.Nickname.all) then
             Insert (Machine.Kernel,
@@ -1437,7 +1570,7 @@ package body Remote.Db is
          Free (Machine.Shell_Name);
          Free (Machine.Extra_Init_Commands);
          Free (Machine.User_Name);
-         Free (Machine.Rsync_Func);
+         Free (Machine.Sync_Tool_Name);
 
          if The_Machine.User_Data /= null then
             Free (The_Machine.User_Data.all);
@@ -1562,33 +1695,52 @@ package body Remote.Db is
       Machine.Shell      := null;
    end Set_Shell;
 
-   ----------------
-   -- Rsync_Func --
-   ----------------
+   ---------------
+   -- Sync_Tool --
+   ---------------
 
-   overriding function Rsync_Func
+   overriding function Sync_Tool
      (Machine : Machine_Type) return String
    is
    begin
-      if Machine.Rsync_Func = null then
+      if Machine.Sync_Tool_Name = null then
          return "";
       end if;
 
-      return Machine.Rsync_Func.all;
-   end Rsync_Func;
+      return Machine.Sync_Tool_Name.all;
+   end Sync_Tool;
 
    --------------------
-   -- Set_Rsync_Func --
+   -- Sync_Tool_Args --
    --------------------
 
-   procedure Set_Rsync_Func
-     (Machine    : in out Machine_Type;
-      Rsync_Func : String)
+   overriding function Sync_Tool_Args
+     (Machine : Machine_Type) return String_List is
+   begin
+      if Machine.Sync_Tool = null then
+         raise Invalid_Remote_Configuration;
+      end if;
+
+      if Machine.Sync_Tool.Args = null then
+         return (1 .. 0 => <>);
+      end if;
+
+      return Machine.Sync_Tool.Args.all;
+   end Sync_Tool_Args;
+
+   -------------------
+   -- Set_Sync_Tool --
+   -------------------
+
+   procedure Set_Sync_Tool
+     (Machine   : in out Machine_Type;
+      Sync_Func : String)
    is
    begin
-      Free (Machine.Rsync_Func);
-      Machine.Rsync_Func := new String'(Rsync_Func);
-   end Set_Rsync_Func;
+      Free (Machine.Sync_Tool_Name);
+      Machine.Sync_Tool_Name := new String'(Sync_Func);
+      Machine.Sync_Tool := null;
+   end Set_Sync_Tool;
 
    -------------------------
    -- Extra_Init_Commands --

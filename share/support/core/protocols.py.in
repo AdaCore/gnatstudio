@@ -171,9 +171,9 @@ XML = r"""<?xml version="1.0"?>
 
   <!-- RSYNC CONFIGURATION -->
 
-  <rsync_configuration>
+  <remote_sync_config name="rsync">
     <arguments>-az --delete --progress --exclude *.o --exclude *.a --exclude .xrefs</arguments>
-  </rsync_configuration>
+  </remote_sync_config>
 </GPS>
 """
 
