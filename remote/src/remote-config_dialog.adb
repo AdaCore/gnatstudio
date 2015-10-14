@@ -1004,6 +1004,7 @@ package body Remote.Config_Dialog is
               0, 1, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0, 10);
       Gtk_New (Dialog.Remote_Sync_Combo);
+      Set_Name (Dialog.Remote_Sync_Combo, "remote sync combo");
       Attach (Dialog.Right_Table, Dialog.Remote_Sync_Combo,
               1, 2, Line_Nb, Line_Nb + 1,
               Fill or Expand, 0);
