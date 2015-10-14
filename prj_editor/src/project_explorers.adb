@@ -1233,10 +1233,13 @@ package body Project_Explorers is
 
          while It /= Null_Iter loop
             case Get_Node_Type (Exp.Tree.Model, It) is
-               when Project_Node_Types =>
+               when Project_Node_Types | Runtime_Node =>
                   Process_Node (It, No_Project);
 
                when Directory_Node_Types =>
+                  --  ??? When in a runtime mode, the path is not relative to
+                  --  any project, so we are always displaying the full path.
+
                   Set (Exp.Tree.Model, It, Display_Name_Column,
                        Directory_Node_Text
                           (Show_Abs_Paths, Prj,
@@ -1812,6 +1815,20 @@ package body Project_Explorers is
             Success := Expand_Row (Self.Tree, Path, False);
             Path_Free (Path);
          end if;
+
+         if Show_Runtime.Get_Pref then
+            Child := Create_Or_Reuse_Node
+              (Model  => Self.Tree.Model,
+               Parent => Null_Iter,  --  always at toplevel
+               Kind   => Runtime_Node,
+               File   => No_File,
+               Name   => "runtime",
+               Add_Dummy => True);
+
+            Remove_Child_Nodes (Self.Tree.Model, Parent => Child);
+            Append_Dummy_Iter (Self.Tree.Model, Child);
+         end if;
+
          return;
       end if;
 

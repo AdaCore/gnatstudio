@@ -25,6 +25,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-OA07-028 GPS: Project view with flat view does not show runtime
+
+  Problem:    If you select both Flat View and Show Runtime in the project
+              view settings, no node is added for the runtime.
+
+  Status:     This was fixed in 6.2 on 2015-10-14
+
+  Workaround: Unchecked Flat View to see the runtime.
+
 KP-61-OA05-029 GPS: makefile.py fails to parse double colons
 
   Problem:    If you are using a Makefile which includes the GNU syntax
