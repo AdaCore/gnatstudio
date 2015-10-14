@@ -64,6 +64,22 @@ KP-61-O923-032 GPS: tooltips could be drawn outside of the screen
 
   Workaround: Arrange the editor to avoid the entity to be close to borders.
 
+KP-61-O918-018 WB: no rule to make target `*-stubs.o' error
+
+  Problem:    When building VxWorks 653 2.x application projects converted to
+              Ada project, and when the application project files are not
+              located inside the workspace, for example when they are located
+              in a git repository, the project cannot be built because the
+              generated $(SSL_NAME)-stubs.o file cannot be located.
+              The error reported by Workbench is:
+              no rule to make target `$(SSL_NAME)-stubs.o'
+
+  Status:     This was fixed in 2.10 on 2015-09-23
+
+  Workaround: Edit the makefile of the project (usually named gnat.makefile
+              file) and replace the occurrences of $(WS_ROOT_DIR) by
+              $(PRJ_ROOT_DIR)/..
+
 KP-61-O910-041 GB: error parsing GPR file
 
   Problem:    When displaying the GNATbench properties for a project having a
