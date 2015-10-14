@@ -19,22 +19,22 @@ with Default_Preferences;       use Default_Preferences;
 with Generic_Views;             use Generic_Views;
 
 with Glib.Object;               use Glib.Object;
-with Glib.Properties;           use Glib.Properties;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Event_Box;             use Gtk.Event_Box;
-with Gtk.Frame;                 use Gtk.Frame;
+with Gtk.Grid;                  use Gtk.Grid;
 with Gtk.Label;                 use Gtk.Label;
 with Gtkada.MDI;                use Gtkada.MDI;
+with Gtk.Notebook;              use Gtk.Notebook;
+with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Separator;             use Gtk.Separator;
-with Gtk.Table;                 use Gtk.Table;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtk.Viewport;              use Gtk.Viewport;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
@@ -56,9 +56,10 @@ package body GPS.Kernel.Preferences_Views is
    --  Called when the preferences have changed
 
    type Preferences_Editor_Record is new Generic_Views.View_Record with record
-      View              : Gtk_Tree_View;
-      Model             : Gtk_Tree_Store;
-      Current_Selection : Gtk_Widget;
+      Pages_Tree         : Gtk_Tree_View;
+      Model              : Gtk_Tree_Store;
+      Pages_Notebook     : Gtk_Notebook;
+      Current_Page_Index : Gint;
    end record;
    --  Preferences editor view record. This record only encapsulates needed
    --  for callbacks (e.g: Selection_Changed).
@@ -80,7 +81,7 @@ package body GPS.Kernel.Preferences_Views is
       Local_Config              => False,
       Group                     => Group_Default,
       Areas                     => Gtkada.MDI.Both,
-      Default_Width             => 700,
+      Default_Width             => 800,
       Default_Height            => 700,
       Commands_Category         => -"/Edit/Preferences",
       Add_Close_Button_On_Float => True,
@@ -104,17 +105,14 @@ package body GPS.Kernel.Preferences_Views is
       Iter      : Gtk_Tree_Iter;
       M         : Gtk_Tree_Model;
    begin
-      if Pref_View.Current_Selection /= null then
-         Set_Child_Visible (Pref_View.Current_Selection, False);
-         Pref_View.Current_Selection := null;
-      end if;
-
-      Get_Selected (Get_Selection (Pref_View.View), M, Iter);
+      Get_Selected (Get_Selection (Pref_View.Pages_Tree), M, Iter);
 
       if Iter /= Null_Iter then
-         Pref_View.Current_Selection :=
-           Gtk_Widget (Get_Object (Pref_View.Model, Iter, 1));
-         Set_Child_Visible (Pref_View.Current_Selection, True);
+         --  Get the newly selected page index from the model and
+         --  set it as the current page to display for the notebook.
+         Pref_View.Current_Page_Index := Get_Int (Pref_View.Model, Iter, 1);
+         Pref_View.Pages_Notebook.Set_Current_Page
+           (Pref_View.Current_Page_Index);
       end if;
    end Selection_Changed;
 
@@ -128,7 +126,9 @@ package body GPS.Kernel.Preferences_Views is
       Pref   : Default_Preferences.Preference) is
       pragma Unreferenced (Self, Kernel);
    begin
-      Pref.Update_On_Pref_Changed (Get_GObject_To_Update (Pref));
+      if Has_Gobject_To_Update (Pref) then
+         Pref.Update_On_Pref_Changed (Get_GObject_To_Update (Pref));
+      end if;
    end Execute;
 
    ----------------
@@ -138,21 +138,21 @@ package body GPS.Kernel.Preferences_Views is
    function Initialize
      (Self : access Preferences_Editor_Record'Class) return Gtk_Widget
    is
-      Manager  : constant GPS_Preferences :=
-                   GPS_Preferences (Self.Kernel.Preferences);
-      Filename : constant Virtual_File := Self.Kernel.Preferences_File;
-
-      Main_Table        : Gtk_Table;
+      Manager        : constant GPS_Preferences :=
+                     GPS_Preferences (Self.Kernel.Preferences);
+      Filename       : constant Virtual_File := Self.Kernel.Preferences_File;
+      Main_Pane      : Gtk_Paned;
 
       procedure Select_First_Page;
       --  Select the first page of preferences to be active in the Tree_View.
       --  This procedure is called right after the initialization.
 
       function Find_Or_Create_Page
-        (Name : String; Widget : Gtk_Widget) return Gtk_Widget;
-      --  Return the iterator in Model matching Name.
-      --  If no such page already exists, then eithe Widget (if non null) is
-      --  inserted for it, or a new table is created and inserted
+        (Name : String; Widget : Gtk_Widget) return Gint;
+      --  Return the page index stored in the Gtk_Tree_Model.
+      --  If no such page already exists, then either Widget (if non null) is
+      --  inserted for it, or a new page is created and appended to the
+      --  notebook.
 
       -----------------------
       -- Select_First_Page --
@@ -167,9 +167,7 @@ package body GPS.Kernel.Preferences_Views is
          if First_Iter /= Null_Iter then
             First_Page_Path := Self.Model.Get_Path (First_Iter);
 
-            Set_Cursor (Self.View, First_Page_Path, null, False);
-            Self.Current_Selection
-              := Gtk_Widget (Get_Object (Self.Model, First_Iter, 1));
+            Set_Cursor (Self.Pages_Tree, First_Page_Path, null, False);
          end if;
       end Select_First_Page;
 
@@ -178,13 +176,14 @@ package body GPS.Kernel.Preferences_Views is
       -------------------------
 
       function Find_Or_Create_Page
-        (Name : String; Widget : Gtk_Widget) return Gtk_Widget
+        (Name : String; Widget : Gtk_Widget) return Gint
       is
-         Current     : Gtk_Tree_Iter := Null_Iter;
-         Child       : Gtk_Tree_Iter;
-         First, Last : Integer := Name'First;
-         Table       : Gtk_Table;
-         W           : Gtk_Widget;
+         Current       : Gtk_Tree_Iter := Null_Iter;
+         Child         : Gtk_Tree_Iter;
+         First, Last   : Integer := Name'First;
+         Page          : Gtk_Grid;
+         Scrolled_Page : Gtk_Scrolled_Window;
+         W             : Gtk_Widget;
 
       begin
          while First <= Name'Last loop
@@ -211,23 +210,29 @@ package body GPS.Kernel.Preferences_Views is
 
             if Child = Null_Iter then
                if Widget = null then
-                  Gtk_New (Table, Rows => 0, Columns => 2,
-                           Homogeneous => False);
-                  Set_Row_Spacings (Table, 1);
-                  Set_Col_Spacings (Table, 5);
-                  W := Gtk_Widget (Table);
+                  Gtk_New (Page);
+                  Page.Set_Margin_Start (10);
+                  Page.Set_Margin_End (10);
+                  Page.Set_Column_Spacing (5);
+                  Page.Set_Row_Spacing (5);
+                  Page.Set_Column_Homogeneous (False);
 
+                  Gtk_New (Scrolled_Page);
+                  Scrolled_Page.Set_Policy
+                    (Policy_Automatic, Policy_Automatic);
+                  Scrolled_Page.Add (Page);
+
+                  W := Gtk_Widget (Scrolled_Page);
                else
                   W := Widget;
                end if;
 
+               Self.Pages_Notebook.Append_Page (Child     => W,
+                                                Tab_Label => null);
+
                Append (Self.Model, Child, Current);
                Set (Self.Model, Child, 0, Name (First .. Last - 1));
-               Set (Self.Model, Child, 1, GObject (W));
-
-               Attach (Main_Table, W, 1, 2, 2, 3,
-                       Ypadding => 0, Xpadding => 10);
-               Set_Child_Visible (W, False);
+               Set (Self.Model, Child, 1, Self.Pages_Notebook.Get_N_Pages - 1);
             end if;
 
             Current := Child;
@@ -235,29 +240,26 @@ package body GPS.Kernel.Preferences_Views is
             First := Last + 1;
          end loop;
 
-         return Gtk_Widget (Get_Object (Self.Model, Current, 1));
+         return  Get_Int (Self.Model, Current, 1);
       end Find_Or_Create_Page;
 
-      Frame          : Gtk_Frame;
-      Table          : Gtk_Table;
-      Col            : Gtk_Tree_View_Column;
-      Render         : Gtk_Cell_Renderer_Text;
-      Num            : Gint;
-      Scrolled       : Gtk_Scrolled_Window;
-      Pref           : Preference;
-      Row            : Guint;
-      Backup_Created : Boolean;
-      Widget         : Gtk_Widget;
-      Event          : Gtk_Event_Box;
-      Label          : Gtk_Label;
-      Separator      : Gtk_Separator;
-      C              : Default_Preferences.Cursor;
-      Tmp            : Gtk_Widget;
-      Backup_File    : constant Virtual_File :=
-                         Create (Full_Filename => Filename.Full_Name & ".bkp");
+      Page                    : Gtk_Grid;
+      Scrolled_Page           : Gtk_Scrolled_Window;
+      Scrolled_Page_Viewport  : Gtk_Viewport;
+      Col                     : Gtk_Tree_View_Column;
+      Render                  : Gtk_Cell_Renderer_Text;
+      Num                     : Gint;
+      Scrolled_Pages_Tree     : Gtk_Scrolled_Window;
+      Pref                    : Preference;
+      Backup_Created          : Boolean;
+      Widget                  : Gtk_Widget;
+      Event                   : Gtk_Event_Box;
+      Label                   : Gtk_Label;
+      C                       : Default_Preferences.Cursor;
+      Backup_File             : constant Virtual_File :=
+                        Create (Full_Filename => Filename.Full_Name & ".bkp");
 
-      pragma Unreferenced (Tmp, Num);
-
+      pragma Unreferenced (Num);
    begin
       Filename.Copy (Backup_File.Full_Name, Success => Backup_Created);
 
@@ -266,45 +268,60 @@ package body GPS.Kernel.Preferences_Views is
 
       Manager.Set_Editor (Self);
 
-      Gtk_New (Main_Table, Rows => 3, Columns => 2, Homogeneous => False);
-      Self.Pack_Start (Main_Table);
+      --  Create an horizontal paned view and add it to the Preferences
+      --  view.
+      Gtk_New_Hpaned (Main_Pane);
+      Self.Pack_Start (Main_Pane);
 
-      Gtk_New (Frame);
-      Main_Table.Attach (Frame, 0, 1, 0, 3);
+      --  Create the scrolled window which will contain the pages tree view
+      --  on the left side of the paned view.
+      Gtk_New (Scrolled_Pages_Tree);
+      Scrolled_Pages_Tree.Set_Policy (Policy_Never, Policy_Automatic);
+      Main_Pane.Pack1 (Child  => Scrolled_Pages_Tree,
+                       Resize => False,
+                       Shrink => False);
 
-      Gtk_New_Hseparator (Separator);
-      Main_Table.Attach (Separator, 1, 2, 1, 2, Yoptions => 0, Ypadding => 1);
+      --  Create the notebook window which will contain the selected page
+      --  on the right side of the paned view.
+      Gtk_New (Self.Pages_Notebook);
+      Self.Pages_Notebook.Set_Show_Border (False);
+      Self.Pages_Notebook.Set_Show_Tabs (False);
+      Main_Pane.Pack2 (Child  => Self.Pages_Notebook,
+                       Resize => True,
+                       Shrink => False);
 
-      Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Never, Policy_Automatic);
-      Frame.Add (Scrolled);
-
-      Gtk_New (Self.Model, (0 => GType_String, 1 => GType_Object));
-      Gtk_New (Self.View, Self.Model);
-      Scrolled.Add (Self.View);
-      Unref (Self.Model);
-      Self.View.Set_Headers_Visible (False);
+      --  Create the pages tree view and add it to its parent scrolled window
+      Gtk_New (Self.Model, (0 => GType_String, 1 => GType_Int));
+      Gtk_New (Self.Pages_Tree, Self.Model);
+      Scrolled_Pages_Tree.Add (Self.Pages_Tree);
+      Self.Pages_Tree.Set_Headers_Visible (False);
 
       Gtk_New (Col);
-      Num := Self.View.Append_Column (Col);
+      Num := Self.Pages_Tree.Append_Column (Col);
       Gtk_New (Render);
       Col.Pack_Start (Render, Expand => True);
       Col.Add_Attribute (Render, "text", 0);
 
       Widget_Callback.Object_Connect
-        (Get_Selection (Self.View), Gtk.Tree_Selection.Signal_Changed,
+        (Get_Selection (Self.Pages_Tree),
+         Gtk.Tree_Selection.Signal_Changed,
          Selection_Changed'Unrestricted_Access,
          Self);
 
+      --  For each registered preference, create or find the corresponding
+      --  preference page and add the preferences widget to it.
       C := Manager.Get_First_Reference;
       loop
          Pref := Get_Pref (C);
          exit when Pref = null;
 
          if Pref.Get_Page /= "" then
-            Table := Gtk_Table (Find_Or_Create_Page (Pref.Get_Page, null));
-            Row := Get_Property (Table, N_Rows_Property);
-            Resize (Table, Rows => Row + 1, Columns => 2);
+            --  Get/Create the page associated to this preference
+            Scrolled_Page := Gtk_Scrolled_Window
+              (Self.Pages_Notebook.Get_Nth_Page
+                 (Find_Or_Create_Page (Pref.Get_Page, null)));
+            Scrolled_Page_Viewport := Gtk_Viewport (Scrolled_Page.Get_Child);
+            Page := Gtk_Grid (Scrolled_Page_Viewport.Get_Child);
 
             if Pref.Editor_Needs_Label then
                Gtk_New (Event);
@@ -312,17 +329,25 @@ package body GPS.Kernel.Preferences_Views is
                Event.Add (Label);
                Event.Set_Tooltip_Text (Pref.Get_Doc);
                Label.Set_Alignment (0.0, 0.5);
-               Table.Attach (Event, 0, 1, Row, Row + 1,
-                             Xoptions => Fill, Yoptions => 0);
+
+               Page.Attach (Child  => Event,
+                            Left   => 0,
+                            Top    => Page.Get_Baseline_Row,
+                            Width  => 1,
+                            Height => 1);
 
                Widget := Edit
                  (Pref      => Pref,
                   Manager   => Manager);
 
                if Widget /= null then
-                  Table.Attach (Widget, 1, 2, Row, Row + 1, Yoptions => 0);
+                  Widget.Set_Hexpand (False);
+                  Page.Attach (Child  => Widget,
+                               Left   => 1,
+                               Top    => Page.Get_Baseline_Row,
+                               Width  => 1,
+                               Height => 1);
                end if;
-
             else
                Widget := Edit
                  (Pref      => Pref,
@@ -330,9 +355,15 @@ package body GPS.Kernel.Preferences_Views is
                Widget.Set_Tooltip_Text (Pref.Get_Doc);
 
                if Widget /= null then
-                  Table.Attach (Widget, 0, 2, Row, Row + 1, Yoptions => 0);
+                  Widget.Set_Hexpand (False);
+                  Page.Attach (Child  => Widget,
+                               Left   => 0,
+                               Top    => Page.Get_Baseline_Row,
+                               Width  => 1,
+                               Height => 1);
                end if;
             end if;
+            Page.Set_Baseline_Row (Page.Get_Baseline_Row + 1);
          end if;
 
          Manager.Next (C);
@@ -341,10 +372,13 @@ package body GPS.Kernel.Preferences_Views is
       Self.Set_Can_Focus (True);
 
       --  Show all pages for more convenient access
-      Self.View.Expand_All;
+      Self.Pages_Tree.Expand_All;
 
+      --  Register a hook function which will update all the prefernces
+      --  widgets when preferences changes.
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
 
+      --  Select and display the first page when opening the Preferences view
       Select_First_Page;
 
       return Gtk_Widget (Self);

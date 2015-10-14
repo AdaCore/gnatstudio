@@ -209,7 +209,15 @@ package body Default_Preferences is
 
    function Get_GObject_To_Update
      (Pref : not null access Preference_Record) return GObject is
-      (Preferences_GObjects_Map (Pref.Name.all));
+     (Preferences_GObjects_Map (Pref.Name.all));
+
+   --------------------------------
+   -- Pref_Has_Gobject_To_Update --
+   --------------------------------
+
+   function Has_GObject_To_Update
+     (Pref : not null access Preference_Record) return Boolean is
+     (Preferences_GObjects_Map.Contains (Pref.Name.all));
 
    -----------------------
    -- From_Multi_String --

@@ -73,6 +73,11 @@ package Default_Preferences is
    --  Preferences_GObject_Map. This function is used to retrieve the GObject
    --  we want to update when preferences changed.
 
+   function Has_Gobject_To_Update
+     (Pref : not null access Preference_Record) return Boolean;
+   --  Return True if a the Preferences_Gobjects_Map contains a key association
+   --  for the preference given in parameter, False otherwise.
+
    procedure Notify_Pref_Changed
      (Self : not null access Preferences_Manager_Record;
       Pref : not null access Preference_Record'Class) is null;

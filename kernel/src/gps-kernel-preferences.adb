@@ -84,6 +84,7 @@ package body GPS.Kernel.Preferences is
       Font : Pango_Font_Description;
    begin
       Self.Nested_Pref_Changed := Self.Nested_Pref_Changed + 1;
+
       if Pref = Default_Font then
          Font := Copy (Default_Font.Get_Pref_Font);
          Set_Size (Font, Gint (Float (Get_Size (Font)) * 0.8));
