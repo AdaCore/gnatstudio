@@ -217,7 +217,17 @@ package body Default_Preferences is
 
    function Has_GObject_To_Update
      (Pref : not null access Preference_Record) return Boolean is
-     (Preferences_GObjects_Map.Contains (Pref.Name.all));
+     (not Preferences_GObjects_Map.Is_Empty
+      and then Preferences_GObjects_Map.Contains (Pref.Name.all));
+
+   -----------------------------------
+   -- Remove_All_GObjects_To_Update --
+   -----------------------------------
+
+   procedure Remove_All_GObjects_To_Update is
+   begin
+      Preferences_GObjects_Map.Clear;
+   end Remove_All_GObjects_To_Update;
 
    -----------------------
    -- From_Multi_String --
