@@ -23,18 +23,20 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Event_Box;             use Gtk.Event_Box;
-with Gtk.Grid;                  use Gtk.Grid;
+with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.Label;                 use Gtk.Label;
+with Gtk.List_Box;              use Gtk.List_Box;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Size_Group;            use Gtk.Size_Group;
+with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Viewport;              use Gtk.Viewport;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
@@ -63,8 +65,27 @@ package body GPS.Kernel.Preferences_Views is
    end record;
    --  Preferences editor view record. This record only encapsulates needed
    --  for callbacks (e.g: Selection_Changed).
-
    type Preferences_Editor is access all Preferences_Editor_Record'Class;
+
+   type Preferences_Group_Record is new Gtk_Frame_Record with record
+      Label_Size_Group       : Gtk_Size_Group;
+      Pref_Widget_Size_Group : Gtk_Size_Group;
+      Preferences_List       : Gtk_List_Box;
+   end record;
+   --  Preferences group view record. The Gtk_Size_Group widgets are used
+   --  to align the labels and teh preferences widgets.
+   type Preferences_Group is access all Preferences_Group_Record'Class;
+
+   package Preferences_Group_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (String, Preferences_Group, Ada.Strings.Hash, "=");
+
+   type Preferences_Page_Record is new Gtk_Scrolled_Window_Record with record
+      Groups_Map : Preferences_Group_Maps.Map;
+      Page_Box   : Gtk_Box;
+   end record;
+   --  Preferences page view record. The Groups_Map field is used to keep track
+   --  of the preferences groups contained in a page.
+   type Preferences_Page is access all Preferences_Page_Record'Class;
 
    function Initialize
      (Self : access Preferences_Editor_Record'Class) return Gtk_Widget;
@@ -148,11 +169,70 @@ package body GPS.Kernel.Preferences_Views is
       --  This procedure is called right after the initialization.
 
       function Find_Or_Create_Page
-        (Name : String; Widget : Gtk_Widget) return Gint;
+        (Page_Name : String; Widget : Gtk_Widget) return Gtk_Tree_Iter;
       --  Return the page index stored in the Gtk_Tree_Model.
       --  If no such page already exists, then either Widget (if non null) is
       --  inserted for it, or a new page is created and appended to the
-      --  notebook.
+      --  notebook
+
+      function Find_Or_Create_Group
+        (Page_Name  : String;
+         Group_Name : String;
+         Widget     : Gtk_Widget) return Preferences_Group;
+      --  Return the widget associated with a specific group. If a widget
+      --  associated with the group name is already in the model,
+      --  this function returns it. If not, it creates a widget for the group
+      --  given in paremeter and appends it to the model.
+
+      function Get_Page_Name (Pref_Name : String) return String;
+      --  Return the page name in the preference name conatined in the
+      --  preference name.
+
+      function Get_Group_Name (Pref_Name : String) return String;
+      --  Return the group name in the preference name, if any. If not, return
+      --  an empty string.
+
+      -------------------
+      -- Get_Page_Name --
+      -------------------
+
+      function Get_Page_Name (Pref_Name : String) return String is
+         Current_Index : Integer := Pref_Name'First;
+      begin
+         --  Find the delimitor for group names
+         while Current_Index <= Pref_Name'Last
+           and then Pref_Name (Current_Index) /= ':' loop
+            Current_Index := Current_Index + 1;
+         end loop;
+
+         --  No group specified in the preference name
+         if Current_Index >= Pref_Name'Last then
+            return Pref_Name;
+         end if;
+
+         return Pref_Name (Pref_Name'First .. Current_Index - 1);
+      end Get_Page_Name;
+
+      --------------------
+      -- Get_Group_Name --
+      --------------------
+
+      function Get_Group_Name (Pref_Name : String) return String is
+         Current_Index : Integer := Pref_Name'First;
+      begin
+         --  Find the delimitor for group names
+         while Current_Index <= Pref_Name'Last
+           and then Pref_Name (Current_Index) /= ':' loop
+            Current_Index := Current_Index + 1;
+         end loop;
+
+         --  No group specified in the preference name
+         if Current_Index >= Pref_Name'Last then
+            return "";
+         end if;
+
+         return Pref_Name (Current_Index + 1 .. Pref_Name'Last);
+      end Get_Group_Name;
 
       -----------------------
       -- Select_First_Page --
@@ -171,26 +251,79 @@ package body GPS.Kernel.Preferences_Views is
          end if;
       end Select_First_Page;
 
+      --------------------------
+      -- Find_Or_Create_Group --
+      --------------------------
+
+      function Find_Or_Create_Group
+        (Page_Name  : String;
+         Group_Name : String;
+         Widget     : Gtk_Widget) return Preferences_Group
+      is
+         Page_Iter    : Gtk_Tree_Iter;
+         Page_Index   : Gint;
+         Page         : Preferences_Page;
+         Group        : Preferences_Group := null;
+         use Preferences_Group_Maps;
+      begin
+         --  Get the page where we want to insert the preferences group
+         Page_Iter := Find_Or_Create_Page (Page_Name, Widget);
+         Page_Index := Get_Int (Self.Model, Page_Iter, 1);
+         Page := Preferences_Page
+           (Self.Pages_Notebook.Get_Nth_Page (Page_Index));
+
+         --  If the group has already been created for this page, just retrieve
+         --  if from the map
+         if Page.Groups_Map.Contains (Group_Name) then
+            Group := Page.Groups_Map (Group_Name);
+         end if;
+
+         --  If the group doesn't exist for this page yet, create a new one
+         --  and insert in the map
+         if Group = null then
+            Group := new Preferences_Group_Record;
+            Gtk.Frame.Initialize (Group);
+            Group.Set_Border_Width (3);
+
+            Gtk_New (Group.Label_Size_Group);
+            Gtk_New (Group.Pref_Widget_Size_Group);
+            Gtk_New (Group.Preferences_List);
+            Group.Preferences_List.Set_Selection_Mode (Selection_None);
+            Get_Style_Context (Group.Preferences_List).Add_Class
+              ("gps-preferences-groups");
+
+            Group.Add (Group.Preferences_List);
+
+            Page.Page_Box.Pack_Start (Group);
+
+            if Group_Name /= "" then
+               Group.Set_Label (Group_Name);
+            end if;
+
+            Page.Groups_Map.Insert (Group_Name, Group);
+         end if;
+
+         return Group;
+      end Find_Or_Create_Group;
+
       -------------------------
       -- Find_Or_Create_Page --
       -------------------------
 
       function Find_Or_Create_Page
-        (Name : String; Widget : Gtk_Widget) return Gint
+        (Page_Name : String; Widget : Gtk_Widget) return Gtk_Tree_Iter
       is
          Current       : Gtk_Tree_Iter := Null_Iter;
          Child         : Gtk_Tree_Iter;
-         First, Last   : Integer := Name'First;
-         Page          : Gtk_Grid;
-         Scrolled_Page : Gtk_Scrolled_Window;
+         First, Last   : Integer := Page_Name'First;
+         Page          : Preferences_Page;
          W             : Gtk_Widget;
-
       begin
-         while First <= Name'Last loop
+         while First <= Page_Name'Last loop
             Last := First;
 
-            while Last <= Name'Last
-              and then Name (Last) /= '/'
+            while Last <= Page_Name'Last
+              and then Page_Name (Last) /= '/'
             loop
                Last := Last + 1;
             end loop;
@@ -203,26 +336,27 @@ package body GPS.Kernel.Preferences_Views is
 
             while Child /= Null_Iter
               and then
-                Get_String (Self.Model, Child, 0) /= Name (First .. Last - 1)
+                Get_String (Self.Model, Child, 0) /= Page_Name
+              (First .. Last - 1)
             loop
                Next (Self.Model, Child);
             end loop;
 
             if Child = Null_Iter then
                if Widget = null then
-                  Gtk_New (Page);
-                  Page.Set_Margin_Start (10);
-                  Page.Set_Margin_End (10);
-                  Page.Set_Column_Spacing (5);
-                  Page.Set_Row_Spacing (5);
-                  Page.Set_Column_Homogeneous (False);
+                  --  Create a new page
+                  Page := new Preferences_Page_Record;
+                  Gtk.Scrolled_Window.Initialize (Page);
+                  Page.Set_Policy (Policy_Automatic, Policy_Automatic);
 
-                  Gtk_New (Scrolled_Page);
-                  Scrolled_Page.Set_Policy
-                    (Policy_Automatic, Policy_Automatic);
-                  Scrolled_Page.Add (Page);
+                  --  Create the new Vbox which will hold the preferences
+                  --  groups
+                  Gtk_New_Vbox (Page.Page_Box);
+                  Page.Page_Box.Set_Margin_Start (10);
+                  Page.Page_Box.Set_Margin_End (10);
+                  Page.Add (Page.Page_Box);
 
-                  W := Gtk_Widget (Scrolled_Page);
+                  W := Gtk_Widget (Page);
                else
                   W := Widget;
                end if;
@@ -231,7 +365,7 @@ package body GPS.Kernel.Preferences_Views is
                                                 Tab_Label => null);
 
                Append (Self.Model, Child, Current);
-               Set (Self.Model, Child, 0, Name (First .. Last - 1));
+               Set (Self.Model, Child, 0, Page_Name (First .. Last - 1));
                Set (Self.Model, Child, 1, Self.Pages_Notebook.Get_N_Pages - 1);
             end if;
 
@@ -240,12 +374,10 @@ package body GPS.Kernel.Preferences_Views is
             First := Last + 1;
          end loop;
 
-         return  Get_Int (Self.Model, Current, 1);
+         return  Current;
       end Find_Or_Create_Page;
-
-      Page                    : Gtk_Grid;
-      Scrolled_Page           : Gtk_Scrolled_Window;
-      Scrolled_Page_Viewport  : Gtk_Viewport;
+      Group                   : Preferences_Group;
+      Group_Row               : Gtk_Box;
       Col                     : Gtk_Tree_View_Column;
       Render                  : Gtk_Cell_Renderer_Text;
       Num                     : Gint;
@@ -271,7 +403,9 @@ package body GPS.Kernel.Preferences_Views is
       --  Create an horizontal paned view and add it to the Preferences
       --  view.
       Gtk_New_Hpaned (Main_Pane);
-      Self.Pack_Start (Main_Pane);
+      Self.Pack_Start (Child   => Main_Pane,
+                       Expand  => True,
+                       Fill    => True);
 
       --  Create the scrolled window which will contain the pages tree view
       --  on the left side of the paned view.
@@ -316,12 +450,13 @@ package body GPS.Kernel.Preferences_Views is
          exit when Pref = null;
 
          if Pref.Get_Page /= "" then
-            --  Get/Create the page associated to this preference
-            Scrolled_Page := Gtk_Scrolled_Window
-              (Self.Pages_Notebook.Get_Nth_Page
-                 (Find_Or_Create_Page (Pref.Get_Page, null)));
-            Scrolled_Page_Viewport := Gtk_Viewport (Scrolled_Page.Get_Child);
-            Page := Gtk_Grid (Scrolled_Page_Viewport.Get_Child);
+            Group := Find_Or_Create_Group
+              (Page_Name  => Get_Page_Name (Pref.Get_Page),
+               Group_Name => Get_Group_Name (Pref.Get_Page),
+               Widget     => null);
+
+            Gtk_New_Hbox (Group_Row);
+            Group_Row.Set_Border_Width (3);
 
             if Pref.Editor_Needs_Label then
                Gtk_New (Event);
@@ -330,11 +465,8 @@ package body GPS.Kernel.Preferences_Views is
                Event.Set_Tooltip_Text (Pref.Get_Doc);
                Label.Set_Alignment (0.0, 0.5);
 
-               Page.Attach (Child  => Event,
-                            Left   => 0,
-                            Top    => Page.Get_Baseline_Row,
-                            Width  => 1,
-                            Height => 1);
+               Group.Label_Size_Group.Add_Widget (Event);
+               Group_Row.Pack_Start (Event);
 
                Widget := Edit
                  (Pref      => Pref,
@@ -342,11 +474,8 @@ package body GPS.Kernel.Preferences_Views is
 
                if Widget /= null then
                   Widget.Set_Hexpand (False);
-                  Page.Attach (Child  => Widget,
-                               Left   => 1,
-                               Top    => Page.Get_Baseline_Row,
-                               Width  => 1,
-                               Height => 1);
+                  Group.Pref_Widget_Size_Group.Add_Widget (Widget);
+                  Group_Row.Pack_Start (Widget);
                end if;
             else
                Widget := Edit
@@ -356,14 +485,12 @@ package body GPS.Kernel.Preferences_Views is
 
                if Widget /= null then
                   Widget.Set_Hexpand (False);
-                  Page.Attach (Child  => Widget,
-                               Left   => 0,
-                               Top    => Page.Get_Baseline_Row,
-                               Width  => 1,
-                               Height => 1);
+                  Group.Pref_Widget_Size_Group.Add_Widget (Widget);
+                  Group_Row.Pack_Start (Widget);
                end if;
             end if;
-            Page.Set_Baseline_Row (Page.Get_Baseline_Row + 1);
+
+            Group.Preferences_List.Add (Group_Row);
          end if;
 
          Manager.Next (C);

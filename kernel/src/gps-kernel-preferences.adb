@@ -345,7 +345,7 @@ package body GPS.Kernel.Preferences is
         (Kernel.Preferences,
          Name  => "GPS6-Gtk-Theme-Name",  --  synchronize with colorschemes.py
          Label => -"Theme",
-         Page  => -"General",
+         Page  => -"General:Appearance",
          Doc   => -("Select a theme from the list to change the general "
                      & "appearance of GPS"));
 
@@ -358,7 +358,7 @@ package body GPS.Kernel.Preferences is
          Doc     => -("The default style used in GPS. The color indicates the"
            & " what should be used for the background color of windows (for"
            & " editors check the Editor/Colors preference page)."),
-         Page    => -"General",
+         Page    => -"General:Appearance",
          Label   => -"Default font");
 
       Small_Font := Create
@@ -377,7 +377,7 @@ package body GPS.Kernel.Preferences is
          Doc     => -("Fixed pitch (monospace) font used in the various views "
                       & "(Outline View, Clipboard View, Messages, ...)"),
          Label   => -"Fixed view font",
-         Page    => -"General");
+         Page    => -"General:Appearance");
 
       GPS.Kernel.Charsets.Register_Preferences (Kernel);
 
@@ -397,7 +397,7 @@ package body GPS.Kernel.Preferences is
          Doc      =>
          -"Whether a splash screen should be displayed when starting GPS",
          Default => True,
-         Page    => -"General");
+         Page    => -"General:Behavior");
 
       Display_Welcome := Create
         (Manager => Kernel.Preferences,
@@ -406,7 +406,7 @@ package body GPS.Kernel.Preferences is
          Doc     => -("Enabled when GPS should display the welcome window"
                       & " for the selection of the project"),
          Default => True,
-         Page    => -"General");
+         Page    => -"General:Behavior");
 
       Auto_Save := Create
         (Manager => Kernel.Preferences,
@@ -415,7 +415,7 @@ package body GPS.Kernel.Preferences is
          Doc     => -("Whether unsaved files/projects should be saved"
                       & " automatically before calling external tools"),
          Default => True,
-         Page    => -"General");
+         Page    => -"General:Behavior");
 
       Save_Desktop_On_Exit := Create
         (Manager => Kernel.Preferences,
@@ -423,14 +423,14 @@ package body GPS.Kernel.Preferences is
          Label   => -"Save desktop on exit",
          Doc     => -"Whether the desktop should be saved when exiting GPS",
          Default => True,
-         Page    => -"General");
+         Page    => -"General:Behavior");
 
       Save_Editor_Desktop := Editor_Desktop_Policy_Prefs.Create
         (Manager => Kernel.Preferences,
          Name    => "General-Editor-Desktop-Policy",
          Label   => "Save editor in desktop",
          Doc     => -"When to save source editors in the desktop",
-         Page    => -"General",
+         Page    => -"General:Behavior",
          Default => From_Project);
 
       Multi_Language_Builder := Multi_Language_Builder_Policy_Prefs.Create
@@ -442,7 +442,7 @@ package body GPS.Kernel.Preferences is
            "  - gprbuild" & ASCII.LF &
            "  - gnatmake (not recommended, not supported for "
            & "multi-language builds)"),
-         Page    => -"General",
+         Page    => -"General:Behavior",
          Default => Default_Builder);
 
       Hyper_Mode := Create
@@ -453,7 +453,7 @@ package body GPS.Kernel.Preferences is
          -("Whether to allow hyper links to appear in editors when the"
           & " Control key is pressed."),
          Label   => -"Hyper links",
-         Page    => -"General");
+         Page    => -"General:Behavior");
 
       Tip_Of_The_Day := Create
         (Manager => Kernel.Preferences,
@@ -461,7 +461,7 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Doc     => -("Whether GPS should display the Tip of the Day dialog"),
          Label   => -"Tip of the Day",
-         Page    => -"General");
+         Page    => -"General:Behavior");
 
       -- Source Editor --
 

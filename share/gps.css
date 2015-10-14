@@ -68,6 +68,19 @@ GtkTextView.readonly {
    opacity: 1.0;
 }
 
+/**************************
+ * GPS preferences groups *
+ **************************/
+
+.gps-preferences-groups {
+   background-color: @notebook_background;
+}
+
+.gps-preferences-groups GtkListBoxRow:hover {
+   /* Don't prelight the preferences groups rows when hovering */
+   background-color: @notebook_background;
+}
+
 /*********************
  * Menus
  *********************/

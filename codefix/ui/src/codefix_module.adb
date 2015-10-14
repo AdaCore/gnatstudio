@@ -1442,7 +1442,7 @@ package body Codefix_Module is
          Label => -"Remove policy when fixing code",
          Doc   => -("Prefered way to fix code when part have to be " &
            "removed."),
-         Page    => -"General",
+         Page    => -"General:Behavior",
          Default => Always_Remove);
    end Register_Preferences;
 

@@ -233,7 +233,7 @@ package body GPS.Kernel.Charsets is
         (Get_Preferences (Kernel),
          Name    => "General-Charset",
          Label   => -"Character set",
-         Page    => -"General",
+         Page    => -"General:Charsets",
          Doc     => -("Name of character set to use when reading or saving"
                       & " files. GPS uses unicode internally, but need to"
                       & " convert the files from and to your system's"

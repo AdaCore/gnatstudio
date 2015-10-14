@@ -130,7 +130,7 @@ package body GPS.Kernel.Clipboard is
             Doc     => -("Number of entries stored in the clipboard, that"
               & " can be accessed through Paste Previous. The"
               & " higher the size, the more memory GPS needs"),
-            Page    => -"General",
+            Page    => -"General:Clipboard",
             Minimum => 1,
             Maximum => 1_000);
       end if;
