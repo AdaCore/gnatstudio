@@ -1986,6 +1986,7 @@ vc_msg_dict = {
     'range check might fail': 'VC_RANGE_CHECK',
     'length check might fail': 'VC_LENGTH_CHECK',
     'discriminant check might fail': 'VC_DISCRIMINANT_CHECK',
+    'interrupt might be reserved': 'VC_INTERRUPT_RESERVED',
     'tag check might fail': 'VC_TAG_CHECK',
 
     # VC_Assert_Kind - assertions
