@@ -157,6 +157,28 @@ class JSON_Diagram_File():
         d.ensure()
         return d
 
+    def get_diagram_for_item(self, id):
+        """
+        Return the diagram to use for a given item
+        :return:  (GPS.Diagram, Item)
+        """
+        for d in self.diagrams:
+            d.ensure()
+            it = d.get_item(id)
+            if it:
+                return (d, it)
+        return None
+
+    def clear_selection(self):
+        """
+        Clear the selection in all diagrams.
+        This does not force the creation of diagrams (since if they have not
+        been created yet, they cannot have a selection either.
+        """
+
+        for d in self.diagrams:
+            d.clear_selection()
+
     def __load(self, data):
         """
         Load a JSON string.
@@ -208,6 +230,12 @@ class JSON_Diagram(B.Diagram):
         self.__items = {}  # id -> item
         self.id = json.get('id', None)
         super(JSON_Diagram, self).__init__()
+
+    def get_item(self, id):
+        """
+        Return the item with the given id
+        """
+        return self.__items.get(id)
 
     def ensure(self):
         """

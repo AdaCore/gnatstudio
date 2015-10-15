@@ -41,7 +41,7 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Widget;                use Gtk.Widget;
 with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
@@ -839,19 +839,17 @@ package body Browsers.Scripts is
    is
       View    : constant Browser_View :=
         Browser_View (GPS_MDI_Child (Self).Get_Actual_Widget);
-      Details : aliased Canvas_Event_Details;
       Dummy   : Boolean;
       Context : Selection_Context;
    begin
       Context := Browser_Child_Record (Self.all).Build_Context (Event);
-      if Event /= null then
-         View.Get_View.Set_Details (Details, Event.Button);
-      else
-         View.Get_View.Initialize_Details (Details);
-      end if;
-      Set_Browser_Information (Context, Details);
-      Dummy := Call_Method
-        (View, "on_create_context", Details'Unchecked_Access, Context);
+      declare
+         Details : aliased Canvas_Event_Details :=
+            GPS.Kernel.Contexts.Browser_Information (Context);
+      begin
+         Dummy := Call_Method
+           (View, "on_create_context", Details'Unchecked_Access, Context);
+      end;
       return Context;
    end Build_Context;
 

@@ -609,13 +609,18 @@ package body Browsers.Canvas is
       if Event = null
         or else Get_Event_Type (Event) not in Button_Press .. Button_Release
       then
+         B.View.Initialize_Details (Details);
+         Set_Browser_Information (Context, Details);
+
          --  Look at the current selection
          B.Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
 
       else
          B.View.Set_Details (Details, Event.Button);
          Set_Browser_Information (Context, Details);
-         if Details.Toplevel_Item /= null then
+         if Details.Toplevel_Item /= null
+            and then Details.Toplevel_Item.all in GPS_Item_Record'Class
+         then
             GPS_Item (Details.Toplevel_Item).Set_Context (Context);
          end if;
       end if;
