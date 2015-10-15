@@ -16,11 +16,11 @@ project Syntax is
    package IDE renames Shared.IDE;
 
    package Builder is
-      for Default_Switches ("Ada") use ("-m");
+      for Switches ("Ada") use ("-m");
    end Builder;
 
    package Linker is
-      for Default_Switches ("Ada") use ("-shared-libgcc");
+      for Switches ("Ada") use ("-shared-libgcc");
    end Linker;
 
 end Syntax;

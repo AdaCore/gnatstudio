@@ -10,23 +10,10 @@ project Widgets is
    for Object_Dir use Shared'Object_Dir;
 
    package Compiler extends Shared.Compiler is
-      for Default_Switches ("C") use
-        Shared.Compiler'Default_Switches ("C") & GnatColl_Gtk.Gtk_Include;
+      for Switches ("C") use
+        Shared.Compiler'Switches ("C") & GnatColl_Gtk.Gtk_Include;
    end Compiler;
 
    package IDE renames Shared.IDE;
-
-   package Linker is
-      case Shared.OS is
-         when "Windows_NT" =>
-            null;
-         when "unix" =>
-            --  for Linker_Options use
-            --    GtkAda.Linker'Linker_Options
-            --    & ("-L/usr/X11R6/lib", "-L/usr/X11/lib",
-            --       "-L/usr/X11R6/lib64", "-L/usr/X11/lib64",
-            --       "-lXrender");
-      end case;
-   end Linker;
 
 end Widgets;

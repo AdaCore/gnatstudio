@@ -9,8 +9,8 @@ project Common_UI is
    for Object_Dir use "ui/obj";
 
    package Compiler is
-      for Default_Switches ("Ada")
-        use Common.Compiler'Default_Switches ("Ada");
+      for Switches ("Ada")
+        use Common.Compiler'Switches ("Ada");
    end Compiler;
 
    package IDE renames Common.IDE;

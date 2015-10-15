@@ -11,7 +11,7 @@ project Help is
          when "Windows_NT" =>
             for Implementation ("help_module.display_help")
               use "help_module-display_help_win32.adb";
-         when "unix" =>
+         when "unix" | "osx" =>
             for Implementation ("help_module.display_help")
               use "help_module-display_help_unix.adb";
       end case;

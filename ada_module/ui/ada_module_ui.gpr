@@ -15,7 +15,7 @@ project Ada_Module_UI is
    package IDE renames Shared.IDE;
 
    package Binder is
-      for Default_Switches ("Ada") use ("-E");
+      for Switches ("Ada") use ("-E");
    end Binder;
 
    package Linker renames Shared.Linker;

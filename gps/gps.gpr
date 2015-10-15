@@ -54,11 +54,11 @@ project GPS is
 
       case Shared.Build is
          when "Debug" =>
-           for Default_Switches ("Ada") use ("-m", "-j" & Processors);
+           for Switches ("Ada") use ("-m", "-j" & Processors);
            for Global_Configuration_Pragmas use "gnat_debug.adc";
 
          when "Production" =>
-           for Default_Switches ("Ada") use ("-m", "-j" & Processors);
+           for Switches ("Ada") use ("-m", "-j" & Processors);
            for Global_Configuration_Pragmas use "gnat.adc";
       end case;
    end Builder;
@@ -70,15 +70,15 @@ project GPS is
    package Linker is
       case Shared.OS is
          when "Windows_NT" =>
-            for Default_Switches ("Ada") use ("obj/gps.res", "-mwindows");
-         when "unix" =>
+            for Switches ("Ada") use ("obj/gps.res", "-mwindows");
+         when "unix" | "osx" =>
             null;
       end case;
-      for Default_Switches ("Ada") use Linker'Default_Switches ("Ada")
-         & Shared.Linker'Default_Switches ("Ada");
+      for Switches ("Ada") use Linker'Switches ("Ada")
+         & Shared.Linker'Switches ("Ada");
 
-      --  for Default_Switches ("Ada") use ("-lgmem");
-      --  for Default_Switches ("Ada") use ("-pg");
+      --  for Switches ("Ada") use ("-lgmem");
+      --  for Switches ("Ada") use ("-pg");
    end Linker;
 
    package CodePeer is

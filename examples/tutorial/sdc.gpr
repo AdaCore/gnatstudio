@@ -15,11 +15,11 @@ project Sdc is
       case Build is
 
          when "DEBUG" =>
-            for Default_Switches ("ada") use ("-gnatwe", "-gnaty", "-gnato", "-g");
+            for Switches ("ada") use ("-gnatwe", "-gnaty", "-gnato", "-g");
             for Switches ("screen_output.adb") use ("-gnatwe", "-gnaty", "-g");
 
          when "PRODUCTION" =>
-            for Default_Switches ("ada") use ("-O2", "-gnatn", "-gnatwe", "-gnaty", "-gnatp");
+            for Switches ("ada") use ("-O2", "-gnatn", "-gnatwe", "-gnaty", "-gnatp");
       end case;
    end Compiler;
 
@@ -28,15 +28,15 @@ project Sdc is
       case Build is
 
          when "DEBUG" =>
-            for Default_Switches ("ada") use ("-g");
+            for Switches ("ada") use ("-g");
 
          when "PRODUCTION" =>
-            for Default_Switches ("ada") use ();
+            for Switches ("ada") use ();
       end case;
    end Builder;
 
    package Binder is
-      for Default_Switches ("ada") use ("-static");
+      for Switches ("ada") use ("-static");
    end Binder;
 
    package Ide is

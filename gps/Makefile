@@ -1,3 +1,14 @@
+SYS := $(shell gcc -dumpmachine)
+ifeq ($(OS),Windows_NT)
+	OS := Windows_NT
+else
+	ifneq (, $(findstring darwin, $(SYS)))
+OS := osx
+else
+	OS := unix
+endif
+endif
+
 ifeq ($(OS),Windows_NT)
    LN = cp -p
 else
@@ -11,9 +22,9 @@ PYTHON=python
 Build?=Debug
 
 ifeq ($(Build),Production)
-  GPRBUILD_BUILD_TYPE_FLAGS=-XBuild=Production -XGnatcoll_Build=Production
+  GPRBUILD_BUILD_TYPE_FLAGS=-XBuild=Production -XGnatcoll_Build=Production -XOS=${OS}
 else
-  GPRBUILD_BUILD_TYPE_FLAGS=-XBuild=Debug -XGnatcoll_Build=Debug
+  GPRBUILD_BUILD_TYPE_FLAGS=-XBuild=Debug -XGnatcoll_Build=Debug -XOS=${OS}
 endif
 
 .PHONY: default resources do_links all clean

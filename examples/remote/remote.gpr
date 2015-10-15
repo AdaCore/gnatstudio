@@ -6,7 +6,7 @@ project Remote is
    for Exec_Dir use "obj";
 
    package Builder is
-      for Default_Switches ("ada") use ("-g");
+      for Switches ("ada") use ("-g");
    end Builder;
 
    package Ide is

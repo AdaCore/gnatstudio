@@ -2,11 +2,16 @@ with "gnatcoll";
 
 project Shared is
 
-   type OS_Type is ("unix", "Windows_NT");
+   type OS_Type is ("unix", "osx", "Windows_NT");
    OS : OS_Type := External ("OS", "unix");
 
    type Build_Type is ("Debug", "Production");
    Build : Build_Type := External ("Build", "Debug");
+
+   type Boolean_Type is ("true", "false");
+   Enable_LTO : Boolean_Type := "false";
+   --  Whether to enable link-time-optimization, and removal of
+   --  unused subprograms
 
    for Source_Dirs use ();
    for Object_Dir use "obj";
@@ -17,20 +22,35 @@ project Shared is
    end IDE;
 
    package Compiler is
+      Common := ("-g", "-gnat12");
+      Optimize := ();
+
+      case OS is
+         when "osx" | "Windows_NT" => null;
+         when "unix" =>
+            case Enable_LTO is
+               when "true" =>
+                  Optimize := ("-fdata-sections", "-ffunction-sections",
+                               "-flto");
+               when "false" =>
+                  null;
+            end case;
+      end case;
+
       case Build is
          when "Debug" =>
-            for Default_Switches ("Ada") use
-              ("-g", "-O0", "-gnata", "-gnatVa", "-gnatQ", "-gnatygO",
-               "-gnatwaCJe", "-gnat2012", "-gnateE");
-
-            for Default_Switches ("C") use ("-g", "-O1");
+            for Switches ("Ada") use Common &
+              ("-O0", "-gnata", "-gnatVa", "-gnatQ", "-gnatygO",
+               "-gnatwaCJe", "-gnateE");
+            for Switches ("C") use ("-g", "-O1");
 
          when "Production" =>
-            for Default_Switches ("Ada") use
-              ("-O2", "-gnatn",  "-g",
+            for Switches ("Ada") use Common & Optimize &
+              ("-O2", "-gnatn",
                "-gnatT3", --  Temporary, L403-023.
-               "-gnatws", "-gnat12");
-            for Default_Switches ("C") use ("-g", "-O2");
+               "-gnatws"
+               );
+            for Switches ("C") use Optimize & ("-g", "-O2");
       end case;
    end Compiler;
 
@@ -43,7 +63,24 @@ project Shared is
    package Linker is
       --  ??? missing hack to force libiconv first (working around
       --  a faulty libiconv in macports)
-      for Default_Switches ("Ada") use Clang_Libs & ("-lstdc++");
+      for Switches ("Ada") use Clang_Libs & ("-lstdc++");
+
+      case Enable_LTO is
+         when "true" =>
+            case OS is
+               when "osx" =>
+                  for Switches ("Ada") use Linker'Switches ("Ada")
+                     & ("-Wl,-dead_strip");
+               when "unix" =>
+                  for Switches ("Ada") use Linker'Switches ("Ada")
+                     & ("-Wl,--gc-sections", "-Wl,--print-gc-sections");
+               when others =>
+                  null;
+            end case;
+
+         when "false" =>
+            null;
+      end case;
    end Linker;
 
 end Shared;

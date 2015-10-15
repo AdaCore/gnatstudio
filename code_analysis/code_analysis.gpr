@@ -10,7 +10,7 @@ project Code_Analysis is
    for Object_Dir use Shared'Object_Dir;
 
    package Builder is
-      for Default_Switches ("ada") use ("-g");
+      for Switches ("ada") use ("-g");
    end Builder;
 
    package Compiler renames Shared.Compiler;

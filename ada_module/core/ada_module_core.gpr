@@ -7,7 +7,7 @@ project Ada_Module_Core is
    for Object_Dir use Shared'Object_Dir;
 
    package Builder is
-      for Default_Switches ("Ada") use ("-m");
+      for Switches ("Ada") use ("-m");
    end Builder;
 
    package Compiler renames Shared.Compiler;

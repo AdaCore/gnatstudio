@@ -17,10 +17,10 @@ project Prj_Editor is
    Build : Build_Type := External ("Build", "Debug");
 
    package Builder is
-      for Default_Switches ("Ada") use ("-g", "-m");
+      for Switches ("Ada") use ("-g", "-m");
       case Build is
           when "Debug" =>
-             for Default_Switches ("Ada") use Builder'Default_Switches ("Ada");
+             for Switches ("Ada") use Builder'Switches ("Ada");
              for Global_Configuration_Pragmas use "../gps/gnat_debug.adc";
           when "Production" =>
              for Global_Configuration_Pragmas use "../gps/gnat.adc";
@@ -30,11 +30,11 @@ project Prj_Editor is
    package Compiler renames Shared.Compiler;
 
    package Binder is
-      for Default_Switches ("Ada") use ("-E");
+      for Switches ("Ada") use ("-E");
    end Binder;
 
    package Linker is
-      for Default_Switches ("Ada") use ("-shared-libgcc");
+      for Switches ("Ada") use ("-shared-libgcc");
    end Linker;
 
    package IDE renames Shared.IDE;

@@ -10,7 +10,7 @@ project GNATdoc is
    for Languages use ("Ada");
 
    package Builder is
-      for Default_Switches ("ada") use ("-g");
+      for Switches ("ada") use ("-g");
    end Builder;
 
    package Compiler renames Shared.Compiler;

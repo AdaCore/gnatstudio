@@ -7,11 +7,11 @@ project @_project_name_@ is
    for Object_Dir use "obj";
    
    package Compiler is
-      for Default_Switches ("ada") use ("-g", "-gnatwa", "-gnatQ", "-gnat12");
+      for Switches ("ada") use ("-g", "-gnatwa", "-gnatQ", "-gnat12");
    end Compiler;
 
    package Builder is
-      for Default_Switches ("ada") use ("-g", "-O0");
+      for Switches ("ada") use ("-g", "-O0");
    end Builder;
 
    for Runtime ("Ada") use "ravenscar-sfp-stm32f4";

@@ -8,8 +8,8 @@ project Common is
    for Object_Dir use "core/obj";
 
    package Compiler is
-      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
-      for Default_Switches ("C") use Shared.Compiler'Default_Switches ("C");
+      for Switches ("Ada") use Shared.Compiler'Switches ("Ada");
+      for Switches ("C") use Shared.Compiler'Switches ("C");
       for Switches ("test_htables.adb") use ("-g", "-O2", "-gnatwue");
       for Switches ("s-memory.adb") use ("-g", "-O2", "-gnatpg");
 

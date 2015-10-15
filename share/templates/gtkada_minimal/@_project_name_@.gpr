@@ -8,7 +8,7 @@ project @_Project_Name_@ is
 
    --  Enable Ada 2005.
    package Compiler is
-      for Default_Switches ("ada") use ("-gnat05");
+      for Switches ("ada") use ("-gnat05");
    end Compiler;
 
 end @_Project_Name_@;

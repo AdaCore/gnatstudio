@@ -65,14 +65,14 @@ project Templates_Parser is
    package Compiler is
       case Build is
          when "Release" =>
-            for Default_Switches ("Ada") use Common_Options & Release_Options;
+            for Switches ("Ada") use Common_Options & Release_Options;
          when "Debug" =>
-            for Default_Switches ("Ada") use Common_Options & Debug_Options;
+            for Switches ("Ada") use Common_Options & Debug_Options;
       end case;
    end Compiler;
 
    package Builder is
-      for Default_Switches ("Ada") use ("-m", "-j" & Processors);
+      for Switches ("Ada") use ("-m", "-j" & Processors);
    end Builder;
 
 end Templates_Parser;

@@ -5,7 +5,7 @@ project @_Project_Name_@ is
    for Object_Dir use "obj";
 
    package Compiler is
-      for Default_Switches ("ada") use ("-gnat05");
+      for Switches ("ada") use ("-gnat05");
    end Compiler;
 
    package Make is

@@ -14,7 +14,7 @@ project Language is
    package IDE renames Shared.IDE;
 
    package Compiler is
-      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
+      for Switches ("Ada") use Shared.Compiler'Switches ("Ada");
 
       No_Checks := ("-g", "-O2", "-gnat12", "-gnatpn");
 

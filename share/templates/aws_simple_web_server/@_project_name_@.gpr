@@ -14,7 +14,7 @@ project @_Project_Name_@ is
    end Builder;
 
    package Compiler is
-      for Default_Switches ("Ada") use ("-gnat05");
+      for Switches ("Ada") use ("-gnat05");
    end Compiler;
 
 end @_Project_Name_@;
