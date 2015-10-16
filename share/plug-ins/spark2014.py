@@ -1987,6 +1987,10 @@ vc_msg_dict = {
     'length check might fail': 'VC_LENGTH_CHECK',
     'discriminant check might fail': 'VC_DISCRIMINANT_CHECK',
     'interrupt might be reserved': 'VC_INTERRUPT_RESERVED',
+    'ceiling priority might not be in Interrupt_Priority':
+        'VC_CEILING_INTERRUPT',
+    'ceiling priority protocol might not be respected':
+        'VC_CEILING_PRIORITY_PROTOCOL',
     'tag check might fail': 'VC_TAG_CHECK',
 
     # VC_Assert_Kind - assertions
