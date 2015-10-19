@@ -990,16 +990,16 @@ package body BT.Xml.Reader is
       Equivalent_Keys => "=",
       "="             => "=");  --  elements "="
 
-   -------------------------
-   --  Get_Variable_Vn_Value
-   -------------------------
+   ---------------------------
+   -- Get_Variable_Vn_Value --
+   ---------------------------
 
-   function Get_Variable_Vn_Value (File : String;
+   function Get_Variable_Vn_Value
+     (File          : String;
       Variable      : String;
       Srcpos        : Source_Position;
-      Closest_Match : out Source_Position)
-     return String is
-
+      Closest_Match : out Source_Position) return String
+   is
       File_Exists        : Boolean;
       Curr               : Srcpos_Vals_Mappings.Cursor;
       Variable_Positions : List_Of_Source_Positions.List;
@@ -1348,6 +1348,10 @@ package body BT.Xml.Reader is
       --  for each of these VNs
       declare
          procedure Find_One_Variable (Position : Name_Set.Cursor);
+
+         -----------------------
+         -- Find_One_Variable --
+         -----------------------
 
          procedure Find_One_Variable (Position : Name_Set.Cursor) is
             Var_Name      : constant String :=

@@ -73,6 +73,7 @@ package Message_Kinds is
       User_Precondition_Check,
       Invalid_Check,
       Invalid_Or_Null_Check,
+      Freed_Check,  --  Invalid access value due to unchecked_deallocation
       Divide_By_Zero_Check,
       Boolean_Check,
       Non_Neg_Check,

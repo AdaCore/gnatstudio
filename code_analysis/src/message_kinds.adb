@@ -179,6 +179,7 @@ package body Message_Kinds is
                   null;
 
                when Invalid_Or_Null_Check
+                  | Freed_Check
                   | Divide_By_Zero_Check
                   | Boolean_Check
                   | Non_Neg_Check
