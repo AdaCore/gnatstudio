@@ -1,6 +1,6 @@
 .. GNATdoc documentation master file
 
-GNATdoc v0.9
+GNATdoc v1.0
 ============
 
 **Contents:**

@@ -42,8 +42,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Docgen'
-copyright = u'2013, AdaCore'
+project = u'GNATdoc'
+copyright = u'2013-2015, AdaCore'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
