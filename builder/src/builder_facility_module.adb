@@ -1348,10 +1348,13 @@ package body Builder_Facility_Module is
          Mains : Any_Type);
       --  Create one button for target Name and main Main
 
+      -----------------------
+      -- Button_For_Target --
+      -----------------------
+
       procedure Button_For_Target
         (Name  : String;
-         Mains : Any_Type)
-      is
+         Mains : Any_Type) is
       begin
          --  In case only one main is available, create a simple button
          if Mains.Length <= 1 then
@@ -1381,6 +1384,7 @@ package body Builder_Facility_Module is
                   (To_Unbounded_String (Name), Main));
                Button := Gtk_Tool_Item (Widget);
             end;
+
          else
             declare
                Widget : Gtkada.Combo_Tool_Button.Gtkada_Combo_Tool_Button;
