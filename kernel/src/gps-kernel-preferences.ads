@@ -210,6 +210,7 @@ package GPS.Kernel.Preferences is
    Current_Line_Color        : Color_Preference;
    Current_Line_Thin         : Boolean_Preference;
    Current_Block_Color       : Color_Preference;
+   Alter_Bg_For_RO_Files     : Boolean_Preference;
 
    --  stripping blanks at end of line
    Strip_Blanks              : Strip_Trailing_Blanks_Policy_Prefs.Preference;

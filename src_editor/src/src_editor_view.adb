@@ -1806,7 +1806,9 @@ package body Src_Editor_View is
 
       Self.Background_Color := C;
 
-      if not Self.Get_Editable then
+      if not Self.Get_Editable
+        and then Alter_Bg_For_RO_Files.Get_Pref
+      then
          C := Shade_Or_Lighten (C, Amount => 0.1);
       end if;
 

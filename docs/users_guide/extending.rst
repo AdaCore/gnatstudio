@@ -470,6 +470,10 @@ arrow, as seen in the screenshot above).
       the auto_highlight_occurrences plugin uses this to indicate that the
       matches come from the cross-references engine.
 
+    * :guilabel:`Darken background for the RO file`
+
+      Alter the background in the editor for read-only files.
+
   * :guilabel:`Ada`
 
     .. index:: Ada

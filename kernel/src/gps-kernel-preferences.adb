@@ -773,6 +773,15 @@ package body GPS.Kernel.Preferences is
          Default_Bg   => "rgba(134,134,134,0.35)",
          Page         => -"Editor/Fonts & Colors");
 
+      Alter_Bg_For_RO_Files := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Alter-Bg-For-RO-Files",
+         Label   => -"Darken background for the RO file",
+         Doc     => -("When active, shade the background"
+                      & " for read-only files."),
+         Default => True,
+         Page    => -"Editor/Fonts & Colors");
+
       -- Refactoring --
 
       Add_Subprogram_Box := Create
