@@ -25,6 +25,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-OA15-024 GB: Toggle Comment sometimes unable to uncomment
+
+  Problem:    Uncommenting multiple lines using the Toggle Comment "Ctrl+-"
+              action, doesn't uncomment them, but it comments them again.
+              This occurs when the selection ends with a "--" line or 2 ""
+              empty lines
+
+  Status:     This was fixed in 2.10 on 2015-10-20
+
+  Workaround: Uncomment the text using different selected text.
+
 KP-61-OA07-028 GPS: Project view with flat view does not show runtime
 
   Problem:    If you select both Flat View and Show Runtime in the project
