@@ -50,12 +50,12 @@ package Gtkada.Combo_Tool_Button is
       Item      : String;
       Icon_Name : String := "";
       Data      : User_Data := null);
-   --  Add an item in the button items list.
+   --  Add an item in the button items list
 
    procedure Select_Item
      (Widget : access Gtkada_Combo_Tool_Button_Record;
       Item   : String);
-   --  Select Item from the list.
+   --  Select Item from the list
 
    function Get_Selected_Item
      (Widget : access Gtkada_Combo_Tool_Button_Record) return String;
@@ -64,11 +64,11 @@ package Gtkada.Combo_Tool_Button is
    function Get_Selected_Item_Data
      (Widget : access Gtkada_Combo_Tool_Button_Record)
       return User_Data;
-   --  Get the data attached to the selected item.
+   --  Get the data attached to the selected item
 
    procedure Clear_Items
      (Widget : access Gtkada_Combo_Tool_Button_Record);
-   --  Clear the Items list.
+   --  Clear the Items list
 
    -------------
    -- Signals --
@@ -99,13 +99,14 @@ private
      (Natural, Ada.Strings.Unbounded.Unbounded_String);
 
    type Gtkada_Combo_Tool_Button_Record is new
-     Gtk.Tool_Button.Gtk_Tool_Button_Record with record
+     Gtk.Tool_Button.Gtk_Tool_Button_Record
+    with record
       Items       : Strings_Vector.Vector;
       Selected    : Strings_Vector.Extended_Index;
       Menu        : Gtk_Menu;
 
       Icon_Name    : Unbounded_String;
-      --  The default icon name, when items do not provide one.
+      --  The default icon name, when items do not provide one
 
       Popup_Timeout : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       Popup_Device  : Gdk.Device.Gdk_Device;

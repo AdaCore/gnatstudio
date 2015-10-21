@@ -67,7 +67,7 @@ package body Gtkada.Combo_Tool_Button is
       State : Boolean);
 
    procedure On_Destroy (Self : access Gtk_Widget_Record'Class);
-   --  Called when the tool_button is destroyed.
+   --  Called when the tool_button is destroyed
 
    --------------
    -- Handlers --
@@ -87,7 +87,7 @@ package body Gtkada.Combo_Tool_Button is
      (Gtkada_Combo_Tool_Button);
 
    function On_Long_Click (Self : Gtkada_Combo_Tool_Button) return Boolean;
-   --  Called when the user had kept the button pressed for a long time.
+   --  Called when the user had kept the button pressed for a long time
 
    function On_Button_Press
      (Button : access GObject_Record'Class;
@@ -125,7 +125,7 @@ package body Gtkada.Combo_Tool_Button is
    function Get_Button
      (Self : not null access Gtkada_Combo_Tool_Button_Record'Class)
       return Gtk_Widget;
-   --  Return the internal button widget used by a GtkToolButton.
+   --  Return the internal button widget used by a GtkToolButton
 
    ----------------
    -- Get_Button --
@@ -330,7 +330,7 @@ package body Gtkada.Combo_Tool_Button is
          B.Popup_Timeout := No_Source_Id;
       end if;
 
-      --  Leave default behavior, which is to close the menu.
+      --  Leave default behavior, which is to close the menu
       return False;
    end On_Menu_Button_Release;
 
@@ -441,7 +441,6 @@ package body Gtkada.Combo_Tool_Button is
      (Self      : access Gtkada_Combo_Tool_Button_Record'Class;
       Icon_Name : String)
    is
-
    begin
       Initialize_Class_Record
         (Ancestor     => Gtk.Tool_Button.Get_Type,

@@ -31,11 +31,11 @@ package body Build_Configurations is
    procedure Set_Parsers_For_Target
      (Target : Target_Access;
       Value  : String_Ptr);
-   --  Convert Value to list of strings and assign as Target's parser list.
+   --  Convert Value to list of strings and assign as Target's parser list
 
    function To_String
      (List : String_List_Utils.String_List.List) return String;
-   --  Convert list of strings to textual representation.
+   --  Convert list of strings to textual representation
 
    function Default_Parser_Names (Is_Run_Target : Boolean) return String;
    --  List of parsers used by default by a target. Is_Run_Target specifies
@@ -1271,7 +1271,7 @@ package body Build_Configurations is
          end if;
       end;
 
-      --  Default icon is the model's icon.
+      --  Default icon is the model's icon
       Target.Properties.Icon_Name := Target.Model.Icon;
 
       Child := XML.Child;
@@ -1646,7 +1646,7 @@ package body Build_Configurations is
    ---------------------
 
    procedure Set_Target_Type
-     (Target : Target_Access;
+     (Target          : Target_Access;
       New_Target_Type : String) is
    begin
       Target.Properties.Target_Type :=

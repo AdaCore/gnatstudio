@@ -440,6 +440,10 @@ package body Builder_Facility_Module is
       procedure Add_Contextual (T : Target_Access);
       --  Add a contextual menu for T
 
+      --------------------
+      -- Add_Contextual --
+      --------------------
+
       procedure Add_Contextual (T : Target_Access) is
          Mitem   : Dynamic_Menu_Item;
          Targets : Unbounded_String;
@@ -463,8 +467,8 @@ package body Builder_Facility_Module is
                           Create (+Mains.List (J).Tuple (3).Str);
                      begin
                         if not Has_Project_Information (Context)
-                          or else Project_Information (Context).Project_Path =
-                             Prj
+                          or else
+                            Project_Information (Context).Project_Path = Prj
                         then
                            Mitem := new Dynamic_Menu_Item_Record;
                            Gtk.Menu_Item.Initialize
@@ -481,6 +485,7 @@ package body Builder_Facility_Module is
                end loop;
                Free (Mains);
             end;
+
          else
             Mitem := new Dynamic_Menu_Item_Record;
             Gtk.Menu_Item.Initialize (Mitem, Get_Name (T));
@@ -698,6 +703,7 @@ package body Builder_Facility_Module is
 
             Free (Mains);
          end;
+
       else
          Create
            (C, Builder_Module_ID.Builder'Access, N, No_File, False, Default);
@@ -1432,7 +1438,7 @@ package body Builder_Facility_Module is
 
       if Targets /= Null_Unbounded_String then
          declare
-            Mains  : Any_Type := Compute_Build_Targets_Hook.Run
+            Mains : Any_Type := Compute_Build_Targets_Hook.Run
                (Get_Kernel, To_String (Targets));
          begin
             --  Do not display if no main is available
@@ -1441,6 +1447,7 @@ package body Builder_Facility_Module is
             end if;
             Free (Mains);
          end;
+
       else
          Button_For_Target (Get_Name (Target), Empty_Any_Type);
       end if;
@@ -1504,7 +1511,7 @@ package body Builder_Facility_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
       Changes_Made : Boolean;
    begin
       Configuration_Dialog
@@ -1531,7 +1538,7 @@ package body Builder_Facility_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
       Changes_Made : Boolean;
    begin
       Modes_Dialog
@@ -1939,6 +1946,7 @@ package body Builder_Facility_Module is
       Result := null;
       if T = null or else Self.Mains = null then
          Has_Next := False;
+
       else
          if Self.Current_Main < Self.Mains.Length then
             declare
