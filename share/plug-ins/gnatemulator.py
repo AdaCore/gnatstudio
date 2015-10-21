@@ -162,9 +162,10 @@ class GNATemulator(Module):
         """
 
         targets_def = [["Run with Emulator", "run-with-emulator",
-                        self.__emu_wf, "gps-emulatorloading-symbolic"],
+                        self.__emu_wf, "gps-emulatorloading-run-symbolic"],
                        ["Debug with Emulator", "debug-with-emulator",
-                        self.__emu_debug_wf, "gps-emulatorloading-symbolic"]]
+                        self.__emu_debug_wf,
+                        "gps-emulatorloading-debug-symbolic"]]
 
         for target in targets_def:
 

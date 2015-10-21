@@ -196,7 +196,7 @@ class BoardLoader(Module):
             "Flash to Board",
             "flash-to-board",
             self.__flash_wf,
-            "gps-boardloading-symbolic")
+            "gps-boardloading-flash-symbolic")
         workflows.create_target_from_workflow(
             "Debug on Board",
             "debug-on-board",
