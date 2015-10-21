@@ -1392,7 +1392,7 @@ def get_trace_overlay(buf):
 
 
 def get_ce_special_lines(buf):
-    """retrieve the list of special lines for counter-example for a
+    """retrieve the list of special lines for counterexample for a
        buffer. If the buffer hasn't got one yet, create it, add it to the
        buffer, and return it.
     """
@@ -1412,7 +1412,7 @@ def add_ce_special_line(buf, line, text):
 
 
 def remove_ce_special_lines(buf):
-    """remove all special lines for counter-example in the buffer"""
+    """remove all special lines for counterexample in the buffer"""
 
     line_markers = get_ce_special_lines(buf)
     for line_marker in line_markers:
@@ -1486,7 +1486,7 @@ def remove_trace(lines):
 
 
 def get_ce_text_for_line(line_info):
-    """Generates the text to be displayed in counter-example for given
+    """Generates the text to be displayed in counterexample for given
        line."""
     return " and ".join(['%s = %s' % (ce_element["name"], ce_element["value"])
                          for ce_element in line_info])
@@ -1677,9 +1677,13 @@ class GNATprove_Parser(tool_output.OutputParser):
             GPS.Editor.register_highlighting(Ce_Highlighting,
                                              Ce_Highlighting_Color,
                                              False)
+            if counterexample != {}:
+                msg = 'Show counterexample'
+            else:
+                msg = 'Show path'
             m.set_subprogram(lambda m: toggle_trace(m, lines, counterexample),
                              'gps-gnatprove-symbolic',
-                             'show counter-example information')
+                             msg)
         # We don't want to open hundreds of editors if a Prove All
         # or Prove File was launched with a manual prover.
         # We only open an editor for prove check.
