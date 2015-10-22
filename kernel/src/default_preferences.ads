@@ -24,7 +24,6 @@
 --  preference.
 
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;        use GNAT.Strings;
 
@@ -440,61 +439,18 @@ package Default_Preferences is
    function Get_Pref (Self : Cursor) return Preference;
    --  Iterate over all registered preferences
 
-   -------------------------
-   -- Editing preferences --
-   -------------------------
-   --  The following types can be used to add your own pages to the preferences
-   --  dialog. Most of the time, though, the pages will be created
-   --  automatically by GPS to show the registered preferences.
-
-   type Preferences_Page_Record is abstract tagged null record;
-   type Preferences_Page is access all Preferences_Page_Record'Class;
-
-   type Preferences_Page_Array is array (Natural range <>)
-      of Preferences_Page;
-   type Preferences_Page_Array_Access is access Preferences_Page_Array;
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Preferences_Page_Array, Preferences_Page_Array_Access);
-
-   function Name
-     (Pref : access Preferences_Page_Record) return String is abstract;
-   --  Return the name to use for this page in the list on the left of the
-   --  preferences dialog.
-
-   function Create
-     (Pref : access Preferences_Page_Record) return Gtk.Widget.Gtk_Widget
-      is abstract;
-   --  Return a widget to display in the preferences dialog
-
-   procedure Validate
-     (Pref   : access Preferences_Page_Record;
-      Widget : access Gtk.Widget.Gtk_Widget_Record'Class) is abstract;
-   --  Take into acount the contents of the page. This would for instance
-   --  modify the current preferences. There is no need to save previous
-   --  values of the preferences, since this is done automatically prior to
-   --  validating all the pages.
-   --  This can be called any number of times if the user presses Apply in the
-   --  preferences dialog.
-
-   procedure Undo
-     (Pref   : access Preferences_Page_Record;
-      Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Undo the previous effect of Validate.
-   --  There is nothing to be done if Undo would simply restore the previous
-   --  value of the preferences, since this is done automatically prior to
-   --  undoing the effect of all the pages. This is the default behavior.
-   --  This might be called even if Validate has not previously been called for
-   --  this page.
+   -------------------
+   -- Editors views --
+   -------------------
 
    function Get_Editor
      (Manager : access Preferences_Manager_Record)
       return Gtk.Widget.Gtk_Widget;
+   --  Return the Preferences dialog widget if it is currently open
    procedure Set_Editor
      (Manager : access Preferences_Manager_Record;
       Editor  : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Return the Preferences dialog if it is currently open
-
+   --  Attach the preferences dialog widget to the manager
    Signal_Preferences_Changed : constant Glib.Signal_Name :=
                                   "preferences_changed";
 

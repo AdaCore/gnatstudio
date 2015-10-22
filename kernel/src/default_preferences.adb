@@ -19,6 +19,7 @@ with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings;
 with Ada.Strings.Hash;
+with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
@@ -1941,19 +1942,6 @@ package body Default_Preferences is
         (Button, Signal_Color_Set, Bg_Color_Changed'Access, P);
       Style_Box.Bg_Color_Button := Button;
    end Create_Color_Buttons;
-
-   ----------
-   -- Undo --
-   ----------
-
-   procedure Undo
-     (Pref   : access Preferences_Page_Record;
-      Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
-      pragma Unreferenced (Pref, Widget);
-   begin
-      null;
-   end Undo;
 
    ----------------
    -- Set_Editor --

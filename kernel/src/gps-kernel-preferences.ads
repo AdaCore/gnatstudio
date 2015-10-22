@@ -75,17 +75,6 @@ package GPS.Kernel.Preferences is
    --  preference has an impact on the fonts and colors. This is used to limit
    --  the amount of work done when the user changes preferences.
 
-   --------------------------------
-   -- Specific preferences pages --
-   --------------------------------
-
-   procedure Register_Page
-     (Kernel : access Kernel_Handle_Record'Class;
-      Page   : access Default_Preferences.Preferences_Page_Record'Class);
-   --  Register a new pasge to display in the preferences dialog.
-   --  This page will be put first on the list of preference pages in the
-   --  dialog.
-
    ------------------
    -- Enumerations --
    ------------------

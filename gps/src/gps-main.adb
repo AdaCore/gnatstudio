@@ -172,7 +172,6 @@ with Socket_Module;
 with Src_Editor_Module;
 with Startup_Module;
 with Switches_Chooser.Scripts;
-with Theme_Manager_Module;
 with Toolchains_Editor;
 with VCS_Module;
 with VFS_Module;
@@ -1978,11 +1977,6 @@ procedure GPS.Main is
       KeyManager_Module.Macros.Register_Module (GPS_Main.Kernel);
       Command_Window.Register_Module (GPS_Main.Kernel);
       Register_Keys (GPS_Main);
-
-      --  Load the theme manager module immediately, so that any customization
-      --  file or module can provide its own themes.
-
-      Theme_Manager_Module.Register_Module (GPS_Main.Kernel);
 
       Vsearch.Register_Module (GPS_Main.Kernel);
 

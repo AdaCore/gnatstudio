@@ -47,9 +47,6 @@ package body GPS.Kernel.Preferences is
 
    use type Config.Host_Type;
 
-   Preferences_Pages : Preferences_Page_Array_Access;
-   --  ??? To be included in the kernel
-
    procedure Get_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Get preference command handler
@@ -1690,28 +1687,6 @@ package body GPS.Kernel.Preferences is
    begin
       Set_Pref (Pref, Kernel.Preferences, Value);
    end Set_Pref;
-
-   -------------------
-   -- Register_Page --
-   -------------------
-
-   procedure Register_Page
-     (Kernel : access Kernel_Handle_Record'Class;
-      Page   : access Preferences_Page_Record'Class)
-   is
-      pragma Unreferenced (Kernel);
-      Tmp : Preferences_Page_Array_Access := Preferences_Pages;
-   begin
-      if Tmp = null then
-         Preferences_Pages := new Preferences_Page_Array (1 .. 1);
-      else
-         Preferences_Pages := new Preferences_Page_Array (1 .. Tmp'Last + 1);
-         Preferences_Pages (Tmp'Range) := Tmp.all;
-      end if;
-
-      Preferences_Pages (Preferences_Pages'Last) := Preferences_Page (Page);
-      Unchecked_Free (Tmp);
-   end Register_Page;
 
    -------------------------
    -- Set_Font_And_Colors --
