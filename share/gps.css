@@ -26,6 +26,9 @@
 @define-color gutter_color grey;
 @define-color gutter_background #f8f8f8;
 
+@define-color browser_decoration_color grey;
+@define-color browser_decoration_background #f8f8f8;
+
 @define-color completion-border-color shade (@theme_base_color, 0.7);
 @define-color completion-selected-color mix(@theme_base_color, @middle-gray, 0.5);
 @define-color completion-background-color shade(@theme_base_color, 1.10);
@@ -370,6 +373,15 @@ GtkEntry.search {
 .gps_gutter {
   background-color: @gutter_background;
   color: @gutter_color;
+}
+
+/**********************************
+ * Browsers
+ **********************************/
+
+.gps_browser_decoration {
+  background-color: @browser_decoration_background;
+  color: @browser_decoration_color;
 }
 
 /**********************************

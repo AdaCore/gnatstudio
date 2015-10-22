@@ -61,7 +61,8 @@ default = gps_utils.Chainmap(light_common, {
         "DEFAULT", "rgb(150,150,150)", "transparent"),
     "Src-Editor-Keywords-Variant": ("DEFAULT", "rgb(0,0,230)", "transparent"),
     "Src-Editor-Type-Variant": ("DEFAULT", "rgb(0,153,0)", "transparent"),
-    "Src-Editor-Block-Variant": ("DEFAULT", "rgb(96,97,95)", "transparent")
+    "Src-Editor-Block-Variant": ("DEFAULT", "rgb(96,97,95)", "transparent"),
+    "Browsers-Bg-Color": "rgb(255,255,255)"
 })
 
 
@@ -103,7 +104,8 @@ monokai = gps_utils.Chainmap(dark_common, {
                                              "transparent"),
     "Src-Editor-Block-Variant":             ("DEFAULT",
                                              "rgb(230,219,116)",
-                                             "transparent")
+                                             "transparent"),
+    "Browsers-Bg-Color": "rgb(39,40,34)"
 })
 
 darkside = gps_utils.Chainmap(dark_common, {
@@ -145,7 +147,8 @@ darkside = gps_utils.Chainmap(dark_common, {
                                              "transparent"),
     "Src-Editor-Block-Variant":             ("DEFAULT",
                                              "rgb(104,194,68)",
-                                             "transparent")
+                                             "transparent"),
+    "Browsers-Bg-Color": "rgb(34,35,36)"
 })
 
 iplastic = gps_utils.Chainmap(light_common, {
@@ -186,7 +189,8 @@ iplastic = gps_utils.Chainmap(light_common, {
                                              "transparent"),
     "Src-Editor-Block-Variant":             ("DEFAULT",
                                              "rgb(255,128,0)",
-                                             "transparent")
+                                             "transparent"),
+    "Browsers-Bg-Color": "rgb(238,238,238)"
 })
 
 themes = []
@@ -266,7 +270,9 @@ class ColorThemeSwitcher(object):
 
         recognized_colors = ["theme_bg_color", "theme_selected_bg_color",
                              "theme_fg_color", "gutter_color",
-                             "gutter_background"]
+                             "gutter_background",
+                             "browser_decoration_background",
+                             "browser_decoration_color"]
 
         for c in recognized_colors:
             v = theme.get("@" + c)
