@@ -43,13 +43,14 @@ with Gtk.Menu;                          use Gtk.Menu;
 with Gtk.Menu_Item;                     use Gtk.Menu_Item;
 with Gtk.Menu_Tool_Button;              use Gtk.Menu_Tool_Button;
 with Gtk.Scrolled_Window;               use Gtk.Scrolled_Window;
+with Gtk.Style_Context;                 use Gtk.Style_Context;
 with Gtk.Toolbar;                       use Gtk.Toolbar;
 with Gtk.Tool_Button;                   use Gtk.Tool_Button;
 with Gtk.Widget;                        use Gtk.Widget;
 
 with Gtkada.Canvas_View;                use Gtkada.Canvas_View;
 with Gtkada.Canvas_View.Views;          use Gtkada.Canvas_View.Views;
-with Gtkada.Canvas_View.Models.Layers; use Gtkada.Canvas_View.Models.Layers;
+with Gtkada.Canvas_View.Models.Layers;  use Gtkada.Canvas_View.Models.Layers;
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.Handlers;                   use Gtkada.Handlers;
 with Gtkada.MDI;                        use Gtkada.MDI;
@@ -375,6 +376,12 @@ package body Browsers.Canvas is
             & " layout of the graph. This might result in less edge crossings"
             & " but is sometimes harder to use interactively")));
 
+      --  Set css style for scrollbars
+      Get_Style_Context
+        (Scrolled.Get_Vscrollbar).Add_Class ("gps_browser_decoration");
+      Get_Style_Context
+        (Scrolled.Get_Hscrollbar).Add_Class ("gps_browser_decoration");
+
       Hook := new On_Pref_Changed;
       Hook.Browser := General_Browser (Browser);
       Preferences_Changed_Hook.Add (Hook, Watch => Browser);
@@ -396,6 +403,13 @@ package body Browsers.Canvas is
       B    : constant General_Browser := Self.Browser;
    begin
       Create_Styles (B.View);
+
+      if Pref = null
+        or else Pref = Preference (Browsers_Bg_Color)
+      then
+         B.Override_Background_Color
+           (Gtk_State_Flag_Normal, Browsers_Bg_Color.Get_Pref);
+      end if;
 
       if Pref = null
         or else Pref = Preference (Draw_Grid)
@@ -982,9 +996,7 @@ package body Browsers.Canvas is
 
       View.View.Grid_Style := Gtk_New
         (Stroke     => (0.9, 0.9, 0.9, 0.5),   --  the grid color
-         Line_Width => 1.0,                    --  the grid line width
-         Fill       => Create_Rgba_Pattern
-           (Browsers_Bg_Color.Get_Pref));  --  the background color
+         Line_Width => 1.0);                   --  the grid line width
 
       Free (Annotation_Font);
 

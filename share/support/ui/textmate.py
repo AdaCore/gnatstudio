@@ -304,6 +304,17 @@ class Theme(object):
         d['@gutter_color'] = lighten(fg, 0.07 * light_val)
         d['@gutter_background'] = lighten(bg, -0.05 * light_val)
 
+        # Compute nice browser settings
+
+        bb = bg
+        if "Browsers-Bg-Color" in d:
+            bb = d["Browsers-Bg-Color"]
+
+        d["Browsers-Bg-Color"] = bb
+
+        d['@browser_decoration_color'] = lighten(fg, 0.07 * light_val)
+        d['@browser_decoration_background'] = lighten(bb, -0.05 * light_val)
+
         # Caret
 
         if 'caret' in self.general:
