@@ -1502,16 +1502,16 @@ package body Build_Configurations.Gtkada is
          end;
       end if;
 
+      --  Show the dialog
+
+      Show_All (Dialog);
+
       --  Grab the focus on the entry, select the text, and make it activate
       --  the default, so that the user only has to press Enter if he is
       --  happy with the selection.
       Grab_Focus (Ent);
       Select_Region (Ent, 0);
       Set_Activates_Default (Ent, True);
-
-      --  Show the dialog
-
-      Show_All (Dialog);
 
       --  Run the dialog
 
