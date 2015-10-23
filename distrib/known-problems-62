@@ -1,0 +1,26 @@
+===========================================
+Known problems in GPS 6.2 and GNATbench 2.9
+===========================================
+
+Copyright (C) 2013-2015, AdaCore
+
+The following is a listing of known problems in GPS 6.0.x and GNATbench 2.8.x.
+Each entry contains a status line stating when the problem was fixed, and on
+which release(s). In addition, any wavefront issued subsequent to the date
+specified (in ISO format YYYY-MM-DD) also contains the fix. This can be used
+to determine if a given release or wavefront has the fix identified in the
+entry.
+
+Note that older releases might or might not be affected by the problems listed
+in this document.
+
+The following leading tags are used in this document to indicate:
+GPS: this entry is specific to GPS
+GB:  this entry is specific to GNATbench
+WB:  this entry is specific to GNATbench for WorkBench
+ECL: this entry is specific to GNATbench for Eclipse
+
+If no tag is specified, the entry is relevant to all IDEs.
+
+Known problems fixed in GPS 17.0 / GNATbench 17.0
+-------------------------------------------------
