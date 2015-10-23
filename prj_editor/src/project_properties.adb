@@ -2072,18 +2072,22 @@ package body Project_Properties is
             Model := -Get_Model (Tree);
 
             case Filter is
-               when Filter_From_Project =>
+               when Filter_None
+                  | Filter_From_Project
+                  | Filter_From_All_Projects
+               =>
                   Prj := Project;
+
                when Filter_From_Extended =>
                   Prj := Extended_Project (Project);
-               when others =>
-                  Prj := Project;
             end case;
 
             while Prj /= GNATCOLL.Projects.No_Project loop
                declare
-                  Sources : File_Array_Access := Prj.Source_Files;
+                  Sources : File_Array_Access :=
+                    Prj.Source_Files (Filter = Filter_From_All_Projects);
                   Sort_Id : Gint;
+
                begin
                   Sort_Id := Freeze_Sort (Model);
                   for S in Sources'Range loop
