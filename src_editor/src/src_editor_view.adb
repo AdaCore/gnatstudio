@@ -2929,8 +2929,8 @@ package body Src_Editor_View is
             Files           => (1 => Filename),
             Project         => Get_Project (V),
             Publish_Project => False,
-            Line            => Integer (EL),
-            Column          => Col);
+            Line            => 0,
+            Column          => 0);
          return Context;
       end if;
 
