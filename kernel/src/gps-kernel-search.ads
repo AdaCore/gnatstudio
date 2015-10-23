@@ -69,13 +69,15 @@ package GPS.Kernel.Search is
    --  Change the list of recent items, after Result has been selected
    --  by the user.
 
-   Provider_Filenames  : constant String := "File names";
-   Provider_Actions    : constant String := "Actions";
-   Provider_Builds     : constant String := "Build";
-   Provider_Opened_Win : constant String := "Opened";
-   Provider_Entities   : constant String := "Entities";
-   Provider_Sources    : constant String := "Sources";
-   Provider_Bookmarks  : constant String := "Bookmarks";
+   Provider_Filenames   : constant String := "File names";
+   Provider_Actions     : constant String := "Actions";
+   Provider_Builds      : constant String := "Build";
+   Provider_Opened_Win  : constant String := "Opened";
+   Provider_Entities    : constant String := "Entities";
+   Provider_Sources     : constant String := "Sources";
+   Provider_Bookmarks   : constant String := "Bookmarks";
+   Provider_Preferences : constant String := "Preferences";
+
    --  The names must be synchronized with the search.py plugin
 
    Action_Name_Prefix : constant String := "Global Search in context: ";

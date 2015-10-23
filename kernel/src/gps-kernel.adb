@@ -375,8 +375,9 @@ package body GPS.Kernel is
       --  do not override user's preferences.
       --  We need to load now so that for instance the splash screen is
       --  correctly taken into account.
-      Handle.Preferences := new GPS_Preferences_Record;
-      GPS_Preferences_Record (Handle.Preferences.all).Set_Kernel (Handle);
+      Handle.Preferences := new GPS_Preferences_Manager_Record;
+      GPS_Preferences_Manager_Record (Handle.Preferences.all).
+        Set_Kernel (Handle);
 
       declare
          Style_Manager : Style_Manager_Access;

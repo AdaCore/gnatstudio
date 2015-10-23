@@ -49,6 +49,7 @@ with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Kernel.Search.Actions;
 with GPS.Kernel.Search.Filenames;
 with GPS.Kernel.Search.Sources;
+with GPS.Kernel.Search.Preferences;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Main_Window;          use GPS.Main_Window;
 with GNAT.Strings;             use GNAT.Strings;
@@ -1452,7 +1453,8 @@ package body GPS.Search.GUI is
            & Provider_Actions & ";"
            & Provider_Builds & ";"
            & Provider_Bookmarks & ";"
-           & Provider_Sources & ";");
+           & Provider_Sources & ";"
+           & Provider_Preferences & ";");
 
       P := new GPS.Kernel.Search.Filenames.Filenames_Search_Provider;
       Register_Provider_And_Action
@@ -1465,6 +1467,9 @@ package body GPS.Search.GUI is
       Register_Provider_And_Action (Kernel, P);
 
       P := new GPS.Kernel.Search.Sources.Current_File_Search_Provider;
+      Register_Provider_And_Action (Kernel, P);
+
+      P := new GPS.Kernel.Search.Preferences.Preferences_Search_Provider;
       Register_Provider_And_Action (Kernel, P);
 
       Gtk_New (Align, 0.0, 1.0, 0.0, 0.0);

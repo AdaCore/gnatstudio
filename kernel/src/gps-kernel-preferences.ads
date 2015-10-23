@@ -24,17 +24,19 @@ with Gtk.Menu;                 use Gtk.Menu;
 
 package GPS.Kernel.Preferences is
 
-   type GPS_Preferences_Record is new Preferences_Manager_Record
+   type GPS_Preferences_Manager_Record is new Preferences_Manager_Record
      with private;
-   type GPS_Preferences is access all GPS_Preferences_Record'Class;
+   type GPS_Preferences_Manager is access
+     all GPS_Preferences_Manager_Record'Class;
 
    overriding procedure Notify_Pref_Changed
-     (Self : not null access GPS_Preferences_Record;
+     (Self : not null access GPS_Preferences_Manager_Record;
       Pref : not null access Preference_Record'Class);
-   overriding procedure Thaw (Self : not null access GPS_Preferences_Record);
+   overriding procedure Thaw
+     (Self : not null access GPS_Preferences_Manager_Record);
 
    procedure Set_Kernel
-     (Self   : not null access GPS_Preferences_Record;
+     (Self   : not null access GPS_Preferences_Manager_Record;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Set the kernel
 
@@ -273,11 +275,14 @@ package GPS.Kernel.Preferences is
      Default_Preferences.Enums.Generics (Language.Indentation_Kind);
 
 private
-   type GPS_Preferences_Record is new Preferences_Manager_Record with record
+
+   type GPS_Preferences_Manager_Record is new Preferences_Manager_Record
+     with record
       Kernel : GPS.Kernel.Kernel_Handle;
 
       Nested_Pref_Changed : Natural := 0;
       --  Monitor the nested calls to On_Pref_Changed to avoid saving the
       --  preferences file too often.
    end record;
+
 end GPS.Kernel.Preferences;

@@ -797,9 +797,9 @@ package body Default_Preferences is
    --------------
 
    procedure Register
-     (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
-      Pref                      : access Preference_Record'Class)
+     (Manager                : not null access Preferences_Manager_Record;
+      Name, Label, Page, Doc : String;
+      Pref                   : not null access Preference_Record'Class)
    is
       Old : Preferences_Maps.Cursor :=
         Get_Pref_From_Name (Manager, Name);
@@ -1949,9 +1949,9 @@ package body Default_Preferences is
 
    procedure Set_Editor
      (Manager : access Preferences_Manager_Record;
-      Editor  : access Gtk.Widget.Gtk_Widget_Record'Class) is
+      Editor  : access Preferences_Editor_Interface'Class) is
    begin
-      Manager.Pref_Editor := Gtk_Widget (Editor);
+      Manager.Pref_Editor := Editor;
    end Set_Editor;
 
    ----------------
@@ -1960,7 +1960,7 @@ package body Default_Preferences is
 
    function Get_Editor
      (Manager : access Preferences_Manager_Record)
-      return Gtk.Widget.Gtk_Widget is
+      return access Preferences_Editor_Interface'Class is
    begin
       return Manager.Pref_Editor;
    end Get_Editor;
@@ -2385,7 +2385,7 @@ package body Default_Preferences is
         (Ent, Signal_Focus_Out_Event, Font_Entry_Changed'Access, P);
 
       if Pango.Context.Load_Font
-        (Get_Pango_Context (Manager.Pref_Editor), Desc) /= null
+        (Get_Pango_Context (Manager.Pref_Editor.Get_Widget), Desc) /= null
       then
          Modify_Font (Ent, Desc);
       end if;

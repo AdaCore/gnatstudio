@@ -58,6 +58,27 @@ package Default_Preferences is
 
    type Preference_Record is abstract tagged private;
    type Preference is access all Preference_Record'Class;
+   --  Type used to represent a general preference.
+   --  You can extend this type to represent more specific preferences
+   --  (e.g: Integer_Preference_Record)
+
+   type Preferences_Editor_Interface is interface;
+   type Preferences_Editor is access all Preferences_Editor_Interface'Class;
+   --  Interface defining a common API for all the preferences editor
+   --  widgets.
+
+   function Get_Widget
+     (Self : not null access Preferences_Editor_Interface)
+      return Gtk.Widget.Gtk_Widget is abstract;
+   --  Return the main Gtk_Widget of the preferences editor view
+
+   procedure Display_Pref
+     (Self : not null access Preferences_Editor_Interface;
+      Pref : not null access Preference_Record'Class) is abstract;
+   --  Display the preference given in parameter. This means that the
+   --  preferences editor widget should make appear the preference on the
+   --  screen (e.g: open the page containing the preference if it is organized
+   --  with different pages).
 
    procedure Set_GObject_To_Update
      (Pref   : not null access Preference_Record;
@@ -101,6 +122,14 @@ package Default_Preferences is
    procedure Freeze (Self : not null access Preferences_Manager_Record);
    procedure Thaw (Self : not null access Preferences_Manager_Record);
    --  Freeze/Thaw the emission of the preferences_changed signal
+   procedure Register
+     (Manager                : not null access Preferences_Manager_Record;
+      Name, Label, Page, Doc : String;
+      Pref                   : not null access Preference_Record'Class);
+   --  Set common attributes of all preferences, and register that preference
+   --  in the manager. This function only needs to be called if you are
+   --  creating your own types of preferences, and is already called
+   --  automatically when using one of the Create functions below.
 
    function Is_Frozen
      (Self : not null access Preferences_Manager_Record'Class) return Boolean;
@@ -187,15 +216,6 @@ package Default_Preferences is
    type Variant_Preference is access all Variant_Preference_Record'Class;
    type Enum_Preference    is access all Enum_Preference_Record'Class;
    type Theme_Preference   is access all Theme_Preference_Record'Class;
-
-   procedure Register
-     (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
-      Pref                      : access Preference_Record'Class);
-   --  Set common attributes of all preferences, and register that preference
-   --  in the manager. This function only needs to be called if you are
-   --  creating your own types of preferences, and is already called
-   --  automatically when using one of the Create functions below.
 
    -------------------------------
    -- Editing preferences types --
@@ -445,19 +465,16 @@ package Default_Preferences is
 
    function Get_Editor
      (Manager : access Preferences_Manager_Record)
-      return Gtk.Widget.Gtk_Widget;
+      return access Preferences_Editor_Interface'Class;
    --  Return the Preferences dialog widget if it is currently open
    procedure Set_Editor
      (Manager : access Preferences_Manager_Record;
-      Editor  : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Attach the preferences dialog widget to the manager
-   Signal_Preferences_Changed : constant Glib.Signal_Name :=
-                                  "preferences_changed";
+      Editor  : access Preferences_Editor_Interface'Class);
 
 private
 
    type Preference_Record is abstract tagged record
-      Name : GNAT.Strings.String_Access;
+      Name  : GNAT.Strings.String_Access;
       --  Name in the .xml file, and used for external references
 
       Label : GNAT.Strings.String_Access;
@@ -692,7 +709,7 @@ private
    type Preferences_Manager_Record is tagged record
       Preferences   : Preferences_Maps.List;
 
-      Pref_Editor   : Gtk.Widget.Gtk_Widget;
+      Pref_Editor   : access Preferences_Editor_Interface'Class;
       --  The current preferences editor. This is set to null if there is no
       --  editor open currently
 

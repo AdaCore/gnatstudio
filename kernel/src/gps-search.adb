@@ -440,7 +440,7 @@ package body GPS.Search is
             if T > Self.Text'Last then
                --  The score should be higher when the characters are closer
                --  together
-               Score := 101 - (B - Start);
+               Score := Integer'Max (101 - (B - Start), 0);
 
                if Self.Negate then
                   return GPS.Search.No_Match;

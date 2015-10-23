@@ -64,7 +64,7 @@ package body GPS.Kernel.Preferences is
    ----------------
 
    procedure Set_Kernel
-     (Self   : not null access GPS_Preferences_Record;
+     (Self   : not null access GPS_Preferences_Manager_Record;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Self.Kernel := Kernel_Handle (Kernel);
@@ -75,7 +75,7 @@ package body GPS.Kernel.Preferences is
    -------------------------
 
    overriding procedure Notify_Pref_Changed
-     (Self : not null access GPS_Preferences_Record;
+     (Self : not null access GPS_Preferences_Manager_Record;
       Pref : not null access Preference_Record'Class)
    is
       Font : Pango_Font_Description;
@@ -1644,7 +1644,8 @@ package body GPS.Kernel.Preferences is
    -- Thaw --
    ----------
 
-   overriding procedure Thaw (Self : not null access GPS_Preferences_Record) is
+   overriding procedure Thaw
+     (Self : not null access GPS_Preferences_Manager_Record) is
    begin
       Thaw (Preferences_Manager_Record (Self.all)'Access);  --  inherited
       if not Self.Is_Frozen then
