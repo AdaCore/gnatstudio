@@ -1561,6 +1561,19 @@ package body GPS.Kernel.MDI is
       return Left.Title = MDI_Location_Marker (Right).Title;
    end Similar;
 
+   -------------
+   -- Destroy --
+   -------------
+
+   overriding procedure Destroy (Module : in out General_UI_Module_Record) is
+      Kernel : constant Kernel_Handle := Module.Get_Kernel;
+   begin
+      if Kernel.Check_Monitored_Files_Id /= Glib.Main.No_Source_Id then
+         Remove (Kernel.Check_Monitored_Files_Id);
+         Kernel.Check_Monitored_Files_Id := Glib.Main.No_Source_Id;
+      end if;
+   end Destroy;
+
    --------------
    -- Distance --
    --------------

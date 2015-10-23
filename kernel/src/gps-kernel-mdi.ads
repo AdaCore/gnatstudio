@@ -47,6 +47,8 @@ package GPS.Kernel.MDI is
      (Module : access General_UI_Module_Record;
       Load   : XML_Utils.Node_Ptr := null) return Location_Marker;
 
+   overriding procedure Destroy (Module : in out General_UI_Module_Record);
+
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the General_UI_Module
