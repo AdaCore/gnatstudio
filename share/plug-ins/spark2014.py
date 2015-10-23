@@ -2101,18 +2101,6 @@ def on_prove_check(context):
 gnatprove = os_utils.locate_exec_on_path(toolname)
 
 if gnatprove:
-
-    # Check for SPARK 2005 toolchain: spark
-
-    spark2005 = os_utils.locate_exec_on_path('spark')
-
-    # Rename menu into "SPARK 2014" if there is already a menu "SPARK" for
-    # SPARK 2005 toolset.
-
-    if spark2005:
-        prefix = 'SPARK 2014'
-        menu_prefix = '/' + prefix
-
     xml_gnatprove_menus = \
         xml_gnatprove_menus.replace('@EXAMPLE@', get_example_root())
 
