@@ -51,7 +51,8 @@ package GPS.Project_Properties is
                          Attribute_As_Dynamic_List);
    type File_Filter is (Filter_None,
                         Filter_From_Project,
-                        Filter_From_Extended);
+                        Filter_From_Extended,
+                        Filter_From_All_Projects);
 
    type Attribute_Type (Typ : Attribute_As := Attribute_As_String) is
    record

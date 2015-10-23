@@ -964,15 +964,19 @@ package body GPS.Project_Properties is
             Allow_Empty : constant Boolean :=
               Boolean'Value
                 (Get_Attribute (Child, "allow_empty", "True"));
+            Filter_Attr : constant String :=
+              Get_Attribute (Child, "filter", "none");
             Filter      : File_Filter := Filter_None;
+
          begin
-            if Get_Attribute (Child, "filter", "none") = "project" then
+            if Filter_Attr = "project" then
                Filter := Filter_From_Project;
 
-            elsif Get_Attribute
-              (Child, "filter", "none") = "extended_project"
-            then
+            elsif Filter_Attr = "extended_project" then
                Filter := Filter_From_Extended;
+
+            elsif Filter_Attr = "all_projects" then
+               Filter := Filter_From_All_Projects;
             end if;
 
             if Typ = "file" then
