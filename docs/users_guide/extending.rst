@@ -1868,8 +1868,6 @@ specify under :file:`<root>` is described in later sections. It includes:
 
 * :ref:`<doc\_path>\ <Adding_documentation>`
 
-* :ref:`\<stock>\ <Adding_stock_icons>`
-
 * :ref:`<project\_attribute>\ <Defining_project_attributes>`
 
 * :ref:`<remote_machine\_descriptor>\ <Defining_a_remote_server>`
@@ -4471,89 +4469,62 @@ Youc an also add such a directory via Python, as in::
 
 .. _Adding_stock_icons:
 
-Adding stock icons
-------------------
+Adding custom icons
+-------------------
 
-.. index:: stock_icons
-.. index:: <stock_icons>
+You can also provide custom icons to be used throughout GPS in places such as
+buttons, menus and toolbars. To do this place :file:`index.theme`
+in :file:`.gps/icons/` directory. This file defines a set of directories to
+look for icons in and nominal icon size. Detailed description of the file
+could be found in a separate document - `Icon Theme Specification
+<http://www.freedesktop.org/wiki/Specifications/icon-theme-spec/>`_.
+We provide an example here::
 
-You can also define 'stock icons' in an XML configuration file. Stock icons
-are pictures that are identified by their label and are used throughout GPS
-in places such as buttons, menus and toolbars.
+    [Icon Theme]
+    Name=hicolor
+    Comment=User defined icon theme
+    Hidden=true
+    Directories=vcs_icons
+    
+    [vcs_icons]
+    Size=24
 
-You must declare stock icons using the tag :file:`<icon>` within the global
-tag :file:`<stock>`. The attribute :file:`id` is the label used to identify
-the stock icon and the attribute :file:`file` is the filename (either
-absolute or relative to the GPS icons directory) containing the actual
-picture.  If you need to read the icons from a directory relative to the
-location of the plug-in, you should use a Python script like::
+The corresponding directory tree in the :file:`.gps/icons` directory could
+look like this::
 
-    XML = r"""<GPS><stock>
-        <icon id="gtk-new" file="${icons}/file.svg"/>
-      </stock></GPS>"""
-
-    icons = os.path.normpath(
-       os.path.join(os.path.dirname(__file__), "../dir"))
-    XML = XML.replace("${icons}", icons)
-    GPS.parse_xml(XML)
-
-If you intend to use the stock icon in a toolbar, use the attribute
-:file:`label` to specify the text to display in the toolbar, under the
-button, when the toolbar is configured to show text.
-
-For icons intended to be displayed at multiple sizes, specify multiple
-files corresponding to these multiple sizes by adding children to the main
-:file:`<icon>` tag, with the tag :file:`<alternate>` containing a
-:file:`file` attribute and a :file:`size` attribute giving the size for
-which this alternate source should be used.
-
-Possible values for the :file:`size` attribute are:
-
-* :command:`Icon_Size_Menu`
-
-  Menu item, typically 16x16 pixels.
-
-* :command:`Icon_Size_Small_Toolbar`
-
-  Button in a small toolbar, typically 18x18 pixels.
-
-* :command:`Icon_Size_Large_Toolbar`
-
-  Button in a large toolbar, typically 24x24 pixels.
-
-* :command:`Icon_Size_Button`
-
-  Standard button, typically 20x20 pixels.
-
-* :command:`Icon_Size_Dnd`
-
-  Image used during drag-and-drop operation, typically 32x32 pixels.
-
-* :command:`Icon_Size_Dialog`
-
-  Main image in a dialog, typically 48x48 pixels
+    index.theme
+    vcs_icons/my-vcs-up-to-date-symbolic.svg
 
 .. highlight:: xml
+And usage in VCS plugin would be::
+               
+    <status label="Up to date"
+            iconname="my-vcs-up-to-date" />
 
-Here is an example::
+By default, gtk+ loads the Adwaita icon theme, which is found in the
+directory :file:`prefix/share/icons/`.
+An extra theme, hicolor, is also defined, and acts as a fallback when
+icons are not found in Adwaita. GPS adds extra directories to that
+hicolor theme (:file:`gpsprefix/share/icons/hicolor/*`), which contain GPS
+specific icons. As a result, icons from the user's theme (Adwaita) have
+priority, and GPS icons are loaded as fallbacks.
 
-  <?xml version="1.0"?>
-  <my_visual_preferences>
-    <stock>
-      <icon id="myproject-my-picture" file="icons/my-picture.png" />
-      <icon id="myproject-multipurpose-image"
-             label="do something"
-             file="icons/icon_default.png">
-         <alternate file="icons/icon_16.png" size="Icon_Size_Menu" />
-         <alternate file="icons/icon_24.png" size="Icon_Size_Large_Toolbar" />
-         <alternate file="icons/icon_20.png" size="Icon_Size_Button" />
-      </icon>
+In GPS, the following conventions are used:
 
-    </stock>
-  </my_visual_preferences>
+* All icons should be scalable SVG icons, so that the icons display
+  properly on hidpi screens.
 
-As shown in the example above, you should prefix the label with a unique
-name, here :file:`myproject-`, to make sure predefined stock icons do not
+* By convention in gtk+, the basename of the file is the name by
+  which the icon is refered to in the code. gtk+ automatically looks
+  for variants, for instance :file:`basename-rtl.svg` when using
+  right-to-left writing conventions.
+
+* In GPS, icon files most often end with :file:`-symbolic.svg`. This is a
+  special convention in gtk+. Such icons are displayed as grayscale
+  only, and automatically adapt to dark themes.
+
+As shown in the example above, you should prefix the icon with a unique
+name, here :file:`my-vcs-`, to make sure predefined icons do not
 get overridden by your icons.
 
 .. _Remote_programming_customization:
