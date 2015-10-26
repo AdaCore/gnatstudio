@@ -282,13 +282,11 @@ dnl
   else
     gtk_major_version=`sed -n 's/version := \"\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)\";/\1/p' $GTKADA_PRJ`
     gtk_minor_version=`sed -n 's/version := \"\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)\";/\2/p' $GTKADA_PRJ`
-    gtk_micro_version=`sed -n 's/version := \"\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)\";/\3/p' $GTKADA_PRJ`
 
 dnl for now we disable the version check to be compatible with GPL 2015
 dnl so we set with a correct version if not found.
-    if test "$gtk_major_version" = ""; then gtk_major_version=3; fi
-    if test "$gtk_minor_version" = ""; then gtk_minor_version=14; fi
-    if test "$gtk_micro_version" = ""; then gtk_micro_version=3; fi
+    if test "$gtk_major_version" = ""; then gtk_major_version=17; fi
+    if test "$gtk_minor_version" = ""; then gtk_minor_version=0; fi
 
 dnl
 dnl Now check if the installed GtkAda is sufficiently new.
@@ -300,28 +298,28 @@ dnl
 int
 main ()
 {
-  int major, minor, micro;
+  int major, minor;
   char *version = "$min_gtk_version";
 
   system ("touch conf.gtktest");
 
-  if (sscanf(version, "%d.%d.%d", &major, &minor, &micro) != 3) {
+  if (sscanf(version, "%d.%d", &major, &minor) != 2) {
      printf("%s, bad version string\n", "$min_gtk_version");
      exit(1);
   }
 
   if (($gtk_major_version > major) ||
      (($gtk_major_version == major) && ($gtk_minor_version > minor)) ||
-     (($gtk_major_version == major) && ($gtk_minor_version == minor) && ($gtk_micro_version >= micro)))
+     (($gtk_major_version == major) && ($gtk_minor_version == minor)))
     {
       return 0;
      }
    else
     {
-      printf("\n*** An old version of GtkAda (%d.%d.%d) was found.\n",
-             $gtk_major_version, $gtk_minor_version, $gtk_micro_version);
-        printf("*** You need a version of GtkAda newer or equal to %d.%d.%d. The latest version of\n",
-               major, minor, micro);
+      printf("\n*** An old version of GtkAda (%d.%d) was found.\n",
+             $gtk_major_version, $gtk_minor_version);
+        printf("*** You need a version of GtkAda newer or equal to %d.%d. The latest version of\n",
+               major, minor);
       printf("*** GtkAda is always available from http://libre.adacore.com\n");
       printf("***\n");
       printf("*** If you have already installed a sufficiently new version, this error\n");
