@@ -4852,9 +4852,9 @@ Define a model with a :file:`target-model` tag, which has one attribute,
 :file:`name`, containing the name of the model, and which supports the
 following child tags:
 
-* :file:`<icon>` (required)
+* :file:`<iconname>` (required)
 
-  Name of the stock icon associated by default with targets of this model.
+  Name of the icon associated by default with targets of this model.
   See :ref:`Adding_stock_icons`.
 
 * :file:`<description>` (required)
@@ -4963,9 +4963,9 @@ Define targets with a :file:`<target>` tag, which has three attributes:
 
 This tag accepts the following child tags:
 
-* :file:`<icon>`
+* :file:`<iconname>`
 
-  Name of the stock icon associated by default with targets of this model.
+  Name of the icon associated by default with targets of this model.
   See :ref:`Adding_stock_icons`.
 
 * :file:`<in-toolbar>` (default :command:`False`)
