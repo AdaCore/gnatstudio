@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.OS_Lib;       use GNAT.OS_Lib;
-
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GPS.Kernel;        use GPS.Kernel;
@@ -34,12 +32,12 @@ package body GPS.Stock_Icons is
 
    procedure Register_Stock_Icons
      (Kernel     : not null access Kernel_Handle_Record'Class;
-      System_Dir : GNATCOLL.VFS.Virtual_File)
+      System_Dir : Virtual_File)
    is
-      W, H    : Gint;
-      Result  : Boolean;
-      Theme   : Gtk_Icon_Theme;
-      pragma Unreferenced (Kernel);
+      W, H     : Gint;
+      Result   : Boolean;
+      Theme    : Gtk_Icon_Theme;
+      GPS_Home : constant Virtual_File := Kernel.Get_Home_Dir;
    begin
       Icon_Size_Action_Button := Icon_Size_Register ("ICON_SIZE_ACTION", 7, 7);
       Icon_Size_Local_Toolbar :=
@@ -75,8 +73,14 @@ package body GPS.Stock_Icons is
 
       Theme := Get_Default;
       Theme.Prepend_Search_Path
-        (System_Dir.Display_Full_Name
-         & "share" & Directory_Separator
-         & "gps" & Directory_Separator & "icons");
+        (Create_From_Dir
+           (Create_From_Dir
+              (Create_From_Dir (System_Dir, "share"),
+               "gps"),
+            "icons")
+         .Display_Full_Name);
+
+      Theme.Prepend_Search_Path
+        (Create_From_Dir (GPS_Home, "icons").Display_Full_Name);
    end Register_Stock_Icons;
 end GPS.Stock_Icons;
