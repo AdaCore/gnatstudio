@@ -7390,11 +7390,11 @@ with each.  This tag supports two attributes:
   Name of the status, for example :command:`Up to date` or :command:`Needs
   update` for CVS.
 
-* :file:`stock`
+* :file:`iconname`
 
-  Stock identifier of the icon associated to this status used to denote the
+  Name of the icon associated to this status used to denote the
   status in the :guilabel:`VCS Explorer`. See :ref:`Adding_stock_icons` for
-  details on defining stock icons.
+  details on defining custom icons.
 
 The order in which status are defined in the XML file is significant: the
 first status listed displayed must correspond to the equivalent of the
