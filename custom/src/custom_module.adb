@@ -30,7 +30,6 @@ with Glib.Object;               use Glib.Object;
 
 with Gtk.Accel_Label;           use Gtk.Accel_Label;
 with Gtk.Check_Menu_Item;
-with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -53,7 +52,6 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with GPS.Stock_Icons;           use GPS.Stock_Icons;
 with GUI_Utils;                 use GUI_Utils;
 with Language.Custom;           use Language.Custom;
 with Language;                  use Language;
@@ -471,7 +469,6 @@ package body Custom_Module is
       procedure Parse_Button_Node (Node : Node_Ptr);
       procedure Parse_Entry_Node (Node : Node_Ptr);
       procedure Parse_Tool_Node (Node : Node_Ptr);
-      procedure Parse_Stock_Node (Node : Node_Ptr);
       procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String);
       procedure Parse_Submenu_Node
         (Node : Node_Ptr; Parent_Path : UTF8_String);
@@ -1082,101 +1079,6 @@ package body Custom_Module is
          Free (Title);
       end Parse_Menu_Node;
 
-      ----------------------
-      -- Parse_Stock_Node --
-      ----------------------
-
-      procedure Parse_Stock_Node (Node : Node_Ptr) is
-         Child   : Node_Ptr := Node.Child;
-
-         procedure Add_Alternate_Sources;
-         --  Add the alternate sources to the icon set.
-
-         ---------------------------
-         -- Add_Alternate_Sources --
-         ---------------------------
-
-         procedure Add_Alternate_Sources is
-            Files    : Node_Ptr := Child.Child;
-         begin
-            while Files /= null loop
-               if To_Lower (Files.Tag.all) = "alternate" then
-                  declare
-                     Filename : constant Virtual_File :=
-                                  Get_File_Child (Files, "file");
-                     S : constant String := Get_Attribute (Files, "size");
-                     Size : Gtk.Enums.Gtk_Icon_Size;
-                     pragma Unreferenced (Size);
-                  begin
-                     if S = "Icon_Size_Menu" then
-                        Size := Gtk.Enums.Icon_Size_Menu;
-                     elsif S = "Icon_Size_Small_Toolbar" then
-                        Size := Gtk.Enums.Icon_Size_Small_Toolbar;
-                     elsif S = "Icon_Size_Local_Toolbar" then
-                        Size := Icon_Size_Local_Toolbar;
-                     elsif S = "Icon_Size_Large_Toolbar" then
-                        Size := Gtk.Enums.Icon_Size_Large_Toolbar;
-                     else
-                        Insert (Kernel, "Invalid icon size: " & S,
-                                Mode => Error);
-                     end if;
-
-                     if Filename = No_File then
-                        Insert
-                          (Kernel,
-                           -"No alternate file specified for icon "
-                           & Get_Attribute (Child, "id"), Mode => Error);
-                     else
-                        Insert
-                          (Kernel,
-                           -"<icon> no longer supported in customization");
-                     end if;
-                  end;
-               else
-                  Insert
-                    (Kernel,
-                     -"child for <icon> node not recognized: " &
-                     Files.Tag.all);
-               end if;
-
-               Files := Files.Next;
-            end loop;
-         end Add_Alternate_Sources;
-
-      begin
-         while Child /= null loop
-            if To_Lower (Child.Tag.all) = "icon" then
-               declare
-                  Id       : constant String := Get_Attribute (Child, "id");
-                  Filename : constant Virtual_File :=
-                               Get_File_Child (Child, "file");
-               begin
-                  if Id = "" then
-                     Insert
-                       (Kernel,
-                        -"No id specified for stock icon.",
-                        Mode => Error);
-
-                  elsif Filename = No_File then
-                     Insert
-                       (Kernel,
-                        -"No file specified for stock icon " & Id,
-                        Mode => Error);
-
-                  else
-                     Insert
-                       (Kernel,
-                        -"<icon> no longer supported in customization (for id "
-                        & Id & ")");
-                     Add_Alternate_Sources;
-                  end if;
-               end;
-            end if;
-
-            Child := Child.Next;
-         end loop;
-      end Parse_Stock_Node;
-
       ---------------
       -- Add_Child --
       ---------------
@@ -1238,7 +1140,9 @@ package body Custom_Module is
             Parse_Tool_Node (Current_Node);
 
          elsif To_Lower (Current_Node.Tag.all) = "stock" then
-            Parse_Stock_Node (Current_Node);
+            Insert
+              (Kernel,
+               -"<stock> no longer supported in customization");
 
          elsif To_Lower (Current_Node.Tag.all) = "entry" then
             Parse_Entry_Node (Current_Node);
