@@ -2799,8 +2799,8 @@ package body Src_Editor_View is
       Filename : constant GNATCOLL.VFS.Virtual_File := Get_Filename (B);
       Loc                        : Location_Type := Location;
       Line                       : Gint := 0;
-      EL                         : Editable_Line_Type;
-      Col                        : Visible_Column_Type;
+      EL                         : Editable_Line_Type := 0;
+      Col                        : Visible_Column_Type := 0;
       Column                     : Gint := 0;
       X, Y                       : Gint;
       Start_Iter                 : Gtk_Text_Iter;
@@ -2929,8 +2929,8 @@ package body Src_Editor_View is
             Files           => (1 => Filename),
             Project         => Get_Project (V),
             Publish_Project => False,
-            Line            => 0,
-            Column          => 0);
+            Line            => Integer (EL),
+            Column          => Col);
          return Context;
       end if;
 
