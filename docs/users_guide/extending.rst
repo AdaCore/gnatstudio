@@ -3003,20 +3003,16 @@ tag, it requires an :file:`action` attribute, which specifies what should
 be done when the button is pressed. The button is not created if the action
 action does not exist.
 
-This tag accepts one optional attribute, :file:`stock` which you can use to
+This tag accepts one optional attribute, :file:`iconname` which you can use to
 override the default image registered for the action or set one if the
-action no image. The value for this attribute is an icon specified by a
-:file:`<stock>` node (which you can use to provide a label for the button
-or several sizes of the images for better rendering).  (The :file:`stock`
-attribute replaces the old :file:`<pixmap>` child, which is no longer
-supported.)
+action no image. The value for this attribute is an icon name.
 
 The following example defines a new button::
 
   <?xml version="1.0" ?>
   <stats>
     <button action="undo" />   <!--  use default icon -->
-    <button action="execute my stats" stock='my-image' />
+    <button action="execute my stats" iconname='my-image' />
   </stats>
 
 Use the :file:`<button>` tag to create a simple button that the user can
