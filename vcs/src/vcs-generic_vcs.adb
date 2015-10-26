@@ -1490,12 +1490,23 @@ package body VCS.Generic_VCS is
 
          while P /= null loop
             if P.Tag.all = "status" then
-               Ref.Status (Num).Icon_Name := new String'
-                 (Get_Attribute (P, "stock", "unknown-icon"));
-               Ref.Status (Num).Label := new String'
-                 (Get_Attribute (P, "label", -"unnamed status"));
+               declare
+                  Icon : constant String := Get_Attribute (P, "iconname");
+               begin
+                  if Icon = "" then
+                     --  Rollback to old 'stock' attribute to keep
+                     --  compability for a while
+                     Ref.Status (Num).Icon_Name := new String'
+                       (Get_Attribute (P, "stock", "unknown-icon"));
+                  else
+                     Ref.Status (Num).Icon_Name := new String'(Icon);
+                  end if;
 
-               Num := Num + 1;
+                  Ref.Status (Num).Label := new String'
+                    (Get_Attribute (P, "label", -"unnamed status"));
+
+                  Num := Num + 1;
+               end;
             end if;
 
             P := P.Next;
