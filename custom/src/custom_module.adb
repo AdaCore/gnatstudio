@@ -819,6 +819,8 @@ package body Custom_Module is
 
       procedure Parse_Button_Node (Node : Node_Ptr) is
          Action  : constant String := Get_Attribute (Node, "action");
+         Icon    : constant String := Get_Attribute (Node, "iconname");
+         --  For back compability support stock='icon' attribute
          Stock   : constant String := Get_Attribute (Node, "stock");
          Child   : Node_Ptr;
 
@@ -852,7 +854,12 @@ package body Custom_Module is
             return;
          end if;
 
-         Register_Button (Kernel, Action, Icon_Name => Stock);
+         if Icon = "" then
+            --  Rollback to compability with 'stock' attribute
+            Register_Button (Kernel, Action, Icon_Name => Stock);
+         else
+            Register_Button (Kernel, Action, Icon_Name => Icon);
+         end if;
       end Parse_Button_Node;
 
       ----------------------
