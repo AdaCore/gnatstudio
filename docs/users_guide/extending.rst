@@ -4075,12 +4075,13 @@ The type of the project attribute is specified by child tags of
     units.
 
   * :file:`filter` (:command:`none`, :command:`project`,
-    :command:`extending_project`)
+    :command:`extending_project`, :command:`all_projects`)
 
     Ignored for all types except :command:`file`, where it further
     specifies what type of files should be specified by this attribute. If
-    :command:`none`, any file is valid.  If :command:`project`, only files
-    from the selected project are valid. If :command:`extended_project`,
+    :command:`none`, any file is valid. If :command:`all_projects`, files from
+    all projects in the project tree are valid. If :command:`project`, only
+    files from the selected project are valid. If :command:`extended_project`,
     only the files from the project extended by the current project can be
     specified. This attribute is not shown if the current project is not an
     extension project.
