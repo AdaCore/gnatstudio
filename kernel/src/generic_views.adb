@@ -43,6 +43,7 @@ with Gtk.Tool_Item;           use Gtk.Tool_Item;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Window;              use Gtk.Window;
+with Gtkada.Entry_Completion; use Gtkada.Entry_Completion;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Gtkada.Search_Entry;     use Gtkada.Search_Entry;
 with Gtkada.MDI;              use Gtkada.MDI;
@@ -58,6 +59,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Search;         use GPS.Kernel.Search;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Search;                use GPS.Search;
 with GPS.Stock_Icons;           use GPS.Stock_Icons;
@@ -480,6 +482,46 @@ package body Generic_Views is
    end On_Filter_Focus_Out;
 
    ------------------
+   -- Build_Search --
+   ------------------
+
+   procedure Build_Search
+     (Self    : not null access View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
+      P       : not null access GPS.Kernel.Search.Kernel_Search_Provider'Class;
+      Name                : Histories.History_Key;
+      Case_Sensitive      : Boolean := False)
+   is
+   begin
+      --  If the view already contains a search panel, don't create another
+      --  one.
+      if Self.Search /= null then
+         return;
+      end if;
+
+      --  Create the tool item
+      Self.Search := new Search_Panel_Record;
+      Gtk.Tool_Item.Initialize (Self.Search);
+
+      --  Create and initialize the completion entry. The provider
+      --  is freed by the completion entry (see the
+      --  Gtkada.Entry_Completion.Initialize doc).
+      Gtkada.Entry_Completion.Gtk_New
+        (Self                => Self.Search.Completion_Entry,
+         Kernel              => Self.Kernel,
+         Completion          => P,
+         Name                => Name,
+         Case_Sensitive      => Case_Sensitive,
+         Completion_In_Popup => True);
+      Self.Search.Add (Self.Search.Completion_Entry);
+
+      --  Append it to the toolbar
+      Self.Append_Toolbar (Toolbar     => Toolbar,
+                           Item        => Self.Search,
+                           Right_Align => True);
+   end Build_Search;
+
+   ------------------
    -- Build_Filter --
    ------------------
 
@@ -514,7 +556,7 @@ package body Generic_Views is
          Class_Init   => Filter_Panel_Class_Init'Access);
 
       G_New (F, Filter_Class_Record.The_Type);
-      Self.Append_Toolbar (Toolbar, F, Is_Filter => True);
+      Self.Append_Toolbar (Toolbar, F, Right_Align => True);
       F.Set_Expand (True);
       F.Set_Homogeneous (False);
 
@@ -649,14 +691,14 @@ package body Generic_Views is
      (Self        : not null access View_Record;
       Toolbar     : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
       Item        : not null access Gtk.Tool_Item.Gtk_Tool_Item_Record'Class;
-      Is_Filter   : Boolean := False;
+      Right_Align : Boolean := False;
       Homogeneous : Boolean := True)
    is
       pragma Unreferenced (Self);
       Sep : Gtk_Separator_Tool_Item;
       Loc : Gint;
    begin
-      if Is_Filter then
+      if Right_Align then
          if Has_Toolbar_Separator (Toolbar) = -1 then
             Gtk_New (Sep);
             Sep.Set_Draw (False);
@@ -1069,7 +1111,7 @@ package body Generic_Views is
             Event_Box.Set_Name ("local-config");
             Item.Set_Homogeneous (False);
             Item.Set_Tooltip_Text (-"Configure this panel");
-            View.Append_Toolbar (Toolbar, Item, Is_Filter => True);
+            View.Append_Toolbar (Toolbar, Item, Right_Align => True);
 
             Add_Events
               (Event_Box,

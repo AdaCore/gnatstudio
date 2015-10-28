@@ -39,10 +39,6 @@ package GPS.Kernel.Search.Preferences is
      (Self     : not null access Preferences_Search_Provider) return String
    is
      (Provider_Preferences);
-   overriding function Complete_Suffix
-     (Self      : not null access Preferences_Search_Provider;
-      Pattern   : not null access GPS.Search.Search_Pattern'Class)
-      return String;
 
    type Preferences_Search_Result is new Kernel_Search_Result with private;
    overriding procedure Free (Self : in out Preferences_Search_Result);
@@ -63,5 +59,9 @@ private
    overriding procedure Execute
      (Self       : not null access Preferences_Search_Result;
       Give_Focus : Boolean);
+
+   overriding function Full
+     (Self       : not null access Preferences_Search_Result)
+      return Gtk.Widget.Gtk_Widget;
 
 end GPS.Kernel.Search.Preferences;

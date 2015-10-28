@@ -19,9 +19,18 @@ with Default_Preferences;     use Default_Preferences;
 with Commands;                use Commands;
 with Commands.Interactive;    use Commands.Interactive;
 
+with Glib.Convert;            use Glib.Convert;
+
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Search;              use GPS.Search;
+
+with Gtk.Enums;               use Gtk.Enums;
+with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
+with Gtk.Text_Iter;           use Gtk.Text_Iter;
+with Gtk.Text_Tag;            use Gtk.Text_Tag;
+with Gtk.Text_View;           use Gtk.Text_View;
+with Pango.Enums;             use Pango.Enums;
 
 package body GPS.Kernel.Search.Preferences is
 
@@ -83,8 +92,8 @@ package body GPS.Kernel.Search.Preferences is
                   Provider => Self,
                   Score    => C.Score,
                   Short    => S,
-                  Long     => new String'(Page),
-                  Id       => S,
+                  Long     => new String'(Escape_Text (Page)),
+                  Id       => new String'(Get_Name (Pref)),
                   Pref     => Pref);
 
                Self.Adjust_Score (Result);
@@ -95,42 +104,6 @@ package body GPS.Kernel.Search.Preferences is
       Next (Self.Kernel.Get_Preferences, Self.Iter);
       Has_Next := Get_Pref (Self.Iter) /= null;
    end Next;
-
-   ---------------------
-   -- Complete_Suffix --
-   ---------------------
-
-   overriding function Complete_Suffix
-     (Self      : not null access Preferences_Search_Provider;
-      Pattern   : not null access GPS.Search.Search_Pattern'Class)
-      return String
-   is
-      Suffix      : Unbounded_String;
-      Suffix_Last : Natural := 0;
-      Pref        : Preference;
-      C           : Search_Context;
-   begin
-      Self.Set_Pattern (Pattern);
-
-      loop
-         Pref := Get_Pref (Self.Iter);
-         exit when Pref = null;
-
-         declare
-            Page : constant String := Get_Page (Pref);
-         begin
-            C := Self.Pattern.Start (Page);
-            if C /= GPS.Search.No_Match then
-               Self.Pattern.Compute_Suffix (C, Page, Suffix, Suffix_Last);
-               exit when Suffix_Last = 0;
-            end if;
-         end;
-
-         Next (Self.Kernel.Get_Preferences, Self.Iter);
-      end loop;
-
-      return Slice (Suffix, 1, Suffix_Last);
-   end Complete_Suffix;
 
    ----------
    -- Free --
@@ -162,4 +135,45 @@ package body GPS.Kernel.Search.Preferences is
       Self.Kernel.Get_Preferences.Get_Editor.Display_Pref (Self.Pref);
    end Execute;
 
+----------
+-- Full --
+----------
+
+   overriding function Full
+     (Self       : not null access Preferences_Search_Result)
+      return Gtk.Widget.Gtk_Widget is
+      View      : Gtk_Text_View;
+      Buffer    : Gtk_Text_Buffer;
+      Underline : Gtk_Text_Tag;
+      Bold      : Gtk_Text_Tag;
+      Iter      : Gtk_Text_Iter;
+   begin
+      if Self.Pref /= null then
+         Gtk_New (View);
+         Buffer := View.Get_Buffer;
+
+         View.Set_Editable (False);
+         View.Set_Wrap_Mode (Wrap_Word);
+
+         Bold := Buffer.Create_Tag;
+         Set_Property (Bold, Gtk.Text_Tag.Weight_Property, Pango_Weight_Bold);
+
+         Underline := Buffer.Create_Tag;
+         Set_Property
+           (Underline, Gtk.Text_Tag.Weight_Property, Pango_Weight_Bold);
+         Set_Property
+           (Underline, Gtk.Text_Tag.Underline_Property,
+            Pango_Underline_Single);
+
+         Buffer.Get_End_Iter (Iter);
+         Buffer.Insert (Iter, "Name: " & Get_Name (Self.Pref) & ASCII.LF);
+         Buffer.Insert
+           (Iter, ASCII.LF & "Page: " & Get_Page (Self.Pref) & ASCII.LF);
+         Buffer.Insert (Iter, ASCII.LF & Get_Doc (Self.Pref));
+
+         return Gtk.Widget.Gtk_Widget (View);
+      end if;
+
+      return null;
+   end Full;
 end GPS.Kernel.Search.Preferences;

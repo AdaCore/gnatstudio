@@ -181,9 +181,8 @@ package body GPS.Kernel.Search.Actions is
       Iter   : Gtk_Text_Iter;
    begin
       if Action /= null then
-         Gtk_New (Buffer);
-         Gtk_New (View, Buffer);
-         Unref (Buffer);
+         Gtk_New (View);
+         Buffer := View.Get_Buffer;
 
          View.Set_Editable (False);
          View.Set_Wrap_Mode (Wrap_Word);

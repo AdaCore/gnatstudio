@@ -1093,7 +1093,7 @@ package body KeyManager_Module.GUI is
       View.Filter_Grab.Set_Tooltip_Text (-"Grab a key sequence to search for");
       View.Filter_Grab.On_Clicked (On_Grab_For_Filter'Access, View);
       View.Append_Toolbar
-        (Toolbar, View.Filter_Grab, Is_Filter => True, Homogeneous => False);
+        (Toolbar, View.Filter_Grab, Right_Align => True, Homogeneous => False);
    end Create_Toolbar;
 
    --------------------

@@ -15,43 +15,46 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Default_Preferences;       use Default_Preferences;
-with Generic_Views;             use Generic_Views;
+with Default_Preferences;           use Default_Preferences;
+with Generic_Views;                 use Generic_Views;
 
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Traces;               use GNATCOLL.Traces;
 
-with Glib.Object;               use Glib.Object;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Event_Box;             use Gtk.Event_Box;
-with Gtk.Frame;                 use Gtk.Frame;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.List_Box;              use Gtk.List_Box;
-with Gtkada.MDI;                use Gtkada.MDI;
-with Gtk.Notebook;              use Gtk.Notebook;
-with Gtk.Paned;                 use Gtk.Paned;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Size_Group;            use Gtk.Size_Group;
-with Gtk.Style_Context;         use Gtk.Style_Context;
-with Gtk.Toolbar;               use Gtk.Toolbar;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Model_Filter;     use Gtk.Tree_Model_Filter;
-with Gtk.Tree_Model_Sort;       use Gtk.Tree_Model_Sort;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.Handlers;           use Gtkada.Handlers;
+with Glib.Object;                   use Glib.Object;
+with Gtk.Box;                       use Gtk.Box;
+with Gtk.Cell_Renderer_Text;        use Gtk.Cell_Renderer_Text;
+with Gtk.Enums;                     use Gtk.Enums;
+with Gtk.Event_Box;                 use Gtk.Event_Box;
+with Gtk.Frame;                     use Gtk.Frame;
+with Gtk.Label;                     use Gtk.Label;
+with Gtk.List_Box;                  use Gtk.List_Box;
+with Gtkada.MDI;                    use Gtkada.MDI;
+with Gtk.Notebook;                  use Gtk.Notebook;
+with Gtk.Paned;                     use Gtk.Paned;
+with Gtk.Scrolled_Window;           use Gtk.Scrolled_Window;
+with Gtk.Size_Group;                use Gtk.Size_Group;
+with Gtk.Style_Context;             use Gtk.Style_Context;
+with Gtk.Toolbar;                   use Gtk.Toolbar;
+with Gtk.Tree_Model;                use Gtk.Tree_Model;
+with Gtk.Tree_Model_Filter;         use Gtk.Tree_Model_Filter;
+with Gtk.Tree_Model_Sort;           use Gtk.Tree_Model_Sort;
+with Gtk.Tree_Selection;            use Gtk.Tree_Selection;
+with Gtk.Tree_Store;                use Gtk.Tree_Store;
+with Gtk.Tree_Row_Reference;        use Gtk.Tree_Row_Reference;
+with Gtk.Tree_View;                 use Gtk.Tree_View;
+with Gtk.Tree_View_Column;          use Gtk.Tree_View_Column;
+with Gtk.Widget;                    use Gtk.Widget;
+with Gtkada.Handlers;               use Gtkada.Handlers;
 
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Search;                use GPS.Search;
+with GPS.Intl;                      use GPS.Intl;
+with GPS.Kernel.Hooks;              use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;        use GPS.Kernel.Preferences;
+with GPS.Kernel.Search;             use GPS.Kernel.Search;
+with GPS.Kernel.Search.Preferences; use GPS.Kernel.Search.Preferences;
+with GPS.Search;                    use GPS.Search;
 
-with Language;                  use Language;
+with Language;                      use Language;
 
 package body GPS.Kernel.Preferences_Views is
 
@@ -98,6 +101,7 @@ package body GPS.Kernel.Preferences_Views is
       Label_Size_Group       : Gtk_Size_Group;
       Pref_Widget_Size_Group : Gtk_Size_Group;
       Preferences_List       : Gtk_List_Box;
+      Page_Reference         : Gtk_Tree_Row_Reference;
    end record;
    --  Preferences group view record. The Gtk_Size_Group widgets are used
    --  to align the labels and teh preferences widgets.
@@ -113,6 +117,18 @@ package body GPS.Kernel.Preferences_Views is
    --  Preferences page view record. The Groups_Map field is used to keep track
    --  of the preferences groups contained in a page.
    type Preferences_Page is access all Preferences_Page_Record'Class;
+
+   type Custom_Preferences_Search_Provider is new Preferences_Search_Provider
+   with null record;
+   --  Extend the GPS.Kernel.Preferences_Search_Provider used by the omnisearch
+   --  to have a custom local search bar.
+
+   overriding function Display_Name
+     (Self : not null access Custom_Preferences_Search_Provider) return String
+   is
+     ("");
+   --  Return an empty string so that the category is not displayed in this
+   --  local search bar.
 
    package Preferences_Editor_Visible_Funcs is new
      Gtk.Tree_Model_Filter.Set_Visible_Func_User_Data (GPS_Preferences_Editor);
@@ -131,6 +147,10 @@ package body GPS.Kernel.Preferences_Views is
    procedure On_Destroy (Widget : access Gtk_Widget_Record'Class);
    --  Used to reset the Preferences_GObjects_Map mapping the preferences names
    --  with the widget we want to update when preferences change.
+
+   procedure On_Destroy_Group (Widget : access Gtk_Widget_Record'Class);
+   --  Used to Free the Gtk_Tree_Row_Reference hold in a
+   --  Preferences_Group_Record.
 
    package Preferences_Editor_Views is new Generic_Views.Simple_Views
      (Module_Name               => "Preferences",
@@ -163,23 +183,24 @@ package body GPS.Kernel.Preferences_Views is
    --  This procedure is called right after the initialization.
 
    function Find_Or_Create_Page
-     (Self      : access GPS_Preferences_Editor_Record'Class;
-      Page_Name : String;
-      Widget    : Gtk_Widget) return Gtk_Tree_Iter;
+     (Self        : access GPS_Preferences_Editor_Record'Class;
+      Page_Name   : String;
+      Page_Widget : Gtk_Widget) return Gtk_Tree_Iter;
    --  Return the page index stored in the Gtk_Tree_Model.
-   --  If no such page already exists, then either Widget (if non null) is
+   --  If no such page already exists, then either Page_Widget (if non null) is
    --  inserted for it, or a new page is created and appended to the
    --  notebook
 
    function Find_Or_Create_Group
-     (Self       : access GPS_Preferences_Editor_Record'Class;
-      Page_Name  : String;
-      Group_Name : String;
-      Widget     : Gtk_Widget) return Preferences_Group;
+     (Self        : access GPS_Preferences_Editor_Record'Class;
+      Page_Name   : String;
+      Group_Name  : String;
+      Page_Widget : Gtk_Widget) return Preferences_Group;
    --  Return the widget associated with a specific group. If a widget
    --  associated with the group name is already in the model,
-   --  this function returns it. If not, it creates a widget for the group
-   --  given in paremeter and appends it to the model.
+   --  this function returns it.
+   --  If not, this function finds/creates the page widget which will contain
+   --  the group and creates a widget for the group.
 
    function Get_Page_Name (Pref_Name : String) return String;
    --  Return the page name in the preference name conatined in the
@@ -237,15 +258,13 @@ package body GPS.Kernel.Preferences_Views is
    overriding procedure Create_Toolbar
      (View    : not null access GPS_Preferences_Editor_Record;
       Toolbar : not null access Gtk_Toolbar_Record'Class) is
+      P : access Custom_Preferences_Search_Provider;
    begin
-      View.Build_Filter
-        (Toolbar     => Toolbar,
-         Hist_Prefix => "preferences",
-         Tooltip     => -"filter and the contents of the preferences pages",
-         Placeholder => -"filter",
-         Options     =>
-           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy
-         or Has_Approximate);
+      P := new Custom_Preferences_Search_Provider;
+      P.Kernel := View.Kernel;
+
+      View.Build_Search
+        (Toolbar, P, "preferences_editor_search", Case_Sensitive => False);
    end Create_Toolbar;
 
    --------------------
@@ -283,18 +302,20 @@ package body GPS.Kernel.Preferences_Views is
    overriding procedure Display_Pref
      (Self : not null access GPS_Preferences_Editor_Record;
       Pref : not null access Preference_Record'Class) is
-      Page_Iter : Gtk_Tree_Iter;
+      Group     : Preferences_Group;
       Page_Path : Gtk_Tree_Path;
    begin
-      --  Find the page where the preference is
-      Page_Iter :=
-        Self.Find_Or_Create_Page (Get_Page_Name (Get_Page (Pref)), null);
+      --  Get the group to highlight
+      Group := Self.Find_Or_Create_Group
+        (Page_Name   => Get_Page_Name (Pref.Get_Page),
+         Group_Name  => Get_Group_Name (Pref.Get_Page),
+         Page_Widget => null);
 
-      --  If the page is found, select it
-      if Page_Iter /= Null_Iter then
-         Page_Path := Self.Model.Get_Path (Page_Iter);
-         Self.Pages_Tree.Set_Cursor (Page_Path, null, False);
-      end if;
+      --  TODO: Find a way to highlight the selected pref
+
+      --  Display the page containing it
+      Page_Path := Group.Page_Reference.Get_Path;
+      Self.Pages_Tree.Set_Cursor (Page_Path, null, False);
    end Display_Pref;
 
    -----------------------
@@ -399,10 +420,10 @@ package body GPS.Kernel.Preferences_Views is
    --------------------------
 
    function Find_Or_Create_Group
-     (Self       : access GPS_Preferences_Editor_Record'Class;
-      Page_Name  : String;
-      Group_Name : String;
-      Widget     : Gtk_Widget) return Preferences_Group
+     (Self        : access GPS_Preferences_Editor_Record'Class;
+      Page_Name   : String;
+      Group_Name  : String;
+      Page_Widget : Gtk_Widget) return Preferences_Group
    is
       Page_Iter    : Gtk_Tree_Iter;
       Page_Index   : Gint;
@@ -411,7 +432,7 @@ package body GPS.Kernel.Preferences_Views is
       use Preferences_Group_Maps;
    begin
       --  Get the page where we want to insert the preferences group
-      Page_Iter := Find_Or_Create_Page (Self, Page_Name, Widget);
+      Page_Iter := Find_Or_Create_Page (Self, Page_Name, Page_Widget);
       Page_Index := Get_Int (Self.Model, Page_Iter, 1);
       Page := Preferences_Page
         (Self.Pages_Notebook.Get_Nth_Page (Page_Index));
@@ -428,6 +449,7 @@ package body GPS.Kernel.Preferences_Views is
          Group := new Preferences_Group_Record;
          Gtk.Frame.Initialize (Group);
          Group.Set_Border_Width (3);
+         Group.On_Destroy (On_Destroy_Group'Access);
 
          Gtk_New (Group.Label_Size_Group);
          Gtk_New (Group.Pref_Widget_Size_Group);
@@ -437,6 +459,10 @@ package body GPS.Kernel.Preferences_Views is
            ("gps-preferences-groups");
 
          Group.Add (Group.Preferences_List);
+         Gtk.Tree_Row_Reference.Gtk_New
+           (Reference => Group.Page_Reference,
+            Model     => Self.Pages_Tree.Get_Model,
+            Path      => Self.Model.Get_Path (Page_Iter));
 
          Page.Page_Box.Pack_Start (Group);
 
@@ -455,9 +481,9 @@ package body GPS.Kernel.Preferences_Views is
    -------------------------
 
    function Find_Or_Create_Page
-     (Self      : access GPS_Preferences_Editor_Record'Class;
-      Page_Name : String;
-      Widget    : Gtk_Widget) return Gtk_Tree_Iter
+     (Self        : access GPS_Preferences_Editor_Record'Class;
+      Page_Name   : String;
+      Page_Widget : Gtk_Widget) return Gtk_Tree_Iter
    is
       Current       : Gtk_Tree_Iter := Null_Iter;
       Child         : Gtk_Tree_Iter;
@@ -489,7 +515,7 @@ package body GPS.Kernel.Preferences_Views is
          end loop;
 
          if Child = Null_Iter then
-            if Widget = null then
+            if Page_Widget = null then
                --  Create a new page
                Page := new Preferences_Page_Record;
                Gtk.Scrolled_Window.Initialize (Page);
@@ -504,7 +530,7 @@ package body GPS.Kernel.Preferences_Views is
 
                W := Gtk_Widget (Page);
             else
-               W := Widget;
+               W := Page_Widget;
             end if;
 
             Self.Pages_Notebook.Append_Page (Child     => W,
@@ -613,9 +639,9 @@ package body GPS.Kernel.Preferences_Views is
 
          if Pref.Get_Page /= "" then
             Group := Self.Find_Or_Create_Group
-              (Page_Name  => Get_Page_Name (Pref.Get_Page),
-               Group_Name => Get_Group_Name (Pref.Get_Page),
-               Widget     => null);
+              (Page_Name   => Get_Page_Name (Pref.Get_Page),
+               Group_Name  => Get_Group_Name (Pref.Get_Page),
+               Page_Widget => null);
 
             Gtk_New_Hbox (Group_Row);
             Group_Row.Set_Border_Width (3);
@@ -688,6 +714,16 @@ package body GPS.Kernel.Preferences_Views is
       Remove_All_GObjects_To_Update;
       Manager.Set_Editor (null);
    end On_Destroy;
+
+   ----------------------
+   -- On_Destroy_Group --
+   ----------------------
+
+   procedure On_Destroy_Group (Widget : access Gtk_Widget_Record'Class) is
+      Group : constant Preferences_Group := Preferences_Group (Widget);
+   begin
+      Free (Group.Page_Reference);
+   end On_Destroy_Group;
 
    ---------------------
    -- Register_Module --

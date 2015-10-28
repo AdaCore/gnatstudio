@@ -24,6 +24,7 @@ with Gdk.Event;
 
 with GPS.Kernel.Modules;
 with GPS.Kernel.MDI;
+with GPS.Kernel.Search;
 with GPS.Search;
 with Glib.Main;
 with Glib.Object;
@@ -37,6 +38,7 @@ with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Tool_Item;
 with Gtk.Widget;
+private with Gtkada.Entry_Completion;
 private with Gtkada.Search_Entry;
 with Gtkada.MDI;
 with Histories;
@@ -86,10 +88,10 @@ package Generic_Views is
      (Self        : not null access View_Record;
       Toolbar     : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
       Item        : not null access Gtk.Tool_Item.Gtk_Tool_Item_Record'Class;
-      Is_Filter   : Boolean := False;
+      Right_Align : Boolean := False;
       Homogeneous : Boolean := True);
    --  Appends an item to the local toolbar.
-   --  If Is_Filter is True, the item will be right-aligned.
+   --  If Right_Align is True, the item will be right-aligned.
    --  All items with Homogeneous set to True will have the same width.
    --  It is better to use this procedure than Gtk.Toolbar.Insert, since the
    --  latter makes it harder to know how to append items to the left or to
@@ -106,6 +108,19 @@ package Generic_Views is
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Set the Kernel field (needed only internally from the generic, where
    --  we can directly access the kernel field)
+
+   -----------------------
+   -- Search bar fields --
+   -----------------------
+
+   procedure Build_Search
+     (Self    : not null access View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
+      P       : not null access GPS.Kernel.Search.Kernel_Search_Provider'Class;
+      Name                : Histories.History_Key;
+      Case_Sensitive      : Boolean := False);
+   --  Build a search bar panel, looking like the omnisearch bar, by giving a
+   --  custom search provider.
 
    ------------------------------
    -- Search and filter fields --
@@ -125,7 +140,7 @@ package Generic_Views is
       Tooltip     : String := "";
       Placeholder : String := "";
       Options     : Filter_Options_Mask := 0);
-   --  Build a search field which provides a standard look-and-feel:
+   --  Build a filter panel which provides a standard look-and-feel:
    --     * rounded corner (through the theme)
    --     * "clear" icon
    --     * placeholder text
@@ -337,9 +352,17 @@ private
      end record;
    type Filter_Panel is access all Filter_Panel_Record'Class;
 
+   type Search_Panel_Record is new Gtk.Tool_Item.Gtk_Tool_Item_Record
+   with record
+      Completion_Entry : Gtkada.Entry_Completion.Gtkada_Entry;
+   end record;
+   type Search_Panel is access all Search_Panel_Record'Class;
+   --  Type used to create a search bar in the view's local toolbar
+
    type View_Record is new Gtk.Box.Gtk_Box_Record with record
       Kernel : GPS.Kernel.Kernel_Handle;
       Filter : Filter_Panel;   --  might be null
+      Search : Search_Panel;   --  might be null
    end record;
 
 end Generic_Views;
