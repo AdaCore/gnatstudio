@@ -533,6 +533,15 @@ class Predefined_Hooks:
       :param GPS.File file:
         """
 
+    # file_deleting = 'file_deleting'
+    def file_deleting(name,file):
+        """
+      +Emitted before GPS delete a file.
+
+      :param str name:
+      :param GPS.File file:
+        """
+
     # file_edited = 'file_edited'
     def file_edited(name,file):
         """

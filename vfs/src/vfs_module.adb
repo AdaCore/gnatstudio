@@ -399,6 +399,7 @@ package body VFS_Module is
       File    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Project : Project_Type;
 
+      Files   : GNATCOLL.VFS.File_Array_Access;
    begin
       Trace (Me, "deleting "
              & File_Information (Context.Context).Display_Full_Name);
@@ -414,6 +415,9 @@ package body VFS_Module is
             Gtkada.Dialogs.Button_Yes or Gtkada.Dialogs.Button_No);
 
          if Res = Gtkada.Dialogs.Button_Yes then
+            --  inform before deleting
+            File_Deleting_Hook.Run (Get_Kernel (Context.Context), File);
+
             Delete (File, Success);
 
             if not Success then
@@ -442,9 +446,19 @@ package body VFS_Module is
             --  physical dir.
 
             if Dir.Is_Directory then
+               --  close all editors associated with files
+               Files := Read_Dir_Recursive (Dir);
+               if Files /= null then
+                  for F of Files.all loop
+                     File_Deleting_Hook.Run
+                       (Get_Kernel (Context.Context), File);
+                  end loop;
+                  GNATCOLL.VFS.Unchecked_Free (Files);
+               end if;
+
                Dir.Remove_Dir (True, Success);
             else
-               Success :=  False;
+               Success := False;
             end if;
 
             if not Success then

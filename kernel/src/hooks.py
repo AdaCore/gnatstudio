@@ -679,6 +679,9 @@ Emitted just before the last editor for a file is closed. You can still
 use :func:`EditorBuffer.get` and :func:`current_view` to access the last
 editor for `file`.'''),
 
+    Hook('file_deleting', 'file_hooks', descr='''
++Emitted before GPS delete a file.'''),
+
     Hook('file_deleted', 'file_hooks', descr='''
 Emitted whenever GPS detects that a file was deleted on the disk. The
 parameter might be a directory instead of a file, indicating that any

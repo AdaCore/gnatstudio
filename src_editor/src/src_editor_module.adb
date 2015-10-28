@@ -250,6 +250,13 @@ package body Src_Editor_Module is
       Pref   : Preference);
    --  Called when the preferences have changed
 
+   type On_Deleting is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Deleting;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
+   --  Callback for the "file_deleting" hook
+
    procedure Add_To_Recent_Menu
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
    --  Add an entry for File to the Recent menu, if needed
@@ -2330,6 +2337,7 @@ package body Src_Editor_Module is
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
       File_Edited_Hook.Add (new On_File_Edited);
       File_Changed_On_Disk_Hook.Add (new On_File_Changed_On_Disk);
+      File_Deleting_Hook.Add (new On_Deleting);
 
       Register_Commands (Kernel);
 
@@ -2530,6 +2538,41 @@ package body Src_Editor_Module is
             Runtime_Use_ACL := 0;
          end if;
       end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Deleting;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
+   is
+      pragma Unreferenced (Self);
+
+      procedure Close_View
+        (Child : not null access GPS_MDI_Child_Record'Class);
+
+      ----------------
+      -- Close_View --
+      ----------------
+
+      procedure Close_View
+        (Child : not null access GPS_MDI_Child_Record'Class)
+      is
+         Box : constant Source_Editor_Box :=
+           Source_Editor_Box (Get_Widget (Child));
+      begin
+         if Box.Get_Buffer.Needs_To_Be_Saved then
+            --  undo all changes to prevent save dialog showing
+            Standard.Commands.Empty_Queue (Box.Get_Buffer.Get_Command_Queue);
+         end if;
+         Close (Get_MDI (Kernel), Box, True);
+      end Close_View;
+
+   begin
+      For_All_Views (Kernel, File, Close_View'Access);
    end Execute;
 
    ----------
