@@ -69,9 +69,9 @@ package body GPS.Kernel.Search.Preferences is
      (Self     : not null access Preferences_Search_Provider;
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean) is
-      Pref : Preference;
-      C    : Search_Context;
-      S    : GNAT.Strings.String_Access;
+      Pref  : Preference;
+      C     : Search_Context;
+      Short : GNAT.Strings.String_Access;
    begin
       Result := null;
 
@@ -80,21 +80,15 @@ package body GPS.Kernel.Search.Preferences is
       --  Don't try to match the hidden preferences
       if Get_Page (Pref) /= "" then
          declare
-            Page  : constant String := Get_Page (Pref);
             Doc   : constant String := Get_Doc (Pref);
          begin
             C := Self.Pattern.Start (Doc);
             if C /= GPS.Search.No_Match then
-               S := new String'
+               Short := new String'
                  (Self.Pattern.Highlight_Match (Doc, Context => C));
-               Result := new Preferences_Search_Result'
-                 (Kernel   => Self.Kernel,
-                  Provider => Self,
-                  Score    => C.Score,
-                  Short    => S,
-                  Long     => new String'(Escape_Text (Page)),
-                  Id       => new String'(Get_Name (Pref)),
-                  Pref     => Pref);
+               Result := Preferences_Search_Provider'Class
+                 (Self.all).Create_Preferences_Search_Result
+                 (Pref, Short, C.Score);
 
                Self.Adjust_Score (Result);
             end if;
@@ -104,6 +98,29 @@ package body GPS.Kernel.Search.Preferences is
       Next (Self.Kernel.Get_Preferences, Self.Iter);
       Has_Next := Get_Pref (Self.Iter) /= null;
    end Next;
+
+   --------------------------------------
+   -- Create_Preferences_Search_Result --
+   --------------------------------------
+
+   function Create_Preferences_Search_Result
+     (Self  : not null access Preferences_Search_Provider;
+      Pref  : not null Default_Preferences.Preference;
+      Short : GNAT.Strings.String_Access;
+      Score : Natural) return GPS.Search.Search_Result_Access
+   is
+      Page  : constant String := Get_Page (Pref);
+      Name  : constant String := Get_Name (Pref);
+   begin
+      return new Preferences_Search_Result'
+        (Kernel   => Self.Kernel,
+         Provider => Self,
+         Score    => Score,
+         Short    => Short,
+         Long     => new String'(Escape_Text (Page)),
+         Id       => new String'(Name),
+         Pref     => Pref);
+   end Create_Preferences_Search_Result;
 
    ----------
    -- Free --
@@ -135,9 +152,9 @@ package body GPS.Kernel.Search.Preferences is
       Self.Kernel.Get_Preferences.Get_Editor.Display_Pref (Self.Pref);
    end Execute;
 
-----------
--- Full --
-----------
+   ----------
+   -- Full --
+   ----------
 
    overriding function Full
      (Self       : not null access Preferences_Search_Result)
@@ -176,4 +193,5 @@ package body GPS.Kernel.Search.Preferences is
 
       return null;
    end Full;
+
 end GPS.Kernel.Search.Preferences;

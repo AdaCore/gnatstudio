@@ -20,6 +20,7 @@ with Generic_Views;                 use Generic_Views;
 
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 
+with Glib.Convert;                  use Glib.Convert;
 with Glib.Object;                   use Glib.Object;
 with Gtk.Box;                       use Gtk.Box;
 with Gtk.Cell_Renderer_Text;        use Gtk.Cell_Renderer_Text;
@@ -130,6 +131,25 @@ package body GPS.Kernel.Preferences_Views is
    --  Return an empty string so that the category is not displayed in this
    --  local search bar.
 
+   overriding function Create_Preferences_Search_Result
+     (Self  : not null access Custom_Preferences_Search_Provider;
+      Pref  : not null Default_Preferences.Preference;
+      Short : GNAT.Strings.String_Access;
+      Score : Natural) return GPS.Search.Search_Result_Access;
+   --  Override this function to return a Custom_Preferences_Search_Result
+   --  and have dispatching on the returned Custom_Preferences_Search_Result.
+
+   type Custom_Preferences_Search_Result is new Preferences_Search_Result
+   with null record;
+   --  Extend the GPS.Kernel.Preferences_Search_Result type to override some
+   --  primitives.
+
+   overriding function Full
+     (Self       : not null access Custom_Preferences_Search_Result)
+      return Gtk.Widget.Gtk_Widget is (null);
+   --  Return null here because we don't want to display any previews in the
+   --  preferences dialog local search.
+
    package Preferences_Editor_Visible_Funcs is new
      Gtk.Tree_Model_Filter.Set_Visible_Func_User_Data (GPS_Preferences_Editor);
    function Page_Is_Visible
@@ -209,6 +229,29 @@ package body GPS.Kernel.Preferences_Views is
    function Get_Group_Name (Pref_Name : String) return String;
    --  Return the group name in the preference name, if any. If not, return
    --  an empty string.
+
+   --------------------------------------
+   -- Create_Preferences_Search_Result --
+   --------------------------------------
+
+   overriding function Create_Preferences_Search_Result
+     (Self  : not null access Custom_Preferences_Search_Provider;
+      Pref  : not null Default_Preferences.Preference;
+      Short : GNAT.Strings.String_Access;
+      Score : Natural) return GPS.Search.Search_Result_Access
+     is
+      Page  : constant String := Get_Page (Pref);
+      Name  : constant String := Get_Name (Pref);
+   begin
+      return new Custom_Preferences_Search_Result'
+        (Kernel   => Self.Kernel,
+         Provider => Self,
+         Score    => Score,
+         Short    => Short,
+         Long     => new String'(Escape_Text (Page)),
+         Id       => new String'(Name),
+         Pref     => Pref);
+   end Create_Preferences_Search_Result;
 
    ---------------------
    -- Page_Is_Visible --

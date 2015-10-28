@@ -40,8 +40,26 @@ package GPS.Kernel.Search.Preferences is
    is
      (Provider_Preferences);
 
-   type Preferences_Search_Result is new Kernel_Search_Result with private;
+   type Preferences_Search_Result is new Kernel_Search_Result with record
+      Pref : Default_Preferences.Preference;
+      --  The preference that has been selected
+   end record;
+
+   function Create_Preferences_Search_Result
+     (Self  : not null access Preferences_Search_Provider;
+      Pref  : not null Default_Preferences.Preference;
+      Short : GNAT.Strings.String_Access;
+      Score : Natural) return GPS.Search.Search_Result_Access;
+   --  Return a GPS.Search.Search_Result_Access according to the matched
+   --  preference, a short description and the calculated score for this match.
+
    overriding procedure Free (Self : in out Preferences_Search_Result);
+   overriding procedure Execute
+     (Self       : not null access Preferences_Search_Result;
+      Give_Focus : Boolean);
+   overriding function Full
+     (Self       : not null access Preferences_Search_Result)
+      return Gtk.Widget.Gtk_Widget;
 
 private
    type Preferences_Search_Provider is new Kernel_Search_Provider with record
@@ -50,18 +68,5 @@ private
       Iter    : Default_Preferences.Cursor;
       --  The current iterator
    end record;
-
-   type Preferences_Search_Result is new Kernel_Search_Result with record
-      Pref : Default_Preferences.Preference;
-      --  The preference that has been selected
-   end record;
-
-   overriding procedure Execute
-     (Self       : not null access Preferences_Search_Result;
-      Give_Focus : Boolean);
-
-   overriding function Full
-     (Self       : not null access Preferences_Search_Result)
-      return Gtk.Widget.Gtk_Widget;
 
 end GPS.Kernel.Search.Preferences;
