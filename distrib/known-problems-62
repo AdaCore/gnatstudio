@@ -1,10 +1,10 @@
-===========================================
-Known problems in GPS 6.2 and GNATbench 2.9
-===========================================
+============================================
+Known problems in GPS 6.2 and GNATbench 2.10
+============================================
 
 Copyright (C) 2013-2015, AdaCore
 
-The following is a listing of known problems in GPS 6.0.x and GNATbench 2.8.x.
+The following is a listing of known problems in GPS 6.2.x and GNATbench 2.10.x.
 Each entry contains a status line stating when the problem was fixed, and on
 which release(s). In addition, any wavefront issued subsequent to the date
 specified (in ISO format YYYY-MM-DD) also contains the fix. This can be used
