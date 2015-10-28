@@ -3988,7 +3988,7 @@ package body Project_Properties is
             Iterator => For_All_Pages'Access);
       begin
          for T in Tools'Range loop
-            Trace (Me, "MANU Add page for tool="
+            Trace (Me, "Add page for tool="
                & To_String (Tools (T).Tool_Name));
             Page := Switches_Editor_For_Tool_Factory
               (Tool           => Tools (T),
@@ -4224,9 +4224,9 @@ package body Project_Properties is
       Self : constant Properties_Editor := Properties_Editor (Editor);
       Languages : String_List_Access := Get_Languages (Self);
    begin
-      Trace (Me, "MANU On_Languages_Change");
+      Trace (Me, "On_Languages_Change");
       for L in Languages'Range loop
-         Trace (Me, "MANU   L =" & Languages (L).all);
+         Trace (Me, "   L =" & Languages (L).all);
       end loop;
       Set_Visible_Pages (Self, Languages.all);
       Free (Languages);
@@ -4598,7 +4598,7 @@ package body Project_Properties is
          Project := Project_Information (Context.Context);
       else
          Project := Get_Project (Kernel);
-         Trace (Me, "MANU Editing kernel's project");
+         Trace (Me, "Editing kernel's project");
       end if;
 
       Edit_Properties (Project, Kernel);
