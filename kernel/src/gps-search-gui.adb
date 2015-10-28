@@ -1452,9 +1452,9 @@ package body GPS.Search.GUI is
            & Provider_Entities & ";"
            & Provider_Actions & ";"
            & Provider_Builds & ";"
+           & Provider_Preferences & ";"
            & Provider_Bookmarks & ";"
-           & Provider_Sources & ";"
-           & Provider_Preferences & ";");
+           & Provider_Sources & ";");
 
       P := new GPS.Kernel.Search.Filenames.Filenames_Search_Provider;
       Register_Provider_And_Action

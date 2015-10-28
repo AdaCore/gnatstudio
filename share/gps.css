@@ -68,17 +68,36 @@ GtkTextView.readonly {
    opacity: 1.0;
 }
 
+/*************************
+ * GPS preferences pages *
+ *************************/
+
+.gps-preferences-pages {
+   background-color: @theme_base_color;
+}
+
 /**************************
  * GPS preferences groups *
  **************************/
 
 .gps-preferences-groups {
-   background-color: @notebook_background;
+   background-color: @theme_base_color;
+   box-shadow: none;
+   border-width: 0px 0px 0px 0px;
+}
+
+.gps-preferences-groups > GtkLabel {
+  /* Set bold font for group titles */
+  font-weight: bold;
+}
+
+.gps-preferences-groups GtkListBoxRow {
+  padding-left: 10px;
 }
 
 .gps-preferences-groups GtkListBoxRow:hover {
    /* Don't prelight the preferences groups rows when hovering */
-   background-color: @notebook_background;
+   background-color: @theme_base_color;
 }
 
 /*********************

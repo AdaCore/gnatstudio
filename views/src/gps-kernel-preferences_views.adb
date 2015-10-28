@@ -448,14 +448,13 @@ package body GPS.Kernel.Preferences_Views is
       if Group = null then
          Group := new Preferences_Group_Record;
          Gtk.Frame.Initialize (Group);
-         Group.Set_Border_Width (3);
          Group.On_Destroy (On_Destroy_Group'Access);
 
          Gtk_New (Group.Label_Size_Group);
          Gtk_New (Group.Pref_Widget_Size_Group);
          Gtk_New (Group.Preferences_List);
          Group.Preferences_List.Set_Selection_Mode (Selection_None);
-         Get_Style_Context (Group.Preferences_List).Add_Class
+         Get_Style_Context (Group).Add_Class
            ("gps-preferences-groups");
 
          Group.Add (Group.Preferences_List);
@@ -524,9 +523,9 @@ package body GPS.Kernel.Preferences_Views is
                --  Create the new Vbox which will hold the preferences
                --  groups
                Gtk_New_Vbox (Page.Page_Box);
-               Page.Page_Box.Set_Margin_Start (10);
-               Page.Page_Box.Set_Margin_End (10);
                Page.Add (Page.Page_Box);
+               Get_Style_Context (Page.Page_Box).Add_Class
+                 ("gps-preferences-pages");
 
                W := Gtk_Widget (Page);
             else
@@ -644,7 +643,6 @@ package body GPS.Kernel.Preferences_Views is
                Page_Widget => null);
 
             Gtk_New_Hbox (Group_Row);
-            Group_Row.Set_Border_Width (3);
 
             if Pref.Editor_Needs_Label then
                Gtk_New (Event);
