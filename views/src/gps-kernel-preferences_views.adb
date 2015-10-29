@@ -18,6 +18,7 @@
 with Default_Preferences;           use Default_Preferences;
 with Generic_Views;                 use Generic_Views;
 
+with Ada.Containers.Indefinite_Hashed_Maps;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 
 with Glib.Convert;                  use Glib.Convert;
@@ -29,6 +30,7 @@ with Gtk.Event_Box;                 use Gtk.Event_Box;
 with Gtk.Frame;                     use Gtk.Frame;
 with Gtk.Label;                     use Gtk.Label;
 with Gtk.List_Box;                  use Gtk.List_Box;
+with Gtk.List_Box_Row;              use Gtk.List_Box_Row;
 with Gtkada.MDI;                    use Gtkada.MDI;
 with Gtk.Notebook;                  use Gtk.Notebook;
 with Gtk.Paned;                     use Gtk.Paned;
@@ -61,6 +63,11 @@ package body GPS.Kernel.Preferences_Views is
 
    Me : constant Trace_Handle := Create (-"PREFERENCES_VIEWS");
 
+   package Preferences_Row_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (String, Gtk_List_Box_Row, Ada.Strings.Hash, "=");
+   --  Used to asscociate preferences names with their row widget
+   Preferences_Row_Map : Preferences_Row_Maps.Map;
+
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
 
    overriding procedure Execute
@@ -78,6 +85,7 @@ package body GPS.Kernel.Preferences_Views is
       Filter_Pattern     : Search_Pattern_Access;
       Pages_Notebook     : Gtk_Notebook;
       Current_Page_Index : Gint;
+      Highlighted_Pref   : Preference;
    end record;
    type GPS_Preferences_Editor is
      access all GPS_Preferences_Editor_Record'Class;
@@ -97,6 +105,16 @@ package body GPS.Kernel.Preferences_Views is
      (Self : not null access GPS_Preferences_Editor_Record;
       Pref : not null access Preference_Record'Class);
    --  See inherited subprograms documentation
+
+   overriding procedure Highlight_Pref
+     (Self      : not null access GPS_Preferences_Editor_Record;
+      Pref      : not null access Preference_Record'Class);
+   --  Highlight the given preference. Used by the local search to have a nice
+   --  preview for the matched preferences.
+
+   overriding procedure Unhighlight_Previous_Pref
+     (Self : not null access GPS_Preferences_Editor_Record);
+   --  Unhighlight the preference that is currently highlighted, if any.
 
    type Preferences_Group_Record is new Gtk_Frame_Record with record
       Label_Size_Group       : Gtk_Size_Group;
@@ -144,11 +162,19 @@ package body GPS.Kernel.Preferences_Views is
    --  Extend the GPS.Kernel.Preferences_Search_Result type to override some
    --  primitives.
 
+   overriding procedure Execute
+     (Self       : not null access Custom_Preferences_Search_Result;
+      Give_Focus : Boolean);
+   --  Override this function to unhighlight the currently highlighted
+   --  preference (if any) after selecting a match in the search bar
+   --  completion list popup.
+
    overriding function Full
      (Self       : not null access Custom_Preferences_Search_Result)
-      return Gtk.Widget.Gtk_Widget is (null);
-   --  Return null here because we don't want to display any previews in the
-   --  preferences dialog local search.
+      return Gtk.Widget.Gtk_Widget;
+   --  Override this function to highlight the preference and display the page
+   --  containing it as a preview.
+   --  Return null so that no additional preview widget is displayed.
 
    package Preferences_Editor_Visible_Funcs is new
      Gtk.Tree_Model_Filter.Set_Visible_Func_User_Data (GPS_Preferences_Editor);
@@ -253,6 +279,42 @@ package body GPS.Kernel.Preferences_Views is
          Pref     => Pref);
    end Create_Preferences_Search_Result;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self       : not null access Custom_Preferences_Search_Result;
+      Give_Focus : Boolean)
+   is
+      pragma Unreferenced (Give_Focus);
+   begin
+      --  Display the page when a matched preference is selected.
+      --  This is only useful when preview is disabled.
+      Self.Kernel.Get_Preferences.Get_Editor.Display_Pref (Self.Pref);
+
+      --  Unhighlight the previous selected preference, if any
+      Self.Kernel.Get_Preferences.Get_Editor.Unhighlight_Previous_Pref;
+   end Execute;
+
+   ----------
+   -- Full --
+   ----------
+
+   overriding function Full
+     (Self       : not null access Custom_Preferences_Search_Result)
+      return Gtk.Widget.Gtk_Widget is
+   begin
+      --  Highlight the selected preference
+      if Self.Pref /= null then
+         Self.Kernel.Get_Preferences.Get_Editor.Highlight_Pref
+           (Self.Pref);
+      end if;
+
+      --  Return null so that no preview widget is displayed
+      return null;
+   end Full;
+
    ---------------------
    -- Page_Is_Visible --
    ---------------------
@@ -265,8 +327,6 @@ package body GPS.Kernel.Preferences_Views is
       Row_Visible : Boolean := True;
       Child       : Gtk.Tree_Model.Gtk_Tree_Iter;
    begin
-      Trace (Me, "Page_Is_Visible has been called");
-
       --  Compute the row itself should be visible (not withstanding its
       --  children.
       if Data.Filter_Pattern /= null then
@@ -345,8 +405,28 @@ package body GPS.Kernel.Preferences_Views is
    overriding procedure Display_Pref
      (Self : not null access GPS_Preferences_Editor_Record;
       Pref : not null access Preference_Record'Class) is
-      Group     : Preferences_Group;
+      Page_Iter : Gtk_Tree_Iter;
       Page_Path : Gtk_Tree_Path;
+   begin
+      --  Get the page containing it
+      Page_Iter := Self.Find_Or_Create_Page
+        (Get_Page_Name (Pref.Get_Page), null);
+      Page_Path := Self.Model.Get_Path (Page_Iter);
+
+      --  Display it
+      Self.Pages_Tree.Set_Cursor (Page_Path, null, False);
+   end Display_Pref;
+
+   --------------------
+   -- Highlight_Pref --
+   --------------------
+
+   overriding procedure Highlight_Pref
+     (Self      : not null access GPS_Preferences_Editor_Record;
+      Pref      : not null access Preference_Record'Class) is
+      Row_to_Highlight : Gtk_List_Box_Row;
+      Group            : Preferences_Group;
+      Page_Path        : Gtk_Tree_Path;
    begin
       --  Get the group to highlight
       Group := Self.Find_Or_Create_Group
@@ -354,12 +434,34 @@ package body GPS.Kernel.Preferences_Views is
          Group_Name  => Get_Group_Name (Pref.Get_Page),
          Page_Widget => null);
 
-      --  TODO: Find a way to highlight the selected pref
+      --  Unhighlight the previous selected preference, if any
+      Self.Unhighlight_Previous_Pref;
+
+      --  Highlight the row containing the selected preference
+      Row_to_Highlight := Preferences_Row_Map (Pref.Get_Name);
+      Row_to_Highlight.Set_State_Flags (Gtk_State_Flag_Selected, False);
+      Self.Highlighted_Pref := Preference (Pref);
 
       --  Display the page containing it
       Page_Path := Group.Page_Reference.Get_Path;
       Self.Pages_Tree.Set_Cursor (Page_Path, null, False);
-   end Display_Pref;
+   end Highlight_Pref;
+
+   -------------------------------
+   -- Unhighlight_Previous_Pref --
+   -------------------------------
+
+   overriding procedure Unhighlight_Previous_Pref
+     (Self : not null access GPS_Preferences_Editor_Record)
+   is
+      Highlighted_Row  : Gtk_List_Box_Row;
+   begin
+      if Self.Highlighted_Pref /= null then
+         Highlighted_Row := Preferences_Row_Map
+           (Self.Highlighted_Pref.Get_Name);
+         Highlighted_Row.Set_State_Flags (Gtk_State_Flag_Normal, True);
+      end if;
+   end Unhighlight_Previous_Pref;
 
    -----------------------
    -- Selection_Changed --
@@ -718,8 +820,11 @@ package body GPS.Kernel.Preferences_Views is
                   Group_Row.Pack_Start (Widget);
                end if;
             end if;
-
+            --  Insert the preference row in the Group's Gtk_List_Box and
+            --  keep track of if in the map so that we can highlight it later.
             Group.Preferences_List.Add (Group_Row);
+            Preferences_Row_Map.Insert
+              (Pref.Get_Name, Gtk_List_Box_Row (Group_Row.Get_Parent));
          end if;
 
          Manager.Next (C);
@@ -750,9 +855,10 @@ package body GPS.Kernel.Preferences_Views is
       Manager : constant GPS_Preferences_Manager :=
                   GPS_Preferences_Manager (Editor.Kernel.Get_Preferences);
    begin
-      --  Clear the map mapping preferences with the GObject we want to update
-      --  when the preferences dialog is destroyed.
+      --  Clear the maps mapping preferences and alert the manager that
+      --  its editor has been destroyed.
       Remove_All_GObjects_To_Update;
+      Preferences_Row_Map.Clear;
       Manager.Set_Editor (null);
    end On_Destroy;
 

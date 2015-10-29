@@ -80,6 +80,18 @@ package Default_Preferences is
    --  screen (e.g: open the page containing the preference if it is organized
    --  with different pages).
 
+   procedure Highlight_Pref
+     (Self : not null access Preferences_Editor_Interface;
+      Pref : not null access Preference_Record'Class) is null;
+   --  Highlight the preference given in parameter.
+   --  The way preferences are highlighted is editor-specific: override
+   --  this procedure if preferences highlighting is needed.
+
+   procedure Unhighlight_Previous_Pref
+     (Self : not null access Preferences_Editor_Interface) is null;
+   --  If a preference has already been highlighted (via a call to
+   --  Highlight_Pref), unhighlight it.
+
    procedure Set_GObject_To_Update
      (Pref   : not null access Preference_Record;
       Obj    : not null access GObject_Record'Class);
