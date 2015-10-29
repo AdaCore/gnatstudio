@@ -458,8 +458,8 @@ package body GUI_Utils is
 
       procedure Contextual_Menu_Position_Callback
         (Menu : not null access Gtk_Menu_Record'Class;
-         X : in out Gint;
-         Y : in out Gint;
+         X : out Gint;
+         Y : out Gint;
          Push_In : out Boolean;
          Val : Gdk.Event.Gdk_Event);
 
@@ -509,8 +509,8 @@ package body GUI_Utils is
 
       procedure Contextual_Menu_Position_Callback
         (Menu : not null access Gtk_Menu_Record'Class;
-         X : in out Gint;
-         Y : in out Gint;
+         X : out Gint;
+         Y : out Gint;
          Push_In : out Boolean;
          Val : Gdk.Event.Gdk_Event)
       is

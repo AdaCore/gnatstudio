@@ -182,11 +182,11 @@ package body Generic_Views is
 
       procedure Func
         (Menu    : not null access Gtk_Menu_Record'Class;
-         X, Y    : in out Gint;
+         X, Y    : out Gint;
          Push_In : out Boolean);
       procedure Func
         (Menu    : not null access Gtk_Menu_Record'Class;
-         X, Y    : in out Gint;
+         X, Y    : out Gint;
          Push_In : out Boolean)
       is
          pragma Unreferenced (Menu);
