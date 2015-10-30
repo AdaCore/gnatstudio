@@ -45,6 +45,16 @@ KP-61-OA07-028 GPS: Project view with flat view does not show runtime
 
   Workaround: Unchecked Flat View to see the runtime.
 
+KP-61-OA06-025 GPS: crash when deleting files via project overview
+
+  Problem:    When you modify source code in an editor and try to delete
+              this modified (unsaved) file via the Project view,
+              GPS crashes or hangs.
+
+  Status:     This was fixed in 6.2 on 2015-10-30
+
+  Workaround: Don't delete unsaved modified files.
+
 KP-61-OA05-029 GPS: makefile.py fails to parse double colons
 
   Problem:    If you are using a Makefile which includes the GNU syntax
