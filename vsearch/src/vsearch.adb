@@ -1986,6 +1986,7 @@ package body Vsearch is
       Widget_Callback.Object_Connect
         (Vsearch.Context_Combo, Gtk.Combo_Box.Signal_Changed,
          On_Context_Combo_Changed'Access, Vsearch);
+      Set_Name (Vsearch.Context_Combo, "search scope combo");
 
       Gtk_New_Vbox (Vsearch.Context_Specific, Homogeneous => False);
       Pack_Start (Vsearch.Scope_Frame, Vsearch.Context_Specific, False);
