@@ -476,6 +476,7 @@
    <toolbar id='Project'>
       <button action='reload project'/>
       <button action='open project properties' hide='true'/>
+      <button action='Project view: collapse all projects'/>
    </toolbar>
 
    <toolbar id='Clipboard'>

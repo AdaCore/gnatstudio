@@ -22,3 +22,9 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
+
+NF-170-OA29-048 GPS: collapse all project nodes in Project view (2015-11-02)
+
+  A new button was added to the local toolbar of the Project view, to
+  collapse all project nodes. This is a way to quickly cleanup the display
+  after using "Locate in Project View" for a while.

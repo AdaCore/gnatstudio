@@ -212,6 +212,13 @@ package body Project_Explorers is
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
 
+   type Collapse_All_Projects_Command is
+     new Interactive_Command with null record;
+   overriding function Execute
+     (Self    : access Collapse_All_Projects_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+
    function Hash (Key : Filesystem_String) return Ada.Containers.Hash_Type;
    pragma Inline (Hash);
 
@@ -1196,6 +1203,60 @@ package body Project_Explorers is
    begin
       Set_Pref (Show_Absolute_Paths, K.Get_Preferences,
                 not Show_Absolute_Paths.Get_Pref);
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : access Collapse_All_Projects_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Self);
+      View     : constant Project_Explorer :=
+        Explorer_Views.Get_Or_Create_View (Get_Kernel (Context.Context));
+      Iter     : Gtk_Tree_Iter := Get_Iter_First (View.Tree.Model);
+      Sort     : constant Gint := Freeze_Sort (View.Tree.Model);
+
+      procedure Recurse (It : Gtk_Tree_Iter);
+      --  Close all project nodes recursively
+
+      procedure Recurse (It : Gtk_Tree_Iter) is
+         Child_It : Gtk_Tree_Iter;
+         P        : Gtk_Tree_Path;
+         Success  : Boolean;
+         pragma Unreferenced (Success);
+      begin
+         case Get_Node_Type (View.Tree.Model, It) is
+            when Project_Node_Types
+               | Runtime_Node
+               | Directory_Node_Types =>
+
+               P := View.Tree.Model.Get_Path (It);
+               Success := View.Tree.Collapse_Row (P);
+               Path_Free (P);
+
+               Child_It := Children (View.Tree.Model, It);
+               while Child_It /= Null_Iter loop
+                  Recurse (Child_It);
+                  Next (View.Tree.Model, Child_It);
+               end loop;
+
+            when others =>
+               null;
+         end case;
+      end Recurse;
+
+   begin
+      while Iter /= Null_Iter loop
+         Recurse (Iter);
+         Next (View.Tree.Model, Iter);
+      end loop;
+
+      Thaw_Sort (View.Tree.Model, Sort);
       return Commands.Success;
    end Execute;
 
@@ -2189,6 +2250,13 @@ package body Project_Explorers is
          Command     => new Toggle_Absolute_Path_Command,
          Description => Toggle_Absolute_Path_Tip,
          Category    => -"Project Explorer");
+
+      Register_Action
+        (Kernel, "Project view: collapse all projects",
+         new Collapse_All_Projects_Command,
+         Description => "Collapse all project nodes in the Project view",
+         Category    => -"Project Explorer",
+         Icon_Name   => "gps-collapse-all-symbolic");
 
       Register_Filter
         (Kernel,
