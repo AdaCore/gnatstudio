@@ -1176,7 +1176,7 @@ package body GVD.Canvas is
       Submenu : Gtk_Menu;
       Item    : Display_Item;
       Base      : Item_Record :=
-        Item_Record'(Canvas         => Canvas,
+        Item_Record'(Canvas         => null,
                      Item           => null,
                      Component      => null,
                      Mode           => Value,
@@ -1190,6 +1190,8 @@ package body GVD.Canvas is
       Canvas := GVD_Canvas
         (GPS_MDI_Child
            (Get_MDI (Get_Kernel (Context)).Get_Focus_Child).Get_Actual_Widget);
+
+      Base.Canvas := Canvas;
 
       if not Has_Browser_Information (Context) then
          return;

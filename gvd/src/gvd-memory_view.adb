@@ -505,7 +505,8 @@ package body GVD.Memory_View is
       --  If the cursor is found at a place where text is not editable,
       --  reinitialize its position.
 
-      if Column >= View.Number_Of_Columns
+      if Row >= Integer (Get_Value_As_Int (View.Editor.Lines_Spin))
+        or else Column >= View.Number_Of_Columns
         or else Column < 0
       then
          Set_Offset
