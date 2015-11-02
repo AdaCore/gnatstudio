@@ -20,7 +20,6 @@ with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with Custom_Tools_Output;
-with Generic_Stack;
 
 with GNAT.Directory_Operations;
 with GNAT.Regpat;               use GNAT.Regpat;
@@ -40,8 +39,6 @@ package body Build_Command_Utils is
    Max_Number_Of_Mains : constant := 128;
    --  The maximum number of Mains that we accept to display in the Menus
    --  and toolbar.
-
-   package Projects_Stack is new Generic_Stack (Project_Type);
 
    function Is_Server_In_Mode
      (Registry   : Build_Config_Registry_Access;
@@ -297,106 +294,89 @@ package body Build_Command_Utils is
    function Get_Mains
      (Registry : Project_Registry_Access) return Project_And_Main_Array
    is
-      Root_Project : constant Project_Type := Registry.Tree.Root_Project;
-
       Result       : Project_And_Main_Array (1 .. Max_Number_Of_Mains);
-      Index        : Natural := Result'First;
-      Projects     : Projects_Stack.Simple_Stack;
+      Index        : Natural := Result'Last;
       The_Project  : Project_Type;
+      M            : String_List_Access;
+      P            : Project_Type;
+      File         : Virtual_File;
+      Main_Found   : Boolean;
+
+      --  The main units, when defined in an extended project, are
+      --  always added for the extending project (since we always want
+      --  to compile in the context of that project). So we always ignore
+      --  extended projects in the loop.
+
       Iterator     : Project_Iterator :=
-                       Root_Project.Start (Include_Extended => True);
-      Mains        : String_List_Access;
-
-      function To_Full_Path (Basename : String) return Virtual_File;
-      --  Return the full path of file Basename in project Project
-
-      function Is_Already_In_Mains (F : Virtual_File) return Boolean;
-      --  Return True if S is in Result (for instance a project could use its
-      --  extended project's Main attribute, in which case we would end up
-      --  with duplicates).
-
-      -------------------------
-      -- Is_Already_In_Mains --
-      -------------------------
-
-      function Is_Already_In_Mains (F : Virtual_File) return Boolean is
-      begin
-         for J in Result'First .. Index - 1 loop
-            if Result (J).Main = F then
-               return True;
-            end if;
-         end loop;
-         return False;
-      end Is_Already_In_Mains;
-
-      ------------------
-      -- To_Full_Path --
-      ------------------
-
-      function To_Full_Path (Basename : String) return Virtual_File is
-         File : Virtual_File;
-      begin
-         if GNAT.Directory_Operations.File_Extension (Basename) = "" then
-            --  The project files used to support the form
-            --     for Main use ("basename");
-            --  If this is the case here, add ".adb" to get the real name of
-            --  the source unit.
-            File := Registry.Tree.Create
-              (Filesystem_String (Basename & ".adb"),
-               Use_Object_Path => False);
-         else
-            File := Registry.Tree.Create
-              (Filesystem_String (Basename),
-               Use_Object_Path => False);
-         end if;
-
-         if File = GNATCOLL.VFS.No_File then
-            return Create_From_Base (+Basename);
-         end if;
-
-         return File;
-      end To_Full_Path;
+         Registry.Tree.Root_Project.Start (Include_Extended => False);
 
    begin
       --  The project Iterator starts with the leaf projects and ends with
       --  the root project. Reverse the order to be more user-friendly: in
       --  the majority of cases, users will want to see the mains defined
-      --  in the root project first.
+      --  in the root project first. To do this, we fill the result
+      --  starting from the end
 
       while Current (Iterator) /= No_Project loop
-         Projects_Stack.Push (Projects, Current (Iterator));
+         The_Project := Current (Iterator);
+         if The_Project.Extending_Project = No_Project then
+
+            P := The_Project;
+            Main_Found := False;
+
+            Add_Mains_From_Extended :
+
+            while P /= No_Project
+               --  Stop searching when we found a valid Main attribute, which
+               --  overrides the one from the extended projects.
+               and then not Main_Found
+            loop
+               M := P.Attribute_Value (Main_Attribute);
+               if M /= null then
+                  for Basename of M.all loop
+                     if Basename.all /= "" then
+
+                        --  Resolve to full path
+
+                        if GNAT.Directory_Operations.File_Extension
+                           (Basename.all) = ""
+                        then
+                           --  The project files used to support the form
+                           --     for Main use ("basename");
+                           --  If this is the case here, add ".adb" to get the
+                           --  real name of  the source unit.
+                           File := Registry.Tree.Create
+                             (Filesystem_String (Basename.all & ".adb"),
+                              Use_Object_Path => False);
+                        else
+                           File := Registry.Tree.Create
+                              (Name    => Filesystem_String (Basename.all),
+                               Project => P,
+                               Use_Object_Path => False);
+                        end if;
+
+                        if File = GNATCOLL.VFS.No_File then
+                           File := Create_From_Base (+Basename.all);
+                        end if;
+
+                        Result (Index) :=
+                           (Project => The_Project, Main => File);
+                        Index := Index - 1;
+                        Main_Found := True;
+                        exit when Index < Result'First;
+                     end if;
+                  end loop;
+                  Free (M);
+               end if;
+
+               P := P.Extended_Project;
+            end loop Add_Mains_From_Extended;
+         end if;
+
          Next (Iterator);
       end loop;
 
-      while not Projects_Stack.Is_Empty (Projects)
-        and Index <= Result'Last
-      loop
-         Projects_Stack.Pop (Projects, The_Project);
-         Mains := The_Project.Attribute_Value (Main_Attribute);
-         if Mains /= null then
-            for J in Mains'Range loop
-               if Mains (J)'Length > 0 then
-                  Result (Index) :=
-                    (Project => The_Project,
-                     Main    => To_Full_Path (Mains (J).all));
-
-                  if not Is_Already_In_Mains (Result (Index).Main) then
-                     Index := Index + 1;
-                     exit when Index > Result'Last;
-                  else
-                     Result (Index) := (Project => The_Project,
-                                        Main    => GNATCOLL.VFS.No_File);
-                  end if;
-               end if;
-            end loop;
-
-            Free (Mains);
-         end if;
-      end loop;
-
-      Projects_Stack.Clear (Projects);
-
-      return Result (1 .. Index - 1);
+      return Result (Index + 1 .. Result'Last);
    end Get_Mains;
 
    --------------------------

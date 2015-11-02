@@ -46,6 +46,7 @@ with Commands;                  use Commands;
 with Debugger;                  use Debugger;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
 with Default_Preferences;       use Default_Preferences;
+with GNATCOLL.Any_Types;        use GNATCOLL.Any_Types;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
@@ -185,6 +186,7 @@ package body GVD_Module is
 
    procedure Debug_Init
      (Kernel  : GPS.Kernel.Kernel_Handle;
+      Project : Project_Type;
       File    : GNATCOLL.VFS.Virtual_File;
       Args    : String);
    --  Initialize the debugger
@@ -269,7 +271,8 @@ package body GVD_Module is
    --------------------
 
    type Initialize_Debugger_Command is new Interactive_Command with record
-      Exec   : Virtual_File;
+      Project : Project_Type;
+      Exec    : Virtual_File;
    end record;
    overriding function Execute
      (Command : access Initialize_Debugger_Command;
@@ -546,6 +549,7 @@ package body GVD_Module is
    begin
       Debug_Init
         (GPS.Kernel.Kernel_Handle (Kernel),
+         No_Project,
          No_File,
          Args);
    end Initialize_Debugger;
@@ -1608,15 +1612,14 @@ package body GVD_Module is
 
    procedure Debug_Init
      (Kernel  : GPS.Kernel.Kernel_Handle;
+      Project : Project_Type;
       File    : GNATCOLL.VFS.Virtual_File;
       Args    : String)
    is
       Ignore : Visual_Debugger;
       pragma Unreferenced (Ignore);
    begin
-      Ignore := Spawn
-        (Kernel, Debugger_Kind.Get_Pref, File,
-         Get_Project (Kernel), Args);
+      Ignore := Spawn (Kernel, Debugger_Kind.Get_Pref, File, Project, Args);
    end Debug_Init;
 
    -------------
@@ -1625,10 +1628,10 @@ package body GVD_Module is
 
    overriding function Execute
      (Command : access Initialize_Debugger_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
+      Context : Interactive_Command_Context) return Command_Return_Type is
    begin
-      Debug_Init (Get_Kernel (Context.Context), Command.Exec, "");
+      Debug_Init
+         (Get_Kernel (Context.Context), Command.Project, Command.Exec, "");
       return Commands.Success;
    end Execute;
 
@@ -1949,16 +1952,10 @@ package body GVD_Module is
       use GNAT.OS_Lib;
       Menu              : Gtk_Menu renames GVD_Module_ID.Initialize_Menu;
       Loaded_Project    : constant Project_Type := Get_Project (Kernel);
-      Iter              : Project_Iterator := Loaded_Project.Start;
-      Current_Project   : Project_Type := Current (Iter);
-      Tmp               : Project_Type;
 
       procedure Create_Action_And_Menu
         (Prj : Project_Type; Main : Virtual_File; M : Integer);
       --  Create the action and menu to initialize a specific executable
-
-      procedure Add_Entries (Mains : in out Argument_List; Prj : Project_Type);
-      --  Add menu entries for all executables in Main. Main is freed on exit
 
       ----------------------------
       -- Create_Action_And_Menu --
@@ -1973,7 +1970,8 @@ package body GVD_Module is
             else
                Escape_Underscore (Escape_Menu_Name (Main.Display_Base_Name)));
 
-         Action  : constant String := "debug initialize " & Main_Name;
+         Action  : constant String :=
+            "debug initialize " & Prj.Name & ":" & Main_Name;
          Menu    : constant String :=
            "/Debug/Initialize/"
            & (if Prj = No_Project
@@ -1983,7 +1981,9 @@ package body GVD_Module is
          Item    : Gtk_Menu_Item;
       begin
          Command := new Initialize_Debugger_Command'
-           (Interactive_Command with Exec => Main);
+           (Interactive_Command with
+            Project => Prj,
+            Exec    => Main);
          Unregister_Action (Kernel, Action);
          Register_Action
            (Kernel, Action, Command,
@@ -2006,73 +2006,28 @@ package body GVD_Module is
          end if;
       end Create_Action_And_Menu;
 
-      -----------------
-      -- Add_Entries --
-      -----------------
-
-      procedure Add_Entries
-        (Mains : in out Argument_List; Prj : Project_Type) is
-      begin
-         for M in Mains'Range loop
-            declare
-               Exec : constant Filesystem_String :=
-                 Prj.Executable_Name (+Mains (M).all);
-               Dir  : constant Virtual_File := Executables_Directory (Prj);
-            begin
-               if Dir = No_File then
-                  Create_Action_And_Menu (Prj, Create_From_Base (Exec), M);
-               else
-                  Create_Action_And_Menu (Prj, Create_From_Dir (Dir, Exec), M);
-               end if;
-            end;
-         end loop;
-      end Add_Entries;
+      Mains : Any_Type :=
+         Compute_Build_Targets_Hook.Run (Kernel, "executable");
 
    begin
-      --  Remove all existing menus
-
       Remove_All_Children (Menu);
 
-      --  The following loop should be factorized with the one in the builder
-      --  module (see Builder_Module.On_View_Changed).
-
-      while Current_Project /= No_Project loop
-         --  Never show the main units from an extended project, since we only
-         --  look at the actual executables in the extending project
-
-         if Extending_Project (Current_Project) /= No_Project then
-            null;
-
-         --  If we have an extending project, the list of main units could
-         --  come from the project itself, or be inherited from extended
-         --  projects.
-
-         else
-            Tmp := Current_Project;
-            while Tmp /= No_Project loop
-               declare
-                  Mains : String_List_Access :=
-                    Tmp.Attribute_Value (Main_Attribute);
-               begin
-                  if Mains /= null and then Mains'Length /= 0 then
-                     --  Basenames inherited, but exec_dir is current project
-                     Add_Entries (Mains.all, Current_Project);
-
-                     --  Stop looking in inherited project, since the attribute
-                     --  has been overridden.
-                     Tmp := No_Project;
-                  else
-                     Tmp := Extended_Project (Tmp);
-                  end if;
-
-                  Free (Mains);
-               end;
-            end loop;
+      for J in 1 .. Mains.Length loop
+         if Mains.List (J).Length /= 0 then
+            declare
+               Main : constant Virtual_File :=
+                  Create (+Mains.List (J).Tuple (2).Str);
+               Prj  : constant Virtual_File :=
+                  Create (+Mains.List (J).Tuple (3).Str);
+               P    : constant Project_Type :=
+                  Kernel.Registry.Tree.Project_From_Path (Prj);
+            begin
+               Create_Action_And_Menu (P, Main, J);
+            end;
          end if;
-
-         Next (Iter);
-         Current_Project := Current (Iter);
       end loop;
+
+      Free (Mains);
 
       --  Specific entry to start the debugger without any main program
 
