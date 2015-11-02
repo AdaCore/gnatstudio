@@ -2945,7 +2945,8 @@ package body GNATdoc.Frontend is
                         end if;
                      end;
 
-                  when Tok_Type =>
+                  when Tok_Type    |
+                       Tok_Subtype =>
                      if Prev_Token = Tok_Task
                        or else Prev_Token = Tok_Protected
                      then
