@@ -84,6 +84,7 @@ package body Memory_View_Pkg is
       Set_Text (Memory_View.Address_Entry, -"");
       Set_Visibility (Memory_View.Address_Entry, True);
       Attach (Table, Memory_View.Address_Entry, 1, 2, 0, 1);
+      Set_Name (Memory_View.Address_Entry, "memory view adress entry");
 
       Gtk_New (Memory_View.Address_View, -"View");
       Set_Relief (Memory_View.Address_View, Relief_Normal);
@@ -133,6 +134,7 @@ package body Memory_View_Pkg is
       Memory_View.Size.Append_Text (-"Word");
       Memory_View.Size.Set_Active (0);
       Pack_Start (Hbox12, Memory_View.Size, True, True, 0);
+      Set_Name (Memory_View.Size, "memory view unit size");
 
       Gtk_New_Vseparator (Vseparator7);
       Pack_Start (Hbox12, Vseparator7, False, True, 10);
@@ -151,6 +153,7 @@ package body Memory_View_Pkg is
       Memory_View.Format.Append_Text (-"ASCII");
       Memory_View.Format.Set_Active (0);
       Pack_Start (Hbox12, Memory_View.Format, True, True, 7);
+      Set_Name (Memory_View.Format, "memory view format");
 
       Gtk_New_Vseparator (Vseparator10);
       Pack_Start (Hbox12, Vseparator10, True, True, 0);
@@ -158,6 +161,7 @@ package body Memory_View_Pkg is
       Gtk_New (Memory_View.Show_Ascii, -"Show ASCII");
       Set_Active (Memory_View.Show_Ascii, True);
       Pack_Start (Hbox12, Memory_View.Show_Ascii, False, False, 0);
+      Set_Name (Memory_View.Show_Ascii, "memory view show ascii");
 
       Gtk_New_Vseparator (Vseparator9);
       Pack_Start (Hbox12, Vseparator9, True, True, 0);
