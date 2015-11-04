@@ -29,6 +29,12 @@ NF-62-OA22-009 GPS: Filter to include all files (2015-10-27)
   from any loaded project. This impacts the project editor, which will
   display all those files and let users chose among them.
 
+NF-62-OA20-041 GPS: remove use of stock icons (2015-10-27)
+
+  GPS uses icon themes instead of stock icons, since Gtk+ 3.14 has marked
+  stock icons as deprecated. As a result, most icons were converted to SVG
+  and <stock> configuration nodes are no longer supported.
+
 NF-62-O925-041 GPS: Add css highlighter for GPS (2015-10-05)
 
   Added a CSS highlighter to GPS using the Python API.
