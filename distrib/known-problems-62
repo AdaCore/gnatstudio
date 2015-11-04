@@ -24,3 +24,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
+
+KP-62-O820-024 GPS: debugging aggregated projects
+
+  Problem:    If you are using aggregate projects, the /Debug/Initialize
+              behaves incorrectly when the same main unit is part of multiple
+              aggregated projects. Selecting any of the corresponding menu
+              will always debug the executable in the context of the same
+              aggregated project, and never the others.
+
+  Status:     This was fixed in 17.0 on 2015-11-03
+
+  Workaround: Initialize the debugger with no main unit, and manually type
+              'file <exec_name>' in the debugger console.
