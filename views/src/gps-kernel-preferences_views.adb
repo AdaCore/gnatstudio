@@ -129,13 +129,18 @@ package body GPS.Kernel.Preferences_Views is
    package Preferences_Group_Maps is new Ada.Containers.Indefinite_Hashed_Maps
      (String, Preferences_Group, Ada.Strings.Hash, "=");
 
-   type Preferences_Page_Record is new Gtk_Scrolled_Window_Record with record
+   type GPS_Preferences_Page_Record is
+     new Gtk_Scrolled_Window_Record and Preferences_Page_Interface with record
       Groups_Map : Preferences_Group_Maps.Map;
       Page_Box   : Gtk_Box;
    end record;
    --  Preferences page view record. The Groups_Map field is used to keep track
    --  of the preferences groups contained in a page.
-   type Preferences_Page is access all Preferences_Page_Record'Class;
+   type GPS_Preferences_Page is access all GPS_Preferences_Page_Record'Class;
+
+   overriding function Edit
+     (Self : not null access GPS_Preferences_Page_Record)
+      return Gtk_Widget is (Gtk_Widget (Self.Page_Box));
 
    type Custom_Preferences_Search_Provider is new Preferences_Search_Provider
    with null record;
@@ -572,14 +577,14 @@ package body GPS.Kernel.Preferences_Views is
    is
       Page_Iter    : Gtk_Tree_Iter;
       Page_Index   : Gint;
-      Page         : Preferences_Page;
+      Page         : GPS_Preferences_Page;
       Group        : Preferences_Group := null;
       use Preferences_Group_Maps;
    begin
       --  Get the page where we want to insert the preferences group
       Page_Iter := Find_Or_Create_Page (Self, Page_Name, Page_Widget);
       Page_Index := Get_Int (Self.Model, Page_Iter, 1);
-      Page := Preferences_Page
+      Page := GPS_Preferences_Page
         (Self.Pages_Notebook.Get_Nth_Page (Page_Index));
 
       --  If the group has already been created for this page, just retrieve
@@ -632,7 +637,7 @@ package body GPS.Kernel.Preferences_Views is
       Current       : Gtk_Tree_Iter := Null_Iter;
       Child         : Gtk_Tree_Iter;
       First, Last   : Integer := Page_Name'First;
-      Page          : Preferences_Page;
+      Page          : GPS_Preferences_Page;
       W             : Gtk_Widget;
    begin
       while First <= Page_Name'Last loop
@@ -661,7 +666,7 @@ package body GPS.Kernel.Preferences_Views is
          if Child = Null_Iter then
             if Page_Widget = null then
                --  Create a new page
-               Page := new Preferences_Page_Record;
+               Page := new GPS_Preferences_Page_Record;
                Gtk.Scrolled_Window.Initialize (Page);
                Page.Set_Policy (Policy_Automatic, Policy_Automatic);
 

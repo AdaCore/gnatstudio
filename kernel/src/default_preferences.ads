@@ -67,6 +67,17 @@ package Default_Preferences is
    --  Interface defining a common API for all the preferences editor
    --  widgets.
 
+   type Preferences_Page_Interface is interface;
+   type Preferences_Page is access all Preferences_Page_Interface'Class;
+   --  Interface defining a common API for all the preferences editor pages.
+   --  This is used to manipulate in a same way the pages directly related with
+   --  preferences (preferences.xml) and pages that are related with other
+   --  modules and other customization files (e.g: key shortcuts).
+
+   function Edit (Self : not null access Preferences_Page_Interface)
+                  return Gtk.Widget.Gtk_Widget is abstract;
+   --  Return the page's widget in which we can insert new children.
+
    function Get_Widget
      (Self : not null access Preferences_Editor_Interface)
       return Gtk.Widget.Gtk_Widget is abstract;
