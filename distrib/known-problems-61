@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-OA29-008 GPS: GNATdoc generates wrong sources for subtype declarations
+
+  Problem:    Processing the sources of a subtype declaration GNATdoc may
+              extract more sources than expected (that is, sources located
+              before or after the declaration).
+
+  Status:     This was fixed in 6.2 on 2015-11-03
+
+  Workaround: None.
+
 KP-61-OA15-024 GB: Toggle Comment sometimes unable to uncomment
 
   Problem:    Uncommenting multiple lines using the Toggle Comment "Ctrl+-"
