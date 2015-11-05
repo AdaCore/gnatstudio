@@ -17,7 +17,7 @@
 
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
-with GPS.Shared_Macros;       use GPS.Shared_Macros;
+with Shared_Macros;           use Shared_Macros;
 with String_Utils;            use String_Utils;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
@@ -218,10 +218,6 @@ package body GPS.Kernel.Macros is
          then
             return Importing_Project_Information (Context).Name;
          end if;
-
-      elsif Param = "ek" then
-         return String_Utils.Protect
-           (Krunch (Entity_Name_Information (Context)));
 
       elsif Param = "gnat" then
          declare

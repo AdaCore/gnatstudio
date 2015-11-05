@@ -25,6 +25,7 @@ with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 with GNAT.Command_Line; use GNAT.Command_Line;
 with GNAT.Strings;      use GNAT.Strings;
+private with Shared_Macros;
 
 package Switches_Chooser is
 
@@ -545,10 +546,38 @@ package Switches_Chooser is
      return Ada.Containers.Count_Type;
    --  Switches_Editor_Config object Switches vector length getter
 
-   function Command_Line_Editor_Tooltip_Text return String;
+   Command_Line_Editor_Tooltip_Text : constant String;
    --  builder target command line field editor tool tip text
 
 private
+   LF : constant Character := ASCII.LF;
+   Command_Line_Editor_Tooltip_Text : constant String :=
+        "%subdir subdirectory of obj dir where object files are stored" & LF
+      & "%subdirsarg  switch --subdirs=..." & LF
+      & "%X      switches -Xname=value for scenario variables" & LF
+      & "%vars   list of name=value for scenario variables" & LF
+      & "%vars(-D) switches -Dname=value for scenario variables" & LF
+      & "%eL     switch -eL, if fast project loading is set" & LF
+
+      & LF & "Project attributes" & LF
+      & "%attr(pkg'name[,default])     value of a specific attribute" & LF
+      & "%dirattr(pkg'name[,default])  dirname of a specific attribute" & LF
+      & "%baseattr(pkg'name[,default]) base name of a specific attribute" & LF
+      & "%switches(tool)  value for attribute Ide'default_switches(tool)" & LF
+
+      & LF & "Compilation (when building, only)" & LF
+      & "%builder  default language builder (gnatmake or gprbuild)" & LF
+      & "%gprbuild gprbuild command" & LF
+      & "%gnatmake gnatmake command" & LF
+      & "%gprclean clean command (gprclean or gnat clean)" & LF
+      & "%external" & LF
+      & "[exec_dir] exec dir from the project" & LF
+      & "%fp        base name of the file to compile" & LF
+      & "%TT        absolute path of main source to compile" & LF
+      & "%T         base name of main source to compile" & LF
+      & "%E" & LF
+      & LF & Shared_Macros.Doc;
+
    type Radio_Switch is new Integer;
    type Popup_Index is new Integer;
    Main_Window : constant Popup_Index := 0;

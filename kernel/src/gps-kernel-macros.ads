@@ -19,6 +19,7 @@
 --  customization file. These are the %f, %e,... special strings that are
 --  substituted dynamically based on the current context.
 
+private with Shared_Macros;
 with Remote; use Remote;
 
 package GPS.Kernel.Macros is
@@ -64,7 +65,31 @@ package GPS.Kernel.Macros is
    --  For_Shell must be set to True when the result string is to be used by a
    --  shell command. In this case it is needed to escape backslashes.
 
+   Doc : constant String;
+   --  Documents all supported macros from this package
+
 private
+   LF  : constant Character := ASCII.LF;
+   Doc : constant String :=
+      Shared_Macros.Doc & LF
+      & LF & "Current Context Information" & LF
+      & "%d      directory (of current file,...)" & LF
+      & "%dk     krunched directory" & LF
+      & "%e      entity name" & LF
+      & "%ef     entity name, with indicator if xref is not up-to-date" & LF
+      & "%s      entity name (if available) or current selection" & LF
+      & "%S      entity name, current selection or current expression" & LF
+      & "%l      line number" & LF
+      & "%c      column number" & LF
+      & "%a      category of current message (in Locations window)" & LF
+      & "%i      name of importing project (in Project view)" & LF
+
+      & LF & "System Information" & LF
+      & "%GPS    user's directory to store GPS settings" & LF
+      & "%system_bin_dir GPS install prefix" & LF
+      & "%gnat   name of the GNAT driver to use" & LF
+      & "%target switch --target= to pass to various tools";
+
    type Requirements is record
       File        : Boolean := False;
       Directory   : Boolean := False;

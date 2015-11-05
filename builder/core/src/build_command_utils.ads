@@ -408,7 +408,6 @@ package Build_Command_Utils is
    --  Expand command line CL compatible with gnatbench objects.
 
 private
-
    type Abstract_Build_Command_Adapter is abstract tagged record
 
       Kernel_Registry : Project_Registry_Access;

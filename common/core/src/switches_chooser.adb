@@ -1855,48 +1855,4 @@ package body Switches_Chooser is
       return To_String (Value.Value);
    end Get_Value;
 
-   --------------------------------------
-   -- Command_Line_Editor_Tooltip_Text --
-   --------------------------------------
-
-   function Command_Line_Editor_Tooltip_Text return String is
-   begin
-      return "The following macros are available from this command line:" &
-            ASCII.LF &
-            "   %builder: default language builder (e.g. gnatmake, gprbuild)" &
-            ASCII.LF &
-            "   %gnatmake: gnatmake command configured in your project" &
-            ASCII.LF &
-            "   %gprbuild: gprbuild command" &
-            ASCII.LF &
-            "   %gprclean: clean tool (e.g. gnat clean, gprclean)" &
-            ASCII.LF &
-            "   %attr(Pkg'Name[,def]): replaced by given project attribute" &
-            ASCII.LF &
-            "   %baseattr(Pkg'Name[,def]): base name of an attribute" &
-            ASCII.LF &
-            "   %dirattr(Pkg'Name[,def]): dirname of an attribute" &
-            ASCII.LF &
-            "   %switches(tool): replaced by IDE'Default_Switches(tool)" &
-            ASCII.LF &
-            "   %eL: replaced by -eL if Fast Project Loading pref is set" &
-            ASCII.LF &
-            "   %fp: base name of the selected source file" &
-            ASCII.LF &
-            "   %F: full name of the selected source file" &
-            ASCII.LF &
-            "   %T: base name of main source being considered" &
-            ASCII.LF &
-            "   %TT: full name of main source being considered" &
-            ASCII.LF &
-            "   %O: pathname of the root project's object dir" &
-            ASCII.LF &
-            "   %PP: pathname of the root project" &
-            ASCII.LF &
-            "   %vars: list of var=value switches from project variables" &
-            ASCII.LF &
-            "   %X: list of -Xvar=value switches from project variables";
-
-   end Command_Line_Editor_Tooltip_Text;
-
 end Switches_Chooser;

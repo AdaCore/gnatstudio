@@ -19,7 +19,7 @@ with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with Remote;                use Remote;
 
-package GPS.Shared_Macros is
+package Shared_Macros is
 
    function Shared_Macros_Substitute
      (Project_From_Kernel : Project_Type;
@@ -52,4 +52,38 @@ package GPS.Shared_Macros is
    --  builder target command line expansion.
    --  It uses only parameters available from GNATbench.
 
-end GPS.Shared_Macros;
+   Doc : constant String;
+   --  Documents all supported macros from this package
+
+private
+   LF : constant Character := ASCII.LF;
+   Doc : constant String :=
+        "File information" & LF
+      & "%f      base name of current file" & LF
+      & "%fk     krunched base name of current file" & LF
+      & "%F      absolute path of current file" & LF
+
+      & LF & "Project information" & LF
+      & "%o      absolute path of object directory for current project" & LF
+      & "%O      absolute path of object directory for root project" & LF
+      & "%pps    switch -P with absolute path, if there is a project" & LF
+      & "%PPs    switch -P with absolute path of root project" & LF
+      & "%p      name of current project" & LF
+      & "%P      name of current root project" & LF
+      & "%Pl     lower-cased name of current project" & LF
+      & "%Pb     base name for current project file" & LF
+      & "%pp     absolute path for current project file" & LF
+      & "%PP     absolute path for root project" & LF
+      & "%prd    list of recursive absolute paths for source dirs" & LF
+      & "%prf    list of recursive absolute paths for source files" & LF
+      & "%prdf   tmp file with recursive absolute paths for source dirs" & LF
+      & "%prsf   tmp file with recursive absolute paths for source files" & LF
+      & "%pd     list of absolute paths for source dirs" & LF
+      & "%pf     list of absolute paths for source files" & LF
+      & "%pdf    tmp file with absolute paths for source dirs" & LF
+      & "%psf    tmp file with absolute paths for source files" & LF
+
+      & LF & "System information" & LF
+      & "%gnatmake  compiler driver to use (gprbuild or gnatmake)";
+
+end Shared_Macros;

@@ -28,7 +28,7 @@ with GNATCOLL.Templates;          use GNATCOLL.Templates;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 
 with GPS.Intl;                    use GPS.Intl;
-with GPS.Shared_Macros;           use GPS.Shared_Macros;
+with Shared_Macros;               use Shared_Macros;
 with GNATCOLL.Traces;                      use GNATCOLL.Traces;
 with GNAT.Strings;
 
@@ -716,7 +716,14 @@ package body Build_Command_Utils is
          return Result;
       end Create_Command;
 
-   begin  -- Expand_Arg
+   begin
+      -------------------------
+      --  IMPORTANT:
+      --
+      --  Any change in this list must be documented in
+      --  switches_chooser.ads
+      -------------------------
+
       --  ??? Special case for "%X"
       --  We are implementing a special case here since GPS.Kernel.Macros
       --  does not support returning an Argument_List.
