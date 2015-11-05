@@ -36,6 +36,7 @@ with System.Traceback.Symbolic;
 pragma Warnings (On);
 with GNATCOLL.Utils; use GNATCOLL.Utils;
 with GNAT.Regpat; use GNAT.Regpat;
+with System.Multiprocessors; use System.Multiprocessors;
 
 package body Language.Libclang is
 
@@ -45,7 +46,8 @@ package body Language.Libclang is
      and Cachecompletionresults;
 
    LRU_Size : constant := 16;
-   Nb_Tasks : constant := 4;
+   Nb_Tasks : constant Natural := Natural'Min (Natural (Number_Of_CPUs), 6);
+
    Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
 
    Activate_Clang_XRef : constant Trace_Handle :=
