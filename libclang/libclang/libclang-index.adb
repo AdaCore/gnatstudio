@@ -111,7 +111,7 @@ package body Libclang.Index is
 
       function local_clang_parseTranslationUnit
         (C_Idxx : CXIndex;
-         Source_Filename : Interfaces.C.Strings.chars_ptr;
+         Source_Filename : chars_ptr;
          Command_Line_Args : System.Address;
          Num_Command_Line_Args : int;
          Unsaved_Files : System.Address;
@@ -162,7 +162,7 @@ package body Libclang.Index is
           (C_Idxx                => Index,
            Source_Filename       => C_Source_Filename,
            Command_Line_Args     => C_Command_Line_Args,
-           Num_Command_Line_Args => Interfaces.C.int (First_Free - CL'First),
+           Num_Command_Line_Args => int (First_Free - CL'First),
            Unsaved_Files         => C_Unsaved_Files,
            Num_Unsaved_Files     => Unsaved_Files'Length,
            Options               => unsigned (Options));
@@ -390,8 +390,7 @@ package body Libclang.Index is
               Index_Options,
               Source_Filename       => C_Source_Filename,
               Command_Line_Args     => C_Command_Line_Args,
-              Num_Command_Line_Args =>
-                Interfaces.C.int (First_Free - CL'First),
+              Num_Command_Line_Args => int (First_Free - CL'First),
               Unsaved_Files         => C_Unsaved_Files,
               Num_Unsaved_Files     => Unsaved_Files'Length,
               Out_TU                => TU'Address,
@@ -502,7 +501,7 @@ package body Libclang.Index is
 
       function local_clang_codeCompleteAt
         (TU : CXTranslationUnit;
-         complete_filename : Interfaces.C.Strings.chars_ptr;
+         complete_filename : chars_ptr;
          complete_line : unsigned;
          complete_column : unsigned;
          unsaved_files : System.Address;
@@ -935,7 +934,7 @@ package body Libclang.Index is
    is
       V : aliased Visitor_Data;
       V_Ptr : constant Addr_To_Vis_Data.Object_Pointer := V'Unchecked_Access;
-      Discard : Interfaces.C.unsigned;
+      Discard : unsigned;
    begin
       Discard := clang_visitChildren
         (C, Visitor,
@@ -1072,9 +1071,7 @@ package body Libclang.Index is
    begin
       if not Is_From_Main_File (Location (Containing)) then
          return False;
-      end if;
-
-      if Sought = Containing then
+      elsif Sought = Containing then
          return True;
       end if;
 
@@ -1145,12 +1142,12 @@ package body Libclang.Index is
    function To_String
      (Clang_String : clang_c_CXString_h.CXString) return String
    is
-      C_String : constant Interfaces.C.Strings.chars_ptr :=
+      C_String : constant chars_ptr :=
         clang_getCString (Clang_String);
    begin
       if C_String /= Null_Ptr then
          declare
-            Str : constant String := Interfaces.C.Strings.Value (C_String);
+            Str : constant String := Value (C_String);
          begin
             clang_disposeString (Clang_String);
             return Str;
