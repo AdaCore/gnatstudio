@@ -16,9 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
-with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings;
-with Ada.Strings.Hash;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;
@@ -39,12 +37,17 @@ with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Event_Box;            use Gtk.Event_Box;
 with Gtk.Font_Selection;       use Gtk.Font_Selection;
+with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;             use Gtk.Handlers;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.List_Box;             use Gtk.List_Box;
 with Gtk.Rc;                   use Gtk.Rc;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Size_Group;           use Gtk.Size_Group;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
 with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Style_Context;        use Gtk.Style_Context;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_View;            use Gtk.Text_View;
@@ -64,11 +67,13 @@ with GPS.Intl;                 use GPS.Intl;
 with GUI_Utils;                use GUI_Utils;
 with XML_Parsers;
 
+-------------------------
+-- Default_Preferences --
+-------------------------
+
 package body Default_Preferences is
 
    Me : constant Trace_Handle := Create ("Default_Prefs");
-
-   use Preferences_Maps;
 
    ------------------
    -- Saved_Params --
@@ -81,10 +86,6 @@ package body Default_Preferences is
    -------------------------------
    -- Preferences_GObjects_Maps --
    -------------------------------
-
-   package Preferences_GObjects_Maps is
-     new Ada.Containers.Indefinite_Hashed_Maps
-       (String, GObject, Ada.Strings.Hash, "=");
 
    Preferences_GObjects_Map : Preferences_GObjects_Maps.Map;
    --  Used to map preferences names with their main widget.
@@ -100,12 +101,19 @@ package body Default_Preferences is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Theme_Descr_Array, Theme_Descr_Array_Access);
 
+   function Append_Dir_Delimitor_If_Needed
+     (Page_Name : String) return String;
+   --  Append a '/' delimitor to the page's name if needed.
+
    procedure Create_Color_Buttons
      (Pref            : access Style_Preference_Record'Class;
       Manager         : access Preferences_Manager_Record'Class;
       Fg_Color_Button : out Gtk_Color_Button;
       Bg_Color_Button : out Gtk_Color_Button);
    --  Factorize code that creates the color buttons
+
+   procedure Free (Page : in out Preferences_Page);
+   --  Free the memory associated with Page
 
    procedure Free (Pref : in out Preference);
    --  Free the memory associated with Pref
@@ -177,11 +185,6 @@ package body Default_Preferences is
       Desc         : Pango_Font_Description;
       Button_Label : String) return My_Font_Box;
    --  Create a box suitable for editing fonts
-
-   function Get_Pref_From_Name
-     (Manager             : access Preferences_Manager_Record'Class;
-      Name                : String) return Preferences_Maps.Cursor;
-   --  Return a pointer to the preference Name
 
    function From_Multi_String
      (M : String) return Pango.Font.Pango_Font_Description;
@@ -305,17 +308,71 @@ package body Default_Preferences is
    end Get_Label;
 
    --------------
-   -- Get_Page --
+   -- Get_Path --
    --------------
 
-   function Get_Page (Pref : access Preference_Record'Class) return String is
+   function Get_Path  (Pref : access Preference_Record'Class) return String is
+     (if Pref.Path /= null then Pref.Path.all else "");
+
+   ------------------------------------
+   -- Append_Dir_Delimitor_If_Needed --
+   ------------------------------------
+
+   function Append_Dir_Delimitor_If_Needed
+     (Page_Name : String) return String is
    begin
-      if Pref.Page = null then
-         return "";
-      else
-         return Pref.Page.all;
+      if Page_Name /= "" and then Page_Name (Page_Name'Last) /= '/' then
+         return Page_Name & '/';
       end if;
-   end Get_Page;
+
+      return Page_Name;
+   end Append_Dir_Delimitor_If_Needed;
+
+   -------------------
+   -- Get_Page_Name --
+   -------------------
+
+   function Get_Page_Name (Pref : not null Preference) return String
+   is
+      Full_Page_Name : constant String := Pref.Get_Path;
+      Current_Index  : Integer := Full_Page_Name'First;
+   begin
+      --  Find the delimitor for group names
+      while Current_Index <= Full_Page_Name'Last
+        and then Full_Page_Name (Current_Index) /= ':' loop
+         Current_Index := Current_Index + 1;
+      end loop;
+
+      --  No group specified in the preference name
+      if Current_Index >= Full_Page_Name'Last then
+         return Append_Dir_Delimitor_If_Needed (Full_Page_Name);
+      end if;
+
+      return Append_Dir_Delimitor_If_Needed
+        (Full_Page_Name (Full_Page_Name'First .. Current_Index - 1));
+   end Get_Page_Name;
+
+   --------------------
+   -- Get_Group_Name --
+   --------------------
+
+   function Get_Group_Name (Pref : not null Preference) return String is
+      Full_Page_Name : constant String := Pref.Get_Path;
+      Current_Index  : Integer := Full_Page_Name'First;
+   begin
+      --  Find the delimitor for group names
+      while Current_Index <= Full_Page_Name'Last
+        and then Full_Page_Name (Current_Index) /= ':' loop
+         Current_Index := Current_Index + 1;
+      end loop;
+
+      --  No group specified in the preference name
+      if Current_Index >= Full_Page_Name'Last then
+         return "";
+      end if;
+
+      return Full_Page_Name (Current_Index + 1 .. Full_Page_Name'Last);
+   end Get_Group_Name;
 
    -------------
    -- Get_Doc --
@@ -331,28 +388,62 @@ package body Default_Preferences is
    -------------
 
    procedure Destroy (Manager : in out Preferences_Manager_Record) is
-      C : Preferences_Maps.Cursor := First (Manager.Preferences);
-      Pref : Preference;
+      C : Pages_Lists.Cursor := Manager.Pages.First;
+      Page : Preferences_Page;
    begin
-      while Has_Element (C) loop
-         Pref := Element (C);
-         Free (Pref);
-         Next (C);
+      while Pages_Lists.Has_Element (C) loop
+         Page := Pages_Lists.Element (C);
+         Free (Page);
+         Pages_Lists.Next (C);
       end loop;
-      Clear (Manager.Preferences);
+
+      Manager.Pages.Clear;
    end Destroy;
+
+   ---------
+   -- "<" --
+   ---------
+
+   function "<" (Left, Right : Preferences_Page) return Boolean is
+   begin
+      if Left.Priority = Right.Priority then
+         if Left.Name /= null and then Right.Name /= null then
+            return Left.Name.all < Right.Name.all;
+         else
+            return Left /= null;
+         end if;
+      else
+         return Left.Priority < Right.Priority;
+      end if;
+   end "<";
 
    ----------
    -- Free --
    ----------
 
-   procedure Free (Pref : in out Preference) is
+   procedure Free (Pref : in out Preference)
+   is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Preference_Record'Class, Preference);
    begin
       if Pref /= null then
          Free (Pref.all);
          Unchecked_Free (Pref);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Page : in out Preferences_Page)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Preferences_Page_Record'Class, Preferences_Page);
+   begin
+      if Page /= null then
+         Free (Page.all);
+         Unchecked_Free (Page);
       end if;
    end Free;
 
@@ -367,6 +458,241 @@ package body Default_Preferences is
       Destroy (Manager.all);
       Unchecked_Free (Manager);
    end Destroy;
+
+   --------------------------
+   -- Set_Pref_Highlighted --
+   --------------------------
+
+   procedure Set_Pref_Highlighted
+     (Self      : not null access Preferences_Page_View_Record'Class;
+      Pref      : not null Preference;
+      Highlight : Boolean)
+   is
+      Widget : Gtk_Widget;
+   begin
+      --  Do nothing if the preference is not mapped
+      if not Self.Pref_Widgets.Contains (Pref.Get_Name) then
+         return;
+      end if;
+
+      Widget := Self.Pref_Widgets (Pref.Get_Name);
+
+      if Highlight then
+         Widget.Set_State_Flags (Gtk_State_Flag_Selected, False);
+      else
+         Widget.Set_State_Flags (Gtk_State_Flag_Normal, True);
+      end if;
+   end Set_Pref_Highlighted;
+
+   --------------------------
+   -- On_Destroy_Page_View --
+   --------------------------
+
+   procedure On_Destroy_Page_View
+     (Page_View : access Gtk.Widget.Gtk_Widget_Record'Class) is
+   begin
+      Preferences_Page_View (Page_View).Pref_Widgets.Clear;
+   end On_Destroy_Page_View;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
+     (Self : not null access Preferences_Page_Record) return String is
+     (if Self.Name = null then "" else Self.Name.all);
+
+   ----------------
+   -- Get_Widget --
+   ----------------
+
+   overriding function Get_Widget
+     (Self    : not null access Default_Preferences_Page_Record;
+      Manager : not null Preferences_Manager)
+      return Preferences_Page_View
+   is
+      Page_View : Preferences_Page_View;
+      Page_Box  : Gtk_Box;
+      Group     : Preferences_Group;
+
+      procedure Add_Group_Widget;
+
+      ----------------------
+      -- Add_Group_Widget --
+      ----------------------
+
+      procedure Add_Group_Widget is
+         Group_Widget           : Gtk_Frame;
+         Pref_List_Box          : Gtk_List_Box;
+         Label_Size_Group       : Gtk_Size_Group;
+         Pref_Widget_Size_Group : Gtk_Size_Group;
+         Pref                   : Preference;
+         procedure Add_Pref_Widget;
+
+         ---------------------
+         -- Add_Pref_Widget --
+         ---------------------
+
+         procedure Add_Pref_Widget is
+            Pref_Row    : Gtk_Box;
+            Event       : Gtk_Event_Box;
+            Label       : Gtk_Label;
+            Pref_Widget : Gtk_Widget;
+         begin
+            Gtk_New_Hbox (Pref_Row);
+
+            if Pref.Editor_Needs_Label then
+               Gtk_New (Event);
+               Gtk_New (Label, Pref.Get_Label);
+               Event.Add (Label);
+               Event.Set_Tooltip_Text (Pref.Get_Doc);
+               Label.Set_Alignment (0.0, 0.5);
+
+               Label_Size_Group.Add_Widget (Event);
+               Pref_Row.Pack_Start (Event);
+
+               Pref_Widget := Edit (Pref, Manager);
+
+               if Pref_Widget /= null then
+                  Pref_Widget.Set_Hexpand (False);
+                  Pref_Widget_Size_Group.Add_Widget (Pref_Widget);
+                  Pref_Row.Pack_Start (Pref_Widget);
+               end if;
+            else
+               Pref_Widget := Edit
+                 (Pref      => Pref,
+                  Manager   => Manager);
+               Pref_Widget.Set_Tooltip_Text (Pref.Get_Doc);
+
+               if Pref_Widget /= null then
+                  Pref_Widget.Set_Hexpand (False);
+                  Pref_Widget_Size_Group.Add_Widget (Pref_Widget);
+                  Pref_Row.Pack_Start (Pref_Widget);
+               end if;
+            end if;
+            Pref_List_Box.Add (Pref_Row);
+            Page_View.Pref_Widgets.Insert
+              (Pref.Get_Name, Pref_Row.Get_Parent);
+         end Add_Pref_Widget;
+
+      begin
+         Gtk_New (Group_Widget);
+         Page_Box.Pack_Start (Group_Widget);
+
+         Gtk_New (Pref_List_Box);
+         Pref_List_Box.Set_Selection_Mode (Selection_None);
+         Gtk_New (Label_Size_Group);
+         Gtk_New (Pref_Widget_Size_Group);
+         Group_Widget.Add (Pref_List_Box);
+
+         if Group.Name /= null then
+            Group_Widget.Set_Label (Group.Name.all);
+         end if;
+
+         --  Iterate over all the preferences registered in this group and
+         --  append their widgets.
+         for Pref_Iter in Group.Preferences.Iterate loop
+            Pref := Preferences_Maps.Element (Pref_Iter);
+            Add_Pref_Widget;
+         end loop;
+      end Add_Group_Widget;
+
+   begin
+      --  Create a new page
+      Page_View := new Preferences_Page_View_Record;
+      Gtk.Scrolled_Window.Initialize (Page_View);
+      Page_View.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Page_View.On_Destroy (On_Destroy_Page_View'Access);
+
+      --  Create the new Vbox which will hold the preferences
+      --  groups
+      Gtk_New_Vbox (Page_Box);
+      Page_View.Add (Page_Box);
+      Get_Style_Context (Page_Box).Add_Class
+        ("gps-preferences-pages");
+
+      --  Iterate over all the groups registered in this page and append
+      --  their widgets.
+      for Group_Iter in Self.Groups.Iterate loop
+         Group := Groups_Maps.Element (Group_Iter);
+         Add_Group_Widget;
+      end loop;
+
+      return Page_View;
+   end Get_Widget;
+
+   --------------
+   -- Add_Pref --
+   --------------
+
+   procedure Add_Pref
+     (Self : not null access Preferences_Page_Record;
+      Pref : not null Preference)
+   is
+      Pref_Name  : constant String := Pref.Get_Name;
+      Group_Name : constant String := Get_Group_Name (Pref);
+      Group      : Preferences_Group;
+   begin
+      --  Find or create the group that should contain the preference
+      if Self.Groups.Contains (Group_Name) then
+         Group := Self.Groups (Group_Name);
+      else
+         Group := new Preferences_Group_Record;
+
+         if Group_Name /= "" then
+            Group.Name := new String'(Group_Name);
+         end if;
+
+         Self.Groups.Insert (Group_Name, Group);
+      end if;
+
+      --  If a preference is already associated to this name, replace it.
+      --  If not, insert it to the preferences map.
+      if Group.Preferences.Contains (Pref_Name) then
+         Group.Preferences (Pref_Name) := Pref;
+      else
+         Group.Preferences.Insert (Pref_Name, Pref);
+      end if;
+   end Add_Pref;
+
+   -----------------
+   -- Remove_Pref --
+   -----------------
+
+   procedure Remove_Pref
+     (Self : not null access Preferences_Page_Record;
+      Pref : not null Preference)
+   is
+      Group : constant Preferences_Group
+        := Self.Groups (Get_Group_Name (Pref));
+   begin
+      Preferences_Maps.Delete (Group.Preferences, Pref.Get_Name);
+   end Remove_Pref;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free
+     (Self : in out Preferences_Page_Record)
+   is
+      Group : Preferences_Group;
+      Pref  : Preference;
+   begin
+      for Group_iter in Self.Groups.Iterate loop
+         Group := Groups_Maps.Element (Group_iter);
+
+         for Pref_Iter in Group.Preferences.Iterate loop
+            Pref := Preferences_Maps.Element (Pref_Iter);
+            Free (Pref);
+         end loop;
+
+         Preferences_Maps.Clear (Group.Preferences);
+         Free (Group.Name);
+      end loop;
+
+      Groups_Maps.Clear (Self.Groups);
+   end Free;
 
    ------------
    -- Create --
@@ -747,51 +1073,82 @@ package body Default_Preferences is
    ------------------------
 
    function Get_Pref_From_Name
-     (Manager             : access Preferences_Manager_Record'Class;
-      Name                : String) return Preferences_Maps.Cursor
-   is
-      C : Preferences_Maps.Cursor := First (Manager.Preferences);
-   begin
-      while Has_Element (C) loop
-         if Element (C).Name.all = Name then
-            return C;
-         end if;
-         Next (C);
-      end loop;
-
-      return Preferences_Maps.No_Element;
-   end Get_Pref_From_Name;
-
-   ------------------------
-   -- Get_Pref_From_Name --
-   ------------------------
-
-   function Get_Pref_From_Name
-     (Manager             : access Preferences_Manager_Record;
+     (Self                : not null access Preferences_Manager_Record;
       Name                : String;
-      Create_If_Necessary : Boolean) return Preference
-   is
-      C : constant Preferences_Maps.Cursor :=
-        Get_Pref_From_Name (Manager, Name);
+      Create_If_Necessary : Boolean) return Preference is
    begin
-      if Has_Element (C) then
-         return Element (C);
+      if Self.Preferences.Contains (Name) then
+         return Self.Preferences (Name);
       end if;
 
+      --  If Create_If_Necessary is True, return a temporary preference and
+      --  and don't register it.
       if Create_If_Necessary then
          return Preference
            (String_Preference'
               (Create
-                 (Manager => Manager,
-                  Name    => Name,
-                  Label   => Name,
-                  Page    => "",
-                  Doc     => "",
-                  Default => "")));
+                   (Manager => Self,
+                    Name    => Name,
+                    Label   => Name,
+                    Page    => "",
+                    Doc     => "",
+                    Default => "")));
       else
          return null;
       end if;
    end Get_Pref_From_Name;
+
+   -------------------
+   -- Register_Page --
+   -------------------
+
+   procedure Register_Page
+     (Self             : not null access Preferences_Manager_Record;
+      Name             : String;
+      Page             : not null Preferences_Page;
+      Priority         : Integer := -1;
+      Replace_If_Exist : Boolean := False)
+   is
+      use Pages_Lists;
+      Page_Iter : Pages_Lists.Cursor;
+   begin
+      Free (Page.Name);
+      Page.Name := new String'(Name);
+      Page.Priority := Priority;
+
+      Page_Iter := Self.Pages.Find (Page);
+
+      if Page_Iter /= Pages_Lists.No_Element then
+         if Replace_If_Exist then
+            Self.Pages.Delete (Page_Iter);
+         else
+            return;
+         end if;
+      end if;
+
+      Self.Pages.Append (Page);
+   end Register_Page;
+
+   -------------------------
+   -- Get_Registered_Page --
+   -------------------------
+
+   function Get_Registered_Page
+     (Self : not null access Preferences_Manager_Record;
+      Name : String) return Preferences_Page
+   is
+      Page : Preferences_Page;
+   begin
+      for Page_Iter in Self.Pages.Iterate loop
+         Page := Pages_Lists.Element (Page_Iter);
+
+         if Page.Name /= null and then Page.Name.all = Name then
+            return Page;
+         end if;
+      end loop;
+
+      return null;
+   end Get_Registered_Page;
 
    --------------
    -- Register --
@@ -799,59 +1156,59 @@ package body Default_Preferences is
 
    procedure Register
      (Manager                : not null access Preferences_Manager_Record;
-      Name, Label, Page, Doc : String;
+      Name, Label, Path, Doc : String;
       Pref                   : not null access Preference_Record'Class)
    is
-      Old : Preferences_Maps.Cursor :=
-        Get_Pref_From_Name (Manager, Name);
-      Old_Pref : Preference;
+      Old_Pref        : Preference :=
+                          Manager.Get_Pref_From_Name (Name, False);
+      Old_Page        : Preferences_Page;
+      Registered_Page : Preferences_Page;
    begin
+      --  If the preference was already in the list, remove the old value.
+      --  It was probably inserted when reading the preferences file, which is
+      --  in no specific order. Instead, we want to preserve the order based
+      --  on the actual registration of preferences by the various modules, so
+      --  that the preferences dialog is always displayed in the same order.
+      if Old_Pref /= null then
+         Old_Page := Get_Registered_Page (Manager, Get_Page_Name (Old_Pref));
+         Old_Page.Remove_Pref (Old_Pref);
+         Preferences_Maps.Delete (Manager.Preferences, Old_Pref.Get_Name);
+
+         if Pref /= Old_Pref then
+            Free (Old_Pref);
+         end if;
+      end if;
+
+      --  Set the fields of the preference we want to register
       Free (Pref.Name);
       Pref.Name := new String'(Name);
 
       Free (Pref.Label);
       Pref.Label := new String'(Label);
 
-      Free (Pref.Page);
-      if Page /= "" and then Page /= "/" then
-         Pref.Page := new String'(Page);
+      Free (Pref.Path);
+      if Path /= "" and then Path /= "/" then
+         Pref.Path := new String'(Path);
       end if;
 
       Free (Pref.Doc);
       Pref.Doc := new String'(Doc);
 
-      --  If the preference was already in the list, remove the old value.
-      --  It was probably inserted when reading the preferences file, which is
-      --  in no specific order. Instead, we want to preserve the order based
-      --  on the actual registration of preferences by the various modules, so
-      --  that the preferences dialog is always displayed in the same order.
+      --  Register the preference in the manager's global map
+      Manager.Preferences.Insert (Name, Pref);
 
-      if Has_Element (Old) then
-         Old_Pref := Element (Old);
-         Delete (Manager.Preferences, Old);
+      --  Check if a page has already been registered for the preference's
+      --  page name
+      Registered_Page := Get_Registered_Page (Manager, Get_Page_Name (Pref));
 
-         if Old_Pref /= Preference (Pref) then
-            Free (Old_Pref);
-         end if;
+      if Registered_Page = null then
+         Registered_Page := new Default_Preferences_Page_Record;
+         Manager.Register_Page (Get_Page_Name (Pref), Registered_Page);
       end if;
 
-      Append
-        (Container => Manager.Preferences,
-         New_Item  => Preference (Pref));
+      --  Add the preference to the already/newly registered page
+      Registered_Page.Add_Pref (Pref);
    end Register;
-
-   --------------
-   -- Get_Pref --
-   --------------
-
-   function Get_Pref (Self : Cursor) return Preference is
-   begin
-      if not Has_Element (Self.C) then
-         return null;
-      else
-         return Element (Self.C);
-      end if;
-   end Get_Pref;
 
    --------------
    -- Get_Pref --
@@ -1409,28 +1766,25 @@ package body Default_Preferences is
       File_Name : Virtual_File;
       Success   : out Boolean)
    is
-      File, Node : Node_Ptr;
-      C          : Preferences_Maps.Cursor := First (Manager.Preferences);
-      P          : Preference;
+      File, Node  : Node_Ptr;
+      Pref        : Preference;
    begin
       File := new XML_Utils.Node;
       File.Tag := new String'("Prefs");
 
-      while Has_Element (C) loop
-         P := Element (C);
-         if not P.Is_Default then
+      for Pref_Iter in Manager.Preferences.Iterate loop
+         Pref := Preferences_Maps.Element (Pref_Iter);
+
+         if not Pref.Is_Default then
             Node     := new XML_Utils.Node;
             Node.Tag := new String'("pref");
-            Set_Attribute (Node, "name", Get_Name (P));
-            Node.Value := new String'(Get_Pref (P));
+            Set_Attribute (Node, "name", Get_Name (Pref));
+            Node.Value := new String'(Get_Pref (Pref));
             Add_Child (File, Node);
          end if;
-
-         Next (C);
       end loop;
 
       Print (File, File_Name, Success);
-
    exception
       when E : others => Trace (Me, E);
    end Save_Preferences;
@@ -1871,7 +2225,7 @@ package body Default_Preferences is
    begin
       Free (Pref.Name);
       Free (Pref.Label);
-      Free (Pref.Page);
+      Free (Pref.Path);
       Free (Pref.Doc);
    end Free;
 
@@ -2048,10 +2402,9 @@ package body Default_Preferences is
 
    function Get_First_Reference
      (Manager : not null access Preferences_Manager_Record)
-      return Cursor
-   is
+      return Page_Cursor is
    begin
-      return (C => First (Manager.Preferences));
+      return (C => Manager.Pages.First);
    end Get_First_Reference;
 
    ----------
@@ -2060,12 +2413,62 @@ package body Default_Preferences is
 
    procedure Next
      (Manager : not null access Preferences_Manager_Record;
-      C       : in out Cursor)
+      C       : in out Page_Cursor)
    is
       pragma Unreferenced (Manager);
    begin
-      Next (C.C);
+      Pages_Lists.Next (C.C);
    end Next;
+
+   --------------
+   -- Get_Page --
+   --------------
+
+   function Get_Page (Self : Page_Cursor) return Preferences_Page is
+   begin
+      if not Pages_Lists.Has_Element (Self.C) then
+         return null;
+      else
+         return Pages_Lists.Element (Self.C);
+      end if;
+   end Get_Page;
+
+   -------------------------
+   -- Get_First_Reference --
+   -------------------------
+
+   function Get_First_Reference
+     (Manager : not null access Preferences_Manager_Record)
+      return Preference_Cursor is
+   begin
+      return (C => Manager.Preferences.First);
+   end Get_First_Reference;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next
+     (Manager : not null access Preferences_Manager_Record;
+      C       : in out Preference_Cursor)
+   is
+      pragma Unreferenced (Manager);
+   begin
+      Preferences_Maps.Next (C.C);
+   end Next;
+
+   --------------
+   -- Get_Pref --
+   --------------
+
+   function Get_Pref (Self : Preference_Cursor) return Preference is
+   begin
+      if not Preferences_Maps.Has_Element (Self.C) then
+         return null;
+      else
+         return Preferences_Maps.Element (Self.C);
+      end if;
+   end Get_Pref;
 
    ------------
    -- Freeze --

@@ -65,7 +65,7 @@ private
    type Preferences_Search_Provider is new Kernel_Search_Provider with record
       Pattern : GPS.Search.Search_Pattern_Access;
       --  Current pattern, do not free
-      Iter    : Default_Preferences.Cursor;
+      Iter    : Default_Preferences.Preference_Cursor;
       --  The current iterator
    end record;
 

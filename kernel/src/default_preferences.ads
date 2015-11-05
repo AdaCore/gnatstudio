@@ -23,7 +23,9 @@
 --  enumeration types with C types, thus allowing almost any type of
 --  preference.
 
+with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Strings.Hash;
 
 with GNAT.Strings;        use GNAT.Strings;
 
@@ -38,6 +40,7 @@ with Gtk.Color_Button;
 with Gtk.Combo_Box_Text;
 with Gtk.GEntry;
 with Gtk.Handlers;
+with Gtk.Scrolled_Window;
 with Gtk.Widget;
 
 with Pango.Font;          use Pango.Font;
@@ -51,11 +54,6 @@ package Default_Preferences is
    --  of the preferences, by providing a cache system, and redefining the
    --  Set_Pref subprograms.
 
-   procedure Destroy (Manager : in out Preferences_Manager_Record);
-   procedure Destroy (Manager : in out Preferences_Manager);
-   --  Free the memory used by Manager, including all the registered
-   --  preferences. Get_Pref mustn't be used afterwards.
-
    type Preference_Record is abstract tagged private;
    type Preference is access all Preference_Record'Class;
    --  Type used to represent a general preference.
@@ -67,16 +65,104 @@ package Default_Preferences is
    --  Interface defining a common API for all the preferences editor
    --  widgets.
 
-   type Preferences_Page_Interface is interface;
-   type Preferences_Page is access all Preferences_Page_Interface'Class;
-   --  Interface defining a common API for all the preferences editor pages.
-   --  This is used to manipulate in a same way the pages directly related with
-   --  preferences (preferences.xml) and pages that are related with other
-   --  modules and other customization files (e.g: key shortcuts).
+   type Preferences_Page_Record is abstract tagged private;
+   type Preferences_Page is access all Preferences_Page_Record'Class;
+   --  Type used to represent a page containing preferences.
+   --  This is only a model : the way the preferences are stored and displayed
+   --  must be defined when extending this type, by overriding its primitives.
 
-   function Edit (Self : not null access Preferences_Page_Interface)
-                  return Gtk.Widget.Gtk_Widget is abstract;
-   --  Return the page's widget in which we can insert new children.
+   type Preferences_Page_View_Record is
+     new Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with private;
+   type Preferences_Page_View is access all Preferences_Page_View_Record'Class;
+   --  Type defining a preferences editor page view.
+   --  This is used to define a common API for all the pages views of the
+   --  preferences editor dialog.
+
+   procedure Set_GObject_To_Update
+     (Pref   : not null access Preference_Record;
+      Obj    : not null access GObject_Record'Class);
+   --  Add/Update the key association in the Preferences_GObjects_Map
+   --  between the preference's name and the GObject which needs
+   --  to be updated when preferences changed.
+
+   function Get_GObject_To_Update
+     (Pref : not null access Preference_Record) return GObject;
+   --  Return the GObject associated with the preference's name in the
+   --  Preferences_GObject_Map. This function is used to retrieve the GObject
+   --  we want to update when preferences changed.
+
+   function Has_GObject_To_Update
+     (Pref : not null access Preference_Record) return Boolean;
+   --  Return True if a the Preferences_GObjects_Map contains a key association
+   --  for the preference given in parameter, False otherwise.
+
+   procedure Remove_All_GObjects_To_Update;
+   --  Reset the Preferences_GObjects_Map. This is used to avoid calling
+   --  Update_On_Pref_Changed for all the preferences when the preferences
+   --  dialog has already been destroyed.
+
+   -------------------------
+   -- Preferences_Manager --
+   --------------------------
+
+   procedure Destroy (Manager : in out Preferences_Manager_Record);
+   procedure Destroy (Manager : in out Preferences_Manager);
+   --  Free the memory used by Manager, including all the registered
+   --  preferences. Get_Pref mustn't be used afterwards.
+
+   procedure Notify_Pref_Changed
+     (Self : not null access Preferences_Manager_Record;
+      Pref : not null access Preference_Record'Class) is null;
+   --  Called when a preference is changed.
+   --  If the Preference dialog is displayed, runs the
+   --  Preferences_Changed_Hook. This is only useful when writing
+   --  your own type of preference and overriding Set_Pref.
+
+   procedure Set_Is_Loading_Prefs
+     (Self : not null access Preferences_Manager_Record'Class;
+      Loading : Boolean);
+   function Is_Loading_Preferences
+     (Self : not null access Preferences_Manager_Record'Class) return Boolean;
+   --  True while we are loading the preferences. This is used to disable
+   --  saving the preferences when we are setting their initial value.
+
+   procedure Freeze (Self : not null access Preferences_Manager_Record);
+   procedure Thaw (Self : not null access Preferences_Manager_Record);
+   --  Freeze/Thaw the emission of the preferences_changed signal
+
+   procedure Register
+     (Manager                : not null access Preferences_Manager_Record;
+      Name, Label, Path, Doc : String;
+      Pref                   : not null access Preference_Record'Class);
+   --  Set common attributes of all preferences, and register that preference
+   --  in the manager. This function only needs to be called if you are
+   --  creating your own types of preferences, and is already called
+   --  automatically when using one of the Create functions below.
+
+   procedure Register_Page
+     (Self             : not null access Preferences_Manager_Record;
+      Name             : String;
+      Page             : not null Preferences_Page;
+      Priority         : Integer := -1;
+      Replace_If_Exist : Boolean := False);
+   --  Register a new preferences page in the manager.
+   --  If Replace_If_Exist is True and if an association for this name already
+   --  exists, replace the Preferences_Page associated to Name with the one
+   --  given in parameter.
+
+   function Get_Registered_Page
+     (Self : not null access Preferences_Manager_Record;
+      Name : String) return Preferences_Page;
+   --  Return the page registered in the manager for this name.
+   --  If no page has been registered for this name, return null.
+
+   function Is_Frozen
+     (Self : not null access Preferences_Manager_Record'Class) return Boolean;
+   --  Return True if Self is frozen
+
+   ----------------------------------
+   -- Preferences_Editor_Interface --
+   ----------------------------------
 
    function Get_Widget
      (Self : not null access Preferences_Editor_Interface)
@@ -103,60 +189,65 @@ package Default_Preferences is
    --  If a preference has already been highlighted (via a call to
    --  Highlight_Pref), unhighlight it.
 
-   procedure Set_GObject_To_Update
-     (Pref   : not null access Preference_Record;
-      Obj    : not null access GObject_Record'Class);
-   --  Add/Update the key association in the Preferemces_GObjects_Map
-   --  between the preference's name and the GObject which needs
-   --  to be updated when preferences changed.
+   ---------------------------
+   -- Preferences_Page_View --
+   ---------------------------
 
-   function Get_GObject_To_Update
-     (Pref : not null access Preference_Record) return GObject;
-   --  Return the GObject associated with the preference's name in the
-   --  Preferences_GObject_Map. This function is used to retrieve the GObject
-   --  we want to update when preferences changed.
+   procedure Set_Pref_Highlighted
+     (Self      : not null access Preferences_Page_View_Record'Class;
+      Pref      : not null Preference;
+      Highlight : Boolean);
+   --  If Highlight is True, Highlight the widget displaying the preference
+   --  given in parameter.
+   --  If not, unhighlight it.
 
-   function Has_GObject_To_Update
-     (Pref : not null access Preference_Record) return Boolean;
-   --  Return True if a the Preferences_GObjects_Map contains a key association
-   --  for the preference given in parameter, False otherwise.
+   procedure On_Destroy_Page_View
+     (Page_View : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Called when a preferences page view is destroyed.
 
-   procedure Remove_All_GObjects_To_Update;
-   --  Reset the Preferences_GObjects_Map. This is used to avoid calling
-   --  Update_On_Pref_Changed for all the preferences when the preferences
-   --  dialog has already been destroyed.
+   ----------------------
+   -- Preferences_Page --
+   ----------------------
 
-   procedure Notify_Pref_Changed
-     (Self : not null access Preferences_Manager_Record;
-      Pref : not null access Preference_Record'Class) is null;
-   --  Called when a preference is changed.
-   --  If the Preference dialog is displayed, runs the
-   --  Preferences_Changed_Hook. This is only useful when writing
-   --  your own type of preference and overriding Set_Pref.
+   function Get_Name
+     (Self : not null access Preferences_Page_Record) return String;
+   --  Return the page's name.
 
-   procedure Set_Is_Loading_Prefs
-     (Self : not null access Preferences_Manager_Record'Class;
-      Loading : Boolean);
-   function Is_Loading_Preferences
-     (Self : not null access Preferences_Manager_Record'Class) return Boolean;
-   --  True while we are loading the preferences. This is used to disable
-   --  saving the preferences when we are setting their initial value.
+   function Get_Widget
+     (Self    : not null access Preferences_Page_Record;
+      Manager : not null Preferences_Manager)
+      return Preferences_Page_View is abstract;
+   --  Return the main widget of the preferences page.
+   --  This is the widget we want to append to the preferences editor.
 
-   procedure Freeze (Self : not null access Preferences_Manager_Record);
-   procedure Thaw (Self : not null access Preferences_Manager_Record);
-   --  Freeze/Thaw the emission of the preferences_changed signal
-   procedure Register
-     (Manager                : not null access Preferences_Manager_Record;
-      Name, Label, Page, Doc : String;
-      Pref                   : not null access Preference_Record'Class);
-   --  Set common attributes of all preferences, and register that preference
-   --  in the manager. This function only needs to be called if you are
-   --  creating your own types of preferences, and is already called
-   --  automatically when using one of the Create functions below.
+   procedure Add_Pref
+     (Self : not null access Preferences_Page_Record;
+      Pref : not null Preference);
+   --  Add a new preference to the given page.
 
-   function Is_Frozen
-     (Self : not null access Preferences_Manager_Record'Class) return Boolean;
-   --  Return True if Self is frozen
+   procedure Remove_Pref
+     (Self : not null access Preferences_Page_Record;
+      Pref : not null Preference);
+   --  Remove Pref of the given page.
+
+   procedure Free (Self : in out Preferences_Page_Record);
+   --  Free the memory associated with Page.
+
+   ------------------------------
+   -- Default_Preferences_Page --
+   ------------------------------
+
+   type Default_Preferences_Page_Record is new Preferences_Page_Record
+   with private;
+   --  Default preferences pages. This type of pages is the default one in GPS:
+   --  pages of this type will be created when registering a preference that
+   --  resides in a page that has not been registered previously.
+
+   overriding function Get_Widget
+     (Self    : not null access Default_Preferences_Page_Record;
+      Manager : not null Preferences_Manager)
+      return Preferences_Page_View;
+   --  See inherited documentation.
 
    ----------------
    -- Preference --
@@ -338,7 +429,7 @@ package Default_Preferences is
    --  changes.
 
    function Get_Pref_From_Name
-     (Manager             : access Preferences_Manager_Record;
+     (Self                : not null access Preferences_Manager_Record;
       Name                : String;
       Create_If_Necessary : Boolean) return Preference;
    --  Return the corresponding preference.
@@ -352,8 +443,16 @@ package Default_Preferences is
 
    function Get_Name  (Pref : access Preference_Record'Class) return String;
    function Get_Label (Pref : access Preference_Record'Class) return String;
+   function Get_Path  (Pref : access Preference_Record'Class) return String;
    function Get_Doc   (Pref : access Preference_Record'Class) return String;
-   function Get_Page  (Pref : access Preference_Record'Class) return String;
+
+   function Get_Page_Name (Pref : not null Preference) return String;
+   --  Return the preference's page name from the full page name contained
+   --  in Pref.Page.
+
+   function Get_Group_Name (Pref : not null Preference) return String;
+   --  Return, if any, the preference's group from the full page name contained
+   --  in Pref.Page.
 
    overriding function Get_Pref
      (Pref : access String_Preference_Record) return String;
@@ -471,16 +570,27 @@ package Default_Preferences is
    -- iterators --
    ---------------
 
-   type Cursor is private;
+   type Page_Cursor is private;
 
    function Get_First_Reference
      (Manager : not null access Preferences_Manager_Record)
-      return Cursor;
+      return Page_Cursor;
    procedure Next
      (Manager : not null access Preferences_Manager_Record;
-      C       : in out Cursor);
-   function Get_Pref (Self : Cursor) return Preference;
-   --  Iterate over all registered preferences
+      C       : in out Page_Cursor);
+   function Get_Page (Self : Page_Cursor) return Preferences_Page;
+   --  Iterate all over the registered pages.
+
+   type Preference_Cursor is private;
+
+   function Get_First_Reference
+     (Manager : not null access Preferences_Manager_Record)
+      return Preference_Cursor;
+   procedure Next
+     (Manager : not null access Preferences_Manager_Record;
+      C       : in out Preference_Cursor);
+   function Get_Pref (Self : Preference_Cursor) return Preference;
+   --  Iterate all over the registered preferences.
 
    -------------------
    -- Editors views --
@@ -496,6 +606,39 @@ package Default_Preferences is
 
 private
 
+   function "<" (Left, Right : Preferences_Page) return Boolean;
+   --  Used to order pages lists.
+   --  The order is calculated using the page's priority first. If the
+   --  priorities are equal, the order is calculated using alphabetical order.
+
+   package Pages_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Preferences_Page, "=");
+   type Page_Cursor is record
+      C : Pages_Lists.Cursor;
+   end record;
+   --  Used to store pages in the preferences manager.
+
+   package Preferences_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (String, Preference, Ada.Strings.Hash, "=");
+   type Preference_Cursor is record
+      C : Preferences_Maps.Cursor;
+   end record;
+   --  Used to map preferences with their names.
+
+   package Preferences_GObjects_Maps is
+     new Ada.Containers.Indefinite_Hashed_Maps
+       (String, GObject, Ada.Strings.Hash, "=");
+   --  Used to map preferences with the GObjects we want to update when
+   --  preferences change.
+
+   function "=" (Left, Right : Gtk.Widget.Gtk_Widget) return Boolean
+   is (GObject (Left) = GObject (Right));
+
+   package Preferences_Widgets_Maps is
+     new Ada.Containers.Indefinite_Hashed_Maps
+       (String, Gtk.Widget.Gtk_Widget, Ada.Strings.Hash, "=");
+   --  Used to map preferences with the widgets displaying them.
+
    type Preference_Record is abstract tagged record
       Name  : GNAT.Strings.String_Access;
       --  Name in the .xml file, and used for external references
@@ -503,14 +646,52 @@ private
       Label : GNAT.Strings.String_Access;
       --  Label used in the preferences dialog
 
-      Page  : GNAT.Strings.String_Access;
-      --  Page in the preference dialog. Subpages are separated by '/' chars.
-      --  This is set to null if the preference should not be visible in the
-      --  preferences dialog, but can be edited directly in the XML file.
+      Path  : GNAT.Strings.String_Access;
+      --  Preferences's path in the preference dialog. Subpages are separated
+      --  by '/' chars.
+      --  A group can be optionally added at the end of the page's name, using
+      --  the ':' char delimitor (e.g: "General:Behavior" where "General" is
+      --  the page's name and "Behavior" the group's name. This is set to null
+      --  if the preference should not be visible in the preferences dialog,
+      --  but can be edited directly in the XML file.
 
       Doc   : GNAT.Strings.String_Access;
       --  The documentation for this preference
    end record;
+
+   type Preferences_Page_View_Record is
+     new Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with record
+      Pref_Widgets : Preferences_Widgets_Maps.Map;
+      --  Used to map preferences with their highlightable parent widget.
+   end record;
+
+   type Preferences_Group_Record is tagged record
+      Name        : GNAT.Strings.String_Access;
+      --  Group's name.
+
+      Preferences : Preferences_Maps.Map;
+      --  Map of preferences belonging to this group.
+   end record;
+   --  Type representing a group of preferences. The default preferences pages
+   --  uses groups to display preferences.
+   type Preferences_Group is
+     access all Preferences_Group_Record'Class;
+
+   package Groups_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (String, Preferences_Group, Ada.Strings.Hash, "=");
+
+   type Preferences_Page_Record is abstract tagged record
+      Name     : GNAT.Strings.String_Access;
+      --  Name of the page. Subpages are separated by '/' chars.
+      Priority : Integer;
+      --  Page's priority. This is used to sort the pages according to the
+      --  order we want to display it.
+      Groups   : Groups_Maps.Map;
+      --  List of groups belonging to this page.
+   end record;
+
+   type Default_Preferences_Page_Record is new Preferences_Page_Record
+   with null record;
 
    type Integer_Preference_Record is new Preference_Record with record
       Int_Value     : Integer;
@@ -723,19 +904,19 @@ private
      (Pref   : access Theme_Preference_Record;
       Widget : access GObject_Record'Class);
 
-   package Preferences_Maps is new Ada.Containers.Doubly_Linked_Lists
-     (Preference);
-
-   type Cursor is record
-      C : Preferences_Maps.Cursor;
-   end record;
-
    type Preferences_Manager_Record is tagged record
-      Preferences   : Preferences_Maps.List;
+      Pages         : Pages_Lists.List;
+      --  List of the preferences pages belonging to this manager.
+
+      Preferences   : Preferences_Maps.Map;
+      --  Global map containing all the preferences.
+      --  This is used when we need to iterate over all the preferences,
+      --  without needing to know in which page it resides (e.g: when saving
+      --  preferences).
 
       Pref_Editor   : access Preferences_Editor_Interface'Class;
       --  The current preferences editor. This is set to null if there is no
-      --  editor open currently
+      --  editor open currently.
 
       Loading_Prefs : Boolean := False;
       --  True while we are loading the preferences. This is used to disable

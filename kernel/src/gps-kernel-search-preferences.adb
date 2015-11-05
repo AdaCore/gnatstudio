@@ -78,7 +78,7 @@ package body GPS.Kernel.Search.Preferences is
       Pref := Get_Pref (Self.Iter);
 
       --  Don't try to match the hidden preferences
-      if Get_Page (Pref) /= "" then
+      if Get_Page_Name (Pref) /= "" then
          declare
             Doc   : constant String := Get_Doc (Pref);
          begin
@@ -109,7 +109,7 @@ package body GPS.Kernel.Search.Preferences is
       Short : GNAT.Strings.String_Access;
       Score : Natural) return GPS.Search.Search_Result_Access
    is
-      Page  : constant String := Get_Page (Pref);
+      Page  : constant String := Get_Page_Name (Pref);
       Name  : constant String := Get_Name (Pref);
    begin
       return new Preferences_Search_Result'
@@ -185,7 +185,7 @@ package body GPS.Kernel.Search.Preferences is
          Buffer.Get_End_Iter (Iter);
          Buffer.Insert (Iter, "Name: " & Get_Name (Self.Pref) & ASCII.LF);
          Buffer.Insert
-           (Iter, ASCII.LF & "Page: " & Get_Page (Self.Pref) & ASCII.LF);
+           (Iter, ASCII.LF & "Page: " & Get_Page_Name (Self.Pref) & ASCII.LF);
          Buffer.Insert (Iter, ASCII.LF & Get_Doc (Self.Pref));
 
          return Gtk.Widget.Gtk_Widget (View);

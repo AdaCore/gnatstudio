@@ -18,7 +18,6 @@
 with Default_Preferences;           use Default_Preferences;
 with Generic_Views;                 use Generic_Views;
 
-with Ada.Containers.Indefinite_Hashed_Maps;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 
 with Glib.Convert;                  use Glib.Convert;
@@ -27,15 +26,11 @@ with Gtk.Box;                       use Gtk.Box;
 with Gtk.Cell_Renderer_Text;        use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                     use Gtk.Enums;
 with Gtk.Event_Box;                 use Gtk.Event_Box;
-with Gtk.Frame;                     use Gtk.Frame;
-with Gtk.Label;                     use Gtk.Label;
-with Gtk.List_Box;                  use Gtk.List_Box;
 with Gtk.List_Box_Row;              use Gtk.List_Box_Row;
 with Gtkada.MDI;                    use Gtkada.MDI;
 with Gtk.Notebook;                  use Gtk.Notebook;
 with Gtk.Paned;                     use Gtk.Paned;
 with Gtk.Scrolled_Window;           use Gtk.Scrolled_Window;
-with Gtk.Size_Group;                use Gtk.Size_Group;
 with Gtk.Style_Context;             use Gtk.Style_Context;
 with Gtk.Toolbar;                   use Gtk.Toolbar;
 with Gtk.Tree_Model;                use Gtk.Tree_Model;
@@ -43,7 +38,6 @@ with Gtk.Tree_Model_Filter;         use Gtk.Tree_Model_Filter;
 with Gtk.Tree_Model_Sort;           use Gtk.Tree_Model_Sort;
 with Gtk.Tree_Selection;            use Gtk.Tree_Selection;
 with Gtk.Tree_Store;                use Gtk.Tree_Store;
-with Gtk.Tree_Row_Reference;        use Gtk.Tree_Row_Reference;
 with Gtk.Tree_View;                 use Gtk.Tree_View;
 with Gtk.Tree_View_Column;          use Gtk.Tree_View_Column;
 with Gtk.Widget;                    use Gtk.Widget;
@@ -62,11 +56,6 @@ with Language;                      use Language;
 package body GPS.Kernel.Preferences_Views is
 
    Me : constant Trace_Handle := Create (-"PREFERENCES_VIEWS");
-
-   package Preferences_Row_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (String, Gtk_List_Box_Row, Ada.Strings.Hash, "=");
-   --  Used to asscociate preferences names with their row widget
-   Preferences_Row_Map : Preferences_Row_Maps.Map;
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
 
@@ -115,32 +104,6 @@ package body GPS.Kernel.Preferences_Views is
    overriding procedure Unhighlight_Previous_Pref
      (Self : not null access GPS_Preferences_Editor_Record);
    --  Unhighlight the preference that is currently highlighted, if any.
-
-   type Preferences_Group_Record is new Gtk_Frame_Record with record
-      Label_Size_Group       : Gtk_Size_Group;
-      Pref_Widget_Size_Group : Gtk_Size_Group;
-      Preferences_List       : Gtk_List_Box;
-      Page_Reference         : Gtk_Tree_Row_Reference;
-   end record;
-   --  Preferences group view record. The Gtk_Size_Group widgets are used
-   --  to align the labels and teh preferences widgets.
-   type Preferences_Group is access all Preferences_Group_Record'Class;
-
-   package Preferences_Group_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (String, Preferences_Group, Ada.Strings.Hash, "=");
-
-   type GPS_Preferences_Page_Record is
-     new Gtk_Scrolled_Window_Record and Preferences_Page_Interface with record
-      Groups_Map : Preferences_Group_Maps.Map;
-      Page_Box   : Gtk_Box;
-   end record;
-   --  Preferences page view record. The Groups_Map field is used to keep track
-   --  of the preferences groups contained in a page.
-   type GPS_Preferences_Page is access all GPS_Preferences_Page_Record'Class;
-
-   overriding function Edit
-     (Self : not null access GPS_Preferences_Page_Record)
-      return Gtk_Widget is (Gtk_Widget (Self.Page_Box));
 
    type Custom_Preferences_Search_Provider is new Preferences_Search_Provider
    with null record;
@@ -199,10 +162,6 @@ package body GPS.Kernel.Preferences_Views is
    --  Used to reset the Preferences_GObjects_Map mapping the preferences names
    --  with the widget we want to update when preferences change.
 
-   procedure On_Destroy_Group (Widget : access Gtk_Widget_Record'Class);
-   --  Used to Free the Gtk_Tree_Row_Reference hold in a
-   --  Preferences_Group_Record.
-
    package Preferences_Editor_Views is new Generic_Views.Simple_Views
      (Module_Name               => "Preferences",
       View_Name                 => "Preferences",
@@ -232,33 +191,14 @@ package body GPS.Kernel.Preferences_Views is
    --  Select the first page of preferences to be active in the Tree_View.
    --  This procedure is called right after the initialization.
 
-   function Find_Or_Create_Page
-     (Self        : access GPS_Preferences_Editor_Record'Class;
-      Page_Name   : String;
-      Page_Widget : Gtk_Widget) return Gtk_Tree_Iter;
-   --  Return the page index stored in the Gtk_Tree_Model.
-   --  If no such page already exists, then either Page_Widget (if non null) is
-   --  inserted for it, or a new page is created and appended to the
-   --  notebook
-
-   function Find_Or_Create_Group
-     (Self        : access GPS_Preferences_Editor_Record'Class;
-      Page_Name   : String;
-      Group_Name  : String;
-      Page_Widget : Gtk_Widget) return Preferences_Group;
-   --  Return the widget associated with a specific group. If a widget
-   --  associated with the group name is already in the model,
-   --  this function returns it.
-   --  If not, this function finds/creates the page widget which will contain
-   --  the group and creates a widget for the group.
-
-   function Get_Page_Name (Pref_Name : String) return String;
-   --  Return the page name in the preference name conatined in the
-   --  preference name.
-
-   function Get_Group_Name (Pref_Name : String) return String;
-   --  Return the group name in the preference name, if any. If not, return
-   --  an empty string.
+   function Find_Or_Create_Page_Iter
+     (Editor    : not null GPS_Preferences_Editor;
+      Page_Iter : out Gtk_Tree_Iter;
+      Page_Name : String) return Boolean;
+   --  If a Gtk_Tree_Iter has been found for this page in the model, return
+   --  True and return this existing node in Page_Iter.
+   --  If not, create a new Gtk_Tree_Iter node at the right location and return
+   --  it in Page_Iter.
 
    --------------------------------------
    -- Create_Preferences_Search_Result --
@@ -270,7 +210,7 @@ package body GPS.Kernel.Preferences_Views is
       Short : GNAT.Strings.String_Access;
       Score : Natural) return GPS.Search.Search_Result_Access
      is
-      Page  : constant String := Get_Page (Pref);
+      Page  : constant String := Get_Page_Name (Pref);
       Name  : constant String := Get_Name (Pref);
    begin
       return new Custom_Preferences_Search_Result'
@@ -309,10 +249,11 @@ package body GPS.Kernel.Preferences_Views is
      (Self       : not null access Custom_Preferences_Search_Result)
       return Gtk.Widget.Gtk_Widget is
    begin
-      --  Highlight the selected preference
+      --  Go to the corresponding page and highlight the selected preference
       if Self.Pref /= null then
-         Self.Kernel.Get_Preferences.Get_Editor.Highlight_Pref
-           (Self.Pref);
+         Self.Kernel.Get_Preferences.Get_Editor.Display_Pref (Self.Pref);
+         Self.Kernel.Get_Preferences.Get_Editor.Unhighlight_Previous_Pref;
+         Self.Kernel.Get_Preferences.Get_Editor.Highlight_Pref (Self.Pref);
       end if;
 
       --  Return null so that no preview widget is displayed
@@ -409,16 +350,19 @@ package body GPS.Kernel.Preferences_Views is
    overriding procedure Display_Pref
      (Self : not null access GPS_Preferences_Editor_Record;
       Pref : not null access Preference_Record'Class) is
-      Page_Iter : Gtk_Tree_Iter;
-      Page_Path : Gtk_Tree_Path;
+      Page_Found : Boolean;
+      Page_Iter  : Gtk_Tree_Iter;
+      Page_Path  : Gtk_Tree_Path;
    begin
       --  Get the page containing it
-      Page_Iter := Self.Find_Or_Create_Page
-        (Get_Page_Name (Pref.Get_Page), null);
-      Page_Path := Self.Model.Get_Path (Page_Iter);
+      Page_Found := Find_Or_Create_Page_Iter
+        (Self, Page_Iter, Get_Page_Name (Pref));
 
-      --  Display it
-      Self.Pages_Tree.Set_Cursor (Page_Path, null, False);
+      if Page_Found then
+         --  Display it
+         Page_Path := Self.Model.Get_Path (Page_Iter);
+         Self.Pages_Tree.Set_Cursor (Page_Path, null, False);
+      end if;
    end Display_Pref;
 
    --------------------
@@ -427,28 +371,25 @@ package body GPS.Kernel.Preferences_Views is
 
    overriding procedure Highlight_Pref
      (Self      : not null access GPS_Preferences_Editor_Record;
-      Pref      : not null access Preference_Record'Class) is
-      Row_to_Highlight : Gtk_List_Box_Row;
-      Group            : Preferences_Group;
-      Page_Path        : Gtk_Tree_Path;
+      Pref      : not null access Preference_Record'Class)
+   is
+      Page_Found : Boolean;
+      Page_Iter  : Gtk_Tree_Iter;
+      Page_View  : Preferences_Page_View;
    begin
-      --  Get the group to highlight
-      Group := Self.Find_Or_Create_Group
-        (Page_Name   => Get_Page_Name (Pref.Get_Page),
-         Group_Name  => Get_Group_Name (Pref.Get_Page),
-         Page_Widget => null);
+      --  Get the page containing it
+      Page_Found := Find_Or_Create_Page_Iter
+        (Self, Page_Iter, Get_Page_Name (Pref));
 
-      --  Unhighlight the previous selected preference, if any
-      Self.Unhighlight_Previous_Pref;
+      --  Tell the view to highlight this pref
+      if Page_Found then
+         Page_View :=
+           Preferences_Page_View (Self.Pages_Notebook.Get_Nth_Page
+                                  (Get_Int (Self.Model, Page_Iter, 1)));
 
-      --  Highlight the row containing the selected preference
-      Row_to_Highlight := Preferences_Row_Map (Pref.Get_Name);
-      Row_to_Highlight.Set_State_Flags (Gtk_State_Flag_Selected, False);
-      Self.Highlighted_Pref := Preference (Pref);
-
-      --  Display the page containing it
-      Page_Path := Group.Page_Reference.Get_Path;
-      Self.Pages_Tree.Set_Cursor (Page_Path, null, False);
+         Page_View.Set_Pref_Highlighted (Pref, True);
+         Self.Highlighted_Pref := Preference (Pref);
+      end if;
    end Highlight_Pref;
 
    -------------------------------
@@ -458,12 +399,24 @@ package body GPS.Kernel.Preferences_Views is
    overriding procedure Unhighlight_Previous_Pref
      (Self : not null access GPS_Preferences_Editor_Record)
    is
-      Highlighted_Row  : Gtk_List_Box_Row;
+      Page_Found : Boolean;
+      Page_Iter  : Gtk_Tree_Iter;
+      Page_View  : Preferences_Page_View;
    begin
-      if Self.Highlighted_Pref /= null then
-         Highlighted_Row := Preferences_Row_Map
-           (Self.Highlighted_Pref.Get_Name);
-         Highlighted_Row.Set_State_Flags (Gtk_State_Flag_Normal, True);
+      if Self.Highlighted_Pref = null then
+         return;
+      end if;
+
+      Page_Found := Find_Or_Create_Page_Iter
+        (Self, Page_Iter, Get_Page_Name (Self.Highlighted_Pref));
+
+      --  Tell the view to highlight this pref
+      if Page_Found then
+         Page_View :=
+           Preferences_Page_View (Self.Pages_Notebook.Get_Nth_Page
+                                  (Get_Int (Self.Model, Page_Iter, 1)));
+
+         Page_View.Set_Pref_Highlighted (Self.Highlighted_Pref, False);
       end if;
    end Unhighlight_Previous_Pref;
 
@@ -503,48 +456,6 @@ package body GPS.Kernel.Preferences_Views is
       end if;
    end Execute;
 
-   -------------------
-   -- Get_Page_Name --
-   -------------------
-
-   function Get_Page_Name (Pref_Name : String) return String is
-      Current_Index : Integer := Pref_Name'First;
-   begin
-      --  Find the delimitor for group names
-      while Current_Index <= Pref_Name'Last
-        and then Pref_Name (Current_Index) /= ':' loop
-         Current_Index := Current_Index + 1;
-      end loop;
-
-      --  No group specified in the preference name
-      if Current_Index >= Pref_Name'Last then
-         return Pref_Name;
-      end if;
-
-      return Pref_Name (Pref_Name'First .. Current_Index - 1);
-   end Get_Page_Name;
-
-   --------------------
-   -- Get_Group_Name --
-   --------------------
-
-   function Get_Group_Name (Pref_Name : String) return String is
-      Current_Index : Integer := Pref_Name'First;
-   begin
-      --  Find the delimitor for group names
-      while Current_Index <= Pref_Name'Last
-        and then Pref_Name (Current_Index) /= ':' loop
-         Current_Index := Current_Index + 1;
-      end loop;
-
-      --  No group specified in the preference name
-      if Current_Index >= Pref_Name'Last then
-         return "";
-      end if;
-
-      return Pref_Name (Current_Index + 1 .. Pref_Name'Last);
-   end Get_Group_Name;
-
    -----------------------
    -- Select_First_Page --
    -----------------------
@@ -564,80 +475,19 @@ package body GPS.Kernel.Preferences_Views is
       end if;
    end Select_First_Page;
 
-   --------------------------
-   -- Find_Or_Create_Group --
-   --------------------------
+   ------------------------------
+   -- Find_Or_Create_Page_Iter --
+   ------------------------------
 
-   function Find_Or_Create_Group
-     (Self        : access GPS_Preferences_Editor_Record'Class;
-      Page_Name   : String;
-      Group_Name  : String;
-      Page_Widget : Gtk_Widget) return Preferences_Group
-   is
-      Page_Iter    : Gtk_Tree_Iter;
-      Page_Index   : Gint;
-      Page         : GPS_Preferences_Page;
-      Group        : Preferences_Group := null;
-      use Preferences_Group_Maps;
-   begin
-      --  Get the page where we want to insert the preferences group
-      Page_Iter := Find_Or_Create_Page (Self, Page_Name, Page_Widget);
-      Page_Index := Get_Int (Self.Model, Page_Iter, 1);
-      Page := GPS_Preferences_Page
-        (Self.Pages_Notebook.Get_Nth_Page (Page_Index));
-
-      --  If the group has already been created for this page, just retrieve
-      --  if from the map
-      if Page.Groups_Map.Contains (Group_Name) then
-         Group := Page.Groups_Map (Group_Name);
-      end if;
-
-      --  If the group doesn't exist for this page yet, create a new one
-      --  and insert in the map
-      if Group = null then
-         Group := new Preferences_Group_Record;
-         Gtk.Frame.Initialize (Group);
-         Group.On_Destroy (On_Destroy_Group'Access);
-
-         Gtk_New (Group.Label_Size_Group);
-         Gtk_New (Group.Pref_Widget_Size_Group);
-         Gtk_New (Group.Preferences_List);
-         Group.Preferences_List.Set_Selection_Mode (Selection_None);
-         Get_Style_Context (Group).Add_Class
-           ("gps-preferences-groups");
-
-         Group.Add (Group.Preferences_List);
-         Gtk.Tree_Row_Reference.Gtk_New
-           (Reference => Group.Page_Reference,
-            Model     => Self.Pages_Tree.Get_Model,
-            Path      => Self.Model.Get_Path (Page_Iter));
-
-         Page.Page_Box.Pack_Start (Group);
-
-         if Group_Name /= "" then
-            Group.Set_Label (Group_Name);
-         end if;
-
-         Page.Groups_Map.Insert (Group_Name, Group);
-      end if;
-
-      return Group;
-   end Find_Or_Create_Group;
-
-   -------------------------
-   -- Find_Or_Create_Page --
-   -------------------------
-
-   function Find_Or_Create_Page
-     (Self        : access GPS_Preferences_Editor_Record'Class;
-      Page_Name   : String;
-      Page_Widget : Gtk_Widget) return Gtk_Tree_Iter
+   function Find_Or_Create_Page_Iter
+     (Editor    : not null GPS_Preferences_Editor;
+      Page_Iter : out Gtk_Tree_Iter;
+      Page_Name : String) return Boolean
    is
       Current       : Gtk_Tree_Iter := Null_Iter;
       Child         : Gtk_Tree_Iter;
       First, Last   : Integer := Page_Name'First;
-      Page          : GPS_Preferences_Page;
-      W             : Gtk_Widget;
+      Page_Found    : Boolean := True;
    begin
       while First <= Page_Name'Last loop
          Last := First;
@@ -649,53 +499,35 @@ package body GPS.Kernel.Preferences_Views is
          end loop;
 
          if Current = Null_Iter then
-            Child := Get_Iter_First (Self.Model);
+            Child := Get_Iter_First (Editor.Model);
          else
-            Child := Children (Self.Model, Current);
+            Child := Children (Editor.Model, Current);
          end if;
 
          while Child /= Null_Iter
            and then
-             Get_String (Self.Model, Child, 0) /= Page_Name
+             Get_String (Editor.Model, Child, 0) /= Page_Name
            (First .. Last - 1)
          loop
-            Next (Self.Model, Child);
+            Next (Editor.Model, Child);
          end loop;
 
          if Child = Null_Iter then
-            if Page_Widget = null then
-               --  Create a new page
-               Page := new GPS_Preferences_Page_Record;
-               Gtk.Scrolled_Window.Initialize (Page);
-               Page.Set_Policy (Policy_Automatic, Policy_Automatic);
-
-               --  Create the new Vbox which will hold the preferences
-               --  groups
-               Gtk_New_Vbox (Page.Page_Box);
-               Page.Add (Page.Page_Box);
-               Get_Style_Context (Page.Page_Box).Add_Class
-                 ("gps-preferences-pages");
-
-               W := Gtk_Widget (Page);
-            else
-               W := Page_Widget;
-            end if;
-
-            Self.Pages_Notebook.Append_Page (Child     => W,
-                                             Tab_Label => null);
-
-            Append (Self.Model, Child, Current);
-            Set (Self.Model, Child, 0, Page_Name (First .. Last - 1));
-            Set (Self.Model, Child, 1, Self.Pages_Notebook.Get_N_Pages - 1);
+            Page_Found := False;
+            Append (Editor.Model, Child, Current);
+            Set (Editor.Model, Child, 0, Page_Name (First .. Last - 1));
+            Set
+              (Editor.Model, Child, 1, Editor.Pages_Notebook.Get_N_Pages);
          end if;
 
          Current := Child;
-
          First := Last + 1;
       end loop;
 
-      return  Current;
-   end Find_Or_Create_Page;
+      Page_Iter := Current;
+
+      return Page_Found;
+   end Find_Or_Create_Page_Iter;
 
    ----------------
    -- Initialize --
@@ -704,26 +536,22 @@ package body GPS.Kernel.Preferences_Views is
    function Initialize
      (Self : access GPS_Preferences_Editor_Record'Class) return Gtk_Widget
    is
-      Manager        : constant GPS_Preferences_Manager :=
-                         GPS_Preferences_Manager (Self.Kernel.Preferences);
+      Manager        : constant Preferences_Manager := Self.Kernel.Preferences;
       Filename       : constant Virtual_File := Self.Kernel.Preferences_File;
-      Main_Pane      : Gtk_Paned;
-      Group                   : Preferences_Group;
-      Group_Row               : Gtk_Box;
+      Main_Pane               : Gtk_Paned;
       Col                     : Gtk_Tree_View_Column;
       Render                  : Gtk_Cell_Renderer_Text;
       Num                     : Gint;
       Scrolled_Pages_Tree     : Gtk_Scrolled_Window;
-      Pref                    : Preference;
+      Page                    : Preferences_Page;
+      Page_Iter               : Gtk_Tree_Iter;
+      Page_Curs               : Page_Cursor := Manager.Get_First_Reference;
+      Page_Found              : Boolean;
       Backup_Created          : Boolean;
-      Widget                  : Gtk_Widget;
-      Event                   : Gtk_Event_Box;
-      Label                   : Gtk_Label;
-      C                       : Default_Preferences.Cursor;
       Backup_File             : constant Virtual_File :=
                         Create (Full_Filename => Filename.Full_Name & ".bkp");
 
-      pragma Unreferenced (Num);
+      pragma Unreferenced (Page_Found, Num);
    begin
       Filename.Copy (Backup_File.Full_Name, Success => Backup_Created);
 
@@ -778,60 +606,20 @@ package body GPS.Kernel.Preferences_Views is
          Selection_Changed'Unrestricted_Access,
          Self);
 
-      --  For each registered preference, create or find the corresponding
-      --  preference page and add the preferences widget to it.
-      C := Manager.Get_First_Reference;
+      --  Iterate over all the registered preferences pages and append their
+      --  widgets to the preferences editor notebook.
       loop
-         Pref := Get_Pref (C);
-         exit when Pref = null;
+         Page := Get_Page (Page_Curs);
+         exit when Page = null;
 
-         if Pref.Get_Page /= "" then
-            Group := Self.Find_Or_Create_Group
-              (Page_Name   => Get_Page_Name (Pref.Get_Page),
-               Group_Name  => Get_Group_Name (Pref.Get_Page),
-               Page_Widget => null);
-
-            Gtk_New_Hbox (Group_Row);
-
-            if Pref.Editor_Needs_Label then
-               Gtk_New (Event);
-               Gtk_New (Label, Pref.Get_Label);
-               Event.Add (Label);
-               Event.Set_Tooltip_Text (Pref.Get_Doc);
-               Label.Set_Alignment (0.0, 0.5);
-
-               Group.Label_Size_Group.Add_Widget (Event);
-               Group_Row.Pack_Start (Event);
-
-               Widget := Edit
-                 (Pref      => Pref,
-                  Manager   => Manager);
-
-               if Widget /= null then
-                  Widget.Set_Hexpand (False);
-                  Group.Pref_Widget_Size_Group.Add_Widget (Widget);
-                  Group_Row.Pack_Start (Widget);
-               end if;
-            else
-               Widget := Edit
-                 (Pref      => Pref,
-                  Manager   => Manager);
-               Widget.Set_Tooltip_Text (Pref.Get_Doc);
-
-               if Widget /= null then
-                  Widget.Set_Hexpand (False);
-                  Group.Pref_Widget_Size_Group.Add_Widget (Widget);
-                  Group_Row.Pack_Start (Widget);
-               end if;
-            end if;
-            --  Insert the preference row in the Group's Gtk_List_Box and
-            --  keep track of if in the map so that we can highlight it later.
-            Group.Preferences_List.Add (Group_Row);
-            Preferences_Row_Map.Insert
-              (Pref.Get_Name, Gtk_List_Box_Row (Group_Row.Get_Parent));
+         --  Don't display pages without names
+         if Page.Get_Name /= "" then
+            Page_Found := Find_Or_Create_Page_Iter
+              (Self, Page_Iter, Page.Get_Name);
+            Self.Pages_Notebook.Append_Page (Page.Get_Widget (Manager), null);
          end if;
 
-         Manager.Next (C);
+         Manager.Next (Page_Curs);
       end loop;
 
       Self.Set_Can_Focus (True);
@@ -859,22 +647,11 @@ package body GPS.Kernel.Preferences_Views is
       Manager : constant GPS_Preferences_Manager :=
                   GPS_Preferences_Manager (Editor.Kernel.Get_Preferences);
    begin
-      --  Clear the maps mapping preferences and alert the manager that
-      --  its editor has been destroyed.
+      --  Clear the maps mapping preferences and alert the manager that its
+      --  editor has been destroyed.
       Remove_All_GObjects_To_Update;
-      Preferences_Row_Map.Clear;
       Manager.Set_Editor (null);
    end On_Destroy;
-
-   ----------------------
-   -- On_Destroy_Group --
-   ----------------------
-
-   procedure On_Destroy_Group (Widget : access Gtk_Widget_Record'Class) is
-      Group : constant Preferences_Group := Preferences_Group (Widget);
-   begin
-      Free (Group.Page_Reference);
-   end On_Destroy_Group;
 
    ---------------------
    -- Register_Module --

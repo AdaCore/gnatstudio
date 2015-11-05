@@ -512,7 +512,7 @@ package body GPS.Kernel.Style_Manager is
         (Handle.Style_Manager);
 
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Map, Map_Access);
+        (Style_Map.Map, Map_Access);
 
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Style_Manager_Record'Class, Style_Manager_Access);
