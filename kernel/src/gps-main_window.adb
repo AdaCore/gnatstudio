@@ -19,6 +19,7 @@ with Ada.Command_Line;
 
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
@@ -49,11 +50,11 @@ with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Style_Context;         use Gtk.Style_Context;
 with Gtk.Style_Provider;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Window;                use Gtk.Window;
 with Gtk.Css_Provider;          use Gtk.Css_Provider;
 with Gtk.Text_View;
 with Gtk.Text_Buffer;
 with Gtk.Scrolled_Window;
+with Gtk.Window;                use Gtk.Window;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
@@ -69,16 +70,15 @@ with Default_Preferences.Enums; use Default_Preferences;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                use GPS.Kernel;
 with GUI_Utils;
-with Remote;                    use Remote;
 with Task_Manager;              use Task_Manager;
 with User_Interface_Tools;
 
@@ -137,6 +137,7 @@ package body GPS.Main_Window is
      Default_Preferences.Enums.Generics (Toolbar_Icons_Size);
 
    Pref_Toolbar_Style  : Toolbar_Icons_Size_Preferences.Preference;
+   Window_Title_Pref   : String_Preference;
 
    Theme_Specific_Css_Provider : Gtk_Css_Provider;
    --  Provider for the gps-<theme>.css file
@@ -186,9 +187,9 @@ package body GPS.Main_Window is
       return Command_Return_Type;
    --  Act on the layout of windows
 
-   type On_Project_Changed is new Simple_Hooks_Function with null record;
+   type On_Project_View_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute
-      (Self   : On_Project_Changed;
+      (Self   : On_Project_View_Changed;
        Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project is changed
 
@@ -404,12 +405,12 @@ package body GPS.Main_Window is
    -------------
 
    overriding procedure Execute
-      (Self   : On_Project_Changed;
+      (Self   : On_Project_View_Changed;
        Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
    begin
-      Reset_Title (GPS_Window (Get_Main_Window (Kernel)));
+      Reset_Title (Kernel, Kernel.Get_Current_Context);
    end Execute;
 
    -------------
@@ -483,6 +484,12 @@ package body GPS.Main_Window is
          Gtkada.Style.Load_Css_String
            ("* { font: " & To_String (Default_Font.Get_Pref_Font) & "}",
             Priority => Gtk.Style_Provider.Priority_Theme);
+      end if;
+
+      if Pref = null
+        or else Pref = Preference (Window_Title_Pref)
+      then
+         Reset_Title (Kernel, Kernel.Get_Current_Context);
       end if;
 
       if Pref = null
@@ -617,6 +624,15 @@ package body GPS.Main_Window is
          Doc     => -("Indicates how the tool bar should be displayed"),
          Default => Small_Icons);
 
+      Window_Title_Pref := Application.Kernel.Get_Preferences.Create
+        (Name  => "window-title",
+         Label => "Window title",
+         Page  => -"Windows",
+         Doc   => "Title to use for the GPS window." & ASCII.LF
+           & "The following macros are expanded dynamically:" & ASCII.LF
+           & GPS.Kernel.Macros.Doc,
+         Default => "GPS - %ts - %fd - %P project");
+
       --  Use Win_Pos_Center, as the default Win_Pos_None is translated on many
       --  window managers as "top-left" corner, which may cause issues with
       --  taskbars.
@@ -650,7 +666,7 @@ package body GPS.Main_Window is
 
       Widget_Callback.Connect (Main_Window, Signal_Destroy, On_Destroy'Access);
 
-      Project_Changed_Hook.Add (new On_Project_Changed);
+      Project_View_Changed_Hook.Add (new On_Project_View_Changed);
 
       Return_Callback.Object_Connect
         (Main_Window, Gtk.Widget.Signal_Delete_Event,
@@ -1403,52 +1419,38 @@ package body GPS.Main_Window is
    -----------------
 
    procedure Reset_Title
-     (Window : access GPS_Window_Record;
-      Info   : String := "")
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Context : GPS.Kernel.Selection_Context)
    is
-      function Info_Str return String;
-      --  Returns the info string, if set
-
-      function Remote_Str return String;
-      --  Returns the remote string, if set
-
-      --------------
-      -- Info_Str --
-      --------------
-
-      function Info_Str return String is
-         V : Virtual_File;
+      function Callback (Param : String; Quoted : Boolean) return String;
+      function Callback (Param : String; Quoted : Boolean) return String is
+         Done : aliased Boolean := False;
       begin
-         if Info /= "" then
-            V := Create (+Info);
-            if V.Is_Regular_File then
-               return " - " & V.Display_Base_Name
-                 & " - " & (+V.Dir_Name);
-            else
-               return " - " & Info;
-            end if;
-         end if;
+         return GPS.Kernel.Macros.Substitute
+           (Param, Context, Quoted, Done'Access);
+      end Callback;
 
-         return "";
-      end Info_Str;
-
-      ----------------
-      -- Remote_Str --
-      ----------------
-
-      function Remote_Str return String is
-      begin
-         if Is_Local (Build_Server) then
-            return "";
-         else
-            return " on " & Get_Nickname (Build_Server);
-         end if;
-      end Remote_Str;
-
+      MDI  : constant MDI_Window := Get_MDI (Kernel);
+      C    : MDI_Child;
+      Win  : Gtk_Window;
    begin
-      Set_Title
-        (Window, "GPS" & Info_Str & " - "
-         & Get_Project (Window.Kernel).Name & " project" & Remote_Str);
+      if MDI /= null then
+         C := MDI.Get_Focus_Child;
+         if C /= null then
+            Win := Gtk_Window (C.Get_Widget.Get_Toplevel);
+         end if;
+      end if;
+
+      if Win = null then
+         Win := Kernel.Get_Main_Window;
+      end if;
+
+      if Win /= null then
+         Win.Set_Title
+           (GNATCOLL.Templates.Substitute
+              (Str      => Window_Title_Pref.Get_Pref,
+               Callback => Callback'Unrestricted_Access));
+      end if;
    end Reset_Title;
 
    ----------------------

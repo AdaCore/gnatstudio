@@ -22,13 +22,9 @@ pragma Warnings (On);
 with Glib.Messages;          use Glib.Messages;
 with Glib.Object;            use Glib.Object;
 with Glib.Values;            use Glib.Values;
-
 with Gtk;                    use Gtk;
 with Gtk.Arguments;          use Gtk.Arguments;
 with Gtk.Enums;              use Gtk.Enums;
-
-with Gtkada.MDI;             use Gtkada.MDI;
-
 with GPS.Kernel;             use GPS.Kernel;
 
 package GPS.Callbacks is
@@ -36,11 +32,6 @@ package GPS.Callbacks is
    procedure Ctrl_C_Handler;
    pragma Convention (C, Ctrl_C_Handler);
    --  Handler for Ctrl-C events
-
-   procedure Set_Main_Title
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : MDI_Child);
-   --  Set the title of the main window
 
    procedure Child_Selected
      (Mdi    : access GObject_Record'Class;

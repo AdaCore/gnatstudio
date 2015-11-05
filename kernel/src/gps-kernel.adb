@@ -37,6 +37,7 @@ with Gdk;                       use Gdk;
 with Gdk.Window;                use Gdk.Window;
 
 with Glib.Object;               use Glib.Object;
+with Glib.Main;                 use Glib.Main;
 with XML_Utils;                 use XML_Utils;
 
 with Gtk.Enums;                 use Gtk.Enums;
@@ -615,14 +616,14 @@ package body GPS.Kernel is
    begin
       Context_Changed_Hook.Run (Kernel, Context => Kernel.Current_Context);
 
-      --  Lower the flag, and stop calling this in a timeout.
-      Kernel.Context_Timeout_Registered := False;
+      --  Stop calling this in a timeout.
+      Kernel.Context_Timeout := Glib.Main.No_Source_Id;
       return False;
 
    exception
       when E : others =>
          Trace (Me, E);
-         Kernel.Context_Timeout_Registered := False;
+         Kernel.Context_Timeout := Glib.Main.No_Source_Id;
          return False;
    end Context_Timeout;
 
@@ -639,11 +640,10 @@ package body GPS.Kernel is
       --  The actual context_changed hook is emitted in a timeout after
       --  the last time the context has changed: if the timeout is already
       --  running, deregister it and register another one.
-      if Handle.Context_Timeout_Registered then
+      if Handle.Context_Timeout /= Glib.Main.No_Source_Id then
          Glib.Main.Remove (Handle.Context_Timeout);
       end if;
 
-      Handle.Context_Timeout_Registered := True;
       Handle.Context_Timeout := Kernel_Sources.Timeout_Add
         (Context_Hook_Timeout,
          Context_Timeout'Access,
@@ -803,11 +803,11 @@ package body GPS.Kernel is
       --  context_changed, so that all clients are acting on the same
       --  context.
 
-      if Kernel.Context_Timeout_Registered then
-         Context_Changed_Hook.Run (Kernel, Kernel.Current_Context);
-
+      if Kernel.Context_Timeout /= Glib.Main.No_Source_Id then
          Glib.Main.Remove (Kernel.Context_Timeout);
-         Kernel.Context_Timeout_Registered := False;
+         Kernel.Context_Timeout := Glib.Main.No_Source_Id;
+
+         Context_Changed_Hook.Run (Kernel, Kernel.Current_Context);
       end if;
 
       return Kernel.Current_Context;
@@ -963,9 +963,9 @@ package body GPS.Kernel is
       --  the "context_changed" hook won't be run here, which wouldn't
       --  be necessary.
 
-      if Handle.Context_Timeout_Registered then
+      if Handle.Context_Timeout /= Glib.Main.No_Source_Id then
          Glib.Main.Remove (Handle.Context_Timeout);
-         Handle.Context_Timeout_Registered := False;
+         Handle.Context_Timeout := Glib.Main.No_Source_Id;
       end if;
 
       Save_Scenario_Vars_On_Exit (Handle);

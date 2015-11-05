@@ -1404,8 +1404,6 @@ procedure GPS.Main is
          GPS_Main.Public_Version := False;
       end if;
 
-      Reset_Title (GPS_Main);
-
       GPS.Menu.Register_Common_Menus (App.Kernel);
 
       Kernel_Callback.Connect
@@ -2409,10 +2407,6 @@ procedure GPS.Main is
          Execute_Batch (Batch_File.all, As_File => True);
          Free (Batch_File);
       end if;
-
-      --  Set the title of the GPS window
-      Set_Main_Title
-        (GPS_Main.Kernel, Get_Focus_Child (Get_MDI (GPS_Main.Kernel)));
 
       Idle_Id := Glib.Main.Idle_Add (On_GPS_Started'Unrestricted_Access);
 

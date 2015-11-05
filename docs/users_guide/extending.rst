@@ -2241,6 +2241,10 @@ arguments.  This code is useful when you are writing a full python script.
 
     GPS.current_context().file().name()
 
+* :file:`%fd`
+
+  Absolute path for the directory that contains the current file.
+
 * :file:`%fk`
 
   Krunched base name of the currently selected file.  This is the same as
@@ -2496,6 +2500,21 @@ arguments.  This code is useful when you are writing a full python script.
 * :file:`%%`
 
   The literal :kbd:`%` character.
+
+* :file:`%ts`
+
+  The short name for the current window ('Search', 'Project', 'Outline', or
+  the base name for the current file).
+
+* :file:`%tl`
+
+  The long name for the current window ('Search', 'Project', 'Outline' or
+  the absolute path name for the current file).
+
+* :file:`%rbl`
+
+  The name of the Remote Build server (defaults to 'localhost' when no such
+  server is configured, hence the final 'l' in the name of the macro).
 
 Another type of macros are expanded before commands are executed: they start
 with the :kbd:`$` character and represent parameters passed to the action

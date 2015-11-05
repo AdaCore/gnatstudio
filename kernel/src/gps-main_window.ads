@@ -86,11 +86,10 @@ package GPS.Main_Window is
    --  Status is the exit status (0 is success)
 
    procedure Reset_Title
-     (Window : access GPS_Window_Record;
-      Info   : String := "");
-   --  Reset the title of the main window.
-   --  Info is an extra information to be displayed, in addition of the name
-   --  of the root project which is always displayed.
+     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Context : GPS.Kernel.Selection_Context);
+   --  Reset the title of the main window or the current floating window,
+   --  depending on which child currently has the focus.
 
    function Is_Any_Menu_Open
      (Window : access GPS_Window_Record) return Boolean;

@@ -272,6 +272,19 @@ try:
         else:
             return result
 
+    def get_window_by_prefix(prefix, list=None):
+        """Search the whole hierarchy given by list (see WidgetTree) the
+           first window whose title starts with prefix
+        """
+
+        result = [x for x in WidgetTree(list) if isinstance(x, Gtk.Window)
+                  and x.get_title()
+                  and x.get_title().startswith(prefix)]
+        if result:
+            return result[0]
+        else:
+            return result
+
     def get_stock_button(parents, stock=Gtk.STOCK_OK):
         """Find the first button in the possible parents that is a stock button
            with the given stock label.
@@ -455,6 +468,16 @@ try:
             return w
         except AttributeError:
             return None
+
+    def select_combo(combo, item):
+        """
+        In the given combo box, select the item whose name is `item`
+        """
+        model = combo.get_model()
+        for row in model:
+            if item == row[0]:
+                combo.set_active_iter(row.iter)
+                return
 
     def get_current_textview(nb):
         """

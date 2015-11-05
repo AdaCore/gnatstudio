@@ -16,12 +16,14 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with Shared_Macros;           use Shared_Macros;
 with String_Utils;            use String_Utils;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with GNATCOLL.Templates;      use GNATCOLL.Templates;
+with Gtkada.MDI;              use Gtkada.MDI;
 with Xref;                    use Xref;
 
 package body GPS.Kernel.Macros is
@@ -217,6 +219,37 @@ package body GPS.Kernel.Macros is
            Project_Information (Context)
          then
             return Importing_Project_Information (Context).Name;
+         end if;
+
+      elsif Param = "ts" then
+         declare
+            C : constant MDI_Child :=
+              Get_Focus_Child (Get_MDI (Get_Kernel (Context)));
+         begin
+            if C /= null then
+               return C.Get_Short_Title;
+            else
+               return "";
+            end if;
+         end;
+
+      elsif Param = "tl" then
+         declare
+            C : constant MDI_Child :=
+              Get_Focus_Child (Get_MDI (Get_Kernel (Context)));
+         begin
+            if C /= null then
+               return C.Get_Title;
+            else
+               return "";
+            end if;
+         end;
+
+      elsif Param = "rbl" then
+         if Is_Local (Build_Server) then
+            return "localhost";
+         else
+            return Get_Nickname (Build_Server);
          end if;
 
       elsif Param = "gnat" then

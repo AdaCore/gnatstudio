@@ -22,6 +22,7 @@ pragma Warnings (On);
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Main_Window;           use GPS.Main_Window;
+with Gtkada.MDI;                use Gtkada.MDI;
 
 package body GPS.Callbacks is
 
@@ -73,35 +74,17 @@ package body GPS.Callbacks is
       Child  : Gtk_Args;
       Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (MDI);
-      C : MDI_Child;
+      pragma Unreferenced (MDI, Child);
    begin
       if not Kernel.Is_In_Destruction then
-         C := MDI_Child (To_Object (Child, 1));
-         Set_Main_Title (Kernel, C);
+         --  ??? We should recompute the context instead, since some macros
+         --  like %ts and %tl depends on the title of the child. This will be
+         --  done if we are systematically reseting the window title whenever
+         --  the context changes.
+
+         Reset_Title (Kernel, Kernel.Get_Current_Context);
       end if;
    end Title_Changed;
-
-   --------------------
-   -- Set_Main_Title --
-   --------------------
-
-   procedure Set_Main_Title
-     (Kernel : access Kernel_Handle_Record'Class;
-      Child  : MDI_Child)
-   is
-      Win : constant GPS_Window := GPS_Window (Kernel.Get_Main_Window);
-   begin
-      if Win /= null then
-         if Child = null then
-            Reset_Title (Win);
-         elsif Has_Title_Bar (Child) then
-            Reset_Title (Win, Get_Short_Title (Child));
-         else
-            Reset_Title (Win, Get_Title (Child));
-         end if;
-      end if;
-   end Set_Main_Title;
 
    --------------------
    -- Child_Selected --
@@ -120,7 +103,6 @@ package body GPS.Callbacks is
         and then not Kernel.Is_In_Destruction
       then
          Child := MDI_Child (To_Object (Params, 1));
-         Set_Main_Title (Kernel, Child);
 
          if Child = null then
             Context := New_Context (Kernel);
@@ -135,6 +117,7 @@ package body GPS.Callbacks is
             end if;
          end if;
 
+         Reset_Title (Kernel, Context);
          Kernel.Context_Changed (Context);
       end if;
    end Child_Selected;

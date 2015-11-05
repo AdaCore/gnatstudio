@@ -47,7 +47,7 @@ package GPS.Kernel.Macros is
       Server    : Server_Type := GPS_Server;
       For_Shell : Boolean := False) return String;
    --  Return the replacement suitable for %Param.
-   --  This should mostly be used from String_Utils.Substitute.
+   --  This should mostly be used from GNATCOLL.Templates.Substitute.
    --  If Param is not one of the macro parameters, set Done.all to False and
    --  return an empty string.
    --  If Param is recognized and handled, Done.all is set to True. Note that
@@ -83,8 +83,11 @@ private
       & "%c      column number" & LF
       & "%a      category of current message (in Locations window)" & LF
       & "%i      name of importing project (in Project view)" & LF
+      & "%ts     short title for the current window" & LF
+      & "%tl     long title for the current window" & LF
 
       & LF & "System Information" & LF
+      & "%rbl    name of the remote build host (or 'localhost')" & LF
       & "%GPS    user's directory to store GPS settings" & LF
       & "%system_bin_dir GPS install prefix" & LF
       & "%gnat   name of the GNAT driver to use" & LF

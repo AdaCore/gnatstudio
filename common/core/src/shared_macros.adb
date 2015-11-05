@@ -57,6 +57,14 @@ package body Shared_Macros is
                Protect_Backslashes => For_Shell);
          end if;
 
+      elsif Param = "fd" then
+         if File_Information /= No_File then
+            return String_Utils.Protect
+              (+File_Information.Dir_Name,
+               Protect_Quotes      => Quoted,
+               Protect_Backslashes => For_Shell);
+         end if;
+
       elsif Param = "fk" then
          if File_Information /= No_File then
             return String_Utils.Protect
