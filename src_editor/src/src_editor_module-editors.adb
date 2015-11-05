@@ -70,6 +70,7 @@ package body Src_Editor_Module.Editors is
       Ref_Count : Natural := 1;
    end record;
    type Buffer_Reference_Access is access all Buffer_Reference;
+
    type
      Src_Editor_Buffer is new GPS.Editors.Line_Information.GPS_Editor_Buffer
    with record
@@ -196,8 +197,10 @@ package body Src_Editor_Module.Editors is
    is
      (Left.Line = Right.Line
       and then Left.Column = Right.Column
-      and then String (Left.Buffer.File.Full_Name.all) =
-        String (Right.Buffer.File.Full_Name.all));
+      and then
+      String (Src_Editor_Buffer'Class (Left.Buffer).File.Full_Name.all)
+      =
+        String (Src_Editor_Buffer'Class (Right.Buffer).File.Full_Name.all));
 
    overriding function Beginning_Of_Line
      (This : Src_Editor_Location) return Editor_Location'Class;
