@@ -747,17 +747,24 @@ package body Src_Editor_Buffer is
       Edited : constant Virtual_File := Self.Buffer.Filename;
       Dest   : GNATCOLL.VFS.Virtual_File;
    begin
-      if Edited /= GNATCOLL.VFS.No_File then
-         if Is_Directory (File) and then Is_Parent (File, Edited) then
+      --  If we are renaming a directory (and not a file), we need to update
+      --  the internal name of the file to take the new directory name into
+      --  account.
+
+      if Is_Directory (File) then
+         if Is_Parent (File, Edited) then
             Dest := Create_From_Dir
               (Renamed.Dir, Relative_Path (Edited, File));
             Self.Buffer.Filename := Dest;
             Self.Buffer.Filename_Changed;
-
-         elsif not Is_Directory (File) and then Edited = File then
-            Self.Buffer.Filename := Renamed;
-            Self.Buffer.Filename_Changed;
          end if;
+
+      --  Else if we are renaming the current file from elsewhere, we need
+      --  to update the buffer filename
+
+      elsif Edited = File then
+         Self.Buffer.Filename := Renamed;
+         Self.Buffer.Filename_Changed;
       end if;
    end Execute;
 
@@ -4312,12 +4319,14 @@ package body Src_Editor_Buffer is
             --  name
             if Buffer.Filename = GNATCOLL.VFS.No_File then
                File_Closed_Hook.Run (Buffer.Kernel, Buffer.File_Identifier);
-            end if;
 
-            File_Renamed_Hook.Run
-               (Kernel   => Buffer.Kernel,
-                File     => Buffer.Filename,
-                File2    => Filename);
+            --  Unless the file was an unnamed buffer
+            elsif not Is_Directory (Buffer.Filename) then
+               File_Renamed_Hook.Run
+                 (Kernel   => Buffer.Kernel,
+                  File     => Buffer.Filename,
+                  File2    => Filename);
+            end if;
 
             Buffer.Filename := Filename;
          end if;
@@ -4393,7 +4402,6 @@ package body Src_Editor_Buffer is
          if Name_Changed then
             --  Force an update of the persistent properties if need be
             Set_Charset  (Buffer, Get_Charset (Buffer));
-            Set_Language (Buffer, Get_Language (Buffer));
 
             --  ??? The following is expensive, it would be nice to have a
             --  simpler way to report a possible change in the list of sources

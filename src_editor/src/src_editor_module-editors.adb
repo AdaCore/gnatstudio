@@ -2248,27 +2248,22 @@ package body Src_Editor_Module.Editors is
       File        : Virtual_File := No_File;
       Internal    : Boolean := False)
    is
+      F : Virtual_File;
       Ignore : Boolean;
       pragma Unreferenced (Ignore);
    begin
       if This.Contents.Buffer /= null then
+         F := File;
          if File = No_File then
-            Ignore := Save_MDI_Children
-              (This.Contents.Kernel,
-               Children =>
-                 (1 => Find_Editor
-                    (This.Contents.Kernel,
-                     Get_Filename (This.Contents.Buffer),
-                     No_Project)),
-               Force    => not Interactive);
-         else
-            Save_To_File
-              (This.Contents.Buffer,
-               Filename => File,
-               Success  => Ignore,
-               Internal => Internal,
-               Force    => not Interactive);
+            F := Get_Filename (This.Contents.Buffer);
          end if;
+
+         Save_To_File
+           (This.Contents.Buffer,
+            Filename => F,
+            Success  => Ignore,
+            Internal => Internal,
+            Force    => not Interactive);
       end if;
    end Save;
 

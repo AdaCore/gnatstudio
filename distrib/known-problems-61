@@ -25,6 +25,18 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 6.2 / GNATbench 2.10
 ------------------------------------------------
 
+KP-61-OA15-027 GPS: saving files in wrong directory
+
+  Problem:    Saving a new file in a parent directory of opened editor
+              impacts the directory in which those editors will be saved
+              from then on.
+
+  Status:     This was fixed in 6.2 on 2015-11-06
+
+  Workaround: Set the current directory (via /File/Change Directory) to
+              a directory that doesn't contain any source file (recursively).
+              For instance one of the object directories, in typical setups.
+
 KP-61-OA15-024 GB: Toggle Comment sometimes unable to uncomment
 
   Problem:    Uncommenting multiple lines using the Toggle Comment "Ctrl+-"
