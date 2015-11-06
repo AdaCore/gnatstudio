@@ -319,7 +319,7 @@ package body Scenario_Views is
         (Kernel          => View.Kernel,
          Event_On_Widget => View.View);
 
-      return Gtk_Widget (View);
+      return Gtk_Widget (View.View);
    end Initialize;
 
    -----------------------

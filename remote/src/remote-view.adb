@@ -451,7 +451,7 @@ package body Remote.View is
             (Simple_Hooks_Function with View => Remote_View (View)),
           Watch => View);
 
-      return Gtk_Widget (View);
+      return Gtk_Widget (View.Settings_Button);
    end Initialize;
 
    -------------------
