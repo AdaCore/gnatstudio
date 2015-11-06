@@ -546,12 +546,12 @@ package Switches_Chooser is
      return Ada.Containers.Count_Type;
    --  Switches_Editor_Config object Switches vector length getter
 
-   Command_Line_Editor_Tooltip_Text : constant String;
+   Command_Line_Editor_Tooltip_Text : aliased constant String;
    --  builder target command line field editor tool tip text
 
 private
    LF : constant Character := ASCII.LF;
-   Command_Line_Editor_Tooltip_Text : constant String :=
+   Command_Line_Editor_Tooltip_Text : aliased constant String :=
         "%subdir subdirectory of obj dir where object files are stored" & LF
       & "%subdirsarg  switch --subdirs=..." & LF
       & "%X      switches -Xname=value for scenario variables" & LF

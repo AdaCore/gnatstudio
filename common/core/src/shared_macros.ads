@@ -52,16 +52,17 @@ package Shared_Macros is
    --  builder target command line expansion.
    --  It uses only parameters available from GNATbench.
 
-   Doc : constant String;
+   Doc : aliased constant String;
    --  Documents all supported macros from this package
 
 private
    LF : constant Character := ASCII.LF;
-   Doc : constant String :=
-        "File information" & LF
-      & "%f      base name of current file" & LF
-      & "%fk     krunched base name of current file" & LF
-      & "%F      absolute path of current file" & LF
+   Doc : aliased constant String :=
+        "Current File information" & LF
+      & "%f      base name" & LF
+      & "%fd     directory name" & LF
+      & "%fk     krunched base name" & LF
+      & "%F      absolute path" & LF
 
       & LF & "Project information" & LF
       & "%o      absolute path of object directory for current project" & LF
