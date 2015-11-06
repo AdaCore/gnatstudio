@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-170-OB05-010 GPS: remove the Always Use External Editor pref (2015-11-06)
+
+  This preference (which always uses an external editor rather than GPS's
+  own editor) has been removed. Such editors do not conveniently give access
+  to cross-references, outline, and all the other facilities provided by GPS
+
 NF-170-OA29-048 GPS: collapse all project nodes in Project view (2015-11-02)
 
   A new button was added to the local toolbar of the Project view, to

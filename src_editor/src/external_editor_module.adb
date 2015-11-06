@@ -32,7 +32,6 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib;                      use Glib;
 with Glib.Main;                 use Glib.Main;
-with Gtkada.MDI;                use Gtkada.MDI;
 
 with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
@@ -40,7 +39,6 @@ with Default_Preferences.Enums; use Default_Preferences;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
@@ -69,7 +67,6 @@ package body External_Editor_Module is
 
    Default_External_Editor    : Supported_Client_Preferences.Preference;
    Custom_Editor              : String_Preference;
-   Always_Use_External_Editor : Boolean_Preference;
 
    type Constant_String_Access is access constant String;
 
@@ -262,21 +259,6 @@ package body External_Editor_Module is
      (Args : Argument_List_Access; F, C, L, E, P  : String := "");
    --  Does all the substitutions in Args for %f, %c, %l, %e and %%.
 
-   type On_Open_File is new Open_File_Hooks_Function with null record;
-   overriding function Execute
-     (Self      : On_Open_File;
-      Kernel    : not null access Kernel_Handle_Record'Class;
-      File      : Virtual_File;
-      Line      : Integer;
-      Column, Column_End : GNATCOLL.Xref.Visible_Column;
-      Enable_Navigation, New_File, Force_Reload, Focus : Boolean;
-      Project   : Project_Type;
-      Group : Child_Group;
-      Initial_Position : Child_Position;
-      Areas : Allowed_Areas;
-      Title : String) return Boolean;
-   --  Handle an edition request
-
    procedure Spawn_New_Process
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : Filesystem_String;
@@ -296,13 +278,6 @@ package body External_Editor_Module is
      (Command : Filesystem_String; Args : Argument_List) return Integer;
    --  Spawn a new process, and waits for its termination. It hides both its
    --  standard output and standard error.
-
-   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
-     (Self   : On_Pref_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Preference);
-   --  Called when the preferences have changed.
 
    -------------------
    -- Select_Client --
@@ -743,6 +718,7 @@ package body External_Editor_Module is
          Column := Entity_Column_Information (Context.Context);
       end if;
 
+      Select_Client;
       Client_Command
         (Kernel => Get_Kernel (Context.Context),
          File   => File_Information (Context.Context),
@@ -754,61 +730,6 @@ package body External_Editor_Module is
       when E : others =>
          Trace (Me, E);
          return Commands.Failure;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self      : On_Open_File;
-      Kernel    : not null access Kernel_Handle_Record'Class;
-      File      : Virtual_File;
-      Line      : Integer;
-      Column, Column_End : GNATCOLL.Xref.Visible_Column;
-      Enable_Navigation, New_File, Force_Reload, Focus : Boolean;
-      Project   : Project_Type;
-      Group : Child_Group;
-      Initial_Position : Child_Position;
-      Areas : Allowed_Areas;
-      Title : String) return Boolean
-   is
-      pragma Unreferenced (Self, Column_End, Enable_Navigation, New_File);
-      pragma Unreferenced (Force_Reload, Focus, Project);
-      pragma Unreferenced (Group, Initial_Position, Areas, Title);
-   begin
-      if External_Editor_Module_Id.Client /= Auto
-        and then Always_Use_External_Editor.Get_Pref
-      then
-         if Is_Regular_File (File) then
-            --  ??? Incorrect handling of remote files
-            Client_Command
-              (Kernel => Kernel,
-               File   => File,
-               Line   => Natural (Line),
-               Column => Column);
-            return True;
-         end if;
-      end if;
-      return False;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Self   : On_Pref_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Preference)
-   is
-      pragma Unreferenced (Kernel, Self);
-   begin
-      if Pref = null
-         or else Pref = Preference (Always_Use_External_Editor)
-      then
-         Select_Client;
-      end if;
    end Execute;
 
    ---------------------
@@ -838,17 +759,6 @@ package body External_Editor_Module is
          Doc     => -"Command to use for launching a custom editor",
          Default => "emacs +%l %f");
 
-      Always_Use_External_Editor := Create
-        (Get_Preferences (Kernel),
-         Name    => "External-Editor-Always-Use-External-Editor",
-         Default => False,
-         Page    => -"Editor",
-         Doc     => -("True if all editions should be done with the external"
-                      & " editor. This will deactivate completely the"
-                      & " internal editor. False if the external editor"
-                      & " needs to be explicitely called by the user."),
-         Label   => -"Always use external editor");
-
       Register_Action
         (Kernel, "Edit with external editor", new Edit_With_External_Command,
          Description =>
@@ -861,8 +771,6 @@ package body External_Editor_Module is
          Kernel                  => Kernel,
          Module_Name             => External_Editor_Module_Name,
          Priority                => Default_Priority + 1);
-      Open_File_Action_Hook.Add (new On_Open_File);
-      Preferences_Changed_Hook.Add (new On_Pref_Changed);
    end Register_Module;
 
 end External_Editor_Module;
