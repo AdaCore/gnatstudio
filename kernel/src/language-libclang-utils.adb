@@ -15,239 +15,46 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Config; use Config;
-
-with Ada.Calendar;            use Ada.Calendar;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
-with GNAT.Expect;     use GNAT.Expect;
-with GNAT.Expect.TTY; use GNAT.Expect.TTY;
-with GNAT.OS_Lib;
-with GNAT.Regpat;     use GNAT.Regpat;
-
-with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 with GNATCOLL.VFS;       use GNATCOLL.VFS;
 with GNAT.Strings;       use GNAT.Strings;
+with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
 
 package body Language.Libclang.Utils is
-
-   Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG.UTILS");
 
    -------------------------------
    -- Get_Compiler_Search_Paths --
    -------------------------------
 
-   Last_Project : Project_Type;
-   Last_Lang    : GNAT.Strings.String_Access;
-   Last_Result  : Unbounded_String_Array (1 .. 512);
-   Last_Result_Index : Natural;
-   --  This acts as a very basic cache
-   --  ??? This is horrible
-   --  ??? We should cache this seriously, in a hash table indexed by
-   --  project/language, cleaned on project/scenario switch.
-
-   function Get_Compiler_Search_Paths
+   function Get_Compiler_Search_Paths_Switches
      (Kernel   : Core_Kernel;
       Project  : Project_Type;
       Language : String) return Unbounded_String_Array
    is
-      The_Exec         : GNAT.Strings.String_Access;
-      Gcc_Exec_On_Path : GNAT.Strings.String_Access;
-      Result           : Unbounded_String_Array (1 .. 512);
-      --  Unlikely to go over 512 search dirs
-      First_Free       : Natural := 1;
+      Python           : constant Scripting_Language :=
+        Lookup_Scripting_Language (Kernel.Scripts, "python");
+      C                : Callback_Data'Class := Python.Create (2);
    begin
-      if Last_Lang /= null
-        and then Last_Lang.all = Language
-        and then Last_Project = Project
-      then
-         --  Return the cached result
-         return Last_Result (1 .. Last_Result_Index);
-      end if;
 
-      --  ??? This won't work on remote hosts
+      --  This function is implemented in python, because the spawning logic
+      --  *and* the string massaging were both easier to express.
 
-      --  Heuristic for finding the default search path:
-      --   - we find the compiler driver for this language
-      --   - we create a dummy "t.h"
-      --   - we invoke <driver> -v t.h
-      --   - we expect an output containing:
-      --        (something)
-      --        #include <...> search starts here:
-      --         dir1
-      --         dir2
-      --         ...
-      --         dirN
-      --        End of search list.
-      --        (something)
-      --   - we get dir1 .. dirN from the above.
-
-      --  First find the driver.
-      --  Heuristic for finding the driver:
-      --     A) we look for an explicitly set Compiler'Driver setting
-      --     B) if this is not explicitely set, we use
-      --          <target>gcc for C
-      --          <target>cpp for C++
-
-      The_Exec := new String'
-        (Attribute_Value (Project      => Project,
-                          Attribute    => Compiler_Driver_Attribute,
-                          Index        => Language,
-                          Default      => "",
-                          Use_Extended => False));
-
-      if The_Exec.all /= "" then
-         Trace (Me, "driver specified in Compiler'Driver: " & The_Exec.all);
-      else
-         Trace (Me, "no driver specified in Compiler'Driver");
-
-         --  A) has failed, we fall back on B)
-         GNAT.Strings.Free (The_Exec);
-
-         declare
-            Target        : constant String := Get_Target (Kernel);
-            Target_Prefix : GNAT.Strings.String_Access;
-         begin
-            if Target = "" then
-               Target_Prefix := new String'("");
-            else
-               Target_Prefix := new String'(Target & "-");
-            end if;
-
-            if To_Lower (Language) = "c" then
-               The_Exec := new String'(Target_Prefix.all & "gcc");
-            else
-               --  Assume libclang is only for C and C++
-               The_Exec := new String'(Target_Prefix.all & "cpp");
-            end if;
-
-            Trace (Me, "using driver " & The_Exec.all);
-
-            GNAT.Strings.Free (Target_Prefix);
-         end;
-      end if;
-
-      --  At this stage we have a driver, now let's run it
-
-      Gcc_Exec_On_Path := GNAT.OS_Lib.Locate_Exec_On_Path (The_Exec.all);
-      GNAT.Strings.Free (The_Exec);
-
-      if Gcc_Exec_On_Path = null then
-         Trace (Me, "driver not found on PATH : " & The_Exec.all);
-         return (1 .. 0 => <>);
-      end if;
+      C.Set_Nth_Arg (1, Project.Name);
+      C.Set_Nth_Arg (2, Language);
+      C.Execute_Command ("GPS.__get_compiler_search_paths");
 
       declare
-         Fd      : TTY_Process_Descriptor;
-         All_Match : constant Pattern_Matcher := Compile
-           (".+", Multiple_Lines);
-         Args : GNAT.OS_Lib.Argument_List_Access;
-         Spawned_Exec : GNAT.Strings.String_Access;
-         Dir     : Virtual_File;
-         Match   : Expect_Match;
-         Ignored : Boolean;
-         Listing : Boolean := False;
+         L : constant List_Instance'Class := C.Return_Value;
       begin
-         Dir := Project.Object_Dir;
-
-         if Dir = No_File then
-            Dir := GNATCOLL.VFS.Get_Current_Dir;
-         end if;
-
-         if Host = Windows then
-            Spawned_Exec := new String'("cmd");
-            Args  := new GNAT.OS_Lib.Argument_List'
-              (new String'("/c"),
-               new String'
-                 ("echo | " & Gcc_Exec_On_Path.all
-                  & " -x" & To_Lower (Language) & " -E -v -"));
-         else
-            Spawned_Exec := new String'(Gcc_Exec_On_Path.all);
-            Args  := new GNAT.OS_Lib.Argument_List'
-              (new String'("-x" & To_Lower (Language)),
-               new String'("-E"),
-               new String'("-v"),
-               new String'("-"));
-         end if;
-
-         Trace (Me,
-                "spawning: "
-                & Spawned_Exec.all
-                & " " & Argument_List_To_String (Args.all));
-
-         Non_Blocking_Spawn
-           (Fd, Spawned_Exec.all, Args.all,
-            Err_To_Out => True);
-
-         GNAT.Strings.Free (Spawned_Exec);
-         GNAT.OS_Lib.Free (Args);
-
-         declare
-            Start : constant Time := Clock;
-         begin
-            while True loop
-               GNAT.Expect.TTY.Expect (Fd, Match, All_Match, Timeout => 1000);
-
-               declare
-                  S : constant String :=
-                    Strip_CR (Strip_Character (Expect_Out (Fd), ASCII.LF));
-                  F : Natural;
-               begin
-                  Trace (Me, "Out: " & S);
-
-                  if S = "#include <...> search starts here:" then
-                     Listing := True;
-                  elsif S = "End of search list." then
-                     Listing := False;
-                     exit;
-                  else
-                     if Listing then
-                        F := S'First;
-                        while S (F) = ' ' loop
-                           F := F + 1;
-                        end loop;
-
-                        Trace (Me, "=> search path found: " & S (F .. S'Last));
-                        Result (First_Free) := To_Unbounded_String
-                          ("-I" & S (F .. S'Last));
-
-                        First_Free := First_Free + 1;
-                     end if;
-                  end if;
-               end;
-
-               if Clock - Start > 3.0 then
-                  --  We exceeded 3 seconds of waiting: trace and exit
-                  Trace (Me, "timeout exceeded");
-                  exit;
-               end if;
+         return A : Unbounded_String_Array (1 .. L.Number_Of_Arguments) do
+            for J in A'Range loop
+               A (J) := To_Unbounded_String ("-I" & String'(L.Nth_Arg (J)));
             end loop;
-         exception
-            when Process_Died =>
-               --  Not expected
-               null;
-            when E : others =>
-               Trace (Me, E);
-         end;
-
-         Close (Fd);
+         end return;
       end;
 
-      GNAT.Strings.Free (Gcc_Exec_On_Path);
-
-      --  We are about to return results: cache this
-      if Last_Lang /= null then
-         GNAT.Strings.Free (Last_Lang);
-      end if;
-
-      Last_Project := Project;
-      Last_Lang := new String'(Language);
-      Last_Result := Result;
-      Last_Result_Index := First_Free - 1;
-
-      return Result (1 .. First_Free - 1);
-   end Get_Compiler_Search_Paths;
+   end Get_Compiler_Search_Paths_Switches;
 
    -----------------------------
    -- Get_Project_Source_Dirs --
