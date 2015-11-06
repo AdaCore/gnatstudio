@@ -707,7 +707,7 @@ package body Language.Libclang is
                  (Kernel, F_Info.Project, Lang)
 
                  --  ... a -I<dir> for each dir in the compiler search path
-                 & Get_Compiler_Search_Paths
+                 & Get_Compiler_Search_Paths_Switches
                  (Kernel, F_Info.Project, Lang)
 
                  & (if Lang in "c++" | "cpp" then (+"-x", +"c++")

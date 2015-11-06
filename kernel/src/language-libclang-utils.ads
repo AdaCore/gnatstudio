@@ -22,7 +22,7 @@ with GNATCOLL.Utils;    use GNATCOLL.Utils;
 
 package Language.Libclang.Utils is
 
-   function Get_Compiler_Search_Paths
+   function Get_Compiler_Search_Paths_Switches
      (Kernel   : Core_Kernel;
       Project  : Project_Type;
       Language : String) return Unbounded_String_Array;
