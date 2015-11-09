@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Vectors;
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
@@ -592,9 +593,14 @@ package body Src_Editor_Module is
       Callback : not null access procedure
         (Child : not null access GPS_MDI_Child_Record'Class))
    is
-      Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
+      Iter  : Child_Iterator := Get_MDI (Kernel).First_Child;
       Child : MDI_Child;
       Box   : Source_Editor_Box;
+
+      package Child_Vectors is new Ada.Containers.Vectors
+        (Positive, GPS_MDI_Child);
+      Childs : Child_Vectors.Vector;
+
    begin
       loop
          Child := Get (Iter);
@@ -604,11 +610,15 @@ package body Src_Editor_Module is
             Box := Source_Editor_Box (Get_Widget (Child));
 
             if File = GNATCOLL.VFS.No_File or else File = Box.Get_Filename then
-               Callback (GPS_MDI_Child (Child));
+               Childs.Append (GPS_MDI_Child (Child));
             end if;
          end if;
 
          Next (Iter);
+      end loop;
+
+      for Child of Childs loop
+         Callback (Child);
       end loop;
    end For_All_Views;
 
