@@ -130,9 +130,11 @@ package body GVD.Dialogs.Callbacks is
             begin
                Iter := Get_Iter (M, Path);
                Append (S, Get_String (M, Iter, 0));
+               Path_Free (Path);
             end;
             Tmp := Gtk_Tree_Path_List.Next (Tmp);
          end loop;
+         Gtk_Tree_Path_List.Free (Selection);
 
          if Length (S) = 0 then
             Button :=
