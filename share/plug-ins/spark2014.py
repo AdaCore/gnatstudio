@@ -19,6 +19,10 @@ import re
 # We create the actions and menus in XML instead of python to share the same
 # source for GPS and GNATbench (which only understands the XML input for now).
 
+# Note that we use GPS.current_context instead of GPS.contextual_context below,
+# because GPS.contextual_context does not work when clicking on the right of a
+# line of code (see OB05-033).
+
 xml_gnatprove_menus = """<?xml version="1.0"?>
   <GNATPROVE>
     <filter name="Inside Subprogram Context" language="Ada" shell_lang="python"
@@ -76,16 +80,16 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
     </action>
     <action name="Prove Line Action" category="GNATprove" output="none">
        <filter language="Ada" shell_lang="python"
-         shell_cmd="spark2014.is_file_context(GPS.contextual_context())" />
+         shell_cmd="spark2014.is_file_context(GPS.current_context())" />
        <shell
-         lang="python">spark2014.on_prove_line(GPS.contextual_context())
+         lang="python">spark2014.on_prove_line(GPS.current_context())
        </shell>
     </action>
     <action name="Prove Check Action" category="GNATprove" output="none">
        <filter language="Ada" shell_lang="python"
-        shell_cmd="spark2014.prove_check_context(GPS.contextual_context())" />
+        shell_cmd="spark2014.prove_check_context(GPS.current_context())" />
        <shell
-         lang="python">spark2014.on_prove_check(GPS.contextual_context())
+         lang="python">spark2014.on_prove_check(GPS.current_context())
        </shell>
     </action>
     <action name="Show Report Action" category="GNATprove" output="none">
