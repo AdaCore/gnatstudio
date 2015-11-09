@@ -3939,6 +3939,7 @@ package body Project_Properties is
       Button := Editor.Add_Button (-"Edit Source", Response_Edit);
       Button.Set_Tooltip_Text
         ("Close this dialog and edit the source file for this project");
+      Set_Name (Button, "project properties edit source");
 
       Button := Editor.Add_Button (Stock_Ok, Gtk_Response_OK);
       Button.Set_Sensitive (not Read_Only);
@@ -4410,6 +4411,85 @@ package body Project_Properties is
       Read_Only : constant Boolean :=
         Project.Is_Aggregate_Project
         or else not Project.Is_Editable;
+
+      Save_Before_Edit : Boolean := False;
+
+      function Check_Pages return Boolean;
+      --  Whether the current contents of the pages is valid and
+      --  rewrites project's file (with user's confirmation)
+      --  if it has changed.
+      --  Should return True if all is valid.
+
+      -----------------
+      -- Check_Pages --
+      -----------------
+
+      function Check_Pages return Boolean is
+         Failed : Boolean := False;
+
+         procedure Check_Page
+           (Page : not null access Project_Editor_Page_Record'Class);
+         --  Whether the current contents of the page is valid.
+
+         ----------------
+         -- Check_Page --
+         ----------------
+
+         procedure Check_Page
+           (Page : not null access Project_Editor_Page_Record'Class)
+         is
+            Error : constant String := Page.Is_Valid;
+         begin
+            if not Failed and then Error /= "" then
+               Ignore := Message_Dialog
+                 (Msg         => Error,
+                  Buttons     => Button_OK,
+                  Dialog_Type => Gtkada.Dialogs.Error,
+                  Title       => -"Error",
+                  Parent      => Get_Current_Window (Kernel));
+               Failed := True;
+            end if;
+         end Check_Page;
+
+      begin
+         Editor.For_Each_Page
+           (Check_Page'Unrestricted_Access, Visible_Only => True);
+
+         if Failed then
+            return False;
+         end if;
+
+         declare
+            New_Name : constant String :=
+              Get_Safe_Text (Editor.General_Page.Name);
+            New_Base : constant Filesystem_String :=
+              To_File_Name (+New_Name);
+            New_Path : constant Virtual_File := Create_From_UTF8
+              (Get_Safe_Text (Editor.General_Page.Path));
+            New_File : constant Virtual_File :=
+              Create_From_Dir
+                (New_Path,
+                 New_Base
+                 & GNATCOLL.Projects.Project_File_Extension);
+
+         begin
+            if (New_Name /= Project.Name
+                or else New_Path /= Project_Directory (Project))
+              and then Is_Regular_File (New_File)
+            then
+               return Message_Dialog
+                 (New_File.Display_Full_Name &
+                  (-" already exists. Do you want to overwrite ?"),
+                  Buttons     => Button_Yes or Button_No,
+                  Dialog_Type => Gtkada.Dialogs.Error,
+                  Title       => -"Error",
+                  Parent      => Get_Current_Window (Kernel)) = Button_Yes;
+            else
+               return True;
+            end if;
+         end;
+      end Check_Pages;
+
    begin
       Project_Editor_Hook.Run (Kernel);
       Gtk_New (Editor, Project, Kernel, Read_Only => Read_Only);
@@ -4418,78 +4498,29 @@ package body Project_Properties is
          Response := Editor.Run;
          case Response is
             when Response_Edit =>
-               Open_File_Action_Hook.Run
-                  (Kernel, File => Project.Project_Path,
-                   Project => Project);
-               exit;
+               if not Read_Only then
+                  Save_Before_Edit := Message_Dialog
+                    ("Would you like to apply your modifications " &
+                       "before editing the source?",
+                     Buttons     => Button_Yes or Button_No,
+                     Dialog_Type => Gtkada.Dialogs.Confirmation,
+                     Title       => -"Confirmation",
+                     Parent      => Get_Current_Window (Kernel)) =
+                      Button_Yes;
+               end if;
+               exit when not Save_Before_Edit or else Check_Pages;
+
             when Gtk_Response_OK =>
-               declare
-                  Failed : Boolean := False;
-
-                  procedure Check_Page
-                    (Page : not null access Project_Editor_Page_Record'Class);
-                  procedure Check_Page
-                    (Page : not null access Project_Editor_Page_Record'Class)
-                  is
-                     Error : constant String := Page.Is_Valid;
-                  begin
-                     if not Failed and then Error /= "" then
-                        Ignore := Message_Dialog
-                          (Msg         => Error,
-                           Buttons     => Button_OK,
-                           Dialog_Type => Gtkada.Dialogs.Error,
-                           Title       => -"Error",
-                           Parent      => Get_Current_Window (Kernel));
-                        Failed := True;
-                     end if;
-                  end Check_Page;
-
-               begin
-                  Editor.For_Each_Page
-                    (Check_Page'Unrestricted_Access, Visible_Only => True);
-
-                  if Failed then
-                     null;
-                  else
-                     declare
-                        New_Name : constant String :=
-                          Get_Safe_Text (Editor.General_Page.Name);
-                        New_Base : constant Filesystem_String :=
-                          To_File_Name (+New_Name);
-                        New_Path : constant Virtual_File := Create_From_UTF8
-                          (Get_Safe_Text (Editor.General_Page.Path));
-                        New_File : constant Virtual_File :=
-                          Create_From_Dir
-                            (New_Path,
-                             New_Base
-                             & GNATCOLL.Projects.Project_File_Extension);
-
-                     begin
-                        if (New_Name /= Project.Name
-                            or else New_Path /= Project_Directory (Project))
-                          and then Is_Regular_File (New_File)
-                        then
-                           exit when Message_Dialog
-                             (New_File.Display_Full_Name &
-                              (-" already exists. Do you want to overwrite ?"),
-                              Buttons     => Button_Yes or Button_No,
-                              Dialog_Type => Gtkada.Dialogs.Error,
-                              Title       => -"Error",
-                              Parent      =>
-                                Get_Current_Window (Kernel)) = Button_Yes;
-                        else
-                           exit;
-                        end if;
-                     end;
-                  end if;
-               end;
+               exit when Check_Pages;
 
             when others =>
                exit;
          end case;
       end loop;
 
-      if not Read_Only and then Response = Gtk_Response_OK then
+      if not Read_Only
+        and then (Response = Gtk_Response_OK or else Save_Before_Edit)
+      then
          declare
             Prj_Iter    : Scenario_Selectors.Project_Iterator :=
                             Start (Editor.Prj_Selector);
@@ -4579,6 +4610,19 @@ package body Project_Properties is
 
       Destroy (Editor);
       Free (Languages);
+
+      if Response = Response_Edit then
+         if Save_Before_Edit and then Project.Modified (Recursive => True) then
+            Changed := Save_Project
+              (Kernel    => Kernel,
+               Project   => Project,
+               Recursive => True);
+         end if;
+
+         Open_File_Action_Hook.Run
+           (Kernel, File => Project.Project_Path,
+            Project => Project);
+      end if;
    end Edit_Properties;
 
    -------------
