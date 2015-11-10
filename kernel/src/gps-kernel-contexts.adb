@@ -478,18 +478,40 @@ package body GPS.Kernel.Contexts is
       return Context.Data.Data.Importing_Project;
    end Importing_Project_Information;
 
-   -----------------------------
-   -- Set_Message_Information --
-   -----------------------------
+   ------------------------------
+   -- Set_Messages_Information --
+   ------------------------------
 
-   procedure Set_Message_Information
-     (Context : in out Selection_Context;
-      Message : GPS.Kernel.Messages.Message_Access) is
+   procedure Set_Messages_Information
+     (Context  : in out Selection_Context;
+      Messages : GPS.Kernel.Messages.Message_Array)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Addresses_Array, Addresses_Array_Access);
+
+      Index : Positive := 1;
    begin
-      Context.Data.Data.Message :=
-        Message_Conversions.To_Address
-          (Message_Conversions.Object_Pointer (Message));
-   end Set_Message_Information;
+      if Context.Data.Data.Messages /= null
+        and then Context.Data.Data.Messages'Length /= Messages'Length
+      then
+         Unchecked_Free (Context.Data.Data.Messages);
+      end if;
+
+      if Messages'Length = 0 then
+         return;
+      end if;
+
+      if Context.Data.Data.Messages = null then
+         Context.Data.Data.Messages := new Addresses_Array
+           (1 .. Messages'Length);
+      end if;
+
+      for I in Messages'Range loop
+         Context.Data.Data.Messages (Index) := Message_Conversions.To_Address
+           (Message_Conversions.Object_Pointer (Messages (I)));
+         Index := Index + 1;
+      end loop;
+   end Set_Messages_Information;
 
    --------------------------
    -- Has_Line_Information --
@@ -541,20 +563,33 @@ package body GPS.Kernel.Contexts is
       use type System.Address;
    begin
       return Context.Data.Data /= null
-        and Context.Data.Data.Message /= System.Null_Address;
+        and Context.Data.Data.Messages /= null;
    end Has_Message_Information;
 
-   -------------------------
-   -- Message_Information --
-   -------------------------
+   --------------------------
+   -- Messages_Information --
+   --------------------------
 
-   function Message_Information
-     (Context : Selection_Context) return GPS.Kernel.Messages.Message_Access is
+   function Messages_Information
+     (Context : Selection_Context) return GPS.Kernel.Messages.Message_Array is
    begin
-      return
-        GPS.Kernel.Messages.Message_Access
-          (Message_Conversions.To_Pointer (Context.Data.Data.Message));
-   end Message_Information;
+      if Context.Data.Data.Messages = null then
+         return Result : GPS.Kernel.Messages.Message_Array (1 .. 0) do
+            null;
+         end return;
+
+      else
+         return Result : GPS.Kernel.Messages.Message_Array
+           (1 .. Context.Data.Data.Messages'Last)
+         do
+            for Index in Result'Range loop
+               Result (Index) := GPS.Kernel.Messages.Message_Access
+                 (Message_Conversions.To_Pointer
+                    (Context.Data.Data.Messages (Index)));
+            end loop;
+         end return;
+      end if;
+   end Messages_Information;
 
    ----------------------------
    -- Set_Entity_Information --

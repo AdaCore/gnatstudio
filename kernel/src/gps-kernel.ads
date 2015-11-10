@@ -862,6 +862,9 @@ private
       Element_Type => Boolean,
       "<"          => System."<");
 
+   type Addresses_Array is array (Positive range <>) of System.Address;
+   type Addresses_Array_Access is access all Addresses_Array;
+
    type Selection_Context_Data_Record is record
       Kernel    : Kernel_Handle;
       Creator   : Abstract_Module;
@@ -882,7 +885,9 @@ private
       Browser_Details : Gtkada.Canvas_View.Canvas_Event_Details;
       Has_Browser_Details : Boolean := False;
 
-      Message        : System.Address := System.Null_Address;
+      Messages       : Addresses_Array_Access := null;
+      --  The current selected messages
+
       Revision       : Unbounded_String;
       Other_Revision : Unbounded_String;
       Tag            : Unbounded_String;

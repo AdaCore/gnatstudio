@@ -686,6 +686,9 @@ package body GPS.Kernel is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Selection_Context_Data_Record, Selection_Context_Data);
 
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Addresses_Array, Addresses_Array_Access);
+
       procedure Free (Data : in out Selection_Context_Data_Record);
       --  Free memory used by Data
 
@@ -708,6 +711,7 @@ package body GPS.Kernel is
             --   ??? problem of double deallocation at shutdown time, ideally
             --   the following call should be outside of the conditional.
             GNATCOLL.VFS.Unchecked_Free (Data.Files);
+            Unchecked_Free (Data.Messages);
          end if;
 
          String_List_Utils.String_List.Free (Data.Activities);

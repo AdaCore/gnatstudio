@@ -161,6 +161,18 @@ package body GPS.Location_View is
    --  Idle callback used to expand nodes of category and its first or defined
    --  file; select first message and the open first location if requested.
 
+   procedure Free (List : in out Gtk_Tree_Path_List.Glist);
+   --  Calling Path_Free on each item in list,
+   --  and then freeing the list itself.
+
+   function Is_Parent_Selected
+     (Selection : Gtk.Tree_Selection.Gtk_Tree_Selection;
+      Path      : Gtk_Tree_Path;
+      Depth     : Gint := 0)
+      return Boolean;
+   --  Check whether the one of parents is selected. Parent node well be
+   --  checked if Depth is 0 or depth of node less or equal Depth.
+
    -------------
    -- Actions --
    -------------
@@ -378,6 +390,8 @@ package body GPS.Location_View is
    is
       Loc : constant Location_View := Location_View (Self);
    begin
+      Loc.View.Get_Selection.Unselect_All;
+
       Loc.Requests.Prepend
         ((Ada.Strings.Unbounded.To_Unbounded_String (Category),
          GNATCOLL.VFS.No_File, Goto_First));
@@ -400,6 +414,8 @@ package body GPS.Location_View is
    is
       Loc : constant Location_View := Location_View (Self);
    begin
+      Loc.View.Get_Selection.Unselect_All;
+
       Loc.Requests.Prepend
         ((Ada.Strings.Unbounded.To_Unbounded_String (Category),
          File, Goto_First));
@@ -539,14 +555,24 @@ package body GPS.Location_View is
       Model   : Gtk_Tree_Model;
       Path    : Gtk_Tree_Path;
       Success : Boolean := True;
-   begin
-      Self.View.Get_Selection.Get_Selected (Model, Iter);
+      List    : Gtk_Tree_Path_List.Glist;
 
-      if Model = Null_Gtk_Tree_Model or else Iter = Null_Iter then
+      use type Gtk_Tree_Path_List.Glist;
+   begin
+      if Self.View.Get_Selection.Count_Selected_Rows /= 1 then
          return;
       end if;
 
-      Path := Get_Path (Model, Iter);
+      Self.View.Get_Selection.Get_Selected_Rows (Model, List);
+
+      if Model = Null_Gtk_Tree_Model
+        or else List = Gtk_Tree_Path_List.Null_List
+      then
+         Free (List);
+         return;
+      end if;
+
+      Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (List));
 
       while Success and then Get_Depth (Path) < 3 loop
          Success := Expand_Row (Self.View, Path, False);
@@ -560,7 +586,7 @@ package body GPS.Location_View is
          On_Location_Clicked (Self, Path, Iter);
       end if;
 
-      Path_Free (Path);
+      Free (List);
    end Goto_Location;
 
    -------------
@@ -576,25 +602,32 @@ package body GPS.Location_View is
       K : constant Kernel_Handle := Get_Kernel (Context.Context);
       V : constant Location_View := Location_Views.Retrieve_View (K);
 
-      Iter  : Gtk_Tree_Iter;
+      List  : Gtk_Tree_Path_List.Glist;
       Model : Gtk_Tree_Model;
       Path  : Gtk_Tree_Path;
       Dummy : Boolean;
       pragma Unreferenced (Dummy);
 
+      use type Gtk_Tree_Path_List.Glist;
+
    begin
       if V /= null then
-         Get_Selected (Get_Selection (V.View), Model, Iter);
-         Path := Get_Path (Model, Iter);
+         V.View.Get_Selection.Get_Selected_Rows (Model, List);
+         if Model /= Null_Gtk_Tree_Model
+           and then List /= Gtk_Tree_Path_List.Null_List
+         then
+            Path := Gtk_Tree_Path
+              (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
 
-         while Path.Get_Depth > 1 and then Up (Path) loop
-            null;
-         end loop;
+            while Path.Get_Depth > 1 and then Path.Up loop
+               null;
+            end loop;
 
-         Dummy := V.View.Expand_Row (Path, True);
-
-         Path_Free (Path);
+            Dummy := V.View.Expand_Row (Path, True);
+         end if;
+         Free (List);
       end if;
+
       return Commands.Success;
    end Execute;
 
@@ -610,29 +643,34 @@ package body GPS.Location_View is
       pragma Unreferenced (Self);
       K     : constant Kernel_Handle := Get_Kernel (Context.Context);
       V     : constant Location_View := Location_Views.Retrieve_View (K);
-      Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
       Path  : Gtk_Tree_Path;
+      List  : Gtk_Tree_Path_List.Glist;
 
+      use type Gtk_Tree_Path_List.Glist;
    begin
       --  When Locations view doesn't have focus it just clear selection on
       --  collapse all action. Selection is moved to category row to workaround
       --  this.
+      if V /= null then
+         V.View.Get_Selection.Get_Selected_Rows (Model, List);
+         if Model /= Null_Gtk_Tree_Model
+           and then List /= Gtk_Tree_Path_List.Null_List
+         then
+            Path := Gtk_Tree_Path
+              (Gtk_Tree_Path_List.Get_Data (Gtk_Tree_Path_List.First (List)));
 
-      V.View.Get_Selection.Get_Selected (Model, Iter);
+            while Path.Get_Depth > 1 and then Path.Up loop
+               null;
+            end loop;
 
-      if Iter /= Null_Iter then
-         Path := Get_Path (Model, Iter);
+            V.View.Get_Selection.Select_Path (Path);
+         end if;
+         Free (List);
 
-         while Path.Get_Depth > 1 and then Up (Path) loop
-            null;
-         end loop;
-
-         V.View.Get_Selection.Select_Path (Path);
-         Path_Free (Path);
+         V.View.Collapse_All;
       end if;
 
-      V.View.Collapse_All;
       return Commands.Success;
    end Execute;
 
@@ -645,107 +683,112 @@ package body GPS.Location_View is
       Backwards : Boolean := False)
    is
       Loc : constant Location_View := Location_View (Self);
-      Iter          : Gtk_Tree_Iter;
       Path          : Gtk_Tree_Path;
       File_Path     : Gtk_Tree_Path;
       Category_Path : Gtk_Tree_Path;
       Model         : Gtk_Tree_Model;
       Success       : Boolean;
+      List          : Gtk_Tree_Path_List.Glist;
       Ignore        : Boolean;
       pragma Unreferenced (Ignore);
 
+      use type Gtk_Tree_Path_List.Glist;
    begin
-      Get_Selected (Get_Selection (Loc.View), Model, Iter);
+      Loc.View.Get_Selection.Get_Selected_Rows (Model, List);
 
-      if Iter = Null_Iter then
+      if Model = Null_Gtk_Tree_Model
+        or else List = Gtk_Tree_Path_List.Null_List
+      then
+         Free (List);
          return;
       end if;
 
-      Path := Get_Path (Model, Iter);
+      Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (List));
 
       --  First handle the case where the selected item is not a node
 
-      if Get_Depth (Path) < 3 then
+      if Path.Get_Depth < 3 then
          Success := True;
-         while Success and then Get_Depth (Path) < 3 loop
-            Success := Expand_Row (Loc.View, Path, False);
-            Down (Path);
-            Select_Path (Get_Selection (Loc.View), Path);
+         while Success and then Path.Get_Depth < 3 loop
+            Success := Loc.View.Expand_Row (Path, False);
+            Path.Down;
+            Loc.View.Get_Selection.Unselect_All;
+            Loc.View.Get_Selection.Select_Path (Path);
          end loop;
 
          if not Backwards then
             --  We have found the first iter, our job is done.
-            Path_Free (Path);
+            Free (List);
             return;
          end if;
       end if;
 
-      if Get_Depth (Path) < 3 then
-         Path_Free (Path);
-
+      if Path.Get_Depth < 3 then
+         Free (List);
          return;
       end if;
 
-      File_Path := Copy (Path);
-      Ignore := Up (File_Path);
+      File_Path := Path.Copy;
+      Ignore := File_Path.Up;
 
-      Category_Path := Copy (File_Path);
-      Success := Up (Category_Path);
+      Category_Path := File_Path.Copy;
+      Success := Category_Path.Up;
 
       if Backwards then
-         Success := Prev (Path);
+         Success := Path.Prev;
       else
-         Next (Path);
+         Path.Next;
       end if;
 
       if not Success or else Get_Iter (Model, Path) = Null_Iter then
          if Backwards then
-            Success := Prev (File_Path);
+            Success := File_Path.Prev;
          else
-            Next (File_Path);
+            File_Path.Next;
          end if;
 
          if not Success
            or else Get_Iter (Model, File_Path) = Null_Iter
          then
             if Locations_Wrap.Get_Pref then
-               File_Path := Copy (Category_Path);
-               Down (File_Path);
+               File_Path := Category_Path.Copy;
+               File_Path.Down;
 
                if Backwards then
                   while Get_Iter (Model, File_Path) /= Null_Iter loop
-                     Next (File_Path);
+                     File_Path.Next;
                   end loop;
 
-                  Ignore := Prev (File_Path);
+                  Ignore := File_Path.Prev;
                end if;
             else
                Path_Free (File_Path);
-               Path_Free (Path);
+               Free (List);
                Path_Free (Category_Path);
                return;
             end if;
          end if;
 
-         Ignore := Expand_Row (Loc.View, File_Path, False);
-         Path := Copy (File_Path);
-         Down (Path);
+         Ignore := Loc.View.Expand_Row (File_Path, False);
+         Path := File_Path.Copy;
+         Path.Down;
 
          if Backwards then
             while Get_Iter (Model, Path) /= Null_Iter loop
-               Next (Path);
+               Path.Next;
             end loop;
 
-            Ignore := Prev (Path);
+            Ignore := Path.Prev;
          end if;
       end if;
 
-      Select_Path (Get_Selection (Loc.View), Path);
-      Scroll_To_Cell (Loc.View, Path, null, False, 0.1, 0.1);
+      Loc.View.Get_Selection.Unselect_All;
+      Loc.View.Get_Selection.Select_Path (Path);
+      Loc.View.Scroll_To_Cell (Path, null, False, 0.1, 0.1);
       Goto_Location (Loc);
 
       Path_Free (File_Path);
-      Path_Free (Path);
+      Free (List);
       Path_Free (Category_Path);
    end Next_Item;
 
@@ -781,34 +824,111 @@ package body GPS.Location_View is
       Event : Gdk.Event.Gdk_Event := null)
       return Selection_Context
    is
-      Context : Selection_Context :=
+      Context    : Selection_Context :=
         GPS_MDI_Child_Record (Self.all).Build_Context (Event);
-      Explorer : constant Location_View :=
+      Explorer   : constant Location_View :=
         Location_View (GPS_MDI_Child (Self).Get_Actual_Widget);
-      Path     : Gtk_Tree_Path;
-      Iter     : Gtk_Tree_Iter;
-      Message  : Message_Access;
-      Model    : constant Gtk_Tree_Model := Get_Model (Explorer.View);
-   begin
-      Iter := Find_Iter_For_Event (Explorer.View, Event);
+      Path       : Gtk_Tree_Path;
+      Iter       : Gtk_Tree_Iter;
+      Model      : Gtk_Tree_Model;
+      List       : Gtk_Tree_Path_List.Glist;
+      N_Selected : Natural;
 
-      if Iter = Null_Iter then
+      use type Gtk_Tree_Path_List.Glist;
+   begin
+      Iter       := Find_Iter_For_Event (Explorer.View, Event);
+      N_Selected := Natural (Explorer.View.Get_Selection.Count_Selected_Rows);
+
+      if Iter = Null_Iter or else N_Selected = 0 then
          return Context;
       end if;
 
-      Path := Get_Path (Model, Iter);
+      Explorer.View.Get_Selection.Get_Selected_Rows (Model, List);
 
-      if Get_Depth (Path) >= 3 then
-         Message := Get_Message (Model, Iter, Message_Column);
-         Set_File_Information
-           (Context,
-            Files  => (1 => Message.Get_File),
-            Line   => Message.Get_Line,
-            Column => Message.Get_Column);
-         Set_Message_Information (Context, Message);
+      if Model = Null_Gtk_Tree_Model
+        or else List = Gtk_Tree_Path_List.Null_List
+      then
+         Free (List);
+         return Context;
       end if;
 
-      Path_Free (Path);
+      if N_Selected = 1 then
+         --  Single selection
+         declare
+            Message  : Message_Access;
+         begin
+            Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (List));
+            if Path.Get_Depth >= 3 then
+               Message := Get_Message
+                 (Model, Get_Iter (Model, Path), Message_Column);
+
+               Set_Messages_Information (Context, (1 => Message));
+
+               Set_File_Information
+                 (Context,
+                  Files  => (1 => Message.Get_File),
+                  Line   => Message.Get_Line,
+                  Column => Message.Get_Column);
+            end if;
+         end;
+
+      else
+         declare
+            G_Iter         : Gtk_Tree_Path_List.Glist;
+            Messages       : GPS.Kernel.Messages.Message_Array
+              (1 .. N_Selected);
+            Messages_Index : Natural := 0;
+            File           : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+            Only_Messages  : Boolean := True;
+         begin
+            G_Iter := Gtk_Tree_Path_List.First (List);
+            while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+               Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+               if Path.Get_Depth >= 3 then
+                  Messages_Index := Messages_Index + 1;
+                  Messages (Messages_Index) := Get_Message
+                    (Model, Get_Iter (Model, Path), Message_Column);
+
+                  if Messages_Index = 1 then
+                     --  Store first message's file
+                     File := Messages (1).Get_File;
+
+                  elsif Only_Messages then
+                     --  Is this message belong to first message's file
+                     if File /= GNATCOLL.VFS.No_File
+                       and then File /= Messages (Messages_Index).Get_File
+                     then
+                        File := GNATCOLL.VFS.No_File;
+                     end if;
+                  end if;
+
+               else
+                  --  Not message
+                  Only_Messages := False;
+               end if;
+               G_Iter := Gtk_Tree_Path_List.Next (G_Iter);
+            end loop;
+
+            if Messages_Index /= 0 then
+               --  Message(s) selected
+               Set_Messages_Information
+                 (Context, Messages (1 .. Messages_Index));
+
+               if Only_Messages
+                 and then File /= GNATCOLL.VFS.No_File
+               then
+                  --  Messages belong to one file
+                  Set_File_Information
+                    (Context,
+                     Files  => (1 => File),
+                     Line   => Messages (1).Get_Line,
+                     Column => Messages (1).Get_Column);
+               end if;
+            end if;
+         end;
+      end if;
+
+      Free (List);
       return Context;
    end Build_Context;
 
@@ -873,14 +993,30 @@ package body GPS.Location_View is
       Iter          : Gtk_Tree_Iter;
       Model         : Gtk_Tree_Model;
       Path          : Gtk_Tree_Path;
+      List          : Gtk_Tree_Path_List.Glist;
 
+      use type Gtk_Tree_Path_List.Glist;
    begin
       --  Check current selection: if it is on the same line as the new
       --  location, do not change the selection. Otherwise, there is no easy
       --  way for a user to click on a secondary location found in the same
       --  error message.
 
-      Locations.View.Get_Selection.Get_Selected (Model, Iter);
+      if Locations.View.Get_Selection.Count_Selected_Rows > 1 then
+         return;
+      end if;
+
+      Locations.View.Get_Selection.Get_Selected_Rows (Model, List);
+      if Model = Null_Gtk_Tree_Model
+        or else List = Gtk_Tree_Path_List.Null_List
+      then
+         Free (List);
+         return;
+      end if;
+
+      Iter := Get_Iter
+        (Model, Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (List)));
+      Free (List);
 
       if Iter /= Null_Iter
         and then Get_File (Model, Iter, File_Column) = File
@@ -993,6 +1129,7 @@ package body GPS.Location_View is
          Location_View_Callbacks.To_Marshaller (On_Row_Deleted'Access),
          Location_View (Self),
          True);
+      Self.View.Get_Selection.Set_Mode (Selection_Multiple);
 
       Self.View.Set_Name ("Locations Tree");
       Set_Font_And_Colors (Self.View, Fixed_Font => True);
@@ -1024,6 +1161,28 @@ package body GPS.Location_View is
 
       return Gtk_Widget (Self.View);
    end Initialize;
+
+   ------------------------
+   -- Is_Parent_Selected --
+   ------------------------
+
+   function Is_Parent_Selected
+     (Selection : Gtk.Tree_Selection.Gtk_Tree_Selection;
+      Path      : Gtk_Tree_Path;
+      Depth     : Gint := 0)
+      return Boolean
+   is
+   begin
+      while Path.Up loop
+         if (Depth = 0 or else Path.Get_Depth <= Depth)
+           and then Selection.Path_Is_Selected (Path)
+         then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Is_Parent_Selected;
 
    -----------------------
    -- On_Action_Clicked --
@@ -1472,6 +1631,30 @@ package body GPS.Location_View is
       Self.View.Get_Filter_Model.Set_Pattern (Pattern);
    end Filter_Changed;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (List : in out Gtk_Tree_Path_List.Glist)
+   is
+      Iter : Gtk_Tree_Path_List.Glist;
+      Path : Gtk_Tree_Path;
+
+      use type Gtk_Tree_Path_List.Glist;
+   begin
+      if List = Gtk_Tree_Path_List.Null_List then
+         return;
+      end if;
+
+      Iter := Gtk_Tree_Path_List.First (List);
+      while Iter /= Gtk_Tree_Path_List.Null_List loop
+         Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (Iter));
+         Path_Free (Path);
+         Iter := Gtk_Tree_Path_List.Next (Iter);
+      end loop;
+      Gtk_Tree_Path_List.Free (List);
+   end Free;
+
    --------------------
    -- On_Row_Deleted --
    --------------------
@@ -1519,46 +1702,80 @@ package body GPS.Location_View is
       return Commands.Command_Return_Type
    is
       pragma Unreferenced (Self);
-      View    : constant Location_View :=
+      View      : constant Location_View :=
         Location_Views.Retrieve_View (Get_Kernel (Context.Context));
-      Path    : Gtk_Tree_Path;
-      Iter    : Gtk_Tree_Iter;
-      Model   : Gtk_Tree_Model;
-      Message : Message_Access;
+      Selection : Gtk.Tree_Selection.Gtk_Tree_Selection;
+      Path      : Gtk_Tree_Path;
+      Iter      : Gtk_Tree_Iter;
+      Model     : Gtk_Tree_Model;
+      Message   : Message_Access;
+      List      : Gtk_Tree_Path_List.Glist;
+      G_Iter    : Gtk_Tree_Path_List.Glist;
 
+      procedure Get_Path_And_Iter;
+
+      -----------------------
+      -- Get_Path_And_Iter --
+      -----------------------
+
+      procedure Get_Path_And_Iter is
+      begin
+         Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+         Iter := Get_Iter (Model, Path);
+      end Get_Path_And_Iter;
+
+      use type Gtk_Tree_Path_List.Glist;
    begin
       if View = null then
          return Commands.Failure;
       end if;
 
-      Get_Selected (Get_Selection (View.View), Model, Iter);
+      Selection := View.View.Get_Selection;
+      Selection.Get_Selected_Rows (Model, List);
 
-      if Model = Null_Gtk_Tree_Model or else Iter = Null_Iter then
+      if Model = Null_Gtk_Tree_Model
+        or else List = Gtk_Tree_Path_List.Null_List
+      then
+         Free (List);
          return Commands.Failure;
       end if;
 
-      Path := Get_Path (Model, Iter);
+      G_Iter := Gtk_Tree_Path_List.First (List);
+      while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+         Get_Path_And_Iter;
 
-      if Get_Depth (Path) = 1 then
-         Get_Messages_Container (View.Kernel).Remove_Category
-           (Get_String (Model, Iter, Category_Column),
-            Locations_Message_Flags);
-         Path_Free (Path);
-      elsif Get_Depth (Path) = 2 then
-         Get_Messages_Container (View.Kernel).Remove_File
-           (Get_String (Model, Iter, Category_Column),
-            Get_File (Model, Iter, File_Column),
-            Locations_Message_Flags);
-         Path_Free (Path);
-      elsif Get_Depth (Path) >= 3 then
-         Message := Get_Message (Model, Iter, Message_Column);
-         Message.Remove;
-
-         --  We just selected a new row,
-         Path_Free (Path);
-         Get_Selected (Get_Selection (View.View), Model, Iter);
          if Iter /= Null_Iter then
-            Path := Get_Path (Model, Iter);
+            if Path.Get_Depth = 1 then
+               Get_Messages_Container (View.Kernel).Remove_Category
+                 (Get_String (Model, Iter, Category_Column),
+                  Locations_Message_Flags);
+
+            elsif Path.Get_Depth = 2 then
+               if not Is_Parent_Selected (Selection, Path) then
+                  Get_Messages_Container (View.Kernel).Remove_File
+                    (Get_String (Model, Iter, Category_Column),
+                     Get_File (Model, Iter, File_Column),
+                     Locations_Message_Flags);
+               end if;
+
+            elsif Path.Get_Depth >= 3 then
+               if not Is_Parent_Selected (Selection, Path, 2) then
+                  Message := Get_Message (Model, Iter, Message_Column);
+                  Message.Remove;
+               end if;
+            end if;
+         end if;
+
+         Path_Free (Path);
+         G_Iter := Gtk_Tree_Path_List.Next (G_Iter);
+      end loop;
+      Gtk_Tree_Path_List.Free (List);
+
+      --  We just selected a new row,
+      Next (Model, Iter);
+      if Iter /= Null_Iter then
+         Path := Get_Path (Model, Iter);
+         if Path /= Null_Gtk_Tree_Path then
             View.View.Location_Clicked (Path, Iter);
             Path_Free (Path);
          end if;
@@ -1577,66 +1794,95 @@ package body GPS.Location_View is
       return Commands.Command_Return_Type
    is
       pragma Unreferenced (Self);
-      View : constant Location_View :=
+      View        : constant Location_View :=
         Location_Views.Retrieve_View (Get_Kernel (Context.Context));
-      Path     : Gtk_Tree_Path;
-      Iter     : Gtk_Tree_Iter;
-      Model    : Gtk_Tree_Model;
+      Path        : Gtk_Tree_Path;
+      Iter        : Gtk_Tree_Iter;
+      Model       : Gtk_Tree_Model;
       Export_File : GNATCOLL.VFS.Virtual_File;
       Container   : constant GPS.Kernel.Messages.Messages_Container_Access :=
         Get_Messages_Container (View.Kernel);
+      List        : Gtk_Tree_Path_List.Glist;
+      G_Iter      : Gtk_Tree_Path_List.Glist;
+      Export      : Boolean := False;
+      File        : Ada.Text_IO.File_Type;
+
+      use type Gtk_Tree_Path_List.Glist;
    begin
       if View = null then
          return Commands.Failure;
       end if;
 
-      Get_Selected (Get_Selection (View.View), Model, Iter);
-
-      if Model = Null_Gtk_Tree_Model or else Iter = Null_Iter then
+      View.View.Get_Selection.Get_Selected_Rows (Model, List);
+      if Model = Null_Gtk_Tree_Model
+        or else List = Gtk_Tree_Path_List.Null_List
+      then
+         Free (List);
          return Commands.Failure;
       end if;
 
-      Path := Get_Path (Model, Iter);
+      G_Iter := Gtk_Tree_Path_List.First (List);
+      while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+         Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+         if Path.Get_Depth in 1 .. 2 then
+            Export := True;
+            exit;
+         end if;
+         G_Iter := Gtk_Tree_Path_List.Next (G_Iter);
+      end loop;
 
-      if Get_Depth (Path) = 1 then
+      if Export then
          Export_File := Gtkada.File_Selector.Select_File;
          if Export_File /= No_File then
-            declare
-               Category : constant Unbounded_String := To_Unbounded_String
-                 (Get_String (Model, Iter, Category_Column));
-               Files    : constant Virtual_File_Array :=
-                 Container.Get_Files (Category);
-               File     : Ada.Text_IO.File_Type;
-            begin
-               Create (File, Out_File, String (Export_File.Full_Name.all));
-               for J in Files'Range loop
-                  Export_Messages (File, Container, Category, Files (J));
-               end loop;
-               Ada.Text_IO.Close (File);
-            end;
-         end if;
+            Create (File, Out_File, String (Export_File.Full_Name.all));
 
-      elsif Get_Depth (Path) = 2 then
-         Export_File := Gtkada.File_Selector.Select_File;
-         if Export_File /= No_File then
-            declare
-               Category : constant Unbounded_String := To_Unbounded_String
-                 (Get_String (Model, Iter, Category_Column));
-               File     : constant Virtual_File :=
-                 GNATCOLL.VFS.GtkAda.Get_File (Model, Iter, File_Column);
-               F : File_Type;
-            begin
-               Create (F, Out_File, String (Export_File.Full_Name.all));
-               Export_Messages (F, Container, Category, File);
-               Close (F);
-            end;
-         end if;
+            G_Iter := Gtk_Tree_Path_List.First (List);
+            while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+               Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+               Iter := Get_Iter (Model, Path);
 
-      elsif Get_Depth (Path) >= 3 then
-         null;   --  Nothing to do
+               if Path.Get_Depth = 1 then
+                  declare
+                     Category : constant Unbounded_String :=
+                       To_Unbounded_String
+                         (Get_String (Model, Iter, Category_Column));
+                     Files    : constant Virtual_File_Array :=
+                       Container.Get_Files (Category);
+                  begin
+                     for J in Files'Range loop
+                        Export_Messages (File, Container, Category, Files (J));
+                     end loop;
+                  end;
+
+               elsif Path.Get_Depth = 2 then
+                  --  prevent dublicate
+                  if not Is_Parent_Selected
+                    (View.View.Get_Selection, Path)
+                  then
+                     declare
+                        Category : constant Unbounded_String :=
+                          To_Unbounded_String
+                            (Get_String (Model, Iter, Category_Column));
+                        F        : constant Virtual_File :=
+                          GNATCOLL.VFS.GtkAda.Get_File
+                            (Model, Iter, File_Column);
+                     begin
+                        Export_Messages (File, Container, Category, F);
+                     end;
+                  end if;
+
+               elsif Path.Get_Depth >= 3 then
+                  null;   --  Nothing to do
+               end if;
+
+               G_Iter := Gtk_Tree_Path_List.Next (G_Iter);
+            end loop;
+
+            Ada.Text_IO.Close (File);
+         end if;
       end if;
+      Free (List);
 
-      Path_Free (Path);
       return Commands.Success;
    end Execute;
 

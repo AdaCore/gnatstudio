@@ -17,6 +17,7 @@
 
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with Shared_Macros;           use Shared_Macros;
 with String_Utils;            use String_Utils;
@@ -188,7 +189,12 @@ package body GPS.Kernel.Macros is
 
       elsif Param = "a" then
          if Has_Message_Information (Context) then
-            return Message_Information (Context).Get_Category;
+            declare
+               Messages : constant GPS.Kernel.Messages.Message_Array :=
+                 Messages_Information (Context);
+            begin
+               return Messages (Messages'First).Get_Category;
+            end;
          end if;
 
       elsif Param = "GPS" then

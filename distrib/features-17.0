@@ -35,6 +35,15 @@ NF-170-OA29-048 GPS: collapse all project nodes in Project view (2015-11-02)
   collapse all project nodes. This is a way to quickly cleanup the display
   after using "Locate in Project View" for a while.
 
+NF-170-O805-011 GPS: add multi-select to Locations View (2015-11-09)
+
+  It is now possible to select multiple items in the Locations view,
+  in particular to remove or export them all in a single operation.
+  If selected one item - working as before.
+  If selected more than one item:
+    - jumping to source code location not allowed
+    - context menu is available if selected items are from one file
+
 NF-170-O314-006 GPS: saving project before opening it's source (2015-11-05)
 
   Edit-source button in project properties rewrites project's

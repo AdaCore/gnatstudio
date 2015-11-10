@@ -810,31 +810,36 @@ package body Codefix_Module is
             return;
          end if;
 
-         Session :=
-           Get_Session_By_Name (Message_Information (Context).Get_Category);
+         declare
+            Messages : constant GPS.Kernel.Messages.Message_Array :=
+              Messages_Information (Context);
+         begin
+            Session :=
+              Get_Session_By_Name (Messages (Messages'First).Get_Category);
 
-         if Session = null then
-            return;
-         end if;
+            if Session = null then
+               return;
+            end if;
 
-         if not Has_Message_Information (Context)
-           or else not Has_File_Information (Context)
-         then
-            return;
-         end if;
+            if not Has_Message_Information (Context)
+              or else not Has_File_Information (Context)
+            then
+               return;
+            end if;
 
-         Error := Search_Error
-           (Session.Corrector.all,
-            File    => File_Information (Context),
-            Line    => Contexts.Line_Information (Context),
-            Column  => Column_Information (Context),
-            Message =>
-              Ada.Strings.Unbounded.To_String
-                (Message_Information (Context).Get_Text));
+            Error := Search_Error
+              (Session.Corrector.all,
+               File    => File_Information (Context),
+               Line    => Contexts.Line_Information (Context),
+               Column  => Column_Information (Context),
+               Message =>
+                 Ada.Strings.Unbounded.To_String
+                   (Messages (Messages'First).Get_Text));
 
-         if Error /= Null_Error_Id and then not Is_Fixed (Error) then
-            Create_Submenu (Get_Kernel (Context), Menu, Session, Error);
-         end if;
+            if Error /= Null_Error_Id and then not Is_Fixed (Error) then
+               Create_Submenu (Get_Kernel (Context), Menu, Session, Error);
+            end if;
+         end;
       end if;
 
    exception

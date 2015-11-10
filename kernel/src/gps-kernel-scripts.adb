@@ -529,11 +529,18 @@ package body GPS.Kernel.Scripts is
       Context : constant Selection_Context := Get_Data (Data, 1);
 
    begin
-      if Command = "message" then
-         Set_Return_Value
-           (Data,
-            GPS.Kernel.Messages.Shell.Create_Message_Instance
-              (Get_Script (Data), Message_Information (Context)));
+      if Command = "message"
+        and then Has_Message_Information (Context)
+      then
+         declare
+            Messages : constant GPS.Kernel.Messages.Message_Array :=
+              Messages_Information (Context);
+         begin
+            Set_Return_Value
+              (Data,
+               GPS.Kernel.Messages.Shell.Create_Message_Instance
+                 (Get_Script (Data), Messages (Messages'First)));
+         end;
       end if;
    end Message_Context_Command_Handler;
 

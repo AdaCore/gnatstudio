@@ -185,16 +185,17 @@ package GPS.Kernel.Contexts is
    --  the references in the error message.
    --  Line and columns are stored as Line_Information and Column_Information
 
-   procedure Set_Message_Information
-     (Context : in out Selection_Context;
-      Message : GPS.Kernel.Messages.Message_Access);
+   procedure Set_Messages_Information
+     (Context  : in out Selection_Context;
+      Messages : GPS.Kernel.Messages.Message_Array);
    --  Set the information in the context
 
    function Has_Message_Information
      (Context : Selection_Context) return Boolean;
    --  Return True if Context has message information
-   function Message_Information
-     (Context : Selection_Context) return GPS.Kernel.Messages.Message_Access;
+
+   function Messages_Information
+     (Context : Selection_Context) return GPS.Kernel.Messages.Message_Array;
    --  Return the message information associated with Context
 
    ---------------------
