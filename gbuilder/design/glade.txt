@@ -1,6 +1,0 @@
-Interesting files that can be found in Glade:
-  doc/generic.txt
-  doc/notes.txt
-  doc/developer.txt
-  glade/gb.h
-  glade/gbwidget.h
