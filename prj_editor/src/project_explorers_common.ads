@@ -121,6 +121,24 @@ package Project_Explorers_Common is
       File   : Virtual_File);
    --  Create a new file node, or reuse one if it already exists
 
+   function Create_Node
+     (Model  : Gtk_Tree_Store;
+      Parent : Gtk_Tree_Iter;
+      Kind   : Node_Types;
+      Name   : String;
+      File   : Virtual_File;
+      Add_Dummy : Boolean := False) return Gtk_Tree_Iter;
+   --  Create a new node. Name is set for the Display_Name_Column.
+   --  If Add_Dummy is true and a new node is created, a dummy child is
+   --  added to it so that the user can expand the node.
+
+   procedure Create_File
+     (Model  : Gtk_Tree_Store;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Dir    : Gtk_Tree_Iter;
+      File   : Virtual_File);
+   --  Create a file node at the end of the children of Dir
+
    procedure Append_File
      (Kernel : Kernel_Handle;
       Model  : Gtk_Tree_Store;

@@ -1738,6 +1738,7 @@ package body Project_Explorers is
       procedure Remove_If_Obsolete (C : in out Gtk_Tree_Iter);
       --  Remove C from the model if it matches a file which is no longer in
       --  the project.
+      --  If the file is not obsolete, add it to Files_Inserted.
 
       Show_Abs_Paths : constant Boolean := Show_Absolute_Paths.Get_Pref;
       Show_Obj_Dirs : constant Boolean := Show_Object_Dirs.Get_Pref;
@@ -1747,6 +1748,9 @@ package body Project_Explorers is
       Files   : File_Array_Access;
       Project : Project_Type;
       Dirs    : Dirs_Files_Hash.Map;
+
+      Files_Inserted : File_Sets.Set;
+      --  The files currently inserted in the tree
 
       ---------------
       -- Is_Hidden --
@@ -1835,6 +1839,7 @@ package body Project_Explorers is
       begin
          for N of S loop
             if File_Info'Class (N).Project = Project then
+               Files_Inserted.Insert (F);
                return;
             end if;
          end loop;
@@ -1993,7 +1998,7 @@ package body Project_Explorers is
          end;
       end if;
 
-      --  Remove obsolete file nodes
+      --  Remove obsolete file nodes,
 
       For_Each_File_Node (Self.Tree.Model, Node, Remove_If_Obsolete'Access);
 
@@ -2013,10 +2018,9 @@ package body Project_Explorers is
                end if;
 
                for F of Dirs (Dir) loop
-                  --  ??? This is O(n^2), since every time we insert a row
-                  --  it will be searched next time.
-                  Create_Or_Reuse_File
-                    (Self.Tree.Model, Self.Kernel, Child, F);
+                  if not Files_Inserted.Contains (F) then
+                     Create_File (Self.Tree.Model, Self.Kernel, Child, F);
+                  end if;
                end loop;
             end if;
 

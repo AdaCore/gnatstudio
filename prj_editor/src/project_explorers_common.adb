@@ -526,6 +526,32 @@ package body Project_Explorers_Common is
       end if;
    end Append_File_Info;
 
+   -----------------
+   -- Create_Node --
+   -----------------
+
+   function Create_Node
+     (Model  : Gtk_Tree_Store;
+      Parent : Gtk_Tree_Iter;
+      Kind   : Node_Types;
+      Name   : String;
+      File   : Virtual_File;
+      Add_Dummy : Boolean := False) return Gtk_Tree_Iter
+   is
+      Iter : Gtk_Tree_Iter := Null_Iter;
+   begin
+      Model.Append (Iter => Iter, Parent => Parent);
+      Model.Set (Iter, Display_Name_Column, Name);
+      Set_File (Model, Iter, File_Column, File);
+      Set_Node_Type (Model, Iter, Kind, False);
+
+      if Add_Dummy then
+         Append_Dummy_Iter (Model, Iter);
+      end if;
+
+      return Iter;
+   end Create_Node;
+
    --------------------------
    -- Create_Or_Reuse_Node --
    --------------------------
@@ -563,16 +589,7 @@ package body Project_Explorers_Common is
          Model.Next (Iter);
       end loop;
 
-      Model.Append (Iter => Iter, Parent => Parent);
-      Model.Set (Iter, Display_Name_Column, Name);
-      Set_File (Model, Iter, File_Column, File);
-      Set_Node_Type (Model, Iter, Kind, False);
-
-      if Add_Dummy then
-         Append_Dummy_Iter (Model, Iter);
-      end if;
-
-      return Iter;
+      return Create_Node (Model, Parent, Kind, Name, File, Add_Dummy);
    end Create_Or_Reuse_Node;
 
    --------------------------
@@ -598,6 +615,29 @@ package body Project_Explorers_Common is
          Name   => File.Display_Base_Name,
          Add_Dummy => Lang /= null);
    end Create_Or_Reuse_File;
+
+   -----------------
+   -- Create_File --
+   -----------------
+
+   procedure Create_File
+     (Model  : Gtk_Tree_Store;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Dir    : Gtk_Tree_Iter;
+      File   : Virtual_File)
+   is
+      Lang : constant Language_Access := Get_Language_From_File
+        (Get_Language_Handler (Kernel), File);
+      Ignored : Gtk_Tree_Iter;
+   begin
+      Ignored := Create_Node
+        (Model  => Model,
+         Parent => Dir,
+         Kind   => File_Node,
+         File   => File,
+         Name   => File.Display_Base_Name,
+         Add_Dummy => Lang /= null);
+   end Create_File;
 
    -------------------------
    -- Append_Runtime_Info --
