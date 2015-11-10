@@ -182,6 +182,12 @@ package GPS.Kernel.MDI is
    --  Set the subprogram to be called by the default Save_Desktop. This will
    --  have no effect if you override Save_Desktop
 
+   overriding procedure Set_Default_Size_For_Floating_Window
+     (Child : not null access GPS_MDI_Child_Record;
+      Win   : not null access Gtk.Window.Gtk_Window_Record'Class;
+      Width, Height : Glib.Gint);
+   --  see inherited documentation
+
    procedure Load_Perspective
      (Kernel : access Kernel_Handle_Record'Class;
       Name   : String);

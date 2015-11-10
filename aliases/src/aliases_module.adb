@@ -86,6 +86,7 @@ with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Kernel;               use GPS.Kernel;
+with GPS.Main_Window;          use GPS.Main_Window;
 with GUI_Utils;                use GUI_Utils;
 with Histories;                use Histories;
 with String_Hash;
@@ -1630,7 +1631,7 @@ package body Aliases_Module is
                   Parent => Current_Win,
                   Flags  => Destroy_With_Parent
                     or Use_Header_Bar_From_Settings (Current_Win));
-      Set_Default_Size (Editor, 640, 400);
+      Set_Default_Size_From_History (Editor, "aliases", Kernel, 640, 400);
 
       Editor.Local_Aliases.Clear;
 

@@ -703,7 +703,8 @@ package body GVD.Dialogs is
          Title   => -"Question",
          Kernel  => Kernel);
 
-      Set_Default_Size (Dialog, -1, 200);
+      Set_Default_Size_From_History
+         (Dialog, "debug-question", Kernel, -1, 200);
 
       Dialog.Vbox1 := Get_Content_Area (Dialog);
       Set_Homogeneous (Dialog.Vbox1, False);
@@ -749,7 +750,8 @@ package body GVD.Dialogs is
             and then Questions (Questions'First).Choice.all = "y"))
       then
          Dialog.Kind := Yes_No_Dialog;
-         Set_Default_Size (Dialog, 100, 50);
+         Set_Default_Size_From_History
+            (Dialog, "debug-yes-no", Kernel, 100, 50);
          Gtk_New_From_Stock (OK_Button, Stock_Yes);
          Add (Dialog.Hbuttonbox1, OK_Button);
          Widget_Callback.Connect
@@ -831,7 +833,8 @@ package body GVD.Dialogs is
             end loop;
          end;
          Columns_Autosize (Dialog.Tree_View);
-         Set_Default_Size (Dialog, 500, 200);
+         Set_Default_Size_From_History
+            (Dialog, "debug-question-multiple", Kernel, 500, 200);
       end if;
 
       Register_Dialog (Convert (Debugger), Dialog);

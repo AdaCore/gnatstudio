@@ -888,6 +888,8 @@ package body Build_Configurations.Gtkada is
    procedure Configuration_Dialog
      (Registry     : Build_Config_Registry_Access;
       Parent       : Gtk_Window   := null;
+      Set_Default_Size_From_History : not null access procedure
+         (Win : not null access Gtk_Window_Record'Class);
       Changes_Made : out Boolean)
    is
       UI     : Build_UI_Access;
@@ -915,8 +917,7 @@ package body Build_Configurations.Gtkada is
                Parent => Parent,
                Flags  => Modal or Destroy_With_Parent
                   or Use_Header_Bar_From_Settings (Parent));
-
-      Set_Default_Size (Dialog, 1024, 620);
+      Set_Default_Size_From_History (Dialog);
 
       UI := new Build_UI_Record;
       Initialize_Hbox (UI);
@@ -1081,6 +1082,8 @@ package body Build_Configurations.Gtkada is
    procedure Modes_Dialog
      (Registry     : Build_Config_Registry_Access;
       Parent       : Gtk_Window   := null;
+      Set_Default_Size_From_History : not null access procedure
+         (Win : not null access Gtk_Window_Record'Class);
       Changes_Made : out Boolean)
    is
       UI     : Mode_UI_Access;
@@ -1108,7 +1111,7 @@ package body Build_Configurations.Gtkada is
                Parent => Parent,
                Flags  => Modal or Destroy_With_Parent
                   or Use_Header_Bar_From_Settings (Parent));
-      Set_Default_Size (Dialog, 650, 450);
+      Set_Default_Size_From_History (Dialog);
 
       UI := new Mode_UI_Record;
       Initialize_Hbox (UI);
@@ -1390,6 +1393,8 @@ package body Build_Configurations.Gtkada is
       Target          : String;
       History         : Histories.History;
       Expand_Cmd_Line : Cmd_Line_Expander;
+      Set_Default_Size_From_History : not null access procedure
+         (Win : not null access Gtk_Window_Record'Class);
       Result          : out GNAT.OS_Lib.Argument_List_Access)
    is
       UI     : Build_UI_Access;
@@ -1436,7 +1441,7 @@ package body Build_Configurations.Gtkada is
                Parent => Parent,
                Flags  => Modal or Destroy_With_Parent
                   or Use_Header_Bar_From_Settings (Parent));
-      Set_Default_Size (Dialog, 700, 400);
+      Set_Default_Size_From_History (Dialog);
 
       UI := new Build_UI_Record;
       Initialize_Hbox (UI);

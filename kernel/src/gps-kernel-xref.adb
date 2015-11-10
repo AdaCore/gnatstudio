@@ -30,6 +30,7 @@ with GPS.Kernel.Project;             use GPS.Kernel.Project;
 with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
 with GPS.Kernel.Task_Manager;        use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;             use GPS.Kernel.Scripts;
+with GPS.Main_Window;                use GPS.Main_Window;
 with GPS.Kernel;                     use GPS.Kernel;
 with Glib.Convert;                   use Glib.Convert;
 with Glib.Object;                    use Glib.Object;
@@ -674,9 +675,7 @@ package body GPS.Kernel.Xref is
       Scrolled  : Gtk_Scrolled_Window;
       View      : Gtk_Tree_View;
       Col_Num   : Gint;
---        Val       : Glib.Values.GValue;
       Candidate_Decl : General_Entity_Declaration;
---        Result    : Root_Entity'Class;
       pragma Unreferenced (Button, Col_Num);
 
       Number_Selected : Natural := 0;
@@ -698,7 +697,8 @@ package body GPS.Kernel.Xref is
                         Title  => -"Select the declaration",
                         Kernel => Self.Kernel,
                         Flags  => Modal);
-               Set_Default_Size (Dialog, 500, 500);
+               Set_Default_Size_From_History
+                  (Dialog, "xref", Self.Kernel, 500, 500);
 
                Gtk_New (Label, -"This entity is overloaded.");
                Pack_Start (Dialog.Get_Action_Area, Label, Expand => False);

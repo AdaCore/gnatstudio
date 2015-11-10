@@ -33,6 +33,7 @@ with Pango.Font;               use Pango.Font;
 with Logo_Boxes;               use Logo_Boxes;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Main_Window;          use GPS.Main_Window;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 
 package body Wizards is
@@ -126,8 +127,8 @@ package body Wizards is
          Kernel     => Kernel,
          Show_Toc   => Show_Toc,
          Title_Font => Wizard_Title_Font.Get_Pref);
-
-      Set_Default_Size (Wiz, 640, 480);
+      Set_Default_Size_From_History
+         (Wiz, "project-wizard", Kernel, 640, 480);
 
       Gtk_New_From_Stock (Wiz.Previous, Stock_Go_Back);
       Set_Sensitive (Wiz.Previous, False);

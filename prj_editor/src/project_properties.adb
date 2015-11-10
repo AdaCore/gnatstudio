@@ -77,6 +77,7 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.Core_Kernels;          use GPS.Core_Kernels;
 with GPS.Project_Properties;    use GPS.Project_Properties;
 with GUI_Utils;                 use GUI_Utils;
@@ -507,6 +508,7 @@ package body Project_Properties is
 
    function Select_Files_Or_Directories
      (Toplevel       : access Gtk_Window_Record'Class;
+      Kernel         : not null access Kernel_Handle_Record'Class;
       Project        : Project_Type;
       Default        : Filesystem_String;
       Project_Path   : Filesystem_String;
@@ -2014,6 +2016,7 @@ package body Project_Properties is
 
    function Select_Files_Or_Directories
      (Toplevel       : access Gtk_Window_Record'Class;
+      Kernel         : not null access Kernel_Handle_Record'Class;
       Project        : Project_Type;
       Default        : Filesystem_String;
       Project_Path   : Filesystem_String;
@@ -2055,7 +2058,8 @@ package body Project_Properties is
                Title  => -"Select files",
                Parent => Gtk_Window (Toplevel),
                Flags  => Destroy_With_Parent);
-            Set_Default_Size (Dialog, 500, 400);
+            Set_Default_Size_From_History
+               (Dialog, "project-props-file-select", Kernel, 500, 400);
 
             Gtk_New (Scrolled);
             Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
@@ -2200,6 +2204,7 @@ package body Project_Properties is
       Files : constant GNATCOLL.VFS.File_Array :=
                 Select_Files_Or_Directories
                   (Toplevel       => Gtk_Window (Get_Toplevel (Editor)),
+                   Kernel         => Ed.Kernel,
                    Project        => Ed.Project,
                    Default        =>
                      +Histories.Most_Recent
@@ -2823,6 +2828,7 @@ package body Project_Properties is
                  (Project, Description, Index => Attribute_Index);
                Files   : constant File_Array := Select_Files_Or_Directories
                  (Toplevel          => Toplevel,
+                  Kernel            => Kernel,
                   Project           => Project,
                   Default           => Current,
                   Project_Path      => Project_Path,
@@ -3863,7 +3869,8 @@ package body Project_Properties is
          Title  => -"Properties for " & Project.Name,
          Parent => Get_Current_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
-      Editor.Set_Default_Size (1000, 700);
+      Set_Default_Size_From_History
+         (Editor, "project-props", Kernel, 1000, 700);
       Editor.Set_Name ("Project Properties"); --  For testsuite
 
       Gtk_New (Editor.Errors);

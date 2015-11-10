@@ -32,6 +32,7 @@ with Gtk.Tool_Item;             use Gtk.Tool_Item;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
 with Gtkada.Combo_Tool_Button;  use Gtkada.Combo_Tool_Button;
 with Gtkada.MDI;                use Gtkada.MDI;
 
@@ -56,6 +57,7 @@ with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Search;         use GPS.Kernel.Search;
+with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.Search;                use GPS.Search;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
@@ -1513,10 +1515,20 @@ package body Builder_Facility_Module is
       pragma Unreferenced (Command);
       Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
       Changes_Made : Boolean;
+
+      procedure Set_Size (W : not null access Gtk_Window_Record'Class);
+      --  Set the default size for the dialog
+
+      procedure Set_Size (W : not null access Gtk_Window_Record'Class) is
+      begin
+         Set_Default_Size_From_History (W, "build-targets", Kernel, 800, 600);
+      end Set_Size;
+
    begin
       Configuration_Dialog
         (Builder_Module_ID.Registry,
          Get_Main_Window (Kernel),
+         Set_Size'Access,
          Changes_Made);
 
       if Changes_Made then
@@ -1540,10 +1552,20 @@ package body Builder_Facility_Module is
       pragma Unreferenced (Command);
       Kernel       : constant Kernel_Handle := Get_Kernel (Context.Context);
       Changes_Made : Boolean;
+
+      procedure Set_Size (W : not null access Gtk_Window_Record'Class);
+      --  Set the default size for the dialog
+
+      procedure Set_Size (W : not null access Gtk_Window_Record'Class) is
+      begin
+         Set_Default_Size_From_History (W, "build-modes", Kernel, 800, 600);
+      end Set_Size;
+
    begin
       Modes_Dialog
         (Builder_Module_ID.Registry,
          Get_Main_Window (Kernel),
+         Set_Size'Access,
          Changes_Made);
 
       pragma Warnings (Off);

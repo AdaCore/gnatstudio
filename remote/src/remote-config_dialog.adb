@@ -68,6 +68,7 @@ with Gtkada.Handlers;            use Gtkada.Handlers;
 with Gexpect;                    use Gexpect;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
+with GPS.Main_Window;            use GPS.Main_Window;
 with GUI_Utils;                  use GUI_Utils;
 with String_Utils;               use String_Utils;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
@@ -845,7 +846,7 @@ package body Remote.Config_Dialog is
          Modal or Destroy_With_Parent
          or Use_Header_Bar_From_Settings (Get_Main_Window (Kernel)));
       Set_Position (Dialog, Win_Pos_Center_On_Parent);
-      Set_Default_Size (Dialog, -1, 400);
+      Set_Default_Size_From_History (Dialog, "remote", Kernel, -1, 400);
 
       Dialog.Kernel := Kernel;
 

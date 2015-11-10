@@ -69,6 +69,7 @@ with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Search;          use GPS.Kernel.Search;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
+with GPS.Main_Window;            use GPS.Main_Window;
 with GPS.Search;                 use GPS.Search;
 with GUI_Utils;                  use GUI_Utils;
 with Histories;                  use Histories;
@@ -1538,7 +1539,8 @@ package body Gtkada.Entry_Completion is
          Parent => Get_Main_Window (S.Kernel),
          Flags  => Modal or Destroy_With_Parent
             or Use_Header_Bar_From_Settings (Get_Main_Window (S.Kernel)));
-      Win.Set_Default_Size (500, 480);
+      Set_Default_Size_From_History
+         (Win, "omnisearch-settings", S.Kernel, 500, 480);
 
       Gtk_New (Preview, -"Preview");
       Associate (Get_History (S.Kernel).all,

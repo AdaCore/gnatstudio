@@ -17,12 +17,14 @@
 
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 
+with Glib;                    use Glib;
 with Gtk.Accel_Group;         use Gtk.Accel_Group;
 with Gtk.Application_Window;  use Gtk.Application_Window;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Menu_Bar;            use Gtk.Menu_Bar;
 with Gdk.Event;               use Gdk.Event;
 with Gtk.Toolbar;             use Gtk.Toolbar;
+with Gtk.Window;              use Gtk.Window;
 
 with Gtkada.Application;      use Gtkada.Application;
 with Gtkada.MDI;              use Gtkada.MDI;
@@ -103,5 +105,17 @@ package GPS.Main_Window is
 
    function Get_Child (Inst : Class_Instance) return MDI_Child;
    --  Return the child stored in an instance of GPS.MDIWindow
+
+   procedure Set_Default_Size_From_History
+      (Win    : not null access Gtk_Window_Record'Class;
+       Name   : String;
+       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+       Width, Height : Glib.Gint);
+   --  Set the default size for a window.
+   --  This should be called before the window is displayed, and replaces
+   --  the standard Gtk.Window.Set_Default_Size procedure. As opposed to the
+   --  latter, this one will look in past GPS sessions (or earlier in this
+   --  session) for the size that a user has set, and reuse that one.
+   --  This procedure ensures that the size fits on the screen.
 
 end GPS.Main_Window;

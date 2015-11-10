@@ -38,6 +38,7 @@ with Config;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Logo_Boxes;                use Logo_Boxes;
@@ -105,8 +106,7 @@ package body Welcome is
                        " (" & Config.Source_Date & ")",
          Kernel     => Kernel,
          Title_Font => Wizard_Title_Font.Get_Pref);
-
-      Set_Default_Size (Screen, 600, 350);
+      Set_Default_Size_From_History (Screen, "welcome", Kernel, 600, 350);
 
       Gtk_New (Size);
 

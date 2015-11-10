@@ -19,6 +19,7 @@ with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel;                       use GPS.Kernel;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
+with GPS.Main_Window;                  use GPS.Main_Window;
 with Build_Configurations;             use Build_Configurations;
 with Extending_Environments;           use Extending_Environments;
 with Remote;                           use Remote;
@@ -26,6 +27,7 @@ with Build_Configurations.Gtkada;      use Build_Configurations.Gtkada;
 with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
+with Gtk.Window;                       use Gtk.Window;
 
 package body Build_Command_Manager.End_Of_Build is
 
@@ -123,6 +125,16 @@ package body Build_Command_Manager.End_Of_Build is
          end case;
       end Should_Display_Dialog;
 
+      procedure Set_Size (W : not null access Gtk_Window_Record'Class);
+      --  Set the size of the window based on previous sizes set by the user
+
+      procedure Set_Size (W : not null access Gtk_Window_Record'Class) is
+      begin
+         Set_Default_Size_From_History
+            (W, "builder-single-target", Kernel_Handle (Builder.Kernel),
+             800, 500);
+      end Set_Size;
+
       Command_Line   : Argument_List_Access;
 
    begin
@@ -130,6 +142,7 @@ package body Build_Command_Manager.End_Of_Build is
          --  Use the single target dialog to get the unexpanded command line
          Single_Target_Dialog
            (Registry        => Builder.Registry,
+            Set_Default_Size_From_History => Set_Size'Access,
             Parent          => Get_Main_Window
               (Kernel_Handle (Builder.Kernel)),
             Target          => Get_Name (Build.Target),

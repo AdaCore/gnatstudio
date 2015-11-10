@@ -45,6 +45,7 @@ with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
+with GPS.Main_Window;                  use GPS.Main_Window;
 with Projects;                         use Projects;
 with GPS.Intl;                         use GPS.Intl;
 with Creation_Wizard;                  use Creation_Wizard;
@@ -536,7 +537,8 @@ package body Creation_Wizard.Dependencies is
                Title  => -"Add project dependency",
                Parent => Gtk_Window (Get_Toplevel (Button)),
                Flags  => Destroy_With_Parent or Modal);
-      Set_Default_Size (Dialog, 500, 600);
+      Set_Default_Size_From_History
+         (Dialog, "project-dependencies", P.Kernel, 500, 600);
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);

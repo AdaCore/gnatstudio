@@ -2054,4 +2054,17 @@ package body GPS.Kernel.MDI is
       return False;   --  propagate the event
    end On_GPS_Dialog_Focus_In;
 
+   ------------------------------------------
+   -- Set_Default_Size_For_Floating_Window --
+   ------------------------------------------
+
+   overriding procedure Set_Default_Size_For_Floating_Window
+     (Child : not null access GPS_MDI_Child_Record;
+      Win   : not null access Gtk.Window.Gtk_Window_Record'Class;
+      Width, Height : Glib.Gint) is
+   begin
+      Set_Default_Size_From_History
+         (Win, Child.Get_Short_Title, Child.Kernel, Width, Height);
+   end Set_Default_Size_For_Floating_Window;
+
 end GPS.Kernel.MDI;

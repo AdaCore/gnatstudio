@@ -20,6 +20,7 @@ with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Stock;       use Gtk.Stock;
 with GPS.Intl;        use GPS.Intl;
+with GPS.Main_Window; use GPS.Main_Window;
 
 package body New_Variable_Editor_Pkg is
 
@@ -51,7 +52,8 @@ package body New_Variable_Editor_Pkg is
         (New_Variable_Editor,
          Title => Title,
          Kernel => Kernel);
-      Set_Default_Size (New_Variable_Editor, 600, 400);
+      Set_Default_Size_From_History
+         (New_Variable_Editor, "project-variable", Kernel, 600, 400);
 
       New_Variable_Editor.Dialog_Vbox1 :=
         Get_Content_Area (New_Variable_Editor);

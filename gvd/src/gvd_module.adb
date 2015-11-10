@@ -1146,7 +1146,8 @@ package body GVD_Module is
          Kernel => Kernel,
          Flags  => Modal or Destroy_With_Parent);
       Set_Position (Dialog, Win_Pos_Mouse);
-      Set_Default_Size (Dialog, 300, 100);
+      Set_Default_Size_From_History
+         (Dialog, "debug-connect-to-board", Kernel, 300, 100);
 
       Gtk_New (Table, 2, 2, False);
       Pack_Start (Get_Content_Area (Dialog), Table, Expand => False);

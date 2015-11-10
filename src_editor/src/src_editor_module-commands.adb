@@ -30,6 +30,7 @@ with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
+with GPS.Main_Window;            use GPS.Main_Window;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Window;                 use Gdk.Window;
 with Gdk;                        use Gdk;
@@ -941,7 +942,7 @@ package body Src_Editor_Module.Commands is
                Title  => -"Properties for " & Display_Full_Name (File),
                Parent => Get_Main_Window (Kernel),
                Flags  => Destroy_With_Parent);
-      Set_Default_Size (Dialog, 400, 200);
+      Set_Default_Size_From_History (Dialog, "editor-props", Kernel, 400, 200);
 
       Gtk_New (Size);
 

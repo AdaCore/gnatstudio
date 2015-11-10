@@ -16,11 +16,13 @@
 ------------------------------------------------------------------------------
 
 with Ada.Command_Line;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
@@ -30,7 +32,6 @@ with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.RGBA;                  use Gdk.RGBA;
 with Gdk.Screen;                use Gdk.Screen;
 
-with Glib;                      use Glib;
 with Glib.Main;
 with Glib.Error;                use Glib.Error;
 with Glib.Object;               use Glib.Object;
@@ -41,6 +42,7 @@ with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Notebook;              use Gtk.Notebook;
@@ -54,7 +56,6 @@ with Gtk.Css_Provider;          use Gtk.Css_Provider;
 with Gtk.Text_View;
 with Gtk.Text_Buffer;
 with Gtk.Scrolled_Window;
-with Gtk.Window;                use Gtk.Window;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
@@ -75,12 +76,15 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Kernel;                use GPS.Kernel;
+with GPS.Properties;            use GPS.Properties;
 with GUI_Utils;
 with Task_Manager;              use Task_Manager;
 with User_Interface_Tools;
+with XML_Utils;                 use XML_Utils;
 
 package body GPS.Main_Window is
    Me : constant Trace_Handle := Create ("MAIN");
@@ -130,6 +134,17 @@ package body GPS.Main_Window is
      (1 => Short_Cst'Access);
    Rename_Cmd_Parameter : constant Cst_Argument_List :=
      (1 => Name_Cst'Access, 2 => Short_Cst'Access);
+
+   type Window_Size_Property is new Property_Record with record
+      Width, Height : Gint;
+   end record;
+   overriding procedure Save
+      (Self : access Window_Size_Property;
+       Node : in out XML_Utils.Node_Ptr);
+   overriding procedure Load
+      (Self : in out Window_Size_Property;
+       From : XML_Utils.Node_Ptr);
+   --  Save the preferred size of a window in the persistent properties
 
    type Toolbar_Icons_Size
       is (Text_Only, Text_And_Icons, Small_Icons, Large_Icons);
@@ -227,6 +242,22 @@ package body GPS.Main_Window is
 
    function On_Focus_In (W : access Gtk_Widget_Record'Class) return Boolean;
    --  Called when the main window gains or loses focus.
+
+   type Configure_Event_Data is record
+      Kernel : access Kernel_Handle_Record'Class;
+      Name   : Unbounded_String;
+   end record;
+
+   package Configure_Events is new Gtk.Handlers.User_Return_Callback
+      (Widget_Type => Gtk_Window_Record,
+       Return_Type => Boolean,
+       User_Type   => Configure_Event_Data);
+   function On_Configure
+      (Win   : access Gtk_Window_Record'Class;
+       Event : Gdk_Event;
+       Data  : Configure_Event_Data) return Boolean;
+   --  Called when a window is resized, to store its size in the properties
+   --  and be able to restore it later on.
 
    ----------------
    -- Query_User --
@@ -1473,5 +1504,112 @@ package body GPS.Main_Window is
       end loop;
       return False;
    end Is_Any_Menu_Open;
+
+   ------------------
+   -- On_Configure --
+   ------------------
+
+   function On_Configure
+      (Win   : access Gtk_Window_Record'Class;
+       Event : Gdk_Event;
+       Data  : Configure_Event_Data) return Boolean
+   is
+      pragma Unreferenced (Win);
+      Prop : access Window_Size_Property;
+   begin
+      if Active (Me) then
+         Trace (Me, "Storing new size for window "
+            & To_String (Data.Name)
+            & " width=" & Event.Configure.Width'Img
+            & " height=" & Event.Configure.Height'Img);
+      end if;
+
+      Prop := new Window_Size_Property'
+         (Property_Record with
+          Width  => Event.Configure.Width,
+          Height => Event.Configure.Height);
+      Set_Property
+         (Data.Kernel,
+          Index_Name  => "window",
+          Index_Value => To_String (Data.Name),
+          Name        => "size",
+          Property    => Prop,
+          Persistent  => True);
+      return False;
+   end On_Configure;
+
+   -----------------------------------
+   -- Set_Default_Size_From_History --
+   -----------------------------------
+
+   procedure Set_Default_Size_From_History
+      (Win    : not null access Gtk_Window_Record'Class;
+       Name   : String;
+       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+       Width, Height : Gint)
+   is
+      Prop  : Window_Size_Property;
+      Found : Boolean;
+      Data  : Configure_Event_Data;
+   begin
+      Get_Property
+         (Property    => Prop,
+          Index_Name  => "window",
+          Index_Value => Name,
+          Name        => "size",
+          Found       => Found);
+
+      --  ??? Can we check that the size is small enough for the screen ? We
+      --  do not know yet what screen the window will be displayed on (since
+      --  we are calling before that).
+
+      --  ??? Should we use Gtk.Window.Resize instead, so that this works even
+      --  after the window has been created ? Then we would know the screen
+      --  the window is on.
+
+      if Found then
+         Trace (Me, "Default size for " & Name & " from properties");
+         Win.Set_Default_Size (Prop.Width, Prop.Height);
+      else
+         Trace (Me, "Default size for " & Name & " from default");
+         Win.Set_Default_Size (Width, Height);
+      end if;
+
+      --  Start monitoring resizes of the window, so that we can store the
+      --  size in the properties file
+
+      Data.Kernel := Kernel;
+      Data.Name   := To_Unbounded_String (Name);
+      Configure_Events.Connect
+         (Win, Signal_Configure_Event,
+          Configure_Events.To_Marshaller (On_Configure'Access), Data);
+   end Set_Default_Size_From_History;
+
+   ----------
+   -- Save --
+   ----------
+
+   overriding procedure Save
+      (Self : access Window_Size_Property;
+       Node : in out XML_Utils.Node_Ptr)
+   is
+   begin
+      Set_Attribute
+         (Node, "width", Image (Integer (Self.Width), Min_Width => 0));
+      Set_Attribute
+         (Node, "height", Image (Integer (Self.Height), Min_Width => 0));
+   end Save;
+
+   ----------
+   -- Load --
+   ----------
+
+   overriding procedure Load
+      (Self : in out Window_Size_Property;
+       From : XML_Utils.Node_Ptr) is
+   begin
+      Self.Width := Gint'Value (Get_Attribute (From, "width", "200"));
+      Self.Height := Gint'Value (Get_Attribute (From, "height", "200"));
+   end Load;
 
 end GPS.Main_Window;

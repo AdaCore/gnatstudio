@@ -38,6 +38,7 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Main_Window;           use GPS.Main_Window;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Switches_Chooser.Gtkada;   use Switches_Chooser, Switches_Chooser.Gtkada;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -596,7 +597,8 @@ package body Switches_Editors is
                   Flags  => Modal or Destroy_With_Parent);
       end if;
 
-      Dialog.Set_Default_Size (1024, 800);
+      Set_Default_Size_From_History
+         (Dialog, "switches-editor", Kernel, 1024, 800);
 
       Gtk_New_Hbox (Box, Homogeneous => False);
       Dialog.Get_Content_Area.Pack_Start (Box, Fill => True, Expand => True);

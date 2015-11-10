@@ -359,7 +359,7 @@ package body Startup_Module is
          Parent => Get_Main_Window (Kernel),
          Flags  => Destroy_With_Parent
            or Use_Header_Bar_From_Settings (Get_Main_Window (Kernel)));
-      Set_Default_Size (Editor, 800, 600);
+      Set_Default_Size_From_History (Editor, "plug-ins", Kernel, 800, 600);
       Set_Name (Editor, "Startup Plug-ins Editor");
 
       Gtk_New_Hpaned (Pane);

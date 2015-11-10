@@ -44,14 +44,21 @@ package Build_Configurations.Gtkada is
    procedure Configuration_Dialog
      (Registry     : Build_Config_Registry_Access;
       Parent       : Gtk_Window   := null;
+      Set_Default_Size_From_History : not null access procedure
+         (Win : not null access Gtk_Window_Record'Class);
       Changes_Made : out Boolean);
    --  Launch the full configuration dialog
    --  Changes_Made is set to True if the user caused some changes that
    --  need to be saved (in other words, if the user clicked "OK" or "Apply").
+   --  Set_Default_Size is called to set a default size for the window. This
+   --  will in general be a function that sets the size by looking at what
+   --  size the user has set before.
 
    procedure Modes_Dialog
      (Registry     : Build_Config_Registry_Access;
       Parent       : Gtk_Window   := null;
+      Set_Default_Size_From_History : not null access procedure
+         (Win : not null access Gtk_Window_Record'Class);
       Changes_Made : out Boolean);
    --  Launch the modes configuration dialog
    --  Changes_Made is set to True if the user caused some changes that
@@ -65,6 +72,8 @@ package Build_Configurations.Gtkada is
       Target          : String;
       History         : Histories.History;
       Expand_Cmd_Line : Cmd_Line_Expander;
+      Set_Default_Size_From_History : not null access procedure
+         (Win : not null access Gtk_Window_Record'Class);
       Result          : out GNAT.OS_Lib.Argument_List_Access);
    --  Launch a dialog allowing to modify the command line for Target only.
    --  Return the resulting command followed by arguments, macros not
