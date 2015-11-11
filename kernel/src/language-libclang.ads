@@ -191,9 +191,10 @@ package Language.Libclang is
       File_Name : String) return Clang_Translation_Unit;
 
    function Translation_Unit
-     (Kernel : Core_Kernel;
-      File : GNATCOLL.VFS.Virtual_File;
-      Reparse : Boolean := False;
+     (Kernel       : Core_Kernel;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Project      : Project_Type := No_Project;
+      Reparse      : Boolean := False;
       Default_Lang : String := "c++")
       return Clang_Translation_Unit;
 

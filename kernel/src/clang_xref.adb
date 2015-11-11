@@ -282,7 +282,7 @@ package body Clang_Xref is
       Ret : Clang_Cursor;
       Line_Offset : constant Natural := Get_Line_Offset (Kernel, Loc);
       TU : constant Clang_Translation_Unit :=
-        Translation_Unit (Kernel, Loc.File, False);
+        Translation_Unit (Kernel, Loc.File, Reparse => False);
 
    begin
       Ret := Cursor_At (TU, Loc.File, Loc.Line, Line_Offset);
@@ -561,7 +561,7 @@ package body Clang_Xref is
       Offset : Offset_T) return General_Location
    is
       TU : constant Clang_Translation_Unit :=
-        Translation_Unit (K, F, False);
+        Translation_Unit (K, F, Reparse => False);
    begin
       return To_General_Location (K, Location (TU, F, Natural (Offset)));
    end To_General_Location;
@@ -1987,7 +1987,7 @@ package body Clang_Xref is
 
    overriding procedure Destroy (Iter : in out Clang_Reference_Iterator) is
    begin
-      Free (Iter.Elements);
+      Unchecked_Free (Iter.Elements);
    end Destroy;
 
    --------------------------

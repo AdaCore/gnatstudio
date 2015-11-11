@@ -184,6 +184,31 @@ class Language(object):
 
 
 @extend_gps
+class Libclang(object):
+
+    @staticmethod
+    def get_translation_unit(file, project=None):
+        """
+        Returns the clang translation unit corresponding to this file. You can
+        use that as a full libclang translation unit.
+
+        :param GPS.File file: The file to get the translation unit for
+        :rtype: clang.cindex.TranslationUnit
+        """
+        from clang.cindex import TranslationUnit, c_object_p, Index
+        from ctypes import cast
+
+        project = project or file.project()
+        tu_ptr, index_ptr = GPS.Libclang._get_translation_unit(file, project)
+
+        # If tu_ptr or index_ptr are 0, then we return nothing
+        if tu_ptr and index_ptr:
+            return TranslationUnit(
+                cast(tu_ptr, c_object_p), Index(cast(index_ptr, c_object_p))
+            )
+
+
+@extend_gps
 class Contextual(object):
 
     @override_gps_method

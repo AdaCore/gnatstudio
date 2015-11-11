@@ -1132,6 +1132,15 @@ Classes
 
    .. automethod:: GPS.Language.register
 
+:class:`GPS.Libclang`
+^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Libclang
+
+
+
+   .. automethod:: GPS.Libclang.get_translation_unit
+
 :class:`GPS.Locations`
 ^^^^^^^^^^^^^^^^^^^^^^
 
