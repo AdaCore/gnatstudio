@@ -1998,7 +1998,7 @@ package body Project_Explorers is
          end;
       end if;
 
-      --  Remove obsolete file nodes,
+      --  Remove obsolete file nodes, and fill Files_Inserted
 
       For_Each_File_Node (Self.Tree.Model, Node, Remove_If_Obsolete'Access);
 
