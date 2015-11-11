@@ -37,6 +37,8 @@ pragma Warnings (On);
 with GNATCOLL.Utils; use GNATCOLL.Utils;
 with GNAT.Regpat; use GNAT.Regpat;
 with System.Multiprocessors; use System.Multiprocessors;
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 package body Language.Libclang is
 
@@ -92,6 +94,13 @@ package body Language.Libclang is
      (Decl_Info_Vectors.Vector, Decl_Info_Vector);
    --  Love you so much Ada <3 <3 (okay)
 
+   procedure Python_Get_TU
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Command handler for the Libclang.get_translation_unit shell command.
+   --  This handler will pass back addresses corresponding to the index and the
+   --  translation, that will then be used on the python side to create a real
+   --  python clang TranslationUnit
+
    procedure Index_One_File;
 
    package Clang_Cache_Maps is new Ada.Containers.Indefinite_Hashed_Maps
@@ -111,6 +120,15 @@ package body Language.Libclang is
    overriding procedure Execute
      (Self   : On_Project_View_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
+   --  Command executed when the project view is changed. This will handle
+   --  recomputing the clang cache.
+
+   function Context_From_File
+     (Kernel       : Core_Kernel;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Project      : Project_Type := No_Project)
+      return Clang_Context_Access;
+   --  Returns a Clang context from a given file
 
    -------------
    -- Destroy --
@@ -519,24 +537,40 @@ package body Language.Libclang is
                                 Callback => Callback);
    end Enqueue_Translation_Unit;
 
+   -----------------------
+   -- Context_From_File --
+   -----------------------
+
+   function Context_From_File
+     (Kernel  : Core_Kernel;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : Project_Type := No_Project)
+      return Clang_Context_Access
+   is
+      P : Project_Type := Project;
+   begin
+      if P = No_Project then
+         P :=
+           File_Info'Class
+             (Kernel.Registry.Tree.Info_Set (File).First_Element).Project;
+      end if;
+
+      return
+        Clang_Module_Id.Global_Cache.Element (P.Project_Path);
+   end Context_From_File;
+
    ----------------------
    -- Translation_Unit --
    ----------------------
 
    function Translation_Unit
-     (Kernel : Core_Kernel;
-      File : GNATCOLL.VFS.Virtual_File;
-      Reparse : Boolean := False;
+     (Kernel       : Core_Kernel;
+      File         : GNATCOLL.VFS.Virtual_File;
+      Project      : Project_Type := No_Project;
+      Reparse      : Boolean := False;
       Default_Lang : String := "c++")
       return Clang_Translation_Unit
    is
-      F_Info : constant File_Info'Class :=
-        File_Info'Class
-          (Kernel.Registry.Tree.Info_Set
-             (File).First_Element);
-      Context : Clang_Context_Access;
-
-      Ret : Clang_Translation_Unit;
       Callback : Parse_Callback_Access := null;
    begin
       Enqueue_Translation_Unit
@@ -544,10 +578,8 @@ package body Language.Libclang is
          Callback => Callback);
 
       if Clang_Module_Id /= null then
-         Context :=
-           Clang_Module_Id.Global_Cache.Element (F_Info.Project.Project_Path);
-         Ret := Context.Get_TU (String (File.Full_Name.all)).Get_Blocking;
-         return Ret;
+         return Context_From_File (Kernel, File, Project).Get_TU
+           (String (File.Full_Name.all)).Get_Blocking;
       end if;
 
       return No_Translation_Unit;
@@ -986,13 +1018,61 @@ package body Language.Libclang is
       return True;
    end Parsing_Timeout_Handler;
 
+   Libclang_Class_Name : constant String := "Libclang";
+
+   -------------------
+   -- Python_Get_TU --
+   -------------------
+
+   procedure Python_Get_TU
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      pragma Unreferenced (Command);
+
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+
+      File : constant Virtual_File := Get_Data
+        (Nth_Arg
+           (Data, 1, Get_File_Class (Kernel),
+            Default => No_Class_Instance, Allow_Null => True));
+
+      --  ??? TEMPORARY HACK: Don't use the project passed by the user, because
+      --  we don't support aggregate projects correctly for the moment.
+      --  Project : GNATCOLL.Projects.Project_Type := Get_Data (Data, 2);
+      Project : constant GNATCOLL.Projects.Project_Type := No_Project;
+
+      CTU    : constant Clang_Translation_Unit := Translation_Unit
+        (Kernel  => Core_Kernel (Get_Kernel (Data)),
+         File    => File,
+         Project => Project);
+
+   begin
+
+      Set_Return_Value_As_List (Data);
+      Set_Address_Return_Value (Data, System.Address (CTU));
+      Set_Address_Return_Value
+        (Data, System.Address
+           (Context_From_File
+                (Core_Kernel (Get_Kernel (Data)), File).Clang_Indexer));
+   end Python_Get_TU;
+
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Language_Class : constant Class_Type :=
+        New_Class (Kernel, Libclang_Class_Name);
    begin
+
+      Register_Command
+        (Kernel.Scripts, "_get_translation_unit",
+         (Param ("file"), Param ("project")),
+         Python_Get_TU'Access,
+         Language_Class,
+         Static_Method => True);
 
       --  Register cross references databases for c and c++
       if Active (Activate_Clang_XRef) then

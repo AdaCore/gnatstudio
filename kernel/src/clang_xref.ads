@@ -390,9 +390,8 @@ private
 
    type Clang_Entity_Ref_Vector is access all Clang_Entity_Ref_Vectors.Vector;
 
-   procedure Free
-   is new Ada.Unchecked_Deallocation (Clang_Entity_Ref_Vectors.Vector,
-                                      Clang_Entity_Ref_Vector);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Clang_Entity_Ref_Vectors.Vector, Clang_Entity_Ref_Vector);
 
    type Clang_Reference_Iterator is new Root_Reference_Iterator with record
       Entity : Clang_Entity;
