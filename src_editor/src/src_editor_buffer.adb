@@ -4087,7 +4087,7 @@ package body Src_Editor_Buffer is
       S           : Ada.Strings.Unbounded.Aux.Big_String_Access;
       Length      : Natural;
       Has_Errors  : Boolean := False;
-      Buttons     : Message_Dialog_Buttons;
+      Buttons     : Message_Dialog_Buttons := Button_None;
 
       procedure New_Line;
       --  Append a new line on U_Buffer
