@@ -1026,6 +1026,7 @@ package body GPS.Kernel.Messages is
       end if;
 
       if Messages_File.Is_Regular_File then
+         Trace (Me, "Loading " & Messages_File.Display_Full_Name);
          Parse (Messages_File, Root_XML_Node, Error);
       end if;
 
@@ -1033,7 +1034,8 @@ package body GPS.Kernel.Messages is
          Project_XML_Node := Root_XML_Node.Child;
 
          while Project_XML_Node /= null loop
-            exit when Get_File_Child (Project_XML_Node, "file") = Project_File;
+            exit when Project_XML_Node.Tag.all = "project" and then
+              Get_File_Child (Project_XML_Node, "file") = Project_File;
 
             Project_XML_Node := Project_XML_Node.Next;
          end loop;
