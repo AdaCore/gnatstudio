@@ -481,15 +481,15 @@ private
    --------------------
 
    No_Semantic_Node : constant Semantic_Node'Class :=
-     Dummy_Semantic_Node'(others => <>);
+     Dummy_Semantic_Node'(null record);
 
    No_Semantic_Tree : constant Semantic_Tree'Class :=
-     Dummy_Semantic_Tree'(others => <>);
+     Dummy_Semantic_Tree'(null record);
 
    No_Semantic_Node_Array : constant Semantic_Node_Array'Class :=
-     Dummy_Semantic_Node_Array'(others => <>);
+     Dummy_Semantic_Node_Array'(null record);
 
    No_Semantic_Tree_Iterator : constant Semantic_Tree_Iterator'Class :=
-     Dummy_Semantic_Tree_Iterator'(others => <>);
+     Dummy_Semantic_Tree_Iterator'(null record);
 
 end Language.Abstract_Language_Tree;

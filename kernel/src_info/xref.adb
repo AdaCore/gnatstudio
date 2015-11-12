@@ -290,7 +290,7 @@ package body Xref is
             while R.Has_Element loop
                if Filter
                  (General_Entity_Reference'
-                    (Ref => R.Element, Db => Ref.Db, others => <>))
+                    (Ref => R.Element, Db => Ref.Db))
                then
                   return True;
                end if;

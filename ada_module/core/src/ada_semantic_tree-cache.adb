@@ -57,9 +57,7 @@ package body Ada_Semantic_Tree.Cache is
         (Db,
          Cache_Assistant_Id,
          new Cache_Db_Assistant'
-           (Database_Assistant with
-            Cache_Key => Cache_Key,
-            others    => <>));
+           (Database_Assistant with Cache_Key => Cache_Key));
    end Register_Assistant;
 
    ---------------
