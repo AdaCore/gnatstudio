@@ -33,8 +33,6 @@ with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 
-with Pango.Layout;              use Pango.Layout;
-
 with Gdk;                       use Gdk;
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Event;                 use Gdk.Event;
@@ -571,9 +569,6 @@ package body Project_Explorers is
       Pack_Start (Col, Text_Rend, True);
       Add_Attribute (Col, Pixbuf_Rend, "icon-name", Icon_Column);
       Add_Attribute (Col, Text_Rend, "markup", Display_Name_Column);
-      Set_Property
-        (Text_Rend,
-         Gtk.Cell_Renderer_Text.Ellipsize_Property, Ellipsize_Start);
       Dummy := Append_Column (Tree, Col);
    end Set_Column_Types;
 
