@@ -876,7 +876,7 @@ private
       Ends              : out Dummy_Editor_Location);
 
    Nil_Editor_Location : constant Editor_Location'Class :=
-     Dummy_Editor_Location'(Controlled with others => <>);
+     Dummy_Editor_Location'(Controlled with null record);
 
    ---------------------
    -- Nil_Editor_Mark --
@@ -908,7 +908,7 @@ private
       return Class_Instance;
 
    Nil_Editor_Mark : constant Editor_Mark'Class :=
-     Dummy_Editor_Mark'(Controlled with others => <>);
+     Dummy_Editor_Mark'(Controlled with null record);
 
    -----------------------
    -- Nil_Editor_Buffer --
@@ -1100,7 +1100,7 @@ private
      (This : Dummy_Editor_Buffer; Buffer : Dummy_Editor_Buffer) return Boolean;
 
    Nil_Editor_Buffer : constant Editor_Buffer'Class :=
-     Dummy_Editor_Buffer'(Controlled with others => <>);
+     Dummy_Editor_Buffer'(Controlled with null record);
 
    ---------------------
    -- Nil_Editor_View --
@@ -1143,7 +1143,7 @@ private
      (This : Dummy_Editor_View; Extend_Selection : Boolean) is null;
 
    Nil_Editor_View : constant Editor_View'Class :=
-     Dummy_Editor_View'(Controlled with others => <>);
+     Dummy_Editor_View'(Controlled with null record);
 
    ------------------------
    -- Nil_Editor_Overlay --
@@ -1166,7 +1166,7 @@ private
      (This : Dummy_Editor_Overlay; Name : String; Value : Integer) is null;
 
    Nil_Editor_Overlay : constant Editor_Overlay'Class :=
-     Dummy_Editor_Overlay'(Controlled with others => <>);
+     Dummy_Editor_Overlay'(Controlled with null record);
 
    type Dummy_Editor_Cursor is new Editor_Cursor with null record;
 
@@ -1187,6 +1187,6 @@ private
      (This : Dummy_Editor_Cursor) is null;
 
    Nil_Editor_Cursor : constant Editor_Cursor'Class
-     := Dummy_Editor_Cursor'(Controlled with others => <>);
+     := Dummy_Editor_Cursor'(Controlled with null record);
 
 end GPS.Editors;

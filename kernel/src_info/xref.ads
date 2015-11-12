@@ -1140,7 +1140,7 @@ private
      (Iter : in out Dummy_Entities_Cursor) is null;
 
    No_Entities_Cursor : constant Abstract_Entities_Cursor'Class :=
-     Dummy_Entities_Cursor'(others => <>);
+     Dummy_Entities_Cursor'(null record);
 
    type Dummy_Reference_Iterator is new Root_Reference_Iterator
    with null record;
@@ -1174,6 +1174,6 @@ private
      (Iter : Dummy_Reference_Iterator) return Integer is (0);
 
    No_Reference_Iterator : constant Root_Reference_Iterator'Class :=
-     Dummy_Reference_Iterator'(others => <>);
+     Dummy_Reference_Iterator'(null record);
 
 end Xref;

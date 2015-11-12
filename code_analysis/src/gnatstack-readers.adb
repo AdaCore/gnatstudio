@@ -138,7 +138,7 @@ package body GNATStack.Readers is
       --  "cycleset" is top level element
 
    begin
-      Self.State := (Kind => Cycle_Set_State, others => <>);
+      Self.State := (Kind => Cycle_Set_State);
    end Analyze_cycleset_Start_Tag;
 
    ---------------------------
@@ -208,7 +208,7 @@ package body GNATStack.Readers is
       --  "entryset" is top level element
 
    begin
-      Self.State := (Kind => Entry_Set_State, others => <>);
+      Self.State := (Kind => Entry_Set_State);
    end Analyze_entryset_Start_Tag;
 
    ------------------------------
@@ -240,8 +240,7 @@ package body GNATStack.Readers is
       Self.Push;
       Self.State :=
         (Kind   => External_State,
-         E_Id   => To_Unbounded_String (Attributes.Get_Value ("id")),
-         others => <>);
+         E_Id   => To_Unbounded_String (Attributes.Get_Value ("id")));
    end Analyze_external_Start_Tag;
 
    ---------------------------------
@@ -271,7 +270,7 @@ package body GNATStack.Readers is
       --  "externalset" is top level element
 
    begin
-      Self.State := (Kind => External_Set_State, others => <>);
+      Self.State := (Kind => External_Set_State);
    end Analyze_externalset_Start_Tag;
 
    --------------------------
@@ -483,7 +482,7 @@ package body GNATStack.Readers is
       --  "indirectset" is child of "global" element
 
    begin
-      Self.State := (Kind => Indirect_Set_State, others => <>);
+      Self.State := (Kind => Indirect_Set_State);
    end Analyze_indirectset_Start_Tag;
 
    --------------------------
@@ -787,7 +786,7 @@ package body GNATStack.Readers is
       --  "subprogramset" is top level element
 
    begin
-      Self.State := (Kind => Subprogram_Set_State, others => <>);
+      Self.State := (Kind => Subprogram_Set_State);
    end Analyze_subprogramset_Start_Tag;
 
    -------------------------------
@@ -815,7 +814,7 @@ package body GNATStack.Readers is
 
    begin
       Self.Push;
-      Self.State := (Kind => Unbounded_State, others => <>);
+      Self.State := (Kind => Unbounded_State);
    end Analyze_unbounded_Start_Tag;
 
    -------------------------------------
@@ -915,7 +914,7 @@ package body GNATStack.Readers is
       --  "unboundedset" is child of "global" element
 
    begin
-      Self.State := (Kind => Unbounded_Set_State, others => <>);
+      Self.State := (Kind => Unbounded_Set_State);
    end Analyze_unboundedset_Start_Tag;
 
    ----------------
