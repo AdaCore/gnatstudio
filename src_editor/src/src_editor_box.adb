@@ -1612,6 +1612,10 @@ package body Src_Editor_Box is
       end if;
 
       Set_Writable (Views, Writable);
+
+      --  Let the world know that the status has changed (in particular that
+      --  the undo/redo queue has changed).
+      Editor.Kernel.Refresh_Context;
    end Set_Writable;
 
    ----------
