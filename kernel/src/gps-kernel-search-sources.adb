@@ -22,6 +22,7 @@ with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with String_Utils;               use String_Utils;
 
 with Cairo.Region;               use Cairo.Region;
 with Gdk.RGBA;                   use Gdk.RGBA;
@@ -279,14 +280,17 @@ package body GPS.Kernel.Search.Sources is
    is
       pragma Unreferenced (Limit);
    begin
-      case Pattern.Get_Kind is
-         when Full_Text | Regexp =>
-            Self.Pattern := Search_Pattern_Access (Pattern);
-            Self.Pattern_Needs_Free := False;
-         when Fuzzy | Approximate =>
-            Self.Pattern := Pattern.Build (Kind => Approximate);
-            Self.Pattern_Needs_Free := True;
-      end case;
+      --  If Self.Pattern has been allocated by the provider itself, free
+      --  it before allocating a new pattern.
+      if Self.Pattern_Needs_Free then
+         Free (Self.Pattern);
+      end if;
+
+      --  Set Self.Pattern to Approximate if Pattern.Kind = Fuzzy
+      Self.Pattern := Pattern.Build_If_Needed
+        (Kind     => Fuzzy,
+         New_Kind => Approximate,
+         Built    => Self.Pattern_Needs_Free);
 
       Self.Set_File (Self.File, Self.Project);  --  reset search
    end Set_Pattern;
@@ -342,7 +346,6 @@ package body GPS.Kernel.Search.Sources is
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
-      Start, Finish : Integer;
       L      : GNAT.Strings.String_Access;
    begin
       Result := null;
@@ -362,38 +365,25 @@ package body GPS.Kernel.Search.Sources is
       end if;
 
       if Self.Context /= GPS.Search.No_Match then
-         --  Find beginning of the line, but ignore leading spaces
-         Start := Self.Context.Start.Index;
-         while Start >= Self.Text'First
-           and then Self.Text (Start) /= ASCII.LF
-         loop
-            Start := Start - 1;
-         end loop;
-
-         Start := Start + 1;
-         while Start <= Self.Context.Start.Index
-           and then (Self.Text (Start) = ' '
-                     or else Self.Text (Start) = ASCII.HT)
-         loop
-            Start := Start + 1;
-         end loop;
-
-         --  If match is empty string use begin of match
-         if Is_Empty_Match (Self.Context) then
-            Finish := Line_End (Self.Text.all, Self.Context.Start.Index);
-         else
-            Finish := Line_End (Self.Text.all, Self.Context.Finish.Index);
-         end if;
-
          declare
-            P_Name : constant String :=
-              (if Self.Project = No_Project
-               or else not Get_Registry
-                 (Self.Kernel).Tree.Root_Project.Is_Aggregate_Project
-               then ""
-               else ASCII.LF
-               & "(" & Self.Project.Project_Path.Display_Base_Name & " -- "
-               & (+Self.Project.Project_Path.Dir_Name) & ')');
+            Matched_Line : constant String :=
+                (if not Is_Empty_Match (Self.Context) then
+                    Get_Surrounding_Line (Self.Text.all,
+                   Self.Context.Start.Index,
+                   Self.Context.Finish.Index)
+                 else
+                    Get_Surrounding_Line (Self.Text.all,
+                                Self.Context.Start.Index,
+                   Self.Context.Start.Index));
+
+            P_Name       : constant String :=
+                (if Self.Project = No_Project
+                  or else not Get_Registry
+                    (Self.Kernel).Tree.Root_Project.Is_Aggregate_Project
+                  then ""
+                  else ASCII.LF
+                  & "(" & Self.Project.Project_Path.Display_Base_Name & " -- "
+                  & (+Self.Project.Project_Path.Dir_Name) & ')');
          begin
             L := new String'
               (Self.File.Display_Full_Name
@@ -408,7 +398,7 @@ package body GPS.Kernel.Search.Sources is
                Score      => Self.Context.Score,
                Short      => new String'
                  (Self.Pattern.Highlight_Match
-                      (Self.Text (Start .. Finish), Self.Context)),
+                      (Matched_Line, Self.Context)),
                Long       => L,
                Id         => L,
                File       => Self.File,

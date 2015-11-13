@@ -20,7 +20,6 @@ with Generic_Views;                 use Generic_Views;
 
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 
-with Glib.Convert;                  use Glib.Convert;
 with Glib.Object;                   use Glib.Object;
 with Gtk.Box;                       use Gtk.Box;
 with Gtk.Cell_Renderer_Text;        use Gtk.Cell_Renderer_Text;
@@ -121,6 +120,7 @@ package body GPS.Kernel.Preferences_Views is
      (Self  : not null access Custom_Preferences_Search_Provider;
       Pref  : not null Default_Preferences.Preference;
       Short : GNAT.Strings.String_Access;
+      Long  : GNAT.Strings.String_Access;
       Score : Natural) return GPS.Search.Search_Result_Access;
    --  Override this function to return a Custom_Preferences_Search_Result
    --  and have dispatching on the returned Custom_Preferences_Search_Result.
@@ -208,9 +208,9 @@ package body GPS.Kernel.Preferences_Views is
      (Self  : not null access Custom_Preferences_Search_Provider;
       Pref  : not null Default_Preferences.Preference;
       Short : GNAT.Strings.String_Access;
+      Long  : GNAT.Strings.String_Access;
       Score : Natural) return GPS.Search.Search_Result_Access
-     is
-      Page  : constant String := Get_Page_Name (Pref);
+   is
       Name  : constant String := Get_Name (Pref);
    begin
       return new Custom_Preferences_Search_Result'
@@ -218,7 +218,7 @@ package body GPS.Kernel.Preferences_Views is
          Provider => Self,
          Score    => Score,
          Short    => Short,
-         Long     => new String'(Escape_Text (Page)),
+         Long     => Long,
          Id       => new String'(Name),
          Pref     => Pref);
    end Create_Preferences_Search_Result;

@@ -158,6 +158,17 @@ package GPS.Search is
    --  pattern, like "filename:line" where only the filename part should
    --  be searched.
 
+   function Build_If_Needed
+     (Pattern    : not null access Search_Pattern'Class;
+      Kind       : Search_Kind;
+      New_Kind   : Search_Kind;
+      Built      : out Boolean) return Search_Pattern_Access;
+   --  If Pattern.Kind = Kind, allocates a new pattern, preserving the
+   --  attributes of pattern, except for Pattern.Kind which is set to New_Kind.
+   --  If Pattern.Kind /= Kind, return Pattern.
+   --  Built is set to True if a newly allocated pattern is returned and set to
+   --  False otherwise.
+
    function Get_Text
       (Pattern    : not null access Search_Pattern'Class) return String;
    function Get_Kind

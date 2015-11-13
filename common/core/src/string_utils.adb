@@ -101,6 +101,56 @@ package body String_Utils is
       end if;
    end Replace;
 
+   --------------------------
+   -- Get_Surrounding_Line --
+   --------------------------
+
+   function Get_Surrounding_Line
+     (Str    : String;
+      Start  : Natural;
+      Finish : Natural) return String
+   is
+      Line_Start  : Natural;
+      Line_Finish : Natural;
+   begin
+      if Start < Str'First or Finish > Str'Last then
+         return Str;
+      end if;
+
+      --  Find beginning of the line
+      Line_Start := First_Word_Start (Str, Start);
+
+      --  Find the end of the line
+      Line_Finish := Line_End (Str, Finish);
+
+      return Str (Line_Start .. Line_Finish);
+   end Get_Surrounding_Line;
+
+   ----------------------
+   -- First_Word_Start --
+   ----------------------
+
+   function First_Word_Start (Str : String; P : Natural) return Natural
+   is
+      Start : Natural := P;
+   begin
+      while Start >= Str'First
+        and then Str (Start) /= ASCII.LF
+      loop
+         Start := Start - 1;
+      end loop;
+
+      Start := Start + 1;
+      while Start <= P
+        and then (Str (Start) = ' '
+                  or else Str (Start) = ASCII.HT)
+      loop
+         Start := Start + 1;
+      end loop;
+
+      return Start;
+   end First_Word_Start;
+
    -------------------
    -- Skip_To_Blank --
    -------------------

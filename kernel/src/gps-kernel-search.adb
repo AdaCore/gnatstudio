@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Strings;         use GNAT.Strings;
+
 with GPS.Kernel.Actions;   use GPS.Kernel.Actions;
 with GPS.Search.GUI;       use GPS.Search, GPS.Search.GUI;
 with Histories;            use Histories;

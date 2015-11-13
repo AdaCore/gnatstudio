@@ -1193,6 +1193,25 @@ package body GPS.Search is
           Kind            => Kind);
    end Build;
 
+   ---------------------
+   -- Build_If_Needed --
+   ---------------------
+
+   function Build_If_Needed
+     (Pattern    : not null access Search_Pattern'Class;
+      Kind       : Search_Kind;
+      New_Kind   : Search_Kind;
+      Built      : out Boolean) return Search_Pattern_Access is
+   begin
+      if Pattern.Kind = Kind then
+         Built := True;
+         return Pattern.Build (Kind => New_Kind);
+      else
+         Built := False;
+         return Search_Pattern_Access (Pattern);
+      end if;
+   end Build_If_Needed;
+
    ----------------
    -- Get_Negate --
    ----------------

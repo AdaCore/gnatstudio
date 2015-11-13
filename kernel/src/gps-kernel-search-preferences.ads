@@ -27,6 +27,7 @@ package GPS.Kernel.Search.Preferences is
 
    overriding function Documentation
      (Self    : not null access Preferences_Search_Provider) return String;
+   overriding procedure Free (Self : in out Preferences_Search_Provider);
    overriding procedure Set_Pattern
      (Self    : not null access Preferences_Search_Provider;
       Pattern : not null access GPS.Search.Search_Pattern'Class;
@@ -49,6 +50,7 @@ package GPS.Kernel.Search.Preferences is
      (Self  : not null access Preferences_Search_Provider;
       Pref  : not null Default_Preferences.Preference;
       Short : GNAT.Strings.String_Access;
+      Long  : GNAT.Strings.String_Access;
       Score : Natural) return GPS.Search.Search_Result_Access;
    --  Return a GPS.Search.Search_Result_Access according to the matched
    --  preference, a short description and the calculated score for this match.
@@ -63,9 +65,11 @@ package GPS.Kernel.Search.Preferences is
 
 private
    type Preferences_Search_Provider is new Kernel_Search_Provider with record
-      Pattern : GPS.Search.Search_Pattern_Access;
-      --  Current pattern, do not free
-      Iter    : Default_Preferences.Preference_Cursor;
+      Pattern            : GPS.Search.Search_Pattern_Access;
+      --  Current pattern, do not free.
+      Pattern_Needs_Free : Boolean := False;
+      --  True if Pattern has been allocated by the provider, False otherwise.
+      Iter               : Default_Preferences.Preference_Cursor;
       --  The current iterator
    end record;
 

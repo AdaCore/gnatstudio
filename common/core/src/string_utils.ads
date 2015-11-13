@@ -36,6 +36,17 @@ package String_Utils is
    --  Return the value for the hexadecimal number Hex. Raises
    --  Constraint_Error is Hex is not an hexadecimal number.
 
+   function Get_Surrounding_Line
+     (Str    : String;
+      Start  : Natural;
+      Finish : Natural) return String;
+   --  Return the line surrounding the substring Str (Start .. Finish) without
+   --  leading whitespaces.
+
+   function First_Word_Start (Str : String; P : Natural) return Natural;
+   --  Return the beginning index of the first word in P.
+   --  In this context, word begins with any non-whitespace ASCII character.
+
    procedure Skip_To_Blank
      (Type_Str : String;
       Index    : in out Natural);
