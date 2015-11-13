@@ -34,8 +34,6 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Radio_Menu_Item;       use Gtk.Radio_Menu_Item;
-with Gtk.Separator_Menu_Item;   use Gtk.Separator_Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Commands.Custom;           use Commands.Custom;
@@ -92,13 +90,6 @@ package body Custom_Module is
      (1 => Name_Cst'Access);
    Menu_Set_Active_Params : constant Cst_Argument_List :=
      (1 => Is_Active_Cst'Access);
-   Menu_Create_Params : constant Cst_Argument_List :=
-     (1 => Path_Cst'Access,
-      2 => On_Activate_Cst'Access,
-      3 => Ref_Cst'Access,
-      4 => Add_Before_Cst'Access,
-      5 => Filter_Cst'Access,
-      6 => Group_Cst'Access);
    Contextual_Constructor_Params : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Contextual_Create_Dynamic_Params : constant Cst_Argument_List :=
@@ -116,11 +107,6 @@ package body Custom_Module is
       Element_Type => Widget_SList.GSlist,
       "="          => Widget_SList."=");
 
-   Radio_Groups : Radio_Group_Maps.Map;
-
-   package Subprogram_Callback is new
-     Gtk.Handlers.User_Callback (Gtk_Menu_Item_Record, Subprogram_Type);
-
    type Action_Filter_Wrapper is new Action_Filter_Record with record
       Filter : Subprogram_Type;
    end record;
@@ -128,17 +114,6 @@ package body Custom_Module is
      (Filter  : access Action_Filter_Wrapper;
       Context : Selection_Context) return Boolean;
    --  A filter that executes a shell subprogram
-
-   procedure On_Activate
-     (Menu        : access Gtk_Menu_Item_Record'Class;
-      On_Activate : Subprogram_Type);
-   --  Called when a Subprogram_Type_Menu is activated
-
-   procedure On_Destroy_Subprogram_Menu
-     (Menu        : access Gtk_Menu_Item_Record'Class;
-      On_Activate : Subprogram_Type);
-   --  Called when a subprogram_type_menu is destroyed
-
    overriding procedure Customize
      (Module : access Custom_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
@@ -937,8 +912,6 @@ package body Custom_Module is
       procedure Parse_Submenu_Node
         (Node : Node_Ptr; Parent_Path : UTF8_String)
       is
-         Before : constant String := Get_Attribute (Node, "before");
-         After  : constant String := Get_Attribute (Node, "after");
          Child  : Node_Ptr := Node.Child;
          Title  : GNAT.OS_Lib.String_Access := new String'("");
       begin
@@ -963,22 +936,6 @@ package body Custom_Module is
 
          Trace (Me, "Creating submenu with title=" & Title.all);
 
-         --  If specific locations are specified, create the menu now
-
-         if Before /= "" then
-            Register_Menu
-              (Kernel      => Kernel,
-               Parent_Path => Create_Menu_Path (Parent_Path, Title.all),
-               Ref_Item    => Before,
-               Add_Before  => True);
-         elsif After /= "" then
-            Register_Menu
-              (Kernel      => Kernel,
-               Parent_Path => Create_Menu_Path (Parent_Path, Title.all),
-               Ref_Item    => After,
-               Add_Before  => False);
-         end if;
-
          while Child /= null loop
             if To_Lower (Child.Tag.all) = "title" then
                null; --  Already handled
@@ -988,17 +945,6 @@ package body Custom_Module is
             elsif To_Lower (Child.Tag.all) = "menu" then
                Parse_Menu_Node
                  (Child, Create_Menu_Path (Parent_Path, Title.all));
-            elsif To_Lower (Child.Tag.all) = "menu_item"
-              or else To_Lower (Child.Tag.all) = "toolbar_item"
-            then
-               Insert
-                 (Kernel,
-                  -("<menu_item> and <toolbar_item> are no longer"
-                    & " supported. Please use the program"
-                    & " gps2custom-1.3 to convert to the new format."),
-                  Mode => Error);
-               pragma Assert (False);
-               return;
             else
                Insert (Kernel,
                        -"Invalid child node for <submenu>: "
@@ -1024,7 +970,6 @@ package body Custom_Module is
          After   : constant String := Get_Attribute (Node, "after");
          Child   : Node_Ptr;
          Title   : GNAT.OS_Lib.String_Access := new String'("");
-         Sep     : Gtk_Separator_Menu_Item;
 
       begin
          Child := Node.Child;
@@ -1053,8 +998,7 @@ package body Custom_Module is
          end if;
 
          if Title.all = "" then
-            Gtk_New (Sep);
-            Register_Menu (Kernel, Parent_Path, Sep);
+            Register_Menu (Kernel, Parent_Path, Action => "");
          else
             if Before /= "" then
                Register_Menu
@@ -1157,34 +1101,6 @@ package body Custom_Module is
       when E : others => Trace (Me, E);
    end Customize;
 
-   -----------------
-   -- On_Activate --
-   -----------------
-
-   procedure On_Activate
-     (Menu        : access Gtk_Menu_Item_Record'Class;
-      On_Activate : Subprogram_Type) is
-   begin
-      if On_Activate /= null then
-         declare
-            Inst : constant Class_Instance :=
-              Get_Instance (Get_Script (On_Activate.all), Menu);
-            C : Callback_Data'Class := Create
-              (Get_Script (Inst), Arguments_Count => 1);
-            Tmp : Boolean;
-            pragma Unreferenced (Tmp);
-         begin
-            Trace (Me, "Callback for menu");
-            Set_Nth_Arg (C, 1, Inst);
-            Tmp := Execute (On_Activate, C);
-            Free (C);
-         end;
-      end if;
-
-   exception
-      when E : others => Trace (Me, E);
-   end On_Activate;
-
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -1239,116 +1155,6 @@ package body Custom_Module is
             end if;
          end;
 
-      elsif Command = "create" then
-         Name_Parameters (Data, Menu_Create_Params);
-         declare
-            Inst : Class_Instance;
-            Path : constant String := Nth_Arg (Data, 1);
-            Group : constant String := Nth_Arg (Data, 6, "");
-            Filter : constant Subprogram_Type := Nth_Arg (Data, 5, null);
-            Filter_A : Action_Filter;
-            Subprogram : constant Subprogram_Type := Nth_Arg (Data, 2, null);
-
-            Item  : Gtk_Menu_Item;
-            Sep   : Gtk_Separator_Menu_Item;
-            Menu  : Gtk_Menu;
-            Index : Integer := Path'First - 1;
-            Last  : Natural := Path'Last;
-
-         begin
-            --  If Path ends with '/' it meats that empty submenu need to be
-            --  created.
-
-            if Path (Last) = '/' and Path (Last - 1) /= '\' then
-               Last := Last - 1;
-            end if;
-
-            --  Take into account backslashes when extracting components of the
-            --  menu path.
-            for J in reverse Path'First .. Last loop
-               if Path (J) = '/'
-                 and then (J = Path'First
-                           or else Path (J - 1) /= '\')
-               then
-                  Index := J;
-                  exit;
-               end if;
-            end loop;
-
-            if Path'Length > 0 and then Path (Index + 1) = '-' then
-               Gtk_New (Sep);
-               Item := Gtk_Menu_Item (Sep);
-
-            else
-               if Group = "" then
-                  Gtk.Menu_Item.Gtk_New_With_Mnemonic
-                    (Item,
-                     Label => Unprotect (Path (Index + 1 .. Last)));
-
-                  if Last /= Path'Last then
-                     Gtk_New (Menu);
-                     Item.Set_Submenu (Menu);
-                  end if;
-
-               else
-                  declare
-                     Inserted : Boolean;
-                     Cursor   : Radio_Group_Maps.Cursor;
-                     List     : Widget_SList.GSlist;
-                     Menu     : Gtk_Radio_Menu_Item;
-                  begin
-                     Radio_Groups.Insert (Group, List, Cursor, Inserted);
-
-                     if not Inserted then
-                        List := Radio_Group_Maps.Element (Cursor);
-                     end if;
-
-                     Gtk.Radio_Menu_Item.Gtk_New_With_Mnemonic
-                       (Menu,
-                        Group => List,
-                        Label => Unprotect (Path (Index + 1 .. Last)));
-
-                     List := Get_Group (Menu);
-
-                     Radio_Groups.Replace_Element (Cursor, List);
-
-                     Item := Gtk_Menu_Item (Menu);
-                  end;
-               end if;
-
-               Subprogram_Callback.Connect
-                 (Item,
-                  Signal_Activate,
-                  On_Activate'Access,
-                  Subprogram);
-
-               Subprogram_Callback.Connect
-                 (Item,
-                  "destroy",
-                  On_Destroy_Subprogram_Menu'Access,
-                  Subprogram);
-
-               Set_Accel_Path
-                 (Item, "<gps>" & Path, Get_Default_Accelerators (Kernel));
-            end if;
-
-            if Filter /= null then
-               Filter_A := new Action_Filter_Wrapper'
-                 (Action_Filter_Record with Filter);
-            end if;
-
-            Register_Menu
-              (Kernel      => Kernel,
-               Parent_Path => Path (Path'First .. Index - 1),
-               Item        => Item,
-               Ref_Item    => Nth_Arg (Data, 3, ""),
-               Add_Before  => Nth_Arg (Data, 4, True),
-               Filter      => Filter_A);
-
-            Inst := New_Instance (Get_Script (Data), Menu_Class);
-            Set_Data (Inst, Widget => GObject (Item));
-            Set_Return_Value (Data, Inst);
-         end;
       elsif Command = "get_active" then
          declare
             use Gtk.Check_Menu_Item;
@@ -1402,20 +1208,6 @@ package body Custom_Module is
    exception
       when E : others => Trace (Me, E);
    end Menu_Handler;
-
-   --------------------------------
-   -- On_Destroy_Subprogram_Menu --
-   --------------------------------
-
-   procedure On_Destroy_Subprogram_Menu
-     (Menu        : access Gtk_Menu_Item_Record'Class;
-      On_Activate : Subprogram_Type)
-   is
-      pragma Unreferenced (Menu);
-      Object : Subprogram_Type := On_Activate;
-   begin
-      Free (Object);
-   end On_Destroy_Subprogram_Menu;
 
    ------------------------
    -- Contextual_Handler --
@@ -1804,13 +1596,6 @@ package body Custom_Module is
          Maximum_Args  => 1,
          Class         => Menu_Class,
          Static_Method => True,
-         Handler       => Menu_Handler'Access);
-      Register_Command
-        (Kernel, "create",
-         Minimum_Args  => 1,
-         Maximum_Args  => 6,
-         Static_Method => True,
-         Class         => Menu_Class,
          Handler       => Menu_Handler'Access);
       Register_Command
         (Kernel, "rename",

@@ -242,6 +242,43 @@ package body GPS.Kernel.Modules.UI is
       Hash            => Ada.Strings.Hash_Case_Insensitive,
       Equivalent_Keys => "=");
 
+   procedure Register_Menu
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Parent_Path : String;
+      Item        : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null;
+      Ref_Item    : String := "";
+      Add_Before  : Boolean := True;
+      Filter      : Action_Filter  := null;
+      Menubar     : access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class := null);
+   --  Add new menu items to the menu bar, as a child of Parent_Path.
+   --
+   --  Parent_Path should have a form like "/main_main/submenu". Underscores
+   --  are not used for mnemonics, and will be present in the final menu.
+   --  Use String_Utils.Strip_Single_Underscores if needed.
+   --
+   --  Menus will be created if they don't exist.
+   --  This is considered as an absolute path, as if it always started with
+   --  a '/'.
+   --
+   --  Menubar will default to the main window's menubar.
+   --
+   --  Item might be null, in which case only the parent menu items are
+   --  created, and Add_Before applies to the deepest one instead of Item.
+   --
+   --  The new item is inserted either:
+   --    - before Ref_Item if the latter is not the empty string and Add_Before
+   --      is true
+   --    - after Ref_Item if the latter is not the empty string and Add_Before
+   --      is false
+   --    - at the end of the menu
+   --
+   --  To register a separator, do the following:
+   --      Mitem : Gtk_Menu_Item;
+   --      Gtk_New (Mitem);
+   --      Register_Menu (Kernel, "/Parent_Path", Mitem);
+   --
+   --  The menu item will be active if Filter matches.
+
    -------------------------
    -- proxies for actions --
    -------------------------
@@ -1538,41 +1575,51 @@ package body GPS.Kernel.Modules.UI is
       Self : Action_Menu_Item;
       Full_Path : constant String := Create_Menu_Path ("/", Path);
       Accel_Path  : constant String := "<gps>" & Full_Path;
-      Item : Gtk_Menu_Item;
+      Item        : Gtk_Menu_Item;
+      Sep         : Gtk_Separator_Menu_Item;
    begin
-      Item := Find_Menu_Item (Kernel, Full_Path);
-      if Item /= null then
-         Trace (Me, "Menu registered twice: " & Full_Path);
-         return Item;
+      if Path (Path'Last) = '-' then
+         Gtk_New (Sep);
+         Register_Menu
+           (Kernel, Parent_Menu_Name (Full_Path), Sep, Ref_Item, Add_Before,
+            Menubar => Menubar);
+         return Gtk_Menu_Item (Sep);
+
+      else
+         Item := Find_Menu_Item (Kernel, Full_Path);
+         if Item /= null then
+            Trace (Me, "Menu registered twice: " & Full_Path);
+            return Item;
+         end if;
+
+         --  Create the menu item
+         Self := new Action_Menu_Item_Record;
+
+         Gtk.Menu_Item.Initialize_With_Mnemonic
+           (Self, Label => Base_Menu_Name (Full_Path));
+
+         Self.Data := (Action    => new String'(Action),
+                       Kernel    => Kernel,
+                       Optional  => Optional,
+                       Hide      => False,
+                       Looked_Up => null);
+         Self.Set_Accel_Path (Accel_Path);
+         Get_Style_Context (Self).Add_Class ("gpsaction");
+
+         --  Add it to the menubar. We do not use Dir_Name, which would ignore
+         --  escaping and would use '\' as a separator.
+
+         Register_Menu
+           (Kernel, Parent_Menu_Name (Full_Path), Self, Ref_Item, Add_Before,
+            Menubar => Menubar);
+
+         Add_To_Global_Proxies (Self, Kernel, null);
+         --  And now setup the dynamic behavior
+
+         Self.On_Activate (On_Activate_Action_Item'Access);
+
+         return Gtk_Menu_Item (Self);
       end if;
-
-      --  Create the menu item
-      Self := new Action_Menu_Item_Record;
-
-      Gtk.Menu_Item.Initialize_With_Mnemonic
-        (Self, Label => Base_Menu_Name (Full_Path));
-
-      Self.Data := (Action    => new String'(Action),
-                    Kernel    => Kernel,
-                    Optional  => Optional,
-                    Hide      => False,
-                    Looked_Up => null);
-      Self.Set_Accel_Path (Accel_Path);
-      Get_Style_Context (Self).Add_Class ("gpsaction");
-
-      --  Add it to the menubar. We do not use Dir_Name, which would ignore
-      --  escaping and would use '\' as a separator.
-
-      Register_Menu
-        (Kernel, Parent_Menu_Name (Full_Path), Self, Ref_Item, Add_Before,
-         Menubar => Menubar);
-
-      Add_To_Global_Proxies (Self, Kernel, null);
-      --  And now setup the dynamic behavior
-
-      Self.On_Activate (On_Activate_Action_Item'Access);
-
-      return Gtk_Menu_Item (Self);
    end Register_Menu;
 
    ------------------

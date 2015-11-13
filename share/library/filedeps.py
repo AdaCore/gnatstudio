@@ -18,6 +18,7 @@ second (for instance "file1" depends on "file2", which depends on "file3")
 
 import GPS
 import os.path
+from gps_utils import interactive
 
 
 def internal_dependency_path(from_file, to_file, include_implicit):
@@ -48,7 +49,7 @@ def internal_dependency_path(from_file, to_file, include_implicit):
             break
 
         for f in imports:
-            if f and not deps.has_key(f):
+            if f and f not in deps:
                 to_analyze.append((f, file))
 
     target = to_file
@@ -59,7 +60,7 @@ def internal_dependency_path(from_file, to_file, include_implicit):
     while target:
         targets.append(target)
         result = " -> " + target.name() + "\n" + result
-        if not deps.has_key(target):
+        if target not in deps:
             result = "No dependency between these two files"
             break
         target = deps[target]
@@ -73,7 +74,8 @@ def dependency_path(from_file, to_file, fill_location=False, title=""):
        properly. This function does not attempt to compute the shortest
        dependency path, and just returns the first one it finds.
        FROM_FILE and TO_FILE must be instances of GPS.File.
-       If FILL_LOCATION is True, then the locations view will also be filled."""
+       If FILL_LOCATION is True, then the locations view will also be
+       filled."""
 
     if not isinstance(from_file, GPS.File):
         from_file = GPS.File(from_file)
@@ -137,13 +139,20 @@ def dependency_path(from_file, to_file, fill_location=False, title=""):
 
 
 def print_dependency_path(from_file, to_file):
-    title = "Dependencies from " + os.path.basename (from_file.name()) + \
+    title = "Dependencies from " + os.path.basename(from_file.name()) + \
         " to " + os.path.basename(to_file.name())
     result = dependency_path(from_file, to_file, True, title)
     GPS.Console().write(title + "\n" + result + "\n")
 
 
-def interactive_dependency_path(menu):
+@interactive(name='explain file dependency',
+             menu='/Navigate/Show File Dependency Path...')
+def interactive_dependency_path():
+    """
+    Explains one of the reasons why a file depends on another one (through
+    a chain of with clauses or #include statements).
+    """
+
     try:
         (file1, file2) = GPS.MDI.input_dialog("Show file dependency path",
                                               "From File", "To File")
@@ -151,6 +160,3 @@ def interactive_dependency_path(menu):
         return
 
     print_dependency_path(GPS.File(file1), GPS.File(file2))
-
-GPS.Menu.create("/Navigate/Show File Dependency Path...",
-                interactive_dependency_path)

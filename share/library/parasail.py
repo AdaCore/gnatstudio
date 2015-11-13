@@ -65,21 +65,4 @@ language_description = """
   </Language>
 """
 
-
-def on_gps_started(hook_name):
-    """ Called once, when GPS is starting.
-    """
-    pass
-#    if os_utils.locate_exec_on_path ("pslc") != "":
-#        GPS.Hook("compilation_finished").add(on_compilation_finished)
-#
-#        menu = "/Tools/GNATcov/"
-#        ref  = "Coverage"
-#        gnatcov_menu = GPS.Menu.create(menu + '-', ref=ref, add_before=False)
-#
-#        GPS.parse_xml(xml.replace("@MENU@", 'menu="%s"' % menu))
-
-
 GPS.parse_xml(language_description)
-
-GPS.Hook("gps_started").add(on_gps_started)

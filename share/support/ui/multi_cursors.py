@@ -25,11 +25,9 @@ mc_on_entity_color.create(
     "#96C5D9"
 )
 
-GPS.Menu.create("/Edit/Cursors", None, ref="Rectangle")
-
 
 @interactive("Editor", name="Add cursor and go down",
-             menu="Edit/Cursors/Add cursor and go down")
+             menu="/Edit/Cursors/Add cursor and go down")
 def mc_down():
     ed = GPS.EditorBuffer.get()
     view = ed.current_view()
@@ -42,7 +40,7 @@ def mc_down():
 
 
 @interactive("Editor", name="Add cursor and go up",
-             menu="Edit/Cursors/Add cursor and go up")
+             menu="/Edit/Cursors/Add cursor and go up")
 def mc_up():
     ed = GPS.EditorBuffer.get()
     view = ed.current_view()
@@ -57,7 +55,7 @@ id_pattern = re.compile(r"[\w0-9_]")
 
 
 @interactive("Editor", name="Cursor select next occurence of selection",
-             menu="Edit/Cursors/Cursor select next occurence of selection")
+             menu="/Edit/Cursors/Cursor select next occurence of selection")
 def mc_select_next_occurence():
     ed = GPS.EditorBuffer.get()
     cur_st, cur_end = ed.selection_start(), ed.selection_end().forward_char(-1)
@@ -77,7 +75,7 @@ def mc_select_next_occurence():
 
 
 @interactive("Editor", name="Cursor skip next occurence of selection",
-             menu="Edit/Cursors/Cursor skip next occurence of selection")
+             menu="/Edit/Cursors/Cursor skip next occurence of selection")
 def mc_skip_to_next_occurence():
     ed = GPS.EditorBuffer.get()
     cur_st, cur_end = ed.selection_start(), ed.selection_end().forward_char(-1)
@@ -91,7 +89,7 @@ def mc_skip_to_next_occurence():
 
 
 @interactive("Editor", name="Add cursors to all references of entity",
-             menu="Edit/Cursors/Add cursors to every reference of entity")
+             menu="/Edit/Cursors/Add cursors to every reference of entity")
 def mc_all_entity_references():
 
     def get_word_bounds(loc):

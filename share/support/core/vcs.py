@@ -134,7 +134,8 @@ def create_menus(system_name, actions):
             separator_count += 1
 
             # Add a separator in the global menu
-            menu = GPS.Menu.create("/_VCS/-separator%s" % (separator_count, ))
+            a = GPS.Action('__separator')
+            menu = a.menu('/VCS/-%s-' % (separator_count, ))
             global_vcs_menus.append(menu)
 
             # Add a separator in the contextual menu

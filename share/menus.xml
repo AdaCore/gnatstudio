@@ -83,6 +83,8 @@
             <menu label='Selection'         action='spell check selection' optional='True'/>
             <menu label='Word'              action='spell check word' optional='True'/>
          </menu>
+         <menu label='Cursors' optional='True'>
+         </menu>
          <menu label='Rectangle' optional='True'>
             <menu label='Cut'               action='rectangle_cut'   optional='true'/>
             <menu label='Copy'              action='rectangle_copy'  optional='true'/>
@@ -326,6 +328,8 @@
                <menu label="Compute Coverage Files"  action="gcov compute coverage files" />
                <menu label="Remove Coverage Files"   action="gcov remove coverage files" />
             </menu>
+         </menu>
+         <menu label="GNATcov" optional="true">
          </menu>
          <menu label="Documentation">
             <menu label="Generate _Project"   action="documentation generate for project"/>

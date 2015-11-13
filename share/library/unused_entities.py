@@ -34,6 +34,7 @@ through the GPS.Locations.dump() method in the python console.
 #############################################################################
 
 from GPS import *
+from gps_utils import interactive
 
 xmlada_projects = [
     "xmlada_sax", "xmlada_dom", "xmlada_schema", "xmlada_unicode",
@@ -129,27 +130,34 @@ def show_unused_entities(where, globals_only):
     Console().write("Done searching for unused entities\n")
 
 
-def show_unused_entities_in_file(menu):
+@interactive(name='show unused entities from file',
+             menu='/Navigate/List unused entities/From file',
+             after='Goto Body')
+def show_unused_entities_in_file():
+    """
+    Show all entities from the current file that are unused anywhere in your
+    application.
+    """
     show_unused_entities(EditorBuffer.get().file(), True)
 
 
+@interactive(name='show unused entities from project',
+             menu='/Navigate/List unused entities/From project',
+             after='Goto Body')
 def show_unused_entities_in_project(menu):
+    """
+    Show all entities from the current project that are unused anywhere in
+    your application.
+    """
     show_unused_entities(EditorBuffer.get().file().project(), True)
 
 
+@interactive(name='show unused entities from all projects',
+             menu='/Navigate/List unused entities/From all projects',
+             after='Goto Body')
 def show_unused_entities_in_projects(menu):
+    """
+    Show all entities from any loaded project that are unused anywhere in
+    your application.
+    """
     show_unused_entities(None, True)
-
-
-Menu.create("/Navigate/List unused entities/From file",
-            on_activate=show_unused_entities_in_file,
-            ref="Goto Body",
-            add_before=False)
-Menu.create("/Navigate/List unused entities/From project",
-            on_activate=show_unused_entities_in_project,
-            ref="Goto Body",
-            add_before=False)
-Menu.create("/Navigate/List unused entities/From all projects",
-            on_activate=show_unused_entities_in_projects,
-            ref="Goto Body",
-            add_before=False)

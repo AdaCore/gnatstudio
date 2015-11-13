@@ -309,13 +309,6 @@ class GNATcovPlugin(object):
         GPS.Hook('gps_started').add(self.on_gps_started)
 
     def on_gps_started(self, hook):
-        # Create the GNATcov menu entry before loading targets and so on, so
-        # that we master where the entry is inserted.
-        GPS.Menu.create(
-            self.PLUGIN_MENU + '-',
-            ref='Coverage',
-            add_before=False)
-
         # Now the parent menu is present, fill it with custom targets.
         GPS.parse_xml(list_to_xml(self.BUILD_TARGETS))
 

@@ -59,7 +59,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Main_Window.Debug;     use GPS.Main_Window.Debug;
 with GPS.Main_Window;           use GPS.Main_Window;
@@ -95,8 +94,6 @@ package body GVD_Module is
    --  The key in the history for the arguments to the run command.
    --  WARNING: this constant is shared with builder_module.adb, since we want
    --  to have the same history for the run command in GPS.
-
-   Debug_Menu_Prefix : constant String := "<gps>/Debug/Initialize/";
 
    History_Target_Name : constant History_Key := "gvd-target-name";
    History_Protocol : constant History_Key := "gvd-protocol";
@@ -1952,10 +1949,9 @@ package body GVD_Module is
       pragma Unreferenced (Self);
       use GNAT.OS_Lib;
       Menu              : Gtk_Menu renames GVD_Module_ID.Initialize_Menu;
-      Loaded_Project    : constant Project_Type := Get_Project (Kernel);
 
       procedure Create_Action_And_Menu
-        (Prj : Project_Type; Main : Virtual_File; M : Integer);
+        (Prj : Project_Type; Main : Virtual_File);
       --  Create the action and menu to initialize a specific executable
 
       ----------------------------
@@ -1963,7 +1959,7 @@ package body GVD_Module is
       ----------------------------
 
       procedure Create_Action_And_Menu
-        (Prj : Project_Type; Main : Virtual_File; M : Integer)
+        (Prj : Project_Type; Main : Virtual_File)
       is
          Main_Name : constant String :=
            (if Main = No_File then
@@ -1979,7 +1975,6 @@ package body GVD_Module is
               then "" else Escape_Underscore (Prj.Name) & '/')
            & Main_Name;
          Command : Interactive_Command_Access;
-         Item    : Gtk_Menu_Item;
       begin
          Command := new Initialize_Debugger_Command'
            (Interactive_Command with
@@ -1991,20 +1986,7 @@ package body GVD_Module is
             -"Initialize the debugger on the file "
             & Main.Display_Full_Name,
             Category => -"Debug");
-         Item := Register_Menu (Kernel, Menu, Action => Action);
-
-         --  Only set accelerators for main units of the root project
-         if Prj = No_Project or else Prj = Loaded_Project then
-
-            if Main = No_File then
-               Set_Accel_Path (Item, Debug_Menu_Prefix & "<no main>",
-                               Get_Default_Accelerators (Kernel));
-            else
-               Set_Accel_Path
-                 (Item, Debug_Menu_Prefix & "item" & Image (M),
-                  Get_Default_Accelerators (Kernel));
-            end if;
-         end if;
+         Register_Menu (Kernel, Menu, Action => Action);
       end Create_Action_And_Menu;
 
       Mains : Any_Type :=
@@ -2023,7 +2005,7 @@ package body GVD_Module is
                P    : constant Project_Type :=
                   Kernel.Registry.Tree.Project_From_Path (Prj);
             begin
-               Create_Action_And_Menu (P, Main, J);
+               Create_Action_And_Menu (P, Main);
             end;
          end if;
       end loop;
@@ -2032,7 +2014,7 @@ package body GVD_Module is
 
       --  Specific entry to start the debugger without any main program
 
-      Create_Action_And_Menu (No_Project, No_File, 0);
+      Create_Action_And_Menu (No_Project, No_File);
       Show_All (Menu);
 
    exception

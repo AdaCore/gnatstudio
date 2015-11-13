@@ -306,6 +306,8 @@ class Action(GUI):
         argument.
 
         :param string path: A string
+            If path ends with a '-', a separator line is created, instead of a
+            menu item with text.
         :param string ref: A string
         :param boolean add_before: A boolean
         :return: The instance of GPS.Menu that was created
@@ -7493,61 +7495,6 @@ class Menu(GUI):
         or :func:`GPS.Menu.create`. This is so you always get the same
         instance of :class:`GPS.Menu` when refering to a given menu in GPS
         and so you can store your own specific data with the menu.
-        """
-        pass  # implemented in Ada
-
-    @staticmethod
-    def create(path, on_activate='', ref='', add_before=True,
-               filter=None, group=''):
-        """
-        Creates a new menu in the GPS system. The menu is added at the given
-        location (see :func:`GPS.Menu.get` for more information on the
-        ``path`` parameter). Submenus are created as necessary so ``path``
-        is valid.
-
-        It is recommended now to use :class:`gps_utils.interactive`
-        instead of creating menus explicitly. The latter creates GPS
-        actions, to which keybindings can be associated with the
-        user. They can also be executed more conveniently using
-        keyboard only with the omni-search.
-
-        If ``on_activate`` is specified, it is executed every time the user
-        selects that menu. It is called with only one parameter, the instance
-        of :class:`GPS.Menu` that was just created.
-
-        If ``ref`` and ``add_before`` are specified, they specify the name of
-        another item in the parent menu (and not a full path) before or after
-        which the new menu should be added.
-
-        If the name of the menu starts with a '-' sign, as in "/Edit/-", a
-        menu separator is inserted instead. In this case, on_activate is
-        ignored.
-
-        Underscore characters ('_') need to be duplicated in the path. A
-        single underscore indicates the mnemonic to be used for that
-        menu. For example, if you create the menu "/_File", then the user can
-        open the menu by pressing :kbd:`Alt-f`. But the underscore itself
-        is not be displayed in the name of the menu.
-
-        If ``group`` is specified, create a radio menu item in given group.
-
-        :param path: A string
-        :param on_activate: A subprogram, see the GPS documentation on
-            subprogram parameters
-        :param ref: A string
-        :param add_before: A boolean
-        :param filter: A subprogram
-        :param group: A string
-        :return: The instance of :class:`GPS.Menu`
-
-        .. code-block:: python
-
-           def on_activate(self):
-               print "A menu was selected: " + self.data
-
-           menu = GPS.Menu.create("/Edit/My Company/My Action", on_activate)
-           menu.data = "my own data"   ## Store your own data in the instance
-
         """
         pass  # implemented in Ada
 

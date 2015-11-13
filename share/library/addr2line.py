@@ -23,6 +23,7 @@ It asks you for the location of the executable
 #############################################################################
 
 from GPS import *
+from gps_utils import interactive
 import re
 import os.path
 
@@ -73,14 +74,14 @@ class Addr2line (Console):
         MDI.get_by_child(buffer.current_view()).raise_window()
         line = int(matched.group(3))
         column = matched.group(5)
-        if column != None:
+        if column is not None:
             buffer.current_view().goto(buffer.at(line, int(column)))
         else:
             buffer.current_view().goto(buffer.at(line, 1))
 
 
-def open_addr2line_console(menu):
+@interactive(name='open addr2line console',
+             menu='/Navigate/Open Addr2line Console')
+def open_addr2line_console():
     executable = MDI.input_dialog("Location of the executable ?", "Exec")[0]
     addr = Addr2line(executable)
-
-Menu.create("/Navigate/Open Addr2line Console", open_addr2line_console)

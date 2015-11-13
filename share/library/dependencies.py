@@ -25,6 +25,7 @@ graphical tree widget, which you can dynamically manipulate.
 
 from GPS import *
 from os.path import *
+from gps_utils import interactive
 import traceback
 import re
 
@@ -162,7 +163,7 @@ class XMLOutput:
         self.xml = ""
 
 
-def compute_project_dependencies(menu):
+def compute_project_dependencies(output):
     try:
         depends_on = dict()
         current_deps = dict()
@@ -192,11 +193,11 @@ def compute_project_dependencies(menu):
         ]
 
         for p in depends_on:
-            menu.out.set_current_project(p)
+            output.set_current_project(p)
             for dep in depends_on[p]:
-                menu.out.add_dependency(dep, newdep=dep not in current_deps[p])
+                output.add_dependency(dep, newdep=dep not in current_deps[p])
                 for reason in depends_on[p][dep]:
-                    menu.out.explain_dependency(reason[0], reason[1])
+                    output.explain_dependency(reason[0], reason[1])
 
                 try:
                     current_deps[p].remove(dep)
@@ -205,20 +206,28 @@ def compute_project_dependencies(menu):
 
             for dep in current_deps[p]:
                 if dep.name().lower() not in no_source_projects:
-                    menu.out.add_dependency(dep, newdep=False, removed=True)
+                    output.add_dependency(dep, newdep=False, removed=True)
 
-        menu.out.close()
+        output.close()
     except:
         Console().write("Unexpected exception " + traceback.format_exc())
 
 
-def on_gps_started(hook):
-    menu = Menu.create("/Project/Dependencies/Check (to console)",
-                       on_activate=compute_project_dependencies)
-    menu.out = Output()
+@interactive(name='check project dependencies to console',
+             menu='/Project/Dependencies/Check (to console)')
+def check_project_dependencies_to_console():
+    """
+    Check whether there are dependencies between the project files that are
+    in fact not needed. Output is displayed in the Messages window.
+    """
+    compute_project_dependencies(Output())
 
-    menu = Menu.create("/Project/Dependencies/Check (to XML)",
-                       on_activate=compute_project_dependencies)
-    menu.out = XMLOutput()
 
-Hook("gps_started").add(on_gps_started)
+@interactive(name='check project dependencies to xml',
+             menu='/Project/Dependencies/Check (to XML)')
+def check_project_dependencies_to_console():
+    """
+    Check whether there are dependencies between the project files that are
+    in fact not needed. Output is displayed in a tree.
+    """
+    compute_project_dependencies(XMLOutput())

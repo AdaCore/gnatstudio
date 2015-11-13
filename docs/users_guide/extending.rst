@@ -2840,8 +2840,7 @@ in the title to designate the accelerator key. For example, if you
 want an accelerator on the first letter in a menu named :file:`File`,
 set its title to :file:`_File`.
 
-The :file:`<submenu>` tag accepts the :file:`before` and :file:`after`
-attributes, which operate the same way as for the :file:`<menu>` tag.  It
+The :file:`<submenu>` tag 
 accepts several children, such as :file:`<title>` (which can present at
 most once), :file:`<submenu>` (for nested menus), and :file:`<menu>`.
 
@@ -2896,7 +2895,7 @@ that new menu::
 
   <?xml version="1.0" ?>
   <test>
-    <submenu after="File">
+    <submenu>
       <title>My_Tools</title>
       <menu action="execute my stats">
          <title>unit testing/stats</title>
@@ -6562,11 +6561,11 @@ famous 'Hello World!'.
 Here is the code that you need to put in :file:`hello_world.py`::
 
   import GPS
+  import gps_utils
 
-  def hello_world (self):
-     GPS.MDI.dialog ("Hello World!")
-
-  GPS.Menu.create ("/Help/Hello World!", on_activate=hello_world)
+  @gps_utils.interactive(menu='/Help/Hello World!')
+  def hello_world():
+     GPS.MDI.dialog("Hello World!")
 
 To use this plug-in, launch GPS with the following command line::
 
