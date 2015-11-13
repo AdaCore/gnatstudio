@@ -358,7 +358,25 @@ package body Language.Libclang_Tree is
    overriding function Name
      (Self : Clang_Node) return GNATCOLL.Symbols.Symbol is
    begin
-      return Self.Kernel.Symbols.Find (Spelling (Self.Cursor));
+      if Kind (Self.Cursor) = TranslationUnit then
+
+         --  If the cursor is the translation unit, then spelling will be the
+         --  full file path. In that case we want only the file name
+
+         declare
+            Path        : constant String := Spelling (Self.Cursor);
+            Slash_Index : Natural := Path'Last;
+            Dot_Index   : Natural := Path'Last;
+            use String_Utils;
+         begin
+            Skip_To_Char (Path, Slash_Index, '/', -1);
+            Skip_To_Char (Path, Dot_Index, '.', -1);
+            return Self.Kernel.Symbols.Find
+              (Path (Slash_Index + 1 .. Dot_Index - 1));
+         end;
+      else
+         return Self.Kernel.Symbols.Find (Spelling (Self.Cursor));
+      end if;
    end Name;
 
    -------------
