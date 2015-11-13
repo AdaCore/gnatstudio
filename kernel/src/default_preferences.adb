@@ -101,9 +101,10 @@ package body Default_Preferences is
      (Theme_Descr_Array, Theme_Descr_Array_Access);
 
    procedure Create_Color_Buttons
-     (Style_Box : My_Style_Box;
-      Pref      : access Style_Preference_Record'Class;
-      Manager   : access Preferences_Manager_Record'Class);
+     (Pref            : access Style_Preference_Record'Class;
+      Manager         : access Preferences_Manager_Record'Class;
+      Fg_Color_Button : out Gtk_Color_Button;
+      Bg_Color_Button : out Gtk_Color_Button);
    --  Factorize code that creates the color buttons
 
    procedure Free (Pref : in out Preference);
@@ -1624,7 +1625,12 @@ package body Default_Preferences is
 
       Style_Box.Font_Box := Font_Box;
 
-      Create_Color_Buttons (Style_Box, Pref, Manager);
+      Create_Color_Buttons (Pref            => Pref,
+                            Manager         => Manager,
+                            Fg_Color_Button => Style_Box.Fg_Color_Button,
+                            Bg_Color_Button => Style_Box.Bg_Color_Button);
+      Pack_Start (Style_Box, Style_Box.Fg_Color_Button, Expand => False);
+      Pack_Start (Style_Box, Style_Box.Bg_Color_Button, Expand => False);
 
       Set_GObject_To_Update (Pref, GObject (Style_Box));
 
@@ -1663,11 +1669,14 @@ package body Default_Preferences is
       Preference_Handlers.Connect
         (Variant_Combo, Gtk.Combo_Box.Signal_Changed,
          Variant_Changed'Access, P);
+      Variant_Box.Combo := Variant_Combo;
 
-      Variant_Box.Style_Box := new My_Style_Box_Record;
-      Initialize_Hbox (Variant_Box.Style_Box, Homogeneous => False);
-
-      Create_Color_Buttons (Variant_Box.Style_Box, Pref, Manager);
+      Create_Color_Buttons (Pref            => Pref,
+                            Manager         => Manager,
+                            Fg_Color_Button => Variant_Box.Fg_Color_Button,
+                            Bg_Color_Button => Variant_Box.Bg_Color_Button);
+      Pack_Start (Variant_Box, Variant_Box.Fg_Color_Button, Expand => False);
+      Pack_Start (Variant_Box, Variant_Box.Bg_Color_Button, Expand => False);
 
       Set_GObject_To_Update (Pref, GObject (Variant_Box));
 
@@ -1715,8 +1724,21 @@ package body Default_Preferences is
       Widget : access GObject_Record'Class) is
       Variant_Box : constant My_Variant_Box := My_Variant_Box (Widget);
       Count       : Gint := 0;
+      Old, Val    : Gdk_RGBA;
    begin
-      Update_On_Pref_Changed (Style_Preference (Pref), Variant_Box.Style_Box);
+      Variant_Box.Fg_Color_Button.Get_Rgba (Old);
+      Val := Get_Pref_Fg (Style_Preference (Pref));
+
+      if Old /= Val then
+         Variant_Box.Fg_Color_Button.Set_Rgba (Val);
+      end if;
+
+      Variant_Box.Bg_Color_Button.Get_Rgba (Old);
+      Val := Get_Pref_Bg (Style_Preference (Pref));
+
+      if Old /= Val then
+         Variant_Box.Bg_Color_Button.Set_Rgba (Val);
+      end if;
 
       for J in Variant_Enum loop
          if J = Pref.Variant then
@@ -1918,9 +1940,10 @@ package body Default_Preferences is
    --------------------------
 
    procedure Create_Color_Buttons
-     (Style_Box : My_Style_Box;
-      Pref      : access Style_Preference_Record'Class;
-      Manager   : access Preferences_Manager_Record'Class)
+     (Pref            : access Style_Preference_Record'Class;
+      Manager         : access Preferences_Manager_Record'Class;
+      Fg_Color_Button : out Gtk_Color_Button;
+      Bg_Color_Button : out Gtk_Color_Button)
    is
       Button : Gtk_Color_Button;
       P      : constant Manager_Preference :=
@@ -1929,18 +1952,16 @@ package body Default_Preferences is
       Gtk_New_With_Rgba (Button, Get_Pref_Fg (Style_Preference (Pref)));
       Button.Set_Use_Alpha (True);
       Set_Tooltip_Text (Button, -"Foreground color");
-      Pack_Start (Gtk_Box (Style_Box), Button, Expand => False);
       Preference_Handlers.Connect
         (Button, Signal_Color_Set, Fg_Color_Changed'Access, P);
-      Style_Box.Fg_Color_Button := Button;
+      Fg_Color_Button := Button;
 
       Gtk_New_With_Rgba (Button, Get_Pref_Bg (Style_Preference (Pref)));
       Button.Set_Use_Alpha (True);
       Set_Tooltip_Text (Button, -"Background color");
-      Pack_Start (Gtk_Box (Style_Box), Button, Expand => False);
       Preference_Handlers.Connect
         (Button, Signal_Color_Set, Bg_Color_Changed'Access, P);
-      Style_Box.Bg_Color_Button := Button;
+      Bg_Color_Button := Button;
    end Create_Color_Buttons;
 
    ----------------

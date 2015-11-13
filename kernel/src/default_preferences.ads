@@ -664,8 +664,9 @@ private
       --  never sets the Style_Font and Font_Default fields
    end record;
    type My_Variant_Box_Record is new Gtk.Box.Gtk_Box_Record with record
-      Style_Box : My_Style_Box;
-      Combo     : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
+      Combo           : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
+      Fg_Color_Button : Gtk.Color_Button.Gtk_Color_Button;
+      Bg_Color_Button : Gtk.Color_Button.Gtk_Color_Button;
    end record;
    type My_Variant_Box is access all My_Variant_Box_Record'Class;
    overriding procedure Set_Pref
