@@ -339,11 +339,13 @@ package body GPS.Menu is
          Description => -"Open remote project");
 
       Reopen_Menu := Find_Menu_Item (Kernel, "/Project/Recent");
-      Associate (Get_History (Kernel).all,
-                 Project_History_Key,
-                 Reopen_Menu,
-                 new On_Reopen'(Menu_Callback_Record with
-                                Kernel => Kernel_Handle (Kernel)));
+      if Reopen_Menu /= null then
+         Associate (Get_History (Kernel).all,
+                    Project_History_Key,
+                    Reopen_Menu,
+                    new On_Reopen'(Menu_Callback_Record with
+                      Kernel => Kernel_Handle (Kernel)));
+      end if;
 
       Project_Changed_Hook.Add (new On_Project_Changed);
 

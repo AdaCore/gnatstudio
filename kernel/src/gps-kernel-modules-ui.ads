@@ -360,7 +360,8 @@ package GPS.Kernel.Modules.UI is
       Path   : String) return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Given an absolute path (see Register_Menu) for a menu item, return
    --  the underlying gtk menu item. Useful in particular to check or change
-   --  the state of a menu item. Path is case insensitive
+   --  the state of a menu item. Path is case insensitive.
+   --  This function might return null when the item is not found.
 
    procedure Register_MDI_Menu
      (Kernel     : Kernel_Handle;

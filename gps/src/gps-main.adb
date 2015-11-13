@@ -1388,12 +1388,14 @@ procedure GPS.Main is
          Menu_Item : Gtk_Menu_Item;
       begin
          Menu_Item := Find_Menu_Item (App.Kernel, -"/Window");
-         Set_Submenu
-           (Menu_Item, Kernel_Desktop.Create_Menu
-              (GPS_Main.MDI,
-               User         => App.Kernel,
-               Registration =>
-                 GPS.Kernel.Modules.UI.Register_MDI_Menu'Access));
+         if Menu_Item /= null then
+            Set_Submenu
+              (Menu_Item, Kernel_Desktop.Create_Menu
+                 (GPS_Main.MDI,
+                  User         => App.Kernel,
+                  Registration =>
+                    GPS.Kernel.Modules.UI.Register_MDI_Menu'Access));
+         end if;
       end;
 
       Set_Project_Name;

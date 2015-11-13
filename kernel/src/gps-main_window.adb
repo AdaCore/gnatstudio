@@ -626,7 +626,7 @@ package body GPS.Main_Window is
    procedure Gtk_New
      (Main_Window : out GPS_Window;
       Application : not null access GPS_Application_Record'Class;
-      Menubar     : not null access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class)
+      Menubar     : access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class)
    is
       Vbox : Gtk_Vbox;
       P    : access On_Pref_Changed;
@@ -682,8 +682,10 @@ package body GPS.Main_Window is
       Gtk_New_Vbox (Vbox, False, 0);
       Add (Main_Window, Vbox);
 
-      Main_Window.Menu_Bar := Gtk_Menu_Bar (Menubar);
-      Pack_Start (Vbox, Main_Window.Menu_Bar, False);
+      if Menubar /= null then
+         Main_Window.Menu_Bar := Gtk_Menu_Bar (Menubar);
+         Pack_Start (Vbox, Main_Window.Menu_Bar, False);
+      end if;
 
       Setup_Toplevel_Window (Main_Window.MDI, Main_Window);
 
@@ -1492,16 +1494,19 @@ package body GPS.Main_Window is
      (Window : access GPS_Window_Record) return Boolean
    is
       use Gtk.Widget.Widget_List;
-      L : Glist := First (Window.Menu_Bar.Get_Children);
+      L : Glist;
       Menu : Gtk_Widget;
    begin
-      while L /= Null_List loop
-         Menu := Gtk_Menu_Item (Get_Data (L)).Get_Submenu;
-         L := Next (L);
-         if Menu /= null and then Menu.Is_Visible then
-            return True;
-         end if;
-      end loop;
+      if Window.Menu_Bar /= null then
+         L := First (Window.Menu_Bar.Get_Children);
+         while L /= Null_List loop
+            Menu := Gtk_Menu_Item (Get_Data (L)).Get_Submenu;
+            L := Next (L);
+            if Menu /= null and then Menu.Is_Visible then
+               return True;
+            end if;
+         end loop;
+      end if;
       return False;
    end Is_Any_Menu_Open;
 

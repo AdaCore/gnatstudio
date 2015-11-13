@@ -2198,11 +2198,14 @@ package body Src_Editor_Module is
          Icon_Name   => "gps-open-file-symbolic");
 
       Recent_Menu_Item := Find_Menu_Item (Kernel, "/File/Recent");
-      Associate (Get_History (Kernel).all,
-                 Hist_Key,
-                 Recent_Menu_Item,
-                 new On_Recent'(Menu_Callback_Record with
-                                Kernel => Kernel_Handle (Kernel)));
+      if Recent_Menu_Item /= null then
+         Associate (Get_History (Kernel).all,
+                    Hist_Key,
+                    Recent_Menu_Item,
+                    new On_Recent'(
+                      Menu_Callback_Record with
+                      Kernel => Kernel_Handle (Kernel)));
+      end if;
 
       Register_Action
         (Kernel, Save_Command_Name, new Save_Command,

@@ -2259,10 +2259,12 @@ package body GVD_Module is
 
       --  Dynamic Initialize menu
       Mitem := Find_Menu_Item (Kernel, -"/Debug/Initialize");
-      Gtk_New (Menu);
-      Set_Submenu (Mitem, Menu);
-      GVD_Module_ID.Initialize_Menu := Menu;
-      Project_View_Changed_Hook.Add (new On_View_Changed);
+      if Mitem /= null then
+         Gtk_New (Menu);
+         Set_Submenu (Mitem, Menu);
+         GVD_Module_ID.Initialize_Menu := Menu;
+         Project_View_Changed_Hook.Add (new On_View_Changed);
+      end if;
 
       --  Add debugger menus
 

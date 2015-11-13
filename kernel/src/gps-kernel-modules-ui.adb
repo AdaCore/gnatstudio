@@ -1197,7 +1197,7 @@ package body GPS.Kernel.Modules.UI is
    is
       Win : constant GPS_Window := GPS_Window (Kernel.Get_Main_Window);
    begin
-      if Win = null then
+      if Win = null or else Win.Menu_Bar = null then
          return null;
       else
          return Find_Or_Create_Menu_Tree
@@ -1229,7 +1229,9 @@ package body GPS.Kernel.Modules.UI is
       Bar : Gtk_Menu_Bar;
 
    begin
-      if Win = null and then Menubar = null then
+      if (Win = null or else Win.Menu_Bar = null)
+        and then Menubar = null
+      then
          return;
       end if;
 
@@ -1786,31 +1788,29 @@ package body GPS.Kernel.Modules.UI is
       Toolbar.Set_Style (Toolbar_Icons);
       Toolbar.Set_Show_Arrow (True);
 
-      if not Globals.Toolbar_Descriptions.Contains (Id) then
-         return Toolbar;
-      end if;
+      if Globals.Toolbar_Descriptions.Contains (Id) then
+         N := Globals.Toolbar_Descriptions.Element (Id);
+         if N /= null then
+            Process_Toolbar (N);
 
-      N := Globals.Toolbar_Descriptions.Element (Id);
-      if N /= null then
-         Process_Toolbar (N);
+            while N /= null loop
+               declare
+                  Inh : constant String := Get_Attribute (N, "inherit");
+               begin
+                  if Inh /= ""
+                    and then Globals.Toolbar_Descriptions.Contains (Inh)
+                  then
+                     N := Globals.Toolbar_Descriptions.Element (Inh);
 
-         while N /= null loop
-            declare
-               Inh : constant String := Get_Attribute (N, "inherit");
-            begin
-               if Inh /= ""
-                 and then Globals.Toolbar_Descriptions.Contains (Inh)
-               then
-                  N := Globals.Toolbar_Descriptions.Element (Inh);
-
-                  if N /= null then
-                     Process_Toolbar (N);
+                     if N /= null then
+                        Process_Toolbar (N);
+                     end if;
+                  else
+                     N := null;
                   end if;
-               else
-                  N := null;
-               end if;
-            end;
-         end loop;
+               end;
+            end loop;
+         end if;
       end if;
 
       return Toolbar;
@@ -2462,7 +2462,9 @@ package body GPS.Kernel.Modules.UI is
 
             Menu_Bar := GPS_Window
               (Get_Kernel (Data.Context).Get_Main_Window).Menu_Bar;
-            Propagate_Visibility (Menu_Bar, Menu_Bar);
+            if Menu_Bar /= null then
+               Propagate_Visibility (Menu_Bar, Menu_Bar);
+            end if;
 
             Tool_Bar := Get_Toolbar (Get_Kernel (Data.Context));
             Cleanup_Toolbar_Separators (Tool_Bar);
@@ -2653,9 +2655,9 @@ package body GPS.Kernel.Modules.UI is
 
       procedure Process_Menu
         (Parent_Path : String;
-         Parent      : not null access Gtk_Menu_Shell_Record'Class;
+         Parent      : access Gtk_Menu_Shell_Record'Class;
          Menu_Node   : Node);
-      --  Process a <menu> node
+      --  Process a <menu> node. Parent will be null when using system menus.
 
       ------------------
       -- Process_Menu --
@@ -2663,7 +2665,7 @@ package body GPS.Kernel.Modules.UI is
 
       procedure Process_Menu
         (Parent_Path : String;
-         Parent      : not null access Gtk_Menu_Shell_Record'Class;
+         Parent      : access Gtk_Menu_Shell_Record'Class;
          Menu_Node   : Node)
       is
          Label  : constant DOM_String := Get_Attribute (Menu_Node, "label");
@@ -2688,10 +2690,6 @@ package body GPS.Kernel.Modules.UI is
          end if;
 
          if Action /= "" then
-            Item := Register_Menu
-              (Kernel, Parent_Path & "/" & Label,
-               Action, Optional => Optional, Menubar => Menubar);
-
             if Active (System_Menus) then
                App.Add_Action (New_G_Action (Kernel, Action));
 
@@ -2708,26 +2706,32 @@ package body GPS.Kernel.Modules.UI is
                        & "<attribute name='action'>app."
                        & XML_Utils.Protect (Action)
                        & "</attribute></item>" & ASCII.LF);
+            else
+               Item := Register_Menu
+                 (Kernel, Parent_Path & "/" & Label,
+                  Action, Optional => Optional, Menubar => Menubar);
             end if;
          else
-            Gtk_New_With_Mnemonic (Item, Label);
-            Parent.Append (Item);
-
             if Active (System_Menus) then
                Append (Builder_XML,
                        "<submenu>"
                        & "<attribute name='label'>" & XML_Utils.Protect (Label)
                        & "</attribute>" & ASCII.LF
                        & " <section>");
+            elsif Parent /= null then  --  Test redundant, but just in case
+               Gtk_New_With_Mnemonic (Item, Label);
+               Parent.Append (Item);
             end if;
          end if;
 
          N := First_Child (Menu_Node);
 
          if N /= null then
-            Gtk_New (Menu);
-            Menu.Set_Accel_Group (Get_Default_Accelerators (Kernel));
-            Item.Set_Submenu (Menu);
+            if not Active (System_Menus) then
+               Gtk_New (Menu);
+               Menu.Set_Accel_Group (Get_Default_Accelerators (Kernel));
+               Item.Set_Submenu (Menu);
+            end if;
 
             while N /= null loop
                if Node_Name (N) = "menu" then
@@ -2735,11 +2739,11 @@ package body GPS.Kernel.Modules.UI is
                     (Parent_Path & "/" & Strip_Single_Underscores (Label),
                      Menu, N);
                elsif Node_Name (N) = "separator" then
-                  Gtk_New (Sep);
-                  Menu.Append (Sep);
-
                   if Active (System_Menus) then
                      Append (Builder_XML, "</section><section>");
+                  else
+                     Gtk_New (Sep);
+                     Menu.Append (Sep);
                   end if;
                end if;
                N := Next_Sibling (N);
@@ -2777,7 +2781,9 @@ package body GPS.Kernel.Modules.UI is
          Globals.Symbols := Allocate;
       end if;
 
-      Gtk_New (Menubar);
+      if not Active (System_Menus) then
+         Gtk_New (Menubar);
+      end if;
 
       Builder_XML := To_Unbounded_String ("<interface><menu id='menubar'>");
 

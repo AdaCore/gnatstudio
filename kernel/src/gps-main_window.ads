@@ -63,12 +63,13 @@ package GPS.Main_Window is
    procedure Gtk_New
      (Main_Window : out GPS_Window;
       Application : not null access GPS_Application_Record'Class;
-      Menubar     : not null access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class);
+      Menubar     : access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class);
    --  Create a new main window.
    --  Home_Dir is the home directory (e.g ~/.gps) under which configuration
    --  files will be saved.
    --  Prefix_Directory is the prefix where GPS is installed (e.g /opt/gps).
-   --  Application is the GPS Application instance
+   --  Application is the GPS Application instance.
+   --  The Menubar can be null if none was created
 
    function Kernel
      (Self : not null access GPS_Window_Record'Class)
