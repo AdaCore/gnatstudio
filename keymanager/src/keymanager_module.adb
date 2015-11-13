@@ -32,6 +32,7 @@ with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Main_Window;          use GPS.Main_Window;
@@ -684,9 +685,10 @@ package body KeyManager_Module is
       Key                                  : String;
       Save_In_Keys_XML                     : Boolean;
       Remove_Existing_Shortcuts_For_Action : Boolean;
-      Remove_Existing_Actions_For_Shortcut : Boolean;
-      Update_Menus                         : Boolean)
-  is
+      Remove_Existing_Actions_For_Shortcut : Boolean)
+   is
+      Real_Action : constant String := Action_From_Menu (Kernel, Action);
+
       procedure Bind_Internal
         (Table       : in out Key_Htable.Instance;
          Default_Key : Gdk.Types.Gdk_Key_Type;
@@ -723,21 +725,9 @@ package body KeyManager_Module is
             while Tmp /= null loop
                if Tmp.Action /= null
                  and then Equal
-                   (Tmp.Action.all, Action, Case_Sensitive => False)
+                   (Tmp.Action.all, Real_Action, Case_Sensitive => False)
                then
                   return;
-               end if;
-               Tmp := Tmp.Next;
-            end loop;
-
-         elsif Update_Menus then
-            --  Remove the gtk+ bindings
-            Tmp := Get (Table, Key_Binding'(Default_Key, Default_Mod));
-            while Tmp /= null loop
-               if Tmp.Action /= null
-                 and then Tmp.Action (Tmp.Action'First) = '/'
-               then
-                  Update_Shortcut_Display (Kernel, Tmp.Action.all);
                end if;
                Tmp := Tmp.Next;
             end loop;
@@ -749,7 +739,7 @@ package body KeyManager_Module is
 
          --  We need to clone memory associated to Binding3, since it is
          --  freed in the call to Set below.
-         if Action /= "" then
+         if Real_Action /= "" then
             if Binding3 /= null then
                Clone (From => Binding3, To => Tmp);
             else
@@ -757,12 +747,12 @@ package body KeyManager_Module is
             end if;
 
             Binding2 := new Key_Description'
-              (Action  => new String'(Action),
+              (Action  => new String'(Real_Action),
                User_Defined => Save_In_Keys_XML,
                Keymap  => null,
                Next    => Tmp);
             Set (Table, Key_Binding'(Default_Key, Default_Mod), Binding2);
-            Update_Shortcut_Display (Kernel, Action);
+            Update_Shortcut_Display (Kernel, Real_Action);
          else
             Binding2 := Get (Table, Key_Binding'(Default_Key, Default_Mod));
             while Binding2 /= null loop
@@ -799,7 +789,7 @@ package body KeyManager_Module is
 
                elsif List.Action /= null
                  and then Equal
-                   (List.Action.all, Action, Case_Sensitive => False)
+                   (List.Action.all, Real_Action, Case_Sensitive => False)
                then
                   if Previous = null then
                      if List.Next /= null then
@@ -842,7 +832,7 @@ package body KeyManager_Module is
       end Remove_In_Keymap;
 
       Partial_Key           : Gdk_Key_Type;
-      Modif, Mnemonic_Modif : Gdk_Modifier_Type;
+      Modif                 : Gdk_Modifier_Type;
       First, Last           : Integer;
       Keymap                : Keymap_Access;
       Success               : Boolean;
@@ -861,9 +851,8 @@ package body KeyManager_Module is
 
       if Config.Host = Windows
         and then (Key = "control-c" or else Key = "primary-c")
-        and then Action /= ""
-        and then Action /= "/Edit/Copy"
-        and then Action /= "Copy to Clipboard"
+        and then Real_Action /= ""
+        and then Real_Action /= "Copy to Clipboard"
       then
          Kernel.Insert
            (-("Warning: binding Ctrl-C is unreliable on Windows,"
@@ -889,32 +878,6 @@ package body KeyManager_Module is
          if Last > Key'Last then
             if Keymap = null then
                Bind_Internal (Table, Partial_Key, Modif);
-
-               if Update_Menus
-                 and then Action /= ""
-                 and then Action (Action'First) = '/'
-               then
-                  --  Guess the accel path from the menu. This operation might
-                  --  fail if the shortcut is already used as a mnemonic for a
-                  --  menu, so we temporarily change the modifier for mnemonics
-                  --  All menus are assumed to be in the main GPS window at
-                  --  this stage.
-
-                  Mnemonic_Modif := Get_Mnemonic_Modifier
-                    (Get_Main_Window (Kernel));
-
-                  if Modif = Mnemonic_Modif then
-                     Set_Mnemonic_Modifier
-                       (Get_Main_Window (Kernel),
-                        Modif or Primary_Mod_Mask or Mod1_Mask or Shift_Mask);
-                  end if;
-
-                  if Modif = Mnemonic_Modif then
-                     Set_Mnemonic_Modifier
-                       (Get_Main_Window (Kernel), Mnemonic_Modif);
-                  end if;
-               end if;
-
             else
                Bind_Internal (Keymap.Table, Partial_Key, Modif);
             end if;
@@ -952,7 +915,8 @@ package body KeyManager_Module is
                         Error_Message
                           (Kernel,
                            (-"Cannot use key shortcut <") & Key
-                           & (-"> for action """) & Action & """:" & ASCII.LF
+                           & (-"> for action """)
+                           & Real_Action & """:" & ASCII.LF
                            & (-"prefixing key shortcut <")
                            & Key (Key'First .. Last - 1)
                            & (-"> is already bound to action """)
@@ -1586,8 +1550,7 @@ package body KeyManager_Module is
                         Key              => Child.Value.all,
                         Save_In_Keys_XML => User_Defined,
                         Remove_Existing_Shortcuts_For_Action => User_Defined,
-                        Remove_Existing_Actions_For_Shortcut => User_Defined,
-                        Update_Menus     => True);
+                        Remove_Existing_Actions_For_Shortcut => User_Defined);
                   end if;
                end;
 
@@ -1839,8 +1802,7 @@ package body KeyManager_Module is
                      Key    => Node.Value.all,
                      Save_In_Keys_XML                     => False,
                      Remove_Existing_Shortcuts_For_Action => False,
-                     Remove_Existing_Actions_For_Shortcut => True,
-                     Update_Menus                         => True);
+                     Remove_Existing_Actions_For_Shortcut => True);
                end if;
             end if;
 
@@ -1868,8 +1830,7 @@ package body KeyManager_Module is
                Remove_Existing_Shortcuts_For_Action => False,
                Remove_Existing_Actions_For_Shortcut => True,
                Save_In_Keys_XML  => False,
-               Key               => Node.Value.all,
-               Update_Menus      => True);
+               Key               => Node.Value.all);
          end;
       end if;
    end Customize;

@@ -196,8 +196,7 @@ private
       Key                                  : String;
       Save_In_Keys_XML                     : Boolean;
       Remove_Existing_Shortcuts_For_Action : Boolean;
-      Remove_Existing_Actions_For_Shortcut : Boolean;
-      Update_Menus                         : Boolean);
+      Remove_Existing_Actions_For_Shortcut : Boolean);
    --  Add a new key shortcut for Action.
    --
    --  If Remove_Existings_Shortcuts_For_Action, then any binding to this

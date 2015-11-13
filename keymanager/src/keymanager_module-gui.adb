@@ -95,7 +95,6 @@ package body KeyManager_Module.GUI is
    Weight_Column     : constant := 2;
    Icon_Name_Column  : constant := 3;
 
-   Show_All_Menus      : Boolean_Preference;
    Shortcuts_Only      : Boolean_Preference;
    Categories_Pref     : Boolean_Preference;
    Show_Empty_Cat      : Boolean_Preference;
@@ -350,7 +349,6 @@ package body KeyManager_Module.GUI is
    -----------------
 
    procedure Fill_Editor (Editor : access Keys_Editor_Record'Class) is
-      All_Menus  : constant Boolean := Show_All_Menus.Get_Pref;
       Categories : constant Boolean := Categories_Pref.Get_Pref;
       Shortcuts  : constant Boolean := Shortcuts_Only.Get_Pref;
       Empty_Cat  : constant Boolean := Show_Empty_Cat.Get_Pref;
@@ -387,11 +385,7 @@ package body KeyManager_Module.GUI is
               or else Key /= "";
 
             if Show then
-               if Name (Name'First) /= '/' then
-                  Show := not Shortcuts or else Key /= "";
-               else
-                  Show := Key /= "" or else (not Shortcuts and then All_Menus);
-               end if;
+               Show := not Shortcuts or else Key /= "";
             end if;
 
             if Show then
@@ -883,7 +877,8 @@ package body KeyManager_Module.GUI is
                         Trace
                           (Testsuite_Handle,
                            "Dialog for already assigned key would have"
-                           & " been displayed");
+                           & " been displayed, old_action='"
+                           & Old_Action & "' action='" & New_Action & "'");
 
                      elsif Message_Dialog
                        (Msg =>
@@ -915,8 +910,7 @@ package body KeyManager_Module.GUI is
                      Key              => Key,
                      Save_In_Keys_XML => True,
                      Remove_Existing_Actions_For_Shortcut => True,
-                     Remove_Existing_Shortcuts_For_Action => True,
-                     Update_Menus     => True);
+                     Remove_Existing_Shortcuts_For_Action => True);
                   Save_Custom_Keys (Ed.Kernel);
                   Refresh_Editor (Ed);
                end if;
@@ -1033,8 +1027,7 @@ package body KeyManager_Module.GUI is
             Key               => "",
             Save_In_Keys_XML  => True,
             Remove_Existing_Shortcuts_For_Action => True,
-            Remove_Existing_Actions_For_Shortcut => True,
-            Update_Menus      => False);
+            Remove_Existing_Actions_For_Shortcut => True);
          Save_Custom_Keys (Ed.Kernel);
          Refresh_Editor (Ed);
       end if;
@@ -1055,7 +1048,6 @@ package body KeyManager_Module.GUI is
    begin
       Append_Menu (Menu, K, Shortcuts_Only);
       Append_Menu (Menu, K, Categories_Pref);
-      Append_Menu (Menu, K, Show_All_Menus);
       Append_Menu (Menu, K, Show_Empty_Cat);
    end Create_Menu;
 
@@ -1349,7 +1341,6 @@ package body KeyManager_Module.GUI is
          if Pref = null
            or else Pref = Preference (Shortcuts_Only)
            or else Pref = Preference (Categories_Pref)
-           or else Pref = Preference (Show_All_Menus)
            or else Pref = Preference (Show_Empty_Cat)
          then
             Refill_Editor (View);
@@ -1366,18 +1357,6 @@ package body KeyManager_Module.GUI is
    begin
       Keys_Editor_Views.Register_Module (Kernel);
 
-      Show_All_Menus := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("shortcuts-show-all-menus", False,
-         Label => -"Show all menus",
-         Doc => -("Whether to show all menus, or only those with a shortcut"
-           & ASCII.LF
-           & "Historically, shortcuts used to be associated directly to menus,"
-           & " but it is in fact better to associate them with the"
-           & " corresponding action, which you can see by looking at the"
-           & " tooltip on the menu."
-           & ASCII.LF
-           & "This ensures the shortcut remains available even when the menu"
-           & " is not visible."));
       Shortcuts_Only := Kernel.Get_Preferences.Create_Invisible_Pref
         ("shortcuts-only", False,
          Label => -"Shortcuts only",

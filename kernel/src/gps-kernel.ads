@@ -419,21 +419,6 @@ package GPS.Kernel is
    --  Return Integer'Last if locations are not comparable, for example marks
    --  are in different files.
 
-   --------------
-   -- Commands --
-   --------------
-
-   procedure Register_Perma_Command
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : access Commands.Root_Command'Class);
-   --  Register a command to be freed when GPS exits. Such commands must not be
-   --  added to command queues, and therefore this is mostly intended for
-   --  commands used in actions or menus (but in such case the command is
-   --  automatically added already). A given command can be registered
-   --  several times though.
-   --  The current reference to Command is stolen, ie you must not call Unref
-   --  on the command before first calling Ref yourself.
-
    --------------------
    -- Action filters --
    --------------------
@@ -1120,12 +1105,6 @@ private
 
       Style_Manager : System.Address;
       --  A pointer to the color manager.
-
-      Perma_Commands : Command_Set.Set;
-      --  The list of global commands associated with menus, actions or
-      --  contextual menus, so that they can be freed on exit. These commands
-      --  are automatically added to the list when the menu or action is
-      --  created
 
       ----------------------
       -- Context handling --

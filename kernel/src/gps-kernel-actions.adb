@@ -54,9 +54,11 @@ package body GPS.Kernel.Actions is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Action_Record, Action_Record_Access);
    begin
-      --  Do not free Action.Command itself, since some menus might still
-      --  be referring to it. It will be freed when the whole htable is
-      --  reset (since it was registered through Register_Perma_Command)
+      --  In the past, we did not free the command explictly, since menus might
+      --  have referenced directly, But since now they also keep the name of
+      --  the action, it is safe to free the command
+
+      Commands.Unref (Command_Access (Action.Command));
 
       --  Do not free the Action.Filter, which will be taken care of when the
       --  kernel itself is destroyed. This means that filters always have a
@@ -150,8 +152,6 @@ package body GPS.Kernel.Actions is
          Disabled   => False,
          Menus      => null,
          Icon_Name  => Stock);
-
-      Register_Perma_Command (Kernel, Cmd);
 
       Set (Actions_Htable_Access (Kernel.Actions).Table,
            To_Lower (Name), Action);

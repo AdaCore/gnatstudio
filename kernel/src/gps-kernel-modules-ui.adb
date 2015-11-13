@@ -160,17 +160,6 @@ package body GPS.Kernel.Modules.UI is
       return access Action_Record;
    --  Lookup the action for this contextual menu
 
-   type Menu_Command_Record is new Interactive_Command with record
-      Kernel    : Kernel_Handle;
-      Menu_Name : GNAT.Strings.String_Access;
-   end record;
-   type Menu_Command is access all Menu_Command_Record'Class;
-   overriding function Execute
-     (Command : access Menu_Command_Record;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   overriding procedure Free (X : in out Menu_Command_Record);
-   --  See doc for interactive commands
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Contextual_Menu_Record, Contextual_Menu_Access);
 
@@ -246,11 +235,6 @@ package body GPS.Kernel.Modules.UI is
      (Kernel : access Kernel_Handle_Record'Class;
       Name   : String) return Contextual_Menu_Reference;
    --  Find a contextual menu by name
-
-   function Create_Command_For_Menu
-     (Kernel    : Kernel_Handle;
-      Full_Path : String) return Menu_Command;
-   --  Utility function: create a command for a given menu
 
    package Node_Maps is new Ada.Containers.Indefinite_Hashed_Maps
      (Key_Type        => String,
@@ -477,63 +461,6 @@ package body GPS.Kernel.Modules.UI is
       Update_Menus_Idle_Id : G_Source_Id := No_Source_Id;
    end record;
    Globals : Global_Data;
-
-   -----------------------------
-   -- Create_Command_For_Menu --
-   -----------------------------
-
-   function Create_Command_For_Menu
-     (Kernel    : Kernel_Handle;
-      Full_Path : String) return Menu_Command
-   is
-      Command : Menu_Command;
-   begin
-      Command := new Menu_Command_Record;
-      Command.Kernel := Kernel;
-      Command.Menu_Name := new String'(Full_Path);
-      Register_Perma_Command (Kernel, Command);
-      return Command;
-   end Create_Command_For_Menu;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (X : in out Menu_Command_Record) is
-   begin
-      GNAT.Strings.Free (X.Menu_Name);
-   end Free;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Menu_Command_Record;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Menu : constant Gtk_Menu_Item := Find_Menu_Item
-        (Command.Kernel, Command.Menu_Name.all);
-   begin
-      if Menu /= null then
-         Trace (Me, "Executing " & Command.Menu_Name.all);
-
-         if Menu.all in Action_Menu_Item_Record'Class then
-            Execute_Action
-              (Menu, Action_Menu_Item (Menu).Data,
-               In_Foreground => Context.Synchronous);
-         else
-            Activate (Menu);
-         end if;
-
-         return Success;
-      else
-         Command.Kernel.Insert
-           (-"Can't execute " & Command.Menu_Name.all,
-            Mode => Error);
-         return Failure;
-      end if;
-   end Execute;
 
    ---------------
    -- Emphasize --
@@ -1209,6 +1136,27 @@ package body GPS.Kernel.Modules.UI is
       end if;
    end Find_Menu_Item;
 
+   ----------------------
+   -- Action_From_Menu --
+   ----------------------
+
+   function Action_From_Menu
+     (Kernel : access Kernel_Handle_Record'Class;
+      Path   : String) return String
+   is
+      Item : Gtk_Menu_Item;
+   begin
+      if Path /= "" and then Path (Path'First) = '/' then
+         Item := Find_Menu_Item (Kernel, Path);
+         if Item /= null
+           and then Item.all in Action_Menu_Item_Record'Class
+         then
+            return Action_Menu_Item (Item).Data.Action.all;
+         end if;
+      end if;
+      return Path;
+   end Action_From_Menu;
+
    -------------------
    -- Register_Menu --
    -------------------
@@ -1274,24 +1222,6 @@ package body GPS.Kernel.Modules.UI is
 
          if Filter /= null then
             Add_To_Global_Proxies (Item, Kernel, Filter);
-         end if;
-
-         if Item.Get_Child /= null then
-            declare
-               Full : constant String :=
-                 Unescape_Underscore
-                   (Strip_Single_Underscores
-                      (Create_Menu_Path ('/' & Parent_Path, Item.Get_Label)));
-            begin
-               Register_Action
-                 (Kernel      => Kernel,
-                  Name        => Full,
-                  Command     => Create_Command_For_Menu
-                    (Kernel_Handle (Kernel), Full),
-                  Description => "Menu " & Full,
-                  Filter      => Filter,
-                  Category    => "Menus");
-            end;
          end if;
       end if;
    end Register_Menu;
@@ -1645,27 +1575,6 @@ package body GPS.Kernel.Modules.UI is
       return Gtk_Menu_Item (Self);
    end Register_Menu;
 
-   -----------------------
-   -- Register_MDI_Menu --
-   -----------------------
-
-   procedure Register_MDI_Menu
-     (Kernel     : Kernel_Handle;
-      Item_Name  : String;
-      Accel_Path : String)
-   is
-      pragma Unreferenced (Accel_Path);
-      Full_Path : constant String := "/Window/" & Item_Name;
-   begin
-      Register_Action
-        (Kernel      => Kernel,
-         Name        => Full_Path,
-         Command     => Create_Command_For_Menu (Kernel, Full_Path),
-         Description => "Menu " & Full_Path,
-         Filter      => null,
-         Category    => "Menus");
-   end Register_MDI_Menu;
-
    ------------------
    -- Execute_Menu --
    ------------------
@@ -1674,11 +1583,18 @@ package body GPS.Kernel.Modules.UI is
      (Kernel    : Kernel_Handle;
       Menu_Name : String)
    is
-      Command : Menu_Command;
+      Menu : constant Gtk_Menu_Item := Find_Menu_Item (Kernel, Menu_Name);
    begin
-      Command := Create_Command_For_Menu (Kernel, Menu_Name);
-      Launch_Foreground_Command
-        (Kernel, Command, Destroy_On_Exit => False);
+      if Menu /= null then
+         if Menu.all in Action_Menu_Item_Record'Class then
+            Execute_Action
+              (Menu, Action_Menu_Item (Menu).Data, In_Foreground => True);
+         else
+            Activate (Menu);
+         end if;
+      else
+         Kernel.Insert (-"Can't execute " & Menu_Name, Mode => Error);
+      end if;
    end Execute_Menu;
 
    -------------------------

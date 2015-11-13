@@ -1018,15 +1018,6 @@ package body GPS.Kernel is
       Free (Handle.Logs_Mapper);
       Free_Messages_Container (Handle);
 
-      for C of Handle.Perma_Commands loop
-         declare
-            A : Commands.Command_Access := C;
-         begin
-            Commands.Unref (A);
-         end;
-      end loop;
-      Handle.Perma_Commands.Clear;
-
       Unchecked_Free (Handle.Refactoring);
 
       --  Handle.Symbols.Display_Stats;
@@ -1674,25 +1665,6 @@ package body GPS.Kernel is
    begin
       null;
    end Destroy;
-
-   ----------------------------
-   -- Register_Perma_Command --
-   ----------------------------
-
-   procedure Register_Perma_Command
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : access Commands.Root_Command'Class)
-   is
-      use Commands.Command_Lists, Commands;
-   begin
-      if Kernel.Perma_Commands.Contains (Command_Access (Command)) then
-         return;
-      end if;
-
-      --  Command is not in list: we steal a reference to it
-
-      Kernel.Perma_Commands.Insert (Command_Access (Command));
-   end Register_Perma_Command;
 
    ----------------------
    -- Enter_Hyper_Mode --

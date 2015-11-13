@@ -1392,9 +1392,7 @@ procedure GPS.Main is
             Set_Submenu
               (Menu_Item, Kernel_Desktop.Create_Menu
                  (GPS_Main.MDI,
-                  User         => App.Kernel,
-                  Registration =>
-                    GPS.Kernel.Modules.UI.Register_MDI_Menu'Access));
+                  User         => App.Kernel));
          end if;
       end;
 

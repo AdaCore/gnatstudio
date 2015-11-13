@@ -355,6 +355,15 @@ package GPS.Kernel.Modules.UI is
    --  When a menu is optional, it is hidden if its action does not exist.
    --  Otherwise, the menu is simply greyed out, but the menu is still visible.
 
+   function Action_From_Menu
+     (Kernel : access Kernel_Handle_Record'Class;
+      Path   : String) return String;
+   --  Return the name of the action executed by a menu (or "" if there is no
+   --  such menu or it is not associated with an action).
+   --  If Path is not a menu path (starting with /), it is returned as is. So
+   --  this function can be given the name of any action to retrieve either the
+   --  action itself or the action that would be executed by selecting the menu
+
    function Find_Menu_Item
      (Kernel : access Kernel_Handle_Record'Class;
       Path   : String) return Gtk.Menu_Item.Gtk_Menu_Item;
@@ -362,12 +371,6 @@ package GPS.Kernel.Modules.UI is
    --  the underlying gtk menu item. Useful in particular to check or change
    --  the state of a menu item. Path is case insensitive.
    --  This function might return null when the item is not found.
-
-   procedure Register_MDI_Menu
-     (Kernel     : Kernel_Handle;
-      Item_Name  : String;
-      Accel_Path : String);
-   --  Register in the GPS menu machinery the menus created by the GtkAda MDI
 
    procedure Execute_Menu
      (Kernel    : Kernel_Handle;
