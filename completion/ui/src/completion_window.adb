@@ -680,15 +680,6 @@ package body Completion_Window is
 
             Last_Completion := To_Unbounded_String (Completion);
 
-            if Custom_Icon_Name /= "" then
-               Icon_Name := new String'(Custom_Icon_Name);
-            else
-               Icon_Name := new String'
-                 (Stock_From_Category
-                    (False, Get_Visibility (Proposal),
-                     Get_Category (Proposal)));
-            end if;
-
             --  Check whether the current iter contains the same completion
             if
               Explorer.Index = 1
@@ -698,6 +689,16 @@ package body Completion_Window is
               or else
                 Proposal.Get_Category /= Last_Comp_Cat
             then
+
+               if Custom_Icon_Name /= "" then
+                  Icon_Name := new String'(Custom_Icon_Name);
+               else
+                  Icon_Name := new String'
+                    (Stock_From_Category
+                       (False, Get_Visibility (Proposal),
+                        Get_Category (Proposal)));
+               end if;
+
                Last_Comp_Cat := Proposal.Get_Category;
                Info :=
                  (new String'(Showable),
