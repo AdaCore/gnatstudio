@@ -2040,17 +2040,29 @@ package body Clang_Xref is
       File_Tree : constant Semantic_Tree'Class :=
         Clang_Db.Kernel.Get_Abstract_Tree_For_File (Ref_Loc.File);
 
-      Parent : constant Clang_Node := Clang_Node
-        (File_Tree.Node_At
-           (Sloc, (Cat_Function, Cat_Method, Cat_Constructor)));
+      Sem_Parent : constant Semantic_Node'Class :=
+        File_Tree.Node_At (Sloc, (Cat_Function, Cat_Method, Cat_Constructor));
 
-      Ret : constant Clang_Entity :=
-        Cursor_As_Entity
-          (Clang_Db, Clang_Db.Kernel, Parent.Cursor);
    begin
-      return
-        (if Ret.Ref_Loc = Ref_Loc then No_Root_Entity
-            else To_Root_Entity (Ret));
+
+      --  If the reference is to a toplevel node, it won't have any parent. In
+      --  this case, we return No_Root_Entity
+
+      if Sem_Parent = No_Semantic_Node then
+         return No_Root_Entity;
+      else
+         declare
+            Parent : constant Clang_Node := Clang_Node (Sem_Parent);
+
+            Ret    : constant Clang_Entity :=
+              Cursor_As_Entity
+                (Clang_Db, Clang_Db.Kernel, Parent.Cursor);
+         begin
+            return
+              (if Ret.Ref_Loc = Ref_Loc then No_Root_Entity
+               else To_Root_Entity (Ret));
+         end;
+      end if;
    end Get_Caller;
 
    ----------------
