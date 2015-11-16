@@ -21,7 +21,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -29,7 +29,6 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Glib.Object;               use Glib.Object;
 
 with Gtk.Accel_Label;           use Gtk.Accel_Label;
-with Gtk.Check_Menu_Item;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -82,14 +81,11 @@ package body Custom_Module is
    Description_Cst   : aliased constant String := "description";
    Category_Cst      : aliased constant String := "category";
    Key_Cst           : aliased constant String := "key";
-   Is_Active_Cst     : aliased constant String := "is_active";
 
    Menu_Get_Params : constant Cst_Argument_List :=
      (1 => Path_Cst'Access);
    Menu_Rename_Params : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
-   Menu_Set_Active_Params : constant Cst_Argument_List :=
-     (1 => Is_Active_Cst'Access);
    Contextual_Constructor_Params : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Contextual_Create_Dynamic_Params : constant Cst_Argument_List :=
@@ -1145,54 +1141,34 @@ package body Custom_Module is
             if Menu = null then
                Set_Error_Msg (Data, -"No such menu: " & Path);
             else
-               Inst := Get_Instance (Get_Script (Data), Widget => Menu);
-               if Inst = No_Class_Instance then
-                  Inst := New_Instance (Get_Script (Data), Menu_Class);
-                  Set_Data (Inst, Widget => GObject (Menu));
-               end if;
-
+               Inst := New_Instance (Get_Script (Data), Menu_Class);
+               Set_Data (Inst, Menu_Class, Path);
                Set_Return_Value (Data, Inst);
             end if;
          end;
 
-      elsif Command = "get_active" then
+      elsif Command = "action" then
          declare
-            use Gtk.Check_Menu_Item;
-            Inst : constant Class_Instance := Nth_Arg (Data, 1, Menu_Class);
-            W    : constant GObject := Get_Data (Inst);
-         begin
-            if W /= null and then
-              W.all in Gtk_Check_Menu_Item_Record'Class
-            then
-               Set_Return_Value (Data, Get_Active (Gtk_Check_Menu_Item (W)));
-            else
-               Set_Return_Value (Data, False);
-            end if;
-         end;
-      elsif Command = "set_active" then
-         Name_Parameters (Data, Menu_Set_Active_Params);
-         declare
-            use Gtk.Check_Menu_Item;
             Inst  : constant Class_Instance := Nth_Arg (Data, 1, Menu_Class);
-            Value : constant Boolean := Nth_Arg (Data, 2, True);
-            W     : constant GObject := Get_Data (Inst);
+            Path  : constant String := Get_Data (Inst, Menu_Class);
+            Action : constant String := Action_From_Menu (Kernel, Path);
+            Result : Class_Instance;
+            Action_Class : constant Class_Type := New_Class (Kernel, "Action");
          begin
-            if W /= null and then
-              W.all in Gtk_Check_Menu_Item_Record'Class
-            then
-               Set_Active (Gtk_Check_Menu_Item (W), Value);
-            end if;
+            Result := New_Instance (Data.Get_Script, Action_Class);
+            Set_Data (Result, Action_Class, Value => Action);
+            Set_Return_Value (Data, Result);
          end;
+
       elsif Command = "rename" then
          Name_Parameters (Data, Menu_Rename_Params);
          declare
             Inst : constant Class_Instance := Nth_Arg (Data, 1, Menu_Class);
-            W    : constant Gtk_Widget     :=
-                     Gtk_Widget (GObject'(Get_Data (Inst)));
-            Menu : constant Gtk_Menu_Item  := Gtk_Menu_Item (W);
+            Path : constant String := Get_Data (Inst, Menu_Class);
+            Menu : constant Gtk_Menu_Item  := Find_Menu_Item (Kernel, Path);
             Label : Gtk_Accel_Label;
          begin
-            if W /= null then
+            if Menu /= null then
                Gtk_New (Label, "");
                Set_Text_With_Mnemonic (Label, Nth_Arg (Data, 2));
                Set_Alignment (Label, 0.0, 0.5);
@@ -1366,8 +1342,7 @@ package body Custom_Module is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Action_Class : constant Class_Type := New_Class
-        (Kernel, "Action", Base => Get_GUI_Class (Kernel));
+      Action_Class : constant Class_Type := New_Class (Kernel, "Action");
       Menu_Class : constant Class_Type := New_Class
         (Kernel, "Menu", Base => Get_GUI_Class (Kernel));
 
@@ -1454,18 +1429,17 @@ package body Custom_Module is
          Inst := Nth_Arg (Data, 1, Action_Class);
 
          declare
-            Item   : Gtk_Menu_Item;
             Path   : constant String  := Nth_Arg (Data, 2);
             Ref    : constant String  := Nth_Arg (Data, 3, "");
             Before : constant Boolean := Nth_Arg (Data, 4, True);
             Action : constant String := Get_Data (Inst, Action_Class);
          begin
-            Item := Register_Menu
+            Register_Menu
               (Kernel, Path, Action,
                Ref_Item    => Ref,
                Add_Before  => Before);
             Inst := New_Instance (Get_Script (Data), Menu_Class);
-            Set_Data (Inst, Widget => GObject (Item));
+            Set_Data (Inst, Menu_Class, Path);
             Set_Return_Value (Data, Inst);
          end;
 
@@ -1527,10 +1501,8 @@ package body Custom_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Menu_Class : constant Class_Type := New_Class
-        (Kernel, "Menu", Base => Get_GUI_Class (Kernel));
-      Action_Class : constant Class_Type := New_Class
-        (Kernel, "Action", Base => Get_GUI_Class (Kernel));
+      Menu_Class : constant Class_Type := New_Class (Kernel, "Menu");
+      Action_Class : constant Class_Type := New_Class (Kernel, "Action");
       Contextual_Class : constant Class_Type := New_Class
         (Kernel, "Contextual");
    begin
@@ -1597,20 +1569,13 @@ package body Custom_Module is
          Class         => Menu_Class,
          Static_Method => True,
          Handler       => Menu_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("action",
+         Class         => Menu_Class,
+         Getter        => Menu_Handler'Access);
       Register_Command
         (Kernel, "rename",
          Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Menu_Class,
-         Handler       => Menu_Handler'Access);
-      Register_Command
-        (Kernel, "get_active",
-         Maximum_Args  => 0,
-         Class         => Menu_Class,
-         Handler       => Menu_Handler'Access);
-      Register_Command
-        (Kernel, "set_active",
-         Minimum_Args  => 0,
          Maximum_Args  => 1,
          Class         => Menu_Class,
          Handler       => Menu_Handler'Access);

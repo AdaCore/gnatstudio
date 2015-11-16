@@ -67,7 +67,7 @@ Classes
 
 .. autoclass:: Action
 
-   .. inheritance-diagram:: GPS.Action
+
 
    .. automethod:: GPS.Action.__init__
 
@@ -1313,19 +1313,29 @@ Classes
 
 .. autoclass:: Menu
 
-   .. inheritance-diagram:: GPS.Menu
+
+
+
+   .. autoattribute:: GPS.Menu.action
+
 
    .. automethod:: GPS.Menu.__init__
 
    .. automethod:: GPS.Menu.create
 
+   .. automethod:: GPS.Menu.destroy
+
    .. automethod:: GPS.Menu.get
 
-   .. automethod:: GPS.Menu.get_active
+   .. automethod:: GPS.Menu.hide
+
+   .. automethod:: GPS.Menu.pywidget
 
    .. automethod:: GPS.Menu.rename
 
-   .. automethod:: GPS.Menu.set_active
+   .. automethod:: GPS.Menu.set_sensitive
+
+   .. automethod:: GPS.Menu.show
 
 :class:`GPS.Message`
 ^^^^^^^^^^^^^^^^^^^^

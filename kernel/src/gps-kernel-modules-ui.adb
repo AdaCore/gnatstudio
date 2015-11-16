@@ -242,14 +242,16 @@ package body GPS.Kernel.Modules.UI is
       Hash            => Ada.Strings.Hash_Case_Insensitive,
       Equivalent_Keys => "=");
 
-   procedure Register_Menu
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Parent_Path : String;
-      Item        : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null;
-      Ref_Item    : String := "";
-      Add_Before  : Boolean := True;
-      Filter      : Action_Filter  := null;
-      Menubar     : access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class := null);
+   function Create_Menu_Item
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Parent_Path   : String;
+      Menu_Label    : String;
+      Action        : String;
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True;
+      Optional      : Boolean := False;
+      Menubar       : not null access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class)
+      return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Add new menu items to the menu bar, as a child of Parent_Path.
    --
    --  Parent_Path should have a form like "/main_main/submenu". Underscores
@@ -1194,75 +1196,6 @@ package body GPS.Kernel.Modules.UI is
       return Path;
    end Action_From_Menu;
 
-   -------------------
-   -- Register_Menu --
-   -------------------
-
-   procedure Register_Menu
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Parent_Path : String;
-      Item        : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null;
-      Ref_Item    : String := "";
-      Add_Before  : Boolean := True;
-      Filter      : Action_Filter  := null;
-      Menubar     : access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class := null)
-   is
-      Parent, Pred : Gtk_Menu_Item;
-      Parent_Menu  : Gtk_Menu;
-      Index        : Gint;
-      Win : constant GPS_Window := GPS_Window (Kernel.Get_Main_Window);
-      Bar : Gtk_Menu_Bar;
-
-   begin
-      if (Win = null or else Win.Menu_Bar = null)
-        and then Menubar = null
-      then
-         return;
-      end if;
-
-      Bar := (if Menubar = null then Win.Menu_Bar else Gtk_Menu_Bar (Menubar));
-
-      Parent := Find_Or_Create_Menu_Tree
-        (Menu_Bar     => Bar,
-         Menu         => null,
-         Path         => Parent_Path,
-         Accelerators => Get_Default_Accelerators (Kernel),
-         Add_Before   => Add_Before,
-         Ref_Item     => Ref_Item,
-         Allow_Create => True);
-
-      if Parent = null then
-         Trace (Me, "Register_Menu: Parent menu not found for " & Parent_Path);
-         Parent_Menu := null;
-      else
-         Parent_Menu := Gtk_Menu (Get_Submenu (Parent));
-         if Parent_Menu = null then
-            Gtk_New (Parent_Menu);
-            Set_Submenu (Parent, Parent_Menu);
-         end if;
-      end if;
-
-      if Item /= null then
-         Find_Menu_Item_By_Name
-           (Menu_Bar  => Bar,
-            Menu      => Parent_Menu,
-            Name      => Ref_Item,
-            Menu_Item => Pred,
-            Index     => Index);
-
-         Add_Menu (Parent     => Parent_Menu,
-                   Menu_Bar   => Bar,
-                   Item       => Item,
-                   Index      => Index,
-                   Add_Before => Add_Before);
-         Item.Show_All;
-
-         if Filter /= null then
-            Add_To_Global_Proxies (Item, Kernel, Filter);
-         end if;
-      end if;
-   end Register_Menu;
-
    --------------
    -- Get_Data --
    --------------
@@ -1552,75 +1485,110 @@ package body GPS.Kernel.Modules.UI is
       Ref_Item      : String := "";
       Add_Before    : Boolean := True)
    is
-      Ignored : Gtk_Menu_Item;
+      Full_Path : constant String := Create_Menu_Path ("/", Path);
+      Win       : constant GPS_Window := GPS_Window (Kernel.Get_Main_Window);
+      Menubar   : constant Gtk_Menu_Bar :=
+        (if Win /= null then Win.Menu_Bar else null);
+      Ignored   : Gtk_Menu_Item;
       pragma Unreferenced (Ignored);
    begin
-      Ignored := Register_Menu (Kernel, Path, Action, Ref_Item, Add_Before);
+      if Menubar /= null then
+         Ignored := Create_Menu_Item
+           (Kernel,
+            Parent_Path => Parent_Menu_Name (Full_Path),
+            Menu_Label  => Base_Menu_Name (Full_Path),
+            Action      => Action,
+            Ref_Item    => Ref_Item,
+            Add_Before  => Add_Before,
+            Menubar     => Menubar);
+      end if;
    end Register_Menu;
 
-   -------------------
-   -- Register_Menu --
-   -------------------
+   ----------------------
+   -- Create_Menu_Item --
+   ----------------------
 
-   function Register_Menu
+   function Create_Menu_Item
      (Kernel        : not null access Kernel_Handle_Record'Class;
-      Path          : String;
+      Parent_Path   : String;
+      Menu_Label    : String;
       Action        : String;
       Ref_Item      : String := "";
       Add_Before    : Boolean := True;
       Optional      : Boolean := False;
-      Menubar       : access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class := null)
+      Menubar       : not null access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class)
       return Gtk.Menu_Item.Gtk_Menu_Item
    is
-      Self : Action_Menu_Item;
-      Full_Path : constant String := Create_Menu_Path ("/", Path);
-      Accel_Path  : constant String := "<gps>" & Full_Path;
-      Item        : Gtk_Menu_Item;
-      Sep         : Gtk_Separator_Menu_Item;
+      Self         : Action_Menu_Item;
+      Parent, Pred, Item : Gtk_Menu_Item;
+      Parent_Menu  : Gtk_Menu;
+      Index        : Gint;
    begin
-      if Path (Path'Last) = '-' then
-         Gtk_New (Sep);
-         Register_Menu
-           (Kernel, Parent_Menu_Name (Full_Path), Sep, Ref_Item, Add_Before,
-            Menubar => Menubar);
-         return Gtk_Menu_Item (Sep);
+      --  Find or create the parent menu
 
+      Parent := Find_Or_Create_Menu_Tree
+        (Menu_Bar     => Gtk_Menu_Bar (Menubar),
+         Menu         => null,
+         Path         => Parent_Path,
+         Accelerators => Get_Default_Accelerators (Kernel),
+         Add_Before   => Add_Before,
+         Ref_Item     => Ref_Item,
+         Allow_Create => True);
+
+      if Parent = null then
+         Trace (Me, "Register_Menu: Parent menu not found for " & Parent_Path);
+         return null;
       else
-         Item := Find_Menu_Item (Kernel, Full_Path);
-         if Item /= null then
-            Trace (Me, "Menu registered twice: " & Full_Path);
-            return Item;
+         Parent_Menu := Gtk_Menu (Get_Submenu (Parent));
+         if Parent_Menu = null then
+            Gtk_New (Parent_Menu);
+            Set_Submenu (Parent, Parent_Menu);
          end if;
+      end if;
+
+      --  Find the reference menu item so that we can insert in proper place
+
+      Find_Menu_Item_By_Name
+        (Menu_Bar  => Gtk_Menu_Bar (Menubar),
+         Menu      => Parent_Menu,
+         Name      => Ref_Item,
+         Menu_Item => Pred,
+         Index     => Index);
+
+      --  Add the new item
+
+      if Menu_Label (Menu_Label'First) = '-' then
+         Item := Gtk_Menu_Item (Gtk_Separator_Menu_Item_New);
+      else
+         --  ??? Do not test for duplicate menus anymore. These can only happen
+         --  through an incorrect menus.xml (which we test), or rogue plugins
+         --  (which the author tests). This speeds up the initial creation of
+         --  menus.
 
          --  Create the menu item
          Self := new Action_Menu_Item_Record;
-
-         Gtk.Menu_Item.Initialize_With_Mnemonic
-           (Self, Label => Base_Menu_Name (Full_Path));
-
+         Gtk.Menu_Item.Initialize_With_Mnemonic (Self, Label => Menu_Label);
          Self.Data := (Action    => new String'(Action),
                        Kernel    => Kernel,
                        Optional  => Optional,
                        Hide      => False,
                        Looked_Up => null);
-         Self.Set_Accel_Path (Accel_Path);
-         Get_Style_Context (Self).Add_Class ("gpsaction");
-
-         --  Add it to the menubar. We do not use Dir_Name, which would ignore
-         --  escaping and would use '\' as a separator.
-
-         Register_Menu
-           (Kernel, Parent_Menu_Name (Full_Path), Self, Ref_Item, Add_Before,
-            Menubar => Menubar);
-
-         Add_To_Global_Proxies (Self, Kernel, null);
-         --  And now setup the dynamic behavior
-
          Self.On_Activate (On_Activate_Action_Item'Access);
-
-         return Gtk_Menu_Item (Self);
+         Add_To_Global_Proxies (Self, Kernel, null);
+         Item := Gtk_Menu_Item (Self);
       end if;
-   end Register_Menu;
+
+      if Index = -1 then
+         Parent_Menu.Append (Item);
+      elsif Add_Before then
+         Parent_Menu.Insert (Item, Index);
+      else
+         Parent_Menu.Insert (Item, Index + 1);
+      end if;
+
+      Item.Show_All;
+      return Item;
+   end Create_Menu_Item;
 
    ------------------
    -- Execute_Menu --
@@ -2250,8 +2218,6 @@ package body GPS.Kernel.Modules.UI is
          Button.Set_Icon_Name (Icon_Name);
       end if;
 
-      Get_Style_Context (Button).Add_Class ("gpsaction");
-
       --  The side effect is to set image, tooltip,... if the action already
       --  exists.
       --  If the action is unknown, or it has a filter, we will need to
@@ -2670,8 +2636,8 @@ package body GPS.Kernel.Modules.UI is
                        & XML_Utils.Protect (Action)
                        & "</attribute></item>" & ASCII.LF);
             else
-               Item := Register_Menu
-                 (Kernel, Parent_Path & "/" & Label,
+               Item := Create_Menu_Item
+                 (Kernel, Parent_Path, Label,
                   Action, Optional => Optional, Menubar => Menubar);
             end if;
          else

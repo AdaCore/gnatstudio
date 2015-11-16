@@ -310,7 +310,28 @@ class Contextual(object):
 @extend_gps
 class Menu(GPS.GUI):
 
-    @override_gps_method
+    def set_sensitive(self, sensitive=True):
+        """Disable the action associated with the menu"""
+        self.action.disable(not sensitive)
+
+    def destroy(self):
+        # For backward compatibility only
+        pass
+
+    def hide(self):
+        """Disable the action associated with the menu"""
+        self.action.disable(True)
+
+    def show(self):
+        """Enable the action associated with the menu"""
+        self.action.disable(False)
+
+    def pywidget(self):
+        GPS.Console().write(
+            "GPS.Menu.pywidget is no longer supported." +
+            " Use GPS.Menu.action to interacte with the action" +
+            " directly")
+
     def create(
             path, on_activate='', ref='', add_before=True,
             filter=None, group=''):

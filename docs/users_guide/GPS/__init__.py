@@ -207,7 +207,7 @@ class GUI(object):
 # Action
 ###########################################################
 
-class Action(GUI):
+class Action():
 
     """
     This class gives access to the interactive commands in GPS. These are the
@@ -276,6 +276,15 @@ class Action(GUI):
            dialog. If you are using Python, a convenient value is
            on_activate.__doc__, which avoids duplicating the comment.
 
+        """
+        pass  # implemented in Ada
+
+    def disable(self, disabled=True):
+        """
+        Prevent the execution of the action, whether through menus,
+        contextual menus, key shortcuts,...
+
+        :param bool disabled: whether to disable or enable
         """
         pass  # implemented in Ada
 
@@ -7477,7 +7486,7 @@ class MDIWindow(GUI):
 # Menu
 ###########################################################
 
-class Menu(GUI):
+class Menu(object):
 
     """
     This class is a general interface to the menu system in GPS. It gives you
@@ -7519,14 +7528,6 @@ class Menu(GUI):
         """
         pass  # implemented in Ada
 
-    def get_active(self):
-        """
-        Returns True if the widget is a currently active radio menu item.
-
-        :return: A boolean
-        """
-        pass  # implemented in Ada
-
     def rename(self, name):
         """
         Changes the name of a menu. The first underscore character seen in
@@ -7535,14 +7536,6 @@ class Menu(GUI):
         need to double it.
 
         :param name: A string
-        """
-        pass  # implemented in Ada
-
-    def set_active(self, is_active=True):
-        """
-        Sets the active state of a radio menu item.
-
-        :param is_active: A boolean
         """
         pass  # implemented in Ada
 
@@ -7565,6 +7558,9 @@ class Message(object):
     """
     The flags returned by :func:`GPS.Message.get_flags`.
     """
+
+    action = None
+    """The GPS.Action executed by this menu"""
 
     @staticmethod
     def __del__():

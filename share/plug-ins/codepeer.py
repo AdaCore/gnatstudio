@@ -622,5 +622,3 @@ if codepeer:
     xml_codepeer = xml_codepeer.replace('@EXAMPLE@', example_root)
     GPS.parse_xml(xml_codepeer)
     GPS.Hook("project_changed").add(on_project_changed)
-else:
-    GPS.Menu.get("CodePeer").destroy()

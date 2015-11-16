@@ -129,9 +129,9 @@ try:
         def next(self):
             if self.to_traverse == []:
                 raise StopIteration
-            w = self.to_traverse.pop()
+            w = self.to_traverse.pop(0)
             if isinstance(w, Gtk.Container):
-                self.to_traverse = self.to_traverse + w.get_children()
+                self.to_traverse.extend(w.get_children())
             return w
 
     class WidgetTree(object):
@@ -346,7 +346,7 @@ try:
         else:
             GObject.timeout_add(timeout, lambda: internal_on_open(
                 on_open, widgets, windows, args, kwargs))
-        GPS.Menu.get(menu).pywidget().activate()
+        GPS.Menu.get(menu).action.execute_if_possible()
 
     # ###############
     # # Key events ##

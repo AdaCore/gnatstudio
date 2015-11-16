@@ -35,6 +35,21 @@ NF-170-OB16-046 GPS: Ellipsis in Project view (2015-11-17)
   ellipsize the long file names. A file would thus be displayed as
   "...long.adb" if the project view is not wide enough to fit the whole name.
 
+NF-170-OB13-048 GPS: GPS.Menu no longer derives from GPS.GUI (2015-11-16)
+
+  A menu no longer is necessarily a graphical object (it could be displayed
+  outside of the application on some systems like Ubuntu or OSX), so this
+  inheritance has been removed. Most functions have been reimplemented though
+  using the action associated with the menu. Only pywidget() is no longer
+  available.
+
+NF-170-OB13-034 GPS: remove support for GPS.Menu.create (2015-11-13)
+
+  This python function is now obsolescent. A simple replacement is provided
+  for a few releases, but we encourage you to change your plug-ins to use
+  gps_utils.interactive instead, since the latter creates proper actions
+  which can be reused for contextual menus or key shortcuts.
+
 NF-170-OB12-016 GPS: highlighting focused view (2015-11-17)
 
   The GPS color theme was modified so that the view that currently has the
