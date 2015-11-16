@@ -111,10 +111,8 @@ package body GPS.Location_View is
 
       --  Message listener
       Listener            : GPS.Kernel.Messages.Listener_Access;
-
-      Do_Not_Delete_Messages_On_Exit : Boolean := False;
-      --  Protection against reentrancy
    end record;
+
    overriding procedure Create_Toolbar
      (View    : not null access Location_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
@@ -761,7 +759,7 @@ package body GPS.Location_View is
 
       Unregister (V.Kernel, Locations_Listener_Access (V.Listener));
 
-      if not V.Do_Not_Delete_Messages_On_Exit then
+      if not Locations_Save_In_Desktop.Get_Pref then
          Get_Messages_Container (V.Kernel).Remove_All_Messages
            ((Editor_Side => False, GPS.Kernel.Messages.Locations => True));
       end if;
@@ -1481,7 +1479,6 @@ package body GPS.Location_View is
       if Auto_Close.Get_Pref
         and then Get_Iter_First (Self.View.Get_Model) = Null_Iter
       then
-         Self.Do_Not_Delete_Messages_On_Exit := True;
          Location_Views.Close (Self.Kernel);
       end if;
    end On_Row_Deleted;
