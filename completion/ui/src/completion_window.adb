@@ -384,6 +384,8 @@ package body Completion_Window is
          end;
          Next (C);
       end loop;
+
+      X.Proposals.Clear;
    end Free;
 
    ---------------
@@ -745,6 +747,8 @@ package body Completion_Window is
                  and then Proposal.Is_Accessible
                then
                   --  If it is indeed the case, ungray the text (replace it)
+
+                  Unchecked_Free (Explorer.Info (Explorer.Index - 1).Markup);
                   Explorer.Info (Explorer.Index - 1).Markup
                     := new String'(Showable);
 
