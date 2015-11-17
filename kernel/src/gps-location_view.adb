@@ -992,6 +992,8 @@ package body GPS.Location_View is
       Model         : Gtk_Tree_Model;
       Path          : Gtk_Tree_Path;
       List          : Gtk_Tree_Path_List.Glist;
+      N_Selected    : constant Gint :=
+        Locations.View.Get_Selection.Count_Selected_Rows;
 
       use type Gtk_Tree_Path_List.Glist;
    begin
@@ -1000,21 +1002,19 @@ package body GPS.Location_View is
       --  way for a user to click on a secondary location found in the same
       --  error message.
 
-      if Locations.View.Get_Selection.Count_Selected_Rows > 1 then
-         return;
-      end if;
-
-      Locations.View.Get_Selection.Get_Selected_Rows (Model, List);
-      if Model = Null_Gtk_Tree_Model
-        or else List = Gtk_Tree_Path_List.Null_List
-      then
+      if N_Selected = 1 then
+         Locations.View.Get_Selection.Get_Selected_Rows (Model, List);
+         if Model /= Null_Gtk_Tree_Model
+           and then List /= Gtk_Tree_Path_List.Null_List
+         then
+            Iter := Get_Iter
+              (Model, Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (List)));
+         end if;
          Free (List);
-         return;
-      end if;
 
-      Iter := Get_Iter
-        (Model, Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (List)));
-      Free (List);
+      elsif N_Selected > 1 then
+         Locations.View.Get_Selection.Unselect_All;
+      end if;
 
       if Iter /= Null_Iter
         and then Get_File (Model, Iter, File_Column) = File
@@ -1081,6 +1081,7 @@ package body GPS.Location_View is
             if Message_Iter /= Null_Iter then
                Path := Get_Path (Model, Message_Iter);
                Expand_To_Path (Locations.View, Path);
+               Locations.View.Get_Selection.Unselect_All;
                Locations.View.Get_Selection.Select_Iter (Message_Iter);
                Locations.View.Scroll_To_Cell (Path, null, False, 0.1, 0.1);
                Path_Free (Path);
