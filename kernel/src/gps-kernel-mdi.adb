@@ -383,8 +383,7 @@ package body GPS.Kernel.MDI is
          Name    => "MDI-Homogeneous-Tabs",
          Default => False,
          Doc     =>
-           -("If enabled, the text in notebook tabs will never use ellipsis."
-             & " Changing this preference requires a restart of GPS."),
+           -"If disabled, the text in notebook tabs will never use ellipsis.",
          Label   => -"Homogeneous tabs",
          Page    => -"Windows");
 
