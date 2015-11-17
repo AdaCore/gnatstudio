@@ -8,7 +8,7 @@ import time
 import traceback
 
 try:
-    from gi.repository import GObject, GLib
+    from gi.repository import GLib
     gobject_available = 1
 except:
     gobject_available = 0
@@ -125,7 +125,8 @@ class OverlayStyle(object):
                 line=start.line(),
                 column=start.column(),  # index in python starts at 0
                 text="",
-                flags=2)
+                show_on_editor_side=True,
+                show_in_locations=False)
 
             if self.whole_line:
                 msg.set_style(over)

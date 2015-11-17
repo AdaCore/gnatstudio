@@ -7554,14 +7554,6 @@ class Message(object):
     annotations, etc.
     """
 
-    MESSAGE_INVISIBLE = 0
-    MESSAGE_IN_SIDEBAR = 1
-    MESSAGE_IN_LOCATIONS = 2
-    MESSAGE_IN_SIDEBAR_AND_LOCATIONS = 3
-    """
-    The flags returned by :func:`GPS.Message.get_flags`.
-    """
-
     @staticmethod
     def __del__():
         """
@@ -7569,7 +7561,9 @@ class Message(object):
         """
         pass  # implemented in Ada
 
-    def __init__(self, category, file, line, column, text, flags,
+    def __init__(self, category, file, line, column, text,
+                 show_on_editor_side=True,
+                 show_in_locations=True,
                  allow_auto_jump_to_first=True):
         """
         Adds a Message in GPS.
@@ -7579,17 +7573,23 @@ class Message(object):
         :param line: An integer indicating the line
         :param column: An integer indicating the column
         :param text: A pango markup String containg the message text
-        :param flags: An integer representing the location of the message
-        :param bool allow_auto_jump_to_first: True by default, if put to False,
-            then adding a message that is the first for its category will auto
-            jump the editor to it, if the corresponding preference is activated
+
+        :param bool show_on_editor_side: Whether to show the message in the
+            editor's gutter
+
+        :param bool show_in_locations: Whether to show the message in the
+            locations view
+
+        :param bool allow_auto_jump_to_first: If True, then adding a message
+            that is the first for its category will auto jump the editor to it,
+            if the corresponding preference is activated
 
         .. code-block:: python
 
            # Create a message
 
            m=GPS.Message("default", GPS.File("gps-main.adb"),
-                 1841, 20, "test message", 0)
+                 1841, 20, "test message")
 
            # Remove the message
            m.remove()

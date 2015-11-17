@@ -47,7 +47,6 @@ class Clang(object):
                 line=d.location.line,
                 column=d.location.column,
                 text=d.spelling,
-                flags=0,
                 allow_auto_jump_to_first=False
             )
 
