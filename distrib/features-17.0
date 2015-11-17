@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-170-OB12-016 GPS: highlighting focused view (2015-11-17)
+
+  The GPS color theme was modified so that the view that currently has the
+  keyboard focus has a special color in its notebook tab. Changing the color
+  theme will change the colors, but will still make this tab unique.
+
 NF-170-OB05-010 GPS: remove the Always Use External Editor pref (2015-11-06)
 
   This preference (which always uses an external editor rather than GPS's
