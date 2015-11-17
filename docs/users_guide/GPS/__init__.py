@@ -7626,7 +7626,8 @@ class Message(object):
         """
         pass  # implemented in Ada
 
-    def __init__(self, category, file, line, column, text, flags):
+    def __init__(self, category, file, line, column, text, flags,
+                 allow_auto_jump_to_first=True):
         """
         Adds a Message in GPS.
 
@@ -7636,6 +7637,9 @@ class Message(object):
         :param column: An integer indicating the column
         :param text: A pango markup String containg the message text
         :param flags: An integer representing the location of the message
+        :param bool allow_auto_jump_to_first: True by default, if put to False,
+            then adding a message that is the first for its category will auto
+            jump the editor to it, if the corresponding preference is activated
 
         .. code-block:: python
 
