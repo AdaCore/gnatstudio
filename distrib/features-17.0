@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-170-OB16-046 GPS: Ellipsis in Project view (2015-11-17)
+
+  A new setting in the local menu of the Project view can be activated to
+  ellipsize the long file names. A file would thus be displayed as
+  "...long.adb" if the project view is not wide enough to fit the whole name.
+
 NF-170-OB12-016 GPS: highlighting focused view (2015-11-17)
 
   The GPS color theme was modified so that the view that currently has the

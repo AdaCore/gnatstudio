@@ -60,6 +60,7 @@ with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Tree_View;          use Gtkada.Tree_View;
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Pango.Layout;              use Pango.Layout;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Default_Preferences;       use Default_Preferences;
@@ -94,6 +95,7 @@ package body Project_Explorers is
    Show_Object_Dirs    : Boolean_Preference;
    Show_Runtime        : Boolean_Preference;
    Show_Directories    : Boolean_Preference;
+   Show_Ellipsis       : Boolean_Preference;
 
    Toggle_Absolute_Path_Name : constant String :=
      "Explorer toggle absolute paths";
@@ -150,6 +152,7 @@ package body Project_Explorers is
 
    type Project_Explorer_Record is new Generic_Views.View_Record with record
       Tree      : Gtkada.Tree_View.Tree_View;
+      Text_Rend : Gtk_Cell_Renderer_Text;
       Filter    : Explorer_Filter;
       Expanding : Boolean := False;
    end record;
@@ -297,7 +300,8 @@ package body Project_Explorers is
    -- Local subprograms --
    -----------------------
 
-   procedure Set_Column_Types (Tree : Gtk_Tree_View);
+   procedure Set_Column_Types
+     (Self : not null access Project_Explorer_Record'Class);
    --  Sets the types of columns to be displayed in the tree_view
 
    ---------------------
@@ -551,24 +555,26 @@ package body Project_Explorers is
    -- Set_Column_Types --
    ----------------------
 
-   procedure Set_Column_Types (Tree : Gtk_Tree_View) is
+   procedure Set_Column_Types
+     (Self : not null access Project_Explorer_Record'Class)
+   is
+      Tree        : constant Gtk_Tree_View := Gtk_Tree_View (Self.Tree);
       Col         : Gtk_Tree_View_Column;
-      Text_Rend   : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
       Dummy       : Gint;
       pragma Unreferenced (Dummy);
 
    begin
-      Gtk_New (Text_Rend);
+      Gtk_New (Self.Text_Rend);
       Gtk_New (Pixbuf_Rend);
 
       Set_Rules_Hint (Tree, False);
 
       Gtk_New (Col);
       Pack_Start (Col, Pixbuf_Rend, False);
-      Pack_Start (Col, Text_Rend, True);
+      Pack_Start (Col, Self.Text_Rend, True);
       Add_Attribute (Col, Pixbuf_Rend, "icon-name", Icon_Column);
-      Add_Attribute (Col, Text_Rend, "markup", Display_Name_Column);
+      Add_Attribute (Col, Self.Text_Rend, "markup", Display_Name_Column);
       Dummy := Append_Column (Tree, Col);
    end Set_Column_Types;
 
@@ -653,7 +659,7 @@ package body Project_Explorers is
       Gtk_New (Explorer.Tree, Columns_Types, Filtered => True);
       Set_Headers_Visible (Explorer.Tree, False);
       Explorer.Tree.Set_Enable_Search (False);
-      Set_Column_Types (Gtk_Tree_View (Explorer.Tree));
+      Set_Column_Types (Explorer);
 
       Set_Visible_Funcs.Set_Visible_Func
          (Explorer.Tree.Filter, Is_Visible'Access, Data => Explorer);
@@ -921,6 +927,17 @@ package body Project_Explorers is
          Set_Font_And_Colors
             (Self.Explorer.Tree, Fixed_Font => True, Pref => Pref);
 
+         if Pref = null
+           or else Pref = Preference (Show_Ellipsis)
+         then
+            Set_Property
+              (Self.Explorer.Text_Rend,
+               Gtk.Cell_Renderer_Text.Ellipsize_Property,
+               (if Show_Ellipsis.Get_Pref then Ellipsize_Start
+                else Ellipsize_None));
+            Self.Explorer.Tree.Queue_Resize;
+         end if;
+
          if Pref = null   --  multiple preferences updated
            or else Pref = Preference (Show_Flat_View)
            or else Pref = Preference (Show_Directories)
@@ -974,6 +991,7 @@ package body Project_Explorers is
       Append_Menu (Menu, K, Show_Object_Dirs);
       Append_Menu (Menu, K, Show_Empty_Dirs);
       Append_Menu (Menu, K, Show_Runtime);
+      Append_Menu (Menu, K, Show_Ellipsis);
       Append_Menu (Menu, K, Projects_Before_Directories);
    end Create_Menu;
 
@@ -2201,6 +2219,9 @@ package body Project_Explorers is
       Show_Empty_Dirs := Kernel.Get_Preferences.Create_Invisible_Pref
         ("explorer-show-empty-directories", True,
          Label => -"Show empty directories");
+      Show_Ellipsis := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("explorer-show-ellipsis", False,
+         Label => -"Ellipsize long file names");
       Projects_Before_Directories :=
         Kernel.Get_Preferences.Create_Invisible_Pref
           ("explorer-show-projects-first", False,
