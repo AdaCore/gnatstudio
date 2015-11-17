@@ -210,7 +210,7 @@ package body Libclang.Task_Parser_Pool is
 
                end if;
 
-               Free (Request);
+               Destroy (Request);
                Responded := True;
 
                <<Cont>>
