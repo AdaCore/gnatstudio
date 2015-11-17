@@ -61,7 +61,7 @@ class Pep8_Module(Module):
                                 line=int(a[1]),
                                 column=int(a[2]),
                                 text=a[3],
-                                flags=2)
+                                show_in_locations=False)
 
                 m.set_action("", "gps-emblem-build-warning", m.get_text())
                 m.set_style(colorschemes.STYLE_WARNING, 1)

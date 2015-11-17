@@ -35,18 +35,13 @@ package body GPS.Kernel.Messages.Shell is
    Class         : constant String := "Message";
    Message_Class : Class_Type;
 
-   Action_Cst     : aliased constant String := "action";
-   Auto_First     : aliased constant String := "allow_auto_jump_to_first";
-   Subprogram_Cst : aliased constant String := "subprogram";
-   Tooltip_Cst    : aliased constant String := "tooltip";
-   Image_Cst      : aliased constant String := "image";
-   Category_Cst   : aliased constant String := "category";
-   Line_Cst       : aliased constant String := "line";
-   Column_Cst     : aliased constant String := "column";
-   File_Cst       : aliased constant String := "file";
-   Text_Cst       : aliased constant String := "text";
-   Flags_Cst      : aliased constant String := "flags";
-   Hint_Cst       : aliased constant String := "hint";
+   Action_Cst        : aliased constant String := "action";
+   Subprogram_Cst    : aliased constant String := "subprogram";
+   Tooltip_Cst       : aliased constant String := "tooltip";
+   Image_Cst         : aliased constant String := "image";
+   Category_Cst      : aliased constant String := "category";
+   File_Cst          : aliased constant String := "file";
+   Hint_Cst          : aliased constant String := "hint";
 
    type Message_Property_Record is new Instance_Property_Record with record
       Message : Message_Reference;
@@ -263,15 +258,6 @@ package body GPS.Kernel.Messages.Shell is
 
    begin
       if Command = Constructor_Method then
-         Name_Parameters
-           (Data,
-            (1 => Category_Cst'Access,
-             2 => File_Cst'Access,
-             3 => Line_Cst'Access,
-             4 => Column_Cst'Access,
-             5 => Text_Cst'Access,
-             6 => Flags_Cst'Access,
-             7 => Auto_First'Access));
 
          declare
             Category   : constant String := Nth_Arg (Data, 2);
@@ -282,8 +268,10 @@ package body GPS.Kernel.Messages.Shell is
             Line       : constant Natural := Nth_Arg (Data, 4);
             Column     : constant Natural := Nth_Arg (Data, 5);
             Text       : constant String := Nth_Arg (Data, 6);
-            Flags      : constant Integer := Nth_Arg (Data, 7, 0);
-            Auto_First : constant Boolean := Nth_Arg (Data, 8, True);
+            Flags      : constant Message_Flags :=
+              (Editor_Side => Nth_Arg (Data, 7, True),
+               Locations => Nth_Arg (Data, 8, True));
+            Auto_First : constant Boolean := Nth_Arg (Data, 9, True);
             Message    : constant Markup_Message_Access :=
               Create_Markup_Message
                 (Container                => Container,
@@ -293,7 +281,7 @@ package body GPS.Kernel.Messages.Shell is
                  Column                   => Visible_Column_Type (Column),
                  Text                     => Text,
                  Weight                   => 0, --  ??? what is Weight?
-                 Flags                    => From_Int (Flags),
+                 Flags                    => Flags,
                  Allow_Auto_Jump_To_First => Auto_First);
 
          begin
@@ -479,9 +467,19 @@ package body GPS.Kernel.Messages.Shell is
    begin
       Message_Class := New_Class (Kernel, Class);
 
-      Register_Command
-        (Kernel, Constructor_Method, 5, 7, Message_Command_Handler'Access,
-         Message_Class, False);
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
+         Params =>
+           (Param ("category"),
+            Param ("file"),
+            Param ("line"),
+            Param ("column"),
+            Param ("text"),
+            Param ("show_on_editor_side", Optional => True),
+            Param ("show_in_locations", Optional => True),
+            Param ("allow_auto_jump_to_first",  Optional => True)),
+         Handler => Message_Command_Handler'Access,
+         Class => Message_Class);
 
       Register_Command
         (Kernel, Destructor_Method, 0, 0, Accessors'Access,
