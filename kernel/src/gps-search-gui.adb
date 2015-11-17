@@ -815,10 +815,16 @@ package body GPS.Search.GUI is
          declare
             Vals : String_List_Access := GNATCOLL.Utils.Split
               (Pref_Provider_Order.Get_Pref, On => ';');
-            Rank : Positive := 1;
+
+            --  leave space for providers not part of the preference
+            Rank : Positive := 2;
             P    : Positive;
             Provider : Search_Provider_Access;
             Enabled : Boolean;
+
+            Unset : constant Positive := Positive'Last / 2;
+            --  To find out which provides were not specified in the
+            --  preference, and should preserve their current rank.
          begin
             --  Reset all ranks
 
@@ -826,7 +832,8 @@ package body GPS.Search.GUI is
             loop
                Provider := Get (Registry, P);
                exit when Provider = null;
-               Provider.Rank := Positive'Last;
+               Provider.Rank :=
+                  Unset + Positive'Min (Provider.Rank, Positive'Last / 2);
                P := P + 1;
             end loop;
 
@@ -850,14 +857,15 @@ package body GPS.Search.GUI is
             end loop;
 
             --  And finally assign values for the providers when unset.
+            --  Preserve the order they were in in the list
 
             P := 1;
             loop
                Provider := Get (Registry, P);
                exit when Provider = null;
-               if Provider.Rank = Positive'Last then
-                  Provider.Rank := Rank;
-                  Rank := Rank + 1;
+               if Provider.Rank >= Unset then
+                  --  Preserve the old rank
+                  Provider.Rank := Provider.Rank - Unset;
                end if;
                P := P + 1;
             end loop;
@@ -1136,13 +1144,15 @@ package body GPS.Search.GUI is
          declare
             Name : constant String := Nth_Arg (Data, 1);
             Inst : constant Class_Instance := Nth_Arg (Data, 2);
+            Rank : constant Integer := Data.Nth_Arg (3, -1);
             Provider : Python_Search_Provider_Access;
          begin
             Provider := new Python_Search_Provider;
             Provider.Name := new String'(Name);
             Provider.Inst := Null_Instance_List;
-            Set (Provider.Inst, Get_Script (Inst), Inst);
+            Provider.Rank := (if Rank <= 0 then 1000 else Rank);
             Provider.Kernel := Get_Kernel (Data);
+            Set (Provider.Inst, Get_Script (Inst), Inst);
 
             Registry.Register (Provider);
          end;
@@ -1519,7 +1529,8 @@ package body GPS.Search.GUI is
       Register_Command
         (Kernel.Scripts, "register",
          Params        => (1 => Param ("name"),
-                           2 => Param ("provider")),
+                           2 => Param ("provider"),
+                           3 => Param ("rank", Optional => True)),
          Static_Method => True,
          Class         => Search_Class,
          Handler       => Search_Commands_Handler'Access);

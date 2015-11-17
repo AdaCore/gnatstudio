@@ -9316,7 +9316,7 @@ class Search(object):
         """
 
     @staticmethod
-    def register(name, factory):
+    def register(name, factory, rank=-1):
         """
         Registers a new custom search.  This will be available to users via
         the omni-search in GPS, or via the :class:`GPS.Search` class.
@@ -9324,6 +9324,10 @@ class Search(object):
         :param name: a string
         :param factory: an instance of :class:`GPS.Search` that will be reused
            every time the user starts a new search.
+        :param rank: the search order for the provider. If negative, the new
+           provider is added last. Other providers might be registered later,
+           though, so the rank could change. User preferences will also
+           override that rank.
         """
 
     @staticmethod

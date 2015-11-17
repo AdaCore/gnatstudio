@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-170-OB17-034 GPS: new calculator support in omni-search (2015-11-17)
+
+  It is now possible to type simple mathematical expression in the
+  omnisearch ("2 + 3**2") to get their result in decimal, hexadecimal
+  and binary.
+
 NF-170-OB16-046 GPS: Ellipsis in Project view (2015-11-17)
 
   A new setting in the local menu of the Project view can be activated to

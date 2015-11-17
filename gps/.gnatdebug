@@ -137,3 +137,5 @@ buffer_debug=no
 --  Active in development mode
 
 GPS.KERNEL.MODULES.UI=yes
+
+SQL.SQLITE.GNADE=yes
