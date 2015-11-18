@@ -83,6 +83,10 @@ GtkTextView.readonly {
    background-color: @theme_base_color;
 }
 
+.gps-preferences-pages GtkNotebook {
+   padding-top: 3px;
+}
+
 /**************************
  * GPS preferences groups *
  **************************/
@@ -91,15 +95,16 @@ GtkTextView.readonly {
    background-color: @theme_base_color;
    box-shadow: none;
    border-width: 0px 0px 0px 0px;
+   padding-top: 10px;
 }
 
 .gps-preferences-groups > GtkLabel {
-  /* Set bold font for group titles */
-  font-weight: bold;
+   /* Set bold font for group titles */
+   font-weight: bold;
 }
 
 .gps-preferences-groups GtkListBoxRow {
-  padding-left: 10px;
+   padding-left: 10px;
 }
 
 .gps-preferences-groups GtkListBoxRow:hover {

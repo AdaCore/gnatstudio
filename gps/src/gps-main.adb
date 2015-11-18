@@ -2160,10 +2160,6 @@ procedure GPS.Main is
 
       Buffer_Views.Register_Module (GPS_Main.Kernel);
 
-      if Active (Startup_Trace) then
-         Startup_Module.Register_Module (GPS_Main.Kernel);
-      end if;
-
       GPS.Kernel.Custom.Parse_Startup_Scripts_List (GPS_Main.Kernel);
 
       --  Load system files.
@@ -2195,6 +2191,14 @@ procedure GPS.Main is
 
       if Active (Python_Trace) then
          Python_Module.Load_User_Python_Startup_Files (GPS_Main.Kernel);
+      end if;
+
+      --  Register the Startup_Module afer loading both system and user custom
+      --  files so that each custom file is known before registering all
+      --  the 'Plugins' subpages in the preferences editor dialog.
+
+      if Active (Startup_Trace) then
+         Startup_Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       Navigation_Module.Register_Module (GPS_Main.Kernel);

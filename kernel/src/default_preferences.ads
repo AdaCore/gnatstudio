@@ -40,7 +40,6 @@ with Gtk.Color_Button;
 with Gtk.Combo_Box_Text;
 with Gtk.GEntry;
 with Gtk.Handlers;
-with Gtk.Scrolled_Window;
 with Gtk.Widget;
 
 with Pango.Font;          use Pango.Font;
@@ -77,12 +76,9 @@ package Default_Preferences is
    --  This is only a model : the way the preferences are stored and displayed
    --  must be defined when extending this type, by overriding its primitives.
 
-   type Preferences_Page_View_Record is
-     new Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with private;
-   type Preferences_Page_View is access all Preferences_Page_View_Record'Class;
-   --  Type defining a preferences editor page view.
-   --  This is used to define a common API for all the pages views of the
-   --  preferences editor dialog.
+   type Preferences_Page_Type is (Visible_Page, Hidden_Page);
+   --  Used by the preferences editor dialog to know if a page should be
+   --  visible from the editor or not.
 
    procedure Set_GObject_To_Update
      (Pref   : not null access Preference_Record;
@@ -146,7 +142,7 @@ package Default_Preferences is
    --  automatically when using one of the Create functions below.
 
    procedure Register_Page
-     (Self             : not null access Preferences_Manager_Record;
+     (Self             : not null access Preferences_Manager_Record'Class;
       Name             : String;
       Page             : not null Preferences_Page;
       Priority         : Integer := -1;
@@ -154,13 +150,17 @@ package Default_Preferences is
    --  Register a new preferences page in the manager.
    --  If Replace_If_Exist is True and if an association for this name already
    --  exists, replace the Preferences_Page associated to Name with the one
-   --  given in parameter.
+   --  given in parameter and copy the preferences registered in the previous
+   --  page.
 
    function Get_Registered_Page
-     (Self : not null access Preferences_Manager_Record;
-      Name : String) return Preferences_Page;
+     (Self             : not null access Preferences_Manager_Record'Class;
+      Name             : String;
+      Create_If_Needed : Boolean := False) return Preferences_Page;
    --  Return the page registered in the manager for this name.
-   --  If no page has been registered for this name, return null.
+   --  If no page has been registered for this name, return null if
+   --  Create_If_Needed is False. Otherwise, create and register a default
+   --  page for the given name.
 
    function Is_Frozen
      (Self : not null access Preferences_Manager_Record'Class) return Boolean;
@@ -195,25 +195,9 @@ package Default_Preferences is
    --  If a preference has already been highlighted (via a call to
    --  Highlight_Pref), unhighlight it.
 
-   ---------------------------
-   -- Preferences_Page_View --
-   ---------------------------
-
-   procedure Set_Pref_Highlighted
-     (Self      : not null access Preferences_Page_View_Record'Class;
-      Pref      : not null Preference;
-      Highlight : Boolean);
-   --  If Highlight is True, Highlight the widget displaying the preference
-   --  given in parameter.
-   --  If not, unhighlight it.
-
-   procedure On_Destroy_Page_View
-     (Page_View : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Called when a preferences page view is destroyed.
-
-   ------------------------
-   -- Preferences_Groups --
-   ------------------------
+   -----------------------
+   -- Preferences_Group --
+   -----------------------
 
    function Get_Name
      (Self : not null access Preferences_Group_Record) return String;
@@ -227,17 +211,49 @@ package Default_Preferences is
      (Self : not null access Preferences_Page_Record) return String;
    --  Return the page's name.
 
+   function Get_Page_Type
+     (Self : not null access Preferences_Page_Record)
+      return Preferences_Page_Type;
+   --  Return the page's type.
+
    function Get_Widget
      (Self    : not null access Preferences_Page_Record;
       Manager : not null Preferences_Manager)
-      return Preferences_Page_View is abstract;
+      return Gtk.Widget.Gtk_Widget is abstract;
    --  Return the main widget of the preferences page.
    --  This is the widget we want to append to the preferences editor.
+
+   procedure Register_Subpage
+     (Self             : not null access Preferences_Page_Record;
+      Subpage          : not null Preferences_Page;
+      Subpage_Name     : String;
+      Subpage_Type     : Preferences_Page_Type := Visible_Page;
+      Replace_If_Exist : Boolean := False);
+   --  Register a subpage in a parent page.
+   --  If Replace_If_Exist is True, replace the previously registered subpage
+   --  with the same name. If False, do nothing.
+
+   function Get_Registered_Subpage
+     (Self             : not null access Preferences_Page_Record'Class;
+      Name             : String;
+      Create_If_Needed : Boolean := False) return Preferences_Page;
+   --  Get the subpage associated with Name from its parent.
+   --  If no subpage has been registered for this name, return null if
+   --  Create_If_Needed is False. Otherwise, create and register a default
+   --  subpage for the given name.
 
    procedure Add_Pref
      (Self : not null access Preferences_Page_Record;
       Pref : not null Preference);
    --  Add a new preference to the given page.
+
+   procedure Add_Pref
+     (Self       : not null access Preferences_Page_Record;
+      Pref       : not null Preference;
+      Group_Name : String);
+   --  Add a new preference to the given page, inside the given group.
+   --  If Pref had already a group mentioned in its Path, replace it by
+   --  Group_Name.
 
    procedure Remove_Pref
      (Self : not null access Preferences_Page_Record;
@@ -253,6 +269,8 @@ package Default_Preferences is
 
    type Default_Preferences_Page_Record is new Preferences_Page_Record
    with private;
+   type Default_Preferences_Page is
+     access all Default_Preferences_Page_Record'Class;
    --  Default preferences pages. This type of pages is the default one in GPS:
    --  pages of this type will be created when registering a preference that
    --  resides in a page that has not been registered previously.
@@ -260,7 +278,7 @@ package Default_Preferences is
    overriding function Get_Widget
      (Self    : not null access Default_Preferences_Page_Record;
       Manager : not null Preferences_Manager)
-      return Preferences_Page_View;
+      return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation.
 
    ----------------
@@ -459,14 +477,10 @@ package Default_Preferences is
    function Get_Label (Pref : access Preference_Record'Class) return String;
    function Get_Path  (Pref : access Preference_Record'Class) return String;
    function Get_Doc   (Pref : access Preference_Record'Class) return String;
-
-   function Get_Page_Name (Pref : not null Preference) return String;
-   --  Return the preference's page name from the full page name contained
-   --  in Pref.Page.
-
-   function Get_Group_Name (Pref : not null Preference) return String;
-   --  Return, if any, the preference's group from the full page name contained
-   --  in Pref.Page.
+   function Get_Page_Name
+     (Pref : access Preference_Record'Class) return String;
+   function Get_Group_Name
+     (Pref : access Preference_Record'Class) return String;
 
    overriding function Get_Pref
      (Pref : access String_Preference_Record) return String;
@@ -589,20 +603,37 @@ package Default_Preferences is
    function Get_First_Reference
      (Manager : not null access Preferences_Manager_Record)
       return Page_Cursor;
-   procedure Next
-     (Manager : not null access Preferences_Manager_Record;
-      C       : in out Page_Cursor);
-   function Get_Page (Self : Page_Cursor) return Preferences_Page;
+   procedure Next (C : in out Page_Cursor);
+   function Get_Page (Self : in out Page_Cursor) return Preferences_Page;
    --  Iterate all over the registered pages.
 
-   type Preference_Cursor is private;
+   type Subpage_Cursor is private;
+
+   function Get_First_Reference
+     (Parent : not null access Preferences_Page_Record)
+      return Subpage_Cursor;
+   procedure Next (C : in out Subpage_Cursor);
+   function Get_Subpage (Self : in out Subpage_Cursor) return Preferences_Page;
+   --  Iterate all over the registered subpages
+
+   type Group_Cursor is private;
+
+   function Get_First_Reference
+     (Page : not null access Preferences_Page_Record) return Group_Cursor;
+   procedure Next (C : in out Group_Cursor);
+   function Get_Group (Self : Group_Cursor) return Preferences_Group;
+   --  Iterate all over the registered groups for a given page.
+
+   type Preference_Cursor_Type is (From_Manager, From_Group);
+   type Preference_Cursor (Cursor_Type : Preference_Cursor_Type) is private;
 
    function Get_First_Reference
      (Manager : not null access Preferences_Manager_Record)
       return Preference_Cursor;
-   procedure Next
-     (Manager : not null access Preferences_Manager_Record;
-      C       : in out Preference_Cursor);
+   function Get_First_Reference
+     (Group : not null access Preferences_Group_Record)
+      return Preference_Cursor;
+   procedure Next (C : in out Preference_Cursor);
    function Get_Pref (Self : Preference_Cursor) return Preference;
    --  Iterate all over the registered preferences.
 
@@ -625,9 +656,17 @@ private
    --  The order is calculated using the page's priority first. If the
    --  priorities are equal, the order is calculated using alphabetical order.
 
+   function Page_Name_Equals (Left, Right : Preferences_Page) return Boolean;
+   --  Used to search in pages lists using name equality.
+
    package Pages_Lists is new Ada.Containers.Doubly_Linked_Lists
-     (Preferences_Page, "=");
+     (Preferences_Page, Page_Name_Equals);
    type Page_Cursor is record
+      Root_Pages_Curs   : Pages_Lists.Cursor;
+      Subpages_Curs     : Pages_Lists.Cursor;
+      Is_Root           : Boolean;
+   end record;
+   type Subpage_Cursor is record
       C : Pages_Lists.Cursor;
    end record;
    --  Used to store pages in the preferences manager.
@@ -648,8 +687,13 @@ private
 
    package Preferences_Maps is new Ada.Containers.Indefinite_Hashed_Maps
      (String, Preference, Ada.Strings.Hash, "=");
-   type Preference_Cursor is record
-      C : Preferences_Maps.Cursor;
+   type Preference_Cursor (Cursor_Type : Preference_Cursor_Type) is record
+      case Cursor_Type is
+         when From_Manager =>
+            Map_Curs  : Preferences_Maps.Cursor;
+         when From_Group =>
+            List_Curs : Preferences_Lists.Cursor;
+      end case;
    end record;
    --  Used to map preferences with their names.
 
@@ -668,29 +712,31 @@ private
    --  Used to map preferences with the widgets displaying them.
 
    type Preference_Record is abstract tagged record
-      Name  : GNAT.Strings.String_Access;
+      Name       : GNAT.Strings.String_Access;
       --  Name in the .xml file, and used for external references
 
-      Label : GNAT.Strings.String_Access;
+      Label      : GNAT.Strings.String_Access;
       --  Label used in the preferences dialog
 
-      Path  : GNAT.Strings.String_Access;
-      --  Preferences's path in the preference dialog. Subpages are separated
-      --  by '/' chars.
+      Path       : GNAT.Strings.String_Access;
+      --  Preferences's full path in the preference dialog. Subpages are
+      --  separated by '/' chars.
       --  A group can be optionally added at the end of the page's name, using
       --  the ':' char delimitor (e.g: "General:Behavior" where "General" is
       --  the page's name and "Behavior" the group's name. This is set to null
       --  if the preference should not be visible in the preferences dialog,
       --  but can be edited directly in the XML file.
 
-      Doc   : GNAT.Strings.String_Access;
-      --  The documentation for this preference
-   end record;
+      Page_Name  : GNAT.Strings.String_Access;
+      --  Name of the preference's page. This is set to null if the preference
+      --  is hidden.
 
-   type Preferences_Page_View_Record is
-     new Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with record
-      Pref_Widgets : Preferences_Widgets_Maps.Map;
-      --  Used to map preferences with their highlightable parent widget.
+      Group_Name : GNAT.Strings.String_Access;
+      --  Name of the preference's group. This is set to null if no group has
+      --  been specified in its path.
+
+      Doc        : GNAT.Strings.String_Access;
+      --  The documentation for this preference
    end record;
 
    type Preferences_Group_Record is tagged record
@@ -701,14 +747,30 @@ private
       --  Map of preferences belonging to this group.
    end record;
 
+   package Groups_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (String, Preferences_Group, Ada.Strings.Hash, "=");
+   --  Used to map groups with their names.
+   type Group_Cursor is record
+      C : Groups_Lists.Cursor;
+   end record;
+
    type Preferences_Page_Record is abstract tagged record
-      Name     : GNAT.Strings.String_Access;
+      Name      : GNAT.Strings.String_Access;
       --  Name of the page. Subpages are separated by '/' chars.
-      Priority : Integer;
+
+      Priority  : Integer;
       --  Page's priority. This is used to sort the pages according to the
       --  order we want to display it.
+
       Groups   : Groups_Lists.List;
       --  List of groups belonging to this page.
+
+      Page_Type : Preferences_Page_Type;
+      --  Type of the page. Used by the editor to know if the page should be
+      --  displayed or not.
+
+      Subpages  : Pages_Lists.List;
+      --  List of all the subpages. This list is empty if Is_Root is False.
    end record;
 
    type Default_Preferences_Page_Record is new Preferences_Page_Record

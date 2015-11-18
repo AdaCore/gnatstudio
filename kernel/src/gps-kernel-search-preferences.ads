@@ -17,7 +17,7 @@
 
 --  A search provider that matches preferences.
 
-with Default_Preferences;
+with Default_Preferences; use Default_Preferences;
 with GPS.Search;
 
 package GPS.Kernel.Search.Preferences is
@@ -68,7 +68,7 @@ private
       --  Current pattern, do not free.
       Pattern_Needs_Free : Boolean := False;
       --  True if Pattern has been allocated by the provider, False otherwise.
-      Iter               : Default_Preferences.Preference_Cursor;
+      Iter               : Preference_Cursor (From_Manager);
       --  The current iterator
    end record;
 

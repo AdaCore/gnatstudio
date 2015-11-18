@@ -19,12 +19,79 @@
 --  possible initialization strings. A large part of the work is done in
 --  GPS.Kernel.Modules;
 
+with GNAT.Strings;
+with GNATCOLL.VFS;
+
+with Gtk.Widget;
+
+with Default_Preferences;       use Default_Preferences;
 with GPS.Kernel;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 
 package Startup_Module is
+
+   type Startup_Module_ID_Record is new Module_ID_Record with private;
+   type Startup_Module_ID is access all Startup_Module_ID_Record'Class;
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
+
+   type Root_Plugins_Preferences_Page_Record is new Preferences_Page_Record
+   with null record;
+   type Root_Plugins_Preferences_Page is
+     access all Root_Plugins_Preferences_Page_Record'Class;
+   --  Type used to represent the root preferences page for all plugins.
+
+   overriding function Get_Widget
+     (Self    : not null access Root_Plugins_Preferences_Page_Record;
+      Manager : not null Preferences_Manager)
+      return Gtk.Widget.Gtk_Widget;
+   --  See inherited documentation.
+
+   type Plugin_Preferences_Page_Record is new Preferences_Page_Record with
+      private;
+   type Plugin_Preferences_Page is
+     access all Plugin_Preferences_Page_Record'Class;
+   --  Type used for plugin preferences pages.
+
+   overriding procedure Add_Pref
+     (Self : not null access Plugin_Preferences_Page_Record;
+      Pref : not null Preference);
+   --  See inherited documentation.
+
+   overriding function Get_Widget
+     (Self    : not null access Plugin_Preferences_Page_Record;
+      Manager : not null Preferences_Manager)
+      return Gtk.Widget.Gtk_Widget;
+   --  See inherited documentation.
+
+private
+
+   type Plugin_Preferences_Page_Record is new Preferences_Page_Record with
+      record
+         Plugin_Name       : GNAT.Strings.String_Access;
+         --  Name of the plugin associated to this page.
+
+         File              : GNATCOLL.VFS.Virtual_File;
+         --  Plugin file associated to this preferences page.
+
+         Loaded_At_Startup : Boolean;
+         --  Used to know if the corresponding plugin is set to be loaded
+         --  at startup or not.
+
+         Explicit          : Boolean;
+         --  Used to know if the plugin has been loaded at startup or not
+         --  because of an explicit user setting.
+
+         Doc               : GNAT.Strings.String_Access;
+         --  Plugin documentation.
+      end record;
+
+   type Startup_Module_ID_Record is new Module_ID_Record with record
+      Has_Changed : Boolean := False;
+      --  Boolean used to indicate if the set of startup scripts to load has
+      --  been modified since GPS started.
+   end record;
 
 end Startup_Module;

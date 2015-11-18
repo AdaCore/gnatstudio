@@ -40,6 +40,11 @@ package GPS.Kernel.Preferences is
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Set the kernel
 
+   function Get_Kernel
+     (Self   : not null access GPS_Preferences_Manager_Record)
+      return access GPS.Kernel.Kernel_Handle_Record'Class;
+   --  Get the kernel
+
    procedure Register_Global_Preferences
      (Kernel : access Kernel_Handle_Record'Class);
    --  Register all the preferences defined below.

@@ -16,7 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Default_Preferences;           use Default_Preferences;
+with Default_Preferences.GUI;       use Default_Preferences.GUI;
 with Generic_Views;                 use Generic_Views;
+with GUI_Utils;                     use GUI_Utils;
 
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 
@@ -185,11 +187,6 @@ package body GPS.Kernel.Preferences_Views is
 
    procedure Selection_Changed (Widget : access Gtk_Widget_Record'Class);
    --  Called when the selected page has changed.
-
-   procedure Select_First_Page
-     (Self : access GPS_Preferences_Editor_Record'Class);
-   --  Select the first page of preferences to be active in the Tree_View.
-   --  This procedure is called right after the initialization.
 
    function Find_Or_Create_Page_Iter
      (Editor    : not null GPS_Preferences_Editor;
@@ -456,25 +453,6 @@ package body GPS.Kernel.Preferences_Views is
       end if;
    end Execute;
 
-   -----------------------
-   -- Select_First_Page --
-   -----------------------
-
-   procedure Select_First_Page
-     (Self : access GPS_Preferences_Editor_Record'Class)
-   is
-      First_Iter      : Gtk_Tree_Iter;
-      First_Page_Path : Gtk_Tree_Path;
-   begin
-      First_Iter := Get_Iter_First (Self.Model);
-
-      if First_Iter /= Null_Iter then
-         First_Page_Path := Self.Model.Get_Path (First_Iter);
-
-         Set_Cursor (Self.Pages_Tree, First_Page_Path, null, False);
-      end if;
-   end Select_First_Page;
-
    ------------------------------
    -- Find_Or_Create_Page_Iter --
    ------------------------------
@@ -513,9 +491,9 @@ package body GPS.Kernel.Preferences_Views is
          end loop;
 
          if Child = Null_Iter then
-            Page_Found := False;
             Append (Editor.Model, Child, Current);
             Set (Editor.Model, Child, 0, Page_Name (First .. Last - 1));
+            Page_Found := False;
             Set
               (Editor.Model, Child, 1, Editor.Pages_Notebook.Get_N_Pages);
          end if;
@@ -613,13 +591,13 @@ package body GPS.Kernel.Preferences_Views is
          exit when Page = null;
 
          --  Don't display pages without names
-         if Page.Get_Name /= "" then
+         if Page.Get_Page_Type = Visible_Page then
             Page_Found := Find_Or_Create_Page_Iter
               (Self, Page_Iter, Page.Get_Name);
             Self.Pages_Notebook.Append_Page (Page.Get_Widget (Manager), null);
          end if;
 
-         Manager.Next (Page_Curs);
+         Next (Page_Curs);
       end loop;
 
       Self.Set_Can_Focus (True);
@@ -632,7 +610,7 @@ package body GPS.Kernel.Preferences_Views is
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
 
       --  Select and display the first page when opening the Preferences view
-      Self.Select_First_Page;
+      Select_First_Row (Self.Pages_Tree);
 
       return Gtk_Widget (Self);
    end Initialize;

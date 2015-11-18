@@ -343,7 +343,7 @@ Files
 
   Directory containing files with system-wide plug-ins (XML and Python files)
   that are not loaded automatically at startup but can be selected in the
-  Plug-ins editor.
+  :guilabel:`Plugins` section of the preferences editor dialog.
 
 * :file:`prefix/share/gps/key_themes`
 

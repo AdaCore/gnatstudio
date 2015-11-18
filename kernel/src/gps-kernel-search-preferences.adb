@@ -16,7 +16,7 @@
 ------------------------------------------------------------------------------
 
 with String_Utils;            use String_Utils;
-with Default_Preferences;     use Default_Preferences;
+
 with Glib.Convert;            use Glib.Convert;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Search;              use GPS.Search;
@@ -144,7 +144,7 @@ package body GPS.Kernel.Search.Preferences is
          end;
       end if;
 
-      Next (Self.Kernel.Get_Preferences, Self.Iter);
+      Next (Self.Iter);
       Has_Next := Get_Pref (Self.Iter) /= null;
    end Next;
 

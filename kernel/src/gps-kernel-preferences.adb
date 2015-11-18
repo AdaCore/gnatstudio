@@ -70,6 +70,15 @@ package body GPS.Kernel.Preferences is
       Self.Kernel := Kernel_Handle (Kernel);
    end Set_Kernel;
 
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel
+     (Self   : not null access GPS_Preferences_Manager_Record)
+      return access GPS.Kernel.Kernel_Handle_Record'Class is
+      (Self.Kernel);
+
    -------------------------
    -- Notify_Pref_Changed --
    -------------------------

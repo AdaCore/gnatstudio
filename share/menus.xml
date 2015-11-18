@@ -158,7 +158,7 @@
          <menu label='_Activities'                action='vcs open activities window'/>
          <menu label='Update All _Projects'       action='vcs update all projects'/>
          <menu label='_Query Status for All Projects' action='vcs query status for all projects'/>
-         <!--  All other menus are dynamic and depend on the VCS backend 
+         <!--  All other menus are dynamic and depend on the VCS backend
          <menu label='Query Status'               action='status'/>
          <menu label='Commit'                     action='commit'/>
          <menu label='Commit (via Revision Log)'  action='commit (via revision log)'/>
@@ -383,7 +383,6 @@
             <menu label="Check Current _File"      action="gnatcheck file" optional='True'/>
          </menu>
          <separator/>
-         <menu label="_Plug-ins"                  action="open plug-ins dialog"/>
          <menu label="_Interrupt"                 action="interrupt"/>
       </menu>
 

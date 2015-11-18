@@ -1945,6 +1945,26 @@ package body GUI_Utils is
       end if;
    end Get_Selection;
 
+   ----------------------
+   -- Select_First_Row --
+   ----------------------
+
+   procedure Select_First_Row
+     (Tree : not null access Gtk.Tree_View.Gtk_Tree_View_Record'Class)
+   is
+      Model           : constant Gtk_Tree_Model := Tree.Get_Model;
+      First_Iter      : Gtk_Tree_Iter;
+      First_Page_Path : Gtk_Tree_Path;
+   begin
+      First_Iter := Get_Iter_First (Model);
+
+      if First_Iter /= Null_Iter then
+         First_Page_Path := Get_Path (Model, First_Iter);
+
+         Tree.Set_Cursor (First_Page_Path, null, False);
+      end if;
+   end Select_First_Row;
+
    ---------------------------------
    -- Gtk_New_From_Name_And_Label --
    ---------------------------------

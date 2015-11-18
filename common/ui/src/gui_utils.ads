@@ -286,6 +286,10 @@ package GUI_Utils is
      (Tree : access Gtk.Tree_View.Gtk_Tree_View_Record'Class) return String;
    --  Return the content of the current selection
 
+   procedure Select_First_Row
+     (Tree : not null access Gtk.Tree_View.Gtk_Tree_View_Record'Class);
+   --  Select the first row of the given tree view, if it exists.
+
    type Editable_Cb is access procedure
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues);

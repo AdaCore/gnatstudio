@@ -28,7 +28,7 @@ the :guilabel:`OK` button or press the :guilabel:`Cancel` button to undo
 them.
 
 A label displays the name of each preference and an editing area to modify
-its value. If you hover the mouse over the label, a tool tip is displayed 
+its value. If you hover the mouse over the label, a tool tip is displayed
 giving on-line help for the preference.
 
 The preferences dialog is composed of several areas, accessible through the
@@ -1175,7 +1175,7 @@ arrow, as seen in the screenshot above).
     for a description of the parameters.
 
   * :guilabel:`Default color`
-    
+
     Color in the reference editor indicating lines on which there is a
     difference.
 
@@ -1364,8 +1364,8 @@ arrow, as seen in the screenshot above).
 
     .. index:: fast project loading
 
-    If the project contains a number of restrictions, this preference 
-    significantly speeds up loading time when GPS parses the project. 
+    If the project contains a number of restrictions, this preference
+    significantly speeds up loading time when GPS parses the project.
     This is especially noticeable if the source files are on a network drive.
 
     GPS assumes the following restrictions are true when this preference is
@@ -1506,7 +1506,7 @@ Custom Fonts
 
 .. index: fonts
 
-In addition to the system fonts, GPS will load the fonts located under 
+In addition to the system fonts, GPS will load the fonts located under
 :file:`share/gps/fonts`) in the GPS installation directory. The supported
 formats are :file:`.otf`, :file:`.ttf` and :file:`.ttc`.
 
@@ -1604,7 +1604,7 @@ grouped into two logical sets:
 
   - All actions and menus currently associated with key are no longer
     executed when the key is pressed.
-  
+
   - All key shortcuts defined for this action are replaced by the new one;
     the action is only executable through this new shortcut.
 
@@ -1614,10 +1614,10 @@ is restarted.
 
 
 
-.. _The_Plug-ins_Editor:
+.. _Editing_Plug-ins:
 
-The Plug-ins Editor
-===================
+Editing Plug-ins
+================
 
 .. index:: plug-ins
 
@@ -1651,35 +1651,44 @@ Some plug-ins provided with GPS are:
   editors, for example to align a set of lines based on various criteria
   or to manipulate a rectangular selection of text.
 
-To graphically choose which plug-ins are loaded on startup, select the
-:menuselection:`Tools --> Plug-ins` menu.  This brings up a new window,
-containing two parts:
+You can graphically choose which plug-ins are loaded on startup by
+opening the preferences editor dialog (:menuselection:`Edit -->
+Preferences` menu), under the :guilabel:`Plugins` section. This section
+lists all the known plugins on the left. By selecting one particular
+plugin, the corresponding preferences page is opened on the right. Each
+plugin page comes with the same layout:
 
-* A list of all known plug-ins on the left.
+* A :guilabel:`General` group
 
-  This list indicates the name of the plug-in, and whether it is loaded in
-  this GPS session (when the toggle button is checked).
+  This group indicates the exact location of the plug-in file. Moreover,
+  this group contains a toggle button (:guilabel:`Loaded at startup`)
+  which allows you to decide if this plugin should be loaded or not in
+  the next GPS session.
 
   As described in :ref:`Customization_files_and_plugins`, GPS searches for
   plug-ins in various directories and, based on these directories, decides
   whether to automatically load the plug-in on startup.
 
-* Details for the selected plug-in on the right.
+* An optional :guilabel:`Preferences` group
 
-  This window is a notebook with two pages: the first contains the exact
-  location of the plug-in, the reason it was either loaded or not loaded,
-  and the source of the plug-in.  By convention, each plug-in starts with
-  a comment indicating the purpose of this plug-in and more detailed
-  documentation on its usage.  This also contains the plug-in itself, so it
-  can act as an example you can use to create your own customization
-  script.  The list of plug-ins to load are stored in the file
-  :file:`HOME/.gps/startup.xml`.
+  This group lists all the preferences related to the selected plug-in,
+  allowing you to customize the plug-in behavior. Note that this group
+  is displayed only if preferences have been registered for this plug-in.
 
-  If you have modified anything through this dialog (such as the list of
-  plug-ins to load or unload), you need to restart GPS, since it cannot
-  unload a module due to such an action having too many possible effects on
-  GPS, so a dialog is displayed asking you whether you would like to exit
-  GPS. Doing so saves your files.
+* A :guilabel:`Documentation` frame
+
+  This frame displays the plugin file documentation. By convention,
+  each plug-in starts with a comment indicating the purpose of this
+  plug-in and more detailed documentation on its usage.
+
+If you have modified the list of plugins that should be loaded at startup,
+you will need to restart GPS, since it cannot unload a module due to such
+an action having too many possible effects on GPS: then, a dialog is
+displayed asking you whether you would like to exit GPS when closing the
+preferences editor dialog.
+
+All the changes explictly set by the user in the list of plug-ins to load
+at startup are saved in :file:`HOME/.gps/startup.xml`.
 
 .. _Customizing_through_XML_and_Python_files:
 
@@ -1702,8 +1711,8 @@ own tools into the GPS platform.
 GPS searches for these customization files at startup in several different
 directories. Depending on where they are found, they are either
 automatically loaded by GPS (and thus can immediately modify things in GPS)
-or may only be made visible in the :guilabel:`Plug-ins` editor (see
-:ref:`The_Plug-ins_Editor`).
+or may only be made visible in the :guilabel:`Plugins` section of the
+preferences editor dialog (see :ref:`Editing_Plug-ins`).
 
 GPS searches these directories in the order given below. Any script loaded
 later can override operations performed by previously loaded scripts. For
@@ -1721,16 +1730,17 @@ versions of GPS you should not have keep other files in these directories.
 
   The :file:`INSTALL/share/gps/plug-ins` directory contains the files GPS
   automatically loads by default (unless overridden by the user via the
-  Plug-ins Editor). These plug-ins are visible to any user on the system
-  using the same GPS installation.  Reserve this directory for critical
-  plug-ins that almost everyone will use.
+  guilabel:`Plugins` section of the preferences editor dialog). These
+  plug-ins are visible to any user on the system using the same GPS
+  installation.  Reserve this directory for critical plug-ins that almost
+  everyone will use.
 
 * Not automatically-loaded, global modules
 
   The :file:`INSTALL/share/gps/library` directory contain files GPS
-  displays in the :guilabel:`Plug-ins` editor but does not load
-  automatically.  Typically, these files add optional capabilities to GPS
-  that many of users generally will not use.
+  displays in the :guilabel:`Plugins` section of the preferences editor dialog
+  but does not load automatically. Typically, these files add optional
+  capabilities to GPS that many of users generally will not use.
 
 * :file:`GPS_CUSTOM_PATH`
 
@@ -1738,7 +1748,8 @@ versions of GPS you should not have keep other files in these directories.
   directories, separated by semicolons (';') on Windows systems and colons
   (':') on Unix systems. All files in these directories with the
   appropriate extensions are automatically loaded by default by GPS, unless
-  overridden by the user through the :guilabel:`Plug-ins` editor.
+  overridden by the user through the :guilabel:`Plugins` section of
+  the preferences editor dialog.
 
   This is a convenient way to have project-specific customization
   files. You can, for example, create scripts or icons that set the
@@ -1749,24 +1760,24 @@ versions of GPS you should not have keep other files in these directories.
 * Automatically loaded user directory
 
   The directory :file:`HOME/.gps/plug-ins` is searched last. Any script in
-  it is loaded automatically unless overridden in the :guilabel:`Plug-ins`
-  editor.
+  it is loaded automatically unless overridden via the :guilabel:`Plugins`
+  section of the preferences editor dialog.
 
   This is a convenient way for you to create your own plug-ins or test them
   before you make them available to all GPS users by copying them to one of
   the other directories.
 
 Any script loaded by GPS can contain customization for various aspects of
-GPS, such as aliases, new languages or menus, in a single file. 
+GPS, such as aliases, new languages or menus, in a single file.
 
 Python files
 ^^^^^^^^^^^^
 
 You can format the Python plug-in in any way you want (as long as it can be
 executed by Python, of course), the following formatting is
-suggested. These plug-ins are visible in the :guilabel:`Plug-ins` editor,
-so having a common format makes it easier for users to understand each
-plug-in:
+suggested. These plug-ins are visible in the :guilabel:`Plugins` section
+of the preferences editor dialog, so having a common format makes it easier
+for users to understand each plug-in:
 
 * Comment
 
@@ -1775,13 +1786,6 @@ plug-in:
   start-of-line hash ('#') signs.  The first line of the comment should be
   a one line explanation of the goal of the script, separated by a blank
   line from the rest of the comment.
-
-* Customization variables
-
-  If a user can configure your script by changing some global variables,
-  they should be listed next and fully documented.  The user can use the
-  :menuselection:`Tools --> Plug-ins` menu to change the value of those
-  variables.
 
 * Implementation
 
@@ -1833,8 +1837,10 @@ format is therefore::
 
 The first line after the `<?xml?>` tag should contain a comment describing
 the purpose and usage of the script.  This comment is made visible in the
-:guilabel:`Plug-ins` editor.  The list of valid XML nodes that you can
-specify under :file:`<root>` is described in later sections. It includes:
+the preferences page associated with this plug-in, under :guilabel:`Plugins`
+section of the preferences editor dialog. The list of valid XML nodes
+that you can specify under :file:`<root>` is described in later sections.
+It includes:
 
 * :ref:`\<action>\ <Defining_Actions>`
 
@@ -2044,7 +2050,7 @@ The valid children of :file:`<action>` are the following XML tags:
 * :file:`on-failure`
 
   Specifies a command or group of commands to be executed if the previous
-  external command fails. Typically, this is used to parse the output of the 
+  external command fails. Typically, this is used to parse the output of the
   command and fill the :guilabel:`Locations` view appropriately
   (see :ref:`Processing_the_tool_output`).
 
@@ -2135,7 +2141,7 @@ current directory, which depends on the context::
       <external>xterm</external>
     </action>
   </xterm_directory>
-  
+
 As you can see in some of the examples above, some special strings are
 expanded by GPS just prior to executing the command, for example "%f" and
 "%d".  See below for a full list.
@@ -2465,11 +2471,11 @@ arguments.  This code is useful when you are writing a full python script.
 
 * :file:`%dirattr(Package'Name[,default])`
 
-  Like :file:`%attr`, but the directory part of an attribute value. 
+  Like :file:`%attr`, but the directory part of an attribute value.
 
 * :file:`%baseattr(Package'Name[,default])`
 
-  Like :file:`%attr`, but the base name an attribute value. 
+  Like :file:`%attr`, but the base name an attribute value.
 
 * :file:`%vars`
 
@@ -2833,14 +2839,14 @@ attributes:
 
 The :file:`<menu>` tag should have one XML child called
 :file:`<title>`, which specifies the label of the menu. This label is
-actually a path to a menu, so you can define submenus. 
+actually a path to a menu, so you can define submenus.
 
 You can define the accelerator keys for your menus using underscores
 in the title to designate the accelerator key. For example, if you
 want an accelerator on the first letter in a menu named :file:`File`,
 set its title to :file:`_File`.
 
-The :file:`<submenu>` tag 
+The :file:`<submenu>` tag
 accepts several children, such as :file:`<title>` (which can present at
 most once), :file:`<submenu>` (for nested menus), and :file:`<menu>`.
 
@@ -3850,8 +3856,8 @@ read-only by GPS and therefore cannot be edited through its graphical
 interface.  You can override some of the aliases in your own custom files.
 The system files are loaded first and aliases defined there can be
 overridden by the user-defined file.  There is one specific files which must
-contain only aliases definitions: :file:`$HOME/.gps/aliases`. Whenever you 
-edit aliases graphically or create new ones, they are stored in this file, 
+contain only aliases definitions: :file:`$HOME/.gps/aliases`. Whenever you
+edit aliases graphically or create new ones, they are stored in this file,
 which is the only one GPS ever modifies automatically.
 
 These files are standard XML customization files.  The XML tag to use is
@@ -4504,7 +4510,7 @@ We provide an example here::
     Comment=User defined icon theme
     Hidden=true
     Directories=vcs_icons
-    
+
     [vcs_icons]
     Size=24
 
@@ -4516,7 +4522,7 @@ look like this::
 
 .. highlight:: xml
 And usage in VCS plugin would be::
-               
+
     <status label="Up to date"
             iconname="my-vcs-up-to-date" />
 
@@ -4867,8 +4873,8 @@ following child tags:
 
   When this is set to :command`True`, launch a Python command rather than an
   external process. In this case, the arguments in the command line
-  are first process using the macro replacement mechanism, and then 
-  concatenated to form the string which is interpreted. For instance the 
+  are first process using the macro replacement mechanism, and then
+  concatenated to form the string which is interpreted. For instance the
   following::
 
        <command-line>
@@ -5477,7 +5483,7 @@ Here are the valid children for :file:`<switches>`:
 
   Groups together any number of children, each of which is associated with
   its own switch, allowing only one of the children can be selected at any
-  given time. 
+  given time.
 
   This tag accepts the :file:`line`, :file:`column` , :file:`label`,
   :file:`switch`, :file:`section`, :file:`before`, and :file:`tip`
@@ -5568,7 +5574,7 @@ Here are the valid children for :file:`<switches>`:
     attribute. If the user selects the check button of the this
     switch, GPS forces the selection of the check button for the slave
     switch. Likewise, if user sets the field to any value, GPS sets
-    the slave switch to that same value. 
+    the slave switch to that same value.
 
   * :file:`slave-page`, :file:`slave-switch`, :file:` slave-section`
 
@@ -6457,7 +6463,7 @@ This is handled in different ways depending on what language you are using:
             self.my_var = "global data"
 
          def on_changed(combo, choice):
-            print ("on_changed called: " + 
+            print ("on_changed called: " +
                combo.myclass.my_var + " " + combo.data + " " + choice)
 
       MyClass()
@@ -6484,7 +6490,7 @@ This is handled in different ways depending on what language you are using:
 
          def on_changed(self, combo, choice):
             # self is the instance of MyClass specified in call to append()
-            print ("on_changed called: " + 
+            print ("on_changed called: " +
                self.my_var + " " + combo.data + " " + choice)
 
       MyClass()
@@ -6615,7 +6621,7 @@ Redirecting the output of spawned processes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In general, you can redirect the output of any Python script to any GPS
-window (either an already existing one or one GPS creates automatically) 
+window (either an already existing one or one GPS creates automatically)
 using the :file:`output` attribute of XML configuration files.
 
 However, there is a limitation in Python that the output of processes
@@ -6724,7 +6730,7 @@ We will implement this contextual menu in a Python file, called
 
 The example above shows the flexibility of filters since you can pretty
 much do anything you wish through the shell commands. However, it is complex
-to write the above for such a simple filter. GPS provides a predefined 
+to write the above for such a simple filter. GPS provides a predefined
 filter for just that purpose, so you can write instead, in an XML file::
 
   <action name="test_filter" >
@@ -6816,7 +6822,7 @@ Python file (:file:`"mymod.py"`) containing the following::
 
 This file defines an action :file:`my_action`, that you can, for example,
 associate with a keybinding through the :menuselection:`Edit --> Key
-shortcuts` menu. 
+shortcuts` menu.
 
 If you copy this file into one of the :file:`plug-ins` directories, GPS
 automatically loads it at startup.  The function :func:`myfunc` is in a
