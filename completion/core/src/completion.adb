@@ -254,6 +254,7 @@ package body Completion is
       procedure Internal is new Ada.Unchecked_Deallocation
         (Completion_Proposal'Class, Completion_Proposal_Access);
    begin
+      Free (This.all);
       Internal (This);
    end Free;
 

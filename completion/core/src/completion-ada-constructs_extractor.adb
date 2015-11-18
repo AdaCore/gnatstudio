@@ -34,6 +34,9 @@ package body Completion.Ada.Constructs_Extractor is
 
    Resolver_ID : constant String := "CNST_ADA";
 
+   procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
+     (Actual_Parameter_Resolver, Actual_Parameter_Resolver_Access);
+
    ---------------------------------------
    -- New_Construct_Completion_Resolver --
    ---------------------------------------
@@ -135,6 +138,7 @@ package body Completion.Ada.Constructs_Extractor is
    is
    begin
       Unref (Stored.Persistent_Entity);
+      Unchecked_Free (Stored.Actual_Params);
    end Free;
 
    -----------------------
@@ -590,7 +594,10 @@ package body Completion.Ada.Constructs_Extractor is
    overriding procedure Free
      (Proposal : in out Construct_Completion_Proposal) is
    begin
-      Free (Proposal.Actual_Params);
+      Unchecked_Free (Proposal.Actual_Params);
+      if Proposal.Should_Free_View then
+         Free (Proposal.View);
+      end if;
    end Free;
 
    ----------
@@ -824,7 +831,8 @@ package body Completion.Ada.Constructs_Extractor is
          View                  => Deep_Copy (This.Current_Decl),
          Actual_Params         => Actuals,
          Is_In_Call            => This.Params_Array /= null,
-         From_Accept_Statement => This.From_Accept_Statement);
+         From_Accept_Statement => This.From_Accept_Statement,
+         Should_Free_View      => True);
    end Get;
 
    ----------

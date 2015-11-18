@@ -113,6 +113,8 @@ private
 
       View       : Entity_View;
       Is_In_Call : Boolean;
+
+      Should_Free_View : Boolean := False;
    end record;
 
    overriding
