@@ -21,13 +21,14 @@ private with Ada.Containers.Indefinite_Hashed_Sets;
 private with Ada.Strings.Hash;
 
 with Gdk.Event;
+with Gdk.RGBA;
 with Gtk.Menu;
 with Gtk.Widget;
 
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
-with Gdk.RGBA;
+private with Commands;
 private with Default_Preferences;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
@@ -89,6 +90,12 @@ package CodePeer.Module is
    --  Type used to automatically set build mode to "codepeer" on entry
    --  and reset it to the previous mode on exit. Also takes care of
    --  freezing the xref db.
+
+   function Get_CodePeer_Message
+     (Message : GPS.Kernel.Messages.Message_Access)
+      return CodePeer.Message_Access;
+   --  Returns associated CodePeer message or null when there is no associated
+   --  CodePeer Message.
 
 private
 
@@ -155,6 +162,9 @@ private
 
       Display_Values : Boolean := True;
       --  Display values tooltip
+
+      Review_Command : Commands.Command_Access;
+      --  Shared command to review selected message(s).
    end record;
 
    overriding function Tooltip_Handler

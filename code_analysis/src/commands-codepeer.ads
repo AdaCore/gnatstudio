@@ -20,8 +20,7 @@ with CodePeer.Module;
 package Commands.CodePeer is
 
    type Review_Message_Command is new Root_Command with record
-      Module  : Standard.CodePeer.Module.CodePeer_Module_Id;
-      Message : Standard.CodePeer.Message_Access;
+      Module : Standard.CodePeer.Module.CodePeer_Module_Id;
    end record;
 
    overriding function Execute

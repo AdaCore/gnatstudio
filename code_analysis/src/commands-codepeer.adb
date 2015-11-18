@@ -15,6 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
+with GPS.Kernel.Messages;
+
 package body Commands.CodePeer is
 
    -------------
@@ -22,9 +25,26 @@ package body Commands.CodePeer is
    -------------
 
    overriding function Execute
-     (Self : access Review_Message_Command) return Command_Return_Type is
+     (Self : access Review_Message_Command) return Command_Return_Type
+   is
+      use type Standard.CodePeer.Message_Access;
+
+      Context  : constant GPS.Kernel.Selection_Context :=
+        Self.Module.Kernel.Get_Current_Context;
+      Messages : constant GPS.Kernel.Messages.Message_Array :=
+        Messages_Information (Context);
+      Message  : Standard.CodePeer.Message_Access;
+
    begin
-      Self.Module.Review_Message (Self.Message);
+      if Messages'Length = 1 then
+         Message :=
+           Standard.CodePeer.Module.Get_CodePeer_Message
+             (Messages (Messages'First));
+
+         if Message /= null then
+            Self.Module.Review_Message (Message);
+         end if;
+      end if;
 
       return Success;
    end Execute;

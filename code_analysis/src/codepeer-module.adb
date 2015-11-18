@@ -284,6 +284,23 @@ package body CodePeer.Module is
       end loop;
    end Fill_Object_Races;
 
+   --------------------------
+   -- Get_CodePeer_Message --
+   --------------------------
+
+   function Get_CodePeer_Message
+     (Message : GPS.Kernel.Messages.Message_Access)
+      return CodePeer.Message_Access is
+   begin
+      if Message.Has_Note (CodePeer_Note'Tag) then
+         return
+           CodePeer_Note (Message.Get_Note (CodePeer_Note'Tag).all).Message;
+
+      else
+         return null;
+      end if;
+   end Get_CodePeer_Message;
+
    ---------------
    -- Get_Color --
    ---------------
@@ -1062,26 +1079,21 @@ package body CodePeer.Module is
       Message : GPS.Kernel.Messages.Message_Access)
    is
       pragma Unreferenced (Self);
+
+      Msg : constant Message_Access := Get_CodePeer_Message (Message);
+
    begin
-      if Module.Has_Backtraces
-        and then Message.Has_Note (CodePeer_Note'Tag)
-      then
-         declare
-            Msg : constant Message_Access :=
-              CodePeer_Note
-                (Message.Get_Note (CodePeer_Note'Tag).all).Message;
-         begin
-            CodePeer.Backtrace_View.Display_Backtraces
-              (Kernel,
-               Module.Output_Directory,
-               Msg.File.Name,
-               Message,
-               Msg.Subprogram.Name.all,
-               (if Msg.Is_Check
-                then Msg.Vns
-                else Natural_Sets.Empty_Set));
-            --  Backtraces are displayed only for 'check' messages.
-         end;
+      if Module.Has_Backtraces and then Msg /= null then
+         CodePeer.Backtrace_View.Display_Backtraces
+           (Kernel,
+            Module.Output_Directory,
+            Msg.File.Name,
+            Message,
+            Msg.Subprogram.Name.all,
+            (if Msg.Is_Check
+             then Msg.Vns
+             else Natural_Sets.Empty_Set));
+         --  Backtraces are displayed only for 'check' messages.
       end if;
    end Execute;
 
@@ -1307,6 +1319,7 @@ package body CodePeer.Module is
                   Primary.Set_Highlighting (Style);
                end if;
 
+               CodePeer_Module_Id (Self).Review_Command.Ref;
                Primary.Set_Action
                  (new GPS.Editors.Line_Information.Line_Information_Record'
                     (Text               => Null_Unbounded_String,
@@ -1317,9 +1330,7 @@ package body CodePeer.Module is
                      Message            =>
                        Create (Messages.Message_Access (Primary)),
                      Associated_Command =>
-                     new Standard.Commands.CodePeer.Review_Message_Command'
-                       (Root_Command with
-                          CodePeer_Module_Id (Self), Message)));
+                       CodePeer_Module_Id (Self).Review_Command));
 
                if Message.From_File /= No_File then
                   declare
@@ -1835,6 +1846,11 @@ package body CodePeer.Module is
         (GPS.Kernel.Messages.Get_Messages_Container (Kernel),
          GPS.Kernel.Messages.Listener_Access (Module.Listener),
          GPS.Kernel.Messages.Empty_Message_Flags);
+
+      Module.Review_Command :=
+        new Commands.CodePeer.Review_Message_Command'
+          (Root_Command with Module);
+      --  This command is shared for all CodePeer messages.
 
       Editors.Register_Module (Kernel);
    end Register_Module;
