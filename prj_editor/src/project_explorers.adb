@@ -87,15 +87,18 @@ package body Project_Explorers is
 
    Me : constant Trace_Handle := Create ("Project_Explorers");
 
-   Show_Absolute_Paths : Boolean_Preference;
-   Show_Flat_View      : Boolean_Preference;
-   Show_Hidden_Dirs    : Boolean_Preference;
-   Show_Empty_Dirs     : Boolean_Preference;
-   Projects_Before_Directories : Boolean_Preference;
-   Show_Object_Dirs    : Boolean_Preference;
-   Show_Runtime        : Boolean_Preference;
-   Show_Directories    : Boolean_Preference;
-   Show_Ellipsis       : Boolean_Preference;
+   type Preferences_Kind is
+     (Show_Absolute_Paths,
+      Show_Flat_View,
+      Show_Directories,
+      Show_Hidden_Dirs,
+      Show_Object_Dirs,
+      Show_Empty_Dirs,
+      Show_Runtime,
+      Show_Ellipsis,
+      Projects_Before_Directories);
+
+   Preferences : array (Preferences_Kind) of Boolean_Preference;
 
    Toggle_Absolute_Path_Name : constant String :=
      "Explorer toggle absolute paths";
@@ -150,11 +153,14 @@ package body Project_Explorers is
    -- The project explorer widget --
    ---------------------------------
 
+   type Own_Preferences is array (Preferences_Kind) of Boolean;
+
    type Project_Explorer_Record is new Generic_Views.View_Record with record
-      Tree      : Gtkada.Tree_View.Tree_View;
-      Text_Rend : Gtk_Cell_Renderer_Text;
-      Filter    : Explorer_Filter;
-      Expanding : Boolean := False;
+      Tree        : Gtkada.Tree_View.Tree_View;
+      Text_Rend   : Gtk_Cell_Renderer_Text;
+      Filter      : Explorer_Filter;
+      Expanding   : Boolean := False;
+      Preferences : Own_Preferences;
    end record;
    overriding procedure Create_Menu
      (View    : not null access Project_Explorer_Record;
@@ -734,6 +740,11 @@ package body Project_Explorers is
       Tooltip.Explorer := Project_Explorer (Explorer);
       Tooltip.Set_Tooltip (Explorer.Tree);
 
+      for Index in Preferences_Kind loop
+         --  Revert the properties for the first refresh
+         Explorer.Preferences (Index) := not Preferences (Index).Get_Pref;
+      end loop;
+
       P := new On_Pref_Changed;
       P.Explorer := Project_Explorer (Explorer);
       Preferences_Changed_Hook.Add (P, Watch => Explorer);
@@ -922,35 +933,42 @@ package body Project_Explorers is
       Pref   : Preference)
    is
       pragma Unreferenced (Kernel);
+
+      Value, Update : Boolean := False;
+
+      subtype Update_Kind is Preferences_Kind
+        range Show_Flat_View .. Preferences_Kind'Last;
+
    begin
       if Self.Explorer /= null then
          Set_Font_And_Colors
             (Self.Explorer.Tree, Fixed_Font => True, Pref => Pref);
 
-         if Pref = null
-           or else Pref = Preference (Show_Ellipsis)
-         then
+         Value := Preferences (Show_Ellipsis).Get_Pref;
+         if Self.Explorer.Preferences (Show_Ellipsis) /= Value then
+            Self.Explorer.Preferences (Show_Ellipsis) := Value;
             Set_Property
               (Self.Explorer.Text_Rend,
                Gtk.Cell_Renderer_Text.Ellipsize_Property,
-               (if Show_Ellipsis.Get_Pref then Ellipsize_Start
-                else Ellipsize_None));
+               (if Value then Ellipsize_Start else Ellipsize_None));
             Self.Explorer.Tree.Queue_Resize;
          end if;
 
-         if Pref = null   --  multiple preferences updated
-           or else Pref = Preference (Show_Flat_View)
-           or else Pref = Preference (Show_Directories)
-           or else Pref = Preference (Show_Hidden_Dirs)
-           or else Pref = Preference (Show_Object_Dirs)
-           or else Pref = Preference (Show_Empty_Dirs)
-           or else Pref = Preference (Show_Runtime)
-           or else Pref = Preference (Projects_Before_Directories)
-         then
+         for Index in Update_Kind loop
+            Value := Preferences (Index).Get_Pref;
+            if Self.Explorer.Preferences (Index) /= Value then
+               Self.Explorer.Preferences (Index) := Value;
+               Update := True;
+            end if;
+         end loop;
+
+         if Update then
             Update_View (Self.Explorer);
          end if;
 
-         if Pref = Preference (Show_Absolute_Paths) then
+         Value := Preferences (Show_Absolute_Paths).Get_Pref;
+         if Self.Explorer.Preferences (Show_Absolute_Paths) /= Value then
+            Self.Explorer.Preferences (Show_Absolute_Paths) := Value;
             Update_Absolute_Paths (Self.Explorer);
          end if;
       end if;
@@ -984,15 +1002,9 @@ package body Project_Explorers is
    is
       K : constant Kernel_Handle := View.Kernel;
    begin
-      Append_Menu (Menu, K, Show_Absolute_Paths);
-      Append_Menu (Menu, K, Show_Flat_View);
-      Append_Menu (Menu, K, Show_Directories);
-      Append_Menu (Menu, K, Show_Hidden_Dirs);
-      Append_Menu (Menu, K, Show_Object_Dirs);
-      Append_Menu (Menu, K, Show_Empty_Dirs);
-      Append_Menu (Menu, K, Show_Runtime);
-      Append_Menu (Menu, K, Show_Ellipsis);
-      Append_Menu (Menu, K, Projects_Before_Directories);
+      for Item of Preferences loop
+         Append_Menu (Menu, K, Item);
+      end loop;
    end Create_Menu;
 
    ----------------
@@ -1012,7 +1024,7 @@ package body Project_Explorers is
             return Is_Visible (Self.Filter, File) /= Hide;
 
          when Directory_Node_Types =>
-            if Show_Empty_Dirs.Get_Pref
+            if Self.Preferences (Show_Empty_Dirs)
               or else Has_Child (Child_Model, Iter)
             then
                File := Get_File_From_Node (-Child_Model, Iter);
@@ -1055,8 +1067,9 @@ package body Project_Explorers is
       Kernel  : not null access Kernel_Handle_Record'Class;
       Pattern : Search_Pattern_Access)
    is
-      Show_Abs_Paths : constant Boolean := Show_Absolute_Paths.Get_Pref;
-      Flat_View : constant Boolean := Show_Flat_View.Get_Pref;
+      Show_Abs_Paths : constant Boolean :=
+        Preferences (Show_Absolute_Paths).Get_Pref;
+      Flat_View : constant Boolean := Preferences (Show_Flat_View).Get_Pref;
 
       procedure Mark_Project_And_Parents_Visible (P : Project_Type);
       --  mark the given project node and all its parents as visible
@@ -1214,8 +1227,8 @@ package body Project_Explorers is
       pragma Unreferenced (Self);
       K : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
-      Set_Pref (Show_Absolute_Paths, K.Get_Preferences,
-                not Show_Absolute_Paths.Get_Pref);
+      Set_Pref (Preferences (Show_Absolute_Paths), K.Get_Preferences,
+                not Preferences (Show_Absolute_Paths).Get_Pref);
       return Commands.Success;
    end Execute;
 
@@ -1281,7 +1294,8 @@ package body Project_Explorers is
      (Explorer : access Gtk_Widget_Record'Class)
    is
       Exp : constant Project_Explorer := Project_Explorer (Explorer);
-      Show_Abs_Paths : constant Boolean := Show_Absolute_Paths.Get_Pref;
+      Show_Abs_Paths : constant Boolean :=
+        Exp.Preferences (Show_Absolute_Paths);
 
       procedure Process_Node (Iter : Gtk_Tree_Iter; Project : Project_Type);
       --  Recursively process node
@@ -1498,7 +1512,7 @@ package body Project_Explorers is
          when Project_Node_Types =>
             if Has_Dummy_Iter (T.Tree.Model, Iter) then
                Refresh_Project_Node
-                 (T, Iter, Flat_View => Show_Flat_View.Get_Pref);
+                 (T, Iter, Flat_View => T.Preferences (Show_Flat_View));
                Success := Expand_Row (T.Tree, Filter_Path, Open_All => False);
             end if;
 
@@ -1633,7 +1647,7 @@ package body Project_Explorers is
       --  Cache the value for use in Sort_Func
       Boolean_User_Data.Set
         (T.Tree.Model,
-         Projects_Before_Directories.Get_Pref,
+         T.Preferences (Projects_Before_Directories),
          User_Data_Projects_Before_Directories);
 
       if Get_Project (T.Kernel) = No_Project then
@@ -1651,7 +1665,7 @@ package body Project_Explorers is
       Refresh_Project_Node
         (Self      => T,
          Node      => Null_Iter,
-         Flat_View => Show_Flat_View.Get_Pref);
+         Flat_View => T.Preferences (Show_Flat_View));
 
       --  Restore initial settings
 
@@ -1678,7 +1692,7 @@ package body Project_Explorers is
      (Self    : not null access Project_Explorer_Record'Class;
       Project : Project_Type) return Gtk_Tree_Iter
    is
-      Flat_View : constant Boolean := Show_Flat_View.Get_Pref;
+      Flat_View : constant Boolean := Self.Preferences (Show_Flat_View);
       Node     : Gtk_Tree_Iter;
       P        : Project_Type;
    begin
@@ -1687,7 +1701,8 @@ package body Project_Explorers is
       end if;
 
       if not Flat_View then
-         Set_Pref (Show_Flat_View, Self.Kernel.Get_Preferences, True);
+         Set_Pref
+           (Preferences (Show_Flat_View), Self.Kernel.Get_Preferences, True);
          Update_View (Self);
       end if;
 
@@ -1753,9 +1768,11 @@ package body Project_Explorers is
       --  the project.
       --  If the file is not obsolete, add it to Files_Inserted.
 
-      Show_Abs_Paths : constant Boolean := Show_Absolute_Paths.Get_Pref;
-      Show_Obj_Dirs : constant Boolean := Show_Object_Dirs.Get_Pref;
-      Show_Dirs : constant Boolean := Show_Directories.Get_Pref;
+      Show_Abs_Paths : constant Boolean :=
+        Self.Preferences (Show_Absolute_Paths);
+      Show_Obj_Dirs : constant Boolean :=
+        Self.Preferences (Show_Object_Dirs);
+      Show_Dirs : constant Boolean := Self.Preferences (Show_Directories);
 
       Child   : Gtk_Tree_Iter;
       Files   : File_Array_Access;
@@ -1770,7 +1787,8 @@ package body Project_Explorers is
       ---------------
 
       function Is_Hidden (Dir : Virtual_File) return Boolean is
-         Show_Abs_Paths : constant Boolean := Show_Absolute_Paths.Get_Pref;
+         Show_Abs_Paths : constant Boolean :=
+           Self.Preferences (Show_Absolute_Paths);
       begin
          return Is_Hidden
            (Self.Kernel, +Directory_Node_Text (Show_Abs_Paths, Project, Dir));
@@ -1895,7 +1913,7 @@ package body Project_Explorers is
             Path_Free (Path);
          end if;
 
-         if Show_Runtime.Get_Pref then
+         if Self.Preferences (Show_Runtime) then
             Child := Create_Or_Reuse_Node
               (Model  => Self.Tree.Model,
                Parent => Null_Iter,  --  always at toplevel
@@ -1918,7 +1936,7 @@ package body Project_Explorers is
       --  Insert runtime files if requested
 
       if Project = Get_Project (Self.Kernel)
-        and then Show_Runtime.Get_Pref
+        and then Self.Preferences (Show_Runtime)
       then
          Child := Create_Or_Reuse_Node
            (Model  => Self.Tree.Model,
@@ -2018,9 +2036,9 @@ package body Project_Explorers is
       --  Now insert directories and files (including object directories)
 
       declare
-         Dir : Dirs_Files_Hash.Cursor := Dirs.First;
-         Show_Hidden : constant Boolean := Show_Hidden_Dirs.Get_Pref;
-         Previous : Directory_Info := (No_File, Dummy_Node);
+         Dir         : Dirs_Files_Hash.Cursor := Dirs.First;
+         Show_Hidden : constant Boolean := Self.Preferences (Show_Hidden_Dirs);
+         Previous    : Directory_Info := (No_File, Dummy_Node);
       begin
          while Has_Element (Dir) loop
             if Show_Hidden or else not Is_Hidden (Key (Dir).Directory) then
@@ -2207,39 +2225,47 @@ package body Project_Explorers is
    begin
       Explorer_Views.Register_Module (Kernel => Kernel);
 
-      Show_Flat_View := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("explorer-show-flat-view", False,
-         Label => -"Show flat view");
-      Show_Absolute_Paths := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("explorer-show-absolute-paths", False,
-         Label => -"Show absolute paths");
-      Show_Hidden_Dirs := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("explorer-show-hidden-directories", False,
-         Label => -"Show hidden directories");
-      Show_Empty_Dirs := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("explorer-show-empty-directories", True,
-         Label => -"Show empty directories");
-      Show_Ellipsis := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("explorer-show-ellipsis", False,
-         Label => -"Ellipsize long file names");
-      Projects_Before_Directories :=
+      Preferences (Show_Flat_View) :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("explorer-show-flat-view", False,
+           Label => -"Show flat view");
+      Preferences (Show_Absolute_Paths) :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("explorer-show-absolute-paths", False,
+           Label => -"Show absolute paths");
+      Preferences (Show_Hidden_Dirs) :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("explorer-show-hidden-directories", False,
+           Label => -"Show hidden directories");
+      Preferences (Show_Empty_Dirs) :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("explorer-show-empty-directories", True,
+           Label => -"Show empty directories");
+      Preferences (Show_Ellipsis) :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("explorer-show-ellipsis", False,
+           Label => -"Ellipsize long file names");
+      Preferences (Projects_Before_Directories) :=
         Kernel.Get_Preferences.Create_Invisible_Pref
           ("explorer-show-projects-first", False,
            Label => -"Projects before directories",
            Doc =>
              -("Whether imported projects should occur before or after source"
              & " directories"));
-      Show_Object_Dirs := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("explorer-show-object-dirs", True,
-         Label => -"Show object directories");
-      Show_Runtime := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("explorer-show-runtime", False,
-         Label => "Show runtime files");
-      Show_Directories := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("explorer-show-directories", True,
-         Label => "Group by directories",
-         Doc => -("If False, files are shown directly below the projects,"
-           & " otherwise they are grouped by categories"));
+      Preferences (Show_Object_Dirs) :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("explorer-show-object-dirs", True,
+           Label => -"Show object directories");
+      Preferences (Show_Runtime) :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("explorer-show-runtime", False,
+           Label => "Show runtime files");
+      Preferences (Show_Directories) :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("explorer-show-directories", True,
+           Label => "Group by directories",
+           Doc => -("If False, files are shown directly below the projects,"
+             & " otherwise they are grouped by categories"));
 
       Register_Action
         (Kernel, "Locate file in explorer",
