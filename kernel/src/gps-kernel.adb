@@ -86,8 +86,6 @@ with Language.Abstract_Construct_Tree; use Language.Abstract_Construct_Tree;
 package body GPS.Kernel is
 
    Me        : constant Trace_Handle := Create ("gps_kernel");
-   Ref_Me    : constant Trace_Handle :=
-                 Create ("Contexts.Ref", GNATCOLL.Traces.Off);
    Create_Me : constant Trace_Handle :=
                  Create ("Contexts.Mem", GNATCOLL.Traces.Off);
    Me_Hooks  : constant Trace_Handle := Create ("HOOKS", GNATCOLL.Traces.Off);
@@ -105,8 +103,6 @@ package body GPS.Kernel is
 
    use Action_Filters_Htable.String_Hash_Table;
 
-   function To_Address is new Ada.Unchecked_Conversion
-     (Selection_Context_Data, System.Address);
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Kernel_Handle);
    function Convert is new Ada.Unchecked_Conversion
@@ -676,119 +672,33 @@ package body GPS.Kernel is
       end if;
    end Report_Preference_File_Error;
 
-   --------------
-   -- Finalize --
-   --------------
+   -----------
+   -- Freee --
+   -----------
 
-   overriding procedure Finalize
-     (Context : in out Selection_Context_Controlled)
-   is
+   procedure Free (Self : in out Selection_Context_Data_Record) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Selection_Context_Data_Record, Selection_Context_Data);
-
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Addresses_Array, Addresses_Array_Access);
-
-      procedure Free (Data : in out Selection_Context_Data_Record);
-      --  Free memory used by Data
-
-      ----------
-      -- Free --
-      ----------
-
-      procedure Free (Data : in out Selection_Context_Data_Record) is
-      begin
-         if Active (Create_Me) then
-            Trace (Create_Me, "Freeing context: 0x"
-                   & System.Address_Image (Data'Address));
-         end if;
-
-         --  Do not unref the entity stored in the context if the kernel is in
-         --  destruction or as already been destroyed since the entity has
-         --  already been freed as part of the kernel destruction.
-
-         if Data.Kernel /= null and then not Data.Kernel.Is_In_Destruction then
-            --   ??? problem of double deallocation at shutdown time, ideally
-            --   the following call should be outside of the conditional.
-            GNATCOLL.VFS.Unchecked_Free (Data.Files);
-            Unchecked_Free (Data.Messages);
-         end if;
-
-         String_List_Utils.String_List.Free (Data.Activities);
-         Free (Data.Instances);
-      end Free;
-
-      Tmp     : Instance_List_Access;
-      Data    : Selection_Context_Data := Context.Data;
-
+         (Addresses_Array, Addresses_Array_Access);
    begin
-      Context.Data := null;  --  Make Finalize idempotent
-      if Data /= null then
-         if Active (Ref_Me) then
-            Trace (Ref_Me, "Before decref context: ("
-                   & System.Address_Image (To_Address (Data))
-                   & " " & Data.Ref_Count'Img & ") in instances="
-                   & Length (Data.Instances)'Img);
-         end if;
-
-         --  Some references to the selection are hold by the instance list
-         --  stored in the selection, so we need to break the cycle here
-
-         if Data.Ref_Count = Length (Data.Instances) + 1 then
-            Tmp := Data.Instances;
-            Data.Instances := null;
-            Free (Tmp);
-         end if;
-
-         Data.Ref_Count := Data.Ref_Count - 1;
-
-         if Data.Ref_Count = 0 then
-            if Active (Create_Me) then
-               GNATCOLL.Traces.Increase_Indent
-                 (Create_Me, "Destroy selection context ("
-                  & System.Address_Image (To_Address (Data)) & ")");
-            end if;
-
-            --  Do not access Context any more below, since the call to Free
-            --  will free instances and their user data, and the current call
-            --  to Finalize might come from such a user data.
-
-            Free (Data.all);
-            Unchecked_Free (Data);
-
-            if Active (Create_Me) then
-               GNATCOLL.Traces.Decrease_Indent
-                 (Create_Me, "Done destroying selection context");
-            end if;
-         end if;
+      if Active (Create_Me) then
+         Trace (Create_Me, "Freeing context: 0x"
+                & System.Address_Image (Self'Address));
       end if;
-   exception
-      when E : others =>
-         Trace (Me, E);
-         if Active (Create_Me) then
-            GNATCOLL.Traces.Decrease_Indent (Create_Me);
-         end if;
-   end Finalize;
 
-   ------------
-   -- Adjust --
-   ------------
+      --  Do not unref the entity stored in the context if the kernel is in
+      --  destruction or as already been destroyed since the entity has
+      --  already been freed as part of the kernel destruction.
 
-   overriding procedure Adjust
-     (Context : in out Selection_Context_Controlled) is
-   begin
-      if Context.Data /= null then
-         Context.Data.Ref_Count := Context.Data.Ref_Count + 1;
-         if Active (Ref_Me) then
-            Trace
-              (Ref_Me, "Adjust selection_context="
-               & System.Address_Image (To_Address (Context.Data))
-               & " " & Context.Data.Ref_Count'Img & ")");
-         end if;
+      if Self.Kernel /= null and then not Self.Kernel.Is_In_Destruction then
+         --   ??? problem of double deallocation at shutdown time, ideally
+         --   the following call should be outside of the conditional.
+         GNATCOLL.VFS.Unchecked_Free (Self.Files);
+         Unchecked_Free (Self.Messages);
       end if;
-   exception
-      when E : others => Trace (Me, E);
-   end Adjust;
+
+      String_List_Utils.String_List.Free (Self.Activities);
+      Free (Self.Instances);
+   end Free;
 
    -------------------------
    -- Get_Current_Context --
@@ -841,10 +751,10 @@ package body GPS.Kernel is
 
    function Get_Kernel (Context : Selection_Context) return Kernel_Handle is
    begin
-      if Context.Data.Data = null then
+      if Context.Ref.Is_Null then
          return null;
       else
-         return Context.Data.Data.Kernel;
+         return Context.Ref.Get.Kernel;
       end if;
    end Get_Kernel;
 
@@ -855,10 +765,10 @@ package body GPS.Kernel is
    function Get_Creator
      (Context : Selection_Context) return Abstract_Module_ID is
    begin
-      if Context.Data.Data = null then
+      if Context.Ref.Is_Null then
          return null;
       else
-         return Context.Data.Data.Creator;
+         return Context.Ref.Get.Creator;
       end if;
    end Get_Creator;
 
@@ -871,16 +781,17 @@ package body GPS.Kernel is
       Creator : access Abstract_Module_Record'Class := null)
       return Selection_Context
    is
-      Context : constant Selection_Context :=
-                  (Data => (Ada.Finalization.Controlled with
-                            Data => new Selection_Context_Data_Record));
+      Context : Selection_Context;
    begin
+      Context.Ref.Set (Selection_Context_Data_Record'(
+         Kernel  => Kernel_Handle (Kernel),
+         Creator => Abstract_Module (Creator),
+         others  => <>));
+
       if Active (Create_Me) then
          Trace (Create_Me, "Creating new context: 0x"
-                & System.Address_Image (Context.Data.Data.all'Address));
+                & System.Address_Image (Context.Ref.Get.Element.all'Address));
       end if;
-      Context.Data.Data.Kernel  := Kernel_Handle (Kernel);
-      Context.Data.Data.Creator := Abstract_Module (Creator);
       return Context;
    end New_Context;
 
@@ -1638,19 +1549,19 @@ package body GPS.Kernel is
          return True;
       end if;
 
-      if Context = No_Context then
+      if Context.Ref.Is_Null then
          return False;
       end if;
 
       --  Cache the result of each filter on this context in Computed_Filters.
 
-      C := Context.Data.Data.Computed_Filters.Find (Filter.all'Address);
+      C := Context.Ref.Get.Computed_Filters.Find (Filter.all'Address);
 
       if Has_Element (C) then
          return Element (C);
       else
          Result := Filter_Matches_Primitive (Filter, Context);
-         Context.Data.Data.Computed_Filters.Insert
+         Context.Ref.Get.Computed_Filters.Insert
            (Filter.all'Address, Result);
          return Result;
       end if;

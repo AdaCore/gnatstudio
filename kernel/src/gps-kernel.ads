@@ -22,7 +22,6 @@ with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Finalization;
 with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
@@ -31,6 +30,7 @@ with System;
 with GNAT.Strings;
 with GNATCOLL.Projects;
 with GNAT.Regpat;
+with GNATCOLL.Refcount;
 with GNATCOLL.Scripts;
 with GNATCOLL.Traces;
 with GNATCOLL.Tribooleans;
@@ -853,9 +853,10 @@ private
    type Selection_Context_Data_Record is record
       Kernel    : Kernel_Handle;
       Creator   : Abstract_Module;
-      Ref_Count : Natural := 1;
 
       Instances : GNATCOLL.Scripts.Instance_List_Access;
+      --  Instances in this list hold weak references to the selection
+      --  context, so that they don't prevent its deallocation.
 
       Files             : GNATCOLL.VFS.File_Array_Access := null;
       --  The current selected files
@@ -940,26 +941,25 @@ private
       --  Cache the result of each filter object applied to this context.
    end record;
 
-   type Selection_Context_Data is access all Selection_Context_Data_Record;
-   type Selection_Context_Controlled is new Ada.Finalization.Controlled
-      with record
-         Data : Selection_Context_Data;
-      end record;
+   procedure Free (Self : in out Selection_Context_Data_Record);
+   --  Free the context and its data
+
+   package Selection_Pointers is new GNATCOLL.Refcount.Shared_Pointers
+      (Element_Type           => Selection_Context_Data_Record,
+       Release                => Free,
+       Atomic_Counters        => True,
+       Potentially_Controlled => True);
+
    type Selection_Context is record
-      Data : Selection_Context_Controlled;
+      Ref : Selection_Pointers.Ref;
    end record;
-   --  Selection_Context should not be visibly tagged, otherwise we would have
-   --  operations dispatching on multiple types above
-
-   overriding
-   procedure Adjust   (Context : in out Selection_Context_Controlled);
-
-   overriding
-   procedure Finalize (Context : in out Selection_Context_Controlled);
-   --  See inherited documentation
-
+   type Weak_Selection_Context is record
+      Weak : Selection_Pointers.Weak_Ref;
+   end record;
    No_Context : constant Selection_Context :=
-                  (Data => (Ada.Finalization.Controlled with null));
+      (Ref => Selection_Pointers.Null_Ref);
+   No_Weak_Context : constant Weak_Selection_Context :=
+      (Weak => Selection_Pointers.Null_Weak_Ref);
 
    No_Tool : constant Tool_Properties_Record :=
      (Null_Unbounded_String,

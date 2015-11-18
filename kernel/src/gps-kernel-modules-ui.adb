@@ -677,7 +677,7 @@ package body GPS.Kernel.Modules.UI is
       if Act /= null then
          Context.Context := Action.Kernel.Last_Context_For_Contextual;
 
-         Assert (Me, Context.Context.Data.Data /= null,
+         Assert (Me, Context.Context /= No_Context,
                  "Contextual_Action called on freed context");
          Context.Event :=
            GPS_Window

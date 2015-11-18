@@ -18,7 +18,6 @@
 with Ada.Unchecked_Conversion;
 with Ada.Exceptions;          use Ada.Exceptions;
 with System;                  use System;
-with System.Address_Image;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Regpat;             use GNAT.Regpat;
 
@@ -74,14 +73,9 @@ package body GPS.Kernel.Scripts is
 
    Me     : constant Trace_Handle :=
               Create ("GPS.Kernel.Scripts", GNATCOLL.Traces.Off);
-   Ref_Me : constant Trace_Handle :=
-              Create ("Scripts.Ref", GNATCOLL.Traces.Off);
 
    Context_Class_Name         : constant String := "Context";
    Message_Context_Class_Name : constant String := "MessageContext";
-
-   function To_Address is new Ada.Unchecked_Conversion
-     (Selection_Context_Data, System.Address);
 
    type GPS_Properties_Type is
      (Files, Contexts, Entities, Projects, File_Locations);
@@ -93,7 +87,7 @@ package body GPS.Kernel.Scripts is
          when Files =>
             File : Virtual_File;
          when Contexts =>
-            Context : Selection_Context := No_Context;
+            Context : Weak_Selection_Context := No_Weak_Context;
          when Entities =>
             Entity  : Root_Entity_Ref;
          when Projects =>
@@ -1701,13 +1695,18 @@ package body GPS.Kernel.Scripts is
    function Get_Data
      (Instance : Class_Instance) return GPS.Kernel.Selection_Context
    is
+      use Selection_Pointers;
       Value : constant Instance_Property :=
                 Get_Data (Instance, Context_Class_Name);
    begin
-      if Value = null then
+      if Value = null
+         or else GPS_Properties (Value).Context.Weak.Was_Freed
+      then
          return No_Context;
       else
-         return GPS_Properties (Value).Context;
+         return C : Selection_Context do
+            C.Ref.Set (GPS_Properties (Value).Context.Weak);
+         end return;
       end if;
    end Get_Data;
 
@@ -1793,7 +1792,9 @@ package body GPS.Kernel.Scripts is
 
       Set_Data
         (Instance, Context_Class_Name,
-         GPS_Properties_Record'(Typ => Contexts, Context => Context));
+         GPS_Properties_Record'(
+            Typ => Contexts,
+            Context => (Weak => Context.Ref.Weak)));
    end Set_Data;
 
    ---------------------------
@@ -1805,52 +1806,18 @@ package body GPS.Kernel.Scripts is
       Class   : Class_Type;
       Context : GPS.Kernel.Selection_Context) return Class_Instance
    is
-      Initial_Ref : constant Integer := Context.Data.Data.Ref_Count;
-      Instance    : Class_Instance;
+      Instance : Class_Instance := No_Class_Instance;
    begin
-      if Active (Ref_Me) then
-         Increase_Indent
-           (Ref_Me, "Get_Or_Create_Context, context=("
-            & System.Address_Image (To_Address (Context.Data.Data))
-            & Initial_Ref'Img & ")");
+      if Context.Ref.Get.Instances = null then
+         Context.Ref.Get.Instances := new Instance_List'(Null_Instance_List);
+      else
+         Instance := Get (Context.Ref.Get.Instances.all, Script);
       end if;
-
-      if Context.Data.Data.Instances = null then
-         Context.Data.Data.Instances := new Instance_List'(Null_Instance_List);
-      end if;
-
-      Instance := Get (Context.Data.Data.Instances.all, Script);
 
       if Instance = No_Class_Instance then
-         Trace (Me, "Create a new instance for the current context");
          Instance := New_Instance (Script, Class);
          Set_Data (Instance, Context);
-         Set (Instance_List (Context.Data.Data.Instances.all),
-              Script, Instance);
-
-         if Active (Ref_Me) then
---              Assert (Ref_Me,
---                      Instance.Data.Data.Refcount = 3,
---                      "After Get_Or_Create_Context, CI.refcount ("
---                      & Instance.Data.Data.Refcount'Img
---                      & ") should be 3", Raise_Exception => False);
-            Assert (Ref_Me,
-                    Context.Data.Data.Ref_Count = Initial_Ref + 1,
-                    "After Get_Or_Create_Context, context.refcount ("
-                    & Context.Data.Data.Ref_Count'Img
-                    & ") should be 1+" & Initial_Ref'Img,
-                    Raise_Exception => False);
-         end if;
-
-      else
-         if Active (Ref_Me) then
-            Trace
-              (Ref_Me, "Get_Or_Create_Context: context already has instance");
-         end if;
-      end if;
-
-      if Active (Ref_Me) then
-         Decrease_Indent (Ref_Me);
+         Set (Instance_List (Context.Ref.Get.Instances.all), Script, Instance);
       end if;
 
       return Instance;
