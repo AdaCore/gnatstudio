@@ -1988,7 +1988,7 @@ package body Xref is
      (Self   : General_Xref_Database; Tree   : Project_Tree_Access)
    is
       Working_Xref_File : Virtual_File;
-
+      Descr : GNATCOLL.SQL.Exec.Database_Description;
       Error : GNAT.Strings.String_Access;
    begin
       Self.Working_Xref_Db := GNATCOLL.VFS.No_File;
@@ -2001,19 +2001,21 @@ package body Xref is
 
       if Self.Disable_SQL_Queries then
          --  Just to avoid errors because we are accessing a non-existing db
+         Descr := GNATCOLL.SQL.Sqlite.Setup
+            (Database => ":memory:", Errors   => Self.Errors);
          Self.Xref.Setup_DB
-           (DB    => GNATCOLL.SQL.Sqlite.Setup
-              (Database => ":memory:",
-               Errors   => Self.Errors),
+           (DB    => Descr,
             Tree  => Tree,
             Error => Error);
+
       else
          declare
          begin
+            Descr :=  GNATCOLL.SQL.Sqlite.Setup
+              (Database => +Working_Xref_File.Full_Name.all,
+               Errors   => Self.Errors);
             Self.Xref.Setup_DB
-              (DB    => GNATCOLL.SQL.Sqlite.Setup
-                 (Database => +Working_Xref_File.Full_Name.all,
-                  Errors   => Self.Errors),
+              (DB    => Descr,
                Tree  => Tree,
                Error => Error);
          exception
@@ -2025,6 +2027,8 @@ package body Xref is
                       & Exception_Information (E));
          end;
       end if;
+
+      GNATCOLL.SQL.Exec.Free (Descr);
 
       --  Not interested in schema version errors, gnatinspect already
       --  displays them on the console
@@ -2697,6 +2701,7 @@ package body Xref is
 
    procedure Project_Changed (Self : General_Xref_Database) is
       Error : GNAT.Strings.String_Access;
+      Descr : GNATCOLL.SQL.Exec.Database_Description;
    begin
       --  Create an initial empty database. It will never be filled, and
       --  will be shortly replaced in Project_View_Changed, but it ensures
@@ -2714,12 +2719,13 @@ package body Xref is
       Trace (Me, "Set up xref database: :memory:");
       Self.Working_Xref_Db := GNATCOLL.VFS.No_File;
       Self.Xref_Db_Is_Temporary := True;
+      Descr := GNATCOLL.SQL.Sqlite.Setup
+         (Database => ":memory:", Errors   => Self.Errors);
       Self.Xref.Setup_DB
-        (DB    => GNATCOLL.SQL.Sqlite.Setup
-           (Database => ":memory:",
-            Errors   => Self.Errors),
+        (DB    => Descr,
          Tree  => Self.Registry.Tree,
          Error => Error);
+      GNATCOLL.SQL.Exec.Free (Descr);
 
       --  not interested in schema version errors, gnatinspect will
       --  already display those for the user.
