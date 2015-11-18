@@ -911,6 +911,7 @@ package body Build_Configurations is
 
    procedure Free (Target : in out Target_Type) is
    begin
+      String_List_Utils.String_List.Free (Target.Properties.Parser_List);
       GNAT.OS_Lib.Free (Target.Command_Line);
    end Free;
 
