@@ -37,3 +37,15 @@ KP-62-O820-024 GPS: debugging aggregated projects
 
   Workaround: Initialize the debugger with no main unit, and manually type
               'file <exec_name>' in the debugger console.
+
+Known problems fixed in GPS 6.2.1 / GNATbench 2.10.1
+----------------------------------------------------
+
+KP-62-OB12-006 GPS: Locations are not restored on startup
+
+  Problem:    Messages are not restored on startup when "Save locations on
+              exit" feature of Locations view is enabled.
+
+  Status:     This was fixed in 6.2.1 on 2015-11-17
+
+  Workaround: Not necessary.
