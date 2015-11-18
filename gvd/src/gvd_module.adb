@@ -1617,6 +1617,7 @@ package body GVD_Module is
       pragma Unreferenced (Ignore);
    begin
       Ignore := Spawn (Kernel, Debugger_Kind.Get_Pref, File, Project, Args);
+      Kernel.Refresh_Context;
    end Debug_Init;
 
    -------------
@@ -1671,8 +1672,12 @@ package body GVD_Module is
          Close_Debugger (Current_Debugger);
       end loop;
 
-      GVD_Module_ID.Initialized := False;
       Remove_Debugger_Columns (Kernel, GNATCOLL.VFS.No_File);
+
+      if GVD_Module_ID.Initialized then
+         GVD_Module_ID.Initialized := False;
+         Kernel.Refresh_Context;
+      end if;
    end Debug_Terminate;
 
    -------------
