@@ -561,6 +561,7 @@ package body Builder_Facility_Module is
 
    overriding procedure Destroy (Module : in out Builder_Module_ID_Record) is
    begin
+      Clear_Toolbar_Buttons;
       Module.Builder.Destroy;
       Free (Module.Registry);
    end Destroy;
