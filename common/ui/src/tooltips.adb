@@ -168,9 +168,7 @@ package body Tooltips is
 
          declare
             Screen  : constant Gdk.Screen.Gdk_Screen := Toplevel.Get_Screen;
-            Monitor : constant Gint :=
-                        Screen.Get_Monitor_At_Window
-                          (Screen.Get_Active_Window);
+            Monitor : constant Gint := Screen.Get_Monitor_At_Point (X, Y);
          begin
             Screen.Get_Monitor_Geometry (Monitor, Geom);
 
