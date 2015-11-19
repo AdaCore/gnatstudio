@@ -813,16 +813,16 @@ package body Src_Editor_Module.Shell is
             procedure Print_Line_Info (Info : Line_Information_Record) is
                Print : Unbounded_String;
             begin
-               if Info.Text = null then
+               if Info.Text = Null_Unbounded_String then
                   Print := Print & "[no text], ";
                else
-                  Print := Print & """" & Info.Text.all & """, ";
+                  Print := Print & """" & Info.Text & """, ";
                end if;
 
-               if Info.Tooltip_Text = null then
+               if Info.Tooltip_Text = Null_Unbounded_String then
                   Print := Print & "[no tooltip], ";
                else
-                  Print := Print & """" & Info.Tooltip_Text.all & """, ";
+                  Print := Print & """" & Info.Tooltip_Text & """, ";
                end if;
 
                if Info.Associated_Command = null then

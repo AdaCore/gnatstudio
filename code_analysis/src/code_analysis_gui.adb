@@ -44,7 +44,7 @@ package body Code_Analysis_GUI is
 
    function Build_Analysis_Report
      (Kernel   : Kernel_Handle;
-      Name     : String_Access;
+      Name     : GNAT.Strings.String_Access;
       Projects : Code_Analysis_Tree;
       Binary   : Boolean) return Code_Analysis_View
    is

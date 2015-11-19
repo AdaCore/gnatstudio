@@ -15,9 +15,10 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Commands;
-with GNAT.Strings;     use GNAT.Strings;
+with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
+
+with Commands;
 
 package GPS.Editors.Line_Information is
 
@@ -28,10 +29,10 @@ package GPS.Editors.Line_Information is
    ----------------------
 
    type Line_Information_Record is record
-      Text               : GNAT.Strings.String_Access := null;
-      Tooltip_Text       : GNAT.Strings.String_Access := null;
+      Text               : Ada.Strings.Unbounded.Unbounded_String;
+      Tooltip_Text       : Ada.Strings.Unbounded.Unbounded_String;
       --  A text to be displayed in a tooltip
-      Image              : GNAT.Strings.String_Access := null;
+      Image              : Ada.Strings.Unbounded.Unbounded_String;
       Associated_Command : Commands.Command_Access := null;
    end record;
    --  Text must be a valid UTF8 string, which may contain markups in the pango
@@ -101,6 +102,9 @@ package GPS.Editors.Line_Information is
 private
 
    Empty_Line_Information : constant Line_Information_Record :=
-                              (null, null, null, null);
+     (Text               => Ada.Strings.Unbounded.Null_Unbounded_String,
+      Tooltip_Text       => Ada.Strings.Unbounded.Null_Unbounded_String,
+      Image              => Ada.Strings.Unbounded.Null_Unbounded_String,
+      Associated_Command => null);
 
 end GPS.Editors.Line_Information;

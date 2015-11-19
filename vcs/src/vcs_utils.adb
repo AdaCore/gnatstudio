@@ -15,18 +15,22 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with GNAT.Strings;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
+
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with GNATCOLL.Projects;            use GNATCOLL.Projects;
+
+with Gtkada.MDI;                   use Gtkada.MDI;
+
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with Gtkada.MDI;                use Gtkada.MDI;
-with Log_Utils;                 use Log_Utils;
-with VCS_Module;                use VCS_Module;
+with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
+with Log_Utils;                    use Log_Utils;
+with VCS_Module;                   use VCS_Module;
 
 package body VCS_Utils is
    Me : constant Trace_Handle := Create ("VCS_UTILS");
@@ -93,7 +97,7 @@ package body VCS_Utils is
       end if;
 
       Infos := new Line_Information_Array (-1 .. -1);
-      Infos (-1).Text := new String'(Label.all);
+      Infos (-1).Text := To_Unbounded_String (Label.all);
 
       File_Line_Action_Hook.Run
         (Kernel,

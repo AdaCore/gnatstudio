@@ -895,9 +895,10 @@ package body GPS.Location_View.Listener is
 
       if Message.Get_Action /= null
         and then Message.Get_Action.Associated_Command /= null
-        and then Message.Get_Action.Image /= null
+        and then Message.Get_Action.Image /= Null_Unbounded_String
       then
-         Glib.Values.Set_String (Values (Last), Message.Get_Action.Image.all);
+         Glib.Values.Set_String
+           (Values (Last), To_String (Message.Get_Action.Image));
       else
          Glib.Values.Set_String (Values (Last), "");
       end if;
@@ -912,10 +913,10 @@ package body GPS.Location_View.Listener is
       Glib.Values.Init (Values (Last), Glib.GType_String);
 
       if Message.Get_Action /= null
-        and then Message.Get_Action.Tooltip_Text /= null
+        and then Message.Get_Action.Tooltip_Text /= Null_Unbounded_String
       then
          Glib.Values.Set_String
-           (Values (Last), Message.Get_Action.Tooltip_Text.all);
+           (Values (Last), To_String (Message.Get_Action.Tooltip_Text));
 
       else
          Glib.Values.Set_String (Values (Last), "");
@@ -993,10 +994,10 @@ package body GPS.Location_View.Listener is
 
          if Message.Get_Action /= null
            and then Message.Get_Action.Associated_Command /= null
-           and then Message.Get_Action.Image /= null
+           and then Message.Get_Action.Image /= Null_Unbounded_String
          then
             Self.Model.Set
-               (Iter, Icon_Name_Column, Message.Get_Action.Image.all);
+               (Iter, Icon_Name_Column, To_String (Message.Get_Action.Image));
          else
             Self.Model.Set (Iter, Icon_Name_Column, "");
          end if;
@@ -1005,12 +1006,12 @@ package body GPS.Location_View.Listener is
            (Iter, Action_Command_Column, To_Address (Message.Get_Action));
 
          if Message.Get_Action /= null
-           and then Message.Get_Action.Tooltip_Text /= null
+           and then Message.Get_Action.Tooltip_Text /= Null_Unbounded_String
          then
             Self.Model.Set
               (Iter,
                Action_Tooltip_Column,
-               Message.Get_Action.Tooltip_Text.all);
+               To_String (Message.Get_Action.Tooltip_Text));
 
          else
             Self.Model.Set (Iter, Action_Tooltip_Column, "");

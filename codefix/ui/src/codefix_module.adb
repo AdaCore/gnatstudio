@@ -97,6 +97,11 @@ package body Codefix_Module is
    Fix_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Choice_Cst'Access);
 
+   GPS_Codefix_String       : constant Unbounded_String :=
+     To_Unbounded_String ("gps-codefix");
+   GPS_Codefix_Multi_String : constant Unbounded_String :=
+     To_Unbounded_String ("gps-codefix-multi");
+
    type Codefix_Sessions_Array is array (Natural range <>) of Codefix_Session;
    type Codefix_Sessions is access Codefix_Sessions_Array;
 
@@ -764,13 +769,13 @@ package body Codefix_Module is
       Err        : constant Error_Message := Get_Error_Message (Error);
    begin
       New_Action := new Line_Information_Record;
-      New_Action.Tooltip_Text := new String'
+      New_Action.Tooltip_Text := To_Unbounded_String
         (-"<b>Fix: </b>" & Get_Message (Err));
 
       if Get_Number_Of_Fixes (Error) = 1 then
-         New_Action.Image := new String'("gps-codefix");
+         New_Action.Image := GPS_Codefix_String;
       else
-         New_Action.Image := new String'("gps-codefix-multi");
+         New_Action.Image := GPS_Codefix_Multi_String;
       end if;
 
       New_Action.Associated_Command := new Codefix_Command;

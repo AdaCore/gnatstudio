@@ -17,6 +17,7 @@
 
 with Ada.Strings;                use Ada.Strings;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNAT.Regpat;                use GNAT.Regpat;
 
 with GPS.Intl;                   use GPS.Intl;
@@ -36,7 +37,7 @@ package body Code_Coverage.Gcov is
 
    procedure Add_File_Info
      (File_Node     : Code_Analysis.File_Access;
-      File_Contents : String_Access)
+      File_Contents : GNAT.Strings.String_Access)
    is
       Current           : Natural;
       Line_Regexp       : constant Pattern_Matcher := Compile
@@ -165,7 +166,7 @@ package body Code_Coverage.Gcov is
       Kernel      : GPS.Kernel.Kernel_Handle;
       File        : GNATCOLL.VFS.Virtual_File;
       Line_Number : Positive;
-      Line_Text   : String_Access;
+      Line_Text   : GNAT.Strings.String_Access;
       Added       : in out Boolean;
       Allow_Auto_Jump_To_First : Boolean)
    is
@@ -211,41 +212,40 @@ package body Code_Coverage.Gcov is
       if Bin_Mode then
          case Coverage.Coverage is
          when 0 =>
-            Result.Image :=
-               new String'(Code_Analysis_GUI.Uncovered_Line_Pixbuf);
-            Result.Tooltip_Text := new String'
+            Result.Image := Code_Analysis_GUI.Uncovered_Line_Pixbuf;
+            Result.Tooltip_Text := To_Unbounded_String
               (-"The code for this line has not been executed.");
          when others =>
-            Result.Image :=
-               new String'(Code_Analysis_GUI.Covered_Line_Pixbuf);
-            Result.Tooltip_Text := new String'
+            Result.Image := Code_Analysis_GUI.Covered_Line_Pixbuf;
+            Result.Tooltip_Text := To_Unbounded_String
               (-"The code for this line has been executed.");
          end case;
       else
          case Coverage.Coverage is
-         when 0 =>
-            Result.Text := new
-              String'(Pango_Markup_To_Open_1
-                      & "red"
-                      & Pango_Markup_To_Open_2
-                      & "#"
-                      & Pango_Markup_To_Close);
-         when 1 =>
-            Result.Text := new
-              String'(Pango_Markup_To_Open_1
-                      & "black"
-                      & Pango_Markup_To_Open_2
-                      & (-" 1 time ")
-                       & Pango_Markup_To_Close);
-         when others =>
-            Result.Text := new
-              String'
-                (Pango_Markup_To_Open_1
-                 & "black"
-                 & Pango_Markup_To_Open_2
-                 & Image (Coverage.Coverage)
-                 & " times"
-                 & Pango_Markup_To_Close);
+            when 0 =>
+               Result.Text := To_Unbounded_String
+                 (Pango_Markup_To_Open_1
+                  & "red"
+                  & Pango_Markup_To_Open_2
+                  & "#"
+                  & Pango_Markup_To_Close);
+
+            when 1 =>
+               Result.Text := To_Unbounded_String
+                 (Pango_Markup_To_Open_1
+                  & "black"
+                  & Pango_Markup_To_Open_2
+                  & (-" 1 time ")
+                  & Pango_Markup_To_Close);
+
+            when others =>
+               Result.Text := To_Unbounded_String
+                 (Pango_Markup_To_Open_1
+                  & "black"
+                  & Pango_Markup_To_Open_2
+                  & Image (Coverage.Coverage)
+                  & " times"
+                  & Pango_Markup_To_Close);
          end case;
       end if;
 

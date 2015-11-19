@@ -18,13 +18,13 @@
 --  This package provides visual utilities to handle differences between
 --  files.
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNAT.Strings;    use GNAT.Strings;
+
+with GNATCOLL.Traces; use GNATCOLL.Traces;
+with GNATCOLL.VFS;    use GNATCOLL.VFS;
 
 with GPS.Kernel;
 with GPS.Kernel.Preferences;
-
-with GNATCOLL.Traces;      use GNATCOLL.Traces;
-with GNATCOLL.VFS;         use GNATCOLL.VFS;
 
 package Vdiff2_Module.Utils is
 
@@ -108,12 +108,13 @@ package Vdiff2_Module.Utils is
    type Text_Iterator_Access is access all Text_Iterator;
 
    type Text_Iterator is record
-      New_Line, Old_Line : String_Access;
-      Original_Position  : Natural;
-      Action             : Diff_Action := Nothing;
-      Color_Enabled      : Boolean := True;
-      Next               : Text_Iterator_Access;
-      File_Caption       : Boolean := False;
+      New_Line          : GNAT.Strings.String_Access;
+      Old_Line          : GNAT.Strings.String_Access;
+      Original_Position : Natural;
+      Action            : Diff_Action := Nothing;
+      Color_Enabled     : Boolean := True;
+      Next              : Text_Iterator_Access;
+      File_Caption      : Boolean := False;
    end record;
    --  In this structure, Original_Position is the number of the line in the
    --  old text. If Action is Append, then New_Line should be null and

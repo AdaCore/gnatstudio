@@ -1308,9 +1308,10 @@ package body CodePeer.Module is
 
                Primary.Set_Action
                  (new GPS.Editors.Line_Information.Line_Information_Record'
-                    (Text               => null,
-                     Tooltip_Text       => new String'("Review message"),
-                     Image              => new String'
+                    (Text               => Null_Unbounded_String,
+                     Tooltip_Text       => To_Unbounded_String
+                       ("Review message"),
+                     Image              => To_Unbounded_String
                         (Code_Analysis_GUI.Post_Analysis_Cst),
                      Associated_Command =>
                      new Standard.Commands.CodePeer.Review_Message_Command'

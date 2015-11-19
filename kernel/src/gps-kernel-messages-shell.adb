@@ -324,9 +324,9 @@ package body GPS.Kernel.Messages.Shell is
             end if;
 
             Action := new Line_Information_Record'
-              (Text         => null,
-               Tooltip_Text => new String'(Tooltip_Str),
-               Image        => new String'(Image_Str),
+              (Text               => Null_Unbounded_String,
+               Tooltip_Text       => To_Unbounded_String (Tooltip_Str),
+               Image              => To_Unbounded_String (Image_Str),
                Associated_Command => Command);
 
             Message.Set_Action (Action);
@@ -355,9 +355,9 @@ package body GPS.Kernel.Messages.Shell is
             Command.Inst := Nth_Arg (Data, 1, Message_Class);
 
             Action := new Line_Information_Record'
-              (Text         => null,
-               Tooltip_Text => new String'(Tooltip_Str),
-               Image        => new String'(Image_Str),
+              (Text               => Null_Unbounded_String,
+               Tooltip_Text       => To_Unbounded_String (Tooltip_Str),
+               Image              => To_Unbounded_String (Image_Str),
                Associated_Command => Command_Access (Command));
 
             Message.Set_Action (Action);

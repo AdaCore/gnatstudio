@@ -198,19 +198,18 @@ package body Src_Editor_Box.Tooltips is
 
                      if Action /= null then
                         if Image = null
-                           and then Action.Image /= null
-                           and then Action.Image.all /= ""
+                          and then Action.Image /= Null_Unbounded_String
                         then
                            Gtk_New_From_Icon_Name
-                              (Image, Action.Image.all, 20);
+                              (Image, To_String (Action.Image), 20);
                         end if;
 
-                        if Action.Tooltip_Text /= null then
+                        if Action.Tooltip_Text /= Null_Unbounded_String then
                            if Content /= Null_Unbounded_String then
                               Append (Content, ASCII.LF);
                            end if;
 
-                           Append (Content, Action.Tooltip_Text.all);
+                           Append (Content, Action.Tooltip_Text);
                            Has_Info := True;
                         end if;
                      end if;
@@ -329,11 +328,12 @@ package body Src_Editor_Box.Tooltips is
                   if Text /= Null_Unbounded_String then
 
                      if Image = null
-                        and then Message.Get_Action /= null
-                        and then Message.Get_Action.Image /= null
+                       and then Message.Get_Action /= null
+                       and then Message.Get_Action.Image
+                                  /= Null_Unbounded_String
                      then
                         Gtk_New_From_Icon_Name
-                           (Image, Message.Get_Action.Image.all, 20);
+                           (Image, To_String (Message.Get_Action.Image), 20);
                      end if;
 
                      if Vbox = null then

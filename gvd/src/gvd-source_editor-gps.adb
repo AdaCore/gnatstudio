@@ -15,26 +15,24 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Editors;               use GPS.Editors;
-with GPS.Kernel;                use GPS.Kernel;
-
-with GVD.Process;               use GVD.Process;
-with GVD.Types;                 use GVD.Types;
-with Debugger_Pixmaps;          use Debugger_Pixmaps;
-with String_List_Utils;         use String_List_Utils;
+with Ada.Unchecked_Deallocation;
+with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
+with GNAT.Strings;                 use GNAT.Strings;
 
 with GNATCOLL.Projects;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 
-with Commands;                  use Commands;
-with Commands.Debugger;         use Commands.Debugger;
-
-with Ada.Unchecked_Deallocation;
-with GNAT.Strings;              use GNAT.Strings;
-
-with GVD.Preferences;           use GVD.Preferences;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with Commands;                     use Commands;
+with Commands.Debugger;            use Commands.Debugger;
+with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Kernel;                   use GPS.Kernel;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GVD.Preferences;              use GVD.Preferences;
+with GVD.Process;                  use GVD.Process;
+with GVD.Types;                    use GVD.Types;
+with Debugger_Pixmaps;             use Debugger_Pixmaps;
+with String_List_Utils;            use String_List_Utils;
 
 package body GVD.Source_Editor.GPS is
 
@@ -242,9 +240,9 @@ package body GVD.Source_Editor.GPS is
       declare
          Info : aliased Line_Information_Array :=
             (Line => Line_Information_Record'
-               (Text               => null,
-                Tooltip_Text       => null,
-                Image              => new String'(Current_Line_Pixbuf),
+               (Text               => Null_Unbounded_String,
+                Tooltip_Text       => Null_Unbounded_String,
+                Image              => Current_Line_Pixbuf,
                 Associated_Command => null));
       begin
          Add_Line_Information
@@ -430,7 +428,7 @@ package body GVD.Source_Editor.GPS is
                   Unset,
                   Br (J).File,
                   Br (J).Line);
-               A (L).Image := new String'(Line_Has_Breakpoint_Pixbuf);
+               A (L).Image := Line_Has_Breakpoint_Pixbuf;
                A (L).Associated_Command := Command_Access (Other_Command);
 
                --  Try to resolve file when it is not present to handle
@@ -491,9 +489,9 @@ package body GVD.Source_Editor.GPS is
                      Editor.Current_Breakpoints (J).Line);
 
                   if Editor_Show_Line_With_Code.Get_Pref then
-                     A (L).Image := new String'(Line_Has_Code_Pixbuf);
+                     A (L).Image := Line_Has_Code_Pixbuf;
                   else
-                     A (L).Image := new String'(Line_Might_Have_Code_Pixbuf);
+                     A (L).Image := Line_Might_Have_Code_Pixbuf;
                   end if;
 
                   A (L).Associated_Command := Command_Access (Other_Command);

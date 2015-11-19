@@ -20,19 +20,22 @@
 --  Code Analysis Module use
 --  </description>
 
-with GNAT.Strings;         use GNAT.Strings;
-with Glib;                 use Glib;
-with Gdk.Event;            use Gdk.Event;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNAT.Strings;          use GNAT.Strings;
+
+with Glib;                  use Glib;
+with Gdk.Event;             use Gdk.Event;
 with Gtk.Menu;
-with Gtk.Box;              use Gtk.Box;
-with Gtk.Button;           use Gtk.Button;
-with Gtk.Tree_View;        use Gtk.Tree_View;
-with Gtk.Tree_Store;       use Gtk.Tree_Store;
-with Gtk.Tree_Model;       use Gtk.Tree_Model;
-with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
-with Gtk.Widget;           use Gtk.Widget;
-with GPS.Kernel;           use GPS.Kernel;
-with Code_Analysis;        use Code_Analysis;
+with Gtk.Box;               use Gtk.Box;
+with Gtk.Button;            use Gtk.Button;
+with Gtk.Tree_View;         use Gtk.Tree_View;
+with Gtk.Tree_Store;        use Gtk.Tree_Store;
+with Gtk.Tree_Model;        use Gtk.Tree_Model;
+with Gtk.Tree_View_Column;  use Gtk.Tree_View_Column;
+with Gtk.Widget;            use Gtk.Widget;
+
+with GPS.Kernel;            use GPS.Kernel;
+with Code_Analysis;         use Code_Analysis;
 
 package Code_Analysis_GUI is
 
@@ -82,9 +85,10 @@ package Code_Analysis_GUI is
    --  Constant used to set the width of the progress bars of the analysis
    --  report
 
-   Covered_Line_Pixbuf : constant String := "gps-emblem-gcov-covered-symbolic";
-   Uncovered_Line_Pixbuf : constant String :=
-      "gps-emblem-gcov-uncovered-symbolic";
+   Covered_Line_Pixbuf   : constant Unbounded_String :=
+     To_Unbounded_String ("gps-emblem-gcov-covered-symbolic");
+   Uncovered_Line_Pixbuf : constant Unbounded_String :=
+     To_Unbounded_String ("gps-emblem-gcov-uncovered-symbolic");
    --  Pixbufs containing the line information icons.
    --  Call Initialize_Graphics before referencing these variables.
 
@@ -106,7 +110,7 @@ package Code_Analysis_GUI is
 
    function Build_Analysis_Report
      (Kernel   : Kernel_Handle;
-      Name     : String_Access;
+      Name     : GNAT.Strings.String_Access;
       Projects : Code_Analysis_Tree;
       Binary   : Boolean) return Code_Analysis_View;
    --  Actually builds the tree view report.

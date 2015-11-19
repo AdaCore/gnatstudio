@@ -19,13 +19,16 @@
 --  This package provides a user level code coverage API
 --  </description>
 
-with GNAT.OS_Lib;       use GNAT.OS_Lib;
+with GNAT.Strings;      use GNAT.Strings;
+
 with GNATCOLL.Projects; use GNATCOLL.Projects;
-with XML_Utils;         use XML_Utils;
+
 with Gtk.Tree_Store;    use Gtk.Tree_Store;
 with Gtk.Tree_Model;    use Gtk.Tree_Model;
-with Language.Tree;     use Language.Tree;
+
 with Code_Analysis;     use Code_Analysis;
+with Language.Tree;     use Language.Tree;
+with XML_Utils;         use XML_Utils;
 
 package Code_Coverage is
 
@@ -35,7 +38,7 @@ package Code_Coverage is
    --  Sets a coverage data with Error_Code for Status to the given File_Node
 
    procedure Get_Runs_Info_From_File
-     (File_Contents : String_Access;
+     (File_Contents : GNAT.Strings.String_Access;
       Prj_Runs      : out Positive;
       Have_Runs     : out Boolean);
    --  Reads and returns in the given .gcov file contents the number of

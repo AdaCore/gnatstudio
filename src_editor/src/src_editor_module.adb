@@ -18,8 +18,10 @@
 with Ada.Containers.Vectors;
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
+with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;                       use GNAT.Regpat;
+
 with GNATCOLL.Projects;                 use GNATCOLL.Projects;
 with GNATCOLL.VFS_Utils;                use GNATCOLL.VFS_Utils;
 with GNATCOLL.Utils;                    use GNATCOLL.Utils;
@@ -919,7 +921,7 @@ package body Src_Editor_Module is
                   new Line_Information_Array (Line1 .. Line2);
             begin
                for J in Infos'Range loop
-                  Infos (J).Text := new String'(Image (J));
+                  Infos (J).Text := To_Unbounded_String (Image (J));
                end loop;
 
                Add_Line_Information

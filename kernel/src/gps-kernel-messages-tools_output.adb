@@ -541,10 +541,12 @@ package body GPS.Kernel.Messages.Tools_Output is
                Msg : constant String := Get_Message (Last);
             begin
                Action := new Line_Information_Record;
+
                if C /= null and then Get_Icon (C) /= "" then
-                  Action.Image := new String'(Get_Icon (C));
+                  Action.Image := To_Unbounded_String (Get_Icon (C));
                end if;
-               Action.Tooltip_Text := new String'(Msg);
+
+               Action.Tooltip_Text := To_Unbounded_String (Msg);
 
                if not Show_In_Locations then
                   C := Builder_Background_Style;

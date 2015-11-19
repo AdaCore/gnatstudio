@@ -1665,14 +1665,6 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      if Info.Text /= null then
-         GNAT.Strings.Free (Info.Text);
-      end if;
-
-      if Info.Tooltip_Text /= null then
-         GNAT.Strings.Free (Info.Tooltip_Text);
-      end if;
-
       if Info.Associated_Command /= null then
          Unref (Info.Associated_Command);
       end if;

@@ -16,8 +16,10 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar;              use Ada.Calendar;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Locations;      use GPS.Kernel.Locations;
@@ -43,6 +45,8 @@ package body Coverage_GUI is
       new Default_Preferences.Enums.Generics (Coverage_Toolchain_Kinds);
 
    Coverage_Toolchain_Preference : Coverage_Toolchain_Preferences.Preference;
+
+   Space_String : constant Unbounded_String := To_Unbounded_String (" ");
 
    ---------------------------
    -- Add_Gcov_Project_Info --
@@ -112,7 +116,7 @@ package body Coverage_GUI is
          Set_Error (File_Node, File_Out_Of_Date);
       else
          declare
-            Contents : String_Access := Read_File (Cov_File);
+            Contents : GNAT.Strings.String_Access := Read_File (Cov_File);
             Last     : Integer;
             CR_Found : Boolean;
          begin
@@ -151,7 +155,7 @@ package body Coverage_GUI is
 
          if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
             declare
-               Text : String_Access;
+               Text : GNAT.Strings.String_Access;
                Lang : constant Language_Access :=
                         Get_Language_From_File (Handler, Src_File);
             begin
@@ -257,7 +261,7 @@ package body Coverage_GUI is
                      Binary_Coverage_Mode);
                end;
             else
-               Line_Info (J).Text := new String'(" ");
+               Line_Info (J).Text := Space_String;
             end if;
          end loop;
 
@@ -479,7 +483,7 @@ package body Coverage_GUI is
      (Kernel : Kernel_Handle;
       Source : GNATCOLL.VFS.Virtual_File) return GNATCOLL.VFS.Virtual_File
    is
-      Gcov_Root_Env : String_Access;
+      Gcov_Root_Env : GNAT.Strings.String_Access;
       Gcov_Root     : GNATCOLL.VFS.Virtual_File;
    begin
       case Current_Coverage_Tool is

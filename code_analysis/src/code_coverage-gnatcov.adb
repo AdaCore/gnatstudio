@@ -88,7 +88,7 @@ package body Code_Coverage.GNATcov is
 
    procedure Add_File_Info
      (File_Node     : Code_Analysis.File_Access;
-      File_Contents : GNAT.OS_Lib.String_Access)
+      File_Contents : GNAT.Strings.String_Access)
    is
       Current           : Natural;
       Line_Regexp       : constant Pattern_Matcher := Compile
@@ -333,7 +333,7 @@ package body Code_Coverage.GNATcov is
       Kernel      : GPS.Kernel.Kernel_Handle;
       File        : GNATCOLL.VFS.Virtual_File;
       Line_Number : Positive;
-      Line_Text   : GNAT.OS_Lib.String_Access;
+      Line_Text   : GNAT.Strings.String_Access;
       Added       : in out Boolean;
       Allow_Auto_Jump_To_First : Boolean)
    is
@@ -398,13 +398,13 @@ package body Code_Coverage.GNATcov is
       Result : GPS.Editors.Line_Information.Line_Information_Record;
    begin
       if Text /= "" then
-         Result.Text := new String'
+         Result.Text := To_Unbounded_String
            (Pango_Markup_To_Open_1
             & Coverage_Status_Color (Coverage.Status).all
             & Pango_Markup_To_Open_2
             & Coverage_Status_Char (Coverage.Status)
             & Pango_Markup_To_Close);
-         Result.Tooltip_Text := new String'(Text);
+         Result.Tooltip_Text := To_Unbounded_String (Text);
          Result.Associated_Command := new Detail_Messages_Command'
            (Commands.Root_Command with
             Line   => Coverage.all'Access,

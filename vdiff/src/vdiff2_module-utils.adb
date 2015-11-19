@@ -15,10 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with Commands;                          use Commands;
+
 with GNATCOLL.Arg_Lists;                use GNATCOLL.Arg_Lists;
+
+with Gtk.Enums;                         use Gtk.Enums;
+with Gtkada.Dialogs;                    use Gtkada.Dialogs;
+with Gtkada.MDI;                        use Gtkada.MDI;
+
+with Commands;                          use Commands;
 with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
 with GPS.Editors;                       use GPS.Editors;
 with GPS.Intl;                          use GPS.Intl;
@@ -29,14 +35,11 @@ with GPS.Kernel.Messages;               use GPS.Kernel.Messages;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
-with Gtk.Enums;                         use Gtk.Enums;
-with Gtkada.Dialogs;                    use Gtkada.Dialogs;
-with Gtkada.MDI;                        use Gtkada.MDI;
 with String_Utils;                      use String_Utils;
 with Vdiff2_Command_Line;               use Vdiff2_Command_Line;
+with Vdiff2_Module;                     use Vdiff2_Module;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
-with Vdiff2_Module;                     use Vdiff2_Module;
 
 package body Vdiff2_Module.Utils is
 
@@ -44,6 +47,14 @@ package body Vdiff2_Module.Utils is
    use Diff_Chunk_List;
 
    type T_VLine_Information is array (1 .. 3) of Line_Information_Data;
+
+   GPS_Diff_Noconflict_Symbolic_String : constant Unbounded_String :=
+     To_Unbounded_String ("gps-diff-noconflict-symbolic");
+   GPS_Diff_Conflict_Symbolic_String   : constant Unbounded_String :=
+     To_Unbounded_String ("gps-diff-conflict-symbolic");
+
+   Minus_Sign_String : constant Unbounded_String := To_Unbounded_String ("-");
+   Plus_Sign_String  : constant Unbounded_String := To_Unbounded_String ("+");
 
    procedure Append
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -236,8 +247,8 @@ package body Vdiff2_Module.Utils is
       Offset_Source       : constant Natural :=
                               Source_Range.Last - Source_Range.First;
       Offset_Min          : Natural;
-      Current_Line_Source : String_Access;
-      Current_Line_Dest   : String_Access;
+      Current_Line_Source : GNAT.Strings.String_Access;
+      Current_Line_Dest   : GNAT.Strings.String_Access;
       Line                : Natural := Dest_Range.First;
 
    begin
@@ -266,8 +277,8 @@ package body Vdiff2_Module.Utils is
                Dest_File,
                Line);
             Line := Dest_Range.First + J;
-            Free (Current_Line_Source);
-            Free (Current_Line_Dest);
+            GNAT.Strings.Free (Current_Line_Source);
+            GNAT.Strings.Free (Current_Line_Dest);
          end loop;
       end if;
    end Fine_Diff_Block;
@@ -508,11 +519,10 @@ package body Vdiff2_Module.Utils is
          end if;
 
          if not Conflict then
-            Info (Pos)(Line).Image :=
-               new String'("gps-diff-noconflict-symbolic");
+            Info (Pos)(Line).Image := GPS_Diff_Noconflict_Symbolic_String;
+
          else
-            Info (Pos)(Line).Image :=
-               new String'("gps-diff-conflict-symbolic");
+            Info (Pos)(Line).Image := GPS_Diff_Conflict_Symbolic_String;
          end if;
 
          Info (Pos)(Line).Associated_Command := Command_Access (Cmd);
@@ -569,7 +579,7 @@ package body Vdiff2_Module.Utils is
             new Line_Information_Array (Line_Start .. Line_End);
       begin
          for J in Infos'Range loop
-            Infos (J).Text := new String'(Symbol);
+            Infos (J).Text := To_Unbounded_String (Symbol);
          end loop;
 
          Add_Line_Information
@@ -839,7 +849,7 @@ package body Vdiff2_Module.Utils is
          for L in Curr_Chunk.Range1.First ..
            Curr_Chunk.Range1.Last - 1
          loop
-            Arr (L).Text := new String'("-");
+            Arr (L).Text := Minus_Sign_String;
             Append (Original, Get_Line (Refbuf, L));
          end loop;
 
@@ -894,7 +904,7 @@ package body Vdiff2_Module.Utils is
            (Curr_Chunk.Range2.First .. Curr_Chunk.Range2.Last - 1);
 
          for L in Arr'Range loop
-            Arr (L).Text := new String'("+");
+            Arr (L).Text := Plus_Sign_String;
          end loop;
 
          Highlight_Line

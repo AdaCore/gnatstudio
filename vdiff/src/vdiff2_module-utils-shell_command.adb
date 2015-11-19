@@ -15,10 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNAT.OS_Lib;        use GNAT.OS_Lib;
+
 with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
-with GNATCOLL.Utils;         use GNATCOLL.Utils;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
-with String_Utils;           use String_Utils;
+with GNATCOLL.Utils;     use GNATCOLL.Utils;
+
+with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with String_Utils;       use String_Utils;
 
 package body Vdiff2_Module.Utils.Shell_Command is
 
@@ -178,7 +181,7 @@ package body Vdiff2_Module.Utils.Shell_Command is
       End_C   : Integer := -1)
    is
       CL : Arg_List;
-      Args_Highlight_Range : Argument_List :=
+      Args_Highlight_Range : GNAT.OS_Lib.Argument_List :=
                                (1 => new String'(+Full_Name (File)),
                                 2 => new String'(Style),
                                 3 => new String'(Image (Line)),

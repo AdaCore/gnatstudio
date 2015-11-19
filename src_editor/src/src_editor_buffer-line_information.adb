@@ -15,16 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
+
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNATCOLL.Xref;
 
 with Gdk;                      use Gdk;
 with Gdk.Cairo;                use Gdk.Cairo;
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gdk.RGBA;                 use Gdk.RGBA;
-
 with Glib.Error;
 with Glib.Object;              use Glib.Object;
-
 with Gtk;                      use Gtk;
 with Gtk.Icon_Theme;           use Gtk.Icon_Theme;
 with Gtk.Enums;                use Gtk.Enums;
@@ -34,21 +37,15 @@ with Gtk.Text_Tag;             use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;       use Gtk.Text_Tag_Table;
 with Gtk.Text_Mark;            use Gtk.Text_Mark;
 with Gtkada.Style;             use Gtkada.Style;
-
 with Pango.Cairo;              use Pango.Cairo;
 
 with Commands.Editor;          use Commands.Editor;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
-with GNATCOLL.Xref;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel;               use GPS.Kernel;
-
+with Language.Ada;             use Language.Ada;
 with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer;        use Src_Editor_Buffer;
 with Src_Editor_Module;        use Src_Editor_Module;
-with GNATCOLL.Traces;                   use GNATCOLL.Traces;
-
-with Language.Ada;             use Language.Ada;
 
 package body Src_Editor_Buffer.Line_Information is
    use type GNATCOLL.Xref.Visible_Column;
@@ -509,14 +506,14 @@ package body Src_Editor_Buffer.Line_Information is
       Layout : Pango_Layout;
 
    begin
-      if Data.Text /= null then
+      if Data.Text /= Null_Unbounded_String then
          Layout := Create_Pango_Layout
            (Gtk_Widget (Get_Main_Window (Buffer.Kernel)));
          Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
-         Set_Markup (Layout, String'(Data.Text.all));
+         Set_Markup (Layout, To_String (Data.Text));
          Get_Pixel_Size (Layout, Width, Height);
 
-      elsif Data.Image /= null then
+      elsif Data.Image /= Null_Unbounded_String then
          --  ??? We could compute the line height in the editor, and use this,
          --  assuming that icons as square.
          Width := Default_Icon_Width;
@@ -1053,8 +1050,8 @@ package body Src_Editor_Buffer.Line_Information is
             Get_Relevant_Action (Line_Info);
          Size : Gint;
       begin
-         if Action.Text /= null then
-            Set_Markup (Layout, Action.Text.all);
+         if Action.Text /= Null_Unbounded_String then
+            Set_Markup (Layout, To_String (Action.Text));
 
             Move_To (Cr,
                      Gdouble (Starting_X),
@@ -1062,21 +1059,25 @@ package body Src_Editor_Buffer.Line_Information is
             Show_Layout (Cr, Layout);
          end if;
 
-         if Action.Image /= null then
+         if Action.Image /= Null_Unbounded_String then
             --  Size depends on actual line height, but also on the size
             --  we reserved for the column
             Size := Gint'Min (Default_Icon_Width, Line_Height - 2);
 
             declare
-               P    : Gdk_Pixbuf;
-               Info : Gtk_Icon_Info;
+               P            : Gdk_Pixbuf;
+               Info         : Gtk_Icon_Info;
                Was_Symbolic : aliased Boolean;
                Error        : aliased Glib.Error.GError;
 
                Ctxt : constant Gtk_Style_Context := Get_Style_Context (Area);
+               Strs : GNAT.Strings.String_List :=
+                 (1 => new String'(To_String (Action.Image)));
+
             begin
                Info := Choose_Icon_For_Scale
-                 (Gtk.Icon_Theme.Get_Default, (1 => Action.Image), Size, 1, 0);
+                 (Gtk.Icon_Theme.Get_Default, Strs, Size, 1, 0);
+               Free (Strs);
 
                P := Load_Symbolic_For_Context
                  (Icon_Info    => Info,
@@ -1689,10 +1690,9 @@ package body Src_Editor_Buffer.Line_Information is
          --  ??? optimization: should use the integer value for column here:
          --  buffer.block_highlighting_column
          Line_Information_Array'(Integer (Editable_Line)
-           => (Text => null,
-               Tooltip_Text => null,
-               Image        =>
-                  (if Icon_Name = "" then null else new String'(Icon_Name)),
+           => (Text               => Null_Unbounded_String,
+               Tooltip_Text       => Null_Unbounded_String,
+               Image              => To_Unbounded_String (Icon_Name),
                Associated_Command => Command)),
          0);
    end Add_Block_Command;
@@ -2165,7 +2165,8 @@ package body Src_Editor_Buffer.Line_Information is
       while Number_Of_Lines_Folded <= Natural (Number) loop
          declare
             The_Line : Universal_Line;
-            The_Text : String_Access;
+            The_Text : GNAT.Strings.String_Access;
+
          begin
             Get_Iter_At_Line (Buffer, Start_Iter, Gint (Buffer_Line - 1));
             Copy (Start_Iter, End_Iter);

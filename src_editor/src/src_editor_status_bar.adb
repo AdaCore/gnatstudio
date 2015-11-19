@@ -157,8 +157,8 @@ package body Src_Editor_Status_Bar is
                 Size => Icon_Size_Menu);
             Bar.Buffer_Info_Frames (J).Label := Gtk_Widget (Image);
          else
-            if Info (J).Info.Text /= null then
-               Gtk_New (Label, Info (J).Info.Text.all);
+            if Info (J).Info.Text /= Null_Unbounded_String then
+               Gtk_New (Label, To_String (Info (J).Info.Text));
             else
                Gtk_New (Label);
             end if;

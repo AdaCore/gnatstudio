@@ -1902,15 +1902,15 @@ package body GVD_Module is
             for J in A'Range loop
                if Lines_Valid then
                   if Lines (J) then
-                     A (J).Image := new String'(Line_Has_Code_Pixbuf);
+                     A (J).Image := Line_Has_Code_Pixbuf;
                   end if;
                else
-                  A (J).Image := new String'(Line_Might_Have_Code_Pixbuf);
+                  A (J).Image := Line_Might_Have_Code_Pixbuf;
                end if;
 
                if Bps (J) /= 0 then
                   Mode        := Unset;
-                  A (J).Image := new String'(Line_Has_Breakpoint_Pixbuf);
+                  A (J).Image := Line_Has_Breakpoint_Pixbuf;
                else
                   Mode := Set;
                end if;

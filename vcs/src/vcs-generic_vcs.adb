@@ -2010,7 +2010,7 @@ package body VCS.Generic_VCS is
                         .. Matches (Parser.Date_Index).Last));
                   end if;
 
-                  A (Line).Text := new String'
+                  A (Line).Text := To_Unbounded_String
                     (Build_Text_Info
                        (Rev, To_String (Author), To_String (Date)));
 
@@ -2038,7 +2038,7 @@ package body VCS.Generic_VCS is
                               S (Matches (N).First .. Matches (N).Last)
                               & "</b>");
                         end loop;
-                        A (Line).Tooltip_Text := new String'(To_String (Str));
+                        A (Line).Tooltip_Text := Str;
                      end;
                   end if;
 
@@ -2062,10 +2062,11 @@ package body VCS.Generic_VCS is
              File       => File,
              Identifier => Annotation_Id,
              Info       =>
-                (Text  => new String'((1 .. Max_Length => ' ')),
-                 Tooltip_Text => null,
-                 Image        => null,
-                 Associated_Command => null),
+               (Text               =>
+                    To_Unbounded_String ((1 .. Max_Length => ' ')),
+                Tooltip_Text       => Null_Unbounded_String,
+                Image              => Null_Unbounded_String,
+                Associated_Command => null),
              Every_Line => False);
          Add_Line_Information
             (Kernel,
