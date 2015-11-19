@@ -809,31 +809,7 @@ package body Src_Editor_Buffer is
    -----------------------
 
    procedure Reset_Blocks_Info (Buffer : access Source_Buffer_Record'Class) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Block_Record, Block_Access);
-      Block : Block_Access;
    begin
-      if Buffer.Editable_Lines /= null then
-         --  ??? Should we loop till Buffer.Last_Editable_Line ?
-         for Line in Buffer.Editable_Lines'Range loop
-            Block := Buffer.Editable_Lines (Line).Block;
-
-            --  Block is shared so we need to ensure that no other block
-            --  references it. We only free the block on its last line
-            --  (which is always associated with this block, that hasn't
-            --  changed) rather than iterate through all the lines looking
-            --  for similar blocks. That avoids a O(n^2) algorithm
-
-            if Block /= null
-              and then Block.Last_Line = Line
-            then
-               Unchecked_Free (Block);
-            end if;
-
-            Buffer.Editable_Lines (Line).Block := null;
-         end loop;
-      end if;
-
       Buffer.Blocks_Exact := False;
    end Reset_Blocks_Info;
 
@@ -3240,7 +3216,6 @@ package body Src_Editor_Buffer is
         (Where          => In_Buffer,
          Buffer_Line    => 1,
          Stored_Lines   => Lines_List.Empty_List,
-         Block          => null,
          Stored_Editable_Lines => 0);
 
       --  ??? create line info (above)

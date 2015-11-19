@@ -1415,10 +1415,6 @@ private
       --  Caches the number of editable lines stored in Stored_Lines,
       --  recursively.
 
-      Block              : Block_Access;
-      --  Points to the corresponding block, or null if the line doesn't belong
-      --  to a block.
-
       case Where is
          when In_Buffer =>
             Buffer_Line : Buffer_Line_Type;
