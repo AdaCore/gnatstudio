@@ -585,9 +585,7 @@ package body GPS.Kernel.Contexts is
       Data : constant Selection_Pointers.Reference_Type := Context.Ref.Get;
    begin
       if Data.Messages = null then
-         return Result : GPS.Kernel.Messages.Message_Array (1 .. 0) do
-            null;
-         end return;
+         return (1 .. 0 => <>);
 
       else
          return Result : GPS.Kernel.Messages.Message_Array
