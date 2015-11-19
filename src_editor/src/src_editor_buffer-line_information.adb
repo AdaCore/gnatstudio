@@ -1767,7 +1767,6 @@ package body Src_Editor_Buffer.Line_Information is
               (Where       => In_Buffer,
                Buffer_Line => 0,
                Stored_Lines   => Lines_List.Empty_List,
-               Block          => null,
                Stored_Editable_Lines => 0);
          end loop;
 
@@ -1808,7 +1807,6 @@ package body Src_Editor_Buffer.Line_Information is
                  (Where        => In_Buffer,
                   Buffer_Line  => Start + J,
                   Stored_Lines   => Lines_List.Empty_List,
-                  Block          => null,
                   Stored_Editable_Lines => 0);
                Create_Side_Info (Buffer, Start + J);
             end if;
@@ -1884,7 +1882,6 @@ package body Src_Editor_Buffer.Line_Information is
                  (Where       => In_Buffer,
                   Buffer_Line => Start + Buffer_Line_Type (J),
                   Stored_Lines   => Lines_List.Empty_List,
-                  Block          => null,
                   Stored_Editable_Lines => 0);
                Create_Side_Info (Buffer, Start + Buffer_Line_Type (J));
             end loop;
@@ -2207,7 +2204,6 @@ package body Src_Editor_Buffer.Line_Information is
                     (Where              => In_Mark,
                      UL                 => new Universal_Line'(The_Line),
                      Text               => null,
-                     Block              => null,
                      Stored_Lines       => Editable_Lines
                        (EL).Stored_Lines,
                      Stored_Editable_Lines => Editable_Lines
@@ -2357,7 +2353,6 @@ package body Src_Editor_Buffer.Line_Information is
                declare
                   Line_Data : constant Editable_Line_Data :=
                     (Where          => In_Buffer,
-                     Block          => null,
                      Buffer_Line    => Current_B,
                      Stored_Lines   => Editable_Lines (Current).Stored_Lines,
                      Stored_Editable_Lines =>

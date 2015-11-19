@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gdk.RGBA;          use Gdk.RGBA;
 with Language;          use Language;
 with Src_Editor_Buffer.Line_Information;
 with Src_Editor_Module; use Src_Editor_Module;
@@ -34,10 +33,6 @@ package body Src_Editor_Buffer.Blocks is
    --------------------
 
    procedure Compute_Blocks (Buffer : access Source_Buffer_Record'Class) is
-      Line_Start : Editable_Line_Type;
-      Line_End   : Editable_Line_Type;
-      Column     : Visible_Column_Type;
-      Block      : Block_Access;
    begin
       if Buffer.Lang = null then
          Buffer.Parse_Blocks := False;
@@ -49,12 +44,12 @@ package body Src_Editor_Buffer.Blocks is
          return;
       end if;
 
-      Reset_Blocks_Info (Source_Buffer (Buffer));
       Buffer.Blocks_Exact := True;
 
       if Buffer.Block_Folding then
          Remove_Block_Folding_Commands (Buffer, False);
       end if;
+
       declare
          Current : Semantic_Tree_Iterator'Class
            := Buffer.Get_Tree_Iterator (Line_Exact);
@@ -63,42 +58,6 @@ package body Src_Editor_Buffer.Blocks is
             declare
                Node : constant Semantic_Node'Class := Element (Current);
             begin
-
-               if Node.Category in Construct_Category
-                 or else Node.Category in Enclosing_Entity_Category
-               then
-                  Line_Start := Editable_Line_Type (Node.Sloc_Start.Line);
-                  Line_End   := Editable_Line_Type (Node.Sloc_End.Line);
-                  --  Use the minimal column for the construct, friendlier for
-                  --  visual display of blocks
-                  Column     := Visible_Column_Type'Min
-                    (Node.Sloc_Start.Column, Node.Sloc_End.Column);
-                  Block      := new Block_Record'
-                    (Indentation_Level => 0,
-                     Offset_Start      => Integer (Column),
-                     Stored_Offset     => 0,
-                     First_Line        => Line_Start,
-                     Last_Line         => Line_End,
-                     Name              => Node.Name,
-                     Block_Type        => Node.Category,
-                     Tree_Node         => Sem_Node_Holders.Empty_Holder,
-                     Color             => Null_RGBA);
-
-                  for J in Line_Start + 1 .. Line_End loop
-                     if Buffer.Editable_Lines (J).Block = null then
-
-                        --  When freeing (Destroy_Buffer), we assume that the
-                        --  block is always associated with its last line, so
-                        --  make sure this is true here
-                        Block.Last_Line := J;
-
-                        Buffer.Editable_Lines (J).Block := Block;
-                     end if;
-                  end loop;
-
-                  Buffer.Editable_Lines (Line_Start).Block := Block;
-               end if;
-
                --  Fill the folding information
                --  ??? This needs to be optimized.
 
@@ -137,7 +96,6 @@ package body Src_Editor_Buffer.Blocks is
                      end;
                   end if;
                end if;
-
             end;
             Next (Current);
          end loop;
