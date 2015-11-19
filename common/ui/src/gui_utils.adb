@@ -2058,11 +2058,13 @@ package body GUI_Utils is
       Parent : Gtk_Tree_Iter)
    is
       Iter : Gtk_Tree_Iter;
+      Prev : Gtk_Tree_Iter;
    begin
-      loop
-         Iter := Model.Nth_Child (Parent, 0);
-         exit when Iter = Null_Iter;
-         Model.Remove (Iter);
+      Iter := Model.Nth_Child (Parent, 0);
+      while Iter /= Null_Iter loop
+         Prev := Iter;
+         Model.Next (Iter);
+         Model.Remove (Prev);
       end loop;
    end Remove_Child_Nodes;
 

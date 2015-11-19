@@ -22,16 +22,20 @@ with Ada.Strings.Hash;
 with GNAT.Strings;              use GNAT.Strings;
 
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
+with Glib.Convert;              use Glib.Convert;
+with Glib.Values;
+with Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Target_List;
 with Gtk.Tree_Model_Filter;     use Gtk.Tree_Model_Filter;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Glib.Convert;              use Glib.Convert;
 
 with Basic_Types;               use Basic_Types;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -45,13 +49,190 @@ with Language_Handlers;         use Language_Handlers;
 with Language_Utils;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
-with GNATCOLL.Traces;                    use GNATCOLL.Traces;
-with Gtk.Target_List;
-with Gtk.Dnd;
 
 package body Project_Explorers_Common is
 
    Me : constant Trace_Handle := Create ("Project_Explorers_Common");
+
+   procedure Add_Column_Name
+     (Name    : String;
+      Columns : in out Glib.Gint_Array;
+      Values  : in out Glib.Values.GValue_Array;
+      Last    : in out Gint);
+   --  Increase Last and set Name value and column index on Last's position.
+
+   procedure Add_Column_File
+     (File    : Virtual_File;
+      Columns : in out Glib.Gint_Array;
+      Values  : in out Glib.Values.GValue_Array;
+      Last    : in out Gint);
+   --  Increase Last and set File value and column index on Last's position.
+
+   procedure Add_Column_Type
+     (Kind     : Node_Types;
+      Columns  : in out Glib.Gint_Array;
+      Values   : in out Glib.Values.GValue_Array;
+      Last     : in out Gint);
+   --  Increase Last and set Kind value and column index on Last's position.
+
+   procedure Add_Column_Type_Icon
+     (Kind     : Node_Types;
+      Expanded : Boolean;
+      Columns  : in out Glib.Gint_Array;
+      Values   : in out Glib.Values.GValue_Array;
+      Last     : in out Gint);
+   --  Increase Last and set Kind value and column index on Last's position.
+   --  If Kind not in Category_Node .. Entity_Node then add data for icon.
+
+   procedure Add_Column_Icon
+     (Name     : String;
+      Columns  : in out Glib.Gint_Array;
+      Values   : in out Glib.Values.GValue_Array;
+      Last     : in out Gint);
+   --  Increase Last and set Icon value and column index on Last's position.
+
+   procedure Add_Column_Line
+     (Line     : Gint;
+      Columns  : in out Glib.Gint_Array;
+      Values   : in out Glib.Values.GValue_Array;
+      Last     : in out Gint);
+   --  Increase Last and set Line value and column index on Last's position.
+
+   procedure Add_Column_Column
+     (Column   : Gint;
+      Columns  : in out Glib.Gint_Array;
+      Values   : in out Glib.Values.GValue_Array;
+      Last     : in out Gint);
+   --  Increase Last and set Column value and column index on Last's position.
+
+   procedure Set
+     (Model    : Gtk_Tree_Store;
+      Iter     : Gtk_Tree_Iter;
+      Name     : String;
+      Kind     : Node_Types;
+      Expanded : Boolean;
+      File     : Virtual_File);
+   --  Set values of columns
+
+   -----------------------
+   -- Add_Column_Column --
+   -----------------------
+
+   procedure Add_Column_Column
+     (Column   : Gint;
+      Columns  : in out Glib.Gint_Array;
+      Values   : in out Glib.Values.GValue_Array;
+      Last     : in out Gint) is
+   begin
+      Last := Last + 1;
+      Columns (Integer (Last)) := Column_Column;
+      Glib.Values.Init (Values (Last), Glib.GType_Int);
+      Glib.Values.Set_Int (Values (Last), Column);
+   end Add_Column_Column;
+
+   ---------------------
+   -- Add_Column_File --
+   ---------------------
+
+   procedure Add_Column_File
+     (File    : Virtual_File;
+      Columns : in out Glib.Gint_Array;
+      Values  : in out Glib.Values.GValue_Array;
+      Last    : in out Gint) is
+   begin
+      Last := Last + 1;
+      Columns (Integer (Last)) := File_Column;
+      Glib.Values.Init (Values (Last), Get_Virtual_File_Type);
+      Set_File (Values (Last), File);
+   end Add_Column_File;
+
+   ---------------------
+   -- Add_Column_Icon --
+   ---------------------
+
+   procedure Add_Column_Icon
+     (Name     : String;
+      Columns  : in out Glib.Gint_Array;
+      Values   : in out Glib.Values.GValue_Array;
+      Last     : in out Gint) is
+   begin
+      Last := Last + 1;
+      Columns (Integer (Last)) := Icon_Column;
+      Glib.Values.Init (Values (Last), Glib.GType_String);
+      Glib.Values.Set_String (Values (Last), Name);
+   end Add_Column_Icon;
+
+   ---------------------
+   -- Add_Column_Line --
+   ---------------------
+
+   procedure Add_Column_Line
+     (Line     : Gint;
+      Columns  : in out Glib.Gint_Array;
+      Values   : in out Glib.Values.GValue_Array;
+      Last     : in out Gint) is
+   begin
+      Last := Last + 1;
+      Columns (Integer (Last)) := Line_Column;
+      Glib.Values.Init (Values (Last), Glib.GType_Int);
+      Glib.Values.Set_Int (Values (Last), Line);
+   end Add_Column_Line;
+
+   ---------------------
+   -- Add_Column_Name --
+   ---------------------
+
+   procedure Add_Column_Name
+     (Name    : String;
+      Columns : in out Glib.Gint_Array;
+      Values  : in out Glib.Values.GValue_Array;
+      Last    : in out Gint) is
+   begin
+      Last := Last + 1;
+      Columns (Integer (Last)) := Display_Name_Column;
+      Glib.Values.Init (Values (Last), Glib.GType_String);
+      Glib.Values.Set_String (Values (Last), Name);
+   end Add_Column_Name;
+
+   ---------------------
+   -- Add_Column_Type --
+   ---------------------
+
+   procedure Add_Column_Type
+     (Kind     : Node_Types;
+      Columns  : in out Glib.Gint_Array;
+      Values   : in out Glib.Values.GValue_Array;
+      Last     : in out Gint) is
+   begin
+      Last := Last + 1;
+      Columns (Integer (Last)) := Node_Type_Column;
+      Glib.Values.Init (Values (Last), Glib.GType_Int);
+      Glib.Values.Set_Int (Values (Last), Gint (Node_Types'Pos (Kind)));
+   end Add_Column_Type;
+
+   --------------------------
+   -- Add_Column_Type_Icon --
+   --------------------------
+
+   procedure Add_Column_Type_Icon
+     (Kind     : Node_Types;
+      Expanded : Boolean;
+      Columns  : in out Glib.Gint_Array;
+      Values   : in out Glib.Values.GValue_Array;
+      Last     : in out Gint) is
+   begin
+      Last := Last + 1;
+      Columns (Integer (Last)) := Node_Type_Column;
+      Glib.Values.Init (Values (Last), Glib.GType_Int);
+      Glib.Values.Set_Int (Values (Last), Gint (Node_Types'Pos (Kind)));
+
+      if Kind not in Category_Node .. Entity_Node then
+         Add_Column_Icon
+           (Stock_For_Node
+              (Kind, Expanded => Expanded),
+            Columns, Values, Last);
+      end if;
+   end Add_Column_Type_Icon;
 
    -------------------
    -- Columns_Types --
@@ -193,9 +374,7 @@ package body Project_Explorers_Common is
          Append (Model, Iter, Base);
       end if;
 
-      Set_File (Model, Iter, File_Column, File);
-      Model.Set (Iter, Display_Name_Column, Display_Base_Name (File));
-      Set_Node_Type (Model, Iter, File_Node, False);
+      Set (Model, Iter, Display_Base_Name (File), File_Node, False, File);
 
       Lang := Get_Language_From_File (Get_Language_Handler (Kernel), File);
 
@@ -284,14 +463,27 @@ package body Project_Explorers_Common is
          Insert_Before (Model, N, Parent_Iter, Sibling);
       end if;
 
-      Set_File (Model, N, File_Column, File);
-      Set (Model, N, Display_Name_Column, Locale_To_UTF8 (Name));
-      Set (Model, N, Icon_Column,
-           Stock_From_Category
-             (Is_Declaration => False,
-              Visibility     => Visibility_Public,
-              Category       => Category));
-      Set (Model, N, Node_Type_Column, Gint (Node_Types'Pos (Category_Node)));
+      declare
+         Columns : Glib.Gint_Array (1 .. 4);
+         Values  : Glib.Values.GValue_Array (1 .. 4);
+         Last    : Gint := 0;
+      begin
+         Add_Column_Type (Category_Node, Columns, Values, Last);
+         Add_Column_Name (Locale_To_UTF8 (Name), Columns, Values, Last);
+         Add_Column_File (File, Columns, Values, Last);
+         Add_Column_Icon
+           (Stock_From_Category
+              (Is_Declaration => False,
+               Visibility     => Visibility_Public,
+               Category       => Category),
+            Columns, Values, Last);
+
+         Set (Model, N, Columns, Values);
+
+         for Index in 1 .. Last loop
+            Glib.Values.Unset (Values (Index));
+         end loop;
+      end;
 
       return N;
    end Append_Category_Node;
@@ -403,19 +595,41 @@ package body Project_Explorers_Common is
          Insert_Before (Model, N, Parent_Iter, Sibling);
       end if;
 
-      Set_File (Model, N, File_Column, File);
-      Set (Model, N, Display_Name_Column, Entity_Name_Of (Construct, True));
-      Set (Model, N, Entity_Base_Column, Reduce (Get (Construct.Name).all));
-      Set (Model, N, Icon_Column, Entity_Icon_Of (Construct));
-      Set (Model, N, Node_Type_Column, Gint (Node_Types'Pos (Entity_Node)));
+      declare
+         Columns : Glib.Gint_Array (1 .. 7);
+         Values  : Glib.Values.GValue_Array (1 .. 7);
+         Last    : Gint := 0;
+      begin
+         Add_Column_Name
+           (Entity_Name_Of (Construct, True), Columns, Values, Last);
+         Add_Column_Type (Entity_Node, Columns, Values, Last);
+         Add_Column_Icon (Entity_Icon_Of (Construct), Columns, Values, Last);
+         Add_Column_File (File, Columns, Values, Last);
 
-      if Construct.Sloc_Entity.Line /= 0 then
-         Set (Model, N, Line_Column, Gint (Construct.Sloc_Entity.Line));
-         Set (Model, N, Column_Column, Gint (Construct.Sloc_Entity.Column));
-      else
-         Set (Model, N, Line_Column, Gint (Construct.Sloc_Start.Line));
-         Set (Model, N, Column_Column, Gint (Construct.Sloc_Start.Column));
-      end if;
+         if Construct.Sloc_Entity.Line /= 0 then
+            Add_Column_Line
+              (Gint (Construct.Sloc_Entity.Line), Columns, Values, Last);
+            Add_Column_Column
+              (Gint (Construct.Sloc_Entity.Column), Columns, Values, Last);
+         else
+            Add_Column_Line
+              (Gint (Construct.Sloc_Start.Line), Columns, Values, Last);
+            Add_Column_Column
+              (Gint (Construct.Sloc_Start.Column), Columns, Values, Last);
+         end if;
+
+         Last := Last + 1;
+         Columns (Integer (Last)) := Entity_Base_Column;
+         Glib.Values.Init (Values (Last), Glib.GType_String);
+         Glib.Values.Set_String
+           (Values (Last), Reduce (Get (Construct.Name).all));
+
+         Set (Model, N, Columns, Values);
+
+         for Index in 1 .. Last loop
+            Glib.Values.Unset (Values (Index));
+         end loop;
+      end;
 
       return N;
    end Append_Entity_Node;
@@ -512,12 +726,24 @@ package body Project_Explorers_Common is
 
          if not Node_Appended then
             Append (Model, Iter, Node);
-            Set (Model, Iter, Display_Name_Column,
-                 "<span foreground=""#555555"">"
-                 & (-"(no entity)")
-                 & "</span>");
-            Set (Model, Iter, Node_Type_Column,
-                 Gint (Node_Types'Pos (Category_Node)));
+            declare
+               Columns : Glib.Gint_Array (1 .. 2);
+               Values  : Glib.Values.GValue_Array (1 .. 2);
+               Last    : Gint := 0;
+            begin
+               Add_Column_Type (Category_Node, Columns, Values, Last);
+               Add_Column_Name
+                 ("<span foreground=""#555555"">"
+                  & (-"(no entity)")
+                  & "</span>",
+                  Columns, Values, Last);
+
+               Set (Model, Iter, Columns, Values);
+
+               for Index in 1 .. Last loop
+                  Glib.Values.Unset (Values (Index));
+               end loop;
+            end;
          end if;
 
          Free (Constructs);
@@ -541,9 +767,7 @@ package body Project_Explorers_Common is
       Iter : Gtk_Tree_Iter := Null_Iter;
    begin
       Model.Append (Iter => Iter, Parent => Parent);
-      Model.Set (Iter, Display_Name_Column, Name);
-      Set_File (Model, Iter, File_Column, File);
-      Set_Node_Type (Model, Iter, Kind, False);
+      Set (Model, Iter, Name, Kind, False, File);
 
       if Add_Dummy then
          Append_Dummy_Iter (Model, Iter);
@@ -1023,14 +1247,19 @@ package body Project_Explorers_Common is
      (Model    : Gtk_Tree_Store;
       Node     : Gtk_Tree_Iter;
       N_Type   : Node_Types;
-      Expanded : Boolean) is
-   begin
-      Set (Model, Node, Node_Type_Column, Gint (Node_Types'Pos (N_Type)));
+      Expanded : Boolean)
+   is
+      Columns : Glib.Gint_Array (1 .. 2);
+      Values  : Glib.Values.GValue_Array (1 .. 2);
+      Last    : Gint := 0;
 
-      if N_Type not in Category_Node .. Entity_Node then
-         Set (Model, Node, Icon_Column,
-              Stock_For_Node (N_Type, Expanded => Expanded));
-      end if;
+   begin
+      Add_Column_Type_Icon (N_Type, Expanded, Columns, Values, Last);
+      Set (Model, Node, Columns (1 .. Integer (Last)), Values (1 .. Last));
+
+      for Index in 1 .. Last loop
+         Glib.Values.Unset (Values (Index));
+      end loop;
    end Set_Node_Type;
 
    -------------------
@@ -1210,5 +1439,32 @@ package body Project_Explorers_Common is
             Line         => L);
       end if;
    end Context_Factory;
+
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set
+     (Model    : Gtk_Tree_Store;
+      Iter     : Gtk_Tree_Iter;
+      Name     : String;
+      Kind     : Node_Types;
+      Expanded : Boolean;
+      File     : Virtual_File)
+   is
+      Columns : Glib.Gint_Array (1 .. 4);
+      Values  : Glib.Values.GValue_Array (1 .. 4);
+      Last    : Gint := 0;
+   begin
+      Add_Column_Type_Icon (Kind, Expanded, Columns, Values, Last);
+      Add_Column_Name (Name, Columns, Values, Last);
+      Add_Column_File (File, Columns, Values, Last);
+
+      Set (Model, Iter, Columns (1 .. Integer (Last)), Values (1 .. Last));
+
+      for Index in 1 .. Last loop
+         Glib.Values.Unset (Values (Index));
+      end loop;
+   end Set;
 
 end Project_Explorers_Common;

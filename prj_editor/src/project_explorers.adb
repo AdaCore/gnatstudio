@@ -1768,6 +1768,9 @@ package body Project_Explorers is
       --  the project.
       --  If the file is not obsolete, add it to Files_Inserted.
 
+      procedure Create_Or_Reuse_Runtime;
+      --  Create a new runtime node, or reuse one if it exists.
+
       Show_Abs_Paths : constant Boolean :=
         Self.Preferences (Show_Absolute_Paths);
       Show_Obj_Dirs : constant Boolean :=
@@ -1858,6 +1861,26 @@ package body Project_Explorers is
               Directory_Node_Text (Show_Abs_Paths, Project, Dir.Directory));
       end Create_Or_Reuse_Directory;
 
+      -----------------------------
+      -- Create_Or_Reuse_Runtime --
+      -----------------------------
+
+      procedure Create_Or_Reuse_Runtime is
+      begin
+         if Self.Preferences (Show_Runtime) then
+            Child := Create_Or_Reuse_Node
+              (Model  => Self.Tree.Model,
+               Parent => Null_Iter,  --  always at toplevel
+               Kind   => Runtime_Node,
+               File   => No_File,
+               Name   => "runtime",
+               Add_Dummy => False);
+
+            Remove_Child_Nodes (Self.Tree.Model, Parent => Child);
+            Append_Dummy_Iter (Self.Tree.Model, Child);
+         end if;
+      end Create_Or_Reuse_Runtime;
+
       ------------------------
       -- Remove_If_Obsolete --
       ------------------------
@@ -1913,19 +1936,7 @@ package body Project_Explorers is
             Path_Free (Path);
          end if;
 
-         if Self.Preferences (Show_Runtime) then
-            Child := Create_Or_Reuse_Node
-              (Model  => Self.Tree.Model,
-               Parent => Null_Iter,  --  always at toplevel
-               Kind   => Runtime_Node,
-               File   => No_File,
-               Name   => "runtime",
-               Add_Dummy => True);
-
-            Remove_Child_Nodes (Self.Tree.Model, Parent => Child);
-            Append_Dummy_Iter (Self.Tree.Model, Child);
-         end if;
-
+         Create_Or_Reuse_Runtime;
          return;
       end if;
 
@@ -1935,19 +1946,8 @@ package body Project_Explorers is
 
       --  Insert runtime files if requested
 
-      if Project = Get_Project (Self.Kernel)
-        and then Self.Preferences (Show_Runtime)
-      then
-         Child := Create_Or_Reuse_Node
-           (Model  => Self.Tree.Model,
-            Parent => Null_Iter,  --  always at toplevel
-            Kind   => Runtime_Node,
-            File   => No_File,
-            Name   => "runtime",
-            Add_Dummy => True);
-
-         Remove_Child_Nodes (Self.Tree.Model, Parent => Child);
-         Append_Dummy_Iter (Self.Tree.Model, Child);
+      if Project = Get_Project (Self.Kernel) then
+         Create_Or_Reuse_Runtime;
       end if;
 
       --  Insert non-expanded nodes for imported projects
