@@ -7497,6 +7497,9 @@ class Menu(object):
 
     """
 
+    action = None
+    """The GPS.Action executed by this menu"""
+
     def __init__(self):
         """
         Prevents the creation of a menu instance. Such instances can only be
@@ -7558,9 +7561,6 @@ class Message(object):
     """
     The flags returned by :func:`GPS.Message.get_flags`.
     """
-
-    action = None
-    """The GPS.Action executed by this menu"""
 
     @staticmethod
     def __del__():
