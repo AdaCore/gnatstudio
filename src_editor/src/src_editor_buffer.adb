@@ -3849,6 +3849,7 @@ package body Src_Editor_Buffer is
                elsif Active (Create ("DIALOG_AUTO_SAVE_NO_RELOAD")) then
                   Buttons := Button_No;
                else
+                  Buttons := Button_No;
                   --  test is not expecting the dialog, we should report it as
                   --  an error, but no need to block with a dialog
                   Trace
