@@ -9,6 +9,16 @@ import GPS
 from modules import Module
 import colorschemes
 
+EDITOR_LOCATIONS, EDITOR, DISABLED = (
+    "editor_and_locations", "editor_only", "disabled"
+)
+
+show_diags_pref = GPS.Preference("Editor/C & C++/Show diagnostics")
+show_diags_pref.create(
+    "Show clang live diagnostics", "enum",
+    "How to show clang live diagnostics in GPS, for C/C++",
+    0, EDITOR_LOCATIONS, EDITOR, DISABLED
+)
 
 ####################
 # Main clang class #
@@ -24,8 +34,7 @@ class Clang(object):
         return GPS.Libclang.get_translation_unit(ed_buffer.file())
 
     def refresh_buffer(self, ed_buffer, update=False):
-        f = ed_buffer.file()
-        if f.language() in ("c", "c++"):
+        if ed_buffer.file().language() in ("c", "c++"):
             self.add_diagnostics(ed_buffer)
 
     def add_diagnostics(self, ed_buffer):
@@ -47,6 +56,7 @@ class Clang(object):
                 line=d.location.line,
                 column=d.location.column,
                 text=d.spelling,
+                show_in_locations=(show_diags_pref.get() == EDITOR_LOCATIONS),
                 allow_auto_jump_to_first=False
             )
 
@@ -69,24 +79,37 @@ class Clang_Module(Module):
 
     clang_instance = None
 
-    def setup(self):
-        Clang_Module.clang_instance = Clang()
+    def is_on(self):
+        return show_diags_pref.get() != DISABLED
 
+    def refresh_current_editor(self):
         # Get the current editor but don't open a new editor if none is open
         ed = GPS.EditorBuffer.get(open=False)
-
-        if ed and ed.file().language() in ("c", "c++"):
+        if ed and self.is_on():
             Clang_Module.clang_instance.refresh_buffer(ed)
 
+    def setup(self):
+        Clang_Module.show_diags_pref_val = show_diags_pref.get()
+        Clang_Module.clang_instance = Clang()
+        self.refresh_current_editor()
+
     def buffer_edited(self, f):
-        Clang_Module.clang_instance.refresh_buffer(GPS.EditorBuffer.get(f))
+        if self.is_on():
+            Clang_Module.clang_instance.refresh_buffer(GPS.EditorBuffer.get(f))
 
     def file_edited(self, f):
         """
         This hook is called when a new file editor is being opened
         """
-        if f.language() in ("c", "c++"):
+        if self.is_on():
             self.clang_instance.refresh_buffer(GPS.EditorBuffer.get(f))
+
+    def preferences_changed(self, *args):
+        if show_diags_pref.get() != self.show_diags_pref_val:
+            self.show_diags_pref_val = show_diags_pref.get()
+            for m in self.clang_instance.messages:
+                m.remove()
+            self.refresh_current_editor()
 
 
 # We want to remove the del methods on TranslationUnit and Index, because in
