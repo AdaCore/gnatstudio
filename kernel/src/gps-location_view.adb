@@ -1012,8 +1012,16 @@ package body GPS.Location_View is
          end if;
          Free (List);
 
-      elsif N_Selected > 1 then
-         Locations.View.Get_Selection.Unselect_All;
+      else
+         if N_Selected > 1 then
+            Locations.View.Get_Selection.Unselect_All;
+         end if;
+
+         Model := Locations.View.Get_Model;
+      end if;
+
+      if Model = Null_Gtk_Tree_Model then
+         return;
       end if;
 
       if Iter /= Null_Iter
