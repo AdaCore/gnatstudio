@@ -3513,7 +3513,7 @@ class Config:
         if name == 'Darwin':
             file = 'libclang.dylib'
         elif name == 'Windows':
-            file = 'libclang.dll'
+            file = 'clang.dll'
         else:
             file = 'libclang.so'
 
