@@ -697,7 +697,7 @@ package body GPS.Kernel is
       end if;
 
       String_List_Utils.String_List.Free (Self.Activities);
-      Free (Self.Instances);
+      Self.Instances.Free;
    end Free;
 
    -------------------------

@@ -70,6 +70,7 @@ with GPS.Messages_Windows;
 with GPS.Process_Launchers;
 with GPS.Process_Launchers.Implementation;
 use GPS.Process_Launchers.Implementation;
+with GPS.Scripts;                     use GPS.Scripts;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package GPS.Kernel is
@@ -850,13 +851,15 @@ private
    type Addresses_Array is array (Positive range <>) of System.Address;
    type Addresses_Array_Access is access all Addresses_Array;
 
+   Context_Class_Name : aliased constant String := "Context";
+   type Context_Proxy is new Script_Proxy with null record;
+   overriding function Class_Name (Self : Context_Proxy) return String
+      is (Context_Class_Name) with Inline;
+
    type Selection_Context_Data_Record is record
       Kernel    : Kernel_Handle;
       Creator   : Abstract_Module;
-
-      Instances : GNATCOLL.Scripts.Instance_List_Access;
-      --  Instances in this list hold weak references to the selection
-      --  context, so that they don't prevent its deallocation.
+      Instances : Context_Proxy;
 
       Files             : GNATCOLL.VFS.File_Array_Access := null;
       --  The current selected files
@@ -960,6 +963,9 @@ private
       (Ref => Selection_Pointers.Null_Ref);
    No_Weak_Context : constant Weak_Selection_Context :=
       (Weak => Selection_Pointers.Null_Weak_Ref);
+
+   package Context_Proxies is new Script_Proxies
+      (Weak_Selection_Context, Context_Proxy);
 
    No_Tool : constant Tool_Properties_Record :=
      (Null_Unbounded_String,

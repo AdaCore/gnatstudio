@@ -60,7 +60,6 @@ with GPS.Kernel.Properties;   use GPS.Kernel.Properties;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Command_API;  use GPS.Kernel.Command_API;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Scripts;             use GPS.Scripts;
 with GPS.Scripts.Commands;
 with Histories;               use Histories;
 with Interactive_Consoles;    use Interactive_Consoles;
@@ -74,11 +73,8 @@ package body GPS.Kernel.Scripts is
    Me     : constant Trace_Handle :=
               Create ("GPS.Kernel.Scripts", GNATCOLL.Traces.Off);
 
-   Context_Class_Name         : constant String := "Context";
-   Message_Context_Class_Name : constant String := "MessageContext";
-
    type GPS_Properties_Type is
-     (Files, Contexts, Entities, Projects, File_Locations);
+     (Files, Entities, Projects, File_Locations);
 
    type GPS_Properties_Record (Typ : GPS_Properties_Type)
      is new Instance_Property_Record
@@ -86,8 +82,6 @@ package body GPS.Kernel.Scripts is
       case Typ is
          when Files =>
             File : Virtual_File;
-         when Contexts =>
-            Context : Weak_Selection_Context := No_Weak_Context;
          when Entities =>
             Entity  : Root_Entity_Ref;
          when Projects =>
@@ -97,7 +91,6 @@ package body GPS.Kernel.Scripts is
       end case;
    end record;
 
-   type GPS_Properties is access all GPS_Properties_Record'Class;
    overriding procedure Destroy (Prop : in out GPS_Properties_Record);
    --  See inherited documentation
 
@@ -147,10 +140,6 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for all GUI class commands
 
-   procedure Set_Data
-     (Instance : Class_Instance; Context  : Selection_Context);
-   --  Set the data for an instance
-
    function On_Console_Input
      (Console : access Interactive_Console_Record'Class;
       Input   : String; User_Data : System.Address) return String;
@@ -178,27 +167,6 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles commands related to GPS.History
 
-   function Get_Or_Create_Context
-     (Script : access Scripting_Language_Record'Class;
-      Class  : Class_Type;
-      Context : GPS.Kernel.Selection_Context)
-      return Class_Instance;
-   --  Create a new instance representing the context. If such an instance
-   --  already exists for that context, return the same one so that the user
-   --  can store his own data in it.
-
-   function Get_Area_Context_Class
-     (Repo : Scripts_Repository) return Class_Type;
-   function Get_File_Context_Class
-     (Repo : Scripts_Repository) return Class_Type;
-   function Get_Context_Class
-     (Repo : Scripts_Repository) return Class_Type;
-   function Get_Entity_Context_Class
-     (Repo : Scripts_Repository) return Class_Type;
-   function Get_Message_Context_Class
-     (Repo : Scripts_Repository) return Class_Type;
-   --  Create or return existing classes
-
    type Hyper_Link_Subprogram is new Hyper_Link_Callback_Record with record
       Subprogram : Subprogram_Type;
    end record;
@@ -221,8 +189,6 @@ package body GPS.Kernel.Scripts is
    Foreground_Cst : aliased constant String := "foreground";
    Background_Cst : aliased constant String := "background";
    Underline_Cst  : aliased constant String := "underline";
-   Approximate_Search_Cst : aliased constant String :=
-     "approximate_search_fallback";
 
    Create_Link_Args         : constant Cst_Argument_List :=
      (1 => Regexp_Cst'Access,     2 => On_Click_Cst'Access,
@@ -500,16 +466,15 @@ package body GPS.Kernel.Scripts is
    procedure Entity_Context_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Entity : constant Selection_Context := Get_Data (Data, 1);
+      Ctxt : constant Selection_Context := Get_Context (Data.Nth_Arg (1));
       Approx_Search : Boolean;
    begin
       if Command = "entity" then
-         Name_Parameters (Data, (1 => Approximate_Search_Cst'Access));
-         Approx_Search := Nth_Arg (Data, 2, True);
+         Approx_Search := Data.Nth_Arg (2, True);
          Set_Return_Value
            (Data, Create_Entity
               (Get_Script (Data), Get_Entity
-               (Entity, Approximate_Search_Fallback => Approx_Search)));
+               (Ctxt, Approximate_Search_Fallback => Approx_Search)));
       end if;
    end Entity_Context_Command_Handler;
 
@@ -520,15 +485,14 @@ package body GPS.Kernel.Scripts is
    procedure Message_Context_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Context : constant Selection_Context := Get_Data (Data, 1);
-
+      Ctxt : constant Selection_Context := Get_Context (Data.Nth_Arg (1));
    begin
       if Command = "message"
-        and then Has_Message_Information (Context)
+        and then Has_Message_Information (Ctxt)
       then
          declare
             Messages : constant GPS.Kernel.Messages.Message_Array :=
-              Messages_Information (Context);
+              Messages_Information (Ctxt);
          begin
             Set_Return_Value
               (Data,
@@ -545,11 +509,10 @@ package body GPS.Kernel.Scripts is
    procedure Context_Getters
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Context : Selection_Context;
+      Ctxt : constant Selection_Context := Get_Context (Data.Nth_Arg (1));
    begin
-      Context := Get_Data (Data, 1);
       if Command = "module_name" then
-         Set_Return_Value (Data, Get_Name (Module_ID (Get_Creator (Context))));
+         Set_Return_Value (Data, Get_Name (Module_ID (Get_Creator (Ctxt))));
       end if;
    end Context_Getters;
 
@@ -620,17 +583,17 @@ package body GPS.Kernel.Scripts is
          Set_Error_Msg (Data, -"Cannot create an instance of this class");
 
       elsif Command = "start_line" then
-         Context := Get_Data (Data, 1);
+         Context := Get_Context (Data.Nth_Arg (1));
          Get_Area (Context, L, C);
          Set_Return_Value (Data, L);
 
       elsif Command = "end_line" then
-         Context := Get_Data (Data, 1);
+         Context := Get_Context (Data.Nth_Arg (1));
          Get_Area (Context, L, C);
          Set_Return_Value (Data, C);
 
       elsif Command = "file" then
-         Context := Get_Data (Data, 1);
+         Context := Get_Context (Data.Nth_Arg (1));
          if Has_File_Information (Context) then
             Set_Return_Value
               (Data,
@@ -642,11 +605,11 @@ package body GPS.Kernel.Scripts is
          end if;
 
       elsif Command = "set_file" then
-         Context := Get_Data (Data, 1);
+         Context := Get_Context (Data.Nth_Arg (1));
          Set_File_Information (Context, Files => (1 => Nth_Arg (Data, 2)));
 
       elsif Command = "files" then
-         Context := Get_Data (Data, 1);
+         Context := Get_Context (Data.Nth_Arg (1));
          if Has_File_Information (Context) then
             Set_Return_Value_As_List (Data);
 
@@ -663,7 +626,7 @@ package body GPS.Kernel.Scripts is
          end if;
 
       elsif Command = "location" then
-         Context := Get_Data (Data, 1);
+         Context := Get_Context (Data.Nth_Arg (1));
          if Has_Line_Information (Context) then
             L := Line_Information (Context);
          else
@@ -691,7 +654,7 @@ package body GPS.Kernel.Scripts is
          end if;
 
       elsif Command = "project" then
-         Context := Get_Data (Data, 1);
+         Context := Get_Context (Data.Nth_Arg (1));
          Project := Project_Information (Context);  --  will compute if needed
 
          if Project = No_Project then
@@ -707,7 +670,7 @@ package body GPS.Kernel.Scripts is
          end if;
 
       elsif Command = "directory" then
-         Context := Get_Data (Data, 1);
+         Context := Get_Context (Data.Nth_Arg (1));
          if Has_Directory_Information (Context) then
             --  ??? We should return the Virtual_File here ?
             --  Set_Return_Value
@@ -722,7 +685,7 @@ package body GPS.Kernel.Scripts is
          end if;
 
       elsif Command = "location" then
-         Context := Get_Data (Data, 1);
+         Context := Get_Context (Data.Nth_Arg (1));
 
          if Has_Line_Information (Context) then
             L := Line_Information (Context);
@@ -768,7 +731,7 @@ package body GPS.Kernel.Scripts is
          end if;
 
       elsif Command = "contextual_menu" then
-         Context := Get_Data (Data, 1);
+         Context := Get_Context (Data.Nth_Arg (1));
          Object := GObject (Get_Current_Focus_Widget (Kernel));
 
          if Object /= null then
@@ -1253,6 +1216,17 @@ package body GPS.Kernel.Scripts is
       History_Class : constant Class_Type :=
         New_Class (Kernel.Scripts, "History");
 
+      Context_Class : constant Class_Type := Kernel.Scripts.New_Class
+        ("Context");
+      File_Context_Class : constant Class_Type := Kernel.Scripts.New_Class
+         ("FileContext", Base => Context_Class);
+      Area_Context_Class : constant Class_Type := Kernel.Scripts.New_Class
+         ("AreaContext", Base => File_Context_Class);
+      Entity_Context_Class : constant Class_Type := Kernel.Scripts.New_Class
+         ("EntityContext", Base => File_Context_Class);
+      Message_Context_Class : constant Class_Type := Kernel.Scripts.New_Class
+         ("MessageContext", Base => File_Context_Class);
+
       Tmp : GNAT.Strings.String_Access;
    begin
       GNATCOLL.Scripts.Register_Standard_Classes
@@ -1272,83 +1246,83 @@ package body GPS.Kernel.Scripts is
          Static_Method => True,
          Handler => History_Command_Handler'Access);
 
-      Register_Command
-        (Kernel, Constructor_Method,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Minimum_Args => 0,
          Maximum_Args => 11,
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
-      Register_Command
-        (Kernel, "enable_input",
+      Kernel.Scripts.Register_Command
+        ("enable_input",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
-      Register_Command
-        (Kernel, "add_input",
+      Kernel.Scripts.Register_Command
+        ("add_input",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
-      Register_Command
-        (Kernel, "accept_input",
+      Kernel.Scripts.Register_Command
+        ("accept_input",
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
-      Register_Command
-        (Kernel, "clear_input",
+      Kernel.Scripts.Register_Command
+        ("clear_input",
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
-      Register_Command
-        (Kernel, "get_text",
+      Kernel.Scripts.Register_Command
+        ("get_text",
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
-      Register_Command
-        (Kernel, "create_link",
+      Kernel.Scripts.Register_Command
+        ("create_link",
          Minimum_Args => 1,
          Maximum_Args => 5,
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
-      Register_Command
-        (Kernel, "delete_links",
+      Kernel.Scripts.Register_Command
+        ("delete_links",
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
-      Register_Command
-        (Kernel, "write_with_links",
+      Kernel.Scripts.Register_Command
+        ("write_with_links",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
-      Register_Command
-        (Kernel, "select_all",
+      Kernel.Scripts.Register_Command
+        ("select_all",
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
-      Register_Command
-        (Kernel, "copy_clipboard",
+      Kernel.Scripts.Register_Command
+        ("copy_clipboard",
          Class        => Console_Class,
          Handler      => Console_Command_Handler'Access);
 
-      Register_Command
-        (Kernel, "get_system_dir",
+      Kernel.Scripts.Register_Command
+        ("get_system_dir",
          Handler => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "get_tmp_dir",
+      Kernel.Scripts.Register_Command
+        ("get_tmp_dir",
          Handler => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "get_home_dir",
+      Kernel.Scripts.Register_Command
+        ("get_home_dir",
          Handler => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "insmod",
+      Kernel.Scripts.Register_Command
+        ("insmod",
          Minimum_Args => 2,
          Maximum_Args => 2,
          Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "lsmod",
+      Kernel.Scripts.Register_Command
+        ("lsmod",
          Handler => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "supported_languages",
+      Kernel.Scripts.Register_Command
+        ("supported_languages",
          Handler => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "execute_action",
+      Kernel.Scripts.Register_Command
+        ("execute_action",
          Minimum_Args => 1,
          Maximum_Args => Integer'Last,
          Handler      => Default_Command_Handler'Access);
@@ -1356,39 +1330,39 @@ package body GPS.Kernel.Scripts is
       Tmp := Getenv ("GPS_MEMORY_MONITOR" & ASCII.NUL);
       if Tmp.all /= "" then
          Free (Tmp);
-         Register_Command
-           (Kernel, "debug_memory_usage",
+         Kernel.Scripts.Register_Command
+           ("debug_memory_usage",
             Minimum_Args => 0,
             Maximum_Args => 2,
             Handler      => Default_Command_Handler'Access);
-         Register_Command
-           (Kernel, "debug_memory_reset",
+         Kernel.Scripts.Register_Command
+           ("debug_memory_reset",
             Minimum_Args => 0,
             Maximum_Args => 0,
             Handler      => Default_Command_Handler'Access);
       end if;
       Free (Tmp);
 
-      Register_Command
-        (Kernel, "execute_asynchronous_action",
+      Kernel.Scripts.Register_Command
+        ("execute_asynchronous_action",
          Minimum_Args => 1,
          Maximum_Args => Integer'Last,
          Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "parse_xml",
+      Kernel.Scripts.Register_Command
+        ("parse_xml",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Default_Command_Handler'Access);
 
-      Register_Command
-        (Kernel, "freeze_prefs",
+      Kernel.Scripts.Register_Command
+        ("freeze_prefs",
          Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel, "thaw_prefs",
+      Kernel.Scripts.Register_Command
+        ("thaw_prefs",
          Handler      => Default_Command_Handler'Access);
 
-      Register_Command
-        (Kernel, "set_scenario_variable",
+      Kernel.Scripts.Register_Command
+        ("set_scenario_variable",
          Class         => Get_Project_Class (Kernel),
          Minimum_Args  => 2,
          Maximum_Args  => 2,
@@ -1401,13 +1375,13 @@ package body GPS.Kernel.Scripts is
 
       GNATCOLL.Scripts.Projects.Register_Commands (Kernel.Scripts, Kernel);
 
-      Register_Command
-        (Kernel, "recompute",
+      Kernel.Scripts.Register_Command
+        ("recompute",
          Class         => Get_Project_Class (Kernel),
          Static_Method => True,
          Handler       => Create_Project_Command_Handler'Access);
-      Register_Command
-        (Kernel, "load",
+      Kernel.Scripts.Register_Command
+        ("load",
          Minimum_Args  => 1,
          Maximum_Args  => 3,
          Class         => Get_Project_Class (Kernel),
@@ -1415,111 +1389,113 @@ package body GPS.Kernel.Scripts is
          Handler       => Create_Project_Command_Handler'Access);
 
       if Active (Testsuite_Handle) then
-         Register_Command
-           (Kernel, "contextual_menu",
-            Class        => Get_Context_Class (Kernel),
+         Kernel.Scripts.Register_Command
+           ("contextual_menu",
+            Class        => Context_Class,
             Handler      => Context_Command_Handler'Access);
       end if;
 
-      Register_Property (Repo   => Kernel.Scripts,
-                         Name   => "module_name",
-                         Class  => Get_Context_Class (Kernel),
-                         Setter => null,
-                         Getter => Context_Getters'Access);
+      Kernel.Scripts.Register_Property
+         (Name   => "module_name",
+          Class  => Context_Class,
+          Setter => null,
+          Getter => Context_Getters'Access);
 
-      Register_Command
-        (Kernel, Constructor_Method,
-         Class        => Get_File_Context_Class (Kernel),
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
+         Class        => File_Context_Class,
          Handler      => Context_Command_Handler'Access);
-      Register_Command
-        (Kernel, "file",
-         Class        => Get_Context_Class (Kernel),
+      Kernel.Scripts.Register_Command
+        ("file",
+         Class        => Context_Class,
          Handler      => Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_file",
-         Class        => Get_Context_Class (Kernel),
+         Class        => Context_Class,
          Handler      => Context_Command_Handler'Access,
          Params       => (1 => Param ("file")));
-      Register_Command
-        (Kernel, "files",
-         Class        => Get_File_Context_Class (Kernel),
+      Kernel.Scripts.Register_Command
+        ("files",
+         Class        => File_Context_Class,
          Handler      => Context_Command_Handler'Access);
-      Register_Command
-        (Kernel, "project",
-         Class        => Get_File_Context_Class (Kernel),
+      Kernel.Scripts.Register_Command
+        ("project",
+         Class        => File_Context_Class,
          Handler      => Context_Command_Handler'Access);
-      Register_Command
-        (Kernel, "directory",
-         Class        => Get_File_Context_Class (Kernel),
+      Kernel.Scripts.Register_Command
+        ("directory",
+         Class        => File_Context_Class,
          Handler      => Context_Command_Handler'Access);
-      Register_Command
-        (Kernel, "location",
-         Class        => Get_File_Context_Class (Kernel),
-         Handler      => Context_Command_Handler'Access);
-
-      Register_Command
-        (Kernel, Constructor_Method,
-         Class        => Get_Area_Context_Class (Kernel),
-         Handler      => Context_Command_Handler'Access);
-      Register_Command
-        (Kernel, "start_line",
-         Class        => Get_Area_Context_Class (Kernel),
-         Handler      => Context_Command_Handler'Access);
-      Register_Command
-        (Kernel, "end_line",
-         Class        => Get_Area_Context_Class (Kernel),
+      Kernel.Scripts.Register_Command
+        ("location",
+         Class        => File_Context_Class,
          Handler      => Context_Command_Handler'Access);
 
-      Register_Command
-        (Kernel, Constructor_Method,
-         Class        => Get_Entity_Context_Class (Kernel),
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
+         Class        => Area_Context_Class,
          Handler      => Context_Command_Handler'Access);
-      Register_Command
-        (Kernel, "entity", 0, 1,
-         Class        => Get_Entity_Context_Class (Kernel),
+      Kernel.Scripts.Register_Command
+        ("start_line",
+         Class        => Area_Context_Class,
+         Handler      => Context_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("end_line",
+         Class        => Area_Context_Class,
+         Handler      => Context_Command_Handler'Access);
+
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
+         Class        => Entity_Context_Class,
+         Handler      => Context_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("entity",
+         Params => (1 => Param ("approximate_search_fallback",
+                                Optional => True)),
+         Class        => Entity_Context_Class,
          Handler      => Entity_Context_Command_Handler'Access);
 
-      Register_Command
-        (Kernel, Constructor_Method,
-         Class   => Get_Message_Context_Class (Kernel),
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
+         Class   => Message_Context_Class,
          Handler => Context_Command_Handler'Access);
-      Register_Command
-        (Kernel, "message",
-         Class   => Get_Message_Context_Class (Kernel),
+      Kernel.Scripts.Register_Command
+        ("message",
+         Class   => Message_Context_Class,
          Handler => Message_Context_Command_Handler'Access);
 
       Kernel.Scripts.Register_Command
         ("current_context",
          Handler => Context_Command_Handler'Access,
          Params  => (1 => Param ("refresh", Optional => True)));
-      Register_Command
-        (Kernel, "contextual_context",
+      Kernel.Scripts.Register_Command
+        ("contextual_context",
          Handler      => Context_Command_Handler'Access);
 
-      Register_Command
-        (Kernel, Constructor_Method,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Class   => Get_GUI_Class (Kernel),
          Handler => GUI_Command_Handler'Access);
-      Register_Command
-        (Kernel, "set_sensitive",
+      Kernel.Scripts.Register_Command
+        ("set_sensitive",
          Maximum_Args => 1,
          Class        => Get_GUI_Class (Kernel),
          Handler      => GUI_Command_Handler'Access);
-      Register_Command
-        (Kernel, "is_sensitive",
+      Kernel.Scripts.Register_Command
+        ("is_sensitive",
          Maximum_Args => 0,
          Class        => Get_GUI_Class (Kernel),
          Handler      => GUI_Command_Handler'Access);
-      Register_Command
-        (Kernel, "destroy",
+      Kernel.Scripts.Register_Command
+        ("destroy",
          Class        => Get_GUI_Class (Kernel),
          Handler      => GUI_Command_Handler'Access);
-      Register_Command
-        (Kernel, "hide",
+      Kernel.Scripts.Register_Command
+        ("hide",
          Class        => Get_GUI_Class (Kernel),
          Handler      => GUI_Command_Handler'Access);
-      Register_Command
-        (Kernel, "show",
+      Kernel.Scripts.Register_Command
+        ("show",
          Class        => Get_GUI_Class (Kernel),
          Handler      => GUI_Command_Handler'Access);
 
@@ -1605,41 +1581,6 @@ package body GPS.Kernel.Scripts is
       return Kernel_Handle (GPS.Scripts.Get_Kernel (Script));
    end Get_Kernel;
 
-   -----------------------
-   -- Get_Context_Class --
-   -----------------------
-
-   function Get_Context_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type is
-   begin
-      return Get_Context_Class (Kernel.Scripts);
-   end Get_Context_Class;
-
-   function Get_Context_Class
-     (Repo : Scripts_Repository) return Class_Type is
-   begin
-      return New_Class (Repo, Context_Class_Name);
-   end Get_Context_Class;
-
-   ----------------------------
-   -- Get_Area_Context_Class --
-   ----------------------------
-
-   function Get_Area_Context_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type is
-   begin
-      return Get_Area_Context_Class (Kernel.Scripts);
-   end Get_Area_Context_Class;
-
-   function Get_Area_Context_Class
-     (Repo : Scripts_Repository) return Class_Type is
-   begin
-      return New_Class
-        (Repo, "AreaContext", Base => Get_File_Context_Class (Repo));
-   end Get_Area_Context_Class;
-
    --------------------
    -- Create_Context --
    --------------------
@@ -1653,175 +1594,51 @@ package body GPS.Kernel.Scripts is
          return No_Class_Instance;
 
       elsif Has_Area_Information (Context) then
-         return Get_Or_Create_Context
-           (Script,
-            Get_Area_Context_Class (Get_Repository (Script)),
-            Context);
+         return Context_Proxies.Get_Or_Create_Instance
+            (Context.Ref.Get.Instances, (Weak => Context.Ref.Weak), Script,
+             Class_To_Create => "AreaContext");
 
       elsif Has_Entity_Name_Information (Context) then
-         return Get_Or_Create_Context
-           (Script,
-            Get_Entity_Context_Class (Get_Repository (Script)),
-            Context);
+         return Context_Proxies.Get_Or_Create_Instance
+            (Context.Ref.Get.Instances, (Weak => Context.Ref.Weak), Script,
+             Class_To_Create => "EntityContext");
 
       elsif Has_Message_Information (Context) then
-         return Get_Or_Create_Context
-           (Script,
-            Get_Message_Context_Class (Get_Repository (Script)),
-            Context);
+         return Context_Proxies.Get_Or_Create_Instance
+            (Context.Ref.Get.Instances, (Weak => Context.Ref.Weak), Script,
+             Class_To_Create => "MessageContext");
 
       elsif Has_File_Information (Context)
         or else Has_Project_Information (Context)
         or else Has_Directory_Information (Context)
       then
-         return Get_Or_Create_Context
-           (Script,
-            Get_File_Context_Class (Get_Repository (Script)),
-            Context);
+         return Context_Proxies.Get_Or_Create_Instance
+            (Context.Ref.Get.Instances, (Weak => Context.Ref.Weak), Script,
+             Class_To_Create => "FileContext");
 
       else
          Trace (Me, "Context type is not supported by GPS");
-         return Get_Or_Create_Context
-           (Script,
-            Get_Context_Class (Get_Repository (Script)),
-            Context);
+         return Context_Proxies.Get_Or_Create_Instance
+            (Context.Ref.Get.Instances, (Weak => Context.Ref.Weak), Script);
       end if;
    end Create_Context;
 
-   --------------
-   -- Get_Data --
-   --------------
+   -----------------
+   -- Get_Context --
+   -----------------
 
-   function Get_Data
-     (Instance : Class_Instance) return GPS.Kernel.Selection_Context
-   is
-      use Selection_Pointers;
-      Value : constant Instance_Property :=
-                Get_Data (Instance, Context_Class_Name);
+   function Get_Context (Inst : Class_Instance) return Selection_Context is
+      Weak : constant Weak_Selection_Context :=
+         Context_Proxies.From_Instance (Inst);
    begin
-      if Value = null
-         or else GPS_Properties (Value).Context.Weak.Was_Freed
-      then
+      if Weak.Weak.Was_Freed then
          return No_Context;
       else
          return C : Selection_Context do
-            C.Ref.Set (GPS_Properties (Value).Context.Weak);
+            C.Ref.Set (Weak.Weak);
          end return;
       end if;
-   end Get_Data;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data
-     (Data : Callback_Data'Class; N : Positive)
-      return GPS.Kernel.Selection_Context is
-   begin
-      return Get_Data
-        (Nth_Arg (Data, N, Get_Context_Class (Get_Kernel (Data))));
-   end Get_Data;
-
-   ----------------------------
-   -- Get_File_Context_Class --
-   ----------------------------
-
-   function Get_File_Context_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type is
-   begin
-      return Get_File_Context_Class (Kernel.Scripts);
-   end Get_File_Context_Class;
-
-   function Get_File_Context_Class
-     (Repo : Scripts_Repository) return Class_Type is
-   begin
-      return New_Class
-        (Repo, "FileContext", Base => Get_Context_Class (Repo));
-   end Get_File_Context_Class;
-
-   ------------------------------
-   -- Get_Entity_Context_Class --
-   ------------------------------
-
-   function Get_Entity_Context_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type is
-   begin
-      return Get_Entity_Context_Class (Kernel.Scripts);
-   end Get_Entity_Context_Class;
-
-   function Get_Entity_Context_Class
-     (Repo : Scripts_Repository) return Class_Type is
-   begin
-      return New_Class
-        (Repo, "EntityContext", Base => Get_File_Context_Class (Repo));
-   end Get_Entity_Context_Class;
-
-   -------------------------------
-   -- Get_Message_Context_Class --
-   -------------------------------
-
-   function Get_Message_Context_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type is
-   begin
-      return Get_Message_Context_Class (Kernel.Scripts);
-   end Get_Message_Context_Class;
-
-   function Get_Message_Context_Class
-     (Repo : Scripts_Repository) return Class_Type is
-   begin
-      return New_Class
-        (Repo,
-         Message_Context_Class_Name,
-         Base => Get_File_Context_Class (Repo));
-   end Get_Message_Context_Class;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data
-     (Instance : Class_Instance;
-      Context  : Selection_Context) is
-   begin
-      if not Is_Subclass (Instance, Context_Class_Name) then
-         raise Invalid_Data;
-      end if;
-
-      Set_Data
-        (Instance, Context_Class_Name,
-         GPS_Properties_Record'(
-            Typ => Contexts,
-            Context => (Weak => Context.Ref.Weak)));
-   end Set_Data;
-
-   ---------------------------
-   -- Get_Or_Create_Context --
-   ---------------------------
-
-   function Get_Or_Create_Context
-     (Script  : access Scripting_Language_Record'Class;
-      Class   : Class_Type;
-      Context : GPS.Kernel.Selection_Context) return Class_Instance
-   is
-      Instance : Class_Instance := No_Class_Instance;
-   begin
-      if Context.Ref.Get.Instances = null then
-         Context.Ref.Get.Instances := new Instance_List'(Null_Instance_List);
-      else
-         Instance := Get (Context.Ref.Get.Instances.all, Script);
-      end if;
-
-      if Instance = No_Class_Instance then
-         Instance := New_Instance (Script, Class);
-         Set_Data (Instance, Context);
-         Set (Instance_List (Context.Ref.Get.Instances.all), Script, Instance);
-      end if;
-
-      return Instance;
-   end Get_Or_Create_Context;
+   end Get_Context;
 
    -------------------
    -- Get_GUI_Class --
@@ -1903,12 +1720,6 @@ package body GPS.Kernel.Scripts is
    overriding procedure Destroy (Prop : in out GPS_Properties_Record) is
    begin
       case Prop.Typ is
-         when Contexts =>
-            --  Nothing to do either. The ref to the class instance that is
-            --  hold by the context will be automatically freed when the
-            --  context itself is destroyed.
-            null;
-
          when Files | Projects | Entities =>
             null;
 

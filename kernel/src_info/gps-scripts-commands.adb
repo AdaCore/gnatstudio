@@ -44,7 +44,7 @@ package body GPS.Scripts.Commands is
          Command_Instance := Nth_Arg (Data, 1, Command_Class);
          Data_Command := Get_Data (Command_Instance);
          if Data_Command /= null then
-            Remove_Instance (Data_Command, Get_Script (Data));
+            Remove_Instance (Data_Command);
             Unref (Command_Access (Data_Command));
          end if;
 
@@ -144,14 +144,14 @@ package body GPS.Scripts.Commands is
    ----------
 
    overriding procedure Free (Command : in out Scheduled_Command) is
-      Instances : constant Instance_Array := Get_Instances (Command.Instances);
+      Curs : Inst_Cursor := First (Command.Instances);
    begin
       if Command.Is_Dead then
-         for J in Instances'Range loop
-            if Instances (J) /= No_Class_Instance then
-               return;
-            end if;
-         end loop;
+         --   ??? Is the command implemented in a scripting language ?
+         if Has_Element (Curs) then
+            --  ??? Should we free Command.Instances
+            return;
+         end if;
 
          if Command.Destroy_On_Exit then
             Unref (Command.Command);
@@ -168,13 +168,13 @@ package body GPS.Scripts.Commands is
             Dead_Command.Destroy_On_Exit := Command.Destroy_On_Exit;
             Dead_Command.Is_Dead := True;
 
-            for J in Instances'Range loop
-               if Instances (J) /= No_Class_Instance then
-                  Found := True;
-                  Set_Data
-                    (Instances (J), Command_Class_Name, Command_Property'
-                       (Command => Dead_Command));
-               end if;
+            while Has_Element (Curs) loop
+               Found := True;
+               Set_Data
+                 (Element (Command.Instances, Curs),
+                  Command_Class_Name,
+                  Command_Property'(Command => Dead_Command));
+               Next (Command.Instances, Curs);
             end loop;
 
             --  If the command is not referenced by any script, then we just
@@ -248,7 +248,7 @@ package body GPS.Scripts.Commands is
             Inst := New_Instance (Language, Command_Class);
          end if;
 
-         Set_Instance (Command, Language, Inst);
+         Set_Instance (Command, Inst);
       end if;
 
       return Inst;
@@ -260,25 +260,22 @@ package body GPS.Scripts.Commands is
 
    procedure Set_Instance
      (Command  : access Scheduled_Command'Class;
-      Language : access Scripting_Language_Record'Class;
       Instance : Class_Instance) is
    begin
       Set_Data
         (Instance, Command_Class_Name, Command_Property'
            (Command => Scheduled_Command_Access (Command)));
       Ref (Command_Access (Command));  --  unrefed in GPS.Command.__del__
-      Set (Command.Instances, Language, Instance);
+      Set (Command.Instances, Instance);
    end Set_Instance;
 
    ---------------------
    -- Remove_Instance --
    ---------------------
 
-   procedure Remove_Instance
-     (Command  : access Scheduled_Command'Class;
-      Language : access Scripting_Language_Record'Class) is
+   procedure Remove_Instance (Command  : access Scheduled_Command'Class) is
    begin
-      Set (Command.Instances, Language, No_Class_Instance);
+      Set (Command.Instances, No_Class_Instance);
    end Remove_Instance;
 
    --------------

@@ -94,7 +94,7 @@ types = {
         ada='GPS.Kernel.Selection_Context',
         python='GPS.Context',
         topython='Create_Context (Get_Script (Data), %(ada)s)',
-        toada='Get_Data (Data, %(idx)d)'),
+        toada='Get_Context (Data.Nth_Arg (%(idx)d))'),
 
     'String': Mapping(ada='String', python='str'),
     'Integer': Mapping(ada='Integer', python='int'),

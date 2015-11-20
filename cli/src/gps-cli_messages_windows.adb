@@ -59,7 +59,7 @@ package body GPS.CLI_Messages_Windows is
      (Instance : Class_Instance;
       Console  : access CLI_Virtual_Console_Record) is
    begin
-      Set (Console.Instances, Get_Script (Instance), Instance);
+      Set (Console.Instances, Instance);
    end Set_Data_Primitive;
 
    ----------
@@ -117,27 +117,6 @@ package body GPS.CLI_Messages_Windows is
    begin
       Self.Insert (UTF8, Add_LF, Mode);
    end Insert_UTF8;
-
-   -----------
-   -- Clear --
-   -----------
-
-   overriding procedure Clear (Self   : not null access Messages_Window) is
-   begin
-      null;
-   end Clear;
-
-   -------------------
-   -- Raise_Console --
-   -------------------
-
-   overriding procedure Raise_Console
-     (Self       : not null access Messages_Window;
-      Give_Focus : Boolean)
-   is
-   begin
-      null;
-   end Raise_Console;
 
    -------------------------
    -- Get_Virtual_Console --

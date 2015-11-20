@@ -16,8 +16,8 @@
 ------------------------------------------------------------------------------
 --  Base package for GPS scripting (GUI independent)
 
-with GNATCOLL.Scripts;
-with GPS.Core_Kernels;
+with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
+with GPS.Core_Kernels;   use GPS.Core_Kernels;
 
 package GPS.Scripts is
 
@@ -36,6 +36,101 @@ package GPS.Scripts is
      (Script : access GNATCOLL.Scripts.Scripting_Language_Record'Class)
       return GPS.Core_Kernels.Core_Kernel;
    --  Return the kernel associated with Script
+
+   ------------------
+   -- Script_Proxy --
+   ------------------
+
+   type Script_Proxy is abstract tagged record
+      Instances : Instance_List;
+   end record;
+   --  A type that should be used in types that are exported to python.
+   --  They provide the following support:
+   --  * Creating a new python class instance to wrap an Ada object of this
+   --    type.
+   --  * Ensure that one given Ada object is always represented by the
+   --    same python instance. This allows python users to store their own
+   --    custom data, and be able to get it every time the same Ada instance
+   --    is manipulated.
+   --  * Ensure that the python instances exist at least as long as the Ada
+   --    object exists.
+   --  * Ensures that once the Ada object is destroyed, any remaining python
+   --    instance no longer references it anymore. Instead, its internal
+   --    data is reset to a default value. From then on, acting on the
+   --    python object will no longer make sense, but will not crash the
+   --    application either.
+   --  * Support multiple scripting languages (one instance of class per
+   --    scripting language and per Ada object).
+
+   function Class_Name (Self : Script_Proxy) return String is abstract;
+   pragma Inline (Class_Name);
+   --  Class_Name is the name in the scripting language. This is also used for
+   --  the name of the internal field in the python class that stores
+   --  the Ada object. This way, it is possible to have a python class
+   --  store reference to multiple types of Ada objects, if they use
+   --  different names.
+   --
+   --  Implementation:
+   --  We could have set this as a discriminant of the type, but then this
+   --  is not accessible from the generic package below for some reason. This
+   --  class name must be known by Finalize to properly free the memory.
+
+   procedure Free (Self : in out Script_Proxy);
+   --  Severe the links between class instances stored in Self, and the
+   --  Ada object.
+   --  This will possibly destroy the instances, or if they are currently
+   --  in use in the scripting language, it will simply ensure that the
+   --  instances reference a null element.
+   --
+   --  Implementation:
+   --  We could make Script_Proxy a controlled type so that the memory is
+   --  freed automatically. The difficulty however is that this type will
+   --  be part of a record that it passed to the generic package below, so
+   --  Finalize is called every time From_Instance is called.
+
+   generic
+      type Element_Type is private;
+      --  Data stored in the python class instance. This type is the one
+      --  that includes a Script_Proxy field.
+      --  Element_Type must not be a reference counted type, since otherwise
+      --  there is a refcount cycle: Element_Type owns a Script_Proxy, that
+      --  contains python class instances that own the Element_Type. In this
+      --  case, use a Weak reference as the Element_Type.
+
+      type Proxy is new Script_Proxy with private;
+      --  Used to get access to the class name.
+
+   package Script_Proxies is
+
+      function Get_Or_Create_Instance
+         (Self   : in out Proxy'Class;
+          Obj    : Element_Type;
+          Script : not null access Scripting_Language_Record'Class;
+          Class_To_Create : String := "")
+         return Class_Instance;
+      --  If Obj was already associated with a class instance in the given
+      --  scripting language, returns that same instance.
+      --  Otherwise, create a new instance to wrap Obj.
+      --  Self should be stored in Obj, but we need to pass it explicitly
+      --  since we do not have access to it from this generic package.
+      --  Class_To_Create can be used to override the name of the class that
+      --  we are creating, when there are various children classes possible
+
+      procedure Store_In_Instance
+         (Self   : in out Proxy'Class;
+          Inst   : Class_Instance;
+          Obj    : Element_Type);
+      --  Associate Inst with Obj.
+      --  This procedure is only needed when the instance was created
+      --  independently, for instance when implementing a Constructor_Method
+      --  in Ada. Otherwise, better to use Get_Or_Create_Instance.
+
+      function From_Instance (Inst : Class_Instance) return Element_Type;
+      --  Return the element stored in the instance.
+      --  This will raise a Program_Error if no element was associated with
+      --  this instance.
+
+   end Script_Proxies;
 
 private
 

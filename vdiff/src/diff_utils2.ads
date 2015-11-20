@@ -90,7 +90,7 @@ package Diff_Utils2 is
       Current_Node   : Diff_List_Node;
       Ref_File       : T_VFile_Index := 2;
       In_Destruction : Boolean := False;
-      Instances      : Instance_List_Access := null;
+      Instances      : Instance_List;
       Mode           : GPS.Kernel.Preferences.Vdiff_Modes;
    end record;
    type Diff_Head_Access is access all Diff_Head;
@@ -110,7 +110,7 @@ package Diff_Utils2 is
                   Current_Node   => Diff_Chunk_List.Null_Node,
                   Ref_File       => 2,
                   In_Destruction => False,
-                  Instances      => null,
+                  Instances      => <>,
                   Mode           => GPS.Kernel.Preferences.Side_By_Side);
 
    procedure Free (Vdiff : in out Diff_Head_Access);

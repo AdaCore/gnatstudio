@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 --  Implementation of FileLocation class
 
-with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
 with Basic_Types;
 with GPS.Core_Kernels;
 

@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
-
 package body GPS.Scripts is
 
    ------------
@@ -51,5 +49,94 @@ package body GPS.Scripts is
    begin
       return Kernel_Scripts_Repository (Get_Repository (Script).all).Kernel;
    end Get_Kernel;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Self : in out Script_Proxy) is
+      C : Inst_Cursor := First (Self.Instances);
+   begin
+      --  Severe the connection between instances and Ada object
+      while Has_Element (C) loop
+         Unset_Data
+            (Element (Self.Instances, C),
+             Script_Proxy'Class (Self).Class_Name);
+         Next (Self.Instances, C);
+      end loop;
+
+      --  Unref all instances (and possibly destroy them). Also
+      --  release memory on the Ada side.
+      Free (Self.Instances);
+   end Free;
+
+   --------------------
+   -- Script_Proxies --
+   --------------------
+
+   package body Script_Proxies is
+
+      type Element_Properties_Record is new Instance_Property_Record with
+         record
+            Element : Element_Type;
+         end record;
+
+      ----------------------------
+      -- Get_Or_Create_Instance --
+      ----------------------------
+
+      function Get_Or_Create_Instance
+         (Self   : in out Proxy'Class;
+          Obj    : Element_Type;
+          Script : not null access Scripting_Language_Record'Class;
+          Class_To_Create : String := "")
+         return Class_Instance
+      is
+         C : Class_Instance := Get (Self.Instances, Script);
+      begin
+         if C = No_Class_Instance then
+            --  This assumes the class has already been declared with its
+            --  proper base classes.
+            C := New_Instance
+               (Script, New_Class (Script.Get_Repository,
+                (if Class_To_Create = "" then Self.Class_Name
+                 else Class_To_Create)));
+            Store_In_Instance (Self, C, Obj);
+         end if;
+         return C;
+      end Get_Or_Create_Instance;
+
+      -----------------------
+      -- Store_In_Instance --
+      -----------------------
+
+      procedure Store_In_Instance
+         (Self   : in out Proxy'Class;
+          Inst   : Class_Instance;
+          Obj    : Element_Type) is
+      begin
+         Set_Data
+            (Inst, Self.Class_Name,
+             Element_Properties_Record'(Element => Obj));
+         Set (Self.Instances, Inst);
+      end Store_In_Instance;
+
+      -------------------
+      -- From_Instance --
+      -------------------
+
+      function From_Instance (Inst : Class_Instance) return Element_Type is
+         P : Proxy;  --  Only to retrieve class name
+         Data : constant Instance_Property := Get_Data (Inst, P.Class_Name);
+      begin
+         if Data = null then
+            raise Program_Error with
+                "No Ada object associated with python " & P.Class_Name
+                & " instance";
+         end if;
+         return Element_Properties_Record (Data.all).Element;
+      end From_Instance;
+
+   end Script_Proxies;
 
 end GPS.Scripts;

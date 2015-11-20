@@ -717,23 +717,15 @@ package body Diff_Utils2 is
    ----------
 
    procedure Free (Link : in out Diff_Head) is
+      Curs : Inst_Cursor := First (Link.Instances);
    begin
       Free_List (Link.List);
+      while Has_Element (Curs) loop
+         Set_Vdiff_Data (Element (Link.Instances, Curs), null);
+         Next (Link.Instances, Curs);
+      end loop;
 
-      if Link.Instances /= null then
-         declare
-            Instances : constant Instance_Array :=
-              Get_Instances (Link.Instances.all);
-         begin
-            for Index in Instances'Range loop
-               if Instances (Index) /= No_Class_Instance then
-                  Set_Vdiff_Data (Instances (Index), null);
-               end if;
-            end loop;
-         end;
-
-         Free (Link.Instances);
-      end if;
+      Free (Link.Instances);
    end Free;
 
    ----------

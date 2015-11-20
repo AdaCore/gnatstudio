@@ -62,6 +62,7 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Search;         use GPS.Kernel.Search;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Scripts;               use GPS.Scripts;
 with GPS.Search;                use GPS.Search;
 with GUI_Utils;                 use GUI_Utils;
 with Generic_List;
@@ -73,17 +74,26 @@ package body Bookmark_Views is
 
    Me : constant Trace_Handle := Create ("Bookmarks");
 
+   Bookmark_Class_Name : constant String := "Bookmark";
+
    Icon_Name_Column : constant := 0;
    Name_Column     : constant := 1;
    Data_Column     : constant := 2;
    Editable_Column : constant := 3;
 
+   type Bookmark_Proxy is new Script_Proxy with null record;
+   overriding function Class_Name (Self : Bookmark_Proxy) return String
+      is (Bookmark_Class_Name) with Inline;
+
    type Bookmark_Data is record
       Marker    : Location_Marker;
       Name      : GNAT.Strings.String_Access;
-      Instances : Instance_List;
+      Instances : Bookmark_Proxy;
    end record;
    type Bookmark_Data_Access is access Bookmark_Data;
+
+   package Bookmark_Proxies is new Script_Proxies
+      (Bookmark_Data_Access, Bookmark_Proxy);
 
    procedure Free (Data : in out Bookmark_Data_Access);
    package Bookmark_List is new Generic_List (Bookmark_Data_Access, Free);
@@ -148,13 +158,6 @@ package body Bookmark_Views is
      (Name : String) return Bookmark_List.List_Node;
    --  Return the location marker for the first bookmark named Name.
    --  null is returned if not found
-
-   function Instance_From_Bookmark
-     (List   : Bookmark_List.List_Node;
-      Class  : Class_Type;
-      Script : access Scripting_Language_Record'Class) return Class_Instance;
-   --  Get or create the class_instance associated with the bookmark described
-   --  in List.
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
    overriding procedure Execute
@@ -661,6 +664,7 @@ package body Bookmark_Views is
         (Bookmark_Data, Bookmark_Data_Access);
    begin
       Destroy (Data.Marker.all);
+      Data.Instances.Free;
       Free (Data.Name);
       Unchecked_Free (Data.Marker);
       Unchecked_Free (Data);
@@ -771,7 +775,7 @@ package body Bookmark_Views is
                  new Bookmark_Data'
                    (Marker => Mark,
                     Name   => new String'(To_String (Mark)),
-                    Instances => Null_Instance_List));
+                    Instances => <>));
 
          if Child = null then
             View := Generic_View.Get_Or_Create_View (Kernel);
@@ -977,13 +981,13 @@ package body Bookmark_Views is
                         Append (Bookmark_Views_Module.List,
                                 new Bookmark_Data'
                                   (Marker    => Marker,
-                                   Instances => Null_Instance_List,
+                                   Instances => <>,
                                    Name   => new String'(To_String (Marker))));
                      else
                         Append (Bookmark_Views_Module.List,
                                 new Bookmark_Data'
                                   (Marker    => Marker,
-                                   Instances => Null_Instance_List,
+                                   Instances => <>,
                                    Name      => new String'(Name)));
                      end if;
                   end;
@@ -1051,27 +1055,6 @@ package body Bookmark_Views is
       return List;
    end Bookmark_From_Name;
 
-   ----------------------------
-   -- Instance_From_Bookmark --
-   ----------------------------
-
-   function Instance_From_Bookmark
-     (List   : Bookmark_List.List_Node;
-      Class  : Class_Type;
-      Script : access Scripting_Language_Record'Class) return Class_Instance
-   is
-      Inst : Class_Instance :=
-               Get (Bookmark_List.Data (List).Instances, Script);
-   begin
-      if Inst = No_Class_Instance then
-         Inst := New_Instance (Script, Class);
-         Set_Data (Inst, Class, Bookmark_List.Data (List).Name.all);
-         Set (Bookmark_List.Data (List).Instances, Script, Inst);
-      end if;
-
-      return Inst;
-   end Instance_From_Bookmark;
-
    ---------------------
    -- Command_Handler --
    ---------------------
@@ -1080,14 +1063,14 @@ package body Bookmark_Views is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Bookmark_Class : constant Class_Type :=
-                         New_Class
-                           (Get_Scripts (Get_Kernel (Data)), "Bookmark");
+         New_Class (Get_Scripts (Get_Kernel (Data)), Bookmark_Class_Name);
       Name_Cst       : aliased constant String := "name";
       Inst           : Class_Instance;
       Bookmark       : Bookmark_List.List_Node;
       Marker         : Location_Marker;
       Tmp            : Boolean;
       List           : Bookmark_List.List_Node;
+      B              : Bookmark_Data_Access;
       pragma Unreferenced (Tmp);
    begin
       if Command = Constructor_Method then
@@ -1101,9 +1084,11 @@ package body Bookmark_Views is
          if Bookmark = Null_Node then
             Set_Error_Msg (Data, "No such bookmark");
          else
-            Inst := Instance_From_Bookmark
-              (Bookmark, Bookmark_Class, Get_Script (Data));
-            Set_Return_Value (Data, Inst);
+            Data.Set_Return_Value
+               (Bookmark_Proxies.Get_Or_Create_Instance
+                  (Self   => Bookmark_List.Data (Bookmark).Instances,
+                   Obj    => Bookmark_List.Data (Bookmark),
+                   Script => Data.Get_Script));
          end if;
 
       elsif Command = "create" then
@@ -1116,68 +1101,66 @@ package body Bookmark_Views is
               (Bookmark_Views_Module.List,
                new Bookmark_Data'
                  (Marker    => Marker,
-                  Instances => Null_Instance_List,
+                  Instances => <>,
                   Name      => new String'(Nth_Arg (Data, 1))));
             Save_Bookmarks (Get_Kernel (Data));
             Bookmark_Added_Hook.Run (Get_Kernel (Data), Data.Nth_Arg (1));
             Bookmark := First (Bookmark_Views_Module.List);
-            Set_Return_Value
-              (Data, Instance_From_Bookmark
-                 (Bookmark, Bookmark_Class, Get_Script (Data)));
+            Data.Set_Return_Value
+               (Bookmark_Proxies.Get_Or_Create_Instance
+                  (Self   => Bookmark_List.Data (Bookmark).Instances,
+                   Obj    => Bookmark_List.Data (Bookmark),
+                   Script => Data.Get_Script));
          end if;
 
       elsif Command = "name" then
-         Inst := Nth_Arg (Data, 1, Bookmark_Class);
-         Set_Return_Value (Data, String'(Get_Data (Inst, Bookmark_Class)));
+         Inst := Data.Nth_Arg (1, Bookmark_Class);
+         Data.Set_Return_Value
+            (Bookmark_Proxies.From_Instance (Inst).Name.all);
 
       elsif Command = "delete" then
-         Inst := Nth_Arg (Data, 1, Bookmark_Class);
-         Bookmark := Bookmark_From_Name (Get_Data (Inst, Bookmark_Class));
-         if Bookmark = Null_Node then
-            Set_Error_Msg (Data, "Invalid bookmark");
+         Inst := Data.Nth_Arg (1, Bookmark_Class);
+         B := Bookmark_Proxies.From_Instance (Inst);
+         if B = null then
+            Data.Set_Error_Msg ("Invalid bookmark");
          else
-            Delete_Bookmark
-              (Get_Kernel (Data), Bookmark_List.Data (Bookmark).all);
+            Delete_Bookmark (Get_Kernel (Data), B.all);
          end if;
 
       elsif Command = "rename" then
          Name_Parameters (Data, (2 => Name_Cst'Unchecked_Access));
-         Inst := Nth_Arg (Data, 1, Bookmark_Class);
-         Bookmark := Bookmark_From_Name (Get_Data (Inst, Bookmark_Class));
-         if Bookmark = Null_Node then
-            Set_Error_Msg (Data, "Invalid bookmark");
+         Inst := Data.Nth_Arg (1, Bookmark_Class);
+         B := Bookmark_Proxies.From_Instance (Inst);
+         if B = null then
+            Data.Set_Error_Msg ("Invalid bookmark");
          else
-            Bookmark_Added_Hook.Run
-              (Get_Kernel (Data), Bookmark_List.Data (Bookmark).Name.all);
-            Free (Bookmark_List.Data (Bookmark).Name);
-            Bookmark_List.Data (Bookmark).Name :=
-              new String'(Nth_Arg (Data, 2));
-            Set_Data (Inst, Bookmark_Class, String'(Data.Nth_Arg (2)));
+            Bookmark_Added_Hook.Run (Get_Kernel (Data), B.Name.all);
+            Free (B.Name);
+            B.Name := new String'(Nth_Arg (Data, 2));
             Bookmark_Added_Hook.Run (Get_Kernel (Data), Data.Nth_Arg (2));
             Save_Bookmarks (Get_Kernel (Data));
          end if;
 
       elsif Command = "goto" then
-         Inst := Nth_Arg (Data, 1, Bookmark_Class);
-         Bookmark := Bookmark_From_Name (Get_Data (Inst, Bookmark_Class));
-         if Bookmark /= Null_Node
-           and then Go_To
-             (Bookmark_List.Data (Bookmark).Marker, Get_Kernel (Data))
+         Inst := Data.Nth_Arg (1, Bookmark_Class);
+         B := Bookmark_Proxies.From_Instance (Inst);
+         if B /= null
+           and then Go_To (B.Marker, Get_Kernel (Data))
          then
-            Push_Marker_In_History
-              (Get_Kernel (Data),
-               Clone (Bookmark_List.Data (Bookmark).Marker));
+            Push_Marker_In_History (Get_Kernel (Data), Clone (B.Marker));
          else
-            Set_Error_Msg (Data, "Invalid bookmark");
+            Data.Set_Error_Msg ("Invalid bookmark");
          end if;
 
       elsif Command = "list" then
          Set_Return_Value_As_List (Data);
          List := First (Bookmark_Views_Module.List);
          while List /= Null_Node loop
-            Inst := Instance_From_Bookmark
-              (List, Bookmark_Class, Get_Script (Data));
-            Set_Return_Value (Data, Inst);
+            Data.Set_Return_Value
+               (Bookmark_Proxies.Get_Or_Create_Instance
+                   (Self   => Bookmark_List.Data (List).Instances,
+                    Obj    => Bookmark_List.Data (List),
+                    Script => Data.Get_Script));
             List := Next (List);
          end loop;
       end if;
@@ -1191,7 +1174,7 @@ package body Bookmark_Views is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Bookmark_Class     : constant Class_Type :=
-                             New_Class (Get_Scripts (Kernel), "Bookmark");
+         New_Class (Get_Scripts (Kernel), Bookmark_Class_Name);
       Src_Action_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
       P         : Kernel_Search_Provider_Access;

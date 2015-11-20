@@ -1327,7 +1327,7 @@ package body Vdiff2_Module.Utils is
          Current_Node   => First (Result),
          Ref_File       => 2,
          In_Destruction => False,
-         Instances      => null);
+         Instances      => <>);
 
       return Process_Differences (Kernel, Item, Id.List_Diff);
    end Visual_Diff;
@@ -1380,7 +1380,7 @@ package body Vdiff2_Module.Utils is
          Current_Node   => First (Result),
          Ref_File       => 1,
          In_Destruction => False,
-         Instances      => null);
+         Instances      => <>);
 
       return Process_Differences (Kernel, Item, Id.List_Diff);
    end Visual_Patch;

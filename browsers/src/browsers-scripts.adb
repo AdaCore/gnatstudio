@@ -138,12 +138,6 @@ package body Browsers.Scripts is
    function Get_Model (Inst : Class_Instance) return Model_Type;
    --  Set or get the style associated with an instance of GPS.Browsers.Style
 
-   type Item_Properties_Record is new Instance_Property_Record with record
-      Item : Abstract_Item;
-      --  ??? Who owns the item, if the python class lasts longer than the
-      --  canvas model ?
-   end record;
-
    procedure Style_Handler
      (Data : in out Callback_Data'Class; Command : String);
    procedure Rect_Item_Handler
@@ -218,95 +212,83 @@ package body Browsers.Scripts is
       return Boolean;
    --  Called when an unhandled event occurs in the view
 
-   function Get_Item (Inst : Class_Instance) return Abstract_Item;
-   --  Set or get the style associated with an instance of GPS.Browsers.Item
-
-   procedure Set_Instance
-     (Self : not null access Python_Item'Class; Inst : Class_Instance);
-   function Get_Instance
-     (Item   : not null access Python_Item'Class;
-      Script : not null access Scripting_Language_Record'Class)
-      return Class_Instance;
-
-   procedure Destroy_Instances (Self : not null access Python_Item'Class);
-
    type PRect_Record is new Rect_Item_Record and Python_Item with record
-      Inst : aliased Instance_List;
+      Inst : aliased Item_Proxy;
    end record;
    overriding function Inst_List
      (Self : not null access PRect_Record)
-      return Instance_List_Access is (Self.Inst'Access);
+      return access Item_Proxy'Class is (Self.Inst'Access);
    overriding procedure Destroy
      (Self     : not null access PRect_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
    type PEllipse_Record is new Ellipse_Item_Record and Python_Item with record
-      Inst : aliased Instance_List;
+      Inst : aliased Item_Proxy;
    end record;
    overriding function Inst_List
      (Self : not null access PEllipse_Record)
-      return Instance_List_Access is (Self.Inst'Access);
+      return access Item_Proxy'Class is (Self.Inst'Access);
    overriding procedure Destroy
      (Self     : not null access PEllipse_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
    type PText_Record is new Text_Item_Record and Python_Item with record
-      Inst : aliased Instance_List;
+      Inst : aliased Item_Proxy;
    end record;
    overriding function Inst_List
      (Self : not null access PText_Record)
-      return Instance_List_Access is (Self.Inst'Access);
+      return access Item_Proxy'Class is (Self.Inst'Access);
    overriding procedure Destroy
      (Self     : not null access PText_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
    type PEditable_Text_Record is new Editable_Text_Item_Record and Python_Item
      with record
-      Inst : aliased Instance_List;
+      Inst : aliased Item_Proxy;
    end record;
    overriding function Inst_List
      (Self : not null access PEditable_Text_Record)
-      return Instance_List_Access is (Self.Inst'Access);
+      return access Item_Proxy'Class is (Self.Inst'Access);
    overriding procedure Destroy
      (Self     : not null access PEditable_Text_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
    type PHr_Record is new Hr_Item_Record and Python_Item with record
-      Inst : aliased Instance_List;
+      Inst : aliased Item_Proxy;
    end record;
    overriding function Inst_List
      (Self : not null access PHr_Record)
-      return Instance_List_Access is (Self.Inst'Access);
+      return access Item_Proxy'Class is (Self.Inst'Access);
    overriding procedure Destroy
      (Self     : not null access PHr_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
    type PImage_Record is new Image_Item_Record and Python_Item with record
-      Inst : aliased Instance_List;
+      Inst : aliased Item_Proxy;
    end record;
    overriding function Inst_List
      (Self : not null access PImage_Record)
-      return Instance_List_Access is (Self.Inst'Access);
+      return access Item_Proxy'Class is (Self.Inst'Access);
    overriding procedure Destroy
      (Self     : not null access PImage_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
    type Pline_Record is new Polyline_Item_Record and Python_Item with record
-      Inst : aliased Instance_List;
+      Inst : aliased Item_Proxy;
    end record;
    overriding function Inst_List
      (Self : not null access Pline_Record)
-      return Instance_List_Access is (Self.Inst'Access);
+      return access Item_Proxy'Class is (Self.Inst'Access);
    overriding procedure Destroy
      (Self     : not null access Pline_Record;
       In_Model : not null access Canvas_Model_Record'Class);
 
    type Plink_Record is new Canvas_Link_Record and Python_Item with record
-      Inst : aliased Instance_List;
+      Inst : aliased Item_Proxy;
    end record;
    overriding function Inst_List
      (Self : not null access Plink_Record)
-      return Instance_List_Access is (Self.Inst'Access);
+      return access Item_Proxy'Class is (Self.Inst'Access);
    overriding procedure Destroy
      (Self     : not null access Plink_Record;
       In_Model : not null access Canvas_Model_Record'Class);
@@ -316,40 +298,6 @@ package body Browsers.Scripts is
       Item  : Abstract_Item);
    --  Called when the selection has changed
 
-   ------------------
-   -- Set_Instance --
-   ------------------
-
-   procedure Set_Instance
-     (Self : not null access Python_Item'Class; Inst : Class_Instance)
-   is
-      List : constant Instance_List_Access := Self.Inst_List;
-   begin
-      --  The python instance outlives its Ada counterpart, so that we can
-      --  always get access to the python custom data in callbacks.
-      Set_Data (Inst, "Browsers.Item",
-                Item_Properties_Record'(Item => Abstract_Item (Self)));
-      Set (List.all, Get_Script (Inst), Inst);
-   end Set_Instance;
-
-   -----------------------
-   -- Destroy_Instances --
-   -----------------------
-
-   procedure Destroy_Instances (Self : not null access Python_Item'Class) is
-      List : constant Instance_List_Access := Self.Inst_List;
-      Arr  : constant Instance_Array := Get_Instances (List.all);
-   begin
-      for Inst in Arr'Range loop
-         if Arr (Inst) /= No_Class_Instance then
-            Set_Data (Arr (Inst), "Browsers.Item",
-                      Item_Properties_Record'(Item => null));
-         end if;
-      end loop;
-
-      Free (List.all);
-   end Destroy_Instances;
-
    -------------
    -- Destroy --
    -------------
@@ -358,7 +306,7 @@ package body Browsers.Scripts is
      (Self     : not null access PRect_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
-      Destroy_Instances (Self);
+      Self.Inst.Free;
       Rect_Item_Record (Self.all).Destroy (In_Model);  --  inherited
    end Destroy;
 
@@ -370,7 +318,7 @@ package body Browsers.Scripts is
      (Self     : not null access PEllipse_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
-      Destroy_Instances (Self);
+      Self.Inst.Free;
       Ellipse_Item_Record (Self.all).Destroy (In_Model);  --  inherited
    end Destroy;
 
@@ -382,7 +330,7 @@ package body Browsers.Scripts is
      (Self     : not null access PText_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
-      Destroy_Instances (Self);
+      Self.Inst.Free;
       Text_Item_Record (Self.all).Destroy (In_Model);  --  inherited
    end Destroy;
 
@@ -394,7 +342,7 @@ package body Browsers.Scripts is
      (Self     : not null access PHr_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
-      Destroy_Instances (Self);
+      Self.Inst.Free;
       Hr_Item_Record (Self.all).Destroy (In_Model);  --  inherited
    end Destroy;
 
@@ -406,7 +354,7 @@ package body Browsers.Scripts is
      (Self     : not null access Pline_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
-      Destroy_Instances (Self);
+      Self.Inst.Free;
       Polyline_Item_Record (Self.all).Destroy (In_Model);  --  inherited
    end Destroy;
 
@@ -418,7 +366,7 @@ package body Browsers.Scripts is
      (Self     : not null access Plink_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
-      Destroy_Instances (Self);
+      Self.Inst.Free;
       Canvas_Link_Record (Self.all).Destroy (In_Model);  --  inherited
    end Destroy;
 
@@ -430,7 +378,7 @@ package body Browsers.Scripts is
      (Self     : not null access PEditable_Text_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
-      Destroy_Instances (Self);
+      Self.Inst.Free;
       Editable_Text_Item_Record (Self.all).Destroy (In_Model);  --  inherited
    end Destroy;
 
@@ -442,7 +390,7 @@ package body Browsers.Scripts is
      (Self     : not null access PImage_Record;
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
-      Destroy_Instances (Self);
+      Self.Inst.Free;
       Image_Item_Record (Self.all).Destroy (In_Model);  --  inherited
    end Destroy;
 
@@ -470,37 +418,6 @@ package body Browsers.Scripts is
          return Style_Properties_Record (Data.all).Style;
       end if;
    end Get_Style;
-
-   --------------
-   -- Get_Item --
-   --------------
-
-   function Get_Item (Inst : Class_Instance) return Abstract_Item is
-      Data : constant Instance_Property := Get_Data (Inst, "Browsers.Item");
-   begin
-      if Data = null then
-         return null;
-      else
-         return Item_Properties_Record (Data.all).Item;
-      end if;
-   end Get_Item;
-
-   ------------------
-   -- Get_Instance --
-   ------------------
-
-   function Get_Instance
-     (Item   : not null access Python_Item'Class;
-      Script : not null access Scripting_Language_Record'Class)
-      return Class_Instance
-   is
-   begin
-      if Item = null then
-         return No_Class_Instance;
-      else
-         return Get (Item.Inst_List.all, Script);
-      end if;
-   end Get_Instance;
 
    ---------------
    -- Set_Model --
@@ -551,7 +468,7 @@ package body Browsers.Scripts is
 
       elsif Command = "add" then
          Model := Get_Model (Inst);
-         Item  := Get_Item (Nth_Arg (Data, PA_Item));
+         Item := Item_Proxies.From_Instance (Data.Nth_Arg (PA_Item));
          Model.Add (Item);
          Model.Refresh_Layout;
 
@@ -563,17 +480,17 @@ package body Browsers.Scripts is
 
       elsif Command = "is_selected" then
          Model := Get_Model (Inst);
-         Set_Return_Value
-           (Data, Model.Is_Selected (Get_Item (Nth_Arg (Data, 2))));
+         Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
+         Data.Set_Return_Value (Model.Is_Selected (Item));
 
       elsif Command = "select" then
          Model := Get_Model (Inst);
-         Item  := Get_Item (Nth_Arg (Data, 2));
+         Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
          Model.Add_To_Selection (Item);
 
       elsif Command = "unselect" then
          Model := Get_Model (Inst);
-         Item  := Get_Item (Nth_Arg (Data, 2));
+         Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
          Model.Remove_From_Selection (Item);
 
       elsif Command = "clear_selection" then
@@ -587,12 +504,13 @@ package body Browsers.Scripts is
             procedure Add_Child
               (Child : not null access Abstract_Item_Record'Class)
             is
+               P : Python_Item_Access;
             begin
                if Child.all in Python_Item'Class then
-                  Set_Return_Value
-                    (Data,
-                     Get_Instance
-                       (Python_Item_Access (Child), Get_Script (Data)));
+                  P := Python_Item_Access (Child);
+                  Data.Set_Return_Value
+                    (Item_Proxies.Get_Or_Create_Instance
+                       (P.Inst_List.all, Child, Data.Get_Script));
                end if;
             end Add_Child;
          begin
@@ -608,12 +526,13 @@ package body Browsers.Scripts is
             procedure Add_Child
               (Child : not null access Abstract_Item_Record'Class)
             is
+               P : Python_Item_Access;
             begin
                if Child.all in Python_Item'Class then
-                  Set_Return_Value
-                    (Data,
-                     Get_Instance
-                       (Python_Item_Access (Child), Get_Script (Data)));
+                  P := Python_Item_Access (Child);
+                  Data.Set_Return_Value
+                    (Item_Proxies.Get_Or_Create_Instance
+                       (P.Inst_List.all, Child, Data.Get_Script));
                end if;
             end Add_Child;
          begin
@@ -623,7 +542,7 @@ package body Browsers.Scripts is
 
       elsif Command = "remove" then
          Model := Get_Model (Inst);
-         Item  := Get_Item (Nth_Arg (Data, 2));
+         Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
          Model.Remove (Item);
          Model.Refresh_Layout;
 
@@ -634,13 +553,13 @@ package body Browsers.Scripts is
 
       elsif Command = "raise_item" then
          Model := Get_Model (Inst);
-         Item  := Get_Item (Nth_Arg (Data, 2));
+         Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
          Model.Raise_Item (Item);
          Model.Refresh_Layout;
 
       elsif Command = "lower_item" then
          Model := Get_Model (Inst);
-         Item  := Get_Item (Nth_Arg (Data, 2));
+         Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
          Model.Lower_Item (Item);
          Model.Refresh_Layout;
       end if;
@@ -675,10 +594,11 @@ package body Browsers.Scripts is
                if Item = null then
                   Set_Nth_Arg (Args, 1, No_Class_Instance);
                else
-                  Set_Nth_Arg
-                    (Args, 1,
-                     Get_Instance
-                       (Python_Item_Access (Item), Subp.Get_Script));
+                  Args.Set_Nth_Arg
+                    (1,
+                     Item_Proxies.Get_Or_Create_Instance
+                       (Python_Item_Access (Item).Inst_List.all,
+                        Item, Subp.Get_Script));
                end if;
                Dummy := Subp.Execute (Args);
                Free (Args);
@@ -729,46 +649,49 @@ package body Browsers.Scripts is
                Args : Callback_Data'Class := Subp.Get_Script.Create (Count);
             begin
                if Context /= No_Context then
-                  Set_Nth_Arg
-                    (Args, 1, Create_Context (Subp.Get_Script, Context));
+                  Args.Set_Nth_Arg
+                    (1, Create_Context (Subp.Get_Script, Context));
                   First := 2;
                else
                   First := 1;
                end if;
 
                if Event.Toplevel_Item /= null then
-                  Set_Nth_Arg
-                    (Args, First,
-                     Get_Instance (Python_Item_Access (Event.Toplevel_Item),
-                       Subp.Get_Script));
+                  Args.Set_Nth_Arg
+                    (First,
+                     Item_Proxies.Get_Or_Create_Instance
+                       (Python_Item_Access (Event.Toplevel_Item).Inst_List.all,
+                        Event.Toplevel_Item, Subp.Get_Script));
                else
                   Set_Nth_Arg (Args, First, No_Class_Instance);
                end if;
 
                if Event.Event_Type = Key_Press then
                   if Event.Item /= null then
-                     Set_Nth_Arg
-                       (Args, First + 1,
-                        Get_Instance (Python_Item_Access (Event.Item),
-                          Subp.Get_Script));
+                     Args.Set_Nth_Arg
+                       (First + 1,
+                        Item_Proxies.Get_Or_Create_Instance
+                           (Python_Item_Access (Event.Item).Inst_List.all,
+                            Event.Item, Subp.Get_Script));
                   else
-                     Set_Nth_Arg (Args, First + 1, No_Class_Instance);
+                     Args.Set_Nth_Arg (First + 1, No_Class_Instance);
                   end if;
 
-                  Set_Nth_Arg (Args, First + 2, Integer (Event.Key));
+                  Args.Set_Nth_Arg (First + 2, Integer (Event.Key));
 
                else
                   if Event.Item /= null then
-                     Set_Nth_Arg
-                       (Args, First + 1,
-                        Get_Instance (Python_Item_Access (Event.Item),
-                          Subp.Get_Script));
-                     Set_Nth_Arg (Args, First + 2, Float (Event.I_Point.X));
-                     Set_Nth_Arg (Args, First + 3, Float (Event.I_Point.Y));
+                     Args.Set_Nth_Arg
+                       (First + 1,
+                        Item_Proxies.Get_Or_Create_Instance
+                           (Python_Item_Access (Event.Item).Inst_List.all,
+                            Event.Item, Subp.Get_Script));
+                     Args.Set_Nth_Arg (First + 2, Float (Event.I_Point.X));
+                     Args.Set_Nth_Arg (First + 3, Float (Event.I_Point.Y));
                   else
-                     Set_Nth_Arg (Args, First + 1, No_Class_Instance);
-                     Set_Nth_Arg (Args, First + 2, Float'First);
-                     Set_Nth_Arg (Args, First + 3, Float'First);
+                     Args.Set_Nth_Arg (First + 1, No_Class_Instance);
+                     Args.Set_Nth_Arg (First + 2, Float'First);
+                     Args.Set_Nth_Arg (First + 3, Float'First);
                   end if;
                end if;
 
@@ -861,6 +784,7 @@ package body Browsers.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Inst   : Class_Instance;
+      Item   : Abstract_Item;
       View   : Browser_View;
       Model  : Model_Type;
       C      : MDI_Child;
@@ -915,7 +839,8 @@ package body Browsers.Scripts is
       elsif Command = "scroll_into_view" then
          Inst := Nth_Arg (Data, 1);
          View := Browser_View (GObject'(Get_Data (Inst)));
-         View.Get_View.Scroll_Into_View (Get_Item (Nth_Arg (Data, 2)));
+         Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
+         View.Get_View.Scroll_Into_View (Item);
 
       elsif Command = "center_on" then
          declare
@@ -1058,6 +983,7 @@ package body Browsers.Scripts is
       Inst : Class_Instance;
       M    : Margins := No_Margins;
       Item : Container_Item;
+      It   : Abstract_Item;
       X, Y : Gdouble := Gdouble'First;
       AnchorX, AnchorY : Gdouble;
       Pos  : Gtkada.Style.Point;
@@ -1079,40 +1005,44 @@ package body Browsers.Scripts is
          AnchorX := Gdouble (Nth_Arg (Data, 4, 0.0));
          AnchorY := Gdouble (Nth_Arg (Data, 5, 0.0));
 
-         Container_Item (Get_Item (Inst)).Set_Position
+         Container_Item (Item_Proxies.From_Instance (Inst)).Set_Position
            ((X, Y), Anchor_X => AnchorX, Anchor_Y => AnchorY);
 
       elsif Command = "parent" then
          Inst := Nth_Arg (Data, 1);
-         if Get_Item (Inst).Parent /= null then
-            Set_Return_Value
-               (Data,
-                Get_Instance (Python_Item_Access (Get_Item (Inst).Parent),
-                              Get_Script (Data)));
+         It := Item_Proxies.From_Instance (Inst);
+         if It.Parent /= null then
+            Data.Set_Return_Value
+               (Item_Proxies.Get_Or_Create_Instance
+                   (Python_Item_Access (It.Parent).Inst_List.all, It,
+                    Data.Get_Script));
          end if;
 
       elsif Command = "x" then
          Inst := Nth_Arg (Data, 1);
-         Pos := Get_Item (Inst).Position;
-         Set_Return_Value (Data, Float (Pos.X));
+         Pos := Item_Proxies.From_Instance (Inst).Position;
+         Data.Set_Return_Value (Float (Pos.X));
 
       elsif Command = "y" then
          Inst := Nth_Arg (Data, 1);
-         Pos := Get_Item (Inst).Position;
-         Set_Return_Value (Data, Float (Pos.Y));
+         Pos := Item_Proxies.From_Instance (Inst).Position;
+         Data.Set_Return_Value (Float (Pos.Y));
 
       elsif Command = "width" then
          Inst := Nth_Arg (Data, 1);
-         Set_Return_Value (Data, Float (Get_Item (Inst).Bounding_Box.Width));
+         It := Item_Proxies.From_Instance (Inst);
+         Data.Set_Return_Value (Float (It.Bounding_Box.Width));
 
       elsif Command = "height" then
          Inst := Nth_Arg (Data, 1);
-         Pos := Get_Item (Inst).Position;
-         Set_Return_Value (Data, Float (Get_Item (Inst).Bounding_Box.Height));
+         It := Item_Proxies.From_Instance (Inst);
+         Pos := It.Position;
+         Data.Set_Return_Value (Float (It.Bounding_Box.Height));
 
       elsif Command = "is_link" then
          Inst := Nth_Arg (Data, 1);
-         Set_Return_Value (Data, Get_Item (Inst).Is_Link);
+         It := Item_Proxies.From_Instance (Inst);
+         Data.Set_Return_Value (It.Is_Link);
 
       elsif Command = "children" then
          Inst := Nth_Arg (Data, 1);
@@ -1126,14 +1056,14 @@ package body Browsers.Scripts is
             is
             begin
                if Child.all in Python_Item'Class then
-                  Set_Return_Value
-                    (Data,
-                     Get_Instance
-                       (Python_Item_Access (Child), Get_Script (Data)));
+                  Data.Set_Return_Value
+                    (Item_Proxies.Get_Or_Create_Instance
+                       (Python_Item_Access (Child).Inst_List.all,
+                        Child, Data.Get_Script));
                end if;
             end Add_Child;
 
-            It : constant Abstract_Item := Get_Item (Inst);
+            It : constant Abstract_Item := Item_Proxies.From_Instance (Inst);
          begin
             if It.all in Container_Item_Record'Class then
                Container_Item (It).For_Each_Child (Add_Child'Access);
@@ -1142,22 +1072,23 @@ package body Browsers.Scripts is
 
       elsif Command = "set_width_range" then
          Inst := Nth_Arg (Data, 1);
-         Container_Item (Get_Item (Inst)).Set_Width_Range
+         Container_Item (Item_Proxies.From_Instance (Inst)).Set_Width_Range
            (Min => Get (2), Max => Get (3));
 
       elsif Command = "set_height_range" then
          Inst := Nth_Arg (Data, 1);
-         Container_Item (Get_Item (Inst)).Set_Height_Range
+         Container_Item (Item_Proxies.From_Instance (Inst)).Set_Height_Range
            (Min => Get (2), Max => Get (3));
 
       elsif Command = "set_size" then
          Inst := Nth_Arg (Data, 1);
-         Container_Item (Get_Item (Inst)).Set_Size
+         Container_Item (Item_Proxies.From_Instance (Inst)).Set_Size
            (Width  => Get (2), Height => Get (3));
 
       elsif Command = "add" then
          Inst := Nth_Arg (Data, 1);
-         Item  := Container_Item (Get_Item ((Nth_Arg (Data, PA_Item))));
+         Item  := Container_Item
+            (Item_Proxies.From_Instance (Data.Nth_Arg (PA_Item)));
 
          begin
             declare
@@ -1185,7 +1116,7 @@ package body Browsers.Scripts is
                null;
          end;
 
-         Container_Item (Get_Item (Inst)).Add_Child
+         Container_Item (Item_Proxies.From_Instance (Inst)).Add_Child
            (Item,
             Align => Alignment_Style'Val
               (Nth_Arg (Data, PA_Align, Alignment_Style'Pos (Align_Start))),
@@ -1198,7 +1129,7 @@ package body Browsers.Scripts is
 
       elsif Command = "set_child_layout" then
          Inst := Nth_Arg (Data, 1);
-         Container_Item (Get_Item (Inst)).Set_Child_Layout
+         Container_Item (Item_Proxies.From_Instance (Inst)).Set_Child_Layout
            (Child_Layout_Strategy'Val
               (Nth_Arg (Data, 2, Child_Layout_Strategy'Pos (Vertical_Stack))));
       end if;
@@ -1396,18 +1327,16 @@ package body Browsers.Scripts is
    procedure Rect_Item_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Inst : Class_Instance;
       Item : access PRect_Record;
    begin
       if Command = Constructor_Method then
-         Inst := Nth_Arg (Data, 1);
          Item := new PRect_Record;
          Item.Initialize_Rect
-           (Style  => Get_Style (Nth_Arg (Data, 2)),
-            Width  => Gdouble (Nth_Arg (Data, 3, -1.0)),
-            Height => Gdouble (Nth_Arg (Data, 4, -1.0)),
-            Radius => Gdouble (Nth_Arg (Data, 5, 0.0)));
-         Item.Set_Instance (Inst);
+           (Style  => Get_Style (Data.Nth_Arg (2)),
+            Width  => Gdouble (Data.Nth_Arg (3, -1.0)),
+            Height => Gdouble (Data.Nth_Arg (4, -1.0)),
+            Radius => Gdouble (Data.Nth_Arg (5, 0.0)));
+         Item_Proxies.Store_In_Instance (Item.Inst, Data.Nth_Arg (1), Item);
       end if;
    end Rect_Item_Handler;
 
@@ -1423,10 +1352,10 @@ package body Browsers.Scripts is
       if Command = Constructor_Method then
          Item := new PEllipse_Record;
          Item.Initialize_Ellipse
-           (Style  => Get_Style (Nth_Arg (Data, 2)),
-            Width  => Gdouble (Nth_Arg (Data, 3, -1.0)),
-            Height => Gdouble (Nth_Arg (Data, 4, -1.0)));
-         Item.Set_Instance (Nth_Arg (Data, 1));
+           (Style  => Get_Style (Data.Nth_Arg (2)),
+            Width  => Gdouble (Data.Nth_Arg (3, -1.0)),
+            Height => Gdouble (Data.Nth_Arg (4, -1.0)));
+         Item_Proxies.Store_In_Instance (Item.Inst, Data.Nth_Arg (1), Item);
       end if;
    end Ellipse_Handler;
 
@@ -1462,11 +1391,11 @@ package body Browsers.Scripts is
       if Command = Constructor_Method then
          Item := new Pline_Record;
          Item.Initialize_Polyline
-           (Style    => Get_Style (Nth_Arg (Data, 2)),
+           (Style    => Get_Style (Data.Nth_Arg (2)),
             Points   => Points_From_Param (Data, 3),
-            Close    => Nth_Arg (Data, 4, False),
-            Relative => Nth_Arg (Data, 5, False));
-         Item.Set_Instance (Nth_Arg (Data, 1));
+            Close    => Data.Nth_Arg (4, False),
+            Relative => Data.Nth_Arg (5, False));
+         Item_Proxies.Store_In_Instance (Item.Inst, Data.Nth_Arg (1), Item);
       end if;
    end Polyline_Handler;
 
@@ -1482,11 +1411,11 @@ package body Browsers.Scripts is
       if Command = Constructor_Method then
          Item := new PText_Record;
          Item.Initialize_Text
-           (Style    => Get_Style (Nth_Arg (Data, 2)),
-            Text     => Nth_Arg (Data, 3),
+           (Style    => Get_Style (Data.Nth_Arg (2)),
+            Text     => Data.Nth_Arg (3),
             Directed => Text_Arrow_Direction'Val
-              (Nth_Arg (Data, 4, Text_Arrow_Direction'Pos (No_Text_Arrow))));
-         Item.Set_Instance (Nth_Arg (Data, 1));
+              (Data.Nth_Arg (4, Text_Arrow_Direction'Pos (No_Text_Arrow))));
+         Item_Proxies.Store_In_Instance (Item.Inst, Data.Nth_Arg (1), Item);
       end if;
    end Text_Handler;
 
@@ -1502,9 +1431,9 @@ package body Browsers.Scripts is
       if Command = Constructor_Method then
          Item := new PHr_Record;
          Item.Initialize_Hr
-           (Style    => Get_Style (Nth_Arg (Data, 2)),
-            Text     => Nth_Arg (Data, 3, ""));
-         Item.Set_Instance (Nth_Arg (Data, 1));
+           (Style    => Get_Style (Data.Nth_Arg (2)),
+            Text     => Data.Nth_Arg (3, ""));
+         Item_Proxies.Store_In_Instance (Item.Inst, Data.Nth_Arg (1), Item);
       end if;
    end Hr_Handler;
 
@@ -1520,11 +1449,11 @@ package body Browsers.Scripts is
       if Command = Constructor_Method then
          Item := new PEditable_Text_Record;
          Item.Initialize_Text
-           (Style    => Get_Style (Nth_Arg (Data, 2)),
-            Text     => Nth_Arg (Data, 3),
+           (Style    => Get_Style (Data.Nth_Arg (2)),
+            Text     => Data.Nth_Arg (3),
             Directed => Text_Arrow_Direction'Val
-              (Nth_Arg (Data, 4, Text_Arrow_Direction'Pos (No_Text_Arrow))));
-         Item.Set_Instance (Nth_Arg (Data, 1));
+              (Data.Nth_Arg (4, Text_Arrow_Direction'Pos (No_Text_Arrow))));
+         Item_Proxies.Store_In_Instance (Item.Inst, Data.Nth_Arg (1), Item);
       end if;
    end Editable_Text_Handler;
 
@@ -1540,18 +1469,18 @@ package body Browsers.Scripts is
       Error  : GError;
    begin
       if Command = Constructor_Method then
-         Gdk_New_From_File (Pixbuf, Nth_Arg (Data, 3), Error);
+         Gdk_New_From_File (Pixbuf, Data.Nth_Arg (3), Error);
          if Error /= null then
             Set_Error_Msg (Data, Get_Message (Error));
             Error_Free (Error);
          else
             Item := new PImage_Record;
             Item.Initialize_Image
-              (Style    => Get_Style (Nth_Arg (Data, 2)),
+              (Style    => Get_Style (Data.Nth_Arg (2)),
                Image    => Pixbuf,
-               Width    => Gdouble (Nth_Arg (Data, 4, -1.0)),
-               Height   => Gdouble (Nth_Arg (Data, 5, -1.0)));
-            Item.Set_Instance (Nth_Arg (Data, 1));
+               Width    => Gdouble (Data.Nth_Arg (4, -1.0)),
+               Height   => Gdouble (Data.Nth_Arg (5, -1.0)));
+            Item_Proxies.Store_In_Instance (Item.Inst, Data.Nth_Arg (1), Item);
          end if;
       end if;
    end Image_Handler;
@@ -1570,23 +1499,23 @@ package body Browsers.Scripts is
       if Command = Constructor_Method then
          Inst2 := Nth_Arg (Data, L_Label, Allow_Null => True);
          if Inst2 /= No_Class_Instance then
-            Label := Container_Item (Get_Item (Inst2));
+            Label := Container_Item (Item_Proxies.From_Instance (Inst2));
          end if;
 
          Inst2 := Nth_Arg (Data, L_From_Label, Allow_Null => True);
          if Inst2 /= No_Class_Instance then
-            Label_From := Container_Item (Get_Item (Inst2));
+            Label_From := Container_Item (Item_Proxies.From_Instance (Inst2));
          end if;
 
          Inst2 := Nth_Arg (Data, L_To_Label, Allow_Null => True);
          if Inst2 /= No_Class_Instance then
-            Label_To := Container_Item (Get_Item (Inst2));
+            Label_To := Container_Item (Item_Proxies.From_Instance (Inst2));
          end if;
 
          Link := new Plink_Record;
          Link.Initialize
-           (From        => Get_Item (Nth_Arg (Data, L_From)),
-            To          => Get_Item (Nth_Arg (Data, L_To)),
+           (From        => Item_Proxies.From_Instance (Data.Nth_Arg (L_From)),
+            To          => Item_Proxies.From_Instance (Data.Nth_Arg (L_To)),
             Style       => Get_Style (Nth_Arg (Data, L_Style)),
             Label       => Label,
             Label_From  => Label_From,
@@ -1606,11 +1535,11 @@ package body Browsers.Scripts is
                Toplevel_Side => Side_Attachment'Val
                  (Nth_Arg (Data, L_To_Side, Side_Attachment'Pos (Auto)))));
 
-         Link.Set_Instance (Nth_Arg (Data, 1));
+         Item_Proxies.Store_In_Instance (Link.Inst, Data.Nth_Arg (1), Link);
 
       elsif Command = "set_waypoints" then
          Inst := Nth_Arg (Data, 1);
-         Canvas_Link (Get_Item (Inst)).Set_Waypoints
+         Canvas_Link (Item_Proxies.From_Instance (Inst)).Set_Waypoints
            (Points   => Points_From_Param (Data, 2),
             Relative => Nth_Arg (Data, 3, False));
       end if;

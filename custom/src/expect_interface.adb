@@ -1037,7 +1037,7 @@ package body Expect_Interface is
                end if;
             end if;
 
-            Set_Instance (Created_Command, Get_Script (Data), Inst);
+            Set_Instance (Created_Command, Inst);
             Set_Data
               (Inst, Process_Class_Name, Action_Property'(Action => D));
          end;

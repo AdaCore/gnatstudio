@@ -936,7 +936,7 @@ package body GPS.Search.GUI is
            (Inst, "Search_Result", Result_Property_Record'(Result => Result));
 
          if Result.all in Python_Search_Result'Class then
-            Set (Python_Search_Result (Result.all).Inst, Script, Inst);
+            Set (Python_Search_Result (Result.all).Inst, Inst);
          end if;
       end if;
 
@@ -1005,8 +1005,7 @@ package body GPS.Search.GUI is
             --  Provider is set in the handler for "next", before returning
             --  the type to Ada.
 
-            Set (Python_Search_Result (Props.Result.all).Inst,
-                 Get_Script (Inst), Inst);
+            Set (Python_Search_Result (Props.Result.all).Inst, Inst);
          end if;
 
          return Props;
@@ -1152,7 +1151,7 @@ package body GPS.Search.GUI is
             Provider.Inst := Null_Instance_List;
             Provider.Rank := (if Rank <= 0 then 1000 else Rank);
             Provider.Kernel := Get_Kernel (Data);
-            Set (Provider.Inst, Get_Script (Inst), Inst);
+            Set (Provider.Inst, Inst);
 
             Registry.Register (Provider);
          end;
@@ -1268,46 +1267,46 @@ package body GPS.Search.GUI is
       Pattern : not null access GPS.Search.Search_Pattern'Class;
       Limit   : Natural := Natural'Last)
    is
-      Inst : constant Instance_Array := Get_Instances (Self.Inst);
+      Curs : Inst_Cursor := First (Self.Inst);
+      Inst : Class_Instance;
       Result : Class_Instance;
       pragma Unreferenced (Limit, Result);
    begin
-      for J in Inst'Range loop
-         if Inst (J) /= No_Class_Instance then
+      while Has_Element (Curs) loop
+         Inst := Element (Self.Inst, Curs);
+         declare
+            Sub  : constant Subprogram_Type :=
+              Get_Method (Inst, "set_pattern");
+            Args : Callback_Data'Class :=
+              Create (Get_Script (Inst), 2);
+            P    : Flags := 0;
+         begin
+            Set_Nth_Arg (Args, 1, Pattern.Get_Text);
 
-            declare
-               Sub  : constant Subprogram_Type :=
-                 Get_Method (Inst (J), "set_pattern");
-               Args : Callback_Data'Class :=
-                 Create (Get_Script (Inst (J)), 2);
-               P    : Flags := 0;
-            begin
-               Set_Nth_Arg (Args, 1, Pattern.Get_Text);
+            case Pattern.Get_Kind is
+            when GPS.Search.Full_Text =>
+               P := P or Flags'(Substrings);
+            when GPS.Search.Regexp =>
+               P := P or Flags'(Regexp);
+            when GPS.Search.Fuzzy | GPS.Search.Approximate =>
+               P := P or Flags'(Fuzzy);
+            end case;
 
-               case Pattern.Get_Kind is
-               when GPS.Search.Full_Text =>
-                  P := P or Flags'(Substrings);
-               when GPS.Search.Regexp =>
-                  P := P or Flags'(Regexp);
-               when GPS.Search.Fuzzy | GPS.Search.Approximate =>
-                  P := P or Flags'(Fuzzy);
-               end case;
+            if Pattern.Get_Case_Sensitive then
+               P := P or Flags'(Case_Sensitive);
+            end if;
 
-               if Pattern.Get_Case_Sensitive then
-                  P := P or Flags'(Case_Sensitive);
-               end if;
+            if Pattern.Get_Whole_Word then
+               P := P or Flags'(Whole_Word);
+            end if;
 
-               if Pattern.Get_Whole_Word then
-                  P := P or Flags'(Whole_Word);
-               end if;
+            Set_Nth_Arg (Args, 2, Natural (P));
 
-               Set_Nth_Arg (Args, 2, Natural (P));
+            Result := Execute (Sub, Args);
+            Free (Args);
+         end;
 
-               Result := Execute (Sub, Args);
-               Free (Args);
-            end;
-            exit;
-         end if;
+         Next (Self.Inst, Curs);
       end loop;
    end Set_Pattern;
 
@@ -1320,35 +1319,36 @@ package body GPS.Search.GUI is
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
-      Inst : constant Instance_Array := Get_Instances (Self.Inst);
+      Curs : Inst_Cursor := First (Self.Inst);
+      Inst : Class_Instance;
       R    : Result_Property;
    begin
-      for J in Inst'Range loop
-         if Inst (J) /= No_Class_Instance then
-            declare
-               Sub : constant Subprogram_Type := Get_Method (Inst (J), "get");
-               Args : Callback_Data'Class := Create (Get_Script (Inst (J)), 0);
-               List : List_Instance'Class := Execute (Sub, Args);
-            begin
-               Has_Next := Nth_Arg (List, 1);
+      while Has_Element (Curs) loop
+         Inst := Element (Self.Inst, Curs);
+         declare
+            Sub : constant Subprogram_Type := Get_Method (Inst, "get");
+            Args : Callback_Data'Class := Create (Get_Script (Inst), 0);
+            List : List_Instance'Class := Execute (Sub, Args);
+         begin
+            Has_Next := Nth_Arg (List, 1);
 
-               --  If the result class is pure python, this will wrap it inside
-               --  an Ada class, unless it has already been done when setting
-               --  the 'short' and 'long' fields. This ensures the pure python
-               --  instance can be used from Ada transparently.
-               R := Get_Search_Result (List, 2);
+            --  If the result class is pure python, this will wrap it inside
+            --  an Ada class, unless it has already been done when setting
+            --  the 'short' and 'long' fields. This ensures the pure python
+            --  instance can be used from Ada transparently.
+            R := Get_Search_Result (List, 2);
 
-               if R /= null then
-                  Result := R.Result;
-                  Result.Provider := Search_Provider_Access (Self);
-                  Self.Adjust_Score (Result);
-               end if;
+            if R /= null then
+               Result := R.Result;
+               Result.Provider := Search_Provider_Access (Self);
+               Self.Adjust_Score (Result);
+            end if;
 
-               Free (List);
-               Free (Args);
-            end;
-            exit;
-         end if;
+            Free (List);
+            Free (Args);
+         end;
+
+         Next (Self.Inst, Curs);
       end loop;
    end Next;
 
@@ -1361,23 +1361,24 @@ package body GPS.Search.GUI is
       Give_Focus : Boolean)
    is
       pragma Unreferenced (Give_Focus);
-      Inst : constant Instance_Array := Get_Instances (Self.Inst);
+      Curs : Inst_Cursor := First (Self.Inst);
+      Inst : Class_Instance;
       Sub  : Subprogram_Type;
    begin
-      for J in Inst'Range loop
-         if Inst (J) /= No_Class_Instance then
-            Sub := Get_Method (Inst (J), "show");
-            if Sub /= null then
-               declare
-                  Args : Callback_Data'Class :=
-                    Create (Get_Script (Inst (J)), 0);
-                  B    : constant Boolean := Execute (Sub, Args);
-                  pragma Unreferenced (B);
-               begin
-                  Free (Args);
-               end;
-            end if;
+      while Has_Element (Curs) loop
+         Inst := Element (Self.Inst, Curs);
+         Sub := Get_Method (Inst, "show");
+         if Sub /= null then
+            declare
+               Args : Callback_Data'Class :=
+                 Create (Get_Script (Inst), 0);
+               B    : constant Boolean := Execute (Sub, Args);
+               pragma Unreferenced (B);
+            begin
+               Free (Args);
+            end;
          end if;
+         Next (Self.Inst, Curs);
       end loop;
    end Execute;
 
@@ -1386,16 +1387,19 @@ package body GPS.Search.GUI is
    ----------
 
    overriding procedure Free (Self : in out Python_Search_Result) is
-      Instances : constant Instance_Array := Get_Instances (Self.Inst);
+      Curs : Inst_Cursor := First (Self.Inst);
+      Inst : Class_Instance;
       Result    : Result_Property;
    begin
-      for Inst in Instances'Range loop
+      while Has_Element (Curs) loop
+         Inst := Element (Self.Inst, Curs);
          Result := Result_Property
-           (Instance_Property'(Get_Data (Instances (Inst), "Search_Result")));
+           (Instance_Property'(Get_Data (Inst, "Search_Result")));
 
          if Result /= null then
             Result.Result := null;
          end if;
+         Next (Self.Inst, Curs);
       end loop;
 
       Free (Self.Inst);

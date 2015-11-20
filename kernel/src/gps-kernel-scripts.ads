@@ -22,6 +22,7 @@ with Basic_Types;
 with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Projects;
+with GPS.Scripts;            use GPS.Scripts;
 with GPS.Scripts.Entities;
 with GPS.Scripts.Files;
 with GPS.Scripts.File_Locations;
@@ -214,11 +215,6 @@ package GPS.Kernel.Scripts is
    -- Context_Class --
    -------------------
 
-   function Get_Context_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type;
-   --  Return the base class for all context-related classes
-
    function Create_Context
      (Script  : access Scripting_Language_Record'Class;
       Context : GPS.Kernel.Selection_Context) return Class_Instance;
@@ -227,31 +223,8 @@ package GPS.Kernel.Scripts is
    --  If Context is already associated with a Class_Instance, the same
    --  instance is returned.
 
-   function Get_Data (Data : Callback_Data'Class; N : Positive)
-      return GPS.Kernel.Selection_Context;
-   function Get_Data (Instance : Class_Instance)
-      return GPS.Kernel.Selection_Context;
-   --  Retrieve some context information from instance
-
-   function Get_Area_Context_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type;
-   --  Return the base class for contexts containing file areas
-
-   function Get_File_Context_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type;
-   --  Return a class for a File_Selection_Context
-
-   function Get_Entity_Context_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type;
-   --  Return a class for an Entity_Selection_Context
-
-   function Get_Message_Context_Class
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Class_Type;
-   --  Return a class for an Message_Selection_Context
+   function Get_Context (Inst : Class_Instance) return Selection_Context;
+   --  Return the context stored in the instance
 
 private
    No_File_Location : constant File_Location_Info :=

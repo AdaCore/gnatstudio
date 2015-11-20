@@ -449,17 +449,13 @@ package body Vdiff2_Module is
    is
       Instance : Class_Instance;
    begin
-      if Vdiff.Instances = null then
-         Vdiff.Instances := new Instance_List'(Null_Instance_List);
-      end if;
-
-      Instance := Get (Vdiff.Instances.all, Script);
+      Instance := Get (Vdiff.Instances, Script);
 
       if Instance = No_Class_Instance then
          Trace (Me, "Create a new instance of the current visual diff");
          Instance := New_Instance (Script, Class);
          Set_Vdiff_Data (Instance, Diff_Head_Access (Vdiff));
-         Set (Vdiff.Instances.all, Script, Instance);
+         Set (Vdiff.Instances, Instance);
       end if;
 
       return Instance;

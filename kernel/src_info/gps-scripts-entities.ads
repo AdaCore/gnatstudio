@@ -17,7 +17,6 @@
 
 --  Implementation of Entity class
 
-with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
 with GPS.Core_Kernels;
 with Xref;                   use Xref;
 

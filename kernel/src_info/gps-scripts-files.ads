@@ -17,7 +17,6 @@
 --  Implementation of File class
 
 with GPS.Core_Kernels;
-with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Files;
 with GNATCOLL.VFS;
 

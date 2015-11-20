@@ -36,11 +36,11 @@ package GPS.CLI_Messages_Windows is
       Add_LF : Boolean := True;
       Mode   : Message_Type := Info);
 
-   overriding procedure Clear (Self   : not null access Messages_Window);
+   overriding procedure Clear (Self : not null access Messages_Window) is null;
 
    overriding procedure Raise_Console
      (Self       : not null access Messages_Window;
-      Give_Focus : Boolean);
+      Give_Focus : Boolean) is null;
 
    overriding function Get_Virtual_Console
      (Self : not null access Messages_Window)
