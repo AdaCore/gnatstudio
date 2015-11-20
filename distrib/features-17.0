@@ -62,6 +62,11 @@ NF-170-OB05-010 GPS: remove the Always Use External Editor pref (2015-11-06)
   own editor) has been removed. Such editors do not conveniently give access
   to cross-references, outline, and all the other facilities provided by GPS
 
+NF-170-OB03-004 GPS: performance improvement in Project View (2015-11-20)
+
+  The Project View is significantly faster to load - this is noticeable
+  on projects that have a large number of files.
+
 NF-170-OA29-048 GPS: collapse all project nodes in Project view (2015-11-02)
 
   A new button was added to the local toolbar of the Project view, to
