@@ -17,6 +17,7 @@ valgrind="valgrind --suppressions=$suppressions/valgrind-python.supp --suppressi
 
 ## Modes that can be used when running this script:
 ## memcheck : check pointers
+## debug    : check pointers, in debug server mode
 ## leaks     : detect memory leaks
 ## leaks2:   : same as above, but shows how to create a suppression file
 ## massif   : check heap usage
@@ -46,6 +47,7 @@ case $mode in
    leaks)    args="--tool=memcheck --leak-check=full --leak-resolution=med" ;;
    leaks3)   args="--tool=memcheck --leak-check=full --show-reachable=yes" ;;
    memcheck) args="--tool=memcheck";;
+   debug) args="--tool=memcheck --vgdb=yes --vgdb-error=0";;
    massif)   args="--tool=massif --depth=5 --format=html --alloc-fn=__gnat_malloc \
                    --alloc-fn=PyObject_Malloc --alloc-fn=g_malloc --alloc-fn=__gnat_realloc \
                    --alloc-fn=g_realloc --alloc-fn=g_try_malloc --alloc-fn=g_malloc0 \
