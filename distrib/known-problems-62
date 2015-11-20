@@ -41,6 +41,14 @@ KP-62-OB19-009 GPS: GNATdoc missing --version switch
 
   Workaround: Use GPS's version switch, since versions are the same
 
+KP-62-OA28-042 GPS: memory leak linked to completions
+
+  Problem:    Using the dynamic completion causes GPS to leak memory.
+
+  Status:     This was fixed in 17.0 on 2015-11-20
+
+  Workaround: None known, apart from deactivating the completion.
+
 KP-62-O820-024 GPS: debugging aggregated projects
 
   Problem:    If you are using aggregate projects, the /Debug/Initialize
