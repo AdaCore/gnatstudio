@@ -25,6 +25,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-OB19-009 GPS: GNATdoc missing --version switch
+
+  Problem:    GNATdoc did not have a version switch.
+
+  Status:     This was fixed in 17.0 on 2015-11-20
+
+  Workaround: Use GPS's version switch, since versions are the same
+
 KP-62-O820-024 GPS: debugging aggregated projects
 
   Problem:    If you are using aggregate projects, the /Debug/Initialize

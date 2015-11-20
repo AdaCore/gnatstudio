@@ -39,6 +39,7 @@ with GNATdoc.Customization.Tag_Handlers.Shell;
 with Xref;                  use Xref;
 with String_List_Utils;     use String_List_Utils;
 with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
+with Config;
 
 procedure GNATdoc_Main is
 
@@ -71,6 +72,7 @@ procedure GNATdoc_Main is
    Enable_Warnings      : aliased Boolean := False;
    Enable_Build         : aliased Boolean := False;
    Follow_Symlinks      : aliased Boolean := False;
+   Show_Version         : aliased Boolean := False;
 
    procedure Launch_Gprbuild;
    --  Launch gprbuild on the loaded project
@@ -336,6 +338,11 @@ begin
       Help         => "Rebuild the project before processing it");
    Define_Switch
      (Cmdline,
+      Output       => Show_Version'Access,
+      Switch       => "--version",
+      Help         => "Shows GNATdoc's version");
+   Define_Switch
+     (Cmdline,
       Output       => Backend_Name'Access,
       Switch       => "--output=",
       Help         => "Format of generated documentation");
@@ -385,6 +392,19 @@ begin
          --  User provided -h or --help option. Just return
          return;
    end;
+
+   if Show_Version then
+      declare
+         Version : constant String :=
+                     "GNATdoc " &
+                     Config.Version & " (" &
+                     Config.Source_Date & ") hosted on " &
+                     Config.Target;
+      begin
+         Put_Line (Version);
+         return;
+      end;
+   end if;
 
    --  Check project file path passed in command line
    --  Use project file in current directory if only one project file present
