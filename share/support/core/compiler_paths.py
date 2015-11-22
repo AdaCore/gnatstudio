@@ -12,7 +12,8 @@ import re
 paths_cache = {}
 
 
-def get_compiler_search_paths(project_name, language, logger=None):
+def get_compiler_search_paths(project_name, language,
+                              logger=None, use_cache=True):
     logger = logger or GPS.Logger("LIBCLANG.SEARCH_PATHS")
 
     # First find the driver.
@@ -49,25 +50,30 @@ def get_compiler_search_paths(project_name, language, logger=None):
     # We use a tuple (compiler, language) for the cache, because it is possible
     # that the user defined the same driver for both C and C++. The cache needs
     # to be able to distinguish between the two
-    ret = paths_cache.get((compiler, language), None)
-    if ret:
-        logger.log('Returning cached search paths: {}'.format(ret))
-        return ret
+    if use_cache:
+        ret = paths_cache.get((compiler, language), None)
+        if ret:
+            logger.log('Returning cached search paths: {}'.format(ret))
+            return ret
 
     # Spawn the compiler, get the include paths
     try:
         logger.log('Spawning {} to find the search paths'.format(compiler))
+        cmd = "echo | {} -x {} -E -v -".format(compiler, language)
+        logger.log("Compiler command : {}".format(cmd))
         out = subprocess.check_output(
-            "echo | {} -x {} -E -v -".format(compiler, language),
-            shell=True, stderr=subprocess.STDOUT
+            cmd, shell=True, stderr=subprocess.STDOUT
         )
+
+        logger.log("Compiler's output: {}".format(out))
+
         m = re.findall(r'\> search starts here:(.*) ?End', out, re.DOTALL)[0]
         ret = map(str.strip, m.strip().splitlines())
 
     except Exception as e:
         import traceback
         logger.log('Spawning failed !')
-        traceback.print_exc(e)
+        logger.log(traceback.format_exc(e))
         ret = []
 
     logger.log('Returning {}'.format(ret))
