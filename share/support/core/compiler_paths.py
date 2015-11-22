@@ -12,8 +12,8 @@ import re
 paths_cache = {}
 
 
-def get_compiler_search_paths(project_name, language):
-    logger = GPS.Logger("LIBCLANG.SEARCH_PATHS")
+def get_compiler_search_paths(project_name, language, logger=None):
+    logger = logger or GPS.Logger("LIBCLANG.SEARCH_PATHS")
 
     # First find the driver.
     # Heuristic for finding the driver:
