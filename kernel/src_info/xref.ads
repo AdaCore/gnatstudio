@@ -138,6 +138,11 @@ package Xref is
       Freeze_Count : Integer := 0;
       --  Used to implement freeze of the DB
 
+      DB : GNATCOLL.SQL.Exec.Database_Description;
+      --  The description of the database we are currently connected to.
+      --  This must not be freed while where exists connections to this
+      --  database, since the connections have a pointer to this descr.
+
       Working_Xref_Db : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       --  Location of the sqlite database on which GPS is currently working
       --  Set to No_File if GPS is not working on a database at the moment.
