@@ -721,6 +721,11 @@ package body GNATdoc.Backend.HTML is
             "tasks",
             Categories_Index);
          Self.Generate_Entities_Category
+           (Self.Entities.Protected_Objects,
+            "Protected Objects & Protected Types",
+            "protecteds",
+            Categories_Index);
+         Self.Generate_Entities_Category
            (Self.Entities.CPP_Classes,
             "C++ Classes",
             "cpp_classes",
@@ -1201,6 +1206,12 @@ package body GNATdoc.Backend.HTML is
       if not Entities.Tasks.Is_Empty then
          Build_Entity_Entries
            (Entity_Entries, "Tasks and task types", Entities.Tasks);
+      end if;
+
+      if not Entities.Protected_Objects.Is_Empty then
+         Build_Entity_Entries
+           (Entity_Entries, "Protected objects and protected types",
+            Entities.Protected_Objects);
       end if;
 
       if not Entities.Subprgs.Is_Empty then

@@ -25,6 +25,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-OB19-033 GNATdoc: protected types are not included in documentation
+
+  Problem:    GNATdoc doesn't generate documentation for protected types.
+
+  Status:     This was fixed in 17.0 on 2015-11-23
+
+  Workaround: None.
+
 KP-62-OB19-009 GPS: GNATdoc missing --version switch
 
   Problem:    GNATdoc did not have a version switch.
