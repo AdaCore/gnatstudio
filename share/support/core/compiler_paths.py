@@ -61,8 +61,11 @@ def get_compiler_search_paths(project_name, language,
         logger.log('Spawning {} to find the search paths'.format(compiler))
         cmd = "echo | {} -x {} -E -v -".format(compiler, language)
         logger.log("Compiler command : {}".format(cmd))
+
         out = subprocess.check_output(
-            cmd, shell=True, stderr=subprocess.STDOUT
+            cmd, shell=True, stderr=subprocess.STDOUT,
+            # This is needed for consoleless processes under windows - OB11-026
+            stdin=subprocess.PIPE
         )
 
         logger.log("Compiler's output: {}".format(out))
