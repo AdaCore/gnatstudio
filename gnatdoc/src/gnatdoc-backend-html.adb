@@ -779,6 +779,10 @@ package body GNATdoc.Backend.HTML is
 
    begin
       if not Entities.Is_Empty then
+         --  Copy entities to temporary ordered set to order them by names (or
+         --  file name/location when name is not available) in generated
+         --  documentation.
+
          for Entity of Entities loop
             Set.Insert (Entity);
          end loop;
@@ -818,6 +822,7 @@ package body GNATdoc.Backend.HTML is
                  (+Self.Get_Template (Tmpl_Entities_Category_JS).Full_Name,
                   Translation));
          end;
+
          declare
             Translation : Translate_Set;
 
