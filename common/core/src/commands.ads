@@ -106,7 +106,7 @@ package Commands is
    --  IMPORTANT: at the end of undoing, Command_Finished must be
    --  called. See above for details.
 
-   procedure Free (X : in out Root_Command);
+   procedure Free (X : in out Root_Command) is null;
    --  Free memory associated to X
 
    procedure Ref   (Command : access Root_Command'Class);

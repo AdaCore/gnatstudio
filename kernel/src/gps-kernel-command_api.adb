@@ -37,10 +37,7 @@ package body GPS.Kernel.Command_API is
    procedure Command_Cmds
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Command_Class    : constant Class_Type :=
-        New_Class (Get_Kernel (Data), "Command");
-      Data_Command     : Scheduled_Command_Access;
-      Command_Instance : Class_Instance;
+      Cmd : Scheduled_Command_Access;
    begin
       if Command = "list" then
          declare
@@ -81,9 +78,10 @@ package body GPS.Kernel.Command_API is
          end;
 
       elsif Command = "interrupt" then
-         Command_Instance := Nth_Arg (Data, 1, Command_Class);
-         Data_Command := Get_Data (Command_Instance);
-         Interrupt_Queue (Get_Kernel (Data), Command_Access (Data_Command));
+         Cmd := Get_Command (Data, 1);
+         if Cmd /= null then
+            Interrupt_Queue (Get_Kernel (Data), Command_Access (Cmd));
+         end if;
       end if;
    end Command_Cmds;
 

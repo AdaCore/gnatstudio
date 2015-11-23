@@ -17,16 +17,75 @@
 
 package body GPS.Scripts.Commands is
 
-   Command_Class_Name       : constant String := "Command";
+   procedure Free_When_Python_Owns_Ada (S : in out Scheduled_Command_Access);
+   --  Free a command, when it was owned by script instances.
 
-   type Command_Property is new Instance_Property_Record with record
-      Command : Scheduled_Command_Access;
-   end record;
-   type Command_Property_Access is access all Command_Property'Class;
+   procedure Free_When_Python_Owns_Ada
+      (S : in out Scheduled_Command_Access) is
+   begin
+      Unref (Command_Access (S));
+   end Free_When_Python_Owns_Ada;
+
+   package Command_Script_Proxies is new Script_Proxies
+      (Scheduled_Command_Access, Command_Script_Proxy,
+       Free => Free_When_Python_Owns_Ada);
 
    procedure Command_Cmds
      (Data : in out Callback_Data'Class; Command : String);
    --  Handle shell commands.
+
+   function Create_Dead_Command
+      (Self : Scheduled_Command_Access) return Scheduled_Command_Access;
+   function Transfer_Ownership is new Command_Script_Proxies.Transfer_Ownership
+      (Detach => Create_Dead_Command);
+   --  Transfer ownership of the command to the script instances associated
+   --  with it (if any), instead of having the script instances belong to
+   --  the command.
+
+   -----------------
+   -- Get_Command --
+   -----------------
+
+   function Get_Command
+      (Data       : Callback_Data'Class;
+       Nth        : Positive;
+       Allow_Null : Boolean := False)
+      return Scheduled_Command_Access is
+   begin
+      return Command_Script_Proxies.From_Instance
+         (Data.Nth_Arg (Nth, Allow_Null => Allow_Null));
+   exception
+      when No_Data_Set_For_Instance =>
+         return null;
+   end Get_Command;
+
+   -----------------
+   -- Set_Command --
+   -----------------
+
+   procedure Set_Command
+      (Inst    : Class_Instance;
+       Command : not null access Scheduled_Command'Class) is
+   begin
+      Command_Script_Proxies.Store_In_Instance
+         (Command.Instances, Inst, Scheduled_Command_Access (Command));
+   end Set_Command;
+
+   ------------------
+   -- Get_Instance --
+   ------------------
+
+   function Get_Instance
+      (Command : not null access Scheduled_Command'Class;
+       Script  : not null access Scripting_Language_Record'Class;
+       Class_To_Create : String := "")
+      return Class_Instance
+   is
+   begin
+      return Command_Script_Proxies.Get_Or_Create_Instance
+         (Command.Instances, Scheduled_Command_Access (Command), Script,
+          Class_To_Create => Class_To_Create);
+   end Get_Instance;
 
    ------------------
    -- Command_Cmds --
@@ -35,36 +94,26 @@ package body GPS.Scripts.Commands is
    procedure Command_Cmds
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Command_Class    : constant Class_Type :=
-        Get_Command_Class (Get_Kernel (Data));
-      Data_Command     : Scheduled_Command_Access;
-      Command_Instance : Class_Instance;
+      Cmd              : Scheduled_Command_Access;
    begin
-      if Command = Destructor_Method then
-         Command_Instance := Nth_Arg (Data, 1, Command_Class);
-         Data_Command := Get_Data (Command_Instance);
-         if Data_Command /= null then
-            Remove_Instance (Data_Command);
-            Unref (Command_Access (Data_Command));
+      if Command = "progress" then
+         Cmd := Get_Command (Data, 1);
+         if Cmd /= null then
+            Data.Set_Return_Value (Progress (Cmd).Current);
+            Data.Set_Return_Value_Key ("current");
+            Data.Set_Return_Value (Progress (Cmd).Total);
+            Data.Set_Return_Value_Key ("total");
          end if;
 
-      elsif Command = "progress" then
-         Command_Instance := Nth_Arg (Data, 1, Command_Class);
-         Data_Command := Get_Data (Command_Instance);
-         Set_Return_Value (Data, Progress (Data_Command).Current);
-         Set_Return_Value_Key (Data, "current");
-         Set_Return_Value (Data, Progress (Data_Command).Total);
-         Set_Return_Value_Key (Data, "total");
-
       elsif Command = "name" then
-         Command_Instance := Nth_Arg (Data, 1, Command_Class);
-         Data_Command := Get_Data (Command_Instance);
-         Set_Return_Value (Data, Name (Data_Command));
+         Cmd := Get_Command (Data, 1);
+         if Cmd /= null then
+            Data.Set_Return_Value (Name (Cmd));
+         end if;
 
       elsif Command = "get_result" then
-         Set_Return_Value
-           (Data,
-            String'
+         Data.Set_Return_Value
+           (String'
               ("Error: this primitive should be implemeted by subclasses"));
       end if;
    end Command_Cmds;
@@ -78,17 +127,6 @@ package body GPS.Scripts.Commands is
    begin
       return Command.Command;
    end Get_Command;
-
-   -----------------------
-   -- Get_Command_Class --
-   -----------------------
-
-   function Get_Command_Class
-     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
-      return Class_Type is
-   begin
-      return New_Class (Kernel.Scripts, Command_Class_Name);
-   end Get_Command_Class;
 
    -------------
    -- Execute --
@@ -139,54 +177,36 @@ package body GPS.Scripts.Commands is
       Interrupt (Command.Command.all);
    end Interrupt;
 
+   -------------------------
+   -- Create_Dead_Command --
+   -------------------------
+
+   function Create_Dead_Command
+      (Self : Scheduled_Command_Access) return Scheduled_Command_Access
+   is
+      Result : constant Scheduled_Command_Access := new Scheduled_Command;
+   begin
+      Result.Command := Self.Command;
+      Result.Destroy_On_Exit := Self.Destroy_On_Exit;
+      return Result;
+   end Create_Dead_Command;
+
    ----------
    -- Free --
    ----------
 
    overriding procedure Free (Command : in out Scheduled_Command) is
-      Curs : Inst_Cursor := First (Command.Instances);
    begin
-      if Command.Is_Dead then
-         --   ??? Is the command implemented in a scripting language ?
-         if Has_Element (Curs) then
-            --  ??? Should we free Command.Instances
-            return;
-         end if;
+      --  If some script instance is referencing the command, we need to
+      --  keep it in memory, but owned by the instances.
 
+      if Transfer_Ownership (Command.Instances) = Has_No_Instances then
          if Command.Destroy_On_Exit then
             Unref (Command.Command);
          end if;
-
-         Free (Command.Instances);
-      else
-         declare
-            Dead_Command : Scheduled_Command_Access :=
-                             new Scheduled_Command;
-            Found        : Boolean := False;
-         begin
-            Dead_Command.Command := Command.Command;
-            Dead_Command.Destroy_On_Exit := Command.Destroy_On_Exit;
-            Dead_Command.Is_Dead := True;
-
-            while Has_Element (Curs) loop
-               Found := True;
-               Set_Data
-                 (Element (Command.Instances, Curs),
-                  Command_Class_Name,
-                  Command_Property'(Command => Dead_Command));
-               Next (Command.Instances, Curs);
-            end loop;
-
-            --  If the command is not referenced by any script, then we just
-            --  remove it.
-
-            if not Found then
-               Unref (Command_Access (Dead_Command));
-            end if;
-
-            Free (Command.Instances);
-         end;
       end if;
+
+      Free (Root_Command (Command));  --  inherited
    end Free;
 
    ----------
@@ -223,82 +243,6 @@ package body GPS.Scripts.Commands is
       return C;
    end Create_Wrapper;
 
-   ------------------
-   -- Get_Instance --
-   ------------------
-
-   function Get_Instance
-     (Command       : access Scheduled_Command'Class;
-      Language      : access Scripting_Language_Record'Class;
-      Command_Class : Class_Type := No_Class)
-      return Class_Instance
-   is
-      Inst : Class_Instance := Get (Command.Instances, Language);
-   begin
-      if Inst = No_Class_Instance then
-
-         if Command_Class = No_Class then
-            declare
-               Root_Command_Class : constant Class_Type :=
-                 New_Class (Get_Repository (Language), Command_Class_Name);
-            begin
-               Inst := New_Instance (Language, Root_Command_Class);
-            end;
-         else
-            Inst := New_Instance (Language, Command_Class);
-         end if;
-
-         Set_Instance (Command, Inst);
-      end if;
-
-      return Inst;
-   end Get_Instance;
-
-   ------------------
-   -- Set_Instance --
-   ------------------
-
-   procedure Set_Instance
-     (Command  : access Scheduled_Command'Class;
-      Instance : Class_Instance) is
-   begin
-      Set_Data
-        (Instance, Command_Class_Name, Command_Property'
-           (Command => Scheduled_Command_Access (Command)));
-      Ref (Command_Access (Command));  --  unrefed in GPS.Command.__del__
-      Set (Command.Instances, Instance);
-   end Set_Instance;
-
-   ---------------------
-   -- Remove_Instance --
-   ---------------------
-
-   procedure Remove_Instance (Command  : access Scheduled_Command'Class) is
-   begin
-      Set (Command.Instances, No_Class_Instance);
-   end Remove_Instance;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data
-     (Instance : Class_Instance) return Scheduled_Command_Access
-   is
-      Cmd : Command_Property_Access;
-   begin
-      Cmd := Command_Property_Access
-        (Instance_Property'(Get_Data (Instance, Command_Class_Name)));
-      if Cmd = null then
-         return null;
-      else
-         return Cmd.Command;
-      end if;
-   exception
-      when Invalid_Data =>
-         return null;
-   end Get_Data;
-
    -----------------------
    -- Register_Commands --
    -----------------------
@@ -306,20 +250,15 @@ package body GPS.Scripts.Commands is
    procedure Register_Commands
      (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
    is
-      Command_Class    : constant Class_Type := Get_Command_Class (Kernel);
+      Command_Class : constant Class_Type :=
+         Kernel.Scripts.New_Class (Command_Class_Name);
    begin
-      Register_Command
-        (Kernel.Scripts, Destructor_Method,
-         0, 0, Command_Cmds'Access, Command_Class);
-      Register_Command
-        (Kernel.Scripts, "progress",
-         0, 0, Command_Cmds'Access, Command_Class);
-      Register_Command
-        (Kernel.Scripts, "name",
-         0, 0, Command_Cmds'Access, Command_Class);
-      Register_Command
-        (Kernel.Scripts, "get_result",
-         0, 0, Command_Cmds'Access, Command_Class);
+      Kernel.Scripts.Register_Command
+        ("progress", Handler => Command_Cmds'Access, Class => Command_Class);
+      Kernel.Scripts.Register_Command
+        ("name", Handler => Command_Cmds'Access, Class => Command_Class);
+      Kernel.Scripts.Register_Command
+        ("get_result", Handler => Command_Cmds'Access, Class => Command_Class);
    end Register_Commands;
 
 end GPS.Scripts.Commands;

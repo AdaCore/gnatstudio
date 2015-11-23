@@ -74,6 +74,7 @@ package body Expect_Interface is
       Pattern          : Pattern_Matcher_Access;
       Server           : Server_Type;
       Command          : Arg_List;
+      Inst             : Class_Instance;
       Show_Command     : Boolean;
       On_Match         : Subprogram_Type;
       On_Exit          : Subprogram_Type;
@@ -81,7 +82,6 @@ package body Expect_Interface is
       Pd               : Process_Descriptor_Access;
       Status           : Integer := 0;
       Started          : Boolean;
-      Inst             : Class_Instance;
       Progress_Regexp  : Pattern_Matcher_Access;
       Progress_Current : Natural := 1;  --  Parenthesis within the regexp
       Progress_Final   : Natural := 2;  --  Parenthesis within the regexp
@@ -1023,8 +1023,7 @@ package body Expect_Interface is
                --  for remote operation can occur.
 
                if D.On_Exit /= null then
-                  D.End_Action := new End_Action_Record;
-
+                  D.End_Action         := new End_Action_Record;
                   D.End_Action.Inst    := D.Inst;
                   D.End_Action.On_Exit := D.On_Exit;
 
@@ -1037,7 +1036,7 @@ package body Expect_Interface is
                end if;
             end if;
 
-            Set_Instance (Created_Command, Inst);
+            Set_Command (Inst, Created_Command);
             Set_Data
               (Inst, Process_Class_Name, Action_Property'(Action => D));
          end;

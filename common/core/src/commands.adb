@@ -512,16 +512,6 @@ package body Commands is
       end loop;
    end Launch_Synchronous;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Root_Command) is
-      pragma Unreferenced (X);
-   begin
-      null;
-   end Free;
-
    -----------------
    -- Start_Group --
    -----------------

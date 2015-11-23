@@ -717,15 +717,8 @@ package body Diff_Utils2 is
    ----------
 
    procedure Free (Link : in out Diff_Head) is
-      Curs : Inst_Cursor := First (Link.Instances);
    begin
-      Free_List (Link.List);
-      while Has_Element (Curs) loop
-         Set_Vdiff_Data (Element (Link.Instances, Curs), null);
-         Next (Link.Instances, Curs);
-      end loop;
-
-      Free (Link.Instances);
+      Link.Instances.Free;
    end Free;
 
    ----------
@@ -780,19 +773,5 @@ package body Diff_Utils2 is
          Free (V (J));
       end loop;
    end Free;
-
-   --------------------
-   -- Set_Vdiff_Data --
-   --------------------
-
-   procedure Set_Vdiff_Data
-     (Instance : Class_Instance;
-      Data     : Diff_Head_Access) is
-   begin
-      Set_Data
-        (Instance,
-         Vdiff_Class_Name,
-         Vdiff_Property'(Vdiff => Data));
-   end Set_Vdiff_Data;
 
 end Diff_Utils2;

@@ -19,15 +19,13 @@
 --  files.
 
 with Ada.Unchecked_Deallocation;
-
-with GNAT.OS_Lib;        use GNAT.OS_Lib;
-with GNATCOLL.Scripts;   use GNATCOLL.Scripts;
-
+with GNAT.OS_Lib;                 use GNAT.OS_Lib;
 with Generic_List;
-with GPS.Kernel;         use GPS.Kernel;
+with GPS.Kernel;                  use GPS.Kernel;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
-with GPS.Editors;        use GPS.Editors;
+with GPS.Editors;                 use GPS.Editors;
 with GPS.Kernel.Preferences;
+with GPS.Scripts;                 use GPS.Scripts;
 
 package Diff_Utils2 is
 
@@ -84,17 +82,25 @@ package Diff_Utils2 is
    procedure Free_List (Link : in out Diff_List);
    --  Free the memory associated with each node of the list Link
 
+   Vdiff_Class_Name : constant String := "Vdiff";
+   type Diff_Script_Proxy is new Script_Proxy with null record;
+   overriding function Class_Name (Self : Diff_Script_Proxy) return String
+      is (Vdiff_Class_Name) with Inline;
+
    type Diff_Head is record
       List           : Diff_List;
       Files          : T_VFile;
       Current_Node   : Diff_List_Node;
       Ref_File       : T_VFile_Index := 2;
       In_Destruction : Boolean := False;
-      Instances      : Instance_List;
+      Instances      : Diff_Script_Proxy;
       Mode           : GPS.Kernel.Preferences.Vdiff_Modes;
    end record;
    type Diff_Head_Access is access all Diff_Head;
    --  Data structure that represents a visual diff
+
+   package Diff_Script_Proxies is new Script_Proxies
+      (Diff_Head_Access, Diff_Script_Proxy);
 
    procedure Free (Link : in out Diff_Head);
    --  Free the memory associated with Link
@@ -121,19 +127,6 @@ package Diff_Utils2 is
 
    procedure Free (Vdiff_List : in out Diff_Head_List_Access);
    --  Free the memory associated with a list of Vdiff
-
-   Vdiff_Class_Name : constant String := "Vdiff";
-
-   type Vdiff_Property is new Instance_Property_Record with record
-      Vdiff : Diff_Head_Access;
-   end record;
-   type Vdiff_Property_Access is access all Vdiff_Property'Class;
-   --  Vdiff structure that is stored in a class instance
-
-   procedure Set_Vdiff_Data
-     (Instance : Class_Instance;
-      Data     : Diff_Head_Access);
-   --  Set the data assiociated with an instance of the Vdiff classs
 
    function Diff
      (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;

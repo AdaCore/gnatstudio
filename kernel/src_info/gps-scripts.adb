@@ -17,6 +17,8 @@
 
 package body GPS.Scripts is
 
+   type Ownership_Mode is (Ada_Owns_Python, Python_Owns_Ada);
+
    ------------
    -- Create --
    ------------
@@ -78,8 +80,22 @@ package body GPS.Scripts is
 
       type Element_Properties_Record is new Instance_Property_Record with
          record
-            Element : Element_Type;
+            Element   : Element_Type;
+            Ownership : Ownership_Mode;
          end record;
+      overriding procedure Destroy (Prop : in out Element_Properties_Record);
+
+      -------------
+      -- Destroy --
+      -------------
+
+      overriding procedure Destroy
+         (Prop : in out Element_Properties_Record) is
+      begin
+         if Prop.Ownership = Python_Owns_Ada then
+            Free (Prop.Element);
+         end if;
+      end Destroy;
 
       ----------------------------
       -- Get_Or_Create_Instance --
@@ -117,7 +133,9 @@ package body GPS.Scripts is
       begin
          Set_Data
             (Inst, Self.Class_Name,
-             Element_Properties_Record'(Element => Obj));
+             Element_Properties_Record'
+                (Element   => Obj,
+                 Ownership => Ada_Owns_Python));
          Set (Self.Instances, Inst);
       end Store_In_Instance;
 
@@ -130,12 +148,47 @@ package body GPS.Scripts is
          Data : constant Instance_Property := Get_Data (Inst, P.Class_Name);
       begin
          if Data = null then
-            raise Program_Error with
+            raise No_Data_Set_For_Instance with
                 "No Ada object associated with python " & P.Class_Name
                 & " instance";
          end if;
          return Element_Properties_Record (Data.all).Element;
       end From_Instance;
+
+      ------------------------
+      -- Transfer_Ownership --
+      ------------------------
+
+      function Transfer_Ownership
+         (Self : in out Proxy'Class) return Instances_Status
+      is
+         Found : Boolean := False;
+         C : Inst_Cursor := First (Self.Instances);
+         Detached : Element_Type;
+      begin
+         while Has_Element (C) loop
+            if not Found then
+               Detached := Detach
+                  (From_Instance (Element (Self.Instances, C)));
+               Found := True;
+            end if;
+            Set_Data
+               (Element (Self.Instances, C),
+                Self.Class_Name,
+                Element_Properties_Record'
+                   (Element   => Detached,
+                    Ownership => Python_Owns_Ada));
+            Next (Self.Instances, C);
+         end loop;
+
+         Free (Self.Instances);
+
+         if Found then
+            return Has_Instances;
+         else
+            return Has_No_Instances;
+         end if;
+      end Transfer_Ownership;
 
    end Script_Proxies;
 

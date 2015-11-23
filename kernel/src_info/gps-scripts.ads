@@ -88,6 +88,10 @@ package GPS.Scripts is
    --  be part of a record that it passed to the generic package below, so
    --  Finalize is called every time From_Instance is called.
 
+   type Instances_Status is (Has_Instances, Has_No_Instances);
+
+   No_Data_Set_For_Instance : exception;
+
    generic
       type Element_Type is private;
       --  Data stored in the python class instance. This type is the one
@@ -99,6 +103,15 @@ package GPS.Scripts is
 
       type Proxy is new Script_Proxy with private;
       --  Used to get access to the class name.
+
+      with procedure Free (E : in out Element_Type) is null;
+      --  After using Transfer_Ownership:
+      --  this subprogram is called when the last instance associated with
+      --  the element is destroyed.
+      --  This procedure is never called if you did not use Transfer_Ownership
+      --  since otherwise the script instances are owned by the element, and
+      --  thus the instances can only be destroyed when the element itself has
+      --  already been freed.
 
    package Script_Proxies is
 
@@ -127,8 +140,33 @@ package GPS.Scripts is
 
       function From_Instance (Inst : Class_Instance) return Element_Type;
       --  Return the element stored in the instance.
-      --  This will raise a Program_Error if no element was associated with
-      --  this instance.
+      --  This will raise No_Data_Set_For_Instance if no element was associated
+      --  with this instance or if Inst is No_Class_Instance.
+
+      generic
+         with function Detach (E : Element_Type) return Element_Type;
+         --  Return a new version of E, which does not own any script
+         --  instance.
+      function Transfer_Ownership
+         (Self : in out Proxy'Class) return Instances_Status;
+      --  This procedure is used to change the owner ship of data. After
+      --  calling this procedure, the following is true:
+      --  * Self is no longer referencing any instance.
+      --  * script instances still exist if they are used by a script. If
+      --    their last reference was in Self, they are destroyed.
+      --  * they now reference some new data (created by calling Detach).
+      --    This data should not own a reference to the script instances
+      --    (so their Proxy field should be left unset).
+      --    Detach is called exacty once if there is at least one script
+      --    instance, and never otherwise.
+      --  * when the script instances are destroyed eventually, the new
+      --    data will be freed automatically.
+      --
+      --  This procedure can be used when some Data is no longer required on
+      --  the Ada side, but existing script instances still need to access it
+      --  to extract some information. For instance, we use this for Commands,
+      --  so that scripts can access the output of the command even after the
+      --  command has finished executing.
 
    end Script_Proxies;
 

@@ -199,7 +199,7 @@ package body Custom_Tools_Output is
       Class  : constant Class_Type := New_Class
         (Kernel.Scripts, Tools_Output_Handler_Class_Name);
       Arg_3  : constant Scheduled_Command_Access :=
-        Get_Data (Nth_Arg (Data, 3, Get_Command_Class (Kernel), True));
+         Get_Command (Data, 3, Allow_Null => True);
    begin
       if Command = On_Stdout_Cst then
          Name_Parameters (Data, On_Text_Params);

@@ -406,13 +406,12 @@ package body GPS.Kernel.Entities is
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      Inst         : constant Class_Instance := Nth_Arg (Data, 1);
-      Data_Command : constant References_Command_Access :=
-        References_Command_Access (Get_Command (Get_Data (Inst)));
+      Cmd : constant References_Command_Access :=
+        References_Command_Access (Get_Command (Get_Command (Data, 1)));
    begin
-      if Command = "get_result" then
+      if Cmd /= null and then Command = "get_result" then
          Put_Locations_In_Return
-           (Data_Command, Data, Show_Ref_Kind => Data_Command.Show_Ref_Kind);
+           (Cmd, Data, Show_Ref_Kind => Cmd.Show_Ref_Kind);
       end if;
    end References_Command_Handler;
 
@@ -452,11 +451,6 @@ package body GPS.Kernel.Entities is
       elsif Command = "references" then
          declare
             Ref_Command : References_Command_Access := new References_Command;
-            References_Command_Class : constant Class_Type := New_Class
-              (Kernel,
-               References_Command_Class_Name,
-               New_Class (Kernel, "Command"));
-
             Implicit         : constant Boolean := Nth_Arg (Data, 2, False);
             Synchronous      : constant Boolean := Nth_Arg (Data, 3, True);
             Show_Ref_Type    : constant Boolean := Nth_Arg (Data, 4, False);
@@ -465,7 +459,6 @@ package body GPS.Kernel.Entities is
                        Allow_Null => True);
             Only_If_Kind     : constant String := Nth_Arg (Data, 6, "");
             In_File          : Virtual_File := No_File;
-            Instance         : Class_Instance;
             Launched_Command : Scheduled_Command_Access;
          begin
             Ref_Command.Kernel := Kernel;
@@ -506,12 +499,10 @@ package body GPS.Kernel.Entities is
                    Current  => Get_Current_Progress (Ref_Command.Iter.Element),
                    Total    => Get_Total_Progress (Ref_Command.Iter.Element)));
 
-               Instance := Get_Instance
-                 (Launched_Command,
-                  Get_Script (Data),
-                  References_Command_Class);
-
-               Set_Return_Value (Data, Instance);
+               Data.Set_Return_Value
+                  (Get_Instance
+                     (Launched_Command, Data.Get_Script,
+                      Class_To_Create => References_Command_Class_Name));
             end if;
          end;
 

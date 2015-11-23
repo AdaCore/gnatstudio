@@ -21,26 +21,19 @@ with Commands;         use Commands;
 package GPS.Scripts.Commands is
 
    type Scheduled_Command is new Root_Command with private;
+   type Scheduled_Command_Access is access all Scheduled_Command'Class;
    --  This command encloses any command scheduled or running in the task
    --  manager
 
-   type Scheduled_Command_Access is access all Scheduled_Command'Class;
-
    overriding function Name (Command : access Scheduled_Command) return String;
-
    overriding procedure Interrupt (Command : in out Scheduled_Command);
-
    overriding procedure Set_Progress
      (Command : access Scheduled_Command; Progress : Progress_Record);
-
    overriding function Progress
      (Command : access Scheduled_Command) return Progress_Record;
-
    overriding function Execute
      (Command : access Scheduled_Command) return Command_Return_Type;
-
    overriding function Undo (This : access Scheduled_Command) return Boolean;
-
    overriding procedure Free (Command : in out Scheduled_Command);
    --  See inherited documentation
 
@@ -57,39 +50,25 @@ package GPS.Scripts.Commands is
    -- Support for scripting languages --
    -------------------------------------
 
-   function Get_Instance
-     (Command       : access Scheduled_Command'Class;
-      Language      : access Scripting_Language_Record'Class;
-      Command_Class : Class_Type := No_Class)
-      return Class_Instance;
-   --  Returns the class instance associated to this command for the given
-   --  scripting language. Create one when needed. The instance is from the
-   --  class GPS.Command.
-   --  Command_Class specify the actual type of the command that have to be
-   --  created if needed. It has to be a child of type Command. If its type is
-   --  No_Class, then default command class will be used.
-
-   procedure Set_Instance
-     (Command  : access Scheduled_Command'Class;
-      Instance : Class_Instance);
-   --  Set the instance corresponding to the given language to the given
-   --  command. This assumes that no instance has previously been set for the
-   --  given language.
-
-   procedure Remove_Instance
-     (Command  : access Scheduled_Command'Class);
-   --  Removes the instance corresponding to the given language from the list
-
-   function Get_Data
-     (Instance : GNATCOLL.Scripts.Class_Instance)
+   function Get_Command
+      (Data       : Callback_Data'Class;
+       Nth        : Positive;
+       Allow_Null : Boolean := False)
       return Scheduled_Command_Access;
-   --  Return the command stored in Instance. Instance must be of the class
-   --  GPS.Command.
+   --  Return the command given as the nth argument to data
 
-   function Get_Command_Class
-     (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class)
-      return Class_Type;
-   --  Return Class_Type for GPS.Command class
+   procedure Set_Command
+      (Inst    : Class_Instance;
+       Command : not null access Scheduled_Command'Class);
+   function Get_Instance
+      (Command : not null access Scheduled_Command'Class;
+       Script  : not null access Scripting_Language_Record'Class;
+       Class_To_Create : String := "")
+      return Class_Instance;
+   --  Wrap the command in a python instance. The same instance is
+   --  always reused for a given command. Its class can be
+   --  overridden via the Class_To_Create parameter (it defaults to
+   --  "Command").
 
    procedure Register_Commands
      (Kernel : access GPS.Core_Kernels.Core_Kernel_Record'Class);
@@ -97,11 +76,16 @@ package GPS.Scripts.Commands is
 
 private
 
+   Command_Class_Name : constant String := "Command";
+
+   type Command_Script_Proxy is new Script_Proxy with null record;
+   overriding function Class_Name (Self : Command_Script_Proxy) return String
+      is (Command_Class_Name) with Inline;
+
    type Scheduled_Command is new Root_Command with record
       Command         : Command_Access;
       Destroy_On_Exit : Boolean;
-      Instances       : GNATCOLL.Scripts.Instance_List;
-      Is_Dead         : Boolean := False;
+      Instances       : Command_Script_Proxy;
    end record;
 
 end GPS.Scripts.Commands;
