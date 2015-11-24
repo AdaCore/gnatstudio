@@ -190,11 +190,18 @@ package Language.Libclang is
      (C : access Clang_Context;
       File_Name : String) return Clang_Translation_Unit;
 
+   Default_Clang_Options : constant Clang_Translation_Unit_Flags :=
+     Includebriefcommentsincodecompletion
+     or Precompiledpreamble
+     or Cachecompletionresults
+     or Detailedpreprocessingrecord;
+
    function Translation_Unit
      (Kernel       : Core_Kernel;
       File         : GNATCOLL.VFS.Virtual_File;
       Project      : Project_Type := No_Project;
       Reparse      : Boolean := False;
+      Options      : Clang_Translation_Unit_Flags := Default_Clang_Options;
       Default_Lang : String := "c++")
       return Clang_Translation_Unit;
 
@@ -202,6 +209,7 @@ package Language.Libclang is
      (Kernel       : Core_Kernel;
       File         : GNATCOLL.VFS.Virtual_File;
       Reparse      : Boolean := False;
+      Options      : Clang_Translation_Unit_Flags := Default_Clang_Options;
       Default_Lang : String := "c++";
       Prio         : Parsing_Request_Priority := Low;
       Callback     : in out Parse_Callback_Access);

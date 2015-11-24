@@ -379,7 +379,10 @@ package body Completion.C.Libclang is
             Filename      => +Context.File.Full_Name,
             Line          => Loc.Line,
             Column        => Loc.Line_Offset + 2,
-            Unsaved_Files => Unsaved_Files);
+            Unsaved_Files => Unsaved_Files,
+            Options       =>
+              (Include_Macros
+               or Include_Code_Patterns or Include_Brief_Comments));
 
          declare
             use Completion_Results_Arrays;

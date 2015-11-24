@@ -42,11 +42,6 @@ with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 package body Language.Libclang is
 
-   Clang_Options : constant Clang_Translation_Unit_Flags :=
-     Includebriefcommentsincodecompletion
-     and Precompiledpreamble
-     and Cachecompletionresults;
-
    LRU_Size : constant := 16;
    Nb_Tasks : constant Natural := Natural'Min (Natural (Number_Of_CPUs), 6);
 
@@ -66,12 +61,13 @@ package body Language.Libclang is
    use Task_Parser_Pool;
 
    procedure Enqueue_Translation_Unit
-     (Kernel : Core_Kernel;
-      File : GNATCOLL.VFS.Virtual_File;
+     (Kernel        : Core_Kernel;
+      File          : GNATCOLL.VFS.Virtual_File;
       Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files;
-      Default_Lang : String := "c++";
-      Prio     : Parsing_Request_Priority := Low;
-      Callback : Parse_Callback_Access := null);
+      Options       : Clang_Translation_Unit_Flags := Default_Clang_Options;
+      Default_Lang  : String := "c++";
+      Prio          : Parsing_Request_Priority := Low;
+      Callback      : Parse_Callback_Access := null);
 
    procedure Free
    is new Ada.Unchecked_Deallocation (TU_Maps.Map, Tu_Map_Access);
@@ -482,6 +478,7 @@ package body Language.Libclang is
      (Kernel       : Core_Kernel;
       File         : GNATCOLL.VFS.Virtual_File;
       Reparse      : Boolean := False;
+      Options      : Clang_Translation_Unit_Flags := Default_Clang_Options;
       Default_Lang : String := "c++";
       Prio         : Parsing_Request_Priority := Low;
       Callback     : in out Parse_Callback_Access)
@@ -519,7 +516,10 @@ package body Language.Libclang is
                         File,
                         (0 => Create_Unsaved_File
                              (String (File.Full_Name.all), Buffer_Text)),
-                        Default_Lang, Prio => Prio, Callback => Callback);
+                        Default_Lang => Default_Lang,
+                        Prio         => Prio,
+                        Callback     => Callback,
+                        Options      => Options);
                      Cache_Val.Cache.Version := Buffer.Version;
                      return;
                   end;
@@ -568,14 +568,18 @@ package body Language.Libclang is
       File         : GNATCOLL.VFS.Virtual_File;
       Project      : Project_Type := No_Project;
       Reparse      : Boolean := False;
+      Options      : Clang_Translation_Unit_Flags := Default_Clang_Options;
       Default_Lang : String := "c++")
       return Clang_Translation_Unit
    is
       Callback : Parse_Callback_Access := null;
    begin
       Enqueue_Translation_Unit
-        (Kernel, File, Reparse, Default_Lang, Prio => High,
-         Callback => Callback);
+        (Kernel, File, Reparse,
+         Options      => Options,
+         Default_Lang => Default_Lang,
+         Prio         => High,
+         Callback     => Callback);
 
       if Clang_Module_Id /= null then
          return Context_From_File (Kernel, File, Project).Get_TU
@@ -621,12 +625,13 @@ package body Language.Libclang is
    ------------------------------
 
    procedure Enqueue_Translation_Unit
-     (Kernel : Core_Kernel;
-      File : GNATCOLL.VFS.Virtual_File;
+     (Kernel        : Core_Kernel;
+      File          : GNATCOLL.VFS.Virtual_File;
       Unsaved_Files : Unsaved_File_Array := No_Unsaved_Files;
-      Default_Lang : String := "c++";
-      Prio : Parsing_Request_Priority := Low;
-      Callback     : Parse_Callback_Access := null)
+      Options       : Clang_Translation_Unit_Flags := Default_Clang_Options;
+      Default_Lang  : String := "c++";
+      Prio          : Parsing_Request_Priority := Low;
+      Callback      : Parse_Callback_Access := null)
    is
       --  ??? We should fill other unsaved_files! ??? Or should we ? I think
       --  that filling the current file as unsaved is enough. We can, at
@@ -708,7 +713,7 @@ package body Language.Libclang is
                Indexer       => Context.Clang_Indexer,
                Kind          => Reparse,
                Unsaved_Files => new Unsaved_File_Array'(Unsaved_Files),
-               Options       => Clang_Options,
+               Options       => Options,
                File_Name     => +File_Name,
                Prio          => Prio,
                Project_Name  =>
@@ -760,7 +765,7 @@ package body Language.Libclang is
                   Indexer      => Context.Clang_Indexer,
                   File_Name    => +File_Name,
                   Switches     => new Unbounded_String_Array'(Switches),
-                  Options      => Clang_Options,
+                  Options      => Options,
                   Prio         => Prio,
                   Project_Name =>
                     +(String (F_Info.Project.Project_Path.Full_Name.all)),
@@ -946,8 +951,9 @@ package body Language.Libclang is
                  new Parse_Callback_Package.Parse_For_Cache'
                    (Command => Command_Data);
             begin
-               Enqueue_Translation_Unit (Core_Kernel (Kernel), F, False,
-                                         Callback => Callback);
+               Enqueue_Translation_Unit
+                 (Core_Kernel (Kernel), F, False,
+                  Callback => Callback);
             end;
          end loop;
 
