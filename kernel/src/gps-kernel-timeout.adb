@@ -79,6 +79,9 @@ package body GPS.Kernel.Timeout is
       Started              : Boolean := False;
       --  Whether the process has been started
 
+      Finished             : Boolean := False;
+      --  Whether the process has been died and Exit_Callback called
+
       Timeout              : Integer;
       --  How many time do we wait for first output
 
@@ -257,9 +260,7 @@ package body GPS.Kernel.Timeout is
             return Failure;
          end if;
 
-      elsif Command.Data.D.Descriptor = null
-        or else Command.Data.Died
-      then
+      elsif Command.Data.Finished then
          Trace (Me, "Process finished: "  & Get_Command (Command.Data.CL));
          return Failure;
 
@@ -352,10 +353,7 @@ package body GPS.Kernel.Timeout is
          end;
       end if;
 
-      if Data.D.Command /= null then
-         Unref (Command_Access (Data.D.Command));
-         Data.D.Command := null;
-      end if;
+      Data.Finished := True;
    end Cleanup;
 
    ----------------
@@ -621,12 +619,12 @@ package body GPS.Kernel.Timeout is
          Died                 => False,
          Interrupted          => False,
          Started              => False,
+         Finished             => False,
          Start_Time           =>
            Time_Of (Year_Number'First, Month_Number'First, Day_Number'First),
          Id                   => 0,
          Timeout              => Timeout);
       Initialize (C.Data);
-      Scheduled.Ref;
 
       if Synchronous then
          Launch_Synchronous (Command_Access (Scheduled), 0.1);
