@@ -556,6 +556,19 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       </menu>
     </submenu>
 
+    <action name="spark2014_example_traffic_light" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/traffic_light/test.gpr"</shell>
+      <shell>Editor.edit "traffic_lights.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_traffic_light">
+        <title>traffic__light</title>
+      </menu>
+    </submenu>
+
   </GNATPROVE>
 """
 
