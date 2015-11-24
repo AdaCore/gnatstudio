@@ -37,6 +37,11 @@ package Completion.History is
    --  be able to manage history
    --  ??? This should really be an interface.
 
+   overriding
+   function Deep_Copy
+     (Proposal : Storable_Proposal)
+      return Completion_Proposal'Class is abstract;
+
    type Stored_Proposal is abstract tagged null record;
    --  This is the base type for a proposal stored in the history. Such a
    --  proposal must have the capability of surviving during the whole

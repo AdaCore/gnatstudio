@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;
+
 with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
@@ -395,5 +397,36 @@ package body Engine_Wrappers is
                       Column => Visible_Column_Type
                         (Proposal.Construct.Sloc_Start.Column))));
    end Get_Documentation;
+
+   ---------------
+   -- Deep_Copy --
+   ---------------
+
+   overriding function Deep_Copy
+     (Proposal : Comp_Proposal) return Root_Proposal'Class is
+   begin
+      if Proposal.P = null then
+         return Comp_Proposal'(P => null);
+      else
+         return Comp_Proposal'(P => new Completion_Proposal'Class'
+                                 (Deep_Copy (Proposal.P.all)));
+      end if;
+   end Deep_Copy;
+
+   overriding function Deep_Copy
+     (Proposal : Entity_Proposal) return Root_Proposal'Class
+   is
+      Result : Entity_Proposal;
+      use type Ada.Strings.Unbounded.String_Access;
+   begin
+      Result := Entity_Proposal'(File      => Proposal.File,
+                                 Construct => Proposal.Construct);
+      if Proposal.Construct.Profile_Cache /= null then
+         Result.Construct.Profile_Cache :=
+           new String'(Proposal.Construct.Profile_Cache.all);
+      end if;
+
+      return Entity_Proposal'(Result);
+   end Deep_Copy;
 
 end Engine_Wrappers;

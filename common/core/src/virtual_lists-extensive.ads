@@ -56,7 +56,7 @@ package Virtual_Lists.Extensive is
    --  See inherited documentation
 
    overriding function Get
-     (It : Extensive_List_Iterator) return Data_Type;
+     (It : in out Extensive_List_Iterator) return Data_Type;
    --  See inherited documentation
 
    overriding procedure Free (List : in out Extensive_List_Component);

@@ -69,7 +69,8 @@ package Virtual_Lists is
    --  Moves the iterator to the next element of the list.
 
    function Get
-     (It : Virtual_List_Component_Iterator) return Data_Type is abstract;
+     (It : in out Virtual_List_Component_Iterator)
+      return Data_Type is abstract;
    --  Return the element contained in this iterator.
 
    procedure Append

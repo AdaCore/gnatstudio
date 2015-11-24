@@ -104,7 +104,7 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding
    function Get
-     (It : Declaration_Id_Iterator) return Entity_View;
+     (It : in out Declaration_Id_Iterator) return Entity_View;
    --  Return the element contained in this iterator
 
    procedure Computes_Visibility (It : in out Declaration_Id_Iterator'Class);
@@ -180,7 +180,7 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding
    function Get
-     (It : Declaration_Composition_Iterator) return Entity_View;
+     (It : in out Declaration_Composition_Iterator) return Entity_View;
    --  Return the element contained in this iterator
 
    function Is_Valid
@@ -220,7 +220,7 @@ package body Ada_Semantic_Tree.Declarations is
 
    overriding
    function Get
-     (It : Unique_Declaration_Iterator) return Entity_View;
+     (It : in out Unique_Declaration_Iterator) return Entity_View;
    --  Return the element contained in this iterator
 
    overriding
@@ -452,7 +452,7 @@ package body Ada_Semantic_Tree.Declarations is
    ---------
 
    overriding function Get
-     (It : Declaration_Id_Iterator) return Entity_View
+     (It : in out Declaration_Id_Iterator) return Entity_View
    is
       Declaration : Entity_View;
       Full_Cell   : Entity_Access;
@@ -1495,7 +1495,7 @@ package body Ada_Semantic_Tree.Declarations is
    ---------
 
    overriding function Get
-     (It : Declaration_Composition_Iterator) return Entity_View
+     (It : in out Declaration_Composition_Iterator) return Entity_View
    is
       Info : constant Semantic_Information := Get (It.It);
    begin
@@ -1766,7 +1766,7 @@ package body Ada_Semantic_Tree.Declarations is
    ---------
 
    overriding function Get
-     (It : Unique_Declaration_Iterator) return Entity_View is
+     (It : in out Unique_Declaration_Iterator) return Entity_View is
    begin
       return Deep_Copy (It.Object);
    end Get;

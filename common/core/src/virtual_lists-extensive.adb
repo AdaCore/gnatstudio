@@ -64,7 +64,7 @@ package body Virtual_Lists.Extensive is
    ---------
 
    overriding function Get
-     (It : Extensive_List_Iterator) return Data_Type
+     (It : in out Extensive_List_Iterator) return Data_Type
    is
       Result : Data_Type := Data (It.It);
    begin

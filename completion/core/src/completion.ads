@@ -314,6 +314,11 @@ package Completion is
    procedure Free (Proposal : in out Completion_Proposal) is abstract;
    --  Free the memory associated to the proposal.
 
+   function Deep_Copy
+     (Proposal : Completion_Proposal)
+      return Completion_Proposal'Class is abstract;
+   --  Make a deep copy of Proposal. Result should be freed by the caller.
+
    -------------------------
    -- Completion_Iterator --
    -------------------------
@@ -336,7 +341,8 @@ package Completion is
    function Get_Proposal
      (This : Completion_Iterator) return Completion_Proposal'Class;
    --  Return the actual proposal for the given iterator.
-   --  The returned value should NOT be freed by the user.
+   --  The returned value should NOT be freed by the user, and not be stored.
+   --  If you want to store a proposal, make a Deep_Copy of it.
 
    procedure Free (This : in out Completion_Iterator);
    --  Free the data associated to a completion iterator.
@@ -465,6 +471,11 @@ private
    --  See inherited documentation
 
    overriding procedure Free (Proposal : in out Simple_Completion_Proposal);
+   --  See inherited documentation
+
+   overriding function Deep_Copy
+     (Proposal : Simple_Completion_Proposal)
+      return Completion_Proposal'Class;
    --  See inherited documentation
 
    function Match

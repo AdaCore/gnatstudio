@@ -61,6 +61,10 @@ package body Completion.C.Libclang is
 
    overriding procedure Free (Proposal : in out Libclang_Completion) is null;
 
+   overriding function Deep_Copy
+     (Proposal : Libclang_Completion)
+      return Completion_Proposal'Class is (Libclang_Completion'(Proposal));
+
    overriding function Match
      (Proposal   : Libclang_Completion;
       Context    : Completion_Context;
@@ -140,7 +144,7 @@ package body Completion.C.Libclang is
    overriding function At_End (It : Libclang_Iterator) return Boolean;
    overriding procedure Next (It : in out Libclang_Iterator);
    overriding function Get
-     (It : Libclang_Iterator) return Completion_Proposal'Class;
+     (It : in out Libclang_Iterator) return Completion_Proposal'Class;
 
    -----------
    -- First --
@@ -261,7 +265,7 @@ package body Completion.C.Libclang is
    ---------
 
    overriding function Get
-     (It : Libclang_Iterator) return Completion_Proposal'Class
+     (It : in out Libclang_Iterator) return Completion_Proposal'Class
    is
    begin
       return

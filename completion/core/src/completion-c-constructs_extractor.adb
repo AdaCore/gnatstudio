@@ -225,7 +225,8 @@ package body Completion.C.Constructs_Extractor is
       overriding procedure Next (It : in out Construct_Iterator_Wrapper);
 
       overriding function Get
-        (This : Construct_Iterator_Wrapper) return Completion_Proposal'Class;
+        (This : in out Construct_Iterator_Wrapper)
+         return Completion_Proposal'Class;
 
       overriding procedure Free (This : in out Construct_Iterator_Wrapper);
 
@@ -309,7 +310,8 @@ package body Completion.C.Constructs_Extractor is
       ---------
 
       overriding function Get
-        (This : Construct_Iterator_Wrapper) return Completion_Proposal'Class is
+        (This : in out Construct_Iterator_Wrapper)
+         return Completion_Proposal'Class is
       begin
          case This.Stage is
             when Stage_1 =>

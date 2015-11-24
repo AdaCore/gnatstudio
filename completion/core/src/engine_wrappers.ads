@@ -87,6 +87,10 @@ package Engine_Wrappers is
 
    procedure Free (X : in out Root_Proposal) is null;
 
+   function Deep_Copy
+     (Proposal : Root_Proposal) return Root_Proposal'Class is abstract;
+   --  Make a deep copy of Proposal. Result should be freed by the caller.
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Root_Proposal'Class, Root_Proposal_Access);
 
@@ -105,6 +109,8 @@ package Engine_Wrappers is
       Db : access Xref.General_Xref_Database_Record'Class) is abstract;
    function Get_Proposal
      (Iter    : Root_Iterator) return Root_Proposal'Class is abstract;
+   --  Get a proposal. The result should not be freed and not be stored.
+   --  If you want to store a proposal, make a Deep_Copy of it.
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Root_Iterator'Class, Root_Iterator_Access);
@@ -220,9 +226,15 @@ private
       P : Completion_Proposal_Access;
    end record;
 
+   overriding function Deep_Copy
+     (Proposal : Comp_Proposal) return Root_Proposal'Class;
+
    type Entity_Proposal is new Root_Proposal with record
       File      : Virtual_File;
       Construct : Simple_Construct_Information;
    end record;
+
+   overriding function Deep_Copy
+     (Proposal : Entity_Proposal) return Root_Proposal'Class;
 
 end Engine_Wrappers;

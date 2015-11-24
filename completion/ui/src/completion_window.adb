@@ -251,7 +251,7 @@ package body Completion_Window is
       Proposal : Root_Proposal'Class)
    is
    begin
-      Info.Proposals.Append (new Root_Proposal'Class'(Proposal));
+      Info.Proposals.Append (new Root_Proposal'Class'(Deep_Copy (Proposal)));
    end Augment_Notes;
 
    ------------------------

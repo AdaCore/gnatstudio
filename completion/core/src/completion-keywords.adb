@@ -50,7 +50,7 @@ package body Completion.Keywords is
               and then K (K'First .. K'First + Word'Length - 1) = Word
             then
                Proposal := (Resolver => Resolver,
-                            Name     => new String'(Keywords (J).all),
+                            Name     => Keywords (J),
                             Category => Cat_Unknown);
 
                Completion_List_Extensive_Pckg.Extensive_List_Pckg.Append

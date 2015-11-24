@@ -118,7 +118,7 @@ package body Ada_Semantic_Tree.Std_Entities is
 
    overriding procedure Next (It : in out Std_Iterator);
 
-   overriding function Get (It : Std_Iterator) return Entity_View;
+   overriding function Get (It : in out Std_Iterator) return Entity_View;
 
    overriding procedure Free (It : in out Std_Iterator);
 
@@ -445,7 +445,7 @@ package body Ada_Semantic_Tree.Std_Entities is
    -- Get --
    ---------
 
-   overriding function Get (It : Std_Iterator) return Entity_View is
+   overriding function Get (It : in out Std_Iterator) return Entity_View is
    begin
       return new Std_Entity_Record'
         (Entity_View_Record with

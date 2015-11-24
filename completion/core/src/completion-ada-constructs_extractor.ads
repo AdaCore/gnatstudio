@@ -182,6 +182,11 @@ private
    procedure Free (Proposal : in out Construct_Completion_Proposal);
    --  See inherited documentation
 
+   overriding function Deep_Copy
+     (Proposal : Construct_Completion_Proposal)
+      return Completion_Proposal'Class;
+   --  See inherited documentation
+
    overriding
    function To_Stored_Proposal
      (Proposal : Construct_Completion_Proposal)
@@ -231,6 +236,9 @@ private
       --  This is used when completing with possible parameters
       Params_Array : Formal_Parameter_Array_Access;
       Params_It : Integer;
+
+      Proposal_Computed : Boolean := False;
+      Proposal          : Construct_Completion_Proposal;
    end record;
 
    overriding function First
@@ -249,7 +257,8 @@ private
    --  See inherited documentation
 
    overriding function Get
-     (This : Construct_Iterator_Wrapper) return Completion_Proposal'Class;
+     (This : in out Construct_Iterator_Wrapper)
+      return Completion_Proposal'Class;
    --  See inherited documentation
 
    overriding procedure Free (This : in out Construct_Iterator_Wrapper);

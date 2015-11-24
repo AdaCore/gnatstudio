@@ -69,7 +69,7 @@ package body Completion.Python is
    overriding function At_End (It : Python_Iterator) return Boolean;
    overriding procedure Next (It : in out Python_Iterator);
    overriding function Get
-     (It : Python_Iterator) return Completion_Proposal'Class;
+     (It : in out Python_Iterator) return Completion_Proposal'Class;
 
    -----------
    -- First --
@@ -124,7 +124,7 @@ package body Completion.Python is
    ---------
 
    overriding function Get
-     (It : Python_Iterator) return Completion_Proposal'Class
+     (It : in out Python_Iterator) return Completion_Proposal'Class
    is
       Sub    : constant Subprogram_Type := Get_Method
         (It.Object, "_ada_get");
@@ -197,8 +197,7 @@ package body Completion.Python is
       Object   : Class_Instance)
       return Simple_Python_Completion_Proposal
    is
-      Sub      : constant Subprogram_Type     :=
-        Get_Method (Object, "get_data_as_list");
+      Sub      : Subprogram_Type := Get_Method (Object, "get_data_as_list");
       Script   : constant Scripting_Language  := Get_Script (Sub.all);
       Proposal : Simple_Python_Completion_Proposal;
       Args     : constant Callback_Data'Class := Create (Script, 0);
@@ -212,6 +211,7 @@ package body Completion.Python is
          Nth_Arg (Fields, 3),
          Nth_Arg (Fields, 4),
          Nth_Arg (Fields, 5));
+      Free (Sub);
       return Proposal;
    end Object_To_Proposal;
 

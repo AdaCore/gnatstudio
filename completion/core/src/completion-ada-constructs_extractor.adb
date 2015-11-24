@@ -600,6 +600,30 @@ package body Completion.Ada.Constructs_Extractor is
       end if;
    end Free;
 
+   ---------------
+   -- Deep_Copy --
+   ---------------
+
+   overriding function Deep_Copy
+     (Proposal : Construct_Completion_Proposal)
+      return Completion_Proposal'Class
+   is
+      Result : Construct_Completion_Proposal;
+   begin
+      Result :=
+        (Resolver              => Proposal.Resolver,
+         Actual_Params         => null,
+         From_Accept_Statement => Proposal.From_Accept_Statement,
+         View                  => Deep_Copy (Proposal.View),
+         Is_In_Call            => Proposal.Is_In_Call,
+         Should_Free_View      => True);
+      if Proposal.Actual_Params /= null then
+         Result.Actual_Params := new Actual_Parameter_Resolver'
+           (Proposal.Actual_Params.all);
+      end if;
+      return Construct_Completion_Proposal'(Result);
+   end Deep_Copy;
+
    ----------
    -- Free --
    ----------
@@ -816,23 +840,30 @@ package body Completion.Ada.Constructs_Extractor is
    ---------
 
    overriding function Get
-     (This : Construct_Iterator_Wrapper) return Completion_Proposal'Class
+     (This : in out Construct_Iterator_Wrapper)
+      return Completion_Proposal'Class
    is
       Actuals : Actual_Parameter_Resolver_Access;
    begin
+      if This.Proposal_Computed then
+         Free (This.Proposal);
+      end if;
+
       Actuals := Get_Actual_Parameters (This.Current_Decl);
 
       if Actuals /= null then
          Actuals := new Actual_Parameter_Resolver'(Actuals.all);
       end if;
 
-      return Construct_Completion_Proposal'
+      This.Proposal_Computed := True;
+      This.Proposal := Construct_Completion_Proposal'
         (Resolver              => This.Resolver,
          View                  => Deep_Copy (This.Current_Decl),
          Actual_Params         => Actuals,
          Is_In_Call            => This.Params_Array /= null,
          From_Accept_Statement => This.From_Accept_Statement,
          Should_Free_View      => True);
+      return This.Proposal;
    end Get;
 
    ----------
@@ -844,6 +875,10 @@ package body Completion.Ada.Constructs_Extractor is
       Free (This.Params_Array);
       Free (This.Iter);
       Free (This.Current_Decl);
+      if This.Proposal_Computed then
+         Free (This.Proposal);
+         This.Proposal_Computed := False;
+      end if;
    end Free;
 
 end Completion.Ada.Constructs_Extractor;
