@@ -18,6 +18,7 @@
 with String_Utils; use String_Utils;
 with Language.Libclang_Tree; use Language.Libclang_Tree;
 with clang_c_Index_h; use clang_c_Index_h;
+with Libclang.File;
 
 with Interfaces.C;
 with GNATCOLL.Projects;
@@ -261,11 +262,16 @@ package body Clang_Xref is
    begin
       Ret := Get_Clang_Cursor (E.Kernel, E.Ref_Loc);
 
+      if Kind (Ret) = InclusionDirective then
+         return Ret;
+      end if;
+
       if Offset (Location (Ret)) = 0 then
          Ret := Get_Clang_Cursor (E.Kernel, E.Ref_Loc);
       else
          Ret := Referenced (Ret);
       end if;
+
       return Ret;
    end Get_Clang_Cursor;
 
@@ -509,6 +515,19 @@ package body Clang_Xref is
 
       Cursor := Get_Clang_Cursor (Entity);
 
+      --  Special case for inclusion directives
+      if Kind (Cursor) = InclusionDirective then
+         return General_Entity_Declaration'
+           (Loc                      =>
+              General_Location'
+                (Libclang.File.File
+                     (clang_getIncludedFile (Cursor)),
+                 GNATCOLL.Projects.No_Project,
+                 1, 1),
+            Name                     => +"",
+            Body_Is_Full_Declaration => False);
+      end if;
+
       --  In some cases we cannot get the cursor from a decl again, because
       --  (for example) it's from a file that doesn't make sense on its own. In
       --  this case we want to just return the location stored in the entity,
@@ -524,6 +543,10 @@ package body Clang_Xref is
       --  cases
 
       Def := Referenced (Cursor);
+
+      if Kind (Def) = InvalidFile then
+         Def := Cursor;
+      end if;
 
       --  If the referenced cursor is the same as the original cursor, it means
       --  entity points to a function/method body, which is it's own entity.
