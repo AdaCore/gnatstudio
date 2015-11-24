@@ -17,6 +17,7 @@
 
 with Completion.Search;     use Completion.Search;
 with GPS.Kernel.Search;     use GPS.Kernel.Search;
+with GPS.Search.GUI;        use GPS.Search.GUI;
 
 package body Completion_Window.Entity_Views is
 

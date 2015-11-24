@@ -15,46 +15,45 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;                           use GNAT.OS_Lib;
+with GNAT.Directory_Operations;             use GNAT.Directory_Operations;
 with GNATCOLL.Projects;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GUI_Utils;                 use GUI_Utils;
-with String_Utils;              use String_Utils;
+with GNATCOLL.Utils;                        use GNATCOLL.Utils;
+with GNATCOLL.VFS;                          use GNATCOLL.VFS;
+with GUI_Utils;                             use GUI_Utils;
+with String_Utils;                          use String_Utils;
 
-with Glib.Object;               use Glib, Glib.Object;
-with Glib.Values;               use Glib.Values;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
-with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Link_Button;           use Gtk.Link_Button;
-with Gtk.List_Box_Row;          use Gtk.List_Box_Row;
-with Gtk.Notebook;              use Gtk.Notebook;
-with Gtk.Paned;                 use Gtk.Paned;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
-with Gtk.Text_Iter;             use Gtk.Text_Iter;
-with Gtk.Text_Tag;              use Gtk.Text_Tag;
-with Gtk.Text_View;             use Gtk.Text_View;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
-with Gtk.Tree_View;             use Gtk.Tree_View;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtkada.Handlers;           use Gtkada.Handlers;
+with Glib.Object;                           use Glib, Glib.Object;
+with Glib.Values;                           use Glib.Values;
+with Gtk.Box;                               use Gtk.Box;
+with Gtk.Cell_Renderer;                     use Gtk.Cell_Renderer;
+with Gtk.Cell_Renderer_Toggle;              use Gtk.Cell_Renderer_Toggle;
+with Gtk.Dialog;                            use Gtk.Dialog;
+with Gtk.Enums;                             use Gtk.Enums;
+with Gtk.Label;                             use Gtk.Label;
+with Gtk.Link_Button;                       use Gtk.Link_Button;
+with Gtk.List_Box_Row;                      use Gtk.List_Box_Row;
+with Gtk.Notebook;                          use Gtk.Notebook;
+with Gtk.Paned;                             use Gtk.Paned;
+with Gtk.Scrolled_Window;                   use Gtk.Scrolled_Window;
+with Gtk.Text_Buffer;                       use Gtk.Text_Buffer;
+with Gtk.Text_Iter;                         use Gtk.Text_Iter;
+with Gtk.Text_Tag;                          use Gtk.Text_Tag;
+with Gtk.Text_View;                         use Gtk.Text_View;
+with Gtk.Tree_Model;                        use Gtk.Tree_Model;
+with Gtk.Tree_Selection;                    use Gtk.Tree_Selection;
+with Gtk.Tree_Store;                        use Gtk.Tree_Store;
+with Gtk.Tree_View;                         use Gtk.Tree_View;
+with Gtk.Tree_View_Column;                  use Gtk.Tree_View_Column;
+with Gtk.Widget;                            use Gtk.Widget;
+with Gtkada.Handlers;                       use Gtkada.Handlers;
 
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Main_Window;           use GPS.Main_Window;
-with Default_Preferences.GUI;   use Default_Preferences.GUI;
+with GPS.Kernel;                            use GPS.Kernel;
+with GPS.Kernel.Custom;                     use GPS.Kernel.Custom;
+with GPS.Kernel.Hooks;                      use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;                use GPS.Kernel.Preferences;
+with GPS.Intl;                              use GPS.Intl;
+with GPS.Main_Window;                       use GPS.Main_Window;
 
 --------------------
 -- Startup_Module --
@@ -75,16 +74,8 @@ package body Startup_Module is
    Column_Modified      : constant := 4;
    Column_Background    : constant := 5;
    Column_Name_With_Ext : constant := 6;
-   Column_Page          : constant := 7;
-
-   type Startup_Editor_Page_View_Record is new Preferences_Page_View_Record
-     with record
-      Tree              : Gtk_Tree_View;
-      Model             : Gtk_Tree_Store;
-      Plugins_Notebook  : Gtk_Notebook;
-   end record;
-   type Startup_Editor is access all Startup_Editor_Page_View_Record'Class;
-   --  Type of the 'Plugins' page view in the preferences editor dialog.
+   Column_Subpage_Name  : constant := 7;
+   Column_Page          : constant := 8;
 
    type Kernel_Link_Button_Record is new Gtk_Link_Button_Record with record
       Kernel : Kernel_Handle;
@@ -130,6 +121,75 @@ package body Startup_Module is
    function Is_Loaded
      (Editor : not null access Startup_Editor_Page_View_Record'Class;
       Iter   : Gtk_Tree_Iter) return String;
+   --  Return a String indicating if the script refered by Iter is currently
+   --  loaded and how it has been loaded.
+
+   function Get_Subpage_Iter
+     (Editor       : not null access Startup_Editor_Page_View_Record'Class;
+      Subpage_Name : String) return Gtk_Tree_Iter;
+   --  Return the page index in the notebook for Subpage_Name.
+
+   ----------------------
+   -- Get_Subpage_Iter --
+   ----------------------
+
+   function Get_Subpage_Iter
+     (Editor       : not null access Startup_Editor_Page_View_Record'Class;
+      Subpage_Name : String) return Gtk_Tree_Iter
+   is
+      Iter        : Gtk_Tree_Iter;
+   begin
+      Iter := Get_Iter_First (Editor.Model);
+
+      while Iter /= Null_Iter loop
+         exit when Get_String
+           (Editor.Model, Iter, Column_Subpage_Name) = Subpage_Name;
+
+         Next (Editor.Model, Iter);
+      end loop;
+
+      return Iter;
+   end Get_Subpage_Iter;
+
+   ---------------------
+   -- Display_Subpage --
+   ---------------------
+
+   overriding procedure Display_Subpage
+     (Self         : not null access Startup_Editor_Page_View_Record;
+      Subpage_Name : String)
+   is
+      Subpage_Iter : constant Gtk_Tree_Iter :=
+                      Get_Subpage_Iter (Editor       => Self,
+                                        Subpage_Name => Subpage_Name);
+      Subpage_Path : constant Gtk_Tree_Path :=
+                       Self.Model.Get_Path (Subpage_Iter);
+   begin
+      Self.Tree.Set_Cursor (Subpage_Path, null, False);
+   end Display_Subpage;
+
+   --------------------------
+   -- Set_Pref_Highlighted --
+   --------------------------
+
+   overriding procedure Set_Pref_Highlighted
+     (Self      : not null access Startup_Editor_Page_View_Record;
+      Pref      : not null access Preference_Record'Class;
+      Highlight : Boolean)
+   is
+      Subpage_Iter  : constant Gtk_Tree_Iter :=
+                       Get_Subpage_Iter (Editor       => Self,
+                                         Subpage_Name => Pref.Get_Page_Name);
+      Subpage_Index : constant Gint :=
+                          Get_Int (Self.Model, Subpage_Iter, Column_Page);
+      Subpage_View  : constant Preferences_Page_View :=
+                        Preferences_Page_View
+                          (Self.Plugins_Notebook.Get_Nth_Page
+                             (Subpage_Index));
+
+   begin
+      Subpage_View.Set_Pref_Highlighted (Pref, Highlight);
+   end Set_Pref_Highlighted;
 
    ---------------
    -- Is_Loaded --
@@ -296,6 +356,7 @@ package body Startup_Module is
                     Is_Loaded (Editor, Iter));
                Set (Editor.Model, Iter, Column_Modified, False);
                Set (Editor.Model, Iter, Column_Name_With_Ext, Name);
+               Set (Editor.Model, Iter, Column_Subpage_Name, Subpage.Get_Name);
                Set (Editor.Model, Iter, Column_Page,
                     Editor.Plugins_Notebook.Get_N_Pages);
 
@@ -326,6 +387,7 @@ package body Startup_Module is
                           Column_Modified      => GType_Boolean,
                           Column_Background    => GType_String,
                           Column_Name_With_Ext => GType_String,
+                          Column_Subpage_Name  => GType_String,
                           Column_Page          => GType_Int),
          Column_Names       => (Column_Name + 1   =>
                                     Column_Name_Name'Unchecked_Access,
@@ -498,9 +560,29 @@ package body Startup_Module is
 
    overriding procedure Free (Self : in out Plugin_Preferences_Page_Record) is
    begin
-      Free (Self.Doc);
       Free (Preferences_Page_Record (Self));
+
+      Free (Self.Plugin_Name);
+      Free (Self.Doc);
    end Free;
+
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   function Get_Documentation
+     (Self : not null access Plugin_Preferences_Page_Record) return String
+   is
+     (if Self.Doc = null then "" else Self.Doc.all);
+
+   ---------------------
+   -- Get_Plugin_Name --
+   ---------------------
+
+   function Get_Plugin_Name
+     (Self : not null access Plugin_Preferences_Page_Record) return String
+   is
+      (Self.Plugin_Name.all);
 
    --------------------------------------------
    -- Register_All_Plugins_Preferences_Pages --
@@ -526,13 +608,14 @@ package body Startup_Module is
       is
          Plugin_Page : constant Plugin_Preferences_Page :=
                          new Plugin_Preferences_Page_Record;
-         Page_Name   : constant String :=
-                         "Plugins/" &
+         Page_Name   : constant String := "Plugins/" &
                          Base_Name (Name, File_Extension (Name)) & '/';
       begin
          --  Set the plugin page attributes
          Plugin_Page.Plugin_Name := new String'(Name);
          Plugin_Page.File := File;
+         Plugin_Page.Plugin_Name :=
+           new String'(Base_Name (Name, File_Extension (Name)));
          Plugin_Page.Loaded_At_Startup := Loaded;
          Plugin_Page.Explicit := Explicit;
          Plugin_Page.Doc := Get_Plugin_Doc (File);

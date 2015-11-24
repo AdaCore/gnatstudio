@@ -1000,6 +1000,26 @@ package body GPS.Search is
    -- Free --
    ----------
 
+   procedure Free
+     (Self : in out Search_Provider_Registry_Access)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Search_Provider_Registry'Class, Search_Provider_Registry_Access);
+   begin
+      if Self /= null then
+         for Provider_Info of Self.Providers loop
+            Free (Provider_Info.Provider);
+         end loop;
+
+         Self.Providers.Clear;
+         Unchecked_Free (Self);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
    overriding procedure Free (Self : in out Full_Text_Search) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (GNATCOLL.Boyer_Moore.Pattern, Boyer_Moore_Pattern_Access);

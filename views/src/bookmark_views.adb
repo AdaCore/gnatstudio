@@ -61,6 +61,7 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Search;         use GPS.Kernel.Search;
+with GPS.Search.GUI;            use GPS.Search.GUI;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Scripts;               use GPS.Scripts;
 with GPS.Search;                use GPS.Search;

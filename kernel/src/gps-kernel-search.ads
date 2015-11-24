@@ -76,6 +76,7 @@ package GPS.Kernel.Search is
    Provider_Entities    : constant String := "Entities";
    Provider_Sources     : constant String := "Sources";
    Provider_Bookmarks   : constant String := "Bookmarks";
+   Provider_Plugins     : constant String := "Plugins";
    Provider_Preferences : constant String := "Preferences";
 
    --  The names must be synchronized with the search.py plugin
@@ -83,15 +84,5 @@ package GPS.Kernel.Search is
    Action_Name_Prefix : constant String := "Global Search in context: ";
    --  prefix for the actions, which should be followed by one of the provider
    --  ids.
-
-   Registry : GPS.Search.Search_Provider_Registry;
-   --  ??? Will be moved to the kernel
-
-   procedure Register_Provider_And_Action
-      (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Provider   : not null access Kernel_Search_Provider'Class;
-       Icon_Name  : String := "");
-   --  Register the provider (and sets its Kernel field).
-   --  Creates an action for it so that users can do key bindings.
 
 end GPS.Kernel.Search;

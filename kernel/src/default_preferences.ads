@@ -175,25 +175,22 @@ package Default_Preferences is
       return Gtk.Widget.Gtk_Widget is abstract;
    --  Return the main Gtk_Widget of the preferences editor view
 
+   procedure Display_Page
+     (Self      : not null access Preferences_Editor_Interface;
+      Page_Name : String) is abstract;
+   --  Display the page view associated with Page_Name.
+
    procedure Display_Pref
-     (Self : not null access Preferences_Editor_Interface;
-      Pref : not null access Preference_Record'Class) is abstract;
-   --  Display the preference given in parameter. This means that the
-   --  preferences editor widget should make appear the preference on the
-   --  screen (e.g: open the page containing the preference if it is organized
-   --  with different pages).
+     (Self      : not null access Preferences_Editor_Interface;
+      Pref      : not null Preference;
+      Highlight : Boolean := False) is abstract;
+   --  Display the page view in which Pref is contained, highlighting the
+   --  preference or not depending on Highlight.
 
-   procedure Highlight_Pref
-     (Self : not null access Preferences_Editor_Interface;
-      Pref : not null access Preference_Record'Class) is null;
-   --  Highlight the preference given in parameter.
-   --  The way preferences are highlighted is editor-specific: override
-   --  this procedure if preferences highlighting is needed.
-
-   procedure Unhighlight_Previous_Pref
-     (Self : not null access Preferences_Editor_Interface) is null;
-   --  If a preference has already been highlighted (via a call to
-   --  Highlight_Pref), unhighlight it.
+   function Get_Page_View
+     (Self      : not null access Preferences_Editor_Interface;
+      Page_Name : String) return Gtk.Widget.Gtk_Widget is abstract;
+   --  Return the page view associated with Page_Name.
 
    -----------------------
    -- Preferences_Group --
@@ -262,6 +259,11 @@ package Default_Preferences is
 
    procedure Free (Self : in out Preferences_Page_Record);
    --  Free the memory associated with Page.
+
+   function Get_Root_Page (Page_Name : String) return String;
+   --  Return the root page for a given page name (e.g: for "Editor/Ada/",
+   --  return "Editor/").
+   --  Return "" if Page_Name refers already to a root page.
 
    ------------------------------
    -- Default_Preferences_Page --

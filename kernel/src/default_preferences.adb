@@ -208,10 +208,6 @@ package body Default_Preferences is
    --  Return True if the given page name refers to a root page, False
    --  otherwise.
 
-   function Get_Root_Page (Page_Name : String) return String;
-   --  Return the root page for a given page name (e.g: for "Editor/Ada/",
-   --  return "Editor/").
-
    function Find_Page
      (Pages      : in out Pages_Lists.List;
       Name       : String) return Preferences_Page;

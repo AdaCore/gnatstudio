@@ -244,8 +244,10 @@ package body GPS.Kernel.Search.Preferences is
          (Self.Kernel, "open Preferences", Synchronous => True,
           Error_Msg_In_Console => True);
 
-      --  Display the preference in the preferences editor view
-      Self.Kernel.Get_Preferences.Get_Editor.Display_Pref (Self.Pref);
+      --  Display the preference in the preferences editor dialog
+      Self.Kernel.Get_Preferences.Get_Editor.Display_Pref
+        (Pref      => Self.Pref,
+         Highlight => False);
    end Execute;
 
    ----------

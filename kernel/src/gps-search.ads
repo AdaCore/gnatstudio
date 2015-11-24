@@ -444,6 +444,8 @@ package GPS.Search is
    --------------
 
    type Search_Provider_Registry is tagged private;
+   type Search_Provider_Registry_Access is
+     access all Search_Provider_Registry'Class;
 
    procedure Register
      (Self     : in out Search_Provider_Registry;
@@ -468,6 +470,10 @@ package GPS.Search is
      (Self : Search_Provider_Registry;
       N    : Positive) return Search_Provider_Access;
    --  Retrieve a provider by rank
+
+   procedure Free
+     (Self : in out Search_Provider_Registry_Access);
+   --  Free all the providers registered in Self.
 
 private
 

@@ -51,6 +51,7 @@ with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Search;      use GPS.Kernel.Search;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Search;             use GPS.Search;
+with GPS.Search.GUI;         use GPS.Search.GUI;
 with GUI_Utils;              use GUI_Utils;
 with Src_Editor_Module;      use Src_Editor_Module;
 with GNAT.Strings;           use GNAT.Strings;

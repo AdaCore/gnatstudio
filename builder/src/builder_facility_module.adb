@@ -59,6 +59,7 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Search;         use GPS.Kernel.Search;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.Search;                use GPS.Search;
+with GPS.Search.GUI;            use GPS.Search.GUI;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
 

@@ -73,6 +73,13 @@ package Default_Preferences.GUI is
    --  Setter and getter for the Prefs_Box attribute, which is the container
    --  containing all the preferences-related widgets for a given page view.
 
+   procedure Display_Subpage
+     (Self         : not null access Preferences_Page_View_Record;
+      Subpage_Name : String) is null;
+   --  Display the subpage associated to Subpage_Name.
+   --  Override this procedure if the subpages are displayed directly in the
+   --  root page view (e.g: inside a list contained in the root page view).
+
    ------------------------------
    -- Preferences_Group_Widget --
    ------------------------------

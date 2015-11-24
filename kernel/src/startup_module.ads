@@ -22,11 +22,15 @@
 with GNAT.Strings;
 with GNATCOLL.VFS;
 
+with Gtk.Notebook;
+with Gtk.Tree_Store;
+with Gtk.Tree_View;
 with Gtk.Widget;
 
-with Default_Preferences;       use Default_Preferences;
+with Default_Preferences;     use Default_Preferences;
+with Default_Preferences.GUI; use Default_Preferences.GUI;
 with GPS.Kernel;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 
 package Startup_Module is
 
@@ -67,6 +71,31 @@ package Startup_Module is
    --  See inherited documentation.
 
    overriding procedure Free (Self : in out Plugin_Preferences_Page_Record);
+   --  See inherited documentation.
+
+   function Get_Documentation
+     (Self : not null access Plugin_Preferences_Page_Record) return String;
+   --  Return the plugin page documentation.
+
+   function Get_Plugin_Name
+     (Self : not null access Plugin_Preferences_Page_Record) return String;
+   --  Return the name of the plugin associated to this page
+
+   type Startup_Editor_Page_View_Record is new Preferences_Page_View_Record
+   with private;
+   type Startup_Editor is access all Startup_Editor_Page_View_Record'Class;
+   --  Type of the 'Plugins' page view in the preferences editor dialog.
+
+   overriding procedure Display_Subpage
+     (Self         : not null access Startup_Editor_Page_View_Record;
+      Subpage_Name : String);
+   --  See inherited documentation.
+
+   overriding procedure Set_Pref_Highlighted
+     (Self      : not null access Startup_Editor_Page_View_Record;
+      Pref      : not null access Preference_Record'Class;
+      Highlight : Boolean);
+   --  See inherited documentation.
 
 private
 
@@ -89,6 +118,13 @@ private
          Doc               : GNAT.Strings.String_Access;
          --  Plugin documentation.
       end record;
+
+   type Startup_Editor_Page_View_Record is new Preferences_Page_View_Record
+   with record
+      Tree                  : Gtk.Tree_View.Gtk_Tree_View;
+      Model                 : Gtk.Tree_Store.Gtk_Tree_Store;
+      Plugins_Notebook      : Gtk.Notebook.Gtk_Notebook;
+   end record;
 
    type Startup_Module_ID_Record is new Module_ID_Record with record
       Has_Changed : Boolean := False;
