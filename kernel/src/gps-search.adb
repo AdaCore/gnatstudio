@@ -267,6 +267,37 @@ package body GPS.Search is
       return not (Is_Alphanumeric (C) or else C = '_');
    end Is_Word_Delimiter;
 
+   -----------------------
+   -- Search_Best_Match --
+   -----------------------
+
+   function Search_Best_Match
+     (Self    : not null access Search_Pattern'Class;
+      Buffer  : String) return Search_Context
+   is
+      Context : Search_Context := Self.Start (Buffer);
+   begin
+      --  Searching for the best match only makes sense when searching in
+      --  Approximate mode.
+      if Self.Kind /= Approximate then
+         return Context;
+      end if;
+
+      declare
+         Max_Score_Context : Search_Context := Context;
+      begin
+         while Context /= No_Match loop
+            if Context.Score > Max_Score_Context.Score then
+               Max_Score_Context := Context;
+            end if;
+
+            Self.Next (Buffer, Context);
+         end loop;
+
+         return Max_Score_Context;
+      end;
+   end Search_Best_Match;
+
    -----------
    -- Start --
    -----------

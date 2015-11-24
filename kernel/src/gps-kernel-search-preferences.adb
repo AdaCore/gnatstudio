@@ -29,6 +29,98 @@ with Pango.Enums;             use Pango.Enums;
 
 package body GPS.Kernel.Search.Preferences is
 
+   procedure Search_Match_In_Label
+     (Self     : not null access Preferences_Search_Provider;
+      Pref     : not null Preference;
+      Result   : out GPS.Search.Search_Result_Access);
+   --  Search if the current pattern matches with the given preference's label.
+   --  Return null if no match was found and a non-null result otherwise.
+
+   procedure Search_Match_In_Doc
+     (Self     : not null access Preferences_Search_Provider;
+      Pref     : not null Preference;
+      Result   : out GPS.Search.Search_Result_Access);
+   --  Search if the current pattern matches with the given preference's
+   --  documentation.
+   --  Return null if no match was found and a non-null result otherwise.
+
+   ---------------------------
+   -- Search_Match_In_Label --
+   ---------------------------
+
+   procedure Search_Match_In_Label
+     (Self     : not null access Preferences_Search_Provider;
+      Pref     : not null Preference;
+      Result   : out GPS.Search.Search_Result_Access)
+   is
+      Label             : constant String := Get_Label (Pref);
+      Label_Context     : Search_Context;
+      Short             : GNAT.Strings.String_Access;
+      Long              : GNAT.Strings.String_Access;
+   begin
+      Result := null;
+      Label_Context := Self.Pattern.Search_Best_Match (Label);
+
+      --  if a match was found
+      if Label_Context /= GPS.Search.No_Match then
+         declare
+            Doc : constant String := Get_Doc (Pref);
+         begin
+            Short := new String'
+              (Escape_Text (Get_Page_Name (Pref)) &
+                 Self.Pattern.Highlight_Match
+                 (Buffer  => Pref.Get_Label,
+                  Context => Label_Context));
+            Long := new String'
+              (Get_Surrounding_Line (Doc, Doc'First, Doc'First));
+
+            Result := Preferences_Search_Provider'Class
+              (Self.all).Create_Preferences_Search_Result
+              (Pref, Short, Long, Label_Context.Score);
+
+            Self.Adjust_Score (Result);
+         end;
+      end if;
+   end Search_Match_In_Label;
+
+   -------------------------
+   -- Search_Match_In_Doc --
+   -------------------------
+
+   procedure Search_Match_In_Doc
+     (Self     : not null access Preferences_Search_Provider;
+      Pref     : not null Preference;
+      Result   : out GPS.Search.Search_Result_Access)
+   is
+      Doc               : constant String := Get_Doc (Pref);
+      Short             : GNAT.Strings.String_Access;
+      Long              : GNAT.Strings.String_Access;
+      Doc_Context       : Search_Context;
+   begin
+      Result := null;
+
+      Doc_Context := Self.Pattern.Search_Best_Match (Doc);
+
+      --  If a match was found
+      if Doc_Context /= GPS.Search.No_Match then
+         Short := new String'
+           (Escape_Text (Get_Page_Name (Pref)) & Pref.Get_Label);
+         Long := new String'
+           (Self.Pattern.Highlight_Match
+              (Buffer  => Get_Surrounding_Line
+                   (Doc,
+                    Doc_Context.Start.Index,
+                    Doc_Context.Finish.Index),
+               Context => Doc_Context));
+
+         Result := Preferences_Search_Provider'Class
+           (Self.all).Create_Preferences_Search_Result
+           (Pref, Short, Long, Doc_Context.Score);
+
+         Self.Adjust_Score (Result);
+      end if;
+   end Search_Match_In_Doc;
+
    -------------------
    -- Documentation --
    -------------------
@@ -89,7 +181,7 @@ package body GPS.Kernel.Search.Preferences is
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
-      Pref : Preference;
+      Pref         : Preference;
    begin
       Result := null;
 
@@ -97,51 +189,17 @@ package body GPS.Kernel.Search.Preferences is
 
       --  Don't try to match the hidden preferences
       if Get_Page_Name (Pref) /= "" then
-         declare
-            Doc               : constant String := Get_Doc (Pref);
-            Doc_Context       : Search_Context;
-            Label             : constant String := Get_Label (Pref);
-            Label_Context     : Search_Context;
-            Short             : GNAT.Strings.String_Access;
-            Long              : GNAT.Strings.String_Access;
-         begin
-            Label_Context := Self.Pattern.Start (Label);
-            Doc_Context := Self.Pattern.Start (Doc);
+         --  Try to match the preference's label first
+         Search_Match_In_Label (Self   => Self,
+                                Pref   => Pref,
+                                Result => Result);
 
-            --  Try to match the preference's label first
-            if Label_Context /= GPS.Search.No_Match then
-               Short := new String'
-                 (Escape_Text (Get_Page_Name (Pref)) &
-                    Self.Pattern.Highlight_Match
-                    (Buffer  => Pref.Get_Label,
-                     Context => Label_Context));
-               Long := new String'
-                 (Get_Surrounding_Line (Doc, Doc'First, Doc'First));
-
-               Result := Preferences_Search_Provider'Class
-                 (Self.all).Create_Preferences_Search_Result
-                 (Pref, Short, Long, Label_Context.Score);
-
-               Self.Adjust_Score (Result);
-            elsif Doc_Context /= GPS.Search.No_Match then
-               --  Try to match the documentation
-               Short := new String'
-                 (Escape_Text (Get_Page_Name (Pref)) & Pref.Get_Label);
-               Long := new String'
-                 (Self.Pattern.Highlight_Match
-                    (Buffer  => Get_Surrounding_Line
-                         (Doc,
-                          Doc_Context.Start.Index,
-                          Doc_Context.Finish.Index),
-                     Context => Doc_Context));
-
-               Result := Preferences_Search_Provider'Class
-                 (Self.all).Create_Preferences_Search_Result
-                 (Pref, Short, Long, Doc_Context.Score);
-
-               Self.Adjust_Score (Result);
-            end if;
-         end;
+         --  If no match was found for the label, try with the documentation
+         if Result = null then
+            Search_Match_In_Doc (Self   => Self,
+                                 Pref   => Pref,
+                                 Result => Result);
+         end if;
       end if;
 
       Next (Self.Iter);

@@ -210,6 +210,13 @@ package GPS.Search is
    --
    --  Context is set to No_Match if the Buffer did not match.
 
+   function Search_Best_Match
+     (Self    : not null access Search_Pattern'Class;
+      Buffer  : String) return Search_Context;
+   --  Search for the best occurence (highest score) of Self in buffer and
+   --  return it.
+   --  No_Match is returned if the Buffer did not match.
+
    function Highlight_Match
       (Self      : Search_Pattern;
        Buffer    : String;
