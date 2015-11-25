@@ -185,7 +185,11 @@ package body GPS.Search is
          M := M + 1;
       end if;
 
-      if Context.Ref = Unknown_Position then
+      --  Ref should be before any (Start, Finish) to update them correctly
+      if Context.Ref = Unknown_Position
+        or else Context.Ref.Index > Integer'Min
+          (Context.Start.Index, Context.Finish.Index)
+      then
          --  Assume beginning of buffer is first line and column
          Context.Ref := (Buffer'First, 1, 1, 1);
       end if;
