@@ -306,6 +306,27 @@ package body Clang_Xref is
            (TU, Loc.File, Loc.Line, Natural'Max (1, Line_Offset - 1));
       end if;
 
+      --  If you ask for a cursor that is in the brackets section of an
+      --  inclusion directive, like this:
+      --
+      --  #include <test.h>
+      --             ^ ask for cursor here
+      --
+      --  Libclang will return a NoDeclFound cursor. We want to get the
+      --  inclusion directive cursor, so test if we are in that case, and
+      --  then return the proper cursor
+
+      if Kind (Ret) = NoDeclFound then
+         declare
+            Tmp : constant Clang_Cursor
+              := Cursor_At (TU, Loc.File, Loc.Line, 1);
+         begin
+            if Kind (Tmp) = InclusionDirective then
+               Ret := Tmp;
+            end if;
+         end;
+      end if;
+
       return Ret;
    end Get_Clang_Cursor;
 
