@@ -55,7 +55,6 @@ package GPS.Kernel.Search.Preferences is
    --  Return a GPS.Search.Search_Result_Access according to the matched
    --  preference, a short description and the calculated score for this match.
 
-   overriding procedure Free (Self : in out Preferences_Search_Result);
    overriding procedure Execute
      (Self       : not null access Preferences_Search_Result;
       Give_Focus : Boolean);

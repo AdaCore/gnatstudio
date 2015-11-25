@@ -178,15 +178,6 @@ package body GPS.Kernel.Search.Preferences is
          Pref     => Pref);
    end Create_Preferences_Search_Result;
 
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (Self : in out Preferences_Search_Result) is
-   begin
-      Free (Kernel_Search_Result (Self));
-   end Free;
-
    -------------
    -- Execute --
    -------------
