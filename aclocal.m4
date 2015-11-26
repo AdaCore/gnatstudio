@@ -32,11 +32,17 @@ cat > conftest.gpr <<EOF
 with "[$1]";
 project Conftest is for Source_Files use (); end Conftest;
 EOF
-if AC_TRY_COMMAND([gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out])
+if AC_TRY_COMMAND([gprls -Pconftest.gpr system.ads > /dev/null 2>conftest.out])
 then
   HAVE_GNAT_PROJECT_$1=yes
 else
-  HAVE_GNAT_PROJECT_$1=no
+  # Try with "gnatls", in case gprls was not available
+  if AC_TRY_COMMAND([gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out])
+  then
+    HAVE_GNAT_PROJECT_$1=yes
+  else
+    HAVE_GNAT_PROJECT_$1=no
+  fi
 fi
 AC_MSG_RESULT($HAVE_GNAT_PROJECT_$1)
 AC_SUBST(HAVE_GNAT_PROJECT_$1)

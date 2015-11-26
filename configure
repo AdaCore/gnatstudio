@@ -2354,7 +2354,7 @@ cat > conftest.gpr <<EOF
 with "xmlada";
 project Conftest is for Source_Files use (); end Conftest;
 EOF
-if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
+if { ac_try='gprls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -2363,7 +2363,18 @@ if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
 then
   HAVE_GNAT_PROJECT_xmlada=yes
 else
-  HAVE_GNAT_PROJECT_xmlada=no
+  # Try with "gnatls", in case gprls was not available
+  if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+  then
+    HAVE_GNAT_PROJECT_xmlada=yes
+  else
+    HAVE_GNAT_PROJECT_xmlada=no
+  fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $HAVE_GNAT_PROJECT_xmlada" >&5
 $as_echo "$HAVE_GNAT_PROJECT_xmlada" >&6; }
@@ -2399,7 +2410,7 @@ cat > conftest.gpr <<EOF
 with "gtkada";
 project Conftest is for Source_Files use (); end Conftest;
 EOF
-if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
+if { ac_try='gprls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -2408,7 +2419,18 @@ if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
 then
   HAVE_GNAT_PROJECT_gtkada=yes
 else
-  HAVE_GNAT_PROJECT_gtkada=no
+  # Try with "gnatls", in case gprls was not available
+  if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+  then
+    HAVE_GNAT_PROJECT_gtkada=yes
+  else
+    HAVE_GNAT_PROJECT_gtkada=no
+  fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $HAVE_GNAT_PROJECT_gtkada" >&5
 $as_echo "$HAVE_GNAT_PROJECT_gtkada" >&6; }
@@ -4198,7 +4220,7 @@ cat > conftest.gpr <<EOF
 with "gtkada";
 project Conftest is for Source_Files use (); end Conftest;
 EOF
-if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
+if { ac_try='gprls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -4207,7 +4229,18 @@ if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
 then
   HAVE_GNAT_PROJECT_gtkada=yes
 else
-  HAVE_GNAT_PROJECT_gtkada=no
+  # Try with "gnatls", in case gprls was not available
+  if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+  then
+    HAVE_GNAT_PROJECT_gtkada=yes
+  else
+    HAVE_GNAT_PROJECT_gtkada=no
+  fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $HAVE_GNAT_PROJECT_gtkada" >&5
 $as_echo "$HAVE_GNAT_PROJECT_gtkada" >&6; }
