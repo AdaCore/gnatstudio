@@ -895,9 +895,7 @@ package body Call_Graph_Views is
          Path_Free (Local_Path);
 
          while Child /= Null_Iter loop
-            Dummy := Child;
-            Next (M, Child);
-            Remove (M, Dummy);
+            Remove (M, Child);
          end loop;
 
          case Get_View_Type (Get_Model (V.Tree), Iter) is

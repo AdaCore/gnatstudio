@@ -1633,16 +1633,9 @@ package body Directory_Tree is
 
    procedure Free_Children
      (T    : Dir_Tree;
-      Iter : Gtk_Tree_Iter)
-   is
-      Current : Gtk_Tree_Iter := Children (T.File_Model, Iter);
+      Iter : Gtk_Tree_Iter) is
    begin
-      if Has_Child (T.File_Model, Iter) then
-         while Current /= Null_Iter loop
-            Remove (T.File_Model, Current);
-            Current := Children (T.File_Model, Iter);
-         end loop;
-      end if;
+      Remove_Child_Nodes (T.File_Model, Iter);
    end Free_Children;
 
 end Directory_Tree;
