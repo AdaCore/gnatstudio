@@ -1281,6 +1281,9 @@ package body GNATdoc.Frontend is
          In_Item_Decl     : Boolean := False;
          --  Set to true when we see "procedure", "function" or "entry"
 
+         In_Aspect_Spec   : Boolean := False;
+         --  Set to true when In_Item_Decl is True and we see "with"
+
          In_Parent_Part   : Boolean := False;
          --  In_Parent_Part is set when we identify the sequence "is new"
          --  or the sequence "interface and" which indicate that the next
@@ -1324,6 +1327,7 @@ package body GNATdoc.Frontend is
             In_Type_Definition := False;
             In_Derived_Type_Definition := False;
             In_Item_Decl    := False;
+            In_Aspect_Spec  := False;
 
             In_Parent_Part  := False;
 
@@ -3113,6 +3117,11 @@ package body GNATdoc.Frontend is
                         when Tok_Type =>
                            null;
 
+                        when Tok_With =>
+                           if In_Item_Decl then
+                              In_Aspect_Spec := True;
+                           end if;
+
                         when others =>
                            null;
                      end case;
@@ -3527,8 +3536,12 @@ package body GNATdoc.Frontend is
                      --  processing the file s-htable.ads. More work needed
                      --  in this area???
 
+                     --  Disable also the check on entities found in aspect
+                     --  specifications since we do not need to process them.
+
                      Extended_Cursor.Next_Entity (Cursor,
-                       Check_Disabled => Get_Kind (E) = E_Generic_Package);
+                       Check_Disabled => Get_Kind (E) = E_Generic_Package
+                                           or else In_Aspect_Spec);
                      E := Extended_Cursor.Entity (Cursor);
                   end loop;
 
