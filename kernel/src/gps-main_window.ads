@@ -77,6 +77,11 @@ package GPS.Main_Window is
 
       Menu_Bar          : Gtk.Menu_Bar.Gtk_Menu_Bar;
 
+      Toolbar_Box       : Gtk_Box;
+      Toolbar           : Gtk_Toolbar;
+      --  The toolbar, and the box that contains it. The box is used to display
+      --  additional items, like the omni-search or progress bars.
+
       Main_Box          : Gtk.Box.Gtk_Box;
       --  The box that contains the menubar, and the rest of the window's
       --  content.
@@ -107,8 +112,6 @@ package GPS.Main_Window is
       Main_Accel_Group  : Gtk_Accel_Group;
       --  The default accelerators for the window
 
-      Toolbar_Box       : Gtk_Box;
-      Toolbar           : Gtk_Toolbar;
       MDI               : Gtkada.MDI.MDI_Window;
 
       Is_Destroyed      : Boolean := False;

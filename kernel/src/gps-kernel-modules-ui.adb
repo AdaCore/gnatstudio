@@ -2232,7 +2232,6 @@ package body GPS.Kernel.Modules.UI is
       A : Proxy_And_Filter;
       Action : access Action_Record;
       Start  : constant Time := Clock;
-      Tool_Bar : Gtk_Toolbar;
       Available : Boolean;
 
       procedure Propagate_Visibility
@@ -2359,12 +2358,13 @@ package body GPS.Kernel.Modules.UI is
                      Propagate_Visibility (W.Menu_Bar, W.Menu_Bar);
                   end if;
 
+                  if W.Toolbar /= null then
+                     Cleanup_Toolbar_Separators (W.Toolbar);
+                  end if;
+
                   List := Next (List);
                end loop;
             end;
-
-            Tool_Bar := Get_Toolbar (Get_Kernel (Data.Context));
-            Cleanup_Toolbar_Separators (Tool_Bar);
 
             Globals.Update_Menus_Idle_Id := No_Source_Id;
             return False;

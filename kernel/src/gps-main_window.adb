@@ -217,6 +217,12 @@ package body GPS.Main_Window is
    end record;
    --  Generic User Interface object
 
+   procedure Set_Toolbar_Style
+     (App       : not null access GPS_Application_Record'Class;
+      Icon_Size : Gtk.Enums.Gtk_Icon_Size;
+      Style     : Gtk.Enums.Gtk_Toolbar_Style);
+   --  Change the style for all toolbars in the application
+
    function On_Draw_Toolbar_Box
      (Self : access Gtk_Widget_Record'Class;
       Cr   : Cairo_Context) return Boolean;
@@ -440,6 +446,30 @@ package body GPS.Main_Window is
       Reset_Title (Kernel, Kernel.Get_Current_Context);
    end Execute;
 
+   -----------------------
+   -- Set_Toolbar_Style --
+   -----------------------
+
+   procedure Set_Toolbar_Style
+     (App       : not null access GPS_Application_Record'Class;
+      Icon_Size : Gtk.Enums.Gtk_Icon_Size;
+      Style     : Gtk.Enums.Gtk_Toolbar_Style)
+   is
+      use Widget_List;
+      List : Widget_List.Glist := App.Get_Windows;  --  Do not free
+      W    : GPS_Application_Window;
+   begin
+      while List /= Null_List loop
+         W := GPS_Application_Window (Get_Data (List));
+         if W.Toolbar /= null then
+            W.Toolbar.Set_Icon_Size (Icon_Size);
+            W.Toolbar.Set_Style (Style);
+         end if;
+
+         List := Next (List);
+      end loop;
+   end Set_Toolbar_Style;
+
    -------------
    -- Execute --
    -------------
@@ -524,20 +554,20 @@ package body GPS.Main_Window is
       then
          case Toolbar_Icons_Size'(Pref_Toolbar_Style.Get_Pref) is
          when Text_Only =>
-            Get_Toolbar (Kernel).Set_Icon_Size (Icon_Size_Menu);
-            Get_Toolbar (Kernel).Set_Style (Toolbar_Text);
+            Set_Toolbar_Style (GPS_Application (Kernel.Get_Application),
+                               Icon_Size_Menu, Toolbar_Text);
 
          when Text_And_Icons =>
-            Get_Toolbar (Kernel).Set_Icon_Size (Icon_Size_Menu);
-            Get_Toolbar (Kernel).Set_Style (Toolbar_Both);
+            Set_Toolbar_Style (GPS_Application (Kernel.Get_Application),
+                               Icon_Size_Menu, Toolbar_Both);
 
          when Small_Icons =>
-            Get_Toolbar (Kernel).Set_Icon_Size (Icon_Size_Menu);
-            Get_Toolbar (Kernel).Set_Style (Toolbar_Icons);
+            Set_Toolbar_Style (GPS_Application (Kernel.Get_Application),
+                               Icon_Size_Menu, Toolbar_Icons);
 
          when Large_Icons =>
-            Get_Toolbar (Kernel).Set_Icon_Size (Icon_Size_Large_Toolbar);
-            Get_Toolbar (Kernel).Set_Style (Toolbar_Icons);
+            Set_Toolbar_Style (GPS_Application (Kernel.Get_Application),
+                               Icon_Size_Large_Toolbar, Toolbar_Icons);
          end case;
       end if;
 
@@ -624,6 +654,15 @@ package body GPS.Main_Window is
       if Self.Menu_Bar /= null then
          Self.Main_Box.Pack_Start (Self.Menu_Bar, Expand => False);
       end if;
+
+      Gtk_New_Hbox (Self.Toolbar_Box, False, 0);
+      Self.Toolbar_Box.Set_Name ("toolbar-box");
+      Self.Main_Box.Pack_Start (Self.Toolbar_Box, False, False, 0);
+      Get_Style_Context (Self.Toolbar_Box).Add_Class ("toolbar");
+      Self.Toolbar_Box.On_Draw (On_Draw_Toolbar_Box'Access);
+
+      Self.Toolbar := Create_Toolbar (Application.Kernel, Id => "main");
+      Self.Toolbar_Box.Pack_Start (Self.Toolbar);
    end Initialize;
 
    -------------
@@ -677,13 +716,6 @@ package body GPS.Main_Window is
 
       Setup_Toplevel_Window (Main_Window.MDI, Main_Window);
 
-      Gtk_New_Hbox (Main_Window.Toolbar_Box, False, 0);
-      Main_Window.Toolbar_Box.Set_Name ("toolbar-box");
-      Main_Window.Main_Box.Pack_Start
-        (Main_Window.Toolbar_Box, False, False, 0);
-      Get_Style_Context (Main_Window.Toolbar_Box).Add_Class ("toolbar");
-      Main_Window.Toolbar_Box.On_Draw (On_Draw_Toolbar_Box'Access);
-
       Widget_Callback.Object_Connect
          (Main_Window.MDI, Signal_Float_Child, On_Float_Child'Access,
           Slot_Object => Main_Window);
@@ -714,9 +746,6 @@ package body GPS.Main_Window is
       --  Set the generic user interface
       User_Interface_Tools.Set_User_Interface
         (new User_Interface'(Main_Window => Gtk_Window (Main_Window)));
-
-      Main_Window.Toolbar := Create_Toolbar (Application.Kernel, Id => "main");
-      Main_Window.Toolbar_Box.Pack_Start (Main_Window.Toolbar);
 
       P := new On_Pref_Changed;
       Preferences_Changed_Hook.Add (P);
