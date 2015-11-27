@@ -60,7 +60,6 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel;                use GPS.Kernel;
-with GPS.Main_Window.Debug;     use GPS.Main_Window.Debug;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
 with GVD.Assembly_View;         use GVD.Assembly_View;
@@ -2033,13 +2032,8 @@ package body GVD_Module is
       Pref   : Preference)
    is
       pragma Unreferenced (Self, Pref);
-      Window : constant Gtk_Window := Get_Main_Window (Kernel);
-      Top    : constant GPS_Window := GPS_Window (Window);
       Prev   : Boolean;
-
    begin
-      GPS.Main_Window.Debug.Preferences_Changed (Top);
-
       Prev   := GVD_Module_ID.Show_Lines_With_Code;
       GVD_Module_ID.Show_Lines_With_Code :=
         Editor_Show_Line_With_Code.Get_Pref;
