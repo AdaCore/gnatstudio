@@ -28,7 +28,6 @@ with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Object;               use Glib.Object;
 
-with Gtk.Accel_Label;           use Gtk.Accel_Label;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -83,8 +82,6 @@ package body Custom_Module is
 
    Menu_Get_Params : constant Cst_Argument_List :=
      (1 => Path_Cst'Access);
-   Menu_Rename_Params : constant Cst_Argument_List :=
-     (1 => Name_Cst'Access);
    Contextual_Constructor_Params : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Contextual_Create_Dynamic_Params : constant Cst_Argument_List :=
@@ -1134,16 +1131,11 @@ package body Custom_Module is
          Name_Parameters (Data, Menu_Get_Params);
          declare
             Path : constant String := Nth_Arg (Data, 1);
-            Menu : constant Gtk_Menu_Item := Find_Menu_Item (Kernel, Path);
             Inst : Class_Instance;
          begin
-            if Menu = null then
-               Set_Error_Msg (Data, -"No such menu: " & Path);
-            else
-               Inst := New_Instance (Get_Script (Data), Menu_Class);
-               Set_Data (Inst, Menu_Class, Path);
-               Set_Return_Value (Data, Inst);
-            end if;
+            Inst := New_Instance (Get_Script (Data), Menu_Class);
+            Set_Data (Inst, Menu_Class, Path);
+            Set_Return_Value (Data, Inst);
          end;
 
       elsif Command = "action" then
@@ -1158,30 +1150,7 @@ package body Custom_Module is
             Set_Data (Result, Action_Class, Value => Action);
             Set_Return_Value (Data, Result);
          end;
-
-      elsif Command = "rename" then
-         Name_Parameters (Data, Menu_Rename_Params);
-         declare
-            Inst : constant Class_Instance := Nth_Arg (Data, 1, Menu_Class);
-            Path : constant String := Get_Data (Inst, Menu_Class);
-            Menu : constant Gtk_Menu_Item  := Find_Menu_Item (Kernel, Path);
-            Label : Gtk_Accel_Label;
-         begin
-            if Menu /= null then
-               Gtk_New (Label, "");
-               Set_Text_With_Mnemonic (Label, Nth_Arg (Data, 2));
-               Set_Alignment (Label, 0.0, 0.5);
-               Set_Accel_Widget (Label, Menu);
-
-               Remove (Menu, Get_Child (Menu));
-               Add (Menu, Label);
-               Show_All (Label);
-            end if;
-         end;
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
    end Menu_Handler;
 
    ------------------------
@@ -1558,12 +1527,6 @@ package body Custom_Module is
         ("action",
          Class         => Menu_Class,
          Getter        => Menu_Handler'Access);
-      Register_Command
-        (Kernel, "rename",
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Class         => Menu_Class,
-         Handler       => Menu_Handler'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,

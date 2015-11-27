@@ -49,6 +49,8 @@ NF-170-OB13-048 GPS: GPS.Menu no longer derives from GPS.GUI (2015-11-16)
   inheritance has been removed. Most functions have been reimplemented though
   using the action associated with the menu. Only pywidget() is no longer
   available.
+  The function GPS.Menu.rename() is no longer provided. Instead, destroy the
+  menu and create a new one associated with the same action.
 
 NF-170-OB13-034 GPS: remove support for GPS.Menu.create (2015-11-13)
 

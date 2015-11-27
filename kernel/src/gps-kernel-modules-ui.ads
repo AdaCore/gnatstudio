@@ -47,7 +47,7 @@ with Glib.Values;
 with Gtk.Application;
 with Gtk.Handlers;
 with Gtk.Menu;
-with Gtk.Menu_Bar;
+with Gtk.Menu_Bar;       use Gtk.Menu_Bar;
 with Gtk.Menu_Item;
 with Gtk.Target_List;
 with Gtk.Toolbar;
@@ -307,6 +307,12 @@ package GPS.Kernel.Modules.UI is
    --  When a menu is optional, it is hidden if its action does not exist.
    --  Otherwise, the menu is simply greyed out, but the menu is still visible.
 
+   procedure Remove_Menu
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Path   : String);
+   --  Remove the menu items with that path (in all windows that have a
+   --  menubar)
+
    function Action_From_Menu
      (Kernel : access Kernel_Handle_Record'Class;
       Path   : String) return String;
@@ -317,8 +323,10 @@ package GPS.Kernel.Modules.UI is
    --  action itself or the action that would be executed by selecting the menu
 
    function Find_Menu_Item
-     (Kernel : access Kernel_Handle_Record'Class;
-      Path   : String) return Gtk.Menu_Item.Gtk_Menu_Item;
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Path    : String;
+      Menubar : Gtk_Menu_Bar := null)
+      return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Given an absolute path (see Register_Menu) for a menu item, return
    --  the underlying gtk menu item. Useful in particular to check or change
    --  the state of a menu item. Path is case insensitive.

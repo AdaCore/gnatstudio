@@ -261,6 +261,24 @@ package body GPS.Main_Window is
    --  Called when a window is resized, to store its size in the properties
    --  and be able to restore it later on.
 
+   --------------------------
+   -- For_All_Open_Windows --
+   --------------------------
+
+   procedure For_All_Open_Windows
+     (App      : not null access Gtk_Application_Record'Class;
+      Callback : not null access procedure
+        (Win : not null access GPS_Application_Window_Record'Class))
+   is
+      use Widget_List;
+      List : Widget_List.Glist := App.Get_Windows;  --  Do not free
+   begin
+      while List /= Null_List loop
+         Callback (GPS_Application_Window (Get_Data (List)));
+         List := Next (List);
+      end loop;
+   end For_All_Open_Windows;
+
    ----------------
    -- Query_User --
    ----------------
@@ -455,19 +473,18 @@ package body GPS.Main_Window is
       Icon_Size : Gtk.Enums.Gtk_Icon_Size;
       Style     : Gtk.Enums.Gtk_Toolbar_Style)
    is
-      use Widget_List;
-      List : Widget_List.Glist := App.Get_Windows;  --  Do not free
-      W    : GPS_Application_Window;
-   begin
-      while List /= Null_List loop
-         W := GPS_Application_Window (Get_Data (List));
+      procedure Internal
+        (W : not null access GPS_Application_Window_Record'Class);
+      procedure Internal
+        (W : not null access GPS_Application_Window_Record'Class) is
+      begin
          if W.Toolbar /= null then
             W.Toolbar.Set_Icon_Size (Icon_Size);
             W.Toolbar.Set_Style (Style);
          end if;
-
-         List := Next (List);
-      end loop;
+      end Internal;
+   begin
+      For_All_Open_Windows (App, Internal'Access);
    end Set_Toolbar_Style;
 
    -------------
@@ -1529,15 +1546,18 @@ package body GPS.Main_Window is
      (App : not null access GPS_Application_Record'Class) return Boolean
    is
       use Gtk.Widget.Widget_List;
-      Windows : Widget_List.Glist := App.Get_Windows;  --  Do not free
-      W       : GPS_Application_Window;
-      Children : Glist;  --  Must be freed
-      L       : Glist;
-      Menu    : Gtk_Widget;
-   begin
-      while Windows /= Null_List loop
-         W := GPS_Application_Window (Get_Data (Windows));
-         if W.Menu_Bar /= null then
+      Result : Boolean := False;
+
+      procedure Internal
+        (W : not null access GPS_Application_Window_Record'Class);
+      procedure Internal
+        (W : not null access GPS_Application_Window_Record'Class)
+      is
+         Children : Glist;  --  Must be freed
+         L        : Glist;
+         Menu     : Gtk_Widget;
+      begin
+         if not Result and then W.Menu_Bar /= null then
             Children := First (W.Menu_Bar.Get_Children);
             L := Children;
             while L /= Null_List loop
@@ -1545,16 +1565,15 @@ package body GPS.Main_Window is
                L := Next (L);
                if Menu /= null and then Menu.Is_Visible then
                   Free (Children);
-                  return True;
+                  Result := True;
                end if;
             end loop;
             Free (Children);
          end if;
-
-         Windows := Next (Windows);
-      end loop;
-
-      return False;
+      end Internal;
+   begin
+      For_All_Open_Windows (App, Internal'Access);
+      return Result;
    end Is_Any_Menu_Open;
 
    ------------------

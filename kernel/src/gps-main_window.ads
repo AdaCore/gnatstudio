@@ -19,6 +19,7 @@ with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 
 with Glib;                    use Glib;
 with Gtk.Accel_Group;         use Gtk.Accel_Group;
+with Gtk.Application;         use Gtk.Application;
 with Gtk.Application_Window;  use Gtk.Application_Window;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Menu_Bar;            use Gtk.Menu_Bar;
@@ -103,6 +104,12 @@ package GPS.Main_Window is
      (Self : not null access GPS_Application_Window_Record'Class)
       return GPS.Kernel.Kernel_Handle is (Self.Application.Kernel) with Inline;
    --  The kernel for the application
+
+   procedure For_All_Open_Windows
+     (App      : not null access Gtk_Application_Record'Class;
+      Callback : not null access procedure
+        (Win : not null access GPS_Application_Window_Record'Class));
+   --  Calls Callback for all open windows
 
    ---------------------
    -- GPS main window --

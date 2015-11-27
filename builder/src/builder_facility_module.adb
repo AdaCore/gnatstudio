@@ -153,10 +153,6 @@ package body Builder_Facility_Module is
       Actions : Unbounded_String_List.List;
       --  The list of currently registered builder actions
 
-      Menus : Unbounded_String_List.List;
-      --  The set of menu items that need to be removed when reloading the
-      --  targets
-
       Build_Count : Natural := 0;
       --  The number of builds currently running
 
@@ -626,9 +622,6 @@ package body Builder_Facility_Module is
             Path          => Path,
             Action        => Action_Name,
             Ref_Item      => "Project");
-
-         Builder_Module_ID.Menus.Prepend
-           (To_Unbounded_String (Strip_Single_Underscores (Path)));
       end Menu_For_Action;
 
    begin
@@ -1463,25 +1456,14 @@ package body Builder_Facility_Module is
    procedure Clear_Actions_And_Menus is
       use Unbounded_String_List;
       C : Unbounded_String_List.Cursor;
-      M : Gtk_Menu_Item;
    begin
-      C := Builder_Module_ID.Menus.First;
-
-      while Has_Element (C) loop
-         M := Find_Menu_Item (Get_Kernel, To_String (Element (C)));
-
-         if M /= null then
-            M.Destroy;
-         end if;
-
-         Next (C);
-      end loop;
-
       loop
          C := Builder_Module_ID.Actions.First;
          exit when not Has_Element (C);
-         Unregister_Action (Kernel => Get_Kernel,
-                            Name   => To_String (Element (C)));
+         Unregister_Action
+           (Kernel       => Get_Kernel,
+            Name         => To_String (Element (C)),
+            Remove_Menus => True);
          Builder_Module_ID.Actions.Delete (C);
       end loop;
    end Clear_Actions_And_Menus;

@@ -174,13 +174,22 @@ package body GPS.Kernel.Actions is
    -----------------------
 
    procedure Unregister_Action
-     (Kernel : access Kernel_Handle_Record'Class;
-      Name   : String) is
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Name         : String;
+      Remove_Menus : Boolean := True)
+   is
+      A : Action_Record_Access;
    begin
       loop
-         exit when Get
-           (Actions_Htable_Access (Kernel.Actions).Table, To_Lower (Name))
-           = null;
+         A := Get
+           (Actions_Htable_Access (Kernel.Actions).Table, To_Lower (Name));
+         exit when A = null;
+
+         if Remove_Menus and then A.Menus /= null then
+            for M of A.Menus.all loop
+               Remove_Menu (Kernel, M.all);
+            end loop;
+         end if;
 
          Remove (Actions_Htable_Access (Kernel.Actions).Table,
                  To_Lower (Name));

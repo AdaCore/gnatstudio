@@ -7531,17 +7531,6 @@ class Menu(object):
         """
         pass  # implemented in Ada
 
-    def rename(self, name):
-        """
-        Changes the name of a menu. The first underscore character seen in
-        name will be used as the keyboard shortcut to access this menu from
-        now on. If you actually want to insert an underscore in the name, you
-        need to double it.
-
-        :param name: A string
-        """
-        pass  # implemented in Ada
-
 
 ###########################################################
 # Message

@@ -59,7 +59,6 @@ with Gtk.Tool_Item;             use Gtk.Tool_Item;
 with Gtk.Accel_Label;           use Gtk.Accel_Label;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Bar;              use Gtk.Menu_Bar;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Menu_Shell;            use Gtk.Menu_Shell;
 with Gtk.Selection_Data;        use Gtk.Selection_Data;
@@ -1148,16 +1147,24 @@ package body GPS.Kernel.Modules.UI is
    --------------------
 
    function Find_Menu_Item
-     (Kernel : access Kernel_Handle_Record'Class;
-      Path   : String) return Gtk.Menu_Item.Gtk_Menu_Item
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Path    : String;
+      Menubar : Gtk_Menu_Bar := null)
+      return Gtk.Menu_Item.Gtk_Menu_Item
    is
       Win : constant GPS_Window := GPS_Window (Kernel.Get_Main_Window);
+      M   : Gtk_Menu_Bar;
    begin
-      if Win = null or else Win.Menu_Bar = null then
+      if Win = null then
          return null;
       else
+         M := (if Menubar = null then Win.Menu_Bar else Menubar);
+         if M = null then
+            return null;
+         end if;
+
          return Find_Or_Create_Menu_Tree
-           (Menu_Bar      => Win.Menu_Bar,
+           (Menu_Bar      => M,
             Menu          => null,
             Path          => Escape_Underscore (Path),
             Accelerators  => Get_Default_Accelerators (Kernel),
@@ -1225,6 +1232,32 @@ package body GPS.Kernel.Modules.UI is
             return null;
       end case;
    end Lookup_Action;
+
+   -----------------
+   -- Remove_Menu --
+   -----------------
+
+   procedure Remove_Menu
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Path   : String)
+   is
+      procedure Internal
+        (W : not null access GPS_Application_Window_Record'Class);
+      procedure Internal
+        (W : not null access GPS_Application_Window_Record'Class)
+      is
+         M : Gtk_Menu_Item;
+      begin
+         if W.Menu_Bar /= null then
+            M := Find_Menu_Item (Kernel, Path, W.Menu_Bar);
+            if M /= null then
+               M.Destroy;
+            end if;
+         end if;
+      end Internal;
+   begin
+      For_All_Open_Windows (Kernel.Get_Application, Internal'Access);
+   end Remove_Menu;
 
    -------------------
    -- Lookup_Action --
