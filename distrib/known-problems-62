@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-OB23-034 GNATdoc: compiling does not update cross references
+
+  Problem:    Units containing subprograms with pre/post conditions may
+              be incorrectly reported by GNATdoc as sources whose cross
+              references are not up-to-date.
+
+  Status:     This was fixed in 17.0 on 2015-11-27
+
+  Workaround: None.
+
 KP-62-OB19-033 GNATdoc: protected types are not included in documentation
 
   Problem:    GNATdoc doesn't generate documentation for protected types.
