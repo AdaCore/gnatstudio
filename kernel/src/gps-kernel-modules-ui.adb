@@ -1573,6 +1573,12 @@ package body GPS.Kernel.Modules.UI is
                        Optional  => Optional,
                        Hide      => False,
                        Looked_Up => null);
+
+         --  The accel path is necessary to show the menu path in the
+         --  Key Shortcuts editor, and tooltips for actions.
+         Self.Set_Accel_Path
+           ("<gps>" & Create_Menu_Path (Parent_Path, Menu_Label));
+
          Self.On_Activate (On_Activate_Action_Item'Access);
          Add_To_Global_Proxies (Self, Kernel, null);
          Item := Gtk_Menu_Item (Self);
