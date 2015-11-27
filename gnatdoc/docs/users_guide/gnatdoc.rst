@@ -588,7 +588,7 @@ that contains implementation of custom tags handlers::
 
    package Documentation is
       for Custom_Tags_Definition use "my_tags.py";
-      --  GNATdoc loads my_tags.py file on statup to process custom tags
+      --  GNATdoc loads my_tags.py file on startup to process custom tags
    end Documentation;
 
 If this attribute is not specified, there is no custom tags are processed.
