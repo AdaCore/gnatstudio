@@ -82,12 +82,6 @@ package body Language.Libclang is
    is new Ada.Unchecked_Deallocation
      (Symbol_To_Location_Maps.Map, Sym_To_Loc_Map);
 
-   procedure Free
-   is new Ada.Unchecked_Deallocation
-     (Ref_Info_Vectors.Vector, Ref_Info_Vector);
-   procedure Free
-   is new Ada.Unchecked_Deallocation
-     (Decl_Info_Vectors.Vector, Decl_Info_Vector);
    --  Love you so much Ada <3 <3 (okay)
 
    procedure Python_Get_TU
@@ -126,6 +120,9 @@ package body Language.Libclang is
       return Clang_Context_Access;
    --  Returns a Clang context from a given file
 
+   use Streamable_Decl_Info_Vectors_Accesses;
+   use Streamable_Ref_Info_Vectors_Accesses;
+
    -------------
    -- Destroy --
    -------------
@@ -161,7 +158,6 @@ package body Language.Libclang is
       Self.TU_Cache      := new TU_Maps.Map;
       Self.LRU           := new LRU_Lists.List;
       Self.Index_Action  := Create (Idx);
-      Self.Sym_Table     := GNATCOLL.Symbols.Allocate;
       Self.Refs          := new VFS_To_Refs_Maps.Map;
    end Initialize;
 
@@ -184,7 +180,6 @@ package body Language.Libclang is
       end loop;
 
       Free (Self.Refs);
-      GNATCOLL.Symbols.Free (Self.Sym_Table);
       Dispose (Self.Index_Action);
       clang_disposeIndex (Self.Clang_Indexer);
    end Destroy;
@@ -317,14 +312,13 @@ package body Language.Libclang is
 
    type Indexer_Data is record
       Syms_To_Locs : Sym_To_Loc_Map;
-      Sym_Table    : Symbol_Table_Access;
    end record;
 
    procedure Index_Reference
      (Client_Data : in out Indexer_Data;
       Info   : Clang_Ref_Info);
    function Info_Vector
-     (Map : Sym_To_Loc_Map; Sym : GNATCOLL.Symbols.Symbol) return Info_Vectors;
+     (Map : Sym_To_Loc_Map; Sym : Clang_Symbol) return Info_Vectors;
    procedure Index_Declaration
      (Client_Data : in out Indexer_Data;
       Info        : Clang_Decl_Info);
@@ -377,12 +371,12 @@ package body Language.Libclang is
    procedure Started_Translation_Unit
      (Client_Data : in out Indexer_Data) is null;
 
-   ---------------------
-   -- Get_Info_Vector --
-   ---------------------
+   -----------------
+   -- Info_Vector --
+   -----------------
 
    function Info_Vector
-     (Map : Sym_To_Loc_Map; Sym : GNATCOLL.Symbols.Symbol) return Info_Vectors
+     (Map : Sym_To_Loc_Map; Sym : Clang_Symbol) return Info_Vectors
    is
       Info_Vector : Info_Vectors;
    begin
@@ -407,7 +401,7 @@ package body Language.Libclang is
       use Interfaces.C.Strings;
       use Interfaces.C;
       Loc : constant Clang_Location := +Info.loc;
-      Sym : GNATCOLL.Symbols.Symbol;
+      Sym : Clang_Symbol;
       use Cursors_Arrays;
    begin
       if Is_From_Main_File (Loc) then
@@ -422,7 +416,7 @@ package body Language.Libclang is
                 (Clang_Cursor (Info.cursor), CXXBaseSpecifier)
             loop
                Sym :=
-                 Client_Data.Sym_Table.Find (USR (Referenced (C)));
+                 Clang_Symbol_Table.Find (USR (Referenced (C)));
                Info_Vector (Client_Data.Syms_To_Locs, Sym).Refs.Append
                  (Ref_Info'
                     (To_Offset_T (Location (C)),
@@ -430,7 +424,7 @@ package body Language.Libclang is
             end loop;
          end if;
 
-         Sym := Client_Data.Sym_Table.Find (Value (Info.entityInfo.USR));
+         Sym := Clang_Symbol_Table.Find (Value (Info.entityInfo.USR));
 
          Info_Vector (Client_Data.Syms_To_Locs, Sym).Decls.Append
            (Decl_Info'(To_Offset_T (Loc), Info.isDefinition /= 0,
@@ -450,11 +444,11 @@ package body Language.Libclang is
       use Interfaces.C.Strings;
       use Interfaces.C;
       Loc : constant Clang_Location := +Info.loc;
-      Sym : GNATCOLL.Symbols.Symbol;
+      Sym : Clang_Symbol;
    begin
       if Is_From_Main_File (Loc) then
          Sym :=
-           Client_Data.Sym_Table.Find (Value (Info.referencedEntity.USR));
+           Clang_Symbol_Table.Find (Value (Info.referencedEntity.USR));
 
          Info_Vector (Client_Data.Syms_To_Locs, Sym).Refs.Append
            (Ref_Info'(To_Offset_T (Loc),
@@ -991,7 +985,7 @@ package body Language.Libclang is
         (Index_Action  =>
            Response.Context.Index_Action,
          Client_Data   =>
-           Indexer_Data'(Refs, Response.Context.Sym_Table),
+           Indexer_Data'(Syms_To_Locs => Refs),
          Index_Options => CXIndexOpt_None,
          TU            =>
            Response.Context.TU_Cache.Element (Response.File_Name).TU);
