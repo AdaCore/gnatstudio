@@ -1272,6 +1272,9 @@ package body GNATdoc.Frontend is
          In_Aggregate         : Boolean := False;
          Aggr_Begin_Line      : Natural := 0;
 
+         In_Subtype_Declaration : Boolean := False;
+         --  Set to true when we see the token "subtype"
+
          In_Type_Definition   : Boolean := False;
          --  Set to true when we see the token "is"
 
@@ -1324,6 +1327,7 @@ package body GNATdoc.Frontend is
             In_Aggregate    := False;
             Aggr_Begin_Line := 0;
 
+            In_Subtype_Declaration := False;
             In_Type_Definition := False;
             In_Derived_Type_Definition := False;
             In_Item_Decl    := False;
@@ -2664,6 +2668,11 @@ package body GNATdoc.Frontend is
                      if In_Pragma then
                         null;
 
+                     --  Subtype declarations don't open a new scope
+
+                     elsif In_Subtype_Declaration then
+                        null;
+
                      elsif Prev_Token = Tok_End then
                         null;
 
@@ -2848,6 +2857,9 @@ package body GNATdoc.Frontend is
                            Do_Exit;
                         end;
                      end if;
+
+                  when Tok_Subtype =>
+                     In_Subtype_Declaration := True;
 
                   when others =>
                      null;
@@ -3178,6 +3190,7 @@ package body GNATdoc.Frontend is
                            end if;
 
                            In_Item_Decl := False;
+                           In_Subtype_Declaration := False;
                            In_Type_Definition := False;
                            In_Derived_Type_Definition := False;
                         end if;
@@ -3950,9 +3963,9 @@ package body GNATdoc.Frontend is
                end case;
             end Handle_Body_Doc;
 
-            -------------------
-            -- Handle_Scopes --
-            -------------------
+            ------------------------
+            -- Handle_Body_Scopes --
+            ------------------------
 
             In_Debug_File : constant Boolean :=
               Current_Body_File.Base_Name = " disabled";
