@@ -31,6 +31,8 @@ with Ada.Strings.Unbounded.Hash;
 with Ada.Finalization;
 with Libclang.Task_Parser_Pool; use Libclang.Task_Parser_Pool;
 with clang_c_Index_h; use clang_c_Index_h;
+with Streamable_Access_Type;
+with GNATCOLL.Symbols.Streamable_Symbol_Table;
 
 package Language.Libclang is
 
@@ -91,12 +93,21 @@ package Language.Libclang is
 
    package Ref_Info_Vectors is
      new Ada.Containers.Vectors (Positive, Ref_Info);
-   type Ref_Info_Vector is access all Ref_Info_Vectors.Vector;
+
+   package Streamable_Ref_Info_Vectors_Accesses
+   is new Streamable_Access_Type (Ref_Info_Vectors.Vector);
+
+   subtype Ref_Info_Vector is Streamable_Ref_Info_Vectors_Accesses.Access_Type;
    --  A vector of references information
 
    package Decl_Info_Vectors is
      new Ada.Containers.Vectors (Positive, Decl_Info);
-   type Decl_Info_Vector is access all Decl_Info_Vectors.Vector;
+
+   package Streamable_Decl_Info_Vectors_Accesses
+   is new Streamable_Access_Type (Decl_Info_Vectors.Vector);
+
+   subtype Decl_Info_Vector
+     is Streamable_Decl_Info_Vectors_Accesses.Access_Type;
    --  A vector of declarations information
 
    type Info_Vectors is record
@@ -106,19 +117,49 @@ package Language.Libclang is
    --  Record for the information for a (file, usr) couple. Keep tracks of
    --  every reference for a specific USR in a specific file
 
-   use GNATCOLL.Symbols;
+   package Clang_Symbol_Table_Pkg
+   is new GNATCOLL.Symbols.Streamable_Symbol_Table;
+
+   Clang_Symbol_Table : Clang_Symbol_Table_Pkg.Symbol_Table_Access
+   renames Clang_Symbol_Table_Pkg.Symbol_Table;
+
+   subtype Clang_Symbol is Clang_Symbol_Table_Pkg.Streamable_Symbol;
+   use type Clang_Symbol;
+
+   --------------------
+   -- Sym_To_Loc_Map --
+   --------------------
+
+   --  File -> (USR -> Info_Vector) part of the cache
 
    package Symbol_To_Location_Maps is new Ada.Containers.Hashed_Maps
-     (GNATCOLL.Symbols.Symbol, Info_Vectors,
-      Hash => GNATCOLL.Symbols.Hash, Equivalent_Keys => "=");
-   type Sym_To_Loc_Map is access all Symbol_To_Location_Maps.Map;
+     (Clang_Symbol, Info_Vectors,
+      Hash => Clang_Symbol_Table_Pkg.Hash, Equivalent_Keys => "=");
+
+   --  We use the Streamable_Access_Type generic package, so that accesses of
+   --  this type are automatically streamable
+
+   package Streamable_Sym_To_Loc_Map_Accesses
+   is new Streamable_Access_Type (Symbol_To_Location_Maps.Map);
+
+   subtype Sym_To_Loc_Map is Streamable_Sym_To_Loc_Map_Accesses.Access_Type;
+   use type Sym_To_Loc_Map;
+
    procedure Destroy (S : in out Sym_To_Loc_Map);
-   --  File -> (USR -> Info_Vector) part of the cache
+
+   -----------------
+   -- VFS_To_Refs --
+   -----------------
+
+   --  (File -> USR) -> Info_Vector part of the cache
 
    package VFS_To_Refs_Maps is new Ada.Containers.Hashed_Maps
      (Unbounded_String, Sym_To_Loc_Map, Ada.Strings.Unbounded.Hash, "=");
-   type VFS_To_Refs is access all VFS_To_Refs_Maps.Map;
-   --  (File -> USR) -> Info_Vector part of the cache
+
+   package Streamable_VFS_To_Refs_Map_Accesses
+   is new Streamable_Access_Type (VFS_To_Refs_Maps.Map);
+
+   subtype VFS_To_Refs is Streamable_VFS_To_Refs_Map_Accesses.Access_Type;
 
    function Hash (Project : Project_Type) return Hash_Type is
      (if Project = No_Project
@@ -164,7 +205,6 @@ package Language.Libclang is
       Clang_Indexer    : Clang_Index;
       Index_Action     : Clang_Index_Action;
       Refs             : VFS_To_Refs;
-      Sym_Table        : GNATCOLL.Symbols.Symbol_Table_Access;
    end record;
 
    procedure Initialize (Self : access Clang_Context);

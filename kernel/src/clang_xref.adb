@@ -627,7 +627,8 @@ package body Clang_Xref is
 
       Cursor : constant Clang_Cursor := Get_Clang_Cursor (Entity);
       Ctx : constant Clang_Context_Access := Context (Get_Project (Entity));
-      USR_Sym : constant Symbol := Ctx.Sym_Table.Find (USR (Cursor));
+      USR_Sym : constant Clang_Symbol :=
+        Clang_Symbol_Table.Find (USR (Cursor));
 
       --  Try to use Definition from libclang. It will only work as long as the
       --  definition is in the same translation unit though, so not sufficient
@@ -1726,7 +1727,7 @@ package body Clang_Xref is
       --  Clang context symbol table
 
       Entity_Name : constant Symbol :=
-        Context (Project).Sym_Table.Find (Entity.Get_Name);
+        Clang_Symbol_Table.Find (Entity.Get_Name);
 
       --  Construct the return value, with an empty vector
 
@@ -1773,7 +1774,6 @@ package body Clang_Xref is
          then Get_Body (In_Scope)
          else In_Scope);
 
-      Ctx : constant Clang_Context_Access := Context (Get_Project (Entity));
       Searched : constant Clang_Cursor := Get_Clang_Cursor (Entity);
 
       use Cursors_Arrays;
@@ -1815,7 +1815,7 @@ package body Clang_Xref is
             Ret_Vec.Append
               (Clang_Reference'
                  (To_General_Location (Entity.Kernel, Location (Cursor)),
-                  Ctx.Sym_Table.Find (+Entity.Name),
+                  Clang_Symbol_Table.Find (+Entity.Name),
                   Real_Scope.Db,
                   Kind (Cursor)));
          end;
@@ -1859,9 +1859,9 @@ package body Clang_Xref is
       --  Retrieve information about the entity, USR_Sym to search for symbol
       --  in maps, Name to store in references
 
-      USR_Sym : constant Symbol :=
-        Ctx.Sym_Table.Find (USR (Get_Clang_Cursor (Entity)));
-      Name : constant Symbol := Ctx.Sym_Table.Find (Entity.Get_Name);
+      USR_Sym : constant Clang_Symbol :=
+        Clang_Symbol_Table.Find (USR (Get_Clang_Cursor (Entity)));
+      Name : constant Symbol := Clang_Symbol_Table.Find (Entity.Get_Name);
 
       use VFS_To_Refs_Maps;
 
