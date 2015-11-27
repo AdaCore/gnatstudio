@@ -123,6 +123,12 @@ package GPS.Kernel is
    --  preferences. But the default value for preferences could be set from any
    --  plug-in.
 
+   function Get_Application
+      (Self : not null access Kernel_Handle_Record'Class)
+      return not null access Gtk_Application_Record'Class;
+   --  Return the handle on the application (i.e. the non-graphical part of
+   --  the process).
+
    function Get_Main_Window
      (Handle : access Kernel_Handle_Record) return Gtk.Window.Gtk_Window;
    --  Return the main window associated with the kernel

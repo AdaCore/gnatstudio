@@ -734,14 +734,17 @@ package body GPS.Kernel is
    procedure Refresh_Context
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
-      Child : constant MDI_Child := Get_MDI (Kernel).Get_Focus_Child;
+      Child : MDI_Child;
    begin
-      if Child /= null
-        and then Child.all in GPS_MDI_Child_Record'Class
-      then
-         Context_Changed (Kernel, GPS_MDI_Child (Child).Build_Context);
-      else
-         Context_Changed (Kernel, New_Context (Kernel));
+      if not Kernel.Is_In_Destruction then
+         Child := Get_MDI (Kernel).Get_Focus_Child;
+         if Child /= null
+           and then Child.all in GPS_MDI_Child_Record'Class
+         then
+            Context_Changed (Kernel, GPS_MDI_Child (Child).Build_Context);
+         else
+            Context_Changed (Kernel, New_Context (Kernel));
+         end if;
       end if;
    end Refresh_Context;
 
@@ -2043,5 +2046,17 @@ package body GPS.Kernel is
       end loop;
       return Result;
    end List_Functions;
+
+   ---------------------
+   -- Get_Application --
+   ---------------------
+
+   function Get_Application
+      (Self : not null access Kernel_Handle_Record'Class)
+      return not null access Gtk_Application_Record'Class
+   is
+   begin
+      return Self.Application;
+   end Get_Application;
 
 end GPS.Kernel;

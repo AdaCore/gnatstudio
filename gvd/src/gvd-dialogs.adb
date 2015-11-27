@@ -53,6 +53,12 @@ with GNATCOLL.Traces;                use GNATCOLL.Traces;
 package body GVD.Dialogs is
    Me : constant Trace_Handle := Create ("GVD.Dialogs");
 
+   type Is_Vx653_Debugger is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+      (Self    : access Is_Vx653_Debugger;
+       Context : Selection_Context) return Boolean;
+   --  Whether the current debugger is for a vx653 target
+
    -----------------
    -- Thread View --
    -----------------
@@ -265,6 +271,24 @@ package body GVD.Dialogs is
       return Commands.Success;
    end Execute;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+      (Self    : access Is_Vx653_Debugger;
+       Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Self);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context);
+      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+   begin
+      return Process /= null
+         and then Process.Debugger /= null
+         and then VxWorks_Version (Process.Debugger) = Vx653;
+   end Filter_Matches_Primitive;
+
    ---------------------------
    -- Info_Threads_Dispatch --
    ---------------------------
@@ -375,11 +399,14 @@ package body GVD.Dialogs is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      Filter : Action_Filter;
    begin
+      Filter := new Is_Vx653_Debugger;
       Register_Action
         (Kernel, "open protection domains debugger window",
          new Protection_Domains_Command,
          -"Open the 'Protection Domains' window for the debugger",
+         Filter => Filter,
          Category => -"Views");
 
       Register_Action

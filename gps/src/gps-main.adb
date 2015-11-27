@@ -303,7 +303,6 @@ procedure GPS.Main is
    Port_Number            : Natural := 0;
 
    GPS_Main               : GPS_Window;
-   Application            : GPS_Application;
    Project_Name           : Virtual_File := No_File;
    Splash                 : Gtk_Window;
    Files_To_Open          : File_To_Open_Vectors.Vector;
@@ -1348,7 +1347,6 @@ procedure GPS.Main is
       return Glib.Gint
    is
       App     : constant GPS_Application := GPS_Application (Application);
-      Menubar : Gtk_Menu_Bar;
       Data    : Process_Data;
       Tmp     : Boolean;
       pragma Unreferenced (Command_Line, Tmp);
@@ -1363,12 +1361,6 @@ procedure GPS.Main is
       Data := (App.Kernel, null, null, null, null, null, False);
 
       Create_MDI_Preferences (App.Kernel);
-      Install_Menus
-        (App.Kernel,
-         App,
-         Create_From_Base
-           ("menus.xml", Get_Share_Dir (App.Kernel).Full_Name.all),
-         Menubar => Menubar);
 
       --  Load the fonts
 
@@ -1376,7 +1368,7 @@ procedure GPS.Main is
 
       --  Finally create the main window, and setup the project
 
-      GPS.Main_Window.Gtk_New (GPS_Main, App, Menubar);
+      GPS.Main_Window.Gtk_New (GPS_Main, App);
 
       GPS.Stock_Icons.Register_Stock_Icons (App.Kernel, Prefix_Dir);
       App.Kernel.Set_Environment (Env);
@@ -1572,7 +1564,7 @@ procedure GPS.Main is
 
    function On_GPS_Started return Boolean is
    begin
-      Gps_Started_Hook.Run (Application.Kernel);
+      Gps_Started_Hook.Run (GPS_Main.Kernel);
 
       --  A number of actions are created in reaction to the hook above:
       --  if there is a menu described in menus.xml corresponding to such
@@ -2634,9 +2626,9 @@ procedure GPS.Main is
 
    Dead        : Boolean;
    Registered  : Boolean;
-   pragma Unreferenced (Registered);
    Status      : Glib.Gint;
-   pragma Unreferenced (Dead);
+   Application : GPS_Application;
+   pragma Unreferenced (Dead, Registered);
 
 begin
    --  Under all platforms, prevent the creation of a dbus session: this serves

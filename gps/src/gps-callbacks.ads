@@ -21,9 +21,7 @@ pragma Warnings (On);
 
 with Glib.Messages;          use Glib.Messages;
 with Glib.Object;            use Glib.Object;
-with Glib.Values;            use Glib.Values;
 with Gtk;                    use Gtk;
-with Gtk.Arguments;          use Gtk.Arguments;
 with Gtk.Enums;              use Gtk.Enums;
 with GPS.Kernel;             use GPS.Kernel;
 
@@ -35,13 +33,11 @@ package GPS.Callbacks is
 
    procedure Child_Selected
      (Mdi    : access GObject_Record'Class;
-      Params : Glib.Values.GValues;
       Kernel : Kernel_Handle);
    --  Called when a new child is selected
 
    procedure Title_Changed
      (MDI    : access GObject_Record'Class;
-      Child  : Gtk_Args;
       Kernel : Kernel_Handle);
    --  Called when the title of an MDI child has changed
 

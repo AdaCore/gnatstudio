@@ -106,3 +106,9 @@ NF-170-N714-016 GPS: configurable window title (2015-11-05)
   A new preference (Window Title) has been added to configure the title of
   the GPS window. Through it, you can chose whether to display any of base
   names, directory names, project name,... in the title bar.
+
+NF-170-G222-043 GPS: menubars for floating windows (2015-11-27)
+
+  When an editor or a browser is made floating, its window now includes a
+  menubar similar to the one used in the main GPS window. This makes it
+  more convenient to execute actions via menus.

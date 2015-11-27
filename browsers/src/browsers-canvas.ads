@@ -199,6 +199,9 @@ package Browsers.Canvas is
    ---------
 
    type Browser_Child_Record is new GPS_MDI_Child_Record with null record;
+   overriding function Has_Menu_Bar_When_Floating
+     (Child : not null access Browser_Child_Record) return Boolean
+      is (True) with Inline;
    overriding function Build_Context
      (Self  : not null access Browser_Child_Record;
       Event : Gdk.Event.Gdk_Event := null)

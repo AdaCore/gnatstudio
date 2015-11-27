@@ -24,7 +24,6 @@ with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with Cairo;                     use Cairo;
 with Gdk.Display;               use Gdk.Display;
@@ -61,7 +60,6 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Style;
-with Gtkada.Types;
 
 with Pango.Font;                use Pango.Font;
 
@@ -88,11 +86,6 @@ with XML_Utils;                 use XML_Utils;
 
 package body GPS.Main_Window is
    Me : constant Trace_Handle := Create ("MAIN");
-
-   Signals : constant Gtkada.Types.Chars_Ptr_Array :=
-     (1 => New_String ("preferences_changed"));
-   Class_Record : Glib.Object.Ada_GObject_Class :=
-      Glib.Object.Uninitialized_Class;
 
    Force_Cst      : aliased constant String := "force";
    Msg_Cst        : aliased constant String := "msg";
@@ -207,6 +200,9 @@ package body GPS.Main_Window is
       (Self   : On_Project_View_Changed;
        Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project is changed
+
+   procedure On_Float_Child (Win : access Gtk_Widget_Record'Class);
+   --  Called when a child window is floated
 
    procedure Default_Command_Handler
      (Data    : in out Callback_Data'Class; Command : String);
@@ -607,17 +603,28 @@ package body GPS.Main_Window is
       return False;
    end On_Focus_In;
 
-   ------------
-   -- Kernel --
-   ------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   function Kernel
-     (Self : not null access GPS_Window_Record'Class)
-      return GPS.Kernel.Kernel_Handle
+   procedure Initialize
+     (Self        : not null access GPS_Application_Window_Record'Class;
+      Application : not null access GPS_Application_Record'Class)
    is
    begin
-      return Self.Application.Kernel;
-   end Kernel;
+      Gtk.Application_Window.Initialize (Self, Application);
+
+      Self.Application := Application;
+      Application.Add_Window (Self);
+
+      Gtk_New_Vbox (Self.Main_Box, Homogeneous => False);
+      Self.Add (Self.Main_Box);
+
+      Install_Menus (Application.Kernel, Menubar => Self.Menu_Bar);
+      if Self.Menu_Bar /= null then
+         Self.Main_Box.Pack_Start (Self.Menu_Bar, Expand => False);
+      end if;
+   end Initialize;
 
    -------------
    -- Gtk_New --
@@ -625,22 +632,12 @@ package body GPS.Main_Window is
 
    procedure Gtk_New
      (Main_Window : out GPS_Window;
-      Application : not null access GPS_Application_Record'Class;
-      Menubar     : access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class)
+      Application : not null access GPS_Application_Record'Class)
    is
-      Vbox : Gtk_Vbox;
       P    : access On_Pref_Changed;
    begin
       Main_Window := new GPS_Window_Record;
-      Glib.Object.Initialize_Class_Record
-        (Ancestor     => Gtk.Application_Window.Get_Type,
-         Signals      => Signals,
-         Class_Record => Class_Record,
-         Type_Name    => "GpsMainWindow");
-      Glib.Object.G_New (Main_Window, Class_Record);
-
-      Main_Window.Application := Application;
-      Application.Add_Window (Main_Window);
+      GPS.Main_Window.Initialize (Main_Window, Application);
 
       Application.Kernel.Set_Main_Window (Main_Window);
 
@@ -668,7 +665,6 @@ package body GPS.Main_Window is
       --  window managers as "top-left" corner, which may cause issues with
       --  taskbars.
       Set_Position (Main_Window, Win_Pos_Center);
-      Set_Modal (Main_Window, False);
       Set_Default_Size (Main_Window, 800, 700);
 
       Gtk_New (Main_Window.Main_Accel_Group);
@@ -679,23 +675,20 @@ package body GPS.Main_Window is
          Kernel => Application.Kernel,
          Group  => Main_Window.Main_Accel_Group);
 
-      Gtk_New_Vbox (Vbox, False, 0);
-      Add (Main_Window, Vbox);
-
-      if Menubar /= null then
-         Main_Window.Menu_Bar := Gtk_Menu_Bar (Menubar);
-         Pack_Start (Vbox, Main_Window.Menu_Bar, False);
-      end if;
-
       Setup_Toplevel_Window (Main_Window.MDI, Main_Window);
 
       Gtk_New_Hbox (Main_Window.Toolbar_Box, False, 0);
       Main_Window.Toolbar_Box.Set_Name ("toolbar-box");
-      Pack_Start (Vbox, Main_Window.Toolbar_Box, False, False, 0);
+      Main_Window.Main_Box.Pack_Start
+        (Main_Window.Toolbar_Box, False, False, 0);
       Get_Style_Context (Main_Window.Toolbar_Box).Add_Class ("toolbar");
       Main_Window.Toolbar_Box.On_Draw (On_Draw_Toolbar_Box'Access);
 
-      Add (Vbox, Main_Window.MDI);
+      Widget_Callback.Object_Connect
+         (Main_Window.MDI, Signal_Float_Child, On_Float_Child'Access,
+          Slot_Object => Main_Window);
+
+      Main_Window.Main_Box.Add (Main_Window.MDI);
 
       Widget_Callback.Connect (Main_Window, Signal_Destroy, On_Destroy'Access);
 
@@ -729,6 +722,19 @@ package body GPS.Main_Window is
       Preferences_Changed_Hook.Add (P);
       P.Execute (Application.Kernel, null);
    end Gtk_New;
+
+   --------------------
+   -- On_Float_Child --
+   --------------------
+
+   procedure On_Float_Child (Win : access Gtk_Widget_Record'Class) is
+      W : constant GPS_Window := GPS_Window (Win);
+   begin
+      --  Report a context change, so that the menus for the new
+      --  floating window are properly updated
+      W.Kernel.Refresh_Context;
+      Reset_Title (W.Kernel, W.Kernel.Get_Current_Context);
+   end On_Float_Child;
 
    -------------------
    -- Register_Keys --
@@ -1491,22 +1497,34 @@ package body GPS.Main_Window is
    ----------------------
 
    function Is_Any_Menu_Open
-     (Window : access GPS_Window_Record) return Boolean
+     (App : not null access GPS_Application_Record'Class) return Boolean
    is
       use Gtk.Widget.Widget_List;
-      L : Glist;
-      Menu : Gtk_Widget;
+      Windows : Widget_List.Glist := App.Get_Windows;  --  Do not free
+      W       : GPS_Application_Window;
+      Children : Glist;  --  Must be freed
+      L       : Glist;
+      Menu    : Gtk_Widget;
    begin
-      if Window.Menu_Bar /= null then
-         L := First (Window.Menu_Bar.Get_Children);
-         while L /= Null_List loop
-            Menu := Gtk_Menu_Item (Get_Data (L)).Get_Submenu;
-            L := Next (L);
-            if Menu /= null and then Menu.Is_Visible then
-               return True;
-            end if;
-         end loop;
-      end if;
+      while Windows /= Null_List loop
+         W := GPS_Application_Window (Get_Data (Windows));
+         if W.Menu_Bar /= null then
+            Children := First (W.Menu_Bar.Get_Children);
+            L := Children;
+            while L /= Null_List loop
+               Menu := Gtk_Menu_Item (Get_Data (L)).Get_Submenu;
+               L := Next (L);
+               if Menu /= null and then Menu.Is_Visible then
+                  Free (Children);
+                  return True;
+               end if;
+            end loop;
+            Free (Children);
+         end if;
+
+         Windows := Next (Windows);
+      end loop;
+
       return False;
    end Is_Any_Menu_Open;
 

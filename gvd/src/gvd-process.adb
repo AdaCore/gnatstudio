@@ -1008,7 +1008,6 @@ package body GVD.Process is
         (Process.Kernel.Get_Main_Window);
       Buttons : Message_Dialog_Buttons;
       pragma Unreferenced (Buttons);
-      Widget  : Gtk_Menu_Item;
 
    begin
       Attach_To_Debugger_Console (Process, Create_If_Necessary => True);
@@ -1069,17 +1068,6 @@ package body GVD.Process is
       --  file.
 
       Initialize (Process.Debugger);
-
-      --  Hide or show AE653 specific capabilities according to the debugger
-      --  we are using.
-
-      Widget := Find_Menu_Item
-        (Window.Kernel, -"/Debug/Data/Protection Domains");
-
-      if Widget /= null then
-         Set_Sensitive
-           (Widget, VxWorks_Version (Process.Debugger) = Vx653);
-      end if;
 
       --  If some unattached dialogs exist, claim them
       Attach_To_Call_Stack    (Process, Create_If_Necessary => False);

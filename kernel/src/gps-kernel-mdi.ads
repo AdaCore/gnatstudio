@@ -31,11 +31,13 @@ with Glib.Main;
 with Glib.Object;
 with Glib.Xml_Int;
 with Gtk.Accel_Group;
+with Gtk.Container;         use Gtk.Container;
 with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Handlers;          use Gtk.Handlers;
 with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Widget;
+with Gtk.Window;            use Gtk.Window;
 with Gtkada.MDI;            use Gtkada.MDI;
 
 package GPS.Kernel.MDI is
@@ -144,11 +146,11 @@ package GPS.Kernel.MDI is
    --  Recommended version of Gtk_New to use, instead of the one in
    --  GtkAda.MDI. This version has several new parameters:
    --    - Module : used to associate a module with a widget. This is used to
-   --               get the current context for instance
+   --      get the current context for instance
    --    - Desktop_Independent: if this is true, then the window will not be
-   --               closed  when a new desktop is loaded.
+   --      closed  when a new desktop is loaded.
    --    - Use_Scrolled : if this is true, then the widget will be included
-   --               inside a scrolled window
+   --      inside a scrolled window
 
    procedure Initialize
      (Child               : access GPS_MDI_Child_Record'Class;
@@ -162,11 +164,6 @@ package GPS.Kernel.MDI is
       Desktop_Independent : Boolean := False;
       Areas               : Allowed_Areas := Both);
    --  Internal version of Gtk_New
-
-   overriding procedure Set_Title
-     (Child       : access GPS_MDI_Child_Record;
-      Title       : String;
-      Short_Title : String := "");
 
    overriding function Save_Desktop
      (Self : not null access GPS_MDI_Child_Record)
@@ -182,10 +179,18 @@ package GPS.Kernel.MDI is
    --  Set the subprogram to be called by the default Save_Desktop. This will
    --  have no effect if you override Save_Desktop
 
+   overriding procedure Set_Title
+     (Child       : access GPS_MDI_Child_Record;
+      Title       : String;
+      Short_Title : String := "");
    overriding procedure Set_Default_Size_For_Floating_Window
      (Child : not null access GPS_MDI_Child_Record;
       Win   : not null access Gtk.Window.Gtk_Window_Record'Class;
       Width, Height : Glib.Gint);
+   overriding procedure Create_Float_Window_For_Child
+      (Child     : not null access GPS_MDI_Child_Record;
+       Win       : out Gtk_Window;
+       Container : out Gtk_Container);
    --  see inherited documentation
 
    procedure Load_Perspective
@@ -228,6 +233,11 @@ package GPS.Kernel.MDI is
      (Child : not null access Gtkada.MDI.MDI_Child_Record'Class)
       return Module_ID;
    --  Return the module that created Child, or null if no module was found.
+
+   function Has_Menu_Bar_When_Floating
+      (Child : not null access GPS_MDI_Child_Record) return Boolean
+      is (False) with Inline;
+   --  Whether to add a menubar when the child is made floating
 
    function Build_Context
      (Self  : not null access GPS_MDI_Child_Record;

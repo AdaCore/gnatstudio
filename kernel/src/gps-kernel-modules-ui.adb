@@ -2232,7 +2232,6 @@ package body GPS.Kernel.Modules.UI is
       A : Proxy_And_Filter;
       Action : access Action_Record;
       Start  : constant Time := Clock;
-      Menu_Bar : Gtk_Menu_Bar;
       Tool_Bar : Gtk_Toolbar;
       Available : Boolean;
 
@@ -2345,11 +2344,24 @@ package body GPS.Kernel.Modules.UI is
          if not Has_Element (Data.Current) then
             --  no more items
 
-            Menu_Bar := GPS_Window
-              (Get_Kernel (Data.Context).Get_Main_Window).Menu_Bar;
-            if Menu_Bar /= null then
-               Propagate_Visibility (Menu_Bar, Menu_Bar);
-            end if;
+            --  Look at the menu bars used in all of the windows for the
+            --  application
+
+            declare
+               use Widget_List;
+               List : Widget_List.Glist :=   --  Do not free
+                 Get_Kernel (Data.Context).Get_Application.Get_Windows;
+               W    : GPS_Application_Window;
+            begin
+               while List /= Null_List loop
+                  W := GPS_Application_Window (Get_Data (List));
+                  if W.Menu_Bar /= null then
+                     Propagate_Visibility (W.Menu_Bar, W.Menu_Bar);
+                  end if;
+
+                  List := Next (List);
+               end loop;
+            end;
 
             Tool_Bar := Get_Toolbar (Get_Kernel (Data.Context));
             Cleanup_Toolbar_Separators (Tool_Bar);
@@ -2529,10 +2541,12 @@ package body GPS.Kernel.Modules.UI is
 
    procedure Install_Menus
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      App       : not null access Gtk.Application.Gtk_Application_Record'Class;
-      Description : GNATCOLL.VFS.Virtual_File;
       Menubar   : out Gtk.Menu_Bar.Gtk_Menu_Bar)
    is
+      Description : constant GNATCOLL.VFS.Virtual_File :=
+         Kernel.Get_Share_Dir / "menus.xml";
+      App : constant Gtk_Application := Kernel.Get_Application;
+
       procedure Process_Menu_Bar (Menubar_Node : Node);
       --  Process a <menubar> node
 
@@ -2660,7 +2674,19 @@ package body GPS.Kernel.Modules.UI is
       Reader : Tree_Reader;
       Doc    : Document;
       N      : Node;
+
    begin
+      --  Nothing to do if this procedure has already been called and we
+      --  are using system menus (since all floating windows will reuse the
+      --  same menu in any case). If we are using an explicit Gtk_Menu_Bar,
+      --  though, we need to recreate one, and this is done by reparsing the
+      --  description (which is reasonably fast).
+
+      if Active (System_Menus) and then App.Get_Menubar /= null then
+         Menubar := null;
+         return;
+      end if;
+
       Trace (Me, "Install menus from " & Description.Display_Full_Name);
       if Globals.Symbols = No_Symbol_Table then
          Globals.Symbols := Allocate;

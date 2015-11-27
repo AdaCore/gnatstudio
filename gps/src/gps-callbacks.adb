@@ -71,19 +71,11 @@ package body GPS.Callbacks is
 
    procedure Title_Changed
      (MDI    : access GObject_Record'Class;
-      Child  : Gtk_Args;
       Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (MDI, Child);
+      pragma Unreferenced (MDI);
    begin
-      if not Kernel.Is_In_Destruction then
-         --  ??? We should recompute the context instead, since some macros
-         --  like %ts and %tl depends on the title of the child. This will be
-         --  done if we are systematically reseting the window title whenever
-         --  the context changes.
-
-         Reset_Title (Kernel, Kernel.Get_Current_Context);
-      end if;
+      Reset_Title (Kernel, Kernel.Get_Current_Context);
    end Title_Changed;
 
    --------------------
@@ -92,34 +84,12 @@ package body GPS.Callbacks is
 
    procedure Child_Selected
      (Mdi    : access GObject_Record'Class;
-      Params : Glib.Values.GValues;
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Mdi);
-      Child   : MDI_Child;
-      Context : Selection_Context;
    begin
-      if Kernel /= null
-        and then not Kernel.Is_In_Destruction
-      then
-         Child := MDI_Child (To_Object (Params, 1));
-
-         if Child = null then
-            Context := New_Context (Kernel);
-         else
-            --  Create the new context. The module itself is in charge of
-            --  creating a specific context.
-
-            if Child.all in GPS_MDI_Child_Record'Class then
-               Context := GPS_MDI_Child (Child).Build_Context;
-            else
-               Context := New_Context (Kernel);
-            end if;
-         end if;
-
-         Reset_Title (Kernel, Context);
-         Kernel.Context_Changed (Context);
-      end if;
+      Kernel.Refresh_Context;
+      Reset_Title (Kernel, Kernel.Get_Current_Context);
    end Child_Selected;
 
 end GPS.Callbacks;

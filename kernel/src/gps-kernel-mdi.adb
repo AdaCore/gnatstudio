@@ -43,7 +43,6 @@ with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Combo_Box;            use Gtk.Combo_Box;
-with Gtk.Container;            use Gtk.Container;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Main;                 use Gtk.Main;
@@ -57,7 +56,6 @@ with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
-with Gtk.Window;               use Gtk.Window;
 
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.Handlers;          use Gtkada.Handlers;
@@ -2065,5 +2063,33 @@ package body GPS.Kernel.MDI is
       Set_Default_Size_From_History
          (Win, Child.Get_Short_Title, Child.Kernel, Width, Height);
    end Set_Default_Size_For_Floating_Window;
+
+   -----------------------------------
+   -- Create_Float_Window_For_Child --
+   -----------------------------------
+
+   overriding procedure Create_Float_Window_For_Child
+      (Child     : not null access GPS_MDI_Child_Record;
+       Win       : out Gtk_Window;
+       Container : out Gtk_Container)
+   is
+      App_Win : GPS_Application_Window;
+   begin
+      if GPS_MDI_Child (Child).Has_Menu_Bar_When_Floating then
+         --  Create an application window, rather than a standard window,
+         --  so that it automatically builts its menu bar from the model
+         --  in the application when using system menus.
+
+         App_Win := new GPS_Application_Window_Record;
+         GPS.Main_Window.Initialize
+           (App_Win, GPS_Application (Child.Kernel.Get_Application));
+
+         Win := Gtk_Window (App_Win);
+         Container := Gtk_Container (App_Win.Main_Box);
+      else
+         Create_Float_Window_For_Child   --  inherited
+            (MDI_Child_Record (Child.all)'Access, Win, Container);
+      end if;
+   end Create_Float_Window_For_Child;
 
 end GPS.Kernel.MDI;

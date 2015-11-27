@@ -33,19 +33,80 @@ with GPS.Kernel;
 
 package GPS.Main_Window is
 
+   -----------------
+   -- Application --
+   -----------------
+   --  An application is a concept similar to the GPS kernel, at the gtk+
+   --  level.
+
    type GPS_Application_Record is new Gtkada_Application_Record with record
-      Kernel            : GPS.Kernel.Kernel_Handle;
+      Kernel         : GPS.Kernel.Kernel_Handle;
    end record;
    type GPS_Application is access all GPS_Application_Record'Class;
 
-   type GPS_Window_Record is new Gtk_Application_Window_Record with record
+   function Is_Any_Menu_Open
+     (App : not null access GPS_Application_Record'Class) return Boolean;
+   --  Returns True if any menu has been clicked on by the user (from the
+   --  menu bars of any window)
+
+   --------------
+   -- Windows --
+   -------------
+   --  Utilities that apply to any window
+
+   procedure Set_Default_Size_From_History
+     (Win           : not null access Gtk_Window_Record'Class;
+      Name          : String;
+      Kernel        : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Width, Height : Glib.Gint);
+   --  Set the default size for a window.
+   --  This should be called before the window is displayed, and replaces
+   --  the standard Gtk.Window.Set_Default_Size procedure. As opposed to the
+   --  latter, this one will look in past GPS sessions (or earlier in this
+   --  session) for the size that a user has set, and reuse that one.
+   --  This procedure ensures that the size fits on the screen.
+
+   ----------------------------
+   -- GPS Application Window --
+   ----------------------------
+
+   type GPS_Application_Window_Record is new Gtk_Application_Window_Record
+   with record
       Application       : access GPS_Application_Record'Class;
       --  The GPS Application (not owned by the window)
 
+      Menu_Bar          : Gtk.Menu_Bar.Gtk_Menu_Bar;
+
+      Main_Box          : Gtk.Box.Gtk_Box;
+      --  The box that contains the menubar, and the rest of the window's
+      --  content.
+   end record;
+   type GPS_Application_Window
+     is access all GPS_Application_Window_Record'Class;
+   --  An application window with special handling for menubars:
+   --  when not using the syste menus, an explicit menubar widget can be
+   --  created and associated with the window.
+
+   procedure Initialize
+     (Self        : not null access GPS_Application_Window_Record'Class;
+      Application : not null access GPS_Application_Record'Class);
+   --  Initialize Self.
+   --  A menubar is automatically added to the window is necessary (i.e. when
+   --  this would not be done automatically by gtk+ when using system menus).
+
+   function Kernel
+     (Self : not null access GPS_Application_Window_Record'Class)
+      return GPS.Kernel.Kernel_Handle is (Self.Application.Kernel) with Inline;
+   --  The kernel for the application
+
+   ---------------------
+   -- GPS main window --
+   ---------------------
+
+   type GPS_Window_Record is new GPS_Application_Window_Record with record
       Main_Accel_Group  : Gtk_Accel_Group;
       --  The default accelerators for the window
 
-      Menu_Bar          : Gtk.Menu_Bar.Gtk_Menu_Bar;
       Toolbar_Box       : Gtk_Box;
       Toolbar           : Gtk_Toolbar;
       MDI               : Gtkada.MDI.MDI_Window;
@@ -62,19 +123,9 @@ package GPS.Main_Window is
 
    procedure Gtk_New
      (Main_Window : out GPS_Window;
-      Application : not null access GPS_Application_Record'Class;
-      Menubar     : access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class);
+      Application : not null access GPS_Application_Record'Class);
    --  Create a new main window.
-   --  Home_Dir is the home directory (e.g ~/.gps) under which configuration
-   --  files will be saved.
-   --  Prefix_Directory is the prefix where GPS is installed (e.g /opt/gps).
-   --  Application is the GPS Application instance.
    --  The Menubar can be null if none was created
-
-   function Kernel
-     (Self : not null access GPS_Window_Record'Class)
-      return GPS.Kernel.Kernel_Handle;
-   --  The kernel for the application
 
    procedure Register_Keys (Main_Window : access GPS_Window_Record'Class);
    --  Register the key bindings associated with the window
@@ -94,9 +145,9 @@ package GPS.Main_Window is
    --  Reset the title of the main window or the current floating window,
    --  depending on which child currently has the focus.
 
-   function Is_Any_Menu_Open
-     (Window : access GPS_Window_Record) return Boolean;
-   --  Returns True if any of the main menu bar's menus are visible
+   ----------------------
+   -- Python interface --
+   ----------------------
 
    function Create_MDI_Window_Instance
      (Script : not null access Scripting_Language_Record'Class;
@@ -106,17 +157,5 @@ package GPS.Main_Window is
 
    function Get_Child (Inst : Class_Instance) return MDI_Child;
    --  Return the child stored in an instance of GPS.MDIWindow
-
-   procedure Set_Default_Size_From_History
-      (Win    : not null access Gtk_Window_Record'Class;
-       Name   : String;
-       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-       Width, Height : Glib.Gint);
-   --  Set the default size for a window.
-   --  This should be called before the window is displayed, and replaces
-   --  the standard Gtk.Window.Set_Default_Size procedure. As opposed to the
-   --  latter, this one will look in past GPS sessions (or earlier in this
-   --  session) for the size that a user has set, and reuse that one.
-   --  This procedure ensures that the size fits on the screen.
 
 end GPS.Main_Window;

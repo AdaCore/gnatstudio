@@ -270,8 +270,6 @@ package GPS.Kernel.Modules.UI is
 
    procedure Install_Menus
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      App       : not null access Gtk.Application.Gtk_Application_Record'Class;
-      Description : GNATCOLL.VFS.Virtual_File;
       Menubar   : out Gtk.Menu_Bar.Gtk_Menu_Bar);
    --  Load an XML description of the menubar, and create it.
 

@@ -121,6 +121,9 @@ package body Src_Editor_Module is
      (Self  : not null access Editor_Child_Record;
       Event : Gdk.Event.Gdk_Event := null)
       return Selection_Context;
+   overriding function Has_Menu_Bar_When_Floating
+     (Child : not null access Editor_Child_Record) return Boolean
+      is (True) with Inline;
    --  See inherited documentation
 
    type On_Open_File is new Open_File_Hooks_Function with null record;

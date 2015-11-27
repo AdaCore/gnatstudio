@@ -1188,7 +1188,8 @@ package body KeyManager_Module is
                  Keymanager_Module.Current_Command;
                Keymanager_Module.Current_Command    := null;
 
-               if not GPS_Window (Kernel.Get_Main_Window).Is_Any_Menu_Open
+               if not GPS_Application
+                  (Kernel.Get_Application).Is_Any_Menu_Open
                  and then Execute_Action
                    (Kernel  => Kernel,
                     Action  => Binding.Action.all,
