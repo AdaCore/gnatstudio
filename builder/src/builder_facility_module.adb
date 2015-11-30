@@ -284,16 +284,13 @@ package body Builder_Facility_Module is
       Level  : Customization_Level);
    --  See inherited documentation
 
-   procedure Clear_Toolbar_Buttons;
-   --  Remove the build-related buttons from the main toolbar
-
    procedure Install_Toolbar_Buttons;
    --  Install the build-related buttons into the main toolbar
 
    procedure Install_Button_For_Target (Target : Target_Access);
    --  Install one button in the toolbar
 
-   procedure Clear_Actions_And_Menus;
+   procedure Clear_Actions_Menus_And_Toolbars;
    --  Remove the target build menus
 
    function Get_Targets_File return GNATCOLL.VFS.Virtual_File;
@@ -557,7 +554,7 @@ package body Builder_Facility_Module is
 
    overriding procedure Destroy (Module : in out Builder_Module_ID_Record) is
    begin
-      Clear_Toolbar_Buttons;
+      Clear_Actions_Menus_And_Toolbars;
       Module.Builder.Destroy;
       Free (Module.Registry);
    end Destroy;
@@ -571,7 +568,6 @@ package body Builder_Facility_Module is
       C        : Build_Command_Access;
       M        : Build_Main_Command_Access;
       N        : constant String := Get_Name (Target);
-      Action   : Unbounded_String;
       Category : constant String := Get_Category (Target);
       Targets  : constant Unbounded_String :=
         Get_Properties (Target).Target_Type;
@@ -584,45 +580,62 @@ package body Builder_Facility_Module is
         & (if Toplevel_Menu then "" else Category & "/");
       --  For instance:  /Build/Project/
 
-      procedure Menu_For_Action
+      procedure Replace_Action
         (Main         : Virtual_File;
          Project      : Project_Type;
-         Menu_Name    : String;
-         Action_Name  : String);
-      --  Add a menu at Parent_Path for target named Name, with menu name
-      --  Menu_Name
+         Command      : access Interactive_Command'Class;
+         Description  : String;
+         Action_Name  : String;
+         Menu_Name    : String);
+      --  Replace the current definition for the action: remove the old menus
+      --  and the old action, then register a new action and menu.
 
-      procedure Menu_For_Action
+      procedure Replace_Action
         (Main         : Virtual_File;
          Project      : Project_Type;
-         Menu_Name    : String;
-         Action_Name  : String)
+         Command      : access Interactive_Command'Class;
+         Description  : String;
+         Action_Name  : String;
+         Menu_Name    : String)
       is
          Mnemonics : constant Boolean := Main = No_File;
          --  Always protect underscores in menu name when dealing with file
          --  names, but not otherwise.
-
-         Path : constant String :=
-           Cat_Path
-           & (if Project = No_Project
-              then ""
-              else Escape_Menu_Name (Escape_Underscore (Project.Name)) & '/')
-           & Escape_Menu_Name
-            ((if Mnemonics then Menu_Name else Escape_Underscore (Menu_Name)));
       begin
-         --  Do nothing is the target is not supposed to be shown in the menu
-         if not Get_Properties (Target).In_Menu
-           or else not Get_Properties (Target).Visible
-         then
-            return;
-         end if;
+         Unregister_Action (Kernel, Action_Name, Remove_Menus => True);
 
-         Register_Menu
-           (Kernel,
-            Path          => Path,
-            Action        => Action_Name,
-            Ref_Item      => "Project");
-      end Menu_For_Action;
+         Register_Action (Kernel      => Kernel,
+                          Name        => Action_Name,
+                          Command     => Command,
+                          Description => Description,
+                          Icon_Name   => Get_Icon_Name (Target),
+                          Category    => -"Build");
+         Builder_Module_ID.Actions.Append (To_Unbounded_String (Action_Name));
+
+         --  Do nothing is the target is not supposed to be shown in the menu
+         if Menu_Name /= ""
+           and then Get_Properties (Target).In_Menu
+           and then Get_Properties (Target).Visible
+         then
+            declare
+               Path : constant String :=
+                 Cat_Path
+                 & (if Project = No_Project
+                    then ""
+                    else Escape_Menu_Name
+                      (Escape_Underscore (Project.Name)) & '/')
+                 & Escape_Menu_Name
+                 ((if Mnemonics
+                  then Menu_Name else Escape_Underscore (Menu_Name)));
+            begin
+               Register_Menu
+                 (Kernel,
+                  Path          => Path,
+                  Action        => Action_Name,
+                  Ref_Item      => "Project");
+            end;
+         end if;
+      end Replace_Action;
 
    begin
       if Targets /= Null_Unbounded_String then
@@ -664,21 +677,13 @@ package body Builder_Facility_Module is
                              Main        => J,
                              Quiet       => False,
                              Dialog      => D);
-                     Set_Unbounded_String (Action, N & (-" Number") & J'Img);
-                     Unregister_Action (Kernel, To_String (Action));
-                     Register_Action
-                       (Kernel      => Kernel,
-                        Name        => To_String (Action),
-                        Command     => M,
-                        Description => To_String (Action),
-                        Icon_Name   => Get_Icon_Name (Target),
-                        Category    => -"Build");
-                     Builder_Module_ID.Actions.Append (Action);
-                     Menu_For_Action
+                     Replace_Action
                        (Main         => Create (+Mains.List (J).Tuple (2).Str),
-                        Action_Name  => To_String (Action),
                         Project      => Kernel.Registry.Tree.Project_From_Path
                           (Create (+Mains.List (J).Tuple (3).Str)),
+                        Command      => M,
+                        Description  => "",
+                        Action_Name  => N & (-" Number") & J'Img,
                         Menu_Name    => Mains.List (J).Tuple (1).Str);
                   end if;
                end loop;
@@ -687,13 +692,13 @@ package body Builder_Facility_Module is
                --  can associate shortcuts to these.
 
                for J in Mains.Length + 1 .. 4 loop
-                  Unregister_Action (Kernel, N & (-" Number") & J'Img);
-                  Register_Action
-                    (Kernel      => Kernel,
-                     Name        => N & (-" Number") & J'Img,
-                     Command     => null,
-                     Category    => -"Build");
-                  Builder_Module_ID.Actions.Append (Action);
+                  Replace_Action
+                    (Main         => No_File,
+                     Project      => No_Project,
+                     Command      => null,
+                     Description  => "",
+                     Action_Name  => N & (-" Number") & J'Img,
+                     Menu_Name    => "");
                end loop;
             end if;
 
@@ -703,18 +708,13 @@ package body Builder_Facility_Module is
       else
          Create
            (C, Builder_Module_ID.Builder'Access, N, No_File, False, Default);
-         Unregister_Action (Kernel, N);
-         Register_Action (Kernel      => Kernel,
-                          Name        => N,
-                          Command     => C,
-                          Description => (-"Build target ") & N,
-                          Icon_Name   => Get_Icon_Name (Target),
-                          Category    => -"Build");
-         Builder_Module_ID.Actions.Append (To_Unbounded_String (N));
-         Menu_For_Action (Main         => No_File,
-                          Project      => No_Project,
-                          Menu_Name    => Get_Menu_Name (Target),
-                          Action_Name  => N);
+         Replace_Action
+           (Main         => No_File,
+            Project      => No_Project,
+            Command      => C,
+            Description  => (-"Build target ") & N,
+            Action_Name  => N,
+            Menu_Name    => Get_Menu_Name (Target));
       end if;
    end Add_Action_And_Menu_For_Target;
 
@@ -1030,11 +1030,10 @@ package body Builder_Facility_Module is
    procedure Refresh_Graphical_Elements is
    begin
       --  Recreate the actions
-      Clear_Actions_And_Menus;
+      Clear_Actions_Menus_And_Toolbars;
 
       Add_Actions_And_Menus_For_All_Targets;
 
-      Clear_Toolbar_Buttons;
       Install_Toolbar_Buttons;
    end Refresh_Graphical_Elements;
 
@@ -1247,32 +1246,6 @@ package body Builder_Facility_Module is
       return Get_Kernel (Builder_Module_ID.all);
    end Get_Kernel;
 
-   ---------------------------
-   -- Clear_Toolbar_Buttons --
-   ---------------------------
-
-   procedure Clear_Toolbar_Buttons is
-      Toolbar : constant Gtk_Toolbar := Get_Toolbar (Get_Kernel);
-      use Buttons_List;
-
-      C : Buttons_List.Cursor;
-   begin
-      if Toolbar /= null then
-         --  Browse through the registry and remove already added buttons
-
-         C := Builder_Module_ID.Buttons.First;
-
-         while Has_Element (C) loop
-            Remove (Toolbar, Element (C));
-            Next (C);
-         end loop;
-      end if;
-
-      --  Remove all buttons from registry
-
-      Builder_Module_ID.Buttons.Clear;
-   end Clear_Toolbar_Buttons;
-
    -----------------------------
    -- On_Button_Or_Menu_Click --
    -----------------------------
@@ -1449,13 +1422,14 @@ package body Builder_Facility_Module is
       end if;
    end Install_Button_For_Target;
 
-   -----------------------------
-   -- Clear_Actions_And_Menus --
-   -----------------------------
+   --------------------------------------
+   -- Clear_Actions_Menus_And_Toolbars --
+   --------------------------------------
 
-   procedure Clear_Actions_And_Menus is
+   procedure Clear_Actions_Menus_And_Toolbars is
       use Unbounded_String_List;
       C : Unbounded_String_List.Cursor;
+      Toolbar : constant Gtk_Toolbar := Get_Toolbar (Get_Kernel);
    begin
       loop
          C := Builder_Module_ID.Actions.First;
@@ -1466,7 +1440,14 @@ package body Builder_Facility_Module is
             Remove_Menus => True);
          Builder_Module_ID.Actions.Delete (C);
       end loop;
-   end Clear_Actions_And_Menus;
+
+      if Toolbar /= null then
+         for B of Builder_Module_ID.Buttons loop
+            Remove (Toolbar, B);
+         end loop;
+      end if;
+      Builder_Module_ID.Buttons.Clear;
+   end Clear_Actions_Menus_And_Toolbars;
 
    -----------------------------
    -- Install_Toolbar_Buttons --

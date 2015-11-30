@@ -1350,7 +1350,9 @@ package body GUI_Utils is
       end if;
 
       while P <= Path'Last loop
-         if Path (P) /= '_' then
+         if Path (P) /= '_'
+           or else (P < Path'Last and then Path (P + 1) = '_')
+         then
             Result (Index) := Path (P);
             Index := Index + 1;
          end if;

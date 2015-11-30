@@ -92,8 +92,6 @@ with Sax.Utils;                 use Sax.Utils;
 with UTF8_Utils;                use UTF8_Utils;
 
 package body GPS.Kernel.Modules.UI is
-   use Sax.Utils.Symbol_Table_Pointers;
-
    Me : constant Trace_Handle :=
      Create ("GPS.Kernel.Modules.UI", GNATCOLL.Traces.Off);
 
@@ -239,45 +237,6 @@ package body GPS.Kernel.Modules.UI is
       Hash            => Ada.Strings.Hash_Case_Insensitive,
       Equivalent_Keys => "=");
 
-   function Create_Menu_Item
-     (Kernel        : not null access Kernel_Handle_Record'Class;
-      Parent_Path   : String;
-      Menu_Label    : String;
-      Action        : String;
-      Ref_Item      : String := "";
-      Add_Before    : Boolean := True;
-      Optional      : Boolean := False;
-      Menubar       : not null access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class)
-      return Gtk.Menu_Item.Gtk_Menu_Item;
-   --  Add new menu items to the menu bar, as a child of Parent_Path.
-   --
-   --  Parent_Path should have a form like "/main_main/submenu". Underscores
-   --  are not used for mnemonics, and will be present in the final menu.
-   --  Use String_Utils.Strip_Single_Underscores if needed.
-   --
-   --  Menus will be created if they don't exist.
-   --  This is considered as an absolute path, as if it always started with
-   --  a '/'.
-   --
-   --  Menubar will default to the main window's menubar.
-   --
-   --  Item might be null, in which case only the parent menu items are
-   --  created, and Add_Before applies to the deepest one instead of Item.
-   --
-   --  The new item is inserted either:
-   --    - before Ref_Item if the latter is not the empty string and Add_Before
-   --      is true
-   --    - after Ref_Item if the latter is not the empty string and Add_Before
-   --      is false
-   --    - at the end of the menu
-   --
-   --  To register a separator, do the following:
-   --      Mitem : Gtk_Menu_Item;
-   --      Gtk_New (Mitem);
-   --      Register_Menu (Kernel, "/Parent_Path", Mitem);
-   --
-   --  The menu item will be active if Filter matches.
-
    -------------------------
    -- proxies for actions --
    -------------------------
@@ -316,7 +275,8 @@ package body GPS.Kernel.Modules.UI is
       Object : not null access GObject_Record'Class);
 
    type GPS_Action_Record is new Gsimple_Action_Record with record
-      Data : aliased GPS_Action_Proxy;
+      CName : chars_ptr;
+      Data  : aliased GPS_Action_Proxy;
    end record;
    type GPS_Action is access all GPS_Action_Record'Class;
 
@@ -425,6 +385,24 @@ package body GPS.Kernel.Modules.UI is
    end record;
    type Action_Menu_Item is access all Action_Menu_Item_Record'Class;
 
+   function Gtk_New_Action_Item
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Full_Path     : String;
+      Menu_Label    : String;
+      Action        : String;
+      Optional      : Boolean := False) return Gtk_Menu_Item;
+   --  Create a new menu item that will execute Action.
+   --
+   --  Full_Path should have a form like "/main_main/submenu/label".
+   --  Underscores are not used for mnemonics, and will be present in the
+   --  final menu. Use String_Utils.Strip_Single_Underscores if needed.
+   --  Full_Path must include the Menu_Label, although the latter is also
+   --  provided separately for efficiency.
+   --
+   --  Menus will be created if they don't exist.
+   --  This is considered as an absolute path, as if it always started with
+   --  a '/'.
+
    procedure On_Activate_Action_Item
      (Item : access Gtk_Menu_Item_Record'Class);
    --  Called when an Action_Menu_Item is mapped to screen
@@ -482,8 +460,18 @@ package body GPS.Kernel.Modules.UI is
      (Update_Menus_Data_Access);
 
    type Global_Data is record
+      Builder     : Gtk_Builder;
+      Menu_Model  : Gmenu_Model;
+      --  The builder used to load the menu menu (and later to do merges).
+      --  Seems like we should not free the builder while we might use the
+      --  menu model.
+
+      Symbols     : Symbol_Table;
+      --  The symbol table used by the XML reader when it parses the menu
+      --  description. This needs to be kept as long as the toolbar_description
+      --  are kept.
+
       Toolbar_Descriptions : Node_Maps.Map;
-      Symbols              : Symbol_Table := No_Symbol_Table;
 
       Proxy_Items          : Proxy_Lists.List;
       --  The list of items whose sensitivity might need to be updated when the
@@ -496,7 +484,9 @@ package body GPS.Kernel.Modules.UI is
 
       Update_Menus_Idle_Id : G_Source_Id := No_Source_Id;
    end record;
+
    Globals : Global_Data;
+   --   ??? Should be stored in kernel
 
    ---------------
    -- Emphasize --
@@ -1468,116 +1458,126 @@ package body GPS.Kernel.Modules.UI is
       Ref_Item      : String := "";
       Add_Before    : Boolean := True)
    is
-      Full_Path : constant String := Create_Menu_Path ("/", Path);
-      Win       : constant GPS_Window := GPS_Window (Kernel.Get_Main_Window);
-      Menubar   : constant Gtk_Menu_Bar :=
-        (if Win /= null then Win.Menu_Bar else null);
-      Ignored   : Gtk_Menu_Item;
-      pragma Unreferenced (Ignored);
+      Full_Path   : constant String := Create_Menu_Path ("/", Path);
+      Parent_Path : constant String := Parent_Menu_Name (Full_Path);
+      Menu_Label  : constant String := Base_Menu_Name (Full_Path);
+      Is_First    : Boolean := True;
+
+      procedure Add_To_Win
+        (Win : not null access GPS_Application_Window_Record'Class);
+      --  Add to the menubar for the specied window
+
+      procedure Add_To_Win
+        (Win : not null access GPS_Application_Window_Record'Class)
+      is
+         Parent, Pred, Item : Gtk_Menu_Item;
+         Parent_Menu        : Gtk_Menu;
+         Index              : Gint;
+         Act                : access Action_Record;
+         pragma Unreferenced (Act);
+      begin
+         if Win.Menu_Bar /= null then
+            --  Find or create the parent menu
+
+            Parent := Find_Or_Create_Menu_Tree
+              (Menu_Bar     => Win.Menu_Bar,
+               Menu         => null,
+               Path         => Parent_Path,
+               Accelerators => Get_Default_Accelerators (Kernel),
+               Add_Before   => Add_Before,
+               Ref_Item     => Ref_Item,
+               Allow_Create => True);
+
+            if Parent = null then
+               Trace (Me, "Register_Menu: Parent menu not found for "
+                      & Parent_Path);
+               return;
+            else
+               Parent_Menu := Gtk_Menu (Get_Submenu (Parent));
+               if Parent_Menu = null then
+                  Gtk_New (Parent_Menu);
+                  Set_Submenu (Parent, Parent_Menu);
+               end if;
+            end if;
+
+            --  Find the reference menu item so that we can insert in proper
+            --  place
+
+            Find_Menu_Item_By_Name
+              (Menu_Bar  => Win.Menu_Bar,
+               Menu      => Parent_Menu,
+               Name      => Ref_Item,
+               Menu_Item => Pred,
+               Index     => Index);
+
+            --  Add the new item
+
+            if Menu_Label (Menu_Label'First) = '-' then
+               Item := Gtk_Menu_Item (Gtk_Separator_Menu_Item_New);
+            else
+               Item := Gtk_New_Action_Item
+                 (Kernel      => Kernel,
+                  Full_Path   => Parent_Path & Menu_Label,
+                  Menu_Label  => Menu_Label,
+                  Action      => Action,
+                  Optional    => False);
+
+               --  Lookup the action immediately. If it exists, this has the
+               --  effect of setting the tooltips and register the menu in the
+               --  action record instead of waiting for a lazy update later. In
+               --  particular, if the action is unregistered before (as happens
+               --  for the builder module), the menu would never be removed
+               --  otherwise.
+               if Is_First and then not Active (System_Menus) then
+                  Act := Lookup_Action (Item);
+               end if;
+            end if;
+
+            if Index = -1 then
+               Parent_Menu.Append (Item);
+            elsif Add_Before then
+               Parent_Menu.Insert (Item, Index);
+            else
+               Parent_Menu.Insert (Item, Index + 1);
+            end if;
+
+            Item.Show_All;
+            Is_First := False;
+         end if;
+      end Add_To_Win;
+
    begin
-      if Menubar /= null then
-         Ignored := Create_Menu_Item
-           (Kernel,
-            Parent_Path => Parent_Menu_Name (Full_Path),
-            Menu_Label  => Base_Menu_Name (Full_Path),
-            Action      => Action,
-            Ref_Item    => Ref_Item,
-            Add_Before  => Add_Before,
-            Menubar     => Menubar);
-      end if;
+      For_All_Open_Windows (Kernel.Get_Application, Add_To_Win'Access);
    end Register_Menu;
 
-   ----------------------
-   -- Create_Menu_Item --
-   ----------------------
+   -------------------------
+   -- Gtk_New_Action_Item --
+   -------------------------
 
-   function Create_Menu_Item
+   function Gtk_New_Action_Item
      (Kernel        : not null access Kernel_Handle_Record'Class;
-      Parent_Path   : String;
+      Full_Path     : String;
       Menu_Label    : String;
       Action        : String;
-      Ref_Item      : String := "";
-      Add_Before    : Boolean := True;
-      Optional      : Boolean := False;
-      Menubar       : not null access Gtk.Menu_Bar.Gtk_Menu_Bar_Record'Class)
-      return Gtk.Menu_Item.Gtk_Menu_Item
+      Optional      : Boolean := False) return Gtk_Menu_Item
    is
-      Self         : Action_Menu_Item;
-      Parent, Pred, Item : Gtk_Menu_Item;
-      Parent_Menu  : Gtk_Menu;
-      Index        : Gint;
+      Item : constant Action_Menu_Item := new Action_Menu_Item_Record;
    begin
-      --  Find or create the parent menu
+      Gtk.Menu_Item.Initialize_With_Mnemonic (Item, Label => Menu_Label);
+      Item.Data := (Action    => new String'(Action),
+                    Kernel    => Kernel,
+                    Optional  => Optional,
+                    Hide      => False,
+                    Looked_Up => null);
 
-      Parent := Find_Or_Create_Menu_Tree
-        (Menu_Bar     => Gtk_Menu_Bar (Menubar),
-         Menu         => null,
-         Path         => Parent_Path,
-         Accelerators => Get_Default_Accelerators (Kernel),
-         Add_Before   => Add_Before,
-         Ref_Item     => Ref_Item,
-         Allow_Create => True);
+      --  The accel path is necessary to show the menu path in the
+      --  Key Shortcuts editor, and tooltips for actions.
+      Item.Set_Accel_Path ("<gps>" & Full_Path);
 
-      if Parent = null then
-         Trace (Me, "Register_Menu: Parent menu not found for " & Parent_Path);
-         return null;
-      else
-         Parent_Menu := Gtk_Menu (Get_Submenu (Parent));
-         if Parent_Menu = null then
-            Gtk_New (Parent_Menu);
-            Set_Submenu (Parent, Parent_Menu);
-         end if;
-      end if;
-
-      --  Find the reference menu item so that we can insert in proper place
-
-      Find_Menu_Item_By_Name
-        (Menu_Bar  => Gtk_Menu_Bar (Menubar),
-         Menu      => Parent_Menu,
-         Name      => Ref_Item,
-         Menu_Item => Pred,
-         Index     => Index);
-
-      --  Add the new item
-
-      if Menu_Label (Menu_Label'First) = '-' then
-         Item := Gtk_Menu_Item (Gtk_Separator_Menu_Item_New);
-      else
-         --  ??? Do not test for duplicate menus anymore. These can only happen
-         --  through an incorrect menus.xml (which we test), or rogue plugins
-         --  (which the author tests). This speeds up the initial creation of
-         --  menus.
-
-         --  Create the menu item
-         Self := new Action_Menu_Item_Record;
-         Gtk.Menu_Item.Initialize_With_Mnemonic (Self, Label => Menu_Label);
-         Self.Data := (Action    => new String'(Action),
-                       Kernel    => Kernel,
-                       Optional  => Optional,
-                       Hide      => False,
-                       Looked_Up => null);
-
-         --  The accel path is necessary to show the menu path in the
-         --  Key Shortcuts editor, and tooltips for actions.
-         Self.Set_Accel_Path
-           ("<gps>" & Create_Menu_Path (Parent_Path, Menu_Label));
-
-         Self.On_Activate (On_Activate_Action_Item'Access);
-         Add_To_Global_Proxies (Self, Kernel, null);
-         Item := Gtk_Menu_Item (Self);
-      end if;
-
-      if Index = -1 then
-         Parent_Menu.Append (Item);
-      elsif Add_Before then
-         Parent_Menu.Insert (Item, Index);
-      else
-         Parent_Menu.Insert (Item, Index + 1);
-      end if;
-
-      Item.Show_All;
-      return Item;
-   end Create_Menu_Item;
+      Item.On_Activate (On_Activate_Action_Item'Access);
+      Add_To_Global_Proxies (Item, Kernel, null);
+      return Gtk_Menu_Item (Item);
+   end Gtk_New_Action_Item;
 
    ------------------
    -- Execute_Menu --
@@ -2568,47 +2568,164 @@ package body GPS.Kernel.Modules.UI is
       Context_Changed_Hook.Add (new On_Context_Changed);
    end Start_Monitoring_Menus;
 
-   -------------------
-   -- Install_Menus --
-   -------------------
+   -------------------------
+   -- Menu_Model_From_XML --
+   -------------------------
 
-   procedure Install_Menus
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Menubar   : out Gtk.Menu_Bar.Gtk_Menu_Bar)
+   procedure Parse_Menu_Model_From_XML
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Root   : Node);
+   --  Create a GMenu_Model from the XML description used by GPS.
+   --  This also stores enough information to create toolbars later on.
+
+   function Create_Menubar_From_Model
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return Gtk_Menu_Bar;
+   --  Create a menu bar from a menu model.
+   --  This is only needed when not using system menus, and will be removed as
+   --  soon as we use those menus everywhere.
+
+   -------------------------------
+   -- Create_Menubar_From_Model --
+   -------------------------------
+
+   function Create_Menubar_From_Model
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return Gtk_Menu_Bar
    is
-      Description : constant GNATCOLL.VFS.Virtual_File :=
-         Kernel.Get_Share_Dir / "menus.xml";
-      App : constant Gtk_Application := Kernel.Get_Application;
-
-      procedure Process_Menu_Bar (Menubar_Node : Node);
-      --  Process a <menubar> node
-
-      Builder_XML : Unbounded_String;
+      procedure Process_Menu
+        (Parent      : not null access Gtk_Menu_Shell_Record'Class;
+         M           : Gmenu_Model;
+         Idx         : Gint;
+         Parent_Path : Unbounded_String);
+      --  Create a menu (and its submenu) from a menu model
 
       procedure Process_Menu
-        (Parent_Path : String;
-         Parent      : access Gtk_Menu_Shell_Record'Class;
-         Menu_Node   : Node);
+        (Parent      : not null access Gtk_Menu_Shell_Record'Class;
+         M           : Gmenu_Model;
+         Idx         : Gint;
+         Parent_Path : Unbounded_String)
+      is
+         Attr_Iter : Gmenu_Attribute_Iter;
+         Links     : Gmenu_Link_Iter;
+         Label     : Unbounded_String;
+         Full_Path : Unbounded_String;
+         Action    : Unbounded_String;
+         Optional  : Boolean := False;
+         Item      : Gtk_Menu_Item;
+         Sep       : Gtk_Separator_Menu_Item;
+         Menu      : Gtk_Menu;
+         Has_Attributes : Boolean := False;
+      begin
+         Attr_Iter := Iterate_Item_Attributes (M, Idx);
+         while Next (Attr_Iter) loop
+            Has_Attributes := True;
+            declare
+               N   : constant String := Get_Name (Attr_Iter);
+               Val : Gvariant;
+            begin
+               Val := Get_Value (Attr_Iter);
+               if N = "label" then
+                  Label := To_Unbounded_String
+                    (Strip_Single_Underscores (Get_String (Val, null)));
+               elsif N = "action" then
+                  Action := To_Unbounded_String (Get_String (Val, null));
+               elsif N = "hidden-when" then
+                  Optional := Get_String (Val, null) = "action-disabled";
+               else
+                  Trace (Me, "Unknown attribute " & N);
+               end if;
+               Unref (Val);
+            end;
+         end loop;
+         Unref (Attr_Iter);
+
+         if Has_Attributes then
+            Full_Path := Parent_Path & '/' & Label;
+            if Action = "" then
+               Gtk_New (Item, To_String (Label));
+            else
+               --  Remove the "app." prefix for the action name
+               Item := Gtk_New_Action_Item
+                 (Kernel      => Kernel,
+                  Full_Path   => To_String (Full_Path),
+                  Menu_Label  => To_String (Label),
+                  Action      => Slice (Action, 5, Length (Action)),
+                  Optional    => Optional);
+            end if;
+            Parent.Append (Item);
+         else
+            Full_Path := Parent_Path;
+         end if;
+
+         Links := Iterate_Item_Links (M, Idx);
+         while Next (Links) loop
+            declare
+               N  : constant String := Get_Name (Links);
+               M2 : Gmenu_Model;
+               P  : Gtk_Menu_Shell;
+            begin
+               if N = "submenu" then
+                  Gtk_New (Menu);
+                  Menu.Set_Accel_Group (Get_Default_Accelerators (Kernel));
+                  Item.Set_Submenu (Menu);
+                  P := Gtk_Menu_Shell (Menu);
+               elsif N = "section" then
+                  if Idx /= 0 then
+                     Gtk_New (Sep);
+                     Parent.Append (Sep);
+                  end if;
+                  P := Gtk_Menu_Shell (Parent);
+               else
+                  Trace (Me, "Unknown attribute " & N);
+               end if;
+
+               M2 := Get_Value (Links);
+               for Idx2 in 0 .. M2.Get_N_Items - 1 loop
+                  Process_Menu (P, M2, Idx2, Full_Path);
+               end loop;
+            end;
+         end loop;
+         Unref (Links);
+      end Process_Menu;
+
+      Menubar : Gtk_Menu_Bar;
+   begin
+      Increase_Indent (Me, "Menubar From model");
+
+      Gtk_New (Menubar);
+      for Idx in 0 .. Globals.Menu_Model.Get_N_Items - 1 loop
+         Process_Menu
+           (Menubar, Globals.Menu_Model, Idx, Null_Unbounded_String);
+      end loop;
+      return Menubar;
+   end Create_Menubar_From_Model;
+
+   -------------------------------
+   -- Parse_Menu_Model_From_XML --
+   -------------------------------
+
+   procedure Parse_Menu_Model_From_XML
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Root   : Node)
+   is
+      App         : constant Gtk_Application := Kernel.Get_Application;
+      Builder_XML : Unbounded_String;
+
+      procedure Process_Menu (Menu_Node : Node);
       --  Process a <menu> node. Parent will be null when using system menus.
 
       ------------------
       -- Process_Menu --
       ------------------
 
-      procedure Process_Menu
-        (Parent_Path : String;
-         Parent      : access Gtk_Menu_Shell_Record'Class;
-         Menu_Node   : Node)
-      is
-         Label  : constant DOM_String := Get_Attribute (Menu_Node, "label");
-         Action : constant DOM_String := Get_Attribute (Menu_Node, "action");
+      procedure Process_Menu (Menu_Node : Node) is
+         Label   : constant DOM_String := Get_Attribute (Menu_Node, "label");
+         Action  : constant DOM_String := Get_Attribute (Menu_Node, "action");
          Optional_Str : constant DOM_String :=
            Get_Attribute (Menu_Node, "optional");
-         Optional : Boolean := False;
-         Item   : Gtk_Menu_Item;
-         Sep    : Gtk_Separator_Menu_Item;
-         Menu   : Gtk_Menu;
-         N      : Node;
+         Optional     : Boolean := False;
+         N            : Node;
       begin
          if Optional_Str /= "" then   --  avoid raising exception if we can
             begin
@@ -2622,158 +2739,119 @@ package body GPS.Kernel.Modules.UI is
          end if;
 
          if Action /= "" then
-            if Active (System_Menus) then
-               App.Add_Action (New_G_Action (Kernel, Action));
+            App.Add_Action (New_G_Action (Kernel, Action));
 
-               --  See possible attributes in gtkmenutrackeritem.c
-               Append (Builder_XML,
-                       "<item>"
-                       & "<attribute name='hidden-when'>"
-                       & (if Optional
-                          then "action-disabled" else "action-missing")
-                       & "</attribute>"
-                       & "<attribute name='label'>"
-                       & XML_Utils.Protect (Label)
-                       & "</attribute>"
-                       & "<attribute name='action'>app."
-                       & XML_Utils.Protect (Action)
-                       & "</attribute></item>" & ASCII.LF);
-            else
-               Item := Create_Menu_Item
-                 (Kernel, Parent_Path, Label,
-                  Action, Optional => Optional, Menubar => Menubar);
-            end if;
+            --  See possible attributes in gtkmenutrackeritem.c
+            Append (Builder_XML,
+                    "<item>"
+                    & "<attribute name='hidden-when'>"
+                    & (if Optional
+                      then "action-disabled" else "action-missing")
+                    & "</attribute>"
+                    & "<attribute name='label'>"
+                    & XML_Utils.Protect (Label)
+                    & "</attribute>"
+                    & "<attribute name='action'>app."
+                    & XML_Utils.Protect (Action)
+                    & "</attribute></item>" & ASCII.LF);
          else
-            if Active (System_Menus) then
-               Append (Builder_XML,
-                       "<submenu>"
-                       & "<attribute name='label'>" & XML_Utils.Protect (Label)
-                       & "</attribute>" & ASCII.LF
-                       & " <section>");
-            elsif Parent /= null then  --  Test redundant, but just in case
-               Gtk_New_With_Mnemonic (Item, Label);
-               Parent.Append (Item);
-            end if;
+            Append (Builder_XML,
+                    "<submenu>"
+                    & "<attribute name='label'>" & XML_Utils.Protect (Label)
+                    & "</attribute>" & ASCII.LF
+                    & " <section>");
          end if;
 
          N := First_Child (Menu_Node);
 
          if N /= null then
-            if not Active (System_Menus) then
-               Gtk_New (Menu);
-               Menu.Set_Accel_Group (Get_Default_Accelerators (Kernel));
-               Item.Set_Submenu (Menu);
-            end if;
-
             while N /= null loop
                if Node_Name (N) = "menu" then
-                  Process_Menu
-                    (Parent_Path & "/" & Strip_Single_Underscores (Label),
-                     Menu, N);
+                  Process_Menu (N);
                elsif Node_Name (N) = "separator" then
-                  if Active (System_Menus) then
-                     Append (Builder_XML, "</section><section>");
-                  else
-                     Gtk_New (Sep);
-                     Menu.Append (Sep);
-                  end if;
+                  Append (Builder_XML, "</section><section>");
                end if;
                N := Next_Sibling (N);
             end loop;
          end if;
 
-         if Active (System_Menus) and then Action = "" then
+         if Action = "" then
             Append (Builder_XML, "</section></submenu>" & ASCII.LF);
          end if;
       end Process_Menu;
 
-      ----------------------
-      -- Process_Menu_Bar --
-      ----------------------
-
-      procedure Process_Menu_Bar (Menubar_Node : Node) is
-         N    : Node := First_Child (Menubar_Node);
-      begin
-         while N /= null loop
-            if Node_Name (N) = "menu" then
-               Process_Menu ("", Menubar, N);
-            end if;
-
-            N := Next_Sibling (N);
-         end loop;
-      end Process_Menu_Bar;
-
-      Input  : File_Input;
-      Reader : Tree_Reader;
-      Doc    : Document;
-      N      : Node;
+      N, N2       : Node;
+      Tmp         : Guint;
+      Error       : aliased GError;
 
    begin
-      --  Nothing to do if this procedure has already been called and we
-      --  are using system menus (since all floating windows will reuse the
-      --  same menu in any case). If we are using an explicit Gtk_Menu_Bar,
-      --  though, we need to recreate one, and this is done by reparsing the
-      --  description (which is reasonably fast).
-
-      if Active (System_Menus) and then App.Get_Menubar /= null then
-         Menubar := null;
-         return;
-      end if;
-
-      Trace (Me, "Install menus from " & Description.Display_Full_Name);
-      if Globals.Symbols = No_Symbol_Table then
-         Globals.Symbols := Allocate;
-      end if;
-
-      if not Active (System_Menus) then
-         Gtk_New (Menubar);
-      end if;
-
       Builder_XML := To_Unbounded_String ("<interface><menu id='menubar'>");
 
-      Open (Description.Display_Full_Name, Input);
-      Reader.Set_Symbol_Table (Globals.Symbols);
-      Parse (Reader, Input);
-      Close (Input);
-
-      Doc := Get_Tree (Reader);
-      N := Get_Element (Doc);   --  name is irrelevant
-      N := First_Child (N);
-
+      N := First_Child (Root);
       while N /= null loop
          if Node_Name (N) = "menubar" then
-            Process_Menu_Bar (N);
+            N2 := First_Child (N);
+            while N2 /= null loop
+               if Node_Name (N2) = "menu" then
+                  Process_Menu (N2);
+               end if;
+               N2 := Next_Sibling (N2);
+            end loop;
+
          elsif Node_Name (N) = "toolbar" then
             Globals.Toolbar_Descriptions.Include
               (Get_Attribute (N, "id"), Clone_Node (N, Deep => True));
          end if;
-
          N := Next_Sibling (N);
       end loop;
 
-      Free (Reader);
+      Append (Builder_XML, "</menu></interface>");
 
-      if Active (System_Menus) then
-         Append (Builder_XML, "</menu></interface>");
+      Gtk_New (Globals.Builder);
+      Tmp := Globals.Builder.Add_From_String
+        (To_String (Builder_XML), Error => Error'Access);
+      if Tmp /= 0 then
+         Globals.Menu_Model :=
+           Gmenu_Model (Globals.Builder.Get_Object ("menubar"));
+      else
+         Trace (Me, "Could not parse menu description "
+                & Get_Message (Error));
+      end if;
+   end Parse_Menu_Model_From_XML;
 
+   -------------------
+   -- Install_Menus --
+   -------------------
+
+   procedure Install_Menus
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Menubar   : out Gtk.Menu_Bar.Gtk_Menu_Bar) is
+   begin
+      if Globals.Menu_Model = null then
          declare
-            Menubar   : GObject;
-            Builder   : Gtk_Builder;
-            Tmp       : Guint;
-            Error     : aliased GError;
+            Description : constant GNATCOLL.VFS.Virtual_File :=
+              Kernel.Get_Share_Dir / "menus.xml";
+            Input       : File_Input;
+            Reader : Tree_Reader;
          begin
-            Gtk_New (Builder);
-            Tmp := Builder.Add_From_String
-              (To_String (Builder_XML), Error => Error'Access);
-            if Tmp /= 0 then
-               Menubar := Builder.Get_Object ("menubar");
-               App.Set_Menubar (Gmenu_Model (Menubar));
-            else
-               Trace (Me, "Could not parse menu description "
-                  & Get_Message (Error));
-            end if;
-            Unref (Builder);
+            Trace (Me, "Load menus from " & Description.Display_Full_Name);
+            Open (Description.Display_Full_Name, Input);
+            Globals.Symbols := Allocate;
+            Reader.Set_Symbol_Table (Globals.Symbols);
+            Parse (Reader, Input);
+            Close (Input);
+            Parse_Menu_Model_From_XML
+              (Kernel, Get_Element (Get_Tree (Reader)));
+            Free (Reader);
          end;
+      end if;
+
+      if Globals.Menu_Model /= null then
+         if Active (System_Menus) then
+            Kernel.Get_Application.Set_Menubar (Globals.Menu_Model);
+         else
+            Menubar := Create_Menubar_From_Model (Kernel);
+         end if;
       end if;
    end Install_Menus;
 
@@ -2795,7 +2873,7 @@ package body GPS.Kernel.Modules.UI is
    function On_GPS_Action_Get_Name (Self : Gaction) return chars_ptr is
       S : constant GPS_Action := GPS_Action (To_Object (Self));
    begin
-      return New_String (S.Data.Action.all);  --  ??? memory leak
+      return S.CName;
    end On_GPS_Action_Get_Name;
 
    -------------------------------
@@ -2934,6 +3012,7 @@ package body GPS.Kernel.Modules.UI is
       Act := new GPS_Action_Record;
       G_New (Act, GPS_Action_Get_Type);
 
+      Act.CName := New_String (Action);  --  ??? never freed
       Act.Data := (Action    => new String'(Action),
                    Kernel    => Kernel,
                    Optional  => False,

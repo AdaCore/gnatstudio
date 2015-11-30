@@ -84,8 +84,8 @@ package GPS.Main_Window is
       --  additional items, like the omni-search or progress bars.
 
       Main_Box          : Gtk.Box.Gtk_Box;
-      --  The box that contains the menubar, and the rest of the window's
-      --  content.
+      --  The box that contains the menubar, toolbar, and the rest of the
+      --  window's content.
    end record;
    type GPS_Application_Window
      is access all GPS_Application_Window_Record'Class;

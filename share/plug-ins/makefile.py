@@ -81,7 +81,7 @@ On a multiprocessor machine compilations will occur in parallel" />
    </switches>
 </target-model>
 
-<target model="make" category="_Makefile" name="Make">
+<target model="make" category="Makefile" name="Make">
     <in-toolbar>FALSE</in-toolbar>
     <iconname>gps-build-all-symbolic</iconname>
     <launch-mode>MANUALLY</launch-mode>
