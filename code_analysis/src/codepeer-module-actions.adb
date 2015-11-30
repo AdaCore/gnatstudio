@@ -339,7 +339,11 @@ package body CodePeer.Module.Actions is
 
       Temp_SCIL : constant Filesystem_String := "Insp_";
       Obj_Dirs  : constant GNATCOLL.VFS.File_Array :=
-                    Object_Path (Get_Project (Kernel), True, True);
+                    Object_Path
+                      (Project             => Get_Project (Kernel),
+                       Recursive           => True,
+                       Including_Libraries => True,
+                       Exclude_Externally  => True);
       Dirs      : File_Array_Access;
       Ignore    : Boolean;
       pragma Unreferenced (Ignore);
@@ -408,7 +412,11 @@ package body CodePeer.Module.Actions is
       pragma Unreferenced (Ensure_Build_Mode);
 
       Obj_Dirs : constant GNATCOLL.VFS.File_Array :=
-                Object_Path (Get_Project (Kernel), True, True);
+                   Object_Path
+                     (Project             => Get_Project (Kernel),
+                      Recursive           => True,
+                      Including_Libraries => True,
+                      Exclude_Externally  => True);
       Ignore   : Boolean;
       pragma Unreferenced (Ignore);
 
