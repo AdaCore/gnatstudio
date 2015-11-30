@@ -227,6 +227,20 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       </menu>
     </submenu>
 
+    <action name="spark2014_example_bitwalker" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/bitwalker/test.gpr"</shell>
+      <shell>Editor.edit "bitwalker.adb"</shell>
+      <shell>Editor.edit "bitwalker.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_bitwalker">
+        <title>bitwalker</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_database" category=""
             show-command="false" output="none">
       <shell>Project.load "@EXAMPLE@/database/test.gpr"</shell>
