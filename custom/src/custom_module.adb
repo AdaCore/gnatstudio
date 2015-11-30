@@ -75,8 +75,6 @@ package body Custom_Module is
    Factory_Cst       : aliased constant String := "factory";
    Group_Cst         : aliased constant String := "group";
    Visibility_Filter_Cst : aliased constant String := "visibility_filter";
-   Description_Cst   : aliased constant String := "description";
-   Category_Cst      : aliased constant String := "category";
    Key_Cst           : aliased constant String := "key";
 
    Menu_Get_Params : constant Cst_Argument_List :=
@@ -1327,6 +1325,7 @@ package body Custom_Module is
         (Kernel, "Menu", Base => Get_GUI_Class (Kernel));
 
       Inst : Class_Instance;
+      Cmd  : Subprogram_Command;
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, (1 => Name_Cst'Access));
@@ -1334,31 +1333,18 @@ package body Custom_Module is
          Set_Data (Inst, Action_Class, Value => String'(Nth_Arg (Data, 2)));
 
       elsif Command = "create" then
-         Name_Parameters (Data, (1 => On_Activate_Cst'Access,
-                                 2 => Filter_Cst'Access,
-                                 3 => Category_Cst'Access,
-                                 4 => Description_Cst'Access));
          Inst := Nth_Arg (Data, 1, Action_Class);
-
-         declare
-            Name : constant String := String'(Get_Data (Inst, Action_Class));
-            Filter  : constant Action_Filter := Filter_From_Argument (Data, 3);
-            Category    : constant String := Nth_Arg (Data, 4, "General");
-            Descr       : constant String := Nth_Arg (Data, 5, "");
-            Cmd         : Subprogram_Command;
-         begin
-            Cmd := new Subprogram_Command_Record;
-            Cmd.Pass_Context := False;
-            Cmd.On_Activate  := Nth_Arg (Data, 2);
-
-            Register_Action
-              (Kernel,
-               Name        => Name,
-               Command     => Cmd,
-               Description => Descr,
-               Category    => Category,
-               Filter      => Filter);
-         end;
+         Cmd  := new Subprogram_Command_Record;
+         Cmd.Pass_Context := False;
+         Cmd.On_Activate  := Data.Nth_Arg (2);
+         Register_Action
+           (Kernel,
+            Name        => String'(Get_Data (Inst, Action_Class)),
+            Command     => Cmd,
+            Filter      => Filter_From_Argument (Data, 3),
+            Category    => Data.Nth_Arg (4, "General"),
+            Description => Data.Nth_Arg (5, ""),
+            Icon_Name   => Data.Nth_Arg (6, ""));
 
       elsif Command = "disable" then
          declare
@@ -1500,11 +1486,14 @@ package body Custom_Module is
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Handler       => Action_Handler'Access);
-      Register_Command
-        (Kernel, "create",
+      Kernel.Scripts.Register_Command
+        ("create",
          Class         => Action_Class,
-         Minimum_Args  => 1,
-         Maximum_Args  => 4,
+         Params        => (1 => Param ("on_activate"),
+                           2 => Param ("filter", Optional => True),
+                           3 => Param ("category", Optional => True),
+                           4 => Param ("description", Optional => True),
+                           5 => Param ("icon",        Optional => True)),
          Handler       => Action_Handler'Access);
       Kernel.Scripts.Register_Command
         ("disable",

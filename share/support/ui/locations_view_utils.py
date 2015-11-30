@@ -6,6 +6,7 @@
 
 import GPS
 import gps_utils
+import pygps
 import os.path
 
 
@@ -118,3 +119,46 @@ def on_contextual():
     list = GPS.Message.list(file=context.file())
     for m in list:
         m.remove()
+
+
+def in_call_trees_filter(context):
+    return context.module_name == "Callgraph_View"
+
+
+@gps_utils.interactive(
+    name="export call trees to editor",
+    icon='gps-save-symbolic',
+    toolbar='Call Trees', button_label='Export to editor',
+    filter=in_call_trees_filter)
+def export_call_trees_to_editor():
+    """
+    Export the current contents of the Call Trees view to an editor.
+    """
+
+    def dump_tree_model(model, indent):
+        values = []
+        if model:
+            for row in model:
+                first = row[0]
+                if first == 'computing...':
+                    return []
+                if not row[1] or \
+                   first.endswith(' called by ') or \
+                   first.endswith('calls '):
+                    values.append(indent + first)
+                else:
+                    values.append(indent + first + '\t\t{}'.format(row[1]))
+
+                values.extend(
+                    dump_tree_model(row.iterchildren(), indent + "   "))
+        return values
+
+    m = pygps.get_widget_by_name("Call Graph Tree").get_model()
+    text = '\n'.join(dump_tree_model(m, ""))
+
+    # Open an editor and write the contents
+
+    GPS.execute_action("new file")
+    buf = GPS.EditorBuffer.get()
+    buf.delete()   # in case some template was inserted
+    buf.insert(buf.at(1, 1), text)

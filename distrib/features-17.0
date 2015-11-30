@@ -38,6 +38,11 @@ NF-170-OC02-030 GB: trailing space removal set to autodetect (2015-12-04)
   trailing spaces are removed. In this mode they are preserved only if
   trailing spaces were detected in the file content when the file was opened.
 
+NF-170-OB24-046 GPS: exporting Call Trees to an editor (2015-11-30)
+
+  A new action and contextual menu allow exporting the contents of the
+  Call Trees view to an editor.
+
 NF-170-OB17-034 GPS: new calculator support in omni-search (2015-11-17)
 
   It is now possible to type simple mathematical expression in the

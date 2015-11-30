@@ -247,7 +247,7 @@ class Action():
         pass  # implemented in Ada
 
     def create(self, on_activate, filter='', category='General',
-               description=''):
+               description='', icon=''):
         """
         Export the function :func:`on_activate` and make it interactive so
         that users can bind keys and menus to it. The function should not
@@ -268,16 +268,18 @@ class Action():
            context. This is used to disable menu items when they are not
            available.
 
-        :param string category: A string
-           Category of the command in the /Edit/Key Shortcuts dialog.
+        :param str category: Category of the command in the Key Shortcuts
+           editor.
 
-        :param string description: A string
-           Description of the command that appears in that
-           dialog. If you are using Python, a convenient value is
-           on_activate.__doc__, which avoids duplicating the comment.
+        :param str description: Description of the command that appears in
+           the dialog or in tooltips. If you are using Python, a convenient
+           value is on_activate.__doc__, which avoids duplicating the comment.
+
+        :param str icon: Name of the icon to use for this action (in toolbars,
+           dialogs, ...). This is the name of an icon file in the GPS icons
+           directory.
 
         """
-        pass  # implemented in Ada
 
     def disable(self, disabled=True):
         """

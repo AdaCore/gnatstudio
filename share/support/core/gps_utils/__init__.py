@@ -247,7 +247,10 @@ def remove_interactive(menu="", name="", contextual=""):
 
 def make_interactive(callback, category="General", filter="", menu="", key="",
                      contextual='', name="", before="", after="",
-                     contextual_ref=''):
+                     contextual_ref='', icon='',
+
+                     # Adding buttons to a toolbar
+                     toolbar='', toolbar_section='', button_label=''):
     """
     Declare a new GPS action (an interactive function, in Emacs talk),
     associated with an optional menu and default key. The description of
@@ -267,11 +270,25 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
       placed within its parent just before the item referenced as `before`,
       or after the item referenced as `after`.
 
+    :param str icon: Name of the icon to use for this action, for instance
+      in toolbars or in various dialogs. This is the name of a file (minus
+      extension) found in the icons directory of GPS.
+
     :param contextual: Path for the contextual menu
       This is either a string, for instance '/Menu/Submenu' or
       '/Menu/Submenu %f', which supports a number of parameter substitution;
       or a function that receives a GPS.Context as parameter and returns a
       string.
+
+    :param str toolbar: If specified, inserts a button in the corresponding
+      toolbar (either 'main' or the name of the view as found in the
+      /Tools/Views menu)
+
+    :param str toolbar_section: Where, in the toolbar, to insert the button.
+      See :func:`GPS.Action.button()`
+
+    :param str button_label: The label to use for the button (defaults to
+      the name of the action).
 
     :return: a tuple (GPS.Action, GPS.Menu)
       The menu might be None if you did not request its creation.
@@ -290,7 +307,8 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
         callback = do
 
     a = Action(name or callback.__name__)
-    a.create(callback, filter=filter, category=category, description=doc)
+    a.create(callback, filter=filter, category=category, description=doc,
+             icon=icon)
 
     if menu:
         if before:
@@ -305,6 +323,9 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
 
     if key:
         a.key(key)
+
+    if toolbar:
+        a.button(toolbar=toolbar, section=toolbar_section, label=button_label)
 
     return a, m
 
@@ -322,25 +343,16 @@ class interactive:
            pass
     """
 
-    def __init__(self, category="General", filter="", menu="", key="",
-                 contextual="", name="", before="", after="",
-                 contextual_ref=''):
-        self.filter = filter
-        self.category = category
-        self.menu = menu
-        self.key = key
-        self.name = name
-        self.contextual = contextual
-        self.contextual_ref = contextual_ref
-        self.before = before
-        self.after = after
+    def __init__(self, *args, **kwargs):
+        """
+        The arguments are the same as for make_interactive above. It is
+        recommended to always use named arguments.
+        """
+        self.args = args
+        self.kwargs = kwargs
 
     def __call__(self, fn):
-        make_interactive(fn, filter=self.filter, category=self.category,
-                         menu=self.menu, key=self.key, after=self.after,
-                         before=self.before,
-                         contextual_ref=self.contextual_ref,
-                         contextual=self.contextual, name=self.name)
+        make_interactive(fn, *self.args, **self.kwargs)
         return fn
 
 
