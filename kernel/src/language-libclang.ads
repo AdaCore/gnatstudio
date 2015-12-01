@@ -15,24 +15,29 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Libclang.Index; use Libclang.Index;
-with GPS.Core_Kernels; use GPS.Core_Kernels;
-with GPS.Kernel;
-with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
-with Ada.Containers.Vectors;
-with GNATCOLL.Projects; use GNATCOLL.Projects;
-with Ada.Containers.Hashed_Maps;
-with Ada.Strings.Hash;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
-with Ada.Containers; use Ada.Containers;
+with Ada.Containers;                  use Ada.Containers;
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
 with Ada.Finalization;
-with Libclang.Task_Parser_Pool; use Libclang.Task_Parser_Pool;
-with clang_c_Index_h; use clang_c_Index_h;
-with Streamable_Access_Type;
+with Ada.Containers.Hashed_Maps;
+with Ada.Containers.Vectors;
+with Ada.Calendar;
+
+with GNATCOLL.Projects;               use GNATCOLL.Projects;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with GNATCOLL.Symbols.Streamable_Symbol_Table;
+
+with Streamable_Access_Type;
+with Array_Utils;
+
+with GPS.Core_Kernels;                use GPS.Core_Kernels;
+with GPS.Kernel;
+
+with Libclang.Task_Parser_Pool;       use Libclang.Task_Parser_Pool;
+with clang_c_Index_h;                 use clang_c_Index_h;
+with Libclang.Index;                  use Libclang.Index;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package Language.Libclang is
 
@@ -65,7 +70,7 @@ package Language.Libclang is
    --  Cache information records --
    --------------------------------
 
-   --  NOTE: Those two types store Offsets for space efficiency reasons !
+   --  NOTE: Those two types store Offsets for space efficiency reasons
 
    subtype Small_Cursor_Kind is CXCursorKind;
 
@@ -74,7 +79,6 @@ package Language.Libclang is
       Is_Def     : Boolean;
       Kind       : Small_Cursor_Kind;
    end record;
---     pragma Pack (Decl_Info);
    --  This is the record for declarations information stored in the reference
    --  cache. Important because in C a single entity can have several
    --  declarations AND bodies
@@ -83,7 +87,6 @@ package Language.Libclang is
       Loc         : Offset_T;
       Cursor_Kind : Small_Cursor_Kind;
    end record;
---     pragma Pack (Ref_Info);
    --  This is the record for references information stored in the reference
    --  cache
 
@@ -93,19 +96,15 @@ package Language.Libclang is
 
    package Ref_Info_Vectors is
      new Ada.Containers.Vectors (Positive, Ref_Info);
-
    package Streamable_Ref_Info_Vectors_Accesses
    is new Streamable_Access_Type (Ref_Info_Vectors.Vector);
-
    subtype Ref_Info_Vector is Streamable_Ref_Info_Vectors_Accesses.Access_Type;
    --  A vector of references information
 
    package Decl_Info_Vectors is
      new Ada.Containers.Vectors (Positive, Decl_Info);
-
    package Streamable_Decl_Info_Vectors_Accesses
    is new Streamable_Access_Type (Decl_Info_Vectors.Vector);
-
    subtype Decl_Info_Vector
      is Streamable_Decl_Info_Vectors_Accesses.Access_Type;
    --  A vector of declarations information
@@ -119,7 +118,6 @@ package Language.Libclang is
 
    package Clang_Symbol_Table_Pkg
    is new GNATCOLL.Symbols.Streamable_Symbol_Table;
-
    Clang_Symbol_Table : Clang_Symbol_Table_Pkg.Symbol_Table_Access
    renames Clang_Symbol_Table_Pkg.Symbol_Table;
 
@@ -136,16 +134,38 @@ package Language.Libclang is
      (Clang_Symbol, Info_Vectors,
       Hash => Clang_Symbol_Table_Pkg.Hash, Equivalent_Keys => "=");
 
+   type File_Cache_Record is record
+      File_Name       : Unbounded_String;
+      --  We keep the file name here, to be able to find it back easily when we
+      --  have a cache entry. The key contains it but this allows us to avoid
+      --  extracting it
+
+      File_Time_Stamp : Ada.Calendar.Time;
+      --  We keep the time stamp at which this cache entry was recorded, so
+      --  that we can easily determine wether we need to recompute the entry
+      --  when we start gps again.
+
+      Active          : Boolean := True;
+      --  This determines wether the cache is active or not. Since you can have
+      --  several cache entries for a different file, this allows us to know
+      --  which one is active
+
+      Map             : Symbol_To_Location_Maps.Map;
+      --  This is the map of cross references
+
+   end record;
+   --  A cache record keeps the cross-reference information for a *specific
+   --  compilation* of a given file. This means that if for whatever reason
+   --  you compile a given file with options that will yield different cross
+   --  references, there will be *several* cache entries for each of them
+
+   package Streamable_File_Cache_Accesses
+   is new Streamable_Access_Type (File_Cache_Record);
    --  We use the Streamable_Access_Type generic package, so that accesses of
    --  this type are automatically streamable
 
-   package Streamable_Sym_To_Loc_Map_Accesses
-   is new Streamable_Access_Type (Symbol_To_Location_Maps.Map);
-
-   subtype Sym_To_Loc_Map is Streamable_Sym_To_Loc_Map_Accesses.Access_Type;
-   use type Sym_To_Loc_Map;
-
-   procedure Destroy (S : in out Sym_To_Loc_Map);
+   subtype File_Cache_Access is Streamable_File_Cache_Accesses.Access_Type;
+   use type File_Cache_Access;
 
    -----------------
    -- VFS_To_Refs --
@@ -153,18 +173,28 @@ package Language.Libclang is
 
    --  (File -> USR) -> Info_Vector part of the cache
 
-   package VFS_To_Refs_Maps is new Ada.Containers.Hashed_Maps
-     (Unbounded_String, Sym_To_Loc_Map, Ada.Strings.Unbounded.Hash, "=");
+   type File_Key is new Unbounded_String;
+   --  This type is the key that is used to index files in the clang cache. It
+   --  is basically a conflation of the file full path + the switches that can
+   --  change the cross references
 
-   package Streamable_VFS_To_Refs_Map_Accesses
-   is new Streamable_Access_Type (VFS_To_Refs_Maps.Map);
+   package File_To_Refs_Maps is new Ada.Containers.Hashed_Maps
+     (File_Key, File_Cache_Access, Hash, "=");
 
-   subtype VFS_To_Refs is Streamable_VFS_To_Refs_Map_Accesses.Access_Type;
+   type Clang_Crossrefs_Cache_Type is record
+      Map : File_To_Refs_Maps.Map;
+   end record;
 
-   function Hash (Project : Project_Type) return Hash_Type is
-     (if Project = No_Project
-      then 0
-      else Ada.Strings.Hash (Project.Name));
+   package File_Type_Arrays is new Array_Utils (File_Cache_Access);
+   subtype File_Cache_Array is File_Type_Arrays.Array_Type;
+
+   package Streamable_Clang_Crossrefs_Cache_Accesses
+   is new Streamable_Access_Type (Clang_Crossrefs_Cache_Type);
+
+   subtype Clang_Crossrefs_Cache
+     is Streamable_Clang_Crossrefs_Cache_Accesses.Access_Type;
+   --  Main cross references cache data structure for libclang. Uses a
+   --  streamable access type so we can serialize to disk
 
    type TU_Cache_Record is record
       TU       : Clang_Translation_Unit := No_Translation_Unit;
@@ -187,54 +217,16 @@ package Language.Libclang is
    --  List used to store a LIFO of the translation units to free when the
    --  cache is full
 
-   type Translation_Unit_Wrapper is
-     new Ada.Finalization.Controlled with private;
-
-   function Get
-     (Self : Translation_Unit_Wrapper) return Clang_Translation_Unit;
-
-   function Get_Blocking
-     (Self : Translation_Unit_Wrapper) return Clang_Translation_Unit;
-
-   type Clang_Context;
-   type Clang_Context_Access is access all Clang_Context;
-
-   type Clang_Context is tagged limited record
-      TU_Cache         : Tu_Map_Access;
-      LRU              : LRU_Vector_Access;
-      Clang_Indexer    : Clang_Index;
-      Index_Action     : Clang_Index_Action;
-      Refs             : VFS_To_Refs;
-   end record;
-
-   procedure Initialize (Self : access Clang_Context);
-   procedure Destroy (Self : access Clang_Context);
-
-   procedure Reset_Refs
-     (Self : access Clang_Context;
-      File_Name : String; New_Refs : Sym_To_Loc_Map);
-
-   function Has_TU
-     (Self : access Clang_Context; File_Name : String) return Boolean;
-   function Get_TU
-     (Self : access Clang_Context;
-      File_Name : String) return Translation_Unit_Wrapper'Class;
-
-   procedure Add_TU_To_Cache
-     (Self : access Clang_Context;
-      File_Name : String;
-      Translation_Unit : Clang_Translation_Unit;
-      Version : Integer := 0);
-
-   function Get_TU
-     (C : access Clang_Context;
-      File_Name : String) return Clang_Translation_Unit;
+   --------------------------
+   -- Translation unit API --
+   --------------------------
 
    Default_Clang_Options : constant Clang_Translation_Unit_Flags :=
      Includebriefcommentsincodecompletion
      or Precompiledpreamble
      or Cachecompletionresults
      or Detailedpreprocessingrecord;
+   --  This is the set of default clang options used by the clang module
 
    function Translation_Unit
      (Kernel       : Core_Kernel;
@@ -244,6 +236,8 @@ package Language.Libclang is
       Options      : Clang_Translation_Unit_Flags := Default_Clang_Options;
       Default_Lang : String := "c++")
       return Clang_Translation_Unit;
+   --  Request the translation unit associated with file, and block while it's
+   --  being computed, finally returning it
 
    procedure Enqueue_Translation_Unit
      (Kernel       : Core_Kernel;
@@ -253,18 +247,65 @@ package Language.Libclang is
       Default_Lang : String := "c++";
       Prio         : Parsing_Request_Priority := Low;
       Callback     : in out Parse_Callback_Access);
+   --  Request the translation unit associated with file and return
+   --  immediately. Call Callback when the translation unit is ready
 
-   function Context
-     (Project : Project_Type) return Clang_Context_Access;
-   --  This is the main entry point of the module. Access to the translation
-   --  units goes through Translation_Unit.
+   ----------------------------------------------------------
+   -- Global accessors for the clang cross reference cache --
+   ----------------------------------------------------------
+
+   --  Those are the entry points in the cross reference cache.
+
+   function Crossrefs_Cache return Clang_Crossrefs_Cache;
+   --  Return the global cross-references cache
+
+   function Get_Active_Files return File_Cache_Array;
+   --  Return the files that are currently active in the cross references cache
+
+   function Get_Index_Action return Clang_Index_Action;
+   --  Return the global index action for the clang module
+
+   function Construct_Cache_Key
+     (Kernel    : Core_Kernel;
+      File      : Virtual_File;
+      Project   : Project_Type := No_Project) return File_Key;
+   --  Construct a cache key given a file. If the Project is none, this
+   --  function will take the first valid project for this
+   --  ??? When completing aggregate project support, we'll remove the default
+   --  value for project
+
+   type Use_Index is private;
+   --  This type is a controlled type that is used to notify the clang module
+   --  that the clang cache is in use, and that it shouldn't be modified.
+   --  Since it's a controlled object, here is the way it works:
+   --
+   --  procedure Use_The_Cache is
+   --     I : Use_Index;
+   --     --  As soon as the object is created, the cache is locked and cannot
+   --     --  be modified
+   --  begin
+   --     Use_The_Cache_Somehow;
+   --  end Use_The_Cache;
+   --  --  When exiting the function, I is freed and the cache is unlocked
+
+   ----------------------------------------------------
+   -- Debug procedures for the clang reference cache --
+   ----------------------------------------------------
+
+   procedure Print_Decl_Info (D : Decl_Info);
+   procedure Print_Ref_Info (D : Ref_Info);
+   procedure Print_Cache (Cache : Clang_Crossrefs_Cache);
+   procedure Print_File_Cache (File_Cache : File_Cache_Access);
+   --  Debug procedures. Used to print the content of the libclang file cache
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Register the clang module globally
 
 private
-   type Translation_Unit_Wrapper
-   is new Ada.Finalization.Controlled with record
-      Cache : TU_Cache_Access;
-   end record;
+
+   type Use_Index is new Ada.Finalization.Controlled with null record;
+
+   overriding procedure Initialize (Self : in out Use_Index);
+   overriding procedure Finalize (Self : in out Use_Index);
 end Language.Libclang;

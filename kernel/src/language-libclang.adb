@@ -15,50 +15,82 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Language.Libclang.Utils; use Language.Libclang.Utils;
 with Ada.Unchecked_Deallocation;
-with GPS.Editors; use GPS.Editors;
-with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
-with GPS.Kernel; use GPS.Kernel;
-with GPS.Kernel.Modules; use GPS.Kernel.Modules;
-with Interfaces.C.Strings;
-with Language.Libclang_Tree; use Language.Libclang_Tree;
-with Clang_Xref; use Clang_Xref;
-with String_Utils; use String_Utils;
-with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Streams.Stream_IO;         use Ada.Streams.Stream_IO;
+with Ada.Text_IO;                   use Ada.Text_IO;
+with Ada.Exceptions;                use Ada.Exceptions;
 with Ada.Real_Time;
-with Glib.Main;
-with Commands; use Commands;
+with Interfaces.C.Strings;
+with GNAT.Regpat;                   use GNAT.Regpat;
+with GNAT.Traceback.Symbolic;
+with System.Multiprocessors;        use System.Multiprocessors;
+
+with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
+with GNATCOLL.Utils;                use GNATCOLL.Utils;
+
+with Commands;                      use Commands;
 with Commands.Generic_Asynchronous;
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-pragma Warnings (Off);
-with System.Traceback.Symbolic;
-pragma Warnings (On);
-with GNATCOLL.Utils; use GNATCOLL.Utils;
-with GNAT.Regpat; use GNAT.Regpat;
-with System.Multiprocessors; use System.Multiprocessors;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with Glib.Main;
+with String_Utils;                  use String_Utils;
+
+with GPS.Editors;                   use GPS.Editors;
+with GPS.Kernel.Hooks;              use GPS.Kernel.Hooks;
+with GPS.Kernel;                    use GPS.Kernel;
+with GPS.Kernel.Modules;            use GPS.Kernel.Modules;
+with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
+with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
+
+with Language.Libclang_Tree;        use Language.Libclang_Tree;
+with Language.Libclang.Utils;       use Language.Libclang.Utils;
+with Clang_Xref;                    use Clang_Xref;
 
 package body Language.Libclang is
 
    LRU_Size : constant := 16;
+   --  Number of translation units that will be kept in the LRU cache at all
+   --  times. TODO ??? We might want to expose that in a preference so that
+   --  users can fine tune the memory usage of their GPS instance
+
    Nb_Tasks : constant Natural := Natural'Min (Natural (Number_Of_CPUs), 6);
+   --  Number of concurrent tasks used for parsing. TODO ??? We might want to
+   --  expose that via a preference so that users can fine tune parsing speed
 
-   Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
-
-   Activate_Clang_XRef : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG_XREF", On);
+   Me       : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
+   --  Main libclang trace
 
    Diagnostics : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("LIBCLANG_DIAGNOSTICS", Off);
+   --  Whether diagnostics should be shown in the traces or not
+
+   Activate_Clang_XRef : constant Trace_Handle :=
+     GNATCOLL.Traces.Create ("LIBCLANG_XREF", On);
+   --  Whether clang-based cross references should be activated or not
+
+   type Translation_Unit_Wrapper
+   is new Ada.Finalization.Controlled with record
+      Cache : TU_Cache_Access;
+   end record;
+
+   function Get_Blocking
+     (Self : Translation_Unit_Wrapper'Class) return Clang_Translation_Unit;
+   --  Block until the Translation_Unit_Wrapper has a TU, then return it
+
+   function Has_TU (File_Name : String) return Boolean;
+   --  Whether we have a translation unit for File_Name in the cache or not
+
+   function Get_TU (File_Name : String) return Translation_Unit_Wrapper'Class;
+   --  Return the translation unit wrapper associated with File_Name. This will
+   --  always return, irrespective of whether the translation_unit_wrapper
+   --  contains a TU or not.
 
    function Parsing_Timeout_Handler return Boolean;
+   --  Handler that will handle re-index files that have been parsed.
+   --  Underneath will just call Index_One_File until the end of times.
 
-   package Task_Parser_Pool is new Pool
-     (User_Data => Clang_Context_Access);
-
+   package Task_Parser_Pool is new Pool (User_Data => Core_Kernel);
    use Task_Parser_Pool;
+   --  Parser pools using to parse clang translation unit in tasks
+   --  asynchronously.
 
    procedure Enqueue_Translation_Unit
      (Kernel        : Core_Kernel;
@@ -68,6 +100,9 @@ package body Language.Libclang is
       Default_Lang  : String := "c++";
       Prio          : Parsing_Request_Priority := Low;
       Callback      : Parse_Callback_Access := null);
+   --  Helper for the high level Enqueue_Translation_Unit procedure, that will
+   --  take an Unsaved_Files array as parameter. This array is computed by the
+   --  higher level Enqueue_Translation_Unit.
 
    procedure Free
    is new Ada.Unchecked_Deallocation (TU_Maps.Map, Tu_Map_Access);
@@ -77,12 +112,11 @@ package body Language.Libclang is
    is new Ada.Unchecked_Deallocation (TU_Cache_Record, TU_Cache_Access);
    procedure Free
    is new Ada.Unchecked_Deallocation
-     (VFS_To_Refs_Maps.Map, VFS_To_Refs);
+     (Clang_Crossrefs_Cache_Type, Clang_Crossrefs_Cache);
    procedure Free
    is new Ada.Unchecked_Deallocation
-     (Symbol_To_Location_Maps.Map, Sym_To_Loc_Map);
-
-   --  Love you so much Ada <3 <3 (okay)
+     (File_Cache_Record, File_Cache_Access);
+   --  Deallocation procedures
 
    procedure Python_Get_TU
      (Data : in out Callback_Data'Class; Command : String);
@@ -91,18 +125,55 @@ package body Language.Libclang is
    --  translation, that will then be used on the python side to create a real
    --  python clang TranslationUnit
 
-   procedure Index_One_File;
+   function Construct_Cache_Key
+     (File_Name : String;
+      Switches  : Unbounded_String_Array) return File_Key;
+   --  Helper procedure, that will construct a File_Key cache key from a file
+   --  name and a list of switches
 
-   package Clang_Cache_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Virtual_File, Clang_Context_Access, Full_Name_Hash, "=");
+   procedure Index_One_File;
+   --  This procedure will index one file placed in the clang response queue,
+   --  meaning traverse its tree and put the cross references information in
+   --  the global cache
 
    type Clang_Module_Record is new Module_ID_Record with record
-      Global_Cache : Clang_Cache_Maps.Map;
-      Parsing_Timeout_Id : Glib.Main.G_Source_Id;
-      Parsing_Tasks : Parsing_Task_Array (1 .. Nb_Tasks);
+      Parsing_Timeout_Id   : Glib.Main.G_Source_Id;
+      --  Id of the global timeout that is used to regularly index files that
+      --  have been parsed
+
+      Parsing_Tasks        : Parsing_Task_Array (1 .. Nb_Tasks);
+      --  Array of parsing tasks. TODO ??? For the moment this is static,
+      --  but ideally the user could change the number of active tasks with
+      --  a preference to fine tune the performance of the initial parsing
+
+      Indexing_Active      : Boolean := True;
+      --  Global variable used by the indexing timeout handler to know if it
+      --  should index parsed files or not. This is used by procedures using
+      --  the references cache, to notify the libclang engine that the cache
+      --  is currently inspected and should not be modified
+
+      TU_Cache             : Tu_Map_Access;
+      LRU                  : LRU_Vector_Access;
+      --  Those two components, together, constitute the LRU cache. The
+      --  TU_Cache map is used to retrieve translation units by name, while
+      --  the LRU vector is used to evict old translation units.
+
+      Clang_Indexer        : Clang_Index;
+      --  This is the global clang indexer, that is the gateway to the
+      --  underlying libclang API. We have only one Indexer for everything
+      --  for convenience, and because there is no pro to do it another way.
+
+      Index_Action         : Clang_Index_Action;
+      --  Index action used by the cross reference indexing machinery.
+
+      Refs                 : Clang_Crossrefs_Cache;
+      --  Clang cross references cache entry point.
    end record;
+   --  This is the global cache record, containing information that is globally
+   --  useful to the clang module
 
    overriding procedure Destroy (Id : in out Clang_Module_Record);
+   --  Destroy procedure, freeing every resources associated with libclang
 
    Clang_Module_Id : access Clang_Module_Record := null;
 
@@ -113,12 +184,38 @@ package body Language.Libclang is
    --  Command executed when the project view is changed. This will handle
    --  recomputing the clang cache.
 
-   function Context_From_File
-     (Kernel       : Core_Kernel;
-      File         : GNATCOLL.VFS.Virtual_File;
-      Project      : Project_Type := No_Project)
-      return Clang_Context_Access;
-   --  Returns a Clang context from a given file
+   procedure Save_Crossrefs_Cache (Kernel : Core_Kernel);
+   --  This procedure is used to save the crossref cache on disk. Since the
+   --  cache is global, it just needs the kernel to get some global information
+   --  about the state of GPS
+
+   procedure Initialize_Crossrefs_Cache (Kernel : Core_Kernel);
+   --  This procedure is used to initialize the crossref cache, and load it
+   --  from disk if a persistence file exists.
+
+   procedure Add_TU_To_Cache
+     (File_Name        : String;
+      Translation_Unit : Clang_Translation_Unit;
+      Version          : Integer := 0);
+   --  Helper procedure, used to add a translation unit to the LRU cache after
+   --  it has been computed.
+
+   procedure Destroy (S : in out File_Cache_Access);
+   --  Destroy a file cache
+
+   function Get_Switches
+     (Kernel                    : Core_Kernel;
+      File                      : Virtual_File;
+      Project                   : Project_Type := No_Project;
+      Default_Lang              : String := "c++";
+      Include_Compiler_Switches : Boolean := True)
+      return Unbounded_String_Array;
+   --  Helper procedure that will return the switches for a given file and
+   --  project
+
+   function Get_Cache_File (Kernel : Core_Kernel) return Virtual_File;
+   --  Return the Virtual file corresponding to the clang crossref cache file
+   --  for the root project
 
    use Streamable_Decl_Info_Vectors_Accesses;
    use Streamable_Ref_Info_Vectors_Accesses;
@@ -127,9 +224,9 @@ package body Language.Libclang is
    -- Destroy --
    -------------
 
-   procedure Destroy (S : in out Sym_To_Loc_Map) is
+   procedure Destroy (S : in out File_Cache_Access) is
    begin
-      for El of S.all loop
+      for El of S.Map loop
          if El.Refs /= null then
             Free (El.Refs);
          end if;
@@ -137,76 +234,19 @@ package body Language.Libclang is
             Free (El.Decls);
          end if;
       end loop;
-      S.Clear;
+      S.Map.Clear;
       Free (S);
    end Destroy;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize (Self : access Clang_Context)
-   is
-      Idx : constant Clang_Index :=
-        Create_Index
-          (True,
-           --  We never want to display diagnostics via libclang,
-           --  because it will just dump them on stdout
-           Display_Diagnostics => False);
-   begin
-      Self.Clang_Indexer := Idx;
-      Self.TU_Cache      := new TU_Maps.Map;
-      Self.LRU           := new LRU_Lists.List;
-      Self.Index_Action  := Create (Idx);
-      Self.Refs          := new VFS_To_Refs_Maps.Map;
-   end Initialize;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Self : access Clang_Context)
-   is
-   begin
-      for C of Self.TU_Cache.all loop
-         Destroy (C);
-      end loop;
-      Self.TU_Cache.Clear;
-      Free (Self.TU_Cache);
-      Free (Self.LRU);
-
-      for M of Self.Refs.all loop
-         Destroy (M);
-      end loop;
-
-      Free (Self.Refs);
-      Dispose (Self.Index_Action);
-      clang_disposeIndex (Self.Clang_Indexer);
-   end Destroy;
-
-   ----------------
-   -- Reset_Refs --
-   ----------------
-
-   procedure Reset_Refs (Self : access Clang_Context;
-                         File_Name : String; New_Refs : Sym_To_Loc_Map)
-   is
-   begin
-      if Self.Refs.Contains (+File_Name) then
-         Destroy (Self.Refs.Reference (+File_Name));
-      end if;
-      Self.Refs.Include (+File_Name, New_Refs);
-   end Reset_Refs;
 
    ------------
    -- Has_TU --
    ------------
 
-   function Has_TU (Self : access Clang_Context;
-                    File_Name : String) return Boolean is
+   function Has_TU (File_Name : String) return Boolean is
    begin
-      return Self.TU_Cache.Contains (+File_Name)
-        and then Self.TU_Cache.Element (+File_Name).TU /= No_Translation_Unit;
+      return Clang_Module_Id.TU_Cache.Contains (+File_Name)
+        and then Clang_Module_Id.TU_Cache.Element
+          (+File_Name).TU /= No_Translation_Unit;
    end Has_TU;
 
    ------------
@@ -214,21 +254,23 @@ package body Language.Libclang is
    ------------
 
    function Get_TU
-     (Self : access Clang_Context;
-      File_Name : String) return Translation_Unit_Wrapper'Class
+     (File_Name : String) return Translation_Unit_Wrapper'Class
    is
       U_File_Name : constant Unbounded_String := +File_Name;
       Cache : TU_Cache_Access;
    begin
       return Ret : Translation_Unit_Wrapper do
-         if Self.TU_Cache.Contains (U_File_Name) then
-            Cache := Self.TU_Cache.Element (U_File_Name);
+         if Clang_Module_Id.TU_Cache.Contains (U_File_Name) then
+            Cache := Clang_Module_Id.TU_Cache.Element (U_File_Name);
          else
+            Trace (Me,
+                   "In get tu, creating new cache entry for file" & File_Name);
             Cache :=
               new TU_Cache_Record'(TU => No_Translation_Unit, Version => 0,
                                    Is_Ready => False);
-            Self.TU_Cache.Include (+File_Name, Cache);
+            Clang_Module_Id.TU_Cache.Include (+File_Name, Cache);
          end if;
+         Trace (Me, "In get tu, is_ready => " & Cache.Is_Ready'Img);
          Ret.Cache := Cache;
       end return;
    end Get_TU;
@@ -238,8 +280,7 @@ package body Language.Libclang is
    ---------------------
 
    procedure Add_TU_To_Cache
-     (Self : access Clang_Context;
-      File_Name : String;
+     (File_Name : String;
       Translation_Unit : Clang_Translation_Unit;
       Version : Integer := 0)
    is
@@ -249,8 +290,8 @@ package body Language.Libclang is
    begin
       Trace (Me, "Adding TU to cache " & File_Name);
 
-      if Self.TU_Cache.Contains (U_File_Name) then
-         Cache := Self.TU_Cache.Element (U_File_Name);
+      if Clang_Module_Id.TU_Cache.Contains (U_File_Name) then
+         Cache := Clang_Module_Id.TU_Cache.Element (U_File_Name);
 
          Trace (Me, "SELF CONTAINS TU, "
                 & Boolean'Image (Cache.TU /= No_Translation_Unit) & " "
@@ -269,56 +310,58 @@ package body Language.Libclang is
          Cache :=
            new TU_Cache_Record'(TU => Translation_Unit, Version => Version,
                                 Is_Ready => True);
-         Self.TU_Cache.Include (U_File_Name, Cache);
+         Clang_Module_Id.TU_Cache.Include (U_File_Name, Cache);
       end if;
 
       --  Handle LRU bookkeeping
 
       declare
-         C : LRU_Lists.Cursor := Self.LRU.Find (U_File_Name);
+         C : LRU_Lists.Cursor := Clang_Module_Id.LRU.Find (U_File_Name);
       begin
          --  If the file name is already in the LRU, we want to put it back at
          --  the beginning of the list, so remove the existing element
 
          if C /= No_Element then
-            Delete (Self.LRU.all, C);
+            Delete (Clang_Module_Id.LRU.all, C);
          end if;
 
          --  In every case, append the file name at the beginning of the list
-         Self.LRU.Append (U_File_Name);
+         Clang_Module_Id.LRU.Append (U_File_Name);
       end;
 
       --  Remove elements from the cache if > LRU_Size
 
-      if Self.LRU.Length > LRU_Size then
+      if Clang_Module_Id.LRU.Length > LRU_Size then
          declare
-            F : constant Unbounded_String := Self.LRU.First_Element;
+            F : constant Unbounded_String := Clang_Module_Id.LRU.First_Element;
          begin
             --  We are not actually removing element from the cache, so that we
             --  can trace dangling pointers
             Trace (Me, "Removing " & (+F) & " from cache");
             begin
-               Dispose (Self.TU_Cache.Element (F).TU);
-               Self.TU_Cache.Element (F).Is_Ready := False;
+               Dispose (Clang_Module_Id.TU_Cache.Element (F).TU);
+               Clang_Module_Id.TU_Cache.Element (F).Is_Ready := False;
             exception
                when E : others =>
-                  Trace (Me, "EXCEPTION !");
-                  Trace (Me, System.Traceback.Symbolic.Symbolic_Traceback (E));
+                  Trace (Me, "Exception !");
+                  Trace (Me, GNAT.Traceback.Symbolic.Symbolic_Traceback (E));
             end;
-            Self.LRU.Delete_First;
+            Clang_Module_Id.LRU.Delete_First;
          end;
       end if;
    end Add_TU_To_Cache;
 
    type Indexer_Data is record
-      Syms_To_Locs : Sym_To_Loc_Map;
+      Syms_To_Locs : File_Cache_Access;
    end record;
 
    procedure Index_Reference
      (Client_Data : in out Indexer_Data;
-      Info   : Clang_Ref_Info);
+      Info        : Clang_Ref_Info);
+
    function Info_Vector
-     (Map : Sym_To_Loc_Map; Sym : Clang_Symbol) return Info_Vectors;
+     (FC : File_Cache_Access; Sym : Clang_Symbol) return Info_Vectors;
+
    procedure Index_Declaration
      (Client_Data : in out Indexer_Data;
       Info        : Clang_Decl_Info);
@@ -376,16 +419,16 @@ package body Language.Libclang is
    -----------------
 
    function Info_Vector
-     (Map : Sym_To_Loc_Map; Sym : Clang_Symbol) return Info_Vectors
+     (FC : File_Cache_Access; Sym : Clang_Symbol) return Info_Vectors
    is
       Info_Vector : Info_Vectors;
    begin
-      if not Map.Contains (Sym) then
+      if not FC.Map.Contains (Sym) then
          Info_Vector := (new Decl_Info_Vectors.Vector,
                          new Ref_Info_Vectors.Vector);
-         Map.Include (Sym, Info_Vector);
+         FC.Map.Include (Sym, Info_Vector);
       else
-         Info_Vector := Map.Element (Sym);
+         Info_Vector := FC.Map.Element (Sym);
       end if;
       return Info_Vector;
    end Info_Vector;
@@ -461,8 +504,7 @@ package body Language.Libclang is
      (Client_Data_T => Indexer_Data);
 
    function Full_Name (F : Virtual_File) return String
-   is
-     (String (F.Full_Name.all));
+   is (String (F.Full_Name (Normalize => True).all));
 
    ----------------------
    -- Translation_Unit --
@@ -477,81 +519,51 @@ package body Language.Libclang is
       Prio         : Parsing_Request_Priority := Low;
       Callback     : in out Parse_Callback_Access)
    is
-      Buffer : constant Editor_Buffer'Class :=
+      Buffer         : constant Editor_Buffer'Class :=
         Kernel.Get_Buffer_Factory.Get (File, False, False, False, False);
-      F_Info : constant File_Info'Class :=
-        File_Info'Class
-          (Kernel.Registry.Tree.Info_Set
-             (File).First_Element);
-      Context : Clang_Context_Access;
       Full_File_Name : constant String := Full_Name (File);
    begin
       if Reparse
         and then Buffer /= Nil_Editor_Buffer
-        and then Clang_Module_Id.Global_Cache.Contains
-          (F_Info.Project.Project_Path)
+        and then Has_TU (Full_File_Name)
       then
-         Context := Clang_Module_Id.Global_Cache.Element
-           (F_Info.Project.Project_Path);
-
-         if Context.Has_TU (Full_File_Name) then
-            declare
-               Cache_Val : constant Translation_Unit_Wrapper'Class
-                 := Context.Get_TU (Full_File_Name);
-            begin
-               if Cache_Val.Cache.Version < Buffer.Version then
-                  declare
-                     Buffer_Text : constant
-                       Ada.Strings.Unbounded.String_Access :=
-                       new String'(Buffer.Get_Chars);
-                  begin
-                     Enqueue_Translation_Unit
-                       (Kernel,
-                        File,
-                        (0 => Create_Unsaved_File
-                             (String (File.Full_Name.all), Buffer_Text)),
-                        Default_Lang => Default_Lang,
-                        Prio         => Prio,
-                        Callback     => Callback,
-                        Options      => Options);
-                     Cache_Val.Cache.Version := Buffer.Version;
-                     return;
-                  end;
-               else
-                  if Callback /= null then
-                     Callback.Call (File, Cache_Val.Cache.TU);
-                     Free (Callback);
-                  end if;
+         declare
+            Cache_Val : constant Translation_Unit_Wrapper'Class
+              := Get_TU (Full_File_Name);
+         begin
+            if Cache_Val.Cache.Version < Buffer.Version then
+               declare
+                  Buffer_Text                         : constant
+                    Ada.Strings.Unbounded.String_Access :=
+                      new String'(Buffer.Get_Chars);
+               begin
+                  Enqueue_Translation_Unit
+                    (Kernel,
+                     File,
+                     (0 => Create_Unsaved_File
+                          (Full_Name (File), Buffer_Text)),
+                     Default_Lang => Default_Lang,
+                     Prio         => Prio,
+                     Callback     => Callback,
+                     Options      => Options);
+                  Cache_Val.Cache.Version := Buffer.Version;
+                  return;
+               end;
+            else
+               if Callback /= null then
+                  Callback.Call (File, Cache_Val.Cache.TU);
+                  Free (Callback);
                end if;
-            end;
-         end if;
+            end if;
+         end;
+      else
 
+         Enqueue_Translation_Unit
+           (Kernel, File, No_Unsaved_Files,
+            Prio     => Prio,
+            Callback => Callback);
       end if;
-      Enqueue_Translation_Unit (Kernel, File, No_Unsaved_Files, Prio => Prio,
-                                Callback => Callback);
    end Enqueue_Translation_Unit;
-
-   -----------------------
-   -- Context_From_File --
-   -----------------------
-
-   function Context_From_File
-     (Kernel  : Core_Kernel;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Project : Project_Type := No_Project)
-      return Clang_Context_Access
-   is
-      P : Project_Type := Project;
-   begin
-      if P = No_Project then
-         P :=
-           File_Info'Class
-             (Kernel.Registry.Tree.Info_Set (File).First_Element).Project;
-      end if;
-
-      return
-        Clang_Module_Id.Global_Cache.Element (P.Project_Path);
-   end Context_From_File;
 
    ----------------------
    -- Translation_Unit --
@@ -566,8 +578,11 @@ package body Language.Libclang is
       Default_Lang : String := "c++")
       return Clang_Translation_Unit
    is
+      pragma Unreferenced (Project);
       Callback : Parse_Callback_Access := null;
    begin
+      Trace (Me, "Calling enqueue, will wait on tu");
+
       Enqueue_Translation_Unit
         (Kernel, File, Reparse,
          Options      => Options,
@@ -576,8 +591,8 @@ package body Language.Libclang is
          Callback     => Callback);
 
       if Clang_Module_Id /= null then
-         return Context_From_File (Kernel, File, Project).Get_TU
-           (String (File.Full_Name.all)).Get_Blocking;
+         Trace (Me, "Now waiting on tu for file " & Full_Name (File));
+         return Get_TU (Full_Name (File)).Get_Blocking;
       end if;
 
       return No_Translation_Unit;
@@ -587,29 +602,14 @@ package body Language.Libclang is
    -- Context --
    -------------
 
-   function Context
-     (Project : Project_Type) return Clang_Context_Access
+   function Crossrefs_Cache return Clang_Crossrefs_Cache
    is
    begin
-      return Clang_Module_Id.Global_Cache.Element (Project.Project_Path);
-   end Context;
+      return Clang_Module_Id.Refs;
+   end Crossrefs_Cache;
 
    Empty_String_Array : constant GNATCOLL.Utils.Unbounded_String_Array (1 .. 0)
      := (others => <>);
-
-   ------------
-   -- Get_TU --
-   ------------
-
-   function Get_TU
-     (C : access Clang_Context;
-      File_Name : String) return Clang_Translation_Unit
-   is
-      Cache_Entry : constant Translation_Unit_Wrapper'Class :=
-        C.Get_TU (File_Name);
-   begin
-      return Cache_Entry.Get;
-   end Get_TU;
 
    Cpp_Header_Regex : constant Regpat.Pattern_Matcher :=
      Compile (".*?include\/c\+\+\/\d\..*?\/.*$");
@@ -632,67 +632,32 @@ package body Language.Libclang is
       --  least in the first iteration of libclang, ask the user to save
       --  the other files if he expects to get completion. RA
 
-      Kernel_Lang      : constant String :=
-        Kernel.Lang_Handler.Get_Language_From_File (File);
-
-      function Lang return String;
-      function Lang return String is
-      begin
-         if Match (Cpp_Header_Regex, String (File.Full_Name.all)) then
-            return "c++";
-         elsif Kernel_Lang = "" then
-            return Default_Lang;
-         else
-            return Kernel_Lang;
-         end if;
-      end Lang;
-
-      C_Switches       : GNAT.Strings.String_List_Access;
-      Ignored          : Boolean;
-
-      F_Info : constant File_Info'Class :=
-        File_Info'Class
-          (Kernel.Registry.Tree.Info_Set
-             (File).First_Element);
-
-      Context : Clang_Context_Access;
       File_Name : constant String := Full_Name (File);
       Request : Parsing_Request;
 
    begin
 
-      if not Clang_Module_Id.Global_Cache.Contains
-        (F_Info.Project.Project_Path)
-      then
-         Context := new Clang_Context;
-         Context.Initialize;
-         Clang_Module_Id.Global_Cache.Insert
-           (F_Info.Project.Project_Path, Context);
-      else
-         Context :=
-           Clang_Module_Id.Global_Cache.Element (F_Info.Project.Project_Path);
-      end if;
-
       if Unsaved_Files = No_Unsaved_Files
-        and then Context.Has_TU (Full_Name (File))
+        and then Has_TU (Full_Name (File))
       then
          return;
       end if;
 
-      --  Retrieve the switches for this file
-      Switches (F_Info.Project, "compiler", File, Lang, C_Switches, Ignored);
-
       declare
-         The_Switches : Unbounded_String_Array (C_Switches'Range);
          TU           : Clang_Translation_Unit;
          TU_Wrapper   : constant Translation_Unit_Wrapper'Class
-           := Context.Get_TU (File_Name);
-      begin
-         for J in C_Switches'Range loop
-            The_Switches (J) := +C_Switches (J).all;
-         end loop;
+           := Get_TU (File_Name);
 
-         if Context.Has_TU (File_Name) then
+         Switches     : constant Unbounded_String_Array :=
+           Get_Switches (Kernel, File, Default_Lang => Default_Lang);
+
+         File_Project : constant Project_Type :=
+           File_Info'Class
+             (Kernel.Registry.Tree.Info_Set
+                (File).First_Element).Project;
+      begin
+
+         if Has_TU (File_Name) then
 
             --  If the key is in the cache, we know that File_Content is not
             --  null, so we want to reparse
@@ -703,77 +668,46 @@ package body Language.Libclang is
 
             Request := new Parsing_Request_Record'
               (TU            => TU,
-               Context       => Context,
-               Indexer       => Context.Clang_Indexer,
+               Context       => Kernel,
+               Indexer       => Clang_Module_Id.Clang_Indexer,
                Kind          => Reparse,
                Unsaved_Files => new Unsaved_File_Array'(Unsaved_Files),
                Options       => Options,
                File_Name     => +File_Name,
                Prio          => Prio,
-               Project_Name  =>
-                 +(String (F_Info.Project.Project_Path.Full_Name.all)),
+               Project_Name  => +(Full_Name (File_Project.Project_Path)),
                Callbacks     => <>);
 
             if Callback /= null then
                Request.Callbacks.Append (Callback);
             end if;
 
+            Trace (Me, "Enqueuing request for file " & File_Name);
             Parsing_Request_Queue.Enqueue (Request);
 
          else
             --  In the other case, this is the first time we're parsing this
             --  file
 
-            declare
-               Switches : constant GNATCOLL.Utils.Unbounded_String_Array
-                 :=
+            Request := new Parsing_Request_Record'
+              (Kind         => Parse,
+               Context      => Kernel,
+               Indexer      => Clang_Module_Id.Clang_Indexer,
+               File_Name    => +File_Name,
+               Switches     => new Unbounded_String_Array'(Switches),
+               Options      => Options,
+               Prio         => Prio,
+               Project_Name => +(Full_Name (File_Project.Project_Path)),
+               Callbacks    => <>);
 
-               --  We pass to libclang a list of switches made of:
-               --  ... the C/C++ switches specified in this project
-                 The_Switches
+            if Callback /= null then
+               Request.Callbacks.Append (Callback);
+            end if;
 
-               --  ... a -I<dir> for each directory in the subprojects
-               --  of this project
-                 & Get_Project_Source_Dirs
-                 (Kernel, F_Info.Project, Lang)
-
-                 --  ... a -I<dir> for each dir in the compiler search path
-                 & Get_Compiler_Search_Paths_Switches
-                 (Kernel, F_Info.Project, Lang)
-
-                 & (if Lang in "c++" | "cpp" then (+"-x", +"c++")
-                    else Empty_String_Array);
-            begin
-
-               Trace (Diagnostics, "=== FILE     : " & File_Name);
-               Trace (Diagnostics, "=== LANGUAGE : " & Lang);
-               Trace (Diagnostics, "======= BEGIN SWITCHES ==============");
-               for Sw of Switches loop
-                  Trace (Diagnostics, +Sw);
-               end loop;
-               Trace (Diagnostics, "======= END SWITCHES ==============");
-
-               Request := new Parsing_Request_Record'
-                 (Kind         => Parse,
-                  Context      => Context,
-                  Indexer      => Context.Clang_Indexer,
-                  File_Name    => +File_Name,
-                  Switches     => new Unbounded_String_Array'(Switches),
-                  Options      => Options,
-                  Prio         => Prio,
-                  Project_Name =>
-                    +(String (F_Info.Project.Project_Path.Full_Name.all)),
-                  Callbacks    => <>);
-
-               if Callback /= null then
-                  Request.Callbacks.Append (Callback);
-               end if;
-
-               Parsing_Request_Queue.Enqueue (Request);
-            end;
+            Trace (Me, "Enqueuing request for file " & File_Name);
+            Parsing_Request_Queue.Enqueue (Request);
          end if;
 
-         GNAT.Strings.Free (C_Switches);
       end;
    end Enqueue_Translation_Unit;
 
@@ -782,6 +716,7 @@ package body Language.Libclang is
 
    type Parse_Files_Data_Type is record
       Max_Idx, Current_Idx : Natural := 0;
+      Kernel : Core_Kernel;
    end record;
    type Parse_Files_Data_Type_Access is access all Parse_Files_Data_Type;
 
@@ -808,6 +743,7 @@ package body Language.Libclang is
 
       if Data.Current_Idx = Data.Max_Idx then
          Result := Success;
+         Save_Crossrefs_Cache (Data.Kernel);
       else
          Result := Execute_Again;
       end if;
@@ -832,24 +768,187 @@ package body Language.Libclang is
          File : Virtual_File; TU : Clang_Translation_Unit) is
          pragma Unreferenced (TU);
       begin
-         Trace (Me, "Finished parsing " & String (File.Full_Name.all));
+         Trace (Me, "Finished parsing " & Full_Name (File));
          Self.Command.Current_Idx := Self.Command.Current_Idx + 1;
       end Call;
    end Parse_Callback_Package;
 
-   -----------------
-   -- Clean_Cache --
-   -----------------
-   procedure Clean_Cache (Id : in out Clang_Module_Record);
+   ----------------------
+   -- Print_File_Cache --
+   ----------------------
 
-   procedure Clean_Cache (Id : in out Clang_Module_Record) is
+   procedure Print_File_Cache (File_Cache : File_Cache_Access) is
    begin
-      Trace (Me, "Cleaning all cache for libclang");
-      for C of Id.Global_Cache loop
-         C.all.Destroy;
+      Put_Line ("File : " & (+File_Cache.File_Name));
+      Put_Line ("    Elements : ");
+      for C2 in File_Cache.Map.Iterate loop
+         declare
+            S  : constant Clang_Symbol := Symbol_To_Location_Maps.Key (C2);
+            IV : constant Info_Vectors :=
+              Symbol_To_Location_Maps.Element (C2);
+         begin
+            Put ("    " & Clang_Symbol_Table_Pkg.Get (S).all);
+
+            Put ("[");
+            for I in IV.Decls.First_Index .. IV.Decls.Last_Index loop
+               Print_Decl_Info (IV.Decls.Element (I));
+               Put (" ");
+            end loop;
+            Put ("] ");
+
+            Put ("[");
+            for I in IV.Refs.First_Index .. IV.Refs.Last_Index loop
+               Print_Ref_Info (IV.Refs.Element (I));
+               Put (" ");
+            end loop;
+            Put_Line ("]");
+         end;
       end loop;
-      Id.Global_Cache.Clear;
-   end Clean_Cache;
+
+   end Print_File_Cache;
+
+   ---------------------
+   -- Print_Decl_Info --
+   ---------------------
+
+   procedure Print_Decl_Info (D : Decl_Info) is
+   begin
+      Put ("(" & D.Loc'Img & ", " & D.Is_Def'Img & ", " & D.Kind'Img & ")");
+   end Print_Decl_Info;
+
+   --------------------
+   -- Print_Ref_Info --
+   --------------------
+
+   procedure Print_Ref_Info (D : Ref_Info) is
+   begin
+      Put ("(" & D.Loc'Img & ", " & D.Cursor_Kind'Img & ")");
+   end Print_Ref_Info;
+
+   -----------------
+   -- Print_Cache --
+   -----------------
+
+   procedure Print_Cache (Cache : Clang_Crossrefs_Cache) is
+   begin
+      Put_Line ("========= Printing the cache =========");
+      for C in Cache.Map.Iterate loop
+         declare
+            K : constant File_Key := File_To_Refs_Maps.Key (C);
+         begin
+            Put_Line ("Cache entry :" & (+Unbounded_String (K)));
+            Print_File_Cache (File_To_Refs_Maps.Element (C));
+            Put_Line ("=================================================");
+         end;
+      end loop;
+   end Print_Cache;
+
+   --------------------
+   -- Get_Cache_File --
+   --------------------
+
+   function Get_Cache_File (Kernel : Core_Kernel) return Virtual_File
+   is
+      Obj_Dir         : constant Virtual_File :=
+        Kernel.Get_Project_Tree.Root_Project.Object_Dir;
+   begin
+      if Obj_Dir = No_File then
+         return No_File;
+      else
+         return Obj_Dir / "clang_ref_cache.db";
+      end if;
+   end Get_Cache_File;
+
+   --------------------------------
+   -- Initialize_Crossrefs_Cache --
+   --------------------------------
+
+   procedure Initialize_Crossrefs_Cache (Kernel : Core_Kernel)
+   is
+      Cache_File      : Ada.Streams.Stream_IO.File_Type;
+      Cache_Stream    : Stream_Access;
+      Cache_VFS       : constant Virtual_File := Get_Cache_File (Kernel);
+   begin
+      if Cache_VFS = No_File then
+         return;
+      end if;
+
+      Trace (Me, "Loading the db !" & Full_Name (Cache_VFS));
+
+      begin
+         Ada.Streams.Stream_IO.Open
+           (Cache_File, In_File, Full_Name (Cache_VFS));
+      exception
+         when others =>
+            Trace (Me, "No database file");
+            return;
+      end;
+
+      Cache_Stream := Stream (Cache_File);
+
+      declare
+         Dummy : Boolean;
+      begin
+         Clang_Module_Id.Refs
+           := Clang_Crossrefs_Cache'Input (Cache_Stream);
+      exception
+         when others =>
+            Trace (Me, "Failed loading the database from cache");
+            Cache_VFS.Delete (Dummy);
+      end;
+
+      Close (Cache_File);
+   end Initialize_Crossrefs_Cache;
+
+   -------------------
+   -- Save_Database --
+   -------------------
+
+   procedure Save_Crossrefs_Cache (Kernel : Core_Kernel)
+   is
+      Cache_VFS       : constant Virtual_File := Get_Cache_File (Kernel);
+      Cache_File      : Ada.Streams.Stream_IO.File_Type;
+      Cache_Stream    : Stream_Access;
+
+      Dummy           : Boolean;
+   begin
+      if Cache_VFS = No_File then
+         return;
+      end if;
+
+      if Clang_Module_Id.Refs.Map.Is_Empty then
+         return;
+      end if;
+
+      Trace (Me, "Saving the crossref cache " & Full_Name (Cache_VFS));
+
+      --  Remove the file if it already exists
+
+      if Cache_VFS.Is_Regular_File then
+         Trace (Me, "Removing existing file");
+         Cache_VFS.Delete (Dummy);
+      end if;
+
+      begin
+         Ada.Streams.Stream_IO.Create
+           (Cache_File, Out_File, Full_Name (Cache_VFS));
+      exception
+         when Error : others =>
+            Trace (Me, "ERROR: Cannot open database file for writing");
+            Trace (Me, Exception_Information (Error));
+            Trace (Me, Exception_Name (Error));
+            Put (Exception_Message (Error));
+      end;
+
+      Cache_Stream := Stream (Cache_File);
+
+      Trace (Me, "Writing the cache to disk");
+      Clang_Crossrefs_Cache'Output
+        (Cache_Stream, Clang_Module_Id.Refs);
+
+      Close (Cache_File);
+
+   end Save_Crossrefs_Cache;
 
    -------------
    -- Execute --
@@ -860,13 +959,19 @@ package body Language.Libclang is
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
-      P_Tree : constant GNATCOLL.Projects.Project_Tree_Access
+
+      P_Tree         : constant GNATCOLL.Projects.Project_Tree_Access
         := Kernel.Get_Project_Tree;
-      RP     : constant GNATCOLL.Projects.Project_Type := P_Tree.Root_Project;
-      Files : File_Array_Access;
+
+      RP             : constant GNATCOLL.Projects.Project_Type
+        := P_Tree.Root_Project;
+
+      Files          : File_Array_Access;
       Filtered_Files : Virtual_File_Vectors.Vector;
 
    begin
+
+      Initialize_Crossrefs_Cache (Core_Kernel (Kernel));
 
       --  Stop all the tasks
 
@@ -893,9 +998,10 @@ package body Language.Libclang is
          null;
       end;
 
-      --  Clear the cache
-
-      Clean_Cache (Clang_Module_Id.all);
+      --  Put all the existing cache entries to inactive
+      for Cache of Clang_Module_Id.Refs.Map loop
+         Cache.Active := False;
+      end loop;
 
       --  Restart all the tasks
 
@@ -920,13 +1026,43 @@ package body Language.Libclang is
             Info_Set : constant File_Info_Set := P_Tree.Info_Set (F);
             Language : constant String :=
               File_Info (Info_Set.First_Element).Language;
-
+            Cache_Key : File_Key;
          begin
             if Language = "c"
               or else Language = "cpp"
               or else Language = "c++"
             then
-               Filtered_Files.Append (F);
+               Cache_Key := Construct_Cache_Key (Core_Kernel (Kernel), F);
+               if Clang_Module_Id.Refs.Map.Contains (Cache_Key)
+               then
+                  --  The cache already contains an entry for this file with
+                  --  these switches.
+
+                  declare
+                     Cache : constant File_Cache_Access :=
+                       Clang_Module_Id.Refs.Map.Element (Cache_Key);
+                     use type Ada.Calendar.Time;
+                  begin
+                     --  Check if the time stamp is the same
+                     if Cache.File_Time_Stamp /= F.File_Time_Stamp then
+
+                        --  If it's not the same, we'll recompute the cache
+                        Filtered_Files.Append (F);
+                        Trace (Me, "Queuing " & Full_Name (F) & "for parsing");
+
+                     else
+
+                        --  If it is the same, we just reactivate the cache key
+                        Cache.Active := True;
+
+                     end if;
+                  end;
+
+                  Trace (Me, "Loading " & Full_Name (F) & "from cache");
+               else
+                  Filtered_Files.Append (F);
+                  Trace (Me, "Queuing " & Full_Name (F) & "for parsing");
+               end if;
             end if;
          end;
       end loop;
@@ -935,10 +1071,13 @@ package body Language.Libclang is
       declare
          Command_Data : constant Parse_Files_Data_Type_Access
            := new Parse_Files_Data_Type;
-         Command : Parse_Files_Command.Generic_Asynchronous_Command_Access;
+         Command      :
+           Parse_Files_Command.Generic_Asynchronous_Command_Access;
       begin
          --  Call Translation_Unit on them to populate the cache for the file
          Command_Data.Max_Idx := Natural (Filtered_Files.Length);
+         Command_Data.Kernel := Core_Kernel (Kernel);
+
          for F of Filtered_Files loop
             declare
                Callback : Parse_Callback_Access :=
@@ -972,26 +1111,44 @@ package body Language.Libclang is
 
    procedure Index_One_File is
       use Ada.Real_Time;
-      T1 : constant Ada.Real_Time.Time := Clock;
-      Refs : constant Sym_To_Loc_Map := new Symbol_To_Location_Maps.Map;
+
+      T1       : constant Ada.Real_Time.Time := Clock;
+      Refs     : constant File_Cache_Access
+        := new File_Cache_Record;
       Response : Parsing_Response;
    begin
       Parsing_Response_Queue.Dequeue (Response);
 
-      Response.Context.Add_TU_To_Cache
+      Add_TU_To_Cache
         (+Response.File_Name, Response.TU);
-      Trace (Me, "Start indexing for file " & (+Response.File_Name));
-      Indexer.Index_Translation_Unit
-        (Index_Action  =>
-           Response.Context.Index_Action,
-         Client_Data   =>
-           Indexer_Data'(Syms_To_Locs => Refs),
-         Index_Options => CXIndexOpt_None,
-         TU            =>
-           Response.Context.TU_Cache.Element (Response.File_Name).TU);
 
-      --  Reset the references cache for file, and get the new cache
-      Response.Context.Reset_Refs (+Response.File_Name, Refs);
+      if Clang_Module_Id.Indexing_Active then
+         Trace (Me, "Start indexing for file " & (+Response.File_Name));
+         Indexer.Index_Translation_Unit
+           (Index_Action  =>
+              Clang_Module_Id.Index_Action,
+            Client_Data   =>
+              Indexer_Data'(Syms_To_Locs => Refs),
+            Index_Options => CXIndexOpt_None,
+            TU            =>
+              Clang_Module_Id.TU_Cache.Element (Response.File_Name).TU);
+
+         --  Reset the references cache for file, and get the new cache
+         declare
+            Cache_Key : constant File_Key :=
+              Construct_Cache_Key
+                (Response.Context, Create (+(+Response.File_Name)));
+         begin
+            if Clang_Module_Id.Refs.Map.Contains (Cache_Key) then
+               Destroy (Clang_Module_Id.Refs.Map.Reference (Cache_Key));
+            end if;
+            Clang_Module_Id.Refs.Map.Include (Cache_Key, Refs);
+         end;
+
+         Refs.File_Name := Response.File_Name;
+         Refs.File_Time_Stamp :=
+           Create (+(+Response.File_Name)).File_Time_Stamp;
+      end if;
 
       --  Call all the callbacks and free them
       for CB of Response.Callbacks loop
@@ -1000,9 +1157,8 @@ package body Language.Libclang is
          Free (CB);
       end loop;
 
-      Trace
-        (Me, "Indexing finished, took "
-         & Duration'Image (To_Duration (Clock - T1)));
+      Trace (Me, "Indexing finished, took "
+             & Duration'Image (To_Duration (Clock - T1)));
    end Index_One_File;
 
    -----------------------------
@@ -1015,6 +1171,7 @@ package body Language.Libclang is
       while Parsing_Response_Queue.Current_Use > 0 loop
          Index_One_File;
       end loop;
+
       return True;
    end Parsing_Timeout_Handler;
 
@@ -1051,9 +1208,7 @@ package body Language.Libclang is
       Set_Return_Value_As_List (Data);
       Set_Address_Return_Value (Data, System.Address (CTU));
       Set_Address_Return_Value
-        (Data, System.Address
-           (Context_From_File
-                (Core_Kernel (Get_Kernel (Data)), File).Clang_Indexer));
+        (Data, System.Address (Clang_Module_Id.Clang_Indexer));
    end Python_Get_TU;
 
    ---------------------
@@ -1065,6 +1220,13 @@ package body Language.Libclang is
    is
       Language_Class : constant Class_Type :=
         New_Class (Kernel, Libclang_Class_Name);
+
+      Idx            : constant Clang_Index :=
+        Create_Index
+          (True,
+           --  We never want to display diagnostics via libclang,
+           --  because it will just dump them on stdout
+           Display_Diagnostics => False);
    begin
 
       Register_Command
@@ -1084,6 +1246,7 @@ package body Language.Libclang is
       end if;
 
       Clang_Module_Id := new Clang_Module_Record;
+
       Register_Module
         (Clang_Module_Id, Kernel, "clang_module", Default_Priority);
 
@@ -1091,6 +1254,12 @@ package body Language.Libclang is
         Glib.Main.Timeout_Add (100, Parsing_Timeout_Handler'Access);
 
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
+
+      Clang_Module_Id.Clang_Indexer := Idx;
+      Clang_Module_Id.TU_Cache      := new TU_Maps.Map;
+      Clang_Module_Id.LRU           := new LRU_Lists.List;
+      Clang_Module_Id.Index_Action  := Create (Idx);
+      Clang_Module_Id.Refs          := new Clang_Crossrefs_Cache_Type;
    end Register_Module;
 
    -------------
@@ -1099,7 +1268,23 @@ package body Language.Libclang is
 
    overriding procedure Destroy (Id : in out Clang_Module_Record) is
    begin
-      Clean_Cache (Id);
+      Trace (Me, "Cleaning all cache for libclang");
+
+      for C of Id.TU_Cache.all loop
+         Destroy (C);
+      end loop;
+      Id.TU_Cache.Clear;
+      Free (Id.TU_Cache);
+      Free (Id.LRU);
+
+      for M of Id.Refs.Map loop
+         Destroy (M);
+      end loop;
+
+      Free (Id.Refs);
+      Dispose (Id.Index_Action);
+      clang_disposeIndex (Id.Clang_Indexer);
+
       for T of Clang_Module_Id.Parsing_Tasks loop
          T.Finish;
       end loop;
@@ -1117,23 +1302,12 @@ package body Language.Libclang is
       Free (Tu_Cache);
    end Destroy;
 
-   ---------
-   -- Get --
-   ---------
-
-   function Get
-     (Self : Translation_Unit_Wrapper) return Clang_Translation_Unit
-   is
-   begin
-      return Self.Cache.TU;
-   end Get;
-
    ------------------
    -- Get_Blocking --
    ------------------
 
    function Get_Blocking
-     (Self : Translation_Unit_Wrapper) return Clang_Translation_Unit
+     (Self : Translation_Unit_Wrapper'Class) return Clang_Translation_Unit
    is
    begin
       loop
@@ -1149,5 +1323,178 @@ package body Language.Libclang is
          end if;
       end loop;
    end Get_Blocking;
+
+   ------------------
+   -- Get_Switches --
+   ------------------
+
+   function Get_Switches
+     (Kernel                    : Core_Kernel;
+      File                      : Virtual_File;
+      Project                   : Project_Type := No_Project;
+      Default_Lang              : String := "c++";
+      Include_Compiler_Switches : Boolean := True)
+      return Unbounded_String_Array
+   is
+
+      Kernel_Lang      : constant String :=
+        Kernel.Lang_Handler.Get_Language_From_File (File);
+
+      function Lang return String;
+      function Lang return String is
+      begin
+         if Match (Cpp_Header_Regex, Full_Name (File)) then
+            return "c++";
+         elsif Kernel_Lang = "" then
+            return Default_Lang;
+         else
+            return Kernel_Lang;
+         end if;
+      end Lang;
+
+      Ignored          : Boolean;
+
+      File_Project : constant Project_Type :=
+        (if Project /= No_Project then Project
+         else
+            File_Info'Class
+              (Kernel.Registry.Tree.Info_Set
+                (File).First_Element).Project);
+
+      function Get_File_Switches return Unbounded_String_Array;
+      --  Wrap the fetching of file switches for this file and project as
+      --  unbounded string array
+
+      function Get_File_Switches return Unbounded_String_Array is
+         C_Switches       : GNAT.Strings.String_List_Access;
+      begin
+         --  Retrieve the switches for this file
+         Switches
+           (File_Project, "compiler", File, Lang, C_Switches, Ignored);
+         return S : Unbounded_String_Array (C_Switches.all'Range) do
+            for J in C_Switches'Range loop
+               S (J) := +C_Switches (J).all;
+            end loop;
+            GNAT.Strings.Free (C_Switches);
+         end return;
+      end Get_File_Switches;
+
+      Switches     : constant GNATCOLL.Utils.Unbounded_String_Array
+        :=
+
+      --  We pass to libclang a list of switches made of:
+      --  ... the C/C++ switches specified in this project
+        Get_File_Switches
+
+      --  ... a -I<dir> for each directory in the subprojects
+      --  of this project
+        & Get_Project_Source_Dirs
+        (Kernel, File_Project, Lang)
+
+        --  ... a -I<dir> for each dir in the compiler search path
+        & (if Include_Compiler_Switches
+           then Get_Compiler_Search_Paths_Switches (Kernel, File_Project, Lang)
+           else Empty_String_Array)
+
+        & (if Lang in "c++" | "cpp" then (+"-x", +"c++")
+           else Empty_String_Array);
+   begin
+
+      Trace (Diagnostics, "=== File     : " & Full_Name (File));
+      Trace (Diagnostics, "=== Language : " & Lang);
+      Trace (Diagnostics, "======= Begin switches ==============");
+      for Sw of Switches loop
+         Trace (Diagnostics, +Sw);
+      end loop;
+      Trace (Diagnostics, "======= End switches ==============");
+
+      return Switches;
+   end Get_Switches;
+
+   -------------------------
+   -- Construct_Cache_Key --
+   -------------------------
+
+   function Construct_Cache_Key
+     (Kernel    : Core_Kernel;
+      File      : Virtual_File;
+      Project   : Project_Type := No_Project) return File_Key
+   is
+   begin
+      return Construct_Cache_Key
+        (Full_Name (File),
+         Get_Switches
+           (Kernel, File, Project,
+            --  We don't want to include compiler switches in the cache key, we
+            --  presume that they are always the same
+            Include_Compiler_Switches => False));
+   end Construct_Cache_Key;
+
+   -------------------------
+   -- Construct_Cache_Key --
+   -------------------------
+
+   function Construct_Cache_Key
+     (File_Name : String;
+      Switches  : Unbounded_String_Array) return File_Key
+   is
+      Result : Unbounded_String;
+   begin
+      Append (Result, +File_Name);
+
+      for Switch of Switches loop
+         Append (Result, Switch);
+      end loop;
+
+      return File_Key (Result);
+   end Construct_Cache_Key;
+
+   ----------------------
+   -- Get_Active_Files --
+   ----------------------
+
+   function Get_Active_Files return File_Cache_Array
+   is
+      F : File_Cache_Array (1 .. Positive (Clang_Module_Id.Refs.Map.Length));
+      I : Positive := 1;
+
+      function Filter (FCA : File_Cache_Access) return Boolean is (FCA.Active);
+   begin
+      for El of Clang_Module_Id.Refs.Map loop
+         F (I) := El;
+         I := I + 1;
+      end loop;
+
+      return File_Type_Arrays.Filter (F, Filter'Access);
+   end Get_Active_Files;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding procedure Initialize (Self : in out Use_Index) is
+      pragma Unreferenced (Self);
+   begin
+      Clang_Module_Id.Indexing_Active := False;
+   end Initialize;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (Self : in out Use_Index) is
+      pragma Unreferenced (Self);
+   begin
+      Clang_Module_Id.Indexing_Active := True;
+   end Finalize;
+
+   ----------------------
+   -- Get_Index_Action --
+   ----------------------
+
+   function Get_Index_Action return Clang_Index_Action is
+   begin
+      return Clang_Module_Id.Index_Action;
+   end Get_Index_Action;
 
 end Language.Libclang;
