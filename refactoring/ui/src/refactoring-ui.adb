@@ -91,7 +91,19 @@ package body Refactoring.UI is
      (Kernel          : access Kernel_Handle_Record'Class;
       Read_Only_Files : Source_File_Set;
       No_LI_List      : Source_File_Set;
-      Stale_LI_List   : Source_File_Set) return Boolean is
+      Stale_LI_List   : Source_File_Set) return Boolean
+   is
+      function Lang_C (SFS : Source_File_Set) return Boolean is
+        (SFS.Is_Empty or else Kernel.Lang_Handler.Get_Language_From_File
+           (SFS.First_Element).Get_Name in "c" | "C" | "c++" | "C++");
+      --  Returns true when
+      --  1. SFS is empty
+      --  2. SFS is a set of C/C++ files
+
+      Ignore_ALIs : Boolean :=
+        Lang_C (No_LI_List) and then Lang_C (Stale_LI_List);
+      --  We want to ignore information from the ALI database for C and C++
+      --  since they get their information directly from libclang
    begin
       return Dialog
         (Kernel,
@@ -101,24 +113,27 @@ package body Refactoring.UI is
            & "Do you want to refactor the other files anyway ?"),
          Files => Read_Only_Files)
 
-      and then Dialog
-        (Kernel,
-         -"Missing cross-references",
-         -("The following files might contain references to the entity,"
-           & ASCII.LF
-           & "but no cross-reference information was found for them"),
-         No_LI_List)
+        and then
+          (Ignore_ALIs or else Dialog
+             (Kernel,
+              -"Missing cross-references",
+              -("The following files might contain references to the entity,"
+                & ASCII.LF
+                & "but no cross-reference information was found for them"),
+              No_LI_List))
 
-      and then Dialog
-        (Kernel,
-         -"Cross-references not up-to-date",
-         -("The following files contain references to the entity, but the"
-            & ASCII.LF
-             & "cross-reference information is not up-to-date." & ASCII.LF
-             & "This might mean that the files have been modified" & ASCII.LF
-             & "since the last compilation." & ASCII.LF
-             & "As a result, replace might fail."),
-         Stale_LI_List);
+        and then
+          (Ignore_ALIs or else Dialog
+             (Kernel,
+              -"Cross-references not up-to-date",
+              -("The following files contain references to the entity, but the"
+                & ASCII.LF
+                & "cross-reference information is not up-to-date." & ASCII.LF
+                & "This might mean that the files have been modified"
+                & ASCII.LF
+                & "since the last compilation." & ASCII.LF
+                & "As a result, replace might fail."),
+              Stale_LI_List));
    end Confirm_Files;
 
    ----------------------
