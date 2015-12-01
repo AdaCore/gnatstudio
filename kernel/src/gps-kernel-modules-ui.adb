@@ -72,13 +72,11 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.MDI;                use Gtkada.MDI;
 
-with Commands.Interactive;      use Commands, Commands.Interactive;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
@@ -669,27 +667,19 @@ package body GPS.Kernel.Modules.UI is
      (Object : access GObject_Record'Class;
       Action : Contextual_Menu_Access)
    is
-      pragma Unreferenced (Object);
-      Context : Interactive_Command_Context;
-      Act     : access Action_Record;
+      Success : Boolean;
+      pragma Unreferenced (Object, Success);
    begin
-      Act := Lookup_Action (Action);
-      if Act /= null then
-         Context.Context := Action.Kernel.Last_Context_For_Contextual;
-
-         Assert (Me, Context.Context /= No_Context,
-                 "Contextual_Action called on freed context");
-         Context.Event :=
-           GPS_Window
-             (Action.Kernel.Get_Main_Window).Last_Event_For_Contextual;
-         --   Event will be deep-copied in the call to Create_Proxy below
-
-         Launch_Background_Command
-           (Kernel          => Action.Kernel,
-            Command         => Create_Proxy (Get_Command (Act), Context),
-            Active          => True,
-            Show_Bar        => True,
-            Destroy_On_Exit => True);
+      if Action.Menu_Type = Type_Action
+         and then Action.Action /= null
+      then
+         Success := Execute_Action
+           (Kernel  => Action.Kernel,
+            Action  => Action.Action.all,
+            Context => Action.Kernel.Last_Context_For_Contextual,
+            Event   => GPS_Window
+              (Action.Kernel.Get_Main_Window).Last_Event_For_Contextual,
+            Show_Bar => True);
       end if;
 
    exception
@@ -1320,61 +1310,21 @@ package body GPS.Kernel.Modules.UI is
       Data          : Action_Proxy'Class;
       In_Foreground : Boolean := False)
    is
-      Context : Selection_Context;
-      Action : constant access Action_Record := Lookup_Action (Self);
-      Proxy  : Command_Access;
+      Success : Boolean;
+      pragma Unreferenced (Success);
    begin
-      Trace (Me, "Execute action " & Data.Action.all
-             & " in foreground ? " & In_Foreground'Img);
+      --  Do not block GPS exit (only if the command itself spawns another
+      --  command, like an external process, and that other command could
+      --  block).
 
-      Context := Get_Current_Context (Data.Kernel);
-
-      if Action = null then
-         Data.Kernel.Insert
-           ("Action not found: " & Data.Action.all, Mode => Error);
-
-      elsif Filter_Matches (Action, Context) then
-         --  Tests expect that using GPS.execute_action("/menu") will
-         --  execute in the foreground, so we run Launch_Foreground_Command.
-         --  However, when the user is using the GUI, it might make more
-         --  sense to be in the background, not sure.
-
-         Proxy := Create_Proxy
-           (Get_Command (Action),
-            (Event            => null,
-             Context          => Context,
-             Synchronous      => True,
-             Dir              => No_File,
-             Via_Menu         => Self.all in Action_Menu_Item_Record'Class,
-             Args             => null,
-             Label            => new String'(Data.Action.all),
-             Repeat_Count     => 1,
-             Remaining_Repeat => 0));
-
-         if In_Foreground then
-            Launch_Foreground_Command
-              (Data.Kernel, Proxy, Destroy_On_Exit => True);
-         else
-            --  Do not block GPS exit (only if the command itself spawns
-            --  another command, like an external process, and that other
-            --  command could block).
-
-            Launch_Background_Command
-              (Data.Kernel,
-               Proxy,
-               Active          => True,  --  start executing immediately
-               Show_Bar        => True,
-               Destroy_On_Exit => True,
-               Block_Exit      => False);
-         end if;
-
-      elsif Get_Filter_Error (Action) /= "" then
-         Insert
-           (Data.Kernel, To_String (Get_Filter_Error (Action)), Mode => Error);
-      else
-         Insert (Data.Kernel,
-                 -"Invalid context for this action", Mode => Error);
-      end if;
+      Success := Execute_Action
+        (Kernel      => Data.Kernel,
+         Action      => Data.Action.all,
+         Synchronous => In_Foreground,
+         Via_Menu    => Self.all in Action_Menu_Item_Record'Class,
+         Error_Msg_In_Console => True,
+         Block_Exit  => False,
+         Show_Bar    => True);
    end Execute_Action;
 
    -----------------------------

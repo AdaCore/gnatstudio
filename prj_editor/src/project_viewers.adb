@@ -364,8 +364,9 @@ package body Project_Viewers is
             V.Kernel.Context_Changed
               (File_Views.Child_From_View (V).Build_Context);
 
-            return Execute_In_Background
-              (V.Kernel, Action => "edit switches for file");
+            return Execute_Action
+              (V.Kernel, Action => "edit switches for file",
+               Error_Msg_In_Console => True);
          end if;
       end if;
 

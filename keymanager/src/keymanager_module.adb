@@ -1189,11 +1189,12 @@ package body KeyManager_Module is
                Keymanager_Module.Current_Command    := null;
 
                if not GPS_Window (Kernel.Get_Main_Window).Is_Any_Menu_Open
-                 and then Execute_In_Background
+                 and then Execute_Action
                    (Kernel  => Kernel,
                     Action  => Binding.Action.all,
                     Context => Context,
                     Event   => Event,
+                    Error_Msg_In_Console => False,
                     Repeat  => Keymanager_Module.Repeat_Count)
                then
                   if Keymanager_Module.Last_Command /=

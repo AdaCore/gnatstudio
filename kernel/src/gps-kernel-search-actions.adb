@@ -161,7 +161,8 @@ package body GPS.Kernel.Search.Actions is
       Dummy : Boolean;
       pragma Unreferenced (Dummy, Give_Focus);
    begin
-      Dummy := Execute_In_Background (Self.Kernel, Self.Name.all);
+      Dummy := Execute_Action
+         (Self.Kernel, Self.Name.all, Error_Msg_In_Console => True);
    end Execute;
 
    ----------

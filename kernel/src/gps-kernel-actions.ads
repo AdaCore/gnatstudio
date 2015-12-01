@@ -105,16 +105,36 @@ package GPS.Kernel.Actions is
    function Get_Icon_Name (Self : access Action_Record) return String;
    --  Return the icon to use when this action is made visible to the user.
 
-   function Execute_In_Background
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Action  : String;
-      Context : Selection_Context := No_Context;
-      Event   : Gdk.Event.Gdk_Event := null;
-      Repeat  : Positive := 1) return Boolean;
+   function Execute_Action
+     (Kernel      : not null access Kernel_Handle_Record'Class;
+      Action      : String;
+      Context     : Selection_Context := No_Context;
+      Event       : Gdk.Event.Gdk_Event := null;
+      Repeat      : Positive := 1;
+      Args        : access GNAT.Strings.String_List := null;
+      Synchronous : Boolean := False;
+      Show_Bar    : Boolean := False;
+      Via_Menu    : Boolean := False;
+      Block_Exit  : Boolean := False;
+      Error_Msg_In_Console : Boolean := True) return Boolean;
    --  Execute the action if it is valid for the given context.
    --  If Context is null, it is computed automatically.
    --  Returns True if the command was executed, False if it did not apply to
    --  the context.
+   --  Args are extra arguments that are passed to the command. It is
+   --  automatically freed by this function. These are used from XML files
+   --  using $1, $2,..
+   --  If Synchronous is True, the command is executed immediately, and this
+   --  function returns only when the action has finished. Otherwise, the
+   --  action is executed in the background, and this function might return
+   --  before it has finished.
+   --  Show_Bar indicates whether to show a progress bar, in case the action
+   --  is executed in the background.
+   --  If Error_Msg_In_Console is true and the filter did not match, an error
+   --  is displayed in the console.
+   --  Via_Menu can be set to True to force the command to execute as if it
+   --  was executed from a menu. By default, this is computed from the Event.
+   --  If Block_Exit is true, GPS will not exit while the command is running.
 
    procedure Add_Menu_To_List
      (Action : not null access Action_Record;

@@ -631,10 +631,6 @@ package body GPS.Kernel.Timeout is
          Unref (Command_Access (Scheduled));
 
       else
-         --  ??? Add_Alternate_Action: sync even if main action fails
---           Add_Alternate_Action
---             (Item   => C,
---              Action =>
          Created_Command := Launch_Background_Command
            (Kernel,
             Command_Access (Scheduled),

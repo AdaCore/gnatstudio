@@ -48,7 +48,6 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GUI_Utils;                 use GUI_Utils;
 with Language.Custom;           use Language.Custom;
 with Language;                  use Language;
@@ -1400,27 +1399,13 @@ package body Custom_Module is
             Default_Key => Nth_Arg (Data, 2));
 
       elsif Command = "execute_if_possible" then
-         Inst := Nth_Arg (Data, 1, Action_Class);
-
-         --  Force a refresh of the context
-         --  ??? We should really let the script decide whether this is
-         --  necessary.
-         Kernel.Refresh_Context;
-
-         declare
-            Action : constant Action_Record_Access :=
-              Lookup_Action (Kernel, String'(Get_Data (Inst, Action_Class)));
-            Context : constant Selection_Context :=
-              Get_Current_Context (Kernel);
-         begin
-            if Filter_Matches (Action, Context) then
-               Launch_Foreground_Command
-                 (Kernel, Get_Command (Action), Destroy_On_Exit => False);
-               Set_Return_Value (Data, True);
-            else
-               Set_Return_Value (Data, False);
-            end if;
-         end;
+         Inst := Data.Nth_Arg (1, Action_Class);
+         Data.Set_Return_Value
+            (Execute_Action
+               (Kernel,
+                String'(Get_Data (Inst, Action_Class)),
+                Error_Msg_In_Console => False,
+                Synchronous          => True));
 
       elsif Command = "menu" then
          Name_Parameters (Data, (1 => Path_Cst'Access,

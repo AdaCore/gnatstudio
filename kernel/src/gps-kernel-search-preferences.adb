@@ -15,18 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with String_Utils;               use String_Utils;
-
+with String_Utils;            use String_Utils;
 with Default_Preferences;     use Default_Preferences;
-with Commands;                use Commands;
-with Commands.Interactive;    use Commands.Interactive;
-
 with Glib.Convert;            use Glib.Convert;
-
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Search;              use GPS.Search;
-
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
 with Gtk.Text_Iter;           use Gtk.Text_Iter;
@@ -184,16 +177,14 @@ package body GPS.Kernel.Search.Preferences is
 
    overriding procedure Execute
      (Self       : not null access Preferences_Search_Result;
-      Give_Focus : Boolean) is
-      Open_Preferences_Action  : Action_Record_Access;
-      Open_Preferences_Command : Interactive_Command_Access;
-      pragma Unreferenced (Give_Focus);
+      Give_Focus : Boolean)
+   is
+      Success : Boolean;
+      pragma Unreferenced (Give_Focus, Success);
    begin
-      --  Open the preferences dialog
-      Open_Preferences_Action := Lookup_Action
-        (Self.Kernel, "open Preferences");
-      Open_Preferences_Command := Get_Command (Open_Preferences_Action);
-      Launch_Foreground_Command (Self.Kernel, Open_Preferences_Command, False);
+      Success := Execute_Action
+         (Self.Kernel, "open Preferences", Synchronous => True,
+          Error_Msg_In_Console => True);
 
       --  Display the preference in the preferences editor view
       Self.Kernel.Get_Preferences.Get_Editor.Display_Pref (Self.Pref);

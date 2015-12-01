@@ -217,7 +217,8 @@ package body Task_Manager.GUI is
       Success : Boolean;
       pragma Unreferenced (Event, Success);
    begin
-      Success := Execute_In_Background (GUI.Kernel, "open Task Manager");
+      Success := Execute_Action
+         (GUI.Kernel, "open Task Manager", Error_Msg_In_Console => True);
       return False;
    end On_Main_Progress_Button_Press_Event;
 

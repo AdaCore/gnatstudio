@@ -44,7 +44,6 @@ with Pango.Font;              use Pango.Font;
 with Pango.Layout;            use Pango.Layout;
 
 with Basic_Types;             use Basic_Types;
-with Commands.Interactive;    use Commands, Commands.Interactive;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Interactive;  use GPS.Kernel.Interactive;
@@ -57,7 +56,6 @@ with GPS.Kernel.Modules.UI;   use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Properties;   use GPS.Kernel.Properties;
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Command_API;  use GPS.Kernel.Command_API;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Scripts.Commands;
@@ -334,82 +332,24 @@ package body GPS.Kernel.Scripts is
          declare
             Synchronous : constant Boolean := Command = "execute_action";
             Action_Name : constant String := Nth_Arg (Data, 1);
-            Action      : constant Action_Record_Access := Lookup_Action
-              (Kernel, Action_Name);
-            Context     : Selection_Context;
-            Custom      : Command_Access;
             Args        : String_List_Access;
+            Success     : Boolean;
          begin
-            if Action = null then
-               --  If the action was not found, this may be a dynamic menu:
-               --  attempt to execute it.
+            Args := new String_List (1 .. Number_Of_Arguments (Data) - 1);
+            for Index in 2 .. Number_Of_Arguments (Data) loop
+               Args (Index - 1) := new String'(Nth_Arg (Data, Index));
+            end loop;
 
-               if Action_Name (Action_Name'First) = '/' then
-                  GPS.Kernel.Modules.UI.Execute_Menu (Kernel, Action_Name);
-               else
-                  Set_Error_Msg (Data, -"No such action: " & Action_Name);
-               end if;
-               return;
-            end if;
+            Success := Execute_Action
+               (Kernel      => Kernel,
+                Action      => Action_Name,
+                Synchronous => Synchronous,
+                Show_Bar    => True,
+                Error_Msg_In_Console => False,
+                Args        => Args);
 
-            --  Force a refresh of the context
-            --  ??? We should really let the script decide whether this is
-            --  necessary.
-            Kernel.Refresh_Context;
-
-            Context := Get_Current_Context (Kernel);
-
-            if Context = No_Context then
-               Set_Error_Msg
-                 (Data, -"No current context, can't execute action");
-
-            elsif not Filter_Matches (Action, Context) then
-               declare
-                  M : constant Unbounded_String := Get_Filter_Error (Action);
-               begin
-                  if M /= "" then
-                     Set_Error_Msg
-                       (Data,
-                        To_String (M)
-                        & " when executing """ & Action_Name & '"');
-
-                  else
-                     Set_Error_Msg
-                       (Data,
-                        -"Invalid context for action """ & Action_Name & '"');
-                  end if;
-               end;
-
-            else
-               Args := new String_List (1 .. Number_Of_Arguments (Data) - 1);
-               for Index in 2 .. Number_Of_Arguments (Data) loop
-                  Args (Index - 1) := new String'(Nth_Arg (Data, Index));
-               end loop;
-
-               Custom := Create_Proxy
-                 (Command => Get_Command (Action),
-                  Context => (Event       => null,
-                              Context     => Context,
-                              Synchronous => Synchronous,
-                              Dir         => No_File,
-                              Args        => Args,
-                              Via_Menu    =>
-                                Action_Name (Action_Name'First) = '/',
-                              Label       => new String'(Action_Name),
-                              Repeat_Count     => 1,
-                              Remaining_Repeat => 0));
-
-               if Synchronous then
-                  Launch_Foreground_Command
-                    (Kernel, Custom, Destroy_On_Exit => True);
-               else
-                  Launch_Background_Command
-                    (Kernel, Custom,
-                     Destroy_On_Exit => True,
-                     Active     => True,  --  as much as possible immediately
-                     Show_Bar   => True,
-                     Queue_Id   => "");
-               end if;
+            if not Success then
+               Data.Set_Error_Msg ("Could not execute """ & Action_Name & '"');
             end if;
          end;
 

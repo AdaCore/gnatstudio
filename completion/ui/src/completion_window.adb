@@ -57,9 +57,6 @@ with Xref;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with Commands;                  use Commands;
-with Commands.Interactive;      use Commands.Interactive;
 with Cairo; use Cairo;
 with Glib.Object; use Glib.Object;
 with Gdk.Visual; use Gdk.Visual;
@@ -1379,32 +1376,22 @@ package body Completion_Window is
 
             if Proposal.all.Get_Action_Name /= "" then
                declare
-                  Action : constant Action_Record_Access :=
-                    Lookup_Action
-                      (Window.Explorer.Kernel, Proposal.all.Get_Action_Name);
-                  Context     : constant Selection_Context :=
-                    Get_Current_Context (Window.Explorer.Kernel);
-                  Command      : constant Command_Access := Create_Proxy
-                    (Command => Get_Command (Action),
-                     Context =>
-                       (Event       => null,
-                        Context     => Context,
-                        Synchronous => True,
-                        Dir         => No_File,
-                        Via_Menu    => False,
-                        Args        => new GNAT.Strings.String_List (1 .. 0),
-                        Label       => new String'(""),
-                        Repeat_Count     => 1,
-                        Remaining_Repeat => 0));
                   Kernel : constant Kernel_Handle := Window.Explorer.Kernel;
+                  Action : constant String := Proposal.Get_Action_Name;
+                  Success : Boolean;
+                  pragma Unreferenced (Success);
                begin
                   --  We have set In_Destruction above, planning to destroy the
                   --  window, but Delete does nothing if In_Destruction, so
                   --  lower the flag now.
                   Window.In_Destruction := False;
                   Delete (Window);
-                  Launch_Foreground_Command
-                    (Kernel, Command, Destroy_On_Exit => True);
+
+                  Success := Execute_Action
+                     (Kernel      => Kernel,
+                      Action      => Action,
+                      Error_Msg_In_Console => True,
+                      Synchronous => True);
                   return;
                end;
             end if;

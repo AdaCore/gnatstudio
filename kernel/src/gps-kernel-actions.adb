@@ -46,6 +46,14 @@ package body GPS.Kernel.Actions is
    Overrides_Builtin : constant String :=
      -"Action overrides a builtin action" & ASCII.LF;
 
+   procedure Launch_Foreground_Command
+     (Kernel          : not null access Kernel_Handle_Record'Class;
+      Command         : not null access Root_Command'Class;
+      Destroy_On_Exit : Boolean := True);
+   --  Executes a command, blocking the whole GPS interface while doing so.
+   --  It is recommended instead to use Launch_Background_Command, but this one
+   --  is sometimes used in user's python scripts.
+
    ----------
    -- Free --
    ----------
@@ -334,16 +342,64 @@ package body GPS.Kernel.Actions is
       return Self.Command;
    end Get_Command;
 
-   ---------------------------
-   -- Execute_In_Background --
-   ---------------------------
+   -------------------------------
+   -- Launch_Foreground_Command --
+   -------------------------------
 
-   function Execute_In_Background
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Action  : String;
-      Context : Selection_Context := No_Context;
-      Event   : Gdk.Event.Gdk_Event := null;
-      Repeat  : Positive := 1) return Boolean
+   procedure Launch_Foreground_Command
+     (Kernel          : not null access Kernel_Handle_Record'Class;
+      Command         : not null access Root_Command'Class;
+      Destroy_On_Exit : Boolean := True)
+   is
+      Result  : Command_Return_Type;
+      C : Command_Access;
+   begin
+      loop
+         begin
+            --  ??? Not elegant. We should refactor commands so that Execute
+            --  takes a context as parameter, and Interactive_Context is just
+            --  a child of Context (MB20-044)
+
+            if Command.all in Interactive_Command'Class then
+               --  We want to make sure that the context provides access to
+               --  the kernel.
+               Result := Interactive_Command_Access (Command).Execute
+                 (Create_Null_Context (New_Context (Kernel => Kernel)));
+            else
+               Result := Command.Execute;
+            end if;
+
+         exception
+            when E : others =>
+               Trace (Me, E);
+               Result := Failure;
+         end;
+
+         exit when Result = Success or Result = Failure;
+      end loop;
+
+      if Destroy_On_Exit then
+         C := Command_Access (Command);
+         Unref (C);
+      end if;
+   end Launch_Foreground_Command;
+
+   --------------------
+   -- Execute_Action --
+   --------------------
+
+   function Execute_Action
+     (Kernel      : not null access Kernel_Handle_Record'Class;
+      Action      : String;
+      Context     : Selection_Context := No_Context;
+      Event       : Gdk.Event.Gdk_Event := null;
+      Repeat      : Positive := 1;
+      Args        : access String_List := null;
+      Synchronous : Boolean := False;
+      Show_Bar    : Boolean := False;
+      Via_Menu    : Boolean := False;
+      Block_Exit  : Boolean := False;
+      Error_Msg_In_Console : Boolean := True) return Boolean
    is
       Child : GPS_MDI_Child;
       --  The child that currently has the focus
@@ -379,52 +435,95 @@ package body GPS.Kernel.Actions is
 
       Act : constant Action_Record_Access := Lookup_Action (Kernel, Action);
       C : Selection_Context := Context;
+      Custom : Command_Access;
+      Args_In_Out : String_List_Access := String_List_Access (Args);
    begin
       if Act = null then
-         Insert (Kernel, -"Action not defined : " & Action);
-         return False;
+         Free (Args_In_Out);
+         if Action (Action'First) = '/' then
+            GPS.Kernel.Modules.UI.Execute_Menu
+               (Kernel_Handle (Kernel), Action);
+            return True;
+         else
+            Insert (Kernel, -"Action not defined : " & Action);
+            return False;
+         end if;
       end if;
 
       if Context = No_Context then
-         C := Get_Current_Context (Kernel);  --  no need to free
+         C := Get_Current_Context (Kernel);
       end if;
 
       if Filter_Matches (Act, C) then
          if Active (Me) then
-            Trace (Me, "Executing action " & Action & Repeat'Img & " times");
+            Trace (Me, "Executing action " & Action & Repeat'Img & " times"
+               & " synchronous=" & Synchronous'Img);
          end if;
 
-         Undo_Group (Start => True);
+         --  For background commands, we do not use undo groups, since there
+         --  might be several such commands running in parallel anyway.
+         if Synchronous then
+            Undo_Group (Start => True);
+         end if;
+
          for R in 1 .. Repeat loop
-            Launch_Background_Command
-               (Kernel,
-                Create_Proxy
-                   (Act.Command,
-                    (Event       => Event,
-                     Context     => C,
-                     Synchronous => False,
-                     Dir         => No_File,
-                     Args        => null,
-                     Via_Menu    =>
-                       Event /= null and then
-                         (Get_Event_Type (Event) = Button_Press or else
-                          Get_Event_Type (Event) = Button_Release or else
-                          Get_Event_Type (Event) = Key_Press or else
-                          Get_Event_Type (Event) = Key_Release),
-                     Label       => new String'(Action),
-                     Repeat_Count => R,
-                     Remaining_Repeat => Repeat - R)),
-                Destroy_On_Exit => True,
-                Active          => True,
-                Show_Bar        => False,
-                Queue_Id        => "");
+            Custom := Create_Proxy
+               (Act.Command,
+                (Event       => Event,
+                 Context     => C,
+                 Synchronous => Synchronous,
+                 Dir         => No_File,
+                 Args        => Args_In_Out,
+                 Via_Menu    =>
+                   Via_Menu or else
+                   (Event /= null and then
+                     (Get_Event_Type (Event) = Button_Press or else
+                      Get_Event_Type (Event) = Button_Release or else
+                      Get_Event_Type (Event) = Key_Press or else
+                      Get_Event_Type (Event) = Key_Release)),
+                 Label       => new String'(Action),
+                Repeat_Count => R,
+                 Remaining_Repeat => Repeat - R));
+
+            if Synchronous then
+               Launch_Foreground_Command
+                  (Kernel, Custom, Destroy_On_Exit => True);
+            else
+               Launch_Background_Command
+                  (Kernel,
+                   Custom,
+                   Block_Exit      => Block_Exit,
+                   Destroy_On_Exit => True,
+                   Active          => True,  --  immediately if possible
+                   Show_Bar        => Show_Bar,
+                   Queue_Id        => "");
+            end if;
          end loop;
 
-         Undo_Group (Start => False);
+         if Synchronous then
+            Undo_Group (Start => False);
+         end if;
+
          return True;
+
+      else
+         declare
+            M : constant Unbounded_String := Get_Filter_Error (Act);
+            Msg : constant String :=
+               "Could not execute """ & Action & "'"
+               & (if M = "" then "" else ": " & To_String (M));
+         begin
+            if Error_Msg_In_Console then
+               Insert (Kernel, Msg);
+            else
+               Trace (Me, Msg);
+            end if;
+         end;
+
+         Free (Args_In_Out);
+         return False;
       end if;
-      return False;
-   end Execute_In_Background;
+   end Execute_Action;
 
    ----------------------
    -- Add_Menu_To_List --
