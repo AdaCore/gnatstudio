@@ -138,13 +138,6 @@ package body Clang_Xref is
    --  Helper function for find all references, for the case of a public
    --  globally declared entity.
 
-   function Get_Project (E : Clang_Entity) return Project_Type
-   is
-     (File_Info'Class
-        (E.Kernel.Registry.Tree.Info_Set
-             (E.Ref_Loc.File).First_Element).Project);
-   --  Helper function to retrieve an entity's project
-
    function Overrides
      (Cursor : Clang_Cursor) return Cursors_Arrays.Array_Type;
    --  Returns an array of clang cursors, with a cursor for every entity which
@@ -626,7 +619,6 @@ package body Clang_Xref is
       --  as the cursor's USR, so as to be able to query the ref cache
 
       Cursor : constant Clang_Cursor := Get_Clang_Cursor (Entity);
-      Ctx : constant Clang_Context_Access := Context (Get_Project (Entity));
       USR_Sym : constant Clang_Symbol :=
         Clang_Symbol_Table.Find (USR (Cursor));
 
@@ -640,22 +632,19 @@ package body Clang_Xref is
 
       V : Info_Vectors;
 
-      use VFS_To_Refs_Maps;
+      use File_To_Refs_Maps;
 
-      --  Return value holder
-      Ret : General_Location := No_Location;
+      --  Return value holders
+      Loc : Offset_T;
+      File : Virtual_File;
+
    begin
       if Entity_Body /= No_Cursor then
          return To_General_Location (Entity.Kernel, Location (Entity_Body));
       else
 
          --  Iterate on every file's cache
-
-         for C in Ctx.Refs.Iterate loop
-
-            --  Exit as soon as we have found  the first body
-
-            exit when Ret /= No_Location;
+         Toplevel_Loop : for C of Get_Active_Files loop
 
             --  If this file's cache contains some references to the entity for
             --  which we're trying to find the body, then explore those refs
@@ -663,31 +652,27 @@ package body Clang_Xref is
             --  the entity's cache for the file, so as to avoid unnecessary
             --  iterations, but this has not been proved a bottleneck.
 
-            if Element (C).Contains (USR_Sym) then
+            if C.Map.Contains (USR_Sym) then
 
-               V := Element (C).Element (USR_Sym);
+               V := C.Map.Element (USR_Sym);
 
                for I in V.Decls.First_Index .. V.Decls.Last_Index loop
-
-                  --  Exit as soon as we have found  the first body
-
-                  exit when Ret /= No_Location;
-
                   --  If a reference is a body definition, then store the
                   --  corresponding location, which will make the nested
                   --  loops exit
 
                   if V.Decls.Element (I).Is_Def then
-                     Ret := To_General_Location
-                       (Entity.Kernel,
-                        GNATCOLL.VFS.Create (Filesystem_String (+Key (C))),
-                        V.Decls.Element (I).Loc);
+                     Loc := V.Decls.Element (I).Loc;
+                     File := GNATCOLL.VFS.Create
+                       (Filesystem_String (+C.File_Name));
+                     exit Toplevel_Loop;
                   end if;
+
                end loop;
             end if;
-         end loop;
+         end loop Toplevel_Loop;
 
-         return Ret;
+         return To_General_Location (Entity.Kernel, File, Loc);
 
       end if;
    end Get_Body;
@@ -1587,6 +1572,9 @@ package body Clang_Xref is
       Kind                  : String := "")
       return Root_Reference_Iterator'Class
    is
+      Dummy_Use_Index_Context_Manager : Use_Index;
+      --  This variable takes a lock on the index so that it is not modified
+      --  while we search it
    begin
       Trace (Me, "Find all references for entity " & (+Entity.Name));
 
@@ -1718,10 +1706,7 @@ package body Clang_Xref is
       pragma Unreferenced
         (In_Scope, Include_Overriding, Include_Overridden,
          Include_Implicit, Include_All, Kind, In_File);
-
       --  TODO ??? Options are not handled yet
-
-      Project : constant Project_Type := Get_Project (Entity);
 
       --  We want to store entity names as symbols for convenience, use the
       --  Clang context symbol table
@@ -1748,11 +1733,9 @@ package body Clang_Xref is
          Sought_Cursor => Referenced (Get_Clang_Cursor (Entity)),
          Entity_Name   => Entity_Name);
 
-      Index_Action : constant Clang_Index_Action :=
-        Context (Project).Index_Action;
    begin
       Indexer.Index_Translation_Unit
-        (Index_Action, Index_Data, CXIndexOpt_IndexFunctionLocalSymbols,
+        (Get_Index_Action, Index_Data, CXIndexOpt_IndexFunctionLocalSymbols,
          Translation_Unit (Entity.Kernel, Entity.Ref_Loc.File));
 
       return Ret;
@@ -1851,11 +1834,6 @@ package body Clang_Xref is
 
       --  TODO ??? Options are not handled yet
 
-      --  Retrieve the context which contains the reference cache, as well as
-      --  the symbol table
-
-      Ctx : constant Clang_Context_Access := Context (Get_Project (Entity));
-
       --  Retrieve information about the entity, USR_Sym to search for symbol
       --  in maps, Name to store in references
 
@@ -1863,7 +1841,7 @@ package body Clang_Xref is
         Clang_Symbol_Table.Find (USR (Get_Clang_Cursor (Entity)));
       Name : constant Symbol := Clang_Symbol_Table.Find (Entity.Get_Name);
 
-      use VFS_To_Refs_Maps;
+      use File_To_Refs_Maps;
 
       --  Construct the return value, with an empty vector
 
@@ -1875,23 +1853,24 @@ package body Clang_Xref is
            Current_Index => 1);
 
       procedure Find_References_In_File_Map
-        (F : Virtual_File; M : Sym_To_Loc_Map);
+        (M : File_Cache_Access);
       --  Helper function that will do the job of finding references for a
       --  single file's map.
 
       procedure Find_References_In_File_Map
-        (F : Virtual_File; M : Sym_To_Loc_Map)
+        (M : File_Cache_Access)
       is
          --  Temporary for info vectors
          V : Info_Vectors;
+         F : constant Virtual_File := Create (+(+M.File_Name));
       begin
          --  Check if the map contains the entity we're searching for
 
-         if M.Contains (USR_Sym) then
+         if M.Map.Contains (USR_Sym) then
 
             --  If it does, get declarations and references in turn
 
-            V := M.Element (USR_Sym);
+            V := M.Map.Element (USR_Sym);
 
             for I in V.Decls.First_Index .. V.Decls.Last_Index loop
                Ret.Elements.Append
@@ -1920,15 +1899,16 @@ package body Clang_Xref is
    begin
 
       if In_File /= No_File then
-         if Ctx.Refs.Contains (+String (In_File.Full_Name.all)) then
+         if Crossrefs_Cache.Map.Contains
+           (Construct_Cache_Key (Entity.Kernel, In_File))
+         then
             Find_References_In_File_Map
-              (In_File,
-               Ctx.Refs.Element (+String (In_File.Full_Name.all)));
+              (Crossrefs_Cache.Map.Element
+                 (Construct_Cache_Key (Entity.Kernel, In_File)));
          end if;
       else
-         for C in Ctx.Refs.Iterate loop
-            Find_References_In_File_Map
-              (Create (Filesystem_String (+Key (C))), Element (C));
+         for C of Get_Active_Files loop
+            Find_References_In_File_Map (C);
          end loop;
       end if;
 
@@ -2076,6 +2056,10 @@ package body Clang_Xref is
      (Clang_Db : Clang_Database;
       Ref_Loc : General_Location) return Root_Entity'Class
    is
+      Dummy_Use_Index : Use_Index;
+      --  This variable takes a lock on the index so that it is not modified
+      --  while we search it
+
       Sloc : constant Sloc_T := Sloc_T'(Line   => Ref_Loc.Line,
                                         Column => Ref_Loc.Column,
                                         -- TODO: KLUDGE ???
