@@ -65,6 +65,12 @@ package Default_Preferences is
    --  Interface defining a common API for all the preferences editor
    --  widgets.
 
+   type Preferences_Group_Record is abstract tagged private;
+   type Preferences_Group is access all Preferences_Group_Record'Class;
+   --  Type used to represent a group of preferences.
+   --  Preferences groups are used to gather preferences within a same page,
+   --  according to their objective.
+
    type Preferences_Page_Record is abstract tagged private;
    type Preferences_Page is access all Preferences_Page_Record'Class;
    --  Type used to represent a page containing preferences.
@@ -204,6 +210,14 @@ package Default_Preferences is
    procedure On_Destroy_Page_View
      (Page_View : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Called when a preferences page view is destroyed.
+
+   ------------------------
+   -- Preferences_Groups --
+   ------------------------
+
+   function Get_Name
+     (Self : not null access Preferences_Group_Record) return String;
+   --  Return the group's name.
 
    ----------------------
    -- Preferences_Page --
@@ -618,6 +632,20 @@ private
    end record;
    --  Used to store pages in the preferences manager.
 
+   function Group_Name_Equals (Left, Right : Preferences_Group) return Boolean;
+   --  Used to search in groups lists using name equality.
+
+   package Groups_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Preferences_Group, Group_Name_Equals);
+   --  Used to store groups in the pages.
+
+   function Pref_Name_Equals (Left, Right : Preference) return Boolean;
+   --  Used to search in preferences lists using name equality.
+
+   package Preferences_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Preference, Pref_Name_Equals);
+   --  Used to store preference in the groups.
+
    package Preferences_Maps is new Ada.Containers.Indefinite_Hashed_Maps
      (String, Preference, Ada.Strings.Hash, "=");
    type Preference_Cursor is record
@@ -669,16 +697,9 @@ private
       Name        : GNAT.Strings.String_Access;
       --  Group's name.
 
-      Preferences : Preferences_Maps.Map;
+      Preferences : Preferences_Lists.List;
       --  Map of preferences belonging to this group.
    end record;
-   --  Type representing a group of preferences. The default preferences pages
-   --  uses groups to display preferences.
-   type Preferences_Group is
-     access all Preferences_Group_Record'Class;
-
-   package Groups_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (String, Preferences_Group, Ada.Strings.Hash, "=");
 
    type Preferences_Page_Record is abstract tagged record
       Name     : GNAT.Strings.String_Access;
@@ -686,7 +707,7 @@ private
       Priority : Integer;
       --  Page's priority. This is used to sort the pages according to the
       --  order we want to display it.
-      Groups   : Groups_Maps.Map;
+      Groups   : Groups_Lists.List;
       --  List of groups belonging to this page.
    end record;
 

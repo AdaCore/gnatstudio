@@ -719,6 +719,40 @@ package body GPS.Kernel.Preferences is
          Default_Bg   => "white",
          Page         => -"Editor/Fonts & Colors");
 
+      Ephemeral_Highlighting_Smart := Create
+        (Manager         => Kernel.Preferences,
+         Name            => "Src-Editor-Ephemeral-Smart",
+         Label           => -"Ephemeral highlighting (smart)",
+         Doc             => -(
+           "Style used for ephemeral highlighting of context-sensitive"
+           & " information, such as highlighting of matching entities."),
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Default_Fg      => "rgba(0,0,0,0.0)",
+         Default_Bg      => "rgba(252,172,79,0.4)",
+         Page            => -"Editor/Fonts & Colors");
+
+      Ephemeral_Highlighting_Simple := Create
+        (Manager         => Kernel.Preferences,
+         Name            => "Src-Editor-Ephemeral-Simple",
+         Label           => -"Ephemeral highlighting (simple)",
+         Doc             => -(
+           "Style used for ephemeral highlighting in the editor for simple"
+           & " cases, such as highlighting text-based matches."),
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Default_Fg      => "rgba(0,0,0,0.0)",
+         Default_Bg      => "rgba(134,134,134,0.35)",
+         Page            => -"Editor/Fonts & Colors");
+
+      Current_Block_Color := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Current-Block-Color",
+         Default => "#9C9CFF",
+         Doc     => -"Color for highlighting the current block",
+         Label   => -"Current block color",
+         Page    => -"Editor/Fonts & Colors");
+
       Current_Line_Color := Create
         (Manager => Kernel.Preferences,
          Name    => "Src-Editor-Current-Line-Color",
@@ -736,40 +770,6 @@ package body GPS.Kernel.Preferences is
            & ASCII.LF & " highlighting on the current line."),
          Label   => -"Draw current line as a thin line",
          Page    => -"Editor/Fonts & Colors");
-
-      Current_Block_Color := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Current-Block-Color",
-         Default => "#9C9CFF",
-         Doc     => -"Color for highlighting the current block",
-         Label   => -"Current block color",
-         Page    => -"Editor/Fonts & Colors");
-
-      Ephemeral_Highlighting_Smart := Create
-        (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Ephemeral-Smart",
-         Label        => -"Ephemeral highlighting (smart)",
-         Doc          => -(
-           "Style used for ephemeral highlighting of context-sensitive"
-           & " information, such as highlighting of matching entities."),
-         Base            => Default_Style,
-         Default_Variant => Default,
-         Default_Fg   => "rgba(0,0,0,0.0)",
-         Default_Bg   => "rgba(252,172,79,0.4)",
-         Page         => -"Editor/Fonts & Colors");
-
-      Ephemeral_Highlighting_Simple := Create
-        (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Ephemeral-Simple",
-         Label        => -"Ephemeral highlighting (simple)",
-         Doc          => -(
-           "Style used for ephemeral highlighting in the editor for simple"
-           & " cases, such as highlighting text-based matches."),
-         Base            => Default_Style,
-         Default_Variant => Default,
-         Default_Fg   => "rgba(0,0,0,0.0)",
-         Default_Bg   => "rgba(134,134,134,0.35)",
-         Page         => -"Editor/Fonts & Colors");
 
       Alter_Bg_For_RO_Files := Create
         (Manager => Kernel.Preferences,

@@ -193,6 +193,77 @@ package body Default_Preferences is
    --  for instance "Consolas 10, Courier New 9, Courier 10".
    --  The first font that matches a registered family is returned.
 
+   function Find_Group
+     (Groups : in out Groups_Lists.List;
+      Name   : String) return Preferences_Group;
+   --  Find a group associated with Name in the given list.
+   --  If no group is found, return null.
+
+   procedure Insert_Pref
+     (Preferences      : in out Preferences_Lists.List;
+      Pref             : not null Preference;
+      Replace_If_Exist : Boolean := False);
+   --  Insert Pref at the end of the the given list.
+   --  If Replace_If_Exist is True, delete the previous Pref associated with
+   --  Name in the given list, and insert Pref instead. Otherwise, do nothing.
+
+   -----------------------
+   -- Group_Name_Equals --
+   -----------------------
+
+   function Group_Name_Equals (Left, Right : Preferences_Group) return Boolean
+   is
+     (Left.Get_Name = Right.Get_Name);
+
+   ----------------------
+   -- Pref_Name_Equals --
+   ----------------------
+
+   function Pref_Name_Equals (Left, Right : Preference) return Boolean
+   is
+      (Left.Get_Name = Right.Get_Name);
+
+   ---------------
+   -- Find_Group --
+   ---------------
+
+   function Find_Group
+     (Groups : in out Groups_Lists.List;
+      Name   : String) return Preferences_Group is
+   begin
+      for Group of Groups loop
+         if Group.Get_Name = Name then
+            return Group;
+         end if;
+      end loop;
+
+      return null;
+   end Find_Group;
+
+   -----------------
+   -- Insert_Pref --
+   -----------------
+
+   procedure Insert_Pref
+     (Preferences      : in out Preferences_Lists.List;
+      Pref             : not null Preference;
+      Replace_If_Exist : Boolean := False)
+   is
+      Pref_Iter : Preferences_Lists.Cursor;
+   begin
+      Pref_Iter := Preferences.Find (Pref);
+
+      if Preferences_Lists.Has_Element (Pref_Iter) then
+         if Replace_If_Exist then
+            Preferences.Delete (Pref_Iter);
+         else
+            return;
+         end if;
+      end if;
+
+      Preferences.Append (Pref);
+   end Insert_Pref;
+
    ---------------------------
    -- Set_GObject_To_Update --
    ---------------------------
@@ -499,6 +570,14 @@ package body Default_Preferences is
    --------------
 
    function Get_Name
+     (Self : not null access Preferences_Group_Record) return String is
+     (if Self.Name = null then "" else Self.Name.all);
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
      (Self : not null access Preferences_Page_Record) return String is
      (if Self.Name = null then "" else Self.Name.all);
 
@@ -578,6 +657,8 @@ package body Default_Preferences is
       begin
          Gtk_New (Group_Widget);
          Page_Box.Pack_Start (Group_Widget);
+         Get_Style_Context (Group_Widget).Add_Class
+           ("gps-preferences-groups");
 
          Gtk_New (Pref_List_Box);
          Pref_List_Box.Set_Selection_Mode (Selection_None);
@@ -592,7 +673,7 @@ package body Default_Preferences is
          --  Iterate over all the preferences registered in this group and
          --  append their widgets.
          for Pref_Iter in Group.Preferences.Iterate loop
-            Pref := Preferences_Maps.Element (Pref_Iter);
+            Pref := Preferences_Lists.Element (Pref_Iter);
             Add_Pref_Widget;
          end loop;
       end Add_Group_Widget;
@@ -614,7 +695,7 @@ package body Default_Preferences is
       --  Iterate over all the groups registered in this page and append
       --  their widgets.
       for Group_Iter in Self.Groups.Iterate loop
-         Group := Groups_Maps.Element (Group_Iter);
+         Group := Groups_Lists.Element (Group_Iter);
          Add_Group_Widget;
       end loop;
 
@@ -629,30 +710,28 @@ package body Default_Preferences is
      (Self : not null access Preferences_Page_Record;
       Pref : not null Preference)
    is
-      Pref_Name  : constant String := Pref.Get_Name;
       Group_Name : constant String := Get_Group_Name (Pref);
       Group      : Preferences_Group;
    begin
       --  Find or create the group that should contain the preference
-      if Self.Groups.Contains (Group_Name) then
-         Group := Self.Groups (Group_Name);
-      else
+      Group := Find_Group (Groups => Self.Groups,
+                           Name   => Group_Name);
+
+      if Group = null then
          Group := new Preferences_Group_Record;
 
          if Group_Name /= "" then
             Group.Name := new String'(Group_Name);
          end if;
 
-         Self.Groups.Insert (Group_Name, Group);
+         Self.Groups.Append (Group);
       end if;
 
       --  If a preference is already associated to this name, replace it.
       --  If not, insert it to the preferences map.
-      if Group.Preferences.Contains (Pref_Name) then
-         Group.Preferences (Pref_Name) := Pref;
-      else
-         Group.Preferences.Insert (Pref_Name, Pref);
-      end if;
+      Insert_Pref (Preferences      => Group.Preferences,
+                   Pref             => Pref,
+                   Replace_If_Exist => True);
    end Add_Pref;
 
    -----------------
@@ -664,9 +743,13 @@ package body Default_Preferences is
       Pref : not null Preference)
    is
       Group : constant Preferences_Group
-        := Self.Groups (Get_Group_Name (Pref));
+        := Find_Group (Groups => Self.Groups,
+                       Name   => Get_Group_Name (Pref));
+      Pref_Iter : Preferences_Lists.Cursor := Group.Preferences.Find (Pref);
    begin
-      Preferences_Maps.Delete (Group.Preferences, Pref.Get_Name);
+      if Preferences_Lists.Has_Element (Pref_Iter) then
+         Group.Preferences.Delete (Pref_Iter);
+      end if;
    end Remove_Pref;
 
    ----------
@@ -680,18 +763,18 @@ package body Default_Preferences is
       Pref  : Preference;
    begin
       for Group_iter in Self.Groups.Iterate loop
-         Group := Groups_Maps.Element (Group_iter);
+         Group := Groups_Lists.Element (Group_iter);
 
          for Pref_Iter in Group.Preferences.Iterate loop
-            Pref := Preferences_Maps.Element (Pref_Iter);
+            Pref := Preferences_Lists.Element (Pref_Iter);
             Free (Pref);
          end loop;
 
-         Preferences_Maps.Clear (Group.Preferences);
+         Preferences_Lists.Clear (Group.Preferences);
          Free (Group.Name);
       end loop;
 
-      Groups_Maps.Clear (Self.Groups);
+      Groups_Lists.Clear (Self.Groups);
    end Free;
 
    ------------
