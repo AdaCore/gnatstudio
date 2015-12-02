@@ -59,6 +59,15 @@ KP-62-OA28-042 GPS: memory leak linked to completions
 
   Workaround: None known, apart from deactivating the completion.
 
+KP-62-O921-051 GNATdoc: No source code snippet for subtypes
+
+  Problem:    GNATdoc doesn't generate source code snippet for declarations of
+              subtypes of enumeration type declared in another package.
+
+  Status:     This was fixed in 17.0 on 2015-12-01
+
+  Workaround: None.
+
 KP-62-O820-024 GPS: debugging aggregated projects
 
   Problem:    If you are using aggregate projects, the /Debug/Initialize
