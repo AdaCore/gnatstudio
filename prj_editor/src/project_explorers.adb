@@ -950,7 +950,7 @@ package body Project_Explorers is
             Set_Property
               (Self.Explorer.Text_Rend,
                Gtk.Cell_Renderer_Text.Ellipsize_Property,
-               (if Value then Ellipsize_Start else Ellipsize_None));
+               (if Value then Ellipsize_Middle else Ellipsize_None));
             Self.Explorer.Tree.Queue_Resize;
          end if;
 
