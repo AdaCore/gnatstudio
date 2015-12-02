@@ -243,6 +243,7 @@ package body GVD.Source_Editor.GPS is
                (Text               => Null_Unbounded_String,
                 Tooltip_Text       => Null_Unbounded_String,
                 Image              => Current_Line_Pixbuf,
+                Message            => <>,
                 Associated_Command => null));
       begin
          Add_Line_Information

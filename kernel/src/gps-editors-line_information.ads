@@ -19,6 +19,7 @@ with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with Commands;
+with GPS.Kernel.Messages.References;
 
 package GPS.Editors.Line_Information is
 
@@ -33,6 +34,9 @@ package GPS.Editors.Line_Information is
       Tooltip_Text       : Ada.Strings.Unbounded.Unbounded_String;
       --  A text to be displayed in a tooltip
       Image              : Ada.Strings.Unbounded.Unbounded_String;
+      Message            : GPS.Kernel.Messages.References.Message_Reference;
+      --  Reference to the message that will be put into context of execution
+      --  of associated command.
       Associated_Command : Commands.Command_Access := null;
    end record;
    --  Text must be a valid UTF8 string, which may contain markups in the pango
@@ -99,6 +103,7 @@ private
      (Text               => Ada.Strings.Unbounded.Null_Unbounded_String,
       Tooltip_Text       => Ada.Strings.Unbounded.Null_Unbounded_String,
       Image              => Ada.Strings.Unbounded.Null_Unbounded_String,
+      Message            => <>,
       Associated_Command => null);
 
 end GPS.Editors.Line_Information;

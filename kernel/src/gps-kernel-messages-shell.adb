@@ -327,6 +327,7 @@ package body GPS.Kernel.Messages.Shell is
               (Text               => Null_Unbounded_String,
                Tooltip_Text       => To_Unbounded_String (Tooltip_Str),
                Image              => To_Unbounded_String (Image_Str),
+               Message            => <>,
                Associated_Command => Command);
 
             Message.Set_Action (Action);
@@ -358,6 +359,7 @@ package body GPS.Kernel.Messages.Shell is
               (Text               => Null_Unbounded_String,
                Tooltip_Text       => To_Unbounded_String (Tooltip_Str),
                Image              => To_Unbounded_String (Image_Str),
+               Message            => <>,
                Associated_Command => Command_Access (Command));
 
             Message.Set_Action (Action);

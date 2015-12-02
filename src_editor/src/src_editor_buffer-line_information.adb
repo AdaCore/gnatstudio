@@ -40,8 +40,9 @@ with Gtkada.Style;             use Gtkada.Style;
 with Pango.Cairo;              use Pango.Cairo;
 
 with Commands.Editor;          use Commands.Editor;
-with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Language.Ada;             use Language.Ada;
 with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer;        use Src_Editor_Buffer;
@@ -1213,7 +1214,9 @@ package body Src_Editor_Buffer.Line_Information is
       Ignore : Command_Return_Type;
       pragma Unreferenced (Ignore);
 
-      Command : Command_Access;
+      Action  : Line_Information_Record;
+      Context : Selection_Context;
+
    begin
       Set_Cursor_Position (Buffer, Gint (Line - 1), 0, False);
 
@@ -1223,19 +1226,34 @@ package body Src_Editor_Buffer.Line_Information is
               (BL.all (Col).Width + BL.all (Col).Starting_X +
                  Buffer.Line_Numbers_Width)
             then
-               Command := Get_Relevant_Action
-                 (Buffer.Line_Data
-                    (Line).Side_Info_Data (Col)).Associated_Command;
+               Action := Get_Relevant_Action
+                 (Buffer.Line_Data (Line).Side_Info_Data (Col));
 
-               if Command /= null then
-                  if Command.all in
+               if Action.Associated_Command /= null then
+                  if Action.Associated_Command.all in
                     Base_Editor_Command_Type'Class
                   then
                      Base_Editor_Command_Type
-                       (Command.all).Base_Line := Line;
+                       (Action.Associated_Command.all).Base_Line := Line;
                   end if;
 
-                  Ignore := Execute (Command);
+                  if not Action.Message.Is_Empty then
+                     --  Update selection context when message information was
+                     --  associated with action.
+
+                     Context := Buffer.Kernel.New_Context;
+                     Set_Messages_Information
+                       (Context, (1 => Action.Message.Message));
+                     Buffer.Kernel.Context_Changed (Context);
+                  end if;
+
+                  Ignore := Action.Associated_Command.Execute;
+
+                  if not Action.Message.Is_Empty then
+                     --  Refresh selection context to initial state
+
+                     Buffer.Kernel.Refresh_Context;
+                  end if;
                end if;
 
                return;
@@ -1693,6 +1711,7 @@ package body Src_Editor_Buffer.Line_Information is
            => (Text               => Null_Unbounded_String,
                Tooltip_Text       => Null_Unbounded_String,
                Image              => To_Unbounded_String (Icon_Name),
+               Message            => <>,
                Associated_Command => Command)),
          0);
    end Add_Block_Command;

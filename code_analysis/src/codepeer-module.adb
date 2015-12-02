@@ -18,31 +18,32 @@
 with Ada.Characters.Handling;
 with Ada.Characters.Latin_1;
 with Ada.Strings.Fixed;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;          use Ada.Strings.Unbounded;
 
 with Input_Sources.File;
 
-with Glib.Object;                use Glib.Object;
-with Gtk.Check_Menu_Item;        use Gtk.Check_Menu_Item;
-with Gtk.Enums;                  use Gtk.Enums;
+with Glib.Object;                    use Glib.Object;
+with Gtk.Check_Menu_Item;            use Gtk.Check_Menu_Item;
+with Gtk.Enums;                      use Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.Label;                  use Gtk.Label;
-with Gtk.Menu_Item;              use Gtk.Menu_Item;
+with Gtk.Label;                      use Gtk.Label;
+with Gtk.Menu_Item;                  use Gtk.Menu_Item;
 
 with Basic_Types;
-with Default_Preferences;        use Default_Preferences;
+with Default_Preferences;            use Default_Preferences;
 with GPS.Editors;
 with GPS.Editors.Line_Information;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.Project;         use GPS.Kernel.Project;
-with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
+with GPS.Intl;                       use GPS.Intl;
+with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
+with GPS.Kernel.Project;             use GPS.Kernel.Project;
+with GPS.Kernel.Messages;            use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Hyperlink;
-with GPS.Kernel.Messages.Simple; use GPS.Kernel.Messages.Simple;
-with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Style_Manager;   use GPS.Kernel.Style_Manager;
-with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
+with GPS.Kernel.Messages.Simple;     use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Style_Manager;       use GPS.Kernel.Style_Manager;
+with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Xref;
 with String_Utils;
 
@@ -52,13 +53,13 @@ with CodePeer.Bridge.Audit_Trail_Readers;
 with CodePeer.Bridge.Inspection_Readers;
 with CodePeer.Bridge.Status_Readers;
 with CodePeer.Message_Review_Dialogs_V3;
-with CodePeer.Messages_Reports;  use CodePeer.Messages_Reports;
+with CodePeer.Messages_Reports;      use CodePeer.Messages_Reports;
 with CodePeer.Module.Actions;
 with CodePeer.Module.Bridge;
 with CodePeer.Module.Editors;
-with CodePeer.Shell_Commands;   use CodePeer.Shell_Commands;
+with CodePeer.Shell_Commands;        use CodePeer.Shell_Commands;
 with Commands.CodePeer;
-with Commands;                  use Commands;
+with Commands;                       use Commands;
 with Code_Analysis_GUI;
 
 package body CodePeer.Module is
@@ -1312,7 +1313,9 @@ package body CodePeer.Module is
                      Tooltip_Text       => To_Unbounded_String
                        ("Review message"),
                      Image              => To_Unbounded_String
-                        (Code_Analysis_GUI.Post_Analysis_Cst),
+                       (Code_Analysis_GUI.Post_Analysis_Cst),
+                     Message            =>
+                       Create (Messages.Message_Access (Primary)),
                      Associated_Command =>
                      new Standard.Commands.CodePeer.Review_Message_Command'
                        (Root_Command with

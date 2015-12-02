@@ -2066,6 +2066,7 @@ package body VCS.Generic_VCS is
                     To_Unbounded_String ((1 .. Max_Length => ' ')),
                 Tooltip_Text       => Null_Unbounded_String,
                 Image              => Null_Unbounded_String,
+                Message            => <>,
                 Associated_Command => null),
              Every_Line => False);
          Add_Line_Information
