@@ -1448,9 +1448,7 @@ package body GVD_Module is
       Process : constant Visual_Debugger :=
                   Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
    begin
-      return Process /= null
-        and then Process.Debugger /= null
-        and then not Command_In_Process (Get_Process (Process.Debugger));
+      return Process /= null and then not Command_In_Process (Process);
    end Filter_Matches_Primitive;
 
    ------------------------------

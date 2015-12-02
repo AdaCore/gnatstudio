@@ -493,6 +493,7 @@ package body GVD.Process is
       In_Process : Boolean := True) is
    begin
       Set_Command_In_Process (Process_Proxy (Proxy.all)'Access, In_Process);
+      Proxy.Process.Kernel.Refresh_Context;
 
       if In_Process then
          Debugger_State_Changed_Hook.Run
