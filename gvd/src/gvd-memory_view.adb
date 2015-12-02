@@ -1131,7 +1131,7 @@ package body GVD.Memory_View is
          On_Button_Release'Access, Widget);
 
       Show_All (Widget);
-      return Gtk_Widget (Widget);
+      return Gtk_Widget (Widget.Editor);
    end Initialize;
 
    -------------
