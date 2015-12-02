@@ -30,20 +30,6 @@ package body GPS.Editors.Line_Information is
       end if;
    end Free;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Action_Item) is
-      procedure Unchecked_Free is
-        new Ada.Unchecked_Deallocation (Line_Information_Record, Action_Item);
-   begin
-      if X /= null then
-         Free (X.all);
-         Unchecked_Free (X);
-      end if;
-   end Free;
-
    ----------------------
    -- Add_Special_Line --
    ----------------------

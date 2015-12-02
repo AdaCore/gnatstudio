@@ -170,7 +170,7 @@ package body GPS.Kernel.Messages.Legacy is
       end loop Primary_Messages_Loop;
 
       if Message_Node /= null then
-         Message_Node.Set_Action (Action_Item (Action));
+         Message_Node.Set_Action (Action);
       end if;
    end Set_Action_Item;
 

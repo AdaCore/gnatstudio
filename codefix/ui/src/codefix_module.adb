@@ -17,46 +17,47 @@
 
 --  This package defines the module for code fixing.
 
-with Ada.Tags;                  use Ada.Tags;
+with Ada.Tags;                     use Ada.Tags;
 with Ada.Unchecked_Deallocation;
-with GNAT.Regpat;               use GNAT.Regpat;
-with GNAT.Strings;              use GNAT.Strings;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNAT.Regpat;                  use GNAT.Regpat;
+with GNAT.Strings;                 use GNAT.Strings;
+with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 
-with Glib.Object;               use Glib.Object;
+with Glib.Object;                  use Glib.Object;
 
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Enums;                    use Gtk.Enums;
+with Gtk.Menu_Item;                use Gtk.Menu_Item;
+with Gtk.Widget;                   use Gtk.Widget;
 
-with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.Handlers;              use Gtkada.Handlers;
 
-with Basic_Types;               use Basic_Types;
-with UTF8_Utils;                use UTF8_Utils;
-with Codefix.Errors_Parser;     use Codefix.Errors_Parser;
-with Codefix.Error_Lists;       use Codefix.Error_Lists;
-with Codefix.GPS_Io;            use Codefix.GPS_Io;
-with Codefix.Text_Manager;      use Codefix.Text_Manager;
+with Basic_Types;                  use Basic_Types;
+with UTF8_Utils;                   use UTF8_Utils;
+with Codefix.Errors_Parser;        use Codefix.Errors_Parser;
+with Codefix.Error_Lists;          use Codefix.Error_Lists;
+with Codefix.GPS_Io;               use Codefix.GPS_Io;
+with Codefix.Text_Manager;         use Codefix.Text_Manager;
 with Codefix.GNAT_Parser;
 with Codefix.SPARK_Parser;
-with Commands.Codefix;          use Commands.Codefix;
-with Commands;                  use Commands;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Messages.Legacy;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with Glib;                      use Glib;
-with GPS.Editors;               use GPS.Editors;
+with Commands.Codefix;             use Commands.Codefix;
+with Commands;                     use Commands;
+with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Intl;                     use GPS.Intl;
+with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Legacy;
+with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;        use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;           use GPS.Kernel.Project;
+with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager;      use GPS.Kernel.Task_Manager;
+with GNATCOLL.Arg_Lists;           use GNATCOLL.Arg_Lists;
+with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with GNATCOLL.VFS;                 use GNATCOLL.VFS;
+with Glib;                         use Glib;
 
 package body Codefix_Module is
 
@@ -765,7 +766,7 @@ package body Codefix_Module is
       Session : access Codefix_Session_Record;
       Error   : Error_Id)
    is
-      New_Action : GPS.Editors.Line_Information.Action_Item;
+      New_Action : Action_Item;
       Err        : constant Error_Message := Get_Error_Message (Error);
    begin
       New_Action := new Line_Information_Record;

@@ -53,12 +53,6 @@ package GPS.Editors.Line_Information is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Line_Information_Array, Line_Information_Data);
 
-   type Action_Item is access all
-     GPS.Editors.Line_Information.Line_Information_Record;
-
-   procedure Free (X : in out Action_Item);
-   --  Free memory associated to X
-
    procedure Add_File_Information
      (This       : GPS_Editor_Buffer;
       Identifier : String;

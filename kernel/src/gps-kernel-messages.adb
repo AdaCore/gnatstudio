@@ -296,6 +296,20 @@ package body GPS.Kernel.Messages is
       Self.Unset;
    end Finalize;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Action_Item) is
+      procedure Unchecked_Free is
+        new Ada.Unchecked_Deallocation (Line_Information_Record, Action_Item);
+   begin
+      if X /= null then
+         Free (X.all);
+         Unchecked_Free (X);
+      end if;
+   end Free;
+
    -----------------------------
    -- Free_Messages_Container --
    -----------------------------

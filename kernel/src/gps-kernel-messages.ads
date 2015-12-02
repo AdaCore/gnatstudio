@@ -38,7 +38,7 @@ with Ada.Tags;
 
 with Default_Preferences;           use Default_Preferences;
 with GNATCOLL.VFS;
-with GPS.Editors.Line_Information;
+limited with GPS.Editors.Line_Information;
 with GPS.Kernel.Style_Manager;
 
 package GPS.Kernel.Messages is
@@ -68,9 +68,13 @@ package GPS.Kernel.Messages is
 
    type Listener_Access is access all Abstract_Listener'Class;
 
-   subtype Action_Item is GPS.Editors.Line_Information.Action_Item;
+   type Action_Item is
+     access all GPS.Editors.Line_Information.Line_Information_Record;
    function To_Action_Item is new Ada.Unchecked_Conversion
       (System.Address, Action_Item);
+
+   procedure Free (X : in out Action_Item);
+   --  Free memory associated to X
 
    type Unbounded_String_Array is
      array (Positive range <>) of Ada.Strings.Unbounded.Unbounded_String;

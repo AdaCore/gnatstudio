@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Strings.Fixed;   use Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;
@@ -23,17 +23,20 @@ with System.Address_To_Access_Conversions;
 
 with Glib.Object;
 with Glib.Values;
-with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Tree_Sortable;
-with Gtk.Tree_Store;            use Gtk.Tree_Store;
+with Gtk.Tree_Store;      use Gtk.Tree_Store;
+
+with GNATCOLL.VFS;        use GNATCOLL.VFS;
+with GNATCOLL.VFS.GtkAda; use GNATCOLL.VFS.GtkAda;
+with GNATCOLL.Xref;
 
 with Commands;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
-with GNATCOLL.Xref;
 with GPS.Editors.GtkAda;
-with GPS.Editors.Line_Information;  use GPS.Editors.Line_Information;
-with String_Utils;                  use String_Utils;
+with GPS.Editors.Line_Information;
+pragma Unreferenced (GPS.Editors.Line_Information);
+--  Required to access to members of Line_Information_Record.
+with String_Utils;        use String_Utils;
 
 package body GPS.Location_View.Listener is
 
