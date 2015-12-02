@@ -516,17 +516,11 @@ messages. Full: same as normal, plus run-time checks related messages">
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
-          <arg>codepeer-gprbuild</arg>
-          <arg>-ws</arg>
-          <arg>-c</arg>
-          <arg>-f</arg>
-          <arg>-u</arg>
-          <arg>%eL</arg>
+          <arg>codepeer</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
-          <arg>--subdirs=codepeer-file</arg>
-          <arg>--codepeer</arg>
-          <arg>-gnateC</arg>
+          <arg>-compiler-mode</arg>
+          <arg>-file</arg>
           <arg>%fp</arg>
        </command-line>
     </target>
@@ -539,15 +533,11 @@ messages. Full: same as normal, plus run-time checks related messages">
        <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
-          <arg>codepeer-gprbuild</arg>
-          <arg>-ws</arg>
+          <arg>codepeer</arg>
           <arg>-d</arg>
-          <arg>%eL</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
-          <arg>--subdirs=codepeer-file</arg>
-          <arg>--codepeer</arg>
-          <arg>-gnateC</arg>
+          <arg>-compiler-mode</arg>
        </command-line>
     </target>
 
