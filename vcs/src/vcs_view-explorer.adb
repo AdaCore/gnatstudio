@@ -47,6 +47,7 @@ with Projects;                  use Projects;
 with Glib_String_Utils;         use Glib_String_Utils;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Module;                use VCS_Module;
+with VCS_Module.Actions;        use VCS_Module.Actions;
 with VCS_Utils;                 use VCS_Utils;
 with VCS_View_API;              use VCS_View_API;
 with Ignore_Db;                 use Ignore_Db;
@@ -973,12 +974,9 @@ package body VCS_View.Explorer is
       Kernel    : not null access Kernel_Handle_Record'Class;
       File      : Virtual_File)
    is
-      Log_Name : constant String := +Full_Name (File);
       Line     : Line_Record;
    begin
-      if Log_Name'Length > 4
-        and then Log_Name (Log_Name'Last - 3 .. Log_Name'Last) = "$log"
-      then
+      if Is_A_Log (File) then
          declare
             F : constant Virtual_File := Get_File_From_Log (Kernel, File);
          begin

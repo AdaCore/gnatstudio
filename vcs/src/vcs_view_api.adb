@@ -58,6 +58,7 @@ with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Module;                use VCS_Module;
+with VCS_Module.Actions;        use VCS_Module.Actions;
 with VCS_Status;                use VCS_Status;
 with VCS_Utils;                 use VCS_Utils;
 with VCS_View.Activities;       use VCS_View.Activities;
@@ -880,15 +881,12 @@ package body VCS_View_API is
          declare
             File_S : constant Filesystem_String :=
                        Full_Name (File_Information (Context));
+            Index : Natural;
          begin
-            if File_S'Length > 4
-              and then Equal (File_S (File_S'Last - 3 .. File_S'Last), "$log")
-            then
+            if Is_A_Log (File_Information (Context)) then
                --  By default, the log is a "commit" log
                Log_Action := Commit;
 
-               declare
-                  Index : Natural;
                begin
                   --  Attempt to read Action from the name of the log file
 

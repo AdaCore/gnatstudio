@@ -75,7 +75,7 @@ package body GPS.Callbacks is
    is
       pragma Unreferenced (MDI);
    begin
-      Reset_Title (Kernel, Kernel.Get_Current_Context);
+      Reset_Title (Kernel);
    end Title_Changed;
 
    --------------------
@@ -89,7 +89,7 @@ package body GPS.Callbacks is
       pragma Unreferenced (Mdi);
    begin
       Kernel.Refresh_Context;
-      Reset_Title (Kernel, Kernel.Get_Current_Context);
+      Reset_Title (Kernel);
    end Child_Selected;
 
 end GPS.Callbacks;

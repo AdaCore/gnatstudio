@@ -100,9 +100,6 @@ package body VCS_Module.Actions is
    --  Fill Menu with the contextual menu for the VCS module,
    --  if Context is appropriate.
 
-   function Is_A_Log (File : Virtual_File) return Boolean;
-   --  Return True if File is a log
-
    ----------------------
    -- Register_Actions --
    ----------------------
@@ -561,15 +558,8 @@ package body VCS_Module.Actions is
    --------------
 
    function Is_A_Log (File : Virtual_File) return Boolean is
-      Full : constant Cst_Filesystem_String_Access := File.Full_Name;
    begin
-      if Full'Length > 4
-        and then Full (Full'Last - 3 .. Full'Last) = "$log"
-      then
-         return True;
-      end if;
-
-      return False;
+      return Has_Suffix (File, "$log");
    end Is_A_Log;
 
    ------------------------------

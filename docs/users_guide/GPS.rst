@@ -1340,8 +1340,6 @@ Classes
 
    .. automethod:: GPS.Menu.pywidget
 
-   .. automethod:: GPS.Menu.rename
-
    .. automethod:: GPS.Menu.set_sensitive
 
    .. automethod:: GPS.Menu.show

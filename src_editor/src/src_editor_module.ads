@@ -155,8 +155,7 @@ package Src_Editor_Module is
       File       : GNATCOLL.VFS.Virtual_File;
       Project    : GNATCOLL.Projects.Project_Type;
       Dir        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Create_New : Boolean := True;
-      Focus      : Boolean := True) return Src_Editor_Box.Source_Editor_Box;
+      Create_New : Boolean := True) return Src_Editor_Box.Source_Editor_Box;
    --  Create a new text editor that edits File.
    --  If File is the empty string, or the file doesn't exist and Create_New is
    --  True, then an empty editor is created.
@@ -164,7 +163,6 @@ package Src_Editor_Module is
    --  File = VFS.No_File.
    --  No check is done to make sure that File is not already edited
    --  elsewhere. The resulting editor is not put in the MDI window.
-   --  Give the focus to the editor iff Focus.
 
    ------------------
    -- Highlighters --
@@ -351,7 +349,8 @@ private
       Initial_Position : Gtkada.MDI.Child_Position :=
         Gtkada.MDI.Position_Automatic;
       Initial_Dir      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Areas            : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Central_Only)
+      Areas            : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Central_Only;
+      Title      : String := "")
       return Src_Editor_Box.Source_Editor_Box;
    --  Open a file and return the handle associated with it.
    --  If Add_To_MDI is set to True, the box will be added to the MDI window.
@@ -360,5 +359,7 @@ private
    --  Position indicates the position to give to the editor in the MDI.
    --  Initial_Dir is the initial directory to create the file in, in case
    --  we are creating an editor for a new file.
+   --  Title can be specified to override the default title of the editor. It
+   --  only applies when opening a new editor.
 
 end Src_Editor_Module;

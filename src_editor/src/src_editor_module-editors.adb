@@ -2625,7 +2625,7 @@ package body Src_Editor_Module.Editors is
                Get_Iter_Position
                  (Get_Buffer (This.Contents.Box), Iter, Line, Col);
 
-               --  Remebrer prev. location in history for /Navigate/Back
+               --  Remember prev. location in history for /Navigate/Back
                Push_Current_Editor_Location_In_History
                  (This.Contents.Box.Get_Kernel);
 
@@ -2637,7 +2637,7 @@ package body Src_Editor_Module.Editors is
                   Centering   => Centering,
                   Extend_Selection => Extend_Selection);
 
-               --  Remebrer new location in history for /Navigate/Forward
+               --  Remembrer new location in history for /Navigate/Forward
                This.Contents.Box.Add_Navigation_Location;
             end;
 

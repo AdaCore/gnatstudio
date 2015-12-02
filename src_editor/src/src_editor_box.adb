@@ -167,7 +167,6 @@ package body Src_Editor_Box is
       Project     : GNATCOLL.Projects.Project_Type;
       Kernel      : GPS.Kernel.Kernel_Handle;
       Filename    : GNATCOLL.VFS.Virtual_File;
-      Force_Focus : Boolean := True;
       Source      : access Source_Buffer_Record'Class);
    --  Internal version of Initialize, which can create new views
 
@@ -545,7 +544,6 @@ package body Src_Editor_Box is
       Project     : GNATCOLL.Projects.Project_Type;
       Kernel      : GPS.Kernel.Kernel_Handle;
       Filename    : GNATCOLL.VFS.Virtual_File;
-      Force_Focus : Boolean := True;
       Source      : access Source_Buffer_Record'Class)
    is
       Lang_Autodetect : constant Boolean := True;
@@ -674,7 +672,9 @@ package body Src_Editor_Box is
         (Kernel          => Kernel,
          Event_On_Widget => Box.Source_View);
 
-      Set_Cursor_Location (Box, 1, 1, Force_Focus);
+      --  We do not want to send a context_changed even here. It will be done
+      --  later anyway, with more accurate information.
+      Set_Cursor_Location (Box, 1, 1, Force_Focus => False);
       Update_Status (Box.Status_Bar);
    end Initialize;
 
@@ -686,13 +686,9 @@ package body Src_Editor_Box is
      (Box         : access Source_Editor_Box_Record'Class;
       Project     : GNATCOLL.Projects.Project_Type;
       Kernel      : GPS.Kernel.Kernel_Handle;
-      Filename    : GNATCOLL.VFS.Virtual_File;
-      Force_Focus : Boolean := True)
-   is
+      Filename    : GNATCOLL.VFS.Virtual_File) is
    begin
-      Initialize
-        (Box, Project, Kernel, Filename, Force_Focus,
-         Source => null);
+      Initialize (Box, Project, Kernel, Filename, Source => null);
    end Initialize;
 
    --------------
@@ -1046,12 +1042,10 @@ package body Src_Editor_Box is
      (Box         : out Source_Editor_Box;
       Project     : GNATCOLL.Projects.Project_Type;
       Kernel      : GPS.Kernel.Kernel_Handle;
-      Filename    : GNATCOLL.VFS.Virtual_File;
-      Force_Focus : Boolean := True)
-   is
+      Filename    : GNATCOLL.VFS.Virtual_File) is
    begin
       Box := new Source_Editor_Box_Record;
-      Initialize (Box, Project, Kernel, Filename, Force_Focus);
+      Initialize (Box, Project, Kernel, Filename);
    end Gtk_New;
 
    ---------------------
@@ -1075,7 +1069,6 @@ package body Src_Editor_Box is
       Initialize
         (Box, Project, Kernel_Handle (Kernel),
          Filename    => No_File,
-         Force_Focus => True,
          Source      => Source.Source_Buffer);
 
       if not Get_Writable (Box.Source_Buffer) then

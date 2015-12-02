@@ -1894,6 +1894,7 @@ procedure GPS.Main is
                      GPS_Main.Kernel,
                      Use_Source_Path => File_Item.From_Project,
                      Use_Object_Path => False),
+                  Focus   => True,
                   Project => No_Project,  --  will choose most appropriate
                   Line    => File_Item.Line);
             end loop;

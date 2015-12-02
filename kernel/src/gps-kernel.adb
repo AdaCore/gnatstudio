@@ -738,12 +738,21 @@ package body GPS.Kernel is
    begin
       if not Kernel.Is_In_Destruction then
          Child := Get_MDI (Kernel).Get_Focus_Child;
+
+         if Active (Me) then
+            if Child /= null then
+               Trace (Me, "Refresh_Context " & Child.Get_Title);
+            else
+               Trace (Me, "Refresh_Context no child");
+            end if;
+         end if;
+
          if Child /= null
            and then Child.all in GPS_MDI_Child_Record'Class
          then
-            Context_Changed (Kernel, GPS_MDI_Child (Child).Build_Context);
+            Kernel.Context_Changed (GPS_MDI_Child (Child).Build_Context);
          else
-            Context_Changed (Kernel, New_Context (Kernel));
+            Kernel.Context_Changed (New_Context (Kernel));
          end if;
       end if;
    end Refresh_Context;

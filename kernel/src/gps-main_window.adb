@@ -461,7 +461,7 @@ package body GPS.Main_Window is
    is
       pragma Unreferenced (Self);
    begin
-      Reset_Title (Kernel, Kernel.Get_Current_Context);
+      Reset_Title (Kernel);
    end Execute;
 
    -----------------------
@@ -563,7 +563,7 @@ package body GPS.Main_Window is
       if Pref = null
         or else Pref = Preference (Window_Title_Pref)
       then
-         Reset_Title (Kernel, Kernel.Get_Current_Context);
+         Reset_Title (Kernel);
       end if;
 
       if Pref = null
@@ -779,7 +779,7 @@ package body GPS.Main_Window is
       --  Report a context change, so that the menus for the new
       --  floating window are properly updated
       W.Kernel.Refresh_Context;
-      Reset_Title (W.Kernel, W.Kernel.Get_Current_Context);
+      Reset_Title (W.Kernel);
    end On_Float_Child;
 
    -------------------
@@ -1504,9 +1504,10 @@ package body GPS.Main_Window is
    -----------------
 
    procedure Reset_Title
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Context : GPS.Kernel.Selection_Context)
+     (Kernel  : not null access Kernel_Handle_Record'Class)
    is
+      Context : Selection_Context;
+
       function Callback (Param : String; Quoted : Boolean) return String;
       function Callback (Param : String; Quoted : Boolean) return String is
          Done : aliased Boolean := False;
@@ -1515,10 +1516,15 @@ package body GPS.Main_Window is
            (Param, Context, Quoted, Done'Access);
       end Callback;
 
-      MDI  : constant MDI_Window := Get_MDI (Kernel);
+      MDI  : MDI_Window;
       C    : MDI_Child;
       Win  : Gtk_Window;
    begin
+      if Kernel.Is_In_Destruction then
+         return;
+      end if;
+
+      MDI := Get_MDI (Kernel);
       if MDI /= null then
          C := MDI.Get_Focus_Child;
          if C /= null then
@@ -1531,6 +1537,7 @@ package body GPS.Main_Window is
       end if;
 
       if Win /= null then
+         Context := Kernel.Get_Current_Context;
          Win.Set_Title
            (GNATCOLL.Templates.Substitute
               (Str      => Window_Title_Pref.Get_Pref,
@@ -1558,14 +1565,15 @@ package body GPS.Main_Window is
          Menu     : Gtk_Widget;
       begin
          if not Result and then W.Menu_Bar /= null then
-            Children := First (W.Menu_Bar.Get_Children);
-            L := Children;
+            Children := W.Menu_Bar.Get_Children;
+            L := First (Children);
             while L /= Null_List loop
                Menu := Gtk_Menu_Item (Get_Data (L)).Get_Submenu;
                L := Next (L);
                if Menu /= null and then Menu.Is_Visible then
                   Free (Children);
                   Result := True;
+                  return;
                end if;
             end loop;
             Free (Children);

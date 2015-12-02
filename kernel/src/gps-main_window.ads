@@ -150,8 +150,7 @@ package GPS.Main_Window is
    --  Status is the exit status (0 is success)
 
    procedure Reset_Title
-     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Context : GPS.Kernel.Selection_Context);
+     (Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Reset the title of the main window or the current floating window,
    --  depending on which child currently has the focus.
 

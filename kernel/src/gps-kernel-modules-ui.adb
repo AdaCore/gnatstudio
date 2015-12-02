@@ -398,6 +398,8 @@ package body GPS.Kernel.Modules.UI is
    --  final menu. Use String_Utils.Strip_Single_Underscores if needed.
    --  Full_Path must include the Menu_Label, although the latter is also
    --  provided separately for efficiency.
+   --  Any special character like '/' should be quoted in Full_Path, using
+   --  Escape_Menu_Name.
    --
    --  Menus will be created if they don't exist.
    --  This is considered as an absolute path, as if it always started with
@@ -1517,7 +1519,7 @@ package body GPS.Kernel.Modules.UI is
             else
                Item := Gtk_New_Action_Item
                  (Kernel      => Kernel,
-                  Full_Path   => Parent_Path & Menu_Label,
+                  Full_Path   => Parent_Path & Escape_Menu_Name (Menu_Label),
                   Menu_Label  => Menu_Label,
                   Action      => Action,
                   Optional    => False);
@@ -2279,6 +2281,10 @@ package body GPS.Kernel.Modules.UI is
         (Toolbar : not null access Gtk_Toolbar_Record'Class);
       --  Cleanup separators in a toolbar
 
+      procedure Cleanup_Window
+         (Win : not null access GPS_Application_Window_Record'Class);
+      --  Cleanup menubar and toolbar for a specific window
+
       procedure Propagate_Visibility
         (Widget : not null access Gtk_Widget_Record'Class;
          Parent : not null access Gtk_Container_Record'Class)
@@ -2368,6 +2374,18 @@ package body GPS.Kernel.Modules.UI is
          end if;
       end Cleanup_Toolbar_Separators;
 
+      procedure Cleanup_Window
+         (Win : not null access GPS_Application_Window_Record'Class) is
+      begin
+         if Win.Menu_Bar /= null then
+            Propagate_Visibility (Win.Menu_Bar, Win.Menu_Bar);
+         end if;
+
+         if Win.Toolbar /= null then
+            Cleanup_Toolbar_Separators (Win.Toolbar);
+         end if;
+      end Cleanup_Window;
+
       D : access Action_Proxy'Class;
       The_Next : Proxy_Lists.Cursor;
 
@@ -2376,29 +2394,9 @@ package body GPS.Kernel.Modules.UI is
          if not Has_Element (Data.Current) then
             --  no more items
 
-            --  Look at the menu bars used in all of the windows for the
-            --  application
-
-            declare
-               use Widget_List;
-               List : Widget_List.Glist :=   --  Do not free
-                 Get_Kernel (Data.Context).Get_Application.Get_Windows;
-               W    : GPS_Application_Window;
-            begin
-               while List /= Null_List loop
-                  W := GPS_Application_Window (Get_Data (List));
-                  if W.Menu_Bar /= null then
-                     Propagate_Visibility (W.Menu_Bar, W.Menu_Bar);
-                  end if;
-
-                  if W.Toolbar /= null then
-                     Cleanup_Toolbar_Separators (W.Toolbar);
-                  end if;
-
-                  List := Next (List);
-               end loop;
-            end;
-
+            For_All_Open_Windows
+               (Get_Kernel (Data.Context).Get_Application,
+                Cleanup_Window'Access);
             Globals.Update_Menus_Idle_Id := No_Source_Id;
             return False;
          end if;
@@ -2698,6 +2696,8 @@ package body GPS.Kernel.Modules.UI is
          Process_Menu
            (Menubar, Globals.Menu_Model, Idx, Null_Unbounded_String);
       end loop;
+
+      Decrease_Indent (Me);
       return Menubar;
    end Create_Menubar_From_Model;
 

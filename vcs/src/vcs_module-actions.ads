@@ -23,4 +23,7 @@ package VCS_Module.Actions is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Register the VCS actions
 
+   function Is_A_Log (File : Virtual_File) return Boolean;
+   --  Return True if File is a log
+
 end VCS_Module.Actions;

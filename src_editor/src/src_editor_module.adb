@@ -1228,8 +1228,7 @@ package body Src_Editor_Module is
       File       : GNATCOLL.VFS.Virtual_File;
       Project    : GNATCOLL.Projects.Project_Type;
       Dir        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Create_New : Boolean := True;
-      Focus      : Boolean := True) return Source_Editor_Box
+      Create_New : Boolean := True) return Source_Editor_Box
    is
       Success     : Boolean;
       Editor      : Source_Editor_Box;
@@ -1243,8 +1242,7 @@ package body Src_Editor_Module is
 
       if File_Exists then
          Gtk_New (Editor, Project, Kernel_Handle (Kernel),
-                  Filename    => File,
-                  Force_Focus => Focus);
+                  Filename    => File);
 
       elsif Create_New then
          --  Do not create the file if we know we won't be able to save it
@@ -1276,8 +1274,7 @@ package body Src_Editor_Module is
 
          if Is_Writable then
             Gtk_New (Editor, Project, Kernel_Handle (Kernel),
-                     Filename    => F,
-                     Force_Focus => Focus);
+                     Filename    => F);
          end if;
       end if;
 
@@ -1311,7 +1308,8 @@ package body Src_Editor_Module is
       Initial_Position : Gtkada.MDI.Child_Position :=
         Gtkada.MDI.Position_Automatic;
       Initial_Dir      : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Areas            : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Central_Only)
+      Areas            : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Central_Only;
+      Title            : String := "")
       return Source_Editor_Box
    is
       Id      : constant Source_Editor_Module :=
@@ -1322,14 +1320,17 @@ package body Src_Editor_Module is
       Child   : GPS_MDI_Child;
       Child2  : MDI_Child;
 
-      procedure Jump_To_Location;
+      procedure Jump_To_Location_And_Give_Focus
+         (Child : not null access MDI_Child_Record'Class);
       --  Jump to the location given in parameter to Open_File
 
-      ----------------------
-      -- Jump_To_Location --
-      ----------------------
+      -------------------------------------
+      -- Jump_To_Location_And_Give_Focus --
+      -------------------------------------
 
-      procedure Jump_To_Location is
+      procedure Jump_To_Location_And_Give_Focus
+         (Child : not null access MDI_Child_Record'Class)
+      is
          Real_Column, Real_Column_End : Character_Offset_Type;
       begin
          if Line /= 0
@@ -1338,9 +1339,13 @@ package body Src_Editor_Module is
             Real_Column := Collapse_Tabs
               (Get_Buffer (Editor), Line, Column);
 
+            --  Will emit context_changed if Focus is true
             Set_Cursor_Location
-              (Editor, Line, Real_Column, Focus,
+              (Editor, Line, Real_Column, Force_Focus => False,
                Centering => With_Margin);
+            if Focus then
+               Child.Raise_Child (Focus);
+            end if;
 
             Set_Position_Set_Explicitely (Get_View (Editor));
 
@@ -1358,8 +1363,12 @@ package body Src_Editor_Module is
                   Line,
                   Real_Column_End);
             end if;
+
+         elsif Focus then
+            --  Gives the focus, thus child_selected, thus context_changed).
+            Raise_Child (Child, Focus);
          end if;
-      end Jump_To_Location;
+      end Jump_To_Location_And_Give_Focus;
 
    begin
       if Active (Me) then
@@ -1391,7 +1400,7 @@ package body Src_Editor_Module is
 
             Editor := Source_Editor_Box (Get_Widget (Child2));
 
-            Jump_To_Location;
+            Jump_To_Location_And_Give_Focus (Child2);
 
             return Editor;
          end if;
@@ -1408,9 +1417,12 @@ package body Src_Editor_Module is
             Project => Project,
             Kernel  => Kernel,
             Source  => Get_Source_Box_From_MDI (Child2));
+
       else
+         Increase_Indent (Me, "About to Create_File_Editor");
          Editor := Create_File_Editor
-           (Kernel, File, Project, Initial_Dir, Create_New, Focus);
+           (Kernel, File, Project, Initial_Dir, Create_New);
+         Decrease_Indent (Me);
       end if;
 
       --  If we have created an editor, put it into a box, and give it
@@ -1429,19 +1441,12 @@ package body Src_Editor_Module is
          Put (Get_MDI (Kernel), Child, Initial_Position => Initial_Position);
          Set_Child (Get_View (Editor), Child);
 
-         --  ??? Consider enabling this code
-         --  if MDI_Editors_Floating.Get_Pref then
-         --     Float_Child (Child, True);
-         --  end if;
-
          Check_Writable (Editor);
 
          if Get_Status (Get_Buffer (Editor)) = Modified then
             Child.Set_Icon_Name (File_Modified_Pixbuf);
-
          elsif Get_Status (Get_Buffer (Editor)) = Unsaved then
             Child.Set_Icon_Name (File_Unsaved_Pixbuf);
-
          else
             Child.Set_Icon_Name (File_Pixbuf);
          end if;
@@ -1459,19 +1464,17 @@ package body Src_Editor_Module is
          Widget_Callback.Connect
            (Child, Signal_Destroy, On_Editor_Destroy'Access);
 
-         if Focus then
-            Raise_Child (Child, Focus);
-         end if;
-
-         Jump_To_Location;
-
          if File /= GNATCOLL.VFS.No_File and then not File.Is_Directory then
-            --  Force update of MDI titles
+            if Title /= "" then
+               Editor.Get_Buffer.Set_Title (Title);
+            end if;
+
+            --  Force update of MDI titles (thus emits context_changed)
             Editor.Get_Buffer.Filename_Changed;
 
-            --  Report a change of name, so that the titles of the MDI window
-            --  are updated properly
+            --  Update the caches (timestamp+checksum) for this file
             File_Edited_Hook.Run (Kernel, Get_Filename (MDI_Child (Child)));
+
          else
             --  Determine the number of "Untitled" files open
 
@@ -1519,7 +1522,11 @@ package body Src_Editor_Module is
                --  to resolve it.
 
                if Nb_Untitled = -1 then
-                  Set_Title (Child, No_Name);
+                  if Title /= "" then
+                     Child.Set_Title (Title);
+                  else
+                     Set_Title (Child, No_Name);
+                  end if;
                   Ident := Create (+('/' & No_Name));
 
                else
@@ -1528,7 +1535,11 @@ package body Src_Editor_Module is
                                     No_Name & " ("
                                       & Image (Nb_Untitled + 1) & ")";
                   begin
-                     Set_Title (Child, Identifier);
+                     if Title /= "" then
+                        Child.Set_Title (Title);
+                     else
+                        Set_Title (Child, Identifier);
+                     end if;
                      Ident := Create (+('/' & Identifier));
                   end;
                end if;
@@ -1541,6 +1552,11 @@ package body Src_Editor_Module is
          end if;
 
          Child.Monitor_File (File);
+
+         --  Change location only at the end, since other calls above might
+         --  reset it.
+
+         Jump_To_Location_And_Give_Focus (Child);
 
          if File /= GNATCOLL.VFS.No_File then
             Add_To_Recent_Menu (Kernel, File);
@@ -1649,7 +1665,6 @@ package body Src_Editor_Module is
       pragma Unreferenced (Self);
       Child  : MDI_Child;
       Source : Source_Editor_Box;
-      Edit   : Source_Editor_Box;
       Tmp    : Boolean;
 
    begin
@@ -1675,7 +1690,8 @@ package body Src_Editor_Module is
             Line             => Editable_Line_Type (Line),
             Column           => Column,
             Column_End       => Column_End,
-            Areas            => Areas);
+            Areas            => Areas,
+            Title            => Title);
 
          if Force_Reload then
             Source.Get_Buffer.Load_File
@@ -1697,18 +1713,7 @@ package body Src_Editor_Module is
                   Line    => Convert (Line),
                   Column  => Column));
          end if;
-
-         if Source /= null then
-            Edit := Source;
-
-            if Title /= "" then
-               Source.Get_Buffer.Set_Title (Title);
-            end if;
-
-            Source.Get_Buffer.Filename_Changed;  --  force update of MDI title
-         end if;
-
-         return Edit /= null;
+         return Source /= null;
       end if;
    end Execute;
 
