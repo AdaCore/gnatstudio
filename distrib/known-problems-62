@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-OC02-029 GB: cursor jumps to top of ada file when saved
+
+  Problem:    When saving ada files edited by the Ada Editor, the content is
+              scrolled to the top, and the cursor is moved to the first line
+              first column.
+
+  Status:     This was fixed in 17.0 on 2015-12-04
+
+  Workaround: None.
+
 KP-62-OB23-034 GNATdoc: compiling does not update cross references
 
   Problem:    Units containing subprograms with pre/post conditions may
