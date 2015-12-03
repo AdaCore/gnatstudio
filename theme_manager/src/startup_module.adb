@@ -147,7 +147,7 @@ package body Startup_Module is
    begin
       if Get_Boolean (Editor.Model, Iter, Column_Modified) then
          return Loaded
-           & (-" (Modified in this dialog -- Press Cancel to revert)");
+           & (-" (Modified in this dialog)");
       elsif Get_Boolean (Editor.Model, Iter, Column_Explicit) then
          return Loaded & (-" (explicitly set by user)");
       elsif Get_Boolean (Editor.Model, Iter, Column_Load) then
