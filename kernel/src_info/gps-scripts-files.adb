@@ -164,12 +164,14 @@ package body GPS.Scripts.Files is
                       Line   => Loc.Line,
                       Column => Loc.Column));
                   Result.Set_Nth_Arg (Natural'Last, L);
+                  Free (L);  --  refcount has been increased above
                end;
                Next (Refs);
             end loop;
 
             Destroy (Refs);
             Set_Return_Value (Data, Result);
+            Free (Result);  --  refcount has been increased above
          end;
 
       elsif Command = "entities" then
