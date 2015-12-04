@@ -687,6 +687,10 @@ package body Gtkada.Entry_Completion is
       --  Backspace are sent to the omni-search, and not the editor that
       --  had the focus previously.
       Grab_Toplevel_Focus (Get_MDI (S.Kernel), S.GEntry);
+
+      --  This is needed to make sure the MDI doesn't continue to believe
+      --  that another child has the focus.
+      Get_MDI (S.Kernel).Set_Focus_Child (null);
       return False;
    end On_Focus_In;
 
