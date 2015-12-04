@@ -871,8 +871,14 @@ package body Default_Preferences is
          Group.Preferences.Clear;
          Free (Group.Name);
       end loop;
-
       Self.Groups.Clear;
+
+      for Subpage of Self.Subpages loop
+         Free (Subpage);
+      end loop;
+      Self.Subpages.Clear;
+
+      Free (Self.Name);
    end Free;
 
    ------------
