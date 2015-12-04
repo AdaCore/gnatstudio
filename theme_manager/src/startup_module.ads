@@ -66,6 +66,8 @@ package Startup_Module is
       return Gtk.Widget.Gtk_Widget;
    --  See inherited documentation.
 
+   overriding procedure Free (Self : in out Plugin_Preferences_Page_Record);
+
 private
 
    type Plugin_Preferences_Page_Record is new Preferences_Page_Record with

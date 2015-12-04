@@ -660,7 +660,7 @@ package body Completion_Window is
       loop
          exit when Explorer.Iter.At_End;
          declare
-            Proposal   : constant Root_Proposal'Class :=
+            Proposal   : Root_Proposal'Class :=
               Explorer.Iter.Get_Proposal;
             Showable   : constant String :=
               To_Showable_String (Proposal, Explorer.Kernel.Databases);
@@ -758,6 +758,7 @@ package body Completion_Window is
                end if;
                Augment_Notes (Explorer.Info (Explorer.Index - 1), Proposal);
             end if;
+            Shallow_Free (Proposal);
          end;
          Explorer.Iter.Next (Explorer.Kernel.Databases);
       end loop;

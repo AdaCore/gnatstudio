@@ -492,6 +492,16 @@ package body Startup_Module is
       return Gtk_Widget (Page_View);
    end Get_Widget;
 
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Self : in out Plugin_Preferences_Page_Record) is
+   begin
+      Free (Self.Doc);
+      Free (Preferences_Page_Record (Self));
+   end Free;
+
    --------------------------------------------
    -- Register_All_Plugins_Preferences_Pages --
    --------------------------------------------

@@ -104,6 +104,18 @@ package body Engine_Wrappers is
       Free (X.P);
    end Free;
 
+   ------------------
+   -- Shallow_Free --
+   ------------------
+
+   overriding procedure Shallow_Free (X : in out Comp_Proposal) is
+      procedure Unchecked_Free is new
+        Ada.Unchecked_Deallocation
+          (Completion_Proposal'Class, Completion_Proposal_Access);
+   begin
+      Unchecked_Free (X.P);
+   end Shallow_Free;
+
    -----------------------------
    -- Set_Completion_Iterator --
    -----------------------------

@@ -87,6 +87,10 @@ package Engine_Wrappers is
 
    procedure Free (X : in out Root_Proposal) is null;
 
+   procedure Shallow_Free (X : in out Root_Proposal) is null;
+   --  That is special version for use only with instances
+   --  that obtained by call of Get_Proposal.
+
    function Deep_Copy
      (Proposal : Root_Proposal) return Root_Proposal'Class is abstract;
    --  Make a deep copy of Proposal. Result should be freed by the caller.
@@ -109,8 +113,9 @@ package Engine_Wrappers is
       Db : access Xref.General_Xref_Database_Record'Class) is abstract;
    function Get_Proposal
      (Iter    : Root_Iterator) return Root_Proposal'Class is abstract;
-   --  Get a proposal. The result should not be freed and not be stored.
-   --  If you want to store a proposal, make a Deep_Copy of it.
+   --  Get a proposal. The result should not be stored.
+   --  If you want to store a copy, call Deep_Copy.
+   --  You should call Shallow_Free on the result in any case.
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Root_Iterator'Class, Root_Iterator_Access);
@@ -152,6 +157,7 @@ package Engine_Wrappers is
       return Boolean;
 
    overriding procedure Free (X : in out Comp_Proposal);
+   overriding procedure Shallow_Free (X : in out Comp_Proposal);
 
    function Get_Underlying_Proposal
      (C : Comp_Proposal) return Completion_Proposal_Access;
