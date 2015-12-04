@@ -23,6 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-170-OC02-029 GB: trailing space removal set to autodetect (2015-12-04)
+
+  The default value of the "remove trailing spaces when saving" feature is set
+  to Autodetect. When editing new files and Autodetect mode is selected, the
+  trailing spaces are removed. In this mode they are preserved only if
+  trailing spaces were detected in the file content when the file was opened.
+
 NF-170-OB17-034 GPS: new calculator support in omni-search (2015-11-17)
 
   It is now possible to type simple mathematical expression in the
