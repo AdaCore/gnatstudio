@@ -40,6 +40,7 @@
 --      - Each module can register new commands for the shell interpreter
 --      - Adding key handlers, which have priority over other shortcuts
 
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with GNAT.Strings;
 with Glib.Action;
 with Glib.Object;
@@ -60,19 +61,6 @@ package GPS.Kernel.Modules.UI is
 
    package Context_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Selection_Context);
-
-   --------------
-   -- GActions --
-   --------------
-   --  This type is used to create a link between gtk+ actions (GAction) which
-   --  are used for menus in a GtkApplication, and the actions defined by GPS,
-   --  which provide more advanced features (multi-key bindings, automatic
-   --  filters, icons,...)
-
-   function New_G_Action
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      Action : String) return Glib.Action.Gaction;
-   --  Creates a new GAction that will execute the given GPS action
 
    ----------------------
    -- Contextual menus --
@@ -307,20 +295,30 @@ package GPS.Kernel.Modules.UI is
    --  When a menu is optional, it is hidden if its action does not exist.
    --  Otherwise, the menu is simply greyed out, but the menu is still visible.
 
-   procedure Remove_Menu
+   procedure Remove_Menus_For_Action
      (Kernel : not null access Kernel_Handle_Record'Class;
-      Path   : String);
-   --  Remove the menu items with that path (in all windows that have a
-   --  menubar)
+      Action : String);
+   --  Remove all menu items associated with the given action, in all windows
+   --  that have a menubar.
 
    function Action_From_Menu
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Path   : String) return String;
    --  Return the name of the action executed by a menu (or "" if there is no
    --  such menu or it is not associated with an action).
    --  If Path is not a menu path (starting with /), it is returned as is. So
    --  this function can be given the name of any action to retrieve either the
    --  action itself or the action that would be executed by selecting the menu
+
+   function Menu_List_For_Action
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Action : String) return Unbounded_String;
+   --  Return a newline-separated list of menus associated with this action.
+
+   procedure Update_Shortcuts_For_Action
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Action : String);
+   --  Update the shortcuts for all menus associated with the action.
 
    function Find_Menu_Item
      (Kernel  : access Kernel_Handle_Record'Class;

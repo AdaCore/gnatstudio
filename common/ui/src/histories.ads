@@ -30,7 +30,6 @@ with Gtk.Combo_Box;
 with Gtk.GEntry;
 with Gtk.Toggle_Button;
 with Gtk.Toggle_Tool_Button;
-with Gtk.Menu_Item;
 with String_Hash;
 
 package Histories is
@@ -137,28 +136,6 @@ package Histories is
    --  If too many strings are stored, the oldest one is removed.
    --  If New_Entry is already in the history, it is not added a second time,
    --  but moved into first position.
-
-   type Menu_Callback_Record is abstract tagged null record;
-   type Menu_Callback is access all Menu_Callback_Record'Class;
-   procedure Activate
-     (Callback : access Menu_Callback_Record; Item : String) is abstract;
-   --  Called by the menu entries created by Associate below. User-data should
-   --  be stored in Callback directly.
-
-   procedure Free (Callback : in out Menu_Callback_Record) is null;
-   --  Called when the menu associated with callback is destroyed
-
-   procedure Associate
-     (Hist     : in out History_Record;
-      Key      : History_Key;
-      Menu     : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class;
-      Callback : Menu_Callback);
-   --  Associate the menu with Key.
-   --  Every time some entry is added to Key, a corresponding entry is added to
-   --  the submenu of Menu. Callback is set for all these new entries.
-   --  Entries in this submenu are shorten if required (see
-   --  GUI_Utils.Full_Path_Menu_Item).
-   --  Callback is automatically freed when the menu is destroyed.
 
    function Most_Recent
      (Hist : access History_Record;

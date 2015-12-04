@@ -18,7 +18,6 @@
 with Glib.Object;            use Glib.Object;
 with Glib;                   use Glib;
 
-with Gtk.Menu_Item;          use Gtk.Menu_Item;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
 
@@ -26,15 +25,14 @@ with Gtkada.File_Selector;   use Gtkada.File_Selector;
 
 with Commands.Interactive;   use Commands, Commands.Interactive;
 with GNATCOLL.Projects;      use GNATCOLL.Projects;
-with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GNAT.Strings;           use GNAT.Strings;
 with GPS.Intl;               use GPS.Intl;
 with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.Clipboard;   use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules, GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Main_Window;        use GPS.Main_Window;
@@ -43,23 +41,31 @@ with Projects;               use Projects;
 with File_Utils;             use File_Utils;
 
 package body GPS.Menu is
-   Me : constant Trace_Handle := Create ("MENU");
-
    Project_History_Key : constant Histories.History_Key := "project_files";
    --  Key to use in the kernel histories to store the most recently opened
    --  files.
    --  Synchronize with welcome.adb
 
-   type On_Reopen is new Menu_Callback_Record with record
-      Kernel : Kernel_Handle;
+   type Menu_Module_Record is new Module_ID_Record with record
+      Recent_Project_Actions : Action_Lists.List;
    end record;
-   overriding procedure Activate (Callback : access On_Reopen; Item : String);
+   Menu_Module : aliased Menu_Module_Record :=
+      (Module_ID_Record with others => <>);
+   --  ??? Should be registered as standard module
 
    type On_Project_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project has just changed
+
+   type On_Open_Recent is new Interactive_Command with record
+      File  : GNATCOLL.VFS.Virtual_File;
+   end record;
+   overriding function Execute
+      (Self    : access On_Open_Recent;
+       Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called to reopen a project file
 
    type Clipboard_Kind is (Cut, Copy, Paste, Paste_Previous);
    type Clipboard_Command is new Interactive_Command with record
@@ -218,18 +224,17 @@ package body GPS.Menu is
       end if;
    end Execute;
 
-   --------------
-   -- Activate --
-   --------------
+   -------------
+   -- Execute --
+   -------------
 
-   overriding procedure Activate
-     (Callback : access On_Reopen; Item : String) is
+   overriding function Execute
+      (Self    : access On_Open_Recent;
+       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
-      Load_Project (Callback.Kernel, Create (+Item));
-
-   exception
-      when E : others => Trace (Me, E);
-   end Activate;
+      Load_Project (Get_Kernel (Context.Context), Self.File);
+      return Standard.Commands.Success;
+   end Execute;
 
    -------------
    -- Execute --
@@ -243,11 +248,43 @@ package body GPS.Menu is
       Project : constant Project_Type := Get_Project (Kernel);
       Path    : constant Virtual_File := Project_Path (Project);
    begin
-      if Get_Registry (Kernel).Tree.Status = From_File
-        and then Path /= No_File
+      if Get_Registry (Kernel).Tree.Status /= From_File
+        or else Path = No_File
       then
-         Add_To_History (Kernel, Project_History_Key, UTF8_Full_Name (Path));
+         return;
       end if;
+
+      Add_To_History (Kernel, Project_History_Key, UTF8_Full_Name (Path));
+
+      --  Remove old menus and actions
+      for Action of Menu_Module.Recent_Project_Actions loop
+         Unregister_Action (Kernel, Action, Remove_Menus => True);
+      end loop;
+      Menu_Module.Recent_Project_Actions.Clear;
+
+      --  Add new menus
+      declare
+         V : constant String_List_Access :=  --  Do not free
+            Get_History (Kernel.Get_History.all, Project_History_Key);
+         F : Virtual_File;
+      begin
+         for N of V.all loop
+            F := Create (+N.all);
+            Register_Action
+               (Kernel,
+                Name  => "open recent project: " & N.all,
+                Command => new On_Open_Recent'
+                    (Interactive_Command with File => F),
+                Description => "Reopen the project " & N.all,
+                Category    => "Internal");
+            Register_Menu
+               (Kernel,
+                Path   => "/Project/Recent/" & F.Display_Base_Name,
+                Action => "open recent project: " & N.all);
+            Menu_Module.Recent_Project_Actions.Append
+               ("open recent project: " & N.all);
+         end loop;
+      end;
    end Execute;
 
    -------------
@@ -325,7 +362,6 @@ package body GPS.Menu is
    procedure Register_Common_Menus
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
       Command     : Interactive_Command_Access;
    begin
       Register_Action
@@ -337,15 +373,6 @@ package body GPS.Menu is
         (Kernel, "open remote project", new Open_From_Host_Command,
          Icon_Name   => "gps-open-project-symbolic",
          Description => -"Open remote project");
-
-      Reopen_Menu := Find_Menu_Item (Kernel, "/Project/Recent");
-      if Reopen_Menu /= null then
-         Associate (Get_History (Kernel).all,
-                    Project_History_Key,
-                    Reopen_Menu,
-                    new On_Reopen'(Menu_Callback_Record with
-                      Kernel => Kernel_Handle (Kernel)));
-      end if;
 
       Project_Changed_Hook.Add (new On_Project_Changed);
 

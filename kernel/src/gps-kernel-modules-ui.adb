@@ -19,10 +19,10 @@ with Ada.Calendar;              use Ada.Calendar;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Containers.Hashed_Sets;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with GNAT.OS_Lib;
@@ -30,6 +30,7 @@ with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
 
 with Gdk.Drag_Contexts;         use Gdk.Drag_Contexts;
 with Gdk.Event;                 use Gdk.Event;
@@ -39,10 +40,12 @@ with Glib.Action;               use Glib.Action;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Error;                use Glib.Error;
 with Glib.Main;                 use Glib.Main;
+with Glib.Menu;                 use Glib.Menu;
 with Glib.Menu_Model;           use Glib.Menu_Model;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties.Creation;  use Glib.Properties.Creation;
 with Glib.Simple_Action;        use Glib.Simple_Action;
+with Glib.Types;                use Glib.Types;
 with Glib.Values;               use Glib.Values;
 with Glib.Variant;              use Glib.Variant;
 
@@ -235,7 +238,7 @@ package body GPS.Kernel.Modules.UI is
      (Key_Type        => String,
       Element_Type    => Node,
       Hash            => Ada.Strings.Hash_Case_Insensitive,
-      Equivalent_Keys => "=");
+      Equivalent_Keys => Case_Insensitive_Equal);
 
    -------------------------
    -- proxies for actions --
@@ -263,6 +266,10 @@ package body GPS.Kernel.Modules.UI is
    -------------
    -- GAction --
    -------------
+   --  This type is used to create a link between gtk+ actions (GAction) which
+   --  are used for menus in a GtkApplication, and the actions defined by GPS,
+   --  which provide more advanced features (multi-key bindings, automatic
+   --  filters, icons,...)
 
    type GPS_Action_Proxy is new Action_Proxy with record
       Active   : Boolean := True;
@@ -343,6 +350,17 @@ package body GPS.Kernel.Modules.UI is
       Property_Spec : Param_Spec);
    --  Handling of properties for GPS_Action
 
+   function Gtk_Name (Action : not null access GPS_Action_Record'Class)
+      return String is ("app." & Value (Action.CName));
+   --  The name by which the action can be refered in gtk+
+
+   function Create_Or_Lookup_Action
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Action : String) return GPS_Action;
+   --  Lookup whether there is already a GPS_Action associated with the
+   --  given action. If there isn't, create a new one and register it in
+   --  the application.
+
    ------------------------
    -- Action_Tool_Button --
    ------------------------
@@ -399,7 +417,7 @@ package body GPS.Kernel.Modules.UI is
    --  Full_Path must include the Menu_Label, although the latter is also
    --  provided separately for efficiency.
    --  Any special character like '/' should be quoted in Full_Path, using
-   --  Escape_Menu_Name.
+   --  Escape_Menu_Name. Underscores must not be duplicated
    --
    --  Menus will be created if they don't exist.
    --  This is considered as an absolute path, as if it always started with
@@ -461,12 +479,66 @@ package body GPS.Kernel.Modules.UI is
    package Update_Menus_Idle is new Glib.Main.Generic_Sources
      (Update_Menus_Data_Access);
 
+   ----------------
+   -- Menu_Model --
+   ----------------
+
+   procedure Parse_Menu_Model_From_XML
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Root   : Node);
+   --  Create a GMenu_Model from the XML description used by GPS.
+   --  This also stores enough information to create toolbars later on.
+
+   function Create_Menubar_From_Model
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return Gtk_Menu_Bar;
+   --  Create a menu bar from a menu model.
+   --  This is only needed when not using system menus, and will be removed as
+   --  soon as we use those menus everywhere.
+
+   ---------------
+   -- Action_UI --
+   ---------------
+   --  Actions are associated to various UI element via this package. We keep
+   --  track of these elements so that they can be removed when the action is
+   --  destroyed.
+
+   type UI_Element is record
+      Path : Unbounded_String;
+   end record;
+   function Hash (Self : UI_Element) return Ada.Containers.Hash_Type;
+   overriding function "=" (Left, Right : UI_Element) return Boolean;
+
+   package UI_Elements is new Ada.Containers.Hashed_Sets
+      (UI_Element, Hash, "=");
+   use UI_Elements;
+
+   package Action_Elements is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,              --  Action name
+      Element_Type    => UI_Elements.Set,
+      Hash            => Ada.Strings.Hash_Case_Insensitive,
+      Equivalent_Keys => Case_Insensitive_Equal);
+   use Action_Elements;
+   --  Stores associations from actions to menu and toolbar items.
+
+   procedure Add_Menu_To_Action
+      (Action : String;
+       Menu   : String);
+   --  Associate a given menu and an action
+
+   -------------
+   -- Globals --
+   -------------
+
    type Global_Data is record
       Builder     : Gtk_Builder;
       Menu_Model  : Gmenu_Model;
       --  The builder used to load the menu menu (and later to do merges).
       --  Seems like we should not free the builder while we might use the
       --  menu model.
+
+      Actions_To_UI : Action_Elements.Map;
+      --  Associations from actions to UI elements
 
       Symbols     : Symbol_Table;
       --  The symbol table used by the XML reader when it parses the menu
@@ -1169,7 +1241,7 @@ package body GPS.Kernel.Modules.UI is
    ----------------------
 
    function Action_From_Menu
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Kernel : not null access Kernel_Handle_Record'Class;
       Path   : String) return String
    is
       Item : Gtk_Menu_Item;
@@ -1225,14 +1297,110 @@ package body GPS.Kernel.Modules.UI is
       end case;
    end Lookup_Action;
 
-   -----------------
-   -- Remove_Menu --
-   -----------------
+   ----------
+   -- Hash --
+   ----------
 
-   procedure Remove_Menu
+   function Hash (Self : UI_Element) return Ada.Containers.Hash_Type is
+   begin
+      return Ada.Strings.Hash (To_String (Self.Path));
+   end Hash;
+
+   ---------
+   -- "=" --
+   ---------
+
+   overriding function "=" (Left, Right : UI_Element) return Boolean is
+   begin
+      return Left.Path = Right.Path;
+   end "=";
+
+   ------------------------
+   -- Add_Menu_To_Action --
+   ------------------------
+
+   procedure Add_Menu_To_Action (Action, Menu : String) is
+      E : constant Action_Elements.Cursor :=
+         Globals.Actions_To_UI.Find (Action);
+   begin
+      if Has_Element (E) then
+         Globals.Actions_To_UI.Reference (E).Include
+            ((Path => To_Unbounded_String (Menu)));
+      else
+         declare
+            S : UI_Elements.Set;
+         begin
+            S.Include ((Path => To_Unbounded_String (Menu)));
+            Globals.Actions_To_UI.Include (Action, S);
+         end;
+      end if;
+   end Add_Menu_To_Action;
+
+   ---------------------------------
+   -- Update_Shortcuts_For_Action --
+   ---------------------------------
+
+   procedure Update_Shortcuts_For_Action
      (Kernel : not null access Kernel_Handle_Record'Class;
-      Path   : String)
+      Action : String)
    is
+      Item   : Gtk_Menu_Item;
+      Key    : Gdk_Key_Type;
+      Mods   : Gdk_Modifier_Type;
+      Child  : Gtk_Widget;
+      C      : constant Action_Elements.Cursor :=
+         Globals.Actions_To_UI.Find (Action);
+   begin
+      if Has_Element (C) then
+         Kernel.Get_Shortcut_Simple
+           (Action => Action,
+            Key    => Key,
+            Mods   => Mods);
+
+         for M of Globals.Actions_To_UI.Reference (C) loop
+            Item := Find_Menu_Item (Kernel, To_String (M.Path));
+            if Item /= null then
+               Child := Item.Get_Child;
+               if Child.all in Gtk_Accel_Label_Record'Class then
+                  Gtk_Accel_Label (Child).Set_Accel (Key, Mods);
+               end if;
+            end if;
+         end loop;
+      end if;
+   end Update_Shortcuts_For_Action;
+
+   --------------------------
+   -- Menu_List_For_Action --
+   --------------------------
+
+   function Menu_List_For_Action
+      (Kernel : not null access Kernel_Handle_Record'Class;
+       Action : String) return Unbounded_String
+   is
+      pragma Unreferenced (Kernel);
+      C : constant Action_Elements.Cursor :=
+         Globals.Actions_To_UI.Find (Action);
+      Result : Unbounded_String;
+   begin
+      if Has_Element (C) then
+         for M of Globals.Actions_To_UI.Reference (C) loop
+            Append (Result, ASCII.LF);
+            Append (Result, M.Path);
+         end loop;
+      end if;
+      return Result;
+   end Menu_List_For_Action;
+
+   -----------------------------
+   -- Remove_Menus_For_Action --
+   -----------------------------
+
+   procedure Remove_Menus_For_Action
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Action : String)
+   is
+      Path : Unbounded_String;
+
       procedure Internal
         (W : not null access GPS_Application_Window_Record'Class);
       procedure Internal
@@ -1241,15 +1409,34 @@ package body GPS.Kernel.Modules.UI is
          M : Gtk_Menu_Item;
       begin
          if W.Menu_Bar /= null then
-            M := Find_Menu_Item (Kernel, Path, W.Menu_Bar);
+            M := Find_Menu_Item (Kernel, To_String (Path), W.Menu_Bar);
             if M /= null then
                M.Destroy;
             end if;
          end if;
       end Internal;
+
+      Item : Menu_Item_Info;
+      C : Action_Elements.Cursor := Globals.Actions_To_UI.Find (Action);
    begin
-      For_All_Open_Windows (Kernel.Get_Application, Internal'Access);
-   end Remove_Menu;
+      if Has_Element (C) then
+         for M of Globals.Actions_To_UI.Reference (C) loop
+            Path := M.Path;
+            Item := Find_Or_Create_Menu
+               (Gmenu (Globals.Menu_Model),
+                Escape_Underscore (To_String (Path)),
+                Allow_Create => False);
+            if Item /= No_Menu_Item then
+               Item.Model.Remove (Item.Position);
+               Unref (Item);
+            end if;
+
+            For_All_Open_Windows (Kernel.Get_Application, Internal'Access);
+         end loop;
+
+         Globals.Actions_To_UI.Delete (C);
+      end if;
+   end Remove_Menus_For_Action;
 
    -------------------
    -- Lookup_Action --
@@ -1271,16 +1458,10 @@ package body GPS.Kernel.Modules.UI is
       end if;
 
       Action := Lookup_Action (Data.Kernel, Data.Action.all);
-
       if Action /= Data.Looked_Up then
          Data.Looked_Up := Action;
 
          if Action /= null then
-            if Self.all in Gtk_Menu_Item_Record'Class then
-               Add_Menu_To_List
-                 (Action, Create_Menu_Path (Gtk_Menu_Item (Self)));
-            end if;
-
             if Self.all in Gtk_Widget_Record'Class then
                Gtk_Widget (Self).Set_Tooltip_Markup
                  (Get_Full_Description (Action, Data.Kernel));
@@ -1303,7 +1484,7 @@ package body GPS.Kernel.Modules.UI is
 
             --  Lookup the keybinding. This is only done the first time we do
             --  the lookup to save time. Later on, this is updated via
-            --  Update_Shortcut_Display.
+            --  Update_Shortcuts_For_Action.
 
             if Self.all in Action_Menu_Item_Record'Class then
                Data.Kernel.Get_Shortcut_Simple
@@ -1463,7 +1644,6 @@ package body GPS.Kernel.Modules.UI is
       Full_Path   : constant String := Create_Menu_Path ("/", Path);
       Parent_Path : constant String := Parent_Menu_Name (Full_Path);
       Menu_Label  : constant String := Base_Menu_Name (Full_Path);
-      Is_First    : Boolean := True;
 
       procedure Add_To_Win
         (Win : not null access GPS_Application_Window_Record'Class);
@@ -1514,7 +1694,9 @@ package body GPS.Kernel.Modules.UI is
 
             --  Add the new item
 
-            if Menu_Label (Menu_Label'First) = '-' then
+            if Menu_Label = ""
+               or else Menu_Label (Menu_Label'First) = '-'
+            then
                Item := Gtk_Menu_Item (Gtk_Separator_Menu_Item_New);
             else
                Item := Gtk_New_Action_Item
@@ -1523,16 +1705,6 @@ package body GPS.Kernel.Modules.UI is
                   Menu_Label  => Menu_Label,
                   Action      => Action,
                   Optional    => False);
-
-               --  Lookup the action immediately. If it exists, this has the
-               --  effect of setting the tooltips and register the menu in the
-               --  action record instead of waiting for a lazy update later. In
-               --  particular, if the action is unregistered before (as happens
-               --  for the builder module), the menu would never be removed
-               --  otherwise.
-               if Is_First and then not Active (System_Menus) then
-                  Act := Lookup_Action (Item);
-               end if;
             end if;
 
             if Index = -1 then
@@ -1544,11 +1716,48 @@ package body GPS.Kernel.Modules.UI is
             end if;
 
             Item.Show_All;
-            Is_First := False;
          end if;
       end Add_To_Win;
 
+      Item     : Menu_Item_Info;
+      Ref      : Menu_Item_Info := No_Menu_Item;
+      It       : Gmenu_Item;
+      Act      : GPS_Action;
    begin
+      Add_Menu_To_Action (Action, Strip_Single_Underscores (Full_Path));
+
+      Item := Find_Or_Create_Menu (Gmenu (Globals.Menu_Model), Parent_Path);
+      if Item /= No_Menu_Item then
+         if Menu_Label /= ""
+            and then Menu_Label (Menu_Label'First) /= '-'
+         then
+            Act := Create_Or_Lookup_Action (Kernel, Action);
+            G_New
+               (It,
+                Escape_Underscore (Strip_Single_Underscores (Menu_Label)),
+                Detailed_Action => Act.Gtk_Name);
+         else
+            G_New_Section (It, "", Gmenu_New);
+         end if;
+
+         if Ref_Item /= "" then
+            Ref := Find_Or_Create_Single_Level
+               (Gmenu (Item.Item.Get_Link ("submenu")),
+                Ref_Item, Allow_Create => False);
+         end if;
+
+         if Ref = No_Menu_Item then
+            Gmenu (Item.Item.Get_Link ("submenu")).Append_Item (It);
+         elsif Add_Before then
+            Ref.Model.Insert_Item (Ref.Position, It);
+         else
+            Ref.Model.Insert_Item (Ref.Position + 1, It);
+         end if;
+
+         Unref (Ref);
+         Unref (Item);
+      end if;
+
       For_All_Open_Windows (Kernel.Get_Application, Add_To_Win'Access);
    end Register_Menu;
 
@@ -2566,23 +2775,6 @@ package body GPS.Kernel.Modules.UI is
       Context_Changed_Hook.Add (new On_Context_Changed);
    end Start_Monitoring_Menus;
 
-   -------------------------
-   -- Menu_Model_From_XML --
-   -------------------------
-
-   procedure Parse_Menu_Model_From_XML
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      Root   : Node);
-   --  Create a GMenu_Model from the XML description used by GPS.
-   --  This also stores enough information to create toolbars later on.
-
-   function Create_Menubar_From_Model
-     (Kernel : not null access Kernel_Handle_Record'Class)
-      return Gtk_Menu_Bar;
-   --  Create a menu bar from a menu model.
-   --  This is only needed when not using system menus, and will be removed as
-   --  soon as we use those menus everywhere.
-
    -------------------------------
    -- Create_Menubar_From_Model --
    -------------------------------
@@ -2614,6 +2806,7 @@ package body GPS.Kernel.Modules.UI is
          Sep       : Gtk_Separator_Menu_Item;
          Menu      : Gtk_Menu;
          Has_Attributes : Boolean := False;
+         Act       : Gaction;
       begin
          Attr_Iter := Iterate_Item_Attributes (M, Idx);
          while Next (Attr_Iter) loop
@@ -2643,13 +2836,20 @@ package body GPS.Kernel.Modules.UI is
             if Action = "" then
                Gtk_New (Item, To_String (Label));
             else
-               --  Remove the "app." prefix for the action name
-               Item := Gtk_New_Action_Item
-                 (Kernel      => Kernel,
-                  Full_Path   => To_String (Full_Path),
-                  Menu_Label  => To_String (Label),
-                  Action      => Slice (Action, 5, Length (Action)),
-                  Optional    => Optional);
+               --  Remove the "app." prefix for the action name. We then
+               --  need to map from the gtk action name to the GPS name
+               Act := Kernel.Get_Application.Lookup_Action
+                  (Slice (Action, 5, Length (Action)));
+               if Act /= Gaction (Null_Interface) then
+                  Item := Gtk_New_Action_Item
+                    (Kernel      => Kernel,
+                     Full_Path   => To_String (Full_Path),
+                     Menu_Label  => Escape_Underscore (To_String (Label)),
+                     Action    => GPS_Action (To_Object (Act)).Data.Action.all,
+                     Optional  => Optional);
+               else
+                  Item := null;
+               end if;
             end if;
             Parent.Append (Item);
          else
@@ -2682,6 +2882,7 @@ package body GPS.Kernel.Modules.UI is
                for Idx2 in 0 .. M2.Get_N_Items - 1 loop
                   Process_Menu (P, M2, Idx2, Full_Path);
                end loop;
+               --  Do not Unref (M2)
             end;
          end loop;
          Unref (Links);
@@ -2709,23 +2910,28 @@ package body GPS.Kernel.Modules.UI is
      (Kernel : not null access Kernel_Handle_Record'Class;
       Root   : Node)
    is
-      App         : constant Gtk_Application := Kernel.Get_Application;
       Builder_XML : Unbounded_String;
 
-      procedure Process_Menu (Menu_Node : Node);
+      procedure Process_Menu (Menu_Node : Node; Parent_Path : String);
       --  Process a <menu> node. Parent will be null when using system menus.
+      --  Parent_Path always ends up with a trailing '/'
 
       ------------------
       -- Process_Menu --
       ------------------
 
-      procedure Process_Menu (Menu_Node : Node) is
+      procedure Process_Menu (Menu_Node : Node; Parent_Path : String) is
          Label   : constant DOM_String := Get_Attribute (Menu_Node, "label");
+         Clean_Label : constant String :=
+            Parent_Path &
+            Escape_Menu_Name                        --  protect '/' in the name
+               (Strip_Single_Underscores (Label));  --  remove '_' mnemonics
          Action  : constant DOM_String := Get_Attribute (Menu_Node, "action");
          Optional_Str : constant DOM_String :=
            Get_Attribute (Menu_Node, "optional");
          Optional     : Boolean := False;
          N            : Node;
+         Act          : GPS_Action;
       begin
          if Optional_Str /= "" then   --  avoid raising exception if we can
             begin
@@ -2739,7 +2945,8 @@ package body GPS.Kernel.Modules.UI is
          end if;
 
          if Action /= "" then
-            App.Add_Action (New_G_Action (Kernel, Action));
+            Act := Create_Or_Lookup_Action (Kernel, Action);
+            Add_Menu_To_Action (Action, Clean_Label);
 
             --  See possible attributes in gtkmenutrackeritem.c
             Append (Builder_XML,
@@ -2751,8 +2958,8 @@ package body GPS.Kernel.Modules.UI is
                     & "<attribute name='label'>"
                     & XML_Utils.Protect (Label)
                     & "</attribute>"
-                    & "<attribute name='action'>app."
-                    & XML_Utils.Protect (Action)
+                    & "<attribute name='action'>"
+                    & Act.Gtk_Name
                     & "</attribute></item>" & ASCII.LF);
          else
             Append (Builder_XML,
@@ -2767,7 +2974,7 @@ package body GPS.Kernel.Modules.UI is
          if N /= null then
             while N /= null loop
                if Node_Name (N) = "menu" then
-                  Process_Menu (N);
+                  Process_Menu (N, Clean_Label & '/');
                elsif Node_Name (N) = "separator" then
                   Append (Builder_XML, "</section><section>");
                end if;
@@ -2793,7 +3000,7 @@ package body GPS.Kernel.Modules.UI is
             N2 := First_Child (N);
             while N2 /= null loop
                if Node_Name (N2) = "menu" then
-                  Process_Menu (N2);
+                  Process_Menu (N2, "/");
                end if;
                N2 := Next_Sibling (N2);
             end loop;
@@ -2995,33 +3202,52 @@ package body GPS.Kernel.Modules.UI is
       end if;
    end Set_Active;
 
-   ------------------
-   -- New_G_Action --
-   ------------------
+   -----------------------------
+   -- Create_Or_Lookup_Action --
+   -----------------------------
 
-   function New_G_Action
+   function Create_Or_Lookup_Action
      (Kernel : not null access Kernel_Handle_Record'Class;
-      Action : String) return Glib.Action.Gaction
+      Action : String) return GPS_Action
    is
       Act : GPS_Action;
+      A   : Gaction;
+      Clean : String := Action;
    begin
-      --  one action per GPS action, so that they each have their own handling
+      --  Generate a valid name for gtk+
+
+      for N in Clean'Range loop
+         if not Is_Alphanumeric (Clean (N))
+            and then Clean (N) /= '-'
+            and then Clean (N) /= '.'
+         then
+            Clean (N) := '-';
+         end if;
+      end loop;
+
+      --  One action per GPS action, so that they each have their own handling
       --  of enabled. We unfortunately can't use a generic action with a target
       --  name that would be the GPS action name.
 
-      Act := new GPS_Action_Record;
-      G_New (Act, GPS_Action_Get_Type);
+      A := Kernel.Get_Application.Lookup_Action (Clean);
+      if A = Gaction (Null_Interface) then
+         Act := new GPS_Action_Record;
+         G_New (Act, GPS_Action_Get_Type);
 
-      Act.CName := New_String (Action);  --  ??? never freed
-      Act.Data := (Action    => new String'(Action),
-                   Kernel    => Kernel,
-                   Optional  => False,
-                   Hide      => False,
-                   Active    => True,
-                   Looked_Up => null);
-      Add_To_Global_Proxies (Act, Kernel, Filter => null);
+         Act.CName := New_String (Clean); --  ??? never freed
+         Act.Data := (Action    => new String'(Action),
+                      Kernel    => Kernel,
+                      Optional  => False,
+                      Hide      => False,
+                      Active    => True,
+                      Looked_Up => null);
+         Add_To_Global_Proxies (Act, Kernel, Filter => null);
+         Kernel.Get_Application.Add_Action (+Act);
+      else
+         Act := GPS_Action (To_Object (A));
+      end if;
 
-      return +Act;
-   end New_G_Action;
+      return Act;
+   end Create_Or_Lookup_Action;
 
 end GPS.Kernel.Modules.UI;

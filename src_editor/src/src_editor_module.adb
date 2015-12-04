@@ -56,7 +56,6 @@ with GPS.Default_Styles;                use GPS.Default_Styles;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Editors;                       use GPS.Editors;
 with GPS.Editors.Line_Information;      use GPS.Editors.Line_Information;
-with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
@@ -152,6 +151,14 @@ package body Src_Editor_Module is
       Info       : access Line_Information_Array;
       Icon_Name  : String);
    --  Reacts to the File_Line_Action_Hook
+
+   type On_Open_Recent is new Interactive_Command with record
+      File  : GNATCOLL.VFS.Virtual_File;
+   end record;
+   overriding function Execute
+      (Self    : access On_Open_Recent;
+       Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Called to reopen a source file
 
    type On_Word_Added is new File_Hooks_Function with null record;
    overriding procedure Execute
@@ -279,11 +286,6 @@ package body Src_Editor_Module is
       Expansion : String;
       Special   : Character) return String;
    --  Does the expansion of special entities in the aliases
-
-   type On_Recent is new Menu_Callback_Record with record
-      Kernel : Kernel_Handle;
-   end record;
-   overriding procedure Activate (Callback : access On_Recent; Item : String);
 
    procedure On_Editor_Destroy
      (Widget : access Gtk_Widget_Record'Class;
@@ -1286,10 +1288,58 @@ package body Src_Editor_Module is
    ------------------------
 
    procedure Add_To_Recent_Menu
-     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File) is
+     (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File)
+   is
+      M : constant Source_Editor_Module :=
+         Source_Editor_Module (Src_Editor_Module_Id);
    begin
       Add_To_History (Kernel, Hist_Key, UTF8_Full_Name (File));
+
+      --  Remove old menus and actions
+
+      for Action of M.Recent_File_Actions loop
+         Unregister_Action (Kernel, Action, Remove_Menus => True);
+      end loop;
+      M.Recent_File_Actions.Clear;
+
+      --  Add new menus
+      declare
+         V : constant String_List_Access :=  --  Do not free
+            Get_History (Kernel.Get_History.all, Hist_Key);
+         F : Virtual_File;
+      begin
+         for N of V.all loop
+            F := Create (+N.all);
+            Register_Action
+               (Kernel,
+                Name        => "open recent file: " & N.all,
+                Command     => new On_Open_Recent'
+                   (Interactive_Command with File => F),
+                Description => "Reopen the file " & N.all,
+                Category    => "Internal");
+            Register_Menu
+               (Kernel,
+                Path     => "/File/Recent/" & F.Display_Base_Name,
+                Action   => "open recent file: " & N.all);
+            M.Recent_File_Actions.Append ("open recent file: " & N.all);
+         end loop;
+      end;
    end Add_To_Recent_Menu;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+      (Self    : access On_Open_Recent;
+       Context : Interactive_Command_Context) return Command_Return_Type is
+   begin
+      Open_File_Action_Hook.Run
+        (Get_Kernel (Context.Context),
+         File    => Self.File,
+         Project => No_Project);  --  will choose one at random ???
+      return Standard.Commands.Success;
+   end Execute;
 
    ---------------
    -- Open_File --
@@ -1572,19 +1622,6 @@ package body Src_Editor_Module is
 
       return Editor;
    end Open_File;
-
-   --------------
-   -- Activate --
-   --------------
-
-   overriding procedure Activate
-     (Callback : access On_Recent; Item : String) is
-   begin
-      Open_File_Action_Hook.Run
-        (Callback.Kernel,
-         File    => Create (Full_Filename => +Item),
-         Project => No_Project);  --  will choose one at random ???
-   end Activate;
 
    -------------
    -- Execute --
@@ -1981,7 +2018,6 @@ package body Src_Editor_Module is
                                    new Undo_Redo_Information;
       Selector                 : Scope_Selector;
       Extra                    : Files_Extra_Scope;
-      Recent_Menu_Item         : Gtk_Menu_Item;
       Command                  : Interactive_Command_Access;
       Label                    : Contextual_Menu_Label_Creator;
       Line_Numbers_Area_Filter : Action_Filter;
@@ -2206,16 +2242,6 @@ package body Src_Editor_Module is
         (Kernel, "open from host", new Open_Remote_Command,
          Description => -"Open a file from a remote host",
          Icon_Name   => "gps-open-file-symbolic");
-
-      Recent_Menu_Item := Find_Menu_Item (Kernel, "/File/Recent");
-      if Recent_Menu_Item /= null then
-         Associate (Get_History (Kernel).all,
-                    Hist_Key,
-                    Recent_Menu_Item,
-                    new On_Recent'(
-                      Menu_Callback_Record with
-                      Kernel => Kernel_Handle (Kernel)));
-      end if;
 
       Register_Action
         (Kernel, Save_Command_Name, new Save_Command,

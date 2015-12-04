@@ -752,12 +752,12 @@ package body KeyManager_Module is
                Keymap  => null,
                Next    => Tmp);
             Set (Table, Key_Binding'(Default_Key, Default_Mod), Binding2);
-            Update_Shortcut_Display (Kernel, Real_Action);
+            Update_Shortcuts_For_Action (Kernel, Real_Action);
          else
             Binding2 := Get (Table, Key_Binding'(Default_Key, Default_Mod));
             while Binding2 /= null loop
                if Binding2.Action /= null then
-                  Update_Shortcut_Display (Kernel, Binding2.Action.all);
+                  Update_Shortcuts_For_Action (Kernel, Binding2.Action.all);
                end if;
                Binding2 := Binding2.Next;
             end loop;
@@ -1372,7 +1372,7 @@ package body KeyManager_Module is
                --  Need to remove action so that update_shortcut_display
                --  works.
                Free (Binding.Action);
-               Update_Shortcut_Display (Kernel, A);
+               Update_Shortcuts_For_Action (Kernel, A);
             end;
          end if;
       end Update_Menu;

@@ -125,9 +125,6 @@ package body Builder_Facility_Module is
    --  The key in this map is a model name, and the element is a set of XML
    --  describing targets associated with this model.
 
-   package Unbounded_String_List is new Ada.Containers.Doubly_Linked_Lists
-     (Unbounded_String);
-
    type Builder_Module_ID_Record is
      new GPS.Kernel.Modules.Module_ID_Record
    with record
@@ -150,7 +147,7 @@ package body Builder_Facility_Module is
       --  Whether the module is currently reacting to the File_Saved hook.
       --  See implementation of On_File_Save.
 
-      Actions : Unbounded_String_List.List;
+      Actions : Action_Lists.List;
       --  The list of currently registered builder actions
 
       Build_Count : Natural := 0;
@@ -610,7 +607,7 @@ package body Builder_Facility_Module is
                           Description => Description,
                           Icon_Name   => Get_Icon_Name (Target),
                           Category    => -"Build");
-         Builder_Module_ID.Actions.Append (To_Unbounded_String (Action_Name));
+         Builder_Module_ID.Actions.Append (Action_Name);
 
          --  Do nothing is the target is not supposed to be shown in the menu
          if Menu_Name /= ""
@@ -1195,11 +1192,10 @@ package body Builder_Facility_Module is
          --  looking it up in the registered actions.
 
          if T /= null
-           and then not Builder_Module_ID.Actions.Contains
-             (To_Unbounded_String (Get_Name (T)))
+           and then not Builder_Module_ID.Actions.Contains (Get_Name (T))
            and then (Length (Get_Properties (T).Target_Type) = 0
                      or else not Builder_Module_ID.Actions.Contains
-                       (To_Unbounded_String (Get_Name (T) & (-" Number 1"))))
+                       (Get_Name (T) & (-" Number 1")))
          then
             Add_Action_And_Menu_For_Target (T);
             Install_Button_For_Target (T);
@@ -1427,8 +1423,8 @@ package body Builder_Facility_Module is
    --------------------------------------
 
    procedure Clear_Actions_Menus_And_Toolbars is
-      use Unbounded_String_List;
-      C : Unbounded_String_List.Cursor;
+      use Action_Lists;
+      C : Action_Lists.Cursor;
       Toolbar : constant Gtk_Toolbar := Get_Toolbar (Get_Kernel);
    begin
       loop
@@ -1436,7 +1432,7 @@ package body Builder_Facility_Module is
          exit when not Has_Element (C);
          Unregister_Action
            (Kernel       => Get_Kernel,
-            Name         => To_String (Element (C)),
+            Name         => Element (C),
             Remove_Menus => True);
          Builder_Module_ID.Actions.Delete (C);
       end loop;

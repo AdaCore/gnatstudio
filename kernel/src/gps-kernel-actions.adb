@@ -20,7 +20,6 @@ with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Commands;                  use Commands;
 with Gdk.Event;                 use Gdk.Event;
-with Gdk.Types;                 use Gdk.Types;
 with Glib.Convert;              use Glib.Convert;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -29,8 +28,6 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
-with Gtk.Accel_Label;           use Gtk.Accel_Label;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
 with String_Utils;              use String_Utils;
@@ -76,7 +73,6 @@ package body GPS.Kernel.Actions is
       Free (Action.Description);
       Free (Action.Name);
       Free (Action.Icon_Name);
-      Free (Action.Menus);
       Unchecked_Free (Action);
    end Free;
 
@@ -158,7 +154,6 @@ package body GPS.Kernel.Actions is
          Category   => Cat,
          Overridden  => Overridden,
          Disabled   => False,
-         Menus      => null,
          Icon_Name  => Stock);
 
       Set (Actions_Htable_Access (Kernel.Actions).Table,
@@ -185,15 +180,16 @@ package body GPS.Kernel.Actions is
            (Actions_Htable_Access (Kernel.Actions).Table, To_Lower (Name));
          exit when A = null;
 
-         if Remove_Menus and then A.Menus /= null then
-            for M of A.Menus.all loop
-               Remove_Menu (Kernel, M.all);
-            end loop;
-         end if;
-
          Remove (Actions_Htable_Access (Kernel.Actions).Table,
                  To_Lower (Name));
       end loop;
+
+      if Remove_Menus then
+         Remove_Menus_For_Action (Kernel, Name);
+      end if;
+
+      --  Unregister the gtk+ action, too.
+      Kernel.Get_Application.Remove_Action (Name);
    end Unregister_Action;
 
    -----------
@@ -534,25 +530,6 @@ package body GPS.Kernel.Actions is
       end if;
    end Execute_Action;
 
-   ----------------------
-   -- Add_Menu_To_List --
-   ----------------------
-
-   procedure Add_Menu_To_List
-     (Action : not null access Action_Record;
-      Path   : String) is
-   begin
-      if Action.Menus /= null then
-         for M in Action.Menus'Range loop
-            if Action.Menus (M).all = Path then
-               return;
-            end if;
-         end loop;
-      end if;
-
-      Append (Action.Menus, Path);
-   end Add_Menu_To_List;
-
    -------------------
    -- Get_Icon_Name --
    -------------------
@@ -565,40 +542,6 @@ package body GPS.Kernel.Actions is
          return Self.Icon_Name.all;
       end if;
    end Get_Icon_Name;
-
-   -----------------------------
-   -- Update_Shortcut_Display --
-   -----------------------------
-
-   procedure Update_Shortcut_Display
-     (Kernel : access Kernel_Handle_Record'Class;
-      Action : String)
-   is
-      Act    : constant access Action_Record := Lookup_Action (Kernel, Action);
-      Item   : Gtk_Menu_Item;
-      Key    : Gdk_Key_Type;
-      Mods   : Gdk_Modifier_Type;
-      Child  : Gtk_Widget;
-   begin
-      if Act /= null and then Act.Menus /= null then
-         Kernel.Get_Shortcut_Simple
-           (Action => Action,
-            Key    => Key,
-            Mods   => Mods);
-         for M in Act.Menus'Range loop
-            Item := Find_Menu_Item (Kernel, Act.Menus (M).all);
-            if Item = null then
-               Trace (Me, "Not updating shortcut for " & Act.Menus (M).all
-                      & " since menu not found");
-            else
-               Child := Item.Get_Child;
-               if Child.all in Gtk_Accel_Label_Record'Class then
-                  Gtk_Accel_Label (Child).Set_Accel (Key, Mods);
-               end if;
-            end if;
-         end loop;
-      end if;
-   end Update_Shortcut_Display;
 
    --------------------------
    -- Get_Full_Description --
@@ -619,15 +562,10 @@ package body GPS.Kernel.Actions is
            (Action          => Action.Name.all,
             Use_Markup      => Use_Markup,
             Return_Multiple => True));
-      Menus : Unbounded_String;
+      Menus : Unbounded_String :=
+         Menu_List_For_Action (Kernel, Action.Name.all);
 
    begin
-      if Action.Menus /= null then
-         for M in Action.Menus'Range loop
-            Append (Menus, Action.Menus (M).all & ASCII.LF);
-         end loop;
-      end if;
-
       if Use_Markup then
          if Menus /= Null_Unbounded_String then
             Menus := "<b>Menu:</b> " & Menus;

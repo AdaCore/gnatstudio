@@ -28,16 +28,14 @@ with Gtk.Combo_Box;       use Gtk.Combo_Box;
 with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.List_Store;      use Gtk.List_Store;
-with Gtk.Menu;            use Gtk.Menu;
-with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Toggle_Button;   use Gtk.Toggle_Button;
 with Gtk.Toggle_Tool_Button; use Gtk.Toggle_Tool_Button;
 with Gtk.Tree_Model;      use Gtk.Tree_Model;
 with Gtk.Widget;          use Gtk.Widget;
 
-with GUI_Utils;           use GUI_Utils;
-with XML_Utils;           use XML_Utils;
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with GUI_Utils;             use GUI_Utils;
+with XML_Utils;             use XML_Utils;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with XML_Parsers;
 
 package body Histories is
@@ -51,14 +49,10 @@ package body Histories is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Changed_Notifier_Record'Class, Changed_Notifier);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Menu_Callback_Record'Class, Menu_Callback);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (History_Hash.String_Hash_Table.Instance, HTable_Access);
 
    package Value_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, History_Key_Access);
-   package Notifier_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Changed_Notifier);
 
    procedure Update_History
      (Button : access Gtk_Widget_Record'Class;
@@ -70,28 +64,6 @@ package body Histories is
      (Item : access Gtk_Widget_Record'Class;
       Value  : History_Key_Access);
    --  Called when the button is toggled
-
-   type Menu_Changed_Notifier_Record is new Changed_Notifier_Record with record
-      Menu     : Gtk_Menu_Item;
-      Callback : Menu_Callback;
-      Data     : History_Key_Access;
-   end record;
-   type Menu_Changed_Notifier is access all Menu_Changed_Notifier_Record'Class;
-   overriding procedure On_Changed
-     (Notifier : access Menu_Changed_Notifier_Record;
-      Hist     : in out History_Record;
-      Key      : History_Key);
-
-   procedure On_Menu_Destroy
-     (Menu     : access Gtk_Widget_Record'Class;
-      Notifier : Changed_Notifier);
-   --  Called when the menu associated with a history key is destroyed
-
-   procedure On_Menu_Selected
-     (Menu_Item : access Gtk_Widget_Record'Class;
-      Notifier  : Changed_Notifier);
-   --  Called when one of the entries in a menu associated with a history key
-   --  is destroyed.
 
    function Create_New_Key_If_Necessary
      (Hist     : History_Record;
@@ -708,108 +680,6 @@ package body Histories is
         (Item, Gtk.Toggle_Button.Signal_Toggled,
          Update_History_Item'Access, User_Data => Val);
    end Associate;
-
-   ---------------
-   -- Associate --
-   ---------------
-
-   procedure Associate
-     (Hist      : in out History_Record;
-      Key       : History_Key;
-      Menu      : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class;
-      Callback  : Menu_Callback)
-   is
-      Val      : constant History_Key_Access :=
-                   Create_New_Key_If_Necessary (Hist, Key, Strings);
-      Notifier : constant Menu_Changed_Notifier :=
-                   new Menu_Changed_Notifier_Record;
-   begin
-      Notifier.Menu     := Gtk_Menu_Item (Menu);
-      Notifier.Callback := Callback;
-      Notifier.Data     := Val;
-      Val.Notifier      := Changed_Notifier (Notifier);
-
-      Notifier_Callback.Connect
-        (Menu, Signal_Destroy,
-         On_Menu_Destroy'Access, Changed_Notifier (Notifier));
-      On_Changed (Notifier, Hist, Key);
-   end Associate;
-
-   ---------------------
-   -- On_Menu_Destroy --
-   ---------------------
-
-   procedure On_Menu_Destroy
-     (Menu     : access Gtk_Widget_Record'Class;
-      Notifier : Changed_Notifier)
-   is
-      pragma Unreferenced (Menu);
-      Notif         : constant Menu_Changed_Notifier :=
-                        Menu_Changed_Notifier (Notifier);
-      Changed_Notif : Changed_Notifier := Changed_Notifier (Notif);
-   begin
-      Free (Notif.Callback.all);
-      Unchecked_Free (Notif.Callback);
-      Notif.Data.Notifier := null;
-      Free (Notif.all);
-      Unchecked_Free (Changed_Notif);
-   end On_Menu_Destroy;
-
-   ----------------------
-   -- On_Menu_Selected --
-   ----------------------
-
-   procedure On_Menu_Selected
-     (Menu_Item : access Gtk_Widget_Record'Class;
-      Notifier  : Changed_Notifier)
-   is
-      Notif : constant Menu_Changed_Notifier :=
-                Menu_Changed_Notifier (Notifier);
-   begin
-      Activate (Notif.Callback, Get_Path (Full_Path_Menu_Item (Menu_Item)));
-   end On_Menu_Selected;
-
-   ----------------
-   -- On_Changed --
-   ----------------
-
-   overriding procedure On_Changed
-     (Notifier : access Menu_Changed_Notifier_Record;
-      Hist     : in out History_Record;
-      Key      : History_Key)
-   is
-      Value : constant String_List_Access :=
-                Create_New_Key_If_Necessary (Hist, Key, Strings).List;
-      Menu  : Gtk_Menu;
-   begin
-      if Get_Submenu (Notifier.Menu) /= null then
-         Set_Submenu (Notifier.Menu, null);
-      end if;
-
-      Gtk_New (Menu);
-      Set_Submenu (Notifier.Menu, Gtk_Widget (Menu));
-
-      if Value /= null then
-         for V in Value'Range loop
-            declare
-               Path  : constant String := Value (V).all;
-               Mitem : Full_Path_Menu_Item;
-            begin
-               Gtk_New (Mitem, Path, Path);
-               Append (Menu, Mitem);
-
-               if Notifier.Callback /= null then
-                  Notifier_Callback.Connect
-                    (Mitem,
-                     Gtk.Menu_Item.Signal_Activate, On_Menu_Selected'Access,
-                     Changed_Notifier (Notifier));
-               end if;
-            end;
-         end loop;
-
-         Show_All (Menu);
-      end if;
-   end On_Changed;
 
    -----------------
    -- Most_Recent --

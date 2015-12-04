@@ -25,6 +25,7 @@ with GNAT.Strings;
 with Glib.Object;
 with Glib.Values;
 with Glib;                     use Glib;
+with Glib.Menu;                use Glib.Menu;
 
 with Gdk.Event;
 with Gdk.Types;
@@ -370,32 +371,6 @@ package GUI_Utils is
    --  Limitations:
    --     Radio buttons not supported,
 
-   -------------------------
-   -- Full_Path_Menu_Item --
-   -------------------------
-
-   --  This widget is used to associate strings to menu items
-
-   type Full_Path_Menu_Item_Record (Length : Natural) is
-     new Gtk.Menu_Item.Gtk_Menu_Item_Record with private;
-   type Full_Path_Menu_Item is access all Full_Path_Menu_Item_Record'Class;
-
-   procedure Gtk_New
-     (Menu_Item : out Full_Path_Menu_Item;
-      Label     : String := "";
-      Path      : String := "");
-   --  Create a new menu item with the given Path as associated string
-
-   procedure Initialize
-     (Menu_Item : access Full_Path_Menu_Item_Record'Class;
-      Label     : String;
-      Path      : String);
-   --  Internal initialization function
-
-   function Get_Path
-     (Menu_Item : access Full_Path_Menu_Item_Record) return String;
-   --  Return the string associated with Menu_Item
-
    ------------
    -- Events --
    ------------
@@ -418,12 +393,41 @@ package GUI_Utils is
    -- Menus --
    -----------
 
+   type Menu_Item_Info is record
+      Item     : Gmenu_Item;
+      Model    : Gmenu;
+      Position : Gint;
+   end record;
+   No_Menu_Item : constant Menu_Item_Info := (null, null, -1);
+
+   procedure Unref (Self : in out Menu_Item_Info);
+   --  Free the memory as needed
+
+   function Find_Or_Create_Menu
+      (Model        : not null access Gmenu_Record'Class;
+       Path         : String;
+       Allow_Create : Boolean := True) return Menu_Item_Info;
+   --  Search for the corresponding menu item.
+   --  The result must be unrefed by the caller.
+   --  Path still has double undescores and backslashes to protect slashes.
+   --  The position of the item is unset when a new item is created.
+
+   function Find_Or_Create_Single_Level
+      (Model        : not null access Gmenu_Record'Class;
+       Name         : String;
+       Allow_Create : Boolean) return Menu_Item_Info;
+   --  Find or create an item, only looking in Model (not recursive).
+   --  Return value must be unrefered by caller.
+   --  If Allow_Create is True, non-null will always be returned.
+   --  Name must have been unescaped.
+
    procedure Find_Menu_Item_By_Name
      (Menu_Bar      : Gtk.Menu_Bar.Gtk_Menu_Bar;
       Menu          : Gtk.Menu.Gtk_Menu;
       Name          : String;
       Menu_Item     : out Gtk.Menu_Item.Gtk_Menu_Item;
       Index         : out Gint);
+   pragma Obsolescent (Find_Menu_Item_By_Name);
    --  Return the menu item with name Name, either from Menu, or from Menu_Bar
    --  if the latter is null.
    --  The name must be escape (via Escape_Menu_Name) as would be done to
@@ -439,6 +443,7 @@ package GUI_Utils is
       Add_Before    : Boolean := True;
       New_Item      : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class := null)
       return Gtk.Menu_Item.Gtk_Menu_Item;
+   pragma Obsolescent (Find_Or_Create_Menu_Tree);
    --  Create or return the menu_item corresponding to Path in Menu.
    --  Path is a '/'-separated list of menu names, for instance File/New.
    --  Menu_Bar is used if Menu is null
@@ -469,11 +474,6 @@ package GUI_Utils is
    function Create_Menu_Path (Parent, Menu : String) return String;
    --  Create a menu from its parent (possibly empty) and its name (which might
    --  need to be escaped first).
-
-   function Create_Menu_Path
-     (Item : not null access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class)
-      return String;
-   --  Return the path to this menu item
 
    procedure Add_Menu
      (Parent     : Gtk.Menu.Gtk_Menu;
@@ -534,15 +534,6 @@ package GUI_Utils is
    --  the menu creation takes any type as input.
    --  This package must be instantiated as library level.
 
-   ------------------
-   -- Accelerators --
-   ------------------
-
-   procedure Save_Accel_Map (Filename : String);
-   --  Save the current accel map.
-   --  As opposed to Gtk.Accel_Map.Save, this one doesn't keep the lines which
-   --  have no shortcut, thus keeping the file small.
-
    -----------
    -- Label --
    -----------
@@ -553,13 +544,5 @@ package GUI_Utils is
    --  Create a new label, with a blue background.
    --  Event should be inserted in the container, and the text should be set
    --  in Label.
-
-private
-
-   type Full_Path_Menu_Item_Record (Length : Natural) is
-     new Gtk.Menu_Item.Gtk_Menu_Item_Record
-   with record
-      Full_Path : String (1 .. Length);
-   end record;
 
 end GUI_Utils;

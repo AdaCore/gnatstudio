@@ -25,6 +25,7 @@ with GNATCOLL.Projects;
 with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GPS.Customizable_Modules;    use GPS.Customizable_Modules;
+with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
 with GPS.Kernel.Style_Manager;    use GPS.Kernel.Style_Manager;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
@@ -288,6 +289,9 @@ private
 
       Stored_Marks          : Marker_List.List;
       Next_Mark_Id          : Natural := 0;
+
+      Recent_File_Actions   : Action_Lists.List;
+      --  Actions registered dynamically for the list of recent files
 
       Categories            : Highlighting_Category_Array_Access;
       --  Contains a list of registered categories

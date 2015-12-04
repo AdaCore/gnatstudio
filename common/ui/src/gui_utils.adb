@@ -18,18 +18,18 @@
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Strings.Equal_Case_Insensitive; use Ada.Strings;
-with Ada.Text_IO;               use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
 with Glib.Main;
+with Glib.Menu_Model;           use Glib.Menu_Model;
 with Glib.Values;               use Glib.Values;
+with Glib.Variant;              use Glib.Variant;
 
 with Gdk;                       use Gdk;
 with Gdk.Cursor;                use Gdk.Cursor;
@@ -43,7 +43,6 @@ with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
 
-with Gtk.Accel_Map;             use Gtk.Accel_Map;
 with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Bin;                   use Gtk.Bin;
 with Gtk.Box;                   use Gtk.Box;
@@ -85,7 +84,6 @@ with String_Utils;              use String_Utils;
 with Glib_String_Utils;         use Glib_String_Utils;
 with System;                    use System;
 with GNATCOLL.Traces;                    use GNATCOLL.Traces;
-with File_Utils;                use File_Utils;
 with Ada.Containers.Ordered_Sets;
 
 package body GUI_Utils is
@@ -733,44 +731,6 @@ package body GUI_Utils is
       when E : others => Trace (Me, E);
    end Edited_Callback;
 
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Menu_Item : out Full_Path_Menu_Item;
-      Label     : String := "";
-      Path      : String := "") is
-   begin
-      Menu_Item := new Full_Path_Menu_Item_Record (Path'Length);
-      Initialize (Menu_Item, Label, Path);
-   end Gtk_New;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Menu_Item : access Full_Path_Menu_Item_Record'Class;
-      Label     : String;
-      Path      : String) is
-   begin
-      Initialize
-        (Gtk_Menu_Item (Menu_Item),
-         Krunch (UTF8_Full_Name (Create (+Label)), 60));
-      Menu_Item.Full_Path := Path;
-   end Initialize;
-
-   --------------
-   -- Get_Path --
-   --------------
-
-   function Get_Path
-     (Menu_Item : access Full_Path_Menu_Item_Record) return String is
-   begin
-      return Menu_Item.Full_Path;
-   end Get_Path;
-
    -------------------------
    -- Find_Iter_For_Event --
    -------------------------
@@ -1151,47 +1111,6 @@ package body GUI_Utils is
    end Do_Completion;
 
    --------------------
-   -- Save_Accel_Map --
-   --------------------
-
-   procedure Save_Accel_Map (Filename : String) is
-      File : File_Type;
-
-      procedure Save_Dynamic_Key
-        (Accel_Path : String;
-         Accel_Key  : Gdk.Types.Gdk_Key_Type;
-         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
-         Changed    : Boolean);
-      --  Called for each key shortcut the user has defined interactively
-
-      ----------------------
-      -- Save_Dynamic_Key --
-      ----------------------
-
-      procedure Save_Dynamic_Key
-        (Accel_Path : String;
-         Accel_Key  : Gdk.Types.Gdk_Key_Type;
-         Accel_Mods : Gdk.Types.Gdk_Modifier_Type;
-         Changed    : Boolean)
-      is
-      begin
-         if Changed and then Accel_Key /= GDK_VoidSymbol then
-            Put_Line (File, "(gtk_accel_path """
-                      & Accel_Path
-                      & """ """
-                      & Accelerator_Name (Accel_Key, Accel_Mods)
-                      & """) ");
-         end if;
-      end Save_Dynamic_Key;
-
-   begin
-      Create (File, Out_File, Filename);
-      Gtk.Accel_Map.Foreach
-        (Save_Dynamic_Key'Unrestricted_Access);
-      Close (File);
-   end Save_Accel_Map;
-
-   --------------------
    -- Query_Password --
    --------------------
 
@@ -1310,7 +1229,6 @@ package body GUI_Utils is
                Label := Gtk_Label (Get_Child (Box, 0));
                exit when Equal
                  (Get_Text (Label), New_Name, Case_Sensitive => False);
-
             elsif Get_Child (Box, 1) /= null
               and then Get_Child (Box, 1).all in Gtk_Label_Record'Class
             then
@@ -1331,36 +1249,6 @@ package body GUI_Utils is
          Index := -1;
       end if;
    end Find_Menu_Item_By_Name;
-
-   ----------------------
-   -- Create_Menu_Path --
-   ----------------------
-
-   function Create_Menu_Path
-     (Item : not null access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class)
-      return String
-   is
-      Path   : constant String := Item.Get_Accel_Path;
-      P      : Integer := Path'First;
-      Result : String (Path'Range);
-      Index  : Integer := Result'First;
-   begin
-      if Starts_With (Path, "<gps>") then
-         P := Path'First + 5;
-      end if;
-
-      while P <= Path'Last loop
-         if Path (P) /= '_'
-           or else (P < Path'Last and then Path (P + 1) = '_')
-         then
-            Result (Index) := Path (P);
-            Index := Index + 1;
-         end if;
-         P := P + 1;
-      end loop;
-
-      return Result (Result'First .. Index - 1);
-   end Create_Menu_Path;
 
    ----------------------
    -- Create_Menu_Path --
@@ -1507,6 +1395,130 @@ package body GUI_Utils is
       end loop;
       return Path;
    end Base_Menu_Name;
+
+   -----------
+   -- Unref --
+   -----------
+
+   procedure Unref (Self : in out Menu_Item_Info) is
+   begin
+      if Self.Item /= null then
+         Unref (Self.Item);
+      end if;
+   end Unref;
+
+   ---------------------------------
+   -- Find_Or_Create_Single_Level --
+   ---------------------------------
+
+   function Find_Or_Create_Single_Level
+      (Model        : not null access Gmenu_Record'Class;
+       Name         : String;
+       Allow_Create : Boolean) return Menu_Item_Info
+   is
+      N_Items : constant Gint := Model.Get_N_Items;
+      Val     : Gvariant;
+      Item    : Menu_Item_Info;
+      M2      : Gmenu_Model;
+   begin
+      for N in 0 .. N_Items - 1 loop
+         --  Perhaps the item is a <section>
+
+         M2 := Model.Get_Item_Link (N, "section");   --  do not unref
+         if M2 /= null then
+            Item := Find_Or_Create_Single_Level
+               (Gmenu (M2), Name, Allow_Create => False);
+            if Item /= No_Menu_Item then
+               return Item;
+            end if;
+
+         else
+            --  Else check the item's name (do it later to avoid extra
+            --  memory allocation when we had a section)
+
+            Val := Model.Get_Item_Attribute_Value
+               (Item_Index    => N,
+                Attribute     => "label",
+                Expected_Type => Gvariant_Type_String);
+            declare
+               It_Name : constant String :=
+                  Strip_Single_Underscores
+                     (Unescape_Menu_Name (Get_String (Val, null)));
+            begin
+               Unref (Val);
+               if It_Name = Name then
+                  return
+                     (Item => Gmenu_Item_New_From_Model (Gmenu (Model), N),
+                      Model    => Gmenu (Model),
+                      Position => N);
+               end if;
+            end;
+         end if;
+      end loop;
+
+      if Allow_Create then
+         Item := (Item     => Gmenu_Item_New_Submenu (Name, Gmenu_New),
+                  Model    => Gmenu (Model),
+                  Position => -1); --  irrelevant
+         Model.Append_Item (Item.Item);
+         return Item;
+      end if;
+
+      return No_Menu_Item;
+   end Find_Or_Create_Single_Level;
+
+   -------------------------
+   -- Find_Or_Create_Menu --
+   -------------------------
+
+   function Find_Or_Create_Menu
+      (Model        : not null access Gmenu_Record'Class;
+       Path         : String;
+       Allow_Create : Boolean := True) return Menu_Item_Info
+   is
+      First : Natural := Path'First;
+      Last : Natural;
+      Item : Menu_Item_Info;
+      M2   : Gmenu_Model;
+   begin
+      if Path (First) = '/' then
+         First := First + 1;
+      end if;
+
+      --  Find name of toplevel parent
+      Last := First;
+      while Last <= Path'Last and then
+         (Path (Last) /= '/'
+          or else Last = Path'First
+          or else Path (Last - 1) = '\')
+      loop
+         Last := Last + 1;
+      end loop;
+
+      Item := Find_Or_Create_Single_Level
+         (Model,
+          Strip_Single_Underscores (Unescape_Menu_Name
+            (Path (First .. Last - 1))),
+          Allow_Create => Allow_Create);
+
+      if Last >= Path'Last
+         or else Item = No_Menu_Item
+      then
+         return Item;
+      else
+         --  Else we found the toplevel, search for other parents
+         M2 := Item.Item.Get_Link ("submenu");
+         Unref (Item);  --  no longer needed
+
+         if M2 /= null then
+            return Find_Or_Create_Menu
+               (Gmenu (M2), Path (Last + 1 .. Path'Last),
+                Allow_Create => Allow_Create);
+         else
+            return No_Menu_Item;  --  Not found
+         end if;
+      end if;
+   end Find_Or_Create_Menu;
 
    ------------------------------
    -- Find_Or_Create_Menu_Tree --

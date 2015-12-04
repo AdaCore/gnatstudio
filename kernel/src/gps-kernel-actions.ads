@@ -20,6 +20,7 @@
 --  Actions are named commands (or list of commands) in GPS. These can
 --  be associated with menus, keys and toolbar buttons among other things.
 
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Commands.Interactive;  use Commands.Interactive;
 with Gdk.Event;
 with GNAT.Strings;
@@ -28,6 +29,9 @@ package GPS.Kernel.Actions is
 
    type Action_Record is private;
    type Action_Record_Access is access Action_Record;
+
+   package Action_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
+      (String);
 
    procedure Register_Action
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -138,16 +142,6 @@ package GPS.Kernel.Actions is
    --  was executed from a menu. By default, this is computed from the Event.
    --  If Block_Exit is true, GPS will not exit while the command is running.
 
-   procedure Add_Menu_To_List
-     (Action : not null access Action_Record;
-      Path   : String);
-   --  Add a menu to the list of menus associated with Action.
-
-   procedure Update_Shortcut_Display
-     (Kernel : access Kernel_Handle_Record'Class;
-      Action : String);
-   --  Update the shortcut for all menus associated with the action
-
    function Get_Category
      (Action : not null access Action_Record) return String;
    --  Return the name of the category for the action
@@ -193,9 +187,6 @@ private
 
       Disabled    : Boolean := False;
       --  Whether this command was disabled explicitly.
-
-      Menus       : GNAT.Strings.String_List_Access;
-      --  List of all menu paths that are associated with this action.
 
       Icon_Name   : GNAT.Strings.String_Access;
    end record;

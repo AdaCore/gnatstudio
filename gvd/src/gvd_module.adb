@@ -28,8 +28,6 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Table;                 use Gtk.Table;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
@@ -122,7 +120,9 @@ package body GVD_Module is
       Show_Lines_With_Code           : Boolean;
       --  Whether the lines with code should be explicitly queried
 
-      Initialize_Menu                : Gtk_Menu;
+      Actions : Action_Lists.List;
+      --  Actions that have been registered dynamically by this module,
+      --  for the dynamic menus
 
       Delete_Id                      : Handler_Id := (Null_Handler_Id, null);
 
@@ -1950,7 +1950,6 @@ package body GVD_Module is
    is
       pragma Unreferenced (Self);
       use GNAT.OS_Lib;
-      Menu              : Gtk_Menu renames GVD_Module_ID.Initialize_Menu;
 
       procedure Create_Action_And_Menu
         (Prj : Project_Type; Main : Virtual_File);
@@ -1965,7 +1964,7 @@ package body GVD_Module is
       is
          Main_Name : constant String :=
            (if Main = No_File then
-               -"<no main file>"
+               -"no main file"
             else
                Escape_Underscore (Escape_Menu_Name (Main.Display_Base_Name)));
 
@@ -1982,7 +1981,7 @@ package body GVD_Module is
            (Interactive_Command with
             Project => Prj,
             Exec    => Main);
-         Unregister_Action (Kernel, Action);
+         GVD_Module_ID.Actions.Append (Action);
          Register_Action
            (Kernel, Action, Command,
             -"Initialize the debugger on the file "
@@ -1995,7 +1994,10 @@ package body GVD_Module is
          Compute_Build_Targets_Hook.Run (Kernel, "executable");
 
    begin
-      Remove_All_Children (Menu);
+      for A of GVD_Module_ID.Actions loop
+         Unregister_Action (Kernel, A, Remove_Menus => True);
+      end loop;
+      GVD_Module_ID.Actions.Clear;
 
       for J in 1 .. Mains.Length loop
          if Mains.List (J).Length /= 0 then
@@ -2017,7 +2019,6 @@ package body GVD_Module is
       --  Specific entry to start the debugger without any main program
 
       Create_Action_And_Menu (No_Project, No_File);
-      Show_All (Menu);
 
    exception
       when E : others =>
@@ -2074,8 +2075,6 @@ package body GVD_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Mitem             : Gtk_Menu_Item;
-      Menu              : Gtk_Menu;
       Command           : Interactive_Command_Access;
       Filter            : Action_Filter;
       Debugger_Filter   : Action_Filter;
@@ -2236,14 +2235,8 @@ package body GVD_Module is
          Label  => -"Debug/Show current location",
          Action => "debug show current location");
 
-      --  Dynamic Initialize menu
-      Mitem := Find_Menu_Item (Kernel, -"/Debug/Initialize");
-      if Mitem /= null then
-         Gtk_New (Menu);
-         Set_Submenu (Mitem, Menu);
-         GVD_Module_ID.Initialize_Menu := Menu;
-         Project_View_Changed_Hook.Add (new On_View_Changed);
-      end if;
+      --  Dynamic /Debug/Initialize menu
+      Project_View_Changed_Hook.Add (new On_View_Changed);
 
       --  Add debugger menus
 
