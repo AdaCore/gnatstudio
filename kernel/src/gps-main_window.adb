@@ -1459,16 +1459,19 @@ package body GPS.Main_Window is
      (Window : access GPS_Window_Record) return Boolean
    is
       use Gtk.Widget.Widget_List;
-      L : Glist := First (Window.Menu_Bar.Get_Children);
+      Children : Glist := Window.Menu_Bar.Get_Children;
+      List : Glist := First (Children);
       Menu : Gtk_Widget;
    begin
       while L /= Null_List loop
          Menu := Gtk_Menu_Item (Get_Data (L)).Get_Submenu;
          L := Next (L);
          if Menu /= null and then Menu.Is_Visible then
+            Free (Children);
             return True;
          end if;
       end loop;
+      Free (Children);
       return False;
    end Is_Any_Menu_Open;
 
