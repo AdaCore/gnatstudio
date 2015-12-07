@@ -434,6 +434,20 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       </menu>
     </submenu>
 
+    <action name="spark2014_example_prime_numbers" category=""
+            show-command="false" output="none">
+      <shell>Project.load "@EXAMPLE@/prime_numbers/test.gpr"</shell>
+      <shell>Editor.edit "prime_and_coprime_numbers.adb"</shell>
+      <shell>Editor.edit "prime_and_coprime_numbers.ads"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_prime_numbers">
+        <title>prime_numbers</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_railway_signaling" category=""
             show-command="false" output="none">
       <shell>Project.load "@EXAMPLE@/railway_signaling/test.gpr"</shell>
