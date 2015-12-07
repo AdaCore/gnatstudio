@@ -38,7 +38,6 @@ with Gdk.Types;                 use Gdk.Types;
 
 with Glib.Action;               use Glib.Action;
 with Glib.Convert;              use Glib.Convert;
-with Glib.Error;                use Glib.Error;
 with Glib.Main;                 use Glib.Main;
 with Glib.Menu;                 use Glib.Menu;
 with Glib.Menu_Model;           use Glib.Menu_Model;
@@ -49,7 +48,6 @@ with Glib.Types;                use Glib.Types;
 with Glib.Values;               use Glib.Values;
 with Glib.Variant;              use Glib.Variant;
 
-with Gtk.Builder;               use Gtk.Builder;
 with Gtk.Container;             use Gtk.Container;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -531,11 +529,7 @@ package body GPS.Kernel.Modules.UI is
    -------------
 
    type Global_Data is record
-      Builder     : Gtk_Builder;
-      Menu_Model  : Gmenu_Model;
-      --  The builder used to load the menu menu (and later to do merges).
-      --  Seems like we should not free the builder while we might use the
-      --  menu model.
+      Menu_Model  : Gmenu;
 
       Actions_To_UI : Action_Elements.Map;
       --  Associations from actions to UI elements
@@ -1423,7 +1417,7 @@ package body GPS.Kernel.Modules.UI is
          for M of Globals.Actions_To_UI.Reference (C) loop
             Path := M.Path;
             Item := Find_Or_Create_Menu
-               (Gmenu (Globals.Menu_Model),
+               (Globals.Menu_Model,
                 Escape_Underscore (To_String (Path)),
                 Allow_Create => False);
             if Item /= No_Menu_Item then
@@ -1726,7 +1720,7 @@ package body GPS.Kernel.Modules.UI is
    begin
       Add_Menu_To_Action (Action, Strip_Single_Underscores (Full_Path));
 
-      Item := Find_Or_Create_Menu (Gmenu (Globals.Menu_Model), Parent_Path);
+      Item := Find_Or_Create_Menu (Globals.Menu_Model, Parent_Path);
       if Item /= No_Menu_Item then
          if Menu_Label /= ""
             and then Menu_Label (Menu_Label'First) /= '-'
@@ -1754,6 +1748,7 @@ package body GPS.Kernel.Modules.UI is
             Ref.Model.Insert_Item (Ref.Position + 1, It);
          end if;
 
+         Unref (It);
          Unref (Ref);
          Unref (Item);
       end if;
@@ -2785,14 +2780,14 @@ package body GPS.Kernel.Modules.UI is
    is
       procedure Process_Menu
         (Parent      : not null access Gtk_Menu_Shell_Record'Class;
-         M           : Gmenu_Model;
+         M           : Gmenu;
          Idx         : Gint;
          Parent_Path : Unbounded_String);
       --  Create a menu (and its submenu) from a menu model
 
       procedure Process_Menu
         (Parent      : not null access Gtk_Menu_Shell_Record'Class;
-         M           : Gmenu_Model;
+         M           : Gmenu;
          Idx         : Gint;
          Parent_Path : Unbounded_String)
       is
@@ -2880,7 +2875,7 @@ package body GPS.Kernel.Modules.UI is
 
                M2 := Get_Value (Links);
                for Idx2 in 0 .. M2.Get_N_Items - 1 loop
-                  Process_Menu (P, M2, Idx2, Full_Path);
+                  Process_Menu (P, Gmenu (M2), Idx2, Full_Path);
                end loop;
                --  Do not Unref (M2)
             end;
@@ -2910,9 +2905,8 @@ package body GPS.Kernel.Modules.UI is
      (Kernel : not null access Kernel_Handle_Record'Class;
       Root   : Node)
    is
-      Builder_XML : Unbounded_String;
-
-      procedure Process_Menu (Menu_Node : Node; Parent_Path : String);
+      procedure Process_Menu
+         (Menu_Node : Node; Parent_Path : String; Model : Gmenu);
       --  Process a <menu> node. Parent will be null when using system menus.
       --  Parent_Path always ends up with a trailing '/'
 
@@ -2920,7 +2914,9 @@ package body GPS.Kernel.Modules.UI is
       -- Process_Menu --
       ------------------
 
-      procedure Process_Menu (Menu_Node : Node; Parent_Path : String) is
+      procedure Process_Menu
+         (Menu_Node : Node; Parent_Path : String; Model : Gmenu)
+      is
          Label   : constant DOM_String := Get_Attribute (Menu_Node, "label");
          Clean_Label : constant String :=
             Parent_Path &
@@ -2932,6 +2928,9 @@ package body GPS.Kernel.Modules.UI is
          Optional     : Boolean := False;
          N            : Node;
          Act          : GPS_Action;
+         It           : Gmenu_Item;
+         Val          : Gvariant;
+         Menu, Section : Gmenu;
       begin
          if Optional_Str /= "" then   --  avoid raising exception if we can
             begin
@@ -2949,50 +2948,55 @@ package body GPS.Kernel.Modules.UI is
             Add_Menu_To_Action (Action, Clean_Label);
 
             --  See possible attributes in gtkmenutrackeritem.c
-            Append (Builder_XML,
-                    "<item>"
-                    & "<attribute name='hidden-when'>"
-                    & (if Optional
-                      then "action-disabled" else "action-missing")
-                    & "</attribute>"
-                    & "<attribute name='label'>"
-                    & XML_Utils.Protect (Label)
-                    & "</attribute>"
-                    & "<attribute name='action'>"
-                    & Act.Gtk_Name
-                    & "</attribute></item>" & ASCII.LF);
+            It := Gmenu_Item_New
+               (Label           => Label,
+                Detailed_Action => Act.Gtk_Name);
+            if Optional then
+               G_New_String (Val, "action-disabled");
+            else
+               G_New_String (Val, "action-missing");
+            end if;
+            It.Set_Attribute_Value
+               (Attribute => "hidden-when",
+                Value     => Val);
+
+            Model.Append_Item (It);
+            Unref (It);
+
          else
-            Append (Builder_XML,
-                    "<submenu>"
-                    & "<attribute name='label'>" & XML_Utils.Protect (Label)
-                    & "</attribute>" & ASCII.LF
-                    & " <section>");
-         end if;
+            Menu := Gmenu_New;
+            It := Gmenu_Item_New_Submenu
+               (Label   => Label,
+                Submenu => Menu);
+            Model.Append_Item (It);
+            Unref (It);
 
-         N := First_Child (Menu_Node);
+            Section := Gmenu_New;
+            It := Gmenu_Item_New_Section ("", Section);
+            Menu.Append_Item (It);
+            Unref (It);
 
-         if N /= null then
-            while N /= null loop
-               if Node_Name (N) = "menu" then
-                  Process_Menu (N, Clean_Label & '/');
-               elsif Node_Name (N) = "separator" then
-                  Append (Builder_XML, "</section><section>");
-               end if;
-               N := Next_Sibling (N);
-            end loop;
-         end if;
-
-         if Action = "" then
-            Append (Builder_XML, "</section></submenu>" & ASCII.LF);
+            N := First_Child (Menu_Node);
+            if N /= null then
+               while N /= null loop
+                  if Node_Name (N) = "menu" then
+                     Process_Menu (N, Clean_Label & '/', Section);
+                  elsif Node_Name (N) = "separator" then
+                     Section := Gmenu_New;
+                     It := Gmenu_Item_New_Section ("", Section);
+                     Menu.Append_Item (It);
+                     Unref (It);
+                  end if;
+                  N := Next_Sibling (N);
+               end loop;
+            end if;
          end if;
       end Process_Menu;
 
       N, N2       : Node;
-      Tmp         : Guint;
-      Error       : aliased GError;
 
    begin
-      Builder_XML := To_Unbounded_String ("<interface><menu id='menubar'>");
+      Globals.Menu_Model := Gmenu_New;
 
       N := First_Child (Root);
       while N /= null loop
@@ -3000,7 +3004,7 @@ package body GPS.Kernel.Modules.UI is
             N2 := First_Child (N);
             while N2 /= null loop
                if Node_Name (N2) = "menu" then
-                  Process_Menu (N2, "/");
+                  Process_Menu (N2, "/", Globals.Menu_Model);
                end if;
                N2 := Next_Sibling (N2);
             end loop;
@@ -3011,19 +3015,6 @@ package body GPS.Kernel.Modules.UI is
          end if;
          N := Next_Sibling (N);
       end loop;
-
-      Append (Builder_XML, "</menu></interface>");
-
-      Gtk_New (Globals.Builder);
-      Tmp := Globals.Builder.Add_From_String
-        (To_String (Builder_XML), Error => Error'Access);
-      if Tmp /= 0 then
-         Globals.Menu_Model :=
-           Gmenu_Model (Globals.Builder.Get_Object ("menubar"));
-      else
-         Trace (Me, "Could not parse menu description "
-                & Get_Message (Error));
-      end if;
    end Parse_Menu_Model_From_XML;
 
    -------------------
