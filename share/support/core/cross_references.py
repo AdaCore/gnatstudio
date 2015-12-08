@@ -4,6 +4,7 @@
 import GPS
 import os.path
 import tool_output
+import gps_utils
 
 
 class Sqlite_Cross_References(object):
@@ -33,7 +34,7 @@ class Sqlite_Cross_References(object):
 </target-model>
 
 <!-- Targets to launch cross-reference recompilation  -->
-<target model="gnatinspect" category="_Project" name="Recompute _Xref info">
+<target model="gnatinspect" name="Load Xref Info" category="_File_">
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>FALSE</in-menu>
     <in-contextual-menus-for-projects>False</in-contextual-menus-for-projects>
@@ -80,6 +81,11 @@ class Sqlite_Cross_References(object):
         # Initialize self.trusted_mode and other preferences
         self.on_preferences_changed(None)
 
+        # An action for the menu item /Build/Recompute Xref Info
+        gps_utils.make_interactive(
+            lambda *args: self.recompute_xref(quiet=False),
+            name="recompute xref info")
+
     def gnatinspect_completed(self):
         """ Call this when gnatinspect completed working.
         """
@@ -91,7 +97,7 @@ class Sqlite_Cross_References(object):
             self.gnatinspect_launch_registered = False
             self.recompute_xref()
 
-    def recompute_xref(self, force=False):
+    def recompute_xref(self, force=False, quiet=True):
         """ Launch recompilation of the cross references.
             if Force is True, run regardless of a running gnatinspect
             (this flag is used to protect against reentry)"""
@@ -119,7 +125,7 @@ class Sqlite_Cross_References(object):
         # We are about to launch gnatinspect
         self.gnatinspect_launch_registered = False
         self.gnatinspect_already_running = True
-        target = GPS.BuildTarget("Recompute Xref info")
+        target = GPS.BuildTarget("Load Xref Info")
 
         # This might fail if we have spaces in the name of the directory, but
         # any quoting we do here is passed directly to gnatinspect, and the
@@ -129,7 +135,7 @@ class Sqlite_Cross_References(object):
             extra_args.append("--symlinks")
 
         target.execute(synchronous=GPS.Logger(
-            "TESTSUITE").active, quiet=True, extra_args=extra_args)
+            "TESTSUITE").active, quiet=quiet, extra_args=extra_args)
 
     def on_compilation_finished(self, hook, category,
                                 target_name="", mode_name="", status=""):
