@@ -318,16 +318,6 @@ package GPS.Kernel.Modules.UI is
       Action : String);
    --  Update the shortcuts for all menus associated with the action.
 
-   function Find_Menu_Item
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Path    : String;
-      Menubar : Gtk_Menu_Bar := null)
-      return Gtk.Menu_Item.Gtk_Menu_Item;
-   --  Given an absolute path (see Register_Menu) for a menu item, return
-   --  the underlying gtk menu item. Useful in particular to check or change
-   --  the state of a menu item. Path is case insensitive.
-   --  This function might return null when the item is not found.
-
    procedure Execute_Menu
      (Kernel    : Kernel_Handle;
       Menu_Name : String);

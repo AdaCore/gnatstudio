@@ -1373,21 +1373,6 @@ procedure GPS.Main is
       GPS.Stock_Icons.Register_Stock_Icons (App.Kernel, Prefix_Dir);
       App.Kernel.Set_Environment (Env);
 
-      --  Make the /Window menu dynamic.
-      --  ??? This does not work with GtkApplication menu
-
-      declare
-         Menu_Item : Gtk_Menu_Item;
-      begin
-         Menu_Item := Find_Menu_Item (App.Kernel, -"/Window");
-         if Menu_Item /= null then
-            Set_Submenu
-              (Menu_Item, Kernel_Desktop.Create_Menu
-                 (GPS_Main.MDI,
-                  User         => App.Kernel));
-         end if;
-      end;
-
       Set_Project_Name;
 
       if Is_Regular_File

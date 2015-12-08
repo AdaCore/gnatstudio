@@ -208,6 +208,15 @@ package body GPS.Kernel.Modules.UI is
       Context : Selection_Context);
    --  Called when the context changes
 
+   function Find_Menu_Item
+     (Menubar : access Gtk_Menu_Bar_Record'Class;
+      Path    : String)
+      return Gtk.Menu_Item.Gtk_Menu_Item;
+   --  Given an absolute path (see Register_Menu) for a menu item, return
+   --  the underlying gtk menu item. Useful in particular to check or change
+   --  the state of a menu item. Path is case insensitive.
+   --  This function might return null when the item is not found.
+
    function Create_Contextual_Menu
      (User  : Contextual_Menu_User_Data;
       Event : Gdk_Event) return Gtk_Menu;
@@ -280,6 +289,7 @@ package body GPS.Kernel.Modules.UI is
       Object : not null access GObject_Record'Class);
 
    type GPS_Action_Record is new Gsimple_Action_Record with record
+      --  ??? This is already stored by the Gsimple_Action
       CName : chars_ptr;
       Data  : aliased GPS_Action_Proxy;
    end record;
@@ -488,8 +498,8 @@ package body GPS.Kernel.Modules.UI is
    --  This also stores enough information to create toolbars later on.
 
    function Create_Menubar_From_Model
-     (Kernel : not null access Kernel_Handle_Record'Class)
-      return Gtk_Menu_Bar;
+     (Kernel  : not null access Kernel_Handle_Record'Class)
+     return Gtk_Menu_Bar;
    --  Create a menu bar from a menu model.
    --  This is only needed when not using system menus, and will be removed as
    --  soon as we use those menus everywhere.
@@ -1207,29 +1217,19 @@ package body GPS.Kernel.Modules.UI is
    --------------------
 
    function Find_Menu_Item
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Path    : String;
-      Menubar : Gtk_Menu_Bar := null)
-      return Gtk.Menu_Item.Gtk_Menu_Item
-   is
-      Win : constant GPS_Window := GPS_Window (Kernel.Get_Main_Window);
-      M   : Gtk_Menu_Bar;
+     (Menubar : access Gtk_Menu_Bar_Record'Class;
+      Path    : String)
+      return Gtk.Menu_Item.Gtk_Menu_Item is
    begin
-      if Win = null then
+      if Menubar = null then
          return null;
-      else
-         M := (if Menubar = null then Win.Menu_Bar else Menubar);
-         if M = null then
-            return null;
-         end if;
-
-         return Find_Or_Create_Menu_Tree
-           (Menu_Bar      => M,
-            Menu          => null,
-            Path          => Escape_Underscore (Path),
-            Accelerators  => Get_Default_Accelerators (Kernel),
-            Allow_Create  => False);
       end if;
+      return Find_Or_Create_Menu_Tree
+        (Menu_Bar      => Gtk_Menu_Bar (Menubar),
+         Menu          => null,
+         Path          => Escape_Underscore (Path),
+         Accelerators  => null,
+         Allow_Create  => False);
    end Find_Menu_Item;
 
    ----------------------
@@ -1243,7 +1243,9 @@ package body GPS.Kernel.Modules.UI is
       Item : Gtk_Menu_Item;
    begin
       if Path /= "" and then Path (Path'First) = '/' then
-         Item := Find_Menu_Item (Kernel, Path);
+         Item := Find_Menu_Item
+            (GPS_Application_Window (Get_Main_Window (Kernel)).Menu_Bar,
+             Path);
          if Item /= null
            and then Item.all in Action_Menu_Item_Record'Class
          then
@@ -1340,28 +1342,39 @@ package body GPS.Kernel.Modules.UI is
      (Kernel : not null access Kernel_Handle_Record'Class;
       Action : String)
    is
-      Item   : Gtk_Menu_Item;
       Key    : Gdk_Key_Type;
       Mods   : Gdk_Modifier_Type;
-      Child  : Gtk_Widget;
       C      : constant Action_Elements.Cursor :=
          Globals.Actions_To_UI.Find (Action);
+
+      procedure Internal
+         (Win : not null access GPS_Application_Window_Record'Class);
+      procedure Internal
+         (Win : not null access GPS_Application_Window_Record'Class)
+      is
+         Item   : Gtk_Menu_Item;
+         Child  : Gtk_Widget;
+      begin
+         if Win.Menu_Bar /= null then
+            for M of Globals.Actions_To_UI.Reference (C) loop
+               Item := Find_Menu_Item (Win.Menu_Bar, To_String (M.Path));
+               if Item /= null then
+                  Child := Item.Get_Child;
+                  if Child.all in Gtk_Accel_Label_Record'Class then
+                     Gtk_Accel_Label (Child).Set_Accel (Key, Mods);
+                  end if;
+               end if;
+            end loop;
+         end if;
+      end Internal;
+
    begin
       if Has_Element (C) then
          Kernel.Get_Shortcut_Simple
            (Action => Action,
             Key    => Key,
             Mods   => Mods);
-
-         for M of Globals.Actions_To_UI.Reference (C) loop
-            Item := Find_Menu_Item (Kernel, To_String (M.Path));
-            if Item /= null then
-               Child := Item.Get_Child;
-               if Child.all in Gtk_Accel_Label_Record'Class then
-                  Gtk_Accel_Label (Child).Set_Accel (Key, Mods);
-               end if;
-            end if;
-         end loop;
+         For_All_Open_Windows (Kernel.Get_Application, Internal'Access);
       end if;
    end Update_Shortcuts_For_Action;
 
@@ -1402,7 +1415,7 @@ package body GPS.Kernel.Modules.UI is
          M : Gtk_Menu_Item;
       begin
          if W.Menu_Bar /= null then
-            M := Find_Menu_Item (Kernel, To_String (Path), W.Menu_Bar);
+            M := Find_Menu_Item (W.Menu_Bar, To_String (Path));
             if M /= null then
                M.Destroy;
             end if;
@@ -1792,17 +1805,17 @@ package body GPS.Kernel.Modules.UI is
      (Kernel    : Kernel_Handle;
       Menu_Name : String)
    is
-      Menu : constant Gtk_Menu_Item := Find_Menu_Item (Kernel, Menu_Name);
+      Menu : constant Gtk_Menu_Item := Find_Menu_Item
+         (GPS_Application_Window (Get_Main_Window (Kernel)).Menu_Bar,
+          Menu_Name);
    begin
-      if Menu /= null then
-         if Menu.all in Action_Menu_Item_Record'Class then
-            Execute_Action
-              (Menu, Action_Menu_Item (Menu).Data, In_Foreground => True);
-         else
-            Activate (Menu);
-         end if;
-      else
+      if Menu = null then
          Kernel.Insert (-"Can't execute " & Menu_Name, Mode => Error);
+      elsif Menu.all in Action_Menu_Item_Record'Class then
+         Execute_Action
+           (Menu, Action_Menu_Item (Menu).Data, In_Foreground => True);
+      else
+         Activate (Menu);
       end if;
    end Execute_Menu;
 
@@ -2774,8 +2787,8 @@ package body GPS.Kernel.Modules.UI is
    -------------------------------
 
    function Create_Menubar_From_Model
-     (Kernel : not null access Kernel_Handle_Record'Class)
-      return Gtk_Menu_Bar
+     (Kernel  : not null access Kernel_Handle_Record'Class)
+     return Gtk_Menu_Bar
    is
       procedure Process_Menu
         (Parent      : not null access Gtk_Menu_Shell_Record'Class;
@@ -2834,18 +2847,26 @@ package body GPS.Kernel.Modules.UI is
                --  need to map from the gtk action name to the GPS name
                Act := Kernel.Get_Application.Lookup_Action
                   (Slice (Action, 5, Length (Action)));
-               if Act /= Gaction (Null_Interface) then
+               if Act = Gaction (Null_Interface) then
+                  Trace (Me, "MANU No action " & To_String (Action));
+                  Item := null;
+               elsif To_Object (Act).all in GPS_Action_Record'Class then
                   Item := Gtk_New_Action_Item
                     (Kernel      => Kernel,
                      Full_Path   => To_String (Full_Path),
                      Menu_Label  => Escape_Underscore (To_String (Label)),
                      Action    => GPS_Action (To_Object (Act)).Data.Action.all,
                      Optional  => Optional);
-               else
-                  Item := null;
+
+               elsif Get_State_Type (Act) = null then
+                  Gtk_New (Item, To_String (Label));
+                  Item.Set_Action_Name (To_String (Action));
                end if;
             end if;
-            Parent.Append (Item);
+
+            if Item /= null then
+               Parent.Append (Item);
+            end if;
          else
             Full_Path := Parent_Path;
          end if;
@@ -2887,6 +2908,7 @@ package body GPS.Kernel.Modules.UI is
       Increase_Indent (Me, "Menubar From model");
 
       Gtk_New (Menubar);
+
       for Idx in 0 .. Globals.Menu_Model.Get_N_Items - 1 loop
          Process_Menu
            (Menubar, Globals.Menu_Model, Idx, Null_Unbounded_String);
@@ -3022,7 +3044,10 @@ package body GPS.Kernel.Modules.UI is
 
    procedure Install_Menus
      (Kernel    : not null access Kernel_Handle_Record'Class;
-      Menubar   : out Gtk.Menu_Bar.Gtk_Menu_Bar) is
+      Menubar   : out Gtk.Menu_Bar.Gtk_Menu_Bar)
+   is
+      Item : Menu_Item_Info;
+      It   : Gtk_Menu_Item;
    begin
       if Globals.Menu_Model = null then
          declare
@@ -3041,13 +3066,35 @@ package body GPS.Kernel.Modules.UI is
               (Kernel, Get_Element (Get_Tree (Reader)));
             Free (Reader);
          end;
+
+         if Active (System_Menus) then
+            Item := Find_Or_Create_Menu
+               (Globals.Menu_Model, "/Window", Allow_Create => False);
+            if Item /= No_Menu_Item then
+               Kernel_Desktop.Set_Menu_Model
+                  (Get_MDI (Kernel),
+                   Kernel.Get_Application,
+                   Gmenu (Item.Item.Get_Link ("submenu")),
+                   User => Kernel);
+               Unref (Item);
+            end if;
+         end if;
       end if;
 
-      if Globals.Menu_Model /= null then
-         if Active (System_Menus) then
-            Kernel.Get_Application.Set_Menubar (Globals.Menu_Model);
-         else
-            Menubar := Create_Menubar_From_Model (Kernel);
+      if Active (System_Menus) then
+         Kernel.Get_Application.Set_Menubar (Globals.Menu_Model);
+         Menubar := null;
+      else
+         Menubar := Create_Menubar_From_Model (Kernel);
+
+         if Menubar /= null then
+            --  This menu is handled by the MDI
+            It := Find_Menu_Item (Menubar, -"/Window");
+            if It /= null then
+               It.Set_Submenu
+                  (Kernel_Desktop.Create_Menu
+                     (Get_MDI (Kernel), User => Kernel));
+            end if;
          end if;
       end if;
    end Install_Menus;

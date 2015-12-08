@@ -2083,6 +2083,7 @@ package body GPS.Kernel.MDI is
          App_Win := new GPS_Application_Window_Record;
          GPS.Main_Window.Initialize
            (App_Win, GPS_Application (Child.Kernel.Get_Application));
+         App_Win.Setup_Menu_Bar;
 
          Win := Gtk_Window (App_Win);
          Container := Gtk_Container (App_Win.Main_Box);

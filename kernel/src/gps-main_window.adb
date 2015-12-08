@@ -666,8 +666,16 @@ package body GPS.Main_Window is
 
       Gtk_New_Vbox (Self.Main_Box, Homogeneous => False);
       Self.Add (Self.Main_Box);
+   end Initialize;
 
-      Install_Menus (Application.Kernel, Menubar => Self.Menu_Bar);
+   ------------------
+   -- Set_Menu_Bar --
+   ------------------
+
+   procedure Setup_Menu_Bar
+     (Self : not null access GPS_Application_Window_Record'Class) is
+   begin
+      Install_Menus (Self.Application.Kernel, Menubar => Self.Menu_Bar);
       if Self.Menu_Bar /= null then
          Self.Main_Box.Pack_Start (Self.Menu_Bar, Expand => False);
       end if;
@@ -678,9 +686,9 @@ package body GPS.Main_Window is
       Get_Style_Context (Self.Toolbar_Box).Add_Class ("toolbar");
       Self.Toolbar_Box.On_Draw (On_Draw_Toolbar_Box'Access);
 
-      Self.Toolbar := Create_Toolbar (Application.Kernel, Id => "main");
+      Self.Toolbar := Create_Toolbar (Self.Application.Kernel, Id => "main");
       Self.Toolbar_Box.Pack_Start (Self.Toolbar);
-   end Initialize;
+   end Setup_Menu_Bar;
 
    -------------
    -- Gtk_New --
@@ -730,13 +738,13 @@ package body GPS.Main_Window is
         (MDI    => Main_Window.MDI,
          Kernel => Application.Kernel,
          Group  => Main_Window.Main_Accel_Group);
-
       Setup_Toplevel_Window (Main_Window.MDI, Main_Window);
 
       Widget_Callback.Object_Connect
          (Main_Window.MDI, Signal_Float_Child, On_Float_Child'Access,
           Slot_Object => Main_Window);
 
+      Main_Window.Setup_Menu_Bar;
       Main_Window.Main_Box.Add (Main_Window.MDI);
 
       Widget_Callback.Connect (Main_Window, Signal_Destroy, On_Destroy'Access);

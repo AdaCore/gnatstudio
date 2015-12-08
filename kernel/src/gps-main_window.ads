@@ -100,6 +100,10 @@ package GPS.Main_Window is
    --  A menubar is automatically added to the window is necessary (i.e. when
    --  this would not be done automatically by gtk+ when using system menus).
 
+   procedure Setup_Menu_Bar
+     (Self : not null access GPS_Application_Window_Record'Class);
+   --  Setup menubar and toolbar for the window
+
    function Kernel
      (Self : not null access GPS_Application_Window_Record'Class)
       return GPS.Kernel.Kernel_Handle is (Self.Application.Kernel) with Inline;
