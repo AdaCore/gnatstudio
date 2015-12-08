@@ -17,6 +17,7 @@
 
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 with System;
 
 with GNAT.Strings;                use GNAT.Strings;
@@ -313,6 +314,43 @@ package body Call_Graph_Views is
      (Model : Gtk_Tree_Model; Iter : Gtk_Tree_Iter) return View_Type;
    pragma Inline (Get_View_Type);
    --  Returns the View_Type for the entity pointer to by Iter
+
+   procedure Free_And_Remove
+     (Model : Gtk_Tree_Store;
+      Iter  : in out Gtk_Tree_Iter);
+   --  Removes Iter from Tree_Store and free allocated memory.
+   --  After being removed, Iter is set to the
+   --  next valid row at that level, or invalidated if it previously pointed to
+   --  the last one.
+
+   ---------------------
+   -- Free_And_Remove --
+   ---------------------
+
+   procedure Free_And_Remove
+     (Model : Gtk_Tree_Store;
+      Iter  : in out Gtk_Tree_Iter)
+   is
+      L_Value : GValue;
+      L       : List_Access;
+      Addr    : System.Address;
+
+      use type System.Address;
+
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (List, List_Access);
+
+   begin
+      Get_Value (Model, Iter, List_Column, L_Value);
+      Addr := Get_Address (L_Value);
+
+      if Addr /= System.Null_Address then
+         L := To_Reference_List (Addr);
+         Unchecked_Free (L);
+      end if;
+
+      Remove (Model, Iter);
+   end Free_And_Remove;
 
    -------------------
    -- Get_View_Type --
@@ -895,7 +933,7 @@ package body Call_Graph_Views is
          Path_Free (Local_Path);
 
          while Child /= Null_Iter loop
-            Remove (M, Child);
+            Free_And_Remove (M, Child);
          end loop;
 
          case Get_View_Type (Get_Model (V.Tree), Iter) is
@@ -936,10 +974,14 @@ package body Call_Graph_Views is
       View : constant Callgraph_View_Access :=
         Generic_View.Retrieve_View (Get_Kernel (Context.Context));
       Model : Gtk_Tree_Store;
+      Iter  : Gtk_Tree_Iter;
    begin
       if View /= null then
          Model := -Get_Model (View.Tree);
-         Model.Clear;
+         Iter := Model.Get_Iter_First;
+         while Iter /= Null_Iter loop
+            Free_And_Remove (Model, Iter);
+         end loop;
       end if;
       return Commands.Success;
    end Execute;
@@ -979,7 +1021,7 @@ package body Call_Graph_Views is
       if View /= null then
          Get_Selected (Get_Selection (View.Tree), Model, Iter);
          if Iter /= Null_Iter then
-            Remove (Gtk_Tree_Store'(-Model), Iter);
+            Free_And_Remove (Gtk_Tree_Store'(-Model), Iter);
          end if;
       end if;
       return Commands.Success;
@@ -1522,7 +1564,7 @@ package body Call_Graph_Views is
       --  If the Iter has no children, attempt to recompute it here.
 
       if Model.Children (Iter) = Null_Iter then
-         Model.Remove (Iter);
+         Free_And_Remove (Model, Iter);
          Iter := Null_Iter;
       end if;
 
@@ -1624,7 +1666,7 @@ package body Call_Graph_Views is
          Path := Get_Path (Data.Computing_Ref);
          Model := -Get_Model (Data.View.Tree);
          Iter := Get_Iter (Model, Path);
-         Remove (Model, Iter);
+         Free_And_Remove (Model, Iter);
          Path_Free (Path);
       end if;
 

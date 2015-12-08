@@ -265,6 +265,9 @@ package body Navigation_Module is
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the desktop is loaded
 
+   procedure Free (Markers : in out Location_Marker_Array_Access);
+   --  Free allocated memory.
+
    -------------
    -- Execute --
    -------------
@@ -349,6 +352,7 @@ package body Navigation_Module is
 
          if Filename.Is_Regular_File then
             Parse (Filename, File, Error);
+            Free (Error);
          end if;
 
          if File = null then
@@ -496,6 +500,8 @@ package body Navigation_Module is
 
             if Project /= null then
                Child := Project.Child;
+
+               Free (M.Markers);
 
                M.Markers := new Location_Marker_Array
                  (1 .. Max_Locations_In_History);
@@ -905,6 +911,23 @@ package body Navigation_Module is
         and then Module.Current_Marker < Module.Last_Marker;
    end Filter_Matches_Primitive;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Markers : in out Location_Marker_Array_Access) is
+   begin
+      if Markers /= null then
+         for M in Markers'Range loop
+            if Markers (M) /= null then
+               Destroy (Markers (M).all);
+               Unchecked_Free (Markers (M));
+            end if;
+         end loop;
+         Unchecked_Free (Markers);
+      end if;
+   end Free;
+
    -------------
    -- Execute --
    -------------
@@ -1278,16 +1301,7 @@ package body Navigation_Module is
    overriding procedure Destroy (Id : in out Navigation_Module_Record) is
    begin
       Save_History_Markers (Get_Kernel (Id));
-
-      if Id.Markers /= null then
-         for M in Id.Markers'Range loop
-            if Id.Markers (M) /= null then
-               Destroy (Id.Markers (M).all);
-               Unchecked_Free (Id.Markers (M));
-            end if;
-         end loop;
-         Unchecked_Free (Id.Markers);
-      end if;
+      Free (Id.Markers);
    end Destroy;
 
 end Navigation_Module;

@@ -261,7 +261,7 @@ package body Language.Shell is
       Buffer  : UTF8_String;
       Result  : out Construct_List)
    is
-      Sub    : constant Subprogram_Type :=
+      Sub    : Subprogram_Type :=
         Get_Method (Lang.Object, "parse_constructs");
    begin
       if Sub = null then
@@ -290,6 +290,7 @@ package body Language.Shell is
          begin
             null;
          end;
+         Free (Sub);
          Result := CList.CList;
       end;
    end Parse_Constructs;

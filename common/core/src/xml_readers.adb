@@ -286,12 +286,14 @@ package body XML_Readers is
       Tree  := Get_Tree (Reader);
       Error := null;
 
+      Free (Reader);
       Close (Input);
 
    exception
       when E : XML_Fatal_Error =>
          Free (Reader.Tree);
          Free (Reader);
+         Close (Input);
          Error := new Byte_Sequence'(Exception_Message (E));
          Tree := null;
    end Parse;

@@ -674,8 +674,12 @@ package body Completion_Window is
               (Explorer.Pattern = null
                or else Is_Prefix (Explorer.Pattern.all, Completion));
          begin
-            exit when Last_Completion /= ""
-              and then Completion /= Last_Completion;
+            if Last_Completion /= ""
+              and then Completion /= Last_Completion
+            then
+               Shallow_Free (Proposal);
+               exit;
+            end if;
 
             Last_Completion := To_Unbounded_String (Completion);
 

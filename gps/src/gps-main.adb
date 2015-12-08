@@ -1549,7 +1549,16 @@ procedure GPS.Main is
          Rename (Pid_File, Log_File, Success);
       end if;
 
+      GPS_Command_Line.Context.Free;
       Free (Startup_Dir);
+      Free (Batch_File);
+      Free (Batch_Script);
+      Free (Tools_Host);
+      Free (Target);
+      Free (Protocol);
+      Free (Debugger_Name);
+      Free (Passed_Project_Name);
+      Free (Program_Args);
 
       if Memory_Monitor then
          GNATCOLL.Memory.Dump

@@ -949,11 +949,18 @@ package body Completion_Module is
             --  If the completion list is empty, return without showing the
             --  completions window.
 
-            if At_End (First (Data.Result, Kernel.Databases)) then
-               Trace (Me_Adv, "No completions found");
-               On_Completion_Destroy (View);
-               return Commands.Success;
-            end if;
+            declare
+               It : Completion_Iterator;
+            begin
+               It := First (Data.Result, Kernel.Databases);
+               if At_End (It) then
+                  Free (It);
+                  Trace (Me_Adv, "No completions found");
+                  On_Completion_Destroy (View);
+                  return Commands.Success;
+               end if;
+               Free (It);
+            end;
 
             Gtk_New (Win, Kernel);
             Completion_Module.Smart_Completion := Win;
