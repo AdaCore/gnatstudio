@@ -147,6 +147,15 @@ KP-62-0326-012 GPS: C rename refactoring
 Known problems fixed in GPS 6.2.1 / GNATbench 2.10.1
 ----------------------------------------------------
 
+KP-62-OB24-007 GPS: "Remove SCIL&DB" removes unexpected directories
+
+  Problem:    Removal of CodePeer's artifacts with the "Remove SCIL&DB" command
+              also removes directories of externally built projects.
+
+  Status:     This was fixed in 6.2.1 on 2015-12-09
+
+  Workaround: Protect directories using OS utilities.
+
 KP-62-OB12-006 GPS: Locations are not restored on startup
 
   Problem:    Messages are not restored on startup when "Save locations on
