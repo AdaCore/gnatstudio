@@ -80,6 +80,22 @@ KP-62-OB17-052 GPS: Inconsistent Debug menu states
 
   Workaround: Click in another window to move the focus.
 
+KP-62-OB02-020 GB: wrong linked source folder(s) automatically created
+
+  Problem:    At startup or on GPR file/scenario variable change, wrong linked
+              folders are automatically created for source folders.
+              It occurs when the existing linked source folder is not a child
+              of the project node, or on windows when there is case sensitive
+              difference between folder name in GPR file and folder name in the
+              file system.
+              These wrong linked source folders may lead to problems in source
+              navigation.
+
+  Status:     This was fixed in 17.0 on 2015-11-03
+
+  Workaround: Remove the existing linked folders and let GNATbench create them.
+              On windows, let folder names be case sensitive.
+
 KP-62-OA28-042 GPS: memory leak linked to completions
 
   Problem:    Using the dynamic completion causes GPS to leak memory.
