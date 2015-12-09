@@ -323,6 +323,17 @@ KP-61-O506-020 GPS: project attributes for CodePeer
   Workaround: Use text editor to edit project file when CodePeer package is
               used in it.
 
+KP-61-O502-001 GB: invalid content after auto indent or paste actions
+
+  Problem:    On windows, sometimes pressing Enter or pasting clipboard in the
+              ada editor, corrupts the buffer.
+
+  Status:     This was fixed in 6.2 on 2015-06-15
+
+  Workaround: Undo the action (Ctrl+Z) that had corrupted the editor content,
+              select all (Ctrl+A), cut (Ctrl+X) and paste (Ctrl+V) to restore
+              content.
+
 KP-61-O429-016 GPS: behaviors of local toolbar menus
 
   Problem:    The menus at the right of the view-local toolbars behave
