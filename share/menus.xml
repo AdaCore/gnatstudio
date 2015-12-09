@@ -336,8 +336,6 @@
          </menu>
          <menu label="GNATtest">
             <menu label="Generate Unit Test Setup" action="run gnattest on root"/>
-            <menu label="Generate Unit Test Setup Recursive"
-                  action="run gnattest on root recursive"/>
             <menu label="Show not Implemented Tests" action="show not implemented tests"/>
             <menu label="Open Harness Project"       action="open harness"/>
             <menu label="Exit from Harness Project"  action="exit harness"/>

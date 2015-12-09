@@ -36,22 +36,65 @@ def is_harness_project():
     return mapping.strip() != ""
 
 
+def get_driver_list():
+    """ Check if root project has test_drivers.list file and return it. """
+    root_project = GPS.Project.root().file().name()
+    (name, ext) = os.path.splitext(root_project)
+    name = name + ".list"
+    if os.path.exists(name):
+        return name
+    else:
+        return ""
+
+
+def get_harness_project_file(cur):
+    """ Return name of harness project with last modification time """
+    harness_dir = cur.get_attribute_as_string("Harness_Dir", "GNATtest")
+    list = []
+
+    if harness_dir == "":
+        list.append(os.path.join(cur.object_dirs()[0],
+                                 "gnattest", "harness",
+                                 "test_driver.gpr"))
+        list.append(os.path.join(cur.object_dirs()[0],
+                                 "gnattest_stub", "harness",
+                                 "test_drivers.gpr"))
+    else:
+        list.append(os.path.join(cur.object_dirs()[0],
+                                 harness_dir,
+                                 "test_driver.gpr"))
+        list.append(os.path.join(cur.object_dirs()[0],
+                                 harness_dir,
+                                 "test_drivers.gpr"))
+
+    def compare(a, b):
+        if not os.path.exists(a):
+            return b
+        elif not os.path.exists(b) or \
+                os.path.getmtime(a) > os.path.getmtime(b):
+
+            return a
+        else:
+            return b
+
+    return reduce(compare, list, "")
+
+
 def open_harness_project(cur):
     """ Open harness project if it hasn't open yet."""
     if is_harness_project():
         return
 
-    harness_dir = cur.get_attribute_as_string("Harness_Dir", "GNATtest")
+    prj = get_harness_project_file(cur)
 
-    if harness_dir == "":
-        harness_dir = "gnattest/harness"
-
-    prj = os.path.join(cur.object_dirs()[0], harness_dir, "test_driver.gpr")
-    last_gnattest['root'] = GPS.Project.root().file().name()
-    GPS.Project.load(prj, False, True)
-    GPS.Console("Messages").write("Switched to harness project: " +
-                                  GPS.Project.root().file().name() + "\n")
-    last_gnattest['harness'] = GPS.Project.root().file().name()
+    if os.path.exists(prj):
+        last_gnattest['root'] = GPS.Project.root().file().name()
+        GPS.Project.load(prj, False, True)
+        GPS.Console("Messages").write("Switched to harness project: " +
+                                      GPS.Project.root().file().name() + "\n")
+        last_gnattest['harness'] = GPS.Project.root().file().name()
+    else:
+        GPS.Console("Messages").write("No harness project found!\n")
 
 
 def exit_harness_project():
@@ -90,15 +133,22 @@ def __on_compilation_finished(category, target_name="",
 def on_project_view_changed():
     """ Replace run target in harness project. """
     test_run_target = GPS.BuildTarget("Run a test-driver")
+    test_run_targets = GPS.BuildTarget("Run a test drivers list")
     run_main_target = GPS.BuildTarget("Run Main")
 
-    if is_harness_project():
-        run_main_target.hide()
-        test_run_target.show()
-    else:
+    if not is_harness_project():
         run_main_target.show()
         test_run_target.hide()
+        test_run_targets.hide()
         return
+    elif get_driver_list() == "":
+        run_main_target.hide()
+        test_run_target.show()
+        test_run_targets.hide()
+    else:
+        run_main_target.hide()
+        test_run_target.hide()
+        test_run_targets.show()
 
     # Update read-only areas in already opened files
     buffer_list = GPS.EditorBuffer.list()
@@ -255,17 +305,6 @@ XML = r"""<?xml version="1.0" ?>
     """"GNATtest for project")</shell>
   </action>
 
-  <action name="run gnattest recursive">
-    <filter_and>
-      <filter id="Project only"/>
-      <filter id="Non harness project"/>
-    </filter_and>
-    <description>Run gnattest on current project and subprojects</description>
-    <shell lang="python" output="none"
-    >gnattest.run(GPS.current_context().project(), """ \
-    """"GNATtest for project", "-r")</shell>
-  </action>
-
   <action name="run gnattest on root">
     <filter_and>
       <filter id="Non harness project"/>
@@ -273,16 +312,6 @@ XML = r"""<?xml version="1.0" ?>
     <description>Run gnattest on root project</description>
     <shell lang="python" output="none"
     >gnattest.run(GPS.Project.root(), "GNATtest for root project")</shell>
-  </action>
-
-  <action name="run gnattest on root recursive">
-    <filter_and>
-      <filter id="Non harness project"/>
-    </filter_and>
-    <description>Run gnattest on root project and subprojects</description>
-    <shell lang="python" output="none"
-    >gnattest.run(GPS.Project.root(), """ \
-    """"GNATtest for root project", "-r")</shell>
   </action>
 
   <action name="open harness" output="none">
@@ -314,10 +343,6 @@ XML = r"""<?xml version="1.0" ?>
 
   <contextual action="run gnattest" after="GNATtest">
     <title>GNATtest/Generate unit test setup for %p</title>
-  </contextual>
-
-  <contextual action="run gnattest recursive" after="GNATtest">
-    <title>GNATtest/Generate unit test setup for %p recursive</title>
   </contextual>
 
   <contextual action="open harness" after="GNATtest">
@@ -352,9 +377,9 @@ XML = r"""<?xml version="1.0" ?>
              as-directory="true"
              tip="is used to specify the directory in which to """ \
 """place harness packages and project file for the test driver." />
-      <field label="separate stub root"
+      <field label="separate tests root"
              line="1"  column="1"
-             switch="--separate-root"
+             switch="--tests-root"
              separator="="
              as-directory="true"
              tip="The directory hierarchy of tested sources is """ \
@@ -366,6 +391,12 @@ XML = r"""<?xml version="1.0" ?>
              separator="="
              as-directory="true"
              tip="Test packages are placed in subdirectories" />
+      <field label="tests directory"
+             line="1"  column="1"
+             switch="--tests-dir"
+             separator="="
+             as-directory="true"
+             tip="All test packages are placed in this directory." />
       <field label="additional tests"
              line="1"  column="1"
              switch="--additional-tests"
@@ -373,41 +404,46 @@ XML = r"""<?xml version="1.0" ?>
              as-file="true"
              tip="Sources described in given project are considered """ \
     """potential additional manual tests to be added to the test suite." />
-      <combo label="stubs default"
+      <combo label="skeletons default"
              line="2"  column="1"
-             switch="--stub-default"
+             switch="--skeleton-default"
              separator="="
              noswitch="fail"
-             tip="Default behavior of generated stubs.">
+             tip="Default behavior of generated skeletons.">
         <combo-entry label="Fail" value="fail"/>
         <combo-entry label="Pass" value="pass"/>
       </combo>
+      <check label="use stubbing"
+             line="1"  column="2"
+             switch="--stub"
+             tip="Generates the testing framework that uses subsystem """ \
+    """stubbing to isolate the code under test. " />
       <check label="generate harness only"
              line="1"  column="2"
              switch="--harness-only"
              tip="Create a harness for all sources, treating them as """ \
     """test packages." />
-      <check label="Recursive"
+      <check label="recursive"
              line="1"  column="2"
              switch="-r"
              tip="Recursively consider all sources from all projects." />
-      <check label="Silent"
+      <check label="silent"
              line="1"  column="2"
              switch="-q"
              tip="Suppresses noncritical output messages." />
-      <check label="Verbose"
+      <check label="verbose"
              line="1"  column="2"
              switch="-v"
              tip="Verbose mode: generates version information." />
-      <check label="Liskov verification"
+      <check label="validate type ext."
              line="1"  column="2"
-             switch="--liskov"
-             tip="Enables Liskov verification: run all tests from all """ \
+             switch="--validate-type-extensions"
+             tip="Enables substitution check: run all tests from all """ \
     """parents in order to check substitutability." />
     </switches>
   </target-model>
 
-  <!-- This is model for run test-driver executables geberated by GNATtest -->
+  <!-- This is model for run test-driver executables generated by GNATtest -->
   <target-model name="GNATtest run" category="">
     <description>Run a test-driver generated by GNATtest</description>
     <is-run>FALSE</is-run>
@@ -435,9 +471,36 @@ XML = r"""<?xml version="1.0" ?>
     </switches>
   </target-model>
 
+  <!-- This is model for run test-drivers.list generated by GNATtest -->
+  <target-model name="GNATtest execution mode" category="">
+    <description>Run a test-drivers.list generated by GNATtest</description>
+    <is-run>FALSE</is-run>
+    <command-line>
+      <arg>%gnat</arg>
+      <arg>test</arg>
+      <arg>test_drivers.list</arg>
+      <arg>--passed-tests=hide</arg>
+    </command-line>
+    <server>Execution_Server</server>
+    <iconname>gps-run-symbolic</iconname>
+
+    <switches command="%(tool_name)s" columns="1" separator="=">
+      <spin label="Runs N tests in parallel"
+        switch="--queues=" min="1" default="1"
+        tip="Runs n tests in parallel (default is 1)." />
+
+      <check label="Suppress passed tests output"
+        switch="--passed-tests=hide"
+        switch-off="--passed-tests=show"
+        default="on"
+        tip="hide passed tests from test river output"/>
+
+    </switches>
+  </target-model>
+
   <target model="gnattest" category="_Project_" name="GNATtest for project">
     <in-menu>FALSE</in-menu>
-    <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
 
     <command-line>
@@ -452,7 +515,7 @@ XML = r"""<?xml version="1.0" ?>
   <target model="gnattest" category="_File_" name="GNATtest for file">
     <in-toolbar>FALSE</in-toolbar>
     <in-menu>FALSE</in-menu>
-    <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
 
     <command-line>
@@ -468,7 +531,7 @@ XML = r"""<?xml version="1.0" ?>
   <target model="gnattest" category="_Project_"
           name="GNATtest for root project">
     <in-menu>FALSE</in-menu>
-    <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <read-only>TRUE</read-only>
 
     <command-line>
@@ -494,6 +557,24 @@ XML = r"""<?xml version="1.0" ?>
       <arg>--passed-tests=hide</arg>
     </command-line>
   </target>
+
+  <target model="GNATtest execution mode" category="Run"
+          name="Run a test drivers list"
+          messages_category="test-driver">
+    <visible>FALSE</visible>
+    <in-menu>TRUE</in-menu>
+    <in-toolbar>TRUE</in-toolbar>
+    <in-contextual-menus-for-projects>TRUE</in-contextual-menus-for-projects>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
+    <target-type>executable</target-type>
+    <command-line>
+      <arg>%gnat</arg>
+      <arg>test</arg>
+      <arg>test_drivers.list</arg>
+      <arg>--passed-tests=hide</arg>
+    </command-line>
+  </target>
+
 </gnattest>
 """
 
