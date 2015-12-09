@@ -635,7 +635,7 @@ package body Clang_Xref is
       use File_To_Refs_Maps;
 
       --  Return value holders
-      Loc : Offset_T;
+      Loc : Offset_T := 0;
       File : Virtual_File;
 
    begin
