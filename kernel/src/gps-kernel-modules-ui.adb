@@ -968,7 +968,9 @@ package body GPS.Kernel.Modules.UI is
          if C.Label = null then
             return C.Name.all;
          else
-            --  Cache the expensive call to Get_Label in C.Label_For_Context
+            --  Cache the expensive call to Get_Label in C.Label_For_Context.
+            --  This name is used while building the menu to find parent
+            --  items.
             if C.Label_For_Context = Null_Unbounded_String then
                C.Label_For_Context := To_Unbounded_String
                  (Get_Label (C.Label, Context));
@@ -1021,10 +1023,10 @@ package body GPS.Kernel.Modules.UI is
       while C /= null loop
          if C.Menu_Type = Type_Action then
             C.Filter_Matched := Menu_Is_Visible (C, Context);
-
-            --  Reset the cache set in the previous contextual menu
-            C.Label_For_Context := Null_Unbounded_String;
          end if;
+
+         --  Reset the cache set in the previous contextual menu
+         C.Label_For_Context := Null_Unbounded_String;
          C := C.Next;
       end loop;
 
