@@ -78,8 +78,8 @@ KP-62-OB02-020 GB: wrong linked source folder(s) automatically created
               of the project node, or on windows when there is case sensitive
               difference between folder name in GPR file and folder name in the
               file system.
-              These wrong linked source folders may lead to problems in source
-              navigation.
+              These wrong linked source folders may lead to problems in ada
+              problems markers to ada source editor navigation.
 
   Status:     This was fixed in 17.0 on 2015-11-03
 
