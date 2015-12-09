@@ -1303,7 +1303,7 @@ package body GPS.Kernel.Hooks is
          exception
             when E : others =>
                Trace (Me, E, "While running "
-                  & Name (Self) & ":" & Name (F.Func));
+                  & Name (Self) & ":" & Name (F.Func) & ASCII.LF);
          end;
       end loop;%(run_exit)s%(returns_body)s
    end %(run_name)s;
