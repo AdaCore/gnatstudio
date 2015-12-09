@@ -19,7 +19,7 @@
 
 with Basic_Types;
 with GNATCOLL.Projects;
-with GNATCOLL.VFS;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GPS.Kernel;
 
 with Ada.Strings.Unbounded;
@@ -31,8 +31,8 @@ package GNATTest_Module is
    --  Register the module into the list
 
    procedure Find_Tested
-     (File_Name       : GNATCOLL.VFS.Virtual_File;
-      Unit_Name       : out Ada.Strings.Unbounded.Unbounded_String;
+     (File_Name       : Virtual_File;
+      File            : out Virtual_File;
       Subprogram_Name : out Ada.Strings.Unbounded.Unbounded_String;
       Line            : out Natural;
       Column          : out Basic_Types.Visible_Column_Type);
@@ -41,7 +41,7 @@ package GNATTest_Module is
    procedure Open_File
      (Kernel          : GPS.Kernel.Kernel_Handle;
       Project         : GNATCOLL.Projects.Project_Type;
-      Unit_Name       : String;
+      File            : Virtual_File;
       Line            : Natural;
       Column          : Basic_Types.Visible_Column_Type;
       Subprogram_Name : String := "");

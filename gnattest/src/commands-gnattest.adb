@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Basic_Types;
 with GNATTest_Module;
 with GPS.Kernel.Contexts;
@@ -34,24 +35,24 @@ package body Commands.GNATTest is
       Kernel : constant GPS.Kernel.Kernel_Handle :=
         GPS.Kernel.Get_Kernel (Context.Context);
 
-      Unit_Name       : Ada.Strings.Unbounded.Unbounded_String;
+      File            : Virtual_File;
       Subprogram_Name : Ada.Strings.Unbounded.Unbounded_String;
       Line            : Integer;
       Column          : Basic_Types.Visible_Column_Type;
    begin
       GNATTest_Module.Find_Tested
         (GPS.Kernel.Contexts.File_Information (Context.Context),
-         Unit_Name,
+         File,
          Subprogram_Name,
          Line,
          Column);
 
       GNATTest_Module.Open_File
         (Kernel,
-         Project  => GPS.Kernel.Contexts.Project_Information (Context.Context),
-         Unit_Name => Ada.Strings.Unbounded.To_String (Unit_Name),
-         Line      => Line,
-         Column    => Column,
+         Project => GPS.Kernel.Contexts.Project_Information (Context.Context),
+         File    => File,
+         Line    => Line,
+         Column  => Column,
          Subprogram_Name => Ada.Strings.Unbounded.To_String (Subprogram_Name));
 
       Command.Command_Finished (True);

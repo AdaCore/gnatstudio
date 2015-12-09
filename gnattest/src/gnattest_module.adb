@@ -112,20 +112,17 @@ package body GNATTest_Module is
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
 
    type Source_Entity is record
-      Source_File      : Unbounded_String;
-      Test_Unit        : Unbounded_String;
+      Source_File      : Virtual_File;
       Subprogram_Name  : Unbounded_String;
       Line             : Natural := 0;
       Column           : Natural := 0;
       Test_Case_Name   : Unbounded_String;
-      Test_Case_Line   : Natural := 0;
-      Test_Case_Column : Natural := 0;
    end record;
 
    function "<" (Left, Right : Source_Entity) return Boolean;
 
    type Test_Entity is record
-      File_Name        : Unbounded_String;
+      File_Name        : Virtual_File;
       Line             : Natural;
       Column           : Natural;
       Stamp            : Ada.Calendar.Time;
@@ -136,12 +133,19 @@ package body GNATTest_Module is
       Element_Type => Test_Entity);
 
    package Test_Entity_Maps is new Ada.Containers.Ordered_Maps
-     (Key_Type     => Unbounded_String,
+     (Key_Type     => Virtual_File,
       Element_Type => Source_Entity);
 
    type Modes is (Monolith, Separates);
 
+   type Stub_Unit_Type is record
+      Original : Virtual_File;
+      Stub     : Virtual_File;
+      Setter   : Virtual_File;
+   end record;
+
    type Mapping_File is new Sax.Readers.Reader with record
+      Kernel       : GPS.Kernel.Kernel_Handle;
       Mode         : Modes;
       Last_Source  : Source_Entity;
       Source_Map   : Source_Entity_Maps.Map;
@@ -150,6 +154,7 @@ package body GNATTest_Module is
       First_Tested : Boolean;
       Setup        : Test_Entity;
       Teardown     : Test_Entity;
+      Stub_Unit    : Stub_Unit_Type;
    end record;
 
    overriding procedure Start_Element
@@ -198,15 +203,17 @@ package body GNATTest_Module is
    ---------
 
    function "<" (Left, Right : Source_Entity) return Boolean is
+      Left_Name  : constant String := Left.Source_File.Display_Base_Name;
+      Right_Name : constant String := Right.Source_File.Display_Base_Name;
    begin
-      if Left.Source_File = Right.Source_File then
+      if Left_Name = Right_Name then
          if Left.Line = Right.Line then
             return Left.Test_Case_Name < Right.Test_Case_Name;
          else
             return Left.Line < Right.Line;
          end if;
       else
-         return Left.Source_File < Right.Source_File;
+         return Left_Name < Right_Name;
       end if;
    end "<";
 
@@ -231,9 +238,7 @@ package body GNATTest_Module is
       Lookup : Source_Entity;
       Cursor : Source_Entity_Maps.Cursor;
    begin
-      Lookup.Source_File := To_Unbounded_String
-        (Declaration.Loc.File.Display_Base_Name);
-
+      Lookup.Source_File := Declaration.Loc.File;
       Lookup.Line := Declaration.Loc.Line;
 
       Cursor := Map.Source_Map.Floor (Lookup);
@@ -300,10 +305,8 @@ package body GNATTest_Module is
             use type GNATCOLL.VFS.Filesystem_String;
             Key  : constant Source_Entity := Source_Entity_Maps.Key (Cursor);
             Item : constant Test_Entity := Source_Entity_Maps.Element (Cursor);
-            File : constant GNATCOLL.VFS.Virtual_File := GPS.Kernel.Create
-              (+To_String (Key.Source_File), Kernel);
-            Test : constant GNATCOLL.VFS.Virtual_File := GPS.Kernel.Create
-              (+To_String (Item.File_Name), Kernel);
+            File : constant GNATCOLL.VFS.Virtual_File := Key.Source_File;
+            Test : constant GNATCOLL.VFS.Virtual_File := Item.File_Name;
          begin
             if Test.File_Time_Stamp = Item.Stamp then
                GPS.Kernel.Messages.Simple.Create_Simple_Message
@@ -500,8 +503,8 @@ package body GNATTest_Module is
    -----------------
 
    procedure Find_Tested
-     (File_Name       : GNATCOLL.VFS.Virtual_File;
-      Unit_Name       : out Ada.Strings.Unbounded.Unbounded_String;
+     (File_Name       : Virtual_File;
+      File            : out Virtual_File;
       Subprogram_Name : out Ada.Strings.Unbounded.Unbounded_String;
       Line            : out Natural;
       Column          : out Basic_Types.Visible_Column_Type)
@@ -509,13 +512,13 @@ package body GNATTest_Module is
       Cursor : constant Test_Entity_Maps.Cursor := Find_In_Map (File_Name);
    begin
       if Test_Entity_Maps.Has_Element (Cursor) then
-         Unit_Name := Test_Entity_Maps.Element (Cursor).Source_File;
+         File := Test_Entity_Maps.Element (Cursor).Source_File;
          Subprogram_Name := Test_Entity_Maps.Element (Cursor).Subprogram_Name;
          Line := Test_Entity_Maps.Element (Cursor).Line;
          Column := Basic_Types.Visible_Column_Type
            (Test_Entity_Maps.Element (Cursor).Column);
       else
-         Unit_Name := Ada.Strings.Unbounded.Null_Unbounded_String;
+         File := GNATCOLL.VFS.No_File;
          Subprogram_Name := Ada.Strings.Unbounded.Null_Unbounded_String;
          Line := 0;
          Column := 0;
@@ -528,12 +531,9 @@ package body GNATTest_Module is
 
    function Find_In_Map
      (File_Name : GNATCOLL.VFS.Virtual_File)
-     return Test_Entity_Maps.Cursor
-   is
-      Item : constant Unbounded_String :=
-        To_Unbounded_String (String (File_Name.Base_Name));
+     return Test_Entity_Maps.Cursor is
    begin
-      return Map.Test_Map.Find (Item);
+      return Map.Test_Map.Find (File_Name);
    end Find_In_Map;
 
    ----------------------
@@ -566,6 +566,7 @@ package body GNATTest_Module is
    begin
       Map.Source_Map.Clear;
       Map.Test_Map.Clear;
+      Map.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
 
       if Map_File_Name /= "" then
          Input_Sources.File.Open (Map_File_Name, File);
@@ -581,13 +582,10 @@ package body GNATTest_Module is
    procedure Open_File
      (Kernel          : GPS.Kernel.Kernel_Handle;
       Project         : GNATCOLL.Projects.Project_Type;
-      Unit_Name       : String;
+      File            : Virtual_File;
       Line            : Natural;
       Column          : Basic_Types.Visible_Column_Type;
-      Subprogram_Name : String := "")
-   is
-      File  : constant GNATCOLL.VFS.Virtual_File := GPS.Kernel.Create
-        (GNATCOLL.VFS.Filesystem_String (Unit_Name), Kernel);
+      Subprogram_Name : String := "") is
 
    begin
       Src_Editor_Box.Go_To_Closest_Match
@@ -682,6 +680,8 @@ package body GNATTest_Module is
 
       function To_Integer (Name : String) return Integer;
       function To_Time (Name : String) return Ada.Calendar.Time;
+      function To_File (Name : String) return Virtual_File;
+
       function Get_Attribute (Name : String) return String;
       --  Return value of attribute with given Name or empty string if no such
 
@@ -712,6 +712,23 @@ package body GNATTest_Module is
          end if;
       end Get_Attribute;
 
+      function To_File (Name : String) return Virtual_File is
+         Text : constant Filesystem_String :=
+           Filesystem_String (Atts.Get_Value (Name));
+         Dir  : constant Virtual_File :=
+           Self.Kernel.Registry.Tree.Root_Project.Project_Path.Dir;
+         File : constant Virtual_File :=
+           Create_From_Dir (Dir, Filesystem_String (Text), True);
+      begin
+         if File.Base_Name = Text then
+            --  if just base name is provided in XML - find it in project
+            return GPS.Kernel.Create (Text, Self.Kernel);
+         end if;
+
+         --  othervise resolve it relative to directory of root project file
+         return File;
+      end To_File;
+
       function To_Integer (Name : String) return Integer is
       begin
          return Integer'Value (Atts.Get_Value (Name));
@@ -731,6 +748,7 @@ package body GNATTest_Module is
 
          return Null_Time;
       end To_Time;
+
    begin
       if Local_Name = "tests_mapping" then
          if Get_Attribute ("mode") = "monolith" then
@@ -739,12 +757,9 @@ package body GNATTest_Module is
             Self.Mode := Separates;
          end if;
       elsif Local_Name = "unit" then
-         Self.Last_Source.Source_File :=
-           To_Unbounded_String (Atts.Get_Value ("source_file"));
+         Self.Last_Source.Source_File := To_File ("source_file");
 
       elsif Local_Name = "test_unit" then
-         Self.Last_Source.Test_Unit :=
-           To_Unbounded_String (Atts.Get_Value ("target_file"));
          Self.First_Tested := True;
 
       elsif Local_Name = "tested" then
@@ -753,26 +768,20 @@ package body GNATTest_Module is
          Self.Last_Source.Line := To_Integer ("line");
          Self.Last_Source.Column := To_Integer ("column");
          Self.Last_Source.Test_Case_Name := To_Unbounded_String ("test case");
-         Self.Last_Source.Test_Case_Line := 0;
-         Self.Last_Source.Test_Case_Column := 0;
          Self.First_Test := True;
 
       elsif Local_Name = "test_case" then
          Self.Last_Source.Test_Case_Name :=
            To_Unbounded_String (Atts.Get_Value ("name"));
-         Self.Last_Source.Test_Case_Line := To_Integer ("line");
-         Self.Last_Source.Test_Case_Column := To_Integer ("column");
 
       elsif Local_Name = "setup" then
-         Self.Setup.File_Name :=
-              To_Unbounded_String (Atts.Get_Value ("file"));
+         Self.Setup.File_Name := To_File ("file");
          Self.Setup.Line := To_Integer ("line");
          Self.Setup.Column := To_Integer ("column");
          Self.Setup.Stamp := Null_Time;
 
       elsif Local_Name = "teardown" then
-         Self.Teardown.File_Name :=
-              To_Unbounded_String (Atts.Get_Value ("file"));
+         Self.Teardown.File_Name := To_File ("file");
          Self.Teardown.Line := To_Integer ("line");
          Self.Teardown.Column := To_Integer ("column");
          Self.Setup.Stamp := Null_Time;
@@ -781,8 +790,7 @@ package body GNATTest_Module is
          declare
             Target : Test_Entity;
          begin
-            Target.File_Name :=
-              To_Unbounded_String (Atts.Get_Value ("file"));
+            Target.File_Name := To_File ("file");
             Target.Line := To_Integer ("line");
             Target.Column := To_Integer ("column");
             Target.Stamp := To_Time ("timestamp");
@@ -794,6 +802,48 @@ package body GNATTest_Module is
                Add_Setup_Teardown;
                Self.First_Test := False;
             end if;
+         end;
+      elsif Local_Name = "stub_unit" then
+         Self.Stub_Unit.Original := To_File ("Original_body_file");
+         Self.Stub_Unit.Stub := To_File ("stub_body_file");
+         Self.Stub_Unit.Setter := To_File ("setter_file");
+
+      elsif Local_Name = "stubbed" then
+         Self.Last_Source.Subprogram_Name :=
+           To_Unbounded_String (Atts.Get_Value ("name"));
+         Self.Last_Source.Line := To_Integer ("line");
+         Self.Last_Source.Column := To_Integer ("column");
+         Self.Last_Source.Test_Case_Name := To_Unbounded_String ("test case");
+
+      elsif Local_Name in "stub_body" | "setter" then
+         declare
+            Target : Test_Entity;
+         begin
+            Target.Stamp := Null_Time;
+
+            if Local_Name = "stub_body" then
+               Target.Line := 1;
+               Target.Column := 1;
+               Target.File_Name := Self.Stub_Unit.Original;
+               Self.Last_Source.Test_Case_Name :=
+                 To_Unbounded_String ("original body");
+               Self.Source_Map.Include (Self.Last_Source, Target);
+               Self.Test_Map.Include (Target.File_Name, Self.Last_Source);
+
+               Target.File_Name := Self.Stub_Unit.Stub;
+               Self.Last_Source.Test_Case_Name :=
+                 To_Unbounded_String ("stub body");
+            else
+               Target.File_Name := Self.Stub_Unit.Setter;
+               Self.Last_Source.Test_Case_Name :=
+                 To_Unbounded_String ("setter");
+            end if;
+
+            Target.Line := To_Integer ("line");
+            Target.Column := To_Integer ("column");
+            Self.Source_Map.Include (Self.Last_Source, Target);
+            Self.Test_Map.Include (Target.File_Name, Self.Last_Source);
+
          end;
       end if;
    end Start_Element;
@@ -810,10 +860,10 @@ package body GNATTest_Module is
    begin
       Open_File
         (User_Data.Kernel,
-         Project   => GNATCOLL.Projects.No_Project,  --  will use any project
-         Unit_Name => To_String (User_Data.Entity.File_Name),
-         Line   => User_Data.Entity.Line,
-         Column => Basic_Types.Visible_Column_Type (User_Data.Entity.Column));
+         Project => GNATCOLL.Projects.No_Project,  --  will use any project
+         File    => User_Data.Entity.File_Name,
+         Line    => User_Data.Entity.Line,
+         Column  => Basic_Types.Visible_Column_Type (User_Data.Entity.Column));
    end Test_Entity_Callback;
 
    ----------------------------
