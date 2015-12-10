@@ -563,7 +563,7 @@ package body GPS.Kernel.Actions is
             Use_Markup      => Use_Markup,
             Return_Multiple => True));
       Menus : Unbounded_String :=
-         Menu_List_For_Action (Kernel, Action.Name.all);
+         Menu_List_For_Action (Action.Name.all);
 
    begin
       if Use_Markup then

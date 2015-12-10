@@ -1369,11 +1369,8 @@ package body GPS.Kernel.Modules.UI is
    -- Menu_List_For_Action --
    --------------------------
 
-   function Menu_List_For_Action
-      (Kernel : not null access Kernel_Handle_Record'Class;
-       Action : String) return Unbounded_String
+   function Menu_List_For_Action (Action : String) return Unbounded_String
    is
-      pragma Unreferenced (Kernel);
       C : constant Action_Elements.Cursor :=
          Globals.Actions_To_UI.Find (Action);
       Result : Unbounded_String;

@@ -310,9 +310,7 @@ package GPS.Kernel.Modules.UI is
    --  this function can be given the name of any action to retrieve either the
    --  action itself or the action that would be executed by selecting the menu
 
-   function Menu_List_For_Action
-     (Kernel : not null access Kernel_Handle_Record'Class;
-      Action : String) return Unbounded_String;
+   function Menu_List_For_Action (Action : String) return Unbounded_String;
    --  Return a newline-separated list of menus associated with this action.
 
    procedure Update_Shortcuts_For_Action
