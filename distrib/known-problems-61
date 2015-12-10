@@ -359,6 +359,15 @@ KP-61-O429-016 GPS: behaviors of local toolbar menus
   Workaround: Move the main window and click on the menu to make it
               disappear.
 
+KP-61-O427-030 GB: UI random freeze
+
+  Problem:    UI is freezing randomly when running background GNATbench
+              processes.
+
+  Status:     This was fixed in 6.2 on 2015-06-11
+
+  Workaround: None
+
 KP-61-O423-026 GPS: issue displaying complex objects in the debugger
 
   Problem:    Sometimes a graphical displaying of complex object does not work
