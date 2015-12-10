@@ -282,6 +282,17 @@ KP-61-O624-029 GPS: debugger shows value even when variable out of scope
   Workaround: Look at the tooltips in the editor, that show the value of
               the variable in the current scope.
 
+KP-61-O623-014 GB: UI very slow when handling very large ada file outline
+
+  Problem:    When editing ada files with a large number of types, procedures
+              variables, the outline view update process freeze the UI for
+              several seconds.
+
+  Status:     This was fixed in 6.2 on 2015-06-22
+
+  Workaround: Close outline view when editing very large ada files.
+              A smaller outline is available in project explorer view
+
 KP-61-O604-006 GPS: inconsistent support for makefile
 
   Problem:    On case-sensitive file systems, GPS correctly finds a "makefile"
