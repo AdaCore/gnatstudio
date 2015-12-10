@@ -318,6 +318,16 @@ KP-61-O601-007 GPS: cannot disable auto-casing when completion window is open
 
   Workaround: Close the completion window manually.
 
+KP-61-O525-011 GB: internal error during: Load Ada Predefined Paths job
+
+  Problem:    Sometimes applying a quickfix, a 'Load Ada Predefined Paths for
+              <ProjectName>' has encountered a problem dialog is displayed.
+              This can be followed by OutOfMemoryError exceptions.
+
+  Status:     This was fixed in 6.2 on 2015-07-20
+
+  Workaround: Restart GNATbench
+
 KP-61-O522-003 GPS: incorrect indentation after case expression
 
   Problem:    When 'Case indentation' is set to 'RM_Style' code after case
