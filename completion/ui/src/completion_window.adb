@@ -1090,7 +1090,7 @@ package body Completion_Window is
       pragma Unreferenced (Event);
    begin
       if Explorer.Iter /= null then
-         Unchecked_Free (Explorer.Iter);
+         Free (Explorer.Iter);
       end if;
 
       --  Force a refresh of the context as we are about to destroy the
@@ -2155,6 +2155,7 @@ package body Completion_Window is
      (Explorer : Completion_Explorer_Access;
       Iter     : Root_Iterator_Access) is
    begin
+      Free (Explorer.Iter);
       Explorer.Iter := Iter;
    end Set_Iterator;
 

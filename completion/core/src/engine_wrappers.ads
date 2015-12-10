@@ -117,8 +117,11 @@ package Engine_Wrappers is
    --  If you want to store a copy, call Deep_Copy.
    --  You should call Shallow_Free on the result in any case.
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Root_Iterator'Class, Root_Iterator_Access);
+   procedure Free (Iter : in out Root_Iterator) is abstract;
+   --  Free allocated memory
+
+   procedure Free (Iter : in out Root_Iterator_Access);
+   --  Free allocated memory by Iterator and free iterator
 
    ----------------------------------------------
    -- Implementation for the Completion engine --
@@ -169,6 +172,8 @@ package Engine_Wrappers is
       I : Completion_Iterator;
    end record;
 
+   overriding procedure Free (Iter : in out Comp_Iterator);
+
    procedure Set_Completion_Iterator
      (Comp_Iter : in out Comp_Iterator;
       Completion_Iter : Completion_Iterator);
@@ -217,6 +222,8 @@ package Engine_Wrappers is
    type Entity_Iterator is new Root_Iterator with record
       I : Ada_Semantic_Tree.Entity_Iterator;
    end record;
+
+   overriding procedure Free (Iter : in out Entity_Iterator);
 
    overriding function At_End (Iter : Entity_Iterator) return Boolean;
    overriding function Is_Valid (Iter : Entity_Iterator) return Boolean;

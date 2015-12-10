@@ -1998,6 +1998,7 @@ package body Default_Preferences is
       end loop;
 
       Print (File, File_Name, Success);
+      Free (File);
    exception
       when E : others => Trace (Me, E);
    end Save_Preferences;

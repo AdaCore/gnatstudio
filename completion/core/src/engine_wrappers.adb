@@ -25,6 +25,9 @@ with GPS.Kernel.Xref;         use GPS.Kernel.Xref;
 
 package body Engine_Wrappers is
 
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Root_Iterator'Class, Root_Iterator_Access);
+
    ---------------
    -- Get_Label --
    ---------------
@@ -102,6 +105,36 @@ package body Engine_Wrappers is
    overriding procedure Free (X : in out Comp_Proposal) is
    begin
       Free (X.P);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Iter : in out Root_Iterator_Access) is
+   begin
+      if Iter /= null then
+         Free (Iter.all);
+         Unchecked_Free (Iter);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Iter : in out Comp_Iterator) is
+   begin
+      Free (Iter.I);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Iter : in out Entity_Iterator) is
+   begin
+      Free (Iter.I);
    end Free;
 
    ------------------

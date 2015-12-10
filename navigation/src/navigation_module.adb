@@ -326,7 +326,7 @@ package body Navigation_Module is
       M           : constant Navigation_Module :=
                       Navigation_Module (Navigation_Module_ID);
       Filename    : constant Virtual_File := M.Markers_File;
-      File, Child, Project, Prev, Free_Me : Node_Ptr;
+      File, Child, Project, Prev, Free_Me, Project_Nodes : Node_Ptr;
 
       Success     : Boolean;
 
@@ -402,6 +402,7 @@ package body Navigation_Module is
 
                if Get_File_Child (Child, "file") = Project_File then
                   Project := Child;
+                  Project_Nodes := Project.Child;
                   Project.Child := null;
                   exit;
                end if;
@@ -433,6 +434,7 @@ package body Navigation_Module is
 
          Print (File, Filename, Success);
          Free (File);
+         Free (Project_Nodes);
 
          if not Success then
             Report_Preference_File_Error (Kernel, Filename);

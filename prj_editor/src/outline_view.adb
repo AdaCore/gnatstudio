@@ -280,10 +280,15 @@ package body Outline_View is
           (F, Open_View => False, Focus => False);
    begin
       if Ed /= Nil_Editor_Buffer then
-         Location_Changed
-           (Kernel,
-            Natural (Ed.Get_Main_Cursor.Get_Insert_Mark.Line),
-            Natural (Ed.Get_Main_Cursor.Get_Insert_Mark.Column));
+         declare
+            Mark : constant Editor_Mark'Class :=
+              Ed.Get_Main_Cursor.Get_Insert_Mark;
+         begin
+            Location_Changed
+              (Kernel,
+               Natural (Mark.Line),
+               Natural (Mark.Column));
+         end;
       end if;
    end Location_Changed;
 
