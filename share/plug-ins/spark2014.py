@@ -2090,7 +2090,10 @@ def get_line_warn(context):
     def msg_filter(msg):
         return msg.get_line() == context.location().line() \
             and is_unproved_check_message(msg)
-    return filter(msg_filter, GPS.Message.list(file=context.file()))
+    if len(context.files()) > 0:
+        return filter(msg_filter, GPS.Message.list(file=context.file()))
+    else:
+        return None
 
 
 def prove_check_context(context):

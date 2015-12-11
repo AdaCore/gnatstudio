@@ -35,6 +35,16 @@ KP-62-OC02-029 GB: cursor jumps to top of ada file when saved
 
   Workaround: None.
 
+KP-62-OC01-018 GPS.Exception: No file information stored in the context
+
+  Problem:    Right clicking on the name of the project in the project pane may
+              raise exception and display it in messages window when SPARK
+              is installed.
+
+  Status:     This was fixed in 17.0 on 2015-12-11
+
+  Workaround: None.
+
 KP-62-OB24-020 GPS: Navigating to included files doesn't work
 
   Problem:    Clicking on an included file directive in C/C++ did not navigate
