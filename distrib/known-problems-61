@@ -293,6 +293,15 @@ KP-61-O708-055 GPS: improve color of hyperlinks in the Locations view
 
   Workaround: None.
 
+KP-61-O707-010 GB: improve startup performance
+
+  Problem:    At startup, if there is a lot of open ada projects, the UI is
+              not responsive for a long time.
+
+  Status:     This was fixed in 2.10 on 2015-09-08
+
+  Workaround: Close currently unused ada projects.
+
 KP-61-O626-024 GB: opening ada projects takes a long time
 
   Problem:    Opening ada projects that contains a lot of ada files hang the UI
