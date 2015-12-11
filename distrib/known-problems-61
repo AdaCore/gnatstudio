@@ -59,6 +59,18 @@ KP-61-OA15-024 GB: Toggle Comment sometimes unable to uncomment
 
   Workaround: Uncomment the text using different selected text.
 
+KP-61-OA09-022 GB: cannot clean ada environment preference page
+
+  Problem:    When clearing ada environment preference page, using restore
+              defaults button or removing all the entries in the environment
+              variables table, errors are occuring and the ada environment is
+              not cleared..
+
+  Status:     This was fixed in 2.10 on 2015-10-12
+
+  Workaround: Add OA09_022_Workaround environment variable, and remove all the
+              others.
+
 KP-61-OA07-028 GPS: Project view with flat view does not show runtime
 
   Problem:    If you select both Flat View and Show Runtime in the project
