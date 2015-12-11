@@ -1338,7 +1338,7 @@ refactor the code)::
      type Order is tagged null record;
      function Get_Amount (Self : Order) return Integer;
 
-     package Order_Listsis new
+     package Order_Lists is new
         Ada.Containers.Indefinite_Doubly_Linked_Lists (Order);
 
      type Invoice is tagged record
