@@ -92,10 +92,10 @@ package body Code_Coverage.GNATcov is
    is
       Current           : Natural;
       Line_Regexp       : constant Pattern_Matcher := Compile
-        ("^ +(\d+) ([-!?+>v*]):(.*$)", Multiple_Lines);
+        ("^ *(\d+) ([-!?+>v*]):(.*$)", Multiple_Lines);
       Line_Matches      : Match_Array (0 .. 3);
       Last_Line_Regexp  : constant Pattern_Matcher := Compile
-        ("^ +(\d+) (.):", Multiple_Lines);
+        ("^ *(\d+) (.):", Multiple_Lines);
       Last_Line_Matches : Match_Array (0 .. 2);
       Line_Num          : Natural;
       Lines_Count       : Natural := 0;
@@ -254,7 +254,9 @@ package body Code_Coverage.GNATcov is
             Column        : Basic_Types.Visible_Column_Type;
          begin
             while Details_First <= File_Contents'Last
-              and then File_Contents (Details_First) /= ' '
+              and then
+                (File_Contents (Details_First) /= ' '
+                 and then File_Contents (Details_First) not in '0' .. '9')
             loop
                Details_Last := Index
                  (File_Contents.all, (1 => ASCII.LF), Details_First);

@@ -94,6 +94,14 @@ KP-62-OA28-042 GPS: memory leak linked to completions
 
   Workaround: None known, apart from deactivating the completion.
 
+KP-62-OA15-033 GPS: gnatcov's report not fully displayed
+
+  Problem:    GPS displays less then 1000 lines of gnatcov report.
+
+  Status:     This was fixed in 17.0 on 2015-12-11
+
+  Workaround: None.
+
 KP-62-OA07-003 GPS: Crash when using libclang cross references
 
   Problem:    Using the new libclang cross references engine causes GPS to
