@@ -293,6 +293,15 @@ KP-61-O623-014 GB: UI very slow when handling very large ada file outline
   Workaround: Close outline view when editing very large ada files.
               A smaller outline is available in project explorer view
 
+KP-61-O609-020 GB: construct database loaded twice
+
+  Problem:    Sometimes, usually at startup, the load construct database jobs
+              are run twice.
+
+  Status:     This was fixed in 2.10 on 2015-06-10
+
+  Workaround: None.
+
 KP-61-O604-006 GPS: inconsistent support for makefile
 
   Problem:    On case-sensitive file systems, GPS correctly finds a "makefile"
