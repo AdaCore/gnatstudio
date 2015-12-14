@@ -1463,9 +1463,9 @@ package body GPS.Main_Window is
       List : Glist := First (Children);
       Menu : Gtk_Widget;
    begin
-      while L /= Null_List loop
-         Menu := Gtk_Menu_Item (Get_Data (L)).Get_Submenu;
-         L := Next (L);
+      while List /= Null_List loop
+         Menu := Gtk_Menu_Item (Get_Data (List)).Get_Submenu;
+         List := Next (List);
          if Menu /= null and then Menu.Is_Visible then
             Free (Children);
             return True;
