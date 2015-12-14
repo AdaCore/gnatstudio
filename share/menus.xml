@@ -122,7 +122,6 @@
          </menu>
          <separator />  <!--  Below this: general dialogs -->
          <menu label='_Aliases...'               action='aliases edit'/>
-         <menu label='_Key Shortcuts...'         action='open key shortcuts'/>
          <menu label='_Color Theme...'           action='open Color Theme Picker'/>
          <menu label='_Preferences...'           action='open preferences'/>
       </menu>

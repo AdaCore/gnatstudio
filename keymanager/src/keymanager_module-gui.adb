@@ -15,76 +15,77 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Maps;        use Ada.Strings.Maps;
-with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
-with System;                  use System;
+with Ada.Strings.Maps;         use Ada.Strings.Maps;
+with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
+with System;                   use System;
 
-with GNAT.Strings;            use GNAT.Strings;
-with GNATCOLL.Utils;          use GNATCOLL.Utils;
-with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with GNAT.Strings;             use GNAT.Strings;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
-with Glib.Main;               use Glib.Main;
-with Glib.Object;             use Glib, Glib.Object;
+with Glib.Main;                use Glib.Main;
+with Glib.Object;              use Glib, Glib.Object;
 
-with Gdk.Cursor;              use Gdk.Cursor;
-with Gdk.Device;              use Gdk.Device;
-with Gdk.Event;               use Gdk.Event;
-with Gdk.Types;               use Gdk.Types;
-with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
-with Gdk.Window;              use Gdk, Gdk.Window;
+with Gdk.Cursor;               use Gdk.Cursor;
+with Gdk.Device;               use Gdk.Device;
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Types;                use Gdk.Types;
+with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
+with Gdk.Window;               use Gdk, Gdk.Window;
 
-with Gtkada.Dialogs;          use Gtkada.Dialogs;
-with Gtk.Accel_Group;         use Gtk.Accel_Group;
-with Gtk.Box;                 use Gtk.Box;
-with Gtk.Button;              use Gtk.Button;
-with Gtk.Button_Box;          use Gtk.Button_Box;
+with Gtkada.Dialogs;           use Gtkada.Dialogs;
+with Gtk.Accel_Group;          use Gtk.Accel_Group;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Button;               use Gtk.Button;
+with Gtk.Button_Box;           use Gtk.Button_Box;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
-with Gtk.Cell_Renderer_Text;  use Gtk.Cell_Renderer_Text;
-with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
-with Gtk.Combo_Box_Text;      use Gtk.Combo_Box_Text;
-with Gtk.Dialog;              use Gtk.Dialog;
-with Gtk.Enums;               use Gtk.Enums;
-with Gtk.Frame;               use Gtk.Frame;
-with Gtk.GEntry;              use Gtk.GEntry;
-with Gtk.Handlers;            use Gtk.Handlers;
-with Gtk.Label;               use Gtk.Label;
-with Gtk.Main;                use Gtk.Main;
-with Gtk.Menu;                use Gtk.Menu;
-with Gtk.Paned;               use Gtk.Paned;
-with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
-with Gtk.Separator;           use Gtk.Separator;
-with Gtk.Text_Buffer;         use Gtk.Text_Buffer;
-with Gtk.Text_Tag;            use Gtk.Text_Tag;
-with Gtk.Text_View;           use Gtk.Text_View;
-with Gtk.Toggle_Button;       use Gtk.Toggle_Button;
-with Gtk.Toolbar;             use Gtk.Toolbar;
-with Gtk.Tool_Button;         use Gtk.Tool_Button;
-with Gtk.Tree_Model;          use Gtk.Tree_Model;
-with Gtk.Tree_Model_Filter;   use Gtk.Tree_Model_Filter;
-with Gtk.Tree_Model_Sort;     use Gtk.Tree_Model_Sort;
-with Gtk.Tree_Selection;      use Gtk.Tree_Selection;
-with Gtk.Tree_Store;          use Gtk.Tree_Store;
-with Gtk.Tree_View;           use Gtk.Tree_View;
-with Gtk.Tree_View_Column;    use Gtk.Tree_View_Column;
-with Gtk.Widget;              use Gtk.Widget;
-with Gtk.Window;              use Gtk.Window;
-with Gtkada.Handlers;         use Gtkada.Handlers;
-with Gtkada.MDI;              use Gtkada.MDI;
-with Pango.Enums;             use Pango.Enums;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
+with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
+with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Frame;                use Gtk.Frame;
+with Gtk.GEntry;               use Gtk.GEntry;
+with Gtk.Handlers;             use Gtk.Handlers;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.Main;                 use Gtk.Main;
+with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Paned;                use Gtk.Paned;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Separator;            use Gtk.Separator;
+with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
+with Gtk.Text_Tag;             use Gtk.Text_Tag;
+with Gtk.Text_View;            use Gtk.Text_View;
+with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
+with Gtk.Toolbar;              use Gtk.Toolbar;
+with Gtk.Tool_Button;          use Gtk.Tool_Button;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Model_Filter;    use Gtk.Tree_Model_Filter;
+with Gtk.Tree_Model_Sort;      use Gtk.Tree_Model_Sort;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Window;               use Gtk.Window;
+with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtkada.MDI;               use Gtkada.MDI;
+with Pango.Enums;              use Pango.Enums;
 
-with Commands.Interactive;    use Commands, Commands.Interactive;
-with Default_Preferences;     use Default_Preferences;
-with Generic_Views;           use Generic_Views;
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Intl;                use GPS.Intl;
-with GPS.Search;              use GPS.Search;
-with GUI_Utils;               use GUI_Utils;
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
-with Histories;               use Histories;
+with Commands.Interactive;     use Commands, Commands.Interactive;
+with Default_Preferences;      use Default_Preferences;
+with Default_Preferences.GUI;  use Default_Preferences.GUI;
+with Generic_Views;            use Generic_Views;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Intl;                 use GPS.Intl;
+with GPS.Search;               use GPS.Search;
+with GUI_Utils;                use GUI_Utils;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with Histories;                use Histories;
 
 package body KeyManager_Module.GUI is
    Me : constant Trace_Handle := Create ("KEYMGR");
@@ -98,6 +99,19 @@ package body KeyManager_Module.GUI is
    Shortcuts_Only      : Boolean_Preference;
    Categories_Pref     : Boolean_Preference;
    Show_Empty_Cat      : Boolean_Preference;
+
+   type Keys_Editor_Preferences_Page_Record is new Preferences_Page_Record with
+      record
+         Kernel : Kernel_Handle;
+      end record;
+   type Keys_Editor_Preferences_Page is
+     access all Keys_Editor_Preferences_Page_Record'Class;
+   --  Type used to represent the key shortcuts editor preferences page model.
+
+   overriding function Get_Widget
+     (Self    : not null access Keys_Editor_Preferences_Page_Record;
+      Manager : not null Preferences_Manager)
+      return Gtk.Widget.Gtk_Widget;
 
    type Keys_Editor_Record is new Generic_Views.View_Record with record
       View               : Gtk_Tree_View;
@@ -148,9 +162,18 @@ package body KeyManager_Module.GUI is
       Position           => Position_Float,
       Initialize         => Initialize);
    use Keys_Editor_Views;
-   subtype Keys_Editor is Keys_Editor_Views.View_Access;
+   subtype Keys_Editor_View is Keys_Editor_Views.View_Access;
 
-   package Keys_Timeout is new Glib.Main.Generic_Sources (Keys_Editor);
+   type Keys_Editor_Preferences_Page_View_Record is
+     new Preferences_Page_View_Record with record
+      Editor : Keys_Editor_View;
+   end record;
+   type Keys_Editor_Preferences_Page_View is
+     access all Keys_Editor_Preferences_Page_View_Record'Class;
+   --  Type used to represent the preferences page view for the keys editor
+   --  shortcuts.
+
+   package Keys_Timeout is new Glib.Main.Generic_Sources (Keys_Editor_View);
 
    procedure Fill_Editor (Editor : access Keys_Editor_Record'Class);
    procedure Refill_Editor (View : access GObject_Record'Class);
@@ -211,7 +234,7 @@ package body KeyManager_Module.GUI is
       Output    : Event_Info_Access) return Boolean;
    --  Temporary event filter set when grabing the key for a key preference
 
-   function Cancel_Grab (Self : Keys_Editor) return Boolean;
+   function Cancel_Grab (Self : Keys_Editor_View) return Boolean;
    --  Exit the current nest main loop, if any
 
    procedure On_Load_Key_Theme (Editor : access GObject_Record'Class);
@@ -230,11 +253,11 @@ package body KeyManager_Module.GUI is
    --  Called when the preferences change
 
    package Keys_Editor_Visible_Funcs is new
-     Gtk.Tree_Model_Filter.Set_Visible_Func_User_Data (Keys_Editor);
+     Gtk.Tree_Model_Filter.Set_Visible_Func_User_Data (Keys_Editor_View);
    function Action_Is_Visible
      (Model : Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
-      Data  : Keys_Editor) return Boolean;
+      Data  : Keys_Editor_View) return Boolean;
    --  Selects whether a given row should be visible in the key shortcuts
    --  editor.
 
@@ -264,6 +287,35 @@ package body KeyManager_Module.GUI is
       return Commands.Command_Return_Type;
    --  Expand all files within the current category
 
+   ----------------
+   -- Get_Widget --
+   ----------------
+
+   overriding function Get_Widget
+     (Self    : not null access Keys_Editor_Preferences_Page_Record;
+      Manager : not null Preferences_Manager)
+      return Gtk.Widget.Gtk_Widget
+   is
+      Page_View     : Keys_Editor_Preferences_Page_View;
+      Editor        : access Keys_Editor_Record;
+      Editor_View   : Gtk_Widget;
+      Focus_Widget  : Gtk_Widget;
+      pragma Unreferenced (Manager, Focus_Widget);
+   begin
+      Page_View := new Keys_Editor_Preferences_Page_View_Record;
+      Default_Preferences.GUI.Initialize (Page_View);
+
+      Editor := new Keys_Editor_Record;
+      Editor.Set_Kernel (Self.Kernel);
+      Focus_Widget := Initialize (Editor);
+      Editor_View := Create_Finalized_View (Editor);
+
+      Page_View.Add (Editor_View);
+      Page_View.Editor := Editor;
+
+      return Gtk_Widget (Page_View);
+   end Get_Widget;
+
    -------------
    -- Execute --
    -------------
@@ -273,20 +325,34 @@ package body KeyManager_Module.GUI is
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type
    is
+      Kernel    : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Editor    : constant Preferences_Editor :=
+                    Kernel.Get_Preferences.Get_Editor;
+      Page_View : Keys_Editor_Preferences_Page_View;
+      Path      : Gtk_Tree_Path;
       pragma Unreferenced (Self);
-      K : constant Kernel_Handle := Get_Kernel (Context.Context);
-      V : constant Keys_Editor := Keys_Editor_Views.Retrieve_View (K);
-      Path : Gtk_Tree_Path;
    begin
-      if V /= null then
-         Path := Gtk_Tree_Path_New_First;
-         if V.View.Row_Expanded (Path) then
-            V.View.Collapse_All;
-         else
-            V.View.Expand_All;
-         end if;
-         Path_Free (Path);
+      if Editor /= null then
+         Page_View := Keys_Editor_Preferences_Page_View
+           (Editor.Get_Page_View ("Key Shortcuts"));
       end if;
+
+      if Page_View /= null then
+         declare
+            Tree_View : constant Gtk_Tree_View := Page_View.Editor.View;
+         begin
+            Path := Gtk_Tree_Path_New_First;
+
+            if Tree_View.Row_Expanded (Path) then
+               Tree_View.Collapse_All;
+            else
+               Tree_View.Expand_All;
+            end if;
+
+            Path_Free (Path);
+         end;
+      end if;
+
       return Commands.Success;
    end Execute;
 
@@ -422,7 +488,7 @@ package body KeyManager_Module.GUI is
    ---------------------------
 
    procedure Add_Selection_Changed (Editor : access Gtk_Widget_Record'Class) is
-      Ed        : constant Keys_Editor := Keys_Editor (Editor);
+      Ed        : constant Keys_Editor_View := Keys_Editor_View (Editor);
       Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
       Model     : Gtk_Tree_Model;
       Iter      : Gtk_Tree_Iter;
@@ -463,7 +529,7 @@ package body KeyManager_Module.GUI is
    function Action_Is_Visible
      (Model : Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
-      Data  : Keys_Editor) return Boolean
+      Data  : Keys_Editor_View) return Boolean
    is
       Row_Visible : Boolean := True;
       Child       : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -521,7 +587,7 @@ package body KeyManager_Module.GUI is
 
    procedure Refill_Editor (View : access GObject_Record'Class) is
    begin
-      Fill_Editor (Keys_Editor (View));
+      Fill_Editor (Keys_Editor_View (View));
    end Refill_Editor;
 
    --------------------
@@ -696,7 +762,7 @@ package body KeyManager_Module.GUI is
    -- Cancel_Grab --
    -----------------
 
-   function Cancel_Grab (Self : Keys_Editor) return Boolean is
+   function Cancel_Grab (Self : Keys_Editor_View) return Boolean is
    begin
       --  If there is a grab pending
 
@@ -767,7 +833,7 @@ package body KeyManager_Module.GUI is
 
       loop
          Id := Keys_Timeout.Timeout_Add
-           (500, Cancel_Grab'Access, Keys_Editor (View));
+           (500, Cancel_Grab'Access, Keys_Editor_View (View));
          Key_Grab (View, Key, Modif);
          Glib.Main.Remove (Id);
 
@@ -807,7 +873,7 @@ package body KeyManager_Module.GUI is
    -----------------
 
    procedure On_Grab_Key (Editor : access Gtk_Widget_Record'Class) is
-      Ed         : constant Keys_Editor := Keys_Editor (Editor);
+      Ed         : constant Keys_Editor_View := Keys_Editor_View (Editor);
       Selection  : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
       Sort_Model : Gtk_Tree_Model;
       Sort_Iter, Filter_Iter, Iter : Gtk_Tree_Iter;
@@ -929,7 +995,7 @@ package body KeyManager_Module.GUI is
    ---------------
 
    procedure On_Create (Editor : access Gtk_Widget_Record'Class) is
-      Self   : constant Keys_Editor := Keys_Editor (Editor);
+      Self   : constant Keys_Editor_View := Keys_Editor_View (Editor);
       Dialog : GPS_Dialog;
       Label  : Gtk_Label;
       Ent    : Gtk_Entry;
@@ -980,7 +1046,7 @@ package body KeyManager_Module.GUI is
    --------------
 
    procedure On_Reset (Editor : access Gtk_Widget_Record'Class) is
-      Self : constant Keys_Editor := Keys_Editor (Editor);
+      Self : constant Keys_Editor_View := Keys_Editor_View (Editor);
    begin
       if Message_Dialog
         (Dialog_Type    => Confirmation,
@@ -1006,7 +1072,7 @@ package body KeyManager_Module.GUI is
    -------------------
 
    procedure On_Remove_Key (Editor : access Gtk_Widget_Record'Class) is
-      Ed         : constant Keys_Editor := Keys_Editor (Editor);
+      Ed         : constant Keys_Editor_View := Keys_Editor_View (Editor);
       Selection  : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
       Sort_Model : Gtk_Tree_Model;
       Iter, Filter_Iter, Sort_Iter  : Gtk_Tree_Iter;
@@ -1056,7 +1122,7 @@ package body KeyManager_Module.GUI is
    ------------------------
 
    procedure On_Grab_For_Filter (View : access GObject_Record'Class) is
-      V : constant Keys_Editor := Keys_Editor (View);
+      V : constant Keys_Editor_View := Keys_Editor_View (View);
       Key : constant String := Grab_Multiple_Key
         (V, For_Filter => True, For_Display => True);
    begin
@@ -1111,7 +1177,7 @@ package body KeyManager_Module.GUI is
    -----------------------
 
    procedure On_Load_Key_Theme (Editor : access GObject_Record'Class) is
-      Self : constant Keys_Editor := Keys_Editor (Editor);
+      Self : constant Keys_Editor_View := Keys_Editor_View (Editor);
    begin
       Remove_Shortcuts (Self.Kernel, Mode => Standard_Shortcuts);
       Load_Key_Theme (Self.Kernel, Self.Themes.Get_Active_Text);
@@ -1127,7 +1193,7 @@ package body KeyManager_Module.GUI is
       Tmp : Boolean;
       pragma Unreferenced (Tmp);
    begin
-      Tmp := Cancel_Grab (Keys_Editor (Widget));
+      Tmp := Cancel_Grab (Keys_Editor_View (Widget));
 
       --  ??? Should we also reset the handling of key shortcuts ?
    end On_Destroy;
@@ -1142,7 +1208,7 @@ package body KeyManager_Module.GUI is
    is
       pragma Unreferenced (Event);
    begin
-      return Keys_Editor (Widget).In_Grab;
+      return Keys_Editor_View (Widget).In_Grab;
    end On_Delete;
 
    ----------------
@@ -1322,7 +1388,7 @@ package body KeyManager_Module.GUI is
 
       Fill_Editor (Editor);
 
-      return Gtk_Widget (Editor.View);
+      return Gtk_Widget (Editor);
    end Initialize;
 
    -------------
@@ -1334,16 +1400,24 @@ package body KeyManager_Module.GUI is
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
    is
+      Editor    : constant Preferences_Editor :=
+                    Kernel.Get_Preferences.Get_Editor;
+      Page_View : Keys_Editor_Preferences_Page_View;
       pragma Unreferenced (Self);
-      View : constant Keys_Editor := Keys_Editor_Views.Retrieve_View (Kernel);
    begin
-      if View /= null then
+
+      if Editor /= null then
+         Page_View := Keys_Editor_Preferences_Page_View
+           (Editor.Get_Page_View ("Key Shortcuts"));
+      end if;
+
+      if Page_View /= null then
          if Pref = null
            or else Pref = Preference (Shortcuts_Only)
            or else Pref = Preference (Categories_Pref)
            or else Pref = Preference (Show_Empty_Cat)
          then
-            Refill_Editor (View);
+            Refill_Editor (Page_View.Editor);
          end if;
       end if;
    end Execute;
@@ -1353,19 +1427,22 @@ package body KeyManager_Module.GUI is
    -----------------------
 
    procedure Register_Key_Menu
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Manager          : constant Preferences_Manager :=
+                           Kernel.Get_Preferences;
+      Keys_Editor_Page : constant Keys_Editor_Preferences_Page :=
+                           new Keys_Editor_Preferences_Page_Record;
    begin
-      Keys_Editor_Views.Register_Module (Kernel);
-
-      Shortcuts_Only := Kernel.Get_Preferences.Create_Invisible_Pref
+      Shortcuts_Only := Manager.Create_Invisible_Pref
         ("shortcuts-only", False,
          Label => -"Shortcuts only",
          Doc => -("If enabled, only actions with a shortcut are displayed"));
-      Categories_Pref := Kernel.Get_Preferences.Create_Invisible_Pref
+      Categories_Pref := Manager.Create_Invisible_Pref
         ("shortcuts-categories", True,
          Label => -"Show categories",
          Doc => -"Whether to group actions by categories");
-      Show_Empty_Cat := Kernel.Get_Preferences.Create_Invisible_Pref
+      Show_Empty_Cat := Manager.Create_Invisible_Pref
         ("shortcuts-show-empty-cat", False,
          Label => -"Show all categories",
          Doc => -("Whether to show actions with no category."
@@ -1380,6 +1457,13 @@ package body KeyManager_Module.GUI is
          -"Expand or collapse all nodes in the shortcuts editor",
          Icon_Name => "gps-expand-all-symbolic",
          Category => -"Key Shortcuts");
+
+      Keys_Editor_Page.Kernel := Kernel_Handle (Kernel);
+      Manager.Register_Page
+         (Name             => "Key Shortcuts",
+          Page             => Preferences_Page (Keys_Editor_Page),
+          Priority         => -1,
+          Replace_If_Exist => False);
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
    end Register_Key_Menu;

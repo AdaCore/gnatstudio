@@ -49,7 +49,7 @@ package Default_Preferences.GUI is
    ---------------------------
 
    procedure Initialize
-     (Self : not null access Preferences_Page_View_Record);
+     (Self : not null access Preferences_Page_View_Record'Class);
    --  Initialize the common attributes for all the Preferences_Page_Views.
 
    procedure Set_Pref_Highlighted
@@ -65,10 +65,10 @@ package Default_Preferences.GUI is
    --  Called when a preferences page view is destroyed.
 
    procedure Set_Prefs_Box
-     (Self      : not null access Preferences_Page_View_Record;
+     (Self      : not null access Preferences_Page_View_Record'Class;
       Prefs_Box : not null access Preferences_Box_Record'Class);
    function Get_Prefs_Box
-     (Self      : not null access Preferences_Page_View_Record)
+     (Self      : not null access Preferences_Page_View_Record'Class)
       return Preferences_Box;
    --  Setter and getter for the Prefs_Box attribute, which is the container
    --  containing all the preferences-related widgets for a given page view.
@@ -85,9 +85,9 @@ package Default_Preferences.GUI is
    ------------------------------
 
    procedure Initialize
-     (Self        : not null access Preferences_Group_Widget_Record;
+     (Self        : not null access Preferences_Group_Widget_Record'Class;
       Group_Name  : String;
-      Align   : Boolean := True);
+      Align       : Boolean := True);
    --  Initialize a Preferences_Group_Widget.
    --  Group_Name is used to set the frame's label.
    --  If Align is True, this group widget will align all the preferences when
@@ -95,7 +95,7 @@ package Default_Preferences.GUI is
    --  not be aligned.
 
    function Create_Pref_Row
-     (Self    : not null access Preferences_Group_Widget_Record;
+     (Self    : not null access Preferences_Group_Widget_Record'Class;
       Pref    : not null access Preference_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class)
       return Gtk_List_Box_Row;
@@ -103,7 +103,7 @@ package Default_Preferences.GUI is
    --  the group widget.
 
    procedure Append
-     (Self   : not null access Preferences_Group_Widget_Record;
+     (Self   : not null access Preferences_Group_Widget_Record'Class;
       Widget : not null Gtk_Widget);
    --  Append an already built widget to Self's Gtk_List_Box.
 
@@ -112,7 +112,7 @@ package Default_Preferences.GUI is
    ---------------------
 
    procedure Build
-     (Self    : not null access Preferences_Box_Record;
+     (Self    : not null access Preferences_Box_Record'Class;
       Page    : not null access Preferences_Page_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class);
    --  Build all the widgets for every group and every preference and add them

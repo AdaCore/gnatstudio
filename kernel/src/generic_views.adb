@@ -1054,14 +1054,8 @@ package body Generic_Views is
          Child        : out GPS_MDI_Child;
          View         : out View_Access)
       is
-         Focus_Widget : Gtk_Widget;
-         Toolbar      : Gtk_Toolbar;
-         Box          : Gtk_Box;
-         W            : Gtk_Widget;
-         Item         : Gtk_Tool_Item;
-         Image        : Gtk_Image;
-         Event_Box    : Gtk_Event_Box;
-
+         Focus_Widget   : Gtk_Widget;
+         Finalized_View : Gtk_Widget;
       begin
          if Reuse_If_Exist then
             Find (Kernel, Child, View);
@@ -1077,52 +1071,8 @@ package body Generic_Views is
             Focus_Widget := Gtk_Widget (View);
          end if;
 
-         if Local_Toolbar or else Local_Config then
-            Box := new Toplevel_Box;
-            Initialize_Vbox (Box);
-            Toplevel_Box (Box.all).Initial := View;
-
-            Toolbar := Create_Toolbar (Kernel, Id => View_Name);
-            Toolbar.Set_Icon_Size (Icon_Size_Local_Toolbar);
-            Toolbar.Set_Style (Toolbar_Icons);
-            Get_Style_Context (Toolbar).Add_Class ("gps-local-toolbar");
-            Box.Pack_Start (Toolbar, Expand => False, Fill => False);
-
-            Box.Pack_Start (View, Expand => True, Fill => True);
-            W := Gtk_Widget (Box);
-            View.Create_Toolbar (Toolbar);
-            Toolbar.Show_All;
-
-            --  We need to propagate the delete event to the view
-            Return_Callback.Connect
-              (Box, Gtk.Widget.Signal_Delete_Event, On_Delete_Event_Access);
-
-         else
-            W := Gtk_Widget (View);
-         end if;
-
-         if Local_Config then
-            Gtk_New (Item);
-            Gtk_New (Event_Box);
-            Item.Add (Event_Box);
-            Gtk_New_From_Icon_Name
-              (Image, "gps-config-menu-symbolic", Icon_Size_Menu);
-            Event_Box.Add (Image);
-            Event_Box.Set_Name ("local-config");
-            Item.Set_Homogeneous (False);
-            Item.Set_Tooltip_Text (-"Configure this panel");
-            View.Append_Toolbar (Toolbar, Item, Right_Align => True);
-
-            Add_Events
-              (Event_Box,
-               Button_Press_Mask or Button_Release_Mask or Key_Press_Mask);
-
-            Gtkada.Handlers.Return_Callback.Object_Connect
-              (Event_Box, Signal_Button_Press_Event,
-               Gtkada.Handlers.Return_Callback.Event_Marshaller.To_Marshaller
-                 (On_Display_Local_Config_Access), View);
-            Item.Show_All;
-         end if;
+         --  Create the finalized view, creating its local toolbar if needed
+         Finalized_View := Create_Finalized_View (View);
 
          --  A simple check that the widget can indeed get the keyboard focus.
          --  If it can't, this might result in surprising behavior: for
@@ -1130,7 +1080,6 @@ package body Generic_Views is
          --  event with no module information set, and the current focus
          --  widget will not have changed, thus the menus are not correctly
          --  refreshed.
-
          Assert
            (Me,
             Focus_Widget = null or else Focus_Widget.Get_Can_Focus,
@@ -1139,7 +1088,7 @@ package body Generic_Views is
 
          --  Child does not exist yet, create it
          Child := new Local_Formal_MDI_Child;
-         Initialize (Child, W,
+         Initialize (Child, Finalized_View,
                      Kernel         => Kernel,
                      Default_Width  => Default_Width,
                      Default_Height => Default_Height,
@@ -1257,6 +1206,69 @@ package body Generic_Views is
          Find (Kernel, Child, View);
          return View;
       end Retrieve_View;
+
+      ---------------------------
+      -- Create_Finalized_View --
+      ---------------------------
+
+      function Create_Finalized_View
+        (View : not null access Formal_View_Record'Class) return Gtk_Widget
+      is
+         Toolbar        : Gtk_Toolbar;
+         Event_Box      : Gtk_Event_Box;
+         Box            : Gtk_Box;
+         Item           : Gtk_Tool_Item;
+         Image          : Gtk_Image;
+      begin
+         --  If no local toolbar is needed, either to contain a custom toolbar
+         --  or for a local config menu, return View.
+         if not Local_Toolbar and then not Local_Config then
+            return Gtk_Widget (View);
+         end if;
+
+         --  If View needs a local toolbar, create it
+         Box := new Toplevel_Box;
+         Initialize_Vbox (Box);
+         Toplevel_Box (Box.all).Initial := View_Access (View);
+
+         Toolbar := Create_Toolbar (View.Kernel, Id => View_Name);
+         Toolbar.Set_Icon_Size (Icon_Size_Local_Toolbar);
+         Toolbar.Set_Style (Toolbar_Icons);
+         Get_Style_Context (Toolbar).Add_Class ("gps-local-toolbar");
+         Box.Pack_Start (Toolbar, Expand => False, Fill => False);
+
+         Box.Pack_Start (View, Expand => True, Fill => True);
+         View.Create_Toolbar (Toolbar);
+         Toolbar.Show_All;
+
+         --  We need to propagate the delete event to the view
+         Return_Callback.Connect
+           (Box, Gtk.Widget.Signal_Delete_Event, On_Delete_Event_Access);
+
+         --  If View needs a local config menu, create it
+         if Local_Config then
+            Gtk_New (Item);
+            Gtk_New (Event_Box);
+            Item.Add (Event_Box);
+            Gtk_New_From_Icon_Name
+              (Image, "gps-config-menu-symbolic", Icon_Size_Menu);
+            Event_Box.Add (Image);
+            Event_Box.Set_Name ("local-config");
+            Item.Set_Tooltip_Text (-"Configure this panel");
+            View.Append_Toolbar (Toolbar, Item, Right_Align => True);
+
+            Add_Events
+              (Event_Box,
+               Button_Press_Mask or Button_Release_Mask or Key_Press_Mask);
+
+            Gtkada.Handlers.Return_Callback.Object_Connect
+              (Event_Box, Signal_Button_Press_Event,
+               Gtkada.Handlers.Return_Callback.Event_Marshaller.To_Marshaller
+                 (On_Display_Local_Config_Access), View);
+         end if;
+
+         return Gtk_Widget (Box);
+      end Create_Finalized_View;
 
       ------------------------
       -- Get_Or_Create_View --

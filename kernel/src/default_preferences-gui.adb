@@ -32,7 +32,7 @@ package body Default_Preferences.GUI is
    ----------------
 
    procedure Initialize
-     (Self : not null access Preferences_Page_View_Record) is
+     (Self : not null access Preferences_Page_View_Record'Class) is
    begin
       Gtk.Scrolled_Window.Initialize (Self);
       Self.Set_Policy (Policy_Automatic, Policy_Automatic);
@@ -90,7 +90,7 @@ package body Default_Preferences.GUI is
    -------------------
 
    procedure Set_Prefs_Box
-     (Self      : not null access Preferences_Page_View_Record;
+     (Self      : not null access Preferences_Page_View_Record'Class;
       Prefs_Box : not null access Preferences_Box_Record'Class) is
    begin
       Self.Prefs_Box := Preferences_Box (Prefs_Box);
@@ -101,7 +101,7 @@ package body Default_Preferences.GUI is
    -------------------
 
    function Get_Prefs_Box
-     (Self      : not null access Preferences_Page_View_Record)
+     (Self      : not null access Preferences_Page_View_Record'Class)
       return Preferences_Box is (Self.Prefs_Box);
 
    ----------------
@@ -109,7 +109,7 @@ package body Default_Preferences.GUI is
    ----------------
 
    procedure Initialize
-     (Self        : not null access Preferences_Group_Widget_Record;
+     (Self        : not null access Preferences_Group_Widget_Record'Class;
       Group_Name  : String;
       Align       : Boolean := True) is
    begin
@@ -133,7 +133,7 @@ package body Default_Preferences.GUI is
    ---------------------
 
    function Create_Pref_Row
-     (Self    : not null access Preferences_Group_Widget_Record;
+     (Self    : not null access Preferences_Group_Widget_Record'Class;
       Pref    : not null access Preference_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class)
       return Gtk_List_Box_Row
@@ -184,7 +184,7 @@ package body Default_Preferences.GUI is
    ------------
 
    procedure Append
-     (Self   : not null access Preferences_Group_Widget_Record;
+     (Self   : not null access Preferences_Group_Widget_Record'Class;
       Widget : not null Gtk_Widget) is
    begin
       Self.List_Box.Add (Widget);
@@ -195,7 +195,7 @@ package body Default_Preferences.GUI is
    -----------
 
    procedure Build
-     (Self    : not null access Preferences_Box_Record;
+     (Self    : not null access Preferences_Box_Record'Class;
       Page    : not null access Preferences_Page_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class)
    is

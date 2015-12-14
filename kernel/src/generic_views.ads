@@ -251,6 +251,13 @@ package Generic_Views is
       function Get_Module return GPS.Kernel.Modules.Module_ID;
       --  Return the module ID corresponding to that view
 
+      function Create_Finalized_View
+        (View         : not null access Formal_View_Record'Class)
+         return Gtk.Widget.Gtk_Widget;
+      --  If a local toolbar is needed for View, create a parent container
+      --  widget for View, containing a newly created toolbar on the top.
+      --  If no local toolbar is needed, return View.
+
       function Get_Or_Create_View
         (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
          Focus  : Boolean := True)
