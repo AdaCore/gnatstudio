@@ -306,6 +306,10 @@ package body GPS.Location_View is
    --  Opens editor, moves text cursor to the location of the message and
    --  raises editor's window when specified node is a message node.
 
+   procedure On_Location_Selection_Changed
+     (Object : access Glib.Object.GObject_Record'Class);
+   --  Handle change of selections for tree view.
+
    procedure On_Row_Deleted
      (Self : access Location_View_Record'Class);
    --  Called when a row has been delete in the model
@@ -1152,6 +1156,8 @@ package body GPS.Location_View is
          Signal_Location_Clicked,
          Location_View_Callbacks.To_Marshaller (On_Location_Clicked'Access),
          Self);
+      Self.View.Get_Selection.On_Changed
+        (On_Location_Selection_Changed'Access, Self, After => True);
 
       Setup_Contextual_Menu
         (Self.Kernel,
@@ -1205,6 +1211,7 @@ package body GPS.Location_View is
       Action  : GPS.Kernel.Messages.Action_Item;
       Ignore  : Commands.Command_Return_Type;
       pragma Unreferenced (Ignore);
+      Context : Selection_Context;
 
    begin
       On_Location_Clicked (Self, Path, Iter);
@@ -1215,11 +1222,30 @@ package body GPS.Location_View is
       if Action /= null
         and then Action.Associated_Command /= null
       then
+         Context := Location_Views.Child_From_View (Self).Build_Context;
+         Self.Kernel.Context_Changed (Context);
+
          Ignore := Action.Associated_Command.Execute;
+
+         Self.Kernel.Refresh_Context;
       end if;
 
       Unset (Value);
    end On_Action_Clicked;
+
+   -----------------------------------
+   -- On_Location_Selection_Changed --
+   -----------------------------------
+
+   procedure On_Location_Selection_Changed
+     (Object : access Glib.Object.GObject_Record'Class)
+   is
+      Self : Location_View_Record'Class
+        renames Location_View_Record'Class (Object.all);
+
+   begin
+      Self.Kernel.Refresh_Context;
+   end On_Location_Selection_Changed;
 
    -------------------------
    -- On_Location_Clicked --
