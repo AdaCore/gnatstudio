@@ -156,8 +156,7 @@ class BuildTarget(object):
             idt = (self.target_name, main_name)
             if idt in wf.exit_handlers_table:
                 GPS.Logger("BUILDTARGET").log(
-                    "Workflow {} already in execution".format(idt)
-                )
+                    "Workflow {} already in execution".format(idt))
                 return
             wf.exit_handlers_table[idt] = on_exit
             on_exit = None
@@ -165,8 +164,7 @@ class BuildTarget(object):
         # Call the internal execute with given parameters
         self._internal_execute(
             main_name, file, force, extra_args, build_mode,
-            synchronous, directory, quiet, on_exit
-        )
+            synchronous, directory, quiet, on_exit)
 
 
 @extend_gps

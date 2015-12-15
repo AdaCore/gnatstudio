@@ -258,7 +258,7 @@ package body GPS.Menu is
 
       --  Remove old menus and actions
       for Action of Menu_Module.Recent_Project_Actions loop
-         Unregister_Action (Kernel, Action, Remove_Menus => True);
+         Unregister_Action (Kernel, Action, Remove_Menus_And_Toolbars => True);
       end loop;
       Menu_Module.Recent_Project_Actions.Clear;
 

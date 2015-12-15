@@ -71,6 +71,7 @@ with Gtk.Window;                use Gtk.Window;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.MDI;                use Gtkada.MDI;
+with Gtkada.Action_Combo_Tool;  use Gtkada.Action_Combo_Tool;
 
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -88,7 +89,6 @@ with DOM.Readers;               use DOM.Readers;
 with DOM.Core.Nodes;            use DOM.Core, DOM.Core.Nodes;
 with DOM.Core.Documents;        use DOM.Core.Documents;
 with DOM.Core.Elements;         use DOM.Core.Elements;
-with Sax.Utils;                 use Sax.Utils;
 
 with UTF8_Utils;                use UTF8_Utils;
 
@@ -241,11 +241,38 @@ package body GPS.Kernel.Modules.UI is
       Name   : String) return Contextual_Menu_Reference;
    --  Find a contextual menu by name
 
-   package Node_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+   type Toolbar_Button (Is_Separator : Boolean := False) is record
+      case Is_Separator is
+         when False =>
+            Action    : Unbounded_String;
+            Label     : Unbounded_String;
+            Icon_Name : Unbounded_String;
+            Group     : Unbounded_String;
+            Hide      : Boolean := False;  --  Hide when filter fails
+         when True =>
+            Start_Of_Section : Unbounded_String;
+      end case;
+   end record;
+   package Buttons_List is new Ada.Containers.Doubly_Linked_Lists
+      (Toolbar_Button);
+
+   type Toolbar_Description is record
+      Inherit : Unbounded_String;
+      Buttons : Buttons_List.List;
+   end record;
+   package Toolbar_Maps is new Ada.Containers.Indefinite_Hashed_Maps
      (Key_Type        => String,
-      Element_Type    => Node,
+      Element_Type    => Toolbar_Description,
       Hash            => Ada.Strings.Hash_Case_Insensitive,
       Equivalent_Keys => Case_Insensitive_Equal);
+   --  Description of the toolbars
+
+   procedure For_Each_Toolbar
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Name   : String;
+      Callback : not null access procedure
+        (Toolbar : not null access Gtk_Toolbar_Record'Class));
+   --  Executes the Callback for each toolbar identified with the given id
 
    -------------------------
    -- proxies for actions --
@@ -386,15 +413,12 @@ package body GPS.Kernel.Modules.UI is
    end record;
    type Action_Tool_Button is access all Action_Tool_Button_Record'Class;
 
-   procedure Gtk_New
-     (Button          : out Action_Tool_Button;
-      Kernel          : not null access Kernel_Handle_Record'Class;
-      Icon_Name       : String := "";
-      Action          : String;
-      Label           : String := "";
-      Optional        : Boolean := False;
-      Hide            : Boolean := False;
-      Focus_On_Action : Boolean := False);
+   procedure Insert_Button
+     (Kernel          : not null access Kernel_Handle_Record'Class;
+      Toolbar         : not null access Gtk_Toolbar_Record'Class;
+      Descr           : Toolbar_Button;
+      Section         : String;
+      Toolbar_Id      : String);
    --  Create a new button so that it executes action when pressed.
    --  Hide and Optional are the same as for Data_Proxy
    --  Label can be used to override the label of the button (which
@@ -513,8 +537,14 @@ package body GPS.Kernel.Modules.UI is
    --  track of these elements so that they can be removed when the action is
    --  destroyed.
 
-   type UI_Element is record
-      Path : Unbounded_String;
+   type UI_Element_Place is (In_Toolbar, In_Menu);
+   type UI_Element (Place : UI_Element_Place := In_Menu) is record
+      case Place is
+         when In_Toolbar =>
+            Toolbar_Name : Unbounded_String;
+         when In_Menu =>
+            Path : Unbounded_String;
+      end case;
    end record;
    function Hash (Self : UI_Element) return Ada.Containers.Hash_Type;
    overriding function "=" (Left, Right : UI_Element) return Boolean;
@@ -531,9 +561,8 @@ package body GPS.Kernel.Modules.UI is
    use Action_Elements;
    --  Stores associations from actions to menu and toolbar items.
 
-   procedure Add_Menu_To_Action
-      (Action : String;
-       Menu   : String);
+   procedure Add_Menu_To_Action (Action : String; Menu : String);
+   procedure Add_Button_To_Action (Action : String; Toolbar : String);
    --  Associate a given menu and an action
 
    -------------
@@ -546,12 +575,7 @@ package body GPS.Kernel.Modules.UI is
       Actions_To_UI : Action_Elements.Map;
       --  Associations from actions to UI elements
 
-      Symbols     : Symbol_Table;
-      --  The symbol table used by the XML reader when it parses the menu
-      --  description. This needs to be kept as long as the toolbar_description
-      --  are kept.
-
-      Toolbar_Descriptions : Node_Maps.Map;
+      Toolbars : Toolbar_Maps.Map;
 
       Proxy_Items          : Proxy_Lists.List;
       --  The list of items whose sensitivity might need to be updated when the
@@ -1303,7 +1327,12 @@ package body GPS.Kernel.Modules.UI is
 
    function Hash (Self : UI_Element) return Ada.Containers.Hash_Type is
    begin
-      return Ada.Strings.Hash (To_String (Self.Path));
+      case Self.Place is
+         when In_Menu =>
+            return Ada.Strings.Hash (To_String (Self.Path));
+         when In_Toolbar =>
+            return Ada.Strings.Hash (To_String (Self.Toolbar_Name));
+      end case;
    end Hash;
 
    ---------
@@ -1312,8 +1341,37 @@ package body GPS.Kernel.Modules.UI is
 
    overriding function "=" (Left, Right : UI_Element) return Boolean is
    begin
-      return Left.Path = Right.Path;
+      if Left.Place /= Right.Place then
+         return False;
+      else
+         case Left.Place is
+            when In_Menu => return Left.Path = Right.Path;
+            when In_Toolbar => return Left.Toolbar_Name = Right.Toolbar_Name;
+         end case;
+      end if;
    end "=";
+
+   --------------------------
+   -- Add_Button_To_Action --
+   --------------------------
+
+   procedure Add_Button_To_Action (Action : String; Toolbar : String) is
+      E : constant Action_Elements.Cursor :=
+        Globals.Actions_To_UI.Find (Action);
+      Item : constant UI_Element :=
+        (Place => In_Toolbar, Toolbar_Name => To_Unbounded_String (Toolbar));
+   begin
+      if Has_Element (E) then
+         Globals.Actions_To_UI.Reference (E).Include (Item);
+      else
+         declare
+            S : UI_Elements.Set;
+         begin
+            S.Include (Item);
+            Globals.Actions_To_UI.Include (Action, S);
+         end;
+      end if;
+   end Add_Button_To_Action;
 
    ------------------------
    -- Add_Menu_To_Action --
@@ -1321,16 +1379,17 @@ package body GPS.Kernel.Modules.UI is
 
    procedure Add_Menu_To_Action (Action, Menu : String) is
       E : constant Action_Elements.Cursor :=
-         Globals.Actions_To_UI.Find (Action);
+        Globals.Actions_To_UI.Find (Action);
+      Item : constant UI_Element :=
+        (Place => In_Menu, Path => To_Unbounded_String (Menu));
    begin
       if Has_Element (E) then
-         Globals.Actions_To_UI.Reference (E).Include
-            ((Path => To_Unbounded_String (Menu)));
+         Globals.Actions_To_UI.Reference (E).Include (Item);
       else
          declare
             S : UI_Elements.Set;
          begin
-            S.Include ((Path => To_Unbounded_String (Menu)));
+            S.Include (Item);
             Globals.Actions_To_UI.Include (Action, S);
          end;
       end if;
@@ -1359,13 +1418,19 @@ package body GPS.Kernel.Modules.UI is
       begin
          if Win.Menu_Bar /= null then
             for M of Globals.Actions_To_UI.Reference (C) loop
-               Item := Find_Menu_Item (Win.Menu_Bar, To_String (M.Path));
-               if Item /= null then
-                  Child := Item.Get_Child;
-                  if Child.all in Gtk_Accel_Label_Record'Class then
-                     Gtk_Accel_Label (Child).Set_Accel (Key, Mods);
-                  end if;
-               end if;
+               case M.Place is
+                  when In_Menu =>
+                     Item := Find_Menu_Item (Win.Menu_Bar, To_String (M.Path));
+                     if Item /= null then
+                        Child := Item.Get_Child;
+                        if Child.all in Gtk_Accel_Label_Record'Class then
+                           Gtk_Accel_Label (Child).Set_Accel (Key, Mods);
+                        end if;
+                     end if;
+
+                  when In_Toolbar =>
+                     null;
+               end case;
             end loop;
          end if;
       end Internal;
@@ -1392,26 +1457,81 @@ package body GPS.Kernel.Modules.UI is
    begin
       if Has_Element (C) then
          for M of Globals.Actions_To_UI.Reference (C) loop
-            Append (Result, ASCII.LF);
-            Append (Result, M.Path);
+            if M.Place = In_Menu then
+               Append (Result, ASCII.LF);
+               Append (Result, M.Path);
+            end if;
          end loop;
       end if;
       return Result;
    end Menu_List_For_Action;
 
-   -----------------------------
-   -- Remove_Menus_For_Action --
-   -----------------------------
+   ----------------------
+   -- For_Each_Toolbar --
+   ----------------------
 
-   procedure Remove_Menus_For_Action
+   procedure For_Each_Toolbar
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Name     : String;
+      Callback : not null access procedure
+        (Toolbar : not null access Gtk_Toolbar_Record'Class))
+   is
+      procedure Internal
+        (W : not null access GPS_Application_Window_Record'Class);
+      procedure Internal
+        (W : not null access GPS_Application_Window_Record'Class)
+      is
+      begin
+         if W.Toolbar /= null then
+            Callback (W.Toolbar);
+         end if;
+      end Internal;
+
+      C     : Child_Iterator;
+      Child : MDI_Child;
+      Toolbar : Gtk_Toolbar;
+   begin
+      if Name = "main" then
+         For_All_Open_Windows (Kernel.Get_Application, Internal'Access);
+      else
+         C := Get_MDI (Kernel).First_Child;
+         loop
+            Child := Get (C);
+            exit when Child = null;
+
+            if Child.all in GPS_MDI_Child_Record'Class then
+               Toolbar := GPS_MDI_Child (Child).Get_Toolbar;
+               if Toolbar /= null
+                 and then Toolbar.Get_Name = Name
+               then
+                  Callback (Toolbar);
+               end if;
+            end if;
+
+            Next (C);
+         end loop;
+      end if;
+   end For_Each_Toolbar;
+
+   --------------------------
+   -- Remove_UI_For_Action --
+   --------------------------
+
+   procedure Remove_UI_For_Action
      (Kernel : not null access Kernel_Handle_Record'Class;
       Action : String)
    is
       Path : Unbounded_String;
 
-      procedure Internal
+      procedure Remove_Menu
         (W : not null access GPS_Application_Window_Record'Class);
-      procedure Internal
+      --  Remove the menu Path from W's menubar
+
+      procedure Remove_Button
+        (Toolbar : not null access Gtk_Toolbar_Record'Class);
+      --  Remove all buttons for Action from toolbar
+
+      procedure Remove_Menu
         (W : not null access GPS_Application_Window_Record'Class)
       is
          M : Gtk_Menu_Item;
@@ -1422,29 +1542,83 @@ package body GPS.Kernel.Modules.UI is
                M.Destroy;
             end if;
          end if;
-      end Internal;
+      end Remove_Menu;
+
+      procedure Remove_Button
+        (Toolbar : not null access Gtk_Toolbar_Record'Class)
+      is
+         procedure On_Child (C : not null access Gtk_Widget_Record'Class);
+         procedure On_Child (C : not null access Gtk_Widget_Record'Class) is
+         begin
+            if C.all in Action_Tool_Button_Record'Class  then
+               if Action_Tool_Button (C).Data.Action.all = Action then
+                  Toolbar.Remove (C);
+               end if;
+            elsif C.all in Action_Combo_Tool_Record'Class then
+               Action_Combo_Tool (C).Remove_Action (Action);
+               if not Action_Combo_Tool (C).Has_Items then
+                  Toolbar.Remove (C);
+               end if;
+            end if;
+         end On_Child;
+      begin
+         Toolbar.Foreach (On_Child'Unrestricted_Access);
+      end Remove_Button;
 
       Item : Menu_Item_Info;
       C : Action_Elements.Cursor := Globals.Actions_To_UI.Find (Action);
    begin
       if Has_Element (C) then
          for M of Globals.Actions_To_UI.Reference (C) loop
-            Path := M.Path;
-            Item := Find_Or_Create_Menu
-               (Globals.Menu_Model,
-                Escape_Underscore (To_String (Path)),
-                Allow_Create => False);
-            if Item /= No_Menu_Item then
-               Item.Model.Remove (Item.Position);
-               Unref (Item);
-            end if;
+            case M.Place is
+               when In_Menu =>
+                  Path := M.Path;
+                  Item := Find_Or_Create_Menu
+                    (Globals.Menu_Model,
+                     Escape_Underscore (To_String (Path)),
+                     Allow_Create => False);
+                  if Item /= No_Menu_Item then
+                     Item.Model.Remove (Item.Position);
+                     Unref (Item);
+                  end if;
 
-            For_All_Open_Windows (Kernel.Get_Application, Internal'Access);
+                  For_All_Open_Windows
+                    (Kernel.Get_Application, Remove_Menu'Access);
+
+               when In_Toolbar =>
+                  --  Remove from live toolbars
+
+                  For_Each_Toolbar
+                    (Kernel,
+                     To_String (M.Toolbar_Name),
+                     Remove_Button'Access);
+
+                  --  Remove from the model for future windows and views
+
+                  declare
+                     D : Toolbar_Description renames
+                       Globals.Toolbars.Reference (To_String (M.Toolbar_Name));
+                     C, C2 : Buttons_List.Cursor;
+                  begin
+                     C := D.Buttons.First;
+                     while Buttons_List.Has_Element (C) loop
+                        C2 := Buttons_List.Next (C);
+
+                        if not Buttons_List.Element (C).Is_Separator
+                          and then Buttons_List.Element (C).Action = Action
+                        then
+                           D.Buttons.Delete (C);
+                        end if;
+
+                        C := C2;
+                     end loop;
+                  end;
+            end case;
          end loop;
 
          Globals.Actions_To_UI.Delete (C);
       end if;
-   end Remove_Menus_For_Action;
+   end Remove_UI_For_Action;
 
    -------------------
    -- Lookup_Action --
@@ -1826,27 +2000,17 @@ package body GPS.Kernel.Modules.UI is
    -------------------------
 
    function Get_Toolbar_Section
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Toolbar : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
+     (Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
       Section : String;
       Last    : Boolean := True) return Glib.Gint
    is
-      T     : Gtk_Toolbar := Gtk_Toolbar (Toolbar);
       Count : Gint;
       Item  : Gtk_Tool_Item;
       In_Section : Boolean := False;
    begin
-      if Toolbar = null then
-         T := Get_Toolbar (Kernel);
-      end if;
-
-      if T = null then
-         return -1;
-      end if;
-
-      Count := T.Get_N_Items;
+      Count := Toolbar.Get_N_Items;
       for J in 0 .. Count - 1 loop
-         Item := T.Get_Nth_Item (J);
+         Item := Toolbar.Get_Nth_Item (J);
 
          if Item.all in Gtk_Separator_Tool_Item_Record'Class then
             if In_Section then
@@ -1871,88 +2035,52 @@ package body GPS.Kernel.Modules.UI is
 
    function Create_Toolbar
      (Kernel          : not null access Kernel_Handle_Record'Class;
-      Id              : String;
-      Focus_On_Action : Boolean := False)
+      Id              : String)
       return Gtk.Toolbar.Gtk_Toolbar
    is
       Toolbar : Gtk_Toolbar;
 
-      procedure Process_Toolbar (Toolbar_Node : Node);
-      --  Process a <toolbar node>
+      procedure Process_Toolbar (Descr : Toolbar_Description);
+      --  Create a toolbar from its description
 
       ---------------------
       -- Process_Toolbar --
       ---------------------
 
-      procedure Process_Toolbar (Toolbar_Node : Node) is
-         N       : Node;
+      procedure Process_Toolbar (Descr : Toolbar_Description) is
          Sep     : Gtk_Separator_Tool_Item;
-         Hide    : Boolean;
       begin
-         N := First_Child (Toolbar_Node);
-         while N /= null loop
-            if Node_Name (N) = "button" then
-               Hide := False;
-
-               if Get_Attribute (N, "hide") /= "" then
-                  begin
-                     Hide := Boolean'Value (Get_Attribute (N, "hide"));
-                  exception
-                     when Constraint_Error =>
-                        Hide := False;
-                  end;
-               end if;
-
-               Register_Button
-                 (Kernel,
-                  Action          => Get_Attribute (N, "action"),
-                  Icon_Name       => Get_Attribute (N, "stock"),
-                  Label           => Get_Attribute (N, "label"),
-                  Toolbar         => Toolbar,
-                  Hide            => Hide,
-                  Focus_On_Action => Focus_On_Action);
-
-            elsif Node_Name (N) = "separator" then
+         for B of Descr.Buttons loop
+            if B.Is_Separator then
                Gtk_New (Sep);
-               Sep.Set_Name (Get_Attribute (N, "id"));
+               Sep.Set_Name (To_String (B.Start_Of_Section));
                Toolbar.Insert (Sep);
+            else
+               Insert_Button
+                 (Kernel, Toolbar, B,
+                  Section         => "",  --  always append
+                  Toolbar_Id      => Id);
             end if;
-
-            N := Next_Sibling (N);
          end loop;
+
+         if Descr.Inherit /= ""
+            and then Globals.Toolbars.Contains (To_String (Descr.Inherit))
+         then
+            Process_Toolbar
+               (Globals.Toolbars.Constant_Reference
+                  (To_String (Descr.Inherit)));
+         end if;
       end Process_Toolbar;
 
-      N : Node;
    begin
       Gtk_New (Toolbar);
-      Toolbar.Set_Name (Id);
+      Toolbar.Set_Name (Id);  --  used in For_Each_Toolbar
       Toolbar.Set_Icon_Size (Icon_Size_Small_Toolbar);
       Toolbar.Set_Style (Toolbar_Icons);
       Toolbar.Set_Show_Arrow (True);
 
-      if Globals.Toolbar_Descriptions.Contains (Id) then
-         N := Globals.Toolbar_Descriptions.Element (Id);
-         if N /= null then
-            Process_Toolbar (N);
-
-            while N /= null loop
-               declare
-                  Inh : constant String := Get_Attribute (N, "inherit");
-               begin
-                  if Inh /= ""
-                    and then Globals.Toolbar_Descriptions.Contains (Inh)
-                  then
-                     N := Globals.Toolbar_Descriptions.Element (Inh);
-
-                     if N /= null then
-                        Process_Toolbar (N);
-                     end if;
-                  else
-                     N := null;
-                  end if;
-               end;
-            end loop;
-         end if;
+      if Globals.Toolbars.Contains (Id) then
+         Process_Toolbar (Globals.Toolbars.Constant_Reference (Id));
       end if;
 
       return Toolbar;
@@ -1967,24 +2095,70 @@ package body GPS.Kernel.Modules.UI is
       Action          : String;
       Icon_Name       : String := "";
       Label           : String := "";
-      Toolbar         : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
-      Position        : Glib.Gint := -1;
-      Hide            : Boolean := False;
-      Focus_On_Action : Boolean := False)
+      Toolbar         : String := "main";
+      Section         : String := "";
+      Group           : String := "";
+      Hide            : Boolean := False)
    is
-      Button : Action_Tool_Button;
-   begin
-      Gtk_New (Button, Kernel, Icon_Name => Icon_Name, Action => Action,
-               Label => Label, Hide => Hide,
-               Focus_On_Action => Focus_On_Action);
+      Descr : constant Toolbar_Button :=
+        (Is_Separator    => False,
+         Action          => To_Unbounded_String (Action),
+         Icon_Name       => To_Unbounded_String (Icon_Name),
+         Label           => To_Unbounded_String (Label),
+         Group           => To_Unbounded_String (Group),
+         Hide            => Hide);
 
-      if Toolbar = null then
-         Get_Toolbar (Kernel).Insert (Button, Position);
-      else
-         Toolbar.Insert (Button, Pos => Position);
+      procedure For_Toolbar (Bar : not null access Gtk_Toolbar_Record'Class);
+      procedure For_Toolbar (Bar : not null access Gtk_Toolbar_Record'Class) is
+      begin
+         Insert_Button
+           (Kernel, Bar, Descr,
+            Section         => Section,
+            Toolbar_Id      => Toolbar);
+      end For_Toolbar;
+
+   begin
+      --  Register in the model, so that future floating windows also
+      --  get those buttons
+
+      if not Globals.Toolbars.Contains (Toolbar) then
+         Globals.Toolbars.Include (Toolbar, (others => <>));
       end if;
 
-      Button.Show_All;
+      Add_Button_To_Action (Action, Toolbar);
+
+      declare
+         D : Toolbar_Description renames
+           Globals.Toolbars.Reference (Toolbar);
+         C : Buttons_List.Cursor;
+         In_Section : Boolean := False;
+      begin
+         if Section = "" then
+            D.Buttons.Append (Descr);
+         else
+            C := D.Buttons.First;
+            while Buttons_List.Has_Element (C) loop
+               if Buttons_List.Element (C).Is_Separator then
+                  if In_Section then
+                     D.Buttons.Insert (Before => C, New_Item => Descr);
+                     exit;
+                  elsif Buttons_List.Element (C).Start_Of_Section = Section
+                  then
+                     In_Section := True;
+                  end if;
+               end if;
+               Buttons_List.Next (C);
+            end loop;
+
+            if not In_Section then
+               D.Buttons.Append (New_Item => Descr);
+            end if;
+         end if;
+      end;
+
+      --  Now add the button to all live toolbars
+
+      For_Each_Toolbar (Kernel, Toolbar, For_Toolbar'Access);
    end Register_Button;
 
    ------------------------
@@ -2408,50 +2582,92 @@ package body GPS.Kernel.Modules.UI is
       Execute_Action (B, B.Data);
    end On_Action_Button_Clicked;
 
-   -------------
-   -- Gtk_New --
-   -------------
+   -------------------
+   -- Insert_Button --
+   -------------------
 
-   procedure Gtk_New
-     (Button          : out Action_Tool_Button;
-      Kernel          : not null access Kernel_Handle_Record'Class;
-      Icon_Name       : String := "";
-      Action          : String;
-      Label           : String := "";
-      Optional        : Boolean := False;
-      Hide            : Boolean := False;
-      Focus_On_Action : Boolean := False)
+   procedure Insert_Button
+     (Kernel          : not null access Kernel_Handle_Record'Class;
+      Toolbar         : not null access Gtk_Toolbar_Record'Class;
+      Descr           : Toolbar_Button;
+      Section         : String;
+      Toolbar_Id      : String)
    is
+      Button : Action_Tool_Button;
+      Combo  : Action_Combo_Tool;
+      Item   : Gtk_Tool_Item;
+
+      procedure On_Child (Widget : not null access Gtk_Widget_Record'Class);
+      procedure On_Child (Widget : not null access Gtk_Widget_Record'Class) is
+      begin
+         if Widget.all in Action_Combo_Tool_Record'Class
+           and then Widget.Get_Name = Descr.Group
+         then
+            Combo := Action_Combo_Tool (Widget);
+         end if;
+      end On_Child;
+
    begin
-      --  ??? Should automatically grey out when the context does not match.
-      Button := new Action_Tool_Button_Record;
-      Button.Forced_Stock := Icon_Name /= "";
-      Button.Focus_On_Action := Focus_On_Action;
-      Button.Data := (Kernel    => Kernel,
-                      Optional  => Optional,
-                      Hide      => Hide,
-                      Action    => new String'(Action),
-                      Looked_Up => null);
+      if Descr.Group /= "" then
+         --  Do we already have a button for this group ?
 
-      if Label /= "" then
-         Gtk.Tool_Button.Initialize (Button, Label => Label);
+         Toolbar.Foreach (On_Child'Unrestricted_Access);
+         if Combo = null then
+            Gtk_New (Combo, Kernel => Kernel,
+                     Initial_Label => To_String (Descr.Label),
+                     Initial_Action => To_String (Descr.Action));
+            Combo.Set_Name (To_String (Descr.Group));
+            Combo.Set_Label (To_String (Descr.Group));
+            Item := Gtk_Tool_Item (Combo);
+         else
+            Combo.Add_Action
+              (Label  => To_String (Descr.Label),
+               Action => To_String (Descr.Action));
+         end if;
+
       else
-         Gtk.Tool_Button.Initialize (Button, Label => Action);
+         Button := new Action_Tool_Button_Record;
+         Button.Focus_On_Action := Toolbar_Id /= "main";
+         Button.Data := (Kernel    => Kernel,
+                         Optional  => False,
+                         Hide      => Descr.Hide,
+                         Action    => new String'(To_String (Descr.Action)),
+                         Looked_Up => null);
+
+         if Descr.Label /= "" then
+            Gtk.Tool_Button.Initialize
+              (Button, Label => To_String (Descr.Label));
+         else
+            Gtk.Tool_Button.Initialize
+              (Button, Label => To_String (Descr.Action));
+         end if;
+
+         if Descr.Icon_Name /= "" then
+            Button.Forced_Stock := True;
+            Button.Set_Icon_Name (To_String (Descr.Icon_Name));
+         end if;
+
+         --  The side effect is to set image, tooltip,... if the action already
+         --  exists.
+         --  If the action is unknown, or it has a filter, we will need to
+         --  monitor this button when the context changes.
+
+         Add_To_Global_Proxies (Button, Kernel, null);
+
+         Button.On_Clicked (On_Action_Button_Clicked'Access);
+         Item := Gtk_Tool_Item (Button);
       end if;
 
-      if Icon_Name /= "" then
-         Button.Set_Icon_Name (Icon_Name);
+      if Item /= null then
+         if Section = "" then
+            Toolbar.Insert (Item);
+         else
+            Toolbar.Insert (Item, Get_Toolbar_Section (Toolbar, Section));
+         end if;
+
+         Item.Show_All;
       end if;
-
-      --  The side effect is to set image, tooltip,... if the action already
-      --  exists.
-      --  If the action is unknown, or it has a filter, we will need to
-      --  monitor this button when the context changes.
-
-      Add_To_Global_Proxies (Button, Kernel, null);
-
-      Button.On_Clicked (On_Action_Button_Clicked'Access);
-   end Gtk_New;
+   end Insert_Button;
 
    -------------
    -- Destroy --
@@ -3052,8 +3268,51 @@ package body GPS.Kernel.Modules.UI is
             end loop;
 
          elsif Node_Name (N) = "toolbar" then
-            Globals.Toolbar_Descriptions.Include
-              (Get_Attribute (N, "id"), Clone_Node (N, Deep => True));
+            declare
+               Id : constant String := Get_Attribute (N, "id");
+               Descr : Toolbar_Description;
+               Hide  : Boolean;
+            begin
+               Descr.Inherit := To_Unbounded_String
+                 (Get_Attribute (N, "inherit"));
+
+               N2 := First_Child (N);
+               while N2 /= null loop
+                  if Node_Name (N2) = "button" then
+                     begin
+                        Hide := Boolean'Value (Get_Attribute (N2, "hide"));
+                     exception
+                        when Constraint_Error =>
+                           Hide := False;
+                     end;
+
+                     declare
+                        Act : constant String := Get_Attribute (N2, "action");
+                     begin
+                        Descr.Buttons.Append
+                          ((Is_Separator => False,
+                            Action       => To_Unbounded_String (Act),
+                            Group        => Null_Unbounded_String,
+                            Label        => To_Unbounded_String
+                              (Get_Attribute (N2, "label")),
+                            Icon_Name    => To_Unbounded_String
+                              (Get_Attribute (N2, "stock")),
+                            Hide         => Hide));
+                        Add_Button_To_Action (Act, Id);
+                     end;
+
+                  elsif Node_Name (N2) = "separator" then
+                     Descr.Buttons.Append
+                        ((Is_Separator => True,
+                          Start_Of_Section => To_Unbounded_String
+                             (Get_Attribute (N2, "id"))));
+                  end if;
+
+                  N2 := Next_Sibling (N2);
+               end loop;
+
+               Globals.Toolbars.Include (Id, Descr);
+            end;
          end if;
          N := Next_Sibling (N);
       end loop;
@@ -3079,8 +3338,6 @@ package body GPS.Kernel.Modules.UI is
          begin
             Trace (Me, "Load menus from " & Description.Display_Full_Name);
             Open (Description.Display_Full_Name, Input);
-            Globals.Symbols := Allocate;
-            Reader.Set_Symbol_Table (Globals.Symbols);
             Parse (Reader, Input);
             Close (Input);
             Parse_Menu_Model_From_XML

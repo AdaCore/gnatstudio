@@ -234,6 +234,14 @@ package GPS.Kernel.MDI is
       return Module_ID;
    --  Return the module that created Child, or null if no module was found.
 
+   procedure Set_Toolbar
+     (Child   : not null access GPS_MDI_Child_Record'Class;
+      Toolbar : access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   function Get_Toolbar
+     (Child : not null access GPS_MDI_Child_Record'Class)
+      return Gtk.Toolbar.Gtk_Toolbar;
+   --  Return the local toolbar for the MDI child, if there is one.
+
    function Has_Menu_Bar_When_Floating
       (Child : not null access GPS_MDI_Child_Record) return Boolean
       is (False) with Inline;
@@ -441,15 +449,6 @@ package GPS.Kernel.MDI is
    --  id of the new class in the Typ parameter, so that the proper gtk+
    --  widget is allocated.
 
-   -------------
-   -- Toolbar --
-   -------------
-
-   function Get_Toolbar
-     (Handle : access Kernel_Handle_Record'Class)
-      return Gtk.Toolbar.Gtk_Toolbar;
-   --  Return the main toolbar associated with the kernel
-
    ---------------------
    -- Signal emission --
    ---------------------
@@ -505,6 +504,7 @@ private
       Desktop_Independent : Boolean;
       Save_Desktop        : GNATCOLL.Scripts.Subprogram_Type;
       Kernel              : Kernel_Handle;
+      Toolbar             : Gtk.Toolbar.Gtk_Toolbar := null;
 
       Default_Width, Default_Height : Glib.Gint := -1;
 

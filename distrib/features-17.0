@@ -2,7 +2,7 @@
 GPS 17 and GNATbench 17 NEW FEATURES LIST
 =========================================
 
-Copyright (C) 2011-2015, AdaCore
+Copyright (C) 2011-2016, AdaCore
 
 This file contains a list of new features introduced in GPS and GNATbench IDEs.
 A full description of all features can be found in the GPS or GNATbench
@@ -127,3 +127,28 @@ NF-170-G222-043 GPS: menubars for floating windows (2015-11-27)
   When an editor or a browser is made floating, its window now includes a
   menubar similar to the one used in the main GPS window. This makes it
   more convenient to execute actions via menus.
+  It also includes a copy of the global toolbar.
+
+NF-170-0000-001 GPS: Incompatible changes in Python API (2016-01-04)
+
+  This section lists changes done in the Python API that are no longer
+  compatible with previous versions of GPS.
+
+  GPS.Toolbar, GPS.Combo, GPS.ToolButton and GPS.Button removed (2016-01-04)
+
+    This class has been removed. Only buttons associated with named actions
+    can now be added (See GPS.Action.button). A benefit is that buttons can
+    now be added to either the main toolbar or to the local toolbars of the
+    various views. GPS can also repeat the main toolbar in every floating
+    window. Since actions can also be associated with menus and key shortcuts,
+    this also encouraged code reuse.
+
+  GPS.Menu.create obsolescent (2015-12-01)
+
+    This function is now obsolescent, and its use is discouraged (use
+    GPS.Action.menu instead). A temporary version still exists, but will be
+    removed in future versions.
+    The benefit is that menus are now always associated with named actions,
+    which can also be bound to keyshortcuts or toolbar buttons. This encourages
+    code reuse, and allows disabling all GUI items related to a given action
+    more easily.

@@ -171,7 +171,7 @@ package body GPS.Kernel.Actions is
    procedure Unregister_Action
      (Kernel       : access Kernel_Handle_Record'Class;
       Name         : String;
-      Remove_Menus : Boolean := True)
+      Remove_Menus_And_Toolbars : Boolean := True)
    is
       A : Action_Record_Access;
    begin
@@ -184,8 +184,8 @@ package body GPS.Kernel.Actions is
                  To_Lower (Name));
       end loop;
 
-      if Remove_Menus then
-         Remove_Menus_For_Action (Kernel, Name);
+      if Remove_Menus_And_Toolbars then
+         Remove_UI_For_Action (Kernel, Name);
       end if;
 
       --  Unregister the gtk+ action, too.

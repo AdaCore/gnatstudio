@@ -55,12 +55,10 @@ package body Builder_Facility_Module.Scripts is
          begin
             if Ref = null then
                Set_Error_Msg (Data, -"Invalid target");
-               return;
+            elsif Get_Properties (Ref).Visible then
+               Visible (Ref, False);
+               Refresh_Graphical_Elements;
             end if;
-
-            Visible (Ref, False);
-
-            Refresh_Graphical_Elements;
          end;
 
       elsif Command = "show" then
@@ -72,12 +70,10 @@ package body Builder_Facility_Module.Scripts is
          begin
             if Ref = null then
                Set_Error_Msg (Data, -"Invalid target");
-               return;
+            elsif not Get_Properties (Ref).Visible then
+               Visible (Ref, True);
+               Refresh_Graphical_Elements;
             end if;
-
-            Visible (Ref, True);
-
-            Refresh_Graphical_Elements;
          end;
 
       elsif Command = "remove" then

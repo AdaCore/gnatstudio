@@ -1501,8 +1501,7 @@ package body Interactive_Consoles is
          declare
             Toolbar : Gtk_Toolbar;
          begin
-            Toolbar := Create_Toolbar
-              (Kernel, Id => Toolbar_Name, Focus_On_Action => True);
+            Toolbar := Create_Toolbar (Kernel, Id => Toolbar_Name);
             Toolbar.Set_Icon_Size (Icon_Size_Local_Toolbar);
             Toolbar.Set_Style (Toolbar_Icons);
             Get_Style_Context (Toolbar).Add_Class ("gps-local-toolbar");

@@ -26,14 +26,11 @@ with Glib.Object;               use Glib.Object;
 
 with Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Toolbar;               use Gtk.Toolbar;
-with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Tool_Item;             use Gtk.Tool_Item;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
-with Gtkada.Combo_Tool_Button;  use Gtkada.Combo_Tool_Button;
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Projects;                  use Projects;
@@ -95,17 +92,13 @@ package body Builder_Facility_Module is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
       (Any_Type, Any_Type_Access);
 
-   type Target_And_Main is new Gtkada.Combo_Tool_Button.User_Data_Record
-   with record
+   type Target_And_Main is record
       Target : Unbounded_String;
       Main   : Virtual_File;
    end record;
 
    package String_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Target_And_Main);
-
-   package Combo_Callback is new Gtk.Handlers.Callback
-     (Gtkada_Combo_Tool_Button_Record);
 
    package Buttons_List is new Ada.Containers.Doubly_Linked_Lists
      (Gtk_Tool_Item);
@@ -130,9 +123,6 @@ package body Builder_Facility_Module is
      new GPS.Kernel.Modules.Module_ID_Record
    with record
       Registry : Build_Config_Registry_Access;
-
-      Buttons  : Buttons_List.List;
-      --  The set of toolbar buttons
 
       Unregistered_Targets : Target_XML_List.List;
       --  This is a set of targets that could not be registered because their
@@ -282,12 +272,6 @@ package body Builder_Facility_Module is
       Level  : Customization_Level);
    --  See inherited documentation
 
-   procedure Install_Toolbar_Buttons;
-   --  Install the build-related buttons into the main toolbar
-
-   procedure Install_Button_For_Target (Target : Target_Access);
-   --  Install one button in the toolbar
-
    procedure Clear_Actions_Menus_And_Toolbars;
    --  Remove the target build menus
 
@@ -305,14 +289,6 @@ package body Builder_Facility_Module is
       Data   : Target_And_Main);
    --  Called when a user clicks on a toolbar button.
    --  Name is the name of the target corresponding to that button.
-
-   procedure On_Combo_Click
-     (Widget : access Gtkada_Combo_Tool_Button_Record'Class);
-   --  Called when a user clicks on a toolbar combo button
-
-   procedure On_Combo_Selection
-     (Widget : access Gtkada_Combo_Tool_Button_Record'Class);
-   --  Called when a user selects a new item from the combo
 
    type On_File_Saved is new File_Hooks_Function with null record;
    overriding procedure Execute
@@ -584,7 +560,9 @@ package body Builder_Facility_Module is
          Command      : access Interactive_Command'Class;
          Description  : String;
          Action_Name  : String;
-         Menu_Name    : String);
+         Menu_Name    : String;
+         Button_Label : String;
+         Multiple_Mains : Boolean);
       --  Replace the current definition for the action: remove the old menus
       --  and the old action, then register a new action and menu.
 
@@ -594,13 +572,16 @@ package body Builder_Facility_Module is
          Command      : access Interactive_Command'Class;
          Description  : String;
          Action_Name  : String;
-         Menu_Name    : String)
+         Menu_Name    : String;
+         Button_Label : String;
+         Multiple_Mains : Boolean)
       is
          Mnemonics : constant Boolean := Main = No_File;
          --  Always protect underscores in menu name when dealing with file
          --  names, but not otherwise.
       begin
-         Unregister_Action (Kernel, Action_Name, Remove_Menus => True);
+         Unregister_Action
+            (Kernel, Action_Name, Remove_Menus_And_Toolbars => True);
 
          Register_Action (Kernel      => Kernel,
                           Name        => Action_Name,
@@ -633,6 +614,20 @@ package body Builder_Facility_Module is
                   Ref_Item      => "Project");
             end;
          end if;
+
+         if Button_Label /= ""
+           and then Get_Properties (Target).In_Toolbar
+           and then Get_Properties (Target).Visible
+         then
+            Register_Button
+               (Kernel    => Get_Kernel,
+                Action    => Action_Name,
+                Label     => Button_Label,
+                Toolbar   => "main",
+                Section   => "build",
+                Group     => (if Multiple_Mains then N else ""),
+                Hide      => True);   --  when action is not found
+         end if;
       end Replace_Action;
 
    begin
@@ -642,7 +637,8 @@ package body Builder_Facility_Module is
          declare
             Mains  : Any_Type :=
                Compute_Build_Targets_Hook.Run (Kernel, To_String (Targets));
-            D : Dialog_Mode;
+            D      : Dialog_Mode;
+            Main   : Virtual_File;
 
          begin
             if Mains.Length > 0
@@ -666,8 +662,12 @@ package body Builder_Facility_Module is
                      D := Force_No_Dialog;
                end case;
 
+               --   ??? For toolbar buttons, we should register a single
+               --   button for all Mains (but one menu)
+
                for J in 1 .. Mains.Length loop
                   if Mains.List (J).Length /= 0 then
+                     Main :=  Create (+Mains.List (J).Tuple (2).Str);
                      Create (Item        => M,
                              Builder     => Builder_Module_ID.Builder'Access,
                              Target_Name => N,
@@ -676,12 +676,14 @@ package body Builder_Facility_Module is
                              Quiet       => False,
                              Dialog      => D);
                      Replace_Action
-                       (Main         => Create (+Mains.List (J).Tuple (2).Str),
+                       (Main         => Main,
                         Project      => Kernel.Registry.Tree.Project_From_Path
                           (Create (+Mains.List (J).Tuple (3).Str)),
                         Command      => M,
-                        Description  => "",
+                        Description  => N & ' ' & Main.Display_Base_Name,
                         Action_Name  => N & (-" Number") & J'Img,
+                        Multiple_Mains => True,
+                        Button_Label => Mains.List (J).Tuple (2).Str,
                         Menu_Name    => Mains.List (J).Tuple (1).Str);
                   end if;
                end loop;
@@ -696,6 +698,8 @@ package body Builder_Facility_Module is
                      Command      => null,
                      Description  => "",
                      Action_Name  => N & (-" Number") & J'Img,
+                     Multiple_Mains => True,
+                     Button_Label   => "",
                      Menu_Name    => "");
                end loop;
             end if;
@@ -712,6 +716,8 @@ package body Builder_Facility_Module is
             Command      => C,
             Description  => (-"Build target ") & N,
             Action_Name  => N,
+            Button_Label => N,
+            Multiple_Mains => False,
             Menu_Name    => Get_Menu_Name (Target));
       end if;
    end Add_Action_And_Menu_For_Target;
@@ -1027,12 +1033,8 @@ package body Builder_Facility_Module is
 
    procedure Refresh_Graphical_Elements is
    begin
-      --  Recreate the actions
       Clear_Actions_Menus_And_Toolbars;
-
       Add_Actions_And_Menus_For_All_Targets;
-
-      Install_Toolbar_Buttons;
    end Refresh_Graphical_Elements;
 
    -----------------------------------
@@ -1199,7 +1201,6 @@ package body Builder_Facility_Module is
                        (Get_Name (T) & (-" Number 1")))
          then
             Add_Action_And_Menu_For_Target (T);
-            Install_Button_For_Target (T);
          end if;
 
       else
@@ -1264,161 +1265,6 @@ package body Builder_Facility_Module is
          Trace (Me, E);
    end On_Button_Or_Menu_Click;
 
-   --------------------
-   -- On_Combo_Click --
-   --------------------
-
-   procedure On_Combo_Click
-     (Widget : access Gtkada_Combo_Tool_Button_Record'Class)
-   is
-      Data : constant Gtkada.Combo_Tool_Button.User_Data :=
-               Get_Selected_Item_Data (Widget);
-   begin
-      if Data /= null then
-         Launch_Target
-           (Builder_Module_ID.Builder'Access,
-            To_String (Target_And_Main (Data.all).Target),
-            "",
-            No_File,
-            null, False, False, Default, False,
-            Target_And_Main (Data.all).Main, False);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end On_Combo_Click;
-
-   ------------------------
-   -- On_Combo_Selection --
-   ------------------------
-
-   procedure On_Combo_Selection
-     (Widget : access Gtkada_Combo_Tool_Button_Record'Class)
-   is
-      Data : constant Gtkada.Combo_Tool_Button.User_Data :=
-               Get_Selected_Item_Data (Widget);
-   begin
-      Set_Tooltip_Text
-        (Widget,
-         To_String (Target_And_Main (Data.all).Target) &
-         ": " & Get_Selected_Item (Widget));
-   end On_Combo_Selection;
-
-   -------------------------------
-   -- Install_Button_For_Target --
-   -------------------------------
-
-   procedure Install_Button_For_Target (Target : Target_Access) is
-      Toolbar : constant Gtk_Toolbar   := Get_Toolbar (Get_Kernel);
-      Pos     : constant Glib.Gint := Get_Toolbar_Section
-        (Get_Kernel, null, "build");
-      Button : Gtk.Tool_Item.Gtk_Tool_Item;
-
-      procedure Button_For_Target
-        (Name  : String;
-         Mains : Any_Type);
-      --  Create one button for target Name and main Main
-
-      -----------------------
-      -- Button_For_Target --
-      -----------------------
-
-      procedure Button_For_Target
-        (Name  : String;
-         Mains : Any_Type) is
-      begin
-         --  In case only one main is available, create a simple button
-         if Mains.Length <= 1 then
-            declare
-               Widget : Gtk.Tool_Button.Gtk_Tool_Button;
-               Main   : Virtual_File;
-            begin
-               Gtk_New (Widget);
-               Widget.Set_Icon_Name (Get_Icon_Name (Target));
-               Set_Label (Widget, Name);
-
-               if Mains.Length = 0 then
-                  Main := No_File;
-                  Set_Tooltip_Text (Widget, Name);
-               else
-                  Main := Create (+Mains.List (1).Tuple (2).Str);
-                  Set_Tooltip_Text
-                    (Widget,
-                     Name & ": " & Mains.List (1).Tuple (1).Str);
-               end if;
-
-               Set_Name (Widget, "toolbar_button_" & Name);
-
-               String_Callback.Connect
-                 (Widget, Gtk.Tool_Button.Signal_Clicked,
-                  On_Button_Or_Menu_Click'Access,
-                  (To_Unbounded_String (Name), Main));
-               Button := Gtk_Tool_Item (Widget);
-            end;
-
-         else
-            declare
-               Widget : Gtkada.Combo_Tool_Button.Gtkada_Combo_Tool_Button;
-            begin
-               Gtk_New (Widget, Icon_Name => Get_Icon_Name (Target));
-
-               --  Connect to this signal to automatically update the tooltips
-               --  when a new main file is selected
-               Combo_Callback.Connect
-                 (Widget, Signal_Selection_Changed,
-                  On_Combo_Selection'Access);
-
-               for J in Mains.List'Range loop
-                  Widget.Add_Item
-                    (Mains.List (J).Tuple (2).Str, Get_Icon_Name (Target),
-                     new Target_And_Main'
-                       (To_Unbounded_String (Name),
-                        Create (+Mains.List (J).Tuple (2).Str)));
-               end loop;
-
-               Combo_Callback.Connect
-                 (Widget, Gtkada.Combo_Tool_Button.Signal_Clicked,
-                  On_Combo_Click'Access);
-               Button := Gtk_Tool_Item (Widget);
-            end;
-         end if;
-
-         Builder_Module_ID.Buttons.Prepend (Button);
-         Insert (Toolbar => Toolbar, Item => Button, Pos => Pos);
-         Show_All (Button);
-      end Button_For_Target;
-
-      Targets : Unbounded_String;
-
-   begin
-      if Target = null
-        or else Toolbar = null
-        or else not Get_Properties (Target).In_Toolbar
-        or else not Get_Properties (Target).Visible
-      then
-         return;
-      end if;
-
-      Targets := Get_Properties (Target).Target_Type;
-
-      if Targets /= Null_Unbounded_String then
-         declare
-            Mains : Any_Type := Compute_Build_Targets_Hook.Run
-               (Get_Kernel, To_String (Targets));
-         begin
-            --  Do not display if no main is available
-            if Mains.Length > 0 then
-               Button_For_Target (Get_Name (Target), Mains);
-            end if;
-            Free (Mains);
-         end;
-
-      else
-         Button_For_Target (Get_Name (Target), Empty_Any_Type);
-      end if;
-   end Install_Button_For_Target;
-
    --------------------------------------
    -- Clear_Actions_Menus_And_Toolbars --
    --------------------------------------
@@ -1426,44 +1272,17 @@ package body Builder_Facility_Module is
    procedure Clear_Actions_Menus_And_Toolbars is
       use Action_Lists;
       C : Action_Lists.Cursor;
-      Toolbar : constant Gtk_Toolbar := Get_Toolbar (Get_Kernel);
    begin
       loop
          C := Builder_Module_ID.Actions.First;
          exit when not Has_Element (C);
          Unregister_Action
-           (Kernel       => Get_Kernel,
-            Name         => Element (C),
-            Remove_Menus => True);
+           (Kernel                    => Get_Kernel,
+            Name                      => Element (C),
+            Remove_Menus_And_Toolbars => True);
          Builder_Module_ID.Actions.Delete (C);
       end loop;
-
-      if Toolbar /= null then
-         for B of Builder_Module_ID.Buttons loop
-            Remove (Toolbar, B);
-         end loop;
-      end if;
-      Builder_Module_ID.Buttons.Clear;
    end Clear_Actions_Menus_And_Toolbars;
-
-   -----------------------------
-   -- Install_Toolbar_Buttons --
-   -----------------------------
-
-   procedure Install_Toolbar_Buttons is
-      C : Target_Cursor := Get_First_Target (Builder_Module_ID.Registry);
-      T : Target_Access;
-
-   begin
-      loop
-         T := Get_Target (C);
-         exit when T = null;
-
-         Install_Button_For_Target (T);
-
-         Next (C);
-      end loop;
-   end Install_Toolbar_Buttons;
 
    -------------
    -- Execute --

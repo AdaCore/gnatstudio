@@ -1298,7 +1298,7 @@ package body Src_Editor_Module is
       --  Remove old menus and actions
 
       for Action of M.Recent_File_Actions loop
-         Unregister_Action (Kernel, Action, Remove_Menus => True);
+         Unregister_Action (Kernel, Action, Remove_Menus_And_Toolbars => True);
       end loop;
       M.Recent_File_Actions.Clear;
 

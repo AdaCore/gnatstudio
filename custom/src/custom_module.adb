@@ -37,7 +37,6 @@ with Gtk.Widget;                use Gtk.Widget;
 with Commands.Custom;           use Commands.Custom;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
-with Custom_Combos;             use Custom_Combos;
 with Custom_Timeout;            use Custom_Timeout;
 with Expect_Interface;          use Expect_Interface;
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
@@ -1410,6 +1409,17 @@ package body Custom_Module is
             Set_Return_Value (Data, Inst);
          end;
 
+      elsif Command = "button" then
+         Inst := Data.Nth_Arg (1);
+         Register_Button
+           (Kernel,
+            Action    => Get_Data (Inst, Action_Class),
+            Toolbar   => Data.Nth_Arg (2, "main"),
+            Section   => Data.Nth_Arg (3, ""),
+            Group     => Data.Nth_Arg (4, ""),
+            Label     => Data.Nth_Arg (5, ""),
+            Icon_Name => Data.Nth_Arg (6, ""));
+
       elsif Command = "contextual" then
          Name_Parameters (Data, (2 => Path_Cst'Access,
                                  3 => Ref_Cst'Access,
@@ -1481,7 +1491,6 @@ package body Custom_Module is
          Priority    => Low_Priority);
 
       Expect_Interface.Register_Commands (Kernel);
-      Custom_Combos.Register_Commands (Kernel);
       Custom_Timeout.Register_Commands (Kernel);
       XML_Viewer.Register_Commands (Kernel);
 
@@ -1524,6 +1533,15 @@ package body Custom_Module is
          Minimum_Args  => 1,
          Maximum_Args  => 3,
          Handler       => Action_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("button",
+         Params  => (1 => Param ("toolbar", Optional => True),
+                     2 => Param ("section", Optional => True),
+                     3 => Param ("group",   Optional => True),
+                     4 => Param ("label",   Optional => True),
+                     5 => Param ("icon",    Optional => True)),
+         Class   => Action_Class,
+         Handler => Action_Handler'Access);
 
       Register_Command
         (Kernel, Constructor_Method,

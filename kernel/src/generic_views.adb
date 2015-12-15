@@ -286,6 +286,28 @@ package body Generic_Views is
       return null;
    end Build_Filter_Pattern;
 
+   -----------------
+   -- Set_Toolbar --
+   -----------------
+
+   procedure Set_Toolbar
+     (View    : not null access View_Record'Class;
+      Toolbar : access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
+   begin
+      View.Toolbar := Gtk_Toolbar (Toolbar);
+   end Set_Toolbar;
+
+   -----------------
+   -- Get_Toolbar --
+   -----------------
+
+   function Get_Toolbar
+     (View    : not null access View_Record'Class)
+      return Gtk.Toolbar.Gtk_Toolbar is
+   begin
+      return View.Toolbar;
+   end Get_Toolbar;
+
    --------------------------------
    -- Report_Filter_Changed_Idle --
    --------------------------------
@@ -1088,6 +1110,7 @@ package body Generic_Views is
 
          --  Child does not exist yet, create it
          Child := new Local_Formal_MDI_Child;
+         Child.Set_Toolbar (View.Get_Toolbar);
          Initialize (Child, Finalized_View,
                      Kernel         => Kernel,
                      Default_Width  => Default_Width,
@@ -1214,11 +1237,11 @@ package body Generic_Views is
       function Create_Finalized_View
         (View : not null access Formal_View_Record'Class) return Gtk_Widget
       is
-         Toolbar        : Gtk_Toolbar;
          Event_Box      : Gtk_Event_Box;
          Box            : Gtk_Box;
          Item           : Gtk_Tool_Item;
          Image          : Gtk_Image;
+         Toolbar        : Gtk_Toolbar;
       begin
          --  If no local toolbar is needed, either to contain a custom toolbar
          --  or for a local config menu, return View.
@@ -1240,6 +1263,7 @@ package body Generic_Views is
          Box.Pack_Start (View, Expand => True, Fill => True);
          View.Create_Toolbar (Toolbar);
          Toolbar.Show_All;
+         View.Set_Toolbar (Toolbar);
 
          --  We need to propagate the delete event to the view
          Return_Callback.Connect

@@ -55,7 +55,7 @@ package GPS.Kernel.Actions is
    procedure Unregister_Action
      (Kernel : access Kernel_Handle_Record'Class;
       Name   : String;
-      Remove_Menus : Boolean := True);
+      Remove_Menus_And_Toolbars : Boolean := True);
    --  Remove action named Name from the table of actions.
    --  Automatically remove the associated menus if Remove_Menus is true.
 

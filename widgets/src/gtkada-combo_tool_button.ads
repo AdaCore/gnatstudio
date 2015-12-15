@@ -70,6 +70,17 @@ package Gtkada.Combo_Tool_Button is
      (Widget : access Gtkada_Combo_Tool_Button_Record);
    --  Clear the Items list
 
+   procedure Remove_If
+     (Self : not null access Gtkada_Combo_Tool_Button_Record;
+      Predicate : not null access function
+        (Item : String; Data : User_Data) return Boolean);
+   --  Remove the items for which the predicate is True
+
+   function Has_Items
+     (Self : not null access Gtkada_Combo_Tool_Button_Record)
+      return Boolean;
+   --  Whether at least one item is registered
+
    -------------
    -- Signals --
    -------------

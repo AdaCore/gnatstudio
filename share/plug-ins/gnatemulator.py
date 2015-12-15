@@ -21,8 +21,35 @@ def log(msg):
 
 class GNATemulator(Module):
 
-    # a list of targets
-    __buttons = []
+    # List of targets
+    # These are created lazily the first time we find the necessary tools on
+    # the command line. This is done so that we do not have to toggle the
+    # visibility of these build targets too often, since that also trigger
+    # the reparsing of Makefiles, for instance, and a refresh of all GUI
+    # elements related to any build target.
+    __buildTargets = []
+
+    def __create_targets_lazily(self):
+        active = self.gnatemu_on_path()
+
+        if not self.__buildTargets and active:
+            targets_def = [
+                ["Run with Emulator", "run-with-emulator",
+                    self.__emu_wf, "gps-emulatorloading-run-symbolic"],
+                ["Debug with Emulator", "debug-with-emulator",
+                    self.__emu_debug_wf, "gps-emulatorloading-debug-symbolic"]]
+
+            for target in targets_def:
+                workflows.create_target_from_workflow(
+                    target[0], target[1], target[2], target[3])
+                self.__buildTargets.append(GPS.BuildTarget(target[0]))
+
+        if active:
+            for b in self.__buildTargets:
+                b.show()
+        else:
+            for b in self.__buildTargets:
+                b.hide()
 
     def get_gnatemu_name(self):
         target = GPS.get_target()
@@ -59,18 +86,6 @@ class GNATemulator(Module):
     def __error_exit(self, msg=""):
         """ Emit an error and reset the workflows """
         GPS.Console("Messages").write(msg + " [workflow stopped]")
-
-    def __show_button(self):
-        """Initialize buttons and parameters.
-        """
-
-        # Show the buttons only if a gnatemu is available for the target
-        if self.gnatemu_on_path():
-            for b in self.__buttons:
-                b.show()
-        else:
-            for b in self.__buttons:
-                b.hide()
 
     ###############################
     # The following are workflows #
@@ -154,32 +169,8 @@ class GNATemulator(Module):
 
         log("... done.")
 
-    # The followings are hooks:
-
     def setup(self):
-        """
-        When GPS start, add button (include cireteria there)
-        """
-
-        targets_def = [["Run with Emulator", "run-with-emulator",
-                        self.__emu_wf, "gps-emulatorloading-run-symbolic"],
-                       ["Debug with Emulator", "debug-with-emulator",
-                        self.__emu_debug_wf,
-                        "gps-emulatorloading-debug-symbolic"]]
-
-        for target in targets_def:
-
-            # Create targets * 2:
-            workflows.create_target_from_workflow(target[0], target[1],
-                                                  target[2], target[3])
-
-            b = GPS.BuildTarget(target[0])
-            self.__buttons.append(b)
-
-        self.__show_button()
+        self.__create_targets_lazily()
 
     def project_view_changed(self):
-        """
-        When project view changes, add button (include cireteria there)
-        """
-        self.__show_button()
+        self.__create_targets_lazily()

@@ -48,10 +48,10 @@ def uses_stm32f4(prj):
 
 class BoardLoader(Module):
 
-    # a list of targets
-    __targets = ["Flash to Board",
-                 "Debug on Board"]
-    __buttons = []
+    # The build targets that have been created lazily. See comments in
+    # gnatemulator.py
+    __buildTargets = []
+
     __connection = None
 
     def __error_exit(self, msg=""):
@@ -78,18 +78,28 @@ class BoardLoader(Module):
                 r = True
         return r
 
-    def __show_button(self):
-        """Initialize buttons and parameters.
-        """
-        if uses_stm32f4(GPS.Project.root()):
-            for b in self.__buttons:
+    def __create_targets_lazily(self):
+        self.__connection = None    # reset
+
+        active = uses_stm32f4(GPS.Project.root())
+
+        if not self.__buildTargets and active:
+            workflows.create_target_from_workflow(
+                "Flash to Board", "flash-to-board", self.__flash_wf,
+                "gps-boardloading-flash-symbolic")
+            self.__buildTargets.append(GPS.BuildTarget("Flash to Board"))
+
+            workflows.create_target_from_workflow(
+                "Debug on Board", "debug-on-board", self.__debug_wf,
+                "gps-boardloading-debug-symbolic")
+            self.__buildTargets.append(GPS.BuildTarget("Debug on Board"))
+
+        if active:
+            for b in self.__buildTargets:
                 b.show()
         else:
-            for b in self.__buttons:
+            for b in self.__buildTargets:
                 b.hide()
-
-        # reset
-        self.__connection = None
 
     ###############################
     # The following are workflows #
@@ -187,33 +197,13 @@ class BoardLoader(Module):
 
     def setup(self):
         """
-        When setting up the module, create target and buttons.
+        When setting up the module, create target and buildTargets.
         """
         GPS.Hook("debugger_terminated").add(self.debugger_terminated)
-
-        # Create targets * 4:
-        workflows.create_target_from_workflow(
-            "Flash to Board",
-            "flash-to-board",
-            self.__flash_wf,
-            "gps-boardloading-flash-symbolic")
-        workflows.create_target_from_workflow(
-            "Debug on Board",
-            "debug-on-board",
-            self.__debug_wf,
-            "gps-boardloading-debug-symbolic")
-
-        for tar in self.__targets:
-            b = GPS.BuildTarget(tar)
-            self.__buttons.append(b)
-
-        self.__show_button()
+        self.__create_targets_lazily()
 
     def project_view_changed(self):
-        """
-        When project view changes, add button (include cireteria there)
-        """
-        self.__show_button()
+        self.__create_targets_lazily()
 
     def debugger_terminated(self, hookname, debugger):
         """

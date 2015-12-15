@@ -324,6 +324,41 @@ class Action():
         """
         pass  # implemented in Ada
 
+    def button(self, toolbar='main', section='', group='', label='', icon=''):
+        """
+        Add a new button in some toolbars.
+        When this button is clicked, it executes the action from self.
+
+        :param string toolbar: identifies which toolbar the action should be
+           added to. The default is to add to the main toolbar for the main
+           GPS window and all floating windows. Other possible names are the
+           names of the various views, as listed in the /Tools/Views menu.
+
+        :param string section: identifies which part of the toolbar the button
+           should be added to. By default, the button is added at the end of
+           the toolbar. However, some toolbars define various sections (see
+           the menus.xml file for valid section names).
+
+        :param string group: when a group is specified, the new button
+           contains a popup menu. A long click on the menu displays a popup
+           with all actions in that group. A short click executes the last
+           action from this group.
+
+        :param string label: use this as a label for the button, when the user
+           choses to display labels in toolbars. The default is to use the
+           action's name.
+
+        :param string icon: override the default icon registered for the
+           action.
+
+        .. code-block:: python
+
+           # The following adds a 'Copy to clipboard' button in the Messages
+           # window's local toolbar:
+           GPS.Action("Copy to Clipboard").button(
+               toolbar='Messages', label='Copy')
+        """
+
 
 ###########################################################
 # Activities
@@ -901,47 +936,6 @@ class BuildTarget(object):
         """
         pass  # implemented in Ada
 
-###########################################################
-# Button
-###########################################################
-
-
-class Button(GUI):
-
-    """
-    This class represents a button that can be pressed to trigger various
-    actions.
-
-    .. seealso:: :func:`GPS.Button.__init__()`
-    """
-
-    def __init__(self, id, label, on_click):
-        """
-        Initializes a new button. When the button is pressed by the user,
-        :func:`on_click` is called with the a single parameter, ``self``.
-
-        :param string id: A unique identifier for the button
-        :param string label: The text that appears on the button
-        :param on_click: A subprogram to be called when the button is clicked
-        :type on_click: (:class:`GPS.Button`) -> None
-
-        .. code-block:: python
-
-           def on_click (button):
-               print "Button pressed"
-           button = GPS.Button ("my_id", label="Press me", on_click=on_click)
-           GPS.Toolbar().append (button)
-        """
-        pass  # implemented in Ada
-
-    def set_text(self, label):
-        """
-        Changes the text that appears on the button.
-
-        :param string label: New label for the button
-        """
-        pass  # implemented in Ada
-
 
 ###########################################################
 # Clipboard
@@ -1357,97 +1351,6 @@ class CodefixError(object):
 
            for err in GPS.Codefix ("Builder results").errors():
                print err.possible_fixes()
-        """
-        pass  # implemented in Ada
-
-
-###########################################################
-# Combo
-###########################################################
-
-class Combo(GUI):
-
-    """
-    This class represents a combo box, ie a text entry widget with a number of
-    predefined possible values. The user can interactively select one of
-    multiple values through this widget.
-
-    .. seealso::
-
-       :class:`GPS.Toolbar`
-
-       :func:`GPS.Combo.__init__`
-    """
-
-    def __init__(self, id, label='', on_changed=None):
-        """
-        Creates a new combo. The combo will graphically be preceded by some
-        text if label was specified. :func`on_changed` is called every time the
-        user selects a new value for the combo box.
-
-        :param string id: The name of the combo to create
-        :param string label: The label to add next to the entry
-
-        :param on_changed: A subprogram, see the GPS documentation on
-            Subprogram parameters. Its parameters are the following:
-
-            - The instance of GPS.Combo (self)
-            - The newly selected text (a string)
-
-        :type on_changed: (:class:`GPS.Combo`, string) -> None
-
-        .. seealso::
-
-             :func:`GPS.Toolbar.append()`
-
-             :func:`GPS.Toolbar.ge()`
-        """
-        pass  # implemented in Ada
-
-    def add(self, choice, on_selected=None):
-        """
-        Adds a choice to specified entry, :func:`on_selected` is executed
-        whenever this choice is selected.
-
-        :param string choice: The new choice
-        :param on_selected: A subprogram, called with the following
-           parameters:
-           - The instance of GPS.Combo (self)
-           - The newly selected text (a string)
-
-        :type on_selected: (:class:`GPS.Combo`, string) -> None
-        """
-        pass  # implemented in Ada
-
-    def clear(self):
-        """
-        Removes all choices from the specified entry.
-        """
-        pass  # implemented in Ada
-
-    def get_text(self):
-        """
-        Returns the current selection in the specified entry.
-
-        :rtype: A string
-        """
-        pass  # implemented in Ada
-
-    def remove(self, choice):
-        """
-        Removes a choice from the specified entry.
-
-        :param string choice: The choice to remove
-
-        .. seealso:: :func:`GPS.Combo.clear()`
-        """
-        pass  # implemented in Ada
-
-    def set_text(self, choice):
-        """
-        Sets the current selection in the specified entry.
-
-        :param string choice: The string to remove
         """
         pass  # implemented in Ada
 
@@ -9619,155 +9522,6 @@ class Timeout(object):
     def remove(self):
         """
         Unregisters a timeout.
-        """
-        pass  # implemented in Ada
-
-
-###########################################################
-# ToolButton
-###########################################################
-
-class ToolButton(GUI):
-
-    """
-    This class represents a button that can be inserted in the toolbar.
-
-    .. seealso:: :func:`GPS.ToolButton.__init__`
-
-    """
-
-    def __init__(self, stock_id, label, on_click):
-        """
-        Initializes a new button. When the button is pressed by the user,
-        ``on_click`` is called with the following single parameter:
-
-        - $1 = The instance of :class:`GPS.Button`
-
-        :param stock_id: A string identifying the icon
-        :param label: A string, the text that appears on the button
-        :param on_click: A subprogram, see the GPS documentation
-
-        .. code-block:: python
-
-           b = GPS.ToolButton("gtk-new", "New File",
-           lambda x : GPS.execute_action("/File/New"))
-           GPS.Toolbar().insert(b, 0)
-
-        """
-        pass  # implemented in Ada
-
-
-###########################################################
-# Toolbar
-###########################################################
-
-class Toolbar(GUI):
-
-    """
-    Interface to commands related to the toolbar. This allows you to add new
-    combo boxes to the GPS toolbars. Note that this can also be done through
-    XML files, see the GPS documentation.
-
-    .. seealso:: :func:`GPS.Toolbar.__init__`
-
-    .. code-block:: python
-
-       import GPS
-
-       def on_changed(entry, choice):
-           print "changed " + choice + ' ' + entry.custom
-
-       def on_selected(entry, choice):
-           print "on_selected " + choice + ' ' + entry.custom
-
-       ent = GPS.Combo("foo", label="Foo", on_changed=on_changed)
-
-       GPS.Toolbar().append(ent, tooltip => "What it does")
-
-       ent.custom = "Foo"  ##  Create any field you want
-       ent.add(choice="Choice1", on_selected=on_selected)
-       ent.add(choice="Choice2", on_selected=on_selected)
-       ent.add(choice="Choice3", on_selected=on_selected)
-
-    It is easier to use this interface through XML customization files,
-    see the GPS documentation. However, this can also be done through
-    standard GPS shell commands::
-
-       Combo "foo" "Foo" "on_changed_action"
-       Toolbar
-       Toolbar.append %1 %2 "What it does"
-
-       Toolbar
-       Toolbar.get %1 "foo"
-       Combo.add %1 "Choice1" "on_selected"action"
-    """
-
-    def __init__(self):
-        """
-        Initializes a new instance of the toolbar, associated with the default
-        toolbar of GPS. This is called implicitly from Python.
-        """
-        pass  # implemented in Ada
-
-    def append(self, widget, tooltip=''):
-        """
-        Adds a new widget in the toolbar. This can be an instance of
-        :class:`GPS.Combo`, :class:`GPS.Button`, or :class:`GPS.ToolButton`.
-
-        :param widget: An instance of :class:`GPS.GUI`
-        :param tooltip: A string
-        """
-        pass  # implemented in Ada
-
-    def get(self, id):
-        """
-        Returns the toolbar entry matching ``id``. Raises an error if no such
-        entry exists. The same instance of :class:`GPS.Combo` is always
-        returned for each ``id``, so you can store your own fields in this
-        instance and access it later.
-
-        :param id: A string, the name of the entry to get
-        :return: An instance of :class:`GPS.Combo`
-
-        .. code-block:: python
-
-           ent = GPS.Combo("foo")
-           GPS.Toolbar().append(ent)
-           ent.my_custom_field = "Whatever"
-
-           print GPS.Toolbar().get("foo").my_custom_field
-           =>  "Whatever"
-        """
-        pass  # implemented in Ada
-
-    def get_by_pos(self, position):
-        """
-        Returns the ``position``-th widget in the toolbar. If the widget was
-        created from a scripting language, its instance is
-        returned. Otherwise, a generic instance of :class:`GPS.GUI` is
-        returned. This can be used to remove some items from the toolbar,
-        for example.
-
-        :param position: An integer, starting at 0
-        :return: An instance of a child of :class:`GPS.GUI`
-
-        .. code-block:: python
-
-           GPS.Toolbar().get_by_pos(0).set_sensitive(False)
-           # can be used to gray out the first item in the toolbar
-
-        """
-        pass  # implemented in Ada
-
-    def insert(self, widget, pos=-1, tooltip=''):
-        """
-        Adds a new widget in the toolbar. This can be an instance of
-        :class:`GPS.Combo`, :class:`GPS.Button`, or :class:`GPS.ToolButton`.
-
-        :param widget: An instance of :class:`GPS.GUI`
-        :param pos: The position at which to insert the widget
-        :param tooltip: A string
-
         """
         pass  # implemented in Ada
 

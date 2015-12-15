@@ -71,6 +71,8 @@ Classes
 
    .. automethod:: GPS.Action.__init__
 
+   .. automethod:: GPS.Action.button
+
    .. automethod:: GPS.Action.contextual
 
    .. automethod:: GPS.Action.create
@@ -190,17 +192,6 @@ Classes
 
    .. automethod:: GPS.BuildTarget.show
 
-:class:`GPS.Button`
-^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: Button
-
-   .. inheritance-diagram:: GPS.Button
-
-   .. automethod:: GPS.Button.__init__
-
-   .. automethod:: GPS.Button.set_text
-
 :class:`GPS.Clipboard`
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -278,25 +269,6 @@ Classes
    .. automethod:: GPS.CodefixError.message
 
    .. automethod:: GPS.CodefixError.possible_fixes
-
-:class:`GPS.Combo`
-^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: Combo
-
-   .. inheritance-diagram:: GPS.Combo
-
-   .. automethod:: GPS.Combo.__init__
-
-   .. automethod:: GPS.Combo.add
-
-   .. automethod:: GPS.Combo.clear
-
-   .. automethod:: GPS.Combo.get_text
-
-   .. automethod:: GPS.Combo.remove
-
-   .. automethod:: GPS.Combo.set_text
 
 :class:`GPS.Command`
 ^^^^^^^^^^^^^^^^^^^^
@@ -1760,32 +1732,6 @@ Classes
    .. automethod:: GPS.Timeout.__init__
 
    .. automethod:: GPS.Timeout.remove
-
-:class:`GPS.ToolButton`
-^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: ToolButton
-
-   .. inheritance-diagram:: GPS.ToolButton
-
-   .. automethod:: GPS.ToolButton.__init__
-
-:class:`GPS.Toolbar`
-^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: Toolbar
-
-   .. inheritance-diagram:: GPS.Toolbar
-
-   .. automethod:: GPS.Toolbar.__init__
-
-   .. automethod:: GPS.Toolbar.append
-
-   .. automethod:: GPS.Toolbar.get
-
-   .. automethod:: GPS.Toolbar.get_by_pos
-
-   .. automethod:: GPS.Toolbar.insert
 
 :class:`GPS.Unexpected_Exception`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

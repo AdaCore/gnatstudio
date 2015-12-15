@@ -97,6 +97,15 @@ package Generic_Views is
    --  latter makes it harder to know how to append items to the left or to
    --  the right.
 
+   procedure Set_Toolbar
+     (View    : not null access View_Record'Class;
+      Toolbar : access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   function Get_Toolbar
+     (View    : not null access View_Record'Class)
+      return Gtk.Toolbar.Gtk_Toolbar;
+   --  Access the local toolbar for the view (if any).
+   --  This toolbar is created automatically by the generic package below.
+
    function Kernel
      (Self : not null access View_Record'Class)
       return GPS.Kernel.Kernel_Handle;
@@ -367,9 +376,10 @@ private
    --  Type used to create a search bar in the view's local toolbar
 
    type View_Record is new Gtk.Box.Gtk_Box_Record with record
-      Kernel : GPS.Kernel.Kernel_Handle;
-      Filter : Filter_Panel;   --  might be null
-      Search : Search_Panel;   --  might be null
+      Kernel  : GPS.Kernel.Kernel_Handle;
+      Toolbar : Gtk.Toolbar.Gtk_Toolbar;
+      Filter  : Filter_Panel;   --  might be null
+      Search  : Search_Panel;   --  might be null
    end record;
 
 end Generic_Views;

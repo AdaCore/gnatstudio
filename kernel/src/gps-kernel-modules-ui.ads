@@ -295,11 +295,11 @@ package GPS.Kernel.Modules.UI is
    --  When a menu is optional, it is hidden if its action does not exist.
    --  Otherwise, the menu is simply greyed out, but the menu is still visible.
 
-   procedure Remove_Menus_For_Action
+   procedure Remove_UI_For_Action
      (Kernel : not null access Kernel_Handle_Record'Class;
       Action : String);
-   --  Remove all menu items associated with the given action, in all windows
-   --  that have a menubar.
+   --  Remove all menu and toolbar items associated with the given action,
+   --  in all windows that have a menubar.
 
    function Action_From_Menu
      (Kernel : not null access Kernel_Handle_Record'Class;
@@ -332,10 +332,10 @@ package GPS.Kernel.Modules.UI is
       Action          : String;
       Icon_Name       : String := "";
       Label           : String := "";
-      Toolbar         : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
-      Position        : Glib.Gint := -1;
-      Hide            : Boolean := False;
-      Focus_On_Action : Boolean := False);
+      Toolbar         : String := "main";
+      Section         : String := "";
+      Group           : String := "";
+      Hide            : Boolean := False);
    --  Register a button based on an action.
    --  The action need not be registered yet.
    --  Icon_Name overrides the action's default image, if specified.
@@ -348,15 +348,19 @@ package GPS.Kernel.Modules.UI is
    --  Label is used to override the label on the button, which by default
    --  is the name of the action.
    --
-   --  The toolbar defaults to the global toolbar in GPS.
-   --  The position can be computed with Get_Toolbar_Separator_Position.
+   --  Toolbar defaults to the main toolbar, but you can use some other names
+   --  like 'Locations', 'Messages', 'Browser',... to indicate other toolbars.
+   --  See the file share/menus.xml and the view names in generic_views.ads.
    --
-   --  Focus will be set to parent MDI_Child when the button is clicked and
-   --  Focus_On_Action is True
+   --  Section is the position within the toolbar where the new button will be
+   --  added.
+   --
+   --  If Group is specified, a button will be created that can be long-pressed
+   --  to popup a menu with all actions associated with the group. Clicking on
+   --  the button executes the last action.
 
    function Get_Toolbar_Section
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Toolbar : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
+     (Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class;
       Section : String;
       Last    : Boolean := True) return Glib.Gint;
    --  Return the first or last item position in a given section of the
@@ -365,14 +369,11 @@ package GPS.Kernel.Modules.UI is
 
    function Create_Toolbar
      (Kernel          : not null access Kernel_Handle_Record'Class;
-      Id              : String;
-      Focus_On_Action : Boolean := False)
+      Id              : String)
       return Gtk.Toolbar.Gtk_Toolbar;
    --  Create a new toolbar with the given id.
    --  Its contents is read from the XML file in Install_Menus. Any button
    --  registered for it later on will be dynamically added to the toolbar.
-   --  Focus will be set to parent MDI_Child when the button inside toolbar
-   --  is clicked and Focus_On_Action is True
 
    -------------------------
    -- Drag'n'drop support --

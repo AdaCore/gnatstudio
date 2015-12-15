@@ -6,22 +6,14 @@
 #############################################################################
 
 import GPS
+import gps_utils
 
 
-def on_gps_started(hook_name):
-    t = GPS.Toolbar()
-    cut = GPS.ToolButton(
-        "gps-cut-symbolic",   "Cut",
-        lambda x: GPS.execute_action("Cut to Clipboard"))
-    copy = GPS.ToolButton(
-        "gps-copy-symbolic",  "Copy",
-        lambda x: GPS.execute_action("Copy to Clipboard"))
-    paste = GPS.ToolButton(
-        "gps-paste-symbolic", "Paste",
-        lambda x: GPS.execute_action("Paste From Clipboard"))
-
-    t.insert(cut,   3, "Cut to Clipboard")
-    t.insert(copy,  4, "Copy to Clipboard")
-    t.insert(paste, 5, "Paste from Clipboard")
-
-GPS.Hook("gps_started").add(on_gps_started)
+@gps_utils.hook('gps_started')
+def __gps_started():
+    GPS.Action('cut to clipboard').button(
+        toolbar='main', section='editor', label='Cut')
+    GPS.Action('copy to clipboard').button(
+        toolbar='main', section='editor', label='Copy')
+    GPS.Action('paste from clipboard').button(
+        toolbar='main', section='editor', label='Paste')

@@ -210,29 +210,6 @@ def make_action_from_workflow(name, category="General",
     return wrap
 
 
-def make_button_for_action(button_name, icon_name):
-    """
-       Decorator that wraps an action and make a button for it on the toolbar
-
-       :param button_name: name of the button
-       :param icon_name: the icon to use.
-
-       The input of the decorator = expecting argument for returning wrap
-       = an action
-    """
-    def wrap(action):
-        # create on_click function for the button from the action
-        def on_click(button):
-            action.execute_if_possible()
-
-        # create the button and append it to the toolbar
-        b = GPS.Button(icon_name, button_name, on_click)
-        GPS.Toolbar().append(b)
-        return action
-
-    return wrap
-
-
 def create_target_from_workflow(target_name, workflow_name, workflow,
                                 icon_name="gps-print-symbolic"):
     """

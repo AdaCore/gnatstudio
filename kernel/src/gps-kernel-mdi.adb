@@ -1446,24 +1446,6 @@ package body GPS.Kernel.MDI is
       end if;
    end Get_Default_Accelerators;
 
-   -----------------
-   -- Get_Toolbar --
-   -----------------
-
-   function Get_Toolbar
-     (Handle : access Kernel_Handle_Record'Class)
-      return Gtk.Toolbar.Gtk_Toolbar
-   is
-      Win : constant access Gtk_Window_Record'Class :=
-        Handle.Get_Main_Window;
-   begin
-      if Win /= null then
-         return GPS_Window (Win).Toolbar;
-      else
-         return null;
-      end if;
-   end Get_Toolbar;
-
    -----------
    -- Setup --
    -----------
@@ -2092,5 +2074,27 @@ package body GPS.Kernel.MDI is
             (MDI_Child_Record (Child.all)'Access, Win, Container);
       end if;
    end Create_Float_Window_For_Child;
+
+   -----------------
+   -- Set_Toolbar --
+   -----------------
+
+   procedure Set_Toolbar
+     (Child   : not null access GPS_MDI_Child_Record'Class;
+      Toolbar : access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
+   begin
+      Child.Toolbar := Gtk_Toolbar (Toolbar);
+   end Set_Toolbar;
+
+   -----------------
+   -- Get_Toolbar --
+   -----------------
+
+   function Get_Toolbar
+     (Child : not null access GPS_MDI_Child_Record'Class)
+      return Gtk.Toolbar.Gtk_Toolbar is
+   begin
+      return Child.Toolbar;
+   end Get_Toolbar;
 
 end GPS.Kernel.MDI;

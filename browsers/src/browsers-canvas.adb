@@ -451,7 +451,6 @@ package body Browsers.Canvas is
      (View    : not null access General_Browser_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
    is
-      Kernel     : constant Kernel_Handle := View.Kernel;
       Menu       : Gtk_Menu_Tool_Button;
       Zooms_Menu : Gtk_Menu;
       Export_Menu  : Gtk_Menu;
@@ -482,7 +481,7 @@ package body Browsers.Canvas is
       Menu.Set_Tooltip_Text (-"Reset zoom level (or Alt-mousewheel)");
       Menu.Set_Menu (Zooms_Menu);
       Zooms_Menu.Show_All;
-      Toolbar.Insert (Menu, Get_Toolbar_Section (Kernel, Toolbar, "zoom"));
+      Toolbar.Insert (Menu, Get_Toolbar_Section (Toolbar, "zoom"));
       Contextual_Cb.Connect
         (Menu, Gtk.Tool_Button.Signal_Clicked, Zoom_Level'Access,
          (Browser => General_Browser (View),
@@ -512,7 +511,7 @@ package body Browsers.Canvas is
       Menu.Set_Tooltip_Text (-"Export to...");
       Menu.Set_Menu (Export_Menu);
       Export_Menu.Show_All;
-      Toolbar.Insert (Menu, Get_Toolbar_Section (Kernel, Toolbar, "export"));
+      Toolbar.Insert (Menu, Get_Toolbar_Section (Toolbar, "export"));
       Widget_Callback.Object_Connect
         (Menu, Gtk.Tool_Button.Signal_Clicked, On_Export_To_PDF'Access, View);
    end Create_Toolbar;

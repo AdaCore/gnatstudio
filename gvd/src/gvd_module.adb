@@ -1995,7 +1995,7 @@ package body GVD_Module is
 
    begin
       for A of GVD_Module_ID.Actions loop
-         Unregister_Action (Kernel, A, Remove_Menus => True);
+         Unregister_Action (Kernel, A, Remove_Menus_And_Toolbars => True);
       end loop;
       GVD_Module_ID.Actions.Clear;
 

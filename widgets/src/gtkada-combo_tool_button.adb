@@ -513,6 +513,34 @@ package body Gtkada.Combo_Tool_Button is
       end if;
    end Add_Item;
 
+   ---------------
+   -- Remove_If --
+   ---------------
+
+   procedure Remove_If
+     (Self      : not null access Gtkada_Combo_Tool_Button_Record;
+      Predicate : not null access function
+        (Item : String; Data : User_Data) return Boolean)
+   is
+      Index : Natural := 0;
+
+      procedure On_Child (Child : not null access Gtk_Widget_Record'Class);
+      procedure On_Child (Child : not null access Gtk_Widget_Record'Class) is
+         M : constant Menu_Item := Menu_Item (Child);
+         Name : constant String := To_String (Self.Items.Element (Index));
+      begin
+         if Predicate (Name, M.Data) then
+            Self.Menu.Remove (Child);
+            Self.Items.Delete (Index);
+         else
+            Index := Index + 1;
+         end if;
+      end On_Child;
+
+   begin
+      Self.Menu.Foreach (On_Child'Unrestricted_Access);
+   end Remove_If;
+
    -----------------
    -- Select_Item --
    -----------------
@@ -609,5 +637,16 @@ package body Gtkada.Combo_Tool_Button is
          return null;
       end if;
    end Get_Selected_Item_Data;
+
+   ---------------
+   -- Has_Items --
+   ---------------
+
+   function Has_Items
+     (Self : not null access Gtkada_Combo_Tool_Button_Record)
+      return Boolean is
+   begin
+      return not Self.Items.Is_Empty;
+   end Has_Items;
 
 end Gtkada.Combo_Tool_Button;
