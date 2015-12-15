@@ -556,6 +556,7 @@ XML = r"""<?xml version="1.0" ?>
       <arg>%E</arg>
       <arg>--passed-tests=hide</arg>
     </command-line>
+    <iconname>gps-gnattest-run</iconname>
   </target>
 
   <target model="GNATtest execution mode" category="Run"
@@ -573,6 +574,7 @@ XML = r"""<?xml version="1.0" ?>
       <arg>test_drivers.list</arg>
       <arg>--passed-tests=hide</arg>
     </command-line>
+    <iconname>gps-gnattest-run</iconname>
   </target>
 
 </gnattest>
