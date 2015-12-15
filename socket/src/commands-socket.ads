@@ -37,7 +37,7 @@ package Commands.Socket is
       Stream  : Stream_Access);
    --  Create a new custom command
 
-   overriding procedure Free (X : in out Socket_Command);
+   overriding procedure Primitive_Free (X : in out Socket_Command);
    --  Free memory associated to X
 
    overriding function Execute

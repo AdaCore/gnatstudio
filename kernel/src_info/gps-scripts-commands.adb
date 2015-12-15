@@ -187,15 +187,21 @@ package body GPS.Scripts.Commands is
       Result : constant Scheduled_Command_Access := new Scheduled_Command;
    begin
       Result.Command := Self.Command;
+      Self.Command := null;
+
+      --  Some commands (like a GPS.Kernel.Timeout.Monitor_Command) keep a
+      --  reference to the scheduled command they are encapsulated in. This
+      --  pointer should thus be reset.
+
       Result.Destroy_On_Exit := Self.Destroy_On_Exit;
       return Result;
    end Create_Dead_Command;
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
-   overriding procedure Free (Command : in out Scheduled_Command) is
+   overriding procedure Primitive_Free (Command : in out Scheduled_Command) is
    begin
       --  If some script instance is referencing the command, we need to
       --  keep it in memory, but owned by the instances.
@@ -205,9 +211,7 @@ package body GPS.Scripts.Commands is
             Unref (Command.Command);
          end if;
       end if;
-
-      Free (Root_Command (Command));  --  inherited
-   end Free;
+   end Primitive_Free;
 
    ----------
    -- Undo --

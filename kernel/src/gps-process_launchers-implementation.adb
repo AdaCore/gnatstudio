@@ -28,20 +28,29 @@ package body GPS.Process_Launchers.Implementation is
    end record;
 
    overriding procedure Destroy (Data : in out Build_Callback_Data);
-   procedure Build_Callback (Data : Process_Data; Output : String);
-   procedure End_Build_Callback (Data : Process_Data; Status : Integer);
+   procedure Build_Callback
+     (Data    : Process_Data;
+      Command : not null access Root_Command'Class;
+      Output  : String);
+   procedure End_Build_Callback
+     (Data    : Process_Data;
+      Command : not null access Root_Command'Class;
+      Status  : Integer);
 
    --------------------
    -- Build_Callback --
    --------------------
 
-   procedure Build_Callback (Data : Process_Data; Output : String) is
+   procedure Build_Callback
+     (Data    : Process_Data;
+      Command : not null access Root_Command'Class;
+      Output  : String)
+   is
       Build_Data : Build_Callback_Data
         renames Build_Callback_Data (Data.Callback_Data.all);
    begin
       if Build_Data.Output_Parser /= null then
-         Build_Data.Output_Parser.Parse_Standard_Output
-           (Output, Command_Access (Data.Command));
+         Build_Data.Output_Parser.Parse_Standard_Output (Output, Command);
       end if;
    end Build_Callback;
 
@@ -49,14 +58,16 @@ package body GPS.Process_Launchers.Implementation is
    -- End_Build_Callback --
    ------------------------
 
-   procedure End_Build_Callback (Data : Process_Data; Status : Integer) is
+   procedure End_Build_Callback
+     (Data    : Process_Data;
+      Command : not null access Root_Command'Class;
+      Status  : Integer)
+   is
       Build_Data : Build_Callback_Data
                      renames Build_Callback_Data (Data.Callback_Data.all);
-
    begin
       if Build_Data.Output_Parser /= null then
-         Build_Data.Output_Parser.End_Of_Stream
-           (Status, Command_Access (Data.Command));
+         Build_Data.Output_Parser.End_Of_Stream (Status, Command);
       end if;
    end End_Build_Callback;
 
@@ -152,7 +163,6 @@ package body GPS.Process_Launchers.Implementation is
          Callback_Data        => Data,
          Line_By_Line         => False,
          Directory            => Directory,
-         Synchronous          => False,
          Show_Exit_Status     => False,
          Created_Command      => Result,
          Show_In_Task_Manager => Show_In_Task_Manager,

@@ -28,7 +28,7 @@ package Build_Command_Manager.Location_Parsers is
    overriding procedure Parse_Standard_Output
      (Self    : not null access Location_Parser;
       Item    : String;
-      Command : Command_Access);
+      Command : access Root_Command'Class);
 
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;

@@ -42,7 +42,6 @@ with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with Toolchains_Old;            use Toolchains_Old;
 
 package body External_Editor_Module is
@@ -260,19 +259,15 @@ package body External_Editor_Module is
    --  Does all the substitutions in Args for %f, %c, %l, %e and %%.
 
    procedure Spawn_New_Process
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : Filesystem_String;
+     (Command : Filesystem_String;
       Args    : GNAT.OS_Lib.Argument_List;
       Result  : out Boolean);
    --  Spawn a new process, and store it in External_Clients, so that we can
    --  properly handle its termination.
 
-   function External_Timeout (D : Process_Data) return Boolean;
+   function External_Timeout return Boolean;
    --  Timeout used to monitor the external editors. It is also used to make
    --  sure that no zombie process is left on Unix machines.
-
-   procedure External_Timeout_Destroy (D : in out Process_Data);
-   --  Called when the timeout for the external editors is terminated.
 
    function Blocking_Spawn
      (Command : Filesystem_String; Args : Argument_List) return Integer;
@@ -401,8 +396,7 @@ package body External_Editor_Module is
    -- External_Timeout --
    ----------------------
 
-   function External_Timeout (D : Process_Data) return Boolean is
-      pragma Unreferenced (D);
+   function External_Timeout return Boolean is
       Result : Expect_Match;
       Old    : Process_Descriptor_Array_Access;
       J      : Integer := External_Editor_Module_Id.Processes'First;
@@ -443,27 +437,21 @@ package body External_Editor_Module is
          end;
       end loop;
 
-      return External_Editor_Module_Id.Processes /= null;
+      if External_Editor_Module_Id.Processes /= null then
+         return True;
+      else
+         Trace (Me, "Last external editor was killed");
+         External_Editor_Module_Id.Timeout_Id := 0;
+         return False;
+      end if;
    end External_Timeout;
-
-   ----------------------
-   -- External_Timeout --
-   ----------------------
-
-   procedure External_Timeout_Destroy (D : in out Process_Data) is
-      pragma Unreferenced (D);
-   begin
-      Trace (Me, "Last external editor was killed");
-      External_Editor_Module_Id.Timeout_Id := 0;
-   end External_Timeout_Destroy;
 
    -----------------------
    -- Spawn_New_Process --
    -----------------------
 
    procedure Spawn_New_Process
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : Filesystem_String;
+     (Command : Filesystem_String;
       Args    : GNAT.OS_Lib.Argument_List;
       Result  : out Boolean)
    is
@@ -498,12 +486,11 @@ package body External_Editor_Module is
         new TTY_Process_Descriptor'(Process);
 
       if External_Editor_Module_Id.Timeout_Id = 0 then
-         External_Editor_Module_Id.Timeout_Id := Process_Timeout.Timeout_Add
+         --  ??? Should we just run through the task manager and use the
+         --  timeout there instead ?
+         External_Editor_Module_Id.Timeout_Id := Glib.Main.Timeout_Add
            (Interval => Timeout,
-            Func     => External_Timeout'Access,
-            Data     => Process_Data'
-              (Kernel_Handle (Kernel), null, null, null, null, null, False),
-            Notify   => External_Timeout_Destroy'Access);
+            Func     => External_Timeout'Access);
       end if;
 
       Result := True;
@@ -547,7 +534,7 @@ package body External_Editor_Module is
                  (External_Editor_Module_Id.Client).Server_Start_Command.all);
 
             Spawn_New_Process
-              (Kernel, Path.Full_Name, Args.all, Success);
+              (Path.Full_Name, Args.all, Success);
             Free (Args.all);
             Unchecked_Free (Args);
             exit;
@@ -668,8 +655,7 @@ package body External_Editor_Module is
            (Path.Full_Name, Args (Args'First + 1 .. Args'Last));
       else
          Spawn_New_Process
-           (Kernel, Path.Full_Name,
-            Args (Args'First + 1 .. Args'Last), Success);
+           (Path.Full_Name, Args (Args'First + 1 .. Args'Last), Success);
       end if;
 
       --  If we couldn't send the command, it probably means that Emacs wasn't

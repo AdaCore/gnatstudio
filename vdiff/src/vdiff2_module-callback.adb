@@ -515,7 +515,7 @@ package body Vdiff2_Module.Callback is
       Diff          : Diff_Head_Access;
       Ref_File      : T_VFile_Index;
    begin
-      Create
+      Create   --  Freed below
         (Cmd,
          Get_Kernel (Vdiff_Module_ID.all),
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
@@ -540,7 +540,7 @@ package body Vdiff2_Module.Callback is
          Unchecked_Execute (Cmd, Diff);
       end if;
 
-      Free (Root_Command (Cmd.all));
+      Unref (Command_Access (Cmd));
       return Commands.Success;
    end Execute;
 
@@ -571,7 +571,7 @@ package body Vdiff2_Module.Callback is
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
       Unchecked_Execute (Cmd, Data (Node));
-      Free (Root_Command (Cmd.all));
+      Unref (Command_Access (Cmd));
       return Commands.Success;
    end Execute;
 
@@ -622,7 +622,7 @@ package body Vdiff2_Module.Callback is
          Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all, Node),
          Node);
 
-      Free (Root_Command (Cmd.all));
+      Unref (Command_Access (Cmd));
       return Commands.Success;
    end Execute;
 
@@ -684,7 +684,7 @@ package body Vdiff2_Module.Callback is
          end if;
       end loop;
 
-      Free (Root_Command (Cmd.all));
+      Unref (Command_Access (Cmd));
       return Commands.Success;
    end Execute;
 
@@ -715,7 +715,7 @@ package body Vdiff2_Module.Callback is
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
       Unchecked_Execute (Cmd, Data (Node));
-      Free (Root_Command (Cmd.all));
+      Unref (Command_Access (Cmd));
 
       return Commands.Success;
    end Execute;

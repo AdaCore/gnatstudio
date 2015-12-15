@@ -51,7 +51,7 @@ package body GPS.Tools_Output is
    procedure End_Of_Stream
      (Self    : not null access Tools_Output_Parser;
       Status  : Integer;
-      Command : Command_Access) is
+      Command : access Root_Command'Class) is
    begin
       if Self.Child /= null then
          Self.Child.End_Of_Stream (Status, Command);
@@ -116,7 +116,7 @@ package body GPS.Tools_Output is
    procedure Parse_Standard_Output
      (Self    : not null access Tools_Output_Parser;
       Item    : String;
-      Command : Command_Access) is
+      Command : access Root_Command'Class) is
    begin
       if Self.Child /= null then
          Self.Child.Parse_Standard_Output (Item, Command);
@@ -130,7 +130,7 @@ package body GPS.Tools_Output is
    procedure Parse_Standard_Error
      (Self    : not null access Tools_Output_Parser;
       Item    : String;
-      Command : Command_Access) is
+      Command : access Root_Command'Class) is
    begin
       if Self.Child /= null then
          Self.Child.Parse_Standard_Error (Item, Command);

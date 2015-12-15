@@ -31,31 +31,26 @@ package body Commands.VCS is
 
    Me : constant Trace_Handle := Create ("Command.VCS");
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
-   overriding procedure Free (X : in out Log_Action_Command_Type) is
+   overriding procedure Primitive_Free (X : in out Log_Action_Command_Type) is
    begin
       Unchecked_Free (X.Filenames);
       String_List.Free (X.Logs);
-   end Free;
+   end Primitive_Free;
 
-   overriding procedure Free (X : in out Get_Status_Command_Type) is
+   overriding procedure Primitive_Free (X : in out Get_Status_Command_Type) is
    begin
       Unchecked_Free (X.Filenames);
-   end Free;
+   end Primitive_Free;
 
-   overriding procedure Free (X : in out Update_Files_Command_Type) is
+   overriding procedure Primitive_Free
+     (X : in out Update_Files_Command_Type) is
    begin
       Unchecked_Free (X.Filenames);
-   end Free;
-
-   overriding procedure Free (X : in out Generic_Kernel_Command) is
-      pragma Unreferenced (X);
-   begin
-      null;
-   end Free;
+   end Primitive_Free;
 
    ------------
    -- Create --

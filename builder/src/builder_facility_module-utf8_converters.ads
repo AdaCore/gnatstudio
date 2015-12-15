@@ -31,7 +31,7 @@ package Builder_Facility_Module.UTF8_Converters is
    overriding procedure Parse_Standard_Output
      (Self    : not null access UTF8_Converter;
       Item    : String;
-      Command : Command_Access);
+      Command : access Root_Command'Class);
 
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;

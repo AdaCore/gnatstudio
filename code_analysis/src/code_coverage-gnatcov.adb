@@ -529,16 +529,16 @@ package body Code_Coverage.GNATcov is
       return Commands.Success;
    end Execute;
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
-   overriding procedure Free
+   overriding procedure Primitive_Free
      (Self : in out Detail_Messages_Command)
    is
    begin
       Remove_Inlined_Detailed_Messages (Self);
-   end Free;
+   end Primitive_Free;
 
    --------------------------------------
    -- Remove_Inlined_Detailed_Messages --

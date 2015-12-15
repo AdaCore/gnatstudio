@@ -107,10 +107,16 @@ package body Remote.Rsync is
    procedure On_Abort_Clicked (Dialog : access Gtk_Widget_Record'Class);
    --  Abort button pressed
 
-   procedure Parse_Rsync_Output (Data : Process_Data; Output : String);
+   procedure Parse_Rsync_Output
+     (Data    : Process_Data;
+      Command : not null access Root_Command'Class;
+      Output  : String);
    --  Called whenever new output from rsync is available
 
-   procedure Rsync_Terminated (Data : Process_Data; Status : Integer);
+   procedure Rsync_Terminated
+     (Data    : Process_Data;
+      Command : not null access Root_Command'Class;
+      Status  : Integer);
    --  Called when rsync exits.
 
    ---------------------
@@ -175,7 +181,6 @@ package body Remote.Rsync is
       Show_All (Dialog);
    end Gtk_New;
 
-   -- Execute --
    -------------
    -- Execute --
    -------------
@@ -470,7 +475,9 @@ package body Remote.Rsync is
    ------------------------
 
    procedure Parse_Rsync_Output
-     (Data : Process_Data; Output : String)
+     (Data    : Process_Data;
+      Command : not null access Root_Command'Class;
+      Output  : String)
    is
       Progress_Regexp         : constant Pattern_Matcher := Compile
         ("^.*\(([0-9]*), [0-9.%]* of ([0-9]*)", Multiple_Lines);
@@ -657,10 +664,10 @@ package body Remote.Rsync is
                             Natural'Image (Total_Files));
 
                else
-                  Set_Progress (Data.Command.Get_Command,
-                                Progress => (Activity => Running,
-                                             Current  => File_Nb,
-                                             Total    => Total_Files));
+                  Command.Set_Progress
+                    (Progress => (Activity => Running,
+                                  Current  => File_Nb,
+                                  Total    => Total_Files));
                end if;
             end if;
 
@@ -752,8 +759,11 @@ package body Remote.Rsync is
    ----------------------
 
    procedure Rsync_Terminated
-     (Data : Process_Data; Status : Integer)
+     (Data    : Process_Data;
+      Command : not null access Root_Command'Class;
+      Status  : Integer)
    is
+      pragma Unreferenced (Command);
       Cb_Data : Rsync_Callback_Data renames
         Rsync_Callback_Data (Data.Callback_Data.all);
    begin

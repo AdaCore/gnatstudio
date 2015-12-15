@@ -38,11 +38,11 @@ package body Commands.External is
    function Atomic_Command (Command : External_Command_Access) return Boolean;
    --  ???
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
-   overriding procedure Free (Command : in out External_Command) is
+   overriding procedure Primitive_Free (Command : in out External_Command) is
       use String_List;
 
       Fd  : TTY_Process_Descriptor renames Command.Fd;
@@ -60,7 +60,7 @@ package body Commands.External is
          Interrupt (Fd);
          Close (Fd);
       end if;
-   end Free;
+   end Primitive_Free;
 
    ------------
    -- Create --

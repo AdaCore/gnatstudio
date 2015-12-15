@@ -27,7 +27,7 @@ package Build_Command_Manager.End_Of_Build is
    overriding procedure End_Of_Stream
      (Self    : not null access Parser;
       Status  : Integer;
-      Command : Command_Access);
+      Command : access Root_Command'Class);
 
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;

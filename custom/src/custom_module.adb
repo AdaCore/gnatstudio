@@ -133,7 +133,8 @@ package body Custom_Module is
       On_Activate  : Subprogram_Type;
    end record;
    type Subprogram_Command is access all Subprogram_Command_Record'Class;
-   overriding procedure Free (Cmd : in out Subprogram_Command_Record);
+   overriding procedure Primitive_Free
+     (Cmd : in out Subprogram_Command_Record);
    overriding function Execute
      (Command : access Subprogram_Command_Record;
       Context : Interactive_Command_Context) return Command_Return_Type;
@@ -215,14 +216,15 @@ package body Custom_Module is
       Free (Filter.Filter);
    end Free;
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
-   overriding procedure Free (Cmd : in out Subprogram_Command_Record) is
+   overriding procedure Primitive_Free
+     (Cmd : in out Subprogram_Command_Record) is
    begin
       Free (Cmd.On_Activate);
-   end Free;
+   end Primitive_Free;
 
    ----------
    -- Free --

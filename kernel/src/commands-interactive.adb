@@ -103,14 +103,19 @@ package body Commands.Interactive is
       end if;
    end Name;
 
+   --------------------
+   -- Primitive_Free --
+   --------------------
+
+   overriding procedure Primitive_Free
+     (X : in out Interactive_Command_Proxy) is
+   begin
+      Free (X.Context);
+   end Primitive_Free;
+
    ----------
    -- Free --
    ----------
-
-   overriding procedure Free (X : in out Interactive_Command_Proxy) is
-   begin
-      Free (X.Context);
-   end Free;
 
    procedure Free (X : in out Interactive_Command_Context) is
    begin

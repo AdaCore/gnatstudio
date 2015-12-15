@@ -104,7 +104,6 @@ with GPS.Kernel.Scripts;               use GPS.Kernel.Scripts;
 with GPS.Kernel.Scripts.Hooks;
 with GPS.Kernel.Style_Manager.Shell;
 with GPS.Kernel.Task_Manager;          use GPS.Kernel.Task_Manager;
-with GPS.Kernel.Timeout;               use GPS.Kernel.Timeout;
 with GPS.Kernel.Xref;
 with GPS.Stock_Icons;
 with GPS.Main_Window;                  use GPS.Main_Window;
@@ -406,7 +405,7 @@ procedure GPS.Main is
    procedure Load_CSS;
    --  Load the GPS global and local CSS files
 
-   function Finish_Setup (Data : Process_Data) return Boolean;
+   function Finish_Setup return Boolean;
    --  Finish the set up of GPS, while the main loop is running
 
    procedure Execute_Batch (Batch : String; As_File : Boolean);
@@ -1347,7 +1346,6 @@ procedure GPS.Main is
       return Glib.Gint
    is
       App     : constant GPS_Application := GPS_Application (Application);
-      Data    : Process_Data;
       Tmp     : Boolean;
       pragma Unreferenced (Command_Line, Tmp);
 
@@ -1358,7 +1356,6 @@ procedure GPS.Main is
 
       --  Display the splash screen, if needed, while we continue loading
       Display_Splash_Screen;
-      Data := (App.Kernel, null, null, null, null, null, False);
 
       Create_MDI_Preferences (App.Kernel);
 
@@ -1403,7 +1400,7 @@ procedure GPS.Main is
       --    @define-color my_color shade(@theme_bg_color, 1.10);
       Load_CSS;
 
-      Tmp := Finish_Setup (Data);
+      Tmp := Finish_Setup;
 
       return 0;
    end Command_Line_Callback;
@@ -1687,14 +1684,14 @@ procedure GPS.Main is
    -- Finish_Setup --
    ------------------
 
-   function Finish_Setup (Data : Process_Data) return Boolean is
+   function Finish_Setup return Boolean is
       Auto_Load_Project : Boolean := True;
       File_Opened       : Boolean := False;
       Idle_Id           : Glib.Main.G_Source_Id;
       Project           : Project_Type;
       Screen            : Welcome_Screen;
       Icon              : Gdk_Pixbuf;
-      pragma Unreferenced (Data, Idle_Id);
+      pragma Unreferenced (Idle_Id);
 
       procedure Setup_Debug;
       --  Load appropriate debugger project and set up debugger-related

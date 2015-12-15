@@ -269,7 +269,7 @@ package body Build_Command_Manager.End_Of_Build is
    overriding procedure End_Of_Stream
      (Self    : not null access Parser;
       Status  : Integer;
-      Command : Command_Access)
+      Command : access Root_Command'Class)
    is
       Kernel : Kernel_Handle;
    begin

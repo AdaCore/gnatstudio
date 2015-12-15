@@ -2068,4 +2068,23 @@ package body GPS.Kernel is
       return Self.Application;
    end Get_Application;
 
+   ---------------------------
+   -- Get_Scheduled_Command --
+   ---------------------------
+
+   overriding function Get_Scheduled_Command
+     (Kernel  : not null access Kernel_Handle_Record;
+      Command : access Commands.Root_Command'Class)
+      return Commands.Command_Access
+   is
+      use Task_Manager, Commands;
+   begin
+      if Kernel.Tasks = null or else Command = null then
+         return null;
+      else
+         return Command_Access
+           (Kernel.Tasks.Scheduled_Command_From_Command (Command));
+      end if;
+   end Get_Scheduled_Command;
+
 end GPS.Kernel;

@@ -42,7 +42,7 @@ package body Commands.Builder.Progress_Parsers is
    overriding procedure Parse_Standard_Output
      (Self    : not null access Progress_Parser;
       Item    : String;
-      Command : Command_Access)
+      Command : access Root_Command'Class)
    is
       use type Commands.Command_Access;
       Start    : Integer := Item'First;
@@ -54,12 +54,11 @@ package body Commands.Builder.Progress_Parsers is
          Match (Self.Matcher.all, Item (Start .. Item'Last), Matched);
          exit when Matched (0) = No_Match;
 
-         Progress.Current := Natural'Value
-           (Item (Matched (1).First .. Matched (1).Last));
-         Progress.Total := Natural'Value
-           (Item (Matched (2).First .. Matched (2).Last));
-
          if Command /= null then
+            Progress.Current := Natural'Value
+              (Item (Matched (1).First .. Matched (1).Last));
+            Progress.Total := Natural'Value
+              (Item (Matched (2).First .. Matched (2).Last));
             Command.Set_Progress (Progress);
          end if;
 

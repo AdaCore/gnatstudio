@@ -137,8 +137,7 @@ package body GPS.Kernel.Commands is
       Old_Command : Scheduled_Command_Access;
       Old_Data    : File_Iterate_Data_Access;
    begin
-      Old_Command := Scheduled_Command_Access
-        (Head (Get_Task_Manager (Kernel), Queue_Name));
+      Old_Command := Head (Get_Task_Manager (Kernel), Queue_Name);
 
       if Old_Command /= null then
          --  If there is already something in the queue, then interrupt it
@@ -205,8 +204,7 @@ package body GPS.Kernel.Commands is
          Total_Progress := Total_Progress + 1;
       end if;
 
-      Old_Command := Scheduled_Command_Access
-        (Head (Get_Task_Manager (Handle), Queue_Name));
+      Old_Command := Head (Get_Task_Manager (Handle), Queue_Name);
 
       Command_Data := new File_Iterate_Data'
         (Kernel_Handle (Handle),

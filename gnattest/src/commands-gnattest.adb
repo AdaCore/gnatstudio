@@ -71,13 +71,4 @@ package body Commands.GNATTest is
       return "go to test";
    end Name;
 
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (X : in out Go_To_Tested_Command_Type) is
-   begin
-      null;
-   end Free;
-
 end Commands.GNATTest;

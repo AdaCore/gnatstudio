@@ -101,10 +101,9 @@ package Commands.VCS is
    overriding function Name
      (X : access Check_Activity_Command_Type) return String;
 
-   overriding procedure Free (X : in out Log_Action_Command_Type);
-   overriding procedure Free (X : in out Get_Status_Command_Type);
-   overriding procedure Free (X : in out Update_Files_Command_Type);
-   overriding procedure Free (X : in out Generic_Kernel_Command);
+   overriding procedure Primitive_Free (X : in out Log_Action_Command_Type);
+   overriding procedure Primitive_Free (X : in out Get_Status_Command_Type);
+   overriding procedure Primitive_Free (X : in out Update_Files_Command_Type);
    --  Free memory associated to X
 
 private

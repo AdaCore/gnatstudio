@@ -68,7 +68,7 @@ package GPS.Kernel.Task_Manager is
 
    procedure Interrupt_Queue
      (Kernel  : access Kernel_Handle_Record'Class;
-      Command : Command_Access);
+      Command : Scheduled_Command_Access);
    --  Interrupt the Queue that contains Command.
    --  Do nothing if there is no such queue.
 

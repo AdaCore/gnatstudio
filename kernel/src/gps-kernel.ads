@@ -710,6 +710,15 @@ package GPS.Kernel is
      (Kernel : not null access Kernel_Handle_Record)
       return Semantic_Tree_Provider_Access;
 
+   --------------
+   -- Commands --
+   --------------
+
+   overriding function Get_Scheduled_Command
+     (Kernel  : not null access Kernel_Handle_Record;
+      Command : access Commands.Root_Command'Class)
+      return Commands.Command_Access;
+
    ---------------------
    -- Messages window --
    ---------------------

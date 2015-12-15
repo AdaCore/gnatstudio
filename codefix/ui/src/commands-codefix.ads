@@ -15,8 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;           use GPS.Kernel;
-
+with GPS.Kernel;             use GPS.Kernel;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix_Module;
 
@@ -28,6 +27,9 @@ package Commands.Codefix is
       Kernel            : Kernel_Handle;
       Session_Timestamp : Integer := 0;
    end record;
+   overriding function Execute
+     (Command : access Codefix_Command) return Command_Return_Type;
+   overriding function Undo (Command : access Codefix_Command) return Boolean;
 
    type Codefix_Add_Command is new Root_Command with record
       Kernel            : Kernel_Handle;
@@ -37,24 +39,11 @@ package Commands.Codefix is
       Errors_Fixed      : Natural := 0;
       Session_Timestamp : Integer := 0;
    end record;
-
-   overriding function Execute
-     (Command : access Codefix_Command) return Command_Return_Type;
-   --  Fix the error recorded in the Codefix_Command.
-
    overriding function Execute
      (Command : access Codefix_Add_Command) return Command_Return_Type;
-   overriding procedure Free (Command : in out Codefix_Add_Command);
    overriding function Progress
      (Command : access Codefix_Add_Command) return Progress_Record;
    overriding function Name
      (Command : access Codefix_Add_Command) return String;
-   --  See Commands for a description of overloaded subprograms.
-
-   overriding function Undo (Command : access Codefix_Command) return Boolean;
-   --  Unfix the error recored.
-
-   overriding procedure Free (Command : in out Codefix_Command);
-   --  Do not do anyting, as far as nothing has to be freed in Codefix_Command.
 
 end Commands.Codefix;

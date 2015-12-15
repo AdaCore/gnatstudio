@@ -77,15 +77,9 @@ package Commands is
       Failure,
       --  The command terminated and failed
 
-      Execute_Again,
+      Execute_Again
       --  The command should be executed again as soon as possible. This value
       --  might also means that the command has never been executed.
-
-      Lower_Priority,
-      --  Same as Execute_Again, and lower the priority of the command
-
-      Raise_Priority
-      --  Same as Execute_Again, and raise the priority of the command
       );
 
    function Execute
@@ -106,8 +100,9 @@ package Commands is
    --  IMPORTANT: at the end of undoing, Command_Finished must be
    --  called. See above for details.
 
-   procedure Free (X : in out Root_Command) is null;
-   --  Free memory associated to X
+   procedure Primitive_Free (X : in out Root_Command) is null;
+   --  Free memory associated to X.
+   --  Do not call directly.
 
    procedure Ref   (Command : access Root_Command'Class);
    procedure Unref (Command : in out Command_Access);

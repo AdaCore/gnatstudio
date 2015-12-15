@@ -45,7 +45,7 @@ package body Builder_Facility_Module.Output_Choppers is
    overriding procedure Parse_Standard_Output
      (Self    : not null access Output_Chopper;
       Item    : String;
-      Command : Command_Access)
+      Command : access Root_Command'Class)
    is
       Last_EOL : Natural;
    begin
@@ -73,7 +73,7 @@ package body Builder_Facility_Module.Output_Choppers is
    overriding procedure End_Of_Stream
      (Self    : not null access Output_Chopper;
       Status  : Integer;
-      Command : Command_Access) is
+      Command : access Root_Command'Class) is
    begin
       if Self.Child = null then
          return;

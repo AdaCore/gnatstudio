@@ -41,7 +41,7 @@ package body Commands.Builder.Build_Output_Collectors is
    overriding procedure Parse_Standard_Output
      (Self    : not null access Build_Output_Collector;
       Item    : String;
-      Command : Command_Access)
+      Command : access Root_Command'Class)
    is
       Last     : Natural := Item'Last;
    begin

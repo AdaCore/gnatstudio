@@ -261,7 +261,7 @@ package body GPS.Kernel.Entities is
    type References_Command_Access is access all References_Command'Class;
    overriding function Execute
      (Command : access References_Command) return Command_Return_Type;
-   overriding procedure Free (Command : in out References_Command);
+   overriding procedure Primitive_Free (Command : in out References_Command);
 
    procedure Put_Locations_In_Return
      (Command       : access References_Command'Class;
@@ -269,15 +269,15 @@ package body GPS.Kernel.Entities is
       Show_Ref_Kind : Boolean);
    --  Put on the result of Data the list of entities found in the command
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
-   overriding procedure Free (Command : in out References_Command) is
+   overriding procedure Primitive_Free (Command : in out References_Command) is
       El : Root_Reference_Iterator'Class := Command.Iter.Element;
    begin
       Destroy (El);
-   end Free;
+   end Primitive_Free;
 
    -------------
    -- Execute --

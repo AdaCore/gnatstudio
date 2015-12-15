@@ -24,9 +24,9 @@ package Commands.Builder.Build_Output_Collectors is
    type Build_Output_Collector is new Tools_Output_Parser with private;
 
    overriding procedure Parse_Standard_Output
-     (Self : not null access Build_Output_Collector;
-      Item : String;
-      Command : Command_Access);
+     (Self    : not null access Build_Output_Collector;
+      Item    : String;
+      Command : access Root_Command'Class);
 
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;

@@ -180,12 +180,10 @@ package Commands.Editor is
      (Command : access Editor_Command_Type;
       Position : Gtk_Text_Iter);
 
-   overriding procedure Free (X : in out Editor_Command_Type);
-   overriding procedure Free (X : in out Editor_Replace_Slice_Type);
-   overriding procedure Free (X : in out Check_Modified_State_Type);
-   overriding procedure Free (X : in out Remove_Blank_Lines_Command_Type);
-   overriding procedure Free (X : in out Unhide_Editable_Lines_Type);
-   overriding procedure Free (X : in out Hide_Editable_Lines_Type);
+   overriding procedure Primitive_Free (X : in out Editor_Command_Type);
+   overriding procedure Primitive_Free (X : in out Editor_Replace_Slice_Type);
+   overriding procedure Primitive_Free
+     (X : in out Remove_Blank_Lines_Command_Type);
    --  Free memory associated to X
 
    overriding function Debug_String

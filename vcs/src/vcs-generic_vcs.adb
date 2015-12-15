@@ -164,7 +164,7 @@ package body VCS.Generic_VCS is
 
    type Parser_Command_Access is access all Parser_Command_Type;
 
-   overriding procedure Free (Command : in out Parser_Command_Type);
+   overriding procedure Primitive_Free (Command : in out Parser_Command_Type);
    --  Free memory associated to Command
 
    --  Simple Hook command
@@ -221,16 +221,17 @@ package body VCS.Generic_VCS is
       return Success;
    end Execute;
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
-   overriding procedure Free (Command : in out Parser_Command_Type) is
+   overriding procedure Primitive_Free
+     (Command : in out Parser_Command_Type) is
    begin
       GNAT.Strings.Free (Command.Text);
       GNAT.Strings.Free (Command.Dir);
       File_Status_List.Free (Command.Status);
-   end Free;
+   end Primitive_Free;
 
    ---------------------
    -- Describe_Action --

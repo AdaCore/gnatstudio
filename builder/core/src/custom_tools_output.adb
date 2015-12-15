@@ -17,9 +17,7 @@
 
 with GNATCOLL.Any_Types;         use GNATCOLL.Any_Types;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
-
-with Commands; use Commands;
-
+with Commands;                   use Commands;
 with GPS.Scripts;                use GPS.Scripts;
 with GPS.Scripts.Commands;       use GPS.Scripts.Commands;
 with GPS.Tools_Output;           use GPS.Tools_Output;
@@ -49,25 +47,26 @@ package body Custom_Tools_Output is
    --  Handle the custom output parser commands
 
    type Custom_Parser is new Tools_Output_Parser with record
-      Inst : Class_Instance;
+      Inst   : Class_Instance;
+      Kernel : Core_Kernel;
    end record;
 
    overriding procedure Parse_Standard_Output
      (Self    : not null access Custom_Parser;
       Item    : String;
-      Command : Command_Access);
+      Command : access Root_Command'Class);
    --  Parse a piece of an output passed as Item.
 
    overriding procedure Parse_Standard_Error
      (Self    : not null access Custom_Parser;
       Item    : String;
-      Command : Command_Access);
+      Command : access Root_Command'Class);
    --  Parse a piece of an stderr passed as Item.
 
    overriding procedure End_Of_Stream
      (Self    : not null access Custom_Parser;
       Status  : Integer;
-      Command : Command_Access);
+      Command : access Root_Command'Class);
    --  Process end of streams (both output and error).
 
    type Python_Parser_Fabric is new External_Parser_Fabric with record
@@ -148,7 +147,8 @@ package body Custom_Tools_Output is
       end loop;
 
       Found := True;
-      Child := new Custom_Parser'(Child => null, Inst => Inst);
+      Child := new Custom_Parser'
+        (Child => null, Inst => Inst, Kernel => Self.Kernel);
    end Create_External_Parsers;
 
    -------------------
@@ -158,14 +158,14 @@ package body Custom_Tools_Output is
    overriding procedure End_Of_Stream
      (Self    : not null access Custom_Parser;
       Status  : Integer;
-      Command : Command_Access)
+      Command : access Root_Command'Class)
    is
       Args : Callback_Data'Class := Create
         (Get_Script (Self.Inst), Arguments_Count => 2);
       Proc : Subprogram_Type;
       Inst : Class_Instance := No_Class_Instance;
       Scheduled : constant Scheduled_Command_Access :=
-        Scheduled_Command_Access (Command);
+        Scheduled_Command_Access (Self.Kernel.Get_Scheduled_Command (Command));
    begin
       if Scheduled /= null then
          Inst := Scheduled.Get_Instance (Get_Script (Self.Inst));
@@ -248,14 +248,14 @@ package body Custom_Tools_Output is
    overriding procedure Parse_Standard_Error
      (Self    : not null access Custom_Parser;
       Item    : String;
-      Command : Command_Access)
+      Command : access Root_Command'Class)
    is
       Args : Callback_Data'Class := Create
         (Get_Script (Self.Inst), Arguments_Count => 2);
       Proc : Subprogram_Type;
       Inst : Class_Instance := No_Class_Instance;
       Scheduled : constant Scheduled_Command_Access :=
-        Scheduled_Command_Access (Command);
+        Scheduled_Command_Access (Self.Kernel.Get_Scheduled_Command (Command));
    begin
       if Scheduled /= null then
          Inst := Scheduled.Get_Instance (Get_Script (Self.Inst));
@@ -281,14 +281,14 @@ package body Custom_Tools_Output is
    overriding procedure Parse_Standard_Output
      (Self    : not null access Custom_Parser;
       Item    : String;
-      Command : Command_Access)
+      Command : access Root_Command'Class)
    is
       Args : Callback_Data'Class := Create
         (Get_Script (Self.Inst), Arguments_Count => 2);
       Proc : Subprogram_Type;
       Inst : Class_Instance := No_Class_Instance;
       Scheduled : constant Scheduled_Command_Access :=
-        Scheduled_Command_Access (Command);
+        Scheduled_Command_Access (Self.Kernel.Get_Scheduled_Command (Command));
    begin
       if Scheduled /= null then
          Inst := Scheduled.Get_Instance (Get_Script (Self.Inst));

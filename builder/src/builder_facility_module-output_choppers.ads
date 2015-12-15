@@ -28,13 +28,11 @@ package Builder_Facility_Module.Output_Choppers is
    overriding procedure Parse_Standard_Output
      (Self    : not null access Output_Chopper;
       Item    : String;
-      Command : Command_Access);
-
-   overriding
-   procedure End_Of_Stream
+      Command : access Root_Command'Class);
+   overriding procedure End_Of_Stream
      (Self    : not null access Output_Chopper;
       Status  : Integer;
-      Command : Command_Access);
+      Command : access Root_Command'Class);
 
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;

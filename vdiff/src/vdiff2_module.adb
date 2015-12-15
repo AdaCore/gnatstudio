@@ -120,7 +120,7 @@ package body Vdiff2_Module is
                   VDiff2_Module (Vdiff_Module_ID).List_Diff,
                   Close_Difference'Access);
                Unchecked_Execute (Cmd, Vdiff);
-               Free (Root_Command (Cmd.all));
+               Unref (Command_Access (Cmd));
             end if;
          end;
 
@@ -231,7 +231,7 @@ package body Vdiff2_Module is
                   VDiff2_Module (Vdiff_Module_ID).List_Diff,
                   Reload_Difference'Access);
                Unchecked_Execute (Cmd, Vdiff);
-               Free (Root_Command (Cmd.all));
+               Unref (Command_Access (Cmd));
             end if;
          end;
       end if;

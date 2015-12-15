@@ -108,12 +108,16 @@ package body Build_Command_Manager.Console_Writers is
    overriding procedure End_Of_Stream
      (Self    : not null access Console_Writer;
       Status  : Integer;
-      Command : Command_Access)
+      Command : access Root_Command'Class)
    is
       use GPS.Kernel.Messages.Legacy;
       Kernel  : constant Kernel_Handle := Kernel_Handle (Self.Builder.Kernel);
    begin
-      if Self.Show_Status then
+      if Self.Console = null then
+         return;
+      end if;
+
+      if Self.Show_Status and then Command /= null then
          declare
             End_Time   : constant Ada.Calendar.Time := Ada.Calendar.Clock;
             Time_Stamp : constant String := Timestamp (End_Time);
@@ -152,7 +156,7 @@ package body Build_Command_Manager.Console_Writers is
          end;
       end if;
 
-      --  Raise the messages window is compilation was unsuccessful
+      --  Raise the messages window if compilation failed
       --  and no error was parsed. See D914-005
 
       if Self.Raise_On_Error and then Status /= 0 and then
@@ -173,7 +177,7 @@ package body Build_Command_Manager.Console_Writers is
    overriding procedure Parse_Standard_Output
      (Self    : not null access Console_Writer;
       Item    : String;
-      Command : Command_Access) is
+      Command : access Root_Command'Class) is
    begin
       Self.Console.Insert_With_Links (Item, Add_LF => False);
       Tools_Output_Parser (Self.all).Parse_Standard_Output (Item, Command);

@@ -23,7 +23,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with Remote;                    use Remote;
 with Build_Command_Utils;       use Build_Command_Utils;
 
 package Commands.Builder is
@@ -63,14 +62,5 @@ package Commands.Builder is
    --  be run under. Default is the project's directory.
    --  If Background, run the compile in the background.
    --  On_Exit is the subprogram which should be called upon exit.
-
-   procedure Launch_Build_Command
-     (Builder          : Builder_Context;
-      Build            : Build_Information;
-      Server           : Server_Type;
-      Synchronous      : Boolean);
-   --  Launch a build command using build information stored in Build.
-   --  Use given Console to send the output.
-   --  See Build_Command_Manager.Launch_Target for the meanings of Synchronous.
 
 end Commands.Builder;

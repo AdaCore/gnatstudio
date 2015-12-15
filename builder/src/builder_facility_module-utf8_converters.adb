@@ -42,7 +42,7 @@ package body Builder_Facility_Module.UTF8_Converters is
    overriding procedure Parse_Standard_Output
      (Self    : not null access UTF8_Converter;
       Item    : String;
-      Command : Command_Access)
+      Command : access Root_Command'Class)
    is
       Output : GNAT.Strings.String_Access;
       Valid  : Boolean;

@@ -63,44 +63,29 @@ package body Commands.Editor is
       return Success;
    end Execute;
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
-   overriding procedure Free (X : in out Editor_Command_Type) is
+   overriding procedure Primitive_Free (X : in out Editor_Command_Type) is
    begin
       Free (X.Current_Text);
-   end Free;
+   end Primitive_Free;
 
-   overriding procedure Free (X : in out Editor_Replace_Slice_Type) is
+   overriding procedure Primitive_Free
+     (X : in out Editor_Replace_Slice_Type) is
    begin
       Free (X.Text_Before);
       Free (X.Text_After);
-   end Free;
+   end Primitive_Free;
 
-   overriding procedure Free (X : in out Check_Modified_State_Type) is
-      pragma Unreferenced (X);
-   begin
-      null;
-   end Free;
-
-   overriding procedure Free (X : in out Remove_Blank_Lines_Command_Type) is
+   overriding procedure Primitive_Free
+     (X : in out Remove_Blank_Lines_Command_Type) is
    begin
       if not Get_Deleted (X.Mark) then
          Delete_Mark (X.Buffer, X.Mark);
       end if;
-   end Free;
-
-   overriding procedure Free (X : in out Unhide_Editable_Lines_Type) is
-   begin
-      null;
-   end Free;
-
-   overriding procedure Free (X : in out Hide_Editable_Lines_Type) is
-      pragma Unreferenced (X);
-   begin
-      null;
-   end Free;
+   end Primitive_Free;
 
    ---------------------
    -- Is_Null_Command --

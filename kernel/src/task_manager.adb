@@ -29,7 +29,7 @@ package body Task_Manager is
      (Task_Manager_Access);
 
    function Get_Or_Create_Task_Queue
-     (Manager    : Task_Manager_Access;
+     (Manager    : not null access Task_Manager_Record'Class;
       Queue_Id   : String;
       Active     : Boolean;
       Show_Bar   : Boolean;
@@ -50,7 +50,7 @@ package body Task_Manager is
    --  Incremental function to execute the task manager
 
    function Safe_Execute
-     (Command : in out Command_Access) return Command_Return_Type;
+     (Command : in out Scheduled_Command_Access) return Command_Return_Type;
    --  Executes command, and returns the result. If an exception occurs during
    --  execution of the command, return Failure.
 
@@ -59,20 +59,18 @@ package body Task_Manager is
    -----------------------
 
    procedure Interrupt_Command
-     (Manager : access Task_Manager_Record'Class;
+     (Manager : not null access Task_Manager_Record;
       Index   : Integer) is
    begin
-      if Manager.Queues = null then
-         return;
-      end if;
+      if Manager.Queues /= null then
+         if Index in Manager.Queues'Range then
+            Interrupt (Manager.Queues (Index).Queue.First_Element.all);
 
-      if Index in Manager.Queues'Range then
-         Interrupt (Manager.Queues (Index).Queue.First_Element.all);
-
-         Manager.Queues (Index).Status := Completed;
-         Queue_Changed (Manager, Index, True);
-         Run (Task_Manager_Access (Manager),
-              Active => Index < Manager.Passive_Index);
+            Manager.Queues (Index).Status := Completed;
+            Queue_Changed (Manager, Index, True);
+            Run (Task_Manager_Access (Manager),
+                 Active => Index < Manager.Passive_Index);
+         end if;
       end if;
    end Interrupt_Command;
 
@@ -81,20 +79,20 @@ package body Task_Manager is
    ------------------
 
    function Safe_Execute
-     (Command : in out Command_Access) return Command_Return_Type
+     (Command : in out Scheduled_Command_Access) return Command_Return_Type
    is
       Result : Command_Return_Type;
    begin
       --  Ref/Unref Command, to protect the command from being freed by reentry
       --  in the Task Manager while it is itself running.
       Ref (Command);
-      Result := Execute (Command);
-      Unref (Command);
+      Result := Command.Execute;
+      Unref (Command_Access (Command));
       return Result;
    exception
       when E : others =>
          Trace (Me, E);
-         Unref (Command);
+         Unref (Command_Access (Command));
          return Failure;
    end Safe_Execute;
 
@@ -106,8 +104,7 @@ package body Task_Manager is
      (Manager : Task_Manager_Access) return Boolean
    is
       Ignore      : Boolean;
-      Return_Type : Command_Return_Type;
-      pragma Unreferenced (Ignore, Return_Type);
+      pragma Unreferenced (Ignore);
 
    begin
       Ignore := Execute_Incremental (Manager, True);
@@ -124,18 +121,15 @@ package body Task_Manager is
                return True;
             end if;
          end loop;
-
-         Manager.Running_Active := False;
-         return False;
-
-      else
-         Manager.Running_Active := False;
-         return False;
       end if;
+
+      Manager.Running_Active := False;
+      return False;
 
    exception
       when E : others =>
          Trace (Me, E);
+         Manager.Running_Active := False;
          return False;
    end Active_Incremental;
 
@@ -147,8 +141,7 @@ package body Task_Manager is
      (Manager : Task_Manager_Access) return Boolean
    is
       Ignore      : Boolean;
-      Return_Type : Command_Return_Type;
-      pragma Unreferenced (Ignore, Return_Type);
+      pragma Unreferenced (Ignore);
    begin
       Ignore := Execute_Incremental (Manager, False);
 
@@ -164,6 +157,7 @@ package body Task_Manager is
    exception
       when E : others =>
          Trace (Me, E);
+         Manager.Running_Passive := False;
          return False;
    end Passive_Incremental;
 
@@ -175,15 +169,7 @@ package body Task_Manager is
      (Manager : Task_Manager_Access;
       Active  : Boolean) return Boolean
    is
-      Lowest        : Integer := Integer'Last;
-      Result        : Command_Return_Type;
-      First         : Integer;
-      Last          : Integer;
-      Command       : Command_Access;
-      Previous_Prio : Integer;
-      Queue         : Task_Queue_Access;
-
-      function Free_Queue return Boolean;
+      function Free_Queue (Index : Natural) return Boolean;
       --  Free queue referenced by Queue.
       --  Return True if the callback should be called again, False otherwise.
 
@@ -191,53 +177,45 @@ package body Task_Manager is
       -- Free_Queue --
       ----------------
 
-      function Free_Queue return Boolean is
+      function Free_Queue (Index : Natural) return Boolean is
+         Queue : Task_Queue_Access := Manager.Queues (Index);
+         New_Queues : Task_Queue_Array
+           (Manager.Queues'First .. Manager.Queues'Last - 1);
       begin
+         Queue_Removed (Manager, Index);
+
          GNAT.Strings.Free (Queue.Id);
 
          if Manager.Queues'Length = 1 then
-            Queue_Removed (Manager, 1);
             Unchecked_Free (Queue);
             Unchecked_Free (Manager.Queues);
             return False;
 
          else
-            declare
-               New_Queues : Task_Queue_Array
-                 (Manager.Queues'First .. Manager.Queues'Last - 1);
-               Index      : Integer := -1;
-            begin
-               --  Find the index of the current running queue
+            New_Queues (Manager.Queues'First .. Index - 1) :=
+              Manager.Queues (Manager.Queues'First .. Index - 1);
+            New_Queues (Index .. Manager.Queues'Last - 1) :=
+              Manager.Queues (Index + 1 .. Manager.Queues'Last);
 
-               for J in Manager.Queues'Range loop
-                  if Manager.Queues (J) = Queue then
-                     Index := J;
-                     exit;
-                  end if;
-               end loop;
+            if Active then
+               Manager.Passive_Index := Manager.Passive_Index - 1;
+            end if;
 
-               Queue_Removed (Manager, Index);
-
-               New_Queues (Manager.Queues'First .. Index - 1) :=
-                 Manager.Queues (Manager.Queues'First .. Index - 1);
-
-               New_Queues (Index .. Manager.Queues'Last - 1) :=
-                 Manager.Queues (Index + 1 .. Manager.Queues'Last);
-
-               if Active then
-                  Manager.Passive_Index := Manager.Passive_Index - 1;
-               end if;
-
-               Unchecked_Free (Queue);
-               Unchecked_Free (Manager.Queues);
-               Manager.Queues := new Task_Queue_Array'(New_Queues);
-            end;
+            Unchecked_Free (Queue);
+            Unchecked_Free (Manager.Queues);
+            Manager.Queues := new Task_Queue_Array'(New_Queues);
+            return True;
          end if;
-
-         return True;
       end Free_Queue;
 
-      Index : Natural := 0;
+      Lowest        : Integer := Integer'Last;
+      Result        : Command_Return_Type;
+      First         : Integer;
+      Last          : Integer;
+      Command       : Scheduled_Command_Access;
+      Previous_Prio : Integer;
+      Queue         : Task_Queue_Access;
+      Index         : Natural := 0;
 
    begin
       if Manager.Queues = null then
@@ -248,7 +226,7 @@ package body Task_Manager is
 
          for J in Manager.Queues'Range loop
             if Manager.Queues (J).Status = Completed then
-               Free (Manager.Queues (J).Queue);
+               Free (Command_Lists.List (Manager.Queues (J).Queue));
             end if;
          end loop;
 
@@ -266,9 +244,11 @@ package body Task_Manager is
          end if;
 
          if First > Last then
+            --   ??? Should we disable the corresponding timeout or idle ?
             return False;
          end if;
 
+         --  ??? Should use a priority queue here
          for Q in First .. Last loop
             Manager.Queues (Q).Current_Priority :=
               Manager.Queues (Q).Current_Priority - Previous_Prio;
@@ -288,18 +268,22 @@ package body Task_Manager is
             Manager.Minimal_Passive_Priority := Lowest;
          end if;
 
+         --   ??? Shouldn't we be looking for another unpaused queue with
+         --  a lower priority ? Or ignore paused queues in the loop above
          if Queue.Status = Paused then
             return False;
          end if;
 
+         --  ??? Shouldn't we always start by cleaning up empty queues (the
+         --  result of Interrupt or finished commands)
          if Queue.Queue.Is_Empty then
             --  The queue is empty: this can happen when scripts call the
             --  interrupt function.
             --  In this case, free the queue and return.
-            return Free_Queue;
+            return Free_Queue (Index);
          end if;
 
-         Command := Queue.Queue.First_Element;
+         Command := Scheduled_Command_Access (Queue.Queue.First_Element);
 
          if Queue.Status = Completed then
             Result := Success;
@@ -307,40 +291,42 @@ package body Task_Manager is
             Result := Safe_Execute (Command);
          end if;
 
+         --  Warning: the index might have changed here, if a new queue was
+         --  created by the command. So Index should not be used anymore
+         Index := 0;
+         for Q in Manager.Queues'Range loop
+            if Manager.Queues (Q) = Queue then
+               Index := Q;
+               exit;
+            end if;
+         end loop;
+
          case Result is
             when Success | Failure =>
                --  ??? add the command to the list of done or failed commands
 
                if Queue.Status /= Completed then
                   Next (Queue.Queue);
-
                   Queue.Done := Queue.Done + 1;
                end if;
+
                --  If it was the last command in the queue, free the queue
 
                if Queue.Queue.Is_Empty then
-                  return Free_Queue;
-               end if;
-
-            when Raise_Priority =>
-               if Queue.Priority > 1 then
-                  Queue.Priority := Queue.Priority - 1;
-               end if;
-
-            when Lower_Priority =>
-               if Queue.Priority < 3 then
-                  Queue.Priority := Queue.Priority + 1;
+                  return Free_Queue (Index);
                end if;
 
             when Execute_Again =>
                null;
-
          end case;
 
          Queue_Changed (Manager, Index, False);
-
          return True;
       end if;
+   exception
+      when E : others =>
+         Trace (Me, E);
+         return True;
    end Execute_Incremental;
 
    ---------
@@ -379,7 +365,7 @@ package body Task_Manager is
    ------------------------------
 
    function Get_Or_Create_Task_Queue
-     (Manager    : Task_Manager_Access;
+     (Manager    : not null access Task_Manager_Record'Class;
       Queue_Id   : String;
       Active     : Boolean;
       Show_Bar   : Boolean;
@@ -461,7 +447,7 @@ package body Task_Manager is
    ---------------
 
    function Has_Queue
-     (Manager  : Task_Manager_Access;
+     (Manager  : not null access Task_Manager_Record;
       Queue_Id : String) return Boolean
    is
       use GNAT.Strings;
@@ -486,8 +472,8 @@ package body Task_Manager is
    -----------------
 
    procedure Add_Command
-     (Manager    : Task_Manager_Access;
-      Command    : Command_Access;
+     (Manager    : not null access Task_Manager_Record;
+      Command    : not null access Scheduled_Command'Class;
       Active     : Boolean;
       Show_Bar   : Boolean;
       Queue_Id   : String := "";
@@ -498,13 +484,11 @@ package body Task_Manager is
                        (Manager, Queue_Id, Active, Show_Bar, Block_Exit);
    begin
       Manager.Queues (Task_Queue).Queue.Append (Command);
-
       Manager.Queues (Task_Queue).Total :=
         Manager.Queues (Task_Queue).Total + 1;
-
       Queue_Added (Manager, Task_Queue);
 
-      Run (Manager, Active);
+      Run (Task_Manager_Access (Manager), Active);
    end Add_Command;
 
    ---------------------
@@ -512,17 +496,16 @@ package body Task_Manager is
    ---------------------
 
    procedure Interrupt_Queue
-     (Manager : Task_Manager_Access;
-      Command : Command_Access)
+     (Manager : not null access Task_Manager_Record;
+      Command : not null access Scheduled_Command'Class)
    is
       use Command_Lists;
-      Node : Cursor;
+      C : Command_Lists.Cursor;
    begin
       for J in Manager.Queues'Range loop
-         Node := First (Manager.Queues (J).Queue);
-
-         while Has_Element (Node) loop
-            if Element (Node) = Command then
+         C := Manager.Queues (J).Queue.First;
+         while Has_Element (C) loop
+            if Element (C) = Command_Access (Command) then
                Interrupt_Command (Manager, J);
 
                if J >= Manager.Passive_Index then
@@ -531,6 +514,8 @@ package body Task_Manager is
                   Manager.Minimal_Active_Priority := 0;
                end if;
 
+               --  ??? How can this be null ? or could J
+               --  now point to another queue, not the original one ?
                if Manager.Queues /= null then
                   if Manager.Queues (J) /= null then
                      --  Mark the queue as Completed: the actual freeing
@@ -539,15 +524,15 @@ package body Task_Manager is
                      Manager.Queues (J).Status := Completed;
                   end if;
 
+                  --  ??? Why do we reset the priorities ?
                   for K in Manager.Queues'Range loop
                      Manager.Queues (K).Current_Priority := 0;
                   end loop;
                end if;
-
                return;
             end if;
 
-            Node := Next (Node);
+            Next (C);
          end loop;
       end loop;
    end Interrupt_Queue;
@@ -557,25 +542,25 @@ package body Task_Manager is
    ----------
 
    function Head
-     (Manager : Task_Manager_Access; Id : String) return Command_Access
+     (Manager : not null access Task_Manager_Record; Id : String)
+     return Scheduled_Command_Access
    is
       use GNAT.Strings;
    begin
-      if Manager.Queues = null then
-         return null;
-      end if;
-
-      for J in Manager.Queues'Range loop
-         if Manager.Queues (J).Id /= null
-           and then Manager.Queues (J).Id.all = Id
-         then
-            if Manager.Queues (J).Queue.Is_Empty then
-               return null;
-            else
-               return Manager.Queues (J).Queue.First_Element;
+      if Manager.Queues /= null then
+         for J in Manager.Queues'Range loop
+            if Manager.Queues (J).Id /= null
+              and then Manager.Queues (J).Id.all = Id
+            then
+               if Manager.Queues (J).Queue.Is_Empty then
+                  return null;
+               else
+                  return Scheduled_Command_Access
+                     (Manager.Queues (J).Queue.First_Element);
+               end if;
             end if;
-         end if;
-      end loop;
+         end loop;
+      end if;
 
       return null;
    end Head;
@@ -603,19 +588,17 @@ package body Task_Manager is
    -------------------
 
    procedure Pause_Command
-     (Manager : access Task_Manager_Record'Class;
+     (Manager : not null access Task_Manager_Record;
       Index   : Integer) is
    begin
-      if Manager.Queues = null then
-         return;
-      end if;
+      if Manager.Queues /= null then
+         if Index in Manager.Queues'Range then
+            if Manager.Queues (Index).Status = Running then
+               Manager.Queues (Index).Status := Paused;
+            end if;
 
-      if Index in Manager.Queues'Range then
-         if Manager.Queues (Index).Status = Running then
-            Manager.Queues (Index).Status := Paused;
+            Queue_Changed (Manager, Index, True);
          end if;
-
-         Queue_Changed (Manager, Index, True);
       end if;
    end Pause_Command;
 
@@ -624,21 +607,19 @@ package body Task_Manager is
    --------------------
 
    procedure Resume_Command
-     (Manager : access Task_Manager_Record'Class;
+     (Manager : not null access Task_Manager_Record;
       Index   : Integer) is
    begin
-      if Manager.Queues = null then
-         return;
-      end if;
+      if Manager.Queues /= null then
+         if Index in Manager.Queues'Range then
+            if Manager.Queues (Index).Status = Paused then
+               Manager.Queues (Index).Status := Running;
+               Run (Task_Manager_Access (Manager),
+                    Active => Index < Manager.Passive_Index);
+            end if;
 
-      if Index in Manager.Queues'Range then
-         if Manager.Queues (Index).Status = Paused then
-            Manager.Queues (Index).Status := Running;
-            Run (Task_Manager_Access (Manager),
-                 Active => Index < Manager.Passive_Index);
+            Queue_Changed (Manager, Index, True);
          end if;
-
-         Queue_Changed (Manager, Index, True);
       end if;
    end Resume_Command;
 
@@ -646,7 +627,8 @@ package body Task_Manager is
    -- Interrupt_Latest_Task --
    ---------------------------
 
-   procedure Interrupt_Latest_Task (Manager : Task_Manager_Access) is
+   procedure Interrupt_Latest_Task
+      (Manager : not null access Task_Manager_Record) is
    begin
       if Manager.Queues /= null then
          Interrupt_Command (Manager, Manager.Queues'Last);
@@ -657,7 +639,9 @@ package body Task_Manager is
    -- Interrupt_All_Tasks --
    -------------------------
 
-   procedure Interrupt_All_Tasks (Manager : Task_Manager_Access) is
+   procedure Interrupt_All_Tasks
+      (Manager : not null access Task_Manager_Record)
+   is
       Commands : constant Command_Array := Get_Scheduled_Commands (Manager);
    begin
       for C in Commands'Range loop
@@ -670,38 +654,52 @@ package body Task_Manager is
    ----------------------------
 
    function Get_Scheduled_Commands
-     (Manager : Task_Manager_Access) return Command_Array
+     (Manager : not null access Task_Manager_Record) return Command_Array
    is
       use Commands.Command_Lists;
-
-      Total       : Integer := 0;
-      Empty_Array : Command_Array (1 .. 0);
+      Total        : Integer := 0;
+      Result_Index : Integer;
    begin
       if Manager.Queues = null then
-         return Empty_Array;
+         return (1 .. 0 => <>);
       end if;
 
-      for J in Manager.Queues.all'Range loop
+      for J in Manager.Queues'Range loop
          Total := Total + Integer (Manager.Queues (J).Queue.Length);
       end loop;
 
-      declare
-         Result       : Command_Array (1 .. Total);
-         Node         : Cursor;
-         Result_Index : Integer := 1;
-      begin
-         for J in Manager.Queues.all'Range loop
-            Node := First (Manager.Queues (J).Queue);
-
-            while Has_Element (Node) loop
-               Result (Result_Index) := Element (Node);
-               Node := Next (Node);
+      return Result : Command_Array (1 .. Total) do
+         Result_Index := Result'First;
+         for J in Manager.Queues'Range loop
+            for C of Manager.Queues (J).Queue loop
+               Result (Result_Index) := Scheduled_Command_Access (C);
                Result_Index := Result_Index + 1;
             end loop;
          end loop;
-
-         return Result;
-      end;
+      end return;
    end Get_Scheduled_Commands;
+
+   ------------------------------------
+   -- Scheduled_Command_From_Command --
+   ------------------------------------
+
+   function Scheduled_Command_From_Command
+     (Manager : not null access Task_Manager_Record;
+      Command : access Root_Command'Class)
+      return Scheduled_Command_Access is
+   begin
+      if Manager.Queues /= null and then Command /= null then
+         for Q of Manager.Queues.all loop
+            for C of Q.Queue loop
+               if Scheduled_Command_Access (C).Get_Command =
+                 Command_Access (Command)
+               then
+                  return Scheduled_Command_Access (C);
+               end if;
+            end loop;
+         end loop;
+      end if;
+      return null;
+   end Scheduled_Command_From_Command;
 
 end Task_Manager;

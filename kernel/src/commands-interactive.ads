@@ -118,7 +118,7 @@ package Commands.Interactive is
       return Command_Return_Type;
    overriding function Name
      (Command : access Interactive_Command_Proxy) return String;
-   overriding procedure Free (X : in out Interactive_Command_Proxy);
+   overriding procedure Primitive_Free (X : in out Interactive_Command_Proxy);
    overriding function Progress
      (Command : access Interactive_Command_Proxy) return Progress_Record;
    overriding procedure Set_Progress

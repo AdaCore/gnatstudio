@@ -21,6 +21,7 @@ with GPS.Kernel;                       use GPS.Kernel;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Tools_Output;
 with GPS.Kernel.Task_Manager;
+with GPS.Scripts.Commands;             use GPS.Scripts.Commands;
 with GPS.Default_Styles;
 
 package body Build_Command_Manager.Location_Parsers is
@@ -49,7 +50,8 @@ package body Build_Command_Manager.Location_Parsers is
                  Background_Message_Flags);
 
             GPS.Kernel.Task_Manager.Interrupt_Queue
-              ((Kernel_Handle (Self.Builder.Kernel)), Command);
+              (Kernel_Handle (Self.Builder.Kernel),
+               Scheduled_Command_Access (Command));
          end if;
       end Interrupt_Background_Build;
 
@@ -83,7 +85,7 @@ package body Build_Command_Manager.Location_Parsers is
    overriding procedure Parse_Standard_Output
      (Self    : not null access Location_Parser;
       Item    : String;
-      Command : Command_Access) is
+      Command : access Root_Command'Class) is
    begin
       GPS.Kernel.Messages.Tools_Output.Parse_File_Locations
         (Kernel_Handle (Self.Builder.Kernel),

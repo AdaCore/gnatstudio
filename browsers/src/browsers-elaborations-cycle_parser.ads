@@ -41,7 +41,7 @@ package Browsers.Elaborations.Cycle_Parser is
    overriding procedure Parse_Standard_Output
      (Self    : not null access Circularity_Parser;
       Item    : String;
-      Command : Command_Access);
+      Command : access Root_Command'Class);
 
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;

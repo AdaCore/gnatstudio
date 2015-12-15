@@ -42,7 +42,7 @@ package body Builder_Facility_Module.Text_Splitters is
    overriding procedure Parse_Standard_Output
      (Self    : not null access Text_Splitter;
       Item    : String;
-      Command : Command_Access)
+      Command : access Root_Command'Class)
    is
       use type Tools_Output_Parser_Access;
       From : Positive := Item'First;

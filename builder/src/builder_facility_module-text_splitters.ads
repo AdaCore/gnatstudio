@@ -28,7 +28,7 @@ package Builder_Facility_Module.Text_Splitters is
    overriding procedure Parse_Standard_Output
      (Self    : not null access Text_Splitter;
       Item    : String;
-      Command : Command_Access);
+      Command : access Root_Command'Class);
 
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;

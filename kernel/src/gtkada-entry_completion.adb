@@ -125,7 +125,7 @@ package body Gtkada.Entry_Completion is
      (Self : access Command_To_Locations) return String is ("search");
    overriding function Execute
      (Self : access Command_To_Locations) return Command_Return_Type;
-   overriding procedure Free (Self : in out Command_To_Locations);
+   overriding procedure Primitive_Free (Self : in out Command_To_Locations);
 
    procedure Insert_Proposal
      (Self : not null access Gtkada_Entry_Record'Class;
@@ -1512,15 +1512,14 @@ package body Gtkada.Entry_Completion is
       end if;
    end Execute;
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
-   overriding procedure Free (Self : in out Command_To_Locations) is
+   overriding procedure Primitive_Free (Self : in out Command_To_Locations) is
    begin
       Free (Self.Pattern);
-      Free (Root_Command (Self));  --  inherited
-   end Free;
+   end Primitive_Free;
 
    -------------------
    -- Show_Settings --

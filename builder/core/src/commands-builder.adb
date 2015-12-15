@@ -26,6 +26,7 @@ with GPS.Intl;                         use GPS.Intl;
 with GPS.Tools_Output;                 use GPS.Tools_Output;
 with Build_Configurations;             use Build_Configurations;
 with Extending_Environments;           use Extending_Environments;
+with Remote;                           use Remote;
 
 package body Commands.Builder is
 
@@ -33,6 +34,14 @@ package body Commands.Builder is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Argument_List, Argument_List_Access);
+
+   procedure Launch_Build_Command
+     (Builder          : Builder_Context;
+      Build            : Build_Information;
+      Server           : Server_Type;
+      Synchronous      : Boolean);
+   --  Launch a build command using build information stored in Build.
+   --  Use given Console to send the output.
 
    -------------------
    -- Launch_Target --
@@ -316,37 +325,31 @@ package body Commands.Builder is
             end;
          end;
 
+      elsif Synchronous then
+         Builder.Kernel.Process_Launcher.Launch_Process
+            (CL              => CL,
+             Server          => Server,
+             Directory       => Result.Full.Dir,
+             Output_Parser   => Output_Parser,
+             Show_Command_To => Result.Console,
+             Success         => Success);
       else
-         --  Interpret as an executable run
+         Builder.Kernel.Process_Launcher.Launch_Process_In_Background
+           (CL              => CL,
+            Server          => Server,
+            Directory       => Result.Full.Dir,
+            Output_Parser   => Output_Parser,
+            Show_Command_To => Result.Console,
+            Success         => Success,
+            Show_In_Task_Manager => not Build.Background,
+            Name_In_Task_Manager => To_String (Cmd_Name),
+            Block_Exit           => not (Build.Shadow
+              or else Build.Background
+              or else Build.Quiet),
+            Created_Command      => Created_Command);
 
-         if Synchronous then
-            Builder.Kernel.Process_Launcher.Launch_Process
-              (CL              => CL,
-               Server          => Server,
-               Directory       => Result.Full.Dir,
-               Output_Parser   => Output_Parser,
-               Show_Command_To => Result.Console,
-               Success         => Success);
-         else
-            Builder.Kernel.Process_Launcher.Launch_Process_In_Background
-              (CL              => CL,
-               Server          => Server,
-               Directory       => Result.Full.Dir,
-               Output_Parser   => Output_Parser,
-               Show_Command_To => Result.Console,
-               Success         => Success,
-               Show_In_Task_Manager => not Build.Background,
-               Name_In_Task_Manager => To_String (Cmd_Name),
-               Block_Exit           => not (Build.Shadow
-                 or else Build.Background
-                 or else Build.Quiet),
-               Created_Command      => Created_Command);
-
-            --  ??? check value of Success
-
-            if Success and then Build.Background then
-               Background_Build_Started (Builder, Created_Command);
-            end if;
+         if Success and then Build.Background then
+            Background_Build_Started (Builder, Created_Command);
          end if;
       end if;
    end Launch_Build_Command;

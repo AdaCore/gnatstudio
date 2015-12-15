@@ -33,21 +33,26 @@ package GPS.Tools_Output is
    procedure Parse_Standard_Output
      (Self    : not null access Tools_Output_Parser;
       Item    : String;
-      Command : Command_Access);
+      Command : access Root_Command'Class);
    --  Parse a piece of an output passed as Item.
    --  Default implementation just pass Item to the Child if any.
+   --  Command is the low-level command that is executed, not the
+   --  scheduled_command that wraps it in the task manager. It might be null
+   --  when the command was not executed via the task manager.
 
    procedure Parse_Standard_Error
      (Self    : not null access Tools_Output_Parser;
       Item    : String;
-      Command : Command_Access);
+      Command : access Root_Command'Class);
    --  Parse a piece of an error output passed as Item.
    --  Default implementation just pass Item to the Child if any.
+   --  Command is the low-level command that is executed, not the
+   --  scheduled_command that wraps it in the task manager.
 
    procedure End_Of_Stream
      (Self    : not null access Tools_Output_Parser;
       Status  : Integer;
-      Command : Command_Access);
+      Command : access Root_Command'Class);
    --  Process end of streams (both output and error).
    --  Default implementation just call the Child if any.
 

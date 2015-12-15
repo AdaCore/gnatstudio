@@ -95,16 +95,6 @@ package body Commands.Codefix is
       return True;
    end Undo;
 
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (Command : in out Codefix_Command) is
-      pragma Unreferenced (Command);
-   begin
-      null;
-   end Free;
-
    -------------
    -- Execute --
    -------------
@@ -137,16 +127,6 @@ package body Commands.Codefix is
          return Success;
       end if;
    end Execute;
-
-   ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (Command : in out Codefix_Add_Command) is
-      pragma Unreferenced (Command);
-   begin
-      null;
-   end Free;
 
    --------------
    -- Progress --

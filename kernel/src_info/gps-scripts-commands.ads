@@ -34,7 +34,7 @@ package GPS.Scripts.Commands is
    overriding function Execute
      (Command : access Scheduled_Command) return Command_Return_Type;
    overriding function Undo (This : access Scheduled_Command) return Boolean;
-   overriding procedure Free (Command : in out Scheduled_Command);
+   overriding procedure Primitive_Free (Command : in out Scheduled_Command);
    --  See inherited documentation
 
    function Create_Wrapper

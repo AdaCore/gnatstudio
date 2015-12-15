@@ -39,7 +39,6 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 
-with Commands;                   use Commands;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
@@ -63,7 +62,6 @@ package body GPS.Kernel.Timeout is
       Show_Output          : Boolean;
       Show_Command         : Boolean;
       Show_Exit_Status     : Boolean;
-      Synchronous          : Boolean;
       Use_Ext_Terminal     : Boolean;
       Directory            : Virtual_File;
 
@@ -87,13 +85,8 @@ package body GPS.Kernel.Timeout is
 
       Start_Time           : Ada.Calendar.Time;
       --  Start time of the process
-
-      Id                   : G_Source_Id := No_Source_Id;
    end record;
    type Console_Process is access all Console_Process_Data'Class;
-
-   package Console_Process_Timeout is new
-     Glib.Main.Generic_Sources (Console_Process);
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Regpat.Pattern_Matcher, GNAT.Expect.Pattern_Matcher_Access);
@@ -104,17 +97,10 @@ package body GPS.Kernel.Timeout is
    function Get_New_Queue_Id (QId : String) return String;
    --  Returns a new unique queue id
 
-   function Process_Cb (Data : Console_Process) return Boolean;
-   --  Generic callback for async spawn of processes
-
    function Delete_Handler
      (Object : access GObject_Record'Class;
       Params : Glib.Values.GValues) return Boolean;
    --  Callback for the "delete_event" event
-
-   procedure Cleanup (Data : Console_Process);
-   --  Close the process descriptor and mark the process as terminated in the
-   --  task manager.
 
    function Data_Handler
      (Console   : access Interactive_Console_Record'Class;
@@ -135,11 +121,19 @@ package body GPS.Kernel.Timeout is
    overriding procedure Interrupt (Command : in out Monitor_Command);
    --  Interrupts the command
 
-   overriding procedure Free (D : in out Monitor_Command);
+   overriding procedure Primitive_Free (D : in out Monitor_Command);
    overriding function Execute
      (Command : access Monitor_Command) return Command_Return_Type;
    overriding function Name (Command : access Monitor_Command) return String;
    --  See inherited documentation
+
+   function Process_Cb
+     (Command : not null access Monitor_Command'Class) return Boolean;
+   --  Generic callback for async spawn of processes
+
+   procedure Cleanup (Command : not null access Monitor_Command'Class);
+   --  Close the process descriptor and mark the process as terminated in the
+   --  task manager.
 
    ---------------
    -- Interrupt --
@@ -154,11 +148,11 @@ package body GPS.Kernel.Timeout is
       end if;
    end Interrupt;
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
-   overriding procedure Free (D : in out Monitor_Command) is
+   overriding procedure Primitive_Free (D : in out Monitor_Command) is
       PID : GNAT.Expect.Process_Id;
    begin
       if not D.Data.Died and then D.Data.D.Descriptor /= null then
@@ -171,22 +165,21 @@ package body GPS.Kernel.Timeout is
          end if;
       end if;
 
-      Cleanup (D.Data);
-
-      --  Free memory
+      --  ??? This seems complex behavior while we free the process. Might
+      --  be better to expect this to be run from Process_Cb already.
+      Cleanup (D'Unchecked_Access);
 
       Free (D.Name);
-      D.Data.D.Command := null;
 
       Unchecked_Free (D.Data.Expect_Regexp);
 
       if D.Data.D.Callback_Data /= null then
-         Destroy (D.Data.D.Callback_Data.all);
+         Destroy (D.Data.D.Callback_Data.all);  --  Frees output filters
          Unchecked_Free (D.Data.D.Callback_Data);
       end if;
 
       Unref (D.Data);
-   end Free;
+   end Primitive_Free;
 
    -------------
    -- Execute --
@@ -195,7 +188,6 @@ package body GPS.Kernel.Timeout is
    overriding function Execute
      (Command : access Monitor_Command) return Command_Return_Type
    is
-      Timeout : constant Guint := 50;
       Success : Boolean;
    begin
       if not Command.Data.Started then
@@ -231,11 +223,6 @@ package body GPS.Kernel.Timeout is
          Command.Data.Started := True;
 
          if Success then
-            if not Command.Data.Synchronous then
-               Command.Data.Id := Console_Process_Timeout.Timeout_Add
-                 (Timeout, Process_Cb'Access, Command.Data);
-            end if;
-
             return Execute_Again;
 
          else
@@ -247,7 +234,8 @@ package body GPS.Kernel.Timeout is
             --  memory, for instance.
             if Command.Data.D.Exit_Cb /= null then
                begin
-                  Command.Data.D.Exit_Cb (Command.Data.D, -1);
+                  Command.Data.D.Exit_Cb (Command.Data.D, Command, -1);
+                  Command.Data.D.Exit_Cb := null;  --  only run once
 
                exception
                   when E : others =>
@@ -257,18 +245,16 @@ package body GPS.Kernel.Timeout is
 
             Free (Command.Data.D.Descriptor);
             Command.Data.Died := True;
+            Cleanup (Command);
             return Failure;
          end if;
 
       elsif Command.Data.Finished then
          Trace (Me, "Process finished: "  & Get_Command (Command.Data.CL));
-         return Failure;
+         return Commands.Success;
 
       else
-         if Command.Data.Synchronous then
-            Success := Process_Cb (Command.Data);
-         end if;
-
+         Success := Process_Cb (Command);
          return Execute_Again;
       end if;
    end Execute;
@@ -290,7 +276,9 @@ package body GPS.Kernel.Timeout is
    -- Cleanup --
    -------------
 
-   procedure Cleanup (Data : Console_Process) is
+   procedure Cleanup (Command : not null access Monitor_Command'Class) is
+      Data    : constant Console_Process := Command.Data;
+
       procedure Insert (Msg : String);
       procedure Insert (Msg : String) is
       begin
@@ -301,24 +289,17 @@ package body GPS.Kernel.Timeout is
          end if;
       end Insert;
 
-      Status  : Integer;
+      Status  : Integer := 0;
    begin
-      if Data.Id /= No_Source_Id then
-         Remove (Data.Id);
-         Data.Id := No_Source_Id;
-      end if;
+      if Data.D.Descriptor /= null then
+         Close (Data.D.Descriptor.all, Status);
+         if Data.Interrupted then
+            Status := -1;
+         end if;
 
-      if Data.D.Descriptor = null then
-         return;
+         --  So that next call to Cleanup does nothing
+         Free (Data.D.Descriptor);
       end if;
-
-      Close (Data.D.Descriptor.all, Status);
-      if Data.Interrupted then
-         Status := -1;
-      end if;
-
-      --  So that next call to Cleanup does nothing
-      Free (Data.D.Descriptor);
 
       declare
          End_Time      : constant Ada.Calendar.Time := Ada.Calendar.Clock;
@@ -345,7 +326,8 @@ package body GPS.Kernel.Timeout is
 
       if Data.D.Exit_Cb /= null then
          begin
-            Data.D.Exit_Cb (Data.D, Status);
+            Data.D.Exit_Cb (Data.D, Command, Status);
+            Data.D.Exit_Cb := null;  --  never call it twice
 
          exception
             when E : others =>
@@ -360,7 +342,10 @@ package body GPS.Kernel.Timeout is
    -- Process_Cb --
    ----------------
 
-   function Process_Cb (Data : Console_Process) return Boolean is
+   function Process_Cb
+     (Command : not null access Monitor_Command'Class) return Boolean
+   is
+      Data : constant Console_Process := Command.Data;
       Fd     : Process_Descriptor_Access;
       Result : Expect_Match;
 
@@ -415,7 +400,7 @@ package body GPS.Kernel.Timeout is
                   end if;
 
                   if Data.D.Callback /= null then
-                     Data.D.Callback (Data.D, Output);
+                     Data.D.Callback (Data.D, Command, Output);
                   end if;
                end;
 
@@ -447,7 +432,7 @@ package body GPS.Kernel.Timeout is
             begin
                if Data.D.Callback /= null then
                   Data.D.Process_Died := True;
-                  Data.D.Callback (Data.D, Output);
+                  Data.D.Callback (Data.D, Command, Output);
                end if;
 
                if Data.Console /= null then
@@ -469,12 +454,12 @@ package body GPS.Kernel.Timeout is
          end if;
 
          Data.Died := True;
-         Cleanup (Data);
+         Cleanup (Command);
          return False;
 
       when E : others =>
          Trace (Me, E);
-         Cleanup (Data);
+         Cleanup (Command);
          return False;
    end Process_Cb;
 
@@ -503,19 +488,8 @@ package body GPS.Kernel.Timeout is
    exception
       when E : others =>
          Trace (Me, E);
-         Cleanup (Process);
          return "";
    end Data_Handler;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Data : in out Callback_Data_Record) is
-      pragma Unreferenced (Data);
-   begin
-      null;
-   end Destroy;
 
    ----------------------
    -- Get_New_Queue_Id --
@@ -579,7 +553,6 @@ package body GPS.Kernel.Timeout is
       C := new Monitor_Command;
       Scheduled := Create_Wrapper (Command         => C,
                                    Destroy_On_Exit => True);
-
       No_Handler.Id := Null_Handler_Id;
 
       if Line_By_Line then
@@ -607,14 +580,12 @@ package body GPS.Kernel.Timeout is
          Show_Exit_Status     => Show_Exit_Status,
          Strip_CR             => Strip_CR,
          Use_Pipes            => Use_Pipes,
-         Synchronous          => Synchronous,
          Expect_Regexp        => Expect_Regexp,
          D                    => (Kernel        => Kernel,
                                   Descriptor    => null,
                                   Callback      => Callback,
                                   Exit_Cb       => Exit_Cb,
                                   Callback_Data => Callback_Data,
-                                  Command       => Scheduled,
                                   Process_Died  => False),
          Died                 => False,
          Interrupted          => False,
@@ -622,7 +593,6 @@ package body GPS.Kernel.Timeout is
          Finished             => False,
          Start_Time           =>
            Time_Of (Year_Number'First, Month_Number'First, Day_Number'First),
-         Id                   => 0,
          Timeout              => Timeout);
       Initialize (C.Data);
 
@@ -715,7 +685,7 @@ package body GPS.Kernel.Timeout is
          Fd := null;
          Success := False;
          --  Interrupt just launched command because program did not start
-         Interrupt_Queue (Kernel, Get_Command (Created_Command));
+         Interrupt_Queue (Kernel, Created_Command);
       end if;
    exception
       when E : others =>
@@ -793,7 +763,6 @@ package body GPS.Kernel.Timeout is
       Button  : Message_Dialog_Buttons;
    begin
       if Console.Died then
-         Cleanup (Console);
          return False;
       end if;
 

@@ -91,11 +91,7 @@ package body GPS.Kernel.Task_Manager is
       Wrapper : constant Scheduled_Command_Access :=
                   Create_Wrapper (Command, Destroy_On_Exit);
    begin
-      Add_Command
-        (Manager,
-         Command_Access (Wrapper),
-         Active, Show_Bar, Queue_Id, Block_Exit);
-
+      Add_Command (Manager, Wrapper, Active, Show_Bar, Queue_Id, Block_Exit);
       return Wrapper;
    end Launch_Background_Command;
 
@@ -115,7 +111,7 @@ package body GPS.Kernel.Task_Manager is
 
    procedure Interrupt_Queue
      (Kernel  : access Kernel_Handle_Record'Class;
-      Command : Command_Access)
+      Command : Scheduled_Command_Access)
    is
       Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);
    begin
@@ -128,11 +124,9 @@ package body GPS.Kernel.Task_Manager is
 
    function Has_Queue
      (Kernel   : access Kernel_Handle_Record'Class;
-      Queue_Id : String) return Boolean
-   is
-      Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);
+      Queue_Id : String) return Boolean is
    begin
-      return Has_Queue (Manager, Queue_Id);
+      return Get_Task_Manager (Kernel).Has_Queue (Queue_Id);
    end Has_Queue;
 
    ---------------------

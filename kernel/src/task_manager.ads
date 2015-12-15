@@ -27,19 +27,19 @@
 
 with Commands;    use Commands;
 with GNAT.Strings;
-
+with GPS.Scripts.Commands; use GPS.Scripts.Commands;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Scripts; use GNATCOLL.Scripts;
 
 package Task_Manager is
 
    type Task_Manager_Record is tagged private;
-   type Task_Manager_Access is private;
+   type Task_Manager_Access is access all Task_Manager_Record'Class;
    No_Task_Manager : constant Task_Manager_Access;
 
    procedure Add_Command
-     (Manager    : Task_Manager_Access;
-      Command    : Command_Access;
+     (Manager    : not null access Task_Manager_Record;
+      Command    : not null access Scheduled_Command'Class;
       Active     : Boolean;
       Show_Bar   : Boolean;
       Queue_Id   : String := "";
@@ -51,31 +51,39 @@ package Task_Manager is
    --  exiting while this command is running.
 
    procedure Interrupt_Queue
-     (Manager : Task_Manager_Access;
-      Command : Command_Access);
+     (Manager : not null access Task_Manager_Record;
+      Command : not null access Scheduled_Command'Class);
    --  Interrupt the Queue that contains Command.
    --  This interrupts the currently running command (if any); none of the
    --  subsequent commands will be executed, and all commands in the queue
    --  will be Free'd.
    --  Do nothing if there is no such queue.
 
+   procedure Interrupt_Command
+     (Manager : not null access Task_Manager_Record;
+      Index   : Integer);
+   --  Interrupt command referenced by Index
+
    function Head
-     (Manager : Task_Manager_Access; Id : String) return Command_Access;
+     (Manager : not null access Task_Manager_Record; Id : String)
+     return Scheduled_Command_Access;
    --  Return the Head command from the Queue of the given id, null if none
 
-   procedure Interrupt_Latest_Task (Manager : Task_Manager_Access);
+   procedure Interrupt_Latest_Task
+      (Manager : not null access Task_Manager_Record);
    --  Interrupt the task that was started last
 
-   procedure Interrupt_All_Tasks (Manager : Task_Manager_Access);
+   procedure Interrupt_All_Tasks
+      (Manager : not null access Task_Manager_Record);
    --  Interrput all tasks
 
    procedure Pause_Command
-     (Manager : access Task_Manager_Record'Class;
+     (Manager : not null access Task_Manager_Record;
       Index   : Integer);
    --  Pause command referenced by Index
 
    procedure Resume_Command
-     (Manager : access Task_Manager_Record'Class;
+     (Manager : not null access Task_Manager_Record;
       Index   : Integer);
    --  Resume paused command referenced by Index
 
@@ -83,22 +91,29 @@ package Task_Manager is
      (Manager : Task_Manager_Access);
    --  Free all memory associated to the task manager
 
-   type Command_Array is array (Integer range <>) of Command_Access;
+   type Command_Array is array (Integer range <>) of Scheduled_Command_Access;
 
    function Get_Scheduled_Commands
-     (Manager : Task_Manager_Access) return Command_Array;
+     (Manager : not null access Task_Manager_Record) return Command_Array;
    --  Return all the commands currently stored in the task manager
 
+   function Scheduled_Command_From_Command
+     (Manager : not null access Task_Manager_Record;
+      Command : access Root_Command'Class)
+      return Scheduled_Command_Access;
+   --  Return the scheduled command that wraps the given low-level command.
+   --  The task manager can only deal with commands of type Scheduled_Command.
+   --  In general, this is transparent for other subprograms, but it is
+   --  sometimes useful to find the scheduled command itself so that it can
+   --  be interrupted, paused, or to get access to the python instances.
+   --
+   --  The result should not be unref-ed, and might be null.
+
    function Has_Queue
-     (Manager  : Task_Manager_Access;
+     (Manager  : not null access Task_Manager_Record;
       Queue_Id : String) return Boolean;
    --  Return True if a queue identified by Queue_Id is currently running or
    --  paused in the task manager.
-
-   procedure Interrupt_Command
-     (Manager : access Task_Manager_Record'Class;
-      Index   : Integer);
-   --  Interrupt command referenced by Index
 
 private
 
@@ -119,6 +134,8 @@ private
       Status   : Queue_Status := Running;
 
       Queue         : Command_Lists.List;
+      --  Each element is a Scheduled_Command
+
       Stored_Status : Command_Return_Type := Success;
 
       Total    : Integer := 0;
@@ -172,7 +189,6 @@ private
       Minimal_Passive_Priority : Integer := 0;
    end record;
 
-   type Task_Manager_Access is access all Task_Manager_Record'Class;
    No_Task_Manager : constant Task_Manager_Access := null;
 
    procedure Queue_Added

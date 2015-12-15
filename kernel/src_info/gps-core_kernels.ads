@@ -20,24 +20,22 @@
 with Ada.Tags;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
-
+with Commands;
 with Language_Handlers;
 with Projects;
 with Xref;
 with GPS.Messages_Windows;
 with GPS.Process_Launchers;
-with GPS.Editors;
-use GPS.Editors;
-
+with GPS.Editors;                     use GPS.Editors;
 with GNATCOLL.Projects;
 with GNATCOLL.Scripts.Projects;
 with GNATCOLL.Symbols;
 with GNATCOLL.VFS;
 with Toolchains;
-with Ada.Finalization; use Ada.Finalization;
+with Ada.Finalization;                use Ada.Finalization;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
-with Language; use Language;
-with Ada.Containers; use Ada.Containers;
+with Language;                        use Language;
+with Ada.Containers;                  use Ada.Containers;
 with Ada.Strings.Hash;
 with Language.Tree;
 with Language.Tree.Database;
@@ -207,6 +205,16 @@ package GPS.Core_Kernels is
    type Editor_Listener_Factory is abstract new Controlled with null record;
    type Editor_Listener_Factory_Access is
      access all Editor_Listener_Factory'Class;
+
+   function Get_Scheduled_Command
+     (Kernel  : not null access Core_Kernel_Record;
+      Command : access Commands.Root_Command'Class)
+      return Commands.Command_Access
+     is (null);
+   --  Return the command that wraps Command in the task manager. Such a
+   --  wrapper is used when commands are run in the background.
+   --  This always returns null for the CLI kernel, since it does not include
+   --  a task manager for background commands.
 
    -----------------------------
    -- Editor_Listener_Factory --

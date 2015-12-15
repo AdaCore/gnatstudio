@@ -122,7 +122,7 @@ package Code_Coverage.GNATcov is
      (Self : access Detail_Messages_Command)
       return Commands.Command_Return_Type;
 
-   overriding procedure Free
+   overriding procedure Primitive_Free
      (Self : in out Detail_Messages_Command);
 
 end Code_Coverage.GNATcov;

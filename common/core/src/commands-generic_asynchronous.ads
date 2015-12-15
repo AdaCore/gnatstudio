@@ -46,7 +46,8 @@ package Commands.Generic_Asynchronous is
       Data        : Data_Type;
       Iterate     : Iteration_Procedure);
 
-   overriding procedure Free (D : in out Generic_Asynchronous_Command);
+   overriding procedure Primitive_Free
+     (D : in out Generic_Asynchronous_Command);
    --  Free memory associated to D
 
    overriding function Execute

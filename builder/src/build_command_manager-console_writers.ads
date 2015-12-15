@@ -29,12 +29,11 @@ package Build_Command_Manager.Console_Writers is
    overriding procedure Parse_Standard_Output
      (Self    : not null access Console_Writer;
       Item    : String;
-      Command : Command_Access);
-
+      Command : access Root_Command'Class);
    overriding procedure End_Of_Stream
      (Self    : not null access Console_Writer;
       Status  : Integer;
-      Command : Command_Access);
+      Command : access Root_Command'Class);
 
    type Output_Parser_Fabric is
      new GPS.Tools_Output.Output_Parser_Fabric with private;

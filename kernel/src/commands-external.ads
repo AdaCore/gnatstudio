@@ -31,7 +31,7 @@ package Commands.External is
    type External_Command is new Root_Command with private;
    type External_Command_Access is access all External_Command;
 
-   overriding procedure Free (Command : in out External_Command);
+   overriding procedure Primitive_Free (Command : in out External_Command);
    --  Free memory associated to D
 
    type String_List_Handler is access

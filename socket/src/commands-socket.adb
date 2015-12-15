@@ -38,15 +38,15 @@ package body Commands.Socket is
       Item.Stream  := Stream;
    end Create;
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
-   overriding procedure Free (X : in out Socket_Command) is
+   overriding procedure Primitive_Free (X : in out Socket_Command) is
    begin
       Free (X.Command);
       Free (X.Shell);
-   end Free;
+   end Primitive_Free;
 
    -------------
    -- Execute --

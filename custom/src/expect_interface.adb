@@ -17,7 +17,6 @@
 
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Unchecked_Deallocation;
 with System;
 
 with GNAT.Expect;             use GNAT.Expect;
@@ -66,9 +65,7 @@ package body Expect_Interface is
 
    overriding function Execute
      (Command : access End_Action_Record) return Command_Return_Type;
-
-   overriding procedure Free (X : in out End_Action_Record);
-   --  Free memory associated to X
+   overriding procedure Primitive_Free (X : in out End_Action_Record);
 
    type Custom_Action_Record is new Root_Command with record
       Pattern          : Pattern_Matcher_Access;
@@ -106,11 +103,7 @@ package body Expect_Interface is
    end record;
 
    overriding function Name (X : access Custom_Action_Record) return String;
-   --  Returns the name of the command
-
-   overriding procedure Free (X : in out Custom_Action_Record);
-   --  Free memory associated to X
-
+   overriding procedure Primitive_Free (X : in out Custom_Action_Record);
    overriding function Execute
      (Command : access Custom_Action_Record) return Command_Return_Type;
    overriding procedure Interrupt (Command : in out Custom_Action_Record);
@@ -118,11 +111,6 @@ package body Expect_Interface is
    --  task manager.
 
    type Custom_Action_Access is access all Custom_Action_Record;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Custom_Action_Record, Custom_Action_Access);
-
-   procedure Free (X : in out Custom_Action_Access);
-   --  Free memory associated to X
 
    function Get_Process_Class (Kernel : access Kernel_Handle_Record'Class)
       return Class_Type;
@@ -152,10 +140,10 @@ package body Expect_Interface is
    -- Local subprograms --
    -----------------------
 
-   procedure Exit_Cb (D : in out Custom_Action_Record);
+   procedure Exit_Cb (D : in out Custom_Action_Record'Class);
    --  Called when an external process has finished running
 
-   procedure Before_Kill_Cb (D : Custom_Action_Record);
+   procedure Before_Kill_Cb (D : Custom_Action_Record'Class);
    --  Called before killing the external process
 
    procedure Output_Cb (D : Custom_Action_Access; Output : String);
@@ -220,11 +208,11 @@ package body Expect_Interface is
       return "expect";
    end Name;
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
-   overriding procedure Free (X : in out Custom_Action_Record) is
+   overriding procedure Primitive_Free (X : in out Custom_Action_Record) is
    begin
       Unchecked_Free (X.Pattern);
       Free (X.Unmatched_Output);
@@ -232,19 +220,7 @@ package body Expect_Interface is
       Free (X.On_Match);
       Free (X.Before_Kill);
       Unchecked_Free (X.Progress_Regexp);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (X : in out Custom_Action_Access) is
-   begin
-      if X /= null then
-         Free (X.all);
-         Unchecked_Free (X);
-      end if;
-   end Free;
+   end Primitive_Free;
 
    ---------------
    -- Interrupt --
@@ -421,7 +397,7 @@ package body Expect_Interface is
    -- Exit_Cb --
    -------------
 
-   procedure Exit_Cb (D : in out Custom_Action_Record) is
+   procedure Exit_Cb (D : in out Custom_Action_Record'Class) is
       Tmp : Boolean;
       pragma Unreferenced (Tmp);
    begin
@@ -480,21 +456,21 @@ package body Expect_Interface is
       return Success;
    end Execute;
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
-   overriding procedure Free (X : in out End_Action_Record) is
+   overriding procedure Primitive_Free (X : in out End_Action_Record) is
    begin
       Free (X.Unmatched_Output);
       Free (X.On_Exit);
-   end Free;
+   end Primitive_Free;
 
    --------------------
    -- Before_Kill_Cb --
    --------------------
 
-   procedure Before_Kill_Cb (D : Custom_Action_Record) is
+   procedure Before_Kill_Cb (D : Custom_Action_Record'Class) is
       Tmp : Boolean;
       pragma Unreferenced (Tmp);
    begin
@@ -979,7 +955,7 @@ package body Expect_Interface is
                end;
 
                if not Success then
-                  Free (D);
+                  Unref (Command_Access (D));
                   Set_Error_Msg
                     (Data,
                      -"Could not launch command """ & Command_Line & """");

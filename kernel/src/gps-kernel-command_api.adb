@@ -15,15 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Commands;                use Commands;
-with GNATCOLL.Scripts;            use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
 with GPS.Scripts.Commands;    use GPS.Scripts.Commands;
 with Task_Manager;            use Task_Manager;
 
 package body GPS.Kernel.Command_API is
-
    --  Local subprograms
 
    procedure Command_Cmds
@@ -50,9 +48,7 @@ package body GPS.Kernel.Command_API is
             for J in Commands'Range loop
                if Commands (J).all in Scheduled_Command then
                   Set_Return_Value
-                    (Data, Get_Instance
-                       (Scheduled_Command_Access (Commands (J)),
-                        Get_Script (Data)));
+                    (Data, Get_Instance (Commands (J), Get_Script (Data)));
                end if;
             end loop;
          end;
@@ -70,9 +66,7 @@ package body GPS.Kernel.Command_API is
                  and then Commands (J).all in Scheduled_Command
                then
                   Set_Return_Value
-                    (Data, Get_Instance
-                       (Scheduled_Command_Access (Commands (J)),
-                        Get_Script (Data)));
+                    (Data, Get_Instance (Commands (J), Get_Script (Data)));
                end if;
             end loop;
          end;
@@ -80,7 +74,7 @@ package body GPS.Kernel.Command_API is
       elsif Command = "interrupt" then
          Cmd := Get_Command (Data, 1);
          if Cmd /= null then
-            Interrupt_Queue (Get_Kernel (Data), Command_Access (Cmd));
+            Interrupt_Queue (Get_Kernel (Data), Cmd);
          end if;
       end if;
    end Command_Cmds;

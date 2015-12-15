@@ -200,7 +200,8 @@ package body Vsearch is
    type Search_Specific_Context is new Interactive_Command with record
       Context : GNAT.Strings.String_Access;
    end record;
-   overriding procedure Free (Action : in out Search_Specific_Context);
+   overriding procedure Primitive_Free
+     (Action : in out Search_Specific_Context);
    overriding function Execute
      (Action  : access Search_Specific_Context;
       Context : Interactive_Command_Context) return Command_Return_Type;
@@ -2455,14 +2456,15 @@ package body Vsearch is
       return Commands.Success;
    end Execute;
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
-   overriding procedure Free (Action : in out Search_Specific_Context) is
+   overriding procedure Primitive_Free
+     (Action : in out Search_Specific_Context) is
    begin
       Free (Action.Context);
-   end Free;
+   end Primitive_Free;
 
    -------------
    -- Execute --

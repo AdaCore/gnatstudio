@@ -31,9 +31,7 @@ package Commands.GNATTest is
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
 
-   overriding
-   function Name (X : access Go_To_Tested_Command_Type) return String;
-
-   overriding procedure Free (X : in out Go_To_Tested_Command_Type);
+   overriding function Name
+     (X : access Go_To_Tested_Command_Type) return String;
 
 end Commands.GNATTest;

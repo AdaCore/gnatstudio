@@ -31,7 +31,7 @@ package Commands.Builder.Progress_Parsers is
    overriding procedure Parse_Standard_Output
      (Self    : not null access Progress_Parser;
       Item    : String;
-      Command : Command_Access);
+      Command : access Root_Command'Class);
    --  Process the builder output: update the progress bar in Command as
    --  necessary, strip the progress output, and pass the other outputs to
    --  Child.

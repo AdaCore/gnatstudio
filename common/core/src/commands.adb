@@ -16,10 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Unchecked_Deallocation;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package body Commands is
-
-   use Ada.Strings.Unbounded;
 
    procedure Enqueue
      (Queue         : Command_Queue;
@@ -127,9 +126,10 @@ package body Commands is
          if Command.Ref_Count = 0 then
             --  Do not free commands registered as actions, except if we are
             --  freeing the actions themselves
-            Free (Command.all);
+            Primitive_Free (Command.all);
             Unchecked_Free (Command);
          end if;
+         Command := null;
       end if;
    end Unref;
 
@@ -584,16 +584,18 @@ package body Commands is
    ----------
 
    procedure Free (List : in out Command_Lists.List) is
-      C : Cursor;
       Command : Command_Access;
+      Tmp : Command_Lists.List := List;
    begin
-      C := List.First;
-      while Has_Element (C) loop
-         Command := Element (C);
-         Unref (Command);
-         Next (C);
-      end loop;
+      --  Clear the list, so that when we unref below, we do not
+      --  end up executing other commands in the list
       List.Clear;
+
+      while not Tmp.Is_Empty loop
+         Command := Tmp.First_Element;
+         Unref (Command);
+         Tmp.Delete_First;
+      end loop;
    end Free;
 
    ----------
@@ -603,14 +605,11 @@ package body Commands is
    procedure Next (List : in out Command_Lists.List) is
       Command : Command_Access;
    begin
-      if List.Is_Empty then
-         return;
+      if not List.Is_Empty then
+         Command := List.First_Element;
+         List.Delete_First;
+         Unref (Command);
       end if;
-
-      Command := List.First_Element;
-      Unref (Command);
-
-      List.Delete_First;
    end Next;
 
 end Commands;

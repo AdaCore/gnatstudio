@@ -122,7 +122,7 @@ package Commands.Custom is
    --  This filter should be checked if the command is used as an action in
    --  GPS.
 
-   overriding procedure Free (X : in out Custom_Command);
+   overriding procedure Primitive_Free (X : in out Custom_Command);
    --  Free memory associated with X.
 
    overriding function Execute

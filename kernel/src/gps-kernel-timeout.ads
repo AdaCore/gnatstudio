@@ -17,9 +17,8 @@
 
 with Ada.Unchecked_Deallocation;
 with GNAT.Expect;
-
 with Glib.Main;
-
+with Commands;                use Commands;
 with GPS.Scripts.Commands;    use GPS.Scripts.Commands;
 with Interactive_Consoles;
 with Remote;                  use Remote;
@@ -29,13 +28,20 @@ package GPS.Kernel.Timeout is
 
    type Process_Data;
 
-   type Output_Callback is
-     access procedure (Data : Process_Data; Output : String);
+   type Output_Callback is access procedure
+     (Data    : Process_Data;
+      Command : not null access Root_Command'Class;
+      Output  : String);
    --  This callback is called whenever some output is read from the file
    --  descriptor.
+   --  Command is the command that executes the external process, not the
+   --  command manipulated by the task manager. As such, it cannot be passed
+   --  to the task manager.
 
-   type Exit_Callback is
-     access procedure (Data : Process_Data; Status : Integer);
+   type Exit_Callback is access procedure
+     (Data    : Process_Data;
+      Command : not null access Root_Command'Class;
+      Status  : Integer);
    --  Callback called when an underlying process launched by Launch_Process
    --  terminates.
    --  Status is the exit status of the process. If the process could not
@@ -43,7 +49,7 @@ package GPS.Kernel.Timeout is
 
    type Callback_Data_Record is abstract tagged null record;
    type Callback_Data_Access is access all Callback_Data_Record'Class;
-   procedure Destroy (Data : in out Callback_Data_Record);
+   procedure Destroy (Data : in out Callback_Data_Record) is null;
    --  Destroy the memory allocated for Data
 
    type Process_Data is record
@@ -53,15 +59,8 @@ package GPS.Kernel.Timeout is
       Exit_Cb       : Exit_Callback;
       Callback_Data : Callback_Data_Access;
 
-      Command       : Scheduled_Command_Access;
-      --  The command in which the process is wrapped. There might be no such
-      --  command if Launch_Process was called with Show_In_Task_Manager set to
-      --  False.
-      --  This command can be used to report the progress of the action, so
-      --  that the task manager is usefully updated.
-
       Process_Died : Boolean := False;
-      --  This flag is true when the process is died, false otherwise
+      --  This flag is true when the process has died, false otherwise
    end record;
 
    procedure Free is new Ada.Unchecked_Deallocation

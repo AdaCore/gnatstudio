@@ -97,7 +97,7 @@ package body Browsers.Elaborations.Cycle_Parser is
    overriding procedure Parse_Standard_Output
      (Self    : not null access Circularity_Parser;
       Item    : String;
-      Command : Command_Access)
+      Command : access Root_Command'Class)
    is
       use Elaboration_Cycles;
 

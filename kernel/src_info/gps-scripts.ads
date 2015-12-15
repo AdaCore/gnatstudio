@@ -146,10 +146,10 @@ package GPS.Scripts is
       generic
          with function Detach (E : Element_Type) return Element_Type;
          --  Return a new version of E, which does not own any script
-         --  instance.
+         --  instance. E will be freed (with Free above).
       function Transfer_Ownership
          (Self : in out Proxy'Class) return Instances_Status;
-      --  This procedure is used to change the owner ship of data. After
+      --  This procedure is used to change the ownership of data. After
       --  calling this procedure, the following is true:
       --  * Self is no longer referencing any instance.
       --  * script instances still exist if they are used by a script. If

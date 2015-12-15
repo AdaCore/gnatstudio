@@ -32,7 +32,7 @@ package body VCS.Branching_Commands is
       Result := Execute (Command.Command);
 
       case Result is
-         when Execute_Again | Raise_Priority | Lower_Priority =>
+         when Execute_Again =>
             return Result;
 
          when Success =>

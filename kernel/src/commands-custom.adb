@@ -131,11 +131,21 @@ package body Commands.Custom is
      (Custom_Command_Access, System.Address);
    pragma Warnings (On);
 
-   procedure Exit_Cb (Data : Process_Data; Status : Integer);
-   --  Called when an external process has finished running
+   procedure Exit_Cb
+     (Data     : Process_Data;
+      External : not null access Root_Command'Class;
+      Status   : Integer);
+   --  Called when an external process has finished running.
+   --  Stored is the handler for the command executed in the task manager,
+   --  whereas Data contains a handle on the custom command.
 
-   procedure Store_Command_Output (Data : Process_Data; Output : String);
-   --  Store the output of the current command
+   procedure Store_Command_Output
+     (Data     : Process_Data;
+      External : not null access Root_Command'Class;
+      Output   : String);
+   --  Store the output of the current command;
+   --  External is the handler for the command executed in the task manager,
+   --  whereas Data contains a handle on the custom command.
 
    procedure Free (Execution : in out Custom_Command_Execution);
    --  Free Execution and its contents
@@ -197,23 +207,36 @@ package body Commands.Custom is
    -- Exit_Cb --
    -------------
 
-   procedure Exit_Cb (Data : Process_Data; Status : Integer) is
+   procedure Exit_Cb
+     (Data     : Process_Data;
+      External : not null access Root_Command'Class;
+      Status   : Integer)
+   is
+      pragma Unreferenced (External);
       D : constant Custom_Callback_Data_Access :=
             Custom_Callback_Data_Access (Data.Callback_Data);
    begin
-      D.Command.Execution.External_Process_In_Progress := False;
-      D.Command.Execution.Process_Exit_Status := Status;
+      --  Unless the command has already terminated
+      if D.Command.Execution /= null then
+         D.Command.Execution.External_Process_In_Progress := False;
+         D.Command.Execution.Process_Exit_Status := Status;
+      end if;
    end Exit_Cb;
 
    --------------------------
    -- Store_Command_Output --
    --------------------------
 
-   procedure Store_Command_Output (Data : Process_Data; Output : String) is
-
+   procedure Store_Command_Output
+     (Data     : Process_Data;
+      External : not null access Root_Command'Class;
+      Output   : String)
+   is
+      pragma Unreferenced (External);
       D       : constant Custom_Callback_Data_Access :=
                   Custom_Callback_Data_Access (Data.Callback_Data);
       Command : constant Custom_Command_Access := D.Command;
+      Save_Output : Boolean;
 
       procedure Append (S : in out String_Access; Value : String);
       --  Append Value to S
@@ -234,9 +257,6 @@ package body Commands.Custom is
          end if;
       end Insert;
 
-      Save_Output : Boolean :=
-                      Command.Execution.Save_Output
-                        (Command.Execution.Cmd_Index);
       ------------
       -- Append --
       ------------
@@ -273,10 +293,17 @@ package body Commands.Custom is
       end Append;
 
       Current, Total : Integer := 0;
-
       Index, EOL     : Integer;
 
    begin
+      --  Command might have been terminated already
+      if Command.Execution = null then
+         return;
+      end if;
+
+      Save_Output :=
+        Command.Execution.Save_Output (Command.Execution.Cmd_Index);
+
       if Command.Execution.Check_Password then
 
          declare
@@ -596,7 +623,7 @@ package body Commands.Custom is
    -- Free --
    ----------
 
-   overriding procedure Free (X : in out Custom_Command) is
+   overriding procedure Primitive_Free (X : in out Custom_Command) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Components_Array, Components_Array_Access);
    begin
@@ -608,7 +635,7 @@ package body Commands.Custom is
          Free (Custom_Component (X.Components (C).Component));
       end loop;
       Unchecked_Free (X.Components);
-   end Free;
+   end Primitive_Free;
 
    ------------
    -- Create --
@@ -1172,6 +1199,7 @@ package body Commands.Custom is
          function Execute_External
            (Component : Custom_Component_Record'Class) return Boolean
          is
+            Data : GPS.Kernel.Timeout.Callback_Data_Access;
          begin
             The_Command_Line := Parse_String
               (Trim
@@ -1223,6 +1251,9 @@ package body Commands.Custom is
 
                Command.Execution.External_Process_Console := Console;
 
+               Data := new Custom_Callback_Data'
+                 (Command => Custom_Command_Access (Command));
+
                Launch_Process
                  (Command.Kernel,
                   CL                   => The_Command_Line,
@@ -1238,8 +1269,7 @@ package body Commands.Custom is
 
                   Show_Output          => False,
 
-                  Callback_Data        => new Custom_Callback_Data'
-                    (Command => Custom_Command_Access (Command)),
+                  Callback_Data        => Data,
                   Show_In_Task_Manager => Component.Show_In_Task_Manager,
                   Line_By_Line         => False,
                   Synchronous          => Context.Synchronous,
@@ -1442,7 +1472,7 @@ package body Commands.Custom is
    begin
       if Command.Execution /= null then
          Command.Execution.Cmd_Index := Command.Components'First;
-         Interrupt_Queue (Command.Kernel, Get_Command (Command.Sub_Command));
+         Interrupt_Queue (Command.Kernel, Command.Sub_Command);
       end if;
    end Interrupt;
 

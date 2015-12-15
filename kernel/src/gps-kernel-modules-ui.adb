@@ -2866,7 +2866,6 @@ package body GPS.Kernel.Modules.UI is
                Act := Kernel.Get_Application.Lookup_Action
                   (Slice (Action, 5, Length (Action)));
                if Act = Gaction (Null_Interface) then
-                  Trace (Me, "MANU No action " & To_String (Action));
                   Item := null;
                elsif To_Object (Act).all in GPS_Action_Record'Class then
                   Item := Gtk_New_Action_Item

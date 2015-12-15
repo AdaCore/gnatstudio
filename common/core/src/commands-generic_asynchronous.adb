@@ -19,18 +19,19 @@ package body Commands.Generic_Asynchronous is
 
    use GNAT.Strings;
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
-   overriding procedure Free (D : in out Generic_Asynchronous_Command) is
+   overriding procedure Primitive_Free
+     (D : in out Generic_Asynchronous_Command) is
    begin
       if D.Data /= null then
          Free (D.Data.all);
          Unchecked_Free (D.Data);
          Free (D.Description);
       end if;
-   end Free;
+   end Primitive_Free;
 
    ------------
    -- Create --
