@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Implementation Process Launcher via GPS.Kernel.Timtout
+--  Implementation Process Launcher via GPS.Kernel.Timeout
 
 with GNATCOLL.VFS;
 

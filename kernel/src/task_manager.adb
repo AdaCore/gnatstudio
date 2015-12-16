@@ -50,7 +50,7 @@ package body Task_Manager is
    --  Incremental function to execute the task manager
 
    function Safe_Execute
-     (Command : Command_Access) return Command_Return_Type;
+     (Command : in out Command_Access) return Command_Return_Type;
    --  Executes command, and returns the result. If an exception occurs during
    --  execution of the command, return Failure.
 
@@ -81,13 +81,20 @@ package body Task_Manager is
    ------------------
 
    function Safe_Execute
-     (Command : Command_Access) return Command_Return_Type is
+     (Command : in out Command_Access) return Command_Return_Type
+   is
+      Result : Command_Return_Type;
    begin
-      return Execute (Command);
-
+      --  Ref/Unref Command, to protect the command from being freed by reentry
+      --  in the Task Manager while it is itself running.
+      Ref (Command);
+      Result := Execute (Command);
+      Unref (Command);
+      return Result;
    exception
       when E : others =>
          Trace (Me, E);
+         Unref (Command);
          return Failure;
    end Safe_Execute;
 
@@ -237,6 +244,14 @@ package body Task_Manager is
          return False;
 
       else
+         --  Free all Queues that are marked as Completed
+
+         for J in Manager.Queues'Range loop
+            if Manager.Queues (J).Status = Completed then
+               Free (Manager.Queues (J).Queue);
+            end if;
+         end loop;
+
          --  Find the queue with the lowest current priority.
          --  Add their priority to each queue.
 
@@ -296,10 +311,7 @@ package body Task_Manager is
             when Success | Failure =>
                --  ??? add the command to the list of done or failed commands
 
-               if Queue.Status = Completed then
-                  Free (Queue.Queue);
-
-               else
+               if Queue.Status /= Completed then
                   Next (Queue.Queue);
 
                   Queue.Done := Queue.Done + 1;
@@ -521,7 +533,10 @@ package body Task_Manager is
 
                if Manager.Queues /= null then
                   if Manager.Queues (J) /= null then
-                     Free (Manager.Queues (J).Queue);
+                     --  Mark the queue as Completed: the actual freeing
+                     --  of the queue will occur at the next call to
+                     --  Execute_Incremental
+                     Manager.Queues (J).Status := Completed;
                   end if;
 
                   for K in Manager.Queues'Range loop

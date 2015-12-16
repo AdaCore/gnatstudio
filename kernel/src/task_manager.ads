@@ -54,6 +54,9 @@ package Task_Manager is
      (Manager : Task_Manager_Access;
       Command : Command_Access);
    --  Interrupt the Queue that contains Command.
+   --  This interrupts the currently running command (if any); none of the
+   --  subsequent commands will be executed, and all commands in the queue
+   --  will be Free'd.
    --  Do nothing if there is no such queue.
 
    function Head
@@ -105,6 +108,12 @@ private
    --  Runs the task manager, if it is not already running
 
    type Queue_Status is (Not_Started, Running, Paused, Completed);
+   --  Not_Started: the queue has not started
+   --  Running: the queue is running
+   --  Paused: the queue is paused
+   --  Completed: the queue is considered completed: no commands should be
+   --    added to it, and the commands in the queue will be freed at the next
+   --    iteration of the task manager.
 
    type Task_Queue_Record is record
       Status   : Queue_Status := Running;
