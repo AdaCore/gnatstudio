@@ -20,6 +20,7 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
 with Gtk.Widget;                 use Gtk.Widget;
+with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Commands.Interactive;       use Commands, Commands.Interactive;
@@ -28,17 +29,24 @@ with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 
 with Builder_Facility_Module;    use Builder_Facility_Module;
 with Build_Command_Utils;        use Build_Command_Utils;
+with Interactive_Consoles;       use Interactive_Consoles;
 
 package body Builder_Module is
 
    type Interrupt_Tool_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Interrupt_Tool_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Run_Export_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Run_Export_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    procedure Compile_Command
@@ -108,6 +116,50 @@ package body Builder_Module is
       return Commands.Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Run_Export_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Child  : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
+      W      : Gtk_Widget;
+   begin
+      if Child /= null then
+         if Child.all in GPS_MDI_Child_Record'Class then
+            W := GPS_MDI_Child (Child).Get_Actual_Widget;
+         else
+            W := Child.Get_Widget;
+         end if;
+
+         if W.all in Interactive_Console_Record'Class then
+            declare
+               F : constant Virtual_File :=
+                 Select_File
+                   (Title             => -"Select File to Export from " &
+                    Child.Get_Title,
+                    File_Pattern      => +("*.txt"),
+                    Pattern_Name      => -"Text files",
+                    Default_Name      => +"content.txt",
+                    Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+                    Kind              => Save_File);
+            begin
+               if F = GNATCOLL.VFS.No_File
+                 or else Interactive_Console (W).Export (F)
+               then
+                  return Commands.Success;
+               end if;
+            end;
+         end if;
+      end if;
+
+      return Commands.Failure;
+   end Execute;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -120,6 +172,12 @@ package body Builder_Module is
          Description =>
            -"Interrupt the tasks performed in the background by GPS",
          Icon_Name  => "gps-stop-symbolic");
+
+      Register_Action
+        (Kernel, "export console to file", new Run_Export_Command,
+         -"Export the output of run to a text file",
+         Icon_Name => "gps-save-symbolic",
+         Category => -"Run");
 
       Register_Command
         (Kernel, "compute_xref",

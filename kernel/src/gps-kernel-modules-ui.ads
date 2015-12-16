@@ -328,13 +328,14 @@ package GPS.Kernel.Modules.UI is
    ---------------------
 
    procedure Register_Button
-     (Kernel   : not null access Kernel_Handle_Record'Class;
-      Action   : String;
-      Icon_Name : String := "";
-      Label    : String := "";
-      Toolbar  : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
-      Position : Glib.Gint := -1;
-      Hide     : Boolean := False);
+     (Kernel          : not null access Kernel_Handle_Record'Class;
+      Action          : String;
+      Icon_Name       : String := "";
+      Label           : String := "";
+      Toolbar         : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
+      Position        : Glib.Gint := -1;
+      Hide            : Boolean := False;
+      Focus_On_Action : Boolean := False);
    --  Register a button based on an action.
    --  The action need not be registered yet.
    --  Icon_Name overrides the action's default image, if specified.
@@ -349,6 +350,9 @@ package GPS.Kernel.Modules.UI is
    --
    --  The toolbar defaults to the global toolbar in GPS.
    --  The position can be computed with Get_Toolbar_Separator_Position.
+   --
+   --  Focus will be set to parent MDI_Child when the button is clicked and
+   --  Focus_On_Action is True
 
    function Get_Toolbar_Section
      (Kernel  : not null access Kernel_Handle_Record'Class;
@@ -360,12 +364,15 @@ package GPS.Kernel.Modules.UI is
    --  the name of the section, and ends just before the next separator.
 
    function Create_Toolbar
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Id      : String)
+     (Kernel          : not null access Kernel_Handle_Record'Class;
+      Id              : String;
+      Focus_On_Action : Boolean := False)
       return Gtk.Toolbar.Gtk_Toolbar;
    --  Create a new toolbar with the given id.
    --  Its contents is read from the XML file in Install_Menus. Any button
    --  registered for it later on will be dynamically added to the toolbar.
+   --  Focus will be set to parent MDI_Child when the button inside toolbar
+   --  is clicked and Focus_On_Action is True
 
    -------------------------
    -- Drag'n'drop support --

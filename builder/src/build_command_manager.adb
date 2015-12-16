@@ -396,7 +396,8 @@ package body Build_Command_Manager is
       Shadow              : Boolean;
       Background          : Boolean;
       Create_If_Not_Exist : Boolean;
-      New_Console_Name    : String := "") return Interactive_Console
+      New_Console_Name    : String := "";
+      Toolbar_Name        : String := "") return Interactive_Console
    is
       Console : Interactive_Console;
    begin
@@ -409,7 +410,8 @@ package body Build_Command_Manager is
             Module              => null,
             Force_Create        => False,
             ANSI_Support        => True,
-            Accept_Input        => True);
+            Accept_Input        => True,
+            Toolbar_Name        => Toolbar_Name);
 
          Modify_Font (Get_View (Console), View_Fixed_Font.Get_Pref);
 

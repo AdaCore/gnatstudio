@@ -540,6 +540,10 @@
       <button action='messages load from file'/>
    </toolbar>
 
+   <toolbar id='Run'>
+      <button action='export console to file'/>
+   </toolbar>
+
    <toolbar id='Key Shortcuts'>
       <button action='key shortcuts expand all'/>
       <separator/>

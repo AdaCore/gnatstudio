@@ -43,13 +43,15 @@ with Gtk.Box;             use Gtk.Box;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Main;            use Gtk.Main;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Style_Context;   use Gtk.Style_Context;
 with Gtk.Text_Buffer;     use Gtk.Text_Buffer;
 with Gtk.Text_View;       use Gtk.Text_View;
 with Gtk.Text_Iter;       use Gtk.Text_Iter;
 with Gtk.Text_Mark;       use Gtk.Text_Mark;
 with Gtk.Text_Tag;        use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;  use Gtk.Text_Tag_Table;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Toolbar;         use Gtk.Toolbar;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Selection_Data;  use Gtk.Selection_Data;
 with Gtk.Arguments;       use Gtk.Arguments;
@@ -58,14 +60,17 @@ with Gtkada.Terminal;     use Gtkada.Terminal;
 with Gtkada.MDI;          use Gtkada.MDI;
 with Pango.Enums;         use Pango.Enums;
 
-with GNATCOLL.Traces;              use GNATCOLL.Traces;
-with Histories;           use Histories;
-with String_List_Utils;   use String_List_Utils;
-with GUI_Utils;           use GUI_Utils;
-with GNATCOLL.Arg_Lists;  use GNATCOLL.Arg_Lists;
-with GNATCOLL.Iconv;      use GNATCOLL.Iconv;
-with GPS.Kernel.MDI;   use GPS.Kernel.MDI;
-with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
+with Histories;             use Histories;
+with String_List_Utils;     use String_List_Utils;
+with GUI_Utils;             use GUI_Utils;
+with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
+with GNATCOLL.Iconv;        use GNATCOLL.Iconv;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
+with GPS.Stock_Icons;       use GPS.Stock_Icons;
 
 package body Interactive_Consoles is
    Me : constant Trace_Handle := Create ("Console");
@@ -1447,12 +1452,14 @@ package body Interactive_Consoles is
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
       Empty_Equals_Repeat : Boolean := False;
       ANSI_Support        : Boolean := False;
-      Manage_Prompt       : Boolean := True) is
+      Manage_Prompt       : Boolean := True;
+      Toolbar_Name        : String := "") is
    begin
       Console := new Interactive_Console_Record;
       Initialize (Console, Kernel, Prompt, Handler, User_Data,
                   History_List, Key, Highlight, Wrap_Mode,
-                  Empty_Equals_Repeat, ANSI_Support, Manage_Prompt);
+                  Empty_Equals_Repeat, ANSI_Support, Manage_Prompt,
+                  Toolbar_Name => Toolbar_Name);
    end Gtk_New;
 
    ----------------
@@ -1471,9 +1478,9 @@ package body Interactive_Consoles is
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode;
       Empty_Equals_Repeat : Boolean := False;
       ANSI_Support        : Boolean := False;
-      Manage_Prompt       : Boolean := True)
+      Manage_Prompt       : Boolean := True;
+      Toolbar_Name        : String := "")
    is
-      pragma Unreferenced (Kernel);
       Iter : Gtk_Text_Iter;
       Term : Gtkada_Terminal;
    begin
@@ -1489,6 +1496,20 @@ package body Interactive_Consoles is
       Console.Highlight := Highlight;
 
       Initialize_Vbox (Console, Homogeneous => False);
+
+      if Toolbar_Name /= "" then
+         declare
+            Toolbar : Gtk_Toolbar;
+         begin
+            Toolbar := Create_Toolbar
+              (Kernel, Id => Toolbar_Name, Focus_On_Action => True);
+            Toolbar.Set_Icon_Size (Icon_Size_Local_Toolbar);
+            Toolbar.Set_Style (Toolbar_Icons);
+            Get_Style_Context (Toolbar).Add_Class ("gps-local-toolbar");
+            Console.Pack_Start (Toolbar, Expand => False, Fill => False);
+            Toolbar.Show_All;
+         end;
+      end if;
 
       Gtk_New (Console.Scrolled);
       Console.Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
@@ -2325,5 +2346,30 @@ package body Interactive_Consoles is
          Set_Highlight_Color (Self.Console, Self.Console.Highlight);
       end if;
    end Execute;
+
+   ------------
+   -- Export --
+   ------------
+
+   function Export
+     (View : access Interactive_Console_Record;
+      File : GNATCOLL.VFS.Virtual_File)
+      return Boolean
+   is
+      Writable    : Writable_File := File.Write_File;
+      Start, Last : Gtk_Text_Iter;
+      Result : Boolean := True;
+   begin
+      View.Buffer.Get_Bounds (Start, Last);
+      begin
+         Write (Writable, String'(View.Buffer.Get_Text (Start, Last)));
+      exception
+         when E : others =>
+            Trace (Me, E);
+            Result := False;
+      end;
+      Close (Writable);
+      return Result;
+   end Export;
 
 end Interactive_Consoles;

@@ -71,6 +71,11 @@ NF-170-OB05-010 GPS: remove the Always Use External Editor pref (2015-11-06)
   own editor) has been removed. Such editors do not conveniently give access
   to cross-references, outline, and all the other facilities provided by GPS
 
+NF-170-OB04-001 GPS: export the output of program runs (2015-12-16)
+
+  A new button was added to the local toolbar of the Run view, to save the
+  run command output to a file.
+
 NF-170-OB03-004 GPS: performance improvement in Project View (2015-11-20)
 
   The Project View is significantly faster to load - this is noticeable

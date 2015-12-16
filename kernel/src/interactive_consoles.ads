@@ -22,6 +22,7 @@ with System;
 with GNAT.Expect;
 with GNAT.Regpat;
 with GNATCOLL.Scripts;
+with GNATCOLL.VFS;
 with GNAT.Strings;
 
 with Gdk.Types;
@@ -40,8 +41,8 @@ with GUI_Utils;
 with String_List_Utils;
 with GPS.Kernel.MDI;
 with GPS.Messages_Windows;
-with Default_Preferences; use Default_Preferences;
-with GPS.Kernel; use GPS.Kernel;
+with Default_Preferences;  use Default_Preferences;
+with GPS.Kernel;           use GPS.Kernel;
 
 package Interactive_Consoles is
 
@@ -99,7 +100,8 @@ package Interactive_Consoles is
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
       Empty_Equals_Repeat : Boolean := False;
       ANSI_Support        : Boolean := False;
-      Manage_Prompt       : Boolean := True);
+      Manage_Prompt       : Boolean := True;
+      Toolbar_Name        : String := "");
    --  Create a new console.
    --  History_List and Key are used to handle the history of commands entered
    --  by the user in the interactive window. No history is provided if
@@ -119,6 +121,8 @@ package Interactive_Consoles is
    --  change colors or text attributes,...
    --  Highlight can be a Color_Preference, a Variant_Preference or a
    --  Style_Preference.
+   --  If Toolbar_Name is not empty then toolbar will be created. Given name
+   --  will be used as Id of toolbar.
 
    procedure Initialize
      (Console             : access Interactive_Console_Record'Class;
@@ -132,7 +136,8 @@ package Interactive_Consoles is
       Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode;
       Empty_Equals_Repeat : Boolean := False;
       ANSI_Support        : Boolean := False;
-      Manage_Prompt       : Boolean := True);
+      Manage_Prompt       : Boolean := True;
+      Toolbar_Name        : String := "");
    --  Internal initialization function
 
    procedure Insert
@@ -262,6 +267,12 @@ package Interactive_Consoles is
      (Console : access Interactive_Console_Record)
       return Gtk.Text_View.Gtk_Text_View;
    --  Return the text view
+
+   function Export
+     (View : access Interactive_Console_Record;
+      File : GNATCOLL.VFS.Virtual_File)
+      return Boolean;
+   --  Export buffer's contents to the file
 
    function From_View
      (View : access Gtk.Text_View.Gtk_Text_View_Record'Class)

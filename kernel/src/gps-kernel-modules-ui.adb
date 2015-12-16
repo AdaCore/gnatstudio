@@ -380,19 +380,21 @@ package body GPS.Kernel.Modules.UI is
       Object : not null access GObject_Record'Class);
 
    type Action_Tool_Button_Record is new Gtk_Tool_Button_Record with record
-      Data : aliased Widget_Action_Proxy;
-      Forced_Stock : Boolean := False;
+      Data            : aliased Widget_Action_Proxy;
+      Forced_Stock    : Boolean := False;
+      Focus_On_Action : Boolean := False;
    end record;
    type Action_Tool_Button is access all Action_Tool_Button_Record'Class;
 
    procedure Gtk_New
-     (Button   : out Action_Tool_Button;
-      Kernel   : not null access Kernel_Handle_Record'Class;
-      Icon_Name : String := "";
-      Action   : String;
-      Label    : String := "";
-      Optional : Boolean := False;
-      Hide     : Boolean := False);
+     (Button          : out Action_Tool_Button;
+      Kernel          : not null access Kernel_Handle_Record'Class;
+      Icon_Name       : String := "";
+      Action          : String;
+      Label           : String := "";
+      Optional        : Boolean := False;
+      Hide            : Boolean := False;
+      Focus_On_Action : Boolean := False);
    --  Create a new button so that it executes action when pressed.
    --  Hide and Optional are the same as for Data_Proxy
    --  Label can be used to override the label of the button (which
@@ -1868,8 +1870,9 @@ package body GPS.Kernel.Modules.UI is
    --------------------
 
    function Create_Toolbar
-     (Kernel  : not null access Kernel_Handle_Record'Class;
-      Id      : String)
+     (Kernel          : not null access Kernel_Handle_Record'Class;
+      Id              : String;
+      Focus_On_Action : Boolean := False)
       return Gtk.Toolbar.Gtk_Toolbar
    is
       Toolbar : Gtk_Toolbar;
@@ -1902,11 +1905,12 @@ package body GPS.Kernel.Modules.UI is
 
                Register_Button
                  (Kernel,
-                  Action    => Get_Attribute (N, "action"),
-                  Icon_Name => Get_Attribute (N, "stock"),
-                  Label     => Get_Attribute (N, "label"),
-                  Toolbar   => Toolbar,
-                  Hide      => Hide);
+                  Action          => Get_Attribute (N, "action"),
+                  Icon_Name       => Get_Attribute (N, "stock"),
+                  Label           => Get_Attribute (N, "label"),
+                  Toolbar         => Toolbar,
+                  Hide            => Hide,
+                  Focus_On_Action => Focus_On_Action);
 
             elsif Node_Name (N) = "separator" then
                Gtk_New (Sep);
@@ -1959,18 +1963,20 @@ package body GPS.Kernel.Modules.UI is
    ---------------------
 
    procedure Register_Button
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Action    : String;
-      Icon_Name : String := "";
-      Label     : String := "";
-      Toolbar   : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
-      Position  : Glib.Gint := -1;
-      Hide      : Boolean := False)
+     (Kernel          : not null access Kernel_Handle_Record'Class;
+      Action          : String;
+      Icon_Name       : String := "";
+      Label           : String := "";
+      Toolbar         : access Gtk.Toolbar.Gtk_Toolbar_Record'Class := null;
+      Position        : Glib.Gint := -1;
+      Hide            : Boolean := False;
+      Focus_On_Action : Boolean := False)
    is
       Button : Action_Tool_Button;
    begin
       Gtk_New (Button, Kernel, Icon_Name => Icon_Name, Action => Action,
-               Label => Label, Hide => Hide);
+               Label => Label, Hide => Hide,
+               Focus_On_Action => Focus_On_Action);
 
       if Toolbar = null then
          Get_Toolbar (Kernel).Insert (Button, Position);
@@ -2387,8 +2393,18 @@ package body GPS.Kernel.Modules.UI is
    procedure On_Action_Button_Clicked
      (Button : access Gtk_Tool_Button_Record'Class)
    is
-      B      : constant Action_Tool_Button := Action_Tool_Button (Button);
+      B : constant Action_Tool_Button := Action_Tool_Button (Button);
    begin
+      if B.Focus_On_Action then
+         declare
+            P : constant MDI_Child := Find_MDI_Child_From_Widget (B);
+         begin
+            if P /= null then
+               Set_Focus_Child (P);
+            end if;
+         end;
+      end if;
+
       Execute_Action (B, B.Data);
    end On_Action_Button_Clicked;
 
@@ -2397,18 +2413,20 @@ package body GPS.Kernel.Modules.UI is
    -------------
 
    procedure Gtk_New
-     (Button   : out Action_Tool_Button;
-      Kernel   : not null access Kernel_Handle_Record'Class;
-      Icon_Name : String := "";
-      Action   : String;
-      Label    : String := "";
-      Optional : Boolean := False;
-      Hide     : Boolean := False)
+     (Button          : out Action_Tool_Button;
+      Kernel          : not null access Kernel_Handle_Record'Class;
+      Icon_Name       : String := "";
+      Action          : String;
+      Label           : String := "";
+      Optional        : Boolean := False;
+      Hide            : Boolean := False;
+      Focus_On_Action : Boolean := False)
    is
    begin
       --  ??? Should automatically grey out when the context does not match.
       Button := new Action_Tool_Button_Record;
       Button.Forced_Stock := Icon_Name /= "";
+      Button.Focus_On_Action := Focus_On_Action;
       Button.Data := (Kernel    => Kernel,
                       Optional  => Optional,
                       Hide      => Hide,

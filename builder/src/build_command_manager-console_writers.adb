@@ -48,7 +48,8 @@ package body Build_Command_Manager.Console_Writers is
             Cmd_Console := Get_Build_Console
               (Kernel_Handle (Self.Builder.Kernel),
                Build.Shadow, Build.Background, False,
-               "Run: " & Build.Main.Display_Base_Name);
+               "Run: " & Build.Main.Display_Base_Name,
+              Toolbar_Name => "Run");
 
             --  Update console in Builder.Last_Build
             Build.Console := Cmd_Console.Get_Console_Messages_Window;

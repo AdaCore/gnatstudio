@@ -51,7 +51,8 @@ package Build_Command_Manager is
       Shadow              : Boolean;
       Background          : Boolean;
       Create_If_Not_Exist : Boolean;
-      New_Console_Name    : String := "") return Interactive_Console;
+      New_Console_Name    : String := "";
+      Toolbar_Name        : String := "") return Interactive_Console;
    --  Return the console appropriate for showing compiler errors
    --  If New_Console_Name is specified, create a new console with this name.
 

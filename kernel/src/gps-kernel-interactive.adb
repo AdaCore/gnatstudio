@@ -39,7 +39,8 @@ package body GPS.Kernel.Interactive is
       Force_Create        : Boolean := False;
       Accept_Input        : Boolean := True;
       ANSI_Support        : Boolean := False;
-      Manage_Prompt       : Boolean := True) return Interactive_Console
+      Manage_Prompt       : Boolean := True;
+      Toolbar_Name        : String := "") return Interactive_Console
    is
       Console : Interactive_Console;
       Child   : MDI_Child;
@@ -68,7 +69,8 @@ package body GPS.Kernel.Interactive is
             Wrap_Mode    => Wrap_Char,
             Manage_Prompt => Manage_Prompt,
             ANSI_Support => ANSI_Support,
-            Highlight    => Preference (Message_Highlight));
+            Highlight    => Preference (Message_Highlight),
+            Toolbar_Name => Toolbar_Name);
          Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);
          Set_Max_Length   (Get_History (Kernel).all, 100, History);
          Allow_Duplicates (Get_History (Kernel).all, History, True, True);

@@ -28,7 +28,8 @@ package GPS.Kernel.Interactive is
       Force_Create        : Boolean := False;
       Accept_Input        : Boolean := True;
       ANSI_Support        : Boolean := False;
-      Manage_Prompt       : Boolean := True) return Interactive_Console;
+      Manage_Prompt       : Boolean := True;
+      Toolbar_Name        : String := "") return Interactive_Console;
    --  Return a new interactive console (or an existing one if there is already
    --  one with the given Title). Any existing console is not cleared.
    --  If the title is the empty stirng, the GPS console is returned.
