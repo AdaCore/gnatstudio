@@ -241,6 +241,20 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       </menu>
     </submenu>
 
+    <action name="spark2014_example_crazyflie" category=""
+            show-command="false" output="none">
+      <shell lang="python">spark2014.load_example_crazyflie()</shell>
+      <shell>Editor.edit "crazyflie/modules/spec/sensfusion6_pack.ads"</shell>
+      <shell>Editor.edit "crazyflie/modules/body/sensfusion6_pack.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_crazyflie">
+        <title>crazyflie</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_database" category=""
             show-command="false" output="none">
       <shell>Project.load "@EXAMPLE@/database/test.gpr"</shell>
@@ -1396,6 +1410,16 @@ def update_project_path(paths):
         ':'.join(paths) + ':' + \
         os.environ["GPR_PROJECT_PATH"] + ':' + \
         os.environ["ADA_PROJECT_PATH"]
+
+
+def load_example_crazyflie():
+    """ load Crazyflie example project, which requires specific code to set
+        MODE environment variable.
+    """
+    import os
+    crazyflie_root = os.path.join(get_example_root(), 'crazyflie')
+    os.environ["MODE"] = 'Analyze'
+    GPS.Project.load(os.path.join(crazyflie_root, 'test.gpr'))
 
 
 def load_example_ipstack():
