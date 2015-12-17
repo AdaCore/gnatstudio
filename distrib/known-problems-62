@@ -112,16 +112,6 @@ KP-62-OA15-033 GPS: gnatcov's report not fully displayed
 
   Workaround: None.
 
-KP-62-OA07-003 GPS: Crash when using libclang cross references
-
-  Problem:    Using the new libclang cross references engine causes GPS to
-              crash in some scenarios
-
-  Status:     This was fixed in 17.0 on 2015-11-24
-
-  Workaround: Deactivate the libclang xref engine via the LIBCLANG_XREF
-              trace
-
 KP-62-O921-051 GNATdoc: No source code snippet for subtypes
 
   Problem:    GNATdoc doesn't generate source code snippet for declarations of
@@ -182,3 +172,13 @@ KP-62-OB12-006 GPS: Locations are not restored on startup
   Status:     This was fixed in 6.2.1 on 2015-11-17
 
   Workaround: Not necessary.
+
+KP-62-OA07-003 GPS: Crash when using libclang cross references
+
+  Problem:    Using the new libclang cross references engine causes GPS to
+              crash in some scenarios
+
+  Status:     This was fixed in 17.0 on 2015-11-24
+
+  Workaround: Deactivate the libclang xref engine via the LIBCLANG_XREF
+              trace
