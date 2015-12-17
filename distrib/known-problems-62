@@ -144,7 +144,7 @@ KP-62-O820-024 GPS: debugging aggregated projects
   Workaround: Initialize the debugger with no main unit, and manually type
               'file <exec_name>' in the debugger console.
 
-KP-62-0326-012 GPS: C rename refactoring
+KP-62-O326-012 GPS: C rename refactoring
 
   Problem:    Rename refactoring was not working in C/C++
 
