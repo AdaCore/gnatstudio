@@ -396,22 +396,13 @@ class ColorSchemePicker(object):
 
     def __init__(self):
         self.vbox = Gtk.VBox()
+        self.vbox.set_name(_VIEW_TITLE)
         self.snapshots_dir = os.path.join(
             GPS.get_system_dir(), "share", "gps", "color_themes", "snapshots")
 
-        scroll = Gtk.ScrolledWindow()
-        self.vbox.pack_start(scroll, True, True, 0)
-
         flow = Gtk.FlowBox()
         flow.set_selection_mode(Gtk.SelectionMode.NONE)
-        scroll.add(flow)
-
-        button_box = Gtk.HButtonBox()
-        close = Gtk.Button("Close")
-        close.connect("clicked", self.on_close_button)
-        button_box.pack_end(close, False, False, 0)
-
-        self.vbox.pack_end(button_box, False, False, 3)
+        self.vbox.pack_start(flow, True, True, 0)
 
         index = 0
 
@@ -428,31 +419,14 @@ class ColorSchemePicker(object):
         # a default size that allows showing two columns of previews
         self.vbox.set_size_request(930, 600)
 
-        self.vbox.connect("key_press_event", self.on_key_press)
-
-    def on_close_button(self, widget):
-        """ Callback on a click on the close button """
-
-        GPS.MDI.get(_VIEW_TITLE).destroy()
-
-    def on_key_press(self, widget, event):
-        """ Callback on a key press event"""
-
-        if event.keyval == Gdk.KEY_Escape:
-            self.on_close_button(widget)
-            return True
-
-        return False
-
     def __on_chosen(self, widget, theme):
         the_theme_switcher.apply_theme(theme)
 
     def __one_box(self, theme):
         """ Return one widget representing one theme in the flowbox.
         """
-        # frame = Gtk.Frame()
         vbox = Gtk.VBox()
-        # frame.add(vbox)
+
         image = Gtk.Image.new_from_file(
             os.path.join(self.snapshots_dir, theme['name'] + '.png'))
         vbox.pack_start(image, False, False, 0)
@@ -466,20 +440,5 @@ class ColorSchemePicker(object):
         return vbox
 
 
-class ColorSchemes(Module):
-    view_title = _VIEW_TITLE
-    mdi_position = GPS.MDI.POSITION_FLOAT
-    mdi_flags = GPS.MDI.FLAGS_ALL_BUTTONS + GPS.MDI.FLAGS_ALWAYS_DESTROY_FLOAT
-
-    def __init__(self):
-        self.widget = None
-
-    def setup(self):
-        make_interactive(
-            self.get_view,
-            category="Views",
-            name="open Color Theme Picker")
-
-    def create_view(self):
-        self.widget = ColorSchemePicker()
-        return self.widget.vbox
+# Register the color theme picker as a preferences page
+GPS.PreferencesPage("Color Theme").register(ColorSchemePicker().vbox)

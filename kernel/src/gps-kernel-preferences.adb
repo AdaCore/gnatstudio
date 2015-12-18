@@ -19,12 +19,14 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Python.Gtkada;   use GNATCOLL.Scripts.Python.Gtkada;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNAT.Strings;              use GNAT.Strings;
 
 with XML_Utils;                 use XML_Utils;
 
 with Pango.Font;                use Pango.Font;
+with Glib.Object;               use Glib.Object;
 with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
@@ -33,6 +35,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Config;
 with Defaults;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
+with Default_Preferences.GUI;   use Default_Preferences.GUI;
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
@@ -51,6 +54,10 @@ package body GPS.Kernel.Preferences is
      (Data : in out Callback_Data'Class; Command : String);
    --  Get preference command handler
 
+   procedure Preferences_Page_Commands_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for the commands related with preferences pages.
+
    type Preferences_Module is new Module_ID_Record with null record;
    overriding procedure Customize
      (Module : access Preferences_Module;
@@ -58,6 +65,24 @@ package body GPS.Kernel.Preferences is
       Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level);
    --  Handle GPS customization files for this module
+
+   type Python_Preferences_Page_Record is new Default_Preferences_Page_Record
+     with
+      record
+         Page_View : Preferences_Page_View;
+         --  View of the python preferences page, containing the PyGtk widget
+         --  created for this preferences page from the python side.
+      end record;
+   type Python_Preferences_Page is
+     access all Python_Preferences_Page_Record'Class;
+   --  Type used to represent preferences pages that have been registered
+   --  in python plugins.
+
+   overriding function Get_Widget
+     (Self    : not null access Python_Preferences_Page_Record;
+      Manager : not null Preferences_Manager) return Gtk.Widget.Gtk_Widget
+         is
+           (Gtk_Widget (Self.Page_View));
 
    ----------------
    -- Set_Kernel --
@@ -115,6 +140,54 @@ package body GPS.Kernel.Preferences is
       when others =>
          Self.Nested_Pref_Changed := Self.Nested_Pref_Changed - 1;
    end Notify_Pref_Changed;
+
+   ---------------------------------------
+   -- Preferences_Page_Commands_Handler --
+   ---------------------------------------
+
+   procedure Preferences_Page_Commands_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Class  : constant Class_Type := New_Class (Kernel, "PreferencesPage");
+      Inst   : constant Class_Instance := Nth_Arg (Data, 1, Class);
+   begin
+      if Command = Constructor_Method then
+         Set_Data (Inst, Class, String'(Nth_Arg (Data, 2)));
+      elsif Command = "register" then
+         declare
+            Name        : constant String := Get_Data (Inst, Class);
+         begin
+            --  Don't register preferences pages with an empty name
+            if Name = "" then
+               return;
+            end if;
+
+            declare
+               Page_Widget : constant GObject := From_PyGtk (Data => Data,
+                                                             N    => 2);
+               Priority    : constant Integer := Nth_Arg (Data, 3, -1);
+               Page_View   : constant Preferences_Page_View :=
+                               new Preferences_Page_View_Record;
+               Page        : constant Python_Preferences_Page :=
+                               new Python_Preferences_Page_Record;
+            begin
+               --  Create a default preferences page view and add the widget
+               --  created from python.
+               Default_Preferences.GUI.Initialize (Page_View);
+               Page_View.Add (Gtk_Widget (Page_Widget));
+               Page.Page_View := Page_View;
+
+               --  Register the newly created page in the manager
+               Kernel.Get_Preferences.Register_Page
+                 (Name             => Name,
+                  Page             => Preferences_Page (Page),
+                  Priority         => Priority,
+                  Replace_If_Exist => True);
+            end;
+         end;
+      end if;
+   end Preferences_Page_Commands_Handler;
 
    -------------------------
    -- Get_Command_Handler --
@@ -1583,8 +1656,11 @@ package body GPS.Kernel.Preferences is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Pref_Class : constant Class_Type := New_Class (Kernel, "Preference");
-      Module     : Module_ID;
+      Pref_Class             : constant Class_Type :=
+                                 New_Class (Kernel, "Preference");
+      Preferences_Page_Class : constant Class_Type :=
+                                 New_Class (Kernel, "PreferencesPage");
+      Module                 : Module_ID;
    begin
       Module := new Preferences_Module;
       GPS.Kernel.Modules.Register_Module
@@ -1592,6 +1668,7 @@ package body GPS.Kernel.Preferences is
          Kernel      => Kernel,
          Module_Name => "Preferences");
 
+      --  Register the commands associated to the Preference class
       Register_Command
         (Kernel, Constructor_Method,
          Minimum_Args => 1,
@@ -1628,6 +1705,21 @@ package body GPS.Kernel.Preferences is
             5 => Param ("default_fg", Optional => True)),
          Class        => Pref_Class,
          Handler      => Get_Command_Handler'Access);
+
+      --  Register the commands associated to the Preferences_Page class
+      Register_Command
+        (Kernel, Constructor_Method,
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => Preferences_Page_Class,
+         Handler      => Preferences_Page_Commands_Handler'Access);
+
+      Register_Command
+        (Kernel.Scripts, "register",
+         Params  => (1 => Param ("page_view"),
+                     2 => Param ("priority", Optional => True)),
+         Class   => Preferences_Page_Class,
+         Handler => Preferences_Page_Commands_Handler'Access);
 
    end Register_Module;
 

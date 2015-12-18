@@ -7939,10 +7939,60 @@ class Preference(object):
         """
         pass  # implemented in Ada
 
+###########################################################
+# PreferencesPage
+###########################################################
+
+
+class PreferencesPage(object):
+    """
+    Interface to the GPS preferences pages, as set in the
+    :menuselection:`Edit --> Preferences` dialog.
+
+    This interface can be used to register custom preferences pages,
+    associating it a PyGtk widget that will be displayed when
+    selecting the page.
+    """
+
+    def __init__(self, name):
+        """
+        Initializes an instance of the :class:`GPS.Preferences_Page` class,
+        associating it with the preferences page ``name``.
+        This name can include '/' characters, which results in subpages
+        created in the :guilabel:`Preferences`dialog.
+        This name should not be an empty string, otherwise the page
+        will not be displayed in the :guilabel:`Preferences`
+        dialog.
+
+        :param name: A string
+        """
+        pass  # implemented in Ada
+
+    def register(self, page_view, priority=-1):
+        """
+        Register a new preferences page and makes it visible in the
+        :guilabel:`Preferences` dialog, displaying the ``page_view``
+        widget when the page gets selected.
+        The ``priority`` is used to order the preferences pages in
+        the :guilabel:`Preferences` dialog tree view, using the
+        following policy:
+
+        - Pages with higher priorities are listed at the top of the
+        tree view.
+
+        - If two pages have the same priority, the alphabetical order
+        determines which page will appear first.
+
+        :param page_view: The gtk.Widget that should be displayed when
+        selecting the page
+        :param priority: integer defining the page's priority
+        """
+        pass   # implemented in Ada
 
 ###########################################################
 # Process
 ###########################################################
+
 
 class Process(Command):
     """
