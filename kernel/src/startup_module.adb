@@ -614,8 +614,6 @@ package body Startup_Module is
          --  Set the plugin page attributes
          Plugin_Page.Plugin_Name := new String'(Name);
          Plugin_Page.File := File;
-         Plugin_Page.Plugin_Name :=
-           new String'(Base_Name (Name, File_Extension (Name)));
          Plugin_Page.Loaded_At_Startup := Loaded;
          Plugin_Page.Explicit := Explicit;
          Plugin_Page.Doc := Get_Plugin_Doc (File);
