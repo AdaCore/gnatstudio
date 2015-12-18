@@ -25,16 +25,6 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
-KP-62-OC02-029 GB: cursor jumps to top of ada file when saved
-
-  Problem:    When saving ada files edited by the Ada Editor, the content is
-              scrolled to the top, and the cursor is moved to the first line
-              first column.
-
-  Status:     This was fixed in 17.0 on 2015-12-04
-
-  Workaround: None.
-
 KP-62-OC01-018 GPS.Exception: No file information stored in the context
 
   Problem:    Right clicking on the name of the project in the project pane may
@@ -70,22 +60,6 @@ KP-62-OB19-009 GPS: GNATdoc missing --version switch
   Status:     This was fixed in 17.0 on 2015-11-20
 
   Workaround: Use GPS's version switch, since versions are the same
-
-KP-62-OB02-020 GB: wrong linked source folder(s) automatically created
-
-  Problem:    At startup or on GPR file/scenario variable change, wrong linked
-              folders are automatically created for source folders.
-              It occurs when the existing linked source folder is not a child
-              of the project node, or on windows when there is case sensitive
-              difference between folder name in GPR file and folder name in the
-              file system.
-              These wrong linked source folders may lead to problems in ada
-              problems markers to ada source editor navigation.
-
-  Status:     This was fixed in 17.0 on 2015-11-03
-
-  Workaround: Remove the existing linked folders and let GNATbench create them.
-              On windows, let folder names be case sensitive.
 
 KP-62-OA28-042 GPS: memory leak linked to completions
 
@@ -136,6 +110,16 @@ KP-62-O326-012 GPS: C rename refactoring
 Known problems fixed in GPS 6.2.1 / GNATbench 2.10.1
 ----------------------------------------------------
 
+KP-62-OC02-029 GB: cursor jumps to top of ada file when saved
+
+  Problem:    When saving ada files edited by the Ada Editor, the content is
+              scrolled to the top, and the cursor is moved to the first line
+              first column.
+
+  Status:     This was fixed in 2.10.1 on 2015-12-04
+
+  Workaround: None.
+
 KP-62-OB24-020 GPS: Navigating to included files doesn't work
 
   Problem:    Clicking on an included file directive in C/C++ did not navigate
@@ -172,6 +156,22 @@ KP-62-OB12-006 GPS: Locations are not restored on startup
   Status:     This was fixed in 6.2.1 on 2015-11-17
 
   Workaround: Not necessary.
+
+KP-62-OB02-020 GB: wrong linked source folder(s) automatically created
+
+  Problem:    At startup or on GPR file/scenario variable change, wrong linked
+              folders are automatically created for source folders.
+              It occurs when the existing linked source folder is not a child
+              of the project node, or on windows when there is case sensitive
+              difference between folder name in GPR file and folder name in the
+              file system.
+              These wrong linked source folders may lead to problems in ada
+              problems markers to ada source editor navigation.
+
+  Status:     This was fixed in 2.10.1 on 2015-11-03
+
+  Workaround: Remove the existing linked folders and let GNATbench create them.
+              On windows, let folder names be case sensitive.
 
 KP-62-OA07-003 GPS: Crash when using libclang cross references
 
