@@ -18,8 +18,9 @@
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNATCOLL.Python;           use GNATCOLL.Python;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Python.Gtkada;   use GNATCOLL.Scripts.Python.Gtkada;
+with GNATCOLL.Scripts.Python;   use GNATCOLL.Scripts.Python;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNAT.Strings;              use GNAT.Strings;
 
@@ -69,9 +70,8 @@ package body GPS.Kernel.Preferences is
    type Python_Preferences_Page_Record is new Default_Preferences_Page_Record
      with
       record
-         Page_View : Preferences_Page_View;
-         --  View of the python preferences page, containing the PyGtk widget
-         --  created for this preferences page from the python side.
+         Get_Python_Widget  : Subprogram_Type;
+         --  Subprogram returning a newly created PyGtk widget for this page.
       end record;
    type Python_Preferences_Page is
      access all Python_Preferences_Page_Record'Class;
@@ -80,9 +80,41 @@ package body GPS.Kernel.Preferences is
 
    overriding function Get_Widget
      (Self    : not null access Python_Preferences_Page_Record;
+      Manager : not null Preferences_Manager) return Gtk.Widget.Gtk_Widget;
+
+   ----------------
+   -- Get_Widget --
+   ----------------
+
+   overriding function Get_Widget
+     (Self    : not null access Python_Preferences_Page_Record;
       Manager : not null Preferences_Manager) return Gtk.Widget.Gtk_Widget
-         is
-           (Gtk_Widget (Self.Page_View));
+   is
+      function Widget_From_PyObject (Object : PyObject) return System.Address;
+      pragma Import (C, Widget_From_PyObject, "ada_widget_from_pyobject");
+
+      Script        : constant Scripting_Language  :=
+                        Get_Script (Self.Get_Python_Widget.all);
+      Args          : constant Callback_Data'Class := Create (Script, 0);
+      Page_View     : constant Preferences_Page_View :=
+                        new Preferences_Page_View_Record;
+      Stub          : GObject_Record;
+      Python_Widget : GObject;
+      pragma Unreferenced (Manager);
+   begin
+      Default_Preferences.GUI.Initialize (Page_View);
+
+      --  Retrieve the PyGtkWidget created on the python side and add it to
+      --  the page view.
+      Python_Widget := Get_User_Data
+        (Obj  => Widget_From_PyObject
+           (Get_PyObject
+                (Execute (Self.Get_Python_Widget, Args))),
+         Stub => Stub);
+      Page_View.Add (Gtk_Widget (Python_Widget));
+
+      return Gtk_Widget (Page_View);
+   end Get_Widget;
 
    ----------------
    -- Set_Kernel --
@@ -149,44 +181,29 @@ package body GPS.Kernel.Preferences is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Class  : constant Class_Type := New_Class (Kernel, "PreferencesPage");
-      Inst   : constant Class_Instance := Nth_Arg (Data, 1, Class);
+      Name   : constant String := Nth_Arg (Data, 1);
+      pragma Unreferenced (Command);
    begin
-      if Command = Constructor_Method then
-         Set_Data (Inst, Class, String'(Nth_Arg (Data, 2)));
-      elsif Command = "register" then
-         declare
-            Name        : constant String := Get_Data (Inst, Class);
-         begin
-            --  Don't register preferences pages with an empty name
-            if Name = "" then
-               return;
-            end if;
-
-            declare
-               Page_Widget : constant GObject := From_PyGtk (Data => Data,
-                                                             N    => 2);
-               Priority    : constant Integer := Nth_Arg (Data, 3, -1);
-               Page_View   : constant Preferences_Page_View :=
-                               new Preferences_Page_View_Record;
-               Page        : constant Python_Preferences_Page :=
-                               new Python_Preferences_Page_Record;
-            begin
-               --  Create a default preferences page view and add the widget
-               --  created from python.
-               Default_Preferences.GUI.Initialize (Page_View);
-               Page_View.Add (Gtk_Widget (Page_Widget));
-               Page.Page_View := Page_View;
-
-               --  Register the newly created page in the manager
-               Kernel.Get_Preferences.Register_Page
-                 (Name             => Name,
-                  Page             => Preferences_Page (Page),
-                  Priority         => Priority,
-                  Replace_If_Exist => True);
-            end;
-         end;
+      --  Don't register the preferences page if the given name is an empty
+      --  string.
+      if Name = "" then
+         return;
       end if;
+
+      declare
+         Page : constant Python_Preferences_Page :=
+                  new Python_Preferences_Page_Record'
+                    (Default_Preferences_Page_Record with
+                     Get_Python_Widget => Nth_Arg (Data, 2));
+         Priority   : constant Integer := Nth_Arg (Data, 3, Default => -1);
+      begin
+         --  Register the page in the manager
+         Kernel.Get_Preferences.Register_Page
+           (Name             => Name,
+            Page             => Preferences_Page (Page),
+            Priority         => Priority,
+            Replace_If_Exist => False);
+      end;
    end Preferences_Page_Commands_Handler;
 
    -------------------------
@@ -1706,21 +1723,15 @@ package body GPS.Kernel.Preferences is
          Class        => Pref_Class,
          Handler      => Get_Command_Handler'Access);
 
-      --  Register the commands associated to the Preferences_Page class
+      --  Register the commands associated to the PreferencesPage class
       Register_Command
-        (Kernel, Constructor_Method,
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Preferences_Page_Class,
-         Handler      => Preferences_Page_Commands_Handler'Access);
-
-      Register_Command
-        (Kernel.Scripts, "register",
-         Params  => (1 => Param ("page_view"),
-                     2 => Param ("priority", Optional => True)),
-         Class   => Preferences_Page_Class,
-         Handler => Preferences_Page_Commands_Handler'Access);
-
+        (Kernel.Scripts, "create",
+         Params        => (1 => Param ("name"),
+                           2 => Param ("get_widget"),
+                           3 => Param ("priority", Optional => True)),
+         Class         => Preferences_Page_Class,
+         Static_Method => True,
+         Handler       => Preferences_Page_Commands_Handler'Access);
    end Register_Module;
 
    ----------------------

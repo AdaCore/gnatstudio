@@ -7944,35 +7944,26 @@ class Preference(object):
 ###########################################################
 
 
-class PreferencesPage(object):
+class PreferencesPage:
     """
     Interface to the GPS preferences pages, as set in the
     :menuselection:`Edit --> Preferences` dialog.
 
-    This interface can be used to register custom preferences pages,
-    associating it a PyGtk widget that will be displayed when
-    selecting the page.
+    This interface can be used to create custom preferences pages.
     """
-
-    def __init__(self, name):
+    @staticmethod
+    def create(self, name, get_widget, priority=-1):
         """
-        Initializes an instance of the :class:`GPS.Preferences_Page` class,
-        associating it with the preferences page ``name``.
-        This name can include '/' characters, which results in subpages
-        created in the :guilabel:`Preferences`dialog.
-        This name should not be an empty string, otherwise the page
-        will not be displayed in the :guilabel:`Preferences`
-        dialog.
+        Create a new preferences page and makes it visible in the
+        :guilabel:`Preferences` dialog, adding an entry with the
+        given ```name``.
 
-        :param name: A string
-        """
-        pass  # implemented in Ada
+        Each time the page is selected, the PyGtk widget returned by
+        the ``get_widget``function is displayed. Note that this widget
+        is destroyed when closing the preferences dialog: thus, ``get_widget``
+        can't return the same widget twice and should create a new one
+        each time it is called instead.
 
-    def register(self, page_view, priority=-1):
-        """
-        Register a new preferences page and makes it visible in the
-        :guilabel:`Preferences` dialog, displaying the ``page_view``
-        widget when the page gets selected.
         The ``priority`` is used to order the preferences pages in
         the :guilabel:`Preferences` dialog tree view, using the
         following policy:
@@ -7983,8 +7974,8 @@ class PreferencesPage(object):
         - If two pages have the same priority, the alphabetical order
         determines which page will appear first.
 
-        :param page_view: The gtk.Widget that should be displayed when
-        selecting the page
+        :param name: A string
+        :param get_widget: function returning a PyGtk widget
         :param priority: integer defining the page's priority
         """
         pass   # implemented in Ada

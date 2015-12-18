@@ -1454,9 +1454,7 @@ Classes
 
 
 
-   .. automethod:: GPS.PreferencesPage.__init__
-
-   .. automethod:: GPS.PreferencesPage.register
+   .. automethod:: GPS.PreferencesPage.create
 
 :class:`GPS.Process`
 ^^^^^^^^^^^^^^^^^^^^

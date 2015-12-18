@@ -394,7 +394,7 @@ def get_luminosity(x):
 
 class ColorSchemePicker(object):
 
-    def __init__(self):
+    def get_widget(self):
         self.vbox = Gtk.VBox()
         self.vbox.set_name(_VIEW_TITLE)
         self.snapshots_dir = os.path.join(
@@ -419,6 +419,8 @@ class ColorSchemePicker(object):
         # a default size that allows showing two columns of previews
         self.vbox.set_size_request(930, 600)
 
+        return self.vbox
+
     def __on_chosen(self, widget, theme):
         the_theme_switcher.apply_theme(theme)
 
@@ -441,4 +443,6 @@ class ColorSchemePicker(object):
 
 
 # Register the color theme picker as a preferences page
-GPS.PreferencesPage("Color Theme").register(ColorSchemePicker().vbox)
+
+GPS.PreferencesPage.create(name="Color Theme",
+                           get_widget=ColorSchemePicker().get_widget)
