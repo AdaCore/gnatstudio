@@ -226,34 +226,39 @@ package body Completion.Python is
       Result     : in out Completion_List)
    is
       pragma Unreferenced (Offset);
-
-      Sub       : Subprogram_Type :=
-        Get_Method (Resolver.Object, "get_completion_prefix");
-      Script    : constant Scripting_Language  := Get_Script (Sub.all);
-      Args      : Callback_Data'Class := Create (Script, 2);
-
-      Loc : constant Editor_Location'Class :=
-        Current_Location (Get_Kernel (Script), Context.File);
-      Loc_Inst  : constant Class_Instance := Create_Instance (Loc, Script);
-
-      Component : Python_Component;
    begin
       if Resolver.Lang_Name = ""
         or else To_Lower (+Resolver.Lang_Name)
         = To_Lower (Context.Lang.Get_Name)
       then
-         --  First get the completion prefix
-         Set_Nth_Arg (Args, 1, Resolver.Object);
-         Set_Nth_Arg (Args, 2, Loc_Inst);
-         Result.Searched_Identifier := new String'(Execute (Sub, Args));
+         declare
+            Sub      : Subprogram_Type :=
+              Get_Method (Resolver.Object, "get_completion_prefix");
+            Script   : constant Scripting_Language  := Get_Script (Sub.all);
+            Args     : Callback_Data'Class := Create (Script, 2);
+            Loc      : constant Editor_Location'Class :=
+              Current_Location (Get_Kernel (Script), Context.File);
+            Loc_Inst : constant Class_Instance :=
+              Create_Instance (Loc, Script);
 
-         --  And get the list of completions
-         Sub := Get_Method (Resolver.Object, "_ada_get_completions");
-         Set_Nth_Arg (Args, 1, Resolver.Object);
-         Set_Nth_Arg (Args, 2, Loc_Inst);
+            Component : Python_Component;
+         begin
+            --  First get the completion prefix
+            Set_Nth_Arg (Args, 1, Resolver.Object);
+            Set_Nth_Arg (Args, 2, Loc_Inst);
+            Result.Searched_Identifier := new String'(Execute (Sub, Args));
+            Free (Sub);
 
-         Component := (Resolver, Execute (Sub, Args));
-         Completion_List_Pckg.Append (Result.List, Component);
+            --  And get the list of completions
+            Sub := Get_Method (Resolver.Object, "_ada_get_completions");
+            Set_Nth_Arg (Args, 1, Resolver.Object);
+            Set_Nth_Arg (Args, 2, Loc_Inst);
+
+            Component := (Resolver, Execute (Sub, Args));
+            Free (Sub);
+
+            Completion_List_Pckg.Append (Result.List, Component);
+         end;
       end if;
    end Get_Completion_Root;
 
