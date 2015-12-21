@@ -403,6 +403,7 @@ package body Navigation_Module is
                if Get_File_Child (Child, "file") = Project_File then
                   Project := Child;
                   Project_Nodes := Project.Child;
+                  Project_Nodes.Parent := null;
                   Project.Child := null;
                   exit;
                end if;

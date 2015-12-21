@@ -333,7 +333,7 @@ package body Call_Graph_Views is
    is
       L_Value : GValue;
       L       : List_Access;
-      Addr    : System.Address;
+      Addr    : System.Address := System.Null_Address;
 
       use type System.Address;
 
@@ -341,15 +341,17 @@ package body Call_Graph_Views is
         (List, List_Access);
 
    begin
-      Get_Value (Model, Iter, List_Column, L_Value);
-      Addr := Get_Address (L_Value);
+      if Iter /= Null_Iter then
+         Get_Value (Model, Iter, List_Column, L_Value);
+         Addr := Get_Address (L_Value);
 
-      if Addr /= System.Null_Address then
-         L := To_Reference_List (Addr);
-         Unchecked_Free (L);
+         if Addr /= System.Null_Address then
+            L := To_Reference_List (Addr);
+            Unchecked_Free (L);
+         end if;
+
+         Remove (Model, Iter);
       end if;
-
-      Remove (Model, Iter);
    end Free_And_Remove;
 
    -------------------
