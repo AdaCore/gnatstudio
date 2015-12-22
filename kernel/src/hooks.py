@@ -1147,10 +1147,10 @@ package body GPS.Kernel.Hooks is
                   Tmp : constant %(func_return_type)s := %(name)s_Function'Class
                      (F.Func.all).Execute (Kernel%(plist)s);
                begin
-                  if Active (Me) then
-                     Decrease_Indent (Me);
-                  end if;
                   if Tmp /= %(returndefault)s then
+                     if Active (Me) then
+                        Decrease_Indent (Me);
+                     end if;
                      return%(tmp_return)s;
                   end if;
                end;''' % subst
@@ -1160,7 +1160,10 @@ package body GPS.Kernel.Hooks is
         if t.returns_run:
             subst['returntype'] = types[t.returns_run].ada
             subst['run_proc_or_func'] = 'function'
-            subst['run_exit'] = ''
+            subst['run_exit'] = '''
+      if Active (Me) then
+         Decrease_Indent (Me);
+      end if;'''
             subst['returns_run'] = ' return %s' % types[t.returns_run].ada
             subst['returns_run_type'] = types[t.returns_run].ada
             subst['run_body'] = '''
