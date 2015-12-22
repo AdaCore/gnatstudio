@@ -107,24 +107,17 @@ package body Gtkada.Terminal is
       Key_Cursor_Right,          --  "kr"
       Turn_Keypad_On,            --  "ks"
       Key_Cursor_Up,             --  "ku"
-      Start_Blinking,            --  "mb"
-      Start_Bold_Mode,           --  "md"
       End_All_Modes,             --  "me"
       Meta_Mode_On,              --  "mm"
       Meta_Mode_Off,             --  "mo"
-      Start_Reverse_Mode,        --  "mr"
       Cursor_Right,              --  "nd"
       Restore_Saved_Position,    --  "rc"
       Save_Position,             --  "sc"
-      End_Standout_Mode,         --  "se"
-      Start_Standout_Mode,       --  "so"
       Reverse_Scroll,            --  "sr"
       Set_Tabulator_Stop,        --  "st"
       End_Program_Using_Cursor,  --  "te"
       Begin_Program_Using_Cursor, -- "ti"
-      End_Underlining,            -- "ue"
       Cursor_Up,                  -- "up"
-      Start_Underlining,          -- "us"
       Visible_Bell,               -- "vb"
       Normal_Cursor_Visible,      -- "ve"
       Cursor_Invisible,           -- "vi"
@@ -134,6 +127,7 @@ package body Gtkada.Terminal is
       Enable_Line_Wrap,
       Disable_Line_Wrap,
       Set_Char_Attribute,
+      Reset_Char_Attribute,
       Display_In_Status_Line);
 
    type FSM_State is record
@@ -383,6 +377,7 @@ package body Gtkada.Terminal is
       Add_Sequence (FSM, ASCII.ESC & "[%d;%df",  Move_Cursor);
       Add_Sequence (FSM, ASCII.ESC & "[%dm",     Set_Char_Attribute);
       Add_Sequence (FSM, ASCII.ESC & "[%d;%dm",  Set_Char_Attribute);
+      Add_Sequence (FSM, ASCII.ESC & "[m",       Reset_Char_Attribute);
       Add_Sequence (FSM, ASCII.ESC & "[%dD",     Cursor_Left_Multiple);
       Add_Sequence (FSM, ASCII.ESC & "[D",       Cursor_Left);
       Add_Sequence (FSM, ASCII.ESC & "[%dC",     Cursor_Right_Multiple);
@@ -404,11 +399,12 @@ package body Gtkada.Terminal is
       Add_Sequence (FSM, ASCII.BEL & "",     Do_Nothing);
       Add_Sequence (FSM, ASCII.ESC & "[J",   Clear_To_End_Of_Screen);
       Add_Sequence (FSM, ASCII.ESC & "[K",   Clear_To_End_Of_Line);
-      Add_Sequence (FSM, ASCII.ESC & "[27m", End_Standout_Mode);
-      Add_Sequence (FSM, ASCII.ESC & "[24m", End_Underlining);
       Add_Sequence (FSM, ASCII.ESC & "[7h",  Enable_Line_Wrap);
       Add_Sequence (FSM, ASCII.ESC & "[7l",  Disable_Line_Wrap);
-      Add_Sequence (FSM, ASCII.ESC & "[%d;%dr", Scroll_Region);
+      Add_Sequence (FSM, ASCII.ESC & "[%dr",          Scroll_Region);
+      Add_Sequence (FSM, ASCII.ESC & "[%d;%dr",       Scroll_Region);
+      Add_Sequence (FSM, ASCII.ESC & "[%d;%d;%dr",    Scroll_Region);
+      Add_Sequence (FSM, ASCII.ESC & "[%d;%d;%d;%dr", Scroll_Region);
 
       Add_Sequence (FSM, ASCII.ESC & "[?1h"
                     & ASCII.ESC & "=",           Turn_Keypad_On);
@@ -433,7 +429,8 @@ package body Gtkada.Terminal is
       Add_Sequence (FSM, ASCII.ESC & "[?1034l",  Meta_Mode_Off);
 
       Add_Sequence (FSM, ASCII.ESC & "[%dL", Insert_Lines);
-      Add_Sequence (FSM, ASCII.ESC & "[%dP", Delete_Chars);
+      Add_Sequence (FSM, ASCII.ESC & "[%dP",    Delete_Chars);
+      Add_Sequence (FSM, ASCII.ESC & "[%d;%dP", Delete_Chars);
       Add_Sequence (FSM, ASCII.ESC & "[%dM", Delete_Lines);
       Add_Sequence (FSM, ASCII.ESC & "[%d@", Insert_Chars);
       Add_Sequence (FSM, ASCII.ESC & "OE",   Keypad_Center_Key);
@@ -468,21 +465,14 @@ package body Gtkada.Terminal is
       Add_Sequence (FSM, ASCII.ESC & "OD",       Key_Cursor_Left);
       Add_Sequence (FSM, ASCII.ESC & "OC",       Key_Cursor_Right);
       Add_Sequence (FSM, ASCII.ESC & "OA",       Key_Cursor_Up);
-      Add_Sequence (FSM, ASCII.ESC & "[5m",      Start_Blinking);
-      Add_Sequence (FSM, ASCII.ESC & "[1m",      Start_Bold_Mode);
-      Add_Sequence (FSM, ASCII.ESC & "[0m",      End_All_Modes);
-      Add_Sequence (FSM, ASCII.ESC & "[7m",      Start_Reverse_Mode);
       Add_Sequence (FSM, ASCII.ESC & "[C",       Cursor_Right);
-      Add_Sequence (FSM, ASCII.ESC & "[7m",      Start_Standout_Mode);
       Add_Sequence (FSM, ASCII.ESC & "M",        Reverse_Scroll);
       Add_Sequence (FSM, ASCII.ESC & "H",        Set_Tabulator_Stop);
       Add_Sequence (FSM, ASCII.ESC & "[A",       Cursor_Up);
-      Add_Sequence (FSM, ASCII.ESC & "[4m",      Start_Underlining);
       Add_Sequence (FSM, ASCII.ESC & "[?5h"
                     & ASCII.ESC & "[?51",        Visible_Bell);
 
       Add_Sequence (FSM, ASCII.ESC & "[l",       Memory_Lock);
-      Add_Sequence (FSM, ASCII.ESC & "[m",       Memory_Unlock);
 
       --  No meaning in GUI mode (?)
       --  do=^J            Cursor down one line
@@ -547,13 +537,14 @@ package body Gtkada.Terminal is
       Iter   : in out Gtk_Text_Iter;
       Col    : Gint)
    is
+      C : constant Gint := Col + Term.Region.Min_Col;
    begin
-      if Get_Line_Offset (Iter) > Col then
+      if Get_Line_Offset (Iter) > C then
          On_Move_Cursor_Left
-           (Term, Iter, Integer (Get_Line_Offset (Iter) - Col));
-      elsif Get_Line_Offset (Iter) < Col then
+           (Term, Iter, Integer (Get_Line_Offset (Iter) - C));
+      elsif Get_Line_Offset (Iter) < C then
          On_Move_Cursor_Right
-           (Term, Iter, Integer (Col - Get_Line_Offset (Iter)));
+           (Term, Iter, Integer (C - Get_Line_Offset (Iter)));
       else
          Place_Cursor (Term, Iter);
       end if;
@@ -699,32 +690,63 @@ package body Gtkada.Terminal is
       Success : Boolean;
       Missing : Integer;
       Eob     : Gtk_Text_Iter;
+      L       : constant Gint := Gint (Line) + Term.Region.Min_Line;
    begin
       --  ??? Tricky here: the first line should be the first visible line, but
       --  we do not have access to the view, so we don't know exactly which it
       --  is. For now we'll assume the user did a Clear_Screen first and the
       --  buffer only contains the visible part anyway
 
+      --  If a scroll region is in place and we are moving to a line outside
+      --  of the region, we must scroll.
+
+      if Gint (Line) > Term.Region.Max_Line then
+         declare
+            Bor : Gtk_Text_Iter;  --  beginning of region
+            Bos : Gtk_Text_Iter;  --  beginning of scroll
+            Result : Boolean;
+         begin
+            --  If the region does not extend to the end of the buffer, add
+            --  blank lines as needed
+            Term.Get_Start_Iter (Bor);
+            Forward_Lines (Bor, Term.Region.Max_Line + 1, Result);
+            Set_Line_Offset (Bor, 0);
+            Default_Insert
+               (Term, Bor,
+                (1 .. Line - Integer (Term.Region.Max_Line) => ASCII.LF),
+                Overwrite_Mode => False);
+
+            --  Remove the no longer needed lines at the beginning of the
+            --  region (preserve the ones in the buffer before the beginning
+            --  of the region)
+            Term.Get_Start_Iter (Bor);
+            Forward_Lines (Bor, Term.Region.Min_Line, Result);
+            Copy (Source => Bor, Dest => Bos);
+            Forward_Lines (Bos, Gint (Line) - Term.Region.Max_Line, Result);
+            Term.Delete (Bor, Bos);
+         end;
+      end if;
+
       --  Move down, creating lines as needed
       Get_Start_Iter (Term, Iter);
       Get_End_Iter   (Term, Eob);
 
-      if Get_Line (Iter) + 1 = Gint (Line) then
+      if Get_Line (Iter) + 1 = L then
          --  Already on the right line
          null;
 
-      elsif Get_Line (Eob) + 1 < Gint (Line) then
+      elsif Get_Line (Eob) + 1 < L then
          --  Lines missing in the buffer, add them
-         Missing := Line - Integer (Get_Line (Eob) + 1);
+         Missing := Integer (L - Get_Line (Eob) + 1);
          Default_Insert (Term, Eob, (1 .. Missing => ASCII.LF));
          Copy (Source => Eob, Dest => Iter);
 
       else
-         Forward_Lines (Iter, Gint (Line - 1), Success);
+         Forward_Lines (Iter, L - 1, Success);
          if not Success then
             Trace (Me,
                    "Error: could not move"
-                   & Integer'Image (Line - 1) & " down");
+                   & Gint'Image (L - 1) & " down");
          end if;
       end if;
 
@@ -819,27 +841,40 @@ package body Gtkada.Terminal is
          when 0 =>
             End_All_Modes (Term);
 
-         when 30 => Term.Current_Foreground := Tag_Array'First;
-         when 31 => Term.Current_Foreground := Tag_Array'First + 1;
-         when 32 => Term.Current_Foreground := Tag_Array'First + 2;
-         when 33 => Term.Current_Foreground := Tag_Array'First + 3;
-         when 34 => Term.Current_Foreground := Tag_Array'First + 4;
-         when 35 => Term.Current_Foreground := Tag_Array'First + 5;
-         when 36 => Term.Current_Foreground := Tag_Array'First + 6;
-         when 37 => Term.Current_Foreground := Tag_Array'First + 7;
-         when 38 => Term.Current_Foreground := Tag_Array'First; --  Default
-         when 39 => Term.Current_Foreground := -1;
+         --  See https://en.wikipedia.org/wiki/ANSI_escape_code#graphics
+         when 1  =>  --  bold mode
+            End_All_Modes (Term);
+            Term.Bold := True;
+         when 4  => null;  --  underline: single
+         when 5  => null;  --  blink: slow
+         when 7  =>  --  start standout mode
+            End_All_Modes (Term);
+            Term.Standout := True;
+         when 24 => null;  --  underline: none
+         when 27 =>   --  end standout mode
+            End_All_Modes (Term);
+            Term.Standout := False;
+         when 30 | 90 => Term.Current_Foreground := Tag_Array'First;
+         when 31 | 91 => Term.Current_Foreground := Tag_Array'First + 1;
+         when 32 | 92 => Term.Current_Foreground := Tag_Array'First + 2;
+         when 33 | 93 => Term.Current_Foreground := Tag_Array'First + 3;
+         when 34 | 94 => Term.Current_Foreground := Tag_Array'First + 4;
+         when 35 | 95 => Term.Current_Foreground := Tag_Array'First + 5;
+         when 36 | 96 => Term.Current_Foreground := Tag_Array'First + 6;
+         when 37 | 97 => Term.Current_Foreground := Tag_Array'First + 7;
+         when 38 | 98 => Term.Current_Foreground := Tag_Array'First;
+         when 39 | 99 => Term.Current_Foreground := -1;
 
-         when 40 => Term.Current_Background := Tag_Array'First;
-         when 41 => Term.Current_Background := Tag_Array'First + 1;
-         when 42 => Term.Current_Background := Tag_Array'First + 2;
-         when 43 => Term.Current_Background := Tag_Array'First + 3;
-         when 44 => Term.Current_Background := Tag_Array'First + 4;
-         when 45 => Term.Current_Background := Tag_Array'First + 5;
-         when 46 => Term.Current_Background := Tag_Array'First + 6;
-         when 47 => Term.Current_Background := Tag_Array'First + 7;
-         when 48 => Term.Current_Background := Tag_Array'First; --  Default
-         when 49 => Term.Current_Background := -1;
+         when 40 | 100 => Term.Current_Background := Tag_Array'First;
+         when 41 | 101 => Term.Current_Background := Tag_Array'First + 1;
+         when 42 | 102 => Term.Current_Background := Tag_Array'First + 2;
+         when 43 | 103 => Term.Current_Background := Tag_Array'First + 3;
+         when 44 | 104 => Term.Current_Background := Tag_Array'First + 4;
+         when 45 | 105 => Term.Current_Background := Tag_Array'First + 5;
+         when 46 | 106 => Term.Current_Background := Tag_Array'First + 6;
+         when 47 | 107 => Term.Current_Background := Tag_Array'First + 7;
+         when 48 | 108 => Term.Current_Background := Tag_Array'First;
+         when 49 | 109 => Term.Current_Background := -1;
 
          when others =>
             Trace (Me, "Set_Attribute:" & Ansi'Img);
@@ -1079,6 +1114,17 @@ package body Gtkada.Terminal is
                Trace (Me, Func'Img
                       & Term.State.Arg (Term.State.Arg'First)'Img
                       & Term.State.Arg (Term.State.Arg'First + 1)'Img);
+            elsif Term.State.Current_Arg = 4 then
+               Trace (Me, Func'Img
+                      & Term.State.Arg (Term.State.Arg'First)'Img
+                      & Term.State.Arg (Term.State.Arg'First + 1)'Img
+                      & Term.State.Arg (Term.State.Arg'First + 2)'Img);
+            elsif Term.State.Current_Arg = 5 then
+               Trace (Me, Func'Img
+                      & Term.State.Arg (Term.State.Arg'First)'Img
+                      & Term.State.Arg (Term.State.Arg'First + 1)'Img
+                      & Term.State.Arg (Term.State.Arg'First + 2)'Img
+                      & Term.State.Arg (Term.State.Arg'First + 3)'Img);
             else
                Trace (Me, Func'Img & " ...");
             end if;
@@ -1098,15 +1144,6 @@ package body Gtkada.Terminal is
             when End_Alternative_Charset =>
                Term.Alternate_Charset := False;
                End_All_Modes (Term);  --  ??? Is this correct
-            when Start_Bold_Mode =>
-               End_All_Modes (Term);
-               Term.Bold := True;
-            when Start_Standout_Mode =>
-               End_All_Modes (Term);
-               Term.Standout := True;
-            when End_Standout_Mode =>
-               End_All_Modes (Term);
-               Term.Standout := False;
             when End_All_Modes =>
                End_All_Modes (Term);
 
@@ -1144,6 +1181,16 @@ package body Gtkada.Terminal is
             when Clear_To_End_Of_Line =>
                On_Clear_To_End_Of_Line (Term, Iter.all);
 
+            when Delete_Chars =>
+               declare
+                  To      : Gtk_Text_Iter;
+                  Success : Boolean;
+               begin
+                  Copy (Source => Iter.all, Dest => To);
+                  Forward_Chars (To, Gint (Term.State.Arg (1)), Success);
+                  Delete (Term, Iter.all, To);
+               end;
+
             when Newline =>
                On_Newline (Term, Iter.all);
             when Memory_Unlock | Memory_Lock =>
@@ -1162,6 +1209,68 @@ package body Gtkada.Terminal is
                for A in 1 .. Term.State.Current_Arg - 1 loop
                   On_Set_Attribute (Term, Term.State.Arg (A));
                end loop;
+
+            when Reset_Char_Attribute =>
+               On_Set_Attribute (Term, 0);
+
+            when Cursor_Invisible | Normal_Cursor_Visible =>
+               null;
+
+            when Turn_Keypad_On | Turn_Keypad_Off =>
+               null;
+
+            when Audio_Bell =>
+               null;
+
+            when Insert_One_Line =>
+               declare
+                  It, It2 : Gtk_Text_Iter;
+                  Success : Boolean;
+               begin
+                  Copy (Source => Iter.all, Dest => It);
+                  Default_Insert
+                     (Term, It, ASCII.LF & "", Overwrite_Mode => False);
+
+                  --  Remove the last line in the current scrolling region
+                  if Term.Region.Max_Line /= Gint'Last then
+                     Term.Get_Start_Iter (It);
+                     Forward_Lines (It, Term.Region.Max_Line, Success);
+                     Copy (Source => It, Dest => It2);
+                     Forward_To_Line_End (It2, Success);
+                     Term.Delete (It, It2);
+                  end if;
+               end;
+
+            --  http://www.sweger.com/ansiplus/EscSeqScroll.html
+            when Scroll_Region =>
+               if Term.State.Current_Arg = 1 then
+                  Term.Region.Min_Line := 0;
+               else
+                  Term.Region.Min_Line :=
+                     Gint (Term.State.Arg (Term.State.Arg'First)) - 1;
+               end if;
+
+               if Term.State.Current_Arg <= 2 then
+                  Term.Region.Max_Line := Term.Get_Line_Count - 1;
+               else
+                  Term.Region.Max_Line :=
+                     Gint (Term.State.Arg (Term.State.Arg'First + 1)) - 1;
+               end if;
+
+               if Term.State.Current_Arg <= 3 then
+                  Term.Region.Min_Col := 0;
+               else
+                  Term.Region.Min_Col :=
+                     Gint (Term.State.Arg (Term.State.Arg'First + 2)) - 1;
+               end if;
+
+               if Term.State.Current_Arg <= 4 then
+                  Term.Region.Max_Col := Gint'Last;  --   ??? Unsupported
+               else
+                  Term.Region.Max_Col :=
+                     Gint (Term.State.Arg (Term.State.Arg'First + 3)) - 1;
+               end if;
+
             when others =>
                Trace (Me, "Unhandled capability: " & Func'Img);
          end case;
@@ -1503,5 +1612,8 @@ package body Gtkada.Terminal is
          Unref (F);
          Unref (B);
       end loop;
+
+      Self.Region := (0, Gint'Last, 0, Gint'Last);
    end Initialize;
+
 end Gtkada.Terminal;

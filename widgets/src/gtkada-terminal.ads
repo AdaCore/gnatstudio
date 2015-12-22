@@ -19,6 +19,7 @@
 --  understands ESCAPE sequences to move cursor, change color,...
 --  Currently, it knows how to emulate xterm.
 
+with Glib;
 with Gtk.Text_Buffer;
 with Gtk.Text_Mark;
 with Gtk.Text_Iter;
@@ -88,6 +89,16 @@ private
    end record;
    --  Describes the current state of the finite state machine
 
+   type Scrolling_Region is record
+      Min_Line : Glib.Gint;
+      Max_Line : Glib.Gint;
+      Min_Col  : Glib.Gint;
+      Max_Col  : Glib.Gint;
+   end record;
+   --  The current scrolling region. See
+   --  http://www.sweger.com/ansiplus/EscSeqScroll.html#ScrollingRegion
+   --  These are implemented as offsets added to cursor positions
+
    type Gtkada_Terminal_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
    with record
       FSM : FSM_Transition_Access;
@@ -118,6 +129,8 @@ private
 
       Background_Tags    : Tag_Array;
       Current_Background : Integer := -1;
+
+      Region             : Scrolling_Region;
 
       State              : FSM_Current_State;
    end record;

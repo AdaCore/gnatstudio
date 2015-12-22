@@ -16,7 +16,13 @@ the terminal. Since GPS is not outputing anything on its own, just showing
 what the shell is outputing, you need to somehow ensure that your shell
 always echos what you type. This is done by running the command
     stty echo
-in such cases. In general, this can be safely done in your .bashrc
+in such cases. In general, this can be safely done in your .bashrc.
+A preference is provided to automatically emit this command.
+
+An environment variable GPSSHELL is set in the new shell. This can be used
+in your various configuration files to enable/disable behaviors when
+running inside GPS.
+
 """
 
 import os.path
@@ -24,7 +30,7 @@ import GPS
 import re
 import traceback
 import os
-from gps_utils import interactive, save_dir
+from gps_utils import save_dir, make_interactive, interactive
 from gps_utils.console_process import *
 
 
@@ -33,35 +39,32 @@ class Unix_Shell(ANSI_Console_Process):
     def __init__(self, process, args=""):
         oldterm = os.environ["TERM"]
         os.environ["TERM"] = "xterm"
+        os.environ["GPSSHELL"] = "1"
         ANSI_Console_Process.__init__(self, process, args)
+        if GPS.Preference("Plugins/shell/stty").get():
+            self.send("stty echo; clear")
         os.environ["TERM"] = oldterm
 
 
 class Win32_Shell(Console_Process):
 
     def __init__(self, process, args=""):
+        os.environ["GPSSHELL"] = "1"
         Console_Process.__init__(self, process, args)
 
 
-def on_filter(context):
-    if not isinstance(context, GPS.FileContext):
-        return False
-    try:
-        #  Check if context has directory information
-        dir = context.directory()
-        return GPS.Preference("Plugins/shell/contextual").get()
-    except:
-        return False
-
-
 def on_label(context):
-    return "Run OS shell in <b>%s</b>" % (
-        os.path.basename(os.path.dirname("%s/" % context.directory())))
+    # If the context has directory information, use that
+    try:
+        return "Run OS shell in <b>%s</b>" % (
+            os.path.basename(os.path.dirname("%s/" % context.directory())))
+    except:
+        # Otherwise open in the current directory
+        return "Run OS shell in <b>%s</b>" % (
+            os.path.basename(os.path.dirname("%s/" % os.getcwd())))
 
 
-@interactive(name="open os shell",
-             contextual=on_label,
-             filter=on_filter)
+@interactive(name='open os shell')
 @save_dir
 def create_default_shell():
     """Spawns the user's shell as read from the environment variable SHELL"""
@@ -76,7 +79,27 @@ def create_default_shell():
     elif os.getenv("COMSPEC"):
         Win32_Shell(os.getenv("COMSPEC"), "/Q")
 
+
+def if_has_directory(context):
+    try:
+        return context.directory() is not None
+    except:
+        return False
+
+
 GPS.Preference("Plugins/shell/contextual").create(
     "Contextual menu", "boolean",
-    "Add contextual menu to start OS shell from project view",
+    """Add contextual menu to start OS shell from project view
+(needs to restart GPS)""",
     True)
+GPS.Preference("Plugins/shell/stty").create(
+    "Send stty setup", "boolean",
+    """"Whether to send the 'stty echo' command automatically. This command
+is needed in some shells to see the keys typed on the keyboard.
+This is only applicable to Unix shells.""",
+    True)
+
+if GPS.Preference("Plugins/shell/contextual").get():
+    make_interactive(
+        create_default_shell, name='open os shell for contextual menu',
+        contextual=on_label, filter=if_has_directory)
