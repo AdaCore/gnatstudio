@@ -1231,7 +1231,10 @@ package body GVD.Process is
       --  necessary because the position of views is memorized at this time:
       --  if views are closed before the perspective change, their position
       --  is lost.
-      Load_Perspective (Kernel, "Default");
+
+      if Prev = null and then Debugger_List.Next = null then
+         Load_Perspective (Kernel, "Default");
+      end if;
 
       --  Let all views know that they should close
 
