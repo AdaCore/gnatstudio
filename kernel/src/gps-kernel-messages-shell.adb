@@ -57,7 +57,7 @@ package body GPS.Kernel.Messages.Shell is
    overriding function Execute
      (Command : access Subprogram_Command_Record) return Command_Return_Type;
 
-   overriding procedure Free (X : in out Subprogram_Command_Record);
+   overriding procedure Primitive_Free (X : in out Subprogram_Command_Record);
 
    -----------------------
    -- Local subprograms --
@@ -141,15 +141,16 @@ package body GPS.Kernel.Messages.Shell is
       end if;
    end Execute;
 
-   ----------
-   -- Free --
-   ----------
+   --------------------
+   -- Primitive_Free --
+   --------------------
 
-   overriding procedure Free (X : in out Subprogram_Command_Record) is
+   overriding procedure Primitive_Free
+      (X : in out Subprogram_Command_Record) is
    begin
       Free (X.Sub);
-      Root_Command (X).Free;
-   end Free;
+      Root_Command (X).Primitive_Free;
+   end Primitive_Free;
 
    --------------
    -- Set_Data --
