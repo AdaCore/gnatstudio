@@ -134,6 +134,7 @@ def goto_subprogram_start(cursor):
         return None
 
     min = cursor.buffer().beginning_of_buffer()
+    cursor = cursor.block_start()
     while not cursor.block_type() in blocks and cursor > min:
         cursor = cursor.block_start() - 1
 
