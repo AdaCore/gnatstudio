@@ -230,6 +230,7 @@ package body Expect_Interface is
       Free (X.Unmatched_Output);
       Free (X.On_Exit);
       Free (X.On_Match);
+      Free (X.Before_Kill);
       Unchecked_Free (X.Progress_Regexp);
    end Free;
 

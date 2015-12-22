@@ -163,6 +163,7 @@ package body Ada_Semantic_Tree.Entity_Iteration is
             Result.Step := Referenced_Entity_From_Package;
 
          when others =>
+            Result.Step := All_Access;  --  Step is not set by default
             Free (Result);
             return Null_Semantic_Tree_Iterator;
 

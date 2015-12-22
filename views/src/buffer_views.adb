@@ -699,7 +699,6 @@ package body Buffer_Views is
        Has_Next : out Boolean)
    is
       C : Search_Context;
-      L     : GNAT.Strings.String_Access;
       Child : constant MDI_Child := Get (Self.Iter);
    begin
       Result := null;
@@ -709,24 +708,27 @@ package body Buffer_Views is
       else
          C := Self.Pattern.Start (Child.Get_Short_Title);
          if C /= GPS.Search.No_Match then
-            if Child.Get_Title /= Child.Get_Short_Title then
-               L := new String'(Child.Get_Title);
-            end if;
-            Result := new Opened_Windows_Result'
-               (Kernel   => Self.Kernel,
-                Provider => Self,
-                Score    => C.Score,
-                Short    => new String'
-                   (Self.Pattern.Highlight_Match
-                      (Child.Get_Short_Title, Context => C)),
-                Long     => L,
-                Id       => new String'(Child.Get_Title));
-            Self.Adjust_Score (Result);
+            declare
+               L : GNAT.Strings.String_Access;
+            begin
+               if Child.Get_Title /= Child.Get_Short_Title then
+                  L := new String'(Child.Get_Title);
+               end if;
+               Result := new Opened_Windows_Result'
+                 (Kernel   => Self.Kernel,
+                  Provider => Self,
+                  Score    => C.Score,
+                  Short    => new String'
+                    (Self.Pattern.Highlight_Match
+                         (Child.Get_Short_Title, Context => C)),
+                  Long     => L,
+                  Id       => new String'(Child.Get_Title));
+               Self.Adjust_Score (Result);
+            end;
 
          elsif Child.Get_Short_Title /= Child.Get_Title then
             C := Self.Pattern.Start (Child.Get_Title);
             if C /= GPS.Search.No_Match then
-               L := new String'(Child.Get_Title);
                Result := new Opened_Windows_Result'
                   (Kernel   => Self.Kernel,
                    Provider => Self,

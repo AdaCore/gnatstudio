@@ -288,6 +288,7 @@ package body Outline_View is
               (Kernel,
                Natural (Mark.Line),
                Natural (Mark.Column));
+            Delete (Mark);
          end;
       end if;
    end Location_Changed;

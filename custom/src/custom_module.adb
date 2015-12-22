@@ -112,6 +112,7 @@ package body Custom_Module is
       Node   : XML_Utils.Node_Ptr;
       Level  : Customization_Level);
    --  See inherited documentation
+   overriding procedure Free (Filter : in out Action_Filter_Wrapper);
 
    procedure Menu_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -221,6 +222,16 @@ package body Custom_Module is
    overriding procedure Free (Cmd : in out Subprogram_Command_Record) is
    begin
       Free (Cmd.On_Activate);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Filter : in out Action_Filter_Wrapper) is
+   begin
+      Free (Filter.Filter);
+      Action_Filter_Record (Filter).Free;
    end Free;
 
    -------------------------

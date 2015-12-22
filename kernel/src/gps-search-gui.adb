@@ -1284,7 +1284,7 @@ package body GPS.Search.GUI is
       while Has_Element (Curs) loop
          Inst := Element (Self.Inst, Curs);
          declare
-            Sub  : constant Subprogram_Type :=
+            Sub  : Subprogram_Type :=
               Get_Method (Inst, "set_pattern");
             Args : Callback_Data'Class :=
               Create (Get_Script (Inst), 2);
@@ -1313,6 +1313,7 @@ package body GPS.Search.GUI is
 
             Result := Execute (Sub, Args);
             Free (Args);
+            Free (Sub);
          end;
 
          Next (Self.Inst, Curs);
@@ -1335,7 +1336,7 @@ package body GPS.Search.GUI is
       while Has_Element (Curs) loop
          Inst := Element (Self.Inst, Curs);
          declare
-            Sub : constant Subprogram_Type := Get_Method (Inst, "get");
+            Sub : Subprogram_Type := Get_Method (Inst, "get");
             Args : Callback_Data'Class := Create (Get_Script (Inst), 0);
             List : List_Instance'Class := Execute (Sub, Args);
          begin
@@ -1355,6 +1356,7 @@ package body GPS.Search.GUI is
 
             Free (List);
             Free (Args);
+            Free (Sub);
          end;
 
          Next (Self.Inst, Curs);
@@ -1386,6 +1388,7 @@ package body GPS.Search.GUI is
             begin
                Free (Args);
             end;
+            Free (Sub);
          end if;
          Next (Self.Inst, Curs);
       end loop;

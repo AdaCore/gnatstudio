@@ -171,6 +171,7 @@ package body GPS.Kernel.Scripts is
    overriding procedure On_Click
      (Link : access Hyper_Link_Subprogram; Text : String);
    --  Called when a user clicks on a hyper link in a console
+   overriding procedure On_Destroy (Link : in out Hyper_Link_Subprogram);
 
    Name_Cst       : aliased constant String := "name";
    Filename_Cst   : aliased constant String := "filename";
@@ -1668,6 +1669,16 @@ package body GPS.Kernel.Scripts is
             --  This might also destroy the class instance Data.Location.File
       end case;
    end Destroy;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   overriding procedure On_Destroy (Link : in out Hyper_Link_Subprogram) is
+   begin
+      Free (Link.Subprogram);
+      Hyper_Link_Callback_Record (Link).On_Destroy;
+   end On_Destroy;
 
    --------------
    -- On_Click --
