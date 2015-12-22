@@ -110,6 +110,15 @@ KP-62-O326-012 GPS: C rename refactoring
 Known problems fixed in GPS 6.2.1 / GNATbench 2.10.1
 ----------------------------------------------------
 
+KP-62-OC15-050 GPS: bitmap fonts not rendered correctly
+
+  Problem:    Under UNIX/Linux, bitmap fonts are rendered with each glyph
+              drawn backwards and not properly filled.
+
+  Status:     This was fixed in 6.2.1 on 2015-12-23
+
+  Workaround: Choose TrueType fonts instead of bitmap fonts.
+
 KP-62-OC02-029 GB: cursor jumps to top of ada file when saved
 
   Problem:    When saving ada files edited by the Ada Editor, the content is
