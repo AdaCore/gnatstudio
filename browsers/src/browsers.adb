@@ -16,13 +16,13 @@
 ------------------------------------------------------------------------------
 
 with Cairo;                    use Cairo;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with Gdk.RGBA;                 use Gdk.RGBA;
 with Gdk.Types;                use Gdk.Types;
 with Glib.Object;              use Glib, Glib.Object;
 with Gtk.Enums;                use Gtk.Enums;
-with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with Gtkada.Canvas_View;       use Gtkada.Canvas_View;
 with Gtkada.Canvas_View.Views; use Gtkada.Canvas_View.Views;
+with Gtkada.Canvas_View;       use Gtkada.Canvas_View;
 with Pango.Enums;              use Pango.Enums;
 with Pango.Font;               use Pango.Font;
 
@@ -53,7 +53,8 @@ package body Browsers is
    begin
       if not Canvas.Read_Only
          and then
-            (On_Item_Event_Move_Item (Self, Details)
+            (On_Item_Event_Select (Self, Details)
+             or else On_Item_Event_Move_Item (Self, Details)
              or else On_Item_Event_Edit (Self, Details))
       then
          return True;
@@ -131,7 +132,6 @@ package body Browsers is
       --  Put this first
       Self.On_Item_Event (On_Item_Event'Access);
 
-      Self.On_Item_Event (On_Item_Event_Select'Access);
       Self.On_Item_Event (On_Item_Event_Scroll_Background'Access);
       Self.On_Item_Event (On_Item_Event_Zoom'Access);
       Self.On_Item_Event (On_Item_Event_Key_Navigate'Access);
