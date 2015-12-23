@@ -20,8 +20,6 @@ with Default_Preferences.GUI;       use Default_Preferences.GUI;
 with Generic_Views;                 use Generic_Views;
 with GUI_Utils;                     use GUI_Utils;
 
-with GNATCOLL.Traces;               use GNATCOLL.Traces;
-
 with Glib.Object;                   use Glib.Object;
 with Gtk.Box;                       use Gtk.Box;
 with Gtk.Cell_Renderer_Text;        use Gtk.Cell_Renderer_Text;
@@ -35,8 +33,6 @@ with Gtk.Scrolled_Window;           use Gtk.Scrolled_Window;
 with Gtk.Style_Context;             use Gtk.Style_Context;
 with Gtk.Toolbar;                   use Gtk.Toolbar;
 with Gtk.Tree_Model;                use Gtk.Tree_Model;
-with Gtk.Tree_Model_Filter;         use Gtk.Tree_Model_Filter;
-with Gtk.Tree_Model_Sort;           use Gtk.Tree_Model_Sort;
 with Gtk.Tree_Selection;            use Gtk.Tree_Selection;
 with Gtk.Tree_Store;                use Gtk.Tree_Store;
 with Gtk.Tree_View;                 use Gtk.Tree_View;
@@ -44,7 +40,6 @@ with Gtk.Tree_View_Column;          use Gtk.Tree_View_Column;
 with Gtk.Widget;                    use Gtk.Widget;
 with Gtkada.Handlers;               use Gtkada.Handlers;
 
-with GPS.Intl;                      use GPS.Intl;
 with GPS.Kernel.Hooks;              use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;        use GPS.Kernel.Preferences;
@@ -59,8 +54,6 @@ with Language;                      use Language;
 
 package body GPS.Kernel.Preferences_Views is
 
-   Me : constant Trace_Handle := Create (-"PREFERENCES_VIEWS");
-
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
 
    overriding procedure Execute
@@ -73,9 +66,6 @@ package body GPS.Kernel.Preferences_Views is
      and Preferences_Editor_Interface with record
       Pages_Tree         : Gtk_Tree_View;
       Model              : Gtk_Tree_Store;
-      Filter             : Gtk_Tree_Model_Filter;
-      Sort               : Gtk_Tree_Model_Sort;
-      Filter_Pattern     : Search_Pattern_Access;
       Pages_Notebook     : Gtk_Notebook;
       Current_Page_Index : Gint;
       Highlighted_Pref   : Preference;
@@ -88,9 +78,6 @@ package body GPS.Kernel.Preferences_Views is
    overriding procedure Create_Toolbar
      (View    : not null access GPS_Preferences_Editor_Record;
       Toolbar : not null access Gtk_Toolbar_Record'Class);
-   overriding procedure Filter_Changed
-     (Self    : not null access GPS_Preferences_Editor_Record;
-      Pattern : in out Search_Pattern_Access);
    overriding function Get_Widget
      (Self : not null access GPS_Preferences_Editor_Record)
       return Gtk.Widget.Gtk_Widget;
@@ -177,15 +164,6 @@ package body GPS.Kernel.Preferences_Views is
       On_Change : On_Settings_Changed_Callback) is null;
    --  We don't want any non-GUI related settings (e.g: no possibilty to change
    --  the providers order).
-
-   package Preferences_Editor_Visible_Funcs is new
-     Gtk.Tree_Model_Filter.Set_Visible_Func_User_Data (GPS_Preferences_Editor);
-   function Page_Is_Visible
-     (Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
-      Data  : GPS_Preferences_Editor) return Boolean;
-   --  Selects whether a given row should be visible in the preferences
-   --  editor tree view.
 
    function Initialize
      (Self : access GPS_Preferences_Editor_Record'Class) return Gtk_Widget;
@@ -330,45 +308,6 @@ package body GPS.Kernel.Preferences_Views is
       return null;
    end Full;
 
-   ---------------------
-   -- Page_Is_Visible --
-   ---------------------
-
-   function Page_Is_Visible
-     (Model : Gtk_Tree_Model;
-      Iter  : Gtk_Tree_Iter;
-      Data  : GPS_Preferences_Editor) return Boolean
-   is
-      Row_Visible : Boolean := True;
-      Child       : Gtk.Tree_Model.Gtk_Tree_Iter;
-   begin
-      --  Compute the row itself should be visible (not withstanding its
-      --  children.
-      if Data.Filter_Pattern /= null then
-         Row_Visible :=
-           Data.Filter_Pattern.Start (Get_String (Model, Iter, 0)) /= No_Match;
-      end if;
-
-      --  If the row should be invisible, but any of its children is visible,
-      --  we display it anyway.
-      if not Row_Visible then
-         Child := Children (Model, Iter);
-         while Child /= Null_Iter loop
-            if Page_Is_Visible (Model, Child, Data) then
-               return True;
-            end if;
-            Next (Model, Child);
-         end loop;
-      end if;
-
-      return Row_Visible;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return True;
-   end Page_Is_Visible;
-
    --------------------
    -- Create_Toolbar --
    --------------------
@@ -409,23 +348,6 @@ package body GPS.Kernel.Preferences_Views is
          Name           => "preferences_editor_search",
          Case_Sensitive => False);
    end Create_Toolbar;
-
-   --------------------
-   -- Filter_Changed --
-   --------------------
-
-   overriding procedure Filter_Changed
-     (Self    : not null access GPS_Preferences_Editor_Record;
-      Pattern : in out Search_Pattern_Access) is
-   begin
-      Free (Self.Filter_Pattern);
-      Self.Filter_Pattern := Pattern;
-      Self.Filter.Refilter;
-
-      if Pattern /= null then
-         Self.Pages_Tree.Expand_All;  --  show all results more conveniently
-      end if;
-   end Filter_Changed;
 
    ----------------
    -- Get_Widget --
@@ -693,10 +615,7 @@ package body GPS.Kernel.Preferences_Views is
 
       --  Create the pages tree view and add it to its parent scrolled window
       Gtk_New (Self.Model, (0 => GType_String, 1 => GType_Int));
-      Gtk_New (Self.Filter, +Self.Model);
-      Preferences_Editor_Visible_Funcs.Set_Visible_Func
-        (Self.Filter, Page_Is_Visible'Access, Self);
-      Gtk_New (Self.Pages_Tree, Self.Filter);
+      Gtk_New (Self.Pages_Tree, Self.Model);
       Scrolled_Pages_Tree.Add (Self.Pages_Tree);
       Self.Pages_Tree.Set_Headers_Visible (False);
 
