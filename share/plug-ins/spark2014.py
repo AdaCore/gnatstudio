@@ -1874,6 +1874,9 @@ def on_prove_line(self):
     lsparg = build_limit_subp_string(self)
     if lsparg is not None:
         args.append(lsparg)
+        if inside_generic_unit_context(self):
+            args.append("-U")
+
     target = ""
     if isinstance(self, GPS.MessageContext):
         llarg = "--limit-line=" \
@@ -1883,6 +1886,7 @@ def on_prove_line(self):
         target = prove_line_loc()
     else:
         target = prove_line()
+
     generic_on_analyze(target, args=args)
 
 
@@ -1894,7 +1898,21 @@ def on_clean_up(self):
     generic_on_analyze(clean_up)
 
 
+def mk_debug_loc_string(sloc):
+    """Return a location for debugging purpose. sloc can be a FileLocation or
+       an EditorLocation."""
+
+    curfile = sloc.file() if isinstance(sloc, GPS.FileLocation) \
+        else sloc.buffer().file()
+    locstring = os.path.basename(curfile.name()) + ':' \
+        + str(sloc.line()) + ':' + str(sloc.column())
+    return locstring
+
+
 def mk_loc_string(sloc):
+    """Return a location suitable to pass to switch --limit-subp.
+       sloc should be a FileLocation."""
+
     locstring = os.path.basename(sloc.file().name()) + ':' \
         + str(sloc.line())
     return locstring
@@ -1973,6 +1991,42 @@ def inside_subp_context(self):
         return 0
 
 
+def inside_generic_unit_context(self):
+    """Return True if the context is inside a generic unit"""
+
+    try:
+        curloc = self.location()
+        buf = GPS.EditorBuffer.get(curloc.file(), open=False)
+        if buf is not None:
+            start_loc = buf.at(1, 1)
+            unit_loc, _ = start_loc.search('package|function|procedure',
+                                           regexp=True, whole_word=True,
+                                           dialog_on_failure=False)
+            if unit_loc is None:
+                return False
+            # reach the start of the next word. We need to forward 2 words and
+            # backward 1 in order to get the cursor at the start of the next
+            # word instead of the end of the current word with forward 1.
+            unit_loc = unit_loc.forward_word(2)
+            unit_loc = unit_loc.forward_word(-1)
+            tok, _, _ = unit_loc.get_word()
+            if tok == 'body':
+                # reach the start of the next word
+                unit_loc = unit_loc.forward_word(2)
+                unit_loc = unit_loc.forward_word(-1)
+            name, _, _ = unit_loc.get_word()
+            try:
+                entity = GPS.Entity(name, unit_loc.buffer().file(),
+                                    unit_loc.line(), unit_loc.column())
+            except:
+                return False
+            return entity.is_generic()
+        else:
+            return False
+    except:
+        return False
+
+
 def generic_action_on_subp(self, action):
     """execute the action on the the given subprogram entity
     """
@@ -1985,8 +2039,11 @@ def generic_action_on_subp(self, action):
 
     arg = build_limit_subp_string(self)
     if arg is not None:
+        args = [arg]
+        if inside_generic_unit_context(self):
+            args.append("-U")
         target = GPS.BuildTarget(action)
-        target.execute(extra_args=arg,
+        target.execute(extra_args=args,
                        synchronous=False)
 
 
@@ -2165,7 +2222,10 @@ def on_prove_check(context):
     msg = context._loc_msg
     vc_kind = get_vc_kind(msg)
     llarg = limit_line_option(msg, vc_kind)
-    GPS.BuildTarget(prove_check()).execute(extra_args=[llarg],
+    args = [llarg]
+    if inside_generic_unit_context(context):
+        args.append("-U")
+    GPS.BuildTarget(prove_check()).execute(extra_args=args,
                                            synchronous=False)
 
 # Check for GNAT toolchain: gnatprove
