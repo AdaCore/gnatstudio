@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-OC17-015 WB: error markers always at top of C/C++ files
+
+  Problem:    Depending on the C/C++ compiler used, error markers added to
+              C/C++ files during build process are all located at the top of
+              the file instead of at the line reported by the marker.
+
+  Status:     This was fixed in 17.0 on 2015-12-22
+
+  Workaround: Disable quick fix feature. (see Ada/Tools preferences page)
+
 KP-62-OC01-018 GPS.Exception: No file information stored in the context
 
   Problem:    Right clicking on the name of the project in the project pane may
