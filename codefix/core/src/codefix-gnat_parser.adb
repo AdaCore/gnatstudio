@@ -4028,6 +4028,7 @@ package body Codefix.GNAT_Parser is
 
          Next (It);
       end loop;
+      Free (It);
 
       if Correct_Entity /= Null_Entity_Access then
          Set_File

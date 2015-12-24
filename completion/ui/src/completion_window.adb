@@ -429,6 +429,7 @@ package body Completion_Window is
          Explorer.Has_Idle_Computation := False;
       end if;
       Free (Explorer.Pattern);
+      Free (Explorer.Iter);
       Free_Info (Explorer);
    end Delete;
 

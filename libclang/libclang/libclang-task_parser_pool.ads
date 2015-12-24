@@ -106,7 +106,7 @@ package Libclang.Task_Parser_Pool is
         (Unbounded_String, Parsing_Request, Hash, "=");
 
       protected type Parsing_Requests_Queue_Type is
-         procedure Enqueue (Request : Parsing_Request);
+         procedure Enqueue (Request : in out Parsing_Request);
          entry Dequeue (Request : out Parsing_Request);
          function Length return Natural;
       private

@@ -279,7 +279,9 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Self, Kernel);
       Module : constant Navigation_Module :=
-                 Navigation_Module (Navigation_Module_ID);
+        Navigation_Module (Navigation_Module_ID);
+
+      Local : Location_Marker;
    begin
       if Module.Markers = null then
          Module.Markers := new Location_Marker_Array
@@ -305,14 +307,10 @@ package body Navigation_Module is
          Module.Last_Marker := Module.Current_Marker;
       else
          --  We are not storing marker: release memory now.
-         Destroy (Marker.all);
-         --  ??? Unchecked_Free (Marker);
+         Marker.Destroy;
+         Local := Marker;
+         Unchecked_Free (Local);
       end if;
-
-      --  In all cases, we should no longer use the marker (which is either
-      --  stored in the history list, and thus should not be freed, or was
-      --  already freed)
-      --  ???   Marker := null;
    end Execute;
 
    --------------------------
@@ -923,7 +921,7 @@ package body Navigation_Module is
       if Markers /= null then
          for M in Markers'Range loop
             if Markers (M) /= null then
-               Destroy (Markers (M).all);
+               Markers (M).Destroy;
                Unchecked_Free (Markers (M));
             end if;
          end loop;

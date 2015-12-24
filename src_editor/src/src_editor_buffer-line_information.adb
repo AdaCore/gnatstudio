@@ -816,19 +816,15 @@ package body Src_Editor_Buffer.Line_Information is
          for J in Buffer.Extra_Information'Range loop
             if Buffer.Extra_Information (J).Identifier.all = Identifier then
                Free (Buffer.Extra_Information (J).Info);
-               Buffer.Extra_Information (J).Info :=
-                 new Line_Information_Record'(Info (Info'First));
+               Free (Buffer.Extra_Information (J).Tooltip);
+               Free (Buffer.Extra_Information (J).Icon);
 
-               if Buffer.Extra_Information (J).Tooltip /= null then
-                  Free (Buffer.Extra_Information (J).Tooltip);
-               end if;
+               Buffer.Extra_Information (J).all :=
+                 (Info     => new Line_Information_Record'(Info (Info'First)),
+                  Tooltip    => new String'(Tooltip),
+                  Icon       => new String'(Icon),
+                  Identifier => Buffer.Extra_Information (J).Identifier);
 
-               if Buffer.Extra_Information (J).Icon /= null then
-                  Free (Buffer.Extra_Information (J).Icon);
-               end if;
-
-               Buffer.Extra_Information (J).Tooltip := new String'(Tooltip);
-               Buffer.Extra_Information (J).Icon := new String'(Icon);
                Found := True;
                exit;
             end if;
@@ -1729,7 +1725,7 @@ package body Src_Editor_Buffer.Line_Information is
    begin
       Unfold_Line (Buffer, Line);
       Get_Iter_At_Screen_Position (Buffer, Iter, Line, Column);
-      return Create_Mark (Buffer, "", Iter);
+      return Create_Mark (Buffer => Buffer, Where => Iter);
    end Create_Mark;
 
    ---------------

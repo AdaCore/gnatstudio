@@ -523,8 +523,7 @@ package body VFS_Module is
                       Get_Project (Get_Kernel (Context.Context));
          Relative : Boolean;
          Iter     : Project_Iterator :=
-                      Start (Project,
-                                      Include_Extended => False);
+           Start (Project, Include_Extended => False);
          Prj      : Project_Type;
       begin
          Success     := False;

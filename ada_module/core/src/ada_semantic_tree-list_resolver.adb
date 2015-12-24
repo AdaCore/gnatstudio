@@ -305,7 +305,7 @@ package body Ada_Semantic_Tree.List_Resolver is
    ----------
 
    procedure Free (This : in out Actual_Parameter_Resolver_Access) is
-      procedure Internal is new Standard.Ada.Unchecked_Deallocation
+      procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
         (Actual_Parameter_Resolver, Actual_Parameter_Resolver_Access);
    begin
       if This /= null then
@@ -314,7 +314,7 @@ package body Ada_Semantic_Tree.List_Resolver is
          end loop;
       end if;
 
-      Internal (This);
+      Unchecked_Free (This);
    end Free;
 
    ---------------
@@ -492,29 +492,40 @@ package body Ada_Semantic_Tree.List_Resolver is
             end if;
 
          elsif Paren_Depth = 1 then
-            if Word = ")" or else Word = "," then
-               Param_End := String_Index_Type (Sloc_End.Index - 1);
-               Append_Actual
-                 (Params      => Params,
-                  Actual      =>
-                  Get_Actual_Parameter
-                      (Buffer      => Buffer,
-                       Param_Start => Param_Start,
-                       Param_End   => Param_End),
-                  Do_Semantic => False,
-                  Param_Added => Param_Added,
-                  Success     => Success);
+            declare
+               Actual : Actual_Parameter;
+            begin
+               if Word = ")" or else Word = "," then
+                  Param_End := String_Index_Type (Sloc_End.Index - 1);
 
-               if not Success then
-                  return True;
-               end if;
+                  Actual := Get_Actual_Parameter
+                    (Buffer      => Buffer,
+                     Param_Start => Param_Start,
+                     Param_End   => Param_End);
 
-               if Word = ")" then
-                  return True;
-               else
-                  Param_Start := String_Index_Type (Sloc_End.Index + 1);
+                  Append_Actual
+                    (Params      => Params,
+                     Actual      => Actual,
+                     Do_Semantic => False,
+                     Param_Added => Param_Added,
+                     Success     => Success);
+
+                  if not Param_Added then
+                     Free (Actual);
+                  end if;
+
+                  if not Success then
+                     return True;
+                  end if;
+
+                  if Word = ")" then
+                     return True;
+                  else
+                     Param_Start := String_Index_Type (Sloc_End.Index + 1);
+                  end if;
                end if;
-            end if;
+            end;
+
          else
             if Word = "(" then
                Paren_Depth := Paren_Depth + 1;

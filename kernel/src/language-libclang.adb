@@ -986,6 +986,7 @@ package body Language.Libclang is
       begin
          while Parsing_Request_Queue.Length > 0 loop
             Parsing_Request_Queue.Dequeue (Dummy_Request);
+            Free (Dummy_Request);
          end loop;
       end;
 
@@ -1280,8 +1281,8 @@ package body Language.Libclang is
       for M of Id.Refs.Map loop
          Destroy (M);
       end loop;
-
       Free (Id.Refs);
+
       Dispose (Id.Index_Action);
       clang_disposeIndex (Id.Clang_Indexer);
 

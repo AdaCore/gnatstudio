@@ -1462,10 +1462,10 @@ package body Language.Tree.Database is
    ----------
 
    procedure Free (This : in out Entity_Array_Access) is
-      procedure Internal is new Standard.Ada.Unchecked_Deallocation
+      procedure Unchecked_Free is new Standard.Ada.Unchecked_Deallocation
         (Entity_Array, Entity_Array_Access);
    begin
-      Internal (This);
+      Unchecked_Free (This);
    end Free;
 
    ---------

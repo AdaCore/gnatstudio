@@ -942,6 +942,7 @@ package body GPS.Kernel is
       Free_Messages_Container (Handle);
 
       Unchecked_Free (Handle.Refactoring);
+      Handle.Last_Context_For_Contextual := No_Context;
 
       --  Handle.Symbols.Display_Stats;
 

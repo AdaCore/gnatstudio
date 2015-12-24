@@ -28,6 +28,9 @@ package body GPS.Editors.Line_Information is
       if X.Associated_Command /= null then
          Unref (X.Associated_Command);
       end if;
+      X.Text         := Ada.Strings.Unbounded.Null_Unbounded_String;
+      X.Tooltip_Text := Ada.Strings.Unbounded.Null_Unbounded_String;
+      X.Image        := Ada.Strings.Unbounded.Null_Unbounded_String;
    end Free;
 
    ----------------------

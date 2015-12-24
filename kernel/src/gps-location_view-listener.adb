@@ -533,11 +533,15 @@ package body GPS.Location_View.Listener is
         Self.Model.Removed_Rows.First_Index
           .. Self.Model.Removed_Rows.Last_Index
       loop
-         if Is_Ancestor
-           (File_Path, Self.Model.Removed_Rows (Index).Get_Path)
-         then
-            Self.Model.Removed_Rows.Delete (Index);
-         end if;
+         declare
+            Path : Gtk.Tree_Model.Gtk_Tree_Path;
+         begin
+            Path := Self.Model.Removed_Rows (Index).Get_Path;
+            if Is_Ancestor (File_Path, Path) then
+               Self.Model.Removed_Rows.Delete (Index);
+            end if;
+            Path_Free (Path);
+         end;
       end loop;
 
       Path_Free (File_Path);

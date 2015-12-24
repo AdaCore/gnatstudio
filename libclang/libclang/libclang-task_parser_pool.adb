@@ -28,6 +28,8 @@ package body Libclang.Task_Parser_Pool is
 
    package body Pool is
 
+      procedure Free (Request : in out Parsing_Request_Record);
+
       ----------------
       -- Unique_Key --
       ----------------
@@ -46,7 +48,7 @@ package body Libclang.Task_Parser_Pool is
          -- Enqueue --
          -------------
 
-         procedure Enqueue (Request : Parsing_Request) is
+         procedure Enqueue (Request : in out Parsing_Request) is
             Req_Key : constant Unbounded_String := Unique_Key (Request);
          begin
             if Map.Contains (Req_Key) then
@@ -62,13 +64,14 @@ package body Libclang.Task_Parser_Pool is
                   if Request.Kind = Parse then
                      Existing_Req.Callbacks :=
                        Request.Callbacks & Existing_Req.Callbacks;
-                     return;
+                     Destroy (Request);
                   else
-                     --  TODO ??? Free the old request
-                     --  Replace the existing request with the new one
                      Request.Callbacks :=
                        Request.Callbacks & Existing_Req.Callbacks;
+
+                     Free (Existing_Req.all);
                      Existing_Req.all := Request.all;
+                     Free (Request);
 
                      --  Here, in the case where both requests are reparse, we
                      --  assume that Request is more recent than Existing_Req,
@@ -115,19 +118,26 @@ package body Libclang.Task_Parser_Pool is
       -------------
 
       procedure Destroy (Request : in out Parsing_Request) is
-         procedure Free is new Ada.Unchecked_Deallocation
+      begin
+         Free (Request.all);
+         Free (Request);
+      end Destroy;
+
+      ----------
+      -- Free --
+      ----------
+
+      procedure Free (Request : in out Parsing_Request_Record) is
+         procedure Unchecked_Free is new Ada.Unchecked_Deallocation
            (Unbounded_String_Array, Unbounded_String_Array_Access);
       begin
          case Request.Kind  is
          when Parse =>
-            Free (Request.Switches);
+            Unchecked_Free (Request.Switches);
          when Reparse =>
             Destroy (Request.Unsaved_Files);
          end case;
-
-         Free (Request);
-
-      end Destroy;
+      end Free;
 
       ------------------
       -- Parsing_Task --

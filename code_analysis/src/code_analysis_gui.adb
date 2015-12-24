@@ -358,15 +358,13 @@ package body Code_Analysis_GUI is
       File_Node : Code_Analysis.File_Access;
       Quiet     : Boolean;
       Line      : Natural := 1;
-      Column    : Natural := 1)
-   is
-      Marker : MDI_Location_Marker;
+      Column    : Natural := 1) is
    begin
       List_File_Uncovered_Lines
         (Kernel, File_Node, Quiet, Allow_Auto_Jump_To_First => False);
 
-      Marker := Create_MDI_Marker (View.Name & (-" Report"));
-      Push_Marker_In_History (Kernel, Marker);
+      Push_Marker_In_History
+        (Kernel, Create_MDI_Marker (View.Name & (-" Report")));
 
       Open_File_Action_Hook.Run
         (Kernel,

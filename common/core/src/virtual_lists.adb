@@ -136,11 +136,11 @@ package body Virtual_Lists is
    ----------
 
    procedure Free (This : in out Virtual_List_Component_Access) is
-      procedure Internal_Free is new Ada.Unchecked_Deallocation
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Virtual_List_Component'Class, Virtual_List_Component_Access);
    begin
       Free (This.all);
-      Internal_Free (This);
+      Unchecked_Free (This);
    end Free;
 
    ----------

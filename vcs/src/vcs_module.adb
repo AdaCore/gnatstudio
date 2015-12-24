@@ -1030,7 +1030,6 @@ package body VCS_Module is
       Project  : constant Project_Type := F_Info.Project;
       Ref      : VCS_Access;
       Stat     : Line_Record;
-      F_Status : File_Status_List.List;
    begin
       if Status = Unmodified then
          --  Nothing else to do, this is a status changed hook run when the
@@ -1076,12 +1075,18 @@ package body VCS_Module is
 
          Set_Cache (Get_Status_Cache, File, Stat);
 
-         File_Status_List.Append (F_Status, Copy_File_Status (Stat.Status));
+         declare
+            F_Status : File_Status_List.List;
+         begin
+            File_Status_List.Append (F_Status, Copy_File_Status (Stat.Status));
 
-         Display_File_Status
-           (Kernel_Handle (Kernel), F_Status, Ref, False, True);
-         --  Just ensure that this file is added into the explorer if not yet
-         --  present.
+            Display_File_Status
+              (Kernel_Handle (Kernel), F_Status, Ref, False, True);
+            --  Just ensure that this file is added into the explorer if
+            --  not yet present.
+
+            File_Status_List.Free (F_Status);
+         end;
 
          Refresh_File
            (Get_Explorer (Kernel_Handle (Kernel), Raise_Child => False), File);

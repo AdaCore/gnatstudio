@@ -764,6 +764,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    overriding procedure Free (This : in out Remove_Pkg_Clauses_Cmd) is
    begin
+      Free (This.Word);
       Free (Text_Command (This));
    end Free;
 

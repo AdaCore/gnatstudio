@@ -194,23 +194,15 @@ package body Ada_Semantic_Tree.Dependency_Tree is
    -----------
 
    procedure Clear (Resolver : in out Visibility_Resolver) is
-      Cur : Named_Entities.Cursor;
-
       procedure Free is new Standard.Ada.Unchecked_Deallocation
         (Entity_List.List, Entity_List_Access);
-      List       : Entity_List_Access;
    begin
       if Resolver.Hiding_Entities = null then
          return;
       end if;
 
-      Cur := First (Resolver.Hiding_Entities.all);
-
-      while Cur /= Named_Entities.No_Element loop
-         List := Element (Cur);
-         Free (List);
-
-         Cur := Next (Cur);
+      for Item of Resolver.Hiding_Entities.all loop
+         Free (Item);
       end loop;
 
       Clear (Resolver.Hiding_Entities.all);
@@ -229,10 +221,9 @@ package body Ada_Semantic_Tree.Dependency_Tree is
    begin
       if not Contains (Resolver.Hiding_Entities.all, Name_Lower) then
          return;
-      else
-         List := Element (Resolver.Hiding_Entities.all, Name_Lower);
       end if;
 
+      List := Element (Resolver.Hiding_Entities.all, Name_Lower);
       Delete (Resolver.Hiding_Entities.all, Name_Lower);
       Free (List);
    end Clear;

@@ -40,6 +40,7 @@ with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
+with Gtkada.Handlers;          use Gtkada.Handlers;
 with Gtkada.MDI;               use Gtkada.MDI;
 
 with Commands.Interactive;      use Commands.Interactive;
@@ -87,8 +88,8 @@ package body Scenario_Views is
       View          : Gtk.Tree_View.Gtk_Tree_View;
       Scenario_Node : Gtk_Tree_Path := Null_Gtk_Tree_Path;
       Build_Node    : Gtk_Tree_Path := Null_Gtk_Tree_Path;
-
    end record;
+
    overriding procedure Create_Menu
      (View    : not null access Scenario_View_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
@@ -100,6 +101,9 @@ package body Scenario_Views is
    --  The view is automatically refreshed every time the project view in
    --  the manager changes.
    --  Returns the focus widget in the view.
+
+   procedure On_Destroy (Widget : access Gtk_Widget_Record'Class);
+   --  Free memory used by Scenario_View_Record
 
    package Scenario_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Scenario_View",
@@ -311,6 +315,8 @@ package body Scenario_Views is
       Build_Mode_Changed_Hook.Add (new On_Build_Mode_Changed, Watch => View);
 
       Set_Font_And_Colors (View.View, Fixed_Font => False);
+
+      Widget_Callback.Connect (View, Signal_Destroy, On_Destroy'Access);
 
       --  Update the viewer with the current project
       On_Force_Refresh (View);
@@ -525,6 +531,19 @@ package body Scenario_Views is
       H.View := V;
       H.Execute (V.Kernel);
    end On_Force_Refresh;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Widget : access Gtk_Widget_Record'Class) is
+      V     : constant Scenario_View := Scenario_View (Widget);
+      Model : constant Gtk_Tree_Store := Gtk_Tree_Store'(-V.View.Get_Model);
+   begin
+      Path_Free (V.Scenario_Node);
+      Path_Free (V.Build_Node);
+      Model.Clear;
+   end On_Destroy;
 
    -----------------
    -- Create_Menu --

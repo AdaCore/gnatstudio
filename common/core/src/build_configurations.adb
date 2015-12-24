@@ -1950,7 +1950,6 @@ package body Build_Configurations is
       if Target /= null then
          --  Target.Model;   --  No need to free, references in the Registry
          Free (Target.Command_Line);
-         --  Free (Target.Properties);  --  Nothing to free
 
          Unchecked_Free (Target);
       end if;
@@ -1961,13 +1960,9 @@ package body Build_Configurations is
    ----------
 
    procedure Free (List : in out Target_List.List) is
-      C : Target_List.Cursor := First (List);
-      T : Target_Access;
    begin
-      while Has_Element (C) loop
-         T := Element (C);
-         Free (T);
-         Next (C);
+      for Item of List loop
+         Free (Item);
       end loop;
 
       Target_List.Clear (List);
@@ -2030,7 +2025,12 @@ package body Build_Configurations is
          Free (Registry.Models);
          Free (Registry.Targets);
          Free (Registry.Modes);
+
+         for Item of Registry.Original_Targets loop
+            String_List_Utils.String_List.Free (Item.Properties.Parser_List);
+         end loop;
          Free (Registry.Original_Targets);
+
          Unchecked_Free (Registry);
       end if;
    end Free;

@@ -546,8 +546,6 @@ package body GPS.Kernel.Messages.Tools_Output is
                   Action.Image := To_Unbounded_String (Get_Icon (C));
                end if;
 
-               Action.Tooltip_Text := To_Unbounded_String (Msg);
-
                if not Show_In_Locations then
                   C := Builder_Background_Style;
                end if;
@@ -570,6 +568,7 @@ package body GPS.Kernel.Messages.Tools_Output is
                   Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
 
                if Message /= null then
+                  Action.Tooltip_Text := To_Unbounded_String (Msg);
                   Message.Set_Action (Action);
                else
                   Free (Action);

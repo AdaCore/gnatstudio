@@ -2145,10 +2145,7 @@ package body GPS.Kernel.Messages is
       Container : constant Messages_Container_Access := Self.Get_Container;
 
    begin
-      if Self.Action /= null then
-         GPS.Editors.Line_Information.Free (Self.Action.all);
-         Free (Self.Action);
-      end if;
+      Free (Self.Action);
 
       Self.Action := Action;
 

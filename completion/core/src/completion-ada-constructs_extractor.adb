@@ -829,9 +829,15 @@ package body Completion.Ada.Constructs_Extractor is
       else
          --  We want to propagate the visibility of the parent construct
          --  to its arguments
-         It.Current_Decl := To_Declaration
-           (To_Entity_Access (It.Params_Array (It.Params_It)),
-            Is_Accessible => Get_View (It.Iter).Is_Accessible);
+         declare
+            Entity : Entity_View;
+         begin
+            Entity := Get_View (It.Iter);
+            It.Current_Decl := To_Declaration
+              (To_Entity_Access (It.Params_Array (It.Params_It)),
+               Is_Accessible => Entity.Is_Accessible);
+            Free (Entity);
+         end;
       end if;
    end Next;
 

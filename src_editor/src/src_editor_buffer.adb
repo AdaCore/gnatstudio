@@ -3759,6 +3759,14 @@ package body Src_Editor_Buffer is
             for K in Highlight_Location loop
                Unchecked_Free (Buffer.Line_Data (J).Highlighting (K).Enabled);
             end loop;
+
+            if Buffer.Line_Data (J).Side_Info_Data /= null then
+               for I in Buffer.Line_Data (J).Side_Info_Data'Range loop
+                  Free (Buffer, Buffer.Line_Data (J).Side_Info_Data (I),
+                        Free_Messages => False);
+               end loop;
+               Unchecked_Free (Buffer.Line_Data (J).Side_Info_Data);
+            end if;
          end loop;
 
          Unchecked_Free (Buffer.Line_Data);
