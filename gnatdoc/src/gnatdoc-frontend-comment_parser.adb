@@ -460,7 +460,7 @@ package body GNATdoc.Frontend.Comment_Parser is
                Attr_Loc  : Location;
                Text_Loc  : Location;
                Line_Last : Natural;
-               J : Natural;
+               J         : Natural;
             begin
                --  If we found an unexpected tag, then treat it like raw text
 
@@ -507,7 +507,7 @@ package body GNATdoc.Frontend.Comment_Parser is
                         declare
                            Attr_Name : String renames
                              S (Attr_Loc.First .. Attr_Loc.Last);
-                           Cursor : Tag_Cursor;
+                           Cursor    : Tag_Cursor;
                         begin
                            Cursor :=
                              Search_Param (Comment, Attr_Name);
@@ -565,10 +565,38 @@ package body GNATdoc.Frontend.Comment_Parser is
                               Current := Cursor;
 
                               declare
-                                 Text : String renames
+                                 Text     : String renames
                                    S (Text_Loc.First .. Text_Loc.Last);
+                                 Next_Loc : Location;
+                                 Offset   : Natural := 0;
+
                               begin
+                                 --  Lookup for indentation of next line to use
+                                 --  it on current line to be in synch with
+                                 --  comment parser of HTML backend.
+
+                                 J := Text_Loc.Last + 2;
+                                 Scan_Line (J, Next_Loc);
+
+                                 if Present (Next_Loc) then
+                                    for K in
+                                      Next_Loc.First .. Next_Loc.Last
+                                    loop
+                                       if S (K) /= ' ' then
+                                          Offset := K - Next_Loc.First;
+
+                                          exit;
+                                       end if;
+                                    end loop;
+
+                                    Append_Text (Current, Offset * ' ');
+                                 end if;
+
                                  Append_Text (Current, Text);
+
+                                 if Present (Next_Loc) then
+                                    Append_Text (Current, (1 => ASCII.LF));
+                                 end if;
                               end;
 
                            else
