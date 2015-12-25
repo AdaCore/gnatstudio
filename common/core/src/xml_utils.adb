@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2009-2015, AdaCore                     --
+--                     Copyright (C) 2009-2016, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -43,12 +43,14 @@ package body XML_Utils is
      (Buf        : String;
       Index      : in out Natural;
       Terminator : Character;
-      S          : out String_Ptr);
+      S          : out String_Ptr;
+      Skip_Quote : Boolean := False);
    --  On return, S will contain the String starting at Buf (Index) and
    --  terminating before the first 'Terminator' character. Index will also
    --  point to the next non blank character.
    --  The special XML '&' characters are translated appropriately in S.
    --  S is set to null if Terminator wasn't found in Buf.
+   --  If Skip_Quote then ignore Terminator in substrings quoted with ' and "
 
    procedure Extract_Attrib
      (Tag        : in out String_Ptr;
@@ -100,12 +102,25 @@ package body XML_Utils is
      (Buf        : String;
       Index      : in out Natural;
       Terminator : Character;
-      S          : out String_Ptr)
+      S          : out String_Ptr;
+      Skip_Quote : Boolean := False)
    is
       Start : constant Natural := Index;
 
    begin
       while Index <= Buf'Last and then Buf (Index) /= Terminator loop
+         if Skip_Quote and then Buf (Index) in '"' | ''' then
+            declare
+               Quote : constant Character := Buf (Index);
+            begin
+               Index := Index + 1;
+
+               while Index <= Buf'Last and then Buf (Index) /= Quote loop
+                  Index := Index + 1;
+               end loop;
+            end;
+         end if;
+
          Index := Index + 1;
       end loop;
 
@@ -415,7 +430,7 @@ package body XML_Utils is
       pragma Assert (Buf (Index.all) = '<');
 
       Index.all := Index.all + 1;
-      Get_Buf (Buf, Index.all, '>', N.Tag);
+      Get_Buf (Buf, Index.all, '>', N.Tag, Skip_Quote => True);
 
       --  Check to see whether it is a comment, PI, !DOCTYPE, or the like:
 

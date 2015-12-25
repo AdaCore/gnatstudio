@@ -38,7 +38,7 @@ class Category:
             self.name = newname
 
         child = node.firstChild
-        while child != None:
+        while child is not None:
             if child.nodeType == Node.ELEMENT_NODE:
                 # if tip is not defined as attribute, it might be defined as a
                 # child
@@ -68,7 +68,8 @@ class Category:
                     self.AddRule(
                         Check(str(child.getAttribute("switch")),
                               re.sub(
-                                  "^[+]", "-", str(child.getAttribute("switch"))),
+                                  "^[+]", "-",
+                                  str(child.getAttribute("switch"))),
                               str(child.getAttribute("label")),
                               tip,
                               False,
@@ -77,7 +78,8 @@ class Category:
                     self.AddRule(
                         Spin(str(child.getAttribute("switch")),
                              re.sub(
-                                 "^[+]", "-", str(child.getAttribute("switch"))),
+                                 "^[+]", "-",
+                                 str(child.getAttribute("switch"))),
                              str(child.getAttribute("label")),
                              tip,
                              separator,
@@ -160,7 +162,8 @@ def get_supported_rules(gnatCmd):
         dom = minidom.parseString(xmlstring)
     except:
         GPS.Console("Messages").write(
-            "Warning: the gnatcheck module could not retrieve the gnatcheck rules. Using the default ones.\n")
+            "Warning: the gnatcheck module could not retrieve the gnatcheck"
+            + " rules. Using the default ones.\n")
         dom = minidom.parseString(gnatcheck_default)
     roots = dom.getElementsByTagName("gnatcheck")
 
@@ -192,12 +195,14 @@ def get_supported_rules(gnatCmd):
 
 
 def deactivate(widg, self):
-    """Utility function to deactivate a widget. Used as callback in foreach loop"""
+    """Utility function to deactivate a widget.
+    Used as callback in foreach loop"""
     widg.set_sensitive(False)
 
 
 def activate(widg, self):
-    """Utility function to activate a widget. Used as callback in foreach loop"""
+    """Utility function to activate a widget.
+    Used as callback in foreach loop"""
     widg.set_sensitive(True)
 
 
@@ -207,8 +212,10 @@ class rulesEditor(Gtk.Dialog):
 
     def __init__(self, maincat, defaultfile):
         # call parent __init__
-        Gtk.Dialog.__init__(self, title="Coding Standard editor", parent=GPS.MDI.current(
-        ).pywidget().get_toplevel(), flags=Gtk.DialogFlags.MODAL, buttons=None)
+        Gtk.Dialog.__init__(self,
+                            title="Coding Standard editor",
+                            parent=GPS.MDI.current().pywidget().get_toplevel(),
+                            flags=Gtk.DialogFlags.MODAL)
         self.set_default_size(600, 400)
         self.set_name("CodingStandardEditor")
 
@@ -272,7 +279,8 @@ class rulesEditor(Gtk.Dialog):
 
         xml = self.main_cat.Xml("")
         xml = str(
-            """<?xml version="1.0"?><tool name="Coding_Standard" lines="1" columns="1">%s</tool>""" % (xml))
+            '<?xml version="1.0"?><tool name="Coding_Standard" lines="1"'
+            + 'columns="1">%s</tool>' % (xml))
         self.SwitchesChooser = GPS.SwitchesChooser("Gnatcheck", xml)
         self.switchvbox.pack_start(
             self.SwitchesChooser.pywidget(), False, False, 0)
@@ -310,10 +318,13 @@ class rulesEditor(Gtk.Dialog):
                 self.parse(content)
 
     def parse(self, content):
-        """Parse the content of a coding standard file, and apply the values to the editor"""
+        """Parse the content of a coding standard file, and apply the values
+        to the editor"""
         content2 = re.sub(r'\-\-.*\n', '', content)
         if content2 != content:
-            msg = "Warning: the selected file contains comments.\nThese will be removed if the coding standard file is saved from the graphical editor\n"
+            msg = "Warning: the selected file contains comments.\n"
+            + "These will be removed if the coding standard file is"
+            + " saved from the graphical editor\n"
             dialog = Gtk.MessageDialog(self,
                                        Gtk.DialogFlags.MODAL,
                                        Gtk.MessageType.WARNING,
