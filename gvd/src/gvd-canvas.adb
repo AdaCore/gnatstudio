@@ -1751,7 +1751,7 @@ package body GVD.Canvas is
       Item.Set_Width_Range
         (Max => (Unit_Pixels, Gdouble (Max_Item_Width.Get_Pref)));
       Item.Set_Height_Range
-        (Max => (Unit_Pixels, Gdouble (Max_Item_Width.Get_Pref)));
+        (Max => (Unit_Pixels, Gdouble (Max_Item_Height.Get_Pref)));
 
       if Get_Detect_Aliases (Debugger) then
          Recompute_All_Aliases (Debugger, False);
