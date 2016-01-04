@@ -2824,6 +2824,7 @@ package body GPS.Kernel.Modules.UI is
          Attr_Iter : Gmenu_Attribute_Iter;
          Links     : Gmenu_Link_Iter;
          Label     : Unbounded_String;
+         Label_With_Mnemonic : Unbounded_String;
          Full_Path : Unbounded_String;
          Action    : Unbounded_String;
          Optional  : Boolean := False;
@@ -2842,6 +2843,8 @@ package body GPS.Kernel.Modules.UI is
             begin
                Val := Get_Value (Attr_Iter);
                if N = "label" then
+                  Label_With_Mnemonic := To_Unbounded_String
+                    (Get_String (Val, null));
                   Label := To_Unbounded_String
                     (Strip_Single_Underscores (Get_String (Val, null)));
                elsif N = "action" then
@@ -2859,7 +2862,7 @@ package body GPS.Kernel.Modules.UI is
          if Has_Attributes then
             Full_Path := Parent_Path & '/' & Label;
             if Action = "" then
-               Gtk_New (Item, To_String (Label));
+               Gtk_New_With_Mnemonic (Item, To_String (Label_With_Mnemonic));
             else
                --  Remove the "app." prefix for the action name. We then
                --  need to map from the gtk action name to the GPS name
@@ -2871,12 +2874,13 @@ package body GPS.Kernel.Modules.UI is
                   Item := Gtk_New_Action_Item
                     (Kernel      => Kernel,
                      Full_Path   => To_String (Full_Path),
-                     Menu_Label  => Escape_Underscore (To_String (Label)),
+                     Menu_Label  => To_String (Label_With_Mnemonic),
                      Action    => GPS_Action (To_Object (Act)).Data.Action.all,
                      Optional  => Optional);
 
                elsif Get_State_Type (Act) = null then
-                  Gtk_New (Item, To_String (Label));
+                  Gtk_New_With_Mnemonic
+                    (Item, To_String (Label_With_Mnemonic));
                   Item.Set_Action_Name (To_String (Action));
                end if;
             end if;
