@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2011-2015, AdaCore                     --
+--                     Copyright (C) 2011-2016, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -848,8 +848,9 @@ package body MI.Parser is
             Result.Append (MIR);
             Token := Look_Ahead (Tokens);
 
-            if not Is_Out_Of_Band_Record_Follower (Token) and then not
-                   Is_Result_Record_Follower (Token) then
+            if not Is_Out_Of_Band_Record_Follower (Token) and then
+               not Is_Result_Record_Follower (Token)
+            then
                --  try recover the current state to a known one.
                Clear_Token (Token);  --  Release the memory used for this token
                Eat (Tokens);         --  ... and skip it
@@ -1286,7 +1287,8 @@ package body MI.Parser is
             --  handle value={},{} constructions
             if not In_List and then
               Token.Code = Comma and then
-              Look_Twice_Ahead (Tokens).Code = L_Brace then
+              Look_Twice_Ahead (Tokens).Code = L_Brace
+            then
                declare
                   V_List : constant Value_List_Value_Access
                     := new Value_List_Value;
