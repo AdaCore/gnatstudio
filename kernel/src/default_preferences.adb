@@ -232,8 +232,8 @@ package body Default_Preferences is
      (Pages            : in out Pages_Lists.List;
       Page             : not null Preferences_Page;
       Replace_If_Exist : Boolean := False);
-   --  Insert Page in the given list, using the page's priority and name to
-   --  determine where the page is inserted.
+   --  Insert Page in the given list, using its priority to determine where it
+   --  should be inserted in the given list.
    --  If Replace_If_Exist is True, delete the previous page associated with
    --  Name in the given list, and insert Page instead. Otherwise, do nothing.
 
@@ -332,7 +332,18 @@ package body Default_Preferences is
          end if;
       end if;
 
-      Pages.Append (Page);
+      Page_Iter := Pages.First;
+
+      --  Insert the page according to its priority
+      while Pages_Lists.Has_Element (Page_Iter)
+        and then Page.Priority <= Pages_Lists.Element (Page_Iter).Priority
+      loop
+         Pages_Lists.Next (Page_Iter);
+      end loop;
+
+      Pages_Lists.Insert (Container => Pages,
+                          Before    => Page_Iter,
+                          New_Item  => Page);
    end Insert_Page;
 
    ------------------
@@ -595,23 +606,6 @@ package body Default_Preferences is
 
       Manager.Pages.Clear;
    end Destroy;
-
-   ---------
-   -- "<" --
-   ---------
-
-   function "<" (Left, Right : Preferences_Page) return Boolean is
-   begin
-      if Left.Priority = Right.Priority then
-         if Left.Name /= null and then Right.Name /= null then
-            return Left.Name.all > Right.Name.all;
-         else
-            return Left /= null;
-         end if;
-      else
-         return Left.Priority < Right.Priority;
-      end if;
-   end "<";
 
    ----------------------
    -- Page_Name_Equals --

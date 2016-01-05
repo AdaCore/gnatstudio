@@ -652,12 +652,6 @@ package Default_Preferences is
       Editor  : access Preferences_Editor_Interface'Class);
 
 private
-
-   function "<" (Left, Right : Preferences_Page) return Boolean;
-   --  Used to order pages lists.
-   --  The order is calculated using the page's priority first. If the
-   --  priorities are equal, the order is calculated using alphabetical order.
-
    function Page_Name_Equals (Left, Right : Preferences_Page) return Boolean;
    --  Used to search in pages lists using name equality.
 
