@@ -156,6 +156,7 @@ package GPS.Kernel.Preferences is
    Multi_Language_Builder : Multi_Language_Builder_Policy_Prefs.Preference;
    Hyper_Mode             : Boolean_Preference;
    Tip_Of_The_Day         : Boolean_Preference;
+   System_Menus           : Boolean_Preference;
 
    -- Messages --
    Message_Highlight              : Color_Preference;

@@ -1456,6 +1456,16 @@ package body GPS.Kernel.Preferences is
          Default => "#FFFFFF",
          Page    => -"Windows");
 
+      System_Menus := Create_Invisible_Pref
+        (Manager  => Kernel.Preferences,
+         Name     => "system-menus",
+         Label    => -"System menus",
+         Doc      =>
+           -("If set, this will display the menubar outside of the main GPS"
+           & " window on systems that sypport it (OSX and Unity). It has no"
+           & " effect on other systems. Requires a restart of GPS."),
+         Default  => False);
+
       Doc_Search_Before_First := Create
         (Manager => Kernel.Preferences,
          Name    => "Doc-Search-Before-First",

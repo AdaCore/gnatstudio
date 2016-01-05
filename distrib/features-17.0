@@ -116,6 +116,13 @@ NF-170-N908-050 GPS: preserve size of dialogs (2015-11-10)
   you whenever the dialog is displayed again in the future (either in the
   current session or in a later session).
 
+NF-170-N829-014 GPS: system menus (2016-01-05)
+
+  On OSX and Unity, GPS is now able to display the menubar outside of the
+  main window. This is disabled by default, since these menus are not able
+  to display tooltips or key shortcuts. They can be enabled via an advanced
+  preference.
+
 NF-170-N714-016 GPS: configurable window title (2015-11-05)
 
   A new preference (Window Title) has been added to configure the title of

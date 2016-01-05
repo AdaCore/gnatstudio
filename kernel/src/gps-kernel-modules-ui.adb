@@ -77,6 +77,7 @@ with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Macros;         use GPS.Kernel.Macros;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
@@ -95,9 +96,6 @@ with UTF8_Utils;                use UTF8_Utils;
 package body GPS.Kernel.Modules.UI is
    Me : constant Trace_Handle :=
      Create ("GPS.Kernel.Modules.UI", GNATCOLL.Traces.Off);
-
-   System_Menus : constant Trace_Handle :=
-     Create ("SYSTEM_MENUS", GNATCOLL.Traces.Off);
 
    type GPS_Contextual_Menu_Record is new Gtk.Menu.Gtk_Menu_Record with record
       Kernel : access Kernel_Handle_Record'Class;
@@ -3345,7 +3343,7 @@ package body GPS.Kernel.Modules.UI is
             Free (Reader);
          end;
 
-         if Active (System_Menus) then
+         if System_Menus.Get_Pref then
             Item := Find_Or_Create_Menu
                (Globals.Menu_Model, "/Window", Allow_Create => False);
             if Item /= No_Menu_Item then
@@ -3359,7 +3357,7 @@ package body GPS.Kernel.Modules.UI is
          end if;
       end if;
 
-      if Active (System_Menus) then
+      if System_Menus.Get_Pref then
          Kernel.Get_Application.Set_Menubar (Globals.Menu_Model);
          Menubar := null;
       else
