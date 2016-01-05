@@ -45,6 +45,7 @@ with Gtk.List_Store;
 with Gtk.Menu;
 with Gtk.Menu_Bar;
 with Gtk.Menu_Item;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
@@ -179,6 +180,16 @@ package GUI_Utils is
    --  returns True. All children are removed if Filter is null.
    --  If Container is a menu, this empties the menu, thus allowing dynamic
    --  menus.
+
+   ----------------------
+   -- Scrolled_Windows --
+   ----------------------
+
+   procedure Scroll_To_Child
+     (Self  : not null access Gtk_Scrolled_Window_Record'Class;
+      Child : not null access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Adjust the given Gtk_Scrolled_Window so that it displays the given Child
+   --  widget.
 
    ---------------
    -- Text_View --

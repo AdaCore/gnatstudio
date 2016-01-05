@@ -15,11 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Box;                     use Gtk.Box;
-with Gtk.Enums;                   use Gtk.Enums;
-with Gtk.Event_Box;               use Gtk.Event_Box;
-with Gtk.Label;                   use Gtk.Label;
-with Gtk.Style_Context;           use Gtk.Style_Context;
+with GUI_Utils;         use GUI_Utils;
+
+with Gtk.Box;           use Gtk.Box;
+with Gtk.Enums;         use Gtk.Enums;
+with Gtk.Event_Box;     use Gtk.Event_Box;
+with Gtk.Label;         use Gtk.Label;
+with Gtk.Style_Context; use Gtk.Style_Context;
 
 -----------------------------
 -- Default_Preferences.GUI --
@@ -64,6 +66,7 @@ package body Default_Preferences.GUI is
       Widget := Self.Prefs_Box.Pref_Widgets (Pref.Get_Name);
 
       if Highlight then
+         Scroll_To_Child (Self, Widget);
          Widget.Set_State_Flags (Gtk_State_Flag_Selected, False);
       else
          Widget.Set_State_Flags (Gtk_State_Flag_Normal, True);

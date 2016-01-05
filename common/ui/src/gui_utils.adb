@@ -43,6 +43,7 @@ with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
 
+with Gtk.Adjustment;            use Gtk.Adjustment;
 with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Bin;                   use Gtk.Bin;
 with Gtk.Box;                   use Gtk.Box;
@@ -643,6 +644,46 @@ package body GUI_Utils is
 
       Widget_List.Free (Children);
    end Remove_All_Children;
+
+   ---------------------
+   -- Scroll_To_Child --
+   ---------------------
+
+   procedure Scroll_To_Child
+     (Self  : not null access Gtk_Scrolled_Window_Record'Class;
+      Child : not null access Gtk_Widget_Record'Class)
+   is
+      V_Adj           : constant Gtk_Adjustment := Self.Get_Vadjustment;
+      V_Adj_Value     : constant Gdouble := V_Adj.Get_Value;
+      V_Adj_Page_Size : constant Gdouble := V_Adj.Get_Page_Size;
+      H_Adj           : constant Gtk_Adjustment := Self.Get_Hadjustment;
+      H_Adj_Value     : constant Gdouble := H_Adj.Get_Value;
+      H_Adj_Page_Size : constant Gdouble := H_Adj.Get_Page_Size;
+      Child_Alloc   : Gtk_Allocation;
+      Parent_Alloc  : Gtk_Allocation;
+      Total_Alloc_Y : Gdouble;
+      Total_Alloc_X : Gdouble;
+   begin
+      Child.Get_Allocation (Child_Alloc);
+      Child.Get_Parent.Get_Allocation (Parent_Alloc);
+
+      Total_Alloc_Y := Gdouble (Parent_Alloc.Y + Child_Alloc.Y);
+      Total_Alloc_X := Gdouble (Parent_Alloc.X + Child_Alloc.X);
+
+      if Total_Alloc_Y < V_Adj_Value
+        or else Total_Alloc_Y > V_Adj_Value + V_Adj_Page_Size
+      then
+         V_Adj.Set_Value
+           (Gdouble'Min (Total_Alloc_Y, V_Adj.Get_Upper - V_Adj_Page_Size));
+      end if;
+
+      if Total_Alloc_X < H_Adj_Value
+        or else Total_Alloc_X > H_Adj_Value + H_Adj_Page_Size
+      then
+         H_Adj.Set_Value
+           (Gdouble'Min (Total_Alloc_X, H_Adj.Get_Upper - H_Adj_Page_Size));
+      end if;
+   end Scroll_To_Child;
 
    ----------------------------
    -- Set_Radio_And_Callback --
