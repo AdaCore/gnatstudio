@@ -137,19 +137,6 @@ Classes
 
    .. automethod:: GPS.Alias.get
 
-:class:`GPS.AreaContext`
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: AreaContext
-
-   .. inheritance-diagram:: GPS.AreaContext
-
-   .. automethod:: GPS.AreaContext.__init__
-
-   .. automethod:: GPS.AreaContext.end_line
-
-   .. automethod:: GPS.AreaContext.start_line
-
 :class:`GPS.Bookmark`
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -367,9 +354,29 @@ Classes
    .. autoattribute:: GPS.Context.module_name
 
 
+   .. automethod:: GPS.Context.__init__
+
+   .. automethod:: GPS.Context.directory
+
+   .. automethod:: GPS.Context.end_line
+
+   .. automethod:: GPS.Context.entity
+
+   .. automethod:: GPS.Context.entity_name
+
    .. automethod:: GPS.Context.file
 
+   .. automethod:: GPS.Context.files
+
+   .. automethod:: GPS.Context.location
+
+   .. automethod:: GPS.Context.message
+
+   .. automethod:: GPS.Context.project
+
    .. automethod:: GPS.Context.set_file
+
+   .. automethod:: GPS.Context.start_line
 
 :class:`GPS.Contextual`
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -896,17 +903,6 @@ Classes
 
    .. automethod:: GPS.Entity.type
 
-:class:`GPS.EntityContext`
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: EntityContext
-
-   .. inheritance-diagram:: GPS.EntityContext
-
-   .. automethod:: GPS.EntityContext.__init__
-
-   .. automethod:: GPS.EntityContext.entity
-
 :class:`GPS.Exception`
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -960,23 +956,6 @@ Classes
    .. automethod:: GPS.File.used_by
 
    .. automethod:: GPS.File.uses
-
-:class:`GPS.FileContext`
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: FileContext
-
-   .. inheritance-diagram:: GPS.FileContext
-
-   .. automethod:: GPS.FileContext.__init__
-
-   .. automethod:: GPS.FileContext.directory
-
-   .. automethod:: GPS.FileContext.files
-
-   .. automethod:: GPS.FileContext.location
-
-   .. automethod:: GPS.FileContext.project
 
 :class:`GPS.FileLocation`
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1056,13 +1035,6 @@ Classes
 
 .. autoclass:: Predefined_Hooks
     :members:
-
-
-
-:class:`GPS.Hook`
-^^^^^^^^^^^^^^^^^
-
-.. autoclass:: Hook
 
 
 
@@ -1368,17 +1340,6 @@ Classes
    .. automethod:: GPS.Message.set_style
 
    .. automethod:: GPS.Message.set_subprogram
-
-:class:`GPS.MessageContext`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: MessageContext
-
-   .. inheritance-diagram:: GPS.MessageContext
-
-   .. automethod:: GPS.MessageContext.__init__
-
-   .. automethod:: GPS.MessageContext.message
 
 :class:`GPS.Missing_Arguments`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

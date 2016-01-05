@@ -302,53 +302,44 @@ def __contextualMenuFilter(context):
     context.gnatcheck = data
 
     data.desttype = "none"
-    if not isinstance(context, GPS.FileContext):
-        return False
-    try:
-        # might be a file
+
+    data.file = context.file()
+    if data.file:
         data.desttype = "file"
-        data.file = context.file()
         if data.file.language().lower() != "ada":
             return False
 
         # Does this file belong to the project tree ?
         return data.file.project(False) is not None
 
-    except:
-        try:
-            data.desttype = "dir"
-            # verify this is a dir
-            data.dir = context.directory()
-            # check this directory contains ada sources
-            srcs = GPS.Project.root().sources(True)
-            found = False
-            data.files = []
-            for f in srcs:
-                filename = f.name()
-                if filename.find(data.dir) == 0:
-                    if f.language().lower() == "ada":
-                        data.files.append(f)
-                        found = True
-            return found
-        except:
-            try:
-                # this is a project file
-                data.desttype = "project"
-                data.project = context.project()
-                srcs = data.project.sources(recursive=False)
-                found = False
-                data.files = []
-                for f in srcs:
-                    if f.language().lower() == "ada":
-                        data.files.append(f)
-                        found = True
-                return found
-            except:
-                # Weird case where we have a FileContext with neither file,
-                # dir or project information...
-                # This may happen if the file is newly created, and has not
-                # been saved yet, thus does not exist on the disk.
-                return False
+    data.dir = context.directory()
+    if data.dir:
+        data.desttype = "dir"
+        # check this directory contains ada sources
+        srcs = GPS.Project.root().sources(True)
+        found = False
+        data.files = []
+        for f in srcs:
+            filename = f.name()
+            if filename.find(data.dir) == 0:
+                if f.language().lower() == "ada":
+                    data.files.append(f)
+                    found = True
+        return found
+
+    data.project = context.project()
+    if data.project:
+        data.desttype = "project"
+        srcs = data.project.sources(recursive=False)
+        found = False
+        data.files = []
+        for f in srcs:
+            if f.language().lower() == "ada":
+                data.files.append(f)
+                found = True
+        return found
+
+    return False
 
 
 def __contextualMenuLabel(context):

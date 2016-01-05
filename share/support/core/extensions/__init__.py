@@ -37,6 +37,15 @@ def override_gps_method(method):
     method.override_gps_method = True
     return method
 
+############
+# Contexts #
+############
+
+GPS.FileContext = GPS.Context
+GPS.AreaContext = GPS.Context
+GPS.EntityContext = GPS.Context
+GPS.MessageContext = GPS.Context
+
 
 ######################
 # General extensions #
@@ -267,7 +276,7 @@ class Contextual(object):
               GPS.Console("Messages").write("You selected the custom entry")
 
            def on_filter(context):
-              return isinstance(context, GPS.EntityContext)
+              return context.entity_name() is not None
 
            def on_label(context):
               global count
@@ -290,7 +299,7 @@ class Contextual(object):
                  "You selected the custom entry " + self.data)
 
               def on_filter(self, context):
-                 return isinstance(context, GPS.EntityContext)
+                 return context.entity_name() is not None
 
               def on_label(self, context):
                  return self.data

@@ -227,7 +227,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
 
         # Attempt entity highlighting if no word was found.
 
-        if not word and isinstance(context, GPS.EntityContext):
+        if not word and context.entity_name() is not None:
             try:
                 entity = context.entity(approximate_search_fallback=False)
             except:

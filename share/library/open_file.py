@@ -48,7 +48,7 @@ class __contextData(object):
 
 def __filter(context):
     """Checks whether the contextual menu should be displayed"""
-    if not isinstance(context, GPS.FileContext):
+    if context.file() is None:
         return False
 
     ed = GPS.EditorBuffer.get(open=False)

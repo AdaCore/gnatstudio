@@ -141,6 +141,16 @@ NF-170-0000-001 GPS: Incompatible changes in Python API (2016-01-04)
   This section lists changes done in the Python API that are no longer
   compatible with previous versions of GPS.
 
+  GPS.*Context removed (2016-01-05)
+
+    All classes related to contexts were merged into a single GPS.Context
+    class, which provides the same features as all the others combined. The
+    previous names have been left for backward compatibility, but users are
+    encouraged to only use GPS.Context from now one. If you script was
+    explicitly testing classes ("if isinstance(ctx, GPS.FileContext)"), you
+    should instead test whether specific information is available
+    ("if ctx.file()").
+
   GPS.Toolbar, GPS.Combo, GPS.ToolButton and GPS.Button removed (2016-01-04)
 
     This class has been removed. Only buttons associated with named actions

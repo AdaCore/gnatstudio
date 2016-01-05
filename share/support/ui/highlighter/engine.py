@@ -36,7 +36,7 @@ class HighlighterModule(Module):
                 propagate_change(pref)
 
     def context_changed(self, ctx):
-        if isinstance(ctx, GPS.FileContext):
+        if ctx.file() is not None:
             ed = GPS.EditorBuffer.get(open=False)
             if ed:
                 self.init_highlighting(ed.file())

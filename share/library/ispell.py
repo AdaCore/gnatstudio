@@ -140,8 +140,7 @@ suggested replacements""",
         """
         Whether ispell is available, and the cursor on a word
         """
-        if (context.module_name == 'Source_Editor' and
-           isinstance(context, GPS.EntityContext)):
+        if context.module_name == 'Source_Editor' and context.entity_name():
             find_current_word(context)
             return context.ispell_module_word != ""
         else:
@@ -478,7 +477,7 @@ class Dynamic_Contextual(GPS.Contextual):
 
     def _filter(self, context):
         """Decide whether the contextual menu should be made visible"""
-        if isinstance(context, GPS.EntityContext):
+        if context.entity_name():
             find_current_word(context)
             return context.ispell_module_word != ""
         else:

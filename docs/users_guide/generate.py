@@ -131,6 +131,13 @@ Exceptions
                     inheritance = \
                         "   .. inheritance-diagram:: %s.%s" % (n, name)
 
+                if name in ("FileContext",
+                            "AreaContext",
+                            "MessageContext",
+                            "EntityContext"):
+                    # These are for backward compatibility only
+                    continue
+
                 if name == 'Hook':
                     # Include generated doc for predefined hooks
                     fd.write(Inspect.class_stub % {
@@ -139,13 +146,13 @@ Exceptions
                         'members': '    :members:\n',
                         'underscore': '^' * (len(n) + 10 + 16),
                         'module': n})
-
-                fd.write(Inspect.class_stub % {
-                    "name": name,
-                    "inheritance": inheritance,
-                    'members': '',
-                    "underscore": "^" * (len(name) + len(n) + 10),
-                    "module": n})
+                else:
+                    fd.write(Inspect.class_stub % {
+                        "name": name,
+                        "inheritance": inheritance,
+                        'members': '',
+                        "underscore": "^" * (len(name) + len(n) + 10),
+                        "module": n})
 
                 data, methods = self.__methods(c)
 

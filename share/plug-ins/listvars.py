@@ -74,7 +74,7 @@ def list_vars(subprogram, global_only=False):
 
 
 def on_filter(context):
-    return (isinstance(context, GPS.EntityContext) and
+    return (context.entity_name() is not None and
             context.entity() and context.entity().is_subprogram())
 
 

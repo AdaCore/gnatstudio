@@ -416,6 +416,10 @@ package body GPS.Kernel.Scripts is
            (Data, Create_Entity
               (Get_Script (Data), Get_Entity
                (Ctxt, Approximate_Search_Fallback => Approx_Search)));
+      elsif Command = "entity_name" then
+         if Has_Entity_Name_Information (Ctxt) then
+            Data.Set_Return_Value (Entity_Name_Information (Ctxt));
+         end if;
       end if;
    end Entity_Context_Command_Handler;
 
@@ -541,8 +545,6 @@ package body GPS.Kernel.Scripts is
                Create_File
                  (Get_Script (Data),
                   File_Information (Context)));
-         else
-            Set_Error_Msg (Data, -"No file information stored in the context");
          end if;
 
       elsif Command = "set_file" then
@@ -562,8 +564,6 @@ package body GPS.Kernel.Scripts is
                     (Data, Create_File (Get_Script (Data), Files (J)));
                end loop;
             end;
-         else
-            Set_Error_Msg (Data, -"No file information stored in the context");
          end if;
 
       elsif Command = "location" then
@@ -589,9 +589,6 @@ package body GPS.Kernel.Scripts is
                    File_Information (Context))),
                   L,
                   Visible_Column_Type (C)));
-         else
-            Set_Error_Msg
-              (Data, -"No file information stored in the context");
          end if;
 
       elsif Command = "project" then
@@ -606,8 +603,6 @@ package body GPS.Kernel.Scripts is
          if Project /= No_Project then
             Set_Return_Value
               (Data, Create_Project (Get_Script (Data), Project));
-         else
-            Set_Error_Msg (Data, -"No project stored in the context");
          end if;
 
       elsif Command = "directory" then
@@ -621,8 +616,6 @@ package body GPS.Kernel.Scripts is
             --        Directory_Information (Context)));
             Set_Return_Value
               (Data, Directory_Information (Context).Full_Name);
-         else
-            Set_Error_Msg (Data, -"No directory stored in the context");
          end if;
 
       elsif Command = "location" then
@@ -645,9 +638,6 @@ package body GPS.Kernel.Scripts is
                    File_Information (Context))),
                   L,
                   Visible_Column_Type (C)));
-         else
-            Set_Error_Msg
-              (Data, -"No file information stored in the context");
          end if;
 
       elsif Command = "current_context"
@@ -1159,14 +1149,6 @@ package body GPS.Kernel.Scripts is
 
       Context_Class : constant Class_Type := Kernel.Scripts.New_Class
         ("Context");
-      File_Context_Class : constant Class_Type := Kernel.Scripts.New_Class
-         ("FileContext", Base => Context_Class);
-      Area_Context_Class : constant Class_Type := Kernel.Scripts.New_Class
-         ("AreaContext", Base => File_Context_Class);
-      Entity_Context_Class : constant Class_Type := Kernel.Scripts.New_Class
-         ("EntityContext", Base => File_Context_Class);
-      Message_Context_Class : constant Class_Type := Kernel.Scripts.New_Class
-         ("MessageContext", Base => File_Context_Class);
 
       Tmp : GNAT.Strings.String_Access;
    begin
@@ -1344,7 +1326,7 @@ package body GPS.Kernel.Scripts is
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Class        => File_Context_Class,
+         Class        => Context_Class,
          Handler      => Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("file",
@@ -1357,52 +1339,44 @@ package body GPS.Kernel.Scripts is
          Params       => (1 => Param ("file")));
       Kernel.Scripts.Register_Command
         ("files",
-         Class        => File_Context_Class,
+         Class        => Context_Class,
          Handler      => Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("project",
-         Class        => File_Context_Class,
+         Class        => Context_Class,
          Handler      => Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("directory",
-         Class        => File_Context_Class,
+         Class        => Context_Class,
          Handler      => Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("location",
-         Class        => File_Context_Class,
+         Class        => Context_Class,
          Handler      => Context_Command_Handler'Access);
 
       Kernel.Scripts.Register_Command
-        (Constructor_Method,
-         Class        => Area_Context_Class,
-         Handler      => Context_Command_Handler'Access);
-      Kernel.Scripts.Register_Command
         ("start_line",
-         Class        => Area_Context_Class,
+         Class        => Context_Class,
          Handler      => Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("end_line",
-         Class        => Area_Context_Class,
+         Class        => Context_Class,
          Handler      => Context_Command_Handler'Access);
 
       Kernel.Scripts.Register_Command
-        (Constructor_Method,
-         Class        => Entity_Context_Class,
-         Handler      => Context_Command_Handler'Access);
+        ("entity_name",
+         Class        => Context_Class,
+         Handler      => Entity_Context_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("entity",
          Params => (1 => Param ("approximate_search_fallback",
                                 Optional => True)),
-         Class        => Entity_Context_Class,
+         Class        => Context_Class,
          Handler      => Entity_Context_Command_Handler'Access);
 
       Kernel.Scripts.Register_Command
-        (Constructor_Method,
-         Class   => Message_Context_Class,
-         Handler => Context_Command_Handler'Access);
-      Kernel.Scripts.Register_Command
         ("message",
-         Class   => Message_Context_Class,
+         Class   => Context_Class,
          Handler => Message_Context_Command_Handler'Access);
 
       Kernel.Scripts.Register_Command
@@ -1531,34 +1505,8 @@ package body GPS.Kernel.Scripts is
       Context : GPS.Kernel.Selection_Context) return Class_Instance is
    begin
       if Context = No_Context then
-         Trace (Me, "Null context passed to Create_Context");
          return No_Class_Instance;
-
-      elsif Has_Area_Information (Context) then
-         return Context_Proxies.Get_Or_Create_Instance
-            (Context.Ref.Get.Instances, (Weak => Context.Ref.Weak), Script,
-             Class_To_Create => "AreaContext");
-
-      elsif Has_Entity_Name_Information (Context) then
-         return Context_Proxies.Get_Or_Create_Instance
-            (Context.Ref.Get.Instances, (Weak => Context.Ref.Weak), Script,
-             Class_To_Create => "EntityContext");
-
-      elsif Has_Message_Information (Context) then
-         return Context_Proxies.Get_Or_Create_Instance
-            (Context.Ref.Get.Instances, (Weak => Context.Ref.Weak), Script,
-             Class_To_Create => "MessageContext");
-
-      elsif Has_File_Information (Context)
-        or else Has_Project_Information (Context)
-        or else Has_Directory_Information (Context)
-      then
-         return Context_Proxies.Get_Or_Create_Instance
-            (Context.Ref.Get.Instances, (Weak => Context.Ref.Weak), Script,
-             Class_To_Create => "FileContext");
-
       else
-         Trace (Me, "Context type is not supported by GPS");
          return Context_Proxies.Get_Or_Create_Instance
             (Context.Ref.Get.Instances, (Weak => Context.Ref.Weak), Script);
       end if;

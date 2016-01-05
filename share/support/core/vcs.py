@@ -53,10 +53,6 @@ def only_in_submenu(context):
     """ Return True if items for this context should be in the
         'Version Control' submenu. """
 
-    if type(context) not in [GPS.FileContext,
-                             GPS.EntityContext, GPS.AreaContext]:
-        return False
-
     try:
         file = context.file()
 
@@ -65,19 +61,18 @@ def only_in_submenu(context):
 
         if file.name().endswith("$log"):
             return False
+
+        return not context.module_name.startswith("VCS_Explorer")
+
     except:
         return False
-
-    return not context.module_name.startswith("VCS_Explorer")
 
 
 def only_in_explorer(context):
     """ Return True if the context is a VCS explorer. """
 
-    if type(context) not in [GPS.FileContext, GPS.EntityContext]:
-        return False
-
-    return context.module_name.startswith("VCS_Explorer")
+    return context.file() is not None and \
+        context.module_name.startswith("VCS_Explorer")
 
 
 def not_in_explorer(context):

@@ -1835,8 +1835,7 @@ class GNATprove_Parser(tool_output.OutputParser):
 
 def is_file_context(self):
     """This is the context in which "Show Path" may appear."""
-
-    return isinstance(self, GPS.FileContext)
+    return self.file() is not None
 
 
 # It's more convenient to define these callbacks outside of the plugin class
@@ -1878,13 +1877,13 @@ def on_prove_line(self):
             args.append("-U")
 
     target = ""
-    if isinstance(self, GPS.MessageContext):
+    try:
         llarg = "--limit-line=" \
                 + os.path.basename(self.message().get_file().name()) \
                 + ":" + str(self.message().get_line())
         args.append(llarg)
         target = prove_line_loc()
-    else:
+    except:  # No message in context
         target = prove_line()
 
     generic_on_analyze(target, args=args)
@@ -2178,11 +2177,11 @@ def get_line_warn(context):
 
 
 def prove_check_context(context):
-    if isinstance(context, GPS.FileContext):
-        if isinstance(context, GPS.MessageContext):
+    if context.file() is not None:
+        try:
             context._loc_msg = context.message()
             return is_unproved_check_message(context._loc_msg)
-        else:
+        except:  # No message in context
             tmp = get_line_warn(context)
             if len(tmp) == 1:
                 context._loc_msg = tmp[0]

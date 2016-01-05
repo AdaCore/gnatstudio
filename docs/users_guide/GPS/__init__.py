@@ -580,9 +580,10 @@ class Context(object):
     def file(self):
         """
         Return the name of the file in the context.
-        This method used to be set only for a GPS.FileContext.
+        This method used to be set only for a GPS.Context.
 
         :rtype: :class:`GPS.File`
+        .. seealso:: `GPS.Context.files`
         """
         pass  # implemented in Ada
 
@@ -591,28 +592,6 @@ class Context(object):
         Set the file stored in the context.
         :param GPS.File file:
         """
-
-
-###########################################################
-# FileContext
-###########################################################
-
-class FileContext(Context):
-
-    """
-    Represents a context that contains file information.
-
-    .. seealso:: :func:`GPS.FileContext.__init__`
-    """
-
-    def __init__(self):
-        """
-        Dummy function, whose goal is to prevent user-creation of a
-        :class:GPS.FileContext instance. Such instances can only be created
-        internally by GPS.
-
-        """
-        pass  # implemented in Ada
 
     def directory(self):
         """
@@ -648,51 +627,12 @@ class FileContext(Context):
         """
         pass  # implemented in Ada
 
-
-###########################################################
-# ClassContext
-###########################################################
-
-class MessageContext(FileContext):
-    """
-    A special context used when the Locations window has the focus.
-    """
-
-    def __init__(self):
-        """
-        Prevents creation of the self, since such contexts are always
-        created by GPS itself.
-        """
-
     def message(self):
         """
         Returns the current message that was clicked on
 
         :returntype: :class:`GPS.Message`
         """
-
-
-###########################################################
-# AreaContext
-###########################################################
-
-class AreaContext(FileContext):
-    """
-    Represents a context that contains file information and a range of lines
-    currently selected.
-
-    .. seealso:: :func:`GPS.AreaContext.__init__`
-
-    """
-
-    def __init__(self):
-        """
-        Dummy function, whose goal is to prevent user-creation of a
-        :class:GPS.AreaContext instance. Such instances can only be created
-        internally by GPS.
-
-        """
-        pass  # implemented in Ada
 
     def end_line(self):
         """
@@ -710,13 +650,34 @@ class AreaContext(FileContext):
         """
         pass  # implemented in Ada
 
+    def entity(self, approximate_search_fallback=True):
+        """
+        Returns the entity stored in the context.
+        This might be expensive to compute, so it is often recommend to check
+        whether `GPS.Context.entity_name` returns None, first.
+
+        :param approximate_search_fallback: If True, when the line and column
+           are not exact, this parameter will trigger approximate search in the
+           database (eg. see if there are similar entities in the surrounding
+           lines)
+        :return: An instance of :class:`GPS.Entity`
+        """
+        pass  # implemented in Ada
+
+    def entity_name(self):
+        """
+        Return the name of the entity that the context points to.
+        This is None when the context does not contain entity information.
+
+        :rtype: str
+        """
+
 
 ###########################################################
 # Bookmark
 ###########################################################
 
 class Bookmark(object):
-
     """
     This class provides access to GPS's bookmarks. These are special types
     of markers that are saved across sessions, and can be used to save a
@@ -2040,7 +2001,7 @@ class Contextual(object):
               GPS.Console("Messages").write("You selected " + choice)
 
            def filter(contextl):
-              return isinstance(context, GPS.EntityContext)
+              return context.entity_name() is not None
 
            GPS.Contextual("My_Dynamic_Menu").create_dynamic(
               on_activate=on_activate, factory=build_contextual, filter=filter)
@@ -2061,7 +2022,7 @@ class Contextual(object):
                                      factory=self.factory)
 
                def filter(self, context):
-                  return isinstance(context, GPS.EntityContext)
+                  return context.entity_name() is not None
 
                def on_activate(self, context, choice, choice_index):
                   GPS.Console("Messages").write("You selected " + choice)
@@ -5170,39 +5131,6 @@ class Entity(object):
         but this usage is deprecated and you should be using
         :func:`self.parent_types` instead.
 
-        :return: An instance of :class:`GPS.Entity`
-        """
-        pass  # implemented in Ada
-
-
-###########################################################
-# EntityContext
-###########################################################
-
-class EntityContext(FileContext):
-
-    """
-    Represents a context that contains entity information.
-
-    .. seealso:: :func:`GPS.EntityContext.__init__()`
-    """
-
-    def __init__(self):
-        """
-        Dummy function, whose goal is to prevent user-creation of a
-        :func:`GPS.EntityContext` instance. Such instances can only be
-        created internally by GPS.
-        """
-        pass  # implemented in Ada
-
-    def entity(self, approximate_search_fallback=True):
-        """
-        Returns the entity stored in the context.
-
-        :param approximate_search_fallback: If True, when the line and column
-           are not exact, this parameter will trigger approximate search in the
-           database (eg. see if there are similar entities in the surrounding
-           lines)
         :return: An instance of :class:`GPS.Entity`
         """
         pass  # implemented in Ada
@@ -10287,8 +10215,7 @@ def contextual_context():
     menu is executed.  See also the documentation for the
     "contextual_menu_open" hook.
 
-    :return: An instance of e.g., :class:`GPS.FileContext` or
-       :class:`GPS.AreaContext`
+    :return: An instance of :class:`GPS.Context`
 
     .. seealso:: :func:`GPS.current_context`
 
@@ -10396,8 +10323,7 @@ def current_context(refresh=False):
        commands and needs to ensure that the context is properly refresh
        synchronously.
 
-    :return: An instance of, e.g., :class:`GPS.FileContext` or
-       :class:`GPS.AreaContext`
+    :return: An instance of :class:`GPS.Context`
 
     .. seealso::
 

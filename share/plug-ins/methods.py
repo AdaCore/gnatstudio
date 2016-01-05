@@ -36,7 +36,7 @@ class Methods_Contextual (GPS.Contextual):
         # Store the methods in the context, so that we do not have to
         # recompute them if the menu is selected, and so that we can
         # handle overridden methods as well
-        if isinstance(context, GPS.EntityContext) and context.entity():
+        if context.entity_name() is not None and context.entity():
             context.methods_list = context.entity().methods(
                 include_inherited=True)
 

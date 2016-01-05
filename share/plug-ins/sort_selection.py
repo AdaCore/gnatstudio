@@ -41,7 +41,7 @@ def sort_selection(revert=False):
 
     selection = ed.get_chars(start, to)
 
-    if selection == "" or context.__class__ == GPS.EntityContext:
+    if selection == "" or not context.entity_name():
         return
 
     lines = string.split(selection, "\n")
