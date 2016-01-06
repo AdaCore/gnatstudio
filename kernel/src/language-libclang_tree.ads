@@ -15,15 +15,18 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
-with GPS.Core_Kernels; use GPS.Core_Kernels;
-with Language.Tree; use Language.Tree;
-with Ada.Containers; use Ada.Containers;
-with Libclang.Index; use Libclang.Index;
+with Ada.Containers;                     use Ada.Containers;
 with Ada.Containers.Indefinite_Holders;
 with Ada.Containers.Doubly_Linked_Lists;
-with clang_c_Index_h; use clang_c_Index_h;
-with Language.Libclang; use Language.Libclang;
+
+with clang_c_Index_h;                    use clang_c_Index_h;
+
+with Language.Abstract_Language_Tree;    use Language.Abstract_Language_Tree;
+with Language.Libclang;                  use Language.Libclang;
+with Language.Tree;                      use Language.Tree;
+with Libclang.Index;                     use Libclang.Index;
+
+with GPS.Core_Kernels;                   use GPS.Core_Kernels;
 
 package Language.Libclang_Tree is
 
@@ -98,8 +101,9 @@ package Language.Libclang_Tree is
    overriding function File
      (Self : Abstract_Clang_Tree) return GNATCOLL.VFS.Virtual_File;
 
-   overriding procedure Update
-     (Self : Abstract_Clang_Tree);
+   overriding procedure Update (Self : Abstract_Clang_Tree);
+
+   overriding procedure Update_Async (Self : Abstract_Clang_Tree);
 
    ---------------------------
    -- Clang_Node primitives --

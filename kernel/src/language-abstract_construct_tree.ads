@@ -15,12 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+with Ada.Containers;                  use Ada.Containers;
 with Ada.Containers.Vectors;
-with Language.Tree; use Language.Tree;
-with Language.Tree.Database; use Language.Tree.Database;
-with Ada.Containers; use Ada.Containers;
-with GPS.Kernel; use GPS.Kernel;
+
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+with Language.Tree;                   use Language.Tree;
+with Language.Tree.Database;          use Language.Tree.Database;
+
+with GPS.Kernel;                      use GPS.Kernel;
 
 package Language.Abstract_Construct_Tree is
 
@@ -94,8 +96,9 @@ package Language.Abstract_Construct_Tree is
    overriding function File
      (Self : Abstract_Construct_Tree) return GNATCOLL.VFS.Virtual_File;
 
-   overriding procedure Update
-     (Self : Abstract_Construct_Tree);
+   overriding procedure Update (Self : Abstract_Construct_Tree);
+
+   overriding procedure Update_Async (Self : Abstract_Construct_Tree);
 
    overriding function Category
      (Self : Construct_Node) return Language_Category;

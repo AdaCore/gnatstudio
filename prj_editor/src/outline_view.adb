@@ -186,8 +186,8 @@ package body Outline_View is
 
    type On_Project_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute
-      (Self  : On_Project_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class);
+      (Self   : On_Project_Changed;
+       Kernel : not null access Kernel_Handle_Record'Class);
 
    type On_File_Modified is new File_Hooks_Function with null record;
    overriding procedure Execute
@@ -209,6 +209,13 @@ package body Outline_View is
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Called when a file has been edited
+
+   type On_Semantic_Tree_Updated is
+     new File_Hooks_Function with null record;
+   overriding procedure Execute
+      (Self   : On_Semantic_Tree_Updated;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       File   : GNATCOLL.VFS.Virtual_File);
 
    procedure Set_File
      (Outline : access Outline_View_Record'Class;
@@ -723,6 +730,8 @@ package body Outline_View is
       File_Closed_Hook.Add (new On_File_Closed, Watch => Outline);
       File_Edited_Hook.Add (new On_File_Edited, Watch => Outline);
       Project_View_Changed_Hook.Add (new On_Project_Changed, Watch => Outline);
+      Semantic_Tree_Updated_Hook.Add
+        (new On_Semantic_Tree_Updated, Watch => Outline);
 
       return Gtk_Widget (Outline.Tree);
    end Initialize;
@@ -751,9 +760,8 @@ package body Outline_View is
       Outline : constant Outline_View_Access := Outline_View_Access (View);
    begin
       if Outline.File /= No_File then
-         Outline.Kernel.Get_Abstract_Tree_For_File (Outline.File).Update;
-         File_Updated (Get_Outline_Model (View));
-         Location_Changed (Outline.Kernel, Outline.File);
+         Outline.Kernel.Get_Abstract_Tree_For_File (Outline.File).Update_Async;
+         --  will be completed after trigger Semantic_Tree_Updated_Hook
       end if;
    end Refresh;
 
@@ -995,6 +1003,27 @@ package body Outline_View is
          --  language, which is then set when the project is loaded.
 
          Set_File (Outline, Outline.File);
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+      (Self   : On_Semantic_Tree_Updated;
+       Kernel : not null access Kernel_Handle_Record'Class;
+       File   : GNATCOLL.VFS.Virtual_File)
+   is
+      pragma Unreferenced (Self);
+      Outline : constant Outline_View_Access :=
+        Outline_Views.Retrieve_View (Kernel);
+   begin
+      if Outline /= null and then Outline.File /= No_File
+        and then Outline.File = File
+      then
+         File_Updated (Get_Outline_Model (Outline));
+         Location_Changed (Outline.Kernel, File);
       end if;
    end Execute;
 

@@ -206,6 +206,10 @@ package Language.Abstract_Language_Tree is
    --  Ask the tree to update itself to the new content of the file. This will
    --  invalidate all semantic nodes
 
+   procedure Update_Async
+     (Self : Semantic_Tree) is abstract;
+   --  Some as above but will executing asynchronously
+
    ----------------------------------
    -- Primitives for Semantic_Node --
    ----------------------------------
@@ -475,6 +479,8 @@ private
      (GNATCOLL.VFS.No_File);
 
    overriding procedure Update (Self : Dummy_Semantic_Tree) is null;
+
+   overriding procedure Update_Async (Self : Dummy_Semantic_Tree) is null;
 
    --------------------
    -- Null constants --

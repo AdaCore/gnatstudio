@@ -15,14 +15,43 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Interfaces.C; use Interfaces.C;
-with String_Utils;
 with Ada.Containers.Generic_Array_Sort;
+
+with Interfaces.C;                      use Interfaces.C;
+with Libclang.Task_Parser_Pool;         use Libclang.Task_Parser_Pool;
+with String_Utils;
+
+with GPS.Kernel.Hooks;
 
 package body Language.Libclang_Tree is
 
+   type Update_Async_Record is new Parse_Callback with record
+      Kernel : Core_Kernel;
+   end record;
+
+   overriding procedure Call
+     (Self : access Update_Async_Record;
+      File : GNATCOLL.VFS.Virtual_File;
+      TU   : Clang_Translation_Unit);
+
    function Node_From_Cursor
      (C : Clang_Cursor; N : Clang_Node) return Semantic_Node'Class;
+
+   ----------
+   -- Call --
+   ----------
+
+   overriding procedure Call
+     (Self : access Update_Async_Record;
+      File : GNATCOLL.VFS.Virtual_File;
+      TU   : Clang_Translation_Unit)
+   is
+      pragma Unreferenced (TU);
+   begin
+      GPS.Kernel.Hooks.Semantic_Tree_Updated_Hook.Run
+        (Kernel => GPS.Kernel.Kernel_Handle (Self.Kernel),
+         File   => File);
+   end Call;
 
    ------------
    -- Filter --
@@ -166,6 +195,21 @@ package body Language.Libclang_Tree is
    begin
       null;
    end Update;
+
+   ------------------
+   -- Update_Async --
+   ------------------
+
+   overriding procedure Update_Async (Self : Abstract_Clang_Tree)
+   is
+      Callback : Parse_Callback_Access := new Update_Async_Record'
+        (Parse_Callback with Kernel => Self.Kernel);
+   begin
+      Enqueue_Translation_Unit
+        (Kernel   => Self.Kernel,
+         File     => Self.File,
+         Callback => Callback);
+   end Update_Async;
 
    ---------------------------
    -- Clang_Node primitives --

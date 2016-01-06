@@ -844,6 +844,15 @@ class Predefined_Hooks:
       :param str name:
         """
 
+    # semantic_tree_updated = 'semantic_tree_updated'
+    def semantic_tree_updated(name,file):
+        """
+      Emitted when the semantic_tree for a file has been updated.
+
+      :param str name:
+      :param GPS.File file:
+        """
+
     # server_config_hook = 'server_config_hook'
     def server_config_hook(name,server,nickname):
         """

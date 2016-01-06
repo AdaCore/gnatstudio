@@ -32,13 +32,16 @@ class Mapping(object):
 class Hook_Type(object):
     '''Describe a type of hook'''
     def __init__(self, params=[], returns=None, return_default=None,
-                 returns_run=-1, descr='', internal_run=False):
+                 returns_run=-1, descr='', internal_run=False,
+                 override_run_from_python=True):
         """
         :param returns_run: the value returned, in Ada, when calling Run.
            By default, this is the same as returns, but could be set to
            None to ignore the returned value.
         :param internal_run: if True, the Run function is generated with a
            special name and should not be called directly by the code.
+        :param override_run_from_python: if False, Run_From_Python procedure
+           will not be overriden
         """
         self.params = params
         self.descr = descr.strip()
@@ -46,6 +49,7 @@ class Hook_Type(object):
         self.returns = returns
         self.return_default = return_default
         self.returns_run = returns if returns_run == -1 else returns_run
+        self.override_run_from_python = override_run_from_python
         if self.descr:
             self.descr = '\n   --  ' + self.descr.replace('\n', '\n   --  ')
 
@@ -866,7 +870,10 @@ Emitted when a word has been added in an editor.\n
 .. seealso:: :func:`GPS.Predefined_Hooks.character_added`'''),
 
     Hook('xref_updated', 'simple_hooks', descr='''
-Emitted when the cross-reference information has been updated.''')
+Emitted when the cross-reference information has been updated.'''),
+
+    Hook('semantic_tree_updated', 'file_hooks', descr='''
+Emitted when the semantic_tree for a file has been updated.''')
 ]
 
 #########################################################################
@@ -1250,9 +1257,14 @@ package body GPS.Kernel.Hooks is
        Watch : access Glib.Object.GObject_Record'Class := null);
    %(run_proc_or_func)s %(run_name)s
       (Self   : %(name)s;
-       Kernel : not null access Kernel_Handle_Record'Class%(params)s)%(returns_run)s;
+       Kernel : not null access Kernel_Handle_Record'Class%(params)s)%(returns_run)s;''' % subst)
+
+        if t.override_run_from_python:
+            f.write('''
    overriding procedure Run_From_Python
-      (Self : %(name)s; Data : in out Callback_Data'Class);%(param_descr)s
+      (Self : %(name)s; Data : in out Callback_Data'Class);''' % subst)
+
+        f.write('''%(param_descr)s
 ''' % subst)
 
         # Output body
@@ -1310,7 +1322,10 @@ package body GPS.Kernel.Hooks is
          end;
       end loop;%(run_exit)s%(returns_body)s
    end %(run_name)s;
+''' % subst)
 
+        if t.override_run_from_python:
+            b.write('''
    ---------------------
    -- Run_From_Python --
    ---------------------
