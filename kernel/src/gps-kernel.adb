@@ -1774,6 +1774,11 @@ package body GPS.Kernel is
       Add_LF : Boolean := True;
       Mode   : Message_Type := Info) is
    begin
+      if Kernel.Is_In_Destruction then
+         Trace (Me, "Message received after destruction: " & Text);
+         return;
+      end if;
+
       if Kernel.Messages = null then
          Append (Kernel.Pending_Messages, Text);
          if Add_LF then
