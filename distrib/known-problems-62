@@ -2,7 +2,7 @@
 Known problems in GPS 6.2 and GNATbench 2.10
 ============================================
 
-Copyright (C) 2013-2015, AdaCore
+Copyright (C) 2013-2016, AdaCore
 
 The following is a listing of known problems in GPS 6.2.x and GNATbench 2.10.x.
 Each entry contains a status line stating when the problem was fixed, and on
@@ -70,6 +70,20 @@ KP-62-OB19-009 GPS: GNATdoc missing --version switch
   Status:     This was fixed in 17.0 on 2015-11-20
 
   Workaround: Use GPS's version switch, since versions are the same
+
+KP-62-OA29-031 WB: fixed ada problems markers not cleared automatically
+
+  Problem:    Ada problem markers created during "compile ada file"
+              action execution are not cleared by "(re)build project" action
+              executions even if the errors are fixed.
+              Ada problem markers created during "(re)build project" action
+              execution cannot be cleared by "compile ada file" action
+              executions.
+
+  Status:     This was fixed in 17.0 on 2016-01-04
+
+  Workaround: clear the markers manually or relaunch the action that had
+              created the markers.
 
 KP-62-OA28-042 GPS: memory leak linked to completions
 
