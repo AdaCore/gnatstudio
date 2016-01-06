@@ -623,7 +623,7 @@ package body Startup_Module is
            (Subpage          => Preferences_Page (Plugin_Page),
             Subpage_Name     => Page_Name,
             Replace_If_Exist => True,
-            Subpage_Type     => Hidden_Page);
+            Subpage_Type     => Integrated_Page);
       end Register_Plugin_Preferences_Page;
 
    begin

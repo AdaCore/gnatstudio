@@ -22,6 +22,11 @@ with GPS.Search;
 
 package GPS.Kernel.Search.Preferences is
 
+   type Preferences_Search_Mode is
+     (Visible_Preferences_Only, Hidden_Preferences_Only);
+   --  Used to determine if the preferences search provider should only among
+   --  the visible preferences or only among the hidden ones.
+
    type Preferences_Search_Provider is new Kernel_Search_Provider
    with private;
 
@@ -40,6 +45,11 @@ package GPS.Kernel.Search.Preferences is
      (Self     : not null access Preferences_Search_Provider) return String
    is
      (Provider_Preferences);
+
+   procedure Set_Search_Mode
+     (Self        : not null access Preferences_Search_Provider;
+      Search_Mode : Preferences_Search_Mode);
+   --  Set the preferences provider search mode
 
    type Preferences_Search_Result is new Kernel_Search_Result with record
       Pref : Default_Preferences.Preference;
@@ -70,6 +80,9 @@ private
       --  True if Pattern has been allocated by the provider, False otherwise.
       Iter               : Preference_Cursor (From_Manager);
       --  The current iterator
+      Search_Mode        : Preferences_Search_Mode := Visible_Preferences_Only;
+      --  The current search mode. The provider searches only among the
+      --  visible preferences by default.
    end record;
 
 end GPS.Kernel.Search.Preferences;

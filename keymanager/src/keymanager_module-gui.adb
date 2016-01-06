@@ -53,6 +53,7 @@ with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Paned;                use Gtk.Paned;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Separator;            use Gtk.Separator;
+with Gtk.Separator_Menu_Item;  use Gtk.Separator_Menu_Item;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Tag;             use Gtk.Text_Tag;
 with Gtk.Text_View;            use Gtk.Text_View;
@@ -136,9 +137,6 @@ package body KeyManager_Module.GUI is
    overriding procedure Create_Toolbar
      (View    : not null access Keys_Editor_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
-   overriding procedure Create_Menu
-     (View    : not null access Keys_Editor_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
    overriding procedure Filter_Changed
      (Self    : not null access Keys_Editor_Record;
       Pattern : in out Search_Pattern_Access);
@@ -150,7 +148,7 @@ package body KeyManager_Module.GUI is
       Formal_MDI_Child   => GPS_MDI_Child_Record,
       Reuse_If_Exist     => True,
       Local_Toolbar      => True,
-      Local_Config       => True,
+      Local_Config       => False,
       Group              => Group_Default,
       Areas              => Gtkada.MDI.Both,
       Default_Width      => 700,
@@ -172,6 +170,10 @@ package body KeyManager_Module.GUI is
      access all Keys_Editor_Preferences_Page_View_Record'Class;
    --  Type used to represent the preferences page view for the keys editor
    --  shortcuts.
+
+   overriding procedure Create_Menu
+     (Self : not null access Keys_Editor_Preferences_Page_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
 
    package Keys_Timeout is new Glib.Main.Generic_Sources (Keys_Editor_View);
 
@@ -1107,11 +1109,15 @@ package body KeyManager_Module.GUI is
    -----------------
 
    overriding procedure Create_Menu
-     (View    : not null access Keys_Editor_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+     (Self : not null access Keys_Editor_Preferences_Page_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      K     : constant Kernel_Handle := View.Kernel;
+      K   : constant Kernel_Handle := Self.Editor.Kernel;
+      Sep : Gtk_Separator_Menu_Item;
    begin
+      Gtk_New (Sep);
+      Menu.Append (Sep);
+
       Append_Menu (Menu, K, Shortcuts_Only);
       Append_Menu (Menu, K, Categories_Pref);
       Append_Menu (Menu, K, Show_Empty_Cat);

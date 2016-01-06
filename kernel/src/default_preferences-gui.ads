@@ -21,6 +21,7 @@
 with Gtk.Frame;              use Gtk.Frame;
 with Gtk.List_Box;           use Gtk.List_Box;
 with Gtk.List_Box_Row;       use Gtk.List_Box_Row;
+with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Size_Group;         use Gtk.Size_Group;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Widget;             use Gtk.Widget;
@@ -38,6 +39,13 @@ package Default_Preferences.GUI is
    --  Type defining a preferences dialog page view.
    --  This is used to define a common API for all the pages views of the
    --  preferences editor dialog.
+
+   procedure Create_Menu
+     (Self : not null access Preferences_Page_View_Record;
+      Menu : not null access Gtk_Menu_Record'Class) is null;
+   --  Called by the preferences dialog editor to build a unique local
+   --  configuration menu.
+   --  Override this function if the page needs a local configuration menu.
 
    type Preferences_Box_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Preferences_Box is access all Preferences_Box_Record'Class;

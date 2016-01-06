@@ -131,6 +131,21 @@ package Generic_Views is
    --  Build a search bar panel, looking like the omnisearch bar, by giving a
    --  custom search provider.
 
+   procedure Override_Search_Provider
+     (Self : not null access View_Record;
+      P    : not null access GPS.Kernel.Search.Kernel_Search_Provider'Class);
+   --  Override the search bar default provider (i.e: the one passed in
+   --  parameter when calling Build_Search).
+
+   procedure Reset_Search_Provider (Self : not null access View_Record);
+   --  Get back to the default search provider (i.e: the one passed in
+   --  parameter when calling Build_Search).
+
+   function Is_Search_Provider_Overridden
+     (Self : not null access View_Record) return Boolean;
+   --  Return True if the search provider is currently overriden, False if the
+   --  the default one is used.
+
    ------------------------------
    -- Search and filter fields --
    ------------------------------
@@ -370,7 +385,8 @@ private
 
    type Search_Panel_Record is new Gtk.Tool_Item.Gtk_Tool_Item_Record
    with record
-      Completion_Entry : Gtkada.Entry_Completion.Gtkada_Entry;
+      Completion_Entry      : Gtkada.Entry_Completion.Gtkada_Entry;
+      Is_Provider_Overriden : Boolean := False;
    end record;
    type Search_Panel is access all Search_Panel_Record'Class;
    --  Type used to create a search bar in the view's local toolbar

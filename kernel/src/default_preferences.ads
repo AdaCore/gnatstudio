@@ -76,9 +76,18 @@ package Default_Preferences is
    --  This is only a model : the way the preferences are stored and displayed
    --  must be defined when extending this type, by overriding its primitives.
 
-   type Preferences_Page_Type is (Visible_Page, Hidden_Page);
+   type Preferences_Page_Type is
+     (Visible_Page, Integrated_Page, Hidden_Page);
    --  Used by the preferences editor dialog to know if a page should be
    --  visible from the editor or not.
+   --
+   --  Visible_Page: denotes the pages that should be displayed by the editor.
+   --
+   --  Integrated_Page: denotes pages that should be displayed within other
+   --  pages (e.g: a specific plugin page can be displayed in a root 'Plugins'
+   --  page). Then, the editor should not create a specific entry for it.
+   --
+   --  Hidden_Page: denotes the page containing all the hidden preferences.
 
    procedure Set_GObject_To_Update
      (Pref   : not null access Preference_Record;
@@ -191,6 +200,12 @@ package Default_Preferences is
      (Self      : not null access Preferences_Editor_Interface;
       Page_Name : String) return Gtk.Widget.Gtk_Widget is abstract;
    --  Return the page view associated with Page_Name.
+
+   function Is_Displaying_Hidden_Preferences
+     (Self : not null access Preferences_Editor_Interface)
+      return Boolean is abstract;
+   --  Return True if the editor is currently displaying hidden preferences,
+   --  False otherwise.
 
    -----------------------
    -- Preferences_Group --
@@ -450,7 +465,7 @@ package Default_Preferences is
      (Manager : access Preferences_Manager_Record'Class;
       Name    : String;
       Default : Boolean;
-      Label   : String := "";
+      Label   : String;
       Doc     : String := "")
       return Boolean_Preference
    is (Create (Manager, Name, Label => Label, Page => "", Doc => Doc,

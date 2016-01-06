@@ -1466,6 +1466,15 @@ package body Gtkada.Entry_Completion is
       Self.GEntry.Set_Tooltip_Markup (Completion.Documentation);
    end Set_Completion;
 
+   ----------------------
+   -- Reset_Completion --
+   ----------------------
+
+   procedure Reset_Completion (Self : not null access Gtkada_Entry_Record) is
+   begin
+      Self.Set_Completion (Self.Default_Completion);
+   end Reset_Completion;
+
    --------------
    -- Set_Text --
    --------------

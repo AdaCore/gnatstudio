@@ -543,6 +543,37 @@ package body Generic_Views is
                            Right_Align => True);
    end Build_Search;
 
+   ------------------------------
+   -- Override_Search_Provider --
+   ------------------------------
+
+   procedure Override_Search_Provider
+     (Self : not null access View_Record;
+      P    : not null access GPS.Kernel.Search.Kernel_Search_Provider'Class) is
+   begin
+      Self.Search.Completion_Entry.Set_Completion (P);
+      Self.Search.Is_Provider_Overriden := True;
+   end Override_Search_Provider;
+
+   ---------------------------
+   -- Reset_Search_Provider --
+   ---------------------------
+
+   procedure Reset_Search_Provider (Self : not null access View_Record) is
+   begin
+      Self.Search.Completion_Entry.Reset_Completion;
+      Self.Search.Is_Provider_Overriden := False;
+   end Reset_Search_Provider;
+
+   -----------------------------------
+   -- Is_Search_Provider_Overridden --
+   -----------------------------------
+
+   function Is_Search_Provider_Overridden
+     (Self : not null access View_Record) return Boolean
+   is
+     (Self.Search.Is_Provider_Overriden);
+
    ------------------
    -- Build_Filter --
    ------------------

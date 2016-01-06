@@ -98,6 +98,10 @@ package Gtkada.Entry_Completion is
        Completion : not null access GPS.Search.Search_Provider'Class);
    --  Override the provider for the completions
 
+   procedure Reset_Completion (Self : not null access Gtkada_Entry_Record);
+   --  Get back to the default provider (i.e: the one passed in parameter
+   --  when calling Gtk_New).
+
    procedure Popup (Self : not null access Gtkada_Entry_Record);
    procedure Popdown (Self : not null access Gtkada_Entry_Record);
    --  Force the display of the completion list (in case it is in a popup)

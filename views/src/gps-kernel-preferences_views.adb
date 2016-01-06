@@ -27,6 +27,8 @@ with Gtk.Enums;                     use Gtk.Enums;
 with Gtk.Event_Box;                 use Gtk.Event_Box;
 with Gtk.List_Box_Row;              use Gtk.List_Box_Row;
 with Gtkada.MDI;                    use Gtkada.MDI;
+with Gtk.Menu;                      use Gtk.Menu;
+with Gtk.Menu_Item;                 use Gtk.Menu_Item;
 with Gtk.Notebook;                  use Gtk.Notebook;
 with Gtk.Paned;                     use Gtk.Paned;
 with Gtk.Scrolled_Window;           use Gtk.Scrolled_Window;
@@ -62,39 +64,10 @@ package body GPS.Kernel.Preferences_Views is
       Pref   : Default_Preferences.Preference);
    --  Called when the preferences have changed
 
-   type GPS_Preferences_Editor_Record is new Generic_Views.View_Record
-     and Preferences_Editor_Interface with record
-      Pages_Tree         : Gtk_Tree_View;
-      Model              : Gtk_Tree_Store;
-      Pages_Notebook     : Gtk_Notebook;
-      Current_Page_Index : Gint;
-      Highlighted_Pref   : Preference;
-   end record;
-   type GPS_Preferences_Editor is
-     access all GPS_Preferences_Editor_Record'Class;
-   --  Preferences editor view record. This record only encapsulates needed
-   --  for callbacks (e.g: Selection_Changed).
-
-   overriding procedure Create_Toolbar
-     (View    : not null access GPS_Preferences_Editor_Record;
-      Toolbar : not null access Gtk_Toolbar_Record'Class);
-   overriding function Get_Widget
-     (Self : not null access GPS_Preferences_Editor_Record)
-      return Gtk.Widget.Gtk_Widget;
-   overriding procedure Display_Page
-     (Self      : not null access GPS_Preferences_Editor_Record;
-      Page_Name : String);
-   overriding procedure Display_Pref
-     (Self      : not null access GPS_Preferences_Editor_Record;
-      Pref      : not null Preference;
-      Highlight : Boolean := False);
-   overriding function Get_Page_View
-     (Self      : not null access GPS_Preferences_Editor_Record;
-      Page_Name : String) return Gtk.Widget.Gtk_Widget;
-   --  See inherited subprograms documentation
-
    type Custom_Preferences_Search_Provider is new Preferences_Search_Provider
    with null record;
+   type Custom_Preferences_Search_Provider_Access is
+     access all Custom_Preferences_Search_Provider'Class;
    --  Extend the GPS.Kernel.Search.Preferences_Search_Provider used by the
    --  omnisearch to have a custom local search bar.
 
@@ -165,6 +138,46 @@ package body GPS.Kernel.Preferences_Views is
    --  We don't want any non-GUI related settings (e.g: no possibilty to change
    --  the providers order).
 
+   type GPS_Preferences_Editor_Record is new Generic_Views.View_Record
+     and Preferences_Editor_Interface with record
+      Pages_Tree           : Gtk_Tree_View;
+      Model                : Gtk_Tree_Store;
+      Pages_Notebook       : Gtk_Notebook;
+      Highlighted_Pref     : Preference;
+      Hidden_Page_Index    : Gint;
+      Provider_Registry    : Search_Provider_Registry_Access;
+   end record;
+   type GPS_Preferences_Editor is
+     access all GPS_Preferences_Editor_Record'Class;
+   --  Preferences editor view record. This record only encapsulates needed
+   --  for callbacks (e.g: Selection_Changed).
+
+   overriding procedure Create_Toolbar
+     (View    : not null access GPS_Preferences_Editor_Record;
+      Toolbar : not null access Gtk_Toolbar_Record'Class);
+   overriding procedure Create_Menu
+     (View    : not null access GPS_Preferences_Editor_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding function Get_Widget
+     (Self : not null access GPS_Preferences_Editor_Record)
+      return Gtk.Widget.Gtk_Widget;
+   overriding procedure Display_Page
+     (Self      : not null access GPS_Preferences_Editor_Record;
+      Page_Name : String);
+   overriding procedure Display_Pref
+     (Self      : not null access GPS_Preferences_Editor_Record;
+      Pref      : not null Preference;
+      Highlight : Boolean := False);
+   overriding function Get_Page_View
+     (Self      : not null access GPS_Preferences_Editor_Record;
+      Page_Name : String) return Gtk.Widget.Gtk_Widget;
+   overriding function Is_Displaying_Hidden_Preferences
+     (Self : not null access GPS_Preferences_Editor_Record)
+      return Boolean
+   is
+     (Self.Pages_Notebook.Get_Current_Page = Self.Hidden_Page_Index);
+   --  See inherited subprograms documentation
+
    function Initialize
      (Self : access GPS_Preferences_Editor_Record'Class) return Gtk_Widget;
    --  Initialize and add all the widgets needed for the
@@ -181,7 +194,7 @@ package body GPS.Kernel.Preferences_Views is
       Formal_MDI_Child          => GPS_MDI_Child_Record,
       Reuse_If_Exist            => True,
       Local_Toolbar             => True,
-      Local_Config              => False,
+      Local_Config              => True,
       Group                     => Group_Default,
       Areas                     => Gtkada.MDI.Both,
       Default_Width             => 800,
@@ -211,6 +224,11 @@ package body GPS.Kernel.Preferences_Views is
    --  True and return this existing node in Page_Iter.
    --  If not and If_Create_If_Needed is True, create a new Gtk_Tree_Iter node
    --  at the right location and return it in Page_Iter.
+
+   procedure On_Show_Advanced_Activate
+     (Widget : access Glib.Object.GObject_Record'Class);
+   --  Called when clicking on the 'Show advanced preferences' item in the
+   --  local toolbar.
 
    --------------------------------------
    -- Create_Preferences_Search_Result --
@@ -314,12 +332,11 @@ package body GPS.Kernel.Preferences_Views is
 
    overriding procedure Create_Toolbar
      (View    : not null access GPS_Preferences_Editor_Record;
-      Toolbar : not null access Gtk_Toolbar_Record'Class) is
-
+      Toolbar : not null access Gtk_Toolbar_Record'Class)
+   is
       Overall_Provider     : access Overall_Preferences_Search_Provider;
       Preferences_Provider : access Custom_Preferences_Search_Provider;
       Plugins_Provider     : access Custom_Plugins_Search_Provider;
-      Registry : Search_Provider_Registry_Access;
    begin
       --  Create the provider for preferences
       Preferences_Provider := new Custom_Preferences_Search_Provider;
@@ -336,11 +353,11 @@ package body GPS.Kernel.Preferences_Views is
       Overall_Provider := new Overall_Preferences_Search_Provider;
       Overall_Provider.Kernel := View.Kernel;
 
-      Registry := new Search_Provider_Registry;
-      Registry.Register (Preferences_Provider);
-      Registry.Register (Plugins_Provider);
+      View.Provider_Registry := new Search_Provider_Registry;
+      View.Provider_Registry.Register (Preferences_Provider);
+      View.Provider_Registry.Register (Plugins_Provider);
 
-      Overall_Provider.Initialize (Registry);
+      Overall_Provider.Initialize (View.Provider_Registry);
 
       View.Build_Search
         (Toolbar        => Toolbar,
@@ -348,6 +365,26 @@ package body GPS.Kernel.Preferences_Views is
          Name           => "preferences_editor_search",
          Case_Sensitive => False);
    end Create_Toolbar;
+
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View    : not null access GPS_Preferences_Editor_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      Item      : Gtk_Menu_Item;
+      Page_View : constant Preferences_Page_View :=
+                     Get_Selected_Page_View (View);
+   begin
+      Gtk.Menu_Item.Gtk_New (Item, "Show advanced preferences...");
+      Menu.Add (Item);
+      Item.On_Activate (On_Show_Advanced_Activate'Access, View);
+
+      --  Append the selected page's menu, if any
+      Page_View.Create_Menu (Menu);
+   end Create_Menu;
 
    ----------------
    -- Get_Widget --
@@ -372,6 +409,18 @@ package body GPS.Kernel.Preferences_Views is
       Page_Iter  : Gtk_Tree_Iter;
       Page_Path  : Gtk_Tree_Path;
    begin
+      Self.Highlighted_Pref := null;
+
+      --  If the hidden preferences page needs to be displayed, unselect the
+      --  currently selected page and tell the notebook to display the hidden
+      --  preferences page.
+      if Page_Name = "" then
+         Self.Pages_Tree.Get_Selection.Unselect_All;
+         Self.Pages_Notebook.Set_Current_Page (Self.Hidden_Page_Index);
+
+         return;
+      end if;
+
       --  Try to get the page containing it
       Page_Found := Find_Page_Iter
         (Self, Page_Iter, Page_Name);
@@ -453,13 +502,11 @@ package body GPS.Kernel.Preferences_Views is
    function Get_Selected_Page_View
      (Self : not null GPS_Preferences_Editor) return Preferences_Page_View
    is
-      Iter      : Gtk_Tree_Iter;
-      M         : Gtk_Tree_Model;
+      Current_Page_Index : constant Gint :=
+                             Self.Pages_Notebook.Get_Current_Page;
    begin
-      Get_Selected (Get_Selection (Self.Pages_Tree), M, Iter);
-
-      return Preferences_Page_View
-        (Self.Pages_Notebook.Get_Nth_Page (Get_Int (M, Iter, 1)));
+      return Preferences_Page_View (Self.Pages_Notebook.Get_Nth_Page
+                                    (Current_Page_Index));
    end Get_Selected_Page_View;
 
    -----------------------
@@ -467,19 +514,38 @@ package body GPS.Kernel.Preferences_Views is
    -----------------------
 
    procedure Selection_Changed (Widget : access Gtk_Widget_Record'Class) is
-      Pref_View : constant GPS_Preferences_Editor :=
-                    GPS_Preferences_Editor (Widget);
-      Iter      : Gtk_Tree_Iter;
-      M         : Gtk_Tree_Model;
+      Pref_View            : constant GPS_Preferences_Editor :=
+                               GPS_Preferences_Editor (Widget);
+      Iter                 : Gtk_Tree_Iter;
+      M                    : Gtk_Tree_Model;
+      Page_Index           : Gint;
+      Preferences_Provider : Custom_Preferences_Search_Provider_Access;
    begin
       Get_Selected (Get_Selection (Pref_View.Pages_Tree), M, Iter);
 
       if Iter /= Null_Iter then
          --  Get the newly selected page index from the model and set it as the
          --  current page to display for the notebook.
-         Pref_View.Current_Page_Index := Get_Int (M, Iter, 1);
+         Page_Index := Get_Int (M, Iter, 1);
          Pref_View.Pages_Notebook.Set_Current_Page
-           (Pref_View.Current_Page_Index);
+           (Page_Index);
+
+         if Pref_View.Provider_Registry = null then
+            return;
+         end if;
+
+         --  Tell the preferences search provider to search only for visible
+         --  preferences.
+         Preferences_Provider :=
+           Custom_Preferences_Search_Provider_Access
+             (Pref_View.Provider_Registry.Get ("Preferences"));
+            Preferences_Provider.Set_Search_Mode (Visible_Preferences_Only);
+
+         --  Use the default provider again (visible preferences + plugins) if
+         --  it has been previously overriden.
+         if Pref_View.Is_Search_Provider_Overridden then
+            Pref_View.Reset_Search_Provider;
+         end if;
       end if;
    end Selection_Changed;
 
@@ -574,6 +640,7 @@ package body GPS.Kernel.Preferences_Views is
       Page                    : Preferences_Page;
       Page_Iter               : Gtk_Tree_Iter;
       Page_Curs               : Page_Cursor := Manager.Get_First_Reference;
+      Page_Type               : Preferences_Page_Type;
       Page_Found              : Boolean;
       Backup_Created          : Boolean;
       Backup_File             : constant Virtual_File :=
@@ -637,15 +704,26 @@ package body GPS.Kernel.Preferences_Views is
          Page := Get_Page (Page_Curs);
          exit when Page = null;
 
-         --  Don't display pages without names
-         if Page.Get_Page_Type = Visible_Page then
-            Page_Found := Find_Page_Iter (Editor           => Self,
-                                          Page_Iter        => Page_Iter,
-                                          Page_Name        => Page.Get_Name,
-                                          Create_If_Needed => True);
+         Page_Type := Page.Get_Page_Type;
 
-            Self.Pages_Notebook.Append_Page (Page.Get_Widget (Manager), null);
-         end if;
+         --  Create entries only for the pages that should be visible by
+         --  default.
+         case Page_Type is
+            when Visible_Page =>
+               Page_Found := Find_Page_Iter (Editor           => Self,
+                                             Page_Iter        => Page_Iter,
+                                             Page_Name        => Page.Get_Name,
+                                             Create_If_Needed => True);
+
+               Self.Pages_Notebook.Append_Page
+                 (Page.Get_Widget (Manager), null);
+            when Hidden_Page =>
+               Self.Hidden_Page_Index := Self.Pages_Notebook.Get_N_Pages;
+               Self.Pages_Notebook.Append_Page
+                 (Page.Get_Widget (Manager), null);
+            when others =>
+               null;
+         end case;
 
          Next (Page_Curs);
       end loop;
@@ -664,6 +742,32 @@ package body GPS.Kernel.Preferences_Views is
 
       return Gtk_Widget (Self);
    end Initialize;
+
+   -------------------------------
+   -- On_Show_Advanced_Activate --
+   -------------------------------
+
+   procedure On_Show_Advanced_Activate
+     (Widget : access Glib.Object.GObject_Record'Class)
+   is
+      Editor               : constant GPS_Preferences_Editor :=
+                               GPS_Preferences_Editor (Widget);
+      Preferences_Provider : Custom_Preferences_Search_Provider_Access;
+   begin
+      --  Display the hidden preferences page
+      Editor.Display_Page ("");
+
+      --  Tell the preferences search provider to search only for visible
+      --  preferences.
+      Preferences_Provider :=
+        Custom_Preferences_Search_Provider_Access
+          (Editor.Provider_Registry.Get ("Preferences"));
+      Preferences_Provider.Set_Search_Mode (Hidden_Preferences_Only);
+
+      --  Use only the preferences provider while being in the advanced
+      --  preferences page.
+      Editor.Override_Search_Provider (Preferences_Provider);
+   end On_Show_Advanced_Activate;
 
    ----------------
    -- On_Destroy --
