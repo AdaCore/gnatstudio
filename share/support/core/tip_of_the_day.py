@@ -436,9 +436,7 @@ class Tip:
 
         # save the current tip number
 
-        GPS.Preference(
-            "Plugins/tip of the day/tip-of-the-day-number").set(
-                self.tip_number)
+        GPS.Preference("tip-of-the-day-number").set(self.tip_number)
 
         # take into account the checkbox
 
@@ -597,7 +595,7 @@ class Tip:
 
 # Register preferences
 
-GPS.Preference("Plugins/tip of the day/tip-of-the-day-number").create(
+GPS.Preference("tip-of-the-day-number").create(
     "Tip of the day #",
     "integer",
     "The last tip of the day displayed",
@@ -623,9 +621,7 @@ def on_gps_started(hook):
         if t.get_transient_for() == top:
             return
 
-    t = Tip(results, top,
-            GPS.Preference(
-                "Plugins/tip of the day/tip-of-the-day-number").get())
+    t = Tip(results, top, GPS.Preference("tip-of-the-day-number").get())
     t.on_next_button(None)
 
 GPS.Hook("gps_started").add(on_gps_started)

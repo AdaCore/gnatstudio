@@ -1392,7 +1392,8 @@ package body Default_Preferences is
       Pref.Label := new String'(Label);
 
       Free (Pref.Path);
-      if Path /= "" and then Path /= "/" then
+
+      if Path /= "" and then Path /= "./" then
          Pref.Path := new String'(Path);
          Extract_Page_And_Group_Names (Path       => Path,
                                        Page_Name  => Pref.Page_Name,
