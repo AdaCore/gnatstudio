@@ -1450,8 +1450,8 @@ package body Codefix_Module is
       Remove_Policy := Codefix_Remove_Policy_Preferences.Create
         (Get_Preferences (Kernel),
          Name  => "Remove-Policy-When-Fixing",
-         Label => -"Remove policy when fixing code",
-         Doc   => -("Prefered way to fix code when part have to be " &
+         Label => -"Code fixing removal policy",
+         Doc   => -("Prefered way to fix code when a part has to be " &
            "removed."),
          Page    => -"General:Behavior",
          Default => Always_Remove);

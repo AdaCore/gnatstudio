@@ -475,8 +475,6 @@ package body GPS.Kernel.Preferences is
          Label   => -"Fixed view font",
          Page    => -"General:Appearance");
 
-      GPS.Kernel.Charsets.Register_Preferences (Kernel);
-
       Use_Native_Dialogs := Create
         (Manager => Kernel.Preferences,
          Name    => "General-Use-Native-Dialogs",
@@ -521,26 +519,6 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Page    => -"General:Behavior");
 
-      Save_Editor_Desktop := Editor_Desktop_Policy_Prefs.Create
-        (Manager => Kernel.Preferences,
-         Name    => "General-Editor-Desktop-Policy",
-         Label   => "Save editor in desktop",
-         Doc     => -"When to save source editors in the desktop",
-         Page    => -"General:Behavior",
-         Default => From_Project);
-
-      Multi_Language_Builder := Multi_Language_Builder_Policy_Prefs.Create
-        (Manager => Kernel.Preferences,
-         Name    => "General-Default-Builder",
-         Label   => -"Default builder",
-         Doc     =>
-         -("GPS default builder choice:" & ASCII.LF &
-           "  - gprbuild" & ASCII.LF &
-           "  - gnatmake (not recommended, not supported for "
-           & "multi-language builds)"),
-         Page    => -"General:Behavior",
-         Default => Default_Builder);
-
       Hyper_Mode := Create
         (Manager => Kernel.Preferences,
          Name    => "Hyper-Mode",
@@ -558,6 +536,28 @@ package body GPS.Kernel.Preferences is
          Doc     => -("Whether GPS should display the Tip of the Day dialog"),
          Label   => -"Tip of the Day",
          Page    => -"General:Behavior");
+
+      Multi_Language_Builder := Multi_Language_Builder_Policy_Prefs.Create
+        (Manager => Kernel.Preferences,
+         Name    => "General-Default-Builder",
+         Label   => -"Default builder",
+         Doc     =>
+         -("GPS default builder choice:" & ASCII.LF &
+           "  - gprbuild" & ASCII.LF &
+           "  - gnatmake (not recommended, not supported for "
+           & "multi-language builds)"),
+         Page    => -"General:Behavior",
+         Default => Default_Builder);
+
+      Save_Editor_Desktop := Editor_Desktop_Policy_Prefs.Create
+        (Manager => Kernel.Preferences,
+         Name    => "General-Editor-Desktop-Policy",
+         Label   => "Save editor in desktop",
+         Doc     => -"When to save source editors in the desktop",
+         Page    => -"General:Behavior",
+         Default => From_Project);
+
+      GPS.Kernel.Charsets.Register_Preferences (Kernel);
 
       -- Source Editor --
 
