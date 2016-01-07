@@ -88,6 +88,16 @@ KP-62-OB19-009 GPS: GNATdoc missing --version switch
 
   Workaround: Use GPS's version switch, since versions are the same
 
+KP-62-OB18-028 GPS: Replace All corrupts edited source file
+
+  Problem:    When the search pattern is longer than the replace string,
+              "Replace All" is not working properly and could corrupt the
+              edited file.
+
+  Status:     This was fixed in 17.0 on 2015-11-25
+
+  Workaround: Replace occurences one by one using "Replace & Find" function.
+
 KP-62-OA29-031 WB: fixed ada problems markers not cleared automatically
 
   Problem:    Ada problem markers created during "compile ada file"
