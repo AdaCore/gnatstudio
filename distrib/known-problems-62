@@ -25,6 +25,23 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P104-018 WB: multiple definition errors when building RTP on Workbench-4
+
+  Problem:    A real time process (RTP) application converted to an ada project
+              cannot be built without manual modification.
+              Building the project is failing because a lot of symbols are
+              defined more than once.
+              Ex: __argc, __argv, _start, environ, etc...
+
+  Status:     This was fixed in 17.0 on 2016-01-06
+
+  Workaround: Edit the GNAT project file (gpr) and add "-r" and "-nostdlib"
+              switches to the linker package.
+
+              package Linker is
+                 for Default_Switches ("ada") use ("-r", "-nostdlib");
+              end Linker;
+
 KP-62-OC17-015 WB: error markers always at top of C/C++ files
 
   Problem:    Depending on the C/C++ compiler used, error markers added to
