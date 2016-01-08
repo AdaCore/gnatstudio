@@ -113,6 +113,9 @@ package body Default_Preferences is
    procedure Free (Page : in out Preferences_Page);
    --  Free the memory associated with Page
 
+   procedure Free (Group : in out Preferences_Group);
+   --  Free the memory associated with Group
+
    procedure Free (Pref : in out Preference);
    --  Free the memory associated with Pref
 
@@ -191,11 +194,11 @@ package body Default_Preferences is
    --  for instance "Consolas 10, Courier New 9, Courier 10".
    --  The first font that matches a registered family is returned.
 
-   procedure Copy_Subpages_And_Prefs
+   procedure Copy_Subpages_And_Groups
      (Source : not null Preferences_Page;
       Dest   : not null Preferences_Page);
-   --  Add references for all the preferences and subpages registered in Source
-   --  in Dest.
+   --  Add references for all the groups and subpages registered in Source in
+   --  Dest.
 
    procedure Extract_Page_And_Group_Names
      (Path       : String;
@@ -227,6 +230,15 @@ package body Default_Preferences is
    --  Insert Pref at the end of the the given list.
    --  If Replace_If_Exist is True, delete the previous Pref associated with
    --  Name in the given list, and insert Pref instead. Otherwise, do nothing.
+
+   procedure Insert_Group
+     (Groups           : in out Groups_Lists.List;
+      Group            : not null Preferences_Group;
+      Replace_If_Exist : Boolean := False);
+   --  Insert Group in the given list, using its priority to determine where it
+   --  should be inserted in the given list.
+   --  If Replace_If_Exist is True, delete the previous Group associated with
+   --  Name in the given list, and insert Group instead. Otherwise, do nothing.
 
    procedure Insert_Page
      (Pages            : in out Pages_Lists.List;
@@ -310,6 +322,43 @@ package body Default_Preferences is
       Preferences.Append (Pref);
    end Insert_Pref;
 
+   ------------------
+   -- Insert_Group --
+   ------------------
+
+   procedure Insert_Group
+     (Groups            : in out Groups_Lists.List;
+      Group             : not null Preferences_Group;
+      Replace_If_Exist  : Boolean := False)
+   is
+      Group_Iter : Groups_Lists.Cursor;
+   begin
+      Group_Iter := Groups.Find (Group);
+
+      if Groups_Lists.Has_Element (Group_Iter) then
+         if Replace_If_Exist then
+            Group.Preferences :=
+              Groups_Lists.Element (Group_Iter).Preferences.Copy;
+            Groups.Delete (Group_Iter);
+         else
+            return;
+         end if;
+      end if;
+
+      Group_Iter := Groups.First;
+
+      --  Insert the Group according to its priority
+      while Groups_Lists.Has_Element (Group_Iter)
+        and then Group.Priority <= Groups_Lists.Element (Group_Iter).Priority
+      loop
+         Groups_Lists.Next (Group_Iter);
+      end loop;
+
+      Groups_Lists.Insert (Container => Groups,
+                           Before    => Group_Iter,
+                           New_Item  => Group);
+   end Insert_Group;
+
    -----------------
    -- Insert_Page --
    -----------------
@@ -325,7 +374,9 @@ package body Default_Preferences is
 
       if Pages_Lists.Has_Element (Page_Iter) then
          if Replace_If_Exist then
-            Copy_Subpages_And_Prefs (Pages_Lists.Element (Page_Iter), Page);
+            Copy_Subpages_And_Groups
+              (Source => Pages_Lists.Element (Page_Iter),
+               Dest   => Page);
             Pages.Delete (Page_Iter);
          else
             return;
@@ -409,24 +460,25 @@ package body Default_Preferences is
       end if;
    end Extract_Page_And_Group_Names;
 
-   -----------------------------
-   -- Copy_Subpages_And_Prefs --
-   -----------------------------
+   ------------------------------
+   -- Copy_Subpages_And_Groups --
+   ------------------------------
 
-   procedure Copy_Subpages_And_Prefs
+   procedure Copy_Subpages_And_Groups
      (Source : not null Preferences_Page;
       Dest   : not null Preferences_Page) is
    begin
       --  Copy the subpages
       Dest.Subpages := Source.Subpages.Copy;
 
-      --  Copy the preferences
+      --  Copy the groups of preferences
       for Group of Source.Groups loop
-         for Pref of Group.Preferences loop
-            Dest.Add_Pref (Pref);
-         end loop;
+         Dest.Register_Group (Name             => Group.Get_Name,
+                              Group            => Group,
+                              Priority         => Group.Priority,
+                              Replace_If_Exist => False);
       end loop;
-   end Copy_Subpages_And_Prefs;
+   end Copy_Subpages_And_Groups;
 
    ---------------------------
    -- Set_GObject_To_Update --
@@ -633,6 +685,20 @@ package body Default_Preferences is
    -- Free --
    ----------
 
+   procedure Free (Group : in out Preferences_Group) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Preferences_Group_Record'Class, Preferences_Group);
+   begin
+      if Group /= null then
+         Free (Group.all);
+         Unchecked_Free (Group);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (Page : in out Preferences_Page)
    is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -767,65 +833,14 @@ package body Default_Preferences is
    --------------
 
    procedure Add_Pref
-     (Self : not null access Preferences_Page_Record;
-      Pref : not null Preference)
-   is
-      Group_Name : constant String := Get_Group_Name (Pref);
-      Group      : Preferences_Group;
+     (Self : not null access Preferences_Group_Record;
+      Pref : not null Preference) is
    begin
-      --  Find or create the group that should contain the preference
-      Group := Find_Group (Groups => Self.Groups,
-                           Name   => Group_Name);
-
-      if Group = null then
-         Group := new Preferences_Group_Record;
-
-         if Group_Name /= "" then
-            Group.Name := new String'(Group_Name);
-         end if;
-
-         Self.Groups.Append (Group);
-      end if;
-
       --  If a preference is already associated to this name, replace it.
-      --  If not, insert it to the preferences map.
-      Insert_Pref (Preferences      => Group.Preferences,
+      --  If not, insert it to the preferences list.
+      Insert_Pref (Preferences      => Self.Preferences,
                    Pref             => Pref,
                    Replace_If_Exist => True);
-   end Add_Pref;
-
-   --------------
-   -- Add_Pref --
-   --------------
-
-   procedure Add_Pref
-     (Self       : not null access Preferences_Page_Record;
-      Pref       : not null Preference;
-      Group_Name : String)
-   is
-      Old_Path    : GNAT.Strings.String_Access;
-      Delim_Index : Integer;
-   begin
-      Old_Path := Pref.Path;
-      Delim_Index := Old_Path'First;
-
-      Skip_To_Char (Old_Path.all,
-                    Delim_Index,
-                   ':');
-
-      if Delim_Index > Old_Path'Last then
-         Pref.Path := new String'(Old_Path.all & ':' & Group_Name);
-      else
-         Pref.Path :=
-           new String'(Old_Path.all (Old_Path'First .. Delim_Index) &
-                         Group_Name);
-      end if;
-
-      Free (Pref.Group_Name);
-      Pref.Group_Name := new String'(Group_Name);
-
-      Free (Old_Path);
-      Self.Add_Pref (Pref);
    end Add_Pref;
 
    -----------------
@@ -833,18 +848,29 @@ package body Default_Preferences is
    -----------------
 
    procedure Remove_Pref
-     (Self : not null access Preferences_Page_Record;
+     (Self : not null access Preferences_Group_Record;
       Pref : not null Preference)
    is
-      Group : constant Preferences_Group
-        := Find_Group (Groups => Self.Groups,
-                       Name   => Get_Group_Name (Pref));
-      Pref_Iter : Preferences_Lists.Cursor := Group.Preferences.Find (Pref);
+      Pref_Iter : Preferences_Lists.Cursor := Self.Preferences.Find (Pref);
    begin
       if Preferences_Lists.Has_Element (Pref_Iter) then
-         Group.Preferences.Delete (Pref_Iter);
+         Self.Preferences.Delete (Pref_Iter);
       end if;
    end Remove_Pref;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Self : in out Preferences_Group_Record) is
+   begin
+      for Pref of Self.Preferences loop
+         Free (Pref);
+      end loop;
+
+      Self.Preferences.Clear;
+      Free (Self.Name);
+   end Free;
 
    ----------
    -- Free --
@@ -854,13 +880,9 @@ package body Default_Preferences is
      (Self : in out Preferences_Page_Record) is
    begin
       for Group of Self.Groups loop
-         for Pref of Group.Preferences loop
-            Free (Pref);
-         end loop;
-
-         Group.Preferences.Clear;
-         Free (Group.Name);
+         Free (Group);
       end loop;
+
       Self.Groups.Clear;
 
       for Subpage of Self.Subpages loop
@@ -1276,12 +1298,65 @@ package body Default_Preferences is
       end if;
    end Get_Pref_From_Name;
 
+   --------------------
+   -- Register_Group --
+   --------------------
+
+   procedure Register_Group
+     (Self             : not null access Preferences_Page_Record;
+      Name             : String;
+      Group            : not null access Preferences_Group_Record'Class;
+      Priority         : Integer := -1;
+      Replace_If_Exist : Boolean := False)
+   is
+
+   begin
+      --  Set the group's attributes
+      Free (Group.Name);
+
+      if Name /= "" then
+         Group.Name := new String'(Name);
+      end if;
+
+      Group.Priority := Priority;
+
+      --  Insert the group in the page model
+      Insert_Group (Groups           => Self.Groups,
+                    Group            => Group,
+                    Replace_If_Exist => Replace_If_Exist);
+   end Register_Group;
+
+   --------------------------
+   -- Get_Registered_Group --
+   --------------------------
+
+   function Get_Registered_Group
+     (Self             : not null access Preferences_Page_Record'Class;
+      Name             : String;
+      Create_If_Needed : Boolean := False) return Preferences_Group
+   is
+      Group : Preferences_Group;
+   begin
+      Group := Find_Group (Groups => Self.Groups,
+                           Name   => Name);
+
+      if Group /= null then
+         return Group;
+      elsif Create_If_Needed then
+         Group := new Preferences_Group_Record;
+         Self.Register_Group (Name             => Name,
+                              Group            => Group);
+      end if;
+
+      return Group;
+   end Get_Registered_Group;
+
    -------------------
    -- Register_Page --
    -------------------
 
    procedure Register_Page
-     (Self             : not null access Preferences_Manager_Record'Class;
+     (Self             : not null access Preferences_Manager_Record;
       Name             : String;
       Page             : not null Preferences_Page;
       Priority         : Integer := -1;
@@ -1328,10 +1403,9 @@ package body Default_Preferences is
             Page := new Default_Preferences_Page_Record;
             Self.Register_Page (Name             => Name,
                                 Page             => Page);
-            return Page;
-         else
-            return null;
          end if;
+
+         return Page;
       else
          declare
             Root_Page_Name : constant String := Get_Root_Page (Name);
@@ -1364,10 +1438,12 @@ package body Default_Preferences is
       Name, Label, Path, Doc : String;
       Pref                   : not null access Preference_Record'Class)
    is
-      Old_Pref        : Preference :=
-                          Manager.Get_Pref_From_Name (Name, False);
-      Old_Page        : Preferences_Page;
-      Registered_Page : Preferences_Page;
+      Old_Pref         : Preference :=
+                           Manager.Get_Pref_From_Name (Name, False);
+      Old_Page         : Preferences_Page;
+      Old_Group        : Preferences_Group;
+      Registered_Page  : Preferences_Page;
+      Registered_Group : Preferences_Group;
    begin
       --  If the preference was already in the list, remove the old value.
       --  It was probably inserted when reading the preferences file, which is
@@ -1375,8 +1451,9 @@ package body Default_Preferences is
       --  on the actual registration of preferences by the various modules, so
       --  that the preferences dialog is always displayed in the same order.
       if Old_Pref /= null then
-         Old_Page := Get_Registered_Page (Manager, Get_Page_Name (Old_Pref));
-         Old_Page.Remove_Pref (Old_Pref);
+         Old_Page := Get_Registered_Page (Manager, Old_Pref.Get_Page_Name);
+         Old_Group := Get_Registered_Group (Old_Page, Old_Pref.Get_Group_Name);
+         Old_Group.Remove_Pref (Old_Pref);
          Preferences_Maps.Delete (Manager.Preferences, Old_Pref.Get_Name);
 
          if Pref /= Old_Pref then
@@ -1413,8 +1490,15 @@ package body Default_Preferences is
          Name             => Pref.Get_Page_Name,
          Create_If_Needed => True);
 
-      --  Add the preference to the already/newly registered page
-      Registered_Page.Add_Pref (Pref);
+      --  Get the group in which we want to insert the preference. Create one
+      --  at the right location if needed.
+      Registered_Group := Get_Registered_Group
+        (Self             => Registered_Page,
+         Name             => Pref.Get_Group_Name,
+         Create_If_Needed => True);
+
+      --  Add the preference to its group
+      Registered_Group.Add_Pref (Pref);
    end Register;
 
    --------------

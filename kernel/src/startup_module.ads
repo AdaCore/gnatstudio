@@ -59,9 +59,12 @@ package Startup_Module is
      access all Plugin_Preferences_Page_Record'Class;
    --  Type used for plugin preferences pages.
 
-   overriding procedure Add_Pref
-     (Self : not null access Plugin_Preferences_Page_Record;
-      Pref : not null Preference);
+   overriding procedure Register_Group
+     (Self             : not null access Plugin_Preferences_Page_Record;
+      Name             : String;
+      Group            : not null access Preferences_Group_Record'Class;
+      Priority         : Integer := -1;
+      Replace_If_Exist : Boolean := False);
    --  See inherited documentation.
 
    overriding function Get_Widget

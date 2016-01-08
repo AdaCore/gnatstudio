@@ -440,24 +440,31 @@ package body Startup_Module is
       return Gtk_Widget (Editor);
    end Get_Widget;
 
-   --------------
-   -- Add_Pref --
-   --------------
+   --------------------
+   -- Register_Group --
+   --------------------
 
-   overriding procedure Add_Pref
-     (Self : not null access Plugin_Preferences_Page_Record;
-      Pref : not null Preference) is
+   overriding procedure Register_Group
+     (Self             : not null access Plugin_Preferences_Page_Record;
+      Name             : String;
+      Group            : not null access Preferences_Group_Record'Class;
+      Priority         : Integer := -1;
+      Replace_If_Exist : Boolean := False) is
    begin
-      --  Add automatically to a group called 'Preferences' if no group has
-      --  been specified when registering this preference
-      if Get_Group_Name (Pref) = "" then
-         Preferences_Page_Record (Self.all).Add_Pref
-           (Pref       => Pref,
-            Group_Name => "Preferences");
+      if Name /= "" then
+         Preferences_Page_Record (Self.all).Register_Group
+           (Name             => Name,
+            Group            => Group,
+            Priority         => Priority,
+            Replace_If_Exist => Replace_If_Exist);
       else
-         Preferences_Page_Record (Self.all).Add_Pref (Pref);
+         Preferences_Page_Record (Self.all).Register_Group
+           (Name             => "Preferences",
+            Group            => Group,
+            Priority         => Priority,
+            Replace_If_Exist => Replace_If_Exist);
       end if;
-   end Add_Pref;
+   end Register_Group;
 
    ----------------
    -- Get_Widget --

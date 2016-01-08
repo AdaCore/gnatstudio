@@ -64,7 +64,7 @@ package Default_Preferences is
    --  Interface defining a common API for all the preferences editor
    --  widgets.
 
-   type Preferences_Group_Record is abstract tagged private;
+   type Preferences_Group_Record is tagged private;
    type Preferences_Group is access all Preferences_Group_Record'Class;
    --  Type used to represent a group of preferences.
    --  Preferences groups are used to gather preferences within a same page,
@@ -151,7 +151,7 @@ package Default_Preferences is
    --  automatically when using one of the Create functions below.
 
    procedure Register_Page
-     (Self             : not null access Preferences_Manager_Record'Class;
+     (Self             : not null access Preferences_Manager_Record;
       Name             : String;
       Page             : not null Preferences_Page;
       Priority         : Integer := -1;
@@ -215,6 +215,19 @@ package Default_Preferences is
      (Self : not null access Preferences_Group_Record) return String;
    --  Return the group's name.
 
+   procedure Add_Pref
+     (Self : not null access Preferences_Group_Record;
+      Pref : not null Preference);
+   --  Add a new preference to the given group.
+
+   procedure Remove_Pref
+     (Self : not null access Preferences_Group_Record;
+      Pref : not null Preference);
+   --  Remove Pref of the given group.
+
+   procedure Free (Self : in out Preferences_Group_Record);
+   --  Free the memory associated with the given group.
+
    ----------------------
    -- Preferences_Page --
    ----------------------
@@ -254,31 +267,36 @@ package Default_Preferences is
    --  Create_If_Needed is False. Otherwise, create and register a default
    --  subpage for the given name.
 
-   procedure Add_Pref
-     (Self : not null access Preferences_Page_Record;
-      Pref : not null Preference);
-   --  Add a new preference to the given page.
+   procedure Register_Group
+     (Self             : not null access Preferences_Page_Record;
+      Name             : String;
+      Group            : not null access Preferences_Group_Record'Class;
+      Priority         : Integer := -1;
+      Replace_If_Exist : Boolean := False);
+   --  Register a new group in the given preferences page.
+   --  Priority is used to order the groups in their respective page, in
+   --  decreasing order.
+   --  If Replace_If_Exist is True and if an association for this name already
+   --  exists, replace the group associated to Name with the one given in
+   --  parameter and copy the preferences registered in the previous
+   --  group.
 
-   procedure Add_Pref
-     (Self       : not null access Preferences_Page_Record;
-      Pref       : not null Preference;
-      Group_Name : String);
-   --  Add a new preference to the given page, inside the given group.
-   --  If Pref had already a group mentioned in its Path, replace it by
-   --  Group_Name.
-
-   procedure Remove_Pref
-     (Self : not null access Preferences_Page_Record;
-      Pref : not null Preference);
-   --  Remove Pref of the given page.
-
-   procedure Free (Self : in out Preferences_Page_Record);
-   --  Free the memory associated with Page.
+   function Get_Registered_Group
+     (Self             : not null access Preferences_Page_Record'Class;
+      Name             : String;
+      Create_If_Needed : Boolean := False) return Preferences_Group;
+   --  Return the group registered in the given Page for this name.
+   --  If no group has been registered for this name, return null if
+   --  Create_If_Needed is False. Otherwise, create and register a new group
+   --  and return it.
 
    function Get_Root_Page (Page_Name : String) return String;
    --  Return the root page for a given page name (e.g: for "Editor/Ada/",
    --  return "Editor/").
    --  Return "" if Page_Name refers already to a root page.
+
+   procedure Free (Self : in out Preferences_Page_Record);
+   --  Free the memory associated with the given page.
 
    ------------------------------
    -- Default_Preferences_Page --
@@ -754,8 +772,12 @@ private
       Name        : GNAT.Strings.String_Access;
       --  Group's name.
 
+      Priority    : Integer;
+      --  Group's priority. This is used to sort the groups according to the
+      --  order we want to display it.
+
       Preferences : Preferences_Lists.List;
-      --  Map of preferences belonging to this group.
+      --  List of preferences belonging to this group.
    end record;
 
    package Groups_Maps is new Ada.Containers.Indefinite_Hashed_Maps
