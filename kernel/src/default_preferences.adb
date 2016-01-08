@@ -307,11 +307,12 @@ package body Default_Preferences is
       Pref             : not null Preference;
       Replace_If_Exist : Boolean := False)
    is
+      use Preferences_Lists;
       Pref_Iter : Preferences_Lists.Cursor;
    begin
       Pref_Iter := Preferences.Find (Pref);
 
-      if Preferences_Lists.Has_Element (Pref_Iter) then
+      if Has_Element (Pref_Iter) then
          if Replace_If_Exist then
             Preferences.Delete (Pref_Iter);
          else
@@ -319,7 +320,18 @@ package body Default_Preferences is
          end if;
       end if;
 
-      Preferences.Append (Pref);
+      Pref_Iter := Preferences.First;
+
+      --  Insert the Pref according to its priority
+      while Has_Element (Pref_Iter)
+        and then Pref.Priority <= Element (Pref_Iter).Priority
+      loop
+         Next (Pref_Iter);
+      end loop;
+
+      Insert (Container => Preferences,
+              Before    => Pref_Iter,
+              New_Item  => Pref);
    end Insert_Pref;
 
    ------------------
@@ -900,7 +912,8 @@ package body Default_Preferences is
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
       Name, Label, Page, Doc    : String;
-      Minimum, Maximum, Default : Integer)
+      Minimum, Maximum, Default : Integer;
+      Priority                  : Integer := -1)
       return Integer_Preference
    is
       Pref : Preference :=
@@ -923,7 +936,7 @@ package body Default_Preferences is
       Integer_Preference (Pref).Default := Default;
       Integer_Preference (Pref).Int_Min_Value := Minimum;
       Integer_Preference (Pref).Int_Max_Value := Maximum;
-      Register (Manager, Name, Label, Page, Doc, Pref);
+      Register (Manager, Name, Label, Page, Doc, Pref, Priority);
 
       return Integer_Preference (Pref);
    end Create;
@@ -935,7 +948,8 @@ package body Default_Preferences is
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
       Name, Label, Page, Doc    : String;
-      Default                   : Boolean)
+      Default                   : Boolean;
+      Priority                  : Integer := -1)
       return Boolean_Preference
    is
       Pref : Preference :=
@@ -960,7 +974,7 @@ package body Default_Preferences is
       end if;
 
       Boolean_Preference (Pref).Default := Default;
-      Register (Manager, Name, Label, Page, Doc, Pref);
+      Register (Manager, Name, Label, Page, Doc, Pref, Priority);
       return Boolean_Preference (Pref);
    end Create;
 
@@ -972,7 +986,8 @@ package body Default_Preferences is
      (Manager                   : access Preferences_Manager_Record'Class;
       Name, Label, Page, Doc    : String;
       Default                   : String;
-      Multi_Line                : Boolean := False)
+      Multi_Line                : Boolean := False;
+      Priority                  : Integer := -1)
       return String_Preference
    is
       Pref : Preference :=
@@ -990,7 +1005,8 @@ package body Default_Preferences is
       end if;
 
       String_Preference (Pref).Multi_Line := Multi_Line;
-      Register (Manager, Name, Label, Page, Doc, Pref);  --  override previous
+      --  override previous
+      Register (Manager, Name, Label, Page, Doc, Pref, Priority);
       return String_Preference (Pref);
    end Create;
 
@@ -1001,7 +1017,8 @@ package body Default_Preferences is
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
       Name, Label, Page, Doc    : String;
-      Default                   : String)
+      Default                   : String;
+      Priority                  : Integer := -1)
       return Color_Preference
    is
       Pref : Preference :=
@@ -1023,7 +1040,7 @@ package body Default_Preferences is
       end if;
 
       Color_Preference (Pref).Default := From_String (Default);
-      Register (Manager, Name, Label, Page, Doc, Pref);
+      Register (Manager, Name, Label, Page, Doc, Pref, Priority);
       return Color_Preference (Pref);
    end Create;
 
@@ -1034,7 +1051,8 @@ package body Default_Preferences is
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
       Name, Label, Page, Doc    : String;
-      Default                   : String)
+      Default                   : String;
+      Priority                  : Integer := -1)
       return Font_Preference
    is
       Pref : Preference :=
@@ -1056,7 +1074,7 @@ package body Default_Preferences is
       end if;
 
       Font_Preference (Pref).Default := From_Multi_String (Default);
-      Register (Manager, Name, Label, Page, Doc, Pref);
+      Register (Manager, Name, Label, Page, Doc, Pref, Priority);
       return Font_Preference (Pref);
    end Create;
 
@@ -1069,7 +1087,8 @@ package body Default_Preferences is
       Name, Label, Page, Doc    : String;
       Default_Font              : String;
       Default_Fg                : String;
-      Default_Bg                : String)
+      Default_Bg                : String;
+      Priority                  : Integer := -1)
       return Style_Preference
    is
       Result : constant Style_Preference := new Style_Preference_Record;
@@ -1083,7 +1102,7 @@ package body Default_Preferences is
       Result.Font_Descr := From_Multi_String (Default_Font);
       Result.Font_Default := Copy (Result.Font_Descr);
 
-      Register (Manager, Name, Label, Page, Doc, Result);
+      Register (Manager, Name, Label, Page, Doc, Result, Priority);
       return Result;
    end Create;
 
@@ -1097,7 +1116,8 @@ package body Default_Preferences is
       Base                      : Style_Preference;
       Default_Variant           : Variant_Enum;
       Default_Fg                : String;
-      Default_Bg                : String)
+      Default_Bg                : String;
+      Priority                  : Integer := -1)
       return Variant_Preference
    is
       Result : constant Variant_Preference := new Variant_Preference_Record;
@@ -1112,7 +1132,7 @@ package body Default_Preferences is
       Result.Default_Variant := Default_Variant;
       Result.Base_Font := Base;
 
-      Register (Manager, Name, Label, Page, Doc, Result);
+      Register (Manager, Name, Label, Page, Doc, Result, Priority);
       return Result;
    end Create;
 
@@ -1122,7 +1142,8 @@ package body Default_Preferences is
 
    function Create
      (Manager                : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc : String)
+      Name, Label, Page, Doc : String;
+      Priority               : Integer := -1)
       return Theme_Preference
    is
       use GNAT.OS_Lib;
@@ -1263,7 +1284,7 @@ package body Default_Preferences is
          Ret.Current := Ret.Themes'First;
       end if;
 
-      Register (Manager, Name, Label, Page, Doc, Ret);
+      Register (Manager, Name, Label, Page, Doc, Ret, Priority);
 
       return Ret;
    end Create;
@@ -1436,7 +1457,8 @@ package body Default_Preferences is
    procedure Register
      (Manager                : not null access Preferences_Manager_Record;
       Name, Label, Path, Doc : String;
-      Pref                   : not null access Preference_Record'Class)
+      Pref                   : not null access Preference_Record'Class;
+      Priority               : Integer := -1)
    is
       Old_Pref         : Preference :=
                            Manager.Get_Pref_From_Name (Name, False);
@@ -1479,6 +1501,8 @@ package body Default_Preferences is
 
       Free (Pref.Doc);
       Pref.Doc := new String'(Doc);
+
+      Pref.Priority := Priority;
 
       --  Register the preference in the manager's global map
       Manager.Preferences.Insert (Name, Pref);

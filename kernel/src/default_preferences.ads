@@ -144,11 +144,14 @@ package Default_Preferences is
    procedure Register
      (Manager                : not null access Preferences_Manager_Record;
       Name, Label, Path, Doc : String;
-      Pref                   : not null access Preference_Record'Class);
+      Pref                   : not null access Preference_Record'Class;
+      Priority               : Integer := -1);
    --  Set common attributes of all preferences, and register that preference
    --  in the manager. This function only needs to be called if you are
    --  creating your own types of preferences, and is already called
    --  automatically when using one of the Create functions below.
+   --  Priority is used to order the preferences in their respective groups,
+   --  in decreasing order.
 
    procedure Register_Page
      (Self             : not null access Preferences_Manager_Record;
@@ -423,35 +426,41 @@ package Default_Preferences is
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
       Name, Label, Page, Doc    : String;
-      Minimum, Maximum, Default : Integer)
+      Minimum, Maximum, Default : Integer;
+      Priority                  : Integer := -1)
       return Integer_Preference;
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
       Name, Label, Page, Doc    : String;
-      Default                   : Boolean)
+      Default                   : Boolean;
+      Priority                  : Integer := -1)
       return Boolean_Preference;
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
       Name, Label, Page, Doc    : String;
       Default                   : String;
-      Multi_Line                : Boolean := False)
+      Multi_Line                : Boolean := False;
+      Priority                  : Integer := -1)
       return String_Preference;
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
       Name, Label, Page, Doc    : String;
-      Default                   : String)
+      Default                   : String;
+      Priority                  : Integer := -1)
       return Color_Preference;
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
       Name, Label, Page, Doc    : String;
-      Default                   : String)
+      Default                   : String;
+      Priority                  : Integer := -1)
       return Font_Preference;
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
       Name, Label, Page, Doc    : String;
       Default_Font              : String;
       Default_Fg                : String;
-      Default_Bg                : String)
+      Default_Bg                : String;
+      Priority                  : Integer := -1)
       return Style_Preference;
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
@@ -459,11 +468,13 @@ package Default_Preferences is
       Base                      : Style_Preference;
       Default_Variant           : Variant_Enum;
       Default_Fg                : String;
-      Default_Bg                : String)
+      Default_Bg                : String;
+      Priority                  : Integer := -1)
       return Variant_Preference;
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String)
+      Name, Label, Page, Doc    : String;
+      Priority                  : Integer := -1)
       return Theme_Preference;
    --  Create a new preference and register it in the Manager.
    --  Name is the name used when saving in the XML file, and when referencing
@@ -476,6 +487,8 @@ package Default_Preferences is
    --    XML file.
    --  Doc is the documentation for this preference, at it appears in the
    --    tooltip of the preferences dialog
+   --  Priority is used to order the preferences in their respective groups,
+   --    in decreasing order.
    --  See Default_Preferences.Generics to create preferences associated with
    --    enumerations
 
@@ -766,6 +779,10 @@ private
 
       Doc        : GNAT.Strings.String_Access;
       --  The documentation for this preference
+
+      Priority   : Integer;
+      --  Preference's priority. This is used to sort the preferences according
+      --  to the order we want to display it.
    end record;
 
    type Preferences_Group_Record is tagged record
