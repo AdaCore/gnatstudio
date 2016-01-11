@@ -266,7 +266,7 @@ def region_ref(name):
     return RegionRef(name)
 
 
-def new_style(lang, name, foreground_colors,
+def new_style(lang, name, label, doc, foreground_colors,
               background_colors=("white",  "white"),
               font_style="default", prio=-1):
     """
@@ -280,8 +280,13 @@ def new_style(lang, name, foreground_colors,
       . This is used to automatically store the preference associated with
       this style in the right preferences subcategory.
 
-    :param string name: The name of the style, as will be shown in the
-      preferences.
+    :param string name: The name of the style, used to identify it.
+
+    :param string label: The label that will be shown in the preferences
+      dialog for this style.
+
+    :param string doc: The documentation that will be shown in the preferences
+      dialog for this style.
 
     :param foreground_colors: The foreground colors of the style, expressed as
       a tuple of two CSS-like strings, for example ("#224488", "#FF6677"). The
@@ -306,10 +311,10 @@ def new_style(lang, name, foreground_colors,
         import colorschemes
 
         style_id = "{0}_{1}".format(lang, name)
-        pref_name = "Editor/{0}/{1}".format(lang, name)
+        pref_name = "Editor/Fonts & Colors:{0}/{1}".format(lang, name)
         pref = GPS.Preference(pref_name)
-        doc = "Style for '{0}'".format(name)
-        pref.create_style(doc, doc, foreground_colors[0], background_colors[0],
+        pref.create_style(label, doc,
+                          foreground_colors[0], background_colors[0],
                           font_style)
 
         colorschemes.dark_common[pref_name] = (font_style.upper(),

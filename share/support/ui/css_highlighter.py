@@ -141,18 +141,18 @@ color_names_list = ["aliceblue", "antiquewhite", "aqua", "aquamarine",
 # Tag definitions #
 ####################
 
-tag_css_default = new_style(lang="CSS",
-                            name="css_default",
-                            foreground_colors=('black', 'white'),
-                            prio=1)
-
-tag_classes_id_identifiers = new_style(lang="General",
+tag_classes_id_identifiers = new_style(lang="CSS",
                                        name="css_classes_id_identifiers",
-                                       foreground_colors=('#99FF33', '#99FF33')
-                                       )
+                                       label="Classes and ID identifiers",
+                                       doc="Style used for class selectors"
+                                       " and id selectors identifiers",
+                                       foreground_colors=('#99FF33',
+                                                          '#99FF33'))
 
 tag_length_units = new_style(lang="CSS",
                              name="css_length_units",
+                             label="Length units",
+                             doc="Style used for the CSS length units",
                              foreground_colors=('#F92572', '#F92572'))
 
 #######################
@@ -191,10 +191,10 @@ border_types = words(border_types_list, tag=tag_type)
 class_or_id_identifiers = simple(r"(?:\.|#)(?:\w|-)+",
                                  tag=tag_classes_id_identifiers)
 
-gtk_variables = simple(r"@(?:\w|-)+", tag=tag_css_default)
+gtk_variables = simple(r"@(?:\w|-)+", tag=tag_default)
 
 property_assignment = region(r":", r";",
-                             tag=tag_css_default,
+                             tag=tag_default,
                              highlighter=(color_names,
                                           border_types,
                                           colors,
@@ -206,7 +206,7 @@ property_assignment = region(r":", r";",
                                           gtk_variables))
 
 blocks = region(r"\{", r"\}",
-                tag=tag_css_default,
+                tag=tag_default,
                 highlighter=(properties, property_assignment, comments))
 
 #######################

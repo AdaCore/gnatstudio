@@ -578,6 +578,24 @@ package body GPS.Kernel.Preferences is
          Label   => -"Tooltips",
          Page    => -"Editor:Display");
 
+      Current_Line_Thin := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Current-Line-Thin",
+         Default => False,
+         Doc     => -("Whether to use a thin line rather than full background"
+           & ASCII.LF & " highlighting on the current line."),
+         Label   => -"Draw current line as a thin line",
+         Page    => -"Editor:Display");
+
+      Alter_Bg_For_RO_Files := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Alter-Bg-For-RO-Files",
+         Label   => -"Change background of read-only editors",
+         Doc     => -("When active, change the background color"
+           & " of read-only editors."),
+         Default => True,
+         Page    => -"Editor:Display");
+
       Display_Line_Numbers := Line_Number_Policy_Prefs.Create
         (Manager => Kernel.Preferences,
          Name    => "GPS6-Src-Editor-Display-Line_Numbers",
@@ -701,7 +719,7 @@ package body GPS.Kernel.Preferences is
          Default_Font => Defaults.Default_Fixed_Font,
          Default_Fg   => "black",
          Default_Bg   => "white",
-         Page         => -"Editor/Fonts & Colors");
+         Page         => -"Editor/Fonts & Colors:General");
 
       Blocks_Style := Create
         (Manager      => Kernel.Preferences,
@@ -713,7 +731,7 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Default_Fg      => "#60615F",
          Default_Bg      => "white",
-         Page            => -"Editor/Fonts & Colors");
+         Page            => -"Editor/Fonts & Colors:General");
 
       Types_Style := Create
         (Manager      => Kernel.Preferences,
@@ -725,7 +743,7 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Default_Fg   => "#009900",
          Default_Bg   => "white",
-         Page         => -"Editor/Fonts & Colors");
+         Page         => -"Editor/Fonts & Colors:General");
 
       Keywords_Style := Create
         (Manager      => Kernel.Preferences,
@@ -738,7 +756,7 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Default_Fg      => "#0000E6",
          Default_Bg      => "white",
-         Page            => -"Editor/Fonts & Colors");
+         Page            => -"Editor/Fonts & Colors:General");
 
       Comments_Style := Create
         (Manager      => Kernel.Preferences,
@@ -751,7 +769,91 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Default_Fg   => "#969696",
          Default_Bg   => "white",
-         Page         => -"Editor/Fonts & Colors");
+         Page         => -"Editor/Fonts & Colors:General");
+
+      Strings_Style := Create
+        (Manager      => Kernel.Preferences,
+         Name         => "Src-Editor-Strings-Variant",
+         Label        => -"Strings",
+         Doc          => -"Style to use when displaying strings."
+           & " The background color will be that of the default if left"
+           & " to white",
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Default_Fg   => "#CE7B00",
+         Default_Bg   => "white",
+         Page         => -"Editor/Fonts & Colors:General");
+
+      Numbers_Style := Create
+        (Manager      => Kernel.Preferences,
+         Name         => "Src-Editor-Numbers-Variant",
+         Label        => -"Numbers",
+         Doc          => -"Style to use when displaying numbers."
+           & " The background color will be that of the default if left"
+           & " to white",
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Default_Fg   => "#FF3333",
+         Default_Bg   => "white",
+         Page         => -"Editor/Fonts & Colors:General");
+
+      Hyper_Links_Style := Create
+        (Manager      => Kernel.Preferences,
+         Name         => "Src-Editor-Hyper-Links-Variant",
+         Label        => -"Hyper links",
+         Doc          => -"Style to use when displaying hyper-links."
+           & " The background color will be that of the default if left"
+           & " to white",
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Default_Fg   => "blue",
+         Default_Bg   => "white",
+         Page         => -"Editor/Fonts & Colors:General");
+
+      Ephemeral_Highlighting_Smart := Create
+        (Manager         => Kernel.Preferences,
+         Name            => "Src-Editor-Ephemeral-Smart",
+         Label           => -"Ephemeral highlighting (smart)",
+         Doc             => -(
+           "Style used for ephemeral highlighting of context-sensitive"
+           & " information, such as highlighting of matching entities."),
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Default_Fg      => "rgba(0,0,0,0.0)",
+         Default_Bg      => "rgba(252,172,79,0.4)",
+         Page            => -"Editor/Fonts & Colors:General");
+
+      Ephemeral_Highlighting_Simple := Create
+        (Manager         => Kernel.Preferences,
+         Name            => "Src-Editor-Ephemeral-Simple",
+         Label           => -"Ephemeral highlighting (simple)",
+         Doc             => -(
+           "Style used for ephemeral highlighting in the editor for simple"
+           & " cases, such as highlighting text-based matches."),
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Default_Fg      => "rgba(0,0,0,0.0)",
+         Default_Bg      => "rgba(134,134,134,0.35)",
+         Page            => -"Editor/Fonts & Colors:General");
+
+      Current_Block_Color := Create
+        (Manager  => Kernel.Preferences,
+         Name     => "Src-Editor-Current-Block-Color",
+         Default  => "#9C9CFF",
+         Doc      => -"Color for highlighting the current block",
+         Label    => -"Current block color",
+         Page     => -"Editor/Fonts & Colors:General",
+         Priority => -2);
+
+      Current_Line_Color := Create
+        (Manager  => Kernel.Preferences,
+         Name     => "Src-Editor-Current-Line-Color",
+         Default  => "rgba(226,226,226,0.4)",
+         Doc      => -("Color for highlighting the current line. White means"
+           & " transparent"),
+         Label    => -"Current line color",
+         Page     => -"Editor/Fonts & Colors:General",
+         Priority => -2);
 
       Annotated_Comments_Style := Create
         (Manager      => Kernel.Preferences,
@@ -765,7 +867,7 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Default_Fg   => "#60615F",
          Default_Bg   => "white",
-         Page         => -"Editor/Fonts & Colors");
+         Page         => -"Editor/Fonts & Colors:Ada");
 
       Aspects_Style := Create
         (Manager      => Kernel.Preferences,
@@ -778,107 +880,7 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Default_Fg   => "#60615F",
          Default_Bg   => "white",
-         Page         => -"Editor/Fonts & Colors");
-
-      Strings_Style := Create
-        (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Strings-Variant",
-         Label        => -"Strings",
-         Doc          => -"Style to use when displaying strings."
-           & " The background color will be that of the default if left"
-           & " to white",
-         Base            => Default_Style,
-         Default_Variant => Default,
-         Default_Fg   => "#CE7B00",
-         Default_Bg   => "white",
-         Page         => -"Editor/Fonts & Colors");
-
-      Numbers_Style := Create
-        (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Numbers-Variant",
-         Label        => -"Numbers",
-         Doc          => -"Style to use when displaying numbers."
-           & " The background color will be that of the default if left"
-           & " to white",
-         Base            => Default_Style,
-         Default_Variant => Default,
-         Default_Fg   => "#FF3333",
-         Default_Bg   => "white",
-         Page         => -"Editor/Fonts & Colors");
-
-      Hyper_Links_Style := Create
-        (Manager      => Kernel.Preferences,
-         Name         => "Src-Editor-Hyper-Links-Variant",
-         Label        => -"Hyper links",
-         Doc          => -"Style to use when displaying hyper-links."
-           & " The background color will be that of the default if left"
-           & " to white",
-         Base            => Default_Style,
-         Default_Variant => Default,
-         Default_Fg   => "blue",
-         Default_Bg   => "white",
-         Page         => -"Editor/Fonts & Colors");
-
-      Ephemeral_Highlighting_Smart := Create
-        (Manager         => Kernel.Preferences,
-         Name            => "Src-Editor-Ephemeral-Smart",
-         Label           => -"Ephemeral highlighting (smart)",
-         Doc             => -(
-           "Style used for ephemeral highlighting of context-sensitive"
-           & " information, such as highlighting of matching entities."),
-         Base            => Default_Style,
-         Default_Variant => Default,
-         Default_Fg      => "rgba(0,0,0,0.0)",
-         Default_Bg      => "rgba(252,172,79,0.4)",
-         Page            => -"Editor/Fonts & Colors");
-
-      Ephemeral_Highlighting_Simple := Create
-        (Manager         => Kernel.Preferences,
-         Name            => "Src-Editor-Ephemeral-Simple",
-         Label           => -"Ephemeral highlighting (simple)",
-         Doc             => -(
-           "Style used for ephemeral highlighting in the editor for simple"
-           & " cases, such as highlighting text-based matches."),
-         Base            => Default_Style,
-         Default_Variant => Default,
-         Default_Fg      => "rgba(0,0,0,0.0)",
-         Default_Bg      => "rgba(134,134,134,0.35)",
-         Page            => -"Editor/Fonts & Colors");
-
-      Current_Block_Color := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Current-Block-Color",
-         Default => "#9C9CFF",
-         Doc     => -"Color for highlighting the current block",
-         Label   => -"Current block color",
-         Page    => -"Editor/Fonts & Colors");
-
-      Current_Line_Color := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Current-Line-Color",
-         Default => "rgba(226,226,226,0.4)",
-         Doc     => -("Color for highlighting the current line. White means"
-                      & " transparent"),
-         Label   => -"Current line color",
-         Page    => -"Editor/Fonts & Colors");
-
-      Current_Line_Thin := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Current-Line-Thin",
-         Default => False,
-         Doc     => -("Whether to use a thin line rather than full background"
-           & ASCII.LF & " highlighting on the current line."),
-         Label   => -"Draw current line as a thin line",
-         Page    => -"Editor/Fonts & Colors");
-
-      Alter_Bg_For_RO_Files := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Alter-Bg-For-RO-Files",
-         Label   => -"Change background of read-only editors",
-         Doc     => -("When active, change the background color"
-                      & " of read-only editors."),
-         Default => True,
-         Page    => -"Editor/Fonts & Colors");
+         Page         => -"Editor/Fonts & Colors:Ada");
 
       -- Refactoring --
 

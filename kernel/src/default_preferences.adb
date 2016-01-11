@@ -468,7 +468,11 @@ package body Default_Preferences is
       else
          Page_Name := new String'(Append_Dir_Delimitor_If_Needed
                                   (Path (Path'First .. Delim_Index - 1)));
-         Group_Name := new String'(Path (Delim_Index + 1 .. Path'Last));
+         Group_Name :=
+           (if Path (Path'Last) /= '/' then
+                 new String'(Path (Delim_Index + 1 .. Path'Last))
+            else
+               new String'(Path (Delim_Index + 1 .. Path'Last - 1)));
       end if;
    end Extract_Page_And_Group_Names;
 
