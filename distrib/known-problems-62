@@ -25,6 +25,18 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P106-023 GB: no project opened by GPS when launched from GB on linux.
+
+  Problem:    On linux, GPS launched by GB through "GPS debugger" debug
+              configuration or through "GNAT Project/Edit Properties" menu is
+              not able to open the selected GNAT project. It opens an empty
+              project. The properties dialog when required is not displayed.
+
+  Status:     This was fixed in 17.0 on 2016-01-08
+
+  Workaround: After GPS was launched, open the GNAT Project, and when required
+              to edit the properties, run Edit Project Properties menu.
+
 KP-62-P104-018 WB: multiple definition errors when building RTP on Workbench-4
 
   Problem:    A real time process (RTP) application converted to an ada project
