@@ -410,7 +410,7 @@ package body GPS.Kernel.MDI is
            -("If enabled, automatically reload files when they have been"
            & " changed on the disk."),
          Label   => -"Auto-Reload files",
-         Page    => -"Editor");
+         Page    => -"Editor:Behavior");
    end Create_MDI_Preferences;
 
    -------------------

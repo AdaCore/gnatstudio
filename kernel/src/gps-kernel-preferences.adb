@@ -561,31 +561,22 @@ package body GPS.Kernel.Preferences is
 
       -- Source Editor --
 
-      Strip_Blanks := Strip_Trailing_Blanks_Policy_Prefs.Create
+      Display_Subprogram_Names := Create
         (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Strip-Trailing-Blanks",
-         Label   => -"Strip blanks",
+         Name    => "Src-Editor-Display-Subprogram_Names",
+         Default => True,
          Doc     =>
-           -"Should the editor remove trailing blanks when saving files",
-         Default => Autodetect,
-         Page    => -"Editor");
+           -"Whether the subprogram names should be displayed in status lines",
+         Label   => -"Display subprogram names",
+         Page    => -"Editor:Display");
 
-      Strip_Lines := Strip_Trailing_Blanks_Policy_Prefs.Create
+      Display_Tooltip := Create
         (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Strip-Trailing-Lines",
-         Label   => -"Strip lines",
-         Doc     =>
-           -"Should the editor remove trailing blank lines when saving files",
-         Default => Autodetect,
-         Page    => -"Editor");
-
-      Line_Terminator := Line_Terminators_Prefs.Create
-        (Manager => Kernel.Preferences,
-         Name  => "Src-Editor-Line-Terminator",
-         Label => -"Line terminator",
-         Doc   => -"Line terminator style to use when saving files",
-         Default => Unchanged,
-         Page    => -"Editor");
+         Name    => "Src-Editor-Display-Tooltip",
+         Default => True,
+         Doc     => -"Whether tooltips should be displayed automatically",
+         Label   => -"Tooltips",
+         Page    => -"Editor:Display");
 
       Display_Line_Numbers := Line_Number_Policy_Prefs.Create
         (Manager => Kernel.Preferences,
@@ -594,53 +585,7 @@ package body GPS.Kernel.Preferences is
          Doc     =>
            -"Whether the line numbers should be displayed in file editors",
          Label   => -"Display line numbers",
-         Page    => -"Editor");
-
-      Display_Subprogram_Names := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Display-Subprogram_Names",
-         Default => True,
-         Doc     =>
-           -"Whether the subprogram names should be displayed in status lines",
-         Label   => -"Display subprogram names",
-         Page    => -"Editor");
-
-      Auto_Indent_On_Paste := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Indent-On-Paste",
-         Default => False,
-         Doc     =>
-           -"Whether content pasted in the source editors "
-           & "should be auto indented",
-         Label   => -"Auto indent on paste",
-         Page    => -"Editor");
-
-      Display_Tooltip := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Display-Tooltip",
-         Default => True,
-         Doc     => -"Whether tooltips should be displayed automatically",
-         Label   => -"Tooltips",
-         Page    => -"Editor");
-
-      Highlight_Delimiters := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Highlight-Delimiters",
-         Default => True,
-         Doc     => -"Whether delimiters should be highlighted: (){}[]",
-         Label   => -"Highlight delimiters",
-         Page    => -"Editor");
-
-      Periodic_Save := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Src-Editor-Periodic-Save",
-         Minimum => 0,
-         Maximum => 3600,
-         Default => 60,
-         Doc     => -("The period (in seconds) after which a source editor"
-                      & " is automatically saved. 0 if none."),
-         Label   => -"Autosave delay",
-         Page    => -"Editor");
+         Page    => -"Editor:Display");
 
       Highlight_Column := Create
         (Manager => Kernel.Preferences,
@@ -651,7 +596,15 @@ package body GPS.Kernel.Preferences is
          Doc     => -("The right margin to highlight. 0 if none. This value "
                       & "is also used to implement the Edit->Refill command"),
          Label   => -"Right margin",
-         Page    => -"Editor");
+         Page    => -"Editor:Display");
+
+      Highlight_Delimiters := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Highlight-Delimiters",
+         Default => True,
+         Doc     => -"Whether delimiters should be highlighted: (){}[]",
+         Label   => -"Highlight delimiters",
+         Page    => -"Editor:Highlighting");
 
       Block_Highlighting := Create
         (Manager => Kernel.Preferences,
@@ -660,7 +613,43 @@ package body GPS.Kernel.Preferences is
          Doc     =>
            -"Should the editor enable block highlighting",
          Label   => -"Block highlighting",
-         Page    => -"Editor");
+         Page    => -"Editor:Highlighting");
+
+      Strip_Blanks := Strip_Trailing_Blanks_Policy_Prefs.Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Strip-Trailing-Blanks",
+         Label   => -"Strip blanks",
+         Doc     =>
+           -"Should the editor remove trailing blanks when saving files",
+         Default => Autodetect,
+         Page    => -"Editor:On Save");
+
+      Strip_Lines := Strip_Trailing_Blanks_Policy_Prefs.Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Strip-Trailing-Lines",
+         Label   => -"Strip lines",
+         Doc     =>
+           -"Should the editor remove trailing blank lines when saving files",
+         Default => Autodetect,
+         Page    => -"Editor:On Save");
+
+      Line_Terminator := Line_Terminators_Prefs.Create
+        (Manager => Kernel.Preferences,
+         Name  => "Src-Editor-Line-Terminator",
+         Label => -"Line terminator",
+         Doc   => -"Line terminator style to use when saving files",
+         Default => Unchanged,
+         Page    => -"Editor:On Save");
+
+      Auto_Indent_On_Paste := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Src-Editor-Indent-On-Paste",
+         Default => False,
+         Doc     =>
+           -"Whether content pasted in the source editors "
+           & "should be auto indented",
+         Label   => -"Auto indent on paste",
+         Page    => -"Editor:Behavior");
 
       Block_Folding := Create
         (Manager => Kernel.Preferences,
@@ -668,7 +657,19 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Doc     => -"Should the editor enable block folding",
          Label   => -"Block folding",
-         Page    => -"Editor");
+         Page    => -"Editor:Behavior");
+
+      Periodic_Save := Create
+        (Manager  => Kernel.Preferences,
+         Name     => "Src-Editor-Periodic-Save",
+         Minimum  => 0,
+         Maximum  => 3600,
+         Default  => 60,
+         Doc      => -("The period (in seconds) after which a source editor"
+           & " is automatically saved. 0 if none."),
+         Label    => -"Autosave delay",
+         Page     => -"Editor:Behavior",
+         Priority => -2);
 
       Automatic_Syntax_Check := Create
         (Manager => Kernel.Preferences,
@@ -687,7 +688,7 @@ package body GPS.Kernel.Preferences is
             -"Whether GPS should use ACL when changing the "
             & "read/write permissions",
             Default => False,
-            Page    => -"Editor");
+            Page    => -"Editor:Behavior");
       end if;
 
       Default_Style := Create
