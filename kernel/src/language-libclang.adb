@@ -889,8 +889,11 @@ package body Language.Libclang is
       declare
          Dummy : Boolean;
       begin
-         Clang_Module_Id.Refs
-           := Clang_Crossrefs_Cache'Input (Cache_Stream);
+         for M of Clang_Module_Id.Refs.Map loop
+            Destroy (M);
+         end loop;
+
+         Clang_Module_Id.Refs := Clang_Crossrefs_Cache'Input (Cache_Stream);
       exception
          when others =>
             Trace (Me, "Failed loading the database from cache");
