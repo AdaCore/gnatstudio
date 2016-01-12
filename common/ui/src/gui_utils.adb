@@ -1481,19 +1481,22 @@ package body GUI_Utils is
                (Item_Index    => N,
                 Attribute     => "label",
                 Expected_Type => Gvariant_Type_String);
-            declare
-               It_Name : constant String :=
-                  Strip_Single_Underscores
-                     (Unescape_Menu_Name (Get_String (Val, null)));
-            begin
-               Unref (Val);
-               if It_Name = Name then
-                  return
-                     (Item => Gmenu_Item_New_From_Model (Gmenu (Model), N),
-                      Model    => Gmenu (Model),
-                      Position => N);
-               end if;
-            end;
+
+            if Val /= Null_Gvariant then
+               declare
+                  It_Name : constant String :=
+                     Strip_Single_Underscores
+                        (Unescape_Menu_Name (Get_String (Val, null)));
+               begin
+                  Unref (Val);
+                  if It_Name = Name then
+                     return
+                        (Item => Gmenu_Item_New_From_Model (Gmenu (Model), N),
+                         Model    => Gmenu (Model),
+                         Position => N);
+                  end if;
+               end;
+            end if;
          end if;
       end loop;
 
