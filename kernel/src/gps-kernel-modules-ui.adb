@@ -1841,6 +1841,11 @@ package body GPS.Kernel.Modules.UI is
          if Win.Menu_Bar /= null then
             --  Find or create the parent menu
 
+            if Parent_Path = "/" then
+               --  ??? When creating from a <submenu> node in a plugin
+               return;
+            end if;
+
             Parent := Find_Or_Create_Menu_Tree
               (Menu_Bar     => Win.Menu_Bar,
                Menu         => null,
@@ -1852,7 +1857,8 @@ package body GPS.Kernel.Modules.UI is
 
             if Parent = null then
                Trace (Me, "Register_Menu: Parent menu not found for "
-                      & Parent_Path);
+                      & Parent_Path & " (menu path is "
+                      & Full_Path & ")");
                return;
             else
                Parent_Menu := Gtk_Menu (Get_Submenu (Parent));
