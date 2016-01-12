@@ -28,6 +28,7 @@ expanded_code_marks = {}
 highlighting = ""
 
 bg_pref = GPS.Preference("Editor/Fonts & Colors:Ada/expanded_code_style")
+
 bg_pref.create(
     "Expanded code color", "color", "Background color of expanded code",
     "#dddddd"

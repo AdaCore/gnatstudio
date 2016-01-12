@@ -130,8 +130,91 @@ package body Ada_Module is
          Name    => "Ada-Auto-Indentation",
          Default => Extended,
          Doc     => -"How the editor should indent Ada sources",
-         Page    => -"Editor/Ada",
+         Page    => -"Editor/Ada:Indentation",
          Label   => -"Auto indentation");
+
+      Ada_Indentation_Level := Create
+        (Get_Preferences (Kernel),
+         Name    => "Ada-Indent-Level",
+         Minimum => 1,
+         Maximum => 9,
+         Default => 3,
+         Page    => -"Editor/Ada:Indentation",
+         Doc     => -"The number of spaces for the default Ada indentation",
+         Label   => -"Default indentation");
+
+      Ada_Continuation_Level := Create
+        (Get_Preferences (Kernel),
+         Name    => "Ada-Continuation-Level",
+         Minimum => 0,
+         Maximum => 9,
+         Default => 2,
+         Page    => -"Editor/Ada:Indentation",
+         Doc     => -"The number of extra spaces for continuation lines",
+         Label   => -"Continuation lines");
+
+      Ada_Declaration_Level := Create
+        (Get_Preferences (Kernel),
+         Name    => "Ada-Declaration-Level:Indentation",
+         Minimum => 0,
+         Maximum => 9,
+         Default => 0,
+         Page  => -"Editor/Ada:Indentation",
+         Doc   => -"The number of extra spaces for multiple line declarations",
+         Label => -"Declaration lines");
+
+      Ada_Conditional_Level := Create
+        (Get_Preferences (Kernel),
+         Name    => "Ada-Conditional-Level",
+         Minimum => 0,
+         Maximum => 9,
+         Default => 1,
+         Page    => -"Editor/Ada:Indentation",
+         Doc   => -"The number of extra spaces for multiple line conditionals",
+         Label   => -"Conditional continuation lines");
+
+      Ada_Record_Level := Create
+        (Get_Preferences (Kernel),
+         Name    => "Ada-Record-Level",
+         Minimum => 0,
+         Maximum => 9,
+         Default => 3,
+         Page    => -"Editor/Ada:Indentation",
+         Doc     =>
+         -"The number of extra spaces for multiple line record types",
+         Label   => -"Record indentation");
+
+      Ada_Indent_Case_Extra := Indent_Preferences.Create
+        (Get_Preferences (Kernel),
+         Name    => "Ada-Indent-Case-Style",
+         Default => Automatic,
+         Page    => -"Editor/Ada:Indentation",
+         Doc     => -"Whether to indent case statements with an extra level",
+         Label   => -"Case indentation");
+
+      Ada_Casing_Policy := Casing_Policy_Preferences.Create
+        (Get_Preferences (Kernel),
+         Name    => "Ada-Casing-Policy",
+         Label   => -"Casing policy",
+         Doc     => -"Keywords and Identifiers casing policy",
+         Page    => -"Editor/Ada:Casing",
+         Default => Disabled);
+
+      Ada_Reserved_Casing := Casing_Preferences.Create
+        (Get_Preferences (Kernel),
+         Name    => "Ada-Reserved-Casing",
+         Default => Lower,
+         Page    => -"Editor/Ada:Casing",
+         Doc     => -"How the editor should handle reserved words casing",
+         Label   => -"Reserved word casing");
+
+      Ada_Ident_Casing := Casing_Preferences.Create
+        (Get_Preferences (Kernel),
+         Name    => "Ada-Ident-Casing",
+         Default => Smart_Mixed,
+         Page    => -"Editor/Ada:Casing",
+         Doc     => -"How the editor should handle identifiers casing",
+         Label   => -"Identifier casing");
 
       Ada_Use_Tabs := Create
         (Get_Preferences (Kernel),
@@ -143,97 +226,14 @@ package body Ada_Module is
            "insert TAB characters. Consider also the /Edit/Insert Tab " &
            "With Spaces key shortcut which can be mapped via the Edit->Key " &
            "shortcuts menu"),
-         Page     => -"Editor/Ada",
+         Page     => -"Editor/Ada:Indentation",
          Label    => -"Use tabulations");
-
-      Ada_Indentation_Level := Create
-        (Get_Preferences (Kernel),
-         Name    => "Ada-Indent-Level",
-         Minimum => 1,
-         Maximum => 9,
-         Default => 3,
-         Page    => -"Editor/Ada",
-         Doc     => -"The number of spaces for the default Ada indentation",
-         Label   => -"Default indentation");
-
-      Ada_Continuation_Level := Create
-        (Get_Preferences (Kernel),
-         Name    => "Ada-Continuation-Level",
-         Minimum => 0,
-         Maximum => 9,
-         Default => 2,
-         Page    => -"Editor/Ada",
-         Doc     => -"The number of extra spaces for continuation lines",
-         Label   => -"Continuation lines");
-
-      Ada_Declaration_Level := Create
-        (Get_Preferences (Kernel),
-         Name    => "Ada-Declaration-Level",
-         Minimum => 0,
-         Maximum => 9,
-         Default => 0,
-         Page  => -"Editor/Ada",
-         Doc   => -"The number of extra spaces for multiple line declarations",
-         Label => -"Declaration lines");
-
-      Ada_Conditional_Level := Create
-        (Get_Preferences (Kernel),
-         Name    => "Ada-Conditional-Level",
-         Minimum => 0,
-         Maximum => 9,
-         Default => 1,
-         Page    => -"Editor/Ada",
-         Doc   => -"The number of extra spaces for multiple line conditionals",
-         Label   => -"Conditional continuation lines");
-
-      Ada_Record_Level := Create
-        (Get_Preferences (Kernel),
-         Name    => "Ada-Record-Level",
-         Minimum => 0,
-         Maximum => 9,
-         Default => 3,
-         Page    => -"Editor/Ada",
-         Doc     =>
-         -"The number of extra spaces for multiple line record types",
-         Label   => -"Record indentation");
-
-      Ada_Indent_Case_Extra := Indent_Preferences.Create
-        (Get_Preferences (Kernel),
-         Name    => "Ada-Indent-Case-Style",
-         Default => Automatic,
-         Page    => -"Editor/Ada",
-         Doc     => -"Whether to indent case statements with an extra level",
-         Label   => -"Case indentation");
-
-      Ada_Casing_Policy := Casing_Policy_Preferences.Create
-        (Get_Preferences (Kernel),
-         Name    => "Ada-Casing-Policy",
-         Label   => -"Casing policy",
-         Doc     => -"Keywords and Identifiers casing policy",
-         Page    => -"Editor/Ada",
-         Default => Disabled);
-
-      Ada_Reserved_Casing := Casing_Preferences.Create
-        (Get_Preferences (Kernel),
-         Name    => "Ada-Reserved-Casing",
-         Default => Lower,
-         Page    => -"Editor/Ada",
-         Doc     => -"How the editor should handle reserved words casing",
-         Label   => -"Reserved word casing");
-
-      Ada_Ident_Casing := Casing_Preferences.Create
-        (Get_Preferences (Kernel),
-         Name    => "Ada-Ident-Casing",
-         Default => Smart_Mixed,
-         Page    => -"Editor/Ada",
-         Doc     => -"How the editor should handle identifiers casing",
-         Label   => -"Identifier casing");
 
       Ada_Format_Operators := Create
         (Get_Preferences (Kernel),
          Name    => "Ada-Format-Operators",
          Default => False,
-         Page    => -"Editor/Ada",
+         Page    => -"Editor/Ada:Indentation",
          Doc     =>
          -"Whether to add spaces around operators and delimiters",
          Label   => -"Format operators/delimiters");
@@ -242,7 +242,7 @@ package body Ada_Module is
         (Get_Preferences (Kernel),
          Name    => "Ada-Align-On-Colons",
          Default => False,
-         Page    => -"Editor/Ada",
+         Page    => -"Editor/Ada:Indentation",
          Doc     => -"Whether to align colons in declaration statements",
          Label   => -"Align colons in declarations");
 
@@ -250,7 +250,7 @@ package body Ada_Module is
         (Get_Preferences (Kernel),
          Name    => "Ada-Align-On-Arrows",
          Default => False,
-         Page    => -"Editor/Ada",
+         Page    => -"Editor/Ada:Indentation",
          Doc     =>
          -"Whether to align associations on arrow delimiters",
          Label   => -"Align associations on arrows");
@@ -259,7 +259,7 @@ package body Ada_Module is
         (Get_Preferences (Kernel),
          Name    => "Ada-Align-Decl-On_Colon",
          Default => False,
-         Page    => -"Editor/Ada",
+         Page    => -"Editor/Ada:Indentation",
          Doc     =>
          -("Whether to align continuation lines after a declaration " &
            "based on the colon character"),
@@ -269,7 +269,7 @@ package body Ada_Module is
         (Get_Preferences (Kernel),
          Name    => "Ada-Indent-Comments",
          Default => True,
-         Page    => -"Editor/Ada",
+         Page    => -"Editor/Ada:Indentation",
          Doc     => -"Whether to indent lines with comments only",
          Label   => -"Indent comments");
 
@@ -277,7 +277,7 @@ package body Ada_Module is
         (Get_Preferences (Kernel),
          Name    => "Ada-Stick-Comments",
          Default => False,
-         Page    => -"Editor/Ada",
+         Page    => -"Editor/Ada:Indentation",
          Doc     =>
          -("Whether to align comment lines following 'record' and " &
            "'is' keywords immediately with no extra space"),

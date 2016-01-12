@@ -13,7 +13,7 @@ EDITOR_LOCATIONS, EDITOR, DISABLED = (
     "editor_and_locations", "editor_only", "disabled"
 )
 
-show_diags_pref = GPS.Preference("Editor/C & C++/Show diagnostics")
+show_diags_pref = GPS.Preference("Editor/C & C++:Clang/Show diagnostics")
 show_diags_pref.create(
     "Show clang live diagnostics", "enum",
     "How to show clang live diagnostics in GPS, for C/C++",

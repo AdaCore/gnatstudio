@@ -119,31 +119,31 @@ package body Cpp_Module is
         (Get_Preferences (Kernel),
          Name    => "C-Auto-Indentation",
          Default => Extended,
-         Page    => -"Editor/C & C++",
+         Page    => -"Editor/C & C++:Indentation",
          Doc     => -"How the editor should indent C/C++ sources",
          Label   => -"Auto indentation");
-
-      C_Use_Tabs := Kernel.Get_Preferences.Create
-        (Name    => "C-Use-Tabs",
-         Default => True,
-         Page    => -"Editor/C & C++",
-         Doc     =>
-             -("Whether the editor should use tabulations when indenting"),
-         Label   => -"Use tabulations");
 
       C_Indentation_Level := Kernel.Get_Preferences.Create
         (Name    => "C-Indent-Level",
          Minimum => 1,
          Maximum => 9,
          Default => 2,
-         Page    => -"Editor/C & C++",
+         Page    => -"Editor/C & C++:Indentation",
          Doc     => -"The number of spaces for the default indentation",
          Label   => -"Default indentation");
+
+      C_Use_Tabs := Kernel.Get_Preferences.Create
+        (Name    => "C-Use-Tabs",
+         Default => True,
+         Page    => -"Editor/C & C++:Indentation",
+         Doc     =>
+             -("Whether the editor should use tabulations when indenting"),
+         Label   => -"Use tabulations");
 
       C_Indent_Extra := Kernel.Get_Preferences.Create
         (Name    => "C-Indent-Extra",
          Default => True,
-         Page    => -"Editor/C & C++",
+         Page    => -"Editor/C & C++:Indentation",
          Doc     => -("Whether to indent if/loop/switch constructs an extra"
                       & " level after '{'"),
          Label   => -"Extra indentation");
@@ -151,7 +151,7 @@ package body Cpp_Module is
       C_Indent_Comments := Kernel.Get_Preferences.Create
         (Name    => "C-Indent-Comments",
          Default => True,
-         Page    => -"Editor/C & C++",
+         Page    => -"Editor/C & C++:Indentation",
          Doc     => -"Whether to indent lines with comments only",
          Label   => -"Indent comments");
 
