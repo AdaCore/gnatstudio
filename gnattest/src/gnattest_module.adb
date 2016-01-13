@@ -25,6 +25,8 @@ with Glib.Object;                       use Glib.Object;
 
 with GNAT.Calendar.Time_IO;
 
+with GNATCOLL.Scripts;                  use GNATCOLL.Scripts;
+
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
@@ -33,7 +35,7 @@ with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;
-
+with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with Gtk.Handlers;
 with Gtk.Menu;
 with Gtk.Menu_Item;
@@ -106,6 +108,11 @@ package body GNATTest_Module is
      (Project : GNATCOLL.Projects.Project_Type)
      return String;
 
+   function Is_Harness_Project
+     (Project : GNATCOLL.Projects.Project_Type)
+     return Boolean;
+   --  Check if given project is harness project
+
    type On_Project_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute
      (Self   : On_Project_Changed;
@@ -171,6 +178,10 @@ package body GNATTest_Module is
      (Command : access Show_Not_Implemented_Tests_Command_Type;
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
+
+   procedure Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for the commands
 
    Map : Mapping_File;
 
@@ -275,6 +286,74 @@ package body GNATTest_Module is
 
    end Append_To_Menu;
 
+   ---------------------
+   -- Command_Handler --
+   ---------------------
+
+   procedure Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      use GNATCOLL.Projects;
+
+      function Original_Project (Project : Project_Type) return Project_Type;
+      --  Guess original project - source for gnattest to generate given one
+
+      ----------------------
+      -- Original_Project --
+      ----------------------
+
+      function Original_Project (Project : Project_Type) return Project_Type is
+         Kid : Project_Iterator;
+         Top : Project_Iterator :=
+           Project.Start (Recursive => True, Direct_Only => True);
+
+      begin
+         if Is_Harness_Project (Project) then
+            loop
+               exit when Current (Top) = No_Project;
+
+               if Current (Top).Name /= "AUnit" then
+                  Kid := Current (Top).Start
+                    (Recursive => True, Direct_Only => True);
+
+                  loop
+                     exit when Current (Kid) = No_Project;
+
+                     if Current (Kid).Name /= "AUnit" then
+                        return Current (Kid);
+                     end if;
+
+                     Next (Kid);
+                  end loop;
+               end if;
+
+               Next (Top);
+            end loop;
+         end if;
+
+         return No_Project;
+      end Original_Project;
+
+   begin
+      if Command = "is_harness_project" then
+         declare
+            Project : constant Project_Type := Get_Data (Data, 1);
+
+         begin
+            Set_Return_Value (Data, Is_Harness_Project (Project));
+         end;
+      elsif Command = "original_project" then
+         declare
+            Project : constant Project_Type := Get_Data (Data, 1);
+
+         begin
+            Set_Return_Value
+              (Data,
+               Create_Project (Data.Get_Script, Original_Project (Project)));
+         end;
+      end if;
+   end Command_Handler;
+
    -------------
    -- Execute --
    -------------
@@ -343,9 +422,8 @@ package body GNATTest_Module is
          Project : constant GNATCOLL.Projects.Project_Type
            := GPS.Kernel.Project.Get_Project (GPS.Kernel.Get_Kernel (Context));
 
-         Value : constant String := Get_Mapping_File (Project);
       begin
-         return Value /= "";
+         return Is_Harness_Project (Project);
       end;
    end Filter_Matches_Primitive;
 
@@ -363,9 +441,8 @@ package body GNATTest_Module is
          Project : constant GNATCOLL.Projects.Project_Type
            := GPS.Kernel.Project.Get_Project (GPS.Kernel.Get_Kernel (Context));
 
-         Value : constant String := Get_Mapping_File (Project);
       begin
-         return Value = "";
+         return not Is_Harness_Project (Project);
       end;
    end Filter_Matches_Primitive;
 
@@ -387,9 +464,8 @@ package body GNATTest_Module is
          Project : constant GNATCOLL.Projects.Project_Type
             := Project_Information (Context);
 
-         Value : constant String := Get_Mapping_File (Project);
       begin
-         return Value = "" and then
+         return not Is_Harness_Project (Project) and then
            not Harness_Project_Exists (Project);
       end;
    end Filter_Matches_Primitive;
@@ -575,6 +651,17 @@ package body GNATTest_Module is
       end if;
    end Execute;
 
+   ------------------------
+   -- Is_Harness_Project --
+   ------------------------
+
+   function Is_Harness_Project
+     (Project : GNATCOLL.Projects.Project_Type)
+      return Boolean is
+   begin
+      return Get_Mapping_File (Project) /= "";
+   end Is_Harness_Project;
+
    ---------------
    -- Open_File --
    ---------------
@@ -660,6 +747,20 @@ package body GNATTest_Module is
          Custom      => Tested_Subprogram_Name'Access,
          Ref_Item    => "GNATtest",
          Add_Before  => False);
+
+      Kernel.Scripts.Register_Command
+        ("is_harness_project",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_Project_Class (Kernel.all'Access),
+         Handler      => Command_Handler'Access);
+
+      Kernel.Scripts.Register_Command
+        ("original_project",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_Project_Class (Kernel.all'Access),
+         Handler      => Command_Handler'Access);
 
       Project_View_Changed_Hook.Add (new On_Project_Changed);
    end Register_Module;

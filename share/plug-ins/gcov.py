@@ -41,7 +41,13 @@ class Gcov_Process (GPS.Console, GPS.Process):
 
         # Show coverage report
         analysis = CodeAnalysis.get("Coverage")
-        analysis.add_all_gcov_project_info()
+
+        if GPS.Project.root().is_harness_project():
+            original = GPS.Project.root().original_project().file()
+            analysis.add_gcov_project_info(original)
+        else:
+            analysis.add_all_gcov_project_info()
+
         analysis.show_analysis_report()
 
         self.kill()

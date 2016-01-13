@@ -28,14 +28,6 @@ def run(project, target, extra_args=""):
     GPS.BuildTarget(target).execute(synchronous=False, extra_args=extra_args)
 
 
-def is_harness_project():
-    """ Check if root project is harness project. """
-    root_project = GPS.Project.root()
-    mapping = root_project.get_attribute_as_string("GNATtest_Mapping_File",
-                                                   package="GNATtest")
-    return mapping.strip() != ""
-
-
 def get_driver_list():
     """ Check if root project has test_drivers.list file and return it. """
     root_project = GPS.Project.root().file().name()
@@ -82,7 +74,7 @@ def get_harness_project_file(cur):
 
 def open_harness_project(cur):
     """ Open harness project if it hasn't open yet."""
-    if is_harness_project():
+    if GPS.Project.root().is_harness_project():
         return
 
     prj = get_harness_project_file(cur)
@@ -101,15 +93,10 @@ def exit_harness_project():
     """ Leave harness project and open user's project. """
     root_project = GPS.Project.root()
 
-    for p in root_project.dependencies():
-        if p.name() != "AUnit":
-            for d in p.dependencies():
-                if d.name() != "AUnit":
-                    user_project = d.file().name()
-                    break
-
     if last_gnattest['harness'] == root_project.file().name():
         user_project = last_gnattest['root']
+    else:
+        user_project = root_project.original_project().file().name()
 
     GPS.Project.load(user_project, False, True)
     GPS.Console("Messages").write("Exit harness project to: " +
@@ -136,7 +123,7 @@ def on_project_view_changed():
     test_run_targets = GPS.BuildTarget("Run a test drivers list")
     run_main_target = GPS.BuildTarget("Run Main")
 
-    if not is_harness_project():
+    if not GPS.Project.root().is_harness_project():
         run_main_target.show()
         test_run_target.hide()
         test_run_targets.hide()
@@ -159,7 +146,7 @@ def on_project_view_changed():
 @hook('file_edited')
 def __on_file_edited(file):
     """ Find read-only areas and apply an overlay on them. """
-    if not is_harness_project():
+    if not GPS.Project.root().is_harness_project():
         return
 
     buffer = GPS.EditorBuffer.get(file)

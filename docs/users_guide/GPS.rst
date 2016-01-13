@@ -1453,6 +1453,8 @@ Classes
 
    .. automethod:: GPS.Project.get_tool_switches_as_string
 
+   .. automethod:: GPS.Project.is_harness_project
+
    .. automethod:: GPS.Project.is_modified
 
    .. automethod:: GPS.Project.languages
@@ -1462,6 +1464,8 @@ Classes
    .. automethod:: GPS.Project.name
 
    .. automethod:: GPS.Project.object_dirs
+
+   .. automethod:: GPS.Project.original_project
 
    .. automethod:: GPS.Project.properties_editor
 
