@@ -300,7 +300,7 @@ package body Vdiff2_Module is
          Label => -"Diff3 command",
          Doc   => -("Command used to compute differences between three" &
            "files. Arguments can also be specified"),
-         Page  => -"Visual diff",
+         Page  => -"Visual diff:General",
          Default => Config.Default_Diff3_Cmd);
 
       Diff_Default_Color := Create
@@ -308,7 +308,7 @@ package body Vdiff2_Module is
          Name     =>  "Diff-Default-Color",
          Label    => -"Default Color",
          Doc      => -"Color used for highlighting in Visual Diff2",
-         Page     => -"Visual diff",
+         Page     => -"Visual diff:Colors",
          Default  => "#C1C1C1");
 
       Diff_Old_Color := Create
@@ -316,7 +316,7 @@ package body Vdiff2_Module is
          Name     =>  "Diff-Old-Color",
          Label    => -"Old Color",
          Doc      => -"Color used for highlighting in Visual Diff2",
-         Page     => -"Visual diff",
+         Page     => -"Visual diff:Colors",
          Default  => "#C1C1C1");
 
       Diff_Append_Color := Create
@@ -324,7 +324,7 @@ package body Vdiff2_Module is
          Name     =>  "Diff-Append-Color",
          Label    => -"Append Color",
          Doc      => -"Color used for highlighting in Visual Diff2",
-         Page     => -"Visual diff",
+         Page     => -"Visual diff:Colors",
          Default  => "#88EEAA");
 
       Diff_Remove_Color := Create
@@ -332,7 +332,7 @@ package body Vdiff2_Module is
          Name     =>  "Diff-Remove-Color",
          Label    => -"Remove Color",
          Doc      => -"Color used for highlighting in Visual Diff2",
-         Page     => -"Visual diff",
+         Page     => -"Visual diff:Colors",
          Default  => "#FFA0A0");
 
       Diff_Change_Color := Create
@@ -340,7 +340,7 @@ package body Vdiff2_Module is
          Name     =>  "Diff-Change-Color",
          Label    => -"Change Color",
          Doc      => -"Color used for highlighting in Visual Diff2",
-         Page     => -"Visual diff",
+         Page     => -"Visual diff:Colors",
          Default  => "#ECECAA");
 
       Diff_Fine_Change_Color := Create
@@ -348,7 +348,7 @@ package body Vdiff2_Module is
          Name     =>  "Horizontal-Diff-Change-Color",
          Label    => -"Fine Change Color",
          Doc      => -"Color used for highlighting in Visual Diff2",
-         Page     => -"Visual diff",
+         Page     => -"Visual diff:Colors",
          Default  => "#FDE66A");
 
       Preferences_Changed_Hook.Add

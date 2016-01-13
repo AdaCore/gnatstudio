@@ -896,7 +896,7 @@ package body GPS.Kernel.Preferences is
            & "-- Subprogram --" & ASCII.LF
            & "----------------" & ASCII.LF),
          Label   => -"Subprogram Box",
-         Page    => -"Refactoring");
+         Page    => -"Refactoring:Subprograms");
 
       Add_In_Keyword := Create
         (Manager => Get_Preferences (Kernel),
@@ -909,17 +909,18 @@ package body GPS.Kernel.Preferences is
            & " as opposed to" & ASCII.LF
            & "    procedure Proc (A : Integer);"),
          Label   => -"Add ""in"" Keyword",
-         Page    => -"Refactoring");
+         Page    => -"Refactoring:Subprograms");
 
       Create_Subprogram_Decl  := Create
         (Manager => Get_Preferences (Kernel),
          Name    => "Refactoring-Subprogram-Spec",
          Default => True,
          Doc     => -(
-           "Whether GPS should create a declaration for the subprogram. If"
+          "Whether GPS should create a declaration when extracting a"
+           & " subprogram from existing code. If"
            & " set to False, only the body of the subprogram will be created"),
          Label   => -"Create Subprogram Declarations",
-         Page    => -"Refactoring");
+         Page    => -"Refactoring:Subprograms");
 
       -- Browsers --
 
@@ -929,7 +930,7 @@ package body GPS.Kernel.Preferences is
          Default => "#FFFFFF",
          Doc     => -"Color used to draw the background of the browsers",
          Label   => -"Background color",
-         Page    => -"Browsers");
+         Page    => -"Browsers:Colors");
 
       Browsers_Hyper_Link_Color := Create
         (Manager => Kernel.Preferences,
@@ -937,7 +938,7 @@ package body GPS.Kernel.Preferences is
          Default => "#0000FF",
          Doc     => -"Color used to draw the hyper links in the items",
          Label   => -"Hyper link color",
-         Page    => -"Browsers");
+         Page    => -"Browsers:Colors");
 
       Selected_Link_Color := Create
         (Manager => Kernel.Preferences,
@@ -945,7 +946,7 @@ package body GPS.Kernel.Preferences is
          Default => "rgba(230,50,50,0.7)",
          Doc     => -"Color to use for links between selected items",
          Label   => -"Selected link color",
-         Page    => -"Browsers");
+         Page    => -"Browsers:Colors");
 
       Unselected_Link_Color := Create
         (Manager => Kernel.Preferences,
@@ -953,7 +954,7 @@ package body GPS.Kernel.Preferences is
          Default => "rgba(180,180,180,0.7)",
          Doc     => -"Color to use for links between unselected items",
          Label   => -"Default link color",
-         Page    => -"Browsers");
+         Page    => -"Browsers:Colors");
 
       Parent_Linked_Item_Color := Create
         (Manager => Kernel.Preferences,
@@ -962,7 +963,7 @@ package body GPS.Kernel.Preferences is
          Doc     => -("Color to use for the background of the items linked"
                       & " to the selected item"),
          Label   => -"Ancestor items color",
-         Page    => -"Browsers");
+         Page    => -"Browsers:Colors");
 
       Child_Linked_Item_Color := Create
         (Manager => Kernel.Preferences,
@@ -971,7 +972,7 @@ package body GPS.Kernel.Preferences is
          Doc     => -("Color to use for the background of the items linked"
                       & " from the selected item"),
          Label   => -"Offspring items color",
-         Page    => -"Browsers");
+         Page    => -"Browsers:Colors");
 
       Selected_Item_Color := Create
         (Manager => Kernel.Preferences,
@@ -979,7 +980,7 @@ package body GPS.Kernel.Preferences is
          Default => "rgba(138,226,52,0.7)",
          Doc     => -"Color to use to draw the selected item",
          Label   => -"Selected item color",
-         Page    => -"Browsers");
+         Page    => -"Browsers:Colors");
 
       Title_Color := Create
         (Manager => Kernel.Preferences,
@@ -999,7 +1000,7 @@ package body GPS.Kernel.Preferences is
            & " This setting does not affect the entities browser, though,"
            & " where the layout is always vertical."),
          Label   => -"Vertical layout",
-         Page    => -"Browsers");
+         Page    => -"Browsers:Display");
 
       -- VCS --
 
@@ -1012,9 +1013,19 @@ package body GPS.Kernel.Preferences is
            & " an update the status is requested from the repository. This"
            & " may take some time depending on the network connection speed."),
          Label   => -"Implicit status",
-         Page    => -"VCS");
+         Page    => -"VCS:General");
 
       -- Diff_Utils --
+
+      Old_Vdiff := Create
+        (Manager   => Kernel.Preferences,
+         Name      => "Diff-Utils-Old-Vdiff",
+         Label     => -"Use old diff (requires restart)",
+         Doc       => -("Use the old version of visual differences."
+           & " Changing this parameter requires restarting GPS."),
+         Default   => False,
+         Page      => -"Visual diff:General",
+         Priority  => -2);
 
       Diff_Mode := Vdiff_Modes_Prefs.Create
         (Manager => Kernel.Preferences,
@@ -1026,7 +1037,7 @@ package body GPS.Kernel.Preferences is
            & " - Side_By_Side: the differences are shown in a separate editor."
           ),
          Default => Side_By_Side,
-         Page    => -"Visual diff");
+         Page    => -"Visual diff:General");
 
       Diff_Cmd := Create
         (Manager => Kernel.Preferences,
@@ -1035,7 +1046,7 @@ package body GPS.Kernel.Preferences is
          Doc     => -("Command used to compute differences between two files."
                       & " Arguments can also be specified"),
          Default => Config.Default_Diff_Cmd,
-         Page    => -"Visual diff");
+         Page    => -"Visual diff:General");
 
       Patch_Cmd := Create
         (Manager => Kernel.Preferences,
@@ -1044,16 +1055,7 @@ package body GPS.Kernel.Preferences is
          Doc     =>
            -"Command used to apply a patch. Arguments can also be specified",
          Default => Config.Default_Patch_Cmd,
-         Page    => -"Visual diff");
-
-      Old_Vdiff := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Diff-Utils-Old-Vdiff",
-         Label   => -"Use old diff (requires restart)",
-         Doc     => -("Use the old version of visual differences."
-                      & " Changing this parameter requires restarting GPS."),
-         Default => False,
-         Page    => -"Visual diff");
+         Page    => -"Visual diff:General");
 
       -- Messages --
 
@@ -1340,7 +1342,7 @@ package body GPS.Kernel.Preferences is
         (Manager => Kernel.Preferences,
          Name    => "VCS-Hide-Up-To-Date",
          Default => False,
-         Page    => "",
+         Page    => "VCS:General",
          Doc     => -"Whether up to date files should be hidden by default",
          Label   => -"Hide up-to-date files");
 
@@ -1348,7 +1350,7 @@ package body GPS.Kernel.Preferences is
         (Manager => Kernel.Preferences,
          Name    => "VCS-Hide-Not-Registered",
          Default => False,
-         Page    => "",
+         Page    => "VCS:General",
          Doc     => -"Whether unregistered files should be hidden by default",
          Label   => -"Hide non registered files");
 
@@ -1356,7 +1358,7 @@ package body GPS.Kernel.Preferences is
         (Manager => Kernel.Preferences,
          Name    => "Default-VCS",
          Default => "Auto",
-         Page    => -"VCS",
+         Page    => -"VCS:General",
          Doc     =>
          -"The default VCS to use when no VCS is defined in the project",
          Label   => -"Default VCS");

@@ -344,7 +344,7 @@ package body Browsers.Elaborations is
         (Get_Preferences (Kernel),
          Name    => "Auto-Show-Elaboration-Cycles",
          Label   => -"Show elaboration cycles",
-         Page    => -"Browsers",
+         Page    => -"Browsers:Display",
          Doc     => -"Display elaboration cycles in browser after compilation",
          Default => True);
    end Register_Module;
