@@ -15,34 +15,181 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Case_Handling;            use Case_Handling;
-with Gtk.Combo_Box;
-with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
-with Glib.Object;              use Glib.Object;
-with GUI_Utils;                use GUI_Utils;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
-with GNAT.Strings;             use GNAT.Strings;
+with GNATCOLL.Utils;     use GNATCOLL.Utils;
+with GNAT.Strings;       use GNAT.Strings;
+
+with Case_Handling;      use Case_Handling;
+with GUI_Utils;          use GUI_Utils;
+
+with Gtk.Box;            use Gtk.Box;
+with Gtk.Combo_Box;      use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
+with Gtk.Event_Box;      use Gtk.Event_Box;
+with Gtk.Label;          use Gtk.Label;
+with Gtk.Radio_Button;   use Gtk.Radio_Button;
+with Gtk.Toggle_Button;
+with Gtk.Widget;         use Gtk.Widget;
+with Glib.Object;        use Glib.Object;
 
 package body Default_Preferences.Enums is
 
-   procedure Enum_Changed
-     (Combo : access GObject_Record'Class;
-      Data  : Manager_Preference);
-   --  Called when an enumeration preference has been changed.
+   Needs_Combo_Threshold : constant := 3;
+   --  Number of choices from which enum preferences are displayed using
+   --  combo boxes instead of radio buttons.
+
+   type Enum_Radio_Button_Record is new Gtk_Radio_Button_Record with record
+      Enum_Value : Integer;
+      --  The enumeration value associated with this radio button
+   end record;
+   type Enum_Radio_Button is access all Enum_Radio_Button_Record'Class;
+   --  Type representing radio buttons associated with enumeration
+   --  preferences.
+
+   procedure Enum_Combo_Changed
+     (Widget : access GObject_Record'Class;
+      Data   : Manager_Preference);
+   --  Called when an enumeration preference with a combo box has changed.
+
+   procedure Enum_Radio_Changed
+     (Widget : access GObject_Record'Class;
+      Data   : Manager_Preference);
+   --  Called when an enumeration preference with a radio button group
+   --  has changed.
+
+   function Create_Combo_Box
+     (Pref    : not null access Enum_Preference_Record'Class;
+      Manager : not null access Preferences_Manager_Record'Class;
+      Choices : not null GNAT.Strings.String_List_Access)
+      return Gtk_Combo_Box_Text;
+   --  Create a combo box listing all the given choices, and updating the given
+   --  pref when the selected choice changes.
+
+   function Create_Enum_Radio_Buttons_Box
+     (Pref    : not null access Enum_Preference_Record'Class;
+      Manager : not null access Preferences_Manager_Record'Class;
+      Choices : not null GNAT.Strings.String_List_Access)
+      return Gtk_Vbox;
+   --  Create a vertical box containing radio buttons listing all the given
+   --  choices, and updating the given pref when the selected radio button
+   --  changes.
+
+   ----------------------
+   -- Create_Combo_Box --
+   ----------------------
+
+   function Create_Combo_Box
+     (Pref    : not null access Enum_Preference_Record'Class;
+      Manager : not null access Preferences_Manager_Record'Class;
+      Choices : not null GNAT.Strings.String_List_Access)
+      return Gtk_Combo_Box_Text
+   is
+      I     : Gint := 0;
+      Combo : Gtk_Combo_Box_Text;
+   begin
+      Gtk_New (Combo);
+
+      for K in Choices'Range loop
+         Combo.Append_Text (Mixed_Case (Choices (K).all));
+
+         if K = Pref.Enum_Value + Choices'First then
+            Combo.Set_Active (I);
+         end if;
+
+         I := I + 1;
+      end loop;
+
+      Preference_Handlers.Connect
+        (Combo, Gtk.Combo_Box.Signal_Changed,
+         Enum_Combo_Changed'Access,
+         User_Data   => (Preferences_Manager (Manager), Preference (Pref)));
+
+      Set_GObject_To_Update (Pref, GObject (Combo));
+
+      return Combo;
+   end Create_Combo_Box;
+
+   -----------------------------------
+   -- Create_Enum_Radio_Buttons_Box --
+   -----------------------------------
+
+   function Create_Enum_Radio_Buttons_Box
+     (Pref    : not null access Enum_Preference_Record'Class;
+      Manager : not null access Preferences_Manager_Record'Class;
+      Choices : not null GNAT.Strings.String_List_Access)
+      return Gtk_Vbox
+   is
+      Event             : Gtk_Event_Box;
+      Label             : Gtk_Label;
+      Radio_Box         : Gtk_Vbox;
+      Radio             : array (Choices'Range) of Enum_Radio_Button;
+      Radio_Left_Margin : constant := 10;
+   begin
+      Radio_Box := Gtk_Vbox_New;
+
+      Gtk_New (Label, Pref.Get_Label);
+
+      Gtk_New (Event);
+      Event.Add (Label);
+      Event.Set_Tooltip_Text (Pref.Get_Doc);
+      Label.Set_Alignment (0.0, 0.5);
+      Label.Set_Margin_Top (5);
+      Label.Set_Margin_Bottom (3);
+      Radio_Box.Pack_Start (Event);
+
+      for K in Choices'Range loop
+         Radio (K) := new Enum_Radio_Button_Record;
+
+         Initialize
+           (Radio_Button => Gtk_Radio_Button (Radio (K)),
+            Group        => Radio (Radio'First),
+            Label        => Mixed_Case (Choices (K).all));
+         Radio (K).Enum_Value := K - Choices'First;
+         Radio (K).Set_Margin_Left (Radio_Left_Margin);
+
+         Radio_Box.Pack_Start (Radio (K), Expand => False);
+         Preference_Handlers.Connect
+           (Radio (K), Gtk.Toggle_Button.Signal_Toggled,
+            Enum_Radio_Changed'Access,
+            User_Data =>
+              (Preferences_Manager (Manager), Preference (Pref)));
+
+         if K = Pref.Enum_Value + Choices'First then
+            Radio (K).Set_Active (True);
+         end if;
+      end loop;
+
+      return Radio_Box;
+   end Create_Enum_Radio_Buttons_Box;
 
    ------------------
    -- Enum_Changed --
    ------------------
 
-   procedure Enum_Changed
-     (Combo : access GObject_Record'Class;
-      Data  : Manager_Preference)
+   procedure Enum_Combo_Changed
+     (Widget : access GObject_Record'Class;
+      Data   : Manager_Preference)
    is
-      C     : constant Gtk_Combo_Box_Text := Gtk_Combo_Box_Text (Combo);
+      Combo : constant Gtk_Combo_Box_Text :=
+                Gtk_Combo_Box_Text (Widget);
    begin
-      Enum_Preference (Data.Pref).Enum_Value := Integer (Get_Active (C));
+      Enum_Preference (Data.Pref).Enum_Value :=
+        Integer (Get_Active (Combo));
       Data.Manager.Notify_Pref_Changed (Data.Pref);
-   end Enum_Changed;
+   end Enum_Combo_Changed;
+
+   ------------------------
+   -- Enum_Radio_Changed --
+   ------------------------
+
+   procedure Enum_Radio_Changed
+     (Widget : access GObject_Record'Class;
+      Data   : Manager_Preference)
+   is
+      Radio : constant Enum_Radio_Button := Enum_Radio_Button (Widget);
+   begin
+      Enum_Preference (Data.Pref).Enum_Value := Radio.Enum_Value;
+      Data.Manager.Notify_Pref_Changed (Data.Pref);
+   end Enum_Radio_Changed;
 
    ------------
    -- Create --
@@ -82,31 +229,14 @@ package body Default_Preferences.Enums is
       Manager            : access Preferences_Manager_Record'Class)
       return Gtk.Widget.Gtk_Widget
    is
-      Combo : Gtk_Combo_Box_Text;
-      Idx   : Gint := 0;
-
-   begin
-      Gtk_New (Combo);
-
-      for K in Pref.Choices'Range loop
-         Combo.Append_Text (Mixed_Case (Pref.Choices (K).all));
-
-         if K = Pref.Enum_Value + Pref.Choices'First then
-            Combo.Set_Active (Idx);
-         end if;
-
-         Idx := Idx + 1;
-      end loop;
-
-      Preference_Handlers.Connect
-        (Combo, Gtk.Combo_Box.Signal_Changed,
-         Enum_Changed'Access,
-         User_Data   => (Preferences_Manager (Manager), Preference (Pref)));
-
-      Set_GObject_To_Update (Pref, GObject (Combo));
-
-      return Gtk.Widget.Gtk_Widget (Combo);
-   end Edit;
+     (if Pref.Choices'Length > Needs_Combo_Threshold then
+         Gtk_Widget (Create_Combo_Box (Pref    => Pref,
+                                       Manager => Manager,
+                                       Choices => Pref.Choices))
+      else
+         Gtk_Widget (Create_Enum_Radio_Buttons_Box (Pref    => Pref,
+                                                    Manager => Manager,
+                                                    Choices => Pref.Choices)));
 
    --------------
    -- Get_Pref --
@@ -150,6 +280,15 @@ package body Default_Preferences.Enums is
       Set_Active_Text
         (Gtk_Combo_Box_Text (Widget), String'(Get_Pref (Pref)));
    end Update_On_Pref_Changed;
+
+   ------------------------
+   -- Editor_Needs_Label --
+   ------------------------
+
+   overriding function Editor_Needs_Label
+     (Pref : not null access Choice_Preference_Record) return Boolean
+   is
+     (Pref.Choices'Length > Needs_Combo_Threshold);
 
    --------------
    -- Generics --
@@ -203,32 +342,47 @@ package body Default_Preferences.Enums is
          Manager            : access Preferences_Manager_Record'Class)
          return Gtk.Widget.Gtk_Widget
       is
-         V       : constant Integer := Enum_Preference (Pref).Enum_Value;
-         Combo   : Gtk_Combo_Box_Text;
-         Idx     : Gint := 0;
+         subtype Enumeration_Choices is
+              GNAT.Strings.String_List (1 .. Enumeration'Range_Length);
+         Widget  : Gtk_Widget;
+         Choices : GNAT.Strings.String_List_Access := new Enumeration_Choices;
+
+         procedure Build_Choices;
+         --  Build a strings list of all the possible choices for this
+         --  enum preference, using the Enumeration type possible values.
+
+         -------------------
+         -- Build_Choices --
+         -------------------
+
+         procedure Build_Choices is
+            I : Integer := Choices'First;
+         begin
+            for K in Enumeration'Range loop
+               Choices (I) :=
+                 new String'(Enumeration'Image (K));
+               I := I + 1;
+            end loop;
+         end Build_Choices;
 
       begin
-         Gtk_New (Combo);
+         Build_Choices;
 
-         for K in Enumeration'Range loop
-            Combo.Append_Text (Mixed_Case (Enumeration'Image (K)));
+         if Enumeration'Range_Length > Needs_Combo_Threshold then
+            Widget := Gtk_Widget
+              (Create_Combo_Box (Pref    => Pref,
+                                 Manager => Manager,
+                                 Choices => Choices));
+         else
+            Widget := Gtk_Widget
+              (Create_Enum_Radio_Buttons_Box (Pref    => Pref,
+                                              Manager => Manager,
+                                              Choices => Choices));
+         end if;
 
-            if Enumeration'Pos (K) = V then
-               Combo.Set_Active (Idx);
-            end if;
+         Free (Choices);
 
-            Idx := Idx + 1;
-         end loop;
-
-         Preference_Handlers.Connect
-           (Combo, Gtk.Combo_Box.Signal_Changed,
-            Enum_Changed'Access,
-            User_Data   => (Preferences_Manager (Manager),
-                            Default_Preferences.Preference (Pref)));
-
-         Set_GObject_To_Update (Pref, GObject (Combo));
-
-         return Gtk.Widget.Gtk_Widget (Combo);
+         return Widget;
       end Edit;
 
       ----------------------------
@@ -286,6 +440,16 @@ package body Default_Preferences.Enums is
             Set_Pref (Enum_Preference_Record (Pref.all)'Access,
                       Manager, Value);
       end Set_Pref;
+
+      ------------------------
+      -- Editor_Needs_Label --
+      ------------------------
+
+      overriding function Editor_Needs_Label
+        (Pref : not null access Preference_Record) return Boolean
+      is
+        (Enumeration'Range_Length > Needs_Combo_Threshold);
+
    end Generics;
 
 end Default_Preferences.Enums;

@@ -95,7 +95,7 @@ GtkTextView.readonly {
    background-color: @theme_base_color;
    box-shadow: none;
    border-width: 0px 0px 0px 0px;
-   padding-top: 10px;
+   padding-top: 20px;
 }
 
 .gps-preferences-groups > GtkLabel {
@@ -104,7 +104,7 @@ GtkTextView.readonly {
 }
 
 .gps-preferences-groups GtkListBoxRow {
-   padding-left: 10px;
+   padding-left: 12px;
 }
 
 .gps-preferences-groups GtkListBoxRow:hover {

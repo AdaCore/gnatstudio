@@ -62,6 +62,8 @@ package Default_Preferences.Enums is
       overriding procedure Update_On_Pref_Changed
         (Pref   : access Preference_Record;
          Widget : access GObject_Record'Class);
+      overriding function Editor_Needs_Label
+        (Pref : not null access Preference_Record) return Boolean;
    end Generics;
 
 private
@@ -82,5 +84,6 @@ private
    overriding procedure Update_On_Pref_Changed
      (Pref   : access Choice_Preference_Record;
       Widget : access GObject_Record'Class);
-
+   overriding function Editor_Needs_Label
+     (Pref : not null access Choice_Preference_Record) return Boolean;
 end Default_Preferences.Enums;

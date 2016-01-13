@@ -128,6 +128,7 @@ package body Default_Preferences.GUI is
       if Align then
          Gtk_New (Self.Label_Size_Group);
          Gtk_New (Self.Pref_Widget_Size_Group);
+         Self.Pref_Widget_Size_Group.Set_Mode (Mode => Horizontal);
       end if;
    end Initialize;
 
