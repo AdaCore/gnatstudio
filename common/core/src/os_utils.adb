@@ -231,7 +231,11 @@ package body OS_Utils is
 
       use type Config.Host_Type;
 
-      function Norm (Dir, Name : String) return String;
+      function Norm
+        (Dir    : String;
+         Name   : String;
+         Filter : Filter_Type)
+         return String;
       --  Normalize Name using OS casing and do the same recusivelly for full
       --  pathname in Dir.
 
@@ -239,16 +243,34 @@ package body OS_Utils is
       -- Norm --
       ----------
 
-      function Norm (Dir, Name : String) return String is
+      function Norm
+        (Dir    : String;
+         Name   : String;
+         Filter : Filter_Type)
+         return String
+      is
          L_Name  : String := Name;
          Search  : Search_Type;
          Entries : Directory_Entry_Type;
       begin
          Case_Util.To_Lower (L_Name);
 
-         Start_Search (Search, Dir, "*");
+         Start_Search (Search, Dir, "*", Filter);
 
-         while More_Entries (Search) loop
+         Main_Loop : loop
+            loop
+               begin
+                  if More_Entries (Search) then
+                     exit;
+                  else
+                     exit Main_Loop;
+                  end if;
+               exception
+                  when others =>
+                     null;
+               end;
+            end loop;
+
             Get_Next_Entry (Search, Entries);
 
             declare
@@ -271,12 +293,14 @@ package body OS_Utils is
 
                   else
                      return Compose
-                       (Norm (Containing_Directory (Dir), Simple_Name (Dir)),
+                       (Norm (Containing_Directory (Dir),
+                              Simple_Name (Dir),
+                              (Directory => True, others => False)),
                         Simple_Name (Entries));
                   end if;
                end if;
             end;
-         end loop;
+         end loop Main_Loop;
 
          --  Not found, return Full_Name
          End_Search (Search);
@@ -289,7 +313,9 @@ package body OS_Utils is
                   or else Is_Directory (Full_Name))
       then
          return +Norm
-           (Containing_Directory (+Full_Name), Simple_Name (+Full_Name));
+           (Containing_Directory (+Full_Name),
+            Simple_Name (+Full_Name),
+            (others => True));
       else
          return Full_Name;
       end if;
