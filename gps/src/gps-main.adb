@@ -145,7 +145,6 @@ with Command_Window;
 with Cpp_Module;
 with Custom_Module;
 with Project_Templates.GPS;
-with External_Editor_Module;
 with GNATStack.Module;
 with GNATTest_Module;
 with GPS.Location_View;
@@ -213,11 +212,8 @@ procedure GPS.Main is
                         Create ("MODULE.Project_Explorer", GNATCOLL.Traces.On);
    Files_Explorer_Trace   : constant Trace_Handle :=
                         Create ("MODULE.Files_Explorer", GNATCOLL.Traces.On);
-   External_Editor_Trace  : constant Trace_Handle :=
-                        Create ("MODULE.External_Editor", GNATCOLL.Traces.On);
    VCS_Trace              : constant Trace_Handle :=
                         Create ("MODULE.VCS", GNATCOLL.Traces.On);
-
    Custom_Trace           : constant Trace_Handle :=
                         Create ("MODULE.Custom", GNATCOLL.Traces.On);
    Project_Templates_Trace : constant Trace_Handle :=
@@ -2050,10 +2046,6 @@ procedure GPS.Main is
       end if;
 
       KeyManager_Module.Register_Key_Menu (GPS_Main.Kernel);
-
-      if Active (External_Editor_Trace) then
-         External_Editor_Module.Register_Module (GPS_Main.Kernel);
-      end if;
 
       if Active (Builder_Trace) then
          Builder_Facility_Module.Register_Module (GPS_Main.Kernel);
