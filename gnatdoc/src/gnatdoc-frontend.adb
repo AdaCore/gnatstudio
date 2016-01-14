@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2007-2015, AdaCore                     --
+--                     Copyright (C) 2007-2016, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -1284,6 +1284,9 @@ package body GNATdoc.Frontend is
          In_Aspect_Spec   : Boolean := False;
          --  Set to true when In_Item_Decl is True and we see "with"
 
+         In_Null_Record   : Boolean := False;
+         --  Set to true when we see the sequence of tokens "record null"
+
          In_Parent_Part   : Boolean := False;
          --  In_Parent_Part is set when we identify the sequence "is new"
          --  or the sequence "interface and" which indicate that the next
@@ -1327,6 +1330,7 @@ package body GNATdoc.Frontend is
             In_Type_Definition := False;
             In_Derived_Type_Definition := False;
             In_Item_Decl    := False;
+            In_Null_Record  := False;
             In_Aspect_Spec  := False;
 
             In_Parent_Part  := False;
@@ -2692,6 +2696,18 @@ package body GNATdoc.Frontend is
                         end;
                      end if;
 
+                  when Tok_Null =>
+                     if In_Null_Record then
+                        declare
+                           E : constant Entity_Id :=
+                             Get_Current_Entity (Current_Context);
+                        begin
+                           if Get_Kind (E) = E_Discriminant then
+                              Do_Exit;
+                           end if;
+                        end;
+                     end if;
+
                   when Tok_Return =>
                      null;
 
@@ -2832,6 +2848,8 @@ package body GNATdoc.Frontend is
                      Do_Breakpoint;
 
                      if In_Record_Representation_Clause then
+                        null;
+                     elsif In_Null_Record then
                         null;
                      elsif Nested_Variants_Count /= 0 then
                         null;
@@ -3114,6 +3132,16 @@ package body GNATdoc.Frontend is
                               Set_End_Decl_Found (Current_Context);
                            end if;
 
+                        when Tok_Null =>
+                           if Prev_Token = Tok_Record then
+                              In_Null_Record := True;
+                           end if;
+
+                        when Tok_Record =>
+                           if In_Null_Record and then Prev_Token = Tok_End then
+                              In_Null_Record := False;
+                           end if;
+
                         when Tok_Type =>
                            null;
 
@@ -3169,7 +3197,9 @@ package body GNATdoc.Frontend is
                      elsif S = ";" then
                         Token := Tok_Semicolon;
 
-                        if Par_Count = 0 then
+                        if Par_Count = 0
+                          and then not In_Null_Record
+                        then
                            Set_End_Decl_Found (Current_Context);
 
                            --  ???may fail with access to subprogram formals
