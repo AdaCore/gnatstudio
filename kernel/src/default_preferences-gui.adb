@@ -16,8 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GUI_Utils;         use GUI_Utils;
-
-with Gtk.Box;           use Gtk.Box;
 with Gtk.Enums;         use Gtk.Enums;
 with Gtk.Event_Box;     use Gtk.Event_Box;
 with Gtk.Label;         use Gtk.Label;
@@ -39,6 +37,7 @@ package body Default_Preferences.GUI is
       Gtk.Scrolled_Window.Initialize (Self);
       Self.Set_Policy (Policy_Automatic, Policy_Automatic);
       Self.On_Destroy (On_Destroy_Page_View'Access);
+
       Get_Style_Context (Self).Add_Class
         ("gps-preferences-pages");
    end Initialize;
@@ -114,21 +113,29 @@ package body Default_Preferences.GUI is
    procedure Initialize
      (Self        : not null access Preferences_Group_Widget_Record'Class;
       Group_Name  : String;
-      Align       : Boolean := True) is
+      Align       : Boolean := True)
+   is
+      VBox : Gtk_Box;
    begin
       Gtk.Frame.Initialize (Self, Group_Name);
 
       Get_Style_Context (Self).Add_Class
         ("gps-preferences-groups");
 
-      Gtk_New (Self.List_Box);
-      Self.List_Box.Set_Selection_Mode (Selection_None);
-      Self.Add (Self.List_Box);
+      Gtk_New (Self.Flow_Box);
+      Self.Flow_Box.Set_Orientation (Orientation_Horizontal);
+      Self.Flow_Box.Set_Row_Spacing (0);
+      Self.Flow_Box.Set_Max_Children_Per_Line (2);
+      Self.Flow_Box.Set_Selection_Mode (Selection_None);
+      Self.Flow_Box.Set_Homogeneous (True);
+
+      Gtk_New_Vbox (VBox);
+      VBox.Pack_Start (Self.Flow_Box, Expand => False);
+      Self.Add (VBox);
 
       if Align then
          Gtk_New (Self.Label_Size_Group);
          Gtk_New (Self.Pref_Widget_Size_Group);
-         Self.Pref_Widget_Size_Group.Set_Mode (Mode => Horizontal);
       end if;
    end Initialize;
 
@@ -140,33 +147,38 @@ package body Default_Preferences.GUI is
      (Self    : not null access Preferences_Group_Widget_Record'Class;
       Pref    : not null access Preference_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class)
-      return Gtk_List_Box_Row
+      return Gtk_Widget
    is
-      Pref_Row    : Gtk_Box;
+      Pref_HBox    : Gtk_Box;
+      Pref_Row   : Gtk_Box;
       Event       : Gtk_Event_Box;
       Label       : Gtk_Label;
       Pref_Widget : Gtk_Widget;
    begin
-      Gtk_New_Hbox (Pref_Row);
+      Gtk_New_Hbox (Pref_HBox);
+      Gtk_New_Vbox (Pref_Row);
+      Pref_Row.Pack_Start (Pref_HBox, Expand => False);
 
       if Pref.Editor_Needs_Label then
          Gtk_New (Event);
          Gtk_New (Label, Pref.Get_Label);
          Event.Add (Label);
          Event.Set_Tooltip_Text (Pref.Get_Doc);
+
+         --  Right align the label and add it to the row
          Label.Set_Alignment (Xalign => 1.0,
                               Yalign => 0.5);
-
          Self.Label_Size_Group.Add_Widget (Event);
-         Event.Set_Border_Width (2);
-         Pref_Row.Pack_Start (Event, Expand  => False);
+         Pref_HBox.Pack_Start (Event,
+                               Expand  => False,
+                               Fill    => False,
+                               Padding => 5);
 
          Pref_Widget := Edit (Pref, Manager);
 
          if Pref_Widget /= null then
-            Pref_Widget.Set_Hexpand (False);
             Self.Pref_Widget_Size_Group.Add_Widget (Pref_Widget);
-            Pref_Row.Pack_Start (Pref_Widget);
+            Pref_HBox.Pack_Start (Pref_Widget, Expand => False);
          end if;
       else
          Pref_Widget := Edit
@@ -175,14 +187,13 @@ package body Default_Preferences.GUI is
          Pref_Widget.Set_Tooltip_Text (Pref.Get_Doc);
 
          if Pref_Widget /= null then
-            Pref_Widget.Set_Hexpand (False);
             Self.Pref_Widget_Size_Group.Add_Widget (Pref_Widget);
-            Pref_Row.Pack_Start (Pref_Widget);
+            Pref_Row.Pack_Start (Pref_Widget, Expand => False);
          end if;
       end if;
-      Self.List_Box.Add (Pref_Row);
+      Self.Flow_Box.Add (Pref_Row);
 
-      return Gtk_List_Box_Row (Pref_Row.Get_Parent);
+      return Pref_Row.Get_Parent;
    end Create_Pref_Row;
 
    ------------
@@ -193,7 +204,7 @@ package body Default_Preferences.GUI is
      (Self   : not null access Preferences_Group_Widget_Record'Class;
       Widget : not null Gtk_Widget) is
    begin
-      Self.List_Box.Add (Widget);
+      Self.Flow_Box.Add (Widget);
    end Append;
 
    -----------
@@ -227,7 +238,7 @@ package body Default_Preferences.GUI is
 
          procedure Add_Pref_Widget
          is
-            Pref_Row : Gtk_List_Box_Row;
+            Pref_Row : Gtk_Widget;
          begin
             Pref_Row := Create_Pref_Row
               (Self    => Group_Widget,
@@ -235,7 +246,7 @@ package body Default_Preferences.GUI is
                Manager => Manager);
 
             Self.Pref_Widgets.Insert
-              (Pref.Get_Name, Gtk_Widget (Pref_Row));
+              (Pref.Get_Name, Pref_Row);
          end Add_Pref_Widget;
 
       begin
@@ -243,7 +254,7 @@ package body Default_Preferences.GUI is
          Group_Widget.Initialize (Group_Name => Group.Get_Name,
                                   Align      => True);
 
-         Self.Pack_Start (Group_Widget, Expand => False);
+         Self.Pack_Start (Group_Widget, Expand =>  False);
 
          for Pref_Iter in Group.Preferences.Iterate loop
             Pref := Preferences_Lists.Element (Pref_Iter);

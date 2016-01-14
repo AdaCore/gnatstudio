@@ -83,37 +83,23 @@ GtkTextView.readonly {
    background-color: @theme_base_color;
 }
 
-.gps-preferences-pages GtkNotebook {
-   padding-top: 3px;
-}
-
 /**************************
  * GPS preferences groups *
  **************************/
 
 .gps-preferences-groups {
-   background-color: @theme_base_color;
    box-shadow: none;
    border-width: 0px 0px 0px 0px;
-   padding-top: 20px;
 }
 
 .gps-preferences-groups > GtkLabel {
    /* Set bold font for group titles */
    font-weight: bold;
+   padding-top: 12px;
 }
 
-.gps-preferences-groups GtkListBoxRow {
+.gps-preferences-groups GtkFlowBoxChild {
    padding-left: 12px;
-}
-
-.gps-preferences-groups GtkEventBox{
-   padding-right: 5px;
-}
-
-.gps-preferences-groups GtkListBoxRow:hover {
-   /* Don't prelight the preferences groups rows when hovering */
-   background-color: @theme_base_color;
 }
 
 /*********************
@@ -125,6 +111,7 @@ GtkTextView.readonly {
     * are displayed. Perhaps this is a resize handle ? */
    box-shadow: none;
 }
+
 GtkMenu {
   border: 2px solid mix(@theme_base_color, @mdi_border_color, 0.5);
 }

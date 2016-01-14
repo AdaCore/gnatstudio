@@ -781,6 +781,12 @@ package body Default_Preferences is
       Page_View.Set_Prefs_Box (Prefs_Box);
       Page_View.Add (Prefs_Box);
 
+      --  If the window is expanded, do not expand the scrolled view child
+      --  widget
+      Page_View.Get_Child.Set_Valign (Align_Start);
+      Page_View.Get_Child.Set_Vexpand (False);
+      Page_View.Get_Child.Set_Hexpand (False);
+
       return Gtk_Widget (Page_View);
    end Get_Widget;
 
@@ -2158,7 +2164,7 @@ package body Default_Preferences is
       P      : constant Manager_Preference :=
                  (Preferences_Manager (Manager), Preference (Pref));
    begin
-      Gtk_New (Toggle, Pref.Get_Label);
+      Gtk_New (Toggle);
       Toggle.Set_Active (Pref.Bool_Value);
 
       Preference_Handlers.Connect

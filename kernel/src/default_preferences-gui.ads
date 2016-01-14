@@ -18,9 +18,9 @@
 --  This package defines types and subprograms used to create preferences
 --  dialog pages and related widgets.
 
+with Gtk.Box;                use Gtk.Box;
 with Gtk.Frame;              use Gtk.Frame;
-with Gtk.List_Box;           use Gtk.List_Box;
-with Gtk.List_Box_Row;       use Gtk.List_Box_Row;
+with Gtk.Flow_Box;           use Gtk.Flow_Box;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Size_Group;         use Gtk.Size_Group;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
@@ -106,14 +106,14 @@ package Default_Preferences.GUI is
      (Self    : not null access Preferences_Group_Widget_Record'Class;
       Pref    : not null access Preference_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class)
-      return Gtk_List_Box_Row;
+      return Gtk_Widget;
    --  Create a row for the given preference and append it at the bottom of
    --  the group widget.
 
    procedure Append
      (Self   : not null access Preferences_Group_Widget_Record'Class;
       Widget : not null Gtk_Widget);
-   --  Append an already built widget to Self's Gtk_List_Box.
+   --  Append an already built widget to the given group flow box.
 
    ---------------------
    -- Preferences_Box --
@@ -129,7 +129,7 @@ package Default_Preferences.GUI is
 private
 
    type Preferences_Group_Widget_Record is new Gtk_Frame_Record with record
-      List_Box               : Gtk_List_Box;
+      Flow_Box               : Gtk_Flow_Box;
       Label_Size_Group       : Gtk_Size_Group;
       Pref_Widget_Size_Group : Gtk_Size_Group;
    end record;

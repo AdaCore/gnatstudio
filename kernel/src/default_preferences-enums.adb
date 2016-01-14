@@ -21,9 +21,10 @@ with GNAT.Strings;       use GNAT.Strings;
 with Case_Handling;      use Case_Handling;
 with GUI_Utils;          use GUI_Utils;
 
-with Gtk.Box;            use Gtk.Box;
 with Gtk.Combo_Box;      use Gtk.Combo_Box;
 with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
+with Gtk.Flow_Box;       use Gtk.Flow_Box;
+with Gtk.Enums;          use Gtk.Enums;
 with Gtk.Radio_Button;   use Gtk.Radio_Button;
 with Gtk.Toggle_Button;
 with Gtk.Widget;         use Gtk.Widget;
@@ -66,8 +67,8 @@ package body Default_Preferences.Enums is
      (Pref    : not null access Enum_Preference_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class;
       Choices : not null GNAT.Strings.String_List_Access)
-      return Gtk_Vbox;
-   --  Create a vertical box containing radio buttons listing all the given
+      return Gtk_Flow_Box;
+   --  Create a flow box containing radio buttons listing all the given
    --  choices, and updating the given pref when the selected radio button
    --  changes.
 
@@ -114,13 +115,16 @@ package body Default_Preferences.Enums is
      (Pref    : not null access Enum_Preference_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class;
       Choices : not null GNAT.Strings.String_List_Access)
-      return Gtk_Vbox
+      return Gtk_Flow_Box
    is
-      Radio_Box         : Gtk_Vbox;
-      Radio             : array (Choices'Range) of Enum_Radio_Button;
-      Radio_Left_Margin : constant := 10;
+      Radio_Flow_Box : Gtk_Flow_Box;
+      Radio          : array (Choices'Range) of Enum_Radio_Button;
    begin
-      Radio_Box := Gtk_Vbox_New;
+      Gtk_New (Radio_Flow_Box);
+      Radio_Flow_Box.Set_Orientation (Orientation_Horizontal);
+      Radio_Flow_Box.Set_Max_Children_Per_Line (3);
+      Radio_Flow_Box.Set_Selection_Mode (Selection_None);
+      Radio_Flow_Box.Set_Homogeneous (True);
 
       for K in Choices'Range loop
          Radio (K) := new Enum_Radio_Button_Record;
@@ -130,9 +134,8 @@ package body Default_Preferences.Enums is
             Group        => Radio (Radio'First),
             Label        => Mixed_Case (Choices (K).all));
          Radio (K).Enum_Value := K - Choices'First;
-         Radio (K).Set_Margin_Left (Radio_Left_Margin);
+         Radio_Flow_Box.Add (Radio (K));
 
-         Radio_Box.Pack_Start (Radio (K), Expand => False);
          Preference_Handlers.Connect
            (Radio (K), Gtk.Toggle_Button.Signal_Toggled,
             Enum_Radio_Changed'Access,
@@ -144,7 +147,7 @@ package body Default_Preferences.Enums is
          end if;
       end loop;
 
-      return Radio_Box;
+      return Radio_Flow_Box;
    end Create_Enum_Radio_Buttons_Box;
 
    ------------------
@@ -310,10 +313,10 @@ package body Default_Preferences.Enums is
          Default                   : Enumeration)
          return Preference
       is
-         P           : constant Default_Preferences.Preference :=
-               Get_Pref_From_Name
-                 (Manager, Name, Create_If_Necessary => False);
-         Result      : constant Preference := new Preference_Record;
+         P      : constant Default_Preferences.Preference :=
+                    Get_Pref_From_Name
+                      (Manager, Name, Create_If_Necessary => False);
+         Result : constant Preference := new Preference_Record;
 
       begin
          if P /= null then

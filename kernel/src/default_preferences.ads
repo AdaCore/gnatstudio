@@ -876,7 +876,7 @@ private
      is (Self.Default = Self.Bool_Value);
    overriding function Editor_Needs_Label
      (Pref : not null access Boolean_Preference_Record) return Boolean
-   is (False);
+   is (True);
    overriding procedure Update_On_Pref_Changed
      (Pref   : access Boolean_Preference_Record;
       Widget : access GObject_Record'Class);
