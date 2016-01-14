@@ -24,8 +24,6 @@ with GUI_Utils;          use GUI_Utils;
 with Gtk.Box;            use Gtk.Box;
 with Gtk.Combo_Box;      use Gtk.Combo_Box;
 with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
-with Gtk.Event_Box;      use Gtk.Event_Box;
-with Gtk.Label;          use Gtk.Label;
 with Gtk.Radio_Button;   use Gtk.Radio_Button;
 with Gtk.Toggle_Button;
 with Gtk.Widget;         use Gtk.Widget;
@@ -118,23 +116,11 @@ package body Default_Preferences.Enums is
       Choices : not null GNAT.Strings.String_List_Access)
       return Gtk_Vbox
    is
-      Event             : Gtk_Event_Box;
-      Label             : Gtk_Label;
       Radio_Box         : Gtk_Vbox;
       Radio             : array (Choices'Range) of Enum_Radio_Button;
       Radio_Left_Margin : constant := 10;
    begin
       Radio_Box := Gtk_Vbox_New;
-
-      Gtk_New (Label, Pref.Get_Label);
-
-      Gtk_New (Event);
-      Event.Add (Label);
-      Event.Set_Tooltip_Text (Pref.Get_Doc);
-      Label.Set_Alignment (0.0, 0.5);
-      Label.Set_Margin_Top (5);
-      Label.Set_Margin_Bottom (3);
-      Radio_Box.Pack_Start (Event);
 
       for K in Choices'Range loop
          Radio (K) := new Enum_Radio_Button_Record;
@@ -206,7 +192,25 @@ package body Default_Preferences.Enums is
    begin
       Result.Choices := Choices;
       Result.Enum_Value := Default;
-      Register (Manager, Name, Label, Page, Doc, Result);
+
+      --  If the preference should be displayed with radio buttons, place them
+      --  in a group named using the preference's label.
+      if Choices'Length > Needs_Combo_Threshold then
+         Register (Manager, Name, Label, Page, Doc, Result);
+      else
+         declare
+            Page_Name   : GNAT.Strings.String_Access;
+            Group_Name  : GNAT.Strings.String_Access;
+         begin
+            Extract_Page_And_Group_Names (Path       => Page,
+                                          Page_Name  => Page_Name,
+                                          Group_Name => Group_Name);
+            Register (Manager, Name, Label,
+                      Page_Name.all & ':' & Label, Doc, Result);
+            Free (Page_Name);
+            Free (Group_Name);
+         end;
+      end if;
       return Result;
    end Create;
 
@@ -306,9 +310,11 @@ package body Default_Preferences.Enums is
          Default                   : Enumeration)
          return Preference
       is
-         P : constant Default_Preferences.Preference := Get_Pref_From_Name
-           (Manager, Name, Create_If_Necessary => False);
-         Result : constant Preference := new Preference_Record;
+         P           : constant Default_Preferences.Preference :=
+               Get_Pref_From_Name
+                 (Manager, Name, Create_If_Necessary => False);
+         Result      : constant Preference := new Preference_Record;
+
       begin
          if P /= null then
             --  Might already have been created implicitly when loading the
@@ -329,7 +335,26 @@ package body Default_Preferences.Enums is
          end if;
 
          Enum_Preference (Result).Default := Enumeration'Pos (Default);
-         Register (Manager, Name, Label, Page, Doc, Result);
+
+         --  If the preference should be displayed with radio buttons, place
+         --  them in a group named using the preference's label.
+         if Enumeration'Range_Length > Needs_Combo_Threshold then
+            Register (Manager, Name, Label, Page, Doc, Result);
+         else
+            declare
+               Page_Name   : GNAT.Strings.String_Access;
+               Group_Name  : GNAT.Strings.String_Access;
+            begin
+               Extract_Page_And_Group_Names (Path       => Page,
+                                             Page_Name  => Page_Name,
+                                             Group_Name => Group_Name);
+               Register (Manager, Name, Label,
+                         Page_Name.all & ':' & Label, Doc, Result);
+               Free (Page_Name);
+               Free (Group_Name);
+            end;
+         end if;
+
          return Result;
       end Create;
 

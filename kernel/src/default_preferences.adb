@@ -200,13 +200,6 @@ package body Default_Preferences is
    --  Add references for all the groups and subpages registered in Source in
    --  Dest.
 
-   procedure Extract_Page_And_Group_Names
-     (Path       : String;
-      Page_Name  : out GNAT.Strings.String_Access;
-      Group_Name : out GNAT.Strings.String_Access);
-   --  Extract the page'name and the group's name (if any) from the given
-   --  preference's path.
-
    function Is_Root_Page (Page_Name : String) return Boolean;
    --  Return True if the given page name refers to a root page, False
    --  otherwise.

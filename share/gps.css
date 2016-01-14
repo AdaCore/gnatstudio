@@ -107,6 +107,10 @@ GtkTextView.readonly {
    padding-left: 12px;
 }
 
+.gps-preferences-groups GtkEventBox{
+   padding-right: 5px;
+}
+
 .gps-preferences-groups GtkListBoxRow:hover {
    /* Don't prelight the preferences groups rows when hovering */
    background-color: @theme_base_color;

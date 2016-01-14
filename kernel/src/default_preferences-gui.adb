@@ -154,10 +154,12 @@ package body Default_Preferences.GUI is
          Gtk_New (Label, Pref.Get_Label);
          Event.Add (Label);
          Event.Set_Tooltip_Text (Pref.Get_Doc);
-         Label.Set_Alignment (0.0, 0.5);
+         Label.Set_Alignment (Xalign => 1.0,
+                              Yalign => 0.5);
 
          Self.Label_Size_Group.Add_Widget (Event);
-         Pref_Row.Pack_Start (Event);
+         Event.Set_Border_Width (2);
+         Pref_Row.Pack_Start (Event, Expand  => False);
 
          Pref_Widget := Edit (Pref, Manager);
 

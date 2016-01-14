@@ -89,6 +89,13 @@ package Default_Preferences is
    --
    --  Hidden_Page: denotes the page containing all the hidden preferences.
 
+   procedure Extract_Page_And_Group_Names
+     (Path       : String;
+      Page_Name  : out GNAT.Strings.String_Access;
+      Group_Name : out GNAT.Strings.String_Access);
+   --  Extract the page's name and the group's name (if any) from the given
+   --  preference's path.
+
    procedure Set_GObject_To_Update
      (Pref   : not null access Preference_Record;
       Obj    : not null access GObject_Record'Class);
@@ -698,6 +705,7 @@ package Default_Preferences is
       Editor  : access Preferences_Editor_Interface'Class);
 
 private
+
    function Page_Name_Equals (Left, Right : Preferences_Page) return Boolean;
    --  Used to search in pages lists using name equality.
 
