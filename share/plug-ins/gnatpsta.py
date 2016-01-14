@@ -17,19 +17,9 @@ from GPS import *
 import os
 import tempfile
 import os_utils
+import subprocess
+import shutil
 from gps_utils import *
-
-
-def on_exit(process, exit_status, output):
-    if exit_status == 0:
-        f = file(process.standard, "w")
-        f.write(output)
-        f.close()
-        buffer = EditorBuffer.get(File(process.standard))
-        buffer.current_view().set_read_only(True)
-        Editor.set_title(process.standard,
-                         "package Standard", "package Standard")
-        os.unlink(process.standard)
 
 
 @interactive(name="Display standard.ads")
@@ -38,24 +28,40 @@ def display():
     # gnatpsta utility, whereas for more recent versions we need to
     # compile a file with -gnatS. Try gnatpsta first:
 
-    dir = tempfile.mkdtemp()
     path = None
 
     if os_utils.locate_exec_on_path("gnatpsta") != "":
-        proc = Process("gnatpsta", on_exit=on_exit)
+        sub = subprocess.Popen(
+            ['gnatpsta'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        sub.wait()
     else:
+        dir = tempfile.mkdtemp()
         path = dir + "/p.ads"
         f = open(path, "w")
         f.write("package p is end p;")
         f.close()
-        proc = Process(
-            get_gnat_driver_cmd() + " compile -q -gnatc -gnatS " + path,
-            on_exit=on_exit
-        )
 
-    proc.standard = dir + "/_standard.ads"
-    proc.wait()
+        cmdline = ['gprbuild', '-c', '-gnatc', '-gnatS', '-q']
 
-    if path:
-        os.unlink(path)
-    os.rmdir(dir)
+        target = GPS.Project.root().get_attribute_as_string("target")
+        if target:
+            cmdline.append('--target=%s' % target)
+
+        runtime = GPS.Project.root().get_attribute_as_string(
+            "runtime", index="Ada")
+        if runtime:
+            cmdline.append('--runtime=%s' % runtime)
+
+        cmdline.append('p.ads')
+
+        sub = subprocess.Popen(
+            cmdline, cwd=dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        sub.wait()
+
+        shutil.rmtree(dir)
+
+    buffer = EditorBuffer.get(None, open=True)
+    buffer.delete()   # delete any text inserted via templates
+    buffer.insert(buffer.at(1, 1), sub.stdout.read())
+    buffer.current_view().set_read_only(True)
+    MDI.get_by_child(buffer.current_view()).rename('package Standard')
