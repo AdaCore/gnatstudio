@@ -64,15 +64,6 @@ KP-62-OC17-015 WB: error markers always at top of C/C++ files
 
   Workaround: Disable quick fix feature. (see Ada/Tools preferences page)
 
-KP-62-OC15-045 GNATdoc: crash processing record types with null components
-
-  Problem:    GNATdoc cannot process record type declarations with null
-              components.
-
-  Status:     This was fixed in 17.0 on 2016-01-14
-
-  Workaround: Add a dummy component to the record type.
-
 KP-62-OC01-018 GPS.Exception: No file information stored in the context
 
   Problem:    Right clicking on the name of the project in the project pane may
@@ -80,16 +71,6 @@ KP-62-OC01-018 GPS.Exception: No file information stored in the context
               is installed.
 
   Status:     This was fixed in 17.0 on 2015-12-11
-
-  Workaround: None.
-
-KP-62-OB23-034 GNATdoc: compiling does not update cross references
-
-  Problem:    Units containing subprograms with pre/post conditions may
-              be incorrectly reported by GNATdoc as sources whose cross
-              references are not up-to-date.
-
-  Status:     This was fixed in 17.0 on 2015-11-27
 
   Workaround: None.
 
@@ -178,6 +159,28 @@ KP-62-O326-012 GPS: C rename refactoring
   Status:     This was fixed in 17.0 on 2015-12-01
 
   Workaround: Manual renaming of the entity.
+
+Known problems fixed in GPS 6.2.2 / GNATbench 2.10.2
+----------------------------------------------------
+
+KP-62-OC15-045 GNATdoc: crash processing record types with null components
+
+  Problem:    GNATdoc cannot process record type declarations with null
+              components.
+
+  Status:     This was fixed in 6.2.2 on 2016-01-15
+
+  Workaround: Add a dummy component to the record type.
+
+KP-62-OB23-034 GNATdoc: compiling does not update cross references
+
+  Problem:    Units containing subprograms with pre/post conditions may
+              be incorrectly reported by GNATdoc as sources whose cross
+              references are not up-to-date.
+
+  Status:     This was fixed in 6.2.2 on 2016-01-15
+
+  Workaround: None.
 
 Known problems fixed in GPS 6.2.1 / GNATbench 2.10.1
 ----------------------------------------------------
