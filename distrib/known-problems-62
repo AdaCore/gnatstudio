@@ -64,6 +64,15 @@ KP-62-OC17-015 WB: error markers always at top of C/C++ files
 
   Workaround: Disable quick fix feature. (see Ada/Tools preferences page)
 
+KP-62-OC15-045 GNATdoc: crash processing record types with null components
+
+  Problem:    GNATdoc cannot process record type declarations with null
+              components.
+
+  Status:     This was fixed in 17.0 on 2016-01-14
+
+  Workaround: Add a dummy component to the record type.
+
 KP-62-OC01-018 GPS.Exception: No file information stored in the context
 
   Problem:    Right clicking on the name of the project in the project pane may
