@@ -197,7 +197,10 @@ package body Language.Abstract_Construct_Tree is
         (Root_Command with Kernel => Self.Kernel, Tree => Self);
    begin
       GPS.Kernel.Task_Manager.Launch_Background_Command
-        (Self.Kernel, Command_Access (Command), True, True, "semantic tree",
+        (Self.Kernel, Command_Access (Command),
+         Active     => True,
+         Show_Bar   => False,
+         Queue_Id   => "semantic tree",
          Block_Exit => False);
    end Update_Async;
 
