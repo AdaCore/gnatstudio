@@ -96,10 +96,21 @@ GtkTextView.readonly {
    /* Set bold font for group titles */
    font-weight: bold;
    padding-top: 12px;
+   padding-bottom: 5px;
 }
 
-.gps-preferences-groups GtkFlowBoxChild {
+.gps-preferences-groups-rows {
    padding-left: 12px;
+}
+
+.gps-preferences-groups-rows GtkRadioButton > GtkLabel {
+   padding-right: 5px;
+}
+
+.gps-preferences-doc-labels {
+   /* Reduce the font size for the inlined preferences documentation */
+   font-size: 9px;
+   color: @inactive_tab_color;
 }
 
 /*********************

@@ -2164,7 +2164,7 @@ package body Default_Preferences is
       P      : constant Manager_Preference :=
                  (Preferences_Manager (Manager), Preference (Pref));
    begin
-      Gtk_New (Toggle);
+      Gtk_New (Toggle, Pref.Get_Label);
       Toggle.Set_Active (Pref.Bool_Value);
 
       Preference_Handlers.Connect
@@ -3228,7 +3228,7 @@ package body Default_Preferences is
       Initialize_Hbox (Font_Box, Homogeneous => False);
       Gtk_New (Ent);
       Pack_Start (Gtk_Box (Font_Box), Ent, Expand => True, Fill => True);
-
+      Ent.Set_Size_Request (0, 0);
       Font_Box.Ent := Ent;
 
       Gtk_New (Button, Button_Label);

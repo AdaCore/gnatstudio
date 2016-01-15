@@ -15,15 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Fixed;
+with Ada.Strings.Maps;   use Ada.Strings.Maps;
 with GNATCOLL.Utils;     use GNATCOLL.Utils;
 with GNAT.Strings;       use GNAT.Strings;
 
 with Case_Handling;      use Case_Handling;
 with GUI_Utils;          use GUI_Utils;
 
+with Gtk.Box;            use Gtk.Box;
 with Gtk.Combo_Box;      use Gtk.Combo_Box;
 with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
-with Gtk.Flow_Box;       use Gtk.Flow_Box;
 with Gtk.Enums;          use Gtk.Enums;
 with Gtk.Radio_Button;   use Gtk.Radio_Button;
 with Gtk.Toggle_Button;
@@ -67,8 +69,8 @@ package body Default_Preferences.Enums is
      (Pref    : not null access Enum_Preference_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class;
       Choices : not null GNAT.Strings.String_List_Access)
-      return Gtk_Flow_Box;
-   --  Create a flow box containing radio buttons listing all the given
+      return Gtk_Box;
+   --  Create a horizontal box containing radio buttons listing all the given
    --  choices, and updating the given pref when the selected radio button
    --  changes.
 
@@ -88,6 +90,11 @@ package body Default_Preferences.Enums is
       Gtk_New (Combo);
 
       for K in Choices'Range loop
+         Ada.Strings.Fixed.Translate
+           (Source  => Choices (K).all,
+            Mapping => To_Mapping
+              (From => To_Sequence (To_Set (('_'))),
+               To   => To_Sequence (To_Set ((' ')))));
          Combo.Append_Text (Mixed_Case (Choices (K).all));
 
          if K = Pref.Enum_Value + Choices'First then
@@ -115,26 +122,27 @@ package body Default_Preferences.Enums is
      (Pref    : not null access Enum_Preference_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class;
       Choices : not null GNAT.Strings.String_List_Access)
-      return Gtk_Flow_Box
+      return Gtk_Box
    is
-      Radio_Flow_Box : Gtk_Flow_Box;
-      Radio          : array (Choices'Range) of Enum_Radio_Button;
+      Radio_Box : Gtk_Box;
+      Radio     : array (Choices'Range) of Enum_Radio_Button;
    begin
-      Gtk_New (Radio_Flow_Box);
-      Radio_Flow_Box.Set_Orientation (Orientation_Horizontal);
-      Radio_Flow_Box.Set_Max_Children_Per_Line (3);
-      Radio_Flow_Box.Set_Selection_Mode (Selection_None);
-      Radio_Flow_Box.Set_Homogeneous (True);
+      Gtk_New_Hbox (Radio_Box, Homogeneous => False);
 
       for K in Choices'Range loop
-         Radio (K) := new Enum_Radio_Button_Record;
+         Ada.Strings.Fixed.Translate
+           (Source  => Choices (K).all,
+            Mapping => To_Mapping
+              (From => To_Sequence (To_Set (('_'))),
+               To   => To_Sequence (To_Set ((' ')))));
 
+         Radio (K) := new Enum_Radio_Button_Record;
          Initialize
            (Radio_Button => Gtk_Radio_Button (Radio (K)),
             Group        => Radio (Radio'First),
             Label        => Mixed_Case (Choices (K).all));
          Radio (K).Enum_Value := K - Choices'First;
-         Radio_Flow_Box.Add (Radio (K));
+         Radio_Box.Pack_Start (Radio (K), Expand => False);
 
          Preference_Handlers.Connect
            (Radio (K), Gtk.Toggle_Button.Signal_Toggled,
@@ -147,7 +155,7 @@ package body Default_Preferences.Enums is
          end if;
       end loop;
 
-      return Radio_Flow_Box;
+      return Radio_Box;
    end Create_Enum_Radio_Buttons_Box;
 
    ------------------

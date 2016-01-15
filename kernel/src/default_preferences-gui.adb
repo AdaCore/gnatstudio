@@ -17,7 +17,6 @@
 
 with GUI_Utils;         use GUI_Utils;
 with Gtk.Enums;         use Gtk.Enums;
-with Gtk.Event_Box;     use Gtk.Event_Box;
 with Gtk.Label;         use Gtk.Label;
 with Gtk.Style_Context; use Gtk.Style_Context;
 
@@ -127,7 +126,7 @@ package body Default_Preferences.GUI is
       Self.Flow_Box.Set_Row_Spacing (0);
       Self.Flow_Box.Set_Max_Children_Per_Line (2);
       Self.Flow_Box.Set_Selection_Mode (Selection_None);
-      Self.Flow_Box.Set_Homogeneous (True);
+      Self.Flow_Box.Set_Homogeneous (False);
 
       Gtk_New_Vbox (VBox);
       VBox.Pack_Start (Self.Flow_Box, Expand => False);
@@ -149,10 +148,10 @@ package body Default_Preferences.GUI is
       Manager : not null access Preferences_Manager_Record'Class)
       return Gtk_Widget
    is
-      Pref_HBox    : Gtk_Box;
-      Pref_Row   : Gtk_Box;
-      Event       : Gtk_Event_Box;
+      Pref_HBox   : Gtk_Box;
+      Pref_Row    : Gtk_Box;
       Label       : Gtk_Label;
+      Doc_Label   : Gtk_Label;
       Pref_Widget : Gtk_Widget;
    begin
       Gtk_New_Hbox (Pref_HBox);
@@ -160,38 +159,53 @@ package body Default_Preferences.GUI is
       Pref_Row.Pack_Start (Pref_HBox, Expand => False);
 
       if Pref.Editor_Needs_Label then
-         Gtk_New (Event);
          Gtk_New (Label, Pref.Get_Label);
-         Event.Add (Label);
-         Event.Set_Tooltip_Text (Pref.Get_Doc);
 
          --  Right align the label and add it to the row
-         Label.Set_Alignment (Xalign => 1.0,
+         Label.Set_Alignment (Xalign => 0.0,
                               Yalign => 0.5);
-         Self.Label_Size_Group.Add_Widget (Event);
-         Pref_HBox.Pack_Start (Event,
-                               Expand  => False,
-                               Fill    => False,
-                               Padding => 5);
+         Self.Label_Size_Group.Add_Widget (Label);
+         Pref_HBox.Pack_Start (Label,
+                               Expand  => False);
 
          Pref_Widget := Edit (Pref, Manager);
 
          if Pref_Widget /= null then
             Self.Pref_Widget_Size_Group.Add_Widget (Pref_Widget);
-            Pref_HBox.Pack_Start (Pref_Widget, Expand => False);
+            Pref_HBox.Pack_Start (Pref_Widget, Expand => False, Padding => 5);
          end if;
       else
          Pref_Widget := Edit
            (Pref      => Pref,
             Manager   => Manager);
-         Pref_Widget.Set_Tooltip_Text (Pref.Get_Doc);
 
          if Pref_Widget /= null then
             Self.Pref_Widget_Size_Group.Add_Widget (Pref_Widget);
-            Pref_Row.Pack_Start (Pref_Widget, Expand => False);
+            Pref_HBox.Pack_Start (Pref_Widget, Expand => False);
          end if;
       end if;
+
+      --  Create the documentation label and add it to the preference row
+      Gtk_New (Doc_Label, Pref.Get_Doc);
+      Doc_Label.Set_Line_Wrap (True);
+      Doc_Label.Set_Alignment (0.0, 0.5);
+      Doc_Label.Set_Justify (Justify_Fill);
+
+      --  Done to limit the size requested by the label, which is normally
+      --  computed from the size required to display the label text without
+      --  wrapping it.
+      Doc_Label.Set_Max_Width_Chars (70);
+
+      Pref_Row.Pack_Start (Doc_Label, Expand => False);
+
+      Get_Style_Context (Doc_Label).Add_Class
+        ("gps-preferences-doc-labels");
+
+      --  Add the preference row to the flow box
       Self.Flow_Box.Add (Pref_Row);
+
+      Get_Style_Context (Pref_Row.Get_Parent).Add_Class
+        ("gps-preferences-groups-rows");
 
       return Pref_Row.Get_Parent;
    end Create_Pref_Row;
