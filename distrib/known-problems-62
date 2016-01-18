@@ -25,6 +25,20 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P113-013 GPS: cannot display standard.ads on cross platform
+
+  Problem:    When the system is configured for a cross or bareboard platform,
+              GPS is not able to display /Help/GNAT Runtime/Standard. This
+              package needs to be dynamically computed by the compiler, and
+              using gnatmake does not work in such a context. The GPS plug-in
+              was updated to use gprbuild instead.
+
+  Status:     This was fixed in 17.0 on 2016-01-14
+
+  Workaround: On the command line, run
+              'gprbuild -c -gnatc -gnatS -P<project> <file>' where project is
+              your project file and file is any source file.
+
 KP-62-P106-023 GB: no project opened by GPS when launched from GB on linux.
 
   Problem:    On linux, GPS launched by GB through "GPS debugger" debug
