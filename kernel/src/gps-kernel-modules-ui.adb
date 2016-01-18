@@ -1880,7 +1880,8 @@ package body GPS.Kernel.Modules.UI is
 
             --  Add the new item
 
-            if Menu_Label = ""
+            if Action = ""
+               or else Menu_Label = ""
                or else Menu_Label (Menu_Label'First) = '-'
             then
                Item := Gtk_Menu_Item (Gtk_Separator_Menu_Item_New);
@@ -1914,7 +1915,8 @@ package body GPS.Kernel.Modules.UI is
 
       Item := Find_Or_Create_Menu (Globals.Menu_Model, Parent_Path);
       if Item /= No_Menu_Item then
-         if Menu_Label /= ""
+         if Action /= ""
+            and then Menu_Label /= ""
             and then Menu_Label (Menu_Label'First) /= '-'
          then
             Act := Create_Or_Lookup_Action (Kernel, Action);
@@ -3119,7 +3121,7 @@ package body GPS.Kernel.Modules.UI is
                M2 : Gmenu_Model;
                P  : Gtk_Menu_Shell;
             begin
-               if N = "submenu" then
+               if N = "submenu" and then Item /= null then
                   Gtk_New (Menu);
                   Menu.Set_Accel_Group (Get_Default_Accelerators (Kernel));
                   Item.Set_Submenu (Menu);
@@ -3134,10 +3136,12 @@ package body GPS.Kernel.Modules.UI is
                   Trace (Me, "Unknown attribute " & N);
                end if;
 
-               M2 := Get_Value (Links);
-               for Idx2 in 0 .. M2.Get_N_Items - 1 loop
-                  Process_Menu (P, Gmenu (M2), Idx2, Full_Path);
-               end loop;
+               if P /= null then
+                  M2 := Get_Value (Links);
+                  for Idx2 in 0 .. M2.Get_N_Items - 1 loop
+                     Process_Menu (P, Gmenu (M2), Idx2, Full_Path);
+                  end loop;
+               end if;
                --  Do not Unref (M2)
             end;
          end loop;

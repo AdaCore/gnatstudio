@@ -441,6 +441,14 @@ package body Custom_Module is
       --  Add a menuitem or submenu to the Parent_Path, according to
       --  what Current_Node contains.
 
+      Current_Menu_Section : Natural := 0;
+      function Section_Name return String is
+          (if Current_Menu_Section = 0
+           then ""
+           else "--section" & Current_Menu_Section'Img);
+      --  Return the label for a separator menu item (which is translated to
+      --  a section in the menu model)
+
       procedure Parse_Action_Node (Node : Node_Ptr);
       procedure Parse_Contextual_Node (Node : Node_Ptr);
       procedure Parse_Button_Node (Node : Node_Ptr);
@@ -969,7 +977,11 @@ package body Custom_Module is
       procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String) is
          Action  : constant String := Get_Attribute (Node, "action");
          Before  : constant String := Get_Attribute (Node, "before");
-         After   : constant String := Get_Attribute (Node, "after");
+         After_Attribute   : constant String := Get_Attribute (Node, "after");
+         After   : constant String :=
+            (if After_Attribute /= ""
+             then After_Attribute
+             else Section_Name);
          Child   : Node_Ptr;
          Title   : GNAT.OS_Lib.String_Access := new String'("");
 
@@ -982,7 +994,6 @@ package body Custom_Module is
             else
                Insert
                  (Kernel, -"Invalid child node for <menu> tag", Mode => Error);
-               pragma Assert (False);
                return;
             end if;
 
@@ -995,12 +1006,13 @@ package body Custom_Module is
          then
             Insert (Kernel, -"<menu> nodes must have an action attribute",
                     Mode => Error);
-            pragma Assert (False);
-            return;
-         end if;
 
-         if Title.all = "" then
-            Register_Menu (Kernel, Parent_Path, Action => "");
+         elsif Title.all = "" then
+            Current_Menu_Section := Current_Menu_Section + 1;
+            Register_Menu
+               (Kernel,
+                Create_Menu_Path (Parent_Path, Section_Name),
+                Action => "");
          else
             if Before /= "" then
                Register_Menu
