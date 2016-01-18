@@ -22,11 +22,6 @@ with GPS.Search;
 
 package GPS.Kernel.Search.Preferences is
 
-   type Preferences_Search_Mode is
-     (Visible_Preferences_Only, Hidden_Preferences_Only);
-   --  Used to determine if the preferences search provider should only among
-   --  the visible preferences or only among the hidden ones.
-
    type Preferences_Search_Provider is new Kernel_Search_Provider
    with private;
 
@@ -46,10 +41,10 @@ package GPS.Kernel.Search.Preferences is
    is
      (Provider_Preferences);
 
-   procedure Set_Search_Mode
-     (Self        : not null access Preferences_Search_Provider;
-      Search_Mode : Preferences_Search_Mode);
-   --  Set the preferences provider search mode
+   procedure Set_Search_Among_Hidden
+     (Self  : not null access Preferences_Search_Provider;
+      Value : Boolean);
+   --  Set whether the provider should search among hidden preferences or not.
 
    type Preferences_Search_Result is new Kernel_Search_Result with record
       Pref : Default_Preferences.Preference;
@@ -74,15 +69,16 @@ package GPS.Kernel.Search.Preferences is
 
 private
    type Preferences_Search_Provider is new Kernel_Search_Provider with record
-      Pattern            : GPS.Search.Search_Pattern_Access;
+      Pattern             : GPS.Search.Search_Pattern_Access;
       --  Current pattern, do not free.
-      Pattern_Needs_Free : Boolean := False;
+      Pattern_Needs_Free  : Boolean := False;
       --  True if Pattern has been allocated by the provider, False otherwise.
-      Iter               : Preference_Cursor (From_Manager);
+      Iter                : Preference_Cursor (From_Manager);
       --  The current iterator
-      Search_Mode        : Preferences_Search_Mode := Visible_Preferences_Only;
-      --  The current search mode. The provider searches only among the
-      --  visible preferences by default.
+      Search_Among_Hidden : Boolean := False;
+      --  Determines whether the provider should search among hidden
+      --  preferences too.
+      --  The provider searches only among the visible preferences by default.
    end record;
 
 end GPS.Kernel.Search.Preferences;

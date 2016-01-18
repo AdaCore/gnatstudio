@@ -133,16 +133,16 @@ package body GPS.Kernel.Search.Preferences is
       & "containing it.";
    end Documentation;
 
-   ---------------------
-   -- Set_Search_Mode --
-   ---------------------
+   -----------------------------
+   -- Set_Search_Among_Hidden --
+   -----------------------------
 
-   procedure Set_Search_Mode
-     (Self        : not null access Preferences_Search_Provider;
-      Search_Mode : Preferences_Search_Mode) is
+   procedure Set_Search_Among_Hidden
+     (Self  : not null access Preferences_Search_Provider;
+      Value : Boolean) is
    begin
-      Self.Search_Mode := Search_Mode;
-   end Set_Search_Mode;
+      Self.Search_Among_Hidden := Value;
+   end Set_Search_Among_Hidden;
 
    ----------
    -- Free --
@@ -198,11 +198,8 @@ package body GPS.Kernel.Search.Preferences is
 
       Pref := Get_Pref (Self.Iter);
 
-      if (Self.Search_Mode = Visible_Preferences_Only
-          and then Get_Page_Name (Pref) /= "")
-        or else
-          (Self.Search_Mode = Hidden_Preferences_Only
-           and then Get_Page_Name (Pref) = "")
+      if Self.Search_Among_Hidden
+        or else Pref.Get_Page_Name /= ""
       then
          --  Try to match the preference's label first
          Search_Match_In_Label (Self   => Self,
