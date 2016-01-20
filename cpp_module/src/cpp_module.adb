@@ -120,7 +120,7 @@ package body Cpp_Module is
          Name    => "C-Auto-Indentation",
          Default => Extended,
          Page    => -"Editor/C & C++:Indentation",
-         Doc     => -"How the editor should indent C/C++ sources",
+         Doc     => -"Enable auto-indentation for C and C++ sources.",
          Label   => -"Auto indentation");
 
       C_Indentation_Level := Kernel.Get_Preferences.Create
@@ -129,30 +129,29 @@ package body Cpp_Module is
          Maximum => 9,
          Default => 2,
          Page    => -"Editor/C & C++:Indentation",
-         Doc     => -"The number of spaces for the default indentation",
+         Doc     => -"Number of spaces for the default indentation.",
          Label   => -"Default indentation");
 
       C_Use_Tabs := Kernel.Get_Preferences.Create
         (Name    => "C-Use-Tabs",
          Default => True,
          Page    => -"Editor/C & C++:Indentation",
-         Doc     =>
-             -("Whether the editor should use tabulations when indenting"),
+         Doc     => -"Use tabulations when indenting.",
          Label   => -"Use tabulations");
 
       C_Indent_Extra := Kernel.Get_Preferences.Create
         (Name    => "C-Indent-Extra",
          Default => True,
          Page    => -"Editor/C & C++:Indentation",
-         Doc     => -("Whether to indent if/loop/switch constructs an extra"
-                      & " level after '{'"),
+         Doc     =>
+            -"Indent if/loop/switch constructs an extra level after '{'",
          Label   => -"Extra indentation");
 
       C_Indent_Comments := Kernel.Get_Preferences.Create
         (Name    => "C-Indent-Comments",
          Default => True,
          Page    => -"Editor/C & C++:Indentation",
-         Doc     => -"Whether to indent lines with comments only",
+         Doc     => -"Indent lines with only comments.",
          Label   => -"Indent comments");
 
       --  Register tree providers based on clang for both C and C++ languages

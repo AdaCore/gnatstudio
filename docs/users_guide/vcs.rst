@@ -83,8 +83,8 @@ GPS has built in support for the following VCS systems:
   you must have the :program:`patch` and :program:`diff` tools that usually
   come with Subversion.
 
-By default, GPS uses "Auto" for a VCS.  You can configure this through the
-:ref:`The_Preferences_Dialog`.
+By default, GPS uses "Auto" for a VCS. You can change this default via the
+preferences dialog, or better by editing your project.
 
 You can also add support for other version control systems or modify one of
 the existing interfaces, see

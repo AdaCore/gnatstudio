@@ -830,7 +830,6 @@ The second area in the source editor is a text window on the right that
 displays the source files, with syntax highlighting.  If you hold the
 pointer over a variable, GPS displays a tooltip showing the value of that
 variable.  Disable these automatic tooltips using the preferences menu.
-(See :ref:`Preferences Dialog <preferences_dialog>`.)
 
 When the debugger is active, the contextual menu of the source window
 contains a :menuselection:`Debug` submenu providing the entries
@@ -916,7 +915,7 @@ that instruction.
 
 For efficiency purposes, GPS only displays a small part of the assembly
 code around the current instruction.  Specify how many instructions are
-displayed in the :ref:`Preferences Dialog <preferences_dialog>`.  Display
+displayed in the preferences dialog.  Display
 the instructions immediately preceding or following the currently displayed
 instructions by pressing one of the :kbd:`Page up` or :kbd:`Page down` keys
 or using the contextual menu in the assembly window.

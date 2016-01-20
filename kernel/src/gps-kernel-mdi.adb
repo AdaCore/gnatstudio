@@ -348,10 +348,8 @@ package body GPS.Kernel.MDI is
          Name    => "MDI-Destroy-Floats",
          Default => False,
          Doc     =>
-           -("If disabled, closing the window associated with a floating"
-             & " item will put the item back in the main GPS window,"
-             & " but will not destroy it. If enabled, the item is"
-             & " destroyed"),
+           -("Close a view when closing its floating window. Otherwise put"
+             & " the view back in the main GPS window."),
          Label   => -"Destroy floats",
          Page    => -"Windows");
 
@@ -359,10 +357,7 @@ package body GPS.Kernel.MDI is
         (Manager => Get_Preferences (Kernel),
          Name    => "MDI-All-Floating",
          Default => False,
-         Doc     =>
-           -("If enabled, all windows will be set as floating, and put"
-             & " under control of your window manager. Otherwise, a"
-             & " multiple document interface is used."),
+         Doc     => -"Set all windows as floating.",
          Label   => -"All floating",
          Page    => -"Windows");
 
@@ -370,9 +365,7 @@ package body GPS.Kernel.MDI is
         (Manager => Kernel.Preferences,
          Name    => "MDI-Editors-Floating",
          Default => False,
-         Doc     =>
-           -("If enabled, all new editors will be set as floating windows and"
-             & " put under control of your window manager."),
+         Doc     => -"Set all editors as floating (but not other views).",
          Label   => -"Floating editors",
          Page    => "");  --  -"Windows"
 
@@ -381,7 +374,7 @@ package body GPS.Kernel.MDI is
          Name    => "MDI-Homogeneous-Tabs",
          Default => False,
          Doc     =>
-           -"If disabled, the text in notebook tabs will never use ellipsis.",
+           -"Use ellipsis in long tab names to keep all the same size.",
          Label   => -"Homogeneous tabs",
          Page    => -"Windows");
 
@@ -390,7 +383,7 @@ package body GPS.Kernel.MDI is
          Name  => "GPS6-Window-Tabs-Policy",
          Label => -"Notebook tabs policy",
          Page  => -"Windows",
-         Doc   => -"When the notebook tabs should be displayed",
+         Doc   => -"Control the display of notebook tabs.",
          Default => Always);
 
       Pref_Tabs_Position := Tabs_Position_Preferences.Create
@@ -398,8 +391,9 @@ package body GPS.Kernel.MDI is
          Name  => "GPS6-Window-Tabs-Position",
          Label => -"Notebook tabs position",
          Page  => -"Windows",
-         Doc   => -("Where the tabs should be displayed relative to the"
-           & " notebooks"),
+         Doc   =>
+            -("Set default position of notebook tabs. Override by right"
+              & " clicking on a tab."),
          Default => Top);
 
       Auto_Reload_Files := Create
@@ -407,8 +401,7 @@ package body GPS.Kernel.MDI is
          Name    => "Auto-Reload-Files",
          Default => False,
          Doc     =>
-           -("If enabled, automatically reload files when they have been"
-           & " changed on the disk."),
+           -"Automatically reload files when they change on ths disk.",
          Label   => -"Auto-Reload files",
          Page    => -"Editor:Behavior");
    end Create_MDI_Preferences;

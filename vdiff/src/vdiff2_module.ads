@@ -30,7 +30,6 @@ package Vdiff2_Module is
 
    Diff3_Cmd              : Default_Preferences.String_Preference;
    Diff_Default_Color     : Default_Preferences.Color_Preference;
-   Diff_Old_Color         : Default_Preferences.Color_Preference;
    Diff_Append_Color      : Default_Preferences.Color_Preference;
    Diff_Remove_Color      : Default_Preferences.Color_Preference;
    Diff_Change_Color      : Default_Preferences.Color_Preference;

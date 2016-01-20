@@ -227,9 +227,8 @@ The source editor provides an extensive set of features, including:
 
 *Auto save*
 
-  Configure the editor to periodically save modified files.  See
-  :ref:`Autosave delay <autosave_delay>` for a full description of this
-  capability.
+  GPS will by default periodically save your work in temporary files. This
+  can be configured via the :menuselection:`Edit --> Preferences` dialog).
 
 *Automatic highlighting of entities*
 
@@ -245,7 +244,7 @@ The source editor provides an extensive set of features, including:
 
   Details such as the presence of indications in the :guilabel:`Speed Column` or
   highlighting color can be customized in the :guilabel:`Plugins` section
-  of :ref:`The_Preferences_Dialog`.
+  of :menuselection:`Edit --> Preferences` dialog.
 
 .. index:: emacs
 
@@ -643,7 +642,7 @@ The :menuselection:`Edit` Menu
 * :menuselection:`Edit --> Format selection`
 
   Indent and format the selection or the current line.  See
-  :ref:`The_Preferences_Dialog` for preferences related to source
+  :menuselection:`Edit --> Preferences` for preferences related to source
   formatting.
 
 .. index:: menu; edit --> smart completion
@@ -696,7 +695,7 @@ The :menuselection:`Edit` Menu
 
   a smart completion window appears, listing all child and nested packages
   of Ada. You can configure the time interval after which the completion
-  window appears (see :ref:`The_Preferences_Dialog`).
+  window appears in the preferences dialog.
 
   You can also type the beginning of the package, e.g.::
 
@@ -809,7 +808,7 @@ The :menuselection:`Edit` Menu
 
      Rearrange line breaks in the selection or current line so that line
      lengths do not exceed the maximum length, as set in the
-     :guilabel:`Right margin` preference (see :ref:`The_Preferences_Dialog`).
+     :guilabel:`Right margin` preference.
 
   .. index:: menu; edit --> selection --> sort
 
@@ -921,7 +920,7 @@ The :menuselection:`Edit` Menu
 
 * :menuselection:`Edit --> Preferences`
 
-  Start the preferences dialog. See :ref:`The_Preferences_Dialog`.
+  Show the preferences dialog.
 
 
 .. index:: rectangle
@@ -1741,3 +1740,19 @@ If you press :guilabel:`Cancel` instead of :guilabel:`Save`, nothing is
 saved and the action that displayed this dialog is also canceled. Such
 actions can be, for example, starting a compilation command, a VCS
 operation, or quitting GPS with unsaved files.
+
+Printing Files
+==============
+
+GPS lets you configure how printing is performed, via its
+:guilabel:`External Commands/Print command` preference.
+
+This program is required for Unix systems, and is set to :program:`lp`
+by default. Other popular choices include :program:`a2ps` which provides
+pretty-printing and syntax highlighting.
+
+On Windows, this preference is optional and the preference is empty by default
+since GPS provides built-in printing.  If you specify an external tool, such as
+the :program:`PrintFile` freeware utility available from
+`http://www.lerup.com/printfile/descr.html
+<http://www.lerup.com/printfile/descr.html>`_, GPS uses that.

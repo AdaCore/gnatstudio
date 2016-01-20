@@ -4,8 +4,7 @@ from highlighter.interface import *
 tag_string_escapes = new_style(lang="General",
                                name="string escapes",
                                label="String escapes",
-                               doc="Style for escapes in strings,"
-                               " such as \\n or \\t",
+                               doc='',
                                foreground_colors=('#875162', '#DA7495'))
 """
 Style for escapes in strings, such as \\n or \\t
@@ -15,10 +14,8 @@ Style for escapes in strings, such as \\n or \\t
 
 tag_comment_notes = new_style(lang="General",
                               name="comment_notes",
-                              label="Comment notes",
-                              doc="Style used for notes in comments."
-                              " Used to highlight TODO and"
-                              " NOTE strings in comments",
+                              label="TODO and NOTE in comments",
+                              doc='',
                               foreground_colors=("#407A8E", "#907A8E"))
 """
 Style for notes in comments. Used for highlighting TODO and NOTE strings in

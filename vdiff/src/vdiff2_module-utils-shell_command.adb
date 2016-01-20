@@ -221,7 +221,6 @@ package body Vdiff2_Module.Utils.Shell_Command is
    is
       CL : Arg_List;
       Default_Color      : constant String  := Diff_Default_Color.Get_Pref;
-      Old_Color          : constant String  := Diff_Old_Color.Get_Pref;
       Append_Color       : constant String  := Diff_Append_Color.Get_Pref;
       Remove_Color       : constant String  := Diff_Remove_Color.Get_Pref;
       Change_Color       : constant String  := Diff_Change_Color.Get_Pref;
@@ -240,9 +239,13 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Append_Argument (CL, Append_Color, One_Arg);
       Execute_GPS_Shell_Command (Kernel, CL);
 
+      --  This is defined as the same as Default_Color, but kept for
+      --  backward compatibility for now, while Old_Style is referenced
+      --  in the Ada code.
+
       CL := Create ("Editor.register_highlighting");
       Append_Argument (CL, Old_Style, One_Arg);
-      Append_Argument (CL, Old_Color, One_Arg);
+      Append_Argument (CL, Default_Color, One_Arg);
       Execute_GPS_Shell_Command (Kernel, CL);
 
       CL := Create ("Editor.register_highlighting");

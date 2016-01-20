@@ -409,7 +409,7 @@ package body GPS.Kernel.Style_Manager is
          if Allow_Null then
             return null;
          else
-            raise Key_Not_Found;
+            raise Key_Not_Found with "Style not found: " & String (Key);
          end if;
       end if;
 

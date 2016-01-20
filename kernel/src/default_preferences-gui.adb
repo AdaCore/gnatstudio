@@ -143,6 +143,7 @@ package body Default_Preferences.GUI is
       Manager   : not null access Preferences_Manager_Record'Class)
       return Gtk_Widget
    is
+      Doc         : constant String := Pref.Get_Doc;
       Pref_HBox   : Gtk_Box;
       Pref_Row    : Gtk_Box;
       Label       : Gtk_Label;
@@ -180,20 +181,22 @@ package body Default_Preferences.GUI is
       end if;
 
       --  Create the documentation label and add it to the preference row
-      Gtk_New (Doc_Label, Pref.Get_Doc);
-      Doc_Label.Set_Line_Wrap (True);
-      Doc_Label.Set_Alignment (0.0, 0.5);
-      Doc_Label.Set_Justify (Justify_Fill);
+      if Doc /= "" then
+         Gtk_New (Doc_Label, Doc);
+         Doc_Label.Set_Line_Wrap (True);
+         Doc_Label.Set_Alignment (0.0, 0.5);
+         Doc_Label.Set_Justify (Justify_Fill);
 
-      --  Done to limit the size requested by the label, which is normally
-      --  computed from the size required to display the label text without
-      --  wrapping it.
-      Doc_Label.Set_Max_Width_Chars (70);
+         --  Done to limit the size requested by the label, which is normally
+         --  computed from the size required to display the label text without
+         --  wrapping it.
+         Doc_Label.Set_Max_Width_Chars (70);
 
-      Pref_Row.Pack_Start (Doc_Label, Expand => False);
+         Pref_Row.Pack_Start (Doc_Label, Expand => False);
 
-      Get_Style_Context (Doc_Label).Add_Class
-        ("gps-preferences-doc-labels");
+         Get_Style_Context (Doc_Label).Add_Class
+           ("gps-preferences-doc-labels");
+      end if;
 
       --  Add the preference row to the flow box
       Self.Flow_Box.Add (Pref_Row);

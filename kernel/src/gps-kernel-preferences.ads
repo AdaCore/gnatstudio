@@ -142,7 +142,7 @@ package GPS.Kernel.Preferences is
    -- General --
    Gtk_Theme              : Theme_Preference;
 
-   Default_Font           : Style_Preference;
+   Default_Font           : Font_Preference;
    View_Fixed_Font        : Font_Preference;
    Small_Font             : Font_Preference;
    Tooltips_Background    : Color_Preference;
@@ -184,7 +184,6 @@ package GPS.Kernel.Preferences is
    Diff_Mode           : Vdiff_Modes_Prefs.Preference;
    Diff_Cmd            : String_Preference;
    Patch_Cmd           : String_Preference;
-   Old_Vdiff           : Boolean_Preference;
 
    -- Source Editor --
    Default_Style             : Style_Preference;

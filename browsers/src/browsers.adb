@@ -236,7 +236,7 @@ package body Browsers is
 
       Selected : constant Gdk_RGBA := Selected_Item_Color.Get_Pref;
       F        : constant Pango_Font_Description :=
-        GPS.Kernel.Preferences.Default_Font.Get_Pref_Font;
+        GPS.Kernel.Preferences.Default_Font.Get_Pref;
       F2, F3, F4 : Pango_Font_Description;
 
    begin

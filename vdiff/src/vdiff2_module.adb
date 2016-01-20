@@ -298,8 +298,9 @@ package body Vdiff2_Module is
         (Get_Preferences (Kernel),
          Name  => "Diff-Utils-Diff3",
          Label => -"Diff3 command",
-         Doc   => -("Command used to compute differences between three" &
-           "files. Arguments can also be specified"),
+         Doc   =>
+            -("Command and arguments to compute differences between"
+              & " three files."),
          Page  => -"Visual diff:General",
          Default => Config.Default_Diff3_Cmd);
 
@@ -307,15 +308,7 @@ package body Vdiff2_Module is
         (Get_Preferences (Kernel),
          Name     =>  "Diff-Default-Color",
          Label    => -"Default Color",
-         Doc      => -"Color used for highlighting in Visual Diff2",
-         Page     => -"Visual diff:Colors",
-         Default  => "#C1C1C1");
-
-      Diff_Old_Color := Create
-        (Get_Preferences (Kernel),
-         Name     =>  "Diff-Old-Color",
-         Label    => -"Old Color",
-         Doc      => -"Color used for highlighting in Visual Diff2",
+         Doc      => "",
          Page     => -"Visual diff:Colors",
          Default  => "#C1C1C1");
 
@@ -323,7 +316,7 @@ package body Vdiff2_Module is
         (Get_Preferences (Kernel),
          Name     =>  "Diff-Append-Color",
          Label    => -"Append Color",
-         Doc      => -"Color used for highlighting in Visual Diff2",
+         Doc      => "",
          Page     => -"Visual diff:Colors",
          Default  => "#88EEAA");
 
@@ -331,7 +324,7 @@ package body Vdiff2_Module is
         (Get_Preferences (Kernel),
          Name     =>  "Diff-Remove-Color",
          Label    => -"Remove Color",
-         Doc      => -"Color used for highlighting in Visual Diff2",
+         Doc      => "",
          Page     => -"Visual diff:Colors",
          Default  => "#FFA0A0");
 
@@ -339,7 +332,7 @@ package body Vdiff2_Module is
         (Get_Preferences (Kernel),
          Name     =>  "Diff-Change-Color",
          Label    => -"Change Color",
-         Doc      => -"Color used for highlighting in Visual Diff2",
+         Doc      => "",
          Page     => -"Visual diff:Colors",
          Default  => "#ECECAA");
 
@@ -347,7 +340,7 @@ package body Vdiff2_Module is
         (Get_Preferences (Kernel),
          Name     =>  "Horizontal-Diff-Change-Color",
          Label    => -"Fine Change Color",
-         Doc      => -"Color used for highlighting in Visual Diff2",
+         Doc      => "",
          Page     => -"Visual diff:Colors",
          Default  => "#FDE66A");
 

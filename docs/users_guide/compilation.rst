@@ -61,8 +61,8 @@ what is documented here are the default menus (see
 
   If errors or warnings occur during the compilation, the corresponding
   locations will appear in the Locations View. If the corresponding
-  Preference is set, the source lines will be highlighted in the editors
-  (see :ref:`The_Preferences_Dialog`).  To remove the highlighting on these
+  preference is set, the source lines will be highlighted in the editors.
+  To remove the highlighting on these
   lines, remove the files from the :guilabel:`Locations` view using either
   the :menuselection:`Remove category` contextual menu item or by closing
   the :guilabel:`Locations` view.

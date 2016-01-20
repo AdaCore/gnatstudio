@@ -556,7 +556,7 @@ package body GPS.Main_Window is
       then
          --  ??? This creates a new css_provider every time prefs are changed.
          Gtkada.Style.Load_Css_String
-           ("* { font: " & To_String (Default_Font.Get_Pref_Font) & "}",
+           ("* { font: " & To_String (Default_Font.Get_Pref) & "}",
             Priority => Gtk.Style_Provider.Priority_Theme);
       end if;
 
@@ -611,7 +611,7 @@ package body GPS.Main_Window is
             end if;
 
             if not Tooltips_Background_Provider.Load_From_Data
-              ("@define-color theme_tooltip_bg_color "
+              ("@define-color tooltip-background-color "
                & To_String (Tooltips_Background.Get_Pref) & ";",
                Err'Access)
             then
@@ -713,7 +713,7 @@ package body GPS.Main_Window is
          Name    => "GPS6-General-Toolbar-Style",
          Label   => -"Toolbar style",
          Page    => -"Windows",
-         Doc     => -("Indicates how the tool bar should be displayed"),
+         Doc     => -"Style the toolbar.",
          Default => Small_Icons);
 
       Window_Title_Pref := Application.Kernel.Get_Preferences.Create

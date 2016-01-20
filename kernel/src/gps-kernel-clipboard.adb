@@ -127,9 +127,9 @@ package body GPS.Kernel.Clipboard is
             Name    => "Clipboard-Size",
             Label   => "Clipboard Size",
             Default => 10,
-            Doc     => -("Number of entries stored in the clipboard, that"
-              & " can be accessed through Paste Previous. The"
-              & " higher the size, the more memory GPS needs"),
+            Doc     =>
+               -("Number of entries in the clipboard that can be accessed"
+                 & " via Paste Previous."),
             Page    => -"General:Clipboard",
             Minimum => 1,
             Maximum => 1_000);

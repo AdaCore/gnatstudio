@@ -980,7 +980,7 @@ package body Browsers.Canvas is
       Grid : constant Boolean := Draw_Grid.Get_Pref;
       Annotation_Font : Pango_Font_Description;
    begin
-      Annotation_Font := Copy (Preferences.Default_Font.Get_Pref_Font);
+      Annotation_Font := Copy (Preferences.Default_Font.Get_Pref);
       Set_Size
         (Annotation_Font,
          Gint'Max (Pango_Scale, Get_Size (Annotation_Font) - 2 * Pango_Scale));

@@ -428,7 +428,7 @@ package body Command_Window is
       Pack_Start
         (Window.Box, Window.Prompt, Expand => False, Fill => False);
       Set_Alignment (Window.Prompt, 0.0, 0.5);
-      Modify_Font (Window.Prompt, Default_Font.Get_Pref_Font);
+      Modify_Font (Window.Prompt, Default_Font.Get_Pref);
 
       if Prompt = "" then
          Set_Child_Visible (Window.Prompt, False);

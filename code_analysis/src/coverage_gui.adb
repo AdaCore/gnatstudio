@@ -583,14 +583,13 @@ package body Coverage_GUI is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
    begin
-      Coverage_Toolchain_Preference :=
-        Coverage_Toolchain_Preferences.Create
+      Coverage_Toolchain_Preference := Coverage_Toolchain_Preferences.Create
           (Kernel.Get_Preferences,
            "Coverage-Toolchain",
-           "Coverage toolchain",
-           "Coverage Analysis",
-           "",
-           Gcov);
+           Label => "Coverage toolchain",
+           Page  => "Coverage Analysis",
+           Doc   => -"Select the toolchain to perform coverage analysis.",
+           Default => Gcov);
    end Register_Module;
 
 end Coverage_GUI;

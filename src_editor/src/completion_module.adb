@@ -1547,10 +1547,10 @@ package body Completion_Module is
          Name  => "Smart-Completion-Mode",
          Label => -"Smart completion",
          Page  => -"Editor:Smart Completion",
-         Doc   => -("Disabled: smart completion is disabled." & ASCII.LF &
-           "Normal: smart completion occurs on key press," &
-           " or after a timeout on special characters." & ASCII.LF &
-           "Dynamic: the smart completion occurs on every key press."),
+         Doc   =>
+           -("Control the display of smart completion: either on specific"
+             & " key or timeout (""Normal""), or after every key press"
+             & " (""Dynamic"")."),
          Default => Dynamic);
 
       Smart_Completion_Trigger_Timeout := Create
@@ -1559,7 +1559,7 @@ package body Completion_Module is
          Minimum => 0,
          Maximum => 9999,
          Page    => -"Editor:Smart Completion",
-         Doc     => -("The timeout (in milliseconds) for "
+         Doc     => -("Timeout (in milliseconds) for "
            & "character-triggered smart completion in 'Normal' mode"),
          Label   => -"Smart completion timeout",
          Default => 200);

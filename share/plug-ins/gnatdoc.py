@@ -184,8 +184,7 @@ SPAWN_BROWSER_PREF = "Documentation/Doc-Spawn-Browser"
 GPS.Preference(SPAWN_BROWSER_PREF).create(
     "Spawn a browser",
     "boolean",
-    "Whether GNATdoc should spawn a browser after having generated"
-    " the documentation.",
+    "Load generated documentation in a browser automatically.",
     True)
 
 

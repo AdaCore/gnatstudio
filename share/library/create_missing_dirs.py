@@ -51,7 +51,7 @@ def on_project_changed(self):
 
 GPS.parse_xml("""
 <preference name="Auto-Create-Dirs"
-   page="General"
+   page="Plugins/create_missing_dirs"
    label="Auto Create Missing Dirs"
    tip="Automatically creates missing directories when a project is loaded."
    default="True"

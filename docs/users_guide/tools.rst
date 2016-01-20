@@ -272,7 +272,7 @@ different colors.  Each highlight color indicates a different type of line:
 
   Lines present in the reference file but deleted from the modified file.
 
-You can configure these colors. See :ref:`The_Preferences_Dialog`.
+You can configure these colors in the preferences dialog.
 
 Like all highlighted lines in GPS, the visual differences highlights are
 visible in the :guilabel:`Speed Column` at the left of the editors.

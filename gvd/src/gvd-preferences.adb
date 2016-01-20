@@ -25,218 +25,190 @@ package body GVD.Preferences is
    ----------------------------------
 
    procedure Register_Default_Preferences
-     (Prefs : access Preferences_Manager_Record'Class)
-   is
-      XML_Prefix   : constant String := "Debugger-";
-      General      : constant String := -"Debugger";
-
+     (Prefs : access Preferences_Manager_Record'Class) is
    begin
       Break_On_Exception := Create
         (Manager   => Prefs,
-         Name      => XML_Prefix & "Break-On-Exception",
-         Page      => General,
+         Name      => "Debugger-Break-On-Exception",
+         Page      => -"Debugger:Startup & Exit",
          Label     => -"Break on exceptions",
          Doc       =>
-           -("True if process should be stopped when an exception is raised."
-             & " This setup is only taken into account when a new debugger"
-             & " is initialized, it doesn't modify the behavior for existing"
-             & " debuggers."),
+           -("Stop when an exception is raised. Changes to this setting are"
+             & " ignored by debuggers already running."),
          Default   => False);
 
       Open_Main_Unit := Create
         (Manager    => Prefs,
-         Name       => XML_Prefix & "Open-Main-Unit",
+         Name       => "Debugger-Open-Main-Unit",
          Label      => -"Always open main unit",
-         Page       => General,
-         Doc        =>
-         -("Enabled when initializing the debugger should always open the"
-           & " main unit. If disabled, no new editor is opened"),
+         Page      => -"Debugger:Startup & Exit",
+         Doc        => -("Open the main unit when initializing a debugger."),
          Default    => True);
 
-      if Support_Execution_Window then
-         Execution_Window := Create
-           (Manager   => Prefs,
-            Name      => XML_Prefix & "Execution-Window",
-            Label     => -"Execution window",
-            Page      => General,
-            Doc       =>
-             -("If False, the debugged program is assumed to require no " &
-               "input. If True, a separate execution window will be created"),
-            Default   => True);
-      else
-         Execution_Window := Create
-           (Manager   => Prefs,
-            Name      => XML_Prefix & "Execution-Window",
-            Label     => -"Execution window",
-            Page      => "",
-            Doc       => "",
-            Default   => False);
-      end if;
+      Execution_Window := Create
+        (Manager   => Prefs,
+         Name      => "Debugger-Execution-Window",
+         Label     => -"Execution window",
+         Page      => (if Support_Execution_Window
+                       then -"Debugger:Startup & Exit" else ":Debugger"),
+         Doc       =>
+           -("Open a separate window to show output of debuggee."),
+         Default   => Support_Execution_Window);
 
       Preserve_State_On_Exit := Create
         (Manager    => Prefs,
-         Name       => XML_Prefix & "Preserve_State-On-Exit",
+         Name       => "Debugger-Preserve_State-On-Exit",
          Label      => -"Preserve state on exit",
-         Page       => General,
+         Page       => -"Debugger:Startup & Exit",
          Doc        =>
-            -("True if the breakpoints should be saved when the debugger"
-             & " session is terminated, and restored the next time the same"
-             & " executable is debugged. This preference also controls"
-             & " whether the contents of the data window should be preserved"
-             & " when the window is closed."),
+            -("Save breakpoints and data window on exit, and restore them"
+              & " when debugging the same executable."),
          Default    => True);
 
       Debugger_Kind := Debugger_Kind_Preferences.Create
         (Manager => Prefs,
-         Name    => "GPS6-" & XML_Prefix & "Debugger-Kind",
+         Name    => "GPS6-Debugger-Debugger-Kind",
          Label   => -"Debugger kind",
-         Page    => "",
+         Page    => ":Debugger",
          Doc     => -"Kind of debugger spawned by GPS",
          Default => GVD.Types.Gdb);
 
       Editor_Current_Line_Color := Create
         (Manager   => Prefs,
-         Name      => XML_Prefix & "Editor-Current-Line",
+         Name      => "Debugger-Editor-Current-Line",
          Label     => -"Current line",
-         Doc       =>
-           -"Color used to highlight the current line in the editor",
-         Page      => General,
+         Doc       => -"Color to highlight the current line in editors.",
+         Page      => -"Debugger:Editors",
          Default   => "rgba(125,236,57,0.6)");
 
       Editor_Show_Line_With_Code := Create
         (Manager   => Prefs,
-         Name      => XML_Prefix & "Editor-Show-Line-With-Code",
+         Name      => "Debugger-Editor-Show-Line-With-Code",
          Label     => -"Show lines with code",
-         Doc       => -("True if dots should be shown in the editor for lines"
-           & " that contain code"),
-         Page      => General,
+         Doc       =>
+            -"Display dots in editor sidebar for lines that contain code.",
+         Page      => -"Debugger:Editors",
          Default   => False);
 
       Assembly_Range_Size := Create
         (Manager  => Prefs,
-         Name     => XML_Prefix & "Assembly-Range-Size",
-         Page     => General,
+         Name     => "Debugger-Assembly-Range-Size",
+         Page     => -"Debugger:Assembly",
          Label    => -"Assembly range size",
-         Doc      => -("Number of assembly lines to display in the initial"
-                       & " display of the assembly window." & ASCII.LF
-                       & "If this size is 0, then the whole subprogram"
-                       & " is displayed, but this can take a very long time"
-                       & " on slow machines"),
+         Doc      =>
+         -"Number of lines to display initially (0 to show whole subprogram).",
          Minimum  => 0,
          Maximum  => 100000,
          Default  => 200);
 
       Asm_Highlight_Color := Create
         (Manager  => Prefs,
-         Name     => XML_Prefix & "Asm-Highlight-Color",
-         Page     => General,
+         Name     => "Debugger-Asm-Highlight-Color",
+         Page     => -"Debugger:Assembly",
          Label    => -"Current assembly line",
-         Doc      => -("Color used to highlight the assembly code for the"
-                       & " current source line"),
+         Doc      => -"Color to highlight current line in assembly view.",
          Default  => "#0000FF");
 
       Asm_Breakpoint_Color := Create
         (Manager  => Prefs,
-         Name     => XML_Prefix & "Asm-Breakpoint-Color",
-         Page     => General,
+         Name     => "Debugger-Asm-Breakpoint-Color",
+         Page     => -"Debugger:Assembly",
          Label    => -"Breakpoint line",
-         Doc      => -("Assembly line on which a breakpoint is set"),
+         Doc      => -"Color to highlight breakpoints in assembly view.",
          Default  => "#FF0000");
 
       Change_Color := Create
         (Manager  => Prefs,
-         Name     => XML_Prefix & "Change-Color",
-         Page     => General,
+         Name     => "Debugger-Change-Color",
+         Page     => -"Debugger:Data View",
          Label    => -"Changed data",
-         Doc      => -("Color used to highlight data fields that have changed"
-                       & " since the last update"),
+         Doc      => -"Color to highlight modified fields in Data view.",
          Default  => "#FF0000");
 
       Thaw_Bg_Color := Create
         (Manager  => Prefs,
-         Name     => XML_Prefix & "Thaw-Bg-Color",
-         Page     => "",
+         Name     => "Debugger-Thaw-Bg-Color",
+         Page     => ":Debugger",
          Label    => -"Auto-Refreshed",
-         Doc      => -("Background color for the items that are recomputed"
-                       & " every time the debugger stops"),
+         Doc      =>
+            -"Background color for auto-refreshed items in Data view",
          Default  => "#FFFFFF");
 
       Freeze_Bg_Color := Create
         (Manager  => Prefs,
-         Name     => XML_Prefix & "Freeze-Bg-Color",
+         Name     => "Debugger-Freeze-Bg-Color",
          Label    => -"Frozen",
          Doc      =>
-           -("Background color for the items that are never recomputed"),
-         Page     => "",
+            -"Background color for Data view items that are not refreshed.",
+         Page     => ":Debugger",
          Default  => "#AAAAAA");
 
       Memory_View_Color := Create
         (Manager  => Prefs,
-         Name     => XML_Prefix & "Memory-View-Color",
-         Page     => General,
+         Name     => "Debugger-Memory-View-Color",
+         Page     => -"Debugger:Memory",
          Label    => -"Memory color",
-         Doc      => -"Color used by default in the memory view window",
+         Doc      => -"Default color in memory view.",
          Default  => "#333399");
 
       Memory_Highlighted_Color := Create
         (Manager  => Prefs,
-         Name     => XML_Prefix & "Memory-Highlighted-Color",
-         Page     => General,
+         Name     => "Debugger-Memory-Highlighted-Color",
+         Page     => -"Debugger:Memory",
          Label    => -"Memory highlighting",
-         Doc      => -"Color used for highlighted items in the memory view",
+         Doc      => -"Color used for highlighted items in the memory view.",
          Default  => "#DDDDDD");
 
       Memory_Selected_Color := Create
         (Manager  => Prefs,
-         Name     => XML_Prefix & "Memory-Selected-Color",
-         Page     => General,
+         Name     => "Debugger-Memory-Selected-Color",
+         Page     => -"Debugger:Memory",
          Label    => -"Memory selection",
-         Doc      => -"Color used for selected items in the memory view",
+         Doc      => -"Color used for selected items in the memory view.",
          Default  => "#FF0000");
 
       Memory_Auto_Refresh := Create
         (Manager   => Prefs,
-         Name      => XML_Prefix & "Memory-Auto-Refresh",
+         Name      => "Debugger-Memory-Auto-Refresh",
          Label     => -"Refresh memory view after each step",
-         Doc       => -("Ensure actual data dispayed in memory view"
-           & " by refreshing it after each command"),
-         Page      => General,
+         Doc       => -"Auto-refresh the contents of memory view.",
+         Page      => -"Debugger:Memory",
          Default   => True);
 
       Title_Font := Create
         (Manager  => Prefs,
-         Name     => XML_Prefix & "Title-Font",
-         Page     => General,
+         Name     => "Debugger-Title-Font",
+         Page     => -"Debugger:Data View",
          Label    => -"Item name",
-         Doc      => -"Font used for the name of the variables",
+         Doc      => -"Font used for variable names.",
          Default  => "Sans Bold 9");
 
       Type_Font := Create
         (Manager  => Prefs,
-         Name     => XML_Prefix & "Type-Font",
-         Page     => General,
+         Name     => "Debugger-Type-Font",
+         Page     => -"Debugger:Data View",
          Label    => -"Item type",
-         Doc      => -"Font used for the type of the variables",
+         Doc      => -"Font used for variable types.",
          Default  => "Sans Oblique 9");
 
       Max_Item_Width := Create
         (Manager => Prefs,
          Name    => "Browsers-Item-Max-Width",
-         Page    => General,
+         Page    => -"Debugger:Data View",
          Minimum => 1,
          Maximum => Integer'Last,
          Default => 1200,
-         Doc     => -"The maximum width of an item",
+         Doc     => -"Maximum width of a box in Data view.",
          Label   => -"Max item width");
 
       Max_Item_Height := Create
         (Manager => Prefs,
          Name    => "Browsers-Item-Max-Height",
-         Page    => General,
+         Page    => -"Debugger:Data View",
          Minimum => 1,
          Maximum => Integer'Last,
          Default => 12000,
-         Doc     => -"The maximum height of an item",
+         Doc     => -"Maximum height of a box in Data view.",
          Label   => -"Max item height");
    end Register_Default_Preferences;
 

@@ -1451,9 +1451,8 @@ package body Codefix_Module is
         (Get_Preferences (Kernel),
          Name  => "Remove-Policy-When-Fixing",
          Label => -"Code fixing removal policy",
-         Doc   => -("Prefered way to fix code when a part has to be " &
-           "removed."),
-         Page    => -"General:Behavior",
+         Doc   => -"Prefered way to fix code when a part has to be removed.",
+         Page  => -"Messages",
          Default => Always_Remove);
    end Register_Preferences;
 

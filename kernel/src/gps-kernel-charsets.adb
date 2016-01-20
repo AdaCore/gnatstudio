@@ -234,11 +234,9 @@ package body GPS.Kernel.Charsets is
          Name    => "General-Charset",
          Label   => -"Character set",
          Page    => -"General:Charsets",
-         Doc     => -("Name of character set to use when reading or saving"
-                      & " files. GPS uses unicode internally, but need to"
-                      & " convert the files from and to your system's"
-                      & " own encoding. Use ""UTF-8"" if your system supports"
-                      & " unicode"),
+         Doc     =>
+           -("Character set to load and save files. GPS uses unicode"
+             & " internally and needs to convert appropriately."),
          Default => "ISO-8859-1");
    end Register_Preferences;
 

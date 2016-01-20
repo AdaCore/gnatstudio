@@ -1388,8 +1388,7 @@ Color_Pref_Name = 'SPARK/color_trace'
 GPS.Preference(Color_Pref_Name).create(
     'Highlight color for trace',
     'color',
-    'color used to highlight trace lines.' +
-    ' You must restart GPS to take changes into account.',
+    'Color to highlight trace lines (restart needed).',
     Default_Trace_Color)
 
 

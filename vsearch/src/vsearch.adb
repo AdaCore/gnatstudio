@@ -2863,8 +2863,8 @@ package body Vsearch is
          Name  => "Ask-Confirmation-For-Replace-All",
          Label => -"Confirmation for 'Replace all'",
          Page  => -"Search",
-         Doc   => -("Enable the confirmation popup before doing a" &
-           " replace all from the search window."),
+         Doc   =>
+            -"Enable the confirmation popup before a replace all operation.",
          Default => True);
 
       Keep_Previous_Search_Context := Create
@@ -2873,7 +2873,7 @@ package body Vsearch is
          Label => -"Preserve Search Context",
          Page  => -"Search",
          Doc   => -("Preserve the contents of the ""Look in"" entry"
-           & " between consecutive searches."),
+           & " between searches."),
          Default => False);
    end Register_Preferences;
 
