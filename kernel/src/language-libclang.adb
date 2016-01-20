@@ -523,10 +523,24 @@ package body Language.Libclang is
         Kernel.Get_Buffer_Factory.Get (File, False, False, False, False);
       Full_File_Name : constant String := Full_Name (File);
    begin
+
+      --  If we're in reparse mode, we want to check if the buffer is open in
+      --  an editor, which would imply that we potentially have a newer version
+      --  than the one on disk.
+
       if Reparse
         and then Buffer /= Nil_Editor_Buffer
-        and then Has_TU (Full_File_Name)
       then
+         --  If we don't have a translation unit but a reparse has been
+         --  asked, and the buffer is open, then a logic error has been
+         --  made somewhere. Log it.
+
+         if not Has_TU (Full_File_Name) then
+            Trace (Me, "WARNING !! inconsistent state in the Clang library."
+                   & " No translation unit for file " & Full_File_Name
+                   & " for which a reparse was asked");
+         end if;
+
          declare
             Cache_Val : constant Translation_Unit_Wrapper'Class
               := Get_TU (Full_File_Name);
@@ -540,8 +554,9 @@ package body Language.Libclang is
                   Enqueue_Translation_Unit
                     (Kernel,
                      File,
-                     (0 => Create_Unsaved_File
-                          (Full_Name (File), Buffer_Text)),
+                     Unsaved_Files =>
+                       (0 =>
+                        Create_Unsaved_File (Full_Name (File), Buffer_Text)),
                      Default_Lang => Default_Lang,
                      Prio         => Prio,
                      Callback     => Callback,
@@ -557,11 +572,33 @@ package body Language.Libclang is
             end if;
          end;
       else
+         if Has_TU (Full_Name (File)) then
 
-         Enqueue_Translation_Unit
-           (Kernel, File, No_Unsaved_Files,
-            Prio     => Prio,
-            Callback => Callback);
+            --  Since the files are reparsed incrementally, and here we're
+            --  parsing the file itself, we're confident that we have an up to
+            --  date TU. In this case we just want to call the callbacks with
+            --  the existing TU.
+
+            declare
+               Cache_Val : constant Translation_Unit_Wrapper'Class
+                 := Get_TU (Full_File_Name);
+            begin
+               if Callback /= null then
+                  Callback.Call (File, Cache_Val.Cache.TU);
+                  Free (Callback);
+               end if;
+            end;
+         else
+
+            --  If we don't have a TU for this file, it's probably the first
+            --  time we're parsing it. Let's enqueue a request.
+
+            Enqueue_Translation_Unit
+              (Kernel, File, No_Unsaved_Files,
+               Prio     => Prio,
+               Callback => Callback);
+         end if;
+
       end if;
    end Enqueue_Translation_Unit;
 
@@ -636,12 +673,6 @@ package body Language.Libclang is
       Request : Parsing_Request;
 
    begin
-
-      if Unsaved_Files = No_Unsaved_Files
-        and then Has_TU (Full_Name (File))
-      then
-         return;
-      end if;
 
       declare
          TU           : Clang_Translation_Unit;
