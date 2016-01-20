@@ -73,7 +73,8 @@ items in the menu bar:
   the program to be debugged and whether execution should stop at the
   beginning of the main subprogram. If you confirm by clicking the
   :guilabel:`OK` button, GPS starts the program with the arguments you
-  entered.
+  entered. Note, the user should do the quoting himself if he
+  has some special characters inside arguments.
 
 .. index:: menu; debug --> step
 

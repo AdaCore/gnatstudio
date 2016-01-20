@@ -50,6 +50,18 @@ KP-62-P113-008 GPS: problem with folding of directory in Project View
   Workaround: Use double click outside arrow icon or keyboard shortcuts
               to fold the row.
 
+KP-62-P108-044 GPS: incorrect program arguments when debugging in GPS
+
+  Problem:    When argument of a program contains backslash character
+              GPS escapes it in a wrong way before pass to GDB. As a result
+              all arguments are passed as single argument with escaped
+              backslash characters.
+
+  Status:     This was fixed in 17.0 on 2016-01-20
+
+  Workaround: Use 'start <arguments>' command in GDB console of GPS instead
+              of running program with F8 or 'continue' icon.
+
 KP-62-P106-023 GB: no project opened by GPS when launched from GB on linux.
 
   Problem:    On linux, GPS launched by GB through "GPS debugger" debug

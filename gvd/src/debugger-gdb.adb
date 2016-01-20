@@ -1636,25 +1636,7 @@ package body Debugger.Gdb is
    overriding procedure Start
      (Debugger  : access Gdb_Debugger;
       Arguments : String := "";
-      Mode      : Command_Type := Hidden)
-   is
-      function Escape_If_Needed (A : String) return String;
-      --  Escape A so it is suitable for passing to the start/begin command
-
-      ----------------------
-      -- Escape_If_Needed --
-      ----------------------
-
-      function Escape_If_Needed (A : String) return String is
-      begin
-         if Index (A, "\") in A'Range then
-            --  Args contain a backslash: escape it
-            return '"' & Protect (A) & '"';
-         end if;
-
-         return A;
-      end Escape_If_Needed;
-
+      Mode      : Command_Type := Hidden) is
    begin
       Test_If_Has_Command (Debugger, Debugger.Has_Start_Cmd, "start");
 
@@ -1673,11 +1655,9 @@ package body Debugger.Gdb is
 
       else
          if Debugger.Has_Start_Cmd = 1 then
-            Send (Debugger,
-                  "start " & Escape_If_Needed (Arguments), Mode => Mode);
+            Send (Debugger, "start " & Arguments, Mode => Mode);
          else
-            Send (Debugger,
-                  "begin " & Escape_If_Needed (Arguments), Mode => Mode);
+            Send (Debugger, "begin " & Arguments, Mode => Mode);
          end if;
       end if;
 
