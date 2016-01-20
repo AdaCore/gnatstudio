@@ -39,6 +39,17 @@ KP-62-P113-013 GPS: cannot display standard.ads on cross platform
               'gprbuild -c -gnatc -gnatS -P<project> <file>' where project is
               your project file and file is any source file.
 
+KP-62-P113-008 GPS: problem with folding of directory in Project View
+
+  Problem:    After unfolding a row in Project View by clicking on the
+              arrow icon it is impossible to fold it back until some mouse
+              movement.
+
+  Status:     This was fixed in 17.0 on 2016-01-20
+
+  Workaround: Use double click outside arrow icon or keyboard shortcuts
+              to fold the row.
+
 KP-62-P106-023 GB: no project opened by GPS when launched from GB on linux.
 
   Problem:    On linux, GPS launched by GB through "GPS debugger" debug
