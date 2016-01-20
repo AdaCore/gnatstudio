@@ -31,7 +31,6 @@ with Gtk.Cell_Renderer_Toggle;              use Gtk.Cell_Renderer_Toggle;
 with Gtk.Dialog;                            use Gtk.Dialog;
 with Gtk.Enums;                             use Gtk.Enums;
 with Gtk.Label;                             use Gtk.Label;
-with Gtk.Link_Button;                       use Gtk.Link_Button;
 with Gtk.List_Box_Row;                      use Gtk.List_Box_Row;
 with Gtk.Notebook;                          use Gtk.Notebook;
 with Gtk.Paned;                             use Gtk.Paned;
@@ -65,22 +64,15 @@ package body Startup_Module is
 
    Column_Load_Name   : aliased String := "Load";
    Column_Name_Name   : aliased String := "Name";
-   Column_Loaded_Name : aliased String := "Loaded at startup";
 
    Column_Load          : constant := 0;
    Column_Name          : constant := 1;
-   Column_Loaded        : constant := 2;
-   Column_Explicit      : constant := 3;
-   Column_Modified      : constant := 4;
-   Column_Background    : constant := 5;
-   Column_Name_With_Ext : constant := 6;
-   Column_Subpage_Name  : constant := 7;
-   Column_Page          : constant := 8;
-
-   type Kernel_Link_Button_Record is new Gtk_Link_Button_Record with record
-      Kernel : Kernel_Handle;
-   end record;
-   type Kernel_Link_Button is access all Kernel_Link_Button_Record'Class;
+   Column_Explicit      : constant := 2;
+   Column_Modified      : constant := 3;
+   Column_Background    : constant := 4;
+   Column_Name_With_Ext : constant := 5;
+   Column_Subpage_Name  : constant := 6;
+   Column_Page          : constant := 7;
 
    procedure Register_All_Plugins_Preferences_Pages
      (Kernel : not null access Kernel_Handle_Record'Class);
@@ -108,21 +100,11 @@ package body Startup_Module is
    procedure On_Selection_Changed (Widget : access Gtk_Widget_Record'Class);
    --  Called when the selection in the tree has changed.
 
-   function On_File_Clicked
-     (Self : access Gtk_Link_Button_Record'Class) return Boolean;
-   --  Called when the user requests to view the source file.
-
    procedure On_Destroy_Preferences_Dialog
      (Widget : access Gtk_Widget_Record'Class);
    --  Called when the preferences dialog is being closed.
    --  If the used has set/unset some startup scripts, display a dialog
    --  asking the user if he wants to restart now or not.
-
-   function Is_Loaded
-     (Editor : not null access Startup_Editor_Page_View_Record'Class;
-      Iter   : Gtk_Tree_Iter) return String;
-   --  Return a String indicating if the script refered by Iter is currently
-   --  loaded and how it has been loaded.
 
    function Get_Subpage_Iter
      (Editor       : not null access Startup_Editor_Page_View_Record'Class;
@@ -191,32 +173,6 @@ package body Startup_Module is
       Subpage_View.Set_Pref_Highlighted (Pref, Highlight);
    end Set_Pref_Highlighted;
 
-   ---------------
-   -- Is_Loaded --
-   ---------------
-
-   function Is_Loaded
-     (Editor : not null access Startup_Editor_Page_View_Record'Class;
-      Iter   : Gtk_Tree_Iter) return String
-   is
-      Loaded : constant String :=
-                 (if Get_Boolean (Editor.Model, Iter, Column_Load) then
-                     -"yes"
-                  else
-                     -"no ");
-   begin
-      if Get_Boolean (Editor.Model, Iter, Column_Modified) then
-         return Loaded
-           & (-" (Modified in this dialog)");
-      elsif Get_Boolean (Editor.Model, Iter, Column_Explicit) then
-         return Loaded & (-" (explicitly set by user)");
-      elsif Get_Boolean (Editor.Model, Iter, Column_Load) then
-         return Loaded & (-" (found in auto-loading directory)");
-      else
-         return Loaded & (-" (found in no auto-loading directory)");
-      end if;
-   end Is_Loaded;
-
    --------------------------
    -- On_Selection_Changed --
    --------------------------
@@ -266,8 +222,6 @@ package body Startup_Module is
                    Get_Boolean (Editor.Model, Iter, Column_Modified);
    begin
       Set (Editor.Model, Iter, Column_Modified, not Modified);
-      Set (Editor.Model, Iter, Column_Loaded,
-           Is_Loaded (Editor, Iter));
 
       Save (Editor, Iter);
    end Set_Modified;
@@ -352,8 +306,7 @@ package body Startup_Module is
                     Base_Name (Name, File_Extension (Name)));
                Set (Editor.Model, Iter, Column_Explicit,
                     Plugin_Subpage.Explicit);
-               Set (Editor.Model, Iter, Column_Loaded,
-                    Is_Loaded (Editor, Iter));
+
                Set (Editor.Model, Iter, Column_Modified, False);
                Set (Editor.Model, Iter, Column_Name_With_Ext, Name);
                Set (Editor.Model, Iter, Column_Subpage_Name, Subpage.Get_Name);
@@ -378,11 +331,10 @@ package body Startup_Module is
 
       --  Create the list tree view which list all the registered plugins
       Gtk_New (Scrolled);
-      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Scrolled.Set_Policy (Policy_Never, Policy_Automatic);
       Editor.Tree := Create_Tree_View
         (Column_Types => (Column_Load          => GType_Boolean,
                           Column_Name          => GType_String,
-                          Column_Loaded        => GType_String,
                           Column_Explicit      => GType_Boolean,
                           Column_Modified      => GType_Boolean,
                           Column_Background    => GType_String,
@@ -392,9 +344,7 @@ package body Startup_Module is
          Column_Names       => (Column_Name + 1   =>
                                     Column_Name_Name'Unchecked_Access,
                                 Column_Load + 1   =>
-                                  Column_Load_Name'Unchecked_Access,
-                                Column_Loaded + 1 =>
-                                  Column_Loaded_Name'Unchecked_Access),
+                                  Column_Load_Name'Unchecked_Access),
          Show_Column_Titles => True,
          Initial_Sort_On    => Column_Name + 1);
       Editor.Model := -Get_Model (Editor.Tree);
@@ -417,9 +367,9 @@ package body Startup_Module is
 
       --  Create a vertical paned view, containing the list tree view and
       --  the notebook.
-      Gtk_New_Vpaned (Pane);
-      Pane.Pack1 (Scrolled, True, True);
-      Pane.Pack2 (Editor.Plugins_Notebook, True, True);
+      Gtk_New_Hpaned (Pane);
+      Pane.Pack1 (Scrolled, Resize => False, Shrink => False);
+      Pane.Pack2 (Editor.Plugins_Notebook, Resize => True, Shrink => True);
       Editor.Add (Pane);
 
       --  Iterate over all the registered plugin subpages
@@ -483,55 +433,14 @@ package body Startup_Module is
       Doc_Text_Buffer  : Gtk_Text_Buffer;
       Doc_Text_Iter    : Gtk_Text_Iter;
 
-      procedure Add_Startup_Widgets;
-      --  Add all the widgets not linked with preferences (i.e: not
-      --  interacting with preferences.xml file).
-
-      -------------------------
-      -- Add_Startup_Widgets --
-      -------------------------
-
-      procedure Add_Startup_Widgets
-      is
-         Group_Widget     : Preferences_Group_Widget;
-         File_Row         : Gtk_Box;
-         File_Label       : Gtk_Label;
-         File_Link        : Kernel_Link_Button;
-      begin
-         --  Create the group
-         Group_Widget := new Preferences_Group_Widget_Record;
-         Group_Widget.Initialize (Group_Name => "General");
-         Page_Box.Pack_Start (Group_Widget, Expand => False);
-
-         --  Create the file row
-         Gtk_New_Hbox (File_Row, Homogeneous => False);
-         Group_Widget.Append (Widget => Gtk_Widget (File_Row));
-         Gtk_New (File_Label, "File: ");
-         File_Label.Set_Alignment (0.0, 0.5);
-         File_Row.Pack_Start (File_Label, Expand => False);
-
-         --  Create the file link and add it to the file row
-         File_Link := new Kernel_Link_Button_Record;
-         File_Link.Kernel :=
-           Kernel_Handle (GPS_Preferences_Manager (Manager).Get_Kernel);
-         Initialize (File_Link, "file://" & Self.File.Display_Full_Name);
-         File_Link.Set_Alignment (0.0, 0.5);
-         File_Link.Set_Label (Self.File.Display_Full_Name);
-         File_Link.On_Activate_Link (On_File_Clicked'Access);
-         File_Row.Pack_Start (File_Link, Expand => True, Fill => True);
-      end Add_Startup_Widgets;
-
    begin
       --  Create a new page
       Page_View := new Preferences_Page_View_Record;
       Default_Preferences.GUI.Initialize (Page_View);
 
       --  Create the new Vbox which will hold all the page's widgets
-      Gtk_New_Vbox (Page_Box);
+      Gtk_New_Vbox (Page_Box, Homogeneous => False);
       Page_View.Add (Page_Box);
-
-      --  Create and add all the widgets non-related with preferences
-      Add_Startup_Widgets;
 
       --  Create the preferences box for all the preferences registered in this
       --  page and add it to the page view.
@@ -547,9 +456,8 @@ package body Startup_Module is
       Doc_Group_Widget.Initialize (Group_Name => "Documentation");
       Page_Box.Pack_Start (Doc_Group_Widget);
       Gtk_New (Doc_Text_View);
-      Doc_Text_View.Set_Wrap_Mode (Wrap_None);
+      Doc_Text_View.Set_Wrap_Mode (Wrap_Word);
       Doc_Text_View.Set_Editable (False);
-      Doc_Text_View.Modify_Font (Default_Style.Get_Pref_Font);
       Doc_Text_Buffer := Doc_Text_View.Get_Buffer;
       Doc_Text_Buffer.Get_End_Iter (Doc_Text_Iter);
       Doc_Text_Buffer.Insert (Iter => Doc_Text_Iter,
@@ -644,21 +552,6 @@ package body Startup_Module is
       For_All_Startup_Scripts
         (Kernel, Register_Plugin_Preferences_Page'Access);
    end Register_All_Plugins_Preferences_Pages;
-
-   ---------------------
-   -- On_File_Clicked --
-   ---------------------
-
-   function On_File_Clicked
-     (Self : access Gtk_Link_Button_Record'Class) return Boolean is
-   begin
-      Open_File_Action_Hook.Run
-        (Kernel_Link_Button (Self).Kernel,
-         Project  => GNATCOLL.Projects.No_Project,
-         File     => Create (+Self.Get_Label));
-
-      return True;
-   end On_File_Clicked;
 
    ----------
    -- Save --
