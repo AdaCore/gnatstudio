@@ -217,8 +217,8 @@ package body GPS.Kernel.Preferences_Views is
       Local_Config              => True,
       Group                     => Group_Default,
       Areas                     => Gtkada.MDI.Both,
-      Default_Width             => 800,
-      Default_Height            => 700,
+      Default_Width             => 1024,
+      Default_Height            => 800,
       Add_Close_Button_On_Float => True,
       MDI_Flags                 =>
          All_Buttons or Float_To_Main or Always_Destroy_Float,
