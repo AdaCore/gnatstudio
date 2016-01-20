@@ -111,8 +111,7 @@ package body Default_Preferences.GUI is
 
    procedure Initialize
      (Self        : not null access Preferences_Group_Widget_Record'Class;
-      Group_Name  : String;
-      Align       : Boolean := True)
+      Group_Name  : String)
    is
       VBox : Gtk_Box;
    begin
@@ -131,11 +130,6 @@ package body Default_Preferences.GUI is
       Gtk_New_Vbox (VBox);
       VBox.Pack_Start (Self.Flow_Box, Expand => False);
       Self.Add (VBox);
-
-      if Align then
-         Gtk_New (Self.Label_Size_Group);
-         Gtk_New (Self.Pref_Widget_Size_Group);
-      end if;
    end Initialize;
 
    ---------------------
@@ -143,9 +137,10 @@ package body Default_Preferences.GUI is
    ---------------------
 
    function Create_Pref_Row
-     (Self    : not null access Preferences_Group_Widget_Record'Class;
-      Pref    : not null access Preference_Record'Class;
-      Manager : not null access Preferences_Manager_Record'Class)
+     (Self      : not null access Preferences_Group_Widget_Record'Class;
+      Prefs_Box : not null access Preferences_Box_Record'Class;
+      Pref      : not null access Preference_Record'Class;
+      Manager   : not null access Preferences_Manager_Record'Class)
       return Gtk_Widget
    is
       Pref_HBox   : Gtk_Box;
@@ -164,14 +159,14 @@ package body Default_Preferences.GUI is
          --  Right align the label and add it to the row
          Label.Set_Alignment (Xalign => 0.0,
                               Yalign => 0.5);
-         Self.Label_Size_Group.Add_Widget (Label);
+         Prefs_Box.Label_Size_Group.Add_Widget (Label);
          Pref_HBox.Pack_Start (Label,
                                Expand  => False);
 
          Pref_Widget := Edit (Pref, Manager);
 
          if Pref_Widget /= null then
-            Self.Pref_Widget_Size_Group.Add_Widget (Pref_Widget);
+            Prefs_Box.Pref_Widget_Size_Group.Add_Widget (Pref_Widget);
             Pref_HBox.Pack_Start (Pref_Widget, Expand => False, Padding => 5);
          end if;
       else
@@ -180,7 +175,6 @@ package body Default_Preferences.GUI is
             Manager   => Manager);
 
          if Pref_Widget /= null then
-            Self.Pref_Widget_Size_Group.Add_Widget (Pref_Widget);
             Pref_HBox.Pack_Start (Pref_Widget, Expand => False);
          end if;
       end if;
@@ -255,9 +249,10 @@ package body Default_Preferences.GUI is
             Pref_Row : Gtk_Widget;
          begin
             Pref_Row := Create_Pref_Row
-              (Self    => Group_Widget,
-               Pref    => Pref,
-               Manager => Manager);
+              (Self      => Group_Widget,
+               Pref      => Pref,
+               Prefs_Box => Self,
+               Manager   => Manager);
 
             Self.Pref_Widgets.Insert
               (Pref.Get_Name, Pref_Row);
@@ -265,8 +260,7 @@ package body Default_Preferences.GUI is
 
       begin
          Group_Widget := new Preferences_Group_Widget_Record;
-         Group_Widget.Initialize (Group_Name => Group.Get_Name,
-                                  Align      => True);
+         Group_Widget.Initialize (Group_Name => Group.Get_Name);
 
          Self.Pack_Start (Group_Widget, Expand =>  False);
 
@@ -279,6 +273,9 @@ package body Default_Preferences.GUI is
 
    begin
       Initialize_Vbox (Self);
+
+      Gtk_New (Self.Pref_Widget_Size_Group, Mode => Horizontal);
+      Gtk_New (Self.Label_Size_Group);
 
       --  Iterate over all the groups registered in this page and append
       --  their widgets.

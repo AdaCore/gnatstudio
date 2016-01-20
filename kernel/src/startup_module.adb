@@ -500,8 +500,7 @@ package body Startup_Module is
       begin
          --  Create the group
          Group_Widget := new Preferences_Group_Widget_Record;
-         Group_Widget.Initialize (Group_Name => "General",
-                                  Align  => False);
+         Group_Widget.Initialize (Group_Name => "General");
          Page_Box.Pack_Start (Group_Widget, Expand => False);
 
          --  Create the file row
@@ -545,8 +544,7 @@ package body Startup_Module is
       --  Create the text view group which will contain the plugin
       --  documentation
       Doc_Group_Widget := new Preferences_Group_Widget_Record;
-      Doc_Group_Widget.Initialize (Group_Name => "Documentation",
-                                   Align  => False);
+      Doc_Group_Widget.Initialize (Group_Name => "Documentation");
       Page_Box.Pack_Start (Doc_Group_Widget);
       Gtk_New (Doc_Text_View);
       Doc_Text_View.Set_Wrap_Mode (Wrap_None);

@@ -94,21 +94,20 @@ package Default_Preferences.GUI is
 
    procedure Initialize
      (Self        : not null access Preferences_Group_Widget_Record'Class;
-      Group_Name  : String;
-      Align       : Boolean := True);
+      Group_Name  : String);
    --  Initialize a Preferences_Group_Widget.
    --  Group_Name is used to set the frame's label.
-   --  If Align is True, this group widget will align all the preferences when
-   --  calling Create_Pref_Row. If Align is False, the preferences rows will
-   --  not be aligned.
 
    function Create_Pref_Row
-     (Self    : not null access Preferences_Group_Widget_Record'Class;
-      Pref    : not null access Preference_Record'Class;
-      Manager : not null access Preferences_Manager_Record'Class)
+     (Self      : not null access Preferences_Group_Widget_Record'Class;
+      Prefs_Box : not null access Preferences_Box_Record'Class;
+      Pref      : not null access Preference_Record'Class;
+      Manager   : not null access Preferences_Manager_Record'Class)
       return Gtk_Widget;
    --  Create a row for the given preference and append it at the bottom of
    --  the group widget.
+   --  The preference's row width is determined using the size groups of
+   --  Prefs_Box.
 
    procedure Append
      (Self   : not null access Preferences_Group_Widget_Record'Class;
@@ -130,13 +129,13 @@ private
 
    type Preferences_Group_Widget_Record is new Gtk_Frame_Record with record
       Flow_Box               : Gtk_Flow_Box;
-      Label_Size_Group       : Gtk_Size_Group;
-      Pref_Widget_Size_Group : Gtk_Size_Group;
    end record;
 
    type Preferences_Box_Record is new Gtk.Box.Gtk_Box_Record with record
       Pref_Widgets : Preferences_Widgets_Maps.Map;
       --  Used to map preferences with their highlightable parent widget.
+      Label_Size_Group       : Gtk_Size_Group;
+      Pref_Widget_Size_Group : Gtk_Size_Group;
    end record;
 
    type Preferences_Page_View_Record is
