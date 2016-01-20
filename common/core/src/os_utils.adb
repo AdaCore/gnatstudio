@@ -259,6 +259,8 @@ package body OS_Utils is
 
          Main_Loop : loop
             loop
+               --  Catch exceptions (such as Access_Denied) which could
+               --  occur on files that are not accessible.
                begin
                   if More_Entries (Search) then
                      exit;
@@ -312,10 +314,44 @@ package body OS_Utils is
         and then (Is_Regular_File (Full_Name)
                   or else Is_Directory (Full_Name))
       then
-         return +Norm
-           (Containing_Directory (+Full_Name),
-            Simple_Name (+Full_Name),
-            (others => True));
+         declare
+            Dir     : constant String := Containing_Directory (+Full_Name);
+            Sep     : constant String := "\";
+            Use_Sep : Natural := 1;
+         begin
+            if Dir'Length >= 3
+              and then Dir (Dir'First + 1 .. Dir'First + 2) = ":\"
+            then
+               --  Dir is starting with the drive letter (as in "C:\home")
+               return +Norm
+                 (Dir, Simple_Name (+Full_Name), (others => True));
+
+            elsif Dir'Length >= 1
+              and then Dir (Dir'First) = '.'
+            then
+               --  May return "." for current directory under Cygwin
+               --  ??? This seems a bug in Containing_Directory under Cygwin.
+               if Dir'Length = 1
+                 or else (Dir'Length >= 2
+                          and then (Dir (Dir'First + 1) = '/'
+                                    or else Dir (Dir'First + 1) = '\'))
+               then
+                  Use_Sep := 0;
+               end if;
+
+               return +Norm
+                 (Ada.Directories.Current_Directory & Sep (1 .. Use_Sep) &
+                    Dir (Dir'First + 1 .. Dir'Last),
+                  Simple_Name (+Full_Name), (others => True));
+
+            else
+               --  May return "src" for "current_directory/src" under Cygwin
+               --  ??? Also a bug in Containing_Directory under Cygwin.
+               return +Norm
+                 (Ada.Directories.Current_Directory & Sep & Dir,
+                  Simple_Name (+Full_Name), (others => True));
+            end if;
+         end;
       else
          return Full_Name;
       end if;
