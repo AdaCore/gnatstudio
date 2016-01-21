@@ -46,7 +46,7 @@ default = gps_utils.Chainmap(light_common, {
     "@theme_fg_color": None,           # default color for the text
     "@theme_selected_bg_color": None,  # selection in trees or menus
     "@editor_bg_selection": "rgb(74,144,217)",
-    "General-Default-Style": ("${font}", "rgb(0,0,0)", "rgb(255,255,255)"),
+    "General-Default-Font": "${font}",
     "Debugger-Editor-Current-Line":   "rgba(125,236,57,0.6)",
     "Src-Editor-Current-Line-Color":  "rgba(226,226,226,0.4)",
     "Src-Editor-Reference-Style": (
@@ -73,9 +73,7 @@ monokai = gps_utils.Chainmap(dark_common, {
     "@theme_fg_color": "rgb(248,248,242)",
     "@theme_selected_bg_color": "rgb(0,67,152)",
     "@editor_bg_selection": "rgb(0,67,152)",
-    "General-Default-Style":                 ("${font}",
-                                              "rgb(248,248,242)",
-                                              "rgb(39,40,34)"),
+    "General-Default-Font":                  ("${font}"),
     "Debugger-Editor-Current-Line":          "rgba(58,71,54,0.6)",
     "Src-Editor-Current-Line-Color":         "rgb(73,72,62)",
     "Src-Editor-Reference-Style":            ("${editorfont}",
@@ -113,9 +111,7 @@ darkside = gps_utils.Chainmap(dark_common, {
     "GPS6-Gtk-Theme-Name": "Adwaita (Dark)",
     "@theme_bg_color": "rgb(34,35,36)",
     "@editor_bg_selection": "rgb(0,67,152)",
-    "General-Default-Style":                 ("${font}",
-                                              "rgb(186,186,186)",
-                                              "rgb(34,35,36)"),
+    "General-Default-Font":                  ("${font}"),
     "Debugger-Editor-Current-Line":          "rgba(58,71,54,0.6)",
     "Src-Editor-Current-Line-Color":         "rgb(48,51,51)",
     "Src-Editor-Reference-Style":            ("${editorfont}",
@@ -155,9 +151,7 @@ iplastic = gps_utils.Chainmap(light_common, {
     "name": "iPlastic",
     "GPS6-Gtk-Theme-Name": "Adwaita",
     "@editor_bg_selection": "rgb(74,144,217)",
-    "General-Default-Style":                 ("${font}",
-                                              "rgb(0,0,0)",
-                                              "rgb(238,238,238)"),
+    "General-Default-Font":                  ("${font}"),
     "Debugger-Editor-Current-Line":          "rgba(125,236,57,0.6)",
     "Src-Editor-Current-Line-Color":         "rgba(226,226,226,0.4)",
     "Src-Editor-Reference-Style":            ("${editorfont}",
@@ -245,7 +239,7 @@ class ColorThemeSwitcher(object):
            where value is the string value.
         """
 
-        default = GPS.Preference("General-Default-Style").get().split("@")[0]
+        default = GPS.Preference("General-Default-Font").get()
         font = GPS.Preference("Src-Editor-Reference-Style").get().split("@")[0]
 
         def subst(s):

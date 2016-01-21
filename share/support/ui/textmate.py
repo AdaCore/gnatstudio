@@ -283,7 +283,7 @@ class Theme(object):
         d['@text_color'] = fg
         d['@base_color'] = bg
         d["Src-Editor-Reference-Style"] = ("${editorfont}", fg, bg)
-        d["General-Default-Style"] = ("${font}", fg, bg)
+        d["General-Default-Font"] = "${font}"
 
         # Compute the selection
 
