@@ -795,7 +795,8 @@ package body GPS.Kernel.Preferences_Views is
 
       Self.On_Show (On_Show'Access);
 
-      return Gtk_Widget (Self);
+      --  Return null so that the search bar actually receives the focus
+      return null;
    end Initialize;
 
    ------------------------------

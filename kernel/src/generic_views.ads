@@ -217,7 +217,8 @@ package Generic_Views is
          return Gtk.Widget.Gtk_Widget is <>;
       --  Function used to create the view itself.
       --  The Gtk_Widget returned, if non-null, is the Focus Widget to pass
-      --  to the MDI.
+      --  to the MDI. If null, the focus will be given to the view's
+      --  search/filter bar (created via Build_Search/Build_Filter), if any.
       --  View has already been allocated, and the kernel has been set.
 
       Local_Toolbar : Boolean := False;

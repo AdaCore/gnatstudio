@@ -1120,9 +1120,6 @@ package body Generic_Views is
          View := new Formal_View_Record;
          Set_Kernel (View, Kernel_Handle (Kernel));
          Focus_Widget := Initialize (View);
-         if Focus_Widget = null then
-            Focus_Widget := Gtk_Widget (View);
-         end if;
 
          --  Create the finalized view, creating its local toolbar if needed
          Finalized_View := Create_Finalized_View (View);
@@ -1133,6 +1130,27 @@ package body Generic_Views is
          --  event with no module information set, and the current focus
          --  widget will not have changed, thus the menus are not correctly
          --  refreshed.
+
+         if Focus_Widget = null then
+            --  If no focus widget has been returned when calling Initialize,
+            --  give the focus to the search/filter bar, if any.
+            --  If the view does not have any search/filter bar, give it to the
+            --  view itself.
+            declare
+               Abstract_View : constant Abstract_View_Access :=
+                                 Abstract_View_Access (View);
+            begin
+               if Abstract_View.Search /= null then
+                  Focus_Widget :=
+                    Gtk_Widget (Abstract_View.Search.Completion_Entry);
+               elsif Abstract_View.Filter /= null then
+                  Focus_Widget := Gtk_Widget (Abstract_View.Filter.Pattern);
+               else
+                  Focus_Widget := Gtk_Widget (View);
+               end if;
+            end;
+         end if;
+
          Assert
            (Me,
             Focus_Widget = null or else Focus_Widget.Get_Can_Focus,
