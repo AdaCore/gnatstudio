@@ -1383,7 +1383,7 @@ GPS.Preference(User_Profile_Pref_Name).create(
     'Basic',
     'Advanced')
 
-Color_Pref_Name = 'SPARK/color_trace'
+Color_Pref_Name = 'SPARK:Colors/color_trace'
 
 GPS.Preference(Color_Pref_Name).create(
     'Highlight color for trace',

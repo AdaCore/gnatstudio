@@ -180,7 +180,7 @@ targets = """
 # This has to be done at GPS start, before the project is actually loaded.
 GPS.parse_xml(project_attributes)
 
-SPAWN_BROWSER_PREF = "Documentation/Doc-Spawn-Browser"
+SPAWN_BROWSER_PREF = "Documentation:GNATdoc/Doc-Spawn-Browser"
 GPS.Preference(SPAWN_BROWSER_PREF).create(
     "Spawn a browser",
     "boolean",

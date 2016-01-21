@@ -1545,7 +1545,7 @@ package body Completion_Module is
       Smart_Completion := Smart_Completion_Preferences.Create
         (Get_Preferences (Kernel),
          Name  => "Smart-Completion-Mode",
-         Label => -"Smart completion",
+         Label => -"Smart Completion",
          Page  => -"Editor:Smart Completion",
          Doc   =>
            -("Control the display of smart completion: either on specific"

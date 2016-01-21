@@ -197,12 +197,30 @@ package body GPS.Kernel.Preferences is
                      Get_Python_Widget => Nth_Arg (Data, 2));
          Priority   : constant Integer := Nth_Arg (Data, 3, Default => -1);
       begin
-         --  Register the page in the manager
-         Kernel.Get_Preferences.Register_Page
-           (Name             => Name,
-            Page             => Preferences_Page (Page),
-            Priority         => Priority,
-            Replace_If_Exist => False);
+         --  If it's a root page, register it directly in the manager
+         if Is_Root_Page (Name) then
+            Kernel.Get_Preferences.Register_Page
+              (Name             => Name,
+               Page             => Preferences_Page (Page),
+               Priority         => Priority,
+               Replace_If_Exist => False);
+         else
+            --  If it's a subpage, find its root page and register it as a
+            --  subpage.
+            declare
+               Root_Page : constant Preferences_Page :=
+                             Kernel.Get_Preferences.Get_Registered_Page
+                               (Name             => Get_Root_Page (Name),
+                                Create_If_Needed => True);
+            begin
+               Root_Page.Register_Subpage
+                 (Subpage          => Preferences_Page (Page),
+                  Subpage_Name     => Name,
+                  Subpage_Type     => Visible_Page,
+                  Priority         => Priority,
+                  Replace_If_Exist => False);
+            end;
+         end if;
       end;
    end Preferences_Page_Commands_Handler;
 
@@ -447,11 +465,12 @@ package body GPS.Kernel.Preferences is
          Default  => False);
 
       -- General --
+
       Gtk_Theme := Create
         (Kernel.Preferences,
          Name  => "GPS6-Gtk-Theme-Name",  --  synchronize with colorschemes.py
          Label => -"Theme",
-         Page  => -"General:Appearance",
+         Page  => -"General/Custom Styles:Theme",
          Doc   => -("Styles the tabs, tree views, buttons and UI elements."));
 
       Default_Font := Create
@@ -459,7 +478,7 @@ package body GPS.Kernel.Preferences is
          Name    => "General-Default-Font",
          Default => Defaults.Default_Font,
          Doc     => -("Font in menus, browsers,..."),
-         Page    => -"General:Appearance",
+         Page    => -"General/Custom Styles:Fonts",
          Label   => -"Default font");
 
       Small_Font := Create
@@ -467,7 +486,7 @@ package body GPS.Kernel.Preferences is
          Name    => "General-Small-Font",
          Default => Defaults.Default_Font,
          Doc     => -("Used by GPS to display secondary information."),
-         Page    => -"",
+         Page    => -":Fonts & Colors",
          Label   => -"Small font");
 
       View_Fixed_Font := Create
@@ -477,7 +496,15 @@ package body GPS.Kernel.Preferences is
          Doc     => -("Fixed-size font used in most views "
                       & "(Outline, Locations, Messages, ...)"),
          Label   => -"Monospace font",
-         Page    => -"General:Appearance");
+         Page    => -"General/Custom Styles:Fonts");
+
+      Tooltips_Background := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Tooltips-Background-Color",
+         Label   => -"Tooltips background",
+         Doc     => -"Background color for tooltips, defaults to gtk+ theme.",
+         Default => "#FFFFFF",
+         Page    => -"General/Custom Styles:Other");
 
       Use_Native_Dialogs := Create
         (Manager => Kernel.Preferences,
@@ -485,7 +512,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Native dialogs",
          Doc     => -"Use OS native dialogs instead of GPS-specific ones.",
          Default => True,
-         Page    => "");
+         Page    => ":Windows");
 
       Splash_Screen := Create
         (Manager  => Kernel.Preferences,
@@ -696,7 +723,7 @@ package body GPS.Kernel.Preferences is
          Default => False,
          Doc     => -"Check syntax in the background.",
          Label   => -"Automatic syntax check",
-         Page    => "");
+         Page    => ":Editor");
 
       if Config.Host = Config.Windows then
          Use_ACL := Create
@@ -956,7 +983,7 @@ package body GPS.Kernel.Preferences is
          Name     => "Browsers-Title-Color",
          Label    => -"Title background",
          Doc      => -"Item title background",
-         Page     => "",
+         Page     => ":Browsers",
          Default  => "#BEBEBE");
 
       Browsers_Vertical_Layout := Create
@@ -1233,7 +1260,7 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Doc     => -"Save relative paths in projects, not absolute paths.",
          Label   => -"Relative project paths",
-         Page    => -"Project");
+         Page    => -"Project:General");
 
       Trusted_Mode := Create
         (Manager => Kernel.Preferences,
@@ -1243,7 +1270,7 @@ package body GPS.Kernel.Preferences is
             -("Assume projects and files do not use symbolic links to speed"
               & " up loading of projects."),
          Label   => -"Fast Project Loading",
-         Page    => -"Project");
+         Page    => -"Project:General");
 
       Hidden_Directories_Pattern := Create
         (Manager => Kernel.Preferences,
@@ -1262,7 +1289,7 @@ package body GPS.Kernel.Preferences is
          Default => "sans bold oblique 10",
          Doc     => -"Font to use for the title of the pages in the wizard",
          Label   => -"Title font",
-         Page    => ":Font & Colors");
+         Page    => ":Fonts & Colors");
 
       -- VCS --
 
@@ -1324,7 +1351,7 @@ package body GPS.Kernel.Preferences is
          Label    => -"List processes",
          Doc      => -"Command to list processes running on the machine.",
          Default  => Config.Default_Ps,
-         Page     => -"External Command");
+         Page     => -"External Commands:General");
 
       Execute_Command := Create
         (Manager => Kernel.Preferences,
@@ -1332,7 +1359,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Execute command",
          Doc     => -"Program to execute commands externally.",
          Default => Config.Exec_Command,
-         Page    => -"External Command");
+         Page    => -"External Commands:General");
 
       if Config.Host /= Config.Windows then
          --  Preference not used under Windows
@@ -1344,7 +1371,7 @@ package body GPS.Kernel.Preferences is
             Doc     =>
               -"Override the system's default browser. Use %u for the URL.",
             Default => "",
-            Page    => -"External Command");
+            Page    => -"External Commands:Browser");
       end if;
 
       Print_Command := Create
@@ -1354,7 +1381,7 @@ package body GPS.Kernel.Preferences is
           Doc    =>
             -"Command to print files. On Windows, defaults to built-in.",
          Default => Config.Default_Print_Cmd,
-         Page    => -"External Command");
+         Page    => -"External Commands:General");
 
       Max_Output_Length := Create
         (Manager => Kernel.Preferences,
@@ -1368,14 +1395,6 @@ package body GPS.Kernel.Preferences is
 
       -- Windows --
 
-      Tooltips_Background := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Tooltips-Background-Color",
-         Label   => -"Tooltips background",
-         Doc     => -"Background color for tooltips, defaults to gtk+ theme.",
-         Default => "#FFFFFF",
-         Page    => -"Windows");
-
       Doc_Search_Before_First := Create
         (Manager => Kernel.Preferences,
          Name    => "Doc-Search-Before-First",
@@ -1386,7 +1405,7 @@ package body GPS.Kernel.Preferences is
            & " fallback to the comments after the entity declaration if not"
            & " found (reversed when preference is disabled)."),
          Default => True,
-         Page    => -"Documentation");
+         Page    => -"Documentation:General");
 
       Kernel.Preferences.Set_Is_Loading_Prefs (False);
    end Register_Global_Preferences;

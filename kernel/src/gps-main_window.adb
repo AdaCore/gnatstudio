@@ -712,14 +712,14 @@ package body GPS.Main_Window is
         (Get_Preferences (Application.Kernel),
          Name    => "GPS6-General-Toolbar-Style",
          Label   => -"Toolbar style",
-         Page    => -"Windows",
+         Page    => -"General/Custom Styles:Other",
          Doc     => -"Style the toolbar.",
          Default => Small_Icons);
 
       Window_Title_Pref := Application.Kernel.Get_Preferences.Create
         (Name  => "window-title",
          Label => "Window title",
-         Page  => -"Windows",
+         Page  => -"Windows:Main Window",
          Doc   => "Title to use for the GPS window." & ASCII.LF
            & "The following macros are expanded dynamically:" & ASCII.LF
            & GPS.Kernel.Macros.Doc,

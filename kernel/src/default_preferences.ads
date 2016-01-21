@@ -263,8 +263,11 @@ package Default_Preferences is
       Subpage          : not null Preferences_Page;
       Subpage_Name     : String;
       Subpage_Type     : Preferences_Page_Type := Visible_Page;
+      Priority         : Integer := -1;
       Replace_If_Exist : Boolean := False);
    --  Register a subpage in a parent page.
+   --  Priority is used to order the subpages in their respective root page, in
+   --  decreasing order.
    --  If Replace_If_Exist is True, replace the previously registered subpage
    --  with the same name. If False, do nothing.
 
@@ -299,6 +302,10 @@ package Default_Preferences is
    --  If no group has been registered for this name, return null if
    --  Create_If_Needed is False. Otherwise, create and register a new group
    --  and return it.
+
+   function Is_Root_Page (Page_Name : String) return Boolean;
+   --  Return True if the given page name refers to a root page, False
+   --  otherwise.
 
    function Get_Root_Page (Page_Name : String) return String;
    --  Return the root page for a given page name (e.g: for "Editor/Ada/",
@@ -506,14 +513,15 @@ package Default_Preferences is
       Label   : String;
       Doc     : String := "")
       return Boolean_Preference
-   is (Create (Manager, Name, Label => Label, Page => "", Doc => Doc,
+   is (Create (Manager,
+               Name    => Name,
+               Label   => Label,
+               Page    => ":Local Configuration",
+               Doc     => Doc,
                Default => Default));
-   --  Convenience function for creating an invisible preference.
-   --  Such preferences are changed via other GUI elements (like a check
-   --  button for instance), rather than in the preferences dialog. They are
-   --  similar to what histories.ads provides, but are also associated with
-   --  standard hooks so that views can be refreshed when the preference
-   --  changes.
+   --  Convenience function for creating a boolean invisible preference.
+   --  Such preferences are changed via other GUI elements (e.g: view local
+   --  menus) or in the advanced preferences page when displayed.
 
    function Get_Pref_From_Name
      (Self                : not null access Preferences_Manager_Record;

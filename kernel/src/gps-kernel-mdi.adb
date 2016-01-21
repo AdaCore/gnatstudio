@@ -351,7 +351,7 @@ package body GPS.Kernel.MDI is
            -("Close a view when closing its floating window. Otherwise put"
              & " the view back in the main GPS window."),
          Label   => -"Destroy floats",
-         Page    => -"Windows");
+         Page    => -"Windows:Floating Windows");
 
       MDI_All_Floating := Create
         (Manager => Get_Preferences (Kernel),
@@ -359,7 +359,7 @@ package body GPS.Kernel.MDI is
          Default => False,
          Doc     => -"Set all windows as floating.",
          Label   => -"All floating",
-         Page    => -"Windows");
+         Page    => -"Windows:Floating Windows");
 
       MDI_Editors_Floating := Create
         (Manager => Kernel.Preferences,
@@ -367,7 +367,7 @@ package body GPS.Kernel.MDI is
          Default => False,
          Doc     => -"Set all editors as floating (but not other views).",
          Label   => -"Floating editors",
-         Page    => "");  --  -"Windows"
+         Page    => ":Windows");  --  -"Windows"
 
       MDI_Homogeneous_Tabs  := Create
         (Manager => Kernel.Preferences,
@@ -376,13 +376,13 @@ package body GPS.Kernel.MDI is
          Doc     =>
            -"Use ellipsis in long tab names to keep all the same size.",
          Label   => -"Homogeneous tabs",
-         Page    => -"Windows");
+         Page    => -"Windows:Notebook Tabs");
 
       Pref_Tabs_Policy := Show_Tabs_Policy_Preferences.Create
         (Get_Preferences (Kernel),
          Name  => "GPS6-Window-Tabs-Policy",
          Label => -"Notebook tabs policy",
-         Page  => -"Windows",
+         Page  => -"Windows:Notebook Tabs",
          Doc   => -"Control the display of notebook tabs.",
          Default => Always);
 
@@ -390,7 +390,7 @@ package body GPS.Kernel.MDI is
         (Get_Preferences (Kernel),
          Name  => "GPS6-Window-Tabs-Position",
          Label => -"Notebook tabs position",
-         Page  => -"Windows",
+         Page  => -"Windows:Notebook Tabs",
          Doc   =>
             -("Set default position of notebook tabs. Override by right"
               & " clicking on a tab."),

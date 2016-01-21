@@ -438,5 +438,6 @@ class ColorSchemePicker(object):
 
 # Register the color theme picker as a preferences page
 
-GPS.PreferencesPage.create(name="Color Theme",
-                           get_widget=ColorSchemePicker().get_widget)
+GPS.PreferencesPage.create(name="General/Color Theme",
+                           get_widget=ColorSchemePicker().get_widget,
+                           priority=0)

@@ -200,10 +200,6 @@ package body Default_Preferences is
    --  Add references for all the groups and subpages registered in Source in
    --  Dest.
 
-   function Is_Root_Page (Page_Name : String) return Boolean;
-   --  Return True if the given page name refers to a root page, False
-   --  otherwise.
-
    function Find_Page
      (Pages      : in out Pages_Lists.List;
       Name       : String) return Preferences_Page;
@@ -799,13 +795,14 @@ package body Default_Preferences is
       Subpage          : not null Preferences_Page;
       Subpage_Name     : String;
       Subpage_Type     : Preferences_Page_Type := Visible_Page;
+      Priority         : Integer := -1;
       Replace_If_Exist : Boolean := False) is
    begin
       --  Set the page's attributes
       Free (Subpage.Name);
       Subpage.Page_Type := Subpage_Type;
       Subpage.Name := new String'(Subpage_Name);
-      Subpage.Priority := Self.Priority - 1;
+      Subpage.Priority := Priority;
 
       --  Insert the page in the root page subpages
       Insert_Page (Pages            => Self.Subpages,
