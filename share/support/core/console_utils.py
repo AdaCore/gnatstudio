@@ -13,29 +13,19 @@ cu_count = 3
 # Initialize preference for regexp with number num
 
 def cu_create_preference(num):
-    cu_regexp = GPS.Preference("Plugins/console_utils/regexp" + str(num))
-    cu_foreground = GPS.Preference(
-        "Plugins/console_utils/foreground" + str(num))
-    cu_background = GPS.Preference(
-        "Plugins/console_utils/background" + str(num))
+    cu_regexp = GPS.Preference(
+        "Messages:Custom Highlighting " + str(num) + "/regexp")
+    cu_style = GPS.Preference(
+        "Messages:Custom Highlighting " + str(num) + "/variant")
 
     cu_regexp.create(
-        str(num) + ". Regexp for highlight", "string",
-        "Enter regular expression to highlight in Messages View",
-        ""
-    )
-
-    cu_foreground.create(
-        str(num) + ". Foreground color for regexp", "color",
-        "Choose foreground color for given regexp",
-        "#3070A0"
-    )
-
-    cu_background.create(
-        str(num) + ". Background color for regexp", "color",
-        "Choose background color for given regexp",
-        "white"
-    )
+        "Regexp to highlight",
+        "string",
+        "Enter a regular expression to highlight in the Messages View",
+        "")
+    cu_style.create_style(
+        label="Regexp style",
+        doc="")
 
 
 def cu_noop(text):
@@ -43,20 +33,23 @@ def cu_noop(text):
 
 
 def cu_load_preference(num):
-    cu_regexp = GPS.Preference("Plugins/console_utils/regexp" + str(num))
-    cu_foreground = GPS.Preference(
-        "Plugins/console_utils/foreground" + str(num))
-    cu_background = GPS.Preference(
-        "Plugins/console_utils/background" + str(num))
+    cu_regexp = GPS.Preference(
+        "Messages:Custom Highlighting " + str(num) + "/regexp")
+    cu_style = GPS.Preference(
+        "Messages:Custom Highlighting " + str(num) + "/variant")
 
     if cu_regexp.get() == "":
         return
 
+    style_value = cu_style.get().split('@')
+
     try:
-        GPS.Console().create_link(cu_regexp.get(), cu_noop,
-                                  cu_foreground.get(),
-                                  cu_background.get(),
-                                  False)
+        GPS.Console().create_link(regexp=cu_regexp.get(),
+                                  on_click=cu_noop,
+                                  foreground=style_value[1],
+                                  background=style_value[2],
+                                  underline=False,
+                                  font=style_value[0])
     except GPS.Exception, e:
         return
 

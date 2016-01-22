@@ -190,7 +190,7 @@ package body Default_Preferences.GUI is
          --  Done to limit the size requested by the label, which is normally
          --  computed from the size required to display the label text without
          --  wrapping it.
-         Doc_Label.Set_Max_Width_Chars (70);
+         Doc_Label.Set_Max_Width_Chars (50);
 
          Pref_Row.Pack_Start (Doc_Label, Expand => False);
 

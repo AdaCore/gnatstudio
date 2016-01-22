@@ -14,7 +14,7 @@ from color_utils import Color
 subst_pattern = re.compile("%\(.*?\)|%_")
 id_pattern = re.compile(r"[^\w0-9_]")
 
-color_pref_name = "Plugins/aliases/color_current_field"
+color_pref_name = "Editor/Fonts & Colors:Ada/color_current_field"
 Preference(color_pref_name).create(
     "Aliases current field color",
     "color",

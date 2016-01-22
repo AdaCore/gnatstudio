@@ -34,30 +34,30 @@ import time
 import stat
 import re
 
-Preference("Plugins/local history/rcsdir").create(
+Preference("Plugins/local_history/rcsdir").create(
     "Local RCS dir", "string",
     """Name of the local directory created to store history locally.
 One such directory will be created in each object directory of the project
 and its subprojects""",
     ".gpsrcs")
 
-Preference("Plugins/local history/maxdays").create(
+Preference("Plugins/local_history/maxdays").create(
     "Max age", "integer",
     """Keep revisions for that many days at most""",
     2, 0, 1000)
 
-Preference("Plugins/local history/maxrevisions").create(
+Preference("Plugins/local_history/maxrevisions").create(
     "Max revisions", "integer",
     """Maximal number of revisions to keep""",
     200, 0, 10000)
 
-Preference("Plugins/local history/diff_switches").create(
+Preference("Plugins/local_history/diff_switches").create(
     "Diff switches", "string",
     """Additional switches to pass to rcsdiff. In particular, this can be used
 to specify your preferred format for diff""",
     "-u")
 
-Preference("Plugins/local history/when_no_prj").create(
+Preference("Plugins/local_history/when_no_prj").create(
     "When no project", "boolean",
     """Whether files outside of a project should also have a local history.
 In such a case, the local history will be put in a local_rcs_dir subdirectory
@@ -78,13 +78,13 @@ class LocalHistory:
         project = file.project(default_to_root=False)
         if project:
             dir = project.object_dirs(recursive=False)[0]
-        elif Preference("Plugins/local history/when_no_prj").get():
+        elif Preference("Plugins/local_history/when_no_prj").get():
             dir = dirname(self.file)
         else:
             return
 
         self.rcs_dir = join(
-            dir, Preference("Plugins/local history/rcsdir").get())
+            dir, Preference("Plugins/local_history/rcsdir").get())
         self.rcs_file = join(self.rcs_dir, basename(self.file)) + ",v"
 
         # convert all \ to / for Cygwin toolset, note that forward
@@ -156,12 +156,12 @@ class LocalHistory:
         if not self.rcs_dir:
             return
 
-        max_days = Preference("Plugins/local history/maxdays").get()
+        max_days = Preference("Plugins/local_history/maxdays").get()
         older = datetime.datetime.now() - datetime.timedelta(days=max_days)
         older = older.strftime("%Y.%m.%d.%H.%M.%S")
 
         revisions = self.get_revisions()
-        max_revisions = Preference("Plugins/local history/maxrevisions").get()
+        max_revisions = Preference("Plugins/local_history/maxrevisions").get()
         if revisions:
             version = max(0, revisions[0][0] - max_revisions)
             for r in revisions:
@@ -228,7 +228,7 @@ class LocalHistory:
             pwd = os.getcwd()
             os.chdir(dirname(self.file))
             diff_switches = Preference(
-                "Plugins/local history/diff_switches").get()
+                "Plugins/local_history/diff_switches").get()
             proc = Process("rcsdiff " + diff_switches
                            + " -r" + revision + " " + self.rcs_file)
             diff = proc.get_result()

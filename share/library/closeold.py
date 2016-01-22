@@ -10,7 +10,7 @@ import GPS
 from gps_utils import hook, interactive
 
 
-maxeditors = GPS.Preference('Plugins/Close old editors/maxeditors')
+maxeditors = GPS.Preference('Plugins/closeold/maxeditors')
 maxeditors.create(
     'Maximum number of editors',
     'integer',

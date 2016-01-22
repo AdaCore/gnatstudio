@@ -42,7 +42,7 @@ xmlada_projects = [
 aws_projects = ["aws_config", "aws_libz", "aws_shared", "aws_ssl_support",
                 "aws_components", "aws_xmlada", "aws"]
 
-Preference("Plugins/unused entities/ignoreprj").create(
+Preference("Plugins/unused_entities/ignoreprj").create(
     "Ignored projects", "string",
     """Comma-separated list of projects for which we never want to look for
     unused entities. # This should in general include those projects from
@@ -55,7 +55,7 @@ def EntityIterator(where):
     """Return all entities from WHERE"""
     if not where:
         ignore_projects = [s.strip().lower() for s in Preference(
-            "Plugins/unused entities/ignoreprj").get().split(",")]
+            "Plugins/unused_entities/ignoreprj").get().split(",")]
 
         for p in Project.root().dependencies(recursive=True):
             if p.name().lower() not in ignore_projects:

@@ -182,17 +182,8 @@ package body GPS.Kernel.Scripts is
    Sensitive_Cst  : aliased constant String := "sensitive";
    Force_Cst      : aliased constant String := "force";
    Value_Cst      : aliased constant String := "value";
-   Regexp_Cst     : aliased constant String := "regexp";
-   On_Click_Cst   : aliased constant String := "on_click";
    Text_Cst       : aliased constant String := "text";
-   Foreground_Cst : aliased constant String := "foreground";
-   Background_Cst : aliased constant String := "background";
-   Underline_Cst  : aliased constant String := "underline";
 
-   Create_Link_Args         : constant Cst_Argument_List :=
-     (1 => Regexp_Cst'Access,     2 => On_Click_Cst'Access,
-      3 => Foreground_Cst'Access, 4 => Background_Cst'Access,
-      5 => Underline_Cst'Access);
    Write_With_Link_Args         : constant Cst_Argument_List :=
      (1 => Text_Cst'Access);
    Insmod_Cmd_Parameters    : constant Cst_Argument_List :=
@@ -981,7 +972,6 @@ package body GPS.Kernel.Scripts is
          end if;
 
       elsif Command = "create_link" then
-         Name_Parameters (Data, Create_Link_Args);
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
          declare
             Cb : constant Hyper_Link_Callback := new Hyper_Link_Subprogram'
@@ -994,7 +984,8 @@ package body GPS.Kernel.Scripts is
                Callback   => Cb,
                Foreground => Nth_Arg (Data, 4, "blue"),
                Background => Nth_Arg (Data, 5, ""),
-               Underline  => Nth_Arg (Data, 6, True));
+               Underline  => Nth_Arg (Data, 6, True),
+               Font       => Nth_Arg (Data, 7, ""));
          exception
             when GNAT.Regpat.Expression_Error =>
                Set_Error_Msg (Data, "Invalid regular expression");
@@ -1201,9 +1192,13 @@ package body GPS.Kernel.Scripts is
          Handler      => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("create_link",
-         Minimum_Args => 1,
-         Maximum_Args => 5,
          Class        => Console_Class,
+         Params       => (1 => Param ("regexp"),
+                          2 => Param ("on_click"),
+                          3 => Param ("foreground", Optional => True),
+                          4 => Param ("background", Optional => True),
+                          5 => Param ("underline",  Optional => True),
+                          6 => Param ("font",       Optional => True)),
          Handler      => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("delete_links",

@@ -1981,12 +1981,18 @@ package body Interactive_Consoles is
       Callback   : not null access Hyper_Link_Callback_Record'Class;
       Foreground : String;
       Background : String;
-      Underline  : Boolean)
+      Underline  : Boolean;
+      Font       : String)
    is
       Tag : constant Gtk_Text_Tag := new Hyper_Link_Tag_Record;
    begin
       Gtk.Text_Tag.Initialize (Tag);
       Add (Get_Tag_Table (Console.Buffer), Tag);
+
+      if Font /= "" then
+         Set_Property (Tag, Gtk.Text_Tag.Font_Property, Font);
+      end if;
+
       if Foreground /= "" then
          Set_Property (Tag, Gtk.Text_Tag.Foreground_Property, Foreground);
       end if;
