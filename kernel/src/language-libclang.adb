@@ -30,6 +30,7 @@ with GNATCOLL.Utils;                use GNATCOLL.Utils;
 
 with Commands;                      use Commands;
 with Commands.Generic_Asynchronous;
+with Default_Preferences;           use Default_Preferences;
 with Glib.Main;
 with String_Utils;                  use String_Utils;
 
@@ -46,12 +47,15 @@ with Clang_Xref;                    use Clang_Xref;
 
 package body Language.Libclang is
 
-   LRU_Size : constant := 16;
+   LRU_Size_Preference : Integer_Preference;
    --  Number of translation units that will be kept in the LRU cache at all
-   --  times. TODO ??? We might want to expose that in a preference so that
-   --  users can fine tune the memory usage of their GPS instance
+   --  times.
 
-   Nb_Tasks : constant Natural := Natural'Min (Natural (Number_Of_CPUs), 6);
+   Nb_Tasks_Preference : Integer_Preference;
+   --  Number of concurrent tasks used for parsing.
+
+   Max_Nb_Tasks : constant Natural :=
+     Natural'Max (Natural'Min (Natural (Number_Of_CPUs), 6), 2);
    --  Number of concurrent tasks used for parsing. TODO ??? We might want to
    --  expose that via a preference so that users can fine tune parsing speed
 
@@ -141,10 +145,8 @@ package body Language.Libclang is
       --  Id of the global timeout that is used to regularly index files that
       --  have been parsed
 
-      Parsing_Tasks        : Parsing_Task_Array (1 .. Nb_Tasks);
-      --  Array of parsing tasks. TODO ??? For the moment this is static,
-      --  but ideally the user could change the number of active tasks with
-      --  a preference to fine tune the performance of the initial parsing
+      Parsing_Tasks        : Parsing_Task_Array (1 .. Max_Nb_Tasks);
+      --  Array of parsing tasks.
 
       Indexing_Active      : Boolean := True;
       --  Global variable used by the indexing timeout handler to know if it
@@ -331,7 +333,9 @@ package body Language.Libclang is
 
       --  Remove elements from the cache if > LRU_Size
 
-      if Clang_Module_Id.LRU.Length > LRU_Size then
+      if Clang_Module_Id.LRU.Length >
+        Count_Type (LRU_Size_Preference.Get_Pref)
+      then
          declare
             F : constant Unbounded_String := Clang_Module_Id.LRU.First_Element;
          begin
@@ -1041,7 +1045,7 @@ package body Language.Libclang is
 
       --  Restart all the tasks
 
-      for I in Clang_Module_Id.Parsing_Tasks'Range loop
+      for I in  1 .. Nb_Tasks_Preference.Get_Pref loop
          Clang_Module_Id.Parsing_Tasks (I).Start;
       end loop;
 
@@ -1296,6 +1300,36 @@ package body Language.Libclang is
       Clang_Module_Id.LRU           := new LRU_Lists.List;
       Clang_Module_Id.Index_Action  := Create (Idx);
       Clang_Module_Id.Refs          := new Clang_Crossrefs_Cache_Type;
+
+      --  Register the "Clang advanced settings" group explicitly, because we
+      --  want it to be the last group on the C & C++ page.
+
+      Kernel.Get_Preferences.Get_Registered_Page
+        ("Editor/C & C++/", Create_If_Needed => True).Register_Group
+        ("Clang advanced settings", new Preferences_Group_Record, -10, True);
+
+      LRU_Size_Preference := Default_Preferences.Create
+        (Manager      => Kernel.Get_Preferences,
+         Name         => "Libclang-LRU-Size",
+         Label        => "Cache size",
+         Doc          =>
+           "The number of compilation units clang will keep in memory",
+         Page         => "Editor/C & C++:Clang advanced settings",
+         Default      => 8, Minimum => 1, Maximum => 128);
+
+      Nb_Tasks_Preference := Default_Preferences.Create
+        (Manager      => Kernel.Get_Preferences,
+         Name         => "Libclang-Nb-Parsing-Tasks",
+         Label        => "Parsing tasks count",
+         Doc          =>
+           "The number of concurrent tasks GPS will use to parse files",
+         Page         => "Editor/C & C++:Clang advanced settings",
+         Default      => Max_Nb_Tasks,
+
+         --  The minimum number of task is of two because we want at least
+         --  two parsing tasks, one for the background parsing, and one for
+         --  live requests.
+         Minimum      => 2, Maximum => Max_Nb_Tasks);
    end Register_Module;
 
    -------------
