@@ -80,6 +80,12 @@ package GPS.Tree_View.Locations is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter);
    --  Emits "location-clicked" signal.
 
+   function Get_Multiple_Action
+     (Self : not null access GPS_Locations_Tree_View_Record'Class)
+      return Boolean with Inline;
+   --  Returns True if a last click was on message's action
+   --  and more than one message is selected.
+
    Signal_Action_Clicked   : constant Glib.Signal_Name;
    --  Emitted on click in action column.
    --  procedure Handler
@@ -118,6 +124,10 @@ private
         Glib.Main.No_Source_Id;
       --  Context for scrolling after node expansion. Path points to the top
       --  expanded node. Handler is a Gtk+ idle handler.
+
+      Multiple_Action         : Boolean := False;
+      --  Set True when clicked on message's action
+      --  and more than one message is selected
    end record;
 
    overriding procedure On_Lowest_Model_Row_Inserted

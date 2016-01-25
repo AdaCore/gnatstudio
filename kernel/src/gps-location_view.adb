@@ -170,6 +170,18 @@ package body GPS.Location_View is
    --  Check whether the one of parents is selected. Parent node well be
    --  checked if Depth is 0 or depth of node less or equal Depth.
 
+   package Select_Function_With_View is
+     new Set_Select_Function_User_Data (Location_View);
+
+   function Selection_Function
+     (Selection               : not null access
+        Gtk_Tree_Selection_Record'Class;
+      Model                   : Gtk.Tree_Model.Gtk_Tree_Model;
+      Path                    : Gtk.Tree_Model.Gtk_Tree_Path;
+      Path_Currently_Selected : Boolean;
+      View                    : Location_View) return Boolean;
+   --  Prevents unselect messages when action clicked
+
    -------------
    -- Actions --
    -------------
@@ -994,9 +1006,7 @@ package body GPS.Location_View is
       Iter          : Gtk_Tree_Iter;
       Model         : Gtk_Tree_Model;
       Path          : Gtk_Tree_Path;
-      List          : Gtk_Tree_Path_List.Glist;
-      N_Selected    : constant Gint :=
-        Locations.View.Get_Selection.Count_Selected_Rows;
+      List, Cursor  : Gtk_Tree_Path_List.Glist;
 
       use type Gtk_Tree_Path_List.Glist;
    begin
@@ -1005,33 +1015,29 @@ package body GPS.Location_View is
       --  way for a user to click on a secondary location found in the same
       --  error message.
 
-      if N_Selected = 1 then
-         Locations.View.Get_Selection.Get_Selected_Rows (Model, List);
-         if Model /= Null_Gtk_Tree_Model
-           and then List /= Gtk_Tree_Path_List.Null_List
-         then
-            Iter := Get_Iter
-              (Model, Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (List)));
-         end if;
-         Free (List);
-
-      else
-         if N_Selected > 1 then
-            Locations.View.Get_Selection.Unselect_All;
-         end if;
-
-         Model := Locations.View.Get_Model;
-      end if;
-
+      Locations.View.Get_Selection.Get_Selected_Rows (Model, List);
       if Model = Null_Gtk_Tree_Model then
          return;
       end if;
 
-      if Iter /= Null_Iter
-        and then Get_File (Model, Iter, File_Column) = File
-        and then Integer (Get_Int (Model, Iter, Line_Column)) = Line
-      then
-         return;
+      if List /= Gtk_Tree_Path_List.Null_List then
+         Cursor := Gtk_Tree_Path_List.First (List);
+         while Cursor /= Gtk_Tree_Path_List.Null_List loop
+            Iter := Get_Iter
+              (Model, Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (Cursor)));
+
+            if Iter /= Null_Iter
+              and then Get_File (Model, Iter, File_Column) = File
+              and then Integer (Get_Int (Model, Iter, Line_Column)) = Line
+            then
+               Free (List);
+               return;
+            end if;
+
+            Cursor := Gtk_Tree_Path_List.Next (Cursor);
+         end loop;
+
+         Free (List);
       end if;
 
       --  Highlight the location. Use the same category as the current
@@ -1140,6 +1146,8 @@ package body GPS.Location_View is
          Location_View (Self),
          True);
       Self.View.Get_Selection.Set_Mode (Selection_Multiple);
+      Select_Function_With_View.Set_Select_Function
+        (Self.View.Get_Selection, Selection_Function'Access, Self);
 
       Self.View.Set_Name ("Locations Tree");
       Set_Font_And_Colors (Self.View, Fixed_Font => True);
@@ -1214,7 +1222,9 @@ package body GPS.Location_View is
       Context : Selection_Context;
 
    begin
-      On_Location_Clicked (Self, Path, Iter);
+      if Self.View.Get_Selection.Count_Selected_Rows = 1 then
+         On_Location_Clicked (Self, Path, Iter);
+      end if;
 
       Get_Value (Self.View.Get_Model, Iter, Action_Command_Column, Value);
       Action := To_Action_Item (Get_Address (Value));
@@ -1285,7 +1295,8 @@ package body GPS.Location_View is
                  Mark.Location (True);
 
             begin
-               Location.Buffer.Current_View.Cursor_Goto (Location, True);
+               Location.Buffer.Current_View.Cursor_Goto
+                 (Location, Self.View.Get_Selection.Count_Selected_Rows < 2);
             end;
 
             --  ??? The following causes a simple-click on a file line to
@@ -1916,5 +1927,29 @@ package body GPS.Location_View is
 
       return Commands.Success;
    end Execute;
+
+   ------------------------
+   -- Selection_Function --
+   ------------------------
+
+   function Selection_Function
+     (Selection               : not null access
+        Gtk_Tree_Selection_Record'Class;
+      Model                   : Gtk.Tree_Model.Gtk_Tree_Model;
+      Path                    : Gtk.Tree_Model.Gtk_Tree_Path;
+      Path_Currently_Selected : Boolean;
+      View                    : Location_View) return Boolean
+   is
+      pragma Unreferenced (Selection);
+      pragma Unreferenced (Model);
+      pragma Unreferenced (Path);
+
+   begin
+      if Path_Currently_Selected then
+         return not View.View.Get_Multiple_Action;
+      else
+         return True;
+      end if;
+   end Selection_Function;
 
 end GPS.Location_View;

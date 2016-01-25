@@ -22,6 +22,7 @@ with Glib.Properties;          use Glib.Properties;
 with Glib.Values;              use Glib.Values;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.Rectangle;            use Gdk.Rectangle;
+with Gdk.Types;                use Gdk.Types;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Handlers;
 with Gtk.Tooltip;              use Gtk.Tooltip;
@@ -41,6 +42,12 @@ package body GPS.Tree_View.Locations is
       Event : Gdk.Event.Gdk_Event) return Boolean;
    --  Handle "button-press" event. It selects row on press of 3-rd mouse
    --  button to interact with contextual menu correctly.
+
+   function On_Button_Release
+     (Self  : access GPS_Locations_Tree_View_Record'Class;
+      Event : Gdk.Event.Gdk_Event) return Boolean;
+   --  Handle "button-release" event. It emmits Location_Clicked for just
+   --  selected one more message.
 
    function On_Row_Expanded_Idle
      (Self : GPS_Locations_Tree_View) return Boolean;
@@ -114,6 +121,17 @@ package body GPS.Tree_View.Locations is
    begin
       return Self.Filter;
    end Get_Filter_Model;
+
+   -------------------------
+   -- Get_Multiple_Action --
+   -------------------------
+
+   function Get_Multiple_Action
+     (Self : not null access GPS_Locations_Tree_View_Record'Class)
+      return Boolean is
+   begin
+      return Self.Multiple_Action;
+   end Get_Multiple_Action;
 
    -------------
    -- Gtk_New --
@@ -197,6 +215,12 @@ package body GPS.Tree_View.Locations is
          GPS_Locations_Tree_View_Boolean_Callbacks.To_Marshaller
            (On_Button_Press'Access),
          After => False);
+      GPS_Locations_Tree_View_Boolean_Callbacks.Connect
+        (Self,
+         Signal_Button_Release_Event,
+         GPS_Locations_Tree_View_Boolean_Callbacks.To_Marshaller
+           (On_Button_Release'Access),
+         After => True);
 
       GPS.Location_View_Filter.Gtk_New (Self.Filter, Model);
       Self.Set_Source_Model (Self.Filter);
@@ -246,21 +270,81 @@ package body GPS.Tree_View.Locations is
       Row_Found : Boolean;
 
    begin
-      if Get_Button (Event) = 3 and Get_Event_Type (Event) = Button_Press then
-         --  Handling of contextual menu is unable to select item in Locations
-         --  view, thus do this explicitly.
+      Self.Multiple_Action := False;
 
-         Self.Grab_Focus;
+      if Get_Event_Type (Event) = Button_Press then
+         if Get_Button (Event) = 1 then
 
-         --  If there is no selection, select the item under the cursor
+            Self.Get_Path_At_Pos
+              (X, Y, Path, Column, Buffer_X, Buffer_Y, Row_Found);
 
+            if Path /= Null_Gtk_Tree_Path then
+               if Get_Depth (Path) > 2
+                 and then Self.Get_Selection.Count_Selected_Rows > 1
+                 and then Self.Get_Selection.Path_Is_Selected (Path)
+                 and then Column = Self.Action_Column
+               then
+                  Self.Multiple_Action := True;
+               end if;
+
+               Path_Free (Path);
+            end if;
+
+         elsif Get_Button (Event) = 3 then
+            --  Handling of contextual menu is unable to select item in
+            --  Locations view, thus do this explicitly.
+
+            Self.Grab_Focus;
+
+            --  If there is no selection, select the item under the cursor
+
+            Self.Get_Path_At_Pos
+              (X, Y, Path, Column, Buffer_X, Buffer_Y, Row_Found);
+
+            if Path /= Null_Gtk_Tree_Path then
+               if not Self.Get_Selection.Path_Is_Selected (Path) then
+                  Self.Get_Selection.Unselect_All;
+                  Self.Get_Selection.Select_Path (Path);
+               end if;
+
+               Path_Free (Path);
+            end if;
+         end if;
+      end if;
+
+      return False;
+   end On_Button_Press;
+
+   -----------------------
+   -- On_Button_Release --
+   -----------------------
+
+   function On_Button_Release
+     (Self  : access GPS_Locations_Tree_View_Record'Class;
+      Event : Gdk.Event.Gdk_Event) return Boolean
+   is
+      X         : constant Gint := Gint (Event.Button.X);
+      Y         : constant Gint := Gint (Event.Button.Y);
+      Path      : Gtk_Tree_Path;
+      Column    : Gtk_Tree_View_Column;
+      Buffer_X  : Gint;
+      Buffer_Y  : Gint;
+      Row_Found : Boolean;
+   begin
+      if Get_Event_Type (Event) = Button_Release
+        and then Get_Button (Event) = 1
+      then
          Self.Get_Path_At_Pos
            (X, Y, Path, Column, Buffer_X, Buffer_Y, Row_Found);
 
          if Path /= Null_Gtk_Tree_Path then
-            if not Self.Get_Selection.Path_Is_Selected (Path) then
-               Self.Get_Selection.Unselect_All;
-               Self.Get_Selection.Select_Path (Path);
+            if (Get_State (Event) and Control_Mask) /= 0
+              and then Get_Depth (Path) > 2
+              and then Self.Get_Selection.Count_Selected_Rows > 1
+              and then Self.Get_Selection.Path_Is_Selected (Path)
+            then
+               --  Just selected one more message
+               Self.Location_Clicked (Path, Get_Iter (Self.Get_Model, Path));
             end if;
 
             Path_Free (Path);
@@ -268,7 +352,7 @@ package body GPS.Tree_View.Locations is
       end if;
 
       return False;
-   end On_Button_Press;
+   end On_Button_Release;
 
    -----------------------------------
    -- On_Lowerst_Model_Row_Inserted --
