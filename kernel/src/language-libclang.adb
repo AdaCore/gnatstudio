@@ -443,9 +443,10 @@ package body Language.Libclang is
    is
       use Interfaces.C.Strings;
       use Interfaces.C;
+      use Cursors_Arrays;
+
       Loc : constant Clang_Location := +Info.loc;
       Sym : Clang_Symbol;
-      use Cursors_Arrays;
    begin
       if Is_From_Main_File (Loc) then
 
@@ -482,7 +483,7 @@ package body Language.Libclang is
 
    procedure Index_Reference
      (Client_Data : in out Indexer_Data;
-      Info   : Clang_Ref_Info)
+      Info        : Clang_Ref_Info)
    is
       use Interfaces.C.Strings;
       use Interfaces.C;
