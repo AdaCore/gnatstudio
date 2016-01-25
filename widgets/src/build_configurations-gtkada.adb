@@ -24,6 +24,7 @@ with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
 with Glib;                     use Glib;
 with Glib.Convert;
 with Glib.Object;              use Glib.Object;
+with Glib.Values;              use Glib.Values;
 
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Combo_Box;            use Gtk.Combo_Box;
@@ -44,6 +45,8 @@ with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Style_Context;        use Gtk.Style_Context;
 with Gtk.Widget;               use Gtk.Widget;
+
+with Gtkada.Dialogs;           use Gtkada.Dialogs;
 
 with GUI_Utils;                use GUI_Utils;
 with String_Utils;             use String_Utils;
@@ -77,6 +80,7 @@ package body Build_Configurations.Gtkada is
    Name_Column : constant := 1; --  Contains the displayed name, as markup
    Num_Column  : constant := 2;
    --  Contains the number of the corresponding page in the main notebook
+   Editable_Column : constant := 3; -- Whether the target is editable
 
    -----------------
    -- Local types --
@@ -180,6 +184,11 @@ package body Build_Configurations.Gtkada is
    function Target_To_Key (T : Target_Access) return History_Key;
    --  Return a History_Key for storing command line for T
 
+   procedure On_Target_Renamed
+     (UI     : access Build_UI_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Called when a target was renamed
+
    -------------------
    -- Target_To_Key --
    -------------------
@@ -259,9 +268,10 @@ package body Build_Configurations.Gtkada is
    function Columns_Types return GType_Array is
    begin
       return GType_Array'
-        (Icon_Column => GType_String,
-         Name_Column => GType_String,
-         Num_Column  => GType_Int);
+        (Icon_Column     => GType_String,
+         Name_Column     => GType_String,
+         Num_Column      => GType_Int,
+         Editable_Column => GType_Boolean);
    end Columns_Types;
 
    -------------
@@ -881,6 +891,44 @@ package body Build_Configurations.Gtkada is
            (UI.Registry, "Unexpected exception " & Exception_Information (E));
    end On_Selection_Changed;
 
+   -----------------------
+   -- On_Target_Renamed --
+   -----------------------
+
+   procedure On_Target_Renamed
+     (UI     : access Build_UI_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      Text        : constant String := Get_String (Nth (Params, 2));
+      Ignored     : Message_Dialog_Buttons;
+      Old_Target  : constant Target_Access := Get_Selected_Target (UI);
+   begin
+      --  If the new name is the same as the old name, nothing to do
+      if To_String (Old_Target.Name) = Text then
+         return;
+      end if;
+
+      --  Validate that we are not giving the name of a target that already
+      --  exists.
+      if Get_Target_From_Name (UI.Registry, Text) /= null then
+         Ignored := Message_Dialog
+           (Msg            => -"A target with this name already exists",
+            Buttons        => Button_OK,
+            Title          => -"Name conflict",
+            Parent         => Gtk_Window (Get_Toplevel (UI)));
+         return;
+      end if;
+
+      Duplicate_Target
+        (UI.Registry,
+         To_String (Old_Target.Name),
+         Text,
+         To_String (Old_Target.Properties.Category));
+      Remove_Target (UI.Registry, To_String (Old_Target.Name));
+
+      Refresh (UI, Text);
+   end On_Target_Renamed;
+
    --------------------------
    -- Configuration_Dialog --
    --------------------------
@@ -937,6 +985,11 @@ package body Build_Configurations.Gtkada is
       Pack_Start (Col, Text_Renderer, False);
       Add_Attribute (Col, Icon_Renderer, "icon-name", Icon_Column);
       Add_Attribute (Col, Text_Renderer, "markup", Name_Column);
+      Add_Attribute (Col, Text_Renderer, "editable", Editable_Column);
+
+      Build_UI_Callback.Object_Connect
+        (Text_Renderer, Signal_Edited, On_Target_Renamed'Access, UI);
+
       Dummy := Append_Column (UI.View, Col);
 
       Gtk_New (Scrolled);
@@ -1625,6 +1678,7 @@ package body Build_Configurations.Gtkada is
             --  We have not found our iter, create it now
             Append (View.Model, Iter, Null_Iter);
             Set (View.Model, Iter, Name_Column, Cat_Name);
+            Set (View.Model, Iter, Editable_Column, False);
             Set (View.Model, Iter, Icon_Column, "gps-emblem-directory-open");
 
             --  Category iters correspond to page 0 in the main notebook
@@ -1643,6 +1697,8 @@ package body Build_Configurations.Gtkada is
          Append (View.Model, Iter, Category);
          Set (View.Model, Iter, Name_Column,
               Glib.Convert.Escape_Text (To_String (Target.Name)));
+         Set (View.Model, Iter, Editable_Column,
+              not Get_Properties (Target).Read_Only);
          Set (View.Model, Iter, Num_Column, Count);
 
          if Target.Properties.Icon_Name /= "" then
@@ -1775,6 +1831,7 @@ package body Build_Configurations.Gtkada is
          --  We have not found our iter, create it now
          Append (View.Model, Iter, Null_Iter);
          Set (View.Model, Iter, Name_Column, Mode_Name);
+         Set (View.Model, Iter, Editable_Column, False);
          Set (View.Model, Iter, Icon_Column, "gps-emblem-directory-open");
 
          --  Set the corresponding page in the notebook

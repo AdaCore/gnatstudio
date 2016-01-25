@@ -598,12 +598,22 @@ package body Build_Configurations is
          return;
       end if;
 
-      Create_Target (Registry     => Registry,
-                     Name         => New_Name,
-                     Category     => New_Category,
-                     Model        => To_String (Src.Model.Name),
-                     Command_Line =>
-                       Get_Command_Line_Unexpanded (Registry, Src));
+      declare
+         Orig_CL : constant Argument_List :=
+           Get_Command_Line_Unexpanded (Registry, Src);
+         New_CL : Argument_List (Orig_CL'Range);
+      begin
+         --  We need to make a copy of the CL to avoid mixing pointers
+         for J in Orig_CL'Range loop
+            New_CL (J) := new String'(Orig_CL (J).all);
+         end loop;
+
+         Create_Target (Registry     => Registry,
+                        Name         => New_Name,
+                        Category     => New_Category,
+                        Model        => To_String (Src.Model.Name),
+                        Command_Line => New_CL);
+      end;
 
       Dest := Get_Target_From_Name (Registry, New_Name);
 
