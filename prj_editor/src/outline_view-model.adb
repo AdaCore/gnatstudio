@@ -16,8 +16,9 @@
 ------------------------------------------------------------------------------
 
 with System;                      use System;
-with String_Utils;                use String_Utils;
-
+with Ada.Calendar;                use Ada.Calendar;
+with Ada.Containers.Bounded_Hashed_Maps;
+with Ada.Strings.Less_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 
@@ -25,16 +26,15 @@ with Glib.Object;                 use Glib.Object;
 with Glib.Convert;                use Glib.Convert;
 with Gtk.Tree_Model.Utils;        use Gtk.Tree_Model.Utils;
 
-with Basic_Types;                 use Basic_Types;
 with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
+
+with Basic_Types;                 use Basic_Types;
 with GPS.Search;                  use GPS.Search;
 with Language.Icons;              use Language.Icons;
+with String_Utils;                use String_Utils;
 with XML_Utils;                   use XML_Utils;
-with GNATCOLL.VFS;                use GNATCOLL.VFS;
-with Ada.Containers.Bounded_Hashed_Maps;
-with Ada.Strings.Less_Case_Insensitive;
-with Ada.Calendar; use Ada.Calendar;
 
 package body Outline_View.Model is
 
@@ -97,8 +97,8 @@ package body Outline_View.Model is
    --  Node
 
    function Get_Node_Next_Part
-     (Model    : access Outline_Model_Record'Class;
-      Node     : Semantic_Node'Class) return Sorted_Node_Access;
+     (Model : access Outline_Model_Record'Class;
+      Node  : Semantic_Node'Class) return Sorted_Node_Access;
    --  Same as Get_Node, but for the body or full view of the entity.
 
    procedure Add_Array_Recursive
@@ -122,7 +122,8 @@ package body Outline_View.Model is
    --  the corresponding index in the vector
 
    procedure Clean_Node
-     (Model : Outline_Model; Node  : in out Sorted_Node_Access);
+     (Model : Outline_Model;
+      Node  : in out Sorted_Node_Access);
    --  Completely clean the node, eg.:
    --  - Recursively clean every child of node
    --  - Free node
@@ -387,9 +388,6 @@ package body Outline_View.Model is
             Trace (Me, "Cannot add a tree node with no Id");
          end if;
 
-         --  By default, the parent node is the phantom root
-         Parent_Node := Model.Phantom_Root'Access;
-
          if not (Model.Filter.Flat_View or else Sem_Parent = No_Semantic_Node)
          then
             --  Place any with-clause into top with-root node
@@ -402,6 +400,11 @@ package body Outline_View.Model is
             then
                Parent_Node := Get_Node_Next_Part (Model, Sem_Parent);
             end if;
+         end if;
+
+         if Parent_Node = null then
+            --  By default, the parent node is the phantom root
+            Parent_Node := Model.Phantom_Root'Access;
          end if;
 
          --  Add the node for the new object
@@ -442,6 +445,10 @@ package body Outline_View.Model is
             else
                Root.Body_Info := Sem_Node.Info;
             end if;
+
+            pragma Assert
+              (Root.Parent /= null,
+               "Root parent of outline node should never be null");
 
             if Sort then
                Sorted_Insert (Root.Parent.Children, Root);
@@ -1038,12 +1045,11 @@ package body Outline_View.Model is
 
       end Update_Nodes;
    begin
-      if Model.Filter.Flat_View then
-         --  Don't use the selective update mode in flat view, just reset the
-         --  tree
-         --  ??? TODO We might want to get rid of the selective update mode
-         --  completely, because it is performance consuming, and the only pro
-         --  is that user expanded nodes stay expanded
+      if Model.Filter.Flat_View or else Model.Filter_Pattern /= null then
+         --  Don't use the selective update mode in flat view or when there
+         --  is an active filter pattern. Just reset the tree. For the filter
+         --  pattern, since we show node that don't necessarily have parents,
+         --  the selective update does not make sense.
          Set_Tree (Model, Model.Semantic_Tree.Element, Model.Filter);
       else
          Update_Nodes

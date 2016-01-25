@@ -15,19 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Search;
-
-with Glib;                       use Glib;
-with Glib.Values;                use Glib.Values;
-with Gtk.Tree_Model;             use Gtk.Tree_Model;
-with Gtkada.Abstract_Tree_Model; use Gtkada.Abstract_Tree_Model;
-
-with Language;               use Language;
+with Ada.Containers;                  use Ada.Containers;
 with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Containers; use Ada.Containers;
-with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 with Ada.Containers.Vectors;
 with Ada.Strings.Hash;
+
+with Glib;                            use Glib;
+with Glib.Values;                     use Glib.Values;
+with Gtk.Tree_Model;                  use Gtk.Tree_Model;
+with Gtkada.Abstract_Tree_Model;      use Gtkada.Abstract_Tree_Model;
+
+with GPS.Search;
+with Language;                        use Language;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 --  This package implements a sortable hierarchical outline model, based on the
 --  construct trees.
