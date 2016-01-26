@@ -1546,7 +1546,7 @@ package body Completion_Module is
         (Get_Preferences (Kernel),
          Name  => "Smart-Completion-Mode",
          Label => -"Smart Completion",
-         Page  => -"Editor:Smart Completion",
+         Path  => -"Editor:Smart Completion",
          Doc   =>
            -("Control the display of smart completion: either on specific"
              & " key or timeout (""Normal""), or after every key press"
@@ -1558,7 +1558,7 @@ package body Completion_Module is
          Name    => "Smart-Completion-Trigger-Timeout",
          Minimum => 0,
          Maximum => 9999,
-         Page    => -"Editor:Smart Completion",
+         Path    => -"Editor:Smart Completion",
          Doc     => -("Timeout (in milliseconds) for "
            & "character-triggered smart completion in 'Normal' mode"),
          Label   => -"Smart completion timeout",

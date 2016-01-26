@@ -2862,7 +2862,7 @@ package body Vsearch is
         (Get_Preferences (Kernel),
          Name  => "Ask-Confirmation-For-Replace-All",
          Label => -"Confirmation for 'Replace all'",
-         Page  => -":Search",
+         Path  => -":Search",
          Doc   =>
             -"Enable the confirmation popup before a replace all operation.",
          Default => True);
@@ -2871,7 +2871,7 @@ package body Vsearch is
         (Get_Preferences (Kernel),
          Name  => "keep-previous-search-context",
          Label => -"Preserve Search Context",
-         Page  => -":Search",
+         Path  => -":Search",
          Doc   => -("Preserve the contents of the ""Look in"" entry"
            & " between searches."),
          Default => False);

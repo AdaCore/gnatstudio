@@ -7674,7 +7674,9 @@ class Preference(object):
         creating a new preference, this name can include '/' characters,
         which results in subpages created in the :guilabel:`Preferences`
         dialog. The name after the last '/' should only include letters and
-        '-' characters. If the name starts with '/' and contains no other
+        '-' characters. You can also specify a group before the last '/', by
+        appending a ':' delimitor followed by the name of the preference's
+        group. If the name starts with '/' and contains no other
         '/', the preference is not visible in the :guilabel:`Preferences`
         dialog, though it can be manipulated as usual and is loaded
         automatically by GPS on startup.

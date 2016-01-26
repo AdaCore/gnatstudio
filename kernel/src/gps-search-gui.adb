@@ -1459,7 +1459,7 @@ package body GPS.Search.GUI is
         (Get_Preferences (Kernel),
          Name    => "Proposals_Per_Context",
          Label   => "Number of proposals",
-         Page    => ":Omnisearch",
+         Path    => ":Omnisearch",
          Doc     => "Number of proposals per context in the global search",
          Minimum => 2,
          Maximum => 20,
@@ -1469,7 +1469,7 @@ package body GPS.Search.GUI is
         (Get_Preferences (Kernel),
          Name    => "Providers_Order",
          Label   => "Search contexts order",
-         Page    => ":Omnisearch",
+         Path    => ":Omnisearch",
          Doc     => "Order in which the search contexts are displayed in the"
          & " global search",
          Default =>

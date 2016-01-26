@@ -211,14 +211,16 @@ package body GPS.Kernel.Charsets is
 
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc          : String;
       Default                   : String)
       return Charset_Preference
    is
       Result : constant Charset_Preference := new Charset_Preference_Record;
    begin
       Set_Pref (Result, Manager, Default);
-      Register (Manager, Name, Label, Page, Doc, Result);
+      Manager.Register (Path, Name, Label, Doc, Result);
+
       return Result;
    end Create;
 
@@ -233,7 +235,7 @@ package body GPS.Kernel.Charsets is
         (Get_Preferences (Kernel),
          Name    => "General-Charset",
          Label   => -"Character set",
-         Page    => -"General:Charsets",
+         Path    => -"General:Charsets",
          Doc     =>
            -("Character set to load and save files. GPS uses unicode"
              & " internally and needs to convert appropriately."),

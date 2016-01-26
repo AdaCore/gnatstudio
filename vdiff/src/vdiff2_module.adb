@@ -301,7 +301,7 @@ package body Vdiff2_Module is
          Doc   =>
             -("Command and arguments to compute differences between"
               & " three files."),
-         Page  => -"Visual diff:General",
+         Path  => -"Visual diff:General",
          Default => Config.Default_Diff3_Cmd);
 
       Diff_Default_Color := Create
@@ -309,7 +309,7 @@ package body Vdiff2_Module is
          Name     =>  "Diff-Default-Color",
          Label    => -"Default Color",
          Doc      => "",
-         Page     => -"Visual diff:Colors",
+         Path     => -"Visual diff:Colors",
          Default  => "#C1C1C1");
 
       Diff_Append_Color := Create
@@ -317,7 +317,7 @@ package body Vdiff2_Module is
          Name     =>  "Diff-Append-Color",
          Label    => -"Append Color",
          Doc      => "",
-         Page     => -"Visual diff:Colors",
+         Path     => -"Visual diff:Colors",
          Default  => "#88EEAA");
 
       Diff_Remove_Color := Create
@@ -325,7 +325,7 @@ package body Vdiff2_Module is
          Name     =>  "Diff-Remove-Color",
          Label    => -"Remove Color",
          Doc      => "",
-         Page     => -"Visual diff:Colors",
+         Path     => -"Visual diff:Colors",
          Default  => "#FFA0A0");
 
       Diff_Change_Color := Create
@@ -333,7 +333,7 @@ package body Vdiff2_Module is
          Name     =>  "Diff-Change-Color",
          Label    => -"Change Color",
          Doc      => "",
-         Page     => -"Visual diff:Colors",
+         Path     => -"Visual diff:Colors",
          Default  => "#ECECAA");
 
       Diff_Fine_Change_Color := Create
@@ -341,7 +341,7 @@ package body Vdiff2_Module is
          Name     =>  "Horizontal-Diff-Change-Color",
          Label    => -"Fine Change Color",
          Doc      => "",
-         Page     => -"Visual diff:Colors",
+         Path     => -"Visual diff:Colors",
          Default  => "#FDE66A");
 
       Preferences_Changed_Hook.Add

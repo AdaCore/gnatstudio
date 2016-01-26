@@ -30,7 +30,7 @@ package body GVD.Preferences is
       Break_On_Exception := Create
         (Manager   => Prefs,
          Name      => "Debugger-Break-On-Exception",
-         Page      => -"Debugger:Startup & Exit",
+         Path      => -"Debugger:Startup & Exit",
          Label     => -"Break on exceptions",
          Doc       =>
            -("Stop when an exception is raised. Changes to this setting are"
@@ -41,7 +41,7 @@ package body GVD.Preferences is
         (Manager    => Prefs,
          Name       => "Debugger-Open-Main-Unit",
          Label      => -"Always open main unit",
-         Page      => -"Debugger:Startup & Exit",
+         Path      => -"Debugger:Startup & Exit",
          Doc        => -("Open the main unit when initializing a debugger."),
          Default    => True);
 
@@ -49,7 +49,7 @@ package body GVD.Preferences is
         (Manager   => Prefs,
          Name      => "Debugger-Execution-Window",
          Label     => -"Execution window",
-         Page      => (if Support_Execution_Window
+         Path      => (if Support_Execution_Window
                        then -"Debugger:Startup & Exit" else ":Debugger"),
          Doc       =>
            -("Open a separate window to show output of debuggee."),
@@ -59,7 +59,7 @@ package body GVD.Preferences is
         (Manager    => Prefs,
          Name       => "Debugger-Preserve_State-On-Exit",
          Label      => -"Preserve state on exit",
-         Page       => -"Debugger:Startup & Exit",
+         Path       => -"Debugger:Startup & Exit",
          Doc        =>
             -("Save breakpoints and data window on exit, and restore them"
               & " when debugging the same executable."),
@@ -69,7 +69,7 @@ package body GVD.Preferences is
         (Manager => Prefs,
          Name    => "GPS6-Debugger-Debugger-Kind",
          Label   => -"Debugger kind",
-         Page    => ":Debugger",
+         Path    => ":Debugger",
          Doc     => -"Kind of debugger spawned by GPS",
          Default => GVD.Types.Gdb);
 
@@ -78,7 +78,7 @@ package body GVD.Preferences is
          Name      => "Debugger-Editor-Current-Line",
          Label     => -"Current line",
          Doc       => -"Color to highlight the current line in editors.",
-         Page      => -"Debugger:Editors",
+         Path      => -"Debugger:Editors",
          Default   => "rgba(125,236,57,0.6)");
 
       Editor_Show_Line_With_Code := Create
@@ -87,13 +87,13 @@ package body GVD.Preferences is
          Label     => -"Show lines with code",
          Doc       =>
             -"Display dots in editor sidebar for lines that contain code.",
-         Page      => -"Debugger:Editors",
+         Path      => -"Debugger:Editors",
          Default   => False);
 
       Assembly_Range_Size := Create
         (Manager  => Prefs,
          Name     => "Debugger-Assembly-Range-Size",
-         Page     => -"Debugger:Assembly",
+         Path     => -"Debugger:Assembly",
          Label    => -"Assembly range size",
          Doc      =>
          -"Number of lines to display initially (0 to show whole subprogram).",
@@ -104,7 +104,7 @@ package body GVD.Preferences is
       Asm_Highlight_Color := Create
         (Manager  => Prefs,
          Name     => "Debugger-Asm-Highlight-Color",
-         Page     => -"Debugger:Assembly",
+         Path     => -"Debugger:Assembly",
          Label    => -"Current assembly line",
          Doc      => -"Color to highlight current line in assembly view.",
          Default  => "#0000FF");
@@ -112,7 +112,7 @@ package body GVD.Preferences is
       Asm_Breakpoint_Color := Create
         (Manager  => Prefs,
          Name     => "Debugger-Asm-Breakpoint-Color",
-         Page     => -"Debugger:Assembly",
+         Path     => -"Debugger:Assembly",
          Label    => -"Breakpoint line",
          Doc      => -"Color to highlight breakpoints in assembly view.",
          Default  => "#FF0000");
@@ -120,7 +120,7 @@ package body GVD.Preferences is
       Change_Color := Create
         (Manager  => Prefs,
          Name     => "Debugger-Change-Color",
-         Page     => -"Debugger:Data View",
+         Path     => -"Debugger:Data View",
          Label    => -"Changed data",
          Doc      => -"Color to highlight modified fields in Data view.",
          Default  => "#FF0000");
@@ -128,7 +128,7 @@ package body GVD.Preferences is
       Thaw_Bg_Color := Create
         (Manager  => Prefs,
          Name     => "Debugger-Thaw-Bg-Color",
-         Page     => ":Debugger",
+         Path     => ":Debugger",
          Label    => -"Auto-Refreshed",
          Doc      =>
             -"Background color for auto-refreshed items in Data view",
@@ -140,13 +140,13 @@ package body GVD.Preferences is
          Label    => -"Frozen",
          Doc      =>
             -"Background color for Data view items that are not refreshed.",
-         Page     => ":Debugger",
+         Path     => ":Debugger",
          Default  => "#AAAAAA");
 
       Memory_View_Color := Create
         (Manager  => Prefs,
          Name     => "Debugger-Memory-View-Color",
-         Page     => -"Debugger:Memory",
+         Path     => -"Debugger:Memory",
          Label    => -"Memory color",
          Doc      => -"Default color in memory view.",
          Default  => "#333399");
@@ -154,7 +154,7 @@ package body GVD.Preferences is
       Memory_Highlighted_Color := Create
         (Manager  => Prefs,
          Name     => "Debugger-Memory-Highlighted-Color",
-         Page     => -"Debugger:Memory",
+         Path     => -"Debugger:Memory",
          Label    => -"Memory highlighting",
          Doc      => -"Color used for highlighted items in the memory view.",
          Default  => "#DDDDDD");
@@ -162,7 +162,7 @@ package body GVD.Preferences is
       Memory_Selected_Color := Create
         (Manager  => Prefs,
          Name     => "Debugger-Memory-Selected-Color",
-         Page     => -"Debugger:Memory",
+         Path     => -"Debugger:Memory",
          Label    => -"Memory selection",
          Doc      => -"Color used for selected items in the memory view.",
          Default  => "#FF0000");
@@ -172,13 +172,13 @@ package body GVD.Preferences is
          Name      => "Debugger-Memory-Auto-Refresh",
          Label     => -"Refresh memory view after each step",
          Doc       => -"Auto-refresh the contents of memory view.",
-         Page      => -"Debugger:Memory",
+         Path      => -"Debugger:Memory",
          Default   => True);
 
       Title_Font := Create
         (Manager  => Prefs,
          Name     => "Debugger-Title-Font",
-         Page     => -"Debugger:Data View",
+         Path     => -"Debugger:Data View",
          Label    => -"Item name",
          Doc      => -"Font used for variable names.",
          Default  => "Sans Bold 9");
@@ -186,7 +186,7 @@ package body GVD.Preferences is
       Type_Font := Create
         (Manager  => Prefs,
          Name     => "Debugger-Type-Font",
-         Page     => -"Debugger:Data View",
+         Path     => -"Debugger:Data View",
          Label    => -"Item type",
          Doc      => -"Font used for variable types.",
          Default  => "Sans Oblique 9");
@@ -194,7 +194,7 @@ package body GVD.Preferences is
       Max_Item_Width := Create
         (Manager => Prefs,
          Name    => "Browsers-Item-Max-Width",
-         Page    => -"Debugger:Data View",
+         Path    => -"Debugger:Data View",
          Minimum => 1,
          Maximum => Integer'Last,
          Default => 1200,
@@ -204,7 +204,7 @@ package body GVD.Preferences is
       Max_Item_Height := Create
         (Manager => Prefs,
          Name    => "Browsers-Item-Max-Height",
-         Page    => -"Debugger:Data View",
+         Path    => -"Debugger:Data View",
          Minimum => 1,
          Maximum => Integer'Last,
          Default => 12000,

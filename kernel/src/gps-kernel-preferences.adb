@@ -73,7 +73,7 @@ package body GPS.Kernel.Preferences is
          Get_Python_Widget  : Subprogram_Type;
          --  Subprogram returning a newly created PyGtk widget for this page.
       end record;
-   type Python_Preferences_Page is
+   type Python_Preferences_Path is
      access all Python_Preferences_Page_Record'Class;
    --  Type used to represent preferences pages that have been registered
    --  in python plugins.
@@ -105,7 +105,7 @@ package body GPS.Kernel.Preferences is
       Default_Preferences.GUI.Initialize (Page_View);
 
       --  Retrieve the PyGtkWidget created on the python side and add it to
-      --  the page view.
+      --  the Path view.
       Python_Widget := Get_User_Data
         (Obj  => Widget_From_PyObject
            (Get_PyObject
@@ -184,43 +184,24 @@ package body GPS.Kernel.Preferences is
       Name   : constant String := Nth_Arg (Data, 1);
       pragma Unreferenced (Command);
    begin
-      --  Don't register the preferences page if the given name is an empty
+      --  Don't register the preferences Path if the given name is an empty
       --  string.
       if Name = "" then
          return;
       end if;
 
       declare
-         Page : constant Python_Preferences_Page :=
+         Page : constant Python_Preferences_Path :=
                   new Python_Preferences_Page_Record'
                     (Default_Preferences_Page_Record with
                      Get_Python_Widget => Nth_Arg (Data, 2));
          Priority   : constant Integer := Nth_Arg (Data, 3, Default => -1);
       begin
-         --  If it's a root page, register it directly in the manager
-         if Is_Root_Page (Name) then
-            Kernel.Get_Preferences.Register_Page
-              (Name             => Name,
-               Page             => Preferences_Page (Page),
-               Priority         => Priority,
-               Replace_If_Exist => False);
-         else
-            --  If it's a subpage, find its root page and register it as a
-            --  subpage.
-            declare
-               Root_Page : constant Preferences_Page :=
-                             Kernel.Get_Preferences.Get_Registered_Page
-                               (Name             => Get_Root_Page (Name),
-                                Create_If_Needed => True);
-            begin
-               Root_Page.Register_Subpage
-                 (Subpage          => Preferences_Page (Page),
-                  Subpage_Name     => Name,
-                  Subpage_Type     => Visible_Page,
-                  Priority         => Priority,
-                  Replace_If_Exist => False);
-            end;
-         end if;
+         Kernel.Get_Preferences.Register_Page
+           (Name             => Name,
+            Page             => Preferences_Page (Page),
+            Priority         => Priority,
+            Replace_If_Exist => False);
       end;
    end Preferences_Page_Commands_Handler;
 
@@ -338,9 +319,9 @@ package body GPS.Kernel.Preferences is
 
             Pref := Preference
               (Create (Manager => Kernel.Preferences,
-                       Name => Path,
+                       Path    => Dir_Name (Path),
+                       Name    => Path,
                        Label => Label,
-                       Page => Dir_Name (Path),
                        Doc => Doc,
                        Default_Bg => Default_Bg,
                        Default_Fg => Default_Fg,
@@ -360,10 +341,10 @@ package body GPS.Kernel.Preferences is
             if Typ = "integer" then
                Pref := Preference (Create
                  (Manager => Kernel.Preferences,
+                  Path    => Dir_Name (Path),
                   Name    => Path,
                   Label   => Label,
                   Doc     => Doc,
-                  Page    => Dir_Name (Path),
                   Default => Nth_Arg (Data, 5, 0),
                   Minimum => Nth_Arg (Data, 6, Integer'First),
                   Maximum => Nth_Arg (Data, 7, Integer'Last)));
@@ -371,27 +352,28 @@ package body GPS.Kernel.Preferences is
             elsif Typ = "boolean" then
                Pref := Preference (Boolean_Preference'(Create
                  (Manager => Kernel.Preferences,
+                  Path    => Dir_Name (Path),
                   Name    => Path,
                   Label   => Label,
                   Doc     => Doc,
-                  Page    => Dir_Name (Path),
+
                   Default => Nth_Arg (Data, 5, True))));
 
             elsif Typ = "string" then
                Pref := Preference (String_Preference'(Create
                  (Manager => Kernel.Preferences,
+                  Path    => Dir_Name (Path),
                   Name    => Path,
                   Label   => Label,
-                  Page    => Dir_Name (Path),
                   Doc     => Doc,
                   Default => Nth_Arg (Data, 5, ""))));
 
             elsif Typ = "multiline" then
                Pref := Preference (String_Preference'(Create
                  (Manager => Kernel.Preferences,
+                  Path    => Dir_Name (Path),
                   Name    => Path,
                   Label   => Label,
-                  Page    => Dir_Name (Path),
                   Doc     => Doc,
                   Multi_Line => True,
                   Default => Nth_Arg (Data, 5, ""))));
@@ -399,18 +381,18 @@ package body GPS.Kernel.Preferences is
             elsif Typ = "color" then
                Pref := Preference (Color_Preference'(Create
                  (Manager => Kernel.Preferences,
+                  Path    => Dir_Name (Path),
                   Name    => Path,
                   Label   => Label,
                   Doc     => Doc,
-                  Page    => Dir_Name (Path),
                   Default => Nth_Arg (Data, 5, "black"))));
 
             elsif Typ = "font" then
                Pref := Preference (Font_Preference'(Create
                  (Manager => Kernel.Preferences,
+                  Path    => Dir_Name (Path),
                   Name    => Path,
                   Label   => Label,
-                  Page    => Dir_Name (Path),
                   Doc     => Doc,
                   Default => Nth_Arg (Data, 5, Defaults.Default_Font))));
 
@@ -427,12 +409,12 @@ package body GPS.Kernel.Preferences is
 
                   Pref := Preference (Choice_Preference'(Create
                     (Manager => Kernel.Preferences,
-                     Name      => Path,
-                     Label     => Label,
-                     Page      => Dir_Name (Path),
-                     Doc       => Doc,
-                     Choices   => Val,
-                     Default   => Nth_Arg (Data, 5))));
+                     Path    => Dir_Name (Path),
+                     Name    => Path,
+                     Label   => Label,
+                     Doc     => Doc,
+                     Choices => Val,
+                     Default => Nth_Arg (Data, 5))));
                end;
 
             else
@@ -468,97 +450,97 @@ package body GPS.Kernel.Preferences is
 
       Gtk_Theme := Create
         (Kernel.Preferences,
+         Path  => -"General/Custom Styles:Theme",
          Name  => "GPS6-Gtk-Theme-Name",  --  synchronize with colorschemes.py
          Label => -"Theme",
-         Page  => -"General/Custom Styles:Theme",
          Doc   => -("Styles the tabs, tree views, buttons and UI elements."));
 
       Default_Font := Create
         (Manager => Kernel.Preferences,
+         Path    => -"General/Custom Styles:Fonts",
          Name    => "General-Default-Font",
          Default => Defaults.Default_Font,
          Doc     => -("Font in menus, browsers,..."),
-         Page    => -"General/Custom Styles:Fonts",
          Label   => -"Default font");
 
       Small_Font := Create
         (Manager => Kernel.Preferences,
+         Path    => -":Fonts & Colors",
          Name    => "General-Small-Font",
          Default => Defaults.Default_Font,
          Doc     => -("Used by GPS to display secondary information."),
-         Page    => -":Fonts & Colors",
          Label   => -"Small font");
 
       View_Fixed_Font := Create
         (Manager => Kernel.Preferences,
+         Path    => -"General/Custom Styles:Fonts",
          Name    => "General-Fixed-Font",
          Default => Defaults.Default_Fixed_Font,
          Doc     => -("Fixed-size font used in most views "
                       & "(Outline, Locations, Messages, ...)"),
-         Label   => -"Monospace font",
-         Page    => -"General/Custom Styles:Fonts");
+         Label   => -"Monospace font");
 
       Tooltips_Background := Create
         (Manager => Kernel.Preferences,
+         Path    => -"General/Custom Styles:Other",
          Name    => "Tooltips-Background-Color",
          Label   => -"Tooltips background",
          Doc     => -"Background color for tooltips, defaults to gtk+ theme.",
-         Default => "#FFFFFF",
-         Page    => -"General/Custom Styles:Other");
+         Default => "#FFFFFF");
 
       Use_Native_Dialogs := Create
         (Manager => Kernel.Preferences,
+         Path    => ":Windows",
          Name    => "General-Use-Native-Dialogs",
          Label   => -"Native dialogs",
          Doc     => -"Use OS native dialogs instead of GPS-specific ones.",
-         Default => True,
-         Page    => ":Windows");
+         Default => True);
 
       Splash_Screen := Create
         (Manager  => Kernel.Preferences,
+         Path     => -"General:Behavior",
          Name     => "General-Splash-Screen",
          Label    => -"Display splash screen",
          Doc      => -"Display a splash screen while GPS starts.",
-         Default => True,
-         Page    => -"General:Behavior");
+         Default => True);
 
       Display_Welcome := Create
         (Manager => Kernel.Preferences,
+         Path    => -"General:Behavior",
          Name    => "General-Display-Welcome",
          Label   => -"Display welcome window",
          Doc     =>
             -"Show dialog to select the project, when none was specified.",
-         Default => True,
-         Page    => -"General:Behavior");
+         Default => True);
 
       Auto_Save := Create
         (Manager => Kernel.Preferences,
+         Path    => -"General:Behavior",
          Name    => "General-Auto-Save",
          Label   => -"Auto save",
          Doc     =>
            -("Save files and projects automatically before running tools"
              & " and compiling."),
-         Default => True,
-         Page    => -"General:Behavior");
+         Default => True);
 
       Save_Desktop_On_Exit := Create
         (Manager => Kernel.Preferences,
+         Path    => -"General:Behavior",
          Name    => "General-Save-Desktop-On-Exit",
          Label   => -"Save desktop on exit",
          Doc     =>
             -("Save size and position of views on exit. Ignored"
               & " when you work with a default project."),
-         Default => True,
-         Page    => -"General:Behavior");
+         Default => True);
 
       Hyper_Mode := Create
         (Manager => Kernel.Preferences,
+         Path    => -"General:Behavior",
          Name    => "Hyper-Mode",
          Default => True,
          Doc     =>
             -"Display hyper links in editors when you press Control.",
-         Label   => -"Hyper links",
-         Page    => -"General:Behavior");
+         Label   => -"Hyper links");
 
       Tip_Of_The_Day := Create
         (Manager => Kernel.Preferences,
@@ -566,7 +548,7 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Doc     => -"Display tip-of-the-day dialog when GPS starts.",
          Label   => -"Tip of the Day",
-         Page    => -"General:Behavior");
+         Path    => -"General:Behavior");
 
       Multi_Language_Builder := Multi_Language_Builder_Policy_Prefs.Create
         (Manager => Kernel.Preferences,
@@ -575,7 +557,7 @@ package body GPS.Kernel.Preferences is
          Doc     =>
            -("Select the builder to use when compiling sources. Gprbuild is "
              & "the recommend solution especially for multi-language builds."),
-         Page    => -"General:Behavior",
+         Path    => -"General:Behavior",
          Default => Default_Builder);
 
       Save_Editor_Desktop := Editor_Desktop_Policy_Prefs.Create
@@ -585,7 +567,7 @@ package body GPS.Kernel.Preferences is
          Doc     =>
             -("Select which editors to save in the desktop and restore"
               & " on startup."),
-         Page    => -"General:Behavior",
+         Path    => -"General:Behavior",
          Default => From_Project);
 
       GPS.Kernel.Charsets.Register_Preferences (Kernel);
@@ -598,7 +580,7 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Doc => -"Show the name of the current subprogram in the status line.",
          Label   => -"Display subprogram names",
-         Page    => -"Editor:Display");
+         Path    => -"Editor:Display");
 
       Display_Tooltip := Create
         (Manager => Kernel.Preferences,
@@ -606,7 +588,7 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Doc     => -"Show tooltips with information on selected entity.",
          Label   => -"Tooltips",
-         Page    => -"Editor:Display");
+         Path    => -"Editor:Display");
 
       Current_Line_Thin := Create
         (Manager => Kernel.Preferences,
@@ -615,7 +597,7 @@ package body GPS.Kernel.Preferences is
          Doc     =>
             -"Underline current line rather than full background highlight.",
          Label   => -"Draw current line as a thin line",
-         Page    => -"Editor:Highlighting");
+         Path    => -"Editor:Highlighting");
 
       Alter_Bg_For_RO_Files := Create
         (Manager => Kernel.Preferences,
@@ -624,7 +606,7 @@ package body GPS.Kernel.Preferences is
          Doc     =>
             -"Alter the editor background color for read-only files.",
          Default => True,
-         Page    => -"Editor:Display");
+         Path    => -"Editor:Display");
 
       Display_Line_Numbers := Line_Number_Policy_Prefs.Create
         (Manager => Kernel.Preferences,
@@ -632,7 +614,7 @@ package body GPS.Kernel.Preferences is
          Default => All_Lines,
          Doc     => -"Display line numbers on the side of editors.",
          Label   => -"Display line numbers",
-         Page    => -"Editor:Display");
+         Path    => -"Editor:Display");
 
       Highlight_Column := Create
         (Manager => Kernel.Preferences,
@@ -644,7 +626,7 @@ package body GPS.Kernel.Preferences is
             -("Draw a vertical line based on line length. This also"
               & " impacts the refill command. Set to 0 to disable."),
          Label   => -"Right margin",
-         Page    => -"Editor:Display");
+         Path    => -"Editor:Display");
 
       Highlight_Delimiters := Create
         (Manager => Kernel.Preferences,
@@ -652,7 +634,7 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Doc     => -"Highlight matching delimiters: (){}[]",
          Label   => -"Highlight delimiters",
-         Page    => -"Editor:Highlighting");
+         Path    => -"Editor:Highlighting");
 
       Block_Highlighting := Create
         (Manager => Kernel.Preferences,
@@ -662,7 +644,7 @@ package body GPS.Kernel.Preferences is
             -("Highlight current block on the side of editors: procedures,"
               & " loops, if statements,..."),
          Label   => -"Block highlighting",
-         Page    => -"Editor:Highlighting");
+         Path    => -"Editor:Highlighting");
 
       Strip_Blanks := Strip_Trailing_Blanks_Policy_Prefs.Create
         (Manager => Kernel.Preferences,
@@ -670,7 +652,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Strip blanks",
          Doc     => -"Remove trailing blanks at end of lines when saving.",
          Default => Autodetect,
-         Page    => -"Editor:On Save");
+         Path    => -"Editor:On Save");
 
       Strip_Lines := Strip_Trailing_Blanks_Policy_Prefs.Create
         (Manager => Kernel.Preferences,
@@ -678,7 +660,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Strip lines",
          Doc     => -"Remove trailing blank lines when saving.",
          Default => Autodetect,
-         Page    => -"Editor:On Save");
+         Path    => -"Editor:On Save");
 
       Line_Terminator := Line_Terminators_Prefs.Create
         (Manager => Kernel.Preferences,
@@ -686,7 +668,7 @@ package body GPS.Kernel.Preferences is
          Label => -"Line terminator",
          Doc   => -"Override line terminators when saving.",
          Default => Unchanged,
-         Page    => -"Editor:On Save");
+         Path    => -"Editor:On Save");
 
       Auto_Indent_On_Paste := Create
         (Manager => Kernel.Preferences,
@@ -694,7 +676,7 @@ package body GPS.Kernel.Preferences is
          Default => False,
          Doc     => -"Auto-indent new contents when pasting.",
          Label   => -"Auto indent on paste",
-         Page    => -"Editor:Behavior");
+         Path    => -"Editor:Behavior");
 
       Block_Folding := Create
         (Manager => Kernel.Preferences,
@@ -702,7 +684,7 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Doc     => -"Enable block folding: subprograms, if statements,...",
          Label   => -"Block folding",
-         Page    => -"Editor:Behavior");
+         Path    => -"Editor:Behavior");
 
       Periodic_Save := Create
         (Manager  => Kernel.Preferences,
@@ -714,7 +696,7 @@ package body GPS.Kernel.Preferences is
             -("Autosave delay in seconds (0 to disable). Files are saved with"
               & " special name .#filename#."),
          Label    => -"Autosave delay",
-         Page     => -"Editor:Behavior",
+         Path     => -"Editor:Behavior",
          Priority => -2);
 
       Automatic_Syntax_Check := Create
@@ -723,7 +705,7 @@ package body GPS.Kernel.Preferences is
          Default => False,
          Doc     => -"Check syntax in the background.",
          Label   => -"Automatic syntax check",
-         Page    => ":Editor");
+         Path    => ":Editor");
 
       if Config.Host = Config.Windows then
          Use_ACL := Create
@@ -733,7 +715,7 @@ package body GPS.Kernel.Preferences is
             Doc     =>
                -"Use access control lists to change read/write permissions.",
             Default => False,
-            Page    => -"Editor:Behavior");
+            Path    => -"Editor:Behavior");
       end if;
 
       Default_Style := Create
@@ -744,7 +726,7 @@ package body GPS.Kernel.Preferences is
          Default_Font => Defaults.Default_Fixed_Font,
          Default_Fg   => "black",
          Default_Bg   => "white",
-         Page         => -"Editor/Fonts & Colors:General");
+         Path         => -"Editor/Fonts & Colors:General");
 
       Blocks_Style := Create
         (Manager         => Kernel.Preferences,
@@ -755,7 +737,7 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Default_Fg      => "#60615F",
          Default_Bg      => "white",
-         Page            => -"Editor/Fonts & Colors:General");
+         Path            => -"Editor/Fonts & Colors:General");
 
       Types_Style := Create
         (Manager      => Kernel.Preferences,
@@ -766,7 +748,7 @@ package body GPS.Kernel.Preferences is
          Doc             => "",
          Default_Fg   => "#009900",
          Default_Bg   => "white",
-         Page         => -"Editor/Fonts & Colors:General");
+         Path         => -"Editor/Fonts & Colors:General");
 
       Keywords_Style := Create
         (Manager      => Kernel.Preferences,
@@ -777,7 +759,7 @@ package body GPS.Kernel.Preferences is
          Doc             => "",
          Default_Fg      => "#0000E6",
          Default_Bg      => "white",
-         Page            => -"Editor/Fonts & Colors:General");
+         Path            => -"Editor/Fonts & Colors:General");
 
       Comments_Style := Create
         (Manager      => Kernel.Preferences,
@@ -788,7 +770,7 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Default_Fg   => "#969696",
          Default_Bg   => "white",
-         Page         => -"Editor/Fonts & Colors:General");
+         Path         => -"Editor/Fonts & Colors:General");
 
       Strings_Style := Create
         (Manager      => Kernel.Preferences,
@@ -799,7 +781,7 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Default_Fg   => "#CE7B00",
          Default_Bg   => "white",
-         Page         => -"Editor/Fonts & Colors:General");
+         Path         => -"Editor/Fonts & Colors:General");
 
       Numbers_Style := Create
         (Manager      => Kernel.Preferences,
@@ -810,7 +792,7 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Default_Fg   => "#FF3333",
          Default_Bg   => "white",
-         Page         => -"Editor/Fonts & Colors:General");
+         Path         => -"Editor/Fonts & Colors:General");
 
       Hyper_Links_Style := Create
         (Manager      => Kernel.Preferences,
@@ -821,14 +803,14 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Default_Fg   => "blue",
          Default_Bg   => "white",
-         Page         => -"Editor/Fonts & Colors:General");
+         Path         => -"Editor/Fonts & Colors:General");
 
       Current_Block_Color := Create
         (Manager  => Kernel.Preferences,
          Name     => "Src-Editor-Current-Block-Color",
          Default  => "#9C9CFF",
          Label    => -"Current block color",
-         Page     => -"Editor/Fonts & Colors:General",
+         Path     => -"Editor/Fonts & Colors:General",
          Doc      => "",
          Priority => -2);
 
@@ -837,7 +819,7 @@ package body GPS.Kernel.Preferences is
          Name     => "Src-Editor-Current-Line-Color",
          Default  => "rgba(226,226,226,0.4)",
          Label    => -"Current line color",
-         Page     => -"Editor/Fonts & Colors:General",
+         Path     => -"Editor/Fonts & Colors:General",
          Doc      => "",
          Priority => -2);
 
@@ -850,7 +832,7 @@ package body GPS.Kernel.Preferences is
          Default_Fg   => "#60615F",
          Default_Bg   => "white",
          Doc          => "",
-         Page         => -"Editor/Fonts & Colors:SPARK");
+         Path         => -"Editor/Fonts & Colors:SPARK");
 
       Aspects_Style := Create
         (Manager      => Kernel.Preferences,
@@ -861,7 +843,7 @@ package body GPS.Kernel.Preferences is
          Default_Fg   => "#60615F",
          Default_Bg   => "white",
          Doc          => "",
-         Page         => -"Editor/Fonts & Colors:SPARK");
+         Path         => -"Editor/Fonts & Colors:SPARK");
 
       Ephemeral_Highlighting_Simple := Create
         (Manager         => Kernel.Preferences,
@@ -874,7 +856,7 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Default_Fg      => "rgba(0,0,0,0.0)",
          Default_Bg      => "rgba(134,134,134,0.35)",
-         Page            => -"Editor/Fonts & Colors:Ephemeral highlighting");
+         Path            => -"Editor/Fonts & Colors:Ephemeral highlighting");
 
       Ephemeral_Highlighting_Smart := Create
         (Manager         => Kernel.Preferences,
@@ -887,7 +869,7 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Default_Fg      => "rgba(0,0,0,0.0)",
          Default_Bg      => "rgba(252,172,79,0.4)",
-         Page            => -"Editor/Fonts & Colors:Ephemeral highlighting");
+         Path            => -"Editor/Fonts & Colors:Ephemeral highlighting");
 
       -- Refactoring --
 
@@ -899,7 +881,7 @@ package body GPS.Kernel.Preferences is
             -("Add a comment box with the subprogram name when"
               & " creating new subprograms."),
          Label   => -"Subprogram Box",
-         Page    => -"Refactoring:Subprograms");
+         Path    => -"Refactoring:Subprograms");
 
       Add_In_Keyword := Create
         (Manager => Get_Preferences (Kernel),
@@ -909,7 +891,7 @@ package body GPS.Kernel.Preferences is
             -("Add ""in"" keyword in parameter lists when creating new"
               & " subprograms."),
          Label   => -"Add ""in"" Keyword",
-         Page    => -"Refactoring:Subprograms");
+         Path    => -"Refactoring:Subprograms");
 
       Create_Subprogram_Decl  := Create
         (Manager => Get_Preferences (Kernel),
@@ -918,7 +900,7 @@ package body GPS.Kernel.Preferences is
          Doc     =>
             -"Create a separate declaration when creating new subprograms.",
          Label   => -"Create Subprogram Declarations",
-         Page    => -"Refactoring:Subprograms");
+         Path    => -"Refactoring:Subprograms");
 
       -- Browsers --
 
@@ -928,7 +910,7 @@ package body GPS.Kernel.Preferences is
          Default => "#FFFFFF",
          Doc     => -"Background of the browsers.",
          Label   => -"Background",
-         Page    => -"Browsers:Colors");
+         Path    => -"Browsers:Colors");
 
       Browsers_Hyper_Link_Color := Create
         (Manager => Kernel.Preferences,
@@ -936,7 +918,7 @@ package body GPS.Kernel.Preferences is
          Default => "#0000FF",
          Doc     => -"Hyper links in the items.",
          Label   => -"Hyper links ",
-         Page    => -"Browsers:Colors");
+         Path    => -"Browsers:Colors");
 
       Selected_Link_Color := Create
         (Manager => Kernel.Preferences,
@@ -944,7 +926,7 @@ package body GPS.Kernel.Preferences is
          Default => "rgba(230,50,50,0.7)",
          Doc     => -"Links between selected items.",
          Label   => -"Selected links",
-         Page    => -"Browsers:Colors");
+         Path    => -"Browsers:Colors");
 
       Unselected_Link_Color := Create
         (Manager => Kernel.Preferences,
@@ -952,7 +934,7 @@ package body GPS.Kernel.Preferences is
          Default => "rgba(180,180,180,0.7)",
          Doc     => -"Links between unselected items.",
          Label   => -"Links",
-         Page    => -"Browsers:Colors");
+         Path    => -"Browsers:Colors");
 
       Parent_Linked_Item_Color := Create
         (Manager => Kernel.Preferences,
@@ -960,7 +942,7 @@ package body GPS.Kernel.Preferences is
          Default => "rgba(0,168,180,0.4)",
          Doc     => -"Background of the items linked to selected items.",
          Label   => -"Ancestor items",
-         Page    => -"Browsers:Colors");
+         Path    => -"Browsers:Colors");
 
       Child_Linked_Item_Color := Create
         (Manager => Kernel.Preferences,
@@ -968,7 +950,7 @@ package body GPS.Kernel.Preferences is
          Default => "#DDDDDD",
          Doc     => -"Background of the items linked from selected items.",
          Label   => -"Offspring items",
-         Page    => -"Browsers:Colors");
+         Path    => -"Browsers:Colors");
 
       Selected_Item_Color := Create
         (Manager => Kernel.Preferences,
@@ -976,14 +958,14 @@ package body GPS.Kernel.Preferences is
          Default => "rgba(138,226,52,0.7)",
          Doc     => -"Color to use to draw the selected item.",
          Label   => -"Selected items",
-         Page    => -"Browsers:Colors");
+         Path    => -"Browsers:Colors");
 
       Title_Color := Create
         (Manager => Kernel.Preferences,
          Name     => "Browsers-Title-Color",
          Label    => -"Title background",
          Doc      => -"Item title background",
-         Page     => ":Browsers",
+         Path     => ":Browsers",
          Default  => "#BEBEBE");
 
       Browsers_Vertical_Layout := Create
@@ -994,7 +976,7 @@ package body GPS.Kernel.Preferences is
             -("General direction for layout of items. Does not apply to"
               & " entities browser."),
          Label   => -"Vertical layout",
-         Page    => -"Browsers:Display");
+         Path    => -"Browsers:Display");
 
       -- Diff_Utils --
 
@@ -1006,7 +988,7 @@ package body GPS.Kernel.Preferences is
          -("Unified: show differences directly in the editor" & ASCII.LF
            & "Side By Side: show differences in separate editors."),
          Default => Side_By_Side,
-         Page    => -"Visual diff:General");
+         Path    => -"Visual diff:General");
 
       Diff_Cmd := Create
         (Manager => Kernel.Preferences,
@@ -1015,7 +997,7 @@ package body GPS.Kernel.Preferences is
          Doc     =>
             -"Command and arguments to compute differences between two files.",
          Default => Config.Default_Diff_Cmd,
-         Page    => -"Visual diff:General");
+         Path    => -"Visual diff:General");
 
       Patch_Cmd := Create
         (Manager => Kernel.Preferences,
@@ -1023,7 +1005,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Patch command",
          Doc     => -"Command and arguments to apply a patch.",
          Default => Config.Default_Patch_Cmd,
-         Page    => -"Visual diff:General");
+         Path    => -"Visual diff:General");
 
       -- Messages --
 
@@ -1033,7 +1015,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Error messages",
          Doc     => -"Color for GPS error messages.",
          Default => "#FF0000",
-         Page    => -"Messages:Colors");
+         Path    => -"Messages:Colors");
 
       Error_Src_Highlight := Create
         (Manager => Kernel.Preferences,
@@ -1041,7 +1023,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Errors highlighting",
          Doc     => -"Color for build error messages.",
          Default => "#FFB7B7",
-         Page    => -"Messages:Editor Colors");
+         Path    => -"Messages:Editor Colors");
 
       Warning_Src_Highlight := Create
         (Manager => Kernel.Preferences,
@@ -1049,7 +1031,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Warnings highlighting",
          Doc     => -"Color for build warnings.",
          Default => "#FFCC9C",
-         Page    => -"Messages:Editor Colors");
+         Path    => -"Messages:Editor Colors");
 
       Style_Src_Highlight := Create
         (Manager => Kernel.Preferences,
@@ -1057,7 +1039,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Style errors highlighting",
          Doc     => -"Color for style errors.",
          Default => "#FFFFAD",
-         Page    => -"Messages:Editor Colors");
+         Path    => -"Messages:Editor Colors");
 
       Info_Src_Highlight := Create
         (Manager => Kernel.Preferences,
@@ -1065,7 +1047,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Compiler info highlighting",
          Doc     => -"Color for compiler info messages.",
          Default => "#ADFFC2",
-         Page    => -"Messages:Editor Colors");
+         Path    => -"Messages:Editor Colors");
 
       Search_Src_Highlight := Create
         (Manager => Kernel.Preferences,
@@ -1073,7 +1055,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Search highlighting",
          Doc     => -"Color for search results",
          Default => "#BDD7FF",
-         Page    => -"Messages:Editor Colors");
+         Path    => -"Messages:Editor Colors");
 
       File_Pattern := Create
         (Manager => Kernel.Preferences,
@@ -1085,7 +1067,7 @@ package body GPS.Kernel.Preferences is
            "^([^:]:?[^:]*):(\d+):((\d+):)? " &
            "(((medium )?warning|medium:)?(info|Note|check)?" &
            "(\(style|low:|low warning:)?.*)",
-         Page => ":Compiler messages");
+         Path => ":Compiler messages");
 
       File_Pattern_Index := Create
         (Manager => Kernel.Preferences,
@@ -1095,7 +1077,7 @@ package body GPS.Kernel.Preferences is
          Default => 1,
          Doc     => -"Index of filename in the pattern",
          Label   => -"File index",
-         Page => ":Compiler messages");
+         Path => ":Compiler messages");
 
       Line_Pattern_Index := Create
         (Manager => Kernel.Preferences,
@@ -1105,7 +1087,7 @@ package body GPS.Kernel.Preferences is
          Default => 2,
          Doc     => -"Index of line number in the pattern",
          Label   => -"Line index",
-         Page => ":Compiler messages");
+         Path => ":Compiler messages");
 
       Column_Pattern_Index := Create
         (Manager => Kernel.Preferences,
@@ -1115,7 +1097,7 @@ package body GPS.Kernel.Preferences is
          Default => 4,
          Doc     => -"Index of column number in the pattern, 0 if none",
          Label   => -"Column index",
-         Page => ":Compiler messages");
+         Path => ":Compiler messages");
 
       Message_Pattern_Index := Create
         (Manager => Kernel.Preferences,
@@ -1125,7 +1107,7 @@ package body GPS.Kernel.Preferences is
          Default => 5,
          Doc     => -"Index of message in the pattern, 0 if none",
          Label   => -"Message index",
-         Page => ":Compiler messages");
+         Path => ":Compiler messages");
 
       Warning_Pattern_Index := Create
         (Manager => Kernel.Preferences,
@@ -1135,7 +1117,7 @@ package body GPS.Kernel.Preferences is
          Default => 6,
          Doc     => -"Index of warning indication in the pattern, 0 if none",
          Label   => -"Warning index",
-         Page => ":Compiler messages");
+         Path => ":Compiler messages");
 
       Info_Pattern_Index := Create
         (Manager => Kernel.Preferences,
@@ -1145,7 +1127,7 @@ package body GPS.Kernel.Preferences is
          Default => 8,
          Doc     => -"Index of compiler info in the pattern, 0 if none",
          Label   => -"Info index",
-         Page => ":Compiler messages");
+         Path => ":Compiler messages");
 
       Style_Pattern_Index := Create
         (Manager => Kernel.Preferences,
@@ -1155,7 +1137,7 @@ package body GPS.Kernel.Preferences is
          Default => 9,
          Doc     => -"Index of style indication in the pattern, 0 if none",
          Label   => -"Style index",
-         Page => ":Compiler messages");
+         Path => ":Compiler messages");
 
       Secondary_File_Pattern := Create
         (Manager => Kernel.Preferences,
@@ -1164,7 +1146,7 @@ package body GPS.Kernel.Preferences is
          Doc     =>
            -"Pattern used to detect secondary file locations in messages",
          Default => "(([^:( ]+):(\d+)(:(\d+):?)?)",
-         Page => ":Compiler messages");
+         Path => ":Compiler messages");
 
       Secondary_File_Pattern_Index := Create
         (Manager => Kernel.Preferences,
@@ -1174,7 +1156,7 @@ package body GPS.Kernel.Preferences is
          Default => 2,
          Doc     => -"Index of secondary filename in the pattern",
          Label   => -"Secondary File index",
-         Page => ":Compiler messages");
+         Path => ":Compiler messages");
 
       Secondary_Line_Pattern_Index := Create
         (Manager => Kernel.Preferences,
@@ -1184,7 +1166,7 @@ package body GPS.Kernel.Preferences is
          Default => 3,
          Doc     => -"Index of secondary location line number in the pattern",
          Label   => -"Secondary Line index",
-         Page => ":Compiler messages");
+         Path => ":Compiler messages");
 
       Secondary_Column_Pattern_Index := Create
         (Manager => Kernel.Preferences,
@@ -1195,7 +1177,7 @@ package body GPS.Kernel.Preferences is
          Doc     =>
          -"Index of secondary column number in the pattern, 0 if none",
          Label   => -"Secondary Column index",
-         Page => ":Compiler messages");
+         Path => ":Compiler messages");
 
       Alternate_Secondary_Pattern := Create
         (Manager => Kernel.Preferences,
@@ -1204,7 +1186,7 @@ package body GPS.Kernel.Preferences is
          Doc     =>
            -"Pattern used to detect alternate secondary locations in messages",
          Default => "(at line (\d+))",
-         Page => ":Compiler messages");
+         Path => ":Compiler messages");
 
       Alternate_Secondary_Line_Index := Create
         (Manager => Kernel.Preferences,
@@ -1215,7 +1197,7 @@ package body GPS.Kernel.Preferences is
          Minimum => 1,
          Maximum => 99,
          Default => 2,
-         Page => ":Compiler messages");
+         Path => ":Compiler messages");
 
       -- Project Editor --
 
@@ -1226,7 +1208,7 @@ package body GPS.Kernel.Preferences is
          Doc     => -("Color to display switches that are set"
                       & " as default for all the files in the project"),
          Label   => -"Default switches color",
-         Page    => ":Switches editor");
+         Path    => ":Switches editor");
 
       Switches_Editor_Title_Font := Create
         (Manager => Kernel.Preferences,
@@ -1234,7 +1216,7 @@ package body GPS.Kernel.Preferences is
          Default => "sans bold oblique 14",
          Doc     => -"Font to use for the switches editor dialog",
          Label   => -"Title font",
-         Page    => ":Switches editor");
+         Path    => ":Switches editor");
 
       Variable_Ref_Background := Create
         (Manager => Kernel.Preferences,
@@ -1243,7 +1225,7 @@ package body GPS.Kernel.Preferences is
          Doc     => -("Color to use for the background of variable"
                       & " references in the value editor"),
          Label   => -"Variable reference color",
-         Page    => ":Scenario editor");
+         Path    => ":Scenario editor");
 
       Invalid_Variable_Ref_Background := Create
         (Manager => Kernel.Preferences,
@@ -1252,7 +1234,7 @@ package body GPS.Kernel.Preferences is
          Doc     => -("Color to use for the foreground of invalid variable"
                       & " references"),
          Label   => -"Invalid references color",
-         Page    => ":Scenario editor");
+         Path    => ":Scenario editor");
 
       Generate_Relative_Paths := Create
         (Manager => Kernel.Preferences,
@@ -1260,7 +1242,7 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Doc     => -"Save relative paths in projects, not absolute paths.",
          Label   => -"Relative project paths",
-         Page    => -"Project:General");
+         Path    => -"Project:General");
 
       Trusted_Mode := Create
         (Manager => Kernel.Preferences,
@@ -1270,7 +1252,7 @@ package body GPS.Kernel.Preferences is
             -("Assume projects and files do not use symbolic links to speed"
               & " up loading of projects."),
          Label   => -"Fast Project Loading",
-         Page    => -"Project:General");
+         Path    => -"Project:General");
 
       Hidden_Directories_Pattern := Create
         (Manager => Kernel.Preferences,
@@ -1279,7 +1261,7 @@ package body GPS.Kernel.Preferences is
          Doc   =>
             -"Match directories to hide in the project view.",
          Default => "(^|\\|/)((\.[^\.]+.*)|CVS)$",
-         Page    => -":Project view");
+         Path    => -":Project view");
 
       -- Wizards --
 
@@ -1289,7 +1271,7 @@ package body GPS.Kernel.Preferences is
          Default => "sans bold oblique 10",
          Doc     => -"Font to use for the title of the pages in the wizard",
          Label   => -"Title font",
-         Page    => ":Fonts & Colors");
+         Path    => ":Fonts & Colors");
 
       -- VCS --
 
@@ -1301,13 +1283,13 @@ package body GPS.Kernel.Preferences is
             -("Requires explicit status checks commands. These might be too"
               & " costly to run systematically as part of other commands."),
          Label   => -"Implicit status",
-         Page    => -"VCS:General");
+         Path    => -"VCS:General");
 
       Hide_Up_To_Date := Create
         (Manager => Kernel.Preferences,
          Name    => "VCS-Hide-Up-To-Date",
          Default => False,
-         Page    => "VCS:Explorer",
+         Path    => "VCS:Explorer",
          Doc     => -"Hide up-to-date files in VCS explorer.",
          Label   => -"Hide up-to-date files");
 
@@ -1315,7 +1297,7 @@ package body GPS.Kernel.Preferences is
         (Manager => Kernel.Preferences,
          Name    => "VCS-Hide-Not-Registered",
          Default => False,
-         Page    => "VCS:Explorer",
+         Path    => "VCS:Explorer",
          Doc     => -"Hide unknown files in VCS explorer.",
          Label   => -"Hide unknown files");
 
@@ -1323,7 +1305,7 @@ package body GPS.Kernel.Preferences is
         (Manager => Kernel.Preferences,
          Name    => "Default-VCS",
          Default => "Auto",
-         Page    => -"VCS:General",
+         Path    => -"VCS:General",
          Doc     => -"Default VCS to use when none is defined in the project.",
          Label   => -"Default VCS");
 
@@ -1332,7 +1314,7 @@ package body GPS.Kernel.Preferences is
          Name    => "CVS-Command",
          Default => "cvs",
          Doc     => -"General CVS command",
-         Page    => ":VCS",
+         Path    => ":VCS",
          Label   => -"CVS command");
 
       ClearCase_Command := Create
@@ -1340,7 +1322,7 @@ package body GPS.Kernel.Preferences is
          Name    => "ClearCase-Command",
          Default => "cleartool",
          Doc     => -"General ClearCase command",
-         Page    => ":VCS",
+         Path    => ":VCS",
          Label   => -"ClearCase command");
 
       -- External Commands --
@@ -1351,7 +1333,7 @@ package body GPS.Kernel.Preferences is
          Label    => -"List processes",
          Doc      => -"Command to list processes running on the machine.",
          Default  => Config.Default_Ps,
-         Page     => -"External Commands:General");
+         Path     => -"External Commands:General");
 
       Execute_Command := Create
         (Manager => Kernel.Preferences,
@@ -1359,7 +1341,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Execute command",
          Doc     => -"Program to execute commands externally.",
          Default => Config.Exec_Command,
-         Page    => -"External Commands:General");
+         Path    => -"External Commands:General");
 
       if Config.Host /= Config.Windows then
          --  Preference not used under Windows
@@ -1371,7 +1353,7 @@ package body GPS.Kernel.Preferences is
             Doc     =>
               -"Override the system's default browser. Use %u for the URL.",
             Default => "",
-            Page    => -"External Commands:Browser");
+            Path    => -"External Commands:Browser");
       end if;
 
       Print_Command := Create
@@ -1381,7 +1363,7 @@ package body GPS.Kernel.Preferences is
           Doc    =>
             -"Command to print files. On Windows, defaults to built-in.",
          Default => Config.Default_Print_Cmd,
-         Page    => -"External Commands:General");
+         Path    => -"External Commands:General");
 
       Max_Output_Length := Create
         (Manager => Kernel.Preferences,
@@ -1391,7 +1373,7 @@ package body GPS.Kernel.Preferences is
          Minimum => 1_000,
          Maximum => Integer'Last,
          Default => 10_000_000,
-         Page    => ":Commands");
+         Path    => ":Commands");
 
       -- Windows --
 
@@ -1405,7 +1387,7 @@ package body GPS.Kernel.Preferences is
            & " fallback to the comments after the entity declaration if not"
            & " found (reversed when preference is disabled)."),
          Default => True,
-         Page    => -"Documentation:General");
+         Path    => -"Documentation:General");
 
       Kernel.Preferences.Set_Is_Loading_Prefs (False);
    end Register_Global_Preferences;
@@ -1428,7 +1410,7 @@ package body GPS.Kernel.Preferences is
       if Node.Tag.all = "preference" then
          declare
             Name    : constant String := Get_Attribute (Node, "name", "");
-            Page    : constant String :=
+            Path    : constant String :=
                         Get_Attribute (Node, "page", "General");
             Default : constant String := Get_Attribute (Node, "default", "");
             Tooltip : constant String := Get_Attribute (Node, "tip", "");
@@ -1471,7 +1453,7 @@ package body GPS.Kernel.Preferences is
                  (Manager => Kernel.Preferences,
                   Name    => Name,
                   Label   => Label,
-                  Page    => Page,
+                  Path    => Path,
                   Doc     => Tooltip,
                   Default => Bool_Def)));
 
@@ -1519,7 +1501,7 @@ package body GPS.Kernel.Preferences is
                   Minimum => Minimum,
                   Maximum => Maximum,
                   Default => Def,
-                  Page    => Page)));
+                  Path    => Path)));
 
             elsif Typ = "string" then
                Pref := Preference (String_Preference'(Create
@@ -1528,14 +1510,14 @@ package body GPS.Kernel.Preferences is
                   Label   => Label,
                   Doc     => Tooltip,
                   Default => Default,
-                  Page    => Page)));
+                  Path    => Path)));
 
             elsif Typ = "color" then
                Pref := Preference (Color_Preference'(Create
                  (Manager => Kernel.Preferences,
                   Name    => Name,
                   Label   => Label,
-                  Page    => Page,
+                  Path    => Path,
                   Doc     => Tooltip,
                   Default => Default)));
 
@@ -1546,7 +1528,7 @@ package body GPS.Kernel.Preferences is
                   Label   => Label,
                   Doc     => Tooltip,
                   Default => Default,
-                  Page    => Page)));
+                  Path    => Path)));
 
             elsif Typ = "choices" then
                Child := Node.Child;
@@ -1579,7 +1561,7 @@ package body GPS.Kernel.Preferences is
                     (Manager => Kernel.Preferences,
                      Name      => Name,
                      Label     => Label,
-                     Page      => Page,
+                     Path      => Path,
                      Doc       => Tooltip,
                      Choices   => Val,
                      Default   => Def)));
@@ -1661,7 +1643,7 @@ package body GPS.Kernel.Preferences is
          Class        => Pref_Class,
          Handler      => Get_Command_Handler'Access);
 
-      --  Register the commands associated to the PreferencesPage class
+      --  Register the commands associated to the PreferencesPath class
       Register_Command
         (Kernel.Scripts, "create",
          Params        => (1 => Param ("name"),

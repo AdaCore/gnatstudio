@@ -194,7 +194,8 @@ package body Default_Preferences.Enums is
 
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc          : String;
       Choices                   : GNAT.Strings.String_List_Access;
       Default                   : Integer)
       return Choice_Preference
@@ -207,17 +208,26 @@ package body Default_Preferences.Enums is
       --  If the preference should be displayed with radio buttons, place them
       --  in a group named using the preference's label.
       if Choices'Length > Needs_Combo_Threshold then
-         Register (Manager, Name, Label, Page, Doc, Result);
+         Manager.Register
+           (Name  => Name,
+            Path  => Path,
+            Label => Label,
+            Doc   => Doc,
+            Pref  => Result);
       else
          declare
-            Page_Name   : GNAT.Strings.String_Access;
-            Group_Name  : GNAT.Strings.String_Access;
+            Page_Name   : Preferences_Page_Name_Access;
+            Group_Name  : Preferences_Group_Name_Access;
          begin
-            Extract_Page_And_Group_Names (Path       => Page,
+            Extract_Page_And_Group_Names (Path       => Path,
                                           Page_Name  => Page_Name,
                                           Group_Name => Group_Name);
-            Register (Manager, Name, Label,
-                      Page_Name.all & ':' & Label, Doc, Result);
+            Manager.Register
+              (Name  => Name,
+               Path  => Page_Name.all & ':' & Label,
+               Label => Label,
+               Doc   =>  Doc,
+               Pref  => Result);
             Free (Page_Name);
             Free (Group_Name);
          end;
@@ -317,7 +327,8 @@ package body Default_Preferences.Enums is
 
       function Create
         (Manager                   : access Preferences_Manager_Record'Class;
-         Name, Label, Page, Doc    : String;
+         Path                      : Preference_Path;
+         Name, Label, Doc          : String;
          Default                   : Enumeration)
          return Preference
       is
@@ -350,17 +361,27 @@ package body Default_Preferences.Enums is
          --  If the preference should be displayed with radio buttons, place
          --  them in a group named using the preference's label.
          if Enumeration'Range_Length > Needs_Combo_Threshold then
-            Register (Manager, Name, Label, Page, Doc, Result);
+            Manager.Register
+              (Path  => Path,
+               Name  => Name,
+               Label => Label,
+               Doc   => Doc,
+               Pref  => Result);
          else
             declare
-               Page_Name   : GNAT.Strings.String_Access;
-               Group_Name  : GNAT.Strings.String_Access;
+               Page_Name   : Preferences_Page_Name_Access;
+               Group_Name  : Preferences_Group_Name_Access;
             begin
-               Extract_Page_And_Group_Names (Path       => Page,
+               Extract_Page_And_Group_Names (Path       => Path,
                                              Page_Name  => Page_Name,
                                              Group_Name => Group_Name);
-               Register (Manager, Name, Label,
-                         Page_Name.all & ':' & Label, Doc, Result);
+               Manager.Register
+                 (Path  => Page_Name.all & ':' & Label,
+                  Name  => Name,
+                  Label => Label,
+                  Doc   => Doc,
+                  Pref  => Result);
+
                Free (Page_Name);
                Free (Group_Name);
             end;

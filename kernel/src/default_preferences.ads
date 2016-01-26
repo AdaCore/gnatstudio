@@ -26,6 +26,7 @@
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Hash;
+with Ada.Unchecked_Deallocation;
 
 with GNAT.Strings;        use GNAT.Strings;
 
@@ -76,6 +77,53 @@ package Default_Preferences is
    --  This is only a model : the way the preferences are stored and displayed
    --  must be defined when extending this type, by overriding its primitives.
 
+   subtype Preferences_Page_Name is String;
+   type Preferences_Page_Name_Access is access all Preferences_Page_Name;
+   --  Subtype representing a name for preferences pages and used to
+   --  specify where a given page should be in the preferences dialog.
+   --
+   --  A Preferences_Page_Name may designate:
+   --
+   --    . A non-visible page if it's set to an empty string
+   --
+   --    . A root page if it's set to a non empty string, without containing a
+   --      '/' delimiter followed by other caracters
+   --      (e.g : "Editor" or "Editor/")
+   --
+   --    . A subpage it's set to a non empty string containing a root page name
+   --      followed by a '/' delimiter and the subpage name
+   --      (e.g : "Editor/Fonts" or "Editor/Fonts/")
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Preferences_Page_Name, Preferences_Page_Name_Access);
+
+   subtype Preferences_Group_Name is String;
+   type Preferences_Group_Name_Access is access all Preferences_Group_Name;
+   --  Subtype representing a name for the preferences groups.
+   --
+   --  A Preference_Group_Name may designate any String.
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Preferences_Group_Name, Preferences_Group_Name_Access);
+
+   subtype Preference_Path is String;
+   type Preference_Path_Access is access all Preference_Path;
+   --  Subtype representing a preference path and used to specify where a the
+   --  preference should be displayed (which page/groups) in the preferences
+   --  dialog.
+   --
+   --  A Preference_Path may designate:
+   --
+   --    . A Preferences_Page_Name, if the preference does not belong to a
+   --      specific group (e.g: "Editor" or "Editor/")
+   --
+   --    . A Preferences_Page_Name, followed by a ':' delimiter and the name
+   --      of the group of the preference
+   --      (e.g : "Editor:General" or "Editor/:General")
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Preference_Path, Preference_Path_Access);
+
    type Preferences_Page_Type is
      (Visible_Page, Integrated_Page, Hidden_Page);
    --  Used by the preferences editor dialog to know if a page should be
@@ -91,8 +139,8 @@ package Default_Preferences is
 
    procedure Extract_Page_And_Group_Names
      (Path       : String;
-      Page_Name  : out GNAT.Strings.String_Access;
-      Group_Name : out GNAT.Strings.String_Access);
+      Page_Name  : out Preferences_Page_Name_Access;
+      Group_Name : out Preferences_Group_Name_Access);
    --  Extract the page's name and the group's name (if any) from the given
    --  preference's path.
 
@@ -150,7 +198,8 @@ package Default_Preferences is
 
    procedure Register
      (Manager                : not null access Preferences_Manager_Record;
-      Name, Label, Path, Doc : String;
+      Path                   : Preference_Path;
+      Name, Label, Doc       : String;
       Pref                   : not null access Preference_Record'Class;
       Priority               : Integer := -1);
    --  Set common attributes of all preferences, and register that preference
@@ -162,9 +211,10 @@ package Default_Preferences is
 
    procedure Register_Page
      (Self             : not null access Preferences_Manager_Record;
-      Name             : String;
+      Name             : Preferences_Page_Name;
       Page             : not null Preferences_Page;
       Priority         : Integer := -1;
+      Page_Type        : Preferences_Page_Type := Visible_Page;
       Replace_If_Exist : Boolean := False);
    --  Register a new preferences page in the manager.
    --  If Replace_If_Exist is True and if an association for this name already
@@ -174,7 +224,7 @@ package Default_Preferences is
 
    function Get_Registered_Page
      (Self             : not null access Preferences_Manager_Record'Class;
-      Name             : String;
+      Name             : Preferences_Page_Name;
       Create_If_Needed : Boolean := False) return Preferences_Page;
    --  Return the page registered in the manager for this name.
    --  If no page has been registered for this name, return null if
@@ -196,7 +246,7 @@ package Default_Preferences is
 
    procedure Display_Page
      (Self      : not null access Preferences_Editor_Interface;
-      Page_Name : String) is abstract;
+      Page_Name : Preferences_Page_Name) is abstract;
    --  Display the page view associated with Page_Name.
 
    procedure Display_Pref
@@ -208,7 +258,8 @@ package Default_Preferences is
 
    function Get_Page_View
      (Self      : not null access Preferences_Editor_Interface;
-      Page_Name : String) return Gtk.Widget.Gtk_Widget is abstract;
+      Page_Name : Preferences_Page_Name)
+      return Gtk.Widget.Gtk_Widget is abstract;
    --  Return the page view associated with Page_Name.
 
    function Is_Displaying_Hidden_Preferences
@@ -243,7 +294,8 @@ package Default_Preferences is
    ----------------------
 
    function Get_Name
-     (Self : not null access Preferences_Page_Record) return String;
+     (Self : not null access Preferences_Page_Record)
+      return Preferences_Page_Name;
    --  Return the page's name.
 
    function Get_Page_Type
@@ -257,28 +309,6 @@ package Default_Preferences is
       return Gtk.Widget.Gtk_Widget is abstract;
    --  Return the main widget of the preferences page.
    --  This is the widget we want to append to the preferences editor.
-
-   procedure Register_Subpage
-     (Self             : not null access Preferences_Page_Record;
-      Subpage          : not null Preferences_Page;
-      Subpage_Name     : String;
-      Subpage_Type     : Preferences_Page_Type := Visible_Page;
-      Priority         : Integer := -1;
-      Replace_If_Exist : Boolean := False);
-   --  Register a subpage in a parent page.
-   --  Priority is used to order the subpages in their respective root page, in
-   --  decreasing order.
-   --  If Replace_If_Exist is True, replace the previously registered subpage
-   --  with the same name. If False, do nothing.
-
-   function Get_Registered_Subpage
-     (Self             : not null access Preferences_Page_Record'Class;
-      Name             : String;
-      Create_If_Needed : Boolean := False) return Preferences_Page;
-   --  Get the subpage associated with Name from its parent.
-   --  If no subpage has been registered for this name, return null if
-   --  Create_If_Needed is False. Otherwise, create and register a default
-   --  subpage for the given name.
 
    procedure Register_Group
      (Self             : not null access Preferences_Page_Record;
@@ -303,11 +333,11 @@ package Default_Preferences is
    --  Create_If_Needed is False. Otherwise, create and register a new group
    --  and return it.
 
-   function Is_Root_Page (Page_Name : String) return Boolean;
+   function Is_Root_Page (Page_Name : Preferences_Page_Name) return Boolean;
    --  Return True if the given page name refers to a root page, False
    --  otherwise.
 
-   function Get_Root_Page (Page_Name : String) return String;
+   function Get_Root_Page (Page_Name : Preferences_Page_Name) return String;
    --  Return the root page for a given page name (e.g: for "Editor/Ada/",
    --  return "Editor/").
    --  Return "" if Page_Name refers already to a root page.
@@ -439,38 +469,44 @@ package Default_Preferences is
 
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc          : String;
       Minimum, Maximum, Default : Integer;
       Priority                  : Integer := -1)
       return Integer_Preference;
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc          : String;
       Default                   : Boolean;
       Priority                  : Integer := -1)
       return Boolean_Preference;
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc    : String;
       Default                   : String;
       Multi_Line                : Boolean := False;
       Priority                  : Integer := -1)
       return String_Preference;
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc          : String;
       Default                   : String;
       Priority                  : Integer := -1)
       return Color_Preference;
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc         : String;
       Default                   : String;
       Priority                  : Integer := -1)
       return Font_Preference;
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc          : String;
       Default_Font              : String;
       Default_Fg                : String;
       Default_Bg                : String;
@@ -478,7 +514,8 @@ package Default_Preferences is
       return Style_Preference;
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc          : String;
       Base                      : Style_Preference;
       Default_Variant           : Variant_Enum;
       Default_Fg                : String;
@@ -487,18 +524,17 @@ package Default_Preferences is
       return Variant_Preference;
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc          : String;
       Priority                  : Integer := -1)
       return Theme_Preference;
    --  Create a new preference and register it in the Manager.
+   --  Path designates where the preference should go in the preferences
+   --    dialog. Read the Preference_Path documentation for more details.
    --  Name is the name used when saving in the XML file, and when referencing
    --    that preference from a python file. It can contain any character.
    --  Label is the label used in the preferences dialog. It must be human
    --    readable.
-   --  Page is the page in the preference dialog. Subpages are separated by '/'
-   --    chars. This is set to the empty string if the preference should not be
-   --    visible in the preferences dialog, but can be edited directly in the
-   --    XML file.
    --  Doc is the documentation for this preference, at it appears in the
    --    tooltip of the preferences dialog
    --  Priority is used to order the preferences in their respective groups,
@@ -514,9 +550,9 @@ package Default_Preferences is
       Doc     : String := "")
       return Boolean_Preference
    is (Create (Manager,
+               Path    => ":Local Configuration",
                Name    => Name,
                Label   => Label,
-               Page    => ":Local Configuration",
                Doc     => Doc,
                Default => Default));
    --  Convenience function for creating a boolean invisible preference.
@@ -538,10 +574,11 @@ package Default_Preferences is
 
    function Get_Name  (Pref : access Preference_Record'Class) return String;
    function Get_Label (Pref : access Preference_Record'Class) return String;
-   function Get_Path  (Pref : access Preference_Record'Class) return String;
+   function Get_Path
+     (Pref : access Preference_Record'Class) return Preference_Path;
    function Get_Doc   (Pref : access Preference_Record'Class) return String;
    function Get_Page_Name
-     (Pref : access Preference_Record'Class) return String;
+     (Pref : access Preference_Record'Class) return Preferences_Page_Name;
    function Get_Group_Name
      (Pref : access Preference_Record'Class) return String;
 
@@ -776,20 +813,15 @@ private
       Label      : GNAT.Strings.String_Access;
       --  Label used in the preferences dialog
 
-      Path       : GNAT.Strings.String_Access;
-      --  Preferences's full path in the preference dialog. Subpages are
-      --  separated by '/' chars.
-      --  A group can be optionally added at the end of the page's name, using
-      --  the ':' char delimitor (e.g: "General:Behavior" where "General" is
-      --  the page's name and "Behavior" the group's name. This is set to null
-      --  if the preference should not be visible in the preferences dialog,
-      --  but can be edited directly in the XML file.
+      Path       : Preference_Path_Access;
+      --  Preferences's full path in the preference dialog. Read the
+      --  Preference_Path documentation for more details.
 
-      Page_Name  : GNAT.Strings.String_Access;
+      Page_Name  : Preferences_Page_Name_Access;
       --  Name of the preference's page. This is set to null if the preference
       --  is hidden.
 
-      Group_Name : GNAT.Strings.String_Access;
+      Group_Name : Preferences_Group_Name_Access;
       --  Name of the preference's group. This is set to null if no group has
       --  been specified in its path.
 
@@ -802,7 +834,7 @@ private
    end record;
 
    type Preferences_Group_Record is tagged record
-      Name        : GNAT.Strings.String_Access;
+      Name        : Preferences_Group_Name_Access;
       --  Group's name.
 
       Priority    : Integer;
@@ -821,14 +853,15 @@ private
    end record;
 
    type Preferences_Page_Record is abstract tagged record
-      Name      : GNAT.Strings.String_Access;
-      --  Name of the page. Subpages are separated by '/' chars.
+      Name      : Preferences_Page_Name_Access;
+      --  Name of the page. Read the Preferences_Page_Name documentation for
+      --  more details.
 
       Priority  : Integer;
       --  Page's priority. This is used to sort the pages according to the
       --  order we want to display it.
 
-      Groups   : Groups_Lists.List;
+      Groups    : Groups_Lists.List;
       --  List of groups belonging to this page.
 
       Page_Type : Preferences_Page_Type;

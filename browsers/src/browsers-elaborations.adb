@@ -342,9 +342,9 @@ package body Browsers.Elaborations is
 
       Auto_Show_Preference := Create
         (Get_Preferences (Kernel),
+         Path    => -"Browsers:Display",
          Name    => "Auto-Show-Elaboration-Cycles",
          Label   => -"Show elaboration cycles",
-         Page    => -"Browsers:Display",
          Doc    => -"Display elaboration cycles in browser after compilation.",
          Default => True);
    end Register_Module;

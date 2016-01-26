@@ -345,52 +345,52 @@ package body GPS.Kernel.MDI is
    begin
       MDI_Destroy_Floats := Create
         (Manager => Get_Preferences (Kernel),
+         Path    => -"Windows:Floating Windows",
          Name    => "MDI-Destroy-Floats",
          Default => False,
          Doc     =>
            -("Close a view when closing its floating window. Otherwise put"
              & " the view back in the main GPS window."),
-         Label   => -"Destroy floats",
-         Page    => -"Windows:Floating Windows");
+         Label   => -"Destroy floats");
 
       MDI_All_Floating := Create
         (Manager => Get_Preferences (Kernel),
+         Path    => -"Windows:Floating Windows",
          Name    => "MDI-All-Floating",
          Default => False,
          Doc     => -"Set all windows as floating.",
-         Label   => -"All floating",
-         Page    => -"Windows:Floating Windows");
+         Label   => -"All floating");
 
       MDI_Editors_Floating := Create
         (Manager => Kernel.Preferences,
+         Path    => ":Windows",
          Name    => "MDI-Editors-Floating",
          Default => False,
          Doc     => -"Set all editors as floating (but not other views).",
-         Label   => -"Floating editors",
-         Page    => ":Windows");  --  -"Windows"
+         Label   => -"Floating editors");  --  -"Windows"
 
       MDI_Homogeneous_Tabs  := Create
         (Manager => Kernel.Preferences,
+         Path    => -"Windows:Notebook Tabs",
          Name    => "MDI-Homogeneous-Tabs",
          Default => False,
          Doc     =>
            -"Use ellipsis in long tab names to keep all the same size.",
-         Label   => -"Homogeneous tabs",
-         Page    => -"Windows:Notebook Tabs");
+         Label   => -"Homogeneous tabs");
 
       Pref_Tabs_Policy := Show_Tabs_Policy_Preferences.Create
         (Get_Preferences (Kernel),
+         Path  => -"Windows:Notebook Tabs",
          Name  => "GPS6-Window-Tabs-Policy",
          Label => -"Notebook tabs policy",
-         Page  => -"Windows:Notebook Tabs",
          Doc   => -"Control the display of notebook tabs.",
          Default => Always);
 
       Pref_Tabs_Position := Tabs_Position_Preferences.Create
         (Get_Preferences (Kernel),
+         Path  => -"Windows:Notebook Tabs",
          Name  => "GPS6-Window-Tabs-Position",
          Label => -"Notebook tabs position",
-         Page  => -"Windows:Notebook Tabs",
          Doc   =>
             -("Set default position of notebook tabs. Override by right"
               & " clicking on a tab."),
@@ -398,12 +398,12 @@ package body GPS.Kernel.MDI is
 
       Auto_Reload_Files := Create
         (Manager => Kernel.Preferences,
+         Path    => -"Editor:Behavior",
          Name    => "Auto-Reload-Files",
          Default => False,
          Doc     =>
            -"Automatically reload files when they change on ths disk.",
-         Label   => -"Auto-Reload files",
-         Page    => -"Editor:Behavior");
+         Label   => -"Auto-Reload files");
    end Create_MDI_Preferences;
 
    -------------------

@@ -22,7 +22,8 @@ package Default_Preferences.Enums is
 
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc          : String;
       Choices                   : GNAT.Strings.String_List_Access;
       Default                   : Integer)
       return Choice_Preference;
@@ -38,7 +39,8 @@ package Default_Preferences.Enums is
 
       function Create
         (Manager                   : access Preferences_Manager_Record'Class;
-         Name, Label, Page, Doc    : String;
+         Path                      : Preference_Path;
+         Name, Label, Doc          : String;
          Default                   : Enumeration)
          return Preference;
       --  Create a new preference whose possibles values are given by

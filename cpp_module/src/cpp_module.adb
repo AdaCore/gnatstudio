@@ -117,40 +117,40 @@ package body Cpp_Module is
 
       C_Automatic_Indentation := Indentation_Kind_Preferences.Create
         (Get_Preferences (Kernel),
+         Path    => -"Editor/C & C++:Indentation",
          Name    => "C-Auto-Indentation",
          Default => Extended,
-         Page    => -"Editor/C & C++:Indentation",
          Doc     => -"Enable auto-indentation for C and C++ sources.",
          Label   => -"Auto indentation");
 
       C_Indentation_Level := Kernel.Get_Preferences.Create
-        (Name    => "C-Indent-Level",
+        (Path    => -"Editor/C & C++:Indentation",
+         Name    => "C-Indent-Level",
          Minimum => 1,
          Maximum => 9,
          Default => 2,
-         Page    => -"Editor/C & C++:Indentation",
          Doc     => -"Number of spaces for the default indentation.",
          Label   => -"Default indentation");
 
       C_Use_Tabs := Kernel.Get_Preferences.Create
-        (Name    => "C-Use-Tabs",
+        (Path    => -"Editor/C & C++:Indentation",
+         Name    => "C-Use-Tabs",
          Default => True,
-         Page    => -"Editor/C & C++:Indentation",
          Doc     => -"Use tabulations when indenting.",
          Label   => -"Use tabulations");
 
       C_Indent_Extra := Kernel.Get_Preferences.Create
-        (Name    => "C-Indent-Extra",
+        (Path    => -"Editor/C & C++:Indentation",
+         Name    => "C-Indent-Extra",
          Default => True,
-         Page    => -"Editor/C & C++:Indentation",
          Doc     =>
             -"Indent if/loop/switch constructs an extra level after '{'",
          Label   => -"Extra indentation");
 
       C_Indent_Comments := Kernel.Get_Preferences.Create
-        (Name    => "C-Indent-Comments",
+        (Path    => -"Editor/C & C++:Indentation",
+         Name    => "C-Indent-Comments",
          Default => True,
-         Page    => -"Editor/C & C++:Indentation",
          Doc     => -"Indent lines with only comments.",
          Label   => -"Indent comments");
 

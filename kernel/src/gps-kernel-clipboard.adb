@@ -124,13 +124,13 @@ package body GPS.Kernel.Clipboard is
       if Clipboard_Size_Pref = null then
          Clipboard_Size_Pref := Create
            (Get_Preferences (Kernel),
+            Path    => -"General:Clipboard",
             Name    => "Clipboard-Size",
             Label   => "Clipboard Size",
             Default => 10,
             Doc     =>
                -("Number of entries in the clipboard that can be accessed"
                  & " via Paste Previous."),
-            Page    => -"General:Clipboard",
             Minimum => 1,
             Maximum => 1_000);
       end if;

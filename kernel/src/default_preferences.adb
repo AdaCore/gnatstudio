@@ -17,7 +17,6 @@
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Strings;
-with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
@@ -441,8 +440,8 @@ package body Default_Preferences is
 
    procedure Extract_Page_And_Group_Names
      (Path       : String;
-      Page_Name  : out GNAT.Strings.String_Access;
-      Group_Name : out GNAT.Strings.String_Access)
+      Page_Name  : out Preferences_Page_Name_Access;
+      Group_Name : out Preferences_Group_Name_Access)
    is
       Delim_Index : Integer := Path'First;
    begin
@@ -786,60 +785,6 @@ package body Default_Preferences is
       return Gtk_Widget (Page_View);
    end Get_Widget;
 
-   ----------------------
-   -- Register_Subpage --
-   ----------------------
-
-   procedure Register_Subpage
-     (Self             : not null access Preferences_Page_Record;
-      Subpage          : not null Preferences_Page;
-      Subpage_Name     : String;
-      Subpage_Type     : Preferences_Page_Type := Visible_Page;
-      Priority         : Integer := -1;
-      Replace_If_Exist : Boolean := False) is
-   begin
-      --  Set the page's attributes
-      Free (Subpage.Name);
-      Subpage.Page_Type := Subpage_Type;
-      Subpage.Name := new String'(Subpage_Name);
-      Subpage.Priority := Priority;
-
-      --  Insert the page in the root page subpages
-      Insert_Page (Pages            => Self.Subpages,
-                   Page             => Subpage,
-                   Replace_If_Exist => Replace_If_Exist);
-   end Register_Subpage;
-
-   ----------------------------
-   -- Get_Registered_Subpage --
-   ----------------------------
-
-   function Get_Registered_Subpage
-     (Self             : not null access Preferences_Page_Record'Class;
-      Name             : String;
-      Create_If_Needed : Boolean := False) return Preferences_Page is
-   begin
-      for Subpage of Self.Subpages loop
-         if Subpage.Name /= null and then Subpage.Name.all = Name then
-            return Subpage;
-         end if;
-      end loop;
-
-      if Create_If_Needed then
-         declare
-            Subpage : constant Preferences_Page :=
-                        new Default_Preferences_Page_Record;
-         begin
-            Self.Register_Subpage (Subpage          => Subpage,
-                                   Subpage_Name     => Name);
-
-            return Subpage;
-         end;
-      end if;
-
-      return null;
-   end Get_Registered_Subpage;
-
    --------------
    -- Add_Pref --
    --------------
@@ -911,7 +856,8 @@ package body Default_Preferences is
 
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label,  Doc         : String;
       Minimum, Maximum, Default : Integer;
       Priority                  : Integer := -1)
       return Integer_Preference
@@ -936,7 +882,7 @@ package body Default_Preferences is
       Integer_Preference (Pref).Default := Default;
       Integer_Preference (Pref).Int_Min_Value := Minimum;
       Integer_Preference (Pref).Int_Max_Value := Maximum;
-      Register (Manager, Name, Label, Page, Doc, Pref, Priority);
+      Register (Manager, Path, Name, Label, Doc, Pref, Priority);
 
       return Integer_Preference (Pref);
    end Create;
@@ -947,7 +893,8 @@ package body Default_Preferences is
 
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc          : String;
       Default                   : Boolean;
       Priority                  : Integer := -1)
       return Boolean_Preference
@@ -974,7 +921,7 @@ package body Default_Preferences is
       end if;
 
       Boolean_Preference (Pref).Default := Default;
-      Register (Manager, Name, Label, Page, Doc, Pref, Priority);
+      Register (Manager, Path, Name, Label, Doc, Pref, Priority);
       return Boolean_Preference (Pref);
    end Create;
 
@@ -984,7 +931,8 @@ package body Default_Preferences is
 
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc          : String;
       Default                   : String;
       Multi_Line                : Boolean := False;
       Priority                  : Integer := -1)
@@ -1006,7 +954,7 @@ package body Default_Preferences is
 
       String_Preference (Pref).Multi_Line := Multi_Line;
       --  override previous
-      Register (Manager, Name, Label, Page, Doc, Pref, Priority);
+      Register (Manager, Path, Name, Label, Doc, Pref, Priority);
       return String_Preference (Pref);
    end Create;
 
@@ -1016,7 +964,8 @@ package body Default_Preferences is
 
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc          : String;
       Default                   : String;
       Priority                  : Integer := -1)
       return Color_Preference
@@ -1040,7 +989,7 @@ package body Default_Preferences is
       end if;
 
       Color_Preference (Pref).Default := From_String (Default);
-      Register (Manager, Name, Label, Page, Doc, Pref, Priority);
+      Register (Manager, Path, Name, Label, Doc, Pref, Priority);
       return Color_Preference (Pref);
    end Create;
 
@@ -1050,7 +999,8 @@ package body Default_Preferences is
 
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc          : String;
       Default                   : String;
       Priority                  : Integer := -1)
       return Font_Preference
@@ -1074,7 +1024,7 @@ package body Default_Preferences is
       end if;
 
       Font_Preference (Pref).Default := From_Multi_String (Default);
-      Register (Manager, Name, Label, Page, Doc, Pref, Priority);
+      Register (Manager, Path, Name, Label, Doc, Pref, Priority);
       return Font_Preference (Pref);
    end Create;
 
@@ -1084,7 +1034,8 @@ package body Default_Preferences is
 
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc          : String;
       Default_Font              : String;
       Default_Fg                : String;
       Default_Bg                : String;
@@ -1102,7 +1053,7 @@ package body Default_Preferences is
       Result.Font_Descr := From_Multi_String (Default_Font);
       Result.Font_Default := Copy (Result.Font_Descr);
 
-      Register (Manager, Name, Label, Page, Doc, Result, Priority);
+      Register (Manager, Path, Name, Label, Doc, Result, Priority);
       return Result;
    end Create;
 
@@ -1112,7 +1063,8 @@ package body Default_Preferences is
 
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc          : String;
       Base                      : Style_Preference;
       Default_Variant           : Variant_Enum;
       Default_Fg                : String;
@@ -1132,7 +1084,7 @@ package body Default_Preferences is
       Result.Default_Variant := Default_Variant;
       Result.Base_Font := Base;
 
-      Register (Manager, Name, Label, Page, Doc, Result, Priority);
+      Register (Manager, Path, Name, Label, Doc, Result, Priority);
       return Result;
    end Create;
 
@@ -1142,7 +1094,8 @@ package body Default_Preferences is
 
    function Create
      (Manager                : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc : String;
+      Path                   : Preference_Path;
+      Name, Label, Doc       : String;
       Priority               : Integer := -1)
       return Theme_Preference
    is
@@ -1284,7 +1237,7 @@ package body Default_Preferences is
          Ret.Current := Ret.Themes'First;
       end if;
 
-      Register (Manager, Name, Label, Page, Doc, Ret, Priority);
+      Register (Manager, Path, Name, Label, Doc, Ret, Priority);
 
       return Ret;
    end Create;
@@ -1309,9 +1262,9 @@ package body Default_Preferences is
            (String_Preference'
               (Create
                    (Manager => Self,
+                    Path    => "",
                     Name    => Name,
                     Label   => Name,
-                    Page    => "",
                     Doc     => "",
                     Default => "")));
       else
@@ -1381,24 +1334,41 @@ package body Default_Preferences is
       Name             : String;
       Page             : not null Preferences_Page;
       Priority         : Integer := -1;
+      Page_Type        : Preferences_Page_Type := Visible_Page;
       Replace_If_Exist : Boolean := False) is
    begin
       --  Set the page's attributes
       Free (Page.Name);
 
       if Name /= "" and then Name /= "/" then
-         Page.Page_Type := Visible_Page;
+         Page.Page_Type := Page_Type;
          Page.Name := new String'(Name);
       else
+         --  Enforce the page's type to Hidden_Page in case of an empty name
          Page.Page_Type := Hidden_Page;
       end if;
 
       Page.Priority := Priority;
 
-      --  Insert the page
-      Insert_Page (Pages            => Self.Pages,
-                   Page             => Page,
-                   Replace_If_Exist => Replace_If_Exist);
+      --  If Name refers to a root page
+      if Is_Root_Page (Name) then
+         Insert_Page (Pages            => Self.Pages,
+                      Page             => Page,
+                      Replace_If_Exist => Replace_If_Exist);
+      else
+         --  Get (or create) the root page and insert Page
+         declare
+            Root_Page_Name : constant String := Get_Root_Page (Name);
+            Root_Page      : constant Preferences_Page :=
+                               Self.Get_Registered_Page
+                                 (Name             => Root_Page_Name,
+                                  Create_If_Needed => True);
+         begin
+            Insert_Page (Pages            => Root_Page.Subpages,
+                         Page             => Page,
+                         Replace_If_Exist => Replace_If_Exist);
+         end;
+      end if;
    end Register_Page;
 
    -------------------------
@@ -1407,47 +1377,44 @@ package body Default_Preferences is
 
    function Get_Registered_Page
      (Self             : not null access Preferences_Manager_Record'Class;
-      Name             : String;
+      Name             : Preferences_Page_Name;
       Create_If_Needed : Boolean := False) return Preferences_Page
    is
-      Page : Preferences_Page;
+      Page        : Preferences_Page;
+      Actual_Name : constant String := Append_Dir_Delimitor_If_Needed (Name);
    begin
       --  If Name refers to a root page
       if Is_Root_Page (Name) then
-         Page := Find_Page (Self.Pages, Name);
-
-         --  If a page has already been registered, return it
-         if Page /= null then
-            return Page;
-         elsif Create_If_Needed then
-            --  Create a new default root page and register it
-            Page := new Default_Preferences_Page_Record;
-            Self.Register_Page (Name             => Name,
-                                Page             => Page);
-         end if;
-
-         return Page;
+         Page := Find_Page (Self.Pages, Actual_Name);
       else
          declare
-            Root_Page_Name : constant String := Get_Root_Page (Name);
+            Root_Page_Name : constant String := Get_Root_Page (Actual_Name);
             Root_Page      : constant Preferences_Page :=
                                Self.Get_Registered_Page
                                  (Name             => Root_Page_Name,
                                   Create_If_Needed => Create_If_Needed);
          begin
-            --  If Create_If_Needed = False and if no page has been registered
-            --  for Root_Page_Name
+            --  If Create_If_Needed is False and no root page has been found
+            --  for the given page name, return null.
             if Root_Page = null then
                return null;
             end if;
 
-            Page := Root_Page.Get_Registered_Subpage
-              (Name             => Name,
-               Create_If_Needed => Create_If_Needed);
-
-            return Page;
+            Page := Find_Page (Root_Page.Subpages, Actual_Name);
          end;
       end if;
+
+      --  If a page has already been registered, return it
+      if Page /= null then
+         return Page;
+      elsif Create_If_Needed then
+         --  Create and register a default page if Create_If_Needed is True
+         Page := new Default_Preferences_Page_Record;
+         Self.Register_Page (Name             => Actual_Name,
+                             Page             => Page);
+      end if;
+
+      return Page;
    end Get_Registered_Page;
 
    --------------
@@ -1456,7 +1423,8 @@ package body Default_Preferences is
 
    procedure Register
      (Manager                : not null access Preferences_Manager_Record;
-      Name, Label, Path, Doc : String;
+      Path                   : Preference_Path;
+      Name, Label, Doc       : String;
       Pref                   : not null access Preference_Record'Class;
       Priority               : Integer := -1)
    is

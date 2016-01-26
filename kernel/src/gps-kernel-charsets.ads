@@ -38,7 +38,8 @@ package GPS.Kernel.Charsets is
 
    function Create
      (Manager                   : access Preferences_Manager_Record'Class;
-      Name, Label, Page, Doc    : String;
+      Path                      : Preference_Path;
+      Name, Label, Doc          : String;
       Default                   : String)
       return Charset_Preference;
    --  Create a new preference representing a charset

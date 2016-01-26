@@ -585,9 +585,9 @@ package body Coverage_GUI is
    begin
       Coverage_Toolchain_Preference := Coverage_Toolchain_Preferences.Create
           (Kernel.Get_Preferences,
-           "Coverage-Toolchain",
+           Name  => "Coverage-Toolchain",
            Label => "Coverage toolchain",
-           Page  => "Coverage Analysis",
+           Path  => "Coverage Analysis",
            Doc   => -"Select the toolchain to perform coverage analysis.",
            Default => Gcov);
    end Register_Module;

@@ -532,11 +532,12 @@ package body Startup_Module is
          Plugin_Page.Doc := Get_Plugin_Doc (File);
 
          --  Register the plugin subpage.
-         Root_Page.Register_Subpage
-           (Subpage          => Preferences_Page (Plugin_Page),
-            Subpage_Name     => Page_Name,
-            Replace_If_Exist => True,
-            Subpage_Type     => Integrated_Page);
+         Kernel.Get_Preferences.Register_Page
+           (Name             => Page_Name,
+            Page             => Preferences_Page (Plugin_Page),
+            Priority         => -2,
+            Page_Type        => Integrated_Page,
+            Replace_If_Exist => True);
       end Register_Plugin_Preferences_Page;
 
    begin
