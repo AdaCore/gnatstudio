@@ -841,7 +841,8 @@ package body GPS.Kernel.Entities is
                   Local_File         => File_Information (Context.Context),
                   All_From_Same_File => False,
                   Filter             => Filter,
-                  Show_Caller        => True);
+                  Show_Caller        => True,
+                  Include_Overriding => True);
             end if;
             return Commands.Success;
          end;
