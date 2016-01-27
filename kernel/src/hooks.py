@@ -1129,7 +1129,7 @@ package body GPS.Kernel.Hooks is
             subst['func_proc_or_func'] = 'procedure'
             subst['func_returns'] = ''
             subst['ada_call'] = '''
-               %(name)s_Function'Class (F.Func.all).Execute
+               %(name)s_Function'Class (F.all).Execute
                   (Kernel%(plist)s);''' % subst
         else:
             subst['func_proc_or_func'] = 'function'
@@ -1142,7 +1142,7 @@ package body GPS.Kernel.Hooks is
             subst['ada_call'] = '''
                declare
                   Tmp : constant %(func_return_type)s := %(name)s_Function'Class
-                     (F.Func.all).Execute (Kernel%(plist)s);
+                     (F.all).Execute (Kernel%(plist)s);
                begin
                   if Active (Me) then
                      Decrease_Indent (Me);
@@ -1243,10 +1243,10 @@ package body GPS.Kernel.Hooks is
        Last  : Boolean := True;
        Watch : access Glib.Object.GObject_Record'Class := null);
    %(run_proc_or_func)s %(run_name)s
-      (Self   : %(name)s;
+      (Self   : in out %(name)s;
        Kernel : not null access Kernel_Handle_Record'Class%(params)s)%(returns_run)s;
    overriding procedure Run_From_Python
-      (Self : %(name)s; Data : in out Callback_Data'Class);%(param_descr)s
+      (Self : in out %(name)s; Data : in out Callback_Data'Class);%(param_descr)s
 ''' % subst)
 
         # Output body
@@ -1270,27 +1270,37 @@ package body GPS.Kernel.Hooks is
    ---------
 
    %(run_proc_or_func)s %(run_name)s
-      (Self   : %(name)s;
+      (Self   : in out %(name)s;
        Kernel : not null access Kernel_Handle_Record'Class%(params)s)%(returns_run)s
    is
       use Hook_Func_Lists;
-      C : Hook_Func_Lists.Cursor := Self.Funcs.First;
+
+      List : array (1 .. Natural (Self.Funcs.Length)) of
+        access Hook_Function'Class;
+      Last : Natural := 0;
    begin
       if Active (Me) then
          Increase_Indent (Me, "Run " & Name (Self));
       end if;
 
       --  One of the issues here is that running a hook could add or remove
-      --  a function from Self.Funcs. We use an explicit cursor to compensate
-      while Has_Element (C) loop
-         declare
-            F : constant Hook_Func_Info := Element (C);
+      --  a function from Self.Funcs. We use an explicit copy to compensate
+
+      for J of Self.Funcs loop
+         Last := Last + 1;
+         List (Last) := J.Func;
+         List (Last).Refcount := List (Last).Refcount + 1;
+      end loop;
+
+      for F of List loop
          begin
-            Next (C);   --  in case the list is modified
-            if F.Func.all in Python_Hook_Function'Class then
+            if F.Refcount = 1 then
+                --  Skip already deleted hooks
+                null;
+            elsif F.all in Python_Hook_Function'Class then
                declare
                   F2 : constant Subprogram_Type :=
-                     Python_Hook_Function (F.Func.all).Func;
+                     Python_Hook_Function (F.all).Func;
                   Data : Callback_Data'Class :=
                      F2.Get_Script.Create (Arguments_Count => %(pcount)s);
                begin%(pset)s%(run_body)s
@@ -1300,8 +1310,14 @@ package body GPS.Kernel.Hooks is
          exception
             when E : others =>
                Trace (Me, E, "While running "
-                  & Name (Self) & ":" & Name (F.Func));
+                  & Name (Self) & ":" & Name (F));
          end;
+      end loop;
+
+      for J of List loop
+         if J.Refcount = 1 then
+            Remove_Hook_Func (Self, J);
+         end if;
       end loop;%(run_exit)s%(returns_body)s
    end %(run_name)s;
 
@@ -1310,7 +1326,7 @@ package body GPS.Kernel.Hooks is
    ---------------------
 
    overriding procedure Run_From_Python
-      (Self : %(name)s; Data : in out Callback_Data'Class)
+      (Self : in out %(name)s; Data : in out Callback_Data'Class)
    is
       K : constant Kernel_Handle := Get_Kernel (Data);
    begin

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2015, AdaCore                     --
+--                     Copyright (C) 2001-2016, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -572,7 +572,7 @@ package GPS.Kernel is
    --  This name is only useful when creating new hooks from python.
 
    procedure Run_From_Python
-      (Self  : Hook_Types;
+      (Self  : in out Hook_Types;
        Data  : in out GNATCOLL.Scripts.Callback_Data'Class) is null;
    --  This procedure is called when a python scripts "run"s a hook from
    --  python. It is responsible for decoding the parameters (encoded in
@@ -1054,6 +1054,13 @@ private
    --  Add a new callback to the hook.
    --  This function should not be used directly, use the specific Add
    --  function for each hook, which checks the function has the right profile
+
+   procedure Remove_Hook_Func
+      (Self  : in out Hook_Types'Class;
+       Func  : not null access Hook_Function'Class);
+   --  Delete Func from the hook.
+   --  This also frees the corresponding function, unless it is attached to
+   --  multiple hooks.
 
    type Location_Marker_Record is abstract tagged null record;
 
