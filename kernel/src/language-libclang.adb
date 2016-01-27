@@ -1314,7 +1314,7 @@ package body Language.Libclang is
          Label        => "Cache size",
          Doc          =>
            "The number of compilation units clang will keep in memory",
-         Page         => "Editor/C & C++:Clang advanced settings",
+         Path         => "Editor/C & C++:Clang advanced settings",
          Default      => 8, Minimum => 1, Maximum => 128);
 
       Nb_Tasks_Preference := Default_Preferences.Create
@@ -1323,7 +1323,7 @@ package body Language.Libclang is
          Label        => "Parsing tasks count",
          Doc          =>
            "The number of concurrent tasks GPS will use to parse files",
-         Page         => "Editor/C & C++:Clang advanced settings",
+         Path         => "Editor/C & C++:Clang advanced settings",
          Default      => Max_Nb_Tasks,
 
          --  The minimum number of task is of two because we want at least
