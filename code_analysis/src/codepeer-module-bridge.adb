@@ -156,7 +156,9 @@ package body CodePeer.Module.Bridge is
            (Command_File_Name,
             Output_Directory,
             Reply_File_Name,
-            Status_File_Name);
+            Status_File_Name,
+            Format_Version'Min
+              (Module.Version_Limit, Supported_Format_Version'Last));
 
          Module.Action := Load_Bridge_Results;
          Module.Inspection_File := Reply_File_Name;
