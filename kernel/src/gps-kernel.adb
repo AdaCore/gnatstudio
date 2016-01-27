@@ -1953,13 +1953,25 @@ package body GPS.Kernel is
    is
       pragma Unreferenced (Obj);
       D : Hook_User_Data_Access := Convert (Data);
-      function If_Matches
-         (F : not null access Hook_Function'Class) return Boolean
-         is (F = D.Func);
    begin
-      D.Hook.Remove (If_Matches'Access);
+      D.Hook.Remove_Hook_Func (D.Func);
       Unchecked_Free (D);
    end Remove_Hook_Cb;
+
+   ----------------------
+   -- Remove_Hook_Func --
+   ----------------------
+
+   procedure Remove_Hook_Func
+      (Self  : in out Hook_Types'Class;
+       Func  : not null access Hook_Function'Class)
+   is
+      function If_Matches
+         (F : not null access Hook_Function'Class) return Boolean
+         is (F = Func);
+   begin
+      Self.Remove (If_Matches'Access);
+   end Remove_Hook_Func;
 
    -------------------
    -- Add_Hook_Func --
