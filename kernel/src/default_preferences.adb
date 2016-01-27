@@ -1342,7 +1342,7 @@ package body Default_Preferences is
 
       if Name /= "" and then Name /= "/" then
          Page.Page_Type := Page_Type;
-         Page.Name := new String'(Name);
+         Page.Name := new String'(Append_Dir_Delimitor_If_Needed (Name));
       else
          --  Enforce the page's type to Hidden_Page in case of an empty name
          Page.Page_Type := Hidden_Page;

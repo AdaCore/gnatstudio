@@ -64,10 +64,13 @@ package body GPS.Kernel.Preferences_Views is
    --  for the advanced preferences page, containing all the hidden
    --  preferences.
 
-   Page_Name_Column  : constant := 0;
-   --  Column where the page name is stored in the model.
+   Page_Name_Column     : constant := 0;
+   --  Column where the displayed page name  is stored in the model.
 
-   Page_Index_Column : constant := 1;
+   Page_Full_Name_Colum : constant := 1;
+   --  Column where the page's full name is stored in the model.
+
+   Page_Index_Column    : constant := 2;
    --  Column where the notebook page index is stored in the model.
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
@@ -550,6 +553,36 @@ package body GPS.Kernel.Preferences_Views is
          --  Get the newly selected page index from the model and set it as the
          --  current page to display for the notebook.
          Page_Index := Get_Int (M, Iter, Page_Index_Column);
+
+         --  If this page has not been appended to the notebook yet, create its
+         --  widget, append it to the notebook, and set its index in the model.
+         if Page_Index = -1 then
+            declare
+               Manager    :  constant Preferences_Manager :=
+                              Pref_View.Kernel.Get_Preferences;
+               Page_Name  : constant String :=
+                              Get_String (M, Iter, Page_Full_Name_Colum);
+               Page       : constant Preferences_Page :=
+                              Manager.Get_Registered_Page (Page_Name);
+               Page_View  : constant Gtk_Widget := Page.Get_Widget (Manager);
+               Child_Iter : Gtk_Tree_Iter;
+            begin
+               Page_Index := Pref_View.Pages_Notebook.Get_N_Pages;
+
+               --  Convert the Gtk_Tree_Iter rerieved from teh filter model
+               --  so that it can be used by the child model (Gtk_Tree_Store).
+               Pref_View.Filter.Convert_Iter_To_Child_Iter
+                 (Child_Iter  => Child_Iter,
+                  Filter_Iter => Iter);
+               Pref_View.Model.Set
+                 (Child_Iter, Page_Index_Column, Page_Index);
+
+               --  Show the newly created page view
+               Page_View.Show_All;
+               Pref_View.Pages_Notebook.Append_Page (Page_View, null);
+            end;
+         end if;
+
          Pref_View.Pages_Notebook.Set_Current_Page
            (Page_Index);
       end if;
@@ -641,7 +674,9 @@ package body GPS.Kernel.Preferences_Views is
                Editor.Model.Set
                  (Child, Page_Name_Column, Page_Name (First .. Last - 1));
                Editor.Model.Set
-                 (Child, Page_Index_Column, Editor.Pages_Notebook.Get_N_Pages);
+                 (Child, Page_Full_Name_Colum, Page_Name);
+               Editor.Model.Set
+                 (Child, Page_Index_Column, -1);
             else
                return False;
             end if;
@@ -724,8 +759,9 @@ package body GPS.Kernel.Preferences_Views is
                        Shrink => False);
 
       --  Create the pages tree view and add it to its parent scrolled window
-      Gtk_New (Self.Model, (Page_Name_Column  => GType_String,
-                            Page_Index_Column => GType_Int));
+      Gtk_New (Self.Model, (Page_Name_Column     => GType_String,
+                            Page_Full_Name_Colum => GType_String,
+                            Page_Index_Column    => GType_Int));
       Gtk_New (Self.Filter, +Self.Model);
       GPS_Preferences_Editor_Visible_Funcs.Set_Visible_Func
         (Self.Filter, Is_Advanced_Page_Visible'Access, Self);
@@ -761,8 +797,6 @@ package body GPS.Kernel.Preferences_Views is
                                              Page_Iter        => Page_Iter,
                                              Page_Name        => Page.Get_Name,
                                              Create_If_Needed => True);
-               Self.Pages_Notebook.Append_Page
-                 (Page.Get_Widget (Manager), null);
 
                --  Store a reference to the preferences dialog default page
                --  (i.e: the first visible page that we register in the model).
@@ -775,8 +809,6 @@ package body GPS.Kernel.Preferences_Views is
                   Page_Iter        => Page_Iter,
                   Page_Name        => Advanced_Page_Name,
                   Create_If_Needed => True);
-               Self.Pages_Notebook.Append_Page
-                 (Page.Get_Widget (Manager), null);
             when others =>
                null;
          end case;
