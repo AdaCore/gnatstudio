@@ -25,6 +25,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P128-011 GPS: key shortcuts not working on read-only editors
+
+  Problem:    Using key shortcuts based on 'control' and a character
+              (for instance control-a for "select all") do not work on
+              readonly editors.
+
+  Status:     This was fixed in 17.0 on 2016-01-28
+
+  Workaround: Make the editor temporarily writable by clicking on the
+              icon in the bottom-right corner.
+
 KP-62-P113-013 GPS: cannot display standard.ads on cross platform
 
   Problem:    When the system is configured for a cross or bareboard platform,
