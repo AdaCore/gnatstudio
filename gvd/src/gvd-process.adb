@@ -1957,13 +1957,19 @@ package body GVD.Process is
             Buttons : Message_Dialog_Buttons;
             pragma Unreferenced (Buttons);
          begin
-            Buttons := Message_Dialog
-              (Msg =>
-               -"The executable specified with --debug does not exist on disk",
-               Dialog_Type => Error,
-               Buttons => Button_OK,
-               Title =>  -"Executable not found",
-               Parent => Get_Main_Window (Kernel));
+            if Active (Testsuite_Handle) then
+               GNATCOLL.Traces.Trace
+                 (Testsuite_Handle, "executable passed to --debug not found");
+            else
+               Buttons := Message_Dialog
+                 (Msg =>
+                    -("The executable specified with" &
+                      " --debug does not exist on disk"),
+                  Dialog_Type => Error,
+                  Buttons => Button_OK,
+                  Title =>  -"Executable not found",
+                  Parent => Get_Main_Window (Kernel));
+            end if;
          end;
       end if;
 
