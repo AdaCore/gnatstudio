@@ -27,13 +27,15 @@ package CodePeer.Bridge.Audit_Trail_Readers is
    procedure Parse
      (Self     : in out Reader;
       Input    : in out Input_Sources.Input_Source'Class;
-      Audit_V3 : out CodePeer.Audit_V3_Vectors.Vector);
+      Messages : CodePeer.Message_Maps.Map);
+   --  Parses data file and fill audit trail for mentioned messages.
 
 private
 
    type Reader is new Sax.Readers.Reader with record
       Version         : Supported_Format_Version;
-      Audit_V3        : CodePeer.Audit_V3_Vectors.Vector;
+      Messages        : access constant CodePeer.Message_Maps.Map;
+      Message         : CodePeer.Message_Access;
       Audit_Record_V3 : CodePeer.Audit_Record_V3_Access;
    end record;
 

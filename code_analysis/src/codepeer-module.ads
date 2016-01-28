@@ -139,6 +139,8 @@ private
       Output_Directory       : GNATCOLL.VFS.Virtual_File;
       --  CodePeer's output directory for root project.
       Tree                   : Code_Analysis.Code_Analysis_Tree;
+      Messages               : CodePeer.Message_Maps.Map;
+      --  Maps of message identifiers to messages.
       Race_Category          : CodePeer.Message_Category_Access;
       Has_Backtraces         : Boolean := False;
       Report_Subwindow       : Codepeer_Child;

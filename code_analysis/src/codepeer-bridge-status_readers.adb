@@ -53,7 +53,7 @@ package body CodePeer.Bridge.Status_Readers is
       Input    : in out Input_Sources.Input_Source'Class;
       Messages : CodePeer.Message_Maps.Map) is
    begin
-      Self.Messages := Messages;
+      Self.Messages := Messages'Unchecked_Access;
       Self.Parse (Input);
    end Parse;
 
@@ -100,7 +100,7 @@ package body CodePeer.Bridge.Status_Readers is
       elsif Qname = Message_Tag then
          declare
             Message : constant Message_Access :=
-              Self.Messages
+              Self.Messages.all
                 (Natural'Value (Attrs.Get_Value (Identifier_Attribute)));
 
          begin

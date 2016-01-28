@@ -168,6 +168,7 @@ package body CodePeer.Bridge.Inspection_Readers is
       Self.Ignore_Depth    := 0;
       Self.Projects        := new Code_Analysis.Project_Maps.Map;
       Self.Root_Inspection := new CodePeer.Project_Data;
+      Self.Messages        := Messages'Unchecked_Access;
       Self.Message_Categories.Clear;
       Self.Messages.Clear;
       Root_Project :=
@@ -180,7 +181,6 @@ package body CodePeer.Bridge.Inspection_Readers is
 
       Tree          := Self.Projects;
       Version       := Self.Version;
-      Messages      := Self.Messages;
       Race_Category := Self.Race_Category;
    end Parse;
 

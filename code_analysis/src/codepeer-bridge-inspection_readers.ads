@@ -81,7 +81,7 @@ private
       Subprogram_Data       : CodePeer.Subprogram_Data_Access;
       Object_Race           : CodePeer.Object_Race_Information;
       Object_Accesses       : CodePeer.Entry_Point_Object_Access_Information;
-      Messages              : CodePeer.Message_Maps.Map;
+      Messages              : access CodePeer.Message_Maps.Map;
       Current_Message       : CodePeer.Message_Access;
       Race_Category         : CodePeer.Message_Category_Access;
    end record;

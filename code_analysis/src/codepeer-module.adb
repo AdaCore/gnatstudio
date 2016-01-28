@@ -691,10 +691,7 @@ package body CodePeer.Module is
       Inspection_File  : Virtual_File;
       Status_File      : Virtual_File;
       Bts_Directory    : Virtual_File;
-      Output_Directory : Virtual_File)
-   is
-      Messages : CodePeer.Message_Maps.Map;
-
+      Output_Directory : Virtual_File) is
    begin
       if Self.Report_Subwindow /= null then
          --  Destroy old report window if present
@@ -727,7 +724,7 @@ package body CodePeer.Module is
               (Input,
                GPS.Kernel.Kernel_Handle (Self.Kernel),
                Self.Tree,
-               Messages,
+               Self.Messages,
                Self.Version,
                Self.Race_Category);
             Input_Sources.File.Close (Input);
@@ -743,7 +740,7 @@ package body CodePeer.Module is
 
                begin
                   Input_Sources.File.Open (+Status_File.Full_Name, Input);
-                  Reader.Parse (Input, Messages);
+                  Reader.Parse (Input, Self.Messages);
                   Input_Sources.File.Close (Input);
                end;
 
@@ -1277,9 +1274,8 @@ package body CodePeer.Module is
          --  Load inspection information
 
          Input_Sources.File.Open (+File.Full_Name, Input);
-         Reader.Parse (Input, Message.Audit_V3);
+         Reader.Parse (Input, Self.Messages);
          Input_Sources.File.Close (Input);
-         Message.Audit_Loaded := True;
          Module.Review_Message (Message);
 
       else

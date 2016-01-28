@@ -35,7 +35,7 @@ private
       Ignore_Depth : Natural := 0;
       --  Depth of ignore of nested XML elements to be able to load data files
       --  of newer version when GPS module supports.
-      Messages     : CodePeer.Message_Maps.Map;
+      Messages     : access constant CodePeer.Message_Maps.Map;
    end record;
 
    overriding procedure Start_Element

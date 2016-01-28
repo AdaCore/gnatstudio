@@ -49,7 +49,7 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
 
    begin
       if Qname = Audit_Tag then
-         Self.Audit_V3.Append (Self.Audit_Record_V3);
+         Self.Message.Audit_V3.Append (Self.Audit_Record_V3);
          Self.Audit_Record_V3 := null;
       end if;
    end End_Element;
@@ -61,15 +61,13 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
    procedure Parse
      (Self     : in out Reader;
       Input    : in out Input_Sources.Input_Source'Class;
-      Audit_V3 : out CodePeer.Audit_V3_Vectors.Vector) is
+      Messages : CodePeer.Message_Maps.Map) is
    begin
-      Self.Audit_V3.Clear;
+      Self.Messages := Messages'Unchecked_Access;
       Self.Audit_Record_V3 := null;
       Self.Version := Supported_Format_Version'First;
 
       Self.Parse (Input);
-
-      Audit_V3 := Self.Audit_V3;
    end Parse;
 
    -------------------
@@ -88,6 +86,9 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
    begin
       if Qname = Audit_Trail_Tag then
          Self.Version := Format_Version'Value (Attrs.Get_Value ("format"));
+         Self.Message :=
+           Self.Messages.all (Integer'Value (Attrs.Get_Value ("message")));
+         Self.Message.Audit_Loaded := True;
 
       elsif Qname = Audit_Tag then
          Self.Audit_Record_V3 :=
