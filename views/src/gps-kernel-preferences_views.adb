@@ -515,8 +515,17 @@ package body GPS.Kernel.Preferences_Views is
         (Self, Page_Iter, Page_Name);
 
       if Page_Found then
-         return Self.Pages_Notebook.Get_Nth_Page
-           (Get_Int (Self.Model, Page_Iter, Page_Index_Column));
+         declare
+            Page_Index : constant Gint :=
+                           Get_Int (Self.Model, Page_Iter, Page_Index_Column);
+         begin
+            --  If the page has not been rendered yet, return null
+            if Page_Index = -1 then
+               return null;
+            else
+               return Self.Pages_Notebook.Get_Nth_Page (Page_Index);
+            end if;
+         end;
       end if;
 
       return null;
