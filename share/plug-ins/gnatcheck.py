@@ -222,9 +222,9 @@ class gnatCheckProc:
         if self.gnatCmd == "":
             GPS.Console("Messages").write("Error: could not find gnatcheck")
             return
-        # launch gnat check with root project
+        # launch gnat check with specified project
         cmd = self.gnatCmd + ' check -P """' + \
-            GPS.Project.root().file().name("Tools_Server") + '"""'
+            project.file().name("Tools_Server") + '"""'
 
         # also analyse subprojects ?
         if recursive:
@@ -270,7 +270,7 @@ class gnatCheckProc:
 
     def check_file(self, file):
         try:
-            self.internalSpawn(file.name("Tools_Server"), file.project())
+            self.internalSpawn(file.name("Tools_Server"), GPS.Project.root())
         except:
             GPS.Console("Messages").write(
                 "Unexpected exception in gnatcheck.py:\n%s\n" % (
@@ -281,7 +281,7 @@ class gnatCheckProc:
             filestr = ""
             for f in files:
                 filestr += '"""' + f.name("Tools_Server") + '""" '
-            self.internalSpawn(filestr, files[0].project())
+            self.internalSpawn(filestr, GPS.Project.root())
         except:
             GPS.Console("Messages").write(
                 "Unexpected exception in gnatcheck.py:\n%s\n" % (

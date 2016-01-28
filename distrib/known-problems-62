@@ -200,6 +200,17 @@ KP-62-O820-024 GPS: debugging aggregated projects
   Workaround: Initialize the debugger with no main unit, and manually type
               'file <exec_name>' in the debugger console.
 
+KP-62-O723-009 GPS: specifying project for coding standard
+
+  Problem:    The contextual menu "check coding standards" works on
+              the root project rather than the selected project.
+
+  Status:     This was fixed in 17.0 on 2016-01-28
+
+  Workaround: Edit the gnatcheck.py file manually. Replace
+              GPS.Project.root().file().name("Tools_Server") + '"""' by
+              project.file().name("Tools_Server") + '"""'
+
 KP-62-O326-012 GPS: C rename refactoring
 
   Problem:    Rename refactoring was not working in C/C++

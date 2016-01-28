@@ -206,8 +206,9 @@ package body Switches_Chooser.Gtkada is
      (Pop    : access Gtk_Widget_Record'Class;
       Data   : Switch_Data)
    is
-      Dialog : Gtk_Dialog;
-      Table  : Gtk_Table;
+      Dialog   : Gtk_Dialog;
+      Scrolled : Gtk_Scrolled_Window;
+      Table    : Gtk_Table;
       Config   : constant Switches_Editor_Config := Get_Config (Data.Editor);
       S        : constant Switch_Description :=
         Element (Config.Switches, Popup_Button (Pop).Switch);
@@ -226,13 +227,18 @@ package body Switches_Chooser.Gtkada is
                Parent => Gtk_Window (Get_Toplevel (Data.Editor)),
                Flags  => Flags);
       Set_Sensitive (Pop, False);
+      Dialog.Set_Default_Size (600, 400);
+
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Never, Policy_Automatic);
+      Pack_Start (Get_Content_Area (Dialog), Scrolled);
 
       Gtk_New
         (Table,
          Rows        => Guint (S.Lines),
          Columns     => Guint (S.Columns),
          Homogeneous => False);
-      Pack_Start (Get_Content_Area (Dialog), Table);
+      Scrolled.Add (Table);
       Create_Box_For_Popup
         (Editor    => Data.Editor,
          Popup     => S.To_Popup,

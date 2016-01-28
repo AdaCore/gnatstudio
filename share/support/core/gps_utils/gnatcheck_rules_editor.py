@@ -283,7 +283,7 @@ class rulesEditor(Gtk.Dialog):
             + 'columns="1">%s</tool>' % (xml))
         self.SwitchesChooser = GPS.SwitchesChooser("Gnatcheck", xml)
         self.switchvbox.pack_start(
-            self.SwitchesChooser.pywidget(), False, False, 0)
+            self.SwitchesChooser.pywidget(), True, True, 0)
         self.show_all()
 
         # Save - Cancel buttons
