@@ -32,7 +32,7 @@ package CodePeer is
    type Format_Version is new Positive;
    --  Version of format of interchange files.
 
-   subtype Supported_Format_Version is Format_Version range 3 .. 3;
+   subtype Supported_Format_Version is Format_Version range 3 .. 4;
    --  Range of suppoted versions of format of interchange file.
 
    ----------------

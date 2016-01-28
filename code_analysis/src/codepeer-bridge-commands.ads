@@ -51,4 +51,11 @@ package CodePeer.Bridge.Commands is
    --  Generates command file for add audit record to the database using
    --  version 3 of interchange format.
 
+   procedure Add_Audit_Record_V4
+     (Command_File_Name : Virtual_File;
+      Output_Directory  : Virtual_File;
+      Messages          : Message_Vectors.Vector);
+   --  Generates command file for add audit record to the database using
+   --  version 4 of interchange format.
+
 end CodePeer.Bridge.Commands;

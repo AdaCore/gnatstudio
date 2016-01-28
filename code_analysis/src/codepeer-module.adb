@@ -730,28 +730,26 @@ package body CodePeer.Module is
             Input_Sources.File.Close (Input);
          end;
 
-         if Self.Version = 3 then
-            --  Load messages' review status data.
+         --  Load messages' review status data.
 
-            if Status_File.Is_Regular_File then
-               declare
-                  Input   : Input_Sources.File.File_Input;
-                  Reader  : CodePeer.Bridge.Status_Readers.Reader;
+         if Status_File.Is_Regular_File then
+            declare
+               Input  : Input_Sources.File.File_Input;
+               Reader : CodePeer.Bridge.Status_Readers.Reader;
 
-               begin
-                  Input_Sources.File.Open (+Status_File.Full_Name, Input);
-                  Reader.Parse (Input, Self.Messages);
-                  Input_Sources.File.Close (Input);
-               end;
+            begin
+               Input_Sources.File.Open (+Status_File.Full_Name, Input);
+               Reader.Parse (Input, Self.Messages);
+               Input_Sources.File.Close (Input);
+            end;
 
-               Self.Has_Backtraces := Bts_Directory.Is_Directory;
+            Self.Has_Backtraces := Bts_Directory.Is_Directory;
 
-            else
-               Self.Kernel.Insert
-                 (Status_File.Display_Full_Name &
-                  (-" does not exist. Review information is absent."),
-                  Mode => GPS.Kernel.Error);
-            end if;
+         else
+            Self.Kernel.Insert
+              (Status_File.Display_Full_Name &
+               (-" does not exist. Review information is absent."),
+               Mode => GPS.Kernel.Error);
          end if;
 
          --  Create codepeer report window

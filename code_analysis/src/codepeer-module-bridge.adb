@@ -62,6 +62,7 @@ package body CodePeer.Module.Bridge is
       Command_File_Name : Virtual_File;
       Success           : Boolean;
       Ids               : Natural_Sets.Set;
+      All_Messages      : Message_Vectors.Vector;
       pragma Warnings (Off, Success);
 
    begin
@@ -75,16 +76,31 @@ package body CodePeer.Module.Bridge is
 
       --  Generate command file
 
-      Ids.Insert (Message.Id);
-      Ids.Union (Message.Merged);
+      case Module.Version is
+         when 3 =>
+            Ids.Insert (Message.Id);
+            Ids.Union (Message.Merged);
 
-      CodePeer.Bridge.Commands.Add_Audit_Record_V3
-        (Command_File_Name,
-         Codepeer_Output_Directory (Module.Kernel),
-         Ids,
-         Message.Audit_V3.First_Element.Status,
-         Message.Audit_V3.First_Element.Approved_By,
-         Message.Audit_V3.First_Element.Comment);
+            CodePeer.Bridge.Commands.Add_Audit_Record_V3
+              (Command_File_Name,
+               Codepeer_Output_Directory (Module.Kernel),
+               Ids,
+               Message.Audit_V3.First_Element.Status,
+               Message.Audit_V3.First_Element.Approved_By,
+               Message.Audit_V3.First_Element.Comment);
+
+         when 4 =>
+            All_Messages.Append (Message);
+
+            for Id of Message.Merged loop
+               All_Messages.Append (Module.Messages (Id));
+            end loop;
+
+            CodePeer.Bridge.Commands.Add_Audit_Record_V4
+              (Command_File_Name,
+               Codepeer_Output_Directory (Module.Kernel),
+               All_Messages);
+      end case;
 
       Module.Action := None;
       Run_GPS_Codepeer_Bridge (Module, Command_File_Name);

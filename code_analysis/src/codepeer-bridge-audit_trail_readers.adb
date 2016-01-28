@@ -21,6 +21,7 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
 
    Audit_Trail_Tag : constant String := "audit_trail";
    Audit_Tag       : constant String := "audit";
+   Message_Tag     : constant String := "message";
 
    ----------------
    -- Characters --
@@ -86,8 +87,19 @@ package body CodePeer.Bridge.Audit_Trail_Readers is
    begin
       if Qname = Audit_Trail_Tag then
          Self.Version := Format_Version'Value (Attrs.Get_Value ("format"));
+
+         if Self.Version = 3 then
+            --  Version 3 of interchange format supports requesting data for
+            --  one message only. Obtain identifier of this message.
+
+            Self.Message :=
+              Self.Messages.all (Integer'Value (Attrs.Get_Value ("message")));
+            Self.Message.Audit_Loaded := True;
+         end if;
+
+      elsif Qname = Message_Tag then
          Self.Message :=
-           Self.Messages.all (Integer'Value (Attrs.Get_Value ("message")));
+           Self.Messages.all (Integer'Value (Attrs.Get_Value ("identifier")));
          Self.Message.Audit_Loaded := True;
 
       elsif Qname = Audit_Tag then

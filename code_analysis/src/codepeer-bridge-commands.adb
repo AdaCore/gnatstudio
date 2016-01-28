@@ -19,6 +19,20 @@ with XML_Utils;
 
 package body CodePeer.Bridge.Commands is
 
+   procedure Audit_Trail_V3
+     (Command_File_Name : Virtual_File;
+      Output_Directory  : Virtual_File;
+      Export_File_Name  : Virtual_File;
+      Message_Id        : Positive);
+   --  Generates request of message's audit trail in format version 3.
+
+   procedure Audit_Trail_V4
+     (Command_File_Name : Virtual_File;
+      Output_Directory  : Virtual_File;
+      Export_File_Name  : Virtual_File;
+      Message_Id        : Positive);
+   --  Generates request of messages' audit trail in format version 4.
+
    -------------------------
    -- Add_Audit_Record_V3 --
    -------------------------
@@ -69,6 +83,59 @@ package body CodePeer.Bridge.Commands is
       XML_Utils.Free (Database_Node);
    end Add_Audit_Record_V3;
 
+   -------------------------
+   -- Add_Audit_Record_V4 --
+   -------------------------
+
+   procedure Add_Audit_Record_V4
+     (Command_File_Name : Virtual_File;
+      Output_Directory  : Virtual_File;
+      Messages          : Message_Vectors.Vector)
+   is
+      Database_Node  : XML_Utils.Node_Ptr :=
+                         new XML_Utils.Node'
+                               (Tag    => new String'("database"),
+                                others => <>);
+      Add_Audit_Node : constant XML_Utils.Node_Ptr :=
+                         new XML_Utils.Node'
+                               (Tag    => new String'("add_audit_record"),
+                                others => <>);
+      Message_Node   : XML_Utils.Node_Ptr;
+
+   begin
+      XML_Utils.Set_Attribute (Database_Node, "format", "4");
+      XML_Utils.Set_Attribute
+        (Database_Node, "output_directory", +Output_Directory.Full_Name);
+      --  ??? Potentially non-utf8 string should not be
+      --  stored in an XML attribute.
+      XML_Utils.Add_Child (Database_Node, Add_Audit_Node);
+
+      for Message of Messages loop
+         Message_Node :=
+           new XML_Utils.Node'
+             (Tag    => new String'("message"),
+              Value  =>
+                 new String'
+                       (To_String (Message.Audit_V3.First_Element.Comment)),
+              others => <>);
+         XML_Utils.Set_Attribute
+           (Message_Node, "identifier", Positive'Image (Message.Id));
+         XML_Utils.Set_Attribute
+           (Message_Node,
+            "status",
+            Audit_Status_Kinds'Image (Message.Audit_V3.First_Element.Status));
+         XML_Utils.Set_Attribute
+           (Message_Node,
+            "approved",
+            To_String (Message.Audit_V3.First_Element.Approved_By));
+
+         XML_Utils.Add_Child (Add_Audit_Node, Message_Node);
+      end loop;
+
+      XML_Utils.Print (Database_Node, Command_File_Name);
+      XML_Utils.Free (Database_Node);
+   end Add_Audit_Record_V4;
+
    -----------------
    -- Audit_Trail --
    -----------------
@@ -78,7 +145,34 @@ package body CodePeer.Bridge.Commands is
       Output_Directory  : Virtual_File;
       Export_File_Name  : Virtual_File;
       Message_Id        : Positive;
-      Version           : Supported_Format_Version)
+      Version           : Supported_Format_Version) is
+   begin
+      case Version is
+         when 3 =>
+            Audit_Trail_V3
+              (Command_File_Name,
+               Output_Directory,
+               Export_File_Name,
+               Message_Id);
+
+         when 4 =>
+            Audit_Trail_V4
+              (Command_File_Name,
+               Output_Directory,
+               Export_File_Name,
+               Message_Id);
+      end case;
+   end Audit_Trail;
+
+   --------------------
+   -- Audit_Trail_V3 --
+   --------------------
+
+   procedure Audit_Trail_V3
+     (Command_File_Name : Virtual_File;
+      Output_Directory  : Virtual_File;
+      Export_File_Name  : Virtual_File;
+      Message_Id        : Positive)
    is
       Database_Node    : XML_Utils.Node_Ptr :=
                            new XML_Utils.Node'
@@ -90,8 +184,7 @@ package body CodePeer.Bridge.Commands is
                               others => <>);
 
    begin
-      XML_Utils.Set_Attribute
-        (Database_Node, "format", Format_Version'Image (Version));
+      XML_Utils.Set_Attribute (Database_Node, "format", "3");
       XML_Utils.Set_Attribute
         (Database_Node, "output_directory", +Output_Directory.Full_Name);
       --  ??? Potentially non-utf8 string should not be
@@ -105,7 +198,43 @@ package body CodePeer.Bridge.Commands is
       XML_Utils.Add_Child (Database_Node, Audit_Trail_Node);
       XML_Utils.Print (Database_Node, Command_File_Name);
       XML_Utils.Free (Database_Node);
-   end Audit_Trail;
+   end Audit_Trail_V3;
+
+   --------------------
+   -- Audit_Trail_V4 --
+   --------------------
+
+   procedure Audit_Trail_V4
+     (Command_File_Name : Virtual_File;
+      Output_Directory  : Virtual_File;
+      Export_File_Name  : Virtual_File;
+      Message_Id        : Positive)
+   is
+      Database_Node    : XML_Utils.Node_Ptr :=
+                           new XML_Utils.Node'
+                             (Tag    => new String'("database"),
+                              others => <>);
+      Audit_Trail_Node : constant XML_Utils.Node_Ptr :=
+                           new XML_Utils.Node'
+                             (Tag    => new String'("audit_trail"),
+                              others => <>);
+
+   begin
+      XML_Utils.Set_Attribute (Database_Node, "format", "4");
+      XML_Utils.Set_Attribute
+        (Database_Node, "output_directory", +Output_Directory.Full_Name);
+      --  ??? Potentially non-utf8 string should not be
+      --  stored in an XML attribute.
+      XML_Utils.Set_Attribute
+        (Audit_Trail_Node, "messages", Positive'Image (Message_Id));
+      XML_Utils.Set_Attribute
+        (Audit_Trail_Node, "output_file", +Export_File_Name.Full_Name);
+      --  ??? Potentially non-utf8 string should not be
+      --  stored in an XML attribute.
+      XML_Utils.Add_Child (Database_Node, Audit_Trail_Node);
+      XML_Utils.Print (Database_Node, Command_File_Name);
+      XML_Utils.Free (Database_Node);
+   end Audit_Trail_V4;
 
    ----------------
    -- Inspection --
