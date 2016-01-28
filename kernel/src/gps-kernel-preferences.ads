@@ -191,6 +191,7 @@ package GPS.Kernel.Preferences is
    Blocks_Style              : Variant_Preference;
    Types_Style               : Variant_Preference;
    Comments_Style            : Variant_Preference;
+   Code_Annotations_Style    : Variant_Preference;
    Annotated_Comments_Style  : Variant_Preference;
    Aspects_Style             : Variant_Preference;
    Strings_Style             : Variant_Preference;

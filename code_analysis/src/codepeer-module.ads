@@ -30,10 +30,11 @@ with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 private with Commands;
 private with Default_Preferences;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;
-with GPS.Kernel.Style_Manager;
+with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
 
 with Code_Analysis;
 
@@ -195,9 +196,6 @@ private
    --  results.
 
    --  Style names to be used by children packages
-
-   Annotation_Style_Name                : constant String
-     := "CodePeer editor annotations";
    High_Probability_Style_Name          : constant String
      := "CodePeer high messages";
    Medium_Probability_Style_Name        : constant String

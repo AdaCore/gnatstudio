@@ -21,9 +21,9 @@ with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 
 with GNAT.Regpat;                  use GNAT.Regpat;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with GPS.Default_Styles;           use GPS.Default_Styles;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
-with GPS.Default_Styles;           use GPS.Default_Styles;
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple;   use GPS.Kernel.Messages.Simple;
@@ -60,11 +60,6 @@ package body Code_Coverage.GNATcov is
       Not_Covered               => Not_Covered_Color'Access,
       GNATcov_Partially_Covered => Partially_Covered_Color'Access,
       GNATcov_Fully_Covered     => Fully_Covered_Color'Access);
-
-   Details_Style_Name        : constant String :=
-     "GNATcov inlined details";
-   --  Style used for special lines containing GNATcov report details. Keep
-   --  this synchronized with the "gnatcov" Python plug-in.
 
    function Coverage_Verbose_Message
      (Coverage : GNATcov_Line_Coverage)
@@ -506,7 +501,7 @@ package body Code_Coverage.GNATcov is
            (GPS_Editor_Buffer'Class (Buffer).Add_Special_Line
             (Coverage.Line + 1,
                  To_String (Item.Message),
-                 Details_Style_Name));
+                 Editor_Code_Annotations_Style));
       end Process;
 
    begin

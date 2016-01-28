@@ -17,10 +17,12 @@
 
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
-with GPS.Kernel.Project; use GPS.Kernel.Project;
+
+with GPS.Default_Styles;           use GPS.Default_Styles;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
-with GPS.Editors;        use GPS.Editors;
-with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks;
+with GPS.Editors;                  use GPS.Editors;
+with GPS.Kernel.Project;           use GPS.Kernel.Project;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 
 package body CodePeer.Module.Editors is
 
@@ -220,9 +222,9 @@ package body CodePeer.Module.Editors is
          begin
             if Annotation.Lifeage in Added .. Unchanged then
                Buffer.Add_Special_Line
-                 (Subprogram_Node.Line,
-                  Indent & "--    " & Annotation.Text.all,
-                  Annotation_Style_Name);
+                 (Start_Line => Subprogram_Node.Line,
+                  Text       => Indent & "--    " & Annotation.Text.all,
+                  Style      => Editor_Code_Annotations_Style);
                Data.Special_Lines := Data.Special_Lines + 1;
             end if;
          end Process_Annotation;
@@ -241,15 +243,17 @@ package body CodePeer.Module.Editors is
 
          begin
             Buffer.Add_Special_Line
-              (Subprogram_Node.Line,
-               Indent & "--  " & Key.Text.all & ":",
-               Annotation_Style_Name);
+              (Start_Line => Subprogram_Node.Line,
+               Text       => Indent & "--  " & Key.Text.all & ":",
+               Style      => Editor_Code_Annotations_Style);
             Data.Special_Lines := Data.Special_Lines + 1;
 
             Element.Iterate (Process_Annotation'Access);
 
             Buffer.Add_Special_Line
-              (Subprogram_Node.Line, Indent & "--", Annotation_Style_Name);
+              (Start_Line => Subprogram_Node.Line,
+               Text       => Indent & "--",
+               Style      => Editor_Code_Annotations_Style);
             Data.Special_Lines := Data.Special_Lines + 1;
          end Process_Annotations;
 
@@ -258,19 +262,22 @@ package body CodePeer.Module.Editors is
             Data.Mark :=
               new GPS.Editors.Editor_Mark'Class'
                 (Buffer.Add_Special_Line
-                     (Subprogram_Node.Line,
-                      Indent & "--",
-                      Annotation_Style_Name));
+                     (Start_Line => Subprogram_Node.Line,
+                      Text       => Indent & "--",
+                      Style      => Editor_Code_Annotations_Style));
             Data.Special_Lines := Data.Special_Lines + 1;
 
             Buffer.Add_Special_Line
-              (Subprogram_Node.Line,
-               Indent & "--  Subprogram: " & Subprogram_Node.Name.all,
-               Annotation_Style_Name);
+              (Start_Line => Subprogram_Node.Line,
+               Text       => Indent & "--  Subprogram: "
+               & Subprogram_Node.Name.all,
+               Style      => Editor_Code_Annotations_Style);
             Data.Special_Lines := Data.Special_Lines + 1;
 
             Buffer.Add_Special_Line
-              (Subprogram_Node.Line, Indent & "--", Annotation_Style_Name);
+              (Start_Line => Subprogram_Node.Line,
+               Text       => Indent & "--",
+               Style      => Editor_Code_Annotations_Style);
             Data.Special_Lines := Data.Special_Lines + 1;
 
             Data.Annotations.Iterate (Process_Annotations'Access);

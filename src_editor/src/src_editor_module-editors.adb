@@ -38,8 +38,6 @@ with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Search;                use GPS.Search;
 
-with Src_Editor_Module.Line_Highlighting;
-use Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Cursors; use Src_Editor_Buffer.Cursors;
@@ -354,7 +352,7 @@ package body Src_Editor_Module.Editors is
      (This       : Src_Editor_Buffer;
       Start_Line : Integer;
       Text       : String;
-      Category   : String := "";
+      Style      : Style_Access := null;
       Name       : String := "";
       Column_Id  : String := "";
       Info       : Line_Information_Data := null) return Editor_Mark'Class;
@@ -1817,7 +1815,7 @@ package body Src_Editor_Module.Editors is
      (This       : Src_Editor_Buffer;
       Start_Line : Integer;
       Text       : String;
-      Category   : String := "";
+      Style      : Style_Access := null;
       Name       : String := "";
       Column_Id  : String := "";
       Info       : Line_Information_Data := null) return Editor_Mark'Class
@@ -1825,37 +1823,20 @@ package body Src_Editor_Module.Editors is
       Mark : Gtk_Text_Mark;
    begin
       if This.Contents.Buffer /= null then
-         declare
-            Highlight_Category : Natural := 0;
-            Style              : Style_Access;
-         begin
-            if Category /= "" then
-               Style := Get_Style_Manager
-                 (This.Contents.Kernel).Get (Category);
+         Mark := Add_Special_Lines
+           (This.Contents.Buffer,
+            Editable_Line_Type (Start_Line),
+            Style,
+            Text,
+            Name,
+            Column_Id,
+            Info);
 
-               if Style = null then
-                  raise Editor_Exception
-                    with -"No such style: " & Category;
-               else
-                  Highlight_Category := Lookup_Category (Style);
-               end if;
-            end if;
-
-            Mark := Add_Special_Lines
-              (This.Contents.Buffer,
-               Editable_Line_Type (Start_Line),
-               Highlight_Category,
-               Text,
-               Name,
-               Column_Id,
-               Info);
-
-            if Mark = null then
-               return Nil_Editor_Mark;
-            else
-               return Create_Editor_Mark (This, Mark);
-            end if;
-         end;
+         if Mark = null then
+            return Nil_Editor_Mark;
+         else
+            return Create_Editor_Mark (This, Mark);
+         end if;
       else
          return Nil_Editor_Mark;
       end if;

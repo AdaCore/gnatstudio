@@ -25,14 +25,8 @@ def create_dg(f, str):
 expanded_code_marks = {}
 # A dictionary that associates a source filename with a list of marks
 
-highlighting = ""
-
-bg_pref = GPS.Preference("Editor/Fonts & Colors:Ada/expanded_code_style")
-
-bg_pref.create(
-    "Expanded code color", "color", "Background color of expanded code",
-    "#dddddd"
-)
+highlighting = "Editor code annotations"
+# Name of the style we want to apply for expanded code
 
 
 def subprogram_bounds(cursor):
@@ -87,11 +81,6 @@ def edit_dg(dg, source_filename, line, for_subprogram, in_external_editor):
             pass
 
         return
-
-    # If the highlighting category does not exist, register it now
-    if highlighting == "":
-        highlighting = "expanded"
-        Editor.register_highlighting(highlighting, bg_pref.get(), False)
 
     clear_dg(source_filename)
 

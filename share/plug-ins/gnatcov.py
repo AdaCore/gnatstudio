@@ -80,7 +80,6 @@ class GNATcovPlugin(object):
     PLUGIN_MENU = '/Tools/GNATcov/'
 
     # Keep this style name synchronized with Code_Coverage.GNATcov.
-    INLINED_DETAILS_NAME = 'GNATcov inlined details'
 
     PROJECT_ATTRIBUTES = [
         X(
@@ -255,23 +254,6 @@ class GNATcovPlugin(object):
         ),
     ]
 
-    PREFERENCES = [
-        X('preference',
-            name='GNATcov-Inlined-Details-Foreground',
-            page='Plugins/GNATcov',
-            default='#000000',
-            label='Inline details foreground',
-            tip='Color to use for the foreground of inlined details',
-            type='color'),
-        X('preference',
-            name='GNATcov-Inlined-Details-Background',
-            page='Plugins/GNATcov',
-            default='#E9E9E9',
-            label='Inline details background',
-            tip='Color to use for the background of inlined details',
-            type='color'),
-    ]
-
     GNATCOV_DOCUMENTATION = [
         X('doc_path').children('share/doc/gnatcoverage/html'),
         X('documentation_file').children(
@@ -313,11 +295,6 @@ class GNATcovPlugin(object):
         GPS.parse_xml(list_to_xml(self.BUILD_TARGETS))
 
         GPS.Hook('compilation_finished').add(self.on_compilation_finished)
-        GPS.Hook('preferences_changed').add(self.on_preferences_changed)
-
-        self.inline_details_style = GPS.Style(self.INLINED_DETAILS_NAME)
-
-        self.on_preferences_changed('', reload=False)
 
     def reload_gnatcov_data(self):
         """Clean the coverage report and reload it from the files."""
@@ -345,13 +322,6 @@ class GNATcovPlugin(object):
 
         if target_name in ["Generate GNATcov Main Report"]:
             self.reload_gnatcov_data()
-
-    def on_preferences_changed(self, hook, reload=True):
-        """Update various plugin elements that rely on preferences."""
-        self.inline_details_style.set_background(
-            GPS.Preference('GNATcov-Inlined-Details-Background').get())
-        self.inline_details_style.set_foreground(
-            GPS.Preference('GNATcov-Inlined-Details-Foreground').get())
 
 
 # This plug-in makes sense only if GNATcoverage is available.

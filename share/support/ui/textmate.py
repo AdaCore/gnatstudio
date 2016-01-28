@@ -18,9 +18,10 @@ light_common = {
     "@editor_bg_selection":     "#2280d2",
     "@editor_fg_selection":     "black",
 
-    "Editor/Ada/expanded_code_style": "#dddddd",
-
     "Src-Editor-Aspects-Variant": ("DEFAULT", "rgb(96,97,95)", "transparent"),
+
+    "Src-Editor-Code-Annotations-Variant": (
+        "DEFAULT", "transparent", "rgb(224, 224, 224)"),
 
     "Src-Editor-Ephemeral-Smart": (
         "DEFAULT", "transparent", "rgba(252,172,79,0.4)"),
@@ -54,11 +55,12 @@ dark_common = {
     "@editor_bg_selection":     "#2280d2",
     "@editor_fg_selection":     "white",
 
-    "Editor/Ada/expanded_code_style": "#333333",
-
     "Src-Editor-Aspects-Variant": ("DEFAULT",
                                    "rgb(117,113,94)",
                                    "transparent"),
+
+    "Src-Editor-Code-Annotations-Variant": (
+        "DEFAULT", "transparent", "rgb(96, 96, 96)"),
 
     "Src-Editor-Ephemeral-Smart": (
         "DEFAULT", "transparent", "rgba(128,236,255,0.35)"),

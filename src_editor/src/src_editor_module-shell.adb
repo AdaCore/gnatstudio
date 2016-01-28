@@ -1440,7 +1440,6 @@ package body Src_Editor_Module.Shell is
             Number      : constant Integer := Nth_Arg (Data, 3);
             Child       : MDI_Child;
             Box         : Source_Editor_Box;
-            Highlight_Category : Natural := 0;
             Style       : Style_Access;
          begin
             Child := Find_Editor (Kernel, Filename, No_Project);
@@ -1451,9 +1450,6 @@ package body Src_Editor_Module.Shell is
                if Style = null then
                   Set_Error_Msg (Data, -"No such style: " & Nth_Arg (Data, 4));
                   return;
-               else
-                  Highlight_Category :=
-                    Line_Highlighting.Lookup_Category (Style);
                end if;
             end if;
 
@@ -1466,7 +1462,7 @@ package body Src_Editor_Module.Shell is
                      Add_Special_Blank_Lines
                        (Get_Buffer (Box),
                         Editable_Line_Type (Line),
-                        Highlight_Category, Number, "", "", null));
+                        Style, Number, "", "", null));
                   Set_Return_Value (Data, Get_Id (Marker));
                end if;
             else
@@ -1997,14 +1993,23 @@ package body Src_Editor_Module.Shell is
          Set_Return_Value (Data, Get_Buffer (Data, 1).Is_Read_Only);
 
       elsif Command = "add_special_line" then
-         Set_Return_Value
-           (Data, Create_Editor_Mark
-              (Get_Script (Data),
-               Get_Buffer (Data, 1).Add_Special_Line
-               (Start_Line => Nth_Arg (Data, 2),
-                Text       => Nth_Arg (Data, 3),
-                Category   => Nth_Arg (Data, 4, ""),
-                Name       => Nth_Arg (Data, 5, ""))));
+         declare
+            Category : constant String := Nth_Arg (Data, 4, "");
+            Style    : constant Style_Access :=
+                         (if Category /= "" then
+                             Get_Style_Manager (Kernel).Get (Category)
+                          else
+                             null);
+         begin
+            Set_Return_Value
+              (Data, Create_Editor_Mark
+                 (Get_Script (Data),
+                  Get_Buffer (Data, 1).Add_Special_Line
+                  (Start_Line => Nth_Arg (Data, 2),
+                   Text       => Nth_Arg (Data, 3),
+                   Style      => Style,
+                   Name       => Nth_Arg (Data, 5, ""))));
+         end;
 
       elsif Command = "remove_special_lines" then
          Get_Buffer (Data, 1).Remove_Special_Lines

@@ -44,7 +44,6 @@ with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
 with GPS.Kernel.Messages.Simple;     use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Style_Manager;       use GPS.Kernel.Style_Manager;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Xref;
 with String_Utils;
@@ -1212,7 +1211,6 @@ package body CodePeer.Module is
 
    begin
       Editors.Show_Annotations (Context.Module, Context.File);
-
    exception
       when E : others =>
          Trace (Me, E);
@@ -1915,11 +1913,6 @@ package body CodePeer.Module is
            Doc     => -"Color to use for the background of annotations",
            Default => "#E9E9E9");
 
-      Initialize_Style
-        (Module.Annotation_Style,
-         Annotation_Style_Name,
-         Module.Annotation_Color,
-         False);
       Initialize_Style
         (Module.Message_Styles (CodePeer.High),
          High_Probability_Style_Name,

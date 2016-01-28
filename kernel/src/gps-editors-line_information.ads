@@ -20,6 +20,7 @@ with Ada.Unchecked_Deallocation;
 
 with Commands;
 with GPS.Kernel.Messages.References;
+with GPS.Kernel.Style_Manager;       use GPS.Kernel.Style_Manager;
 
 package GPS.Editors.Line_Information is
 
@@ -68,13 +69,13 @@ package GPS.Editors.Line_Information is
      (This       : GPS_Editor_Buffer;
       Start_Line : Integer;
       Text       : String;
-      Category   : String := "";
+      Style      : Style_Access := null;
       Name       : String := "";
       Column_Id  : String := "";
       Info       : Line_Information_Data := null)
       return Editor_Mark'Class is abstract;
    --  Adds one non-editable line to the buffer, starting at line start_line
-   --  and contains string text. If category is specified, use it for
+   --  and contains string text. If Styleis specified, use it for
    --  highlighting. Create a mark at beginning of block and return it. If name
    --  is specified, retuned mark will have this name
    --  Column_Id and Info, if not empty and null, indicate the Side information
@@ -84,7 +85,7 @@ package GPS.Editors.Line_Information is
      (This       : GPS_Editor_Buffer'Class;
       Start_Line : Integer;
       Text       : String;
-      Category   : String := "";
+      Style      : Style_Access := null;
       Name       : String := "";
       Column_Id  : String := "";
       Info       : Line_Information_Data := null);

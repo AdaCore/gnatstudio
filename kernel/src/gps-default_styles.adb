@@ -100,6 +100,11 @@ package body GPS.Default_Styles is
             Variant => Entity_To_Pref (E));
       end loop;
 
+      Editor_Code_Annotations_Style := M.Create_From_Preferences
+        (Key     => "Editor code annotations",
+         Style   => Default_Style,
+         Variant => Code_Annotations_Style);
+
       Editor_Default_Style := M.Create_From_Preferences
         (Key   => "Editor default",
          Style => Default_Style);

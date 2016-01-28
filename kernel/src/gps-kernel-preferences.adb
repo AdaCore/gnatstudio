@@ -803,7 +803,18 @@ package body GPS.Kernel.Preferences is
          Default_Variant => Default,
          Default_Fg   => "blue",
          Default_Bg   => "white",
-         Path         => -"Editor/Fonts & Colors:General");
+         Path            => -"Editor/Fonts & Colors:General");
+
+      Code_Annotations_Style := Create
+        (Manager         => Kernel.Preferences,
+         Name            => "Src-Editor-Code-Annotations-Variant",
+         Label           => -"Code annotations",
+         Base            => Default_Style,
+         Default_Variant => Default,
+         Default_Fg      => "black",
+         Default_Bg      => "white",
+         Doc             => "",
+         Path            => -"Editor/Fonts & Colors:General");
 
       Current_Block_Color := Create
         (Manager  => Kernel.Preferences,

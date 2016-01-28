@@ -107,7 +107,7 @@ package Src_Editor_Buffer.Line_Information is
      (Buffer             : access Source_Buffer_Record'Class;
       Line               : Buffer_Line_Type;
       EL                 : Editable_Line_Type;
-      Highlight_Category : Integer;
+      Style              : Style_Access;
       Text               : String;
       Name               : String;
       Column_Id          : String;
@@ -120,7 +120,7 @@ package Src_Editor_Buffer.Line_Information is
    function Add_Special_Blank_Lines
      (Buffer             : access Source_Buffer_Record'Class;
       Line               : Editable_Line_Type;
-      Highlight_Category : Integer;
+      Style              : Style_Access;
       Number             : Natural;
       Name               : String;
       Column_Id          : String;
@@ -131,7 +131,7 @@ package Src_Editor_Buffer.Line_Information is
    function Add_Special_Lines
      (Buffer             : access Source_Buffer_Record'Class;
       Line               : Editable_Line_Type;
-      Highlight_Category : Integer;
+      Style              : Style_Access;
       Text               : String;
       Name               : String;
       Column_Id          : String;

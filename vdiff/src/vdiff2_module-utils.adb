@@ -35,6 +35,7 @@ with GPS.Kernel.Messages;               use GPS.Kernel.Messages;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
+with GPS.Kernel.Style_Manager;          use GPS.Kernel.Style_Manager;
 with String_Utils;                      use String_Utils;
 with Vdiff2_Command_Line;               use Vdiff2_Command_Line;
 with Vdiff2_Module;                     use Vdiff2_Module;
@@ -838,10 +839,12 @@ package body Vdiff2_Module.Utils is
       -- Show_Deleted --
       ------------------
 
-      procedure Show_Deleted is
+      procedure Show_Deleted
+      is
          Original : Unbounded_String;
          Arr      : Line_Information_Data;
-
+         Manager  : constant Style_Manager_Access := Get_Style_Manager
+           (Kernel_Handle (Kernel));
       begin
          Arr := new Line_Information_Array
            (Curr_Chunk.Range1.First .. Curr_Chunk.Range1.Last - 1);
@@ -861,7 +864,7 @@ package body Vdiff2_Module.Utils is
               (Buf.Add_Special_Line
                  (Start_Line => Curr_Chunk.Range2.First,
                   Text       => O (O'First .. O'Last - 1),
-                  Category   => Remove_Style,
+                  Style      => Manager.Get (Remove_Style),
                   Name       => "",
                   Column_Id  => Id_Col_Vdiff,
                   Info       => Arr));

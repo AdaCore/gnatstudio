@@ -41,16 +41,15 @@ package body GPS.Editors.Line_Information is
      (This       : GPS_Editor_Buffer'Class;
       Start_Line : Integer;
       Text       : String;
-      Category   : String := "";
+      Style      : Style_Access := null;
       Name       : String := "";
       Column_Id  : String := "";
       Info       : Line_Information_Data := null)
    is
-      Mark : constant Editor_Mark'Class :=
-        This.Add_Special_Line
-          (Start_Line, Text, Category, Name, Column_Id, Info);
+      Mark     : constant Editor_Mark'Class :=
+                   This.Add_Special_Line
+                     (Start_Line, Text, Style, Name, Column_Id, Info);
       pragma Unreferenced (Mark);
-
    begin
       null;
    end Add_Special_Line;

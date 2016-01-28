@@ -15,17 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;          use Ada.Strings, Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
+with Ada.Strings.Fixed;            use Ada.Strings, Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
-with Default_Preferences;        use Default_Preferences;
+with Default_Preferences;          use Default_Preferences;
 with GPS.Editors.Line_Information;
 use GPS.Editors, GPS.Editors.Line_Information;
-with GPS.Intl;                   use GPS.Intl;
-with GPS.Kernel;                 use GPS.Kernel;
-with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
-with GPS.Kernel.Style_Manager;   use GPS.Kernel.Style_Manager;
+with GPS.Default_Styles;           use GPS.Default_Styles;
+with GPS.Intl;                     use GPS.Intl;
+with GPS.Kernel;                   use GPS.Kernel;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 
 package body GNATStack.Module.Editors is
 
@@ -238,12 +238,7 @@ package body GNATStack.Module.Editors is
            -"Color to be used for the backgorund of annotations",
            "#E9E9E9");
 
-      Module.Annotations_Style :=
-        Get_Style_Manager
-          (Kernel_Handle (Module.Kernel)).Create_From_Preferences
-            (Key     => GNATStack_Editor_Annotations,
-             Fg_Pref => Module.Annotations_Foreground,
-             Bg_Pref => Module.Annotations_Background);
+      Module.Annotations_Style := Editor_Code_Annotations_Style;
 
       File_Closed_Hook.Add (new On_File_Closed);
       File_Edited_Hook.Add (new On_File_Edited);
@@ -270,20 +265,20 @@ package body GNATStack.Module.Editors is
                (GPS_Editor_Buffer'Class (Buffer),
                 Subprogram_Location.Line,
                 Indent & "--",
-                GNATStack_Editor_Annotations));
+                Module.Annotations_Style));
       Lines := Lines + 1;
       Add_Special_Line
         (GPS_Editor_Buffer'Class (Buffer),
          Subprogram_Location.Line,
          Indent & "--  "
          & To_String (Subprogram.Identifier.Prefix_Name),
-         GNATStack_Editor_Annotations);
+         Module.Annotations_Style);
       Lines := Lines + 1;
       Add_Special_Line
         (GPS_Editor_Buffer'Class (Buffer),
          Subprogram_Location.Line,
          Indent & "--",
-         GNATStack_Editor_Annotations);
+         Module.Annotations_Style);
       Lines := Lines + 1;
       Add_Special_Line
         (GPS_Editor_Buffer'Class (Buffer),
@@ -292,7 +287,7 @@ package body GNATStack.Module.Editors is
          & Image (Subprogram.Local_Usage)
          & ", global: "
          & Image (Subprogram.Global_Usage),
-         GNATStack_Editor_Annotations);
+         Module.Annotations_Style);
       Lines := Lines + 1;
 
       if not Subprogram.Calls.Is_Empty then
@@ -300,7 +295,7 @@ package body GNATStack.Module.Editors is
            (GPS_Editor_Buffer'Class (Buffer),
             Subprogram_Location.Line,
             Indent & "--  Calls:",
-            GNATStack_Editor_Annotations);
+            Module.Annotations_Style);
          Lines := Lines + 1;
       end if;
 
@@ -309,7 +304,7 @@ package body GNATStack.Module.Editors is
            (GPS_Editor_Buffer'Class (Buffer),
             Subprogram_Location.Line,
             Indent & "--  Unbounded objects:",
-            GNATStack_Editor_Annotations);
+            Module.Annotations_Style);
          Lines := Lines + 1;
       end if;
 
@@ -318,7 +313,7 @@ package body GNATStack.Module.Editors is
            (GPS_Editor_Buffer'Class (Buffer),
             Subprogram_Location.Line,
             Indent & "--  Has indirect calls",
-            GNATStack_Editor_Annotations);
+            Module.Annotations_Style);
          Lines := Lines + 1;
       end if;
 
@@ -326,7 +321,7 @@ package body GNATStack.Module.Editors is
         (GPS_Editor_Buffer'Class (Buffer),
          Subprogram_Location.Line,
          Indent & "--",
-         GNATStack_Editor_Annotations);
+         Module.Annotations_Style);
       Lines := Lines + 1;
 
       Replace_Element

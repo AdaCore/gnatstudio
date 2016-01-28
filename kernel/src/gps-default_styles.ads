@@ -39,6 +39,9 @@ package GPS.Default_Styles is
    Editor_Default_Style : Style_Access;
    --  The style for normal text in the editor
 
+   Editor_Code_Annotations_Style : Style_Access;
+   --  The style used for code annotations
+
    Editor_Ephemeral_Highlighting_Smart  : Style_Access;
    Editor_Ephemeral_Highlighting_Simple : Style_Access;
    --  Ephemeral highlightings

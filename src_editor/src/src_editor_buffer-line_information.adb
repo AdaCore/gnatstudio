@@ -1266,16 +1266,16 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer             : access Source_Buffer_Record'Class;
       Line               : Buffer_Line_Type;
       EL                 : Editable_Line_Type;
-      Highlight_Category : Integer;
+      Style              : Style_Access;
       Text               : String;
       Name               : String;
       Column_Id          : String;
       Info               : Line_Information_Data)
       return Gtk.Text_Mark.Gtk_Text_Mark
    is
-      Iter   : Gtk_Text_Iter;
-      Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
-      Number : Positive := 1;
+      Iter       : Gtk_Text_Iter;
+      Mark       : Gtk.Text_Mark.Gtk_Text_Mark;
+      Number     : Positive := 1;
    begin
       if Line = 0 then
          return null;
@@ -1299,6 +1299,25 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer.End_Inserting;
       Buffer.Modifying_Editable_Lines := True;
 
+      Get_Iter_At_Line_Offset (Buffer, Iter, Gint (Line - 1), 0);
+
+      --  Highlight the added lines using the given style, if non-null
+      if Style /= null then
+         declare
+            End_Iter   : Gtk_Text_Iter;
+            Success    : Boolean;
+         begin
+            Copy (Iter, Dest => End_Iter);
+            Forward_Chars (End_Iter, Text'Length, Success);
+
+            Highlight_Range (Buffer     => Buffer,
+                             Style      => Style,
+                             Line       => EL,
+                             Start_Iter => Iter,
+                             End_Iter   => End_Iter);
+         end;
+      end if;
+
       --  Shift down editable lines
 
       for J in EL .. Buffer.Editable_Lines'Last loop
@@ -1313,15 +1332,9 @@ package body Src_Editor_Buffer.Line_Information is
 
       for J in Line .. Line + Buffer_Line_Type (Number) - 1 loop
          Buffer.Line_Data (J).Editable_Line := 0;
-         Buffer.Line_Data (J).Highlighting (Highlight_Editor).Active :=
-           Highlight_Category;
-         Buffer.Line_Data (J).Highlighting (Highlight_Speedbar).Active :=
-           Highlight_Category;
 
          Create_Side_Info (Buffer, J);
       end loop;
-
-      Get_Iter_At_Line_Offset (Buffer, Iter, Gint (Line - 1), 0);
 
       Side_Column_Changed (Buffer);
 
@@ -1354,7 +1367,7 @@ package body Src_Editor_Buffer.Line_Information is
    function Add_Special_Blank_Lines
      (Buffer             : access Source_Buffer_Record'Class;
       Line               : Editable_Line_Type;
-      Highlight_Category : Integer;
+      Style              : Style_Access;
       Number             : Natural;
       Name               : String;
       Column_Id          : String;
@@ -1364,7 +1377,7 @@ package body Src_Editor_Buffer.Line_Information is
       LFs : constant String (1 .. Number - 1) := (others => ASCII.LF);
    begin
       return Add_Special_Lines
-        (Buffer, Line, Highlight_Category, LFs, Name, Column_Id, Info);
+        (Buffer, Line, Style, LFs, Name, Column_Id, Info);
    end Add_Special_Blank_Lines;
 
    -----------------------
@@ -1374,11 +1387,12 @@ package body Src_Editor_Buffer.Line_Information is
    function Add_Special_Lines
      (Buffer             : access Source_Buffer_Record'Class;
       Line               : Editable_Line_Type;
-      Highlight_Category : Integer;
+      Style              : Style_Access;
       Text               : String;
       Name               : String;
       Column_Id          : String;
-      Info               : Line_Information_Data) return Gtk_Text_Mark
+      Info               : Line_Information_Data)
+      return Gtk.Text_Mark.Gtk_Text_Mark
    is
       M : Gtk_Text_Mark;
       B : Buffer_Line_Type;
@@ -1391,7 +1405,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       B := Buffer.Editable_Lines (Line).Buffer_Line;
       M := Add_Blank_Lines
-        (Buffer, B, Line, Highlight_Category, Text, Name, Column_Id, Info);
+        (Buffer, B, Line, Style, Text, Name, Column_Id, Info);
 
       return M;
    end Add_Special_Lines;
@@ -2401,7 +2415,7 @@ package body Src_Editor_Buffer.Line_Information is
                     (Buffer             => Buffer,
                      Line               => Current_B,
                      EL                 => Current + 1,
-                     Highlight_Category => 0,
+                     Style              => null,
                      Text               => U.Text.all,
                      Name               => "",
                      Column_Id          => "",
