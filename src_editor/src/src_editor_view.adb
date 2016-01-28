@@ -2320,7 +2320,9 @@ package body Src_Editor_View is
       --  If we are not pressing the Ctrl key, check whether we are
       --  pressing a graphical key
 
-      if not Get_Editable (View) then
+      if not Get_Editable (View)
+        and then (Get_State (Event) and Control_Mask) = 0
+      then
          case Key is
             when GDK_BackSpace .. GDK_Return | GDK_Delete |
                  GDK_KP_Tab .. GDK_KP_Enter | GDK_KP_Delete =>
