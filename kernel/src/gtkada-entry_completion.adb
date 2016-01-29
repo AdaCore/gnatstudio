@@ -21,6 +21,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.Strings;               use GNAT.Strings;
 
 with Commands;                   use Commands;
+with Default_Preferences;        use Default_Preferences;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Device;                 use Gdk.Device;
 with Gdk.Device_Manager;         use Gdk.Device_Manager;
@@ -66,7 +67,9 @@ with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Search;          use GPS.Kernel.Search;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Main_Window;            use GPS.Main_Window;
@@ -92,6 +95,20 @@ package body Gtkada.Entry_Completion is
    Provider_Label_Width : constant := 100;
    Result_Width : constant := 300;
    --  Maximum width of the popup window
+
+   Provider_Column_Fg_Modifier : constant := 0.3;
+   Provider_Column_Bg_Modifier : constant := 0.05;
+   --  Color modifier amount for the provider column of the popup tree view
+
+   type On_Pref_Changed is new Preferences_Hooks_Function with
+      record
+         Entry_View : Gtkada_Entry;
+      end record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
+   --  Callback called when preferences change
 
    procedure On_Entry_Destroy (Self : access Gtk_Widget_Record'Class);
    --  Callback when the widget is destroyed.
@@ -240,6 +257,43 @@ package body Gtkada.Entry_Completion is
        Column_Score    => GType_Int,
        Column_Data     => GType_Pointer,
        Column_Provider => GType_String);
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
+   is
+      pragma Unreferenced (Kernel);
+
+   begin
+      --  Update the color of the provider column (left one) only if the theme
+      --  preference has changed.
+      if Pref /= Preference (Gtk_Theme) then
+         return;
+      end if;
+
+      declare
+         Color  : Gdk_RGBA;
+         Render : constant Gtk_Cell_Renderer :=  Cell_Renderer_List.Get_Data
+           (Self.Entry_View.Column_Provider.Get_Cells);
+      begin
+         Get_Style_Context (Self.Entry_View.View).Get_Background_Color
+           (Gtk_State_Flag_Normal, Color);
+
+         Set_Property
+           (Render,
+            Gtk.Cell_Renderer_Text.Foreground_Rgba_Property,
+            Shade_Or_Lighten (Color, Provider_Column_Fg_Modifier));
+         Set_Property
+           (Render,
+            Gtk.Cell_Renderer_Text.Background_Rgba_Property,
+            Shade_Or_Lighten (Color, Provider_Column_Bg_Modifier));
+      end;
+   end Execute;
 
    --------------------
    -- Get_Last_Child --
@@ -559,15 +613,14 @@ package body Gtkada.Entry_Completion is
       Self.Column_Provider.Add_Attribute
         (Render, "markup", Column_Provider);
 
-      --  ??? Should onnect to preferences_changed for the color
       Get_Style_Context (Self.View).Get_Background_Color
         (Gtk_State_Flag_Normal, Color);
       Set_Property
         (Render, Gtk.Cell_Renderer_Text.Foreground_Rgba_Property,
-         Shade_Or_Lighten (Color, 0.3));
+         Shade_Or_Lighten (Color, Provider_Column_Fg_Modifier));
       Set_Property
         (Render, Gtk.Cell_Renderer_Text.Background_Rgba_Property,
-         Shade_Or_Lighten (Color, 0.05));
+         Shade_Or_Lighten (Color, Provider_Column_Bg_Modifier));
       Set_Property (Render, Gtk.Cell_Renderer.Xalign_Property, 1.0);
       Set_Property (Render, Gtk.Cell_Renderer.Yalign_Property, 0.0);
 
@@ -667,7 +720,14 @@ package body Gtkada.Entry_Completion is
       --  Connect after setting the default entry, so that we do not
       --  pop up the completion window immediately.
       Gtk.Editable.On_Changed
-         (+Gtk_Entry (Self.GEntry), On_Entry_Changed'Access, Self);
+        (+Gtk_Entry (Self.GEntry), On_Entry_Changed'Access, Self);
+
+      --  Register a callback on the Preferences_Changed hook to update the
+      --  popup colors when the theme preference changes.
+      Preferences_Changed_Hook.Add
+        (Obj   => new On_Pref_Changed'(Hook_Function
+         with Entry_View => Gtkada_Entry (Self)),
+         Watch => Self);
 
       On_Settings_Changed (Self);
    end Initialize;
