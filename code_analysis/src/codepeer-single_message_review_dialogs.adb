@@ -40,8 +40,9 @@ with Gtk.Tree_View_Column;
 with Gtk.Widget;
 
 with GPS.Intl; use GPS.Intl;
+with GPS.Kernel.MDI;
 
-package body CodePeer.Message_Review_Dialogs_V3 is
+package body CodePeer.Single_Message_Review_Dialogs is
 
    Status_Model_Label_Column : constant := 0;
    Status_Model_Value_Column : constant := 1;
@@ -82,7 +83,8 @@ package body CodePeer.Message_Review_Dialogs_V3 is
       Glib.Object.Uninitialized_Class;
 
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
-     (1 => Interfaces.C.Strings.New_String (String (Signal_Ok_Activated)));
+     (1 => Interfaces.C.Strings.New_String
+        (String (CodePeer.Message_Review_Dialogs.Signal_Ok_Activated)));
 
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
      (1 => (1 => Glib.GType_None));
@@ -91,7 +93,7 @@ package body CodePeer.Message_Review_Dialogs_V3 is
    -- Get_Messages --
    ------------------
 
-   not overriding function Get_Messages
+   overriding function Get_Messages
      (Self : not null access constant Message_Review_Dialog_Record)
       return CodePeer.Message_Vectors.Vector is
    begin
@@ -231,7 +233,7 @@ package body CodePeer.Message_Review_Dialogs_V3 is
         (Ancestor     => Gtk.Dialog.Get_Type,
          Signals      => Signals,
          Class_Record => Class_Record,
-         Type_Name    => "CodePeerMessageReviewDialogV3",
+         Type_Name    => "CodePeerSingleMessageReviewDialog",
          Parameters   => Signal_Parameters);
 
       GPS.Kernel.MDI.Initialize
@@ -476,11 +478,13 @@ package body CodePeer.Message_Review_Dialogs_V3 is
 
       --  Emit signal
 
-      Emit_By_Name (Self.Get_Object, Signal_Ok_Activated & ASCII.NUL);
+      Emit_By_Name
+        (Self.Get_Object,
+         CodePeer.Message_Review_Dialogs.Signal_Ok_Activated & ASCII.NUL);
 
       --  Hide dialog
 
       Self.Destroy;
    end On_Ok;
 
-end CodePeer.Message_Review_Dialogs_V3;
+end CodePeer.Single_Message_Review_Dialogs;

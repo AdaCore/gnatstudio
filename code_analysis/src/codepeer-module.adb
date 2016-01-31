@@ -54,12 +54,13 @@ with CodePeer.Backtrace_View;
 with CodePeer.Bridge.Audit_Trail_Readers;
 with CodePeer.Bridge.Inspection_Readers;
 with CodePeer.Bridge.Status_Readers;
-with CodePeer.Message_Review_Dialogs_V3;
+with CodePeer.Message_Review_Dialogs;
 with CodePeer.Messages_Reports;      use CodePeer.Messages_Reports;
 with CodePeer.Module.Actions;
 with CodePeer.Module.Bridge;
 with CodePeer.Module.Editors;
 with CodePeer.Shell_Commands;        use CodePeer.Shell_Commands;
+with CodePeer.Single_Message_Review_Dialogs;
 with Commands.CodePeer;
 with Commands;                       use Commands;
 with Code_Analysis_GUI;
@@ -1135,7 +1136,7 @@ package body CodePeer.Module is
    begin
       CodePeer.Module.Bridge.Add_Audit_Record
         (Context.Module,
-         CodePeer.Message_Review_Dialogs_V3.Message_Review_Dialog_Record'Class
+         CodePeer.Message_Review_Dialogs.Message_Review_Dialog_Record'Class
            (Item.all).Get_Messages.First_Element);
       Context.Module.Report.Messages_Report.Update;
       Context.Module.Update_Location_View;
@@ -1286,7 +1287,8 @@ package body CodePeer.Module is
      (Self    : access Module_Id_Record'Class;
       Message : CodePeer.Message_Access)
    is
-      Review_V3 : CodePeer.Message_Review_Dialogs_V3.Message_Review_Dialog;
+      Single_Review :
+        CodePeer.Single_Message_Review_Dialogs.Message_Review_Dialog;
 
    begin
       if not Message.Audit_Loaded then
@@ -1296,13 +1298,13 @@ package body CodePeer.Module is
       else
          --  Create and show review dialog
 
-         CodePeer.Message_Review_Dialogs_V3.Gtk_New
-           (Review_V3, Self.Kernel, Message);
-         Review_V3.Set_Transient_For (Self.Kernel.Get_Main_Window);
-         Review_V3.Show_All;
+         CodePeer.Single_Message_Review_Dialogs.Gtk_New
+           (Single_Review, Self.Kernel, Message);
+         Single_Review.Set_Transient_For (Self.Kernel.Get_Main_Window);
+         Single_Review.Show_All;
          Context_CB.Connect
-           (Review_V3,
-            CodePeer.Message_Review_Dialogs_V3.Signal_Ok_Activated,
+           (Single_Review,
+            CodePeer.Message_Review_Dialogs.Signal_Ok_Activated,
             Context_CB.To_Marshaller (On_Message_Reviewed'Access),
             (CodePeer_Module_Id (Self), null, null));
       end if;
