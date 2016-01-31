@@ -58,14 +58,14 @@ package CodePeer.Module is
    --  Load code review results from file, creates CodePeer Report window
    --  and display loaded results.
 
-   procedure Review_Message
-     (Self    : access Module_Id_Record'Class;
-      Message : CodePeer.Message_Access);
+   procedure Review_Messages
+     (Self     : access Module_Id_Record'Class;
+      Messages : CodePeer.Message_Vectors.Vector);
 
-   procedure Review_Message
-     (Self    : access Module_Id_Record'Class;
-      Message : CodePeer.Message_Access;
-      File    : Virtual_File);
+   procedure Review_Messages
+     (Self     : access Module_Id_Record'Class;
+      Messages : CodePeer.Message_Vectors.Vector;
+      File     : Virtual_File);
 
    type Submenu_Factory_Record
      (Module : access Module_Id_Record'Class) is
@@ -164,8 +164,8 @@ private
       Bts_Directory   : Virtual_File;
       --  Files is used to communicate with gps_codepeer_bridge
 
-      Bridge_Message : Message_Access;
-      --  Message used to communicate with gps_codepere_bridge
+      Bridge_Messages : CodePeer.Message_Vectors.Vector;
+      --  Messages used to communicate with gps_codepere_bridge
 
       Display_Values : Boolean := True;
       --  Display values tooltip

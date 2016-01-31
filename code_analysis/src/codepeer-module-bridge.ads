@@ -30,14 +30,14 @@ package CodePeer.Module.Bridge is
    --  Removes auxiliary inspection's information file, used as cache.
    --  Builder must be switched to 'codepeer' mode by caller.
 
-   procedure Review_Message
-     (Module  : CodePeer.Module.CodePeer_Module_Id;
-      Message : CodePeer.Message_Access);
-   --  Runs gps_codepeer_bridge to get message's audit trail.
+   procedure Load_Audit_Trail
+     (Module   : CodePeer.Module.CodePeer_Module_Id;
+      Messages : CodePeer.Message_Vectors.Vector);
+   --  Runs gps_codepeer_bridge to get messages' audit trail.
 
    procedure Add_Audit_Record
-     (Module  : CodePeer.Module.CodePeer_Module_Id;
-      Message : CodePeer.Message_Access);
+     (Module   : CodePeer.Module.CodePeer_Module_Id;
+      Messages : CodePeer.Message_Vectors.Vector);
    --  Runs gps_codepeer_bridge to add new record to message's audit trail.
 
 end CodePeer.Module.Bridge;

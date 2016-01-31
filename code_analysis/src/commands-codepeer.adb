@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
-with GPS.Kernel.Messages;
 
 package body Commands.CodePeer is
 
@@ -31,19 +30,20 @@ package body Commands.CodePeer is
 
       Context  : constant GPS.Kernel.Selection_Context :=
         Self.Module.Kernel.Get_Current_Context;
-      Messages : constant GPS.Kernel.Messages.Message_Array :=
-        Messages_Information (Context);
-      Message  : Standard.CodePeer.Message_Access;
+      Aux      : Standard.CodePeer.Message_Access;
+      Messages : Standard.CodePeer.Message_Vectors.Vector;
 
    begin
-      if Messages'Length = 1 then
-         Message :=
-           Standard.CodePeer.Module.Get_CodePeer_Message
-             (Messages (Messages'First));
+      for Message of Messages_Information (Context) loop
+         Aux := Standard.CodePeer.Module.Get_CodePeer_Message (Message);
 
-         if Message /= null then
-            Self.Module.Review_Message (Message);
+         if Aux /= null then
+            Messages.Append (Aux);
          end if;
+      end loop;
+
+      if not Messages.Is_Empty then
+         Self.Module.Review_Messages (Messages);
       end if;
 
       return Success;

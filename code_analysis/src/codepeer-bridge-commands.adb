@@ -30,7 +30,7 @@ package body CodePeer.Bridge.Commands is
      (Command_File_Name : Virtual_File;
       Output_Directory  : Virtual_File;
       Export_File_Name  : Virtual_File;
-      Message_Id        : Positive);
+      Messages          : CodePeer.Message_Vectors.Vector);
    --  Generates request of messages' audit trail in format version 4.
 
    -------------------------
@@ -144,7 +144,7 @@ package body CodePeer.Bridge.Commands is
      (Command_File_Name : Virtual_File;
       Output_Directory  : Virtual_File;
       Export_File_Name  : Virtual_File;
-      Message_Id        : Positive;
+      Messages          : CodePeer.Message_Vectors.Vector;
       Version           : Supported_Format_Version) is
    begin
       case Version is
@@ -153,14 +153,14 @@ package body CodePeer.Bridge.Commands is
               (Command_File_Name,
                Output_Directory,
                Export_File_Name,
-               Message_Id);
+               Messages.First_Element.Id);
 
          when 4 =>
             Audit_Trail_V4
               (Command_File_Name,
                Output_Directory,
                Export_File_Name,
-               Message_Id);
+               Messages);
       end case;
    end Audit_Trail;
 
@@ -208,7 +208,7 @@ package body CodePeer.Bridge.Commands is
      (Command_File_Name : Virtual_File;
       Output_Directory  : Virtual_File;
       Export_File_Name  : Virtual_File;
-      Message_Id        : Positive)
+      Messages          : CodePeer.Message_Vectors.Vector)
    is
       Database_Node    : XML_Utils.Node_Ptr :=
                            new XML_Utils.Node'
@@ -218,15 +218,24 @@ package body CodePeer.Bridge.Commands is
                            new XML_Utils.Node'
                              (Tag    => new String'("audit_trail"),
                               others => <>);
+      Ids              : Unbounded_String;
 
    begin
+      --  Create list of identifiers of messages for which audit trail was not
+      --  loaded.
+
+      for Message of Messages loop
+         if not Message.Audit_Loaded then
+            Append (Ids, Natural'Image (Message.Id));
+         end if;
+      end loop;
+
       XML_Utils.Set_Attribute (Database_Node, "format", "4");
       XML_Utils.Set_Attribute
         (Database_Node, "output_directory", +Output_Directory.Full_Name);
       --  ??? Potentially non-utf8 string should not be
       --  stored in an XML attribute.
-      XML_Utils.Set_Attribute
-        (Audit_Trail_Node, "messages", Positive'Image (Message_Id));
+      XML_Utils.Set_Attribute (Audit_Trail_Node, "messages", To_String (Ids));
       XML_Utils.Set_Attribute
         (Audit_Trail_Node, "output_file", +Export_File_Name.Full_Name);
       --  ??? Potentially non-utf8 string should not be

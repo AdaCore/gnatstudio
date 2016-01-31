@@ -930,8 +930,8 @@ package body CodePeer.Module is
             CodePeer.Module.Bridge.Inspection (Module);
 
          when Audit_Trail =>
-            Module.Review_Message
-              (Module.Bridge_Message, Module.Inspection_File);
+            Module.Review_Messages
+              (Module.Bridge_Messages, Module.Inspection_File);
 
          when Load_Bridge_Results =>
             Module.Load
@@ -1137,7 +1137,7 @@ package body CodePeer.Module is
       CodePeer.Module.Bridge.Add_Audit_Record
         (Context.Module,
          CodePeer.Message_Review_Dialogs.Message_Review_Dialog_Record'Class
-           (Item.all).Get_Messages.First_Element);
+           (Item.all).Get_Messages);
       Context.Module.Report.Messages_Report.Update;
       Context.Module.Update_Location_View;
 
@@ -1249,14 +1249,14 @@ package body CodePeer.Module is
       Container.Remove_Category (CodePeer_Category_Name, Empty_Message_Flags);
    end Remove_Codepeer_Messages;
 
-   --------------------
-   -- Review_Message --
-   --------------------
+   ---------------------
+   -- Review_Messages --
+   ---------------------
 
-   procedure Review_Message
-     (Self    : access Module_Id_Record'Class;
-      Message : CodePeer.Message_Access;
-      File    : Virtual_File)
+   procedure Review_Messages
+     (Self     : access Module_Id_Record'Class;
+      Messages : CodePeer.Message_Vectors.Vector;
+      File     : Virtual_File)
    is
       Input  : Input_Sources.File.File_Input;
       Reader : CodePeer.Bridge.Audit_Trail_Readers.Reader;
@@ -1269,7 +1269,7 @@ package body CodePeer.Module is
          Input_Sources.File.Open (+File.Full_Name, Input);
          Reader.Parse (Input, Self.Messages);
          Input_Sources.File.Close (Input);
-         Module.Review_Message (Message);
+         Module.Review_Messages (Messages);
 
       else
          Self.Kernel.Insert
@@ -1277,29 +1277,38 @@ package body CodePeer.Module is
             (-" does not exist. Please perform a full analysis first"),
             Mode => GPS.Kernel.Error);
       end if;
-   end Review_Message;
+   end Review_Messages;
 
-   --------------------
-   -- Review_Message --
-   --------------------
+   ---------------------
+   -- Review_Messages --
+   ---------------------
 
-   procedure Review_Message
-     (Self    : access Module_Id_Record'Class;
-      Message : CodePeer.Message_Access)
+   procedure Review_Messages
+     (Self     : access Module_Id_Record'Class;
+      Messages : CodePeer.Message_Vectors.Vector)
    is
       Single_Review :
         CodePeer.Single_Message_Review_Dialogs.Message_Review_Dialog;
+      Loaded        : Boolean;
 
    begin
-      if not Message.Audit_Loaded then
-         CodePeer.Module.Bridge.Review_Message
-           (CodePeer_Module_Id (Self), Message);
+      --  Check that all messages has loaded audit trail.
+
+      for Message of Messages loop
+         Loaded := Message.Audit_Loaded;
+
+         exit when not Loaded;
+      end loop;
+
+      if not Loaded then
+         CodePeer.Module.Bridge.Load_Audit_Trail
+           (CodePeer_Module_Id (Self), Messages);
 
       else
          --  Create and show review dialog
 
          CodePeer.Single_Message_Review_Dialogs.Gtk_New
-           (Single_Review, Self.Kernel, Message);
+           (Single_Review, Self.Kernel, Messages.First_Element);
          Single_Review.Set_Transient_For (Self.Kernel.Get_Main_Window);
          Single_Review.Show_All;
          Context_CB.Connect
@@ -1308,7 +1317,7 @@ package body CodePeer.Module is
             Context_CB.To_Marshaller (On_Message_Reviewed'Access),
             (CodePeer_Module_Id (Self), null, null));
       end if;
-   end Review_Message;
+   end Review_Messages;
 
    --------------------------
    -- Update_Location_View --

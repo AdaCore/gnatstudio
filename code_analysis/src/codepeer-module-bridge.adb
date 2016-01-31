@@ -52,8 +52,8 @@ package body CodePeer.Module.Bridge is
    ----------------------
 
    procedure Add_Audit_Record
-     (Module  : CodePeer.Module.CodePeer_Module_Id;
-      Message : CodePeer.Message_Access)
+     (Module   : CodePeer.Module.CodePeer_Module_Id;
+      Messages : CodePeer.Message_Vectors.Vector)
    is
       Project           : constant Project_Type :=
                             GPS.Kernel.Project.Get_Project (Module.Kernel);
@@ -78,22 +78,24 @@ package body CodePeer.Module.Bridge is
 
       case Module.Version is
          when 3 =>
-            Ids.Insert (Message.Id);
-            Ids.Union (Message.Merged);
+            Ids.Insert (Messages.First_Element.Id);
+            Ids.Union (Messages.First_Element.Merged);
 
             CodePeer.Bridge.Commands.Add_Audit_Record_V3
               (Command_File_Name,
                Codepeer_Output_Directory (Module.Kernel),
                Ids,
-               Message.Audit_V3.First_Element.Status,
-               Message.Audit_V3.First_Element.Approved_By,
-               Message.Audit_V3.First_Element.Comment);
+               Messages.First_Element.Audit_V3.First_Element.Status,
+               Messages.First_Element.Audit_V3.First_Element.Approved_By,
+               Messages.First_Element.Audit_V3.First_Element.Comment);
 
          when 4 =>
-            All_Messages.Append (Message);
+            for Message of Messages loop
+               All_Messages.Append (Message);
 
-            for Id of Message.Merged loop
-               All_Messages.Append (Module.Messages (Id));
+               for Id of Message.Merged loop
+                  All_Messages.Append (Module.Messages (Id));
+               end loop;
             end loop;
 
             CodePeer.Bridge.Commands.Add_Audit_Record_V4
@@ -183,40 +185,13 @@ package body CodePeer.Module.Bridge is
       end if;
    end Inspection;
 
-   ----------------------------------
-   -- Remove_Inspection_Cache_File --
-   ----------------------------------
+   ----------------------
+   -- Load_Audit_Trail --
+   ----------------------
 
-   procedure Remove_Inspection_Cache_File
-      (Module : not null access CodePeer.Module.Module_Id_Record'Class)
-   is
-      Project           : constant Project_Type :=
-                            GPS.Kernel.Project.Get_Project (Module.Kernel);
-      Object_Directory  : constant Virtual_File :=
-                            CodePeer_Object_Directory (Project);
-      Reply_File_Name   : constant Virtual_File :=
-                            Create_From_Dir
-                              (Object_Directory, Inspection_Reply_File_Name);
-      Success           : Boolean;
-
-   begin
-      if Reply_File_Name.Is_Regular_File then
-         Delete (Reply_File_Name, Success);
-
-         if not Success then
-            Module.Kernel.Insert
-              (-"Unable to remove code review file");
-         end if;
-      end if;
-   end Remove_Inspection_Cache_File;
-
-   --------------------
-   -- Review_Message --
-   --------------------
-
-   procedure Review_Message
-     (Module  : CodePeer.Module.CodePeer_Module_Id;
-      Message : CodePeer.Message_Access)
+   procedure Load_Audit_Trail
+     (Module   : CodePeer.Module.CodePeer_Module_Id;
+      Messages : CodePeer.Message_Vectors.Vector)
    is
       Project            : constant Project_Type :=
                              GPS.Kernel.Project.Get_Project (Module.Kernel);
@@ -245,17 +220,44 @@ package body CodePeer.Module.Bridge is
         (Command_File_Name,
          Codepeer_Output_Directory (Module.Kernel),
          Reply_File_Name,
-         Message.Id,
+         Messages,
          Module.Version);
 
       --  Run gps_codepeer_bridge
 
       Module.Action := Audit_Trail;
       Module.Inspection_File := Reply_File_Name;
-      Module.Bridge_Message := Message;
+      Module.Bridge_Messages := Messages;
       Run_GPS_Codepeer_Bridge (Module, Command_File_Name);
       Module.Kernel.Set_Build_Mode (Mode);
-   end Review_Message;
+   end Load_Audit_Trail;
+
+   ----------------------------------
+   -- Remove_Inspection_Cache_File --
+   ----------------------------------
+
+   procedure Remove_Inspection_Cache_File
+      (Module : not null access CodePeer.Module.Module_Id_Record'Class)
+   is
+      Project           : constant Project_Type :=
+                            GPS.Kernel.Project.Get_Project (Module.Kernel);
+      Object_Directory  : constant Virtual_File :=
+                            CodePeer_Object_Directory (Project);
+      Reply_File_Name   : constant Virtual_File :=
+                            Create_From_Dir
+                              (Object_Directory, Inspection_Reply_File_Name);
+      Success           : Boolean;
+
+   begin
+      if Reply_File_Name.Is_Regular_File then
+         Delete (Reply_File_Name, Success);
+
+         if not Success then
+            Module.Kernel.Insert
+              (-"Unable to remove code review file");
+         end if;
+      end if;
+   end Remove_Inspection_Cache_File;
 
    -----------------------------
    -- Run_GPS_Codepeer_Bridge --
