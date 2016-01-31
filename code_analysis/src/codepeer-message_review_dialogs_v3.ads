@@ -37,6 +37,11 @@ package CodePeer.Message_Review_Dialogs_V3 is
       Kernel  : not null access Kernel_Handle_Record'Class;
       Message : CodePeer.Message_Access);
 
+   not overriding function Get_Messages
+     (Self : not null access constant Message_Review_Dialog_Record)
+      return CodePeer.Message_Vectors.Vector;
+   --  Returns set of reviewed messages.
+
    Signal_Ok_Activated : constant Glib.Signal_Name;
 
 private

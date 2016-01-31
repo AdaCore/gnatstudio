@@ -77,7 +77,6 @@ package body CodePeer.Module is
       Module  : CodePeer_Module_Id;
       Project : Code_Analysis.Project_Access;
       File    : Code_Analysis.File_Access;
-      Message : CodePeer.Message_Access;
    end record;
 
    package Context_CB is new Gtk.Handlers.User_Callback
@@ -477,8 +476,7 @@ package body CodePeer.Module is
                         Module_Context'
                           (CodePeer_Module_Id (Factory.Module),
                            Project_Node,
-                           File_Node,
-                           null));
+                           File_Node));
 
                   else
                      Gtk.Menu_Item.Gtk_New (Item, -"Show annotations");
@@ -491,8 +489,7 @@ package body CodePeer.Module is
                         Module_Context'
                           (CodePeer_Module_Id (Factory.Module),
                            Project_Node,
-                           File_Node,
-                           null));
+                           File_Node));
                   end if;
                end if;
 
@@ -506,8 +503,7 @@ package body CodePeer.Module is
                      Module_Context'
                        (CodePeer_Module_Id (Factory.Module),
                         Project_Node,
-                        File_Node,
-                        null));
+                        File_Node));
 
                else
                   Gtk.Menu_Item.Gtk_New (Item, -"Show messages");
@@ -519,8 +515,7 @@ package body CodePeer.Module is
                      Module_Context'
                        (CodePeer_Module_Id (Factory.Module),
                         Project_Node,
-                        File_Node,
-                        null));
+                        File_Node));
                end if;
             end if;
          end;
@@ -534,7 +529,7 @@ package body CodePeer.Module is
          Gtk.Check_Menu_Item.Signal_Toggled,
          Context_CB.To_Marshaller (On_Display_Values_Toggled'Access),
          Module_Context'
-           (CodePeer_Module_Id (Factory.Module), null, null, null));
+           (CodePeer_Module_Id (Factory.Module), null, null));
    end Append_To_Menu;
 
    ---------------------------------
@@ -763,17 +758,17 @@ package body CodePeer.Module is
            (Self.Report,
             Gtk.Widget.Signal_Destroy,
             Context_CB.To_Marshaller (On_Destroy'Access),
-            Module_Context'(CodePeer_Module_Id (Self), null, null, null));
+            Module_Context'(CodePeer_Module_Id (Self), null, null));
          Context_CB.Connect
            (Self.Report.Messages_Report,
             CodePeer.Messages_Reports.Signal_Activated,
             Context_CB.To_Marshaller (On_Activate'Access),
-            Module_Context'(CodePeer_Module_Id (Self), null, null, null));
+            Module_Context'(CodePeer_Module_Id (Self), null, null));
          Context_CB.Connect
            (Self.Report.Messages_Report,
             CodePeer.Messages_Reports.Signal_Criteria_Changed,
             Context_CB.To_Marshaller (On_Criteria_Changed'Access),
-            Module_Context'(CodePeer_Module_Id (Self), null, null, null));
+            Module_Context'(CodePeer_Module_Id (Self), null, null));
 
          Self.Report_Subwindow := new Codepeer_Child_Record;
          GPS.Kernel.MDI.Initialize
@@ -1136,13 +1131,12 @@ package body CodePeer.Module is
 
    procedure On_Message_Reviewed
      (Item    : access Glib.Object.GObject_Record'Class;
-      Context : Module_Context)
-   is
-      pragma Unreferenced (Item);
-
+      Context : Module_Context) is
    begin
       CodePeer.Module.Bridge.Add_Audit_Record
-        (Context.Module, Context.Message);
+        (Context.Module,
+         CodePeer.Message_Review_Dialogs_V3.Message_Review_Dialog_Record'Class
+           (Item.all).Get_Messages.First_Element);
       Context.Module.Report.Messages_Report.Update;
       Context.Module.Update_Location_View;
 
@@ -1310,7 +1304,7 @@ package body CodePeer.Module is
            (Review_V3,
             CodePeer.Message_Review_Dialogs_V3.Signal_Ok_Activated,
             Context_CB.To_Marshaller (On_Message_Reviewed'Access),
-            (CodePeer_Module_Id (Self), null, null, Message));
+            (CodePeer_Module_Id (Self), null, null));
       end if;
    end Review_Message;
 

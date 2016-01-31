@@ -87,6 +87,19 @@ package body CodePeer.Message_Review_Dialogs_V3 is
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
      (1 => (1 => Glib.GType_None));
 
+   ------------------
+   -- Get_Messages --
+   ------------------
+
+   not overriding function Get_Messages
+     (Self : not null access constant Message_Review_Dialog_Record)
+      return CodePeer.Message_Vectors.Vector is
+   begin
+      return Messages : CodePeer.Message_Vectors.Vector do
+         Messages.Append (Self.Message);
+      end return;
+   end Get_Messages;
+
    -------------
    -- Gtk_New --
    -------------
