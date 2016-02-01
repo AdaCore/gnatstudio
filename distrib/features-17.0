@@ -105,6 +105,10 @@ NF-170-OA29-048 GPS: collapse all project nodes in Project view (2015-11-02)
   collapse all project nodes. This is a way to quickly cleanup the display
   after using "Locate in Project View" for a while.
 
+NF-170-O807-036 GPS: Review multiple CodePeer messages at once (2016-02-01)
+
+  GPS now allows reviewing multiple CodePeer messages at once.
+
 NF-170-O805-011 GPS: add multi-select to Locations View (2015-11-09)
 
   It is now possible to select multiple items in the Locations view,
