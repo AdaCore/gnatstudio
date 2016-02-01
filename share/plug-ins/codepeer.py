@@ -591,12 +591,12 @@ messages. Full: same as normal, plus run-time checks related messages">
 # Check for GNAT toolchain: codepeer, gps_codepeer_bridge
 
 codepeer = os_utils.locate_exec_on_path("codepeer")
-gnatCmd = gps_utils.get_gnat_driver_cmd()
 
 
 def on_project_changed(hook):
     # Change default build mode to "codepeer"
     # when GNAT is absent and build mode not set for the project
+    gnatCmd = gps_utils.get_gnat_driver_cmd()
     if not os_utils.locate_exec_on_path(gnatCmd):
         root_project = GPS.Project.root()
         try:
