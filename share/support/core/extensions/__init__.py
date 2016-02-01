@@ -364,6 +364,7 @@ class Menu(GPS.GUI):
             " Use GPS.Menu.action to interacte with the action" +
             " directly")
 
+    @staticmethod
     def create(
             path, on_activate='', ref='', add_before=True,
             filter=None, group=''):
