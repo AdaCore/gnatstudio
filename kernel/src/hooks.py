@@ -358,7 +358,7 @@ multiple toolchains mode is activated, the builds generating xref are
 Shadow builds'''),
          Param('background', 'Boolean')],
         returns='Boolean',
-        return_default='False'), # Stops when one returns True
+        return_default='True'), # Stops when one returns False
 
     'compilation_finished_hooks': Hook_Type(
         [Param('name', '__hookname__'),
