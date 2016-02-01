@@ -138,10 +138,10 @@ Exceptions
                     # These are for backward compatibility only
                     continue
 
-                if name == 'Hook':
+                if name == 'AAAAAAHook':
                     # Include generated doc for predefined hooks
                     fd.write(Inspect.class_stub % {
-                        'name': 'Predefined_Hooks',
+                        'name': 'Hook',
                         'inheritance': '',
                         'members': '    :members:\n',
                         'underscore': '^' * (len(n) + 10 + 16),

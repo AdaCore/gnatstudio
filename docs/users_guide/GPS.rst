@@ -1030,11 +1030,10 @@ Classes
 
    .. automethod:: GPS.History.add
 
-:class:`GPS.Predefined_Hooks`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:class:`GPS.Hook`
+^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Predefined_Hooks
-    :members:
+.. autoclass:: Hook
 
 
 
