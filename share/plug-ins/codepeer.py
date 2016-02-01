@@ -18,7 +18,7 @@ import gps_utils
 
 xml_codepeer = """<?xml version="1.0"?>
   <CODEPEER>
-    <doc_path>share/doc/codepeer</doc_path>
+    <doc_path>{root}/share/doc/codepeer</doc_path>
 
     <documentation_file>
       <name>codepeer_ug.html</name>
@@ -50,7 +50,7 @@ xml_codepeer = """<?xml version="1.0"?>
 
     <action name="codepeer_example_backpack" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/backpack/backpack.gpr"</shell>
+      <shell>Project.load "{example}/backpack/backpack.gpr"</shell>
       <shell>Editor.edit "backpack.ads"</shell>
       <shell>Editor.edit "backpack.adb"</shell>
       <shell>Editor.edit "README.txt"</shell>
@@ -65,7 +65,7 @@ xml_codepeer = """<?xml version="1.0"?>
 
     <action name="codepeer_example_coach" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/coach/coach.gpr"</shell>
+      <shell>Project.load "{example}/coach/coach.gpr"</shell>
       <shell>Editor.edit "coach.ads"</shell>
       <shell>Editor.edit "coach.adb"</shell>
       <shell>Editor.edit "README.txt"</shell>
@@ -81,7 +81,7 @@ xml_codepeer = """<?xml version="1.0"?>
     <action name="codepeer_example_codepeer_by_example" category=""
             show-command="false" output="none">
       <shell>Project.load""" \
-        """ "@EXAMPLE@/codepeer_by_example/codepeer_by_example.gpr"</shell>
+        """ "{example}/codepeer_by_example/codepeer_by_example.gpr"</shell>
       <shell>Editor.edit "README.txt"</shell>
     </action>
 
@@ -94,7 +94,7 @@ xml_codepeer = """<?xml version="1.0"?>
 
     <action name="codepeer_example_conductor" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/conductor/conductor.gpr"</shell>
+      <shell>Project.load "{example}/conductor/conductor.gpr"</shell>
       <shell>Editor.edit "score.ads"</shell>
       <shell>Editor.edit "conductor.ads"</shell>
       <shell>Editor.edit "conductor.adb"</shell>
@@ -110,7 +110,7 @@ xml_codepeer = """<?xml version="1.0"?>
 
     <action name="codepeer_example_configs" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/configs/configs.gpr"</shell>
+      <shell>Project.load "{example}/configs/configs.gpr"</shell>
       <shell>Editor.edit "configs.ads"</shell>
       <shell>Editor.edit "configs.adb"</shell>
       <shell>Editor.edit "README.txt"</shell>
@@ -125,7 +125,7 @@ xml_codepeer = """<?xml version="1.0"?>
 
     <action name="codepeer_example_contacts" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/contacts/contacts.gpr"</shell>
+      <shell>Project.load "{example}/contacts/contacts.gpr"</shell>
       <shell>Editor.edit "contacts.ads"</shell>
       <shell>Editor.edit "contacts.adb"</shell>
       <shell>Editor.edit "README.txt"</shell>
@@ -140,7 +140,7 @@ xml_codepeer = """<?xml version="1.0"?>
 
     <action name="codepeer_example_cruise" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/cruise/cruise.gpr"</shell>
+      <shell>Project.load "{example}/cruise/cruise.gpr"</shell>
       <shell>Editor.edit "cruise.ads"</shell>
       <shell>Editor.edit "cruise.adb"</shell>
       <shell>Editor.edit "README.txt"</shell>
@@ -155,7 +155,7 @@ xml_codepeer = """<?xml version="1.0"?>
 
     <action name="codepeer_example_false_tests" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/false_tests/example.gpr"</shell>
+      <shell>Project.load "{example}/false_tests/example.gpr"</shell>
       <shell>Editor.edit "false_tests.adb"</shell>
       <shell>Editor.edit "README.txt"</shell>
     </action>
@@ -169,7 +169,7 @@ xml_codepeer = """<?xml version="1.0"?>
 
     <action name="codepeer_example_pilot" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/pilot/pilot.gpr"</shell>
+      <shell>Project.load "{example}/pilot/pilot.gpr"</shell>
       <shell>Editor.edit "pilot.ads"</shell>
       <shell>Editor.edit "pilot.adb"</shell>
       <shell>Editor.edit "README.txt"</shell>
@@ -184,7 +184,7 @@ xml_codepeer = """<?xml version="1.0"?>
 
     <action name="codepeer_example_radar" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/radar/radar.gpr"</shell>
+      <shell>Project.load "{example}/radar/radar.gpr"</shell>
       <shell>Editor.edit "radar.ads"</shell>
       <shell>Editor.edit "radar.adb"</shell>
       <shell>Editor.edit "README.txt"</shell>
@@ -199,7 +199,7 @@ xml_codepeer = """<?xml version="1.0"?>
 
     <action name="codepeer_example_uninitialized" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/uninitialized/uninitialized.gpr"</shell>
+      <shell>Project.load "{example}/uninitialized/uninitialized.gpr"</shell>
       <shell>Editor.edit "adt.ads"</shell>
       <shell>Editor.edit "adt.adb"</shell>
       <shell>Editor.edit "uninit.adb"</shell>
@@ -215,7 +215,7 @@ xml_codepeer = """<?xml version="1.0"?>
 
     <action name="codepeer_example_voting" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/voting/voting.gpr"</shell>
+      <shell>Project.load "{example}/voting/voting.gpr"</shell>
       <shell>Editor.edit "voting.ads"</shell>
       <shell>Editor.edit "voting.adb"</shell>
       <shell>Editor.edit "README.txt"</shell>
@@ -616,10 +616,9 @@ def on_project_changed(hook):
 
 
 if codepeer:
-    example_root =\
-        os.path.dirname(os.path.dirname(codepeer)).replace('\\', '/') +\
-        '/share/examples/codepeer'
-    xml_codepeer = xml_codepeer.replace('@EXAMPLE@', example_root)
+    root = os.path.dirname(os.path.dirname(codepeer)).replace('\\', '/')
+    example_root = root + '/share/examples/codepeer'
+    xml_codepeer = xml_codepeer.format(example=example_root, root=root)
     GPS.parse_xml(xml_codepeer)
     GPS.Hook("project_changed").add(on_project_changed)
 else:
