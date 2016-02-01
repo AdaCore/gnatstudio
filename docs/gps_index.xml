@@ -1,8 +1,12 @@
 <?xml version="1.0"?>
 <index>
    <doc_path>share/doc/gnat/html</doc_path>
+   <doc_path>share/doc/gnat/html/gnat_ugn</doc_path>
+   <doc_path>share/doc/gnat/html/gnat_rm</doc_path>
    <doc_path>share/doc/gprbuild/html</doc_path>
    <doc_path>share/doc/gnat-cross/html</doc_path>
+   <doc_path>share/doc/gnat-cross/html/gnat_ugx</doc_path>
+   <doc_path>share/doc/gnat-cross/html/gnathie_ug</doc_path>
    <doc_path>share/doc/gps</doc_path>
    <doc_path>share/doc/</doc_path>
 

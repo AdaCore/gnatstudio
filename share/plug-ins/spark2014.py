@@ -154,14 +154,13 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       <Title>%(prefix)s/Prove Check</Title>
     </contextual>
 
-    <doc_path>share/doc/spark</doc_path>
+    <doc_path>{root}/share/doc/spark</doc_path>
 
     <documentation_file>
       <name>html/ug/index.html</name>
       <descr>SPARK 2014 Toolset User's Guide</descr>
       <category>%(prefix)s</category>
-      <menu before="About">/Help/%(prefix)s/SPARK 2014 Toolset User's Guide
-      </menu>
+<menu before="About">/Help/%(prefix)s/SPARK 2014 Toolset User's Guide</menu>
     </documentation_file>
 
     <documentation_file>
@@ -173,7 +172,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_adacore_u" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/adacore_u/Overview/overview.gpr"</shell>
+      <shell>Project.load "{example}/adacore_u/Overview/overview.gpr"</shell>
     </action>
 
     <submenu before="About">
@@ -185,7 +184,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_autopilot" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/autopilot/test.gpr"</shell>
+      <shell>Project.load "{example}/autopilot/test.gpr"</shell>
       <shell>Editor.edit "ap.ads"</shell>
       <shell>Editor.edit "instruments.ads"</shell>
       <shell>Editor.edit "surfaces.ads"</shell>
@@ -200,7 +199,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_binary_search" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/binary_search/test.gpr"</shell>
+      <shell>Project.load "{example}/binary_search/test.gpr"</shell>
       <shell>Editor.edit "binary_search.adb"</shell>
       <shell>Editor.edit "binary_search.ads"</shell>
     </action>
@@ -214,7 +213,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_binary_search_unconstrained" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/binary_search_unconstrained/test.gpr"
+      <shell>Project.load "{example}/binary_search_unconstrained/test.gpr"
       </shell>
       <shell>Editor.edit "binary_search.adb"</shell>
       <shell>Editor.edit "binary_search.ads"</shell>
@@ -229,7 +228,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_bitwalker" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/bitwalker/test.gpr"</shell>
+      <shell>Project.load "{example}/bitwalker/test.gpr"</shell>
       <shell>Editor.edit "bitwalker.adb"</shell>
       <shell>Editor.edit "bitwalker.ads"</shell>
     </action>
@@ -257,7 +256,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_database" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/database/test.gpr"</shell>
+      <shell>Project.load "{example}/database/test.gpr"</shell>
       <shell>Editor.edit "database.adb"</shell>
       <shell>Editor.edit "database.ads"</shell>
     </action>
@@ -271,7 +270,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_euclidian_division" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/euclidian_division/test.gpr"</shell>
+      <shell>Project.load "{example}/euclidian_division/test.gpr"</shell>
       <shell>Editor.edit "linear_div.adb"</shell>
     </action>
 
@@ -284,7 +283,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_evoting" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/evoting/test.gpr"</shell>
+      <shell>Project.load "{example}/evoting/test.gpr"</shell>
       <shell>Editor.edit "evoting.adb"</shell>
       <shell>Editor.edit "evoting.ads"</shell>
     </action>
@@ -298,7 +297,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_formal_queue" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/formal_queue/test.gpr"</shell>
+      <shell>Project.load "{example}/formal_queue/test.gpr"</shell>
       <shell>Editor.edit "queue.adb"</shell>
       <shell>Editor.edit "queue.ads"</shell>
     </action>
@@ -312,7 +311,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_gnatprove_by_example" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/gnatprove_by_example/test.gpr"</shell>
+      <shell>Project.load "{example}/gnatprove_by_example/test.gpr"</shell>
     </action>
 
     <submenu before="About">
@@ -324,7 +323,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_heatingsystem" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/heatingsystem/test.gpr"</shell>
+      <shell>Project.load "{example}/heatingsystem/test.gpr"</shell>
       <shell>Editor.edit "heatingsystem_dfa.adb"</shell>
     </action>
 
@@ -337,7 +336,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_intro" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/intro/test.gpr"</shell>
+      <shell>Project.load "{example}/intro/test.gpr"</shell>
       <shell>Editor.edit "pricing.adb"</shell>
       <shell>Editor.edit "pricing.ads"</shell>
     </action>
@@ -380,7 +379,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_longest_common_prefix" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/longest_common_prefix/test.gpr"</shell>
+      <shell>Project.load "{example}/longest_common_prefix/test.gpr"</shell>
       <shell>Editor.edit "lcp.adb"</shell>
       <shell>Editor.edit "lcp.ads"</shell>
     </action>
@@ -394,7 +393,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_natural" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/natural/test.gpr"</shell>
+      <shell>Project.load "{example}/natural/test.gpr"</shell>
       <shell>Editor.edit "natural_set.adb"</shell>
       <shell>Editor.edit "natural_set.ads"</shell>
     </action>
@@ -408,7 +407,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_n_queens" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/n_queens/test.gpr"</shell>
+      <shell>Project.load "{example}/n_queens/test.gpr"</shell>
       <shell>Editor.edit "queen.adb"</shell>
       <shell>Editor.edit "queen.ads"</shell>
     </action>
@@ -422,7 +421,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_openETCS" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/openETCS/test.gpr"</shell>
+      <shell>Project.load "{example}/openETCS/test.gpr"</shell>
       <shell>Editor.edit "section_4_6.adb"</shell>
       <shell>Editor.edit "step_function.ads"</shell>
     </action>
@@ -436,7 +435,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_patience" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/patience/test.gpr"</shell>
+      <shell>Project.load "{example}/patience/test.gpr"</shell>
       <shell>Editor.edit "patience.adb"</shell>
       <shell>Editor.edit "patience.ads"</shell>
     </action>
@@ -450,7 +449,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_prime_numbers" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/prime_numbers/test.gpr"</shell>
+      <shell>Project.load "{example}/prime_numbers/test.gpr"</shell>
       <shell>Editor.edit "prime_and_coprime_numbers.adb"</shell>
       <shell>Editor.edit "prime_and_coprime_numbers.ads"</shell>
     </action>
@@ -464,7 +463,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_railway_signaling" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/railway_signaling/test.gpr"</shell>
+      <shell>Project.load "{example}/railway_signaling/test.gpr"</shell>
       <shell>Editor.edit "trains.adb"</shell>
       <shell>Editor.edit "trains.ads"</shell>
     </action>
@@ -478,7 +477,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_ring_buffer" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/ring_buffer/test.gpr"</shell>
+      <shell>Project.load "{example}/ring_buffer/test.gpr"</shell>
       <shell>Editor.edit "ring_buf.adb"</shell>
       <shell>Editor.edit "ring_buf.ads"</shell>
     </action>
@@ -492,7 +491,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_search_linked_list" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/search_linked_list/test.gpr"</shell>
+      <shell>Project.load "{example}/search_linked_list/test.gpr"</shell>
       <shell>Editor.edit "lists.adb"</shell>
       <shell>Editor.edit "lists.ads"</shell>
     </action>
@@ -506,7 +505,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_segway" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/segway/test.gpr"</shell>
+      <shell>Project.load "{example}/segway/test.gpr"</shell>
       <shell>Editor.edit "segway.adb"</shell>
       <shell>Editor.edit "segway.ads"</shell>
     </action>
@@ -520,7 +519,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_sparkskein" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/sparkskein/test.gpr"</shell>
+      <shell>Project.load "{example}/sparkskein/test.gpr"</shell>
       <shell>Editor.edit "skein.adb"</shell>
       <shell>Editor.edit "skein.ads"</shell>
     </action>
@@ -534,7 +533,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_spark_book" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/spark_book/test.gpr"</shell>
+      <shell>Project.load "{example}/spark_book/test.gpr"</shell>
     </action>
 
     <submenu before="About">
@@ -546,7 +545,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_spark_io" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/spark_io/test.gpr"</shell>
+      <shell>Project.load "{example}/spark_io/test.gpr"</shell>
       <shell>Editor.edit "spark-text_io.ads"</shell>
       <shell>Editor.edit "hello_world.adb"</shell>
     </action>
@@ -560,7 +559,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_tetris" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/tetris/test.gpr"</shell>
+      <shell>Project.load "{example}/tetris/test.gpr"</shell>
       <shell>Editor.edit "tetris_functional.adb"</shell>
       <shell>Editor.edit "tetris_functional.ads"</shell>
     </action>
@@ -587,7 +586,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_tokeneer" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/tokeneer/test.gpr"</shell>
+      <shell>Project.load "{example}/tokeneer/test.gpr"</shell>
       <shell>Editor.edit "tis.adb"</shell>
     </action>
 
@@ -600,7 +599,7 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
 
     <action name="spark2014_example_traffic_light" category=""
             show-command="false" output="none">
-      <shell>Project.load "@EXAMPLE@/traffic_light/test.gpr"</shell>
+      <shell>Project.load "{example}/traffic_light/test.gpr"</shell>
       <shell>Editor.edit "traffic_lights.ads"</shell>
     </action>
 
@@ -1392,12 +1391,16 @@ GPS.Preference(Color_Pref_Name).create(
     Default_Trace_Color)
 
 
+def get_root():
+    """retrieve the prefix of the spark install found on the path """
+    return os.path.dirname(os.path.dirname(gnatprove)).replace('\\', '/')
+
+
 def get_example_root():
     """retrieve the full path to the directory containing the examples as
        installed locally.
     """
-    return os.path.dirname(os.path.dirname(gnatprove)).replace('\\', '/') \
-        + '/share/examples/spark'
+    return get_root() + '/share/examples/spark'
 
 
 def update_project_path(paths):
@@ -2232,6 +2235,6 @@ gnatprove = os_utils.locate_exec_on_path(toolname)
 
 if gnatprove:
     xml_gnatprove_menus = \
-        xml_gnatprove_menus.replace('@EXAMPLE@', get_example_root())
+        xml_gnatprove_menus.format(root=get_root(), example=get_example_root())
 
     gnatprove_plug = GNATProve_Plugin()
