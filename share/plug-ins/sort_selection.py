@@ -33,6 +33,11 @@ def sort_selection(revert=False):
     start = ed.selection_start()
     to = ed.selection_end()
 
+    # If the selection is empty, do nothing
+
+    if to - start == 0:
+        return
+
     # If the end is at the first column we really want to sort the lines
     # before the current one.
 
@@ -41,12 +46,13 @@ def sort_selection(revert=False):
 
     selection = ed.get_chars(start, to)
 
-    if selection == "" or not context.entity_name():
-        return
-
     lines = string.split(selection, "\n")
     # strip off extraneous trailing "" line
     lines = lines[:-1]
+
+    # If the selection contains less than two lines, do nothing
+    if len(lines) < 2:
+        return
 
     case_sensitive = ed.file().language().lower() not in ("ada", )
 
