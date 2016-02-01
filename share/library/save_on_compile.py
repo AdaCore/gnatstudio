@@ -12,7 +12,7 @@ from os.path import dirname, join
 
 file_name_pref = Preference("Plugins/save_on_compile/file_name").create(
     "File Name", "string",
-    "Name of the file you want to save the messages into"
+    "Name of the file you want to save the messages into",
     "messages.txt"
 )
 
