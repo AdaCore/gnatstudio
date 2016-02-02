@@ -764,8 +764,6 @@ package body CodePeer.Messages_Reports is
          -"Message history",
          "codepeer-summary_report-lifeage");
       Filter_Box.Pack_Start (Self.Lifeage_Editor, False);
-      Self.Analysis_Model.Set_Visible_Message_Lifeages
-        (Self.Lifeage_Editor.Get_Visible_Lifeages);
 
       Message_Lifeage_Criteria_Callbacks.Connect
         (Self.Lifeage_Editor,
@@ -900,7 +898,17 @@ package body CodePeer.Messages_Reports is
            (On_Show_Bug_Messages_Toggled'Access),
          Messages_Report (Self));
 
+      --  Set actual filter criteria (criteria are loaded from preferences to
+      --  restore values used in last session).
+
+      Self.Analysis_Model.Set_Visible_Message_Lifeages
+        (Self.Lifeage_Editor.Get_Visible_Lifeages);
       Self.Analysis_Model.Set_Visible_Message_Status (Self.Show_Status);
+      Self.Analysis_Model.Set_Visible_Message_Categories
+        (Self.Warning_Categories_Editor.Get_Visible_Items.Union
+           (Self.Check_Categories_Editor.Get_Visible_Items));
+      Self.Analysis_Model.Set_Visible_CWE_Categories
+        (Self.CWE_Editor.Get_Visible_Items);
 
       --  Register contextual menu handler
 
