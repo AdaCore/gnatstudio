@@ -1,5 +1,5 @@
 [gerrit]
-host = review.eu.adacore.com
-port = 29418
+host = git.adacore.com
 project = gps
 defaultbranch = master
+defaultremote = origin
