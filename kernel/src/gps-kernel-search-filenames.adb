@@ -255,9 +255,9 @@ package body GPS.Kernel.Search.Filenames is
          Self.Column := Natural'Value (Text (M (3).First .. M (3).Last));
       end if;
 
-      if M (0) /= GNAT.Regpat.No_Match then
+      if M (0) /= GNAT.Regpat.No_Match and then M (0).First /= Text'First then
          Self.Pattern := Build
-            (Self.Pattern, Text (Text'First .. M (0).First - 1));
+           (Self.Pattern, Text (Text'First .. M (0).First - 1));
          Self.Pattern_Needs_Free := True;
       end if;
    end Set_Pattern;
