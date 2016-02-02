@@ -567,14 +567,22 @@ package body GPS.Kernel.Preferences_Views is
          --  widget, append it to the notebook, and set its index in the model.
          if Page_Index = -1 then
             declare
-               Manager    :  constant Preferences_Manager :=
+               Manager     :  constant Preferences_Manager :=
                               Pref_View.Kernel.Get_Preferences;
-               Page_Name  : constant String :=
-                              Get_String (M, Iter, Page_Full_Name_Colum);
-               Page       : constant Preferences_Page :=
-                              Manager.Get_Registered_Page (Page_Name);
-               Page_View  : constant Gtk_Widget := Page.Get_Widget (Manager);
-               Child_Iter : Gtk_Tree_Iter;
+               M_Page_Name : constant String :=
+                               Get_String (M, Iter, Page_Full_Name_Colum);
+               Page_Name   : constant String :=
+                               (if M_Page_Name = Advanced_Page_Name then
+                                   ""
+                                else
+                                   M_Page_Name);
+               --  Retrieve the hidden page if it corresponds to the advanced
+               --  one.
+               Page            : constant Preferences_Page :=
+                                   Manager.Get_Registered_Page (Page_Name);
+               Page_View       : constant Gtk_Widget :=
+                                   Page.Get_Widget (Manager);
+               Child_Iter      : Gtk_Tree_Iter;
             begin
                Page_Index := Pref_View.Pages_Notebook.Get_N_Pages;
 
