@@ -457,6 +457,7 @@ package body CodePeer.Messages_Reports is
       Tree    : Code_Analysis.Code_Analysis_Tree)
    is
       use Gtk.Tree_Model_Sort;
+      use type CodePeer.CWE_Criteria_Editors.Criteria_Editor;
 
       Panel           : Gtk.Paned.Gtk_Hpaned;
       Scrolled        : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
@@ -907,8 +908,11 @@ package body CodePeer.Messages_Reports is
       Self.Analysis_Model.Set_Visible_Message_Categories
         (Self.Warning_Categories_Editor.Get_Visible_Items.Union
            (Self.Check_Categories_Editor.Get_Visible_Items));
-      Self.Analysis_Model.Set_Visible_CWE_Categories
-        (Self.CWE_Editor.Get_Visible_Items);
+
+      if Self.CWE_Editor /= null then
+         Self.Analysis_Model.Set_Visible_CWE_Categories
+           (Self.CWE_Editor.Get_Visible_Items);
+      end if;
 
       --  Register contextual menu handler
 
