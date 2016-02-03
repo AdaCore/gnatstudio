@@ -282,7 +282,7 @@ class GNATcovPlugin(object):
         # Create all custom things that do not require GPS' GUI to be ready
         # (i.e.: all but menus and hooks).
         for xml_nodes in (
-            self.PROJECT_ATTRIBUTES, self.BUILD_MODES, self.PREFERENCES,
+            self.PROJECT_ATTRIBUTES, self.BUILD_MODES,
             self.GNATCOV_DOCUMENTATION, self.GNATEMU_DOCUMENTATION,
         ):
             GPS.parse_xml(list_to_xml(xml_nodes))
