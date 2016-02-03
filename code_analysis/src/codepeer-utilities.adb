@@ -61,7 +61,8 @@ package body CodePeer.Utilities is
          --  Count messages of specified categories, lifeage and review status.
 
          if (Categories.Contains (Message.Category)
-               or not CWEs.Intersection (Message.Category.CWEs).Is_Empty)
+               or else not Categories.Intersection (Message.Checks).Is_Empty
+               or else not CWEs.Intersection (Message.Category.CWEs).Is_Empty)
            and Lifeages (Message.Lifeage)
            and Statuses (Message.Status)
          then

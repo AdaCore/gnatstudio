@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P201-089 GPS: inconsistence of message counters in CodePeer report
+
+  Problem:    Message counters in CodePeer Report view and Locations view is
+              inconsistence in some combinations of selection of check
+              categories.
+
+  Status:     This was fixed in 17.0 on 2016-02-03
+
+  Workaround: Not needed.
+
 KP-62-P128-011 GPS: key shortcuts not working on read-only editors
 
   Problem:    Using key shortcuts based on 'control' and a character
