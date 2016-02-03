@@ -122,10 +122,11 @@ package body CodePeer.Generic_Criteria_Models is
      (Model          : in out Criteria_Model;
       Kernel         : GPS.Kernel.Kernel_Handle;
       History_Prefix : String;
-      Items          : Item_Sets.Set) is
+      Items          : Item_Sets.Set;
+      Default        : Boolean) is
    begin
       Model := new Criteria_Model_Record;
-      Initialize (Model, Kernel, History_Prefix, Items);
+      Initialize (Model, Kernel, History_Prefix, Items, Default);
    end Gtk_New;
 
    ----------
@@ -191,7 +192,8 @@ package body CodePeer.Generic_Criteria_Models is
      (Self           : access Criteria_Model_Record'Class;
       Kernel         : GPS.Kernel.Kernel_Handle;
       History_Prefix : String;
-      Items          : Item_Sets.Set)
+      Items          : Item_Sets.Set;
+      Default        : Boolean)
    is
       procedure Restore (Position : Item_Sets.Cursor);
       --  Restores previous state from history
@@ -205,7 +207,7 @@ package body CodePeer.Generic_Criteria_Models is
 
       begin
          Histories.Create_New_Boolean_Key_If_Necessary
-           (Self.Kernel.Get_History.all, Self.History_Key (Item), True);
+           (Self.Kernel.Get_History.all, Self.History_Key (Item), Default);
 
          if Histories.Get_History
              (Self.Kernel.Get_History.all, Self.History_Key (Item))

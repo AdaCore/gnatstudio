@@ -54,7 +54,8 @@ package CodePeer.Generic_Criteria_Models is
      (Model          : in out Criteria_Model;
       Kernel         : GPS.Kernel.Kernel_Handle;
       History_Prefix : String;
-      Items          : Item_Sets.Set);
+      Items          : Item_Sets.Set;
+      Default        : Boolean);
    --  Creates new instance. History_Prefix is a prefix to manage persistent
    --  state of selected categories.
 
@@ -62,7 +63,8 @@ package CodePeer.Generic_Criteria_Models is
      (Self           : access Criteria_Model_Record'Class;
       Kernel         : GPS.Kernel.Kernel_Handle;
       History_Prefix : String;
-      Items     : Item_Sets.Set);
+      Items          : Item_Sets.Set;
+      Default        : Boolean);
 
    procedure Show
      (Self : access Criteria_Model_Record'Class;

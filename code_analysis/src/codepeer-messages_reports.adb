@@ -687,11 +687,12 @@ package body CodePeer.Messages_Reports is
       --  Warning messages categories
 
       CodePeer.Categories_Criteria_Editors.Gtk_New
-        (Self.Warning_Categories_Editor,
-         Self.Kernel,
-         -"Warning categories",
-         "codepeer-summary_report-categories-warning",
-         Project_Data.Warning_Subcategories);
+        (Editor         => Self.Warning_Categories_Editor,
+         Kernel         => Self.Kernel,
+         Title          => -"Warning categories",
+         History_Prefix => "codepeer-summary_report-categories-warning",
+         Items          => Project_Data.Warning_Subcategories,
+         Default        => True);
       Category_Box.Pack_Start (Self.Warning_Categories_Editor);
 
       Message_Categories_Criteria_Callbacks.Connect
@@ -704,11 +705,12 @@ package body CodePeer.Messages_Reports is
       --  Checks messages categories
 
       CodePeer.Categories_Criteria_Editors.Gtk_New
-        (Self.Check_Categories_Editor,
-         Self.Kernel,
-         -"Check categories",
-         "codepeer-summary_report-categories-check",
-         Project_Data.Check_Subcategories);
+        (Editor         => Self.Check_Categories_Editor,
+         Kernel         => Self.Kernel,
+         Title          => -"Check categories",
+         History_Prefix => "codepeer-summary_report-categories-check",
+         Items          => Project_Data.Check_Subcategories,
+         Default        => True);
       Category_Box.Pack_Start (Self.Check_Categories_Editor);
 
       Message_Categories_Criteria_Callbacks.Connect
@@ -726,11 +728,12 @@ package body CodePeer.Messages_Reports is
             (Project.Attribute_Value (CWE_Attribute)) = "true"
       then
          CodePeer.CWE_Criteria_Editors.Gtk_New
-           (Self.CWE_Editor,
-            Self.Kernel,
-            -"CWE categories",
-            "codepeer-summary-report-categories-cwe",
-            Project_Data.CWE_Categories);
+           (Editor         => Self.CWE_Editor,
+            Kernel         => Self.Kernel,
+            Title          => -"CWE categories",
+            History_Prefix => "codepeer-summary-report-categories-cwe",
+            Items          => Project_Data.CWE_Categories,
+            Default        => False);
          Category_Box.Pack_Start (Self.CWE_Editor);
 
          CWE_Categories_Criteria_Callbacks.Connect

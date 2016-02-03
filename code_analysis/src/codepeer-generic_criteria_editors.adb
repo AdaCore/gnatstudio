@@ -137,10 +137,11 @@ package body CodePeer.Generic_Criteria_Editors is
       Kernel         : GPS.Kernel.Kernel_Handle;
       Title          : String;
       History_Prefix : String;
-      Items          : Item_Sets.Set) is
+      Items          : Item_Sets.Set;
+      Default        : Boolean) is
    begin
       Editor := new Criteria_Editor_Record;
-      Initialize (Editor, Kernel, Title, History_Prefix, Items);
+      Initialize (Editor, Kernel, Title, History_Prefix, Items, Default);
    end Gtk_New;
 
    ----------------
@@ -152,7 +153,8 @@ package body CodePeer.Generic_Criteria_Editors is
       Kernel         : GPS.Kernel.Kernel_Handle;
       Title          : String;
       History_Prefix : String;
-      Items          : Item_Sets.Set)
+      Items          : Item_Sets.Set;
+      Default        : Boolean)
    is
       Column          : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Text_Renderer   : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
@@ -177,7 +179,8 @@ package body CodePeer.Generic_Criteria_Editors is
 
       Self.Set_Policy (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
 
-      Criteria_Models.Gtk_New (Self.Model, Kernel, History_Prefix, Items);
+      Criteria_Models.Gtk_New
+        (Self.Model, Kernel, History_Prefix, Items, Default);
       Message_Categories_Criteria_Model_Callbacks.Connect
         (Self.Model,
          Gtk.Tree_Model.Signal_Row_Changed,
