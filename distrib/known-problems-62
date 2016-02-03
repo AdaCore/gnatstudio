@@ -36,6 +36,33 @@ KP-62-P128-011 GPS: key shortcuts not working on read-only editors
   Workaround: Make the editor temporarily writable by clicking on the
               icon in the bottom-right corner.
 
+KP-62-P126-014 WB: wrs_rtp_base defined more than once on VxWorks-7 RTP builds.
+
+  Problem:    When building VxWorks 7 Real Time Process, __wrs_rtp_base can be
+              defined more than once.
+
+  Status:     This was fixed in 17.0 on 2016-01-28
+
+  Workaround: In gnat.makefile, add after gprbuild invocation, the following
+              line.
+              objcopypentium -L __wrs_rtp_base $(GPRBUILD_OBJECT)
+              Note: You may have to call objcopyppc or objcopyarm instead of
+              objcopypentium.
+
+KP-62-P121-016 WB: undefined reference to `_Unwind_Resume'
+
+  Problem:    When building VxWorks Cert 6.x Real Time Process (RTP)
+              Application using rtp runtime, a lot of undefined reference to
+              _Unwind_* problems are reported
+
+  Status:     This was fixed in 17.0 on 2016-01-22
+
+  Workaround: Use RUNTIME=zfp or ravenscar-cert-rtp to build the RTP. Depending
+              on the RTP's GNAT project file, the RUNTIME used to build it can
+              be changed:
+              - editing RTP's gnat.makefile file
+              - changing RTP's RUNTIME value using the Scenario Variables view.
+
 KP-62-P113-013 GPS: cannot display standard.ads on cross platform
 
   Problem:    When the system is configured for a cross or bareboard platform,
@@ -60,6 +87,23 @@ KP-62-P113-008 GPS: problem with folding of directory in Project View
 
   Workaround: Use double click outside arrow icon or keyboard shortcuts
               to fold the row.
+
+KP-62-P112-044 WB: multiple definition of `_dtors', `_ctors'
+
+  Problem:    When building VxWorks 6.x Downloadable Kernel Module (DKM)
+              multiple definition of `_dtors' and `_ctors' problems may be
+              reported.
+
+  Status:     This was fixed in 17.0 on 2016-01-12
+
+  Workaround: add -noauto-register linker switch. This can be done:
+              - adding the noauto-register switch in the linker package of the
+                DKM GNAT project file (GPR)
+                package Linker is
+                    for Switches ('Ada') use ("-noauto-register");
+                end Linker;
+              - appending '-largs -noauto-register' to the gprbuild command in
+                the DKM makefile (usually named gnat.makefile)
 
 KP-62-P108-044 GPS: incorrect program arguments when debugging in GPS
 
