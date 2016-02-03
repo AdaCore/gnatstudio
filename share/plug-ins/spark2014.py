@@ -1368,8 +1368,7 @@ check_msg_prefix = 'medium: '
 Default_Trace_Color = "#00ffff"  # "aqua" (light blue)
 Overlay_Name = "Gnatprove_Trace_Overlay"
 Ce_Spec_Lines_Name = "Gnatprove_Ce_Special_Lines"
-Ce_Highlighting = "Gnatprove_Ce_Highlighting"
-Ce_Highlighting_Color = "#dddddd"  # light grey
+Ce_Highlighting = "Editor code annotations"
 
 User_Profile_Pref_Name = 'SPARK/user_profile'
 
@@ -1745,9 +1744,6 @@ class GNATprove_Parser(tool_output.OutputParser):
             lines = self.parse_trace_file(tracefile)
 
         if counterexample != {} or lines != []:
-            GPS.Editor.register_highlighting(Ce_Highlighting,
-                                             Ce_Highlighting_Color,
-                                             False)
             if counterexample != {}:
                 msg = 'Show counterexample'
             else:
