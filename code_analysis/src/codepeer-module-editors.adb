@@ -18,7 +18,6 @@
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
-with GPS.Default_Styles;           use GPS.Default_Styles;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Kernel.Project;           use GPS.Kernel.Project;
@@ -224,7 +223,7 @@ package body CodePeer.Module.Editors is
                Buffer.Add_Special_Line
                  (Start_Line => Subprogram_Node.Line,
                   Text       => Indent & "--    " & Annotation.Text.all,
-                  Style      => Editor_Code_Annotations_Style);
+                  Style      => Module.Annotations_Style);
                Data.Special_Lines := Data.Special_Lines + 1;
             end if;
          end Process_Annotation;
@@ -245,7 +244,7 @@ package body CodePeer.Module.Editors is
             Buffer.Add_Special_Line
               (Start_Line => Subprogram_Node.Line,
                Text       => Indent & "--  " & Key.Text.all & ":",
-               Style      => Editor_Code_Annotations_Style);
+               Style      => Module.Annotations_Style);
             Data.Special_Lines := Data.Special_Lines + 1;
 
             Element.Iterate (Process_Annotation'Access);
@@ -253,7 +252,7 @@ package body CodePeer.Module.Editors is
             Buffer.Add_Special_Line
               (Start_Line => Subprogram_Node.Line,
                Text       => Indent & "--",
-               Style      => Editor_Code_Annotations_Style);
+               Style      => Module.Annotations_Style);
             Data.Special_Lines := Data.Special_Lines + 1;
          end Process_Annotations;
 
@@ -264,20 +263,20 @@ package body CodePeer.Module.Editors is
                 (Buffer.Add_Special_Line
                      (Start_Line => Subprogram_Node.Line,
                       Text       => Indent & "--",
-                      Style      => Editor_Code_Annotations_Style));
+                      Style      => Module.Annotations_Style));
             Data.Special_Lines := Data.Special_Lines + 1;
 
             Buffer.Add_Special_Line
               (Start_Line => Subprogram_Node.Line,
                Text       => Indent & "--  Subprogram: "
                & Subprogram_Node.Name.all,
-               Style      => Editor_Code_Annotations_Style);
+               Style      => Module.Annotations_Style);
             Data.Special_Lines := Data.Special_Lines + 1;
 
             Buffer.Add_Special_Line
               (Start_Line => Subprogram_Node.Line,
                Text       => Indent & "--",
-               Style      => Editor_Code_Annotations_Style);
+               Style      => Module.Annotations_Style);
             Data.Special_Lines := Data.Special_Lines + 1;
 
             Data.Annotations.Iterate (Process_Annotations'Access);

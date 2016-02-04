@@ -1026,39 +1026,7 @@ package body GPS.Kernel.Preferences is
          Label   => -"Error messages",
          Doc     => -"Color for GPS error messages.",
          Default => "#FF0000",
-         Path    => -"Messages:Colors");
-
-      Error_Src_Highlight := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Errors-Src-Highlight-Color",
-         Label   => -"Errors highlighting",
-         Doc     => -"Color for build error messages.",
-         Default => "#FFB7B7",
-         Path    => -"Messages:Editor Colors");
-
-      Warning_Src_Highlight := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Warnings-Src-Highlight-Color",
-         Label   => -"Warnings highlighting",
-         Doc     => -"Color for build warnings.",
-         Default => "#FFCC9C",
-         Path    => -"Messages:Editor Colors");
-
-      Style_Src_Highlight := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Style-Src-Highlight-Color",
-         Label   => -"Style errors highlighting",
-         Doc     => -"Color for style errors.",
-         Default => "#FFFFAD",
-         Path    => -"Messages:Editor Colors");
-
-      Info_Src_Highlight := Create
-        (Manager => Kernel.Preferences,
-         Name    => "Info-Src-Highlight-Color",
-         Label   => -"Compiler info highlighting",
-         Doc     => -"Color for compiler info messages.",
-         Default => "#ADFFC2",
-         Path    => -"Messages:Editor Colors");
+         Path    => -"Messages:GPS & Editors");
 
       Search_Src_Highlight := Create
         (Manager => Kernel.Preferences,
@@ -1066,7 +1034,66 @@ package body GPS.Kernel.Preferences is
          Label   => -"Search highlighting",
          Doc     => -"Color for search results",
          Default => "#BDD7FF",
-         Path    => -"Messages:Editor Colors");
+         Path    => -"Messages:GPS & Editors");
+
+      Error_Src_Highlight := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Errors-Src-Highlight-Color",
+         Label   => -"Errors highlighting",
+         Doc     => -"Color for build error messages.",
+         Default => "#FFB7B7",
+         Path    => -"Messages:Build");
+
+      Warning_Src_Highlight := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Warnings-Src-Highlight-Color",
+         Label   => -"Warnings highlighting",
+         Doc     => -"Color for build warnings.",
+         Default => "#FFCC9C",
+         Path    => -"Messages:Build");
+
+      Style_Src_Highlight := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Style-Src-Highlight-Color",
+         Label   => -"Style errors highlighting",
+         Doc     => -"Color for style errors.",
+         Default => "#FFFFAD",
+         Path    => -"Messages:Build");
+
+      Info_Src_Highlight := Create
+        (Manager => Kernel.Preferences,
+         Name    => "Info-Src-Highlight-Color",
+         Label   => -"Compiler info highlighting",
+         Doc     => -"Color for compiler info messages.",
+         Default => "#ADFFC2",
+         Path    => -"Messages:Build");
+
+      High_Messages_Highlight :=
+        Default_Preferences.Create
+          (Kernel.Get_Preferences,
+           Name    => "High-Importance-Messages-Highlight",
+           Label   => -"High importance messages",
+           Path    => -"Messages:Analysis Tools",
+           Doc     => -("Color for high priority messages."),
+           Default => "#F75D59");
+
+      Medium_Messages_Highlight :=
+        Default_Preferences.Create
+          (Kernel.Get_Preferences,
+           Name    => "Medium-Importance-Messages-Highlight",
+           Label   => -"Medium importance messages",
+           Path    => -"Messages:Analysis Tools",
+           Doc     => -("Color for medium priority messages."),
+           Default => "#F88017");
+
+      Low_Messages_Highlight :=
+        Default_Preferences.Create
+          (Kernel.Get_Preferences,
+           Name    => "Low-Importance-Messages-Highlight",
+           Label   => -"Low importance messages",
+           Path    => -"Messages:Analysis Tools",
+           Doc     => -("Color for low priority messages."),
+           Default => "#FFE87C");
 
       File_Pattern := Create
         (Manager => Kernel.Preferences,

@@ -34,7 +34,7 @@ package body GPS.Default_Styles is
       procedure Init
         (Style     : out Style_Access;
          Name      : String;
-         Icon_Name : String;
+         Icon_Name : String := "";
          Fg        : Color_Preference := null;
          Bg        : Color_Preference := null;
          Speedbar  : Boolean := False);
@@ -60,17 +60,21 @@ package body GPS.Default_Styles is
       procedure Init
         (Style     : out Style_Access;
          Name      : String;
-         Icon_Name : String;
+         Icon_Name : String := "";
          Fg        : Color_Preference := null;
          Bg        : Color_Preference := null;
          Speedbar  : Boolean := False) is
       begin
          Style := M.Create_From_Preferences
            (Key => Name, Fg_Pref => Fg, Bg_Pref => Bg);
+
          if Speedbar then
             Set_In_Speedbar (Style, True);
          end if;
-         Set_Icon (Style, Icon_Name);
+
+         if Icon_Name /= "" then
+            Set_Icon (Style, Icon_Name);
+         end if;
       end Init;
 
       Entity_To_Pref : constant Entity_To_Pref_Array :=
@@ -156,6 +160,23 @@ package body GPS.Default_Styles is
             -"Background compilation",
             "",
             Bg => null, Speedbar => True);
+
+      --------------------
+      -- Analysis Tools --
+      --------------------
+
+      Init (Analysis_Styles (High_Importance),
+            Name      => -"High importance messages",
+            Bg        => High_Messages_Highlight);
+
+      Init (Analysis_Styles (Medium_Importance),
+            Name      => -"Medium importance messages",
+            Bg        => Medium_Messages_Highlight);
+
+      Init (Analysis_Styles (Low_Importance),
+            Name      => -"Low importance messages",
+            Bg        => Low_Messages_Highlight);
+
    end Initialize_Default_Styles;
 
 end GPS.Default_Styles;

@@ -35,9 +35,11 @@ with Basic_Types;
 with Default_Preferences;            use Default_Preferences;
 with GPS.Editors;
 with GPS.Editors.Line_Information;
+with GPS.Default_Styles;             use GPS.Default_Styles;
 with GPS.Intl;                       use GPS.Intl;
 with GPS.Kernel.Contexts;            use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;         use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;             use GPS.Kernel.Project;
 with GPS.Kernel.Messages;            use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Hyperlink;
@@ -1854,36 +1856,15 @@ package body CodePeer.Module is
 
       CodePeer.Module.Actions.Register_Actions (Module);
 
-      Module.Message_Colors (CodePeer.High) :=
-        Default_Preferences.Create
-          (Kernel.Get_Preferences,
-           Name    => "CodePeer-Messages-High-Background",
-           Label   => -"Color for 'high' messages",
-           Path    => -"CodePeer:Colors",
-           Doc     => -("Color to use for the background of high" &
-             " ranking messages"),
-           Default => "#F75D59");
+      --  Reuse existing preferences regarding Analysis Tools for low, medium
+      --  and high prirority messages.
+      Module.Message_Colors (CodePeer.High) := High_Messages_Highlight;
 
-      Module.Message_Colors (CodePeer.Medium) :=
-        Default_Preferences.Create
-          (Kernel.Get_Preferences,
-           Name    => "CodePeer-Messages-Medium-Background",
-           Label   => -"Color for 'medium' messages",
-           Path    => -"CodePeer:Colors",
-           Doc     => -("Color to use for the background of medium"
-             & " ranking messages"),
-           Default => "#F88017");
+      Module.Message_Colors (CodePeer.Medium) := Medium_Messages_Highlight;
 
-      Module.Message_Colors (CodePeer.Low) :=
-        Default_Preferences.Create
-          (Kernel.Get_Preferences,
-           Name    => "CodePeer-Messages-Low-Background",
-           Label   => -"Color for 'low' messages",
-           Path    => -"CodePeer:Colors",
-           Doc     => -("Color to use for the background of low"
-             & " ranking messages"),
-           Default => "#FFE87C");
+      Module.Message_Colors (CodePeer.Low) := Low_Messages_Highlight;
 
+      --  Create CodePeer own preferences for CodePeer specific messages
       Module.Message_Colors (CodePeer.Info) :=
         Default_Preferences.Create
           (Kernel.Get_Preferences,
@@ -1904,30 +1885,19 @@ package body CodePeer.Module is
              & " messages"),
            Default => "#EFEFEF");
 
-      Module.Annotation_Color :=
-        Default_Preferences.Create
-          (Kernel.Get_Preferences,
-           Name    => "CodePeer-Annotation-Background",
-           Label   => -"Color for annotations background",
-           Path    => -"CodePeer:Colors",
-           Doc     => -"Color to use for the background of annotations",
-           Default => "#E9E9E9");
+      --  CodePeer styles initialization
 
-      Initialize_Style
-        (Module.Message_Styles (CodePeer.High),
-         High_Probability_Style_Name,
-         Module.Message_Colors (CodePeer.High),
-         True);
-      Initialize_Style
-        (Module.Message_Styles (CodePeer.Medium),
-         Medium_Probability_Style_Name,
-         Module.Message_Colors (CodePeer.Medium),
-         True);
-      Initialize_Style
-        (Module.Message_Styles (CodePeer.Low),
-         Low_Probability_Style_Name,
-         Module.Message_Colors (CodePeer.Low),
-         True);
+      Module.Annotations_Style := Editor_Code_Annotations_Style;
+
+      Module.Message_Styles (CodePeer.High) :=
+        Analysis_Styles (High_Importance);
+
+      Module.Message_Styles (CodePeer.Medium) :=
+        Analysis_Styles (Medium_Importance);
+
+      Module.Message_Styles (CodePeer.Low) :=
+        Analysis_Styles (Low_Importance);
+
       Initialize_Style
         (Module.Message_Styles (CodePeer.Info),
          Informational_Probability_Style_Name,

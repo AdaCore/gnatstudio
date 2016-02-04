@@ -165,6 +165,9 @@ package GPS.Kernel.Preferences is
    Style_Src_Highlight            : Color_Preference;
    Info_Src_Highlight             : Color_Preference;
    Search_Src_Highlight           : Color_Preference;
+   High_Messages_Highlight        : Color_Preference;
+   Medium_Messages_Highlight      : Color_Preference;
+   Low_Messages_Highlight         : Color_Preference;
    File_Pattern                   : String_Preference;
    File_Pattern_Index             : Integer_Preference;
    Line_Pattern_Index             : Integer_Preference;

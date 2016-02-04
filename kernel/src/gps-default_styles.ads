@@ -66,4 +66,15 @@ package GPS.Default_Styles is
    Search_Results_Style     : Style_Access;
    --  Style used to highlight search results
 
+   --------------------
+   -- Analysis Tools --
+   --------------------
+
+   type Analysis_Message_Category is
+     (High_Importance, Medium_Importance, Low_Importance);
+   type Analysis_Message_Styles is
+     array (Analysis_Message_Category) of Style_Access;
+
+   Analysis_Styles : Analysis_Message_Styles;
+
 end GPS.Default_Styles;

@@ -38,7 +38,9 @@ light_common = {
     "Warnings-Src-Highlight-Color": "rgb(255,204,156)",
     "Style-Src-Highlight-Color": "rgb(255,255,173)",
     "Info-Src-Highlight-Color": "rgb(173,255,194)",
-
+    "High-Importance-Messages-Highlight": "rgb(236, 197, 197)",
+    "Medium-Importance-Messages-Highlight": "rgb(255,218,185)",
+    "Low-Importance-Messages-Highlight": "rgb(255,255,240)",
     "Horizontal-Diff-Change-Color": "rgb(253,230,106)",
     "Diff-Change-Color": "rgb(236,236,170)",
     "Diff-Remove-Color": "rgb(255,160,160)",
@@ -77,7 +79,9 @@ dark_common = {
     "Warnings-Src-Highlight-Color": "rgb(85,52,18)",
     "Style-Src-Highlight-Color": "rgb(68,12,42)",
     "Info-Src-Highlight-Color": "rgb(53,77,59)",
-
+    "High-Importance-Messages-Highlight": "rgb(255,99,71)",
+    "Medium-Importance-Messages-Highlight": "rgb(255,140,0)",
+    "Low-Importance-Messages-Highlight": "rgb(189,183,107)",
     "Horizontal-Diff-Change-Color": "rgb(143,89,2)",
     "Diff-Change-Color": "rgb(107,73,19)",
     "Diff-Remove-Color": "rgb(88,43,43)",

@@ -22,6 +22,8 @@ with Ada.Strings.Unbounded;
 with Basic_Types;
 with Commands;
 with GNATCOLL.VFS;
+
+with GPS.Default_Styles;           use GPS.Default_Styles;
 with GPS.Editors.Line_Information;
 with GPS.Kernel;
 
@@ -44,6 +46,17 @@ package Code_Coverage.GNATcov is
 
    subtype GNATcov_Fully_Covered is
      GNATcov_Line_Coverage_Status range Branch_Covered .. Covered_No_Branch;
+
+   type GNATcov_Message_Style_Categories is
+     array (GNATcov_Line_Coverage_Status) of Analysis_Message_Category;
+
+   GNATcov_Style_Categories : constant GNATcov_Message_Style_Categories :=
+                                (Not_Covered                     =>
+                                    High_Importance,
+                                 GNATcov_Partially_Covered'Range =>
+                                    Medium_Importance,
+                                 others                          =>
+                                    Low_Importance);
 
    type GNATcov_Item_Coverage is record
       Column  : Basic_Types.Visible_Column_Type;

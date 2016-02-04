@@ -146,8 +146,7 @@ private
       Has_Backtraces         : Boolean := False;
       Report_Subwindow       : Codepeer_Child;
       Report                 : CodePeer.Reports.Report;
-      Annotation_Style       : GPS.Kernel.Style_Manager.Style_Access;
-      Annotation_Color       : Default_Preferences.Color_Preference;
+      Annotations_Style      : GPS.Kernel.Style_Manager.Style_Access;
       Message_Colors         : Message_Ranking_Color_Preference_Array;
       Message_Styles         : Message_Ranking_Style_Array;
       Listener               : CodePeer.Listeners.Listener_Access;
@@ -196,12 +195,6 @@ private
    --  results.
 
    --  Style names to be used by children packages
-   High_Probability_Style_Name          : constant String
-     := "CodePeer high messages";
-   Medium_Probability_Style_Name        : constant String
-     := "CodePeer medium messages";
-   Low_Probability_Style_Name           : constant String
-     := "CodePeer low messages";
    Informational_Probability_Style_Name : constant String
      := "CodePeer informational messages";
    Suppressed_Probability_Style_Name    : constant String

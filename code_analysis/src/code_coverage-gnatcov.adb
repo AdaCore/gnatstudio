@@ -21,7 +21,6 @@ with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 
 with GNAT.Regpat;                  use GNAT.Regpat;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
-with GPS.Default_Styles;           use GPS.Default_Styles;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Intl;                     use GPS.Intl;
@@ -356,16 +355,15 @@ package body Code_Coverage.GNATcov is
               0,
               Coverage_Message_Flags,
               Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
-         Msg.Set_Highlighting (Builder_Styles (Warnings));
+         Msg.Set_Highlighting
+           (Analysis_Styles (GNATcov_Style_Categories (Coverage.Status)));
       end Process;
 
    begin
       if Coverage.Status = Not_Covered then
          Coverage_Category := Uncovered_Category'Unrestricted_Access;
-
       elsif Coverage.Status in GNATcov_Partially_Covered then
          Coverage_Category := Partially_Covered_Category'Unrestricted_Access;
-
       else
          return;
       end if;
