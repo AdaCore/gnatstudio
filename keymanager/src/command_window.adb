@@ -20,7 +20,6 @@ with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 
 with Gdk.Event;               use Gdk.Event;
-with Gdk.Main;                use Gdk.Main;
 with Gdk.RGBA;                use Gdk.RGBA;
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
@@ -115,12 +114,9 @@ package body Command_Window is
      (Window : access Command_Window_Record'Class) return String;
    --  Return the current text in the window
 
-   function On_Focus_In
-     (Window : access Gtk_Widget_Record'Class) return Boolean;
    function On_Focus_Out
      (Window : access Gtk_Widget_Record'Class) return Boolean;
-   --  Handles focus events on Window. This is used to grab key events in the
-   --  command window, while allowing users to scroll editors.
+   --  Close command window when focus leaves it.
 
    function On_Parent_Configure
      (Window : access Gtk_Widget_Record'Class) return Boolean;
@@ -320,31 +316,12 @@ package body Command_Window is
          CW_Module.Window := null;
       end if;
 
-      Keyboard_Ungrab;
       Remove_Event_Handler (Win.Kernel, Command_Window_Event_Handler'Access);
       KeyManager_Module.Unblock_Key_Shortcuts (Win.Kernel);
 
    exception
       when E : others => Trace (Me, E);
    end On_Destroy;
-
-   -----------------
-   -- On_Focus_In --
-   -----------------
-
-   function On_Focus_In
-     (Window : access Gtk_Widget_Record'Class) return Boolean
-   is
-      Status : Gdk_Grab_Status;
-      pragma Unreferenced (Status);
-   begin
-      Status := Keyboard_Grab (Get_Window (Window), False);
-      return False;
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
-   end On_Focus_In;
 
    ------------------
    -- On_Focus_Out --
@@ -451,12 +428,6 @@ package body Command_Window is
       Widget_Callback.Object_Connect
         (Get_Buffer (Window.Line), Signal_Changed,
          On_Changed'Access, Window, After => True);
-
-      --  So that when the commandWindow gets the keyboard focus, it keeps it
-      --  forever (Grab)
-      Return_Callback.Object_Connect
-        (Window.Line, Signal_Focus_In_Event,
-         On_Focus_In'Access, Window);
       Return_Callback.Object_Connect
         (Window.Line, Signal_Focus_Out_Event,
          On_Focus_Out'Access, Window);
