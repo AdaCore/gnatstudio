@@ -1357,6 +1357,11 @@ procedure GPS.Main is
    begin
       --  Create the kernel and prepare the menu model
 
+      if GPS_Command_Line.Do_Exit then
+         App.Quit;
+         return 0;
+      end if;
+
       Gtk_New (App.Kernel, App, GPS_Home_Dir, Prefix_Dir);
 
       --  Display the splash screen, if needed, while we continue loading
@@ -2564,6 +2569,8 @@ procedure GPS.Main is
       A       : size_t := 0;
       B       : size_t := 0;
    begin
+      Exit_Status.all := 0;
+
       --  Sanitize the environment variables, and perform various init from
       --  them
       Initialize_Environment_Variables (null);
@@ -2625,9 +2632,13 @@ procedure GPS.Main is
       end if;
 
       if GPS_Command_Line.Do_Exit then
-         Exit_Status.all := 0;
-         return 1;  --  Suppress default handling
+         --  Do not return 1 here. This is documented as exiting the
+         --  application, but results in invalid memory access on OSX.
+         --  Instead, we test the same flag again in Command_Line_Callback
+         --  and exit at that point.
+         null;
       end if;
+
       return 0;
    end Local_Command_Line;
 
