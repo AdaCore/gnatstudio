@@ -24,23 +24,23 @@ def msg_is(msg):
     GPS.Console("Messages").write(msg + "\n")
 
 
-def uses_stm32f4(prj):
-    """ Search the project to see if it uses the STM32F4 boards
+def uses_stm32(prj):
+    """ Search the project to see if it uses the STM32 boards
     """
     s = prj.get_attribute_as_string(package="Builder",
                                     attribute="Default_Switches",
                                     index="Ada")
-    if "stm32f4" in s:
+    if "stm32" in s:
         return True
 
     s = prj.get_attribute_as_string(package="Builder",
                                     attribute="Switches",
                                     index="Ada")
-    if "stm32f4" in s:
+    if "stm32" in s:
         return True
 
     s = prj.get_attribute_as_string("runtime", index="Ada")
-    if "stm32f4" in s:
+    if "stm32" in s:
         return True
 
     return False
@@ -81,7 +81,7 @@ class BoardLoader(Module):
     def __create_targets_lazily(self):
         self.__connection = None    # reset
 
-        active = uses_stm32f4(GPS.Project.root())
+        active = uses_stm32(GPS.Project.root())
 
         if not self.__buildTargets and active:
             workflows.create_target_from_workflow(
