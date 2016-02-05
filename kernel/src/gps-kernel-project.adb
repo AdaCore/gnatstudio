@@ -36,6 +36,7 @@ with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Tools_Output; use GPS.Kernel.Messages.Tools_Output;
+with GPS.Kernel.Modules.UI;            use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;           use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;            use GPS.Kernel.Properties;
 with GPS.Kernel.Remote;                use GPS.Kernel.Remote;
@@ -349,6 +350,9 @@ package body GPS.Kernel.Project is
    begin
       Get_Registry (Handle).Tree.Recompute_View
         (Errors => Report_Error'Unrestricted_Access);
+
+      --  Refresh the menus and icons in the toolbars
+      Update_Menus_And_Buttons (Handle);
    end Recompute_View;
 
    --------------------------
