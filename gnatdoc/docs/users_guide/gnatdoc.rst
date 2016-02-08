@@ -98,7 +98,8 @@ switch --help::
   If not specified then all the comments found in the specification of
   the compilation units of the project are used to document the project;
   if specified then only those comments matching the specified regular
-  expression are used to generate the documentation.
+  expression are used to generate the documentation. The leading comment
+  delimiters "--" are stripped before applying the regular expression.
 
   For example, the regular expression "^-" can be used to select the
   documentation of the following subprogram and skip the
