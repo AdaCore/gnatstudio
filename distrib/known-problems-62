@@ -35,6 +35,16 @@ KP-62-P201-089 GPS: inconsistence of message counters in CodePeer report
 
   Workaround: Not needed.
 
+KP-62-P201-061 GPS: exception raised when typing ':' in the omnisearch
+
+  Problem:    Searching for a pattern that begins with the ':' character in
+              the omnisearch bar raises a Constraint_Error. This problem only
+              appears when the search provider for filenames is enabled.
+
+  Status:     This was fixed in 17.0 on 2016-02-02
+
+  Workaround: Not needed.
+
 KP-62-P128-011 GPS: key shortcuts not working on read-only editors
 
   Problem:    Using key shortcuts based on 'control' and a character
