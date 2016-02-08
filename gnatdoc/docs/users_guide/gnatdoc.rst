@@ -100,7 +100,7 @@ switch --help::
   if specified then only those comments matching the specified regular
   expression are used to generate the documentation.
 
-  For example, the regular expression "^-<" can be used to select the
+  For example, the regular expression "^-" can be used to select the
   documentation of the following subprogram and skip the
   internal comment::
 
