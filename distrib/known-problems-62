@@ -156,6 +156,17 @@ KP-62-P108-044 GPS: incorrect program arguments when debugging in GPS
   Workaround: Use 'start <arguments>' command in GDB console of GPS instead
               of running program with F8 or 'continue' icon.
 
+KP-62-P107-003 GPS: subprogram rename refactoring problem
+
+  Problem:    Renaming of subprogram without separate declaration could fail,
+              if new name contains old one as a prefix. In this case renaming
+              performed twice.
+
+  Status:     This was fixed in 17.0 on 2016-02-08
+
+  Workaround: Perform renaming twice using intermediate name, that is not
+              a prefix of old name.
+
 KP-62-P106-023 GB: no project opened by GPS when launched from GB on linux.
 
   Problem:    On linux, GPS launched by GB through "GPS debugger" debug

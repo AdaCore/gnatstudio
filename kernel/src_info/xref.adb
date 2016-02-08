@@ -1266,14 +1266,14 @@ package body Xref is
    -------------------------
 
    overriding function Find_All_References
-     (Entity                : General_Entity;
-      In_File              : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      In_Scope              : Root_Entity'Class := No_Root_Entity;
-      Include_Overriding    : Boolean := False;
-      Include_Overridden    : Boolean := False;
-      Include_Implicit      : Boolean := False;
-      Include_All           : Boolean := False;
-      Kind                  : String := "")
+     (Entity             : General_Entity;
+      In_File            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      In_Scope           : Root_Entity'Class := No_Root_Entity;
+      Include_Overriding : Boolean := False;
+      Include_Overridden : Boolean := False;
+      Include_Implicit   : Boolean := False;
+      Include_All        : Boolean := False;
+      Kind               : String := "")
       return Root_Reference_Iterator'Class
    is
       Iter   : Entity_Reference_Iterator;

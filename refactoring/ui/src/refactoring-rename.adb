@@ -216,6 +216,7 @@ package body Refactoring.Rename is
       Was_Open : Boolean;
       C : Location_Arrays.Cursor;
       Current_File : Virtual_File := No_File;
+      Current_Loc  : General_Location;
 
       procedure Terminate_File (File : Virtual_File);
       --  Finish the processing for a given file
@@ -260,7 +261,13 @@ package body Refactoring.Rename is
                Start_Undo_Group (Kernel, Current_File);
             end if;
 
-            if not Insert_Text
+            if Current_Loc = Loc then
+               --  Skip the same location. This could happen for subprogram
+               --  without separate declaration, when the location is reported
+               --  twice. Find_Next_Location promises that dublicates come one
+               --  after the other.
+               null;
+            elsif not Insert_Text
               (Kernel.Refactoring_Context,
                Loc.File,
                Loc.Line,
@@ -297,6 +304,8 @@ package body Refactoring.Rename is
                   0,
                   (Editor_Side => True, Locations => True));
             end if;
+
+            Current_Loc := Loc;
          end;
 
          Previous (C);
