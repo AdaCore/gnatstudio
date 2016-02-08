@@ -69,6 +69,16 @@ KP-62-P126-014 WB: wrs_rtp_base defined more than once on VxWorks-7 RTP builds.
               Note: You may have to call objcopyppc or objcopyarm instead of
               objcopypentium.
 
+KP-62-P122-042 GPS: invisible cursor after using incremental search
+
+  Problem:    Cursor in the editor is no more visible after using the
+              incremental search. This happens on Microsoft Windows only.
+
+  Status:     This was fixed in 17.0 on 2016-02-08
+
+  Workaround: Switch to a floating GPS windows and back to make cursor
+              visible.
+
 KP-62-P121-016 WB: undefined reference to `_Unwind_Resume'
 
   Problem:    When building VxWorks Cert 6.x Real Time Process (RTP)
