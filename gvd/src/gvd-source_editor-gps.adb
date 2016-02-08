@@ -175,7 +175,9 @@ package body GVD.Source_Editor.GPS is
          Editor.Current_File := File;
 
          Open_File_Action_Hook.Run
-           (Kernel, File,
+           (Kernel            => Kernel,
+            File              => File,
+            Line              => 0,
             Project           => GNATCOLL.Projects.No_Project, --   ??? unknown
             New_File          => False,
             Enable_Navigation => False,

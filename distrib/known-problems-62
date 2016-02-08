@@ -25,6 +25,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P204-004 GPS: rewind source file on debugger initialization
+
+  Problem:    Initialization of debugger session rewind source file to the
+              first line.
+
+  Status:     This was fixed in 17.0 on 2016-02-08
+
+  Workaround: None.
+
 KP-62-P201-089 GPS: inconsistence of message counters in CodePeer report
 
   Problem:    Message counters in CodePeer Report view and Locations view is
