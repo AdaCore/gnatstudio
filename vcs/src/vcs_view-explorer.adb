@@ -19,6 +19,9 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 
 with Gdk;
 
+with Glib_String_Utils;         use Glib_String_Utils;
+with Glib_Values_Utils;         use Glib_Values_Utils;
+
 with Gtk;                       use Gtk;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
@@ -44,7 +47,6 @@ with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with Log_Utils;                 use Log_Utils;
 with Projects;                  use Projects;
-with Glib_String_Utils;         use Glib_String_Utils;
 with VCS_Activities;            use VCS_Activities;
 with VCS_Module;                use VCS_Module;
 with VCS_Module.Actions;        use VCS_Module.Actions;
@@ -400,23 +402,25 @@ package body VCS_View.Explorer is
             return Gtk_Tree_Iter
          is
             R_Iter : Gtk_Tree_Iter;
+
          begin
             R_Iter :=
               Get_Iter_For_Root_Node (Explorer, Name_Column, Name);
 
             if R_Iter = Null_Iter then
                Append (Explorer.Model, R_Iter, Null_Iter);
-               Set (Explorer.Model, R_Iter, Name_Column, Name);
-               Set_File (Explorer.Model, R_Iter, File_Column, File);
 
-               if Display_VCS then
-                  Set (Explorer.Model, R_Iter, Base_Name_Column,
-                       Name & " (" & VCS.Name (VCS_Identifier) & ')');
-               else
-                  Set (Explorer.Model, R_Iter, Base_Name_Column, Name);
-               end if;
+               Set_And_Clear
+                 (Explorer.Model, R_Iter,
+                  (Name_Column, File_Column, Base_Name_Column, Control_Column),
+                  (1 => As_String (Name),
+                   2 => As_File   (File),
+                   3 => As_String
+                     (if Display_VCS
+                      then (Name & " (" & VCS.Name (VCS_Identifier) & ')')
+                      else Name),
+                   4 => As_Boolean (False)));
 
-               Set (Explorer.Model, R_Iter, Control_Column, False);
                New_Root := True;
             end if;
 
@@ -622,8 +626,8 @@ package body VCS_View.Explorer is
    begin
       Clear (Explorer.Model);
       Append (Explorer.Model, R_Iter, Null_Iter);
-      Set (Explorer.Model, R_Iter,
-           Base_Name_Column, -"No VCS for this project");
+      Explorer.Model.Set
+        (R_Iter, Base_Name_Column, -"No VCS for this project");
    end No_VCS_Message;
 
    ---------------
@@ -636,9 +640,12 @@ package body VCS_View.Explorer is
       Line_Info : Line_Record;
       Success   : out Boolean) is
    begin
-      Set (Explorer.Model, Iter, Activity_Column,
-           Get_Name (Get_File_Activity (Line_Info.Status.File)));
-      Set (Explorer.Model, Iter, Control_Column, True);
+      Set_And_Clear
+        (Explorer.Model, Iter,
+         (Activity_Column, Control_Column),
+         (As_String (Get_Name (Get_File_Activity (Line_Info.Status.File))),
+          As_Boolean (True)));
+
       Success := True;
    end Do_Fill_Info;
 

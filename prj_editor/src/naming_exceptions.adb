@@ -18,6 +18,8 @@
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 
 with Glib;                   use Glib;
+with Glib_Values_Utils;      use Glib_Values_Utils;
+
 with Gdk.Event;              use Gdk.Event;
 with Gdk.Types.Keysyms;      use Gdk.Types, Gdk.Types.Keysyms;
 with Gtk.Box;                use Gtk.Box;
@@ -121,6 +123,7 @@ package body Naming_Exceptions is
       Filename : constant String := Get_Text (Ed.Filename_Entry);
       Iter     : Gtk_Tree_Iter;
       Found    : Boolean := False;
+
    begin
       if Filename /= -Empty_Filename then
          --  Check if there is already an entry for this file
@@ -135,8 +138,10 @@ package body Naming_Exceptions is
 
          if not Found then
             Append (Ed.Exceptions, Iter, Null_Iter);
-            Set (Ed.Exceptions, Iter, 0, Filename);
-            Set (Ed.Exceptions, Iter, 1, True);
+            Set_And_Clear (Ed.Exceptions, Iter,
+                           (0 => As_String  (Filename),
+                            1 => As_Boolean (True)));
+
             Set_Text (Ed.Filename_Entry, -Empty_Filename);
          end if;
 
@@ -313,8 +318,9 @@ package body Naming_Exceptions is
                Freeze := Freeze_Sort (Editor.Exceptions);
                for B in Bodies'Range loop
                   Append (Editor.Exceptions, Iter, Null_Iter);
-                  Set (Editor.Exceptions, Iter, 0, Bodies (B).all);
-                  Set (Editor.Exceptions, Iter, 1, True);
+                  Set_And_Clear (Editor.Exceptions, Iter,
+                                 (0 => As_String  (Bodies (B).all),
+                                  1 => As_Boolean (True)));
                end loop;
                Thaw_Sort (Editor.Exceptions, Freeze);
                Free (Bodies);

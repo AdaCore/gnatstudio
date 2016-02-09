@@ -18,6 +18,8 @@
 with Glib;                   use Glib;
 with Glib.Convert;           use Glib.Convert;
 with Glib.Object;            use Glib.Object;
+with Glib_Values_Utils;      use Glib_Values_Utils;
+
 with Gdk.Event;              use Gdk.Event;
 with Gdk.Rectangle;          use Gdk.Rectangle;
 with Gdk.Types;              use Gdk.Types;
@@ -64,8 +66,13 @@ package body Buffer_Views is
    Me : constant Trace_Handle := Create ("BUFFERS");
 
    Icon_Name_Column : constant := 0;
-   Name_Column : constant := 1;
-   Data_Column : constant := 2;
+   Name_Column      : constant := 1;
+   Data_Column      : constant := 2;
+
+   Column_Types : constant GType_Array :=
+     (Icon_Name_Column => GType_Icon_Name_String,
+      Name_Column      => GType_String,
+      Data_Column      => GType_String);
 
    Untitled    : constant String := "Untitled";
    --  Label used for new window that is not yet saved
@@ -458,12 +465,14 @@ package body Buffer_Views is
 
             elsif N_Children (Model, Iter) = 1 then
                --  Single child ?
-               Set (Model, Iter, Icon_Name_Column,
-                    Get_String (Model, Iter2, Icon_Name_Column));
-               Set (Model, Iter, Name_Column,
-                    Get_String (Model, Iter2, Name_Column));
-               Set (Model, Iter, Data_Column,
-                    Get_String (Model, Iter2, Data_Column));
+               Set_And_Clear
+                 (Model, Iter,
+                  (Icon_Name_Column, Name_Column, Data_Column),
+                  (1 => As_String
+                       (Get_String (Model, Iter2, Icon_Name_Column)),
+                   2 => As_String (Get_String (Model, Iter2, Name_Column)),
+                   3 => As_String (Get_String (Model, Iter2, Data_Column))));
+
                Remove (Model, Iter2);
 
             else
@@ -487,12 +496,17 @@ package body Buffer_Views is
          then
             Append (Model, Iter, Parent);
             if Name = "" then
-               Set (Model, Iter, Name_Column, Untitled);
-               Set (Model, Iter, Data_Column, Untitled);
+               Set_And_Clear
+                 (Model, Iter, (Name_Column, Data_Column),
+                  (As_String (Untitled), As_String (Untitled)));
+
             else
-               Set (Model, Iter, Icon_Name_Column, Get_Icon_Name (Child));
-               Set (Model, Iter, Name_Column, Name);
-               Set (Model, Iter, Data_Column, Get_Title (Child));
+               Set_And_Clear
+                 (Model, Iter,
+                  (Icon_Name_Column, Name_Column, Data_Column),
+                  (1 => As_String (Get_Icon_Name (Child)),
+                   2 => As_String (Name),
+                   3 => As_String (Get_Title (Child))));
             end if;
 
             if Child = Get_Focus_Child (Get_MDI (V.Kernel)) then
@@ -534,8 +548,8 @@ package body Buffer_Views is
                Purify;
                Current_Notebook := Get_Notebook (I_Child);
                Append (Model, Iter, Null_Iter);
-               Set (Model, Iter, Name_Column,
-                    -"Notebook" & Integer'Image (Notebook_Index));
+               Model.Set (Iter, Name_Column,
+                          -"Notebook" & Integer'Image (Notebook_Index));
             end if;
 
             Show_Child (Iter, Child);
@@ -622,9 +636,7 @@ package body Buffer_Views is
       View.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       View.Tree := Create_Tree_View
-        (Column_Types       => (Icon_Name_Column => GType_Icon_Name_String,
-                                Name_Column => GType_String,
-                                Data_Column => GType_String),
+        (Column_Types       => Column_Types,
          Column_Names       => (1 => null, 2 => null),
          Show_Column_Titles => False,
          Selection_Mode     => Selection_Multiple,

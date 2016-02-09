@@ -21,11 +21,13 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 
-with Cairo; use Cairo;
+with Cairo;                     use Cairo;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
+with Glib_Values_Utils;         use Glib_Values_Utils;
+
 with Gdk;                       use Gdk;
 with Gtk.Arrow;                 use Gtk.Arrow;
 with Gtk.Box;                   use Gtk.Box;
@@ -55,7 +57,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with GUI_Utils;                 use GUI_Utils;
 with OS_Utils;                  use OS_Utils;
 with UTF8_Utils;                use UTF8_Utils;
-with GNATCOLL.Traces;                    use GNATCOLL.Traces;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 package body Directory_Tree is
    Me : constant Trace_Handle := Create ("Directory_Tree");
@@ -77,8 +79,22 @@ package body Directory_Tree is
    --  Returns the types for the columns in the Model.
    --  This is not implemented as
    --       Columns_Types : constant GType_Array ...
-   --  because Gdk.Pixbuf.Get_Type cannot be called before
-   --  Gtk.Main.Init.
+   --  because GNATCOLL.VFS.GtkAda.Virtual_File_Type is not constant.
+
+   procedure Set_Columns
+     (Model : Gtk_Tree_Store;
+      Iter  : Gtk_Tree_Iter;
+      Icon  : String;
+      Base  : String;
+      File  : Virtual_File);
+   --  Set model's values.
+
+   procedure Set_Columns
+     (Model : Gtk_Tree_Store;
+      Iter  : Gtk_Tree_Iter;
+      Base  : String;
+      File  : Virtual_File);
+   --  Set model's values.
 
    procedure Do_Nothing (File : in out Virtual_File) is null;
    package Dir_List is new Generic_List (Virtual_File, Free => Do_Nothing);
@@ -463,11 +479,9 @@ package body Directory_Tree is
 
       if Row = Null_Iter then
          Append (Selector.List_Model, Row, Null_Iter);
-
-         Set_File (Selector.List_Model, Row, File_Column, Dir);
-
-         Set (Selector.List_Model, Row, Base_Name_Column,
-              Unknown_To_UTF8 (+Base_Dir_Name (Dir)));
+         Set_Columns
+           (Selector.List_Model, Row,
+            Unknown_To_UTF8 (+Base_Dir_Name (Dir)), Dir);
       end if;
 
       if Recursive then
@@ -918,10 +932,10 @@ package body Directory_Tree is
             Append (Selector.List_Model, Iter, Null_Iter);
 
             Ensure_Directory (Initial_Selection (J));
-            Set_File
-              (Selector.List_Model, Iter, File_Column, Initial_Selection (J));
-            Set (Selector.List_Model, Iter, Base_Name_Column,
-                 Initial_Selection (J).Display_Base_Dir_Name);
+            Set_Columns
+              (Selector.List_Model, Iter,
+               Initial_Selection (J).Display_Base_Dir_Name,
+               Initial_Selection (J));
          end loop;
 
       else
@@ -1035,21 +1049,24 @@ package body Directory_Tree is
 
       if D.Base = Null_Iter then
          Append (D.Explorer.File_Model, Iter, D.Base);
-         Set_File (D.Explorer.File_Model, Iter, File_Column, D.Norm_Dir);
-
-         Set (D.Explorer.File_Model, Iter, Base_Name_Column,
-              Display_Base_Dir_Name (D.Norm_Dir));
 
          if D.Physical_Read then
-            Set (D.Explorer.File_Model, Iter, Icon_Column,
-                 Open_Directory_Node);
+            Set_Columns
+              (D.Explorer.File_Model, Iter,
+               Icon => Open_Directory_Node,
+               Base => Display_Base_Dir_Name (D.Norm_Dir),
+               File => D.Norm_Dir);
+
             D.Base := Iter;
             return Read_Directory (D);
 
          else
             Append_Dummy_Iter (D.Explorer.File_Model, Iter);
-            Set (D.Explorer.File_Model, Iter, Icon_Column,
-                 Closed_Directory_Node);
+            Set_Columns
+              (D.Explorer.File_Model, Iter,
+               Icon => Closed_Directory_Node,
+               Base => Display_Base_Dir_Name (D.Norm_Dir),
+               File => D.Norm_Dir);
             return False;
          end if;
 
@@ -1091,8 +1108,8 @@ package body Directory_Tree is
       end;
 
       if Is_Empty (D.Dirs) then
-         Set (D.Explorer.File_Model, D.Base, Icon_Column,
-              Closed_Directory_Node);
+         D.Explorer.File_Model.Set
+           (D.Base, Icon_Column, Closed_Directory_Node);
       end if;
 
       while not Is_Empty (D.Dirs) loop
@@ -1100,9 +1117,11 @@ package body Directory_Tree is
             Dir   : constant Virtual_File := Head (D.Dirs);
          begin
             Append (D.Explorer.File_Model, Iter, D.Base);
-            Set_File (D.Explorer.File_Model, Iter, File_Column, Dir);
-            Set (D.Explorer.File_Model, Iter, Base_Name_Column,
-                 Display_Base_Dir_Name (Dir));
+
+            Set_Columns
+              (D.Explorer.File_Model, Iter,
+               Base => Display_Base_Dir_Name (Dir),
+               File => Dir);
 
             if D.Depth = 0 then
                exit;
@@ -1128,8 +1147,8 @@ package body Directory_Tree is
                   Success := Expand_Row (D.Explorer.File_Tree, Path, False);
                   D.Explorer.Expanding := Expanding;
 
-                  Set (D.Explorer.File_Model, D.Base, Icon_Column,
-                       Open_Directory_Node);
+                  D.Explorer.File_Model.Set
+                    (D.Base, Icon_Column, Open_Directory_Node);
 
                   Path_Free (Path);
                end;
@@ -1158,8 +1177,9 @@ package body Directory_Tree is
                         D.Explorer.Path, False);
                      D.Explorer.Expanding := Expanding;
 
-                     Set (D.Explorer.File_Model, Iter, Icon_Column,
-                          Open_Directory_Node);
+                     D.Explorer.File_Model.Set
+                       (Iter, Icon_Column, Open_Directory_Node);
+
                      D.Explorer.Scroll_To_Directory := True;
 
                      D.Explorer.Realize_Cb_Id :=
@@ -1177,8 +1197,8 @@ package body Directory_Tree is
             else
                Append_Dummy_Iter (D.Explorer.File_Model, Iter);
 
-               Set (D.Explorer.File_Model, Iter, Icon_Column,
-                    Closed_Directory_Node);
+               D.Explorer.File_Model.Set
+                 (Iter, Icon_Column, Closed_Directory_Node);
             end if;
 
             --  Frees first element in the list
@@ -1270,6 +1290,42 @@ package body Directory_Tree is
       Add_Attribute (Col, Text_Rend, "text", Base_Name_Column);
       Dummy := Append_Column (Tree, Col);
    end Set_Column_Types;
+
+   -----------------
+   -- Set_Columns --
+   -----------------
+
+   procedure Set_Columns
+     (Model : Gtk_Tree_Store;
+      Iter  : Gtk_Tree_Iter;
+      Icon  : String;
+      Base  : String;
+      File  : Virtual_File) is
+   begin
+      Set_And_Clear
+        (Model, Iter,
+         (Icon_Column, Base_Name_Column, File_Column),
+         (As_String (Icon),
+          As_String (Base),
+          As_File   (File)));
+   end Set_Columns;
+
+   -----------------
+   -- Set_Columns --
+   -----------------
+
+   procedure Set_Columns
+     (Model : Gtk_Tree_Store;
+      Iter  : Gtk_Tree_Iter;
+      Base  : String;
+      File  : Virtual_File) is
+   begin
+      Set_And_Clear
+        (Model, Iter,
+         (Base_Name_Column, File_Column),
+         (As_String (Base),
+          As_File   (File)));
+   end Set_Columns;
 
    -------------------
    -- Columns_Types --
@@ -1418,7 +1474,7 @@ package body Directory_Tree is
       Iter_File := Get_File (T.File_Model, Iter, File_Column);
 
       if Is_Directory (Iter_File) then
-         Set (T.File_Model, Iter, Icon_Column, Closed_Directory_Node);
+         T.File_Model.Set (Iter, Icon_Column, Closed_Directory_Node);
       end if;
 
    exception
@@ -1496,7 +1552,7 @@ package body Directory_Tree is
          Iter_File := Get_File (T.File_Model, Iter, File_Column);
 
          Free_Children (T, Iter);
-         Set (T.File_Model, Iter, Icon_Column, Open_Directory_Node);
+         T.File_Model.Set (Iter, Icon_Column, Open_Directory_Node);
          File_Append_Directory (T, Iter_File, Iter, 1);
       end;
 

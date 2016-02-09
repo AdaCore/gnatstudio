@@ -31,6 +31,8 @@ with GNAT.Strings;             use GNAT.Strings;
 
 with Glib;                     use Glib;
 with Glib.Values;              use Glib.Values;
+with Glib_Values_Utils;        use Glib_Values_Utils;
+
 with Gdk.Event;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Box;                  use Gtk.Box;
@@ -102,16 +104,16 @@ package body Toolchains_Editor is
    Location_Column    : constant := 3;
    Version_Column     : constant := 4;
 
-   Lang_Column_Types : constant GType_Array :=
-                         (Active_Column      => GType_Boolean,
-                          Name_Column        => GType_String);
+   Lang_Column_Types  : constant GType_Array :=
+     (Active_Column => GType_Boolean,
+      Name_Column   => GType_String);
 
-   Column_Types : constant GType_Array :=
-                    (Active_Column   => GType_Boolean,
-                     Name_Column     => GType_String,
-                     Label_Column    => GType_String,
-                     Location_Column => GType_String,
-                     Version_Column  => GType_String);
+   Column_Types       : constant GType_Array :=
+     (Active_Column   => GType_Boolean,
+      Name_Column     => GType_String,
+      Label_Column    => GType_String,
+      Location_Column => GType_String,
+      Version_Column  => GType_String);
 
    type Tool_Kind is (Tool_Kind_Tool, Tool_Kind_Compiler);
 
@@ -464,8 +466,12 @@ package body Toolchains_Editor is
 
       for J in Ordered'Range loop
          Self.Lang_Model.Append (Iter, Null_Iter);
-         Self.Lang_Model.Set (Iter, Active_Column, False);
-         Self.Lang_Model.Set (Iter, Name_Column, Ordered (J).all);
+
+         Set_And_Clear
+           (Self.Lang_Model, Iter,
+            (Active_Column, Name_Column),
+            (As_Boolean (False), As_String (Ordered (J).all)));
+
          GNAT.OS_Lib.Free (Ordered (J));
       end loop;
 
@@ -480,8 +486,6 @@ package body Toolchains_Editor is
       begin
          Iter := Self.Lang_Model.Get_Iter_First;
          while Iter /= Null_Iter loop
-            Self.Lang_Model.Set (Iter, Active_Column, False);
-
             if In_List
               (Lang => Self.Lang_Model.Get_String (Iter, Name_Column),
                List => Languages)
@@ -490,6 +494,8 @@ package body Toolchains_Editor is
                Mgr.Add_Language
                  (Self.Lang_Model.Get_String (Iter, Name_Column),
                   Project);
+            else
+               Self.Lang_Model.Set (Iter, Active_Column, False);
             end if;
 
             Self.Lang_Model.Next (Iter);
@@ -731,10 +737,16 @@ package body Toolchains_Editor is
       Tc             : Toolchains.Toolchain;
       Force_Selected : Boolean)
    is
-      Iter  : Gtk_Tree_Iter;
-      Infos : Ada_Library_Info_Access;
-      Name  : constant String := Toolchains.Get_Name (Tc);
-      Tmp   : Boolean;
+      Iter    : Gtk_Tree_Iter;
+      Infos   : Ada_Library_Info_Access;
+      Name    : constant String := Toolchains.Get_Name (Tc);
+      Tmp     : Boolean;
+      Values  : Glib.Values.GValue_Array (1 .. 5);
+      Columns : constant Columns_Array (Values'Range) :=
+        (Name_Column, Label_Column, Location_Column,
+         Version_Column, Active_Column);
+      Last    : Gint := 4;
+
       pragma Unreferenced (Tmp);
 
    begin
@@ -760,19 +772,21 @@ package body Toolchains_Editor is
          Editor.Model.Append (Iter, Null_Iter);
       end if;
 
+      Values (1 .. 4) :=
+        (1 => As_String (Toolchains.Get_Name (Tc)),
+         2 => As_String (Toolchains.Get_Label (Tc)),
+         3 => As_String
+           (Toolchains.Get_Install_Path (Infos.all).Display_Full_Name (True)),
+         4 => As_String (Toolchains.Get_Version (Infos.all)));
+
       if Force_Selected then
-         Editor.Model.Set
-           (Iter, Active_Column, True);
+         Last := 5;
+         Glib.Values.Init_Set_Boolean (Values (5), True);
          Editor.Toolchain := Tc;
       end if;
 
-      Editor.Model.Set (Iter, Name_Column,  Toolchains.Get_Name (Tc));
-      Editor.Model.Set (Iter, Label_Column, Toolchains.Get_Label (Tc));
-      Editor.Model.Set
-        (Iter, Location_Column,
-         Toolchains.Get_Install_Path (Infos.all).Display_Full_Name (True));
-      Editor.Model.Set
-        (Iter, Version_Column, Toolchains.Get_Version (Infos.all));
+      Set_And_Clear
+        (Editor.Model, Iter, Columns (1 .. Last), Values (1 .. Last));
 
       if Editor.Languages_Cache /= null then
          --  We are only interested in refreshing the contents of the page, but
@@ -1322,8 +1336,8 @@ package body Toolchains_Editor is
    begin
       Iter := Get_Iter_From_String (Editor.Lang_Model, Path_String);
       if Iter /= Null_Iter then
-         Set (Editor.Lang_Model, Iter, Data,
-              not Get_Boolean (Editor.Lang_Model, Iter, Data));
+         Editor.Lang_Model.Set
+           (Iter, Data, not Get_Boolean (Editor.Lang_Model, Iter, Data));
       end if;
    end On_Lang_Clicked;
 

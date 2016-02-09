@@ -31,6 +31,8 @@ with GNATCOLL.Xref;               use GNATCOLL.Xref;
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
+with Glib_Values_Utils;           use Glib_Values_Utils;
+
 with Gdk.Event;                   use Gdk.Event;
 with Gdk.Types;                   use Gdk.Types;
 with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
@@ -81,16 +83,18 @@ package body Call_Graph_Views is
    -- Constants --
    ---------------
 
-   Name_Column    : constant := 0;   --  Title of the node, e.g. "xxx calls"
-   Decl_Column    : constant := 1;
-   Entity_Name_Column  : constant := 2;  --  Name of entity
-   File_Column    : constant := 3;  --  Entity declaration file
-   Line_Column    : constant := 4;  --  Entity declaration line
-   Column_Column  : constant := 5;  --  Entity declaration column
-   List_Column    : constant := 6;
-   Kind_Column    : constant := 7;
-   Sort_Column    : constant := 8;
-   Project_Column : constant := 9;  --  Entity declaration project
+   Name_Column        : constant := 0; --  Title of the node, e.g. "xxx calls"
+   Decl_Column        : constant := 1;
+   Entity_Name_Column : constant := 2; --  Name of entity
+   File_Column        : constant := 3; --  Entity declaration file
+   Line_Column        : constant := 4; --  Entity declaration line
+   Column_Column      : constant := 5; --  Entity declaration column
+   List_Column        : constant := 6;
+   Kind_Column        : constant := 7;
+   Sort_Column        : constant := 8;
+   Project_Column     : constant := 9; --  Entity declaration project
+
+   Column_Types : GType_Array (0 .. 9);
 
    Location_Line_Column      : constant := 0;
    Location_Column_Column    : constant := 1;
@@ -1293,51 +1297,31 @@ package body Call_Graph_Views is
                   View.Block_On_Expanded := False;
                end if;
 
-               Set (Model, Iter, Name_Column, Get_Attribute (N, "name"));
-               Set (Model, Iter, Decl_Column, Get_Attribute (N, "decl"));
-               Set (Model, Iter, Sort_Column,
-                    Get_Attribute (N, "name") & " "
-                    & Get_Attribute (N, "decl"));
-               Set
-                 (Model, Iter, Kind_Column,
-                  View_Type'Pos
-                    (View_Type'Value
-                       (Get_Attribute (N, "type", "view_calls"))));
-
                --  We want to be compatible with previous version not having
                --  the type node. We then get information from top type node
                --  in this case.
 
-               if Is_Calls then
-                  Set
-                    (Model, Iter, Kind_Column,
-                     View_Type'Pos
-                       (View_Type'Value
-                          (Get_Attribute (N, "type", "view_calls"))));
-               else
-                  Set
-                    (Model, Iter, Kind_Column,
-                     View_Type'Pos
-                       (View_Type'Value
-                          (Get_Attribute (N, "type", "view_called_by"))));
-               end if;
-
-               Set_File
-                 (Model, Iter, File_Column,
-                  Create (+Get_Attribute (N, "entity_decl")));
-               Set_File
-                 (Model, Iter, Project_Column,
-                  Create (+Get_Attribute (N, "entity_project")));
-
-               Set
-                 (Model, Iter, Line_Column,
-                  Gint'Value (Get_Attribute (N, "entity_line")));
-               Set
-                 (Model, Iter, Column_Column,
-                  Gint'Value (Get_Attribute (N, "entity_column")));
-               Set
-                 (Model, Iter, Entity_Name_Column,
-                  Get_Attribute (N, "entity_name"));
+               Set_And_Clear
+                 (Model, Iter,
+                  (Name_Column, Decl_Column, Entity_Name_Column, File_Column,
+                   Line_Column, Column_Column, Project_Column, Kind_Column,
+                   Sort_Column),
+                  (1 => As_String (Get_Attribute (N, "name")),
+                   2 => As_String (Get_Attribute (N, "decl")),
+                   3 => As_String (Get_Attribute (N, "entity_name")),
+                   4 => As_File   (Create (+Get_Attribute (N, "entity_decl"))),
+                   5 => As_Int (Gint'Value (Get_Attribute (N, "entity_line"))),
+                   6 => As_Int
+                     (Gint'Value (Get_Attribute (N, "entity_column"))),
+                   7 => As_File
+                     (Create (+Get_Attribute (N, "entity_project"))),
+                   8 => As_Int (View_Type'Pos
+                     (View_Type'Value
+                        (if Is_Calls
+                           then Get_Attribute (N, "type", "view_calls")
+                           else Get_Attribute (N, "type", "view_called_by")))),
+                   9 => As_String (Get_Attribute
+                     (N, "name") & " " & Get_Attribute (N, "decl"))));
 
                if N.Child /= null then
                   Recursive_Load
@@ -1345,7 +1329,7 @@ package body Call_Graph_Views is
                      Expand_Parent => Get_Attribute (N, "expanded") = "true");
                else
                   Append (Model, Dummy, Iter);
-                  Set (Model, Dummy, Name_Column, Computing_Label);
+                  Model.Set (Dummy, Name_Column, Computing_Label);
                end if;
             end if;
 
@@ -1394,16 +1378,7 @@ package body Call_Graph_Views is
       Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
 
       View.Tree := Create_Tree_View
-        (Column_Types       => (Name_Column   => GType_String,
-                                Decl_Column   => GType_String,
-                                Entity_Name_Column => GType_String,
-                                File_Column   => Get_Virtual_File_Type,
-                                Line_Column   => GType_Int,
-                                Column_Column => GType_Int,
-                                List_Column   => GType_Pointer,
-                                Project_Column => Get_Virtual_File_Type,
-                                Kind_Column   => GType_Int,
-                                Sort_Column   => GType_String),
+        (Column_Types       => Column_Types,
          Column_Names       => Names,
          Show_Column_Titles => False,
          Sortable_Columns   => True);
@@ -1575,25 +1550,31 @@ package body Call_Graph_Views is
 
          Prepend (Model, Iter, Parent_Iter);
 
-         Set (Model, Iter, Name_Column, To_String (Decl.Name) & Suffix);
-         Set (Model, Iter, Decl_Column,
-              Decl.Loc.File.Display_Base_Name
-              & ':' & Image (Decl.Loc.Line)
-              & ':' & Image (Integer (Decl.Loc.Column)));
-         Set_File (Model, Iter, File_Column, Decl.Loc.File);
-         Set_File (Model, Iter, Project_Column, Decl.Loc.Project.Project_Path);
-         Set (Model, Iter, Line_Column, Gint (Decl.Loc.Line));
-         Set (Model, Iter, Column_Column, Gint (Decl.Loc.Column));
-         Set (Model, Iter, Entity_Name_Column, Get_Name (Entity));
-         Set (Model, Iter, Kind_Column, View_Type'Pos (Kind));
-         Set (Model, Iter, Sort_Column,
-              Get_String (Model, Iter, Name_Column) & " "
-              & Get_String (Model, Iter, Decl_Column));
+         declare
+            Name : constant String := To_String (Decl.Name) & Suffix;
+            Dcl  : constant String := Decl.Loc.File.Display_Base_Name & ':' &
+              Image (Decl.Loc.Line) & ':' & Image (Integer (Decl.Loc.Column));
+         begin
+            Set_And_Clear
+              (Model, Iter,
+               (Name_Column, Decl_Column, Entity_Name_Column, File_Column,
+                Line_Column, Column_Column, Project_Column, Kind_Column,
+                Sort_Column),
+               (1 => As_String (Name),
+                2 => As_String (Dcl),
+                3 => As_String (Get_Name (Entity)),
+                4 => As_File   (Decl.Loc.File),
+                5 => As_Int    (Gint (Decl.Loc.Line)),
+                6 => As_Int    (Gint (Decl.Loc.Column)),
+                7 => As_File   (Decl.Loc.Project.Project_Path),
+                8 => As_Int    (View_Type'Pos (Kind)),
+                9 => As_String (Name & " " & Dcl)));
+         end;
 
          --  Append a dummy child, so that the parent can be expanded to
          --  show its called entities.
          Append (Model, Locations, Iter);
-         Set (Model, Locations, Name_Column, Computing_Label);
+         Model.Set (Locations, Name_Column, Computing_Label);
       end if;
 
       if Ref /= No_Root_Entity_Reference then
@@ -1874,6 +1855,18 @@ package body Call_Graph_Views is
    is
       Filter  : Action_Filter;
    begin
+      Column_Types :=
+        (Name_Column        => GType_String,
+         Decl_Column        => GType_String,
+         Entity_Name_Column => GType_String,
+         File_Column        => Get_Virtual_File_Type,
+         Line_Column        => GType_Int,
+         Column_Column      => GType_Int,
+         List_Column        => GType_Pointer,
+         Project_Column     => Get_Virtual_File_Type,
+         Kind_Column        => GType_Int,
+         Sort_Column        => GType_String);
+
       Generic_View.Register_Module (Kernel);
 
       Create_New_Boolean_Key_If_Necessary

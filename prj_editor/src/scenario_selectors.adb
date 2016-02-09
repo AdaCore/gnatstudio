@@ -18,6 +18,8 @@
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
+with Glib_Values_Utils;        use Glib_Values_Utils;
+
 with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Enums;                use Gtk.Enums;
@@ -48,7 +50,7 @@ package body Scenario_Selectors is
       Project_Name_Column => GType_String);
 
    Var_Name_Column      : constant := 1;
-   Var_Column_Types      : constant GType_Array :=
+   Var_Column_Types     : constant GType_Array :=
      (Selected_Column     => GType_Boolean,
       Var_Name_Column     => GType_String);
 
@@ -229,7 +231,7 @@ package body Scenario_Selectors is
             if Get_String (S.Model, It, Project_Name_Column) /=
               S.Ref_Project.Name
             then
-               Set (S.Model, It, Selected_Column, Selected);
+               S.Model.Set (It, Selected_Column, Selected);
             end if;
 
             Select_Recursive (Children (S.Model, It));
@@ -261,7 +263,7 @@ package body Scenario_Selectors is
          if Get_String (Selector.Model, It, Project_Name_Column)
            = Project.Name
          then
-            Set (Selector.Model, It, Selected_Column, Selected);
+            Selector.Model.Set (It, Selected_Column, Selected);
          end if;
 
          Reset_Selected_Status
@@ -294,7 +296,7 @@ package body Scenario_Selectors is
 
          if Project /= S.Ref_Project then
             Selected := Get_Boolean (S.Model, Iter, Selected_Column);
-            Set (S.Model, Iter, Selected_Column, not Selected);
+            S.Model.Set (Iter, Selected_Column, not Selected);
 
             if Get_Active (S.Show_As_Hierarchy) then
                Reset_Selected_Status
@@ -475,14 +477,11 @@ package body Scenario_Selectors is
    begin
       for V in Vars'Range loop
          Append (Selector.Model, Iter, Null_Iter);
-         Set (Selector.Model,
-              Iter,
-              Column => Selected_Column,
-              Value  => False);
-         Set (Selector.Model,
-              Iter,
-              Column => Var_Name_Column,
-              Value  => External_Name (Vars (V)));
+         Set_And_Clear
+           (Selector.Model, Iter,
+            (Selected_Column, Var_Name_Column),
+            (0 => As_Boolean (False),
+             1 => As_String  (External_Name (Vars (V)))));
 
          declare
             Current : constant String := Value (Vars (V));
@@ -492,14 +491,11 @@ package body Scenario_Selectors is
          begin
             for Val in Values'Range loop
                Append (Selector.Model, Child, Iter);
-               Set (Selector.Model,
-                    Child,
-                    Column => Selected_Column,
-                    Value  => Values (Val).all = Current);
-               Set (Selector.Model,
-                    Child,
-                    Column => Var_Name_Column,
-                    Value  => Values (Val).all);
+               Set_And_Clear
+                 (Selector.Model, Child,
+                  (Selected_Column, Var_Name_Column),
+                  (0 => As_Boolean (Values (Val).all = Current),
+                   1 => As_String  (Values (Val).all)));
             end loop;
 
             Free (Values);
@@ -535,7 +531,7 @@ package body Scenario_Selectors is
    is
       Child : Gtk_Tree_Iter;
    begin
-      Set (Selector.Model, Iter, Selected_Column, Selected);
+      Selector.Model.Set (Iter, Selected_Column, Selected);
 
       Child := Children (Selector.Model, Iter);
 
@@ -545,7 +541,7 @@ package body Scenario_Selectors is
       end if;
 
       while Child /= Null_Iter loop
-         Set (Selector.Model, Child, Selected_Column, Selected);
+         Selector.Model.Set (Child, Selected_Column, Selected);
          Next (Selector.Model, Child);
       end loop;
    end Variable_Selection;
@@ -588,16 +584,16 @@ package body Scenario_Selectors is
          end if;
 
          if Selected and then Num_Selected_Child = 1 then
-            Set (S.Model, Iter, Selected_Column, True);
+            S.Model.Set (Iter, Selected_Column, True);
          else
-            Set (S.Model,
-                 Iter,
-                 Column => Selected_Column,
-                 Value  => not Selected);
-            Set (S.Model,
-                 Parent (S.Model, Iter),
-                 Column => Selected_Column,
-                 Value  => False);
+            S.Model.Set
+              (Iter,
+               Column => Selected_Column,
+               Value  => not Selected);
+            S.Model.Set
+              (Parent (S.Model, Iter),
+               Column => Selected_Column,
+               Value  => False);
          end if;
       end if;
    end Var_Selected;

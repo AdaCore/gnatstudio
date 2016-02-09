@@ -25,6 +25,8 @@ with String_Utils;                          use String_Utils;
 
 with Glib.Object;                           use Glib, Glib.Object;
 with Glib.Values;                           use Glib.Values;
+with Glib_Values_Utils;                     use Glib_Values_Utils;
+
 with Gtk.Box;                               use Gtk.Box;
 with Gtk.Cell_Renderer;                     use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Toggle;              use Gtk.Cell_Renderer_Toggle;
@@ -73,6 +75,16 @@ package body Startup_Module is
    Column_Name_With_Ext : constant := 5;
    Column_Subpage_Name  : constant := 6;
    Column_Page          : constant := 7;
+
+   Column_Types : constant GType_Array :=
+     (Column_Load          => GType_Boolean,
+      Column_Name          => GType_String,
+      Column_Explicit      => GType_Boolean,
+      Column_Modified      => GType_Boolean,
+      Column_Background    => GType_String,
+      Column_Name_With_Ext => GType_String,
+      Column_Subpage_Name  => GType_String,
+      Column_Page          => GType_Int);
 
    procedure Register_All_Plugins_Preferences_Pages
      (Kernel : not null access Kernel_Handle_Record'Class);
@@ -287,6 +299,7 @@ package body Startup_Module is
 
       procedure Append_Plugin_Subpage is
          Iter : Gtk_Tree_Iter;
+
       begin
          if Subpage.all in Plugin_Preferences_Page_Record'Class then
             declare
@@ -300,18 +313,18 @@ package body Startup_Module is
             begin
                --  Append a node to the model
                Append (Editor.Model, Iter, Null_Iter);
-               Set (Editor.Model, Iter, Column_Load,
-                    Plugin_Subpage.Loaded_At_Startup);
-               Set (Editor.Model, Iter, Column_Name,
-                    Base_Name (Name, File_Extension (Name)));
-               Set (Editor.Model, Iter, Column_Explicit,
-                    Plugin_Subpage.Explicit);
 
-               Set (Editor.Model, Iter, Column_Modified, False);
-               Set (Editor.Model, Iter, Column_Name_With_Ext, Name);
-               Set (Editor.Model, Iter, Column_Subpage_Name, Subpage.Get_Name);
-               Set (Editor.Model, Iter, Column_Page,
-                    Editor.Plugins_Notebook.Get_N_Pages);
+               Set_And_Clear
+                 (Editor.Model, Iter,
+                  (Column_Load, Column_Name, Column_Explicit, Column_Modified,
+                   Column_Name_With_Ext, Column_Subpage_Name, Column_Page),
+                  (1 => As_Boolean (Plugin_Subpage.Loaded_At_Startup),
+                   2 => As_String  (Base_Name (Name, File_Extension (Name))),
+                   3 => As_Boolean (Plugin_Subpage.Explicit),
+                   4 => As_Boolean (False),
+                   5 => As_String  (Name),
+                   6 => As_String  (Subpage.Get_Name),
+                   7 => As_Int     (Editor.Plugins_Notebook.Get_N_Pages)));
 
                --  Append the plugin page widget to the notebook
                Editor.Plugins_Notebook.Append_Page
@@ -333,14 +346,7 @@ package body Startup_Module is
       Gtk_New (Scrolled);
       Scrolled.Set_Policy (Policy_Never, Policy_Automatic);
       Editor.Tree := Create_Tree_View
-        (Column_Types => (Column_Load          => GType_Boolean,
-                          Column_Name          => GType_String,
-                          Column_Explicit      => GType_Boolean,
-                          Column_Modified      => GType_Boolean,
-                          Column_Background    => GType_String,
-                          Column_Name_With_Ext => GType_String,
-                          Column_Subpage_Name  => GType_String,
-                          Column_Page          => GType_Int),
+        (Column_Types       => Column_Types,
          Column_Names       => (Column_Name + 1   =>
                                     Column_Name_Name'Unchecked_Access,
                                 Column_Load + 1   =>

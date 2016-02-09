@@ -15,25 +15,27 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;           use GPS.Kernel;
-with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
-with GPS.Main_Window;      use GPS.Main_Window;
-with GPS.Intl;             use GPS.Intl;
-with GNATCOLL.VFS;         use GNATCOLL.VFS;
+with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
+with GPS.Main_Window;        use GPS.Main_Window;
+with GPS.Intl;               use GPS.Intl;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 
-with Glib;                  use Glib;
-with Gtk.Box;               use Gtk.Box;
+with Glib;                   use Glib;
+with Glib_Values_Utils;      use Glib_Values_Utils;
+
+with Gtk.Box;                use Gtk.Box;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
-with Gtk.Dialog;            use Gtk.Dialog;
-with Gtk.Enums;             use Gtk.Enums;
-with Gtk.Label;             use Gtk.Label;
-with Gtk.Scrolled_Window;   use Gtk.Scrolled_Window;
-with Gtk.Tree_Model;        use Gtk.Tree_Model;
-with Gtk.Tree_Selection;    use Gtk.Tree_Selection;
-with Gtk.Tree_Store;        use Gtk.Tree_Store;
-with Gtk.Tree_View;         use Gtk.Tree_View;
-with Gtk.Tree_View_Column;  use Gtk.Tree_View_Column;
-with Gtk.Widget;            use Gtk.Widget;
+with Gtk.Dialog;             use Gtk.Dialog;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Label;              use Gtk.Label;
+with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;         use Gtk.Tree_Model;
+with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
+with Gtk.Tree_Store;         use Gtk.Tree_Store;
+with Gtk.Tree_View;          use Gtk.Tree_View;
+with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
+with Gtk.Widget;             use Gtk.Widget;
 
 package body Refactoring.UI is
 
@@ -187,8 +189,11 @@ package body Refactoring.UI is
             F : constant Virtual_File := Element (C);
          begin
             Append (Model, Iter, Null_Iter);
-            Model.Set (Iter, 0, F.Display_Base_Name);
-            Model.Set (Iter, 1, F.Display_Dir_Name);
+
+            Set_And_Clear
+              (Model, Iter,
+               (0 => As_String (F.Display_Base_Name),
+                1 => As_String (F.Display_Dir_Name)));
          end;
          Next (C);
       end loop;

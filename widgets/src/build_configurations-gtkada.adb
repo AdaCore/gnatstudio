@@ -25,6 +25,7 @@ with Glib;                     use Glib;
 with Glib.Convert;
 with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
+with Glib_Values_Utils;        use Glib_Values_Utils;
 
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Combo_Box;            use Gtk.Combo_Box;
@@ -76,11 +77,26 @@ package body Build_Configurations.Gtkada is
 
    --  Tree view constants
 
-   Icon_Column : constant := 0; --  Contains the icon
-   Name_Column : constant := 1; --  Contains the displayed name, as markup
-   Num_Column  : constant := 2;
+   Icon_Column     : constant := 0; --  Contains the icon
+   Name_Column     : constant := 1; --  Contains the displayed name, as markup
+   Num_Column      : constant := 2;
    --  Contains the number of the corresponding page in the main notebook
    Editable_Column : constant := 3; -- Whether the target is editable
+
+   Column_Types : constant GType_Array :=
+     (Icon_Column     => GType_String,
+      Name_Column     => GType_String,
+      Num_Column      => GType_Int,
+      Editable_Column => GType_Boolean);
+
+   procedure Set_Columns
+     (Model    : Gtk_Tree_Store;
+      Iter     : Gtk_Tree_Iter;
+      Icon     : String;
+      Name     : String;
+      Num      : Gint;
+      Editable : Boolean);
+   --  Set model's values.
 
    -----------------
    -- Local types --
@@ -129,13 +145,6 @@ package body Build_Configurations.Gtkada is
 
    procedure Set_Switches (UI : Target_UI_Access);
    --  Set the graphical elements in UI that represent
-
-   function Columns_Types return GType_Array;
-   --  Returns the types for the columns in the Model.
-   --  This is not implemented as
-   --       Columns_Types : constant GType_Array ...
-   --  because Gdk.Pixbuf.Get_Type cannot be called before
-   --  Gtk.Main.Init.
 
    procedure On_Selection_Changed (UI : access Build_UI_Record'Class);
    procedure On_Selection_Changed (UI : access Mode_UI_Record'Class);
@@ -260,19 +269,6 @@ package body Build_Configurations.Gtkada is
       --  ??? Provide implementation
       return Msg;
    end "-";
-
-   -------------------
-   -- Columns_Types --
-   -------------------
-
-   function Columns_Types return GType_Array is
-   begin
-      return GType_Array'
-        (Icon_Column     => GType_String,
-         Name_Column     => GType_String,
-         Num_Column      => GType_Int,
-         Editable_Column => GType_Boolean);
-   end Columns_Types;
 
    -------------
    -- Gtk_New --
@@ -450,8 +446,8 @@ package body Build_Configurations.Gtkada is
          Get_Selected (Get_Selection (UI.View), M, It);
 
          if It /= Null_Iter then --  It should not be null, but test for safety
-            Set (UI.View.Model, It, Icon_Column,
-                 To_String (T.Target.Model.Icon));
+            UI.View.Model.Set
+              (It, Icon_Column, To_String (T.Target.Model.Icon));
          end if;
       end if;
 
@@ -466,6 +462,27 @@ package body Build_Configurations.Gtkada is
          Log
            (UI.Registry, "Unexpected exception " & Exception_Information (E));
    end On_Target_Model_Changed;
+
+   -----------------
+   -- Set_Columns --
+   -----------------
+
+   procedure Set_Columns
+     (Model    : Gtk_Tree_Store;
+      Iter     : Gtk_Tree_Iter;
+      Icon     : String;
+      Name     : String;
+      Num      : Gint;
+      Editable : Boolean) is
+   begin
+      Set_And_Clear
+        (Model, Iter,
+         (Icon_Column, Name_Column, Num_Column, Editable_Column),
+         (As_String  (Icon),
+          As_String  (Name),
+          As_Int     (Num),
+          As_Boolean (Editable)));
+   end Set_Columns;
 
    ------------------
    -- Set_Switches --
@@ -973,7 +990,7 @@ package body Build_Configurations.Gtkada is
       UI.Registry := Registry;
 
       --  Create the tree view
-      Gtk_New (UI.View, Columns_Types);
+      Gtk_New (UI.View, Column_Types);
       Set_Headers_Visible (UI.View, False);
 
       Gtk_New (Col);
@@ -1172,7 +1189,7 @@ package body Build_Configurations.Gtkada is
       UI.Registry := Registry;
 
       --  Create the tree view
-      Gtk_New (UI.View, Columns_Types);
+      Gtk_New (UI.View, Column_Types);
       Set_Headers_Visible (UI.View, False);
 
       Gtk_New (Col);
@@ -1677,12 +1694,14 @@ package body Build_Configurations.Gtkada is
 
             --  We have not found our iter, create it now
             Append (View.Model, Iter, Null_Iter);
-            Set (View.Model, Iter, Name_Column, Cat_Name);
-            Set (View.Model, Iter, Editable_Column, False);
-            Set (View.Model, Iter, Icon_Column, "gps-emblem-directory-open");
+            Set_Columns
+              (View.Model, Iter,
+               Icon     => "gps-emblem-directory-open",
+               Name     => Cat_Name,
+               Num      => 0, --  Category iters correspond to
+                              --  page 0 in the main notebook
+               Editable => False);
 
-            --  Category iters correspond to page 0 in the main notebook
-            Set (View.Model, Iter, Num_Column, 0);
             return Iter;
          end Get_Or_Create_Category;
 
@@ -1695,11 +1714,6 @@ package body Build_Configurations.Gtkada is
          Category := Get_Or_Create_Category (Target.Properties.Category);
 
          Append (View.Model, Iter, Category);
-         Set (View.Model, Iter, Name_Column,
-              Glib.Convert.Escape_Text (To_String (Target.Name)));
-         Set (View.Model, Iter, Editable_Column,
-              not Get_Properties (Target).Read_Only);
-         Set (View.Model, Iter, Num_Column, Count);
 
          if Target.Properties.Icon_Name /= "" then
             Icon_Str := Target.Properties.Icon_Name;
@@ -1708,7 +1722,19 @@ package body Build_Configurations.Gtkada is
          end if;
 
          if Icon_Str /= "" then
-            Set (View.Model, Iter, Icon_Column, To_String (Icon_Str));
+            Set_Columns
+              (View.Model, Iter,
+               Icon     => To_String (Icon_Str),
+               Name     => Glib.Convert.Escape_Text (To_String (Target.Name)),
+               Num      => Count,
+               Editable => not Get_Properties (Target).Read_Only);
+         else
+            Set_And_Clear
+              (View.Model, Iter,
+               (Name_Column, Num_Column, Editable_Column),
+               (As_String (Glib.Convert.Escape_Text (To_String (Target.Name))),
+                As_Int     (Count),
+                As_Boolean (not Get_Properties (Target).Read_Only)));
          end if;
 
          if Select_Target = To_String (Target.Name) then
@@ -1830,12 +1856,12 @@ package body Build_Configurations.Gtkada is
 
          --  We have not found our iter, create it now
          Append (View.Model, Iter, Null_Iter);
-         Set (View.Model, Iter, Name_Column, Mode_Name);
-         Set (View.Model, Iter, Editable_Column, False);
-         Set (View.Model, Iter, Icon_Column, "gps-emblem-directory-open");
-
-         --  Set the corresponding page in the notebook
-         Set (View.Model, Iter, Num_Column, Count);
+         Set_Columns
+           (View.Model, Iter,
+            Icon     => "gps-emblem-directory-open",
+            Name     => Mode_Name,
+            Num      => Count, --  Set the corresponding page in the notebook
+            Editable => False);
 
          Gtk_New (Table, 5, 2, False);
 

@@ -26,6 +26,8 @@ with Glib;                       use Glib;
 with Glib.Main;                  use Glib.Main;
 with Glib.Object;                use Glib.Object;
 with Glib.Values;                use Glib.Values;
+with Glib_Values_Utils;          use Glib_Values_Utils;
+
 with Gdk.Dnd;                    use Gdk.Dnd;
 with Gdk.Drag_Contexts;          use Gdk.Drag_Contexts;
 with Gdk.Event;                  use Gdk.Event;
@@ -517,6 +519,10 @@ package body Project_Explorers_Files is
       Empty      : Boolean := True;
       New_D      : Append_Directory_Idle_Data_Access;
 
+      Values  : Glib.Values.GValue_Array (1 .. 4);
+      Columns : constant Columns_Array (Values'Range) :=
+        (File_Column, Display_Name_Column, Node_Type_Column, Icon_Column);
+
    begin
       --  If we are appending at the base, create a node indicating the
       --  absolute path to the directory.
@@ -524,21 +530,25 @@ package body Project_Explorers_Files is
       if D.Base = Null_Iter then
          Append (D.Explorer.File_Model, Iter, D.Base);
 
-         Set_File (D.Explorer.File_Model, Iter, File_Column, D.Dir);
-         Set (D.Explorer.File_Model, Iter, Display_Name_Column,
-              D.Dir.Display_Base_Dir_Name);
-         Set (D.Explorer.File_Model, Iter, Node_Type_Column,
-              Gint (Node_Types'Pos (Directory_Node)));
+         Values (1 .. 3) :=
+           (1 => As_File   (D.Dir),
+            2 => As_String (D.Dir.Display_Base_Dir_Name),
+            3 => As_Int    (Gint (Node_Types'Pos (Directory_Node))));
 
          if D.Physical_Read then
-            Set (D.Explorer.File_Model, Iter, Icon_Column,
-                 Stock_For_Node (Directory_Node, Expanded => True));
+            Glib.Values.Init_Set_String
+              (Values (4), Stock_For_Node (Directory_Node, Expanded => True));
+            Set_And_Clear (D.Explorer.File_Model, Iter, Columns, Values);
+
             D.Base := Iter;
 
          else
             Append_Dummy_Iter (D.Explorer.File_Model, Iter);
-            Set (D.Explorer.File_Model, Iter, Icon_Column,
-                 Stock_For_Node (Directory_Node, Expanded => False));
+
+            Glib.Values.Init_Set_String
+              (Values (4), Stock_For_Node (Directory_Node, Expanded => False));
+            Set_And_Clear (D.Explorer.File_Model, Iter, Columns, Values);
+
             New_D := D;
             Free (New_D);
 
@@ -621,13 +631,16 @@ package body Project_Explorers_Files is
            and then D.Files (J).Is_Directory
          then
             Append (D.Explorer.File_Model, Iter, D.Base);
-            Set_File (D.Explorer.File_Model, Iter, File_Column, D.Files (J));
-            Set (D.Explorer.File_Model, Iter, Display_Name_Column,
-                 D.Files (J).Display_Base_Dir_Name);
-            Set (D.Explorer.File_Model, Iter, Node_Type_Column,
-                 Gint (Node_Types'Pos (Directory_Node)));
+
+            Values (1 .. 3) :=
+              (1 => As_File   (D.Files (J)),
+               2 => As_String (D.Files (J).Display_Base_Dir_Name),
+               3 => As_Int    (Gint (Node_Types'Pos (Directory_Node))));
 
             if D.Depth = 0 then
+               Set_And_Clear
+                 (D.Explorer.File_Model, Iter,
+                  Columns (1 .. 3), Values (1 .. 3));
                exit;
             end if;
 
@@ -651,8 +664,9 @@ package body Project_Explorers_Files is
                   Ignore := Expand_Row (D.Explorer.File_Tree, Path, False);
                   D.Explorer.Expanding := Expanding;
 
-                  Set (D.Explorer.File_Model, D.Base, Icon_Column,
-                       Stock_For_Node (Directory_Node, Expanded => True));
+                  D.Explorer.File_Model.Set
+                    (D.Base, Icon_Column,
+                     Stock_For_Node (Directory_Node, Expanded => True));
 
                   Path_Free (Path);
                end;
@@ -682,8 +696,11 @@ package body Project_Explorers_Files is
                        (Get_Selection (D.Explorer.File_Tree),
                         D.Explorer.Path);
 
-                     Set (D.Explorer.File_Model, Iter, Icon_Column,
-                          Stock_For_Node (Directory_Node, True));
+                     Glib.Values.Init_Set_String
+                       (Values (4), Stock_For_Node (Directory_Node, True));
+                     Set_And_Clear
+                       (D.Explorer.File_Model, Iter, Columns, Values);
+
                      D.Explorer.Scroll_To_Directory := True;
                      D.Explorer.Realize_Cb_Id :=
                        Gtkada.Handlers.Object_Return_Callback.Object_Connect
@@ -692,6 +709,10 @@ package body Project_Explorers_Files is
                   end;
 
                else
+                  Set_And_Clear
+                    (D.Explorer.File_Model, Iter,
+                     Columns (1 .. 3), Values (1 .. 3));
+
                   File_Append_Directory
                     (D.Explorer, D.Files (J),
                      Iter, D.Depth, D.Norm_Dest, D.Idle);
@@ -700,8 +721,10 @@ package body Project_Explorers_Files is
             else
                Append_Dummy_Iter (D.Explorer.File_Model, Iter);
 
-               Set (D.Explorer.File_Model, Iter, Icon_Column,
-                    Stock_For_Node (Directory_Node, False));
+               Glib.Values.Init_Set_String
+                 (Values (4), Stock_For_Node (Directory_Node, False));
+               Set_And_Clear
+                 (D.Explorer.File_Model, Iter, Columns, Values);
             end if;
          end if;
       end loop;
@@ -967,9 +990,8 @@ package body Project_Explorers_Files is
 
    begin
       if File.Is_Directory then
-         Set
-           (T.File_Model, Iter, Icon_Column,
-            Stock_For_Node (Directory_Node, False));
+         T.File_Model.Set
+           (Iter, Icon_Column, Stock_For_Node (Directory_Node, False));
       end if;
 
    exception
@@ -1035,8 +1057,8 @@ package body Project_Explorers_Files is
          case N_Type is
             when Directory_Node =>
                Free_Children (T, Iter);
-               Set (T.File_Model, Iter, Icon_Column,
-                    Stock_For_Node (Directory_Node, True));
+               T.File_Model.Set
+                 (Iter, Icon_Column, Stock_For_Node (Directory_Node, True));
                File_Append_Directory (T, File, Iter, 1);
 
             when File_Node =>
@@ -1341,9 +1363,12 @@ package body Project_Explorers_Files is
                   Append (View.File_Model, Iter2, Iter);
                end if;
 
-               Set_File (View.File_Model, Iter2, File_Column, File);
-               Set (View.File_Model, Iter2, Display_Name_Column,
-                    File.Display_Base_Dir_Name);
+               Set_And_Clear
+                 (View.File_Model, Iter2,
+                  (File_Column, Display_Name_Column),
+                  (1 => As_File   (File),
+                   2 => As_String (File.Display_Base_Dir_Name)));
+
                Set_Node_Type (View.File_Model, Iter2, Directory_Node, False);
                File_Append_Directory (View, File, Iter2);
 

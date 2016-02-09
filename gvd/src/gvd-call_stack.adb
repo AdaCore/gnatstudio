@@ -18,8 +18,9 @@
 with GNAT.Strings;           use GNAT.Strings;
 
 with Gdk.Event;              use Gdk.Event;
-with Glib.Object;            use Glib.Object;
 with Glib;                   use Glib;
+with Glib.Object;            use Glib.Object;
+with Glib_Values_Utils;      use Glib_Values_Utils;
 
 with Gtk.Box;                use Gtk.Box;
 with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
@@ -69,6 +70,13 @@ package body GVD.Call_Stack is
    Subprog_Name_Column    : constant := 2;
    Params_Column          : constant := 3;
    File_Location_Column   : constant := 4;
+
+   Column_Types : constant GType_Array :=
+     (Frame_Num_Column       => GType_String,
+      Program_Counter_Column => GType_String,
+      Subprog_Name_Column    => GType_String,
+      Params_Column          => GType_String,
+      File_Location_Column   => GType_String);
 
    -----------------------
    -- Local subprograms --
@@ -375,11 +383,7 @@ package body GVD.Call_Stack is
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       Widget.Tree := Create_Tree_View
-        (Column_Types => (Frame_Num_Column       => GType_String,
-                          Program_Counter_Column => GType_String,
-                          Subprog_Name_Column    => GType_String,
-                          Params_Column          => GType_String,
-                          File_Location_Column   => GType_String),
+        (Column_Types => Column_Types,
          Column_Names =>
            (1 + Frame_Num_Column       => Name_Frame'Unchecked_Access,
             1 + Program_Counter_Column => Name_Counter'Unchecked_Access,
@@ -516,8 +520,12 @@ package body GVD.Call_Stack is
             View.Block := Prev;
 
             Append (View.Model, Iter, Null_Iter);
-            Set (View.Model, Iter, Frame_Num_Column, 0);
-            Set (View.Model, Iter, Subprog_Name_Column, "Running...");
+
+            Set_And_Clear
+              (View.Model, Iter, (Frame_Num_Column, Subprog_Name_Column),
+               (1 => As_String ("0"),
+                2 => As_String ("Running...")));
+
             Set_Mode (Get_Selection (View.Tree), Selection_None);
          end if;
       end if;
@@ -586,20 +594,13 @@ package body GVD.Call_Stack is
 
          Append (View.Model, Iter, Null_Iter);
 
-         Set (View.Model, Iter, Frame_Num_Column,
-              Natural'Image (Bt (J).Frame_Id));
-
-         Set (View.Model, Iter, Program_Counter_Column,
-              Bt (J).Program_Counter.all);
-
-         Set (View.Model, Iter, Subprog_Name_Column,
-              Subp (Subp'First .. Index - 1));
-
-         Set (View.Model, Iter, Params_Column,
-              Subp (Index .. Subp'Last));
-
-         Set (View.Model, Iter, File_Location_Column,
-              Bt (J).Source_Location.all);
+         Set_All_And_Clear
+           (View.Model, Iter,
+            (0 => As_String (Natural'Image (Bt (J).Frame_Id)),
+             1 => As_String (Bt (J).Program_Counter.all),
+             2 => As_String (Subp (Subp'First .. Index - 1)),
+             3 => As_String (Subp (Index .. Subp'Last)),
+             4 => As_String (Bt (J).Source_Location.all)));
       end loop;
 
       Free (Bt (1 .. Len));

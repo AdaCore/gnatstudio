@@ -32,6 +32,8 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
 with Glib.Object;                use Glib.Object;
+with Glib_Values_Utils;          use Glib_Values_Utils;
+
 with Gdk.RGBA;                   use Gdk.RGBA;
 with Gdk.Event;                  use Gdk.Event;
 with Gtk.Box;                    use Gtk.Box;
@@ -78,6 +80,8 @@ package body Revision_Views is
    Link_Column     : constant := 5;
    Color_Column    : constant := 6;
    Rev_Info_Column : constant := 7;
+
+   Column_Types : GType_Array (0 .. 7);
 
    package SL renames String_List_Utils.String_List;
 
@@ -596,21 +600,17 @@ package body Revision_Views is
       Child : Gtk_Tree_Iter;
       Info  : Unbounded_String;
       --  The info column contains the date plus tags/branches
+
    begin
-      Set (-Store, Iter, Color_Column, To_Proxy (View.Root_Color'Address));
-      Set (-Store, Iter, Revision_Column, To_String (Line.Log.Revision));
-      Set (-Store, Iter, Rev_Info_Column, To_String (Line.Log.Revision));
-      Set (-Store, Iter, Author_Column, To_String (Line.Log.Author));
-      Set (-Store, Iter, Date_Column, To_String (Line.Log.Date));
-      Set (-Store, Iter, Log_Column, To_String (Line.Log.Log));
-      Set (-Store, Iter, Link_Column, Line.Link);
       Info := Line.Log.Date;
 
       --  Create log entry
 
       Append (-Store, Child, Iter);
-      Set (-Store, Child, Color_Column, C_Proxy'(null));
-      Set (-Store, Child, Info_Column, To_String (Line.Log.Log));
+      Set_And_Clear
+        (-Store, Child, (Color_Column, Info_Column),
+         (As_Proxy  (C_Proxy'(null)),
+          As_String (To_String (Line.Log.Log))));
 
       --  Tags & Branches
 
@@ -631,8 +631,12 @@ package body Revision_Views is
 
             while Node /= SL.Null_Node loop
                Append (-Store, Child, Iter);
-               Set (-Store, Child, Info_Column, "tag: " & SL.Data (Node));
-               Set (-Store, Child, Rev_Info_Column, SL.Data (Node));
+
+               Set_And_Clear
+                 (-Store, Child, (Info_Column, Rev_Info_Column),
+                  (As_String ("tag: " & SL.Data (Node)),
+                   As_String (SL.Data (Node))));
+
                if First then
                   Append (Info, SL.Data (Node));
                   First := False;
@@ -646,7 +650,18 @@ package body Revision_Views is
          end if;
       end;
 
-      Set (-Store, Iter, Info_Column, To_String (Info));
+      Set_And_Clear
+        (-Store, Iter,
+         (Revision_Column, Author_Column, Info_Column, Date_Column, Log_Column,
+          Link_Column, Rev_Info_Column, Color_Column),
+         (1 => As_String  (To_String (Line.Log.Revision)),
+          2 => As_String  (To_String (Line.Log.Author)),
+          3 => As_String  (To_String (Info)),
+          4 => As_String  (To_String (Line.Log.Date)),
+          5 => As_String  (To_String (Line.Log.Log)),
+          6 => As_Boolean (Line.Link),
+          7 => As_String  (To_String (Line.Log.Revision)),
+          8 => As_Proxy   (To_Proxy (View.Root_Color'Address))));
    end Fill_Info;
 
    ------------------------
@@ -891,14 +906,7 @@ package body Revision_Views is
       View.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       View.Tree := Create_Tree_View
-        (Column_Types       => (Revision_Column => GType_String,
-                                Author_Column   => GType_String,
-                                Info_Column     => GType_String,
-                                Date_Column     => GType_String,
-                                Log_Column      => GType_String,
-                                Link_Column     => GType_Boolean,
-                                Color_Column    => Gdk.RGBA.Get_Type,
-                                Rev_Info_Column => GType_String),
+        (Column_Types       => Column_Types,
          Column_Names       => Names,
          Show_Column_Titles => True,
          Sortable_Columns   => True);
@@ -1043,6 +1051,16 @@ package body Revision_Views is
    is
       Revision_Class : constant Class_Type := New_Class (Kernel, "Revision");
    begin
+      Column_Types :=
+        (Revision_Column => GType_String,
+         Author_Column   => GType_String,
+         Info_Column     => GType_String,
+         Date_Column     => GType_String,
+         Log_Column      => GType_String,
+         Link_Column     => GType_Boolean,
+         Color_Column    => Gdk.RGBA.Get_Type,
+         Rev_Info_Column => GType_String);
+
       Revision_View_Module_ID := new Revision_View_Module;
 
       Register_Module

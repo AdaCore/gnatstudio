@@ -20,6 +20,8 @@ with Default_Preferences.GUI;       use Default_Preferences.GUI;
 with Generic_Views;                 use Generic_Views;
 
 with Glib.Object;                   use Glib.Object;
+with Glib_Values_Utils;             use Glib_Values_Utils;
+
 with Gtk.Box;                       use Gtk.Box;
 with Gtk.Cell_Renderer_Text;        use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                     use Gtk.Enums;
@@ -72,6 +74,11 @@ package body GPS.Kernel.Preferences_Views is
 
    Page_Index_Column    : constant := 2;
    --  Column where the notebook page index is stored in the model.
+
+   Column_Types : constant GType_Array :=
+     (Page_Name_Column     => GType_String,
+      Page_Full_Name_Colum => GType_String,
+      Page_Index_Column    => GType_Int);
 
    type On_Pref_Changed is new Preferences_Hooks_Function with null record;
 
@@ -660,6 +667,7 @@ package body GPS.Kernel.Preferences_Views is
       Child         : Gtk_Tree_Iter;
       First, Last   : Integer := Page_Name'First;
       Page_Found    : Boolean := True;
+
    begin
       while First <= Page_Name'Last loop
          Last := First;
@@ -688,12 +696,14 @@ package body GPS.Kernel.Preferences_Views is
             if Create_If_Needed then
                Page_Found := False;
                Append (Editor.Model, Child, Current);
-               Editor.Model.Set
-                 (Child, Page_Name_Column, Page_Name (First .. Last - 1));
-               Editor.Model.Set
-                 (Child, Page_Full_Name_Colum, Page_Name);
-               Editor.Model.Set
-                 (Child, Page_Index_Column, -1);
+
+               Set_And_Clear
+                 (Editor.Model, Child,
+                  (Page_Name_Column, Page_Full_Name_Colum, Page_Index_Column),
+                  (1 => As_String (Page_Name (First .. Last - 1)),
+                   2 => As_String (Page_Name),
+                   3 => As_Int    (-1)));
+
             else
                return False;
             end if;
@@ -776,9 +786,7 @@ package body GPS.Kernel.Preferences_Views is
                        Shrink => False);
 
       --  Create the pages tree view and add it to its parent scrolled window
-      Gtk_New (Self.Model, (Page_Name_Column     => GType_String,
-                            Page_Full_Name_Colum => GType_String,
-                            Page_Index_Column    => GType_Int));
+      Gtk_New (Self.Model, Column_Types);
       Gtk_New (Self.Filter, +Self.Model);
       GPS_Preferences_Editor_Visible_Funcs.Set_Visible_Func
         (Self.Filter, Is_Advanced_Page_Visible'Access, Self);

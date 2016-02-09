@@ -29,6 +29,7 @@ with Glib;                      use Glib;
 with Glib.Main;                 use Glib.Main;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
+with Glib_Values_Utils;         use Glib_Values_Utils;
 
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Rectangle;             use Gdk.Rectangle;
@@ -78,9 +79,15 @@ package body Bookmark_Views is
    Bookmark_Class_Name : constant String := "Bookmark";
 
    Icon_Name_Column : constant := 0;
-   Name_Column     : constant := 1;
-   Data_Column     : constant := 2;
-   Editable_Column : constant := 3;
+   Name_Column      : constant := 1;
+   Data_Column      : constant := 2;
+   Editable_Column  : constant := 3;
+
+   Column_Types : constant GType_Array :=
+     (Icon_Name_Column => GType_String,
+      Name_Column      => GType_String,
+      Data_Column      => GType_Pointer,
+      Editable_Column  => GType_Boolean);
 
    type Bookmark_Proxy is new Script_Proxy with null record;
    overriding function Class_Name (Self : Bookmark_Proxy) return String
@@ -820,6 +827,7 @@ package body Bookmark_Views is
       Model : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       List  : Bookmark_List.List_Node := First (Bookmark_Views_Module.List);
       Iter  : Gtk_Tree_Iter;
+
    begin
       if View.Deleting then
          return;
@@ -829,10 +837,15 @@ package body Bookmark_Views is
 
       while List /= Null_Node loop
          Append (Model, Iter, Null_Iter);
-         Set (Model, Iter, Icon_Name_Column, "gps-goto-symbolic");
-         Set (Model, Iter, Name_Column, Data (List).Name.all);
-         Set (Model, Iter, Data_Column, Address => Convert (Data (List)));
-         Set (Model, Iter, Editable_Column, True);
+
+         Set_And_Clear
+           (Model, Iter,
+            (Icon_Name_Column, Name_Column, Data_Column, Editable_Column),
+            (1 => As_String  ("gps-goto-symbolic"),
+             2 => As_String  (Data (List).Name.all),
+             3 => As_Pointer (Convert (Data (List))),
+             4 => As_Boolean (True)));
+
          List := Next (List);
       end loop;
    end Refresh;
@@ -892,10 +905,7 @@ package body Bookmark_Views is
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       View.Tree := Create_Tree_View
-        (Column_Types       => (Icon_Name_Column => GType_String,
-                                Name_Column     => GType_String,
-                                Data_Column     => GType_Pointer,
-                                Editable_Column => GType_Boolean),
+        (Column_Types       => Column_Types,
          Column_Names       => (1 => null, 2 => null),
          Editable_Columns   => (Name_Column => Editable_Column),
          Editable_Callback  => (Name_Column => Edited_Callback'Access),

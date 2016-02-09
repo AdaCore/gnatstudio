@@ -23,6 +23,8 @@ with System.Address_To_Access_Conversions;
 
 with Glib.Object;
 with Glib.Values;
+with Glib_Values_Utils;   use Glib_Values_Utils;
+
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Tree_Sortable;
 with Gtk.Tree_Store;      use Gtk.Tree_Store;
@@ -45,6 +47,8 @@ package body GPS.Location_View.Listener is
    use type Glib.Main.G_Source_Id;
    use type GNAT.Strings.String_Access;
    use type GNATCOLL.Xref.Visible_Column;
+
+   Column_Types : Glib.GType_Array (0 .. 15);
 
    package Message_Conversions is
      new System.Address_To_Access_Conversions
@@ -79,25 +83,11 @@ package body GPS.Location_View.Listener is
       Iter          : out Gtk.Tree_Model.Gtk_Tree_Iter);
    --  Lookup for specified message.
 
-   procedure Set
-     (Self   : not null access Classic_Tree_Model_Record'Class;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column : Glib.Gint;
-      To     : GNATCOLL.VFS.Virtual_File);
-   --  Sets value of underling model's cell
-
    function Get
      (Self   : not null access Classic_Tree_Model_Record'Class;
       Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : Glib.Gint) return GNATCOLL.VFS.Virtual_File;
    --  Gets value of specifid cells
-
-   procedure Set
-     (Self   : not null access Classic_Tree_Model_Record'Class;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column : Glib.Gint;
-      To     : GPS.Editors.Editor_Mark'Class);
-   --  Sets value of underling model's cell
 
    type Compare_Functions is
      array (Positive range <>) of Gtk_Tree_Iter_Compare_Func;
@@ -173,34 +163,44 @@ package body GPS.Location_View.Listener is
    is
       pragma Unreferenced (Allow_Auto_Jump_To_First);
 
-      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Mark : Glib.Values.GValue;
 
    begin
       Self.Model.Disable_Sorting;
 
       Self.Model.Append (Iter, Gtk.Tree_Model.Null_Iter);
 
-      Self.Model.Set (Iter, Category_Column, To_String (Category));
-      Self.Model.Set (Iter, Weight_Column, 0);
-      Self.Model.Set (Iter, File_Column, No_File);
-      Self.Model.Set (Iter, Line_Column, -1);
-      Self.Model.Set (Iter, Column_Column, -1);
-      Self.Model.Set (Iter, Text_Column, To_String (Category));
-      Self.Model.Set
-         (Iter, Node_Icon_Name_Column, "gps-emblem-category");
-      Self.Model.Set (Iter, Node_Markup_Column, To_String (Category));
-      Self.Model.Set (Iter, Node_Tooltip_Column, To_String (Category));
-      Self.Model.Set (Iter, Node_Mark_Column, GPS.Editors.Nil_Editor_Mark);
-      Self.Model.Set (Iter, Action_Command_Column, System.Null_Address);
-      Self.Model.Set (Iter, Action_Tooltip_Column, To_String (Category));
-      Self.Model.Set (Iter, Number_Of_Children_Column, 0);
-      Self.Model.Set
-        (Iter,
-         Sort_Order_Hint_Column,
-         Sort_Order_Hint'Pos
-           (GPS.Kernel.Messages.Get_Messages_Container
-              (Self.Kernel).Get_Sort_Order_Hint (To_String (Category))));
-      Self.Model.Set (Iter, Message_Column, System.Null_Address);
+      Glib.Values.Init (Mark, GPS.Editors.GtkAda.Get_Editor_Mark_Type);
+      GPS.Editors.GtkAda.Set_Mark (Mark, GPS.Editors.Nil_Editor_Mark);
+
+      Set_And_Clear
+        (Gtk_Tree_Store (Self.Model), Iter,
+         (Category_Column, Weight_Column, File_Column, Line_Column,
+          Column_Column, Text_Column, Node_Icon_Name_Column,
+          Node_Markup_Column, Node_Tooltip_Column, Node_Mark_Column,
+          Action_Command_Column, Action_Tooltip_Column,
+          Number_Of_Children_Column, Sort_Order_Hint_Column,
+          Message_Column),
+         (1  => As_String  (To_String (Category)),
+          2  => As_Int     (0),
+          3  => As_File    (No_File),
+          4  => As_Int     (-1),
+          5  => As_Int     (-1),
+          6  => As_String  (To_String (Category)),
+          7  => As_String  ("gps-emblem-category"),
+          8  => As_String  (To_String (Category)),
+          9  => As_String  (To_String (Category)),
+          10 => Mark,
+          11 => As_Pointer (System.Null_Address),
+          12 => As_String  (To_String (Category)),
+          13 => As_Int     (0),
+          14 => As_Int
+            (Sort_Order_Hint'Pos
+               (GPS.Kernel.Messages.Get_Messages_Container
+                    (Self.Kernel).Get_Sort_Order_Hint
+                    (To_String (Category)))),
+          15 => As_Pointer (System.Null_Address)));
    end Category_Added;
 
    ----------------------
@@ -464,6 +464,7 @@ package body GPS.Location_View.Listener is
    is
       Category_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
       Iter          : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Mark          : Glib.Values.GValue;
 
    begin
       Self.Model.Disable_Sorting;
@@ -476,39 +477,39 @@ package body GPS.Location_View.Listener is
 
       Self.Model.Append (Iter, Category_Iter);
 
-      Self.Model.Set (Iter, Category_Column, To_String (Category));
-      Self.Model.Set (Iter, Weight_Column, 0);
-      Self.Model.Set (Iter, File_Column, File);
-      Self.Model.Set (Iter, Line_Column, -1);
-      Self.Model.Set (Iter, Column_Column, -1);
+      Glib.Values.Init (Mark, GPS.Editors.GtkAda.Get_Editor_Mark_Type);
+      GPS.Editors.GtkAda.Set_Mark (Mark, GPS.Editors.Nil_Editor_Mark);
 
-      if File /= No_File then
-         Self.Model.Set (Iter, Text_Column, String (File.Base_Name));
-
-      else
-         Self.Model.Set (Iter, Text_Column, "<unknown>");
-      end if;
-
-      Self.Model.Set
-         (Iter, Node_Icon_Name_Column, "gps-emblem-file-unmodified");
-
-      if File /= No_File then
-         Self.Model.Set (Iter, Node_Markup_Column, String (File.Base_Name));
-
-      else
-         Self.Model.Set (Iter, Node_Markup_Column, "&lt;unknown&gt;");
-      end if;
-
-      Self.Model.Set (Iter, Node_Tooltip_Column, String (File.Base_Name));
-      Self.Model.Set (Iter, Node_Mark_Column, GPS.Editors.Nil_Editor_Mark);
-      Self.Model.Set (Iter, Action_Command_Column, System.Null_Address);
-      Self.Model.Set (Iter, Action_Tooltip_Column, String (File.Base_Name));
-      Self.Model.Set (Iter, Number_Of_Children_Column, 0);
-      Self.Model.Set
-        (Iter,
-         Sort_Order_Hint_Column,
-         Self.Model.Get_Int (Category_Iter, Sort_Order_Hint_Column));
-      Self.Model.Set (Iter, Message_Column, System.Null_Address);
+      Set_And_Clear
+        (Gtk_Tree_Store (Self.Model), Iter,
+         (Category_Column, Weight_Column, File_Column, Line_Column,
+          Column_Column, Text_Column, Node_Icon_Name_Column,
+          Node_Markup_Column, Node_Tooltip_Column, Node_Mark_Column,
+          Action_Command_Column, Action_Tooltip_Column,
+          Number_Of_Children_Column, Sort_Order_Hint_Column,
+          Message_Column),
+         (1 => As_String (To_String (Category)),
+          2 => As_Int  (0),
+          3 => As_File (File),
+          4 => As_Int  (-1),
+          5 => As_Int  (-1),
+          6 => As_String
+            ((if File /= No_File
+             then String (File.Base_Name)
+             else "<unknown>")),
+          7 => As_String ("gps-emblem-file-unmodified"),
+          8 => As_String
+            ((if File /= No_File
+             then String (File.Base_Name)
+             else "&lt;unknown&gt;")),
+          9  => As_String  (String (File.Base_Name)),
+          10 => Mark,
+          11 => As_Pointer (System.Null_Address),
+          12 => As_String  (String (File.Base_Name)),
+          13 => As_Int     (0),
+          14 => As_Int (Self.Model.Get_Int
+            (Category_Iter, Sort_Order_Hint_Column)),
+          15 => As_Pointer (System.Null_Address)));
    end File_Added;
 
    ------------------
@@ -680,28 +681,8 @@ package body GPS.Location_View.Listener is
    ----------------
 
    procedure Initialize (Self : access Classic_Tree_Model_Record'Class) is
-      Types : constant Glib.GType_Array :=
-        (Glib.Guint (Category_Column)           => Glib.GType_String,
-         Glib.Guint (Weight_Column)             => Glib.GType_Int,
-         Glib.Guint (File_Column)               =>
-           GNATCOLL.VFS.GtkAda.Get_Virtual_File_Type,
-         Glib.Guint (Line_Column)               => Glib.GType_Int,
-         Glib.Guint (Column_Column)             => Glib.GType_Int,
-         Glib.Guint (Text_Column)               => Glib.GType_String,
-         Glib.Guint (Node_Icon_Name_Column)     => Glib.GType_String,
-         Glib.Guint (Node_Markup_Column)        => Glib.GType_String,
-         Glib.Guint (Node_Tooltip_Column)       => Glib.GType_String,
-         Glib.Guint (Node_Mark_Column)          =>
-           GPS.Editors.GtkAda.Get_Editor_Mark_Type,
-         Glib.Guint (Icon_Name_Column)          => Glib.GType_String,
-         Glib.Guint (Action_Command_Column)     => Glib.GType_Pointer,
-         Glib.Guint (Action_Tooltip_Column)     => Glib.GType_String,
-         Glib.Guint (Number_Of_Children_Column) => Glib.GType_Int,
-         Glib.Guint (Sort_Order_Hint_Column)    => Glib.GType_Int,
-         Glib.Guint (Message_Column)            => Glib.GType_Pointer);
-
    begin
-      Gtk.Tree_Store.Initialize (Self, Types);
+      Gtk.Tree_Store.Initialize (Self, Column_Types);
       Self.Set_Default_Sort_Func (Compare_Nodes'Access);
       Self.Set_Sort_Column_Id
         (Gtk.Tree_Sortable.Default_Sort_Column_Id, Sort_Ascending);
@@ -754,10 +735,17 @@ package body GPS.Location_View.Listener is
       Parent_Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
       Iter          : Gtk.Tree_Model.Gtk_Tree_Iter;
 
-      Columns : Glib.Gint_Array (1 .. Natural (Total_Columns));
-      Values  : Glib.Values.GValue_Array (1 .. Total_Columns);
-      Last    : Glib.Gint := 0;
+      Values  : Glib.Values.GValue_Array (1 .. 16);
+      Columns : constant Columns_Array (Values'Range) :=
+        (Category_Column, Weight_Column, File_Column,
+         Line_Column, Column_Column, Text_Column, Node_Icon_Name_Column,
+         Node_Markup_Column, Node_Tooltip_Column, Node_Mark_Column,
+         Icon_Name_Column, Action_Command_Column, Action_Tooltip_Column,
+         Number_Of_Children_Column, Sort_Order_Hint_Column, Message_Column);
 
+      File_Values  : Glib.Values.GValue_Array (1 .. 2);
+      File_Columns : Columns_Array (File_Values'Range);
+      Last         : Glib.Gint := 0;
    begin
       Self.Model.Disable_Sorting;
 
@@ -774,59 +762,32 @@ package body GPS.Location_View.Listener is
          Parent_Iter := File_Iter;
       end if;
 
-      Last := Last + 1;
-      Columns (Natural (Last)) := Category_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_String);
-      Glib.Values.Set_String (Values (Last), To_String (Message.Get_Category));
-
-      Last := Last + 1;
-      Columns (Natural (Last)) := Weight_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_Int);
+      Glib.Values.Init_Set_String
+        (Values (1), To_String (Message.Get_Category));
 
       case Message.Level is
          when Primary =>
-            Glib.Values.Set_Int
-              (Values (Last), Glib.Gint (Message.Get_Weight));
-            Self.Model.Set
-              (File_Iter,
-               Weight_Column,
+            Glib.Values.Init_Set_Int
+              (Values (2), Glib.Gint (Message.Get_Weight));
+
+            Last := 1;
+            File_Columns (1) := Weight_Column;
+            Glib.Values.Init_Set_Int
+              (File_Values (1),
                Glib.Gint'Max
                  (Self.Model.Get_Int (File_Iter, Weight_Column),
                   Glib.Gint (Message.Get_Weight)));
 
          when Secondary =>
-            Glib.Values.Set_Int (Values (Last), 0);
+            Glib.Values.Init_Set_Int (Values (2), 0);
       end case;
 
-      Last := Last + 1;
-      Columns (Natural (Last)) := File_Column;
-      Glib.Values.Init
-        (Values (Last), GNATCOLL.VFS.GtkAda.Get_Virtual_File_Type);
-      GNATCOLL.VFS.GtkAda.Set_File (Values (Last), Message.Get_File);
-
-      Last := Last + 1;
-      Columns (Natural (Last)) := Line_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_Int);
-      Glib.Values.Set_Int (Values (Last), Glib.Gint (Message.Get_Line));
-
-      Last := Last + 1;
-      Columns (Natural (Last)) := Column_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_Int);
-      Glib.Values.Set_Int (Values (Last), Glib.Gint (Message.Get_Column));
-
-      Last := Last + 1;
-      Columns (Natural (Last)) := Text_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_String);
-      Glib.Values.Set_String (Values (Last), To_String (Message.Get_Text));
-
-      Last := Last + 1;
-      Columns (Natural (Last)) := Node_Icon_Name_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_String);
-      Glib.Values.Set_String (Values (Last), "");
-
-      Last := Last + 1;
-      Columns (Natural (Last)) := Node_Markup_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_String);
+      Values (3 .. 7) :=
+        (3 => As_File   (Message.Get_File),
+         4 => As_Int    (Glib.Gint (Message.Get_Line)),
+         5 => As_Int    (Glib.Gint (Message.Get_Column)),
+         6 => As_String (To_String (Message.Get_Text)),
+         7 => As_String (""));
 
       if Message.Level = Primary
         and (Message.Get_Line /= 0 or Message.Get_Column /= 0)
@@ -843,8 +804,8 @@ package body GPS.Location_View.Listener is
               Integer'Max (0, Location_Padding - Location'Length);
 
          begin
-            Glib.Values.Set_String
-              (Values (Last),
+            Glib.Values.Init_Set_String
+              (Values (8),
                "<b>" & Location & "</b>" & (Length * ' ')
                & To_String (Message.Get_Markup));
          end;
@@ -852,8 +813,8 @@ package body GPS.Location_View.Listener is
       else
          --  Otherwise output message text only.
 
-         Glib.Values.Set_String
-           (Values (Last),
+         Glib.Values.Init_Set_String
+           (Values (8),
             (Location_Padding * ' ') & To_String (Message.Get_Markup));
       end if;
 
@@ -884,74 +845,35 @@ package body GPS.Location_View.Listener is
            & ':' & Image (Integer (M.Get_Column))
            & To_String (Markup);
 
-         Last := Last + 1;
-         Columns (Natural (Last)) := Node_Tooltip_Column;
-         Glib.Values.Init (Values (Last), Glib.GType_String);
-         Glib.Values.Set_String (Values (Last), To_String (Markup));
+         Glib.Values.Init_Set_String (Values (9), To_String (Markup));
       end;
 
-      Last := Last + 1;
-      Columns (Natural (Last)) := Node_Mark_Column;
-      Glib.Values.Init
-        (Values (Last), GPS.Editors.GtkAda.Get_Editor_Mark_Type);
-      GPS.Editors.GtkAda.Set_Mark (Values (Last), Message.Get_Editor_Mark);
+      Glib.Values.Init (Values (10), GPS.Editors.GtkAda.Get_Editor_Mark_Type);
+      GPS.Editors.GtkAda.Set_Mark (Values (10), Message.Get_Editor_Mark);
 
-      Last := Last + 1;
-      Columns (Natural (Last)) := Icon_Name_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_String);
-
-      if Message.Get_Action /= null
-        and then Message.Get_Action.Associated_Command /= null
-        and then Message.Get_Action.Image /= Null_Unbounded_String
-      then
-         Glib.Values.Set_String
-           (Values (Last), To_String (Message.Get_Action.Image));
-      else
-         Glib.Values.Set_String (Values (Last), "");
-      end if;
-
-      Last := Last + 1;
-      Columns (Natural (Last)) := Action_Command_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_Pointer);
-      Glib.Values.Set_Address (Values (Last), To_Address (Message.Get_Action));
-
-      Last := Last + 1;
-      Columns (Natural (Last)) := Action_Tooltip_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_String);
-
-      if Message.Get_Action /= null
-        and then Message.Get_Action.Tooltip_Text /= Null_Unbounded_String
-      then
-         Glib.Values.Set_String
-           (Values (Last), To_String (Message.Get_Action.Tooltip_Text));
-
-      else
-         Glib.Values.Set_String (Values (Last), "");
-      end if;
-
-      Last := Last + 1;
-      Columns (Natural (Last)) := Number_Of_Children_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_Int);
-                              Glib.Values.Set_Int (Values (Last), 0);
-
-      Last := Last + 1;
-      Columns (Natural (Last)) := Sort_Order_Hint_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_Int);
-      Glib.Values.Set_Int
-        (Values (Last),
-         Sort_Order_Hint'Pos
-           (GPS.Kernel.Messages.Get_Messages_Container
-                (Self.Kernel).Get_Sort_Order_Hint
-                (To_String (Message.Get_Category))));
-      --  XXX Can it be changed dynamically?
-
-      Last := Last + 1;
-      Columns (Natural (Last)) := Message_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_Pointer);
-      Glib.Values.Set_Address
-        (Values (Last),
-         Message_Conversions.To_Address
-           (Message_Conversions.Object_Pointer (Message)));
+      Values (11 .. 16) :=
+        (11 => As_String
+           (if Message.Get_Action /= null
+            and then Message.Get_Action.Associated_Command /= null
+            and then Message.Get_Action.Image /= Null_Unbounded_String
+            then To_String (Message.Get_Action.Image)
+            else ""),
+         12 => As_Pointer (To_Address (Message.Get_Action)),
+         13 => As_String
+           (if Message.Get_Action /= null
+            and then Message.Get_Action.Tooltip_Text /= Null_Unbounded_String
+            then To_String (Message.Get_Action.Tooltip_Text)
+            else ""),
+         14 => As_Int (0),
+         15 => As_Int
+           (Sort_Order_Hint'Pos
+                (GPS.Kernel.Messages.Get_Messages_Container
+                     (Self.Kernel).Get_Sort_Order_Hint
+                   (To_String (Message.Get_Category)))),
+         --  XXX Can it be changed dynamically?
+         16 => As_Pointer
+           (Message_Conversions.To_Address
+                (Message_Conversions.Object_Pointer (Message))));
 
       --  Create row for the message using prepared data
 
@@ -959,13 +881,9 @@ package body GPS.Location_View.Listener is
         (Gtk.Tree_Store.Gtk_Tree_Store_Record (Self.Model.all)'Access,
          Iter,
          Parent_Iter,
-         -1,
-         Columns (1 .. Natural (Last)),
-         Values (1 .. Last));
+         -1, Glib.Gint_Array (Columns), Values);
 
-      for Value of Values (1 .. Last) loop
-         Glib.Values.Unset (Value);
-      end loop;
+      Unset (Values);
 
       --  Update message counts for category and file row when message is
       --  primary.
@@ -975,10 +893,18 @@ package body GPS.Location_View.Listener is
            (Category_Iter,
             Number_Of_Children_Column,
             Self.Model.Get_Int (Category_Iter, Number_Of_Children_Column) + 1);
-         Self.Model.Set
-           (File_Iter,
-            Number_Of_Children_Column,
+
+         Last := Last + 1;
+         File_Columns (Last) := Number_Of_Children_Column;
+         Glib.Values.Init_Set_Int
+           (File_Values (Last),
             Self.Model.Get_Int (File_Iter, Number_Of_Children_Column) + 1);
+      end if;
+
+      if Last > 0 then
+         Set_And_Clear
+           (Gtk_Tree_Store (Self.Model), File_Iter,
+            File_Columns (1 .. Last), File_Values (1 .. Last));
       end if;
    end Message_Added;
 
@@ -999,30 +925,22 @@ package body GPS.Location_View.Listener is
       if Property = "action" then
          Self.Find_Message (Message, Category_Iter, File_Iter, Iter);
 
-         if Message.Get_Action /= null
-           and then Message.Get_Action.Associated_Command /= null
-           and then Message.Get_Action.Image /= Null_Unbounded_String
-         then
-            Self.Model.Set
-               (Iter, Icon_Name_Column, To_String (Message.Get_Action.Image));
-         else
-            Self.Model.Set (Iter, Icon_Name_Column, "");
-         end if;
-
-         Self.Model.Set
-           (Iter, Action_Command_Column, To_Address (Message.Get_Action));
-
-         if Message.Get_Action /= null
-           and then Message.Get_Action.Tooltip_Text /= Null_Unbounded_String
-         then
-            Self.Model.Set
-              (Iter,
-               Action_Tooltip_Column,
-               To_String (Message.Get_Action.Tooltip_Text));
-
-         else
-            Self.Model.Set (Iter, Action_Tooltip_Column, "");
-         end if;
+         Set_And_Clear
+           (Gtk_Tree_Store (Self.Model), Iter,
+            (Icon_Name_Column, Action_Command_Column, Action_Tooltip_Column),
+            (1 => As_String
+                 (if Message.Get_Action /= null
+                  and then Message.Get_Action.Associated_Command /= null
+                  and then Message.Get_Action.Image /= Null_Unbounded_String
+                  then To_String (Message.Get_Action.Image)
+                  else ""),
+             2 => As_Pointer (To_Address (Message.Get_Action)),
+             3 => As_String
+               (if Message.Get_Action /= null
+                and then
+                Message.Get_Action.Tooltip_Text /= Null_Unbounded_String
+                then To_String (Message.Get_Action.Tooltip_Text)
+                else "")));
       end if;
    end Message_Property_Changed;
 
@@ -1110,6 +1028,25 @@ package body GPS.Location_View.Listener is
       Self    : Locations_Listener_Access;
 
    begin
+      Column_Types :=
+        (Glib.Guint (Category_Column)           => Glib.GType_String,
+         Glib.Guint (Weight_Column)             => Glib.GType_Int,
+         Glib.Guint (File_Column)               => Get_Virtual_File_Type,
+         Glib.Guint (Line_Column)               => Glib.GType_Int,
+         Glib.Guint (Column_Column)             => Glib.GType_Int,
+         Glib.Guint (Text_Column)               => Glib.GType_String,
+         Glib.Guint (Node_Icon_Name_Column)     => Glib.GType_String,
+         Glib.Guint (Node_Markup_Column)        => Glib.GType_String,
+         Glib.Guint (Node_Tooltip_Column)       => Glib.GType_String,
+         Glib.Guint (Node_Mark_Column)          =>
+             GPS.Editors.GtkAda.Get_Editor_Mark_Type,
+         Glib.Guint (Icon_Name_Column)          => Glib.GType_String,
+         Glib.Guint (Action_Command_Column)     => Glib.GType_Pointer,
+         Glib.Guint (Action_Tooltip_Column)     => Glib.GType_String,
+         Glib.Guint (Number_Of_Children_Column) => Glib.GType_Int,
+         Glib.Guint (Sort_Order_Hint_Column)    => Glib.GType_Int,
+         Glib.Guint (Message_Column)            => Glib.GType_Pointer);
+
       Self := new Locations_Listener;
       Self.Kernel := Kernel;
 
@@ -1129,44 +1066,6 @@ package body GPS.Location_View.Listener is
 
       return Self;
    end Register;
-
-   ---------
-   -- Set --
-   ---------
-
-   procedure Set
-     (Self   : not null access Classic_Tree_Model_Record'Class;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column : Glib.Gint;
-      To     : GNATCOLL.VFS.Virtual_File)
-   is
-      Value : Glib.Values.GValue;
-
-   begin
-      Glib.Values.Init (Value, GNATCOLL.VFS.GtkAda.Get_Virtual_File_Type);
-      GNATCOLL.VFS.GtkAda.Set_File (Value, To);
-      Self.Set_Value (Iter, Column, Value);
-      Glib.Values.Unset (Value);
-   end Set;
-
-   ---------
-   -- Set --
-   ---------
-
-   procedure Set
-     (Self   : not null access Classic_Tree_Model_Record'Class;
-      Iter   : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Column : Glib.Gint;
-      To     : GPS.Editors.Editor_Mark'Class)
-   is
-      Value : Glib.Values.GValue;
-
-   begin
-      Glib.Values.Init (Value, GPS.Editors.GtkAda.Get_Editor_Mark_Type);
-      GPS.Editors.GtkAda.Set_Mark (Value, To);
-      Self.Set_Value (Iter, Column, Value);
-      Glib.Values.Unset (Value);
-   end Set;
 
    ---------------
    -- Set_Order --

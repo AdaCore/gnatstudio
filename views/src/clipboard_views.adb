@@ -22,7 +22,9 @@ with Gdk.Event;                 use Gdk.Event;
 with Gdk.Rectangle;             use Gdk.Rectangle;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
+with Glib_Values_Utils;         use Glib_Values_Utils;
 with Glib.Unicode;              use Glib.Unicode;
+
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
@@ -329,12 +331,6 @@ package body Clipboard_Views is
          if Selection (S) /= null then
             Append (Model, Iter, Null_Iter);
 
-            if Last_Paste = S then
-               Set (Model, Iter, 0, "gps-forward-symbolic");
-            else
-               Set (Model, Iter, 0, "");
-            end if;
-
             Start_Truncated := False;
             End_Truncated := False;
 
@@ -381,8 +377,14 @@ package body Clipboard_Views is
             --  There is a pathological case here: if only ASCII.LF was
             --  selected, it will be shown in the view on 2 lines.
 
-            Set (Model, Iter, 1, To_String (Result));
-            Set (Model, Iter, 2, Gint (S));
+            Set_And_Clear
+              (Model, Iter,
+               (0 => As_String
+                    (if Last_Paste = S
+                     then "gps-forward-symbolic"
+                     else ""),
+                1 => As_String (To_String (Result)),
+                2 => As_Int    (Gint (S))));
          end if;
       end loop;
    exception

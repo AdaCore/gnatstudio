@@ -15,8 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;        use Glib;
-with Glib.Object; use Glib.Object;
+with Glib;                     use Glib;
+with Glib.Object;              use Glib.Object;
+with Glib_Values_Utils;        use Glib_Values_Utils;
 
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Dialog;               use Gtk.Dialog;
@@ -43,6 +44,12 @@ package body Build_Configurations.Gtkada.Dialogs is
    Name_Column       : constant := 1; -- Contains the displayed name, as markup
    Desc_Column       : constant := 2;
    Whitespace_Column : constant := 3;
+
+   Column_Types : constant GType_Array :=
+     (Icon_Column       => GType_String,
+      Name_Column       => GType_String,
+      Desc_Column       => GType_String,
+      Whitespace_Column => GType_String);
 
    function "-" (Msg : String) return String;
    --  Convenient shortcut to the Gettext function
@@ -92,11 +99,8 @@ package body Build_Configurations.Gtkada.Dialogs is
    function Models_Combo
      (UI : access Build_UI_Record'Class) return Gtk_Combo_Box_Text
    is
-      Combo     : Gtk_Combo_Box_Text;
-      Model     : Gtk_Tree_Store;
-
-      function Columns return GType_Array;
-      --  Used for the models combo
+      Combo : Gtk_Combo_Box_Text;
+      Model : Gtk_Tree_Store;
 
       function Get_Or_Create_Category (Cat : String) return Gtk_Tree_Iter;
       --  Return the iter corresponding to category Cat
@@ -107,6 +111,7 @@ package body Build_Configurations.Gtkada.Dialogs is
 
       function Get_Or_Create_Category (Cat : String) return Gtk_Tree_Iter is
          It : Gtk_Tree_Iter;
+
       begin
          It := Get_Iter_First (Model);
 
@@ -119,24 +124,12 @@ package body Build_Configurations.Gtkada.Dialogs is
 
          --  We reach this point if no iter was found: create it
          Append (Model, It, Null_Iter);
-         Set (Model, It, Desc_Column, "<b>" & Cat & "</b>");
-         Set (Model, It, Name_Column, "");
+         Set_And_Clear
+           (Model, It, (Desc_Column, Name_Column),
+            (As_String  ("<b>" & Cat & "</b>"), As_String  ("")));
 
          return It;
       end Get_Or_Create_Category;
-
-      -------------
-      -- Columns --
-      -------------
-
-      function Columns return GType_Array is
-      begin
-         return GType_Array'
-           (Icon_Column       => GType_String,
-            Name_Column       => GType_String,
-            Desc_Column       => GType_String,
-            Whitespace_Column => GType_String);
-      end Columns;
 
       Icon_Renderer : Gtk_Cell_Renderer_Pixbuf;
       Text_Renderer : Gtk_Cell_Renderer_Text;
@@ -147,9 +140,10 @@ package body Build_Configurations.Gtkada.Dialogs is
       use Model_Map;
       C  : Cursor;
       M  : Target_Model_Access;
+
    begin
       Gtk_New_With_Entry (Combo);
-      Gtk_New (Model, Columns);
+      Gtk_New (Model, Column_Types);
 
       Set_Model (Combo, +Model);
 
@@ -184,11 +178,13 @@ package body Build_Configurations.Gtkada.Dialogs is
          end if;
 
          Append (Model, Iter, Iter);
-
-         Set (Model, Iter, Name_Column, To_String (M.Name));
-         Set (Model, Iter, Icon_Column, To_String (M.Icon));
-         Set (Model, Iter, Desc_Column, To_String (M.Description));
-         Set (Model, Iter, Whitespace_Column, "        ");
+         Set_And_Clear
+           (Model, Iter,
+            (Icon_Column, Name_Column, Desc_Column, Whitespace_Column),
+            (As_String  (To_String (M.Icon)),
+             As_String  (To_String (M.Name)),
+             As_String  (To_String (M.Description)),
+             As_String  ("        ")));
 
          Next (C);
       end loop;

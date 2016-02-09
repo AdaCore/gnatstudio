@@ -20,6 +20,8 @@ with Ada.Strings.Fixed;      use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
 with Glib;                   use Glib;
+with Glib_Values_Utils;      use Glib_Values_Utils;
+
 with Gtk.Box;                use Gtk.Box;
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;              use Gtk.Enums;
@@ -67,6 +69,8 @@ package body CodePeer.Backtrace_View is
    File_Column   : constant := 1;
    Line_Column   : constant := 2;
    Column_Column : constant := 3;
+
+   Column_Types : GType_Array (0 .. 3);
 
    package Backtrace_View_Callbacks is
      new Gtk.Handlers.Callback (Backtrace_View_Record);
@@ -139,16 +143,17 @@ package body CodePeer.Backtrace_View is
 
       for Vn of Set loop
          View.Store.Append (Vn_Iter, Null_Iter);
-         View.Store.Set
-           (Vn_Iter,
-            Text_Column,
-            Message.Get_File.Display_Base_Name
-            & ':' & Trim (Natural'Image (Message.Get_Line), Both)
-            & ':' & Trim (Visible_Column_Type'Image (Message.Get_Column), Both)
-            & ": " & To_String (Message.Get_Text));
-         Set_File (View.Store, Vn_Iter, File_Column, No_File);
-         View.Store.Set (Vn_Iter, Line_Column, 0);
-         View.Store.Set (Vn_Iter, Column_Column, 0);
+
+         Set_All_And_Clear
+           (View.Store, Vn_Iter,
+            (0 => As_String (Message.Get_File.Display_Base_Name & ':' &
+               Trim (Natural'Image (Message.Get_Line), Both) & ':' &
+               Trim (Visible_Column_Type'Image (Message.Get_Column), Both) &
+               ": " & To_String (Message.Get_Text)),
+             1 => As_File   (No_File),
+             2 => As_Int    (0),
+             3 => As_Int    (0)));
+
          Info.Clear;
          BT.Xml.Reader.Get_Vn_Backtraces
            (Subprogram,
@@ -164,17 +169,16 @@ package body CodePeer.Backtrace_View is
                  Kernel);
 
             View.Store.Append (Bt_Iter, Vn_Iter);
-            View.Store.Set
-              (Bt_Iter,
-               Text_Column,
-               Src_File.Display_Base_Name
-               & ':' & Image (Location.Sloc.Line, 1)
-               & ':' & Image (Location.Sloc.Column, 1)
-               & " - " & To_String (Location.Text));
-            Set_File (View.Store, Bt_Iter, File_Column, Src_File);
-            View.Store.Set (Bt_Iter, Line_Column, Gint (Location.Sloc.Line));
-            View.Store.Set
-              (Bt_Iter, Column_Column, Gint (Location.Sloc.Column));
+
+            Set_All_And_Clear
+              (View.Store, Bt_Iter,
+               (0 => As_String (Src_File.Display_Base_Name & ':' &
+                  Image (Location.Sloc.Line, 1) & ':' &
+                  Image (Location.Sloc.Column, 1) & " - " &
+                  To_String (Location.Text)),
+                1 => As_File (Src_File),
+                2 => As_Int  (Gint (Location.Sloc.Line)),
+                3 => As_Int  (Gint (Location.Sloc.Column))));
          end loop;
       end loop;
 
@@ -189,12 +193,6 @@ package body CodePeer.Backtrace_View is
      (Self : access Backtrace_View_Record'Class)
       return Gtk_Widget
    is
-      Types : constant GType_Array :=
-        (Text_Column   => GType_String,
-         File_Column   => Get_Virtual_File_Type,
-         Line_Column   => GType_Int,
-         Column_Column => GType_Int);
-
       Scrolled : Gtk_Scrolled_Window;
       Column   : Gtk_Tree_View_Column;
       Renderer : Gtk_Cell_Renderer_Text;
@@ -203,7 +201,7 @@ package body CodePeer.Backtrace_View is
    begin
       Initialize_Vbox (Self, False);
 
-      Gtk_New (Self.Store, Types);
+      Gtk_New (Self.Store, Column_Types);
 
       Gtk_New (Scrolled);
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
@@ -268,6 +266,12 @@ package body CodePeer.Backtrace_View is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
+      Column_Types :=
+        (Text_Column   => GType_String,
+         File_Column   => Get_Virtual_File_Type,
+         Line_Column   => GType_Int,
+         Column_Column => GType_Int);
+
       Backtrace_Views.Register_Module (Kernel);
    end Register_Module;
 

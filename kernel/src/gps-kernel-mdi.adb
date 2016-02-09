@@ -31,6 +31,7 @@ with Glib.Main;                use Glib.Main;
 with Glib.Object;              use Glib.Object;
 with Glib.Properties;          use Glib.Properties;
 with Glib.Values;              use Glib.Values;
+with Glib_Values_Utils;        use Glib_Values_Utils;
 
 with Gdk;                      use Gdk;
 with Gdk.Display;              use Gdk.Display;
@@ -500,6 +501,7 @@ package body GPS.Kernel.MDI is
 
       procedure Add_Child_If_Needed (Child : MDI_Child) is
          Module : Module_ID;
+
       begin
          if Child = null then
             return;
@@ -515,8 +517,10 @@ package body GPS.Kernel.MDI is
               Force        => Force)
          then
             Append (Model, It, Null_Iter);
-            Set (Model, It, 0, True);
-            Set (Model, It, 1, Get_Title (Child));
+            Set_And_Clear
+              (Model, It,
+               (0 => As_Boolean (True),
+                1 => As_String  (Get_Title (Child))));
             Num_Unsaved := Num_Unsaved + 1;
          end if;
       end Add_Child_If_Needed;
@@ -583,8 +587,10 @@ package body GPS.Kernel.MDI is
          if Get_Project (Handle).Modified (Recursive => True) then
             Num_Unsaved := Num_Unsaved + 1;
             Append (Model, It, Null_Iter);
-            Set (Model, It, 0, True);
-            Set (Model, It, 1, Project_Description);
+            Set_And_Clear
+              (Model, It,
+               (0 => As_Boolean (True),
+                1 => As_String  (Project_Description)));
          end if;
 
          Iter := First_Child (MDI);

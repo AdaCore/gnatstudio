@@ -1205,7 +1205,7 @@ package body Remote.Config_Dialog is
 
       for J in Machines'Range loop
          Append (Model, Iter, Null_Iter);
-         Set (Model, Iter, Name_Col, Machines (J).all);
+         Model.Set (Iter, Name_Col, Machines (J).all);
 
          if J = 1 or else Machines (J).all = Default_Server then
             Select_Iter (Get_Selection (Dialog.Machine_Tree), Iter);
@@ -1777,7 +1777,7 @@ package body Remote.Config_Dialog is
 
             Model := -Get_Model (Dialog.Machine_Tree);
             Append (Model, Iter, Null_Iter);
-            Set (Model, Iter, Name_Col, Nickname);
+            Model.Set (Iter, Name_Col, Nickname);
 
             --  Set the 'New_Machine' state to handle save.
             Dialog.New_Machine := True;

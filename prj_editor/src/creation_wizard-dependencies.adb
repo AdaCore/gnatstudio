@@ -17,6 +17,8 @@
 
 with Ada.Containers.Hashed_Sets;
 with Glib;                             use Glib;
+with Glib.Values;
+with Glib_Values_Utils;                use Glib_Values_Utils;
 
 with Gtk.Box;                          use Gtk.Box;
 with Gtk.Button;                       use Gtk.Button;
@@ -93,12 +95,16 @@ package body Creation_Wizard.Dependencies is
    Full_Path_Column          : constant := 3;
    Use_Base_Name_Column      : constant := 4;
 
+   function Dependency_Column_Types return GType_Array;
+
    --  Constants for the "Add from known dialog"
    Selected_Column2         : constant := 0;
    Project_Name_Column2     : constant := 1;
    Directory_Column2        : constant := 2;
    Is_Limited_Column2       : constant := 3;
    Full_Path_Column2        : constant := 4;
+
+   function Add_Column_Types return GType_Array;
 
    procedure Remove_Project
      (Button : access Gtk_Widget_Record'Class;
@@ -150,6 +156,16 @@ package body Creation_Wizard.Dependencies is
    --  Internal function that creates a dependency between two projects. It
    --  properly handles the case where a project with the same name as
    --  Imported_Project_Path already exists in the project hierarchy.
+
+   procedure Set_Columns
+     (Model         : Gtk_Tree_Store;
+      Iter          : Gtk_Tree_Iter;
+      Project_Name  : String;
+      Is_Limited    : Boolean;
+      Can_Change    : Boolean;
+      Full_Path     : Virtual_File;
+      Use_Base_Name : Boolean);
+   --  Set model's values
 
    -----------------------------
    -- Add_Dependency_Internal --
@@ -290,7 +306,8 @@ package body Creation_Wizard.Dependencies is
                for K in Files'Range loop
                   declare
                      Base : constant Filesystem_String :=
-                              Files (K).Base_Name (".gpr");
+                       Files (K).Base_Name (".gpr");
+
                   begin
                      if Has_Suffix (Files (K), ".gpr") then
                         Imported_Prj := Get_Registry (Kernel).Tree
@@ -303,13 +320,15 @@ package body Creation_Wizard.Dependencies is
                           Project_Path (J)
                         then
                            Append (Model, Iter, Null_Iter);
-                           Set (Model, Iter, Selected_Column2, False);
-                           Set (Model, Iter, Project_Name_Column2, +Base);
-                           Set (Model, Iter, Directory_Column2,
-                                Project_Path (J).Display_Full_Name);
-                           Set_File
-                             (Model, Iter, Full_Path_Column2, Files (K));
-                           Set (Model, Iter, Is_Limited_Column2, False);
+
+                           Set_All_And_Clear
+                             (Gtk_Tree_Store (Model), Iter,
+                              (0 => As_Boolean (False),
+                               1 => As_String  (+Base),
+                               2 => As_String
+                                 (Project_Path (J).Display_Full_Name),
+                               3 => As_Boolean (False),
+                               4 => As_File (Files (K))));
                         end if;
                      end if;
                   end;
@@ -328,12 +347,12 @@ package body Creation_Wizard.Dependencies is
       while Current (Imported) /= No_Project loop
          Add_Single_Project
            (Project, Current (Imported), Model, True,
-            Column_Project_Name   => Project_Name_Column2,
-            Column_Is_Limited     => Is_Limited_Column2,
-            Column_Directory      => Directory_Column2,
+            Column_Project_Name       => Project_Name_Column2,
+            Column_Is_Limited         => Is_Limited_Column2,
+            Column_Directory          => Directory_Column2,
             Column_Can_Change_Limited => -1,
-            Column_Full_Path      => Full_Path_Column2,
-            Column_Selected       => Selected_Column2);
+            Column_Full_Path          => Full_Path_Column2,
+            Column_Selected           => Selected_Column2);
          Next (Imported);
       end loop;
    end Add_Predefined_Projects;
@@ -352,11 +371,11 @@ package body Creation_Wizard.Dependencies is
       while Current (Imported) /= No_Project loop
          Add_Single_Project
            (Project, Current (Imported), Model,
-            Column_Project_Name   => Project_Name_Column,
-            Column_Is_Limited     => Is_Limited_Column,
-            Column_Directory      => -1,
+            Column_Project_Name       => Project_Name_Column,
+            Column_Is_Limited         => Is_Limited_Column,
+            Column_Directory          => -1,
             Column_Can_Change_Limited => Can_Change_Limited_Column,
-            Column_Full_Path      => Full_Path_Column);
+            Column_Full_Path          => Full_Path_Column);
          Next (Imported);
       end loop;
    end Add_Imported_Projects;
@@ -382,6 +401,11 @@ package body Creation_Wizard.Dependencies is
       Is_Limited      : Boolean;
       Must_Be_Limited : Boolean := False;
       Imported_Iter   : Project_Iterator;
+
+      Values  : Glib.Values.GValue_Array (1 .. 6);
+      Columns : Columns_Array (Values'Range);
+      Last    : Gint;
+
    begin
       if Imported /= Project then
          Project_Imports
@@ -403,28 +427,67 @@ package body Creation_Wizard.Dependencies is
             end loop;
 
             Append (Model, Iter, Null_Iter);
-            Set (Model, Iter, Column_Project_Name, Imported.Name);
-            Set (Model, Iter, Column_Is_Limited,
-                 Is_Limited or else Must_Be_Limited);
-            Set_File
-              (Model, Iter, Column_Full_Path, Project_Path (Imported));
+
+            Columns (1 .. 3) :=
+              (Column_Project_Name, Column_Is_Limited, Column_Full_Path);
+            Values (1 .. 3) :=
+              (1 => As_String  (Imported.Name),
+               2 => As_Boolean (Is_Limited or else Must_Be_Limited),
+               3 => As_File    (Project_Path (Imported)));
+            Last := 3;
 
             if Column_Can_Change_Limited /= -1 then
-               Set (Model, Iter, Column_Can_Change_Limited,
-                    not Must_Be_Limited);
+               Last := Last + 1;
+               Columns (Last) := Column_Can_Change_Limited;
+               Glib.Values.Init_Set_Boolean
+                 (Values (Last), not Must_Be_Limited);
             end if;
 
             if Column_Directory /= -1 then
-               Set (Model, Iter, Column_Directory,
-                    +Full_Name (Project_Directory (Imported)));
+               Last := Last + 1;
+               Columns (Last) := Column_Directory;
+               Glib.Values.Init_Set_String
+                 (Values (Last), +Full_Name (Project_Directory (Imported)));
             end if;
 
             if Column_Selected /= -1 then
-               Set (Model, Iter, Column_Selected, False);
+               Last := Last + 1;
+               Columns (Last) := Column_Selected;
+               Glib.Values.Init_Set_Boolean (Values (Last), False);
             end if;
+
+            Set_And_Clear
+              (Gtk_Tree_Store (Model), Iter,
+               Columns (1 .. Last), Values (1 .. Last));
          end if;
       end if;
    end Add_Single_Project;
+
+   -----------------------------
+   -- Dependency_Column_Types --
+   -----------------------------
+
+   function Dependency_Column_Types return GType_Array is
+   begin
+      return (Project_Name_Column       => GType_String,
+              Is_Limited_Column         => GType_Boolean,
+              Can_Change_Limited_Column => GType_Boolean,
+              Full_Path_Column          => Get_Virtual_File_Type,
+              Use_Base_Name_Column      => GType_Boolean);
+   end Dependency_Column_Types;
+
+   ----------------------
+   -- Add_Column_Types --
+   ----------------------
+
+   function Add_Column_Types return GType_Array is
+   begin
+      return (Selected_Column2     => GType_Boolean,
+              Project_Name_Column2 => GType_String,
+              Directory_Column2    => GType_String,
+              Is_Limited_Column2   => GType_Boolean,
+              Full_Path_Column2    => Get_Virtual_File_Type);
+   end Add_Column_Types;
 
    --------------------
    -- Create_Content --
@@ -459,12 +522,7 @@ package body Creation_Wizard.Dependencies is
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
       Pack_Start (Hbox, Scrolled, Expand => True);
       Page.Tree := Create_Tree_View
-        (Column_Types      =>
-           (Project_Name_Column       => GType_String,
-            Is_Limited_Column         => GType_Boolean,
-            Can_Change_Limited_Column => GType_Boolean,
-            Full_Path_Column          => Get_Virtual_File_Type,
-            Use_Base_Name_Column      => GType_Boolean),
+        (Column_Types      => Dependency_Column_Types,
          Column_Names      =>
            (1 + Project_Name_Column => Cst_Project_Name'Unchecked_Access,
             1 + Is_Limited_Column   => Cst_Limited'Unchecked_Access),
@@ -531,7 +589,9 @@ package body Creation_Wizard.Dependencies is
       Model       : Gtk_Tree_Store;
       PModel      : Gtk_Tree_Store;
       Iter, PIter : Gtk_Tree_Iter;
+      Is_Limited  : Boolean;
       pragma Unreferenced (B);
+
    begin
       Gtk_New (Dialog,
                Title  => -"Add project dependency",
@@ -546,12 +606,7 @@ package body Creation_Wizard.Dependencies is
         (Get_Content_Area (Dialog), Scrolled, Expand => True, Fill => True);
 
       Tree := Create_Tree_View
-        (Column_Types      =>
-           (Selected_Column2         => GType_Boolean,
-            Project_Name_Column2     => GType_String,
-            Directory_Column2        => GType_String,
-            Is_Limited_Column2       => GType_Boolean,
-            Full_Path_Column2        => Get_Virtual_File_Type),
+        (Column_Types      => Add_Column_Types,
          Column_Names      =>
            (1 + Selected_Column2     => null,
             1 + Project_Name_Column2 => Cst_Project_Name'Unchecked_Access,
@@ -576,15 +631,18 @@ package body Creation_Wizard.Dependencies is
             if Get_Boolean (Model, Iter, Selected_Column2) then
                PModel := -Get_Model (P.Tree);
                Append (PModel, PIter, Null_Iter);
-               Set (PModel, PIter, Project_Name_Column,
-                    Get_String (Model, Iter, Project_Name_Column2));
-               Set (PModel, PIter, Is_Limited_Column,
-                    Get_Boolean (Model, Iter, Is_Limited_Column2));
-               Set (PModel, PIter, Can_Change_Limited_Column,
-                    not Get_Boolean (Model, Iter, Is_Limited_Column2));
-               Set_File (PModel, PIter, Full_Path_Column,
-                    Get_File (Model, Iter, Full_Path_Column2));
-               Set (PModel, PIter, Use_Base_Name_Column, True);
+
+               Is_Limited := Get_Boolean
+                 (Model, Iter, Is_Limited_Column2);
+
+               Set_Columns
+                 (PModel, PIter,
+                  Project_Name  => Get_String
+                    (Model, Iter, Project_Name_Column2),
+                  Is_Limited    => Is_Limited,
+                  Can_Change    => not Is_Limited,
+                  Full_Path     => Get_File (Model, Iter, Full_Path_Column2),
+                  Use_Base_Name => True);
             end if;
 
             Next (Model, Iter);
@@ -609,6 +667,7 @@ package body Creation_Wizard.Dependencies is
       Wiz   : Creation_Wizard.Project_Wizard;
       Iter  : Gtk_Tree_Iter;
       Name  : Virtual_File;
+
    begin
       Creation_Wizard.Gtk_New (Wiz, B.Kernel, -"Add New Project");
       Add_Full_Wizard_Pages
@@ -617,11 +676,14 @@ package body Creation_Wizard.Dependencies is
       Name := Creation_Wizard.Run (Wiz);
       if Name /= GNATCOLL.VFS.No_File then
          Append (Model, Iter, Null_Iter);
-         Set (Model, Iter, Project_Name_Column, Display_Base_Name (Name));
-         Set (Model, Iter, Is_Limited_Column, False);
-         Set (Model, Iter, Can_Change_Limited_Column, True);
-         Set_File (Model, Iter, Full_Path_Column, Name);
-         Set (Model, Iter, Use_Base_Name_Column, False);
+
+         Set_Columns
+           (Model, Iter,
+            Project_Name  => Display_Base_Name (Name),
+            Is_Limited    => False,
+            Can_Change    => True,
+            Full_Path     => Name,
+            Use_Base_Name => False);
       end if;
    end Add_New_Project_From_Wizard;
 
@@ -648,14 +710,18 @@ package body Creation_Wizard.Dependencies is
          Kind              => Open_File,
          History           => Get_History (B.Kernel));
       Iter  : Gtk_Tree_Iter;
+
    begin
       if Name /= GNATCOLL.VFS.No_File then
          Append (Model, Iter, Null_Iter);
-         Set (Model, Iter, Project_Name_Column, Display_Base_Name (Name));
-         Set (Model, Iter, Is_Limited_Column, False);
-         Set (Model, Iter, Can_Change_Limited_Column, True);
-         Set_File (Model, Iter, Full_Path_Column, Name);
-         Set (Model, Iter, Use_Base_Name_Column, False);
+
+         Set_Columns
+           (Model, Iter,
+            Project_Name  => Display_Base_Name (Name),
+            Is_Limited    => False,
+            Can_Change    => True,
+            Full_Path     => Name,
+            Use_Base_Name => False);
       end if;
    end Add_New_Project;
 
@@ -807,5 +873,27 @@ package body Creation_Wizard.Dependencies is
          return Failure;
       end if;
    end Execute;
+
+   -----------------
+   -- Set_Columns --
+   -----------------
+
+   procedure Set_Columns
+     (Model         : Gtk_Tree_Store;
+      Iter          : Gtk_Tree_Iter;
+      Project_Name  : String;
+      Is_Limited    : Boolean;
+      Can_Change    : Boolean;
+      Full_Path     : Virtual_File;
+      Use_Base_Name : Boolean) is
+   begin
+      Set_All_And_Clear
+        (Model, Iter,
+         (0 => As_String  (Project_Name),
+          1 => As_Boolean (Is_Limited),
+          2 => As_Boolean (Can_Change),
+          3 => As_File    (Full_Path),
+          4 => As_Boolean (Use_Base_Name)));
+   end Set_Columns;
 
 end Creation_Wizard.Dependencies;

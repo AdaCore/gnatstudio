@@ -17,6 +17,8 @@
 
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with Glib;                     use Glib;
+with Glib_Values_Utils;        use Glib_Values_Utils;
+
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Dialog;               use Gtk.Dialog;
@@ -143,6 +145,7 @@ package body Creation_Wizard.Extending is
       FIter    : Gtk_Tree_Iter;
       Project  : Project_Type;
       Model    : Gtk_Tree_Store;
+
    begin
       Gtk_New_Vbox (Box, Homogeneous => False);
 
@@ -186,18 +189,20 @@ package body Creation_Wizard.Extending is
          Page.Projects_Count := Page.Projects_Count + 1;
 
          Append (Model, TIter, Null_Iter);
-         Set (Model, TIter, 0, False);
-         Set (Model, TIter, 1, Project.Name);
-         Set_File (Model, TIter, 2, No_File);
+         Set_And_Clear (Model, TIter,
+                        (0 => As_Boolean (False),
+                         1 => As_String  (Project.Name),
+                         2 => As_File    (No_File)));
 
          declare
             Sources : File_Array_Access := Project.Source_Files;
          begin
             for F in Sources'Range loop
                Append (Model, FIter, TIter);
-               Set (Model, FIter, 0, False);
-               Set (Model, FIter, 1, +Sources (F).Base_Name);
-               Set_File (Model, FIter, 2, Sources (F));
+               Set_And_Clear (Model, FIter,
+                              (0 => As_Boolean (False),
+                               1 => As_String  (+Sources (F).Base_Name),
+                               2 => As_File    (Sources (F))));
             end loop;
 
             Unchecked_Free (Sources);

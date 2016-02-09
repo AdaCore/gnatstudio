@@ -20,19 +20,20 @@ with Config;                use Config;
 with Generic_Views;         use Generic_Views;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GNAT.Regpat;           use GNAT.Regpat;
+with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
 with GPS.Main_Window;       use GPS.Main_Window;
 with GPS.Intl;              use GPS.Intl;
 pragma Elaborate_All (GPS.Intl);
-with GVD.Dialogs.Callbacks; use GVD.Dialogs.Callbacks;
-with GVD.Process;           use GVD.Process;
-with GVD.Types;             use GVD.Types;
-with GVD.Views;             use GVD.Views;
-with GVD;                   use GVD;
+
+with Gdk.Event;             use Gdk.Event;
+
 with Glib;                  use Glib;
 with Glib.Object;           use Glib.Object;
-with Gdk.Event;             use Gdk.Event;
+with Glib.Values;
+with Glib_Values_Utils;     use Glib_Values_Utils;
+
 with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Label;             use Gtk.Label;
@@ -45,10 +46,16 @@ with Gtk;                   use Gtk;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Gtkada.MDI;            use Gtkada.MDI;
 with GUI_Utils;             use GUI_Utils;
+
+with GVD;                   use GVD;
+with GVD.Dialogs.Callbacks; use GVD.Dialogs.Callbacks;
+with GVD.Process;           use GVD.Process;
+with GVD.Types;             use GVD.Types;
+with GVD.Views;             use GVD.Views;
+
 with Interfaces.C.Strings;  use Interfaces.C.Strings;
 with Interfaces.C;          use Interfaces.C;
 with Process_Proxies;       use Process_Proxies;
-with GNATCOLL.Traces;                use GNATCOLL.Traces;
 
 package body GVD.Dialogs is
    Me : constant Trace_Handle := Create ("GVD.Dialogs");
@@ -630,12 +637,20 @@ package body GVD.Dialogs is
 
          for J in Info'First + 1 .. Len loop
             Append (-Get_Model (Thread.Tree), Iter, Null_Iter);
-            for Col in Info (J).Information'Range loop
-               Set (-Get_Model (Thread.Tree),
-                    Iter,
-                    Gint (Col - Info (J).Information'First),
-                    Value (Info (J).Information (Col)));
-            end loop;
+            declare
+               Values  : Glib.Values.GValue_Array
+                 (Gint (Info (J).Information'First) ..
+                    Gint (Info (J).Information'Last));
+               Columns : Columns_Array (Values'Range);
+            begin
+               for Col in Info (J).Information'Range loop
+                  Columns (Gint (Col)) :=
+                    Gint (Col - Info (J).Information'First);
+                  Glib.Values.Init_Set_String
+                    (Values (Gint (Col)), Value (Info (J).Information (Col)));
+               end loop;
+               Set_And_Clear (-Get_Model (Thread.Tree), Iter, Columns, Values);
+            end;
          end loop;
 
          --  If a selection was found before clearing the tree, restore it
@@ -855,8 +870,11 @@ package body GVD.Dialogs is
          begin
             for J in Questions'Range loop
                Append (Dialog.Tree_Model, Iter, Null_Iter);
-               Set (Dialog.Tree_Model, Iter, 0, Questions (J).Choice.all);
-               Set (Dialog.Tree_Model, Iter, 1, Questions (J).Description.all);
+
+               Set_And_Clear
+                 (Dialog.Tree_Model, Iter,
+                  (0 => As_String (Questions (J).Choice.all),
+                   1 => As_String (Questions (J).Description.all)));
             end loop;
          end;
          Columns_Autosize (Dialog.Tree_View);

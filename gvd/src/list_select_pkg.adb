@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Glib_Values_Utils;         use Glib_Values_Utils;
+
 with Gtk;                       use Gtk;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Stock;                 use Gtk.Stock;
@@ -48,8 +50,10 @@ package body List_Select_Pkg is
    begin
       Append (List_Select.Tree_Model, Iter, Null_Iter);
 
-      Set (List_Select.Tree_Model, Iter, 0, Label);
-      Set (List_Select.Tree_Model, Iter, 1, Comment);
+      Set_And_Clear
+        (List_Select.Tree_Model, Iter,
+         (0 => As_String (Label),
+          1 => As_String (Comment)));
    end Add_Item;
 
    ----------------------

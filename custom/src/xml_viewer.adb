@@ -24,6 +24,8 @@ with System;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
+with Glib.Values;
+with Glib_Values_Utils;         use Glib_Values_Utils;
 
 with Gdk.Event;                 use Gdk.Event;
 
@@ -225,6 +227,7 @@ package body XML_Viewer is
    is
       pragma Unreferenced (Child_Index);
       Iter : Gtk_Tree_Iter := Null_Iter;
+      Last : Gint := 1;
    begin
       if View.Parser /= null then
          declare
@@ -235,13 +238,22 @@ package body XML_Viewer is
             if Tmp'Length /= 0 then
                Append (View.Tree.Model, Iter, Parent);
 
-               for S in Tmp'Range loop
-                  Set (View.Tree.Model, Iter, Gint (S - Tmp'First),
-                       Tmp (S).all);
-               end loop;
+               declare
+                  Values  : Glib.Values.GValue_Array (1 .. Tmp'Length + 1);
+                  Columns : Columns_Array (Values'Range);
+               begin
+                  for S in Tmp'Range loop
+                     Columns (Last) := Gint (S - Tmp'First);
+                     Glib.Values.Init_Set_String (Values (Last), Tmp (S).all);
+                     Last := Last + 1;
+                  end loop;
 
-               Set (View.Tree.Model, Iter, View.Sort_Column,
-                    Tmp (Tmp'First).all);
+                  Columns (Columns'Last) := View.Sort_Column;
+                  Glib.Values.Init_Set_String
+                    (Values (Values'Last), Tmp (Tmp'First).all);
+
+                  Set_And_Clear (View.Tree.Model, Iter, Columns, Values);
+               end;
             end if;
 
             Free (Tmp);
@@ -249,14 +261,29 @@ package body XML_Viewer is
          end;
 
       else
-         Append (View.Tree.Model, Iter, Parent);
-         Set (View.Tree.Model, Iter, 0, Node.Tag.all);
-         if View.Columns >= 2 and then Node.Attributes /= null then
-            Set (View.Tree.Model, Iter, 1, Node.Attributes.all);
-         end if;
-         if View.Columns >= 3 and then Node.Value /= null then
-            Set (View.Tree.Model, Iter, 2, Node.Value.all);
-         end if;
+         declare
+            Values  : Glib.Values.GValue_Array (1 .. 3);
+            Columns : Columns_Array (Values'Range);
+         begin
+            Append (View.Tree.Model, Iter, Parent);
+            Columns (1) := 0;
+            Glib.Values.Init_Set_String (Values (1), Node.Tag.all);
+
+            if View.Columns >= 2 and then Node.Attributes /= null then
+               Last := 2;
+               Columns (2) := 1;
+               Glib.Values.Init_Set_String (Values (2), Node.Attributes.all);
+            end if;
+
+            if View.Columns >= 3 and then Node.Value /= null then
+               Last := Last + 1;
+               Columns (Last) := 2;
+               Glib.Values.Init_Set_String (Values (Last), Node.Value.all);
+            end if;
+
+            Set_And_Clear
+              (View.Tree.Model, Iter, Columns (1 .. Last), Values (1 .. Last));
+         end;
       end if;
 
       return Iter;
@@ -384,23 +411,37 @@ package body XML_Viewer is
       On_Click  : String  := "") return Gtk_Tree_Iter
    is
       Iter : Gtk_Tree_Iter;
+
+      Values  : Glib.Values.GValue_Array (1 .. 4);
+      Columns : Columns_Array (Values'Range);
+      Last    : Gint := 2;
+
    begin
       Append (View.Tree.Model, Iter, Parent);
-      Set (View.Tree.Model, Iter, 0, Col0);
 
-      if Col1 /= "" then
-         Set (View.Tree.Model, Iter, 1, Col1);
-      end if;
+      Columns (1 .. 2) := (0, View.Sort_Column);
+      Glib.Values.Init_Set_String (Values (1), Col0);
 
       if Sort_On /= "" then
-         Set (View.Tree.Model, Iter, View.Sort_Column, Sort_On);
+         Glib.Values.Init_Set_String (Values (2), Sort_On);
       else
-         Set (View.Tree.Model, Iter, View.Sort_Column, Col0);
+         Glib.Values.Init_Set_String (Values (2), Col0);
+      end if;
+
+      if Col1 /= "" then
+         Last := Last + 1;
+         Columns (Last) := 1;
+         Glib.Values.Init_Set_String (Values (Last), Col1);
       end if;
 
       if On_Click /= "" then
-         Set (View.Tree.Model, Iter, View.Command_Column, On_Click);
+         Last := Last + 1;
+         Columns (Last) := View.Command_Column;
+         Glib.Values.Init_Set_String (Values (Last), On_Click);
       end if;
+
+      Set_And_Clear
+        (View.Tree.Model, Iter, Columns (1 .. Last), Values (1 .. Last));
 
       return Iter;
    end Set_Row_Content;
@@ -532,7 +573,7 @@ package body XML_Viewer is
          if Iter /= Null_Iter then
             --  This is valid because N and its tree belongs to View, and are
             --  not freed before View is freed
-            Set (View.Tree.Model, Iter, View.XML_Column, N.all'Address);
+            View.Tree.Model.Set (Iter, View.XML_Column, N.all'Address);
 
             C := N.Child;
             while C /= null loop

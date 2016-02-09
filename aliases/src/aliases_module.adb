@@ -40,6 +40,7 @@ with Glib.Object;              use Glib.Object;
 with Glib.Types;               use Glib.Types;
 with Glib.Unicode;             use Glib.Unicode;
 with Glib.Values;              use Glib.Values;
+with Glib_Values_Utils;        use Glib_Values_Utils;
 
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
@@ -98,6 +99,19 @@ with Glib_String_Utils;        use Glib_String_Utils;
 with Aliases_Module.Scripts;
 
 package body Aliases_Module is
+
+   Aliases_Column_Types : constant GType_Array :=
+     (0 => GType_String,
+      1 => GType_Boolean,
+      2 => GType_String);
+
+   Variables_Column_Types : constant GType_Array :=
+     (0 => GType_String,
+      1 => GType_String,
+      2 => GType_Boolean,
+      3 => GType_Boolean,
+      4 => GType_Boolean,
+      5 => GType_Boolean);
 
    function To_UStr (a : String)
                      return SU.Unbounded_String
@@ -1186,14 +1200,14 @@ package body Aliases_Module is
             declare
                Old   : constant String := Ed.Current_Var.all;
                Name  : constant String :=
-                 Get_String (Ed.Aliases_Model, Iter, 0);
+                 Ed.Aliases_Model.Get_String (Iter, 0);
                Cursor : constant Aliases_Map.Cursor := Get_Value (Ed, Old);
             begin
                if Name'Length = 0
                  or else not Is_Entity_Letter
                    (UTF8_Get_Char (Name (Name'First .. Name'Last)))
                then
-                  Set (Ed.Aliases_Model, Iter, 0, Old);
+                  Ed.Aliases_Model.Set (Iter, 0, Old);
                   Message := Message_Dialog
                     (Msg => -"Error: invalid name for alias: " & Name
                      & ASCII.LF
@@ -1283,13 +1297,12 @@ package body Aliases_Module is
       Iter        : constant Gtk_Tree_Iter :=
         Get_Iter_From_String (Ed.Variables_Model, Path_String);
 
+      Value : constant Boolean := Get_Boolean (Ed.Variables_Model, Iter, 3);
    begin
       --  Set the default value as no longer editable
-
-      Set (Ed.Variables_Model, Iter, 2,
-           Get_Boolean (Ed.Variables_Model, Iter, 3));
-      Set (Ed.Variables_Model, Iter, 3,
-           not Get_Boolean (Ed.Variables_Model, Iter, 3));
+      Set_And_Clear
+        (Ed.Variables_Model, Iter,
+         (2 => As_Boolean (Value), 3 => As_Boolean (not Value)));
 
    exception
       when E : others => Trace (Me, E);
@@ -1374,7 +1387,7 @@ package body Aliases_Module is
 
    begin
       while Iter /= Null_Iter loop
-         Set (Editor.Variables_Model, Iter, 4, False);
+         Editor.Variables_Model.Set (Iter, 4, False);
          Next (Editor.Variables_Model, Iter);
       end loop;
 
@@ -1398,7 +1411,7 @@ package body Aliases_Module is
 
             while Iter /= Null_Iter loop
                if Get_String (Editor.Variables_Model, Iter, 0) = Name then
-                  Set (Editor.Variables_Model, Iter, 4, True);
+                  Editor.Variables_Model.Set (Iter, 4, True);
                   Found := True;
                   exit;
                end if;
@@ -1651,8 +1664,7 @@ package body Aliases_Module is
       Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
       Add (Frame, Scrolled);
 
-      Gtk_New (Editor.Aliases_Model,
-               (0 => GType_String, 1 => GType_Boolean, 2 => GType_String));
+      Gtk_New (Editor.Aliases_Model, Aliases_Column_Types);
       Gtk_New (Editor.Aliases, Editor.Aliases_Model);
       Add (Scrolled, Editor.Aliases);
       Set_Mode (Get_Selection (Editor.Aliases), Selection_Single);
@@ -1717,9 +1729,7 @@ package body Aliases_Module is
 
       --  Parameters list
 
-      Gtk_New (Editor.Variables_Model,
-               (0 => GType_String, 1 => GType_String, 2 => GType_Boolean,
-                3 => GType_Boolean, 4 => GType_Boolean, 5 => GType_Boolean));
+      Gtk_New (Editor.Variables_Model, Variables_Column_Types);
       Gtk_New (Editor.Variables, Editor.Variables_Model);
       Pack_Start (Box, Editor.Variables, Expand => False);
 

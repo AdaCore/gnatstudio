@@ -33,6 +33,7 @@ with Gdk.Event;                    use Gdk.Event;
 with Glib;                         use Glib;
 with Glib.Convert;                 use Glib.Convert;
 with Glib.Object;                  use Glib.Object;
+with Glib_Values_Utils;            use Glib_Values_Utils;
 
 with Gtk.Cell_Renderer_Text;       use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                    use Gtk.Enums;
@@ -322,20 +323,18 @@ package body Project_Viewers is
       Directory_Filter : Virtual_File := GNATCOLL.VFS.No_File)
    is
       Iter : Gtk_Tree_Iter;
+
    begin
       if Directory_Filter = GNATCOLL.VFS.No_File
         or else Dir (File_Name) = Directory_Filter
       then
          Append (Viewer.Model, Iter, Null_Iter);
-         Set (Viewer.Model,
-              Iter,
-              Display_File_Name_Column,
-              File_Name.Display_Base_Name);
-         Set_File
-           (Viewer.Model,
-            Iter,
-            File_Column,
-            File_Name);
+         Set_And_Clear
+           (Viewer.Model, Iter,
+            (Display_File_Name_Column, File_Column),
+            (0 => As_String (File_Name.Display_Base_Name),
+             1 => As_File   (File_Name)));
+
          Project_Viewers_Set (Viewer, Iter);
       end if;
    end Append_Line;

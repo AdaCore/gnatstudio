@@ -27,6 +27,8 @@ with GUI_Utils;                 use GUI_Utils;
 with Gdk;
 with Glib.Main;                 use Glib.Main;
 with Glib.Values;               use Glib.Values;
+with Glib_Values_Utils;         use Glib_Values_Utils;
+
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
@@ -213,15 +215,19 @@ package body VCS_View.Activities is
       Iter     : Gtk_Tree_Iter;
       Id       : G_Source_Id;
       pragma Unreferenced (Id);
+
    begin
       Activity := New_Activity (Kernel);
 
       Append (Explorer.Model, Iter, Null_Iter);
 
-      Set (Explorer.Model, Iter, Base_Name_Column, Get_Name (Activity));
-      Set (Explorer.Model, Iter, Activity_Column, Image (Activity));
-      Set (Explorer.Model, Iter, Control_Column, True);
-      Set (Explorer.Model, Iter, Has_Log_Column, False);
+      Set_And_Clear
+        (Explorer.Model, Iter,
+         (Base_Name_Column, Activity_Column, Control_Column, Has_Log_Column),
+         (1 => As_String  (Get_Name (Activity)),
+          2 => As_String  (Image (Activity)),
+          3 => As_Boolean (True),
+          4 => As_Boolean (False)));
 
       Explorer.Iter := Iter;
 
@@ -423,6 +429,11 @@ package body VCS_View.Activities is
         (Activity : Activity_Id) return Gtk_Tree_Iter
       is
          A_Iter : Gtk_Tree_Iter;
+
+         Values  : Glib.Values.GValue_Array (1 .. 4);
+         Columns : Columns_Array (Values'Range);
+         Last    : Gint := 0;
+
       begin
          A_Iter := Get_Iter_From_Activity (Explorer, Activity);
 
@@ -431,24 +442,34 @@ package body VCS_View.Activities is
 
             if A_Iter = Null_Iter then
                Append (Explorer.Model, A_Iter, Null_Iter);
-               Set (Explorer.Model, A_Iter, Activity_Column, Image (Activity));
-               Set (Explorer.Model, A_Iter,
-                    Has_Log_Column, Has_Log (Kernel, Activity));
+
+               Columns (1 .. 2) := (Activity_Column, Has_Log_Column);
+               Values  (1 .. 2) :=
+                 (1 => As_String  (Image (Activity)),
+                  2 => As_Boolean (Has_Log (Kernel, Activity)));
+               Last := 2;
 
                if not Is_Closed (Activity) then
                   Push (A_Iter);
                end if;
             end if;
 
+            Last := Last + 2;
+            Columns (Last - 1 .. Last) := (Base_Name_Column, Control_Column);
+
             if Is_Closed (Activity) then
-               Set (Explorer.Model, A_Iter,
-                    Base_Name_Column, Get_Name (Activity) & " (closed)");
-               Set (Explorer.Model, A_Iter, Control_Column, False);
+               Values (Last - 1 .. Last) :=
+                 (As_String (Get_Name (Activity) & " (closed)"),
+                  As_Boolean (False));
+
             else
-               Set (Explorer.Model, A_Iter,
-                    Base_Name_Column, Get_Name (Activity));
-               Set (Explorer.Model, A_Iter, Control_Column, True);
+               Values (Last - 1 .. Last) :=
+                 (As_String (Get_Name (Activity)), As_Boolean (True));
             end if;
+
+            Set_And_Clear
+              (Explorer.Model, A_Iter,
+               Columns (1 .. Last), Values (1 .. Last));
 
             return A_Iter;
 
@@ -594,7 +615,7 @@ package body VCS_View.Activities is
    is
       pragma Unreferenced (Line_Info);
    begin
-      Set (Explorer.Model, Iter, Control_Column, False);
+      Explorer.Model.Set (Iter, Control_Column, False);
       Success := True;
    end Do_Fill_Info;
 
@@ -859,9 +880,9 @@ package body VCS_View.Activities is
 
                declare
                   Iter : constant Gtk_Tree_Iter :=
-                           Get_Iter_From_Activity (Self.Explorer, Activity);
+                    Get_Iter_From_Activity (Self.Explorer, Activity);
                begin
-                  Set (Self.Explorer.Model, Iter, Has_Log_Column, True);
+                  Self.Explorer.Model.Set (Iter, Has_Log_Column, True);
                end;
                Refresh (Self.Explorer);
             end if;

@@ -34,6 +34,8 @@ with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
+with Glib.Values;
+with Glib_Values_Utils;         use Glib_Values_Utils;
 with Glib.Unicode;              use Glib.Unicode;
 
 with Gtk;                       use Gtk;
@@ -765,6 +767,10 @@ package body Gtkada.File_Selector is
       Has_Info : Boolean := False;
       F        : Virtual_File;
 
+      Values  : Glib.Values.GValue_Array (1 .. 4);
+      Columns : Columns_Array (Values'Range);
+      Last    : Gint;
+
    begin
       if Win.Current_Directory = No_File then
          return False;
@@ -816,24 +822,32 @@ package body Gtkada.File_Selector is
          end case;
 
          if Iter /= Null_Iter then
-            Win.File_Model.Set (Iter, Base_Name_Column, F.Display_Base_Name);
-            Set_File (Win.File_Model, Iter, File_Column, F);
+            Columns (1 .. 2) := (Base_Name_Column, File_Column);
+            Values  (1 .. 2) := (As_String (F.Display_Base_Name), As_File (F));
+            Last := 2;
 
             if Text /= null then
-               Win.File_Model.Set
-                 (Iter, Comment_Column, Locale_To_UTF8 (Text.all));
+               Last := Last + 1;
+               Columns (Last) := Comment_Column;
+               Values  (Last) := As_String (Locale_To_UTF8 (Text.all));
+
                Free (Text);
                Has_Info := True;
             end if;
+
+            if Pixbuf /= Null_Pixbuf then
+               Last := Last + 1;
+               Columns (Last) := Icon_Column;
+               Values  (Last) := As_Object (GObject (Pixbuf));
+            end if;
+
+            Set_And_Clear
+              (Win.File_Model, Iter, Columns (1 .. Last), Values (1 .. Last));
 
             if Color /= Null_RGBA then
                Internal
                  (Get_Object (Win.File_Model), Iter'Address,
                   Text_Color_Column, Color);
-            end if;
-
-            if Pixbuf /= Null_Pixbuf then
-               Win.File_Model.Set (Iter, Icon_Column, GObject (Pixbuf));
             end if;
          end if;
 

@@ -23,6 +23,8 @@ with System;                   use System;
 
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
+with Glib.Values;
+with Glib_Values_Utils;        use Glib_Values_Utils;
 
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
@@ -658,6 +660,9 @@ package body Ada_Naming_Editors is
       Iter      : Gtk_Tree_Iter;
       Id        : Gint;
 
+      Values    : Glib.Values.GValue_Array (1 .. 4);
+      Columns   : Columns_Array (Values'Range);
+      Last      : Gint := 0;
    begin
       if Unit /= Empty_Unit_Name
         and then (Spec_Name /= Empty_Spec_Name
@@ -685,24 +690,30 @@ package body Ada_Naming_Editors is
 
          if Iter = Null_Iter then
             Append (Editor.Exception_List_Model, Iter, Null_Iter);
-            Set (Editor.Exception_List_Model, Iter,
-                 Column => 0,
-                 Value  => Unit);
-            Set (Editor.Exception_List_Model, Iter,
-                 Column => 3,
-                 Value  => True);
+
+            Columns (1 .. 2) := (0, 3);
+            Values  (1 .. 2) :=
+              (1 => As_String  (Unit),
+               2 => As_Boolean (True));
+            Last := 2;
          end if;
 
          if Spec_Name /= Empty_Spec_Name then
-            Set (Editor.Exception_List_Model, Iter,
-                 Column => 1,
-                 Value  => Spec_Name);
+            Last := Last + 1;
+            Columns (Last) := 1;
+            Glib.Values.Init_Set_String (Values (Last), Spec_Name);
          end if;
 
          if Body_Name /= Empty_Body_Name then
-            Set (Editor.Exception_List_Model, Iter,
-                 Column => 2,
-                 Value  => Body_Name);
+            Last := Last + 1;
+            Columns (Last) := 2;
+            Glib.Values.Init_Set_String (Values (Last), Body_Name);
+         end if;
+
+         if Last /= 0 then
+            Set_And_Clear
+              (Editor.Exception_List_Model, Iter,
+               Columns (1 .. Last), Values (1 .. Last));
          end if;
 
          Thaw_Sort (Editor.Exception_List_Model, Id);

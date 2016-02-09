@@ -33,6 +33,7 @@ with Gdk.Event;                 use Gdk.Event;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
+with Glib_Values_Utils;         use Glib_Values_Utils;
 
 with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Arrow;                 use Gtk.Arrow;
@@ -1812,15 +1813,17 @@ package body Project_Properties is
                           and then Is_Selected
                         then
                            Append (Ed.Model, New_Iter, Null_Iter);
-                           Set (Ed.Model, New_Iter, 0, Index_Value);
-                           Set
-                             (Ed.Model, New_Iter, 1,
-                              Get_Value_From_Project
-                                (Project       => Project,
-                                 Attr          => Att,
-                                 Index         => Index_Value));
-                           Set (Ed.Model, New_Iter, 2,
-                                Is_Any_String (Att, Index_Value));
+
+                           Set_And_Clear
+                             (Ed.Model, New_Iter,
+                              (0 => As_String (Index_Value),
+                               1 => As_String
+                                 (Get_Value_From_Project
+                                    (Project       => Project,
+                                     Attr          => Att,
+                                     Index         => Index_Value)),
+                               2 => As_Boolean
+                                 (Is_Any_String (Att, Index_Value))));
 
                         elsif Ed /= null
                           and then Ed.Model /= null
@@ -1905,7 +1908,6 @@ package body Project_Properties is
       begin
          if Is_List then
             Append (Editor.Model, Iter, Null_Iter);
-            Set (Editor.Model, Iter, 0, Value);
 
             for C in Current_Value'Range loop
                if Equal (Value, Current_Value (C).all,
@@ -1916,7 +1918,9 @@ package body Project_Properties is
                end if;
             end loop;
 
-            Set (Editor.Model, Iter, 1, Selected);
+            Set_And_Clear (Editor.Model, Iter,
+                           (0 => As_String (Value),
+                            1 => As_Boolean (Selected)));
          else
             Editor.Combo.Append_Text (Value);
          end if;
@@ -2091,14 +2095,15 @@ package body Project_Properties is
                   Sources : File_Array_Access :=
                     Prj.Source_Files (Filter = Filter_From_All_Projects);
                   Sort_Id : Gint;
-
                begin
                   Sort_Id := Freeze_Sort (Model);
                   for S in Sources'Range loop
                      Append (Model, Iter, Null_Iter);
-                     Set (Model, Iter, 0, False);
-                     Set (Model, Iter, 1, Sources (S).Display_Base_Name);
-                     Set (Model, Iter, 2, Sources (S).Display_Full_Name);
+                     Set_And_Clear
+                       (Model, Iter,
+                        (0 => As_Boolean (False),
+                         1 => As_String  (Sources (S).Display_Base_Name),
+                         2 => As_String  (Sources (S).Display_Full_Name)));
                   end loop;
                   Thaw_Sort (Model, Sort_Id);
                   Unchecked_Free (Sources);
@@ -2243,25 +2248,34 @@ package body Project_Properties is
                    Attribute_Index => "",
                    Project_Path    => +Get_Safe_Text (Ed.Path_Widget));
       --  ??? What if the filesystem path is non-UTF8?
-      Iter  : Gtk_Tree_Iter;
+      Iter   : Gtk_Tree_Iter;
+      Values : Glib.Values.GValue_Array (0 .. 2);
    begin
       for V in Value'Range loop
          Append (Ed.Model, Iter, Null_Iter);
          if Ed.As_Directory then
-            Set (Ed.Model, Iter, 0, Normalize_Pathname
-              (Value (V).all,
-                 Directory     => Get_Safe_Text (Ed.Path_Widget),
-                 Resolve_Links => False));
+            Values :=
+              (0 => As_String
+                 (Normalize_Pathname
+                      (Value (V).all,
+                       Directory     => Get_Safe_Text (Ed.Path_Widget),
+                       Resolve_Links => False)),
+               1 => As_Boolean (False),
+               2 => As_String  (Value (V).all));
 
          elsif Ed.Attribute.Base_Name_Only then
-            Set (Ed.Model, Iter, 0, Base_Name (Value (V).all));
+            Values :=
+              (0 => As_String  (Base_Name (Value (V).all)),
+               1 => As_Boolean (False),
+               2 => As_String  (Value (V).all));
 
          else
-            Set (Ed.Model, Iter, 0, Value (V).all);
+            Values :=
+              (0 => As_String  (Value (V).all),
+               1 => As_Boolean (False),
+               2 => As_String  (Value (V).all));
          end if;
-
-         Set (Ed.Model, Iter, 1, False);
-         Set (Ed.Model, Iter, 2, Value (V).all);
+         Set_And_Clear (Ed.Model, Iter, Values);
 
          if Ed.Attribute.Base_Name_Only then
             Select_Attribute_In_List
@@ -2331,19 +2345,19 @@ package body Project_Properties is
          Path := Get_Path (Ed.Model, Iter);
 
          declare
-            Value    : constant String := Get_String (Ed.Model, Iter, 0);
-            Recurse  : constant Boolean := Get_Boolean (Ed.Model, Iter, 1);
-            Relative : constant String := Get_String (Ed.Model, Iter, 2);
+            Values : constant Glib.Values.GValue_Array :=
+              (0 => As_String  (Get_String  (Ed.Model, Iter, 0)),
+               1 => As_Boolean (Get_Boolean (Ed.Model, Iter, 1)),
+               2 => As_String  (Get_String  (Ed.Model, Iter, 2)));
          begin
             if Prev (Path) then
                Remove (Ed.Model, Iter);
                Iter := Get_Iter (Ed.Model, Path);
                Insert_Before
-                 (Ed.Model, Iter2, Parent => Parent (Ed.Model, Iter),
-                  Sibling                 => Iter);
-               Set (Ed.Model, Iter2, 0, Value);
-               Set (Ed.Model, Iter2, 1, Recurse);
-               Set (Ed.Model, Iter2, 2, Relative);
+                 (Ed.Model, Iter2,
+                  Parent  => Parent (Ed.Model, Iter),
+                  Sibling => Iter);
+               Set_And_Clear (Ed.Model, Iter2, Values);
                Select_Iter (Get_Selection (Ed.View), Iter2);
             end if;
          end;
@@ -2365,9 +2379,10 @@ package body Project_Properties is
       Get_Selected (Get_Selection (Ed.View), M, Iter);
       if Iter /= Null_Iter then
          declare
-            Value    : constant String := Get_String (Ed.Model, Iter, 0);
-            Recurse  : constant Boolean := Get_Boolean (Ed.Model, Iter, 1);
-            Relative : constant String := Get_String (Ed.Model, Iter, 2);
+            Values : constant Glib.Values.GValue_Array :=
+              (0 => As_String  (Get_String  (Ed.Model, Iter, 0)),
+               1 => As_Boolean (Get_Boolean (Ed.Model, Iter, 1)),
+               2 => As_String  (Get_String  (Ed.Model, Iter, 2)));
          begin
             Iter2 := Iter;
             Next (Ed.Model, Iter);
@@ -2378,9 +2393,7 @@ package body Project_Properties is
                  (Ed.Model, Iter2, Parent => Parent (Ed.Model, Iter),
                   Sibling                 => Iter);
                Select_Iter (Get_Selection (Ed.View), Iter2);
-               Set (Ed.Model, Iter2, 0, Value);
-               Set (Ed.Model, Iter2, 1, Recurse);
-               Set (Ed.Model, Iter2, 2, Relative);
+               Set_And_Clear (Ed.Model, Iter2, Values);
             end if;
          end;
       end if;
@@ -2401,7 +2414,7 @@ package body Project_Properties is
                    Get_Iter_From_String (Ed.Model, Path);
       Selected : constant Boolean := not Get_Boolean (Ed.Model, Iter, 1);
    begin
-      Set (Ed.Model, Iter, 1, Selected);
+      Ed.Model.Set (Iter, 1, Selected);
    end Recursive_Directory_Changed;
 
    --------------------------
@@ -2418,11 +2431,12 @@ package body Project_Properties is
    begin
       Iter := Get_Iter_First (Ed.Model);
       while Iter /= Null_Iter loop
-         Set (Ed.Model, Iter, 0,
-           Normalize_Pathname
-             (Get_String (Ed.Model, Iter, 2),
-              Directory     => Directory,
-              Resolve_Links => False));
+         Ed.Model.Set
+           (Iter, 0,
+            Normalize_Pathname
+              (Get_String (Ed.Model, Iter, 2),
+               Directory     => Directory,
+               Resolve_Links => False));
          Next (Ed.Model, Iter);
       end loop;
    end Project_Path_Changed;
@@ -2571,41 +2585,48 @@ package body Project_Properties is
                   Append (Editor.Model, Iter, Null_Iter);
 
                   declare
-                     Val : String renames Value (V).all;
+                     Val    : String renames Value (V).all;
+                     Values : Glib.Values.GValue_Array (0 .. 2);
                   begin
                      if Val'Length > 3
                        and then
                          (Val (Val'Last - 2 .. Val'Last) = "/**"
                           or else Val (Val'Last - 2 .. Val'Last) = "\**")
                      then
-                        Set (Editor.Model, Iter, 0,
-                          Normalize_Pathname
-                            (Val (Val'First .. Val'Last - 3),
-                             Directory     => Get_Safe_Text (Path_Widget),
-                             Resolve_Links => False));
-                        Set (Editor.Model, Iter, 1, True);
+                        Values :=
+                          (0 => As_String
+                             (Normalize_Pathname
+                                  (Val (Val'First .. Val'Last - 3),
+                                   Directory => Get_Safe_Text (Path_Widget),
+                                   Resolve_Links => False)),
+                           1 => As_Boolean (True),
+                           2 => As_String (Val));
 
                      elsif Attr.Typ = Attribute_As_String
                        or else Attr.Typ = Attribute_As_Unit
                      then
-                        Set (Editor.Model, Iter, 0, Val);
-                        Set (Editor.Model, Iter, 1, False);
+                        Values :=
+                          (0 => As_String  (Val),
+                           1 => As_Boolean (False),
+                           2 => As_String (Val));
 
                      elsif Description.Base_Name_Only then
-                        Set (Editor.Model, Iter, 0, Base_Name (Val));
-                        Set (Editor.Model, Iter, 1, False);
+                        Values :=
+                          (0 => As_String  (Base_Name (Val)),
+                           1 => As_Boolean (False),
+                           2 => As_String (Val));
 
                      else
-                        Set
-                          (Editor.Model, Iter, 0,
-                           Normalize_Pathname
-                             (Val,
-                              Directory     => Get_Safe_Text (Path_Widget),
-                              Resolve_Links => False));
-                        Set (Editor.Model, Iter, 1, False);
+                        Values :=
+                          (0 => As_String
+                             (Normalize_Pathname
+                                  (Val,
+                                   Directory => Get_Safe_Text (Path_Widget),
+                                   Resolve_Links => False)),
+                           1 => As_Boolean (False),
+                           2 => As_String (Val));
                      end if;
-
-                     Set (Editor.Model, Iter, 2, Val);
+                     Set_And_Clear (Editor.Model, Iter, Values);
                   end;
                end loop;
                Free (Value);
@@ -3222,9 +3243,10 @@ package body Project_Properties is
                            Ed.Current_Values (C).Values :=
                              new GNAT.Strings.String_List'
                                (Get_Value_As_List (Value_Ed, ""));
-                           Set (Ed.Model, Iter, 1,
-                                To_String
-                                  (Ed.Current_Values (C).Values.all));
+                           Ed.Model.Set
+                             (Iter, 1,
+                              To_String
+                                (Ed.Current_Values (C).Values.all));
                         end if;
                      end loop;
                      Destroy (Dialog);
@@ -3250,7 +3272,7 @@ package body Project_Properties is
                      --  ??? What if the filesystem path is non-UTF8?
                   begin
                      if Value'Length /= 0 then
-                        Set (Ed.Model, Iter, 1, Value (Value'First).all);
+                        Ed.Model.Set (Iter, 1, Value (Value'First).all);
                         Free (Value);
                      end if;
                   end;
@@ -3328,9 +3350,6 @@ package body Project_Properties is
                               Case_Sensitive => Attr.Case_Sensitive_Index);
             if Matched then
                Append (Ed.Model, Iter, Null_Iter);
-               Set (Ed.Model, Iter, Index_Col, Value);
-               Set (Ed.Model, Iter, Editable_Col,
-                    not Attr.Is_List and then Is_Any_String (Attr, Value));
 
                if Attr.Is_List then
                   declare
@@ -3347,9 +3366,10 @@ package body Project_Properties is
                           (1 .. 0 => null);
                      end if;
 
-                     Set
-                       (Ed.Model, Iter, Attribute_Col,
-                        To_String (Current.all));
+                     Set_And_Clear (Ed.Model, Iter,
+                                    (0 => As_String (Value),
+                                     1 => As_String (To_String (Current.all)),
+                                     2 => As_Boolean (False)));
 
                      Tmp := Ed.Current_Values;
                      if Tmp /= null then
@@ -3366,9 +3386,12 @@ package body Project_Properties is
                         Values => Current);
                   end;
                else
-                  Set (Ed.Model, Iter, Attribute_Col,
-                       Get_Current_Value
-                         (Project => Project, Attr  => Attr, Index => Value));
+                  Set_And_Clear
+                    (Ed.Model, Iter,
+                     (0 => As_String (Value),
+                      1 => As_String (Get_Current_Value
+                        (Project => Project, Attr  => Attr, Index => Value)),
+                      2 => As_Boolean (Is_Any_String (Attr, Value))));
                end if;
                exit;
             end if;
@@ -3725,6 +3748,9 @@ package body Project_Properties is
       Name    : String;
       Page    : not null access Project_Editor_Page_Record'Class)
    is
+      Values  : Glib.Values.GValue_Array (1 .. 2);
+      Columns : Columns_Array (Values'Range);
+
       function Find (Parent : Gtk_Tree_Iter; N : String) return Gtk_Tree_Iter;
       function Find
         (Parent : Gtk_Tree_Iter; N : String) return Gtk_Tree_Iter
@@ -3757,16 +3783,25 @@ package body Project_Properties is
          end loop;
 
          Editor.List_Of_Pages.Append (Child, Iter);
-         Editor.List_Of_Pages.Set (Child, Column_Page_Name, Base);
-         Editor.List_Of_Pages.Set (Child, Column_Visible, True);
+         Columns := (Column_Page_Name, Column_Visible);
+         Values :=
+           (1 => As_String  (Base),
+            2 => As_Boolean (True));
+         Set_And_Clear (Editor.List_Of_Pages, Child, Columns, Values);
+
          return Child;
       end Find;
 
       Child : Gtk_Tree_Iter;
    begin
       Child := Find (Null_Iter, Name);
-      Editor.List_Of_Pages.Set (Child, Column_Path, Name);
-      Editor.List_Of_Pages.Set (Child, Column_Page_Contents, GObject (Page));
+
+      Columns := (Column_Path, Column_Page_Contents);
+      Values :=
+        (1 => As_String (Name),
+         2 => As_Object (GObject (Page)));
+      Set_And_Clear (Editor.List_Of_Pages, Child, Columns, Values);
+
       Page.Ref;
    end Find_Or_Create_Page;
 

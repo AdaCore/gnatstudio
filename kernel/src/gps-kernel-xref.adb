@@ -32,8 +32,11 @@ with GPS.Kernel.Task_Manager;        use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;             use GPS.Kernel.Scripts;
 with GPS.Main_Window;                use GPS.Main_Window;
 with GPS.Kernel;                     use GPS.Kernel;
+
 with Glib.Convert;                   use Glib.Convert;
 with Glib.Object;                    use Glib.Object;
+with Glib_Values_Utils;              use Glib_Values_Utils;
+
 with GUI_Utils;                      use GUI_Utils;
 with Gtk.Box;                        use Gtk.Box;
 with Gtk.Dialog;                     use Gtk.Dialog;
@@ -641,14 +644,6 @@ package body GPS.Kernel.Xref is
       Project : Project_Type;
       Entity  : Root_Entity'Class) return Root_Entity'Class
    is
-      procedure Set
-        (Tree : System.Address;
-         Iter : Gtk_Tree_Iter;
-         Col1 : Gint := 0; Value1 : String;
-         Col2 : Gint := 1; Value2 : Gint;
-         Col3 : Gint := 2; Value3 : Gint);
-      pragma Import (C, Set, "ada_gtk_tree_store_set_ptr_int_int");
-
       Column_Types : constant GType_Array :=
         (0 => GType_String,
          1 => GType_Int,
@@ -679,6 +674,7 @@ package body GPS.Kernel.Xref is
       pragma Unreferenced (Button, Col_Num);
 
       Number_Selected : Natural := 0;
+
    begin
       Iter := Self.Entities_In_File
         (File    => File,
@@ -726,12 +722,14 @@ package body GPS.Kernel.Xref is
             end if;
 
             Append (Model, It, Null_Iter);
-            Set (Get_Object (Model), It,
-                 0, +Candidate_Decl.Loc.File.Base_Name & ASCII.NUL,
-                 1, Gint (Candidate_Decl.Loc.Line),
-                 2, Gint (Candidate_Decl.Loc.Column));
-            Set (Model, It, 3, Candidate.Get_Name & ASCII.NUL);
-            Set (Model, It, 4, Gint (Count));
+
+            Set_And_Clear
+              (Model, It,
+               (0 => As_String (+Candidate_Decl.Loc.File.Base_Name),
+                1 => As_Int    (Gint (Candidate_Decl.Loc.Line)),
+                2 => As_Int    (Gint (Candidate_Decl.Loc.Column)),
+                3 => As_String (Candidate.Get_Name),
+                4 => As_Int    (Gint (Count))));
 
             if Candidate = Entity then
                Select_Iter (Get_Selection (View), It);

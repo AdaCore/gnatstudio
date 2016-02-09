@@ -15,14 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Exceptions; use Ada.Exceptions;
+with Ada.Exceptions;           use Ada.Exceptions;
 
-with Glib; use Glib;
-with Glib.Object; use Glib.Object;
+with Glib;                     use Glib;
+with Glib.Object;              use Glib.Object;
+with Glib_Values_Utils;        use Glib_Values_Utils;
 
-with Gdk.Event;         use Gdk.Event;
-with Gdk.Types;         use Gdk.Types;
-with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Types;                use Gdk.Types;
+with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 
 with Gtk.Assistant;            use Gtk.Assistant;
 with Gtk.Box;                  use Gtk.Box;
@@ -47,17 +48,20 @@ with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
-with GNATCOLL.Utils; use GNATCOLL.Utils;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
 
 package body Project_Templates.GUI is
 
-   Name_Col : constant := 0;
+   Name_Col      : constant := 0;
    Icon_Name_Col : constant := 1;
-   Num_Col  : constant := 2;
-   Desc_Col : constant := 3;
+   Num_Col       : constant := 2;
+   Desc_Col      : constant := 3;
 
-   function Column_Types return GType_Array;
-   --  Return the types to use for the templates tree model.
+   Column_Types : constant GType_Array :=
+     (Name_Col      => GType_String,
+      Icon_Name_Col => GType_String,
+      Num_Col       => GType_Int,
+      Desc_Col      => GType_String);
 
    type Variable_Widget_Record is record
       Name : Unbounded_String;
@@ -263,18 +267,6 @@ package body Project_Templates.GUI is
       return R;
    end Get_Assignments;
 
-   ------------------
-   -- Column_Types --
-   ------------------
-
-   function Column_Types return GType_Array is
-   begin
-      return (Name_Col => GType_String,
-              Icon_Name_Col => GType_String,
-              Num_Col  => GType_Int,
-              Desc_Col => GType_String);
-   end Column_Types;
-
    ----------------------
    -- Install_Template --
    ----------------------
@@ -383,6 +375,7 @@ package body Project_Templates.GUI is
          is
             Child        : Gtk_Tree_Iter;
             Insert_After : Gtk_Tree_Iter := Null_Iter;
+
          begin
             if Iter = Null_Iter then
                Child := Model.Get_Iter_First;
@@ -406,11 +399,13 @@ package body Project_Templates.GUI is
             Model.Insert_After (Child, Iter, Insert_After);
 
             --  Populate the iter that we have just added
+            Set_All_And_Clear
+              (Model, Child,
+               (Name_Col      => As_String (Name),
+                Icon_Name_Col => As_String ("gps-emblem-directory-symbolic"),
+                Num_Col       => As_Int    (-1),
+                Desc_Col      => As_String ("")));
 
-            Model.Set (Child, Name_Col, Name);
-            Model.Set (Child, Desc_Col, "");
-            Model.Set (Child, Icon_Name_Col, "gps-emblem-directory-symbolic");
-            Model.Set (Child, Num_Col, -1);
             return Child;
          end Find_Child;
 
@@ -448,6 +443,7 @@ package body Project_Templates.GUI is
          Child    : Gtk_Tree_Iter;
          Page_Num : Gint;
          Page     : Template_Page;
+
       begin
          --  Create the page
          Gtk_New (Page, Template);
@@ -498,10 +494,12 @@ package body Project_Templates.GUI is
 
          Model.Insert_Before (Iter, Cat, Child);
 
-         Model.Set (Iter, Name_Col, To_String (Template.Label));
-         Model.Set (Iter, Desc_Col, To_String (Template.Description));
-         Model.Set (Iter, Icon_Name_Col, "gps-run-symbolic");
-         Model.Set (Iter, Num_Col, Page_Num);
+         Set_All_And_Clear
+           (Model, Iter,
+            (Name_Col      => As_String (To_String (Template.Label)),
+             Icon_Name_Col => As_String ("gps-run-symbolic"),
+             Num_Col       => As_Int    (Page_Num),
+             Desc_Col      => As_String (To_String (Template.Description))));
       end Add_Template;
 
       -----------------------

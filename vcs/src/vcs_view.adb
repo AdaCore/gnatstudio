@@ -25,6 +25,8 @@ with GUI_Utils;                 use GUI_Utils;
 with Gdk.Rectangle;
 with Gdk.Window;                use Gdk.Window;
 with Gdk;                       use Gdk;
+with Glib.Values;
+with Glib_Values_Utils;         use Glib_Values_Utils;
 with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
@@ -308,6 +310,13 @@ package body VCS_View is
       Line_Info : Line_Record;
       Success   : out Boolean)
    is
+      Values  : Glib.Values.GValue_Array (1 .. 9);
+      Columns : constant Columns_Array (Values'Range) :=
+        (Has_Log_Column, Local_Rev_Column, Rep_Rev_Column,
+         Status_Icon_Name_Column, Status_Description_Column,
+         File_Column, Name_Column, Key_Column, Base_Name_Column);
+      Last    : Gint := 5;
+
    begin
       if Line_Info.Status.File = No_File then
          Success := False;
@@ -320,56 +329,42 @@ package body VCS_View is
          return;
       end if;
 
-      Set (Explorer.Model, Iter, Has_Log_Column, Line_Info.Log);
+      Values (1 .. 5) :=
+        (1 => As_Boolean (Line_Info.Log),
+         2 => As_String
+           (if Line_Info.Status.Working_Revision = null
+            then "n/a"
+            else Line_Info.Status.Working_Revision.all),
+         3 => As_String
+           (if Line_Info.Status.Repository_Revision = null
+            then"n/a"
+            else Line_Info.Status.Repository_Revision.all),
+         4 => As_String
+           (if Line_Info.Status.Status.Icon_Name = null
+            then VCS.Unknown.Icon_Name.all
+            else Line_Info.Status.Status.Icon_Name.all),
+         5 => As_String
+           (if Line_Info.Status.Status.Label = null
+            then VCS.Unknown.Label.all
+            else Line_Info.Status.Status.Label.all));
 
       if Get_File (Explorer.Model, Iter, File_Column) /=
         Line_Info.Status.File
       then
-         Set_File (Explorer.Model, Iter, File_Column,
-                   Line_Info.Status.File);
-         Set (Explorer.Model, Iter, Name_Column,
-              Line_Info.Status.File.Display_Full_Name);
-         Set (Explorer.Model, Iter, Key_Column,
-              File_Key (Line_Info.Status.File));
+         Last := 9;
 
-         if Is_Directory (Line_Info.Status.File) then
-            Set (Explorer.Model, Iter, Base_Name_Column,
-                 '[' & (+Base_Dir_Name (Line_Info.Status.File)) & ']');
-         else
-            Set (Explorer.Model, Iter, Base_Name_Column,
-                 Display_Base_Name (Line_Info.Status.File));
-         end if;
+         Values (6 .. 9) :=
+           (6 => As_File (Line_Info.Status.File),
+            7 => As_String (Line_Info.Status.File.Display_Full_Name),
+            8 => As_String (File_Key (Line_Info.Status.File)),
+            9 => As_String
+              (if Is_Directory (Line_Info.Status.File)
+               then'[' & (+Base_Dir_Name (Line_Info.Status.File)) & ']'
+               else Display_Base_Name (Line_Info.Status.File)));
       end if;
 
-      if Line_Info.Status.Working_Revision = null then
-         Set (Explorer.Model, Iter, Local_Rev_Column, -"n/a");
-      else
-         Set (Explorer.Model, Iter, Local_Rev_Column,
-              Line_Info.Status.Working_Revision.all);
-      end if;
-
-      if Line_Info.Status.Repository_Revision = null then
-         Set (Explorer.Model, Iter, Rep_Rev_Column, -"n/a");
-      else
-         Set (Explorer.Model, Iter, Rep_Rev_Column,
-              Line_Info.Status.Repository_Revision.all);
-      end if;
-
-      if Line_Info.Status.Status.Icon_Name /= null then
-         Set (Explorer.Model, Iter, Status_Icon_Name_Column,
-              Line_Info.Status.Status.Icon_Name.all);
-      else
-         Set (Explorer.Model, Iter, Status_Icon_Name_Column,
-              VCS.Unknown.Icon_Name.all);
-      end if;
-
-      if Line_Info.Status.Status.Label /= null then
-         Set (Explorer.Model, Iter, Status_Description_Column,
-              Line_Info.Status.Status.Label.all);
-      else
-         Set (Explorer.Model, Iter, Status_Description_Column,
-              VCS.Unknown.Label.all);
-      end if;
+      Set_And_Clear
+        (Explorer.Model, Iter, Columns (1 .. Last), Values (1 .. Last));
    end Fill_Info;
 
    ------------------------

@@ -18,11 +18,13 @@
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with System.Assertions;
 
+with Glib;                     use Glib;
 with Glib.Convert;             use Glib.Convert;
 with Glib.Object;              use Glib.Object;
 with Glib.Properties;          use Glib.Properties;
 with Glib.Values;              use Glib.Values;
-with Glib;                     use Glib;
+with Glib_Values_Utils;        use Glib_Values_Utils;
+
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer_Combo;  use Gtk.Cell_Renderer_Combo;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
@@ -572,9 +574,10 @@ package body Scenario_Views is
       pragma Unreferenced (Row);
       Iter   : Gtk_Tree_Iter;
       Model  : constant Gtk_Tree_Store := Gtk_Tree_Store'(-V.View.Get_Model);
-      Val    : GValue;
-      Scenario : Gtk_Tree_Iter;
+
+      Scenario   : Gtk_Tree_Iter;
       Show_Build : constant Boolean := Show_Build_Modes.Get_Pref;
+
    begin
       Trace (Me, "Recomputing list of scenario variables");
 
@@ -592,19 +595,23 @@ package body Scenario_Views is
       if Show_Build then
          Model.Append (Iter, Null_Iter);
          V.Build_Node := Model.Get_Path (Iter);
-         Model.Set (Iter, 0, "Build mode");
-         Model.Set (Iter, 1, V.Kernel.Get_Build_Mode);
-         Model.Set (Iter, 3, True);  --  editable
-         Model.Set (Iter, 4, To_String (Module.Modes_Help));
-         Init (Val, Gtk.List_Store.Get_Type);
-         Set_Object (Val, Module.Modes);
-         Model.Set_Value (Iter, 2, Val);
-         Unset (Val);
+
+         Set_And_Clear
+           (Model, Iter,
+            (0 => As_String     ("Build mode"),
+             1 => As_String     (V.Kernel.Get_Build_Mode),
+             2 => As_List_Store (Module.Modes),
+             3 => As_Boolean    (True),  --  editable,
+             4 => As_String     (To_String (Module.Modes_Help))));
 
          Model.Append (Iter, Null_Iter);
          V.Scenario_Node := Model.Get_Path (Iter);
-         Model.Set (Iter, 0, "Scenario Variables");
-         Model.Set (Iter, 3, False);  --  not editable
+
+         Set_And_Clear
+           (Model, Iter,
+            (0, 3),
+            (0 => As_String  ("Scenario Variables"),
+             1 => As_Boolean  (False)));
 
          Scenario := Iter;
          --  Remove_Child_Nodes (Model, Scenario);
@@ -630,15 +637,13 @@ package body Scenario_Views is
                declare
                   Name : constant String := External_Name (Scenar_Var (J));
                begin
-                  Model.Set (Iter, 0, Name);
-                  Model.Set (Iter, 1, Value (Scenar_Var (J)));
-                  Model.Set (Iter, 3, True);  --  editable
-
-                  Init (Val, Gtk.List_Store.Get_Type);
-                  Set_Object
-                    (Val, Add_Possible_Values (Kernel, Scenar_Var (J)));
-                  Model.Set_Value (Iter, 2, Val);
-                  Unset (Val);
+                  Set_And_Clear
+                    (Model, Iter,
+                     (0 => As_String  (Name),
+                      1 => As_String (Value (Scenar_Var (J))),
+                      2 => As_List_Store
+                        (Add_Possible_Values (Kernel, Scenar_Var (J))),
+                      3 => As_Boolean (True)));
                end;
             end loop;
 

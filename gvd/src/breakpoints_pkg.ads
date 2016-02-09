@@ -46,6 +46,10 @@ package Breakpoints_Pkg is
    Col_Exception : constant Gint := 6;
    Col_Subprogs  : constant Gint := 7;
 
+   Column_Types : constant Glib.GType_Array (0 .. 7) :=
+     (Guint (Col_Enb) => GType_Boolean,
+      others          => GType_String);
+
    type Breakpoints_Record is new Gtk_Vbox_Record with record
       Notebook1                  : Gtk_Notebook;
       Hbox2                      : Gtk_Hbox;

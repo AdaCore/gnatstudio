@@ -20,6 +20,9 @@ with Ada.Strings;           use Ada.Strings;
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
 with GNAT.Regpat;           use GNAT.Regpat;
 with Glib;
+with Glib.Values;
+with Glib_Values_Utils;     use Glib_Values_Utils;
+
 with GPS.Intl;              use GPS.Intl;
 with String_Utils;          use String_Utils;
 with GNATCOLL.Symbols;      use GNATCOLL.Symbols;
@@ -605,6 +608,10 @@ package body Code_Coverage is
          end if;
       end Txt_Sub;
 
+      Values  : Glib.Values.GValue_Array (1 .. 4);
+      Columns : constant Columns_Array (Values'Range) :=
+        (Cov_Col, Cov_Sort, Cov_Bar_Txt, Cov_Bar_Val);
+
    begin
       if Coverage.Is_Valid then
          declare
@@ -621,26 +628,28 @@ package body Code_Coverage is
                  / Lig_Count;
             end if;
 
-            Set (Tree_Store, Iter, Cov_Col,
-                 Image (Lig_Count)
-                 & Txt_Lig (Lig_Count)
-                 & Cov_Txt (Cov_Txt'First + 1 .. Cov_Txt'Last)
-                 & (-" not covered)")
-                 & Txt_Sub (Coverage));
-            Set (Tree_Store, Iter, Cov_Sort, Glib.Gint (Coverage.Coverage));
-            Set (Tree_Store, Iter, Cov_Bar_Val, Glib.Gint (Cov_Percent));
-            Set (Tree_Store, Iter, Cov_Bar_Txt,
-                 Image (Cov_Percent, Int_Image_Pad, Padding => Int_Char_Pad) &
-                 " %");
+            Values :=
+              (1 => As_String
+                 (Image (Lig_Count) & Txt_Lig (Lig_Count) &
+                    Cov_Txt (Cov_Txt'First + 1 .. Cov_Txt'Last) &
+                  (-" not covered)") & Txt_Sub (Coverage)),
+               2 => As_Int (Glib.Gint (Coverage.Coverage)),
+               3 => As_String
+                 (Image (Cov_Percent, Int_Image_Pad,
+                  Padding => Int_Char_Pad) & " %"),
+               4 => As_Int (Glib.Gint (Cov_Percent)));
          end;
 
       else
-         Set (Tree_Store, Iter, Cov_Col,
-              " undetermined"); -- & Status_Message (Coverage.Status));
-         Set (Tree_Store, Iter, Cov_Sort, Glib.Gint (0));
-         Set (Tree_Store, Iter, Cov_Bar_Val, Glib.Gint (0));
-         Set (Tree_Store, Iter, Cov_Bar_Txt, -"n/a");
+         Values :=
+           (1 => As_String (" undetermined"),
+            --  & Status_Message (Coverage.Status));
+            2 => As_Int    (0),
+            3 => As_String ("n/a"),
+            4 => As_Int    (0));
       end if;
+
+      Set_And_Clear (Tree_Store, Iter, Columns, Values);
    end Fill_Iter;
 
 end Code_Coverage;

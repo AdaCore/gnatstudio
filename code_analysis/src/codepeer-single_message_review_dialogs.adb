@@ -21,6 +21,8 @@ with Interfaces.C.Strings;
 with System;
 
 with Glib.Object;
+with Glib_Values_Utils;        use Glib_Values_Utils;
+
 with Gtk.Button;
 with Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Text;
@@ -148,6 +150,8 @@ package body CodePeer.Single_Message_Review_Dialogs is
 
       function Status_Image (Status : Audit_Status_Kinds) return String;
 
+      procedure Set_Audit_Status (Name : String; Status : Audit_Status_Kinds);
+
       -------------------
       -- Ranking_Image --
       -------------------
@@ -204,29 +208,32 @@ package body CodePeer.Single_Message_Review_Dialogs is
       -- Process_Audit --
       -------------------
 
-      procedure Process_Audit (Position : CodePeer.Audit_V3_Vectors.Cursor) is
+      procedure Process_Audit (Position : CodePeer.Audit_V3_Vectors.Cursor)
+      is
          Audit : constant CodePeer.Audit_Record_V3_Access :=
-                   CodePeer.Audit_V3_Vectors.Element (Position);
-
+           CodePeer.Audit_V3_Vectors.Element (Position);
       begin
          Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Store.Set
-           (Iter,
-            History_Model_Timestamp_Column,
-            To_String (Audit.Timestamp));
-         Store.Set
-           (Iter,
-            History_Model_Status_Column,
-            Status_Image (Audit.Status));
-         Store.Set
-           (Iter,
-            History_Model_Approved_Column,
-            To_String (Audit.Approved_By));
-         Store.Set
-           (Iter,
-            History_Model_Comment_Column,
-            To_String (Audit.Comment));
+         Set_All_And_Clear
+           (Store, Iter,
+            (0 => As_String (To_String (Audit.Timestamp)),
+             1 => As_String (Status_Image (Audit.Status)),
+             2 => As_String (To_String (Audit.Approved_By)),
+             3 => As_String (To_String (Audit.Comment))));
       end Process_Audit;
+
+      ----------------------
+      -- Set_Audit_Status --
+      ----------------------
+
+      procedure Set_Audit_Status
+        (Name : String; Status : Audit_Status_Kinds) is
+      begin
+         Set_All_And_Clear
+           (Store, Iter,
+            (0 => As_String (Name),
+             1 => As_Int    (Audit_Status_Kinds'Pos (Status))));
+      end Set_Audit_Status;
 
    begin
       Glib.Object.Initialize_Class_Record
@@ -284,43 +291,23 @@ package body CodePeer.Single_Message_Review_Dialogs is
             Status_Model_Label_Column);
 
          Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Store.Set (Iter, Status_Model_Label_Column, -"Unclassified");
-         Store.Set
-           (Iter,
-            Status_Model_Value_Column,
-            Audit_Status_Kinds'Pos (Unclassified));
+         Set_Audit_Status ("Unclassified", Unclassified);
          Self.New_Status.Set_Active_Iter (Iter);
 
          Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Store.Set (Iter, Status_Model_Label_Column, -"Pending");
-         Store.Set
-           (Iter, Status_Model_Value_Column, Audit_Status_Kinds'Pos (Pending));
+         Set_Audit_Status ("Pending", Pending);
 
          Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Store.Set (Iter, Status_Model_Label_Column, -"Not a bug");
-         Store.Set
-           (Iter,
-            Status_Model_Value_Column,
-            Audit_Status_Kinds'Pos (Not_A_Bug));
+         Set_Audit_Status ("Not a bug", Not_A_Bug);
 
          Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Store.Set (Iter, Status_Model_Label_Column, -"False positive");
-         Store.Set
-           (Iter,
-            Status_Model_Value_Column,
-            Audit_Status_Kinds'Pos (False_Positive));
+         Set_Audit_Status ("False positive", False_Positive);
 
          Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Store.Set (Iter, Status_Model_Label_Column, -"Intentional");
-         Store.Set
-           (Iter,
-            Status_Model_Value_Column,
-            Audit_Status_Kinds'Pos (Intentional));
+         Set_Audit_Status ("Intentional", Intentional);
 
          Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Store.Set (Iter, Status_Model_Label_Column, -"Bug");
-         Store.Set
-           (Iter, Status_Model_Value_Column, Audit_Status_Kinds'Pos (Bug));
+         Set_Audit_Status ("Bug", Bug);
 
          --  "Approved by" entry
 

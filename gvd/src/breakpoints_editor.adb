@@ -19,6 +19,9 @@ with GNAT.Strings;       use GNAT.Strings;
 
 with Glib;               use Glib;
 with Glib.Object;        use Glib.Object;
+with Glib.Values;
+with Glib_Values_Utils;  use Glib_Values_Utils;
+
 with Gdk.Event;          use Gdk.Event;
 with Gdk.Types;
 with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
@@ -263,6 +266,10 @@ package body Breakpoints_Editor is
       Iter          : Gtk_Tree_Iter;
       Selected_Iter : Gtk_Tree_Iter := Null_Iter;
 
+      Values  : Glib.Values.GValue_Array (1 .. 8);
+      Columns : Columns_Array (Values'Range);
+      Last    : Gint;
+
    begin
       Clear (Model);
 
@@ -282,38 +289,59 @@ package body Breakpoints_Editor is
          --  Create a new line
 
          Append (Model, Iter, Null_Iter);
-         Set (Model, Iter, Col_Num, Breakpoint_Identifier'Image (Br.Num));
 
-         if Selection /= -1 and then Br.Num = Selected then
-            Selected_Iter := Iter;
-         end if;
-
-         Set (Model, Iter, Col_Enb, Br.Enabled);
+         Columns (1 .. 4) := (Col_Num, Col_Enb, Col_Type, Col_Disp);
+         Values  (1 .. 2) :=
+           (1 => As_String (Breakpoint_Identifier'Image (Br.Num)),
+            2 => As_Boolean (Br.Enabled));
+         Last := 4;
 
          case Br.The_Type is
             when Breakpoint =>
-               Set (Model, Iter, Col_Type, -"break");
+               Glib.Values.Init_Set_String (Values (3), "break");
             when Watchpoint =>
-               Set (Model, Iter, Col_Type, -"watch");
+               Glib.Values.Init_Set_String (Values (3), "watch");
          end case;
-
-         Set (Model, Iter, Col_Disp, To_Lower (Br.Disposition'Img));
+         Glib.Values.Init_Set_String
+           (Values (4), To_Lower (Br.Disposition'Img));
 
          if Br.Expression /= null then
-            Set (Model, Iter, Col_File, Br.Expression.all);
+            Last := Last + 1;
+            Columns (Last) := Col_File;
+            Glib.Values.Init_Set_String (Values (Last), Br.Expression.all);
          end if;
 
          if Br.File /= GNATCOLL.VFS.No_File then
-            Set (Model, Iter, Col_File, +Base_Name (Br.File));
-            Set (Model, Iter, Col_Line, Integer'Image (Br.Line));
+            if Last < 5 then
+               Last := Last + 1;
+               Columns (Last) := Col_File;
+               Glib.Values.Init
+                 (Values (Last), Column_Types (Guint (Col_File)));
+            end if;
+            Glib.Values.Set_String (Values (Last), +Base_Name (Br.File));
+
+            Last := Last + 1;
+            Columns (Last) := Col_Line;
+            Glib.Values.Init_Set_String
+              (Values (Last), Integer'Image (Br.Line));
          end if;
 
          if Br.Except /= null then
-            Set (Model, Iter, Col_Exception, Br.Except.all);
+            Last := Last + 1;
+            Columns (Last) := Col_Exception;
+            Glib.Values.Init_Set_String (Values (Last), Br.Except.all);
          end if;
 
          if Br.Subprogram /= null then
-            Set (Model, Iter, Col_Subprogs, Br.Subprogram.all);
+            Last := Last + 1;
+            Columns (Last) := Col_Subprogs;
+            Glib.Values.Init_Set_String (Values (Last), Br.Subprogram.all);
+         end if;
+
+         Set_And_Clear (Model, Iter, Columns (1 .. Last), Values (1 .. Last));
+
+         if Selection /= -1 and then Br.Num = Selected then
+            Selected_Iter := Iter;
          end if;
       end loop;
 
@@ -625,11 +653,12 @@ package body Breakpoints_Editor is
             --  since only the state of one of them as changed and we know all
             --  about it.
 
-            Set (Model, Iter, Col_Enb,
-                 Toggle_Breakpoint_State
-                   (Get_Process (View),
-                    Breakpoint_Num => Breakpoint_Identifier'Value
-                      (Get_String (Model, Iter, Col_Num))));
+            Model.Set
+              (Iter, Col_Enb,
+               Toggle_Breakpoint_State
+                 (Get_Process (View),
+                  Breakpoint_Num => Breakpoint_Identifier'Value
+                    (Get_String (Model, Iter, Col_Num))));
 
             --  Stop propagation of the current signal, to avoid extra calls
             --  to Select/Unselect row.

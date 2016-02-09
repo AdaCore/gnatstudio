@@ -16,13 +16,25 @@
 ------------------------------------------------------------------------------
 
 with Glib;                     use Glib;
-with GPS.Intl;                 use GPS.Intl;
+with Glib_Values_Utils;        use Glib_Values_Utils;
+
 with Code_Analysis_Tree_Model; use Code_Analysis_Tree_Model;
 with Code_Analysis_GUI;        use Code_Analysis_GUI;
 with Code_Coverage;            use Code_Coverage;
 with GNATCOLL.VFS;
+with System;
 
 package body Code_Analysis_Tree_Model is
+
+   procedure Set_Columns_Values
+     (Model    : Gtk_Tree_Store;
+      Iter     : Gtk_Tree_Iter;
+      Icon     : String;
+      Name     : String;
+      Node     : System.Address;
+      File     : System.Address;
+      Prjoject : System.Address);
+   --  Set model's values.
 
    ---------------
    -- Fill_Iter --
@@ -36,11 +48,14 @@ package body Code_Analysis_Tree_Model is
    begin
       if Analysis_Id.Coverage_Data /= null then
          Fill_Iter (Model, Iter, Analysis_Id.Coverage_Data, Bin_Mode);
+
       else
-         Set (Model, Iter, Cov_Col, -"n/a");
-         Set (Model, Iter, Cov_Sort, Glib.Gint (0));
-         Set (Model, Iter, Cov_Bar_Val, Glib.Gint (0));
-         Set (Model, Iter, Cov_Bar_Txt, -"n/a");
+         Set_And_Clear
+           (Model, Iter, (Cov_Col, Cov_Sort, Cov_Bar_Txt, Cov_Bar_Val),
+            (1 => As_String ("n/a"),
+             2 => As_Int    (0),
+             3 => As_String ("n/a"),
+             4 => As_Int    (0)));
       end if;
    end Fill_Iter;
 
@@ -58,11 +73,14 @@ package body Code_Analysis_Tree_Model is
       Bin_Mode  : Boolean := False) is
    begin
       Append (Model, Iter, Parent);
-      Set (Model, Iter, Icon_Name_Col, Subp_Pixbuf_Cst);
-      Set (Model, Iter, Name_Col, Subp_Node.Name.all);
-      Subprogram_Set.Set (Model, Iter, Node_Col, Subp_Node.all'Access);
-      File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
-      Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
+      Set_Columns_Values
+        (Model, Iter,
+         Icon     => Subp_Pixbuf_Cst,
+         Name     => Subp_Node.Name.all,
+         Node     => Subp_Node.all'Address,
+         File     => File_Node.all'Address,
+         Prjoject => Prj_Node.all'Address);
+
       Fill_Iter (Model, Iter, Subp_Node.Analysis_Data, Bin_Mode);
    end Fill_Iter;
 
@@ -79,11 +97,14 @@ package body Code_Analysis_Tree_Model is
       Bin_Mode  : Boolean := False) is
    begin
       Append (Model, Iter, Null_Iter);
-      Set (Model, Iter, Icon_Name_Col, Subp_Pixbuf_Cst);
-      Set (Model, Iter, Name_Col, Subp_Node.Name.all);
-      Subprogram_Set.Set (Model, Iter, Node_Col, Subp_Node.all'Access);
-      File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
-      Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
+      Set_Columns_Values
+        (Model, Iter,
+         Icon     => Subp_Pixbuf_Cst,
+         Name     => Subp_Node.Name.all,
+         Node     => Subp_Node.all'Address,
+         File     => File_Node.all'Address,
+         Prjoject => Prj_Node.all'Address);
+
       Fill_Iter (Model, Iter, Subp_Node.Analysis_Data, Bin_Mode);
    end Fill_Iter_With_Subprograms;
 
@@ -105,6 +126,7 @@ package body Code_Analysis_Tree_Model is
       Self_Iter : Gtk_Tree_Iter;
       Sort_Arr  : Subprogram_Array
         (1 .. Integer (File_Node.Subprograms.Length));
+
    begin
       if File_Node.Analysis_Data.Coverage_Data /= null
         and then File_Node.Analysis_Data.Coverage_Data.Is_Valid
@@ -116,13 +138,15 @@ package body Code_Analysis_Tree_Model is
       end if;
 
       Self_Iter := Iter;
-      Gtk.Tree_Store.Set (Model, Iter, Icon_Name_Col, File_Pixbuf_Cst);
-      Gtk.Tree_Store.Set
-        (Model, Iter, Name_Col,
-         GNATCOLL.VFS.Display_Base_Name (File_Node.Name));
-      File_Set.Set (Model, Iter, Node_Col, File_Node.all'Access);
-      File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
-      Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
+
+      Set_Columns_Values
+        (Model, Iter,
+         Icon     => File_Pixbuf_Cst,
+         Name     => GNATCOLL.VFS.Display_Base_Name (File_Node.Name),
+         Node     => File_Node.all'Address,
+         File     => File_Node.all'Address,
+         Prjoject => Prj_Node.all'Address);
+
       Fill_Iter (Model, Iter, File_Node.Analysis_Data, Bin_Mode);
 
       for J in Sort_Arr'Range loop
@@ -159,13 +183,14 @@ package body Code_Analysis_Tree_Model is
          Append (Model, Iter, Null_Iter);
       end if;
 
-      Gtk.Tree_Store.Set (Model, Iter, Icon_Name_Col, File_Pixbuf_Cst);
-      Gtk.Tree_Store.Set
-        (Model, Iter, Name_Col,
-         GNATCOLL.VFS.Display_Base_Name (File_Node.Name));
-      File_Set.Set (Model, Iter, Node_Col, File_Node.all'Access);
-      File_Set.Set (Model, Iter, File_Col, File_Node.all'Access);
-      Project_Set.Set (Model, Iter, Prj_Col, Prj_Node.all'Access);
+      Set_Columns_Values
+        (Model, Iter,
+         Icon     => File_Pixbuf_Cst,
+         Name     => GNATCOLL.VFS.Display_Base_Name (File_Node.Name),
+         Node     => File_Node.all'Address,
+         File     => File_Node.all'Address,
+         Prjoject => Prj_Node.all'Address);
+
       Fill_Iter (Model, Iter, File_Node.Analysis_Data, Bin_Mode);
    end Fill_Iter_With_Files;
 
@@ -214,6 +239,7 @@ package body Code_Analysis_Tree_Model is
       Self_Iter  : Gtk_Tree_Iter;
       Sort_Arr   : File_Array (1 .. Integer (Prj_Node.Files.Length));
       Child_Sibl : Gtk_Tree_Iter := Null_Iter;
+
    begin
       if Prj_Node.Analysis_Data.Coverage_Data /= null
         and then Prj_Node.Analysis_Data.Coverage_Data.Is_Valid
@@ -225,10 +251,13 @@ package body Code_Analysis_Tree_Model is
       end if;
 
       Self_Iter := Iter;
-      Gtk.Tree_Store.Set (Model, Iter, Icon_Name_Col, Prj_Pixbuf_Cst);
-      Gtk.Tree_Store.Set (Model, Iter, Name_Col,
-                          UTF8_String (Prj_Node.Name.Name));
-      Project_Set.Set (Model, Iter, Node_Col, Prj_Node.all'Access);
+
+      Set_And_Clear
+        (Model, Iter, (Icon_Name_Col, Name_Col, Node_Col),
+         (1 => As_String  (Prj_Pixbuf_Cst),
+          2 => As_String  (Prj_Node.Name.Name),
+          3 => As_Pointer (Prj_Node.all'Address)));
+
       Fill_Iter (Model, Iter, Prj_Node.Analysis_Data, Bin_Mode);
 
       for J in Sort_Arr'Range loop
@@ -379,4 +408,27 @@ package body Code_Analysis_Tree_Model is
            (Model, Iter, Sort_Arr (J), Bin_Mode);
       end loop;
    end Fill_Iter_With_Subprograms;
+
+   ------------------------
+   -- Set_Columns_Values --
+   ------------------------
+
+   procedure Set_Columns_Values
+     (Model    : Gtk_Tree_Store;
+      Iter     : Gtk_Tree_Iter;
+      Icon     : String;
+      Name     : String;
+      Node     : System.Address;
+      File     : System.Address;
+      Prjoject : System.Address) is
+   begin
+      Set_And_Clear
+        (Model, Iter, (Icon_Name_Col, Name_Col, Node_Col, File_Col, Prj_Col),
+         (1 => As_String  (Icon),
+          2 => As_String  (Name),
+          3 => As_Pointer (Node),
+          4 => As_Pointer (File),
+          5 => As_Pointer (Prjoject)));
+   end Set_Columns_Values;
+
 end Code_Analysis_Tree_Model;
