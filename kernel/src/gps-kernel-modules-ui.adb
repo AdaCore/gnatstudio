@@ -3287,8 +3287,14 @@ package body GPS.Kernel.Modules.UI is
                N2 := First_Child (N);
                while N2 /= null loop
                   if Node_Name (N2) = "button" then
+                     declare
+                        Attr : constant String := Get_Attribute (N2, "hide");
                      begin
-                        Hide := Boolean'Value (Get_Attribute (N2, "hide"));
+                        if Attr = "" then
+                           Hide := False;
+                        else
+                           Hide := Boolean'Value (Attr);
+                        end if;
                      exception
                         when Constraint_Error =>
                            Hide := False;
