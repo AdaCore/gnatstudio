@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-170-P204-043 GB: add template code assist (2016-02-09)
+
+  It is now possible to add Ada code templates by pressing content assist hot key
+  (Ctrl+Space). Use Tab key to edit the next template variable. Press Enter to
+  finish inserting the template and go to ${cursor} position.
+
 NF-170-P122-059 GPS: rename build targets from the GUI (2016-01-25)
 
   It is now possible to rename targets directly in the Target Configuration
