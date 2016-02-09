@@ -14,6 +14,8 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Object;               use Glib.Object;
 with Gdk.Window;                use Gdk.Window;
@@ -23,9 +25,10 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Label;                 use Gtk.Label;
+with Gtk.Link_Button;           use Gtk.Link_Button;
+with Gtk.Style_Context;         use Gtk.Style_Context;
+
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with String_Utils;              use String_Utils;
 
 package body Completion_Utils is
@@ -71,109 +74,107 @@ package body Completion_Utils is
       Kernel           : Kernel_Handle;
       Fixed_Width_Font : Pango_Font_Description)
    is
-      Frame   : Gtk_Frame;
-      VBox2   : Gtk_Vbox;
-      HBox    : Gtk_Hbox;
+      Declaration_Frame : Gtk_Frame;
+      Doc_Label         : Gtk_Label;
+      Doc_Frame         : Gtk_Frame;
 
       use Proposals_List;
 
-      function Location_To_Label (Loc : File_Location) return String;
-      --  Return a pango markup label corresponding to Loc.
+      function Location_To_Text (Loc : File_Location) return String;
+      --  Return a string concatenating the location's filename and its line
 
-      -----------------------
-      -- Location_To_Label --
-      -----------------------
+      ----------------------
+      -- Location_To_Text --
+      ----------------------
 
-      function Location_To_Label (Loc : File_Location) return String is
+      function Location_To_Text (Loc : File_Location) return String is
       begin
-         return "<span color=""blue""><u>" & Display_Base_Name (Loc.File_Path)
-           & ":" & Image (Loc.Line) & "</u></span>";
-      end Location_To_Label;
+         return Display_Base_Name (Loc.File_Path) & ":" & Image (Loc.Line);
+      end Location_To_Text;
 
       use type Ada.Containers.Count_Type;
    begin
+      --  If no element, return
+      if not Has_Element (Notes_Info.C) then
+         return;
+      end if;
 
-      if Has_Element (Notes_Info.C) then
-         declare
-            Doc      : constant String :=
-              Element (Notes_Info.C).Get_Documentation (Kernel);
-            Location : constant File_Location :=
-              Get_Location (Element (Notes_Info.C).all, Kernel.Databases);
-            Button         : Gtk_Button;
-            Label          : Gtk_Label;
-            Title          : Gtk_Label;
-            Button_Label   : Gtk_Label;
-         begin
+      declare
+         Doc      : constant String :=
+                      Element (Notes_Info.C).Get_Documentation (Kernel);
+         Location : constant File_Location :=
+                      Get_Location (Element (Notes_Info.C).all,
+                                    Kernel.Databases);
+      begin
+         --  Create the frame containing the declaration documentation
+         Gtk_New (Declaration_Frame);
+         Notes_Info.Notes_Box.Pack_Start (Declaration_Frame, Expand => False);
 
-            --  Create the label
-            Gtk_New (Label);
-            Set_Selectable (Label, True);
-            Set_Line_Wrap (Label, False);
-            Set_Use_Markup (Label, True);
-            Modify_Font (Label, Fixed_Width_Font);
+         --  If there is only one documentation to display, do not draw a
+         --  border around the frame, as this is just graphical noise in
+         --  this case.
+         if not Notes_Info.Multiple_Items then
+            Set_Shadow_Type (Declaration_Frame, Shadow_None);
+         end if;
 
-            Gtk_New (Frame);
+         --  Create the label containing the documentaion
+         Gtk_New (Doc_Label);
+         Doc_Label.Set_Halign (Align_Start);
+         Set_Selectable (Doc_Label, True);
+         Set_Line_Wrap (Doc_Label, False);
+         Set_Use_Markup (Doc_Label, True);
+         Modify_Font (Doc_Label, Fixed_Width_Font);
 
-            if Doc /= "" then
-               Set_Markup (Label, Doc);
-            else
-               Set_Markup
-                 (Label, "<span color=""darkgrey"">No documentation</span>");
-            end if;
+         if Doc /= "" then
+            Set_Markup (Doc_Label, Doc);
+         else
+            Set_Markup
+              (Doc_Label,
+               "<span color=""darkgrey"">No documentation</span>");
+         end if;
 
-            --  If there is only one documentation to display, do not draw a
-            --  border around the frame, as this is just graphical noise in
-            --  this case.
+         --  Add the label containing the documentaion within a frame so that
+         --  it can be easily aligned in CSS.
+         Gtk_New (Doc_Frame);
+         Get_Style_Context (Doc_Frame).Add_Class ("notes-doc-frames");
+         Doc_Frame.Add (Doc_Label);
+         Add (Declaration_Frame, Doc_Frame);
 
-            if not Notes_Info.Multiple_Items then
-               Set_Shadow_Type (Frame, Shadow_None);
-            end if;
+         --  If there is a file location, create a link to it
+         if Location /= Null_File_Location then
+            declare
+               Location_Text     : constant String :=
+                                     Location_To_Text (Location);
+               Declaration_Link  : Gtk_Link_Button;
+               Declaration_Label : Gtk_Label;
+               Title_Box         : Gtk_Hbox;
+            begin
+               --  Create the declaration label with a link to its declaration
+               Gtk_New_Hbox (Title_Box);
+               Declaration_Frame.Set_Label_Widget (Title_Box);
 
-            Gtk_New_Hbox (HBox);
-            Pack_Start (HBox, Label, False, False, 3);
+               Gtk_New (Declaration_Label);
+               Set_Use_Markup (Declaration_Label, True);
+               Set_Markup (Declaration_Label, "<b>Declaration:</b>");
+               Title_Box.Pack_Start (Declaration_Label, Expand => False);
+               Modify_Font (Declaration_Label, Fixed_Width_Font);
 
-            Gtk_New_Vbox (VBox2);
-            Pack_Start (VBox2, HBox, False, False, 3);
-            Add (Frame, VBox2);
-
-            --  If there is a file location, create a link to it
-
-            if Location /= Null_File_Location then
-               Gtk_New_Hbox (HBox);
-               Set_Label_Widget (Frame, HBox);
-
-               --  Create a title
-               Gtk_New (Title);
-               Set_Use_Markup (Title, True);
-               Set_Markup (Title, "<b>Declaration:</b>");
-               Pack_Start (HBox, Title, False, False, 1);
-               Modify_Font (Title, Fixed_Width_Font);
-
-               --  Create a button
-               Gtk_New (Button, "");
-               Gtk_New (Button_Label);
-               Modify_Font (Button_Label, Fixed_Width_Font);
-               Pack_Start (HBox, Button, False, False, 0);
-               Add (Button, Button_Label);
-               Set_Use_Markup (Button_Label, True);
-               Set_Relief (Button, Relief_None);
-               Set_Markup (Button_Label, Location_To_Label (Location));
+               Gtk_New (Declaration_Link, Location_Text);
+               Declaration_Link.Set_Label (Location_Text);
+               Title_Box.Pack_Start (Declaration_Link, Expand => False);
 
                Object_Connect
-                 (Button, Gtk.Button.Signal_Clicked,
+                 (Declaration_Link, Gtk.Button.Signal_Clicked,
                   To_Marshaller (On_Location_Button_Clicked'Access),
-                  Button,
-                  After => False,
+                  Declaration_Link,
+                  After     => False,
                   User_Data => (Kernel, Location));
-            end if;
-         end;
+            end;
+         end if;
+      end;
 
-         Gtk_New_Hbox (HBox);
-         HBox.Pack_Start (Frame, True, True, 3);
-         Notes_Info.Notes_Box.Pack_Start (HBox, False, False, 3);
-         Notes_Info.Notes_Box.Show_All;
-         Next (Notes_Info.C);
-      end if;
+      Notes_Info.Notes_Box.Show_All;
+      Next (Notes_Info.C);
    end Add_Next_Item_Doc;
 
 end Completion_Utils;

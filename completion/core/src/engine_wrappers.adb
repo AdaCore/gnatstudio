@@ -392,15 +392,15 @@ package body Engine_Wrappers is
       end if;
 
       return Documentation
-        (Kernel.Databases,
-         Kernel.Get_Language_Handler,
-         Get_Entity
+        (Self                     => Kernel.Databases,
+         Handler                  => Kernel.Get_Language_Handler,
+         Entity                   => Get_Entity
            (Kernel.Databases,
             Name  => Proposal.Get_Label (Kernel.Databases),
             Loc   => (File   => Loc.File_Path,
                       Project => No_Project,  --  ??? unknown
                       Line   => Loc.Line,
-                      Column => Loc.Column)));
+                      Column  => Loc.Column)));
    end Get_Documentation;
 
    --------------------------
@@ -431,15 +431,15 @@ package body Engine_Wrappers is
    is
    begin
       return Documentation
-        (Kernel.Databases,
-         Kernel.Get_Language_Handler,
-         Xref.Get_Entity
+        (Self                     => Kernel.Databases,
+         Handler                  => Kernel.Get_Language_Handler,
+         Entity                   => Xref.Get_Entity
            (Kernel.Databases,
             Name  => Get (Proposal.Construct.Name).all,
-            Loc   => (File   => Proposal.File,
+            Loc   => (File    => Proposal.File,
                       Project => No_Project,  --  ??? unknown
-                      Line   => Proposal.Construct.Sloc_Start.Line,
-                      Column => Visible_Column_Type
+                      Line    => Proposal.Construct.Sloc_Start.Line,
+                      Column  => Visible_Column_Type
                         (Proposal.Construct.Sloc_Start.Column))));
    end Get_Documentation;
 

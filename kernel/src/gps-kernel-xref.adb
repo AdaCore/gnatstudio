@@ -894,7 +894,12 @@ package body GPS.Kernel.Xref is
          Append (Self.Text, ASCII.LF);
          Self.Has_Parameter := False;
       end if;
-      Append (Self.Text, ASCII.LF & "<b>Aspects:</b>" & ASCII.LF);
+
+      if Length (Self.Text) /= 0 then
+         Append (Self.Text, ASCII.LF);
+      end if;
+
+      Append (Self.Text, "<b>Aspects:</b>" & ASCII.LF);
       Append (Self.Text, Escape_Text (Text));
    end Add_Aspects;
 
@@ -909,13 +914,13 @@ package body GPS.Kernel.Xref is
       use Ada.Strings.Unbounded;
    begin
       if Self.Has_Parameter then
-         Append (Self.Text, ASCII.LF);
          Self.Has_Parameter := False;
       end if;
+
       if Length (Self.Text) = 0 then
          Append (Self.Text, Escape_Text (Text));
       else
-         Self.Text := Escape_Text (Text) & ASCII.LF & ASCII.LF & Self.Text;
+         Self.Text := Self.Text & ASCII.LF & ASCII.LF & Escape_Text (Text);
       end if;
    end Add_Comments;
 

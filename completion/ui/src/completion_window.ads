@@ -70,6 +70,12 @@ package Completion_Window is
    type Completion_Explorer_Access is access all
      Completion_Explorer_Record'Class;
 
+   type Completion_Notes_Window_Record is new Gtk_Window_Record with private;
+   type Completion_Notes_Window is access all
+     Completion_Notes_Window_Record'Class;
+   --  Type representing the completion notes window that appears when
+   --  navigating among the completion proposals.
+
    procedure Gtk_New
      (Explorer : out Completion_Explorer_Access;
       Kernel   : Kernel_Handle);
@@ -136,6 +142,12 @@ package Completion_Window is
 
    procedure Delete (Window : access Completion_Window_Record'Class);
    --  Destroy the window and its contents.
+
+   procedure Gtk_New (Window : out Completion_Notes_Window);
+   --  Create a new completion notes window and initialize it
+
+   procedure Initialize (Window : access Completion_Notes_Window_Record'Class);
+   --  Initialize the given completion notes window
 
    --  ??? Need a function to set case sensitivity
 
@@ -260,8 +272,13 @@ private
       Lang : Language_Access;
       --  The language on which the window is completing.
 
-      Notes_Window : Gtk_Window;
-      --  The window containing the documentation
+      Notes_Window : Completion_Notes_Window;
+      --  The popup window containing the documentation
+   end record;
+
+   type Completion_Notes_Window_Record is new Gtk_Window_Record with record
+      Notes_Scroll : Gtk_Scrolled_Window;
+      --  The scrolled window that actually contains the documentation
    end record;
 
    --  Tree model columns.

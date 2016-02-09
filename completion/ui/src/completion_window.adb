@@ -148,6 +148,11 @@ package body Completion_Window is
       Params : Glib.Values.GValues);
    --  Callback before a text deletion
 
+   function On_Notes_Window_Click
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Button) return Boolean;
+   --  Callback on a button press in the notes window
+
    function On_Button_Pressed
      (Window : access Completion_Window_Record'Class;
       Event  : Gdk_Event) return Boolean;
@@ -299,15 +304,15 @@ package body Completion_Window is
             Gtk.Image.Gtk_New_From_Icon_Name
               (Img, Icon_Name => Item.Icon_Name.all,
                Size => 16);
-            Pack_Start (HBox, Img, False, False, 3);
+            HBox.Pack_Start (Img, Expand => False);
          end if;
 
          Gtk_New (Title, Item.Text.all);
          Set_Selectable (Title, True);
          Modify_Font (Title, Explorer.Fixed_Width_Font);
 
-         Pack_Start (HBox, Title, False, False, 3);
-         Pack_Start (VBox, HBox, False, False, 1);
+         HBox.Pack_Start (Title, Expand => False);
+         VBox.Pack_Start (HBox, Expand => False);
       end if;
 
       --  Start idle completion of the notes box
@@ -320,7 +325,7 @@ package body Completion_Window is
          N_Info.Multiple_Items := Natural (Item.Proposals.Length) > 1;
          Explorer.Notes_Info := N_Info;
          Explorer.Notes_Need_Completion := True;
-         Pack_Start (VBox, N_Info.Notes_Box, False, False, 1);
+         VBox.Pack_Start (N_Info.Notes_Box, Expand => False);
          Add (Explorer.Notes_Container, VBox);
          Show_All (VBox);
       end;
@@ -1070,7 +1075,6 @@ package body Completion_Window is
       if Iter = Null_Iter then
          --  Hide the contents window
          Hide (Window.Notes_Window);
-
       else
          --  Something is selected: the window is no longer Volatile
          Window.Volatile := False;
@@ -1801,6 +1805,94 @@ package body Completion_Window is
       end if;
    end Window_On_Screen_Changed;
 
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New (Window : out Completion_Notes_Window) is
+   begin
+      Window := new Completion_Notes_Window_Record;
+      Completion_Window.Initialize (Window);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize (Window : access Completion_Notes_Window_Record'Class)
+   is
+      Frame : Gtk_Frame;
+   begin
+      --  Create the window as a popup
+      Initialize (Window, Window_Popup);
+      Get_Style_Context (Window).Add_Class ("tooltip");
+
+      Window.Set_App_Paintable (True);
+      Window.On_Draw (Window_On_Draw'Access);
+      Window.On_Screen_Changed (Window_On_Screen_Changed'Access);
+
+      Window_On_Screen_Changed (Window, null);
+
+      --  Create the window's main frame
+      Gtk_New (Frame);
+      Add (Window, Frame);
+      Frame.Set_Name ("notes-frame");
+
+      --  Create a scrolled window inside the window's main frame
+      Gtk_New (Window.Notes_Scroll);
+      Set_Policy (Window.Notes_Scroll, Policy_Automatic, Policy_Automatic);
+      Add (Frame, Window.Notes_Scroll);
+
+      --  Add a callback so that the window expands its size when clicking on
+      --  it.
+      Window.On_Button_Press_Event (Call  => On_Notes_Window_Click'Access,
+                                    After => False);
+   end Initialize;
+
+   ---------------------------
+   -- On_Notes_Window_Click --
+   ---------------------------
+
+   function On_Notes_Window_Click
+     (Self  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event_Button) return Boolean
+   is
+      Window : constant Completion_Notes_Window :=
+                 Completion_Notes_Window (Self);
+      H_Policy : Gtk_Policy_Type;
+      V_Policy : Gtk_Policy_Type;
+   begin
+      if Event.The_Type /= Button_Press then
+         return False;
+      end if;
+
+      Window.Notes_Scroll.Get_Policy (Hscrollbar_Policy => H_Policy,
+                                      Vscrollbar_Policy => V_Policy);
+
+      --  Invert the policy and resize the notes window if needed
+      if V_Policy = Policy_Automatic then
+         Window.Notes_Scroll.Set_Policy
+           (Hscrollbar_Policy => Policy_Never,
+            Vscrollbar_Policy => Policy_Never);
+      else
+         declare
+            Default_Width    : Gint;
+            Default_Height   : Gint;
+         begin
+            Window.Get_Default_Size (Width  => Default_Width,
+                                     Height => Default_Height);
+
+            Window.Notes_Scroll.Set_Policy
+              (Hscrollbar_Policy => Policy_Automatic,
+               Vscrollbar_Policy => Policy_Automatic);
+
+            Window.Resize (Default_Width, Default_Height);
+         end;
+      end if;
+
+      return False;
+   end On_Notes_Window_Click;
+
    ----------------
    -- Initialize --
    ----------------
@@ -1810,8 +1902,6 @@ package body Completion_Window is
       Kernel : Kernel_Handle)
    is
       Dummy   : Gint;
-      Frame   : Gtk_Frame;
-      Scroll  : Gtk_Scrolled_Window;
       pragma Unreferenced (Dummy);
       use Gdk;
    begin
@@ -1832,30 +1922,9 @@ package body Completion_Window is
 
       Add (Window, Window.Explorer);
 
-      --  Create the Notes window
-
-      Gtk_New (Window.Notes_Window, Window_Popup);
-      Window.Set_Name ("completion-window");
-      Get_Style_Context (Window.Notes_Window).Add_Class ("tooltip");
-      Window.Notes_Window.Set_Name ("notes-window");
-
-      Window.Notes_Window.Set_App_Paintable (True);
-      Window.Notes_Window.On_Draw (Window_On_Draw'Access);
-      Window.Notes_Window.On_Screen_Changed (Window_On_Screen_Changed'Access);
-
-      Window_On_Screen_Changed (Window.Notes_Window, null);
-
-      Gtk_New (Frame);
-
-      Gtk_New (Scroll);
-      Set_Policy (Scroll, Policy_Automatic, Policy_Automatic);
-      Add (Frame, Scroll);
-      Add (Window.Notes_Window, Frame);
-
-      Frame.Set_Name ("notes-frame");
-      Add_Rounded_Class (Frame);
-
-      Add (Scroll, Window.Explorer.Notes_Container);
+      --  Create and initialize the notes window
+      Gtk_New (Window.Notes_Window);
+      Add (Window.Notes_Window.Notes_Scroll, Window.Explorer.Notes_Container);
    end Initialize;
 
    ----------

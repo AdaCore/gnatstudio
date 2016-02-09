@@ -89,7 +89,7 @@ GtkTextView.readonly {
 
 .gps-preferences-groups {
    box-shadow: none;
-   border-width: 0px 0px 0px 0px;
+   border-width: 0;
 }
 
 .gps-preferences-groups > GtkLabel {
@@ -407,21 +407,18 @@ GtkEntry.search {
     color:@theme_fg_color;
 }
 
-#notes-window {
-    padding:20px;
-    margin:20px;
-}
-
-#notes-frame {
-    border-color: @completion-border-color;
-    background-color: @completion-notes-color;
-    padding: 5px;
-}
-
 #notes-frame * {
     background-color: @completion-notes-color;
-    color: @completion-notes-text-color;
-    text-shadow: none;
+    padding: 3px;
+}
+
+#notes-frame GtkViewport {
+    border-width: 0;
+}
+
+.notes-doc-frames {
+    box-shadow: none;
+    border-width: 0;
 }
 
 /**********************************
@@ -484,5 +481,3 @@ GtkEntry.search {
 }
 GtkTreeView { gtk-key-bindings: gtk-gps-tree-view; }
 */
-
-
