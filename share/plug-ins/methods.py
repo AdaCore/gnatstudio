@@ -53,20 +53,40 @@ class Methods_Contextual (GPS.Contextual):
 
     def factory(self, context):
         own = set(context.entity().methods())  # overridden methods
-        context.methods_list.sort()
+        context.methods_list.sort(key=lambda x: x.name())
         result = []
+        counts = {}  # key: names, value: count of occurrences of this name
+
         for m in context.methods_list:
-            if m in own:
-                result.append("%s" % m.name())
+            name = m.name().replace("/", "\/")
+
+            if m not in own:
+                name = "%s (inherited)" % name
+
+            # methods() can actually return several entities with the same
+            # name. Do the following to create different menu entries.
+            existing = counts.setdefault(name, 1)
+            counts[name] += 1
+            if existing == 1:
+                menu_name = name
             else:
-                result.append("%s (inherited)" % m.name())
+                menu_name = "%s (%s)" % (name, existing)
+
+            result.append(menu_name)
         return result
 
     def on_activate(self, context, choice, choice_index):
         decl = context.methods_list[choice_index].body()
-        buffer = GPS.EditorBuffer.get(decl.file())
-        buffer.current_view().goto(
-            buffer.at(decl.line(), decl.column()))
+        GPS.Hook('open_file_action_hook').run(
+            decl.file(),
+            decl.line(),     # line
+            decl.column(),   # column
+            decl.column(),   # column_end
+            1,   # enable_navigation
+            1,   # new_file
+            0,   # force_reload
+            1,   # focus
+            decl.file().project())
 
 
 @hook('gps_started')

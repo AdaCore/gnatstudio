@@ -1599,7 +1599,7 @@ package body GUI_Utils is
          Last := First + 1;
          Skip_To_Char (Path, Last, '/');
 
-         if Last > First and then Last < Path'Last
+         if Last > First and then Last <= Path'Last
            and then Path (Last - 1) = '\'
          then
             Last := Last + 1;
@@ -1631,7 +1631,7 @@ package body GUI_Utils is
             Last := First + 1;
             Skip_To_Char (Path, Last, '/');
 
-            if Last > First and then Last < Path'Last
+            if Last > First and then Last <= Path'Last
               and then Path (Last - 1) = '\'
             then
                Last := Last + 1;
@@ -1644,7 +1644,9 @@ package body GUI_Utils is
                Menu_Item := new Gtk_Menu_Item_Record;
             end if;
 
-            Initialize_With_Mnemonic (Menu_Item, Path (First .. Last - 1));
+            Initialize_With_Mnemonic
+              (Menu_Item,
+               Unescape_Menu_Name (Path (First .. Last - 1)));
 
             --  Should we create a submenu ?
             if Last <= Path'Last then
