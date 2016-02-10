@@ -62,8 +62,6 @@ with Gtk.Icon_Theme;                   use Gtk.Icon_Theme;
 with Gtk.Image;                        use Gtk.Image;
 with Gtk.Handlers;
 with Gtk.Main;
-with Gtk.Menu_Bar;                     use Gtk.Menu_Bar;
-with Gtk.Menu_Item;                    use Gtk.Menu_Item;
 with Gtk.Settings;                     use Gtk.Settings;
 with Gtk.Style_Provider;               use Gtk.Style_Provider;
 with Gtk.Widget;                       use Gtk.Widget;

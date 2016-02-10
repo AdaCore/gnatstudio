@@ -34,7 +34,6 @@ with Glib;                       use Glib;
 with Glib.Main;                  use Glib.Main;
 with Glib.Object;                use Glib.Object;
 
-with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
 with Gtk;                        use Gtk;
