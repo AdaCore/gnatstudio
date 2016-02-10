@@ -163,16 +163,6 @@ package body Commands is
       Command.Progress := Progress;
    end Set_Progress;
 
-   ---------------
-   -- Interrupt --
-   ---------------
-
-   procedure Interrupt (Command : in out Root_Command) is
-      pragma Unreferenced (Command);
-   begin
-      null;
-   end Interrupt;
-
    ----------
    -- Undo --
    ----------
