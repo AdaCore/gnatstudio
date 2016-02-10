@@ -365,6 +365,7 @@ package body GPS.Kernel.Project is
       Load_Default_Desktop : Boolean := True;
       Clear                : Boolean := True)
    is
+      Block_Me : constant Block_Trace_Handle := Create (Me) with Unreferenced;
       Project             : Virtual_File :=
                               Create_From_Dir (Directory, "default.gpr");
       Share_Dir           : constant Virtual_File :=
@@ -381,7 +382,6 @@ package body GPS.Kernel.Project is
       pragma Unreferenced (Ignore);
 
    begin
-      Increase_Indent (Me, "Load_Default_Project");
       --  Save all open children, and close everything. A new desktop will be
       --  open in the end anyway
 
@@ -419,8 +419,6 @@ package body GPS.Kernel.Project is
          Close_All_Children (Kernel);
          Ignore := Load_Desktop (Kernel);
       end if;
-
-      Decrease_Indent (Me);
    end Load_Default_Project;
 
    ------------------------
@@ -508,6 +506,9 @@ package body GPS.Kernel.Project is
       Is_Default   : Boolean := False;
       Keep_Desktop : Boolean := False)
    is
+      Block_Me : constant Block_Trace_Handle :=
+         Create (Me, (if Active (Me) then Project.Display_Full_Name else ""))
+         with Unreferenced;
 
       procedure Report_Error (S : String);
       --  Output error messages from the project parser to the console
@@ -536,8 +537,6 @@ package body GPS.Kernel.Project is
       Previous_Project    : Virtual_File;
 
    begin
-      Increase_Indent (Me, "Load_Project " & Project.Display_Full_Name);
-
       Remove_Category
         (Get_Messages_Container (Kernel),
          Category => Location_Category,
@@ -565,7 +564,6 @@ package body GPS.Kernel.Project is
       if not No_Save
         and then not Save_MDI_Children (Kernel, Force => False)
       then
-         Decrease_Indent (Me);
          return;
       end if;
 
@@ -616,7 +614,6 @@ package body GPS.Kernel.Project is
                Project_Changing_Hook.Run (Kernel, Previous_Project);
 
                Ignore := Load_Desktop (Kernel);
-               Decrease_Indent (Me);
                return;
             end if;
 
@@ -726,7 +723,6 @@ package body GPS.Kernel.Project is
 
          Xref.Project_Changed (Kernel.Databases);
       end if;
-      Decrease_Indent (Me);
    end Load_Project;
 
    -----------------

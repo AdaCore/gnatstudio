@@ -896,9 +896,9 @@ package body Src_Editor_Box is
 
       --  Start of processing for Append_To_Dispatching_Menu
 
+      Block_Me : constant Block_Trace_Handle := Create (Me, Default_Title)
+         with Unreferenced;
    begin
-      Increase_Indent (Me, "Computing Dispatch_Submenu: " & Default_Title);
-
       Xref.For_Each_Dispatching_Call
         (Ref       => Get_Closest_Ref (Context),
          On_Callee => On_Callee'Access,
@@ -931,8 +931,6 @@ package body Src_Editor_Box is
          end;
          Add (Menu, Item);
       end if;
-
-      Decrease_Indent (Me, "Done computing Dispatch_Declaration_Submenu");
    end Append_To_Dispatching_Menu;
 
    --------------------

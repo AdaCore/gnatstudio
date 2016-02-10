@@ -3030,6 +3030,8 @@ package body GPS.Kernel.Modules.UI is
      (Kernel  : not null access Kernel_Handle_Record'Class)
      return Gtk_Menu_Bar
    is
+      Block_Me : constant Block_Trace_Handle := Create (Me) with Unreferenced;
+
       procedure Process_Menu
         (Parent      : not null access Gtk_Menu_Shell_Record'Class;
          M           : Gmenu;
@@ -3150,8 +3152,6 @@ package body GPS.Kernel.Modules.UI is
 
       Menubar : Gtk_Menu_Bar;
    begin
-      Increase_Indent (Me, "Menubar From model");
-
       Gtk_New (Menubar);
 
       for Idx in 0 .. Globals.Menu_Model.Get_N_Items - 1 loop
@@ -3159,7 +3159,6 @@ package body GPS.Kernel.Modules.UI is
            (Menubar, Globals.Menu_Model, Idx, Null_Unbounded_String);
       end loop;
 
-      Decrease_Indent (Me);
       return Menubar;
    end Create_Menubar_From_Model;
 

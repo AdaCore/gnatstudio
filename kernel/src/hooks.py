@@ -1156,9 +1156,6 @@ package body GPS.Kernel.Hooks is
                      (F.all).Execute (Kernel%(plist)s);
                begin
                   if Tmp /= %(returndefault)s then
-                     if Active (Me) then
-                        Decrease_Indent (Me);
-                     end if;
                      return%(tmp_return)s;
                   end if;
                end;''' % subst
@@ -1168,10 +1165,7 @@ package body GPS.Kernel.Hooks is
         if t.returns_run:
             subst['returntype'] = types[t.returns_run].ada
             subst['run_proc_or_func'] = 'function'
-            subst['run_exit'] = '''
-      if Active (Me) then
-         Decrease_Indent (Me);
-      end if;'''
+            subst['run_exit'] = ''
             subst['returns_run'] = ' return %s' % types[t.returns_run].ada
             subst['returns_run_type'] = types[t.returns_run].ada
             subst['run_body'] = '''
@@ -1180,9 +1174,6 @@ package body GPS.Kernel.Hooks is
                   begin
                      Free (Data);
                      if Tmp /= %(returndefault)s then
-                        if Active (Me) then
-                           Decrease_Indent (Me);
-                        end if;
                         return Tmp;
                      end if;
                   end;''' % subst
@@ -1197,10 +1188,7 @@ package body GPS.Kernel.Hooks is
         else:
             subst['run_proc_or_func'] = 'procedure'
             subst['returns_run'] = ''
-            subst['run_exit'] = '''
-      if Active (Me) then
-         Decrease_Indent (Me);
-      end if;'''
+            subst['run_exit'] = ''
 
             if t.returns is None:
                 subst['returns_body'] = ''
@@ -1222,9 +1210,6 @@ package body GPS.Kernel.Hooks is
                          begin
                             Free (Data);
                             if Tmp /= %(returndefault)s then
-                               if Active (Me) then
-                                  Decrease_Indent (Me);
-                               end if;
                                return;
                             end if;
                          end;''' % subst
@@ -1293,15 +1278,13 @@ package body GPS.Kernel.Hooks is
        Kernel : not null access Kernel_Handle_Record'Class%(params)s)%(returns_run)s
    is
       use Hook_Func_Lists;
+      Block_Me : constant Block_Trace_Handle :=
+         Create (Me, (if Active (Me) then Name (Self) else ""));
 
       List : array (1 .. Natural (Self.Funcs.Length)) of
         access Hook_Function'Class;
       Last : Natural := 0;
    begin
-      if Active (Me) then
-         Increase_Indent (Me, "Run " & Name (Self));
-      end if;
-
       --  One of the issues here is that running a hook could add or remove
       --  a function from Self.Funcs. We use an explicit copy to compensate
 

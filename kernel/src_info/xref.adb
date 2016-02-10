@@ -813,6 +813,12 @@ package body Xref is
      (Entity : General_Entity;
       After  : General_Location := No_Location) return General_Location
    is
+      Block_Me : constant Block_Trace_Handle := Create
+         (Me,
+          (if Active (Me)
+           then Get_Name (Entity) & " fuzzy=" & Is_Fuzzy (Entity)'Img
+           else "")) with Unreferenced;
+
       No_Location_If_First : constant Boolean := False;
 
       function Extract_Next_By_Heuristics return General_Location;
@@ -936,12 +942,6 @@ package body Xref is
       Decl_Loc : constant General_Location := Get_Declaration (Entity).Loc;
 
    begin
-      if Active (Me) then
-         Increase_Indent (Me, "Get_Body of "
-                          & Get_Name (Entity)
-                          & " fuzzy=" & Is_Fuzzy (Entity)'Img);
-      end if;
-
       if After = No_Location
         or else After = Decl_Loc
       then
@@ -980,9 +980,6 @@ package body Xref is
       end if;
 
       if Candidate /= No_Location then
-         if Active (Me) then
-            Decrease_Indent (Me);
-         end if;
          return Candidate;
       end if;
 
@@ -1029,10 +1026,6 @@ package body Xref is
                Candidate := First;
             end if;
          end;
-      end if;
-
-      if Active (Me) then
-         Decrease_Indent (Me);
       end if;
 
       return Candidate;
@@ -1617,20 +1610,18 @@ package body Xref is
       Prefix     : String;
       Is_Partial : Boolean := True) return Entities_In_Project_Cursor
    is
+      Block_Me : constant Block_Trace_Handle := Create
+         (Me, (if Active (Me)
+                 then " prefix=" & Prefix & " partial=" & Is_Partial'Img
+                 else ""))
+         with Unreferenced;
       Result : Entities_In_Project_Cursor;
    begin
       Result.Db := General_Xref_Database (Self);
-      if Active (Me) then
-         Increase_Indent (Me, "All_Entities from Prefix '" & Prefix
-                          & "' partial=" & Is_Partial'Img);
-      end if;
-
       Self.Xref.From_Prefix
         (Prefix     => Prefix,
          Is_Partial => Is_Partial,
          Cursor     => Result.Iter);
-
-      Decrease_Indent (Me);
       return Result;
    end All_Entities_From_Prefix;
 
@@ -2515,21 +2506,14 @@ package body Xref is
    overriding function Literals
      (Entity : General_Entity) return Entity_Array
    is
+      Block_Me : constant Block_Trace_Handle := Create
+         (Me, (if Active (Me) then Get_Name (Entity) else ""))
+         with Unreferenced;
       Arr  : Entity_Lists.List;
       Curs : Entities_Cursor;
    begin
-      if Active (Me) then
-         Increase_Indent
-           (Me, "Retrieving literals of " & Get_Name (Entity));
-      end if;
-
       Entity.Db.Xref.Literals (Entity.Entity, Cursor => Curs);
       Fill_Entity_Array (Entity.Db, Curs, Arr);
-
-      if Active (Me) then
-         Decrease_Indent (Me);
-      end if;
-
       return To_Entity_Array (Arr);
    end Literals;
 
