@@ -25,9 +25,9 @@ New features in GPS 17.0 / GNATbench 17.0
 
 NF-170-P204-043 GB: add template code assist (2016-02-09)
 
-  It is now possible to add Ada code templates by pressing content assist hot key
-  (Ctrl+Space). Use Tab key to edit the next template variable. Press Enter to
-  finish inserting the template and go to ${cursor} position.
+  It is now possible to add Ada code templates by pressing content assist hot
+  key (Ctrl+Space). Use Tab key to edit the next template variable. Press
+  Enter to finish inserting the template and go to ${cursor} position.
 
 NF-170-P122-059 GPS: rename build targets from the GUI (2016-01-25)
 
@@ -115,6 +115,19 @@ NF-170-OA29-048 GPS: collapse all project nodes in Project view (2015-11-02)
   A new button was added to the local toolbar of the Project view, to
   collapse all project nodes. This is a way to quickly cleanup the display
   after using "Locate in Project View" for a while.
+
+NF-170-O925-069 GPS: New GUI for the preferences dialog (2016-02-10)
+
+  The GPS preferences dialog has been completely reworked.
+  A new look-and-feel has been introduced, gathering the preferences
+  in groups and with the documentation being direclty displayed under
+  each preference.
+  The user is now able to search among preferences using the omnisearch
+  bar or the preferences dialog local search bar.
+  The color theme picker and the key shortcuts and plugins editors are
+  now directly accessible from the preferences dialog.
+  GPS hidden preferences can now be displayed and edited by activating the
+  "Show advanced preferences" setting from the dialog's local menu.
 
 NF-170-O807-036 GPS: Review multiple CodePeer messages at once (2016-02-01)
 
