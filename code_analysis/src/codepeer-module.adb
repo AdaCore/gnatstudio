@@ -344,7 +344,7 @@ package body CodePeer.Module is
                     File,
                     Object.Line,
                     GNATCOLL.Xref.Visible_Column (Object.Column),
-                    Object.Name.all & " race condition",
+                    To_String (Object.Name) & " race condition",
                     0,
                     Race_Message_Flags,
                     True));
@@ -364,9 +364,11 @@ package body CodePeer.Module is
                        Basic_Types.Visible_Column_Type (Object_Access.Column),
                        (case Object_Access.Kind is
                            when Read =>
-                              "read by " & Entry_Point.Entry_Point.Name.all,
+                              "read by "
+                              & To_String (Entry_Point.Entry_Point.Name),
                            when Update =>
-                              "update by " & Entry_Point.Entry_Point.Name.all),
+                              "update by "
+                              & To_String (Entry_Point.Entry_Point.Name)),
                        Race_Message_Flags));
             end loop;
          end loop;
@@ -1511,7 +1513,7 @@ package body CodePeer.Module is
                         Append (Aux, ", ");
                      end if;
 
-                     Append (Aux, Check.Name.all);
+                     Append (Aux, Check.Name);
                      Append (Aux, CWE_Image (Check));
                   end loop;
 
@@ -1599,22 +1601,22 @@ package body CodePeer.Module is
                end CWE_Image;
 
             begin
-               if Message.Text'Length = 0
-                 or else Message.Text (Message.Text'First) = ':'
+               if Length (Message.Text) = 0
+                 or else Element (Message.Text, 1) = ':'
                then
                   return
                     Ranking_Image (Message) & ": "
-                    & Message.Category.Name.all
+                    & To_String (Message.Category.Name)
                     & Checks_Image
                     & CWE_Image (Message.Category)
-                    & Message.Text.all;
+                    & To_String (Message.Text);
                else
                   return
                     Ranking_Image (Message) & ": "
-                    & Message.Category.Name.all
+                    & To_String (Message.Category.Name)
                     & Checks_Image
                     & CWE_Image (Message.Category) & " "
-                    & Message.Text.all;
+                    & To_String (Message.Text);
                end if;
             end Image;
 

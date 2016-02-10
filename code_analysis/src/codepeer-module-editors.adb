@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
@@ -222,7 +223,8 @@ package body CodePeer.Module.Editors is
             if Annotation.Lifeage in Added .. Unchanged then
                Buffer.Add_Special_Line
                  (Start_Line => Subprogram_Node.Line,
-                  Text       => Indent & "--    " & Annotation.Text.all,
+                  Text       =>
+                    Indent & "--    " & To_String (Annotation.Text),
                   Style      => Module.Annotations_Style);
                Data.Special_Lines := Data.Special_Lines + 1;
             end if;
@@ -243,7 +245,7 @@ package body CodePeer.Module.Editors is
          begin
             Buffer.Add_Special_Line
               (Start_Line => Subprogram_Node.Line,
-               Text       => Indent & "--  " & Key.Text.all & ":",
+               Text       => Indent & "--  " & To_String (Key.Text) & ":",
                Style      => Module.Annotations_Style);
             Data.Special_Lines := Data.Special_Lines + 1;
 

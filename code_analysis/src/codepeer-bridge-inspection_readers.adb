@@ -15,10 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with GNAT.Strings;
+
 with GNATCOLL.Projects;
 with GNATCOLL.Utils;
-with GNATCOLL.VFS;       use GNATCOLL.VFS;
-with GPS.Kernel.Project; use GPS.Kernel.Project;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with GPS.Kernel.Project;    use GPS.Kernel.Project;
 
 with CodePeer.Module;
 
@@ -95,7 +98,7 @@ package body CodePeer.Bridge.Inspection_Readers is
          CodePeer.Project_Data'Class
            (Self.Root_Inspection.all).Object_Races.Append (Self.Object_Race);
          Self.Object_Race :=
-           (Name         => null,
+           (Name         => Null_Unbounded_String,
             Entry_Points => Entry_Point_Object_Access_Vectors.Empty_Vector,
             File         => GNATCOLL.VFS.No_File,
             Line         => 0,
@@ -191,7 +194,7 @@ package body CodePeer.Bridge.Inspection_Readers is
    overriding procedure Start_Document (Self : in out Reader) is
    begin
       Self.Object_Race :=
-        (Name         => null,
+        (Name         => Null_Unbounded_String,
          Entry_Points => Entry_Point_Object_Access_Vectors.Empty_Vector,
          File         => GNATCOLL.VFS.No_File,
          Line         => 0,
@@ -484,7 +487,7 @@ package body CodePeer.Bridge.Inspection_Readers is
       elsif Qname = Message_Category_Tag then
          Message_Category :=
            new CodePeer.Message_Category'
-             (Name => new String'(Attrs.Get_Value ("name")),
+             (Name => To_Unbounded_String (Attrs.Get_Value ("name")),
               CWEs => <>);
 
          if Attrs.Get_Index (Is_Check_Attribute) /= -1
@@ -511,7 +514,7 @@ package body CodePeer.Bridge.Inspection_Readers is
          Annotation_Category :=
            new CodePeer.Annotation_Category'
              (Order => Natural'Value (Attrs.Get_Value ("identifier")),
-              Text  => new String'(Attrs.Get_Value ("name")),
+              Text  => To_Unbounded_String (Attrs.Get_Value ("name")),
               Vn    => Get_Vn);
          CodePeer.Project_Data'Class
            (Self.Root_Inspection.all).Annotation_Categories.Insert
@@ -590,7 +593,7 @@ package body CodePeer.Bridge.Inspection_Readers is
               Get_Rank,
               Unclassified,
               True,
-              new String'(Attrs.Get_Value ("text")),
+              To_Unbounded_String (Attrs.Get_Value ("text")),
               False,
               CodePeer.Audit_V3_Vectors.Empty_Vector,
               GNATCOLL.VFS.No_File,
@@ -685,13 +688,12 @@ package body CodePeer.Bridge.Inspection_Readers is
 
          Self.Subprogram_Data.Annotations.Element (Annotation_Category).Append
            (new CodePeer.Annotation'
-              (Lifeage,
-               new String'(Attrs.Get_Value ("text"))));
+              (Lifeage, To_Unbounded_String (Attrs.Get_Value ("text"))));
 
       elsif Qname = Entry_Point_Tag then
          Entry_Point :=
            new Entry_Point_Information'
-             (Name   => new String'(Attrs.Get_Value (Name_Attribute)),
+             (Name   => To_Unbounded_String (Attrs.Get_Value (Name_Attribute)),
               File   =>
                 GPS.Kernel.Create
                   (+Attrs.Get_Value (File_Attribute), Self.Kernel),
@@ -706,7 +708,9 @@ package body CodePeer.Bridge.Inspection_Readers is
          if Self.Race_Category = null then
             Self.Race_Category :=
               new CodePeer.Message_Category'
-                (Name => new String'(CodePeer.Module.Race_Condition_Category),
+                (Name =>
+                   To_Unbounded_String
+                     (CodePeer.Module.Race_Condition_Category),
                  CWEs => CodePeer.CWE_Category_Sets.Empty_Set);
             CodePeer.Project_Data'Class
               (Self.Root_Inspection.all).Warning_Subcategories.Include
@@ -714,7 +718,7 @@ package body CodePeer.Bridge.Inspection_Readers is
          end if;
 
          Self.Object_Race.Name :=
-           new String'(Attrs.Get_Value (Name_Attribute));
+           To_Unbounded_String (Attrs.Get_Value (Name_Attribute));
          Self.Object_Race.File := Get_Optional_File;
          Self.Object_Race.Line := Get_Optional_Line;
          Self.Object_Race.Column := Get_Optional_Column;

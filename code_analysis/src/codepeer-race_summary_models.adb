@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with System.Address_To_Access_Conversions;
 
@@ -179,7 +180,7 @@ package body CodePeer.Race_Summary_Models is
             when Object_Name_Column =>
                Glib.Values.Init (Value, Glib.GType_String);
                Glib.Values.Set_String
-                 (Value, Self.Data.Element (Index).Name.all);
+                 (Value, To_String (Self.Data.Element (Index).Name));
 
             when Message_Column =>
                Glib.Values.Init (Value, Glib.GType_Pointer);

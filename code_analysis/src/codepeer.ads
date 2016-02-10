@@ -20,7 +20,6 @@ with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
-with GNAT.Strings;
 
 with GNATCOLL.VFS;
 with GPS.Editors;
@@ -72,7 +71,7 @@ package CodePeer is
      (CWE_Category_Access, Less);
 
    type Message_Category is record
-      Name : GNAT.Strings.String_Access;
+      Name : Ada.Strings.Unbounded.Unbounded_String;
       CWEs : CWE_Category_Sets.Set;
    end record;
 
@@ -119,7 +118,7 @@ package CodePeer is
       Status           : Audit_Status_Kinds;
       Status_Editable  : Boolean;
       --  True means that audit status can be changed by review.
-      Text             : GNAT.Strings.String_Access;
+      Text             : Ada.Strings.Unbounded.Unbounded_String;
       Audit_Loaded     : Boolean;
       Audit_V3         : Audit_V3_Vectors.Vector;
       From_File        : GNATCOLL.VFS.Virtual_File;
@@ -145,7 +144,7 @@ package CodePeer is
 
    type Annotation_Category is record
       Order : Positive;
-      Text  : GNAT.Strings.String_Access;
+      Text  : Ada.Strings.Unbounded.Unbounded_String;
       Vn    : Natural;
    end record;
 
@@ -157,7 +156,7 @@ package CodePeer is
 
    type Annotation is record
       Lifeage : Lifeage_Kinds;
-      Text    : GNAT.Strings.String_Access;
+      Text    : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
    type Annotation_Access is access all Annotation;
@@ -191,7 +190,7 @@ package CodePeer is
      new Ada.Containers.Vectors (Positive, Object_Access_Information);
 
    type Entry_Point_Information is record
-      Name   : GNAT.Strings.String_Access;
+      Name   : Ada.Strings.Unbounded.Unbounded_String;
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Positive;
       Column : Positive;
@@ -216,7 +215,7 @@ package CodePeer is
        (Positive, Entry_Point_Object_Access_Information);
 
    type Object_Race_Information is record
-      Name         : GNAT.Strings.String_Access;
+      Name         : Ada.Strings.Unbounded.Unbounded_String;
       Entry_Points : Entry_Point_Object_Access_Vectors.Vector;
       File         : GNATCOLL.VFS.Virtual_File;
       Line         : Natural;

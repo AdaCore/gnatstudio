@@ -15,9 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with System;
-with Gtk.Tree_Model;         use Gtk.Tree_Model;
+
+with Gtk.Tree_Model;        use Gtk.Tree_Model;
 with Gtk.Tree_Model.Utils;
 
 with GPS.Editors.GtkAda;
@@ -158,7 +160,8 @@ package body CodePeer.Race_Details_Models is
             when Entry_Point_Name_Column =>
                Glib.Values.Init (Value, Glib.GType_String);
                Glib.Values.Set_String
-                 (Value, Self.Data.Element (Index).Entry_Point.Name.all);
+                 (Value,
+                  To_String (Self.Data.Element (Index).Entry_Point.Name));
 
             when Access_Kind_Column =>
                Glib.Values.Init (Value, Glib.GType_String);

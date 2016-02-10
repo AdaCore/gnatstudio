@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Hash;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded.Hash;
 with Ada.Unchecked_Deallocation;
 
 package body CodePeer is
@@ -36,9 +37,6 @@ package body CodePeer is
         (Position : Entry_Point_Information_Sets.Cursor);
       --  Deallocates entry point information
 
-      procedure Process_Object_Race (Position : Object_Race_Vectors.Cursor);
-      --  Deallocates object race information
-
       ---------------------------------
       -- Process_Annotation_Category --
       ---------------------------------
@@ -53,7 +51,6 @@ package body CodePeer is
            (Annotation_Category, Annotation_Category_Access);
 
       begin
-         GNAT.Strings.Free (Element.Text);
          Free (Element);
       end Process_Annotation_Category;
 
@@ -71,7 +68,6 @@ package body CodePeer is
            := Entry_Point_Information_Sets.Element (Position);
 
       begin
-         GNAT.Strings.Free (Element.Name);
          Free (Element);
       end Process_Entry_Point;
 
@@ -89,27 +85,14 @@ package body CodePeer is
            (Message_Category, Message_Category_Access);
 
       begin
-         GNAT.Strings.Free (Element.Name);
          Free (Element);
       end Process_Message_Category;
-
-      -------------------------
-      -- Process_Object_Race --
-      -------------------------
-
-      procedure Process_Object_Race (Position : Object_Race_Vectors.Cursor) is
-         Element : Object_Race_Information :=
-           Object_Race_Vectors.Element (Position);
-
-      begin
-         GNAT.Strings.Free (Element.Name);
-      end Process_Object_Race;
 
    begin
       Self.Message_Categories.Iterate (Process_Message_Category'Access);
       Self.Annotation_Categories.Iterate (Process_Annotation_Category'Access);
       Self.Entry_Points.Iterate (Process_Entry_Point'Access);
-      Self.Object_Races.Iterate (Process_Object_Race'Access);
+      Self.Object_Races.Clear;
    end Finalize;
 
    --------------
@@ -135,7 +118,6 @@ package body CodePeer is
            (Annotation, Annotation_Access);
 
       begin
-         GNAT.Strings.Free (Element.Text);
          Free (Element);
       end Process_Annotation;
 
@@ -171,8 +153,6 @@ package body CodePeer is
          Element : Message_Access := Message_Vectors.Element (Position);
 
       begin
-         GNAT.Strings.Free (Element.Text);
-
          for J of Element.Audit_V3 loop
             Free (J);
          end loop;
@@ -206,7 +186,7 @@ package body CodePeer is
 
    function Get_Name (Self : Message_Category) return String is
    begin
-      return Self.Name.all;
+      return To_String (Self.Name);
    end Get_Name;
 
    -----------------
@@ -235,7 +215,7 @@ package body CodePeer is
    function Hash
      (Item : Entry_Point_Information_Access) return Ada.Containers.Hash_Type is
    begin
-      return Ada.Strings.Hash (Item.Name.all);
+      return Ada.Strings.Unbounded.Hash (Item.Name);
    end Hash;
 
    ----------
@@ -268,7 +248,7 @@ package body CodePeer is
    function Less
      (Left, Right : CodePeer.Message_Category_Access) return Boolean is
    begin
-      return Left.Name.all < Right.Name.all;
+      return Left.Name < Right.Name;
    end Less;
 
 end CodePeer;
