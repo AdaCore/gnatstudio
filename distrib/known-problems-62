@@ -115,6 +115,15 @@ KP-62-P122-042 GPS: invisible cursor after using incremental search
   Workaround: Switch to a floating GPS windows and back to make cursor
               visible.
 
+KP-62-P122-041 GPS: Outline becomes empty after filtering
+
+  Problem:    Using the filter in the outline could render the outline empty,
+              even after removing the filter.
+
+  Status:     This was fixed in 17.0 on 2016-01-26
+
+  Workaround: Don't use the outline's filter.
+
 KP-62-P121-016 WB: undefined reference to `_Unwind_Resume'
 
   Problem:    When building VxWorks Cert 6.x Real Time Process (RTP)
