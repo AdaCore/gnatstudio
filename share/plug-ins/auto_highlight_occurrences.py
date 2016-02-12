@@ -227,7 +227,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
 
         # Attempt entity highlighting if no word was found.
 
-        if not word and context.entity_name() is not None:
+        if not word and self.highlight_entities and context.entity_name():
             try:
                 entity = context.entity(approximate_search_fallback=False)
             except:
