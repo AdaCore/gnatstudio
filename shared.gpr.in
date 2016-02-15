@@ -40,12 +40,7 @@ project Shared is
       case Build is
          when "Debug" =>
             for Switches ("Ada") use Common &
-              ("-O0", "-gnata",
-
-               --  Temporary, P204-028
-               --  "-gnatVa",
-
-               "-gnatQ", "-gnatygO",
+              ("-O0", "-gnata", "-gnatVa", "-gnatQ", "-gnatygO",
                "-gnatwaCJe", "-gnateE");
             for Switches ("C") use ("-g", "-O1");
 
