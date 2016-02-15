@@ -78,6 +78,20 @@ package body GPS.Kernel.Messages is
    --  Constructs set of actual visibility flags for category or file node and
    --  returns it.
 
+   procedure Decrement_Counters
+     (Message : not null Message_Access;
+      Flags   : Message_Flags);
+   --  Decrement counters of given kinds for category and file of the message.
+   --  Send necessary Message_Removed, Category_Removed and File_Removed
+   --  notifications.
+
+   procedure Increment_Counters
+     (Message                  : not null Message_Access;
+      Flags                    : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean);
+   --  Increments counters of given kinds for category and file of the message.
+   --  Send necessary Message_Added, Category_Added and File_Added nofications.
+
    package Notifiers is
 
       procedure Notify_Listeners_About_Category_Added
@@ -245,6 +259,57 @@ package body GPS.Kernel.Messages is
 
       return To_Address (Result);
    end Create_Messages_Container;
+
+   ------------------------
+   -- Decrement_Counters --
+   ------------------------
+
+   procedure Decrement_Counters
+     (Message : not null Message_Access;
+      Flags   : Message_Flags)
+   is
+      Container          : constant Messages_Container_Access :=
+                             Message.Get_Container;
+      Category_Node      : Node_Access;
+      File_Node          : Node_Access;
+      Old_Category_Flags : Message_Flags;
+      Old_File_Flags     : Message_Flags;
+
+   begin
+      Notifiers.Notify_Listeners_About_Message_Removed
+        (Container, Message, Flags);
+
+      if Message.Level = Primary then
+         File_Node     := Message.Parent;
+         Category_Node := File_Node.Parent;
+
+         Old_Category_Flags := Get_Flags (Category_Node);
+         Old_File_Flags     := Get_Flags (File_Node);
+
+         for Kind in Message_Visibility_Kind loop
+            if Flags (Kind) then
+               Category_Node.Counters (Kind) :=
+                 Category_Node.Counters (Kind) - 1;
+               File_Node.Counters (Kind) :=
+                 File_Node.Counters (Kind) - 1;
+            end if;
+         end loop;
+
+         --  Notify listeners
+
+         Notifiers.Notify_Listeners_About_File_Removed
+           (Container,
+            Category_Node.Name,
+            File_Node.File,
+            Old_File_Flags,
+            Get_Flags (File_Node));
+         Notifiers.Notify_Listeners_About_Category_Removed
+           (Container,
+            Category_Node.Name,
+            Old_Category_Flags,
+            Get_Flags (Category_Node));
+      end if;
+   end Decrement_Counters;
 
    --------------
    -- Finalize --
@@ -713,6 +778,60 @@ package body GPS.Kernel.Messages is
       return Ada.Strings.Fixed.Hash (External_Tag (Item));
    end Hash;
 
+   ------------------------
+   -- Increment_Counters --
+   ------------------------
+
+   procedure Increment_Counters
+     (Message                  : not null Message_Access;
+      Flags                    : Message_Flags;
+      Allow_Auto_Jump_To_First : Boolean)
+   is
+      Container          : constant Messages_Container_Access :=
+                             Message.Get_Container;
+      Category_Node      : Node_Access;
+      File_Node          : Node_Access;
+      Old_Category_Flags : Message_Flags;
+      Old_File_Flags     : Message_Flags;
+
+   begin
+      if Message.Level = Primary then
+         File_Node     := Message.Parent;
+         Category_Node := File_Node.Parent;
+
+         Old_Category_Flags := Get_Flags (Category_Node);
+         Old_File_Flags     := Get_Flags (File_Node);
+
+         --  Update counters.
+
+         for Kind in Message_Visibility_Kind loop
+            if Flags (Kind) then
+               Category_Node.Counters (Kind) :=
+                 Category_Node.Counters (Kind) + 1;
+               File_Node.Counters (Kind) := File_Node.Counters (Kind) + 1;
+            end if;
+         end loop;
+
+         --  Notify listeners
+
+         Notifiers.Notify_Listeners_About_Category_Added
+           (Container,
+            Category_Node.Name,
+            Old_Category_Flags,
+            Get_Flags (Category_Node),
+            Allow_Auto_Jump_To_First);
+         Notifiers.Notify_Listeners_About_File_Added
+           (Container,
+            Category_Node.Name,
+            File_Node.File,
+            Old_File_Flags,
+            Get_Flags (File_Node));
+      end if;
+
+      Notifiers.Notify_Listeners_About_Message_Added
+        (Container, Message, Flags);
+   end Increment_Counters;
+
    ----------------
    -- Initialize --
    ----------------
@@ -737,10 +856,8 @@ package body GPS.Kernel.Messages is
       Category_Position : constant Category_Maps.Cursor :=
                             Container.Category_Map.Find (Category_Name);
       Category_Node     : Node_Access;
-      Category_Flags    : Message_Flags;
       File_Position     : File_Maps.Cursor;
       File_Node         : Node_Access;
-      File_Flags        : Message_Flags;
       Sort_Position     : Sort_Order_Hint_Maps.Cursor;
       Sort_Hint         : Sort_Order_Hint;
 
@@ -810,36 +927,7 @@ package body GPS.Kernel.Messages is
       Self.Parent := File_Node;
       File_Node.Children.Append (Node_Access (Self));
 
-      --  Obtain initial set of flags for category and file nodes.
-
-      Category_Flags := Get_Flags (Category_Node);
-      File_Flags := Get_Flags (File_Node);
-
-      --  Update counters.
-
-      for Kind in Message_Visibility_Kind loop
-         if Self.Flags (Kind) then
-            Category_Node.Counters (Kind) := Category_Node.Counters (Kind) + 1;
-            File_Node.Counters (Kind) := File_Node.Counters (Kind) + 1;
-         end if;
-      end loop;
-
-      --  Notify listeners
-
-      Notifiers.Notify_Listeners_About_Category_Added
-        (Container,
-         Category_Name,
-         Category_Flags,
-         Get_Flags (Category_Node),
-         Allow_Auto_Jump_To_First);
-      Notifiers.Notify_Listeners_About_File_Added
-        (Container,
-         Category_Name,
-         File,
-         File_Flags,
-         Get_Flags (File_Node));
-      Notifiers.Notify_Listeners_About_Message_Added
-        (Container, Self, Self.Flags);
+      Increment_Counters (Self, Self.Flags, Allow_Auto_Jump_To_First);
    end Initialize;
 
    ----------------
@@ -2161,17 +2249,16 @@ package body GPS.Kernel.Messages is
      (Self  : not null access Abstract_Message'Class;
       Flags : Message_Flags)
    is
-      Container : constant Messages_Container_Access := Self.Get_Container;
-      Changed   : constant Message_Flags := Self.Flags xor Flags;
-      Removed   : constant Message_Flags := Self.Flags and Changed;
-      Added     : constant Message_Flags := Flags and Changed;
+      Changed : constant Message_Flags := Self.Flags xor Flags;
+      Removed : constant Message_Flags := Self.Flags and Changed;
+      Added   : constant Message_Flags := Flags and Changed;
 
    begin
-      Notifiers.Notify_Listeners_About_Message_Removed
-        (Container, Self, Removed);
-      Self.Flags := Flags;
-      Notifiers.Notify_Listeners_About_Message_Added
-        (Container, Self, Added);
+      Self.Flags := Self.Flags and not Removed;
+      Decrement_Counters (Self, Removed);
+
+      Self.Flags := Self.Flags or Added;
+      Increment_Counters (Self, Added, False);
    end Set_Flags;
 
    ----------------------
