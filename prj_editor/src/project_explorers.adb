@@ -866,7 +866,7 @@ package body Project_Explorers is
                when Obj_Directory_Node | Lib_Directory_Node =>
                   return Alphabetical;
 
-               when Runtime_Node =>
+               when Runtime_Node | Exec_Directory_Node =>
                   return A_Before_B;
 
                when others =>

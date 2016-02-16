@@ -25,6 +25,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P211-059 GPS: Wrong sort order of directories in Project View
+
+  Problem:    Expanding one project changes order of object and execute
+              directories in another expanded project.
+
+  Status:     This was fixed in 17.0 on 2016-02-16
+
+  Workaround: None.
+
 KP-62-P204-042 GB: "Problem occured" dialog displayed during "Content Assist"
 
   Problem:    Sometimes within AdaCore's ada editor, a "Problem Occurred"
