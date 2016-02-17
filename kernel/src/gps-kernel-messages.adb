@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar;
 with Ada.Containers;                use Ada.Containers;
 with Ada.Strings.Fixed.Hash;        use Ada.Strings, Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;         use Ada.Strings.Unbounded;
@@ -33,6 +34,7 @@ with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Project;            use GPS.Kernel.Project;
 with GPS.Kernel.Style_Manager;      use GPS.Kernel.Style_Manager;
+with GPS.Kernel.Task_Manager;
 with GPS.Intl;                      use GPS.Intl;
 with Projects;                      use Projects;
 with XML_Parsers;                   use XML_Parsers;
@@ -78,6 +80,13 @@ package body GPS.Kernel.Messages is
    --  Constructs set of actual visibility flags for category or file node and
    --  returns it.
 
+   type Filter_Runner_Command
+     (Container : not null access Messages_Container'Class) is
+      new Commands.Root_Command with null record;
+   overriding function Execute
+     (Self : access Filter_Runner_Command) return Commands.Command_Return_Type;
+   --  Execute filters.
+
    procedure Decrement_Counters
      (Message : not null Message_Access;
       Flags   : Message_Flags);
@@ -91,6 +100,18 @@ package body GPS.Kernel.Messages is
       Allow_Auto_Jump_To_First : Boolean);
    --  Increments counters of given kinds for category and file of the message.
    --  Send necessary Message_Added, Category_Added and File_Added nofications.
+
+   procedure Initialize_Internal
+     (Self          : not null access Abstract_Message'Class;
+      Container     : not null Messages_Container_Access;
+      Category      : String;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Weight        : Natural;
+      Actual_Line   : Integer;
+      Actual_Column : Integer);
+   --  Common code to initialize message
 
    package Notifiers is
 
@@ -248,6 +269,10 @@ package body GPS.Kernel.Messages is
       Result : constant Messages_Container_Access :=
                  new Messages_Container (Kernel);
    begin
+      Result.Filter_Command :=
+        new Filter_Runner_Command'
+              (Commands.Root_Command with Container => Result);
+
       GPS.Kernel.Messages.Simple.Register (Result);
       GPS.Kernel.Messages.Hyperlink.Register (Result);
       GPS.Kernel.Messages.Markup.Register (Result);
@@ -259,6 +284,25 @@ package body GPS.Kernel.Messages is
 
       return To_Address (Result);
    end Create_Messages_Container;
+
+   ----------------------
+   -- Criteria_Changed --
+   ----------------------
+
+   procedure Criteria_Changed (Self : in out Abstract_Message_Filter'Class) is
+   begin
+      Self.Container.Messages.Unfilter_All;
+
+      if not Self.Container.Filter_Launched then
+         Self.Container.Filter_Launched := True;
+         GPS.Kernel.Task_Manager.Launch_Background_Command
+           (Kernel          => Self.Container.Kernel,
+            Command         => Self.Container.Filter_Command,
+            Active          => True,
+            Show_Bar        => False,
+            Destroy_On_Exit => False);
+      end if;
+   end Criteria_Changed;
 
    ------------------------
    -- Decrement_Counters --
@@ -364,6 +408,10 @@ package body GPS.Kernel.Messages is
       --  Destroy action item.
 
       Free (Self.Action);
+
+      --  Remove from list of filtered/unfiltered messages.
+
+      Self.Exclude;
    end Finalize;
 
    --------------
@@ -879,9 +927,117 @@ package body GPS.Kernel.Messages is
       Column        : Basic_Types.Visible_Column_Type;
       Weight        : Natural;
       Actual_Line   : Integer;
+      Actual_Column : Integer) is
+   begin
+      Initialize_Internal
+        (Self          => Self,
+         Container     => Container,
+         Category      => Category,
+         File          => File,
+         Line          => Line,
+         Column        => Column,
+         Weight        => Weight,
+         Actual_Line   => Actual_Line,
+         Actual_Column => Actual_Column);
+      Self.Flags := Empty_Message_Flags;
+
+      --  Add message to the list of unfiltered messages and activate filter
+      --  runner.
+
+      Self.Include;
+
+      if not Container.Filter_Launched then
+         Container.Filter_Launched := True;
+         GPS.Kernel.Task_Manager.Launch_Background_Command
+           (Kernel          => Container.Kernel,
+            Command         => Container.Filter_Command,
+            Active          => True,
+            Show_Bar        => False,
+            Destroy_On_Exit => False);
+      end if;
+   end Initialize;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Self          : not null access Abstract_Message'Class;
+      Container     : not null Messages_Container_Access;
+      Category      : String;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Weight        : Natural;
+      Actual_Line   : Integer;
       Actual_Column : Integer;
       Flags         : Message_Flags;
-      Allow_Auto_Jump_To_First : Boolean)
+      Allow_Auto_Jump_To_First : Boolean) is
+   begin
+      Initialize_Internal
+        (Self          => Self,
+         Container     => Container,
+         Category      => Category,
+         File          => File,
+         Line          => Line,
+         Column        => Column,
+         Weight        => Weight,
+         Actual_Line   => Actual_Line,
+         Actual_Column => Actual_Column);
+      Self.Flags := Flags;
+
+      Increment_Counters (Self, Self.Flags, Allow_Auto_Jump_To_First);
+   end Initialize;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Self          : not null access Abstract_Message'Class;
+      Parent        : not null Message_Access;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Actual_Line   : Integer;
+      Actual_Column : Integer;
+      Flags         : Message_Flags) is
+   begin
+      Self.Corresponding_File := File;
+      Self.Line               := Line;
+      Self.Column             := Column;
+      Self.Flags              := Flags;
+
+      if File /= No_File then
+         Self.Mark :=
+           new Editor_Mark'Class'
+             (Parent.Get_Container.Kernel.Get_Buffer_Factory.New_Mark
+                  (File, Actual_Line, Actual_Column));
+      end if;
+
+      Self.Parent := Node_Access (Parent);
+      Parent.Children.Append (Node_Access (Self));
+
+      --  Notify listeners
+
+      Notifiers.Notify_Listeners_About_Message_Added
+        (Parent.Get_Container, Self, Self.Get_Flags);
+   end Initialize;
+
+   -------------------------
+   -- Initialize_Internal --
+   -------------------------
+
+   procedure Initialize_Internal
+     (Self          : not null access Abstract_Message'Class;
+      Container     : not null Messages_Container_Access;
+      Category      : String;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Weight        : Natural;
+      Actual_Line   : Integer;
+      Actual_Column : Integer)
    is
       pragma Assert (Category /= "");
 
@@ -896,10 +1052,9 @@ package body GPS.Kernel.Messages is
       Sort_Hint         : Sort_Order_Hint;
 
    begin
-      Self.Line := Line;
+      Self.Line   := Line;
       Self.Column := Column;
       Self.Weight := Weight;
-      Self.Flags  := Flags;
 
       if File /= No_File then
          Self.Mark :=
@@ -960,44 +1115,7 @@ package body GPS.Kernel.Messages is
 
       Self.Parent := File_Node;
       File_Node.Children.Append (Node_Access (Self));
-
-      Increment_Counters (Self, Self.Flags, Allow_Auto_Jump_To_First);
-   end Initialize;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Self          : not null access Abstract_Message'Class;
-      Parent        : not null Message_Access;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Line          : Natural;
-      Column        : Basic_Types.Visible_Column_Type;
-      Actual_Line   : Integer;
-      Actual_Column : Integer;
-      Flags         : Message_Flags) is
-   begin
-      Self.Corresponding_File := File;
-      Self.Line := Line;
-      Self.Column := Column;
-      Self.Flags := Flags;
-
-      if File /= No_File then
-         Self.Mark :=
-           new Editor_Mark'Class'
-             (Parent.Get_Container.Kernel.Get_Buffer_Factory.New_Mark
-                  (File, Actual_Line, Actual_Column));
-      end if;
-
-      Self.Parent := Node_Access (Parent);
-      Parent.Children.Append (Node_Access (Self));
-
-      --  Notify listeners
-
-      Notifiers.Notify_Listeners_About_Message_Added
-        (Parent.Get_Container, Self, Self.Get_Flags);
-   end Initialize;
+   end Initialize_Internal;
 
    ----------
    -- Load --
@@ -1251,6 +1369,99 @@ package body GPS.Kernel.Messages is
    begin
       return True;
    end Message_Can_Be_Destroyed;
+
+   -------------------------
+   -- Message_Collections --
+   -------------------------
+
+   package body Message_Collections is
+
+      -------------
+      -- Exclude --
+      -------------
+
+      procedure Exclude (Self : not null access Abstract_Message_Node'Class) is
+         Container : constant Messages_Container_Access :=
+                       Message_Access (Self).Get_Container;
+
+      begin
+         if Self.Index /= 0 then
+            Container.Messages.Messages.Replace_Element (Self.Index, null);
+            Container.Messages.Unused := Container.Messages.Unused + 1;
+         end if;
+
+         if Natural (Container.Messages.Messages.Length)
+              < Container.Messages.Unused * 2
+         then
+            --  Remove empty elements from the vector
+
+            for J in reverse Container.Messages.Messages.First_Index
+              .. Container.Messages.Messages.Last_Index
+            loop
+               if Container.Messages.Messages (J) = null then
+                  Container.Messages.Messages.Delete (J);
+               end if;
+            end loop;
+
+            --  Update indicies of messages
+
+            for J in Container.Messages.Messages.First_Index
+              .. Container.Messages.Messages.Last_Index
+            loop
+               Container.Messages.Messages (J).Index := J;
+            end loop;
+         end if;
+      end Exclude;
+
+      ----------------------
+      -- Get_Uunprocessed --
+      ----------------------
+
+      function Get_Unprocessed
+        (Self : in out Container'Class) return Message_Access is
+      begin
+         return Message : constant Message_Access :=
+           Message_Access (Self.Messages.Element (Self.Unprocessed))
+         do
+            Self.Unprocessed := Self.Unprocessed + 1;
+         end return;
+      end Get_Unprocessed;
+
+      ---------------------
+      -- Has_Unprocessed --
+      ---------------------
+
+      function Has_Unprocessed
+        (Self : in out Container'Class) return Boolean is
+      begin
+         while Self.Unprocessed <= Self.Messages.Last_Index
+           and then Self.Messages (Self.Unprocessed) = null
+         loop
+            Self.Unprocessed := Self.Unprocessed + 1;
+         end loop;
+
+         return Self.Unprocessed <= Self.Messages.Last_Index;
+      end Has_Unprocessed;
+
+      -------------
+      -- Include --
+      -------------
+
+      procedure Include (Self : not null access Abstract_Message_Node'Class) is
+      begin
+         Get_Container (Message_Access (Self)).Messages.Messages.Append (Self);
+      end Include;
+
+      ------------------
+      -- Unfilter_All --
+      ------------------
+
+      procedure Unfilter_All (Self : in out Container'Class) is
+      begin
+         Self.Unprocessed := Self.Messages.First_Index;
+      end Unfilter_All;
+
+   end Message_Collections;
 
    ---------------
    -- Notifiers --
@@ -1550,6 +1761,57 @@ package body GPS.Kernel.Messages is
    -- Execute --
    -------------
 
+   overriding function Execute
+     (Self : access Filter_Runner_Command) return Commands.Command_Return_Type
+   is
+      use type Ada.Calendar.Time;
+
+      Time_Slice : constant Duration := 0.05;
+      --  Time slice for filtering. If filtering is not completed during this
+      --  slice it will be postponed to next run of the command by the task
+      --  manager.
+
+      Decision : Filter_Result;
+      Message  : Message_Access;
+      Start    : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+
+   begin
+      while Self.Container.Messages.Has_Unprocessed loop
+         Message := Self.Container.Messages.Get_Unprocessed;
+
+         for Filter of Self.Container.Filters loop
+            begin
+               Decision := Filter.Apply (Message.all);
+
+               if not Decision.Non_Applicable then
+                  Message.Set_Flags (Decision.Flags);
+
+                  exit;
+               end if;
+
+            exception
+               when E : others =>
+                  Trace (Me, E);
+            end;
+         end loop;
+
+         exit when Ada.Calendar.Clock - Start > Time_Slice;
+      end loop;
+
+      if Self.Container.Messages.Has_Unprocessed then
+         return Commands.Execute_Again;
+
+      else
+         Self.Container.Filter_Launched := False;
+
+         return Commands.Success;
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
    overriding procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access Kernel_Handle_Record'Class)
@@ -1642,6 +1904,18 @@ package body GPS.Kernel.Messages is
          end if;
       end loop;
    end Execute;
+
+   ---------------------
+   -- Register_Filter --
+   ---------------------
+
+   procedure Register_Filter
+     (Self   : not null access Messages_Container;
+      Filter : not null Message_Filter_Access) is
+   begin
+      Filter.Container := Messages_Container_Access (Self);
+      Self.Filters.Append (Filter);
+   end Register_Filter;
 
    -----------------------
    -- Register_Listener --

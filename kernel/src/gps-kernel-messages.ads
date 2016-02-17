@@ -234,6 +234,22 @@ package GPS.Kernel.Messages is
       Column        : Basic_Types.Visible_Column_Type;
       Weight        : Natural;
       Actual_Line   : Integer;
+      Actual_Column : Integer);
+   --  Initialize message and connect it to container. Visibility of the
+   --  message will be computed later by applying filter.
+   --  Weight is used for sorting in Locations view (when corresponding sorting
+   --  mode is active). Actual_Line and Actual_Column is used to create
+   --  editor's mark to goto location of the message.
+
+   procedure Initialize
+     (Self          : not null access Abstract_Message'Class;
+      Container     : not null Messages_Container_Access;
+      Category      : String;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Line          : Natural;
+      Column        : Basic_Types.Visible_Column_Type;
+      Weight        : Natural;
+      Actual_Line   : Integer;
       Actual_Column : Integer;
       Flags         : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean);
@@ -241,7 +257,9 @@ package GPS.Kernel.Messages is
    --  If Allow_Auto_Jump_To_First is True and the user preference is also true
    --  then the locations window will automatically jump to the first message
    --  when the category is created.
-   --  ??? Need doc for Weight, Actual_Line, Actual_Column, not trivial
+   --  Weight is used for sorting in Locations view (when corresponding sorting
+   --  mode is active). Actual_Line and Actual_Column is used to create
+   --  editor's mark to goto location of the message.
 
    procedure Initialize
      (Self          : not null access Abstract_Message'Class;
@@ -258,6 +276,39 @@ package GPS.Kernel.Messages is
    --  Called to release resources occupied by the message before memory for
    --  message will be released. Derived types can override it to do additional
    --  actions, but must call this subprogram always to avoid memory leaks.
+
+   -----------------------------
+   -- Abstract_Message_Filter --
+   -----------------------------
+
+   type Filter_Result (Non_Applicable : Boolean := True) is record
+      case Non_Applicable is
+         when True =>
+            null;
+
+         when False  =>
+            Flags : Message_Flags;
+      end case;
+   end record;
+
+   type Abstract_Message_Filter is abstract tagged limited private;
+
+   type Message_Filter_Access is access all Abstract_Message_Filter'Class;
+
+   function Apply
+     (Self    : in out Abstract_Message_Filter;
+      Message : Abstract_Message'Class)
+      return Filter_Result is abstract;
+   --  Called to obtain status of message. Filter's implementation can return
+   --  (Non_Applicable => True) to report that it doesn't make decision. In
+   --  this case other registered filters will be used. Once filter returns
+   --  new visibility status of the message it is used to modify message and
+   --  to notify about changes. No other filters are used for this message.
+
+   procedure Criteria_Changed (Self : in out Abstract_Message_Filter'Class);
+   --  Must be called when filter's criteria has been changed. Call of this
+   --  subprogram invalidates flags of all messages and starts or restarts
+   --  (when filtering is in progress) refiltering.
 
    -------------------
    -- Abstract_Note --
@@ -350,6 +401,11 @@ package GPS.Kernel.Messages is
      (Self     : not null access Messages_Container;
       Listener : not null Listener_Access);
    --  Unregister listener. It do nothing when listener is not registered.
+
+   procedure Register_Filter
+     (Self   : not null access Messages_Container;
+      Filter : not null Message_Filter_Access);
+   --  Register filter.
 
    ----------------------
    -- Message Listener --
@@ -520,8 +576,60 @@ private
       end case;
    end record;
 
+   package Message_Collections is
+
+      --  This package provides implementation of lists for filtered/unfiltered
+      --  messages.
+      --  Note, order of messages in lists (filtered+unfiltered) must be
+      --  preserved by all operations. It is used by Locations view's
+      --  'historical' sorting mode.
+
+      type Container is tagged limited private;
+
+      type Abstract_Message_Node is
+        abstract new Node_Record (Node_Message) with private;
+
+      procedure Unfilter_All (Self : in out Container'Class);
+      --  Change state of all messages to 'unfiltered'.
+
+      procedure Include (Self : not null access Abstract_Message_Node'Class);
+      --  Include message into the list of of unfiltered messages
+
+      procedure Exclude (Self : not null access Abstract_Message_Node'Class);
+      --  Exclude message from the list of messages.
+
+      function Has_Unprocessed (Self : in out Container'Class) return Boolean;
+      --  Returns True when container has at least one unprocessed message.
+
+      function Get_Unprocessed
+        (Self : in out Container'Class) return Message_Access;
+      --  Returns first unprocessed message and mark it as processed.
+
+   private
+
+      type Abstract_Message_Access is access all Abstract_Message_Node'Class;
+
+      package Abstract_Message_Vectors is
+        new Ada.Containers.Vectors (Positive, Abstract_Message_Access);
+
+      type Container is tagged limited record
+         Messages    : Abstract_Message_Vectors.Vector;
+         Unprocessed : Positive := 1;
+         --  Points to first message to be processed
+         Unused      : Natural  := 0;
+         --  Count of unused elements in vector to decide when it should be
+         --  reconstructed.
+      end record;
+
+      type Abstract_Message_Node is
+        abstract new Node_Record (Node_Message) with record
+         Index : Natural := 0;
+      end record;
+
+   end Message_Collections;
+
    type Abstract_Message (Level : Message_Levels) is
-     abstract new Node_Record (Node_Message)
+     abstract new Message_Collections.Abstract_Message_Node
    with record
       Head : Reference_Access;
       Tail : Reference_Access;
@@ -570,6 +678,9 @@ private
    package Listener_Vectors is
      new Ada.Containers.Vectors (Positive, Listener_Access);
 
+   package Filter_Vectors is
+     new Ada.Containers.Vectors (Positive, Message_Filter_Access);
+
    package Primary_Message_Load_Maps is
      new Ada.Containers.Hashed_Maps
        (Ada.Tags.Tag, Primary_Message_Load_Procedure, Hash, Ada.Tags."=");
@@ -607,6 +718,11 @@ private
       --  Set to True when Project_Changed till Project_View_Changed hook
       --  to read messages only one per project when project view became
       --  ready.
+      Messages          : aliased Message_Collections.Container;
+      --  Lists of filtered/unfiltered messages.
+      Filter_Command    : Commands.Command_Access;
+      Filter_Launched   : Boolean := False;
+      Filters           : Filter_Vectors.Vector;
    end record;
 
    procedure Register_Message_Class
@@ -643,5 +759,13 @@ private
 
    procedure Unset (Self : in out Abstract_Reference);
    --  Unsets reference.
+
+   -----------------------------
+   -- Abstract_Message_Filter --
+   -----------------------------
+
+   type Abstract_Message_Filter is abstract tagged limited record
+      Container : Messages_Container_Access;
+   end record;
 
 end GPS.Kernel.Messages;
