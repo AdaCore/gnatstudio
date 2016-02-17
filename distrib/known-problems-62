@@ -147,6 +147,18 @@ KP-62-P121-016 WB: undefined reference to `_Unwind_Resume'
               - editing RTP's gnat.makefile file
               - changing RTP's RUNTIME value using the Scenario Variables view.
 
+KP-62-P119-022 ECL: problem with build started automatically during clean
+
+  Problem:    When Running "Clean Project" command, if "Start a build
+              automatically" button is checked, some build commands are failing
+              because they are starting before the end of the clean command.
+
+  Status:     This was fixed in 17.0 on 2016-02-18
+
+  Workaround: Enable "Project > Build Automatically" feature, or uncheck
+              "Start a build automatically" button and build manually projects
+              when clean commands are completed.
+
 KP-62-P113-013 GPS: cannot display standard.ads on cross platform
 
   Problem:    When the system is configured for a cross or bareboard platform,
