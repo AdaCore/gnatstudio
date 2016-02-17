@@ -131,6 +131,11 @@ package Language.Custom is
       Buffer   : String;
       Callback : Entity_Callback);
 
+   overriding procedure Get_Indentation_Parameters
+     (Lang         : access Custom_Language;
+      Params       : out Indent_Parameters;
+      Indent_Style : out Indentation_Kind);
+
 private
 
    type Explorer_Categories_Access is access all Explorer_Categories;
