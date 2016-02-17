@@ -352,6 +352,17 @@ KP-62-O326-012 GPS: C rename refactoring
 Known problems fixed in GPS 6.2.2 / GNATbench 2.10.2
 ----------------------------------------------------
 
+KP-62-OC21-028 GPS: indentation parameters are not used for custom languages
+
+  Problem:    The source editor uses default indentation parameters for custom
+              languages instead of use same parameters are used by the parent
+              language. In particular this fixes the auto-indentation in
+              project files.
+
+  Status:     This was fixed in 6.2.2 on 2016-02-17
+
+  Workaround: None.
+
 KP-62-OC15-045 GNATdoc: crash processing record types with null components
 
   Problem:    GNATdoc cannot process record type declarations with null
