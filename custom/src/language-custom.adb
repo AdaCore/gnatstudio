@@ -139,6 +139,25 @@ package body Language.Custom is
       end if;
    end Explorer_Regexps;
 
+   --------------------------------
+   -- Get_Indentation_Parameters --
+   --------------------------------
+
+   overriding procedure Get_Indentation_Parameters
+     (Lang         : access Custom_Language;
+      Params       : out Indent_Parameters;
+      Indent_Style : out Indentation_Kind) is
+   begin
+      if Lang.Parent /= null then
+         Params       := Lang.Parent.Indent_Params;
+         Indent_Style := Lang.Parent.Indent_Style;
+
+      else
+         Params       := Lang.Indent_Params;
+         Indent_Style := Lang.Indent_Style;
+      end if;
+   end Get_Indentation_Parameters;
+
    --------------------------
    -- Get_Language_Context --
    --------------------------
@@ -438,11 +457,6 @@ package body Language.Custom is
 
                   A_Lang := A_Lang.Next;
                end loop;
-            end if;
-
-            if Lang.Parent /= null then
-               Lang.Indent_Params := Lang.Parent.Indent_Params;
-               Lang.Indent_Style  := Lang.Parent.Indent_Style;
             end if;
          end;
       end if;
