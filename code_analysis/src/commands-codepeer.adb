@@ -30,15 +30,12 @@ package body Commands.CodePeer is
 
       Context  : constant GPS.Kernel.Selection_Context :=
         Self.Module.Kernel.Get_Current_Context;
-      Aux      : Standard.CodePeer.Message_Access;
       Messages : Standard.CodePeer.Message_Vectors.Vector;
 
    begin
       for Message of Messages_Information (Context) loop
-         Aux := Standard.CodePeer.Module.Get_CodePeer_Message (Message);
-
-         if Aux /= null then
-            Messages.Append (Aux);
+         if Message.all in Standard.CodePeer.Message'Class then
+            Messages.Append (Standard.CodePeer.Message_Access (Message));
          end if;
       end loop;
 

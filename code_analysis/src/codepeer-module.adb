@@ -85,10 +85,6 @@ package body CodePeer.Module is
    package Context_CB is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Module_Context);
 
-   type CodePeer_Note is new Abstract_Note with record
-      Message : Message_Access;
-   end record;
-
    procedure On_Hide_Annotations
      (Item    : access Glib.Object.GObject_Record'Class;
       Context : Module_Context);
@@ -192,6 +188,13 @@ package body CodePeer.Module is
       return Boolean;
    --  Called before GPS exits. Switchs perspective to default.
 
+   type Message_Filter is
+     new GPS.Kernel.Messages.Abstract_Message_Filter with null record;
+   overriding function Apply
+     (Self    : in out Message_Filter;
+      Message : GPS.Kernel.Messages.Abstract_Message'Class)
+      return GPS.Kernel.Messages.Filter_Result;
+
    Output_Directory_Attribute   :
      constant GNATCOLL.Projects.Attribute_Pkg_String :=
      GNATCOLL.Projects.Build ("CodePeer", "Output_Directory");
@@ -204,6 +207,107 @@ package body CodePeer.Module is
 
    Race_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (Editor_Side => True, Locations => True);
+
+   -----------
+   -- Apply --
+   -----------
+
+   overriding function Apply
+     (Self    : in out Message_Filter;
+      Message : GPS.Kernel.Messages.Abstract_Message'Class)
+      return GPS.Kernel.Messages.Filter_Result
+   is
+      pragma Unreferenced (Self);
+
+      function Is_Visible (Message : CodePeer.Message'Class) return Boolean;
+      --  Compute visibility of the message with current filter criteria
+
+      function Flags
+        (Message : CodePeer.Message'Class)
+         return GPS.Kernel.Messages.Message_Flags;
+      --  Return set of flags depending from lifeage of the
+      --  message. "Removed" messages are displayed only in
+      --  locations view, others displayed in both locations view
+      --  end editor.
+
+      -----------
+      -- Flags --
+      -----------
+
+      function Flags
+        (Message : CodePeer.Message'Class)
+         return GPS.Kernel.Messages.Message_Flags is
+      begin
+         if Message.Lifeage = Removed then
+            return (Editor_Side => False, Locations => True);
+
+         else
+            return (Editor_Side => True, Locations => True);
+         end if;
+      end Flags;
+
+      ----------------
+      -- Is_Visible --
+      ----------------
+
+      function Is_Visible
+        (Message : CodePeer.Message'Class) return Boolean is
+      begin
+         --  Simple criteria
+
+         if not Module.Filter_Criteria.Lineages (Message.Lifeage)
+           or not Module.Filter_Criteria.Rankings (Message.Ranking)
+           or not Module.Filter_Criteria.Statuses (Message.Status)
+         then
+            return False;
+         end if;
+
+         --  Category of the message should be selected
+
+         if Module.Filter_Criteria.Categories.Contains
+           (Message.Category)
+         then
+            return True;
+         end if;
+
+         --  or at least one check of the message should be selected
+
+         if not Module.Filter_Criteria.Categories.Intersection
+           (Message.Checks).Is_Empty
+         then
+            return True;
+         end if;
+
+         --  or at least one CWE of the message or message's category
+         --  should be selected
+
+         if not Module.Filter_Criteria.CWEs.Intersection
+           ((if not Message.CWEs.Is_Empty
+            then Message.CWEs
+            else Message.Category.CWEs)).Is_Empty
+         then
+            return True;
+         end if;
+
+         --  otherwise it is not visible
+
+         return False;
+      end Is_Visible;
+
+   begin
+      if Message not in CodePeer.Message'Class then
+         return (Non_Applicable => True);
+      end if;
+
+      if Is_Visible (CodePeer.Message'Class (Message)) then
+         return
+           (Non_Applicable => False,
+            Flags          => Flags (CodePeer.Message'Class (Message)));
+
+      else
+         return (Non_Applicable => False, Flags => (others => False));
+      end if;
+   end Apply;
 
    ----------------
    -- Initialize --
@@ -316,6 +420,120 @@ package body CodePeer.Module is
       end if;
    end Check_CodePeer_Version;
 
+   -----------------------------
+   -- Create_CodePeer_Message --
+   -----------------------------
+
+   function Create_CodePeer_Message
+     (Id               : Natural;
+      File             : Code_Analysis.File_Access;
+      Subprogram       : Code_Analysis.Subprogram_Access;
+      Merged           : Natural_Sets.Set;
+      Lifeage          : Lifeage_Kinds;
+      Line             : Positive;
+      Column           : Positive;
+      Category         : Message_Category_Access;
+      Is_Check         : Boolean;
+      Ranking          : Message_Ranking_Level;
+      Text             : String;
+      From_File        : GNATCOLL.VFS.Virtual_File;
+      From_Line        : Positive;
+      From_Column      : Positive;
+      Checks           : Message_Category_Sets.Set;
+      Vns              : Natural_Sets.Set;
+      CWEs             : CWE_Category_Sets.Set)
+      return Message_Access
+   is
+      Project : constant Project_Type :=
+                  GPS.Kernel.Project.Get_Project (Module.Kernel);
+      Message : constant Message_Access := new CodePeer.Message'
+        (GPS.Kernel.Messages.Primary_Abstract_Message with
+         Id              => Id,
+         File            => File,
+         Subprogram      => Subprogram,
+         Merged          => Merged,
+         Lifeage         => Lifeage,
+         Category        => Category,
+         Is_Check        => Is_Check,
+         Ranking         => Ranking,
+         Status          => Unclassified,
+         Status_Editable => True,
+         Text            => To_Unbounded_String (Text),
+         Audit_Loaded    => False,
+         Audit_V3        => CodePeer.Audit_V3_Vectors.Empty_Vector,
+         Checks          => Checks,
+         Vns             => Vns,
+         CWEs            =>
+           (if Project.Has_Attribute (CWE_Attribute)
+            and then
+            Ada.Characters.Handling.To_Lower
+              (Project.Attribute_Value (CWE_Attribute)) = "true"
+              then CWEs else CWE_Category_Sets.Empty_Set));
+      Style   : constant Style_Access := Module.Message_Styles (Ranking);
+
+   begin
+      GPS.Kernel.Messages.Initialize
+        (Self          => Message,
+         Container     => Get_Messages_Container (Module.Kernel),
+         Category      => CodePeer_Category_Name,
+         File          => File.Name,
+         Line          => Line,
+         Column        => Basic_Types.Visible_Column_Type (Column),
+         Weight        => Message_Ranking_Level'Pos (Ranking),
+         Actual_Line   => Line,
+         Actual_Column => Column);
+
+      if Style /= null
+        and then Message.Lifeage /= Removed
+      then
+         Message.Set_Highlighting (Style);
+      end if;
+
+      Module.Review_Command.Ref;
+      Message.Set_Action
+        (new GPS.Editors.Line_Information.Line_Information_Record'
+           (Text               => Null_Unbounded_String,
+            Tooltip_Text       => To_Unbounded_String
+              ("Review message"),
+            Image              => To_Unbounded_String
+              (Code_Analysis_GUI.Post_Analysis_Cst),
+            Message            =>
+              Create (GPS.Kernel.Messages.Message_Access (Message)),
+            Associated_Command =>
+              Module.Review_Command));
+
+      if From_File /= No_File then
+         declare
+            Text : constant String :=
+                     "(see also "
+                     & String (From_File.Full_Name.all)
+                     & ":"
+                     & Ada.Strings.Fixed.Trim
+                     (Positive'Image (From_Line),
+                      Ada.Strings.Both)
+                     & ":"
+                     & Ada.Strings.Fixed.Trim
+                     (Positive'Image (From_Column),
+                      Ada.Strings.Both)
+                     & ")";
+
+         begin
+            GPS.Kernel.Messages.Hyperlink.Create_Hyperlink_Message
+              (GPS.Kernel.Messages.Message_Access (Message),
+               From_File,
+               From_Line,
+               Basic_Types.Visible_Column_Type (From_Column),
+               Text,
+               Text'First + 10,
+               Text'Last - 1,
+               (Editor_Side => False,
+                Locations   => True));
+         end;
+      end if;
+
+      return Message;
+   end Create_CodePeer_Message;
+
    -----------------------
    -- Fill_Object_Races --
    -----------------------
@@ -374,23 +592,6 @@ package body CodePeer.Module is
          end loop;
       end loop;
    end Fill_Object_Races;
-
-   --------------------------
-   -- Get_CodePeer_Message --
-   --------------------------
-
-   function Get_CodePeer_Message
-     (Message : GPS.Kernel.Messages.Message_Access)
-      return CodePeer.Message_Access is
-   begin
-      if Message.Has_Note (CodePeer_Note'Tag) then
-         return
-           CodePeer_Note (Message.Get_Note (CodePeer_Note'Tag).all).Message;
-
-      else
-         return null;
-      end if;
-   end Get_CodePeer_Message;
 
    ---------------
    -- Get_Color --
@@ -651,13 +852,14 @@ package body CodePeer.Module is
       procedure Process_Message
         (Position : CodePeer.Message_Vectors.Cursor)
       is
-         Message : constant CodePeer.Message_Access :=
-           CodePeer.Message_Vectors.Element (Position);
+--           Message : constant CodePeer.Message_Access :=
+--             CodePeer.Message_Vectors.Element (Position);
 
       begin
-         if Message.Message /= null then
-            Message.Message.Set_Flags ((others => False));
-         end if;
+         null;
+--           if Message.Message /= null then
+--              Message.Message.Set_Flags ((others => False));
+--           end if;
       end Process_Message;
 
       ------------------------
@@ -1161,18 +1363,18 @@ package body CodePeer.Module is
    is
       pragma Unreferenced (Self);
 
-      Msg : constant Message_Access := Get_CodePeer_Message (Message);
-
    begin
-      if Module.Has_Backtraces and then Msg /= null then
+      if Module.Has_Backtraces
+        and then Message.all in CodePeer.Message'Class
+      then
          CodePeer.Backtrace_View.Display_Backtraces
            (Kernel,
             Module.Output_Directory,
-            Msg.File.Name,
+            CodePeer.Message'Class (Message.all).File.Name,
             Message,
-            Msg.Subprogram.Name.all,
-            (if Msg.Is_Check
-             then Msg.Vns
+            CodePeer.Message'Class (Message.all).Subprogram.Name.all,
+            (if CodePeer.Message'Class (Message.all).Is_Check
+             then CodePeer.Message'Class (Message.all).Vns
              else Natural_Sets.Empty_Set));
          --  Backtraces are displayed only for 'check' messages.
       end if;
@@ -1344,404 +1546,6 @@ package body CodePeer.Module is
    --------------------------
 
    procedure Update_Location_View (Self : access Module_Id_Record'Class) is
-
-      procedure Process_File (Position : CodePeer.File_Sets.Cursor);
-
-      ------------------
-      -- Process_File --
-      ------------------
-
-      procedure Process_File (Position : CodePeer.File_Sets.Cursor) is
-
-         procedure Process_Subprogram
-           (Position : Code_Analysis.Subprogram_Maps.Cursor);
-
-         procedure Process_Message
-           (Position : CodePeer.Message_Vectors.Cursor);
-
-         File : constant Code_Analysis.File_Access :=
-                  CodePeer.File_Sets.Element (Position);
-
-         ---------------------
-         -- Process_Message --
-         ---------------------
-
-         procedure Process_Message
-           (Position : CodePeer.Message_Vectors.Cursor)
-         is
-            Message : constant CodePeer.Message_Access :=
-              CodePeer.Message_Vectors.Element (Position);
-
-            function Ranking_Image
-              (Message : CodePeer.Message_Access) return String;
-            --  Return an suitable Image corresponding to Message's ranking
-
-            function Image
-              (Message : CodePeer.Message_Access) return String;
-            --  Return complete text of the Message
-
-            function Flags return GPS.Kernel.Messages.Message_Flags;
-            --  Return set of flags depending from lifeage of the
-            --  message. "Removed" messages are displayed only in
-            --  locations view, others displayed in both locations view
-            --  end editor.
-
-            procedure Create_GPS_Message;
-            --  Create GPS message
-
-            function Is_Visible return Boolean;
-            --  Compute visibility of the message with current filter criteria
-
-            ------------------------
-            -- Create_GPS_Message --
-            ------------------------
-
-            procedure Create_GPS_Message is
-               Primary : constant Simple_Message_Access :=
-                 Create_Simple_Message
-                   (Get_Messages_Container (Self.Kernel),
-                    CodePeer_Category_Name,
-                    File.Name,
-                    Message.Line,
-                    Basic_Types.Visible_Column_Type (Message.Column),
-                    Image (Message),
-                    Message_Ranking_Level'Pos (Message.Ranking),
-                    Flags,
-                    False);
-               Style   : constant Style_Access :=
-                 Module.Message_Styles (Message.Ranking);
-
-            begin
-               Message.Message := GPS.Kernel.Messages.Message_Access (Primary);
-               Primary.Set_Note
-                 (new CodePeer_Note'(Abstract_Note with Message => Message));
-
-               --  "Removed" messages are not highlighted in the source
-               --  editor.
-
-               if Style /= null
-                 and then Message.Lifeage /= Removed
-               then
-                  Primary.Set_Highlighting (Style);
-               end if;
-
-               CodePeer_Module_Id (Self).Review_Command.Ref;
-               Primary.Set_Action
-                 (new GPS.Editors.Line_Information.Line_Information_Record'
-                    (Text               => Null_Unbounded_String,
-                     Tooltip_Text       => To_Unbounded_String
-                       ("Review message"),
-                     Image              => To_Unbounded_String
-                       (Code_Analysis_GUI.Post_Analysis_Cst),
-                     Message            =>
-                       Create (Messages.Message_Access (Primary)),
-                     Associated_Command =>
-                       CodePeer_Module_Id (Self).Review_Command));
-
-               if Message.From_File /= No_File then
-                  declare
-                     Text : constant String :=
-                       "(see also "
-                         & String (Message.From_File.Full_Name.all)
-                       & ":"
-                       & Ada.Strings.Fixed.Trim
-                       (Positive'Image (Message.From_Line),
-                        Ada.Strings.Both)
-                       & ":"
-                       & Ada.Strings.Fixed.Trim
-                       (Positive'Image (Message.From_Column),
-                        Ada.Strings.Both)
-                       & ")";
-
-                  begin
-                     GPS.Kernel.Messages.Hyperlink.Create_Hyperlink_Message
-                       (GPS.Kernel.Messages.Message_Access (Primary),
-                        Message.From_File,
-                        Message.From_Line,
-                        Basic_Types.Visible_Column_Type
-                          (Message.From_Column),
-                        Text,
-                        Text'First + 10,
-                        Text'Last - 1,
-                        (Editor_Side => False,
-                         Locations   => True));
-                  end;
-               end if;
-            end Create_GPS_Message;
-
-            -----------
-            -- Flags --
-            -----------
-
-            function Flags return GPS.Kernel.Messages.Message_Flags is
-            begin
-               if Message.Lifeage = Removed then
-                  return (Editor_Side => False, Locations => True);
-
-               else
-                  return (Editor_Side => True, Locations => True);
-               end if;
-            end Flags;
-
-            -----------
-            -- Image --
-            -----------
-
-            function Image
-              (Message : CodePeer.Message_Access) return String
-            is
-               function Checks_Image return String;
-               --  Returns image of set of originating checks for the message.
-
-               function CWE_Image
-                 (Category : Message_Category_Access) return String;
-               --  Returns image of set of CWEs of given category
-
-               ------------------
-               -- Checks_Image --
-               ------------------
-
-               function Checks_Image return String is
-                  Aux : Unbounded_String;
-
-               begin
-                  for Check of Message.Checks loop
-                     if Length (Aux) = 0 then
-                        Append (Aux, " (");
-
-                     else
-                        Append (Aux, ", ");
-                     end if;
-
-                     Append (Aux, Check.Name);
-                     Append (Aux, CWE_Image (Check));
-                  end loop;
-
-                  if Length (Aux) /= 0 then
-                     Append (Aux, ")");
-                  end if;
-
-                  return To_String (Aux);
-               end Checks_Image;
-
-               ---------------
-               -- CWE_Image --
-               ---------------
-
-               function CWE_Image
-                 (Category : Message_Category_Access) return String
-               is
-                  Project   : constant Project_Type :=
-                    GPS.Kernel.Project.Get_Project (Self.Kernel);
-                  Aux       : Unbounded_String;
-                  Previous  : CWE_Identifier        := 0;
-                  Delimiter : Natural               := 0;
-                  --  Position of range delimiter.
-
-               begin
-                  if not Category.CWEs.Is_Empty
-                    and then Project.Has_Attribute (CWE_Attribute)
-                    and then
-                      Ada.Characters.Handling.To_Lower
-                        (Project.Attribute_Value (CWE_Attribute)) = "true"
-                  then
-                     for CWE of Category.CWEs loop
-                        declare
-                           Image : constant String :=
-                             CWE_Identifier'Image (CWE.Identifier);
-
-                        begin
-                           if Length (Aux) = 0 then
-                              Append (Aux, " [");
-                              Append
-                                (Aux, Image (Image'First + 1 .. Image'Last));
-                              Delimiter := 0;
-
-                           else
-                              if Previous + 1 = CWE.Identifier then
-                                 --  Continuous value
-
-                                 if Delimiter = 0 then
-                                    Append (Aux, '-');
-                                    Delimiter := Length (Aux);
-                                    Append
-                                      (Aux,
-                                       Image (Image'First + 1 .. Image'Last));
-
-                                 else
-                                    Replace_Slice
-                                      (Aux,
-                                       Delimiter + 1,
-                                       Length (Aux),
-                                       Image (Image'First + 1 .. Image'Last));
-                                 end if;
-
-                              else
-                                 Delimiter := 0;
-                                 Append (Aux, ',');
-                                 Append
-                                   (Aux,
-                                    Image (Image'First + 1 .. Image'Last));
-                              end if;
-                           end if;
-
-                           Previous := CWE.Identifier;
-                        end;
-                     end loop;
-
-                     if Length (Aux) /= 0 then
-                        Append (Aux, ']');
-                     end if;
-
-                     return To_String (Aux);
-
-                  else
-                     return "";
-                  end if;
-               end CWE_Image;
-
-            begin
-               if Length (Message.Text) = 0
-                 or else Element (Message.Text, 1) = ':'
-               then
-                  return
-                    Ranking_Image (Message) & ": "
-                    & To_String (Message.Category.Name)
-                    & Checks_Image
-                    & CWE_Image (Message.Category)
-                    & To_String (Message.Text);
-               else
-                  return
-                    Ranking_Image (Message) & ": "
-                    & To_String (Message.Category.Name)
-                    & Checks_Image
-                    & CWE_Image (Message.Category) & " "
-                    & To_String (Message.Text);
-               end if;
-            end Image;
-
-            ----------------
-            -- Is_Visible --
-            ----------------
-
-            function Is_Visible return Boolean is
-            begin
-               --  Simple criteria
-
-               if not Self.Filter_Criteria.Lineages (Message.Lifeage)
-                 or not Self.Filter_Criteria.Rankings (Message.Ranking)
-                 or not Self.Filter_Criteria.Statuses (Message.Status)
-               then
-                  return False;
-               end if;
-
-               --  Category of the message should be selected
-
-               if Self.Filter_Criteria.Categories.Contains
-                 (Message.Category)
-               then
-                  return True;
-               end if;
-
-               --  or at least one check of the message should be selected
-
-               if not Self.Filter_Criteria.Categories.Intersection
-                 (Message.Checks).Is_Empty
-               then
-                  return True;
-               end if;
-
-               --  or at least one CWE of the message or message's category
-               --  should be selected
-
-               if not Self.Filter_Criteria.CWEs.Intersection
-                 ((if not Message.CWEs.Is_Empty
-                  then Message.CWEs
-                  else Message.Category.CWEs)).Is_Empty
-               then
-                  return True;
-               end if;
-
-               --  otherwise it is not visible
-
-               return False;
-            end Is_Visible;
-
-            -------------------
-            -- Ranking_Image --
-            -------------------
-
-            function Ranking_Image
-              (Message : CodePeer.Message_Access) return String
-            is
-               function Decorate (S : String) return String;
-               --  Append " warning" after S if Message is a warning
-
-               function Decorate (S : String) return String is
-               begin
-                  if Message.Is_Check then
-                     return S;
-                  else
-                     return S & " warning";
-                  end if;
-               end Decorate;
-
-            begin
-               case Message.Ranking is
-                  when CodePeer.High =>
-                     return Decorate ("high");
-
-                  when CodePeer.Medium =>
-                     return Decorate ("medium");
-
-                  when CodePeer.Low =>
-                     return Decorate ("low");
-
-                  when CodePeer.Info =>
-                     return "info";
-
-                  when CodePeer.Suppressed =>
-                     return "suppressed";
-               end case;
-            end Ranking_Image;
-
-         begin
-            if Is_Visible then
-               if Message.Message = null then
-                  Create_GPS_Message;
-
-               else
-                  Message.Message.Set_Flags (Flags);
-               end if;
-
-            else
-               if Message.Message /= null then
-                  Message.Message.Set_Flags ((others => False));
-               end if;
-            end if;
-         end Process_Message;
-
-         ------------------------
-         -- Process_Subprogram --
-         ------------------------
-
-         procedure Process_Subprogram
-           (Position : Code_Analysis.Subprogram_Maps.Cursor)
-         is
-            Subprogram_Node : constant Code_Analysis.Subprogram_Access :=
-              Code_Analysis.Subprogram_Maps.Element (Position);
-            Data            : CodePeer.Subprogram_Data'Class
-            renames CodePeer.Subprogram_Data'Class
-              (Subprogram_Node.Analysis_Data.CodePeer_Data.all);
-
-         begin
-            Data.Messages.Iterate (Process_Message'Access);
-         end Process_Subprogram;
-
-      begin
-         File.Subprograms.Iterate (Process_Subprogram'Access);
-      end Process_File;
-
       Data : CodePeer.Project_Data'Class
         renames CodePeer.Project_Data'Class
           (Self.Tree.Element
@@ -1752,7 +1556,9 @@ package body CodePeer.Module is
       Get_Messages_Container (Self.Kernel).Set_Sort_Order_Hint
         (CodePeer_Category_Name, Alphabetical);
 
-      Self.Filter_Criteria.Files.Iterate (Process_File'Access);
+      --  Activate refiltering of content of Locations view
+
+      Self.Filter.Criteria_Changed;
 
       --  Update state of race condition messages
 
@@ -1924,6 +1730,10 @@ package body CodePeer.Module is
         new Commands.CodePeer.Review_Message_Command'
           (Root_Command with Module);
       --  This command is shared for all CodePeer messages.
+
+      Module.Filter := new Message_Filter;
+      GPS.Kernel.Messages.Get_Messages_Container (Kernel).Register_Filter
+        (Module.Filter);
 
       Module.Check_CodePeer_Version;
 

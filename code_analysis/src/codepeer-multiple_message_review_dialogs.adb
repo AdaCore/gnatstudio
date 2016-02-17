@@ -267,11 +267,11 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       for Message of Self.Messages loop
          declare
             Line_Image    : constant String :=
-              Integer'Image (Message.Message.Get_Line);
+              Integer'Image (Message.Get_Line);
             Column_Image  : constant String :=
-              GNATCOLL.Xref.Visible_Column'Image (Message.Message.Get_Column);
+              GNATCOLL.Xref.Visible_Column'Image (Message.Get_Column);
             Location_Text : constant String :=
-              Message.Message.Get_File.Display_Base_Name
+              Message.Get_File.Display_Base_Name
               & ':'
               & Line_Image (Line_Image'First + 1 .. Line_Image'Last)
               & ':'
@@ -294,7 +294,7 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
             Store.Set
               (Iter,
                Messages_Model_Text_Column,
-               To_String (Message.Message.Get_Text));
+               To_String (Message.Get_Text));
          end;
       end loop;
 

@@ -92,11 +92,25 @@ package CodePeer.Module is
    --  and reset it to the previous mode on exit. Also takes care of
    --  freezing the xref db.
 
-   function Get_CodePeer_Message
-     (Message : GPS.Kernel.Messages.Message_Access)
-      return CodePeer.Message_Access;
-   --  Returns associated CodePeer message or null when there is no associated
-   --  CodePeer Message.
+   function Create_CodePeer_Message
+     (Id               : Natural;
+      File             : Code_Analysis.File_Access;
+      Subprogram       : Code_Analysis.Subprogram_Access;
+      Merged           : Natural_Sets.Set;
+      Lifeage          : Lifeage_Kinds;
+      Line             : Positive;
+      Column           : Positive;
+      Category         : Message_Category_Access;
+      Is_Check         : Boolean;
+      Ranking          : Message_Ranking_Level;
+      Text             : String;
+      From_File        : GNATCOLL.VFS.Virtual_File;
+      From_Line        : Positive;
+      From_Column      : Positive;
+      Checks           : Message_Category_Sets.Set;
+      Vns              : Natural_Sets.Set;
+      CWEs             : CWE_Category_Sets.Set)
+      return Message_Access;
 
 private
 
@@ -172,6 +186,9 @@ private
 
       Review_Command : Commands.Command_Access;
       --  Shared command to review selected message(s).
+
+      Filter           : GPS.Kernel.Messages.Message_Filter_Access;
+      --  Filter to update visibility of the messages.
    end record;
 
    overriding function Tooltip_Handler

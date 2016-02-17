@@ -101,8 +101,6 @@ package body CodePeer is
 
    overriding procedure Finalize (Self : access Subprogram_Data) is
 
-      procedure Process_Message (Position : Message_Vectors.Cursor);
-
       procedure Process_Annotations (Position : Annotation_Maps.Cursor);
 
       procedure Process_Annotation (Position : Annotation_Vectors.Cursor);
@@ -138,35 +136,30 @@ package body CodePeer is
          Free (Element);
       end Process_Annotations;
 
-      ---------------------
-      -- Process_Message --
-      ---------------------
-
-      procedure Process_Message (Position : Message_Vectors.Cursor) is
-
-         procedure Free is
-           new Ada.Unchecked_Deallocation (Message, Message_Access);
-         procedure Free is
-           new Ada.Unchecked_Deallocation
-             (Audit_Record_V3, Audit_Record_V3_Access);
-
-         Element : Message_Access := Message_Vectors.Element (Position);
-
-      begin
-         for J of Element.Audit_V3 loop
-            Free (J);
-         end loop;
-
-         Element.Audit_V3.Clear;
-
-         Free (Element);
-      end Process_Message;
-
    begin
-      Self.Messages.Iterate (Process_Message'Access);
       Self.Messages.Clear;
       Self.Annotations.Iterate (Process_Annotations'Access);
       Self.Annotations.Clear;
+   end Finalize;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (Self : not null access Message) is
+
+      procedure Free is
+        new Ada.Unchecked_Deallocation
+          (Audit_Record_V3, Audit_Record_V3_Access);
+
+   begin
+      for J of Self.Audit_V3 loop
+         Free (J);
+      end loop;
+
+      Self.Audit_V3.Clear;
+
+      GPS.Kernel.Messages.Primary_Abstract_Message (Self.all).Finalize;
    end Finalize;
 
    --------------
@@ -188,6 +181,178 @@ package body CodePeer is
    begin
       return To_String (Self.Name);
    end Get_Name;
+
+   --------------
+   -- Get_Text --
+   --------------
+
+   overriding function Get_Text
+     (Self : not null access constant Message)
+      return Ada.Strings.Unbounded.Unbounded_String
+   is
+
+      function Checks_Image return Unbounded_String;
+      --  Returns image of set of originating checks for the message.
+
+      function CWE_Image
+        (Category : Message_Category_Access) return Unbounded_String;
+      --  Returns image of set of CWEs of given category
+
+      function Ranking_Image
+        (Self : not null access constant Message) return String;
+      --  Return an suitable Image corresponding to Message's ranking
+
+      ------------------
+      -- Checks_Image --
+      ------------------
+
+      function Checks_Image return Unbounded_String is
+         Aux : Unbounded_String;
+
+      begin
+         for Check of Self.Checks loop
+            if Length (Aux) = 0 then
+               Append (Aux, " (");
+
+            else
+               Append (Aux, ", ");
+            end if;
+
+            Append (Aux, Check.Name);
+            Append (Aux, CWE_Image (Check));
+         end loop;
+
+         if Length (Aux) /= 0 then
+            Append (Aux, ")");
+         end if;
+
+         return Aux;
+      end Checks_Image;
+
+      ---------------
+      -- CWE_Image --
+      ---------------
+
+      function CWE_Image
+        (Category : Message_Category_Access) return Unbounded_String
+      is
+         Aux       : Unbounded_String;
+         Previous  : CWE_Identifier        := 0;
+         Delimiter : Natural               := 0;
+         --  Position of range delimiter.
+
+      begin
+         if not Category.CWEs.Is_Empty then
+            for CWE of Category.CWEs loop
+               declare
+                  Image : constant String :=
+                            CWE_Identifier'Image (CWE.Identifier);
+
+               begin
+                  if Length (Aux) = 0 then
+                     Append (Aux, " [");
+                     Append
+                       (Aux, Image (Image'First + 1 .. Image'Last));
+                     Delimiter := 0;
+
+                  else
+                     if Previous + 1 = CWE.Identifier then
+                        --  Continuous value
+
+                        if Delimiter = 0 then
+                           Append (Aux, '-');
+                           Delimiter := Length (Aux);
+                           Append
+                             (Aux,
+                              Image (Image'First + 1 .. Image'Last));
+
+                        else
+                           Replace_Slice
+                             (Aux,
+                              Delimiter + 1,
+                              Length (Aux),
+                              Image (Image'First + 1 .. Image'Last));
+                        end if;
+
+                     else
+                        Delimiter := 0;
+                        Append (Aux, ',');
+                        Append
+                          (Aux,
+                           Image (Image'First + 1 .. Image'Last));
+                     end if;
+                  end if;
+
+                  Previous := CWE.Identifier;
+               end;
+            end loop;
+
+            if Length (Aux) /= 0 then
+               Append (Aux, ']');
+            end if;
+
+            return Aux;
+
+         else
+            return Null_Unbounded_String;
+         end if;
+      end CWE_Image;
+
+      -------------------
+      -- Ranking_Image --
+      -------------------
+
+      function Ranking_Image
+        (Self : not null access constant Message) return String
+      is
+         function Decorate (S : String) return String;
+         --  Append " warning" after S if Message is a warning
+
+         function Decorate (S : String) return String is
+         begin
+            if Self.Is_Check then
+               return S;
+            else
+               return S & " warning";
+            end if;
+         end Decorate;
+
+      begin
+         case Self.Ranking is
+            when CodePeer.High =>
+               return Decorate ("high");
+
+            when CodePeer.Medium =>
+               return Decorate ("medium");
+
+            when CodePeer.Low =>
+               return Decorate ("low");
+
+            when CodePeer.Info =>
+               return "info";
+
+            when CodePeer.Suppressed =>
+               return "suppressed";
+         end case;
+      end Ranking_Image;
+
+   begin
+      return Text : Ada.Strings.Unbounded.Unbounded_String do
+         Append (Text, Ranking_Image (Self));
+         Append (Text, ": ");
+         Append (Text, Self.Category.Name);
+         Append (Text, Checks_Image);
+         Append (Text, CWE_Image (Self.Category));
+
+         if Length (Self.Text) /= 0
+           and then Element (Self.Text, 1) /= ':'
+         then
+            Append (Text, ' ');
+         end if;
+
+         Append (Text, Self.Text);
+      end return;
+   end Get_Text;
 
    -----------------
    -- Get_Tooltip --

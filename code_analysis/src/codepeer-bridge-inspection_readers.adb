@@ -578,53 +578,74 @@ package body CodePeer.Bridge.Inspection_Readers is
              (Self.Subprogram_Node.Analysis_Data.CodePeer_Data);
 
       elsif Qname = Message_Tag then
-         Self.Current_Message :=
-           new CodePeer.Message'
-             (Positive'Value (Attrs.Get_Value ("identifier")),
-              Self.File_Node,
-              Self.Subprogram_Node,
-              Merged,
-              Lifeage,
-              Positive'Value (Attrs.Get_Value ("line")),
-              Positive'Value (Attrs.Get_Value ("column")),
-              Self.Message_Categories.Element
-                (Positive'Value (Attrs.Get_Value (Category_Attribute))),
-              Is_Check,
-              Get_Rank,
-              Unclassified,
-              True,
-              To_Unbounded_String (Attrs.Get_Value ("text")),
-              False,
-              CodePeer.Audit_V3_Vectors.Empty_Vector,
-              GNATCOLL.VFS.No_File,
-              1,
-              1,
-              null,
-              Message_Category_Sets.Empty_Set,
-              Get_Vns,
-              CWE_Category_Sets.Empty_Set);
+         declare
+            Checks      : Message_Category_Sets.Set;
+            From_File   : GNATCOLL.VFS.Virtual_File;
+            From_Line   : Positive := 1;
+            From_Column : Positive := 1;
+            CWEs        : CWE_Category_Sets.Set;
 
-         --  Only primary checks need to be displayed.
+         begin
+            --  Only primary checks need to be displayed.
 
-         if Attrs.Get_Index (Primary_Checks_Attribute) /= -1 then
-            declare
-               Checks : GNAT.Strings.String_List_Access :=
-                 GNATCOLL.Utils.Split
-                   (Attrs.Get_Value (Primary_Checks_Attribute),
-                    ' ',
-                    True);
+            if Attrs.Get_Index (Primary_Checks_Attribute) /= -1 then
+               declare
+                  Check_Ids : GNAT.Strings.String_List_Access :=
+                                GNATCOLL.Utils.Split
+                                  (Attrs.Get_Value (Primary_Checks_Attribute),
+                                   ' ',
+                                   True);
 
-            begin
-               for Index in Checks'Range loop
-                  Message_Category :=
-                    Self.Message_Categories
-                      (Natural'Value (Checks (Index).all));
-                  Self.Current_Message.Checks.Insert (Message_Category);
-               end loop;
+               begin
+                  for Index in Check_Ids'Range loop
+                     Checks.Insert
+                       (Self.Message_Categories
+                          (Natural'Value (Check_Ids (Index).all)));
+                  end loop;
 
-               GNAT.Strings.Free (Checks);
-            end;
-         end if;
+                  GNAT.Strings.Free (Check_Ids);
+               end;
+            end if;
+
+            if Attrs.Get_Index ("from_file") /= -1 then
+               From_File :=
+                 GPS.Kernel.Create
+                   (+Attrs.Get_Value ("from_file"), Self.Kernel);
+               From_Line :=
+                 Positive'Value (Attrs.Get_Value ("from_line"));
+               From_Column :=
+                 Positive'Value (Attrs.Get_Value ("from_column"));
+            end if;
+
+            Self.Update_CWE
+              (CWEs,
+               (if Attrs.Get_Index (CWE_Attribute) /= -1
+                then Attrs.Get_Value (CWE_Attribute)
+                else ""));
+
+            Self.Current_Message :=
+              CodePeer.Module.Create_CodePeer_Message
+                (Id          =>
+                   Positive'Value (Attrs.Get_Value ("identifier")),
+                 File        => Self.File_Node,
+                 Subprogram  => Self.Subprogram_Node,
+                 Merged      => Merged,
+                 Lifeage     => Lifeage,
+                 Line        => Positive'Value (Attrs.Get_Value ("line")),
+                 Column      => Positive'Value (Attrs.Get_Value ("column")),
+                 Category    =>
+                   Self.Message_Categories.Element
+                     (Positive'Value (Attrs.Get_Value (Category_Attribute))),
+                 Is_Check    => Is_Check,
+                 Ranking     => Get_Rank,
+                 Text        => Attrs.Get_Value ("text"),
+                 From_File   => From_File,
+                 From_Line   => From_Line,
+                 From_Column => From_Column,
+                 Checks      => Checks,
+                 Vns         => Get_Vns,
+                 CWEs        => CWEs);
+         end;
 
          if Self.Messages.Contains (Self.Current_Message.Id) then
             Self.Kernel.Insert
@@ -637,16 +658,6 @@ package body CodePeer.Bridge.Inspection_Readers is
          else
             Self.Messages.Insert
               (Self.Current_Message.Id, Self.Current_Message);
-         end if;
-
-         if Attrs.Get_Index ("from_file") /= -1 then
-            Self.Current_Message.From_File :=
-              GPS.Kernel.Create
-                (+Attrs.Get_Value ("from_file"), Self.Kernel);
-            Self.Current_Message.From_Line :=
-              Positive'Value (Attrs.Get_Value ("from_line"));
-            Self.Current_Message.From_Column :=
-              Positive'Value (Attrs.Get_Value ("from_column"));
          end if;
 
          --  Append message to the list of subprogram's messages
@@ -666,12 +677,6 @@ package body CodePeer.Bridge.Inspection_Readers is
               (Self.Root_Inspection.all).Warning_Subcategories.Include
               (Self.Current_Message.Category);
          end if;
-
-         Self.Update_CWE
-           (Self.Current_Message.CWEs,
-            (if Attrs.Get_Index (CWE_Attribute) /= -1
-             then Attrs.Get_Value (CWE_Attribute)
-             else ""));
 
       elsif Qname = Annotation_Tag then
          Annotation_Category :=

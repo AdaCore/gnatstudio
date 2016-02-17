@@ -103,14 +103,12 @@ package CodePeer is
    package Natural_Sets is
      new Ada.Containers.Ordered_Sets (Natural);
 
-   type Message is record
+   type Message is new GPS.Kernel.Messages.Primary_Abstract_Message with record
       Id               : Natural;
       File             : Code_Analysis.File_Access;
       Subprogram       : Code_Analysis.Subprogram_Access;
       Merged           : Natural_Sets.Set;
       Lifeage          : Lifeage_Kinds;
-      Line             : Positive;
-      Column           : Positive;
       Category         : Message_Category_Access;
       Is_Check         : Boolean;
       --  True means this message is check.
@@ -121,14 +119,16 @@ package CodePeer is
       Text             : Ada.Strings.Unbounded.Unbounded_String;
       Audit_Loaded     : Boolean;
       Audit_V3         : Audit_V3_Vectors.Vector;
-      From_File        : GNATCOLL.VFS.Virtual_File;
-      From_Line        : Positive;
-      From_Column      : Positive;
-      Message          : GPS.Kernel.Messages.Message_Access;
       Checks           : Message_Category_Sets.Set;
       Vns              : Natural_Sets.Set;
       CWEs             : CWE_Category_Sets.Set;
    end record;
+
+   overriding function Get_Text
+     (Self : not null access constant Message)
+      return Ada.Strings.Unbounded.Unbounded_String;
+
+   overriding procedure Finalize (Self : not null access Message);
 
    type Message_Access is access all Message;
 
