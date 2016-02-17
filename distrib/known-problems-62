@@ -312,6 +312,18 @@ KP-62-OC11-015 GPS: Refactoring/Extract' subprograms ignores parameters
   Workaround: Recompile the file before executing this action in order
               to have proper cross-references.
 
+KP-62-OC02-026 WB: absolute GPRPATH in generated scenario.makefile file
+
+  Problem:    The generated scenario.makefile contains an absolute GPRPATH
+              entry. This entry makes scenario.makefile file hard to handle.
+
+  Status:     This was fixed in 17.0 on 2016-02-12
+
+  Workaround: Avoid to save scenario.makefile file in version control and
+              exclude it when copying ada projects. The scenario.makefile file
+              will be automatically generated when Wind River Workbench is
+              started or when the project is opened/imported.
+
 KP-62-OC01-018 GPS.Exception: No file information stored in the context
 
   Problem:    Right clicking on the name of the project in the project pane may
