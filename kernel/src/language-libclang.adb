@@ -297,12 +297,12 @@ package body Language.Libclang is
    ---------------------
 
    procedure Add_TU_To_Cache
-     (File_Name : String;
+     (File_Name        : String;
       Translation_Unit : Clang_Translation_Unit;
-      Version : Integer := 0)
+      Version          : Integer := 0)
    is
       U_File_Name : constant Unbounded_String := +File_Name;
-      Cache : TU_Cache_Access;
+      Cache       : TU_Cache_Access;
       use LRU_Lists;
    begin
       Trace (Me, "Adding TU to cache " & File_Name);
@@ -342,8 +342,9 @@ package body Language.Libclang is
             Delete (Clang_Module_Id.LRU.all, C);
          end if;
 
-         --  In every case, append the file name at the beginning of the list
+         --  In every case, append the file name at the end of the list
          Clang_Module_Id.LRU.Append (U_File_Name);
+         Trace (Me, "Adding " & (+U_File_Name) & " to cache");
       end;
 
       --  Remove elements from the cache if > LRU_Size
@@ -354,10 +355,13 @@ package body Language.Libclang is
          declare
             F : constant Unbounded_String := Clang_Module_Id.LRU.First_Element;
          begin
-            --  We are not actually removing element from the cache, so that we
-            --  can trace dangling pointers
+            --  First, let's remove the element from the LRU
+            Clang_Module_Id.LRU.Delete_First;
+
             Trace (Me, "Removing " & (+F) & " from cache");
             begin
+               --  We are not actually removing element from the cache, so that
+               --  we can trace dangling pointers
                Dispose (Clang_Module_Id.TU_Cache.Element (F).TU);
                Clang_Module_Id.TU_Cache.Element (F).Is_Ready := False;
             exception
@@ -365,7 +369,6 @@ package body Language.Libclang is
                   Trace (Me, "Exception !");
                   Trace (Me, GNAT.Traceback.Symbolic.Symbolic_Traceback (E));
             end;
-            Clang_Module_Id.LRU.Delete_First;
          end;
       end if;
    end Add_TU_To_Cache;
@@ -1396,12 +1399,13 @@ package body Language.Libclang is
    begin
       loop
          if Self.Cache.Is_Ready = False then
-            declare
-               Dummy : Boolean := Parsing_Timeout_Handler;
-            begin
-               null;
-            end;
-            delay 0.01;
+
+            --  While waiting on the translation unit to be ready, we'll index
+            --  one file at a time, and eventually our request will have been
+            --  processed.
+
+            Index_One_File;
+            delay 0.005;
          else
             return Self.Cache.TU;
          end if;
