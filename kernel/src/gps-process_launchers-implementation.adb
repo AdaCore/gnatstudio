@@ -23,62 +23,56 @@ with GPS.Kernel;                       use GPS.Kernel;
 
 package body GPS.Process_Launchers.Implementation is
 
-   type Build_Callback_Data is new Callback_Data_Record with record
+   type Build_Callback_Data is new External_Process_Data with record
       Output_Parser  : Tools_Output_Parser_Access;
    end record;
-
-   overriding procedure Destroy (Data : in out Build_Callback_Data);
-   procedure Build_Callback
-     (Data    : Process_Data;
+   type Build_Callback_Data_Access is access all Build_Callback_Data'Class;
+   overriding procedure Free (Data : in out Build_Callback_Data);
+   overriding procedure On_Output
+     (Self    : not null access Build_Callback_Data;
       Command : not null access Root_Command'Class;
       Output  : String);
-   procedure End_Build_Callback
-     (Data    : Process_Data;
+   overriding procedure On_Exit
+     (Self    : not null access Build_Callback_Data;
       Command : not null access Root_Command'Class;
       Status  : Integer);
 
-   --------------------
-   -- Build_Callback --
-   --------------------
+   ---------------
+   -- On_Output --
+   ---------------
 
-   procedure Build_Callback
-     (Data    : Process_Data;
+   overriding procedure On_Output
+     (Self    : not null access Build_Callback_Data;
       Command : not null access Root_Command'Class;
-      Output  : String)
-   is
-      Build_Data : Build_Callback_Data
-        renames Build_Callback_Data (Data.Callback_Data.all);
+      Output  : String) is
    begin
-      if Build_Data.Output_Parser /= null then
-         Build_Data.Output_Parser.Parse_Standard_Output (Output, Command);
+      if Self.Output_Parser /= null then
+         Self.Output_Parser.Parse_Standard_Output (Output, Command);
       end if;
-   end Build_Callback;
-
-   ------------------------
-   -- End_Build_Callback --
-   ------------------------
-
-   procedure End_Build_Callback
-     (Data    : Process_Data;
-      Command : not null access Root_Command'Class;
-      Status  : Integer)
-   is
-      Build_Data : Build_Callback_Data
-                     renames Build_Callback_Data (Data.Callback_Data.all);
-   begin
-      if Build_Data.Output_Parser /= null then
-         Build_Data.Output_Parser.End_Of_Stream (Status, Command);
-      end if;
-   end End_Build_Callback;
+   end On_Output;
 
    -------------
-   -- Destroy --
+   -- On_Exit --
    -------------
 
-   overriding procedure Destroy (Data : in out Build_Callback_Data) is
+   overriding procedure On_Exit
+     (Self    : not null access Build_Callback_Data;
+      Command : not null access Root_Command'Class;
+      Status  : Integer) is
+   begin
+      if Self.Output_Parser /= null then
+         Self.Output_Parser.End_Of_Stream (Status, Command);
+      end if;
+   end On_Exit;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Data : in out Build_Callback_Data) is
    begin
       Free (Data.Output_Parser);
-   end Destroy;
+   end Free;
 
    --------------------
    -- Launch_Process --
@@ -95,8 +89,8 @@ package body GPS.Process_Launchers.Implementation is
    is
       Console : Interactive_Consoles.Interactive_Console;
       Result  : Scheduled_Command_Access;
-      Data    : constant Callback_Data_Access := new Build_Callback_Data'
-        (Output_Parser => Output_Parser);
+      Data    : constant Build_Callback_Data_Access := new Build_Callback_Data'
+        (External_Process_Data with Output_Parser => Output_Parser);
    begin
       if Show_Command_To /= null then
          Console := Console_Messages_Window (Show_Command_To.all)
@@ -107,14 +101,12 @@ package body GPS.Process_Launchers.Implementation is
         (Kernel               => Kernel_Handle (Launcher.Kernel),
          CL                   => CL,
          Server               => Server,
-         Callback             => Build_Callback'Access,
-         Exit_Cb              => End_Build_Callback'Access,
          Success              => Success,
          Use_Ext_Terminal     => False,
          Console              => Console,
          Show_Command         => Show_Command_To /= null,
          Show_Output          => False,
-         Callback_Data        => Data,
+         Data                 => Data,
          Line_By_Line         => False,
          Directory            => Directory,
          Synchronous          => True,
@@ -141,8 +133,8 @@ package body GPS.Process_Launchers.Implementation is
    is
       Console : Interactive_Consoles.Interactive_Console;
       Result : Scheduled_Command_Access;
-      Data   : constant Callback_Data_Access := new Build_Callback_Data'
-        (Output_Parser => Output_Parser);
+      Data   : constant Build_Callback_Data_Access := new Build_Callback_Data'
+        (External_Process_Data with Output_Parser => Output_Parser);
    begin
       if Show_Command_To /= null then
          Console := Console_Messages_Window (Show_Command_To.all)
@@ -153,14 +145,12 @@ package body GPS.Process_Launchers.Implementation is
         (Kernel               => Kernel_Handle (Launcher.Kernel),
          CL                   => CL,
          Server               => Server,
-         Callback             => Build_Callback'Access,
-         Exit_Cb              => End_Build_Callback'Access,
          Success              => Success,
          Use_Ext_Terminal     => False,
          Console              => Console,
          Show_Command         => Show_Command_To /= null,
          Show_Output          => False,
-         Callback_Data        => Data,
+         Data                 => Data,
          Line_By_Line         => False,
          Directory            => Directory,
          Show_Exit_Status     => False,

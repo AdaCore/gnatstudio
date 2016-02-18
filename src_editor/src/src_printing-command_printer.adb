@@ -48,25 +48,23 @@ package body Src_Printing.Command_Printer is
         Src_Editor_Module.Find_Current_Editor (Kernel);
       Success   : Boolean;
       Scheduled : Scheduled_Command_Access;
+      CL        : Arg_List;
    begin
       if GPS.Kernel.MDI.Save_MDI_Children
         (Kernel,
          Children => (1 => Child),
          Force    => Auto_Save.Get_Pref)
       then
-         declare
-            CL  : Arg_List;
-         begin
-            CL := Parse_String (Print_Helper, Separate_Args);
-            Append_Argument
-              (CL, +Full_Name (Editor.Get_Filename), One_Arg);
+         CL := Parse_String (Print_Helper, Separate_Args);
+         Append_Argument
+           (CL, +Full_Name (Editor.Get_Filename), One_Arg);
 
-            Launch_Process
-              (Kernel, CL,
-               Console   => GPS.Kernel.Console.Get_Console (Kernel),
-               Scheduled => Scheduled,
-               Success   => Success);
-         end;
+         Launch_Process
+           (Kernel    => Kernel,
+            CL        => CL,
+            Console   => GPS.Kernel.Console.Get_Console (Kernel),
+            Scheduled => Scheduled,
+            Success   => Success);
       end if;
    end Print;
 

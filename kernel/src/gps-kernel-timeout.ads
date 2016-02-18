@@ -24,54 +24,21 @@ with GNATCOLL.Arg_Lists;      use GNATCOLL.Arg_Lists;
 
 package GPS.Kernel.Timeout is
 
-   type Process_Data;
-
-   type Output_Callback is access procedure
-     (Data    : Process_Data;
-      Command : not null access Root_Command'Class;
-      Output  : String);
-   --  This callback is called whenever some output is read from the file
-   --  descriptor.
-   --  Command is the command that executes the external process, not the
-   --  command manipulated by the task manager. As such, it cannot be passed
-   --  to the task manager.
-
-   type Exit_Callback is access procedure
-     (Data    : Process_Data;
-      Command : not null access Root_Command'Class;
-      Status  : Integer);
-   --  Callback called when an underlying process launched by Launch_Process
-   --  terminates.
-   --  Status is the exit status of the process. If the process could not
-   --  be launched, status is set to -1.
-
-   type Callback_Data_Record is abstract tagged null record;
-   type Callback_Data_Access is access all Callback_Data_Record'Class;
-   procedure Destroy (Data : in out Callback_Data_Record) is null;
-   --  Destroy the memory allocated for Data
-
-   type Process_Data is record
-      Kernel        : Kernel_Handle;
-      Descriptor    : GNAT.Expect.Process_Descriptor_Access;
-      Callback      : Output_Callback;
-      Exit_Cb       : Exit_Callback;
-      Callback_Data : Callback_Data_Access;
-
-      Process_Died : Boolean := False;
-      --  This flag is true when the process has died, false otherwise
-   end record;
+   type External_Process_Data is tagged private;
+   type External_Process_Data_Access is access all External_Process_Data'Class;
+   --  Data that is passed to the callbacks
 
    procedure Launch_Process
-     (Kernel               : Kernel_Handle;
+     (Scheduled            : out Scheduled_Command_Access;
+      Success              : out Boolean;
+      Data                 : access External_Process_Data'Class := null;
+      Kernel               : not null access Kernel_Handle_Record'Class;
       CL                   : Arg_List;
       Server               : Server_Type := GPS_Server;
       Console              : Interactive_Consoles.Interactive_Console := null;
-      Callback             : Output_Callback := null;
-      Exit_Cb              : Exit_Callback := null;
       Use_Ext_Terminal     : Boolean := False;
       Show_Command         : Boolean := True;
       Show_Output          : Boolean := True;
-      Callback_Data        : Callback_Data_Access := null;
       Line_By_Line         : Boolean := False;
       Directory            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Show_In_Task_Manager : Boolean := True;
@@ -82,21 +49,11 @@ package GPS.Kernel.Timeout is
       Timeout              : Integer := -1;
       Strip_CR             : Boolean := True;
       Use_Pipes            : Boolean := True;
-      Block_Exit           : Boolean := True;
-      Success              : out Boolean;
-      Scheduled            : out Scheduled_Command_Access);
+      Block_Exit           : Boolean := True);
    --  Launch a given command with arguments on server 'Server'.
    --  Arguments must be freed by the user.
    --
-   --  The result command is allocated by this procedure, and will be cleaned
-   --  automatically. It should not be freed by the caller of Launch_Process
-   --  (although it is of course authorized to Interrupt the command).
-   --  The Scheduled command will be null when Success is False or the
-   --  command executed synchronously (and thus has already finished executing)
-   --
-   --  Callback will be called asynchronousely when some new data is
-   --  available from the process.
-   --  Exit_Callback will be called when the underlying process dies.
+   --  Data is freed automatically.
    --
    --  Output is sent to Console, if not null and Show_Output is True, or
    --  discarded otherwise.
@@ -137,12 +94,67 @@ package GPS.Kernel.Timeout is
    --  If Strip_CR is set, then output from the process is stripped from CR
    --  characters.
    --
-   --  Callback_Data is freed automatically when the process terminates.
-   --
    --  Use_Pipes tells if process communication shall be performed with pipes
    --   or through the console on Windows
    --
    --  Block_Exit indicates whether the fact that this process is running
    --  should prevent GPS from closing.
+
+   procedure On_Output
+     (Self     : not null access External_Process_Data;
+      External : not null access Root_Command'Class;
+      Output   : String) is null;
+   --  Called when some new data is available from the process.
+   --  Override to perform your own processing, but you should in general
+   --  call the inherited On_Output.
+   --  Command is the one that executes the external process, not the one
+   --  manipulated by the task manager.
+
+   procedure On_Exit
+     (Self     : not null access External_Process_Data;
+      External : not null access Root_Command'Class;
+      Status   : Integer) is null;
+   --  Called when the process terminates
+
+   procedure Free (Self : in out External_Process_Data) is null;
+   --  Free memory used by Self
+
+   function Kernel
+     (Self : not null access External_Process_Data)
+     return not null access Kernel_Handle_Record'Class
+     with Inline;
+   --  Return the kernel
+
+   function Descriptor
+     (Self : not null access External_Process_Data)
+      return access GNAT.Expect.Process_Descriptor'Class
+     with Inline;
+   --  Return a handle on the external process
+
+   function Process_Died
+     (Self : not null access External_Process_Data) return Boolean
+     with Inline;
+   --  Whether the external process has finished executing
+
+private
+
+   type External_Process_Data is tagged record
+      Kernel       : access Kernel_Handle_Record'Class;
+      Descriptor   : GNAT.Expect.Process_Descriptor_Access;
+      On_Exit_Run  : Boolean := False;
+      Process_Died : Boolean := False;
+   end record;
+
+   function Kernel
+     (Self : not null access External_Process_Data)
+      return not null access Kernel_Handle_Record'Class is (Self.Kernel);
+
+   function Descriptor
+     (Self : not null access External_Process_Data)
+      return access GNAT.Expect.Process_Descriptor'Class is (Self.Descriptor);
+
+   function Process_Died
+     (Self : not null access External_Process_Data) return Boolean
+     is (Self.Process_Died);
 
 end GPS.Kernel.Timeout;

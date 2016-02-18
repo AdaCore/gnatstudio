@@ -131,22 +131,6 @@ package body Commands.Custom is
      (Custom_Command_Access, System.Address);
    pragma Warnings (On);
 
-   procedure Exit_Cb
-     (Data     : Process_Data;
-      External : not null access Root_Command'Class;
-      Status   : Integer);
-   --  Called when an external process has finished running.
-   --  Stored is the handler for the command executed in the task manager,
-   --  whereas Data contains a handle on the custom command.
-
-   procedure Store_Command_Output
-     (Data     : Process_Data;
-      External : not null access Root_Command'Class;
-      Output   : String);
-   --  Store the output of the current command;
-   --  External is the handler for the command executed in the task manager,
-   --  whereas Data contains a handle on the custom command.
-
    procedure Free (Execution : in out Custom_Command_Execution);
    --  Free Execution and its contents
 
@@ -178,10 +162,18 @@ package body Commands.Custom is
    --  This properly takes into account the on-failure components.
    --  Return -1 if no Ref is invalid.
 
-   type Custom_Callback_Data is new Callback_Data_Record with record
+   type Custom_Callback_Data is new External_Process_Data with record
       Command : Custom_Command_Access;
    end record;
-   type Custom_Callback_Data_Access is access all Custom_Callback_Data;
+   type Custom_Callback_Data_Access is access all Custom_Callback_Data'Class;
+   overriding procedure On_Output
+     (Self     : not null access Custom_Callback_Data;
+      External : not null access Root_Command'Class;
+      Output   : String);
+   overriding procedure On_Exit
+     (Self     : not null access Custom_Callback_Data;
+      External : not null access Root_Command'Class;
+      Status   : Integer);
 
    -------------------
    -- Create_Filter --
@@ -204,38 +196,34 @@ package body Commands.Custom is
    end Create_Filter;
 
    -------------
-   -- Exit_Cb --
+   -- On_Exit --
    -------------
 
-   procedure Exit_Cb
-     (Data     : Process_Data;
+   overriding procedure On_Exit
+     (Self     : not null access Custom_Callback_Data;
       External : not null access Root_Command'Class;
       Status   : Integer)
    is
       pragma Unreferenced (External);
-      D : constant Custom_Callback_Data_Access :=
-            Custom_Callback_Data_Access (Data.Callback_Data);
    begin
       --  Unless the command has already terminated
-      if D.Command.Execution /= null then
-         D.Command.Execution.External_Process_In_Progress := False;
-         D.Command.Execution.Process_Exit_Status := Status;
+      if Self.Command.Execution /= null then
+         Self.Command.Execution.External_Process_In_Progress := False;
+         Self.Command.Execution.Process_Exit_Status := Status;
       end if;
-   end Exit_Cb;
+   end On_Exit;
 
-   --------------------------
-   -- Store_Command_Output --
-   --------------------------
+   ---------------
+   -- On_Output --
+   ---------------
 
-   procedure Store_Command_Output
-     (Data     : Process_Data;
+   overriding procedure On_Output
+     (Self     : not null access Custom_Callback_Data;
       External : not null access Root_Command'Class;
       Output   : String)
    is
       pragma Unreferenced (External);
-      D       : constant Custom_Callback_Data_Access :=
-                  Custom_Callback_Data_Access (Data.Callback_Data);
-      Command : constant Custom_Command_Access := D.Command;
+      Command : constant Custom_Command_Access := Self.Command;
       Save_Output : Boolean;
 
       procedure Append (S : in out String_Access; Value : String);
@@ -335,7 +323,7 @@ package body Commands.Custom is
                                        Force);
                begin
                   if Password /= "" then
-                     Send (Data.Descriptor.all, Password);
+                     Send (Self.Descriptor.all, Password);
 
                      --  Do not output password prompt
                      return;
@@ -362,7 +350,7 @@ package body Commands.Custom is
                        Force);
                begin
                   if Password /= "" then
-                     Send (Data.Descriptor.all, Password);
+                     Send (Self.Descriptor.all, Password);
 
                      --  Do not output password prompt
                      return;
@@ -452,7 +440,7 @@ package body Commands.Custom is
       else
          Insert (Output);
       end if;
-   end Store_Command_Output;
+   end On_Output;
 
    --------------------
    -- Clear_Consoles --
@@ -1199,7 +1187,7 @@ package body Commands.Custom is
          function Execute_External
            (Component : Custom_Component_Record'Class) return Boolean
          is
-            Data : GPS.Kernel.Timeout.Callback_Data_Access;
+            Data : Custom_Callback_Data_Access;
          begin
             The_Command_Line := Parse_String
               (Trim
@@ -1252,15 +1240,14 @@ package body Commands.Custom is
                Command.Execution.External_Process_Console := Console;
 
                Data := new Custom_Callback_Data'
-                 (Command => Custom_Command_Access (Command));
+                 (External_Process_Data with
+                  Command => Custom_Command_Access (Command));
 
                Launch_Process
-                 (Command.Kernel,
+                 (Kernel               => Command.Kernel,
                   CL                   => The_Command_Line,
                   Server               => Component.Server,
                   Console              => Console,
-                  Callback             => Store_Command_Output'Access,
-                  Exit_Cb              => Exit_Cb'Access,
                   Success              => Success,
                   Show_Command         => Component.Show_Command,
 
@@ -1269,7 +1256,7 @@ package body Commands.Custom is
 
                   Show_Output          => False,
 
-                  Callback_Data        => Data,
+                  Data                 => Data,
                   Show_In_Task_Manager => Component.Show_In_Task_Manager,
                   Line_By_Line         => False,
                   Synchronous          => Context.Synchronous,
