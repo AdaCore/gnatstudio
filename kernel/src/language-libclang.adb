@@ -535,17 +535,8 @@ package body Language.Libclang is
 
       if Reparse
         and then Buffer /= Nil_Editor_Buffer
+        and then Has_TU (Full_File_Name)
       then
-         --  If we don't have a translation unit but a reparse has been
-         --  asked, and the buffer is open, then a logic error has been
-         --  made somewhere. Log it.
-
-         if not Has_TU (Full_File_Name) then
-            Trace (Me, "WARNING !! inconsistent state in the Clang library."
-                   & " No translation unit for file " & Full_File_Name
-                   & " for which a reparse was asked");
-         end if;
-
          declare
             Cache_Val : constant Translation_Unit_Wrapper'Class
               := Get_TU (Full_File_Name);
@@ -576,33 +567,31 @@ package body Language.Libclang is
                end if;
             end if;
          end;
+      elsif Has_TU (Full_Name (File)) then
+
+         --  Since the files are reparsed incrementally, and here we're
+         --  parsing the file itself, we're confident that we have an up to
+         --  date TU. In this case we just want to call the callbacks with
+         --  the existing TU.
+
+         declare
+            Cache_Val : constant Translation_Unit_Wrapper'Class
+              := Get_TU (Full_File_Name);
+         begin
+            if Callback /= null then
+               Callback.Call (File, Cache_Val.Cache.TU);
+               Free (Callback);
+            end if;
+         end;
       else
-         if Has_TU (Full_Name (File)) then
 
-            --  Since the files are reparsed incrementally, and here we're
-            --  parsing the file itself, we're confident that we have an up to
-            --  date TU. In this case we just want to call the callbacks with
-            --  the existing TU.
+         --  If we don't have a TU for this file, it's probably the first
+         --  time we're parsing it. Let's enqueue a request.
 
-            declare
-               Cache_Val : constant Translation_Unit_Wrapper'Class
-                 := Get_TU (Full_File_Name);
-            begin
-               if Callback /= null then
-                  Callback.Call (File, Cache_Val.Cache.TU);
-                  Free (Callback);
-               end if;
-            end;
-         else
-
-            --  If we don't have a TU for this file, it's probably the first
-            --  time we're parsing it. Let's enqueue a request.
-
-            Enqueue_Translation_Unit
-              (Kernel, File, No_Unsaved_Files,
-               Prio     => Prio,
-               Callback => Callback);
-         end if;
+         Enqueue_Translation_Unit
+           (Kernel, File, No_Unsaved_Files,
+            Prio     => Prio,
+            Callback => Callback);
 
       end if;
    end Enqueue_Translation_Unit;
