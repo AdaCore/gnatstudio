@@ -44,6 +44,7 @@ with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
 with Language.Libclang_Tree;        use Language.Libclang_Tree;
 with Language.Libclang.Utils;       use Language.Libclang.Utils;
 with Clang_Xref;                    use Clang_Xref;
+with GPS.Scripts.Commands;          use GPS.Scripts.Commands;
 
 package body Language.Libclang is
 
@@ -140,6 +141,18 @@ package body Language.Libclang is
    --  meaning traverse its tree and put the cross references information in
    --  the global cache
 
+   type Parse_Files_Data_Type is record
+      Max_Idx, Current_Idx : Natural := 0;
+      Kernel               : Core_Kernel;
+   end record;
+   type Parse_Files_Data_Type_Access is access all Parse_Files_Data_Type;
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Parse_Files_Data_Type, Parse_Files_Data_Type_Access);
+
+   package Parse_Files_Command is
+     new Commands.Generic_Asynchronous (Parse_Files_Data_Type_Access);
+
    type Clang_Module_Record is new Module_ID_Record with record
       Parsing_Timeout_Id   : Glib.Main.G_Source_Id;
       --  Id of the global timeout that is used to regularly index files that
@@ -170,6 +183,8 @@ package body Language.Libclang is
 
       Refs                 : Clang_Crossrefs_Cache;
       --  Clang cross references cache entry point.
+
+      Parse_Files_Command_Access : Scheduled_Command_Access;
    end record;
    --  This is the global cache record, containing information that is globally
    --  useful to the clang module
@@ -739,15 +754,6 @@ package body Language.Libclang is
    package Virtual_File_Vectors is new Ada.Containers.Vectors
      (Positive, Virtual_File);
 
-   type Parse_Files_Data_Type is record
-      Max_Idx, Current_Idx : Natural := 0;
-      Kernel : Core_Kernel;
-   end record;
-   type Parse_Files_Data_Type_Access is access all Parse_Files_Data_Type;
-
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Parse_Files_Data_Type, Parse_Files_Data_Type_Access);
-
    -------------------------
    -- Parse_Files_Iterate --
    -------------------------
@@ -773,9 +779,6 @@ package body Language.Libclang is
          Result := Execute_Again;
       end if;
    end Parse_Files_Iterate;
-
-   package Parse_Files_Command is
-     new Commands.Generic_Asynchronous (Parse_Files_Data_Type_Access);
 
    package Parse_Callback_Package is
       type Parse_For_Cache is new Parse_Callback with record
@@ -987,6 +990,7 @@ package body Language.Libclang is
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
+      use Parse_Files_Command;
 
       P_Tree         : constant GNATCOLL.Projects.Project_Tree_Access
         := Kernel.Get_Project_Tree;
@@ -996,8 +1000,11 @@ package body Language.Libclang is
 
       Files          : File_Array_Access;
       Filtered_Files : Virtual_File_Vectors.Vector;
-
    begin
+
+      if Clang_Module_Id.Parse_Files_Command_Access /= null then
+         Interrupt_Queue (Kernel, Clang_Module_Id.Parse_Files_Command_Access);
+      end if;
 
       Initialize_Crossrefs_Cache (Core_Kernel (Kernel));
 
@@ -1098,10 +1105,9 @@ package body Language.Libclang is
 
       Unchecked_Free (Files);
       declare
+         Command : Parse_Files_Command.Generic_Asynchronous_Command_Access;
          Command_Data : constant Parse_Files_Data_Type_Access
            := new Parse_Files_Data_Type;
-         Command      :
-           Parse_Files_Command.Generic_Asynchronous_Command_Access;
       begin
          --  Call Translation_Unit on them to populate the cache for the file
          Command_Data.Max_Idx := Natural (Filtered_Files.Length);
@@ -1122,14 +1128,18 @@ package body Language.Libclang is
          --  Only start the monitoring command if there actually are files to
          --  parse
          if not Filtered_Files.Is_Empty then
-            Parse_Files_Command.Create (Command, "libclang parsing files",
-                                        Command_Data,
-                                        Parse_Files_Iterate'Access);
+            Parse_Files_Command.Create
+              (Command,
+               "libclang parsing files",
+               Command_Data,
+               Parse_Files_Iterate'Access);
 
-            Launch_Background_Command (Kernel          => Kernel,
-                                       Command         => Command,
-                                       Active          => False,
-                                       Show_Bar        => True);
+            Clang_Module_Id.Parse_Files_Command_Access
+              := Launch_Background_Command
+              (Kernel          => Kernel,
+               Command         => Command,
+               Active          => False,
+               Show_Bar        => True);
          end if;
       end;
    end Execute;
