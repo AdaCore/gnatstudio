@@ -110,13 +110,13 @@ package body Libclang.Index is
       C_Source_Filename : chars_ptr;
 
       function local_clang_parseTranslationUnit
-        (C_Idxx : CXIndex;
-         Source_Filename : chars_ptr;
-         Command_Line_Args : System.Address;
+        (C_Idxx                : CXIndex;
+         Source_Filename       : chars_ptr;
+         Command_Line_Args     : System.Address;
          Num_Command_Line_Args : int;
-         Unsaved_Files : System.Address;
-         Num_Unsaved_Files : unsigned;
-         Options : unsigned) return CXTranslationUnit;
+         Unsaved_Files         : System.Address;
+         Num_Unsaved_Files     : unsigned;
+         Options               : unsigned) return Clang_Translation_Unit;
       pragma Import (C, local_clang_parseTranslationUnit,
                      "clang_parseTranslationUnit");
 
@@ -439,10 +439,10 @@ package body Libclang.Index is
    is
 
       function local_clang_reparseTranslationUnit
-        (tu : CXTranslationUnit;
+        (tu                : Clang_Translation_Unit;
          Num_Unsaved_Files : unsigned;
-         Unsaved_Files : System.Address;
-         Options : unsigned) return int;
+         Unsaved_Files     : System.Address;
+         Options           : unsigned) return int;
       pragma Import (C, local_clang_reparseTranslationUnit,
                      "clang_reparseTranslationUnit");
 
@@ -475,6 +475,7 @@ package body Libclang.Index is
       Trace (Me, "Freeing translation unit" & Spelling (TU));
       if TU = No_Translation_Unit then
          Trace (Me, "WARNING : Trying to dispose of already freed TU");
+         return;
       end if;
 
       clang_disposeTranslationUnit (TU);
@@ -500,13 +501,13 @@ package body Libclang.Index is
       Result : Clang_Complete_Results;
 
       function local_clang_codeCompleteAt
-        (TU : CXTranslationUnit;
+        (TU                : Clang_Translation_Unit;
          complete_filename : chars_ptr;
-         complete_line : unsigned;
-         complete_column : unsigned;
-         unsaved_files : System.Address;
+         complete_line     : unsigned;
+         complete_column   : unsigned;
+         unsaved_files     : System.Address;
          num_unsaved_files : unsigned;
-         options : unsigned)
+         options           : unsigned)
          return System.Address;
       pragma Import (C, local_clang_codeCompleteAt, "clang_codeCompleteAt");
 
