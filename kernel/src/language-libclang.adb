@@ -55,10 +55,9 @@ package body Language.Libclang is
    Nb_Tasks_Preference : Integer_Preference;
    --  Number of concurrent tasks used for parsing.
 
-   Max_Nb_Tasks : constant Natural :=
-     Natural'Max (Natural'Min (Natural (Number_Of_CPUs), 6), 2);
-   --  Number of concurrent tasks used for parsing. TODO ??? We might want to
-   --  expose that via a preference so that users can fine tune parsing speed
+   Max_Nb_Tasks        : constant Natural := 6;
+   --  We have made experiments and determined that above 6 tasks there was no
+   --  improvement in analysis speed, even on machines with many processors.
 
    Me       : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
    --  Main libclang trace
@@ -1206,7 +1205,6 @@ package body Language.Libclang is
 
    function Parsing_Timeout_Handler return Boolean is
    begin
-
       while Parsing_Response_Queue.Current_Use > 0 loop
          Index_One_File;
       end loop;
@@ -1323,12 +1321,27 @@ package body Language.Libclang is
          Doc          =>
            "The number of concurrent tasks GPS will use to parse files",
          Path         => "Editor/C & C++:Clang advanced settings",
-         Default      => Max_Nb_Tasks,
 
-         --  The minimum number of task is of two because we want at least
-         --  two parsing tasks, one for the background parsing, and one for
-         --  live requests.
-         Minimum      => 2, Maximum => Max_Nb_Tasks);
+         Default      => Natural'Max
+           (Natural'Min (Natural (Number_Of_CPUs + 1) / 2, Max_Nb_Tasks), 1),
+
+         --  We prefer to be conservative on the number of tasks allocated to
+         --  clang parsing, in order to not provoke freezes on user's machines.
+         --  This expression will give the following transfer:
+         --
+         --  +---------------+------------------+
+         --  | Nb processors | Nb parsing tasks |
+         --  |       1       |         1        |
+         --  |       2       |         1        |
+         --  |       3       |         2        |
+         --  |       4       |         2        |
+         --  |       5       |         3        |
+         --  |       6       |         3        |
+         --  |       7       |         4        |
+         --  |       8       |         4        |
+         --  +---------------+------------------+
+
+         Minimum      => 1, Maximum => Max_Nb_Tasks);
    end Register_Module;
 
    -------------
