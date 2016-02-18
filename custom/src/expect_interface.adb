@@ -1146,7 +1146,6 @@ package body Expect_Interface is
                     14 => Param ("case_sensitive_regexp", Optional => True),
                     15 => Param ("strip_cr",              Optional => True),
                     16 => Param ("active",                Optional => True)),
-
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
       Kernel.Scripts.Register_Command

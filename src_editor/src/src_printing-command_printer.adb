@@ -15,15 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;
-with Gtkada.MDI;
-with Src_Editor_Module;
+with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GPS.Kernel.Console;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
-with GNATCOLL.VFS; use GNATCOLL.VFS;
-with GPS.Kernel.Timeout; use GPS.Kernel.Timeout;
-with GPS.Kernel.Console;
+with GPS.Kernel.Timeout;     use GPS.Kernel.Timeout;
+with GPS.Kernel;
+with GPS.Scripts.Commands;   use GPS.Scripts.Commands;
+with Gtkada.MDI;
+with Src_Editor_Module;
 
 package body Src_Printing.Command_Printer is
 
@@ -42,10 +43,11 @@ package body Src_Printing.Command_Printer is
       Print_Helper : constant String :=
         Ada.Strings.Unbounded.To_String (This.Command);
 
-      Success : Boolean;
       Kernel  : constant GPS.Kernel.Kernel_Handle := Editor.Get_Kernel;
       Child   : constant Gtkada.MDI.MDI_Child :=
         Src_Editor_Module.Find_Current_Editor (Kernel);
+      Success   : Boolean;
+      Scheduled : Scheduled_Command_Access;
    begin
       if GPS.Kernel.MDI.Save_MDI_Children
         (Kernel,
@@ -62,6 +64,7 @@ package body Src_Printing.Command_Printer is
             Launch_Process
               (Kernel, CL,
                Console   => GPS.Kernel.Console.Get_Console (Kernel),
+               Scheduled => Scheduled,
                Success   => Success);
          end;
       end if;

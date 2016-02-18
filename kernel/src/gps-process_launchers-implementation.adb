@@ -119,7 +119,7 @@ package body GPS.Process_Launchers.Implementation is
          Directory            => Directory,
          Synchronous          => True,
          Show_Exit_Status     => False,
-         Created_Command      => Result);
+         Scheduled            => Result);
    end Launch_Process;
 
    ----------------------------------
@@ -164,7 +164,7 @@ package body GPS.Process_Launchers.Implementation is
          Line_By_Line         => False,
          Directory            => Directory,
          Show_Exit_Status     => False,
-         Created_Command      => Result,
+         Scheduled            => Result,
          Show_In_Task_Manager => Show_In_Task_Manager,
          Name_In_Task_Manager => Name_In_Task_Manager,
          Block_Exit           => Block_Exit);

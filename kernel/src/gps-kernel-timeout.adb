@@ -17,6 +17,7 @@
 
 with Ada.Calendar;               use Ada, Ada.Calendar;
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Expect;                use GNAT.Expect;
 pragma Warnings (Off);
@@ -31,7 +32,6 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib.Object;                use Glib.Object;
 with Glib.Values;
-with Glib.Main;                  use Glib.Main;
 
 with Gtk.Handlers;               use Gtk.Handlers;
 with Gtk.Widget;                 use Gtk.Widget;
@@ -51,6 +51,10 @@ with Time_Utils;                 use Time_Utils;
 package body GPS.Kernel.Timeout is
 
    Me : constant Trace_Handle := Create ("Timeout");
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (GNAT.Expect.Process_Descriptor'Class,
+      GNAT.Expect.Process_Descriptor_Access);
 
    type Console_Process_Data is new GObject_Record with record
       CL                   : Arg_List;
@@ -517,7 +521,6 @@ package body GPS.Kernel.Timeout is
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
       Exit_Cb              : Exit_Callback := null;
-      Success              : out Boolean;
       Use_Ext_Terminal     : Boolean := False;
       Show_Command         : Boolean := True;
       Show_Output          : Boolean := True;
@@ -533,13 +536,14 @@ package body GPS.Kernel.Timeout is
       Strip_CR             : Boolean := True;
       Use_Pipes            : Boolean := True;
       Block_Exit           : Boolean := True;
-      Created_Command      : out Scheduled_Command_Access)
+      Success              : out Boolean;
+      Scheduled            : out Scheduled_Command_Access)
    is
       Q_Id          : constant String := Get_New_Queue_Id (Queue_Id);
       C             : Monitor_Command_Access;
       No_Handler    : Handler_Id;
       Expect_Regexp : GNAT.Expect.Pattern_Matcher_Access;
-      Scheduled     : Scheduled_Command_Access;
+      Wrapper       : Scheduled_Command_Access;
    begin
       if not Is_Local (Server) then
          Synchronize (Kernel, GPS_Server, Server,
@@ -551,8 +555,7 @@ package body GPS.Kernel.Timeout is
       end if;
 
       C := new Monitor_Command;
-      Scheduled := Create_Wrapper (Command         => C,
-                                   Destroy_On_Exit => True);
+      Wrapper := Create_Wrapper (Command => C, Destroy_On_Exit => True);
       No_Handler.Id := Null_Handler_Id;
 
       if Line_By_Line then
@@ -597,16 +600,18 @@ package body GPS.Kernel.Timeout is
       Initialize (C.Data);
 
       if Synchronous then
-         Launch_Synchronous (Command_Access (Scheduled), 0.1);
-         Unref (Command_Access (Scheduled));
+         Launch_Synchronous (Command_Access (Wrapper), 0.1);
+         Unref (Command_Access (Wrapper));
+         Scheduled := null;
 
       else
-         Created_Command := Launch_Background_Command
+         --   ??? A scheduled command that wraps a scheduled command
+         Scheduled := Launch_Background_Command
            (Kernel,
-            Command_Access (Scheduled),
-            Active   => False,
-            Show_Bar => Show_In_Task_Manager,
-            Queue_Id => Q_Id,
+            Command_Access (Wrapper),
+            Active     => False,
+            Show_Bar   => Show_In_Task_Manager,
+            Queue_Id   => Q_Id,
             Block_Exit => Block_Exit);
       end if;
 
@@ -620,133 +625,13 @@ package body GPS.Kernel.Timeout is
       end if;
 
       Success := True;
+
    exception
       when E : others =>
          Trace (Me, E);
          Success := False;
-   end Launch_Process;
-
-   --------------------
-   -- Launch_Process --
-   --------------------
-
-   procedure Launch_Process
-     (Kernel               : Kernel_Handle;
-      CL                   : Arg_List;
-      Console              : Interactive_Consoles.Interactive_Console := null;
-      Callback             : Output_Callback := null;
-      Exit_Cb              : Exit_Callback := null;
-      Success              : out Boolean;
-      Use_Ext_Terminal     : Boolean := False;
-      Show_Command         : Boolean := True;
-      Show_Output          : Boolean := True;
-      Callback_Data        : Callback_Data_Access := null;
-      Line_By_Line         : Boolean := False;
-      Directory            : Virtual_File := No_File;
-      Show_In_Task_Manager : Boolean := True;
-      Name_In_Task_Manager : String := "";
-      Queue_Id             : String := "";
-      Show_Exit_Status     : Boolean := False;
-      Use_Pipes            : Boolean := True;
-      Fd                   : out GNAT.Expect.Process_Descriptor_Access;
-      Created_Command      : out Scheduled_Command_Access)
-   is
-   begin
-      Launch_Process
-        (Kernel               => Kernel,
-         CL                   => CL,
-         Server               => GPS_Server,
-         Console              => Console,
-         Callback             => Callback,
-         Exit_Cb              => Exit_Cb,
-         Success              => Success,
-         Use_Ext_Terminal     => Use_Ext_Terminal,
-         Show_Command         => Show_Command,
-         Show_Output          => Show_Output,
-         Callback_Data        => Callback_Data,
-         Line_By_Line         => Line_By_Line,
-         Directory            => Directory,
-         Show_In_Task_Manager => Show_In_Task_Manager,
-         Name_In_Task_Manager => Name_In_Task_Manager,
-         Queue_Id             => Queue_Id,
-         Synchronous          => False,
-         Show_Exit_Status     => Show_Exit_Status,
-         Use_Pipes            => Use_Pipes,
-         Created_Command      => Created_Command);
-
-      if Success
-        and then Execute (Monitor_Command_Access
-                            (Get_Command (Created_Command)))
-        = Execute_Again
-      then
-         Fd := Monitor_Command_Access
-           (Get_Command (Created_Command)).Data.D.Descriptor;
-      else
-         Fd := null;
-         Success := False;
-         --  Interrupt just launched command because program did not start
-         Interrupt_Queue (Kernel, Created_Command);
-      end if;
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Success := False;
-   end Launch_Process;
-
-   --------------------
-   -- Launch_Process --
-   --------------------
-
-   procedure Launch_Process
-     (Kernel               : Kernel_Handle;
-      CL                   : Arg_List;
-      Server               : Server_Type := GPS_Server;
-      Console              : Interactive_Consoles.Interactive_Console := null;
-      Callback             : Output_Callback := null;
-      Exit_Cb              : Exit_Callback := null;
-      Success              : out Boolean;
-      Use_Ext_Terminal     : Boolean := False;
-      Show_Command         : Boolean := True;
-      Show_Output          : Boolean := True;
-      Callback_Data        : Callback_Data_Access := null;
-      Line_By_Line         : Boolean := False;
-      Directory            : Virtual_File := No_File;
-      Show_In_Task_Manager : Boolean := True;
-      Name_In_Task_Manager : String := "";
-      Queue_Id             : String := "";
-      Synchronous          : Boolean := False;
-      Show_Exit_Status     : Boolean := False;
-      Timeout              : Integer := -1;
-      Strip_CR             : Boolean := True;
-      Use_Pipes            : Boolean := True;
-      Block_Exit           : Boolean := True)
-   is
-      Created_Command : Scheduled_Command_Access;
-   begin
-      Launch_Process
-        (Kernel               => Kernel,
-         CL                   => CL,
-         Server               => Server,
-         Console              => Console,
-         Callback             => Callback,
-         Exit_Cb              => Exit_Cb,
-         Success              => Success,
-         Use_Ext_Terminal     => Use_Ext_Terminal,
-         Show_Command         => Show_Command,
-         Show_Output          => Show_Output,
-         Callback_Data        => Callback_Data,
-         Line_By_Line         => Line_By_Line,
-         Directory            => Directory,
-         Show_In_Task_Manager => Show_In_Task_Manager,
-         Name_In_Task_Manager => Name_In_Task_Manager,
-         Queue_Id             => Queue_Id,
-         Synchronous          => Synchronous,
-         Show_Exit_Status     => Show_Exit_Status,
-         Timeout              => Timeout,
-         Strip_CR             => Strip_CR,
-         Use_Pipes            => Use_Pipes,
-         Block_Exit           => Block_Exit,
-         Created_Command      => Created_Command);
+         Scheduled := null;
+         --  No need to free the command, this is handled by the task manager
    end Launch_Process;
 
    --------------------

@@ -1275,7 +1275,7 @@ package body Commands.Custom is
                   Synchronous          => Context.Synchronous,
                   Directory            => To_Remote
                     (Context.Dir, Get_Nickname (Component.Server)),
-                  Created_Command      => Command.Sub_Command);
+                  Scheduled            => Command.Sub_Command);
 
                Command.Execution.External_Process_In_Progress := Success;
             end if;

@@ -38,6 +38,7 @@ with GPS.Kernel.Console;    use GPS.Kernel.Console;
 with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
 with GPS.Kernel.Timeout;    use GPS.Kernel.Timeout;
+with GPS.Scripts.Commands;  use GPS.Scripts.Commands;
 
 with Commands;              use Commands;
 with Password_Manager;      use Password_Manager;
@@ -425,6 +426,7 @@ package body Remote.Rsync is
                declare
                   Arguments : Argument_List := Build_Arg;
                   CL        : Arg_List;
+                  Scheduled : Scheduled_Command_Access;
                begin
                   CL := Create ("rsync");
                   for A in Arguments'Range loop
@@ -438,6 +440,7 @@ package body Remote.Rsync is
                      Show_Command      => Print_Cmd,
                      Show_Output       => Real_Print_Output,
                      Success           => Success,
+                     Scheduled         => Scheduled,
                      Line_By_Line      => False,
                      Callback          => Parse_Rsync_Output'Access,
                      Exit_Cb           => Rsync_Terminated'Access,

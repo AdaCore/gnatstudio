@@ -15,9 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
 with GNAT.Expect;
-with Glib.Main;
 with Commands;                use Commands;
 with GPS.Scripts.Commands;    use GPS.Scripts.Commands;
 with Interactive_Consoles;
@@ -63,12 +61,6 @@ package GPS.Kernel.Timeout is
       --  This flag is true when the process has died, false otherwise
    end record;
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (GNAT.Expect.Process_Descriptor'Class,
-      GNAT.Expect.Process_Descriptor_Access);
-
-   package Process_Timeout is new Glib.Main.Generic_Sources (Process_Data);
-
    procedure Launch_Process
      (Kernel               : Kernel_Handle;
       CL                   : Arg_List;
@@ -76,7 +68,6 @@ package GPS.Kernel.Timeout is
       Console              : Interactive_Consoles.Interactive_Console := null;
       Callback             : Output_Callback := null;
       Exit_Cb              : Exit_Callback := null;
-      Success              : out Boolean;
       Use_Ext_Terminal     : Boolean := False;
       Show_Command         : Boolean := True;
       Show_Output          : Boolean := True;
@@ -91,11 +82,18 @@ package GPS.Kernel.Timeout is
       Timeout              : Integer := -1;
       Strip_CR             : Boolean := True;
       Use_Pipes            : Boolean := True;
-      Block_Exit           : Boolean := True);
+      Block_Exit           : Boolean := True;
+      Success              : out Boolean;
+      Scheduled            : out Scheduled_Command_Access);
    --  Launch a given command with arguments on server 'Server'.
    --  Arguments must be freed by the user.
    --
-   --  Set Success to True if the command could be spawned.
+   --  The result command is allocated by this procedure, and will be cleaned
+   --  automatically. It should not be freed by the caller of Launch_Process
+   --  (although it is of course authorized to Interrupt the command).
+   --  The Scheduled command will be null when Success is False or the
+   --  command executed synchronously (and thus has already finished executing)
+   --
    --  Callback will be called asynchronousely when some new data is
    --  available from the process.
    --  Exit_Callback will be called when the underlying process dies.
@@ -146,57 +144,5 @@ package GPS.Kernel.Timeout is
    --
    --  Block_Exit indicates whether the fact that this process is running
    --  should prevent GPS from closing.
-
-   procedure Launch_Process
-     (Kernel               : Kernel_Handle;
-      CL                   : Arg_List;
-      Server               : Server_Type := GPS_Server;
-      Console              : Interactive_Consoles.Interactive_Console := null;
-      Callback             : Output_Callback := null;
-      Exit_Cb              : Exit_Callback := null;
-      Success              : out Boolean;
-      Use_Ext_Terminal     : Boolean := False;
-      Show_Command         : Boolean := True;
-      Show_Output          : Boolean := True;
-      Callback_Data        : Callback_Data_Access := null;
-      Line_By_Line         : Boolean := False;
-      Directory            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Show_In_Task_Manager : Boolean := True;
-      Name_In_Task_Manager : String := "";
-      Queue_Id             : String := "";
-      Synchronous          : Boolean := False;
-      Show_Exit_Status     : Boolean := False;
-      Timeout              : Integer := -1;
-      Strip_CR             : Boolean := True;
-      Use_Pipes            : Boolean := True;
-      Block_Exit           : Boolean := True;
-      Created_Command      : out Scheduled_Command_Access);
-   --  Same as above, and returns the created Command_Access.
-   --  Cmd is allocated by this procedure, and will be cleaned automatically,
-   --  and should not be freed by the caller of Launch_Process (although it is
-   --  of course authorized to Interrupt the Cmd).
-
-   procedure Launch_Process
-     (Kernel               : Kernel_Handle;
-      CL                   : Arg_List;
-      Console              : Interactive_Consoles.Interactive_Console := null;
-      Callback             : Output_Callback := null;
-      Exit_Cb              : Exit_Callback := null;
-      Success              : out Boolean;
-      Use_Ext_Terminal     : Boolean := False;
-      Show_Command         : Boolean := True;
-      Show_Output          : Boolean := True;
-      Callback_Data        : Callback_Data_Access := null;
-      Line_By_Line         : Boolean := False;
-      Directory            : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      Show_In_Task_Manager : Boolean := True;
-      Name_In_Task_Manager : String := "";
-      Queue_Id             : String := "";
-      Show_Exit_Status     : Boolean := False;
-      Use_Pipes            : Boolean := True;
-      Fd                   : out GNAT.Expect.Process_Descriptor_Access;
-      Created_Command      : out Scheduled_Command_Access);
-   --  Same as above, and returns the created File_Descriptor.
-   --  This process is necessarily launched locally.
 
 end GPS.Kernel.Timeout;
