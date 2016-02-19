@@ -172,8 +172,7 @@ package body Commands.Custom is
       Output   : String);
    overriding procedure On_Exit
      (Self     : not null access Custom_Callback_Data;
-      External : not null access Root_Command'Class;
-      Status   : Integer);
+      External : not null access Root_Command'Class);
 
    -------------------
    -- Create_Filter --
@@ -201,15 +200,14 @@ package body Commands.Custom is
 
    overriding procedure On_Exit
      (Self     : not null access Custom_Callback_Data;
-      External : not null access Root_Command'Class;
-      Status   : Integer)
+      External : not null access Root_Command'Class)
    is
       pragma Unreferenced (External);
    begin
       --  Unless the command has already terminated
       if Self.Command.Execution /= null then
          Self.Command.Execution.External_Process_In_Progress := False;
-         Self.Command.Execution.Process_Exit_Status := Status;
+         Self.Command.Execution.Process_Exit_Status := Self.Exit_Status;
       end if;
    end On_Exit;
 

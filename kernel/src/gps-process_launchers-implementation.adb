@@ -34,8 +34,7 @@ package body GPS.Process_Launchers.Implementation is
       Output  : String);
    overriding procedure On_Exit
      (Self    : not null access Build_Callback_Data;
-      Command : not null access Root_Command'Class;
-      Status  : Integer);
+      Command : not null access Root_Command'Class);
 
    ---------------
    -- On_Output --
@@ -57,11 +56,10 @@ package body GPS.Process_Launchers.Implementation is
 
    overriding procedure On_Exit
      (Self    : not null access Build_Callback_Data;
-      Command : not null access Root_Command'Class;
-      Status  : Integer) is
+      Command : not null access Root_Command'Class) is
    begin
       if Self.Output_Parser /= null then
-         Self.Output_Parser.End_Of_Stream (Status, Command);
+         Self.Output_Parser.End_Of_Stream (Self.Exit_Status, Command);
       end if;
    end On_Exit;
 

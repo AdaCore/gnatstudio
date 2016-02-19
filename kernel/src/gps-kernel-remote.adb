@@ -791,6 +791,8 @@ package body GPS.Kernel.Remote is
          if Directory /= No_File then
             Old_Dir := Get_Current_Dir;
             Change_Dir (Directory);
+            Trace (Me, "Switching to directory "
+                   & Directory.Display_Full_Name);
          end if;
 
          if Active (Me) then

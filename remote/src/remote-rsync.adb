@@ -110,8 +110,7 @@ package body Remote.Rsync is
       Output  : String);
    overriding procedure On_Exit
      (Self    : not null access Rsync_Callback_Data;
-      Command : not null access Root_Command'Class;
-      Status  : Integer);
+      Command : not null access Root_Command'Class);
 
    type On_Rsync is new Rsync_Hooks_Function with null record;
    overriding function Execute
@@ -748,8 +747,7 @@ package body Remote.Rsync is
 
    overriding procedure On_Exit
      (Self    : not null access Rsync_Callback_Data;
-      Command : not null access Root_Command'Class;
-      Status  : Integer)
+      Command : not null access Root_Command'Class)
    is
       pragma Unreferenced (Command);
    begin
@@ -761,8 +759,8 @@ package body Remote.Rsync is
          Self.Dialog := null;
       end if;
 
-      Self.Ret_Data.Status := Status;
-      Trace (Me, "rsync status is" & Integer'Image (Status));
+      Self.Ret_Data.Status := Self.Exit_Status;
+      Trace (Me, "rsync status is" & Integer'Image (Self.Exit_Status));
 
       Rsync_Finished_Hook.Run (Self.Kernel);
    end On_Exit;

@@ -7889,10 +7889,16 @@ class Process(Command):
                  task_manager=True, progress_regexp='', progress_current=1,
                  progress_total=1, before_kill=None, remote_server='',
                  show_command=False, single_line_regexp=False,
-                 case_sensitive_regexp=True, strip_cr=True, active=False):
+                 case_sensitive_regexp=True, strip_cr=True, active=False,
+                 directory=""):
         """
         Spawns ``command``, which can include triple-quoted strings, similar
         to Python, which are always preserved as one argument.
+
+        The external process might not start immediately. Instead, it will
+        start whenever GPS starts processing events again (once your script
+        gives the hand back to GPS), or when you call :func:`expect()`
+        or :func:`get_result()` below.
 
         If ``regexp`` is not-empty and ``on_match_action`` is specified,
         launch ``on_match_action`` when ``regexp`` is found in the process
@@ -7982,6 +7988,8 @@ class Process(Command):
              of the process. This will require more CPU (and might make the
              GUI less reactive while the process runs), but ensures that
              events like on_exit will be called earlier.
+          :param str directory: The directory in which the external process
+             should be started.
 
           .. seealso:: :class:`GPS.Process`
         """

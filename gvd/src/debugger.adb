@@ -284,6 +284,7 @@ package body Debugger is
       Debugger.Process := Proxy;
       Debugger.Kernel  := Kernel_Handle (Kernel);
 
+      --   ??? Should use GPS.Kernel.Timeout instead
       GPS.Kernel.Remote.Spawn
         (Kernel            => Debugger.Kernel,
          Arguments         => CL,

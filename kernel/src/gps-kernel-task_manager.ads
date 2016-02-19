@@ -25,22 +25,29 @@ with GPS.Scripts.Commands; use GPS.Scripts.Commands;
 package GPS.Kernel.Task_Manager is
 
    procedure Launch_Background_Command
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Command         : access Root_Command'Class;
-      Active          : Boolean;
-      Show_Bar        : Boolean;
-      Queue_Id        : String := "";
-      Destroy_On_Exit : Boolean := True;
-      Block_Exit      : Boolean := True);
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Command           : access Root_Command'Class;
+      Active            : Boolean;
+      Show_Bar          : Boolean;
+      Queue_Id          : String := "";
+      Destroy_On_Exit   : Boolean := True;
+      Block_Exit        : Boolean := True;
+      Start_Immediately : Boolean := False);
    --  Add a command to the Task_Manager.
    --  If Queue_Id is not empty, the queue will be appended at the end of the
    --  queue corresponding to the Id if it exists, or a new queue with this
    --  Id will be created.
+   --
    --  If Active is True, the command will be launched in active mode, ie
    --  executed as fast as possible in an idle loop. Otherwise, it is launched
    --  in background mode, ie executed more slowly in a timeout. If a queue is
    --  specified, the command is put in front of the queue if Active is false,
    --  and at the back otherwise.
+   --
+   --  If Active or Start_Immediately, the command is started immediately.
+   --  Otherwise, it will be executed only by the background loop (idle or
+   --  timeout).
+   --
    --  If Show_Bar is True, a progress bar will be displayed for this command,
    --  otherwise it will only be visible in the Task Manager window.
    --  Memory associated to Command will be freed by the Task Manager
@@ -50,13 +57,14 @@ package GPS.Kernel.Task_Manager is
    --  See comments in task_manager.ads for details.
 
    function Launch_Background_Command
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Command         : access Root_Command'Class;
-      Active          : Boolean;
-      Show_Bar        : Boolean;
-      Queue_Id        : String := "";
-      Destroy_On_Exit : Boolean := True;
-      Block_Exit      : Boolean := True) return Scheduled_Command_Access;
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Command           : access Root_Command'Class;
+      Active            : Boolean;
+      Show_Bar          : Boolean;
+      Queue_Id          : String := "";
+      Destroy_On_Exit   : Boolean := True;
+      Block_Exit        : Boolean := True;
+      Start_Immediately : Boolean := False) return Scheduled_Command_Access;
    --  Same as above, but returns the command actually inserted in the task
    --  manager.
 

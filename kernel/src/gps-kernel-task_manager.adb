@@ -53,22 +53,24 @@ package body GPS.Kernel.Task_Manager is
    -------------------------------
 
    procedure Launch_Background_Command
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Command         : access Root_Command'Class;
-      Active          : Boolean;
-      Show_Bar        : Boolean;
-      Queue_Id        : String := "";
-      Destroy_On_Exit : Boolean := True;
-      Block_Exit      : Boolean := True)
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Command           : access Root_Command'Class;
+      Active            : Boolean;
+      Show_Bar          : Boolean;
+      Queue_Id          : String := "";
+      Destroy_On_Exit   : Boolean := True;
+      Block_Exit        : Boolean := True;
+      Start_Immediately : Boolean := False)
    is
       Wrapper : constant Scheduled_Command_Access := Launch_Background_Command
-        (Kernel          => Kernel,
-         Command         => Command,
-         Active          => Active,
-         Show_Bar        => Show_Bar,
-         Queue_Id        => Queue_Id,
-         Destroy_On_Exit => Destroy_On_Exit,
-         Block_Exit      => Block_Exit);
+        (Kernel            => Kernel,
+         Command           => Command,
+         Active            => Active,
+         Show_Bar          => Show_Bar,
+         Queue_Id          => Queue_Id,
+         Start_Immediately => Start_Immediately,
+         Destroy_On_Exit   => Destroy_On_Exit,
+         Block_Exit        => Block_Exit);
       pragma Unreferenced (Wrapper);
    begin
       null;
@@ -79,19 +81,26 @@ package body GPS.Kernel.Task_Manager is
    -------------------------------
 
    function Launch_Background_Command
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Command         : access Root_Command'Class;
-      Active          : Boolean;
-      Show_Bar        : Boolean;
-      Queue_Id        : String := "";
-      Destroy_On_Exit : Boolean := True;
-      Block_Exit      : Boolean := True) return Scheduled_Command_Access
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Command           : access Root_Command'Class;
+      Active            : Boolean;
+      Show_Bar          : Boolean;
+      Queue_Id          : String := "";
+      Destroy_On_Exit   : Boolean := True;
+      Block_Exit        : Boolean := True;
+      Start_Immediately : Boolean := False) return Scheduled_Command_Access
    is
       Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);
       Wrapper : constant Scheduled_Command_Access :=
                   Create_Wrapper (Command, Destroy_On_Exit);
    begin
-      Add_Command (Manager, Wrapper, Active, Show_Bar, Queue_Id, Block_Exit);
+      Add_Command
+        (Manager, Wrapper,
+         Active            => Active,
+         Show_Bar          => Show_Bar,
+         Queue_Id          => Queue_Id,
+         Block_Exit        => Block_Exit,
+         Start_Immediately => Start_Immediately);
       return Wrapper;
    end Launch_Background_Command;
 

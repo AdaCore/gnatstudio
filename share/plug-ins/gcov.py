@@ -58,7 +58,7 @@ class Gcov_Process (GPS.Console, GPS.Process):
     def on_destroy(self):
         self.kill()
 
-    def __init__(self, process, args=""):
+    def __init__(self, process, args="", directory=""):
         GPS.Console.__init__(self, "Executing gcov",
                              on_input=Gcov_Process.on_input,
                              on_destroy=Gcov_Process.on_destroy,
@@ -66,6 +66,7 @@ class Gcov_Process (GPS.Console, GPS.Process):
 
         GPS.Process.__init__(self, process + ' ' + args, ".+",
                              remote_server="Build_Server",
+                             directory=directory,
                              on_exit=Gcov_Process.on_exit,
                              on_match=Gcov_Process.on_output)
 
@@ -102,12 +103,11 @@ Make sure you are using gcov for GNAT dated 20071005 or later.""")
 
     # Determine the root project
     root_project = Project.root()
-    previous_dir = pwd()
 
     # Determine where to create the gcov info
     GCOV_ROOT = getenv("GCOV_ROOT")
 
-    if GCOV_ROOT is None or GCOV_ROOT == "":
+    if not GCOV_ROOT:
         root_object_dirs = root_project.object_dirs(False)
         if not root_object_dirs:
             MDI.dialog("""The root project does not have an object directory.
@@ -130,7 +130,7 @@ Please point the environment variable GCOV_ROOT to a directory
 on which you have permission to read and write.
          """)
 
-    cd(gcov_dir)
+    input_file = os.path.abspath(os.path.join(gcov_dir, "gcov_input.txt"))
 
     # List all the projects
     projects = root_project.dependencies(True)
@@ -138,7 +138,7 @@ on which you have permission to read and write.
     object_dirs = root_project.object_dirs(True)
 
     # Write the response file
-    res = file("gcov_input.txt", 'wb')
+    res = file(input_file, 'wb')
 
     gcda_file_found = False
     gcno_file_found = False
@@ -176,6 +176,8 @@ on which you have permission to read and write.
 
     res.close()
 
+    r = file(input_file).read()
+
     if not gcno_file_found:
         # No gcno file was found: display an appropriate message.
         MDI.dialog(""" No ".gcno" file was found in any of the object directories.
@@ -193,9 +195,7 @@ Make sure you have run the executable(s) at least once.
 
         else:
             # Run gcov
-            Gcov_Process("gcov", "@gcov_input.txt")
-
-    cd(previous_dir)
+            Gcov_Process("gcov", "@%s" % input_file, directory=gcov_dir)
 
 
 @interactive(name='gcov remove coverage files',

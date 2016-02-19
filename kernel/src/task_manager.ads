@@ -38,12 +38,13 @@ package Task_Manager is
    No_Task_Manager : constant Task_Manager_Access;
 
    procedure Add_Command
-     (Manager    : not null access Task_Manager_Record;
-      Command    : not null access Scheduled_Command'Class;
-      Active     : Boolean;
-      Show_Bar   : Boolean;
-      Queue_Id   : String := "";
-      Block_Exit : Boolean := True);
+     (Manager           : not null access Task_Manager_Record;
+      Command           : not null access Scheduled_Command'Class;
+      Active            : Boolean;
+      Show_Bar          : Boolean;
+      Queue_Id          : String := "";
+      Block_Exit        : Boolean := True;
+      Start_Immediately : Boolean := False);
    --  Add a command to be handled by the task manager.
    --  The command will be executed at once.
    --  The progress bar will be shown for this command if Show_Bar is True.
@@ -116,11 +117,6 @@ package Task_Manager is
    --  paused in the task manager.
 
 private
-
-   procedure Run
-     (Manager : Task_Manager_Access;
-      Active  : Boolean);
-   --  Runs the task manager, if it is not already running
 
    type Queue_Status is (Not_Started, Running, Paused, Completed);
    --  Not_Started: the queue has not started

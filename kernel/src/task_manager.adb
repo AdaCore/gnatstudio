@@ -33,7 +33,8 @@ package body Task_Manager is
       Queue_Id   : String;
       Active     : Boolean;
       Show_Bar   : Boolean;
-      Block_Exit : Boolean) return Integer;
+      Block_Exit : Boolean;
+      Status     : Queue_Status) return Integer;
    --  Return an index in Manager.Queues corresponding to Queue_Id
 
    function Active_Incremental
@@ -53,6 +54,11 @@ package body Task_Manager is
      (Command : in out Scheduled_Command_Access) return Command_Return_Type;
    --  Executes command, and returns the result. If an exception occurs during
    --  execution of the command, return Failure.
+
+   procedure Run
+     (Manager : Task_Manager_Access;
+      Active  : Boolean);
+   --  Runs the task manager, if it is not already running
 
    -----------------------
    -- Interrupt_Command --
@@ -369,16 +375,27 @@ package body Task_Manager is
       Queue_Id   : String;
       Active     : Boolean;
       Show_Bar   : Boolean;
-      Block_Exit : Boolean) return Integer
+      Block_Exit : Boolean;
+      Status     : Queue_Status) return Integer
    is
       use GNAT.Strings;
+
+      procedure Init (Q : in out Task_Queue_Access);
+      --  Set the fields of the queue
+
+      procedure Init (Q : in out Task_Queue_Access) is
+      begin
+         Q := new Task_Queue_Record;
+         Q.Id := new String'(Queue_Id);
+         Q.Show_Bar := Show_Bar;
+         Q.Block_Exit := Block_Exit;
+         Q.Status := Status;
+      end Init;
+
    begin
       if Manager.Queues = null then
          Manager.Queues := new Task_Queue_Array (1 .. 1);
-         Manager.Queues (1) := new Task_Queue_Record;
-         Manager.Queues (1).Id := new String'(Queue_Id);
-         Manager.Queues (1).Show_Bar := Show_Bar;
-         Manager.Queues (1).Block_Exit := Block_Exit;
+         Init (Manager.Queues (1));
 
          if Active then
             Manager.Passive_Index := 2;
@@ -408,13 +425,7 @@ package body Task_Manager is
                New_Queues
                  (Manager.Queues'First + 1 .. Manager.Queues'Last + 1) :=
                  Manager.Queues.all;
-
-               New_Queues (Manager.Queues'First) := new Task_Queue_Record;
-               New_Queues (New_Queues'First).Id := new String'(Queue_Id);
-
-               New_Queues (New_Queues'First).Show_Bar := Show_Bar;
-               New_Queues (New_Queues'First).Block_Exit := Block_Exit;
-
+               Init (New_Queues (Manager.Queues'First));
                Unchecked_Free (Manager.Queues);
                Manager.Queues := new Task_Queue_Array'(New_Queues);
 
@@ -426,13 +437,7 @@ package body Task_Manager is
                New_Queues
                  (Manager.Queues'First .. Manager.Queues'Last) :=
                  Manager.Queues.all;
-
-               New_Queues (New_Queues'Last) := new Task_Queue_Record;
-               New_Queues (New_Queues'Last).Id := new String'(Queue_Id);
-
-               New_Queues (New_Queues'Last).Show_Bar := Show_Bar;
-               New_Queues (New_Queues'Last).Block_Exit := Block_Exit;
-
+               Init (New_Queues (New_Queues'Last));
                Unchecked_Free (Manager.Queues);
                Manager.Queues := new Task_Queue_Array'(New_Queues);
 
@@ -472,23 +477,38 @@ package body Task_Manager is
    -----------------
 
    procedure Add_Command
-     (Manager    : not null access Task_Manager_Record;
-      Command    : not null access Scheduled_Command'Class;
-      Active     : Boolean;
-      Show_Bar   : Boolean;
-      Queue_Id   : String := "";
-      Block_Exit : Boolean := True)
+     (Manager           : not null access Task_Manager_Record;
+      Command           : not null access Scheduled_Command'Class;
+      Active            : Boolean;
+      Show_Bar          : Boolean;
+      Queue_Id          : String := "";
+      Block_Exit        : Boolean := True;
+      Start_Immediately : Boolean := False)
    is
-      Task_Queue : constant Integer :=
-                     Get_Or_Create_Task_Queue
-                       (Manager, Queue_Id, Active, Show_Bar, Block_Exit);
+      Task_Queue : Integer;
+      Status     : Queue_Status := Running;
    begin
+      --  Active commands are always started immediately
+      if Start_Immediately and then not Active then
+         case Command.Execute is
+            when Success | Failure =>
+               --  Can't free the command immediately, so we still queue it.
+               Status := Completed;
+            when Execute_Again =>
+               Status := Running;
+         end case;
+      end if;
+
+      Task_Queue := Get_Or_Create_Task_Queue
+        (Manager, Queue_Id, Active, Show_Bar, Block_Exit,
+         Status => Status);
+
       Manager.Queues (Task_Queue).Queue.Append (Command);
       Manager.Queues (Task_Queue).Total :=
         Manager.Queues (Task_Queue).Total + 1;
       Queue_Added (Manager, Task_Queue);
 
-      Run (Task_Manager_Access (Manager), Active);
+      Run (Task_Manager_Access (Manager),  Active);
    end Add_Command;
 
    ---------------------
