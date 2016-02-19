@@ -276,6 +276,20 @@ package body GPS.Kernel.Messages is
       Old_File_Flags     : Message_Flags;
 
    begin
+      if Message.Level = Primary then
+         for Child of Message.Children loop
+            if (Abstract_Message'Class (Child.all).Flags and Flags)
+              /= Empty_Message_Flags
+            then
+               --  Message is not visible anymore, otherwise message was not
+               --  visible.
+
+               Notifiers.Notify_Listeners_About_Message_Removed
+                 (Container, Message_Access (Child), Flags);
+            end if;
+         end loop;
+      end if;
+
       Notifiers.Notify_Listeners_About_Message_Removed
         (Container, Message, Flags);
 
@@ -472,7 +486,16 @@ package body GPS.Kernel.Messages is
      (Self : not null access constant Abstract_Message'Class)
       return Message_Flags is
    begin
-      return Self.Flags;
+      case Self.Level is
+         when Primary =>
+            return Self.Flags;
+
+         when Secondary =>
+            --  Secondary messages are visible only when primary message is
+            --  visible.
+
+            return Self.Parent.Flags and Self.Flags;
+      end case;
    end Get_Flags;
 
    ------------------
@@ -830,6 +853,17 @@ package body GPS.Kernel.Messages is
 
       Notifiers.Notify_Listeners_About_Message_Added
         (Container, Message, Flags);
+
+      if Message.Level = Primary then
+         for Child of Message.Children loop
+            if (Abstract_Message'Class (Child.all).Get_Flags and Flags)
+              /= Empty_Message_Flags
+            then
+               Notifiers.Notify_Listeners_About_Message_Added
+                 (Container, Message_Access (Child), Flags);
+            end if;
+         end loop;
+      end if;
    end Increment_Counters;
 
    ----------------
@@ -962,7 +996,7 @@ package body GPS.Kernel.Messages is
       --  Notify listeners
 
       Notifiers.Notify_Listeners_About_Message_Added
-        (Parent.Get_Container, Self, Self.Flags);
+        (Parent.Get_Container, Self, Self.Get_Flags);
    end Initialize;
 
    ----------
