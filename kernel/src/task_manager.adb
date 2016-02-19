@@ -502,6 +502,10 @@ package body Task_Manager is
       use Command_Lists;
       C : Command_Lists.Cursor;
    begin
+      if Manager.Queues = null then
+         return;
+      end if;
+
       for J in Manager.Queues'Range loop
          C := Manager.Queues (J).Queue.First;
          while Has_Element (C) loop
