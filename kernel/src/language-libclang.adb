@@ -107,16 +107,16 @@ package body Language.Libclang is
    --  take an Unsaved_Files array as parameter. This array is computed by the
    --  higher level Enqueue_Translation_Unit.
 
-   procedure Free
+   procedure Unchecked_Free
    is new Ada.Unchecked_Deallocation (TU_Maps.Map, Tu_Map_Access);
-   procedure Free
+   procedure Unchecked_Free
    is new Ada.Unchecked_Deallocation (LRU_Lists.List, LRU_Vector_Access);
-   procedure Free
+   procedure Unchecked_Free
    is new Ada.Unchecked_Deallocation (TU_Cache_Record, TU_Cache_Access);
-   procedure Free
+   procedure Unchecked_Free
    is new Ada.Unchecked_Deallocation
      (Clang_Crossrefs_Cache_Type, Clang_Crossrefs_Cache);
-   procedure Free
+   procedure Unchecked_Free
    is new Ada.Unchecked_Deallocation
      (File_Cache_Record, File_Cache_Access);
    --  Deallocation procedures
@@ -236,7 +236,7 @@ package body Language.Libclang is
          end if;
       end loop;
       S.Map.Clear;
-      Free (S);
+      Unchecked_Free (S);
    end Destroy;
 
    ------------
@@ -1337,14 +1337,14 @@ package body Language.Libclang is
          Destroy (C);
       end loop;
       Id.TU_Cache.Clear;
-      Free (Id.TU_Cache);
-      Free (Id.LRU);
+      Unchecked_Free (Id.TU_Cache);
+      Unchecked_Free (Id.LRU);
 
       for M of Id.Refs.Map loop
          Destroy (M);
       end loop;
+      Unchecked_Free (Id.Refs);
 
-      Free (Id.Refs);
       Dispose (Id.Index_Action);
       clang_disposeIndex (Id.Clang_Indexer);
 
@@ -1362,7 +1362,7 @@ package body Language.Libclang is
       if Tu_Cache.TU /= No_Translation_Unit then
          Dispose (Tu_Cache.TU);
       end if;
-      Free (Tu_Cache);
+      Unchecked_Free (Tu_Cache);
    end Destroy;
 
    ------------------
