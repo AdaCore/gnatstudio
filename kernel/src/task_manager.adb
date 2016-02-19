@@ -506,6 +506,10 @@ package body Task_Manager is
       use Command_Lists;
       Node : Cursor;
    begin
+      if Manager.Queues = null then
+         return;
+      end if;
+
       for J in Manager.Queues'Range loop
          Node := First (Manager.Queues (J).Queue);
 
