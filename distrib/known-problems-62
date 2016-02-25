@@ -384,6 +384,18 @@ KP-62-O326-012 GPS: C rename refactoring
 Known problems fixed in GPS 6.2.2 / GNATbench 2.10.2
 ----------------------------------------------------
 
+KP-62-P224-028 GPS: Impossibility to choose custom colors for code highlighting
+
+  Problem:    Users are unable to choose custom colors for code highlighting
+              without changing the Color Theme itself: the "Fonts & Colors"
+              preferences page only offers the possibility to customize font
+              styles.
+
+  Status:     This was fixed in 6.2.2 on 2016-02-25
+
+  Workaround: Keep the previous preferences.xml (with customized colors) if
+              any.
+
 KP-62-OC21-028 GPS: indentation parameters are not used for custom languages
 
   Problem:    The source editor uses default indentation parameters for custom
