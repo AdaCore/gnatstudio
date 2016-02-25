@@ -586,7 +586,10 @@ package body GPS.Kernel.Scripts is
          Context := Get_Context (Data.Nth_Arg (1));
          Project := Project_Information (Context);  --  will compute if needed
 
-         if Project = No_Project then
+         if Project = No_Project
+           and then not Get_Registry
+             (Kernel).Tree.Root_Project.Is_Aggregate_Project
+         then
             Project := Get_Registry (Kernel).Tree.Info
               (File_Information (Context)).Project;
          end if;
