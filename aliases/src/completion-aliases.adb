@@ -27,6 +27,16 @@ package body Completion.Aliases is
    function To_Str
      (A : Unbounded_String) return String renames To_String;
 
+   overriding function Deep_Copy
+     (Proposal : Alias_Completion_Proposal)
+      return Completion_Proposal'Class is
+   begin
+      return Alias_Completion_Proposal'
+        (Simple_Completion_Proposal
+           (Completion.Deep_Copy (Simple_Completion_Proposal (Proposal)))
+         with Alias => Proposal.Alias);
+   end Deep_Copy;
+
    overriding function Get_Action_Name
      (Proposal : Alias_Completion_Proposal) return String
    is ("Expand alias under cursor");

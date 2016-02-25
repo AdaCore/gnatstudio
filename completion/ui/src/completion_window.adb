@@ -1413,6 +1413,10 @@ package body Completion_Window is
       --  but Delete does nothing if In_Destruction, so lower the flag now.
       Window.In_Destruction := False;
       Delete (Window);
+
+   exception
+      when E : others =>
+         Trace (Me, E);
    end Complete_And_Exit;
 
    ------------------
