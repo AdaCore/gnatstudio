@@ -145,9 +145,7 @@ package body GPS.Kernel.Commands is
          Old_Data := Get_Data
            (File_Iterate_Commands.Generic_Asynchronous_Command_Access
               (Get_Command (Old_Command)));
-         Old_Data.Stop := True;
-         Set_Data (File_Iterate_Commands.Generic_Asynchronous_Command_Access
-                   (Get_Command (Old_Command)), Old_Data);
+         Old_Data.Stop := True;   --  modify in place via the pointer
 
          return True;
       end if;
