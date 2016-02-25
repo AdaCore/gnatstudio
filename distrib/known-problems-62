@@ -25,6 +25,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P218-045 GB: Problems in GPR files reported in editor at line 1
+
+  Problem:    Problems in GPR files detected during clean/analyze/build
+              commands are reported in the editor at line 1 instead of the
+              line reported by the location column of the problems view.
+
+  Status:     This was fixed in 17.0 on 2016-02-25
+
+  Workaround: Scroll manually to the line provided in the location column
+              of the problems view.
+
 KP-62-P211-059 GPS: Wrong sort order of directories in Project View
 
   Problem:    Expanding one project changes order of object and execute
