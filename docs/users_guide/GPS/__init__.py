@@ -228,6 +228,13 @@ class Action():
         """
         pass  # implemented in Ada
 
+    def exists(self):
+        """
+        Returns a Boolean indicating if an action has already been created
+        for this name.
+        """
+        pass  # implemented in Ada
+
     def contextual(self, path, ref='', add_before=True, group=0):
         """
         Create a new contextual menu associated with the command. This

@@ -1344,6 +1344,13 @@ package body Custom_Module is
          Inst := Nth_Arg (Data, 1, Action_Class);
          Set_Data (Inst, Action_Class, Value => String'(Nth_Arg (Data, 2)));
 
+      elsif Command = "exists" then
+         Inst := Nth_Arg (Data, 1, Action_Class);
+         Data.Set_Return_Value
+           (Lookup_Action
+              (Kernel,
+               Name => String'(Get_Data (Inst, Action_Class))) /= null);
+
       elsif Command = "create" then
          Inst := Nth_Arg (Data, 1, Action_Class);
          Cmd  := new Subprogram_Command_Record;
@@ -1408,16 +1415,31 @@ package body Custom_Module is
          end;
 
       elsif Command = "button" then
-         Inst := Data.Nth_Arg (1);
-         Register_Button
-           (Kernel,
-            Action    => Get_Data (Inst, Action_Class),
-            Toolbar   => Data.Nth_Arg (2, "main"),
-            Section   => Data.Nth_Arg (3, ""),
-            Group     => Data.Nth_Arg (4, ""),
-            Label     => Data.Nth_Arg (5, ""),
-            Icon_Name => Data.Nth_Arg (6, ""));
-
+         Inst := Data.Nth_Arg (1, Action_Class);
+         declare
+            Action_Name      : constant String :=
+                                 Get_Data (Inst, Action_Class);
+            Toolbar_Name     : constant String := Data.Nth_Arg (2, "main");
+            Section_Name     : constant String := Data.Nth_Arg (3, "");
+            Group_Name       : constant String := Data.Nth_Arg (4, "");
+            Label_Name       : constant String := Data.Nth_Arg (5, "");
+            Icon_Name        : constant String := Data.Nth_Arg (6, "");
+            Actual_Icon_Name : constant String :=
+                                 (if Icon_Name /= "" then Icon_Name
+                                  else
+                                     Get_Icon_Name
+                                    (Lookup_Action (Kernel, Action_Name)));
+         begin
+            Inst := Data.Nth_Arg (1);
+            Register_Button
+              (Kernel,
+               Action    => Action_Name,
+               Toolbar   => Toolbar_Name,
+               Section   => Section_Name,
+               Group     => Group_Name,
+               Label     => Label_Name,
+               Icon_Name => Actual_Icon_Name);
+         end;
       elsif Command = "contextual" then
          Name_Parameters (Data, (2 => Path_Cst'Access,
                                  3 => Ref_Cst'Access,
@@ -1497,6 +1519,10 @@ package body Custom_Module is
          Class         => Action_Class,
          Minimum_Args  => 1,
          Maximum_Args  => 1,
+         Handler       => Action_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("exists",
+         Class         => Action_Class,
          Handler       => Action_Handler'Access);
       Kernel.Scripts.Register_Command
         ("create",
