@@ -1604,7 +1604,7 @@ class Console(GUI):
     def __init__(self, name, force=False, on_input=None, on_destroy=None,
                  accept_input=True, on_resize=None, on_interrupt=None,
                  on_completion=None, on_key='', manage_prompt=True,
-                 ansi=False):
+                 ansi=False, toolbar_name=''):
         """
         Creates a new instance of :class:`GPS.Console`. GPS tries to reuse
         any existing console with the same name. If none exists yet, or the
@@ -1724,6 +1724,11 @@ class Console(GUI):
             mod1 and lock keys. This is a bitmask, where shift is 1,
             lock is 2, control is 4 and mod1 is 8.
 
+        - :``toolbar_name`` is used to register a toolbar for the
+          console.
+          The given name can be used later to register toolbar items
+          (e.g: using the `GPS.Action.button` function).
+
         :param name: A string
         :param force: A boolean
         :param on_input: A subprogram, see the description below
@@ -1735,6 +1740,7 @@ class Console(GUI):
         :param on_key: A subprogram
         :param manage_prompt: A boolean
         :param ansi: A boolean
+        :param toolbar_name: A string
         """
         pass  # implemented in Ada
 

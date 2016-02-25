@@ -211,13 +211,14 @@ package body GPS.Kernel.Scripts is
    On_Key_Cst        : aliased constant String := "on_key";
    Manage_Prompt_Cst : aliased constant String := "manage_prompt";
    ANSI_Cst          : aliased constant String := "ansi";
+   Toolbar_Name_Cst  : aliased constant String := "toolbar_name";
 
    Console_Constructor_Args : constant Cst_Argument_List :=
      (Name_Cst'Access, Force_Cst'Access,
       On_Input_Cst'Access, On_Destroy_Cst'Access, Accept_Input_Cst'Access,
       On_Resize_Cst'Access, On_Interrupt_Cst'Access,
       On_Completion_Cst'Access, On_Key_Cst'Access,
-      Manage_Prompt_Cst'Access, ANSI_Cst'Access);
+      Manage_Prompt_Cst'Access, ANSI_Cst'Access, Toolbar_Name_Cst'Access);
 
    Enable_Cst         : aliased constant String := "enable";
 
@@ -873,6 +874,7 @@ package body GPS.Kernel.Scripts is
             On_Key      : constant Subprogram_Type := Nth_Arg (Data, 10, null);
             Manage_Prompt : constant Boolean := Nth_Arg (Data, 11, True);
             ANSI_Support  : constant Boolean := Nth_Arg (Data, 12, False);
+            Toolbar_Name  : constant String := Nth_Arg (Data, 13, "");
          begin
             Console := Create_Interactive_Console
               (Kernel              => Get_Kernel (Data),
@@ -883,7 +885,8 @@ package body GPS.Kernel.Scripts is
                Force_Create        => Force,
                Manage_Prompt       => Manage_Prompt,
                ANSI_Support        => ANSI_Support,
-               Accept_Input        => Accept_Input);
+               Accept_Input        => Accept_Input,
+               Toolbar_Name        => Toolbar_Name);
             --   ??? If the console was already associated with an instance,
             --  we would lose that original instance and all data the user
             --  might have stored in it.

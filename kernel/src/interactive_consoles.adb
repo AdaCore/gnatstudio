@@ -1506,6 +1506,7 @@ package body Interactive_Consoles is
             Toolbar.Set_Style (Toolbar_Icons);
             Get_Style_Context (Toolbar).Add_Class ("gps-local-toolbar");
             Console.Pack_Start (Toolbar, Expand => False, Fill => False);
+            Console.Set_Toolbar (Toolbar);
             Toolbar.Show_All;
          end;
       end if;

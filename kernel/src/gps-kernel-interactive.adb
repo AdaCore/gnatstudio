@@ -97,6 +97,7 @@ package body GPS.Kernel.Interactive is
                Areas               => Both);
          end if;
 
+         NChild.Set_Toolbar (Console.Get_Toolbar);
          Set_Title (NChild, Title, Title);
          Put
            (Get_MDI (Kernel), NChild, Initial_Position => Position_Bottom);
