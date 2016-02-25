@@ -1512,8 +1512,8 @@ procedure GPS.Main is
          Delete (Project_Path (Project), Success);
       end if;
 
-      Free_Modules (Kernel);
       Destroy (Kernel);
+      GPS_Main := null;
       GNATCOLL.Traces.Finalize;
 
       --  In case of a normal exit, rename log.<pid> as log to avoid

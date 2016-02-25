@@ -160,28 +160,33 @@ package body Custom_Tools_Output is
       Status  : Integer;
       Command : access Root_Command'Class)
    is
-      Args : Callback_Data'Class := Create
-        (Get_Script (Self.Inst), Arguments_Count => 2);
-      Proc : Subprogram_Type;
       Inst : Class_Instance := No_Class_Instance;
-      Scheduled : constant Scheduled_Command_Access :=
-        Scheduled_Command_Access (Self.Kernel.Get_Scheduled_Command (Command));
+      Scheduled : Scheduled_Command_Access;
    begin
-      if Scheduled /= null then
-         Inst := Scheduled.Get_Instance (Get_Script (Self.Inst));
+      --  Unless we have finalized the scripts module already
+      if Self.Kernel.Scripts /= null then
+         Scheduled := Scheduled_Command_Access
+            (Self.Kernel.Get_Scheduled_Command (Command));
+         if Scheduled /= null then
+            Inst := Scheduled.Get_Instance (Get_Script (Self.Inst));
+         end if;
+
+         declare
+            Proc : Subprogram_Type := Get_Method (Self.Inst, On_Exit_Cst);
+            Args : Callback_Data'Class := Create
+              (Get_Script (Self.Inst), Arguments_Count => 2);
+         begin
+            Set_Nth_Arg (Args, 1, Status);
+            Set_Nth_Arg (Args, 2, Inst);
+
+            declare
+               Dummy : constant Any_Type := Proc.Execute (Args);
+            begin
+               Free (Proc);
+               Free (Args);
+            end;
+         end;
       end if;
-
-      Proc := Get_Method (Self.Inst, On_Exit_Cst);
-      Set_Nth_Arg (Args, 1, Status);
-      Set_Nth_Arg (Args, 2, Inst);
-
-      declare
-         Ignore : constant Any_Type := Proc.Execute (Args);
-         pragma Unreferenced (Ignore);
-      begin
-         Free (Proc);
-         Free (Args);
-      end;
 
       if Self.Child /= null then
          Self.Child.End_Of_Stream (Status, Command);

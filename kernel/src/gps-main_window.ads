@@ -106,7 +106,9 @@ package GPS.Main_Window is
 
    function Kernel
      (Self : not null access GPS_Application_Window_Record'Class)
-      return GPS.Kernel.Kernel_Handle is (Self.Application.Kernel) with Inline;
+      return GPS.Kernel.Kernel_Handle
+      is (if Self.Application = null then null else Self.Application.Kernel)
+      with Inline;
    --  The kernel for the application
 
    procedure For_All_Open_Windows

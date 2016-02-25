@@ -25,11 +25,12 @@
 --  the processing of the commands, and will run in the background until all
 --  the commands are finished.
 
-with Commands;    use Commands;
+with Commands;             use Commands;
+with Glib.Main;            use Glib.Main;
 with GNAT.Strings;
 with GPS.Scripts.Commands; use GPS.Scripts.Commands;
 with Ada.Unchecked_Deallocation;
-with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;     use GNATCOLL.Scripts;
 
 package Task_Manager is
 
@@ -76,7 +77,7 @@ package Task_Manager is
 
    procedure Interrupt_All_Tasks
       (Manager : not null access Task_Manager_Record);
-   --  Interrput all tasks
+   --  Interrupt all tasks
 
    procedure Pause_Command
      (Manager : not null access Task_Manager_Record;
@@ -176,13 +177,17 @@ private
       Passive_Index        : Integer := 0;
       --  Index of the first passive queue in Queues
 
-      Running_Active       : Boolean := False;
-      --  Whether the active loop is running
-
-      Running_Passive      : Boolean := False;
-
       Minimal_Active_Priority  : Integer := 0;
       Minimal_Passive_Priority : Integer := 0;
+
+      Prevent_Active_Reentry : Boolean := False;
+      --  Flag to prevent reentry
+
+      Active_Handler_Id        : Glib.Main.G_Source_Id := No_Source_Id;
+      --  The id of the active idle callback.
+
+      Passive_Handler_Id       : Glib.Main.G_Source_Id := No_Source_Id;
+      --  The id of the passive timeout callback
    end record;
 
    No_Task_Manager : constant Task_Manager_Access := null;

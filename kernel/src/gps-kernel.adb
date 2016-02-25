@@ -886,6 +886,13 @@ package body GPS.Kernel is
         (Refactoring.Factory_Context_Record'Class,
          Refactoring.Factory_Context);
    begin
+      Trace (Me, "Destroying the kernel");
+
+      --  Stop executing actions in the background
+      Handle.Tasks.Interrupt_All_Tasks;
+
+      Free_Modules (Handle);
+
       --  Remove dangling timeout callback, if any.
       --  Do this before the rest, for a minor optimization: so that
       --  the "context_changed" hook won't be run here, which wouldn't
@@ -932,6 +939,7 @@ package body GPS.Kernel is
       --        Unref (Handle.Current_Context);
       --        Unref (Handle.Last_Context_For_Contextual);
 
+      --  This also frees all commands
       Reset (Handle.Actions);
       Unchecked_Free (Handle.Actions);
 
@@ -953,7 +961,7 @@ package body GPS.Kernel is
 
       --  Free the memory allocated by gtk+, and disconnect all the callbacks,
       --  reclaiming the associated memory.
-      Trace (Me, "Destroying the GPS kernel");
+      Trace (Me, "Done destroying the GPS kernel");
 
       --  ??? Do not free the memory in fact, since there are some controlled
       --  types like Class_Instance which might in fact be finalized only after

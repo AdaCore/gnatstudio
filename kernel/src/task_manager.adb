@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib.Main;        use Glib.Main;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 package body Task_Manager is
@@ -129,13 +128,13 @@ package body Task_Manager is
          end loop;
       end if;
 
-      Manager.Running_Active := False;
+      Manager.Active_Handler_Id := No_Source_Id;
       return False;
 
    exception
       when E : others =>
          Trace (Me, E);
-         Manager.Running_Active := False;
+         Manager.Active_Handler_Id := No_Source_Id;
          return False;
    end Active_Incremental;
 
@@ -156,14 +155,14 @@ package body Task_Manager is
       if Manager.Queues /= null then
          return True;
       else
-         Manager.Running_Passive := False;
+         Manager.Passive_Handler_Id := No_Source_Id;
          return False;
       end if;
 
    exception
       when E : others =>
          Trace (Me, E);
-         Manager.Running_Passive := False;
+         Manager.Passive_Handler_Id := No_Source_Id;
          return False;
    end Passive_Incremental;
 
@@ -341,28 +340,56 @@ package body Task_Manager is
 
    procedure Run
      (Manager : Task_Manager_Access;
-      Active  : Boolean)
-   is
-      Unused_Handler  : G_Source_Id;
-      Unused_Id       : G_Source_Id;
-      Result          : Command_Return_Type;
-      pragma Unreferenced (Unused_Handler, Unused_Id, Result);
+      Active  : Boolean) is
    begin
-      if not Manager.Running_Passive then
-         Manager.Running_Passive := True;
-
-         Unused_Id := Task_Manager_Timeout.Timeout_Add
+      if Manager.Passive_Handler_Id = No_Source_Id then
+         --  ??? we should fix the task_manager so that it does not run
+         --  iterations of the Passive loop when only Active commands
+         --  are running.
+         Manager.Passive_Handler_Id := Task_Manager_Timeout.Timeout_Add
            (Timeout, Passive_Incremental'Access, Manager,
             Priority => Glib.Main.Priority_Default_Idle);
       end if;
 
-      if Active and then not Manager.Running_Active then
-         Manager.Running_Active := True;
+      if Active then
+         --  Running an Active command
 
-         if Active_Incremental (Manager) then
-            Unused_Handler := Task_Manager_Idle.Idle_Add
+         --  There is a possible infinite loop here:
+         --   - the call to Active_Incremental below runs the current Active
+         --     command known to the task manager,
+         --   - if, as a result of this run, another Active command is added,
+         --     we would come back here and run this current Active command
+         --     again
+         --  We use Prevent_Active_Reentry as a flag to prevent this reentry.
+
+         if Manager.Prevent_Active_Reentry then
+            return;
+         end if;
+
+         Manager.Prevent_Active_Reentry := True;
+
+         --  If the active loop is already running, do nothing and wait for
+         --  the next iteration of the loop.
+         --  ??? This test means that there is an unpredictable behavior in
+         --  the task_manager: a task added to the Active loop is executed
+         --  once immediately, but this is only the case if there isn't already
+         --  an Active loop running. We should fix this impredictability.
+         if Manager.Active_Handler_Id = No_Source_Id
+
+         --  When running an Active command, we first do one iteration
+         --  immediately, using Active_Incremental here.
+
+           and then Active_Incremental (Manager)
+         then
+
+            --  If Active_Incremental returned True, it means "keep going": run
+            --  the active idle loop to continue processing.
+
+            Manager.Active_Handler_Id := Task_Manager_Idle.Idle_Add
               (Active_Incremental'Access, Manager);
          end if;
+
+         Manager.Prevent_Active_Reentry := False;
       end if;
    end Run;
 
@@ -596,7 +623,8 @@ package body Task_Manager is
    procedure Destroy
      (Manager : Task_Manager_Access) is
    begin
-      if Manager.Queues /= null then
+      if Manager /= null and then Manager.Queues /= null then
+         Manager.Interrupt_All_Tasks;
          for J in Manager.Queues'Range loop
             Free (Manager.Queues (J).Queue);
             GNAT.Strings.Free (Manager.Queues (J).Id);
@@ -671,6 +699,16 @@ package body Task_Manager is
       for C in Commands'Range loop
          Interrupt_Queue (Manager, Commands (C));
       end loop;
+
+      if Manager.Passive_Handler_Id /= No_Source_Id then
+         Remove (Manager.Passive_Handler_Id);
+         Manager.Passive_Handler_Id := No_Source_Id;
+      end if;
+
+      if Manager.Active_Handler_Id /= No_Source_Id then
+         Remove (Manager.Active_Handler_Id);
+         Manager.Active_Handler_Id := No_Source_Id;
+      end if;
    end Interrupt_All_Tasks;
 
    ----------------------------
