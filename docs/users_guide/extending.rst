@@ -7126,34 +7126,25 @@ messages. Such general hooks do not pass their parameters to other scripting
 languages.
 
 You create a new hook by calling :func:`Hook.register`. This function takes
-two arguments: the name of the hook you are creating and the type of the
-hook.  The name of the hook is left to you. Any character is allowed in
-that name, although using only alphanumerical characters is recommended.
+two arguments: the name of the hook you are creating and , optionally,
+the type of the hook.
+The name of the hook is left to you. Any character is allowed in that name,
+although using only alphanumerical characters is recommended.
 
-The type of the hook must be one of the following:
+When the hook type is omitted, it indicates that the hook is of the general
+type that allows any number of parameter, of any type.
+Other scripts are able to connect to it but will not be executed when the hook
+is run if they do not expect the same number of parameters passed to
+:func:`Hook.run`. Other scripts in other languages only receive the hook name
+as a parameter, not the full list of parameters.
 
-* the empty string
-
-  Indicates that the hook does not take any argument. None should be passed
-  to :func:`Hook.run` and none should be expected by the various commands
-  connected to that hook, other than the hook name itself.
-
-* :command:`general`
-
-  Indicates that the hook is of the general type that allows any number of
-  parameter, of any type. Other scripts are able to connect to it but
-  will not be executed when the hook is run if they do not expect the same
-  number of parameters passed to :func:`Hook.run`. Other scripts in other
-  languages only receive the hook name as a parameter, not the full list of
-  parameters.
-
-* one of the values returned by :func:`Hook.list_types`
-
-  Indicates that the hook is of one of the types exported by GPS itself.
-  The advantage of using such explicit types instead of :command:`general`
-  is that GPS is able to do more testing of the validity of the
-  parameters. Such hooks can also be connected to from other scripting
-  languages.
+When specified, the type of the hook must be one of the values returned by
+:func:`Hook.list_types`: it indicates that the hook is of one of the types
+exported by GPS itself.
+The advantage of using such explicit types instead of :command:`general`
+is that GPS is able to do more testing of the validity of the
+parameters. Such hooks can also be connected to from other scripting
+languages.
 
 A small trick worth noting: if the command bound to a hook does not have the
 correct number of parameters that this hook provides, the command will not be
