@@ -398,6 +398,9 @@
          <menu label="_Interrupt"                 action="interrupt"/>
       </menu>
 
+      <menu label='_GNAThub'>
+         <menu label='Display Analysis' action='gnathub display analysis' optional='true'/>
+      </menu>
       <menu label='_CodePeer' optional='true'>
          <menu label='_Analyze All'          action='codepeer analyze all' optional='true'/>
          <menu label='Analy_ze...'           action='codepeer analyze...' optional='true'/>

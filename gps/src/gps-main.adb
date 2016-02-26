@@ -143,6 +143,7 @@ with Command_Window;
 with Cpp_Module;
 with Custom_Module;
 with Project_Templates.GPS;
+with GNAThub.Module;
 with GNATStack.Module;
 with GNATTest_Module;
 with GPS.Location_View;
@@ -223,6 +224,8 @@ procedure GPS.Main is
                        Create ("MODULE.Project_Templates", GNATCOLL.Traces.On);
    Code_Analysis_Trace    : constant Trace_Handle :=
                         Create ("MODULE.Code_Analysis", GNATCOLL.Traces.On);
+   GNAThub_Trace          : constant Trace_Handle :=
+                              Create ("MODULE.GNAThub", GNATCOLL.Traces.Off);
    CodePeer_Trace         : constant Trace_Handle :=
                               Create ("MODULE.CodePeer", GNATCOLL.Traces.On);
    GNATStack_Trace        : constant Trace_Handle :=
@@ -2120,6 +2123,10 @@ procedure GPS.Main is
 
       if Active (Code_Analysis_Trace) then
          Code_Analysis_Module.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (GNAThub_Trace) then
+         GNAThub.Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (CodePeer_Trace) then
