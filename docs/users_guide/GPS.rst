@@ -1231,6 +1231,8 @@ Classes
 
    .. automethod:: GPS.MDI.input_dialog
 
+   .. automethod:: GPS.MDI.load_perspective
+
    .. automethod:: GPS.MDI.save_all
 
    .. automethod:: GPS.MDI.show

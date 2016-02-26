@@ -1028,6 +1028,12 @@ package body GPS.Main_Window is
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
+      Register_Command
+        (Main_Window.Kernel.Scripts, "load_perspective",
+         Params        => (1 => Param ("name")),
+         Class         => MDI_Class,
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
    end Register_Keys;
 
    ------------------------------------
@@ -1466,6 +1472,12 @@ package body GPS.Main_Window is
             end loop;
 
             Show (Gtk_Widget (Get_Main_Window (Kernel)));
+         end;
+      elsif Command = "load_perspective" then
+         declare
+            Name : constant String := Nth_Arg (Data, 1);
+         begin
+            Load_Perspective (Kernel, Name);
          end;
       end if;
    end Default_Command_Handler;

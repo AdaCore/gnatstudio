@@ -7210,6 +7210,17 @@ class MDI(object):
         """
         pass  # implemented in Ada
 
+    @staticmethod
+    def load_perspective(name):
+        """
+        Change the current perspective to the one designated by ``name``.
+        This function does nothing if ``name`` does not refer to any known
+        perspective.
+
+        :param name: A string
+        """
+        pass  # implemented in Ada
+
 
 ###########################################################
 # MDIWindow
