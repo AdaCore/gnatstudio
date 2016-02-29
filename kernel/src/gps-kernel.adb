@@ -896,6 +896,8 @@ package body GPS.Kernel is
       end if;
 
       Save_Scenario_Vars_On_Exit (Handle);
+
+      Save_Persistent_Properties (Handle);
       Reset_Properties (Handle);
 
       Trace (Me, "Saving histories.xml");

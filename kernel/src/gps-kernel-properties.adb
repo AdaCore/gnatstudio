@@ -43,10 +43,9 @@ package body GPS.Kernel.Properties is
       Resource_Key  : String;
       Resource_Kind : String;
       Name          : String;
-      Property      : Property_Description;
-      Save_File     : Boolean := True);
+      Property      : Property_Description);
    --  Set property for any kind of resource. This is the internal
-   --  implementation of Set_*_Property
+   --  implementation of Set_*_Property.
 
    procedure Remove_Resource_Property
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -76,20 +75,15 @@ package body GPS.Kernel.Properties is
       Resource_Key  : String;
       Resource_Kind : String;
       Name          : String;
-      Property      : Property_Description;
-      Save_File     : Boolean := True)
+      Property      : Property_Description)
    is
-      pragma Unreferenced (Resource_Kind);
+      pragma Unreferenced (Resource_Kind, Kernel);
       --  Not used yet, the idea is to have various attributes in the XML file
       --  depending on the resource type
 
    begin
       Set (All_Properties, Resource_Key & Sep & Name,
            new Property_Description'(Property));
-
-      if Save_File and then Property.Persistent then
-         Save_Persistent_Properties (Kernel);
-      end if;
    end Set_Resource_Property;
 
    ------------------------------
@@ -102,10 +96,9 @@ package body GPS.Kernel.Properties is
       Resource_Kind : String;
       Name          : String)
    is
-      pragma Unreferenced (Resource_Kind);
+      pragma Unreferenced (Resource_Kind, Kernel);
    begin
       Remove (All_Properties, Resource_Key & Sep & Name);
-      Save_Persistent_Properties (Kernel);
    end Remove_Resource_Property;
 
    ------------------
@@ -392,7 +385,6 @@ package body GPS.Kernel.Properties is
                   Resource_Key  => Get_Attribute (File, "file"),
                   Resource_Kind => "file",
                   Name          => Get_Attribute (Prop, "name"),
-                  Save_File     => False,
                   Property      => (Value      => null,
                                     Unparsed   => Prop2,
                                     Persistent => True));
