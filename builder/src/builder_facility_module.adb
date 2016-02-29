@@ -612,6 +612,7 @@ package body Builder_Facility_Module is
                   Path          => Path,
                   Action        => Action_Name,
                   Ref_Item      => "Project");
+               Update_Menus_And_Buttons (Get_Kernel);
             end;
          end if;
 
@@ -627,6 +628,7 @@ package body Builder_Facility_Module is
                 Section   => "build",
                 Group     => (if Multiple_Mains then N else ""),
                 Hide      => True);   --  when action is not found
+            Update_Menus_And_Buttons (Get_Kernel);
          end if;
       end Replace_Action;
 
