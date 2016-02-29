@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNAT.Strings;               use GNAT.Strings;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 
 with Build_Configurations;       use Build_Configurations;
@@ -109,7 +110,22 @@ package body Builder_Facility_Module.Scripts is
             Refresh_Graphical_Elements;
             Save_Targets;
          end;
+      elsif Command = "get_command_line" then
+         declare
+            Inst     : constant Class_Instance :=
+                         Nth_Arg (Data, 1, Target_Class);
+            Name     : constant String := Get_Target_Name (Inst);
+            Target   : constant Target_Access
+              := Get_Target_From_Name (Registry, Name);
+            Cmd_Line : constant String_List :=
+                         Get_Command_Line_Unexpanded (Registry, Target);
+         begin
+            Data.Set_Return_Value_As_List;
 
+            for Arg of Cmd_Line loop
+               Data.Set_Return_Value (Arg.all);
+            end loop;
+         end;
       elsif Command = "set_build_mode" then
          Kernel.Set_Build_Mode (Nth_Arg (Data, 1, ""));
       end if;
@@ -149,6 +165,13 @@ package body Builder_Facility_Module.Scripts is
         (Kernel, "clone",
          Minimum_Args => 1,
          Maximum_Args => 2,
+         Class        => Target_Class,
+         Handler      => Shell_Handler'Access);
+
+      Register_Command
+        (Kernel, "get_command_line",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
          Class        => Target_Class,
          Handler      => Shell_Handler'Access);
 

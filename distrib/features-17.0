@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-170-P217-017 GPS: New Pythin API to get Build Targets commands (2016-03-01)
+
+  A new GPS.BuildTarget.get_command_line() method has been added in order
+  to be able to retrieve the current command line of a specific Build Target.
+
 NF-170-P204-043 GB: add template code assist (2016-02-09)
 
   It is now possible to add Ada code templates by pressing content assist hot

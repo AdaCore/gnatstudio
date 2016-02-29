@@ -887,6 +887,15 @@ class BuildTarget(object):
         """
         pass  # implemented in Ada
 
+    def get_command_line(self):
+        """
+        Returns a string list containing the current arguments of this
+        BuildTarget.
+
+        Note that these arguments are not expanded.
+        """
+        pass  # implemented in Ada
+
     def remove(self):
         """
         Remove target from the list of known targets.
