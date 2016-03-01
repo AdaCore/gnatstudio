@@ -80,10 +80,34 @@ package body GPS.Kernel.Scripts.Hooks is
          Info := Get_Hook (Data, 1);
          declare
             Func : constant Subprogram_Type := Data.Nth_Arg (2);
+
             function If_Matches
-               (F : not null access Hook_Function'Class) return Boolean
-               is (F.all in Python_Hook_Function'Class
-                   and then Python_Hook_Function (F.all).Func = Func);
+              (F : not null access Hook_Function'Class) return Boolean;
+            --  Return True if the F matches with the python hook function to
+            --  remove, False otherwise.
+
+            ----------------
+            -- If_Matches --
+            ----------------
+
+            function If_Matches
+              (F : not null access Hook_Function'Class) return Boolean
+            is
+            begin
+               if F.all in Python_Hook_Function'Class then
+                  declare
+                     Python_F : constant Python_Hook_Function :=
+                                  Python_Hook_Function (F.all);
+                  begin
+                     if Python_F.Func /= null and then Func /= null then
+                        return Python_F.Func.all = Func.all;
+                     end if;
+                  end;
+               end if;
+
+               return False;
+            end If_Matches;
+
          begin
             Info.Remove (If_Matches'Access);
          end;
