@@ -1131,7 +1131,7 @@ package body Debugger.Gdb is
 
             --  Force the waiting of a prompt between sending the Ctrl-C above
             --  and sending "quit".
-            Send (Debugger, "",
+            Send (Debugger, "echo",
                   Wait_For_Prompt => True,
                   Force_Send      => True,
                   Mode            => Internal);

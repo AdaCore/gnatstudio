@@ -45,6 +45,16 @@ KP-62-P211-059 GPS: Wrong sort order of directories in Project View
 
   Workaround: None.
 
+KP-62-P208-069 GPS: debugging session ignores terminate
+
+  Problem:    When an application is running under debugger the termination
+              of the debugger session doesn't stop the application.
+
+  Status:     This was fixed in 17.0 on 2016-03-02
+
+  Workaround: Interrupt the execution manually before terminating the debugger
+              session.
+
 KP-62-P204-042 GB: "Problem occured" dialog displayed during "Content Assist"
 
   Problem:    Sometimes within AdaCore's ada editor, a "Problem Occurred"
