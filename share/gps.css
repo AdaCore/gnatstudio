@@ -70,11 +70,6 @@ GtkTextView.readonly {
    /* background-color: rgb(200,200,200); */
 }
 
-.mdi tab GtkLabel, .mdifocused tab GtkLabel {
-   color:   @theme_fg_color;
-   opacity: 1.0;
-}
-
 /*************************
  * GPS preferences pages *
  *************************/
@@ -140,6 +135,23 @@ GtkMenu {
  * Notebooks
  *********************/
 
+GtkNotebook.noTabs {
+  /* notebooks with no tabs need borders all around */
+  border: 1px solid @mdi_border_color;
+}
+
+/* Shenanigans to support tabs-not-on-top */
+
+.notebook.leftTabs, .notebook.rightTabs {
+   /* When the MDI tabs are displayed on the left or on the right, we do not
+    * want an extra space at the top, before the first tab */
+   -GtkNotebook-initial-gap: 0;
+}
+
+/*********************
+ * MDI Notebooks
+ *********************/
+
 .notebook.mdi {
   -GtkNotebook-initial-gap: 5;
 
@@ -152,106 +164,13 @@ GtkMenu {
    -GtkNotebook-tab-overlap: 0;
 }
 
-GtkNotebook.noTabs {
-  /* notebooks with no tabs need borders all around */
-  border: 1px solid @mdi_border_color;
-}
-
-.notebook.mdi tab GtkLabel {
-   font-weight: normal;
-   color: @inactive_tab_color;
-}
+/***********************
+ * MDI Notebook headers
+ ***********************/
 
 .notebook.mdi.header {
   border: none;
   box-shadow: none;
-}
-
-.notebook.mdi tab {
-   border-width: 0;
-}
-
-.notebook.mdi tab:active {
-   background-color: @local_toolbar_color;
-   background-image: none;
-}
-
-.notebook.mdi GtkEventBox.active-page GtkLabel {
-   color: @active_tab_color;
-   background-image: none;
-}
-
-.notebook.mdi tab:hover {
-   background-color: @local_toolbar_color;
-}
-
-/* Shenanigans to support tabs-not-on-top */
-
-.notebook.leftTabs, .notebook.rightTabs {
-   /* When the MDI tabs are displayed on the left or on the right, we do not
-    * want an extra space at the top, before the first tab */
-   -GtkNotebook-initial-gap: 0;
-}
-
-.notebook.mdi tab.top,
-.notebook.mdi tab.bottom {
-   padding: 5px 2px 5px 6px;
-}
-
-.notebook.mdi tab.left {
-   padding: 2px 5px 6px 5px;
-}
-.notebook.mdi tab.right {
-   padding: 6px 5px 2px 5px;
-}
-
-.notebook.mdi.leftTabs {
-  border-top-width: 1px;
-  border-left-width: 0px;
-}
-
-.notebook.mdi.rightTabs {
-  border-top-width: 1px;
-  border-right-width: 0px;
-}
-
-.notebook.mdi.bottomTabs {
-  border-top-width: 1px;
-  border-bottom-width: 0px;
-}
-
-.notebook.mdi tab.top {
-   border-bottom-width: 1px;
-}
-
-.notebook.mdi tab.top:active {
-   border: 1px solid @mdi_border_color;
-}
-
-.notebook.mdi tab.left:active {
-   border: 1px solid @mdi_border_color;
-}
-
-.notebook.mdi tab.right:active {
-   border: 1px solid @mdi_border_color;
-}
-
-.notebook.mdi tab.bottom:active {
-   border: 1px solid @mdi_border_color;
-}
-
-.notebook.mdi tab.left {
-   border-top-width: 0px;
-   border-right-width: 1px;
-}
-
-.notebook.mdi tab.right {
-   border-top-width: 0px;
-   border-left-width: 1px;
-}
-
-.notebook.mdi tab.bottom {
-   border-top-width: 1px;
 }
 
 .notebook.mdi.header.top {
@@ -270,40 +189,106 @@ GtkNotebook.noTabs {
   border-top: 1px solid @mdi_border_color;
 }
 
+/*********************
+ * MDI Notebook tabs
+ *********************/
+
+.notebook.mdi.leftTabs {
+  border-top-width: 1px;
+  border-left-width: 0px;
+}
+
+.notebook.mdi.rightTabs {
+  border-top-width: 1px;
+  border-right-width: 0px;
+}
+
+.notebook.mdi.bottomTabs {
+  border-top-width: 1px;
+  border-bottom-width: 0px;
+}
+
+.notebook.mdi tab {
+   border-width: 0;
+}
+
+.notebook.mdi tab GtkLabel {
+   font-weight: normal;
+   color: @inactive_tab_color;
+}
+
+.notebook.mdi tab.top,
+.notebook.mdi tab.bottom {
+   padding: 5px 2px 5px 6px;
+}
+
+.notebook.mdi tab.left {
+   padding: 2px 5px 6px 5px;
+   border-top-width: 0px;
+   border-right-width: 1px;
+}
+.notebook.mdi tab.right {
+   padding: 6px 5px 2px 5px;
+   border-top-width: 0px;
+   border-right-width: 1px;
+}
+
+.notebook.mdi tab.bottom {
+   border-top-width: 1px;
+}
+
+.notebook.mdi tab:hover {
+   background-color: @local_toolbar_color;
+}
+
+.notebook.mdi tab:active GtkLabel {
+   font-weight: normal;
+   color: blue;
+}
+
+.notebook.mdi .active-page GtkLabel {
+   color: @active_tab_color;
+   background-image: none;
+}
+
+.notebook.mdi tab:active {
+   background-color: @local_toolbar_color;
+}
+
 .notebook.mdi tab:active.top {
+   border: 1px solid @mdi_border_color;
    border-top-color: @gps_inactive_tab;
    border-top-width: 3px;
    border-bottom-width: 0;
 }
-.notebook.mdifocused tab:active.top {
-   border-top-color: @gps_active_tab;
-}
 
 .notebook.mdi tab:active.left {
+   border: 1px solid @mdi_border_color;
    border-left-color: @gps_inactive_tab;
    border-left-width: 3px;
    border-right-width: 0;
 }
-.notebook.mdifocused tab:active.left {
-   border-left-color: @gps_active_tab;
-}
 
 .notebook.mdi tab:active.right {
+   border: 1px solid @mdi_border_color;
    border-right-color: @gps_inactive_tab;
    border-right-width: 3px;
    border-left-width: 0;
 }
-.notebook.mdi tab:active.right {
-   border-right-color: @gps_active_tab;
-}
 
 .notebook.mdi tab:active.bottom {
+   border: 1px solid @mdi_border_color;
    border-bottom-color: @gps_inactive_tab;
    border-bottom-width: 3px;
    border-top-width: 0;
 }
-.notebook.mdi tab:active.bottom {
-   border-bottom-color: @gps_active_tab;
+
+.notebook.mdifocused tab:active.top {
+   border-top-color: @gps_active_tab;
+}
+
+.notebook.mdifocused tab:active.left {
+   border-left-color: @gps_active_tab;
 }
 
 /**********************
