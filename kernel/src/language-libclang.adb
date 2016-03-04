@@ -1140,8 +1140,6 @@ package body Language.Libclang is
       use Ada.Real_Time;
 
       T1       : constant Ada.Real_Time.Time := Clock;
-      Refs     : constant File_Cache_Access
-        := new File_Cache_Record;
       Response : Parsing_Response;
    begin
       Parsing_Response_Queue.Dequeue (Response);
@@ -1150,31 +1148,41 @@ package body Language.Libclang is
         (+Response.File_Name, Response.TU);
 
       if Clang_Module_Id.Indexing_Active then
-         Trace (Me, "Start indexing for file " & (+Response.File_Name));
-         Indexer.Index_Translation_Unit
-           (Index_Action  =>
-              Clang_Module_Id.Index_Action,
-            Client_Data   =>
-              Indexer_Data'(Syms_To_Locs => Refs),
-            Index_Options => CXIndexOpt_None,
-            TU            =>
-              Clang_Module_Id.TU_Cache.Element (Response.File_Name).TU);
 
          --  Reset the references cache for file, and get the new cache
          declare
+            use File_To_Refs_Maps;
+
             Cache_Key : constant File_Key :=
               Construct_Cache_Key
                 (Response.Context, Create (+(+Response.File_Name)));
+            Refs      :  File_Cache_Access;
+            C         : File_To_Refs_Maps.Cursor;
          begin
-            if Clang_Module_Id.Refs.Map.Contains (Cache_Key) then
-               Destroy (Clang_Module_Id.Refs.Map.Reference (Cache_Key));
-            end if;
-            Clang_Module_Id.Refs.Map.Include (Cache_Key, Refs);
-         end;
 
-         Refs.File_Name := Response.File_Name;
-         Refs.File_Time_Stamp :=
-           Create (+(+Response.File_Name)).File_Time_Stamp;
+            C := Clang_Module_Id.Refs.Map.Find (Cache_Key);
+            if C = No_Element then
+               Refs := new File_Cache_Record;
+               Refs.File_Name := Response.File_Name;
+               Clang_Module_Id.Refs.Map.Include (Cache_Key, Refs);
+            else
+               Refs := Element (C);
+               Refs.Map.Clear;
+            end if;
+
+            Refs.File_Time_Stamp :=
+              Create (+(+Response.File_Name)).File_Time_Stamp;
+
+            Trace (Me, "Start indexing for file " & (+Response.File_Name));
+            Indexer.Index_Translation_Unit
+              (Index_Action  =>
+                 Clang_Module_Id.Index_Action,
+               Client_Data   =>
+                 Indexer_Data'(Syms_To_Locs => Refs),
+               Index_Options => CXIndexOpt_None,
+               TU            =>
+                 Clang_Module_Id.TU_Cache.Element (Response.File_Name).TU);
+         end;
       end if;
 
       --  Call all the callbacks and free them
