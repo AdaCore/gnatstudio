@@ -612,69 +612,85 @@ package body Clang_Xref is
       After  : General_Location := No_Location)
       return General_Location
    is
-
       pragma Unreferenced (After);
-
-      --  Get the clang context containing the entity references cache, as well
-      --  as the cursor's USR, so as to be able to query the ref cache
-
-      Cursor : constant Clang_Cursor := Get_Clang_Cursor (Entity);
-      USR_Sym : constant Clang_Symbol :=
-        Clang_Symbol_Table.Find (USR (Cursor));
-
-      --  Try to use Definition from libclang. It will only work as long as the
-      --  definition is in the same translation unit though, so not sufficient
-
-      Entity_Body : constant Clang_Cursor := Definition (Cursor);
-
-      --  V is used to store an vector of entity references. Used while
-      --  scanning for the body
-
-      V : Info_Vectors;
-
-      use File_To_Refs_Maps;
-
-      --  Return value holders
-      Loc : Offset_T := 0;
-      File : Virtual_File;
-
    begin
-      if Entity_Body /= No_Cursor then
-         return To_General_Location (Entity.Kernel, Location (Entity_Body));
-      else
-
-         --  Iterate on every file's cache
-         Toplevel_Loop : for C of Get_Active_Files loop
-
-            --  If this file's cache contains some references to the entity for
-            --  which we're trying to find the body, then explore those refs
-            --  to see if one is a body. We might store the information on
-            --  the entity's cache for the file, so as to avoid unnecessary
-            --  iterations, but this has not been proved a bottleneck.
-
-            if C.Map.Contains (USR_Sym) then
-
-               V := C.Map.Element (USR_Sym);
-
-               for I in V.Decls.First_Index .. V.Decls.Last_Index loop
-                  --  If a reference is a body definition, then store the
-                  --  corresponding location, which will make the nested
-                  --  loops exit
-
-                  if V.Decls.Element (I).Is_Def then
-                     Loc := V.Decls.Element (I).Loc;
-                     File := GNATCOLL.VFS.Create
-                       (Filesystem_String (+C.File_Name));
-                     exit Toplevel_Loop;
-                  end if;
-
-               end loop;
-            end if;
-         end loop Toplevel_Loop;
-
-         return To_General_Location (Entity.Kernel, File, Loc);
-
+      if Entity = No_Clang_Entity then
+         return No_Location;
       end if;
+
+      declare
+
+         --  Get the clang context containing the entity references cache, as
+         --  well as the cursor's USR, so as to be able to query the ref cache
+
+         Cursor : constant Clang_Cursor := Get_Clang_Cursor (Entity);
+         USR_Sym : constant Clang_Symbol :=
+           Clang_Symbol_Table.Find (USR (Cursor));
+
+         --  Try to use Definition from libclang. It will only work as long
+         --  as the definition is in the same translation unit though, so not
+         --  sufficient
+
+         Entity_Body : constant Clang_Cursor := Definition (Cursor);
+
+         --  V is used to store an vector of entity references. Used while
+         --  scanning for the body
+
+         V : Info_Vectors;
+
+         use File_To_Refs_Maps;
+
+         --  Return value holders
+         Loc  : Offset_T := 0;
+         File : Virtual_File;
+
+      begin
+         if Cursor = No_Cursor then
+            return No_Location;
+         end if;
+
+         if Entity_Body /= No_Cursor then
+            return To_General_Location (Entity.Kernel, Location (Entity_Body));
+         else
+
+            --  TODO ??? It might be interesting to have a toplevel cache that
+            --  stores whether a particular USR has a body somewhere in the
+            --  project or not (and maybe even where).
+
+            --  Iterate on every file's cache
+            Toplevel_Loop : for C of Get_Active_Files loop
+
+               --  If this file's cache contains some references to the entity
+               --  for which we're trying to find the body, then explore those
+               --  refs to see if one is a body. We might store the information
+               --  on the entity's cache for the file, so as to avoid
+               --  unnecessary iterations, but this has not been proved
+               --  a bottleneck.
+
+               if C.Map.Contains (USR_Sym) then
+
+                  V := C.Map.Element (USR_Sym);
+
+                  for I in V.Decls.First_Index .. V.Decls.Last_Index loop
+                     --  If a reference is a body definition, then store the
+                     --  corresponding location, which will make the nested
+                     --  loops exit
+
+                     if V.Decls.Element (I).Is_Def then
+                        Loc := V.Decls.Element (I).Loc;
+                        File := GNATCOLL.VFS.Create
+                          (Filesystem_String (+C.File_Name));
+                        exit Toplevel_Loop;
+                     end if;
+
+                  end loop;
+               end if;
+            end loop Toplevel_Loop;
+
+            return To_General_Location (Entity.Kernel, File, Loc);
+
+         end if;
+      end;
    end Get_Body;
 
    --------------
