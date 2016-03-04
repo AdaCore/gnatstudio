@@ -130,9 +130,6 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
         <menu action="Clean Proofs Action">
           <Title>Clean Proofs</Title>
         </menu>
-        <menu action="Remove Editor Highlighting Action">
-          <Title>Remove Editor Highlighting</Title>
-        </menu>
     </submenu>
 
     <contextual action="Examine File Action">
@@ -1601,6 +1598,14 @@ def remove_ce(ce):
             buf.remove_overlay(overlay)
 
 
+def disable_trace_and_ce():
+    """remove any traces and counter examples in the editor"""
+    global trace_msg, trace_lines, counterexample
+    remove_trace(trace_lines)
+    remove_ce(counterexample)
+    trace_msg = None
+
+
 def toggle_trace(msg, lines, ce):
     """toggle the trace for the given msg and lines"""
     global trace_msg, trace_lines, counterexample
@@ -1611,9 +1616,7 @@ def toggle_trace(msg, lines, ce):
         show_trace(lines)
         show_ce(ce)
     elif trace_msg == msg:
-        remove_trace(trace_lines)
-        remove_ce(counterexample)
-        trace_msg = None
+        disable_trace_and_ce()
     else:
         remove_trace(trace_lines)
         remove_ce(counterexample)
@@ -1839,6 +1842,7 @@ def is_file_context(self):
 # It's more convenient to define these callbacks outside of the plugin class
 
 def generic_on_analyze(target, args=[]):
+    disable_trace_and_ce()
     GPS.BuildTarget(target).execute(extra_args=args, synchronous=False)
 
 
