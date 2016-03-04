@@ -40,7 +40,8 @@ package body GPS.Kernel.Interactive is
       Accept_Input        : Boolean := True;
       ANSI_Support        : Boolean := False;
       Manage_Prompt       : Boolean := True;
-      Toolbar_Name        : String := "") return Interactive_Console
+      Toolbar_Name         : String := "";
+      Give_Focus_On_Create : Boolean := True) return Interactive_Console
    is
       Console : Interactive_Console;
       Child   : MDI_Child;
@@ -101,14 +102,17 @@ package body GPS.Kernel.Interactive is
          Set_Title (NChild, Title, Title);
          Put
            (Get_MDI (Kernel), NChild, Initial_Position => Position_Bottom);
-         Raise_Child (NChild);
+
+         if Give_Focus_On_Create then
+            Raise_Child (NChild);
+         else
+            Highlight_Child (NChild);
+         end if;
 
          if Console /= null then
             Enable_Prompt_Display (Console, Accept_Input);
          end if;
-
       elsif Child /= null then
-         Highlight_Child (Child);
          Console := Interactive_Console (Get_Widget (Child));
          Enable_Prompt_Display (Console, Accept_Input);
       end if;

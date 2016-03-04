@@ -255,6 +255,10 @@ GtkNotebook.noTabs {
    background-color: @local_toolbar_color;
 }
 
+.notebook.mdi .mdi-highlighted-tab {
+   color: @gps_active_tab;
+}
+
 .notebook.mdi tab:active.top {
    border: 1px solid @mdi_border_color;
    border-top-color: @gps_inactive_tab;

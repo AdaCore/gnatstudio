@@ -1613,7 +1613,7 @@ class Console(GUI):
     def __init__(self, name, force=False, on_input=None, on_destroy=None,
                  accept_input=True, on_resize=None, on_interrupt=None,
                  on_completion=None, on_key='', manage_prompt=True,
-                 ansi=False, toolbar_name=''):
+                 ansi=False, toolbar_name='', give_focus_on_create=True):
         """
         Creates a new instance of :class:`GPS.Console`. GPS tries to reuse
         any existing console with the same name. If none exists yet, or the
@@ -1738,6 +1738,12 @@ class Console(GUI):
           The given name can be used later to register toolbar items
           (e.g: using the `GPS.Action.button` function).
 
+        - :``give_focus_on_create`` is only used if a new console is
+          being created. It should be set to True if the newly created
+          console should receive the focus. If it's set to False,
+          the console will not receive the focus: its tab label
+          will be highlighted instead.
+
         :param name: A string
         :param force: A boolean
         :param on_input: A subprogram, see the description below
@@ -1750,6 +1756,7 @@ class Console(GUI):
         :param manage_prompt: A boolean
         :param ansi: A boolean
         :param toolbar_name: A string
+        :param give_focus_on_create: A boolean
         """
         pass  # implemented in Ada
 

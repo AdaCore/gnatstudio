@@ -202,23 +202,26 @@ package body GPS.Kernel.Scripts is
                                 (1 => Name_Cst'Access,
                                  2 => Value_Cst'Access);
 
-   Accept_Input_Cst  : aliased constant String := "accept_input";
-   On_Input_Cst      : aliased constant String := "on_input";
-   On_Destroy_Cst    : aliased constant String := "on_destroy";
-   On_Resize_Cst     : aliased constant String := "on_resize";
-   On_Interrupt_Cst  : aliased constant String := "on_interrupt";
-   On_Completion_Cst : aliased constant String := "on_completion";
-   On_Key_Cst        : aliased constant String := "on_key";
-   Manage_Prompt_Cst : aliased constant String := "manage_prompt";
-   ANSI_Cst          : aliased constant String := "ansi";
-   Toolbar_Name_Cst  : aliased constant String := "toolbar_name";
+   Accept_Input_Cst         : aliased constant String := "accept_input";
+   On_Input_Cst             : aliased constant String := "on_input";
+   On_Destroy_Cst           : aliased constant String := "on_destroy";
+   On_Resize_Cst            : aliased constant String := "on_resize";
+   On_Interrupt_Cst         : aliased constant String := "on_interrupt";
+   On_Completion_Cst        : aliased constant String := "on_completion";
+   On_Key_Cst               : aliased constant String := "on_key";
+   Manage_Prompt_Cst        : aliased constant String := "manage_prompt";
+   ANSI_Cst                 : aliased constant String := "ansi";
+   Toolbar_Name_Cst         : aliased constant String := "toolbar_name";
+   Give_Focus_On_Create_Cst : aliased constant String :=
+                                "give_focus_on_create";
 
    Console_Constructor_Args : constant Cst_Argument_List :=
      (Name_Cst'Access, Force_Cst'Access,
       On_Input_Cst'Access, On_Destroy_Cst'Access, Accept_Input_Cst'Access,
       On_Resize_Cst'Access, On_Interrupt_Cst'Access,
       On_Completion_Cst'Access, On_Key_Cst'Access,
-      Manage_Prompt_Cst'Access, ANSI_Cst'Access, Toolbar_Name_Cst'Access);
+      Manage_Prompt_Cst'Access, ANSI_Cst'Access, Toolbar_Name_Cst'Access,
+      Give_Focus_On_Create_Cst'Access);
 
    Enable_Cst         : aliased constant String := "enable";
 
@@ -862,31 +865,42 @@ package body GPS.Kernel.Scripts is
       if Command = Constructor_Method then
          Name_Parameters (Data, Console_Constructor_Args);
          declare
-            Title        : constant String := Nth_Arg (Data, 2, "");
-            Force        : constant Boolean := Nth_Arg (Data, 3, False);
-            On_Input     : constant Subprogram_Type := Nth_Arg (Data, 4, null);
-            On_Destroy   : constant Subprogram_Type := Nth_Arg (Data, 5, null);
-            Accept_Input : constant Boolean := Nth_Arg (Data, 6, True);
-            On_Resize    : constant Subprogram_Type := Nth_Arg (Data, 7, null);
-            On_Interrupt : constant Subprogram_Type := Nth_Arg (Data, 8, null);
-            On_Completion : constant Subprogram_Type :=
-              Nth_Arg (Data, 9, null);
-            On_Key      : constant Subprogram_Type := Nth_Arg (Data, 10, null);
-            Manage_Prompt : constant Boolean := Nth_Arg (Data, 11, True);
-            ANSI_Support  : constant Boolean := Nth_Arg (Data, 12, False);
-            Toolbar_Name  : constant String := Nth_Arg (Data, 13, "");
+            Title                : constant String := Nth_Arg (Data, 2, "");
+            Force                : constant Boolean :=
+                                     Nth_Arg (Data, 3, False);
+            On_Input             : constant Subprogram_Type :=
+                                     Nth_Arg (Data, 4, null);
+            On_Destroy           : constant Subprogram_Type :=
+                                     Nth_Arg (Data, 5, null);
+            Accept_Input         : constant Boolean := Nth_Arg (Data, 6, True);
+            On_Resize            : constant Subprogram_Type :=
+                                     Nth_Arg (Data, 7, null);
+            On_Interrupt         : constant Subprogram_Type :=
+                                     Nth_Arg (Data, 8, null);
+            On_Completion        : constant Subprogram_Type :=
+                                     Nth_Arg (Data, 9, null);
+            On_Key               : constant Subprogram_Type :=
+                                     Nth_Arg (Data, 10, null);
+            Manage_Prompt        : constant Boolean :=
+                                     Nth_Arg (Data, 11, True);
+            ANSI_Support         : constant Boolean :=
+                                     Nth_Arg (Data, 12, False);
+            Toolbar_Name         : constant String := Nth_Arg (Data, 13, "");
+            Give_Focus_On_Create : constant Boolean :=
+                                     Nth_Arg (Data, 14, True);
          begin
             Console := Create_Interactive_Console
-              (Kernel              => Get_Kernel (Data),
-               Title               => Title,
-               History             => History_Key ("console_" & Title),
-               Create_If_Not_Exist => Title /= "Python"
+              (Kernel               => Get_Kernel (Data),
+               Title                => Title,
+               History              => History_Key ("console_" & Title),
+               Create_If_Not_Exist  => Title /= "Python"
                and then Title /= "Shell",
-               Force_Create        => Force,
-               Manage_Prompt       => Manage_Prompt,
-               ANSI_Support        => ANSI_Support,
-               Accept_Input        => Accept_Input,
-               Toolbar_Name        => Toolbar_Name);
+               Force_Create         => Force,
+               Manage_Prompt        => Manage_Prompt,
+               ANSI_Support         => ANSI_Support,
+               Accept_Input         => Accept_Input,
+               Toolbar_Name         => Toolbar_Name,
+               Give_Focus_On_Create => Give_Focus_On_Create);
             --   ??? If the console was already associated with an instance,
             --  we would lose that original instance and all data the user
             --  might have stored in it.

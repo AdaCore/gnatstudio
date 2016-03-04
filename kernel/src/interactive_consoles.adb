@@ -274,8 +274,18 @@ package body Interactive_Consoles is
      (Console : access Interactive_Virtual_Console_Record; Txt : String) is
    begin
       if Console.Console /= null then
-         Insert (Console.Console, Txt, Add_LF => False, Show_Prompt => False);
+         Insert (Console.Console,
+                 Text        => Txt,
+                 Add_LF      => False,
+                 Show_Prompt => False);
       end if;
+
+      if Console.Child = null then
+         Console.Child := Find_MDI_Child_From_Widget (Console.Console.View);
+      end if;
+
+      --  Always highlight the console when new output is displayed
+      Highlight_Child (Console.Child);
    end Insert_Text;
 
    ----------------
@@ -329,6 +339,8 @@ package body Interactive_Consoles is
       if Console.Child = null then
          Console.Child := Find_MDI_Child_From_Widget (Console.Console.View);
       end if;
+
+      --  Give the focus to the console when an error message is displayed
       Raise_Child (Console.Child);
    end Insert_Error;
 
