@@ -118,6 +118,7 @@ package Language.Libclang is
 
    package Clang_Symbol_Table_Pkg
    is new GNATCOLL.Symbols.Streamable_Symbol_Table;
+
    Clang_Symbol_Table : Clang_Symbol_Table_Pkg.Symbol_Table_Access
    renames Clang_Symbol_Table_Pkg.Symbol_Table;
 
