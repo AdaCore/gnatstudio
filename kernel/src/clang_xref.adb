@@ -620,6 +620,8 @@ package body Clang_Xref is
 
       declare
 
+         use Clang_Symbol_Table_Pkg;
+
          --  Get the clang context containing the entity references cache, as
          --  well as the cursor's USR, so as to be able to query the ref cache
 
@@ -645,7 +647,7 @@ package body Clang_Xref is
          File : Virtual_File;
 
       begin
-         if Cursor = No_Cursor then
+         if Cursor = No_Cursor or Get (USR_Sym) = "" then
             return No_Location;
          end if;
 
