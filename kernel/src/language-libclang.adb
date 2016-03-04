@@ -120,6 +120,8 @@ package body Language.Libclang is
    procedure Unchecked_Free
    is new Ada.Unchecked_Deallocation
      (File_Cache_Record, File_Cache_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (File_Cache_Array, File_Cache_Array_Access);
    --  Deallocation procedures
 
    procedure Python_Get_TU
@@ -185,6 +187,9 @@ package body Language.Libclang is
       --  Clang cross references cache entry point.
 
       Parse_Files_Command_Access : Scheduled_Command_Access;
+
+      Active_Files         : File_Cache_Array_Access := null;
+      --  Cache used because iteration on Hashed Maps is very slow.
    end record;
    --  This is the global cache record, containing information that is globally
    --  useful to the clang module
@@ -1041,6 +1046,8 @@ package body Language.Libclang is
          Cache.Active := False;
       end loop;
 
+      Unchecked_Free (Clang_Module_Id.Active_Files);
+
       --  Restart all the tasks
 
       for I in  1 .. Nb_Tasks_Preference.Get_Pref loop
@@ -1363,6 +1370,8 @@ package body Language.Libclang is
    begin
       Trace (Me, "Cleaning all cache for libclang");
 
+      Unchecked_Free (Id.Active_Files);
+
       for C of Id.TU_Cache.all loop
          Destroy (C);
       end loop;
@@ -1556,12 +1565,18 @@ package body Language.Libclang is
 
       function Filter (FCA : File_Cache_Access) return Boolean is (FCA.Active);
    begin
-      for El of Clang_Module_Id.Refs.Map loop
-         F (I) := El;
-         I := I + 1;
-      end loop;
+      if Clang_Module_Id.Active_Files = null then
+         for El of Clang_Module_Id.Refs.Map loop
+            F (I) := El;
+            I := I + 1;
+         end loop;
 
-      return File_Type_Arrays.Filter (F, Filter'Access);
+         Clang_Module_Id.Active_Files
+           := new File_Cache_Array'
+             (File_Type_Arrays.Filter (F, Filter'Access));
+      end if;
+
+      return Clang_Module_Id.Active_Files.all;
    end Get_Active_Files;
 
    ----------------

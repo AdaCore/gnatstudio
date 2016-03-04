@@ -187,6 +187,7 @@ package Language.Libclang is
 
    package File_Type_Arrays is new Array_Utils (File_Cache_Access);
    subtype File_Cache_Array is File_Type_Arrays.Array_Type;
+   type File_Cache_Array_Access is access all File_Cache_Array;
 
    package Streamable_Clang_Crossrefs_Cache_Accesses
    is new Streamable_Access_Type (Clang_Crossrefs_Cache_Type);
