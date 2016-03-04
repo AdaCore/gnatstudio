@@ -384,6 +384,18 @@ KP-62-O326-012 GPS: C rename refactoring
 Known problems fixed in GPS 6.2.2 / GNATbench 2.10.2
 ----------------------------------------------------
 
+KP-62-P301-024 GPS: GPS.Hook.remove not working
+
+  Problem:    The GPS.Hook.remove method does not remove the hook callback
+              given in argument from the list of callbacks to call when
+              the given hoos is run.
+
+  Status:     This was fixed in 6.2.2 on 2016-03-04
+
+  Workaround: Use a global variable that is set to True once the hook
+              callback is called and do nothing in the callback if this
+              boolean is set.
+
 KP-62-P224-028 GPS: Impossibility to choose custom colors for code highlighting
 
   Problem:    Users are unable to choose custom colors for code highlighting
