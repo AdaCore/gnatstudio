@@ -816,53 +816,52 @@ package body Build_Configurations.Gtkada is
       end if;
 
       --  Add the switches frame
-
-      Gtk_New (Scrolled.Frame);
-
-      if Single then
-         Set_Shadow_Type (Scrolled.Frame, Shadow_None);
-      else
-         Gtk_New (Label);
-         Set_Use_Markup (Label, True);
-         Set_Markup (Label, "Command line");
-         Set_Label_Widget (Scrolled.Frame, Label);
-      end if;
-
-      Pack_Start (Box, Scrolled.Frame, True, True, 0);
-
       if Scrolled.Target.Model.Switches /= null then
-         Set_Switches (Scrolled);
-      end if;
+         Gtk_New (Scrolled.Frame);
 
-      if Single then
-         Object_Connect
-           (Widget      => Get_Entry (Scrolled.Editor),
-            Name        => Gtk.Editable.Signal_Changed,
-            Cb          => On_Entry_Changed'Access,
-            Slot_Object => UI,
-            After       => True);
-
-         Gtk_New (Scrolled.Expanded_Entry);
-
-         if UI.Expand_Cmd_Line = null then
-            Set_Text
-              (Get_Buffer (Scrolled.Expanded_Entry),
-               Get_Text (Get_Entry (Scrolled.Editor)));
+         if Single then
+            Set_Shadow_Type (Scrolled.Frame, Shadow_None);
          else
-            Set_Text
-              (Get_Buffer (Scrolled.Expanded_Entry),
-               UI.Expand_Cmd_Line (Get_Text (Get_Entry (Scrolled.Editor))));
+            Gtk_New (Label);
+            Set_Use_Markup (Label, True);
+            Set_Markup (Label, "Command line");
+            Set_Label_Widget (Scrolled.Frame, Label);
          end if;
 
-         Set_Editable (Scrolled.Expanded_Entry, False);
-         Set_Sensitive (Scrolled.Expanded_Entry, False);
-         Set_Wrap_Mode (Scrolled.Expanded_Entry, Wrap_Word);
-         Get_Style_Context (Scrolled.Expanded_Entry).Add_Class
-           ("command_line_preview");
-         Gtk_New (Options_Frame);
-         Set_Shadow_Type (Options_Frame, Shadow_None);
-         Add (Options_Frame, Scrolled.Expanded_Entry);
-         Pack_Start (Box, Options_Frame, False, False, 3);
+         Pack_Start (Box, Scrolled.Frame, True, True, 0);
+
+         Set_Switches (Scrolled);
+
+         if Single then
+            Object_Connect
+              (Widget      => Get_Entry (Scrolled.Editor),
+               Name        => Gtk.Editable.Signal_Changed,
+               Cb          => On_Entry_Changed'Access,
+               Slot_Object => UI,
+               After       => True);
+
+            Gtk_New (Scrolled.Expanded_Entry);
+
+            if UI.Expand_Cmd_Line = null then
+               Set_Text
+                 (Get_Buffer (Scrolled.Expanded_Entry),
+                  Get_Text (Get_Entry (Scrolled.Editor)));
+            else
+               Set_Text
+                 (Get_Buffer (Scrolled.Expanded_Entry),
+                  UI.Expand_Cmd_Line (Get_Text (Get_Entry (Scrolled.Editor))));
+            end if;
+
+            Set_Editable (Scrolled.Expanded_Entry, False);
+            Set_Sensitive (Scrolled.Expanded_Entry, False);
+            Set_Wrap_Mode (Scrolled.Expanded_Entry, Wrap_Word);
+            Get_Style_Context (Scrolled.Expanded_Entry).Add_Class
+              ("command_line_preview");
+            Gtk_New (Options_Frame);
+            Set_Shadow_Type (Options_Frame, Shadow_None);
+            Add (Options_Frame, Scrolled.Expanded_Entry);
+            Pack_Start (Box, Options_Frame, False, False, 3);
+         end if;
       end if;
 
       return Scrolled;
