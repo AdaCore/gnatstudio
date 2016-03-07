@@ -23,23 +23,23 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
-NF-170-P217-017 GPS: New Pythin API to get Build Targets commands (2016-03-01)
+NF-17-P217-017 GPS: New Pythin API to get Build Targets commands (2016-03-01)
 
   A new GPS.BuildTarget.get_command_line() method has been added in order
   to be able to retrieve the current command line of a specific Build Target.
 
-NF-170-P204-043 GB: add template code assist (2016-02-09)
+NF-17-P204-043 GB: add template code assist (2016-02-09)
 
   It is now possible to add Ada code templates by pressing content assist hot
   key (Ctrl+Space). Use Tab key to edit the next template variable. Press
   Enter to finish inserting the template and go to ${cursor} position.
 
-NF-170-P122-059 GPS: rename build targets from the GUI (2016-01-25)
+NF-17-P122-059 GPS: rename build targets from the GUI (2016-01-25)
 
   It is now possible to rename targets directly in the Target Configuration
   dialog: double-click on a target name in the tree to give it a new name.
 
-NF-170-OC17-020 GPS: OS shell emits stty command automatically (2015-12-22)
+NF-17-OC17-020 GPS: OS shell emits stty command automatically (2015-12-22)
 
   The "OS Shell" window sometimes need a "stty echo" command to properly
   display the keys typed on the keyboard. GPS now has a preference to
@@ -47,31 +47,31 @@ NF-170-OC17-020 GPS: OS shell emits stty command automatically (2015-12-22)
   environment variable set automatically, so that you can test it in your
   shell's configuration files to enable or disable specific behaviors.
 
-NF-170-OC02-030 GB: trailing space removal set to autodetect (2015-12-04)
+NF-17-OC02-030 GB: trailing space removal set to autodetect (2015-12-04)
 
   The default value of the "remove trailing spaces when saving" feature is set
   to Autodetect. When editing new files and Autodetect mode is selected, the
   trailing spaces are removed. In this mode they are preserved only if
   trailing spaces were detected in the file content when the file was opened.
 
-NF-170-OB24-046 GPS: exporting Call Trees to an editor (2015-11-30)
+NF-17-OB24-046 GPS: exporting Call Trees to an editor (2015-11-30)
 
   A new action and contextual menu allow exporting the contents of the
   Call Trees view to an editor.
 
-NF-170-OB17-034 GPS: new calculator support in omni-search (2015-11-17)
+NF-17-OB17-034 GPS: new calculator support in omni-search (2015-11-17)
 
   It is now possible to type simple mathematical expression in the
   omnisearch ("2 + 3**2") to get their result in decimal, hexadecimal
   and binary.
 
-NF-170-OB16-046 GPS: Ellipsis in Project view (2015-11-17)
+NF-17-OB16-046 GPS: Ellipsis in Project view (2015-11-17)
 
   A new setting in the local menu of the Project view can be activated to
   ellipsize the long file names. A file would thus be displayed as
   "...long.adb" if the project view is not wide enough to fit the whole name.
 
-NF-170-OB13-048 GPS: GPS.Menu no longer derives from GPS.GUI (2015-11-16)
+NF-17-OB13-048 GPS: GPS.Menu no longer derives from GPS.GUI (2015-11-16)
 
   A menu no longer is necessarily a graphical object (it could be displayed
   outside of the application on some systems like Ubuntu or OSX), so this
@@ -81,47 +81,47 @@ NF-170-OB13-048 GPS: GPS.Menu no longer derives from GPS.GUI (2015-11-16)
   The function GPS.Menu.rename() is no longer provided. Instead, destroy the
   menu and create a new one associated with the same action.
 
-NF-170-OB13-034 GPS: remove support for GPS.Menu.create (2015-11-13)
+NF-17-OB13-034 GPS: remove support for GPS.Menu.create (2015-11-13)
 
   This python function is now obsolescent. A simple replacement is provided
   for a few releases, but we encourage you to change your plug-ins to use
   gps_utils.interactive instead, since the latter creates proper actions
   which can be reused for contextual menus or key shortcuts.
 
-NF-170-OB12-016 GPS: highlighting focused view (2015-11-17)
+NF-17-OB12-016 GPS: highlighting focused view (2015-11-17)
 
   The GPS color theme was modified so that the view that currently has the
   keyboard focus has a special color in its notebook tab. Changing the color
   theme will change the colors, but will still make this tab unique.
 
-NF-170-OB05-010 GPS: remove the Always Use External Editor pref (2015-11-06)
+NF-17-OB05-010 GPS: remove the Always Use External Editor pref (2015-11-06)
 
   This preference (which always uses an external editor rather than GPS's
   own editor) has been removed. Such editors do not conveniently give access
   to cross-references, outline, and all the other facilities provided by GPS
 
-NF-170-OB04-001 GPS: export the output of program runs (2015-12-16)
+NF-17-OB04-001 GPS: export the output of program runs (2015-12-16)
 
   A new button was added to the local toolbar of the Run view, to save the
   run command output to a file.
 
-NF-170-OB03-004 GPS: performance improvement in Project View (2015-11-20)
+NF-17-OB03-004 GPS: performance improvement in Project View (2015-11-20)
 
   The Project View is significantly faster to load - this is noticeable
   on projects that have a large number of files.
 
-NF-170-OA30-073 ECL: AJIS examples integration (2016-01-19)
+NF-17-OA30-073 ECL: AJIS examples integration (2016-01-19)
 
   AJIS (17.0.20151202w or later) contains GNATbench examples that can be
   imported/built/run in GNATbench without modifications.
 
-NF-170-OA29-048 GPS: collapse all project nodes in Project view (2015-11-02)
+NF-17-OA29-048 GPS: collapse all project nodes in Project view (2015-11-02)
 
   A new button was added to the local toolbar of the Project view, to
   collapse all project nodes. This is a way to quickly cleanup the display
   after using "Locate in Project View" for a while.
 
-NF-170-O925-069 GPS: New GUI for the preferences dialog (2016-02-10)
+NF-17-O925-069 GPS: New GUI for the preferences dialog (2016-02-10)
 
   The GPS preferences dialog has been completely reworked.
   A new look-and-feel has been introduced, gathering the preferences
@@ -134,11 +134,11 @@ NF-170-O925-069 GPS: New GUI for the preferences dialog (2016-02-10)
   GPS hidden preferences can now be displayed and edited by activating the
   "Show advanced preferences" setting from the dialog's local menu.
 
-NF-170-O807-036 GPS: Review multiple CodePeer messages at once (2016-02-01)
+NF-17-O807-036 GPS: Review multiple CodePeer messages at once (2016-02-01)
 
   GPS now allows reviewing multiple CodePeer messages at once.
 
-NF-170-O805-011 GPS: add multi-select to Locations View (2015-11-09)
+NF-17-O805-011 GPS: add multi-select to Locations View (2015-11-09)
 
   It is now possible to select multiple items in the Locations view,
   in particular to remove or export them all in a single operation.
@@ -147,45 +147,45 @@ NF-170-O805-011 GPS: add multi-select to Locations View (2015-11-09)
     - jumping to source code location not allowed
     - context menu is available if selected items are from one file
 
-NF-170-O727-014 GPS: "Find all references" finds overridden (2016-01-26)
+NF-17-O727-014 GPS: "Find all references" finds overridden (2016-01-26)
 
   The action "find all references" on an entity now includes by default
   all the entities overriding it, all entities it overrides, and
   all entities overriding the entities it overrides.
 
-NF-170-O314-006 GPS: saving project before opening it's source (2015-11-05)
+NF-17-O314-006 GPS: saving project before opening it's source (2015-11-05)
 
   Edit-source button in project properties rewrites project's
   file (with user's confirmation) before opening it in editor.
   This closes the dialog.
 
-NF-170-N908-050 GPS: preserve size of dialogs (2015-11-10)
+NF-17-N908-050 GPS: preserve size of dialogs (2015-11-10)
 
   Most dialogs in GPS can be resized, and GPS will now restore the last size
   you whenever the dialog is displayed again in the future (either in the
   current session or in a later session).
 
-NF-170-N829-014 GPS: system menus (2016-01-05)
+NF-17-N829-014 GPS: system menus (2016-01-05)
 
   On OSX and Unity, GPS is now able to display the menubar outside of the
   main window. This is disabled by default, since these menus are not able
   to display tooltips or key shortcuts. They can be enabled via an advanced
   preference.
 
-NF-170-N714-016 GPS: configurable window title (2015-11-05)
+NF-17-N714-016 GPS: configurable window title (2015-11-05)
 
   A new preference (Window Title) has been added to configure the title of
   the GPS window. Through it, you can chose whether to display any of base
   names, directory names, project name,... in the title bar.
 
-NF-170-G222-043 GPS: menubars for floating windows (2015-11-27)
+NF-17-G222-043 GPS: menubars for floating windows (2015-11-27)
 
   When an editor or a browser is made floating, its window now includes a
   menubar similar to the one used in the main GPS window. This makes it
   more convenient to execute actions via menus.
   It also includes a copy of the global toolbar.
 
-NF-170-0000-001 GPS: Incompatible changes in Python API (2016-01-04)
+NF-17-0000-001 GPS: Incompatible changes in Python API (2016-01-04)
 
   This section lists changes done in the Python API that are no longer
   compatible with previous versions of GPS.
