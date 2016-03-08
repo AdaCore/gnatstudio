@@ -1,5 +1,5 @@
 """
-   The 4 classes here:
+The 4 classes here:
    class Promise
      - provides thenable promises for any method, process and procedures
 
@@ -9,6 +9,9 @@
      - examples as well as utils that controls process
        (or process-like execution) with promises
 """
+
+import time
+from time_utils import *
 
 import GPS
 import re
@@ -166,13 +169,18 @@ class ProcessWrapper(object):
         2 - the process is terminated by GPS.
     """
 
-    def __init__(self, cmdargs=[]):
+    def __init__(self, cmdargs=[], spawn_console=False):
         """
         Initialize and run a process with no promises,
         no user-defined pattern to match,
         but a omnipotent regexp that catches everything.
         The process has empty output and two flags saying that
         the process is unfinished and no pattern has matched yet.
+
+        If spawn_console is True, a console is spawned to display the
+        process output. This console also allows the user to relaunch
+        the associated process with a "Relaunch" button in the console
+        toolbar.
         """
 
         # __final_promise = about termination
@@ -194,10 +202,42 @@ class ProcessWrapper(object):
         self.finished = False
 
         # handler of process will be created -> start running
+        self.__command = ' '.join(cmdargs)
+
+        # Launch the command
         self.__process = GPS.Process(
-            ' '.join(cmdargs), ".+",
+            command=self.__command,
+            regexp=".+",
             on_match=self.__on_match,
             on_exit=self.__on_exit)
+
+        # Save the start time
+        self.__start_time = time.time()
+
+        self.__console = None
+
+        # If requested, spawn a console to display the process output
+        if spawn_console:
+            toolbar_name = cmdargs[0] + '_toolbar'
+
+            self.__console = GPS.Console(
+                name=cmdargs[0],
+                accept_input=False,
+                on_destroy=self.__on_console_destroy,
+                toolbar_name=toolbar_name,
+                give_focus_on_create=False)
+            self.__action = GPS.Action('launch ' + cmdargs[0])
+
+            # Create the associated action and relaunch button if it
+            # does not exist yet.
+            if not self.__action.exists():
+                self.__action.create(
+                    on_activate=self.__relaunch,
+                    description='relaunch the spawned process',
+                    icon='gps-refresh-symbolic')
+                self.__action.button(
+                    toolbar=toolbar_name,
+                    label='Relaunch')
 
     def __on_match(self, process, match, unmatch):
         """
@@ -206,18 +246,19 @@ class ProcessWrapper(object):
 
         # Update all output returned by the process
         # and store it as a private buffer
-
         self.__output += match + unmatch
 
-        # check if user has issued some pattern to match
+        # Display the output on the spawned console, if any
+        if self.__console:
+            self.__console.write(unmatch + match)
 
-        if self.__current_pattern is not None:
+        # check if user has issued some pattern to match
+        if self.__current_pattern:
             p = re.search(self.__current_pattern, self.__output)
 
             # if the pattern is found, update the output to remaining and
             # answer the promise with True-->found it
-
-            if p is not None:
+            if p:
                 self.__current_answered = True
                 self.__output = self.__output[p.span()[1]::]
                 self.__current_promise.resolve(True)
@@ -228,20 +269,35 @@ class ProcessWrapper(object):
            Final_promise will be solved with status
            Current_promise will be solved with False
         """
+        # get end timestamp
+        end_time = time.time()
 
         # mark my process as finished
         self.finished = True
 
         # check if there's unanswered match promises
         # if there is --> pattern has never been found, answer with False
-        if self.__current_promise is not None and \
-           not self.__current_answered:
+        if self.__current_promise and not self.__current_answered:
             self.__current_promise.resolve(False)
 
         # check if I had made a promise to finish the process
         # if there is, answer with whatever the exit status is
-        if self.__final_promise is not None:
+        if self.__final_promise:
             self.__final_promise.resolve(status)
+
+        # output the exit status on the attached console, if any
+        if self.__console:
+            output = "\n" + TimeDisplay.get_timestamp(end_time)
+
+            if not status:
+                output += " process terminated successfully"
+            else:
+                output += " process exited with status " + str(status)
+
+            output += ", elapsed time: " + TimeDisplay.get_elapsed(
+                self.__start_time, end_time) + "\n"
+
+            self.__console.write(output)
 
     def wait_until_match(self, pattern=None, timeout=0):
         """
@@ -290,11 +346,49 @@ class ProcessWrapper(object):
             # answer the promise with False
             self.__current_promise.resolve(False)
 
-    def get(self):
-        return self.__process
+    def terminate(self):
+        """
+        Called by the user to force the process to end and resolve
+        the associated promises.
+        Kill the attached process.
+        """
 
-    def kill(self):
+        # get end timestamp
+        end_time = time.time()
+
+        # Kill the process, if any
+        if not self.finished:
+            self.__process.kill()
+
+            if self.__console:
+                self.__console.write(
+                    "\n<^C> process interrupted (elapsed time: "
+                    + get_elapsed(self.__start_time, end_time) + ")\n")
+
+    def __on_console_destroy(self, console):
+        """
+        Called when the console is being destroyed.
+        Kill the attached process.
+        """
+
         self.__process.kill()
+        self.finished = True
+        self.__console = None
+
+    def __relaunch(self):
+        """
+        Called when clicking on the "Relaunch" button of the
+        console toolbar.
+        Terminate the process and relaunch it again.
+        """
+
+        self.terminate()
+        self.__process = GPS.Process(
+            command=self.__command,
+            regexp=".+",
+            on_match=self.__on_match,
+            on_exit=self.__on_exit)
+        self.__start_time = time.time()
 
 
 class DebuggerWrapper(object):
@@ -358,10 +452,12 @@ class DebuggerWrapper(object):
             self.__remove_timers()
 
             # and if there's cmd to run, send it
-            if self.__next_cmd is not None:
+            if self.__next_cmd:
 
                 if self.__next_cmd is not "":
-                    self.__output = self.__debugger.send(self.__next_cmd)
+                    self.__output = self.__debugger.send(
+                        cmd=self.__next_cmd,
+                        show_in_console=True)
                     self.__next_cmd = None
                     self.__remove_timers()
                     self.__this_promise.resolve(self.__output)
@@ -380,7 +476,7 @@ class DebuggerWrapper(object):
         self.__remove_timers()
 
         # answer the promise with the output
-        if self.__this_promise is not None:
+        if self.__this_promise:
             self.__next_cmd = None
             self.__this_promise.resolve(self.__output)
 
@@ -388,14 +484,14 @@ class DebuggerWrapper(object):
         """
            Called in timers to remove both: prepare for new timer registration
         """
-        if self.__deadline is not None:
+        if self.__deadline:
             try:
                 self.__deadline.remove()
             except:
                 pass
             self.__deadline = None
 
-        if self.__timer is not None:
+        if self.__timer:
             try:
                 self.__timer.remove()
             except:
