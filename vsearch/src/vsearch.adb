@@ -448,8 +448,16 @@ package body Vsearch is
    --  Called when the preferences have changed.
 
    procedure Store_Position (Vsearch : Vsearch_Access);
-   procedure Restore_Position (Vsearch : Vsearch_Access);
-   --  Store and restore the position of the Vsearch dialog.
+   --  Store in history the position of the Vsearch dialog
+
+   procedure Get_Stored_Position
+     (Vsearch        : Vsearch_Access;
+      Position_Found : out Boolean;
+      X              : out Gint;
+      Y              : out Gint);
+   --  Retrieve from history the position of the Vsearch dialog.
+   --  Position_Found is set to True iff the position was set, and, in this
+   --  case, (X, Y) is set to the position.
 
    procedure Add_To_History_And_Combo
      (Vsearch        : not null access Vsearch_Record'Class;
@@ -464,18 +472,19 @@ package body Vsearch is
       Value   : String);
    --  Add a history entry to the combo box.
 
-   ----------------------
-   -- Restore_Position --
-   ----------------------
+   -------------------------
+   -- Get_Stored_Position --
+   -------------------------
 
-   procedure Restore_Position (Vsearch : Vsearch_Access) is
-      Child   : constant MDI_Child :=
-        Find_MDI_Child (Get_MDI (Vsearch.Kernel), Vsearch);
+   procedure Get_Stored_Position
+     (Vsearch        : Vsearch_Access;
+      Position_Found : out Boolean;
+      X              : out Gint;
+      Y              : out Gint)
+   is
       Hist : String_List_Access;
-      X, Y : Gint;
-      Win  : Gtk_Widget;
    begin
-      Win := Get_Toplevel (Get_Widget (Child));
+      Position_Found := False;
 
       Hist := Get_History
         (Get_History (Vsearch.Kernel).all, Window_X_Hist_Key);
@@ -495,8 +504,8 @@ package body Vsearch is
 
       Y := Gint'Value (Hist (Hist'First).all);
 
-      Move (Gtk_Window (Win), X, Y);
-   end Restore_Position;
+      Position_Found := True;
+   end Get_Stored_Position;
 
    --------------------
    -- Store_Position --
@@ -609,7 +618,6 @@ package body Vsearch is
            (Close_Button, Signal_Clicked, Close_Vsearch'Access, Vsearch);
 
          --  Set the position of the floating window
-         Restore_Position (Vsearch);
          Resize_If_Needed (Vsearch);
       else
          --  Create a scrolled window and put vsearch's content in it
@@ -2218,7 +2226,24 @@ package body Vsearch is
            (Child, Signal_Float_Child, Float_Vsearch'Access);
          Widget_Callback.Connect
            (Child, Signal_Unfloat_Child, Float_Vsearch'Access);
-         Float_Child (Child, Float_Widget);
+
+         --  Float the child now, but first, check whether we have a saved
+         --  position for the dialog.
+
+         declare
+            Found : Boolean;
+            X, Y  : Gint;
+         begin
+            Get_Stored_Position (Vsearch        => Vsearch_Module_Id.Search,
+                                 Position_Found => Found,
+                                 X              => X,
+                                 Y              => Y);
+            if Found then
+               Float_Child (Child, Float_Widget, False, X, Y);
+            else
+               Float_Child (Child, Float_Widget);
+            end if;
+         end;
          Set_Focus_Child (Child);
       end if;
 

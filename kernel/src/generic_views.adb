@@ -815,16 +815,26 @@ package body Generic_Views is
       --  Find any existing view
 
       procedure Store_Position (View : View_Access);
-      procedure Restore_Position (View : View_Access);
-      --  Store and restore the position of the view's dialog.
+      --  Store in history the position of the view's dialog
 
-      ----------------------
-      -- Restore_Position --
-      ----------------------
+      procedure Get_Stored_Position
+        (View           : View_Access;
+         Position_Found : out Boolean;
+         X, Y           : out Gint);
+      --  Retrieve from history the position of the view's dialog.
+      --  Position_Found is set to True iff the position was set, and, in this
+      --  case, (X, Y) is set to the position.
 
-      procedure Restore_Position (View : View_Access) is
-         X, Y    : Gint;
-         Win     : constant Gtk_Widget := View.Get_Toplevel;
+      -------------------------
+      -- Get_Stored_Position --
+      -------------------------
+
+      procedure Get_Stored_Position
+        (View           : View_Access;
+         Position_Found : out Boolean;
+         X, Y           : out Gint)
+      is
+         Win     : Gtk_Widget := View.Get_Toplevel;
          Hist_X  : constant String_List_Access := Get_History
            (Get_History (View.Kernel).all, Window_X_Hist_Key);
          Hist_Y  : constant String_List_Access := Get_History
@@ -834,6 +844,8 @@ package body Generic_Views is
          Monitor : Gint;
          Rect    : Gdk_Rectangle;
       begin
+         Position_Found := False;
+
          if Hist_X = null or else Hist_Y = null then
             return;
          end if;
@@ -844,7 +856,17 @@ package body Generic_Views is
          --    for instance 5760x1200
          --  So we need to look at the specific monitor that the window is on.
 
+         if Win = null
+           or else Win.all not in Gtk_Window_Record'Class
+         then
+            Win := Gtk_Widget (View.Kernel.Get_Main_Window);
+            if Win = null then
+               return;
+            end if;
+         end if;
+
          Screen := Gtk_Window (Win).Get_Screen;
+
          Monitor := Screen.Get_Monitor_At_Window (Win.Get_Window);
          Screen.Get_Monitor_Geometry (Monitor, Rect);
 
@@ -854,8 +876,8 @@ package body Generic_Views is
          Y := Gint'Value (Hist_Y (Hist_Y'First).all);
          Y := Gint'Min (Gint'Max (Y, Rect.Y), Rect.Y + Rect.Height - 10);
 
-         Move (Gtk_Window (Win), X, Y);
-      end Restore_Position;
+         Position_Found := True;
+      end Get_Stored_Position;
 
       --------------------
       -- Store_Position --
@@ -1087,7 +1109,6 @@ package body Generic_Views is
                On_Close_Floating_Child_Access, View);
 
             --  Set the position of the floating window
-            Restore_Position (View);
             View.Set_Size_Request (-1, -1);
             Size_Request (View, Req);
             View.Set_Size_Request (Req.Width, Req.Height);
@@ -1178,7 +1199,23 @@ package body Generic_Views is
               (Child, Signal_Unfloat_Child, On_Float_Child_Access);
          end if;
 
-         Put (Get_MDI (Kernel), Child, Initial_Position => Position);
+         --  Put the child in the MDI
+
+         declare
+            Found : Boolean := False;
+            X, Y  : Gint := 0;
+         begin
+            if Position = Position_Float then
+               --  If the child was floating, attempt to find the previous
+               --  position in history.
+               Get_Stored_Position (View, Found, X, Y);
+            end if;
+
+            Put (Get_MDI (Kernel), Child,
+                 Initial_Position => Position,
+                 Position_At_Mouse => not Found,
+                 X => X, Y => Y);
+         end;
       end Create_If_Needed;
 
       ----------------
