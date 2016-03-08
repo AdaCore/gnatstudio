@@ -5,8 +5,9 @@ This plugin implements the "Task Manager" view.
 
 import GPS
 from modules import Module
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, Gdk, GLib, Pango
 from gps_utils import make_interactive
+import pygps
 
 COL_PROGRESS = 0
 COL_PROGRESS_TEXT = 1
@@ -14,13 +15,154 @@ COL_CANCEL_PIXBUF = 2
 COL_PLAYPAUSE_PIXBUF = 3
 COL_TASK_ID = 4
 
+icon_size_action = 0
+
+
+class HUD_Widget():
+
+    """ A widget representing the GPS HUD """
+
+    def __init__(self):
+        global icon_size_action
+
+        if not icon_size_action:
+            icon_size_action = Gtk.IconSize.register("action", 10, 10)
+
+        self.hbox = Gtk.HBox()
+        self.hbox.get_style_context().add_class("gps-task-manager")
+        self.label = Gtk.Label()
+        self.label.set_alignment(0.0, 1.0)
+        self.progress_label = Gtk.Label()
+        self.progress_label.set_alignment(1.0, 1.0)
+        self.progress_bar = Gtk.ProgressBar()
+
+        self.button = Gtk.Button()
+        self.button.set_relief(Gtk.ReliefStyle.NONE)
+        self.button.connect("clicked", self.__on_button_clicked)
+        config_image = Gtk.Image.new_from_icon_name(
+            "gps-config-menu-symbolic", icon_size_action
+            )
+        self.button.set_image(config_image)
+
+        vbox = Gtk.VBox()
+        self.hbox.pack_start(vbox, True, True, 0)
+        label_box = Gtk.HBox()
+        label_box.pack_start(self.label, True, True, 2)
+        label_box.pack_end(self.progress_label, True, True, 2)
+        vbox.pack_start(label_box, True, True, 0)
+        vbox.pack_start(self.progress_bar, True, False, 0)
+        self.hbox.pack_start(self.button, False, True, 0)
+        self.refresh_timeout = GLib.timeout_add(300, self.refresh)
+
+        self.hbox.connect("destroy", self.__destroy)
+
+        # The window that shows the mini task manager
+        self.window = Gtk.Window()
+        self.window.set_decorated(False)
+        self.window.connect("focus_out_event", self.__on_window_focus_out)
+        self.window.connect("key-press-event", self.__on_window_key_press)
+
+        # ??? Setting of the font could be done via CSS rather than via
+        # a preference
+        self.font_string = ""
+        GPS.Hook("preferences_changed").add(self.__on_preferences_changed)
+        self.__on_preferences_changed(None)
+
+    def __destroy(self, widget):
+        """ Callback on destroy """
+        GLib.source_remove(self.refresh_timeout)
+        GPS.Hook("preferences_changed").remove(self.__on_preferences_changed)
+        self.window.destroy()
+
+    def __hide_auxiliary_window(self):
+        """ Hide the window that is showing the mini task manager """
+        self.window.hide()
+        if self.window.get_child():
+            self.window.get_child().destroy()
+
+    def __on_window_key_press(self, window, event):
+        """ Callback for key_press on the auxiliary window """
+        if event.get_keyval()[1] == Gdk.KEY_Escape:
+            self.__hide_auxiliary_window()
+
+    def __on_window_focus_out(self, window, item):
+        """ Callback for focus out on the auxiliary window """
+        self.__hide_auxiliary_window()
+
+    def __on_button_clicked(self, button):
+        """ Callback for a click on the task manager button """
+        # show a mini task manager
+
+        parent_window = self.button.get_parent_window()
+        parent_x, parent_y = parent_window.get_root_coords(0, 0)
+        button_alloc = self.button.get_allocation()
+        width, height = 400, 200
+
+        self.window.set_default_size(width, height)
+        self.window.set_attached_to(self.button)
+
+        m = Task_Manager_Widget()
+        self.window.add(m.box)
+
+        self.window.move(
+            parent_x + button_alloc.x + button_alloc.width + 1 - width,
+            parent_y + button_alloc.y + button_alloc.height + 1
+        )
+
+        self.window.show_all()
+        self.window.present()
+
+    def refresh(self):
+        """ Refresh the contents of the HUD """
+        tasks = filter(lambda x: x.visible == 'TRUE', GPS.Task.list())
+        if len(tasks) == 0:
+            # No visible tasks
+            self.label.set_text("")
+            self.progress_label.set_text("")
+            self.progress_bar.hide()
+            self.button.hide()
+            self.__hide_auxiliary_window()
+        else:
+            self.progress_bar.show_all()
+            self.button.show_all()
+
+            if len(tasks) == 1:
+                # Only one visible task: set the label and button
+                self.label.set_text(tasks[0].name())
+                cur, tot = tasks[0].progress()
+                self.progress_bar.set_fraction(float(cur)/(max(1, tot)))
+                self.progress_label.set_text("{}/{}".format(cur, tot))
+            else:
+                self.label.set_text("{} tasks".format(len(tasks)))
+                fraction = 0.0
+                for t in tasks:
+                    cur, tot = t.progress()
+                    fraction += float(cur)/(max(1, tot))
+                self.progress_bar.set_fraction(fraction/len(tasks))
+                self.progress_label.set_text("")
+
+        return True
+
+    def __on_preferences_changed(self, pref):
+        font_string_pref = GPS.Preference("General-Small-Font")
+
+        if pref and pref != font_string_pref:
+            return
+
+        font_string = font_string_pref.get()
+
+        if font_string != self.font_string:
+            self.font_string = font_string
+            font = Pango.font_description_from_string(font_string)
+            self.label.override_font(font)
+            self.progress_label.override_font(font)
+
 
 class Task_Manager_Widget():
 
     """ A widget containing a task manager """
 
     def __init__(self):
-        self.store = None
         self.box = Gtk.VBox()
         scroll = Gtk.ScrolledWindow()
         self.store = Gtk.ListStore(int, str, str, str, str)
@@ -53,10 +195,7 @@ class Task_Manager_Widget():
         # Connect to a click on the tree view
         self.view.connect("button_press_event", self.__on_click)
 
-        self.__on_task_changed_hook = GPS.Hook(
-            "task_changed").add(self.__task_changed)
-        self.__on_task_terminated_hook = GPS.Hook(
-            "task_terminated").add(self.__task_terminated)
+        self.timeout = GLib.timeout_add(300, self.refresh)
 
         self.box.connect("destroy", self.__destroy)
 
@@ -66,9 +205,10 @@ class Task_Manager_Widget():
         for t in GPS.Task.list():
             self.__task_changed(t)
 
-    def __destroy(self):
-        GPS.Hook("task_changed").remove(self.__on_task_changed_hook)
-        GPS.Hook("task_terminated").remove(self.__on_task_terminated_hook)
+    def __destroy(self, widget):
+        if self.timeout:
+            GLib.source_remove(self.timeout)
+            self.timeout = None
 
     def __task_terminated(self, task):
         iter = self.__iter_from_task(task)
@@ -85,6 +225,29 @@ class Task_Manager_Widget():
             if not iter:
                 iter = self.store.append()
             self.__update_row(iter, task)
+
+    def refresh(self):
+        """ Refresh the view """
+        # First refresh the status of all tasks
+
+        task_ids = []
+        for t in GPS.Task.list():
+            self.__task_changed(t)
+            task_ids.append(str(id(t)))
+
+        # And then remove tasks that are shown that are no longer running
+
+        iter = self.store.get_iter_first()
+
+        while iter:
+            task_id = self.store.get_value(iter, COL_TASK_ID)
+            if task_id not in task_ids:
+                self.store.remove(iter)
+                iter = self.store.get_iter_first()
+            else:
+                iter = self.store.iter_next(iter)
+
+        return True
 
     def __task_from_row(self, path):
         """ Return the GPS.Task corresponding to the row at path.
@@ -197,10 +360,16 @@ class Task_Manager(Module):
         return False
 
     def setup(self):
+        # Add the Task Manager view
         make_interactive(
             self.get_view,
             category="Views",
             name="open Task Manager")
+
+        # Create a HUD widget and add it to the toolbar
+        HUD = HUD_Widget().hbox
+        HUD.show_all()
+        pygps.get_widget_by_name("toolbar-box").pack_end(HUD, False, False, 3)
 
     def create_view(self):
         self.widget = Task_Manager_Widget()

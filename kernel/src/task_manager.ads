@@ -193,21 +193,4 @@ private
 
    No_Task_Manager : constant Task_Manager_Access := null;
 
-   procedure Queue_Added
-     (Manager : access Task_Manager_Record;
-      Index   : Integer) is null;
-   --  Inform the GUI that a queue has been added
-
-   procedure Queue_Removed
-     (Manager : access Task_Manager_Record;
-      Index   : Integer) is null;
-   --  Inform the GUI that a queue has been removed
-
-   procedure Queue_Changed
-     (Manager           : access Task_Manager_Record;
-      Index             : Integer;
-      Immediate_Refresh : Boolean) is null;
-   --  Inform the GUI that a queue has been changed; if Immediate_Refresh is
-   --  True, refresh immediately, otherwise do so in a timeout callback.
-
 end Task_Manager;

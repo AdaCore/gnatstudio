@@ -88,7 +88,6 @@ package body Task_Manager is
             end if;
 
             Manager.Queues (Index).Status := Completed;
-            Queue_Changed (Manager, Index, True);
             Run (Task_Manager_Access (Manager),
                  Active => Index < Manager.Passive_Index);
          end if;
@@ -203,8 +202,6 @@ package body Task_Manager is
          New_Queues : Task_Queue_Array
            (Manager.Queues'First .. Manager.Queues'Last - 1);
       begin
-         Queue_Removed (Manager, Index);
-
          GNAT.Strings.Free (Queue.Id);
 
          if Manager.Queues'Length = 1 then
@@ -341,7 +338,6 @@ package body Task_Manager is
                null;
          end case;
 
-         Queue_Changed (Manager, Index, False);
          return True;
       end if;
    exception
@@ -550,7 +546,6 @@ package body Task_Manager is
       Manager.Queues (Task_Queue).Queue.Append (Command);
       Manager.Queues (Task_Queue).Total :=
         Manager.Queues (Task_Queue).Total + 1;
-      Queue_Added (Manager, Task_Queue);
 
       Run (Task_Manager_Access (Manager),  Active);
    end Add_Command;
@@ -700,8 +695,6 @@ package body Task_Manager is
             if Manager.Queues (Index).Status = Running then
                Manager.Queues (Index).Status := Paused;
             end if;
-
-            Queue_Changed (Manager, Index, True);
          end if;
       end if;
    end Pause_Command;
@@ -721,8 +714,6 @@ package body Task_Manager is
                Run (Task_Manager_Access (Manager),
                     Active => Index < Manager.Passive_Index);
             end if;
-
-            Queue_Changed (Manager, Index, True);
          end if;
       end if;
    end Resume_Command;

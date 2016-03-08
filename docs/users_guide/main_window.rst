@@ -422,6 +422,7 @@ The Tool Bar
 ============
 
 .. image:: toolbar.png
+.. image:: toolbar_hud.png
 
 The tool bar provides shortcuts to some common actions:
 
@@ -446,11 +447,12 @@ The tool bar provides shortcuts to some common actions:
 When GPS is performing background actions, such as loading cross-reference
 information or all actions involving external processes (including
 compiling), it displays a progress bar in the toolbar showing when the
-current task(s) will be completed.  Click on the small
-:guilabel:`interrupt` button to interrupt all background tasks. Clicking on
-the progress bar opens the :guilabel:`Tasks` view
-(see :ref:`The_Task_Manager`).
-
+current task(s) will be completed.  Click on the button to pop up a window
+showing the details of the tasks. This window is a Task Manager, and can
+therefore be used to pause or interrupt running tasks (see
+:ref:`The_Task_Manager`). This window can be discarded by pressing
+:guilabel:`ESC` or by clicking anywhere else in the GPS. This window also
+disappears when there are no more running tasks.
 
 .. index:: omni-search
 .. index:: seealso: search; omni-search

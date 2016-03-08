@@ -151,7 +151,11 @@ package body GPS.Kernel.Task_Manager is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      Manager : Task_Manager_Access;
    begin
+      Manager := new Task_Manager_Record;
+      Set_Task_Manager (Kernel, Manager);
+
       Standard.Task_Manager.Shell.Register_Commands (Kernel);
    end Register_Module;
 

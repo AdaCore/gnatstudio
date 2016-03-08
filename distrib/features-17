@@ -89,6 +89,13 @@ NF-17-P314-024 GPS: listvars.py plugins shows reference type (2016-03-30)
   "Variables used in ...") now also shows the type of reference for those
   variable (read, write, dispatching call,...)
 
+NF-17-P314-001 GPS: view the tasks directly from the toolbar (2016-05-12)
+
+  In the main toolbar, the button next to the summary of running tasks now
+  brings up an ephemeral window which contains a task manager view, which
+  allows viewing and interrupting tasks directly from the toolbar, without
+  the need to have the Task Manager view present in the MDI.
+
 NF-17-P310-018 GPS: Support for arm-sysgo-pikeos (2016-04-04)
 
   GPS now supports the arm-sysgo-pikeos toolchain.

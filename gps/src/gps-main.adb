@@ -113,7 +113,6 @@ with Remote;                           use Remote;
 with Src_Editor_Box;                   use Src_Editor_Box;
 with String_Utils;
 with Trace_Support;                    use Trace_Support;
-with Task_Manager.GUI;
 with Welcome;                          use Welcome;
 with Welcome_Page;                     use Welcome_Page;
 
@@ -2090,7 +2089,6 @@ procedure GPS.Main is
       end if;
 
       GPS.Search.GUI.Register_Module (GPS_Main.Kernel);
-      Task_Manager.GUI.Register_Module (GPS_Main.Kernel);
       GPS.Kernel.Task_Manager.Register_Module (GPS_Main.Kernel);
 
       if Active (VCS_Trace) then
