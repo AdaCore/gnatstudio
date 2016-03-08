@@ -16,8 +16,10 @@ plug-in is not concerned with that aspect.
 
 import GPS
 from modules import Module
+from target_connector import TargetConnector
 import workflows
 import workflows.promises as promises
+from gps_utils.console_process import Console_Process
 
 
 def msg_is(msg):
@@ -52,36 +54,36 @@ class BoardLoader(Module):
     # gnatemulator.py
     __buildTargets = []
 
+    # The build target associated with the 'st-util' command line
+    __connector = None
+
+    # The ProcessWrapper instance used to spawn the 'st-util' tool
+    # and the associated promises
     __connection = None
 
     def __error_exit(self, msg=""):
         """ Emit an error and reset the workflows """
-        GPS.Console("Messages").write(msg + " [workflow stopped]")
+        GPS.Console("Messages").write(
+            msg + " [workflow stopped]",
+            mode="error")
 
     def __reset_all(self, manager_delete=True, connection_delete=True):
         """ Reset the workflows """
+        msg_is("Resetting the connection")
         if self.__connection is not None and connection_delete:
-            self.__connection.get().kill()
+            self.__connection.terminate()
             self.__connection = None
-        interest = "st-util"
-        for i in GPS.Task.list():
-            if interest in i.name():
-                i.interrupt()
 
-    def __check_task(self, id):
-        """ Back up method to check if task exists
-        """
-        r = False
-        interest = ["st-util"][id]
-        for i in GPS.Task.list():
-            if interest in i.name():
-                r = True
-        return r
+            interest = "st-util"
+            for i in GPS.Task.list():
+                if interest in i.name():
+                    i.interrupt()
 
     def __create_targets_lazily(self):
-        self.__connection = None    # reset
-
         active = uses_stm32(GPS.Project.root())
+
+        if not self.__connector and active:
+            self.__connector = TargetConnector("st-util", [])
 
         if not self.__buildTargets and active:
             workflows.create_target_from_workflow(
@@ -139,7 +141,7 @@ class BoardLoader(Module):
         msg_is("Flashing image to board.")
         cmd = ["st-flash", "write", binary, "0x8000000"]
         try:
-            con = promises.ProcessWrapper(cmd)
+            con = promises.ProcessWrapper(cmd, spawn_console=True)
         except:
             self.__error_exit("Could not connect to the board.")
             return
@@ -153,7 +155,7 @@ class BoardLoader(Module):
 
         if not (r2 and r3):
             self.__error_exit(msg="Could not flash the executable.")
-            con.get().kill()
+            con.terminate()
             return
 
         msg_is("Flashing complete. You may need to reset (or cycle power).")
@@ -162,36 +164,49 @@ class BoardLoader(Module):
         """
         Workflow to build, flash and debug the program on the real board.
         """
+
+        # Reset the connection if still alive
+        if self.__connection is not None:
+            self.__reset_all()
+
         if main_name is None:
             self.__error_exit(msg="Main not specified")
             return
 
+        # Build the executable
         builder = promises.TargetWrapper("Build Main")
         r0 = yield builder.wait_on_execute(main_name)
         if r0 is not 0:
             self.__error_exit("Build error.")
             return
 
-        msg_is("Launching st-util.")
-        cmd = ["st-util"]
+        # Switch directly to the "Debug" perspective so that the
+        # 'st-util' console is still visible when spawning the debugger.
+        GPS.MDI.load_perspective("Debug")
 
-        try:
-            con = promises.ProcessWrapper(cmd)
-        except:
-            self.__error_exit("Could not launch st-util.")
+        # Launch st-util with its associated console
+        cmd = self.__connector.get_command_line()
+        msg_is("Launching st-util.")
+        self.__connection = promises.ProcessWrapper(cmd, spawn_console=True)
+        r1 = yield self.__connection.wait_until_match(
+            "Listening at",
+            1000)
+
+        if not r1:
+            self.__error_exit(msg="Could not connect to the device.")
             return
 
-        self.__connection = con
-
+        # Spawn the debugger on the executable and load it
         msg_is("Launching debugger.")
         b = GPS.Project.root().get_executable_name(GPS.File(main_name))
         debugger_promise = promises.DebuggerWrapper(GPS.File(b))
-        r3 = yield debugger_promise.wait_and_send(cmd="", block=True)
+        r2 = yield debugger_promise.wait_and_send(
+            cmd="load",
+            block=True)
 
         if not r3:
             self.__error_exit("Connection Lost. "
                               + "Please check the USB connection and restart.")
-            r3 = yield debugger_promise.wait_and_send(cmd="", block=True)
             self.__reset_all()
             return
 
@@ -207,6 +222,6 @@ class BoardLoader(Module):
 
     def debugger_terminated(self, hookname, debugger):
         """
-        When debugger terminates, kill connection.
+        When debugger terminates, terminate the connection.
         """
         self.__reset_all()

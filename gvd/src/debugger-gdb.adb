@@ -1298,12 +1298,6 @@ package body Debugger.Gdb is
 
       Connect_To_Target_If_Needed (Debugger);
 
-      --  Send the "load" command if needed
-
-      if Debugger.Mode /= Native then
-         Launch_Command_And_Output ("load");
-      end if;
-
       Display_Prompt (Debugger);
 
       --  If we are in Cross mode (ie, with the "remote" protocol), the call
