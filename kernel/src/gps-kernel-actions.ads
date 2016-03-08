@@ -57,7 +57,8 @@ package GPS.Kernel.Actions is
       Name   : String;
       Remove_Menus_And_Toolbars : Boolean := True);
    --  Remove action named Name from the table of actions.
-   --  Automatically remove the associated menus if Remove_Menus is true.
+   --  Automatically remove the associated menus and toolbar items if
+   --  Remove_Menus_And_Toolbars is true.
 
    function Lookup_Action
      (Kernel : access Kernel_Handle_Record'Class;
