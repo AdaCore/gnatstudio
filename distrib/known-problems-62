@@ -332,6 +332,15 @@ KP-62-OA28-042 GPS: memory leak linked to completions
 
   Workaround: None known, apart from deactivating the completion.
 
+KP-62-OA28-026 GPS: dialog appears at mouse cursor position
+
+  Problem:    Some GPS dialogs appear at position of the mouse cursor.
+              This is inconvenient in case of multi-monitor setup.
+
+  Status:     This was fixed in 17.0 on 2016-03-09
+
+  Workaround: None.
+
 KP-62-OA15-033 GPS: gnatcov's report not fully displayed
 
   Problem:    GPS displays less then 1000 lines of gnatcov report.
