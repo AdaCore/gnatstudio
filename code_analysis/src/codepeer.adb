@@ -242,7 +242,7 @@ package body CodePeer is
          --  Position of range delimiter.
 
       begin
-         if not Category.CWEs.Is_Empty then
+         if Self.Display_CWEs and then not Category.CWEs.Is_Empty then
             for CWE of Category.CWEs loop
                declare
                   Image : constant String :=

@@ -463,12 +463,11 @@ package body CodePeer.Module is
          Audit_V3        => CodePeer.Audit_V3_Vectors.Empty_Vector,
          Checks          => Checks,
          Vns             => Vns,
-         CWEs            =>
-           (if Project.Has_Attribute (CWE_Attribute)
-            and then
-            Ada.Characters.Handling.To_Lower
-              (Project.Attribute_Value (CWE_Attribute)) = "true"
-              then CWEs else CWE_Category_Sets.Empty_Set));
+         CWEs            => CWEs,
+         Display_CWEs    =>
+           Project.Has_Attribute (CWE_Attribute)
+             and then Ada.Characters.Handling.To_Lower
+               (Project.Attribute_Value (CWE_Attribute)) = "true");
       Style   : constant Style_Access := Module.Message_Styles (Ranking);
 
    begin
