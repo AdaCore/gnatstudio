@@ -1450,8 +1450,12 @@ package body GPS.Kernel.Messages is
       -------------
 
       procedure Include (Self : not null access Abstract_Message_Node'Class) is
+         Container : constant Messages_Container_Access :=
+                       Get_Container (Message_Access (Self));
+
       begin
-         Get_Container (Message_Access (Self)).Messages.Messages.Append (Self);
+         Container.Messages.Messages.Append (Self);
+         Self.Index := Container.Messages.Messages.Last_Index;
       end Include;
 
       ------------------
