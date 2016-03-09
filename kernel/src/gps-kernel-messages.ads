@@ -726,7 +726,7 @@ private
       In_Message_Init   : Boolean := False;
       --  Message initialization is in progress, filter should avoid access to
       --  unprocessed messages because it is possible that message is not
-      --  initializaed completely.
+      --  initialized completely.
    end record;
 
    procedure Register_Message_Class
