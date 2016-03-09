@@ -948,12 +948,14 @@ package body GPS.Kernel.Messages is
 
       if not Container.Filter_Launched then
          Container.Filter_Launched := True;
+         Self.Get_Container.In_Message_Init := True;
          GPS.Kernel.Task_Manager.Launch_Background_Command
            (Kernel          => Container.Kernel,
             Command         => Container.Filter_Command,
             Active          => True,
             Show_Bar        => False,
             Destroy_On_Exit => False);
+         Self.Get_Container.In_Message_Init := False;
       end if;
    end Initialize;
 
@@ -1776,6 +1778,13 @@ package body GPS.Kernel.Messages is
       Start    : constant Ada.Calendar.Time := Ada.Calendar.Clock;
 
    begin
+      if Self.Container.In_Message_Init then
+         --  When filter is executed during message initialization it can
+         --  access to uninitialized message, thus relaunch command.
+
+         return Commands.Execute_Again;
+      end if;
+
       while Self.Container.Messages.Has_Unprocessed loop
          Message := Self.Container.Messages.Get_Unprocessed;
 

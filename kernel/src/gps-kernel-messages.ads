@@ -723,6 +723,10 @@ private
       Filter_Command    : Commands.Command_Access;
       Filter_Launched   : Boolean := False;
       Filters           : Filter_Vectors.Vector;
+      In_Message_Init   : Boolean := False;
+      --  Message initialization is in progress, filter should avoid access to
+      --  unprocessed messages because it is possible that message is not
+      --  initializaed completely.
    end record;
 
    procedure Register_Message_Class
