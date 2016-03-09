@@ -258,7 +258,8 @@ package body VCS_View.Activities is
                (-"will be deleted") & ASCII.LF,
             Dialog_Type => Warning,
             Title       => -"Delete Activity",
-            Buttons     => Button_OK + Button_Cancel);
+            Buttons     => Button_OK + Button_Cancel,
+            Parent      => Kernel.Get_Main_Window);
       end if;
 
       if Button = Button_OK then
@@ -311,7 +312,8 @@ package body VCS_View.Activities is
                         ''' & ASCII.LF,
                         Dialog_Type => Warning,
                         Title       => -"Open Activity",
-                        Buttons     => Button_OK);
+                        Buttons     => Button_OK,
+                        Parent      => Kernel.Get_Main_Window);
                      --  Revert back the status to its current setting
                      Ok := False;
                      exit;

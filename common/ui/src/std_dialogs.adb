@@ -49,7 +49,7 @@ package body Std_Dialogs is
       Extra_Box2 : Gtk_Check_Button := null;
       Title      : String;
       Message    : String;
-      Position   : Gtk_Window_Position := Win_Pos_Mouse;
+      Position   : Gtk_Window_Position := Win_Pos_Center_On_Parent;
       History    : Histories.History;
       Key        : History_Key := "") return String;
    --  Internal version of Simple_Entry_Dialog, where Dialog is already
@@ -71,7 +71,7 @@ package body Std_Dialogs is
       Extra_Box2      : Gtk_Check_Button := null;
       Title           : String;
       Message         : String;
-      Position        : Gtk_Window_Position := Win_Pos_Mouse;
+      Position        : Gtk_Window_Position := Win_Pos_Center_On_Parent;
       History         : Histories.History;
       Key             : History_Key := "") return String
    is
@@ -150,7 +150,7 @@ package body Std_Dialogs is
      (Parent   : access Gtk_Window_Record'Class;
       Title    : String;
       Message  : String;
-      Position : Gtk_Window_Position := Win_Pos_Mouse;
+      Position : Gtk_Window_Position := Win_Pos_Center_On_Parent;
       History  : Histories.History := null;
       Key      : History_Key := "") return String
    is
@@ -179,7 +179,7 @@ package body Std_Dialogs is
      (Parent         : access Gtk_Window_Record'Class;
       Title          : String;
       Message        : String;
-      Position       : Gtk_Window_Position := Win_Pos_Mouse;
+      Position       : Gtk_Window_Position := Win_Pos_Center_On_Parent;
       Check_Msg      : String := "";
       History        : Histories.History;
       Key            : History_Key := "";

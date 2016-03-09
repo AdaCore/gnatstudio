@@ -2380,7 +2380,8 @@ package body KeyManager_Module is
             Dialog_Type    => Error,
             Buttons        => Button_OK,
             Default_Button => Button_OK,
-            Title          => -"Key binding error");
+            Title          => -"Key binding error",
+            Parent         => Kernel.Get_Main_Window);
       else
          Insert (Kernel, Message, Mode => Error);
       end if;

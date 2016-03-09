@@ -1101,7 +1101,8 @@ package body GVD.Process is
            Message_Dialog
              (Expect_Out (Get_Process (Process.Debugger)) & ASCII.LF &
               (-"Could not launch the debugger"),
-              Error, Button_OK, Button_OK);
+              Error, Button_OK, Button_OK,
+              Parent => Process.Kernel.Get_Main_Window);
          Process.Exiting := True;
 
          Close_Debugger (Process);

@@ -234,7 +234,8 @@ package body GVD.Generic_View is
                           (-"Interrupt the debugger or wait for its"
                              & " availability.")),
                         Dialog_Type => Warning,
-                        Buttons     => Button_OK);
+                        Buttons     => Button_OK,
+                        Parent      => Kernel.Get_Main_Window);
                   else
                      Update (View);
                   end if;

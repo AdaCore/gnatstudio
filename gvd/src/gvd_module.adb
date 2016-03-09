@@ -669,8 +669,9 @@ package body GVD_Module is
            ((-"Cannot attach to a task/process while the") & ASCII.LF &
             (-"underlying debugger is busy.") & ASCII.LF &
             (-"Interrupt the debugger or wait for its availability."),
-           Dialog_Type => Warning,
-           Buttons => Button_OK);
+            Dialog_Type => Warning,
+            Buttons     => Button_OK,
+            Parent      => Kernel.Get_Main_Window);
          return Commands.Failure;
       end if;
 
@@ -728,8 +729,9 @@ package body GVD_Module is
            ((-"Cannot detach the task/process while the") & ASCII.LF &
             (-"underlying debugger is busy.") & ASCII.LF &
             (-"Interrupt the debugger or wait for its availability."),
-           Dialog_Type => Warning,
-           Buttons => Button_OK);
+            Dialog_Type => Warning,
+            Buttons     => Button_OK,
+            Parent      => Kernel.Get_Main_Window);
 
       else
          Detach_Process (Process.Debugger, Mode => GVD.Types.Visible);
@@ -1104,8 +1106,9 @@ package body GVD_Module is
            ((-"Cannot rerun while the underlying debugger is busy.") &
             ASCII.LF &
             (-"Interrupt the debugger or wait for its availability."),
-           Dialog_Type => Warning,
-           Buttons => Button_OK);
+            Dialog_Type => Warning,
+            Buttons     => Button_OK,
+            Parent      => Kernel.Get_Main_Window);
          return Commands.Failure;
       end if;
 
@@ -1141,7 +1144,7 @@ package body GVD_Module is
          Title  => -"Connect to board",
          Kernel => Kernel,
          Flags  => Modal or Destroy_With_Parent);
-      Set_Position (Dialog, Win_Pos_Mouse);
+      Set_Position (Dialog, Win_Pos_Center_On_Parent);
       Set_Default_Size_From_History
          (Dialog, "debug-connect-to-board", Kernel, 300, 100);
 
@@ -1393,7 +1396,7 @@ package body GVD_Module is
                      (Parent   => Process.Kernel.Get_Main_Window,
                       Title    => -"Setting value of " & Variable,
                       Message  => -"Setting value of " & Variable & ':',
-                      Position => Win_Pos_Mouse,
+                      Position => Win_Pos_Center_On_Parent,
                       Key      => "gvd_set_value_dialog");
    begin
       if S /= "" and then S (S'First) /= ASCII.NUL then

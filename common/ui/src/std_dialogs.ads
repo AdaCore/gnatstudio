@@ -25,7 +25,7 @@ package Std_Dialogs is
      (Parent   : access Gtk_Window_Record'Class;
       Title    : String;
       Message  : String;
-      Position : Gtk_Window_Position := Win_Pos_Mouse;
+      Position : Gtk_Window_Position := Win_Pos_Center_On_Parent;
       History  : Histories.History := null;
       Key      : History_Key := "") return String;
    --  Open a simple dialog, with a single entry field, and returns the
@@ -42,7 +42,7 @@ package Std_Dialogs is
      (Parent         : access Gtk_Window_Record'Class;
       Title          : String;
       Message        : String;
-      Position       : Gtk_Window_Position := Win_Pos_Mouse;
+      Position       : Gtk_Window_Position := Win_Pos_Center_On_Parent;
       Check_Msg      : String := "";
       History        : Histories.History;
       Key            : History_Key := "";

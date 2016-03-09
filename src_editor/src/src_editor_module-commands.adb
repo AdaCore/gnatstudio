@@ -263,7 +263,7 @@ package body Src_Editor_Module.Commands is
          Str : constant String := Simple_Entry_Dialog
            (Get_Current_Window (Kernel),
             -"Goto Line...", -"Enter line number:",
-            Win_Pos_Mouse, Get_History (Kernel), "Goto_Line");
+            Win_Pos_Center_On_Parent, Get_History (Kernel), "Goto_Line");
 
       begin
          if Str = "" or else Str (Str'First) = ASCII.NUL then

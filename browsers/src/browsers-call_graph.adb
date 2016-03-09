@@ -694,7 +694,7 @@ package body Browsers.Call_Graph is
               -"Complete Call Graph",
               -("Computing complete call graph may take a long time." &
                 ASCII.LF & "Enter maximum number of items to display: "),
-              Win_Pos_Mouse, History, Key);
+              Win_Pos_Center_On_Parent, History, Key);
       begin
          if Str /= "" and then Str (Str'First) /= ASCII.NUL then
             Max_Items := Integer'Value (Str);

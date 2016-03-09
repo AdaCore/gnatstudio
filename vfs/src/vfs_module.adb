@@ -392,6 +392,7 @@ package body VFS_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Dir     : constant GNATCOLL.VFS.Virtual_File :=
                   Directory_Information (Context.Context);
       Success : Boolean;
@@ -412,7 +413,8 @@ package body VFS_Module is
             Display_Full_Name (File) &
             " ?",
             Gtkada.Dialogs.Confirmation,
-            Gtkada.Dialogs.Button_Yes or Gtkada.Dialogs.Button_No);
+            Gtkada.Dialogs.Button_Yes or Gtkada.Dialogs.Button_No,
+            Parent => Kernel.Get_Main_Window);
 
          if Res = Gtkada.Dialogs.Button_Yes then
             --  inform before deleting
@@ -438,7 +440,8 @@ package body VFS_Module is
            (-"Are you sure you want to delete the directory " &
             Dir.Display_Full_Name & (-" and all its subdirectories ?"),
             Gtkada.Dialogs.Confirmation,
-            Gtkada.Dialogs.Button_Yes or Gtkada.Dialogs.Button_No);
+            Gtkada.Dialogs.Button_Yes or Gtkada.Dialogs.Button_No,
+            Parent => Kernel.Get_Main_Window);
 
          if Res = Gtkada.Dialogs.Button_Yes then
             --  Is_Directory marks File as directory. This is important
@@ -629,7 +632,8 @@ package body VFS_Module is
                   (-("Do you want GPS to modify these projects to " &
                      "reference its new name ?")),
                   Gtkada.Dialogs.Confirmation,
-                  Button_Yes or Button_No);
+                  Button_Yes or Button_No,
+                  Parent => Get_Kernel (Context.Context).Get_Main_Window);
 
                if Button = Button_Yes then
                   Rename_In_Prj
@@ -643,7 +647,8 @@ package body VFS_Module is
                   Project.Name & ASCII.LF &
                   (-"The project(s) might require manual modifications."),
                   Gtkada.Dialogs.Warning,
-                  Button_OK);
+                  Button_OK,
+                  Parent => Get_Kernel (Context.Context).Get_Main_Window);
                Prj_Changed := True;
             end if;
          end if;

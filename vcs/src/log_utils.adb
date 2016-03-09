@@ -842,7 +842,8 @@ package body Log_Utils is
             Button_Yes or Button_No,
             Button_Yes,
             "", -"Empty log detected",
-            Gtk.Enums.Justify_Left) = Button_No
+            Gtk.Enums.Justify_Left,
+            Kernel.Get_Main_Window) = Button_No
          then
             Cancel_All := True;
          end if;
@@ -974,7 +975,8 @@ package body Log_Utils is
                         Button_Yes or Button_No,
                         Button_Yes,
                         "", -"Empty log detected",
-                        Gtk.Enums.Justify_Left) = Button_No
+                        Gtk.Enums.Justify_Left,
+                        Kernel.Get_Main_Window) = Button_No
                      then
                         Cancel_All := True;
 

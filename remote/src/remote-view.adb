@@ -43,6 +43,7 @@ with Gtk.Style;              use Gtk.Style;
 with Gtk.Table;              use Gtk.Table;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Widget;             use Gtk.Widget;
+with Gtk.Window;             use Gtk.Window;
 with Gtkada.Dialogs;         use Gtkada.Dialogs;
 with Gtkada.MDI;             use Gtkada.MDI;
 with Collapsing_Pane;        use Collapsing_Pane;
@@ -58,7 +59,7 @@ with GPS.Kernel.Remote;
 with Remote;                 use Remote;
 with Remote.Config_Dialog;   use Remote.Config_Dialog;
 with Gexpect.Db;             use Gexpect, Gexpect.Db;
-with GNATCOLL.Traces;                 use GNATCOLL.Traces;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
 
 package body Remote.View is
 
@@ -803,7 +804,7 @@ package body Remote.View is
       Reasons    : Ada.Strings.Unbounded.Unbounded_String;
       Failure    : Boolean := False;
       Ignore     : Message_Dialog_Buttons;
-      pragma Unreferenced (W, Ignore);
+      pragma Unreferenced (Ignore);
 
    begin
       for S in Distant_Server_Type'Range loop
@@ -870,13 +871,15 @@ package body Remote.View is
       if not Failure then
          Ignore := Message_Dialog
            ("Remote configuration check has successfully completed",
-            Buttons => Button_OK);
+            Buttons => Button_OK,
+            Parent  => Gtk_Window (W.Get_Toplevel));
       else
          Ignore := Message_Dialog
            ("Remote configuration check has failed for the following reasons:"
             & ASCII.LF & To_String (Reasons),
             Dialog_Type => Error,
-            Buttons     => Button_OK);
+            Buttons     => Button_OK,
+            Parent      => Gtk_Window (W.Get_Toplevel));
       end if;
 
    exception
@@ -886,7 +889,8 @@ package body Remote.View is
             & ASCII.LF & "Exception received: " & ASCII.LF &
             Ada.Exceptions.Exception_Information (E),
             Dialog_Type => Error,
-            Buttons     => Button_OK);
+            Buttons     => Button_OK,
+            Parent      => Gtk_Window (W.Get_Toplevel));
    end On_Check_Clicked;
 
    ------------------------

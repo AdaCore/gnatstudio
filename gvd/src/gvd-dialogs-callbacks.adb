@@ -27,6 +27,7 @@ with GVD.Process;           use GVD.Process;
 with GVD.Types;             use GVD.Types;
 with Gtk.Tree_Model;        use Gtk.Tree_Model;
 with Gtk.Tree_Selection;    use Gtk.Tree_Selection;
+with Gtk.Window;            use Gtk.Window;
 
 package body GVD.Dialogs.Callbacks is
 
@@ -140,7 +141,8 @@ package body GVD.Dialogs.Callbacks is
             Button :=
               Message_Dialog
                 (-"You must select at least one of the choices",
-                 Error, Button_OK);
+                 Error, Button_OK,
+                 Parent => Gtk_Window (Dialog));
             Emit_Stop_By_Name (Object, "clicked");
             return;
          end if;

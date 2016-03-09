@@ -55,7 +55,8 @@ package body Build_Configurations.Gtkada.Dialogs is
    --  Convenient shortcut to the Gettext function
 
    function New_Target_Name_Is_Valid
-     (Registry : Build_Config_Registry_Access;
+     (UI       : access Build_UI_Record'Class;
+      Registry : Build_Config_Registry_Access;
       Name     : Unbounded_String) return Boolean;
    --  Return True is Name is a valid new target name for Registry
 
@@ -79,7 +80,10 @@ package body Build_Configurations.Gtkada.Dialogs is
    -- Information --
    -----------------
 
-   procedure Information (Message : String) is
+   procedure Information
+     (UI      : access Build_UI_Record'Class;
+      Message : String)
+   is
       R : Message_Dialog_Buttons;
       pragma Unreferenced (R);
    begin
@@ -89,7 +93,8 @@ package body Build_Configurations.Gtkada.Dialogs is
          Buttons        => Button_OK,
          Default_Button => Button_OK,
          Help_Msg       => "",
-         Title          => "");
+         Title          => "",
+         Parent         => Gtk_Window (Get_Toplevel (UI)));
    end Information;
 
    ------------------
@@ -197,19 +202,22 @@ package body Build_Configurations.Gtkada.Dialogs is
    ------------------------------
 
    function New_Target_Name_Is_Valid
-     (Registry : Build_Config_Registry_Access;
+     (UI       : access Build_UI_Record'Class;
+      Registry : Build_Config_Registry_Access;
       Name     : Unbounded_String) return Boolean is
    begin
       --  Verify that the name is not empty
       if Name = "" then
-         Information (-"Note: targets must have a non-empty name.");
+         Information
+           (UI, -"Note: targets must have a non-empty name.");
          return False;
       end if;
 
       --  Verify that no target with this name exists
       if Contains (Registry.Targets, Name) then
          Information
-           (-"A target named """ & To_String (Name) & """ already exists.");
+           (UI,
+            -"A target named """ & To_String (Name) & """ already exists.");
          return False;
       end if;
 
@@ -409,7 +417,7 @@ package body Build_Configurations.Gtkada.Dialogs is
                Model    := To_Unbounded_String (Get_Text (Model_E));
                Category := To_Unbounded_String (Get_Text (Cat_E));
 
-               if New_Target_Name_Is_Valid (UI.Registry, Name) then
+               if New_Target_Name_Is_Valid (UI, UI.Registry, Name) then
                   Destroy (Dialog);
                   exit;
                end if;
@@ -520,7 +528,7 @@ package body Build_Configurations.Gtkada.Dialogs is
                Name := To_Unbounded_String (Get_Text (Name_E));
                Category := To_Unbounded_String (Get_Text (Cat_E));
 
-               if New_Target_Name_Is_Valid (UI.Registry, Name) then
+               if New_Target_Name_Is_Valid (UI, UI.Registry, Name) then
                   Destroy (Dialog);
                   exit;
                end if;
@@ -567,7 +575,7 @@ package body Build_Configurations.Gtkada.Dialogs is
 
       if Target.Properties.Read_Only then
          Information
-           (-"This target is a predefined target, and cannot be removed");
+           (UI, -"This target is a predefined target, and cannot be removed");
          Cancelled := True;
          return;
       end if;

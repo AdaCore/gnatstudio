@@ -1457,7 +1457,7 @@ package body GVD.Canvas is
         (Parent   => Item.Item.Debugger.Kernel.Get_Main_Window,
          Title    => -"Setting value of " & Name,
          Message  => -"Setting value of " & Name & ':',
-         Position => Win_Pos_Mouse,
+         Position => Win_Pos_Center_On_Parent,
          History  => Get_History (Get_Kernel (Item.Canvas)),
          Key      => "gvd_set_value_dialog");
 

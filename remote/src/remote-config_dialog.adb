@@ -766,7 +766,8 @@ package body Remote.Config_Dialog is
          Gtk_Resp := Message_Dialog
            (-"Cannot browse the selected server until Apply button is pressed",
             Dialog_Type => Error,
-            Buttons     => Button_OK);
+            Buttons     => Button_OK,
+            Parent      => Gtk_Window (Widget.Widget.Get_Toplevel));
          return;
       end if;
 
@@ -973,7 +974,8 @@ package body Remote.Config_Dialog is
                    " - telnet"),
                Dialog_Type   => Gtkada.Dialogs.Error,
                Buttons       => Gtkada.Dialogs.Button_OK,
-               Justification => Gtk.Enums.Justify_Left);
+               Justification => Gtk.Enums.Justify_Left,
+               Parent        => Kernel.Get_Main_Window);
          end;
       end if;
 
@@ -1851,7 +1853,8 @@ package body Remote.Config_Dialog is
                Current_Selection & " ?",
                Dialog_Type => Confirmation,
                Buttons     => Button_OK or Button_Cancel,
-               Title       => "Server removal confirmation");
+               Title       => "Server removal confirmation",
+               Parent      => Gtk_Window (W.Get_Toplevel));
 
             if Ret = Button_Cancel then
                return;

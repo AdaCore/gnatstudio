@@ -817,7 +817,8 @@ package body Debugger is
               Message_Dialog
                 (Expect_Out (Get_Process (Debugger)) & ASCII.LF &
                  (-"The underlying debugger died unexpectedly. Closing it"),
-                 Error, Button_OK, Button_OK);
+                 Error, Button_OK, Button_OK,
+                 Parent => Debugger.Kernel.Get_Main_Window);
             Unregister_Dialog (Process);
             Close_Debugger (Process);
          end if;

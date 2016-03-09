@@ -2516,7 +2516,8 @@ procedure GPS.Main is
             & "Please report with contents of " & Str.Display_Full_Name,
             Error, Button_OK,
             Title         => -"Fatal Error",
-            Justification => Justify_Left);
+            Justification => Justify_Left,
+            Parent        => GPS_Main.Kernel.Get_Main_Window);
       end if;
    end Error_Message;
 

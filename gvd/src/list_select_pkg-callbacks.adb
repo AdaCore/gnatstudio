@@ -115,7 +115,8 @@ package body List_Select_Pkg.Callbacks is
    begin
       Dummy := Message_Dialog
         (List_Select.Help_Text.all,
-         Buttons => Button_OK);
+         Buttons => Button_OK,
+         Parent  => Gtk_Window (Object.Get_Toplevel));
    end On_Help_Clicked;
 
    ---------------------

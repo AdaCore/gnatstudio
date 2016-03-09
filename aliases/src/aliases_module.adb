@@ -794,7 +794,6 @@ package body Aliases_Module is
                               Title  => -"Alias Parameter Selection",
                               Kernel => Kernel,
                               Flags  => Destroy_With_Parent);
-                     Dialog.Set_Position (Win_Pos_Center_On_Parent);
                      Gtk_New (S);
 
                      W := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);

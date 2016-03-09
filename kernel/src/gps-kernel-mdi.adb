@@ -2012,7 +2012,7 @@ package body GPS.Kernel.MDI is
          Self.Set_Destroy_With_Parent (True);
       end if;
 
-      Self.Set_Position (Win_Pos_Mouse);
+      Self.Set_Position (Win_Pos_Center_On_Parent);
 
       Self.On_Focus_In_Event (On_GPS_Dialog_Focus_In'Access);
    end Initialize;

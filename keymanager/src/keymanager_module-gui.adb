@@ -40,7 +40,6 @@ with Gtk.Button;               use Gtk.Button;
 with Gtk.Button_Box;           use Gtk.Button_Box;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
-with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
 with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
@@ -1055,6 +1054,7 @@ package body KeyManager_Module.GUI is
          Buttons        => Button_Yes or Button_No,
          Default_Button => Button_Yes,
          Title          => -"Reset custom shortcuts",
+         Parent         => Gtk_Window (Editor.Get_Toplevel),
          Msg            =>
            -("This operation will remove all the custom shortcuts you have"
              & ASCII.LF

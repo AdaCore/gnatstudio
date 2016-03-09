@@ -778,7 +778,6 @@ package body GPS.Kernel.Timeout is
      (Console : access Interactive_Console_Record'Class;
       Data    : System.Address) return Boolean
    is
-      pragma Unreferenced (Console);
       Self : constant Monitor_Command_Access := Convert (Data);
       Button  : Message_Dialog_Buttons;
    begin
@@ -791,7 +790,8 @@ package body GPS.Kernel.Timeout is
           & (-"is still active, do you want to kill it ?"),
          Confirmation,
          Button_Yes or Button_No,
-         Button_Yes);
+         Button_Yes,
+         Parent => Console.Kernel.Get_Main_Window);
 
       if Button = Button_Yes then
          --  The console is about to be destroyed: avoid dangling pointer.

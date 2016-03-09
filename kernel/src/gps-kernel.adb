@@ -662,7 +662,8 @@ package body GPS.Kernel is
            ((-"Could not save the configuration file ") &
             Filename.Display_Full_Name & ASCII.LF &
             (-"Please verify that you have write access to this file."),
-            Error, Button_OK, Justification => Justify_Left);
+            Error, Button_OK, Justification => Justify_Left,
+            Parent => Handle.Get_Main_Window);
       else
          Handle.Insert
            ((-"Could not save the configuration file ") &
