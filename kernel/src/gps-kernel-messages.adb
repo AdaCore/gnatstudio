@@ -1415,9 +1415,9 @@ package body GPS.Kernel.Messages is
          end if;
       end Exclude;
 
-      ----------------------
-      -- Get_Uunprocessed --
-      ----------------------
+      ---------------------
+      -- Get_Unprocessed --
+      ---------------------
 
       function Get_Unprocessed
         (Self : in out Container'Class) return Message_Access is
