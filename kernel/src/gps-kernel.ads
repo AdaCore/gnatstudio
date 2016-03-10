@@ -608,26 +608,6 @@ package GPS.Kernel is
 
    type File_Status is (Modified, Unmodified, Unsaved, Saved, Readonly);
 
-   type Base_Visual_Debugger is abstract new Glib.Object.GObject_Record
-      with null record;
-   type Base_Visual_Debugger_Access is access all Base_Visual_Debugger'Class;
-
-   type Debugger_State is (Debug_None, Debug_Busy, Debug_Available);
-   --  Possible states of a debugger:
-   --  - Debug_None: debugger is not running
-   --  - Debug_Busy: debugger is busy processing a command
-   --  - Debug_Available: debugger is available
-
-   function To_String (State : Debugger_State) return String
-      is (if State = Debug_None then "none"
-          elsif State = Debug_Busy then "busy"
-          else "idle");
-   function From_String (State : String) return Debugger_State
-      is (if State = "none" then Debug_None
-          elsif State = "busy" then Debug_Busy
-          else Debug_Available);
-   --  Use by the hooks to pass the information python.
-
    -----------
    -- Tools --
    -----------

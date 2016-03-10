@@ -15,11 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Conversion;
 with System;                 use System;
 
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
 with Glib.Main;              use Glib.Main;
+with Gtk.Box;                use Gtk.Box;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Text_View;
@@ -38,15 +40,16 @@ with GNAT.Strings;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 
 with Debugger;               use Debugger;
-with GPS.Kernel;             use GPS.Kernel;
+with Generic_Views;          use Generic_Views;
+with GPS.Debuggers;          use GPS.Debuggers;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
+with GVD.Generic_View;       use GVD.Generic_View;
 with GVD.Process;            use GVD.Process;
 with GVD.Types;              use GVD.Types;
-with GVD.Views;              use GVD.Views;
 with GVD_Module;             use GVD_Module;
 with Histories;              use Histories;
 with Interactive_Consoles;   use Interactive_Consoles;
@@ -68,13 +71,18 @@ package body GVD.Consoles is
    Timeout : constant Guint := 50;
    --  Timeout between updates of the debuggee console
 
-   type Debugger_Console_Record is new Console_Views.Process_View_Record with
+   type Console_Process_View_Record is abstract new Process_View_Record with
+      record
+         Console : Interactive_Console;
+      end record;
+
+   type Debugger_Console_Record is new Console_Process_View_Record with
       record
          Contextual_Menu : Gtk_Menu;
       end record;
    type Debugger_Console is access all Debugger_Console_Record'Class;
 
-   type Debuggee_Console_Record is new Console_Views.Process_View_Record with
+   type Debuggee_Console_Record is new Console_Process_View_Record with
       record
          Debuggee_TTY        : GNAT.TTY.TTY_Handle;
          Debuggee_Descriptor : GNAT.Expect.TTY.TTY_Process_Descriptor;
@@ -84,14 +92,17 @@ package body GVD.Consoles is
       end record;
    type Debuggee_Console is access all Debuggee_Console_Record'Class;
 
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Debuggee_Console);
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Debugger_Console);
+
    package TTY_Timeout is new Glib.Main.Generic_Sources (Debuggee_Console);
 
    function Initialize
-     (Console : access Debugger_Console_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (Self    : access Debugger_Console_Record'Class) return Gtk_Widget;
    function Initialize
-     (Console : access Debuggee_Console_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (Self    : access Debuggee_Console_Record'Class) return Gtk_Widget;
    --  Create each of the console types
 
    procedure Allocate_TTY (Console : access Debuggee_Console_Record'Class);
@@ -100,48 +111,63 @@ package body GVD.Consoles is
 
    overriding procedure On_Attach
      (Console : access Debuggee_Console_Record;
-      Process : access Visual_Debugger_Record'Class);
+      Process : not null access Base_Visual_Debugger'Class);
    --  Requires initialized when attaching the console to a process
 
    function Get_Debugger_Console
-     (Process : access Visual_Debugger_Record'Class)
-      return Interactive_Console;
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access Debugger_Console_Record'Class;
    function Get_Debuggee_Console
-     (Process : access Visual_Debugger_Record'Class)
-      return Interactive_Console;
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access Debuggee_Console_Record'Class;
    procedure Set_Debugger_Console
-     (Process : access Visual_Debugger_Record'Class;
-      Console : Interactive_Console);
+     (Process : not null access Base_Visual_Debugger'Class;
+      Console : access Debugger_Console_Record'Class := null);
    procedure Set_Debuggee_Console
-     (Process : access Visual_Debugger_Record'Class;
-      Console : Interactive_Console);
+     (Process : not null access Base_Visual_Debugger'Class;
+      Console : access Debuggee_Console_Record'Class := null);
    --  Get or set the consoles from the process
 
-   package Debugger_Views is new Console_Views.Simple_Views
+   package Debugger_MDI_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Debugger_Console",
       View_Name          => -"Debugger Console",
       Formal_View_Record => Debugger_Console_Record,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_Debugger_Console,
-      Set_View           => Set_Debugger_Console,
+      Reuse_If_Exist     => False,
+      Commands_Category  => "",
+      Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Consoles,
       Position           => Position_Bottom,
       Initialize         => Initialize);
-   package Debuggee_Views is new Console_Views.Simple_Views
+   package Debugger_Views is new GVD.Generic_View.Simple_Views
+     (Views              => Debugger_MDI_Views,
+      Formal_View_Record => Debugger_Console_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Get_View           => Get_Debugger_Console,
+      Set_View           => Set_Debugger_Console);
+
+   package Debuggee_MDI_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Debugger_Execution",
       View_Name          => -"Debugger Execution",
       Formal_View_Record => Debuggee_Console_Record,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_Debuggee_Console,
-      Set_View           => Set_Debuggee_Console,
+      Reuse_If_Exist     => False,
+      Commands_Category  => "",
+      Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Consoles,
       Position           => Position_Bottom,
       Initialize         => Initialize);
+   package Debuggee_Views is new GVD.Generic_View.Simple_Views
+     (Views              => Debuggee_MDI_Views,
+      Formal_View_Record => Debuggee_Console_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Get_View           => Get_Debuggee_Console,
+      Set_View           => Set_Debuggee_Console);
 
    function Complete_Command
      (Input     : String;
       View      : access Gtk.Text_View.Gtk_Text_View_Record'Class;
-      User_Data : System.Address)
+      Console   : System.Address)
       return String_List_Utils.String_List.List;
    --  Return the list of completions for Input.
 
@@ -152,15 +178,15 @@ package body GVD.Consoles is
    --  Callback for communication with a tty.
 
    function Interpret_Command_Handler
-     (Console            : access Interactive_Console_Record'Class;
-      Input              : String;
-      Console_User_Data  : System.Address) return String;
+     (Console    : access Interactive_Console_Record'Class;
+      Input      : String;
+      Debugger_C : System.Address) return String;
    --  Launch the command interpreter for Input and return the output.
 
    function Debuggee_Console_Handler
-     (Console : access Interactive_Console_Record'Class;
-      Input   : String;
-      Object  : System.Address) return String;
+     (Console    : access Interactive_Console_Record'Class;
+      Input      : String;
+      Debuggee_C : System.Address) return String;
    --  Handler of I/O for the debuggee console.
 
    procedure On_Grab_Focus (Console : access Gtk_Widget_Record'Class);
@@ -171,10 +197,10 @@ package body GVD.Consoles is
    --------------------------
 
    function Get_Debugger_Console
-     (Process : access Visual_Debugger_Record'Class)
-      return Interactive_Console is
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access Debugger_Console_Record'Class is
    begin
-      return Process.Debugger_Text;
+      return Debugger_Console (Visual_Debugger (Process).Debugger_Text);
    end Get_Debugger_Console;
 
    --------------------------
@@ -182,10 +208,10 @@ package body GVD.Consoles is
    --------------------------
 
    function Get_Debuggee_Console
-     (Process : access Visual_Debugger_Record'Class)
-      return Interactive_Console is
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access Debuggee_Console_Record'Class is
    begin
-      return Process.Debuggee_Console;
+      return Debuggee_Console (Visual_Debugger (Process).Debuggee_Console);
    end Get_Debuggee_Console;
 
    --------------------------
@@ -193,17 +219,15 @@ package body GVD.Consoles is
    --------------------------
 
    procedure Set_Debugger_Console
-     (Process : access Visual_Debugger_Record'Class;
-      Console : Interactive_Console) is
+     (Process : not null access Base_Visual_Debugger'Class;
+      Console : access Debugger_Console_Record'Class := null) is
    begin
-      --  If we are detaching, clear the old view
-      if Console = null
-        and then Process.Debugger_Text /= null
-      then
-         Clear (Process.Debugger_Text);
+      if Get_Debugger_Console (Process) /= null then
+         Clear (Get_Debugger_Console (Process).Console);
       end if;
 
-      Process.Debugger_Text := Console;
+      Visual_Debugger (Process).Debugger_Text :=
+        Abstract_View_Access (Console);
    end Set_Debugger_Console;
 
    --------------------------
@@ -211,18 +235,16 @@ package body GVD.Consoles is
    --------------------------
 
    procedure Set_Debuggee_Console
-     (Process : access Visual_Debugger_Record'Class;
-      Console : Interactive_Console) is
+     (Process : not null access Base_Visual_Debugger'Class;
+      Console : access Debuggee_Console_Record'Class := null) is
    begin
-      --  If we are detaching, clear the old view
-      if Console = null
-        and then Process.Debuggee_Console /= null
-      then
-         Close_TTY (Debuggee_Console (Process.Debuggee_Console));
-         Clear (Process.Debuggee_Console);
+      if Get_Debuggee_Console (Process) /= null then
+         Close_TTY (Get_Debuggee_Console (Process));
+         Clear (Get_Debuggee_Console (Process).Console);
       end if;
 
-      Process.Debuggee_Console := Console;
+      Visual_Debugger (Process).Debuggee_Console :=
+        Abstract_View_Access (Console);
    end Set_Debuggee_Console;
 
    ------------
@@ -236,12 +258,13 @@ package body GVD.Consoles is
          Expect (Console.Debuggee_Descriptor, Match, Regexp_Any, Timeout => 1);
 
          if Match /= Expect_Timeout then
-            Insert (Console,
+            Insert (Console.Console,
                     Expect_Out (Console.Debuggee_Descriptor),
                     Add_LF => False);
             Highlight_Child
               (Find_MDI_Child
-                 (Get_MDI (Get_Process (Console).Kernel), Console));
+                 (Get_MDI (Visual_Debugger (Get_Process (Console)).Kernel),
+                  Console));
          end if;
       end if;
 
@@ -249,11 +272,13 @@ package body GVD.Consoles is
 
    exception
       when Process_Died =>
-         Insert (Console,
+         Insert (Console.Console,
                  Expect_Out (Console.Debuggee_Descriptor),
                  Add_LF => False);
          Highlight_Child
-           (Find_MDI_Child (Get_MDI (Get_Process (Console).Kernel), Console));
+           (Find_MDI_Child
+              (Get_MDI (Visual_Debugger (Get_Process (Console)).Kernel),
+               Console));
 
          --  Reset the TTY linking with the debugger and the console
          Close_TTY (Console);
@@ -281,9 +306,11 @@ package body GVD.Consoles is
    begin
       if Get_Process (C) /= null then
          Set_Current_Debugger
-            (Get_Process (C).Kernel, GObject (Get_Process (C)));
+           (Visual_Debugger (Get_Process (C)).Kernel,
+            Get_Process (C));
          String_History.Wind
-           (Get_Process (C).Command_History, String_History.Forward);
+           (Visual_Debugger (Get_Process (C)).Command_History,
+            String_History.Forward);
       end if;
    end On_Grab_Focus;
 
@@ -294,19 +321,20 @@ package body GVD.Consoles is
    function Complete_Command
      (Input   : String;
       View    : access Gtk.Text_View.Gtk_Text_View_Record'Class;
-      User_Data : System.Address)
+      Console : System.Address)
       return String_List_Utils.String_List.List
    is
-      pragma Unreferenced (User_Data);
+      pragma Unreferenced (View);
       use String_List_Utils.String_List;
-      C     : constant Debugger_Console := Debugger_Console (From_View (View));
+      C : constant Debugger_Console := Convert (Console);
       Result : List;
    begin
       if Get_Process (C) = null then
          return String_List_Utils.String_List.Null_List;
 
       elsif not
-        Command_In_Process (Get_Process (Get_Process (C).Debugger))
+        Command_In_Process
+          (Get_Process (Visual_Debugger (Get_Process (C)).Debugger))
       then
          --  Do not launch completion if the last character is ' ', as that
          --  might result in an output of several thousand entries, which
@@ -319,7 +347,7 @@ package body GVD.Consoles is
          then
             declare
                S : GNAT.Strings.String_List :=
-                     Complete (Get_Process (C).Debugger, Input);
+                  Complete (Visual_Debugger (Get_Process (C)).Debugger, Input);
             begin
                for J in S'Range loop
                   Append (Result, S (J).all);
@@ -342,18 +370,18 @@ package body GVD.Consoles is
    -------------------------------
 
    function Interpret_Command_Handler
-     (Console           : access Interactive_Console_Record'Class;
-      Input             : String;
-      Console_User_Data : System.Address) return String
+     (Console    : access Interactive_Console_Record'Class;
+      Input      : String;
+      Debugger_C : System.Address) return String
    is
-      pragma Unreferenced (Console_User_Data);
-      C   : constant Debugger_Console := Debugger_Console (Console);
+      pragma Unreferenced (Console);
+      C   : constant Debugger_Console := Convert (Debugger_C);
+      P   : constant Visual_Debugger := Visual_Debugger (Get_Process (C));
    begin
-      if Get_Process (C) /= null then
-         Get_Process (C).Is_From_Dbg_Console := True;
-         Process_User_Command (Get_Process (C), Input, Mode => User);
+      if P /= null then
+         P.Is_From_Dbg_Console := True;
+         Process_User_Command (P, Input, Mode => User);
       end if;
-
       return "";
    end Interpret_Command_Handler;
 
@@ -362,12 +390,12 @@ package body GVD.Consoles is
    ------------------------------
 
    function Debuggee_Console_Handler
-     (Console : access Interactive_Console_Record'Class;
-      Input   : String;
-      Object  : System.Address) return String
+     (Console    : access Interactive_Console_Record'Class;
+      Input      : String;
+      Debuggee_C : System.Address) return String
    is
-      pragma Unreferenced (Object);
-      C   : constant Debuggee_Console := Debuggee_Console (Console);
+      pragma Unreferenced (Console);
+      C   : constant Debuggee_Console := Convert (Debuggee_C);
       NL  : aliased Character := ASCII.LF;
       N   : Integer;
       pragma Unreferenced (N);
@@ -387,37 +415,39 @@ package body GVD.Consoles is
    ----------------
 
    function Initialize
-     (Console : access Debugger_Console_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget is
+     (Self    : access Debugger_Console_Record'Class) return Gtk_Widget is
    begin
-      Initialize
-        (Console,
-         Kernel,
+      Gtk.Box.Initialize_Vbox (Self);
+      Gtk_New
+        (Self.Console,
+         Self.Kernel,
          Handler             => Interpret_Command_Handler'Access,
-         User_Data           => Console.all'Address,
+         User_Data           => Self.all'Address,
          Prompt              => "",
-         History_List        => Get_History (Kernel),
+         History_List        => Get_History (Self.Kernel),
          Key                 => "gvd_console",
          Wrap_Mode           => Wrap_Char,
          ANSI_Support        => Active (ANSI_Support),
          Empty_Equals_Repeat => True);
-      Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);
+      Self.Pack_Start (Self.Console, Fill => True, Expand => True);
+      Set_Font_And_Colors (Get_View (Self.Console), Fixed_Font => True);
 
-      Set_Max_Length (Get_History (Kernel).all, 100, "gvd_console");
+      Set_Max_Length (Get_History (Self.Kernel).all, 100, "gvd_console");
       Allow_Duplicates
-        (Get_History (Kernel).all, "gvd_console", True, True);
+        (Get_History (Self.Kernel).all, "gvd_console", True, True);
 
-      Set_Highlight_Color    (Console, Preference (Comments_Style));
+      Set_Highlight_Color    (Self.Console, Preference (Comments_Style));
       Set_Completion_Handler
-        (Console, Complete_Command'Access, System.Null_Address);
+        (Self.Console, Complete_Command'Access, Self.all'Address);
       Widget_Callback.Object_Connect
-        (Get_View (Console), Signal_Grab_Focus, On_Grab_Focus'Access, Console);
+        (Get_View (Self.Console), Signal_Grab_Focus, On_Grab_Focus'Access,
+         Self);
 
       Setup_Contextual_Menu
-        (Kernel          => Kernel,
-         Event_On_Widget => Get_View (Console));
+        (Kernel          => Self.Kernel,
+         Event_On_Widget => Get_View (Self.Console));
 
-      return Gtk_Widget (Get_View (Console));
+      return Gtk_Widget (Get_View (Self.Console));
    end Initialize;
 
    ------------------
@@ -438,10 +468,10 @@ package body GVD.Consoles is
              (Timeout, TTY_Cb'Access, Console.all'Access);
 
          if Get_Process (Console) /= null
-           and then Get_Process (Console).Debugger /= null
+           and then Visual_Debugger (Get_Process (Console)).Debugger /= null
          then
             Set_TTY
-              (Get_Process (Console).Debugger,
+              (Visual_Debugger (Get_Process (Console)).Debugger,
                TTY_Name (Console.Debuggee_TTY));
          end if;
       end if;
@@ -465,12 +495,12 @@ package body GVD.Consoles is
          end if;
 
          if Get_Process (Console) /= null then
-            Debugger := Get_Process (Console).Debugger;
+            Debugger := Visual_Debugger (Get_Process (Console)).Debugger;
 
             if Debugger /= null
               and then not Command_In_Process (Get_Process (Debugger))
             then
-               Set_TTY (Get_Process (Console).Debugger,  "");
+               Set_TTY (Visual_Debugger (Get_Process (Console)).Debugger,  "");
             end if;
          end if;
 
@@ -485,24 +515,26 @@ package body GVD.Consoles is
    ----------------
 
    function Initialize
-     (Console : access Debuggee_Console_Record'Class;
-      Kernel  : access Kernel_Handle_Record'Class) return Gtk_Widget is
+     (Self    : access Debuggee_Console_Record'Class) return Gtk_Widget is
    begin
-      Initialize
-        (Console,
-         Kernel,
+      Gtk.Box.Initialize_Vbox (Self);
+      Gtk_New
+        (Self.Console,
+         Self.Kernel,
          Prompt      => "",
          Handler     => Debuggee_Console_Handler'Access,
-         User_Data   => Console.all'Address,
+         User_Data   => Self.all'Address,
          History_List => null,
          Key          => "gvd_tty_console",
          ANSI_Support => True,
          Wrap_Mode    => Wrap_Char);
-      Set_Font_And_Colors (Get_View (Console), Fixed_Font => True);
-      Widget_Callback.Connect
-        (Console, Signal_Destroy, On_Debuggee_Destroy'Access);
+      Self.Pack_Start (Self.Console, Expand => True, Fill => True);
 
-      return Gtk_Widget (Get_View (Console));
+      Set_Font_And_Colors (Get_View (Self.Console), Fixed_Font => True);
+      Widget_Callback.Object_Connect
+        (Self.Console, Signal_Destroy, On_Debuggee_Destroy'Access, Self);
+
+      return Gtk_Widget (Get_View (Self.Console));
    end Initialize;
 
    --------------------------------
@@ -510,12 +542,14 @@ package body GVD.Consoles is
    --------------------------------
 
    procedure Attach_To_Debugger_Console
-     (Debugger            : access GVD.Process.Visual_Debugger_Record'Class;
+     (Debugger            : access Base_Visual_Debugger'Class;
+      Kernel              : not null access Kernel_Handle_Record'Class;
       Create_If_Necessary : Boolean)
      renames Debugger_Views.Attach_To_View;
 
    procedure Attach_To_Debuggee_Console
-     (Debugger            : access GVD.Process.Visual_Debugger_Record'Class;
+     (Debugger            : access Base_Visual_Debugger'Class;
+      Kernel              : not null access Kernel_Handle_Record'Class;
       Create_If_Necessary : Boolean)
      renames Debuggee_Views.Attach_To_View;
 
@@ -525,12 +559,40 @@ package body GVD.Consoles is
 
    overriding procedure On_Attach
      (Console : access Debuggee_Console_Record;
-      Process : access Visual_Debugger_Record'Class)
+      Process : not null access Base_Visual_Debugger'Class)
    is
       pragma Unreferenced (Process);
    begin
       Allocate_TTY (Console);
    end On_Attach;
+
+   --------------------------------
+   -- Debugger_Console_Has_Focus --
+   --------------------------------
+
+   function Debugger_Console_Has_Focus
+     (Process : not null access Visual_Debugger_Record'Class)
+      return Boolean is
+   begin
+      return Get_Debugger_Console (Process).Console.Get_View.Has_Focus;
+   end Debugger_Console_Has_Focus;
+
+   ---------------------------------
+   -- Display_In_Debugger_Console --
+   ---------------------------------
+
+   procedure Display_In_Debugger_Console
+     (Process       : not null access GVD.Process.Visual_Debugger_Record'Class;
+      Text           : String;
+      Highlight      : Boolean := False;
+      Add_To_History : Boolean := False) is
+   begin
+      Insert (Get_Debugger_Console (Process).Console,
+              Text,
+              Add_LF         => False,
+              Highlight      => Highlight,
+              Add_To_History => Add_To_History);
+   end Display_In_Debugger_Console;
 
    ---------------------
    -- Register_Module --
@@ -539,7 +601,8 @@ package body GVD.Consoles is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Debugger_Views.Register_Desktop_Functions (Kernel);
-      Debuggee_Views.Register_Desktop_Functions (Kernel);
+      --  Register the debugger console last so that it gets the initial focus
+      Debuggee_Views.Register_Module (Kernel);
+      Debugger_Views.Register_Module (Kernel);
    end Register_Module;
 end GVD.Consoles;

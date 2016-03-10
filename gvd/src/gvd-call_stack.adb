@@ -39,19 +39,18 @@ with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
 
-with Commands.Interactive;   use Commands, Commands.Interactive;
 with Config;                 use Config;
 with Debugger;               use Debugger;
 with Generic_Views;          use Generic_Views;
+with GPS.Debuggers;          use GPS.Debuggers;
 with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Intl;               use GPS.Intl;
 with GUI_Utils;              use GUI_Utils;
 with GVD.Code_Editors;       use GVD.Code_Editors;
-with GVD.Views;              use GVD.Views;
+with GVD.Generic_View;       use GVD.Generic_View;
 with GVD.Process;            use GVD.Process;
 with GVD.Types;              use GVD.Types;
 with GVD_Module;             use GVD_Module;
@@ -90,7 +89,7 @@ package body GVD.Call_Stack is
    File_Location   : constant Stack_List_Mask := 2 ** 4;
    --  Lists the information to be displayed in the stack list window.
 
-   type Call_Stack_Record is new Base_Views.Process_View_Record with
+   type Call_Stack_Record is new Process_View_Record with
       record
          Tree                       : Gtk_Tree_View;
          Model                      : Gtk_Tree_Store;
@@ -102,11 +101,11 @@ package body GVD.Call_Stack is
       end record;
    type Call_Stack is access all Call_Stack_Record'Class;
 
-   overriding procedure Update (View   : access Call_Stack_Record);
+   overriding procedure Update (View   : not null access Call_Stack_Record);
    overriding procedure On_Process_Terminated
-     (View : access Call_Stack_Record);
+     (View : not null access Call_Stack_Record);
    overriding procedure On_State_Changed
-     (View : access Call_Stack_Record; New_State : Debugger_State);
+     (View : not null access Call_Stack_Record; New_State : Debugger_State);
    overriding procedure Load_From_XML
      (View : access Call_Stack_Record; XML : XML_Utils.Node_Ptr);
    overriding procedure Save_To_XML
@@ -115,16 +114,15 @@ package body GVD.Call_Stack is
    --  See inherited documentation
 
    function Initialize
-     (Widget : access Call_Stack_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (Widget : access Call_Stack_Record'Class) return Gtk_Widget;
    --  Internal initialization function
 
    function Get_View
-     (Process : access Visual_Debugger_Record'Class)
-      return Generic_Views.Abstract_View_Access;
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access Call_Stack_Record'Class;
    procedure Set_View
-     (Process : access Visual_Debugger_Record'Class;
-      View    : Generic_Views.Abstract_View_Access);
+     (Process : not null access Base_Visual_Debugger'Class;
+      View    : access Call_Stack_Record'Class := null);
    --  Store or retrieve the view from the process
 
    type CS_Child_Record is new GPS_MDI_Child_Record with null record;
@@ -133,16 +131,23 @@ package body GVD.Call_Stack is
       Event : Gdk.Event.Gdk_Event := null)
       return GPS.Kernel.Selection_Context;
 
-   package Simple_Views is new Base_Views.Simple_Views
+   package CS_MDI_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Call_Stack",
       View_Name          => -"Call Stack",
       Formal_View_Record => Call_Stack_Record,
       Formal_MDI_Child   => CS_Child_Record,
-      Get_View           => Get_View,
-      Set_View           => Set_View,
+      Reuse_If_Exist     => False,
+      Commands_Category  => "",
+      Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Debugger_Stack,
       Position           => Position_Right,
       Initialize         => Initialize);
+   package Simple_Views is new GVD.Generic_View.Simple_Views
+     (Views              => CS_MDI_Views,
+      Formal_View_Record => Call_Stack_Record,
+      Formal_MDI_Child   => CS_Child_Record,
+      Get_View           => Get_View,
+      Set_View           => Set_View);
 
    package Call_Stack_Cb is new Gtk.Handlers.User_Callback
      (Call_Stack_Record, Stack_List_Mask);
@@ -164,21 +169,15 @@ package body GVD.Call_Stack is
      (Object : access Glib.Object.GObject_Record'Class);
    --  Callback for the selection change.
 
-   type Call_Stack_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Call_Stack_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Debug->Data->Call Stack
-
    --------------
    -- Get_View --
    --------------
 
    function Get_View
-     (Process : access Visual_Debugger_Record'Class)
-      return Generic_Views.Abstract_View_Access is
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access Call_Stack_Record'Class is
    begin
-      return Generic_Views.Abstract_View_Access (Process.Stack);
+      return Call_Stack (Visual_Debugger (Process).Stack);
    end Get_View;
 
    --------------
@@ -186,12 +185,12 @@ package body GVD.Call_Stack is
    --------------
 
    procedure Set_View
-     (Process : access Visual_Debugger_Record'Class;
-      View    : Generic_Views.Abstract_View_Access)
+     (Process : not null access Base_Visual_Debugger'Class;
+      View    : access Call_Stack_Record'Class := null)
    is
-      Old : constant Call_Stack := Call_Stack (Process.Stack);
+      Old : constant Call_Stack := Get_View (Process);
    begin
-      Process.Stack := Gtk_Widget (View);
+      Visual_Debugger (Process).Stack := Abstract_View_Access (View);
 
       --  If we are detaching, clear the old view. This can only be done after
       --  the above, since otherwise the action on the GUI will result into
@@ -201,31 +200,6 @@ package body GVD.Call_Stack is
          On_Process_Terminated (Old);
       end if;
    end Set_View;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Call_Stack_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Process : Visual_Debugger;
-      List    : Debugger_List_Link := Get_Debugger_List (Kernel);
-   begin
-      while List /= null loop
-         Process := Visual_Debugger (List.Debugger);
-
-         if Process.Debugger /= null then
-            Attach_To_Call_Stack (Process, Create_If_Necessary => True);
-         end if;
-
-         List := List.Next;
-      end loop;
-      return Commands.Success;
-   end Execute;
 
    --------------------------
    -- On_Selection_Changed --
@@ -245,7 +219,7 @@ package body GVD.Call_Stack is
       Get_Selected (Get_Selection (Stack.Tree), Model, Iter);
       if Iter /= Null_Iter then
          Stack_Frame
-           (Get_Process (Stack).Debugger,
+           (Visual_Debugger (Get_Process (Stack)).Debugger,
             Natural'Value
               (Get_String (Stack.Model, Iter, Frame_Num_Column)) + 1,
             GVD.Types.Visible);
@@ -365,10 +339,8 @@ package body GVD.Call_Stack is
    ----------------
 
    function Initialize
-     (Widget : access Call_Stack_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
+     (Widget : access Call_Stack_Record'Class) return Gtk_Widget
    is
-      pragma Unreferenced (Kernel);
       Name_Frame   : aliased String := -"Num";
       Name_Counter : aliased String := -"PC";
       Name_Subprog : aliased String := -"Subprogram";
@@ -445,14 +417,6 @@ package body GVD.Call_Stack is
       end if;
    end Highlight_Call_Stack_Frame;
 
-   --------------------------
-   -- Attach_To_Call_Stack --
-   --------------------------
-
-   procedure Attach_To_Call_Stack
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
-      Create_If_Necessary : Boolean) renames Simple_Views.Attach_To_View;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -460,11 +424,11 @@ package body GVD.Call_Stack is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Simple_Views.Register_Desktop_Functions (Kernel);
-      Register_Action
-        (Kernel, "open debugger call stack", new Call_Stack_Command,
-         -"Open the Call Stack window for the debugger",
-         Category => -"Views");
+      Simple_Views.Register_Module (Kernel);
+      Simple_Views.Register_Open_View_Action
+        (Kernel,
+         Action_Name => "open debugger call stack",
+         Description => -"Open the Call Stack window for the debugger");
    end Register_Module;
 
    -------------------
@@ -500,7 +464,7 @@ package body GVD.Call_Stack is
    ----------------------
 
    overriding procedure On_State_Changed
-     (View : access Call_Stack_Record; New_State : Debugger_State)
+     (View : not null access Call_Stack_Record; New_State : Debugger_State)
    is
       Iter : Gtk_Tree_Iter;
       Prev : Boolean;
@@ -510,7 +474,7 @@ package body GVD.Call_Stack is
          --  the current stack trace. While it is executing, we do not want to
          --  keep a visible call stack displayed.
 
-         if Is_Execution_Command (Get_Process (View)) then
+         if Is_Execution_Command (Visual_Debugger (Get_Process (View))) then
             --  Calling Clear might cause the selection to jump from row to
             --  row, causing a query of every frame info. To prevent this,
             --  set the Block flag.
@@ -536,7 +500,7 @@ package body GVD.Call_Stack is
    ---------------------------
 
    overriding procedure On_Process_Terminated
-     (View : access Call_Stack_Record)
+     (View : not null access Call_Stack_Record)
    is
       Prev : Boolean;
    begin
@@ -550,7 +514,7 @@ package body GVD.Call_Stack is
    -- Update --
    ------------
 
-   overriding procedure Update (View : access Call_Stack_Record) is
+   overriding procedure Update (View : not null access Call_Stack_Record) is
       Bt       : Backtrace_Array (1 .. Max_Frame);
       Len      : Natural;
       Process  : Process_Proxy_Access;
@@ -565,7 +529,8 @@ package body GVD.Call_Stack is
       Clear (View.Model);
 
       if Get_Process (View) /= null then
-         Process := Get_Process (Get_Process (View).Debugger);
+         Process :=
+           Get_Process (Visual_Debugger (Get_Process (View)).Debugger);
       end if;
 
       --  If the debugger was killed, no need to refresh
@@ -577,7 +542,7 @@ package body GVD.Call_Stack is
 
       --  Parse the information from the debugger
 
-      Backtrace (Get_Process (View).Debugger, Bt, Len);
+      Backtrace (Visual_Debugger (Get_Process (View)).Debugger, Bt, Len);
 
       --  Update the contents of the window
 

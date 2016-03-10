@@ -61,12 +61,11 @@ with GPS.Kernel;                use GPS.Kernel;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
 with GVD.Assembly_View;         use GVD.Assembly_View;
-with GVD.Call_Stack;            use GVD.Call_Stack;
 with GVD.Canvas;                use GVD.Canvas;
 with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Consoles;              use GVD.Consoles;
+with GVD.Contexts;              use GVD.Contexts;
 with GVD.Dialogs;               use GVD.Dialogs;
-with GVD.Memory_View;           use GVD.Memory_View;
 with GVD.Menu;                  use GVD.Menu;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Proc_Utils;            use GVD.Proc_Utils;
@@ -77,7 +76,6 @@ with GVD.Source_Editor;         use GVD.Source_Editor;
 with GVD.Types;                 use GVD.Types;
 with Histories;                 use Histories;
 with Language;                  use Language;
-with Language_Handlers;         use Language_Handlers;
 with List_Select_Pkg;           use List_Select_Pkg;
 with Process_Proxies;           use Process_Proxies;
 with Std_Dialogs;               use Std_Dialogs;
@@ -136,7 +134,7 @@ package body GVD_Module is
       First_Debugger                 : Debugger_List_Link;
       --  Points to the list of debuggers
 
-      Current_Debugger               : Glib.Object.GObject;
+      Current_Debugger               : access Base_Visual_Debugger'Class;
       --  The current visual debugger
    end record;
    type GVD_Module is access all GVD_Module_Record'Class;
@@ -240,21 +238,15 @@ package body GVD_Module is
          Context : Interactive_Command_Context) return Command_Return_Type
       is
          Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-         Top     : GPS_Window;
          Process : Visual_Debugger;
       begin
-         Top := GPS_Window (Kernel.Get_Main_Window);
-         if Top = null then
-            return Commands.Failure;
-         end if;
-
-         Process := Get_Current_Process (Top);
+         Process := Visual_Debugger (Get_Current_Debugger (Kernel));
 
          if Process = null or else Process.Debugger = null then
             return Commands.Failure;
          end if;
 
-         if Process.Debugger_Text.Get_View.Has_Focus then
+         if Debugger_Console_Has_Focus (Process) then
             Process.Is_From_Dbg_Console := True;
          end if;
 
@@ -501,7 +493,7 @@ package body GVD_Module is
 
    function Get_Current_Debugger
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Glib.Object.GObject
+      return access Base_Visual_Debugger'Class
    is
       pragma Unreferenced (Kernel);
    begin
@@ -527,7 +519,7 @@ package body GVD_Module is
 
    procedure Set_Current_Debugger
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Current : Glib.Object.GObject)
+      Current : access Base_Visual_Debugger'Class)
    is
       pragma Unreferenced (Kernel);
    begin
@@ -593,7 +585,8 @@ package body GVD_Module is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
 
       use GNAT.Strings;
    begin
@@ -650,9 +643,8 @@ package body GVD_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top          : constant GPS_Window :=
-                       GPS_Window (Get_Main_Window (Kernel));
-      Process      : constant Visual_Debugger := Get_Current_Process (Top);
+      Process      : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
       Process_List : List_Select_Access;
       Success      : Boolean;
       Info         : Process_Info;
@@ -714,9 +706,8 @@ package body GVD_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window :=
-                  GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
       Ignore  : Message_Dialog_Buttons;
       pragma Unreferenced (Command, Ignore);
    begin
@@ -932,9 +923,8 @@ package body GVD_Module is
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window :=
-                  GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
 
    begin
       if Process = null or else Process.Debugger = null then
@@ -959,9 +949,8 @@ package body GVD_Module is
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window :=
-                  GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
    begin
       if Process = null or else Process.Debugger = null then
          return Commands.Failure;
@@ -1093,7 +1082,7 @@ package body GVD_Module is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process : constant Visual_Debugger :=
-                  Get_Current_Process (GPS_Window (Get_Main_Window (Kernel)));
+        Visual_Debugger (Get_Current_Debugger (Kernel));
       Ignore  : Message_Dialog_Buttons;
       pragma Unreferenced (Ignore);
    begin
@@ -1127,10 +1116,8 @@ package body GVD_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top          : constant GPS_Window :=
-                       GPS_Window (Get_Main_Window (Kernel));
       Process      : constant Visual_Debugger :=
-                       Get_Current_Process (Top);
+        Visual_Debugger (Get_Current_Debugger (Kernel));
       Dialog       : GPS_Dialog;
       Table        : Gtk_Table;
       Ent_Protocol : Gtk_Entry;
@@ -1214,10 +1201,8 @@ package body GVD_Module is
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top         : constant GPS_Window :=
-                      GPS_Window (Get_Main_Window (Kernel));
       Process     : constant Visual_Debugger :=
-                      Get_Current_Process (Top);
+        Visual_Debugger (Get_Current_Debugger (Kernel));
       Exec        : Virtual_File;
       Ptr         : GNAT.Strings.String_Access :=
                       GNAT.OS_Lib.Get_Executable_Suffix;
@@ -1281,8 +1266,8 @@ package body GVD_Module is
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
 
       use GNAT.Strings;
 
@@ -1338,10 +1323,10 @@ package body GVD_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Top  : constant GPS_Window :=
-               GPS_Window (Get_Main_Window (Get_Kernel (Context.Context)));
-      Edit : constant GEdit :=
-               GEdit (Get_Source (Get_Current_Process (Top).Editor_Text));
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+      Edit : constant GEdit := GEdit (Get_Source (Process.Editor_Text));
       Name : constant Virtual_File := Get_Current_File (Edit);
    begin
       if Name /= GNATCOLL.VFS.No_File then
@@ -1359,8 +1344,7 @@ package body GVD_Module is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Process  : constant Visual_Debugger :=
-                   Get_Current_Process
-                     (Get_Main_Window (Get_Kernel (Context.Context)));
+        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)));
       Debugger : constant Debugger_Access := Process.Debugger;
       Name     : constant String :=
                    Get_Variable_Name (Context.Context, Command.Dereference);
@@ -1387,8 +1371,7 @@ package body GVD_Module is
    is
       pragma Unreferenced (Command);
       Process  : constant Visual_Debugger :=
-                   Get_Current_Process
-                     (Get_Main_Window (Get_Kernel (Context.Context)));
+        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)));
       Variable : constant String :=
                    Get_Variable_Name (Context.Context, False);
       S        : constant String :=
@@ -1413,8 +1396,9 @@ package body GVD_Module is
      (Command : access Set_Breakpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Debugger : constant Debugger_Access := Get_Current_Process
-        (Get_Main_Window (Get_Kernel (Context.Context))).Debugger;
+      Debugger : constant Debugger_Access :=
+        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)))
+        .Debugger;
    begin
       if not Command.On_Line then
          Break_Subprogram
@@ -1425,14 +1409,14 @@ package body GVD_Module is
          Break_Source
            (Debugger,
             File_Information (Context.Context),
-            Contexts.Line_Information (Context.Context),
+            GPS.Kernel.Contexts.Line_Information (Context.Context),
             Temporary => True);
          Continue (Debugger, Mode => GVD.Types.Visible);
       else
          Break_Source
            (Debugger,
             File_Information (Context.Context),
-            Contexts.Line_Information (Context.Context),
+            GPS.Kernel.Contexts.Line_Information (Context.Context),
             Mode => GVD.Types.Visible);
       end if;
 
@@ -1449,7 +1433,7 @@ package body GVD_Module is
    is
       pragma Unreferenced (Filter);
       Process : constant Visual_Debugger :=
-                  Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
+        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context)));
    begin
       return Process /= null and then not Command_In_Process (Process);
    end Filter_Matches_Primitive;
@@ -1464,7 +1448,7 @@ package body GVD_Module is
    is
       pragma Unreferenced (Filter);
       Process : constant Visual_Debugger :=
-                  Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
+        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context)));
    begin
       return Process /= null and then Process.Debugger /= null;
    end Filter_Matches_Primitive;
@@ -1553,7 +1537,7 @@ package body GVD_Module is
       pragma Unreferenced (Module);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
       Debugger : constant Visual_Debugger :=
-        Get_Current_Process (Get_Main_Window (Kernel));
+        Visual_Debugger (Get_Current_Debugger (Kernel));
       Value    : GNAT.Strings.String_Access;
       W        : Gtk_Widget;
       Label    : Gtk_Label;
@@ -1712,7 +1696,7 @@ package body GVD_Module is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
-      Close_Debugger (Get_Current_Process (Get_Main_Window (Kernel)));
+      Close_Debugger (Visual_Debugger (Get_Current_Debugger (Kernel)));
       Update_Menus_And_Buttons (Kernel);
       return Commands.Success;
 
@@ -1721,54 +1705,6 @@ package body GVD_Module is
          Trace (Me, E);
          return Commands.Failure;
    end Execute;
-
-   -----------------------
-   -- Get_Variable_Name --
-   -----------------------
-
-   function Get_Variable_Name
-     (Context     : Selection_Context;
-      Dereference : Boolean) return String
-   is
-      Lang  : Language_Access;
-   begin
-      if Context = No_Context then
-         return "";
-      end if;
-
-      if Has_File_Information (Context) then
-         Lang := Get_Language_From_File
-           (Get_Language_Handler (Get_Kernel (Context)),
-            File_Information (Context));
-      end if;
-
-      if Has_Area_Information (Context) then
-         if Dereference and then Lang /= null then
-            return Dereference_Name (Lang, Text_Information (Context));
-         end if;
-
-         return Text_Information (Context);
-      end if;
-
-      if Has_Expression_Information (Context) then
-         if Dereference and then Lang /= null then
-            return Dereference_Name (Lang, Expression_Information (Context));
-         end if;
-
-         return Expression_Information (Context);
-      end if;
-
-      if Has_Entity_Name_Information (Context) then
-         if Dereference and then Lang /= null then
-            return Dereference_Name
-              (Lang, Entity_Name_Information (Context));
-         end if;
-
-         return Entity_Name_Information (Context);
-      end if;
-
-      return "";
-   end Get_Variable_Name;
 
    -------------
    -- Execute --
@@ -1831,13 +1767,15 @@ package body GVD_Module is
    overriding procedure Execute
      (Self   : On_File_Edited;
       Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File) is
+      File   : Virtual_File)
+   is
+      pragma Unreferenced (Self);
    begin
       Create_Debugger_Columns (Kernel_Handle (Kernel), File);
    exception
       when E : others =>
          Trace (Me, E);
-         Close_Debugger (Get_Current_Process (Self.Top));
+         Close_Debugger (Visual_Debugger (Get_Current_Debugger (Kernel)));
    end Execute;
 
    -------------
@@ -1851,7 +1789,7 @@ package body GVD_Module is
    is
       pragma Unreferenced (Self);
       Process : constant Visual_Debugger :=
-                  Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
+        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context)));
    begin
       if Process = null
         or else Process.Debugger = null
@@ -1874,7 +1812,7 @@ package body GVD_Module is
 
          declare
             Tab         : constant Visual_Debugger :=
-                            Get_Current_Process (Get_Main_Window (Kernel));
+              Visual_Debugger (Get_Current_Debugger (Kernel));
             Lines       : Line_Array (Line1 .. Line2);
             A           : Line_Information_Data :=
                new Line_Information_Array (Line1 .. Line2);
@@ -2299,12 +2237,10 @@ package body GVD_Module is
          Category    => -"Debug");
 
       GVD.Canvas.Register_Module (Kernel);
-      GVD.Call_Stack.Register_Module (Kernel);
       GVD.Consoles.Register_Module (Kernel);
       GVD.Dialogs.Register_Module (Kernel);
       GVD.Assembly_View.Register_Module (Kernel);
       Breakpoints_Editor.Register_Module (Kernel);
-      GVD.Memory_View.Register_Module (Kernel);
 
       Register_Action
         (Kernel, "debug display local variables", new Local_Vars_Command,

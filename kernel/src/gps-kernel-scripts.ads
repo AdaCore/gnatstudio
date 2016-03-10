@@ -22,6 +22,7 @@ with Basic_Types;
 with GNATCOLL.Arg_Lists;     use GNATCOLL.Arg_Lists;
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Projects;
+with GPS.Debuggers;          use GPS.Debuggers;
 with GPS.Scripts;            use GPS.Scripts;
 with GPS.Scripts.Entities;
 with GPS.Scripts.Files;

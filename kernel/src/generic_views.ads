@@ -108,8 +108,7 @@ package Generic_Views is
 
    function Kernel
      (Self : not null access View_Record'Class)
-      return GPS.Kernel.Kernel_Handle;
-   pragma Inline (Kernel);
+      return GPS.Kernel.Kernel_Handle with Inline;
    --  Return the kernel stored in Self
 
    procedure Set_Kernel

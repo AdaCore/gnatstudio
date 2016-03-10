@@ -15,98 +15,59 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;                use Glib;
-with Glib.Object;         use Glib.Object;
-with GPS.Kernel.Modules;  use GPS.Kernel.Modules;
-with GPS.Intl;            use GPS.Intl;
-with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Window;          use Gtk.Window;
-with Gtkada.Dialogs;      use Gtkada.Dialogs;
-with Gtkada.Handlers;     use Gtkada.Handlers;
-with Gtkada.MDI;          use Gtkada.MDI;
-with String_Utils;        use String_Utils;
-with GNATCOLL.Traces;     use GNATCOLL.Traces;
+with Commands;             use Commands;
+with Commands.Interactive; use Commands.Interactive;
+with Glib;                 use Glib;
+with GPS.Kernel.Actions;   use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
+with GPS.Intl;             use GPS.Intl;
+with Gtk.Widget;           use Gtk.Widget;
+with Gtkada.Dialogs;       use Gtkada.Dialogs;
+with Gtkada.Handlers;      use Gtkada.Handlers;
+with Gtkada.MDI;           use Gtkada.MDI;
+with String_Utils;         use String_Utils;
+with GNATCOLL.Traces;      use GNATCOLL.Traces;
 
 package body GVD.Generic_View is
    Me : constant GNATCOLL.Traces.Trace_Handle := Create ("GVD");
-
-   procedure Set_Process
-     (View    : access Process_View_Record'Class;
-      Process : Visual_Debugger);
-   --  Set the debugger associated with View
 
    -----------------
    -- Set_Process --
    -----------------
 
-   procedure Set_Process
-     (View    : access Process_View_Record'Class;
-      Process : Visual_Debugger) is
+   overriding procedure Set_Process
+     (Self    : not null access Process_View_Record;
+      Process : access Base_Visual_Debugger'Class) is
    begin
-      View.Process := Process;
+      Self.Process := Process;
    end Set_Process;
 
-   -----------------
-   -- Get_Process --
-   -----------------
-
-   function Get_Process
-     (View : access Process_View_Record)
-      return Visual_Debugger is
-   begin
-      return View.Process;
-   end Get_Process;
-
-   -------------------
-   -- Unset_Process --
-   -------------------
-
-   procedure Unset_Process (View : access Process_View_Record) is
-   begin
-      View.Process := null;
-   end Unset_Process;
-
-   ------------------
-   -- Simple_Views --
-   ------------------
-
    package body Simple_Views is
-      function Local_Initialize
-        (View   : access Formal_View_Record'Class)
-         return Gtk_Widget;
-      --  Initialize the view and returns the focus widget.
 
-      package Views is new Generic_Views.Simple_Views
-        (Module_Name        => Module_Name,
-         View_Name          => View_Name,
-         Formal_View_Record => Formal_View_Record,
-         Formal_MDI_Child   => Formal_MDI_Child,
-         Reuse_If_Exist     => False,
-         Initialize         => Local_Initialize,
-         Local_Config       => Local_Config,
-         Local_Toolbar      => Local_Toolbar,
-         Position           => Position,
-         Areas              => Areas,
-         Commands_Category  => "",  --  No "open ... " command, since we might
-                                    --  reuse existing views
-         Group              => Group);
-      subtype Formal_View_Access is Views.View_Access;
-      use type Formal_View_Access;
+      type Open_Command is new Interactive_Command with null record;
+      overriding function Execute
+        (Self    : access Open_Command;
+         Context : Interactive_Command_Context) return Command_Return_Type;
+      --  Opens the view and attach to current debugger
+
+      type On_Debugger_Started is new Debugger_Hooks_Function with null record;
+      overriding procedure Execute
+        (Self     : On_Debugger_Started;
+         Kernel   : not null access Kernel_Handle_Record'Class;
+         Debugger : access Base_Visual_Debugger'Class);
+      --  Called when the debugger is started, to connect non-attached views
 
       ----------------
       -- On_Destroy --
       ----------------
 
       procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
-         V : constant Formal_View_Access := Formal_View_Access (View);
+         V : constant Views.View_Access := Views.View_Access (View);
       begin
          if Get_Process (V) /= null then
             Set_View (Get_Process (V), null);
-            Unset_Process (V);
+            V.Set_Process (null);
          end if;
-
-      exception
-         when E : others => Trace (Me, E);
       end On_Destroy;
 
       -------------
@@ -118,12 +79,12 @@ package body GVD.Generic_View is
           Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
           Debugger : access Base_Visual_Debugger'Class)
       is
-         pragma Unreferenced (Self);
-         P : constant Visual_Debugger := Visual_Debugger (Debugger);
-         V : constant Formal_View_Access := Formal_View_Access (Get_View (P));
+         Block_Me : constant Block_Trace_Handle :=
+           Create (Me, "Closing view " & Views.View_Name);
+         V : constant access Formal_View_Record'Class := Get_View (Debugger);
+         pragma Unreferenced (Self, Block_Me);
       begin
-         Trace (Me, "On_Debugger_Terminate, closing view " & Module_Name);
-         if P /= null and then V /= null then
+         if V /= null then
             --  Do not destroy the view when we are in the process of
             --  destroying the main window. What might happen otherwise is the
             --  following: we have the debugger console and debuggee console in
@@ -133,19 +94,17 @@ package body GVD.Generic_View is
             --  we were to destroy the latter, this means that
             --  gtk_notebook_destroy's loop would then point to an invalid
             --  location.
-            if Get_Main_Window (Kernel) /= null
-              and then not Get_Main_Window (Kernel).In_Destruction
+            if not Kernel.Is_In_Destruction
               and then Get_Process (V) /= null
             then
                Set_View (Get_Process (V), null);
-               Unset_Process (V);
+               V.Set_Process (null);
                Views.Child_From_View (V).Close_Child (Force => True);
             else
                Set_View (Get_Process (V), null);
-               Unset_Process (V);
+               V.Set_Process (null);
             end if;
          end if;
-         Trace (Me, "On_Debugger_Terminate, done closing view " & Module_Name);
       end Execute;
 
       --------------------
@@ -153,32 +112,25 @@ package body GVD.Generic_View is
       --------------------
 
       procedure Attach_To_View
-        (Process             : access Visual_Debugger_Record'Class;
+        (Process             : access Base_Visual_Debugger'Class;
+         Kernel              : not null access Kernel_Handle_Record'Class;
          Create_If_Necessary : Boolean)
       is
-         Kernel  : constant Kernel_Handle := Get_Kernel (Get_Module.all);
-         MDI     : constant MDI_Window := Get_MDI (Kernel);
+         MDI     : constant MDI_Window := GPS.Kernel.MDI.Get_MDI (Kernel);
          Child   : MDI_Child;
          Iter    : Child_Iterator;
-         View    : Formal_View_Access;
-         Button  : Message_Dialog_Buttons;
-         pragma Unreferenced (Button);
-
---           List : Debugger_List_Link;
-         P    : constant Visual_Debugger := Visual_Debugger (Process);
-
+         View    : access Formal_View_Record'Class;
+         Button  : Message_Dialog_Buttons with Unreferenced;
       begin
          if Process = null then
-            null;
             --  ??? Should try to attach to the current debugger, but there are
             --  elaboration circularities.
---              List := Get_Debugger_List (Kernel);
---              if List /= null then
---                 P := Visual_Debugger (List.Debugger);
---              end if;
+            --  P := Visual_Debugger
+            --     (GVD_Module.Get_Current_Debugger (Kernel));
+            null;
          end if;
 
-         View := Formal_View_Access (Get_View (P));
+         View := Get_View (Process);
 
          if View = null then
             --  Do we have an existing unattached view ?
@@ -210,26 +162,26 @@ package body GVD.Generic_View is
                --  Make it visible again
                Raise_Child (Child);
 
-               if P /= null then
-                  Set_Process (View, P);
-                  Set_View (P, Base_Type_Access (View));
+               if Process /= null then
+                  View.Set_Process (Process);
+                  Set_View (Process, View);
 
-                  if Get_Num (P) = 1 then
-                     Set_Title (Child, View_Name);
+                  if Get_Num (Process) = 1 then
+                     Set_Title (Child, Views.View_Name);
                   else
                      Set_Title
                        (Child,
-                        View_Name
+                        Views.View_Name
                         & " <"
-                        & Image (Integer (Get_Num (P)))
+                        & Image (Integer (Get_Num (Process)))
                         & ">");
                   end if;
 
-                  On_Attach (View, P);
+                  On_Attach (View, Process);
 
-                  if Command_In_Process (P) then
+                  if Process.Command_In_Process then
                      Button := Message_Dialog
-                       (-"Cannot update " & View_Name
+                       (-"Cannot update " & Views.View_Name
                         & (-" while the debugger is busy." & ASCII.LF &
                           (-"Interrupt the debugger or wait for its"
                              & " availability.")),
@@ -255,28 +207,12 @@ package body GVD.Generic_View is
                --  part of the MDI, reset it.
                Destroy (View);
 
-               if P /= null then
-                  Set_View (P, null);
+               if Process /= null then
+                  Set_View (Process, null);
                end if;
             end if;
          end if;
       end Attach_To_View;
-
-      ----------------------
-      -- Local_Initialize --
-      ----------------------
-
-      function Local_Initialize
-        (View   : access Formal_View_Record'Class)
-         return Gtk_Widget
-      is
-         Focus_Widget : Gtk_Widget;
-      begin
-         Focus_Widget := Initialize (View, View.Kernel);
-         Debugger_Terminated_Hook.Add
-            (new On_Debugger_Terminate, Watch => View);
-         return Focus_Widget;
-      end Local_Initialize;
 
       -------------
       -- Execute --
@@ -288,12 +224,10 @@ package body GVD.Generic_View is
          Debugger : access Base_Visual_Debugger'Class)
       is
          pragma Unreferenced (Self, Kernel);
-         Process : constant Visual_Debugger := Visual_Debugger (Debugger);
-         View    : constant Formal_View_Access :=
-                     Formal_View_Access (Get_View (Process));
+         V : constant access Formal_View_Record'Class := Get_View (Debugger);
       begin
-         if View /= null then
-            Update (View);
+         if V /= null then
+            V.Update;
          end if;
       end Execute;
 
@@ -308,12 +242,10 @@ package body GVD.Generic_View is
          New_State : Debugger_State)
       is
          pragma Unreferenced (Self, Kernel);
-         Process : constant Visual_Debugger := Visual_Debugger (Debugger);
-         View    : constant Formal_View_Access :=
-                     Formal_View_Access (Get_View (Process));
+         V : constant access Formal_View_Record'Class := Get_View (Debugger);
       begin
-         if View /= null then
-            On_State_Changed (View, New_State);
+         if V /= null then
+            V.On_State_Changed (New_State);
          end if;
       end Execute;
 
@@ -327,30 +259,79 @@ package body GVD.Generic_View is
           Debugger : access Base_Visual_Debugger'Class)
       is
          pragma Unreferenced (Self, Kernel);
-         Process : constant Visual_Debugger := Visual_Debugger (Debugger);
-         View    : constant Formal_View_Access :=
-                     Formal_View_Access (Get_View (Process));
+         V : constant access Formal_View_Record'Class := Get_View (Debugger);
       begin
-         if View /= null then
-            On_Process_Terminated (View);
+         if V /= null then
+            V.On_Process_Terminated;
          end if;
       end Execute;
 
-      --------------------------------
-      -- Register_Desktop_Functions --
-      --------------------------------
+      ---------------------
+      -- Register_Module --
+      ---------------------
 
-      procedure Register_Desktop_Functions
-        (Kernel : access Kernel_Handle_Record'Class)
-      is
+      procedure Register_Module
+        (Kernel : not null access Kernel_Handle_Record'Class) is
       begin
          Views.Register_Module (Kernel);
+         Debugger_Started_Hook.Add (new On_Debugger_Started);
          Debugger_Process_Stopped_Hook.Add (new On_Update);
          Debugger_Context_Changed_Hook.Add (new On_Update);
          Debugger_State_Changed_Hook.Add (new On_Debugger_State_Changed);
+         Debugger_Terminated_Hook.Add (new On_Debugger_Terminate);
          Debugger_Process_Terminated_Hook.Add
-            (new On_Debug_Process_Terminated);
-      end Register_Desktop_Functions;
+           (new On_Debug_Process_Terminated);
+      end Register_Module;
+
+      -------------
+      -- Execute --
+      -------------
+
+      overriding procedure Execute
+        (Self     : On_Debugger_Started;
+         Kernel   : not null access Kernel_Handle_Record'Class;
+         Debugger : access Base_Visual_Debugger'Class)
+      is
+         pragma Unreferenced (Self);
+      begin
+         Attach_To_View (Debugger, Kernel, Create_If_Necessary => False);
+      end Execute;
+
+      -------------
+      -- Execute --
+      -------------
+
+      overriding function Execute
+        (Self    : access Open_Command;
+         Context : Interactive_Command_Context) return Command_Return_Type
+      is
+         pragma Unreferenced (Self);
+         Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+         Process : constant access Base_Visual_Debugger'Class :=
+           Get_Current_Debugger (Kernel);
+      begin
+         if Process /= null then
+            Attach_To_View (Process, Kernel, Create_If_Necessary => True);
+         end if;
+         return Commands.Success;
+      end Execute;
+
+      -------------------------------
+      -- Register_Open_View_Action --
+      -------------------------------
+
+      procedure Register_Open_View_Action
+        (Kernel      : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Action_Name : String;
+         Description : String;
+         Filter      : Action_Filter := null) is
+      begin
+         Register_Action
+           (Kernel, Action_Name, new Open_Command,
+            Description => Description,
+            Category    => -"Views",
+            Filter      => Filter);
+      end Register_Open_View_Action;
 
    end Simple_Views;
 

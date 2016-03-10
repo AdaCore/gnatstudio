@@ -55,19 +55,18 @@ with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
 
 with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
 with Breakpoints_Pkg;         use Breakpoints_Pkg;
-with Commands.Interactive;    use Commands, Commands.Interactive;
-with Generic_Views;
+with Generic_Views;           use Generic_Views;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 with Gtkada.MDI;         use Gtkada.MDI;
+with GPS.Debuggers;      use GPS.Debuggers;
 with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
 with GPS.Intl;           use GPS.Intl;
-with GPS.Kernel.Actions; use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks; use GPS.Kernel;
-with GVD_Module;       use GVD_Module;
 with GVD.Code_Editors; use GVD, GVD.Code_Editors;
+with GVD.Generic_View; use GVD.Generic_View;
 with GVD.Process;      use GVD.Process;
 with GVD.Types;        use GVD.Types;
-with GVD.Views;        use GVD.Views;
+with GVD_Module;       use GVD_Module;
 with GUI_Utils;        use GUI_Utils;
 with Debugger;         use Debugger;
 with GNATCOLL.VFS;     use GNATCOLL.VFS;
@@ -76,48 +75,49 @@ with Process_Proxies;  use Process_Proxies;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Breakpoints_Editor is
-   type Breakpoint_Editor_Record is new Base_Views.Process_View_Record with
+   type Breakpoint_Editor_Record is new Process_View_Record with
       record
          Editor               : Breakpoints_Access;
          Advanced_Breakpoints : Advanced_Breakpoint_Access;
       end record;
    type Breakpoint_Editor is access all Breakpoint_Editor_Record'Class;
 
-   overriding procedure Update (View   : access Breakpoint_Editor_Record);
+   overriding procedure Update
+     (View   : not null access Breakpoint_Editor_Record);
    overriding procedure On_Process_Terminated
-     (View : access Breakpoint_Editor_Record);
+     (View : not null access Breakpoint_Editor_Record);
    --  See inherited documentation
 
    function Initialize
-     (Widget : access Breakpoint_Editor_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (Widget : access Breakpoint_Editor_Record'Class) return Gtk_Widget;
    --  Internal initialization function
    --  Returns the focus child
 
    function Get_View
-     (Process : access Visual_Debugger_Record'Class)
-      return Generic_Views.Abstract_View_Access;
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access Breakpoint_Editor_Record'Class;
    procedure Set_View
-     (Process : access Visual_Debugger_Record'Class;
-      View    : Generic_Views.Abstract_View_Access);
+     (Process : not null access Base_Visual_Debugger'Class;
+      View    : access Breakpoint_Editor_Record'Class := null);
    --  Store or retrieve the view from the process
 
-   package Simple_Views is new Base_Views.Simple_Views
+   package Breakpoints_MDI_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Breakpoints",
       View_Name          => -"Breakpoints",
       Formal_View_Record => Breakpoint_Editor_Record,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_View,
-      Set_View           => Set_View,
+      Reuse_If_Exist     => False,
+      Commands_Category  => "",
+      Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Default,
       Position           => Position_Automatic,
       Initialize         => Initialize);
-
-   type Breakpoint_Editor_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Breakpoint_Editor_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Debug->Data->Breakpoints
+   package Simple_Views is new GVD.Generic_View.Simple_Views
+     (Views              => Breakpoints_MDI_Views,
+      Formal_View_Record => Breakpoint_Editor_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Get_View           => Get_View,
+      Set_View           => Set_View);
 
    type On_Breakpoints_Changed is new Debugger_Hooks_Function
       with null record;
@@ -193,10 +193,10 @@ package body Breakpoints_Editor is
    --------------
 
    function Get_View
-     (Process : access Visual_Debugger_Record'Class)
-      return Generic_Views.Abstract_View_Access is
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access Breakpoint_Editor_Record'Class is
    begin
-      return Generic_Views.Abstract_View_Access (Process.Breakpoints_Editor);
+      return Breakpoint_Editor (Visual_Debugger (Process).Breakpoints_Editor);
    end Get_View;
 
    --------------
@@ -204,49 +204,24 @@ package body Breakpoints_Editor is
    --------------
 
    procedure Set_View
-     (Process : access Visual_Debugger_Record'Class;
-      View    : Generic_Views.Abstract_View_Access)
+     (Process : not null access Base_Visual_Debugger'Class;
+      View    : access Breakpoint_Editor_Record'Class := null)
    is
       use type Generic_Views.Abstract_View_Access;
-      Old : constant Breakpoint_Editor :=
-        Breakpoint_Editor (Process.Breakpoints_Editor);
+      V   : constant Visual_Debugger := Visual_Debugger (Process);
+      Old : constant Breakpoint_Editor := Get_View (Process);
    begin
-      Process.Breakpoints_Editor := Gtk_Widget (View);
+      V.Breakpoints_Editor := Abstract_View_Access (View);
 
       --  If we are detaching, clear the old view. This can only be done after
       --  the above, since otherwise the action on the GUI will result into
       --  actions on the debugger.
 
-      if View = null and then Old /= null then
+      if Old /= null then
          On_Process_Terminated (Old);
       end if;
+
    end Set_View;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Breakpoint_Editor_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Process : Visual_Debugger;
-      List    : Debugger_List_Link := Get_Debugger_List (Kernel);
-
-   begin
-      while List /= null loop
-         Process := Visual_Debugger (List.Debugger);
-
-         if Process.Debugger /= null then
-            Attach_To_Breakpoints (Process, Create_If_Necessary => True);
-         end if;
-
-         List := List.Next;
-      end loop;
-      return Commands.Success;
-   end Execute;
 
    ----------------------------
    -- Update_Breakpoint_List --
@@ -357,12 +332,15 @@ package body Breakpoints_Editor is
    -- Update --
    ------------
 
-   overriding procedure Update (View   : access Breakpoint_Editor_Record) is
+   overriding procedure Update
+     (View   : not null access Breakpoint_Editor_Record)
+   is
+      V     : constant Visual_Debugger := Visual_Debugger (Get_Process (View));
       Process  : Process_Proxy_Access;
       M        : Gtk_List_Store;
    begin
-      if Get_Process (View) /= null then
-         Process := Get_Process (Get_Process (View).Debugger);
+      if V /= null then
+         Process := Get_Process (V.Debugger);
       end if;
 
       --  If the debugger was killed, no need to refresh
@@ -375,8 +353,7 @@ package body Breakpoints_Editor is
 
       --  Reinitialize the contents of the file name entry
       Set_Text
-        (View.Editor.File_Name,
-         +Base_Name (Get_Current_File (Get_Process (View).Editor_Text)));
+        (View.Editor.File_Name, +Base_Name (Get_Current_File (V.Editor_Text)));
       --  ??? What if the filesystem path is non-UTF8?
 
       --  Clear the contents of the exceptions combo (its contents is in fact
@@ -416,7 +393,7 @@ package body Breakpoints_Editor is
    ---------------------------
 
    overriding procedure On_Process_Terminated
-     (View : access Breakpoint_Editor_Record)
+     (View : not null access Breakpoint_Editor_Record)
    is
       Model : constant Gtk_Tree_Store :=
         -Get_Model (View.Editor.Breakpoint_List);
@@ -429,10 +406,7 @@ package body Breakpoints_Editor is
    ----------------
 
    function Initialize
-     (Widget : access Breakpoint_Editor_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
-   is
-      pragma Unreferenced (Kernel);
+     (Widget : access Breakpoint_Editor_Record'Class) return Gtk_Widget is
    begin
       Gtk.Box.Initialize_Hbox (Widget);
       Gtk_New (Widget.Editor);
@@ -515,15 +489,6 @@ package body Breakpoints_Editor is
       return Gtk_Widget (Widget);
    end Initialize;
 
-   ---------------------------
-   -- Attach_To_Breakpoints --
-   ---------------------------
-
-   procedure Attach_To_Breakpoints
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
-      Create_If_Necessary : Boolean)
-      renames Simple_Views.Attach_To_View;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -531,11 +496,11 @@ package body Breakpoints_Editor is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Simple_Views.Register_Desktop_Functions (Kernel);
-      Register_Action
-        (Kernel, "open breakpoints editor", new Breakpoint_Editor_Command,
-         -"Open the Breakpoints Editor for the debugger",
-         Category => -"Views");
+      Simple_Views.Register_Module (Kernel);
+      Simple_Views.Register_Open_View_Action
+        (Kernel,
+         Action_Name => "open breakpoints editor",
+         Description => -"Open the Breakpoints Editor for the debugger");
    end Register_Module;
 
    -------------------------------------
@@ -656,7 +621,7 @@ package body Breakpoints_Editor is
             Model.Set
               (Iter, Col_Enb,
                Toggle_Breakpoint_State
-                 (Get_Process (View),
+                 (Visual_Debugger (Get_Process (View)),
                   Breakpoint_Num => Breakpoint_Identifier'Value
                     (Get_String (Model, Iter, Col_Num))));
 

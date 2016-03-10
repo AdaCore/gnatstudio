@@ -17,13 +17,15 @@
 
 --  Handling of the debugger and debuggee consoles
 
+with GPS.Debuggers;
 with GVD.Process;
-with GPS.Kernel;
+with GPS.Kernel;      use GPS.Kernel;
 
 package GVD.Consoles is
 
    procedure Attach_To_Debugger_Console
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+     (Debugger            : access GPS.Debuggers.Base_Visual_Debugger'Class;
+      Kernel              : not null access Kernel_Handle_Record'Class;
       Create_If_Necessary : Boolean);
    --  Attach debugger to a console
    --  If an unattached console exists in the desktop, it is reused.
@@ -31,12 +33,26 @@ package GVD.Consoles is
    --  Nothing is done when Debugger is already attached to a console.
 
    procedure Attach_To_Debuggee_Console
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+     (Debugger            : access GPS.Debuggers.Base_Visual_Debugger'Class;
+      Kernel              : not null access Kernel_Handle_Record'Class;
       Create_If_Necessary : Boolean);
    --  Attach to the console for the program that is debugged.
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register menus and other functions to support the consoles
+
+   function Debugger_Console_Has_Focus
+     (Process : not null access GVD.Process.Visual_Debugger_Record'Class)
+      return Boolean;
+   --  Whether the debugger console has the keyboard focus
+
+   procedure Display_In_Debugger_Console
+     (Process       : not null access GVD.Process.Visual_Debugger_Record'Class;
+      Text           : String;
+      Highlight      : Boolean := False;
+      Add_To_History : Boolean := False);
+   --  Display some text in the debugger console
+   --  See Interactive_Consoles.Interactive for the meaning of parameters.
 
 end GVD.Consoles;

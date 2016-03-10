@@ -197,19 +197,21 @@ types = {
         withs=['Remote']),
 
     'Debugger': Mapping(
-        ada='access GPS.Kernel.Base_Visual_Debugger\'Class',
+        ada='access GPS.Debuggers.Base_Visual_Debugger\'Class',
         python='GPS.Debugger',
         topython='GPS.Kernel.Scripts.Get_Or_Create_Instance ' +
             '(Data.Get_Script, %(ada)s)',
-        toada='Base_Visual_Debugger_Access (GNATCOLL.Scripts.Gtkada.Get_Data'
+        toada='GPS.Debuggers.Base_Visual_Debugger_Access ' +
+            '(GNATCOLL.Scripts.Gtkada.Get_Data'
             ' (Data.Nth_Arg (%(idx)d, K.Scripts.New_Class ("Debugger"))))',
-        withs=['Glib.Object', 'GNATCOLL.Scripts.Gtkada']),
+        withs=['Glib.Object', 'GNATCOLL.Scripts.Gtkada', 'GPS.Debuggers']),
 
     'Debugger_State': Mapping(
-        ada='GPS.Kernel.Debugger_State',
+        ada='GPS.Debuggers.Debugger_State',
         python='str',
-        topython='GPS.Kernel.To_String (%(ada)s)',
-        toada='GPS.Kernel.From_String (Data.Nth_Arg (%(idx)d))'),
+        topython='GPS.Debuggers.To_String (%(ada)s)',
+        toada='GPS.Debuggers.From_String (Data.Nth_Arg (%(idx)d))',
+        withs=['GPS.Debuggers']),
 }
 
 # The following describe hook types (the various hook families with

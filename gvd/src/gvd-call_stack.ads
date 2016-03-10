@@ -26,17 +26,6 @@ package GVD.Call_Stack is
    --  stored in Process. Nothing is done if Process is not associated with
    --  a call stack
 
-   procedure Attach_To_Call_Stack
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
-      Create_If_Necessary : Boolean);
-   --  Attach Debugger to a call stack.
-   --  If an unattached call stack exists in the desktop, it is reused.
-   --  If no call stack exists, one is created if Create_If_Necessary is true.
-   --  Nothing is done when Debugger is already attached to a call stack.
-   --
-   --  The debugger console should be created already. When it is closed (ie
-   --  the debugger exits), the call stack will be destroyed.
-
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register menus and other functions to support the callstacks

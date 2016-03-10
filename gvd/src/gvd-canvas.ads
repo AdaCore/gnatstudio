@@ -16,14 +16,16 @@
 ------------------------------------------------------------------------------
 
 with Gtkada.Canvas_View;    use Gtkada.Canvas_View;
-with GPS.Kernel;
+with GPS.Debuggers;
+with GPS.Kernel;            use GPS.Kernel;
 with GVD.Process;           use GVD.Process;
 with Items;                 use Items;
 
 package GVD.Canvas is
 
    procedure Attach_To_Data_Window
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
+     (Debugger            : access GPS.Debuggers.Base_Visual_Debugger'Class;
+      Kernel              : not null access Kernel_Handle_Record'Class;
       Create_If_Necessary : Boolean);
    --  Attach debugger to a data window.
    --  If an unattached data window exists in the desktop, it is reused.

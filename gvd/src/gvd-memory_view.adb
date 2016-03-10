@@ -59,6 +59,7 @@ with Pango.Font;               use Pango.Font;
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with Debugger;                 use Debugger;
 with Generic_Views;            use Generic_Views;
+with GPS.Debuggers;            use GPS.Debuggers;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
@@ -66,10 +67,11 @@ with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with GVD_Module;               use GVD_Module;
+with GVD.Contexts;             use GVD.Contexts;
+with GVD.Generic_View;         use GVD.Generic_View;
 with GVD.Preferences;          use GVD.Preferences;
 with GVD.Process;              use GVD.Process;
-with GVD.Views;                use GVD.Views;
+with GVD_Module;               use GVD_Module;
 
 with Gtk.Text_Tag;          use Gtk.Text_Tag;
 with Gdk.Window;            use Gdk.Window;
@@ -93,7 +95,7 @@ package body GVD.Memory_View is
    --  Note that any change in this type needs to be coordinated in
    --  Update_Display.
 
-   type GVD_Memory_View_Record is new Base_Views.Process_View_Record with
+   type GVD_Memory_View_Record is new Process_View_Record with
       record
          Editor : Memory_View_Access;
 
@@ -156,36 +158,40 @@ package body GVD.Memory_View is
    type GVD_Memory_View is access all GVD_Memory_View_Record'Class;
 
    overriding procedure On_Process_Terminated
-     (View : access GVD_Memory_View_Record);
-   --  See inherited documentation
-
-   overriding procedure Update (View   : access GVD_Memory_View_Record);
+     (View : not null access GVD_Memory_View_Record);
+   overriding procedure Update (View : not null access GVD_Memory_View_Record);
    --  See inherited documentation
 
    function Initialize
-     (Widget : access GVD_Memory_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (Widget : access GVD_Memory_View_Record'Class) return Gtk_Widget;
    --  Internal initialization function
    --  Returns the focus child
 
    function Get_View
-     (Process : access Visual_Debugger_Record'Class)
-      return Generic_Views.Abstract_View_Access;
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access GVD_Memory_View_Record'Class;
    procedure Set_View
-     (Process : access Visual_Debugger_Record'Class;
-      View    : Generic_Views.Abstract_View_Access);
+     (Process : not null access Base_Visual_Debugger'Class;
+      View    : access GVD_Memory_View_Record'Class := null);
    --  Store or retrieve the view from the process
 
-   package Simple_Views is new Base_Views.Simple_Views
+   package Memory_MDI_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Memory_View",
       View_Name          => -"Memory",
       Formal_View_Record => GVD_Memory_View_Record,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_View,
-      Set_View           => Set_View,
+      Reuse_If_Exist     => False,
+      Commands_Category  => "",
+      Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Default,
       Position           => Position_Automatic,
       Initialize         => Initialize);
+   package Simple_Views is new GVD.Generic_View.Simple_Views
+     (Formal_View_Record => GVD_Memory_View_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Views              => Memory_MDI_Views,
+      Get_View           => Get_View,
+      Set_View           => Set_View);
 
    procedure Display_Memory
      (View    : access GVD_Memory_View_Record'Class;
@@ -341,10 +347,10 @@ package body GVD.Memory_View is
    --------------
 
    function Get_View
-     (Process : access Visual_Debugger_Record'Class)
-      return Generic_Views.Abstract_View_Access is
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access GVD_Memory_View_Record'Class is
    begin
-      return Generic_Views.Abstract_View_Access (Process.Memory_View);
+      return GVD_Memory_View (Visual_Debugger (Process).Memory_View);
    end Get_View;
 
    --------------
@@ -352,13 +358,12 @@ package body GVD.Memory_View is
    --------------
 
    procedure Set_View
-     (Process : access Visual_Debugger_Record'Class;
-      View    : Generic_Views.Abstract_View_Access)
+     (Process : not null access Base_Visual_Debugger'Class;
+      View    : access GVD_Memory_View_Record'Class := null)
    is
-      Old : constant GVD_Memory_View :=
-        GVD_Memory_View (Process.Memory_View);
+      Old : constant GVD_Memory_View := Get_View (Process);
    begin
-      Process.Memory_View := Gtk_Widget (View);
+      Visual_Debugger (Process).Memory_View := Abstract_View_Access (View);
 
       --  If we are detaching, clear the old view. This can only be done after
       --  the above, since otherwise the action on the GUI will result into
@@ -601,7 +606,7 @@ package body GVD.Memory_View is
    ---------------------------
 
    overriding procedure On_Process_Terminated
-     (View : access GVD_Memory_View_Record) is
+     (View : not null access GVD_Memory_View_Record) is
    begin
       Clear_View (View);
    end On_Process_Terminated;
@@ -695,7 +700,8 @@ package body GVD.Memory_View is
    -- Update --
    ------------
 
-   overriding procedure Update (View   : access GVD_Memory_View_Record) is
+   overriding procedure Update
+     (View   : not null access GVD_Memory_View_Record) is
    begin
       if Memory_Auto_Refresh.Get_Pref then
          if View.Edit_Mode then
@@ -1079,14 +1085,12 @@ package body GVD.Memory_View is
    ----------------
 
    function Initialize
-     (Widget : access GVD_Memory_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
-   is
+     (Widget : access GVD_Memory_View_Record'Class) return Gtk_Widget is
    begin
       Gtk.Box.Initialize_Hbox (Widget);
       Gtk_New (Widget.Editor);
       Pack_Start (Widget, Widget.Editor, True, True);
-      Init_Graphics (Widget, Get_Window (Get_Main_Window (Kernel)));
+      Init_Graphics (Widget, Get_Window (Get_Main_Window (Widget.Kernel)));
 
       Widget_Callback.Object_Connect
         (Widget.Editor.Address_Entry, Gtk.GEntry.Signal_Activate,
@@ -1567,12 +1571,13 @@ package body GVD.Memory_View is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Address : String)
    is
-      Process  : constant Visual_Debugger :=
-                   Get_Current_Process (Get_Main_Window (Kernel));
+      Process  : constant access Base_Visual_Debugger'Class :=
+                   Get_Current_Debugger (Kernel);
       View : GVD_Memory_View;
 
    begin
-      Attach_To_Memory (Process, Create_If_Necessary => True);
+      Simple_Views.Attach_To_View
+        (Process, Kernel, Create_If_Necessary => True);
       View := GVD_Memory_View (Get_View (Process));
       Display_Memory (View, Address);
    end Display_Memory;
@@ -1656,15 +1661,6 @@ package body GVD.Memory_View is
       return Commands.Success;
    end Execute;
 
-   ----------------------
-   -- Attach_To_Memory --
-   ----------------------
-
-   procedure Attach_To_Memory
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
-      Create_If_Necessary : Boolean)
-     renames Simple_Views.Attach_To_View;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1672,7 +1668,7 @@ package body GVD.Memory_View is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Simple_Views.Register_Desktop_Functions (Kernel);
+      Simple_Views.Register_Module (Kernel);
 
       Register_Action
         (Kernel, "examine memory",

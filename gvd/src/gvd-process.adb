@@ -41,7 +41,6 @@ with Gtk;                        use Gtk;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
-with Breakpoints_Editor;         use Breakpoints_Editor;
 with Config;                     use Config;
 with Debugger.Gdb;               use Debugger.Gdb;
 with Debugger.Gdb_MI;            use Debugger.Gdb_MI;
@@ -57,13 +56,11 @@ with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Main_Window;            use GPS.Main_Window;
 with GVD.Assembly_View;          use GVD.Assembly_View;
-with GVD.Call_Stack;             use GVD.Call_Stack;
+with GVD.Call_Stack;
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Consoles;               use GVD.Consoles;
-with GVD.Dialogs;                use GVD.Dialogs;
 with GVD.Preferences;            use GVD.Preferences;
-with GVD.Memory_View;            use GVD.Memory_View;
 with GVD.Source_Editor;          use GVD.Source_Editor;
 with GVD.Source_Editor.GPS;      use GVD.Source_Editor.GPS;
 with GVD.Trace;                  use GVD.Trace;
@@ -574,12 +571,12 @@ package body GVD.Process is
    -- Command_In_Process --
    ------------------------
 
-   function Command_In_Process
-     (Debugger : access Visual_Debugger_Record'Class) return Boolean is
+   overriding function Command_In_Process
+     (Self : not null access Visual_Debugger_Record) return Boolean is
    begin
-      return Debugger.Debugger /= null
-        and then Get_Process (Debugger.Debugger) /= null
-        and then Command_In_Process (Get_Process (Debugger.Debugger));
+      return Self.Debugger /= null
+        and then Get_Process (Self.Debugger) /= null
+        and then Command_In_Process (Get_Process (Self.Debugger));
    end Command_In_Process;
 
    -----------------
@@ -627,7 +624,8 @@ package body GVD.Process is
    begin
       if Process.Debugger_Text /= null then
          if Is_Command then
-            Insert (Process.Debugger_Text, Str, False, True, True);
+            Display_In_Debugger_Console
+              (Process, Str, Highlight => True, Add_To_History => True);
          else
             while Start <= Str'Last loop
                Match (Highlighting_Pattern (Process.Debugger),
@@ -636,20 +634,18 @@ package body GVD.Process is
 
                if Matched (0) /= No_Match then
                   if Matched (0).First - 1 >= Start then
-                     Insert (Process.Debugger_Text,
-                             Str (Start .. Matched (0).First - 1),
-                             False, False);
+                     Display_In_Debugger_Console
+                       (Process, Str (Start .. Matched (0).First - 1));
                   end if;
 
-                  Insert (Process.Debugger_Text,
-                          Str (Matched (0).First .. Matched (0).Last),
-                          False, True);
+                  Display_In_Debugger_Console
+                    (Process, Str (Matched (0).First .. Matched (0).Last),
+                     Highlight => True);
                   Start := Matched (0).Last + 1;
 
                else
-                  Insert (Process.Debugger_Text,
-                          Str (Start .. Str'Last),
-                          False, False);
+                  Display_In_Debugger_Console
+                    (Process, Str (Start .. Str'Last));
                   Start := Str'Last + 1;
                end if;
             end loop;
@@ -718,7 +714,7 @@ package body GVD.Process is
       --  the breakpoints. Otherwise, they won't be correctly updated for the
       --  newly displayed frame.
 
-      Highlight_Call_Stack_Frame (Process);
+      GVD.Call_Stack.Highlight_Call_Stack_Frame (Process);
 
       --  Last step is to update the breakpoints once all the rest has been
       --  set up correctly.
@@ -726,6 +722,7 @@ package body GVD.Process is
 
       if Length (File) /= 0 then
          if Process.Breakpoints = null then
+            --  If we have never parsed the breakpoints info
             Update_Breakpoints (Process, Force => True);
 
          elsif Process.Breakpoints'Length > 0 then
@@ -946,7 +943,7 @@ package body GVD.Process is
       Configure
         (Process.Editor_Text, Source, Default_Style.Get_Pref_Font);
 
-      Set_Current_Debugger (Window.Kernel, GObject (Process));
+      Set_Current_Debugger (Window.Kernel, Process);
 
       if Get_Debugger_List (Window.Kernel) = null then
          Process.Debugger_Num := Debugger_Num;
@@ -1009,7 +1006,8 @@ package body GVD.Process is
       pragma Unreferenced (Buttons);
 
    begin
-      Attach_To_Debugger_Console (Process, Create_If_Necessary => True);
+      Attach_To_Debugger_Console
+        (Process, Process.Kernel, Create_If_Necessary => True);
 
       --  Destroying the console should kill the debugger
       if Process.Debugger_Text /= null then
@@ -1069,20 +1067,15 @@ package body GVD.Process is
       Initialize (Process.Debugger);
 
       --  If some unattached dialogs exist, claim them
-      Attach_To_Call_Stack    (Process, Create_If_Necessary => False);
-      Attach_To_Data_Window   (Process, Create_If_Necessary => False);
-      Attach_To_Thread_Dialog (Process, Create_If_Necessary => False);
-      Attach_To_Tasks_Dialog  (Process, Create_If_Necessary => False);
-      Attach_To_PD_Dialog     (Process, Create_If_Necessary => False);
-      Attach_To_Assembly_View (Process, Create_If_Necessary => False);
-      Attach_To_Breakpoints   (Process, Create_If_Necessary => False);
-      Attach_To_Memory        (Process, Create_If_Necessary => False);
+      Attach_To_Data_Window
+        (Process, Window.Kernel, Create_If_Necessary => False);
 
       --  If we have a debuggee console in the desktop, always use it.
       --  Otherwise, we only create one when the user has asked for it.
 
       Attach_To_Debuggee_Console
         (Process,
+         Process.Kernel,
          Create_If_Necessary =>
            Execution_Window.Get_Pref
            and then Is_Local (Debug_Server)
@@ -1195,7 +1188,7 @@ package body GVD.Process is
 
       GNATCOLL.Traces.Trace (Me, "Closing Debugger");
       while Debugger_List /= null
-        and then Debugger_List.Debugger /= GObject (Process)
+        and then Debugger_List.Debugger /= Process
       loop
          Prev          := Debugger_List;
          Debugger_List := Debugger_List.Next;
@@ -1645,25 +1638,14 @@ package body GVD.Process is
       return False;
    end Toggle_Breakpoint_State;
 
-   -------------------------
-   -- Get_Current_Process --
-   -------------------------
-
-   function Get_Current_Process
-     (Main_Window : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return Visual_Debugger is
-   begin
-      return Visual_Debugger
-        (Get_Current_Debugger (GPS_Window (Main_Window).Kernel));
-   end Get_Current_Process;
-
    -------------
    -- Get_Num --
    -------------
 
-   function Get_Num (Tab : Visual_Debugger) return Gint is
+   overriding function Get_Num
+     (Self : not null access Visual_Debugger_Record) return Gint is
    begin
-      return Gint (Tab.Debugger_Num);
+      return Gint (Self.Debugger_Num);
    end Get_Num;
 
    -----------------
@@ -1899,7 +1881,7 @@ package body GVD.Process is
       Setup_Side_Columns (Kernel);
 
       --  Force the creation of the project if needed
-      Load_Project_From_Executable (Kernel, Get_Current_Process (Top));
+      Load_Project_From_Executable (Kernel, Process);
 
       --  Restore the breakpoints
       if Preserve_State_On_Exit.Get_Pref then

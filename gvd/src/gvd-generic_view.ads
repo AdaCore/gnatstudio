@@ -23,97 +23,100 @@
 --
 --  See default instanciations in GVD.Views
 
-with Glib;
 with Generic_Views;
+with GPS.Debuggers;       use GPS.Debuggers;
 with GPS.Kernel;          use GPS.Kernel;
-with GPS.Kernel.Hooks;    use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;
-with Gtkada.Handlers;
-with Gtk.Widget;
-with Gtkada.MDI;
-
-generic
-   type Base_Type is new Generic_Views.View_Record with private;
-   type Base_Type_Access is access all Base_Type'Class;
-   --  The type used as a parent for the view, and used to store the view in
-   --  a Visual_Debugger.
-
-   type Visual_Debugger_Record is new Base_Visual_Debugger with private;
-   type Visual_Debugger is access all Visual_Debugger_Record'Class;
-   --  The visual debugger class. We cannot with GVD.Process in this package,
-   --  since otherwise this creates elaboration circularities.
-
-   with function Get_Module return GPS.Kernel.Modules.Module_ID is <>;
-   --  The module to be associated with the MDI child, in particular when
-   --  creating contextual menus. This needs to be a function instead of a
-   --  simple variable, since the package is instanciated before the module is
-   --  created.
-
-   with function Get_Num (Process : Visual_Debugger) return Glib.Gint is <>;
-   --  Return the debugger identifier associated with Process
-
-   with function Command_In_Process
-     (Process : access Visual_Debugger_Record'Class) return Boolean is <>;
-   --  Whether a command is currently being processed by the debugger
+with GPS.Kernel.MDI;
+private with GPS.Kernel.Hooks;
+private with Gtkada.Handlers;
+private with Gtk.Widget;
 
 package GVD.Generic_View is
-   type Process_View_Record is abstract new Base_Type with private;
 
+   -----------------------
+   -- View_With_Process --
+   -----------------------
+
+   type View_With_Process is interface;
+
+   procedure Set_Process
+     (Self    : not null access View_With_Process;
+      Process : access Base_Visual_Debugger'Class) is abstract;
    function Get_Process
-     (View : access Process_View_Record) return Visual_Debugger;
+     (Self : not null access View_With_Process)
+      return access Base_Visual_Debugger'Class is abstract;
    --  Return the debugger associated with that view, or null if the view
    --  is not associated currently.
 
-   procedure Unset_Process (View : access Process_View_Record);
-   --  Disconnect View from any process
-
    procedure On_Attach
-     (View    : access Process_View_Record;
-      Process : access Visual_Debugger_Record'Class) is null;
+     (View    : not null access View_With_Process;
+      Process : not null access Base_Visual_Debugger'Class) is null;
    --  Called when the view is being attached to Process. This procedure should
    --  typically be used to connect to specific events on Process. However, it
    --  doesn't need to force a refresh of the view, which is done
    --  automatically.
-   --  By default, it does nothing.
 
-   procedure Update (View : access Process_View_Record) is null;
+   procedure Update (View : not null access View_With_Process) is null;
    --  Refresh the view by getting up-to-date information from the debugger.
    --  Nothing is done when the view is not associated with a debugger.
    --  It does nothing by default.
 
-   procedure On_Process_Terminated (View : access Process_View_Record) is null;
-   --  Called when the debugged process has terminated
+   procedure On_Process_Terminated
+     (View : not null access View_With_Process) is null;
+   --  Called when the debugged process has terminated.
 
    procedure On_State_Changed
-     (View      : access Process_View_Record;
-      New_State : GPS.Kernel.Debugger_State) is null;
+     (View      : not null access View_With_Process;
+      New_State : GPS.Debuggers.Debugger_State) is null;
    --  Called when the debugger state has changed. One possibly use is to
    --  clear the view while the debugger is executing because its information
    --  might be confusing in such a case.
 
+   ------------------
+   -- Simple views --
+   ------------------
+
+   type Process_View_Record is abstract
+      new Generic_Views.View_Record and View_With_Process with private;
+   --  The base type for all debugger-related views.
+   --  These are associated with a debugger (when one is running), and display
+   --  info that that debugger.
+
+   overriding procedure Set_Process
+     (Self    : not null access Process_View_Record;
+      Process : access Base_Visual_Debugger'Class);
+   overriding function Get_Process
+     (Self : not null access Process_View_Record)
+      return access Base_Visual_Debugger'Class;
+
    generic
-      Module_Name : String;
-      --  The name of the module, and name used in the desktop file. It mustn'y
-      --  contain any space.
+      type Formal_View_Record is
+        new Generic_Views.View_Record and View_With_Process with private;
+      --  The type used as a parent for the view, and used to store the view in
+      --  a Visual_Debugger.
 
-      View_Name   : String;
-      --  Name of the menu, in tools, that is used to create the view. It is
-      --  also used as the name for the MDI window.
+      type Formal_MDI_Child is new GPS.Kernel.MDI.GPS_MDI_Child_Record
+         with private;
+      --  ??? Seems to be needed because of a bug in GNAT, since we get errors
+      --  when Formal_MDI_Child is not explicitly declared in Views below.
 
-      type Formal_View_Record is new Process_View_Record with private;
-      --  The base type of the view
-
-      type Formal_MDI_Child is new GPS_MDI_Child_Record with private;
-      --  The type of MDI child, in case the view needs to use a specialized
-      --  type, for instance to add drag-and-drop capabilities
+      with package Views is new Generic_Views.Simple_Views
+        (Formal_View_Record => Formal_View_Record,
+         Formal_MDI_Child   => Formal_MDI_Child,
+         Commands_Category  => "",
+         others             => <>);
+      --  The description of the view in the MDI.
+      --  The Commands_Category should be the empty string, since creating new
+      --  views should attach them to the current debugger.
+      --  ??? Can this be done via a primitive operation, rather than have to
+      --  rewrite our own command.
 
       with function Get_View
-        (Process : access Visual_Debugger_Record'Class)
-         return Base_Type_Access is <>;
+        (Process : not null access Base_Visual_Debugger'Class)
+         return access Formal_View_Record'Class is <>;
       with procedure Set_View
-        (Process : access Visual_Debugger_Record'Class;
-         View    : Base_Type_Access) is <>;
+        (Process : not null access Base_Visual_Debugger'Class;
+         View    : access Formal_View_Record'Class := null) is <>;
       --  Get or set the view in the visual debugger structure, so that it is
       --  closely associated with that process.
       --  The function Set_View is a good place to save the current state of
@@ -125,31 +128,21 @@ package GVD.Generic_View is
       --  graphically the contents of the old view. At that point the
       --  view is still attached to a process with which you can interact.
 
-      with function Initialize
-        (View   : access Formal_View_Record'Class;
-         Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-        return Gtk.Widget.Gtk_Widget is <>;
-      --  Function used to create the view itself.
-      --  This function should return the Focus_Child in the MDI sense, ie the
-      --  widget that should receive the focus when the MDI child receives the
-      --  focus.
-
-      Local_Toolbar : Boolean := False;
-      Local_Config  : Boolean := False;
-      --  See documentation in generic_views.ads
-
-      Group    : Gtkada.MDI.Child_Group;
-      Position : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Right;
-      Areas    : Gtkada.MDI.Allowed_Areas := Gtkada.MDI.Sides_Only;
-      --  How should the MDI child be created?
+      with function Get_Current_Debugger
+        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+         return access Base_Visual_Debugger'Class is <>;
+      --  A proxy to the corresponding function in GVD_Module, because of
+      --  elaboration circularities
 
    package Simple_Views is
 
       procedure Attach_To_View
-        (Process             : access Visual_Debugger_Record'Class;
+        (Process             : access Base_Visual_Debugger'Class;
+         Kernel              : not null access Kernel_Handle_Record'Class;
          Create_If_Necessary : Boolean);
       --  Attach the process to an instance of the view. It is valid to pass a
-      --  null process, just to open a view.
+      --  null process, just to open a view (this will attach to the current
+      --  debugger if possible)
       --
       --  If an unattached view exists in the desktop, it is reused.
       --  If none exists, one is created if Create_If_Necessary is true.
@@ -158,9 +151,16 @@ package GVD.Generic_View is
       --  The debugger console should be created already. When it is closed (ie
       --  the debugger exits), the view will be destroyed.
 
-      procedure Register_Desktop_Functions
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+      procedure Register_Module
+        (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
       --  Register the functions needed to load and save the desktop
+
+      procedure Register_Open_View_Action
+        (Kernel      : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+         Action_Name : String;
+         Description : String;
+         Filter      : Action_Filter := null);
+      --  Create a new action that will open the view.
 
    private
       procedure On_Destroy
@@ -171,8 +171,8 @@ package GVD.Generic_View is
       --  This needs to be in the spec since it is used as a callback in the
       --  body.
 
-      type On_Debugger_Terminate is new Debugger_Hooks_Function
-         with null record;
+      type On_Debugger_Terminate is
+        new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
       overriding procedure Execute
         (Self     : On_Debugger_Terminate;
          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -181,24 +181,25 @@ package GVD.Generic_View is
       --  This needs to be in the spec since it is used as a callback in the
       --  body.
 
-      type On_Update is new Debugger_Hooks_Function with null record;
+      type On_Update is
+        new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
       overriding procedure Execute
         (Self     : On_Update;
          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger : access Base_Visual_Debugger'Class);
       --  Hook called when the view needs to be refreshed
 
-      type On_Debugger_State_Changed is new Debugger_States_Hooks_Function
-         with null record;
+      type On_Debugger_State_Changed is
+        new GPS.Kernel.Hooks.Debugger_States_Hooks_Function with null record;
       overriding procedure Execute
         (Self      : On_Debugger_State_Changed;
          Kernel    : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Debugger  : access Base_Visual_Debugger'Class;
-         New_State : GPS.Kernel.Debugger_State);
+         New_State : GPS.Debuggers.Debugger_State);
       --  Hook called when the state of the debugger changes
 
-      type On_Debug_Process_Terminated is new Debugger_Hooks_Function
-         with null record;
+      type On_Debug_Process_Terminated is
+        new GPS.Kernel.Hooks.Debugger_Hooks_Function with null record;
       overriding procedure Execute
         (Self     : On_Debug_Process_Terminated;
          Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -208,8 +209,16 @@ package GVD.Generic_View is
    end Simple_Views;
 
 private
-   type Process_View_Record is abstract new Base_Type with record
-      Process : Visual_Debugger;
-         --  The process associated with the view
+   type Process_View_Record is abstract
+      new Generic_Views.View_Record and View_With_Process with
+   record
+      Process : access Base_Visual_Debugger'Class;
+      --  The process associated with the view
    end record;
+
+   overriding function Get_Process
+     (Self : not null access Process_View_Record)
+      return access Base_Visual_Debugger'Class
+     is (Self.Process);
+
 end GVD.Generic_View;

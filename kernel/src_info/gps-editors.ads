@@ -15,16 +15,16 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with System;
+--  An abstract definition of what editors are and what they can do.
 
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Finalization; use Ada.Finalization;
-with GNATCOLL.VFS;     use GNATCOLL.VFS;
-with GNATCOLL.Scripts; use GNATCOLL.Scripts;
-with GNATCOLL.Xref;    use GNATCOLL.Xref;
-
 with Basic_Types;      use Basic_Types;
+with GNATCOLL.Scripts; use GNATCOLL.Scripts;
+with GNATCOLL.VFS;     use GNATCOLL.VFS;
+with GNATCOLL.Xref;    use GNATCOLL.Xref;
 with Language;         use Language;
+with System;
 
 package GPS.Editors is
 

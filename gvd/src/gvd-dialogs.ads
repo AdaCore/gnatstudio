@@ -30,22 +30,6 @@ with GNAT.Strings;
 
 package GVD.Dialogs is
 
-   procedure Attach_To_Thread_Dialog
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
-      Create_If_Necessary : Boolean);
-   --  Attach to a thread dialog (if Create_If_Necessary is True, only attach
-   --  if one exists and is not attached to a debugger)
-
-   procedure Attach_To_Tasks_Dialog
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
-      Create_If_Necessary : Boolean);
-   --  Attach to a task dialog
-
-   procedure Attach_To_PD_Dialog
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
-      Create_If_Necessary : Boolean);
-   --  Attach to a protection domains dialog
-
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the functions to load and save the desktop

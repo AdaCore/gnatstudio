@@ -15,20 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GVD.Process;
 with GPS.Kernel;
 
 package Breakpoints_Editor is
-
-   procedure Attach_To_Breakpoints
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
-      Create_If_Necessary : Boolean);
-   --  Attach Debugger to a breakpoints editor.
-   --  If an unattached editor exists in the desktop, it is reused.
-   --  If no editor exists, one is created if Create_If_Necessary is true.
-   --  Nothing is done when Debugger is already attached to an editor.
-   --
-   --  The debugger console should be created already
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

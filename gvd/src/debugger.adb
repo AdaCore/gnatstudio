@@ -94,6 +94,17 @@ package body Debugger is
    --  prompt, ie processing the output
    --  Note that this function will do nothing if Mode is Internal.
 
+   procedure After_Command_Executed
+     (Debugger          : access Debugger_Root'Class;
+      Mode              : Command_Type;
+      Always_Emit_Hooks : Boolean);
+   --  Various updates and cleanups to be done when the current command has
+   --  finished executing. This will also run other commands in the queue, if
+   --  there are any, before running the appropriate hooks.
+   --  The hooks reporting the change of state of the debugger are only emited
+   --  when the mode is not Internal. But if Always_Emit_Hooks is true, they
+   --  are always emitted.
+
    ---------------------
    -- Command Queuing --
    ---------------------
@@ -469,58 +480,7 @@ package body Debugger is
          Debugger.State := Idle;
          Flush_Async_Output;
 
-         --  Put back the standard cursor
-
-         Set_Command_In_Process (Get_Process (Debugger), False);
-         Unregister_Dialog (Process);
-
-         --  Do the postprocessing here instead of calling Send_Internal_Post
-         --  since we need to handle post processing slightly differently
-
-         declare
-            Current_Command : constant String := Get_Command (Process);
-            Bp_Changed      : Boolean;
-            Result          : Boolean;
-            pragma Unreferenced (Result);
-
-         begin
-            Free (Process.Current_Command);
-
-            if Process_Command (Debugger) then
-               --  ??? register if needed for some of the hooks
-               --  before returning
-               return True;
-            end if;
-
-            Final_Post_Process (Process, Mode);
-
-            --  Compute Bp_Changed before running hooks and e.g. running
-            --  other debugger commands as a side effect.
-            Bp_Changed := Breakpoints_Changed (Debugger, Current_Command);
-
-            if Process /= null then  --  null in testsuite
-               case Command_Kind (Debugger, Current_Command) is
-               when Load_Command =>
-                  Debugger_Executable_Changed_Hook.Run
-                     (Process.Kernel, Process);
-               when Context_Command =>
-                  Debugger_Context_Changed_Hook.Run
-                     (Process.Kernel, Process);
-               when Execution_Command =>
-                  Debugger_Process_Stopped_Hook.Run
-                     (Process.Kernel, Process);
-               when Misc_Command =>
-                  null;
-               end case;
-            end if;
-
-            Update_Breakpoints (Process, Force => Bp_Changed);
-
-            --  In case a command has been queued while handling the signals
-            --  and breakpoints above.
-
-            Result := Process_Command (Debugger);
-         end;
+         After_Command_Executed (Debugger, Mode, Always_Emit_Hooks => True);
       end if;
 
       return True;
@@ -626,73 +586,86 @@ package body Debugger is
       Send (Get_Process (Debugger), Cmd, Empty_Buffer);
    end Send_Internal_Pre;
 
-   ------------------------
-   -- Send_Internal_Post --
-   ------------------------
+   ----------------------------
+   -- After_Command_Executed --
+   ----------------------------
 
-   procedure Send_Internal_Post
-     (Debugger : access Debugger_Root'Class;
-      Mode     : Command_Type)
+   procedure After_Command_Executed
+     (Debugger          : access Debugger_Root'Class;
+      Mode              : Command_Type;
+      Always_Emit_Hooks : Boolean)
    is
-      Process    : Visual_Debugger;
-      Kind       : Command_Category;
-      Bp_Changed : Boolean;
-      Result     : Boolean;
-      pragma Unreferenced (Result);
+      Process : constant Visual_Debugger := GVD.Process.Convert (Debugger);
+      Bp_Might_Have_Changed : Boolean;
+      Kind                  : Command_Category;
+      Dummy                 : Boolean;
 
    begin
-      Process := GVD.Process.Convert (Debugger);
-
-      --  See also Output_Available for similar handling.
       Set_Command_In_Process (Get_Process (Debugger), False);
 
       if Process /= null then
-         Kind := Command_Kind (Debugger, Process.Current_Command.all);
-         Bp_Changed := Breakpoints_Changed
+         --  Compute whether breakpoints might have changed before running
+         --  hooks and e.g. running other debugger commands as a side effect.
+
+         Bp_Might_Have_Changed := Breakpoints_Changed
            (Debugger, Process.Current_Command.all);
+         Kind := Command_Kind (Debugger, Process.Current_Command.all);
 
          Free (Process.Current_Command);
-      end if;
+         Unregister_Dialog (Process);
 
-      if Mode /= Internal and then Process_Command (Debugger) then
-         --  ??? register if needed for hooks before returning
-         return;
-      end if;
+         --  Are there still commands to run in the queue ? If yes, perform
+         --  they all before we run the hooks just once
+         if Mode /= Internal and then Process_Command (Debugger) then
+            return;
+         end if;
 
-      if Process /= null then
          Final_Post_Process (Process, Mode);
 
-         if Mode /= Internal then
+         if Always_Emit_Hooks or else Mode /= Internal then
             --  Postprocessing (e.g handling of auto-update).
 
             if Process /= null then  --  null in testsuite
                case Kind is
                when Load_Command =>
                   Debugger_Executable_Changed_Hook.Run
-                     (Process.Kernel, Process);
+                    (Process.Kernel, Process);
                when Context_Command =>
                   Debugger_Context_Changed_Hook.Run
-                     (Process.Kernel, Process);
+                    (Process.Kernel, Process);
                when Execution_Command =>
                   Debugger_Process_Stopped_Hook.Run
-                     (Process.Kernel, Process);
+                    (Process.Kernel, Process);
                when Misc_Command =>
                   null;
                end case;
             end if;
 
-            Update_Breakpoints (Process, Force => Bp_Changed);
+            --  ??? This has already be run in Final_Post_Process if we
+            --  discovered a file name and we never parsed breakpoints info
+            --  before
+            Update_Breakpoints (Process, Force => Bp_Might_Have_Changed);
          end if;
 
-         Unregister_Dialog (Process);
-
-         --  In case a command has been queued while handling the signals
-         --  and breakpoints above.
+         --  In case a command has been queued while handling the signals and
+         --  breakpoints above.
 
          if Mode /= Internal then
-            Result := Process_Command (Debugger);
+            Dummy := Process_Command (Debugger);
          end if;
+
       end if;
+   end After_Command_Executed;
+
+   ------------------------
+   -- Send_Internal_Post --
+   ------------------------
+
+   procedure Send_Internal_Post
+     (Debugger : access Debugger_Root'Class;
+      Mode     : Command_Type) is
+   begin
+      After_Command_Executed (Debugger, Mode, Always_Emit_Hooks => False);
    end Send_Internal_Post;
 
    ----------

@@ -40,21 +40,20 @@ with Pango.Font;              use Pango.Font;
 
 with Gtkada.MDI;              use Gtkada.MDI;
 
-with Commands.Interactive;    use Commands, Commands.Interactive;
 with Debugger;                use Debugger;
 with Default_Preferences;     use Default_Preferences;
 with Generic_Views;           use Generic_Views;
+with GPS.Debuggers;           use GPS.Debuggers;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GVD.Code_Editors;        use GVD.Code_Editors;
+with GVD.Generic_View;        use GVD.Generic_View;
 with GVD.Preferences;         use GVD.Preferences;
 with GVD.Process;             use GVD.Process;
 with GVD.Types;               use GVD.Types;
-with GVD.Views;               use GVD.Views;
 with GVD_Module;              use GVD_Module;
 with String_Utils;            use String_Utils;
 
@@ -74,7 +73,7 @@ package body GVD.Assembly_View is
    --  Some debuggers (gdb) might take a long time to output the assembly code
    --  for a specific region, so it is better to keep it once we have it.
 
-   type Assembly_View_Record is new Base_Views.Process_View_Record with
+   type Assembly_View_Record is new Process_View_Record with
       record
          View                : Gtk.Text_View.Gtk_Text_View;
 
@@ -111,8 +110,7 @@ package body GVD.Assembly_View is
    --  source code.
 
    function Initialize
-     (Widget : access Assembly_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (Widget : access Assembly_View_Record'Class) return Gtk_Widget;
    --  Internal initialization function
 
    procedure Set_Source_Line
@@ -121,8 +119,7 @@ package body GVD.Assembly_View is
    --  Store in the assembly view the range of address that corresponds to the
    --  current source line.
 
-   overriding procedure Update (View : access Assembly_View_Record);
-   --  Update the assembly view
+   overriding procedure Update (View : not null access Assembly_View_Record);
 
    procedure Set_Font
      (View : Assembly_View;
@@ -136,33 +133,33 @@ package body GVD.Assembly_View is
    --  Set the text associated with the box. The Hightlighting is reset.
 
    function Get_View
-     (Process : access Visual_Debugger_Record'Class)
-      return Generic_Views.Abstract_View_Access;
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access Assembly_View_Record'Class;
    procedure Set_View
-     (Process : access Visual_Debugger_Record'Class;
-      View    : Generic_Views.Abstract_View_Access);
+     (Process : not null access Base_Visual_Debugger'Class;
+      View    : access Assembly_View_Record'Class := null);
    --  Store or retrieve the view from the process
 
-   package Simple_Views is new Base_Views.Simple_Views
+   package Assembly_MDI_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Assembly_View",
       View_Name          => -"Assembly",
       Formal_View_Record => Assembly_View_Record,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_View,
-      Set_View           => Set_View,
+      Reuse_If_Exist     => False,
+      Commands_Category  => "",
       Group              => Group_Debugger_Stack,
       Position           => Position_Right,
       Areas              => Gtkada.MDI.Both,
       Initialize         => Initialize);
+   package Simple_Views is new GVD.Generic_View.Simple_Views
+     (Views              => Assembly_MDI_Views,
+      Formal_View_Record => Assembly_View_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Get_View           => Get_View,
+      Set_View           => Set_View);
 
    package Assembly_View_Event_Cb is
      new Return_Callback (Assembly_View_Record, Boolean);
-
-   type Assembly_View_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Assembly_View_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Debug->Data->Assembly
 
    function Key_Press_Cb
      (View  : access Assembly_View_Record'Class;
@@ -315,7 +312,7 @@ package body GVD.Assembly_View is
       end if;
 
       Get_Line_Address
-        (Get_Process (View).Debugger,
+        (Visual_Debugger (Get_Process (View)).Debugger,
          Source_Line,
          View.Source_Line_Start,
          View.Source_Line_End);
@@ -617,7 +614,7 @@ package body GVD.Assembly_View is
          return;
       end if;
 
-      Breakpoints_Array := Get_Process (View).Breakpoints;
+      Breakpoints_Array := Visual_Debugger (Get_Process (View)).Breakpoints;
 
       for Index in Breakpoints_Array'Range loop
          if Breakpoints_Array (Index).Address = Addr then
@@ -952,7 +949,7 @@ package body GVD.Assembly_View is
    -- Update --
    ------------
 
-   overriding procedure Update (View : access Assembly_View_Record) is
+   overriding procedure Update (View : not null access Assembly_View_Record) is
       Process      : constant Visual_Debugger := Get_Process (View);
       Buffer       : constant Gtk_Text_Buffer := Get_Buffer (View.View);
 
@@ -1010,10 +1007,10 @@ package body GVD.Assembly_View is
    --------------
 
    function Get_View
-     (Process : access Visual_Debugger_Record'Class)
-      return Generic_Views.Abstract_View_Access is
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access Assembly_View_Record'Class is
    begin
-      return Generic_Views.Abstract_View_Access (Process.Assembly);
+      return Assembly_View (Visual_Debugger (Process).Assembly);
    end Get_View;
 
    --------------
@@ -1021,52 +1018,19 @@ package body GVD.Assembly_View is
    --------------
 
    procedure Set_View
-     (Process : access Visual_Debugger_Record'Class;
-      View    : Generic_Views.Abstract_View_Access) is
+     (Process : not null access Base_Visual_Debugger'Class;
+      View    : access Assembly_View_Record'Class := null)
+   is
+      V : constant Visual_Debugger := Visual_Debugger (Process);
+      Old : constant Assembly_View := Get_View (Process);
    begin
       --  If we are detaching, clear the old view
-      if View = null
-        and then Process.Assembly /= null
-      then
-         Set_Text (Assembly_View (Process.Assembly), "");
+      if Old /= null then
+         Set_Text (Old, "");
       end if;
 
-      Process.Assembly := Gtk_Widget (View);
+      V.Assembly := Abstract_View_Access (View);
    end Set_View;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Assembly_View_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Process : Visual_Debugger;
-      List    : Debugger_List_Link := Get_Debugger_List (Kernel);
-   begin
-      while List /= null loop
-         Process := Visual_Debugger (List.Debugger);
-
-         if Process.Debugger /= null then
-            Attach_To_Assembly_View (Process, Create_If_Necessary => True);
-         end if;
-
-         List := List.Next;
-      end loop;
-      return Commands.Success;
-   end Execute;
-
-   -----------------------------
-   -- Attach_To_Assembly_View --
-   -----------------------------
-
-   procedure Attach_To_Assembly_View
-     (Debugger            : access GVD.Process.Visual_Debugger_Record'Class;
-      Create_If_Necessary : Boolean) renames Simple_Views.Attach_To_View;
-
    --------------------------
    -- Update_Assembly_View --
    --------------------------
@@ -1102,11 +1066,11 @@ package body GVD.Assembly_View is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Simple_Views.Register_Desktop_Functions (Kernel);
-      Register_Action
-        (Kernel, "open assembly view", new Assembly_View_Command,
-         -"Open the Assembly view for the debugger",
-         Category => -"Views");
+      Simple_Views.Register_Module (Kernel);
+      Simple_Views.Register_Open_View_Action
+        (Kernel,
+         Action_Name => "open assembly view",
+         Description => -"Open the Assembly view for the debugger");
    end Register_Module;
 
    ----------------
@@ -1114,10 +1078,8 @@ package body GVD.Assembly_View is
    ----------------
 
    function Initialize
-     (Widget : access Assembly_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
+     (Widget : access Assembly_View_Record'Class) return Gtk_Widget
    is
-      pragma Unreferenced (Kernel);
       Hook : access On_Pref_Changed;
       Scrolled : Gtk_Scrolled_Window;
    begin

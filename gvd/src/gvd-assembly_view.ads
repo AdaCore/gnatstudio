@@ -23,17 +23,6 @@ with GVD.Process;
 
 package GVD.Assembly_View is
 
-   procedure Attach_To_Assembly_View
-     (Debugger            : access GVD.Process.Visual_Debugger_Record'Class;
-      Create_If_Necessary : Boolean);
-   --  Attach Debugger to an assembly view.
-   --  If an unattached assembly view exists in the desktop, it is reused.
-   --  Otherwise one, is created if Create_If_Necessary is true.
-   --  Nothing is done when Debugger is already attached to an assembly view.
-   --
-   --  The debugger console should be created already. When it is closed (ie
-   --  the debugger exits), the assembly view will be destroyed.
-
    procedure Update_Assembly_View
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class);
    --  Update the assembly view

@@ -15,14 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Commands.Interactive;  use Commands, Commands.Interactive;
 with Config;                use Config;
 with Generic_Views;         use Generic_Views;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
-with GPS.Kernel.Actions;    use GPS.Kernel.Actions;
+with GPS.Debuggers;         use GPS.Debuggers;
 with GPS.Main_Window;       use GPS.Main_Window;
 with GPS.Intl;              use GPS.Intl;
 pragma Elaborate_All (GPS.Intl);
@@ -49,9 +48,10 @@ with GUI_Utils;             use GUI_Utils;
 
 with GVD;                   use GVD;
 with GVD.Dialogs.Callbacks; use GVD.Dialogs.Callbacks;
+with GVD.Generic_View;      use GVD.Generic_View;
 with GVD.Process;           use GVD.Process;
 with GVD.Types;             use GVD.Types;
-with GVD.Views;             use GVD.Views;
+with GVD_Module;            use GVD_Module;
 
 with Interfaces.C.Strings;  use Interfaces.C.Strings;
 with Interfaces.C;          use Interfaces.C;
@@ -99,7 +99,7 @@ package body GVD.Dialogs is
    --  Would be nice to use a primitive operation, but that would require
    --  declaring the types in the spec, not nice...
 
-   type Thread_View_Record is new Base_Views.Process_View_Record with
+   type Thread_View_Record is new Process_View_Record with
       record
          Scrolled : Gtk_Scrolled_Window;
          Tree     : Gtk.Tree_View.Gtk_Tree_View;
@@ -109,27 +109,33 @@ package body GVD.Dialogs is
    type Thread_View is access all Thread_View_Record'Class;
 
    function Initialize
-     (Thread : access Thread_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (Thread : access Thread_View_Record'Class) return Gtk_Widget;
    function Get_Thread_View
-     (Process : access Visual_Debugger_Record'Class)
-      return Generic_Views.Abstract_View_Access;
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access Thread_View_Record'Class;
    procedure Set_Thread_View
-     (Process : access Visual_Debugger_Record'Class;
-      View    : Generic_Views.Abstract_View_Access);
-   overriding procedure Update (Thread : access Thread_View_Record);
+     (Process : not null access Base_Visual_Debugger'Class;
+      View    : access Thread_View_Record'Class := null);
+   overriding procedure Update (Thread : not null access Thread_View_Record);
    --  See description in GVD.Generic_View
 
-   package Thread_Views is new Base_Views.Simple_Views
+   package Thread_MDI_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Thread_View",
       View_Name          => -"Threads",
       Formal_View_Record => Thread_View_Record,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_Thread_View,
-      Set_View           => Set_Thread_View,
+      Reuse_If_Exist     => False,
+      Commands_Category  => "",
+      Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Debugger_Stack,
       Position           => Position_Right,
       Initialize         => Initialize);
+   package Thread_Views is new GVD.Generic_View.Simple_Views
+     (Views              => Thread_MDI_Views,
+      Formal_View_Record => Thread_View_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Get_View           => Get_Thread_View,
+      Set_View           => Set_Thread_View);
 
    function On_Thread_Button_Release
      (Thread : access Gtk_Widget_Record'Class;
@@ -141,54 +147,68 @@ package body GVD.Dialogs is
    ----------------
 
    type Task_View_Record is new Thread_View_Record with null record;
+   type Task_View is access all Task_View_Record'Class;
    function Get_Task_View
-     (Process : access Visual_Debugger_Record'Class)
-      return Generic_Views.Abstract_View_Access;
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access Task_View_Record'Class;
    procedure Set_Task_View
-     (Process : access Visual_Debugger_Record'Class;
-      View    : Generic_Views.Abstract_View_Access);
+     (Process : not null access Base_Visual_Debugger'Class;
+      View    : access Task_View_Record'Class := null);
    function Initialize
-     (Tasks  : access Task_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (Tasks  : access Task_View_Record'Class) return Gtk_Widget;
    --  See inherited documentation
 
-   package Tasks_Views is new Base_Views.Simple_Views
+   package Tasks_MDI_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Tasks_View",
       View_Name          => -"Tasks",
       Formal_View_Record => Task_View_Record,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_Task_View,
-      Set_View           => Set_Task_View,
+      Reuse_If_Exist     => False,
+      Commands_Category  => "",
+      Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Debugger_Stack,
       Position           => Position_Right,
       Initialize         => Initialize);
+   package Tasks_Views is new GVD.Generic_View.Simple_Views
+     (Views              => Tasks_MDI_Views,
+      Formal_View_Record => Task_View_Record,
+      Formal_MDI_Child   => GPS_MDI_Child_Record,
+      Get_View           => Get_Task_View,
+      Set_View           => Set_Task_View);
 
    -----------------------------
    -- Protection domains view --
    -----------------------------
 
    type PD_View_Record is new Thread_View_Record with null record;
+   type PD_View is access all PD_View_Record'Class;
    function Get_PD_View
-     (Process : access Visual_Debugger_Record'Class)
-      return Generic_Views.Abstract_View_Access;
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access PD_View_Record'Class;
    procedure Set_PD_View
-     (Process : access Visual_Debugger_Record'Class;
-      View    : Generic_Views.Abstract_View_Access);
+     (Process : not null access Base_Visual_Debugger'Class;
+      View    : access PD_View_Record'Class := null);
    function Initialize
-     (PDs    : access PD_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget;
+     (PDs    : access PD_View_Record'Class) return Gtk_Widget;
    --  See inherited documentation
 
-   package PD_Views is new Base_Views.Simple_Views
+   package PD_MDI_Views is new Generic_Views.Simple_Views
      (Module_Name        => "PD_View",
       View_Name          => -"Protection Domains",
       Formal_View_Record => PD_View_Record,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Get_View           => Get_PD_View,
-      Set_View           => Set_PD_View,
+      Reuse_If_Exist     => False,
+      Commands_Category  => "",
+      Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Debugger_Stack,
       Position           => Position_Right,
       Initialize         => Initialize);
+   package PD_Views is new GVD.Generic_View.Simple_Views
+     (Views               => PD_MDI_Views,
+      Formal_View_Record => PD_View_Record,
+      Formal_MDI_Child    => GPS_MDI_Child_Record,
+      Get_View            => Get_PD_View,
+      Set_View           => Set_PD_View);
 
    ----------
    -- Misc --
@@ -198,85 +218,6 @@ package body GVD.Dialogs is
      (Dialog : access Gtk_Widget_Record'Class) return Boolean;
    --  Called when the user deletes a dialog by clicking on the small
    --  button in the title bar of the window.
-
-   procedure Attach_To_Thread_Dialog
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
-      Create_If_Necessary : Boolean)
-      renames Thread_Views.Attach_To_View;
-   procedure Attach_To_Tasks_Dialog
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
-      Create_If_Necessary : Boolean)
-      renames Tasks_Views.Attach_To_View;
-   procedure Attach_To_PD_Dialog
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
-      Create_If_Necessary : Boolean)
-      renames PD_Views.Attach_To_View;
-
-   type Protection_Domains_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Protection_Domains_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-
-   type Tasks_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Tasks_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-
-   type Threads_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Threads_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Protection_Domains_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
-   begin
-      Attach_To_PD_Dialog (Process, Create_If_Necessary => True);
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Tasks_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
-   begin
-      Attach_To_Tasks_Dialog (Process, Create_If_Necessary => True);
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Threads_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
-   begin
-      Attach_To_Thread_Dialog (Process, Create_If_Necessary => True);
-      return Commands.Success;
-   end Execute;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -288,8 +229,8 @@ package body GVD.Dialogs is
    is
       pragma Unreferenced (Self);
       Kernel  : constant Kernel_Handle := Get_Kernel (Context);
-      Top     : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
    begin
       return Process /= null
          and then Process.Debugger /= null
@@ -345,7 +286,7 @@ package body GVD.Dialogs is
 
       if Matched (0) /= No_Match then
          Task_Switch
-           (Get_Process (View).Debugger,
+           (Visual_Debugger (Get_Process (View)).Debugger,
             Natural'Value (Line (Matched (0).First .. Matched (0).Last)),
             Mode => GVD.Types.Visible);
       end if;
@@ -364,7 +305,7 @@ package body GVD.Dialogs is
 
       if Matched (0) /= No_Match then
          Thread_Switch
-           (Get_Process (View).Debugger,
+           (Visual_Debugger (Get_Process (View)).Debugger,
             Natural'Value (Line (Matched (0).First .. Matched (0).Last)),
             Mode => GVD.Types.Visible);
       end if;
@@ -389,7 +330,7 @@ package body GVD.Dialogs is
 
       if Matched (0) /= No_Match then
          PD_Switch
-           (Get_Process (View).Debugger,
+           (Visual_Debugger (Get_Process (View)).Debugger,
             Line (Matched (0).First .. Matched (0).Last),
             Mode => GVD.Types.Hidden);
 
@@ -404,31 +345,28 @@ package body GVD.Dialogs is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Filter : Action_Filter;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Filter := new Is_Vx653_Debugger;
-      Register_Action
-        (Kernel, "open protection domains debugger window",
-         new Protection_Domains_Command,
-         -"Open the 'Protection Domains' window for the debugger",
-         Filter => Filter,
-         Category => -"Views");
+      Thread_Views.Register_Module (Kernel);
+      Tasks_Views.Register_Module (Kernel);
+      PD_Views.Register_Module (Kernel);
 
-      Register_Action
-        (Kernel, "open threads debugger window", new Threads_Command,
-         -"Open the 'Threads' window for the debugger",
-         Category => -"Views");
+      Thread_Views.Register_Open_View_Action
+        (Kernel,
+         Action_Name => "open threads debugger window",
+         Description => -"Open the 'Threads' window for the debugger");
 
-      Register_Action
-        (Kernel, "open tasks debugger window", new Tasks_Command,
-         -"Open the 'Tasks' window for the debugger",
-         Category => -"Views");
+      Tasks_Views.Register_Open_View_Action
+        (Kernel,
+         Action_Name => "open tasks debugger window",
+         Description => -"Open the 'Tasks' window for the debugger");
 
-      Thread_Views.Register_Desktop_Functions (Kernel);
-      Tasks_Views.Register_Desktop_Functions (Kernel);
-      PD_Views.Register_Desktop_Functions (Kernel);
+      PD_Views.Register_Open_View_Action
+        (Kernel,
+         Action_Name => "open protection domains debugger window",
+         Description =>
+           -"Open the 'Protection Domains' window for the debugger",
+        Filter       => new Is_Vx653_Debugger);
    end Register_Module;
 
    ------------------------------
@@ -460,10 +398,10 @@ package body GVD.Dialogs is
    ---------------------
 
    function Get_Thread_View
-     (Process : access Visual_Debugger_Record'Class)
-      return Generic_Views.Abstract_View_Access is
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access Thread_View_Record'Class is
    begin
-      return Generic_Views.Abstract_View_Access (Process.Threads);
+      return Thread_View (Visual_Debugger (Process).Threads);
    end Get_Thread_View;
 
    ---------------------
@@ -471,18 +409,17 @@ package body GVD.Dialogs is
    ---------------------
 
    procedure Set_Thread_View
-     (Process : access Visual_Debugger_Record'Class;
-      View    : Generic_Views.Abstract_View_Access) is
+     (Process : not null access Base_Visual_Debugger'Class;
+      View    : access Thread_View_Record'Class := null)
+   is
+      V : constant Visual_Debugger := Visual_Debugger (Process);
+      Old : constant Thread_View := Get_Thread_View (Process);
    begin
-      if View = null
-        and then Process.Threads /= null
-        and then Thread_View (Process.Threads).Tree /= null
-      then
-         Clear
-           (-Get_Model (Thread_View (Process.Threads).Tree));
+      if Old /= null and then Old.Tree /= null then
+         Clear (-Get_Model (Old.Tree));
       end if;
 
-      Process.Threads := Gtk_Widget (View);
+      V.Threads := Abstract_View_Access (View);
    end Set_Thread_View;
 
    -------------------
@@ -490,10 +427,10 @@ package body GVD.Dialogs is
    -------------------
 
    function Get_Task_View
-     (Process : access Visual_Debugger_Record'Class)
-      return Generic_Views.Abstract_View_Access is
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access Task_View_Record'Class is
    begin
-      return Generic_Views.Abstract_View_Access (Process.Tasks);
+      return Task_View (Visual_Debugger (Process).Tasks);
    end Get_Task_View;
 
    -------------------
@@ -501,17 +438,17 @@ package body GVD.Dialogs is
    -------------------
 
    procedure Set_Task_View
-     (Process : access Visual_Debugger_Record'Class;
-      View    : Generic_Views.Abstract_View_Access) is
+     (Process : not null access Base_Visual_Debugger'Class;
+      View    : access Task_View_Record'Class := null)
+   is
+      V : constant Visual_Debugger := Visual_Debugger (Process);
+      Old : constant Task_View := Get_Task_View (Process);
    begin
-      if View = null
-        and then Process.Tasks /= null
-        and then Thread_View (Process.Tasks).Tree /= null
-      then
-         Clear (-Get_Model (Thread_View (Process.Tasks).Tree));
+      if Old /= null and then Old.Tree /= null then
+         Clear (-Get_Model (Old.Tree));
       end if;
 
-      Process.Tasks := Gtk_Widget (View);
+      V.Tasks := Abstract_View_Access (View);
    end Set_Task_View;
 
    -----------------
@@ -519,10 +456,10 @@ package body GVD.Dialogs is
    -----------------
 
    function Get_PD_View
-     (Process : access Visual_Debugger_Record'Class)
-      return Generic_Views.Abstract_View_Access is
+     (Process : not null access Base_Visual_Debugger'Class)
+      return access PD_View_Record'Class is
    begin
-      return Generic_Views.Abstract_View_Access (Process.PDs);
+      return PD_View (Visual_Debugger (Process).PDs);
    end Get_PD_View;
 
    -----------------
@@ -530,17 +467,17 @@ package body GVD.Dialogs is
    -----------------
 
    procedure Set_PD_View
-     (Process : access Visual_Debugger_Record'Class;
-      View    : Generic_Views.Abstract_View_Access) is
+     (Process : not null access Base_Visual_Debugger'Class;
+      View    : access PD_View_Record'Class := null)
+   is
+      V : constant Visual_Debugger := Visual_Debugger (Process);
+      Old : constant PD_View := Get_PD_View (Process);
    begin
-      if View = null
-        and then Process.PDs /= null
-        and then Thread_View (Process.PDs).Tree /= null
-      then
-         Clear (-Get_Model (Thread_View (Process.PDs).Tree));
+      if Old /= null and then Old.Tree /= null then
+         Clear (-Get_Model (Old.Tree));
       end if;
 
-      Process.PDs := Gtk_Widget (View);
+      V.PDs := Abstract_View_Access (View);
    end Set_PD_View;
 
    -------------
@@ -567,7 +504,7 @@ package body GVD.Dialogs is
    -- Update --
    ------------
 
-   overriding procedure Update (Thread : access Thread_View_Record) is
+   overriding procedure Update (Thread : not null access Thread_View_Record) is
       Info        : Thread_Information_Array (1 .. Max_Tasks);
       Len         : Natural;
       Num_Columns : Thread_Fields;
@@ -575,12 +512,13 @@ package body GVD.Dialogs is
       Model       : Gtk_Tree_Model;
       Path        : Gtk_Tree_Path;
       Sel         : Gtk_Tree_Selection;
+      V   : constant Visual_Debugger := Visual_Debugger (Get_Process (Thread));
    begin
-      if Get_Process (Thread) /= null
+      if V /= null
         and then Thread.Get_Visible
-        and then Get_Process (Get_Process (Thread).Debugger) /= null
+        and then Get_Process (V.Debugger) /= null
       then
-         Thread.Get_Info (Get_Process (Thread).Debugger, Info, Len);
+         Thread.Get_Info (V.Debugger, Info, Len);
          Num_Columns := Info (Info'First).Num_Fields;
 
          if Thread.Tree /= null
@@ -669,10 +607,7 @@ package body GVD.Dialogs is
    ----------------
 
    function Initialize
-     (Thread : access Thread_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
-   is
-      pragma Unreferenced (Kernel);
+     (Thread : access Thread_View_Record'Class) return Gtk_Widget is
    begin
       Initialize_Vbox (Thread, Homogeneous => False);
 
@@ -691,12 +626,11 @@ package body GVD.Dialogs is
    ----------------
 
    function Initialize
-     (Tasks  : access Task_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
+     (Tasks  : access Task_View_Record'Class) return Gtk_Widget
    is
       W : Gtk_Widget;
    begin
-      W := Initialize (Thread => Tasks, Kernel => Kernel);
+      W := Initialize (Thread => Tasks);
       Tasks.Get_Info := Info_Tasks_Dispatch'Access;
       Tasks.Switch   := Task_Switch_Dispatch'Access;
       return W;
@@ -707,12 +641,11 @@ package body GVD.Dialogs is
    ----------------
 
    function Initialize
-     (PDs    : access PD_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) return Gtk_Widget
+     (PDs    : access PD_View_Record'Class) return Gtk_Widget
    is
       W : Gtk_Widget;
    begin
-      W := Initialize (Thread => PDs, Kernel => Kernel);
+      W := Initialize (Thread => PDs);
       PDs.Get_Info := Info_PD_Dispatch'Access;
       PDs.Switch   := PD_Switch_Dispatch'Access;
       return W;

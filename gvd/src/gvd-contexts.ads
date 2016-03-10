@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                      GVD - The GNU Visual Debugger                       --
 --                                                                          --
---                     Copyright (C) 2005-2016, AdaCore                     --
+--                     Copyright (C) 2016, AdaCore                          --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,26 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  Various instanciations of GVD.Generic_Views
+--  Utilities to support selection contexts in the contxt of the debugger
 
-with Generic_Views;
-with GVD.Generic_View;
-with GVD.Process;          use GVD.Process;
-with GVD_Module;           use GVD_Module;
-with Interactive_Consoles; use Interactive_Consoles;
+with GPS.Kernel;           use GPS.Kernel;
 
-package GVD.Views is
+package GVD.Contexts is
 
-   package Base_Views is new GVD.Generic_View
-     (Base_Type                     => Generic_Views.View_Record,
-      Base_Type_Access              => Generic_Views.Abstract_View_Access,
-      Visual_Debugger_Record        => GVD.Process.Visual_Debugger_Record,
-      Visual_Debugger               => GVD.Process.Visual_Debugger);
+   function Get_Variable_Name
+     (Context     : GPS.Kernel.Selection_Context;
+      Dereference : Boolean) return String;
+   --  If Context contains an entity, get the entity name.
+   --  Dereference the entity if Dereference is True.
+   --  Return "" if entity name could not be found in Context.
 
-   package Console_Views is new GVD.Generic_View
-     (Base_Type                     => Interactive_Console_Record,
-      Base_Type_Access              => Interactive_Console,
-      Visual_Debugger_Record        => GVD.Process.Visual_Debugger_Record,
-      Visual_Debugger               => GVD.Process.Visual_Debugger);
-
-end GVD.Views;
+end GVD.Contexts;

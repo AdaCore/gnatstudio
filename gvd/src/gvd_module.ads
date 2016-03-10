@@ -20,8 +20,9 @@
 with Ada.Unchecked_Deallocation;
 
 with Glib.Object;
+with GPS.Debuggers;           use GPS.Debuggers;
 with GPS.Kernel.Modules;
-with GVD;  use GVD;
+with GVD;                     use GVD;
 
 package GVD_Module is
 
@@ -38,7 +39,7 @@ package GVD_Module is
    type Debugger_List_Link is access Debugger_List_Node;
 
    type Debugger_List_Node is record
-      Debugger : Glib.Object.GObject;
+      Debugger : access Base_Visual_Debugger'Class;
       --  The real type is a Visual_Debugger
 
       Next     : Debugger_List_Link;
@@ -59,13 +60,6 @@ package GVD_Module is
    procedure Debug_Terminate (Kernel : GPS.Kernel.Kernel_Handle);
    --  Terminate the debugging session, and closes all remaining debuggers
 
-   function Get_Variable_Name
-     (Context     : GPS.Kernel.Selection_Context;
-      Dereference : Boolean) return String;
-   --  If Context contains an entity, get the entity name.
-   --  Dereference the entity if Dereference is True.
-   --  Return "" if entity name could not be found in Context.
-
    procedure Setup_Side_Columns
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Create the hooks that are responsible for refreshing the side column
@@ -79,7 +73,7 @@ package GVD_Module is
 
    function Get_Current_Debugger
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Glib.Object.GObject;
+      return access Base_Visual_Debugger'Class;
    --  Return the current visual debugger
 
    procedure Set_First_Debugger
@@ -89,7 +83,7 @@ package GVD_Module is
 
    procedure Set_Current_Debugger
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Current : Glib.Object.GObject);
+      Current : access Base_Visual_Debugger'Class);
    --  Set the current active visual debugger
 
 end GVD_Module;

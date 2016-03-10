@@ -26,6 +26,8 @@ with GNAT.Expect;          use GNAT.Expect;
 with Gtk.Widget;
 
 with Debugger;             use Debugger;
+with Generic_Views;        use Generic_Views;
+with GPS.Debuggers;        use GPS.Debuggers;
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with GVD.Code_Editors;
@@ -34,8 +36,6 @@ with GVD.Histories;
 pragma Elaborate_All (GVD.Histories);
 with GNATCOLL.Projects;    use GNATCOLL.Projects;
 with GNATCOLL.VFS;
-with Items;                use Items;
-with Interactive_Consoles; use Interactive_Consoles;
 
 package GVD.Process is
 
@@ -72,21 +72,17 @@ package GVD.Process is
       Command_History         : String_History.History_List;
       --  The history of commands for the current session.
 
-      Debugger_Text           : Interactive_Console;
-      Debuggee_Console        : Interactive_Console;
-      --  Separate console for debugged programs, if debugger supports ttys.
-      --  See gvd-consoles.adb for these two fields
-
-      Stack                   : Gtk.Widget.Gtk_Widget;
-      Threads                 : Gtk.Widget.Gtk_Widget;
-      Tasks                   : Gtk.Widget.Gtk_Widget;
-      PDs                     : Gtk.Widget.Gtk_Widget;
-      Data                    : Debugger_Data_View;
-      Assembly                : Gtk.Widget.Gtk_Widget;
-      Breakpoints_Editor      : Gtk.Widget.Gtk_Widget;
-      Memory_View             : Gtk.Widget.Gtk_Widget;
-      --  The call stack, threads, task, protection domains, data and assembly
-      --  views.
+      Debugger_Text           : Generic_Views.Abstract_View_Access;
+      Debuggee_Console        : Generic_Views.Abstract_View_Access;
+      Stack                   : Generic_Views.Abstract_View_Access;
+      Threads                 : Generic_Views.Abstract_View_Access;
+      Tasks                   : Generic_Views.Abstract_View_Access;
+      PDs                     : Generic_Views.Abstract_View_Access;
+      Data                    : Generic_Views.Abstract_View_Access;
+      Assembly                : Generic_Views.Abstract_View_Access;
+      Breakpoints_Editor      : Generic_Views.Abstract_View_Access;
+      Memory_View             : Generic_Views.Abstract_View_Access;
+      --  All views potentially associated with a debugger
 
       Breakpoints             : GVD.Types.Breakpoint_Array_Ptr;
       --  The list of breakpoints and watchpoints currently defined.
@@ -197,8 +193,10 @@ package GVD.Process is
    --  This filter will be run when output from a debugger is received
    --  that matches regexp.
 
-   function Get_Num (Tab : Visual_Debugger) return Glib.Gint;
-   --  Return the number identifying the debugger associated with a process tab
+   overriding function Get_Num
+     (Self : not null access Visual_Debugger_Record) return Glib.Gint;
+   overriding function Command_In_Process
+     (Self : not null access Visual_Debugger_Record) return Boolean;
 
    function Get_Console
      (Process : access Visual_Debugger_Record'Class)
@@ -224,18 +222,6 @@ package GVD.Process is
       Mode    : GVD.Types.Command_Type);
    --  Final post processing.
    --  Call the appropriate filters and reset Current_Output.
-
-   function Get_Current_Process
-     (Main_Window : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return Visual_Debugger;
-   --  Return the current process tab in Main_Window.
-   --  Main_Window should be a pointer to the top-level window in gvd.
-   --  This returns null if there is no current debugger.
-
-   function Command_In_Process
-     (Debugger : access Visual_Debugger_Record'Class) return Boolean;
-   --  Return True if a command is currently being processed, and thus no
-   --  other command can be sent to the debugger
 
    procedure Process_User_Command
      (Debugger       : Visual_Debugger;
