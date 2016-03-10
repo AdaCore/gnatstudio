@@ -537,6 +537,12 @@ package body Generic_Views is
          Completion_In_Popup => True);
       Self.Search.Add (Self.Search.Completion_Entry);
 
+      --  Ensure that Get_Can_Focus returns True, even if the
+      --  completion entry has not been realized and/or mapped yet.
+      --  This is safe because we know that Gtk_Entry widgets can
+      --  receive the focus.
+      Self.Search.Completion_Entry.Set_Can_Focus (True);
+
       --  Append it to the toolbar
       Self.Append_Toolbar (Toolbar     => Toolbar,
                            Item        => Self.Search,
@@ -622,6 +628,12 @@ package body Generic_Views is
          Report_Filter_Changed'Access, Self);
       F.Pattern.On_Focus_Out_Event (On_Filter_Focus_Out'Access, F);
       F.Add (F.Pattern);
+
+      --  Ensure that Get_Can_Focus returns True, even if the
+      --  filter entry has not been realized and/or mapped yet.
+      --  This is safe because we know that Gtk_Entry widgets can
+      --  receive the focus.
+      F.Pattern.Set_Can_Focus (True);
 
       F.Pattern.Set_Tooltip_Markup
         (Tooltip & ASCII.LF
@@ -1166,8 +1178,6 @@ package body Generic_Views is
                     Gtk_Widget (Abstract_View.Search.Completion_Entry);
                elsif Abstract_View.Filter /= null then
                   Focus_Widget := Gtk_Widget (Abstract_View.Filter.Pattern);
-               else
-                  Focus_Widget := Gtk_Widget (View);
                end if;
             end;
          end if;
