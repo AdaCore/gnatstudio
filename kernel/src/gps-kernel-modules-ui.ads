@@ -39,6 +39,33 @@
 --        and the corresponding cross-referencing subprograms (same file)
 --      - Each module can register new commands for the shell interpreter
 --      - Adding key handlers, which have priority over other shortcuts
+--
+--  Handling of GUI items that are associated with actions
+--  ======================================================
+--
+--  Some permanent GUI items are associated with actions, and therefore with
+--  context-based filters. This is the case for now for global menus,
+--  and toolbar buttons. These items need to be refreshed when the context
+--  changes, to be made insensitive when the action they trigger does not
+--  apply to the context.
+--
+--  There are two mechanisms for handling this at the moment, depending on
+--  whether we are using system menus.
+--
+--    * When we are not using system menus:
+--        - the states of toolbar buttons are recomputed immediately
+--          when the context changes,
+--        - the states of each menu item is computed at the moment when
+--          the menu is mapped
+--
+--    * When we are using system menus: we do not have access to the 'mapped'
+--      signal on the menus. So we have to recompute the state of the menus
+--      every time the context changes. In order to protect ourselves from
+--      performance issues, we try to do this in a limited amount of time,
+--      and, failing this, schedule an idle timeout to continue the processing
+--      without blocking the main loop.
+--
+--  The entry point of this is the body of Update_Menus_And_Buttons.
 
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with GNAT.Strings;

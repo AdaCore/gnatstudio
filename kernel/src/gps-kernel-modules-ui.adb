@@ -457,7 +457,7 @@ package body GPS.Kernel.Modules.UI is
 
    procedure On_Activate_Action_Item
      (Item : access Gtk_Menu_Item_Record'Class);
-   --  Called when an Action_Menu_Item is mapped to screen
+   --  Called when an Action_Menu_Item is activated
 
    ----------------------------------------------
    --  Computing menu states in the background --
@@ -562,6 +562,37 @@ package body GPS.Kernel.Modules.UI is
    procedure Add_Menu_To_Action (Action : String; Menu : String);
    procedure Add_Button_To_Action (Action : String; Toolbar : String);
    --  Associate a given menu and an action
+
+   ---------------
+   -- Utilities --
+   ---------------
+
+   procedure Propagate_Visibility
+     (Widget : not null access Gtk_Widget_Record'Class;
+      Parent : not null access Gtk_Container_Record'Class);
+   --  Hide menu items for which all children are also hidden.
+   --  Set menu items insensitive if all children are also insensitive
+   --  Widget's visibility and sensitivity will be updated based on the
+   --  list of children of Parent.
+
+   procedure Recompute_State_And_Visibility (Shell : Gtk_Menu_Shell);
+   --  Recompute the state of the menu and its submenus.
+
+   procedure On_Menu_Map (Object : access Gtk_Widget_Record'Class);
+   --  Called when Object (a Gtk_Menu) is mapped on the screen:
+   --  recompute its sensitivitiy.
+
+   procedure Connect_Submenu
+     (Item    : Gtk_Menu_Item;
+      Submenu : Gtk_Menu);
+   --  Connect the submenu to the given menu item. This also takes care of
+   --  connecting the menus to the proper signals, and compute the visibility.
+
+   procedure Recompute_Object_State
+     (Object : not null access GObject_Record'Class);
+   --  Assuming Object is associated to an action, recompute the active
+   --  state of Object according to the context and the filters that apply
+   --  to this action.
 
    -------------
    -- Globals --
@@ -963,7 +994,7 @@ package body GPS.Kernel.Modules.UI is
                   Item := null;
                else
                   Gtk_New (Item, Base_Menu_Name (Full_Name.all));
-                  Set_Submenu (Item, Menu);
+                  Connect_Submenu (Item, Menu);
                end if;
 
                Widget_List.Free (Children);
@@ -1735,18 +1766,37 @@ package body GPS.Kernel.Modules.UI is
       Filter : access Action_Filter_Record'Class)
    is
    begin
-      Globals.Proxy_Items.Append (Proxy_And_Filter'(Item, Filter));
-
       Weak_Ref
         (Item,
          Notify => On_Delete_Proxy'Access,
          Data   => Kernel.all'Address);
 
-      --  If the background updating of menus was taking place, we need to
-      --  restart it since its iterators are now invalid.
+      if Item.all in Gtk_Tool_Item_Record'Class
+        or else (Item.all in Gtk_Menu_Item_Record'Class
+                 and System_Menus.Get_Pref)
+      then
+         --  This is a toolbar button or this is a menu item and we are
+         --  not using system menus: we need to add this to the list of
+         --  items that refreshed with every context change, since there
+         --  isn't another specific point at which to monitor their
+         --  status.
 
-      if Globals.Update_Menus_Idle_Id /= No_Source_Id then
-         Update_Menus_And_Buttons (Kernel);
+         Globals.Proxy_Items.Append (Proxy_And_Filter'(Item, Filter));
+
+         --  If the background updating of menus was taking place, we need to
+         --  restart it since its iterators are now invalid.
+
+         if Globals.Update_Menus_Idle_Id /= No_Source_Id then
+            Update_Menus_And_Buttons (Kernel);
+         end if;
+
+      else
+         --  We are adding an action, or we are adding a menu item and we are
+         --  not using system menus: we will refresh the state of this menu
+         --  item when the menu is mapped, so we can add this directly to the
+         --  list of unfiltered items.
+
+         Add_To_Unfiltered_Items (Proxy_And_Filter'(Item, Filter));
       end if;
    end Add_To_Global_Proxies;
 
@@ -1864,7 +1914,7 @@ package body GPS.Kernel.Modules.UI is
                Parent_Menu := Gtk_Menu (Get_Submenu (Parent));
                if Parent_Menu = null then
                   Gtk_New (Parent_Menu);
-                  Set_Submenu (Parent, Parent_Menu);
+                  Connect_Submenu (Parent, Parent_Menu);
                end if;
             end if;
 
@@ -1976,6 +2026,7 @@ package body GPS.Kernel.Modules.UI is
 
       Item.On_Activate (On_Activate_Action_Item'Access);
       Add_To_Global_Proxies (Item, Kernel, null);
+
       return Gtk_Menu_Item (Item);
    end Gtk_New_Action_Item;
 
@@ -2661,6 +2712,7 @@ package body GPS.Kernel.Modules.UI is
          Add_To_Global_Proxies (Button, Kernel, null);
 
          Button.On_Clicked (On_Action_Button_Clicked'Access);
+
          Item := Gtk_Tool_Item (Button);
       end if;
 
@@ -2670,6 +2722,14 @@ package body GPS.Kernel.Modules.UI is
          else
             Toolbar.Insert (Item, Get_Toolbar_Section (Toolbar, Section));
          end if;
+
+         --  Do this to obtain the side effect of Lookup_Action that sets
+         --  the icon for this item, if applicable.
+         declare
+            Dummy : access Action_Record := Lookup_Action (Item);
+         begin
+            null;
+         end;
 
          Item.Show_All;
       end if;
@@ -2719,119 +2779,56 @@ package body GPS.Kernel.Modules.UI is
    function Update_Menus_And_Buttons_Chunk
      (Data : Update_Menus_Data_Access) return Boolean
    is
-      Max_Idle_Duration : constant Duration := 0.05;
-      A : Proxy_And_Filter;
-      Action : access Action_Record;
-      Start  : constant Time := Clock;
-      Available : Boolean;
-
-      procedure Propagate_Visibility
-        (Widget : not null access Gtk_Widget_Record'Class;
-         Parent : not null access Gtk_Container_Record'Class);
-      --  Hide menu items for which all children are also hidden.
-      --  Set menu items insensitive if all children are also insensitive
-      --  Widget's visibility and sensitivity will be updated based on the
-      --  list of children of Parent.
-
-      procedure Cleanup_Toolbar_Separators
-        (Toolbar : not null access Gtk_Toolbar_Record'Class);
-      --  Cleanup separators in a toolbar
-
       procedure Cleanup_Window
-         (Win : not null access GPS_Application_Window_Record'Class);
+        (Win : not null access GPS_Application_Window_Record'Class);
       --  Cleanup menubar and toolbar for a specific window
 
-      procedure Propagate_Visibility
-        (Widget : not null access Gtk_Widget_Record'Class;
-         Parent : not null access Gtk_Container_Record'Class)
-      is
-         use Widget_List;
-         Children : Widget_List.Glist := Parent.Get_Children;
-         Iter     : Widget_List.Glist := Children;
-         S, V : Boolean := False;
-         W    : Gtk_Widget;
-         Last_Visible_Sep : Gtk_Widget;
-         Prev_Is_Sep : Boolean := True;
-      begin
-         while Iter /= Null_List loop
-            W := Widget_List.Get_Data (Iter);
-
-            --  Separators should not impact the visibility of the parent.
-            --  We also do not want to display a separator as the first or last
-            --  item in the menu, nor display multiple separators next to
-            --  each other.
-            if W.all in Gtk_Separator_Menu_Item_Record'Class then
-               if Prev_Is_Sep then
-                  W.Hide;
-               else
-                  W.Show;
-                  Last_Visible_Sep := W;
-               end if;
-               Prev_Is_Sep := True;
-
-            else
-               if W.all in Gtk_Menu_Item_Record'Class
-                 and then Gtk_Menu_Item (W).Get_Submenu /= null
-               then
-                  Propagate_Visibility
-                    (W, Gtk_Container (Gtk_Menu_Item (W).Get_Submenu));
-               end if;
-
-               Prev_Is_Sep := Prev_Is_Sep and then not W.Get_Visible;
-               S := S or else W.Get_Sensitive;
-               V := V or else W.Get_Visible;  --  do not check parents
-            end if;
-
-            Iter := Next (Iter);
-         end loop;
-
-         if Prev_Is_Sep and then Last_Visible_Sep /= null then
-            Last_Visible_Sep.Hide;
-         end if;
-
-         Widget_List.Free (Children);
-
-         if not V then
-            Widget.Hide;
-         else
-            Widget.Show;
-            Widget.Set_Sensitive (S);
-         end if;
-      end Propagate_Visibility;
-
-      procedure Cleanup_Toolbar_Separators
-        (Toolbar : not null access Gtk_Toolbar_Record'Class)
-      is
-         Count       : constant Gint := Toolbar.Get_N_Items;
-         Prev_Is_Sep : Boolean := True;
-         Item        : Gtk_Tool_Item;
-         Last_Visible_Sep : Gint := -1;
-      begin
-         for C in 0 .. Count - 1 loop
-            Item := Toolbar.Get_Nth_Item (C);
-            Item.Set_No_Show_All (True);
-
-            if Item.all in Gtk_Separator_Tool_Item_Record'Class then
-               if Prev_Is_Sep then
-                  Item.Hide;
-               else
-                  Item.Show;
-                  Last_Visible_Sep := C;
-               end if;
-               Prev_Is_Sep := True;
-
-            else
-               Prev_Is_Sep := Prev_Is_Sep and then not Item.Get_Visible;
-            end if;
-         end loop;
-
-         if Prev_Is_Sep and then Last_Visible_Sep /= -1 then
-            Toolbar.Get_Nth_Item (Last_Visible_Sep).Hide;
-         end if;
-      end Cleanup_Toolbar_Separators;
+      --------------------
+      -- Cleanup_Window --
+      --------------------
 
       procedure Cleanup_Window
-         (Win : not null access GPS_Application_Window_Record'Class) is
+        (Win : not null access GPS_Application_Window_Record'Class)
+      is
+         procedure Cleanup_Toolbar_Separators
+           (Toolbar : not null access Gtk_Toolbar_Record'Class);
+         --  Cleanup separators in a toolbar
+
+         --------------------------------
+         -- Cleanup_Toolbar_Separators --
+         --------------------------------
+
+         procedure Cleanup_Toolbar_Separators
+           (Toolbar : not null access Gtk_Toolbar_Record'Class)
+         is
+            Count       : constant Gint := Toolbar.Get_N_Items;
+            Prev_Is_Sep : Boolean := True;
+            Item        : Gtk_Tool_Item;
+            Last_Visible_Sep : Gint := -1;
+         begin
+            for C in 0 .. Count - 1 loop
+               Item := Toolbar.Get_Nth_Item (C);
+               Item.Set_No_Show_All (True);
+
+               if Item.all in Gtk_Separator_Tool_Item_Record'Class then
+                  if Prev_Is_Sep then
+                     Item.Hide;
+                  else
+                     Item.Show;
+                     Last_Visible_Sep := C;
+                  end if;
+                  Prev_Is_Sep := True;
+
+               else
+                  Prev_Is_Sep := Prev_Is_Sep and then not Item.Get_Visible;
+               end if;
+            end loop;
+
+            if Prev_Is_Sep and then Last_Visible_Sep /= -1 then
+               Toolbar.Get_Nth_Item (Last_Visible_Sep).Hide;
+            end if;
+         end Cleanup_Toolbar_Separators;
+
       begin
          if Win.Menu_Bar /= null then
             Propagate_Visibility (Win.Menu_Bar, Win.Menu_Bar);
@@ -2841,6 +2838,12 @@ package body GPS.Kernel.Modules.UI is
             Cleanup_Toolbar_Separators (Win.Toolbar);
          end if;
       end Cleanup_Window;
+
+      Max_Idle_Duration : constant Duration := 0.05;
+      A : Proxy_And_Filter;
+      Action : access Action_Record;
+      Start  : constant Time := Clock;
+      Available : Boolean;
 
       D : access Action_Proxy'Class;
       The_Next : Proxy_Lists.Cursor;
@@ -2917,6 +2920,8 @@ package body GPS.Kernel.Modules.UI is
 
       Was_Computing_Idle : Boolean := False;
       --  Whether the idle loop was computing
+
+      Recomputation_Timed_Out : Boolean := False;
    begin
       if Kernel.Is_In_Destruction then
          return;
@@ -2930,35 +2935,57 @@ package body GPS.Kernel.Modules.UI is
          return;
       end if;
 
-      if Globals.Update_Menus_Idle_Id /= No_Source_Id then
-         Was_Computing_Idle := True;
-         Remove (Globals.Update_Menus_Idle_Id);
-      end if;
-
       Data := new Update_Menus_Data'
         (Context => Ctxt,
          Current => Globals.Proxy_Items.First);
 
-      --  Do a first immediate pass, since it might look nicer. This is also
-      --  needed on startup to avoid flickering the toolbars.
-      --  Never do this first pass if we were already doing a recompute pass
-      --  in the idle loop, to avoid performance locking in the following
-      --  scenario:
-      --      1- Update_Menus_And_Buttons_Chunk is called here
-      --      2- the chunk takes too slow, so an idle is registered
-      --      3- anywhere else in this package, a call to this function
-      --         is made with the purpose to clean up the dangling pointers
-      --         in the globals because the idle is registered
-      --      4- back to step 1
+      if System_Menus.Get_Pref then
 
-      if Was_Computing_Idle
-        or else Update_Menus_And_Buttons_Chunk (Data)
-      then
-         Globals.Update_Menus_Idle_Id := Update_Menus_Idle.Idle_Add
-           (Update_Menus_And_Buttons_Chunk'Access,
-            Data       => Data,
-            Notify     => Destroy'Access);
+         --  The menus are handled outside of GPS: we are dealing with
+         --  the asynchronous greying out of menus here.
+
+         if Globals.Update_Menus_Idle_Id /= No_Source_Id then
+            Was_Computing_Idle := True;
+            Remove (Globals.Update_Menus_Idle_Id);
+         end if;
+
+         --  Do a first immediate pass, since it might look nicer. This is also
+         --  needed on startup to avoid flickering the toolbars.
+         --  Never do this first pass if we were already doing a recompute pass
+         --  in the idle loop, to avoid performance locking in the following
+         --  scenario:
+         --      1- Update_Menus_And_Buttons_Chunk is called here
+         --      2- the chunk takes too slow, so an idle is registered
+         --      3- anywhere else in this package, a call to this function
+         --         is made with the purpose to clean up the dangling pointers
+         --         in the globals because the idle is registered
+         --      4- back to step 1
+
+         if Was_Computing_Idle
+           or else Update_Menus_And_Buttons_Chunk (Data)
+         then
+            Globals.Update_Menus_Idle_Id := Update_Menus_Idle.Idle_Add
+              (Update_Menus_And_Buttons_Chunk'Access,
+               Data       => Data,
+               Notify     => Destroy'Access);
+         else
+            Destroy (Data);
+         end if;
       else
+         --  The menus are handled by GPS: the state of the menus is going to
+         --  be computed when the menus is mapped. So we can compute all the
+         --  toolbar items directly, we know/hope it won't take a lot of time.
+
+         while Update_Menus_And_Buttons_Chunk (Data) loop
+            --  If we reached this, this means that the recomputation is taking
+            --  longer than one allocated time slot: we'll want to trace this.
+            Recomputation_Timed_Out := True;
+         end loop;
+
+         if Recomputation_Timed_Out then
+            Trace (Me, "Refreshing toolbar items took longer than expected.");
+         end if;
+
          Destroy (Data);
       end if;
    end Update_Menus_And_Buttons;
@@ -3036,14 +3063,16 @@ package body GPS.Kernel.Modules.UI is
         (Parent      : not null access Gtk_Menu_Shell_Record'Class;
          M           : Gmenu;
          Idx         : Gint;
-         Parent_Path : Unbounded_String);
+         Parent_Path : Unbounded_String;
+         Level       : Natural);
       --  Create a menu (and its submenu) from a menu model
 
       procedure Process_Menu
         (Parent      : not null access Gtk_Menu_Shell_Record'Class;
          M           : Gmenu;
          Idx         : Gint;
-         Parent_Path : Unbounded_String)
+         Parent_Path : Unbounded_String;
+         Level       : Natural)
       is
          Attr_Iter : Gmenu_Attribute_Iter;
          Links     : Gmenu_Link_Iter;
@@ -3126,7 +3155,7 @@ package body GPS.Kernel.Modules.UI is
                if N = "submenu" and then Item /= null then
                   Gtk_New (Menu);
                   Menu.Set_Accel_Group (Get_Default_Accelerators (Kernel));
-                  Item.Set_Submenu (Menu);
+                  Connect_Submenu (Item, Menu);
                   P := Gtk_Menu_Shell (Menu);
                elsif N = "section" then
                   if Idx /= 0 then
@@ -3141,23 +3170,37 @@ package body GPS.Kernel.Modules.UI is
                if P /= null then
                   M2 := Get_Value (Links);
                   for Idx2 in 0 .. M2.Get_N_Items - 1 loop
-                     Process_Menu (P, Gmenu (M2), Idx2, Full_Path);
+                     Process_Menu (P, Gmenu (M2), Idx2, Full_Path, Level + 1);
                   end loop;
                end if;
+
                --  Do not Unref (M2)
             end;
          end loop;
+
          Unref (Links);
       end Process_Menu;
 
       Menubar : Gtk_Menu_Bar;
+
    begin
       Gtk_New (Menubar);
 
       for Idx in 0 .. Globals.Menu_Model.Get_N_Items - 1 loop
          Process_Menu
-           (Menubar, Globals.Menu_Model, Idx, Null_Unbounded_String);
+           (Menubar, Globals.Menu_Model, Idx, Null_Unbounded_String, 0);
       end loop;
+
+      --  The pass above creates the menus from menus.xml: there can be empty
+      --  menus, such as the SPARK or CodePeer menus. To remove those,
+      --  recompute the visibility now.
+      Recompute_State_And_Visibility (Gtk_Menu_Shell (Menubar));
+
+      --  There are also menus that have no associated actions when this is
+      --  created (such as the Navigate menu) - for these, we want to refresh
+      --  the menu bar once the actions are created, otherwise the menu will
+      --  appear as greyed out. Do this when mapping the menu bar.
+      Menubar.On_Map (On_Menu_Map'Access);
 
       return Menubar;
    end Create_Menubar_From_Model;
@@ -3341,6 +3384,7 @@ package body GPS.Kernel.Modules.UI is
    is
       Item : Menu_Item_Info;
       It   : Gtk_Menu_Item;
+      Menu : Gtk_Menu;
    begin
       if Globals.Menu_Model = null then
          declare
@@ -3382,9 +3426,9 @@ package body GPS.Kernel.Modules.UI is
             --  This menu is handled by the MDI
             It := Find_Menu_Item (Menubar, -"/Window");
             if It /= null then
-               It.Set_Submenu
-                  (Kernel_Desktop.Create_Menu
-                     (Get_MDI (Kernel), User => Kernel));
+               Menu := Kernel_Desktop.Create_Menu
+                 (Get_MDI (Kernel), User => Kernel);
+               Connect_Submenu (It, Menu);
             end if;
          end if;
       end if;
@@ -3577,5 +3621,153 @@ package body GPS.Kernel.Modules.UI is
 
       return Act;
    end Create_Or_Lookup_Action;
+
+   --------------------------
+   -- Propagate_Visibility --
+   --------------------------
+
+   procedure Propagate_Visibility
+     (Widget : not null access Gtk_Widget_Record'Class;
+      Parent : not null access Gtk_Container_Record'Class)
+   is
+      use Widget_List;
+      Children : Widget_List.Glist := Parent.Get_Children;
+      Iter     : Widget_List.Glist := Children;
+      S, V : Boolean := False;
+      W    : Gtk_Widget;
+      Last_Visible_Sep : Gtk_Widget;
+      Prev_Is_Sep : Boolean := True;
+   begin
+      while Iter /= Null_List loop
+         W := Widget_List.Get_Data (Iter);
+
+         --  Separators should not impact the visibility of the parent.
+         --  We also do not want to display a separator as the first or last
+         --  item in the menu, nor display multiple separators next to
+         --  each other.
+         if W.all in Gtk_Separator_Menu_Item_Record'Class then
+            if Prev_Is_Sep then
+               W.Hide;
+            else
+               W.Show;
+               Last_Visible_Sep := W;
+            end if;
+            Prev_Is_Sep := True;
+
+         else
+            if W.all in Gtk_Menu_Item_Record'Class
+              and then Gtk_Menu_Item (W).Get_Submenu /= null
+            then
+               Propagate_Visibility
+                 (W, Gtk_Container (Gtk_Menu_Item (W).Get_Submenu));
+            end if;
+
+            Prev_Is_Sep := Prev_Is_Sep and then not W.Get_Visible;
+            S := S or else W.Get_Sensitive;
+            V := V or else W.Get_Visible;  --  do not check parents
+         end if;
+
+         Iter := Next (Iter);
+      end loop;
+
+      if Prev_Is_Sep and then Last_Visible_Sep /= null then
+         Last_Visible_Sep.Hide;
+      end if;
+
+      Widget_List.Free (Children);
+
+      if not V then
+         Widget.Hide;
+      else
+         Widget.Show;
+         Widget.Set_Sensitive (S);
+      end if;
+   end Propagate_Visibility;
+
+   ----------------------------
+   -- Recompute_Object_State --
+   ----------------------------
+
+   procedure Recompute_Object_State
+     (Object : not null access GObject_Record'Class)
+   is
+      Data   : constant access Action_Proxy'Class := Get_Data (Object);
+      Action : access Action_Record;
+   begin
+      if Data = null then
+         return;
+      end if;
+
+      Action := Lookup_Action (Object);
+
+      if Action = null then
+         Data.Set_Active (False, Object);
+      else
+         Data.Set_Active
+           (Filter_Matches (Action, Data.Kernel.Get_Current_Context),
+            Object);
+      end if;
+   end Recompute_Object_State;
+
+   -----------------
+   -- On_Menu_Map --
+   -----------------
+
+   procedure On_Menu_Map (Object : access Gtk_Widget_Record'Class) is
+   begin
+      Recompute_State_And_Visibility (Gtk_Menu_Shell (Object));
+   end On_Menu_Map;
+
+   ------------------------------------
+   -- Recompute_State_And_Visibility --
+   ------------------------------------
+
+   procedure Recompute_State_And_Visibility (Shell : Gtk_Menu_Shell) is
+      use Widget_List;
+
+      procedure Recompute_State (Menu : Gtk_Menu_Shell);
+      --  Auxiliary recursion
+
+      procedure Recompute_State (Menu : Gtk_Menu_Shell) is
+         Children : Widget_List.Glist := Menu.Get_Children;
+         Iter     : Widget_List.Glist := Children;
+         Submenu  : Gtk_Widget;
+         W        : Gtk_Widget;
+      begin
+         while Iter /= Null_List loop
+            W := Widget_List.Get_Data (Iter);
+            if W.all in Gtk_Menu_Item_Record'Class then
+               Recompute_Object_State (W);
+               Submenu := Gtk_Menu_Item (W).Get_Submenu;
+               if Submenu /= null
+                 and then Submenu.all in Gtk_Menu_Shell_Record'Class
+               then
+                  Recompute_State (Gtk_Menu_Shell (Submenu));
+               end if;
+            end if;
+            Iter := Next (Iter);
+         end loop;
+         Widget_List.Free (Children);
+      end Recompute_State;
+
+   begin
+      --  Recompute the state of each menu item in this menu and submenu
+      Recompute_State (Shell);
+
+      --  Refresh visibility of the menu, clean up duplicate separators
+      Propagate_Visibility (Shell, Shell);
+   end Recompute_State_And_Visibility;
+
+   ---------------------
+   -- Connect_Submenu --
+   ---------------------
+
+   procedure Connect_Submenu
+     (Item    : Gtk_Menu_Item;
+      Submenu : Gtk_Menu) is
+   begin
+      Item.Set_Submenu (Submenu);
+      Submenu.On_Map (On_Menu_Map'Access);
+   end Connect_Submenu;
 
 end GPS.Kernel.Modules.UI;

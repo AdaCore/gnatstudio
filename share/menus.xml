@@ -352,11 +352,11 @@
          </menu>
          <menu label="_Metrics">
             <menu label="Compute Metrics on Current _File"
-                  action="gnat metric on current file" optional='true'/>
+                  action="gnat metric on current file"/>
             <menu label="Compute Metrics on Current P_roject"
-                  action="gnat metric on current project" optional='true'/>
+                  action="gnat metric on current project"/>
             <menu label="Compute Metrics on Current Project &amp; _Subprojects"
-                  action="gnat metric on current project and subprojects" optional='true'/>
+                  action="gnat metric on current project and subprojects"/>
          </menu>
          <menu label="Stac_k Analysis">
             <menu label="_Analyze Stack Usage"               action="analyze stack usage"
