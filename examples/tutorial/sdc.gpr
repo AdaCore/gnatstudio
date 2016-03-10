@@ -37,9 +37,5 @@ project Sdc is
       for Switches ("ada") use ("-static");
    end Binder;
 
-   package Ide is
-      for Vcs_Kind use "Git";
-   end Ide;
-
 end Sdc;
 
