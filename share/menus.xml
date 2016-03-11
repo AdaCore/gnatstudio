@@ -378,6 +378,22 @@
             <menu label="Check Root _Project"      action="gnatcheck root project" optional='True'/>
             <menu label="Check Current _File"      action="gnatcheck file" optional='True'/>
          </menu>
+         <menu label='Python'> <!-- actions defined in the python_support.py plug-in -->
+            <menu label='Python library help' action='display python library help' optional='true'/>
+            <menu label='Import and reload file' action='reload python file'       optional='true'/>
+         </menu>
+         <menu label='XML'>  <!-- actions defined in the xml_support.py plug-in -->
+            <menu label='Check Well Formedness' action='xml check well formedness' optional='true'/>
+            <menu label='Escape Selection' action='xml escape selection' optional='true'/>
+            <menu label='View as Tree'     action='xml view as tree'     optional='true'/>
+            <separator/>
+            <menu label='Move to Next Open Tag' action='XML move to next open tag'
+                  optional='true'/>
+            <menu label='Move to Next Close Tag' action='XML move to next close tag'
+                  optional='true'/>
+            <menu label='Move to Matching Close Tag' action='XML move to matching close tag'
+                  optional='true'/>
+         </menu>
          <separator/>
          <menu label="_Interrupt"                 action="interrupt"/>
       </menu>
@@ -411,24 +427,6 @@
       </menu>
 
       <menu label='SPARK'>
-      </menu>
-
-      <menu label='Python'> <!-- actions defined in the python_support.py plug-in -->
-         <menu label='Python library help' action='display python library help' optional='true'/>
-         <menu label='Import and reload file' action='reload python file'       optional='true'/>
-      </menu>
-
-      <menu label='XML'>  <!-- actions defined in the xml_support.py plug-in -->
-         <menu label='Check Well Formedness' action='xml check well formedness' optional='true'/>
-         <menu label='Escape Selection' action='xml escape selection' optional='true'/>
-         <menu label='View as Tree'     action='xml view as tree'     optional='true'/>
-         <separator/>
-         <menu label='Move to Next Open Tag' action='XML move to next open tag'
-               optional='true'/>
-         <menu label='Move to Next Close Tag' action='XML move to next close tag'
-               optional='true'/>
-         <menu label='Move to Matching Close Tag' action='XML move to matching close tag'
-               optional='true'/>
       </menu>
 
       <menu label='_Window'>
