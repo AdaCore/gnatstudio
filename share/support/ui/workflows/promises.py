@@ -363,7 +363,8 @@ class ProcessWrapper(object):
             if self.__console:
                 self.__console.write(
                     "\n<^C> process interrupted (elapsed time: "
-                    + get_elapsed(self.__start_time, end_time) + ")\n")
+                    + TimeDisplay.get_elapsed(
+                        self.__start_time, end_time) + ")\n")
 
     def __on_console_destroy(self, console):
         """
