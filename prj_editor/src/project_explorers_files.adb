@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation; use Ada;
+with Ada.Containers.Doubly_Linked_Lists;
 
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
@@ -55,7 +56,6 @@ with Gtkada.Handlers;            use Gtkada.Handlers;
 
 with Commands.Interactive;       use Commands, Commands.Interactive;
 with Default_Preferences;        use Default_Preferences;
-with Generic_List;
 with Generic_Views;              use Generic_Views;
 with GPS.Kernel.Actions;         use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;        use GPS.Kernel.Contexts;
@@ -85,9 +85,8 @@ package body Project_Explorers_Files is
    package File_Append_Directory_Timeout is
       new Glib.Main.Generic_Sources (Append_Directory_Idle_Data_Access);
 
-   procedure Free (D : in out Glib.Main.G_Source_Id) is null;
-
-   package Timeout_Id_List is new Generic_List (Glib.Main.G_Source_Id);
+   package Timeout_Id_List is new Ada.Containers.Doubly_Linked_Lists
+     (Glib.Main.G_Source_Id);
 
    type Project_Explorer_Files_Record is new Generic_Views.View_Record with
       record
@@ -144,6 +143,8 @@ package body Project_Explorers_Files is
       File_Index    : Natural := 0;
       Idle          : Boolean := False;
       Physical_Read : Boolean := True;
+
+      This_Timeout_ID : G_Source_Id := No_Source_Id;
    end record;
 
    procedure Free is new Unchecked_Deallocation
@@ -514,6 +515,7 @@ package body Project_Explorers_Files is
    function Read_Directory
      (D : Append_Directory_Idle_Data_Access) return Boolean
    is
+      This_Timeout_Id : G_Source_Id;
       Path_Found : Boolean := False;
       Iter       : Gtk_Tree_Iter;
       Empty      : Boolean := True;
@@ -523,7 +525,36 @@ package body Project_Explorers_Files is
       Columns : constant Columns_Array (Values'Range) :=
         (File_Column, Display_Name_Column, Node_Type_Column, Icon_Column);
 
+      procedure Clear_Timeout_Id;
+      --  Clear the timeout_id associated with this idle callback, if any.
+      --  This should be called whenever we are returning False from this
+      --  function.
+
+      procedure Clear_Timeout_Id is
+         use Timeout_Id_List;
+         C : Cursor;
+      begin
+         if This_Timeout_Id = No_Source_Id then
+            --  This can happen when we are calling this synchronously rather
+            --  than from a timeout/idle callback
+            return;
+         end if;
+         C := D.Explorer.Fill_Timeout_Ids.Find (This_Timeout_Id);
+         if C /= No_Element then
+            D.Explorer.Fill_Timeout_Ids.Delete (C);
+         end if;
+      end Clear_Timeout_Id;
+
    begin
+      if D = null then
+         --  Cannot happen right now, but do this for safety
+         return False;
+      end if;
+
+      --  Make a copy of this right now, so we can free D and then still
+      --  call Clear_Timeout_Id whenever we want.
+      This_Timeout_Id := D.This_Timeout_ID;
+
       --  If we are appending at the base, create a node indicating the
       --  absolute path to the directory.
 
@@ -552,6 +583,7 @@ package body Project_Explorers_Files is
             New_D := D;
             Free (New_D);
 
+            Clear_Timeout_Id;
             return False;
          end if;
       end if;
@@ -747,6 +779,7 @@ package body Project_Explorers_Files is
       New_D := D;
       Free (New_D);
 
+      Clear_Timeout_Id;
       return False;
 
    exception
@@ -755,10 +788,14 @@ package body Project_Explorers_Files is
 
          New_D := D;
          Free (New_D);
+
+         Clear_Timeout_Id;
          return False;
 
       when E : others =>
          Trace (Me, E);
+
+         Clear_Timeout_Id;
          return False;
    end Read_Directory;
 
@@ -779,8 +816,6 @@ package body Project_Explorers_Files is
                      new Append_Directory_Idle_Data;
       --  D is freed when Read_Directory ends (i.e. returns False)
 
-      Timeout_Id : G_Source_Id;
-
    begin
       D.Dir           := Dir;
       Ensure_Directory (D.Dir);
@@ -796,10 +831,12 @@ package body Project_Explorers_Files is
          --  Necessary for preserving order in drive names.
 
          if Read_Directory (D) then
-            Timeout_Id :=
+            D.This_Timeout_ID :=
               File_Append_Directory_Timeout.Timeout_Add
                 (1, Read_Directory'Access, D);
-            Timeout_Id_List.Append (Explorer.Fill_Timeout_Ids, Timeout_Id);
+            Timeout_Id_List.Append
+              (Explorer.Fill_Timeout_Ids,
+               D.This_Timeout_ID);
          end if;
 
       else
@@ -950,12 +987,15 @@ package body Project_Explorers_Files is
    ----------------------------
 
    procedure File_Remove_Idle_Calls
-     (Explorer : access Project_Explorer_Files_Record'Class) is
+     (Explorer : access Project_Explorer_Files_Record'Class)
+   is
+      use Timeout_Id_List;
    begin
-      while not Timeout_Id_List.Is_Empty (Explorer.Fill_Timeout_Ids) loop
-         Glib.Main.Remove (Timeout_Id_List.Head (Explorer.Fill_Timeout_Ids));
-         Timeout_Id_List.Next (Explorer.Fill_Timeout_Ids);
+      for Id of Explorer.Fill_Timeout_Ids loop
+         Glib.Main.Remove (Id);
       end loop;
+
+      Explorer.Fill_Timeout_Ids.Clear;
    end File_Remove_Idle_Calls;
 
    ---------------------
