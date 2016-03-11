@@ -80,6 +80,8 @@ package body GPS.Location_View is
    Auto_Close              : Boolean_Preference;
    Sort_Files_Alphabetical : Boolean_Preference;
 
+   Locations_View_Name : constant String := "Locations";
+
    Locations_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (GPS.Kernel.Messages.Editor_Side => False,
       GPS.Kernel.Messages.Locations   => True);
@@ -129,7 +131,7 @@ package body GPS.Location_View is
 
    package Location_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Location_View_Record",
-      View_Name          => GPS.Kernel.MDI.Locations_View_Name,
+      View_Name          => Locations_View_Name,
       Formal_View_Record => Location_View_Record,
       Formal_MDI_Child   => Locations_Child_Record,
       Reuse_If_Exist     => True,
@@ -1386,6 +1388,30 @@ package body GPS.Location_View is
       Append_Menu (Menu, K, Auto_Close);
       Append_Menu (Menu, K, Locations_Save_In_Desktop);
    end Create_Menu;
+
+   ----------------------------
+   -- Raise_Locations_Window --
+   ----------------------------
+
+   procedure Raise_Locations_Window
+     (Self             : not null access Kernel_Handle_Record'Class;
+      Give_Focus       : Boolean := True;
+      Create_If_Needed : Boolean := False)
+   is
+      L : constant GPS.Location_View.Location_View_Access :=
+            (if Create_If_Needed
+             then GPS.Location_View.Get_Or_Create_Location_View (Self)
+             else null);
+      pragma Unreferenced (L);
+      --  Create Locations view when necessary
+      C : constant MDI_Child :=
+            Get_MDI (Self).Find_MDI_Child_By_Name (Locations_View_Name);
+
+   begin
+      if C /= null then
+         C.Raise_Child (Give_Focus => Give_Focus);
+      end if;
+   end Raise_Locations_Window;
 
    ---------------------
    -- Register_Module --

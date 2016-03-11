@@ -64,4 +64,11 @@ package GPS.Location_View is
    --  Requests to expand specified category and file and goto first visible
    --  location.
 
+   procedure Raise_Locations_Window
+     (Self             : not null access Kernel_Handle_Record'Class;
+      Give_Focus       : Boolean := True;
+      Create_If_Needed : Boolean := False);
+   --  Raise the locations window, if it exists or create it before raising
+   --  it if Create_If_Needed is True.
+
 end GPS.Location_View;

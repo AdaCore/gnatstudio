@@ -20,46 +20,46 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Tags;
 with Ada.Unchecked_Conversion;
 
-with GNAT.Strings;             use GNAT.Strings;
+with GNAT.Strings;              use GNAT.Strings;
 
-with GNATCOLL.Projects;        use GNATCOLL.Projects;
-with GNATCOLL.Scripts;         use GNATCOLL.Scripts;
-with GNATCOLL.Traces;          use GNATCOLL.Traces;
-with GNATCOLL.VFS;             use GNATCOLL.VFS;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Glib.Main;                use Glib.Main;
-with Glib.Object;              use Glib.Object;
-with Glib.Properties;          use Glib.Properties;
-with Glib.Values;              use Glib.Values;
-with Glib_Values_Utils;        use Glib_Values_Utils;
+with Glib.Main;                 use Glib.Main;
+with Glib.Object;               use Glib.Object;
+with Glib.Properties;           use Glib.Properties;
+with Glib.Values;               use Glib.Values;
+with Glib_Values_Utils;         use Glib_Values_Utils;
 
-with Gdk;                      use Gdk;
-with Gdk.Display;              use Gdk.Display;
+with Gdk;                       use Gdk;
+with Gdk.Display;               use Gdk.Display;
 with Gdk.Main;
-with Gdk.Screen;               use Gdk.Screen;
-with Gdk.Types;                use Gdk.Types;
+with Gdk.Screen;                use Gdk.Screen;
+with Gdk.Types;                 use Gdk.Types;
 
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
-with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
-with Gtk.Check_Button;         use Gtk.Check_Button;
-with Gtk.Combo_Box;            use Gtk.Combo_Box;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Label;                use Gtk.Label;
-with Gtk.Main;                 use Gtk.Main;
-with Gtk.Menu;                 use Gtk.Menu;
-with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Stock;                use Gtk.Stock;
-with Gtk.Toolbar;              use Gtk.Toolbar;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Tree_View;            use Gtk.Tree_View;
-with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
+with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Combo_Box;             use Gtk.Combo_Box;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Main;                  use Gtk.Main;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Toolbar;               use Gtk.Toolbar;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
+with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtk.Widget;                use Gtk.Widget;
 
-with Gtkada.Dialogs;           use Gtkada.Dialogs;
-with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Default_Preferences;       use Default_Preferences;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
@@ -69,14 +69,14 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Main_Window;           use GPS.Main_Window;
 
-with GPS.Editors;              use GPS.Editors;
+with GPS.Editors;               use GPS.Editors;
 with GPS.Editors.GtkAda;
 
 with XML_Utils;                 use XML_Utils;
 with XML_Parsers;
 with XML_Utils.GtkAda;
-with Gtk.Style_Context; use Gtk.Style_Context;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Gtk.Style_Context;         use Gtk.Style_Context;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 
 package body GPS.Kernel.MDI is
 
@@ -1610,22 +1610,6 @@ package body GPS.Kernel.MDI is
    begin
       return Self.Kernel;
    end Kernel;
-
-   ----------------------------
-   -- Raise_Locations_Window --
-   ----------------------------
-
-   procedure Raise_Locations_Window
-     (Self       : not null access Kernel_Handle_Record'Class;
-      Give_Focus : Boolean := True)
-   is
-      C : constant MDI_Child :=
-        Get_MDI (Self).Find_MDI_Child_By_Name (Locations_View_Name);
-   begin
-      if C /= null then
-         C.Raise_Child (Give_Focus => Give_Focus);
-      end if;
-   end Raise_Locations_Window;
 
    ---------------------
    -- Get_Child_Class --

@@ -291,12 +291,6 @@ package GPS.Kernel.MDI is
    --  the user has selected OK (whatever the number of children that were
    --  saved).
 
-   Locations_View_Name : constant String := "Locations";
-   procedure Raise_Locations_Window
-     (Self       : not null access Kernel_Handle_Record'Class;
-      Give_Focus : Boolean := True);
-   --  Raise the locations window, if it exists
-
    procedure Close_All_Children (Handle : access Kernel_Handle_Record'Class);
    --  Close all the MDI children. No confirmation is asked, call
    --  Save_All_MDI_Children first if needed.

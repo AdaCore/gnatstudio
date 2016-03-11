@@ -51,6 +51,7 @@ with GPS.Kernel.Project;            use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;       use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Xref;               use GPS.Kernel.Xref;
+with GPS.Location_View;
 with GPS.Intl;                      use GPS.Intl;
 with Histories;                     use Histories;
 with String_Utils;                  use String_Utils;
@@ -701,7 +702,8 @@ package body GPS.Kernel.Entities is
                      Sort_In_File => False);
 
                   if Data.Count = 1 then
-                     Raise_Locations_Window (Data.Kernel, Give_Focus => False);
+                     GPS.Location_View.Raise_Locations_Window
+                       (Data.Kernel, Give_Focus => False);
                   end if;
                end if;
 

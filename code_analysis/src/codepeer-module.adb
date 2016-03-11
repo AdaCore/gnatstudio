@@ -46,6 +46,7 @@ with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
 with GPS.Kernel.Messages.Simple;     use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules.UI;          use GPS.Kernel.Modules.UI;
+with GPS.Location_View;
 with GNATCOLL.Traces;                use GNATCOLL.Traces;
 with GNATCOLL.Xref;
 with String_Utils;
@@ -1010,7 +1011,8 @@ package body CodePeer.Module is
          Editors.Show_Annotations_In_Opened_Editors (Self);
          Self.Fill_Object_Races;
          Self.Update_Location_View;
-         Raise_Locations_Window (Self.Kernel);
+         GPS.Location_View.Raise_Locations_Window
+           (Self.Kernel, Create_If_Needed => True);
 
          --  Reset content of Backtraces view.
 
