@@ -1033,15 +1033,6 @@ package body GVD.Process is
       end if;
 
       Process.Descriptor.Debugger := Kind;
-
-      if Remote_Protocol = "" then
-         Process.Descriptor.Remote_Target := new String'("");
-         Process.Descriptor.Protocol := new String'("");
-      else
-         Process.Descriptor.Remote_Target := new String'(Remote_Target);
-         Process.Descriptor.Protocol := new String'(Remote_Protocol);
-      end if;
-
       Process.Descriptor.Program := Executable;
       Process.Descriptor.Debugger_Name := new String'(Debugger_Name);
 

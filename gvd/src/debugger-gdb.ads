@@ -51,7 +51,11 @@ package Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Target   : String;
       Protocol : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Force    : Boolean := False;
+      Mode     : GVD.Types.Invisible_Command := GVD.Types.Hidden);
+
+   overriding function Is_Connected_To_Target
+     (Debugger : access Gdb_Debugger) return Boolean;
 
    overriding procedure Wait_Prompt (Debugger : access Gdb_Debugger);
 

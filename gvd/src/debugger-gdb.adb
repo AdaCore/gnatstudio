@@ -1161,11 +1161,72 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Target   : String;
       Protocol : String;
-      Mode     : Command_Type := Hidden) is
+      Force    : Boolean := False;
+      Mode     : Invisible_Command := Hidden)
+   is
+      Process : constant Visual_Debugger := Convert (Debugger);
+      Cmd     : constant String := "target " & Protocol & " " & Target;
+      Timeout : constant := 2_000;
+      Success : Boolean;
    begin
-      Send (Debugger, "target " & Protocol & " " & Target, Mode => Mode);
-      Set_VxWorks_Version (Debugger, Force => True);
+      --  If the debugger is already connected, kill the connection if Force
+      --  is True or simply return otherwise.
+      if Debugger.Target_Connected then
+         if Force then
+            Interrupt (Debugger);
+            Wait_Prompt (Debugger);
+         else
+            return;
+         end if;
+      end if;
+
+      --  Send the command to the debugger in a non-blocking way and check if
+      --  it succeed.
+      Send (Debugger,
+            Cmd             => Cmd,
+            Wait_For_Prompt => False,
+            Mode            => Mode);
+      Success := Wait_Prompt (Debugger, Timeout);
+
+      --  Mark the command as processed, even if did not succeed in the
+      --  specified timeout so that we can continue sending other commands.
+      Set_Command_In_Process (Get_Process (Debugger), False);
+      Free (Process.Current_Command);
+
+      if Success then
+         if Process /= null then
+            Output_Text
+              (Process, Protocol & " debugging using " & Target & ASCII.LF);
+         end if;
+
+         if Protocol = "remote" then
+            Set_Is_Started (Debugger, True);
+         end if;
+
+         Set_VxWorks_Version (Debugger);
+      else
+         --  If it
+         Interrupt (Debugger);
+         Wait_Prompt (Debugger);
+
+         if Process /= null then
+            Output_Text (Process, "Can't connect to the target using "
+                         & Protocol & " protocol on " & Target & ASCII.LF);
+         end if;
+      end if;
+
+      Debugger.Target_Connected := Success;
+      Display_Prompt (Debugger);
    end Connect_To_Target;
+
+      ----------------------------
+   -- Is_Connected_To_Target --
+   ----------------------------
+
+   overriding function Is_Connected_To_Target
+     (Debugger : access Gdb_Debugger) return Boolean
+   is
+     (Debugger.Target_Connected);
 
    --------------
    -- Set_Args --
@@ -1197,31 +1258,14 @@ package body Debugger.Gdb is
    procedure Connect_To_Target_If_Needed (Debugger : access Gdb_Debugger) is
    begin
       if Debugger.Remote_Target /= null
+        and then Debugger.Remote_Protocol /= null
         and then not Debugger.Target_Connected
       then
-         declare
-            Process : constant Visual_Debugger := Convert (Debugger);
-            Cmd : constant String :=
-                    "target " & Debugger.Remote_Protocol.all & " "
-                      & Debugger.Remote_Target.all;
-         begin
-            if Process = null then
-               Send (Debugger, Cmd, Mode => Internal);
-
-            else
-               Output_Text
-                 (Process,
-                  Send_And_Get_Clean_Output
-                    (Debugger, Cmd, Mode => Internal) & ASCII.LF);
-            end if;
-
-            if Debugger.Remote_Protocol.all = "remote" then
-               Set_Is_Started (Debugger, True);
-            end if;
-         end;
-
-         Set_VxWorks_Version (Debugger);
-         Debugger.Target_Connected := True;
+         Debugger.Connect_To_Target (Target   => Debugger.Get_Remote_Target,
+                                     Protocol => Debugger.Get_Remote_Protocol,
+                                     Mode     => Internal);
+      else
+         Display_Prompt (Debugger);
       end if;
    end Connect_To_Target_If_Needed;
 
@@ -1304,8 +1348,6 @@ package body Debugger.Gdb is
       --  Connect to the remote target if needed
 
       Connect_To_Target_If_Needed (Debugger);
-
-      Display_Prompt (Debugger);
 
       --  If we are in Cross mode (ie, with the "remote" protocol), the call
       --  to "target" has the side effect of starting the executable.

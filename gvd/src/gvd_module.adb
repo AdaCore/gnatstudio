@@ -22,14 +22,9 @@ with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Table;                 use Gtk.Table;
 with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
@@ -82,13 +77,10 @@ with Xref;                      use Xref;
 package body GVD_Module is
    Me : constant Trace_Handle := Create ("GVD_MODULE");
 
-   Cst_Run_Arguments_History : constant History_Key := "gvd_run_arguments";
+   Run_Arguments_History_Key : constant History_Key := "gvd_run_arguments";
    --  The key in the history for the arguments to the run command.
    --  WARNING: this constant is shared with builder_module.adb, since we want
    --  to have the same history for the run command in GPS.
-
-   History_Target_Name : constant History_Key := "gvd-target-name";
-   History_Protocol : constant History_Key := "gvd-protocol";
 
    type Bp_Array is array (Integer range <>) of Breakpoint_Identifier;
 
@@ -1024,7 +1016,7 @@ package body GVD_Module is
                 (Parent         => Process.Kernel.Get_Main_Window,
                  Title          => -"Run/Start",
                  Message        => Cmd_Msg.all,
-                 Key            => Cst_Run_Arguments_History,
+                 Key            => Run_Arguments_History_Key,
                  History        => Get_History (Process.Kernel),
                  Check_Msg      => Msg1.all,
                  Check_Msg2     => Msg2.all,
@@ -1112,79 +1104,56 @@ package body GVD_Module is
      (Command : access Connect_To_Board_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Process      : constant Visual_Debugger :=
-        Visual_Debugger (Get_Current_Debugger (Kernel));
-      Dialog       : GPS_Dialog;
-      Table        : Gtk_Table;
-      Ent_Protocol : Gtk_Entry;
-      Ent_Target   : Gtk_Entry;
-      Label        : Gtk_Label;
-      Ignore       : Gtk_Widget;
-      pragma Unreferenced (Command, Ignore);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Top      : constant GPS_Window :=
+                       GPS_Window (Get_Main_Window (Kernel));
+      Process  : constant Visual_Debugger :=
+                       Get_Current_Debugger (Kernel);
+      Continue : Boolean := True;
+      pragma Unreferenced (Command);
+
+      function Display_Confirmation_Dialog return Boolean;
+      --  Display a confirmation dialog if the debugger is already connected to
+      --  a target.
+      --  Return True if the user wants to continue, False otherwise.
+
+      ---------------------------------
+      -- Display_Confirmation_Dialog --
+      ---------------------------------
+
+      function Display_Confirmation_Dialog return Boolean
+      is
+         Response : Message_Dialog_Buttons;
+      begin
+         Response := Message_Dialog
+           (Msg         =>
+              "The debugger is already connected to a target."
+            & ASCII.LF
+            & ASCII.LF
+            & "Do you want to disconnect it and start a new connection?",
+            Buttons     => Button_Yes or Button_No,
+            Dialog_Type => Confirmation,
+            Parent      => Gtk_Window (Top));
+
+         return Response /= Button_No;
+      end Display_Confirmation_Dialog;
+
    begin
-      Gtk_New
-        (Dialog,
-         Title  => -"Connect to board",
-         Kernel => Kernel,
-         Flags  => Modal or Destroy_With_Parent);
-      Set_Position (Dialog, Win_Pos_Center_On_Parent);
-      Set_Default_Size_From_History
-         (Dialog, "debug-connect-to-board", Kernel, 300, 100);
-
-      Gtk_New (Table, 2, 2, False);
-      Pack_Start (Get_Content_Area (Dialog), Table, Expand => False);
-
-      Gtk_New (Label, -"Target name:");
-      Set_Alignment (Label, 0.0, 0.0);
-      Attach (Table, Label, 0, 1, 0, 1, Xpadding => 3, Ypadding => 3);
-
-      Gtk_New (Ent_Target);
-      Set_Width_Chars (Ent_Target, 20);
-      Ent_Target.Set_Text
-        (Most_Recent (Get_History (Kernel), History_Target_Name));
-      Attach (Table, Ent_Target, 1, 2, 0, 1);
-      Grab_Focus (Ent_Target);
-      Set_Activates_Default (Ent_Target, True);
-
-      Gtk_New (Label, -"Protocol:");
-      Set_Alignment (Label, 0.0, 0.0);
-      Attach (Table, Label, 0, 1, 1, 2, Xpadding => 3, Ypadding => 3);
-
-      Gtk_New (Ent_Protocol);
-      Ent_Protocol.Set_Text
-        (Most_Recent (Get_History (Kernel), History_Protocol));
-      Set_Width_Chars (Ent_Protocol, 20);
-      Attach (Table, Ent_Protocol, 1, 2, 1, 2);
-      Set_Activates_Default (Ent_Protocol, True);
-
-      Ignore := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-      Ignore := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-      Set_Default_Response (Dialog, Gtk_Response_OK);
-
-      Show_All (Dialog);
-
-      if Run (Dialog) = Gtk_Response_OK then
-         Process.Descriptor.Remote_Target :=
-           new String'(Get_Text (Ent_Target));
-         Process.Descriptor.Protocol :=
-           new String'(Get_Text (Ent_Protocol));
-
-         Add_To_History
-           (Get_History (Kernel).all, History_Target_Name,
-            Get_Text (Ent_Target));
-         Add_To_History
-           (Get_History (Kernel).all, History_Protocol,
-            Get_Text (Ent_Protocol));
-
-         Connect_To_Target
-           (Process.Debugger,
-            Process.Descriptor.Remote_Target.all,
-            Process.Descriptor.Protocol.all,
-            GVD.Types.Visible);
+      --  Display a confirmation dialog if the debugger is already connected
+      --  to a target.
+      if Process.Debugger.Is_Connected_To_Target then
+         Continue := Display_Confirmation_Dialog;
       end if;
 
-      Destroy (Dialog);
+      if Continue then
+         Connect_To_Target
+           (Process.Debugger,
+            Target   => Process.Debugger.Get_Remote_Target,
+            Protocol => Process.Debugger.Get_Remote_Protocol,
+            Force    => True,
+            Mode     => GVD.Types.Internal);
+      end if;
+
       return Commands.Success;
    end Execute;
 
@@ -2021,7 +1990,6 @@ package body GVD_Module is
       Printable_Filter  : Action_Filter;
       Access_Filter     : Action_Filter;
       Subprogram_Filter : Action_Filter;
-
    begin
       Create_GVD_Module (Kernel);
       GVD.Preferences.Register_Default_Preferences (Get_Preferences (Kernel));

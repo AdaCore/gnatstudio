@@ -235,8 +235,6 @@ package GVD.Types is
       Debugger      : Debugger_Type;
       Debugger_Name : GNAT.Strings.String_Access;
       Remote_Host   : GNAT.Strings.String_Access;
-      Remote_Target : GNAT.Strings.String_Access;
-      Protocol      : GNAT.Strings.String_Access;
       Launch        : Launch_Method;
    end record;
    --  This record contains all the information about how a debugger was

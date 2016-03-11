@@ -791,11 +791,23 @@ package body Debugger.Gdb_MI is
      (Debugger : access Gdb_MI_Debugger;
       Target   : String;
       Protocol : String;
-      Mode     : Command_Type := Hidden) is
+      Force    : Boolean := False;
+      Mode     : Invisible_Command := Hidden)
+   is
+      pragma Unreferenced (Force);
    begin
       Send (Debugger, "target " & Protocol & " " & Target, Mode => Mode);
       Set_VxWorks_Version (Debugger, Force => True);
    end Connect_To_Target;
+
+   ----------------------------
+   -- Is_Connected_To_Target --
+   ----------------------------
+
+   overriding function Is_Connected_To_Target
+     (Debugger : access Gdb_MI_Debugger) return Boolean
+   is
+      (Debugger.Target_Connected);
 
    --------------
    -- Set_Args --

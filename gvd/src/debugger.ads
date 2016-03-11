@@ -106,9 +106,17 @@ package Debugger is
      (Debugger : access Debugger_Root;
       Target   : String;
       Protocol : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Force    : Boolean := False;
+      Mode     : GVD.Types.Invisible_Command := GVD.Types.Hidden);
    --  If supported by the debugger, connect to the given target, using
    --  the given communication protocol.
+   --  If Force is True, the debugger should kill any existing connection
+   --  before attempting to connect to this target.
+
+   function Is_Connected_To_Target
+     (Debugger : access Debugger_Root) return Boolean is abstract;
+   --  Return True if the debugger is already connected to a target, False
+   --  otherwise.
 
    procedure Send
      (Debugger        : access Debugger_Root;
@@ -953,6 +961,16 @@ package Debugger is
    function Separate_Execution_Window
      (Debugger : access Debugger_Root) return Boolean;
    --  Whether the debugger has a separate execution window.
+
+   function Get_Remote_Target
+     (Debugger : access Debugger_Root) return String;
+   --  Return the debugger's current remote target.
+   --  If no remote target has been specified yet, return an empty string.
+
+   function Get_Remote_Protocol
+     (Debugger : access Debugger_Root) return String;
+   --  Return the debugger's current remote protocol.
+   --  If no remote protocol has been specified yet, return an empty string.
 
    function Get_Kernel
      (Debugger : access Debugger_Root'Class)

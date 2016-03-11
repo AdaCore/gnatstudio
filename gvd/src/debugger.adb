@@ -138,7 +138,8 @@ package body Debugger is
      (Debugger : access Debugger_Root;
       Target   : String;
       Protocol : String;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+      Force    : Boolean := False;
+      Mode     : GVD.Types.Invisible_Command := GVD.Types.Hidden)
    is
       pragma Unreferenced (Debugger, Target, Protocol, Mode);
    begin
@@ -1222,6 +1223,30 @@ package body Debugger is
 
       --  ??? Shouldn't we free Command_Queue
    end Close;
+
+   -----------------------
+   -- Get_Remote_Target --
+   -----------------------
+
+   function Get_Remote_Target
+     (Debugger : access Debugger_Root) return String
+   is
+     (if Debugger.Remote_Target /= null then
+         Debugger.Remote_Target.all
+      else
+         "");
+
+   -------------------------
+   -- Get_Remote_Protocol --
+   -------------------------
+
+   function Get_Remote_Protocol
+     (Debugger : access Debugger_Root) return String
+   is
+     (if Debugger.Remote_Protocol /= null then
+         Debugger.Remote_Protocol.all
+      else
+         "");
 
    ----------------
    -- Get_Kernel --
