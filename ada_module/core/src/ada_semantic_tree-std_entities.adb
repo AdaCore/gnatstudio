@@ -626,7 +626,11 @@ package body Ada_Semantic_Tree.Std_Entities is
    overriding function Get_Documentation
      (E : access Std_Entity_Record) return String is
    begin
-      return E.Desc.Documentation.all;
+      if E.Desc /= null and then E.Desc.Documentation /= null then
+         return E.Desc.Documentation.all;
+      else
+         return "";
+      end if;
    end Get_Documentation;
 
    --------------
