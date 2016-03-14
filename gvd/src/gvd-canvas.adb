@@ -58,6 +58,7 @@ with GVD.Generic_View;         use GVD.Generic_View;
 with GVD.Memory_View;
 with GVD.Menu;                 use GVD.Menu;
 with GVD.Preferences;          use GVD.Preferences;
+with GVD.Process;              use GVD.Process;
 with GVD.Trace;
 with GVD.Types;
 with GVD_Module;               use GVD_Module;
@@ -180,6 +181,14 @@ package body GVD.Canvas is
       Process : not null access Base_Visual_Debugger'Class);
    overriding procedure Update (Canvas : not null access GVD_Canvas_Record);
 
+   type On_Command is new Debugger_String_Hooks_Function with null record;
+   overriding function Execute
+     (Self    : On_Command;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Process : access GPS.Debuggers.Base_Visual_Debugger'Class;
+      Command : String) return String;
+   --  Handles the "graph display", "graph enable", ... custom commands
+
    type On_Pref_Changed is new Preferences_Hooks_Function with record
       Canvas : GVD_Canvas;
    end record;
@@ -233,6 +242,11 @@ package body GVD.Canvas is
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class);
    --  Refresh the contents of the data window (if any) associated with
    --  Debugger
+
+   procedure Process_Graph_Cmd
+     (Process : not null access GVD.Process.Visual_Debugger_Record'Class;
+      Cmd     : String);
+   --  Parse and process a "graph print" or "graph display" command
 
    function Get_Detect_Aliases
      (Process : access GVD.Process.Visual_Debugger_Record'Class)
@@ -744,7 +758,7 @@ package body GVD.Canvas is
    -----------------------
 
    procedure Process_Graph_Cmd
-     (Process : access Visual_Debugger_Record'Class;
+     (Process : not null access Visual_Debugger_Record'Class;
       Cmd     : String)
    is
       Matched   : Match_Array (0 .. Graph_Cmd_Max_Paren);
@@ -771,7 +785,7 @@ package body GVD.Canvas is
       Match (Graph_Cmd_Format, Cmd, Matched);
 
       if Matched (0) /= No_Match then
-         Attach_To_Data_Window
+         Canvas_Views.Attach_To_View
            (Process, Process.Kernel, Create_If_Necessary => True);
          Enable := Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd'
            or else Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'D';
@@ -905,7 +919,7 @@ package body GVD.Canvas is
          Match (Graph_Cmd_Format2, Cmd, Matched);
 
          if Matched (2) /= No_Match then
-            Attach_To_Data_Window
+            Canvas_Views.Attach_To_View
               (Process, Process.Kernel, Create_If_Necessary => True);
 
             Index := Matched (2).First;
@@ -940,7 +954,7 @@ package body GVD.Canvas is
             Match (Graph_Cmd_Format3, Cmd, Matched);
 
             if Matched (1) /= No_Match then
-               Attach_To_Data_Window
+               Canvas_Views.Attach_To_View
                  (Process, Process.Kernel, Create_If_Necessary => True);
                Index := Matched (1).First;
 
@@ -1076,16 +1090,6 @@ package body GVD.Canvas is
 
       return Gtk_Widget (Self.Get_View);
    end Initialize;
-
-   ---------------------------
-   -- Attach_To_Data_Window --
-   ---------------------------
-
-   procedure Attach_To_Data_Window
-     (Debugger : access Base_Visual_Debugger'Class;
-      Kernel   : not null access Kernel_Handle_Record'Class;
-      Create_If_Necessary : Boolean)
-      renames Canvas_Views.Attach_To_View;
 
    -----------------------
    -- Get_Next_Item_Num --
@@ -1573,6 +1577,26 @@ package body GVD.Canvas is
          True);
    end Toggle_Refresh_Mode;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self    : On_Command;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Process : access GPS.Debuggers.Base_Visual_Debugger'Class;
+      Command : String) return String
+   is
+      pragma Unreferenced (Self, Kernel);
+   begin
+      if Process /= null and then Starts_With (Command, "graph ") then
+         Process_Graph_Cmd (Visual_Debugger (Process), Command);
+         return "done";  --  command was processed
+      else
+         return "";  --  command does not apply to the canvas
+      end if;
+   end Execute;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1587,6 +1611,8 @@ package body GVD.Canvas is
            -("When two variables are at the same location in memory, a single"
            & " it , a single box is displayed if alias detection is enabled.")
         );
+
+      Debugger_Command_Action_Hook.Add (new On_Command);
 
       Canvas_Views.Register_Module (Kernel);
       Canvas_Views.Register_Open_View_Action

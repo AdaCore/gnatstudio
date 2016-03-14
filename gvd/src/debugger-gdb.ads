@@ -403,7 +403,7 @@ package Debugger.Gdb is
 
 private
 
-   overriding function Send
+   overriding function Send_And_Get_Clean_Output
      (Debugger        : access Gdb_Debugger;
       Cmd             : String;
       Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)

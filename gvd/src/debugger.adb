@@ -37,7 +37,6 @@ with Gtkada.Types;               use Gtkada.Types;
 
 with Config;                     use Config;
 with GVD;                        use GVD;
-with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Process;                use GVD.Process;
 with GVD.Source_Editor;          use GVD.Source_Editor;
@@ -65,6 +64,9 @@ package body Debugger is
 
    package Debugger_Timeout is new Glib.Main.Generic_Sources (Visual_Debugger);
 
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Command_Record, Command_Access);
+
    ---------------------
    -- Local Functions --
    ---------------------
@@ -86,15 +88,6 @@ package body Debugger is
    --  history if necessary
 
    procedure Send_Internal_Post
-     (Debugger         : access Debugger_Root'Class;
-      Mode             : Command_Type);
-   --  Internal procedure used by Send. This takes care of processing the
-   --  output of the debugger, but it doesn't read it.
-   --  This should be called only if we are currently waiting for the next
-   --  prompt, ie processing the output
-   --  Note that this function will do nothing if Mode is Internal.
-
-   procedure After_Command_Executed
      (Debugger          : access Debugger_Root'Class;
       Mode              : Command_Type;
       Always_Emit_Hooks : Boolean);
@@ -104,6 +97,22 @@ package body Debugger is
    --  The hooks reporting the change of state of the debugger are only emited
    --  when the mode is not Internal. But if Always_Emit_Hooks is true, they
    --  are always emitted.
+
+   procedure Internal_Send
+     (Debugger        : not null access Debugger_Root;
+      Cmd             : String;
+      Synchronous     : Boolean;
+      Output          : out GNAT.OS_Lib.String_Access;
+      Empty_Buffer    : Boolean := True;
+      Wait_For_Prompt : Boolean := True;
+      Force_Send      : Boolean := False;
+      Mode            : Command_Type := Hidden)
+     with Pre => (not Synchronous or else Wait_For_Prompt);
+   --  Internal version of Send
+   --  This version sends a command to the debugger, and will possibly wait for
+   --  its output (if Synchronous is True, otherwise Output is always set to
+   --  null).
+   --  See Send for the explanation for the other parameters.
 
    ---------------------
    -- Command Queuing --
@@ -480,7 +489,7 @@ package body Debugger is
          Debugger.State := Idle;
          Flush_Async_Output;
 
-         After_Command_Executed (Debugger, Mode, Always_Emit_Hooks => True);
+         Send_Internal_Post (Debugger, Mode, Always_Emit_Hooks => True);
       end if;
 
       return True;
@@ -586,11 +595,11 @@ package body Debugger is
       Send (Get_Process (Debugger), Cmd, Empty_Buffer);
    end Send_Internal_Pre;
 
-   ----------------------------
-   -- After_Command_Executed --
-   ----------------------------
+   ------------------------
+   -- Send_Internal_Post --
+   ------------------------
 
-   procedure After_Command_Executed
+   procedure Send_Internal_Post
      (Debugger          : access Debugger_Root'Class;
       Mode              : Command_Type;
       Always_Emit_Hooks : Boolean)
@@ -603,6 +612,8 @@ package body Debugger is
    begin
       Set_Command_In_Process (Get_Process (Debugger), False);
 
+      --  ??? Process might be null in the testsuite.
+
       if Process /= null then
          --  Compute whether breakpoints might have changed before running
          --  hooks and e.g. running other debugger commands as a side effect.
@@ -614,38 +625,17 @@ package body Debugger is
          Free (Process.Current_Command);
          Unregister_Dialog (Process);
 
-         --  Are there still commands to run in the queue ? If yes, perform
-         --  they all before we run the hooks just once
+         --  Are there still commands to run in the queue ? If yes, execute
+         --  them and let the last one do the post-processing.
          if Mode /= Internal and then Process_Command (Debugger) then
             return;
          end if;
 
-         Final_Post_Process (Process, Mode);
-
-         if Always_Emit_Hooks or else Mode /= Internal then
-            --  Postprocessing (e.g handling of auto-update).
-
-            if Process /= null then  --  null in testsuite
-               case Kind is
-               when Load_Command =>
-                  Debugger_Executable_Changed_Hook.Run
-                    (Process.Kernel, Process);
-               when Context_Command =>
-                  Debugger_Context_Changed_Hook.Run
-                    (Process.Kernel, Process);
-               when Execution_Command =>
-                  Debugger_Process_Stopped_Hook.Run
-                    (Process.Kernel, Process);
-               when Misc_Command =>
-                  null;
-               end case;
-            end if;
-
-            --  ??? This has already be run in Final_Post_Process if we
-            --  discovered a file name and we never parsed breakpoints info
-            --  before
-            Update_Breakpoints (Process, Force => Bp_Might_Have_Changed);
-         end if;
+         Final_Post_Process
+           (Process, Mode,
+            Always_Emit_Hooks              => Always_Emit_Hooks,
+            Category                       => Kind,
+            Breakpoints_Might_Have_Changed => Bp_Might_Have_Changed);
 
          --  In case a command has been queued while handling the signals and
          --  breakpoints above.
@@ -655,38 +645,70 @@ package body Debugger is
          end if;
 
       end if;
-   end After_Command_Executed;
-
-   ------------------------
-   -- Send_Internal_Post --
-   ------------------------
-
-   procedure Send_Internal_Post
-     (Debugger : access Debugger_Root'Class;
-      Mode     : Command_Type) is
-   begin
-      After_Command_Executed (Debugger, Mode, Always_Emit_Hooks => False);
    end Send_Internal_Post;
 
-   ----------
-   -- Send --
-   ----------
+   -------------------
+   -- Internal_Send --
+   -------------------
 
-   procedure Send
-     (Debugger        : access Debugger_Root;
+   procedure Internal_Send
+     (Debugger        : not null access Debugger_Root;
       Cmd             : String;
+      Synchronous     : Boolean;
+      Output          : out GNAT.OS_Lib.String_Access;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
       Force_Send      : Boolean := False;
       Mode            : Command_Type := Hidden)
    is
-      Process : Visual_Debugger;
+      Process : constant Visual_Debugger := GVD.Process.Convert (Debugger);
       Button  : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
       Last    : Positive := Cmd'First;
+      Cmd_Last : Natural;
       First   : Positive;
 
+      procedure Wait_For_Prompt_And_Get_Output;
+      --  Wait for the prompt synchronously, then get the full debugger
+      --  output. Finally, terminate do all the post-processing.
+
+      procedure Wait_For_Prompt_And_Get_Output is
+         Dummy   : Boolean;
+      begin
+         Wait_Prompt (Debugger_Access (Debugger));
+         Debugger.Continuation_Line := False;
+         Debugger.State := Idle;
+
+         if Synchronous then
+            Free (Output);
+
+            declare
+               S : String := Glib.Convert.Locale_To_UTF8
+                 (Expect_Out (Get_Process (Debugger)));
+            begin
+               --  Strip CRs in remote mode, as we can't know in advance if the
+               --  debug server outputs CR/LF or just LF, and the consequences
+               --  or removing CRs in the latter case are better than not
+               --  removing them in the first case
+               if Need_To_Strip_CR or else not Is_Local (Debug_Server) then
+                  Strip_CR (S, Last, CR_Found => Dummy);
+                  Output := new String'(S (S'First .. Last));
+               else
+                  Output := new String'(S);
+               end if;
+            end;
+         end if;
+
+         Send_Internal_Post (Debugger, Mode, Always_Emit_Hooks => False);
+      end Wait_For_Prompt_And_Get_Output;
+
    begin
+      Free (Output);
+
+      if Cmd = "" then
+         return;
+      end if;
+
       --  When there are multiple commands separated by ASCII.LF, Force_Send
       --  applies to the command set as a whole. If the debugger is processing
       --  a command, we send none of them, otherwise we send them all without
@@ -694,19 +716,63 @@ package body Debugger is
       --  only occur in a few limited cases anyway (Set_Breakpoint_Command for
       --  instance).
 
-      if not Force_Send
-        and then Command_In_Process (Get_Process (Debugger))
-      then
-         --  Will be processed by the same Send later on
-         Queue_Command (Debugger, Cmd, Empty_Buffer, Mode);
-         return;
+      if Command_In_Process (Get_Process (Debugger)) then
+         if Synchronous then
+            Trace (Me, "Cannot send command " & Cmd & " since debugger is"
+                   & " already processing"
+                   & (if Process = null or else  Process.Current_Command = null
+                     then "" else Process.Current_Command.all));
+            return;
+
+         elsif not Force_Send then
+            --  Will be processed by the same Send later on
+            Queue_Command (Debugger, Cmd, Empty_Buffer, Mode);
+            return;
+         end if;
       end if;
+
+      --  Cleanup the command to remove special characters that would make
+      --  the debugger and GPS hang
+      --  ??? Should forbid commands that modify the configuration of the
+      --  debugger, like "set annotate" for gdb, otherwise we can't be sure
+      --  what to expect from the debugger.
+
+      Cmd_Last := Cmd'Last;
+      while Cmd_Last >= Cmd'First
+        and then (Cmd (Cmd_Last) = '\' or else Cmd (Cmd_Last) = ASCII.HT)
+      loop
+         Cmd_Last := Cmd_Last - 1;
+      end loop;
 
       --  Each command is separated with a ASCII.LF and is handled separately
 
+      Skip_Blanks (Cmd (Cmd'First .. Cmd_Last), Last);
       loop
          First := Last;
-         Skip_To_Char (Cmd, Last, ASCII.LF);
+         Skip_To_Char (Cmd (Cmd'First .. Cmd_Last), Last, ASCII.LF);
+
+         --  Test custom commands defined by the views and user plug-ins. This
+         --  might execute or queue commands (by ultimately calling this same
+         --  Internal_Send procedure).
+
+         declare
+            Tmp : constant String :=
+              (if Debugger.Kernel = null
+               then ""    --  in the testsuite
+               else Debugger_Command_Action_Hook.Run
+                 (Kernel   => Debugger.Kernel,
+                  Debugger => Process,
+                  Str      => Cmd (First .. Last - 1)));
+         begin
+            if Tmp /= "" then
+               if Mode in Visible_Command then
+                  Output_Text (Process, Tmp, Is_Command  => False,
+                               Set_Position              => True);
+                  Debugger_Root'Class (Debugger.all).Display_Prompt;
+               end if;
+               return;
+            end if;
+         end;
 
          --  Used to have the following text:
          --    if Mode not in Invisible_Command
@@ -727,26 +793,14 @@ package body Debugger is
             when Invisible_Command =>
                Debugger.State := Sync_Wait;
 
-               if Last > Cmd'Last and then Wait_For_Prompt then
-                  --  Only wait for the prompt on the last command when
-                  --  there are multiple commands separated by ASCII.LF
-                  Wait_Prompt (Debugger_Access (Debugger));
-                  Debugger.Continuation_Line := False;
-                  Debugger.State := Idle;
-                  Send_Internal_Post (Debugger, Mode);
+               if Last > Cmd_Last and then Wait_For_Prompt then
+                  Wait_For_Prompt_And_Get_Output;
                end if;
 
             when Visible_Command =>
                if Wait_For_Prompt then
-                  if not Async_Commands then
-                     --  Synchronous handling of commands, simple case
-
-                     Debugger.State := Sync_Wait;
-                     Wait_Prompt (Debugger_Access (Debugger));
-                     Debugger.Continuation_Line := False;
-                     Debugger.State := Idle;
-                     Send_Internal_Post (Debugger, Mode);
-
+                  if Synchronous then
+                     Wait_For_Prompt_And_Get_Output;
                   else
                      --  Asynchronous handling of commands, done in
                      --  Output_Available.
@@ -754,7 +808,7 @@ package body Debugger is
                      Debugger.State := Async_Wait;
                   end if;
 
-               else
+               else   --  always asynchronous
                   if Mode >= Visible then
                      --  Clear the current output received from the debugger
                      --  to avoid confusing the prompt detection, since
@@ -762,13 +816,11 @@ package body Debugger is
                      --  which is delicate.
 
                      Process_Proxies.Empty_Buffer (Get_Process (Debugger));
-                     Process := GVD.Process.Convert (Debugger);
                   end if;
                end if;
          end case;
 
-         exit when Last > Cmd'Last;
-
+         exit when Last > Cmd_Last;
          Last := Last + 1;
       end loop;
 
@@ -776,8 +828,6 @@ package body Debugger is
       when Process_Died =>
          Trace (Me, "underlying debugger died unexpectedly in 'send'");
          Set_Command_In_Process (Get_Process (Debugger), False);
-
-         Process := GVD.Process.Convert (Debugger);
 
          if Process /= null then
             Free (Process.Current_Command);
@@ -795,66 +845,63 @@ package body Debugger is
             Unregister_Dialog (Process);
             Close_Debugger (Process);
          end if;
+   end Internal_Send;
+
+   ----------
+   -- Send --
+   ----------
+
+   procedure Send
+     (Debugger        : access Debugger_Root;
+      Cmd             : String;
+      Empty_Buffer    : Boolean := True;
+      Wait_For_Prompt : Boolean := True;
+      Force_Send      : Boolean := False;
+      Mode            : Command_Type := Hidden)
+   is
+      Output : GNAT.OS_Lib.String_Access;
+   begin
+      Internal_Send
+        (Debugger,
+         Cmd             => Cmd,
+         Synchronous     => False,
+         Output          => Output,   --  will always be null
+         Empty_Buffer    => Empty_Buffer,
+         Wait_For_Prompt => Wait_For_Prompt,
+         Force_Send      => Force_Send,
+         Mode            => Mode);
+      Free (Output);  --  Just in case
    end Send;
 
-   ---------------
-   -- Send_Full --
-   ---------------
+   -------------------------
+   -- Send_And_Get_Output --
+   -------------------------
 
-   function Send_Full
+   function Send_And_Get_Output
      (Debugger : access Debugger_Root;
       Cmd      : String;
       Mode     : Invisible_Command := Hidden) return String
    is
-      Process  : Visual_Debugger;
-      Last     : Natural;
-      CR_Found : Boolean;
-
+      Output : GNAT.OS_Lib.String_Access;
    begin
-      if Command_In_Process (Get_Process (Debugger)) then
-         --  Should never happen, but it's safer to return immediately in case
-         --  we're compiling without assertions, rather than hanging.
+      Internal_Send
+        (Debugger,
+         Cmd             => Cmd,
+         Synchronous     => True,
+         Output          => Output,
+         Empty_Buffer    => True,
+         Wait_For_Prompt => True,
+         Force_Send      => False,
+         Mode            => Mode);
 
-         pragma Assert (False);
+      if Output = null then
          return "";
+      else
+         return S : constant String := Output.all do
+            Free (Output);
+         end return;
       end if;
-
-      Send_Internal_Pre (Debugger, Cmd, Mode => Mode);
-      Wait_Prompt (Debugger_Access (Debugger));
-      Debugger.Continuation_Line := False;
-
-      declare
-         S : String :=
-           Glib.Convert.Locale_To_UTF8 (Expect_Out (Get_Process (Debugger)));
-      begin
-         Send_Internal_Post (Debugger, Mode);
-
-         --  Strip CRs in remote mode, as we can't know in advance if the debug
-         --  server outputs CR/LF or just LF, and the consequences or removing
-         --  CRs in the latter case are better than not removing them in the
-         --  first case
-         if Need_To_Strip_CR or else not Is_Local (Debug_Server) then
-            Strip_CR (S, Last, CR_Found);
-            return S (S'First .. Last);
-         else
-            return S;
-         end if;
-      end;
-
-   exception
-      when Process_Died =>
-         Trace (Me, "underlying debugger died unexpectedly in 'send_full'");
-         Set_Command_In_Process (Get_Process (Debugger), False);
-
-         Process := GVD.Process.Convert (Debugger);
-         if Process /= null then
-            Free (Process.Current_Command);
-            Unregister_Dialog (Process);
-            Close_Debugger (Process);
-         end if;
-
-         return "";
-   end Send_Full;
+   end Send_And_Get_Output;
 
    ---------------------
    -- List_Exceptions --
@@ -1027,37 +1074,19 @@ package body Debugger is
    -- Process_Command --
    ---------------------
 
-   procedure Free is new
-     Ada.Unchecked_Deallocation (Command_Record, Command_Access);
-
    function Process_Command
      (Debugger : access Debugger_Root'Class) return Boolean
    is
       Command : Command_Access := Debugger.Command_Queue;
-      Process : Visual_Debugger;
-      First   : Natural;
-
    begin
       if Command = null then
          return False;
       end if;
 
       Debugger.Command_Queue := Command.Next;
-
-      First := Command.Cmd'First;
-      Skip_Blanks (Command.Cmd.all, First);
-
-      if Looking_At (Command.Cmd.all, First, "graph") then
-         Process := GVD.Process.Convert (Debugger);
-         if Process /= null then
-            Process_Graph_Cmd (Process, Command.Cmd.all);
-         end if;
-
-      else
-         Send
-           (Debugger, Command.Cmd.all, Command.Empty_Buffer,
-            Mode => Command.Mode);
-      end if;
+      Send
+        (Debugger, Command.Cmd.all, Command.Empty_Buffer,
+         Mode => Command.Mode);
 
       Free (Command.Cmd);
       Free (Command);

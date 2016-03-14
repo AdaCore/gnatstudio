@@ -15,12 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+--  A view to edit breakpoints interactively
+
 with GPS.Kernel;
 
-package Breakpoints_Editor is
+package GVD.Breakpoints is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register menus and other functions to support the breakpoint editor
 
-end Breakpoints_Editor;
+end GVD.Breakpoints;

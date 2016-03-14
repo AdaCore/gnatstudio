@@ -78,7 +78,7 @@ package GPS.Kernel.Modules.UI is
      (Kernel          : access Kernel_Handle_Record'Class;
       Event_On_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Context_Func    : Contextual_Menu_Factory := null);
-   --  Register than Event_On_Widget should create a contextual menu when the
+   --  Register that Event_On_Widget should create a contextual menu when the
    --  user right-clicks anywhere inside its area.
    --  Upon right-click, the following happens:
    --     - GPS computes the selection_context via a call to the MDI Child's

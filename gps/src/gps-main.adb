@@ -147,7 +147,10 @@ with GNATStack.Module;
 with GNATTest_Module;
 with GPS.Location_View;
 with GVD_Module;
+with GVD.Assembly_View;
+with GVD.Breakpoints;
 with GVD.Call_Stack;
+with GVD.Dialogs;
 with GVD.Memory_View;
 with Help_Module;
 with KeyManager_Module;
@@ -2067,6 +2070,9 @@ procedure GPS.Main is
 
       if Active (GVD_Trace) then
          GVD_Module.Register_Module (GPS_Main.Kernel);
+         GVD.Dialogs.Register_Module (GPS_Main.Kernel);
+         GVD.Assembly_View.Register_Module (GPS_Main.Kernel);
+         GVD.Breakpoints.Register_Module (GPS_Main.Kernel);
          GVD.Call_Stack.Register_Module (GPS_Main.Kernel);
          GVD.Memory_View.Register_Module (GPS_Main.Kernel);
       end if;

@@ -70,11 +70,6 @@ package GVD.Dialogs is
    --  If Questions consists of two choices "y" and "n" then display
    --  only a basic Yes/No dialog.
 
-   function Get_Dialog_Kind
-     (Question_Dialog : access Question_Dialog_Record'Class)
-      return Dialog_Kind;
-   --  Return the kind of dialog associated with Question_Dialog
-
 private
    type Question_Dialog_Record is new GPS_Dialog_Record with record
       Vbox1           : Gtk_Vbox;

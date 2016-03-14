@@ -569,7 +569,7 @@ not have changed since the last time.'''),
     Hook('debugger_command_action_hook', 'debugger_string_hooks',
          descr='''
 Called when the user types a command in the debugger console, or emits
-the console through the GPS.Debugger API. It gives you a chance to
+the command through the GPS.Debugger API. It gives you a chance to
 override the behavior for the command, or even define your own
 commands. Note that you must ensure that any debugger command you
 execute this way does finish with a prompt. The function should return

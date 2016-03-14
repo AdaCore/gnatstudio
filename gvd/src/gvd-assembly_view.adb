@@ -167,7 +167,7 @@ package body GVD.Assembly_View is
    --  Called when a key is pressed in the child (handling of meta-scrolling)
 
    procedure Iter_From_Address
-     (View     : Assembly_View;
+     (View     : not null access Assembly_View_Record'Class;
       Address  : Address_Type;
       Iter     : out Gtk_Text_Iter;
       Found    : out Boolean);
@@ -190,21 +190,8 @@ package body GVD.Assembly_View is
    pragma Unreferenced (Is_Breakpoint_Address);
    --  Result is set to True if a breakpoint is set at address Addr
 
-   procedure Reset_Highlighting (View : Assembly_View);
-   --  Reset the buffer highlighting
-
-   procedure Highlight (View : Assembly_View);
+   procedure Highlight (View : access Assembly_View_Record'Class);
    --  Redo the buffer highlighting
-
-   procedure Highlight_Address_Range (View : Assembly_View);
-   --  Highlight the range of addresses corresponding to the current source
-   --  line.
-
-   procedure Highlight_Pc_Line (View : Assembly_View);
-   --  Highlight the Pc line
-
-   procedure Highlight_Breakpoint_Lines (View : Assembly_View);
-   --  Highlight lines on which a breakpoint is set
 
    procedure On_Frame_Changed
      (View          : Assembly_View;
@@ -243,6 +230,14 @@ package body GVD.Assembly_View is
    procedure Meta_Scroll_Up
      (View : access Assembly_View_Record'Class);
    --  The user has asked for the previous or next undisplayed assembly page
+
+   type On_Breakpoints_Changed is new Debugger_Hooks_Function
+      with null record;
+   overriding procedure Execute
+      (Self     : On_Breakpoints_Changed;
+       Kernel   : not null access Kernel_Handle_Record'Class;
+       Debugger : access Base_Visual_Debugger'Class);
+   --  Called when the breakpoints might have changed
 
    type On_Pref_Changed is new Preferences_Hooks_Function with record
       View : Assembly_View;
@@ -326,7 +321,7 @@ package body GVD.Assembly_View is
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
       Line     : Natural) is
    begin
-      Set_Source_Line (Assembly_View (Debugger.Assembly), Line);
+      Set_Source_Line (Get_View (Debugger), Line);
    end Set_Source_Line;
 
    --------------
@@ -364,148 +359,81 @@ package body GVD.Assembly_View is
       Modify_Font (View.View, Font);
    end Set_Font;
 
-   ------------------------
-   -- Reset_Highlighting --
-   ------------------------
-
-   procedure Reset_Highlighting (View : Assembly_View) is
-      Buffer     : Gtk_Text_Buffer;
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-   begin
-      if View = null then
-         return;
-      end if;
-
-      Buffer := Get_Buffer (View.View);
-      Get_Bounds (Buffer, Start_Iter, End_Iter);
-      Remove_Tag (Buffer, View.Highlight_Tag, Start_Iter, End_Iter);
-      Remove_Tag (Buffer, View.Pc_Tag, Start_Iter, End_Iter);
-      Remove_Tag (Buffer, View.Breakpoint_Tag, Start_Iter, End_Iter);
-   end Reset_Highlighting;
-
-   -----------------------------
-   -- Highlight_Address_Range --
-   -----------------------------
-
-   procedure Highlight_Address_Range (View : Assembly_View) is
-      Buffer     : Gtk_Text_Buffer;
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-      Found      : Boolean := False;
-
-   begin
-      if View = null then
-         return;
-      end if;
-
-      Buffer := Get_Buffer (View.View);
-
-      if View.Source_Line_Start /= Invalid_Address
-        and then View.Source_Line_End /= Invalid_Address
-      then
-         Iter_From_Address
-           (View, View.Source_Line_Start, Start_Iter,
-            Found);
-
-         if Found then
-            Iter_From_Address
-              (View, View.Source_Line_End, End_Iter, Found);
-         end if;
-
-         --  Highlight the new range
-
-         if Found then
-            Begin_User_Action (Buffer);
-            Apply_Tag
-              (Buffer, View.Highlight_Tag, Start_Iter, End_Iter);
-            End_User_Action (Buffer);
-         end if;
-      end if;
-   end Highlight_Address_Range;
-
-   -----------------------
-   -- Highlight_Pc_Line --
-   -----------------------
-
-   procedure Highlight_Pc_Line (View : Assembly_View) is
-      Buffer        : Gtk_Text_Buffer;
-      Start_Iter,
-      End_Iter      : Gtk_Text_Iter;
-      Dummy_Boolean : Boolean;
-      Process       : Visual_Debugger;
-   begin
-      if View = null then
-         return;
-      end if;
-
-      Process := Get_Process (View);
-      Buffer := Get_Buffer (View.View);
-      Iter_From_Address
-        (View, Process.Pc, Start_Iter, Dummy_Boolean);
-      Copy (Start_Iter, Dest => End_Iter);
-      Forward_To_Line_End (End_Iter, Dummy_Boolean);
-      Apply_Tag (Buffer, View.Pc_Tag, Start_Iter, End_Iter);
-   end Highlight_Pc_Line;
-
-   --------------------------------
-   -- Highlight_Breakpoint_Lines --
-   --------------------------------
-
-   procedure Highlight_Breakpoint_Lines (View : Assembly_View) is
-      Process   : Visual_Debugger;
-      Buffer    : Gtk_Text_Buffer;
-      Start_Iter,
-      End_Iter  : Gtk_Text_Iter;
-      Found     : Boolean;
-      Dummy     : Boolean;
-   begin
-      if View = null then
-         return;
-      end if;
-
-      Process := Get_Process (View);
-
-      if Process.Breakpoints = null then
-         return;
-      end if;
-
-      Buffer := Get_Buffer (View.View);
-
-      --  Add the new ones
-
-      for B in Process.Breakpoints'Range loop
-         if Process.Breakpoints (B).Address /= Invalid_Address then
-            Iter_From_Address
-              (View,
-               Process.Breakpoints (B).Address,
-               Start_Iter,
-               Found);
-
-            if Found then
-               Copy (Start_Iter, Dest => End_Iter);
-               Forward_To_Line_End (End_Iter, Dummy);
-               Apply_Tag
-                 (Buffer, View.Breakpoint_Tag, Start_Iter, End_Iter);
-            end if;
-         end if;
-      end loop;
-   end Highlight_Breakpoint_Lines;
-
    ---------------
    -- Highlight --
    ---------------
 
-   procedure Highlight (View : Assembly_View) is
+   procedure Highlight (View : access Assembly_View_Record'Class) is
+      Process    : Visual_Debugger;
+      Buffer     : Gtk_Text_Buffer;
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+      Found      : Boolean := False;
+      Dummy      : Boolean;
    begin
-      if View = null then
-         return;
-      end if;
+      if View /= null then
+         Buffer := Get_Buffer (View.View);
+         Process := Get_Process (View);
 
-      Reset_Highlighting (View);
-      Highlight_Address_Range (View);
-      Highlight_Breakpoint_Lines (View);
-      Highlight_Pc_Line (View);
+         --  Reset the current highlighting
+
+         Get_Bounds (Buffer, Start_Iter, End_Iter);
+         Remove_Tag (Buffer, View.Highlight_Tag, Start_Iter, End_Iter);
+         Remove_Tag (Buffer, View.Pc_Tag, Start_Iter, End_Iter);
+         Remove_Tag (Buffer, View.Breakpoint_Tag, Start_Iter, End_Iter);
+
+         --  Highlight address range
+
+         if View.Source_Line_Start /= Invalid_Address
+           and then View.Source_Line_End /= Invalid_Address
+         then
+            Iter_From_Address
+              (View, View.Source_Line_Start, Start_Iter,
+               Found);
+
+            if Found then
+               Iter_From_Address
+                 (View, View.Source_Line_End, End_Iter, Found);
+            end if;
+
+            --  Highlight the new range
+
+            if Found then
+               Begin_User_Action (Buffer);
+               Apply_Tag
+                 (Buffer, View.Highlight_Tag, Start_Iter, End_Iter);
+               End_User_Action (Buffer);
+            end if;
+         end if;
+
+         --  Highlight breakpoint lines
+
+         if Process.Breakpoints /= null then
+            for B in Process.Breakpoints'Range loop
+               if Process.Breakpoints (B).Address /= Invalid_Address then
+                  Iter_From_Address
+                    (View,
+                     Process.Breakpoints (B).Address,
+                     Start_Iter,
+                     Found);
+
+                  if Found then
+                     Copy (Start_Iter, Dest => End_Iter);
+                     Forward_To_Line_End (End_Iter, Dummy);
+                     Apply_Tag
+                       (Buffer, View.Breakpoint_Tag, Start_Iter, End_Iter);
+                  end if;
+               end if;
+            end loop;
+         end if;
+
+         --  Highlight PC line
+
+         Iter_From_Address (View, Process.Pc, Start_Iter, Dummy);
+         Copy (Start_Iter, Dest => End_Iter);
+         Forward_To_Line_End (End_Iter, Dummy);
+         Apply_Tag (Buffer, View.Pc_Tag, Start_Iter, End_Iter);
+      end if;
    end Highlight;
 
    -----------------------
@@ -513,7 +441,7 @@ package body GVD.Assembly_View is
    -----------------------
 
    procedure Iter_From_Address
-     (View    : Assembly_View;
+     (View     : not null access Assembly_View_Record'Class;
       Address : Address_Type;
       Iter    : out Gtk_Text_Iter;
       Found   : out Boolean)
@@ -522,10 +450,6 @@ package body GVD.Assembly_View is
       End_Iter : Gtk_Text_Iter;
       Result   : Boolean := True;
    begin
-      if View = null then
-         null;
-      end if;
-
       Buffer := Get_Buffer (View.View);
 
       Get_Start_Iter (Buffer, Iter);
@@ -677,11 +601,8 @@ package body GVD.Assembly_View is
      (View : Assembly_View;
       Down : Boolean) is
    begin
-      if View = null then
-         return;
-      end if;
-
-      if View.Current_Range /= null
+      if View /= null
+        and then View.Current_Range /= null
         and then Assembly_Range_Size.Get_Pref /= 0
       then
          if Down then
@@ -1031,33 +952,23 @@ package body GVD.Assembly_View is
 
       V.Assembly := Abstract_View_Access (View);
    end Set_View;
-   --------------------------
-   -- Update_Assembly_View --
-   --------------------------
 
-   procedure Update_Assembly_View
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class) is
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+      (Self     : On_Breakpoints_Changed;
+       Kernel   : not null access Kernel_Handle_Record'Class;
+       Debugger : access Base_Visual_Debugger'Class)
+   is
+      pragma Unreferenced (Self, Kernel);
+      V : constant access Assembly_View_Record'Class := Get_View (Debugger);
    begin
-      if Debugger.Assembly = null then
-         return;
+      if V /= null then
+         Highlight (V);
       end if;
-
-      Update (Assembly_View (Debugger.Assembly));
-   end Update_Assembly_View;
-
-   ------------------------
-   -- Update_Breakpoints --
-   ------------------------
-
-   procedure Update_Breakpoints
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class) is
-   begin
-      if Debugger.Assembly = null then
-         return;
-      end if;
-
-      Highlight (Assembly_View (Debugger.Assembly));
-   end Update_Breakpoints;
+   end Execute;
 
    ---------------------
    -- Register_Module --
@@ -1071,6 +982,8 @@ package body GVD.Assembly_View is
         (Kernel,
          Action_Name => "open assembly view",
          Description => -"Open the Assembly view for the debugger");
+
+      Debugger_Breakpoints_Changed_Hook.Add (new On_Breakpoints_Changed);
    end Register_Module;
 
    ----------------

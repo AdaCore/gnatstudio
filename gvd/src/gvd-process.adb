@@ -55,22 +55,19 @@ with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Main_Window;            use GPS.Main_Window;
-with GVD.Assembly_View;          use GVD.Assembly_View;
+with GVD.Assembly_View;
 with GVD.Call_Stack;
-with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Consoles;               use GVD.Consoles;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Source_Editor;          use GVD.Source_Editor;
 with GVD.Source_Editor.GPS;      use GVD.Source_Editor.GPS;
-with GVD.Trace;                  use GVD.Trace;
 with GVD.Types;                  use GVD.Types;
 with GVD_Module;                 use GVD_Module;
 with Language_Handlers;          use Language_Handlers;
 with Process_Proxies;            use Process_Proxies;
 with Projects;                   use Projects;
 with Remote;                     use Remote;
-with String_Utils;               use String_Utils;
 with Toolchains_Old;             use Toolchains_Old;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with XML_Utils;                  use XML_Utils;
@@ -112,12 +109,6 @@ package body GVD.Process is
       Str        : String;
       Window     : System.Address);
    --  Real handler called by First_Text_Output_Filter
-
-   procedure Process_Graph_Command
-     (Debugger : Visual_Debugger;
-      Command  : String;
-      Mode     : Command_Type);
-   --  Process a "graph ..." command
 
    type On_Before_Exit is new Return_Boolean_Hooks_Function with record
       Process : access Visual_Debugger_Record'Class;
@@ -661,8 +652,11 @@ package body GVD.Process is
    ------------------------
 
    procedure Final_Post_Process
-     (Process : access Visual_Debugger_Record'Class;
-      Mode    : GVD.Types.Command_Type)
+     (Process           : not null access Visual_Debugger_Record'Class;
+      Mode              : GVD.Types.Command_Type;
+      Always_Emit_Hooks : Boolean;
+      Category          : Command_Category;
+      Breakpoints_Might_Have_Changed : Boolean)
    is
       File : Unbounded_String;
       Line : Natural := 0;
@@ -744,6 +738,25 @@ package body GVD.Process is
          end if;
 
          Process.Is_From_Dbg_Console := False;
+      end if;
+
+      if Always_Emit_Hooks or else Mode /= Internal then
+         --  Postprocessing (e.g handling of auto-update).
+
+         case Category is
+            when Load_Command =>
+               Debugger_Executable_Changed_Hook.Run (Process.Kernel, Process);
+            when Context_Command =>
+               Debugger_Context_Changed_Hook.Run (Process.Kernel, Process);
+            when Execution_Command =>
+               Debugger_Process_Stopped_Hook.Run (Process.Kernel, Process);
+            when Misc_Command =>
+               null;
+         end case;
+
+         --  ??? This has already be run above if we discovered a file name and
+         --  we never parsed breakpoints info before
+         Update_Breakpoints (Process, Force => Breakpoints_Might_Have_Changed);
       end if;
    end Final_Post_Process;
 
@@ -1066,10 +1079,6 @@ package body GVD.Process is
 
       Initialize (Process.Debugger);
 
-      --  If some unattached dialogs exist, claim them
-      Attach_To_Data_Window
-        (Process, Window.Kernel, Create_If_Necessary => False);
-
       --  If we have a debuggee console in the desktop, always use it.
       --  Otherwise, we only create one when the user has asked for it.
 
@@ -1282,60 +1291,6 @@ package body GVD.Process is
       end if;
    end Close_Debugger;
 
-   ---------------------------
-   -- Process_Graph_Command --
-   ---------------------------
-
-   procedure Process_Graph_Command
-     (Debugger : Visual_Debugger;
-      Command  : String;
-      Mode     : Command_Type)
-   is
-      Busy  : constant Boolean :=
-                Command_In_Process (Get_Process (Debugger.Debugger));
-      Data  : History_Data;
-      Index : Natural;
-
-   begin
-      Data.Mode := Mode;
-      Data.Command := new String'(Command);
-      Output_Message (Debugger, Command, Mode);
-
-      if Mode /= Internal then
-         Append (Debugger.Command_History, Data);
-      end if;
-
-      if Busy then
-         --  Process graph disable|undisplay commands immediately since
-         --  they do not require access to the underlying debugger, and
-         --  queue other graph commands.
-
-         declare
-            Lowered_Command : constant String := To_Lower (Command);
-         begin
-            Index := Lowered_Command'First;
-            Skip_Blanks (Lowered_Command, Index);
-            Index := Index + 6;  -- Skip "graph "
-            Skip_Blanks (Lowered_Command, Index);
-
-            if not (Looking_At (Lowered_Command, Index, "disable")
-                    or else Looking_At (Lowered_Command, Index, "undisplay"))
-            then
-               --  Command requires access to the debugger, queue it
-
-               Send (Debugger.Debugger, Command, Mode => Mode);
-               return;
-            end if;
-         end;
-      end if;
-
-      Process_Graph_Cmd (Debugger, Command);
-
-      if Mode in Visible_Command and then not Busy then
-         Display_Prompt (Debugger.Debugger);
-      end if;
-   end Process_Graph_Command;
-
    --------------------------
    -- Process_User_Command --
    --------------------------
@@ -1348,37 +1303,7 @@ package body GVD.Process is
       Output         : String_Access_Access)
    is
       Lowered_Command : constant String := To_Lower (Command);
-      First           : Natural := Lowered_Command'First;
       Busy            : Boolean;
-
-      function Check (S : String) return String;
-      --  Check validity of debugger command S, and modify it if needed
-
-      -----------
-      -- Check --
-      -----------
-
-      function Check (S : String) return String is
-         Last : Integer := S'Last;
-      begin
-         --  ??? Should forbid commands that modify the configuration of the
-         --  debugger, like "set annotate" for gdb, otherwise we can't be sure
-         --  what to expect from the debugger.
-
-         if S'Length = 0 then
-            return "";
-         else
-            --  Strip trailing characters which will block GPS
-
-            while Last >= S'First
-              and then (S (Last) = '\' or else S (Last) = ASCII.HT)
-            loop
-                  Last := Last - 1;
-            end loop;
-
-            return S (S'First .. Last);
-         end if;
-      end Check;
 
    begin
       if Output /= null then
@@ -1401,45 +1326,12 @@ package body GVD.Process is
          Output_Text (Debugger, Command & ASCII.LF, Is_Command => True);
       end if;
 
-      --  Is this a command handled by a script ?
-
-      declare
-         Tmp : constant String := Debugger_Command_Action_Hook.Run
-             (Kernel   => Debugger.Kernel,
-              Debugger => Debugger,
-              Str      => Command);
-      begin
-         if Tmp /= "" then
-            if Output_Command then
-               Output_Text (Debugger, Tmp, Is_Command => False,
-                            Set_Position => True);
-            end if;
-
-            if not Busy then
-               Display_Prompt (Debugger.Debugger);
-            end if;
-
-            if Output /= null then
-               Output.all := new String'(Tmp);
-            end if;
-
-            return;
-         end if;
-      end;
-
       --  Command has been converted to lower-cases, but the new version
       --  should be used only to compare with our standard list of commands.
       --  We should pass the original string to the debugger, in case we are
       --  in a case-sensitive language.
 
-      --  Ignore the blanks at the beginning of lines
-
-      Skip_Blanks (Lowered_Command, First);
-
-      if Looking_At (Lowered_Command, First, "graph") then
-         Process_Graph_Command (Debugger, Command, Mode);
-
-      elsif Is_Quit_Command (Debugger.Debugger, Lowered_Command) then
+      if Is_Quit_Command (Debugger.Debugger, Lowered_Command) then
          if Busy
            and then not Separate_Execution_Window (Debugger.Debugger)
          then
@@ -1453,42 +1345,42 @@ package body GVD.Process is
          else
             Close_Debugger (Debugger);
          end if;
+         return;
+      end if;
+
+      --  Regular debugger command, send it.
+      --  If a dialog is currently displayed, do not wait for the debugger
+      --  prompt, since the prompt won't be displayed before the user
+      --  answers the question...
+
+      if Output = null
+        and then (Continuation_Line (Debugger.Debugger)
+                  or else Debugger.Registered_Dialog /= null)
+      then
+         --  For interactive command, we always send them immediately to
+         --  the debugger, since this might be an answer to a gdb question
+         --  ("restart process (y/n) ?")
+         Send
+           (Debugger.Debugger,
+            Command, Wait_For_Prompt => False, Mode => Mode,
+            Force_Send               => Debugger.Is_From_Dbg_Console);
+
+      elsif Output = null then
+         --  Force_Send is always false so that commands are queued. We
+         --  are not in a secondary prompt anyway (which should be when
+         --  we have a Registered_Dialog).
+         Send (Debugger.Debugger, Command, Mode => Mode,
+               Force_Send => False);
 
       else
-         --  Regular debugger command, send it.
-         --  If a dialog is currently displayed, do not wait for the debugger
-         --  prompt, since the prompt won't be displayed before the user
-         --  answers the question...
+         Output.all := new String'
+           (Send_And_Get_Clean_Output
+              (Debugger.Debugger, Command, Mode => Mode));
 
-         if Output = null
-           and then (Continuation_Line (Debugger.Debugger)
-                     or else Debugger.Registered_Dialog /= null)
+         if Output_Command
+           and then Debugger.Debugger /= null
          then
-            --  For interactive command, we always send them immediately to
-            --  the debugger, since this might be an answer to a gdb question
-            --  ("restart process (y/n) ?")
-            Send
-              (Debugger.Debugger,
-               Command, Wait_For_Prompt => False, Mode => Mode,
-               Force_Send => Debugger.Is_From_Dbg_Console);
-         else
-            if Output = null then
-               --  Force_Send is always false so that commands are queue. We
-               --  are not in a secondary prompt anyway (which should be when
-               --  we have a Registered_Dialog).
-               Send (Debugger.Debugger, Check (Command), Mode => Mode,
-                     Force_Send => False);
-            else
-               Output.all :=
-                 new String'(Send
-                   (Debugger.Debugger, Check (Command), Mode => Mode));
-
-               if Output_Command
-                 and then Debugger.Debugger /= null
-               then
-                  Display_Prompt (Debugger.Debugger);
-               end if;
-            end if;
+            Display_Prompt (Debugger.Debugger);
          end if;
       end if;
    end Process_User_Command;
@@ -1567,20 +1459,15 @@ package body GVD.Process is
    is
       Debugger  : constant Visual_Debugger := Visual_Debugger (Process);
    begin
-      if Debugger.Debugger = null then
+      if Debugger.Debugger = null
+         or else Command_In_Process (Get_Process (Debugger.Debugger))
+      then
          return;
       end if;
 
       --  We only need to update the list of breakpoints when we have a
       --  temporary breakpoint (since its status might be changed upon
       --  reaching the line).
-
-      if Command_In_Process (Get_Process (Debugger.Debugger)) then
-         --  Will only happen when e.g. exiting and the debuggee
-         --  is still running.
-
-         return;
-      end if;
 
       if Force or else Debugger.Has_Temporary_Breakpoint then
          Free (Debugger.Breakpoints);
@@ -1602,9 +1489,6 @@ package body GVD.Process is
 
          --  Update the breakpoints in the editor
          Update_Breakpoints (Debugger.Editor_Text, Debugger.Breakpoints.all);
-
-         --  Update the breakpoints in the assembly view
-         GVD.Assembly_View.Update_Breakpoints (Debugger);
 
          Debugger_Breakpoints_Changed_Hook.Run (Debugger.Kernel, Debugger);
       end if;

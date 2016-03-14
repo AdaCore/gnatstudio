@@ -23,14 +23,6 @@ with GVD.Process;
 
 package GVD.Assembly_View is
 
-   procedure Update_Assembly_View
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class);
-   --  Update the assembly view
-
-   procedure Update_Breakpoints
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class);
-   --  Refresh the breakpoint information associated with the assembly view
-
    procedure Set_Source_Line
      (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
       Line     : Natural);

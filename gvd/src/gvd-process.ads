@@ -82,6 +82,7 @@ package GVD.Process is
       Assembly                : Generic_Views.Abstract_View_Access;
       Breakpoints_Editor      : Generic_Views.Abstract_View_Access;
       Memory_View             : Generic_Views.Abstract_View_Access;
+      Variables_View          : Generic_Views.Abstract_View_Access;
       --  All views potentially associated with a debugger
 
       Breakpoints             : GVD.Types.Breakpoint_Array_Ptr;
@@ -214,14 +215,21 @@ package GVD.Process is
      (Debugger : access Debugger_Root'Class)
       return Visual_Debugger;
    --  Conversion function.
-   --  Main_Debug_Window should be the window in which the debugger is
-   --  displayed.
 
    procedure Final_Post_Process
-     (Process : access Visual_Debugger_Record'Class;
-      Mode    : GVD.Types.Command_Type);
+     (Process           : not null access Visual_Debugger_Record'Class;
+      Mode              : GVD.Types.Command_Type;
+      Always_Emit_Hooks : Boolean;
+      Category          : Command_Category;
+      Breakpoints_Might_Have_Changed : Boolean);
    --  Final post processing.
    --  Call the appropriate filters and reset Current_Output.
+   --  The hooks reporting the change of state of the debugger are only emited
+   --  when the mode is not Internal. But if Always_Emit_Hooks is true, they
+   --  are always emitted.
+   --  Breakpoints_Might_Have_Changed should be set to True if the previous
+   --  command might have changed any of the breakpoints. This will force GPS
+   --  to query the list again, and send appropriate signals.
 
    procedure Process_User_Command
      (Debugger       : Visual_Debugger;
@@ -229,6 +237,8 @@ package GVD.Process is
       Output_Command : Boolean := False;
       Mode           : GVD.Types.Command_Type := GVD.Types.Visible);
    --  Process a command entered by the user.
+   --  The debugger must not be busy processing another command (in general,
+   --  it is better to use Send, which will enqueue as needed).
    --  In most cases, the command is simply transfered asynchronously to the
    --  debugger process. However, commands internal to GVD are filtered and
    --  are not transmitted to the debugger.

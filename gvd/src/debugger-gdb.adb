@@ -68,8 +68,8 @@ package body Debugger.Gdb is
    --  Note that this regexp needs to be as simple as possible, since it will
    --  be used several times when receiving long results from commands.
 
-   Prompt_Length             : constant := 6;
-   --  Length of the prompt ("(gdb) ")
+   Prompt_String             : constant String := "(gdb) ";
+   --  The prompt used by the debugger
 
    Gdb_Command               : constant String := "gdb";
    --  Name of the command to launch gdb
@@ -321,7 +321,8 @@ package body Debugger.Gdb is
          --  wasn't supported in older versions of the debugger.
 
          declare
-            Help : constant String := Send_Full (Debugger, "help catch");
+            Help : constant String :=
+              Send_And_Get_Clean_Output (Debugger, "help catch");
          begin
             Debugger.Use_Catch_For_Exceptions :=
               To_TriBoolean (Index (Help, "catch exception") >= 1);
@@ -357,8 +358,8 @@ package body Debugger.Gdb is
       end if;
 
       declare
-         S       : constant String :=
-           Send (Debugger, "show version", Mode => Internal);
+         S       : constant String := Send_And_Get_Clean_Output
+           (Debugger, "show version", Mode => Internal);
          Matched : Match_Array (0 .. 3);
       begin
          Match (Version_Pattern, S, Matched);
@@ -664,28 +665,32 @@ package body Debugger.Gdb is
       Process.Debugger.Continuation_Line := True;
    end Continuation_Line_Filter;
 
-   ----------
-   -- Send --
-   ----------
+   -------------------------------
+   -- Send_And_Get_Clean_Output --
+   -------------------------------
 
-   overriding function Send
+   overriding function Send_And_Get_Clean_Output
      (Debugger : access Gdb_Debugger;
       Cmd      : String;
       Mode     : Invisible_Command := Hidden) return String
    is
-      S   : constant String := Send_Full (Debugger, Cmd, Mode);
-      Pos : Integer := S'Last - Prompt_Length;
+      S   : constant String := Send_And_Get_Output (Debugger, Cmd, Mode);
+      Pos : Integer;
    begin
-      if S'Length <= Prompt_Length then
-         return "";
+      if Ends_With (S, Prompt_String) then
+         Pos := S'Last - Prompt_String'Length;
+         if Pos in S'Range and then S (Pos) = ASCII.LF then
+            Pos := Pos - 1;
+         end if;
+         return S (S'First .. Pos);
+      else
+         return S;
       end if;
+   end Send_And_Get_Clean_Output;
 
-      if S (Pos) = ASCII.LF then
-         Pos := Pos - 1;
-      end if;
-
-      return S (S'First .. Pos);
-   end Send;
+   ----------
+   -- Send --
+   ----------
 
    overriding procedure Send
      (Debugger        : access Gdb_Debugger;
@@ -743,8 +748,8 @@ package body Debugger.Gdb is
       end loop;
 
       declare
-         S   : constant String :=
-                 Send (Debugger, "ptype " & Entity, Mode => Internal);
+         S   : constant String := Send_And_Get_Clean_Output
+           (Debugger, "ptype " & Entity, Mode => Internal);
          Pos : constant Integer := Index (S, "type = ");
 
       begin
@@ -810,9 +815,9 @@ package body Debugger.Gdb is
       Entity   : String;
       Format   : Value_Format := Default_Format) return String
    is
-      S : constant String :=
-        Send (Debugger, "print" & Fmt_Array (Format) & ' ' & Entity,
-              Mode => Internal);
+      S : constant String := Send_And_Get_Clean_Output
+        (Debugger, "print" & Fmt_Array (Format) & ' ' & Entity,
+         Mode => Internal);
       Index : Natural := S'First;
 
    begin
@@ -856,8 +861,8 @@ package body Debugger.Gdb is
       --  In particular, in C, &(*A) returns A, not an address, which causes
       --  unexpected wrong aliases to be detected.
 
-      S       : constant String :=
-                  Send (Debugger, "print &(" & Entity & ")", Mode => Internal);
+      S       : constant String := Send_And_Get_Clean_Output
+        (Debugger, "print &(" & Entity & ")", Mode => Internal);
       Matched : Match_Array (0 .. 1);
 
    begin
@@ -1002,7 +1007,7 @@ package body Debugger.Gdb is
 
       --  Make sure that the prompt is what we are expecting
 
-      Send (Debugger, "set prompt (gdb) ", Mode => Internal);
+      Send (Debugger, Gdb_Options_Set_Prompt, Mode => Internal);
       Send (Debugger, "set width 0", Mode => Internal);
       Send (Debugger, "set height 0", Mode => Internal);
       Send (Debugger, "set annotate 1", Mode => Internal);
@@ -1206,7 +1211,8 @@ package body Debugger.Gdb is
             else
                Output_Text
                  (Process,
-                  Send (Debugger, Cmd, Mode => Internal) & ASCII.LF);
+                  Send_And_Get_Clean_Output
+                    (Debugger, Cmd, Mode => Internal) & ASCII.LF);
             end if;
 
             if Debugger.Remote_Protocol.all = "remote" then
@@ -1269,7 +1275,8 @@ package body Debugger.Gdb is
          end if;
 
          declare
-            S : constant String := Send (Debugger, Cmd.all, Mode => Hidden);
+            S : constant String := Send_And_Get_Clean_Output
+              (Debugger, Cmd.all, Mode => Hidden);
          begin
             Free (Cmd);
 
@@ -1335,7 +1342,8 @@ package body Debugger.Gdb is
       if Get_Pref (Break_On_Exception) then
          declare
             Cmd : constant String := Break_Exception_Cmd (Debugger);
-            S   : constant String := Send (Debugger, Cmd);
+            S   : constant String := Send_And_Get_Clean_Output
+              (Debugger, Cmd);
 
          begin
             if Process /= null then
@@ -1354,8 +1362,8 @@ package body Debugger.Gdb is
          Set_Parse_File_Name (Get_Process (Debugger), False);
 
          declare
-            Str         : constant String :=
-                            Send (Debugger, "info line", Mode => Internal);
+            Str         : constant String := Send_And_Get_Clean_Output
+              (Debugger, "info line", Mode => Internal);
             Matched     : Match_Array (0 .. 2);
             File        : Unbounded_String;
             Line        : Natural;
@@ -1435,7 +1443,7 @@ package body Debugger.Gdb is
    begin
       if Flag = -1 then
          declare
-            S : constant String := Send
+            S : constant String := Send_And_Get_Clean_Output
               (Debugger, "help " & Command, Mode => Internal);
          begin
             if Starts_With (S, Undefined_Command)
@@ -1503,7 +1511,8 @@ package body Debugger.Gdb is
          Set_Parse_File_Name (Get_Process (Debugger), False);
 
          declare
-            Str  : constant String := Send (Debugger, "up", Mode => Internal);
+            Str  : constant String := Send_And_Get_Clean_Output
+              (Debugger, "up", Mode => Internal);
             File : Unbounded_String;
             Line : Natural;
             Addr : Address_Type;
@@ -1923,7 +1932,8 @@ package body Debugger.Gdb is
       Len      : out Natural) is
    begin
       Parse_Backtrace_Info
-        (Send (Debugger, "where", Mode => Internal), Value, Len);
+        (Send_And_Get_Clean_Output
+           (Debugger, "where", Mode => Internal), Value, Len);
    end Backtrace;
 
    ----------------------
@@ -2026,8 +2036,8 @@ package body Debugger.Gdb is
    overriding function Get_Last_Breakpoint_Id
      (Debugger : access Gdb_Debugger) return Breakpoint_Identifier
    is
-      S            : constant String :=
-                       Send (Debugger, "print $bpnum", Mode => Internal);
+      S            : constant String := Send_And_Get_Clean_Output
+        (Debugger, "print $bpnum", Mode => Internal);
       Error_String : constant String := "void";
       Index        : Integer := S'First;
    begin
@@ -2261,7 +2271,7 @@ package body Debugger.Gdb is
       Len      : out Natural)
    is
       Output  : constant String :=
-        Send (Debugger, "info tasks", Mode => Internal);
+        Send_And_Get_Clean_Output (Debugger, "info tasks", Mode => Internal);
       Matched : Match_Array (0 .. 6);
    begin
       Len := 0;
@@ -2355,8 +2365,8 @@ package body Debugger.Gdb is
       Info     : out Thread_Information_Array;
       Len      : out Natural)
    is
-      Output : constant String :=
-                 Send (Debugger, "info threads", Mode => Internal);
+      Output : constant String := Send_And_Get_Clean_Output
+        (Debugger, "info threads", Mode => Internal);
       EOL    : Natural;
       Index  : Integer := Output'Last;
 
@@ -2394,8 +2404,8 @@ package body Debugger.Gdb is
       Info     : out PD_Information_Array;
       Len      : out Natural)
    is
-      Output : constant String :=
-                 Send (Debugger, "info pds", Mode => Internal);
+      Output : constant String := Send_And_Get_Clean_Output
+        (Debugger, "info pds", Mode => Internal);
       EOL    : Positive;
       Start  : Positive := Output'First;
       First  : Positive := Output'First;
@@ -2469,8 +2479,8 @@ package body Debugger.Gdb is
    begin
       if Force or else Debugger.VxWorks_Version = Vx_None then
          declare
-            Output : constant String :=
-              Send (Debugger, "info wtx vxworks-version", Mode => Internal);
+            Output : constant String := Send_And_Get_Clean_Output
+              (Debugger, "info wtx vxworks-version", Mode => Internal);
          begin
             if Output'Length >= 17 then
                if Output (1 .. 17) = "VxWorks version 5" then
@@ -2582,7 +2592,7 @@ package body Debugger.Gdb is
             --  Send the gdb command to get the list of lines with code.
             --  The call to "Format_Pathname" is to work a bug in some versions
             --  of gdb under Windows.
-            S              : constant String := Send
+            S              : constant String := Send_And_Get_Clean_Output
               (Debugger,
                "-symbol-list-lines " & (+File.Unix_Style_Full_Name),
                Mode => Internal);
@@ -2638,7 +2648,7 @@ package body Debugger.Gdb is
       if Proc /= null then
          Output_Text
            (Proc,
-            Send_Full (Debugger, "  ", Mode => Internal),
+            Send_And_Get_Output (Debugger, "  ", Mode => Internal),
             Is_Command => False,
             Set_Position => True);
       end if;
@@ -2772,8 +2782,8 @@ package body Debugger.Gdb is
    overriding function Source_Files_List
      (Debugger : access Gdb_Debugger) return GNAT.Strings.String_List
    is
-      S         : constant String :=
-                    Send (Debugger, "info sources", Mode => Internal);
+      S         : constant String := Send_And_Get_Clean_Output
+        (Debugger, "info sources", Mode => Internal);
       Max_Files : Natural := 0;
 
    begin
@@ -3294,7 +3304,7 @@ package body Debugger.Gdb is
      (Debugger  : access Gdb_Debugger) return Breakpoint_Array
    is
       S               : constant String :=
-                          Send
+                          Send_And_Get_Output
                             (Debugger, "info breakpoints", Mode => Internal);
       Num_Breakpoints : Natural := 0;
       Index           : Natural := S'First;
@@ -3334,9 +3344,9 @@ package body Debugger.Gdb is
          List            : in out Breakpoint_Array;
          Num_Breakpoints : Natural)
       is
-         S : constant String :=
-               Send (Debugger, "info breakpoints-extra-info",
-                     Mode => Internal);
+         S : constant String := Send_And_Get_Clean_Output
+           (Debugger, "info breakpoints-extra-info",
+            Mode => Internal);
 
          Index   : Natural := S'First;
          Matched : Match_Array (0 .. 4);
@@ -3734,8 +3744,8 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger)
      return GVD.Types.Exception_Array
    is
-      S     : constant String :=
-                Send (Debugger, "info exceptions", Mode => Internal);
+      S     : constant String := Send_And_Get_Clean_Output
+        (Debugger, "info exceptions", Mode => Internal);
       Nums  : Natural := 0;
    begin
       --  Count the number of exceptions listed
@@ -3790,8 +3800,8 @@ package body Debugger.Gdb is
       Entity    : String;
       Default   : String) return String
    is
-      S : constant String :=
-            Send (Debugger, "whatis " & Entity, Mode => Internal);
+      S : constant String := Send_And_Get_Clean_Output
+        (Debugger, "whatis " & Entity, Mode => Internal);
 
    begin
       if S'Length > 6
@@ -3827,8 +3837,8 @@ package body Debugger.Gdb is
       Switch_Language (Debugger, "c");
 
       declare
-         Str : constant String :=
-           Send (Debugger, "info line " & File_Name & ":1", Mode => Internal);
+         Str : constant String := Send_And_Get_Clean_Output
+           (Debugger, "info line " & File_Name & ":1", Mode => Internal);
       begin
          Restore_Language (Debugger);
          Set_Parse_File_Name (Get_Process (Debugger), True);
@@ -3920,7 +3930,7 @@ package body Debugger.Gdb is
          Switch_Language (Debugger, "c");
 
          declare
-            S : constant String := Send
+            S : constant String := Send_And_Get_Clean_Output
               (Debugger,
                "disassemble " &
                  Code_Address_To_String (Start_Address) & Separator &
@@ -4013,7 +4023,7 @@ package body Debugger.Gdb is
       Switch_Language (Debugger, "c");
 
       declare
-         S : constant String := Send
+         S : constant String := Send_And_Get_Clean_Output
            (Debugger, "info line" & Natural'Image (Line), Mode => Internal);
          Matched : Match_Array (0 .. 2);
 
@@ -4114,10 +4124,11 @@ package body Debugger.Gdb is
 
       Error_String : constant String := "Cannot access memory at";
       Image        : constant String := Integer'Image (Size / 8);
-      S            : GNAT.OS_Lib.String_Access := new String'(Send
-        (Debugger,
-         "x/" & Image (Image'First + 1 .. Image'Last)
-         & "gx " & Address, Mode => Internal));
+      S              : GNAT.OS_Lib.String_Access := new String'
+        (Send_And_Get_Clean_Output
+           (Debugger,
+            "x/" & Image (Image'First + 1 .. Image'Last)
+            & "gx " & Address, Mode => Internal));
       S_Index      : Integer := S'First + 2;
       Last_Index   : Integer := S'First + 2;
       Result       : constant Memory_Dump_Access :=
@@ -4146,7 +4157,7 @@ package body Debugger.Gdb is
          declare
             Image : constant String := Integer'Image (Size);
          begin
-            S := new String'(Send
+            S := new String'(Send_And_Get_Clean_Output
               (Debugger,
                  "x/" & Image (Image'First + 1 .. Image'Last)
                  & "b " & Address, Mode => Internal));
@@ -4255,7 +4266,7 @@ package body Debugger.Gdb is
       Variable : String) return String
    is
       S         : constant String :=
-                    Send
+                    Send_And_Get_Clean_Output
                       (Debugger, "print &(" & Variable & ")",
                        Mode => Internal);
       Index     : Integer := S'Last;
@@ -4298,7 +4309,7 @@ package body Debugger.Gdb is
 
       declare
          S      : constant String :=
-                    Send
+                    Send_And_Get_Clean_Output
                       (Debugger, "show endian", Mode => Internal);
          Little : constant String := "little endian";
 
@@ -4322,7 +4333,7 @@ package body Debugger.Gdb is
       Beginning : String) return GNAT.Strings.String_List
    is
       S           : constant String :=
-                      Send
+                      Send_And_Get_Clean_Output
                         (Debugger, "complete " & Beginning, Mode => Internal);
       First_Index : Integer := S'First;
       Last_Index  : Integer := S'First;
@@ -4377,7 +4388,8 @@ package body Debugger.Gdb is
       then
          Debugger.WTX_List :=
             new String'
-              (Send (Debugger, "info wtx threads", Mode => Internal));
+             (Send_And_Get_Clean_Output
+                (Debugger, "info wtx threads", Mode => Internal));
 
          if Starts_With (Debugger.WTX_List.all, Undefined_Info_Command)
            or else
@@ -4389,7 +4401,8 @@ package body Debugger.Gdb is
             Free (Debugger.WTX_List);
             Debugger.WTX_List :=
                new String'
-                 (Send (Debugger, "tcl activeTaskNameMap", Mode => Internal));
+                (Send_And_Get_Clean_Output
+                   (Debugger, "tcl activeTaskNameMap", Mode => Internal));
          end if;
 
          Debugger.WTX_Index := Debugger.WTX_List'First;
@@ -4461,7 +4474,8 @@ package body Debugger.Gdb is
    ---------------------
 
    overriding procedure Detect_Language (Debugger : access Gdb_Debugger) is
-      S : constant String := Send (Debugger, "show lang", Mode => Internal);
+      S : constant String := Send_And_Get_Clean_Output
+        (Debugger, "show lang", Mode => Internal);
       pragma Unreferenced (S);
    begin
       null;
@@ -4475,8 +4489,8 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Language : String)
    is
-      S           : constant String :=
-                      Send (Debugger, "show lang", Mode => Internal);
+      S           : constant String := Send_And_Get_Clean_Output
+        (Debugger, "show lang", Mode => Internal);
       First_Index : Integer := S'First;
       End_Index   : Integer;
 

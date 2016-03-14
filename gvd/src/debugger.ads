@@ -131,7 +131,7 @@ package Debugger is
    --  Cmd to the debugger (for instance because the latter is waiting for
    --  input). In this case, Force_Send might be set to True
 
-   function Send_Full
+   function Send_And_Get_Output
      (Debugger        : access Debugger_Root;
       Cmd             : String;
       Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)
@@ -145,13 +145,13 @@ package Debugger is
    --  yourself after calling the procedure Send, since some intermediate
    --  hidden calls to the debugger might have taken place in the meanwhile.
 
-   function Send
+   function Send_And_Get_Clean_Output
      (Debugger : access Debugger_Root;
       Cmd      : String;
       Mode     : GVD.Types.Invisible_Command := GVD.Types.Hidden)
       return String is abstract;
-   --  Same as above, but return a clean version of the output, i.e. delete
-   --  the final prompt if any, depending on the debugger type.
+   --  Same Send_And_Get_Output, but return a clean version of the output, i.e.
+   --  delete the final prompt if any, depending on the debugger type.
 
    procedure Wait_User_Command (Debugger : access Debugger_Root);
    --  Wait until the current user command ends.

@@ -37,7 +37,6 @@ with Gtk.Window;                use Gtk.Window;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 
-with Breakpoints_Editor;        use Breakpoints_Editor;
 with Commands.Debugger;         use Commands.Debugger;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
@@ -60,12 +59,10 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
-with GVD.Assembly_View;         use GVD.Assembly_View;
 with GVD.Canvas;                use GVD.Canvas;
 with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Consoles;              use GVD.Consoles;
 with GVD.Contexts;              use GVD.Contexts;
-with GVD.Dialogs;               use GVD.Dialogs;
 with GVD.Menu;                  use GVD.Menu;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Proc_Utils;            use GVD.Proc_Utils;
@@ -2238,9 +2235,6 @@ package body GVD_Module is
 
       GVD.Canvas.Register_Module (Kernel);
       GVD.Consoles.Register_Module (Kernel);
-      GVD.Dialogs.Register_Module (Kernel);
-      GVD.Assembly_View.Register_Module (Kernel);
-      Breakpoints_Editor.Register_Module (Kernel);
 
       Register_Action
         (Kernel, "debug display local variables", new Local_Vars_Command,

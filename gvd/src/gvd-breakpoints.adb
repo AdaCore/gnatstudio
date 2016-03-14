@@ -74,7 +74,7 @@ with Process_Proxies;  use Process_Proxies;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
-package body Breakpoints_Editor is
+package body GVD.Breakpoints is
    type Breakpoint_Editor_Record is new Process_View_Record with
       record
          Editor               : Breakpoints_Access;
@@ -1138,4 +1138,4 @@ package body Breakpoints_Editor is
       return False;
    end On_Breakpoints_Key_Press_Event;
 
-end Breakpoints_Editor;
+end GVD.Breakpoints;
