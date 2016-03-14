@@ -265,7 +265,7 @@ package body Task_Manager is
             end if;
          end loop;
 
-         Queue.Current_Priority := Queue.Current_Priority + Queue.Priority;
+         Queue.Current_Priority := Queue.Current_Priority + 1;
 
          if Active then
             Manager.Minimal_Active_Priority := Lowest;

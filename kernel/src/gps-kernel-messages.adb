@@ -24,6 +24,7 @@ with Ada.Tags;                      use Ada.Tags;
 with Glib.Convert;
 
 with Basic_Types;                   use Basic_Types;
+with Commands;                      use Commands;
 with GNATCOLL.Projects;             use GNATCOLL.Projects;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GPS.Editors;                   use GPS.Editors;
@@ -269,10 +270,6 @@ package body GPS.Kernel.Messages is
       Result : constant Messages_Container_Access :=
                  new Messages_Container (Kernel);
    begin
-      Result.Filter_Command :=
-        new Filter_Runner_Command'
-              (Commands.Root_Command with Container => Result);
-
       GPS.Kernel.Messages.Simple.Register (Result);
       GPS.Kernel.Messages.Hyperlink.Register (Result);
       GPS.Kernel.Messages.Markup.Register (Result);
@@ -290,17 +287,19 @@ package body GPS.Kernel.Messages is
    ----------------------
 
    procedure Criteria_Changed (Self : in out Abstract_Message_Filter'Class) is
+      Command : Command_Access;
    begin
       Self.Container.Messages.Unfilter_All;
 
       if not Self.Container.Filter_Launched then
          Self.Container.Filter_Launched := True;
+         Command := new Filter_Runner_Command'
+           (Commands.Root_Command with Container => Self.Container);
          GPS.Kernel.Task_Manager.Launch_Background_Command
            (Kernel          => Self.Container.Kernel,
-            Command         => Self.Container.Filter_Command,
+            Command         => Command,
             Active          => True,
-            Show_Bar        => False,
-            Destroy_On_Exit => False);
+            Show_Bar        => False);
       end if;
    end Criteria_Changed;
 
@@ -927,7 +926,9 @@ package body GPS.Kernel.Messages is
       Column        : Basic_Types.Visible_Column_Type;
       Weight        : Natural;
       Actual_Line   : Integer;
-      Actual_Column : Integer) is
+      Actual_Column : Integer)
+   is
+      Command : Command_Access;
    begin
       Initialize_Internal
         (Self          => Self,
@@ -949,12 +950,13 @@ package body GPS.Kernel.Messages is
       if not Container.Filter_Launched then
          Container.Filter_Launched := True;
          Self.Get_Container.In_Message_Init := True;
+         Command := new Filter_Runner_Command'
+              (Commands.Root_Command with Container => Container);
          GPS.Kernel.Task_Manager.Launch_Background_Command
            (Kernel          => Container.Kernel,
-            Command         => Container.Filter_Command,
+            Command         => Command,
             Active          => True,
-            Show_Bar        => False,
-            Destroy_On_Exit => False);
+            Show_Bar        => False);
          Self.Get_Container.In_Message_Init := False;
       end if;
    end Initialize;

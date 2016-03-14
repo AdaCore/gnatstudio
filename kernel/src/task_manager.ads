@@ -143,11 +143,6 @@ private
 
       Id       : GNAT.Strings.String_Access;
 
-      Priority : Natural := 2;
-      --  A priority of 1 is high priority,
-      --                2 is normal priority,
-      --                3 is low priority
-
       Current_Priority : Integer := 0;
 
       Show_Bar     : Boolean := False;

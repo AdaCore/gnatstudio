@@ -491,8 +491,7 @@ package body GPS.Kernel.Entities is
                  (Kernel          => Kernel,
                   Command         => Ref_Command,
                   Active          => False,
-                  Show_Bar        => False,
-                  Destroy_On_Exit => True);
+                  Show_Bar        => False);
 
                Set_Progress
                  (Ref_Command,

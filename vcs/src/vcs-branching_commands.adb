@@ -49,7 +49,6 @@ package body VCS.Branching_Commands is
             Active          => False,
             Show_Bar        => True,
             Queue_Id        => To_String (Command.Queue_Id),
-            Destroy_On_Exit => True,
             Block_Exit      => False);
          C := Next (C);
       end loop;

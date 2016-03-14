@@ -2996,7 +2996,6 @@ package body Src_Editor_Module is
                                  Command         => Proxy,
                                  Active          => True,
                                  Show_Bar        => False,
-                                 Destroy_On_Exit => True,
                                  Block_Exit      => False);
    end Register_Editor_Close;
 

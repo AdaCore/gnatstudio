@@ -38,8 +38,8 @@ package GPS.Scripts.Commands is
    --  See inherited documentation
 
    function Create_Wrapper
-     (Command         : access Root_Command'Class;
-      Destroy_On_Exit : Boolean) return Scheduled_Command_Access;
+     (Command : access Root_Command'Class)
+      return Scheduled_Command_Access;
    --  Create a new wrapper
 
    function Get_Command (Command : access Scheduled_Command'Class)
@@ -84,7 +84,6 @@ private
 
    type Scheduled_Command is new Root_Command with record
       Command         : Command_Access;
-      Destroy_On_Exit : Boolean;
       Instances       : Command_Script_Proxy;
    end record;
 

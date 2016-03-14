@@ -734,7 +734,7 @@ package body GPS.Kernel.Timeout is
       C.D.Show_Output := Show_Output;
       C.D.Strip_CR    := Strip_CR;
 
-      Wrapper := Create_Wrapper (Command => C, Destroy_On_Exit => True);
+      Wrapper := Create_Wrapper (Command => C);
 
       if Synchronous then
          Launch_Synchronous (Command_Access (Wrapper), 0.1);

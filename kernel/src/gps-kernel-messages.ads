@@ -720,7 +720,6 @@ private
       --  ready.
       Messages          : aliased Message_Collections.Container;
       --  Lists of filtered/unfiltered messages.
-      Filter_Command    : Commands.Command_Access;
       Filter_Launched   : Boolean := False;
       Filters           : Filter_Vectors.Vector;
       In_Message_Init   : Boolean := False;

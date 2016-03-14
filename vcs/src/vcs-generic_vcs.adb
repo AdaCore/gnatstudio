@@ -412,8 +412,7 @@ package body VCS.Generic_VCS is
                Command         => Custom,
                Active          => False,
                Show_Bar        => Show_Bar,
-               Queue_Id        => Ref.Id.all,
-               Destroy_On_Exit => True);
+               Queue_Id        => Ref.Id.all);
          end;
       end loop;
    end Generic_Dir_Command;
@@ -537,8 +536,7 @@ package body VCS.Generic_VCS is
                Command         => Custom,
                Active          => False,
                Show_Bar        => Show_Bar,
-               Queue_Id        => Ref.Id.all,
-               Destroy_On_Exit => True);
+               Queue_Id        => Ref.Id.all);
          end;
       end loop;
    end Generic_Command;
@@ -609,8 +607,7 @@ package body VCS.Generic_VCS is
          Command         => Custom,
          Active          => False,
          Show_Bar        => True,
-         Queue_Id        => Ref.Id.all,
-         Destroy_On_Exit => True);
+         Queue_Id        => Ref.Id.all);
    end Generic_Command;
 
    ----------------

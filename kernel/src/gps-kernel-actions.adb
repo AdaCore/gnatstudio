@@ -45,8 +45,7 @@ package body GPS.Kernel.Actions is
 
    procedure Launch_Foreground_Command
      (Kernel          : not null access Kernel_Handle_Record'Class;
-      Command         : not null access Root_Command'Class;
-      Destroy_On_Exit : Boolean := True);
+      Command         : not null access Root_Command'Class);
    --  Executes a command, blocking the whole GPS interface while doing so.
    --  It is recommended instead to use Launch_Background_Command, but this one
    --  is sometimes used in user's python scripts.
@@ -353,8 +352,7 @@ package body GPS.Kernel.Actions is
 
    procedure Launch_Foreground_Command
      (Kernel          : not null access Kernel_Handle_Record'Class;
-      Command         : not null access Root_Command'Class;
-      Destroy_On_Exit : Boolean := True)
+      Command         : not null access Root_Command'Class)
    is
       Result  : Command_Return_Type;
       C : Command_Access;
@@ -383,10 +381,8 @@ package body GPS.Kernel.Actions is
          exit when Result = Success or Result = Failure;
       end loop;
 
-      if Destroy_On_Exit then
-         C := Command_Access (Command);
-         Unref (C);
-      end if;
+      C := Command_Access (Command);
+      Unref (C);
    end Launch_Foreground_Command;
 
    --------------------
@@ -491,14 +487,12 @@ package body GPS.Kernel.Actions is
                  Remaining_Repeat => Repeat - R));
 
             if Synchronous then
-               Launch_Foreground_Command
-                  (Kernel, Custom, Destroy_On_Exit => True);
+               Launch_Foreground_Command (Kernel, Custom);
             else
                Launch_Background_Command
                   (Kernel,
                    Custom,
                    Block_Exit      => Block_Exit,
-                   Destroy_On_Exit => True,
                    Active          => True,  --  immediately if possible
                    Show_Bar        => Show_Bar,
                    Queue_Id        => "");

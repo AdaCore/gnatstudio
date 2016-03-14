@@ -193,7 +193,6 @@ package body GPS.Scripts.Commands is
       --  reference to the scheduled command they are encapsulated in. This
       --  pointer should thus be reset.
 
-      Result.Destroy_On_Exit := Self.Destroy_On_Exit;
       return Result;
    end Create_Dead_Command;
 
@@ -207,9 +206,7 @@ package body GPS.Scripts.Commands is
       --  keep it in memory, but owned by the instances.
 
       if Transfer_Ownership (Command.Instances) = Has_No_Instances then
-         if Command.Destroy_On_Exit then
-            Unref (Command.Command);
-         end if;
+         Unref (Command.Command);
       end if;
    end Primitive_Free;
 
@@ -227,22 +224,18 @@ package body GPS.Scripts.Commands is
    --------------------
 
    function Create_Wrapper
-     (Command : access Root_Command'Class; Destroy_On_Exit : Boolean)
+     (Command : access Root_Command'Class)
       return Scheduled_Command_Access
    is
       C : Scheduled_Command_Access;
    begin
       if Command.all in Scheduled_Command'Class then
          C := Scheduled_Command_Access (Command);
-
-         if C.Destroy_On_Exit = Destroy_On_Exit then
-            return C;
-         end if;
+         return C;
       end if;
 
       C := new Scheduled_Command;
       C.Command := Command_Access (Command);
-      C.Destroy_On_Exit := Destroy_On_Exit;
 
       return C;
    end Create_Wrapper;

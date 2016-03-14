@@ -30,7 +30,6 @@ package GPS.Kernel.Task_Manager is
       Active            : Boolean;
       Show_Bar          : Boolean;
       Queue_Id          : String := "";
-      Destroy_On_Exit   : Boolean := True;
       Block_Exit        : Boolean := True;
       Start_Immediately : Boolean := False);
    --  Add a command to the Task_Manager.
@@ -50,11 +49,13 @@ package GPS.Kernel.Task_Manager is
    --
    --  If Show_Bar is True, a progress bar will be displayed for this command,
    --  otherwise it will only be visible in the Task Manager window.
-   --  Memory associated to Command will be freed by the Task Manager
-   --  after execution, unless Destroy_On_Exit is false.
+   --
    --  If Block_Exit is True, GPS will show a confirmation dialog if user exits
    --  while this command is running.
    --  See comments in task_manager.ads for details.
+   --
+   --  Memory associated to Command will be freed by the Task Manager
+   --  after execution.
 
    function Launch_Background_Command
      (Kernel            : access Kernel_Handle_Record'Class;
@@ -62,7 +63,6 @@ package GPS.Kernel.Task_Manager is
       Active            : Boolean;
       Show_Bar          : Boolean;
       Queue_Id          : String := "";
-      Destroy_On_Exit   : Boolean := True;
       Block_Exit        : Boolean := True;
       Start_Immediately : Boolean := False) return Scheduled_Command_Access;
    --  Same as above, but returns the command actually inserted in the task

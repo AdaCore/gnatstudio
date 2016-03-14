@@ -58,7 +58,6 @@ package body GPS.Kernel.Task_Manager is
       Active            : Boolean;
       Show_Bar          : Boolean;
       Queue_Id          : String := "";
-      Destroy_On_Exit   : Boolean := True;
       Block_Exit        : Boolean := True;
       Start_Immediately : Boolean := False)
    is
@@ -69,7 +68,6 @@ package body GPS.Kernel.Task_Manager is
          Show_Bar          => Show_Bar,
          Queue_Id          => Queue_Id,
          Start_Immediately => Start_Immediately,
-         Destroy_On_Exit   => Destroy_On_Exit,
          Block_Exit        => Block_Exit);
       pragma Unreferenced (Wrapper);
    begin
@@ -86,13 +84,12 @@ package body GPS.Kernel.Task_Manager is
       Active            : Boolean;
       Show_Bar          : Boolean;
       Queue_Id          : String := "";
-      Destroy_On_Exit   : Boolean := True;
       Block_Exit        : Boolean := True;
       Start_Immediately : Boolean := False) return Scheduled_Command_Access
    is
       Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);
       Wrapper : constant Scheduled_Command_Access :=
-                  Create_Wrapper (Command, Destroy_On_Exit);
+                  Create_Wrapper (Command);
    begin
       Add_Command
         (Manager, Wrapper,

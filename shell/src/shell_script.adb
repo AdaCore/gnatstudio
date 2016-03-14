@@ -135,8 +135,7 @@ package body Shell_Script is
          Command         => Custom,
          Active          => True,
          Show_Bar        => True,
-         Queue_Id        => "",
-         Destroy_On_Exit => True);
+         Queue_Id        => "");
 
       --  ??? Should evaluate output properly, but we are in asynchronous mode
       --  ??? In fact, this is no longer true if we use Active set to False
