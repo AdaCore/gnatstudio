@@ -1070,6 +1070,20 @@ package body Generic_Views is
          end if;
       end Find;
 
+      ------------------------------
+      -- On_Delete_Floating_Child --
+      ------------------------------
+
+      function On_Delete_Floating_Child
+        (Self : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean
+      is
+         View : constant View_Access := View_Access (Self);
+      begin
+         Store_Position (View);
+
+         return False;
+      end On_Delete_Floating_Child;
+
       -----------------------------
       -- On_Close_Floating_Child --
       -----------------------------
@@ -1116,6 +1130,9 @@ package body Generic_Views is
               (Gtk_Dialog (View.Get_Toplevel).Add_Button
                    (-"Close", Gtk_Response_Cancel));
 
+            Return_Callback.Object_Connect
+              (View.Get_Toplevel, Gtk.Widget.Signal_Delete_Event,
+               On_Delete_Floating_Child_Access, View);
             Widget_Callback.Object_Connect
               (Close_Button, Gtk.Button.Signal_Clicked,
                On_Close_Floating_Child_Access, View);

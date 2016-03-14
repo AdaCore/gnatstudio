@@ -354,6 +354,13 @@ package Generic_Views is
         Gtkada.Handlers.Widget_Callback.Simple_Handler :=
           On_Float_Child'Access;
 
+      function On_Delete_Floating_Child
+        (Self : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
+      On_Delete_Floating_Child_Access : constant
+        Gtkada.Handlers.Return_Callback.Simple_Handler :=
+          On_Delete_Floating_Child'Access;
+      --  Used to store the view's position when closing if floating
+
       procedure On_Close_Floating_Child
         (Self : access Gtk.Widget.Gtk_Widget_Record'Class);
       On_Close_Floating_Child_Access : constant
