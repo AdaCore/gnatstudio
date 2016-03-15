@@ -568,6 +568,20 @@ xml_gnatprove_menus = """<?xml version="1.0"?>
       </menu>
     </submenu>
 
+    <action name="spark2014_example_text_io_get_line" category=""
+            show-command="false" output="none">
+      <shell>Project.load "{example}/text_io_get_line/test.gpr"</shell>
+      <shell>Editor.edit "textio.ads"</shell>
+      <shell>Editor.edit "textio-get_line.adb"</shell>
+    </action>
+
+    <submenu before="About">
+      <title>/Help/%(prefix)s/Examples</title>
+      <menu action="spark2014_example_text_io_get_line">
+        <title>text__io__get__line</title>
+      </menu>
+    </submenu>
+
     <action name="spark2014_example_thumper" category=""
             show-command="false" output="none">
       <shell lang="python">spark2014.load_example_thumper()</shell>
