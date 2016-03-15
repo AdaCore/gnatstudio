@@ -388,15 +388,13 @@ package body GVD.Call_Stack is
    procedure Highlight_Call_Stack_Frame
      (Process : access GVD.Process.Visual_Debugger_Record'Class)
    is
-      S           : Call_Stack;
+      S           : constant Call_Stack := Get_View (Process);
       Frame       : Unbounded_String;
       Frame_Info  : Frame_Info_Type := Location_Not_Found;
       Path        : Gtk_Tree_Path;
 
    begin
-      if Process.Stack /= null then
-         S := Call_Stack (Process.Stack);
-
+      if S /= null then
          Found_Frame_Info
            (Process.Debugger,
             Process.Current_Output

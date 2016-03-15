@@ -15,69 +15,113 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.Strings;       use GNAT.Strings;
-
-with Glib;               use Glib;
-with Glib.Object;        use Glib.Object;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Advanced_Breakpoint_Pkg;   use Advanced_Breakpoint_Pkg;
+with Debugger;                  use Debugger;
+with Gdk.Event;                 use Gdk.Event;
+with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
+with Gdk.Types;                 use Gdk.Types;
+with Gdk.Window;                use Gdk.Window;
+with Generic_Views;             use Generic_Views;
+with Glib.Object;               use Glib.Object;
 with Glib.Values;
-with Glib_Values_Utils;  use Glib_Values_Utils;
-
-with Gdk.Event;          use Gdk.Event;
-with Gdk.Types;
-with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
-with Gdk.Window;         use Gdk.Window;
-
-with Gtk;                use Gtk;
-with Gtk.Arguments;      use Gtk.Arguments;
-with Gtk.Box;            use Gtk.Box;
-with Gtk.Button;         use Gtk.Button;
-with Gtk.Check_Button;   use Gtk.Check_Button;
-with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
-with Gtk.Dialog;         use Gtk.Dialog;
-with Gtk.Enums;          use Gtk.Enums;
-with Gtk.GEntry;         use Gtk.GEntry;
-with Gtk.List_Store;     use Gtk.List_Store;
-with Gtk.Main;           use Gtk.Main;
-with Gtk.Notebook;       use Gtk.Notebook;
-with Gtk.Radio_Button;   use Gtk.Radio_Button;
-with Gtk.Spin_Button;    use Gtk.Spin_Button;
-with Gtk.Widget;         use Gtk.Widget;
-
-with Gtk.Text_View;    use Gtk.Text_View;
-with Gtk.Text_Buffer;  use Gtk.Text_Buffer;
-with Gtk.Text_Iter;    use Gtk.Text_Iter;
-
-with Gtk.Tree_View;        use Gtk.Tree_View;
-with Gtk.Tree_Model;       use Gtk.Tree_Model;
-with Gtk.Tree_Store;       use Gtk.Tree_Store;
-with Gtk.Tree_Selection;   use Gtk.Tree_Selection;
-with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
-
-with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
-with Breakpoints_Pkg;         use Breakpoints_Pkg;
-with Generic_Views;           use Generic_Views;
-with Gtkada.Handlers;    use Gtkada.Handlers;
-with Gtkada.MDI;         use Gtkada.MDI;
-with GPS.Debuggers;      use GPS.Debuggers;
-with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
-with GPS.Intl;           use GPS.Intl;
-with GPS.Kernel.Hooks;   use GPS.Kernel.Hooks; use GPS.Kernel;
-with GVD.Code_Editors; use GVD, GVD.Code_Editors;
-with GVD.Generic_View; use GVD.Generic_View;
-with GVD.Process;      use GVD.Process;
-with GVD.Types;        use GVD.Types;
-with GVD_Module;       use GVD_Module;
-with GUI_Utils;        use GUI_Utils;
-with Debugger;         use Debugger;
-with GNATCOLL.VFS;     use GNATCOLL.VFS;
-with Process_Proxies;  use Process_Proxies;
-
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Glib;                      use Glib;
+with Glib_Values_Utils;         use Glib_Values_Utils;
+with GNAT.Strings;              use GNAT.Strings;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GPS.Debuggers;             use GPS.Debuggers;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks; use GPS.Kernel;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with Gtk.Alignment;             use Gtk.Alignment;
+with Gtk.Arguments;             use Gtk.Arguments;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Button;                use Gtk.Button;
+with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
+with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Frame;                 use Gtk.Frame;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Hbutton_Box;           use Gtk.Hbutton_Box;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.List_Store;            use Gtk.List_Store;
+with Gtk.Main;                  use Gtk.Main;
+with Gtk.Notebook;              use Gtk.Notebook;
+with Gtk.Radio_Button;          use Gtk.Radio_Button;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Separator;             use Gtk.Separator;
+with Gtk.Spin_Button;           use Gtk.Spin_Button;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
+with Gtk.Text_Iter;             use Gtk.Text_Iter;
+with Gtk.Text_View;             use Gtk.Text_View;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
+with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtk.Vbutton_Box;           use Gtk.Vbutton_Box;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk;                       use Gtk;
+with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.MDI;                use Gtkada.MDI;
+with GUI_Utils;                 use GUI_Utils;
+with GVD.Code_Editors;          use GVD, GVD.Code_Editors;
+with GVD.Generic_View;          use GVD.Generic_View;
+with GVD.Process;               use GVD.Process;
+with GVD.Types;                 use GVD.Types;
+with GVD_Module;                use GVD_Module;
+with Process_Proxies;           use Process_Proxies;
 
 package body GVD.Breakpoints is
+
+   Col_Num       : constant Gint := 0;
+   Col_Enb       : constant Gint := 1;
+   Col_Type      : constant Gint := 2;
+   Col_Disp      : constant Gint := 3;
+   Col_File      : constant Gint := 4;
+   Col_Line      : constant Gint := 5;
+   Col_Exception : constant Gint := 6;
+   Col_Subprogs  : constant Gint := 7;
+
+   Column_Types : constant Glib.GType_Array (0 .. 7) :=
+     (Guint (Col_Enb) => GType_Boolean,
+      others          => GType_String);
+
    type Breakpoint_Editor_Record is new Process_View_Record with
       record
-         Editor               : Breakpoints_Access;
+         Breakpoint_List      : Gtk_Tree_View;
+
+         Notebook             : Gtk_Notebook;
+
+         Subprogram_Selected  : Gtk_Radio_Button;
+         Address_Selected     : Gtk_Radio_Button;
+         Regexp_Selected      : Gtk_Radio_Button;
+         Location_Selected    : Gtk_Radio_Button;
+         Temporary_Location   : Gtk_Check_Button;
+         Temporary_Exception  : Gtk_Check_Button;
+
+         Hbox_Exceptions            : Gtk_Hbox;
+         Stop_Always_Exception      : Gtk_Radio_Button;
+         Stop_Not_Handled_Exception : Gtk_Radio_Button;
+
+         Exception_Name       : Gtk_Combo_Box_Text;
+
+         Watchpoint_Name      : Gtk_Entry;
+         Watchpoint_Type      : Gtk_Combo_Box_Text;
+         Watchpoint_Cond      : Gtk_Entry;
+
+         File_Name            : Gtk_Entry;
+         Line_Spin            : Gtk_Spin_Button;
+         Address_Combo        : Gtk_Combo_Box_Text;
+         Subprogram_Combo     : Gtk_Combo_Box_Text;
+         Regexp_Combo         : Gtk_Combo_Box_Text;
+
+         Remove               : Gtk_Button;
+         View                 : Gtk_Button;
+         Advanced_Location    : Gtk_Button;
+
          Advanced_Breakpoints : Advanced_Breakpoint_Access;
       end record;
    type Breakpoint_Editor is access all Breakpoint_Editor_Record'Class;
@@ -89,7 +133,7 @@ package body GVD.Breakpoints is
    --  See inherited documentation
 
    function Initialize
-     (Widget : access Breakpoint_Editor_Record'Class) return Gtk_Widget;
+     (Self : access Breakpoint_Editor_Record'Class) return Gtk_Widget;
    --  Internal initialization function
    --  Returns the focus child
 
@@ -148,34 +192,26 @@ package body GVD.Breakpoints is
       Event  : Gdk_Event_Button) return Boolean;
    --  Called when receiving a click on the breakpoint tree.
 
-   procedure On_Advanced_Location_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-   --  Run the advanced breakpoints dialog
-
-   procedure On_Add_Location_Clicked (Object : access Gtk_Widget_Record'Class);
+   procedure On_Add_Location_Clicked (Object : access GObject_Record'Class);
    --  Set the breakpoint that is currently described in the location page.
    --  If Current is not -1, then the breakpoint currently displayed at line
    --  Current is updated (first removed if some of the information has
    --  changed).
 
-   procedure On_Load_Exception_List_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-   procedure On_Remove_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-   procedure On_View_Clicked
-     (Object : access Gtk_Widget_Record'Class);
+   procedure On_Subprogram_Selected_Toggled (W : access GObject_Record'Class);
+   procedure On_Address_Selected_Toggled    (W : access GObject_Record'Class);
+   procedure On_Regexp_Selected_Toggled     (W : access GObject_Record'Class);
+   procedure On_Location_Selected_Toggled   (W : access GObject_Record'Class);
+   procedure On_Advanced_Location_Clicked   (W : access GObject_Record'Class);
+   procedure On_Load_Exception_List_Clicked (W : access GObject_Record'Class);
+   procedure On_Add_Exception_Clicked       (W : access GObject_Record'Class);
+   procedure On_Remove_Clicked              (W : access GObject_Record'Class);
+   procedure On_View_Clicked                (W : access GObject_Record'Class);
+   procedure On_Add_Watchpoint_Clicked      (W : access GObject_Record'Class);
    function On_Breakpoints_Key_Press_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean;
+     (W      : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event_Key) return Boolean;
    --  Callbacks for the various buttons
-
-   procedure On_Add_Exception_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-   --  Set the breakpoint that is currently described in the exception page.
-
-   procedure On_Add_Watchpoint_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-   --  Set the watchpoint that is currently described in the variables page.
 
    procedure Fill_Advanced_Dialog
      (Advanced : Advanced_Breakpoint_Access; Br : Breakpoint_Data);
@@ -237,7 +273,7 @@ package body GVD.Breakpoints is
       Size         : Gint;
       pragma Unreferenced (Size);
       Model : constant Gtk_Tree_Store :=
-        -Get_Model (View.Editor.Breakpoint_List);
+        -Get_Model (View.Breakpoint_List);
       Iter          : Gtk_Tree_Iter;
       Selected_Iter : Gtk_Tree_Iter := Null_Iter;
 
@@ -323,8 +359,7 @@ package body GVD.Breakpoints is
       --  Reselect the same item as before
 
       if Selected_Iter /= Null_Iter then
-         Select_Iter
-           (Get_Selection (View.Editor.Breakpoint_List), Selected_Iter);
+         Select_Iter (Get_Selection (View.Breakpoint_List), Selected_Iter);
       end if;
    end Update_Breakpoint_List;
 
@@ -353,20 +388,18 @@ package body GVD.Breakpoints is
 
       --  Reinitialize the contents of the file name entry
       Set_Text
-        (View.Editor.File_Name, +Base_Name (Get_Current_File (V.Editor_Text)));
+        (View.File_Name, +Base_Name (Get_Current_File (V.Editor_Text)));
       --  ??? What if the filesystem path is non-UTF8?
 
       --  Clear the contents of the exceptions combo (its contents is in fact
       --  cached in gdb, so it is fast enough to call "info exceptions" again)
-      M := -View.Editor.Exception_Name.Get_Model;
+      M := -View.Exception_Name.Get_Model;
       M.Clear;
-      Add_Unique_Combo_Entry
-        (View.Editor.Exception_Name, -"All Ada exceptions");
-      Add_Unique_Combo_Entry
-        (View.Editor.Exception_Name, -"Ada assertions");
+      Add_Unique_Combo_Entry (View.Exception_Name, -"All Ada exceptions");
+      Add_Unique_Combo_Entry (View.Exception_Name, -"Ada assertions");
 
       --  Reset the Exception page
-      Set_Sensitive (View.Editor.Hbox4, True);
+      Set_Sensitive (View.Hbox_Exceptions, True);
    end Update;
 
    -------------
@@ -395,8 +428,7 @@ package body GVD.Breakpoints is
    overriding procedure On_Process_Terminated
      (View : not null access Breakpoint_Editor_Record)
    is
-      Model : constant Gtk_Tree_Store :=
-        -Get_Model (View.Editor.Breakpoint_List);
+      Model : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
    begin
       Clear (Model);
    end On_Process_Terminated;
@@ -406,87 +438,309 @@ package body GVD.Breakpoints is
    ----------------
 
    function Initialize
-     (Widget : access Breakpoint_Editor_Record'Class) return Gtk_Widget is
-   begin
-      Gtk.Box.Initialize_Hbox (Widget);
-      Gtk_New (Widget.Editor);
-      Pack_Start (Widget, Widget.Editor, True, Padding => 4);
+     (Self : access Breakpoint_Editor_Record'Class) return Gtk_Widget
+   is
+      Bbox                : Gtk_Vbutton_Box;
+      HBbox               : Gtk_Hbutton_Box;
+      Button              : Gtk_Button;
+      Alignment           : Gtk_Alignment;
+      Bp_Kind_Vbox        : Gtk_Vbox;
+      Frame               : Gtk_Frame;
+      HBox                : Gtk_Hbox;
+      Hbox14              : Gtk_Hbox;
+      Hbox2               : Gtk_Hbox;
+      Hbox3               : Gtk_Hbox;
+      Label               : Gtk_Label;
+      Main_Vbox           : Gtk_Box;
+      Scroll              : Gtk_Scrolled_Window;
+      Vbox16              : Gtk_Vbox;
+      Vbox2               : Gtk_Vbox;
+      Vbox7               : Gtk_Vbox;
+      Vbox8               : Gtk_Vbox;
+      Vbox9               : Gtk_Vbox;
 
-      Set_Sensitive (Widget.Editor.Advanced_Location, False);
-      Set_Sensitive (Widget.Editor.Remove, False);
-      Set_Sensitive (Widget.Editor.View, False);
+   begin
+      Gtk.Box.Initialize_Hbox (Self);
+      Self.On_Key_Press_Event (On_Breakpoints_Key_Press_Event'Access);
+
+      Gtk_New (Scroll);
+      Scroll.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Self.Pack_Start (Scroll);
+
+      Gtk_New_Vbox (Main_Vbox);
+      Scroll.Add_With_Viewport (Main_Vbox);
+
+      Gtk_New (Self.Notebook);
+      Main_Vbox.Pack_Start (Self.Notebook, True, True, 0);
+
+      Gtk_New_Hbox (Hbox2, False, 0);
+      Self.Notebook.Append_Page
+        (Hbox2, Tab_Label => Gtk_Label_New (-"Location"));
+
+      Gtk_New_Vbox (Vbox2, False, 0);
+      Hbox2.Pack_Start (Vbox2, True, True, 0);
+
+      Gtk_New_Vbox (Bp_Kind_Vbox, False, 0);
+      Vbox2.Pack_Start (Bp_Kind_Vbox, True, True, 0);
+
+      --  Source location
+
+      Gtk_New (Self.Location_Selected, Label => -"Source location");
+      Self.Location_Selected.Set_Active (False);
+      Bp_Kind_Vbox.Pack_Start (Self.Location_Selected, False, False, 0);
+      Self.Location_Selected.On_Toggled
+        (On_Location_Selected_Toggled'Access, Self);
+
+      Gtk_New (Alignment, 0.5, 0.5, 0.88, 0.88);
+      Bp_Kind_Vbox.Pack_Start (Alignment, False, False, 1);
+      Gtk_New_Hbox (HBox, False, 0);
+      Alignment.Add (HBox);
+
+      Gtk_New (Label, -("File:"));
+      HBox.Pack_Start (Label, False, False, 0);
+
+      Gtk_New (Self.File_Name);
+      Self.File_Name.Set_Editable (True);
+      HBox.Pack_Start (Self.File_Name, True, True, 0);
+      Self.File_Name.On_Activate (On_Add_Location_Clicked'Access, Self);
+
+      Gtk_New (Label, -("Line:"));
+      HBox.Pack_Start (Label, False, False, 0);
+
+      Gtk_New (Self.Line_Spin, Min => 1.0, Max => 1.0e+08, Step => 1.0);
+      Self.Line_Spin.Set_Value (1.0);
+      HBox.Pack_Start (Self.Line_Spin, True, True, 0);
+
+      --  Subprogram name
+
+      Gtk_New (Self.Subprogram_Selected,
+               Group => Self.Location_Selected,
+               Label => -"Subprogram Name");
+      Bp_Kind_Vbox.Pack_Start (Self.Subprogram_Selected, False, False, 0);
+      Self.Subprogram_Selected.On_Toggled
+        (On_Subprogram_Selected_Toggled'Access, Self);
+
+      Gtk_New (Alignment, 0.5, 0.5, 0.88, 0.88);
+      Pack_Start (Bp_Kind_Vbox, Alignment, False, False, 1);
+
+      Gtk_New_With_Entry (Self.Subprogram_Combo);
+      Self.Subprogram_Combo.Append_Text ("");
+      Self.Subprogram_Combo.Set_Sensitive (False);
+      Alignment.Add (Self.Subprogram_Combo);
+      Gtk_Entry (Self.Subprogram_Combo.Get_Child).On_Activate
+        (On_Add_Location_Clicked'Access, Self);
+
+      --  Address
+
+      Gtk_New (Self.Address_Selected,
+               Group => Self.Location_Selected,
+               Label => -"Address");
+      Self.Address_Selected.Set_Active (False);
+      Bp_Kind_Vbox.Pack_Start (Self.Address_Selected, False, False, 0);
+      Self.Address_Selected.On_Toggled
+        (On_Address_Selected_Toggled'Access, Self);
+
+      Gtk_New (Alignment, 0.5, 0.5, 0.88, 0.88);
+      Bp_Kind_Vbox.Pack_Start (Alignment, False, False, 1);
+
+      Gtk_New_With_Entry (Self.Address_Combo);
+      Self.Address_Combo.Append_Text ("");
+      Self.Address_Combo.Set_Sensitive (False);
+      Alignment.Add (Self.Address_Combo);
+      Gtk_Entry (Self.Address_Combo.Get_Child).On_Activate
+        (On_Add_Location_Clicked'Access, Self);
+
+      --  Regular expressions
+
+      Gtk_New (Self.Regexp_Selected,
+               Group => Self.Location_Selected,
+               Label => -"Regular expression");
+      Self.Regexp_Selected.Set_Active (False);
+      Bp_Kind_Vbox.Pack_Start (Self.Regexp_Selected, False, False, 0);
+      Self.Regexp_Selected.On_Toggled
+        (On_Regexp_Selected_Toggled'Access, Self);
+
+      Gtk_New (Alignment, 0.5, 0.5, 0.88, 0.88);
+      Bp_Kind_Vbox.Pack_Start (Alignment, False, False, 1);
+
+      Gtk_New_With_Entry (Self.Regexp_Combo);
+      Self.Regexp_Combo.Append_Text ("");
+      Self.Regexp_Combo.Set_Sensitive (False);
+      Alignment.Add (Self.Regexp_Combo);
+      Gtk_Entry (Self.Regexp_Combo.Get_Child).On_Activate
+        (On_Add_Location_Clicked'Access, Self);
+
+      Gtk_New (Self.Temporary_Location, -"Temporary breakpoint");
+      Self.Temporary_Location.Set_Active (False);
+      Vbox2.Pack_Start (Self.Temporary_Location, False, False, 5);
+
+      Hbox2.Pack_Start (Gtk_Vseparator_New, False, False, 0);
+
+      Gtk_New (Bbox);
+      Bbox.Set_Layout (Buttonbox_Start);
+      Hbox2.Pack_Start (Bbox, False, False, 0);
+
+      Gtk_New_From_Stock (Button, Stock_Add);
+      Bbox.Add (Button);
+      Button.On_Clicked (On_Add_Location_Clicked'Access, Self);
+
+      Gtk_New_Hbox (Hbox3, False, 0);
+      Self.Notebook.Append_Page (Hbox3, Gtk_Label_New (-"Variable"));
+
+      Gtk_New_Vbox (Vbox7, False, 0);
+      Hbox3.Pack_Start (Vbox7, True, True, 0);
+
+      Gtk_New (Label, -("Break when the variable:"));
+      Vbox7.Pack_Start (Label, False, False, 5);
+
+      Gtk_New (Self.Watchpoint_Name);
+      Vbox7.Pack_Start (Self.Watchpoint_Name, False, False, 0);
+
+      Gtk_New (Label, -("is"));
+      Vbox7.Pack_Start (Label, False, False, 5);
+
+      Gtk_New (Self.Watchpoint_Type);
+      Self.Watchpoint_Type.Append_Text (-"written");
+      Self.Watchpoint_Type.Append_Text (-"read");
+      Self.Watchpoint_Type.Append_Text (-"read or written");
+      Self.Watchpoint_Type.Set_Active (1); --  "read"
+      Vbox7.Pack_Start (Self.Watchpoint_Type, False, False, 0);
+
+      Gtk_New (Label, -("Condition:"));
+      Vbox7.Pack_Start (Label, False, False, 5);
+
+      Gtk_New (Self.Watchpoint_Cond);
+      Vbox7.Pack_Start (Self.Watchpoint_Cond, False, False, 0);
+
+      Hbox3.Pack_Start (Gtk_Vseparator_New, False, False, 0);
+
+      Gtk_New (Bbox);
+      Bbox.Set_Layout (Buttonbox_Start);
+      Hbox3.Pack_Start (Bbox, False, True, 0);
+
+      Gtk_New_From_Stock (Button, Stock_Add);
+      Bbox.Add (Button);
+      Button.On_Clicked (On_Add_Watchpoint_Clicked'Access, Self);
+
+      Gtk_New_Hbox (Self.Hbox_Exceptions, False, 0);
+      Self.Notebook.Append_Page
+        (Self.Hbox_Exceptions, Gtk_Label_New (-"Exception"));
+      Self.Hbox_Exceptions.Set_Name ("Breakpoints.Hbox4"); -- For testsuite
+
+      Gtk_New_Vbox (Vbox8, False, 0);
+      Self.Hbox_Exceptions.Pack_Start (Vbox8, True, True, 0);
+
+      Gtk_New (Label, -("Break on exception:"));
+      Vbox8.Pack_Start (Label, False, False, 0);
+
+      Gtk_New_Hbox (Hbox14, False, 8);
+      Vbox8.Pack_Start (Hbox14, False, True, 0);
+
+      Gtk_New_With_Entry (Self.Exception_Name);
+      Self.Exception_Name.Append_Text ("All Ada exceptions");
+      Self.Exception_Name.Set_Active (0);
+      Hbox14.Pack_Start (Self.Exception_Name, True, True, 0);
+
+      Gtk_New (Button, -"Load List");
+      Hbox14.Pack_Start (Button, False, False, 0);
+      Button.On_Clicked (On_Load_Exception_List_Clicked'Access, Self);
+
+      Gtk_New (Self.Temporary_Exception, -"Temporary breakpoint");
+      Self.Temporary_Exception.Set_Active (False);
+      Vbox8.Pack_Start (Self.Temporary_Exception, False, False, 0);
+
+      Gtk_New (Frame, -"Action");
+      Vbox8.Pack_Start (Frame, False, False, 7);
+
+      Gtk_New_Vbox (Vbox9, False, 0);
+      Frame.Add (Vbox9);
+
+      Gtk_New (Self.Stop_Always_Exception, Label => -"Stop always");
+      Self.Stop_Always_Exception.Set_Active (True);
+      Vbox9.Pack_Start (Self.Stop_Always_Exception, False, False, 0);
+
+      Gtk_New
+        (Self.Stop_Not_Handled_Exception,
+         Group => Self.Stop_Always_Exception,
+         Label => -"Stop if not handled");
+      Vbox9.Pack_Start (Self.Stop_Not_Handled_Exception, False, False, 0);
+
+      Self.Hbox_Exceptions.Pack_Start (Gtk_Vseparator_New, False, False, 0);
+
+      Gtk_New (Bbox);
+      Bbox.Set_Layout (Buttonbox_Start);
+      Self.Hbox_Exceptions.Pack_Start (Bbox, False, False, 0);
+
+      Gtk_New_From_Stock (Button, Stock_Add);
+      Bbox.Add (Button);
+      Button.On_Clicked (On_Add_Exception_Clicked'Access, Self);
+
+      Gtk_New (Frame, -"Breakpoints");
+      Main_Vbox.Pack_Start (Frame, True, True, 0);
+
+      Gtk_New_Vbox (Vbox16, False, 0);
+      Frame.Add (Vbox16);
+
+      declare
+         Column_Types : constant Glib.GType_Array (1 .. 8) :=
+           (Guint (Col_Enb + 1)  => GType_Boolean,
+            others               => GType_String);
+
+         Column_Names : GNAT.Strings.String_List (1 .. 8) :=
+           (new String'(-"Num"),
+            new String'(-"Enb"),
+            new String'(-"Type"),
+            new String'(-"Disp"),
+            new String'(-"File/Variable"),
+            new String'(-"Line"),
+            new String'(-"Exception"),
+            new String'(-"Subprograms"));
+      begin
+         Self.Breakpoint_List := Create_Tree_View
+           (Column_Types, Column_Names, Sortable_Columns => False);
+         Self.Breakpoint_List.On_Button_Press_Event
+           (Breakpoint_Clicked'Access, Self);
+         Widget_Callback.Object_Connect
+           (Get_Selection (Self.Breakpoint_List),
+            Gtk.Tree_Selection.Signal_Changed,
+            Breakpoint_Row_Selection_Change'Access,
+            Slot_Object => Self,
+            After       => True);
+
+         for J in Column_Names'Range loop
+            GNAT.Strings.Free (Column_Names (J));
+         end loop;
+      end;
+
+      Vbox16.Pack_Start (Self.Breakpoint_List, True, True, 0);
+
+      Gtk_New (HBbox);
+      HBbox.Set_Layout (Buttonbox_Spread);
+      Vbox16.Pack_Start (HBbox, False, False, 0);
+
+      Gtk_New_From_Stock (Self.Remove, Stock_Remove);
+      Self.Remove.Set_Sensitive (False);
+      HBbox.Add (Self.Remove);
+      Self.Remove.On_Clicked (On_Remove_Clicked'Access, Self);
+
+      Gtk_New (Self.View, -"View");
+      Self.View.Set_Sensitive (False);
+      HBbox.Add (Self.View);
+      Self.View.On_Clicked (On_View_Clicked'Access, Self);
+
+      Gtk_New (Self.Advanced_Location, -"Advanced");
+      Self.Advanced_Location.Set_Sensitive (False);
+      HBbox.Add (Self.Advanced_Location);
+      Self.Advanced_Location.On_Clicked
+        (On_Advanced_Location_Clicked'Access, Self);
 
       --  Return in the combo boxes should activate them
 
-      Widget_Callback.Object_Connect
-        (Widget.Editor.File_Name,
-         Gtk.GEntry.Signal_Activate,
-         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
-         Widget);
-      Widget_Callback.Object_Connect
-        (Gtk_Entry (Widget.Editor.Address_Combo.Get_Child),
-         Gtk.GEntry.Signal_Activate,
-         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
-         Widget);
-      Widget_Callback.Object_Connect
-        (Gtk_Entry (Widget.Editor.Subprogram_Combo.Get_Child),
-         Gtk.GEntry.Signal_Activate,
-         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
-         Widget);
-      Widget_Callback.Object_Connect
-        (Gtk_Entry (Widget.Editor.Regexp_Combo.Get_Child),
-         Gtk.GEntry.Signal_Activate,
-         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
-         Widget);
-
-      Widget_Callback.Object_Connect
-        (Get_Selection (Widget.Editor.Breakpoint_List),
-         Gtk.Tree_Selection.Signal_Changed,
-         Breakpoint_Row_Selection_Change'Access,
-         Slot_Object => Widget,
-         After       => True);
-
-      Return_Callback.Object_Connect
-        (Widget.Editor, Signal_Key_Press_Event,
-         On_Breakpoints_Key_Press_Event'Access, Widget);
-
-      Widget_Callback.Object_Connect
-        (Widget.Editor.Add_Location, Gtk.Button.Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
-         Widget);
-      Widget_Callback.Object_Connect
-        (Widget.Editor.Add_Watchpoint, Gtk.Button.Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Add_Watchpoint_Clicked'Access),
-         Widget);
-      Widget_Callback.Object_Connect
-        (Widget.Editor.Add_Exception, Gtk.Button.Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Add_Exception_Clicked'Access),
-         Widget);
-      Widget_Callback.Object_Connect
-        (Widget.Editor.Advanced_Location, Gtk.Button.Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Advanced_Location_Clicked'Access),
-         Widget);
-      Widget_Callback.Object_Connect
-        (Widget.Editor.Load_Exception_List, Gtk.Button.Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Load_Exception_List_Clicked'Access),
-         Widget);
-      Widget_Callback.Object_Connect
-        (Widget.Editor.Remove, Gtk.Button.Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_Remove_Clicked'Access), Widget);
-      Widget_Callback.Object_Connect
-        (Widget.Editor.View, Gtk.Button.Signal_Clicked,
-         Widget_Callback.To_Marshaller (On_View_Clicked'Access), Widget);
-
-      Widget.Editor.Breakpoint_List.On_Button_Press_Event
-        (Breakpoint_Clicked'Access, Widget);
-
       Debugger_Breakpoints_Changed_Hook.Add
-         (new On_Breakpoints_Changed, Watch => Widget);
+         (new On_Breakpoints_Changed, Watch => Self);
 
-      Widget.Editor.Notebook1.Set_Current_Page (0);
-
-      Show_All (Widget);
-      return Gtk_Widget (Widget);
+      Show_All (Self);
+      return Gtk_Widget (Self);
    end Initialize;
 
    ---------------------
@@ -521,12 +775,12 @@ package body GVD.Breakpoints is
       Br_Num  : Breakpoint_Identifier;
 
    begin
-      Get_Selected (Get_Selection (View.Editor.Breakpoint_List), Model, Iter);
+      Get_Selected (Get_Selection (View.Breakpoint_List), Model, Iter);
 
       if Iter = Null_Iter then
-         Set_Sensitive (View.Editor.Advanced_Location, False);
-         Set_Sensitive (View.Editor.Remove, False);
-         Set_Sensitive (View.Editor.View, False);
+         View.Advanced_Location.Set_Sensitive (False);
+         View.Remove.Set_Sensitive (False);
+         View.View.Set_Sensitive (False);
          return;
       end if;
 
@@ -543,50 +797,48 @@ package body GVD.Breakpoints is
       --  Fill the information
 
       if Br.Except /= null then
-         View.Editor.Notebook1.Set_Current_Page (2);
-         Set_Active (View.Editor.Stop_Always_Exception, True);
+         View.Notebook.Set_Current_Page (2);
+         Set_Active (View.Stop_Always_Exception, True);
 
          if Br.Except.all = "all" then
-            Set_Active_Text
-              (View.Editor.Exception_Name, -"All Ada exceptions");
+            Set_Active_Text (View.Exception_Name, -"All Ada exceptions");
          elsif Br.Except.all = "unhandled" then
-            Set_Active_Text
-              (View.Editor.Exception_Name, -"All Ada exceptions");
-            Set_Active (View.Editor.Stop_Not_Handled_Exception, True);
+            Set_Active_Text (View.Exception_Name, -"All Ada exceptions");
+            Set_Active (View.Stop_Not_Handled_Exception, True);
          else
             Add_Unique_Combo_Entry
-              (View.Editor.Exception_Name, Br.Except.all, Select_Text => True);
+              (View.Exception_Name, Br.Except.all, Select_Text => True);
          end if;
 
-         Set_Active (View.Editor.Temporary_Exception, Br.Disposition /= Keep);
+         Set_Active (View.Temporary_Exception, Br.Disposition /= Keep);
 
       else
-         View.Editor.Notebook1.Set_Current_Page (0);
+         View.Notebook.Set_Current_Page (0);
 
          if Br.File /= GNATCOLL.VFS.No_File then
-            Set_Active (View.Editor.Location_Selected, True);
-            Set_Text (View.Editor.File_Name, +Base_Name (Br.File));
+            Set_Active (View.Location_Selected, True);
+            Set_Text (View.File_Name, +Base_Name (Br.File));
             --  ??? What if the filesystem path is non-UTF8?
-            Set_Value (View.Editor.Line_Spin, Grange_Float (Br.Line));
+            Set_Value (View.Line_Spin, Grange_Float (Br.Line));
 
             if Br.Subprogram /= null then
                Add_Unique_Combo_Entry
-                 (View.Editor.Subprogram_Combo, Br.Subprogram.all, True);
+                 (View.Subprogram_Combo, Br.Subprogram.all, True);
             end if;
 
          else
-            Set_Active (View.Editor.Address_Selected, True);
+            Set_Active (View.Address_Selected, True);
             Add_Unique_Combo_Entry
-              (View.Editor.Address_Combo, Address_To_String (Br.Address));
+              (View.Address_Combo, Address_To_String (Br.Address));
             Set_Text
-              (Gtk_Entry (View.Editor.Address_Combo.Get_Child),
+              (Gtk_Entry (View.Address_Combo.Get_Child),
                Address_To_String (Br.Address));
          end if;
       end if;
 
-      Set_Sensitive (View.Editor.Advanced_Location, True);
-      Set_Sensitive (View.Editor.Remove, True);
-      Set_Sensitive (View.Editor.View, True);
+      View.Advanced_Location.Set_Sensitive (True);
+      View.Remove.Set_Sensitive (True);
+      View.View.Set_Sensitive (True);
    end Breakpoint_Row_Selection_Change;
 
    ------------------------
@@ -600,18 +852,17 @@ package body GVD.Breakpoints is
       View  : constant Breakpoint_Editor := Breakpoint_Editor (Widget);
       Iter  : Gtk_Tree_Iter;
       Col   : Gtk_Tree_View_Column;
-      Model : constant Gtk_Tree_Store :=
-        -Get_Model (View.Editor.Breakpoint_List);
+      Model : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
    begin
       if Event.Button = 1
         and then Event.The_Type = Button_Press
       then
          Coordinates_For_Event
-           (View.Editor.Breakpoint_List,
+           (View.Breakpoint_List,
             Event, Iter, Col);
 
          if Iter /= Null_Iter
-           and then Col = Get_Column (View.Editor.Breakpoint_List, Col_Enb)
+           and then Col = Get_Column (View.Breakpoint_List, Col_Enb)
          then
             --  Click in the second column => change the enable/disable state
             --  For efficiency, no need to reparse the list of breakpoints,
@@ -652,8 +903,7 @@ package body GVD.Breakpoints is
       Iter      : Gtk_Tree_Iter;
       The_Model : Gtk_Tree_Model;
    begin
-      Get_Selected
-        (Get_Selection (View.Editor.Breakpoint_List), The_Model, Iter);
+      Get_Selected (Get_Selection (View.Breakpoint_List), The_Model, Iter);
 
       if Iter /= Null_Iter then
          Br_Num := Breakpoint_Identifier'Value
@@ -793,21 +1043,17 @@ package body GVD.Breakpoints is
    -- On_Add_Exception_Clicked --
    ------------------------------
 
-   procedure On_Add_Exception_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      View    : constant Breakpoint_Editor := Breakpoint_Editor (Object);
-
+   procedure On_Add_Exception_Clicked (W : access GObject_Record'Class) is
+      View      : constant Breakpoint_Editor := Breakpoint_Editor (W);
       Temporary : Boolean;
       Process   : constant Visual_Debugger := Get_Process (View);
       Name      : constant String :=
-                    Get_Text
-                      (Gtk_Entry (View.Editor.Exception_Name.Get_Child));
+                    Get_Text (Gtk_Entry (View.Exception_Name.Get_Child));
       Unhandled : constant Boolean :=
-                    Get_Active (View.Editor.Stop_Not_Handled_Exception);
+                    Get_Active (View.Stop_Not_Handled_Exception);
 
    begin
-      Temporary := Get_Active (View.Editor.Temporary_Exception);
+      Temporary := Get_Active (View.Temporary_Exception);
 
       --  Some of the strings below deal with the GUI, and thus should be
       --  translated for internationalization. Others come from gdb, and
@@ -843,24 +1089,21 @@ package body GVD.Breakpoints is
    -- On_Add_Location_Clicked --
    -----------------------------
 
-   procedure On_Add_Location_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Add_Location_Clicked (Object : access GObject_Record'Class) is
       View      : constant Breakpoint_Editor := Breakpoint_Editor (Object);
       Process   : constant Visual_Debugger := Get_Process (View);
       Temporary : Boolean;
 
    begin
-      Temporary := Get_Active (View.Editor.Temporary_Location);
+      Temporary := Get_Active (View.Temporary_Location);
 
-      if Get_Active (View.Editor.Location_Selected) then
+      if Get_Active (View.Location_Selected) then
          declare
-            File : constant Filesystem_String :=
-                     +Get_Text (View.Editor.File_Name);
+            File : constant Filesystem_String := +Get_Text (View.File_Name);
             --  ??? What if the filesystem path is non-UTF8?
 
             Line : constant Integer :=
-              Integer (Get_Value_As_Int (View.Editor.Line_Spin));
+              Integer (Get_Value_As_Int (View.Line_Spin));
 
          begin
             --  ??? Should also check Temporary
@@ -872,10 +1115,9 @@ package body GVD.Breakpoints is
                Mode      => GVD.Types.Visible);
          end;
 
-      elsif Get_Active (View.Editor.Subprogram_Selected) then
+      elsif Get_Active (View.Subprogram_Selected) then
          declare
-            Name : constant String :=
-                     Get_Active_Text (View.Editor.Subprogram_Combo);
+            Name : constant String := Get_Active_Text (View.Subprogram_Combo);
 
          begin
             --  ??? Should also check Temporary
@@ -886,11 +1128,11 @@ package body GVD.Breakpoints is
                Mode      => GVD.Types.Visible);
          end;
 
-      elsif Get_Active (View.Editor.Address_Selected) then
+      elsif Get_Active (View.Address_Selected) then
          declare
             Address : constant Address_Type :=
                         String_To_Address
-                          (Get_Active_Text (View.Editor.Address_Combo));
+                          (Get_Active_Text (View.Address_Combo));
          begin
             Break_Address
               (Process.Debugger,
@@ -902,7 +1144,7 @@ package body GVD.Breakpoints is
       else
          Break_Regexp
            (Process.Debugger,
-            Regexp    => Get_Active_Text (View.Editor.Regexp_Combo),
+            Regexp    => Get_Active_Text (View.Regexp_Combo),
             Temporary => Temporary,
             Mode      => GVD.Types.Visible);
       end if;
@@ -912,12 +1154,9 @@ package body GVD.Breakpoints is
    -- On_Advanced_Location_Clicked --
    ----------------------------------
 
-   procedure On_Advanced_Location_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      View    : constant Breakpoint_Editor := Breakpoint_Editor (Object);
+   procedure On_Advanced_Location_Clicked (W : access GObject_Record'Class) is
+      View    : constant Breakpoint_Editor := Breakpoint_Editor (W);
       Current : constant Integer := Get_Selection_Index (View);
-
       Process : constant Visual_Debugger := Get_Process (View);
       Adv  : Advanced_Breakpoint_Access := View.Advanced_Breakpoints;
    begin
@@ -992,17 +1231,15 @@ package body GVD.Breakpoints is
    -- On_Add_Watchpoint_Clicked --
    -------------------------------
 
-   procedure On_Add_Watchpoint_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      View    : constant Breakpoint_Editor := Breakpoint_Editor (Object);
+   procedure On_Add_Watchpoint_Clicked (W : access GObject_Record'Class) is
+      View    : constant Breakpoint_Editor := Breakpoint_Editor (W);
       Process         : constant Visual_Debugger := Get_Process (View);
       Watchpoint_Name : constant String :=
-                          Get_Text (View.Editor.Watchpoint_Name);
+                          Get_Text (View.Watchpoint_Name);
       Watchpoint_Type : constant String :=
-                          Get_Active_Text (View.Editor.Watchpoint_Type);
+                          Get_Active_Text (View.Watchpoint_Type);
       Watchpoint_Cond : constant String :=
-                          Get_Text (View.Editor.Watchpoint_Cond);
+                          Get_Text (View.Watchpoint_Cond);
 
       Trigger : GVD.Types.Watchpoint_Trigger;
       --  Encodes the value we get from Watchpoint_Type for the call to Watch
@@ -1030,27 +1267,27 @@ package body GVD.Breakpoints is
    ------------------------------------
 
    procedure On_Load_Exception_List_Clicked
-     (Object : access Gtk_Widget_Record'Class)
+     (W : access GObject_Record'Class)
    is
-      View    : constant Breakpoint_Editor := Breakpoint_Editor (Object);
+      View    : constant Breakpoint_Editor := Breakpoint_Editor (W);
       Process : constant Visual_Debugger := Get_Process (View);
    begin
       declare
          Exception_Arr : Exception_Array := List_Exceptions (Process.Debugger);
       begin
          if Exception_Arr'Length > 0 then
-            Set_Sensitive (View.Editor.Hbox4, True);
+            Set_Sensitive (View.Hbox_Exceptions, True);
             Add_Unique_Combo_Entry
-              (View.Editor.Exception_Name, -"All Ada exceptions");
+              (View.Exception_Name, -"All Ada exceptions");
             Add_Unique_Combo_Entry
-              (View.Editor.Exception_Name, -"Ada assertions");
+              (View.Exception_Name, -"Ada assertions");
 
             for J in Exception_Arr'Range loop
                Add_Unique_Combo_Entry
-                 (View.Editor.Exception_Name, Exception_Arr (J).Name.all);
+                 (View.Exception_Name, Exception_Arr (J).Name.all);
             end loop;
          else
-            Set_Sensitive (View.Editor.Hbox4, False);
+            Set_Sensitive (View.Hbox_Exceptions, False);
          end if;
 
          Free (Exception_Arr);
@@ -1061,13 +1298,11 @@ package body GVD.Breakpoints is
    -- On_Remove_Clicked --
    -----------------------
 
-   procedure On_Remove_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      View      : constant Breakpoint_Editor := Breakpoint_Editor (Object);
+   procedure On_Remove_Clicked (W : access GObject_Record'Class) is
+      View      : constant Breakpoint_Editor := Breakpoint_Editor (W);
       Process   : constant Visual_Debugger := Get_Process (View);
       Model     : constant Gtk_Tree_Store :=
-        -Get_Model (View.Editor.Breakpoint_List);
+        -Get_Model (View.Breakpoint_List);
       Selection : constant Integer := Get_Selection_Index (View);
 
    begin
@@ -1082,14 +1317,14 @@ package body GVD.Breakpoints is
 
          if Gint (Selection) >= N_Children (Model, Null_Iter) then
             Select_Iter
-              (Get_Selection (View.Editor.Breakpoint_List),
+              (Get_Selection (View.Breakpoint_List),
                Nth_Child
                  (Model,
                   Parent => Null_Iter,
                   N      => N_Children (Model, Null_Iter) - 1));
          else
             Select_Iter
-              (Get_Selection (View.Editor.Breakpoint_List),
+              (Get_Selection (View.Breakpoint_List),
                Nth_Child
                  (Model,
                   Parent => Null_Iter,
@@ -1102,10 +1337,8 @@ package body GVD.Breakpoints is
    -- On_View_Clicked --
    ---------------------
 
-   procedure On_View_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      View      : constant Breakpoint_Editor := Breakpoint_Editor (Object);
+   procedure On_View_Clicked (W : access GObject_Record'Class) is
+      View      : constant Breakpoint_Editor := Breakpoint_Editor (W);
       Process   : constant Visual_Debugger := Get_Process (View);
       Selection : constant Integer := Get_Selection_Index (View);
 
@@ -1126,16 +1359,71 @@ package body GVD.Breakpoints is
    ------------------------------------
 
    function On_Breakpoints_Key_Press_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
-      Event : constant Gdk_Event := To_Event (Params, 1);
-      use type Gdk.Types.Gdk_Key_Type;
+     (W      : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event_Key) return Boolean is
    begin
-      if Get_Key_Val (Event) = GDK_Delete then
-         On_Remove_Clicked (Object);
+      if Event.Keyval = GDK_Delete then
+         On_Remove_Clicked (W);
       end if;
       return False;
    end On_Breakpoints_Key_Press_Event;
+
+   ----------------------------------
+   -- On_Location_Selected_Toggled --
+   ----------------------------------
+
+   procedure On_Location_Selected_Toggled (W : access GObject_Record'Class) is
+      Self : constant Breakpoint_Editor := Breakpoint_Editor (W);
+   begin
+      Self.File_Name.Set_Sensitive (True);
+      Self.Line_Spin.Set_Sensitive (True);
+      Self.Address_Combo.Set_Sensitive (False);
+      Self.Subprogram_Combo.Set_Sensitive (False);
+      Self.Regexp_Combo.Set_Sensitive (False);
+   end On_Location_Selected_Toggled;
+
+   ------------------------------------
+   -- On_Subprogram_Selected_Toggled --
+   ------------------------------------
+
+   procedure On_Subprogram_Selected_Toggled
+     (W : access GObject_Record'Class)
+   is
+      Self : constant Breakpoint_Editor := Breakpoint_Editor (W);
+   begin
+      Self.File_Name.Set_Sensitive (False);
+      Self.Line_Spin.Set_Sensitive (False);
+      Self.Address_Combo.Set_Sensitive (False);
+      Self.Subprogram_Combo.Set_Sensitive (True);
+      Self.Regexp_Combo.Set_Sensitive (False);
+   end On_Subprogram_Selected_Toggled;
+
+   ---------------------------------
+   -- On_Address_Selected_Toggled --
+   ---------------------------------
+
+   procedure On_Address_Selected_Toggled (W : access GObject_Record'Class) is
+      Self : constant Breakpoint_Editor := Breakpoint_Editor (W);
+   begin
+      Self.File_Name.Set_Sensitive (False);
+      Self.Line_Spin.Set_Sensitive (False);
+      Self.Address_Combo.Set_Sensitive (True);
+      Self.Subprogram_Combo.Set_Sensitive (False);
+      Self.Regexp_Combo.Set_Sensitive (False);
+   end On_Address_Selected_Toggled;
+
+   --------------------------------
+   -- On_Regexp_Selected_Toggled --
+   --------------------------------
+
+   procedure On_Regexp_Selected_Toggled (W : access GObject_Record'Class) is
+      Self : constant Breakpoint_Editor := Breakpoint_Editor (W);
+   begin
+      Self.File_Name.Set_Sensitive (False);
+      Self.Line_Spin.Set_Sensitive (False);
+      Self.Address_Combo.Set_Sensitive (False);
+      Self.Subprogram_Combo.Set_Sensitive (False);
+      Self.Regexp_Combo.Set_Sensitive (True);
+   end On_Regexp_Selected_Toggled;
 
 end GVD.Breakpoints;
