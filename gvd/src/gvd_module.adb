@@ -1365,21 +1365,22 @@ package body GVD_Module is
       Debugger : constant Debugger_Access :=
         Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)))
         .Debugger;
+      Num : Breakpoint_Identifier with Unreferenced;
    begin
       if not Command.On_Line then
-         Break_Subprogram
+         Num := Break_Subprogram
            (Debugger,
             Entity_Name_Information (Context.Context),
             Mode => GVD.Types.Visible);
       elsif Command.Continue_Till then
-         Break_Source
+         Num := Break_Source
            (Debugger,
             File_Information (Context.Context),
             GPS.Kernel.Contexts.Line_Information (Context.Context),
             Temporary => True);
          Continue (Debugger, Mode => GVD.Types.Visible);
       else
-         Break_Source
+         Num := Break_Source
            (Debugger,
             File_Information (Context.Context),
             GPS.Kernel.Contexts.Line_Information (Context.Context),

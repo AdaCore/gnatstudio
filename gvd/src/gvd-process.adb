@@ -376,6 +376,9 @@ package body GVD.Process is
      (Process  : access Visual_Debugger_Record'Class;
       Property : Breakpoint_Property_Record'Class) is
    begin
+      --  ??? Should be done in GVD.Breakpoints, since we are duplicating some
+      --  of the logic here to choose with type of breakpoint to create
+
       if Process.Debugger = null
         or else Property.Breakpoints = null
       then
@@ -387,22 +390,23 @@ package body GVD.Process is
             Br      : Breakpoint_Data renames Property.Breakpoints (B);
             Created : Boolean := True;
             Id      : Breakpoint_Identifier := Breakpoint_Identifier'Last;
+            Num     : Breakpoint_Identifier with Unreferenced;
          begin
             if Br.Except /= null then
-               Break_Exception
+               Num := Break_Exception
                  (Process.Debugger, Br.Except.all,
                   Temporary => Br.Disposition /= Keep, Mode => Internal,
                   Unhandled => False);
             elsif Br.Line /= 0 and then Br.File /= GNATCOLL.VFS.No_File then
-               Break_Source
+               Num := Break_Source
                  (Process.Debugger, Br.File, Br.Line,
                   Temporary => Br.Disposition /= Keep, Mode => Internal);
             elsif Br.Subprogram /= null then
-               Break_Subprogram
+               Num := Break_Subprogram
                  (Process.Debugger, Br.Subprogram.all,
                   Temporary => Br.Disposition /= Keep, Mode => Internal);
             elsif Br.Address /= Invalid_Address then
-               Break_Address
+               Num := Break_Address
                  (Process.Debugger, Br.Address,
                   Temporary => Br.Disposition /= Keep, Mode => Internal);
             else

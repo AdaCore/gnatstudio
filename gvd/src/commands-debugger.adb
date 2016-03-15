@@ -50,6 +50,7 @@ package body Commands.Debugger is
      (Command : access Set_Breakpoint_Command) return Command_Return_Type
    is
       C : Command_Access;
+      B : Breakpoint_Identifier with Unreferenced;
    begin
       if Command_In_Process (Get_Process (Command.Debugger.Debugger)) then
          Insert
@@ -65,7 +66,7 @@ package body Commands.Debugger is
 
       case Command.BMode is
          when Set =>
-            Break_Source
+            B := Break_Source
               (Command.Debugger.Debugger,
                Command.File,
                Command.Line,

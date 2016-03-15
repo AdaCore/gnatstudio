@@ -28,6 +28,14 @@ NF-17-P321-014 WB: add VxWorks 653 3.1 support (2016-03-21)
   GNATbench is able to handle Wind River Workbench projects for VxWorks 653 3.1
   target operating system.
 
+NF-17-P315-043 GPS: revamp the debugger Breakpoints view (2016-03-29)
+
+  This view shows the current list of breakpoints set in the debugger. Its
+  layout has been modified so that it is now smaller and can more easily be
+  a permanent fixture of the desktop. Clicking on a breakpoint will display
+  all its properties (both basic like file and line, exception name,... and
+  advanced like the condition to be met for the debugger to stop).
+
 NF-17-P315-018 GPS: Preference for tab orientation (2016-03-18)
 
   New preference added to configure default tab orientation. This allows,

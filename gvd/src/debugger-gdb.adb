@@ -130,6 +130,11 @@ package body Debugger.Gdb is
    --  Regular expression used to detect and parse callstack frames
    --  with no file information
 
+   Breakpoint_Num_Pattern    : constant Pattern_Matcher := Compile
+     ("(?:Breakpoint|Watchpoint|Catchpoint) (\d+)");
+   --  Extract breakpoint identifier after setting a breakpoint via "break"
+   --  or "tbreak"
+
    Breakpoint_Pattern        : constant Pattern_Matcher := Compile
      ("^(\d+)\s+(breakpoint|\w+? watchpoint|catchpoint)\s+"
       & "(keep|dis|del)\s+([yn])"
@@ -263,6 +268,14 @@ package body Debugger.Gdb is
    procedure Restore_Language
      (Debugger : access Gdb_Debugger);
    --  Restore the language that was active before Switch_Language was called
+
+   function Internal_Set_Breakpoint
+     (Debugger  : access Gdb_Debugger;
+      Command   : String;
+      Mode      : GVD.Types.Command_Type)
+      return GVD.Types.Breakpoint_Identifier;
+   --  Send a command that sets a breakpoint, and retrieve the id of the newly
+   --  created breakpoint
 
    function Get_Module (Executable : GNATCOLL.VFS.Virtual_File) return String;
    --  Return the name of the module contained in Executable
@@ -672,7 +685,7 @@ package body Debugger.Gdb is
    overriding function Send_And_Get_Clean_Output
      (Debugger : access Gdb_Debugger;
       Cmd      : String;
-      Mode     : Invisible_Command := Hidden) return String
+      Mode     : Command_Type := Hidden) return String
    is
       S   : constant String := Send_And_Get_Output (Debugger, Cmd, Mode);
       Pos : Integer;
@@ -1978,20 +1991,46 @@ package body Debugger.Gdb is
            (Debugger, "where", Mode => Internal), Value, Len);
    end Backtrace;
 
+   -----------------------------
+   -- Internal_Set_Breakpoint --
+   -----------------------------
+
+   function Internal_Set_Breakpoint
+     (Debugger  : access Gdb_Debugger;
+      Command   : String;
+      Mode      : GVD.Types.Command_Type)
+      return GVD.Types.Breakpoint_Identifier
+   is
+      C : constant String := Debugger.Send_And_Get_Clean_Output
+        (Cmd => Command, Mode => Mode);
+      M : Match_Array (0 .. 1);
+   begin
+      Match (Breakpoint_Num_Pattern, C, Matches => M);
+      if M (1) /= No_Match then
+         return Breakpoint_Identifier'Value
+           (C (M (1).First .. M (1).Last));
+      else
+         return 0;
+      end if;
+   end Internal_Set_Breakpoint;
+
    ----------------------
    -- Break_Subprogram --
    ----------------------
 
-   overriding procedure Break_Subprogram
+   overriding function Break_Subprogram
      (Debugger  : access Gdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier is
    begin
       if Temporary then
-         Send (Debugger, "tbreak " & Name, Mode => Mode);
+         return Internal_Set_Breakpoint
+           (Debugger, "tbreak " & Name, Mode => Mode);
       else
-         Send (Debugger, "break " & Name, Mode => Mode);
+         return Internal_Set_Breakpoint
+           (Debugger, "break " & Name, Mode => Mode);
       end if;
    end Break_Subprogram;
 
@@ -1999,22 +2038,26 @@ package body Debugger.Gdb is
    -- Break_Source --
    ------------------
 
-   overriding procedure Break_Source
+   overriding function Break_Source
      (Debugger  : access Gdb_Debugger;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Positive;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden) is
+      Mode      : Command_Type := Hidden)
+      return GVD.Types.Breakpoint_Identifier
+   is
    begin
       if Temporary then
-         Send (Debugger,
-               "tbreak " & (+Base_Name (File)) & ":" & Image (Line),
-               Mode => Mode);
+         return Internal_Set_Breakpoint
+           (Debugger,
+            "tbreak " & (+Base_Name (File)) & ":" & Image (Line),
+            Mode => Mode);
 
       else
-         Send (Debugger,
-               "break " & (+Base_Name (File)) & ':' & Image (Line),
-               Mode => Mode);
+         return Internal_Set_Breakpoint
+           (Debugger,
+            "break " & (+Base_Name (File)) & ':' & Image (Line),
+            Mode => Mode);
       end if;
    end Break_Source;
 
@@ -2022,33 +2065,36 @@ package body Debugger.Gdb is
    -- Break_Exception --
    ---------------------
 
-   overriding procedure Break_Exception
+   overriding function Break_Exception
      (Debugger  : access Gdb_Debugger;
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Mode      : Command_Type := Hidden) is
+      Mode      : Command_Type := Hidden)
+      return GVD.Types.Breakpoint_Identifier is
    begin
-      Send (Debugger,
-            Break_Exception_Cmd (Debugger, Name, Temporary, Unhandled),
-            Mode => Mode);
+      return Internal_Set_Breakpoint
+        (Debugger,
+         Break_Exception_Cmd (Debugger, Name, Temporary, Unhandled),
+         Mode => Mode);
    end Break_Exception;
 
    -------------------
    -- Break_Address --
    -------------------
 
-   overriding procedure Break_Address
+   overriding function Break_Address
      (Debugger  : access Gdb_Debugger;
       Address   : GVD.Types.Address_Type;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden) is
+      Mode      : Command_Type := Hidden)
+      return GVD.Types.Breakpoint_Identifier is
    begin
       if Temporary then
-         Send
+         return Internal_Set_Breakpoint
            (Debugger, "tbreak *" & Address_To_String (Address), Mode => Mode);
       else
-         Send
+         return Internal_Set_Breakpoint
            (Debugger, "break *" & Address_To_String (Address), Mode => Mode);
       end if;
    end Break_Address;
@@ -2057,17 +2103,20 @@ package body Debugger.Gdb is
    -- Break_Regexp --
    ------------------
 
-   overriding procedure Break_Regexp
+   overriding function Break_Regexp
      (Debugger  : access Gdb_Debugger;
       Regexp    : String;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden) is
+      Mode      : Command_Type := Hidden)
+      return GVD.Types.Breakpoint_Identifier
+   is
    begin
       if Temporary then
          raise Unknown_Command;
          --  Error ("Temporary regexp breakpoints not supported");
       else
-         Send (Debugger, "rbreak " & Regexp, Mode => Mode);
+         return Internal_Set_Breakpoint
+           (Debugger, "rbreak " & Regexp, Mode => Mode);
       end if;
    end Break_Regexp;
 
@@ -2218,12 +2267,13 @@ package body Debugger.Gdb is
    -- Watch --
    -----------
 
-   overriding procedure Watch
+   overriding function Watch
      (Debugger  : access Gdb_Debugger;
       Name      : String;
       Trigger   : GVD.Types.Watchpoint_Trigger;
       Condition : String := "";
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier
    is
       function Command return String;
       --  Returns the appropriate GDB watchpoint command based on the
@@ -2247,9 +2297,10 @@ package body Debugger.Gdb is
 
    begin
       if Condition = "" then
-         Send (Debugger, Command & " " & Name, Mode => Mode);
+         return Internal_Set_Breakpoint
+           (Debugger, Command & " " & Name, Mode => Mode);
       else
-         Send
+         return Internal_Set_Breakpoint
            (Debugger,
             Command & " " & Name & " if " & Condition,
             Mode => Mode);

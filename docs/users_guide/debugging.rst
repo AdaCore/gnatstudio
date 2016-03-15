@@ -660,87 +660,79 @@ following special meanings:
 The Breakpoint Editor
 =====================
 
-.. image:: breakpoints.jpg
+.. image:: breakpoints.png
 
 .. index:: menu; debug --> data --> edit breaakpoints
 
 Access the breakpoint editor from the :menuselection:`Debug --> Data -->
-Edit Breakpoints` menu.  It allows you to manipulate the various kinds of
+Breakpoints` menu.  It allows you to manipulate the various kinds of
 breakpoints: those at a source location, on a subprogram, at an executable
 address, on memory access (watchpoints), or on Ada exceptions.
 
-Double-click on any breakpoint in the list to open the corresponding source
-editor at the corresponding location.  Or select the breakpoint and then
-click the :guilabel:`View` button.
+This view lists the existing breakpoints that are currently set in the
+debugger.
+You can quickly and conveniently enable or disable breakpoints by
+clicking on the checkboxes directly in the list.
 
-The top area provides an interface to create the different kinds of
-breakpoints, while the bottom area lists existing breakpoints and their
-characteristics.
+Select a breakpoint in the list and click on the :guilabel:`View` button
+in the toolbar to shows the corresponding editor at that location.
 
-To access advanced breakpoint characteristics for a given breakpoint select
-the breakpoint from the list and click on the :guilabel:`Advanced` button,
-which displays a new dialog window where you can specify commands to run
-automatically after a breakpoint is hit or specify how many times the
-breakpoint will be ignored.  If running VxWorks AE, you can also change the
-Scope and Action settings for breakpoints.
+.. image:: bp-advanced.png
 
-.. image:: bp-advanced.jpg
-.. index:: VxWorks AE
+To view the details of a breakpoint, select it in the list and click on
+the :guilabel:`Edit` button in the toolbar. This opens up a separate
+dialog that shows the various attributes:
 
-Scope and Action Settings for VxWorks AE
-----------------------------------------
+   - Details on where the breakpoint is set: the file and line, the
+     specific address in memory, or the name of the exception which will
+     stop the debugger when raised. These are not editable, so to change
+     this you must create a new breakpoint instead;
 
-In VxWorks AE breakpoints have two extra properties:
+   - The conditions to be met for the debugger to stop at that location.
+     Such conditions can refer to variables valid at that location, and
+     for instance test the value of specific variables;
 
-* Scope:
+   - The number of times that the breakpoint should be ignored before the
+     debugger actually stops. This is useful when you know the error
+     occurs after the 70th time hitting the breakpoint;
 
-  Which task(s) will be stopped at a given breakpoint. Possible values are:
+   - Debugger commands to execute when reaching the breakpoint.
 
-  * task:
+   - When running :index:`VxWorks AE`, this dialog also lets you two extra
+     properties:
 
-    The breakpoint only affects the task that was active when the
-    breakpoint was set. If the breakpoint is set before the program is run,
-    the breakpoint affects the environment task.
+      * The **scope** indicates which tasks will be stopped. Possible
+        values are:
 
-  * pd:
-    .. index:: protection domain
+          - task: The breakpoint only affects the task that was active when the
+            breakpoint was set. If the breakpoint is set before the program is run,
+            the breakpoint affects the environment task.
 
-    Any task in the current protection domain is affected by the breakpoint.
+          - pd: Any task in the current :index:`protection domain` is affected
+            by the breakpoint.
 
-  * any:
+          - any: Any task in any protection domain is affected by the breakpoint. This
+            setting is only allowed for tasks in the Kernel domain.
 
-    Any task in any protection domain is affected by the breakpoint. This
-    setting is only allowed for tasks in the Kernel domain.
+      * The **action** indicates which tasks are stopped when the breakpoint
+        is hit:
 
-* Action:
+          - task: only the task that hit the breakpoint.
 
-  When a task hits a breakpoints, which tasks are stopped:
+          - pd: all tasks in the current protection domain.
 
-  * task: only the task that hit the breakpoint.
+          - all: all stoppable tasks in the system.
 
-  * pd: all tasks in the current protection domain.
+     Both of these properties can either be configured for the specific breakpoint,
+     or configured as the default for the session, so that from then on every
+     breakpoint will have the specified values for scope and action.
 
-  * all: all stoppable tasks in the system.
+.. image:: breakpoints-add.png
 
-You set and change these properties through the advanced breakpoints
-characteristics by clicking on the :guilabel:`Advanced` button. There are
-two ways of setting these properties:
-
-* Per breakpoint settings:
-
-  After setting a breakpoint (the default Scope or Action values are both
-  :samp:`task`), select the :guilabel:`Scope/Action` tab in the
-  :guilabel:`Advanced` settings.  To change these settings for a specific
-  breakpoint, select it from the breakpoints list, select the desired
-  values of Scope and Action, and click on the :guilabel:`Update` button.
-
-* Default session settings:
-
-  Select the :guilabel:`Scope/Action` tab in the :guilabel:`Advanced`
-  settings, select the desired Scope and Action settings, check the
-  :guilabel:`Set as session defaults` check box and click the
-  :guilabel:`Close` button. From then on, every new breakpoint will have
-  the specified values for Scope and Action.
+To create new breakpoints, click on the :guilabel:`Add` button in the
+toolbar. This opens up the same dialog as above, but lets you edit the
+top section (file, line, exception, address,...). Select the type of
+the breakpoint or watchpoint at the top.
 
 .. index:: saving breakpoints
 .. index:: breakpoints, saving

@@ -248,7 +248,7 @@
             <menu label="_Threads"            action="open threads debugger window"/>
             <menu label="Tas_ks"              action="open tasks debugger window"/>
             <menu label="A_ssembly"           action="open assembly view"/>
-            <menu label="Edit _Breakpoints"   action="open breakpoints editor"/>
+            <menu label="_Breakpoints"        action="open breakpoints editor"/>
             <separator/>
             <menu label="_Examine Memory"     action="examine memory"/>
             <separator/>
@@ -546,6 +546,14 @@
    <toolbar id='Key Shortcuts'>
       <button action='key shortcuts expand all'/>
       <separator/>
+   </toolbar>
+
+   <toolbar id='Breakpoints'>
+      <button action='debug delete breakpoint'/>
+      <button action='debug view breakpoint'/>
+      <button action='debug edit breakpoint'/>
+      <separator/>
+      <button action='debug create breakpoint'/>
    </toolbar>
 
    <toolbar id='Browser'>

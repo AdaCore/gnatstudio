@@ -142,7 +142,7 @@ package Debugger is
    function Send_And_Get_Output
      (Debugger        : access Debugger_Root;
       Cmd             : String;
-      Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)
+      Mode            : GVD.Types.Command_Type := GVD.Types.Hidden)
       return String;
    --  Same as above, but also return the output of the debugger.
    --  The full output is returned, ie this includes the final prompt.
@@ -156,7 +156,7 @@ package Debugger is
    function Send_And_Get_Clean_Output
      (Debugger : access Debugger_Root;
       Cmd      : String;
-      Mode     : GVD.Types.Invisible_Command := GVD.Types.Hidden)
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
       return String is abstract;
    --  Same Send_And_Get_Output, but return a clean version of the output, i.e.
    --  delete the final prompt if any, depending on the debugger type.
@@ -569,35 +569,42 @@ package Debugger is
    -- Breakpoint Handling --
    -------------------------
 
-   procedure Break_Subprogram
+   function Break_Subprogram
      (Debugger  : access Debugger_Root;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier
+      is abstract;
    --  Break at the beginning of a specific subprogram.
    --  If Temporary is True, then the breakpoint should be deleted
    --  automatically the first time it is hit.
    --  It returns the identifier associated with the newly created breakpoint.
-   --  GDB_COMMAND: "break name" or "tbreak name"
+   --  GDB_COMMAND: "break name" or "tbreak name" (or 0 if the debugger is
+   --  busy and the command was queued)
 
-   procedure Break_Source
+   function Break_Source
      (Debugger  : access Debugger_Root;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Positive;
       Temporary : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier
+      is abstract;
    --  Break at a specific source location.
    --  If Temporary is True, then the breakpoint should be deleted
    --  automatically the first time it is hit.
    --  It returns the identifier associated with the newly created breakpoint.
    --  GDB_COMMAND: "break file:line" or "tbreak file:line"
 
-   procedure Break_Exception
+   function Break_Exception
      (Debugger  : access Debugger_Root;
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier
+      is abstract;
    --  Break on an exception, if the debugger and the language recognize that
    --  feature.
    --  The breakpoint is set on a specific exception Name (or all exceptions
@@ -608,18 +615,22 @@ package Debugger is
    --  not break on a specific exception only when it is unhandled).
    --  GDB_COMMAND: "break exception"
 
-   procedure Break_Address
+   function Break_Address
      (Debugger   : access Debugger_Root;
       Address    : GVD.Types.Address_Type;
       Temporary  : Boolean := False;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier
+      is abstract;
    --  Set a breakpoint at a specific address.
 
-   procedure Break_Regexp
+   function Break_Regexp
      (Debugger   : access Debugger_Root;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier
+      is abstract;
    --  Set a breakpoint on all subprograms matching Regexp.
    --  This function is emulated when the debugger does not support it
    --  directly.
@@ -692,12 +703,14 @@ package Debugger is
    -- Watchpoints --
    -----------------
 
-   procedure Watch
+   function Watch
      (Debugger  : access Debugger_Root;
       Name      : String;
       Trigger   : GVD.Types.Watchpoint_Trigger;
       Condition : String := "";
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier
+      is abstract;
    --  Set a watchpoint for the variable or memory location in Name.
    --  Trigger specifies that the watchpoint is activated by a read, write,
    --  or either to the memory location.  If a condition string is given,

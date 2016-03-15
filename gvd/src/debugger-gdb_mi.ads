@@ -208,37 +208,42 @@ package Debugger.Gdb_MI is
       Frame    : Positive;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   overriding procedure Break_Subprogram
+   overriding function Break_Subprogram
      (Debugger  : access Gdb_MI_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+     return GVD.Types.Breakpoint_Identifier;
 
-   overriding procedure Break_Source
+   overriding function Break_Source
      (Debugger  : access Gdb_MI_Debugger;
       File      : GNATCOLL.VFS.Virtual_File;
       Line      : Positive;
       Temporary : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier;
 
-   overriding procedure Break_Exception
+   overriding function Break_Exception
      (Debugger  : access Gdb_MI_Debugger;
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier;
 
-   overriding procedure Break_Address
+   overriding function Break_Address
      (Debugger   : access Gdb_MI_Debugger;
       Address    : GVD.Types.Address_Type;
       Temporary  : Boolean := False;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier;
 
-   overriding procedure Break_Regexp
+   overriding function Break_Regexp
      (Debugger   : access Gdb_MI_Debugger;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier;
 
    overriding procedure Enable_Breakpoint
      (Debugger : access Gdb_MI_Debugger;
@@ -273,12 +278,13 @@ package Debugger.Gdb_MI is
       Count    : Integer;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   overriding procedure Watch
+   overriding function Watch
      (Debugger  : access Gdb_MI_Debugger;
       Name      : String;
       Trigger   : GVD.Types.Watchpoint_Trigger;
       Condition : String := "";
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier;
 
    overriding procedure Finish
      (Debugger : access Gdb_MI_Debugger;
@@ -391,7 +397,7 @@ private
    overriding function Send_And_Get_Clean_Output
      (Debugger        : access Gdb_MI_Debugger;
       Cmd             : String;
-      Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)
+      Mode            : GVD.Types.Command_Type := GVD.Types.Hidden)
       return String;
 
    overriding procedure Send

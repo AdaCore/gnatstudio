@@ -880,7 +880,7 @@ package body Debugger is
    function Send_And_Get_Output
      (Debugger : access Debugger_Root;
       Cmd      : String;
-      Mode     : Invisible_Command := Hidden) return String
+      Mode     : Command_Type := Hidden) return String
    is
       Output : GNAT.OS_Lib.String_Access;
    begin
