@@ -15,22 +15,22 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Strings.Fixed;         use Ada.Strings, Ada.Strings.Fixed;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
+with Ada.Strings.Fixed;          use Ada.Strings, Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with Refactoring.Buffer_Helpers; use Refactoring.Buffer_Helpers;
 
-with Basic_Types;             use Basic_Types;
-with GNAT.Strings;            use GNAT.Strings;
-with GPS.Editors;             use GPS.Editors;
-with Language;                use Language;
-with Language.Ada;            use Language.Ada;
-with Language.Tree;           use Language.Tree;
-with Language.Tree.Database;  use Language.Tree.Database;
-with String_Utils;            use String_Utils;
-with GNATCOLL.Utils;          use GNATCOLL.Utils;
-with GNATCOLL.Traces;         use GNATCOLL.Traces;
-with GNATCOLL.Xref;           use GNATCOLL.Xref;
+with Basic_Types;                use Basic_Types;
+with GNAT.Strings;               use GNAT.Strings;
+with GPS.Editors;                use GPS.Editors;
+with Language;                   use Language;
+with Language.Ada;               use Language.Ada;
+with Language.Tree;              use Language.Tree;
+with Language.Tree.Database;     use Language.Tree.Database;
+with String_Utils;               use String_Utils;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Xref;              use GNATCOLL.Xref;
 
 package body Refactoring.Services is
    Me : constant Trace_Handle := Create ("Refactoring");
@@ -1046,6 +1046,14 @@ package body Refactoring.Services is
       --  The entity that contains the code to extract. This is set lazily.
 
    begin
+      if not Db.Is_Up_To_Date (Self.File) then
+         Self.Context.Report_Error
+           ("File " & GNATCOLL.VFS."+" (Self.File.Full_Name) &
+              " does not have up-to-date xref, recompile the file");
+         Success := False;
+         return;
+      end if;
+
       Success := True;
 
       --  This code might require loading a file, so we only freeze afterward

@@ -284,6 +284,17 @@ KP-62-OC17-015 WB: error markers always at top of C/C++ files
 
   Workaround: Disable quick fix feature. (see Ada/Tools preferences page)
 
+KP-62-OC11-015 GPS: Refactoring/Extract' subprograms ignores parameters
+
+  Problem:    The 'Refactoring/Extract subprogram' action does not work
+              correctly if the file being edited does not have up-to-date
+              cross-references.
+
+  Status:     This was fixed in 17.0 on 2016-03-16
+
+  Workaround: Recompile the file before executing this action in order
+              to have proper cross-references.
+
 KP-62-OC01-018 GPS.Exception: No file information stored in the context
 
   Problem:    Right clicking on the name of the project in the project pane may

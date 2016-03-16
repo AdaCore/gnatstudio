@@ -45,7 +45,7 @@ with Language;               use Language;
 with Language.Tree.Database; use Language.Tree.Database;
 with Refactoring.Services;   use Refactoring.Services;
 with Refactoring.Performers; use Refactoring.Performers;
-with GNATCOLL.Traces;                 use GNATCOLL.Traces;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with Xref;                   use Xref;
@@ -652,7 +652,7 @@ package body Refactoring.Subprograms is
          Flags  : Entity_References_Flags)
       is
          Decl : Refactoring.Services.Entity_Declaration;
-         H : Root_Entity_Ref;
+         H    : Root_Entity_Ref;
       begin
          Decl := Get_Declaration (Context.Code.Context, Entity);
 
