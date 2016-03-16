@@ -13,6 +13,7 @@ import workflows.promises as promises
 import workflows
 from os_utils import locate_exec_on_path
 from gps_utils.console_process import Console_Process
+import os
 
 
 def log(msg):
@@ -83,6 +84,17 @@ class GNATemulator(Module):
         Console_Process(gnatemu, args=jargs, force=True,
                         close_on_exit=False, task_manager=True)
 
+    def executable_path(self, main_name):
+        b = GPS.Project.root().get_executable_name(GPS.File(main_name))
+        exec_dir = GPS.Project.root().get_attribute_as_string("exec_dir")
+        if exec_dir == '(same as build directory)':
+            exec_dir = GPS.Project.root().object_dirs()[0]
+        if not os.path.isabs(exec_dir):
+            exec_dir = os.path.join(GPS.Project.root().file().directory(),
+                                    exec_dir)
+        ret = os.path.join(exec_dir, b)
+        return ret
+
     def __error_exit(self, msg=""):
         """ Emit an error and reset the workflows """
         GPS.Console("Messages").write(msg + " [workflow stopped]")
@@ -111,10 +123,7 @@ class GNATemulator(Module):
         log("... done.")
 
         # STEP 2 load with Emulator
-        b = GPS.Project.root().get_executable_name(GPS.File(main_name))
-        d = GPS.Project.root().object_dirs()[0]
-        obj = d + b
-        self.run_gnatemu([obj])
+        self.run_gnatemu([self.executable_path(main_name)])
 
     def __emu_debug_wf(self, main_name):
         """
@@ -152,9 +161,7 @@ class GNATemulator(Module):
         # STEP 3 load with Emulator
         # To have GNATemu console in the debugger perspective we have to start
         # GNATemu after gdb initialization.
-        d = GPS.Project.root().object_dirs()[0]
-        obj = d + binary
-        self.run_gnatemu(["-g", obj])
+        self.run_gnatemu(["-g", self.executable_path(main_name)])
 
         # STEP 4 target and run the program
         log("Sending debugger command to target the emulator...")
