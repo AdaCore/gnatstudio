@@ -2690,7 +2690,7 @@ package body Debugger.Gdb is
       if Proc /= null then
          Output_Text
            (Proc,
-            Send_And_Get_Output (Debugger, "  ", Mode => Internal),
+            Send_And_Get_Output (Debugger, "echo", Mode => Internal),
             Is_Command => False,
             Set_Position => True);
       end if;
