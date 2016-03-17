@@ -15,6 +15,13 @@ from os_utils import locate_exec_on_path
 from gps_utils.console_process import Console_Process
 import os
 
+GDB_REMOTE_PORT_PREF = "Plugins/gnatemulator/gdb_remote_target"
+
+GPS.Preference(GDB_REMOTE_PORT_PREF).create(
+    "GDB remote target port", "integer",
+    """Remote port used for debug on GNATemu""",
+    1234)
+
 
 def log(msg):
     GPS.Logger("GNATemulator").log(msg)
@@ -76,7 +83,6 @@ class GNATemulator(Module):
         jargs = "%s %s %s" % (project_arg, var_args, " ".join(args))
         GPS.Console("Messages").write("Running in emulator: %s %s" %
                                       (gnatemu, jargs))
-
         #  - Open a console for each GNATemu run
         #  - Don't close the console when GNAtemu exits so we have time to see
         #    the results
@@ -158,17 +164,21 @@ class GNATemulator(Module):
             return
         log("... done.")
 
+        gdb_remote_port = GPS.Preference(GDB_REMOTE_PORT_PREF).get()
+
         # STEP 3 load with Emulator
         # To have GNATemu console in the debugger perspective we have to start
         # GNATemu after gdb initialization.
-        self.run_gnatemu(["-g", self.executable_path(main_name)])
+        self.run_gnatemu(["--freeze-on-startup",
+                          "--gdb=%d" % gdb_remote_port,
+                          self.executable_path(main_name)])
 
         # STEP 4 target and run the program
         log("Sending debugger command to target the emulator...")
         r3 = yield debugger_promise.wait_and_send(
-            cmd="target remote localhost:1234",
+            cmd="target remote :%d" % gdb_remote_port,
             timeout=4000)
-        interest = "Remote debugging using localhost:1234"
+        interest = "Remote debugging using :%d" % gdb_remote_port
 
         if interest not in r3:
             self.__error_exit("Could not connect to the target.")
