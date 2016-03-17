@@ -423,7 +423,7 @@ package body Expect_Interface is
                Directory            => Dir,
                Console              => Get_Console (Kernel),
                Show_Command         => Data.Nth_Arg (12, False),
-               Show_Output          => True,
+               Show_Output          => False,
                Active               => Data.Nth_Arg (16, False),
                Start_Immediately    => True,
                Line_By_Line         => False,
