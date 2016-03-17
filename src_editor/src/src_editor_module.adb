@@ -63,6 +63,7 @@ with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;                use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
 with GPS.Kernel.Task_Manager;           use GPS.Kernel.Task_Manager;
+with GUI_Utils;                         use GUI_Utils;
 with Histories;                         use Histories;
 with Projects;                          use Projects;
 with Remote;                            use Remote;
@@ -1319,7 +1320,8 @@ package body Src_Editor_Module is
                 Category    => "Internal");
             Register_Menu
                (Kernel,
-                Path     => "/File/Recent/" & F.Display_Base_Name,
+                Path     => "/File/Recent/"
+                   & Escape_Underscore (F.Display_Base_Name),
                 Action   => "open recent file: " & N.all);
             M.Recent_File_Actions.Append ("open recent file: " & N.all);
          end loop;

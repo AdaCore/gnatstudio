@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P317-010 GPS: missing underscores in /Files/Recent
+
+  Problem:    File names displayed in the /Files/Recent menu are missing
+              underscore characters.
+
+  Status:     This was fixed in 17.0 on 2016-03-17
+
+  Workaround: This is a display issue only, and the tooltip on the menu
+              shows the proper name.
+
 KP-62-P218-045 GB: Problems in GPR files reported in editor at line 1
 
   Problem:    Problems in GPR files detected during clean/analyze/build
