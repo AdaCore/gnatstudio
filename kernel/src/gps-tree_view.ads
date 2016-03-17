@@ -14,8 +14,9 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  This package provides Gtk_Tree_View which can remember expand/collapse
---  state of the nodes between collapse/expand operation on the parent node;
+
+--  This package provides a Gtk_Tree_View which can remember expanded/collapsed
+--  state of the nodes between collapsed/expanded operation on the parent node;
 --  filtering out/in and resorting.
 --
 --  Application must define derived type to provide implementation of two
@@ -24,7 +25,7 @@
 --
 --  To properly initialize view, call to Initialize must be done first and
 --  reference to Lowest model passed to it; after when stack of intermediate
---  models can be sreated and view's source model must be setted by call to
+--  models can be created and view's source model must be set by calling
 --  Set_Source_Model. Stack of source models can't be changed during view's
 --  life. Rationale: callbacks to Lowest model must be set before it is
 --  connected to intermediate model; but standard intermediate models allows

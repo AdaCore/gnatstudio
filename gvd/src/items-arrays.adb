@@ -15,17 +15,29 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Tags;        use Ada.Tags;
-with Glib;            use Glib;
-with GNAT.IO;         use GNAT.IO;
-with GNAT.Strings;    use GNAT.Strings;
-with Items.Repeats;   use Items.Repeats;
-with Language;        use Language;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Tags;              use Ada.Tags;
+with Glib;                  use Glib;
+with GNAT.Strings;          use GNAT.Strings;
+with Items.Repeats;         use Items.Repeats;
+with Language;              use Language;
 
 package body Items.Arrays is
 
+   type Array_Iterator is new Generic_Iterator with record
+      Item  : Array_Type_Access;
+      Child : Natural;
+   end record;
+   overriding procedure Next (Iter : in out Array_Iterator);
+   overriding function At_End (Iter : Array_Iterator) return Boolean;
+   overriding function Data (Iter : Array_Iterator) return Generic_Type_Access;
+   overriding function Field_Name
+     (Iter : Array_Iterator;
+      Lang : not null access Language_Root'Class;
+      Base : String := "") return String;
+
    function Index_String
-     (Item    : Array_Type;
+     (Item    : Array_Type'Class;
       Index   : Long_Integer;
       Dim_Num : Positive) return String;
    --  Return the string indicating the coordinates in the array, for the
@@ -36,7 +48,7 @@ package body Items.Arrays is
    ------------------
 
    function Index_String
-     (Item    : Array_Type;
+     (Item    : Array_Type'Class;
       Index   : Long_Integer;
       Dim_Num : Positive) return String
    is
@@ -478,38 +490,45 @@ package body Items.Arrays is
       Free (Tmp);
    end Shrink_Values;
 
-   -----------
-   -- Print --
-   -----------
+   --------------------
+   -- Get_Type_Descr --
+   --------------------
 
-   overriding procedure Print (Value : Array_Type; Indent : Natural := 0) is
+   overriding function Get_Type_Descr
+     (Self    : not null access Array_Type) return String
+   is
+      Result : Unbounded_String := To_Unbounded_String ("Array (");
    begin
-      Put ("{Array (");
-      for J in 1 .. Value.Num_Dimensions loop
-         Put (Value.Dimensions (J).First'Img & " .. "
-              & Value.Dimensions (J).Last'Img);
-         if J /= Value.Num_Dimensions then
-            Put (", ");
+      for J in 1 .. Self.Num_Dimensions loop
+         Append
+           (Result,
+            Self.Dimensions (J).First'Img & " .. "
+            & Self.Dimensions (J).Last'Img);
+         if J /= Self.Num_Dimensions then
+            Append (Result, ", ");
          end if;
       end loop;
 
-      Put (")= (");
-      New_Line;
-      Put (String'(1 .. Indent + 3 => ' '));
+      Append (Result, ")");
+      return To_String (Result);
+   end Get_Type_Descr;
 
-      if Value.Values /= null then
-         for J in 1 .. Value.Last_Value loop
-            Put (Value.Values (J).Index'Img & " => ");
-            Print (Value.Values (J).Value.all, Indent + 6);
-            if J /= Value.Values'Last then
-               Put (", ");
-               New_Line;
-               Put (String'(1 .. Indent + 3 => ' '));
-            end if;
-         end loop;
-      end if;
-      Put (")}");
-   end Print;
+   ----------------
+   -- Field_Name --
+   ----------------
+
+   overriding function Field_Name
+     (Iter : Array_Iterator;
+      Lang : not null access Language_Root'Class;
+      Base : String := "") return String
+   is
+      Idx : constant String := Index_String
+        (Iter.Item.all,
+         Iter.Item.Values (Iter.Child).Index,
+         Iter.Item.Num_Dimensions);
+   begin
+      return Lang.Array_Item_Name (Name  => Base, Index => Idx);
+   end Field_Name;
 
    ----------
    -- Free --

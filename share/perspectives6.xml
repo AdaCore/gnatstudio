@@ -26,21 +26,13 @@
     </perspective>
     <perspective name="Debug">
       <Pane width=" 100%" Orientation="ORIENTATION_VERTICAL">
-        <Notebook height=" 15%" Tabs="POS_TOP">
-          <Child Raised="True" Group=" 101" State="NORMAL">
-            <Debugger_Data  />
-          </Child>
-        </Notebook>
-        <Pane height=" 85%" Orientation="ORIENTATION_HORIZONTAL">
+        <Pane height=" 100%" Orientation="ORIENTATION_HORIZONTAL">
           <Notebook width=" 20%" Tabs="POS_LEFT">
-            <Child Raised="True" Focus="True" Group=" 106" State="NORMAL">
+            <Child Raised="True" Group=" 106" State="NORMAL">
               <Project_Explorer_Project  />
             </Child>
             <Child Group=" 106" State="NORMAL">
               <Outline_View  />
-            </Child>
-            <Child Group=" 106" State="NORMAL">
-              <Scenario_View  />
             </Child>
           </Notebook>
           <Pane width=" 80%" Orientation="ORIENTATION_VERTICAL">
@@ -52,11 +44,24 @@
                 </Child>
               </Notebook>
             </Pane>
-            <Notebook height=" 20%" Tabs="POS_TOP">
-              <Child Raised="True" Group=" 107" State="NORMAL">
-                <Message_Window  />
-              </Child>
-            </Notebook>
+            <Pane height=" 20%" Orientation="ORIENTATION_HORIZONTAL">
+              <Notebook Width=" 50%" Tabs="POS_TOP">
+                <Child Group=" 107" State="NORMAL">
+                  <Message_Window  />
+                </Child>
+                <Child Raised="True" Focus="True" Group=" 107" State="NORMAL">
+                  <Debugger_Console  />
+                </Child>
+              </Notebook>
+              <Notebook Width=" 50%" Tabs="POS_TOP">
+                <Child Group=" 107" State="NORMAL">
+                  <Breakpoints  />
+                </Child>
+                <Child Raised="True" Group=" 107" State="NORMAL">
+                  <Debugger_Variables  />
+                </Child>
+              </Notebook>
+            </Pane>
           </Pane>
         </Pane>
       </Pane>

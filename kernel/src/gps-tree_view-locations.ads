@@ -14,15 +14,16 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 --  This package provides specialized Gtk_Tree_View widget to be used
---  in the locations view. It uses some knownledge of underling model
+--  in the locations view. It uses some knownledge of underlying model
 --  layout, thus can be used only with models provided by message
 --  container. In addition to GPS_Tree_View it:
 --
 --   - creates columns and renderers at initialization time;
 --
 --   - creates intermediate filter and sort models which is connected between
---     lowerst model and view;
+--     lowest model and view;
 --
 --   - handle "query-tooltip" request and display tooltip when visible
 --     area of the view is insufficient to display all text of the message;

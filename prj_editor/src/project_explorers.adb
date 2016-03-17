@@ -1191,8 +1191,7 @@ package body Project_Explorers is
       end if;
       Path_Free (Filter_Path);
 
-      T.Tree.Convert_To_Store_Iter
-        (Store_Iter => Iter, Filter_Iter => Filter_Iter);
+      Iter := T.Tree.Convert_To_Store_Iter (Filter_Iter => Filter_Iter);
       Project_Explorers_Common.Context_Factory
         (Context, T.Kernel, T.Tree.Model, Iter);
       return Context;
@@ -1501,8 +1500,7 @@ package body Project_Explorers is
       end if;
 
       T.Expanding := True;
-      T.Tree.Convert_To_Store_Iter
-        (Store_Iter => Iter, Filter_Iter => Filter_Iter);
+      Iter := T.Tree.Convert_To_Store_Iter (Filter_Iter => Filter_Iter);
       N_Type := Get_Node_Type (T.Tree.Model, Iter);
       Set_Node_Type (T.Tree.Model, Iter, N_Type, Expanded => True);
 
@@ -1558,8 +1556,7 @@ package body Project_Explorers is
       Iter   : Gtk_Tree_Iter;
       N_Type : Node_Types;
    begin
-      E.Tree.Convert_To_Store_Iter
-         (Store_Iter => Iter, Filter_Iter => Filter_Iter);
+      Iter := E.Tree.Convert_To_Store_Iter (Filter_Iter => Filter_Iter);
 
       N_Type := Get_Node_Type (E.Tree.Model, Iter);
       Set_Node_Type   --  update the icon

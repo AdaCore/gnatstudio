@@ -80,7 +80,8 @@ private
      Border_Spacing : Glib.Gint := Items.Border_Spacing;
      Ancestors : Class_Type_Array (1 .. Num_Ancestors) := (others => null);
    end record;
-   overriding procedure Print (Value : Class_Type; Indent : Natural := 0);
+   overriding function Get_Type_Descr
+     (Self    : not null access Class_Type) return String is ("Class");
    overriding procedure Free
      (Item : access Class_Type;
       Only_Value : Boolean := False);
@@ -103,15 +104,7 @@ private
    overriding function Structurally_Equivalent
      (Item1 : access Class_Type; Item2 : access Generic_Type'Class)
      return Boolean;
-
-   type Class_Iterator is new Generic_Iterator with record
-      Item     : Class_Type_Access;
-      Ancestor : Natural;
-   end record;
    overriding function Start
      (Item : access Class_Type) return Generic_Iterator'Class;
-   overriding procedure Next (Iter : in out Class_Iterator);
-   overriding function At_End (Iter : Class_Iterator) return Boolean;
-   overriding function Data (Iter : Class_Iterator) return Generic_Type_Access;
 
 end Items.Classes;

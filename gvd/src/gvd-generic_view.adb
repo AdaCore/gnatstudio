@@ -66,6 +66,7 @@ package body GVD.Generic_View is
          V : constant Views.View_Access := Views.View_Access (View);
       begin
          if Get_Process (V) /= null then
+            V.On_Detach (Get_Process (V));
             Set_View (Get_Process (V), null);
             V.Set_Process (null);
          end if;
@@ -86,6 +87,7 @@ package body GVD.Generic_View is
          pragma Unreferenced (Self, Block_Me, Kernel);
       begin
          if V /= null then
+            V.On_Detach (Debugger);
             Set_View (Debugger, null);
             V.Set_Process (null);
 

@@ -158,7 +158,8 @@ private
    procedure Free is new Ada.Unchecked_Deallocation
      (Record_Type_Array, Record_Type_Array_Access);
 
-   overriding procedure Print (Value : Record_Type; Indent : Natural := 0);
+   overriding function Get_Type_Descr
+     (Self    : not null access Record_Type) return String is ("Record");
    overriding procedure Free
      (Item : access Record_Type;
       Only_Value : Boolean := False);
@@ -177,23 +178,16 @@ private
       Replace_With : access Generic_Type'Class) return Generic_Type_Access;
    overriding function Structurally_Equivalent
      (Item1 : access Record_Type; Item2 : access Generic_Type'Class)
-     return Boolean;
-
-   type Record_Iterator is new Generic_Iterator with record
-      Item  : Record_Type_Access;
-      Field : Natural;
-      Variant : Natural;
-   end record;
+      return Boolean;
+   overriding function Get_Simple_Value
+     (Self    : not null access Record_Type) return String;
    overriding function Start
      (Item : access Record_Type) return Generic_Iterator'Class;
-   overriding procedure Next (Iter : in out Record_Iterator);
-   overriding function At_End (Iter : Record_Iterator) return Boolean;
-   overriding function Data
-     (Iter : Record_Iterator) return Generic_Type_Access;
 
    type Union_Type (Num_Fields : Natural) is new Record_Type (Num_Fields)
-     with null record;
-   overriding procedure Print (Value : Union_Type; Indent : Natural := 0);
+   with null record;
+   overriding function Get_Type_Descr
+     (Self    : not null access Union_Type) return String is ("Union");
    --  Free is inherited from Record_Type.
 
 end Items.Records;

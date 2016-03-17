@@ -17,7 +17,6 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Browsers;                use Browsers;
-with GNAT.IO;                 use GNAT.IO;
 with GNAT.Strings;            use GNAT.Strings;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with GVD.Canvas;              use GVD.Canvas;
@@ -27,13 +26,7 @@ with String_Utils;            use String_Utils;
 package body Items.Simples is
    use type GNAT.Strings.String_Access;
 
-   Line_Highlighted     : constant Character := '@';
-   Line_Not_Highlighted : constant Character := ' ';
-   --  Special characters inserted at the beginning of each line for the
-   --  value of Debugger_Output_Type, that indicate whether the following line
-   --  should be displayed in red or not.
-
-   Null_Value_Str : constant String := "<null>";
+   Unknown_Value_Str : constant String := "<unknown>";
    --  The string representation of a null value for the user.
 
    function Quote_Non_Printable_Characters (Str : String) return String;
@@ -107,19 +100,19 @@ package body Items.Simples is
       Item.Valid := True;
    end Set_Value;
 
-   -----------
-   -- Print --
-   -----------
+   ----------------------
+   -- Get_Simple_Value --
+   ----------------------
 
-   overriding procedure Print (Value : Simple_Type; Indent : Natural := 0) is
-      pragma Unreferenced (Indent);
+   overriding function Get_Simple_Value
+     (Self : not null access Simple_Type) return String is
    begin
-      if Value.Value = null then
-         Put ("{Simple: " & Null_Value_Str & "}");
+      if Self.Value = null then
+         return Unknown_Value_Str;
       else
-         Put ("{Simple: " & Value.Value.all & "}");
+         return Self.Value.all;
       end if;
-   end Print;
+   end Get_Simple_Value;
 
    ----------
    -- Free --
@@ -249,22 +242,6 @@ package body Items.Simples is
       Item.Has_Changed := False;
    end Reset_Recursive;
 
-   -----------
-   -- Print --
-   -----------
-
-   overriding procedure Print (Value : Enum_Type; Indent : Natural := 0) is
-      pragma Unreferenced (Indent);
-   begin
-      Put ("{Enumeration = ");
-
-      if Value.Value = null then
-         Put ("<Unknown>}");
-      else
-         Put (Value.Value.all & "}");
-      end if;
-   end Print;
-
    --------------------
    -- New_Range_Type --
    --------------------
@@ -302,63 +279,19 @@ package body Items.Simples is
       return new Enum_Type;
    end New_Enum_Type;
 
-   -----------
-   -- Print --
-   -----------
-
-   overriding procedure Print (Value : Range_Type; Indent : Natural := 0) is
-      pragma Unreferenced (Indent);
-   begin
-      Put ("{Range" & Value.Min'Img & " .." & Value.Max'Img & " = ");
-
-      if Value.Value /= null then
-         Put (Value.Value.all);
-      end if;
-
-      Put ("}");
-   end Print;
-
-   -----------
-   -- Print --
-   -----------
-
-   overriding procedure Print (Value : Mod_Type; Indent : Natural := 0) is
-      pragma Unreferenced (Indent);
-   begin
-      Put ("{Modulo " & Value.Modulo'Img & " = ");
-
-      if Value.Value /= null then
-         Put (Value.Value.all);
-      end if;
-
-      Put ("}");
-   end Print;
-
-   -----------
-   -- Print --
-   -----------
-
-   overriding procedure Print (Value : Access_Type; Indent : Natural := 0) is
-      pragma Unreferenced (Indent);
-   begin
-      Put ("{Access ");
-
-      if Value.Value = null then
-         Put (Null_Value_Str & ")");
-      else
-         Put (Value.Value.all & "}");
-      end if;
-   end Print;
-
    -----------------------
    -- New_Debugger_Type --
    -----------------------
 
-   function New_Debugger_Type (Cmd : String) return Generic_Type_Access is
+   function New_Debugger_Type
+     (Cmd         : String;
+      Split_Lines : Boolean := False) return Generic_Type_Access
+   is
       Item : Debugger_Output_Type_Access;
    begin
       Item := new Debugger_Output_Type;
       Item.Refresh_Cmd := new String'(Cmd);
+      Item.Split_Lines := Split_Lines;
       return Generic_Type_Access (Item);
    end New_Debugger_Type;
 
@@ -371,22 +304,26 @@ package body Items.Simples is
       return Item.Refresh_Cmd.all;
    end Refresh_Command;
 
-   -----------
-   -- Print --
-   -----------
+   ----------------------
+   -- Get_Simple_Value --
+   ----------------------
 
-   overriding procedure Print
-     (Value : Debugger_Output_Type; Indent : Natural := 0)
+   overriding function Get_Simple_Value
+     (Self : not null access Debugger_Output_Type) return String
    is
-      pragma Unreferenced (Indent);
+      Value : Unbounded_String;
    begin
-      if Value.Value = null then
-         Put ("{Debugger_Type: " & Null_Value_Str & "}");
+      if Self.Value = null then
+         return Unknown_Value_Str;
+      elsif Self.Split_Lines then
+         return "";   --  value is split into components
       else
-         Put
-           ("{Debugger_Type: " & Join ("" & ASCII.LF, Value.Value.all) & "}");
+         for L of Self.Value.all loop
+            Append (Value, L.Value.all & ASCII.LF);
+         end loop;
+         return To_String (Value);
       end if;
-   end Print;
+   end Get_Simple_Value;
 
    -----------------------
    -- Clone_Dispatching --
@@ -409,10 +346,14 @@ package body Items.Simples is
      (Item       : access Debugger_Output_Type;
       Only_Value : Boolean := False) is
    begin
-      GNAT.Strings.Free (Item.Value);
+      Free (Item.Value);
 
       if not Only_Value then
          GNAT.Strings.Free (Item.Refresh_Cmd);
+      end if;
+
+      if Item.As_Record /= null then
+         Free (Item.As_Record);
       end if;
 
       Free (Generic_Type (Item.all)'Access, Only_Value);
@@ -437,21 +378,32 @@ package body Items.Simples is
       if not Self.Visible then
          Rect.Add_Child (View.Item_Hidden);
       else
-         for L in Self.Value'Range loop
-            declare
-               V : constant String := Self.Value (L).all;
-            begin
-               Rect.Add_Child
-                 (Gtk_New_Text
-                    ((if V (V'First) = Line_Highlighted
-                     then View.Modified else Styles.Text_Font),
-                     V (V'First + 1 .. V'Last)));
-            end;
+         for L of Self.Value.all loop
+            Rect.Add_Child
+              (Gtk_New_Text
+                 ((if L.Modified then View.Modified else Styles.Text_Font),
+                  L.Value.all));
          end loop;
       end if;
 
       return Rect;
    end Build_Display;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Self : in out Line_Array_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Line_Array, Line_Array_Access);
+   begin
+      if Self /= null then
+         for L in Self'Range loop
+            Free (Self (L).Value);
+         end loop;
+         Unchecked_Free (Self);
+      end if;
+   end Free;
 
    ---------------
    -- Set_Value --
@@ -461,37 +413,44 @@ package body Items.Simples is
      (Item : in out Debugger_Output_Type; Value : String)
    is
       S         : constant String := Do_Tab_Expansion (Value, 8);
-      Old       : GNAT.Strings.String_List_Access := Item.Value;
+      Old       : Line_Array_Access := Item.Value;
       Index_Old : Positive;
       Lines     : String_List_Access := Split (S, ASCII.LF);
    begin
-      Item.Value := new String_List (Lines'Range);
+      --  Compute which lines have changed since the last update.
 
+      Item.Value := new Line_Array (Lines'Range);
       for L in Item.Value'Range loop
          if Old = null then
-            Item.Value (L) := new String'(Line_Highlighted & Lines (L).all);
+            Item.Value (L) :=
+              (Modified => True,
+               Value    => new String'(Lines (L).all));
          else
             Index_Old := L - Item.Value'First + Old'First;
-            if Index_Old > Old'Last then
-               Item.Value (L) := new String'(Line_Highlighted & Lines (L).all);
-            else
-               declare
-                  OV : constant String := Old (Index_Old).all;
-               begin
-                  if  Lines (L).all /= OV (OV'First + 1 .. OV'Last) then
-                     Item.Value (L) := new String'
-                       (Line_Highlighted & Lines (L).all);
-                  else
-                     Item.Value (L) := new String'
-                       (Line_Not_Highlighted & Lines (L).all);
-                  end if;
-               end;
-            end if;
+            Item.Value (L) :=
+              (Modified =>
+                 Index_Old > Old'Last
+                 or else Lines (L).all /= Old (Index_Old).Value.all,
+               Value    => new String'(Lines (L).all));
          end if;
       end loop;
 
+      if Item.Split_Lines then
+         Free (Item.As_Record);
+         Item.As_Record := new Type_Array (Item.Value'Range);
+
+         for L in Item.Value'Range loop
+            Item.As_Record (L).Name := new String'("");
+            Item.As_Record (L).Typ := new Simple_Type'
+              (Base_Simple_Type with
+               Value       => new String'(Item.Value (L).Value.all),
+               Has_Changed => Item.Value (L).Modified);
+         end loop;
+      end if;
+
       Free (Lines);
       Free (Old);
+
       Item.Valid := True;
    end Set_Value;
 
@@ -502,8 +461,8 @@ package body Items.Simples is
    overriding procedure Reset_Recursive (Item : access Debugger_Output_Type) is
    begin
       if Item.Value /= null then
-         for L in Item.Value'Range loop
-            Item.Value (L) (Item.Value (L)'First) := Line_Not_Highlighted;
+         for L of Item.Value.all loop
+            L.Modified := False;
          end loop;
       end if;
    end Reset_Recursive;
@@ -584,5 +543,30 @@ package body Items.Simples is
       --  Never any aliasing
       return False;
    end Structurally_Equivalent;
+
+   -----------
+   -- Start --
+   -----------
+
+   overriding function Start
+     (Self   : not null access Debugger_Output_Type)
+      return Generic_Iterator'Class is
+   begin
+      if Self.As_Record = null then
+         return Create_Empty_Iterator;
+      else
+         return Start (Self.As_Record);
+      end if;
+   end Start;
+
+   ----------------
+   -- Is_Changed --
+   ----------------
+
+   overriding function Is_Changed
+     (Self : not null access Simple_Type) return Boolean is
+   begin
+      return Self.Has_Changed;
+   end Is_Changed;
 
 end Items.Simples;

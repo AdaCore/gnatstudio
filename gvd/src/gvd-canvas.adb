@@ -19,6 +19,7 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Browsers.Canvas;          use Browsers, Browsers.Canvas;
+with Commands.Interactive;     use Commands, Commands.Interactive;
 with Debugger;                 use Debugger;
 with Default_Preferences;      use Default_Preferences;
 with Gdk.RGBA;                 use Gdk.RGBA;
@@ -34,6 +35,7 @@ with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Debuggers;            use GPS.Debuggers;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;      use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
@@ -54,7 +56,9 @@ with Gtkada.Canvas_View.Views; use Gtkada.Canvas_View.Views;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Gtkada.MDI;               use Gtkada.MDI;
 with Gtkada.Style;             use Gtkada.Style;
+with GVD.Contexts;             use GVD.Contexts;
 with GVD.Generic_View;         use GVD.Generic_View;
+with GVD.Items;                use GVD.Items;
 with GVD.Memory_View;
 with GVD.Menu;                 use GVD.Menu;
 with GVD.Preferences;          use GVD.Preferences;
@@ -69,6 +73,7 @@ with Pango.Font;               use Pango.Font;
 with Std_Dialogs;              use Std_Dialogs;
 with String_Utils;             use String_Utils;
 with XML_Utils;                use XML_Utils;
+with Xref;                     use Xref;
 
 package body GVD.Canvas is
    Me : constant Trace_Handle := Create ("Canvas");
@@ -272,14 +277,13 @@ package body GVD.Canvas is
    type Display_Item is access all Display_Item_Record;
    type Display_Item_Record is new GPS_Item_Record with record
       Num          : Integer;
-      Graph_Cmd    : GNAT.Strings.String_Access := null;
-      Name         : GNAT.Strings.String_Access := null;
-      Entity       : Items.Generic_Type_Access := null;
-      Auto_Refresh : Boolean := True;
-      Debugger     : GVD.Process.Visual_Debugger;
 
-      Is_A_Variable : Boolean := True;
-      --  Set to False if the item is not related to a variable
+      Info         : Item_Info;
+
+      Depend_On    : Integer := -1;
+      --  Set if there was a "dependent on..." when creating the item
+
+      Debugger     : GVD.Process.Visual_Debugger;
 
       Id           : GNAT.Strings.String_Access := null;
       --  Uniq ID used for the variable.
@@ -301,11 +305,6 @@ package body GVD.Canvas is
       --  Memorize whether the item was an alias in the previous display, so
       --  that we can compute a new position for it.
 
-      Mode           : Items.Display_Mode := Items.Value;
-      --  Whether we should display the mode itself.
-
-      Format         : Standard.Debugger.Value_Format :=
-        Standard.Debugger.Default_Format;
    end record;
 
    overriding procedure Destroy
@@ -331,13 +330,6 @@ package body GVD.Canvas is
    --  Return True if Item is an alias of the entity with name Name and
    --  whose Id is Id.
    --  Deref_Name should be the dereferenced version of Name
-
-   procedure Parse_Type (Item : access Display_Item_Record'Class);
-   --  Parse the type of the entity associated with Item. If the type is
-   --  already known, nothing is done
-
-   procedure Parse_Value (Item : access Display_Item_Record'Class);
-   --  Parse the value of the entity
 
    procedure Update_Display (Item : not null access Display_Item_Record'Class);
    --  Recompute the GUI rendering for the item.
@@ -380,20 +372,14 @@ package body GVD.Canvas is
    --  This does not redraw the canvas or the item on the canvas, unless
    --  Redisplay_Canvas is True
 
-   procedure Reset_Recursive (Item : access Display_Item_Record'Class);
-   --  Mark the corresponding entity as up-to-date (i.e. no longer display
-   --  in red).
-
    procedure Gtk_New
      (Item           : out Display_Item;
       Browser        : not null access Debugger_Data_View_Record'Class;
-      Graph_Cmd      : String;
-      Variable_Name  : String;
+      Info           : Item_Info;
       Num            : Integer;
-      Debugger       : access GVD.Process.Visual_Debugger_Record'Class;
+      Debugger       : access Visual_Debugger_Record'Class;
       Auto_Refresh   : Boolean := True;
-      Is_Dereference : Boolean := False;
-      Default_Entity : Items.Generic_Type_Access := null);
+      Is_Dereference : Boolean := False);
    --  Create a new item to display the value of Variable_Name (or return an
    --  existing item if one matches).
    --
@@ -413,6 +399,86 @@ package body GVD.Canvas is
    --  Debugger can be null. In this case, the item will never be computed
    --
    --  Num must be specified, and is the number of the item
+
+   function Custom_Label_Expansion
+     (Context : Selection_Context) return String;
+   --  Expand "%C" to the dereferenced name for the current variable.
+
+   type Access_Variable_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Access_Variable_Filter;
+      Context : Selection_Context) return Boolean;
+
+   type Print_Variable_Command is new Interactive_Command with record
+      Display     : Boolean := False;
+      Dereference : Boolean := False;
+   end record;
+   overriding function Execute
+     (Command : access Print_Variable_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Access_Variable_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+   begin
+      if Has_Entity_Name_Information (Context) then
+         declare
+            Entity : constant Root_Entity'Class := Get_Entity (Context);
+         begin
+            return Is_Fuzzy (Entity)
+
+              --  ??? Should also include array variables
+              or else (not Is_Type (Entity)
+                       and then Is_Access (Entity));
+         end;
+
+      elsif Has_Area_Information (Context) then
+         return True;
+      end if;
+      return False;
+   end Filter_Matches_Primitive;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Print_Variable_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Process  : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)));
+      Debugger : constant Debugger_Access := Process.Debugger;
+      Name     : constant String :=
+        Get_Variable_Name (Context.Context, Command.Dereference);
+   begin
+      if Name /= "" then
+         if Command.Display then
+            Process_User_Command
+              (Process, "graph display " & Name, Output_Command => True);
+         else
+            Send (Debugger, Print_Value_Cmd (Debugger, Name),
+                  Mode => GVD.Types.Visible);
+         end if;
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   ----------------------------
+   -- Custom_Label_Expansion --
+   ----------------------------
+
+   function Custom_Label_Expansion
+     (Context : Selection_Context) return String is
+   begin
+      return Emphasize (Get_Variable_Name (Context, True));
+   end Custom_Label_Expansion;
 
    ----------------
    -- Properties --
@@ -746,6 +812,7 @@ package body GVD.Canvas is
       end if;
 
       --  If we are detaching, clear the old view
+      --  ??? Should use On_Detach
       if Old /= null then
          Browser_Model (Old.Get_View.Model).Clear;
       end if;
@@ -770,9 +837,10 @@ package body GVD.Canvas is
       Link_Name : GNAT.Strings.String_Access;
       Link_From : Display_Item;
       Num       : Integer := -1;
-      Entity    : Generic_Type_Access;
+      Link_Num  : Integer := -1;
       Rect      : Model_Rectangle;
       Pos       : Point := No_Position;
+      Info      : Item_Info;
 
    begin
       --  graph (print|display) expression [dependent on display_num]
@@ -792,12 +860,12 @@ package body GVD.Canvas is
 
          --  Do we have any 'dependent on' expression ?
          if Matched (Graph_Cmd_Dependent_Paren) /= No_Match then
-            Num := Safe_Value
+            Link_Num := Safe_Value
               (Cmd (Matched (Graph_Cmd_Dependent_Paren).First
                     .. Matched (Graph_Cmd_Dependent_Paren).Last),
                -1);
-            if Num /= -1 then
-               Link_From := Find_Item (Get_Canvas (Process), Num);
+            if Link_Num /= -1 then
+               Link_From := Find_Item (Get_Canvas (Process), Link_Num);
             end if;
          end if;
 
@@ -843,20 +911,19 @@ package body GVD.Canvas is
          if Matched (Graph_Cmd_Expression_Paren) /= No_Match then
             First  := Matched (Graph_Cmd_Expression_Paren).First;
             Last   := Matched (Graph_Cmd_Expression_Paren).Last;
-            Entity := New_Debugger_Type (Cmd (First .. Last));
-            Set_Value
-              (Debugger_Output_Type (Entity.all),
-               Process_User_Command
-                 (Visual_Debugger (Process),
-                  Refresh_Command (Debugger_Output_Type (Entity.all)),
-                  Mode => GVD.Types.Internal));
-
-         elsif Matched (Graph_Cmd_Quoted_Paren) /= No_Match then
-            First := Matched (Graph_Cmd_Quoted_Paren).First;
-            Last  := Matched (Graph_Cmd_Quoted_Paren).Last;
+            Info := Wrap_Debugger_Command
+              (Cmd (Matched (Graph_Cmd_Cmd_Paren).First
+               .. Matched (Graph_Cmd_Cmd_Paren).Last));
          else
-            First := Matched (Graph_Cmd_Variable_Paren).First;
-            Last  := Matched (Graph_Cmd_Variable_Paren).Last;
+            if Matched (Graph_Cmd_Quoted_Paren) /= No_Match then
+               First := Matched (Graph_Cmd_Quoted_Paren).First;
+               Last  := Matched (Graph_Cmd_Quoted_Paren).Last;
+            else
+               First := Matched (Graph_Cmd_Variable_Paren).First;
+               Last  := Matched (Graph_Cmd_Variable_Paren).Last;
+            end if;
+
+            Info := Wrap_Variable (Cmd (First .. Last));
          end if;
 
          if Link_Name = null then
@@ -866,15 +933,12 @@ package body GVD.Canvas is
          Gtk_New
            (Item,
             Browser        => Get_Canvas (Process),
-            Graph_Cmd      => Cmd (Matched
-              (Graph_Cmd_Cmd_Paren).First
-              .. Matched (Graph_Cmd_Cmd_Paren).Last),
-            Variable_Name  => Cmd (First .. Last),
+            Info           => Info,
             Debugger       => Visual_Debugger (Process),
             Auto_Refresh   => Enable,
-            Default_Entity => Entity,
             Is_Dereference => Link_From /= null,
             Num            => Num);
+         Item.Depend_On := Link_Num;
 
          if Link_From /= null then
             Create_Link (Get_Canvas (Process), Link_From, Item, Link_Name.all);
@@ -1117,9 +1181,9 @@ package body GVD.Canvas is
       Item   : Item_Record) is
    begin
       if Get_Active (Gtk_Radio_Menu_Item (Widget))
-        and then Item.Item.Mode /= Item.Mode
+        and then Item.Item.Info.Mode /= Item.Mode
       then
-         Item.Item.Mode := Item.Mode;
+         Item.Item.Info.Mode := Item.Mode;
          Update (Item.Item);
          Item.Item.Browser.Get_View.Model.Refresh_Layout;
       end if;
@@ -1134,9 +1198,9 @@ package body GVD.Canvas is
       Item   : Item_Record) is
    begin
       if Get_Active (Gtk_Radio_Menu_Item (Widget))
-        and then Item.Item.Format /= Item.Format
+        and then Item.Item.Info.Format /= Item.Format
       then
-         Item.Item.Format := Item.Format;
+         Item.Item.Info.Format := Item.Format;
          Update (Item.Item);
          Item.Item.Browser.Get_View.Model.Refresh_Layout;
       end if;
@@ -1152,7 +1216,7 @@ package body GVD.Canvas is
    is
       pragma Unreferenced (Widget);
    begin
-      if Item.Item.Is_A_Variable then
+      if Item.Item.Info.Is_A_Variable then
          Process_User_Command
            (Item.Item.Debugger,
             "graph display " & To_String (Item.Component.Name),
@@ -1160,7 +1224,7 @@ package body GVD.Canvas is
       else
          Process_User_Command
            (Item.Item.Debugger,
-            "graph display `" & Item.Item.Name.all & "`",
+            "graph display `" & Item.Item.Info.Name & "`",
             Output_Command => True);
       end if;
    end Clone_Component;
@@ -1230,11 +1294,11 @@ package body GVD.Canvas is
          Base.Item      := Item;
          Base.Component := Component_Item (Details.Item);
 
-         if Item.Is_A_Variable then
+         if Item.Info.Is_A_Variable then
             declare
                Component_Name : constant String :=
                  (if Base.Component = null
-                  then Item.Name.all
+                  then Item.Info.Name
                   else To_String (Base.Component.Name));
             begin
                Gtk_New (Sep);
@@ -1263,7 +1327,7 @@ package body GVD.Canvas is
 
                --  We can't clone an auto-refreshed item, since it would reuse
                --  the same box.
-               if not Item.Auto_Refresh then
+               if not Item.Info.Auto_Refresh then
                   Gtk_New (Mitem, Label => -"Clone" & " " & Component_Name);
                   Item_Handler.Connect
                     (Mitem, Signal_Activate,
@@ -1291,7 +1355,7 @@ package body GVD.Canvas is
 
          --  Updating the value is only interesting when the item is not
          --  auto-refreshed, otherwise the value is already up-to-date.
-         if not Item.Auto_Refresh then
+         if not Item.Info.Auto_Refresh then
             Gtk_New (Mitem, Label => -"Update Value");
             Item_Handler.Connect
               (Mitem, Signal_Activate,
@@ -1299,7 +1363,7 @@ package body GVD.Canvas is
             Append (Menu, Mitem);
          end if;
 
-         if Item.Is_A_Variable then
+         if Item.Info.Is_A_Variable then
             Gtk_New (Sep);
             Append (Menu, Sep);
 
@@ -1309,7 +1373,7 @@ package body GVD.Canvas is
             Append (Menu, Mitem);
 
             Gtk_New (Radio, Widget_SList.Null_List, -"Show Value");
-            Set_Active (Radio, Item.Mode = Value);
+            Set_Active (Radio, Item.Info.Mode = Value);
             Item_Handler.Connect
               (Radio, Signal_Activate,
                Item_Handler.To_Marshaller (Change_Display_Mode'Access),
@@ -1320,7 +1384,7 @@ package body GVD.Canvas is
             Append (Submenu, Radio);
 
             Gtk_New (Radio, Get_Group (Radio), -"Show Type");
-            Set_Active (Radio, Item.Mode = Type_Only);
+            Set_Active (Radio, Item.Info.Mode = Type_Only);
             Item_Handler.Connect
               (Radio, Signal_Activate,
                Item_Handler.To_Marshaller (Change_Display_Mode'Access),
@@ -1332,7 +1396,7 @@ package body GVD.Canvas is
             Append (Submenu, Radio);
 
             Gtk_New (Radio, Get_Group (Radio), -"Show Value + Type");
-            Set_Active (Radio, Item.Mode = Type_Value);
+            Set_Active (Radio, Item.Info.Mode = Type_Value);
             Item_Handler.Connect
               (Radio, Signal_Activate,
                Item_Handler.To_Marshaller (Change_Display_Mode'Access),
@@ -1347,7 +1411,7 @@ package body GVD.Canvas is
             Append (Submenu, Sep);
 
             Gtk_New (Radio, Widget_SList.Null_List, -"Default");
-            Set_Active (Radio, Item.Format = Default_Format);
+            Set_Active (Radio, Item.Info.Format = Default_Format);
             Item_Handler.Connect
               (Radio, Signal_Activate,
                Item_Handler.To_Marshaller (Change_Format'Access),
@@ -1358,7 +1422,7 @@ package body GVD.Canvas is
             Append (Submenu, Radio);
 
             Gtk_New (Radio, Get_Group (Radio), -"Decimal");
-            Set_Active (Radio, Item.Format = Decimal);
+            Set_Active (Radio, Item.Info.Format = Decimal);
             Item_Handler.Connect
               (Radio, Signal_Activate,
                Item_Handler.To_Marshaller (Change_Format'Access),
@@ -1370,7 +1434,7 @@ package body GVD.Canvas is
             Append (Submenu, Radio);
 
             Gtk_New (Radio, Get_Group (Radio), -"Hexadecimal");
-            Set_Active (Radio, Item.Format = Hexadecimal);
+            Set_Active (Radio, Item.Info.Format = Hexadecimal);
             Item_Handler.Connect
               (Radio, Signal_Activate,
                Item_Handler.To_Marshaller (Change_Format'Access),
@@ -1382,7 +1446,7 @@ package body GVD.Canvas is
             Append (Submenu, Radio);
 
             Gtk_New (Radio, Get_Group (Radio), -"Octal");
-            Set_Active (Radio, Item.Format = Octal);
+            Set_Active (Radio, Item.Info.Format = Octal);
             Item_Handler.Connect
               (Radio, Signal_Activate,
                Item_Handler.To_Marshaller (Change_Format'Access),
@@ -1394,7 +1458,7 @@ package body GVD.Canvas is
             Append (Submenu, Radio);
 
             Gtk_New (Radio, Get_Group (Radio), -"Binary");
-            Set_Active (Radio, Item.Format = Binary);
+            Set_Active (Radio, Item.Info.Format = Binary);
             Item_Handler.Connect
               (Radio, Signal_Activate,
                Item_Handler.To_Marshaller (Change_Format'Access),
@@ -1414,7 +1478,7 @@ package body GVD.Canvas is
          --  Display "Toggle auto-refresh" option
 
          Gtk_New (Check, "Auto refresh");
-         Set_Active (Check, Base.Item.Auto_Refresh);
+         Set_Active (Check, Base.Item.Info.Auto_Refresh);
          Item_Handler.Connect
            (Check, Signal_Activate,
             Item_Handler.To_Marshaller (Toggle_Refresh_Mode'Access), Base);
@@ -1544,7 +1608,7 @@ package body GVD.Canvas is
         (Kernel  => Item.Canvas.Kernel,
          Address =>
            (if Item.Component = null
-            then Item.Item.Name.all
+            then Item.Item.Info.Name
             else To_String (Item.Component.Name)));
    end View_Into_Memory;
 
@@ -1573,7 +1637,7 @@ package body GVD.Canvas is
    begin
       Set_Auto_Refresh
         (Item.Item,
-         not Item.Item.Auto_Refresh,
+         not Item.Item.Info.Auto_Refresh,
          True);
    end Toggle_Refresh_Mode;
 
@@ -1591,7 +1655,7 @@ package body GVD.Canvas is
    begin
       if Process /= null and then Starts_With (Command, "graph ") then
          Process_Graph_Cmd (Visual_Debugger (Process), Command);
-         return "done";  --  command was processed
+         return Command_Intercepted;  --  command was processed
       else
          return "";  --  command does not apply to the canvas
       end if;
@@ -1602,7 +1666,11 @@ package body GVD.Canvas is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Access_Filter : Action_Filter;
+      Filter        : Action_Filter;
+      Command       : Interactive_Command_Access;
    begin
       Detect_Aliases := Kernel.Get_Preferences.Create_Invisible_Pref
         ("gvd-detect-aliases", True,
@@ -1619,57 +1687,45 @@ package body GVD.Canvas is
         (Kernel,
          Action_Name => "open debugger data window",
          Description => -"Open the Data Window for the debugger");
+
+      Access_Filter     := new Access_Variable_Filter;
+
+      Filter := Kernel.Lookup_Filter ("Debugger stopped")
+        and Kernel.Lookup_Filter ("Debugger printable variable");
+
+      Command := new Print_Variable_Command;
+      Print_Variable_Command (Command.all).Display := True;
+      Register_Action
+        (Kernel, "debug display variable",
+         Command     => Command,
+         Description =>
+           "Display the value of the variable in the debugger data window,"
+         & " so that it is displayed again every time the debugger stops",
+         Filter      => Filter,
+         Category    => -"Debug");
+      Register_Contextual_Menu
+        (Kernel => Kernel,
+         Label  => -"Debug/Graph Display %S",
+         Action => "debug display variable");
+
+      Command := new Print_Variable_Command;
+      Print_Variable_Command (Command.all).Display := True;
+      Print_Variable_Command (Command.all).Dereference := True;
+      Register_Action
+        (Kernel, "debug display dereferenced variable",
+         Command     => Command,
+         Description =>
+           "Display the value pointed to by the variable in the debugger"
+         & " data window, so that it is displayed again every time the"
+         & "  debugger stops",
+         Filter      => Filter and Access_Filter,
+         Category    => -"Debug");
+      Register_Contextual_Menu
+        (Kernel => Kernel,
+         Label  => -"Debug/Graph Display %C",
+         Custom => Custom_Label_Expansion'Access,
+         Action => "debug display dereferenced variable");
    end Register_Module;
-
-   ----------------
-   -- Parse_Type --
-   ----------------
-
-   procedure Parse_Type (Item : access Display_Item_Record'Class) is
-   begin
-      if Item.Is_A_Variable and then Item.Entity = null then
-         begin
-            Item.Entity := Parse_Type (Item.Debugger.Debugger, Item.Name.all);
-         exception
-            when E : Language.Unexpected_Type | Constraint_Error =>
-               GNATCOLL.Traces.Trace (Me, E);
-               Item.Entity := null;
-         end;
-
-         if Item.Entity = null then
-            GNATCOLL.Traces.Trace (Me, "Result of Parse_Type is null");
-         end if;
-      end if;
-   end Parse_Type;
-
-   -----------------
-   -- Parse_Value --
-   -----------------
-
-   procedure Parse_Value (Item : access Display_Item_Record'Class) is
-      Value_Found : Boolean;
-   begin
-      if Item.Entity /= null
-        and then Item.Is_A_Variable
-        and then Item.Name /= null
-      then
-         begin
-            Parse_Value
-              (Item.Debugger.Debugger,
-               Item.Name.all,
-               Item.Entity,
-               Format      => Item.Format,
-               Value_Found => Value_Found);
-            Set_Valid (Item.Entity, Value_Found);
-
-         exception
-            when Language.Unexpected_Type | Constraint_Error =>
-               Set_Valid (Item.Entity, False);
-         end;
-      elsif Item.Entity /= null then
-         Set_Valid (Item.Entity, True);
-      end if;
-   end Parse_Value;
 
    -------------
    -- Gtk_New --
@@ -1678,26 +1734,21 @@ package body GVD.Canvas is
    procedure Gtk_New
      (Item           : out Display_Item;
       Browser        : not null access Debugger_Data_View_Record'Class;
-      Graph_Cmd      : String;
-      Variable_Name  : String;
+      Info           : Item_Info;
       Num            : Integer;
       Debugger       : access Visual_Debugger_Record'Class;
       Auto_Refresh   : Boolean := True;
-      Is_Dereference : Boolean := False;
-      Default_Entity : Items.Generic_Type_Access := null)
+      Is_Dereference : Boolean := False)
    is
       Styles : constant access Browser_Styles := Browser.Get_View.Get_Styles;
       Alias_Item : Display_Item;
    begin
       Item                := new Display_Item_Record;
       Item.Browser        := General_Browser (Browser);
-      Item.Graph_Cmd      := new String'(Graph_Cmd);
-      Item.Entity         := Default_Entity;
-      Item.Is_A_Variable  := Default_Entity = null;
+      Item.Info           := Info;
       Item.Num            := Num;
       Item.Debugger       := Visual_Debugger (Debugger);
-      Item.Name           := new String'(Variable_Name);
-      Item.Auto_Refresh   := Auto_Refresh;
+      Item.Info.Auto_Refresh := Auto_Refresh;
       Item.Is_Dereference := Is_Dereference;
 
       --  We need the information on the type, so that we detect aliases only
@@ -1705,28 +1756,24 @@ package body GVD.Canvas is
       --  the variable might not be known yet, and we will simply try to
       --  refresh over and over again until we can parse the type
 
-      Parse_Type (Item);
-
-      if Item.Entity /= null then
-         Set_Valid (Item.Entity, False);
-      end if;
+      Item.Info.Update (Debugger);
 
       --  If an auto-updated similar item is on the canvas, we simply show
       --  and select it.
 
-      if Item.Entity /= null then
-         if Variable_Name /= "" then
-            Item.Id :=
-              new String'(Get_Uniq_Id (Debugger.Debugger, Variable_Name));
+      if Item.Info.Entity /= null then
+         if Item.Info.Is_A_Variable then
+            Item.Id := new String'
+              (Get_Uniq_Id (Debugger.Debugger, To_String (Item.Info.Varname)));
          end if;
 
-         if Item.Is_A_Variable then
+         if Item.Info.Is_A_Variable then
             if Auto_Refresh then
                --  Avoid creating the same item twice if it already exists in
                --  the canvas
 
-               Alias_Item :=
-                 Search_Item (Debugger, Item.Id.all, Variable_Name);
+               Alias_Item := Search_Item
+                 (Debugger, Item.Id.all, To_String (Item.Info.Varname));
 
                --  Two structures are aliased only if they have the same
                --  address and the same structure. The latter is to handle
@@ -1736,8 +1783,8 @@ package body GVD.Canvas is
                if Alias_Item /= null
                  and then
                    (not Typed_Aliases
-                    or else
-                    Structurally_Equivalent (Alias_Item.Entity, Item.Entity))
+                    or else Structurally_Equivalent
+                      (Alias_Item.Info.Entity, Item.Info.Entity))
                then
                   Browser.Get_View.Model.Add_To_Selection (Alias_Item);
                   Browser.Get_View.Scroll_Into_View
@@ -1748,8 +1795,6 @@ package body GVD.Canvas is
                end if;
             end if;
          end if;
-
-         Parse_Value (Item);
       end if;
 
       Item.Initialize_Rect (Styles.Item);
@@ -1780,7 +1825,7 @@ package body GVD.Canvas is
    begin
       Item.Clear (In_Model => Item.Browser.Get_View.Model);
 
-      if Item.Auto_Refresh then
+      if Item.Info.Auto_Refresh then
          Item.Set_Style (Item.Browser.Get_View.Get_Styles.Item);
       else
          Item.Set_Style (Debugger_Data_View (Item.Browser).Freeze);
@@ -1789,17 +1834,17 @@ package body GVD.Canvas is
       Gtk_New (Close);
       Item.Setup_Titlebar
         (Browser => Item.Browser,
-         Name    => Integer'Image (Item.Num) & ": " & Item.Name.all,
+         Name    => Integer'Image (Item.Num) & ": " & Item.Info.Name,
          Buttons => (1  => Close));
 
-      if Item.Entity /= null
-         and then Item.Entity.Is_Valid
+      if Item.Info.Entity /= null
+         and then Item.Info.Entity.Is_Valid
       then
          Item.Add_Child
-           (Item.Entity.Build_Display
-              (Item.Name.all,
+           (Item.Info.Entity.Build_Display
+              (Item.Info.Name,
                Debugger_Data_View (Item.Browser),
-               Get_Language (Item.Debugger.Debugger), Item.Mode));
+               Get_Language (Item.Debugger.Debugger), Item.Info.Mode));
       end if;
    end Update_Display;
 
@@ -1810,17 +1855,20 @@ package body GVD.Canvas is
    function Get_Graph_Cmd
      (Item : access Display_Item_Record'Class) return String
    is
-      Rect : Point;
+      Rect   : constant Point := Item.Position;
+      Prefix : constant String :=
+        "graph " & (if Item.Info.Auto_Refresh then "display " else "print ");
+      Suffix : constant String :=
+        (if Item.Depend_On /= -1 then " dependent on" & Item.Depend_On'Img
+         else "")
+        & " at" & Gdouble'Image (Rect.X)
+        & "," & Gdouble'Image (Rect.Y)
+        & " num" & Integer'Image (Item.Num);
    begin
-      --  ??? Should memorize auto-refresh state ("graph print" vs "display")
-      if Item.Graph_Cmd /= null then
-         Rect := Item.Position;
-         return Item.Graph_Cmd.all & " at"
-           & Gdouble'Image (Rect.X)
-           & "," & Gdouble'Image (Rect.Y)
-           & " num" & Integer'Image (Item.Num);
+      if Item.Info.Cmd /= "" then
+         return Prefix & "`" & To_String (Item.Info.Cmd) & "`" & Suffix;
       else
-         return "";
+         return Prefix & To_String (Item.Info.Varname) & Suffix;
       end if;
    end Get_Graph_Cmd;
 
@@ -1841,11 +1889,11 @@ package body GVD.Canvas is
       --  types, which, once dereferenced, would point to themselves).
 
       return Item.Id /= null
-        and then Item.Auto_Refresh
+        and then Item.Info.Auto_Refresh
         and then Item.Id.all = Id
-        and then Item.Name.all /= Deref_Name
+        and then Item.Info.Name /= Deref_Name
         and then Name /= Dereference_Name
-          (Get_Language (Item.Debugger.Debugger), Item.Name.all);
+          (Get_Language (Item.Debugger.Debugger), Item.Info.Name);
    end Is_Alias_Of;
 
    ---------------
@@ -1889,7 +1937,7 @@ package body GVD.Canvas is
          It : constant Display_Item := Display_Item (Item);
       begin
          if Alias_Item = null  --  not found yet
-           and then (Name = "" or else It.Name.all = Name)
+           and then (Name = "" or else It.Info.Name = Name)
            and then Is_Alias_Of (It, Id, Name, Deref_Name)
          then
             if It.Is_Alias_Of /= null then
@@ -1916,28 +1964,7 @@ package body GVD.Canvas is
 
    procedure Update (Item : not null access Display_Item_Record'Class) is
    begin
-      if Item.Is_A_Variable
-        and then Item.Entity = null
-      then
-         Parse_Type (Item);
-      end if;
-
-      if Item.Entity /= null then
-         --  Parse the value
-
-         if Item.Entity.all in Debugger_Output_Type'Class then
-            Set_Value
-              (Debugger_Output_Type (Item.Entity.all),
-               Process_User_Command
-                 (Item.Debugger,
-                  Refresh_Command (Debugger_Output_Type (Item.Entity.all)),
-                  Mode => GVD.Types.Internal));
-
-         else
-            Parse_Value (Item);
-         end if;
-      end if;
-
+      Item.Info.Update (Item.Debugger);
       Item.Update_Display;
    end Update;
 
@@ -1991,7 +2018,7 @@ package body GVD.Canvas is
       --  The newly created item should have the same auto-refresh state as
       --  the one we are dereferencing
 
-      if Item.Auto_Refresh then
+      if Item.Info.Auto_Refresh then
          Process_User_Command
            (Item.Debugger,
             "graph display """ & New_Name & """ dependent on"
@@ -2031,13 +2058,13 @@ package body GVD.Canvas is
       Update_Value : Boolean := False)
    is
    begin
-      Item.Auto_Refresh := Auto_Refresh;
+      Item.Info.Auto_Refresh := Auto_Refresh;
 
       if Update_Value then
          --  If we moved back to the auto-refresh state, force an
          --  update of the value.
 
-         Reset_Recursive (Item);
+         Item.Info.Mark_As_Up_To_Date;
          Update (Item);
       end if;
 
@@ -2070,12 +2097,8 @@ package body GVD.Canvas is
 
       In_Model.For_Each_Item (On_Item'Access, Filter => Kind_Item);
       In_Model.Remove (To_Remove);
+      Self.Info.Free;
 
-      if Self.Entity /= null then
-         Free (Self.Entity);
-      end if;
-
-      GNAT.Strings.Free (Self.Name);
       GNAT.Strings.Free (Self.Id);
 
       GPS_Item_Record (Self.all).Destroy (In_Model);  --  inherited
@@ -2163,10 +2186,7 @@ package body GVD.Canvas is
 
          --  If this is not an item associated with a variable, ignore it
          --  Only detect aliases if we have an auto_refresh item
-         if It.Name = null
-           or else not It.Auto_Refresh
-           or else not It.Is_A_Variable
-         then
+         if not It.Info.Has_Address then
             return;
          end if;
 
@@ -2175,7 +2195,7 @@ package body GVD.Canvas is
 
          declare
             Id : constant String :=
-              Get_Uniq_Id (It.Debugger.Debugger, It.Name.all);
+              Get_Uniq_Id (It.Debugger.Debugger, To_String (It.Info.Varname));
          begin
             if Id /= "" then
                It.Id := new String'(Id);
@@ -2282,7 +2302,7 @@ package body GVD.Canvas is
       is
          It : constant Display_Item := Display_Item (Item);
       begin
-         if It.Auto_Refresh and then It.Is_Alias_Of = null then
+         if It.Info.Auto_Refresh and then It.Is_Alias_Of = null then
             Update (It);
          end if;
       end Update_Value;
@@ -2314,17 +2334,6 @@ package body GVD.Canvas is
            (Update_Value'Access, Filter => Kind_Item);
       end if;
    end Recompute_All_Aliases;
-
-   ---------------------
-   -- Reset_Recursive --
-   ---------------------
-
-   procedure Reset_Recursive (Item : access Display_Item_Record'Class) is
-   begin
-      if Item.Entity /= null then
-         Reset_Recursive (Item.Entity);
-      end if;
-   end Reset_Recursive;
 
    -----------------
    -- Set_Process --

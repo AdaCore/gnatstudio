@@ -142,7 +142,7 @@ package body GVD.Process is
    type String_Access_Access is access all GNAT.Strings.String_Access;
 
    procedure Process_User_Command
-     (Debugger       : Visual_Debugger;
+     (Debugger       : not null access Visual_Debugger_Record'Class;
       Command        : String;
       Output_Command : Boolean := False;
       Mode           : Command_Type;
@@ -374,6 +374,7 @@ package body GVD.Process is
                Num := Break_Subprogram
                  (Process.Debugger, Br.Subprogram.all,
                   Temporary => Br.Disposition /= Keep, Mode => Internal);
+
             elsif Br.Address /= Invalid_Address then
                Num := Break_Address
                  (Process.Debugger, Br.Address,
@@ -585,7 +586,7 @@ package body GVD.Process is
    -----------------
 
    procedure Output_Text
-     (Process      : Visual_Debugger;
+     (Process      : not null access Visual_Debugger_Record'Class;
       Str          : String;
       Is_Command   : Boolean := False;
       Set_Position : Boolean := False)
@@ -1123,7 +1124,7 @@ package body GVD.Process is
    --------------------------
 
    procedure Process_User_Command
-     (Debugger       : Visual_Debugger;
+     (Debugger       : not null access Visual_Debugger_Record'Class;
       Command        : String;
       Output_Command : Boolean := False;
       Mode           : Command_Type;
@@ -1212,8 +1213,12 @@ package body GVD.Process is
       end if;
    end Process_User_Command;
 
+   --------------------------
+   -- Process_User_Command --
+   --------------------------
+
    procedure Process_User_Command
-     (Debugger       : Visual_Debugger;
+     (Debugger       : not null access Visual_Debugger_Record'Class;
       Command        : String;
       Output_Command : Boolean := False;
       Mode           : Command_Type := GVD.Types.Visible) is
@@ -1221,8 +1226,12 @@ package body GVD.Process is
       Process_User_Command (Debugger, Command, Output_Command, Mode, null);
    end Process_User_Command;
 
+   --------------------------
+   -- Process_User_Command --
+   --------------------------
+
    function Process_User_Command
-     (Debugger       : Visual_Debugger;
+     (Debugger       : not null access Visual_Debugger_Record'Class;
       Command        : String;
       Output_Command : Boolean := False;
       Mode           : GVD.Types.Invisible_Command := GVD.Types.Hidden)

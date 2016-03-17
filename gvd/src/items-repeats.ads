@@ -56,14 +56,19 @@ private
       Value            : Generic_Type_Access := null;
    end record;
 
-   overriding procedure Print (Value : Repeat_Type; Indent : Natural := 0);
+   overriding function Get_Type_Descr
+     (Self : not null access Repeat_Type) return String is ("Repeat");
+   overriding function Get_Simple_Value
+     (Self : not null access Repeat_Type) return String;
+   overriding function Get_Type_Name
+     (Self    : access Repeat_Type;
+      Lang    : Language.Language_Access) return String;
    overriding procedure Free
      (Item : access Repeat_Type;
       Only_Value : Boolean := False);
    overriding procedure Clone_Dispatching
      (Item  : Repeat_Type;
       Clone : in out Generic_Type_Access);
-
    overriding function Build_Display
      (Self : not null access Repeat_Type;
       Name : String;
@@ -77,16 +82,7 @@ private
    overriding function Structurally_Equivalent
      (Item1 : access Repeat_Type; Item2 : access Generic_Type'Class)
      return Boolean;
-
-   type Repeat_Iterator is new Generic_Iterator with record
-      Item   : Repeat_Type_Access;
-      At_End : Boolean;
-   end record;
    overriding function Start
      (Item : access Repeat_Type) return Generic_Iterator'Class;
-   overriding procedure Next (Iter : in out Repeat_Iterator);
-   overriding function At_End (Iter : Repeat_Iterator) return Boolean;
-   overriding function Data
-     (Iter : Repeat_Iterator) return Generic_Type_Access;
 
 end Items.Repeats;

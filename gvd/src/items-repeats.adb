@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.IO;         use GNAT.IO;
 with Glib;            use Glib;
 with Language;        use Language;
+with GNATCOLL.Utils;  use GNATCOLL.Utils;
 
 package body Items.Repeats is
 
@@ -75,21 +75,17 @@ package body Items.Repeats is
       Item.Value := Value;
    end Set_Value;
 
-   -----------
-   -- Print --
-   -----------
+   ----------------------
+   -- Get_Simple_Value --
+   ----------------------
 
-   overriding procedure Print (Value : Repeat_Type; Indent : Natural := 0) is
+   overriding function Get_Simple_Value
+     (Self : not null access Repeat_Type) return String is
    begin
-      Put ("{<" & Value.Repeat_Num'Img & " times> : ");
-
-      if Value.Value /= null then
-         Print (Value.Value.all, Indent + 3);
-         Put ("}");
-      else
-         Put ("<null>}");
-      end if;
-   end Print;
+      return
+        (if Self.Value = null then "" else Self.Value.Get_Simple_Value)
+        & " <" & Image (Self.Repeat_Num, Min_Width => 0) & " times>";
+   end Get_Simple_Value;
 
    ----------
    -- Free --
@@ -163,46 +159,40 @@ package body Items.Repeats is
       return null;
    end Replace;
 
+   -------------------
+   -- Get_Type_Name --
+   -------------------
+
+   overriding function Get_Type_Name
+     (Self    : access Repeat_Type;
+      Lang    : Language.Language_Access) return String is
+   begin
+      --  So that we display  "(record) <repeat 11 times>", and not
+      --  "() <repeat 11 times>".  The latter requires one extra level of
+      --  expansion in the variables view.
+      if Self.Value = null then
+         return "";
+      else
+         return Self.Value.Get_Type_Name (Lang);
+      end if;
+   end Get_Type_Name;
+
    -----------
    -- Start --
    -----------
 
    overriding function Start
      (Item : access Repeat_Type) return Generic_Iterator'Class is
-      Iter : Repeat_Iterator;
    begin
-      Iter.Item := Repeat_Type_Access (Item);
-      Iter.At_End := False;
-      return Iter;
+      --  No child ? Return an iterator that does nothing
+      if Item.Value = null then
+         return Create_Empty_Iterator;
+      else
+         --  Else iterate directly the components of the repeated type, so that
+         --  we have one less level in the Variables view
+         return Item.Value.Start;
+      end if;
    end Start;
-
-   ----------
-   -- Next --
-   ----------
-
-   overriding procedure Next (Iter : in out Repeat_Iterator) is
-   begin
-      Iter.At_End := True;
-   end Next;
-
-   ------------
-   -- At_End --
-   ------------
-
-   overriding function At_End (Iter : Repeat_Iterator) return Boolean is
-   begin
-      return Iter.At_End;
-   end At_End;
-
-   ----------
-   -- Data --
-   ----------
-
-   overriding function Data
-     (Iter : Repeat_Iterator) return Generic_Type_Access is
-   begin
-      return Iter.Item.Value;
-   end Data;
 
    -----------------------------
    -- Structurally_Equivalent --

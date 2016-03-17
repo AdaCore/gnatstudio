@@ -1851,7 +1851,8 @@ package body Xref is
      (E  : General_Entity) return Boolean
    is
    begin
-      return E.Db.Xref.Declaration (E.Entity).Flags.Is_Printable_In_Gdb;
+      return E.Db /= null
+         and then E.Db.Xref.Declaration (E.Entity).Flags.Is_Printable_In_Gdb;
    end Is_Printable_In_Debugger;
 
    ----------------------

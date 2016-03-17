@@ -101,6 +101,11 @@ NF-17-P122-059 GPS: rename build targets from the GUI (2016-01-25)
   It is now possible to rename targets directly in the Target Configuration
   dialog: double-click on a target name in the tree to give it a new name.
 
+NF-17-OC30-003 GPS: new Debugger Variables view (2016-04-29)
+
+  This view displays the same type of information as the Data Window (i.e. the
+  value of variables) but in a tree, which might help keep things organized.
+
 NF-17-OC17-020 GPS: OS shell emits stty command automatically (2015-12-22)
 
   The "OS Shell" window sometimes need a "stty echo" command to properly

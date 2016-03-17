@@ -40,13 +40,6 @@ package Items.Simples is
    procedure Set_Value (Item : in out Simple_Type; Value : String);
    --  Assign a new value to Item.
 
-   overriding function Build_Display
-     (Self   : not null access Simple_Type;
-      Name   : String;
-      View   : not null access Debugger_Data_View_Record'Class;
-      Lang   : Language.Language_Access;
-      Mode   : Display_Mode) return Component_Item;
-
    -----------------
    -- Range Types --
    -----------------
@@ -82,13 +75,6 @@ package Items.Simples is
    function New_Access_Type return Generic_Type_Access;
    --  Create a new access type.
 
-   overriding function Build_Display
-     (Self   : not null access Access_Type;
-      Name   : String;
-      View   : not null access Debugger_Data_View_Record'Class;
-      Lang   : Language.Language_Access;
-      Mode   : Display_Mode) return Component_Item;
-
    ----------------
    -- Enum Types --
    ----------------
@@ -111,9 +97,13 @@ package Items.Simples is
    --  General types, used to display directly the output of the debugger
    --  (no processing is done in that case).
 
-   function New_Debugger_Type (Cmd : String) return Generic_Type_Access;
+   function New_Debugger_Type
+     (Cmd         : String;
+      Split_Lines : Boolean := False) return Generic_Type_Access;
    --  Create a new Debugger item, which a specific command to send to the
    --  debugger to get the new value.
+   --  If Split_Lines is true, then each line will be returned as a separate
+   --  component when iterating, for instance for the Variables view.
 
    function Refresh_Command (Item : Debugger_Output_Type) return String;
    --  Return the command to send to the debugger to refresh the value.
@@ -127,6 +117,9 @@ package Items.Simples is
       View   : not null access Debugger_Data_View_Record'Class;
       Lang   : Language.Language_Access;
       Mode   : Display_Mode) return Component_Item;
+   overriding function Start
+     (Self   : not null access Debugger_Output_Type)
+      return Generic_Iterator'Class;
 
 private
 
@@ -146,7 +139,10 @@ private
       --  Whether the value of the item has changed.
    end record;
 
-   overriding procedure Print (Value : Simple_Type; Indent : Natural := 0);
+   overriding function Get_Type_Descr
+     (Self : not null access Simple_Type) return String is ("Simple");
+   overriding function Get_Simple_Value
+     (Self : not null access Simple_Type) return String;
    overriding procedure Free
      (Item : access Simple_Type;
       Only_Value : Boolean := False);
@@ -157,11 +153,21 @@ private
    overriding function Structurally_Equivalent
      (Item1 : access Simple_Type; Item2 : access Generic_Type'Class)
      return Boolean;
+   overriding function Build_Display
+     (Self   : not null access Simple_Type;
+      Name   : String;
+      View   : not null access Debugger_Data_View_Record'Class;
+      Lang   : Language.Language_Access;
+      Mode   : Display_Mode) return Component_Item;
+   overriding function Is_Changed
+     (Self : not null access Simple_Type) return Boolean;
 
    type Range_Type is new Simple_Type with record
       Min, Max : Long_Integer;
    end record;
-   overriding procedure Print (Value : Range_Type; Indent : Natural := 0);
+   overriding function Get_Type_Descr
+     (Self : not null access Range_Type) return String
+     is ("Range " & Self.Min'Img & " .." & Self.Max'Img);
    overriding function Structurally_Equivalent
      (Item1 : access Range_Type; Item2 : access Generic_Type'Class)
      return Boolean;
@@ -170,37 +176,64 @@ private
    type Mod_Type is new Simple_Type with record
       Modulo : Long_Integer;
    end record;
-   overriding procedure Print (Value : Mod_Type; Indent : Natural := 0);
+   overriding function Get_Type_Descr
+     (Self : not null access Mod_Type) return String
+     is ("Modulo " & Self.Modulo'Img);
    overriding function Structurally_Equivalent
      (Item1 : access Mod_Type; Item2 : access Generic_Type'Class)
      return Boolean;
    --  Free is inherited from Simple_Type.
 
    type Access_Type is new Simple_Type with null record;
-   overriding procedure Print (Value : Access_Type; Indent : Natural := 0);
-   --  Free is inherited from Simple_Type.
+   overriding function Get_Type_Descr
+     (Self : not null access Access_Type) return String  is ("Access");
    overriding function Structurally_Equivalent
      (Item1 : access Access_Type; Item2 : access Generic_Type'Class)
      return Boolean;
+   overriding function Build_Display
+     (Self   : not null access Access_Type;
+      Name   : String;
+      View   : not null access Debugger_Data_View_Record'Class;
+      Lang   : Language.Language_Access;
+      Mode   : Display_Mode) return Component_Item;
 
    type Enum_Type is new Simple_Type with null record;
-   overriding procedure Print (Value : Enum_Type; Indent : Natural := 0);
+   overriding function Get_Type_Descr
+     (Self : not null access Enum_Type) return String  is ("Enumeration");
    overriding function Structurally_Equivalent
      (Item1 : access Enum_Type; Item2 : access Generic_Type'Class)
      return Boolean;
    --  Free is inherited from Simple_Type.
 
+   type Line_Value is record
+      Value    : GNAT.Strings.String_Access;
+      Modified : Boolean;
+   end record;
+   type Line_Array is array (Natural range <>) of Line_Value;
+   type Line_Array_Access is access all Line_Array;
+   procedure Free (Self : in out Line_Array_Access);
+   --  Each line in the debugger output, along with an indication on whether it
+   --  was modified since the last update.
+
    type Debugger_Output_Type is new Base_Simple_Type with record
-      Value       : GNAT.Strings.String_List_Access;
+      Value       : Line_Array_Access;
       Refresh_Cmd : GNAT.Strings.String_Access;
+      Split_Lines : Boolean;
+
+      As_Record   : Type_Array_Access;
+      --  When we split lines, the value is interpreted as a record for which
+      --  all fields are strings. This is unused if we do not split lines
    end record;
    --  Since Value can be a multiple-line string, and we want to consider each
    --  line separately as far as highlighting is concerned, we in fact insert
    --  a special character at the beginning of each line to indicate whether
    --  the line should be highlighted or not.
 
-   overriding procedure Print
-     (Value : Debugger_Output_Type; Indent : Natural := 0);
+   overriding function Get_Type_Descr
+     (Self : not null access Debugger_Output_Type) return String
+     is ("Debugger_Type");
+   overriding function Get_Simple_Value
+     (Self : not null access Debugger_Output_Type) return String;
    overriding procedure Clone_Dispatching
      (Item  : Debugger_Output_Type;
       Clone : in out Generic_Type_Access);

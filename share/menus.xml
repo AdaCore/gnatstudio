@@ -244,6 +244,7 @@
          </menu>
          <menu label="D_ata">
             <menu label="_Data Window"        action="open debugger data window"/>
+            <menu label="_Variables"          action="open debugger variables window"/>
             <menu label="_Call Stack"         action="open debugger call stack"/>
             <menu label="_Protection Domains" action="open protection domains debugger window"/>
             <menu label="_Threads"            action="open threads debugger window"/>
@@ -555,6 +556,16 @@
       <button action='debug edit breakpoint'/>
       <separator/>
       <button action='debug create breakpoint'/>
+   </toolbar>
+
+   <toolbar id="Debugger Variables">
+      <button action="debug tree clear"/>
+      <button action="debug tree display expression"/>
+      <button action="debug tree undisplay"/>
+      <separator/>
+      <button action="debug tree display local variables"/>
+      <button action="debug tree display arguments"/>
+      <button action="debug tree display registers"/>
    </toolbar>
 
    <toolbar id='Browser'>

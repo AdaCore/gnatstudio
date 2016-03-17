@@ -250,6 +250,12 @@ items. Failure to do so will result in empty windows.
   Displays the :guilabel:`Data` browser. If it already exists, it is raised
   so it becomes visible.
 
+.. index:: menu; debug --> data --> variables
+
+* :menuselection:`Debug --> Data --> Variables`
+
+  Displays the :guilabel:`Variables` view, or raise an already existing one.
+
 .. index:: menu; debug --> data --> call stack
 
 * :menuselection:`Debug --> Data --> Call Stack`
@@ -416,10 +422,33 @@ By default, only the subprogram name is displayed.  Hide the call stack
 view by closing it and show it again using the menu :menuselection:`Debug
 --> Data --> Call Stack` menu.
 
-.. index:: debugger; data browser
+.. index:: debugger; variables view
+..  _The_Variables_View:
+
+The Variables View
+==================
+
+The :guilabel:`Variables` view displays the value of selected variables or
+debugger command every time the debugger stops. The display is done in a
+tree, so that for instance the fields of a record are displayed in child
+nodes (recursively).
+
+Access types (or pointers) can also be expanded to show the value they
+reference.
+
+Values that have been modified since the debugger last stopped are highlighted
+in red.
+
+This value is very similar to :ref:`The_Data_Browser`.
+
+.. image:: debugger-variables.png
+
+
+
+.. index:: debugger; data window
 .. _The_Data_Browser:
 
-The Data Browser
+The Data Window
 ================
 
 Description
@@ -429,7 +458,7 @@ The Data browser is the area in which various information about the process
 being debugged is displayed. This includes the value of selected variables,
 the current contents of registers, and local variables.
 
-.. index:: debugger; data browser
+.. index:: debugger; data window
 
 This browser is open by default when you start the debugger.  Force it to
 display through the menu :menuselection:`Debug --> Data --> Data Window`.
@@ -443,7 +472,7 @@ the same items as previously. This behavior is controlled by the
 :menuselection:`Debugger --> Preserve State on Exit` preference.
 
 The data browser contains all the graphic boxes that can be accessed using
-the :menuselection:`Debug --> Data --> Display*` menus, the data browser
+the :menuselection:`Debug --> Data --> Graph Display*` menus, the data browser
 :menuselection:`Display Expression...` contextual menu, the editor
 :menuselection:`Display` contextual menu items, and the `graph` item in the
 debugger console.
@@ -833,25 +862,15 @@ allows you to easily display complex expressions (for example, you can add
 comments to your code with expressions you want to display in the
 debugger).
 
-* :menuselection:`Debug --> Print *selection*`
-
-  Prints the selection (or by default the name under the pointer) in the
-  debugger console.
-
-* :menuselection:`Debug --> Display *selection*`
+* :menuselection:`Debug --> Graph Display *selection*`
 
   Displays the selection (or by default the name under the pointer) in the
-  data browser. GPS automatically refreshes this value each time the
+  data window. GPS automatically refreshes this value each time the
   process state changes (e.g after a step or a next command). To freeze the
   display, click on the corresponding icon in the browser or use the
   contextual menu for that item (see :ref:`The_Data_Browser`).
 
-* :menuselection:`Debug --> Print *selection*.all`
-
-  Dereferences the selection (or by default the name under the pointer) and
-  prints the value in the debugger console.
-
-* :menuselection:`Display *selection*.all`
+* :menuselection:`Debug --> Graph Display *selection*.all`
 
   Dereferences the selection (or by default the name under the pointer) and
   displays the value in the data browser.
@@ -953,6 +972,21 @@ provides completion for the command being typed (or its arguments).
 Additional commands are defined here to provide a simple text interface to
 some graphical features.  Here is the complete list of such commands (the
 arguments between square brackets are optional and can be omitted):
+
+* tree display expression
+
+  .. index:: tree display
+
+  This command displays the value of the expression in the
+  :guilabel:`Variables` view. The :samp:`expression` should be
+  the name of a variable, or any expression matching the source
+  language of the current frame (for instance :samp:`A(0).Field`).
+
+* tree display `command`
+
+  This command executes the gdb command, and displays the result in the
+  :guilabel:`Variables` view. The :samp:`command` should be an internal
+  debugger command, for instance :samp:`info local`.
 
 *graph (print|display) expression [dependent on display_num] [link_name name] [at x, y] [num num]*
 
@@ -1079,10 +1113,12 @@ start a debugger as usual in GPS, and type the following in its console::
 
 The first command defines the alias, the second line executes it.
 
-This alias can also be used within the :command:`graph display` command so
-the value of the variable is displayed in the data window, for example::
+This alias can also be used within the :command:`graph display` or
+:command:`tree display` commands so the value of the variable is displayed in
+the data window, for example::
 
      (gdb) graph display `foo`
+     (gdb) tree display `foo`
 
 You can also program other examples. You could write complex Python
 functions, which would, for example, query the value of several variables

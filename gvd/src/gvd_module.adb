@@ -426,24 +426,11 @@ package body GVD_Module is
      (Filter  : access Printable_Variable_Filter;
       Context : Selection_Context) return Boolean;
 
-   type Access_Variable_Filter is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Access_Variable_Filter;
-      Context : Selection_Context) return Boolean;
-
    type Subprogram_Variable_Filter
      is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
      (Filter  : access Subprogram_Variable_Filter;
       Context : Selection_Context) return Boolean;
-
-   type Print_Variable_Command is new Interactive_Command with record
-      Display     : Boolean := False;
-      Dereference : Boolean := False;
-   end record;
-   overriding function Execute
-     (Command : access Print_Variable_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Set_Value_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -462,10 +449,6 @@ package body GVD_Module is
    overriding function Execute
      (Command : access Set_Breakpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-
-   function Custom_Label_Expansion
-     (Context : Selection_Context) return String;
-   --  Provide expansion for "$!" in the labels for contextual menus
 
    ------------------
    -- Add_Debugger --
@@ -1298,16 +1281,6 @@ package body GVD_Module is
       return Commands.Success;
    end Execute;
 
-   ----------------------------
-   -- Custom_Label_Expansion --
-   ----------------------------
-
-   function Custom_Label_Expansion
-     (Context : Selection_Context) return String is
-   begin
-      return Emphasize (Get_Variable_Name (Context, True));
-   end Custom_Label_Expansion;
-
    -------------
    -- Execute --
    -------------
@@ -1325,32 +1298,6 @@ package body GVD_Module is
    begin
       if Name /= GNATCOLL.VFS.No_File then
          Highlight_Current_Line (Edit);
-      end if;
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Print_Variable_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Process  : constant Visual_Debugger :=
-        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)));
-      Debugger : constant Debugger_Access := Process.Debugger;
-      Name     : constant String :=
-                   Get_Variable_Name (Context.Context, Command.Dereference);
-   begin
-      if Name /= "" then
-         if Command.Display then
-            Process_User_Command
-              (Process, "graph display " & Name, Output_Command => True);
-         else
-            Send (Debugger, Print_Value_Cmd (Debugger, Name),
-                  Mode => GVD.Types.Visible);
-         end if;
       end if;
       return Commands.Success;
    end Execute;
@@ -1489,33 +1436,6 @@ package body GVD_Module is
 
       elsif Has_Area_Information (Context) then
          --  We assume the user knows best
-         return True;
-      end if;
-      return False;
-   end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Access_Variable_Filter;
-      Context : Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-   begin
-      if Has_Entity_Name_Information (Context) then
-         declare
-            Entity : constant Root_Entity'Class := Get_Entity (Context);
-         begin
-            return Is_Fuzzy (Entity)
-
-            --  ??? Should also include array variables
-              or else (not Is_Type (Entity)
-                       and then Is_Access (Entity));
-         end;
-
-      elsif Has_Area_Information (Context) then
          return True;
       end if;
       return False;
@@ -2038,12 +1958,10 @@ package body GVD_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Command           : Interactive_Command_Access;
-      Filter            : Action_Filter;
       Debugger_Filter   : Action_Filter;
       Stopped_And_In_File : Action_Filter;
       Debugger_Active   : Action_Filter;
       Printable_Filter  : Action_Filter;
-      Access_Filter     : Action_Filter;
       Subprogram_Filter : Action_Filter;
    begin
       Create_GVD_Module (Kernel);
@@ -2065,76 +1983,9 @@ package body GVD_Module is
       Register_Filter
         (Kernel, Printable_Filter, "Debugger printable variable");
 
-      Access_Filter     := new Access_Variable_Filter;
       Subprogram_Filter := new Subprogram_Variable_Filter;
 
       Register_Contextual_Submenu (Kernel, "Debug", Ref_Item => "References");
-
-      Filter := Debugger_Filter and Printable_Filter;
-
-      Register_Action
-        (Kernel, "debug print variable",
-         Command     => new Print_Variable_Command,
-         Description =>
-           "Print the value of the variable in the debugger console",
-         Filter    => Filter,
-         Category  => -"Debug");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Debug/Print %S",
-         Action => "debug print variable");
-
-      Command := new Print_Variable_Command;
-      Print_Variable_Command (Command.all).Display := True;
-      Register_Action
-        (Kernel, "debug display variable",
-         Command     => Command,
-         Description =>
-           "Display the value of the variable in the debugger console, so that"
-           & " it is displayed again every time the debugger stops",
-         Filter    => Filter,
-         Category  => -"Debug");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Debug/Display %S",
-         Action => "debug display variable");
-
-      Filter := Debugger_Filter and Printable_Filter and Access_Filter;
-
-      Command := new Print_Variable_Command;
-      Print_Variable_Command (Command.all).Display := False;
-      Print_Variable_Command (Command.all).Dereference := True;
-      Register_Action
-        (Kernel, "debug print dereferenced variable",
-         Command     => Command,
-         Description =>
-           "Print the value pointed to by the variable in the debugger"
-           & " console",
-         Filter    => Filter,
-         Category  => -"Debug");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Debug/Print %C",
-         Custom => Custom_Label_Expansion'Access,
-         Action => "debug print dereferenced variable");
-
-      Command := new Print_Variable_Command;
-      Print_Variable_Command (Command.all).Display := True;
-      Print_Variable_Command (Command.all).Dereference := True;
-      Register_Action
-        (Kernel, "debug display dereferenced variable",
-         Command     => Command,
-         Description =>
-           "Display the value pointed to by the variable in the debugger"
-           & " console, so that it is displayed again every time the debugger"
-           & " stops",
-         Filter    => Filter,
-         Category  => -"Debug");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Debug/Display %C",
-         Custom => Custom_Label_Expansion'Access,
-         Action => "debug display dereferenced variable");
 
       Register_Action
         (Kernel, "debug set value",

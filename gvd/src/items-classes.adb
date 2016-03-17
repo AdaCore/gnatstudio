@@ -16,11 +16,22 @@
 ------------------------------------------------------------------------------
 
 with Glib;            use Glib;
-with GNAT.IO;         use GNAT.IO;
 with Items.Records;   use Items.Records;
 with Language;        use Language;
 
 package body Items.Classes is
+
+   type Class_Iterator is new Generic_Iterator with record
+      Item     : Class_Type_Access;
+      Ancestor : Natural;
+   end record;
+   overriding procedure Next (Iter : in out Class_Iterator);
+   overriding function At_End (Iter : Class_Iterator) return Boolean;
+   overriding function Data (Iter : Class_Iterator) return Generic_Type_Access;
+   overriding function Field_Name
+     (Iter : Class_Iterator;
+      Lang : not null access Language_Root'Class;
+      Base : String := "") return String;
 
    --------------------
    -- New_Class_Type --
@@ -100,33 +111,6 @@ package body Items.Classes is
    begin
       return Item.Num_Ancestors;
    end Get_Num_Ancestors;
-
-   -----------
-   -- Print --
-   -----------
-
-   overriding procedure Print (Value : Class_Type; Indent : Natural := 0) is
-   begin
-      Put ("{Class ");
-      for A in Value.Ancestors'Range loop
-         New_Line;
-         Put (String'(1 .. Indent + 3 => ' '));
-         Put ("Ancestor" & A'Img & " => ");
-
-         if Value.Ancestors (A) = null then
-            Put (" <unknown>");
-         else
-            Print (Value.Ancestors (A).all, Indent + 3);
-         end if;
-      end loop;
-
-      New_Line;
-      Put (String'(1 .. Indent + 3 => ' '));
-      Put ("Child => ");
-
-      Print (Value.Child.all, Indent + 3);
-      Put ("}");
-   end Print;
 
    ----------
    -- Free --
@@ -259,7 +243,7 @@ package body Items.Classes is
       Iter : Class_Iterator;
    begin
       Iter.Item := Class_Type_Access (Item);
-      if Item.Ancestors'Length /= 0 then
+      if Item.Ancestors'Length = 0 then
          Iter.Ancestor := Item.Ancestors'Last + 1;
       else
          Iter.Ancestor := Item.Ancestors'First;
@@ -282,7 +266,9 @@ package body Items.Classes is
 
    overriding function At_End (Iter : Class_Iterator) return Boolean is
    begin
-      return Iter.Ancestor > Iter.Item.Ancestors'Last + 1;
+      return Iter.Ancestor > Iter.Item.Ancestors'Last + 1
+        or else (Iter.Ancestor = Iter.Item.Ancestors'Last + 1
+                 and then Iter.Item.Child = null);
    end At_End;
 
    ----------
@@ -298,6 +284,24 @@ package body Items.Classes is
          return Generic_Type_Access (Iter.Item.Child);
       end if;
    end Data;
+
+   ----------------
+   -- Field_Name --
+   ----------------
+
+   overriding function Field_Name
+     (Iter : Class_Iterator;
+      Lang : not null access Language_Root'Class;
+      Base : String := "") return String
+   is
+      pragma Unreferenced (Lang, Base);
+   begin
+      if Iter.Ancestor <= Iter.Item.Ancestors'Last then
+         return "<parent class>";
+      else
+         return "<record>";
+      end if;
+   end Field_Name;
 
    -----------------
    -- Draw_Border --

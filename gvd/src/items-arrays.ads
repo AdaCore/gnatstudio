@@ -157,7 +157,8 @@ private
       View : not null access Debugger_Data_View_Record'Class;
       Lang : Language.Language_Access;
       Mode : Display_Mode) return Component_Item;
-   overriding procedure Print (Value : Array_Type; Indent : Natural := 0);
+   overriding function Get_Type_Descr
+     (Self    : not null access Array_Type) return String;
    overriding procedure Free
      (Item : access Array_Type;
       Only_Value : Boolean := False);
@@ -171,15 +172,7 @@ private
    overriding function Structurally_Equivalent
      (Item1 : access Array_Type; Item2 : access Generic_Type'Class)
      return Boolean;
-
-   type Array_Iterator is new Generic_Iterator with record
-      Item  : Array_Type_Access;
-      Child : Natural;
-   end record;
    overriding function Start
      (Item : access Array_Type) return Generic_Iterator'Class;
-   overriding procedure Next (Iter : in out Array_Iterator);
-   overriding function At_End (Iter : Array_Iterator) return Boolean;
-   overriding function Data (Iter : Array_Iterator) return Generic_Type_Access;
 
 end Items.Arrays;

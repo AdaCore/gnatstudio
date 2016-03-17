@@ -16,9 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Glib;              use Glib;
-with GNAT.Strings;      use GNAT.Strings;
 with GVD.Canvas;        use GVD.Canvas;
-with Language;          use Language;
 with Debugger;          use Debugger;
 with Language.Debugger; use Language.Debugger;
 
@@ -256,62 +254,126 @@ package body Items is
    -- Start --
    -----------
 
-   function Start (Item : access Generic_Type) return Generic_Iterator'Class is
+   function Start
+     (Item : not null access Generic_Type) return Generic_Iterator'Class
+   is
       pragma Unreferenced (Item);
-
-      Iter : Generic_Iterator;
+      Iter : Empty_Iterator;
    begin
       return Iter;
    end Start;
-
-   ------------
-   -- At_End --
-   ------------
-
-   function At_End (Iter : Generic_Iterator) return Boolean is
-      pragma Unreferenced (Iter);
-   begin
-      return True;
-   end At_End;
-
-   ----------
-   -- Next --
-   ----------
-
-   procedure Next (Iter : in out Generic_Iterator) is
-      pragma Unreferenced (Iter);
-   begin
-      null;
-   end Next;
-
-   ----------
-   -- Data --
-   ----------
-
-   function Data (Iter : Generic_Iterator) return Generic_Type_Access is
-      pragma Unreferenced (Iter);
-   begin
-      return null;
-   end Data;
 
    ---------------------
    -- Reset_Recursive --
    ---------------------
 
    procedure Reset_Recursive (Item : access Generic_Type) is
-      Iter : Generic_Iterator'Class := Start (Generic_Type_Access (Item));
-      It   : Generic_Type_Access;
-
+      Iter : Generic_Iterator'Class := Generic_Type'Class (Item.all).Start;
    begin
       while not At_End (Iter) loop
-         It := Data (Iter);
-
-         if It /= null then
-            Reset_Recursive (It);
+         if Iter.Data /= null then
+            Iter.Data.Reset_Recursive;
          end if;
-
          Next (Iter);
       end loop;
    end Reset_Recursive;
+
+   ---------------------------
+   -- Create_Empty_Iterator --
+   ---------------------------
+
+   function Create_Empty_Iterator return Generic_Iterator'Class is
+   begin
+      return Empty_Iterator'(Generic_Iterator with null record);
+   end Create_Empty_Iterator;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Self : in out Type_Array_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Type_Array, Type_Array_Access);
+   begin
+      if Self /= null then
+         for J in Self'Range loop
+            Free (Self (J).Name);
+            Free (Self (J).Typ);
+         end loop;
+         Unchecked_Free (Self);
+      end if;
+   end Free;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (Self : Type_Array_Access) return Generic_Iterator'Class is
+   begin
+      return Field_Iterator'
+        (Generic_Iterator with
+         Fields => Self,
+         Idx    => (if Self = null then 0 else Self'First));
+   end Start;
+
+   ------------
+   -- At_End --
+   ------------
+
+   overriding function At_End (Self : Field_Iterator) return Boolean is
+   begin
+      return Self.Fields = null or else Self.Idx > Self.Fields'Last;
+   end At_End;
+
+   ----------
+   -- Next --
+   ----------
+
+   overriding procedure Next (Self : in out Field_Iterator) is
+   begin
+      Self.Idx := Self.Idx + 1;
+   end Next;
+
+   ----------------
+   -- Field_Name --
+   ----------------
+
+   overriding function Field_Name
+     (Self : Field_Iterator;
+      Lang : not null access Language_Root'Class;
+      Base : String := "") return String
+   is
+      pragma Unreferenced (Lang, Base);
+   begin
+      return Self.Fields (Self.Idx).Name.all;
+   end Field_Name;
+
+   ----------
+   -- Data --
+   ----------
+
+   overriding function Data
+     (Self : Field_Iterator) return Generic_Type_Access is
+   begin
+      return Self.Fields (Self.Idx).Typ;
+   end Data;
+
+   ----------------
+   -- Is_Changed --
+   ----------------
+
+   function Is_Changed
+     (Self : not null access Generic_Type) return Boolean
+   is
+      Iter : Generic_Iterator'Class := Generic_Type'Class (Self.all).Start;
+   begin
+      while not Iter.At_End loop
+         if Iter.Data /= null and then Iter.Data.Is_Changed then
+            return True;
+         end if;
+         Iter.Next;
+      end loop;
+      return False;
+   end Is_Changed;
 
 end Items;

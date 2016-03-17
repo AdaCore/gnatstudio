@@ -15,13 +15,26 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.IO;         use GNAT.IO;
 with Glib;            use Glib;
 with Language;        use Language;
 
 package body Items.Records is
 
    use type GNAT.Strings.String_Access;
+
+   type Record_Iterator is new Generic_Iterator with record
+      Item    : Record_Type_Access;
+      Field   : Natural;
+      Variant : Natural;
+   end record;
+   overriding procedure Next (Iter : in out Record_Iterator);
+   overriding function At_End (Iter : Record_Iterator) return Boolean;
+   overriding function Data
+     (Iter : Record_Iterator) return Generic_Type_Access;
+   overriding function Field_Name
+     (Iter : Record_Iterator;
+      Lang : not null access Language_Root'Class;
+      Base : String := "") return String;
 
    ---------------------
    -- New_Record_Type --
@@ -245,74 +258,19 @@ package body Items.Records is
       return new Union_Type (Num_Fields);
    end New_Union_Type;
 
-   -----------
-   -- Print --
-   -----------
+   ----------------------
+   -- Get_Simple_Value --
+   ----------------------
 
-   overriding procedure Print (Value : Record_Type; Indent : Natural := 0) is
+   overriding function Get_Simple_Value
+     (Self    : not null access Record_Type) return String is
    begin
-      Put ("{Record: ");
-      if Value.Fields'Length = 0 then
-         Put ("null record");
+      if Self.Fields'Length = 0 then
+         return "null record";
       else
-         New_Line;
-         Put (String'(1 .. Indent + 3 => ' '));
-         for J in Value.Fields'Range loop
-            if Value.Fields (J).Variant_Part /= null then
-               Put ("<variant_part> => ");
-
-               for P in Value.Fields (J).Variant_Part'Range loop
-                  New_Line;
-                  Put (String'(1 .. Indent + 6 => ' '));
-                  Print (Value.Fields (J).Variant_Part (P).all,
-                         Indent + 9);
-               end loop;
-
-               New_Line;
-               Put (String'(1 .. Indent + 3 => ' '));
-
-            else
-               Put (Value.Fields (J).Name.all & " => ");
-
-               if Value.Fields (J).Value /= null then
-                  Print (Value.Fields (J).Value.all, Indent + 6);
-               end if;
-            end if;
-
-            if J /= Value.Fields'Last then
-               Put (", ");
-               New_Line;
-               Put (String'(1 .. Indent + 3 => ' '));
-            end if;
-         end loop;
+         return "";  --  Value given in the fields
       end if;
-      Put ("}");
-   end Print;
-
-   -----------
-   -- Print --
-   -----------
-
-   overriding procedure Print (Value : Union_Type; Indent : Natural := 0) is
-   begin
-      Put ("{Union: ");
-
-      for J in Value.Fields'Range loop
-         Put (Value.Fields (J).Name.all & " => ");
-
-         if Value.Fields (J).Value /= null then
-            Print (Value.Fields (J).Value.all, Indent + 6);
-         end if;
-
-         if J /= Value.Fields'Last then
-            Put (", ");
-            New_Line;
-            Put (String'(1 .. Indent + 3 => ' '));
-         end if;
-      end loop;
-
-      Put ("}");
-   end Print;
+   end Get_Simple_Value;
 
    ----------
    -- Free --
@@ -507,6 +465,13 @@ package body Items.Records is
       Iter.Item := Record_Type_Access (Item);
       Iter.Field := Item.Fields'First;
       Iter.Variant := Natural'Last;
+
+      if Iter.Field <= Iter.Item.Fields'Last
+        and then Iter.Item.Fields (Iter.Field).Variant_Part /= null
+      then
+         Iter.Variant := Iter.Item.Fields (Iter.Field).Variant_Part'First;
+      end if;
+
       return Iter;
    end Start;
 
@@ -515,23 +480,24 @@ package body Items.Records is
    ----------
 
    overriding procedure Next (Iter : in out Record_Iterator) is
+      Var : Record_Type_Array_Access :=
+        Iter.Item.Fields (Iter.Field).Variant_Part;
+
    begin
-      if Iter.Item.Fields (Iter.Field).Variant_Part /= null then
-         if Iter.Variant = Natural'Last then
-            Iter.Variant := Iter.Item.Fields (Iter.Field).Variant_Part'First;
-         else
-            Iter.Variant := Iter.Variant + 1;
+      --  If the current field has a variant part, we need to iterate
+      if Var /= null then
+         Iter.Variant := Iter.Variant + 1;
+         if Iter.Variant <= Var'Last then
+            return;
          end if;
+      end if;
 
-         if Iter.Variant >
-           Iter.Item.Fields (Iter.Field).Variant_Part'Last
-         then
-            Iter.Variant := Natural'Last;
-            Iter.Field := Iter.Field + 1;
+      Iter.Field := Iter.Field + 1;
+      if Iter.Field <= Iter.Item.Fields'Last then
+         Var := Iter.Item.Fields (Iter.Field).Variant_Part;
+         if Var /= null then
+            Iter.Variant := Var'First;
          end if;
-
-      else
-         Iter.Field := Iter.Field + 1;
       end if;
    end Next;
 
@@ -549,15 +515,37 @@ package body Items.Records is
    ----------
 
    overriding function Data
-     (Iter : Record_Iterator) return Generic_Type_Access is
+     (Iter : Record_Iterator) return Generic_Type_Access
+   is
+      Var : constant Record_Type_Array_Access :=
+        Iter.Item.Fields (Iter.Field).Variant_Part;
    begin
-      if Iter.Variant = Natural'Last then
-         return Iter.Item.Fields (Iter.Field).Value;
+      if Var /= null then
+         return Generic_Type_Access (Var (Iter.Variant));
       else
-         return Generic_Type_Access
-           (Iter.Item.Fields (Iter.Field).Variant_Part (Iter.Variant));
+         return Iter.Item.Fields (Iter.Field).Value;
       end if;
    end Data;
+
+   ----------------
+   -- Field_Name --
+   ----------------
+
+   overriding function Field_Name
+     (Iter : Record_Iterator;
+      Lang : not null access Language_Root'Class;
+      Base : String := "") return String
+   is
+      Var : constant Record_Type_Array_Access :=
+        Iter.Item.Fields (Iter.Field).Variant_Part;
+   begin
+      if Var /= null then
+         return "<variant part>";
+      else
+         return Lang.Record_Field_Name
+           (Base, Iter.Item.Fields (Iter.Field).Name.all);
+      end if;
+   end Field_Name;
 
    -----------------
    -- Draw_Border --

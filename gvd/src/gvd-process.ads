@@ -239,7 +239,7 @@ package GVD.Process is
    --  to query the list again, and send appropriate signals.
 
    procedure Process_User_Command
-     (Debugger       : Visual_Debugger;
+     (Debugger       : not null access Visual_Debugger_Record'Class;
       Command        : String;
       Output_Command : Boolean := False;
       Mode           : GVD.Types.Command_Type := GVD.Types.Visible);
@@ -255,7 +255,7 @@ package GVD.Process is
    --  debugger.
 
    function Process_User_Command
-     (Debugger       : Visual_Debugger;
+     (Debugger       : not null access Visual_Debugger_Record'Class;
       Command        : String;
       Output_Command : Boolean := False;
       Mode           : GVD.Types.Invisible_Command := GVD.Types.Hidden)
@@ -263,7 +263,7 @@ package GVD.Process is
    --  Same as above, but returns the debugger output
 
    procedure Output_Text
-     (Process      : Visual_Debugger;
+     (Process      : not null access Visual_Debugger_Record'Class;
       Str          : String;
       Is_Command   : Boolean := False;
       Set_Position : Boolean := False);

@@ -1859,6 +1859,7 @@ package body Debugger.Gdb is
         or else Starts_With (Command, "r ")
         or else Starts_With (Command, "begin")
         or else Starts_With (Command, "start")
+        or else Starts_With (Command, "set variable")
       then
          return Execution_Command;
       end if;
@@ -3148,7 +3149,7 @@ package body Debugger.Gdb is
 
             Set_Value (Item       => Array_Type (Result.all),
                        Elem_Value => Simple,
-                       Elem_Index => Dim.First);
+                       Elem_Index => 0);
             Shrink_Values (Array_Type (Result.all));
          end;
 

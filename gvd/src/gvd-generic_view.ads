@@ -51,6 +51,9 @@ package GVD.Generic_View is
    procedure On_Attach
      (View    : not null access View_With_Process;
       Process : not null access Base_Visual_Debugger'Class) is null;
+   procedure On_Detach
+     (View    : not null access View_With_Process;
+      Process : not null access Base_Visual_Debugger'Class) is null;
    --  Called when the view is being attached to Process. This procedure should
    --  typically be used to connect to specific events on Process. However, it
    --  doesn't need to force a refresh of the view, which is done

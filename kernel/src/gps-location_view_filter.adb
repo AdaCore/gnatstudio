@@ -206,6 +206,8 @@ package body GPS.Location_View_Filter is
 
             --  ??? Should do a single pass on the whole model, and have an
             --  extra boolean column in the model. The following is O(n^2).
+            --  ??? We should use Gtkada.Tree_View instead, which does this
+            --  automatically.
 
             Child := Children (Child_Model, Iter);
             while Child /= Null_Iter loop

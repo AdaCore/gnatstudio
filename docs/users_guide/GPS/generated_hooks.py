@@ -304,7 +304,9 @@ class Predefined_Hooks:
       override the behavior for the command, or even define your own
       commands. Note that you must ensure that any debugger command you
       execute this way does finish with a prompt. The function should return
-      the output of your custom command
+      the output of your custom command (which is printed in the debugger
+      console), or Debugger.Command_Intercepted to indicate the command was
+      handled (but this is not output in the console)
       
       .. code-block:: python
       

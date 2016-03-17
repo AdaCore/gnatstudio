@@ -765,8 +765,10 @@ package body Debugger is
             begin
                if Tmp /= "" then
                   if Mode in Visible_Command then
-                     Output_Text (Process, Tmp, Is_Command  => False,
-                                  Set_Position              => True);
+                     if Tmp /= Command_Intercepted then
+                        Output_Text (Process, Tmp, Is_Command  => False,
+                                     Set_Position              => True);
+                     end if;
                      Debugger_Root'Class (Debugger.all).Display_Prompt;
                   end if;
                   return;
@@ -986,6 +988,10 @@ package body Debugger is
          --  because right after this call, Set_Value will typically request
          --  the new value of the variable, before we got the debugger's
          --  prompt asynchronously.
+         --  ??? On the other hand, we want the command to be visible in the
+         --  console (and its output, since we get an error when casting to an
+         --  invalid value for instance), and we also want the Variables view
+         --  to refresh after the command.
 
          Send (Debugger, S, Mode => Hidden);
       end if;

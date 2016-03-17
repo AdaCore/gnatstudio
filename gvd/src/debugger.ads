@@ -138,6 +138,8 @@ package Debugger is
    --  afterward. However, in some cases it is necessary to immediately send
    --  Cmd to the debugger (for instance because the latter is waiting for
    --  input). In this case, Force_Send might be set to True
+   --  Modules can define their own commands ("graph display ...") which are
+   --  intercepted via the Debugger_Command_Action_Hook.
 
    function Send_And_Get_Output
      (Debugger        : access Debugger_Root;
@@ -989,6 +991,9 @@ package Debugger is
      (Debugger : access Debugger_Root'Class)
       return GPS.Kernel.Kernel_Handle;
    --  Return the kernel
+
+   Command_Intercepted : constant String := "----";
+   --  See the documentation of the Debugger_Command_Action_Hook
 
 private
    type Command_Record;

@@ -722,8 +722,11 @@ package body GPS.Kernel.Contexts is
      (Context : Selection_Context) return Boolean is
    begin
       return not Context.Ref.Is_Null
-        and then not (Context.Ref.Get.Start_Line = 0
-                      and then Context.Ref.Get.End_Line = 0);
+        and then
+          (Context.Ref.Get.Text /= Null_Unbounded_String
+           or else
+             not (Context.Ref.Get.Start_Line = 0
+                  and then Context.Ref.Get.End_Line = 0));
    end Has_Area_Information;
 
    --------------

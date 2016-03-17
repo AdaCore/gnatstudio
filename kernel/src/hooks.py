@@ -573,7 +573,9 @@ the command through the GPS.Debugger API. It gives you a chance to
 override the behavior for the command, or even define your own
 commands. Note that you must ensure that any debugger command you
 execute this way does finish with a prompt. The function should return
-the output of your custom command\n
+the output of your custom command (which is printed in the debugger
+console), or Debugger.Command_Intercepted to indicate the command was
+handled (but this is not output in the console)\n
 .. code-block:: python\n
     ## The following example implements a new gdb command, "hello". When
     ## the user types this command in the console, we end up executing
