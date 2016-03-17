@@ -662,12 +662,11 @@ package body Debugger is
       Force_Send      : Boolean := False;
       Mode            : Command_Type := Hidden)
    is
-      Process : constant Visual_Debugger := GVD.Process.Convert (Debugger);
-      Button  : Message_Dialog_Buttons;
-      pragma Unreferenced (Button);
-      Last    : Positive := Cmd'First;
+      Process  : constant Visual_Debugger := GVD.Process.Convert (Debugger);
+      Dummy    : Message_Dialog_Buttons;
+      Last     : Positive := Cmd'First;
       Cmd_Last : Natural;
-      First   : Positive;
+      First    : Positive;
 
       procedure Wait_For_Prompt_And_Get_Output;
       --  Wait for the prompt synchronously, then get the full debugger
@@ -686,14 +685,15 @@ package body Debugger is
             declare
                S : String := Glib.Convert.Locale_To_UTF8
                  (Expect_Out (Get_Process (Debugger)));
+               L : Natural;
             begin
                --  Strip CRs in remote mode, as we can't know in advance if the
                --  debug server outputs CR/LF or just LF, and the consequences
                --  or removing CRs in the latter case are better than not
                --  removing them in the first case
                if Need_To_Strip_CR or else not Is_Local (Debug_Server) then
-                  Strip_CR (S, Last, CR_Found => Dummy);
-                  Output := new String'(S (S'First .. Last));
+                  Strip_CR (S, L, CR_Found => Dummy);
+                  Output := new String'(S (S'First .. L));
                else
                   Output := new String'(S);
                end if;
@@ -756,24 +756,23 @@ package body Debugger is
          --  might execute or queue commands (by ultimately calling this same
          --  Internal_Send procedure).
 
-         declare
-            Tmp : constant String :=
-              (if Debugger.Kernel = null
-               then ""    --  in the testsuite
-               else Debugger_Command_Action_Hook.Run
-                 (Kernel   => Debugger.Kernel,
-                  Debugger => Process,
-                  Str      => Cmd (First .. Last - 1)));
-         begin
-            if Tmp /= "" then
-               if Mode in Visible_Command then
-                  Output_Text (Process, Tmp, Is_Command  => False,
-                               Set_Position              => True);
-                  Debugger_Root'Class (Debugger.all).Display_Prompt;
+         if Debugger.Kernel /= null then   --  not in the testsuite
+            declare
+               Tmp : constant String := Debugger_Command_Action_Hook.Run
+                  (Kernel   => Debugger.Kernel,
+                   Debugger => Process,
+                   Str      => Cmd (First .. Last - 1));
+            begin
+               if Tmp /= "" then
+                  if Mode in Visible_Command then
+                     Output_Text (Process, Tmp, Is_Command  => False,
+                                  Set_Position              => True);
+                     Debugger_Root'Class (Debugger.all).Display_Prompt;
+                  end if;
+                  return;
                end if;
-               return;
-            end if;
-         end;
+            end;
+         end if;
 
          --  Used to have the following text:
          --    if Mode not in Invisible_Command
@@ -837,7 +836,7 @@ package body Debugger is
                return;
             end if;
 
-            Button :=
+            Dummy :=
               Message_Dialog
                 (Expect_Out (Get_Process (Debugger)) & ASCII.LF &
                  (-"The underlying debugger died unexpectedly. Closing it"),
