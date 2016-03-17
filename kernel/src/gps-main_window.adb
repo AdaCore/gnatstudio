@@ -396,7 +396,6 @@ package body GPS.Main_Window is
          --  menus (that might have been destroyed) in reaction to context
          --  changes.
          Main_Window.Kernel.Set_Destruction_Flag (True);
-
          return True;
       else
          return False;
@@ -447,8 +446,14 @@ package body GPS.Main_Window is
       Params : Glib.Values.GValues) return Boolean
    is
       pragma Unreferenced (Params);
+      Main_Window : constant GPS_Window := GPS_Window (Widget);
    begin
-      return not Prepare_Quit (GPS_Window (Widget));
+      if Prepare_Quit (Main_Window) then
+         Main_Window.Application.Quit;
+         return False;
+      end if;
+
+      return True;
    end Delete_Callback;
 
    -------------
