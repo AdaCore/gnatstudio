@@ -515,7 +515,6 @@ package body Project_Explorers_Files is
    function Read_Directory
      (D : Append_Directory_Idle_Data_Access) return Boolean
    is
-      This_Timeout_Id : G_Source_Id;
       Path_Found : Boolean := False;
       Iter       : Gtk_Tree_Iter;
       Empty      : Boolean := True;
@@ -534,12 +533,12 @@ package body Project_Explorers_Files is
          use Timeout_Id_List;
          C : Cursor;
       begin
-         if This_Timeout_Id = No_Source_Id then
+         if D.This_Timeout_ID = No_Source_Id then
             --  This can happen when we are calling this synchronously rather
             --  than from a timeout/idle callback
             return;
          end if;
-         C := D.Explorer.Fill_Timeout_Ids.Find (This_Timeout_Id);
+         C := D.Explorer.Fill_Timeout_Ids.Find (D.This_Timeout_ID);
          if C /= No_Element then
             D.Explorer.Fill_Timeout_Ids.Delete (C);
          end if;
@@ -550,10 +549,6 @@ package body Project_Explorers_Files is
          --  Cannot happen right now, but do this for safety
          return False;
       end if;
-
-      --  Make a copy of this right now, so we can free D and then still
-      --  call Clear_Timeout_Id whenever we want.
-      This_Timeout_Id := D.This_Timeout_ID;
 
       --  If we are appending at the base, create a node indicating the
       --  absolute path to the directory.
@@ -580,10 +575,11 @@ package body Project_Explorers_Files is
               (Values (4), Stock_For_Node (Directory_Node, Expanded => False));
             Set_And_Clear (D.Explorer.File_Model, Iter, Columns, Values);
 
+            Clear_Timeout_Id;
+
             New_D := D;
             Free (New_D);
 
-            Clear_Timeout_Id;
             return False;
          end if;
       end if;
@@ -776,20 +772,22 @@ package body Project_Explorers_Files is
       D.Norm_Dest := No_File;
       Unchecked_Free (D.Files);
 
+      Clear_Timeout_Id;
+
       New_D := D;
       Free (New_D);
 
-      Clear_Timeout_Id;
       return False;
 
    exception
       when VFS_Directory_Error =>
          --  The directory couldn't be open, probably because of permissions
 
+         Clear_Timeout_Id;
+
          New_D := D;
          Free (New_D);
 
-         Clear_Timeout_Id;
          return False;
 
       when E : others =>
