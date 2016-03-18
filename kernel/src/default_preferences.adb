@@ -1460,7 +1460,10 @@ package body Default_Preferences is
 
       Free (Pref.Path);
 
-      if Path /= "" and then Path /= "./" then
+      --  For preferences registered from Python, the paths are retrieved from
+      --  the preferences names using the Dir_Name command, which can return
+      --  "./" or ".\" for an empty path, depending on the platform.
+      if Path /= "" and then Path /= "./" and then Path /= ".\" then
          Pref.Path := new String'(Path);
          Extract_Page_And_Group_Names (Path       => Path,
                                        Page_Name  => Pref.Page_Name,
