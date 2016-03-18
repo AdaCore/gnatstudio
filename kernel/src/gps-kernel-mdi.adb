@@ -86,6 +86,9 @@ package body GPS.Kernel.MDI is
    package Tabs_Position_Preferences is new
      Default_Preferences.Enums.Generics (Tabs_Position_Preference);
 
+   package Tabs_Orientation_Preferences is new
+     Default_Preferences.Enums.Generics (Tab_Orientation_Type);
+
    type Tabs_Policy_Enum is (Never, Automatic, Always);
    package Show_Tabs_Policy_Preferences is new
      Default_Preferences.Enums.Generics (Tabs_Policy_Enum);
@@ -96,6 +99,7 @@ package body GPS.Kernel.MDI is
 
    Pref_Tabs_Policy      : Show_Tabs_Policy_Preferences.Preference;
    Pref_Tabs_Position    : Tabs_Position_Preferences.Preference;
+   Pref_Tabs_Orientation : Tabs_Orientation_Preferences.Preference;
    MDI_Destroy_Floats    : Boolean_Preference;
    MDI_All_Floating      : Boolean_Preference;
    MDI_Editors_Floating  : Boolean_Preference;
@@ -397,6 +401,16 @@ package body GPS.Kernel.MDI is
               & " clicking on a tab."),
          Default => Top);
 
+      Pref_Tabs_Orientation := Tabs_Orientation_Preferences.Create
+        (Get_Preferences (Kernel),
+         Path  => -"Windows:Notebook Tabs",
+         Name  => "Default-Tabs-Orientation",
+         Label => -"Notebook tabs orientation",
+         Doc   =>
+            -("Set default orientation of notebook tabs. Override by right"
+              & " clicking on a tab."),
+         Default => Automatic);
+
       Auto_Reload_Files := Create
         (Manager => Kernel.Preferences,
          Path    => -"Editor:Behavior",
@@ -415,15 +429,18 @@ package body GPS.Kernel.MDI is
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Default_Preferences.Preference := null)
    is
-      Pos    : Gtk_Position_Type;
-      Policy : Show_Tabs_Policy_Enum;
+      Position : Gtk_Position_Type;
+      Rotation : Tab_Orientation_Type;
+      Policy   : Show_Tabs_Policy_Enum;
    begin
       case Tabs_Position_Preference'(Pref_Tabs_Position.Get_Pref) is
-         when Bottom => Pos := Pos_Bottom;
-         when Right  => Pos := Pos_Right;
-         when Top    => Pos := Pos_Top;
-         when Left   => Pos := Pos_Left;
+         when Bottom => Position := Pos_Bottom;
+         when Right  => Position := Pos_Right;
+         when Top    => Position := Pos_Top;
+         when Left   => Position := Pos_Left;
       end case;
+
+      Rotation := Pref_Tabs_Orientation.Get_Pref;
 
       case Tabs_Policy_Enum'(Pref_Tabs_Policy.Get_Pref) is
          when Automatic => Policy := Show_Tabs_Policy_Enum'(Automatic);
@@ -446,7 +463,8 @@ package body GPS.Kernel.MDI is
             and not MDI_Editors_Floating.Get_Pref,
             Draw_Title_Bars           => Never,
             Show_Tabs_Policy          => Policy,
-            Tabs_Position             => Pos,
+            Tabs_Position             => Position,
+            Tabs_Orientation          => Rotation,
             Homogeneous_Tabs          => MDI_Homogeneous_Tabs.Get_Pref);
       end if;
 
