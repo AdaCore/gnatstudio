@@ -179,7 +179,7 @@ private
 
    type Action_Record is record
       Command     : not null access Interactive_Command'Class;
-      Filter      : not null access Action_Filter_Record'Class;
+      Filter      : access Action_Filter_Record'Class;
       Description : GNAT.Strings.String_Access;
       Name        : GNAT.Strings.String_Access;
       Modified    : Boolean;
