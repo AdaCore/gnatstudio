@@ -2202,6 +2202,7 @@ package body Build_Configurations is
            "text_splitter"      & " " &
            "output_collector"   & " " &
            "elaboration_cycles" & " " &
+           "linker_parser"      & " " &
            "end_of_build";
       end if;
    end Default_Parser_Names;

@@ -122,8 +122,9 @@ XML = r"""<?xml version="1.0" ?>
       <arg>%X</arg>
    </command-line>
    <iconname>gps-build-all-symbolic</iconname>
-   <switches command="%(tool_name)s" columns="2" lines="2">
+   <switches command="%(tool_name)s" columns="2" lines="2" sections="-largs">
      <title column="1" line="1" >Dependencies</title>
+     <title column="1" line="2" >Linking</title>
      <title column="2" line="1" >Compilation</title>
      <title column="2" line="2" >Project</title>
      <check label="Recompile if switches changed" switch="-s"
@@ -131,6 +132,11 @@ XML = r"""<?xml version="1.0" ?>
             since last compilation" />
      <check label="Keep going" switch="-k"
             tip="Continue as much as possible after a compilation error" />
+     <check label="Display memory usage" switch="-Wl,--print-memory-usage"
+            section="-largs"
+            tip="Display the memory usage in the Memory usage view"
+            filter="Linker is supported"
+            line="2" />
      <spin label="Multiprocessing" switch="-j" min="0" max="100" default="1"
            column="2"
            tip="Use N processes to carry out the compilations.
@@ -230,7 +236,6 @@ XML = r"""<?xml version="1.0" ?>
      <check label="Debug information" switch="-g" column="2"
             tip="Add debugging information. This forces the corresponding
             switch for the compiler, binder and linker" />
-
      <check label="Syntax check" switch="-gnats" line="2"
             tip="Perform syntax check, no compilation occurs" />
      <check label="Semantic check" switch="-gnatc" line="2"
@@ -433,6 +438,8 @@ name="U_pdate file XRef in background">
        <arg>-P%PP</arg>
        <arg>%X</arg>
        <arg>%T</arg>
+       <arg>-largs</arg>
+       <arg>-Wl,--print-memory-usage</arg>
     </command-line>
 </target>
 
@@ -448,6 +455,8 @@ name="U_pdate file XRef in background">
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
+       <arg>-largs</arg>
+       <arg>-Wl,--print-memory-usage</arg>
     </command-line>
 </target>
 <target model="builder" category="_Project" name="_Compile All Sources">
