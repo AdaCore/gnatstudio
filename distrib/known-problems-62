@@ -46,6 +46,15 @@ KP-62-P218-045 GB: Problems in GPR files reported in editor at line 1
   Workaround: Scroll manually to the line provided in the location column
               of the problems view.
 
+KP-62-P216-002 GPS: Libclang parsing files task not finishing.
+
+  Problem:    When working on C/C++ projects, the "libclang parsing files" task
+              would often not finish.
+
+  Status:     This was fixed in 17.0 on 2016-03-20
+
+  Workaround: Disable clang crossrefs via the LIBCLANG_XREF trace.
+
 KP-62-P211-059 GPS: Wrong sort order of directories in Project View
 
   Problem:    Expanding one project changes order of object and execute
