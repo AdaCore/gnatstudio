@@ -154,6 +154,14 @@ KP-62-P122-041 GPS: Outline becomes empty after filtering
 
   Workaround: Don't use the outline's filter.
 
+KP-62-P122-015 GPS: Too much memory used on big C/C++ projects
+
+  Problem:    Indexing C/C++ files uses a lot of memory for very big projects.
+
+  Status:     This was fixed in 17.0 on 2016-03-20
+
+  Workaround: Disable clang crossrefs via the LIBCLANG_XREF trace.
+
 KP-62-P121-016 WB: undefined reference to `_Unwind_Resume'
 
   Problem:    When building VxWorks Cert 6.x Real Time Process (RTP)
