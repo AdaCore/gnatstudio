@@ -161,7 +161,7 @@ package GPS.Kernel.Actions is
 private
 
    type Action_Record is record
-      Command     : not null access Interactive_Command'Class;
+      Command     : access Interactive_Command'Class;
       Filter      : access Action_Filter_Record'Class;
       Description : GNAT.Strings.String_Access;
       Name        : GNAT.Strings.String_Access;
