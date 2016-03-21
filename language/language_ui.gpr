@@ -1,11 +1,12 @@
 with "gtkada";
 with "language";
+with "../shared";
 
 project Language_UI is
 
    for Languages use ("Ada");
    for Source_Dirs use ("ui/src");
-   for Object_Dir use "ui/obj";
+   for Object_Dir use Shared'Object_Dir;
 
    package Compiler is
       for Switches ("Ada")

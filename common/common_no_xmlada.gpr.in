@@ -5,7 +5,7 @@ project Common is
 
    for Languages use ("Ada", "C");
    for Source_Dirs use ("core/src");
-   for Object_Dir use "core/obj";
+   for Object_Dir use Shared'Object_Dir;
 
    package Compiler is
       for Switches ("Ada") use Shared.Compiler'Switches ("Ada");

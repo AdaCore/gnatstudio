@@ -13,8 +13,10 @@ project Shared is
    --  Whether to enable link-time-optimization, and removal of
    --  unused subprograms
 
+   Global_Objects_Root := External("GPS_OBJECTS_ROOT", "");
+
    for Source_Dirs use ();
-   for Object_Dir use "obj";
+   for Object_Dir use Global_Objects_Root &  "obj";
    for Library_Dir use "lib";
 
    package IDE is

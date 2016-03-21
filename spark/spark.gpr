@@ -3,7 +3,7 @@ with "gnatcoll";
 
 project SPARK is
    for Source_Dirs use ("src");
-   for Object_Dir use "obj";
+   for Object_Dir use Shared'Object_Dir;
    for Main use ("gnatspark.adb");
 
    package IDE renames Shared.IDE;
