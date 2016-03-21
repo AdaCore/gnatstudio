@@ -69,8 +69,8 @@ class BoardLoader(Module):
 
     def __reset_all(self, manager_delete=True, connection_delete=True):
         """ Reset the workflows """
-        msg_is("Resetting the connection")
         if self.__connection is not None and connection_delete:
+            msg_is("Resetting the connection")
             self.__connection.terminate()
             self.__connection = None
 

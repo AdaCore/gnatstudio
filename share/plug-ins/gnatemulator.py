@@ -15,12 +15,22 @@ from os_utils import locate_exec_on_path
 from gps_utils.console_process import Console_Process
 import os
 
-GDB_REMOTE_PORT_PREF = "Plugins/gnatemulator/gdb_remote_target"
 
-GPS.Preference(GDB_REMOTE_PORT_PREF).create(
-    "GDB remote target port", "integer",
-    """Remote port used for debug on GNATemu""",
-    1234)
+project_attributes = """
+  <project_attribute
+   package="emulator"
+   name="Debug_Port"
+   label="Debug port"
+   editor_page="GNATemulator"
+   hide_in="wizard library_wizard"
+   description="Port used by GNATemulator to debug"
+  >
+    <string/>
+  </project_attribute>
+"""
+
+# This has to be done at GPS start, before the project is actually loaded.
+GPS.parse_xml(project_attributes)
 
 
 def log(msg):
@@ -92,18 +102,15 @@ class GNATemulator(Module):
 
     def executable_path(self, main_name):
         b = GPS.Project.root().get_executable_name(GPS.File(main_name))
-        exec_dir = GPS.Project.root().get_attribute_as_string("exec_dir")
-        if exec_dir == '(same as build directory)':
-            exec_dir = GPS.Project.root().object_dirs()[0]
-        if not os.path.isabs(exec_dir):
-            exec_dir = os.path.join(GPS.Project.root().file().directory(),
-                                    exec_dir)
+        exec_dir = GPS.Project.root().exec_dir()
         ret = os.path.join(exec_dir, b)
         return ret
 
     def __error_exit(self, msg=""):
         """ Emit an error and reset the workflows """
-        GPS.Console("Messages").write(msg + " [workflow stopped]")
+        GPS.Console("Messages").write(
+            msg + " [workflow stopped]",
+            mode="error")
 
     ###############################
     # The following are workflows #
@@ -152,36 +159,36 @@ class GNATemulator(Module):
 
         log("... done.")
 
-        # STEP 2 launch debugger
+        # STEP 2 Switch to the "Debug" perspective To have GNATemu console in
+        # the debugger perspective.
 
-        debugger_promise = promises.DebuggerWrapper(GPS.File(binary))
+        GPS.MDI.load_perspective("Debug")
+
+        # STEP 2 load with Emulator
+        debug_port = GPS.Project.root().get_attribute_as_string(
+            package="Emulator", attribute="Debug_Port")
+
+        # TODO: remove this fall-back once GNATemulator supports the
+        # new 'Debug_Port' attribute (Fabien's task)
+        if debug_port == "":
+            debug_port = "1234"
+
+        self.run_gnatemu(["--freeze-on-startup",
+                          "--gdb=%s" % debug_port,
+                          self.executable_path(main_name)])
+
+        log("... done.")
+
+        # STEP 3 launch the debugger
+        debugger_promise = promises.DebuggerWrapper(
+            GPS.File(binary),
+            remote_target="localhost:" + debug_port,
+            remote_protocol="remote")
 
         # block execution until debugger is free
         r3 = yield debugger_promise.wait_and_send(cmd="", block=False)
         if not r3:
             self.__error_exit("Could not initialize the debugger.")
-            r3 = yield debugger_promise.wait_and_send(cmd="", block=False)
-            return
-        log("... done.")
-
-        gdb_remote_port = GPS.Preference(GDB_REMOTE_PORT_PREF).get()
-
-        # STEP 3 load with Emulator
-        # To have GNATemu console in the debugger perspective we have to start
-        # GNATemu after gdb initialization.
-        self.run_gnatemu(["--freeze-on-startup",
-                          "--gdb=%d" % gdb_remote_port,
-                          self.executable_path(main_name)])
-
-        # STEP 4 target and run the program
-        log("Sending debugger command to target the emulator...")
-        r3 = yield debugger_promise.wait_and_send(
-            cmd="target remote :%d" % gdb_remote_port,
-            timeout=4000)
-        interest = "Remote debugging using :%d" % gdb_remote_port
-
-        if interest not in r3:
-            self.__error_exit("Could not connect to the target.")
             return
 
         log("... done.")

@@ -151,13 +151,20 @@ package GVD.Process is
    type Visual_Debugger is access all Visual_Debugger_Record'Class;
 
    function Spawn
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Kind    : GVD.Types.Debugger_Type;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Project : Project_Type;
-      Args    : String) return Visual_Debugger;
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Kind            : GVD.Types.Debugger_Type;
+      File            : GNATCOLL.VFS.Virtual_File;
+      Project         : Project_Type;
+      Args            : String;
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "") return Visual_Debugger;
    --  Spawn a new debugger on File (taking into account the settings from
    --  Project). Args are passed to the executable File.
+   --
+   --  If non-empty, Remote_Target and Remote_Protocol are used to initialize
+   --  a remote connection instead of using the attributes defined in the IDE
+   --  package for this purpose (i.e: respectively IDE'Program_Host and
+   --  IDE'Communication_Protocol).
 
    procedure Close_Debugger (Process : access Visual_Debugger_Record);
    --  Close the given debugger and terminate the debugging session if this

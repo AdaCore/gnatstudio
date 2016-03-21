@@ -33,8 +33,6 @@ with GVD_Module;              use GVD_Module;
 
 package body GVD.Scripts is
 
-   Show_In_Console_Cst : aliased constant String := "show_in_console";
-
    procedure Shell_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
@@ -49,11 +47,6 @@ package body GVD.Scripts is
       Command : String)
    is
       Kernel : constant Kernel_Handle := GPS.Kernel.Scripts.Get_Kernel (Data);
-      Arg_Cmd    : aliased constant String := "cmd";
-      Arg_ID     : aliased constant String := "id";
-      Arg_Exec   : aliased constant String := "executable";
-      Arg_Args   : aliased constant String := "args";
-      Arg_Output : aliased constant String := "output";
       Process    : Visual_Debugger;
       Inst       : Class_Instance;
    begin
@@ -64,7 +57,6 @@ package body GVD.Scripts is
             & "Use GPS.Debugger.get() or GPS.Debugger.spawn() instead"));
 
       elsif Command = "get" then
-         Name_Parameters (Data, (1 => Arg_ID'Unchecked_Access));
          declare
             Id   : Natural;
             File_Inst : Class_Instance;
@@ -73,7 +65,6 @@ package body GVD.Scripts is
          begin
             if Number_Of_Arguments (Data) = 0 then
                Process := Visual_Debugger (Get_Current_Debugger (Kernel));
-
             else
                Id := Nth_Arg (Data, 1);
                while List /= null loop
@@ -120,11 +111,6 @@ package body GVD.Scripts is
          end;
 
       elsif Command = "send" then
-         Name_Parameters
-           (Data,
-            (1 => Arg_Cmd'Unchecked_Access,
-             2 => Arg_Output'Unchecked_Access,
-             3 => Show_In_Console_Cst'Access));
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
 
@@ -144,10 +130,6 @@ package body GVD.Scripts is
          end if;
 
       elsif Command = "non_blocking_send" then
-         Name_Parameters
-           (Data,
-            (1 => Arg_Cmd'Unchecked_Access,
-             2 => Arg_Output'Unchecked_Access));
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Process_User_Command
@@ -213,19 +195,21 @@ package body GVD.Scripts is
          Close_Debugger (Process);
 
       elsif Command = "spawn" then
-         Name_Parameters (Data, (1 => Arg_Exec'Unchecked_Access,
-                                 2 => Arg_Args'Unchecked_Access));
          declare
-            File_Inst : constant Class_Instance := Nth_Arg
-              (Data, 1, Get_File_Class (Kernel), Allow_Null => False);
-            File : constant Virtual_File := Get_Data (File_Inst);
+            File_Inst       : constant Class_Instance := Nth_Arg
+              (Data, 1, Get_File_Class (Kernel));
+            File            : constant Virtual_File := Get_Data (File_Inst);
+            Remote_Target   : constant String := Nth_Arg (Data, 3, "");
+            Remote_Protocol : constant String := Nth_Arg (Data, 4, "");
          begin
             Process := Spawn
-              (Kernel => Kernel,
-               Kind   => Debugger_Kind.Get_Pref,
-               File   => File,
-               Project => Get_Project (Kernel),
-               Args    => Nth_Arg (Data, 2, ""));
+              (Kernel          => Kernel,
+               Kind            => Debugger_Kind.Get_Pref,
+               File            => File,
+               Project         => Get_Project (Kernel),
+               Args            => Nth_Arg (Data, 2, ""),
+               Remote_Target   => Remote_Target,
+               Remote_Protocol => Remote_Protocol);
             Set_Return_Value
               (Data, Get_Or_Create_Instance (Get_Script (Data), Process));
          end;
@@ -242,32 +226,111 @@ package body GVD.Scripts is
       Class : constant Class_Type := New_Class (Kernel, "Debugger");
    begin
       Register_Command
-        (Kernel, Constructor_Method, 0, 0, Shell_Handler'Access, Class);
+        (Kernel,
+         Constructor_Method,
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
       Register_Command
-        (Kernel, "get", 0, 1, Shell_Handler'Access, Class,
+        (Kernel.Scripts,
+         "get",
+         Params       => (1 => Param ("id", Optional => True)),
+         Handler      => Shell_Handler'Access,
+         Class        => Class,
          Static_Method => True);
       Register_Command
-        (Kernel, "list", 0, 0, Shell_Handler'Access, Class,
-         Static_Method => True);
-      Register_Command (Kernel, "send", 1, 3, Shell_Handler'Access, Class);
-      Register_Command
-        (Kernel, "non_blocking_send", 1, 1, Shell_Handler'Access, Class);
-      Register_Command
-        (Kernel, "get_executable", 0, 0, Shell_Handler'Access, Class);
-      Register_Command (Kernel, "get_num", 0, 0, Shell_Handler'Access, Class);
-      Register_Command (Kernel, "is_busy", 0, 0, Shell_Handler'Access, Class);
-      Register_Command (Kernel, "close", 0, 0, Shell_Handler'Access, Class);
-      Register_Command
-        (Kernel, "spawn", 1, 2, Shell_Handler'Access, Class,
+        (Kernel.Scripts,
+         "list",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Shell_Handler'Access,
+         Class        => Class,
          Static_Method => True);
       Register_Command
-        (Kernel, "command", 0, 0, Shell_Handler'Access, Class);
+        (Kernel.Scripts,
+         "send",
+         Params =>
+           (1 => Param ("cmd"),
+            2 => Param ("output", Optional => True),
+            3 => Param ("show_in_console", Optional => True)),
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
       Register_Command
-        (Kernel, "is_exec_command", 0, 0, Shell_Handler'Access, Class);
+        (Kernel.Scripts,
+         "non_blocking_send",
+         Params =>
+           (1 => Param ("cmd"),
+            2 => Param ("output", Optional => True)),
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
       Register_Command
-        (Kernel, "is_context_command", 0, 0, Shell_Handler'Access, Class);
+        (Kernel.Scripts,
+         "get_executable",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
       Register_Command
-        (Kernel, "is_break_command", 0, 0, Shell_Handler'Access, Class);
+        (Kernel.Scripts,
+         "get_num",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Register_Command
+        (Kernel.Scripts,
+         "is_busy",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Register_Command
+        (Kernel.Scripts,
+         "close",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Register_Command
+        (Kernel.Scripts,
+         "spawn",
+         Params =>
+           (1 => Param ("executable"),
+            2 => Param ("args", Optional => True),
+            3 => Param ("remote_target", Optional => True),
+            4 => Param ("remote_protocol", Optional => True)),
+         Handler       => Shell_Handler'Access,
+         Class         => Class,
+         Static_Method => True);
+      Register_Command
+        (Kernel.Scripts,
+         "command",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Register_Command
+        (Kernel.Scripts,
+         "is_exec_command",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Register_Command
+        (Kernel.Scripts,
+         "is_context_command",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Register_Command
+        (Kernel.Scripts,
+         "is_break_command",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
    end Create_Hooks;
 
 end GVD.Scripts;

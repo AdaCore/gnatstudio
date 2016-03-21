@@ -2297,13 +2297,21 @@ class Debugger(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def spawn(executable, args=''):
+    def spawn(executable, args='', remote_target='', remote_protocol=''):
         """
         Starts a new debugger. It will debug ``executable``. When the program
         is executed, the extra arguments args are passed.
 
+        If ``remote_target`` and ``remote_protocol`` are specified and
+        non-empty, the debugger will try to initialize a remote debugging
+        session with these parameters. When not specified, the
+        ``IDE'Program_Host`` and ``IDE'Communication_Protocol`` are used
+        if present in the .gpr project file.
+
         :param executable: An instance of GPS.File
         :param args: A string
+        :param remote_target: A string
+        :param remote_protocol: A string
         :return: An instance of :class:`GPS.Debugger`
         """
         pass  # implemented in Ada
@@ -8642,6 +8650,15 @@ class Project(object):
 
         :param recursive: A boolean
         :return: A list of strings
+        """
+        pass  # implemented in Ada
+
+    def exec_dir(self):
+        """
+        Return the directory that contains the executables generated for the
+        main programs of this project. This is either Exec_Dir or Object_Dir.
+
+        :return: A string
         """
         pass  # implemented in Ada
 

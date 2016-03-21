@@ -1610,7 +1610,9 @@ package body GVD.Process is
       Kind    : GVD.Types.Debugger_Type;
       File    : GNATCOLL.VFS.Virtual_File;
       Project : Project_Type;
-      Args    : String) return Visual_Debugger
+      Args    : String;
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "") return Visual_Debugger
    is
       Top          : constant GPS_Window :=
                        GPS_Window (Get_Main_Window (Kernel));
@@ -1730,7 +1732,19 @@ package body GVD.Process is
                     (Project.Attribute_Value
                        (Debugger_Command_Attribute,
                         Default => Default_Gdb));
-
+         Actual_Remote_Target   : constant String :=
+                                    (if Remote_Target /= "" then
+                                        Remote_Target
+                                     else
+                                        Project.Attribute_Value
+                                       (Program_Host_Attribute));
+         Actual_Remote_Protocol : constant String :=
+                                    (if Remote_Protocol /= ""
+                                     then
+                                        Remote_Protocol
+                                     else
+                                        Project.Attribute_Value
+                                       (Protocol_Attribute));
       begin
          Proxy := new GPS_Proxy;
          GPS_Proxy (Proxy.all).Process := Process;
@@ -1741,8 +1755,8 @@ package body GVD.Process is
             Executable      => Module,
             Debugger_Args   => Args (2 .. Args'Last),
             Executable_Args => Program_Args.all,
-            Remote_Target  => Project.Attribute_Value (Program_Host_Attribute),
-            Remote_Protocol => Project.Attribute_Value (Protocol_Attribute),
+            Remote_Target   => Actual_Remote_Target,
+            Remote_Protocol => Actual_Remote_Protocol,
             Debugger_Name   => Args (1).all,
             Success         => Success);
          GNAT.OS_Lib.Free (Args);

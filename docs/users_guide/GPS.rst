@@ -1442,6 +1442,8 @@ Classes
 
    .. automethod:: GPS.Project.dependencies
 
+   .. automethod:: GPS.Project.exec_dir
+
    .. automethod:: GPS.Project.file
 
    .. automethod:: GPS.Project.generate_doc

@@ -407,10 +407,17 @@ class DebuggerWrapper(object):
     # the debugger is busy, in milliseconds
     __query_interval = 200
 
-    def __init__(self, f, reuse_existing=True):
+    def __init__(self, f, reuse_existing=True,
+                 remote_target='', remote_protocol=''):
         """
            Initialize a manager, begin a debugger on the given file
-           with no timers, no promises, no command
+           with no timers, no promises, no command.
+
+           The optional ``remote_target`` and ``remote_protocol`` parameters
+           are used to initialize a remote debugging session when spawning the
+           debugger. When not specified, the ``IDE'Program_Host`` and
+           ``IDE'Communication_Protocol`` are used if present in the .gpr
+            project file.
         """
 
         if reuse_existing:
@@ -421,7 +428,10 @@ class DebuggerWrapper(object):
                 # if we reach this, a debugger is running: interrupt it
                 GPS.execute_action("/Debug/Interrupt")
             except:
-                self.__debugger = GPS.Debugger.spawn(f)
+                self.__debugger = GPS.Debugger.spawn(
+                    executable=f,
+                    remote_target=remote_target,
+                    remote_protocol=remote_protocol)
                 pass
         else:
             self.__debugger = GPS.Debugger.spawn(f)
