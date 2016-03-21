@@ -1355,6 +1355,11 @@ package body Language.Libclang is
    begin
       Trace (Me, "Cleaning all cache for libclang");
 
+      --  Kill all tasks *before* we deallocate any resources
+      for T of Clang_Module_Id.Parsing_Tasks loop
+         T.Finish;
+      end loop;
+
       Unchecked_Free (Id.Active_Files);
 
       for C of Id.TU_Cache.all loop
@@ -1371,10 +1376,6 @@ package body Language.Libclang is
 
       Dispose (Id.Index_Action);
       clang_disposeIndex (Id.Clang_Indexer);
-
-      for T of Clang_Module_Id.Parsing_Tasks loop
-         T.Finish;
-      end loop;
 
       Clang_Symbol_Table.Free;
    end Destroy;
