@@ -124,6 +124,15 @@ package body GPS.Kernel.Task_Manager is
       Interrupt_Queue (Manager, Command);
    end Interrupt_Queue;
 
+   procedure Interrupt_Queue
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Queue_Id : String)
+   is
+      Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);
+   begin
+      Interrupt_Queue (Manager, Queue_Id);
+   end Interrupt_Queue;
+
    ---------------
    -- Has_Queue --
    ---------------

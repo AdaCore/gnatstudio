@@ -61,6 +61,12 @@ package Task_Manager is
    --  will be Free'd.
    --  Do nothing if there is no such queue.
 
+   procedure Interrupt_Queue
+     (Manager  : not null access Task_Manager_Record;
+      Queue_Id : String);
+   --  Interrupts the queue that has the given id, if any. If there is no
+   --  such queue, do nothing.
+
    procedure Interrupt_Command
      (Manager : not null access Task_Manager_Record;
       Index   : Integer);

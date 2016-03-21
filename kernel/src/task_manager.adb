@@ -59,6 +59,12 @@ package body Task_Manager is
       Active  : Boolean);
    --  Runs the task manager, if it is not already running
 
+   procedure Interrupt_Queue_N
+     (Manager : not null access Task_Manager_Record;
+      Index   : Natural);
+   --  Internal factorization function.
+   --  Interrupt the queue at the given index.
+
    -----------------------
    -- Interrupt_Command --
    -----------------------
@@ -538,6 +544,39 @@ package body Task_Manager is
       Run (Task_Manager_Access (Manager),  Active);
    end Add_Command;
 
+   -----------------------
+   -- Interrupt_Queue_N --
+   -----------------------
+
+   procedure Interrupt_Queue_N
+     (Manager : not null access Task_Manager_Record;
+      Index   : Natural) is
+   begin
+      Interrupt_Command (Manager, Index);
+
+      if Index >= Manager.Passive_Index then
+         Manager.Minimal_Passive_Priority := 0;
+      else
+         Manager.Minimal_Active_Priority := 0;
+      end if;
+
+      --  ??? How can this be null ? or could Index
+      --  now point to another queue, not the original one ?
+      if Manager.Queues /= null then
+         if Manager.Queues (Index) /= null then
+            --  Mark the queue as Completed: the actual freeing
+            --  of the queue will occur at the next call to
+            --  Execute_Incremental
+            Manager.Queues (Index).Status := Completed;
+         end if;
+
+         --  ??? Why do we reset the priorities ?
+         for K in Manager.Queues'Range loop
+            Manager.Queues (K).Current_Priority := 0;
+         end loop;
+      end if;
+   end Interrupt_Queue_N;
+
    ---------------------
    -- Interrupt_Queue --
    ---------------------
@@ -557,34 +596,36 @@ package body Task_Manager is
          C := Manager.Queues (J).Queue.First;
          while Has_Element (C) loop
             if Element (C) = Command_Access (Command) then
-               Interrupt_Command (Manager, J);
-
-               if J >= Manager.Passive_Index then
-                  Manager.Minimal_Passive_Priority := 0;
-               else
-                  Manager.Minimal_Active_Priority := 0;
-               end if;
-
-               --  ??? How can this be null ? or could J
-               --  now point to another queue, not the original one ?
-               if Manager.Queues /= null then
-                  if Manager.Queues (J) /= null then
-                     --  Mark the queue as Completed: the actual freeing
-                     --  of the queue will occur at the next call to
-                     --  Execute_Incremental
-                     Manager.Queues (J).Status := Completed;
-                  end if;
-
-                  --  ??? Why do we reset the priorities ?
-                  for K in Manager.Queues'Range loop
-                     Manager.Queues (K).Current_Priority := 0;
-                  end loop;
-               end if;
+               Interrupt_Queue_N (Manager, J);
                return;
             end if;
 
             Next (C);
          end loop;
+      end loop;
+   end Interrupt_Queue;
+
+   ---------------------
+   -- Interrupt_Queue --
+   ---------------------
+
+   procedure Interrupt_Queue
+     (Manager  : not null access Task_Manager_Record;
+      Queue_Id : String)
+   is
+      use type GNAT.Strings.String_Access;
+   begin
+      if Manager.Queues = null then
+         return;
+      end if;
+
+      for J in Manager.Queues'Range loop
+         if Manager.Queues (J).Id /= null
+           and then Manager.Queues (J).Id.all = Queue_Id
+         then
+            Interrupt_Queue_N (Manager, J);
+            return;
+         end if;
       end loop;
    end Interrupt_Queue;
 
