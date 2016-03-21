@@ -44,7 +44,6 @@ with GPS.Kernel.Scripts;            use GPS.Kernel.Scripts;
 with Language.Libclang_Tree;        use Language.Libclang_Tree;
 with Language.Libclang.Utils;       use Language.Libclang.Utils;
 with Clang_Xref;                    use Clang_Xref;
-with GPS.Scripts.Commands;          use GPS.Scripts.Commands;
 
 package body Language.Libclang is
 
@@ -61,6 +60,10 @@ package body Language.Libclang is
 
    Me       : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
    --  Main libclang trace
+
+   Libclang_Queue_Id : constant String := "libclang parsing files";
+   --  Name of the queue in the task manager running the command to parse
+   --  files.
 
    Diagnostics : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("LIBCLANG_DIAGNOSTICS", Off);
@@ -185,8 +188,6 @@ package body Language.Libclang is
 
       Refs                 : Clang_Crossrefs_Cache;
       --  Clang cross references cache entry point.
-
-      Parse_Files_Command_Access : Scheduled_Command_Access;
 
       Active_Files         : File_Cache_Array_Access := null;
       --  Cache used because iteration on Hashed Maps is very slow.
@@ -1009,9 +1010,7 @@ package body Language.Libclang is
       Files          : File_Array_Access;
       Filtered_Files : Virtual_File_Vectors.Vector;
    begin
-      if Clang_Module_Id.Parse_Files_Command_Access /= null then
-         Interrupt_Queue (Kernel, Clang_Module_Id.Parse_Files_Command_Access);
-      end if;
+      Interrupt_Queue (Kernel, Libclang_Queue_Id);
 
       Initialize_Crossrefs_Cache (Core_Kernel (Kernel));
 
@@ -1143,12 +1142,12 @@ package body Language.Libclang is
                Command_Data,
                Parse_Files_Iterate'Access);
 
-            Clang_Module_Id.Parse_Files_Command_Access
-              := Launch_Background_Command
+            Launch_Background_Command
               (Kernel          => Kernel,
                Command         => Command,
                Active          => False,
-               Show_Bar        => True);
+               Show_Bar        => True,
+               Queue_Id        => Libclang_Queue_Id);
          end if;
       end;
    end Execute;
