@@ -1859,20 +1859,33 @@ package body Interactive_Consoles is
       Output      : GNAT.Strings.String_Access;
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
+      Destroyed   : Boolean := False;
+
+      procedure On_Console_Destroy (Console, Data : System.Address);
+      pragma Convention (C, On_Console_Destroy);
+
+      procedure On_Console_Destroy (Console, Data : System.Address) is
+         pragma Unreferenced (Console, Data);
+      begin
+         Destroyed := True;
+      end On_Console_Destroy;
 
    begin
-      --  In case the console gets killed when handling the command, for
-      --  instance "quit" in the debugger
+      --  Processing the command could close the console (for instance
+      --  executing "q" in the debugger). So we need to monitor its
+      --  status.
 
-      Ref (Console);
+      Weak_Ref (Console, On_Console_Destroy'Unrestricted_Access);
 
+      --  This call might close the console
       Output := new String'
         (Console.Handler (Console, Command, Console.User_Data));
 
-      if Console.In_Destruction then
-         Unref (Console);
+      if Destroyed then
          return;
       end if;
+
+      Weak_Unref (Console, On_Console_Destroy'Unrestricted_Access);
 
       if Console.Handler /= Default_Command_Handler'Access then
          Get_End_Iter (Console.Buffer, Last_Iter);
@@ -1898,8 +1911,6 @@ package body Interactive_Consoles is
       end if;
 
       Free (Output);
-
-      Unref (Console);
    end Execute_Command;
 
    ----------------
