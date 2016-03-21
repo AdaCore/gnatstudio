@@ -50,6 +50,11 @@ class Clang(object):
         self.messages = []
 
         for d in tu.diagnostics:
+            # Skip diagnostics that are not in the current file. If diagnostic
+            # has no file, it might be a config error (bad switch for example)
+            # so we want to show it
+            if d.location.file and d.location.file.name != f.name():
+                continue
             m = GPS.Message(
                 category="Clang live diagnostics",
                 file=f,
