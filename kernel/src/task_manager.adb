@@ -71,11 +71,21 @@ package body Task_Manager is
 
    procedure Interrupt_Command
      (Manager : not null access Task_Manager_Record;
-      Index   : Integer) is
+      Index   : Integer)
+   is
+      Command : Command_Access;
    begin
       if Manager.Queues /= null then
          if Index in Manager.Queues'Range then
-            Interrupt (Manager.Queues (Index).Queue.First_Element.all);
+            if not Manager.Queues (Index).Queue.Is_Empty then
+               --  Safety checks, allowing clients to interrupt
+               --  several times the same queue.
+               Command := Manager.Queues (Index).Queue.First_Element;
+
+               if Command /= null then
+                  Interrupt (Command.all);
+               end if;
+            end if;
 
             Manager.Queues (Index).Status := Completed;
             Queue_Changed (Manager, Index, True);
