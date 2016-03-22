@@ -2129,14 +2129,18 @@ vc_msg_dict = {
     'array index check might fail': 'VC_INDEX_CHECK',
     'overflow check might fail': 'VC_OVERFLOW_CHECK',
     'range check might fail': 'VC_RANGE_CHECK',
+    'predicate check might fail': 'VC_PREDICATE_CHECK',
+    'predicate check might fail on default value':
+        'VC_PREDICATE_CHECK_ON_DEFAULT_VALUE',
     'length check might fail': 'VC_LENGTH_CHECK',
     'discriminant check might fail': 'VC_DISCRIMINANT_CHECK',
-    'interrupt might be reserved': 'VC_INTERRUPT_RESERVED',
+    'tag check might fail': 'VC_TAG_CHECK',
     'ceiling priority might not be in Interrupt_Priority':
         'VC_CEILING_INTERRUPT',
+    'interrupt might be reserved': 'VC_INTERRUPT_RESERVED',
     'ceiling priority protocol might not be respected':
         'VC_CEILING_PRIORITY_PROTOCOL',
-    'tag check might fail': 'VC_TAG_CHECK',
+    'the task might terminate': 'VC_TASK_TERMINATION',
 
     # VC_Assert_Kind - assertions
 
