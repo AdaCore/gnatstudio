@@ -443,6 +443,7 @@ package body Task_Manager is
             for J in Manager.Queues'Range loop
                if Manager.Queues (J).Id /= null
                  and then Manager.Queues (J).Id.all = Queue_Id
+                 and then Manager.Queues (J).Status /= Completed
                then
                   Manager.Queues (J).Show_Bar := Show_Bar;
                   return J;

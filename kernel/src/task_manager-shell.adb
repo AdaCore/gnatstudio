@@ -76,8 +76,15 @@ package body Task_Manager.Shell is
          end if;
 
          for J in Manager.Queues.all'Range loop
-            Task_Inst := Get_Or_Create_Instance (Data, J);
-            Set_Return_Value (Data, Task_Inst);
+            --  The "Completed" queues are not meant to be shown to the
+            --  external world: these are queues that have just been
+            --  interrupted and will be destroyed at the next iteration
+            --  of the task manager. So, do not include in the list of
+            --  tasks.
+            if Manager.Queues (J).Status /= Completed then
+               Task_Inst := Get_Or_Create_Instance (Data, J);
+               Set_Return_Value (Data, Task_Inst);
+            end if;
          end loop;
 
       elsif Command = "interrupt" then
