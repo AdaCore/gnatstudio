@@ -35,6 +35,16 @@ KP-62-P317-010 GPS: missing underscores in /Files/Recent
   Workaround: This is a display issue only, and the tooltip on the menu
               shows the proper name.
 
+KP-62-P310-027 GPS: crash or freeze when using the menu Project->Recent
+
+  Problem:    Opening a project using the Project->Recent menu can cause
+              GPS to freeze or crash.
+
+  Status:     This was fixed in 17.0 on 2016-03-22
+
+  Workaround: Use another way of opening the project, for instance through
+              Project->Open...
+
 KP-62-P218-045 GB: Problems in GPR files reported in editor at line 1
 
   Problem:    Problems in GPR files detected during clean/analyze/build

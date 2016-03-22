@@ -33,6 +33,7 @@ with GPS.Kernel.Clipboard;   use GPS.Kernel.Clipboard;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules, GPS.Kernel.Modules.UI;
+with GPS.Kernel.Task_Manager;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Main_Window;        use GPS.Main_Window;
@@ -118,6 +119,13 @@ package body GPS.Menu is
      (Command : access Reload_Project_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Callback for the Project->Recompute Project menu
+
+   type Recompute_Recent_Menus_Command is new Root_Command with record
+      Kernel : Kernel_Handle;
+   end record;
+   overriding function Execute
+     (Command : access Recompute_Recent_Menus_Command)
+      return Command_Return_Type;
 
    -------------
    -- Execute --
@@ -247,6 +255,7 @@ package body GPS.Menu is
       pragma Unreferenced (Self);
       Project : constant Project_Type := Get_Project (Kernel);
       Path    : constant Virtual_File := Project_Path (Project);
+      Command : Command_Access;
    begin
       if Get_Registry (Kernel).Tree.Status /= From_File
         or else Path = No_File
@@ -256,6 +265,36 @@ package body GPS.Menu is
 
       Add_To_History (Kernel, Project_History_Key, UTF8_Full_Name (Path));
 
+      --  We cannot recompute the old menus and actions immediately as
+      --  the project has changed because of a saw-the-branch-you're-on
+      --  problem: this function can be called from within the very command
+      --  that we're removing.
+      --  To solve this, do this in a timeout.
+
+      Command := new Recompute_Recent_Menus_Command'
+        (Root_Command with Kernel => Kernel_Handle (Kernel));
+      GPS.Kernel.Task_Manager.Launch_Background_Command
+        (Kernel            => Kernel,
+         Command           => Command,
+         Active            => False,
+         Show_Bar          => False,
+         Block_Exit        => False,
+         Start_Immediately => False);
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Recompute_Recent_Menus_Command)
+      return Command_Return_Type
+   is
+      Kernel : constant Kernel_Handle := Command.Kernel;
+      V : constant String_List_Access :=  --  Do not free
+        Get_History (Kernel.Get_History.all, Project_History_Key);
+      F : Virtual_File;
+   begin
       --  Remove old menus and actions
       for Action of Menu_Module.Recent_Project_Actions loop
          Unregister_Action (Kernel, Action, Remove_Menus_And_Toolbars => True);
@@ -263,28 +302,23 @@ package body GPS.Menu is
       Menu_Module.Recent_Project_Actions.Clear;
 
       --  Add new menus
-      declare
-         V : constant String_List_Access :=  --  Do not free
-            Get_History (Kernel.Get_History.all, Project_History_Key);
-         F : Virtual_File;
-      begin
-         for N of V.all loop
-            F := Create (+N.all);
-            Register_Action
-               (Kernel,
-                Name  => "open recent project: " & N.all,
-                Command => new On_Open_Recent'
-                    (Interactive_Command with File => F),
-                Description => "Reopen the project " & N.all,
-                Category    => "Internal");
-            Register_Menu
-               (Kernel,
-                Path   => "/Project/Recent/" & F.Display_Base_Name,
-                Action => "open recent project: " & N.all);
-            Menu_Module.Recent_Project_Actions.Append
-               ("open recent project: " & N.all);
-         end loop;
-      end;
+      for N of V.all loop
+         F := Create (+N.all);
+         Register_Action
+           (Kernel,
+            Name  => "open recent project: " & N.all,
+            Command => new On_Open_Recent'
+              (Interactive_Command with File => F),
+            Description => "Reopen the project " & N.all,
+            Category    => "Internal");
+         Register_Menu
+           (Kernel,
+            Path   => "/Project/Recent/" & F.Display_Base_Name,
+            Action => "open recent project: " & N.all);
+         Menu_Module.Recent_Project_Actions.Append
+           ("open recent project: " & N.all);
+      end loop;
+      return Success;
    end Execute;
 
    -------------
