@@ -786,22 +786,34 @@ package body Language.Libclang is
 
    package Parse_Callback_Package is
       type Parse_For_Cache is new Parse_Callback with record
-         Command : Parse_Files_Data_Type_Access;
+         Command    : Parse_Files_Data_Type_Access;
+         Start_Time : Ada.Calendar.Time;
       end record;
 
       overriding procedure Call
         (Self : access Parse_For_Cache;
-         File : Virtual_File; TU : Clang_Translation_Unit);
+         File : Virtual_File;
+         TU   : Clang_Translation_Unit);
    end Parse_Callback_Package;
 
    package body Parse_Callback_Package is
       overriding procedure Call
         (Self : access Parse_For_Cache;
-         File : Virtual_File; TU : Clang_Translation_Unit) is
+         File : Virtual_File;
+         TU   : Clang_Translation_Unit) is
          pragma Unreferenced (TU);
+         use Ada.Calendar;
       begin
          Trace (Me, "Finished parsing " & Full_Name (File));
+
+         --  Check whether the command is still active.
          Self.Command.Current_Idx := Self.Command.Current_Idx + 1;
+
+         if Self.Command.Current_Idx = Self.Command.Max_Idx then
+            Trace (Me, "Total indexing time: "
+                   & Duration'Image (Clock - Self.Start_Time));
+         end if;
+
       end Call;
    end Parse_Callback_Package;
 
@@ -1120,11 +1132,11 @@ package body Language.Libclang is
             declare
                Callback : Parse_Callback_Access :=
                  new Parse_Callback_Package.Parse_For_Cache'
-                   (Command => Command_Data);
+                   (Command    => Command_Data,
+                    Start_Time => Ada.Calendar.Clock);
             begin
                Enqueue_Translation_Unit
-                 (Core_Kernel (Kernel), F, False,
-                  Callback => Callback);
+                 (Core_Kernel (Kernel), F, False, Callback => Callback);
             end;
          end loop;
 
