@@ -923,12 +923,20 @@ package body Language.Libclang is
          Ada.Streams.Stream_IO.Open
            (Cache_File, In_File, Full_Name (Cache_VFS));
       exception
-         when others =>
+         when E : others =>
             Trace (Me, "No database file");
+            Trace (Me, Exception_Information (E));
             return;
       end;
 
-      Cache_Stream := Stream (Cache_File);
+      begin
+         Cache_Stream := Stream (Cache_File);
+      exception
+         when E : others =>
+            Trace (Me, "Failed to create a stream from file");
+            Trace (Me, Exception_Information (E));
+            return;
+      end;
 
       declare
          Dummy : Boolean;
@@ -939,8 +947,9 @@ package body Language.Libclang is
 
          Clang_Module_Id.Refs := Clang_Crossrefs_Cache'Input (Cache_Stream);
       exception
-         when others =>
+         when E : others =>
             Trace (Me, "Failed loading the database from cache");
+            Trace (Me, Exception_Information (E));
             Cache_VFS.Delete (Dummy);
       end;
 
@@ -983,8 +992,6 @@ package body Language.Libclang is
          when Error : others =>
             Trace (Me, "ERROR: Cannot open database file for writing");
             Trace (Me, Exception_Information (Error));
-            Trace (Me, Exception_Name (Error));
-            Put (Exception_Message (Error));
       end;
 
       Cache_Stream := Stream (Cache_File);
@@ -1015,35 +1022,43 @@ package body Language.Libclang is
 
       Files          : File_Array_Access;
       Filtered_Files : Virtual_File_Vectors.Vector;
-
+      Dummy          : Boolean;
    begin
-
+      Trace (Me, "In Libclang project reload");
       Initialize_Crossrefs_Cache (Core_Kernel (Kernel));
 
-      --  Stop all the tasks
-
+      --  Stop all the tasks first.
       for I in Clang_Module_Id.Parsing_Tasks'Range loop
+         Trace (Me, "Stopping task " & I'Img);
          Clang_Module_Id.Parsing_Tasks (I).Stop;
       end loop;
 
-      --  Remove all the pending requests
-
+      --  Remove all the pending requests. It's important that we stop the
+      --  tasks first so that we don't block indefinitely on trying to dequeue
+      --  a request that has been taken by a task.
       declare
          Dummy_Request : Parsing_Request;
       begin
+         Trace (Me, "Dequeuing requests");
          while Parsing_Request_Queue.Length > 0 loop
             Parsing_Request_Queue.Dequeue (Dummy_Request);
             Free (Dummy_Request);
          end loop;
+      exception
+         when E : others =>
+            Trace (Me, "Cannot dequeue requests");
+            Trace (Me, Exception_Information (E));
       end;
 
       --  Remove all the pending responses. We do that the simple way for the
       --  moment but we don't need to index at this stage
-
-      declare
-         Dummy : constant Boolean := Parsing_Timeout_Handler;
       begin
-         null;
+         Trace (Me, "Remove all libclang pending responses");
+         Dummy := Parsing_Timeout_Handler;
+      exception
+         when E : others =>
+            Trace (Me, "Exception when indexing");
+            Trace (Me, Exception_Information (E));
       end;
 
       --  Put all the existing cache entries to inactive
@@ -1066,11 +1081,10 @@ package body Language.Libclang is
       end if;
 
       --  Fetch all of the project's files
-
+      Trace (Me, "Fetching C and C++ files for libclang xref cache");
       Files := RP.Source_Files (Recursive => True);
 
       --  Only keep those who are relevant to libclang
-
       for F of Files.all loop
          declare
             Info_Set : constant File_Info_Set := P_Tree.Info_Set (F);
@@ -1078,13 +1092,10 @@ package body Language.Libclang is
               File_Info (Info_Set.First_Element).Language;
             Cache_Key : File_Key;
          begin
-            if Language = "c"
-              or else Language = "cpp"
-              or else Language = "c++"
-            then
+            if Language in "c" | "cpp" | "c++" then
                Cache_Key := Construct_Cache_Key (Core_Kernel (Kernel), F);
-               if Clang_Module_Id.Refs.Map.Contains (Cache_Key)
-               then
+
+               if Clang_Module_Id.Refs.Map.Contains (Cache_Key) then
                   --  The cache already contains an entry for this file with
                   --  these switches.
 
@@ -1118,6 +1129,8 @@ package body Language.Libclang is
       end loop;
 
       Unchecked_Free (Files);
+
+      Trace (Me, "Sending files to parsing tasks");
       declare
          Command_Data : constant Parse_Files_Data_Type_Access
            := new Parse_Files_Data_Type;
@@ -1143,6 +1156,7 @@ package body Language.Libclang is
          --  Only start the monitoring command if there actually are files to
          --  parse
          if not Filtered_Files.Is_Empty then
+            Trace (Me, "Starting libclang parsing files command");
             Parse_Files_Command.Create (Command, "libclang parsing files",
                                         Command_Data,
                                         Parse_Files_Iterate'Access);
@@ -1153,6 +1167,10 @@ package body Language.Libclang is
                                        Show_Bar        => True);
          end if;
       end;
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception in libclang project reload");
+         Trace (Me, Exception_Information (E));
    end Execute;
 
    --------------------
