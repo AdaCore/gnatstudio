@@ -1187,11 +1187,12 @@ package body Language.Libclang is
                Parse_Files_Iterate'Access);
 
             Launch_Background_Command
-              (Kernel   => Kernel,
-               Command  => Command,
-               Active   => False,
-               Show_Bar => True,
-               Queue_Id => Libclang_Queue_Id);
+              (Kernel     => Kernel,
+               Command    => Command,
+               Active     => False,
+               Show_Bar   => True,
+               Block_Exit => False,
+               Queue_Id   => Libclang_Queue_Id);
          end if;
       end;
    exception
