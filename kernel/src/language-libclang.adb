@@ -1036,7 +1036,12 @@ package body Language.Libclang is
       --  Stop all the tasks first.
       for I in Clang_Module_Id.Parsing_Tasks'Range loop
          Trace (Me, "Stopping task " & I'Img);
-         Clang_Module_Id.Parsing_Tasks (I).Stop;
+         select
+            Clang_Module_Id.Parsing_Tasks (I).Stop;
+         or
+            delay 1.0;
+            Trace (Me, "ERROR : Task " & I'Img & " seems to be dead !");
+         end select;
       end loop;
 
       --  Remove all the pending requests. It's important that we stop the
@@ -1047,7 +1052,16 @@ package body Language.Libclang is
       begin
          Trace (Me, "Dequeuing requests");
          while Parsing_Request_Queue.Length > 0 loop
-            Parsing_Request_Queue.Dequeue (Dummy_Request);
+            select
+               Parsing_Request_Queue.Dequeue (Dummy_Request);
+            or
+                 -- We don't wait long here. If we can't dequeue it means that
+                 -- another task is dequeuing requests, and we're supposed to
+                 -- have stopped them all, so there is a logic error.
+               delay 0.1;
+               Trace (Me, "LOGIC ERROR : Can't dequeue request");
+            end select;
+
             Free (Dummy_Request);
          end loop;
       exception
@@ -1196,10 +1210,20 @@ package body Language.Libclang is
       T1       : constant Ada.Real_Time.Time := Clock;
       Response : Parsing_Response;
    begin
-      Parsing_Response_Queue.Dequeue (Response);
+      if Parsing_Response_Queue.Current_Use = 0 then
+         return;
+      end if;
 
-      Add_TU_To_Cache
-        (+Response.File_Name, Response.TU);
+      select
+         Parsing_Response_Queue.Dequeue (Response);
+      or
+         --  If we get here, there is a logic error in the tasking code.
+         delay 0.1;
+         Trace (Me, "LOGIC ERROR : Another thread is dequeuing responses");
+         return;
+      end select;
+
+      Add_TU_To_Cache (+Response.File_Name, Response.TU);
 
       if Clang_Module_Id.Indexing_Active then
 
