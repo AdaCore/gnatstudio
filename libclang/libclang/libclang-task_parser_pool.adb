@@ -155,7 +155,7 @@ package body Libclang.Task_Parser_Pool is
                      Do_Finish := True;
                   end Finish;
                or
-                  delay 0.1;
+                  delay 0.01;
                end select;
 
                if Do_Finish then
@@ -163,7 +163,6 @@ package body Libclang.Task_Parser_Pool is
                end if;
 
                if Stopped then
-                  delay 0.1;
                   goto Cont;
                end if;
 
@@ -172,7 +171,7 @@ package body Libclang.Task_Parser_Pool is
                or
                     --  If we cannot dequeue, timeout and restart the loop, so
                     --  that the entries get a chance to get evaluated
-                  delay 0.1;
+                  delay 0.01;
                   goto Cont;
                end select;
 
