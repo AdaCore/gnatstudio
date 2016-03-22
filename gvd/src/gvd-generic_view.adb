@@ -22,6 +22,7 @@ with GPS.Kernel.Actions;   use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;     use GPS.Kernel.Hooks;
 with GPS.Intl;             use GPS.Intl;
 with Gtk.Widget;           use Gtk.Widget;
+with Gtk.Window;           use Gtk.Window;
 with Gtkada.Dialogs;       use Gtkada.Dialogs;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.MDI;           use Gtkada.MDI;
@@ -82,9 +83,21 @@ package body GVD.Generic_View is
          Block_Me : constant Block_Trace_Handle :=
            Create (Me, "Closing view " & Views.View_Name);
          V : constant access Formal_View_Record'Class := Get_View (Debugger);
-         pragma Unreferenced (Self, Block_Me);
+         pragma Unreferenced (Self, Block_Me, Kernel);
       begin
          if V /= null then
+            Set_View (Debugger, null);
+            V.Set_Process (null);
+
+            --  ??? We used to call Close_Child on the Child_From_View (V).
+            --  This unfortunately is fragile (given the comment below, and
+            --  also because typing 'q' in the console results in invalid
+            --  memory access). Also this means that the current desktop gets
+            --  changed, so if the user opens the debugger again (or a second
+            --  one again), the views are back to their default position.
+            --
+            --  For now, this code is thus commented out.
+
             --  Do not destroy the view when we are in the process of
             --  destroying the main window. What might happen otherwise is the
             --  following: we have the debugger console and debuggee console in
@@ -94,16 +107,11 @@ package body GVD.Generic_View is
             --  we were to destroy the latter, this means that
             --  gtk_notebook_destroy's loop would then point to an invalid
             --  location.
-            if not Kernel.Is_In_Destruction
-              and then Get_Process (V) /= null
-            then
-               Set_View (Get_Process (V), null);
-               V.Set_Process (null);
-               Views.Child_From_View (V).Close_Child (Force => True);
-            else
-               Set_View (Get_Process (V), null);
-               V.Set_Process (null);
-            end if;
+--              if Kernel.Get_Main_Window /= null
+--                and then not Kernel.Get_Main_Window.In_Destruction
+--              then
+--                 Views.Child_From_View (V).Close_Child (Force => True);
+--              end if;
          end if;
       end Execute;
 
