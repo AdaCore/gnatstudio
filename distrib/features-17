@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P321-014 WB: add VxWorks 653 3.1 support (2016-03-21)
+
+  GNATbench is able to handle Wind River Workbench projects for VxWorks 653 3.1
+  target operating system.
+
 NF-17-P217-017 GPS: New Pythin API to get Build Targets commands (2016-03-01)
 
   A new GPS.BuildTarget.get_command_line() method has been added in order
