@@ -537,6 +537,8 @@ package body GPS.Kernel.Project is
       Previous_Project    : Virtual_File;
 
    begin
+      Trace (Me, "Clearing messages");
+
       Remove_Category
         (Get_Messages_Container (Kernel),
          Category => Location_Category,
@@ -592,7 +594,9 @@ package body GPS.Kernel.Project is
       end if;
 
       if Is_Regular_File (Project) then
+         Trace (Me, "Running the 'project_changing' hook");
          Project_Changing_Hook.Run (Kernel, Project);
+         Trace (Me, "Finished running the 'project_changing' hook");
 
          if not Is_Local (Project) then
             Trace (Me, "Converting to Local Project");
@@ -691,7 +695,9 @@ package body GPS.Kernel.Project is
             Get_Registry (Kernel).Tree.Set_Status (Default);
          end if;
 
+         Trace (Me, "Running the 'project_changed' hook");
          Project_Changed_Hook.Run (Kernel);
+         Trace (Me, "Finished running the 'project_changed' hook");
 
          --  Make sure the subdirs is correctly set for objects
          Kernel.Set_Build_Mode (Kernel.Get_Build_Mode);
