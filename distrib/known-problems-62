@@ -59,6 +59,16 @@ KP-62-P310-027 GPS: crash or freeze when using the menu Project->Recent
   Workaround: Use another way of opening the project, for instance through
               Project->Open...
 
+KP-62-P309-043 GPS: GNATemu plug-in doesn't use Exec_Dir attribute
+
+  Problem:    Using the "Run with emulator" or "Debug with emulator" buttons,
+              the project file attribute "Exec_Dir" is not taken into account,
+              which means GNATemu is called with a wrong executable path.
+
+  Status:     This is fixed in 17.0 on 2016-03-22
+
+  Workaround: None.
+
 KP-62-P218-045 GB: Problems in GPR files reported in editor at line 1
 
   Problem:    Problems in GPR files detected during clean/analyze/build
