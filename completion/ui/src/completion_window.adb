@@ -303,7 +303,7 @@ package body Completion_Window is
          if Item.Icon_Name /= null then
             Gtk.Image.Gtk_New_From_Icon_Name
               (Img, Icon_Name => Item.Icon_Name.all,
-               Size => 16);
+               Size => Icon_Size_Small_Toolbar);
             HBox.Pack_Start (Img, Expand => False);
          end if;
 

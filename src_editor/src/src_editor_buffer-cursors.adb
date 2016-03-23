@@ -36,11 +36,15 @@ package body Src_Editor_Buffer.Cursors is
       P : constant Preference :=
         Buffer.Kernel.Get_Preferences.Get_Pref_From_Name
           (Selection_Pref_Name, True);
+      Color_Name : constant String := P.Get_Pref;
    begin
       if T = null then
          T := Buffer.Create_Tag (Mc_Selection_Tag);
       end if;
-      Glib.Properties.Set_Property (T, Background_Property, P.Get_Pref);
+
+      if Color_Name /= "" then
+         Glib.Properties.Set_Property (T, Background_Property, Color_Name);
+      end if;
    end Check_Mc_Selection_Tag;
 
    ------------
