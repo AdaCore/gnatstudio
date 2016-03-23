@@ -45,6 +45,12 @@ package GNAThub is
    package Severity_Natural_Maps is
      new Ada.Containers.Hashed_Maps (Severity_Access, Natural, Hash, "=");
 
+   function Less (L, R : GNAThub.Severity_Access) return Boolean is
+     (Ada.Strings.Unbounded."<" (L.Name, R.Name));
+
+   package Severities_Ordered_Sets is new Ada.Containers.Ordered_Sets
+     (GNAThub.Severity_Access, Less, "=");
+
    ----------
    -- Rule --
    ----------
@@ -74,5 +80,11 @@ package GNAThub is
 
    package Tool_Vectors is
      new Ada.Containers.Vectors (Positive, Tool_Access);
+
+   function Less (L, R : GNAThub.Tool_Access) return Boolean is
+     (Ada.Strings.Unbounded."<" (L.Name, R.Name));
+
+   package Tools_Ordered_Sets is new Ada.Containers.Ordered_Sets
+     (GNAThub.Tool_Access, Less, "=");
 
 end GNAThub;

@@ -19,9 +19,11 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS;
 with GPS.Intl;              use GPS.Intl;
+with GPS.Kernel.Actions;
 with GPS.Kernel.Messages;
 
 with GNAThub.Actions;
+with GNAThub.Filters_Views;
 with GNAThub.Loader;
 
 package body GNAThub.Module is
@@ -38,9 +40,14 @@ package body GNAThub.Module is
                      .Create_From_Dir ("gnathub")
                      .Create_From_Dir ("gnathub.db");
 
+      Ignore : Boolean;
+
    begin
       if Database.Is_Regular_File then
          Self.Loader.Load (Database);
+
+         Ignore := GPS.Kernel.Actions.Execute_Action
+           (Self.Get_Kernel, "open gnathub filters_view");
 
       else
          Self.Get_Kernel.Insert
@@ -49,6 +56,18 @@ package body GNAThub.Module is
             Mode => GPS.Kernel.Error);
       end if;
    end Display_Data;
+
+   --------------------
+   -- Message_Loaded --
+   --------------------
+
+   procedure Message_Loaded (Self : in out GNAThub_Module_Id_Record'Class)
+   is
+      Ignore : Boolean;
+   begin
+      Ignore := GPS.Kernel.Actions.Execute_Action
+        (Self.Get_Kernel, "update gnathub filters_view");
+   end Message_Loaded;
 
    --------------
    -- New_Rule --
@@ -87,7 +106,7 @@ package body GNAThub.Module is
           (Name       => Name,
            On_Sidebar => On_Sidebar)
       do
-         Self.Severities.Append (Severity);
+         Self.Severities.Insert (Severity);
       end return;
    end New_Severity;
 
@@ -102,7 +121,7 @@ package body GNAThub.Module is
       return Tool : constant Tool_Access :=
         new Tool_Record'(Name => Name, Rules => <>)
       do
-         Self.Tools.Append (Tool);
+         Self.Tools.Insert (Tool);
       end return;
    end New_Tool;
 
@@ -118,7 +137,8 @@ package body GNAThub.Module is
       GNAThub.Actions.Register_Actions (Module_Id);
       Module_Id.Loader := new GNAThub.Loader.Loader (Module_Id);
       Module_Id.Loader.Initialize;
-      Module_Id.Filter :=  new GNAThub.Filters.Message_Filter;
+      Module_Id.Filter := new GNAThub.Filters.Message_Filter;
+      GNAThub.Filters_Views.Register_Module (Kernel, Module_Id);
       GPS.Kernel.Messages.Register_Filter
         (GPS.Kernel.Messages.Get_Messages_Container (Kernel),
          GPS.Kernel.Messages.Message_Filter_Access (Module_Id.Filter));

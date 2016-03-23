@@ -29,11 +29,11 @@ package GNAThub.Module is
 
    type GNAThub_Module_Id_Record is
      new GPS.Kernel.Modules.Module_ID_Record with record
-      Tools          : Tool_Vectors.Vector;
-      Severities     : Severity_Vectors.Vector;
-      Rules          : Rule_Sets.Set;
-      Filter         : Filter_Access;
-      Loader         : Loader_Access;
+      Tools      : Tools_Ordered_Sets.Set;
+      Severities : Severities_Ordered_Sets.Set;
+      Rules      : Rule_Sets.Set;
+      Filter     : Filter_Access;
+      Loader     : Loader_Access;
    end record;
 
    type GNAThub_Module_Id is access all GNAThub_Module_Id_Record'Class;
@@ -41,6 +41,9 @@ package GNAThub.Module is
    procedure Display_Data (Self : in out GNAThub_Module_Id_Record'Class);
    --  Loads and displays analysis data. Doesn't run GNAThub, reports error
    --  when database is not exists.
+
+   procedure Message_Loaded (Self : in out GNAThub_Module_Id_Record'Class);
+   --  Call when a new message loaded
 
    function New_Severity
      (Self       : in out GNAThub_Module_Id_Record'Class;

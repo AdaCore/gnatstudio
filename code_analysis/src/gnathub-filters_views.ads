@@ -14,34 +14,18 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  Filter to be used by messages container to manage visibility of GNAThub
---  messages.
 
-with GPS.Kernel.Messages;
+--  This package contains a view which allow to select criterias for
+--  filtering GNATHub messages.
 
-package GNAThub.Filters is
+with GPS.Kernel;
+with GNAThub.Module;
 
-   type Message_Filter is
-     new GPS.Kernel.Messages.Abstract_Message_Filter with private;
+package GNAThub.Filters_Views is
 
-   procedure Fill
-     (Self       : in out Message_Filter;
-      Tools      : Tools_Ordered_Sets.Set;
-      Severities : Severities_Ordered_Sets.Set;
-      Rules      : Rule_Sets.Set);
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Module : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class);
+   --  Register the module into the list
 
-private
-
-   type Message_Filter is
-     new GPS.Kernel.Messages.Abstract_Message_Filter with record
-      Tools      : Tools_Ordered_Sets.Set;
-      Severities : Severities_Ordered_Sets.Set;
-      Rules      : Rule_Sets.Set;
-   end record;
-
-   overriding function Apply
-     (Self    : in out Message_Filter;
-      Message : GPS.Kernel.Messages.Abstract_Message'Class)
-      return GPS.Kernel.Messages.Filter_Result;
-
-end GNAThub.Filters;
+end GNAThub.Filters_Views;

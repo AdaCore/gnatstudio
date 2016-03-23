@@ -58,4 +58,19 @@ package body GNAThub.Filters is
       end;
    end Apply;
 
+   ----------
+   -- Fill --
+   ----------
+
+   procedure Fill
+     (Self       : in out Message_Filter;
+      Tools      : Tools_Ordered_Sets.Set;
+      Severities : Severities_Ordered_Sets.Set;
+      Rules      : Rule_Sets.Set) is
+   begin
+      Self.Tools      := Tools;
+      Self.Severities := Severities;
+      Self.Rules      := Rules;
+   end Fill;
+
 end GNAThub.Filters;

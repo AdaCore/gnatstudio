@@ -101,6 +101,8 @@ package body GNAThub.Loader is
 
       Resource_Maps.Next (Self.Loader.Current);
 
+      Self.Loader.Module.Message_Loaded;
+
       if Resource_Maps.Has_Element (Self.Loader.Current) then
          return Commands.Execute_Again;
 
@@ -114,7 +116,6 @@ package body GNAThub.Loader is
    exception
       when others =>
          Self.Loader.Command := null;
-
          Self.Loader.Cleanup;
 
          return Commands.Failure;
