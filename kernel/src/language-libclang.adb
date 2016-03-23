@@ -924,12 +924,17 @@ package body Language.Libclang is
 
       Trace (Me, "Loading the db !" & Full_Name (Cache_VFS));
 
+      if not Cache_VFS.Is_Regular_File then
+         Trace (Me, "No database file");
+         return;
+      end if;
+
       begin
          Ada.Streams.Stream_IO.Open
            (Cache_File, In_File, Full_Name (Cache_VFS));
       exception
          when E : others =>
-            Trace (Me, "No database file");
+            Trace (Me, "Couldn't stream to file");
             Trace (Me, Exception_Information (E));
             return;
       end;
@@ -1133,7 +1138,8 @@ package body Language.Libclang is
 
                         --  If it's not the same, we'll recompute the cache
                         Filtered_Files.Append (F);
-                        Trace (Me, "Queuing " & Full_Name (F) & "for parsing");
+                        Trace (Me, "Queuing " & Full_Name (F)
+                               & " for parsing");
 
                      else
 
@@ -1143,10 +1149,10 @@ package body Language.Libclang is
                      end if;
                   end;
 
-                  Trace (Me, "Loading " & Full_Name (F) & "from cache");
+                  Trace (Me, "Loading " & Full_Name (F) & " from cache");
                else
                   Filtered_Files.Append (F);
-                  Trace (Me, "Queuing " & Full_Name (F) & "for parsing");
+                  Trace (Me, "Queuing " & Full_Name (F) & " for parsing");
                end if;
             end if;
          end;
