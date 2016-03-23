@@ -25,6 +25,20 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P322-013 GB: ada navigation failure
+
+  Problem:    Navigating to an Ada source file that exists in the workspace
+              in multiple projects (for example, a general project containing
+              an svn checkout of this file and an imported existing GNAT
+              project containing a link to this file) is not always working
+              fine. The navigation is not working, or the opened file is seen
+              as a foreign Ada sources file.
+
+  Status:     This was fixed in 17.0 on 2016-03-23
+
+  Workaround: Move non-Ada projects containing target Ada file to another
+              workspace.
+
 KP-62-P317-010 GPS: missing underscores in /Files/Recent
 
   Problem:    File names displayed in the /Files/Recent menu are missing
