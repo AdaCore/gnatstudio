@@ -696,16 +696,24 @@ package body Src_Editor_Box is
    --------------
 
    function Focus_In (Box : access GObject_Record'Class) return Boolean is
-      B : constant Source_Editor_Box := Source_Editor_Box (Box);
+      B          : constant Source_Editor_Box := Source_Editor_Box (Box);
+      Old_Status : constant Boolean := B.Source_Buffer.Get_Writable;
+
    begin
+      Check_Writable (B);
+
       --  Connect the Undo/Redo buttons to the buffer
-      if Get_Writable (B.Source_Buffer) then
+      if B.Source_Buffer.Get_Writable then
          Add_Controls (B.Source_Buffer);
       else
          Remove_Controls (B.Source_Buffer);
       end if;
 
-      Check_Writable (B);
+      if Old_Status /= B.Source_Buffer.Get_Writable then
+         Get_Kernel (B).Refresh_Context;
+         --  Refresh context to update state of Undo/Redo actions when file
+         --  permissions has been changed.
+      end if;
 
       return False;
    end Focus_In;
