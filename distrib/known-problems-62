@@ -69,6 +69,20 @@ KP-62-P309-043 GPS: GNATemu plug-in doesn't use Exec_Dir attribute
 
   Workaround: None.
 
+KP-62-P308-047 GB: Allow GPR file to have filename different from project name
+
+  Problem:    To be handled by GB, GPR files had to have a name equal to their
+              project node name.
+              ex: Prj.gpr to be handled by GB must have the following content
+                  ...
+                  project Prj is
+                  ...
+                  end Prj;
+
+  Status:     This was fixed in 17.0 on 2016-03-11
+
+  Workaround: None.
+
 KP-62-P218-045 GB: Problems in GPR files reported in editor at line 1
 
   Problem:    Problems in GPR files detected during clean/analyze/build
