@@ -229,7 +229,7 @@ package body Xref.Lifecycle is
                   if Dir = No_File then
                      Trace (Me, "Object_Dir is unknown for the root project "
                             & Project.Project_Path.Display_Full_Name);
-                     Dir := GNATCOLL.VFS.Get_Current_Dir;
+                     Dir := Project.Project_Path.Dir;
                   end if;
 
                   Self.Working_Xref_Db := Create_From_Dir
