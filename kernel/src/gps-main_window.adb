@@ -1552,7 +1552,14 @@ package body GPS.Main_Window is
       MDI := Get_MDI (Kernel);
       if MDI /= null then
          C := MDI.Get_Focus_Child;
-         if C /= null then
+
+         --  During a drag-and-drop operation, the toplevel might be a
+         --  Gtk_Notebook rather than a window (for instance when moving the
+         --  Outline from the bottom dock to the left of the editor.
+
+         if C /= null
+            and then C.Get_Widget.Get_Toplevel.all in Gtk_Window_Record'Class
+         then
             Win := Gtk_Window (C.Get_Widget.Get_Toplevel);
          end if;
       end if;
