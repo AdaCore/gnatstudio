@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P324-031 GB: xref not working on aggregate projects
+
+  Problem:    Navigation & References are not working when working on aggregate
+              projects.
+
+  Status:     This was fixed in 17.0 on 2016-03-24
+
+  Workaround: Move aggregated projects to root projects using GNAT project's
+              GNATbench properties page.
+
 KP-62-P322-013 GB: ada navigation failure
 
   Problem:    Navigating to an Ada source file that exists in the workspace
