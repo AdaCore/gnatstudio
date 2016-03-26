@@ -1279,7 +1279,7 @@ package body GPS.Search.GUI is
       Curs : Inst_Cursor := First (Self.Inst);
       Inst : Class_Instance;
       Result : Class_Instance;
-      pragma Unreferenced (Limit, Result);
+      pragma Unreferenced (Limit);
    begin
       while Has_Element (Curs) loop
          Inst := Element (Self.Inst, Curs);
