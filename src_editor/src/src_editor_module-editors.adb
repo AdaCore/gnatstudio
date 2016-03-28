@@ -795,7 +795,7 @@ package body Src_Editor_Module.Editors is
       if This.Contents.Buffer /= null then
          while Pure_Editors_Hash.Get
            (This.Contents.Factory.Pure_Buffers.all,
-            This.Contents.File).Box /= null
+            This.Contents.File).Buf /= null
          loop
             Pure_Editors_Hash.Remove
               (This.Contents.Factory.Pure_Buffers.all, This.Contents.File);
@@ -831,7 +831,9 @@ package body Src_Editor_Module.Editors is
 
       Child : MDI_Child;
       Box   : Source_Editor_Box;
+      Buf   : Source_Buffer;
       Dummy : Boolean;
+      Success        : Boolean;
       pragma Unreferenced (Dummy);
    begin
       if File /= GNATCOLL.VFS.No_File then
@@ -846,13 +848,21 @@ package body Src_Editor_Module.Editors is
               (This.Kernel, File, Project,
                Line => 0, Column => 0, Column_End => 0, Focus => Focus);
          else
-            Box := Pure_Editors_Hash.Get (This.Pure_Buffers.all, File).Box;
-            if Box = null then
+            Buf := Pure_Editors_Hash.Get (This.Pure_Buffers.all, File).Buf;
+            if Buf /= null then
+               return Get (This, Buf);
+            else
                if Open_Buffer then
-                  Box := Create_File_Editor
-                    (This.Kernel, File, Project, No_File, False);
-                  Pure_Editors_Hash.Set
-                    (This.Pure_Buffers.all, File, (Box => Box));
+                  Gtk_New (Buf, This.Kernel, Lang => null);
+                  Load_File (Buf, File, True, Success);
+                  if Success then
+                     Pure_Editors_Hash.Set
+                       (This.Pure_Buffers.all, File, (Buf => Buf));
+                  else
+                     Buf.Unref;
+                     return Nil_Editor_Buffer;
+                  end if;
+                  return Get (This, Buf);
                end if;
             end if;
          end if;
@@ -2732,6 +2742,7 @@ package body Src_Editor_Module.Editors is
       procedure Free is new Ada.Unchecked_Deallocation
         (Pure_Editors_Hash.Instance, Table_Access);
    begin
+      Pure_Editors_Hash.Reset (X.Pure_Buffers.all);
       Free (X.Pure_Buffers);
    end Destroy;
 
@@ -3763,5 +3774,14 @@ package body Src_Editor_Module.Editors is
          return This.Contents.Buffer = Buffer.Contents.Buffer;
       end if;
    end "=";
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Element) is
+   begin
+      Unref (X.Buf);
+   end Free;
 
 end Src_Editor_Module.Editors;
