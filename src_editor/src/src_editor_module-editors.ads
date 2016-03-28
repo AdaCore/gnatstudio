@@ -136,12 +136,12 @@ package Src_Editor_Module.Editors is
 private
 
    type Element is record
-      Box : Src_Editor_Box.Source_Editor_Box;
+      Buf : Src_Editor_Buffer.Source_Buffer;
    end record;
 
-   procedure Free (X : in out Element) is null;
+   procedure Free (X : in out Element);
 
-   No_Element : constant Element := (Box => null);
+   No_Element : constant Element := (Buf => null);
 
    package Pure_Editors_Hash is new HTables.Simple_HTable
      (Header_Num   => Header_Num,
