@@ -3784,7 +3784,7 @@ package body Ada_Analyzer is
                      Push (Paren_Stack, Top (Paren_Stack).all);
                   elsif Local_Top_Token.Token = Tok_Type then
                      Push (Paren_Stack, Type_Declaration);
-                  elsif Prev_Prev_Token = Tok_Return then
+                  elsif Prev_Prev_Token in Tok_Return | Tok_Use then
                      Push (Paren_Stack, Aggregate);
                   elsif Prev_Prev_Token in Reserved_Token_Type then
                      Push (Paren_Stack, Conditional);
