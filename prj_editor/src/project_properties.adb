@@ -3017,7 +3017,15 @@ package body Project_Properties is
       Index  : Natural := Result'First;
    begin
       while Iter /= Null_Iter loop
-         Result (Index) := new String'(Get_String (Editor.Model, Iter, 0));
+         if Editor.As_Directory and then
+           Get_Boolean (Editor.Model, Iter, 1)  --  Include subdirectories
+         then
+            Result (Index) :=
+              new String'(Get_String (Editor.Model, Iter, 0) & "/**");
+         else
+            Result (Index) := new String'(Get_String (Editor.Model, Iter, 0));
+         end if;
+
          Index := Index + 1;
          Next (Editor.Model, Iter);
       end loop;

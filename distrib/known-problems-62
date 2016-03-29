@@ -69,6 +69,16 @@ KP-62-P310-027 GPS: crash or freeze when using the menu Project->Recent
   Workaround: Use another way of opening the project, for instance through
               Project->Open...
 
+KP-62-P309-052 GPS: 'include sub-directories' is lost in project editor
+
+  Problem:    If you make a change to Project Properties via the GUI, it will
+              discard all include sub-directories selections from the Source
+              Directories page.
+
+  Status:     This was fixed in 17.0 on 2016-03-25
+
+  Workaround: None.
+
 KP-62-P309-043 GPS: GNATemu plug-in doesn't use Exec_Dir attribute
 
   Problem:    Using the "Run with emulator" or "Debug with emulator" buttons,
