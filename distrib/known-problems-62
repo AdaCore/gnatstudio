@@ -584,6 +584,15 @@ KP-62-OB23-034 GNATdoc: compiling does not update cross references
 
   Workaround: None.
 
+KP-62-O708-055 GPS: hyperlinks not very visible in Darkside and Monokai themes
+
+  Problem:    The default color of the hyperlinks is not very easy to read
+              on the dark backgrounds.
+
+  Status:     This was fixed in 6.2.2 on 2016-03-29
+
+  Workaround: Change the corresponding preference manually.
+
 Known problems fixed in GPS 6.2.1 / GNATbench 2.10.1
 ----------------------------------------------------
 
