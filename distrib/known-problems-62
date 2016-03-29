@@ -578,6 +578,15 @@ KP-62-NA21-042 GPS: No vertical scrolling of filters of CodePeer report
 
   Workaround: Resize GPS window.
 
+KP-62-NA09-049 GPS: CodePeer messages are not displayed in Locations view
+
+  Problem:    CodePeer messages are not displayed after close and reopen of
+              Locations view.
+
+  Status:     This was fixed in 17.0 on 2016-03-29
+
+  Workaround: Restart GPS.
+
 Known problems fixed in GPS 6.2.2 / GNATbench 2.10.2
 ----------------------------------------------------
 

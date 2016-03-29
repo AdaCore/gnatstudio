@@ -97,7 +97,8 @@ package body GPS.Kernel.Messages is
 
    procedure Increment_Counters
      (Message                  : not null Message_Access;
-      Flags                    : Message_Flags;
+      New_Flags                : Message_Flags;
+      Changed_Flags            : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean);
    --  Increments counters of given kinds for category and file of the message.
    --  Send necessary Message_Added, Category_Added and File_Added nofications.
@@ -287,20 +288,8 @@ package body GPS.Kernel.Messages is
    ----------------------
 
    procedure Criteria_Changed (Self : in out Abstract_Message_Filter'Class) is
-      Command : Command_Access;
    begin
-      Self.Container.Messages.Unfilter_All;
-
-      if not Self.Container.Filter_Launched then
-         Self.Container.Filter_Launched := True;
-         Command := new Filter_Runner_Command'
-           (Commands.Root_Command with Container => Self.Container);
-         GPS.Kernel.Task_Manager.Launch_Background_Command
-           (Kernel          => Self.Container.Kernel,
-            Command         => Command,
-            Active          => True,
-            Show_Bar        => False);
-      end if;
+      Self.Container.Refilter;
    end Criteria_Changed;
 
    ------------------------
@@ -467,25 +456,6 @@ package body GPS.Kernel.Messages is
       return Self.Action;
    end Get_Action;
 
-   ---------------
-   -- Get_Flags --
-   ---------------
-
-   function Get_Flags (Node : not null Node_Access) return Message_Flags is
-   begin
-      case Node.Kind is
-         when Node_Category | Node_File =>
-            return Result : Message_Flags do
-               for J in Message_Visibility_Kind loop
-                  Result (J) := Node.Counters (J) /= 0;
-               end loop;
-            end return;
-
-         when Node_Message =>
-            raise Program_Error;
-      end case;
-   end Get_Flags;
-
    ------------------
    -- Has_Category --
    ------------------
@@ -524,6 +494,45 @@ package body GPS.Kernel.Messages is
    begin
       return To_String (Self.Get_Category);
    end Get_Category;
+
+   ---------------
+   -- Get_Flags --
+   ---------------
+
+   function Get_Flags (Node : not null Node_Access) return Message_Flags is
+   begin
+      case Node.Kind is
+         when Node_Category | Node_File =>
+            return Result : Message_Flags do
+               for J in Message_Visibility_Kind loop
+                  Result (J) := Node.Counters (J) /= 0;
+               end loop;
+            end return;
+
+         when Node_Message =>
+            raise Program_Error;
+      end case;
+   end Get_Flags;
+
+   ---------------
+   -- Get_Flags --
+   ---------------
+
+   function Get_Flags
+     (Self     : not null access constant Messages_Container'Class;
+      Category : String) return Message_Flags
+   is
+      Position : constant Category_Maps.Cursor :=
+                   Self.Category_Map.Find (To_Unbounded_String (Category));
+
+   begin
+      if Has_Element (Position) then
+         return Get_Flags (Element (Position));
+
+      else
+         return Empty_Message_Flags;
+      end if;
+   end Get_Flags;
 
    ---------------
    -- Get_Flags --
@@ -854,7 +863,8 @@ package body GPS.Kernel.Messages is
 
    procedure Increment_Counters
      (Message                  : not null Message_Access;
-      Flags                    : Message_Flags;
+      New_Flags                : Message_Flags;
+      Changed_Flags            : Message_Flags;
       Allow_Auto_Jump_To_First : Boolean)
    is
       Container          : constant Messages_Container_Access :=
@@ -875,7 +885,7 @@ package body GPS.Kernel.Messages is
          --  Update counters.
 
          for Kind in Message_Visibility_Kind loop
-            if Flags (Kind) then
+            if Changed_Flags (Kind) then
                Category_Node.Counters (Kind) :=
                  Category_Node.Counters (Kind) + 1;
                File_Node.Counters (Kind) := File_Node.Counters (Kind) + 1;
@@ -898,16 +908,17 @@ package body GPS.Kernel.Messages is
             Get_Flags (File_Node));
       end if;
 
+      Message.Flags := New_Flags;
       Notifiers.Notify_Listeners_About_Message_Added
-        (Container, Message, Flags);
+        (Container, Message, Changed_Flags);
 
       if Message.Level = Primary then
          for Child of Message.Children loop
-            if (Abstract_Message'Class (Child.all).Get_Flags and Flags)
+            if (Abstract_Message'Class (Child.all).Get_Flags and Changed_Flags)
               /= Empty_Message_Flags
             then
                Notifiers.Notify_Listeners_About_Message_Added
-                 (Container, Message_Access (Child), Flags);
+                 (Container, Message_Access (Child), Changed_Flags);
             end if;
          end loop;
       end if;
@@ -988,9 +999,9 @@ package body GPS.Kernel.Messages is
          Weight        => Weight,
          Actual_Line   => Actual_Line,
          Actual_Column => Actual_Column);
-      Self.Flags := Flags;
+      Self.Flags := Empty_Message_Flags;
 
-      Increment_Counters (Self, Self.Flags, Allow_Auto_Jump_To_First);
+      Increment_Counters (Self, Flags, Flags, Allow_Auto_Jump_To_First);
    end Initialize;
 
    ----------------
@@ -1973,6 +1984,28 @@ package body GPS.Kernel.Messages is
       end loop;
    end Execute;
 
+   --------------
+   -- Refilter --
+   --------------
+
+   procedure Refilter (Self : not null access Messages_Container) is
+      Command : Command_Access;
+
+   begin
+      Self.Messages.Unfilter_All;
+
+      if not Self.Filter_Launched then
+         Self.Filter_Launched := True;
+         Command := new Filter_Runner_Command'
+           (Commands.Root_Command with Container => Self);
+         GPS.Kernel.Task_Manager.Launch_Background_Command
+           (Kernel          => Self.Kernel,
+            Command         => Command,
+            Active          => True,
+            Show_Bar        => False);
+      end if;
+   end Refilter;
+
    ---------------------
    -- Register_Filter --
    ---------------------
@@ -2632,9 +2665,7 @@ package body GPS.Kernel.Messages is
    begin
       Self.Flags := Self.Flags and not Removed;
       Decrement_Counters (Self, Removed);
-
-      Self.Flags := Self.Flags or Added;
-      Increment_Counters (Self, Added, False);
+      Increment_Counters (Self, Self.Flags or Added, Added, False);
    end Set_Flags;
 
    ----------------------

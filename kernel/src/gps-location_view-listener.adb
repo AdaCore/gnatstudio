@@ -1024,8 +1024,11 @@ package body GPS.Location_View.Listener is
    function Register
      (Kernel : Kernel_Handle) return Locations_Listener_Access
    is
-      Success : Boolean;
-      Self    : Locations_Listener_Access;
+      Container  : constant GPS.Kernel.Messages.Messages_Container_Access :=
+                     Get_Messages_Container (Kernel);
+      Success    : Boolean;
+      Self       : Locations_Listener_Access;
+      File_Added : Boolean;
 
    begin
       Column_Types :=
@@ -1060,9 +1063,36 @@ package body GPS.Location_View.Listener is
 
       --  Register listener
 
-      Get_Messages_Container (Kernel).Register_Listener
+      Container.Register_Listener
         (Listener_Access (Self),
          (Editor_Side => False, GPS.Kernel.Messages.Locations => True));
+
+      --  Construct tree for currently visible messages
+
+      for Category of Container.Get_Categories loop
+         if Container.Get_Flags (To_String (Category)) (Locations) then
+            Self.Category_Added (Category, False);
+
+            for File of Container.Get_Files (Category) loop
+               File_Added := False;
+
+               for Message of Container.Get_Messages (Category, File) loop
+                  if Message.Get_Flags (GPS.Kernel.Messages.Locations) then
+                     if not File_Added then
+                        File_Added := True;
+                        Self.File_Added (Category, File);
+                     end if;
+
+                     Self.Message_Added (Message);
+                  end if;
+               end loop;
+            end loop;
+         end if;
+      end loop;
+
+      Container.Refilter;
+      --  Some messages can be hidden by closing of Locations view, so refilter
+      --  messages to make them visible.
 
       return Self;
    end Register;

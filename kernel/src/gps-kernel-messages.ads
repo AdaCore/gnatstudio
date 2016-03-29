@@ -338,6 +338,11 @@ package GPS.Kernel.Messages is
       return Unbounded_String_Array;
    --  Returns list of all categories.
 
+   function Get_Flags
+     (Self     : not null access constant Messages_Container'Class;
+      Category : String) return Message_Flags;
+   --  Returns set of flags of given category.
+
    function Get_Files
      (Self     : not null access constant Messages_Container'Class;
       Category : Ada.Strings.Unbounded.Unbounded_String)
@@ -407,6 +412,9 @@ package GPS.Kernel.Messages is
       Filter : not null Message_Filter_Access);
    --  Register filter.
 
+   procedure Refilter (Self : not null access Messages_Container);
+   --  Reapply filters for all messages.
+
    ----------------------
    -- Message Listener --
    ----------------------
@@ -459,7 +467,9 @@ package GPS.Kernel.Messages is
      (Self    : not null access Abstract_Listener;
       Message : not null access Abstract_Message'Class) return Boolean;
    --  Ask listener about destroy of the message. When one of listeners return
-   --  False message is not destroyed but is made invisible.
+   --  False message is not destroyed but is made invisible. Messages can be
+   --  made visible by changing its flags or by calling of the Refilter
+   --  subprogram of the messages container.
 
    --------------------------
    -- For private use only --
