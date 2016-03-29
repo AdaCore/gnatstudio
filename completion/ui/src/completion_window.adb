@@ -14,6 +14,7 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 with Glib.Properties;
 with Glib.Values;               use Glib.Values;
 with Glib.Convert;              use Glib.Convert;
@@ -57,9 +58,9 @@ with Xref;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with Cairo; use Cairo;
-with Glib.Object; use Glib.Object;
-with Gdk.Visual; use Gdk.Visual;
+with Cairo;                     use Cairo;
+with Glib.Object;               use Glib.Object;
+with Gdk.Visual;                use Gdk.Visual;
 with Gtk.Scrollbar;
 with Language.Cpp;
 with Language.C;
@@ -225,6 +226,14 @@ package body Completion_Window is
      (Explorer : access Completion_Explorer_Record'Class);
    --  Create the Iter corresponding to the "computing" row
    --  in the completion list
+
+   procedure Start_Idle_Computation
+     (Explorer : access Completion_Explorer_Record'Class);
+   --  Start Idle_Computation's task
+
+   procedure Stop_Idle_Computation
+     (Explorer : access Completion_Explorer_Record'Class);
+   --  Stop Idle_Computation's task
 
    ------------------------
    -- Add_Computing_Iter --
@@ -409,10 +418,7 @@ package body Completion_Window is
 
    procedure Clear (Explorer : access Completion_Explorer_Record'Class) is
    begin
-      if Explorer.Has_Idle_Computation then
-         Remove (Explorer.Idle_Computation);
-         Explorer.Has_Idle_Computation := False;
-      end if;
+      Stop_Idle_Computation (Explorer);
       Empty_Notes_Container (Explorer);
       Explorer.Model.Clear;
       Explorer.Shown := 0;
@@ -429,10 +435,7 @@ package body Completion_Window is
 
    procedure Delete (Explorer : access Completion_Explorer_Record'Class) is
    begin
-      if Explorer.Has_Idle_Computation then
-         Remove (Explorer.Idle_Computation);
-         Explorer.Has_Idle_Computation := False;
-      end if;
+      Stop_Idle_Computation (Explorer);
       Free (Explorer.Pattern);
       Free (Explorer.Iter);
       Free_Info (Explorer);
@@ -470,11 +473,7 @@ package body Completion_Window is
       Count : Natural := 0;
    begin
       --  If the idle function is running, unregister it
-
-      if Explorer.Has_Idle_Computation then
-         Remove (Explorer.Idle_Computation);
-         Explorer.Has_Idle_Computation := False;
-      end if;
+      Stop_Idle_Computation (Explorer);
 
       --  Give ourselves Number * 2 chances to get Number items without having
       --  to resort to an idle computation.
@@ -498,12 +497,7 @@ package body Completion_Window is
 
       --  If we failed to get Number items, register an idle computation to
       --  fill the data.
-
-      if not Explorer.Has_Idle_Computation then
-         Explorer.Has_Idle_Computation := True;
-         Explorer.Idle_Computation := Completion_Explorer_Idle.Idle_Add
-           (Idle_Compute'Access, Completion_Explorer_Access (Explorer));
-      end if;
+      Start_Idle_Computation (Explorer);
    exception
       when E : others => Trace (Me, E);
    end Expand_Selection;
@@ -540,9 +534,11 @@ package body Completion_Window is
    is
       More_Idle_Complete, More_Idle_Doc : Boolean;
    begin
+      if Explorer = null then
+         return False;
+      end if;
 
-      if Explorer = null
-        or else Explorer.Info = null
+      if Explorer.Info = null
         or else not Explorer.Has_Idle_Computation
         or else Explorer.Completion_Window.In_Destruction
       then
@@ -550,7 +546,7 @@ package body Completion_Window is
          return False;
       end if;
 
-      More_Idle_Doc := Idle_Complete_Notes (Explorer);
+      More_Idle_Doc      := Idle_Complete_Notes (Explorer);
       More_Idle_Complete := Idle_Expand (Explorer);
 
       if not Explorer.Completion_Window.In_Destruction then
@@ -574,6 +570,12 @@ package body Completion_Window is
       Explorer.Has_Idle_Computation := More_Idle_Doc or More_Idle_Complete;
 
       return Explorer.Has_Idle_Computation;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         Explorer.Has_Idle_Computation := False;
+         return False;
    end Idle_Compute;
 
    -----------------
@@ -1148,11 +1150,7 @@ package body Completion_Window is
             Fill_Notes_Container (Explorer, Explorer.Info (Index));
          end if;
 
-         if not Explorer.Has_Idle_Computation then
-            Explorer.Has_Idle_Computation := True;
-            Explorer.Idle_Computation := Completion_Explorer_Idle.Idle_Add
-              (Idle_Compute'Access, Explorer);
-         end if;
+         Start_Idle_Computation (Explorer);
       else
          Explorer.Notes_Need_Completion := False;
       end if;
@@ -2244,5 +2242,32 @@ package body Completion_Window is
    begin
       Set_Iterator (Window.Explorer, Iter);
    end Set_Iterator;
+
+   ----------------------------
+   -- Start_Idle_Computation --
+   ----------------------------
+
+   procedure Start_Idle_Computation
+     (Explorer : access Completion_Explorer_Record'Class) is
+   begin
+      if not Explorer.Has_Idle_Computation then
+         Explorer.Has_Idle_Computation := True;
+         Explorer.Idle_Computation := Completion_Explorer_Idle.Idle_Add
+           (Idle_Compute'Access, Explorer);
+      end if;
+   end Start_Idle_Computation;
+
+   ---------------------------
+   -- Stop_Idle_Computation --
+   ---------------------------
+
+   procedure Stop_Idle_Computation
+     (Explorer : access Completion_Explorer_Record'Class) is
+   begin
+      if Explorer.Has_Idle_Computation then
+         Remove (Explorer.Idle_Computation);
+         Explorer.Has_Idle_Computation := False;
+      end if;
+   end Stop_Idle_Computation;
 
 end Completion_Window;
