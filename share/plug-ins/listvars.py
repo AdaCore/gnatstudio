@@ -40,32 +40,40 @@ def list_vars(subprogram, global_only=False):
     for e in locFile.entities(local=False):
         if not e.is_type():
             found = False
-            for r in e.references(include_implicit=True, in_file=locFile):
+            refs = e.references(
+                include_implicit=True,
+                in_file=locFile,
+                show_kind=True)
+            for loc, kind in refs.iteritems():
                 if not found \
-                        and r.file() == locFile \
-                        and r.line() >= locFrom and r.line() <= locTo:
+                   and loc.file() == locFile \
+                   and loc.line() >= locFrom \
+                   and loc.line() <= locTo:
+
                     decl = e.declaration()
 
                     if decl.file() != locFile \
-                            or decl.line() < locFrom \
-                            or decl.line() > locTo:
-                        GPS.Locations.add(category=category,
-                                          file=r.file(),
-                                          line=r.line(),
-                                          column=r.column(),
-                                          message=e.full_name() +
-                                          " (decl: %s)" % e.declaration(),
-                                          highlight=highlight,
-                                          length=0)
+                       or decl.line() < locFrom \
+                       or decl.line() > locTo:
+                        GPS.Locations.add(
+                            category=category,
+                            file=loc.file(),
+                            line=loc.line(),
+                            column=loc.column(),
+                            message="%s (decl: %s) %s" % (
+                                e.full_name(), e.declaration(), kind),
+                            highlight=highlight,
+                            length=0)
                         added = True
                     elif not global_only:
-                        GPS.Locations.add(category=category,
-                                          file=r.file(),
-                                          line=r.line(),
-                                          column=r.column(),
-                                          message=e.name(),
-                                          highlight=highlight,
-                                          length=0)
+                        GPS.Locations.add(
+                            category=category,
+                            file=loc.file(),
+                            line=loc.line(),
+                            column=loc.column(),
+                            message="%s %s" % (e.name(), kind),
+                            highlight=highlight,
+                            length=0)
                         added = True
                     found = True
 
