@@ -84,7 +84,7 @@ package body Bookmark_Views is
    Editable_Column  : constant := 3;
 
    Column_Types : constant GType_Array :=
-     (Icon_Name_Column => GType_String,
+     (Icon_Name_Column => GType_Icon_Name_String,
       Name_Column      => GType_String,
       Data_Column      => GType_Pointer,
       Editable_Column  => GType_Boolean);
