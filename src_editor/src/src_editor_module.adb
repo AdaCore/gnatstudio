@@ -2076,7 +2076,7 @@ package body Src_Editor_Module is
                      "Move to " & Step_Str & " " & Kind_Str & ESel_Str,
                      Command,
                      -"Move to the " & Step_Str & " " & Kind_Str
-                     & "in the current source editor" & ESel_Str,
+                     & " in the current source editor" & ESel_Str,
                      Category => "Editor",
                      Filter   => Src_Action_Context);
                end;
