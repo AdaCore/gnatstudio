@@ -3,9 +3,13 @@
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 width="16px" height="16px" viewBox="0 0 16 16" enable-background="new 0 0 16 16" xml:space="preserve">
-<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="7.9995" y1="3" x2="7.9995" y2="13.0005">
-	<stop  offset="0" style="stop-color:#000000;stop-opacity:0.7"/>
-	<stop  offset="1" style="stop-color:#000000;stop-opacity:0.6"/>
+<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="7.9995" y1="7" x2="7.9995" y2="9">
+	<stop  offset="0" style="stop-color:#010101;stop-opacity:0.5"/>
+	<stop  offset="0.0343" style="stop-color:#010101;stop-opacity:0.7"/>
+	<stop  offset="1" style="stop-color:#010101;stop-opacity:0.6"/>
 </linearGradient>
-<polygon fill="url(#SVGID_1_)" points="13,7 9,7 9,3 7,3 7,7 3,7 3,9 7,9 7,13 9,13 9,9 13,9 "/>
+<g>
+  <rect x="3" y="7" fill="url(#SVGID_1_)" width="10" height="2"/>
+  <rect x="7" y="3" fill="url(#SVGID_1_)" width="2" height="10"/>
+</g>
 </svg>

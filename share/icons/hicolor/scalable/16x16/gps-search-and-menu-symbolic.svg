@@ -18,5 +18,5 @@
 	<stop  offset="0" style="stop-color:#000000;stop-opacity:0.7"/>
 	<stop  offset="1" style="stop-color:#000000;stop-opacity:0.6"/>
 </linearGradient>
-<polygon fill="url(#SVGID_2_)" points="16,6.023 13.013,9.489 10.028,6.023 "/>
+<path fill="url(#SVGID_2_)" d="M16,6.023 L13.013,9.489 L10.028,6.023 Z"/>
 </svg>
