@@ -533,6 +533,15 @@ KP-62-O326-012 GPS: C rename refactoring
 Known problems fixed in GPS 6.2.2 / GNATbench 2.10.2
 ----------------------------------------------------
 
+KP-62-P329-035 GPS: missing display of icon in Bookmarks view
+
+  Problem:    The first column in the Bookmarks view list contains text
+              instead of an icon.
+
+  Status:     This was fixed in 6.2.2 on 2016-03-30
+
+  Workaround: None.
+
 KP-62-P321-032 GPS: State of Undo/Redo buttons not updated
 
   Problem:    The state of the Undo/Redo buttons is not updated when
