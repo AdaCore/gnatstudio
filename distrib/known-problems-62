@@ -89,6 +89,15 @@ KP-62-P309-043 GPS: GNATemu plug-in doesn't use Exec_Dir attribute
 
   Workaround: None.
 
+KP-62-P309-004 GPS: hang when viewing codepeer.csv report
+
+  Problem:    GPS could hang on displaying a codepeer tooltip at the beginning
+              of the viewed file.
+
+  Status:     This was fixed in 17.0 on 2016-03-30
+
+  Workaround: None
+
 KP-62-P308-047 GB: Allow GPR file to have filename different from project name
 
   Problem:    To be handled by GB, GPR files had to have a name equal to their

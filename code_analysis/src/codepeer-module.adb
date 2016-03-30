@@ -1806,6 +1806,8 @@ package body CodePeer.Module is
                  and Wide_Wide_Character'Val (Location.Get_Char) /= '''
                  and Wide_Wide_Character'Val (Location.Get_Char) /= '.';
 
+            exit when Location.Offset = 0;
+
             Location := Location.Forward_Char (-1);
          end loop;
 
