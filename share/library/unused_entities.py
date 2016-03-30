@@ -144,7 +144,7 @@ def show_unused_entities_in_file():
 @interactive(name='show unused entities from project',
              menu='/Navigate/List unused entities/From project',
              after='Goto Body')
-def show_unused_entities_in_project(menu):
+def show_unused_entities_in_project():
     """
     Show all entities from the current project that are unused anywhere in
     your application.
@@ -155,7 +155,7 @@ def show_unused_entities_in_project(menu):
 @interactive(name='show unused entities from all projects',
              menu='/Navigate/List unused entities/From all projects',
              after='Goto Body')
-def show_unused_entities_in_projects(menu):
+def show_unused_entities_in_projects():
     """
     Show all entities from any loaded project that are unused anywhere in
     your application.
