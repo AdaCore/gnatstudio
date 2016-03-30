@@ -887,7 +887,7 @@ package body Bookmark_Views is
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
       View.Tree := Create_Tree_View
-        (Column_Types       => (Icon_Name_Column => GType_String,
+        (Column_Types       => (Icon_Name_Column => GType_Icon_Name_String,
                                 Name_Column     => GType_String,
                                 Data_Column     => GType_Pointer,
                                 Editable_Column => GType_Boolean),
