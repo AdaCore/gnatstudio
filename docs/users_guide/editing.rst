@@ -239,8 +239,7 @@ The source editor provides an extensive set of features, including:
   .. index:: plug-ins; auto_highlight_occurrences.py
 
   This is controlled by the plugin :file:`auto_highlight_occurrences.py`:
-  it can be deactivated by disabling the plugin (see
-  :ref:`The_Plug-ins_Editor`).
+  it can be deactivated by disabling the plugin.
 
   Details such as the presence of indications in the :guilabel:`Speed Column` or
   highlighting color can be customized in the :guilabel:`Plugins` section
@@ -904,19 +903,6 @@ The :menuselection:`Edit` Menu
 
 .. index:: menu; edit --> key shortcuts
 .. index:: key shortcuts
-
-* :menuselection:`Edit --> Key shortcuts`
-
-  Start the key manager dialog, used to associate commands with special
-  keys.  See :ref:`The_Key_Shortcuts_Editor`.
-
-.. index:: menu; edit --> color theme
-
-* :menuselection:`Edit --> Color Theme`
-
-  Open the Color Theme window. See :ref:`GPS_Themes`.
-
-.. index:: menu; edit --> preferences
 
 * :menuselection:`Edit --> Preferences`
 

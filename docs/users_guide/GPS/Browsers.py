@@ -174,13 +174,15 @@ class Item(object):
     """
     Describes the size of an item. In general, the size is given as a number
     of pixels. There are however a few special values.
-    - FIT indicates that the item is sized so that it fits exactly in its
-      parent container, including the child margins. So for instance given a
-      parent with a vertical layout, of width 200px, and a child with
-      10px margins both on left and right, then the child's width will be
-      set to 180px.
-    - AUTO indicates that the item's size is computed so that all of its
-      children fit exactly inside the item.
+
+       - FIT indicates that the item is sized so that it fits exactly in its
+         parent container, including the child margins. So for instance given a
+         parent with a vertical layout, of width 200px, and a child with
+         10px margins both on left and right, then the child's width will be
+         set to 180px.
+
+       - AUTO indicates that the item's size is computed so that all of its
+         children fit exactly inside the item.
     """
 
     children = None

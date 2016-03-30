@@ -592,9 +592,10 @@ class Context(object):
         This method used to be set only for a GPS.Context.
 
         :rtype: :class:`GPS.File`
-        .. seealso:: `GPS.Context.files`
+
+        .. seealso:: :class:`GPS.Context.files`
+
         """
-        pass  # implemented in Ada
 
     def set_file(self, file):
         """
@@ -4814,6 +4815,22 @@ class Entity(object):
         """
         pass  # implemented in Ada
 
+    def child_types(self):
+        """
+        Return the list of entities that extend self (in the object-oriented
+        sense)
+
+        :return: a list of :class:`GPS.Entity`
+        """
+
+    def get_called_entities(self):
+        """
+        Return the list of entities referenced within the scope of
+        self.
+
+        :return: a list of :class:`GPS.Entity`
+        """
+
     def is_subprogram(self):
         """
         Whether the entity is a subprogram, procedure or function.
@@ -7822,10 +7839,10 @@ class Preference(object):
         """
         pass  # implemented in Ada
 
+
 ###########################################################
 # PreferencesPage
 ###########################################################
-
 
 class PreferencesPage:
     """
@@ -7851,11 +7868,11 @@ class PreferencesPage:
         the :guilabel:`Preferences` dialog tree view, using the
         following policy:
 
-        - Pages with higher priorities are listed at the top of the
-        tree view.
+           - Pages with higher priorities are listed at the top of the
+             tree view.
 
-        - If two pages have the same priority, the alphabetical order
-        determines which page will appear first.
+           - If two pages have the same priority, the alphabetical order
+             determines which page will appear first.
 
         :param name: A string
         :param get_widget: function returning a PyGtk widget
@@ -10920,6 +10937,20 @@ def parse_xml(xml):
     pass  # implemented in Ada
 
 
+def process_all_events():
+    """
+    Process all the graphical events that have been queue by the system:
+    these events typically involve demands to refresh part of the screen,
+    handle key or mouse events, ...
+    This is mostly useful when writing automatic tests. In plug-ins, the
+    recommand approach is instead to create actions via
+    :func:`gps_utils.interactive`, and run them in the background with
+    :func:`GPS.execute_action`.
+    Another possible approach is to use python generators with the yield
+    keyword.
+    """
+
+
 def pwd():
     """
     Prints name of the current (working) directory.
@@ -10952,6 +10983,52 @@ def save_persistent_properties():
     call this subprogram.
     """
     pass  # implemented in Ada
+
+
+def send_key_event(
+        keyval, window=None, primary=False, alt=False,
+        shift=False, control=False):
+    """
+    synthesize and queue an event to simulate a key press. This event
+    will be processed later by gtk+ (unless you call
+    :func:`gps.process_all_events`). as much as possible, this function
+    should be avoided and you should use :func:`gps.execute_action`
+    instead.
+
+    :param GUI window: the window to which the event should be sent. This
+       defaults to the window that currently has the focus.
+    """
+
+
+def send_button_event(window=None, type=None, button=1, x=1, y=1, state=0):
+    """
+    synthesize and queue an event to simulate a mouse action. This event
+    will be processed later by gtk+ (unless you call
+    :func:`gps.process_all_events`). as much as possible, this function
+    should be avoided and you should use :func:`gps.execute_action`
+    instead.
+
+    :param int type: the type of event. This defaults to a button press.
+    :param GUI window: the window to which the event should be sent. This
+       defaults to the window that currently has the focus.
+    :param int state: the state of the modified keys (control, shift,...)
+    """
+
+
+def send_crossing_event(window=None, type=None, x=1, y=1, state=0):
+    """
+    synthesize and queue an event to simulate a mouse movement. This event
+    will be processed later by gtk+ (unless you call
+    :func:`gps.process_all_events`). as much as possible, this function
+    should be avoided and you should use :func:`gps.execute_action`
+    instead.
+
+    :param int type: the type of event. This defaults to an Enter notify
+       event.
+    :param GUI window: the window to which the event should be sent. This
+       defaults to the window that currently has the focus.
+    :param int state: the state of the modified keys (control, shift,...)
+    """
 
 
 def set_build_mode(mode=''):

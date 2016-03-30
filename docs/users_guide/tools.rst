@@ -186,12 +186,6 @@ The list of active entries includes:
 
   See :ref:`Metrics`.
 
-* :guilabel:`Plug-ins`
-
-  .. index:: plug-ins
-
-  See :ref:`The_Plug-ins_Editor`.
-
 * :guilabel:`Interrupt`
 
   .. index:: interrupt

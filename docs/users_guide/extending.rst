@@ -1843,7 +1843,7 @@ Creating themes
 
 You can create your own themes and share them between users and then
 selectively chose which themes each user want to activate through the
-preferences dialog (see :ref:`GPS_Themes`).
+preferences dialog.
 
 You create new themes in the customization files using the
 :file:`<theme>` tag.
