@@ -25,6 +25,19 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P328-005 Indentation engine on aggregates
+
+  Problem:    The following is wrongly auto-indented if the preferences for
+              conditional continuation lines is different than the default
+              value of 1:
+                 for Primary_Colour use
+                    (Red   => 1,
+                     Green => 4);
+
+  Status:     This was fixed in 17.0 on 2016-03-30
+
+  Workaround: Indent manually.
+
 KP-62-P324-031 GB: xref not working on aggregate projects
 
   Problem:    Navigation & References are not working when working on aggregate
