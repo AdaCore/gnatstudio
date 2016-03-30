@@ -1259,7 +1259,8 @@ package body GPS.Search.GUI is
    is
       Inst : constant Instance_Array := Get_Instances (Self.Inst);
       Result : Class_Instance;
-      pragma Unreferenced (Limit, Result);
+      pragma Warnings (Off, Result);
+      pragma Unreferenced (Limit);
    begin
       for J in Inst'Range loop
          if Inst (J) /= No_Class_Instance then
