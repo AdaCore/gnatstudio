@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
@@ -70,7 +71,6 @@ with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands.Generic_Asynchronous;
 with Default_Preferences;       use Default_Preferences;
-with Generic_List;
 with GUI_Utils;                 use GUI_Utils;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Templates;
@@ -152,7 +152,8 @@ package body Vsearch is
    procedure Free (Data : in out Search_Module_Data);
    --  Free the memory associated with Data
 
-   package Search_Modules_List is new Generic_List (Search_Module_Data);
+   package Search_Modules_List is new Ada.Containers.Doubly_Linked_Lists
+     (Search_Module_Data);
    use Search_Modules_List;
 
    Search_Module_Name : constant String := "Search";
@@ -691,7 +692,9 @@ package body Vsearch is
          Unchecked_Free (Module.Search_Regexps);
       end if;
 
-      Search_Modules_List.Free (Module.Search_Modules);
+      for M of Module.Search_Modules loop
+         Free (M);
+      end loop;
    end Destroy;
 
    --------------------
@@ -2578,18 +2581,18 @@ package body Vsearch is
       Num    : Positive) return Search_Module_Data
    is
       pragma Unreferenced (Kernel);
-      Node : Search_Modules_List.List_Node := First
-        (Vsearch_Module_Id.Search_Modules);
+      Node : Search_Modules_List.Cursor :=
+        Vsearch_Module_Id.Search_Modules.First;
    begin
       for N in 1 .. Num - 1 loop
          Node := Next (Node);
       end loop;
 
-      if Node = Null_Node then
-         return No_Search;
-      else
-         return Data (Node);
+      if Has_Element (Node) then
+         return Element (Node);
       end if;
+
+      return No_Search;
    end Get_Nth_Search_Module;
 
    -----------------
@@ -2601,17 +2604,12 @@ package body Vsearch is
       Label  : String) return Search_Module_Data
    is
       pragma Unreferenced (Kernel);
-
-      List : List_Node := First (Vsearch_Module_Id.Search_Modules);
    begin
-      while List /= Null_Node loop
-         if Data (List).Label.all = Label then
-            return Data (List);
+      for M of Vsearch_Module_Id.Search_Modules loop
+         if M.Label.all = Label then
+            return M;
          end if;
-
-         List := Next (List);
       end loop;
-
       return No_Search;
    end Find_Module;
 
@@ -2624,39 +2622,39 @@ package body Vsearch is
       Handle       : access Kernel_Handle_Record'Class;
       In_Selection : Boolean := False) return Search_Module_Data
    is
-      List : List_Node := First (Vsearch_Module_Id.Search_Modules);
-      Last_Matching_Node : List_Node := Null_Node;
+      List : Cursor := Vsearch_Module_Id.Search_Modules.First;
+      Last_Matching_Node : Cursor := No_Element;
       Key : constant History_Key :=
         Last_Function_In_Module_Key & History_Key (Get_Name (Module_ID (Id)));
       Last_Selected : constant String_List_Access :=
         Get_History (Get_History (Handle).all, Key);
 
    begin
-      while List /= Null_Node loop
-         if Data (List).Id = Module_ID (Id)
-           and Data (List).In_Selection = In_Selection
+      while Has_Element (List) loop
+         if Element (List).Id = Module_ID (Id)
+           and Element (List).In_Selection = In_Selection
          then
             Last_Matching_Node := List;
 
             if not Get_Pref (Keep_Previous_Search_Context)
               or else Last_Selected = null
               or else Last_Selected (Last_Selected'First).all =
-                 Data (List).Label.all
+                 Element (List).Label.all
             then
                if Active (Me) then
                   Trace (Me, "Get last search function for module "
-                         & String (Key) & ": " & Data (List).Label.all);
+                         & String (Key) & ": " & Element (List).Label.all);
                end if;
 
-               return Data (List);
+               return Element (List);
             end if;
          end if;
 
          List := Next (List);
       end loop;
 
-      if Last_Matching_Node /= Null_Node then
-         return Data (Last_Matching_Node);
+      if Has_Element (Last_Matching_Node) then
+         return Element (Last_Matching_Node);
       end if;
 
       return No_Search;
