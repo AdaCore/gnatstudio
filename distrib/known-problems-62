@@ -587,6 +587,15 @@ KP-62-P224-028 GPS: Impossibility to choose custom colors for code highlighting
   Workaround: Keep the previous preferences.xml (with customized colors) if
               any.
 
+KP-62-P215-044 GPS: GPS locks up on Ada completion
+
+  Problem:    GPS might hang or crash when triggering the smart
+              completion on projects that contain C files.
+
+  Status:     This was fixed in 6.2.2 on 2016-03-30
+
+  Workaround: None.
+
 KP-62-P208-069 GPS: debugging session ignores terminate
 
   Problem:    When an application is running under debugger the termination
