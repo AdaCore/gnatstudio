@@ -662,26 +662,24 @@ xml_gnatprove = """<?xml version="1.0"?>
 <combo
 label="Proof level"
 switch="--level"
-noswitch="none"
+noswitch="0"
 separator="="
 tip="Set the proof level from 0 = faster to 4 = more powerful" >
-    <combo-entry label="none" value="none"
-                 tip="No level set"/>
     <combo-entry label="0 (fast, one prover)" value="0"
                  tip="Equivalent to --prover=cvc4 --proof=per_check
- --steps=100 --timeout=1"/>
+ --steps=100"/>
     <combo-entry label="1 (fast, all provers)" value="1"
                  tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
- --steps=100 --timeout=1"/>
+ --steps=100"/>
     <combo-entry label="2 (all provers)" value="2"
                  tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
- --steps=1000 --timeout=10"/>
+ --steps=1000"/>
     <combo-entry label="3 (slower, all provers)" value="3"
                  tip="Equivalent to --prover=cvc4,z3,altergo
- --proof=progressive --steps=1000 --timeout=10"/>
+ --proof=progressive --steps=1000"/>
     <combo-entry label="4 (slowest, all provers)" value="4"
                  tip="Equivalent to --prover=cvc4,z3,altergo
- --proof=progressive --steps=10000 --timeout=60"/>
+ --proof=progressive --steps=10000"/>
 </combo>
 <combo
 label="Proof strategy"
@@ -699,8 +697,9 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
     tip="Start ith one formula per check, then split into paths when needed"/>
 </combo>
         <spin label="Prover timeout" switch="--timeout="
-              default="1" min="1" max="3600"
-              tip="Set the prover timeout (in s) for individual proofs" />
+              default="0" min="0" max="3600"
+              tip="Set the prover timeout (in sec) for individual proofs
+ (0 for no timeout)" />
         <spin
           label="Prover max steps"
           switch="--steps="
@@ -748,28 +747,29 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
 <combo
 label="Proof level"
 switch="--level"
-noswitch="none"
+noswitch="0"
 separator="="
 column="2"
 tip="Set the proof level from 0 = faster to 4 = more powerful" >
-    <combo-entry label="none" value="none"
-                 tip="No level set"/>
     <combo-entry label="0 (fast, one prover)" value="0"
                  tip="Equivalent to --prover=cvc4 --proof=per_check
- --steps=100 --timeout=1"/>
+ --steps=100"/>
     <combo-entry label="1 (fast, all provers)" value="1"
                  tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
- --steps=100 --timeout=1"/>
+ --steps=100"/>
     <combo-entry label="2 (all provers)" value="2"
                  tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
- --steps=1000 --timeout=10"/>
+ --steps=1000"/>
     <combo-entry label="3 (slower, all provers)" value="3"
                  tip="Equivalent to --prover=cvc4,z3,altergo
- --proof=progressive --steps=1000 --timeout=10"/>
+ --proof=progressive --steps=1000"/>
     <combo-entry label="4 (slowest, all provers)" value="4"
                  tip="Equivalent to --prover=cvc4,z3,altergo
- --proof=progressive --steps=10000 --timeout=60"/>
+ --proof=progressive --steps=10000"/>
 </combo>
+         <check label="Automatic timeout" switch="--timeout=auto" column="2"
+                tip="Adjust timeout to the proof level"
+         />
        </switches>
        <persistent-history>False</persistent-history>
     </target-model>
@@ -825,8 +825,9 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
  then split into paths when needed"/>
          </combo>
          <spin label="Prover timeout" switch="--timeout=" column="2"
-                default="1" min="1" max="3600"
-                tip="Set the prover timeout (in s) for individual proofs" />
+                default="0" min="0" max="3600"
+                tip="Set the prover timeout (in sec) for individual proofs
+ (0 for no timeout)" />
          <field label="Alternate provers" switch="--prover=" column="2"
                 tip="Alternate provers to use, instead of CVC4
  followed by Alt-Ergo" />
