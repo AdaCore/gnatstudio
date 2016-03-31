@@ -177,6 +177,14 @@ NF-17-O314-006 GPS: saving project before opening it's source (2015-11-05)
   file (with user's confirmation) before opening it in editor.
   This closes the dialog.
 
+NF-17-NB13-048 GPS: width of omnisearch popup (2016-03-31)
+
+  The width of the popup window for the omnisearch (at the top-right
+  corner of the main window) is now proportional to that of the search
+  field itself. And the width of the latter can be set by changing the
+  settings, which is useful if you have long file names in your
+  application.
+
 NF-17-N908-050 GPS: preserve size of dialogs (2015-11-10)
 
   Most dialogs in GPS can be resized, and GPS will now restore the last size

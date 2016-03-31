@@ -1273,11 +1273,15 @@ package body Gtkada.Entry_Completion is
          --  Compute the ideal height. We do not compute the ideal width,
          --  since we don't want to have to move the window around and want
          --  it aligned on the GPS right side.
-         --  Leave an offset of 20 pixels so that the window is not aligned
+         --  Leave an offset of 13 pixels so that the window is not aligned
          --  exactly on the screen edge which makes the scrollbar hard to grab
+         --  (yet keep the offset so that the popup is somewhat aligned with
+         --  the entry).
 
-         Width := Result_Width + Provider_Label_Width;
-         X := Gint'Min (Gdk_X, MaxX - Width - 20);
+         Width := Gint'Max
+            (Self.GEntry.Get_Allocated_Width,
+             Result_Width + Provider_Label_Width);
+         X := Gint'Min (Gdk_X, MaxX - Width - 13);
          Y := Gdk_Y + Self.GEntry.Get_Allocated_Height;
 
          if Auto_Resize_Popup (Self) then
