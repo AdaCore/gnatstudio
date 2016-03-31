@@ -25,6 +25,18 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P330-050 GPS: select row in Attach dialog scrolls to top
+
+  Problem:    After you start the debugger, if you open the dialog
+              Debugger/Data/Attach to attach to an existing process and
+              then select a row in the list, the list scrolls back to the
+              top, which is confusing.
+
+  Status:     This was fixed in 17.0 on 2016-03-31
+
+  Workaround: Scroll back the list as needed. The selection was properly
+              handled, so you can also click on the OK button directly.
+
 KP-62-P328-005 Indentation engine on aggregates
 
   Problem:    The following is wrongly auto-indented if the preferences for

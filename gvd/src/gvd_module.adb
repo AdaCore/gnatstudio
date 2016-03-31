@@ -60,15 +60,14 @@ with GVD.Consoles;              use GVD.Consoles;
 with GVD.Contexts;              use GVD.Contexts;
 with GVD.Menu;                  use GVD.Menu;
 with GVD.Preferences;           use GVD.Preferences;
-with GVD.Proc_Utils;            use GVD.Proc_Utils;
 with GVD.Process;               use GVD.Process;
+with GVD.Process_Lists;         use GVD.Process_Lists;
 with GVD.Scripts;               use GVD.Scripts;
 with GVD.Source_Editor.GPS;     use GVD.Source_Editor.GPS;
 with GVD.Source_Editor;         use GVD.Source_Editor;
 with GVD.Types;                 use GVD.Types;
 with Histories;                 use Histories;
 with Language;                  use Language;
-with List_Select_Pkg;           use List_Select_Pkg;
 with Process_Proxies;           use Process_Proxies;
 with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
@@ -634,11 +633,9 @@ package body GVD_Module is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process      : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
-      Process_List : List_Select_Access;
-      Success      : Boolean;
-      Info         : Process_Info;
-      Ignore       : Message_Dialog_Buttons;
-      pragma Unreferenced (Command, Ignore);
+      List         : Process_List;
+      Dummy       : Message_Dialog_Buttons;
+      pragma Unreferenced (Command);
 
    begin
       if Process = null or else Process.Debugger = null then
@@ -646,7 +643,7 @@ package body GVD_Module is
       end if;
 
       if Command_In_Process (Get_Process (Process.Debugger)) then
-         Ignore := Message_Dialog
+         Dummy := Message_Dialog
            ((-"Cannot attach to a task/process while the") & ASCII.LF &
             (-"underlying debugger is busy.") & ASCII.LF &
             (-"Interrupt the debugger or wait for its availability."),
@@ -656,32 +653,18 @@ package body GVD_Module is
          return Commands.Failure;
       end if;
 
-      Gtk_New
-        (Process_List,
-         Title         => -"Process Selection",
-         Item_Label    => -"Pid",
-         Comment_Label => -"Command");
-
-      Open_Processes (Process.Debugger);
-
-      loop
-         Next_Process (Process.Debugger, Info, Success);
-
-         exit when not Success;
-
-         Add_Item (Process_List, Info.Id, Info.Info);
-      end loop;
-
-      Close_Processes (Process.Debugger);
+      Gtk_New (List, Process);
 
       declare
-         Argument : constant String := Show (Process_List);
+         Argument : constant String := List.Get_Selection;
       begin
          if Argument /= "" then
             Attach_Process
               (Process.Debugger, Argument, Mode => GVD.Types.Visible);
          end if;
       end;
+
+      List.Destroy;
 
       return Commands.Success;
    end Execute;

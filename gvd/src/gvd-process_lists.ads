@@ -15,34 +15,38 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib.Object;
-with Gdk.Event;     use Gdk.Event;
-with Gtk.Arguments;
-with Gtk.Widget;
+--  Shows a list of processes that can be attached to
 
-package List_Select_Pkg.Callbacks is
+with GVD.Process;         use GVD.Process;
+with Gtk.Dialog;          use Gtk.Dialog;
+with Gtk.Tree_View;       use Gtk.Tree_View;
+with Gtk.Tree_Store;      use Gtk.Tree_Store;
+with Gtk.GEntry;          use Gtk.GEntry;
 
-   procedure On_Clist_Select_Row
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
+package GVD.Process_Lists is
 
-   function On_Clist_Button_Press
-     (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Event  : Gdk_Event) return Boolean;
+   type Process_List_Record is new Gtk_Dialog_Record with private;
+   type Process_List is access all Process_List_Record'Class;
 
-   procedure On_The_Entry_Activate
-     (Object : access Gtk_Entry_Record'Class);
+   procedure Gtk_New
+     (Self    : out Process_List;
+      Process : not null access Visual_Debugger_Record'Class);
+   --  Create a new dialog
 
-   procedure On_Ok_Clicked
-     (Object : access Gtk_Button_Record'Class);
+   function Get_Selection
+     (Self  : not null access Process_List_Record)
+      return String;
+   --  Display the dialog and let the user select a new process to attach to.
+   --  Returns "" if the user clicked on the Cancel button, otherwise returns
+   --  the PID of the process.
+   --  The dialog is not destroyed automatically.
 
-   procedure On_Cancel_Clicked
-     (Object : access Gtk_Button_Record'Class);
+private
 
-   procedure On_Help_Clicked
-     (Object : access Gtk_Button_Record'Class);
+   type Process_List_Record is new Gtk_Dialog_Record with record
+      Tree_Model     : Gtk_Tree_Store;
+      Tree_View      : Gtk_Tree_View;
+      Ent            : Gtk_Entry;
+   end record;
 
-   function On_Delete_Event
-     (Object : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
-
-end List_Select_Pkg.Callbacks;
+end GVD.Process_Lists;
