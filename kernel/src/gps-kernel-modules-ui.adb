@@ -3006,13 +3006,15 @@ package body GPS.Kernel.Modules.UI is
       --  Put all items on the list to be checked. When they still do not
       --  have a filter, they will simply be put back on the list of unfiltered
       --  items.
-      C := Globals.Unfiltered_Items.First;
+      C := Globals.Unfiltered_Items.Last;
       while Has_Element (C) loop
-         N := Next (C);
+         N := Previous (C);
          P := Proxy_Lists.Element (C);
 
          Data := Get_Data (P.Proxy);
          if Data /= null and then To_Lower (Data.Action.all) = Lower then
+            --  This might end up putting the item back on Unfiltered_items,
+            --  which is why we traverse the list in the reverse order here.
             Add_To_Global_Proxies (P.Proxy, Kernel, P.Filter);
             Globals.Unfiltered_Items.Delete (C);
          end if;

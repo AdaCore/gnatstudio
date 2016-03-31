@@ -1366,13 +1366,14 @@ package body Custom_Module is
             Icon_Name   => Data.Nth_Arg (6, ""));
 
       elsif Command = "disable" then
+         Inst := Nth_Arg (Data, 1, Action_Class);
          declare
             Disabled : constant Boolean := Nth_Arg (Data, 2, True);
+            Action   : constant String := Get_Data (Inst, Action_Class);
          begin
-            Inst := Nth_Arg (Data, 1, Action_Class);
             Set_Action_Disabled
               (Kernel,
-               Name     => String'(Get_Data (Inst, Action_Class)),
+               Name     => Action,
                Disabled => Disabled);
          end;
 
