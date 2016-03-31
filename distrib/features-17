@@ -41,6 +41,12 @@ NF-17-P315-018 GPS: Preference for tab orientation (2016-03-18)
   New preference added to configure default tab orientation. This allows,
   for example, to put tabs horizontally at right side of a window.
 
+NF-17-P314-024 GPS: listvars.py plugins shows reference type (2016-03-30)
+
+  The optional listvars.py plugin (which adds a contextual menu
+  "Variables used in ...") now also shows the type of reference for those
+  variable (read, write, dispatching call,...)
+
 NF-17-P217-017 GPS: New Pythin API to get Build Targets commands (2016-03-01)
 
   A new GPS.BuildTarget.get_command_line() method has been added in order
