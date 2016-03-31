@@ -48,6 +48,15 @@ with Gtk.Text_View;             use Gtk.Text_View;
 with Gtk.Toggle_Button;         use Gtk.Toggle_Button;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Window;                use Gtk.Window;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Button;                use Gtk.Button;
+with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Combo_Box;             use Gtk.Combo_Box;
+with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Table;                 use Gtk.Table;
+with Gtk.Viewport;              use Gtk.Viewport;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -78,7 +87,6 @@ with GNATCOLL.VFS;
 with Histories;                 use Histories;
 with Projects;                  use Projects;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with String_Utils;              use String_Utils;
 with XML_Utils;                 use XML_Utils;
 
 package body Vsearch is
@@ -110,6 +118,79 @@ package body Vsearch is
        & " unselected, the focus is left on the search window, which means"
        & " you can keep typing Enter to go to the next search, but can't"
        & " modify the editor directly");
+
+   type Search_Regexp is record
+      Name           : GNAT.Strings.String_Access;
+      Regexp         : GNAT.Strings.String_Access;
+      Case_Sensitive : Boolean;
+      Is_Regexp      : Boolean;
+   end record;
+   type Search_Regexps_Array is array (Natural range <>) of Search_Regexp;
+   type Search_Regexps_Array_Access is access Search_Regexps_Array;
+
+   type Vsearch_Record is new Gtk_Box_Record with record
+      Scrolled                : Gtk_Scrolled_Window;
+      View                    : Gtk_Viewport;
+      Main                    : Gtk_Vbox;
+      Table                   : Gtk_Table;
+      Replace_Label           : Gtk_Label;
+      Search_For_Label        : Gtk_Label;
+      Search_In_Label         : Gtk_Label;
+      Replace_Combo           : Gtk_Combo_Box;
+      Context_Combo           : Gtk_Combo_Box_Text;
+      Pattern_Combo           : Gtk_Combo_Box;
+      Buttons_Table           : Gtk_Table;
+      Options_Frame           : Gtk_Box;
+      Options_Vbox            : Gtk_Table;
+      Scope_Frame             : Gtk_Box;
+      Scope_Table             : Gtk_Table;
+      Select_Editor_Check     : Gtk_Check_Button;
+      Case_Check              : Gtk_Check_Button;
+      Case_Preserving_Replace : Gtk_Check_Button;
+      Whole_Word_Check        : Gtk_Check_Button;
+      Auto_Hide_Check         : Gtk_Check_Button;
+      Regexp_Check            : Gtk_Check_Button;
+      Context_Specific        : Gtk_Box;
+
+      Kernel                  : GPS.Kernel.Kernel_Handle;
+      Search_Next_Button      : Gtk.Button.Gtk_Button;
+      Replace_Button          : Gtk.Button.Gtk_Button;
+      Replace_Search_Button   : Gtk.Button.Gtk_Button;
+      Replace_All_Button      : Gtk.Button.Gtk_Button;
+      Search_Previous_Button  : Gtk.Button.Gtk_Button;
+      Search_All_Button       : Gtk.Button.Gtk_Button;
+      Replace_Only_Button     : Gtk.Button.Gtk_Button;
+      Extra_Information       : Gtk.Widget.Gtk_Widget;
+      Search_Idle_Handler     : Glib.Main.G_Source_Id := 0;
+      Last_Search_Context     : Find_Utils.Root_Search_Context_Access;
+      --  This is the context used for single Find/Next and Replace operations.
+      Last_Search_All_Context : Find_Utils.Root_Search_Context_Access;
+      --  This is the context used for Find/Replace All operations. It is
+      --  then copied to the idle data of the background command. The purpose
+      --  here it to be able to launch a new Find/Replace All operation while
+      --  there is another one already running: they need to have their own
+      --  context.
+      Find_Next               : Boolean := False;
+      Selection_From          : Gtk_Text_Mark;
+      Selection_To            : Gtk_Text_Mark;
+
+      Projects                : Standard.Projects.Project_Type_Array_Access;
+      --  Restrict the search to these projects
+   end record;
+   type Vsearch_Access is access all Vsearch_Record'Class;
+
+   procedure Gtk_New
+     (New_Vsearch : out Vsearch_Access;
+      Handle      : GPS.Kernel.Kernel_Handle);
+   --  Create a new extended search dialog.
+
+   procedure Initialize
+     (Vsearch : access Vsearch_Record'Class;
+      Handle  : GPS.Kernel.Kernel_Handle);
+   --  Internal initialization procedure.
+
+   procedure Register_Preferences (Kernel : access Kernel_Handle_Record'Class);
+   --  Register the preferences associated to the search functions
 
    package Implements_Editable is new Glib.Types.Implements
      (Gtk.Editable.Gtk_Editable, GObject_Record, GObject);
@@ -172,9 +253,6 @@ package body Vsearch is
 
       Search_Regexps : Search_Regexps_Array_Access;
       --  The list of predefined regexps for the search module.
-
-      Tab_Width      : Natural;
-      --  The default tab width.
 
       Has_Focus_On_Click : Boolean := False;
       --  If Patern/Replace combo has focus on mouse click
@@ -261,7 +339,7 @@ package body Vsearch is
    --  label of existing ones is updated to show the next context (macro
    --  substitution,...)
 
-   procedure Free (D : in out Idle_Search_Data);
+   procedure Free (D : in out Idle_Search_Data) is null;
    --  Free memory associated with D.
 
    package Search_Commands is new Commands.Generic_Asynchronous
@@ -354,10 +432,6 @@ package body Vsearch is
                        return Boolean;
    --  Called when the search widget is about to be destroyed.
 
-   procedure Replace_Text_Changed
-     (Vsearch : access Gtk_Widget_Record'Class);
-   --  Called when the contents of the "Replace" field has changed
-
    procedure Resize_If_Needed (Vsearch : access Vsearch_Record'Class);
    --  Resize the vsearch window if needed.
 
@@ -440,13 +514,6 @@ package body Vsearch is
 
    procedure Float_Vsearch (Search_Child : access Gtk_Widget_Record'Class);
    --  The floating state of the search widget has changed
-
-   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
-     (Self   : On_Pref_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Preference);
-   --  Called when the preferences have changed.
 
    procedure Store_Position (Vsearch : Vsearch_Access);
    --  Store in history the position of the Vsearch dialog
@@ -640,9 +707,6 @@ package body Vsearch is
          Store_Position (Vsearch);
          Set_Size_Request (Vsearch, -1, -1);
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
    end Float_Vsearch;
 
    -------------------
@@ -659,9 +723,6 @@ package body Vsearch is
       --  done by the window manager (e.g. under Windows)
 
       Gdk_Raise (Get_Window (Get_Main_Window (Vsearch.Kernel)));
-
-   exception
-      when E : others => Trace (Me, E);
    end Close_Vsearch;
 
    ----------
@@ -1133,9 +1194,6 @@ package body Vsearch is
             Set_First_Next_Mode (Vsearch, Find_Next => True);
          end if;
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
    end On_Search_Previous;
 
    -------------------
@@ -1145,9 +1203,6 @@ package body Vsearch is
    procedure On_Search_All (Object : access Gtk_Widget_Record'Class) is
    begin
       Internal_Search (Vsearch_Access (Object), True);
-
-   exception
-      when E : others => Trace (Me, E);
    end On_Search_All;
 
    ----------------
@@ -1491,19 +1546,6 @@ package body Vsearch is
          return False;
    end Key_Press;
 
-   --------------------------
-   -- Replace_Text_Changed --
-   --------------------------
-
-   procedure Replace_Text_Changed
-     (Vsearch : access Gtk_Widget_Record'Class)
-   is
-      pragma Unreferenced (Vsearch);
-   begin
-      null;
-      --  Reset_Search (Vsearch, Vsearch_Access (Vsearch).Kernel);
-   end Replace_Text_Changed;
-
    -----------------------
    -- Key_Press_Replace --
    -----------------------
@@ -1572,30 +1614,22 @@ package body Vsearch is
      (Self   : New_Predefined_Regexp;
       Kernel : not null access Kernel_Handle_Record'Class)
    is
-      pragma Unreferenced (Self);
+      pragma Unreferenced (Self, Kernel);
       Search  : constant Vsearch_Access := Vsearch_Module_Id.Search;
       Item    : Gtk_Tree_Iter;
       List    : Gtk_List_Store;
-      Is_Regexp, Case_Sensitive : Boolean;
       Casing     : constant Boolean := Get_Active (Search.Case_Check);
       Whole_Word : constant Boolean := Get_Active (Search.Whole_Word_Check);
       Regexp     : constant Boolean := Get_Active (Search.Regexp_Check);
 
    begin
-      for S in 1 .. Search_Regexps_Count (Kernel) loop
-         Item := Add_Unique_Combo_Entry
-           (Search.Pattern_Combo,
-            Get_Nth_Search_Regexp_Name (Kernel, S));
-         Get_Nth_Search_Regexp_Options
-           (Kernel, S,
-            Case_Sensitive => Case_Sensitive,
-            Is_Regexp => Is_Regexp);
-
+      for R of Vsearch_Module_Id.Search_Regexps.all loop
+         Item := Add_Unique_Combo_Entry (Search.Pattern_Combo, R.Name.all);
          List := -Get_Model (Search.Pattern_Combo);
-         List.Set (Item, Column_Pattern, Get_Nth_Search_Regexp (Kernel, S));
-         List.Set (Item, Column_Case_Sensitive, Case_Sensitive);
-         List.Set (Item, Column_Is_Regexp, Is_Regexp);
-         List.Set (Item, Column_Whole_Word, False);
+         List.Set (Item, Column_Pattern,        R.Regexp.all);
+         List.Set (Item, Column_Case_Sensitive, R.Case_Sensitive);
+         List.Set (Item, Column_Is_Regexp,      R.Is_Regexp);
+         List.Set (Item, Column_Whole_Word,     False);
       end loop;
 
       --  Restore the options as before (they might have changed depending
@@ -1696,7 +1730,6 @@ package body Vsearch is
       E : constant Gtk_Entry := Gtk_Entry (Self);
    begin
       Vsearch_Module_Id.Has_Focus_On_Click := E.Is_Focus;
-
       return False;
    end On_Button_Press;
 
@@ -2013,9 +2046,6 @@ package body Vsearch is
       Kernel_Callback.Connect
         (Vsearch.Pattern_Combo, Gtk.Combo_Box.Signal_Changed,
          Reset_Search'Access, Handle);
-      Widget_Callback.Object_Connect
-        (Vsearch.Replace_Combo, Gtk.Combo_Box.Signal_Changed,
-         Replace_Text_Changed'Access, Vsearch);
       Kernel_Callback.Connect
         (Vsearch.Context_Combo, Gtk.Combo_Box.Signal_Changed,
          Reset_Search'Access, Handle);
@@ -2505,18 +2535,11 @@ package body Vsearch is
       Vsearch : Vsearch_Access;
       pragma Unreferenced (Vsearch);
    begin
-      if Action.Context = null then
-         null;
-      else
-         null;
-      end if;
-
       Vsearch := Get_Or_Create_Vsearch
         (Get_Kernel (Context.Context),
          Raise_Widget  => True,
          Reset_Entries => True,
          Context       => Action.Context);
-
       return Success;
    end Execute;
 
@@ -2739,60 +2762,6 @@ package body Vsearch is
       Search_Regexps_Changed_Hook.Run (Kernel);
    end Register_Search_Pattern;
 
-   --------------------------
-   -- Search_Regexps_Count --
-   --------------------------
-
-   function Search_Regexps_Count
-     (Kernel : access Kernel_Handle_Record'Class) return Natural
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      return Vsearch_Module_Id.Search_Regexps'Length;
-   end Search_Regexps_Count;
-
-   -----------------------------------
-   -- Get_Nth_Search_Regexp_Options --
-   -----------------------------------
-
-   procedure Get_Nth_Search_Regexp_Options
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Num            : Natural;
-      Case_Sensitive : out Boolean;
-      Is_Regexp      : out Boolean)
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      Case_Sensitive := Vsearch_Module_Id.Search_Regexps (Num).Case_Sensitive;
-      Is_Regexp      := Vsearch_Module_Id.Search_Regexps (Num).Is_Regexp;
-   end Get_Nth_Search_Regexp_Options;
-
-   --------------------------------
-   -- Get_Nth_Search_Regexp_Name --
-   --------------------------------
-
-   function Get_Nth_Search_Regexp_Name
-     (Kernel : access Kernel_Handle_Record'Class; Num : Natural)
-      return String
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      return Vsearch_Module_Id.Search_Regexps (Num).Name.all;
-   end Get_Nth_Search_Regexp_Name;
-
-   ----------------------------------
-   -- Get_Nth_Search_Regexp_Regexp --
-   ----------------------------------
-
-   function Get_Nth_Search_Regexp
-     (Kernel : access Kernel_Handle_Record'Class; Num : Natural)
-      return String
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      return Vsearch_Module_Id.Search_Regexps (Num).Regexp.all;
-   end Get_Nth_Search_Regexp;
-
    ---------------
    -- Customize --
    ---------------
@@ -2842,8 +2811,6 @@ package body Vsearch is
          Priority    => Default_Priority);
       Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);
 
-      Vsearch_Module_Id.Tab_Width := Tab_Width;
-
       Register_Action
         (Kernel, "Search",
          new Search_Specific_Context'
@@ -2870,7 +2837,6 @@ package body Vsearch is
 
       Register_Default_Search (Kernel);
 
-      Preferences_Changed_Hook.Add (new On_Pref_Changed);
       Register_Preferences (Kernel);
    end Register_Module;
 
@@ -2899,44 +2865,6 @@ package body Vsearch is
            & " between searches."),
          Default => False);
    end Register_Preferences;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (D : in out Idle_Search_Data) is
-      pragma Unreferenced (D);
-   begin
-      null;
-   end Free;
-
-   -------------------
-   -- Get_Tab_Width --
-   -------------------
-
-   function Get_Tab_Width return Natural is
-   begin
-      --  This is needed in the context of the automatic testsuite
-      if Vsearch_Module_Id = null then
-         return 8;
-      else
-         return Vsearch_Module_Id.Tab_Width;
-      end if;
-   end Get_Tab_Width;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Self   : On_Pref_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Preference)
-   is
-      pragma Unreferenced (Self, Kernel, Pref);
-   begin
-      Vsearch_Module_Id.Tab_Width := Tab_Width;
-   end Execute;
 
    ------------------
    -- Reset_Search --
