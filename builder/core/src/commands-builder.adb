@@ -217,7 +217,7 @@ package body Commands.Builder is
       procedure Expand_Command_Line (Result : in out Build_Information) is
          Mode    : constant String := To_String (Result.Mode);
          CL      : constant Argument_List :=
-           Get_Command_Line_Unexpanded (Builder.Registry, Result.Target);
+           Get_Command_Line_Unexpanded (Result.Target);
          CL_Mode : Argument_List_Access :=
            Apply_Mode_Args (Builder.Registry, Get_Model (Result.Target),
                             Mode, CL);

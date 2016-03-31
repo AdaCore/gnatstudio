@@ -107,7 +107,8 @@ package Switches_Chooser is
       Line          : Positive := 1;
       Column        : Positive := 1;
       Add_Before    : Boolean := False;
-      Popup         : Popup_Index := Main_Window);
+      Popup         : Popup_Index := Main_Window;
+      Filter        : String := "");
    --  Adds a check button in a specific area of the editor.
    --  When the button is different from its default state, then the switch
    --  corresponding to the activation state (set or unset) is present,
@@ -125,7 +126,8 @@ package Switches_Chooser is
       Line         : Positive := 1;
       Column       : Positive := 1;
       Add_Before   : Boolean := False;
-      Popup        : Popup_Index := Main_Window);
+      Popup        : Popup_Index := Main_Window;
+      Filter       : String := "");
    --  Add a text field
 
    procedure Add_Spin
@@ -141,7 +143,8 @@ package Switches_Chooser is
       Line       : Positive := 1;
       Column     : Positive := 1;
       Add_Before : Boolean := False;
-      Popup      : Popup_Index := Main_Window);
+      Popup      : Popup_Index := Main_Window;
+      Filter     : String := "");
    --  Add a switch that takes a numeric argument
 
    type Radio_Switch is private;
@@ -157,7 +160,8 @@ package Switches_Chooser is
       Switch     : String;
       Section    : String := "";
       Tip        : String := "";
-      Add_Before : Boolean := False);
+      Add_Before : Boolean := False;
+      Filter     : String := "");
    --  Create a radio button: only one of these switches is active at any time.
    --  A radio_entry is in all ways similar to a check button.
 
@@ -189,7 +193,8 @@ package Switches_Chooser is
       Line       : Positive := 1;
       Column     : Positive := 1;
       Add_Before : Boolean := False;
-      Popup      : Popup_Index := Main_Window);
+      Popup      : Popup_Index := Main_Window;
+      Filter     : String := "");
    --  Add a combo box.
    --  When selected, the switch inserted in the command line will be
    --  Switch & Separator & <value of current entry>
@@ -549,6 +554,35 @@ package Switches_Chooser is
    Command_Line_Editor_Tooltip_Text : aliased constant String;
    --  builder target command line field editor tool tip text
 
+   type Switch_Filter_Description_Record is tagged private;
+   type Switch_Filter_Description is
+     access all Switch_Filter_Description_Record'Class;
+
+   function Get_Name
+     (Filter : not null access Switch_Filter_Description_Record) return String;
+   --  Return the name of the filter
+
+   function Get_Switch
+     (Config : not null access Switches_Editor_Config_Record'Class;
+      Filter : not null Switch_Filter_Description) return Switch_Description;
+   --  Return the switch associated to the given filter
+
+   procedure Apply
+     (Config  : not null access Switches_Editor_Config_Record'Class;
+      Filter  : not null Switch_Filter_Description;
+      Matches : Boolean);
+   --  Enable or disable the switch associated to Filter depending on Matches
+
+   type Switch_Filter_Cursor is private;
+   function First
+     (Config : Switches_Editor_Config) return Switch_Filter_Cursor;
+   procedure Next (Cursor : in out Switch_Filter_Cursor);
+   function Has_Element
+     (Cursor : Switch_Filter_Cursor) return Boolean;
+   function Element
+     (Cursor : Switch_Filter_Cursor) return Switch_Filter_Description;
+   --  Standard iteration support for switch filters
+
 private
    LF : constant Character := ASCII.LF;
    Command_Line_Editor_Tooltip_Text : aliased constant String :=
@@ -595,6 +629,11 @@ private
       Column    : Positive := 1;
       Separator : Character;
       Popup     : Popup_Index := Main_Window;
+
+      Active    : Boolean := True;
+      --  Boolean indicating if the switch is currently valid. A non-valid
+      --  switch should not be editable by the user: it's the switches editor
+      --  GUI's responsability to implement this behavior.
 
       case Typ is
          when Switch_Check =>
@@ -654,6 +693,21 @@ private
    --  the dependencies can only be fully setup once all pages have been
    --  created.
 
+   type Switch_Filter_Description_Record is tagged record
+      Name         : Ada.Strings.Unbounded.Unbounded_String;
+      Switch       : Switch_Description_Vectors.Extended_Index;
+      Add_On_Match : Boolean;
+   end record;
+   package Switch_Filter_Description_Vectors is new
+     Ada.Containers.Indefinite_Vectors (Natural, Switch_Filter_Description);
+   --  Description for switch filters that can be defined via XML. The filter's
+   --  name is used to identify and retrieve the filter to execute at a higher
+   --  level.
+
+   type Switch_Filter_Cursor is record
+      C : Switch_Filter_Description_Vectors.Cursor;
+   end record;
+
    type Switches_Editor_Config_Record is tagged record
       Lines             : Positive;
       Columns           : Positive;
@@ -665,6 +719,7 @@ private
       Switch_Char       : Character;
       Frames            : Frame_Description_Vectors.Vector;
       Switches          : Switch_Description_Vectors.Vector;
+      Filters           : Switch_Filter_Description_Vectors.Vector;
       Max_Radio         : Radio_Switch := 0;
       Max_Popup         : Popup_Index := Main_Window;
       Dependencies      : Dependency_Description_Access := null;

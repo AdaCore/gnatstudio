@@ -334,21 +334,25 @@ package Build_Configurations is
    ------------------------------------
 
    function Get_Command_Line_Unexpanded
-     (Registry : Build_Config_Registry_Access;
-      Target   : Target_Access)
-      return GNAT.OS_Lib.Argument_List;
+     (Target : Target_Access) return GNAT.OS_Lib.Argument_List;
    --  Return the full command line associated with Target, with macros not
    --  expanded (in other words, the returned list may still contain "%f"
    --  where the final command should expand this to a file name)
    --  The first element in the returned list is the executable, followed by
    --  a list of arguments.
-   --  Mode is the name of the mode with which to launch Target (the empty
-   --  string can be passed to get the command line with no mode switches).
-   --  Caller should NOT free the result.
+
+   function Get_Default_Command_Line_Unexpanded
+     (Target : Target_Access) return GNAT.OS_Lib.Argument_List;
+   --  Return the full default command line associated with Target, with macros
+   --  not expanded (in other words, the returned list may still contain "%f"
+   --  where the final command should expand this to a file name).
+   --  The target's default command line is retrieved from the XML that
+   --  creates the target.
+   --  The default command line is modified each time the target is saved if
+   --  the target has changed, retrieving the target's current command line.
 
    procedure Set_Command_Line
-     (Registry     : Build_Config_Registry_Access;
-      Target       : Target_Access;
+     (Target       : Target_Access;
       Command_Line : GNAT.OS_Lib.Argument_List);
    --  Set the current unexpanded command line of Target to Command_Line.
    --  Note that Command_Line should include the executable as well as the
@@ -398,8 +402,7 @@ package Build_Configurations is
    --  Return the name of the model for Target
 
    procedure Set_Model
-     (Registry : Build_Config_Registry_Access;
-      Target : Target_Access;
+     (Target : Target_Access;
       Model : Target_Model_Access);
    --  Change the name of the model for Target
 
@@ -691,11 +694,20 @@ private
       Command_Line : GNAT.OS_Lib.Argument_List_Access;
       --  This stores the command line between launches of the graphical editor
 
+      Default_Command_Line : GNAT.OS_Lib.Argument_List_Access;
+      --  This stores the default command line of the target, the one specified
+      --  via XML.
+
       Properties   : Target_Properties;
       --  The set of target properties
    end record;
 
    -- Private subprograms --
+
+   procedure Set_Default_Command_Line
+     (Target               : Target_Access;
+      Default_Command_Line : GNAT.OS_Lib.Argument_List);
+   --  Set the default command line of Target.
 
    procedure Log
      (Registry : Build_Config_Registry_Access;

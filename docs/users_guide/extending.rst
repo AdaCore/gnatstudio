@@ -3454,6 +3454,41 @@ following child tags:
        </target-model>
     </my_model>
 
+  Aditionally, switches defined for target models accept a :file:`filter`
+  attribute, allowing you to define when a switch is relevant or
+  not (e.g: switch only defined for newer versions of the executable to
+  launch).
+
+  The  :file:`filter` attribute accepts any named filter: predefined ones
+  or custom filters defined in XML via the
+  :ref:`\<filter>\ <Filtering_actions>` tag.
+
+  Here is a simple example showing how to define filters for target model
+  switches::
+
+    <?xml version="1.0" ?>
+
+       <!-- filter checking that the tool's version supports the switch
+            by calling a python function that actually verifies it -->
+       <filter name="Is_My_Tool_Version_Supported" shell_lang="python"
+           shell_cmd="check_my_tool_version(GPS.current_context())"/>
+
+       <my_model>
+       <target-model name="my_tool" category="">
+          <description>Model for targets based on 'my_tool'</description>
+          <command-line>
+             <arg>my_tool</arg>
+          </command-line>
+          <switches command="%(tool_name)s" columns="1">
+             <check label="vesrion specific switch"
+                    switch="--version-specific-switch"
+                    tip="This switch is only supported by newer versions"
+                    <!-- Identify the filter to apply here -->
+                    filter="Is_My_Tool_Version_Supported"/>
+          </switches>
+       </target-model>
+    </my_model>
+
 .. _Defining_new_Targets:
 
 Defining new Targets

@@ -159,6 +159,7 @@ package body Switches_Chooser is
          Sections          => To_Unbounded_String (Sections),
          Switches          => <>,
          Frames            => <>,
+         Filters           => <>,
          Dependencies      => null);
 
       --  Add star to getopt switches
@@ -286,7 +287,8 @@ package body Switches_Chooser is
       Line          : Positive := 1;
       Column        : Positive := 1;
       Add_Before    : Boolean := False;
-      Popup         : Popup_Index := Main_Window)
+      Popup         : Popup_Index := Main_Window;
+      Filter        : String := "")
    is
    begin
       Append
@@ -305,7 +307,8 @@ package body Switches_Chooser is
             Popup         => Popup,
             Line          => Line,
             Column        => Column,
-            Add_First     => Add_Before));
+            Add_First     => Add_Before,
+            Active        => True));
 
       if Switch_Set /= "" then
          Add_To_Getopt (Config, Switch_Set, ASCII.LF);
@@ -313,6 +316,14 @@ package body Switches_Chooser is
 
       if Switch_Unset /= "" then
          Add_To_Getopt (Config, Switch_Unset, ASCII.LF);
+      end if;
+
+      if Filter /= "" then
+         Config.Filters.Append
+           (new Switch_Filter_Description_Record'
+              (Name         => To_Unbounded_String (Filter),
+               Switch       => Config.Switches.Last_Index,
+               Add_On_Match => False));
       end if;
    end Add_Check;
 
@@ -332,7 +343,8 @@ package body Switches_Chooser is
       Line         : Positive := 1;
       Column       : Positive := 1;
       Add_Before   : Boolean := False;
-      Popup        : Popup_Index := Main_Window)
+      Popup        : Popup_Index := Main_Window;
+      Filter       : String := "")
    is
       Sep : Character := ASCII.NUL;
    begin
@@ -354,8 +366,17 @@ package body Switches_Chooser is
             Line         => Line,
             Column       => Column,
             Add_First    => Add_Before,
-            Popup        => Popup));
+            Popup        => Popup,
+            Active       => True));
       Add_To_Getopt (Config, Switch, Sep);
+
+      if Filter /= "" then
+         Config.Filters.Append
+           (new Switch_Filter_Description_Record'
+              (Name         => To_Unbounded_String (Filter),
+               Switch       => Config.Switches.Last_Index,
+               Add_On_Match => False));
+      end if;
    end Add_Field;
 
    ----------------
@@ -394,7 +415,8 @@ package body Switches_Chooser is
       Line       : Positive := 1;
       Column     : Positive := 1;
       Add_Before : Boolean := False;
-      Popup      : Popup_Index := Main_Window)
+      Popup      : Popup_Index := Main_Window;
+      Filter     : String := "")
    is
       Sep : Character := ASCII.NUL;
    begin
@@ -416,8 +438,17 @@ package body Switches_Chooser is
             Line      => Line,
             Column    => Column,
             Add_First => Add_Before,
-            Popup     => Popup));
+            Popup     => Popup,
+            Active    => True));
       Add_To_Getopt (Config, Switch, Sep);
+
+      if Filter /= "" then
+         Config.Filters.Append
+           (new Switch_Filter_Description_Record'
+              (Name         => To_Unbounded_String (Filter),
+               Switch       => Config.Switches.Last_Index,
+               Add_On_Match => False));
+      end if;
    end Add_Spin;
 
    ---------------
@@ -437,7 +468,8 @@ package body Switches_Chooser is
       Line       : Positive := 1;
       Column     : Positive := 1;
       Add_Before : Boolean := False;
-      Popup      : Popup_Index := Main_Window)
+      Popup      : Popup_Index := Main_Window;
+      Filter     : String := "")
    is
       Ent : Combo_Switch_Vectors.Vector;
       S   : Character := ASCII.NUL;
@@ -465,12 +497,21 @@ package body Switches_Chooser is
             Line      => Line,
             Column    => Column,
             Add_First => Add_Before,
-            Popup     => Popup));
+            Popup     => Popup,
+            Active    => True));
 
       if Separator = "" then
          Add_To_Getopt (Config, Switch, ASCII.CR);      --  optional parameter
       else
          Add_To_Getopt (Config, Switch, Separator (Separator'First));
+      end if;
+
+      if Filter /= "" then
+         Config.Filters.Append
+              (new Switch_Filter_Description_Record'
+                   (Name         => To_Unbounded_String (Filter),
+                    Switch       => Config.Switches.Last_Index,
+                    Add_On_Match => False));
       end if;
    end Add_Combo;
 
@@ -502,7 +543,8 @@ package body Switches_Chooser is
             Columns   => 1,
             Add_First => False,
             Popup     => Popup,
-            To_Popup  => Config.Max_Popup));
+            To_Popup  => Config.Max_Popup,
+            Active    => True));
       return Config.Max_Popup;
    end Add_Popup;
 
@@ -531,7 +573,8 @@ package body Switches_Chooser is
             Line      => Line,
             Column    => Column,
             Add_First => False,
-            Popup     => Popup));
+            Popup     => Popup,
+            Active    => True));
       return Config.Max_Radio;
    end Add_Radio;
 
@@ -546,7 +589,8 @@ package body Switches_Chooser is
       Switch     : String;
       Section    : String := "";
       Tip        : String := "";
-      Add_Before : Boolean := False)
+      Add_Before : Boolean := False;
+      Filter     : String := "")
    is
    begin
       Append
@@ -562,10 +606,19 @@ package body Switches_Chooser is
             Line      => 1,
             Column    => 1,
             Add_First => Add_Before,
-            Popup     => Main_Window));
+            Popup     => Main_Window,
+            Active    => True));
 
       if Switch /= "" then
          Add_To_Getopt (Config, Switch, ASCII.LF);
+      end if;
+
+      if Filter /= "" then
+         Config.Filters.Append
+              (new Switch_Filter_Description_Record'
+                   (Name         => To_Unbounded_String (Filter),
+                    Switch       => Config.Switches.Last_Index,
+                    Add_On_Match => False));
       end if;
    end Add_Radio_Entry;
 
@@ -1854,5 +1907,75 @@ package body Switches_Chooser is
    begin
       return To_String (Value.Value);
    end Get_Value;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
+     (Filter : not null access Switch_Filter_Description_Record) return String
+   is
+     (To_String (Filter.Name));
+
+   ----------------
+   -- Get_Switch --
+   ----------------
+
+   function Get_Switch
+     (Config : not null access Switches_Editor_Config_Record'Class;
+      Filter : not null Switch_Filter_Description) return Switch_Description
+   is
+      (Config.Switches (Filter.Switch));
+
+   -----------
+   -- Apply --
+   -----------
+
+   procedure Apply
+     (Config  : not null access Switches_Editor_Config_Record'Class;
+      Filter  : not null Switch_Filter_Description;
+      Matches : Boolean)
+   is
+      Switch : Switch_Description := Config.Switches (Filter.Switch);
+   begin
+      Switch.Active := Matches;
+      Config.Switches.Replace_Element (Filter.Switch, Switch);
+   end Apply;
+
+   -----------
+   -- First --
+   -----------
+
+   function First
+     (Config : Switches_Editor_Config) return Switch_Filter_Cursor
+   is
+      (Switch_Filter_Cursor'(C => Config.Filters.First));
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Cursor : in out Switch_Filter_Cursor) is
+   begin
+      Switch_Filter_Description_Vectors.Next (Cursor.C);
+   end Next;
+
+   -----------------
+   -- Has_Element --
+   -----------------
+
+   function Has_Element
+     (Cursor : Switch_Filter_Cursor) return Boolean
+   is
+     (Switch_Filter_Description_Vectors.Has_Element (Cursor.C));
+
+   -------------
+   -- Element --
+   -------------
+
+   function Element
+     (Cursor : Switch_Filter_Cursor) return Switch_Filter_Description
+   is
+      (Switch_Filter_Description_Vectors.Element (Cursor.C));
 
 end Switches_Chooser;

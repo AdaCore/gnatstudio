@@ -19,6 +19,7 @@ with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
 
+with GNAT.Command_Line;         use GNAT.Command_Line;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Glib;                      use Glib;
@@ -40,6 +41,7 @@ with Commands.Interactive;        use Commands.Interactive;
 
 with Build_Configurations;        use Build_Configurations;
 with Build_Configurations.Gtkada; use Build_Configurations.Gtkada;
+with Switches_Chooser;            use Switches_Chooser;
 
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Intl;                  use GPS.Intl;
@@ -60,6 +62,7 @@ with GPS.Search.GUI;            use GPS.Search.GUI;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
 
+with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Any_Types;        use GNATCOLL.Any_Types;
@@ -367,12 +370,26 @@ package body Builder_Facility_Module is
       Mode   : String);
    --  Called when the build mode is being changed by the user
 
-   procedure Add_Action_And_Menu_For_Target (Target : Target_Access);
+   procedure Add_Action_And_Menu_For_Target
+     (Target : not null Target_Access);
    --  Register a Kernel Action to build T and create a menu item to build
    --  Target
 
-   procedure Add_Actions_And_Menus_For_All_Targets;
-   --  Register Kernel Actions for all targets
+   procedure Execute_Switch_Filters_For_Target
+     (Target : not null Target_Access);
+   --  Execute the filters associated with the target's switches, hiding
+   --  the switches that are not valid in the current context.
+
+   type Target_Callback is not null access procedure
+     (Target : not null Target_Access);
+   package Target_Callback_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Element_Type => Target_Callback,
+      "="          => "=");
+   --  Used to run callbacks on all the regsitered targets
+
+   procedure For_All_Targets (Callback : Target_Callback);
+   procedure For_All_Targets (Callback_List : Target_Callback_Lists.List);
+   --  Run the given callback(s) on all the registered targets
 
    procedure Parse_Mode_Node (XML : Node_Ptr);
    --  Parse XML node describing a mode. See spec for a description of the
@@ -537,7 +554,9 @@ package body Builder_Facility_Module is
    -- Add_Action_And_Menu_For_Target --
    ------------------------------------
 
-   procedure Add_Action_And_Menu_For_Target (Target : Target_Access) is
+   procedure Add_Action_And_Menu_For_Target
+     (Target : not null Target_Access)
+   is
       Kernel   : constant Kernel_Handle := Get_Kernel;
       C        : Build_Command_Access;
       M        : Build_Main_Command_Access;
@@ -724,22 +743,183 @@ package body Builder_Facility_Module is
       end if;
    end Add_Action_And_Menu_For_Target;
 
-   -------------------------------------------
-   -- Add_Actions_And_Menus_For_All_Targets --
-   -------------------------------------------
+   ---------------------------------------
+   -- Execute_Switch_Filters_For_Target --
+   ---------------------------------------
 
-   procedure Add_Actions_And_Menus_For_All_Targets is
-      C : Target_Cursor := Get_First_Target (Builder_Module_ID.Registry);
-      T : Target_Access;
+   procedure Execute_Switch_Filters_For_Target
+     (Target : not null Target_Access)
+   is
+      Kernel             : constant Kernel_Handle :=
+                             Builder_Module_ID.Get_Kernel;
+      Target_Model_Name  : constant String := Get_Model (Target);
+      Target_Model       : constant Target_Model_Access :=
+                             Get_Model_By_Name
+                               (Builder_Module_ID.Registry,
+                                Target_Model_Name);
+      Switches_Config    : Switches_Editor_Config;
+      Context            : constant Selection_Context :=
+                             Kernel.Get_Current_Context;
+      Cursor             : Switch_Filter_Cursor;
+      Filter_Description : Switch_Filter_Description;
+      Filter             : Action_Filter;
+      Matches            : Boolean;
+
+      procedure Apply_Filter_On_Command_Line;
+      --  Apply the filter's result on the target's command line
+
+      ----------------------------------
+      -- Apply_Filter_On_Command_Line --
+      ----------------------------------
+
+      procedure Apply_Filter_On_Command_Line is
+         Default_Cmd_Line : Command_Line;
+         Cmd_Line         : Command_Line;
+         Config           : constant Command_Line_Configuration :=
+                              Get_Config (Switches_Config);
+         Switch_Char      : constant Character :=
+                              Get_Switch_Char (Switches_Config);
+         Switch           : constant Switch_Description :=
+                              Get_Switch (Switches_Config, Filter_Description);
+         New_Cmd_Line     : GNAT.OS_Lib.Argument_List_Access;
+         Success          : Boolean;
+      begin
+         --  Set the command lines configuration
+         Set_Configuration (Default_Cmd_Line, Config);
+         Set_Configuration (Cmd_Line, Config);
+
+         --  Build the command lines
+         Set_Command_Line
+           (Default_Cmd_Line,
+            Switches           => Argument_List_To_String
+              (Get_Default_Command_Line_Unexpanded (Target)),
+            Switch_Char        => Switch_Char);
+         Set_Command_Line
+           (Cmd_Line,
+            Switches           => Argument_List_To_String
+              (Get_Command_Line_Unexpanded (Target)),
+            Switch_Char        => Switch_Char);
+
+         if not Matches then
+            --  If the filter does not match, remove its associated switch if
+            --  present in the target's command line.
+
+            Remove_Switch
+              (Cmd_Line,
+               Switch    => Get_Switch (Switch),
+               Section   => Get_Section (Switch),
+               Success   => Success);
+         else
+            --  It it matches and if the associated switch is present in the
+            --  target's command line, add it again.
+
+            declare
+               Iter : Command_Line_Iterator;
+            begin
+               Start (Default_Cmd_Line, Iter, Expanded => True);
+
+               while Has_More (Iter) loop
+                  exit when Get_Switch (Switch) = Current_Switch (Iter)
+                    and then
+                      Get_Section (Switch) = Current_Section (Iter);
+
+                  Next (Iter);
+               end loop;
+
+               if not Has_More (Iter) then
+                  return;
+               end if;
+
+               Add_Switch
+                 (Cmd_Line,
+                  Switch     => Current_Switch (Iter),
+                  Parameter  => Current_Parameter (Iter),
+                  Separator  => Get_Separator (Switch),
+                  Section    => Get_Section (Switch),
+                  Add_Before => Is_Add_First (Switch),
+                  Success    => Success);
+            end;
+         end if;
+
+         --  Update the command line if the filter has affected it
+         if Success then
+            Get_Command_Line
+              (Cmd_Line, Expanded => False, Result => New_Cmd_Line);
+            Set_Command_Line (Target, New_Cmd_Line.all);
+         end if;
+      end Apply_Filter_On_Command_Line;
+
+   begin
+      Switches_Config := Get_Switches (Target_Model);
+
+      if Switches_Config = null then
+         return;
+      end if;
+
+      Cursor := First (Switches_Config);
+
+      while Has_Element (Cursor) loop
+         Filter_Description := Element (Cursor);
+
+         --  Retrieve the actual filter from its name
+         Filter := Lookup_Filter
+           (Builder_Module_ID.Get_Kernel, Filter_Description.Get_Name);
+
+         --  If a filter has been found for this name, run it and apply the
+         --  result on the model's switches configuration and on the target's
+         --  command line.
+         if Filter /= null then
+            Matches := Filter.Filter_Matches (Context);
+            Apply
+              (Config  => Switches_Config,
+               Filter  => Filter_Description,
+               Matches => Matches);
+            Apply_Filter_On_Command_Line;
+         else
+            Insert
+              (Kernel => Builder_Module_ID.Get_Kernel,
+               Text   => "'" & Get_Name (Target) & "' target: '"
+               & Get_Name (Filter_Description) & "' filter not found for '"
+               & Get_Label (Get_Switch (Switches_Config, Filter_Description))
+               & "' switch",
+               Add_LF => True,
+               Mode   => GPS.Kernel.Error);
+         end if;
+
+         Next (Cursor);
+      end loop;
+   end Execute_Switch_Filters_For_Target;
+
+   ---------------------
+   -- For_All_Targets --
+   ---------------------
+
+   procedure For_All_Targets (Callback : Target_Callback) is
+      Callback_List : Target_Callback_Lists.List;
+   begin
+      Callback_List.Append (Callback);
+      For_All_Targets (Callback_List);
+   end For_All_Targets;
+
+   ---------------------
+   -- For_All_Targets --
+   ---------------------
+
+   procedure For_All_Targets (Callback_List : Target_Callback_Lists.List) is
+      C      : Target_Cursor := Get_First_Target (Builder_Module_ID.Registry);
+      Target : Target_Access;
    begin
       loop
-         T := Get_Target (C);
-         exit when T = null;
+         Target := Get_Target (C);
+         exit when Target = null;
 
-         Add_Action_And_Menu_For_Target (T);
+         for Callback of Callback_List loop
+            Callback (Target);
+         end loop;
+
          Next (C);
       end loop;
-   end Add_Actions_And_Menus_For_All_Targets;
+   end For_All_Targets;
 
    ----------------------
    -- Get_Targets_File --
@@ -899,6 +1079,7 @@ package body Builder_Facility_Module is
       pragma Unreferenced (Self, Kernel);
    begin
       Refresh_Graphical_Elements;
+      For_All_Targets (Execute_Switch_Filters_For_Target'Access);
    end Execute;
 
    -------------
@@ -1036,7 +1217,7 @@ package body Builder_Facility_Module is
    procedure Refresh_Graphical_Elements is
    begin
       Clear_Actions_Menus_And_Toolbars;
-      Add_Actions_And_Menus_For_All_Targets;
+      For_All_Targets (Add_Action_And_Menu_For_Target'Access);
    end Refresh_Graphical_Elements;
 
    -----------------------------------
@@ -1451,7 +1632,6 @@ package body Builder_Facility_Module is
       pragma Unreferenced (Module, File);
       From_User : Boolean;
       C         : Target_XML_List.Cursor;
-
    begin
       if Node.Tag.all = "target" then
          --  If the Customization_Level we are parsing is user-specific, this
@@ -1461,7 +1641,6 @@ package body Builder_Facility_Module is
 
          From_User := (Level = User_Specific);
          Attempt_Target_Register (Node, From_User);
-
       elsif Node.Tag.all = "target-model" then
          Create_Model_From_XML (Builder_Module_ID.Registry, Node);
 

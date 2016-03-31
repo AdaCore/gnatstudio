@@ -130,10 +130,11 @@ package body Build_Configurations is
    function Copy (T : Target_Access) return Target_Access is
    begin
       return new Target_Type'
-        (Name         => T.Name,
-         Model        => T.Model,
-         Command_Line => Deep_Copy (T.Command_Line),
-         Properties   => T.Properties);
+        (Name                  => T.Name,
+         Model                 => T.Model,
+         Command_Line          => Deep_Copy (T.Command_Line),
+         Default_Command_Line  => Deep_Copy (T.Default_Command_Line),
+         Properties            => T.Properties);
    end Copy;
 
    ------------
@@ -181,6 +182,7 @@ package body Build_Configurations is
         or else T1.Model      /= T2.Model
         or else T1.Properties /= T2.Properties
         or else not Equals (T1.Command_Line, T2.Command_Line)
+        or else not Equals (T1.Default_Command_Line, T2.Default_Command_Line)
       then
          return False;
       end if;
@@ -494,10 +496,10 @@ package body Build_Configurations is
       Target.Model := The_Model;
 
       if Command_Line'Length > 0 then
-         Set_Command_Line (Registry, Target, Command_Line);
+         Set_Command_Line (Target, Command_Line);
       elsif The_Model.Default_Command_Line /= null then
          Set_Command_Line
-           (Registry, Target, The_Model.Default_Command_Line.all);
+           (Target, The_Model.Default_Command_Line.all);
       end if;
 
       Add_Target (Registry, Target);
@@ -543,12 +545,11 @@ package body Build_Configurations is
       --  reset the command line.
 
       if The_Model.Default_Command_Line = null then
-         Set_Command_Line (Registry, The_Target, (1 .. 0 => null));
+         Set_Command_Line (The_Target, (1 .. 0 => null));
       else
          declare
             Old_Cmd_Line : constant Argument_List :=
-                             Get_Command_Line_Unexpanded
-                               (Registry, The_Target);
+                             Get_Command_Line_Unexpanded (The_Target);
             New_Cmd_Line : Argument_List (Old_Cmd_Line'Range);
 
          begin
@@ -561,7 +562,7 @@ package body Build_Configurations is
                   New_Cmd_Line (J) := new String'(Old_Cmd_Line (J).all);
                end loop;
 
-               Set_Command_Line (Registry, The_Target, New_Cmd_Line);
+               Set_Command_Line (The_Target, New_Cmd_Line);
 
                for J in New_Cmd_Line'Range loop
                   Free (New_Cmd_Line (J));
@@ -599,8 +600,7 @@ package body Build_Configurations is
       end if;
 
       declare
-         Orig_CL : constant Argument_List :=
-           Get_Command_Line_Unexpanded (Registry, Src);
+         Orig_CL : constant Argument_List := Get_Command_Line_Unexpanded (Src);
          New_CL : Argument_List (Orig_CL'Range);
       begin
          --  We need to make a copy of the CL to avoid mixing pointers
@@ -780,20 +780,10 @@ package body Build_Configurations is
    ----------------------
 
    procedure Set_Command_Line
-     (Registry     : Build_Config_Registry_Access;
-      Target       : Target_Access;
-      Command_Line : GNAT.OS_Lib.Argument_List)
-   is
-      pragma Unreferenced (Registry);
-
+     (Target       : Target_Access;
+      Command_Line : GNAT.OS_Lib.Argument_List) is
    begin
-      if Target.Command_Line /= null then
-         for J in Target.Command_Line'Range loop
-            Free (Target.Command_Line (J));
-         end loop;
-
-         Unchecked_Free (Target.Command_Line);
-      end if;
+      Free (String_List_Access (Target.Command_Line));
 
       Target.Command_Line := new GNAT.OS_Lib.Argument_List
         (Command_Line'Range);
@@ -802,6 +792,25 @@ package body Build_Configurations is
          Target.Command_Line (J) := new String'(Command_Line (J).all);
       end loop;
    end Set_Command_Line;
+
+   ------------------------------
+   -- Set_Default_Command_Line --
+   ------------------------------
+
+   procedure Set_Default_Command_Line
+     (Target               : Target_Access;
+      Default_Command_Line : GNAT.OS_Lib.Argument_List) is
+   begin
+      Free (String_List_Access (Target.Default_Command_Line));
+
+      Target.Default_Command_Line := new GNAT.OS_Lib.Argument_List
+        (Default_Command_Line'Range);
+
+      for J in Default_Command_Line'Range loop
+         Target.Default_Command_Line (J) :=
+           new String'(Default_Command_Line (J).all);
+      end loop;
+   end Set_Default_Command_Line;
 
    --------------
    -- Contains --
@@ -898,10 +907,8 @@ package body Build_Configurations is
    ---------------------------------
 
    function Get_Command_Line_Unexpanded
-     (Registry : Build_Config_Registry_Access;
-      Target   : Target_Access) return GNAT.OS_Lib.Argument_List
+     (Target : Target_Access) return GNAT.OS_Lib.Argument_List
    is
-      pragma Unreferenced (Registry);
       Empty : constant Argument_List (1 .. 0) := (others => null);
    begin
       if Target = null
@@ -915,6 +922,26 @@ package body Build_Configurations is
       return Target.Command_Line.all;
    end Get_Command_Line_Unexpanded;
 
+   -----------------------------------------
+   -- Get_Default_Command_Line_Unexpanded --
+   -----------------------------------------
+
+   function Get_Default_Command_Line_Unexpanded
+     (Target : Target_Access) return GNAT.OS_Lib.Argument_List
+   is
+      Empty : constant Argument_List (1 .. 0) := (others => null);
+   begin
+      if Target = null
+        or else Target.Default_Command_Line = null
+      then
+         --  A target command line should at least contain the command to
+         --  launch; if none can be found, return.
+         return Empty;
+      end if;
+
+      return Target.Default_Command_Line.all;
+   end Get_Default_Command_Line_Unexpanded;
+
    ----------
    -- Free --
    ----------
@@ -923,6 +950,7 @@ package body Build_Configurations is
    begin
       String_List_Utils.String_List.Free (Target.Properties.Parser_List);
       GNAT.OS_Lib.Free (Target.Command_Line);
+      GNAT.OS_Lib.Free (Target.Default_Command_Line);
    end Free;
 
    ----------------------------------
@@ -1292,6 +1320,7 @@ package body Build_Configurations is
             Free (Target.Command_Line);
             Target.Command_Line := new GNAT.OS_Lib.Argument_List'
               (XML_To_Command_Line (Child));
+            Set_Default_Command_Line (Target, Target.Command_Line.all);
 
          elsif Child.Value = null then
             Log (Registry, -"Warning: empty node in target: " & Child.Tag.all);
@@ -1384,7 +1413,8 @@ package body Build_Configurations is
       C2                 : Cursor;
       Name               : Unbounded_String;
       Equals_To_Original : Boolean;
-
+      Original_Target    : Target_Access;
+      Target             : Target_Access;
    begin
       N := new Node;
       N.Tag := new String'("targets");
@@ -1392,31 +1422,41 @@ package body Build_Configurations is
       C := Registry.Targets.First;
 
       while Has_Element (C) loop
-         if not Element (C).Properties.Do_Not_Save then
+         Target := Element (C);
+
+         if not Target.Properties.Do_Not_Save then
             --  Check whether the target has been modified. If so, save it
 
-            Name := Element (C).Name;
+            Name := Target.Name;
             Equals_To_Original := False;
+
             C2 := Registry.Original_Targets.First;
 
             while Has_Element (C2) loop
-               if Element (C2).Name = Name then
-                  if Equals (Element (C2), Element (C)) then
+               Original_Target := Element (C2);
+
+               if Original_Target.Name = Name then
+                  if Equals (Original_Target, Target) then
                      Equals_To_Original := True;
                   end if;
                   exit;
                end if;
+
                Next (C2);
             end loop;
 
             if not Equals_To_Original or Save_Even_If_Equals_To_Original then
                if Child = null then
-                  N.Child := Save_Target_To_XML (Registry, Element (C));
+                  N.Child := Save_Target_To_XML (Registry, Target);
                   Child := N.Child;
                else
-                  Child.Next := Save_Target_To_XML (Registry, Element (C));
+                  Child.Next := Save_Target_To_XML (Registry, Target);
                   Child := Child.Next;
                end if;
+
+               --  Save the new default command line for Target
+               Set_Default_Command_Line
+                 (Target, Get_Command_Line_Unexpanded (Target));
             end if;
          end if;
 
@@ -1852,16 +1892,16 @@ package body Build_Configurations is
    ---------------
 
    procedure Set_Model
-     (Registry : Build_Config_Registry_Access;
-      Target : Target_Access;
-      Model : Target_Model_Access) is
+     (Target   : Target_Access;
+      Model    : Target_Model_Access) is
    begin
       Target.Model := Model;
       if Model.Default_Command_Line = null then
-         Set_Command_Line (Registry, Target, (1 .. 0 => null));
+         Set_Command_Line (Target, (1 .. 0 => null));
+         Set_Default_Command_Line (Target, (1 .. 0 => null));
       else
-         Set_Command_Line
-              (Registry, Target, Model.Default_Command_Line.all);
+         Set_Command_Line (Target, Model.Default_Command_Line.all);
+         Set_Default_Command_Line (Target, Model.Default_Command_Line.all);
       end if;
    end Set_Model;
 
@@ -1960,6 +2000,7 @@ package body Build_Configurations is
       if Target /= null then
          --  Target.Model;   --  No need to free, references in the Registry
          Free (Target.Command_Line);
+         Free (Target.Default_Command_Line);
 
          Unchecked_Free (Target);
       end if;

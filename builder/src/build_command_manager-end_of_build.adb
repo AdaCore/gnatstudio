@@ -172,7 +172,7 @@ package body Build_Command_Manager.End_Of_Build is
       else
          declare
             CL      : constant Argument_List :=
-              Get_Command_Line_Unexpanded (Builder.Registry, Build.Target);
+                        Get_Command_Line_Unexpanded (Build.Target);
             CL_Mode : Argument_List_Access :=
               Apply_Mode_Args (Builder.Registry,
                                Get_Model (Build.Target),

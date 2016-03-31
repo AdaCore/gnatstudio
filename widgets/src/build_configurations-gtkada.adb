@@ -299,7 +299,7 @@ package body Build_Configurations.Gtkada is
          --  Save the command line
          if T.Editor /= null then
             CL := Get_Command_Line (T.Editor, False);
-            Set_Command_Line (UI.Registry, T.Target, CL.all);
+            Set_Command_Line (T.Target, CL.all);
             Unchecked_Free (CL);
          end if;
 

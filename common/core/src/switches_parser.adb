@@ -258,6 +258,7 @@ package body Switches_Parser is
                declare
                   Label  : constant String := Get_Attribute (N, "label");
                   Switch : constant String := Get_Attribute (N, "switch");
+                  Filter : constant String := Get_Attribute (N, "filter");
                begin
                   if Label = "" then
                      Log_Error
@@ -277,7 +278,8 @@ package body Switches_Parser is
                      Switch     => Switch,
                      Section    => Get_Attribute (N, "section"),
                      Tip        => Get_Tip_Value (N),
-                     Add_Before => Get_Attribute (N, "before") = "true");
+                     Add_Before => Get_Attribute (N, "before") = "true",
+                     Filter     => Filter);
                end;
             end if;
             N := N.Next;
@@ -397,6 +399,7 @@ package body Switches_Parser is
          Line, Col : Natural;
          Label     : constant String := Get_Attribute (N, "label");
          Switch    : constant String := Get_Attribute (N, "switch");
+         Filter    : constant String := Get_Attribute (N, "filter");
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -412,19 +415,20 @@ package body Switches_Parser is
          end if;
 
          Add_Combo
-           (Config    => Current_Tool_Config,
-            Label     => Label,
-            Switch    => Switch,
-            Separator => Get_Attribute (N, "separator", ""),
-            No_Switch => Get_Attribute (N, "noswitch"),
-            No_Digit  => Get_Attribute (N, "nodigit"),
-            Entries   => Process_Combo_Entry_Nodes (N),
-            Section   => Get_Attribute (N, "section"),
-            Tip       => Get_Tip_Value (N),
-            Line      => Line,
-            Column    => Col,
+           (Config     => Current_Tool_Config,
+            Label      => Label,
+            Switch     => Switch,
+            Separator  => Get_Attribute (N, "separator", ""),
+            No_Switch  => Get_Attribute (N, "noswitch"),
+            No_Digit   => Get_Attribute (N, "nodigit"),
+            Entries    => Process_Combo_Entry_Nodes (N),
+            Section    => Get_Attribute (N, "section"),
+            Tip        => Get_Tip_Value (N),
+            Line       => Line,
+            Column     => Col,
             Add_Before => Get_Attribute (N, "before") = "true",
-            Popup     => Popup);
+            Popup      => Popup,
+            Filter     => Filter);
       end Process_Combo_Node;
 
       -------------------------
@@ -459,6 +463,7 @@ package body Switches_Parser is
          Line, Col : Natural;
          Label     : constant String := Get_Attribute (N, "label");
          Switch    : constant String := Get_Attribute (N, "switch");
+         Filter    : constant String := Get_Attribute (N, "filter");
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -486,7 +491,8 @@ package body Switches_Parser is
             Line         => Line,
             Column       => Col,
             Add_Before   => Get_Attribute (N, "before") = "true",
-            Popup        => Popup);
+            Popup        => Popup,
+            Filter       => Filter);
       end Process_Field_Node;
 
       -----------------------
@@ -497,6 +503,7 @@ package body Switches_Parser is
          Line, Col : Natural;
          Label     : constant String := Get_Attribute (N, "label");
          Switch    : constant String := Get_Attribute (N, "switch");
+         Filter    : constant String := Get_Attribute (N, "filter");
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -524,7 +531,8 @@ package body Switches_Parser is
             Line       => Line,
             Column     => Col,
             Add_Before => Get_Attribute (N, "before") = "true",
-            Popup      => Popup);
+            Popup      => Popup,
+            Filter     => Filter);
       end Process_Spin_Node;
 
       ------------------------
@@ -535,6 +543,7 @@ package body Switches_Parser is
          Line, Col     : Natural;
          Label         : constant String := Get_Attribute (N, "label");
          Switch        : constant String := Get_Attribute (N, "switch");
+         Filter        : constant String := Get_Attribute (N, "filter");
          Switch_Unset  : constant String :=
                            Get_Attribute (N, "switch-off");
          Default       : constant String :=
@@ -582,7 +591,8 @@ package body Switches_Parser is
             Line          => Line,
             Column        => Col,
             Add_Before    => Get_Attribute (N, "before") = "true",
-            Popup         => Popup);
+            Popup         => Popup,
+            Filter        => Filter);
       end Process_Check_Node;
 
       -------------------

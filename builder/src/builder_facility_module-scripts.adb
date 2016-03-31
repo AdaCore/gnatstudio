@@ -118,7 +118,7 @@ package body Builder_Facility_Module.Scripts is
             Target   : constant Target_Access
               := Get_Target_From_Name (Registry, Name);
             Cmd_Line : constant String_List :=
-                         Get_Command_Line_Unexpanded (Registry, Target);
+                         Get_Command_Line_Unexpanded (Target);
          begin
             Data.Set_Return_Value_As_List;
 
