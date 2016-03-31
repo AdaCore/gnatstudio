@@ -536,9 +536,11 @@ package body Completion_Window is
    is
       More_Idle_Complete, More_Idle_Doc : Boolean;
    begin
+      if Explorer = null then
+         return False;
+      end if;
 
-      if Explorer = null
-        or else Explorer.Info = null
+      if Explorer.Info = null
         or else not Explorer.Has_Idle_Computation
         or else Explorer.Completion_Window.In_Destruction
       then
@@ -570,6 +572,12 @@ package body Completion_Window is
       Explorer.Has_Idle_Computation := More_Idle_Doc or More_Idle_Complete;
 
       return Explorer.Has_Idle_Computation;
+
+   exception
+      when E : others =>
+         Trace (Me, E);
+         Explorer.Has_Idle_Computation := False;
+         return False;
    end Idle_Compute;
 
    -----------------
