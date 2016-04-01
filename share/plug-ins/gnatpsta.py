@@ -60,7 +60,7 @@ def display():
 
         shutil.rmtree(dir)
 
-    buffer = EditorBuffer.get(None, open=True)
+    buffer = EditorBuffer.get_new()
     buffer.delete()   # delete any text inserted via templates
     buffer.insert(buffer.at(1, 1), sub.stdout.read())
     buffer.current_view().set_read_only(True)
