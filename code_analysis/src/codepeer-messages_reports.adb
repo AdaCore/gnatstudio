@@ -461,6 +461,7 @@ package body CodePeer.Messages_Reports is
 
       Panel           : Gtk.Paned.Gtk_Hpaned;
       Scrolled        : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Box             : Gtk.Box.Gtk_Vbox;
       Column          : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Pixbuf_Renderer : Gtk.Cell_Renderer_Pixbuf.Gtk_Cell_Renderer_Pixbuf;
       Text_Renderer   : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
@@ -767,7 +768,7 @@ package body CodePeer.Messages_Reports is
          Kernel,
          -"Message history",
          "codepeer-summary_report-lifeage");
-      Filter_Box.Pack_Start (Self.Lifeage_Editor, False);
+      Filter_Box.Pack_Start (Self.Lifeage_Editor);
 
       Message_Lifeage_Criteria_Callbacks.Connect
         (Self.Lifeage_Editor,
@@ -784,9 +785,17 @@ package body CodePeer.Messages_Reports is
       Gtk.Label.Gtk_New (Label, -"Message ranking");
       Filter_Box.Pack_Start (Label, False);
 
+      Gtk.Scrolled_Window.Gtk_New (Scrolled);
+      Scrolled.Set_Policy
+        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
+      Filter_Box.Pack_Start (Scrolled, True);
+
+      Gtk.Box.Gtk_New_Vbox (Box);
+      Scrolled.Add (Box);
+
       Gtk.Check_Button.Gtk_New (Check, -"suppressed");
       Check.Set_Active (Self.Show_Ranking (CodePeer.Suppressed));
-      Filter_Box.Pack_Start (Check, False);
+      Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
          Gtk.Toggle_Button.Signal_Toggled,
@@ -796,7 +805,7 @@ package body CodePeer.Messages_Reports is
 
       Gtk.Check_Button.Gtk_New (Check, -"informational");
       Check.Set_Active (Self.Show_Ranking (CodePeer.Info));
-      Filter_Box.Pack_Start (Check, False);
+      Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
          Gtk.Toggle_Button.Signal_Toggled,
@@ -806,7 +815,7 @@ package body CodePeer.Messages_Reports is
 
       Gtk.Check_Button.Gtk_New (Check, -"low");
       Check.Set_Active (Self.Show_Ranking (CodePeer.Low));
-      Filter_Box.Pack_Start (Check, False);
+      Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
          Gtk.Toggle_Button.Signal_Toggled,
@@ -816,7 +825,7 @@ package body CodePeer.Messages_Reports is
 
       Gtk.Check_Button.Gtk_New (Check, -"medium");
       Check.Set_Active (Self.Show_Ranking (CodePeer.Medium));
-      Filter_Box.Pack_Start (Check, False);
+      Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
          Gtk.Toggle_Button.Signal_Toggled,
@@ -826,7 +835,7 @@ package body CodePeer.Messages_Reports is
 
       Gtk.Check_Button.Gtk_New (Check, -"high");
       Check.Set_Active (Self.Show_Ranking (CodePeer.High));
-      Filter_Box.Pack_Start (Check, False);
+      Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
          Gtk.Toggle_Button.Signal_Toggled,
@@ -842,9 +851,17 @@ package body CodePeer.Messages_Reports is
       Gtk.Label.Gtk_New (Label, -"Message review status");
       Filter_Box.Pack_Start (Label, False);
 
+      Gtk.Scrolled_Window.Gtk_New (Scrolled);
+      Scrolled.Set_Policy
+        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
+      Filter_Box.Pack_Start (Scrolled, True);
+
+      Gtk.Box.Gtk_New_Vbox (Box);
+      Scrolled.Add (Box);
+
       Gtk.Check_Button.Gtk_New (Check, -"unclassified");
       Check.Set_Active (Self.Show_Status (Unclassified));
-      Filter_Box.Pack_Start (Check, False);
+      Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
          Gtk.Toggle_Button.Signal_Toggled,
@@ -854,7 +871,7 @@ package body CodePeer.Messages_Reports is
 
       Gtk.Check_Button.Gtk_New (Check, -"pending");
       Check.Set_Active (Self.Show_Status (Pending));
-      Filter_Box.Pack_Start (Check, False);
+      Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
          Gtk.Toggle_Button.Signal_Toggled,
@@ -864,7 +881,7 @@ package body CodePeer.Messages_Reports is
 
       Gtk.Check_Button.Gtk_New (Check, -"not a bug");
       Check.Set_Active (Self.Show_Status (Not_A_Bug));
-      Filter_Box.Pack_Start (Check, False);
+      Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
          Gtk.Toggle_Button.Signal_Toggled,
@@ -874,7 +891,7 @@ package body CodePeer.Messages_Reports is
 
       Gtk.Check_Button.Gtk_New (Check, -"false positive");
       Check.Set_Active (Self.Show_Status (False_Positive));
-      Filter_Box.Pack_Start (Check, False);
+      Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
          Gtk.Toggle_Button.Signal_Toggled,
@@ -884,7 +901,7 @@ package body CodePeer.Messages_Reports is
 
       Gtk.Check_Button.Gtk_New (Check, -"intentional");
       Check.Set_Active (Self.Show_Status (Intentional));
-      Filter_Box.Pack_Start (Check, False);
+      Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
          Gtk.Toggle_Button.Signal_Toggled,
@@ -894,7 +911,7 @@ package body CodePeer.Messages_Reports is
 
       Gtk.Check_Button.Gtk_New (Check, -"bug");
       Check.Set_Active (Self.Show_Status (Bug));
-      Filter_Box.Pack_Start (Check, False);
+      Box.Pack_Start (Check, False);
       Check_Button_Report_Callbacks.Connect
         (Check,
          Gtk.Toggle_Button.Signal_Toggled,

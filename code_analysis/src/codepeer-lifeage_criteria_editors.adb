@@ -22,8 +22,10 @@ with System;
 with Glib;                  use Glib;
 with Glib.Object;
 with Gtk.Check_Button;
+with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Label;
+with Gtk.Scrolled_Window;
 with Gtk.Toggle_Button;
 
 with GPS.Intl;              use GPS.Intl;
@@ -87,8 +89,10 @@ package body CodePeer.Lifeage_Criteria_Editors is
       Title          : String;
       History_Prefix : String)
    is
-      Label : Gtk.Label.Gtk_Label;
-      Check : Gtk.Check_Button.Gtk_Check_Button;
+      Scrolled : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Box      : Gtk.Box.Gtk_Vbox;
+      Label    : Gtk.Label.Gtk_Label;
+      Check    : Gtk.Check_Button.Gtk_Check_Button;
 
    begin
       Glib.Object.Initialize_Class_Record
@@ -138,9 +142,17 @@ package body CodePeer.Lifeage_Criteria_Editors is
       Gtk.Label.Gtk_New (Label, Title);
       Self.Pack_Start (Label, False);
 
+      Gtk.Scrolled_Window.Gtk_New (Scrolled);
+      Scrolled.Set_Policy
+        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
+      Self.Pack_Start (Scrolled);
+
+      Gtk.Box.Gtk_New_Vbox (Box);
+      Scrolled.Add (Box);
+
       Gtk.Check_Button.Gtk_New (Check, -"added");
       Check.Set_Active (Self.Criteria (Added));
-      Self.Pack_Start (Check, False);
+      Box.Pack_Start (Check, False);
       Check_Button_Editor_Callbacks.Connect
         (Check,
          Gtk.Toggle_Button.Signal_Toggled,
@@ -150,7 +162,7 @@ package body CodePeer.Lifeage_Criteria_Editors is
 
       Gtk.Check_Button.Gtk_New (Check, -"unchanged");
       Check.Set_Active (Self.Criteria (Unchanged));
-      Self.Pack_Start (Check, False);
+      Box.Pack_Start (Check, False);
       Check_Button_Editor_Callbacks.Connect
         (Check,
          Gtk.Toggle_Button.Signal_Toggled,
@@ -160,7 +172,7 @@ package body CodePeer.Lifeage_Criteria_Editors is
 
       Gtk.Check_Button.Gtk_New (Check, -"removed");
       Check.Set_Active (Self.Criteria (Removed));
-      Self.Pack_Start (Check, False);
+      Box.Pack_Start (Check, False);
       Check_Button_Editor_Callbacks.Connect
         (Check,
          Gtk.Toggle_Button.Signal_Toggled,
