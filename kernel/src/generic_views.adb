@@ -1243,6 +1243,8 @@ package body Generic_Views is
                  Position_At_Mouse => not Found,
                  X => X, Y => Y);
          end;
+
+         View.On_Create (Child);
       end Create_If_Needed;
 
       ----------------

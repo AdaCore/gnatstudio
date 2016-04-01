@@ -117,6 +117,13 @@ package Generic_Views is
    --  Set the Kernel field (needed only internally from the generic, where
    --  we can directly access the kernel field)
 
+   procedure On_Create
+     (View  : not null access View_Record;
+      Child : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class)
+   is null;
+   --  This is called after a new view has been created, and it has been added
+   --  to the MDI.
+
    -----------------------
    -- Search bar fields --
    -----------------------
