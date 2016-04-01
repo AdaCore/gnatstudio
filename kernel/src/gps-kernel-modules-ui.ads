@@ -350,6 +350,14 @@ package GPS.Kernel.Modules.UI is
       Menu_Name : String);
    --  Execute immediately a menu. Menu_Name is the full path to the menu.
 
+   procedure Append_Menu
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Menu      : not null access Gtk.Menu.Gtk_Menu_Record'Class;
+      Label     : String;
+      Action    : String);
+   --  Append a new entry to the menu, that will execute the action.
+   --  This is meant for local config menus.
+
    ---------------------
    -- Toolbar buttons --
    ---------------------

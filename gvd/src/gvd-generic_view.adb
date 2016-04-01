@@ -149,7 +149,7 @@ package body GVD.Generic_View is
                exit when Child = null;
 
                if Child.all in Views.Local_Formal_MDI_Child'Class then
-                  View := Views.View_From_Widget (Get_Widget (Child));
+                  View := Views.View_From_Child (Child);
                   exit when Get_Process (View) = null;
                end if;
 

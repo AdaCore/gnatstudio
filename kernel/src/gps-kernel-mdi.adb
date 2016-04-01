@@ -61,9 +61,11 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
+with Commands.Interactive;      use Commands, Commands.Interactive;
 with Default_Preferences;       use Default_Preferences;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
 with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
@@ -139,6 +141,11 @@ package body GPS.Kernel.MDI is
    pragma Convention (C, Get_Preferred_Height_For_Width);
    --  Support for creating a new gtk class, and define a default size for
    --  MDI children.
+
+   type Unfloat_View_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Unfloat_View_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    -----------------------
    -- Local subprograms --
@@ -1604,6 +1611,25 @@ package body GPS.Kernel.MDI is
       return null;
    end Bookmark_Handler;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Unfloat_View_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Child : MDI_Child;
+   begin
+      Child := Get_MDI (Get_Kernel (Context.Context)).Get_Focus_Child;
+      if Child /= null then
+         Child.Float_Child (Float => False);
+         Child.Raise_Child (Give_Focus => True);
+      end if;
+      return Commands.Success;
+   end Execute;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1617,6 +1643,12 @@ package body GPS.Kernel.MDI is
          Kernel      => Kernel,
          Module_Name => "General_UI",
          Priority    => Default_Priority);
+
+      Register_Action
+        (Kernel, "unfloat view",
+         Command     => new Unfloat_View_Command,
+         Description => "Put back the current window in the main window",
+         Category    => -"Windows");
    end Register_Module;
 
    ------------

@@ -451,7 +451,6 @@ package body GPS.Kernel.Modules.UI is
    --  Any special character like '/' should be quoted in Full_Path, using
    --  Escape_Menu_Name. Underscores must not be duplicated
    --
-   --  Menus will be created if they don't exist.
    --  This is considered as an absolute path, as if it always started with
    --  a '/'.
 
@@ -3050,6 +3049,27 @@ package body GPS.Kernel.Modules.UI is
    begin
       Context_Changed_Hook.Add (new On_Context_Changed);
    end Start_Monitoring_Menus;
+
+   -----------------
+   -- Append_Menu --
+   -----------------
+
+   procedure Append_Menu
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Menu      : not null access Gtk_Menu_Record'Class;
+      Label     : String;
+      Action    : String)
+   is
+      Item      : Gtk_Menu_Item;
+   begin
+      Item := Gtk_New_Action_Item
+        (Kernel      => Kernel,
+         Menu_Label  => Label,
+         Full_Path   => "/invisible/" & Label,
+         Action      => Action,
+         Optional    => False);
+      Menu.Append (Item);
+   end Append_Menu;
 
    -------------------------------
    -- Create_Menubar_From_Model --

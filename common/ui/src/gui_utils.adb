@@ -602,6 +602,22 @@ package body GUI_Utils is
 
    end User_Contextual_Menus;
 
+   ------------------
+   -- Has_Children --
+   ------------------
+
+   function Has_Children
+     (Container : not null access Gtk.Container.Gtk_Container_Record'Class)
+      return Boolean
+   is
+      use Widget_List;
+      Children : Widget_List.Glist := Get_Children (Container);
+      Result   : constant Boolean := Children /= Null_List;
+   begin
+      Widget_List.Free (Children);
+      return Result;
+   end Has_Children;
+
    -------------------------
    -- Remove_All_Children --
    -------------------------

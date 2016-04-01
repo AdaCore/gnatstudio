@@ -192,7 +192,7 @@ package body Vsearch is
       Reuse_If_Exist     => True,
       Initialize         => Initialize,
       Local_Toolbar      => False,
-      Local_Config       => False,
+      Local_Config       => True,
       Position           => Position_Float,
       Group              => Group_View,
       Commands_Category  => "",  --  no automatic command
@@ -520,9 +520,12 @@ package body Vsearch is
 
    procedure On_Float (Search_Child : access Gtk_Widget_Record'Class) is
       Child   : constant MDI_Child := MDI_Child (Search_Child);
-      Vsearch : constant Vsearch_Access := Vsearch_Access (Get_Widget (Child));
+      Vsearch : constant Vsearch_Access :=
+        Search_Views.View_From_Child (Child);
    begin
       if Is_Floating (Child) then
+
+         Vsearch.Get_Toolbar.Show_All;
 
          if Vsearch.Scrolled /= null then
             Ref (Vsearch.Scrolled);
@@ -536,6 +539,11 @@ package body Vsearch is
          Show_All (Vsearch.Auto_Hide_Check);
          Set_Child_Visible (Vsearch.Auto_Hide_Check, True);
       else
+         --  Hide the toolbar, which only contains the local config
+         --  for "Unfloat"
+         Vsearch.Get_Toolbar.Hide;
+         Vsearch.Get_Toolbar.Set_No_Show_All (True);
+
          --  Create a scrolled window and put vsearch's content in it
          if Vsearch.Scrolled = null then
             Gtk_New (Vsearch.Scrolled);
@@ -1889,6 +1897,7 @@ package body Vsearch is
 
       Widget_Callback.Connect (Child, Signal_Float_Child, On_Float'Access);
       Widget_Callback.Connect (Child, Signal_Unfloat_Child, On_Float'Access);
+      On_Float (Child);  --  hide or show the buttons
    end On_Create;
 
    ---------------------------

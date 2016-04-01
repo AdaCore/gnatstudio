@@ -181,6 +181,11 @@ package GUI_Utils is
    --  If Container is a menu, this empties the menu, thus allowing dynamic
    --  menus.
 
+   function Has_Children
+     (Container : not null access Gtk.Container.Gtk_Container_Record'Class)
+      return Boolean;
+   --  Whether the container has at least one child widget.
+
    ----------------------
    -- Scrolled_Windows --
    ----------------------

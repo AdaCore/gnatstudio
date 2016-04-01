@@ -27,7 +27,6 @@ with GPS.Kernel.MDI;
 with GPS.Kernel.Search;
 with GPS.Search;
 with Glib.Main;
-with Glib.Object;
 with XML_Utils;
 with Gtkada.Handlers;
 with Gtk.Box;
@@ -82,7 +81,9 @@ package Generic_Views is
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is null;
    --  Fill the menu created by the local configuration menu (see Local_Config
    --  in the generic formal parameters below).
-   --  This menu should contain entries that configure the current view.
+   --  This menu should contain entries that configure the current view, for
+   --  instance by using GPS.Kernel.Preferences.Append_Menu or
+   --  GPS.Kernel.Modules.UI.Append_Menu.
 
    procedure Append_Toolbar
      (Self        : not null access View_Record;
@@ -235,6 +236,8 @@ package Generic_Views is
       Local_Config : Boolean := False;
       --  If true, a button will be displayed to show the configuration menu
       --  for the view. If true, this also forces the use of a local toolbar.
+      --  Such a menu is always displayed for floating windows, so that they
+      --  have an automatic "Unfloat" menu there.
 
       Position : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Bottom;
       --  The preferred position for newly created views.
@@ -302,13 +305,6 @@ package Generic_Views is
          return View_Access;
       --  Retrieve any of the existing views.
 
-      function View_From_Widget
-        (Widget : not null access Glib.Object.GObject_Record'Class)
-         return View_Access;
-      --  When using a local toolbar, the actual widget stored in the child is
-      --  not the formal view itself. This function can be used in all cases
-      --  to convert from a Child.Get_Widget to a Formal_View
-
       procedure Close
         (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
       --  Close the view
@@ -323,6 +319,11 @@ package Generic_Views is
         (Self : not null access Local_Formal_MDI_Child)
          return Gtk.Widget.Gtk_Widget;
 
+      function View_From_Child
+        (Child : not null access Gtkada.MDI.MDI_Child_Record'Class)
+         return View_Access
+      is (View_Access
+          (GPS.Kernel.MDI.GPS_MDI_Child (Child).Get_Actual_Widget));
       function Child_From_View
         (View : not null access Formal_View_Record'Class)
          return access Local_Formal_MDI_Child'Class;

@@ -945,8 +945,9 @@ package body Generic_Views is
         (View  : access Gtk_Widget_Record'Class;
          Event : Gdk.Event.Gdk_Event) return Boolean
       is
-         V : constant View_Access := View_Access (View);
-         Menu : Gtk_Menu;
+         V     : constant View_Access := View_Access (View);
+         Menu  : Gtk_Menu;
+         Child : MDI_Child;
          Time_Before_Factory : Time;
       begin
          if Get_Button (Event) /= 1
@@ -961,6 +962,17 @@ package body Generic_Views is
 
          Gtk_New (Menu);
          V.Create_Menu (Menu);
+
+         Child := Child_From_View (V);
+         if Child /= null and then Child.Is_Floating then
+            if Has_Children (Menu) then
+               Menu.Add (Gtk_Separator_Menu_Item_New);
+            end if;
+            Append_Menu (V.Kernel, Menu,
+                         Label => "Unfloat",
+                         Action => "unfloat view");
+         end if;
+
          View.Grab_Focus;
          Menu.Show_All;
 
@@ -1021,25 +1033,14 @@ package body Generic_Views is
       overriding function Get_Actual_Widget
         (Self : not null access Local_Formal_MDI_Child) return Gtk_Widget
       is
-      begin
-         return Gtk_Widget (View_From_Widget (Get_Widget (Self)));
-      end Get_Actual_Widget;
-
-      ----------------------
-      -- View_From_Widget --
-      ----------------------
-
-      function View_From_Widget
-        (Widget : not null access Glib.Object.GObject_Record'Class)
-         return View_Access
-      is
+         W : constant Gtk_Widget := Get_Widget (Self);
       begin
          if Local_Toolbar or else Local_Config then
-            return Toplevel_Box (Widget.all).Initial;
+            return Gtk_Widget (Toplevel_Box (W.all).Initial);
          else
-            return View_Access (Widget);
+            return W;
          end if;
-      end View_From_Widget;
+      end Get_Actual_Widget;
 
       ----------
       -- Find --
@@ -1065,7 +1066,7 @@ package body Generic_Views is
          if MDI /= null then
             Child := GPS_MDI_Child (MDI.Find_MDI_Child_By_Tag (T));
             if Child /= null then
-               View := View_From_Widget (Child.Get_Widget);
+               View := View_From_Child (Child);
             end if;
          end if;
       end Find;
@@ -1118,7 +1119,7 @@ package body Generic_Views is
       procedure On_Float_Child (Child : access Gtk_Widget_Record'Class) is
          Self   : constant Local_Formal_MDI_Child_Access :=
            Local_Formal_MDI_Child_Access (Child);
-         View   : constant View_Access := View_From_Widget (Self.Get_Widget);
+         View   : constant View_Access := View_From_Child (Self);
          Close_Button : Gtk_Button;
          Req : Gtk_Requisition;
       begin
