@@ -25,6 +25,19 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P404-015 GPS: separate.py plug-in does not raise the editor
+
+  Problem:    When this optional plug-in is activated, it displays a
+              "Goto separate body of..." in the contextual menu for Ada
+              separates. This menus jumps to the place where "is separate"
+              occurs in the source code, but the corresponding editor is
+              not raised when it was already opened.
+
+  Status:     This was fixed in 17.0 on 2016-04-04
+
+  Workaround: Select "Goto body" twice to jump between actual body and
+              the location of "is separate".
+
 KP-62-P330-050 GPS: select row in Attach dialog scrolls to top
 
   Problem:    After you start the debugger, if you open the dialog
