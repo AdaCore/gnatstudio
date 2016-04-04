@@ -23,6 +23,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P403-002 GPS: Home goes to beginning or first-non-blank (2016-04-04)
+
+  When using the Home key while in an editor (or any key bound to the
+  action "beginning of line"), GPS will first go to the first column (as it
+  has always done), but if you do it a second time it will then go to the
+  first non-blank character of the line). This is a feature available in
+  other code editors.
+
 NF-17-P321-014 WB: add VxWorks 653 3.1 support (2016-03-21)
 
   GNATbench is able to handle Wind River Workbench projects for VxWorks 653 3.1

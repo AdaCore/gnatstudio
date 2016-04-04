@@ -603,16 +603,18 @@ def end_of_buffer():
 
 
 def _goto_line_bound(beginning, extend_selection):
-    """Goto the beginning of line"""
+    """
+    Move the cursor in the current focus widget to various places in the line:
+    * if beginning is True, move to the beginning of the line
+      If the cursor is already in column 1, move to the first non-blank
+      character on the line when in a GPS code editor.
+    * else move to the end of the line
+    """
 
     from pygps import get_widgets_by_type
-
     widget = get_focused_widget()
-    ed = GPS.EditorBuffer.get()
-    extend_selection = \
-        extend_selection or ed.current_view().get_extend_selection()
-    gtk_ed_view = get_widgets_by_type(
-        Gtk.TextView, ed.current_view().pywidget())[0]
+
+    # When in a standard Gtk_Entry field:
 
     if isinstance(widget, Gtk.Entry):
         bounds = widget.get_selection_bounds()
@@ -628,29 +630,78 @@ def _goto_line_bound(beginning, extend_selection):
         else:
             widget.set_position(end_pos)
 
-    elif gtk_ed_view != widget:
-        b = widget.get_buffer()
-        it = b.get_iter_at_mark(b.get_mark("insert"))
-        if beginning:
-            b.place_cursor(b.get_iter_at_line_offset(it.get_line(), 0))
-        else:
-            it.forward_to_line_end()
-            b.place_cursor(it)
+        return
+
+    elif not isinstance(widget, Gtk.TextView):
+        # We don't know how to handle these other widgets
+        return
+
     else:
-        for c in ed.cursors():
-            d = c.mark().location()
-            d = d.beginning_of_line() if beginning else d.end_of_line()
-            c.move(d, extend_selection)
+        # We are in a GPS code editor or standard Gtk.TextView
+
+        ed = GPS.EditorBuffer.get()
+        gtk_ed_view = get_widgets_by_type(
+            Gtk.TextView, ed.current_view().pywidget())[0]
+
+        if gtk_ed_view != widget:
+            # in a Gtk.TextView, but not a GPS code editor
+
+            b = widget.get_buffer()
+            it = b.get_iter_at_mark(b.get_mark("insert"))
+            if beginning:
+                if it.get_line_index() == 0:
+                    # Already at beginning ? move to first non blank
+                    while it.get_char() in (u' ', u'\t'):
+                        it.forward_char()
+
+                else:
+                    b.place_cursor(b.get_iter_at_line_offset(it.get_line(), 0))
+
+            else:
+                it.forward_to_line_end()
+                b.place_cursor(it)
+
+        else:
+            for c in ed.cursors():
+                d = c.mark().location()
+
+                if beginning:
+                    if d.column() == 1:
+                        # Already at beginning ? move to first non blank
+
+                        while d.get_char() in (u' ', u'\t'):
+                            d = d.forward_char(1)
+                    else:
+                        d = d.beginning_of_line()
+
+                else:
+                    d = d.end_of_line()
+
+                c.move(d, extend_selection or
+                       ed.current_view().get_extend_selection())
 
 
 @interactive("Editor", filter_text_actions,
              name="goto beginning of line (extend selection)")
 def goto_beginning_of_line_ext_sel():
+    """
+    Move the cursor to the beginning of the line:
+    * if the cursor is anywhere within the line, move back to column 1
+    * if the cursor is already on column 1, move to the first non-blank
+      character of the line.
+    This function extends the current selection while moving the cursor.
+    """
     _goto_line_bound(beginning=True, extend_selection=True)
 
 
 @interactive("Editor", filter_text_actions, name="goto beginning of line")
 def goto_beginning_of_line():
+    """
+    Move the cursor to the beginning of the line:
+    * if the cursor is anywhere within the line, move back to column 1
+    * if the cursor is already on column 1, move to the first non-blank
+      character of the line.
+    """
     _goto_line_bound(beginning=True, extend_selection=False)
 
 
