@@ -75,6 +75,14 @@ def list_to_xml(items):
     return '\n'.join(str(i) for i in items)
 
 
+gnatcov_path = os_utils.locate_exec_on_path('gnatcov')
+gnatcov_install_dir = (
+    os.path.join(os.path.dirname(gnatcov_path), '..')
+    if gnatcov_path else
+    None
+)
+
+
 class GNATcovPlugin(object):
 
     PLUGIN_MENU = '/Tools/GNATcov/'
@@ -255,7 +263,12 @@ class GNATcovPlugin(object):
     ]
 
     GNATCOV_DOCUMENTATION = [
-        X('doc_path').children('share/doc/gnatcoverage/html'),
+        X('doc_path').children(
+            os.path.join(gnatcov_install_dir, 'share',
+                         'doc', 'gnatcoverage', 'html')
+            if gnatcov_install_dir else
+            None
+        ),
         X('documentation_file').children(
             X('name').children('gnatcov.html'),
             X('descr').children("GNATcoverage User's Guide"),
