@@ -174,9 +174,8 @@ package body Task_Manager.Shell is
         (Kernel, "block_exit", 0, 0, Task_Command_Handler'Access, Task_Class);
       Register_Command
         (Kernel, "status", 0, 0, Task_Command_Handler'Access, Task_Class);
-      Register_Property
-        (Get_Scripts (Kernel), "visible", Task_Class,
-         Getter => Task_Command_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("visible", Task_Class, Getter => Task_Command_Handler'Access);
       Register_Command
         (Kernel, "progress", 0, 0, Task_Command_Handler'Access, Task_Class);
    end Register_Commands;

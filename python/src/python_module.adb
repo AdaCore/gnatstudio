@@ -121,8 +121,7 @@ package body Python_Module is
    is
       Backend : Virtual_Console;
       Script  : constant Scripting_Language :=
-                  Lookup_Scripting_Language
-                    (Get_Scripts (Console.Kernel), Python_Name);
+         Console.Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
       Errors  : aliased Boolean;
       Result  : PyObject;
 
@@ -179,7 +178,7 @@ package body Python_Module is
    begin
       GPS.Python_Core.Register_Python (Kernel);
 
-      Script := Lookup_Scripting_Language (Get_Scripts (Kernel), Python_Name);
+      Script := Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
       if Script = null then
          Trace (Me, "Python not supported");
          return;
@@ -194,13 +193,12 @@ package body Python_Module is
 
       Register_Desktop_Functions (null, Load_Desktop'Access);
 
-      MDI := New_Class (Get_Scripts (Kernel), "MDI");
+      MDI := Kernel.Scripts.New_Class ("MDI");
 
       Add_PyWidget_Method
-        (Get_Scripts (Kernel), Class => Get_GUI_Class (Kernel));
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command       => "add",
+        (Kernel.Scripts, Class => Get_GUI_Class (Kernel));
+      Kernel.Scripts.Register_Command
+        (Command       => "add",
          Handler       => Python_GUI_Command_Handler'Access,
          Class         => MDI,
          Params        =>
@@ -219,108 +217,92 @@ package body Python_Module is
       --  strings.
       --  Also make sure these can be used as keys in dictionaries.
 
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command      => "__str__",
+      Kernel.Scripts.Register_Command
+        (Command      => "__str__",
          Handler      => Python_File_Command_Handler'Access,
          Class        => Get_File_Class (Kernel),
          Language     => Python_Name);
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command      => "__repr__",
+      Kernel.Scripts.Register_Command
+        (Command      => "__repr__",
          Handler      => Python_File_Command_Handler'Access,
          Class        => Get_File_Class (Kernel),
          Language     => Python_Name);
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command      => "__hash__",
+      Kernel.Scripts.Register_Command
+        (Command      => "__hash__",
          Handler      => Python_File_Command_Handler'Access,
          Class        => Get_File_Class (Kernel),
          Language     => Python_Name);
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command      => "__cmp__",
+      Kernel.Scripts.Register_Command
+        (Command      => "__cmp__",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Python_File_Command_Handler'Access,
          Class        => Get_File_Class (Kernel),
          Language     => Python_Name);
 
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command      => "__str__",
+      Kernel.Scripts.Register_Command
+        (Command      => "__str__",
          Handler      => Python_Project_Command_Handler'Access,
          Class        => Get_Project_Class (Kernel),
          Language      => Python_Name);
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command      => "__repr__",
+      Kernel.Scripts.Register_Command
+        (Command      => "__repr__",
          Handler      => Python_Project_Command_Handler'Access,
          Class        => Get_Project_Class (Kernel),
          Language     => Python_Name);
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command      => "__hash__",
+      Kernel.Scripts.Register_Command
+        (Command      => "__hash__",
          Handler      => Python_Project_Command_Handler'Access,
          Class        => Get_Project_Class (Kernel),
          Language     => Python_Name);
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command      => "__cmp__",
+      Kernel.Scripts.Register_Command
+        (Command      => "__cmp__",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Python_Project_Command_Handler'Access,
          Class        => Get_Project_Class (Kernel),
          Language     => Python_Name);
 
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command      => "__str__",
+      Kernel.Scripts.Register_Command
+        (Command      => "__str__",
          Handler      => Python_Entity_Command_Handler'Access,
          Class        => Get_Entity_Class (Kernel),
          Language     => Python_Name);
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command      => "__repr__",
+      Kernel.Scripts.Register_Command
+        (Command      => "__repr__",
          Handler      => Python_Entity_Command_Handler'Access,
          Class        => Get_Entity_Class (Kernel),
          Language     => Python_Name);
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command      => "__hash__",
+      Kernel.Scripts.Register_Command
+        (Command      => "__hash__",
          Handler      => Python_Entity_Command_Handler'Access,
          Class        => Get_Entity_Class (Kernel),
          Language     => Python_Name);
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command      => "__cmp__",
+      Kernel.Scripts.Register_Command
+        (Command      => "__cmp__",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Python_Entity_Command_Handler'Access,
          Class        => Get_Entity_Class (Kernel),
          Language     => Python_Name);
 
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command      => "__str__",
+      Kernel.Scripts.Register_Command
+        (Command      => "__str__",
          Handler      => Python_Location_Command_Handler'Access,
          Class        => Get_File_Location_Class (Kernel),
          Language     => Python_Name);
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command      => "__repr__",
+      Kernel.Scripts.Register_Command
+        (Command      => "__repr__",
          Handler      => Python_Location_Command_Handler'Access,
          Class        => Get_File_Location_Class (Kernel),
          Language     => Python_Name);
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command      => "__hash__",
+      Kernel.Scripts.Register_Command
+        (Command      => "__hash__",
          Handler      => Python_Location_Command_Handler'Access,
          Class        => Get_File_Location_Class (Kernel),
          Language     => Python_Name);
-      Register_Command
-        (Get_Scripts (Kernel),
-         Command      => "__cmp__",
+      Kernel.Scripts.Register_Command
+        (Command      => "__cmp__",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Python_Location_Command_Handler'Access,
@@ -354,8 +336,7 @@ package body Python_Module is
       end To_Load;
 
       Script : constant Scripting_Language :=
-                 Lookup_Scripting_Language
-                   (Get_Scripts (Kernel), Python_Name);
+                 Kernel.Scripts.Lookup_Scripting_Language (Python_Name);
 
    begin
       if Script /= null then
@@ -470,7 +451,7 @@ package body Python_Module is
    is
       pragma Unreferenced (MDI);
       Script : constant Scripting_Language :=
-        Lookup_Scripting_Language (Get_Scripts (User), Python_Name);
+        User.Scripts.Lookup_Scripting_Language (Python_Name);
       Data : Callback_Data'Class := Create (Script, 2);
       Inst : Class_Instance;
    begin
@@ -723,7 +704,7 @@ package body Python_Module is
 
    overriding procedure Destroy (Module : in out Python_Module_Record) is
    begin
-      Unregister_Python_Scripting (Get_Scripts (Get_Kernel (Module)));
+      Unregister_Python_Scripting (Get_Kernel (Module).Scripts);
    end Destroy;
 
 end Python_Module;

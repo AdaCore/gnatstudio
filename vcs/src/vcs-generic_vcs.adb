@@ -1956,8 +1956,7 @@ package body VCS.Generic_VCS is
          Open_File_Action_Hook.Run (Kernel, File, Project => No_Project);
       end if;
 
-      Script := Lookup_Scripting_Language
-        (Get_Scripts (Kernel), GPS_Shell_Name);
+      Script := Kernel.Scripts.Lookup_Scripting_Language (GPS_Shell_Name);
 
       declare
          CL : Arg_List;
@@ -2157,8 +2156,7 @@ package body VCS.Generic_VCS is
                  -"Error: no log parser defined for " & Rep.Id.all);
       end if;
 
-      Script := Lookup_Scripting_Language
-        (Get_Scripts (Kernel), GPS_Shell_Name);
+      Script := Kernel.Scripts.Lookup_Scripting_Language (GPS_Shell_Name);
 
       loop
          Match (Parser.Regexp.all, S, Matches, Start, S'Last);
@@ -2266,8 +2264,7 @@ package body VCS.Generic_VCS is
                  -"Error: no revision parser defined for " & Rep.Id.all);
       end if;
 
-      Script := Lookup_Scripting_Language
-        (Get_Scripts (Kernel), GPS_Shell_Name);
+      Script := Kernel.Scripts.Lookup_Scripting_Language (GPS_Shell_Name);
 
       loop
          Match (Parser.Regexp.all, S, Matches, Start, S'Last);

@@ -85,7 +85,7 @@ package body Shell_Script is
    is
       Script : constant Shell_Scripting := Global_Shell_Script'Access;
    begin
-      Register_Shell_Scripting (Get_Scripts (Kernel), Script);
+      Register_Shell_Scripting (Kernel.Scripts, Script);
    end Register_Module;
 
    ------------

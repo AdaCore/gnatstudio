@@ -2294,8 +2294,8 @@ package body KeyManager_Module is
       Register_Command
         (Kernel, "lookup_actions", 0, 0, Keymanager_Command_Handler'Access);
 
-      Register_Command
-        (Get_Scripts (Kernel), "send_key_event",
+      Kernel.Scripts.Register_Command
+        ("send_key_event",
          (Param ("keyval"),
           Param ("window", Optional => True),
           Param ("primary", Optional => True),
@@ -2303,8 +2303,8 @@ package body KeyManager_Module is
           Param ("shift", Optional => True),
           Param ("control", Optional => True)),
          Keymanager_Command_Handler'Access);
-      Register_Command
-        (Get_Scripts (Kernel), "send_button_event",
+      Kernel.Scripts.Register_Command
+        ("send_button_event",
          (Param ("window", Optional => True),
           Param ("type", Optional => True),
           Param ("button", Optional => True),
@@ -2312,8 +2312,8 @@ package body KeyManager_Module is
           Param ("y", Optional => True),
           Param ("state", Optional => True)),
          Keymanager_Command_Handler'Access);
-      Register_Command
-        (Get_Scripts (Kernel), "send_crossing_event",
+      Kernel.Scripts.Register_Command
+        ("send_crossing_event",
          (Param ("window", Optional => True),
           Param ("type", Optional => True),
           Param ("x", Optional => True),
@@ -2321,8 +2321,8 @@ package body KeyManager_Module is
           Param ("state", Optional => True)),
          Keymanager_Command_Handler'Access);
 
-      Register_Command
-        (Get_Scripts (Kernel), "process_all_events", No_Params,
+      Kernel.Scripts.Register_Command
+        ("process_all_events", No_Params,
          Keymanager_Command_Handler'Access);
 
       Command := new Repeat_Next_Command;

@@ -145,7 +145,7 @@ package body Project_Templates.GPS is
          if Chosen.Post_Hook /= No_File then
             declare
                Python : constant Scripting_Language :=
-                 Lookup_Scripting_Language (Get_Scripts (Kernel), "python");
+                 Kernel.Scripts.Lookup_Scripting_Language ("python");
                Errors : Boolean;
             begin
                Execute_File

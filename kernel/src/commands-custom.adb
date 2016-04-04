@@ -681,8 +681,7 @@ package body Commands.Custom is
          Show_Command => Show_C,
          Output       => Outp,
          Command      => new String'(Command.Value.all),
-         Script       =>
-           Lookup_Scripting_Language (Get_Scripts (Kernel), Script));
+         Script       => Kernel.Scripts.Lookup_Scripting_Language (Script));
    end Shell_From_XML;
 
    -----------------------

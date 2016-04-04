@@ -35,11 +35,6 @@ package GPS.Kernel.Scripts is
 
    GPS_Shell_Name      : constant String := "Shell";
 
-   function Get_Scripts
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return GNATCOLL.Scripts.Scripts_Repository;
-   --  Return the scripts repository
-
    function Get_Kernel (Data : GNATCOLL.Scripts.Callback_Data'Class)
       return GPS.Kernel.Kernel_Handle;
    function Get_Kernel

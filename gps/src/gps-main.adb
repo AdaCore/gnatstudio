@@ -2426,7 +2426,7 @@ procedure GPS.Main is
       for J in Batch'Range loop
          if Batch (J) = ':' then
             Script := Lookup_Scripting_Language
-              (Get_Scripts (GPS_Main.Kernel), Batch (Batch'First .. J - 1));
+              (GPS_Main.Kernel.Scripts, Batch (Batch'First .. J - 1));
             Start := J + 1;
 
             if Script = null then
@@ -2451,7 +2451,7 @@ procedure GPS.Main is
       if Script = null then
          --  Assume language is python
          Script := Lookup_Scripting_Language
-           (Get_Scripts (GPS_Main.Kernel), "python");
+           (GPS_Main.Kernel.Scripts, "python");
       end if;
 
       if As_File then

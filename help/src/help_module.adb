@@ -703,7 +703,7 @@ package body Help_Module is
          declare
             Errors : aliased Boolean := False;
             Script : constant Scripting_Language := Lookup_Scripting_Language
-              (Get_Scripts (Kernel), To_String (Self.Shell_Lang));
+              (Kernel.Scripts, To_String (Self.Shell_Lang));
             File   : constant String := Execute_Command
               (Script      => Script,
                CL          => Parse_String

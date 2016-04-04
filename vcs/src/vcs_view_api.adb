@@ -2612,8 +2612,7 @@ package body VCS_View_API is
            Get_Branches_Root (Project);
          Root_Tags     : constant Filesystem_String := Get_Tags_Root (Project);
          Script        : constant Scripting_Language :=
-                           Lookup_Scripting_Language
-                             (Get_Scripts (Kernel), GPS_Shell_Name);
+            Kernel.Scripts.Lookup_Scripting_Language (GPS_Shell_Name);
          Command       : Custom_Command_Access;
 
       begin

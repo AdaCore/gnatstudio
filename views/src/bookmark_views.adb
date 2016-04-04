@@ -1073,8 +1073,9 @@ package body Bookmark_Views is
    procedure Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
+      Kernel         : constant Kernel_Handle := Get_Kernel (Data);
       Bookmark_Class : constant Class_Type :=
-         New_Class (Get_Scripts (Get_Kernel (Data)), Bookmark_Class_Name);
+         Kernel.Scripts.New_Class (Bookmark_Class_Name);
       Name_Cst       : aliased constant String := "name";
       Inst           : Class_Instance;
       Bookmark       : Bookmark_List.List_Node;
@@ -1104,7 +1105,7 @@ package body Bookmark_Views is
 
       elsif Command = "create" then
          Name_Parameters (Data, (1 => Name_Cst'Unchecked_Access));
-         Marker := Create_Marker (Get_Kernel (Data));
+         Marker := Create_Marker (Kernel);
          if Marker = null then
             Set_Error_Msg (Data, "Can't create bookmark for this context");
          else
@@ -1114,8 +1115,8 @@ package body Bookmark_Views is
                  (Marker    => Marker,
                   Instances => <>,
                   Name      => new String'(Nth_Arg (Data, 1))));
-            Save_Bookmarks (Get_Kernel (Data));
-            Bookmark_Added_Hook.Run (Get_Kernel (Data), Data.Nth_Arg (1));
+            Save_Bookmarks (Kernel);
+            Bookmark_Added_Hook.Run (Kernel, Data.Nth_Arg (1));
             Bookmark := First (Bookmark_Views_Module.List);
             Data.Set_Return_Value
                (Bookmark_Proxies.Get_Or_Create_Instance
@@ -1135,7 +1136,7 @@ package body Bookmark_Views is
          if B = null then
             Data.Set_Error_Msg ("Invalid bookmark");
          else
-            Delete_Bookmark (Get_Kernel (Data), B.all);
+            Delete_Bookmark (Kernel, B.all);
          end if;
 
       elsif Command = "rename" then
@@ -1145,20 +1146,20 @@ package body Bookmark_Views is
          if B = null then
             Data.Set_Error_Msg ("Invalid bookmark");
          else
-            Bookmark_Added_Hook.Run (Get_Kernel (Data), B.Name.all);
+            Bookmark_Added_Hook.Run (Kernel, B.Name.all);
             Free (B.Name);
             B.Name := new String'(Nth_Arg (Data, 2));
-            Bookmark_Added_Hook.Run (Get_Kernel (Data), Data.Nth_Arg (2));
-            Save_Bookmarks (Get_Kernel (Data));
+            Bookmark_Added_Hook.Run (Kernel, Data.Nth_Arg (2));
+            Save_Bookmarks (Kernel);
          end if;
 
       elsif Command = "goto" then
          Inst := Data.Nth_Arg (1, Bookmark_Class);
          B := Bookmark_Proxies.From_Instance (Inst);
          if B /= null
-           and then Go_To (B.Marker, Get_Kernel (Data))
+           and then Go_To (B.Marker, Kernel)
          then
-            Push_Marker_In_History (Get_Kernel (Data), Clone (B.Marker));
+            Push_Marker_In_History (Kernel, Clone (B.Marker));
          else
             Data.Set_Error_Msg ("Invalid bookmark");
          end if;
@@ -1185,7 +1186,7 @@ package body Bookmark_Views is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Bookmark_Class     : constant Class_Type :=
-         New_Class (Get_Scripts (Kernel), Bookmark_Class_Name);
+         Kernel.Scripts.New_Class (Bookmark_Class_Name);
       Src_Action_Context : constant Action_Filter :=
                              Lookup_Filter (Kernel, "Source editor");
       P         : Kernel_Search_Provider_Access;

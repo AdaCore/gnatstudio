@@ -59,8 +59,8 @@ package body Commands.Socket is
       Script : Scripting_Language;
    begin
       if Command.Command /= null then
-         Script := Lookup_Scripting_Language
-           (Get_Scripts (Command.Kernel), Command.Shell.all);
+         Script := Command.Kernel.Scripts.Lookup_Scripting_Language
+           (Command.Shell.all);
          String'Write
            (Command.Stream,
             Execute_Command

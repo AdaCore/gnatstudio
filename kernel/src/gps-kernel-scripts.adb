@@ -1113,7 +1113,7 @@ package body GPS.Kernel.Scripts is
       Script : access Scripting_Language_Record'Class)
       return Callback_Data_Access is
    begin
-      return Get (Get_Scripts (Kernel), List, Script);
+      return Get (Kernel.Scripts, List, Script);
    end Get;
 
    ---------
@@ -1126,7 +1126,7 @@ package body GPS.Kernel.Scripts is
       Script : access Scripting_Language_Record'Class;
       Data   : Callback_Data_Access) is
    begin
-      Set (Get_Scripts (Kernel), List, Script, Data);
+      Set (Kernel.Scripts, List, Script, Data);
    end Set;
 
    ---------------
@@ -1141,7 +1141,7 @@ package body GPS.Kernel.Scripts is
       if Kernel = null then
          return No_Class;
       else
-         return New_Class (Get_Scripts (Kernel), Name, Base);
+         return New_Class (Kernel.Scripts, Name, Base);
       end if;
    end New_Class;
 
@@ -1164,7 +1164,7 @@ package body GPS.Kernel.Scripts is
       Tmp : GNAT.Strings.String_Access;
    begin
       GNATCOLL.Scripts.Register_Standard_Classes
-        (Get_Scripts (Kernel),
+        (Kernel.Scripts,
          Console_Class_Name => Console_Class_Name,
          Logger_Class_Name  => "Logger");
 
@@ -1444,17 +1444,6 @@ package body GPS.Kernel.Scripts is
    begin
       return GNATCOLL.Scripts.Projects.Get_Project_Class (Kernel.Scripts);
    end Get_Project_Class;
-
-   -----------------
-   -- Get_Scripts --
-   -----------------
-
-   function Get_Scripts
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return GNATCOLL.Scripts.Scripts_Repository is
-   begin
-      return Kernel.Scripts;
-   end Get_Scripts;
 
    -------------------------------
    -- Execute_GPS_Shell_Command --
