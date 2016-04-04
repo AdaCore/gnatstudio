@@ -50,6 +50,7 @@ with Gtk.Text_Iter;                use Gtk.Text_Iter;
 with Gtk.Text_Mark;                use Gtk.Text_Mark;
 with Gtk.Text_Tag;                 use Gtk.Text_Tag;
 with Language;                     use Language;
+with Language_Handlers;            use Language_Handlers;
 with Projects;                     use Projects;
 with Src_Contexts;                 use Src_Contexts;
 with Src_Editor_Box;               use Src_Editor_Box;
@@ -2027,6 +2028,12 @@ package body Src_Editor_Module.Shell is
                 Column =>
                   Visible_Column_Type (Integer'Max (1, Nth_Arg (Data, 3))))));
 
+      elsif Command = "set_lang" then
+         Get_Buffer (Data, 1).Set_Language
+            (Get_Language_By_Name
+               (Get_Language_Handler (Kernel),
+                Data.Nth_Arg (2)));
+
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
       end if;
@@ -2847,6 +2854,11 @@ package body Src_Editor_Module.Shell is
         (Kernel, "set_read_only", 0, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "is_read_only", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+      Kernel.Scripts.Register_Command
+         ("set_lang",
+          Params  => (1 => Param ("lang")),
+          Class   => EditorBuffer,
+          Handler => Buffer_Cmds'Access);
       Register_Command
         (Kernel, "add_special_line", 2, 4, Buffer_Cmds'Access, EditorBuffer);
       Register_Command

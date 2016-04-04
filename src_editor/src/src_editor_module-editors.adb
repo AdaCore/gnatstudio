@@ -379,59 +379,41 @@ package body Src_Editor_Module.Editors is
    overriding procedure Add_Cursor
      (This     : Src_Editor_Buffer;
       Location : Editor_Location'Class);
-
    overriding function Add_Cursor
      (This     : Src_Editor_Buffer;
       Location : Editor_Location'Class) return GPS.Editors.Editor_Cursor'Class;
-
    overriding function Get_Insert_Mark
      (This     : Src_Editor_Cursor) return Editor_Mark'Class;
-
    overriding procedure Set_Manual_Sync
      (This : Src_Editor_Cursor);
-
    overriding function Get_Selection_Mark
      (This     : Src_Editor_Cursor) return Editor_Mark'Class;
-
    overriding procedure Move
      (This : Src_Editor_Cursor; Where : Editor_Location'Class;
       Extend_Selection : Boolean);
-
    overriding procedure Remove_All_Slave_Cursors
      (This     : Src_Editor_Buffer);
-
    overriding function Get_Main_Cursor
      (This : Src_Editor_Buffer) return Editor_Cursor'Class;
-
    overriding function Has_Slave_Cursors
      (This     : Src_Editor_Buffer) return Boolean;
-
    overriding procedure Set_Cursors_Auto_Sync
      (This : Src_Editor_Buffer);
-
    overriding function Get_Cursors
      (This : Src_Editor_Buffer) return GPS.Editors.Cursors_Lists.List;
-
    overriding procedure Update_Cursors_Selection
      (This : Src_Editor_Buffer);
-
    overriding function Current_View
      (This : Src_Editor_Buffer) return Editor_View'Class;
-
    overriding function Version
      (This : Src_Editor_Buffer) return Integer
-   is
-     (This.Contents.Buffer.Get_Version);
-
+     is (This.Contents.Buffer.Get_Version);
    overriding function Views
      (This : Src_Editor_Buffer) return View_Lists.List;
-
    overriding function Lines_Count (This : Src_Editor_Buffer) return Integer;
    overriding function Characters_Count
      (This : Src_Editor_Buffer) return Natural;
-
    overriding function Is_Modified (This : Src_Editor_Buffer) return Boolean;
-
    overriding procedure Copy
      (This   : Src_Editor_Buffer;
       From   : Editor_Location'Class := Nil_Editor_Location;
@@ -445,7 +427,6 @@ package body Src_Editor_Module.Editors is
    overriding procedure Paste
      (This   : Src_Editor_Buffer;
       From   : Editor_Location'Class);
-
    overriding procedure Select_Text
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
@@ -455,80 +436,65 @@ package body Src_Editor_Module.Editors is
    overriding function Selection_End
      (This : Src_Editor_Buffer) return Editor_Location'Class;
    overriding procedure Unselect (This : Src_Editor_Buffer);
-
    overriding function Get_Chars
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
       To   : Editor_Location'Class := Nil_Editor_Location) return String;
-
    overriding procedure Insert
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class;
       Text : String);
-
    overriding procedure Delete
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
       To   : Editor_Location'Class := Nil_Editor_Location);
-
    overriding procedure Indent
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
       To   : Editor_Location'Class := Nil_Editor_Location);
-
    overriding procedure Refill
      (This : Src_Editor_Buffer;
       From : Editor_Location'Class := Nil_Editor_Location;
       To   : Editor_Location'Class := Nil_Editor_Location);
-
    overriding function Beginning_Of_Buffer
      (This : Src_Editor_Buffer) return Editor_Location'Class;
-
    overriding function End_Of_Buffer
      (This : Src_Editor_Buffer) return Editor_Location'Class;
-
    overriding procedure Save
      (This        : Src_Editor_Buffer;
       Interactive : Boolean := True;
       File        : Virtual_File := No_File;
       Internal    : Boolean := False);
-
    overriding function Get_Mark
      (This : Src_Editor_Buffer;
       Name : String) return Editor_Mark'Class;
-
+   overriding procedure Set_Language
+     (This   : Src_Editor_Buffer;
+      Lang   : Language.Language_Access);
    overriding procedure Start_Undo_Group (This : Src_Editor_Buffer);
-
    overriding procedure Finish_Undo_Group (This : Src_Editor_Buffer);
-
    overriding procedure Undo (This : Src_Editor_Buffer);
    overriding procedure Redo (This : Src_Editor_Buffer);
-
    overriding procedure Set_Read_Only
      (This : Src_Editor_Buffer; Read_Only : Boolean);
    overriding function Is_Read_Only
      (This : Src_Editor_Buffer) return Boolean;
-
    overriding procedure Apply_Style
      (This  : Src_Editor_Buffer;
       Style : String;
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1);
-
    overriding procedure Remove_Style
      (This  : Src_Editor_Buffer;
       Style : String;
       Line  : Integer;
       From_Column, To_Column : Visible_Column_Type := -1);
-
    overriding procedure Add_File_Information
      (This       : Src_Editor_Buffer;
       Identifier : String;
       Info       : Line_Information_Data);
-
    overriding procedure Adjust (This : in out Src_Editor_Buffer);
    overriding procedure Finalize (This : in out Src_Editor_Buffer);
-
    overriding function "="
      (This : Src_Editor_Buffer; Buffer : Src_Editor_Buffer) return Boolean;
 
@@ -2260,6 +2226,19 @@ package body Src_Editor_Module.Editors is
             Force    => not Interactive);
       end if;
    end Save;
+
+   ------------------
+   -- Set_Language --
+   ------------------
+
+   overriding procedure Set_Language
+     (This   : Src_Editor_Buffer;
+      Lang   : Language.Language_Access) is
+   begin
+      if This.Contents.Buffer /= null then
+         This.Contents.Buffer.Set_Language (Lang);
+      end if;
+   end Set_Language;
 
    --------------
    -- Get_Mark --

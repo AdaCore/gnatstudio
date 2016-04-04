@@ -3693,6 +3693,17 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
+    def set_lang(self, lang):
+        """
+        Set the highlighting programming language. When you open an existing
+        file, GPS automatically computes the best highlighting language based
+        on file extensions and naming schemes defined in your project, or on
+        the language that was set manually via the Properties contextual menu.
+
+        This function can be used to override this, or set it for newly
+        created files (:func:`GPS.EditorBuffer.get_new")
+        """
+
     def set_read_only(self, read_only=True):
         """
         Indicates whether the user should be able to edit the buffer

@@ -701,6 +701,12 @@ package GPS.Editors is
    --  This always return False if any of the buffers is not associated with a
    --  live widget anymore.
 
+   procedure Set_Language
+      (Buffer : Editor_Buffer;
+       Lang   : Language.Language_Access) is null;
+   --  Set the language of the given buffer. The syntax highlighting is
+   --  recomputed using the new language.
+
    package Buffer_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (Editor_Buffer'Class);
 

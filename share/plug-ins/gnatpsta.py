@@ -60,8 +60,16 @@ def display():
 
         shutil.rmtree(dir)
 
+    # We do not create the file on the disk, because:
+    #    - we cannot create a temporay file and delete it immediately, since
+    #      GPS will then display the dialog that the file has changed on disk.
+    #    - we cannot create the file in the project's object_dir, since the
+    #      latter might not exist, or worse could also be a source_dir which
+    #      would confuse the compiler.
+
     buffer = EditorBuffer.get_new()
     buffer.delete()   # delete any text inserted via templates
     buffer.insert(buffer.at(1, 1), sub.stdout.read())
+    buffer.set_lang('ada')
     buffer.current_view().set_read_only(True)
     MDI.get_by_child(buffer.current_view()).rename('package Standard')
