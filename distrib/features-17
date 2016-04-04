@@ -47,6 +47,10 @@ NF-17-P314-024 GPS: listvars.py plugins shows reference type (2016-03-30)
   "Variables used in ...") now also shows the type of reference for those
   variable (read, write, dispatching call,...)
 
+NF-17-P310-018 GPS: Support for arm-sysgo-pikeos (2016-04-04)
+
+  GPS now supports the arm-sysgo-pikeos toolchain.
+
 NF-17-P217-017 GPS: New Pythin API to get Build Targets commands (2016-03-01)
 
   A new GPS.BuildTarget.get_command_line() method has been added in order
