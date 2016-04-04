@@ -51,6 +51,7 @@ with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
@@ -1863,7 +1864,7 @@ package body GVD_Module is
             "debug initialize " & Prj.Name & ":" & Main_Name;
          Menu    : constant String :=
            "/Debug/Initialize/"
-           & (if Prj = No_Project
+           & (if Main = No_File
               then "" else Escape_Underscore (Prj.Name) & '/')
            & Main_Name;
          Command : Interactive_Command_Access;
@@ -1873,10 +1874,13 @@ package body GVD_Module is
             Project => Prj,
             Exec    => Main);
          GVD_Module_ID.Actions.Append (Action);
+
          Register_Action
            (Kernel, Action, Command,
-            -"Initialize the debugger on the file "
-            & Main.Display_Full_Name,
+            (if Main /= No_File
+             then (-"Initialize the debugger on the file "
+               & Main.Display_Full_Name)
+             else -"Initialize the debugger, no file specified"),
             Category => -"Debug");
          Register_Menu (Kernel, Menu, Action => Action);
       end Create_Action_And_Menu;
@@ -1907,9 +1911,11 @@ package body GVD_Module is
 
       Free (Mains);
 
-      --  Specific entry to start the debugger without any main program
+      --  Specific entry to start the debugger without any main program.
+      --  We need to pass the root project so that Ide'debugger_command is
+      --  found.
 
-      Create_Action_And_Menu (No_Project, No_File);
+      Create_Action_And_Menu (Get_Project (Kernel), No_File);
 
    exception
       when E : others =>
