@@ -36,8 +36,26 @@ def on_goto_separate():
     'separate'. Otherwise, the standard 'go to body' operation will first jump
     to the location of the 'is separate', and then to the actual
     implementation.
+
+    package Pkg is
+       procedure Foo;    --  "Goto spec"
+    end Pkg;
+
+    package body Pkg is
+       procedure Foo is separate;  --  "Goto separate body of"
+    end Pkg;
+
+    separate(Pkg)
+    procedure Foo is     --  "Goto body"
+    begin
+       null;
+    end Foo;
     """
     context = GPS.current_context()
-    loc = context.entity().body(2)
+
+    # "Goto body" seems to jump to "body(2)" in the case of a separate entity
+    loc = context.entity().body(1)
     buffer = GPS.EditorBuffer.get(loc.file())
-    buffer.current_view().goto(buffer.at(loc.line(), loc.column()))
+    view = buffer.current_view()
+    GPS.MDI.get_by_child(view).raise_window()
+    view.goto(buffer.at(loc.line(), loc.column()))
