@@ -133,33 +133,6 @@ package body GVD.Process is
       Source  : GVD.Source_Editor.Source_Editor);
    --  Internal initialize procedure
 
-   procedure Configure
-     (Process         : access Visual_Debugger_Record'Class;
-      Kind            : GVD.Types.Debugger_Type;
-      Proxy           : Process_Proxy_Access;
-      Executable      : GNATCOLL.VFS.Virtual_File;
-      Debugger_Args   : Argument_List;
-      Executable_Args : String;
-      Remote_Target   : String := "";
-      Remote_Protocol : String := "";
-      Debugger_Name   : String := "";
-      Success         : out Boolean);
-   --  Configure a visual debugger.
-   --  Kind specifies which debugger should be launched.
-   --  Currently, only gdb is supported.
-   --
-   --  Executable is the name of the executable module to debug.
-   --  This function returns a Process_Tab_Access.
-   --
-   --  Debugger_Args are the optional parameters for the underlying debugger.
-   --
-   --  Executable_Args are the optional parameters for the debuggee.
-   --
-   --  See Debugger.Spawn for a documentation on Remote_Host, Remote_Target,
-   --  Remote_Protocol and Debugger_Name.
-   --
-   --  Success is set to true is the debugger could be successfully started.
-
    procedure On_Console_Destroy
      (Process : access GObject_Record'Class;
       Kernel  : Kernel_Handle);
@@ -1001,119 +974,6 @@ package body GVD.Process is
       Close_Debugger (Proc);
    end On_Console_Destroy;
 
-   ---------------
-   -- Configure --
-   ---------------
-
-   procedure Configure
-     (Process         : access Visual_Debugger_Record'Class;
-      Kind            : Debugger_Type;
-      Proxy           : Process_Proxy_Access;
-      Executable      : GNATCOLL.VFS.Virtual_File;
-      Debugger_Args   : Argument_List;
-      Executable_Args : String;
-      Remote_Target   : String := "";
-      Remote_Protocol : String := "";
-      Debugger_Name   : String := "";
-      Success         : out Boolean)
-   is
-      Window  : constant GPS_Window := GPS_Window
-        (Process.Kernel.Get_Main_Window);
-      Buttons : Message_Dialog_Buttons;
-      pragma Unreferenced (Buttons);
-
-   begin
-      Attach_To_Debugger_Console
-        (Process, Process.Kernel, Create_If_Necessary => True);
-
-      --  Destroying the console should kill the debugger
-      if Process.Debugger_Text /= null then
-         Kernel_Callback.Object_Connect
-           (Process.Debugger_Text, Signal_Destroy,
-            On_Console_Destroy'Access,
-            After       => True,
-            User_Data   => null,
-            Slot_Object => Process);
-      end if;
-
-      Process.Descriptor.Debugger := Kind;
-      Process.Descriptor.Program := Executable;
-      Process.Descriptor.Debugger_Name := new String'(Debugger_Name);
-
-      case Kind is
-         when GVD.Types.Gdb =>
-            Process.Debugger := new Gdb_Debugger;
-         when GVD.Types.Gdb_MI =>
-            Process.Debugger := new Gdb_MI_Debugger;
-      end case;
-
-      --  Spawn the debugger
-
-      Spawn
-        (Process.Debugger,
-         Window.Kernel,
-         Executable,
-         Debugger_Args,
-         Executable_Args,
-         Proxy,
-         Process.Kernel.Get_Main_Window,
-         Remote_Target,
-         Remote_Protocol,
-         Debugger_Name);
-
-      --  Set the output filter, so that we output everything in the Gtk_Text
-      --  window.
-
-      Add_Filter
-        (Get_Descriptor (Get_Process (Process.Debugger)).all,
-         First_Text_Output_Filter'Access, Output,
-         Process.Kernel.Get_Main_Window.all'Address);
-
-      --  Initialize the debugger, and possibly get the name of the initial
-      --  file.
-
-      Initialize (Process.Debugger);
-
-      --  If we have a debuggee console in the desktop, always use it.
-      --  Otherwise, we only create one when the user has asked for it.
-
-      Attach_To_Debuggee_Console
-        (Process,
-         Process.Kernel,
-         Create_If_Necessary =>
-           Execution_Window.Get_Pref
-           and then Is_Local (Debug_Server)
-           and then Support_TTY (Process.Debugger)
-           and then GNAT.TTY.TTY_Supported);
-
-      Raise_Child
-        (Find_MDI_Child (Get_MDI (Window.Kernel), Process.Debugger_Text));
-
-      Success := True;
-
-   exception
-      when Process_Died =>
-         GNATCOLL.Traces.Trace (Me, "could not launch the debugger");
-         Buttons :=
-           Message_Dialog
-             (Expect_Out (Get_Process (Process.Debugger)) & ASCII.LF &
-              (-"Could not launch the debugger"),
-              Error, Button_OK, Button_OK,
-              Parent => Process.Kernel.Get_Main_Window);
-         Process.Exiting := True;
-
-         Close_Debugger (Process);
-
-         Process.Exiting := False;
-         Success := False;
-
-      when Spawn_Error =>
-         --  Do not display a dialog here since the Spawn procedure displays
-         --  a dialog before raising Spawn_Error.
-
-         Success := False;
-   end Configure;
-
    ------------------------------------
    -- Save_Breakpoints_In_Properties --
    ------------------------------------
@@ -1622,7 +1482,6 @@ package body GVD.Process is
                        GPS_Window (Get_Main_Window (Kernel));
       Process      : Visual_Debugger;
       Edit         : GVD.Source_Editor.GPS.GEdit;
-      Module       : GNATCOLL.VFS.Virtual_File;
       Program_Args : GNAT.Strings.String_Access;
       Blank_Pos    : Natural;
       Proxy        : Process_Proxy_Access;
@@ -1631,42 +1490,111 @@ package body GVD.Process is
       H            : access On_Pref_Changed;
       Exit_H       : access On_Before_Exit;
 
-      procedure Check_Extension (Module : in out Virtual_File);
-      --  Check for a missing extension in module, and add it if needed
-      --  Extensions currently checked in order: .exe, .out, .vxe
+      function Get_Main return Virtual_File;
+      --  Return the file to debug
 
-      ---------------------
-      -- Check_Extension --
-      ---------------------
+      --------------
+      -- Get_Main --
+      --------------
 
-      procedure Check_Extension (Module : in out Virtual_File) is
+      function Get_Main return Virtual_File is
          type Extension_Array is array (Positive range <>) of
            Filesystem_String (1 .. 4);
          Extensions : constant Extension_Array := (".exe", ".out", ".vxe");
          Tmp        : Virtual_File;
 
+         End_Of_Exec  : Natural;
+         Exec         : Virtual_File;
       begin
-         if Module = GNATCOLL.VFS.No_File or else Is_Regular_File (Module) then
-            return;
+         if File /= GNATCOLL.VFS.No_File then
+            Exec := File;
+
+         elsif Args /= "" then
+            Blank_Pos := Ada.Strings.Fixed.Index (Args, " ");
+
+            if Blank_Pos = 0 then
+               End_Of_Exec := Args'Last;
+            else
+               End_Of_Exec := Blank_Pos - 1;
+               Free (Program_Args);
+               Program_Args := new String'(Args (Blank_Pos + 1 .. Args'Last));
+            end if;
+
+            --  The code below assumes that the name of the executable is in
+            --  Args (Args'First .. End_Of_Exec).
+
+            declare
+               Exec_Name : constant Filesystem_String :=
+                 +Args (Args'First .. End_Of_Exec);
+
+            begin
+               --  First check whether Exec_Name is an absolute path
+               Exec := Create (Full_Filename => Exec_Name);
+
+               if not Exec.Is_Absolute_Path then
+                  --  If the Exec name is not an absolute path, check
+                  --  whether it corresponds to a file found from the
+                  --  current directory.
+
+                  Exec := Create
+                    (Full_Filename =>
+                       Normalize_Pathname (Exec_Name, Get_Current_Dir));
+
+                  if not Exec.Is_Regular_File then
+                     --  If the Exec is not an absolute path and it is not
+                     --  found from the current directory, try to locate it
+                     --  on path.
+
+                     Exec := Locate_Compiler_Executable (Exec_Name);
+
+                     if Exec = No_File then
+                        Exec := Create_From_Base (Exec_Name);
+                     end if;
+                  end if;
+               end if;
+            end;
          end if;
 
-         for J in Extensions'Range loop
-            Tmp := Create
-              (Full_Filename => Full_Name (Module) & Extensions (J));
+         --  Check for a missing extension in module, and add it if needed
+         --  Extensions currently checked in order: .exe, .out, .vxe
 
-            if Is_Regular_File (Tmp) then
-               Module := Tmp;
-               return;
-            end if;
-         end loop;
-      end Check_Extension;
+         if Exec = GNATCOLL.VFS.No_File or else Exec.Is_Regular_File then
+            return Exec;
+         else
+            for J in Extensions'Range loop
+               Tmp := Create
+                 (Full_Filename => Exec.Full_Name.all & Extensions (J));
 
-      End_Of_Exec : Natural;
+               if Tmp.Is_Regular_File then
+                  Exec := Tmp;
+                  exit;
+               end if;
+            end loop;
+         end if;
+
+         return Exec;
+      end Get_Main;
+
+      Target      : constant String := Kernel.Get_Target;
+      Default_Gdb : constant String :=
+        (if Target = "" then "gdb" else Target & "-gdb");
+      Args2       : GNAT.OS_Lib.Argument_List_Access :=
+        GNAT.OS_Lib.Argument_String_To_List
+          (Project.Attribute_Value
+             (Debugger_Command_Attribute,
+              Default => Default_Gdb));
+      Actual_Remote_Target   : constant String :=
+        (if Remote_Target /= ""
+         then Remote_Target
+         else Project.Attribute_Value (Program_Host_Attribute));
+      Actual_Remote_Protocol : constant String :=
+        (if Remote_Protocol /= ""
+         then Remote_Protocol
+         else Project.Attribute_Value (Protocol_Attribute));
+
+      Executable : GNATCOLL.VFS.Virtual_File;
 
    begin
-      --  Switch to the "Debug" perspective if available
-      Load_Perspective (Kernel, "Debug");
-
       Process := new Visual_Debugger_Record;
       GVD.Source_Editor.GPS.Gtk_New (Edit, Top);
       GVD.Process.Initialize
@@ -1674,102 +1602,77 @@ package body GVD.Process is
 
       Program_Args := new String'("");
 
-      if File /= GNATCOLL.VFS.No_File then
-         Module := File;
+      Executable := Get_Main;
 
-      elsif Args /= "" then
-         Blank_Pos := Ada.Strings.Fixed.Index (Args, " ");
+      Proxy := new GPS_Proxy;
+      GPS_Proxy (Proxy.all).Process := Process;
 
-         if Blank_Pos = 0 then
-            End_Of_Exec := Args'Last;
-         else
-            End_Of_Exec := Blank_Pos - 1;
-            Free (Program_Args);
-            Program_Args := new String'(Args (Blank_Pos + 1 .. Args'Last));
-         end if;
+      Process.Descriptor.Debugger := Kind;
+      Process.Descriptor.Program := Executable;
+      Process.Descriptor.Debugger_Name := new String'(Args2 (1).all);
 
-         --  The code below assumes that the name of the executable is in
-         --  Args (Args'First .. End_Of_Exec).
+      case Kind is
+         when GVD.Types.Gdb =>
+            Process.Debugger := new Gdb_Debugger;
+         when GVD.Types.Gdb_MI =>
+            Process.Debugger := new Gdb_MI_Debugger;
+      end case;
 
-         declare
-            Exec_Name : constant Filesystem_String :=
-                          +Args (Args'First .. End_Of_Exec);
-         begin
-            --  First check whether Exec_Name is an absolute path
+      --  Spawn the debugger
 
-            Module := Create (Full_Filename => Exec_Name);
+      Process.Debugger.Spawn
+        (Kernel          => Kernel,
+         Executable      => Executable,
+         Debugger_Args   => Args2 (2 .. Args'Last),
+         Executable_Args => Program_Args.all,
+         Proxy           => Proxy,
+         Window          => Gtk_Window (Top),
+         Remote_Target   => Actual_Remote_Target,
+         Remote_Protocol => Actual_Remote_Protocol,
+         Debugger_Name   => Process.Descriptor.Debugger_Name.all);
+      GNAT.OS_Lib.Free (Args2);
 
-            if not Is_Absolute_Path (Module) then
-               --  If the Exec name is not an absolute path, check whether it
-               --  corresponds to a file found from the current directory.
+      --  Switch to the "Debug" perspective if available
+      Load_Perspective (Kernel, "Debug");
 
-               Module := Create
-                 (Full_Filename =>
-                    Normalize_Pathname (Exec_Name, Get_Current_Dir));
-
-               if not Is_Regular_File (Module) then
-                  --  If the Exec is not an absolute path and it is not found
-                  --  from the current directory, try to locate it on path.
-
-                  Module := Locate_Compiler_Executable (Exec_Name);
-
-                  if Module = No_File then
-                     Module := Create_From_Base (Exec_Name);
-                  end if;
-               end if;
-            end if;
-         end;
-
-      else
-         Module := GNATCOLL.VFS.No_File;
+      --  Destroying the console should kill the debugger
+      --  ??? Signal should be handled in GVD.Console directly
+      Attach_To_Debugger_Console
+        (Process, Process.Kernel, Create_If_Necessary => True);
+      if Process.Debugger_Text /= null then
+         Kernel_Callback.Object_Connect
+           (Process.Debugger_Text, Signal_Destroy,
+            On_Console_Destroy'Access,
+            After       => True,
+            User_Data   => null,
+            Slot_Object => Process);
       end if;
 
-      Check_Extension (Module);
+      --  Set the output filter, so that we output everything in the Gtk_Text
+      --  window.
 
-      declare
-         Target      : constant String := Kernel.Get_Target;
-         Default_Gdb : constant String := (if Target = ""
-                                           then "gdb"
-                                           else Target & "-gdb");
-         Args : GNAT.OS_Lib.Argument_List_Access :=
-                  GNAT.OS_Lib.Argument_String_To_List
-                    (Project.Attribute_Value
-                       (Debugger_Command_Attribute,
-                        Default => Default_Gdb));
-         Actual_Remote_Target   : constant String :=
-                                    (if Remote_Target /= "" then
-                                        Remote_Target
-                                     else
-                                        Project.Attribute_Value
-                                       (Program_Host_Attribute));
-         Actual_Remote_Protocol : constant String :=
-                                    (if Remote_Protocol /= ""
-                                     then
-                                        Remote_Protocol
-                                     else
-                                        Project.Attribute_Value
-                                       (Protocol_Attribute));
-      begin
-         Proxy := new GPS_Proxy;
-         GPS_Proxy (Proxy.all).Process := Process;
-         Configure
-           (Process         => Process,
-            Kind            => Kind,
-            Proxy           => Proxy,
-            Executable      => Module,
-            Debugger_Args   => Args (2 .. Args'Last),
-            Executable_Args => Program_Args.all,
-            Remote_Target   => Actual_Remote_Target,
-            Remote_Protocol => Actual_Remote_Protocol,
-            Debugger_Name   => Args (1).all,
-            Success         => Success);
-         GNAT.OS_Lib.Free (Args);
+      Add_Filter
+        (Get_Descriptor (Get_Process (Process.Debugger)).all,
+         First_Text_Output_Filter'Access, Output, Top.all'Address);
 
-         if not Success then
-            Close_Debugger (Process);
-            return null;
-         end if;
-      end;
+      --  Initialize the debugger, and possibly get the name of the initial
+      --  file.
+
+      Initialize (Process.Debugger);
+
+      --  If we have a debuggee console in the desktop, always use it.
+      --  Otherwise, we only create one when the user has asked for it.
+
+      Attach_To_Debuggee_Console
+        (Process,
+         Process.Kernel,
+         Create_If_Necessary =>
+           Execution_Window.Get_Pref
+         and then Is_Local (Debug_Server)
+         and then Support_TTY (Process.Debugger)
+         and then GNAT.TTY.TTY_Supported);
+
+      Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Process.Debugger_Text));
 
       Setup_Side_Columns (Kernel);
 
@@ -1801,6 +1704,33 @@ package body GVD.Process is
       return Process;
 
    exception
+      when Process_Died =>
+         GNATCOLL.Traces.Trace (Me, "could not launch the debugger");
+         declare
+            Dummy : constant Message_Dialog_Buttons :=
+              Message_Dialog
+                (Expect_Out (Get_Process (Process.Debugger)) & ASCII.LF &
+                 (-"Could not launch the debugger"),
+                 Error, Button_OK, Button_OK,
+                 Parent => Gtk_Window (Top));
+         begin
+            Process.Exiting := True;
+
+            Close_Debugger (Process);
+            Process.Exiting := False;
+            return null;
+         end;
+
+      when Spawn_Error =>
+         --  Do not display a dialog here since the Spawn procedure displays
+         --  a dialog before raising Spawn_Error.
+
+         --  This will close the debugger and switch back to the default
+         --  perspective. However, some windows haven't had a size allocation
+         --  yet, so this might corrupt the desktop.
+         Close_Debugger (Process);
+         return null;
+
       when E : others =>
          GNATCOLL.Traces.Trace (Me, E);
          return Process;
