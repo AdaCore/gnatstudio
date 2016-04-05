@@ -3703,6 +3703,7 @@ class EditorBuffer(object):
         This function can be used to override this, or set it for newly
         created files (:func:`GPS.EditorBuffer.get_new")
         """
+        pass  # implemented in Ada
 
     def set_read_only(self, read_only=True):
         """
