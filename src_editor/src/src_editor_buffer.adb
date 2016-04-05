@@ -90,14 +90,14 @@ with Src_Editor_Box;                      use Src_Editor_Box;
 with Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Line_Information;
 with Src_Editor_Buffer.Hooks;             use Src_Editor_Buffer.Hooks;
-with Src_Editor_Buffer.Cursors;     use Src_Editor_Buffer.Cursors;
+with Src_Editor_Buffer.Cursors;           use Src_Editor_Buffer.Cursors;
 with Src_Editor_Module;                   use Src_Editor_Module;
 with Src_Editor_Module.Editors;           use Src_Editor_Module.Editors;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Highlighting;                    use Src_Highlighting;
 with String_Utils;                        use String_Utils;
-with Gtk.Widget; use Gtk.Widget;
-with Gtk.Window; use Gtk.Window;
+with Gtk.Widget;                          use Gtk.Widget;
+with Gtk.Window;                          use Gtk.Window;
 
 use Ada.Strings.Unbounded;
 
@@ -124,10 +124,8 @@ package body Src_Editor_Buffer is
    pragma Unreferenced (Prevent_Align);
    --  This trace is setup here for the benefit of tab.py
 
-   Indent_On_Block_Info : constant Trace_Handle :=
-                            Create
-                              ("Source_Editor_Buffer.Indent_On_Block_Info",
-                               Default => Off);
+   Indent_On_Block_Info : constant Trace_Handle := Create
+     ("Source_Editor_Buffer.Indent_On_Block_Info", Default => Off);
 
    Buffer_Recompute_Interval : constant Guint := 200;
    --  The interval at which to check whether the buffer should be reparsed,
@@ -2072,6 +2070,7 @@ package body Src_Editor_Buffer is
       User_Action  : Action_Type;
       Sel_Mark     : Gtk_Text_Mark := Buffer.Get_Selection_Bound;
       Cursor_Previously_Held : Boolean;
+
    begin
       --  If in multi cursors manual slave mode, update corresponding command
       --  and sel mark
@@ -6774,6 +6773,53 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record; As_Is : Boolean)
    is
       Ignore, Result : Boolean;
+
+      procedure Strip_Blanks;
+      --  Removes blanks from the end of the current line
+
+      ------------------
+      -- Strip_Blanks --
+      ------------------
+
+      procedure Strip_Blanks is
+         Iter         : Gtk.Text_Iter.Gtk_Text_Iter;
+         End_Iter     : Gtk.Text_Iter.Gtk_Text_Iter;
+         Line         : Gint;
+         Start_Offset : Gint;
+         End_Offset   : Gint;
+         Char         : Character;
+         Result       : Boolean;
+         pragma Unreferenced (Result);
+      begin
+         Buffer.Get_Cursor_Position (Iter);
+         if Iter = Null_Text_Iter then
+            return;
+         end if;
+
+         End_Offset := Get_Line_Offset (Iter);
+
+         while not Starts_Line (Iter) loop
+            Backward_Char (Iter, Result);
+            Char := Get_Char (Iter);
+            exit when Char /= ' ' and then Char /= ASCII.HT;
+         end loop;
+
+         Start_Offset := Get_Line_Offset (Iter);
+
+         if Start_Offset /= 0
+           and then End_Offset /= Start_Offset + 1
+         then
+            Line := Get_Line (Iter);
+            Buffer.Get_Iter_At_Line_Offset (Iter, Line, Start_Offset + 1);
+            Buffer.Get_Iter_At_Line_Offset (End_Iter, Line, End_Offset);
+            Buffer.Delete_Interactive (Iter, End_Iter, True, Result);
+         end if;
+
+      exception
+         when E : others =>
+            Trace (Me, E);
+      end Strip_Blanks;
+
    begin
       Buffer.Start_Undo_Group;
 
@@ -6786,7 +6832,10 @@ package body Src_Editor_Buffer is
          Ignore := Delete_Selection (Buffer, True, True);
 
          External_End_Action (Buffer);
+      end if;
 
+      if Buffer.Strip_Trailing_Blanks then
+         Strip_Blanks;
       end if;
 
       Result :=
