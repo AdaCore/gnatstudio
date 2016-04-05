@@ -4609,12 +4609,12 @@ package body Project_Properties is
                        (Edit_Page'Unrestricted_Access, Visible_Only => True);
                      Next (Scenar_Iter);
                   end loop;
-
-                  Free (Languages);
                end;
 
                Next (Prj_Iter);
             end loop;
+
+            Free (Languages);
          end;
 
          --  Rename the project last, since we need to recompute the view

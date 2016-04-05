@@ -25,6 +25,21 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P404-044 GPS: error when editing multiple projects
+
+  Problem:    When you select /Project/Edit Properties, and in select
+              multiple projects in the "Apply changes to" section, GPS ends
+              up with an internal error and does not perform any of the
+              updates.
+
+  Status:     This was fixed in 17.0 on 2016-04-05
+
+  Workaround: Modifying multiple projects at the same time is generally not
+              a good idea since they will end up with the exact same contents.
+              The workaround is to edit the projects one by one, or manually
+              (if you have lots of projects, manual editing is the recommended
+              approach for now).
+
 KP-62-P404-015 GPS: separate.py plug-in does not raise the editor
 
   Problem:    When this optional plug-in is activated, it displays a
