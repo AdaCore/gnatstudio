@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Vectors;     use Ada.Containers;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
@@ -77,8 +78,9 @@ package body Src_Contexts is
 
    Me : constant Trace_Handle := Create ("Src_Contexts");
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Match_Result_Array, Match_Result_Array_Access);
+   package Match_Vectors is new Ada.Containers.Vectors
+     (Positive, GPS.Search.Search_Context);
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GError, GError_Access);
 
@@ -138,7 +140,7 @@ package body Src_Contexts is
    --  Same as above, but works directly on the editor. This is useful for
    --  example when the editor has no file yet.
 
-   function Scan_And_Store
+   procedure Scan_And_Store
      (Context  : access Root_Search_Context'Class;
       Handler  : access Language_Handler_Record'Class;
       Kernel   : Kernel_Handle;
@@ -146,7 +148,8 @@ package body Src_Contexts is
       File     : Virtual_File := GNATCOLL.VFS.No_File;
       Ref      : Buffer_Position;
       Scope    : Search_Scope;
-      Lang     : Language_Access := null) return Match_Result_Array_Access;
+      Lang     : Language_Access := null;
+      Result   : out Match_Vectors.Vector);
    --  Same as above, but behaves as if there was a default callback that
    --  stores the results in an array
    --  If Str is not the empty string, it is considered as a buffer to parse.
@@ -287,7 +290,7 @@ package body Src_Contexts is
 
    procedure Replace_Matched
      (Replacement : Replacement_Pattern;
-      Matches     : Match_Result_Array_Access;
+      Matches     : Match_Vectors.Vector;
       Buffer      : Src_Editor_Buffer.Source_Buffer);
    --  Replace all search mathes in given Buffer with Replacement
 
@@ -1008,7 +1011,7 @@ package body Src_Contexts is
    -- Scan_And_Store --
    --------------------
 
-   function Scan_And_Store
+   procedure Scan_And_Store
      (Context  : access Root_Search_Context'Class;
       Handler  : access Language_Handler_Record'Class;
       Kernel   : Kernel_Handle;
@@ -1016,10 +1019,9 @@ package body Src_Contexts is
       File     : Virtual_File := GNATCOLL.VFS.No_File;
       Ref      : Buffer_Position;
       Scope    : Search_Scope;
-      Lang     : Language_Access := null) return Match_Result_Array_Access
+      Lang     : Language_Access := null;
+      Result   : out Match_Vectors.Vector)
    is
-      Result : Match_Result_Array_Access := null;
-
       function Callback
         (Match : GPS.Search.Search_Context;
          Text  : String) return Boolean;
@@ -1034,21 +1036,8 @@ package body Src_Contexts is
          Text  : String) return Boolean
       is
          pragma Unreferenced (Text);
-         Tmp  : Match_Result_Array_Access;
       begin
-         Tmp := Result;
-         if Tmp = null then
-            Result := new Match_Result_Array (1 .. 1);
-         else
-            Result := new Match_Result_Array (1 .. Tmp'Last + 1);
-         end if;
-
-         if Tmp /= null then
-            Result (1 .. Tmp'Last) := Tmp.all;
-            Unchecked_Free (Tmp);
-         end if;
-
-         Result (Result'Last) := Match;
+         Result.Append (Match);
          return True;
       end Callback;
 
@@ -1056,6 +1045,8 @@ package body Src_Contexts is
       Was_Partial : Boolean;
       R           : Buffer_Position;
    begin
+      Result.Clear;
+
       if Str /= "" then
          R := Ref;
          Scan_Buffer (Str, 1, Context,
@@ -1072,8 +1063,6 @@ package body Src_Contexts is
                     Force_Read    => Kernel = null,
                     Was_Partial   => Was_Partial);
       end if;
-
-      return Result;
    end Scan_And_Store;
 
    -----------------
@@ -1576,7 +1565,7 @@ package body Src_Contexts is
       Child        : constant MDI_Child := Find_Current_Editor (Kernel);
       Buffer       : Src_Editor_Buffer.Source_Buffer;
       Editor       : Source_Editor_Box;
-      Matches      : Match_Result_Array_Access;
+      Matches      : Match_Vectors.Vector;
       Begin_Line   : Editable_Line_Type;
       Begin_Column : Character_Offset_Type;
       End_Line     : Editable_Line_Type;
@@ -1612,7 +1601,7 @@ package body Src_Contexts is
               (Text'First, Integer (Begin_Line), Begin_Column,
                Visible_Column_Type (Begin_Column));
          begin
-            Matches := Scan_And_Store
+            Scan_And_Store
               (Context => Context,
                Handler => Get_Language_Handler (Kernel),
                Kernel  => Kernel_Handle (Kernel),
@@ -1620,10 +1609,11 @@ package body Src_Contexts is
                File    => GNATCOLL.VFS.No_File,
                Scope   => Context.Scope,
                Ref     => Ref,
-               Lang    => Get_Language (Buffer));
+               Lang    => Get_Language (Buffer),
+               Result  => Matches);
          end;
 
-         if Matches /= null then
+         if not Matches.Is_Empty then
             Context.Replacement.Initialize
               (Replace_String  => Replace_String,
                Case_Preserving => Case_Preserving,
@@ -1633,8 +1623,6 @@ package body Src_Contexts is
               (Replacement => Context.Replacement,
                Matches     => Matches,
                Buffer      => Buffer);
-
-            Unchecked_Free (Matches);
          end if;
 
          return False;
@@ -2150,7 +2138,7 @@ package body Src_Contexts is
 
    procedure Replace_Matched
      (Replacement : Replacement_Pattern;
-      Matches     : Match_Result_Array_Access;
+      Matches     : Match_Vectors.Vector;
       Buffer      : Src_Editor_Buffer.Source_Buffer) is
    begin
       --  Replace starting from the end, so as to preserve lines and
@@ -2160,29 +2148,29 @@ package body Src_Contexts is
       Start_Undo_Group (Buffer);
       Buffer.Disable_Highlighting;
 
-      for M in reverse Matches'Range loop
-         if Is_Empty_Match (Matches (M)) then
+      for M of reverse Matches loop
+         if Is_Empty_Match (M) then
             Insert
               (Buffer,
-               Editable_Line_Type (Matches (M).Start.Line),
-               Matches (M).Start.Column,
-               Replacement.Replacement_Text (Matches (M), ""));
+               Editable_Line_Type (M.Start.Line),
+               M.Start.Column,
+               Replacement.Replacement_Text (M, ""));
          else
             declare
                Text : constant String := Get_Text
                  (Buffer,
-                  Editable_Line_Type (Matches (M).Start.Line),
-                  Matches (M).Start.Column,
-                  Editable_Line_Type (Matches (M).Finish.Line),
-                  Matches (M).Finish.Column + 1);
+                  Editable_Line_Type (M.Start.Line),
+                  M.Start.Column,
+                  Editable_Line_Type (M.Finish.Line),
+                  M.Finish.Column + 1);
             begin
                Replace_Slice
                  (Buffer,
-                  Editable_Line_Type (Matches (M).Start.Line),
-                  Matches (M).Start.Column,
-                  Editable_Line_Type (Matches (M).Finish.Line),
-                  Matches (M).Finish.Column + 1,
-                  Replacement.Replacement_Text (Matches (M), Text));
+                  Editable_Line_Type (M.Start.Line),
+                  M.Start.Column,
+                  Editable_Line_Type (M.Finish.Line),
+                  M.Finish.Column + 1,
+                  Replacement.Replacement_Text (M, Text));
             end;
          end if;
       end loop;
@@ -2192,7 +2180,7 @@ package body Src_Contexts is
       Set_Avoid_Cursor_Move_On_Changes (Buffer, False);
 
       Buffer.Get_Kernel.Get_Construct_Database.Update_Contents
-        (Buffer.Get_Filename, Purge => Matches'Length > 50);
+        (Buffer.Get_Filename, Purge => Matches.Length > 50);
       --  If there are a lot of changes then update contents by purging old
       --  one and construct new contents from scratch.
    end Replace_Matched;
@@ -2211,7 +2199,6 @@ package body Src_Contexts is
       Child           : MDI_Child) return Boolean
    is
       Editor          : Source_Editor_Box;
-      Matches         : Match_Result_Array_Access;
    begin
       Context.Replacement.Initialize
         (Replace_String  => Replace_String,
@@ -2222,11 +2209,13 @@ package body Src_Contexts is
       Editor := Get_Source_Box_From_MDI (Child);
 
       if Context.All_Occurrences then
+         Editor.Get_Buffer.Freeze_Context;
          declare
             Text : constant String := Get_Buffer (Editor);
             Ref  : constant Buffer_Position := (Text'First, 1, 1, 1);
+            Matches : Match_Vectors.Vector;
          begin
-            Matches := Scan_And_Store
+            Scan_And_Store
               (Context => Context,
                Handler => Get_Language_Handler (Kernel),
                Kernel  => Kernel_Handle (Kernel),
@@ -2234,19 +2223,26 @@ package body Src_Contexts is
                File    => GNATCOLL.VFS.No_File,
                Ref     => Ref,
                Scope   => Context.Scope,
-               Lang    => Get_Language (Get_Buffer (Editor)));
-         end;
+               Lang    => Get_Language (Get_Buffer (Editor)),
+               Result  => Matches);
 
-         if Matches /= null then
-            Replace_Matched
-              (Replacement => Context.Replacement,
-               Matches     => Matches,
-               Buffer      => Get_Buffer (Editor));
-            Unchecked_Free (Matches);
-            return True;
-         else
-            return False;
-         end if;
+            if not Matches.Is_Empty then
+               Replace_Matched
+                 (Replacement => Context.Replacement,
+                  Matches     => Matches,
+                  Buffer      => Get_Buffer (Editor));
+               Editor.Get_Buffer.Thaw_Context;
+               return True;
+            else
+               Editor.Get_Buffer.Thaw_Context;
+               return False;
+            end if;
+
+         exception
+            when others =>
+               Editor.Get_Buffer.Thaw_Context;
+               raise;
+         end;
       else
          --  Test whether the current context text contains the search string.
          --  Warning: we cannot use selection here, since apparently there can
@@ -2336,7 +2332,7 @@ package body Src_Contexts is
       Give_Focus      : Boolean;
       File            : GNATCOLL.VFS.Virtual_File) return Boolean
    is
-      Matches : Match_Result_Array_Access;
+      Matches : Match_Vectors.Vector;
       Child   : MDI_Child;
    begin
       --  If the file is loaded in an editor, do the replacement directly
@@ -2362,7 +2358,7 @@ package body Src_Contexts is
          --  ??? Could be more efficient, since we have already read the
          --  file to do the search
 
-         Matches := Scan_And_Store
+         Scan_And_Store
            (Context => Context,
             Handler => Get_Language_Handler (Kernel),
             Kernel  => Kernel_Handle (Kernel),
@@ -2370,9 +2366,10 @@ package body Src_Contexts is
             Scope   => Context.Scope,
             Ref     => Unknown_Position,  --  not used since Str unspecified
             Lang    => Get_Language_From_File
-              (Get_Language_Handler (Kernel), File));
+              (Get_Language_Handler (Kernel), File),
+            Result  => Matches);
 
-         if Matches /= null then
+         if not Matches.Is_Empty then
             declare
                Buffer   : GNAT.Strings.String_Access;
                Last     : Positive := 1;
@@ -2405,19 +2402,17 @@ package body Src_Contexts is
                      Case_Preserving => Case_Preserving,
                      Is_Regexp       => Context.Is_Regexp);
 
-                  for M in Matches'Range loop
+                  for M of Matches loop
                      Append
-                       (Output_Buffer,
-                        Buffer (Last .. Matches (M).Start.Index - 1));
+                       (Output_Buffer, Buffer (Last .. M.Start.Index - 1));
                      Append
                        (Output_Buffer,
                         Context.Replacement.Replacement_Text
-                          (Matches (M),
-                           Buffer (Matches (M).Start.Index
-                             .. Matches (M).Start.Index
+                          (M,
+                           Buffer (M.Start.Index .. M.Start.Index
                              + Replace_String'Length - 1)));
 
-                     Last := Index_After_Match (Matches (M));
+                     Last := Index_After_Match (M);
                   end loop;
 
                   Append (Output_Buffer, Buffer (Last .. Buffer'Last));
@@ -2454,8 +2449,6 @@ package body Src_Contexts is
                end if;
             end;
          end if;
-
-         Unchecked_Free (Matches);
       end if;
 
       return True;

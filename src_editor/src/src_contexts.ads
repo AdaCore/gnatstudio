@@ -391,10 +391,6 @@ private
    --  Mono_Comments   end of line terminated comments
    --  Multi_Comments  (possibly) multi-line comments
 
-   type Match_Result_Array is array (Positive range <>)
-     of GPS.Search.Search_Context;
-   type Match_Result_Array_Access is access all Match_Result_Array;
-
    type Dir_Data is record
       Name  : Virtual_File;
       Files : File_Array_Access;

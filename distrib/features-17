@@ -40,6 +40,11 @@ NF-17-P403-002 GPS: Home goes to beginning or first-non-blank (2016-04-04)
   first non-blank character of the line). This is a feature available in
   other code editors.
 
+NF-17-P323-017 GPS: speed up search and replace (2016-04-05)
+
+  The "search and replace all occurrences" has been sped up by a factor of
+  seven in some cases.
+
 NF-17-P321-014 WB: add VxWorks 653 3.1 support (2016-03-21)
 
   GNATbench is able to handle Wind River Workbench projects for VxWorks 653 3.1

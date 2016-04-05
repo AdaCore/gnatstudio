@@ -960,6 +960,30 @@ package Src_Editor_Buffer is
    --  A key context that matches if the last source editor is available
 
    --------------
+   -- Contexts --
+   --------------
+   --  Every time the cursor changes position, the editor recomputes the
+   --  current context to update various pieces of information like the
+   --  toolbar buttons. This can however be expensive when doing lots of
+   --  manipulation, so it is possible to temporary freeze the context.
+
+   procedure Freeze_Context
+     (Self : not null access Source_Buffer_Record'Class)
+     with Inline;
+   procedure Thaw_Context
+     (Self : not null access Source_Buffer_Record'Class)
+     with Inline;
+   --  Stop refreshing the GPS context every time the cursor moves.
+   --  The number of calls to Thaw should match the number of calls to Freeze
+
+   function Context_Is_Frozen
+     (Self  : not null access Source_Buffer_Record'Class)
+      return Boolean
+     with Inline;
+   --  Whether the context should be refreshed when the cursor position
+   --  changes.
+
+   --------------
    --  Signals --
    --------------
 
@@ -1768,7 +1792,11 @@ private
       Listeners : Listener_Lists.List;
 
       Last_Checked_Version : Integer := -1;
-      Version : Integer := -1;
+      Version              : Integer := -1;
+
+      Context_Frozen       : Integer := 0;
+      --  GPS context is refreshed every time the cursor position changes and
+      --  this variable is set to 0. See Freeze_Context and Thaw_Context.
    end record;
 
    procedure Emit_By_Name

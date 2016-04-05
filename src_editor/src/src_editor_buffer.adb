@@ -8696,4 +8696,36 @@ package body Src_Editor_Buffer is
          return "";
       end if;
    end Get_Title;
+
+   --------------------
+   -- Freeze_Context --
+   --------------------
+
+   procedure Freeze_Context
+     (Self : not null access Source_Buffer_Record'Class) is
+   begin
+      Self.Context_Frozen := Self.Context_Frozen + 1;
+   end Freeze_Context;
+
+   ------------------
+   -- Thaw_Context --
+   ------------------
+
+   procedure Thaw_Context
+     (Self : not null access Source_Buffer_Record'Class) is
+   begin
+      Self.Context_Frozen := Self.Context_Frozen - 1;
+      Assert (Me, Self.Context_Frozen >= 0,
+              "Calls to Thaw_Context doesn't match Freeze_Context");
+   end Thaw_Context;
+
+   -----------------------
+   -- Context_Is_Frozen --
+   -----------------------
+
+   function Context_Is_Frozen
+     (Self  : not null access Source_Buffer_Record'Class)
+      return Boolean
+     is (Self.Context_Frozen > 0);
+
 end Src_Editor_Buffer;

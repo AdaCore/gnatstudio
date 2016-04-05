@@ -729,7 +729,8 @@ package body Src_Editor_View is
    begin
       if Mark = Buffer.Get_Selection_Bound then
          --  Test whether we have the focus
-         if Gtkada.MDI.MDI_Child (User.Child) =
+         if not Buffer.Context_Is_Frozen
+           and then Gtkada.MDI.MDI_Child (User.Child) =
            Get_Focus_Child (Get_MDI (User.Kernel))
          then
             --  We have changed the selection: emit "context_changed" here.
@@ -764,8 +765,10 @@ package body Src_Editor_View is
          Save_Cursor_Position (User);
 
          --  We have changed the cursor position: emit "context_changed" here.
-         User.Kernel.Context_Changed
-           (Build_Editor_Context (User, Location_Cursor));
+         if not Buffer.Context_Is_Frozen then
+            User.Kernel.Context_Changed
+              (Build_Editor_Context (User, Location_Cursor));
+         end if;
       end if;
 
       --  If we are highlighting the current line, re-expose the entire view
@@ -2677,7 +2680,7 @@ package body Src_Editor_View is
 
    procedure End_Completion (View : access Source_View_Record'Class) is
    begin
-      Set_In_Completion (Source_Buffer (Get_Buffer (View)), False);
+      Set_In_Completion (Source_Buffer (View.Get_Buffer), False);
 
       --  Force a refresh of the context
       View.Kernel.Context_Changed

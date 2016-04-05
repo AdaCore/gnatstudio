@@ -1474,6 +1474,15 @@ package body Completion_Module is
       end Char_Triggers_Auto_Completion;
 
    begin
+      --  If we are in the middle of a long operation (search and replace for
+      --  instance), we should not trigger the completion at all.
+      --  ??? Do we have a way to check whether the character is coming from
+      --  user interaction or script ? That would be a better solution.
+
+      if Buffer.Context_Is_Frozen then
+         return;
+      end if;
+
       if Char = 8 then
          --  This is a special case: we are calling Character_Added after
          --  deleting some text, and the character is a backspace character.

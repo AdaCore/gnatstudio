@@ -673,8 +673,6 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.set_lang
 
-   .. automethod:: GPS.EditorBuffer.set_lang
-
    .. automethod:: GPS.EditorBuffer.set_read_only
 
    .. automethod:: GPS.EditorBuffer.start_undo_group
