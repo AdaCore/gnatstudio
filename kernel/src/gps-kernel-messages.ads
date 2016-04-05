@@ -706,7 +706,16 @@ private
       Project_File      : GNATCOLL.VFS.Virtual_File;
       Category_Map      : Category_Maps.Map;
       Categories        : Node_Vectors.Vector;
+
       Listeners         : Listener_Vectors.Vector;
+      Removed_Listeners : Listener_Vectors.Vector;
+      Notification      : Boolean := False;
+      --  Listeners to be notified about changes in messages container. When
+      --  notification is in progress Notification is set to True, and remove
+      --  operation manage Removed_Listeners (notification subprograms make
+      --  copy of listeners and should know which of them was removed during
+      --  notification).
+
       Savers            : Message_Save_Maps.Map;
       Primary_Loaders   : Primary_Message_Load_Maps.Map;
       Secondary_Loaders : Secondary_Message_Load_Maps.Map;

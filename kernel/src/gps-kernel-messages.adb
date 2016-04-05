@@ -117,7 +117,7 @@ package body GPS.Kernel.Messages is
    package Notifiers is
 
       procedure Notify_Listeners_About_Category_Added
-        (Self          : not null access constant Messages_Container'Class;
+        (Self          : not null access Messages_Container'Class;
          Category      : Ada.Strings.Unbounded.Unbounded_String;
          Initial_Flags : Message_Flags;
          Current_Flags : Message_Flags;
@@ -129,14 +129,14 @@ package body GPS.Kernel.Messages is
       --  message.
 
       procedure Notify_Listeners_About_Category_Removed
-        (Self          : not null access constant Messages_Container'Class;
+        (Self          : not null access Messages_Container'Class;
          Category      : Ada.Strings.Unbounded.Unbounded_String;
          Initial_Flags : Message_Flags;
          Current_Flags : Message_Flags);
       --  Calls listeners to notify about remove of the category
 
       procedure Notify_Listeners_About_File_Added
-        (Self          : not null access constant Messages_Container'Class;
+        (Self          : not null access Messages_Container'Class;
          Category      : Ada.Strings.Unbounded.Unbounded_String;
          File          : GNATCOLL.VFS.Virtual_File;
          Initial_Flags : Message_Flags;
@@ -144,7 +144,7 @@ package body GPS.Kernel.Messages is
       --  Calls listeners to notify about add of the file
 
       procedure Notify_Listeners_About_File_Removed
-        (Self          : not null access constant Messages_Container'Class;
+        (Self          : not null access Messages_Container'Class;
          Category      : Ada.Strings.Unbounded.Unbounded_String;
          File          : GNATCOLL.VFS.Virtual_File;
          Initial_Flags : Message_Flags;
@@ -152,27 +152,27 @@ package body GPS.Kernel.Messages is
       --  Calls listeners to notify about remove of the file
 
       procedure Notify_Listeners_About_Message_Added
-        (Self    : not null access constant Messages_Container'Class;
+        (Self    : not null access Messages_Container'Class;
          Message : not null access Abstract_Message'Class;
          Flags   : Message_Flags);
       --  Calls listeners to notify about add of message. Flags specify subset
       --  of listeners to be notified.
 
       procedure Notify_Listeners_About_Message_Property_Changed
-        (Self     : not null access constant Messages_Container'Class;
+        (Self     : not null access Messages_Container'Class;
          Message  : not null access Abstract_Message'Class;
          Property : String);
       --  Calls listeners to notify about change of message's property
 
       procedure Notify_Listeners_About_Message_Removed
-        (Self    : not null access constant Messages_Container'Class;
+        (Self    : not null access Messages_Container'Class;
          Message : not null access Abstract_Message'Class;
          Flags   : Message_Flags);
       --  Calls listeners to notify about remove of message. Flags specify
       --  subset of listeners to be notified.
 
       function Ask_About_Message_Destroy
-        (Self    : not null access constant Messages_Container'Class;
+        (Self    : not null access Messages_Container'Class;
          Message : not null access Abstract_Message'Class) return Boolean;
       --  Calls listeners to ask aboud destruction of the message.
 
@@ -1477,53 +1477,72 @@ package body GPS.Kernel.Messages is
 
    package body Notifiers is
 
+      procedure Lock (Self : not null access Messages_Container'Class);
+      --  Lock set of listeners
+
+      procedure Unlock (Self : not null access Messages_Container'Class);
+      --  Unlock set of listeners
+
       -------------------------------
       -- Ask_About_Message_Destroy --
       -------------------------------
 
       function Ask_About_Message_Destroy
-        (Self    : not null access constant Messages_Container'Class;
+        (Self    : not null access Messages_Container'Class;
          Message : not null access Abstract_Message'Class) return Boolean
       is
-         Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
-         Result            : Boolean := True;
+         Listeners : constant Listener_Vectors.Vector := Self.Listeners;
+         Result    : Boolean := True;
 
       begin
-         while Has_Element (Listener_Position) loop
+         Lock (Self);
+
+         for Listener of Listeners loop
             begin
-               if Element (Listener_Position).Flags = Empty_Message_Flags
-                 or else Match
-                           (Element (Listener_Position).Flags, Message.Flags)
+               if not Self.Removed_Listeners.Contains (Listener)
+                 and then (Listener.Flags = Empty_Message_Flags
+                           or else Match (Listener.Flags, Message.Flags))
                then
                   Result :=
-                    Result
-                      and Element (Listener_Position).Message_Can_Be_Destroyed
-                            (Message);
+                    Result and Listener.Message_Can_Be_Destroyed (Message);
                end if;
 
             exception
                when E : others =>
                   Trace (Me, E);
             end;
-
-            Next (Listener_Position);
          end loop;
+
+         Unlock (Self);
 
          return Result;
       end Ask_About_Message_Destroy;
+
+      ----------
+      -- Lock --
+      ----------
+
+      procedure Lock (Self : not null access Messages_Container'Class) is
+      begin
+         if Self.Notification then
+            raise Program_Error;
+         end if;
+
+         Self.Notification := True;
+      end Lock;
 
       -------------------------------------------
       -- Notify_Listeners_About_Category_Added --
       -------------------------------------------
 
       procedure Notify_Listeners_About_Category_Added
-        (Self          : not null access constant Messages_Container'Class;
+        (Self          : not null access Messages_Container'Class;
          Category      : Ada.Strings.Unbounded.Unbounded_String;
          Initial_Flags : Message_Flags;
          Current_Flags : Message_Flags;
          Allow_Auto_Jump_To_First : Boolean)
       is
-         Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
+         Listeners : constant Listener_Vectors.Vector := Self.Listeners;
 
       begin
          if Initial_Flags = Current_Flags then
@@ -1532,15 +1551,18 @@ package body GPS.Kernel.Messages is
             return;
          end if;
 
-         while Has_Element (Listener_Position) loop
+         Lock (Self);
+
+         for Listener of Listeners loop
             begin
-               if (Element (Listener_Position).Flags = Empty_Message_Flags
-                   and Initial_Flags = Empty_Message_Flags)
-                 or (((Initial_Flags xor Current_Flags)
-                      and Element (Listener_Position).Flags)
-                     /= Empty_Message_Flags)
+               if not Self.Removed_Listeners.Contains (Listener)
+                 and then ((Listener.Flags = Empty_Message_Flags
+                            and Initial_Flags = Empty_Message_Flags)
+                           or else (((Initial_Flags xor Current_Flags)
+                                     and Listener.Flags)
+                                    /= Empty_Message_Flags))
                then
-                  Element (Listener_Position).Category_Added
+                  Listener.Category_Added
                     (Category,
                      Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First);
                end if;
@@ -1549,9 +1571,9 @@ package body GPS.Kernel.Messages is
                when E : others =>
                   Trace (Me, E);
             end;
-
-            Next (Listener_Position);
          end loop;
+
+         Unlock (Self);
       end Notify_Listeners_About_Category_Added;
 
       ---------------------------------------------
@@ -1559,12 +1581,12 @@ package body GPS.Kernel.Messages is
       ---------------------------------------------
 
       procedure Notify_Listeners_About_Category_Removed
-        (Self          : not null access constant Messages_Container'Class;
+        (Self          : not null access Messages_Container'Class;
          Category      : Ada.Strings.Unbounded.Unbounded_String;
          Initial_Flags : Message_Flags;
          Current_Flags : Message_Flags)
       is
-         Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
+         Listeners : constant Listener_Vectors.Vector := Self.Listeners;
 
       begin
          if Initial_Flags = Current_Flags then
@@ -1573,24 +1595,27 @@ package body GPS.Kernel.Messages is
             return;
          end if;
 
-         while Has_Element (Listener_Position) loop
+         Lock (Self);
+
+         for Listener of Listeners loop
             begin
-               if (Element (Listener_Position).Flags = Empty_Message_Flags
-                   and Current_Flags = Empty_Message_Flags)
-                 or (((Initial_Flags xor Current_Flags)
-                      and Element (Listener_Position).Flags)
-                     /= Empty_Message_Flags)
+               if not Self.Removed_Listeners.Contains (Listener)
+                 and then ((Listener.Flags = Empty_Message_Flags
+                            and Current_Flags = Empty_Message_Flags)
+                           or else (((Initial_Flags xor Current_Flags)
+                                     and Listener.Flags)
+                                    /= Empty_Message_Flags))
                then
-                  Element (Listener_Position).Category_Removed (Category);
+                  Listener.Category_Removed (Category);
                end if;
 
             exception
                when E : others =>
                   Trace (Me, E);
             end;
-
-            Next (Listener_Position);
          end loop;
+
+         Unlock (Self);
       end Notify_Listeners_About_Category_Removed;
 
       ---------------------------------------
@@ -1598,13 +1623,13 @@ package body GPS.Kernel.Messages is
       ---------------------------------------
 
       procedure Notify_Listeners_About_File_Added
-        (Self          : not null access constant Messages_Container'Class;
+        (Self          : not null access Messages_Container'Class;
          Category      : Ada.Strings.Unbounded.Unbounded_String;
          File          : GNATCOLL.VFS.Virtual_File;
          Initial_Flags : Message_Flags;
          Current_Flags : Message_Flags)
       is
-         Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
+         Listeners : constant Listener_Vectors.Vector := Self.Listeners;
 
       begin
          if Initial_Flags = Current_Flags then
@@ -1613,24 +1638,27 @@ package body GPS.Kernel.Messages is
             return;
          end if;
 
-         while Has_Element (Listener_Position) loop
+         Lock (Self);
+
+         for Listener of Listeners loop
             begin
-               if (Element (Listener_Position).Flags = Empty_Message_Flags
-                   and Initial_Flags = Empty_Message_Flags)
-                 or (((Initial_Flags xor Current_Flags)
-                      and Element (Listener_Position).Flags)
-                     /= Empty_Message_Flags)
+               if not Self.Removed_Listeners.Contains (Listener)
+                 and then ((Listener.Flags = Empty_Message_Flags
+                            and Initial_Flags = Empty_Message_Flags)
+                           or else (((Initial_Flags xor Current_Flags)
+                                     and Listener.Flags)
+                                    /= Empty_Message_Flags))
                then
-                  Element (Listener_Position).File_Added (Category, File);
+                  Listener.File_Added (Category, File);
                end if;
 
             exception
                when E : others =>
                   Trace (Me, E);
             end;
-
-            Next (Listener_Position);
          end loop;
+
+         Unlock (Self);
       end Notify_Listeners_About_File_Added;
 
       -----------------------------------------
@@ -1638,13 +1666,13 @@ package body GPS.Kernel.Messages is
       -----------------------------------------
 
       procedure Notify_Listeners_About_File_Removed
-        (Self          : not null access constant Messages_Container'Class;
+        (Self          : not null access Messages_Container'Class;
          Category      : Ada.Strings.Unbounded.Unbounded_String;
          File          : GNATCOLL.VFS.Virtual_File;
          Initial_Flags : Message_Flags;
          Current_Flags : Message_Flags)
       is
-         Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
+         Listeners : constant Listener_Vectors.Vector := Self.Listeners;
 
       begin
          if Initial_Flags = Current_Flags then
@@ -1653,24 +1681,27 @@ package body GPS.Kernel.Messages is
             return;
          end if;
 
-         while Has_Element (Listener_Position) loop
+         Lock (Self);
+
+         for Listener of Listeners loop
             begin
-               if (Element (Listener_Position).Flags = Empty_Message_Flags
-                   and Current_Flags = Empty_Message_Flags)
-                 or (((Initial_Flags xor Current_Flags)
-                      and Element (Listener_Position).Flags)
-                     /= Empty_Message_Flags)
+               if not Self.Removed_Listeners.Contains (Listener)
+                 and then ((Listener.Flags = Empty_Message_Flags
+                            and Current_Flags = Empty_Message_Flags)
+                           or else (((Initial_Flags xor Current_Flags)
+                                     and Listener.Flags)
+                                    /= Empty_Message_Flags))
                then
-                  Element (Listener_Position).File_Removed (Category, File);
+                  Listener.File_Removed (Category, File);
                end if;
 
             exception
                when E : others =>
                   Trace (Me, E);
             end;
-
-            Next (Listener_Position);
          end loop;
+
+         Unlock (Self);
       end Notify_Listeners_About_File_Removed;
 
       ------------------------------------------
@@ -1678,29 +1709,32 @@ package body GPS.Kernel.Messages is
       ------------------------------------------
 
       procedure Notify_Listeners_About_Message_Added
-        (Self    : not null access constant Messages_Container'Class;
+        (Self    : not null access Messages_Container'Class;
          Message : not null access Abstract_Message'Class;
          Flags   : Message_Flags)
       is
-         Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
+         Listeners : constant Listener_Vectors.Vector := Self.Listeners;
 
       begin
-         while Has_Element (Listener_Position) loop
+         Lock (Self);
+
+         for Listener of Listeners loop
             begin
-               if Element (Listener_Position).Flags = Empty_Message_Flags
-                 or else (Flags and Element (Listener_Position).Flags)
-                 /= Empty_Message_Flags
+               if not Self.Removed_Listeners.Contains (Listener)
+                 and then (Listener.Flags = Empty_Message_Flags
+                           or else (Flags and Listener.Flags)
+                           /= Empty_Message_Flags)
                then
-                  Element (Listener_Position).Message_Added (Message);
+                  Listener.Message_Added (Message);
                end if;
 
             exception
                when E : others =>
                   Trace (Me, E);
             end;
-
-            Next (Listener_Position);
          end loop;
+
+         Unlock (Self);
       end Notify_Listeners_About_Message_Added;
 
       -----------------------------------------------------
@@ -1708,30 +1742,31 @@ package body GPS.Kernel.Messages is
       -----------------------------------------------------
 
       procedure Notify_Listeners_About_Message_Property_Changed
-        (Self     : not null access constant Messages_Container'Class;
+        (Self     : not null access Messages_Container'Class;
          Message  : not null access Abstract_Message'Class;
          Property : String)
       is
-         Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
+         Listeners : constant Listener_Vectors.Vector := Self.Listeners;
 
       begin
-         while Has_Element (Listener_Position) loop
+         Lock (Self);
+
+         for Listener of Listeners loop
             begin
-               if Element (Listener_Position).Flags = Empty_Message_Flags
-                 or else Match
-                   (Element (Listener_Position).Flags, Message.Flags)
+               if not Self.Removed_Listeners.Contains (Listener)
+                 and then (Listener.Flags = Empty_Message_Flags
+                           or else Match (Listener.Flags, Message.Flags))
                then
-                  Element (Listener_Position).Message_Property_Changed
-                    (Message, Property);
+                  Listener.Message_Property_Changed (Message, Property);
                end if;
 
             exception
                when E : others =>
                   Trace (Me, E);
             end;
-
-            Next (Listener_Position);
          end loop;
+
+         Unlock (Self);
       end Notify_Listeners_About_Message_Property_Changed;
 
       --------------------------------------------
@@ -1739,30 +1774,48 @@ package body GPS.Kernel.Messages is
       --------------------------------------------
 
       procedure Notify_Listeners_About_Message_Removed
-        (Self    : not null access constant Messages_Container'Class;
+        (Self    : not null access Messages_Container'Class;
          Message : not null access Abstract_Message'Class;
          Flags   : Message_Flags)
       is
-         Listener_Position : Listener_Vectors.Cursor := Self.Listeners.First;
+         Listeners : constant Listener_Vectors.Vector := Self.Listeners;
 
       begin
-         while Has_Element (Listener_Position) loop
+         Lock (Self);
+
+         for Listener of Listeners loop
             begin
-               if Element (Listener_Position).Flags = Empty_Message_Flags
-                 or else (Flags and Element (Listener_Position).Flags)
-                 /= Empty_Message_Flags
+               if not Self.Removed_Listeners.Contains (Listener)
+                 and then (Listener.Flags = Empty_Message_Flags
+                           or else (Flags and Listener.Flags)
+                           /= Empty_Message_Flags)
                then
-                  Element (Listener_Position).Message_Removed (Message);
+                  Listener.Message_Removed (Message);
                end if;
 
             exception
                when E : others =>
                   Trace (Me, E);
             end;
-
-            Next (Listener_Position);
          end loop;
+
+         Unlock (Self);
       end Notify_Listeners_About_Message_Removed;
+
+      ------------
+      -- Unlock --
+      ------------
+
+      procedure Unlock (Self : not null access Messages_Container'Class) is
+      begin
+         if not Self.Notification then
+            raise Program_Error;
+         end if;
+
+         Self.Notification := False;
+         Self.Removed_Listeners.Clear;
+      end Unlock;
+
    end Notifiers;
 
    -------------
@@ -2715,6 +2768,10 @@ package body GPS.Kernel.Messages is
    begin
       if Has_Element (Listener_Position) then
          Self.Listeners.Delete (Listener_Position);
+
+         if Self.Notification then
+            Self.Removed_Listeners.Append (Listener);
+         end if;
       end if;
    end Unregister_Listener;
 
