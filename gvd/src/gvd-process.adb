@@ -1623,7 +1623,7 @@ package body GVD.Process is
       Process.Debugger.Spawn
         (Kernel          => Kernel,
          Executable      => Executable,
-         Debugger_Args   => Args2 (2 .. Args'Last),
+         Debugger_Args   => Args2 (2 .. Args2'Last),
          Executable_Args => Program_Args.all,
          Proxy           => Proxy,
          Window          => Gtk_Window (Top),
