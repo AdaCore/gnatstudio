@@ -482,12 +482,13 @@ package body Python_Module is
    procedure Python_GUI_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Widget   : Glib.Object.GObject;
-      Child    : GPS_MDI_Child;
-      C        : MDI_Child;
-      Group    : Child_Group;
-      Position : Child_Position;
-      Inst     : Class_Instance;
+      Widget       : Glib.Object.GObject;
+      Child        : GPS_MDI_Child;
+      C            : MDI_Child;
+      Group        : Child_Group;
+      Position     : Child_Position;
+      Inst         : Class_Instance;
+      Should_Unref : Boolean := False;
    begin
       if Command = "add" then
          begin
@@ -496,6 +497,9 @@ package body Python_Module is
          exception
             when Invalid_Parameter =>
                Widget := From_PyGtk (Data, 1);
+               Should_Unref := True;
+               --  From_PyGtk above adds a Ref to Widget. In this case, this
+               --  ref should be transferred to the MDI.
          end;
 
          if Widget /= null then
@@ -520,6 +524,12 @@ package body Python_Module is
                Put (Get_MDI (Get_Kernel (Data)), Child, Position);
                Set_Focus_Child (Child);
                C := MDI_Child (Child);
+
+               if Should_Unref then
+                  --  This call to Unref should be done after the MDI has
+                  --  added its own ref.
+                  Widget.Unref;
+               end if;
             end if;
 
             Set_Return_Value
