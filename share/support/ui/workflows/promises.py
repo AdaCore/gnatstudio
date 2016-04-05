@@ -463,7 +463,7 @@ class DebuggerWrapper(object):
             self.__remove_timers()
 
             # and if there's cmd to run, send it
-            if self.__next_cmd:
+            if self.__next_cmd is not None:
 
                 if self.__next_cmd is not "":
                     self.__output = self.__debugger.send(

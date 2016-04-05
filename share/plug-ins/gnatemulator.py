@@ -186,7 +186,7 @@ class GNATemulator(Module):
             remote_protocol="remote")
 
         # block execution until debugger is free
-        r3 = yield debugger_promise.wait_and_send(cmd="", block=False)
+        r3 = yield debugger_promise.wait_and_send(block=True)
         if not r3:
             self.__error_exit("Could not initialize the debugger.")
             return
