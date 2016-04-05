@@ -76,6 +76,7 @@
             <menu label='Move Left'                   action='move block left'/>
             <menu label='Untabify'                    action='untabify'/>
             <menu label='Pipe in External Program...' action='pipe' optional='true'/>
+            <menu label='Comment box'                 action='subprogram box'/>
          </menu>
          <menu label='Spe_ll Check'>
             <menu label='Comments'          action='spell check comments' optional='True'/>
