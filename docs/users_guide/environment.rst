@@ -151,7 +151,7 @@ settings in GPS:
   Overrides and hardcodes the default root installation directory.  You
   usually do not need to set this variable unless you are a GPS developer in
   unusual circumstances. GPS finds all its resource files (e.g., images,
-  plug-ins, and xml files) from this variable, so setting it to an
+  plugins, and xml files) from this variable, so setting it to an
   incorrect value will cause GPS to misbehave.
 
 * :file:`GPS_MEMORY_MONITOR`
@@ -201,7 +201,7 @@ Files
 
 * :file:`$HOME/.gps/plug-ins`
 
-  Directory containing files with user-defined plug-ins.  GPS loads all XML
+  Directory containing files with user-defined plugins.  GPS loads all XML
   and Python files found under this directory during start up.  Create or
   edit these files to add your own menu and/or tool-bar entries in GPS or
   to define support for new languages.  See
@@ -331,17 +331,17 @@ Files
 
 * :file:`prefix/share/gps/support`
 
-  Directory containing required plug-ins for GPS that are automatically
+  Directory containing required plugins for GPS that are automatically
   loaded at startup.
 
 * :file:`prefix/share/gps/plug-ins`
 
-  Directory containing files with system-wide plug-ins (XML and Python
+  Directory containing files with system-wide plugins (XML and Python
   files) that are loaded automatically at start-up.
 
 * :file:`prefix/share/gps/library`
 
-  Directory containing files with system-wide plug-ins (XML and Python files)
+  Directory containing files with system-wide plugins (XML and Python files)
   that are not loaded automatically at startup but can be selected in the
   :guilabel:`Plugins` section of the preferences editor dialog.
 

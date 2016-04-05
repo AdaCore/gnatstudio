@@ -31,7 +31,7 @@ package Projects is
    Saved_Config_File : aliased constant Filesystem_String := "gpsauto.cgpr";
    --  Name of the config file that is saved when loading a project. This file
    --  includes the user's specified config file (or the default GNAT naming
-   --  scheme), and any naming scheme defined in plug-ins.
+   --  scheme), and any naming scheme defined in plugins.
    --  Aliased in order to be accessible through AJIS.
 
    function Is_Valid_Project_Name (Name : String) return Boolean;

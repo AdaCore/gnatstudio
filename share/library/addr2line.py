@@ -1,4 +1,4 @@
-"""This plug-in provides an interface to addr2line, to convert addresses into
+"""This plugin provides an interface to addr2line, to convert addresses into
  file names and line numbers
 
 This is in particular useful when analyzing backtraces output by GNAT when

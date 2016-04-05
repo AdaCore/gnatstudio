@@ -64,7 +64,7 @@ package GPS.Kernel.Custom is
 
    procedure Load_User_Custom_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  As above but for user's plug-ins
+   --  As above but for user's plugins
 
    function Add_Customization_String
      (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -110,7 +110,7 @@ package GPS.Kernel.Custom is
    function Support_No_Autoload_Dir
      (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
    --  The two directories that contain support python files to be loaded at
-   --  startup, but not visible to users in the Plug-ins dialog.
+   --  startup, but not visible to users in the Plugins dialog.
 
    function Get_Custom_Path return File_Array;
    --  Return a list of directories in which the user might
@@ -187,7 +187,7 @@ private
    end record;
    type Script_Description_Access is access all Script_Description;
    --  File is set to No_File to indicate that no source file was found for the
-   --  plugin. If No_File, the plug-in is not displayed in the dialog.
+   --  plugin. If No_File, the plugin is not displayed in the dialog.
    --
    --  Loaded indicates whether the script was loaded
 

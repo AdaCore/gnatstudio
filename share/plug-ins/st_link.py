@@ -1,5 +1,5 @@
 """
-This plug-in creates buttons on the toolbar to conveniently
+This plugin creates buttons on the toolbar to conveniently
 flash and debug programs for the STM32F4* boards.
 
 The utility program st-util must be present on the PATH for
@@ -10,7 +10,7 @@ built. In addition, the utility st-flash is required to be
 on the path in order to flash memory as a separate operation.
 Note that the USB driver for these utility programs must be
 installed in order for them to operate correctly, but this
-plug-in is not concerned with that aspect.
+plugin is not concerned with that aspect.
 
 """
 

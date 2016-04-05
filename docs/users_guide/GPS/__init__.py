@@ -10082,7 +10082,7 @@ class Completion(object):
 
     """
     This class is used to handle editor completion.
-    See the documentation in the :file:`completion.py` plug-in.
+    See the documentation in the :file:`completion.py` plugin.
     """
 
     @staticmethod
@@ -11002,7 +11002,7 @@ def process_all_events():
     Process all the graphical events that have been queue by the system:
     these events typically involve demands to refresh part of the screen,
     handle key or mouse events, ...
-    This is mostly useful when writing automatic tests. In plug-ins, the
+    This is mostly useful when writing automatic tests. In plugins, the
     recommand approach is instead to create actions via
     :func:`gps_utils.interactive`, and run them in the background with
     :func:`GPS.execute_action`.

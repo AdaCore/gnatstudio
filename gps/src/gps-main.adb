@@ -2172,7 +2172,7 @@ procedure GPS.Main is
          Load_System_Custom_Files (GPS_Main.Kernel);
       end if;
 
-      --  Load the default key theme before the python plug-ins, so that the
+      --  Load the default key theme before the python plugins, so that the
       --  latter can override
 
       KeyManager_Module.Load_Key_Theme (GPS_Main.Kernel);

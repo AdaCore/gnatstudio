@@ -1,5 +1,5 @@
 """
-This plug-in creates buttons on the toolbar to conveniently
+This plugin creates buttons on the toolbar to conveniently
 debug, and run programs on GNATemulator.
 
 The following is required:

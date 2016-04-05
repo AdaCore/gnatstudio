@@ -1,4 +1,4 @@
-"""This plug-in provides base class for custom output parser.
+"""This plugin provides base class for custom output parser.
 
 Parsers are organized in chain. Output of one parser is passed as input
 to next one. Chain of parser could be attached to a build target.

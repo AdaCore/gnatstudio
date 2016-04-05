@@ -1,9 +1,9 @@
 """
-This plug-in provides a Vim emulation layer for GPS.
+This plugin provides a Vim emulation layer for GPS.
 It does so outside of the GPS keybindings facility, which means
 that it won't affect your regular keybindings.
 
-This plug-in provides a very small subset of the facilities of vim
+This plugin provides a very small subset of the facilities of vim
 for the moment. What works :
 
 - Insertion mode

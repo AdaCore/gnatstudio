@@ -1,5 +1,5 @@
 """
-This plug-in provides a new menu to reformat the whole buffer.
+This plugin provides a new menu to reformat the whole buffer.
 Select /Edit/Format Whole File
 or create a keybinding to the Editor/Format Whole File action via
 the menu /Edit/Key Shortcuts.

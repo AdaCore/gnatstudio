@@ -1285,7 +1285,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
   </GNATPROVE>
 """
 
-# constants that are required by the plug-in
+# constants that are required by the plugin
 
 toolname = 'gnatprove'
 obj_subdir_name = toolname
@@ -1937,7 +1937,7 @@ def mk_loc_string(sloc):
 def subprogram_start(cursor):
     """Return the start of the subprogram that we are currently in"""
 
-    # This function has been copied and modified from plug-in "expanded_code"
+    # This function has been copied and modified from plugin "expanded_code"
 
     blocks = {'CAT_PROCEDURE': 1, 'CAT_FUNCTION': 1, 'CAT_ENTRY': 1}
 

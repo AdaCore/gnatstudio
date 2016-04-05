@@ -1,4 +1,4 @@
-"""This plug-in removes the menus that allow graphical edition
+"""This plugin removes the menus that allow graphical edition
 of project files.
 
 This is useful when working with project files that have been

@@ -117,7 +117,7 @@ The source editor provides an extensive set of features, including:
   highlighted in different colors and fonts.
 
   By default, GPS knows about many languages. You can also easily add
-  support for other languages through plug-ins. Most languages supported by
+  support for other languages through plugins. Most languages supported by
   GPS provide syntax highlighting in the editor.
 
 *Automatic indentation*
@@ -236,7 +236,7 @@ The source editor provides an extensive set of features, including:
   will highlight all references to this entity in the current editor.  When
   the pointer is moved away from the entity, the highlighting is removed.
 
-  .. index:: plug-ins; auto_highlight_occurrences.py
+  .. index:: plugins; auto_highlight_occurrences.py
 
   This is controlled by the plugin :file:`auto_highlight_occurrences.py`:
   it can be deactivated by disabling the plugin.
@@ -1084,9 +1084,9 @@ GPS supports this with several different methods:
   For example, the sequence :kbd:`control-u 79 -` inserts 79 characters of
   '-' in the current editor.  This is often useful to insert separators.
 
-  If you are using the Emacs mode (see :menuselection:`Tools --> Plug-ins`
-  menu), you can also use the sequence :kbd:`control-u 30 control-k` to
-  delete 30 lines.
+  If you are using the Emacs mode (see :menuselection:`Edit --> Preferences -->
+  Key Shortcuts` menu), you can also use the sequence :kbd:`control-u 30
+  control-k` to delete 30 lines.
 
 * Recording macros
 

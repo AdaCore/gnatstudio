@@ -121,7 +121,7 @@ package GPS.Kernel is
    --  Return the name of the preferences file.
    --  This is the file that GPS will modify when the user modifies the
    --  preferences. But the default value for preferences could be set from any
-   --  plug-in.
+   --  plugin.
 
    function Get_Application
       (Self : not null access Kernel_Handle_Record'Class)

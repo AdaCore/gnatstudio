@@ -1,8 +1,8 @@
-"""This plug-in adds a menu for computing the dependencies between two files
+"""This plugin adds a menu for computing the dependencies between two files
 
 When you modify some source files, it often happens that the compiler will
 decide to recompile other files that depended on it. Finding out why there is
-such a dependency is not always obvious, and this plug-in will help you in
+such a dependency is not always obvious, and this plugin will help you in
 that respect.
 
 Once it has been activated, select the new menu

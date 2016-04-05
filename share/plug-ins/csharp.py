@@ -1,5 +1,5 @@
 """
-This plug-in adds support for C# syntax highlighting and Outline.
+This plugin adds support for C# syntax highlighting and Outline.
 """
 
 

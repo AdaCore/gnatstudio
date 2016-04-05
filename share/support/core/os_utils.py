@@ -1,4 +1,4 @@
-"""Utility library used by other plug-ins"""
+"""Utility library used by other plugins"""
 ###########################################################################
 # No user customization below this line
 ###########################################################################

@@ -2,7 +2,7 @@
 Various extensions to the visual debugger support in GPS.
 This is mostly intended as a template for your own custom commands.
 
-This plug-in adds:
+This plugin adds:
 
 - an entry in the Debug contextual menu so that you can display the entity
 with its full expanded name (e.g. Foo.Bar.Var). In particular, this is

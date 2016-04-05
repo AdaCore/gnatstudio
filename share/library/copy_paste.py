@@ -1,4 +1,4 @@
-""" This plug-in provides various menus, contextual or not, to cut, copy and
+""" This plugin provides various menus, contextual or not, to cut, copy and
 paste text.
 
 In particular, it also provide the capability to copy some text with the

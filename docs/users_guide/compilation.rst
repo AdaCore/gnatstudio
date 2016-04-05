@@ -227,11 +227,11 @@ what is documented here are the default menus (see
     line for each running process.  Right-clicking on any of these lines
     allows interrupting that process.
 
-.. index:: plug-ins; makefile.py
+.. index:: plugins; makefile.py
 
 If your application is built through a :file:`Makefile`, you should
 probably load the :file:`makefile.py` startup script (see the
-:menuselection:`Tools --> Plug-ins` menu).
+:menuselection:`Edit --> Preferences --> Plugins` menu).
 
 .. index:: build targets
 .. _The_Target_Configuration_Dialog:

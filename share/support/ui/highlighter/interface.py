@@ -6,7 +6,7 @@ Tutorial: Add support for python highlighting in GPS
 ----------------------------------------------------
 
 In this short tutorial, we will walk through the steps needed to create a
-small plug-in for GPS that will allow it to highlight python code.
+small plugin for GPS that will allow it to highlight python code.
 
 The idea of the whole API is for the user to declare matchings in a
 declarative way, specifying the matcher via a classic regular expression

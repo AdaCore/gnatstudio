@@ -296,7 +296,7 @@ sessions.
 Extensibility / Customizability
 -------------------------------
 
-.. NF-61-KB22-012 GPS: project-specific plug-ins (2014-08-15)
+.. NF-61-KB22-012 GPS: project-specific plugins (2014-08-15)
 .. NF-61-N711-039 GPS: new parameter on_exit to BuildTarget.execute (2014-07-11)
 .. NF-61-MA18-041 GPS: Menus described in menus.xml (2013-11-13)
 
@@ -347,7 +347,7 @@ User-defined shortcuts are displayed in bold. The icons associated with actions
 are displayed, for consistency with the rest of GPS. Menus are no longer
 displayed in the dialog, since it is better to associate the shortcuts with
 the corresponding action instead. Multiple key themes are provided and can
-dynamically be switched (the emacs.py plug-in was removed and replaced with
+dynamically be switched (the emacs.py plugin was removed and replaced with
 an Emacs key theme instead)
 
 .. figure:: gps_key_shortcuts.png

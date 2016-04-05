@@ -5,7 +5,7 @@ Welcome to the GNAT Programming Studio
 GPS is a complete integrated development environment.  It integrates with a
 wide range of tools, providing easy access to each. It integrates
 especially well with AdaCore's tools but can easily be extended to work
-with other tools by writing small plug-ins in Python.
+with other tools by writing small plugins in Python.
 
 Here is a summary of the features of the GNAT Programming Studio:
 
@@ -43,7 +43,7 @@ Here is a summary of the features of the GNAT Programming Studio:
 * Integration with various :ref:`Version_Control_System`
 
   CVS, subversion, :program:`git`, and ClearCase are supported out of the
-  box.  You can add support for others by customizing some XML plug-ins.
+  box.  You can add support for others by customizing some XML plugins.
 
 * Intelligent :ref:`Source_Navigation`
 
@@ -70,5 +70,5 @@ Here is a summary of the features of the GNAT Programming Studio:
 * Fully customizable (:ref:`Customizing_and_Extending_GPS`)
 
   GPS provides an extensive Python API, allowing you to customize existing
-  features or easily develop your own new plug-ins.  Simpler customization
+  features or easily develop your own new plugins.  Simpler customization
   can be done through the numerous preferences and local settings.

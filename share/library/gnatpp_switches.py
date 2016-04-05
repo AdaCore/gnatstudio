@@ -1,5 +1,5 @@
 """
-If this plug-in is enabled, provides automatic setting of Ada reformatting
+If this plugin is enabled, provides automatic setting of Ada reformatting
 preferences based on gnatpp switches as set in the project file.
 
 For example, if gnatpp switch -i4 is set, then the
@@ -19,8 +19,8 @@ def set_pref(f, name, val):
 
 
 def project_recomputed(hook_name):
-    s = GPS.Project.root().get_attribute_as_list \
-        ("default_switches", package="pretty_printer", index="ada")
+    s = GPS.Project.root().get_attribute_as_list(
+        "default_switches", package="pretty_printer", index="ada")
 
     if s == []:
         GPS.Logger("gnatpp").log("no gnatpp switches, exit")

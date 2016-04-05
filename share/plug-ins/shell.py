@@ -1,5 +1,5 @@
 """
-This plug-in will spawn a Unix/Windows shell console in your GPS.
+This plugin will spawn a Unix/Windows shell console in your GPS.
 The shell that is spawned is read from your environment variables
 SHELL or COMSPEC. When the latter is used, the terminal will not
 do special handling for ANSI escape sequences (the ones used to color

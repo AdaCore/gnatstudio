@@ -752,7 +752,7 @@ package body Debugger is
          First := Last;
          Skip_To_Char (Cmd (Cmd'First .. Cmd_Last), Last, ASCII.LF);
 
-         --  Test custom commands defined by the views and user plug-ins. This
+         --  Test custom commands defined by the views and user plugins. This
          --  might execute or queue commands (by ultimately calling this same
          --  Internal_Send procedure).
 

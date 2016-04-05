@@ -1,6 +1,6 @@
-""" This plug-in adds support for GNATcoverage.
+""" This plugin adds support for GNATcoverage.
 
-This plug-in provides the following:
+This plugin provides the following:
    * A new Build Mode "gnatcov"
    * Several new project attributes which GPS will
      use to drive various tools in the context of
@@ -56,7 +56,7 @@ GNATcoverage session would be:
   5 - edit the code or the test driver, then rerun
       steps 2, 3, 4
 
-Note: this plug-in activates only when the command-line tool
+Note: this plugin activates only when the command-line tool
 "gnatcov" is found on the PATH.
 """
 
@@ -337,6 +337,6 @@ class GNATcovPlugin(object):
             self.reload_gnatcov_data()
 
 
-# This plug-in makes sense only if GNATcoverage is available.
+# This plugin makes sense only if GNATcoverage is available.
 if os_utils.locate_exec_on_path('gnatcov'):
     plugin = GNATcovPlugin()

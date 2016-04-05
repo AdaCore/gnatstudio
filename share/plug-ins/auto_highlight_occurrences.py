@@ -1,5 +1,5 @@
 """
-This plug-in highlights all occurrences of the entity under the cursor.
+This plugin highlights all occurrences of the entity under the cursor.
 
 Whenever your cursor rests in a new location, GPS will search for all
 other places where this entity is referenced using either the cross-reference
@@ -7,7 +7,7 @@ engine in GPS, if this information is up-to-date, or a simple textual
 search. Each of these occurrences will then be highlighted in a color
 depending on the kind of the entity.
 
-This plug-in does its work in the background, whenever GPS is not busy
+This plugin does its work in the background, whenever GPS is not busy
 responding to your actions, so it should have limited impact on the
 performances and responsiveness of GPS.
 
@@ -16,7 +16,7 @@ we recommend you look at the
 :py:class:`gps_utils.highlighter.Background_Highlighter` class instead,
 which provides the underlying framework.
 
-A similar plug-in which you might find useful is in the
+A similar plugin which you might find useful is in the
 :py:class:`gps_utils.highlighter.Regexp_Highlighter` class. By creating
 a simple python file in your gps directory, you are able to highlight any
 regular expression in the editor, which is useful for highlighting text

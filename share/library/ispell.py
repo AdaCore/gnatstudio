@@ -1,10 +1,10 @@
 """Spell-checking support
 
-This plug-in adds spell-checking capabilities.
+This plugin adds spell-checking capabilities.
 In particular, a contextual menu is added, which should only be visible
 when the user has clicked on a word inside the source editor.
 It will be enabled when the "aspell" executable is visible in the PATH.
-Two types of menus are provided in this plug-in:
+Two types of menus are provided in this plugin:
   - Static menu: the menu will be a simple menu entry, which, when
     clicked, starts aspell and displays, in the console, the possible
     replacements for a word
@@ -29,7 +29,7 @@ keys are recognized:
 The menus are implemented as new python classes, since this is the
 cleanest way to encapsulate data in python. We could have used global
 function calls instead.
-This plug-in also demonstrates how to start and monitor an external
+This plugin also demonstrates how to start and monitor an external
 executable.
 It also shows how to get the word under the cursor in GPS.
 """

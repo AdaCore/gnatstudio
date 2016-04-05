@@ -93,7 +93,7 @@ def run_gcov():
             date = found[0]
             if date < 20071005:
                 MDI.dialog("Your version of gcov is dated " + str(date) +
-                           ".\nThis plug-in requires gcov for GNAT dated " +
+                           ".\nThis plugin requires gcov for GNAT dated " +
                            "20071005 or later.")
                 return
     except:

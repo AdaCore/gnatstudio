@@ -1,5 +1,5 @@
 """
-Mercurial CVS support plug-in
+Mercurial CVS support plugin
 
 Provides support for the Mercurial configuration management system.
 

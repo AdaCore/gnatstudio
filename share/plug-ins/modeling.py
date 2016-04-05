@@ -1,5 +1,5 @@
 """
-This plug-in adds support for QGen (the GNAT Modeling Compiler) which generates
+This plugin adds support for QGen (the GNAT Modeling Compiler) which generates
 Ada (SPARK 2014?) and C code from Simulink models.
 
 To use this plugin, you must have "mdl2json" available on your

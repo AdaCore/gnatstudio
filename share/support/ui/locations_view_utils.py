@@ -1,4 +1,4 @@
-"""This plug-in adds a menu File->Messages->Export Locations to Editor
+"""This plugin adds a menu File->Messages->Export Locations to Editor
    which opens an editor with the contents of the Locations view.
    It also add contextual menu to clear items for current file from
    location view.

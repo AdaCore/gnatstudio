@@ -664,7 +664,7 @@ package body Startup_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Startup_Module := new Startup_Module_ID_Record;
-      Register_Module (Startup_Module, Kernel, "Plug-ins manager");
+      Register_Module (Startup_Module, Kernel, "Plugins manager");
 
       Register_All_Plugins_Preferences_Pages (Kernel);
    end Register_Module;

@@ -445,7 +445,6 @@ documentation for the standard python library. It is accessed through the
 
 
 class PythonTracer(object):
-
     """ Basic python tracer, useful for GPS plugin development and debug.
     """
 

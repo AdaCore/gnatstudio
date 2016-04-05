@@ -1,6 +1,6 @@
 """
 This is the python part of the clang integration in GPS. Python is used at the
-moment for the live-diagnostics part of the clang plug-in. It doesn't parse
+moment for the live-diagnostics part of the clang plugin. It doesn't parse
 translation units directly, but instead uses the bridge that is the
 GPS.Libclang API.
 """

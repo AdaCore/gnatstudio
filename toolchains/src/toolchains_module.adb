@@ -321,7 +321,7 @@ package body Toolchains_Module is
          -"Open the toolchains editor (for builds)",
          Category => -"Views");
 
-      --  Load the property after all modules and plug-ins are loaded.
+      --  Load the property after all modules and plugins are loaded.
       Gps_Started_Hook.Add (new On_GPS_Started);
    end Register_Module;
 

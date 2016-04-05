@@ -539,11 +539,11 @@ GPS with these switches.  Use the following command line::
 
 This prevents the loading of the two GPS modules responsible for editing
 project files. However, this also has an impact on the Python functions
-that are exported by GPS and thus could break some plug-ins. Another
+that are exported by GPS and thus could break some plugins. Another
 possible solution is to hide the corresponding project editing menus and
 contextual menus.  You could do this by enabling the
-:file:`prevent_project_edition.py` plug-in via the
-:menuselection:`Tools --> Plug-ins` menu.
+:file:`prevent_project_edition.py` plugin via the
+:menuselection:`Edit --> Preferences --> Plugins` menu.
 
 
 .. _The_Project_Menu:

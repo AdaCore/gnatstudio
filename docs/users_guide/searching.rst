@@ -234,7 +234,7 @@ multiple files, or even in files that are not opened in GPS. However,
 the most frequent context is to search in the current file. GPS provides
 a number of facilities just for this:
 
-* Use the :file:`isearch.py` plug-in
+* Use the :file:`isearch.py` plugin
 
   This plugin provides an interactive search. When you press the key
   shortcut (:kbd:`ctrl-s` by default when using Emacs mode, or use the

@@ -1,5 +1,5 @@
 """
-This plug in provides a convenient action to force the reload
+This plugin provides a convenient action to force the reload
 of the CSS file.
 This is mostly useful for developers who want to build their
 own CSS files.

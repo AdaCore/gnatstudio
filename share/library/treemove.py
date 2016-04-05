@@ -1,5 +1,5 @@
 """
-This plug-in improves the behavior of Left and Right arrow keys
+This plugin improves the behavior of Left and Right arrow keys
 when navigating in a tree, for instance the project explorer.
 
 It brings a behavior similar to the Windows default, that is:

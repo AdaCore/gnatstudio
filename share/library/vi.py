@@ -1,4 +1,4 @@
-"""This plug-in provides a basic emulation of the vi editor's command line.
+"""This plugin provides a basic emulation of the vi editor's command line.
 
 It is not meant as a vi emulation, ie it will not emulate the insertion
 and command modes for instance.
@@ -83,7 +83,7 @@ Preference("Plugins/vi/ignorecase").create(
 
 
 def on_gps_started(hook_name):
-    parse_xml ("""
+    parse_xml("""
   <action name='vi_command_line' category="Editor" output="none">
      <description />
      <filter id="Source editor" />
@@ -102,7 +102,7 @@ def on_gps_started(hook_name):
 """)
 
 
-class CmdLine (CommandWindow):
+class CmdLine(CommandWindow):
     history = []
 
     def __init__(self):
@@ -177,7 +177,9 @@ class CmdLine (CommandWindow):
         """return a tuple: (cmd_to_execute, FROM, TO).
            TO is set to FROM if the command should be executed only once"""
         if cmd[0] == "%":
-            return (cmd[1:], buffer.beginning_of_buffer(), buffer.end_of_buffer())
+            return (cmd[1:],
+                    buffer.beginning_of_buffer(),
+                    buffer.end_of_buffer())
 
         comma = cmd.find(",")
         if comma < 0:
@@ -210,9 +212,9 @@ class CmdLine (CommandWindow):
             count = 100000000  # as many times as needed
 
         while count > 0:
-            result = loc.search \
-                (pattern, regexp=True,
-                 dialog_on_failure=False, case_sensitive=icase)
+            result = loc.search(
+                pattern, regexp=True,
+                dialog_on_failure=False, case_sensitive=icase)
             if not result:
                 return
             else:

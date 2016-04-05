@@ -147,44 +147,44 @@ is restarted.
 
 
 
-.. _Editing_Plug-ins:
+.. _Editing_Plugins:
 
-Editing Plug-ins
+Editing Plugins
 ================
 
-.. index:: plug-ins
+.. index:: plugins
 
-You can extensively customize GPS through external plug-ins, either ones
+You can extensively customize GPS through external plugins, either ones
 you write (see :ref:`Customization_files_and_plugins`) or using one of the
-plug-ins in GPS's own collection.
+plugins in GPS's own collection.
 
-Some plug-ins are loaded by default when GPS starts (such as support for
+Some plugins are loaded by default when GPS starts (such as support for
 the CVS version management system and support for highlighting in various
 programming languages) and others are available but not loaded
 automatically, such as Emacs emulation mode.
 
-Some plug-ins provided with GPS are:
+Some plugins provided with GPS are:
 
 * :file:`Makefile` support
 
   .. index:: Makefile
 
-  A plug-in that parses a :file:`Makefile` and creates menus for each of
+  A plugin that parses a :file:`Makefile` and creates menus for each of
   its targets so you can easily start a :command:`make` command.
 
 * Cross-references enhancements
 
-  Some plug-ins take advantage of GPS's cross-references information to
+  Some plugins take advantage of GPS's cross-references information to
   create additional menus for navigation such as jumping to the primitive
   operations of Ada tagged types and to the body of Ada separate entities.
 
 * Text manipulation
 
-  Several plug-ins provide support for advanced text manipulation in the
+  Several plugins provide support for advanced text manipulation in the
   editors, for example to align a set of lines based on various criteria
   or to manipulate a rectangular selection of text.
 
-You can graphically choose which plug-ins are loaded on startup by
+You can graphically choose which plugins are loaded on startup by
 opening the preferences editor dialog (:menuselection:`Edit -->
 Preferences` menu), under the :guilabel:`Plugins` section. This section
 lists all the known plugins on the left. By selecting one particular
@@ -193,26 +193,26 @@ plugin page comes with the same layout:
 
 * A :guilabel:`General` group
 
-  This group indicates the exact location of the plug-in file. Moreover,
+  This group indicates the exact location of the plugin file. Moreover,
   this group contains a toggle button (:guilabel:`Loaded at startup`)
   which allows you to decide if this plugin should be loaded or not in
   the next GPS session.
 
   As described in :ref:`Customization_files_and_plugins`, GPS searches for
-  plug-ins in various directories and, based on these directories, decides
-  whether to automatically load the plug-in on startup.
+  plugins in various directories and, based on these directories, decides
+  whether to automatically load the plugin on startup.
 
 * An optional :guilabel:`Preferences` group
 
-  This group lists all the preferences related to the selected plug-in,
-  allowing you to customize the plug-in behavior. Note that this group
-  is displayed only if preferences have been registered for this plug-in.
+  This group lists all the preferences related to the selected plugin,
+  allowing you to customize the plugin behavior. Note that this group
+  is displayed only if preferences have been registered for this plugin.
 
 * A :guilabel:`Documentation` frame
 
   This frame displays the plugin file documentation. By convention,
-  each plug-in starts with a comment indicating the purpose of this
-  plug-in and more detailed documentation on its usage.
+  each plugin starts with a comment indicating the purpose of this
+  plugin and more detailed documentation on its usage.
 
 If you have modified the list of plugins that should be loaded at startup,
 you will need to restart GPS, since it cannot unload a module due to such
@@ -220,7 +220,7 @@ an action having too many possible effects on GPS: then, a dialog is
 displayed asking you whether you would like to exit GPS when closing the
 preferences editor dialog.
 
-All the changes explictly set by the user in the list of plug-ins to load
+All the changes explictly set by the user in the list of plugins to load
 at startup are saved in :file:`HOME/.gps/startup.xml`.
 
 .. _Customizing_through_XML_and_Python_files:
@@ -245,7 +245,7 @@ GPS searches for these customization files at startup in several different
 directories. Depending on where they are found, they are either
 automatically loaded by GPS (and thus can immediately modify things in GPS)
 or may only be made visible in the :guilabel:`Plugins` section of the
-preferences editor dialog (see :ref:`Editing_Plug-ins`).
+preferences editor dialog (see :ref:`Editing_Plugins`).
 
 GPS searches these directories in the order given below. Any script loaded
 later can override operations performed by previously loaded scripts. For
@@ -264,8 +264,8 @@ versions of GPS you should not have keep other files in these directories.
   The :file:`INSTALL/share/gps/plug-ins` directory contains the files GPS
   automatically loads by default (unless overridden by the user via the
   guilabel:`Plugins` section of the preferences editor dialog). These
-  plug-ins are visible to any user on the system using the same GPS
-  installation.  Reserve this directory for critical plug-ins that almost
+  plugins are visible to any user on the system using the same GPS
+  installation.  Reserve this directory for critical plugins that almost
   everyone will use.
 
 * Not automatically-loaded, global modules
@@ -296,7 +296,7 @@ versions of GPS you should not have keep other files in these directories.
   it is loaded automatically unless overridden via the :guilabel:`Plugins`
   section of the preferences editor dialog.
 
-  This is a convenient way for you to create your own plug-ins or test them
+  This is a convenient way for you to create your own plugins or test them
   before you make them available to all GPS users by copying them to one of
   the other directories.
 
@@ -306,11 +306,11 @@ GPS, such as aliases, new languages or menus, in a single file.
 Python files
 ^^^^^^^^^^^^
 
-You can format the Python plug-in in any way you want (as long as it can be
+You can format the Python plugin in any way you want (as long as it can be
 executed by Python, of course), the following formatting is
-suggested. These plug-ins are visible in the :guilabel:`Plugins` section
+suggested. These plugins are visible in the :guilabel:`Plugins` section
 of the preferences editor dialog, so having a common format makes it easier
-for users to understand each plug-in:
+for users to understand each plugin:
 
 * Comment
 
@@ -370,7 +370,7 @@ format is therefore::
 
 The first line after the `<?xml?>` tag should contain a comment describing
 the purpose and usage of the script.  This comment is made visible in the
-the preferences page associated with this plug-in, under :guilabel:`Plugins`
+the preferences page associated with this plugin, under :guilabel:`Plugins`
 section of the preferences editor dialog. The list of valid XML nodes
 that you can specify under :file:`<root>` is described in later sections.
 It includes:
@@ -1887,11 +1887,11 @@ the ones defined in files found in the user's own GPS directory.
 Here is an example of a theme::
 
   <?xml version="1.0" ?>
-  <my-plug-in>
+  <my-plugin>
      <theme name="my theme" description="Create a new menu">
          <menu action="my action"><title>/Edit/My Theme Menu</title></menu>
      </theme>
-  </my-plug-in>
+  </my-plugin>
 
 .. _Defining_new_search_patterns:
 
@@ -3098,7 +3098,7 @@ shells, and rsync parameters) and the servers.
 
 The first part (see :ref:`Defining_a_remote_connection_tool`,
 :ref:`Defining_a_shell`, and :ref:`Configuring_rsync_usage`) is performed by
-a pre-installed file in the plug-ins directory called
+a pre-installed file in the plugins directory called
 :file:`protocols.xml`.
 
 The second part (see :ref:`Defining_a_remote_server` and
@@ -3279,7 +3279,7 @@ Defining a remote server
 Users can define remote servers, as described in
 :ref:`Setup_the_remote_servers`.  Doing this creates a :file:`remote.xml`
 file in the user's :file:`gps` directory, which can be installed in any
-plug-ins directory to set the values system-wide.  The tag used in this file
+plugins directory to set the values system-wide.  The tag used in this file
 is :file:`<remote_machine_descriptor>` for each remote server.  You can
 also write this tag manually.  Its attributes are:
 
@@ -4787,7 +4787,7 @@ Python modules
 GPS automatically imports (with Python's :command:`import` command) all
 files with the extension :file:`.py` found in the directory
 :file:`$HOME/.gps/plug-ins`, the directory
-:file:`$prefix/share/gps/plug-ins` or in the directories pointed to by
+:file:`$prefix/share/gps/plugins` or in the directories pointed to by
 :file:`GPS_CUSTOM_PATH` on startup. These files are loaded only after all
 standard GPS modules have been loaded, as well as the custom files, and
 before the script file or batch commands specified on the command lines
@@ -4807,12 +4807,12 @@ Python's own mechanism for loading files at startup (using environment
 variable :file:`PYTHONSTARTUP`) is not suitable for use within the context
 of GPS. When Python is loaded by GPS, the GPS module itself is not yet
 available and thus any script that depends on that module will fail to load
-correctly. Instead, copy your script to one of the plug-in directories, as
+correctly. Instead, copy your script to one of the plugin directories, as
 documented above.
 
 If you are writing a set of Python scripts for other people to use, you need
 to provide the Python files themselves. This is a set of :file:`.py` files,
-which the user should install in the :file:`plug-ins` directory.
+which the user should install in the :file:`plugins` directory.
 
 To make the Python functions accessible through GPS, you can:
 
@@ -5106,14 +5106,14 @@ Here is the code that you need to put in :file:`hello_world.py`::
   def hello_world():
      GPS.MDI.dialog("Hello World!")
 
-To use this plug-in, launch GPS with the following command line::
+To use this plugin, launch GPS with the following command line::
 
   $ gps --load=python:hello_world.py
 
-If want the plug-in to be loaded every time you launch GPS without having
+If want the plugin to be loaded every time you launch GPS without having
 to specify it on the command line, copy :file:`hello_world.py` to your
 :file:`$HOME/.gps/plug-ins/` directory (:file:`%USERPROFILE%\\.gps\\` on
-Windows). Alternatively, you can add the directory containing your plug-in
+Windows). Alternatively, you can add the directory containing your plugin
 to your :file:`GPS_CUSTOM_PATH` environment variable.  For a description of
 the various environment variables used by GPS, see
 :ref:`Environment_Variables`.
@@ -5357,7 +5357,7 @@ This file defines an action :file:`my_action`, that you can, for example,
 associate with a keybinding through the :menuselection:`Edit --> Key
 shortcuts` menu.
 
-If you copy this file into one of the :file:`plug-ins` directories, GPS
+If you copy this file into one of the :file:`plugins` directories, GPS
 automatically loads it at startup.  The function :func:`myfunc` is in a
 separate namespace, with the name :file:`mymod`, like the file.  If you
 decide, during your GPS session, to edit this file, for exampl to have the
@@ -5417,7 +5417,7 @@ Automatically loading python files at startup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 At startup, GPS automatically loads all Python files found in the
-:file:`share/gps/plug-ins` and :file:`$HOME/.gps/plug-ins` directories.  In
+:file:`share/gps/plugins` and :file:`$HOME/.gps/plug-ins` directories.  In
 addition, Python files located under :file:`<prefix>/share/gps/python` can
 be imported (using the `import` command) by any Python script.  You can
 also set the :file:`PYTHONPATH` environment variable to add other
@@ -6303,7 +6303,7 @@ The socket shell provides also additional commands:
 
   Register the current session with a given string.  This string can then
   be used within GPS itself (for example via a :file:`.xml` or Python
-  plug-in) to display extra information to the client via the socket, using
+  plugin) to display extra information to the client via the socket, using
   the function :func:`GPS.Socket().send`.
 
 For example, suppose we start GPS with the :command:`--server=1234`

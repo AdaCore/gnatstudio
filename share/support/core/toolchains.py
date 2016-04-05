@@ -1,7 +1,7 @@
 """
 Defines the standard toolchains used by the GPS project editor.
 
-THIS PLUG-IN MUST BE LOADED.
+THIS PLUGIN MUST BE LOADED.
 """
 
 import GPS

@@ -1,6 +1,6 @@
 """This scripts adds a menu for quickly changing font sizes
 
-When this plug-in is loaded, it adds a new menu /Edit/Text Size which
+When this plugin is loaded, it adds a new menu /Edit/Text Size which
 provides a fast access to the preferences related to font sizes. This
 can be used to quickly zoom on the text.
 

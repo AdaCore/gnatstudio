@@ -25,7 +25,7 @@ package Python_Module is
 
    procedure Load_System_Python_Startup_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Load all the GPS's systems Python plug-ins.
+   --  Load all the GPS's systems Python plugins.
    --  This procedure should be called only after all standard modules
    --  have been registered, so that if the user's startup files depend
    --  on standard GPS functions these are already loaded.
@@ -37,6 +37,6 @@ package Python_Module is
 
    procedure Load_User_Python_Startup_Files
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  As above but load the user's Python plug-ins
+   --  As above but load the user's Python plugins
 
 end Python_Module;

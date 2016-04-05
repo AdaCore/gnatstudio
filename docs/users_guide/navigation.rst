@@ -170,7 +170,7 @@ example, if you have a reference to :func:`Put_Line`, you will jump to its
 declaration in :file:`a-textio.ads`). But you cannot perform
 cross-reference queries from a runtime file itself.
 
-If you need this capability, modify one of the GPS plug-ins, named
+If you need this capability, modify one of the GPS plugins, named
 :file:`support/core/cross-references.py`, and add the :command:`--runtime`
 switch to the list of switches for :program:`gnatinspect`.
 
@@ -344,7 +344,7 @@ cross-references.
 
   Go to the declaration (spec) of *entity*.
 
-.. index:: plug-ins; methods.py
+.. index:: plugins; methods.py
 
 * :menuselection:`Goto declarations of *entity*`
 
@@ -352,7 +352,7 @@ cross-references.
   that case, GPS cannot know what subprogram will actually be called at run
   time, so it gives you a list of all entities in the tagged type hierarchy
   and lets you choose which of the declarations you want to jump to. See
-  also the :file:`methods.py` plug-in (enabled by default) which, given an
+  also the :file:`methods.py` plugin (enabled by default) which, given an
   object, lists all its primitive operations in a contextual menu so you
   can easily jump to them. See also the :menuselection:`References --> Find
   References To...` contextual menu, which allows you to find all calls to
@@ -455,11 +455,11 @@ cross-references.
 
   Find all non-local variables used in the entity.
 
-.. index:: plug-ins; methods.py
+.. index:: plugins; methods.py
 
 * :menuselection:`References --> Methods of *entity*`
 
-  This entry is only visible if you activated the plug-in
+  This entry is only visible if you activated the plugin
   :file:`methods.py` (the default) and when you click on a tagged type or
   an instance of a tagged type.  It lists all the :index:`primitive
   operations` or :index:`methods` of that type, allowing you to jump to the
@@ -545,20 +545,20 @@ preference.
 
 
 .. index:: dispatching
-.. index:: plug-ins; dispatching.py
+.. index:: plugins; dispatching.py
 .. _Highlighting_dispatching_calls:
 
 Highlighting dispatching calls
 ==============================
 
 By default, GPS highlights dispatching calls in Ada and C++ source code via
-the :file:`dispatching.py` plug-in.  Based on the cross-reference
-information, this plug-in highlights (with a special color you can
+the :file:`dispatching.py` plugin.  Based on the cross-reference
+information, this plugin highlights (with a special color you can
 configure in the preferences dialog) all Ada dispatching calls or calls to
 virtual methods in C++.  A dispatching call in Ada is a subprogram call
 where the actual subprogram called is not known until run time and is
 chosen based on the tag of the object.
 
 Disable this highlighting (which may be slow if you have large sources) by
-using the :menuselection:`Tools --> Plug-ins` menu and disabling the
-:file:`dispatching.py` plug-in.
+using the :menuselection:`Edit --> Preferences --> Plugins` menu and disabling
+the :file:`dispatching.py` plugin.

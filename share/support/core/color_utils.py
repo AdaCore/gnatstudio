@@ -2,7 +2,7 @@ import re
 
 """
 The purpose of this module is to provide an utility Color class, which
-is to be shared between plug-ins. It is able to parse most CSS color formats,
+is to be shared between plugins. It is able to parse most CSS color formats,
 to modify them internally, and to give back an hex / rgb(r,g,b) representation.
 """
 

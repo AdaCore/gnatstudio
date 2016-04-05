@@ -1440,7 +1440,7 @@ Both consoles provide a history of previously typed commands.  Use the
 .. index:: consoles; os shell
 .. index:: bash
 .. index:: vi
-.. index:: plug-ins; shell.py
+.. index:: plugins; shell.py
 
 The OS Shell Console
 ====================
@@ -1453,8 +1453,8 @@ OS shell (as defined by the :samp:`{SHELL}` or :samp:`{COMSPEC}`
 environment variables).
 
 Open this console via the :menuselection:`Tools --> Consoles --> OS Shell`
-menu, which is available only if the plug-in :file:`shell.py` was loaded in
-GPS (the default).  Check the documentation of that plug-in, which lists a
+menu, which is available only if the plugin :file:`shell.py` was loaded in
+GPS (the default).  Check the documentation of that plugin, which lists a
 few settings that might be useful.
 
 This console behaves like the standard shell on your system, including

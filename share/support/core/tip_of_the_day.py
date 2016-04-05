@@ -63,8 +63,9 @@ Tip: Highlight all occurrences of a word
 Img: tip_all_occurrences.png
 
 You'd like to highlight all occurrences of the current word in the editor?
-Enable the <i>occurrences.py</i> plug-in in Tools->Plug-ins and then set a key
-short cut for the 'Mark Occurrences' action via the Edit->Key Shortcuts editor.
+Enable the <i>occurrences.py</i> plugin in the preferences dialog and then set
+a key short cut for the 'Mark Occurrences' action via the Edit->Key Shortcuts
+editor.
 
 Tip: Disable indentation temporarily
 
@@ -152,7 +153,8 @@ to <i>Dynamic</i>. You might also want to tune the default timeout.
 Tip: Highlight dispatching calls
 
 Did you know that GPS can highlight all dispatching calls in your source?
-To do so, go to Tools->Plug-ins and enable the <i>dispatching.py</i> plug-in.
+To do so, go to the preferences dialog and enable the <i>dispatching.py</i>
+plugin.
 
 Tip: Source navigation through dispatching calls
 
@@ -308,7 +310,7 @@ in the debugger console.
 Tip: Copy/Paste contextual menus
 
 You can add Cut/Copy/Paste menus to the Editor's contextual menu by
-going to Tools->Plug-ins and enable the <i>copy_paste.py</i> plug-in.
+going to the preferences dialog and enable the <i>copy_paste.py</i> plugin.
 
 Tip: Automatic highlighting of occurrences
 
@@ -321,7 +323,7 @@ Tip: Compute dependency path between two units
 If you want to understand why two units or files depend on each other (to
 understand an elaboration circularity for example, or explain why changing
 a given file triggers recompilation of another file), you can go to
-Tools->Plug-ins and enable the <i>filedeps.py</i> plug-in.
+the preferences dialog and enable the <i>filedeps.py</i> plugin.
 
 Tip: Your tip here
 

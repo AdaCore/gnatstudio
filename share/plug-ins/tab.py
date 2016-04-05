@@ -1,5 +1,5 @@
 """
-This plug-in provides a function to reformat the current line
+This plugin provides a function to reformat the current line
 or selection.
 It tries to do a number of things, which can be configured
 separately to suit your work style.

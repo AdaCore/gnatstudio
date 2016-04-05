@@ -234,7 +234,7 @@ package body GPS.Kernel.Custom is
          end loop;
       end if;
 
-      --  Load the system plug-ins directory first, so that its contents can
+      --  Load the system plugins directory first, so that its contents can
       --  be overridden locally by the user
       Parse_Custom_Dir
         (Kernel, Autoload_System_Dir (Kernel), System_Wide,
