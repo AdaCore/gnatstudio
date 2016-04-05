@@ -38,6 +38,19 @@ KP-62-P404-015 GPS: separate.py plug-in does not raise the editor
   Workaround: Select "Goto body" twice to jump between actual body and
               the location of "is separate".
 
+KP-62-P331-007 GPS: not starting the debugger from project
+
+  Problem:    When you initialize the debugger with the menu
+              "/Debug/Initialize/No Main", gps will always spawn gdb,
+              rather than the debugger mentioned in your project via the
+              IDE'Debugger_Command attribute.
+
+  Status:     This was fixed in 17.0 on 2016-04-04
+
+  Workaround: This only occurs when initializing with no main, so the best
+              is to set up the Main attribute in your project, and then select
+              that main in the /Debug/Initialize menu.
+
 KP-62-P330-050 GPS: select row in Attach dialog scrolls to top
 
   Problem:    After you start the debugger, if you open the dialog
@@ -72,6 +85,20 @@ KP-62-P324-031 GB: xref not working on aggregate projects
 
   Workaround: Move aggregated projects to root projects using GNAT project's
               GNATbench properties page.
+
+KP-62-P323-030 GPS: can't unfloat windows
+
+  Problem:    In some cases, it is impossible to unfloat a window (like
+              Search for instance), because selecting the /Window/Unfloat
+              menu automatically gives back the focus to another view.
+
+  Status:     This was fixed in 17.0 on 2016-04-03
+
+  Workaround: The solution we implemented is that floating windows now have
+              a local configuration menu with an "Unfloat" item. The only
+              workaround is to use a command from the python console:
+                 GPS.MDI.get("Search").float(False)
+              or of course bind this to a key shortcut
 
 KP-62-P322-013 GB: ada navigation failure
 
