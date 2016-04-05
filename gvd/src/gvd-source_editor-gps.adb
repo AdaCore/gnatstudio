@@ -431,7 +431,23 @@ package body GVD.Source_Editor.GPS is
                   Unset,
                   Br (J).File,
                   Br (J).Line);
-               A (L).Image := Line_Has_Breakpoint_Pixbuf;
+
+               if not Br (J).Enabled then
+                  A (L).Image := Line_Has_Disabled_Breakpoint_Pixbuf;
+                  A (L).Tooltip_Text := To_Unbounded_String
+                    ("A disabled breakpoint has been set on this line");
+
+               elsif Br (J).Condition /= null then
+                  A (L).Image := Line_Has_Conditional_Breakpoint_Pixbuf;
+                  A (L).Tooltip_Text := To_Unbounded_String
+                    ("A conditional breakpoint has been set on this line");
+
+               else
+                  A (L).Image := Line_Has_Breakpoint_Pixbuf;
+                  A (L).Tooltip_Text := To_Unbounded_String
+                    ("An active breakpoint has been set on this line");
+               end if;
+
                A (L).Associated_Command := Command_Access (Other_Command);
 
                --  Try to resolve file when it is not present to handle

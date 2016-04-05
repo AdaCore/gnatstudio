@@ -1076,16 +1076,18 @@ package body Src_Editor_Buffer.Line_Information is
                  (Gtk.Icon_Theme.Get_Default, Strs, Size, 1, 0);
                Free (Strs);
 
-               P := Load_Symbolic_For_Context
-                 (Icon_Info    => Info,
-                  Context      => Ctxt,
-                  Was_Symbolic => Was_Symbolic'Access,
-                  Error        => Error'Access);
+               if Info /= null then
+                  P := Load_Symbolic_For_Context
+                    (Icon_Info    => Info,
+                     Context      => Ctxt,
+                     Was_Symbolic => Was_Symbolic'Access,
+                     Error        => Error'Access);
 
-               Render_Icon
-                 (Ctxt, Cr, P,
-                  Gdouble (Starting_X),
-                  Gdouble (Y_Pix_In_Window + (Line_Height - Size) / 2));
+                  Render_Icon
+                    (Ctxt, Cr, P,
+                     Gdouble (Starting_X),
+                     Gdouble (Y_Pix_In_Window + (Line_Height - Size) / 2));
+               end if;
 
                Unref (Info);
                Unref (P);

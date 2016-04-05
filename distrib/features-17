@@ -236,6 +236,12 @@ NF-17-N714-016 GPS: configurable window title (2015-11-05)
   the GPS window. Through it, you can chose whether to display any of base
   names, directory names, project name,... in the title bar.
 
+NF-17-GB12-010 GPS: different icon for disabled breakpoints (2016-04-05)
+
+  The icons that are displayed on the side of editors to show where
+  breakpoints are now have a different color when the breakpoint is disabled
+  or is conditional.
+
 NF-17-G222-043 GPS: menubars for floating windows (2015-11-27)
 
   When an editor or a browser is made floating, its window now includes a

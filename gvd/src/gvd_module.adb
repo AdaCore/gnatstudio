@@ -15,8 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;
-with GNAT.Strings;
+with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 with Glib;                      use Glib;
@@ -81,8 +82,6 @@ package body GVD_Module is
    --  The key in the history for the arguments to the run command.
    --  WARNING: this constant is shared with builder_module.adb, since we want
    --  to have the same history for the run command in GPS.
-
-   type Bp_Array is array (Integer range <>) of Breakpoint_Identifier;
 
    type On_File_Edited is new File_Hooks_Function with record
       Top : GPS_Window;
@@ -1161,7 +1160,7 @@ package body GVD_Module is
       use GNAT.OS_Lib;
 
    begin
-      Free (Ptr);
+      GNAT.Strings.Free (Ptr);
 
       declare
          S : Virtual_File :=
@@ -1762,6 +1761,10 @@ package body GVD_Module is
          end if;
 
          declare
+            type Bp_Array is array (Integer range <>) of Integer;
+            --  For each line of the file, the index of the breakpoint in
+            --  Tab.Breakpoints. Integer'First when there are no breakpoints
+
             Tab         : constant Visual_Debugger :=
               Visual_Debugger (Get_Current_Debugger (Kernel));
             Lines       : Line_Array (Line1 .. Line2);
@@ -1769,7 +1772,8 @@ package body GVD_Module is
                new Line_Information_Array (Line1 .. Line2);
             C           : Set_Breakpoint_Command_Access;
             Mode        : Breakpoint_Command_Mode := Set;
-            Bps         : Bp_Array (Line1 .. Line2) := (others => 0);
+            Bps         : Bp_Array (Line1 .. Line2) :=
+              (others => Integer'First);
             Lines_Valid : Boolean := False;
 
          begin
@@ -1787,8 +1791,7 @@ package body GVD_Module is
                     and then Tab.Breakpoints (J).File /= GNATCOLL.VFS.No_File
                     and then Tab.Breakpoints (J).File = File
                   then
-                     Bps (Tab.Breakpoints (J).Line) :=
-                       Tab.Breakpoints (J).Num;
+                     Bps (Tab.Breakpoints (J).Line) := J;
                   end if;
                end loop;
             end if;
@@ -1802,9 +1805,22 @@ package body GVD_Module is
                   A (J).Image := Line_Might_Have_Code_Pixbuf;
                end if;
 
-               if Bps (J) /= 0 then
+               if Bps (J) /= Integer'First then
                   Mode        := Unset;
-                  A (J).Image := Line_Has_Breakpoint_Pixbuf;
+
+                  if not Tab.Breakpoints (Bps (J)).Enabled then
+                     A (J).Image := Line_Has_Disabled_Breakpoint_Pixbuf;
+                     A (J).Tooltip_Text := To_Unbounded_String
+                       ("A disabled breakpoint has been set on this line");
+                  elsif Tab.Breakpoints (Bps (J)).Condition /= null then
+                     A (J).Image := Line_Has_Conditional_Breakpoint_Pixbuf;
+                     A (J).Tooltip_Text := To_Unbounded_String
+                       ("A conditional breakpoint has been set on this line");
+                  else
+                     A (J).Image := Line_Has_Breakpoint_Pixbuf;
+                     A (J).Tooltip_Text := To_Unbounded_String
+                       ("An active breakpoint has been set on this line");
+                  end if;
                else
                   Mode := Set;
                end if;

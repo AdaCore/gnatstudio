@@ -1073,6 +1073,8 @@ package body GVD.Breakpoints is
                   Breakpoint_Num => Breakpoint_Identifier'Value
                     (Get_String (Model, Iter, Col_Num))));
 
+            Update_Breakpoints (Get_Process (View), Force => True);
+
             --  Stop propagation of the current signal, to avoid extra calls
             --  to Select/Unselect row.
 

@@ -24,7 +24,11 @@ package Debugger_Pixmaps is
       To_Unbounded_String ("gps-emblem-debugger-line-might-have-code");
    Line_Has_Breakpoint_Pixbuf  : constant Unbounded_String :=
       To_Unbounded_String ("gps-emblem-debugger-breakpoint");
-   Current_Line_Pixbuf         : constant Unbounded_String :=
+   Line_Has_Disabled_Breakpoint_Pixbuf  : constant Unbounded_String :=
+     To_Unbounded_String ("gps-emblem-debugger-disabled-breakpoint");
+   Line_Has_Conditional_Breakpoint_Pixbuf  : constant Unbounded_String :=
+     To_Unbounded_String ("gps-emblem-debugger-conditional-breakpoint");
+   Current_Line_Pixbuf                  : constant Unbounded_String :=
       To_Unbounded_String ("gps-emblem-debugger-current");
 
 end Debugger_Pixmaps;
