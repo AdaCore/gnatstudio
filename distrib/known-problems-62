@@ -25,34 +25,6 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
-KP-62-P404-044 GPS: error when editing multiple projects
-
-  Problem:    When you select /Project/Edit Properties, and in select
-              multiple projects in the "Apply changes to" section, GPS ends
-              up with an internal error and does not perform any of the
-              updates.
-
-  Status:     This was fixed in 17.0 on 2016-04-05
-
-  Workaround: Modifying multiple projects at the same time is generally not
-              a good idea since they will end up with the exact same contents.
-              The workaround is to edit the projects one by one, or manually
-              (if you have lots of projects, manual editing is the recommended
-              approach for now).
-
-KP-62-P404-015 GPS: separate.py plug-in does not raise the editor
-
-  Problem:    When this optional plug-in is activated, it displays a
-              "Goto separate body of..." in the contextual menu for Ada
-              separates. This menus jumps to the place where "is separate"
-              occurs in the source code, but the corresponding editor is
-              not raised when it was already opened.
-
-  Status:     This was fixed in 17.0 on 2016-04-04
-
-  Workaround: Select "Goto body" twice to jump between actual body and
-              the location of "is separate".
-
 KP-62-P331-007 GPS: not starting the debugger from project
 
   Problem:    When you initialize the debugger with the menu
@@ -599,6 +571,34 @@ KP-62-NA21-042 GPS: No vertical scrolling of filters of CodePeer report
 
 Known problems fixed in GPS 6.2.2 / GNATbench 2.10.2
 ----------------------------------------------------
+
+KP-62-P404-044 GPS: error when editing multiple projects
+
+  Problem:    When you select /Project/Edit Properties, and in select
+              multiple projects in the "Apply changes to" section, GPS ends
+              up with an internal error and does not perform any of the
+              updates.
+
+  Status:     This was fixed in 6.2.2 on 2016-04-05
+
+  Workaround: Modifying multiple projects at the same time is generally not
+              a good idea since they will end up with the exact same contents.
+              The workaround is to edit the projects one by one, or manually
+              (if you have lots of projects, manual editing is the recommended
+              approach for now).
+
+KP-62-P404-015 GPS: separate.py plug-in does not raise the editor
+
+  Problem:    When this optional plug-in is activated, it displays a
+              "Goto separate body of..." in the contextual menu for Ada
+              separates. This menus jumps to the place where "is separate"
+              occurs in the source code, but the corresponding editor is
+              not raised when it was already opened.
+
+  Status:     This was fixed in 6.2.2 on 2016-04-04
+
+  Workaround: Select "Goto body" twice to jump between actual body and
+              the location of "is separate".
 
 KP-62-P329-035 GPS: missing display of icon in Bookmarks view
 
