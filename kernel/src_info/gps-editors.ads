@@ -701,6 +701,8 @@ package GPS.Editors is
    --  This always return False if any of the buffers is not associated with a
    --  live widget anymore.
 
+   function Get_Language
+     (Buffer : Editor_Buffer) return Language.Language_Access is (null);
    procedure Set_Language
       (Buffer : Editor_Buffer;
        Lang   : Language.Language_Access) is null;

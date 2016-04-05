@@ -23,6 +23,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P404-008 GPS: do not highlight occurrences of keywords (2016-04-05)
+
+  The plug-in auto_highlight_occurrences.py highlights all occurrences of
+  the word under the cursor in the whole file (possibly using smart cross
+  reference information to only highlight the specific entity and not its
+  homonyms). This plug-in has now learned not to highlight the language's
+  keywords ("constant", "begin",...) which is useless and might be slow
+  since these keywords generally occur often.
+
 NF-17-P403-002 GPS: Home goes to beginning or first-non-blank (2016-04-04)
 
   When using the Home key while in an editor (or any key bound to the

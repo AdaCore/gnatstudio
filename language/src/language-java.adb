@@ -23,9 +23,15 @@ with GNAT.Strings; use GNAT.Strings;
 package body Language.Java is
 
    Keywords_Regexp : aliased String :=
-                       Language.Keywords (C_Lang).all &
-                       "finally|synchronized|implements|extends" &
-                       "t(h(rows|readsafe)|ransient)|native";
+     --  The C subset
+     "^(auto|break|c(ase|on(st|tinue)|har)|d(efault|o|ouble)|e(lse|num|xtern)"
+     & "|f(loat|or)|goto|i(f|n(t|line))|long|re(gister|strict|turn)"
+     & "|s(hort|i(gned|zeof)|t(atic|ruct)|witch)|un(ion|signed)|vo(id|latile)"
+     & "|while|typedef"
+
+     --  Java
+     & "|finally|synchronized|implements|extends"
+     & "|t(h(rows|readsafe)|ransient)|native)\b";
 
    Keywords_List : aliased Pattern_Matcher :=
                      Compile ("^(" & Keywords_Regexp & ")\W");

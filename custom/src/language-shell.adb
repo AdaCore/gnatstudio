@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNAT.Strings;       use GNAT.Strings;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 with GPS.Kernel.Project; use GPS.Kernel.Project;
 with GNATCOLL.Any_Types; use GNATCOLL.Any_Types;
@@ -42,11 +43,15 @@ package body Language.Shell is
       Lang   : Shell_Language_Access) return Class_Instance;
 
    procedure Add_Construct
-     (Data : in out Callback_Data'Class; Command : String);
+      (Data : in out Callback_Data'Class; Command : String);
 
-   procedure Python_Add_Language
-     (Data    : in out Callback_Data'Class;
-      Command : String);
+   procedure Language_Handler
+      (Data : in out Callback_Data'Class; Command : String);
+   --  Handlers for the python commands
+
+   -------------------
+   -- Add_Construct --
+   -------------------
 
    procedure Add_Construct
      (Data : in out Callback_Data'Class; Command : String)
@@ -332,21 +337,35 @@ package body Language.Shell is
         (Lang_Name, Spec_Suffix, Body_Suffix, Obj_Suffix);
    end Register_Shell_Language;
 
-   procedure Python_Add_Language
+   ----------------------
+   -- Language_Handler --
+   ----------------------
+
+   procedure Language_Handler
      (Data    : in out Callback_Data'Class;
       Command : String)
    is
-      pragma Unreferenced (Command);
+      Lang : Language_Access;
+      Inst : Class_Instance;
    begin
-      Register_Shell_Language
-        (Get_Kernel (Data),
-         Data.Nth_Arg (1),
-         Data.Nth_Arg (2),
-         Data.Nth_Arg (3),
-         Data.Nth_Arg (4, ""),
-         Data.Nth_Arg (5, ""),
-         Indentation_Kind'Val (Integer'(Data.Nth_Arg (6, 1))));
-   end Python_Add_Language;
+      if Command = "register" then
+         Register_Shell_Language
+           (Get_Kernel (Data),
+            Data.Nth_Arg (1),
+            Data.Nth_Arg (2),
+            Data.Nth_Arg (3),
+            Data.Nth_Arg (4, ""),
+            Data.Nth_Arg (5, ""),
+            Indentation_Kind'Val (Integer'(Data.Nth_Arg (6, 1))));
+
+      elsif Command = "get" then
+         Data.Set_Return_Value
+           (Create_Language_Info
+              (Get_Script (Data),
+               Get_Kernel (Data).Get_Language_Handler.Get_Language_By_Name
+               (Data.Nth_Arg (1))));
+      end if;
+   end Language_Handler;
 
    -----------
    -- Setup --
@@ -356,31 +375,42 @@ package body Language.Shell is
      (Kernel : GPS.Kernel.Kernel_Handle)
    is
       List_Class : constant Class_Type :=
-        New_Class (Kernel, Construct_List_Class_Name);
+         Kernel.Scripts.New_Class (Construct_List_Class_Name);
       Language_Class : constant Class_Type :=
-        New_Class (Kernel, Language_Class_Name);
+         Kernel.Scripts.New_Class (Language_Class_Name);
+      Language_Info : constant Class_Type :=
+         Kernel.Scripts.New_Class ("LanguageInfo");
    begin
-      Register_Command (Kernel.Scripts, "register",
-                        (Param ("language_instance", False),
-                         Param ("name", False),
-                         Param ("body_suffix", False),
-                         Param ("spec_suffix", True),
-                         Param ("obj_suffix", True),
-                         Param ("indentation_kind", True)),
-                        Python_Add_Language'Access, Language_Class, True);
+      Kernel.Scripts.Register_Command
+        ("register",
+         (Param ("language_instance", False),
+          Param ("name", False),
+          Param ("body_suffix", False),
+          Param ("spec_suffix", True),
+          Param ("obj_suffix", True),
+          Param ("indentation_kind", True)),
+         Handler        => Language_Handler'Access,
+         Class          => Language_Class,
+         Static_Method  => True);
+      Kernel.Scripts.Register_Command
+        ("get",
+         Params         => (1 => Param ("name")),
+         Class          => Language_Class,
+         Static_Method  => True,
+         Handler        => Language_Handler'Access);
 
-      Register_Command (Kernel.Scripts,
-                        "add_construct",
-                        (Param ("category", False),
-                         Param ("is_declaration", False),
-                         Param ("visibility", False),
-                         Param ("name", False),
-                         Param ("profile", False),
-                         Param ("sloc_start", False),
-                         Param ("sloc_end", False),
-                         Param ("sloc_entity", False)),
-                        Add_Construct'Access,
-                        List_Class);
+      Kernel.Scripts.Register_Command
+        ("add_construct",
+         (Param ("category", False),
+          Param ("is_declaration", False),
+          Param ("visibility", False),
+          Param ("name", False),
+          Param ("profile", False),
+          Param ("sloc_start", False),
+          Param ("sloc_end", False),
+          Param ("sloc_entity", False)),
+         Handler  => Add_Construct'Access,
+         Class    => List_Class);
    end Setup;
 
 end Language.Shell;

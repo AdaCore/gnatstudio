@@ -31,6 +31,7 @@ like "TODO", or special comments for instance.
 import GPS
 from gps_utils import *
 from gps_utils.highlighter import Location_Highlighter, OverlayStyle
+import re
 
 GPS.Preference(
     "Plugins/auto_highlight_occurrences/highlight_entities").create(
@@ -59,7 +60,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
         """
         Initialize a new highlighter. It monitors changes in the current
         context to highlight the entity under the cursor.
-        It is intended that a single entity of this lass is created in GPS.
+        It is intended that a single entity of this class is created in GPS.
         """
         Location_Highlighter.__init__(self, style=None, context=0)
 
@@ -83,6 +84,9 @@ class Current_Entity_Highlighter(Location_Highlighter):
         self.pref_cache = {}
 
         self.current_buffer = None
+
+        # Words that should not be highlighted.
+        # ??? This should be based on the language
 
         GPS.Hook("preferences_changed").add(self.__on_preferences_changed)
         GPS.Hook("location_changed").add(self.highlight)
@@ -258,6 +262,12 @@ class Current_Entity_Highlighter(Location_Highlighter):
         if not entity and not word:
             self.entity = None
             self.word = None
+            return
+
+        # Do nothing when we have a reserved key word, since this might be
+        # slow and in general does not bring useful information.
+        lang_re = buffer.get_lang().keywords
+        if lang_re and word and re.match(lang_re, word):
             return
 
         self.entity = entity

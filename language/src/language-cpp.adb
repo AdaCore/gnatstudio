@@ -27,17 +27,22 @@ package body Language.Cpp is
    --  Return true if Word is a CPP keyword
 
    Keywords_Regexp : aliased constant String :=
-                       Language.Keywords (C_Lang).all &
-                       "|a(bstract|sm)|bool|c(atch|lass|onst_cast)" &
-                       "|d(elete|ynamic_cast)|explicit|f(alse|inal|riend)" &
-                       "|interface|mutable|n(amespace|ew)|operator" &
-                       "|p(r(ivate|otected)|ublic)|reinterpret_cast" &
-                       "|s(tatic_cast|ynchronized)" &
-                       "|t(emplate|h(is|hrow)|r(ue|y)|ype(id|name))" &
-                       "|using|virtual|wchar_t";
+     --  the C subset
+     "^(auto|break|c(ase|on(st|tinue)|har)|d(efault|o|ouble)|e(lse|num|xtern)"
+     & "|f(loat|or)|goto|i(f|n(t|line))|long|re(gister|strict|turn)"
+     & "|s(hort|i(gned|zeof)|t(atic|ruct)|witch)|un(ion|signed)|vo(id|latile)"
+     & "|while|typedef"
 
-   Keywords_List : aliased Pattern_Matcher :=
-                     Compile ("^(" & Keywords_Regexp & ")\W");
+     --  C++
+     & "|a(bstract|sm)|bool|c(atch|lass|onst_cast)"
+     & "|d(elete|ynamic_cast)|explicit|f(alse|inal|riend)"
+     & "|interface|mutable|n(amespace|ew)|operator"
+     & "|p(r(ivate|otected)|ublic)|reinterpret_cast"
+     & "|s(tatic_cast|ynchronized)"
+     & "|t(emplate|h(is|hrow)|r(ue|y)|ype(id|name))"
+     & "|using|virtual|wchar_t)\b";
+
+   Keywords_List : aliased Pattern_Matcher := Compile (Keywords_Regexp);
 
    The_Keywords : constant GNAT.Strings.String_List :=
      (1  => new String'("and"),

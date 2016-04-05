@@ -26,13 +26,12 @@ with C_Analyzer;        use C_Analyzer;
 package body Language.C is
 
    Keywords_Regexp : aliased String :=
-     "auto|break|c(ase|on(st|tinue)|har)|d(efault|o|ouble)|e(lse|num|xtern)" &
-     "|f(loat|or)|goto|i(f|n(t|line))|long|re(gister|strict|turn)" &
-     "|s(hort|i(gned|zeof)|t(atic|ruct)|witch)|un(ion|signed)|vo(id|latile)" &
-     "|while|typedef";
+     "^(auto|break|c(ase|on(st|tinue)|har)|d(efault|o|ouble)|e(lse|num|xtern)"
+     & "|f(loat|or)|goto|i(f|n(t|line))|long|re(gister|strict|turn)"
+     & "|s(hort|i(gned|zeof)|t(atic|ruct)|witch)|un(ion|signed)|vo(id|latile)"
+     & "|while|typedef)\b";
 
-   Keywords_List : aliased Pattern_Matcher :=
-                     Compile ("^(" & Keywords_Regexp & ")\W");
+   Keywords_List : aliased Pattern_Matcher := Compile (Keywords_Regexp);
 
    The_Keywords : constant GNAT.Strings.String_List :=
                     (1  => new String'("auto"),

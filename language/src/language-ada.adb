@@ -34,18 +34,17 @@ package body Language.Ada is
    use GNAT.Strings;
 
    Keywords_Regexp : aliased String :=
-                       "a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|b"
-                 & "(egin|ody)|c(ase|onstant)|d(e(clare|l(ay|ta))|igits|o)|"
-                 & "e(ls(e|if)|n(d|try)|x(ception|it))|f(or|unction)|g(eneric|"
-                 & "oto)|i([fs]|n(terface)?)|l(imited|oop)|mod|n(ew|ot|ull)|"
-                 & "o(thers|ut|[fr]|verriding)|p(ackage|r(agma|ivate|o(cedure|"
-                 & "tected)))|r(a(ise|nge)|e(cord|m|names|queue|turn|verse))|s"
-                 & "(e(lect|parate)|ome|ubtype|ynchronized)|t(a(gged|sk)|"
-                 & "erminate|hen|ype)|u(ntil|se)|w(h(en|ile)|ith)|xor";
+     "^(a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|b"
+     & "(egin|ody)|c(ase|onstant)|d(e(clare|l(ay|ta))|igits|o)|"
+     & "e(ls(e|if)|n(d|try)|x(ception|it))|f(or|unction)|g(eneric|"
+     & "oto)|i([fs]|n(terface)?)|l(imited|oop)|mod|n(ew|ot|ull)|"
+     & "o(thers|ut|[fr]|verriding)|p(ackage|r(agma|ivate|o(cedure|"
+     & "tected)))|r(a(ise|nge)|e(cord|m|names|queue|turn|verse))|s"
+     & "(e(lect|parate)|ome|ubtype|ynchronized)|t(a(gged|sk)|"
+     & "erminate|hen|ype)|u(ntil|se)|w(h(en|ile)|ith)|xor)\b";
 
    Keywords_List : aliased Pattern_Matcher :=
-                     Compile
-                       ("^(" & Keywords_Regexp & ")\b", Case_Insensitive);
+                     Compile (Keywords_Regexp, Case_Insensitive);
 
    The_Keywords : constant GNAT.Strings.String_List :=
                     (1  => new String'("abort"),

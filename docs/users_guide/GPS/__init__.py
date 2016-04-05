@@ -3701,7 +3701,21 @@ class EditorBuffer(object):
         the language that was set manually via the Properties contextual menu.
 
         This function can be used to override this, or set it for newly
-        created files (:func:`GPS.EditorBuffer.get_new")
+        created files (:func:`GPS.EditorBuffer.get_new`)
+
+        .. seealso:: :func:`GPS.EditorBuffer.get_lang`
+
+        """
+
+    def get_lang(self):
+        """
+        Return the name of the programming language used for this editor,
+        in particular for syntax highlighting and auto indentation.
+
+        :return: a :class:`GPS.LanguageInfo` instance.
+
+        ..  seealso:: :func:`GPS.EditorBuffer.set_lang`
+
         """
         pass  # implemented in Ada
 
@@ -10243,6 +10257,40 @@ class Language(object):
         :param string content_string: The content of the file
         """
         pass
+
+    @staticmethod
+    def get(name):
+        """
+        Return a description of the language, from its name.
+        For instance::
+
+             GPS.Language.get('ada').keywords
+
+        or::
+
+             GPS.EditorBuffer.get().get_lang().keywords
+
+        :return: a :class:`GPS.LanguageInfo`
+        """
+
+
+class LanguageInfo(object):
+    """
+    This class gives access to various information known about the
+    programing languages supported by GPS.
+    """
+
+    name = ''
+    """
+    Return the name of the language
+    """
+
+    keywords = ''
+    """
+    Return a regular expression that can be used to test whether a
+    string is a keyword for the language. The regexp is anchored with
+    "^" and ends with "\b" (word separator).
+    """
 
 
 ###########################################################

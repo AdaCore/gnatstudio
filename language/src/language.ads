@@ -129,6 +129,8 @@ package Language is
      (Lang : access Language_Root) return Strings.String_Access is abstract;
    --  Returns the uncompiled keyword regular expression. This string is used
    --  to create the pattern matcher as returned by the version below.
+   --  Do not free the result.
+   --  The regexp starts with "^" and ends with "\b" (word separator)
 
    function Keywords
      (Lang : access Language_Root)

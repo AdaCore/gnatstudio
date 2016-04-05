@@ -471,6 +471,8 @@ package body Src_Editor_Module.Editors is
    overriding procedure Set_Language
      (This   : Src_Editor_Buffer;
       Lang   : Language.Language_Access);
+   overriding function Get_Language
+     (This   : Src_Editor_Buffer) return Language.Language_Access;
    overriding procedure Start_Undo_Group (This : Src_Editor_Buffer);
    overriding procedure Finish_Undo_Group (This : Src_Editor_Buffer);
    overriding procedure Undo (This : Src_Editor_Buffer);
@@ -2239,6 +2241,20 @@ package body Src_Editor_Module.Editors is
          This.Contents.Buffer.Set_Language (Lang);
       end if;
    end Set_Language;
+
+   ------------------
+   -- Get_Language --
+   ------------------
+
+   overriding function Get_Language
+     (This   : Src_Editor_Buffer) return Language.Language_Access is
+   begin
+      if This.Contents.Buffer /= null then
+         return This.Contents.Buffer.Get_Language;
+      else
+         return null;
+      end if;
+   end Get_Language;
 
    --------------
    -- Get_Mark --

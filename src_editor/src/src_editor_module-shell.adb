@@ -2034,6 +2034,11 @@ package body Src_Editor_Module.Shell is
                (Get_Language_Handler (Kernel),
                 Data.Nth_Arg (2)));
 
+      elsif Command = "get_lang" then
+         Data.Set_Return_Value
+           (Create_Language_Info
+              (Get_Script (Data), Get_Buffer (Data, 1).Get_Language));
+
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
       end if;
@@ -2859,6 +2864,10 @@ package body Src_Editor_Module.Shell is
           Params  => (1 => Param ("lang")),
           Class   => EditorBuffer,
           Handler => Buffer_Cmds'Access);
+      Kernel.Scripts.Register_Command
+        ("get_lang",
+         Class   => EditorBuffer,
+         Handler => Buffer_Cmds'Access);
       Register_Command
         (Kernel, "add_special_line", 2, 4, Buffer_Cmds'Access, EditorBuffer);
       Register_Command

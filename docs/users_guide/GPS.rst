@@ -627,6 +627,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.get_cursors
 
+   .. automethod:: GPS.EditorBuffer.get_lang
+
    .. automethod:: GPS.EditorBuffer.get_mark
 
    .. automethod:: GPS.EditorBuffer.get_new
@@ -668,6 +670,8 @@ Classes
    .. automethod:: GPS.EditorBuffer.selection_start
 
    .. automethod:: GPS.EditorBuffer.set_cursors_auto_sync
+
+   .. automethod:: GPS.EditorBuffer.set_lang
 
    .. automethod:: GPS.EditorBuffer.set_lang
 
@@ -1079,7 +1083,24 @@ Classes
 
    .. automethod:: GPS.Language.__init__
 
+   .. automethod:: GPS.Language.get
+
    .. automethod:: GPS.Language.register
+
+:class:`GPS.LanguageInfo`
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: LanguageInfo
+
+
+
+
+   .. autoattribute:: GPS.LanguageInfo.keywords
+
+
+
+   .. autoattribute:: GPS.LanguageInfo.name
+
 
 :class:`GPS.Libclang`
 ^^^^^^^^^^^^^^^^^^^^^

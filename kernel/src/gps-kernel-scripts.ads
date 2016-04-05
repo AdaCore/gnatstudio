@@ -27,6 +27,7 @@ with GPS.Scripts;            use GPS.Scripts;
 with GPS.Scripts.Entities;
 with GPS.Scripts.Files;
 with GPS.Scripts.File_Locations;
+with Language;               use Language;
 
 package GPS.Kernel.Scripts is
 
@@ -221,6 +222,15 @@ package GPS.Kernel.Scripts is
 
    function Get_Context (Inst : Class_Instance) return Selection_Context;
    --  Return the context stored in the instance
+
+   -------------------
+   -- Language_Info --
+   -------------------
+
+   function Create_Language_Info
+     (Script  : not null access Scripting_Language_Record'Class;
+      Lang    : access Language_Root'Class) return Class_Instance;
+   --  Wraps a Language in a python class
 
 private
    No_File_Location : constant File_Location_Info :=

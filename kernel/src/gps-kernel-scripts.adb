@@ -92,6 +92,10 @@ package body GPS.Kernel.Scripts is
    overriding procedure Destroy (Prop : in out GPS_Properties_Record);
    --  See inherited documentation
 
+   type Language_Info_Property is new Instance_Property_Record with record
+      Lang : Language_Access;
+   end record;
+
    procedure On_Console_Destroy
      (Console : access Gtk_Widget_Record'Class;
       Subprogram : Subprogram_Type);
@@ -125,6 +129,10 @@ package body GPS.Kernel.Scripts is
    procedure Context_Getters
      (Data : in out Callback_Data'Class; Command : String);
    --  Getter for the "module_name" property
+
+   procedure Language_Info_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handlers for all language_info related commands
 
    procedure Entity_Context_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -1157,7 +1165,8 @@ package body GPS.Kernel.Scripts is
         (Kernel.Scripts, Console_Class_Name, Base => Get_GUI_Class (Kernel));
       History_Class : constant Class_Type :=
         New_Class (Kernel.Scripts, "History");
-
+      Language_Info      : constant Class_Type :=
+        Kernel.Scripts.New_Class ("LanguageInfo");
       Context_Class : constant Class_Type := Kernel.Scripts.New_Class
         ("Context");
 
@@ -1429,10 +1438,68 @@ package body GPS.Kernel.Scripts is
          Class        => Get_GUI_Class (Kernel),
          Handler      => GUI_Command_Handler'Access);
 
+      Kernel.Scripts.Register_Property
+        ("name",
+         Class        => Language_Info,
+         Getter       => Language_Info_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("keywords",
+         Class        => Language_Info,
+         Getter       => Language_Info_Handler'Access);
+
       GPS.Kernel.Properties.Register_Script_Commands (Kernel);
       GPS.Scripts.Commands.Register_Commands (Kernel);
       GPS.Kernel.Command_API.Register_Commands (Kernel);
    end Register_Default_Script_Commands;
+
+   --------------------------
+   -- Create_Language_Info --
+   --------------------------
+
+   function Create_Language_Info
+     (Script  : not null access Scripting_Language_Record'Class;
+      Lang    : access Language_Root'Class) return Class_Instance
+   is
+      Language_Info : constant Class_Type :=
+        Script.Get_Repository.New_Class ("LanguageInfo");
+      Inst  : Class_Instance;
+   begin
+      Inst := Script.New_Instance (Language_Info);
+      Set_Data
+        (Inst,
+         Name     => "languageinfo",
+         Property => Language_Info_Property'(Lang => Language_Access (Lang)));
+      return Inst;
+   end Create_Language_Info;
+
+   ---------------------------
+   -- Language_Info_Handler --
+   ---------------------------
+
+   procedure Language_Info_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Inst : Class_Instance;
+      Lang : Language_Access;
+      Prop : Instance_Property;
+   begin
+      Inst := Data.Nth_Arg (1);
+      Prop := Get_Data (Inst, "languageinfo");
+      if Prop = null or else Language_Info_Property (Prop.all).Lang = null then
+         return;
+      end if;
+
+      Lang := Language_Info_Property (Prop.all).Lang;
+
+      if Command = "name" then
+         Data.Set_Return_Value (Lang.Get_Name);
+
+      elsif Command = "keywords" then
+         if Lang.Keywords /= null then
+            Data.Set_Return_Value (Lang.Keywords.all);
+         end if;
+      end if;
+   end Language_Info_Handler;
 
    -----------------------
    -- Get_Project_Class --
