@@ -609,6 +609,17 @@ KP-62-P404-015 GPS: separate.py plug-in does not raise the editor
   Workaround: Select "Goto body" twice to jump between actual body and
               the location of "is separate".
 
+KP-62-P330-030 GPS: reusing the Project Editor corrupts project files
+
+  Problem:    If you are using the Project Properties editor to modify
+              one project, then switch to another project, then use
+              the Project Properties editor again, the new project
+              might contain data coming from the previous project.
+
+  Status:     This was fixed in 6.2.2 on 2016-04-05
+
+  Workaround: Restart GPS before editing the second project.
+
 KP-62-P329-035 GPS: missing display of icon in Bookmarks view
 
   Problem:    The first column in the Bookmarks view list contains text
