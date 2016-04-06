@@ -25,6 +25,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P331-016 GPS: indentation depends on end-of-line spaces
+
+  Problem:    When the end of the line contains blanks then
+              next line starts with indent from last blank.
+
+  Status:     This was fixed in 17.0 on 2016-04-06
+
+  Workaround: Do not set blanks at the end of lines.
+
 KP-62-P331-007 GPS: not starting the debugger from project
 
   Problem:    When you initialize the debugger with the menu
