@@ -100,12 +100,6 @@ class GNATemulator(Module):
         Console_Process(gnatemu, args=jargs, force=True,
                         close_on_exit=False, task_manager=True)
 
-    def executable_path(self, main_name):
-        b = GPS.Project.root().get_executable_name(GPS.File(main_name))
-        exec_dir = GPS.Project.root().exec_dir()
-        ret = os.path.join(exec_dir, b)
-        return ret
-
     def __error_exit(self, msg=""):
         """ Emit an error and reset the workflows """
         GPS.Console("Messages").write(
@@ -136,7 +130,8 @@ class GNATemulator(Module):
         log("... done.")
 
         # STEP 2 load with Emulator
-        self.run_gnatemu([self.executable_path(main_name)])
+        self.run_gnatemu(
+            [GPS.Project.root().get_executable_path(GPS.File(main_name))])
 
     def __emu_debug_wf(self, main_name):
         """
@@ -155,7 +150,7 @@ class GNATemulator(Module):
         if r0 is not 0:
             self.__error_exit(msg="Build error.")
             return
-        binary = GPS.Project.root().get_executable_name(GPS.File(main_name))
+        binary = GPS.Project.root().get_executable_path(GPS.File(main_name))
 
         log("... done.")
 
@@ -175,7 +170,7 @@ class GNATemulator(Module):
 
         self.run_gnatemu(["--freeze-on-startup",
                           "--gdb=%s" % debug_port,
-                          self.executable_path(main_name)])
+                          binary])
 
         log("... done.")
 

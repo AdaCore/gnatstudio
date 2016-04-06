@@ -1475,6 +1475,8 @@ Classes
 
    .. automethod:: GPS.Project.get_executable_name
 
+   .. automethod:: GPS.Project.get_executable_path
+
    .. automethod:: GPS.Project.get_property
 
    .. automethod:: GPS.Project.get_tool_switches_as_list

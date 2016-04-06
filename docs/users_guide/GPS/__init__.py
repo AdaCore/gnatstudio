@@ -8530,6 +8530,17 @@ class Project(object):
         """
         pass  # implemented in Ada
 
+    def get_executable_path(self, main):
+        """
+        Returns the full path of the executable, either read from the
+        project or computed from ``main``.
+
+        :param main: :class:`GPS.File`
+        :return: A string
+
+        """
+        pass  # implemented in Ada
+
     def get_property(self, name):
         """
         Returns the value of the property associated with the project. This
