@@ -1223,6 +1223,12 @@ package body Vsearch is
                         Data.Extra_Information, Expand => False);
             Show_All (Vsearch.Context_Specific);
             Vsearch.Extra_Information := Data.Extra_Information;
+
+            --  We have just added Extra_Information to the vsearch view:
+            --  this will be unref'ed when the view is closed. We want to
+            --  keep this data around (it belongs to the module) so Ref it
+            --  here.
+            Data.Extra_Information.Ref;
          end if;
 
          Child := Search_Views.Child_From_View (Vsearch);
