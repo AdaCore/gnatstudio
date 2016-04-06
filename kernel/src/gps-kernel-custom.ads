@@ -47,6 +47,7 @@
 --      are called initially.
 
 with GNATCOLL.VFS_Utils;
+with String_Hash;
 
 package GPS.Kernel.Custom is
 

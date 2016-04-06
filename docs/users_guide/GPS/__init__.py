@@ -204,11 +204,39 @@ class GUI(object):
 
 
 ###########################################################
+# Filter
+###########################################################
+
+class Filter(object):
+    """
+    This class gives access to various aspects of the filters that
+    are used by GPS to compute whether an action (and thus a menu,
+    contextual menu or toolbar button) can be activated by the user
+    at the current time.
+    """
+
+    @staticmethod
+    def list():
+        """
+        Return the list of all registered named filters.
+        Instead of duplicating their implementation, it is better to
+        reuse existing filters when possible, since their result is
+        cached by GPS. Since lots of filters might be evaluated when
+        computing the contextual menu, it will be faster when using
+        named filters in such a case.
+
+        The returned named can be used in :func:`GPS.Action.create`
+        for instance.
+
+        :return: a list of strings (the name of the filters)
+        """
+
+
+###########################################################
 # Action
 ###########################################################
 
 class Action():
-
     """
     This class gives access to the interactive commands in GPS. These are the
     commands to which the user can bind a key shortcut or for which we can
@@ -274,6 +302,8 @@ class Action():
            return True if the command can be executed within that
            context. This is used to disable menu items when they are not
            available.
+           See :func:`GPS.Filter.list` to retrieve the list of all defined
+           named filters.
 
         :param str category: Category of the command in the Key Shortcuts
            editor.

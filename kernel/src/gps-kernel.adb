@@ -101,7 +101,7 @@ package body GPS.Kernel is
    --  The name of a GPS.Properties to store the current build mode. Use
    --  Get_Build_Mode below instead
 
-   use Action_Filters_Htable.String_Hash_Table;
+   use Action_Filters_Maps;
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Kernel_Handle);
@@ -943,8 +943,18 @@ package body GPS.Kernel is
       Reset (Handle.Actions);
       Unchecked_Free (Handle.Actions);
 
-      Reset (Handle.Action_Filters);
-      Action_Filters_List.Free (Handle.All_Action_Filters);
+      --  Free the registered filters
+      declare
+         procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+           (Action_Filter_Record'Class, Action_Filter);
+      begin
+         for Act of Handle.All_Action_Filters loop
+            Free (Act.all);
+            Unchecked_Free (Act);
+         end loop;
+         Handle.Action_Filters.Clear;
+         Handle.All_Action_Filters.Clear;
+      end;
 
       Handle.Hooks.Clear;
       Free_Tools (Handle);
@@ -1029,57 +1039,17 @@ package body GPS.Kernel is
 
    function Lookup_Filter
      (Kernel : access Kernel_Handle_Record;
-      Name   : String) return Action_Filter is
-   begin
-      return Get (Kernel.Action_Filters, Name);
-   end Lookup_Filter;
-
-   -----------
-   -- Start --
-   -----------
-
-   function Start (Kernel : access Kernel_Handle_Record'Class)
-      return Action_Filter_Iterator
+      Name   : String) return Action_Filter
    is
-      Iter : Action_Filter_Iterator;
+      C : constant Action_Filters_Maps.Cursor :=
+        Kernel.Action_Filters.Find (Name);
    begin
-      Get_First (Kernel.Action_Filters, Iter.Iterator);
-      return Iter;
-   end Start;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Filter : in out Action_Filter) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Action_Filter_Record'Class, Action_Filter);
-   begin
-      if Filter /= null then
-         Free (Filter.all);
-         Unchecked_Free (Filter);
+      if Has_Element (C) then
+         return Element (C);
+      else
+         return null;
       end if;
-   end Free;
-
-   ----------
-   -- Next --
-   ----------
-
-   procedure Next
-     (Kernel : access Kernel_Handle_Record'Class;
-      Iter   : in out Action_Filter_Iterator) is
-   begin
-      Get_Next (Kernel.Action_Filters, Iter.Iterator);
-   end Next;
-
-   ---------
-   -- Get --
-   ---------
-
-   function Get (Iter : Action_Filter_Iterator) return Action_Filter is
-   begin
-      return Get_Element (Iter.Iterator);
-   end Get;
+   end Lookup_Filter;
 
    ---------------------
    -- Register_Filter --
@@ -1090,21 +1060,14 @@ package body GPS.Kernel is
       Filter : access Action_Filter_Record;
       Name   : String) is
    begin
-      --  We can't rename an already named filter, since the hash table would
-      --  not work correctly anymore
-
-      Assert (Me, Name = ""
-              or else Filter.Name = Null_Unbounded_String,
-              "A named filter is being renamed");
-
       if Name /= "" then
+         Assert (Me, Filter.Name = "", "Renaming filter is not allowed");
          Filter.Name := To_Unbounded_String (Name);
-         Set (Kernel.Action_Filters, Name, Action_Filter (Filter));
+         Kernel.Action_Filters.Include (Name, Action_Filter (Filter));
       end if;
 
       if not Filter.Registered then
-         Action_Filters_List.Append
-           (Kernel.All_Action_Filters, Action_Filter (Filter));
+         Kernel.All_Action_Filters.Append (Action_Filter (Filter));
          Filter.Registered := True;
       end if;
    end Register_Filter;
@@ -1369,9 +1332,9 @@ package body GPS.Kernel is
    begin
       return new Base_Action_Filter_Record'
         (Kind       => Filter_Not,
+         Registered => False,
          Error_Msg  => Null_Unbounded_String,
          Name       => Null_Unbounded_String,
-         Registered => False,
          Not1       => Action_Filter (Filter));
    end "not";
 

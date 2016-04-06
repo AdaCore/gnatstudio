@@ -980,6 +980,15 @@ Classes
 
    .. automethod:: GPS.FileLocation.line
 
+:class:`GPS.Filter`
+^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Filter
+
+
+
+   .. automethod:: GPS.Filter.list
+
 :class:`GPS.GUI`
 ^^^^^^^^^^^^^^^^
 

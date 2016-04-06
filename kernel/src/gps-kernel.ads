@@ -23,6 +23,7 @@ with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
+with Ada.Strings.Hash_Case_Insensitive;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with System;
@@ -50,10 +51,8 @@ with Gtkada.Canvas_View;
 with Basic_Types;
 with Basic_Mapper;
 with Commands;
-with Generic_List;
 with Language_Handlers;
 with Projects;
-with String_Hash;
 with Default_Preferences;
 with Histories;
 with Refactoring;
@@ -445,14 +444,15 @@ package GPS.Kernel is
       Name   : String);
    --  Makes the filter accessible from other parts of GPS via a name,
    --  including scripts.
-   --
-   --  As a special case, this subprogram is called internally with no name,
-   --  for memory management purposes.
 
    type Base_Action_Filter_Record (<>)
       is new Action_Filter_Record with private;
    type Base_Action_Filter is access all Base_Action_Filter_Record'Class;
 
+   overriding procedure Register_Filter
+     (Kernel : access Kernel_Handle_Record'Class;
+      Filter : access Base_Action_Filter_Record;
+      Name   : String);
    overriding function Filter_Matches_Primitive
      (Filter  : access Base_Action_Filter_Record;
       Context : Selection_Context) return Boolean;
@@ -503,31 +503,11 @@ package GPS.Kernel is
       Context : Selection_Context) return Boolean;
    --  Same as Filter_Matches_Primitive, except it matches if Filter is null
 
-   overriding procedure Register_Filter
-     (Kernel : access Kernel_Handle_Record'Class;
-      Filter : access Base_Action_Filter_Record;
-      Name   : String);
-
    function Lookup_Filter
      (Kernel : access Kernel_Handle_Record;
       Name   : String) return Action_Filter;
    --  Lookup a filter by name. Return null if no such filter has been
    --  registered.
-
-   type Action_Filter_Iterator is private;
-
-   function Start (Kernel : access Kernel_Handle_Record'Class)
-      return Action_Filter_Iterator;
-   --  Return the first filter registered in the kernel (this is in no
-   --  particular order).
-
-   procedure Next
-     (Kernel : access Kernel_Handle_Record'Class;
-      Iter   : in out Action_Filter_Iterator);
-   --  Move to the next action
-
-   function Get (Iter : Action_Filter_Iterator) return Action_Filter;
-   --  Return the current filter
 
    -----------
    -- Hooks --
@@ -987,17 +967,17 @@ private
    procedure Reset (X : access Root_Table) is abstract;
    --  Reset the table
 
-   procedure Do_Nothing (Filter : in out Action_Filter) is null;
-   package Action_Filters_Htable is new String_Hash
-     (Action_Filter, Do_Nothing, null);
-   --  We never free the filter from this hash-table. This is done in the list
-   --  that stores all actions
+   package Action_Filters_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Action_Filter);
+   --  All filters (named or unnamed) that are registered
 
-   procedure Free (Filter : in out Action_Filter);
-   package Action_Filters_List is new Generic_List (Action_Filter, Free);
+   package Action_Filters_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (String, Action_Filter, Ada.Strings.Hash_Case_Insensitive, "=");
+   --  We never free the filter from this hash-table, since the filters might
+   --  be shared between actions.
 
    type Action_Filter_Iterator is record
-      Iterator : Action_Filters_Htable.String_Hash_Table.Cursor;
+      Iterator : Action_Filters_Maps.Cursor;
    end record;
 
    ----------
@@ -1094,9 +1074,10 @@ private
       --         connected to it. This is used to create new hook types
       --         from python.
 
-      Action_Filters : Action_Filters_Htable.String_Hash_Table.Instance;
-      All_Action_Filters : Action_Filters_List.List;
-      --  The action contexts registered in the kernel
+      Action_Filters     : Action_Filters_Maps.Map;
+      All_Action_Filters : Action_Filters_Lists.List;
+      --  The action contexts registered in the kernel (only named ones are
+      --  stored in Action_Filters)
 
       Application : access Gtk_Application_Record'Class;
       Main_Window : access Gtk.Window.Gtk_Window_Record'Class;

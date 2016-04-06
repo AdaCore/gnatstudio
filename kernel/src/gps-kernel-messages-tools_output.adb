@@ -18,6 +18,7 @@
 with GNAT.Regpat;
 with GNAT.Strings;                    use GNAT.Strings;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
+with Generic_List;
 with Glib.Convert;
 with GPS.Kernel.Messages.Hyperlink;   use GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Legacy;

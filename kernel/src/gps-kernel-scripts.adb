@@ -169,6 +169,10 @@ package body GPS.Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles command related to GPS.Console
 
+   procedure Filter_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles command related to GPS.Filter
+
    procedure History_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles commands related to GPS.History
@@ -1169,6 +1173,7 @@ package body GPS.Kernel.Scripts is
         Kernel.Scripts.New_Class ("LanguageInfo");
       Context_Class : constant Class_Type := Kernel.Scripts.New_Class
         ("Context");
+      Filter  : constant Class_Type := Kernel.Scripts.New_Class ("Filter");
 
       Tmp : GNAT.Strings.String_Access;
    begin
@@ -1187,7 +1192,13 @@ package body GPS.Kernel.Scripts is
          Params  => (1 => Param ("key"),
                      2 => Param ("value")),
          Static_Method => True,
-         Handler => History_Command_Handler'Access);
+         Handler       => History_Command_Handler'Access);
+
+      Kernel.Scripts.Register_Command
+        ("list",
+         Class         => Filter,
+         Static_Method => True,
+         Handler       => Filter_Handler'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
@@ -1500,6 +1511,22 @@ package body GPS.Kernel.Scripts is
          end if;
       end if;
    end Language_Info_Handler;
+
+   --------------------
+   -- Filter_Handler --
+   --------------------
+
+   procedure Filter_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+   begin
+      if Command = "list" then
+         Data.Set_Return_Value_As_List;
+         for Act of Get_Kernel (Data).Action_Filters loop
+            Data.Set_Return_Value (To_String (Act.Name));
+         end loop;
+      end if;
+   end Filter_Handler;
 
    -----------------------
    -- Get_Project_Class --

@@ -18,17 +18,12 @@
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with System.Assertions;         use System.Assertions;
-
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-
 with XML_Utils;                 use XML_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
-with String_Hash;
-
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-
 with XML_Parsers;
 
 package body GPS.Kernel.Custom is

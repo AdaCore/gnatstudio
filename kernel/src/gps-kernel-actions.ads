@@ -24,6 +24,7 @@ with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Commands.Interactive;  use Commands.Interactive;
 with Gdk.Event;
 with GNAT.Strings;
+with String_Hash;
 
 package GPS.Kernel.Actions is
 
