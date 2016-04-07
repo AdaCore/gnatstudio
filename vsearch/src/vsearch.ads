@@ -18,7 +18,6 @@
 --  This package provides the Search view.
 
 with GNAT.Strings;
-with Glib.Main;
 with Glib.Object;
 with Gtk.Text_Mark;       use Gtk.Text_Mark;
 with Gtk.Widget;          use Gtk.Widget;

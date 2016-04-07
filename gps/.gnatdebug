@@ -90,7 +90,7 @@ ENTITIES.REF  = no
 ENTITIES.QUERIES = no
 
 --  Monitor keybindings
-KEYMANAGER=yes
+KEYMANAGER=no
 
 --  Deactivate this to disable the use of sql-based entities.
 --  This cannot be set from the command line, since the kernel and the xref
