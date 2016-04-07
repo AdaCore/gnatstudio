@@ -375,11 +375,6 @@ package body Builder_Facility_Module is
    --  Register a Kernel Action to build T and create a menu item to build
    --  Target
 
-   procedure Execute_Switch_Filters_For_Target
-     (Target : not null Target_Access);
-   --  Execute the filters associated with the target's switches, hiding
-   --  the switches that are not valid in the current context.
-
    type Target_Callback is not null access procedure
      (Target : not null Target_Access);
    package Target_Callback_Lists is new Ada.Containers.Doubly_Linked_Lists
@@ -390,6 +385,21 @@ package body Builder_Facility_Module is
    procedure For_All_Targets (Callback : Target_Callback);
    procedure For_All_Targets (Callback_List : Target_Callback_Lists.List);
    --  Run the given callback(s) on all the registered targets
+
+   procedure Execute_Switch_Filters_For_Target
+     (Target      : not null Target_Access;
+      Before_Save : Boolean := False);
+   --  Execute the filters associated with the target's switches, hiding
+   --  the switches that are not valid in the current context.
+   --
+   --  If Before_Save is True, all the non-valid switches are put back on
+   --  the target's command line if they are present in the target's default
+   --  command line: this is done in order to save only the modifications that
+   --  have been explicitly set by the user.
+
+   procedure Execute_Switch_Filters_For_All_Targets
+     (Before_Save : Boolean := False);
+   --  Call Execute_Switch_Filter_For_Target on all the registered targets
 
    procedure Parse_Mode_Node (XML : Node_Ptr);
    --  Parse XML node describing a mode. See spec for a description of the
@@ -748,7 +758,8 @@ package body Builder_Facility_Module is
    ---------------------------------------
 
    procedure Execute_Switch_Filters_For_Target
-     (Target : not null Target_Access)
+     (Target      : not null Target_Access;
+      Before_Save : Boolean := False)
    is
       Kernel             : constant Kernel_Handle :=
                              Builder_Module_ID.Get_Kernel;
@@ -800,9 +811,10 @@ package body Builder_Facility_Module is
               (Get_Command_Line_Unexpanded (Target)),
             Switch_Char        => Switch_Char);
 
-         if not Matches then
-            --  If the filter does not match, remove its associated switch if
-            --  present in the target's command line.
+         if not Before_Save and then not Matches then
+            --  If we are not saving the target and if the filter does not
+            --  match, remove its associated switch if present in the target's
+            --  command line.
 
             Remove_Switch
               (Cmd_Line,
@@ -810,8 +822,9 @@ package body Builder_Facility_Module is
                Section   => Get_Section (Switch),
                Success   => Success);
          else
-            --  It it matches and if the associated switch is present in the
-            --  target's command line, add it again.
+            --  It it matches or if the target is going to be saved, check if
+            --  the switch is present in the target's default command line and
+            --  put it back on the target's current command line in this case.
 
             declare
                Iter : Command_Line_Iterator;
@@ -890,6 +903,25 @@ package body Builder_Facility_Module is
       end loop;
    end Execute_Switch_Filters_For_Target;
 
+   --------------------------------------------
+   -- Execute_Switch_Filters_For_All_Targets --
+   --------------------------------------------
+
+   procedure Execute_Switch_Filters_For_All_Targets
+     (Before_Save : Boolean := False)
+   is
+      C      : Target_Cursor := Get_First_Target (Builder_Module_ID.Registry);
+      Target : Target_Access;
+   begin
+      loop
+         Target := Get_Target (C);
+         exit when Target = null;
+
+         Execute_Switch_Filters_For_Target (Target, Before_Save);
+         Next (C);
+      end loop;
+   end Execute_Switch_Filters_For_All_Targets;
+
    ---------------------
    -- For_All_Targets --
    ---------------------
@@ -938,6 +970,7 @@ package body Builder_Facility_Module is
       N       : Node_Ptr;
       Success : Boolean;
    begin
+      Execute_Switch_Filters_For_All_Targets (Before_Save => True);
       N := Save_All_Targets_To_XML (Builder_Module_ID.Registry);
       Print (N, Get_Targets_File, Success);
 
@@ -1079,7 +1112,7 @@ package body Builder_Facility_Module is
       pragma Unreferenced (Self, Kernel);
    begin
       Refresh_Graphical_Elements;
-      For_All_Targets (Execute_Switch_Filters_For_Target'Access);
+      Execute_Switch_Filters_For_All_Targets (Before_Save => False);
    end Execute;
 
    -------------
