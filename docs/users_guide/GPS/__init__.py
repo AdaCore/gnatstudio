@@ -8552,9 +8552,9 @@ class Project(object):
     def get_executable_name(self, main):
         """
         Returns the name of the executable, either read from the project or
-        computed from ``main``.
+        computed from `main`.
 
-        :param main: :class:`GPS.File`
+        :param GPS.File main: the main source file.
         :return: A string
 
         """
@@ -8563,9 +8563,9 @@ class Project(object):
     def get_executable_path(self, main):
         """
         Returns the full path of the executable, either read from the
-        project or computed from ``main``.
+        project or computed from `main`.
 
-        :param main: :class:`GPS.File`
+        :param GPS.File main: the main source file.
         :return: A string
 
         """
