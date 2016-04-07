@@ -639,11 +639,12 @@ def _goto_line_bound(beginning, extend_selection):
     else:
         # We are in a GPS code editor or standard Gtk.TextView
 
-        ed = GPS.EditorBuffer.get()
-        gtk_ed_view = get_widgets_by_type(
-            Gtk.TextView, ed.current_view().pywidget())[0]
+        ed = GPS.EditorBuffer.get(open=False)
+        if ed:
+            gtk_ed_view = get_widgets_by_type(
+                Gtk.TextView, ed.current_view().pywidget())[0]
 
-        if gtk_ed_view != widget:
+        if not ed or gtk_ed_view != widget:
             # in a Gtk.TextView, but not a GPS code editor
 
             b = widget.get_buffer()
