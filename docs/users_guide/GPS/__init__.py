@@ -10330,7 +10330,7 @@ class LanguageInfo(object):
     """
     Return a regular expression that can be used to test whether a
     string is a keyword for the language. The regexp is anchored with
-    "^" and ends with "\b" (word separator).
+    '^' and ends with '\\\\b' (word separator).
     """
 
 
