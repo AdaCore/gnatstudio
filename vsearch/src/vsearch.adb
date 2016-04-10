@@ -336,6 +336,9 @@ package body Vsearch is
    --  Select the full text of an entry when it is clicked by left mouse
    --  button and doesn't have focus, to help users clear the entry.
 
+   procedure On_Vsearch_Destroy (Self : access Gtk_Widget_Record'Class);
+   --  Called when the dialog is destroyed
+
    procedure Set_Selected_Project
      (Kernel  : not null access Kernel_Handle_Record'Class;
       Context : Selection_Context);
@@ -1547,6 +1550,27 @@ package body Vsearch is
       return False;
    end On_Button_Press;
 
+   ------------------------
+   -- On_Vsearch_Destroy --
+   ------------------------
+
+   procedure On_Vsearch_Destroy (Self : access Gtk_Widget_Record'Class) is
+      Vsearch : constant Vsearch_Access := Vsearch_Access (Self);
+      Children : Widget_List.Glist := Get_Children (Vsearch.Context_Specific);
+      L : Widget_List.Glist := Children;
+      use Widget_List;
+   begin
+      --  The widgets in Context_Specific have a longer lifecycle than the
+      --  dialog itself: make sure here that they are not destroyed when the
+      --  dialog is destroyed.
+      while L /= Null_List loop
+         Get_Data (L).Ref;
+         Vsearch.Context_Specific.Remove (Get_Data (L));
+         L := Next (L);
+      end loop;
+      Free (Children);
+   end On_Vsearch_Destroy;
+
    ----------------
    -- Initialize --
    ----------------
@@ -1805,6 +1829,8 @@ package body Vsearch is
 
       Gtk_New_Vbox (Self.Context_Specific, Homogeneous => False);
       Self.Scope_Frame.Pack_Start (Self.Context_Specific, False);
+
+      Self.On_Destroy (On_Vsearch_Destroy'Access);
 
       --  Any change to the fields resets the search mode
       Return_Callback.Object_Connect
