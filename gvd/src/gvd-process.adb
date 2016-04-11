@@ -495,13 +495,20 @@ package body GVD.Process is
       Descriptor : GNAT.Expect.Process_Descriptor'Class)
       return Visual_Debugger
    is
-      Process : Visual_Debugger;
-      List    : Debugger_List_Link := Get_Debugger_List (Kernel);
+      procedure Callback
+        (Object : not null access Base_Visual_Debugger'Class);
 
-   begin
-      while List /= null loop
-         Process := Visual_Debugger (List.Debugger);
+      Result : Visual_Debugger;
 
+      --------------
+      -- Callback --
+      --------------
+
+      procedure Callback
+        (Object : not null access Base_Visual_Debugger'Class)
+      is
+         Process : constant Visual_Debugger := Visual_Debugger (Object);
+      begin
          if Process.Debugger /= null then
             --  Note: The process might have been already killed when this
             --  function is called.
@@ -509,14 +516,15 @@ package body GVD.Process is
             if Get_Descriptor
               (Get_Process (Process.Debugger)).all = Descriptor
             then
-               return Process;
+               Result := Process;
             end if;
          end if;
+      end Callback;
 
-         List := List.Next;
-      end loop;
+   begin
+      For_Each_Debugger (Kernel, Callback'Access);
 
-      return null;
+      return Result;
 
    exception
       when Constraint_Error =>
@@ -913,10 +921,7 @@ package body GVD.Process is
    procedure Initialize
      (Process : access Visual_Debugger_Record'Class;
       Window  : access GPS.Main_Window.GPS_Window_Record'Class;
-      Source  : GVD.Source_Editor.Source_Editor)
-   is
-      Debugger_List : Debugger_List_Link;
-      Debugger_Num  : Natural := 1;
+      Source  : GVD.Source_Editor.Source_Editor) is
    begin
       Initialize (Process);
       Ref (Process);
@@ -934,29 +939,7 @@ package body GVD.Process is
         (Process.Editor_Text, Source, Default_Style.Get_Pref_Font);
 
       Set_Current_Debugger (Window.Kernel, Process);
-
-      if Get_Debugger_List (Window.Kernel) = null then
-         Process.Debugger_Num := Debugger_Num;
-         Set_First_Debugger
-           (Window.Kernel,
-            new Debugger_List_Node'
-              (Next     => null,
-               Debugger => Get_Current_Debugger (Window.Kernel)));
-
-      else
-         Debugger_Num := Debugger_Num + 1;
-         Debugger_List := Get_Debugger_List (Window.Kernel);
-
-         while Debugger_List.Next /= null loop
-            Debugger_Num := Debugger_Num + 1;
-            Debugger_List := Debugger_List.Next;
-         end loop;
-
-         Process.Debugger_Num := Debugger_Num;
-         Debugger_List.Next := new Debugger_List_Node'
-           (Next     => null,
-            Debugger => Get_Current_Debugger (Window.Kernel));
-      end if;
+      Add_Debugger (Window.Kernel, Process);
    end Initialize;
 
    ------------------------
@@ -1041,29 +1024,37 @@ package body GVD.Process is
    --------------------
 
    procedure Close_Debugger (Process : access Visual_Debugger_Record) is
-      Kernel        : constant Kernel_Handle := Process.Kernel;
-      Debugger_List : Debugger_List_Link := Get_Debugger_List (Kernel);
-      Prev          : Debugger_List_Link;
-      Property      : Breakpoint_Property;
+
+      procedure Callback (Object : not null access Base_Visual_Debugger'Class);
+      --  Count number of active debugger processes
+
+      Count  : Natural := 0;  --  number of active debugger processes
+
+      --------------
+      -- Callback --
+      --------------
+
+      procedure Callback
+        (Object : not null access Base_Visual_Debugger'Class)
+      is
+         pragma Unreferenced (Object);
+      begin
+         Count := Count + 1;
+      end Callback;
+
+      Kernel           : constant Kernel_Handle := Process.Kernel;
+      Is_Last_Debugger : Boolean;
+      Property         : Breakpoint_Property;
    begin
       if Process.Exiting then
          return;
       end if;
 
       GNATCOLL.Traces.Trace (Me, "Closing Debugger");
-      while Debugger_List /= null
-        and then Debugger_List.Debugger /= Process
-      loop
-         Prev          := Debugger_List;
-         Debugger_List := Debugger_List.Next;
-      end loop;
-
-      if Debugger_List = null then
-         --  Should never happen
-         return;
-      end if;
 
       Process.Exiting := True;
+      For_Each_Debugger (Kernel, Callback'Access);
+      Is_Last_Debugger := Count = 1;
 
       --  Save the breakpoints if needed
 
@@ -1089,7 +1080,7 @@ package body GVD.Process is
       --  if views are closed before the perspective change, their position
       --  is lost.
 
-      if Prev = null and then Debugger_List.Next = null then
+      if Is_Last_Debugger then
          Load_Perspective (Kernel, "Default");
       end if;
 
@@ -1123,25 +1114,10 @@ package body GVD.Process is
          Process.Timeout_Id := 0;
       end if;
 
-      Process.Exiting := False;
+      Remove_Debugger (Kernel, Process);
       Unref (Process);
 
-      if Prev = null then
-         Set_First_Debugger (Kernel, Debugger_List.Next);
-
-         if Debugger_List.Next = null then
-            Set_Current_Debugger (Kernel, null);
-         else
-            Set_Current_Debugger (Kernel, Debugger_List.Next.Debugger);
-         end if;
-      else
-         Prev.Next := Debugger_List.Next;
-         Set_Current_Debugger (Kernel, Prev.Debugger);
-      end if;
-
-      Free (Debugger_List);
-
-      if Get_Debugger_List (Kernel) = null then
+      if Is_Last_Debugger then
          Debug_Terminate (Kernel);
       end if;
    end Close_Debugger;

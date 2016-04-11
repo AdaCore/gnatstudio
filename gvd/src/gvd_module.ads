@@ -17,12 +17,8 @@
 
 --  This package defines the debugger module (called GVD)
 
-with Ada.Unchecked_Deallocation;
-
-with Glib.Object;
 with GPS.Debuggers;           use GPS.Debuggers;
 with GPS.Kernel.Modules;
-with GVD;                     use GVD;
 
 package GVD_Module is
 
@@ -34,19 +30,6 @@ package GVD_Module is
 
    function Get_Module return GPS.Kernel.Modules.Module_ID;
    --  Return the debugger module
-
-   type Debugger_List_Node;
-   type Debugger_List_Link is access Debugger_List_Node;
-
-   type Debugger_List_Node is record
-      Debugger : access Base_Visual_Debugger'Class;
-      --  The real type is a Visual_Debugger
-
-      Next     : Debugger_List_Link;
-   end record;
-
-   procedure Free is new
-     Ada.Unchecked_Deallocation (Debugger_List_Node, Debugger_List_Link);
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -66,24 +49,30 @@ package GVD_Module is
    --  while at least one debugger is running. Does nothing if the hooks have
    --  already been created
 
-   function Get_Debugger_List
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Debugger_List_Link;
-   --  Return to the current list of active debuggers
-
    function Get_Current_Debugger
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return access Base_Visual_Debugger'Class;
    --  Return the current visual debugger
 
-   procedure Set_First_Debugger
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Debugger : Debugger_List_Link);
-   --  Set the first debugger returned by Get_Debugger_List
-
    procedure Set_Current_Debugger
      (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
       Current : access Base_Visual_Debugger'Class);
    --  Set the current active visual debugger
+
+   procedure Add_Debugger
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Object : not null access Base_Visual_Debugger'Class);
+   --  Add Object to debugger list
+
+   procedure Remove_Debugger
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Object : not null access Base_Visual_Debugger'Class);
+   --  Delete Object from debugger list
+
+   procedure For_Each_Debugger
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Action : access procedure
+        (Object : not null access Base_Visual_Debugger'Class));
+   --  Execute callback Action for each debugger
 
 end GVD_Module;

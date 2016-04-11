@@ -23,6 +23,7 @@ with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with Debugger;                use Debugger;
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
+with GPS.Debuggers;           use GPS.Debuggers;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Intl;                use GPS.Intl;
@@ -58,21 +59,50 @@ package body GVD.Scripts is
 
       elsif Command = "get" then
          declare
+            procedure Process_By_Id
+              (Object : not null access Base_Visual_Debugger'Class);
+
+            procedure Process_By_File
+              (Object : not null access Base_Visual_Debugger'Class);
+
             Id   : Natural;
-            File_Inst : Class_Instance;
             File : Virtual_File;
-            List : Debugger_List_Link := Get_Debugger_List (Kernel);
+
+            -------------------
+            -- Process_By_Id --
+            -------------------
+
+            procedure Process_By_Id
+              (Object : not null access Base_Visual_Debugger'Class)
+            is
+               Visual : constant Visual_Debugger := Visual_Debugger (Object);
+            begin
+               if Get_Num (Visual) = Gint (Id) then
+                  Process := Visual;
+               end if;
+            end Process_By_Id;
+
+            ---------------------
+            -- Process_By_File --
+            ---------------------
+
+            procedure Process_By_File
+              (Object : not null access Base_Visual_Debugger'Class)
+            is
+               Visual : constant Visual_Debugger := Visual_Debugger (Object);
+            begin
+               if Get_Executable (Visual.Debugger) = File then
+                  Process := Visual;
+               end if;
+            end Process_By_File;
+
+            File_Inst : Class_Instance;
          begin
             if Number_Of_Arguments (Data) = 0 then
                Process := Visual_Debugger (Get_Current_Debugger (Kernel));
             else
                Id := Nth_Arg (Data, 1);
-               while List /= null loop
-                  Process := Visual_Debugger (List.Debugger);
-                  exit when Get_Num (Process) = Gint (Id);
-                  Process := null;
-                  List := List.Next;
-               end loop;
+               For_Each_Debugger (Kernel, Process_By_Id'Access);
             end if;
 
          exception
@@ -81,13 +111,7 @@ package body GVD.Scripts is
                File_Inst := Nth_Arg
                  (Data, 1, Get_File_Class (Kernel), Allow_Null => False);
                File := Get_Data (File_Inst);
-
-               while List /= null loop
-                  Process := Visual_Debugger (List.Debugger);
-                  exit when Get_Executable (Process.Debugger) = File;
-                  Process := null;
-                  List := List.Next;
-               end loop;
+               For_Each_Debugger (Kernel, Process_By_File'Access);
          end;
 
          if Process = null then
@@ -99,15 +123,25 @@ package body GVD.Scripts is
 
       elsif Command = "list" then
          declare
-            List : Debugger_List_Link := Get_Debugger_List (Kernel);
-         begin
-            Set_Return_Value_As_List (Data);
-            while List /= null loop
-               Process := Visual_Debugger (List.Debugger);
+            procedure Callback
+              (Object : not null access Base_Visual_Debugger'Class);
+
+            --------------
+            -- Callback --
+            --------------
+
+            procedure Callback
+              (Object : not null access Base_Visual_Debugger'Class)
+            is
+               Process : constant Visual_Debugger := Visual_Debugger (Object);
+            begin
                Set_Return_Value
                  (Data, Get_Or_Create_Instance (Get_Script (Data), Process));
-               List := List.Next;
-            end loop;
+            end Callback;
+
+         begin
+            Set_Return_Value_As_List (Data);
+            For_Each_Debugger (Kernel, Callback'Access);
          end;
 
       elsif Command = "send" then

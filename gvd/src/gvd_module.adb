@@ -16,6 +16,8 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Ada.Containers.Doubly_Linked_Lists;
+
 with GNAT.OS_Lib;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -99,6 +101,9 @@ package body GVD_Module is
       Context : Selection_Context);
    --  Callback for the "source_lines_revealed_hook" hook
 
+   package Debugger_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Element_Type => Base_Visual_Debugger_Access);
+
    type GVD_Module_Record is new Module_ID_Record with record
       Initialized                    : Boolean := False;
       --  Whether the debugger is running
@@ -119,7 +124,7 @@ package body GVD_Module is
       Up_Button,
       Down_Button                    : Gtk.Tool_Button.Gtk_Tool_Button;
 
-      First_Debugger                 : Debugger_List_Link;
+      Debugger_List                  : Debugger_Lists.List;
       --  Points to the list of debuggers
 
       Current_Debugger               : access Base_Visual_Debugger'Class;
@@ -462,18 +467,71 @@ package body GVD_Module is
      (Context : Selection_Context) return String;
    --  Provide expansion for "$!" in the labels for contextual menus
 
+   ------------------
+   -- Add_Debugger --
+   ------------------
+
+   procedure Add_Debugger
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Object : not null access Base_Visual_Debugger'Class)
+   is
+      pragma Unreferenced (Kernel);
+
+      Process : Visual_Debugger_Record'Class renames
+        Visual_Debugger_Record'Class (Object.all);
+   begin
+      Process.Debugger_Num :=
+        Natural (GVD_Module_ID.Debugger_List.Length) + 1;
+
+      GVD_Module_ID.Debugger_List.Prepend (Object);
+   end Add_Debugger;
+
+   ---------------------
+   -- Remove_Debugger --
+   ---------------------
+
+   procedure Remove_Debugger
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Object : not null access Base_Visual_Debugger'Class)
+   is
+      Cursor : Debugger_Lists.Cursor :=
+        GVD_Module_ID.Debugger_List.Find (Object);
+      Prev   : constant Debugger_Lists.Cursor :=
+        Debugger_Lists.Previous (Cursor);
+      Next   : constant Debugger_Lists.Cursor :=
+        Debugger_Lists.Next (Cursor);
+   begin
+      if not Debugger_Lists.Has_Element (Cursor) then
+         --  Should never happen
+         return;
+      end if;
+
+      if Debugger_Lists.Has_Element (Prev) then
+         Set_Current_Debugger (Kernel, Debugger_Lists.Element (Prev));
+      elsif Debugger_Lists.Has_Element (Next) then
+         Set_Current_Debugger (Kernel, Debugger_Lists.Element (Next));
+      else
+         Set_Current_Debugger (Kernel, null);
+      end if;
+
+      GVD_Module_ID.Debugger_List.Delete (Cursor);
+   end Remove_Debugger;
+
    -----------------------
-   -- Get_Debugger_List --
+   -- For_Each_Debugger --
    -----------------------
 
-   function Get_Debugger_List
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Debugger_List_Link
+   procedure For_Each_Debugger
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Action : access procedure
+        (Object : not null access Base_Visual_Debugger'Class))
    is
       pragma Unreferenced (Kernel);
    begin
-      return GVD_Module_ID.First_Debugger;
-   end Get_Debugger_List;
+      for J of GVD_Module_ID.Debugger_List loop
+         Action (J);
+      end loop;
+   end For_Each_Debugger;
 
    --------------------------
    -- Get_Current_Debugger --
@@ -487,19 +545,6 @@ package body GVD_Module is
    begin
       return GVD_Module_ID.Current_Debugger;
    end Get_Current_Debugger;
-
-   ------------------------
-   -- Set_First_Debugger --
-   ------------------------
-
-   procedure Set_First_Debugger
-     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Debugger : Debugger_List_Link)
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      GVD_Module_ID.First_Debugger := Debugger;
-   end Set_First_Debugger;
 
    --------------------------
    -- Set_Current_Debugger --
@@ -1598,13 +1643,17 @@ package body GVD_Module is
    ---------------------
 
    procedure Debug_Terminate (Kernel : Kernel_Handle) is
-      Debugger_List    : Debugger_List_Link := Get_Debugger_List (Kernel);
-      Current_Debugger : Visual_Debugger;
+      List : array (1 .. Natural (GVD_Module_ID.Debugger_List.Length)) of
+        Base_Visual_Debugger_Access;
+      Index : Positive := 1;
    begin
-      while Debugger_List /= null loop
-         Current_Debugger := Visual_Debugger (Debugger_List.Debugger);
-         Debugger_List := Debugger_List.Next;
-         Close_Debugger (Current_Debugger);
+      for J of GVD_Module_ID.Debugger_List loop
+         List (Index) := J;
+         Index := Index + 1;
+      end loop;
+
+      for J of List loop
+         Close_Debugger (Visual_Debugger (J));
       end loop;
 
       Remove_Debugger_Columns (Kernel, GNATCOLL.VFS.No_File);
