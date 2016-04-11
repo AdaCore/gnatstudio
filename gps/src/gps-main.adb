@@ -434,13 +434,6 @@ procedure GPS.Main is
       --  proxies for the services in the command line, usable even when no
       --  command line is passed
 
-      procedure Restore_GPS_Startup_Values;
-      --  The GPS wrapper under certain platforms will set a certain number of
-      --  environment variables, and store their original value in
-      --  GPS_STARTUP_$VAR. This procedure restores those variables to their
-      --  original values, so that gps subprocesses are not affected by those
-      --  values.
-
       function Getenv (Var : String) return String is
          Str : String_Access;
       begin
@@ -463,34 +456,35 @@ procedure GPS.Main is
          end if;
       end Get_Cwd;
 
-      --------------------------------
-      -- Restore_GPS_Startup_Values --
-      --------------------------------
-
-      procedure Restore_GPS_Startup_Values is
-
-         package Env_Vars renames Ada.Environment_Variables;
-
-         procedure Internal_RGSV (Saved_Var_Name, Saved_Var_Value : String);
-         --  Internal procedure that will be called for each env var.
-
-         procedure Internal_RGSV (Saved_Var_Name, Saved_Var_Value : String) is
-         begin
-            if Starts_With (Saved_Var_Name, "GPS_STARTUP_") then
-               Env_Vars.Set (Replace (Saved_Var_Name, "GPS_STARTUP_", ""),
-                             Saved_Var_Value);
-            end if;
-         end Internal_RGSV;
-      begin
-         Env_Vars.Iterate (Internal_RGSV'Access);
-      end Restore_GPS_Startup_Values;
-
    begin
       --  Reset the environment that was set before GPS was started (since
       --  starting GPS will generally imply a change in LD_LIBRARY_PATH to
       --  point to the right libraries
 
-      Restore_GPS_Startup_Values;
+      declare
+         Tmp : constant String := Getenv ("GPS_STARTUP_LD_LIBRARY_PATH");
+      begin
+         if Tmp /= "" then
+            Setenv ("LD_LIBRARY_PATH", Tmp);
+         end if;
+      end;
+
+      declare
+         Tmp : constant String := Getenv ("GPS_STARTUP_DYLD_LIBRARY_PATH");
+      begin
+         if Tmp /= "" then
+            Setenv ("DYLD_LIBRARY_PATH", Tmp);
+         end if;
+      end;
+
+      declare
+         Tmp : constant String :=
+           Getenv ("GPS_STARTUP_DYLD_FALLBACK_LIBRARY_PATH");
+      begin
+         if Tmp /= "" then
+            Setenv ("DYLD_FALLBACK_LIBRARY_PATH", Tmp);
+         end if;
+      end;
 
       declare
          Charset : constant String := Getenv ("CHARSET");
