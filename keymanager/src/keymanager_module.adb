@@ -2269,13 +2269,11 @@ package body KeyManager_Module is
       if Active (Event_Debug_Trace) then
          Event_Handler_Kernel.Handler_Set
            (Debug_Event_Handler'Access,
-            Kernel_Handle (Kernel),
-            null);
+            Kernel_Handle (Kernel));
       else
          Event_Handler_Kernel.Handler_Set
            (General_Event_Handler'Access,
-            Kernel_Handle (Kernel),
-            null);
+            Kernel_Handle (Kernel));
       end if;
 
       Create_New_Key_If_Necessary

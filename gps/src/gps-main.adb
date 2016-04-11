@@ -196,75 +196,75 @@ procedure GPS.Main is
    --  Stack depth for GNATCOLL.Memory
 
    Refactor_Trace         : constant Trace_Handle :=
-                              Create ("MODULE.Refactor", GNATCOLL.Traces.On);
+                     Create ("MODULE.Refactor", GNATCOLL.Traces.On);
    Python_Trace           : constant Trace_Handle :=
-                              Create ("MODULE.Python", GNATCOLL.Traces.On);
+                     Create ("MODULE.Python", GNATCOLL.Traces.On);
    Call_Graph_Trace       : constant Trace_Handle :=
-                              Create ("MODULE.Call_Graph", GNATCOLL.Traces.On);
+                     Create ("MODULE.Call_Graph", GNATCOLL.Traces.On);
    Dependency_Trace       : constant Trace_Handle :=
-                              Create ("MODULE.Dependency", GNATCOLL.Traces.On);
+                     Create ("MODULE.Dependency", GNATCOLL.Traces.On);
    Project_Browser_Trace  : constant Trace_Handle :=
-                        Create ("MODULE.Project_Browser", GNATCOLL.Traces.On);
+                     Create ("MODULE.Project_Browser", GNATCOLL.Traces.On);
    Browsers_Trace         : constant Trace_Handle :=
-                        Create ("MODULE.Browsers", GNATCOLL.Traces.On);
+                     Create ("MODULE.Browsers", GNATCOLL.Traces.On);
    Entities_Browser_Trace : constant Trace_Handle :=
-                        Create ("MODULE.Entities_Browser", GNATCOLL.Traces.On);
+                     Create ("MODULE.Entities_Browser", GNATCOLL.Traces.On);
    Revision_Views_Trace   : constant Trace_Handle :=
-                        Create ("MODULE.Revision_Views", GNATCOLL.Traces.On);
+                     Create ("MODULE.Revision_Views", GNATCOLL.Traces.On);
    Aliases_Trace          : constant Trace_Handle :=
-                        Create ("MODULE.Aliases", GNATCOLL.Traces.On);
+                     Create ("MODULE.Aliases", GNATCOLL.Traces.On);
    Project_Explorer_Trace : constant Trace_Handle :=
-                        Create ("MODULE.Project_Explorer", GNATCOLL.Traces.On);
+                     Create ("MODULE.Project_Explorer", GNATCOLL.Traces.On);
    Files_Explorer_Trace   : constant Trace_Handle :=
-                        Create ("MODULE.Files_Explorer", GNATCOLL.Traces.On);
+                     Create ("MODULE.Files_Explorer", GNATCOLL.Traces.On);
    VCS_Trace              : constant Trace_Handle :=
-                        Create ("MODULE.VCS", GNATCOLL.Traces.On);
+                     Create ("MODULE.VCS", GNATCOLL.Traces.On);
    Custom_Trace           : constant Trace_Handle :=
-                        Create ("MODULE.Custom", GNATCOLL.Traces.On);
+                     Create ("MODULE.Custom", GNATCOLL.Traces.On);
    Project_Templates_Trace : constant Trace_Handle :=
-                       Create ("MODULE.Project_Templates", GNATCOLL.Traces.On);
+                     Create ("MODULE.Project_Templates", GNATCOLL.Traces.On);
    Code_Analysis_Trace    : constant Trace_Handle :=
-                        Create ("MODULE.Code_Analysis", GNATCOLL.Traces.On);
+                     Create ("MODULE.Code_Analysis", GNATCOLL.Traces.On);
    GNAThub_Trace          : constant Trace_Handle :=
-                              Create ("MODULE.GNAThub", GNATCOLL.Traces.Off);
+                     Create ("MODULE.GNAThub", GNATCOLL.Traces.Off);
    CodePeer_Trace         : constant Trace_Handle :=
-                              Create ("MODULE.CodePeer", GNATCOLL.Traces.On);
+                     Create ("MODULE.CodePeer", GNATCOLL.Traces.On);
    GNATStack_Trace        : constant Trace_Handle :=
-                              Create ("MODULE.GNATStack", GNATCOLL.Traces.On);
+                     Create ("MODULE.GNATStack", GNATCOLL.Traces.On);
    Codefix_Trace          : constant Trace_Handle :=
-                              Create ("MODULE.Codefix", GNATCOLL.Traces.On);
+                     Create ("MODULE.Codefix", GNATCOLL.Traces.On);
    Builder_Trace          : constant Trace_Handle :=
-                              Create ("MODULE.Builder", GNATCOLL.Traces.On);
+                     Create ("MODULE.Builder", GNATCOLL.Traces.On);
    GVD_Trace              : constant Trace_Handle :=
-                              Create ("MODULE.GVD", GNATCOLL.Traces.On);
+                     Create ("MODULE.GVD", GNATCOLL.Traces.On);
    GNATTest_Trace         : constant Trace_Handle :=
-                              Create ("MODULE.GNATTest", GNATCOLL.Traces.On);
+                     Create ("MODULE.GNATTest", GNATCOLL.Traces.On);
    Startup_Trace          : constant Trace_Handle :=
-                              Create ("MODULE.Startup", GNATCOLL.Traces.On);
+                     Create ("MODULE.Startup", GNATCOLL.Traces.On);
    VFS_Trace              : constant Trace_Handle :=
-                              Create ("MODULE.VFS", GNATCOLL.Traces.On);
+                     Create ("MODULE.VFS", GNATCOLL.Traces.On);
    Help_Trace             : constant Trace_Handle :=
-                              Create ("MODULE.Help", GNATCOLL.Traces.On);
+                     Create ("MODULE.Help", GNATCOLL.Traces.On);
    Scenario_View_Trace    : constant Trace_Handle :=
-                              Create ("MODULE.SCENARIO", GNATCOLL.Traces.On);
+                     Create ("MODULE.SCENARIO", GNATCOLL.Traces.On);
    Project_Viewer_Trace   : constant Trace_Handle :=
-                      Create ("MODULE.Project_Viewer", GNATCOLL.Traces.On);
+                     Create ("MODULE.Project_Viewer", GNATCOLL.Traces.On);
    Project_Properties_Trace : constant Trace_Handle :=
-                      Create ("MODULE.Project_Properties", GNATCOLL.Traces.On);
+                     Create ("MODULE.Project_Properties", GNATCOLL.Traces.On);
    CPP_Trace              : constant Trace_Handle :=
-                              Create ("MODULE.CPP", GNATCOLL.Traces.On);
+                     Create ("MODULE.CPP", GNATCOLL.Traces.On);
    Outline_View_Trace     : constant Trace_Handle :=
-                              Create ("MODULE.Outline", GNATCOLL.Traces.On);
+                     Create ("MODULE.Outline", GNATCOLL.Traces.On);
    Call_Graph_View_Trace  : constant Trace_Handle :=
-                      Create ("MODULE.Call_Graph_View", GNATCOLL.Traces.On);
+                     Create ("MODULE.Call_Graph_View", GNATCOLL.Traces.On);
    Clipboard_View_Trace   : constant Trace_Handle :=
-                      Create ("MODULE.Clipboard_Vview", GNATCOLL.Traces.On);
+                     Create ("MODULE.Clipboard_Vview", GNATCOLL.Traces.On);
    Toolchains_Trace       : constant Trace_Handle :=
-                      Create ("MODULE.Toolchains", GNATCOLL.Traces.On);
+                     Create ("MODULE.Toolchains", GNATCOLL.Traces.On);
    Toolchains_Editor_Trace  : constant Trace_Handle :=
-                      Create ("MODULE.Toolchains_Editor", GNATCOLL.Traces.On);
+                     Create ("MODULE.Toolchains_Editor", GNATCOLL.Traces.On);
    Elaboration_Browser_Trace : constant Trace_Handle :=
-     Create ("MODULE.Elaboration_Browser", GNATCOLL.Traces.On);
+                     Create ("MODULE.Elaboration_Browser", GNATCOLL.Traces.On);
 
    --  If any of these debug handles is active, the correponding module
    --  is loaded.

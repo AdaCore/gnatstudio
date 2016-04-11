@@ -24,6 +24,9 @@ with GNAT.Strings;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;       use GNATCOLL.VFS.GtkAda;
 with GNATCOLL.VFS_Utils;        use GNATCOLL.VFS_Utils;
+with Gtk.File_Chooser;
+with Gtk.File_Chooser_Dialog;   use Gtk.File_Chooser_Dialog;
+with Gtk.File_Filter;           use Gtk.File_Filter;
 with Interfaces.C.Strings;
 with System;
 
@@ -67,6 +70,10 @@ with Unchecked_Deallocation;
 package body Gtkada.File_Selector is
 
    Me : constant Trace_Handle := Create ("Gtkada.File_Selector");
+
+   Use_Gtk_Selector : constant Trace_Handle :=
+     Create ("gtk_file_selector", GNATCOLL.Traces.On);
+   --  Use Gtk_File_Chooser_Dialog from Gtk instead Dialog from GPS
 
    Directories_Hist_Key : constant Histories.History_Key := "directories";
    --  Key used in the history
@@ -176,6 +183,16 @@ package body Gtkada.File_Selector is
    --  Set/Reset the busy cursor on the specified window
 
    function Get_Selected (Combo : Gtk_Combo_Box_Text) return String;
+
+   function Regexp_File_Filter
+     (Filter_Info : Gtk.File_Filter.Gtk_File_Filter_Info;
+      Exp         : Regexp)
+      return Boolean;
+   --  Validate whether file match expression
+
+   package File_Filter_Regexp is
+     new Gtk.File_Filter.Add_Custom_User_Data (Regexp);
+   --  Set Regexp as User_Data in to GtkFileFilter
 
    ---------------
    -- Callbacks --
@@ -454,11 +471,147 @@ package body Gtkada.File_Selector is
       Working_Dir   : Virtual_File;
       Initial_Dir   : Virtual_File;
       Default_File  : Virtual_File;
+      Dialog        : Gtk_File_Chooser_Dialog;
+
+      type Pattern_Callback is
+        access procedure (Pattern : String; Name : String);
+
+      procedure Parse_Pattern (Callback : Pattern_Callback);
+      --  Parse File_Pattern and Pattern_Name, separates them on parts
+      --  and call Callback for each part
+
+      procedure Add_File_Selector_Filter (Pattern : String; Name : String);
+      --  Add filter to File_Selector
+
+      procedure Add_File_Chooser_Filter (Pattern : String; Name : String);
+      --  Add filter to File_Chooser
+
+      function Make_Result (Name : String) return Virtual_File;
+      --  Create Virtual_File for file represented by Name and make
+      --  store/restore actions before exit
+
+      -----------------------------
+      -- Add_File_Chooser_Filter --
+      -----------------------------
+
+      procedure Add_File_Chooser_Filter (Pattern : String; Name : String)
+      is
+         Filter : Gtk.File_Filter.Gtk_File_Filter;
+      begin
+         Gtk.File_Filter.Gtk_New (Filter);
+
+         if Name = "" then
+            if Pattern (Pattern'First) = '{'
+              and then Pattern (Pattern'Last) = '}'
+            then
+               Filter.Set_Name
+                 (Pattern (Pattern'First + 1 .. Pattern'Last - 1));
+            else
+               Filter.Set_Name (Pattern);
+            end if;
+         else
+            Filter.Set_Name (Name);
+         end if;
+
+         if Pattern (Pattern'First) = '{' then
+            File_Filter_Regexp.Add_Custom
+              (Filter, File_Filter_Filename, Regexp_File_Filter'Access,
+               (Compile (Pattern        => Pattern,
+                         Glob           => True,
+                         Case_Sensitive => Local_Host_Is_Case_Sensitive)));
+
+         else
+            Filter.Add_Pattern (Pattern);
+         end if;
+
+         Dialog.Add_Filter (Filter);
+      end Add_File_Chooser_Filter;
+
+      ------------------------------
+      -- Add_File_Selector_Filter --
+      ------------------------------
+
+      procedure Add_File_Selector_Filter (Pattern : String; Name : String) is
+      begin
+         Register_Filter (File_Selector, Regexp_File_Filter (Pattern, Name));
+      end Add_File_Selector_Filter;
+
+      -----------------
+      -- Make_Result --
+      -----------------
+
+      function Make_Result (Name : String) return Virtual_File
+      is
+         F : Virtual_File;
+      begin
+         --  Change back to working directory
+         Change_Dir (Working_Dir);
+
+         if Name = "" then
+            return GNATCOLL.VFS.No_File;
+         else
+            F := Create (+Name);
+            Last_Directory := Dir (F);
+
+            return F;
+         end if;
+      end Make_Result;
+
+      -------------------
+      -- Parse_Pattern --
+      -------------------
+
+      procedure Parse_Pattern (Callback : Pattern_Callback)
+      is
+         Fl     : Natural := File_Pattern'First; -- Last indexes
+         Nl     : Natural := Pattern_Name'First;
+         Ff, Nf : Natural;                       -- First indexes
+         Fo, No : Natural := 0;                  -- Indexes offset
+
+      begin
+         while Fl < File_Pattern'Last loop
+            Ff := Fl;
+            Nf := Nl;
+
+            while Fl < File_Pattern'Last
+              and then File_Pattern (Fl) /= ';'
+            loop
+               Fl := Fl + 1;
+            end loop;
+
+            while Nl < Pattern_Name'Last
+              and then Pattern_Name (Nl) /= ';'
+            loop
+               Nl := Nl + 1;
+            end loop;
+
+            if File_Pattern (Fl) = ';' then
+               Fo := 1;
+            else
+               Fo := 0;
+            end if;
+
+            if Nl < Pattern_Name'Last and then Pattern_Name (Nl) = ';' then
+               No := 1;
+            else
+               No := 0;
+            end if;
+
+            if Nf > Pattern_Name'Last then
+               Callback (+File_Pattern (Ff .. Fl - Fo), "");
+            else
+               Callback
+                 (+File_Pattern (Ff .. Fl - Fo),
+                  Pattern_Name (Nf .. Nl - No));
+            end if;
+
+            Fl := Fl + 1;
+            Nl := Nl + 1;
+         end loop;
+      end Parse_Pattern;
 
    begin
-      if Use_Native_Dialog
-        and then NativeFileSelectionSupported /= 0
-        and then not Remote_Browsing
+      if not Remote_Browsing
         and then Is_Local (Base_Directory)
       then
          --  Save working directory
@@ -468,45 +621,79 @@ package body Gtkada.File_Selector is
             if Last_Directory = No_File then
                Last_Directory := Working_Dir;
             end if;
-
-            S := NativeFileSelection
-              (Title & ASCII.NUL,
-               +Full_Name (Last_Directory).all & ASCII.NUL,
-               +File_Pattern & ASCII.NUL,
-               Pattern_Name & ASCII.NUL,
-               +Default_Name & ASCII.NUL,
-               Pos_Mouse,
-               File_Selector_Kind'Pos (Kind));
+            Initial_Dir := Last_Directory;
 
          else
+            Initial_Dir := Base_Directory;
+         end if;
+
+         if Use_Native_Dialog
+           and then NativeFileSelectionSupported /= 0
+         then
             S := NativeFileSelection
               (Title & ASCII.NUL,
-               +Full_Name (Base_Directory).all & ASCII.NUL,
+               +Full_Name (Initial_Dir).all & ASCII.NUL,
                +File_Pattern & ASCII.NUL,
                Pattern_Name & ASCII.NUL,
                +Default_Name & ASCII.NUL,
                Pos_Mouse,
                File_Selector_Kind'Pos (Kind));
+
+            declare
+               Val : constant String := Interfaces.C.Strings.Value (S);
+            begin
+               c_free (S);
+               return Make_Result (Val);
+            end;
+
+         elsif Kind /= Unspecified
+           and then Active (Use_Gtk_Selector)
+         then
+            declare
+               Ignore : Boolean;
+               Button : Gtk.Widget.Gtk_Widget;
+
+               To_Action : constant array (File_Selector_Kind) of
+                 Gtk.File_Chooser.Gtk_File_Chooser_Action :=
+                   (Open_File   => Gtk.File_Chooser.Action_Open,
+                    Save_File   => Gtk.File_Chooser.Action_Save,
+                    Unspecified => Gtk.File_Chooser.Action_Select_Folder);
+            begin
+               Dialog := Gtk_File_Chooser_Dialog_New
+                 (Title  => Title,
+                  Parent => Parent,
+                  Action => To_Action (Kind));
+
+               Button := Dialog.Add_Button (Stock_Ok, Gtk_Response_OK);
+               Button.Set_Name ("gtk_file_chooser_dialog.ok_button");
+
+               Button := Dialog.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
+
+               Ignore := Dialog.Set_Current_Folder (+Full_Name (Initial_Dir));
+
+               if Kind = Open_File then
+                  Dialog.Set_Create_Folders (False);
+
+               else
+                  Dialog.Set_Do_Overwrite_Confirmation (True);
+                  if Default_Name /= "" then
+                     Dialog.Set_Current_Name (+Default_Name);
+                  end if;
+               end if;
+
+               if File_Pattern /= "" then
+                  Parse_Pattern (Add_File_Chooser_Filter'Access);
+               end if;
+
+               return F : constant Virtual_File := Make_Result
+                 (if Dialog.Run = Gtk_Response_OK
+                  then Dialog.Get_Filename
+                  else "")
+               do
+                  Dialog.Destroy;
+               end return;
+            end;
          end if;
-
-         --  Change back to working directory
-         Change_Dir (Working_Dir);
-
-         declare
-            Val : constant String := Interfaces.C.Strings.Value (S);
-            F   : Virtual_File;
-         begin
-            c_free (S);
-
-            if Val = "" then
-               return GNATCOLL.VFS.No_File;
-            else
-               F := Create (+Val);
-               Last_Directory := Dir (F);
-
-               return F;
-            end if;
-         end;
       end if;
 
       Set_Busy (Parent, True);
@@ -539,58 +726,7 @@ package body Gtkada.File_Selector is
       end if;
 
       if File_Pattern /= "" then
-         declare
-            Fl     : Natural := File_Pattern'First; -- Last indexes
-            Nl     : Natural := Pattern_Name'First;
-            Ff, Nf : Natural;                       -- First indexes
-            Fo, No : Natural := 0;                  -- Indexes offset
-
-         begin
-            while Fl < File_Pattern'Last loop
-               Ff := Fl;
-               Nf := Nl;
-
-               while Fl < File_Pattern'Last
-                 and then File_Pattern (Fl) /= ';'
-               loop
-                  Fl := Fl + 1;
-               end loop;
-
-               while Nl < Pattern_Name'Last
-                 and then Pattern_Name (Nl) /= ';'
-               loop
-                  Nl := Nl + 1;
-               end loop;
-
-               if File_Pattern (Fl) = ';' then
-                  Fo := 1;
-               else
-                  Fo := 0;
-               end if;
-
-               if Nl < Pattern_Name'Last and then Pattern_Name (Nl) = ';' then
-                  No := 1;
-               else
-                  No := 0;
-               end if;
-
-               if Nf > Pattern_Name'Last then
-                  Register_Filter
-                    (File_Selector,
-                     Regexp_File_Filter
-                       (+File_Pattern (Ff .. Fl - Fo), ""));
-               else
-                  Register_Filter
-                    (File_Selector,
-                     Regexp_File_Filter
-                       (+File_Pattern (Ff .. Fl - Fo),
-                        Pattern_Name (Nf .. Nl - No)));
-               end if;
-
-               Fl := Fl + 1;
-               Nl := Nl + 1;
-            end loop;
-         end;
+         Parse_Pattern (Add_File_Selector_Filter'Access);
       end if;
 
       Set_Busy (Parent, False);
@@ -860,6 +996,19 @@ package body Gtkada.File_Selector is
 
       return Has_Element (Win.Remaining_Files);
    end Display_File;
+
+   ------------------------
+   -- Regexp_File_Filter --
+   ------------------------
+
+   function Regexp_File_Filter
+     (Filter_Info : Gtk.File_Filter.Gtk_File_Filter_Info;
+      Exp         : Regexp)
+      return Boolean is
+   begin
+      return Match
+        (Interfaces.C.Strings.Value (Filter_Info.Display_Name), Exp);
+   end Regexp_File_Filter;
 
    ---------------------
    -- Register_Filter --

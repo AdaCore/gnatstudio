@@ -243,6 +243,13 @@ NF-17-N714-016 GPS: configurable window title (2015-11-05)
   the GPS window. Through it, you can chose whether to display any of base
   names, directory names, project name,... in the title bar.
 
+NF-17-J810-010 GPS: use Gtk dialog for open/save files (2016-04-15)
+
+  GtkFileChooserDialog used instead dialog of GPS if system doesn't have
+  own dialog or this forbidden in a preferences and it is local file system.
+  It is possible to use a dialog of GPS by turn off gtk_file_selector
+  trace setting.
+
 NF-17-GB12-010 GPS: different icon for disabled breakpoints (2016-04-05)
 
   The icons that are displayed on the side of editors to show where
