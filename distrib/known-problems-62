@@ -306,13 +306,11 @@ KP-62-P121-016 WB: undefined reference to `_Unwind_Resume'
               Application using rtp runtime, a lot of undefined reference to
               _Unwind_* problems are reported
 
-  Status:     This was fixed in 17.0 on 2016-01-22
+  Status:     This was fixed in 17.0 on 2016-04-07
 
-  Workaround: Use RUNTIME=zfp or ravenscar-cert-rtp to build the RTP. Depending
-              on the RTP's GNAT project file, the RUNTIME used to build it can
-              be changed:
-              - editing RTP's gnat.makefile file
-              - changing RTP's RUNTIME value using the Scenario Variables view.
+  Workaround: add the following libraries to linker switches:
+              "-lgnat -lgcc_eh" when libgcc_eh is part of the compiler,
+              "-lgnat -lgcc" when libgcc_eh is not part of the compiler.
 
 KP-62-P119-022 ECL: problem with build started automatically during clean
 
