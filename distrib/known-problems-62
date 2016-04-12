@@ -25,6 +25,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P404-041 WB: User Guide contents is incorrect on Workbench-4/VxWorks-7
+
+  Problem:    Creating DKM & RTP documentation when running Workbench-4 is
+              incorrect. It is related only to Workbench-3.x platform.
+
+  Status:     This was fixed in 17.0 on 2016-04-12
+
+  Workaround: Ignore standard/flexible managed build information (only
+              flexible managed build are supported on Workbench-4)
+              Use only "gnu" build spec.
+
 KP-62-P331-016 GPS: indentation depends on end-of-line spaces
 
   Problem:    When the end of the line contains blanks then
