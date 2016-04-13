@@ -1757,7 +1757,10 @@ package body Src_Editor_Buffer is
    procedure Changed_Handler (Buffer : access Source_Buffer_Record'Class) is
    begin
       Emit_New_Cursor_Position (Buffer);
-      Buffer.Modified_Auto := True;
+
+      if Buffer.Modifying_Editable_Lines then
+         Buffer.Modified_Auto := True;
+      end if;
 
    exception
       when E : others =>
