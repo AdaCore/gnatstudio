@@ -1236,6 +1236,21 @@ package body Codefix.GNAT_Parser is
       Matches      : Match_Array);
    --  Fix problems like no statements may follow "then" on same line
 
+   type Elaborate_All_Required is new Error_Parser (1) with null record;
+
+   overriding
+   procedure Initialize (This : in out Elaborate_All_Required);
+
+   overriding
+   procedure Fix
+     (This         : Elaborate_All_Required;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like Elaborate_All pragma required for "Procs2"
+
    --------------------------------------
    --  GnatCheck_Missing_Storage_Order --
    --------------------------------------
@@ -4179,6 +4194,39 @@ package body Codefix.GNAT_Parser is
            True);
    end Fix;
 
+   ----------------------------
+   -- Elaborate_All_Required --
+   ----------------------------
+
+   overriding procedure Initialize (This : in out Elaborate_All_Required) is
+   begin
+      This.Matcher :=
+        (1 => new Pattern_Matcher'
+           (Compile ("Elaborate_All pragma required for ""([^""]+)""")));
+   end Initialize;
+
+   ---------
+   -- Fix --
+   ---------
+
+   overriding procedure Fix
+     (This         : Elaborate_All_Required;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message_It   : Error_Message_Iterator;
+      Options      : Fix_Options;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Options);
+
+      Message : constant Error_Message := Get_Message (Message_It);
+   begin
+      Solutions := Add_Elaborate_All
+        (Current_Text,
+         Message,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+   end Fix;
+
    ----------------------
    -- Register_Parsers --
    ----------------------
@@ -4260,6 +4308,7 @@ package body Codefix.GNAT_Parser is
       Add_Parser (Processor, new Wrong_Index_Usage);
       Add_Parser (Processor, new Wrong_Sb_Order);
       Add_Parser (Processor, new No_Statement_Following_Then);
+      Add_Parser (Processor, new Elaborate_All_Required);
 
       --  GNATCheck parsers
 

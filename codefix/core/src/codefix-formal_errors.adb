@@ -1754,4 +1754,68 @@ package body Codefix.Formal_Errors is
       return Error.Is_Style or Error.Is_Warning;
    end Is_Style_Or_Warning;
 
+   -----------------------
+   -- Add_Elaborate_All --
+   -----------------------
+
+   function Add_Elaborate_All
+     (Current_Text   : Text_Navigator_Abstr'Class;
+      Cursor         : File_Cursor'Class;
+      Package_Name   : String) return Solution_List
+   is
+      procedure Add_Pragma
+        (With_Cursor : in out File_Cursor;
+         Result      : in out Solution_List);
+
+      ----------------
+      -- Add_Pragma --
+      ----------------
+
+      procedure Add_Pragma
+        (With_Cursor : in out File_Cursor;
+         Result      : in out Solution_List)
+      is
+         Pragma_Command_Ptr : constant Ptr_Command :=
+           new Add_Pragma_Cmd;
+         Pragma_Command     : Add_Pragma_Cmd renames
+           Add_Pragma_Cmd (Pragma_Command_Ptr.all);
+      begin
+         Pragma_Command.Initialize
+           (Current_Text => Current_Text,
+            Position     => With_Cursor,
+            Category     => Cat_With,
+            Name         => To_Unbounded_String ("Elaborate_All"),
+            Argument     => To_Unbounded_String (Package_Name));
+
+         Set_Caption
+           (Pragma_Command,
+            "Add pragma Elaborate_All after with-clause for """ &
+              To_Unbounded_String (Package_Name) & """");
+         Append (Result, Pragma_Command_Ptr);
+      end Add_Pragma;
+
+      Result      : Solution_List;
+      With_Cursor : File_Cursor;
+   begin
+      With_Cursor := File_Cursor
+        (Search_With (Current_Text, Cursor.Get_File, Package_Name));
+
+      if With_Cursor /= Null_File_Cursor then
+         Add_Pragma (With_Cursor, Result);
+      else
+         --  If no with-clause has been found, try corresponding spec file
+         With_Cursor := File_Cursor
+           (Search_With
+              (Current_Text,
+               Current_Text.Get_Body_Or_Spec (Cursor.Get_File),
+               Package_Name));
+
+         if With_Cursor /= Null_File_Cursor then
+            Add_Pragma (With_Cursor, Result);
+         end if;
+      end if;
+
+      return Result;
+   end Add_Elaborate_All;
+
 end Codefix.Formal_Errors;

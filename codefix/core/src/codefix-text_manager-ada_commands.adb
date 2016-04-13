@@ -925,6 +925,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Position : File_Cursor;
 
       procedure Add_Pragma;
+      procedure Add_Clause_Pragma;
       procedure Add_Literal_Pragma;
       procedure Add_Parameter_Pragma;
 
@@ -961,6 +962,39 @@ package body Codefix.Text_Manager.Ada_Commands is
                To_Column_Index (Char_Ind, Line));
          end;
       end Add_Pragma;
+
+      -----------------------
+      -- Add_Clause_Pragma --
+      -----------------------
+
+      procedure Add_Clause_Pragma is
+         Clause   : Construct_Tree_Iterator;
+         Char_Ind : String_Index_Type;
+      begin
+         Clause := Get_Iterator_At
+           (Current_Text,
+            Cursor,
+            Start_Construct,
+            Categories_Seeked => (Cat_With, Cat_Use));
+
+         Char_Ind := String_Index_Type
+           (Get_Construct (Clause).Sloc_End.Column);
+
+         if Char_Ind = 0 then
+            Char_Ind := 1;
+         end if;
+
+         Set_File (Position, Get_File (Cursor));
+
+         declare
+            Line : constant String := Get_Line (Current_Text, Position);
+         begin
+            Set_Location
+              (Position,
+               Get_Construct (Clause).Sloc_End.Line,
+               To_Column_Index (Char_Ind, Line));
+         end;
+      end Add_Clause_Pragma;
 
       ------------------------
       -- Add_Literal_Pragma --
@@ -1054,6 +1088,9 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          when Cat_Parameter =>
             Add_Parameter_Pragma;
+
+         when Cat_With | Cat_Use =>
+            Add_Clause_Pragma;
 
          when others =>
             Add_Pragma;
@@ -1167,7 +1204,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       if Number_Of_Declarations (Work_Extract) = 1 then
          Current_Text.Replace
            (Position      => File_Cursor'Class
-              (Current_Text.Search_Token (Cursor, Semicolon_Tok)),
+              (Current_Text.Search_Token (Cursor, Colon_Tok)),
             Len           => 1,
             New_Text      => ": " & New_Word,
             Blanks_Before => Keep,
@@ -2900,7 +2937,7 @@ package body Codefix.Text_Manager.Ada_Commands is
         Current_Text.Get_Current_Cursor (This.Location.all);
       Semicol_Cursor : File_Cursor'Class :=
         Current_Text.Search_Token
-          (Cursor, Semicolon_Tok, Reverse_Step);
+          (Cursor, Colon_Tok, Reverse_Step);
    begin
       Current_Text.Replace (Semicol_Cursor, Semicol_Cursor, ": constant");
 

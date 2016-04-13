@@ -23,6 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P412-011 GPS: automatic fix for adding Elaborate_All pragma (2016-04-15)
+
+  The GPS code fixing capability was enhanced to handle compiler messages
+  such as "Elaborate_All pragma required for NAME". To fix this GPS will add
+  pragma Elaborate_All (NAME) after corresponding with-clause in the spec or
+  body of given compilation unit.
+
 NF-17-P404-008 GPS: do not highlight occurrences of keywords (2016-04-05)
 
   The plug-in auto_highlight_occurrences.py highlights all occurrences of

@@ -281,8 +281,10 @@ package Codefix.Text_Manager is
      (Kind => Operator_Text, Name => To_Unbounded_String ("("));
    Close_Paren_Tok : constant Token_Record :=
      (Kind => Operator_Text, Name => To_Unbounded_String (")"));
-   Semicolon_Tok : constant Token_Record :=
+   Colon_Tok : constant Token_Record :=
      (Kind => Operator_Text, Name => To_Unbounded_String (":"));
+   Semicolon_Tok : constant Token_Record :=
+     (Kind => Operator_Text, Name => To_Unbounded_String (";"));
    Tick_Tok : constant Token_Record :=
      (Kind => Operator_Text, Name => To_Unbounded_String ("'"));
    Equals_Tok : constant Token_Record :=

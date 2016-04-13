@@ -372,6 +372,12 @@ package Codefix.Formal_Errors is
       return Solution_List;
    --  Removes a useless comparison, e.g. = True or /= True
 
+   function Add_Elaborate_All
+     (Current_Text   : Text_Navigator_Abstr'Class;
+      Cursor         : File_Cursor'Class;
+      Package_Name   : String) return Solution_List;
+   --  Add pragma Elaborate_All for given package
+
    ----------------------------------------------------------------------------
    --  SPARK specific formal errors
    ----------------------------------------------------------------------------
