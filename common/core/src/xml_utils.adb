@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.IO_Exceptions;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
 with Ada.Strings.Wide_Wide_Unbounded; use Ada.Strings.Wide_Wide_Unbounded;
@@ -694,9 +695,16 @@ package body XML_Utils is
 
       Print_Node (N, 0);
 
-      Close (Writable);
+      begin
+         Close (Writable);
+         Success := True;
 
-      Success := True;
+      exception
+         when Ada.IO_Exceptions.Use_Error =>
+            --  Call to Close raises exception when file can't be saved.
+
+            Success := False;
+      end;
    end Print;
 
    -----------
