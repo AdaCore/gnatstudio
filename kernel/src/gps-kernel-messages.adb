@@ -2844,7 +2844,7 @@ package body GPS.Kernel.Messages is
 
    begin
       for K in Message_Visibility_Kind loop
-         if not Flags (K) then
+         if Flags (K) then
             Int := Int + 2**(Message_Visibility_Kind'Pos (K));
          end if;
       end loop;
@@ -2857,14 +2857,12 @@ package body GPS.Kernel.Messages is
    --------------
 
    function From_Int (Int : Integer) return Message_Flags is
-      Flags : Message_Flags := (Editor_Side => True, Locations => True);
+      Flags : Message_Flags;
       type T is mod 2**32;
       B : constant T := T (Int);
    begin
       for K in Message_Visibility_Kind loop
-         if (B and 2**Message_Visibility_Kind'Pos (K)) /= 0 then
-            Flags (K) := False;
-         end if;
+         Flags (K) := (B and 2**Message_Visibility_Kind'Pos (K)) /= 0;
       end loop;
 
       return Flags;

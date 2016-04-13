@@ -45,6 +45,15 @@ KP-62-P411-035 WB: bad SMP RUNTIME used for arm target on VxWorks-6.x
               endif
               endif
 
+KP-62-P407-005 GPS: GPS.Message.get_flags returns wrong value
+
+  Problem:    GPS.Message.get_flags() returns inversed value. Scripts should be
+              modified to reflect fix of this bug.
+
+  Status:     This was fixed in 17.0 on 2016-04-19
+
+  Workaround: Not needed.
+
 KP-62-P404-041 WB: User Guide contents is incorrect on Workbench-4/VxWorks-7
 
   Problem:    Creating DKM & RTP documentation when running Workbench-4 is

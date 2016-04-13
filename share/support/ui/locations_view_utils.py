@@ -46,7 +46,7 @@ def export_locations_to_editor():
 
     # Filter them and organize them by category and file
     for m in msgs:
-        if m.get_flags() & 2 == 0:
+        if m.get_flags() & 2:
             file = m.get_file()
             category = m.get_category()
 
@@ -100,10 +100,10 @@ def export_locations_to_editor():
 def on_filter(context):
     if context.file():
         # Return True if there are any messages in the file context
-        # which have the flag '2' set to 0, meaning that they show up in
+        # which have the flag '2' set to 1, meaning that they show up in
         # the Locations view.
         for m in GPS.Message.list(file=context.file()):
-            if not m.get_flags() & 2:
+            if m.get_flags() & 2:
                 return True
 
         return False
