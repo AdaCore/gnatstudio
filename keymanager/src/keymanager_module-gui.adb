@@ -71,6 +71,7 @@ with Gtk.Window;               use Gtk.Window;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Gtkada.MDI;               use Gtkada.MDI;
 with Pango.Enums;              use Pango.Enums;
+with Pango.Layout;             use Pango.Layout;
 
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with Default_Preferences;      use Default_Preferences;
@@ -99,6 +100,12 @@ package body KeyManager_Module.GUI is
    Shortcuts_Only      : Boolean_Preference;
    Categories_Pref     : Boolean_Preference;
    Show_Empty_Cat      : Boolean_Preference;
+
+   Key_Shortcuts_Page_Name : constant String := "General/Key Shortcuts";
+   --  Name of the key shortcuts editor preferences page
+
+   Action_Column_Min_Width : constant := 250;
+   --  Minimum width of the 'Actions' tree view column
 
    type Keys_Editor_Preferences_Page_Record is new Preferences_Page_Record with
       record
@@ -335,7 +342,7 @@ package body KeyManager_Module.GUI is
    begin
       if Editor /= null then
          Page_View := Keys_Editor_Preferences_Page_View
-           (Editor.Get_Page_View ("Key Shortcuts"));
+           (Editor.Get_Page_View (Key_Shortcuts_Page_Name));
       end if;
 
       if Page_View /= null then
@@ -438,12 +445,13 @@ package body KeyManager_Module.GUI is
 
          declare
             Name : constant String := Get_Name (Get (Action_Iter));
-            Key  : constant String := Lookup_Key_From_Action
-              (Get_Shortcuts (Editor.Kernel),
-               Name,
-               Use_Markup => False,
-               Is_User_Changed => User_Changed'Unchecked_Access,
-               Default => -Disabled_String);
+            Key  : constant String :=
+                     Lookup_Key_From_Action
+                       (Get_Shortcuts (Editor.Kernel),
+                        Name,
+                        Use_Markup => False,
+                        Is_User_Changed => User_Changed'Unchecked_Access,
+                        Default         => -Disabled_String);
             Show : Boolean;
          begin
             --  Do not show actions with no category, by default
@@ -1365,10 +1373,19 @@ package body KeyManager_Module.GUI is
       --  The tree
 
       Gtk_New (Render);
+      Set_Property
+        (Render, Gtk.Cell_Renderer_Text.Ellipsize_Property, Ellipsize_Middle);
+
       Gtk_New (Pixbuf);
       Pixbuf.Set_Alignment (Xalign => 0.0, Yalign => 0.5);
 
       Gtk_New (Col);
+
+      --  We set a minimum width for the 'Actions' column to ensure that most
+      --  of the action names are fully visible by default, even if ellipsizing
+      --  is enabled for the column's Gtk_Cell_Renrerer_Text.
+      Col.Set_Min_Width (Action_Column_Min_Width);
+
       Ignore := Append_Column (Editor.View, Col);
       Set_Title (Col, -"Action");
       Pack_Start (Col, Pixbuf, False);
@@ -1414,7 +1431,7 @@ package body KeyManager_Module.GUI is
 
       if Editor /= null then
          Page_View := Keys_Editor_Preferences_Page_View
-           (Editor.Get_Page_View ("Key Shortcuts"));
+           (Editor.Get_Page_View (Key_Shortcuts_Page_Name));
       end if;
 
       if Page_View /= null then
@@ -1466,7 +1483,7 @@ package body KeyManager_Module.GUI is
 
       Keys_Editor_Page.Kernel := Kernel_Handle (Kernel);
       Manager.Register_Page
-         (Name             => "Key Shortcuts",
+         (Name             => Key_Shortcuts_Page_Name,
           Page             => Preferences_Page (Keys_Editor_Page),
           Priority         => -1,
           Replace_If_Exist => False);
