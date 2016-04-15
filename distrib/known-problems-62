@@ -619,12 +619,23 @@ KP-62-NA09-049 GPS: CodePeer messages are not displayed in Locations view
 Known problems fixed in GPS 6.2.2 / GNATbench 2.10.2
 ----------------------------------------------------
 
+KP-62-P415-008 GPS: incorrect reload of breakpoints
+
+  Problem:    In some cases, breakpoints are incorrectly reloaded when
+              starting a new debugger session.
+
+  Status:     This was fixed in 6.2.2 on 2016-04-15
+
+  Workaround: The breakpoints are set at the beginning of the subprogram,
+              rather than on the specific line. Once the debugger stops,
+              you can simply click on the line to set a new breakpoint.
+
 KP-62-P411-034 GPS: reports file write error for temporary files
 
   Problem:    GPS reports file write errors when CodePeer report is open and
               source directory is not writable.
 
-  Status:     This was fixed in 6.2.2 on 1026-04-13
+  Status:     This was fixed in 6.2.2 on 2016-04-13
 
   Workaround: Change permissions of directory to be writable.
 

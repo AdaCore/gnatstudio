@@ -329,11 +329,7 @@ package body GVD.Process is
             Br.Action     := Action_Type'Value
               (Get_Attribute
                  (Breaks, "action", Action_Type'Image (No_Action)));
-            if Get_Attribute (Breaks, "file", "") = "" then
-               Br.File := GNATCOLL.VFS.No_File;
-            else
-               Br.File := Get_File_Child (Breaks, "file");
-            end if;
+            Br.File := Get_File_Child (Breaks, "file");
          end;
 
          Count := Count + 1;
