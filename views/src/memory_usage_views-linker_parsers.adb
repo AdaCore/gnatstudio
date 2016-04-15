@@ -37,7 +37,10 @@ package body Memory_Usage_Views.Linker_Parsers is
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
       return Boolean;
    --  Return True if the current toolchain's linker supports the
-   --  '--print-memory-usage' option.
+   --  '--print-memory-usage' option and if the current build mode is set to
+   --  'default', since we don't want any extra arguments to be appended after
+   --  the '-largs' section (e.g: in the 'gnatcoverage' build mode, the
+   --  '--subdirs' option is appended to the command line).
 
    type On_Project_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute
@@ -162,10 +165,9 @@ package body Memory_Usage_Views.Linker_Parsers is
      (Filter  : access Linker_Supported_Filter;
       Context : Selection_Context) return Boolean
    is
-      pragma Unreferenced (Filter, Context);
-   begin
-      return Linker_Parsers_Module.Is_Linker_Supported;
-   end Filter_Matches_Primitive;
+     (Linker_Parsers_Module.Is_Linker_Supported
+      and then
+      Get_Kernel (Context).Get_Build_Mode = "default");
 
    -------------
    -- Execute --
