@@ -15,18 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings; use Ada.Strings;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with Ada.Containers;          use Ada.Containers;
+with Ada.Strings;             use Ada.Strings;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
-with GPR.Names; use GPR.Names;
-with GPR.Sinput; use GPR.Sinput;
-with GPR.Osint; use GPR.Osint;
-with Ada.Containers; use Ada.Containers;
-with GNATCOLL.Traces; use GNATCOLL.Traces;
-with GPR.Part; use GPR.Part;
-with GPR.Env; use GPR.Env;
-with GPR.PP; use GPR.PP;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with GPR.Env;                 use GPR.Env;
+with GPR.Names;               use GPR.Names;
+with GPR.Part;                use GPR.Part;
+with GPR.PP;                  use GPR.PP;
+with GPR.Osint;               use GPR.Osint;
+with GPR.Sinput;              use GPR.Sinput;
+with GPR.Tree;                use GPR.Tree;
 
 package body Toolchains.Parsers is
    Me : constant Trace_Handle := Create ("TOOLCHAIN_PARSER");
@@ -55,7 +56,7 @@ package body Toolchains.Parsers is
 
    procedure Parse
      (This      : in out Toolchain_Parser_Record;
-      Node_Data : Project_Node_Tree_Ref;
+      Node_Data : GPR.Project_Node_Tree_Ref;
       IDE_Node  : Project_Node_Id);
    --  Parse the toolchain contained in the IDE node given in parameter
 
@@ -87,7 +88,7 @@ package body Toolchains.Parsers is
 
    procedure Parse
      (This      : in out Toolchain_Parser_Record;
-      Node_Data : Project_Node_Tree_Ref;
+      Node_Data : GPR.Project_Node_Tree_Ref;
       IDE_Node  : Project_Node_Id)
    is
       Manager : constant Toolchain_Manager := Get_Manager
@@ -1457,7 +1458,7 @@ package body Toolchains.Parsers is
    procedure Initialize
      (This         : Parsed_Project;
       Parser       : in out Project_Parser_Record;
-      Node_Data    : Project_Node_Tree_Ref;
+      Node_Data    : GPR.Project_Node_Tree_Ref;
       Project_Node : Project_Node_Id)
    is
       Source_File    : Source_File_Index;

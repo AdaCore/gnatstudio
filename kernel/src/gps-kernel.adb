@@ -73,6 +73,7 @@ with GPS.Properties;            use GPS.Properties;
 with Histories;                 use Histories;
 with Language_Handlers;         use Language_Handlers;
 with Language.Tree.Database;    use Language.Tree.Database;
+with GPR;                       use GPR;
 with GPR.Names;                 use GPR.Names;
 with GPR.Attr;                  use GPR.Attr;
 with Projects;                  use Projects;

@@ -61,8 +61,7 @@
 --  The parser is able to follow package renaming, and will offer update
 --  capabilities on the renamed package.
 
-with GPR;      use GPR;
-with GPR.Tree; use GPR.Tree;
+with GPR; use GPR;
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Ordered_Maps;
 
@@ -161,7 +160,7 @@ private
    type Toolchain_Parser_Record
      (Enclosing_Parser : access Project_Parser_Record)
    is record
-      Node_Data        : Project_Node_Tree_Ref;
+      Node_Data        : GPR.Project_Node_Tree_Ref;
       Project          : Parsed_Project;
 
       Error            : String_Access;
@@ -186,7 +185,7 @@ private
       Manager                : Toolchain_Manager;
 
       Tree_Data              : Project_Tree_Ref;
-      Node_Data              : Project_Node_Tree_Ref;
+      Node_Data              : GPR.Project_Node_Tree_Ref;
       Enclosing_Project_Node : Project_Node_Id;
       Root_Project_Node      : Project_Node_Id;
       Is_Valid               : Boolean := False;
@@ -202,7 +201,7 @@ private
 
    type Parsed_Project_Record is record
       Project_Node : Project_Node_Id;
-      Node_Data    : Project_Node_Tree_Ref;
+      Node_Data    : GPR.Project_Node_Tree_Ref;
       Variables    : Tree_Node_Maps.Map;
       Path         : Virtual_File;
       Is_Root      : Boolean;
@@ -211,7 +210,7 @@ private
    procedure Initialize
      (This         : Parsed_Project;
       Parser       : in out Project_Parser_Record;
-      Node_Data    : Project_Node_Tree_Ref;
+      Node_Data    : GPR.Project_Node_Tree_Ref;
       Project_Node : Project_Node_Id);
 
 end Toolchains.Parsers;
