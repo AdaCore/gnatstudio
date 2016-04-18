@@ -23,6 +23,7 @@ with Gtk.Box;
 with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Flow_Box;
+with Gtk.Tree_Model;
 with Gtk.Widget;
 with Gtkada.MDI;
 with Generic_Views;
@@ -173,7 +174,7 @@ package body GNAThub.Filters_Views is
       Initialize         => Initialize);
    use Views;
 
-   procedure Apply_Filters (View : Views.View_Access);
+   procedure Apply_Filters (View : access Filters_View_Record'Class);
    --  Apply selected rules/severities/tools
 
    -- Internal Routines --
@@ -182,29 +183,25 @@ package body GNAThub.Filters_Views is
      (Self       : access Gtk.Widget.Gtk_Widget_Record'Class;
       Allocation : Gtk.Widget.Gtk_Allocation);
 
-   package Tools_Callbacks is
-     new Gtk.Handlers.User_Callback
-          (Tools_Editors.Criteria_Editor_Record, Views.View_Access);
+   package Tools_Callbacks is new Gtk.Handlers.Callback (Filters_View_Record);
 
    procedure On_Tools_Changed
-     (Object : access Tools_Editors.Criteria_Editor_Record'Class;
-      View   : Views.View_Access);
+     (View : access Filters_View_Record'Class;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path);
 
    package Severities_Callbacks is
-     new Gtk.Handlers.User_Callback
-          (Severities_Editors.Criteria_Editor_Record, Views.View_Access);
+     new Gtk.Handlers.Callback (Filters_View_Record);
 
    procedure On_Severities_Changed
-     (Object : access Severities_Editors.Criteria_Editor_Record'Class;
-      View   : Views.View_Access);
+     (View : access Filters_View_Record'Class;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path);
 
    package Rules_Callbacks is
-     new Gtk.Handlers.User_Callback
-          (Rules_Editors.Criteria_Editor_Record, Views.View_Access);
+     new Gtk.Handlers.Callback (Filters_View_Record);
 
    procedure On_Rules_Changed
-     (Object : access Rules_Editors.Criteria_Editor_Record'Class;
-      View   : Views.View_Access);
+     (View : access Filters_View_Record'Class;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path);
 
    function Img (Item : Natural) return String;
    function Img (Total, Selected : Natural) return String;
@@ -226,6 +223,11 @@ package body GNAThub.Filters_Views is
       Severity : Severity_Access)
       return Natural;
 
+   function Is_Severity_Visible
+     (Severity : Severity_Access;
+      Tool     : Tool_Access)
+      return Boolean;
+
    GNAThub_Module  : GNAThub_Module_Id;
    Gnathub_Filters : Gnathub_Filters_Module;
 
@@ -233,7 +235,7 @@ package body GNAThub.Filters_Views is
    -- Apply_Filters --
    -------------------
 
-   procedure Apply_Filters (View : Views.View_Access) is
+   procedure Apply_Filters (View : access Filters_View_Record'Class) is
    begin
       GNAThub_Module.Filter.Fill
         (View.Tools_Editor.Get_Visible_Items,
@@ -505,19 +507,19 @@ package body GNAThub.Filters_Views is
 
       -- signals--
 
-      Tools_Callbacks.Connect
+      Tools_Callbacks.Object_Connect
         (Self.Tools_Editor,
          Tools_Editors.Signal_Criteria_Changed,
          Tools_Callbacks.To_Marshaller (On_Tools_Changed'Access),
          Self);
 
-      Severities_Callbacks.Connect
+      Severities_Callbacks.Object_Connect
         (Self.Severities_Editor,
          Severities_Editors.Signal_Criteria_Changed,
          Severities_Callbacks.To_Marshaller (On_Severities_Changed'Access),
          Self);
 
-      Rules_Callbacks.Connect
+      Rules_Callbacks.Object_Connect
         (Self.Rules_Editor,
          Rules_Editors.Signal_Criteria_Changed,
          Rules_Callbacks.To_Marshaller (On_Rules_Changed'Access),
@@ -601,6 +603,26 @@ package body GNAThub.Filters_Views is
       return False;
    end Is_Severity_Visible;
 
+   -------------------------
+   -- Is_Severity_Visible --
+   -------------------------
+
+   function Is_Severity_Visible
+     (Severity : Severity_Access;
+      Tool     : Tool_Access)
+      return Boolean is
+   begin
+      for Rule of GNAThub_Module.Rules loop
+         if Rule.Tool = Tool
+           and then Rule.Count.Contains (Severity)
+         then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Is_Severity_Visible;
+
    --------------------------------
    -- On_Flow_Box_Size_Allocated --
    --------------------------------
@@ -631,10 +653,10 @@ package body GNAThub.Filters_Views is
    ----------------------
 
    procedure On_Rules_Changed
-     (Object : access Rules_Editors.Criteria_Editor_Record'Class;
-      View   : Views.View_Access)
+     (View : access Filters_View_Record'Class;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path)
    is
-      pragma Unreferenced (Object);
+      pragma Unreferenced (Path);
    begin
       if not View.On_Update then
          Apply_Filters (View);
@@ -646,33 +668,72 @@ package body GNAThub.Filters_Views is
    ---------------------------
 
    procedure On_Severities_Changed
-     (Object : access Severities_Editors.Criteria_Editor_Record'Class;
-      View   : Views.View_Access)
+     (View : access Filters_View_Record'Class;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path)
    is
-      pragma Unreferenced (Object);
       use type Rules_Editors.Criteria_Editor;
+      use type Gtk.Tree_Model.Gtk_Tree_Path;
 
-      Update  : constant Boolean := not View.On_Update;
-      Filters : constant Gtk.Widget.Gtk_Widget := Gtk.Widget.Gtk_Widget (View);
+      Update   : constant Boolean := not View.On_Update;
+      Severity : Severity_Access;
    begin
-      if View.Rules_Editor /= null then
-         if Update then
-            View.On_Update := True;
+      if View.Rules_Editor = null then
+         return;
+      end if;
+
+      if Update then
+         View.On_Update := True;
+      end if;
+
+      if Path = Gtk.Tree_Model.Null_Gtk_Tree_Path then
+         --  Toggle select/unselect all
+         if View.Severities_Editor.Get_Visible_Items.Is_Empty then
+            --  Unselect all
+            for Rule of GNAThub_Module.Rules loop
+               if View.Rules_Editor.Get_Visible_Items.Contains (Rule) then
+                  View.Rules_Editor.Unselect (Rule);
+               end if;
+            end loop;
+
+         else
+            --  Select all
+            for Rule of GNAThub_Module.Rules loop
+               if not View.Rules_Editor.Get_Visible_Items.Contains (Rule) then
+                  View.Rules_Editor.Choose (Rule);
+               end if;
+            end loop;
          end if;
 
-         for Rule of GNAThub_Module.Rules loop
-            if View.Rules_Editor.Get_Visible_Items.Contains (Rule)
-              and then not Is_Rule_Visible (Rule, Filters)
-            then
-               View.Rules_Editor.Unselect (Rule);
-            end if;
-         end loop;
+      else
+         --  Single Selection
+         Severity := View.Severities_Editor.Item_By_Path (Path);
 
-         View.Rules_Editor.Update;
+         if View.Severities_Editor.Get_Visible_Items.Contains (Severity) then
+            for Rule of GNAThub_Module.Rules loop
+               if not View.Rules_Editor.Get_Visible_Items.Contains (Rule)
+                 and then Rule.Count.Contains (Severity)
+               then
+                  View.Rules_Editor.Choose (Rule);
+               end if;
+            end loop;
 
-         if Update then
-            Apply_Filters (View);
+         else
+            for Rule of GNAThub_Module.Rules loop
+               if View.Rules_Editor.Get_Visible_Items.Contains (Rule)
+                 and then Rule.Count.Contains (Severity)
+                 and then not Is_Rule_Visible
+                   (Rule, Gtk.Widget.Gtk_Widget (View))
+               then
+                  View.Rules_Editor.Unselect (Rule);
+               end if;
+            end loop;
          end if;
+      end if;
+
+      View.Rules_Editor.Update;
+
+      if Update then
+         Apply_Filters (View);
       end if;
 
    exception
@@ -687,48 +748,123 @@ package body GNAThub.Filters_Views is
    ----------------------
 
    procedure On_Tools_Changed
-     (Object : access Tools_Editors.Criteria_Editor_Record'Class;
-      View   : Views.View_Access)
+     (View : access Filters_View_Record'Class;
+      Path : Gtk.Tree_Model.Gtk_Tree_Path)
    is
-      pragma Unreferenced (Object);
       use type Severities_Editors.Criteria_Editor;
       use type Rules_Editors.Criteria_Editor;
+      use type Gtk.Tree_Model.Gtk_Tree_Path;
 
-      Update  : constant Boolean := not View.On_Update;
-      Filters : constant Gtk.Widget.Gtk_Widget := Gtk.Widget.Gtk_Widget (View);
+      Update   : constant Boolean := not View.On_Update;
+      Tool     : Tool_Access;
+      Selected : Boolean;
+
    begin
+      if View.Rules_Editor = null
+        or else View.Severities_Editor = null
+      then
+         return;
+      end if;
+
       if Update then
          View.On_Update := True;
       end if;
 
-      if View.Rules_Editor /= null then
-         for Tool of GNAThub_Module.Tools loop
-            if not View.Tools_Editor.Get_Visible_Items.Contains (Tool) then
-               for Rule of GNAThub_Module.Rules loop
-                  if Rule.Tool = Tool
-                    and then View.Rules_Editor.
-                      Get_Visible_Items.Contains (Rule)
-                  then
-                     View.Rules_Editor.Unselect (Rule);
-                  end if;
-               end loop;
-            end if;
-         end loop;
+      if Path = Gtk.Tree_Model.Null_Gtk_Tree_Path then
+         --  Toggle select/unselect all
 
-         View.Rules_Editor.Update;
+         if View.Tools_Editor.Get_Visible_Items.Is_Empty then
+            --  Unselect all
+            for Rule of GNAThub_Module.Rules loop
+               if View.Rules_Editor.Get_Visible_Items.Contains (Rule) then
+                  View.Rules_Editor.Unselect (Rule);
+               end if;
+            end loop;
+
+         else
+            --  Select all
+            for Rule of GNAThub_Module.Rules loop
+               if not View.Rules_Editor.Get_Visible_Items.Contains (Rule) then
+                  View.Rules_Editor.Choose (Rule);
+               end if;
+            end loop;
+         end if;
+
+      else
+         --  Single selection
+         Tool     := View.Tools_Editor.Item_By_Path (Path);
+         Selected := View.Tools_Editor.Get_Visible_Items.Contains (Tool);
+
+         if Selected then
+            for Rule of GNAThub_Module.Rules loop
+               if Rule.Tool = Tool
+                 and then not View.Rules_Editor.
+                   Get_Visible_Items.Contains (Rule)
+               then
+                  View.Rules_Editor.Choose (Rule);
+               end if;
+            end loop;
+
+         else
+            for Rule of GNAThub_Module.Rules loop
+               if Rule.Tool = Tool
+                 and then View.Rules_Editor.Get_Visible_Items.Contains (Rule)
+               then
+                  View.Rules_Editor.Unselect (Rule);
+               end if;
+            end loop;
+         end if;
       end if;
 
-      if View.Severities_Editor /= null then
-         for Severity of GNAThub_Module.Severities loop
-            if View.Severities_Editor.Get_Visible_Items.Contains (Severity)
-              and then not Is_Severity_Visible (Severity, Filters)
-            then
-               View.Severities_Editor.Unselect (Severity);
-            end if;
-         end loop;
+      if Tool = null then
+         --  Toggle select/unselect
+         if View.Tools_Editor.Get_Visible_Items.Is_Empty then
+            --  Unselect all
+            for Severity of GNAThub_Module.Severities loop
+               if View.Severities_Editor.
+                 Get_Visible_Items.Contains (Severity)
+               then
+                  View.Severities_Editor.Unselect (Severity);
+               end if;
+            end loop;
+         else
+            --  Select all
+            for Severity of GNAThub_Module.Severities loop
+               if not View.Severities_Editor.
+                 Get_Visible_Items.Contains (Severity)
+               then
+                  View.Severities_Editor.Choose (Severity);
+               end if;
+            end loop;
+         end if;
 
-         View.Severities_Editor.Update;
+      else
+         --  Single selection
+         if Selected then
+            for Severity of GNAThub_Module.Severities loop
+               if not View.Severities_Editor.
+                 Get_Visible_Items.Contains (Severity)
+                 and then Is_Severity_Visible (Severity, Tool)
+               then
+                  View.Severities_Editor.Choose (Severity);
+               end if;
+            end loop;
+
+         else
+            for Severity of GNAThub_Module.Severities loop
+               if View.Severities_Editor.
+                 Get_Visible_Items.Contains (Severity)
+                 and then not Is_Severity_Visible
+                   (Severity, Gtk.Widget.Gtk_Widget (View))
+               then
+                  View.Severities_Editor.Unselect (Severity);
+               end if;
+            end loop;
+         end if;
       end if;
+
+      View.Severities_Editor.Update;
+      View.Rules_Editor.Update;
 
       if Update then
          Apply_Filters (View);

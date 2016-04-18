@@ -21,6 +21,7 @@
 with Ada.Containers.Ordered_Sets;
 
 with Glib.Values;
+with Gtk.Tree_Model;
 with Gtk.Widget;
 
 with GPS.Kernel;
@@ -28,7 +29,6 @@ with GNAThub.Generic_Models;
 
 private with Gtk.Check_Button;
 private with Gtk.Scrolled_Window;
-private with Gtk.Tree_Model;
 private with Gtk.Tree_Model_Filter;
 private with Gtk.Tree_View;
 
@@ -92,13 +92,25 @@ package GNAThub.Generic_Criteria_Editors is
 
    function Get_Visible_Items
      (Self : access Criteria_Editor_Record'Class) return Item_Sets.Set;
-   --  Returns a set of selected message categories
+   --  Returns a set of selected categories
+
+   procedure Choose
+     (Self : access Criteria_Editor_Record'Class;
+      Item : Item_Access);
+   --  Select Item
 
    procedure Unselect
      (Self : access Criteria_Editor_Record'Class;
       Item : Item_Access);
+   --  Unselect Item
 
    procedure Update (Self : access Criteria_Editor_Record'Class);
+
+   function Item_By_Path
+     (Self : access Criteria_Editor_Record'Class;
+      Path  : Gtk.Tree_Model.Gtk_Tree_Path)
+      return Item_Access;
+   --  Return Item by Path
 
    Signal_Criteria_Changed : constant Glib.Signal_Name;
    --  This signal emitted by the editor in the case of the criteria change

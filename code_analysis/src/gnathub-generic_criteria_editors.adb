@@ -87,8 +87,18 @@ package body GNAThub.Generic_Criteria_Editors is
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
      (1 => Interfaces.C.Strings.New_String (String (Signal_Criteria_Changed)));
 
-   Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
-     (1 => (1 => Glib.GType_None));
+   function Signal_Parameters return Glib.Object.Signal_Parameter_Types;
+
+   ------------
+   -- Choose --
+   ------------
+
+   procedure Choose
+     (Self : access Criteria_Editor_Record'Class;
+      Item : Item_Access) is
+   begin
+      Self.Model.Show (Item);
+   end Choose;
 
    -------------------------
    -- Filter_Visible_Func --
@@ -283,6 +293,18 @@ package body GNAThub.Generic_Criteria_Editors is
       end loop;
    end Initialize;
 
+   ------------------
+   -- Item_By_Path --
+   ------------------
+
+   function Item_By_Path
+     (Self : access Criteria_Editor_Record'Class;
+      Path  : Gtk.Tree_Model.Gtk_Tree_Path)
+      return Item_Access is
+   begin
+      return Self.Model.Item_At (Self.Model.Get_Iter (Path));
+   end Item_By_Path;
+
    ----------------
    -- On_Destroy --
    ----------------
@@ -314,6 +336,7 @@ package body GNAThub.Generic_Criteria_Editors is
       Self   : Criteria_Editor)
    is
       pragma Unreferenced (Object);
+      Path : Gtk.Tree_Model.Gtk_Tree_Path;
 
    begin
       if Self.Toggle.Get_Inconsistent then
@@ -333,7 +356,7 @@ package body GNAThub.Generic_Criteria_Editors is
       end if;
 
       Message_Categories_Criteria_Editor_Callbacks.Emit_By_Name
-        (Self, Signal_Criteria_Changed);
+        (Self, Signal_Criteria_Changed, Path);
    end On_Select_All_Toggled;
 
    -----------------------------------
@@ -348,6 +371,7 @@ package body GNAThub.Generic_Criteria_Editors is
    is
       use type Histories.History_Key;
 
+      P    : Gtk.Tree_Model.Gtk_Tree_Path;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
 
    begin
@@ -362,6 +386,9 @@ package body GNAThub.Generic_Criteria_Editors is
            Interfaces.C.Strings.Value (Path));
       end if;
 
+      P := Gtk.Tree_Model.Get_Path
+        (Gtk.Tree_Model.To_Interface (Self.Model), Iter);
+
       if Object.Get_Active then
          Self.Model.Hide (Self.Model.Item_At (Iter));
 
@@ -370,8 +397,20 @@ package body GNAThub.Generic_Criteria_Editors is
       end if;
 
       Message_Categories_Criteria_Editor_Callbacks.Emit_By_Name
-        (Self, Signal_Criteria_Changed);
+        (Self, Signal_Criteria_Changed, P);
    end On_Toggle_Category_Visibility;
+
+   -----------------------
+   -- Signal_Parameters --
+   -----------------------
+
+   function Signal_Parameters return Glib.Object.Signal_Parameter_Types is
+      Result  : constant Glib.Object.Signal_Parameter_Types :=
+        (1 => (1 => Gtk.Tree_Model.Path_Get_Type,
+               2 => Glib.GType_None));
+   begin
+      return Result;
+   end Signal_Parameters;
 
    --------------
    -- Unselect --
