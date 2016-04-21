@@ -28,6 +28,8 @@ with Ada.Text_IO; use Ada.Text_IO;
 package body Language.Tree.Database is
 
    Me : constant Trace_Handle := Create ("Language.Tree.Database");
+   Test_Update_Cache : constant Trace_Handle := Create
+     ("Language.Tree.Database.Test_Update_Cache", Off);
 
    procedure Internal_Update_Contents
      (File : Structured_File_Access; Purge : Boolean);
@@ -821,6 +823,7 @@ package body Language.Tree.Database is
       if File.Timestamp = -1
         or else Timestamp = -1
         or else File.Timestamp /= Timestamp
+        or else Is_Active (Test_Update_Cache)
       then
          File.Timestamp := Timestamp;
          --  We are not up-to-date: compute the constructs

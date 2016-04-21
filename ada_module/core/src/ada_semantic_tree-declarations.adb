@@ -466,6 +466,7 @@ package body Ada_Semantic_Tree.Declarations is
               (Is_Accessible   => True,
                Confidence      => It.From_Visibility.Min_Visibility_Confidence,
                Entity          => It.Visible_Constructs (It.Visible_Index),
+               Persistent      => Null_Entity_Persistent_Access,
                Is_All          => False,
                From_Prefixed   => False,
                Profile         => null,
@@ -474,7 +475,7 @@ package body Ada_Semantic_Tree.Declarations is
               );
 
             Full_Cell := Get_Last_Visible_Declaration
-              (Declaration.Entity,
+              (Declaration.Get_Entity,
                It.From_Visibility.File,
                It.From_Visibility.Offset);
 
@@ -492,12 +493,12 @@ package body Ada_Semantic_Tree.Declarations is
                Confidence      => It.From_Visibility.Min_Visibility_Confidence,
                Entity          => To_Entity_Access
                  (Get_File (It.Db_Iterator), Get_Construct (It.Db_Iterator)),
+               Persistent      => Null_Entity_Persistent_Access,
                Is_All          => False,
                From_Prefixed   => False,
                Profile         => null,
                Actuals         => null,
-               Generic_Context => Context
-              );
+               Generic_Context => Context);
       end case;
    end Get;
 
@@ -1322,6 +1323,7 @@ package body Ada_Semantic_Tree.Declarations is
                             (Entity_Unit, Context.File, Context.Offset),
                         Confidence    => Use_Visible,
                         Entity        => Entity_Unit,
+                        Persistent    => Null_Entity_Persistent_Access,
                         Is_All        => False,
                         From_Prefixed => False,
                         Actuals       => null,
@@ -1504,6 +1506,7 @@ package body Ada_Semantic_Tree.Declarations is
         (Is_Accessible   => True,
          Confidence      => Public_Library_Visible,
          Entity          => Info.Entity,
+         Persistent      => Null_Entity_Persistent_Access,
          Is_All          => Info.Kind = All_Access,
          From_Prefixed   => Info.Kind = Prefix_Notation,
          Actuals         => null,
@@ -1518,10 +1521,10 @@ package body Ada_Semantic_Tree.Declarations is
    function Is_Valid
      (It : Declaration_Composition_Iterator'Class) return Boolean
    is
-      Name_Str : Symbol;
-      Entity   : Entity_Access;
+      Name_Str     : Symbol;
+      Entity       : Entity_Access;
       Construct_It : Construct_Tree_Iterator;
-      Construct : access Simple_Construct_Information;
+      Construct    : access Simple_Construct_Information;
    begin
       if At_End (It.It) then
          return True;
@@ -1637,10 +1640,12 @@ package body Ada_Semantic_Tree.Declarations is
      (E : in out Declaration_View_Record; It : Entity_Iterator)
    is
       Gen_Inst : Instance_Info;
+      Entity   : Entity_Access;
    begin
       if E.Profile = null then
-         if Is_Generic_Instance (E.Entity) then
-            Gen_Inst := Get_Generic_Instance_Information (E.Entity);
+         Entity := E.Get_Entity;
+         if Is_Generic_Instance (Entity) then
+            Gen_Inst := Get_Generic_Instance_Information (Entity);
             Ref (Gen_Inst);
 
             E.Profile := new List_Profile'
@@ -1648,15 +1653,13 @@ package body Ada_Semantic_Tree.Declarations is
                It.From_Visibility));
 
             Unref (Gen_Inst);
-         elsif Get_Construct
-           (E.Entity).Attributes (Ada_Generic_Attribute)
-         then
+
+         elsif Get_Construct (Entity).Attributes (Ada_Generic_Attribute) then
             E.Profile := new List_Profile'
-              (Get_List_Profile
-                 (E.Entity, It.From_Visibility, Generic_Profile));
+              (Get_List_Profile (Entity, It.From_Visibility, Generic_Profile));
          else
             E.Profile := new List_Profile'
-              (Get_List_Profile (E.Entity, It.From_Visibility));
+              (Get_List_Profile (Entity, It.From_Visibility));
          end if;
       end if;
    end Configure_View;
@@ -1707,7 +1710,7 @@ package body Ada_Semantic_Tree.Declarations is
       Append
         (Result.Contents,
          Declaration_Composition_List'
-           (Root_Entity     => E.Entity,
+           (Root_Entity     => E.Get_Entity,
             Name            => new String'(Name),
             Is_Partial      => Is_Partial,
             Is_All          => E.Is_All,
@@ -1788,8 +1791,7 @@ package body Ada_Semantic_Tree.Declarations is
      (Entity : Entity_Access; Is_Accessible : Boolean := True)
       return Entity_View
    is
-      Result : constant Entity_View
-        := new Declaration_View_Record;
+      Result : constant Entity_View := new Declaration_View_Record;
    begin
       Declaration_View_Record (Result.all).Is_Accessible := Is_Accessible;
       Result.Confidence := Public_Library_Visible;

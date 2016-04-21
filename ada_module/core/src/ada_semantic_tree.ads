@@ -15,14 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Basic_Types; use Basic_Types;
-with Language; use Language;
-with Language.Tree.Database; use Language.Tree.Database;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
+
+with Basic_Types;             use Basic_Types;
+with Generic_List;
+with Language;                use Language;
+with Language.Tree;           use Language.Tree;
+with Language.Tree.Database;  use Language.Tree.Database;
 with Virtual_Lists;
 with Virtual_Lists.Extensive;
-with Generic_List;
-with Language.Tree;     use Language.Tree;
-with GNATCOLL.Traces;   use GNATCOLL.Traces;
 
 --  base package of all ada semantic tree queries.
 
@@ -305,7 +306,9 @@ private
      Create ("Ada_Semantic_Tree.Test", Off);
 
    type Entity_View_Record is abstract tagged record
-      Entity        : Entity_Access;
+      Entity        : Entity_Access := Null_Entity_Access;
+      Persistent    : Entity_Persistent_Access :=
+        Null_Entity_Persistent_Access;
       Is_All        : Boolean := False;
       From_Prefixed : Boolean := False;
       Confidence    : Visibility_Confidence;

@@ -445,7 +445,8 @@ package body Ada_Semantic_Tree.Generics is
          if Result /= null then
             Cached := new Instanciated_Package'
               (Cached_Information with
-               Generic_Package => To_Entity_Persistent_Access (Result.Entity),
+               Generic_Package => To_Entity_Persistent_Access
+                 (Result.Get_Entity),
                Generic_Context => Null_Persistent_Instance_Info);
 
             if Result.all in Declaration_View_Record'Class then
