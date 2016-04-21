@@ -233,6 +233,10 @@ package body CodePeer.Single_Message_Review_Dialogs is
            (Store, Iter,
             (0 => As_String (Name),
              1 => As_Int    (Audit_Status_Kinds'Pos (Status))));
+
+         if Message.Status = Status then
+            Self.New_Status.Set_Active_Iter (Iter);
+         end if;
       end Set_Audit_Status;
 
    begin
@@ -292,7 +296,6 @@ package body CodePeer.Single_Message_Review_Dialogs is
 
          Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
          Set_Audit_Status ("Unclassified", Unclassified);
-         Self.New_Status.Set_Active_Iter (Iter);
 
          Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
          Set_Audit_Status ("Pending", Pending);

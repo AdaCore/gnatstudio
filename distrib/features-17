@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P419-042 GPS: proposed value of message review status (2016-04-21)
+
+  In CodePeer message review dialog proposed value of message review status
+  has been changed to current status of the message.
+
 NF-17-P412-011 GPS: automatic fix for adding Elaborate_All pragma (2016-04-15)
 
   The GPS code fixing capability was enhanced to handle compiler messages
