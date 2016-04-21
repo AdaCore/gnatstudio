@@ -764,8 +764,7 @@ package body Completion_Window is
                   Explorer.Info (Explorer.Index - 1).Accessible := True;
 
                   --  Modify the tree model accordingly
-                  Explorer.Model.Set (Iter,
-                                      Markup_Column, Showable);
+                  Explorer.Model.Set (Iter, Markup_Column, Showable);
                end if;
                Augment_Notes (Explorer.Info (Explorer.Index - 1), Proposal);
             end if;
@@ -1192,7 +1191,7 @@ package body Completion_Window is
       J    : Natural;
       K    : Gint;
    begin
-      if not At_End (Window.Explorer.Iter.all) then
+      if not Window.Explorer.Iter.At_End then
          return False;
       end if;
 

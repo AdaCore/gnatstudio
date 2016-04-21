@@ -15,9 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada_Semantic_Tree.Parts;     use Ada_Semantic_Tree.Parts;
 with Ada.Unchecked_Deallocation;
-with Ada_Semantic_Tree.Parts; use Ada_Semantic_Tree.Parts;
-with Language.Ada; use Language.Ada;
+with Language.Ada;                use Language.Ada;
 
 package body Ada_Semantic_Tree is
 
@@ -40,9 +40,15 @@ package body Ada_Semantic_Tree is
      (E : access Entity_View_Record'Class)
       return access Simple_Construct_Information
    is
+      Entity : Entity_Access;
    begin
-      if E /= null and then E.Entity /= Null_Entity_Access then
-         return Get_Construct (E.Entity);
+      if E = null then
+         return null;
+      end if;
+
+      Entity := E.Get_Entity;
+      if Entity /= Null_Entity_Access then
+         return Get_Construct (Entity);
       else
          return null;
       end if;
@@ -68,9 +74,17 @@ package body Ada_Semantic_Tree is
    function Get_Category
      (E : access Entity_View_Record) return Language_Category
    is
+      Construct : access Simple_Construct_Information;
    begin
-      if E /= null and then E.Get_Construct /= null then
-         return E.Get_Construct.Category;
+      if E = null then
+         return Cat_Unknown;
+      end if;
+
+      Construct := E.Get_Construct;
+
+      if Construct /= null then
+         return Construct.Category;
+
       else
          return Cat_Unknown;
       end if;
@@ -81,10 +95,9 @@ package body Ada_Semantic_Tree is
    --------------------------------
 
    function To_Construct_Tree_Iterator
-     (E : Entity_View) return Construct_Tree_Iterator
-   is
+     (E : Entity_View) return Construct_Tree_Iterator is
    begin
-      return To_Construct_Tree_Iterator (E.Entity);
+      return To_Construct_Tree_Iterator (E.Get_Entity);
    end To_Construct_Tree_Iterator;
 
    --------------
@@ -93,7 +106,11 @@ package body Ada_Semantic_Tree is
 
    function Get_File (E : Entity_View) return Structured_File_Access is
    begin
-      return Get_File (E.Entity);
+      if E.Entity /= Null_Entity_Access then
+         return Get_File (E.Entity);
+      else
+         return Get_File (E.Persistent);
+      end if;
    end Get_File;
 
    ------------
@@ -124,6 +141,9 @@ package body Ada_Semantic_Tree is
    begin
       if E /= null then
          Free (E.all);
+         if E.Persistent /= Null_Entity_Persistent_Access then
+            Unref (E.Persistent);
+         end if;
          Unchecked_Free (E);
       end if;
    end Free;
@@ -132,13 +152,22 @@ package body Ada_Semantic_Tree is
    -- Deep_Copy --
    ---------------
 
-   function Deep_Copy (E : Entity_View) return Entity_View is
+   function Deep_Copy (E : Entity_View) return Entity_View
+   is
       Copy : Entity_View;
    begin
       if E = null then
          return null;
       else
          Copy := new Entity_View_Record'Class'(E.all);
+
+         if Copy.Entity /= Null_Entity_Access then
+            Copy.Persistent := To_Entity_Persistent_Access (Copy.Entity);
+            Copy.Entity     := Null_Entity_Access;
+
+         elsif Copy.Persistent /= Null_Entity_Persistent_Access then
+            Ref (Copy.Persistent);
+         end if;
 
          Deep_Copy (Copy.all);
 
@@ -163,8 +192,15 @@ package body Ada_Semantic_Tree is
      (E : access Entity_View_Record'Class) return Entity_Access
    is
    begin
-      if E /= null then
+      if E = null then
+         return Null_Entity_Access;
+
+      elsif E.Entity /= Null_Entity_Access then
          return E.Entity;
+
+      elsif E.Persistent /= Null_Entity_Persistent_Access then
+         return To_Entity_Access (E.Persistent);
+
       else
          return Null_Entity_Access;
       end if;
@@ -175,8 +211,7 @@ package body Ada_Semantic_Tree is
    ---------------
 
    function Filter_In
-     (Filter : Entity_Filter; E : Entity_Access) return Boolean
-   is
+     (Filter : Entity_Filter; E : Entity_Access) return Boolean is
    begin
       case Filter.Kind is
          when Categories_Filter =>
@@ -317,7 +352,7 @@ package body Ada_Semantic_Tree is
       --  iterator
       E := Get (It.It);
 
-      if Is_Excluded (It.Excluded_List, E.Entity) then
+      if Is_Excluded (It.Excluded_List, E.Get_Entity) then
          return Null_Entity_View;
       end if;
 
@@ -338,7 +373,7 @@ package body Ada_Semantic_Tree is
          return Null_Entity_Access;
       end if;
 
-      Result := View.Entity;
+      Result := View.Get_Entity;
       Free (View);
       --  ??? It's a bit annoying to have to create and free a temporary view,
       --  would be better to somehow get the entity directly.
@@ -710,7 +745,7 @@ package body Ada_Semantic_Tree is
    --------------
 
    function Get_Name
-   (Expression : Parsed_Expression; Token : Token_Record) return String is
+     (Expression : Parsed_Expression; Token : Token_Record) return String is
    begin
       case Ada_Token'(Token.Tok_Type) is
          when No_Token =>
