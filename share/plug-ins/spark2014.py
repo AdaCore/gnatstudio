@@ -1654,12 +1654,12 @@ class GNATprove_Parser(tool_output.OutputParser):
        it's not visible in GPS, and builds up a mapping
          msg -> id
        Once GNATprove is terminated, for each msg which has an entry in this
-       mapping, the parser opens the files "unit.flow" and "unit.proof", which
-       are JSON files. See the [parsejson] function for the format of these
-       files.
-       Once these files are parsed, the GNATprove parser now knows the extra
-       information associated to a message, if any. See [act_on_extra_info] to
-       know what is down with this extra information.
+       mapping, the parser opens the JSON file "unit.spark".
+       See the :func:`parsejson()` function for the format of this file.
+       Once this file is parsed, the GNATprove parser now knows the extra
+       information associated to a message, if any. See
+       :func:`act_on_extra_info()` to know what is done with this extra
+       information.
     """
 
     def __init__(self, child):
@@ -1711,8 +1711,8 @@ class GNATprove_Parser(tool_output.OutputParser):
         return lines
 
     def handle_entry(self, unit, list):
-        """code do handle one entry of the JSON file. See [parsejson] for the
-           details of the format.
+        """code do handle one entry of the JSON file. See :func:`parsejson()`
+           for the details of the format.
         """
 
         for entry in list:
@@ -1798,9 +1798,9 @@ class GNATprove_Parser(tool_output.OutputParser):
 
     def on_exit(self, status, command):
         """When GNATprove has finished, scan through messages to see if extra
-           info has been attached to them. If so, parse the .flow and .proof
-           files of the corresponding unit to get the extra info, and act on
-           the extra info"""
+           info has been attached to them. If so, parse the .spark file of
+           the corresponding unit to get the extra info, and act on the extra
+           info"""
 
         objdir = os.path.join(
             GPS.Project.root().object_dirs()[0],
