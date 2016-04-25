@@ -190,7 +190,7 @@ class BoardLoader(Module):
         self.__connection = promises.ProcessWrapper(cmd, spawn_console=True)
         r1 = yield self.__connection.wait_until_match(
             "Listening at",
-            1000)
+            120000)
 
         if not r1:
             self.__error_exit(msg="Could not connect to the device.")
@@ -204,11 +204,10 @@ class BoardLoader(Module):
             cmd="load",
             block=True)
 
-        if not r3:
-            self.__error_exit("Connection Lost. "
-                              + "Please check the USB connection and restart.")
-            self.__reset_all()
-            return
+        # Reset the board
+        r3 = yield debugger_promise.wait_and_send(
+            cmd="monitor jtag_reset",
+            block=True)
 
     def setup(self):
         """
