@@ -1802,10 +1802,37 @@ class GNATprove_Parser(tool_output.OutputParser):
            the corresponding unit to get the extra info, and act on the extra
            info"""
 
+        # Any change to the regular expressions below should follow changes
+        # in messages issued by GNATprove in Compute_Message in
+        # flow_error_messages.adb
+        reg1 = re.compile(r".* in instantiation at ([\w\.-]+):[0-9]+$")
+        reg2 = re.compile(r".* in call inlined at ([\w\.-]+):[0-9]+$")
+        reg3 = re.compile(r".* in inherited contract at ([\w\.-]+):[0-9]+$")
+
+        def get_unit_for_message(msg):
+            """Return the unit for a given message, so that extra information
+               for the message will be found in the file unit.spark. For
+               generic instantiations, inlined calls and inherited contracts,
+               this corresponds to the last unit in the chain of locations.
+               Otherwise, this is simply the unit where the message is
+               reported."""
+
+            text = msg.get_text()
+            m = re.match(reg1, text)
+            if not m:
+                m = re.match(reg2, text)
+            if not m:
+                m = re.match(reg3, text)
+            if m:
+                fname = m.group(1)
+            else:
+                fname = msg.get_file().name()
+            return os.path.splitext(fname)[0]
+
         objdir = os.path.join(
             GPS.Project.root().object_dirs()[0],
             obj_subdir_name)
-        #
+
         imported_units = set()
         for m in GPS.Message.list():
             file = os.path.basename(m.get_file().name())
@@ -1816,7 +1843,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                 m.get_text())
             if text in self.msg_id:
                 id = self.msg_id[text]
-                unit = os.path.splitext(file)[0]
+                unit = get_unit_for_message(m)
                 full_id = unit, id
                 if unit not in imported_units:
                     self.parsejson(unit, os.path.join(objdir, unit + ".spark"))
