@@ -2398,6 +2398,8 @@ if test "${with_gnatcoll+set}" = set; then :
 fi
 
 
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${GNATCOLL_INSTALL:-not specified}" >&5
+$as_echo "${GNATCOLL_INSTALL:-not specified}" >&6; }
 
 
 

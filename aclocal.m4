@@ -243,6 +243,7 @@ AC_DEFUN(AM_PATH_GNATCOLL,
         [Specify the directory that contains the gnatcoll install])],
       [GNATCOLL_INSTALL=$withval])
 
+   AC_MSG_RESULT(${GNATCOLL_INSTALL:-not specified})
    AC_SUBST(GNATCOLL_INSTALL)
 ])
 
