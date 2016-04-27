@@ -48,7 +48,7 @@ package body Language.Libclang is
    Me : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
 
    Activate_Clang_XRef : constant Trace_Handle :=
-     GNATCOLL.Traces.Create ("LIBCLANG_XREF", On);
+     GNATCOLL.Traces.Create ("LIBCLANG_XREF", Off);
 
    Diagnostics : constant Trace_Handle :=
      GNATCOLL.Traces.Create ("LIBCLANG_DIAGNOSTICS", Off);
