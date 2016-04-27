@@ -17,10 +17,12 @@
 
 with Ada.Unchecked_Conversion;
 with Ada.Strings.Hash;
-with GPS.Editors;       use GPS.Editors;
-with GPS.Kernel.Hooks;  use GPS.Kernel.Hooks;
-with GNATCOLL.Projects; use GNATCOLL.Projects;
-with Src_Editor_Box;    use Src_Editor_Box;
+with GPS.Editors;                    use GPS.Editors;
+with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages.References;
+with GNATCOLL.Projects;              use GNATCOLL.Projects;
+with Src_Editor_Box;                 use Src_Editor_Box;
+
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 
@@ -241,7 +243,9 @@ package body Src_Editor_Module.Messages is
       B := Get (Self.Kernel, Message.Get_File);
 
       if B /= null then
-         Remove_Messages (B, (1 => Message_Access (Message)));
+         Remove_Message
+           (B, GPS.Kernel.Messages.References.Create
+              (Message_Access (Message)));
       else
          --  It is possible that B = null, for instance if a container decides
          --  to remove the messages in reaction to a "file_closed" event.

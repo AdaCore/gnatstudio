@@ -18,12 +18,14 @@
 --  This package handles the customizable information in the buffer,
 --  such as information added to the sides of lines, or VCS information.
 
-with Cairo;         use Cairo;
+with Cairo;                use Cairo;
 with Gdk.RGBA;
-with Gtk.Drawing_Area; use Gtk.Drawing_Area;
-with Gtk.Text_View; use Gtk.Text_View;
-with Gtk.Widget;    use Gtk.Widget;
-with Pango.Layout;  use Pango.Layout;
+with Gtk.Drawing_Area;     use Gtk.Drawing_Area;
+with Gtk.Text_View;        use Gtk.Text_View;
+with Gtk.Widget;           use Gtk.Widget;
+with Pango.Layout;         use Pango.Layout;
+
+with GPS.Kernel.Messages;  use GPS.Kernel.Messages;
 
 package Src_Editor_Buffer.Line_Information is
 
@@ -65,10 +67,10 @@ package Src_Editor_Buffer.Line_Information is
    --  Same as above.
    --  User must not free Info.
 
-   procedure Remove_Messages
-     (Buffer     : access Source_Buffer_Record'Class;
-      Messages   : Message_Array);
-   --  Remove messages from Buffer
+   procedure Remove_Message
+     (Buffer    : access Source_Buffer_Record'Class;
+      Reference : Message_Reference);
+   --  Remove message from Buffer
 
    procedure Free_File_Information
      (Buffer : access Source_Buffer_Record'Class);

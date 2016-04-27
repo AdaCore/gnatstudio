@@ -804,6 +804,7 @@ package body Src_Editor_Module.Shell is
               Find_Editor (Kernel, File, No_Project);
             Info  : Line_Info_Width_Array_Access;
             Box   : Source_Editor_Box;
+            M     : Message_Access;
 
             procedure Print_Line_Info (Info : Line_Information_Record);
 
@@ -845,11 +846,13 @@ package body Src_Editor_Module.Shell is
                Set_Return_Value_As_List (Data);
 
                for J in Info'Range loop
-                  if not Info (J).Messages.Is_Empty
-                    and then Info (J).Messages.First_Element.Get_Action /= null
-                  then
-                     Print_Line_Info
-                       (Info (J).Messages.First_Element.Get_Action.all);
+                  if not Info (J).Messages.Is_Empty then
+                     M := Info (J).Messages.First_Element.Message;
+                     if M /= null
+                       and then M.Get_Action /= null
+                     then
+                        Print_Line_Info (M.Get_Action.all);
+                     end if;
                   end if;
 
                   if Info (J).Action /= null then

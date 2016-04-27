@@ -17,24 +17,25 @@
 
 with Ada.Tags;
 
-with GNAT.Strings; use GNAT.Strings;
+with GNAT.Strings;            use GNAT.Strings;
 
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
-with Glib.Object; use Glib.Object;
+with Glib.Object;             use Glib.Object;
 
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 
-with GPS.Kernel;         use GPS.Kernel;
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
+with GPS.Kernel;              use GPS.Kernel;
+with GPS.Kernel.Messages;     use GPS.Kernel.Messages;
+with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 
-with GNATCOLL.Traces;    use GNATCOLL.Traces;
-with Gtk.Text_Tag;       use Gtk.Text_Tag;
-with Gtk.Text_Tag_Table; use Gtk.Text_Tag_Table;
-with Gtk.Text_Iter;      use Gtk.Text_Iter;
-with Language;           use Language;
-with Commands.Editor;    use Commands.Editor;
+with GNATCOLL.Traces;         use GNATCOLL.Traces;
+with Gtk.Text_Tag;            use Gtk.Text_Tag;
+with Gtk.Text_Tag_Table;      use Gtk.Text_Tag_Table;
+with Gtk.Text_Iter;           use Gtk.Text_Iter;
+with Language;                use Language;
+with Commands.Editor;         use Commands.Editor;
 
 with Src_Editor_Module.Line_Highlighting;
 use Src_Editor_Module.Line_Highlighting;
@@ -173,7 +174,7 @@ package body Src_Editor_Buffer.Debug is
               & "#";
          else
             Res := Res & "#"
-              & To_String (Info (J).Messages.First_Element)
+              & To_String (Info (J).Messages.First_Element.Message)
               & ", "
               & "#";
          end if;

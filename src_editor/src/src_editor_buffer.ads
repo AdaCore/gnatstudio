@@ -31,28 +31,28 @@ with GNAT.Strings;
 with GNATCOLL.Projects;
 with GNATCOLL.Symbols;
 with GNATCOLL.VFS;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
+with GNATCOLL.Scripts;                use GNATCOLL.Scripts;
 
 with Gdk.RGBA;
-with Glib;                      use Glib;
+with Glib;                            use Glib;
 with Glib.Main;
 with Gtk;
 with Gtk.Text_Iter;
-with Gtk.Text_Mark; use Gtk.Text_Mark;
+with Gtk.Text_Mark;                   use Gtk.Text_Mark;
 with Gtk.Text_Tag;
-with Gtkada.Text_Buffer;        use Gtkada.Text_Buffer;
+with Gtkada.Text_Buffer;              use Gtkada.Text_Buffer;
 
-with Basic_Types;               use Basic_Types;
-with Commands;                  use Commands;
-with GPS.Editors;               use GPS.Editors;
-with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with Basic_Types;                     use Basic_Types;
+with Commands;                        use Commands;
+with GPS.Editors;                     use GPS.Editors;
+with GPS.Editors.Line_Information;    use GPS.Editors.Line_Information;
 with GPS.Kernel;
-with GPS.Kernel.Style_Manager;  use GPS.Kernel.Style_Manager;
-with GPS.Kernel.Messages;       use GPS.Kernel.Messages;
+with GPS.Kernel.Style_Manager;        use GPS.Kernel.Style_Manager;
+with GPS.Kernel.Messages.References;  use GPS.Kernel.Messages.References;
 with Language.Tree;
 with Src_Highlighting;
 with Ada.Strings.Unbounded;
-with GPS.Core_Kernels; use GPS.Core_Kernels;
+with GPS.Core_Kernels;                use GPS.Core_Kernels;
 with Gtk.Clipboard;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
@@ -793,13 +793,13 @@ package Src_Editor_Buffer is
      (Buffer : Source_Buffer) return Extra_Information_Array_Access;
    --  Return the extra information associated with the buffer
 
-   package Message_List is new Ada.Containers.Doubly_Linked_Lists
-     (Message_Access);
+   package Message_Reference_List is new Ada.Containers.Doubly_Linked_Lists
+     (Message_Reference);
 
    --  The following is related to information to be put in the side column
 
    type Line_Info_Width is record
-      Messages : Message_List.List;
+      Messages : Message_Reference_List.List;
       Action   : Line_Information_Access;
       Set      : Boolean := False;
    end record;

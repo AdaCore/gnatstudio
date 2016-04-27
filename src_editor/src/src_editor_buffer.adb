@@ -76,6 +76,7 @@ with GPS.Kernel.Charsets;                 use GPS.Kernel.Charsets;
 with GPS.Kernel.Contexts;                 use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                    use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;                      use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;                 use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Simple;          use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;                  use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;              use GPS.Kernel.Preferences;
@@ -5969,7 +5970,7 @@ package body Src_Editor_Buffer is
 
             for K in Columns_Config'Range loop
                Buffer.Line_Data (Line).Side_Info_Data (K) :=
-                 (Message_List.Empty_List,
+                 (Message_Reference_List.Empty_List,
                   Action => null,
                   Set   => not Columns_Config (K).Every_Line);
             end loop;
@@ -7859,34 +7860,14 @@ package body Src_Editor_Buffer is
    procedure Free
      (Buffer        : access Source_Buffer_Record;
       X             : in out Line_Info_Width;
-      Free_Messages : Boolean)
-   is
+      Free_Messages : Boolean) is
    begin
       Free (X.Action);
 
       if Free_Messages then
-
-         --  We are about to remove messages from the editor. For safety, do
-         --  not iterate on the messages list, since removing messages will
-         --  affect this list. Instead, construct a Message_Array with all
-         --  messages. This is also potentially more efficient, as
-         --  Remove_Messages works on an array of messages.
-         declare
-            M : Message_Array (1 .. Integer (X.Messages.Length));
-            J : Natural := 1;
-            C : Message_List.Cursor;
-         begin
-            C := X.Messages.First;
-
-            while Message_List.Has_Element (C) loop
-               M (J) := Message_List.Element (C);
-               J := J + 1;
-               Message_List.Next (C);
-            end loop;
-
-            Remove_Messages (Buffer, M);
-         end;
-
+         for Reference of X.Messages loop
+            Remove_Message (Buffer, Reference);
+         end loop;
          X.Messages.Clear;
       end if;
    end Free;

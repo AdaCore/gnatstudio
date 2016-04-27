@@ -54,9 +54,6 @@ package body Src_Editor_Buffer.Line_Information is
    Me : constant Trace_Handle := Create ("Src_Editor_Buffer.Line_Information");
 
    type Line_Info_Note_Record is new Abstract_Note with record
-      Data : Line_Info_Width_Array_Access;
-      --  The data which contains Message in the source editor side info.
-
       Style : Style_Access := null;
       --  The style used to highlight this message
 
@@ -166,9 +163,8 @@ package body Src_Editor_Buffer.Line_Information is
    is
       Data : constant Line_Info_Width_Array_Access :=
         Get_Side_Information (Buffer, Line);
-
-      C : Message_List.Cursor;
-      use Message_List;
+      C    : Message_Reference_List.Cursor;
+      use Message_Reference_List;
    begin
       if Data = null then
          --  Defensive code, this should not happen
@@ -179,7 +175,7 @@ package body Src_Editor_Buffer.Line_Information is
          C := Data (K).Messages.First;
 
          while Has_Element (C) loop
-            if Element (C) = Message then
+            if Element (C).Message = Message then
                return True;
             end if;
             Next (C);
@@ -327,8 +323,6 @@ package body Src_Editor_Buffer.Line_Information is
         (Buffer : access Source_Buffer_Record'Class;
          D      : in out Line_Data_Record)
       is
-         M    : Message_Access;
-         Note : Line_Info_Note;
          pragma Unreferenced (Buffer);
       begin
          if D.Side_Info_Data = null then
@@ -337,7 +331,7 @@ package body Src_Editor_Buffer.Line_Information is
 
             for K in Columns_Config.all'Range loop
                D.Side_Info_Data (K) :=
-                 (Message_List.Empty_List,
+                 (Message_Reference_List.Empty_List,
                   Action => null,
                   Set   => not Columns_Config.all (K).Every_Line);
             end loop;
@@ -346,7 +340,6 @@ package body Src_Editor_Buffer.Line_Information is
             declare
                A : Line_Info_Width_Array
                  (D.Side_Info_Data'First .. D.Side_Info_Data'Last + 1);
-               C : Message_List.Cursor;
             begin
                A (A'First .. A'Last - 1) := D.Side_Info_Data.all;
 
@@ -355,33 +348,9 @@ package body Src_Editor_Buffer.Line_Information is
 
                D.Side_Info_Data
                  (D.Side_Info_Data'Last) :=
-                 (Messages => Message_List.Empty_List,
+                 (Messages => Message_Reference_List.Empty_List,
                   Action   => null,
                   Set      => not Every_Line);
-
-               --  Regenerate notes for each message in this side info data
-               --  There is no need to check for messages at
-               --  D.Side_Info_Data'Last since we have just initialized it to
-               --  null.
-               for J in D.Side_Info_Data'First
-                 .. D.Side_Info_Data'Last - 1
-               loop
-                  C := D.Side_Info_Data (J).Messages.First;
-
-                  while Message_List.Has_Element (C) loop
-                     M := Message_List.Element (C);
-
-                     if M /= null
-                       and then M.Has_Note (Line_Info_Note_Record'Tag)
-                     then
-                        Note := Line_Info_Note
-                          (M.Get_Note (Line_Info_Note_Record'Tag));
-                        Note.Data := D.Side_Info_Data;
-                     end if;
-
-                     Message_List.Next (C);
-                  end loop;
-               end loop;
             end;
          end if;
       end Process_Data;
@@ -550,8 +519,8 @@ package body Src_Editor_Buffer.Line_Information is
          D      : in out Line_Data_Record)
       is
          M    : Message_Access;
-         Note : Line_Info_Note;
-         C    : Message_List.Cursor;
+--           Note : Line_Info_Note;
+         C    : Message_Reference_List.Cursor;
          pragma Unreferenced (Buffer);
       begin
          if D.Side_Info_Data /= null then
@@ -567,11 +536,13 @@ package body Src_Editor_Buffer.Line_Information is
 
             C := D.Side_Info_Data (Column).Messages.First;
 
-            while Message_List.Has_Element (C) loop
-               M := Message_List.Element (C);
+            while Message_Reference_List.Has_Element (C) loop
+               M := Message_Reference_List.Element (C).Message;
 
-               M.Remove;
-               C := D.Side_Info_Data (Column).Messages.First;
+               if M /= null then
+                  M.Remove;
+                  C := D.Side_Info_Data (Column).Messages.First;
+               end if;
             end loop;
 
             declare
@@ -586,25 +557,6 @@ package body Src_Editor_Buffer.Line_Information is
 
                D.Side_Info_Data := new Line_Info_Width_Array'(A);
             end;
-
-            --  Regenerate notes for each message in this side info data
-            for J in D.Side_Info_Data'Range loop
-               C := D.Side_Info_Data (J).Messages.First;
-
-               while Message_List.Has_Element (C) loop
-                  M := Message_List.Element (C);
-
-                  if M /= null
-                    and then M.Has_Note (Line_Info_Note_Record'Tag)
-                  then
-                     Note := Line_Info_Note
-                       (M.Get_Note (Line_Info_Note_Record'Tag));
-                     Note.Data := D.Side_Info_Data;
-                  end if;
-
-                  Message_List.Next (C);
-               end loop;
-            end loop;
          end if;
       end Process_Data;
 
@@ -719,44 +671,27 @@ package body Src_Editor_Buffer.Line_Information is
       Add_Side_Information (Buffer, Identifier, Messages, 0);
    end Add_File_Information;
 
-   ---------------------
-   -- Remove_Messages --
-   ---------------------
+   --------------------
+   -- Remove_Message --
+   --------------------
 
-   procedure Remove_Messages
-     (Buffer     : access Source_Buffer_Record'Class;
-      Messages   : Message_Array)
+   procedure Remove_Message
+     (Buffer    : access Source_Buffer_Record'Class;
+      Reference : Message_Reference)
    is
-      Column        : Integer;
-      Note          : Line_Info_Note;
-      Pos           : Message_List.Cursor;
+      M : constant Message_Access := Reference.Message;
    begin
-      for K in Messages'Range loop
-         if Has_Note (Messages (K), Line_Info_Note_Record'Tag) then
-            Note := Line_Info_Note
-              (Messages (K).Get_Note (Line_Info_Note_Record'Tag));
+      if M /= null then
+         Remove_Message_Highlighting
+           (Buffer, M, M.Get_Highlighting_Style);
 
-            Column := Column_For_Identifier
-              (Buffer, Messages (K).Get_Category);
-
-            Pos := Note.Data (Column).Messages.Find (Messages (K));
-
-            Remove_Message_Highlighting
-              (Buffer, Messages (K), Messages (K).Get_Highlighting_Style);
-
-            if Message_List.Has_Element (Pos) then
-               Note.Data (Column).Messages.Delete (Pos);
-            end if;
-
-            Messages (K).Remove_Note (Line_Info_Note_Record'Tag);
-         else
-            Remove_Message_Highlighting
-              (Buffer, Messages (K), Messages (K).Get_Highlighting_Style);
+         if Has_Note (M, Line_Info_Note_Record'Tag) then
+            M.Remove_Note (Line_Info_Note_Record'Tag);
          end if;
-      end loop;
+      end if;
 
       Side_Column_Configuration_Changed (Buffer);
-   end Remove_Messages;
+   end Remove_Message;
 
    ---------------------------
    -- Column_For_Identifier --
@@ -1174,20 +1109,24 @@ package body Src_Editor_Buffer.Line_Information is
    function Get_Relevant_Action
      (Data : Line_Info_Width) return Line_Information_Record
    is
-      C : Message_List.Cursor;
+      C      : Message_Reference_List.Cursor;
       Action : GPS.Kernel.Messages.Action_Item;
+      M      : Message_Access;
    begin
 
       --  First look for an action in the messages
       C := Data.Messages.First;
 
-      while Message_List.Has_Element (C) loop
-         Action := Message_List.Element (C).Get_Action;
-         if Action /= null then
-            return Action.all;
+      while Message_Reference_List.Has_Element (C) loop
+         M := Message_Reference_List.Element (C).Message;
+         if M /= null then
+            Action := M.Get_Action;
+            if Action /= null then
+               return Action.all;
+            end if;
          end if;
 
-         Message_List.Next (C);
+         Message_Reference_List.Next (C);
       end loop;
 
       --  Next look in the action itself
@@ -1687,11 +1626,10 @@ package body Src_Editor_Buffer.Line_Information is
       if The_Data /= null then
          if Message /= null then
             Note := new Line_Info_Note_Record;
-            Note.Data := The_Data;
             Note.Style := Message.Get_Highlighting_Style;
             Message.Set_Note (Note_Access (Note));
 
-            The_Data (Column).Messages.Prepend (Message);
+            The_Data (Column).Messages.Prepend (Create (Message));
             The_Data (Column).Set := True;
 
             Highlight_Message (Buffer        => Buffer,

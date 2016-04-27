@@ -176,12 +176,13 @@ package body Src_Editor_Box.Tooltips is
            (View, LX, LY, Line, Col, Out_Of_Bounds);
 
          declare
-            Content       : Unbounded_String;
-            Has_Info      : Boolean := False;
-            Action        : GPS.Kernel.Messages.Action_Item;
-            Image         : Gtk_Image;
+            Content  : Unbounded_String;
+            Has_Info : Boolean := False;
+            Action   : GPS.Kernel.Messages.Action_Item;
+            Image    : Gtk_Image;
 
-            C : Message_List.Cursor;
+            C : Message_Reference_List.Cursor;
+            M : Message_Access;
          begin
             Line_Info := Get_Side_Information
               (Box.Source_Buffer,
@@ -193,8 +194,11 @@ package body Src_Editor_Box.Tooltips is
                for K in Line_Info'Range loop
                   C := Line_Info (K).Messages.Last;
 
-                  while Message_List.Has_Element (C) loop
-                     Action := Message_List.Element (C).Get_Action;
+                  while Message_Reference_List.Has_Element (C) loop
+                     M := Message_Reference_List.Element (C).Message;
+                     if M /= null then
+                        Action := M.Get_Action;
+                     end if;
 
                      if Action /= null then
                         if Image = null
@@ -214,7 +218,7 @@ package body Src_Editor_Box.Tooltips is
                         end if;
                      end if;
 
-                     Message_List.Previous (C);
+                     Message_Reference_List.Previous (C);
                   end loop;
                end loop;
             end if;
@@ -295,34 +299,36 @@ package body Src_Editor_Box.Tooltips is
          if Line_Info /= null then
             for J in Line_Info'Range loop
                declare
-                  C : Message_List.Cursor;
+                  C       : Message_Reference_List.Cursor;
                   Message : Message_Access;
                   Text    : Unbounded_String;
                   Image   : Gtk_Image;
                begin
                   C := Line_Info (J).Messages.Last;
 
-                  while Message_List.Has_Element (C) loop
-                     Message := Message_List.Element (C);
+                  while Message_Reference_List.Has_Element (C) loop
+                     Message := Message_Reference_List.Element (C).Message;
 
-                     declare
-                        M : constant GPS.Editors.Editor_Mark'Class
-                          := Message.Get_Editor_Mark;
-                     begin
-                        if Col + 1 >= Gint (M.Column)
-                          and then Col + 1 <= Gint
-                            (M.Column
-                             + Visible_Column_Type
-                               (Message.Get_Highlighting_Length))
-                        then
-                           if Text /= Null_Unbounded_String then
-                              Text := Text & ASCII.LF;
+                     if Message /= null then
+                        declare
+                           M : constant GPS.Editors.Editor_Mark'Class :=
+                             Message.Get_Editor_Mark;
+                        begin
+                           if Col + 1 >= Gint (M.Column)
+                             and then Col + 1 <= Gint
+                               (M.Column
+                                + Visible_Column_Type
+                                  (Message.Get_Highlighting_Length))
+                           then
+                              if Text /= Null_Unbounded_String then
+                                 Text := Text & ASCII.LF;
+                              end if;
+
+                              Text := Text & Message.Get_Text;
                            end if;
-
-                           Text := Text & Message.Get_Text;
-                        end if;
-                     end;
-                     Message_List.Previous (C);
+                        end;
+                     end if;
+                     Message_Reference_List.Previous (C);
                   end loop;
 
                   if Text /= Null_Unbounded_String then
