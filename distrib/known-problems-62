@@ -639,6 +639,15 @@ KP-62-P415-008 GPS: incorrect reload of breakpoints
               rather than on the specific line. Once the debugger stops,
               you can simply click on the line to set a new breakpoint.
 
+KP-62-P412-005 GPS: hangs or crash when triggering the smart completion.
+
+  Problem:    GPS might hang or crash when some files become modified
+              after the smart completion was opened.
+
+  Status:     This was fixed in 6.2.2 on 2016-04-28
+
+  Workaround: None.
+
 KP-62-P411-034 GPS: reports file write error for temporary files
 
   Problem:    GPS reports file write errors when CodePeer report is open and
