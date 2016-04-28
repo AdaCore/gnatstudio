@@ -68,20 +68,6 @@ package body GNATTest_Module is
      (Filter  : access Non_Harness_Project_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean;
 
-   type Create_Harness_Project_Filter is new GPS.Kernel.Action_Filter_Record
-     with null record;
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Create_Harness_Project_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean;
-
-   type Harness_Project_Exists_Filter is new GPS.Kernel.Action_Filter_Record
-     with null record;
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Harness_Project_Exists_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean;
-
    type Go_To_Tested_Filter is
      new GPS.Kernel.Action_Filter_Record with null record;
 
@@ -204,10 +190,6 @@ package body GNATTest_Module is
    procedure Test_Entity_Callback
      (Widget    : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class;
       User_Data : Menu_Data);
-
-   function Harness_Project_Exists
-     (Project : GNATCOLL.Projects.Project_Type)
-      return Boolean;
 
    ---------
    -- "<" --
@@ -451,80 +433,6 @@ package body GNATTest_Module is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Create_Harness_Project_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-   begin
-      if not Has_Project_Information (Context) then
-         return False;
-      end if;
-
-      declare
-         Project : constant GNATCOLL.Projects.Project_Type
-            := Project_Information (Context);
-
-      begin
-         return not Is_Harness_Project (Project) and then
-           not Harness_Project_Exists (Project);
-      end;
-   end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Harness_Project_Exists_Filter;
-      Context : GPS.Kernel.Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-   begin
-      if not Has_Project_Information (Context) then
-         return False;
-      end if;
-
-      declare
-         Project : constant GNATCOLL.Projects.Project_Type
-           := Project_Information (Context);
-      begin
-         return Harness_Project_Exists (Project);
-      end;
-   end Filter_Matches_Primitive;
-
-   ----------------------------
-   -- Harness_Project_Exists --
-   ----------------------------
-
-   function Harness_Project_Exists
-     (Project : GNATCOLL.Projects.Project_Type)
-      return Boolean
-   is
-      use type GNATCOLL.VFS.Filesystem_String;
-
-      Name  : constant GNATCOLL.Projects.Attribute_Pkg_String
-        := GNATCOLL.Projects.Build ("GNATtest", "Harness_Dir");
-
-      Value : constant String := Project.Attribute_Value
-        (Name, Default => "gnattest/harness");
-
-      Object_Dir : constant GNATCOLL.VFS.Virtual_File
-        := Project.Object_Dir;
-
-      Harness_Dir : constant GNATCOLL.VFS.Virtual_File
-        := GNATCOLL.VFS.Create_From_Base (+Value, Object_Dir.Full_Name);
-
-      Harness_Project : constant GNATCOLL.VFS.Virtual_File
-        := Harness_Dir.Create_From_Dir ("test_driver.gpr");
-   begin
-      return Value /= "" and then Harness_Project.Is_Regular_File;
-   end Harness_Project_Exists;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
      (Filter  : access Go_To_Tested_Filter;
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
@@ -713,12 +621,6 @@ package body GNATTest_Module is
 
       Filter := new Non_Harness_Project_Filter;
       Register_Filter (Kernel, Filter, "Non harness project");
-
-      Filter := new Create_Harness_Project_Filter;
-      Register_Filter (Kernel, Filter, "Create harness project");
-
-      Filter := new Harness_Project_Exists_Filter;
-      Register_Filter (Kernel, Filter, "Harness project exists");
 
       Filter := new Package_Declaration_Filter;
       Register_Filter (Kernel, Filter, "Library package declaration");

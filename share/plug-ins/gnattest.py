@@ -8,7 +8,7 @@ This file provides support for gnattest.
 
 import os.path
 import GPS
-from gps_utils import hook
+from gps_utils import hook, interactive
 
 GPS.Preference("Plugins/gnattest/read_only_color"
                ).create("Highlight color", "color",
@@ -42,20 +42,24 @@ def get_driver_list():
 def get_harness_project_file(cur):
     """ Return name of harness project with last modification time """
     harness_dir = cur.get_attribute_as_string("Harness_Dir", "GNATtest")
+    project_dir = cur.file().directory()
+    object_dir = cur.get_attribute_as_string("Object_Dir")
+    parent_dir = os.path.join(project_dir, object_dir)
+
     list = []
 
     if harness_dir == "":
-        list.append(os.path.join(cur.object_dirs()[0],
+        list.append(os.path.join(parent_dir,
                                  "gnattest", "harness",
                                  "test_driver.gpr"))
-        list.append(os.path.join(cur.object_dirs()[0],
+        list.append(os.path.join(parent_dir,
                                  "gnattest_stub", "harness",
                                  "test_drivers.gpr"))
     else:
-        list.append(os.path.join(cur.object_dirs()[0],
+        list.append(os.path.join(parent_dir,
                                  harness_dir,
                                  "test_driver.gpr"))
-        list.append(os.path.join(cur.object_dirs()[0],
+        list.append(os.path.join(parent_dir,
                                  harness_dir,
                                  "test_drivers.gpr"))
 
@@ -86,7 +90,8 @@ def open_harness_project(cur):
                                       GPS.Project.root().file().name() + "\n")
         last_gnattest['harness'] = GPS.Project.root().file().name()
     else:
-        GPS.Console("Messages").write("No harness project found!\n")
+        GPS.Console("Messages").write("No harness project found: %s!\n" %
+                                      (prj))
 
 
 def exit_harness_project():
@@ -188,6 +193,31 @@ def mark_read_only_areas(buffer):
 
             buffer.apply_overlay(read_only_overlay, from_line, to_line)
     # No more read-only areas
+
+
+def open_harness_filter(context):
+    if GPS.Project.root().is_harness_project():
+        return False
+
+    if not isinstance(context, GPS.FileContext):
+        return False
+
+    project = context.project()
+
+    if not project:
+        return False
+
+    return os.path.exists(get_harness_project_file(project))
+
+
+@interactive("General", open_harness_filter, name="open harness",
+             contextual="GNATtest/Open harness project")
+def open_harness():
+    """
+    Open harness project for current project
+    """
+    open_harness_project(GPS.current_context().project())
+
 
 XML = r"""<?xml version="1.0" ?>
 <gnattest>
@@ -301,16 +331,6 @@ XML = r"""<?xml version="1.0" ?>
     >gnattest.run(GPS.Project.root(), "GNATtest for root project")</shell>
   </action>
 
-  <action name="open harness" output="none">
-    <filter_and>
-      <filter id="Harness project exists"/>
-      <filter id="Non harness project"/>
-    </filter_and>
-    <description>Open harness project for current project</description>
-    <shell lang="python">gnattest.open_harness_project""" \
-    """(GPS.current_context().project())</shell>
-  </action>
-
   <action name="exit harness" output="none">
     <filter id="Harness project"/>
     <description>Return to user project from current """ \
@@ -330,10 +350,6 @@ XML = r"""<?xml version="1.0" ?>
 
   <contextual action="run gnattest" after="GNATtest">
     <title>GNATtest/Generate unit test setup for %p</title>
-  </contextual>
-
-  <contextual action="open harness" after="GNATtest">
-    <title>GNATtest/Open harness project</title>
   </contextual>
 
   <contextual action="exit harness" after="GNATtest">
