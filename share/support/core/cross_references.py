@@ -55,7 +55,7 @@ class Sqlite_Cross_References(object):
        <arg>-d</arg>
        <arg>--exit</arg>
        <arg>--tracefile=%GPS/gnatinspect_traces.cfg</arg>
-       <arg>--config=%O/gpsauto.cgpr</arg>
+       <arg>--config=%{O}gpsauto.cgpr</arg>
        <arg>--encoding=iso-8859-1</arg>
        <arg>--check_db_version</arg>
        <arg>-P%PP</arg>
