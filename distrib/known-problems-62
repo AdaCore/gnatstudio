@@ -25,6 +25,21 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P412-027 GPS: 'load' command automatically sent to GDB
+
+  Problem:    GPS automatically loads the executable being debugged
+              when starting GDB on a remote target (i.e: when the
+              IDE'Protocol_Host and IDE'Communication_Protocol are
+              set), flashing the board each time that a debug
+              session is launched.
+
+  Status:     This was fixed in 17.0 on 2016-04-25
+
+  Workaround: Remove the IDE'Protocol_Host and IDE'Communication_Protocol
+              from your project and connect to the board manually in the
+              GDB console to start your debug sesssion without loading
+              the executable.
+
 KP-62-P411-035 WB: bad SMP RUNTIME used for arm target on VxWorks-6.x
 
   Problem:    gprconfig failure when building DKM & RTP for SMP
