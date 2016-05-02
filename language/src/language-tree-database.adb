@@ -823,7 +823,7 @@ package body Language.Tree.Database is
       if File.Timestamp = -1
         or else Timestamp = -1
         or else File.Timestamp /= Timestamp
-        or else Is_Active (Test_Update_Cache)
+        or else Active (Test_Update_Cache)
       then
          File.Timestamp := Timestamp;
          --  We are not up-to-date: compute the constructs
