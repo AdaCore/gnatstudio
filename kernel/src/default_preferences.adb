@@ -24,6 +24,7 @@ with GNATCOLL.Utils;           use GNATCOLL.Utils;
 
 with XML_Utils;                use XML_Utils;
 with Default_Preferences.GUI;  use Default_Preferences.GUI;
+with Dialog_Utils;             use Dialog_Utils;
 
 with Gtk.Adjustment;           use Gtk.Adjustment;
 with Gtk.Box;                  use Gtk.Box;
@@ -761,20 +762,13 @@ package body Default_Preferences is
       return Gtk.Widget.Gtk_Widget
    is
       Page_View : Preferences_Page_View;
-      Prefs_Box : Preferences_Box;
    begin
-      --  Create a new page
+      --  Create a new page view from the preferences regsitered in Self
       Page_View := new Preferences_Page_View_Record;
-      Default_Preferences.GUI.Initialize (Page_View);
-
-      --  Create the preferences box for all the preferences registered in this
-      --  page and add it to the page view.
-      Prefs_Box := new Preferences_Box_Record;
-      Default_Preferences.GUI.Build (Self    => Prefs_Box,
+      Dialog_Utils.Initialize (Page_View);
+      Default_Preferences.GUI.Build (Self    => Page_View,
                                      Page    => Self,
                                      Manager => Manager);
-      Page_View.Set_Prefs_Box (Prefs_Box);
-      Page_View.Add (Prefs_Box);
 
       --  If the window is expanded, do not expand the scrolled view child
       --  widget

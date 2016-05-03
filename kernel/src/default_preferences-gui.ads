@@ -18,23 +18,21 @@
 --  This package defines types and subprograms used to create preferences
 --  dialog pages and related widgets.
 
-with Gtk.Box;                use Gtk.Box;
-with Gtk.Frame;              use Gtk.Frame;
-with Gtk.Flow_Box;           use Gtk.Flow_Box;
 with Gtk.Menu;               use Gtk.Menu;
-with Gtk.Size_Group;         use Gtk.Size_Group;
-with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Widget;             use Gtk.Widget;
+
+with Dialog_Utils;           use Dialog_Utils;
 
 package Default_Preferences.GUI is
 
-   type Preferences_Group_Widget_Record is new Gtk_Frame_Record with private;
+   type Preferences_Group_Widget_Record is new Dialog_Group_Widget_Record
+   with private;
    type Preferences_Group_Widget is
      access all Preferences_Group_Widget_Record'Class;
    --  Type used to represent group widgets in the preferences dialog.
 
-   type Preferences_Page_View_Record is
-     new Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with private;
+   type Preferences_Page_View_Record is new Dialog_View_Record
+   with private;
    type Preferences_Page_View is access all Preferences_Page_View_Record'Class;
    --  Type defining a preferences dialog page view.
    --  This is used to define a common API for all the pages views of the
@@ -47,18 +45,9 @@ package Default_Preferences.GUI is
    --  configuration menu.
    --  Override this function if the page needs a local configuration menu.
 
-   type Preferences_Box_Record is new Gtk.Box.Gtk_Box_Record with private;
-   type Preferences_Box is access all Preferences_Box_Record'Class;
-   --  Type used to represent the parent container of all the preferences
-   --  related widgets displayed on a Preferences_Page_View.
-
    ---------------------------
    -- Preferences_Page_View --
    ---------------------------
-
-   procedure Initialize
-     (Self : not null access Preferences_Page_View_Record'Class);
-   --  Initialize the common attributes for all the Preferences_Page_Views.
 
    procedure Set_Pref_Highlighted
      (Self      : not null access Preferences_Page_View_Record;
@@ -67,19 +56,6 @@ package Default_Preferences.GUI is
    --  If Highlight is True, Highlight the widget displaying the preference
    --  given in parameter.
    --  If not, unhighlight it.
-
-   procedure On_Destroy_Page_View
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Called when a preferences page view is destroyed.
-
-   procedure Set_Prefs_Box
-     (Self      : not null access Preferences_Page_View_Record'Class;
-      Prefs_Box : not null access Preferences_Box_Record'Class);
-   function Get_Prefs_Box
-     (Self      : not null access Preferences_Page_View_Record'Class)
-      return Preferences_Box;
-   --  Setter and getter for the Prefs_Box attribute, which is the container
-   --  containing all the preferences-related widgets for a given page view.
 
    procedure Display_Subpage
      (Self         : not null access Preferences_Page_View_Record;
@@ -92,34 +68,19 @@ package Default_Preferences.GUI is
    -- Preferences_Group_Widget --
    ------------------------------
 
-   procedure Initialize
-     (Self        : not null access Preferences_Group_Widget_Record'Class;
-      Group_Name  : String);
-   --  Initialize a Preferences_Group_Widget.
-   --  Group_Name is used to set the frame's label.
-
-   function Create_Pref_Row
+   procedure Create_Pref_Row
      (Self      : not null access Preferences_Group_Widget_Record'Class;
-      Prefs_Box : not null access Preferences_Box_Record'Class;
       Pref      : not null access Preference_Record'Class;
-      Manager   : not null access Preferences_Manager_Record'Class)
-      return Gtk_Widget;
+      Manager   : not null access Preferences_Manager_Record'Class);
    --  Create a row for the given preference and append it at the bottom of
    --  the group widget.
-   --  The preference's row width is determined using the size groups of
-   --  Prefs_Box.
-
-   procedure Append
-     (Self   : not null access Preferences_Group_Widget_Record'Class;
-      Widget : not null Gtk_Widget);
-   --  Append an already built widget to the given group flow box.
 
    ---------------------
    -- Preferences_Box --
    ---------------------
 
    procedure Build
-     (Self    : not null access Preferences_Box_Record'Class;
+     (Self    : not null access Preferences_Page_View_Record'Class;
       Page    : not null access Preferences_Page_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class);
    --  Build all the widgets for every group and every preference and add them
@@ -127,22 +88,10 @@ package Default_Preferences.GUI is
 
 private
 
-   type Preferences_Group_Widget_Record is new Gtk_Frame_Record with record
-      Flow_Box               : Gtk_Flow_Box;
-   end record;
+   type Preferences_Group_Widget_Record is new Dialog_Group_Widget_Record
+   with null record;
 
-   type Preferences_Box_Record is new Gtk.Box.Gtk_Box_Record with record
-      Pref_Widgets : Preferences_Widgets_Maps.Map;
-      --  Used to map preferences with their highlightable parent widget.
-      Label_Size_Group       : Gtk_Size_Group;
-      Pref_Widget_Size_Group : Gtk_Size_Group;
-   end record;
-
-   type Preferences_Page_View_Record is
-     new Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with record
-      Prefs_Box : Preferences_Box;
-      --  Container for all the preferences related widgets.
-      --  This can be set to null if no preference is displayed on this page.
-   end record;
+   type Preferences_Page_View_Record is new Dialog_View_Record
+   with null record;
 
 end Default_Preferences.GUI;

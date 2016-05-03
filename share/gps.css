@@ -39,6 +39,8 @@
 @define-color tooltip-background-color mix(shade(@theme_base_color, 1.40), @middle-gray, 0.2);
 @define-color tooltip-text-color mix(@theme_fg_color, @middle-gray, 0.2);
 
+@define-color error-color mix(@theme_base_color, red, 0.5);
+
 /* The colors used to highlight the notebook tabs that are raised. Only one
  * of them (at most) has the keyboard focus and is highlighted with
  * gps_active_tab. The others are highlighting with gps_inactive_tab.
@@ -70,39 +72,43 @@ GtkTextView.readonly {
    /* background-color: rgb(200,200,200); */
 }
 
-/*************************
- * GPS preferences pages *
- *************************/
+/********************
+ * GPS dialog views *
+ ********************/
 
-.gps-preferences-pages {
+.dialog-views-pages {
    background-color: @theme_base_color;
 }
 
 /**************************
- * GPS preferences groups *
+ * GPS dialog view groups *
  **************************/
 
-.gps-preferences-groups {
+.dialog-views-groups {
    box-shadow: none;
    border-width: 0;
 }
 
-.gps-preferences-groups > GtkLabel {
+.dialog-views-groups > GtkLabel {
    /* Set bold font for group titles */
    font-weight: bold;
    padding-top: 12px;
    padding-bottom: 5px;
 }
 
-.gps-preferences-groups-rows {
+.dialog-views-groups-rows {
    padding-left: 12px;
 }
 
-.gps-preferences-groups-rows GtkRadioButton > GtkLabel {
+.dialog-views-groups-rows.display_error {
+   background-color: @error-color;
+}
+
+.dialog-views-groups-rows GtkRadioButton > GtkLabel {
    padding-right: 12px;
 }
 
-.gps-preferences-doc-labels {
+.dialog-views-doc-labels {
    /* Reduce the font size for the inlined preferences documentation */
    font-size: 9px;
    color: @inactive_tab_color;

@@ -15,31 +15,13 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GUI_Utils;         use GUI_Utils;
 with Gtk.Enums;         use Gtk.Enums;
-with Gtk.Label;         use Gtk.Label;
-with Gtk.Style_Context; use Gtk.Style_Context;
 
 -----------------------------
 -- Default_Preferences.GUI --
 -----------------------------
 
 package body Default_Preferences.GUI is
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Self : not null access Preferences_Page_View_Record'Class) is
-   begin
-      Gtk.Scrolled_Window.Initialize (Self);
-      Self.Set_Policy (Policy_Automatic, Policy_Automatic);
-      Self.On_Destroy (On_Destroy_Page_View'Access);
-
-      Get_Style_Context (Self).Add_Class
-        ("gps-preferences-pages");
-   end Initialize;
 
    --------------------------
    -- Set_Pref_Highlighted --
@@ -48,182 +30,39 @@ package body Default_Preferences.GUI is
    procedure Set_Pref_Highlighted
      (Self      : not null access Preferences_Page_View_Record;
       Pref      : not null access Preference_Record'Class;
-      Highlight : Boolean)
-   is
-      Widget : Gtk_Widget;
+      Highlight : Boolean) is
    begin
-      if Self.Prefs_Box = null then
-         return;
-      end if;
-
-      --  Do nothing if the preference is not mapped
-      if not Self.Prefs_Box.Pref_Widgets.Contains (Pref.Get_Name) then
-         return;
-      end if;
-
-      Widget := Self.Prefs_Box.Pref_Widgets (Pref.Get_Name);
-
-      if Highlight then
-         Scroll_To_Child (Self, Widget);
-         Widget.Set_State_Flags (Gtk_State_Flag_Selected, False);
-      else
-         Widget.Set_State_Flags (Gtk_State_Flag_Normal, True);
-      end if;
+      Self.Set_Child_Highlighted (Child_Key => Pref.Get_Name,
+                                  Highlight => Highlight);
    end Set_Pref_Highlighted;
-
-   --------------------------
-   -- On_Destroy_Page_View --
-   --------------------------
-
-   procedure On_Destroy_Page_View
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-   is
-      Page_View : constant Preferences_Page_View :=
-                    Preferences_Page_View (Widget);
-   begin
-      if Page_View.Prefs_Box /= null then
-         Page_View.Prefs_Box.Pref_Widgets.Clear;
-      end if;
-   end On_Destroy_Page_View;
-
-   -------------------
-   -- Set_Prefs_Box --
-   -------------------
-
-   procedure Set_Prefs_Box
-     (Self      : not null access Preferences_Page_View_Record'Class;
-      Prefs_Box : not null access Preferences_Box_Record'Class) is
-   begin
-      Self.Prefs_Box := Preferences_Box (Prefs_Box);
-   end Set_Prefs_Box;
-
-   -------------------
-   -- Get_Prefs_Box --
-   -------------------
-
-   function Get_Prefs_Box
-     (Self      : not null access Preferences_Page_View_Record'Class)
-      return Preferences_Box is (Self.Prefs_Box);
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Self        : not null access Preferences_Group_Widget_Record'Class;
-      Group_Name  : String)
-   is
-      VBox : Gtk_Box;
-   begin
-      Gtk.Frame.Initialize (Self, Group_Name);
-
-      Get_Style_Context (Self).Add_Class
-        ("gps-preferences-groups");
-
-      Gtk_New (Self.Flow_Box);
-      Self.Flow_Box.Set_Orientation (Orientation_Horizontal);
-      Self.Flow_Box.Set_Row_Spacing (0);
-      Self.Flow_Box.Set_Max_Children_Per_Line (2);
-      Self.Flow_Box.Set_Selection_Mode (Selection_None);
-      Self.Flow_Box.Set_Homogeneous (False);
-
-      Gtk_New_Vbox (VBox);
-      VBox.Pack_Start (Self.Flow_Box, Expand => False);
-      Self.Add (VBox);
-   end Initialize;
 
    ---------------------
    -- Create_Pref_Row --
    ---------------------
 
-   function Create_Pref_Row
+   procedure Create_Pref_Row
      (Self      : not null access Preferences_Group_Widget_Record'Class;
-      Prefs_Box : not null access Preferences_Box_Record'Class;
       Pref      : not null access Preference_Record'Class;
       Manager   : not null access Preferences_Manager_Record'Class)
-      return Gtk_Widget
    is
       Doc         : constant String := Pref.Get_Doc;
-      Pref_HBox   : Gtk_Box;
-      Pref_Row    : Gtk_Box;
-      Label       : Gtk_Label;
-      Doc_Label   : Gtk_Label;
-      Pref_Widget : Gtk_Widget;
+      Label       : constant String := (if Pref.Editor_Needs_Label then
+                                           Pref.Get_Label
+                                        else
+                                           "");
    begin
-      Gtk_New_Hbox (Pref_HBox);
-      Gtk_New_Vbox (Pref_Row);
-      Pref_Row.Pack_Start (Pref_HBox, Expand => False);
-
-      if Pref.Editor_Needs_Label then
-         Gtk_New (Label, Pref.Get_Label);
-
-         --  Right align the label and add it to the row
-         Label.Set_Alignment (Xalign => 0.0,
-                              Yalign => 0.5);
-         Prefs_Box.Label_Size_Group.Add_Widget (Label);
-         Pref_HBox.Pack_Start (Label,
-                               Expand  => False);
-
-         Pref_Widget := Edit (Pref, Manager);
-
-         if Pref_Widget /= null then
-            Prefs_Box.Pref_Widget_Size_Group.Add_Widget (Pref_Widget);
-            Pref_HBox.Pack_Start (Pref_Widget, Expand => False, Padding => 5);
-         end if;
-      else
-         Pref_Widget := Edit
-           (Pref      => Pref,
-            Manager   => Manager);
-
-         if Pref_Widget /= null then
-            Pref_HBox.Pack_Start (Pref_Widget, Expand => False);
-         end if;
-      end if;
-
-      --  Create the documentation label and add it to the preference row
-      if Doc /= "" then
-         Gtk_New (Doc_Label, Doc);
-         Doc_Label.Set_Line_Wrap (True);
-         Doc_Label.Set_Alignment (0.0, 0.5);
-         Doc_Label.Set_Justify (Justify_Fill);
-
-         --  Done to limit the size requested by the label, which is normally
-         --  computed from the size required to display the label text without
-         --  wrapping it.
-         Doc_Label.Set_Max_Width_Chars (50);
-
-         Pref_Row.Pack_Start (Doc_Label, Expand => False);
-
-         Get_Style_Context (Doc_Label).Add_Class
-           ("gps-preferences-doc-labels");
-      end if;
-
-      --  Add the preference row to the flow box
-      Self.Flow_Box.Add (Pref_Row);
-
-      Get_Style_Context (Pref_Row.Get_Parent).Add_Class
-        ("gps-preferences-groups-rows");
-
-      return Pref_Row.Get_Parent;
+      Self.Create_Child (Widget    => Pref.Edit (Manager),
+                         Label     => Label,
+                         Doc       => Doc,
+                         Child_Key => Pref.Get_Name);
    end Create_Pref_Row;
-
-   ------------
-   -- Append --
-   ------------
-
-   procedure Append
-     (Self   : not null access Preferences_Group_Widget_Record'Class;
-      Widget : not null Gtk_Widget) is
-   begin
-      Self.Flow_Box.Add (Widget);
-   end Append;
 
    -----------
    -- Build --
    -----------
 
    procedure Build
-     (Self    : not null access Preferences_Box_Record'Class;
+     (Self    : not null access Preferences_Page_View_Record'Class;
       Page    : not null access Preferences_Page_Record'Class;
       Manager : not null access Preferences_Manager_Record'Class)
    is
@@ -239,47 +78,24 @@ package body Default_Preferences.GUI is
       procedure Add_Group_Widget is
          Group_Widget : Preferences_Group_Widget;
          Pref         : Preference;
-
-         procedure Add_Pref_Widget;
-         --  Create the widget for Pref and add it to Group_Widget
-
-         ---------------------
-         -- Add_Pref_Widget --
-         ---------------------
-
-         procedure Add_Pref_Widget
-         is
-            Pref_Row : Gtk_Widget;
-         begin
-            Pref_Row := Create_Pref_Row
-              (Self      => Group_Widget,
-               Pref      => Pref,
-               Prefs_Box => Self,
-               Manager   => Manager);
-
-            Self.Pref_Widgets.Insert
-              (Pref.Get_Name, Pref_Row);
-         end Add_Pref_Widget;
-
       begin
          Group_Widget := new Preferences_Group_Widget_Record;
-         Group_Widget.Initialize (Group_Name => Group.Get_Name);
-
-         Self.Pack_Start (Group_Widget, Expand =>  False);
+         Group_Widget.Initialize
+           (Group_Name  => Group.Get_Name,
+            Parent_View => Self);
 
          for Pref_Iter in Group.Preferences.Iterate loop
             Pref := Preferences_Lists.Element (Pref_Iter);
 
-            Add_Pref_Widget;
+            --  Create the row in the group widget for Pref
+            Create_Pref_Row
+              (Self    => Group_Widget,
+               Pref    => Pref,
+               Manager => Manager);
          end loop;
       end Add_Group_Widget;
 
    begin
-      Initialize_Vbox (Self);
-
-      Gtk_New (Self.Pref_Widget_Size_Group, Mode => Horizontal);
-      Gtk_New (Self.Label_Size_Group);
-
       --  Iterate over all the groups registered in this page and append
       --  their widgets.
       for Group_Iter in Page.Groups.Iterate loop

@@ -37,6 +37,7 @@ with Config;
 with Defaults;
 with Default_Preferences.Enums; use Default_Preferences.Enums;
 with Default_Preferences.GUI;   use Default_Preferences.GUI;
+with Dialog_Utils;              use Dialog_Utils;
 with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
@@ -102,7 +103,7 @@ package body GPS.Kernel.Preferences is
       Python_Widget : GObject;
       pragma Unreferenced (Manager);
    begin
-      Default_Preferences.GUI.Initialize (Page_View);
+      Dialog_Utils.Initialize (Page_View);
 
       --  Retrieve the PyGtkWidget created on the python side and add it to
       --  the Path view.
@@ -111,7 +112,8 @@ package body GPS.Kernel.Preferences is
            (Get_PyObject
                 (Execute (Self.Get_Python_Widget, Args))),
          Stub => Stub);
-      Page_View.Add (Gtk_Widget (Python_Widget));
+      Page_View.Append
+        (Gtk_Widget (Python_Widget), Expand => True, Fill => True);
 
       return Gtk_Widget (Page_View);
    end Get_Widget;

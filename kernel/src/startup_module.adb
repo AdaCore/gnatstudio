@@ -49,6 +49,7 @@ with Gtk.Tree_View_Column;                  use Gtk.Tree_View_Column;
 with Gtk.Widget;                            use Gtk.Widget;
 with Gtkada.Handlers;                       use Gtkada.Handlers;
 
+with Dialog_Utils;                          use Dialog_Utils;
 with GPS.Kernel;                            use GPS.Kernel;
 with GPS.Kernel.Custom;                     use GPS.Kernel.Custom;
 with GPS.Kernel.Hooks;                      use GPS.Kernel.Hooks;
@@ -336,7 +337,7 @@ package body Startup_Module is
    begin
       --  Create the page for the plugins editor
       Editor := new Startup_Editor_Page_View_Record;
-      Default_Preferences.GUI.Initialize (Preferences_Page_View (Editor));
+      Dialog_Utils.Initialize (Preferences_Page_View (Editor));
 
       --  Set On_Destroy so that we know when the preferences dialog
       --  is being closed.
@@ -376,7 +377,7 @@ package body Startup_Module is
       Gtk_New_Hpaned (Pane);
       Pane.Pack1 (Scrolled, Resize => False, Shrink => False);
       Pane.Pack2 (Editor.Plugins_Notebook, Resize => True, Shrink => True);
-      Editor.Add (Pane);
+      Editor.Append (Pane, Expand => True, Fill => True);
 
       --  Iterate over all the registered plugin subpages
       Subpage_Curs := Get_First_Reference (Self);
@@ -432,8 +433,6 @@ package body Startup_Module is
       return Gtk.Widget.Gtk_Widget
    is
       Page_View        : Preferences_Page_View;
-      Page_Box         : Gtk_Box;
-      Prefs_Box        : Preferences_Box;
       Doc_Group_Widget : Preferences_Group_Widget;
       Doc_Text_View    : Gtk_Text_View;
       Doc_Text_Buffer  : Gtk_Text_Buffer;
@@ -442,25 +441,17 @@ package body Startup_Module is
    begin
       --  Create a new page
       Page_View := new Preferences_Page_View_Record;
-      Default_Preferences.GUI.Initialize (Page_View);
+      Dialog_Utils.Initialize (Page_View);
 
-      --  Create the new Vbox which will hold all the page's widgets
-      Gtk_New_Vbox (Page_Box, Homogeneous => False);
-      Page_View.Add (Page_Box);
-
-      --  Create the preferences box for all the preferences registered in this
-      --  page and add it to the page view.
-      Prefs_Box := new Preferences_Box_Record;
-      Prefs_Box.Build (Page    => Self,
-                       Manager => Manager);
-      Page_View.Set_Prefs_Box (Prefs_Box);
-      Page_Box.Pack_Start (Prefs_Box, Expand => False);
+      --  Create and build the preferences page view from Self
+      Page_View.Build (Page => Self, Manager => Manager);
 
       --  Create the text view group which will contain the plugin
       --  documentation
       Doc_Group_Widget := new Preferences_Group_Widget_Record;
-      Doc_Group_Widget.Initialize (Group_Name => "Documentation");
-      Page_Box.Pack_Start (Doc_Group_Widget);
+      Doc_Group_Widget.Initialize
+        (Group_Name  => "Documentation",
+         Parent_View => Page_View);
       Gtk_New (Doc_Text_View);
       Doc_Text_View.Set_Wrap_Mode (Wrap_Word);
       Doc_Text_View.Set_Editable (False);
@@ -468,7 +459,7 @@ package body Startup_Module is
       Doc_Text_Buffer.Get_End_Iter (Doc_Text_Iter);
       Doc_Text_Buffer.Insert (Iter => Doc_Text_Iter,
                               Text => Self.Doc.all);
-      Doc_Group_Widget.Append (Gtk_Widget (Doc_Text_View));
+      Doc_Group_Widget.Append_Child (Doc_Text_View);
 
       return Gtk_Widget (Page_View);
    end Get_Widget;
@@ -651,9 +642,6 @@ package body Startup_Module is
 
       --  Save the startup scripts
       Save_Startup_Scripts_List (Kernel);
-
-      --  Destroy the page view
-      On_Destroy_Page_View (Editor);
    end On_Destroy_Preferences_Dialog;
 
    ---------------------

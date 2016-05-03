@@ -76,6 +76,7 @@ with Pango.Layout;             use Pango.Layout;
 with Commands.Interactive;     use Commands, Commands.Interactive;
 with Default_Preferences;      use Default_Preferences;
 with Default_Preferences.GUI;  use Default_Preferences.GUI;
+with Dialog_Utils;             use Dialog_Utils;
 with Generic_Views;            use Generic_Views;
 with GPS.Kernel;               use GPS.Kernel;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
@@ -311,14 +312,14 @@ package body KeyManager_Module.GUI is
       pragma Unreferenced (Manager, Focus_Widget);
    begin
       Page_View := new Keys_Editor_Preferences_Page_View_Record;
-      Default_Preferences.GUI.Initialize (Page_View);
+      Dialog_Utils.Initialize (Page_View);
 
       Editor := new Keys_Editor_Record;
       Editor.Set_Kernel (Self.Kernel);
       Focus_Widget := Initialize (Editor);
       Editor_View := Create_Finalized_View (Editor);
 
-      Page_View.Add (Editor_View);
+      Page_View.Append (Editor_View, Expand => True, Fill => True);
       Page_View.Editor := Editor;
 
       return Gtk_Widget (Page_View);
