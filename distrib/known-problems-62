@@ -50,26 +50,6 @@ KP-62-P412-027 GPS: 'load' command automatically sent to GDB
               GDB console to start your debug sesssion without loading
               the executable.
 
-KP-62-P411-035 WB: bad SMP RUNTIME used for arm target on VxWorks-6.x
-
-  Problem:    gprconfig failure when building DKM & RTP for SMP
-              ,arm-wrs-vxworks and VxWorks-6.x targets. The error reported in
-              the console log is:
-              Error: no compiler found for language 'ada',
-                     target = arm-wrs-vxworks, runtime = [kernel|rtp]-smp
-
-  Status:     This was fixed in 17.0 on 2016-04-12
-
-  Workaround: For each generated gnat.makefile file, change RUNTIME_SUFFIX
-              variable initialization, to avoid the use of the -smp suffix
-              when compiling a DKM or RTP for arm-wrs-vxworks target.
-
-              ifdef _WRS_CONFIG_SMP_DEFINED
-              ifneq (arm-wrs-vxworks,$(PLATFORM))
-                  RUNTIME_SUFFIX:=-smp
-              endif
-              endif
-
 KP-62-P407-005 GPS: GPS.Message.get_flags returns wrong value
 
   Problem:    GPS.Message.get_flags() returns inversed value. Scripts should be
@@ -78,17 +58,6 @@ KP-62-P407-005 GPS: GPS.Message.get_flags returns wrong value
   Status:     This was fixed in 17.0 on 2016-04-19
 
   Workaround: Not needed.
-
-KP-62-P404-041 WB: User Guide contents is incorrect on Workbench-4/VxWorks-7
-
-  Problem:    Creating DKM & RTP documentation when running Workbench-4 is
-              incorrect. It is related only to Workbench-3.x platform.
-
-  Status:     This was fixed in 17.0 on 2016-04-12
-
-  Workaround: Ignore standard/flexible managed build information (only
-              flexible managed build are supported on Workbench-4)
-              Use only "gnu" build spec.
 
 KP-62-P331-016 GPS: indentation depends on end-of-line spaces
 
@@ -161,20 +130,6 @@ KP-62-P323-030 GPS: can't unfloat windows
                  GPS.MDI.get("Search").float(False)
               or of course bind this to a key shortcut
 
-KP-62-P322-013 GB: ada navigation failure
-
-  Problem:    Navigating to an Ada source file that exists in the workspace
-              in multiple projects (for example, a general project containing
-              an svn checkout of this file and an imported existing GNAT
-              project containing a link to this file) is not always working
-              fine. The navigation is not working, or the opened file is seen
-              as a foreign Ada sources file.
-
-  Status:     This was fixed in 17.0 on 2016-03-23
-
-  Workaround: Move non-Ada projects containing target Ada file to another
-              workspace.
-
 KP-62-P317-010 GPS: missing underscores in /Files/Recent
 
   Problem:    File names displayed in the /Files/Recent menu are missing
@@ -215,31 +170,6 @@ KP-62-P309-043 GPS: GNATemu plug-in doesn't use Exec_Dir attribute
 
   Workaround: None.
 
-KP-62-P308-047 GB: Allow GPR file to have filename different from project name
-
-  Problem:    To be handled by GB, GPR files had to have a name equal to their
-              project node name.
-              ex: Prj.gpr to be handled by GB must have the following content
-                  ...
-                  project Prj is
-                  ...
-                  end Prj;
-
-  Status:     This was fixed in 17.0 on 2016-03-11
-
-  Workaround: None.
-
-KP-62-P218-045 GB: Problems in GPR files reported in editor at line 1
-
-  Problem:    Problems in GPR files detected during clean/analyze/build
-              commands are reported in the editor at line 1 instead of the
-              line reported by the location column of the problems view.
-
-  Status:     This was fixed in 17.0 on 2016-02-25
-
-  Workaround: Scroll manually to the line provided in the location column
-              of the problems view.
-
 KP-62-P216-002 GPS: Libclang parsing files task not finishing.
 
   Problem:    When working on C/C++ projects, the "libclang parsing files" task
@@ -257,18 +187,6 @@ KP-62-P211-059 GPS: Wrong sort order of directories in Project View
   Status:     This was fixed in 17.0 on 2016-02-16
 
   Workaround: None.
-
-KP-62-P204-042 GB: "Problem occured" dialog displayed during "Content Assist"
-
-  Problem:    Sometimes within AdaCore's ada editor, a "Problem Occurred"
-              dialog is displayed when pressing Ctrl+Space to request
-              completion proposals. The completion proposals are not displayed.
-              The error message reports an access check failed exception in
-              Ada_Semantic_Tree.Std_Entities package.
-
-  Status:     This was fixed in 17.0 on 2016-02-09
-
-  Workaround: Type more characters and press again Ctrl+Space.
 
 KP-62-P204-004 GPS: rewind source file on debugger initialization
 
@@ -299,21 +217,6 @@ KP-62-P201-061 GPS: exception raised when typing ':' in the omnisearch
 
   Workaround: Not needed.
 
-KP-62-P129-014 GB: Spurious "Define template" content assist window displayed
-
-  Problem:    Sometimes within AdaCore's ada editor,  when entering '.' or '('
-              characters, a completion proposal containing the text from the
-              cursor position to the end of the current line and having
-              "Define template" documentation is displayed. If Enter key is
-              pressed when this Spurious completion proposal is displayed, the
-              completion proposal text is added at the cursor location and the
-              new line is not created.
-
-  Status:     This was fixed in 17.0 on 2016-02-05
-
-  Workaround: Press Escape key to close spurious completion proposal or disable
-              code assist feature. (see Ada > Tools preferences page)
-
 KP-62-P128-011 GPS: key shortcuts not working on read-only editors
 
   Problem:    Using key shortcuts based on 'control' and a character
@@ -324,19 +227,6 @@ KP-62-P128-011 GPS: key shortcuts not working on read-only editors
 
   Workaround: Make the editor temporarily writable by clicking on the
               icon in the bottom-right corner.
-
-KP-62-P126-014 WB: wrs_rtp_base defined more than once on VxWorks-7 RTP builds.
-
-  Problem:    When building VxWorks 7 Real Time Process, __wrs_rtp_base can be
-              defined more than once.
-
-  Status:     This was fixed in 17.0 on 2016-01-28
-
-  Workaround: In gnat.makefile, add after gprbuild invocation, the following
-              line.
-              objcopypentium -L __wrs_rtp_base $(GPRBUILD_OBJECT)
-              Note: You may have to call objcopyppc or objcopyarm instead of
-              objcopypentium.
 
 KP-62-P122-042 GPS: invisible cursor after using incremental search
 
@@ -364,18 +254,6 @@ KP-62-P122-015 GPS: Too much memory used on big C/C++ projects
   Status:     This was fixed in 17.0 on 2016-03-20
 
   Workaround: Disable clang crossrefs via the LIBCLANG_XREF trace.
-
-KP-62-P121-016 WB: undefined reference to `_Unwind_Resume'
-
-  Problem:    When building VxWorks Cert 6.x Real Time Process (RTP)
-              Application using rtp runtime, a lot of undefined reference to
-              _Unwind_* problems are reported
-
-  Status:     This was fixed in 17.0 on 2016-04-07
-
-  Workaround: add the following libraries to linker switches:
-              "-lgnat -lgcc_eh" when libgcc_eh is part of the compiler,
-              "-lgnat -lgcc" when libgcc_eh is not part of the compiler.
 
 KP-62-P119-022 ECL: problem with build started automatically during clean
 
@@ -414,23 +292,6 @@ KP-62-P113-008 GPS: problem with folding of directory in Project View
   Workaround: Use double click outside arrow icon or keyboard shortcuts
               to fold the row.
 
-KP-62-P112-044 WB: multiple definition of `_dtors', `_ctors'
-
-  Problem:    When building VxWorks 6.x Downloadable Kernel Module (DKM)
-              multiple definition of `_dtors' and `_ctors' problems may be
-              reported.
-
-  Status:     This was fixed in 17.0 on 2016-01-12
-
-  Workaround: add -noauto-register linker switch. This can be done:
-              - adding the noauto-register switch in the linker package of the
-                DKM GNAT project file (GPR)
-                package Linker is
-                    for Switches ('Ada') use ("-noauto-register");
-                end Linker;
-              - appending '-largs -noauto-register' to the gprbuild command in
-                the DKM makefile (usually named gnat.makefile)
-
 KP-62-P108-044 GPS: incorrect program arguments when debugging in GPS
 
   Problem:    When argument of a program contains backslash character
@@ -453,45 +314,6 @@ KP-62-P107-003 GPS: subprogram rename refactoring problem
 
   Workaround: Perform renaming twice using intermediate name, that is not
               a prefix of old name.
-
-KP-62-P106-023 GB: no project opened by GPS when launched from GB on linux.
-
-  Problem:    On linux, GPS launched by GB through "GPS debugger" debug
-              configuration or through "GNAT Project/Edit Properties" menu is
-              not able to open the selected GNAT project. It opens an empty
-              project. The properties dialog when required is not displayed.
-
-  Status:     This was fixed in 17.0 on 2016-01-08
-
-  Workaround: After GPS was launched, open the GNAT Project, and when required
-              to edit the properties, run Edit Project Properties menu.
-
-KP-62-P104-018 WB: multiple definition errors when building RTP on Workbench-4
-
-  Problem:    A real time process (RTP) application converted to an ada project
-              cannot be built without manual modification.
-              Building the project is failing because a lot of symbols are
-              defined more than once.
-              Ex: __argc, __argv, _start, environ, etc...
-
-  Status:     This was fixed in 17.0 on 2016-01-06
-
-  Workaround: Edit the GNAT project file (gpr) and add "-r" and "-nostdlib"
-              switches to the linker package.
-
-              package Linker is
-                 for Default_Switches ("ada") use ("-r", "-nostdlib");
-              end Linker;
-
-KP-62-OC17-015 WB: error markers always at top of C/C++ files
-
-  Problem:    Depending on the C/C++ compiler used, error markers added to
-              C/C++ files during build process are all located at the top of
-              the file instead of at the line reported by the marker.
-
-  Status:     This was fixed in 17.0 on 2015-12-22
-
-  Workaround: Disable quick fix feature. (see Ada/Tools preferences page)
 
 KP-62-OC11-015 GPS: Refactoring/Extract' subprograms ignores parameters
 
@@ -673,6 +495,26 @@ KP-62-P412-005 GPS: hangs or crash when triggering the smart completion.
 
   Workaround: None.
 
+KP-62-P411-035 WB: bad SMP RUNTIME used for arm target on VxWorks-6.x
+
+  Problem:    gprconfig failure when building DKM & RTP for SMP
+              ,arm-wrs-vxworks and VxWorks-6.x targets. The error reported in
+              the console log is:
+              Error: no compiler found for language 'ada',
+                     target = arm-wrs-vxworks, runtime = [kernel|rtp]-smp
+
+  Status:     This was fixed in 2.10.2 on 2016-04-12
+
+  Workaround: For each generated gnat.makefile file, change RUNTIME_SUFFIX
+              variable initialization, to avoid the use of the -smp suffix
+              when compiling a DKM or RTP for arm-wrs-vxworks target.
+
+              ifdef _WRS_CONFIG_SMP_DEFINED
+              ifneq (arm-wrs-vxworks,$(PLATFORM))
+                  RUNTIME_SUFFIX:=-smp
+              endif
+              endif
+
 KP-62-P411-034 GPS: reports file write error for temporary files
 
   Problem:    GPS reports file write errors when CodePeer report is open and
@@ -696,6 +538,17 @@ KP-62-P404-044 GPS: error when editing multiple projects
               The workaround is to edit the projects one by one, or manually
               (if you have lots of projects, manual editing is the recommended
               approach for now).
+
+KP-62-P404-041 WB: User Guide contents is incorrect on Workbench-4/VxWorks-7
+
+  Problem:    Creating DKM & RTP documentation when running Workbench-4 is
+              incorrect. It is related only to Workbench-3.x platform.
+
+  Status:     This was fixed in 2.10.2 on 2016-04-12
+
+  Workaround: Ignore standard/flexible managed build information (only
+              flexible managed build are supported on Workbench-4)
+              Use only "gnu" build spec.
 
 KP-62-P404-015 GPS: separate.py plug-in does not raise the editor
 
@@ -747,6 +600,20 @@ KP-62-P329-035 GPS: missing display of icon in Bookmarks view
 
   Workaround: None.
 
+KP-62-P322-013 GB: ada navigation failure
+
+  Problem:    Navigating to an Ada source file that exists in the workspace
+              in multiple projects (for example, a general project containing
+              an svn checkout of this file and an imported existing GNAT
+              project containing a link to this file) is not always working
+              fine. The navigation is not working, or the opened file is seen
+              as a foreign Ada sources file.
+
+  Status:     This was fixed in 2.10.2 on 2016-03-23
+
+  Workaround: Move non-Ada projects containing target Ada file to another
+              workspace.
+
 KP-62-P321-032 GPS: State of Undo/Redo buttons not updated
 
   Problem:    The state of the Undo/Redo buttons is not updated when
@@ -764,6 +631,20 @@ KP-62-P309-004 GPS: hang when viewing codepeer.csv report
   Status:     This was fixed in 6.2.2 on 2016-03-30
 
   Workaround: None
+
+KP-62-P308-047 GB: Allow GPR file to have filename different from project name
+
+  Problem:    To be handled by GB, GPR files had to have a name equal to their
+              project node name.
+              ex: Prj.gpr to be handled by GB must have the following content
+                  ...
+                  project Prj is
+                  ...
+                  end Prj;
+
+  Status:     This was fixed in 2.10.2 on 2016-03-11
+
+  Workaround: None.
 
 KP-62-P301-024 GPS: GPS.Hook.remove not working
 
@@ -789,6 +670,17 @@ KP-62-P224-028 GPS: Impossibility to choose custom colors for code highlighting
   Workaround: Keep the previous preferences.xml (with customized colors) if
               any.
 
+KP-62-P218-045 GB: Problems in GPR files reported in editor at line 1
+
+  Problem:    Problems in GPR files detected during clean/analyze/build
+              commands are reported in the editor at line 1 instead of the
+              line reported by the location column of the problems view.
+
+  Status:     This was fixed in 2.10.2 on 2016-02-25
+
+  Workaround: Scroll manually to the line provided in the location column
+              of the problems view.
+
 KP-62-P215-044 GPS: GPS locks up on Ada completion
 
   Problem:    GPS might hang or crash when triggering the smart
@@ -808,6 +700,104 @@ KP-62-P208-069 GPS: debugging session ignores terminate
   Workaround: Interrupt the execution manually before terminating the debugger
               session.
 
+KP-62-P204-042 GB: "Problem occurred" dialog displayed during "Content Assist"
+
+  Problem:    Sometimes within AdaCore's ada editor, a "Problem Occurred"
+              dialog is displayed when pressing Ctrl+Space to request
+              completion proposals. The completion proposals are not displayed.
+              The error message reports an access check failed exception in
+              Ada_Semantic_Tree.Std_Entities package.
+
+  Status:     This was fixed in 2.10.2 on 2016-02-09
+
+  Workaround: Type more characters and press again Ctrl+Space.
+
+KP-62-P129-014 GB: Spurious "Define template" content assist window displayed
+
+  Problem:    Sometimes within AdaCore's ada editor,  when entering '.' or '('
+              characters, a completion proposal containing the text from the
+              cursor position to the end of the current line and having
+              "Define template" documentation is displayed. If Enter key is
+              pressed when this Spurious completion proposal is displayed, the
+              completion proposal text is added at the cursor location and the
+              new line is not created.
+
+  Status:     This was fixed in 2.10.2 on 2016-02-05
+
+  Workaround: Press Escape key to close spurious completion proposal or disable
+              code assist feature. (see Ada > Tools preferences page)
+
+KP-62-P126-014 WB: wrs_rtp_base defined more than once on VxWorks-7 RTP builds.
+
+  Problem:    When building VxWorks 7 Real Time Process, __wrs_rtp_base can be
+              defined more than once.
+
+  Status:     This was fixed in 2.10.2 on 2016-01-28
+
+  Workaround: In gnat.makefile, add after gprbuild invocation, the following
+              line.
+              objcopypentium -L __wrs_rtp_base $(GPRBUILD_OBJECT)
+              Note: You may have to call objcopyppc or objcopyarm instead of
+              objcopypentium.
+
+KP-62-P121-016 WB: undefined reference to `_Unwind_Resume'
+
+  Problem:    When building VxWorks Cert 6.x Real Time Process (RTP)
+              Application using rtp runtime, a lot of undefined reference to
+              _Unwind_* problems are reported
+
+  Status:     This was fixed in 2.10.2 on 2016-04-07
+
+  Workaround: add the following libraries to linker switches:
+              "-lgnat -lgcc_eh" when libgcc_eh is part of the compiler,
+              "-lgnat -lgcc" when libgcc_eh is not part of the compiler.
+
+KP-62-P112-044 WB: multiple definition of `_dtors', `_ctors'
+
+  Problem:    When building VxWorks 6.x Downloadable Kernel Module (DKM)
+              multiple definition of `_dtors' and `_ctors' problems may be
+              reported.
+
+  Status:     This was fixed in 2.10.2 on 2016-01-12
+
+  Workaround: add -noauto-register linker switch. This can be done:
+              - adding the noauto-register switch in the linker package of the
+                DKM GNAT project file (GPR)
+                package Linker is
+                    for Switches ('Ada') use ("-noauto-register");
+                end Linker;
+              - appending '-largs -noauto-register' to the gprbuild command in
+                the DKM makefile (usually named gnat.makefile)
+
+KP-62-P106-023 GB: no project opened by GPS when launched from GB on linux.
+
+  Problem:    On linux, GPS launched by GB through "GPS debugger" debug
+              configuration or through "GNAT Project/Edit Properties" menu is
+              not able to open the selected GNAT project. It opens an empty
+              project. The properties dialog when required is not displayed.
+
+  Status:     This was fixed in 2.10.2 on 2016-01-08
+
+  Workaround: After GPS was launched, open the GNAT Project, and when required
+              to edit the properties, run Edit Project Properties menu.
+
+KP-62-P104-018 WB: multiple definition errors when building RTP on Workbench-4
+
+  Problem:    A real time process (RTP) application converted to an ada project
+              cannot be built without manual modification.
+              Building the project is failing because a lot of symbols are
+              defined more than once.
+              Ex: __argc, __argv, _start, environ, etc...
+
+  Status:     This was fixed in 2.10.2 on 2016-01-06
+
+  Workaround: Edit the GNAT project file (gpr) and add "-r" and "-nostdlib"
+              switches to the linker package.
+
+              package Linker is
+                 for Default_Switches ("ada") use ("-r", "-nostdlib");
+              end Linker;
+
 KP-62-OC21-028 GPS: indentation parameters are not used for custom languages
 
   Problem:    The source editor uses default indentation parameters for custom
@@ -818,6 +808,16 @@ KP-62-OC21-028 GPS: indentation parameters are not used for custom languages
   Status:     This was fixed in 6.2.2 on 2016-02-17
 
   Workaround: None.
+
+KP-62-OC17-015 WB: error markers always at top of C/C++ files
+
+  Problem:    Depending on the C/C++ compiler used, error markers added to
+              C/C++ files during build process are all located at the top of
+              the file instead of at the line reported by the marker.
+
+  Status:     This was fixed in 2.10.2 on 2015-12-22
+
+  Workaround: Disable quick fix feature. (see Ada/Tools preferences page)
 
 KP-62-OC15-045 GNATdoc: crash processing record types with null components
 
