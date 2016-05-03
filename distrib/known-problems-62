@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P415-043 WB: toolchains not set when converting vx6/vx6cert projects
+
+  Problem:    When converting a vx6 or vx6cert Wind River Workbench project,
+              the selected toolchains of the last dialog box are not based on
+              the project's available build specs.
+
+  Status:     This was fixed in 17.0 on 2016-04-29
+
+  Workaround: Check manually the toolchains used by the project's build specs.
+
 KP-62-P412-027 GPS: 'load' command automatically sent to GDB
 
   Problem:    GPS automatically loads the executable being debugged
