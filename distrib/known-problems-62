@@ -710,6 +710,23 @@ KP-62-P404-015 GPS: separate.py plug-in does not raise the editor
   Workaround: Select "Goto body" twice to jump between actual body and
               the location of "is separate".
 
+KP-62-P331-035 WB: invalid --target argument used calling gprconfig
+
+  Problem:    When building Wind River Workbench projects converted to ada
+              projects, sometimes the generated PLATFORM variable is not a
+              valid value for a gprconfig's "--target=" argument.
+
+  Status:     This was fixed in 2.10.2 on 2016-04-05
+
+  Workaround: Change the gnat.makefile content to use a new GPR_TARGET variable
+              initialized using BUILD_SPEC variable.
+              ex:
+                 ifeq (SIMNTgnu,$(BUILD_SPEC))
+                    GPR_TARGET=i586-wrs-vxworks
+                 endif
+                 [...]
+                 $(TRACE_FLAG)gprconfig $(QUIET) --target=$(GPR_TARGET) \
+
 KP-62-P330-030 GPS: reusing the Project Editor corrupts project files
 
   Problem:    If you are using the Project Properties editor to modify
