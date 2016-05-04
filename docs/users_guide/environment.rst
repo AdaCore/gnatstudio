@@ -4,8 +4,6 @@
 Environment
 ***********
 
-.. highlight:: ada
-
 .. index:: environment
 .. index:: ! command line
 .. index:: see: options; command line

@@ -326,6 +326,8 @@ for users to understand each plugin:
   (control-L); the startup scripts editor only displays the first page of
   the script in the first page of the editor.
 
+  .. highlight:: python
+
   If possible, scripts should avoid executing code when they are
   loaded. This gives the user a chance to change the value of global
   variables or override functions before the script is actually launched.
@@ -1084,7 +1086,7 @@ These macros are the following
   1 (the first execution of the action) unless the user invoked the
   :guilabel:`Repeat Next` action.
 
-  .. highlight:: python
+  .. highlight:: xml
 
   By default, when :guilabel:`Repeat Next` is invoked by the user, it
   repeats the following action the number of times the user
@@ -1095,6 +1097,11 @@ These macros are the following
     <action name="my_action">
        <shell lang="python">if $repeat==1: my_function($remaining + 1)</shell>
     </action>
+
+  .. highlight:: python
+
+  ::
+
 
     def my_function (count):
        """Perform an action count times"""
@@ -3404,6 +3411,8 @@ following child tags:
 
 * :file:`<uses-python>` (default :command:`False`)
 
+  .. highlight:: xml
+
   When this is set to :command`True`, launch a Python command rather than an
   external process. In this case, the arguments in the command line
   are first process using the macro replacement mechanism, and then
@@ -3415,6 +3424,8 @@ following child tags:
           <arg>%PP</arg>
           <arg>")</arg>
        </command-line>
+
+  .. highlight:: python
 
   Is interpreted as::
 
@@ -3463,31 +3474,32 @@ following child tags:
   or custom filters defined in XML via the
   :ref:`\<filter>\ <Filtering_actions>` tag.
 
+  .. highlight:: xml
+
   Here is a simple example showing how to define filters for target model
   switches::
 
-    <?xml version="1.0" ?>
-
+    <GPS>
        <!-- filter checking that the tool's version supports the switch
             by calling a python function that actually verifies it -->
        <filter name="Is_My_Tool_Version_Supported" shell_lang="python"
            shell_cmd="check_my_tool_version(GPS.current_context())"/>
 
        <my_model>
-       <target-model name="my_tool" category="">
-          <description>Model for targets based on 'my_tool'</description>
-          <command-line>
-             <arg>my_tool</arg>
-          </command-line>
-          <switches command="%(tool_name)s" columns="1">
-             <check label="vesrion specific switch"
-                    switch="--version-specific-switch"
-                    tip="This switch is only supported by newer versions"
-                    <!-- Identify the filter to apply here -->
-                    filter="Is_My_Tool_Version_Supported"/>
-          </switches>
-       </target-model>
-    </my_model>
+          <target-model name="my_tool" category="">
+             <description>Model for targets based on 'my_tool'</description>
+             <command-line>
+                <arg>my_tool</arg>
+             </command-line>
+             <switches command="%(tool_name)s" columns="1">
+                <check label="vesrion specific switch"
+                       switch="--version-specific-switch"
+                       tip="This switch is only supported by newer versions"
+                       filter="Is_My_Tool_Version_Supported"/>
+             </switches>
+          </target-model>
+       </my_model>
+    </GPS>
 
 .. _Defining_new_Targets:
 
@@ -3636,6 +3648,8 @@ is executed during each run of a target.
 
 * :file:`output_collector`
 
+  .. highlight:: python
+
   Aggregates output and associates it with the build target.  As result,
   the output is available for scripting (see :func:`GPS.get_build_output`)
   after the build completes::
@@ -3690,7 +3704,6 @@ child tags:
   to the command line when launching targets while this mode is active.
   Macros are supported in the `<arg>` nodes::
 
-     <?xml version="1.0" ?>
      <my_mode>
       <builder-mode name="optimization">
        <description>Build with code optimization activated</description>
@@ -3841,9 +3854,10 @@ for all languages.  If at least one language is specified, the switches
 editor page will only be displayed if that language is supported by the
 project.
 
+.. highlight:: xml
+
 Specify the languages that the tool supports using the :file:`<tool>` tag::
 
-  <?xml version="1.0" ?>
   <my_tool>
     <tool name="My Tool" >
       <language>Ada</language>
@@ -4767,6 +4781,8 @@ you notice, the name of the commands is similar, although they are not run
 exactly in the same way. Specifically, GPS uses the object-oriented aspects
 of Python to create classes and instances of these classes.
 
+.. highlight:: python
+
 In the first line, a new instance of the class Entity is created through
 the :func:`create_entity` function. Various methods can then be applied to
 that instance, including :func:`find_all_refs`, which lists all references
@@ -5140,6 +5156,9 @@ Here is the code that you need to put in :file:`hello_world.py`::
   @gps_utils.interactive(menu='/Help/Hello World!')
   def hello_world():
      GPS.MDI.dialog("Hello World!")
+
+
+.. highlight:: shell
 
 To use this plugin, launch GPS with the following command line::
 
