@@ -42,7 +42,6 @@ install-common:
 	$(MKDIR) $(sharedir)
 	$(MKDIR) $(examplesdir)
 	$(MKDIR) $(sharedir)/gps
-	$(MKDIR) $(sharedir)/gps/docgen2
 	$(MKDIR) $(sharedir)/gps/gnatdoc
 ifeq ($(OS),Windows_NT)
 # On Windows we distribute two versions of subversion.py, one that
@@ -95,8 +94,6 @@ endif
 	(cd share; tar cf - templates/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - key_themes/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - *.*)  | (cd $(sharedir)/gps; tar xf -)
-	(cd docgen2/resources; tar cf - *.tmpl custom/*.css support/*.css support/*.js support/images/*.png) \
-		| (cd $(sharedir)/gps/docgen2; tar xf -)
 	(cd gnatdoc/resources; tar cf - * ) \
 		| (cd $(sharedir)/gps/gnatdoc; tar xf -)
 	$(MAKE) -C docs install
