@@ -848,7 +848,7 @@ arguments.  This code is useful when you are writing a full python script.
 
 * :file:`%p`
 
-  Name of the current projec (not the project file). The :file:`.gpr`
+  Name of the current project (not the project file). The :file:`.gpr`
   extension is not included and the casing is the one in the project
   file not that of the file name itself.  If the current context is an
   editor, the name of the project to which the source file belongs.
