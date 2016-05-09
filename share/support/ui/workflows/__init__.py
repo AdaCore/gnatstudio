@@ -147,6 +147,7 @@ def driver(gen_inst):
                 # The last generator performed some kind of "call": schedule to
                 # run the child generator for the next round.
                 gen_stack.append(el)
+                el = None
             elif isinstance(el, promises.Promise):
                 # If the last generator yielded a promise, schedule to resume
                 # its execution when the promise is ready.
@@ -154,8 +155,7 @@ def driver(gen_inst):
                 return
 
             # Clean state for the next round.
-            return_val = None
-            el = None
+            return_val = el
             exc_info = None
 
         # If we reach this point, there's nothing to execute anymore: just log
@@ -176,45 +176,13 @@ def driver(gen_inst):
     resume()
 
 
-# The following are decorators for workflows(generators)
-def make_action_from_workflow(name, category="General",
-                              description="", criteria=None):
-    """
-       Decorator that creates a GPS action from a workflow.
-
-       name: string, name of the returning action
-       category: category as action object required
-       description: string, description of the result action
-       criteria: function that returns boolean:
-          the workflow is executed only when it returns True
-
-       The input of the decorator is a workflow.
-    """
-    # the wrapper function to be returned by decorator
-    def wrap(workflow):
-        # create action with given name
-        action = GPS.Action(name)
-
-        def drive():
-            if (criteria is None) or criteria():
-                w = workflow()
-                driver(w)
-            else:
-                GPS.Console("Messages").write("Criteria doesn't meet.\n")
-
-        # modify the action
-        action.create(drive, "", category, description)
-
-        return action
-
-    return wrap
-
-
 def create_target_from_workflow(target_name, workflow_name, workflow,
-                                icon_name="gps-print-symbolic"):
+                                icon_name="gps-print-symbolic",
+                                in_toolbar=True):
     """
     Create a Target under the category Workflow from a given workflow.
     Executing this target runs the workflow.
+    The `workflow` receives the `main_name` as argument.
 
     target_name and workflow_name are strings
     """
@@ -228,7 +196,7 @@ def create_target_from_workflow(target_name, workflow_name, workflow,
 
     xml1 = """
 <target model="python" category="Workflow" name="%s">
-<in-toolbar>TRUE</in-toolbar>
+<in-toolbar>%s</in-toolbar>
 <iconname>%s</iconname>
 <launch-mode>MANUALLY</launch-mode>
 <read-only>TRUE</read-only>
@@ -236,7 +204,9 @@ def create_target_from_workflow(target_name, workflow_name, workflow,
 <target-type>main</target-type>
 <command-line>
     <arg>workflows.run_registered_workflows("%s", "%s", "</arg>
-    """ % (target_name, icon_name, workflow_name, target_name)
+    """ % (target_name,
+           "TRUE" if in_toolbar else "FALSE",
+           icon_name, workflow_name, target_name)
 
     xml2 = """
     <arg>%T</arg>

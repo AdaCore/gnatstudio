@@ -237,34 +237,35 @@ def with_save_excursion(fn):
     return do_work
 
 
-def remove_interactive(menu="", name="", contextual=""):
-    """
-    Undo the effects of make_interactive.
-    """
-    # ??? Not implemented yet
-    pass
-
-
 def make_interactive(callback, category="General", filter="", menu="", key="",
                      contextual='', name="", before="", after="",
-                     contextual_ref='', icon='',
+                     contextual_ref='', icon='', description='',
 
                      # Adding buttons to a toolbar
                      toolbar='', toolbar_section='', button_label=''):
     """
     Declare a new GPS action (an interactive function, in Emacs talk),
-    associated with an optional menu and default key. The description of
-    the action is automatically taken from the documentation of the
-    python function. Likewise the name of the action is taken from the
-    name of the python function, unless specified with `name`.
+    associated with an optional menu and default key.
 
-    :param callback: is a python function that requires no argument, although
-      it can have optional arguments (none will be set when this is called from
-      the menu or the key shortcut). Alternatively, `callback` can also be a
-      class: when the user executes the action, a new instance of the class is
-      created, so it is expected that the work is done in the __init__ of the
-      class. This is in particular useful for classes that derive from
-      CommandWindow.
+    :param callback:
+      This is the code that gets executed when the user executes the action.
+      Such an action is executed via a menu, a toolbar button, a key
+      shortcut, or by entering its name in the omnisearch.
+
+      The callback can be one of:
+         * a standard function that requires no argument although
+           it can have optional arguments (none will be set when this is called
+           from the menu or the key shortcut).
+
+         * a class: when the user executes the action, a new instance of the
+           class is created, so it is expected that the work is done in the
+           __init__ of the class. This is in particular useful for classes
+           that derive from CommandWindow.
+
+         * a generator function. Those are functions that use the yield
+           keyword to temporarily suspend and give back control to the caller.
+           These are convenient when chaining background tasks. See the
+           workflows/promises.py package for more on generators and workflows
 
     :param menu: The name of a menu to associate with the action. It will be
       placed within its parent just before the item referenced as `before`,
@@ -280,6 +281,12 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
       or a function that receives a GPS.Context as parameter and returns a
       string.
 
+    :param str name: The name for the action. The default is to use the
+      callback's name.
+
+    :param str description: the description for this action, as visible to the
+      user. If not specified, the callback's own documentation will be used.
+
     :param str toolbar: If specified, inserts a button in the corresponding
       toolbar (either 'main' or the name of the view as found in the
       /Tools/Views menu)
@@ -294,20 +301,28 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
       The menu might be None if you did not request its creation.
     """
 
-    doc = callback.__doc__
+    doc = description or callback.__doc__
     if doc:
         doc = doc.strip()
 
-    if isinstance(callback, types.TypeType):  # Do we have a class ?
-        cb = callback
+    # Support for various kinds of callbacks
 
+    if isinstance(callback, types.TypeType):  # Do we have a class ?
         def do():
-            cb()   # Create new instance
-        do.__doc__ = doc
-        callback = do
+            return callback()   # Create new instance
+
+    else:
+        # Else we still wrap the callback, in case it is a generator
+        def do():
+            r = callback()
+            if isinstance(r, types.GeneratorType):
+                import workflows
+                workflows.driver(r)  # Execute the generator
+                return None
+            return r
 
     a = Action(name or callback.__name__)
-    a.create(callback, filter=filter, category=category, description=doc,
+    a.create(do, filter=filter, category=category, description=doc,
              icon=icon)
 
     if menu:

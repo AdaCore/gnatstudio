@@ -1,19 +1,25 @@
 """
-This plugin adds support for QGen (the GNAT Modeling Compiler) which generates
-Ada (SPARK 2014?) and C code from Simulink models.
+This plugin adds support for QGen and generates Ada and C code from Simulink
+models.
 
-To use this plugin, you must have "mdl2json" available on your
-PATH. Your project must also add the "Simulink" language to its
-Languages attribute. At this point, opening an .mdl file will
-show a diagram instead of showing the text of the .mdl file.
-Double-click on a system block to open it and see other diagrams.
+To use this plugin, you must install qgen, and have "qgenc" available
+in your PATH.
+
+Your project must also add the "Simulink" language to its Languages attribute.
+At this point, opening an .mdl file will show a diagram instead of showing the
+text of the .mdl file.  Double-click on a system block to open it and see other
+diagrams.
 
 The project can optionally include an output directory for the
-generated code:
+generated code. This directory defaults to the project's object_dir.
 
-    package QGen is
-       for Output_Dir use "generated_src";
-    end QGen;
+    project Default is
+       for Languages use ("Ada", "C");
+       for Source_Dirs use (".", "generated");
+       package QGen is
+          for Output_Dir use "generated";
+       end QGen;
+    end Default;
 
 The project can also be used to override the types file used when
 generating code. The default is to use a file with the same name
@@ -27,6 +33,8 @@ needed, you can use:
 A contextual menu is provided when you right-click on an .mdl file,
 to generate code from that file. This menu is available in particular
 in the project view and in the diagrams themselves.
+Convenient toolbar buttons are enabled to generate-then-build or even
+generate-then-build-then-debug.
 Whenever qgen has finished running, GPS will automatically reload the
 project to make the newly generated files available.
 """
@@ -42,7 +50,9 @@ import os
 import os.path
 import os_utils
 import re
-from workflows.promises import Promise, ProcessWrapper
+import workflows
+from workflows.promises import Promise, ProcessWrapper, TargetWrapper, \
+    idle_action
 
 
 logger = GPS.Logger('MODELING')
@@ -111,8 +121,9 @@ class Project_Support(object):
                <read-only>TRUE</read-only>
                <command-line>
                  <arg>qgenc</arg>
-                 <arg>%(option_incremental)s</arg>
-                 <arg>%(option_language)s</arg>
+                 <arg>--trace</arg>
+                 <arg>-i</arg>
+                 <arg>-l</arg>
                  <arg>ada</arg>
                </command-line>
              </target>
@@ -130,21 +141,21 @@ class Project_Support(object):
                  <field
                   line="1"
                   label="Matlab file"
-                  switch="%(option_matlab)s"
+                  switch="-m"
                   separator=" "
                   as-file="true"
                  tip="Provides variable declarations of the Matlab workspace"/>
                  <field
                   line="1"
                   label="Typing file"
-                  switch="%(option_typing)s"
+                  switch="-t"
                   separator=" "
                   as-file="true"
                   tip="Provides Simulink block typing information"/>
                  <field
                   line="1"
                   label="Library directory"
-                  switch="%(option_library)s"
+                  switch="-b"
                   separator=" "
                   as-directory="true"
                   tip=""/>
@@ -152,7 +163,7 @@ class Project_Support(object):
                  <combo
                   line="2"
                   label="Target language"
-                  switch="%(option_language)s"
+                  switch="-l"
                   separator=" "
              tip="The language used by QGENC to produce the generated files">
                     <combo-entry label="Ada" value="ada"/>
@@ -161,30 +172,22 @@ class Project_Support(object):
                  <check
                   line="2"
                   label="Flatten model"
-                  switch="%(option_flatten)s"
+                  switch="--full-flattening"
                   tip=""/>
 
                  <radio line="3">
                    <radio-entry
                     label="Delete"
-                    switch="%(option_clean)s"
+                    switch="-c"
              tip="Delete contents of output directory between compilations"/>
                    <radio-entry
                     label="Preserve"
-                    switch="%(option_incremental)s"
+                    switch="-i"
              tip="Preserve contents of output directory between compilations"/>
                  </radio>
                </switches>
              </tool>
-           </GPS>""" % {
-            "option_clean": CLI.OPTION_CLEAN,
-            "option_flatten": CLI.OPTION_FLATTEN,
-            "option_incremental": CLI.OPTION_INCREMENTAL,
-            "option_language": CLI.OPTION_LANGUAGE,
-            "option_library": CLI.OPTION_LIBRARY,
-            "option_matlab": CLI.OPTION_MATLAB,
-            "option_typing": CLI.OPTION_TYPING
-        })
+           </GPS>""")
 
     def get_output_dir(self, file):
         """
@@ -193,11 +196,15 @@ class Project_Support(object):
 
         :param GPS.File file: the .mdl file
         """
-        dir = file.project().get_attribute_as_string(
+        p = file.project()
+        dir = p.get_attribute_as_string(
             package='QGen', attribute='Output_Dir')
-        if not dir:
+        if dir:
+            # Get absolute directory from Output_Dir
+            dir = os.path.join(os.path.dirname(p.file().name()), dir)
+        else:
             try:
-                return file.project().object_dirs()[0]
+                return p.object_dirs()[0]
             except:
                 return GPS.Project.root().object_dirs()[0]
         return dir
@@ -228,22 +235,14 @@ class CLI(GPS.Process):
     converting an mdl file to a JSON format that can be displayed by GPS.
     """
 
-    mdl2json = os_utils.locate_exec_on_path('mdl2json')
-    # path to mdl2json
-
     qgenc = os_utils.locate_exec_on_path('qgenc')
     # path to qgenc
 
-    OPTION_CLEAN = "-c"
-    OPTION_FLATTEN = "--full-flattening"
-    OPTION_INCREMENTAL = "-i"
-    OPTION_LANGUAGE = "-l"
-    OPTION_LIBRARY = "-b"
-    OPTION_MATLAB = "-m"
-    OPTION_OUTPUT = "-o"
-    OPTION_TYPING = "-t"
-    OPTION_DEBUG = "--debug"
-    # The names of various QGENC and CLI options
+    mdl2json = os.path.normpath(
+        os.path.join(
+            os.path.dirname(qgenc),
+            '..', 'libexec', 'qgen', 'bin', 'mdl2json'))
+    # path to mdl2json
 
     @staticmethod
     def is_available():
@@ -269,7 +268,7 @@ class CLI(GPS.Process):
 
         # Get switches, but remove the ones that do not apply to mdl2json
         switches = re.sub(
-            CLI.OPTION_FLATTEN, "", project_support.get_switches(file))
+            "--full-flattening", "", project_support.get_switches(file))
         outdir = project_support.get_output_dir(file)
 
         # ??? Should output result on stdout
@@ -284,6 +283,7 @@ class CLI(GPS.Process):
             else:
                 GPS.Console().write('When running mdl2json: %s\n' % (
                     output), mode='error')
+                promise.resolve("")   # should be promise.reject()
 
         # mdl2json is relatively fast, and since the user is waiting for
         # its output to see the diagram, we run in active mode below.
@@ -295,13 +295,17 @@ class CLI(GPS.Process):
     ###########
 
     @staticmethod
-    def is_model_file(ctx):
+    def is_model_file(ctx_or_file):
         """
         Whether the current context is a model file.
-        :param GPS.Context ctx:
+        :param ctx: either a `GPS.Context` or a `GPS.File`
         """
         try:
-            return ctx.file().language() == 'simulink'
+            if isinstance(ctx_or_file, GPS.Context):
+                f = ctx_or_file.file()
+            else:
+                f = ctx_or_file
+            return f.language() == 'simulink'
         except:
             return False
 
@@ -313,79 +317,88 @@ class CLI(GPS.Process):
         try:
             debug = GPS.Debugger.get()
             return (
-                debug is not None                   # in a debugger
-                and hasattr(ctx, "modeling_item")   # see on_create_context
-                and CLI.is_model_file(ctx))
+                debug is not None and                  # in a debugger
+                hasattr(ctx, "modeling_item") and  # see on_create_context
+                CLI.is_model_file(ctx))
         except:
             return False
 
     @staticmethod
-    def __compile_file_to_source_code(file, on_exit=None):
+    def __compile_files_to_source_code(files):
         """
-        Generate code for a specific source file
-        :param GPS.File file:
-        :param func on_exit: called when the code generation finishes
+        A python generator that generates code for the `mdl` source file.
+        :param files: A list of `GPS.File`, from which to generate code.
+        :return: the last yield is the status (0 if everything succeeded)
         """
         # Compute the extra switches. The user can override -t, for instance,
         # by setting the project attribute Switches("file.mdl") with a
         # proper version of -t.
-        switches = [
-            CLI.OPTION_OUTPUT,
-            project_support.get_output_dir(file),
-            CLI.OPTION_TYPING,
-            "%s_types.txt" % os.path.splitext(
-                os.path.basename(file.name()))[0]]
-        switches = (' '.join(switches) +
-                    ' ' + project_support.get_switches(file) +
-                    ' ' + file.name())
 
-        target = GPS.BuildTarget('QGen for file')
-        target.execute(
-            synchronous=False,
-            file=file,
-            extra_args=switches,
-            on_exit=on_exit)
+        st = 1
+        for f in files:
+            if CLI.is_model_file(f):
+                base = os.path.splitext(os.path.basename(f.name()))[0]
+                switches = [
+                    "-o", project_support.get_output_dir(f),
+                    "-t", "%s_types.txt" % base]
+                switches = (' '.join(switches) +
+                            ' ' + project_support.get_switches(f) +
+                            ' ' + f.name())
+                w = TargetWrapper(target_name='QGen for file')
+                st = yield w.wait_on_execute(file=f, extra_args=switches)
+                if st != 0:
+                    break
+
+        if st == 0:
+            GPS.Project.recompute()  # Add generated files to the project
+        yield st
 
     @staticmethod
-    def compile_context_to_source_code():
+    def workflow_compile_context_to_source_code():
         """
-        Generate code from the model file from the current context.
-        This function should only be called when is_model_file returns
-        True.
+        Generate code from the model file for a specific MDL file
         """
         ctxt = GPS.contextual_context() or GPS.current_context()
-
-        # On exit, recompute the project to include generated sources
-        def on_exit(status):
-            if not status:
-                GPS.Project.recompute()
-
-        CLI.__compile_file_to_source_code(
-            file=ctxt.file(),
-            on_exit=on_exit)
+        return CLI.__compile_files_to_source_code([ctxt.file()])
 
     @staticmethod
-    def compile_project_to_source_code():
+    def workflow_compile_project_to_source_code():
         """
-        Generate code for all simulink files in the project
+        Generate code for all MDL files in the project
         """
-        # ??? qgenc should allow multipe files on the command line
-        def all_simulink_files():
-            for s in GPS.Project.root().sources(recursive=True):
-                if s.language() == 'simulink':
-                    yield s
+        s = GPS.Project.root().sources(recursive=True)
+        return CLI.__compile_files_to_source_code(s)
 
-        all_files = all_simulink_files()
+    @staticmethod
+    def workflow_generate_from_mdl_then_build(main_name):
+        """
+        Generate the code for all simulink files, then compile the project.
+        This works best if you have defined the `Main` attribute in your
+        project, so that gprbuild knows what to link.
+        This is a workflow, and should be used via the functions in
+        workflows.py.
+        """
+        status = yield CLI.workflow_compile_project_to_source_code()
+        if status == 0:
+            w = TargetWrapper(target_name='Build Main')
+            yield w.wait_on_execute(main_name=main_name)
 
-        def on_exit(status):
-            try:
-                next_file = next(all_files)
-                CLI.__compile_file_to_source_code(next_file, on_exit=on_exit)
-            except:
-                # no more files
-                GPS.Project.recompute()
-
-        on_exit(0)  # start processing the files
+    @staticmethod
+    def workflow_generate_from_mdl_then_build_then_debug(main_name):
+        """
+        Generate the code for all simulink files, then compile the specified
+        main, then debug it.
+        This is a workflow, and should be used via the functions in
+        workflows.py.
+        """
+        status = yield CLI.workflow_compile_project_to_source_code()
+        if status == 0:
+            w = TargetWrapper(target_name='Build Main')
+            status = yield w.wait_on_execute(main_name=main_name)
+        if status == 0:
+            f = GPS.File(main_name)
+            e = f.project().get_executable_path(f)
+            GPS.Debugger.spawn(GPS.File(e))
 
 
 class QGEN_Diagram(gpsbrowsers.JSON_Diagram):
@@ -545,138 +558,98 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
 class Mapping_File(object):
     """
     Support for the mapping file generated by qgen, which maps from source
-    lines to blocks, and back.
+    lines to blocks, and back. The format of this mapping file is:
+       { "filename.adb": {   # repeated for each file
+              "block1": {    # repeated for each block
+                  "line": [1, 2],    # lines impacted by this block
+                  "symbol": ["s1", "s2"]   # variables from this block
+              }
+       }
     """
 
     def __init__(self, filename=None):
-        self.mapping = {"blocks": {}, "files": {}}
-        self.lines = dict()   # filename -> {linenum -> [blocks]}
+        # In the following, a `file` is an instance of `GPS.File`
+        self.blocks = {}   # block_id => set([(file,line), (file,line)])
+        self.lines = {}    # (file,line) => set([block_id])
+        self.files = {}    # sourcefile => mdlfile
 
-    def load(self, filename):
+    def load(self, mdlfile):
         """
-        Load a mapping file from the disk
+        Load a mapping file from the disk. This cumulates with existing
+        information already loaded.
+        :param GPS.File mdlfile: the MDL file we start from
         """
-        self.load_from_json(json.load(open(filename)))
+        filename = os.path.join(
+            project_support.get_output_dir(mdlfile),
+            '%s.json' % os.path.basename(mdlfile.name()))
 
-    def load_from_json(self, json):
-        """
-        Load a mapping from existing JSON data
-        """
+        try:
+            f = open(filename)
+        except IOError:
+            GPS.Console().write('Mapping file %s not found\n' % filename)
+            return
 
-        self.lines = dict()
-        self.mapping = json
-        for block_name, files in self.mapping['blocks'].iteritems():
-            for file, pos in files.iteritems():
-                pos = list(pos)   # copy
-                lines = self.lines.setdefault(file, {})
-                while pos:
-                    start = pos.pop(0)
-                    end = pos.pop(0)
-                    for line in range(start, end + 1):
-                        blocks = lines.setdefault(line, [])
-                        blocks.append(block_name)
+        try:
+            js = json.load(f)
+        except:
+            GPS.Console().write('Invalid json in %s\n' % filename)
+            return
 
-    def get_breakpoints(self, block_name):
+        for filename, blocks in js.iteritems():
+            f = GPS.File(filename)
+            self.files[f] = mdlfile
+
+            for blockid, blockinfo in blocks.iteritems():
+                for line in blockinfo['line']:
+                    a = self.blocks.setdefault(blockid, set())
+                    a.add((f, line))
+
+                    a = self.lines.setdefault((f, line), set())
+                    a.add(blockid)
+
+    def get_breakpoints(self, blockid):
         """
-        Returns the (filename, line) tuples on which we should set or
+        Returns the set of (filename, line) tuples on which we should set or
         remove breakpoints, for a given block.
         """
-        result = []
-        files = self.mapping['blocks'].get(block_name, {})
-        for file, pos in files.iteritems():
-            # get pos[0], pos[2], ... i.e. the start line of each range
-            result.extend((file, p) for p in pos[::2])
-        return result
+        return self.blocks.get(blockid, set())
 
-    def get_blocks(self, filename, line):
+    def get_blocks(self, file, line):
         """
-        The list of block names corresponding to a given source line
+        The set of block names corresponding to a given source line
+        :param file: a `GPS.File`
         """
-        return self.lines.get(os.path.basename(filename), {}).get(line, [])
+        return self.lines.get((file, line), set())
 
-    def get_mdl_file(self, filename):
+    def get_mdl_file(self, file):
         """
         Return the name of the MDL file used to generate the given file
+        :param GPS.File file: the source file
         """
-        return self.mapping['files'].get(os.path.basename(filename))
-
-    def create_mapping(self):
-        """
-        Create the mapping from source to block by parsing the sources.
-        """
-
-        block_start = re.compile('--  Block (?P<block_name>.*)$')
-        block_end = re.compile('--  End Block (?P<block_name>.*)$')
-
-        result = dict(blocks=dict(),
-                      files={   # ??? Hard-coded for now
-                          'controller4.adb': 'Controller4.mdl',
-                          'controller4.ads': 'Controller4.mdl',
-                          'derivator.adb': 'Controller4.mdl',
-                          'derivator.ads': 'Controller4.mdl',
-                          'filter2.adb': 'Filter2.mdl',
-                          'filter2.ads': 'Filter2.mdl',
-                          'pid.adb': 'Controller4.mdl',
-                          'pid.ads': 'Controller4.mdl'})
-
-        def register(block_name, filename, start_line, end_line):
-            name = os.path.basename(filename)
-            for_file = result['blocks'].setdefault(block_name, {})
-            if name in for_file:
-                for_file[name].extend([start_line, end_line])
-            else:
-                for_file[name] = [start_line, end_line]
-
-        def parse_adb(filename):
-            blocks = dict()
-            # Current block:  'block_name' => start line
-
-            with open(filename) as f:
-                for num, line in enumerate(f.readlines()):
-                    g = block_start.search(line)
-                    if g:
-                        block_name = g.group('block_name')
-                        if block_name not in blocks:
-                            blocks[block_name] = num + 1
-
-                    else:
-                        g = block_end.search(line)
-                        if g:
-                            block_name = g.group('block_name')
-                            if block_name in blocks:
-                                # Do not include the comment lines in the block
-                                register(
-                                    block_name, filename,
-                                    blocks[block_name] + 1, num)
-                                del blocks[block_name]
-
-        GPS.Console().write("Generating mapping file\n")
-        for f in GPS.Project.root().sources(recursive=True):
-            if f.name().endswith('.adb'):
-                parse_adb(f.name())
-
-        self.load_from_json(result)
+        return self.files.get(file, None)
 
 
 project_support = Project_Support()
 project_support.register_languages()  # available before project is loaded
 
 if not CLI.is_available():
-    logger.log('mdl2json not found on the PATH')
+    logger.log('mdl2json not found')
 
 else:
     project_support.register_tool()
 
     class QGEN_Debugger_Support(object):
         """
-        Support for interaction with the debugger.
+        Support for interacting with the debugger.
         """
 
         @staticmethod
-        @gps_utils.hook('debugger_executable_changed')
-        def __on_debugger_executable_changed(debugger):
+        @gps_utils.hook('debugger_started')
+        def __on_debugger_started(debugger):
             debugger._modeling_map = Mapping_File()
-            debugger._modeling_map.create_mapping()
+            for f in GPS.Project.root().sources(recursive=True):
+                if CLI.is_model_file(f):
+                    debugger._modeling_map.load(f)
 
         @staticmethod
         @gps_utils.hook('debugger_process_stopped')
@@ -734,6 +707,10 @@ else:
         @staticmethod
         @gps_utils.hook('open_file_action_hook', last=False)
         def __on_open_file_action(file, *args):
+            """
+            When an ".mdl" file is opened, use a diagram viewer instead of a
+            text file to view it.
+            """
             if file.language() == 'simulink':
                 logger.log('Open %s' % file)
                 viewer = QGEN_Diagram_Viewer.get_or_create(file)
@@ -766,20 +743,34 @@ else:
             """
 
             gps_utils.make_interactive(
-                name='compile model file',
+                callback=CLI.workflow_compile_context_to_source_code,
+                name='MDL generate code for file',
+                category='QGen',
                 filter=CLI.is_model_file,
-                contextual='Generate code for %f',
-                callback=CLI.compile_context_to_source_code)
+                contextual='Generate code for %f')
 
             gps_utils.make_interactive(
-                name='compile model',
-                contextual='Generate code for project',
-                callback=CLI.compile_project_to_source_code)
+                callback=CLI.workflow_compile_project_to_source_code,
+                name='MDL generate code for whole project',
+                category='QGen')
 
             gps_utils.make_interactive(
-                name='break debugger on block',
-                contextual='Breakpoint on this block',
+                name='MDL break debugger on block',
+                contextual='Debug/Break on block',
                 filter=CLI.is_model_block_and_debugger,
                 callback=QGEN_Debugger_Support.set_breakpoint)
+
+            workflows.create_target_from_workflow(
+                target_name="MDL Generate code then build",
+                workflow_name="generate-from-mdl-then-build",
+                workflow=CLI.workflow_generate_from_mdl_then_build,
+                icon_name="gps-build-mdl-symbolic")
+
+            workflows.create_target_from_workflow(
+                target_name="MDL Generate code then build then debug",
+                workflow_name="generate-from-mdl-then-build-then-debug",
+                workflow=CLI.workflow_generate_from_mdl_then_build_then_debug,
+                icon_name="gps-build-mdl-symbolic",
+                in_toolbar=True)
 
     module = QGEN_Module()
