@@ -69,6 +69,10 @@ package body Language.Libclang is
      GNATCOLL.Traces.Create ("LIBCLANG_XREF", On);
    --  Whether clang-based cross references should be activated or not
 
+   Activate_Clang_Xref_Cache : constant Trace_Handle :=
+     GNATCOLL.Traces.Create ("LIBCLANG_XREF_CACHE", Off);
+   --  Whether clang-based cross references should be activated or not
+
    type Translation_Unit_Wrapper
    is new Ada.Finalization.Controlled with record
       Cache : TU_Cache_Access;
@@ -913,7 +917,9 @@ package body Language.Libclang is
       Cache_Stream    : Stream_Access;
       Cache_VFS       : constant Virtual_File := Get_Cache_File (Kernel);
    begin
-      if Cache_VFS = No_File then
+      if not Active (Activate_Clang_Xref_Cache)
+        or else Cache_VFS = No_File
+      then
          return;
       end if;
 
@@ -968,11 +974,10 @@ package body Language.Libclang is
 
       Dummy           : Boolean;
    begin
-      if Cache_VFS = No_File then
-         return;
-      end if;
-
-      if Clang_Module_Id.Refs.Map.Is_Empty then
+      if not Active (Activate_Clang_Xref_Cache)
+        or else Cache_VFS = No_File
+        or else Clang_Module_Id.Refs.Map.Is_Empty
+      then
          return;
       end if;
 
