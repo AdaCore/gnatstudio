@@ -30,15 +30,15 @@ with Gtk.Button;              use Gtk.Button;
 with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
 with Gtk.Dialog;              use Gtk.Dialog;
 with Gtk.Enums;               use Gtk.Enums;
-with Gtk.Event_Box;           use Gtk.Event_Box;
-with Gtk.Image;               use Gtk.Image;
 with Gtk.GEntry;              use Gtk.GEntry;
+with Gtk.Main;                use Gtk.Main;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Style_Context;       use Gtk.Style_Context;
 with Gtk.Radio_Menu_Item;     use Gtk.Radio_Menu_Item;
 with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item; use Gtk.Separator_Tool_Item;
+with Gtk.Tool_Button;         use Gtk.Tool_Button;
 with Gtk.Tool_Item;           use Gtk.Tool_Item;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Widget;              use Gtk.Widget;
@@ -140,6 +140,13 @@ package body Generic_Views is
    procedure On_Recent_Item_Activate
      (Item : access Gtk_Menu_Item_Record'Class);
    --  Called when selecting a past search string
+
+   procedure On_Destroy_View (View : access Gtk_Widget_Record'Class);
+   --  Called when the view is destroyed
+
+   procedure On_Menu_Deactivate (View : access GObject_Record'Class);
+   --  Called when the config menu is popped down, to restore the state of
+   --  the config button (unpressed)
 
    ----------------------------
    -- On_Destroy_Recent_Item --
@@ -786,6 +793,31 @@ package body Generic_Views is
       Item.Set_Homogeneous (Homogeneous);
    end Append_Toolbar;
 
+   ---------------------
+   -- On_Destroy_View --
+   ---------------------
+
+   procedure On_Destroy_View (View : access Gtk_Widget_Record'Class) is
+      V : constant Abstract_View_Access := Abstract_View_Access (View);
+   begin
+      if V.Config_Menu /= null then
+         V.Config_Menu.Destroy;
+      end if;
+   end On_Destroy_View;
+
+   ------------------------
+   -- On_Menu_Deactivate --
+   ------------------------
+
+   procedure On_Menu_Deactivate (View : access GObject_Record'Class) is
+      V  : constant Abstract_View_Access := Abstract_View_Access (View);
+   begin
+      V.Config.Get_Child.Set_State_Flags
+        (Gtk_State_Flag_Normal, Clear => True);
+      V.Config_Menu.Destroy;
+      V.Config_Menu := null;
+   end On_Menu_Deactivate;
+
    ------------------
    -- Simple_Views --
    ------------------
@@ -941,55 +973,51 @@ package body Generic_Views is
       -- On_Display_Local_Config --
       -----------------------------
 
-      function On_Display_Local_Config
-        (View  : access Gtk_Widget_Record'Class;
-         Event : Gdk.Event.Gdk_Event) return Boolean
+      procedure On_Display_Local_Config
+        (View  : access GObject_Record'Class)
       is
-         V     : constant View_Access := View_Access (View);
-         Menu  : Gtk_Menu;
+         V     : constant Abstract_View_Access := Abstract_View_Access (View);
          Child : MDI_Child;
          Time_Before_Factory : Time;
       begin
-         if Get_Button (Event) /= 1
-           or else Get_Event_Type (Event) /= Button_Press
-         then
-            return False;
-         end if;
-
          if Host = Windows then
             Time_Before_Factory := Clock;
          end if;
 
-         Gtk_New (Menu);
-         V.Create_Menu (Menu);
+         if V.Config_Menu /= null then
+            V.Config_Menu.Destroy;
+         end if;
 
-         Child := Child_From_View (V);
+         Gtk_New (V.Config_Menu);
+         V.Create_Menu (V.Config_Menu);
+
+         Child := Child_From_View (View_Access (V));
          if Child /= null and then Child.Is_Floating then
-            if Has_Children (Menu) then
-               Menu.Add (Gtk_Separator_Menu_Item_New);
+            if Has_Children (V.Config_Menu) then
+               V.Config_Menu.Add (Gtk_Separator_Menu_Item_New);
             end if;
-            Append_Menu (V.Kernel, Menu,
+            Append_Menu (V.Kernel, V.Config_Menu,
                          Label => "Unfloat",
                          Action => "unfloat view");
          end if;
 
-         View.Grab_Focus;
-         Menu.Show_All;
+         V.Grab_Focus;
+         V.Config_Menu.Show_All;
 
          --  See comments in GUI_Utils.Button_Press_For_Contextual_Menu
 
          if Host = Windows then
-            Popup (Menu,
-                   Button        => Gdk.Event.Get_Button (Event),
-                   Activate_Time => Gdk.Event.Get_Time (Event)
+            Popup (V.Config_Menu,
+                   Button        => 1,
+                   Activate_Time => Gtk.Main.Get_Current_Event_Time
                    + Guint32 ((Clock - Time_Before_Factory) * 1000));
          else
-            Popup (Menu,
-                   Button        => Gdk.Event.Get_Button (Event),
-                   Activate_Time => Gdk.Event.Get_Time (Event));
+            Popup (V.Config_Menu,
+                   Button        => 1,
+                   Activate_Time => Gtk.Main.Get_Current_Event_Time);
          end if;
 
-         return True;
+         V.Config_Menu.On_Deactivate (On_Menu_Deactivate'Access, V);
       end On_Display_Local_Config;
 
       -----------
@@ -1353,11 +1381,9 @@ package body Generic_Views is
       function Create_Finalized_View
         (View : not null access Formal_View_Record'Class) return Gtk_Widget
       is
-         Event_Box      : Gtk_Event_Box;
          Box            : Gtk_Box;
-         Item           : Gtk_Tool_Item;
-         Image          : Gtk_Image;
          Toolbar        : Gtk_Toolbar;
+         Config         : Gtk_Tool_Button;
       begin
          --  If no local toolbar is needed, either to contain a custom toolbar
          --  or for a local config menu, return View.
@@ -1387,25 +1413,17 @@ package body Generic_Views is
 
          --  If View needs a local config menu, create it
          if Local_Config then
-            Gtk_New (Item);
-            Gtk_New (Event_Box);
-            Item.Add (Event_Box);
-            Gtk_New_From_Icon_Name
-              (Image, "gps-config-menu-symbolic", Icon_Size_Menu);
-            Event_Box.Add (Image);
-            Event_Box.Set_Name ("local-config");
-            Item.Set_Tooltip_Text (-"Configure this panel");
-            View.Append_Toolbar (Toolbar, Item, Right_Align => True);
-
-            Add_Events
-              (Event_Box,
-               Button_Press_Mask or Button_Release_Mask or Key_Press_Mask);
-
-            Gtkada.Handlers.Return_Callback.Object_Connect
-              (Event_Box, Signal_Button_Press_Event,
-               Gtkada.Handlers.Return_Callback.Event_Marshaller.To_Marshaller
-                 (On_Display_Local_Config_Access), View);
+            Gtk_New (Config);
+            View_Record (View.all).Config := Config;
+            Config.Set_Icon_Name ("gps-config-menu-symbolic");
+            Config.Set_Name ("local-config");
+            Config.Set_Tooltip_Text (-"Configure this panel");
+            View.Append_Toolbar (Toolbar, Config, Right_Align => True);
+            Gtk_Button (Config.Get_Child).On_Pressed
+              (On_Display_Local_Config_Access, View);
          end if;
+
+         View.On_Destroy (On_Destroy_View'Access);
 
          return Gtk_Widget (Box);
       end Create_Finalized_View;

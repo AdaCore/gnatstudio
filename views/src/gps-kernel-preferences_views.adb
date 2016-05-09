@@ -25,7 +25,6 @@ with Glib_Values_Utils;             use Glib_Values_Utils;
 with Gtk.Box;                       use Gtk.Box;
 with Gtk.Cell_Renderer_Text;        use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                     use Gtk.Enums;
-with Gtk.Event_Box;                 use Gtk.Event_Box;
 with Gtk.List_Box_Row;              use Gtk.List_Box_Row;
 with Gtkada.MDI;                    use Gtkada.MDI;
 with Gtk.Menu;                      use Gtk.Menu;
