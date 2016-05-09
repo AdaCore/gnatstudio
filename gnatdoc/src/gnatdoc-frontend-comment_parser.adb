@@ -1067,7 +1067,9 @@ package body GNATdoc.Frontend.Comment_Parser is
             Parse_Record_Comments (Entity);
             return Skip;
 
-         elsif Get_Kind (Entity) = E_Enumeration_Type then
+         elsif Get_Kind (Entity) = E_Enumeration_Type
+           and then not Is_Subtype (Entity)
+         then
             Parse_Enumeration_Comments (Entity);
             return Skip;
 
