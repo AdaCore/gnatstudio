@@ -1371,6 +1371,8 @@ package body Language.Libclang is
       for T of Clang_Module_Id.Parsing_Tasks loop
          T.Finish;
       end loop;
+
+      Clang_Symbol_Table.Free;
    end Destroy;
 
    -------------
