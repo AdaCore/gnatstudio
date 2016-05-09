@@ -368,6 +368,7 @@ package Clang_Xref is
       Include_Overridden    : Boolean := False;
       Include_Implicit      : Boolean := False;
       Include_All           : Boolean := False;
+      Include_Renames       : Boolean := True;
       Kind                  : String := "")
       return Root_Reference_Iterator'Class;
 

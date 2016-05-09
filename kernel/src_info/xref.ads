@@ -806,6 +806,7 @@ package Xref is
       Include_Overridden    : Boolean := False;
       Include_Implicit      : Boolean := False;
       Include_All           : Boolean := False;
+      Include_Renames       : Boolean := True;
       Kind                  : String := "")
       return Root_Reference_Iterator'Class is abstract;
    --  Find all the references to the entity. This also return the location
@@ -826,6 +827,9 @@ package Xref is
    --  Kind can be used to filter the reference kinds that should be returned.
    --  If it is specified, Include_Implicit and Include_All are ignored. It is
    --  a list of comma-separated strings.
+   --
+   --  If Include_Renames is true, then this subprogram follows the "renames"
+   --  statement and returns the references to the renamed entities as well.
 
    subtype References_Sort is GNATCOLL.Xref.References_Sort;
    function Find_All_References
@@ -948,6 +952,7 @@ private
       Include_Overridden    : Boolean := False;
       Include_Implicit      : Boolean := False;
       Include_All           : Boolean := False;
+      Include_Renames       : Boolean := True;
       Kind                  : String := "")
       return Root_Reference_Iterator'Class;
 

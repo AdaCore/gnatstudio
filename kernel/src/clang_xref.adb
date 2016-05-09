@@ -117,6 +117,7 @@ package body Clang_Xref is
       Include_Overridden    : Boolean := False;
       Include_Implicit      : Boolean := False;
       Include_All           : Boolean := False;
+      Include_Renames       : Boolean := True;
       Kind                  : String := "")
       return Root_Reference_Iterator'Class;
    --  Helper function for find all references, for the case of a locally
@@ -133,6 +134,7 @@ package body Clang_Xref is
       Include_Overridden    : Boolean := False;
       Include_Implicit      : Boolean := False;
       Include_All           : Boolean := False;
+      Include_Renames       : Boolean := True;
       Kind                  : String := "")
       return Root_Reference_Iterator'Class;
    --  Helper function for find all references, for the case of a public
@@ -1587,6 +1589,7 @@ package body Clang_Xref is
       Include_Overridden    : Boolean := False;
       Include_Implicit      : Boolean := False;
       Include_All           : Boolean := False;
+      Include_Renames       : Boolean := True;
       Kind                  : String := "")
       return Root_Reference_Iterator'Class
    is
@@ -1608,11 +1611,11 @@ package body Clang_Xref is
       elsif Entity.Is_Global then
          return Find_All_References_Global
            (Entity, In_File, In_Scope, Include_Overriding, Include_Overridden,
-            Include_Implicit, Include_All, Kind);
+            Include_Implicit, Include_All, Include_Renames, Kind);
       else
          return Find_All_References_Local
            (Entity, In_File, In_Scope, Include_Overriding, Include_Overridden,
-            Include_Implicit, Include_All, Kind);
+            Include_Implicit, Include_All, Include_Renames, Kind);
       end if;
    end Find_All_References;
 
@@ -1718,12 +1721,13 @@ package body Clang_Xref is
       Include_Overridden    : Boolean := False;
       Include_Implicit      : Boolean := False;
       Include_All           : Boolean := False;
+      Include_Renames       : Boolean := True;
       Kind                  : String := "")
       return Root_Reference_Iterator'Class
    is
       pragma Unreferenced
         (In_Scope, Include_Overriding, Include_Overridden,
-         Include_Implicit, Include_All, Kind, In_File);
+         Include_Implicit, Include_All, Include_Renames, Kind, In_File);
       --  TODO ??? Options are not handled yet
 
       --  We want to store entity names as symbols for convenience, use the
@@ -1843,12 +1847,13 @@ package body Clang_Xref is
       Include_Overridden    : Boolean := False;
       Include_Implicit      : Boolean := False;
       Include_All           : Boolean := False;
+      Include_Renames       : Boolean := True;
       Kind                  : String := "")
       return Root_Reference_Iterator'Class
    is
       pragma Unreferenced
         (In_Scope, Include_Overriding, Include_Overridden,
-         Include_Implicit, Include_All, Kind);
+         Include_Implicit, Include_All, Include_Renames, Kind);
 
       --  TODO ??? Options are not handled yet
 

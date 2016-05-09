@@ -138,6 +138,7 @@ package body Refactoring.Performers is
       Data.Iter.Replace_Element
         (Find_All_References
            (Entity                => Entity,
+            Include_Renames       => False,
             Include_Overriding    => Overridden,
             Include_Overridden    => Overridden));
 
