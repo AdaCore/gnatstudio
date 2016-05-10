@@ -51,8 +51,7 @@ import os.path
 import os_utils
 import re
 import workflows
-from workflows.promises import Promise, ProcessWrapper, TargetWrapper, \
-    idle_action
+from workflows.promises import Promise, ProcessWrapper, TargetWrapper
 
 
 logger = GPS.Logger('MODELING')
@@ -250,7 +249,7 @@ class CLI(GPS.Process):
         Whether mdl2json is available on the system.
         """
         # Testing None or empty string
-        if CLI.mdl2json:
+        if CLI.qgenc:
             return True
         else:
             return False

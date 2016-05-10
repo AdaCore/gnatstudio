@@ -1,8 +1,74 @@
-""" This module defines a framework for writing workflows.
+"""
+This module defines a framework for writing workflows.
 
 A workflow is a Python generator which can be used to execute
 a chain of asynchronous actions, while retaining a sequential
 structure.
+
+This package is in most cases not directly useful on its own.  Instead,
+consider workflows as an extension to standard synchronous python functions.
+For instance, it is hard to write a GPS action that would run a build target
+(e.g. "build all"), then when the compilation has finished would start
+running the exectable.
+
+The function would look something like:
+
+    def my_asynchronous_function_1():
+        GPS.BuildTarget("build main").execute("main.adb", synchronous=True)
+        GPS.BuildTarget("run main").execute("main.adb")
+
+with a major drawback: since the build is run synchronously, the whole of GPS
+is frozen while the compiler is doing its job, including the progress bars.
+So this solution is not suitable. This means we need to run the first command
+asynchronously:
+
+    def my_asynchronous_function_2():
+        def on_exit(*args):
+            GPS.BuildTarget("run main").execute("main.adb")
+        GPS.BuildTarget("build main").execute("main.adb", on_exit=on_exit)
+
+so that when the build finishes, it calls `on_exit`, which in turns starts
+running the executable. Imagine what happens when you want to chain more
+than two functions.
+
+Instead, the functions is this module let you write python generator
+functions, which start executing, then give the control back to GPS, which
+resumes their execution when the current task has finished.
+
+   from workflows.promises import TargetWrapper
+   def build_and_run():
+       yield TargetWrapper('build main').wait_on_execute('main.adb')
+       yield TargetWrapper('run main').wait_on_execute('main.adb')
+
+and so on if we want to chain more than two actions. The power of this
+framework, though, is that it works for most GPS concepts: one could run
+any external process, wait for its completion, then execute a GPS target
+as we did above, then wait for a specific hook to be run by GPS, then
+execute an asynchronous python function,... All the while, the `my_workflow`
+remains sequential, and thus is easy to read and maintain.
+
+Such workflows can be used like standard functions to create GPS actions.
+For instance:
+
+   import gps_utils
+
+   @gps_utils.interactive('my action', menu='/Workflows/Build and Run')
+   def build_and_run():
+       # as above
+
+and we have just defined a new menu which executes our workflow. Now that we
+have a GPS action, users can also associate key bindings to it via the
+preferences dialog.
+
+Work can be split among several functions just as easily. Imagine we now
+want to write a function that would generate some code (via an external
+program), then build and run the main as we did above. This can be done
+with:
+
+   from workflows.promises import ProcessWrapper
+   def generate_build_and_run():
+       yield ProcessWrapper(['generate_code', '--full']).wait_until_terminate()
+       yield build_and_run()    # Calling our previous function
 """
 
 import inspect
@@ -151,6 +217,7 @@ def driver(gen_inst):
             elif isinstance(el, promises.Promise):
                 # If the last generator yielded a promise, schedule to resume
                 # its execution when the promise is ready.
+                # ??? Should we connect to reject to cancel the whole workflow?
                 el.then(resume)
                 return
 

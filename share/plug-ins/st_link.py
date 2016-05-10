@@ -133,7 +133,7 @@ class BoardLoader(Module):
             self.__error_exit("Could not launch executable arm-eabi-objcopy.")
             return
 
-        r1 = yield con.wait_until_terminate()
+        r1, output = yield con.wait_until_terminate()
         if r1 is not 0:
             self.__error_exit("arm-eabi-objcopy returned an error.")
             return

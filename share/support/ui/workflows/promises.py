@@ -1,13 +1,6 @@
 """
-The 4 classes here:
-   class Promise
-     - provides thenable promises for any method, process and procedures
-
-   class ProcessWrapper
-         DebuggerWrapper
-         TargetWrapper
-     - examples as well as utils that controls process
-       (or process-like execution) with promises
+This package provides a number of classes and functions to help write
+workflows. See the full description of workflows in workflows/__init__.py
 """
 
 import time
@@ -28,121 +21,166 @@ class Promise(object):
     - The creator of the promise calls resolve on the promise when the result
       is ready, which will notify the client via the callback.
 
-    In effect, in GPS, promises are never used directly, but instead are
-    created in the context of workflows. The writer of a workflow yields
-    promises, and that allows the workflow driver to resume execution of the
-    workflow when the result of the promise is available.
+    Promises are one of the two low-level support concepts for workflows
+    (along with python's yield keyword). They can be used to implement your
+    own asynchronous programming functions, if the other functions in this
+    module are not sufficient.
+
+    For instance, let's assume you want to query data from a web server.
+    Since such a query could take a while, we do not want to block GPS during
+    that time. So we need to do this query in the background.
+
+        class WebQuery(Thread):
+            def __init__(self, url, promise):
+                self.promise = promise
+                self.url = url
+            def run(self):
+                # Running in a separate thread: connect to the server and
+                # retrieve the document, for instance with urllib. Since this
+                # is a separate thread, it doesn't block GPS
+                doc = urllib.urlopen(self.url)
+
+                # Let the promise no that we now have the info
+                self.promise.resolve(doc)
+
+        def query_from_server(*args):
+            p = Promise()
+            # run the query in the background
+            w = WebQuery(url='...', promise=p)
+            return p
+
+    One could now use the `query_from_server` directly from a GPS workflow,
+    but just to show the low-level of using promises:
+
+        # We receive the document, as per the call to resolve() above
+        def when_query_is_done(doc):
+            ...
+
+        # The following call is not blocking at all
+        query_from_server(...).then(when_query_is_done)
+
     """
 
-    # answer = a function/handler that is called to fullfill the promise
-    answer = None
+    PENDING = -1
+    RESOLVED = 0
+    REJECTED = 1
 
-    def then(self, answer=None):
+    def __init__(self):
+        self.__success = []  # Called when the promise is resolved
+        self.__failure = []  # Called when the promise is rejected
+        self.__result = None   # The result of the promise
+        self.__state = Promise.PENDING
+
+    def then(self, success=None, failure=None):
         """
-           Register user defined handler
+        Register user defined callback to be called when the promise is
+        resolved or rejected.
+
+        :param success: a function called when the promise is resolved
+           (or immediately if the promise has already been resolved).
+           It receives as parameter the value passed when calling
+           `self.resolve()` (or, if that was also a promise, the value of
+           that promise once it has been resolved).
+           `success` is called at most once (and never if the promise is
+           rejected).
+           If this function returns a promise, that promise will be
+           resolved before calling the next promise in the chain (see the
+           description on the return value below).
+
+        :param failure: a function called when the promise is rejected
+           (or immediately if the promise has already been rejected).
+           If receives as a parameter the value passed when calling
+           `self.reject()`
+           `failure` is called at most once (and never if the promise is
+           resolved).
+
+        :return: a new promise, which will be resolved with the return
+           value of `success`, or rejected with the return value of
+           `failure`. This way, promises can be chained more easily:
+
+               Promise().then(on_promise1_done).then(on_promise2_done)
+
+           where on_promise1_done is called with the return value of the
+           first promise, and on_promise2_done is called with the
+           return value of on_promise1_done.
+           If `success` also return a promise, the value of that promise will
+           be used to resolve the result of `then`.
         """
-        self.answer = answer
-        return Promise()
+        ret = Promise()
+
+        def __fullfill(value):
+            ret.resolve(success(value) if success else value)
+
+        def __reject(reason):
+            ret.reject(failure(reason) if failure else reason)
+
+        if self.__state == Promise.RESOLVED:
+            __fullfill(self.__result)
+        elif self.__state == Promise.REJECTED:
+            __reject(self.__result)
+        else:
+            self.__success.append(__fullfill)
+            self.__failure.append(__reject)
+        return ret
 
     def resolve(self, result=None):
         """
-           If there is a handler, then call it -> parameterized by the result
+        Set the value of the promise.
+        This automatically calls the callbacks set by the user.
+        :param result: any type
+           This is the result of the promise, and is passed to the callback.
         """
-        if self.answer is not None:
-            self.answer(result)
+        if self.__state == Promise.PENDING:
+            if isinstance(result, Promise):
+                result.then(self.resolve, self.reject)
+            else:
+                self.__state = Promise.RESOLVED
+                self.__result = result  # in case we call then() later
+                for s in self.__success:
+                    s(result)
 
+                # Release all listeners, for garbage collecting, since the
+                # state of the promise can't change anymore, and listeners are
+                # only called once.
+                self.__success = None
+                self.__failure = None
 
-def action(msecs, action_fn):
-    """
-    This primitive makes a blocking action_fn non blocking in the context of a
-    workflow.  It executes action_fn in a timeout, and then calls the promise's
-    callback in another.
-    """
-    p = Promise()
+    def reject(self, reason=None):
+        """
+        The promise cannot be fullfilled after all, so call the appropriate
+        callbacks. `reason` should not be a Promise.
+        """
+        if self.__state == Promise.PENDING:
+            self.__state = Promise.REJECTED
+            self.__result = reason
+            for s in self.__failure:
+                s(reason)
 
-    def timeout_handler(t):
-        t.remove()
-        p.resolve()
-
-    def action_handler(t):
-        t.remove()
-        GPS.Timeout(msecs, timeout_handler)
-        action_fn()
-
-    GPS.Timeout(10, action_handler)
-
-    return p
-
-
-def idle_action(action_fn):
-    """
-    This primitive makes a blocking action_fn non blocking in the context of a
-    workflow.  It executes action_fn in an idle, and then calls the promise's
-    callback in another.
-    """
-    p = Promise()
-
-    def action_handler():
-        GLib.idle_add(lambda: p.resolve())
-        action_fn()
-
-    GLib.idle_add(action_handler)
-
-    return p
+            self.__success = None
+            self.__failure = None
 
 
 def timeout(msecs):
     """
     This primitive allows the user to delay execution of the rest of a workflow
     for msecs milliseconds.
+
+       def my_func():
+           bar()
+           yield timeout(200)   # wait 200ms
+           bar()
+
+    When possible, it is better to use `wait_idle` to wait until GPS is not
+    busy doing anything else, rather than wait an explicit delay, which might
+    depend on the CPU load for instance.
     """
     p = Promise()
 
-    def timeout_handler(t):
-        t.remove()
+    def timeout_handler():
         p.resolve()
+        return False
 
-    GPS.Timeout(msecs, timeout_handler)
-
-    return p
-
-
-def wait_tasks():
-    """
-    This primitive allows the user to delay the execution of the rest of a
-    workflow until all active tasks are terminated
-    """
-
-    p = Promise()
-
-    def timeout_handler(t=None):
-        if not GPS.Task.list():
-            t.remove()
-            process_all_events()
-            GLib.idle_add(lambda: p.resolve())
-
-    GPS.Timeout(200, timeout_handler)
-    return p
-
-
-def hook(hook_name):
-    """
-    This primitive allows the writer of a workflow to connect to a hook once,
-    as if it were a function, and get the parameters of the hook as return
-    values. For example:
-
-    _, file = hook("buffer_edited")
-
-    This will wait until the "buffer_edited" hook is triggered, and the file
-    will be stored in the file variable
-    """
-    p = Promise()
-
-    def hook_handler(hook_params):
-        GPS.Hook(hook_name).remove(hook_handler)
-        p.resolve()
-
-    GPS.Hook(hook_name).add(hook_handler)
+    GLib.timeout_add(msecs, timeout_handler)
     return p
 
 
@@ -157,6 +195,92 @@ def wait_idle():
     return p
 
 
+def wait_tasks():
+    """
+    This primitive allows the user to delay the execution of the rest of a
+    workflow until all active tasks are terminated. If you are waiting on
+    tasks that you spawned yourself, it is better to use ProcessWrapper
+    or TargetWrapper below to spawn the task.
+    """
+
+    p = Promise()
+
+    def timeout_handler():
+        if not GPS.Task.list():
+            process_all_events()
+            GLib.idle_add(lambda: p.resolve())
+            return False
+        return True   # will try again
+
+    GLib.timeout_add(200, timeout_handler)
+    return p
+
+
+def modal_dialog(action_fn, msecs=300):
+    """
+    This primitive executes a blocking function in the context of a workflow.
+    This should rarely be used, but is sometimes needed for some modal dialogs
+    that block GPS without executing the python script.
+    Example:
+        yield modal_dialog(
+            300, lambda: GPS.execute_action('open project properties'))
+    """
+    p = Promise()
+
+    def __on_timeout():
+        p.resolve()
+        return False
+
+    def __start_action():
+        # Use Glib's timeout_add, since GPS.Timeout doesn't seem to be run
+        # correctly when running python's Gtk.Dialog.run (for instance for the
+        # coding standard editor).
+        GLib.timeout_add(msecs, __on_timeout)
+        action_fn()
+        return False
+
+    # Since action is blocking, and we want modal_dialog to return the
+    # promise, we need to start the action in a timeout.
+    GLib.timeout_add(10, __start_action)
+    return p
+
+
+def idle_modal_dialog(action_fn):
+    """
+    Similar to `modal_dialog()`, but waits until GPS is finished processing
+    events, instead of a specific timeout.
+    """
+    p = Promise()
+
+    def __on_idle():
+        GLib.idle_add(lambda: p.resolve())
+        action_fn()
+
+    GLib.idle_add(__on_idle)
+    return p
+
+
+def hook(hook_name):
+    """
+    This primitive allows the writer of a workflow to connect to a hook once,
+    as if it were a function, and get the parameters of the hook as return
+    values. For example:
+
+        _, file = yield hook("buffer_edited")
+
+    This will wait until the "buffer_edited" hook is triggered, and the file
+    will be stored in the file variable.
+    """
+    p = Promise()
+
+    def hook_handler(hook_params):
+        GPS.Hook(hook_name).remove(hook_handler)
+        p.resolve()
+
+    GPS.Hook(hook_name).add(hook_handler)
+    return p
+
+
 class ProcessWrapper(object):
     """
     ProcessWrapper is an advanced process manager
@@ -167,6 +291,13 @@ class ProcessWrapper(object):
     handler (functions) when:
         1 - the pattern matches or timeout.
         2 - the process is terminated by GPS.
+
+    Example of use:
+
+        def my_func():
+            p = ProcessWrapper(['ls'])
+            status, output = yield p.wait_until_terminate()
+
     """
 
     def __init__(self, cmdargs=[], spawn_console=False):
@@ -283,7 +414,7 @@ class ProcessWrapper(object):
         # check if I had made a promise to finish the process
         # if there is, answer with whatever the exit status is
         if self.__final_promise:
-            self.__final_promise.resolve(status)
+            self.__final_promise.resolve((status, remaining_output))
 
         # output the exit status on the attached console, if any
         if self.__console:
@@ -314,7 +445,7 @@ class ProcessWrapper(object):
         # close output check after that timeout
 
         if timeout > 0:
-            x = GPS.Timeout(timeout, self.__on_timeout)
+            GLib.timeout_add(timeout, self.__on_timeout)
 
         return self.__current_promise
 
@@ -322,7 +453,8 @@ class ProcessWrapper(object):
         """
         Called by user. Make a promise to them that:
         I'll let you know when the process is finished
-        * Promise made here will be answered with: exit status
+        * Promise made here will be answered with a tuple:
+            (exit status, output)
         """
 
         # process has already terminated, return nothing
@@ -333,18 +465,18 @@ class ProcessWrapper(object):
         self.__final_promise = Promise()
         return self.__final_promise
 
-    def __on_timeout(self, timeout):
+    def __on_timeout(self):
         """
         Called by GPS when it's timeout for a pattern to appear in output.
         """
 
-        timeout.remove()
         # current promise unanswered --> too late, it fails
         if not self.__current_answered:
             self.__current_pattern = None
             self.__current_answered = True
             # answer the promise with False
             self.__current_promise.resolve(False)
+        return False
 
     def terminate(self):
         """
@@ -362,9 +494,8 @@ class ProcessWrapper(object):
 
             if self.__console:
                 self.__console.write(
-                    "\n<^C> process interrupted (elapsed time: "
-                    + TimeDisplay.get_elapsed(
-                        self.__start_time, end_time) + ")\n")
+                    "\n<^C> process interrupted (elapsed time: %s)\n" %
+                    TimeDisplay.get_elapsed(self.__start_time, end_time))
 
     def __on_console_destroy(self, console):
         """
@@ -394,7 +525,7 @@ class ProcessWrapper(object):
 
 class DebuggerWrapper(object):
     """
-       DebuggerWrapper is a debbuger (eseentially a process in GPS) manager
+       DebuggerWrapper is a debbuger (essentially a process in GPS) manager
        It make a promise (yield object of the promise class) when user:
            want to send a command to debugger
 
@@ -540,10 +671,10 @@ class DebuggerWrapper(object):
 
 class TargetWrapper():
     """
-       TargetWrapper is a manager that build target and return
-       a thenable promise before execute the target
-       The promise will be answered with the exit status when
-       the target finishes
+    TargetWrapper is a manager that build target and return
+    a thenable promise before execute the target
+    The promise will be answered with the exit status when
+    the target finishes
     """
     def __init__(self, target_name):
         """
@@ -570,9 +701,9 @@ class TargetWrapper():
                               on_exit=self.__on_exit)
         return self.__promise
 
-    def __timeout_after_exit(self, timeout):
-        timeout.remove()
+    def __timeout_after_exit(self):
         self.__promise.resolve(self.__status)
+        return False
 
     def __on_exit(self, status):
         """
@@ -580,4 +711,4 @@ class TargetWrapper():
            Will answer the promise with exiting status.
         """
         self.__status = status
-        GPS.Timeout(200, self.__timeout_after_exit)
+        GLib.timeout_add(200, self.__timeout_after_exit)
