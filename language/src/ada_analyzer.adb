@@ -233,9 +233,6 @@ package body Ada_Analyzer is
       Tok_Colon .. Tok_Dot_Dot             => True,
       others                               => False);
 
-   Max_Identifier : constant := 256;
-   --  Maximum length of an identifier
-
    type Variable_Kind_Type is
      (Unknown_Kind, Parameter_Kind, Discriminant_Kind);
 
@@ -272,12 +269,10 @@ package body Ada_Analyzer is
       --  ??? It would be nice to merge the fields Declaration,
       --  Type_Declaration and Package_Declaration at some point.
 
-      Identifier          : String (1 .. Max_Identifier);
-      --  Name of the enclosing token
-      --  The actual name is Identifier (1 .. Ident_Len)
-
       Ident_Len           : Natural := 0;
-      --  Actual length of Indentifier
+      --  Length of the enclosing token name
+      --  The actual name is
+      --  Buffer (Sloc_Name.Index .. Sloc_Name.Index + Ident_Len - 1)
 
       Profile_Start       : Natural := 0;
       --  Position in the buffer where the profile of the current subprogram
@@ -1833,9 +1828,14 @@ package body Ada_Analyzer is
             end if;
 
             if Value.Ident_Len > 0 then
-               Constructs.Current.Name :=
-                 Symbols.Find (Value.Identifier (1 .. Value.Ident_Len));
-               Constructs.Current.Sloc_Entity := Value.Sloc_Name;
+               declare
+                  Name : String renames
+                    Buffer (Value.Sloc_Name.Index
+                              .. Value.Sloc_Name.Index + Value.Ident_Len - 1);
+               begin
+                  Constructs.Current.Name := Symbols.Find (Name);
+                  Constructs.Current.Sloc_Entity := Value.Sloc_Name;
+               end;
             end if;
 
             if Value.Profile_Start /= 0 then
@@ -4019,8 +4019,6 @@ package body Ada_Analyzer is
 
                         if Prev_Token not in Tok_End | Tok_Dot then
                            Len := P - First + 1;
-                           Local_Top_Token.Identifier (1 .. Len) :=
-                             Buffer (First .. P);
                            Local_Top_Token.Ident_Len := Len;
                            Local_Top_Token.Sloc_Name.Line := L;
                            Local_Top_Token.Sloc_Name.Column :=
@@ -4596,7 +4594,6 @@ package body Ada_Analyzer is
             then
                --  Store enclosing entity name
 
-               Top_Token.Identifier (1 .. Str_Len) := Buffer (Prec .. Current);
                Top_Token.Ident_Len := Str_Len;
                Top_Token.Sloc_Name.Line   := Prev_Line;
                Top_Token.Sloc_Name.Column := Prec - Start_Of_Line + 1;
@@ -4642,7 +4639,6 @@ package body Ada_Analyzer is
                   Val.Sloc.Line   := Prev_Line;
                   Val.Sloc.Column := Prec - Start_Of_Line + 1;
                   Val.Sloc.Index  := Prec;
-                  Val.Identifier (1 .. Str_Len) := Str (1 .. Str_Len);
                   Val.Ident_Len   := Str_Len;
                   Val.Sloc_Name   := Val.Sloc;
                   Val.In_Declaration := True;
