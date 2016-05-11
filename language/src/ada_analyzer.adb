@@ -732,8 +732,6 @@ package body Ada_Analyzer is
       ---------------
 
       Line_Count          : Integer := 1;
-      Str                 : String (1 .. 1024);
-      Str_Len             : Natural := 0;
       Current             : Natural;
       Prec                : Natural := Buffer'First;
       Start_Of_Line       : Natural;
@@ -742,7 +740,6 @@ package body Ada_Analyzer is
       Continuation_Val    : Integer := 0;
       Indent_Done         : Boolean := False;
       Num_Parens          : Integer := 0;
-      Index_Ident         : Natural;
       In_Generic          : Boolean := False;
 
       Aspect_Clause       : Boolean := False;
@@ -4558,11 +4555,12 @@ package body Ada_Analyzer is
 
       Main_Loop :
       loop
-         Str_Len := Current - Prec + 1;
-
-         Str (1 .. Str_Len) := Buffer (Prec .. Current);
-
-         Token := Get_Token (Str (1 .. Str_Len), Prev_Token);
+         declare
+            subtype Indexed_From_One is String (1 .. Current - Prec + 1);
+         begin
+            Token := Get_Token
+              (Indexed_From_One (Buffer (Prec .. Current)), Prev_Token);
+         end;
 
          if Token = Tok_Identifier then
             --  Handle dotted names, e.g Foo.Bar.X
@@ -4570,18 +4568,8 @@ package body Ada_Analyzer is
             Prev_Line := Line_Count;
 
             if Current < Buffer_Last then
-               Index_Ident := End_Of_Identifier (Current + 1);
-
-               if Index_Ident /= Current then
-                  --  We have a dotted name, update indexes
-
-                  Str_Len := Index_Ident - Prec + 1;
-
-                  Str (Current - Prec + 2 .. Index_Ident - Prec + 1) :=
-                    Buffer (Current + 1 .. Index_Ident);
-
-                  Current := Index_Ident;
-               end if;
+               --  Check if we have a dotted name, update Current
+               Current := End_Of_Identifier (Current + 1);
             end if;
 
             Top_Token := Top (Tokens);
@@ -4594,7 +4582,7 @@ package body Ada_Analyzer is
             then
                --  Store enclosing entity name
 
-               Top_Token.Ident_Len := Str_Len;
+               Top_Token.Ident_Len := Current - Prec + 1;
                Top_Token.Sloc_Name.Line   := Prev_Line;
                Top_Token.Sloc_Name.Column := Prec - Start_Of_Line + 1;
                Top_Token.Sloc_Name.Index  := Prec;
@@ -4639,7 +4627,7 @@ package body Ada_Analyzer is
                   Val.Sloc.Line   := Prev_Line;
                   Val.Sloc.Column := Prec - Start_Of_Line + 1;
                   Val.Sloc.Index  := Prec;
-                  Val.Ident_Len   := Str_Len;
+                  Val.Ident_Len   := Current - Prec + 1;
                   Val.Sloc_Name   := Val.Sloc;
                   Val.In_Declaration := True;
                   Val.Visibility  := Top_Token.Visibility_Section;
@@ -4667,9 +4655,9 @@ package body Ada_Analyzer is
                Entity := Identifier_Text;
                Casing := Ident_Casing;
 
-               if Is_Digit (Str (1))
+               if Is_Digit (Buffer (Prec))
                  or else (Prev_Token = Tok_Pound
-                          and then Is_Hexadecimal_Digit (Str (1)))
+                          and then Is_Hexadecimal_Digit (Buffer (Prec)))
                then
                   --  Recognize simple cases of numeric values
                   --  ??? recognizing more cases would require changing
@@ -4678,7 +4666,7 @@ package body Ada_Analyzer is
                   Entity := Number_Text;
 
                elsif Is_Optional_Keyword /= null
-                 and then Is_Optional_Keyword (Str (1 .. Str_Len))
+                 and then Is_Optional_Keyword (Buffer (Prec .. Current))
                then
                   Entity := Keyword_Text;
                   Casing := Reserved_Casing;
@@ -4728,7 +4716,7 @@ package body Ada_Analyzer is
                end if;
 
                if Prev_Token = Tok_Apostrophe
-                 and then To_Upper (Str (1 .. Str_Len)) = "CLASS"
+                 and then To_Upper (Buffer (Prec .. Current)) = "CLASS"
                  and then Top_Token.In_Entity_Profile
                then
                   Top_Token.Attributes (Ada_Class_Attribute) := True;
@@ -4840,13 +4828,13 @@ package body Ada_Analyzer is
                   --  possible to determine if some is used as identifier or as
                   --  keyword, so to avoid upsetting users we never change
                   --  casing of some.
-                  if To_Lower (Str (1 .. Str_Len)) /= "some" then
+                  if To_Lower (Buffer (Prec .. Current)) /= "some" then
                      Replace_Text
                        (Prec,
                         Current + 1,
                         Line_Count,
                         Set_Case (Case_Exceptions,
-                                  Str (1 .. Str_Len),
+                                  Buffer (Prec .. Current),
                                   Casing));
                   end if;
             end case;

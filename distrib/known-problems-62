@@ -25,6 +25,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P422-012 GPS: segfaults on very long identifiers
+
+  Problem:    Identifiers with more than 256 characters could
+              cause a GPS crash.
+
+  Status:     This was fixed in 17.0 on 2016-05-11
+
+  Workaround: None.
+
 KP-62-P415-043 WB: toolchains not set when converting vx6/vx6cert projects
 
   Problem:    When converting a vx6 or vx6cert Wind River Workbench project,
