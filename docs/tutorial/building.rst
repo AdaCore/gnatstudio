@@ -5,8 +5,8 @@ Building applications
 Select the icon `Build Main: sdc.adb` on the toolbar (fourth icon from the
 right): this will launch a complete build of the *sdc* application. Note also
 that you can use a key binding directly instead of this tool bar button
-(:kbd:`F4`), or use the corresponding menu item `Build->Project->sdc.adb`. If
-you use the menu item, an extra intermediate dialog is displayed showing the
+(:kbd:`F4`), or use the corresponding menu item `Build->Project->Sdc->sdc.adb`.
+If you use the menu item, an extra intermediate dialog is displayed showing the
 actual command line that will be used by GPS. Pressing :kbd:`Execute` will
 launch the build as well.
 

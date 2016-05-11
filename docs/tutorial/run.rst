@@ -2,7 +2,7 @@
 Run
 ***
 
-It is now time to run the application: select the menu `Build->Run->sdc`, which
+It is now time to run the application: select the menu `Build->Run->Sdc->sdc`, which
 will open a dialog window.  In the text input field (selected by default),
 press the right arrow key and then insert `input.txt`: this is the name of a
 text file that will be passed as argument to the *sdc* program.
