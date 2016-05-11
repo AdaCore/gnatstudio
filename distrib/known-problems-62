@@ -139,6 +139,17 @@ KP-62-P323-030 GPS: can't unfloat windows
                  GPS.MDI.get("Search").float(False)
               or of course bind this to a key shortcut
 
+KP-62-P323-023 GPS: Focus/selection issue with the Search dialog
+
+  Problem:    When the Search dialog is given the input focus, the
+              search entry is given the keyboard focus after a small delay,
+              which can make it cumbersome to quickly enter data in the
+              replace entry.
+
+  Status:     This was fixed in 17.0 on 2016-04-11
+
+  Workaround: Dock the Search window as part of the MDI.
+
 KP-62-P317-010 GPS: missing underscores in /Files/Recent
 
   Problem:    File names displayed in the /Files/Recent menu are missing
