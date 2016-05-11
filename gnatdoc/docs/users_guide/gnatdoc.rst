@@ -506,6 +506,12 @@ on a given entity. For example::
    --  @private No information is generated in the output about this
    --  primitive because it is internally used for debugging.
 
+Groups of packages
+------------------
+
+The tag *@group* is used by GNATdoc to generate an index of packages in the
+project grouped by categories.
+
 Adding images
 -------------
 
