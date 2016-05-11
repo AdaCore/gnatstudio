@@ -5,10 +5,10 @@ Debug
 Open the preferences dialog (menu `Edit->Preferences`) and click on the
 `Debugger` item on the left; set the button `Break on exceptions` to *Enabled*:
 this will enable by default a special breakpoint every time an exception is
-raised. Click on `OK` to confirm your change.
+raised. Click on `Close` to close dialog.
 
-Now select the menu `Debug->Initialize->sdc`: GPS automatically switches to the
-*Debug* perspective as shown in the menu `Window->Perspectives`, and new
+Now select the menu `Debug->Initialize->Sdc->sdc`: GPS automatically switches
+to the *Debug* perspective as shown in the menu `Window->Perspectives`, and new
 windows have appeared: the debugger data window on top, the call stack window
 on the right, and the debugger console at the bottom.
 

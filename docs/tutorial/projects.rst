@@ -19,15 +19,15 @@ Click on `Forward`: we are now on the language selection page.
 It is possible to create a multi-language project by e.g. selecting the C or C++
 check box.
 
+Click on `Forward`: this is the source directories selection,
+used to specify the project's sources. Click on the `Add` button,
+and select the `struct` directory, then click on `OK` to validate.
+
 Click on `Forward`: we are now on the `VCS page`. *VCS* stands for *Version
 Control System*.  GPS provides a generic framework for *VCS* which allows it to
 support new systems easily. Systems supported by default are CVS, ClearCase,
 Subversion and GIT. Select `Auto`, which means that GPS will automatically
 detect the version control system used, if any.
-
-Click on `Forward`: this is the source directories selection,
-used to specify the project's sources. Click on the `Add` button,
-and select the `struct` directory, then click on `OK` to validate.
 
 Click on `Forward`: this is the `Build` and `Exec` directory
 selection, used to store object, ali files, ...

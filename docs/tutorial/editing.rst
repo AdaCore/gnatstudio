@@ -29,5 +29,5 @@ Choose a color, e.g a light green. When you're done with the color selection,
 click on `Select` in the color selection dialog.
 
 After selecting a color, look at the effects in the source editor. If
-you like the new display, click on `OK` to confirm the changes, otherwise
-clicking on `Cancel` will revert to the previous color.
+you like the new display, click on `Close` to close dialog, otherwise
+select another color.

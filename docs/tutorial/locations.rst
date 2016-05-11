@@ -2,12 +2,12 @@
 Locations View
 **************
 
-From `View`, click on the blue link: `stack.ads:32`, this will open the file
-:file:`stack.ads` at line 32.  Then from the source editor (file
-:file:`stack.ads`), select the contextual menu `References->Find all references
-to View`: this highlights the `Locations` tree which now contains all the
-references for `View`, grouped by files (:file:`stack.ads` and
-:file:`stack.adb`).
+From `Call Graph Browser`, select the contextual menu `Goto declaration of
+View`, this will open the file :file:`stack.ads` at line 32.  Then from the
+source editor (file :file:`stack.ads`), select the contextual menu
+`References->Find all references to View`: this highlights the `Locations` tree
+which now contains all the references for `View`, grouped by files
+(:file:`stack.ads` and :file:`stack.adb`).
 
 The first location is highlighted automatically: this is the spec of the
 procedure `View`. Now click in the tree on the triangle at the
