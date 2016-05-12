@@ -153,9 +153,11 @@ class JSON_Diagram_File():
                 d.ensure()
                 return d
 
-        d = self.diagrams[0]
-        d.ensure()
-        return d
+        if self.diagrams:
+            d = self.diagrams[0]
+            d.ensure()
+            return d
+        return None
 
     def get_diagram_for_item(self, id):
         """

@@ -942,7 +942,7 @@ package body Browsers.Scripts is
             Model := Model_Type (View.Get_View.Model);
             Set_Return_Value (Data, Get_Instance (Get_Script (Data), Model));
          else
-            Model := Get_Model (Nth_Arg (Data, 2));
+            Model := Get_Model (Nth_Arg (Data, 2, Allow_Null => True));
             View.Get_View.Set_Model (Model);
          end if;
       end if;

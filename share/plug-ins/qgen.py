@@ -270,11 +270,7 @@ class CLI(GPS.Process):
             "--full-flattening", "", project_support.get_switches(file))
         outdir = project_support.get_output_dir(file)
 
-        # ??? Should output result on stdout
-        cmd = ' '.join(
-            [CLI.mdl2json,
-             file.name(),
-             switches])
+        cmd = ' '.join([CLI.mdl2json, file.name(), switches])
 
         def __on_exit(proc, exit_status, output):
             if exit_status == 0:
@@ -282,7 +278,7 @@ class CLI(GPS.Process):
             else:
                 GPS.Console().write('When running mdl2json: %s\n' % (
                     output), mode='error')
-                promise.resolve("")   # should be promise.reject()
+                promise.reject()
 
         # mdl2json is relatively fast, and since the user is waiting for
         # its output to see the diagram, we run in active mode below.
@@ -474,7 +470,10 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 if on_loaded:
                     on_loaded(v)
 
-            CLI.get_json(file).then(__on_json)
+            def __on_fail(reason):
+                pass
+
+            CLI.get_json(file).then(__on_json, __on_fail)
 
         else:
             if on_loaded:
@@ -596,14 +595,14 @@ class Mapping_File(object):
 
         for filename, blocks in js.iteritems():
             f = GPS.File(filename)
-            self.files[f] = mdlfile
+            self.files[f.name()] = mdlfile
 
             for blockid, blockinfo in blocks.iteritems():
-                for line in blockinfo['line']:
+                for line in blockinfo['lines']:
                     a = self.blocks.setdefault(blockid, set())
                     a.add((f, line))
 
-                    a = self.lines.setdefault((f, line), set())
+                    a = self.lines.setdefault((f.name(), line), set())
                     a.add(blockid)
 
     def get_breakpoints(self, blockid):
@@ -613,19 +612,20 @@ class Mapping_File(object):
         """
         return self.blocks.get(blockid, set())
 
-    def get_blocks(self, file, line):
+    def get_blocks(self, filename, line):
         """
         The set of block names corresponding to a given source line
-        :param file: a `GPS.File`
+        :param str filename:
         """
-        return self.lines.get((file, line), set())
+        return self.lines.get((filename, line), set())
 
-    def get_mdl_file(self, file):
+    def get_mdl_file(self, filename):
         """
         Return the name of the MDL file used to generate the given file
-        :param GPS.File file: the source file
+        :param str file: the source file
+        :return: a `GPS.File`
         """
-        return self.files.get(file, None)
+        return self.files.get(filename, None)
 
 
 project_support = Project_Support()
@@ -654,6 +654,7 @@ else:
         @gps_utils.hook('debugger_process_stopped')
         def __on_debugger_process_stopped(debugger):
             ed = GPS.EditorBuffer.get(open=False)
+
             if ed and hasattr(debugger, '_modeling_map'):
                 view = ed.current_view()
                 filename = ed.file().name()
@@ -680,7 +681,7 @@ else:
                             viewer.diagram.select(item[1])
 
                     QGEN_Diagram_Viewer.get_or_create(
-                        GPS.File(mdl), on_loaded=__on_loaded)
+                        mdl, on_loaded=__on_loaded)
 
         @staticmethod
         def set_breakpoint():
