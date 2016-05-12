@@ -75,7 +75,7 @@ AC_CHECK_PROGS(TEXI2DVI, texi2dvi)
 
 ######### checking for gtk
 AM_PATH_GTK
-AM_PATH_GTKADA(3.4.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
+AM_PATH_GTKADA(2016,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
 
 ######### detect libclang
 AM_PATH_LIBCLANG

@@ -4291,7 +4291,7 @@ $as_echo "no" >&6; }
 fi
 
 
-  min_gtk_version=3.4.0
+  min_gtk_version=2016
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GtkAda - version >= $min_gtk_version" >&5
 $as_echo_n "checking for GtkAda - version >= $min_gtk_version... " >&6; }
   GTKADA_PRJ=`$GNATDRV ls -vP1 -Pgtkada 2>&1 | grep gtkada.gpr | grep Parsing | cut -d'"' -f2`
@@ -4299,13 +4299,13 @@ $as_echo_n "checking for GtkAda - version >= $min_gtk_version... " >&6; }
   if test "$GNATDRV" = "no" -o ! -f "$GTKADA_PRJ"; then
     no_gtk=yes
   else
-    gtk_major_version=`sed -n 's/version := \"\([0-9]*\).\([0-9]*\).\([0-9]*\)\";/\1/p' $GTKADA_PRJ`
-    gtk_minor_version=`sed -n 's/version := \"\([0-9]*\).\([0-9]*\).\([0-9]*\)\";/\2/p' $GTKADA_PRJ`
-    gtk_micro_version=`sed -n 's/version := \"\([0-9]*\).\([0-9]*\).\([0-9]*\)\";/\3/p' $GTKADA_PRJ`
+    # Full version number
+    version=`sed -n 's/version := \"\(.*\)\";/\1/p' $GTKADA_PRJ`
 
-    if test "$gtk_major_version" = ""; then gtk_major_version=3; fi
-    if test "$gtk_minor_version" = ""; then gtk_minor_version=14; fi
-    if test "$gtk_micro_version" = ""; then gtk_micro_version=3; fi
+    # Split it
+    gtk_major_version=`echo $version | cut -d. -f1`
+    gtk_minor_version=`echo $version.0 | cut -d. -f2`
+    gtk_micro_version=`echo $version.0.0 | cut -d. -f3`
 
     rm -f conf.gtktest
     if test "$cross_compiling" = yes; then :
@@ -4320,7 +4320,7 @@ int
 main ()
 {
   int major, minor, micro;
-  char *version = "$min_gtk_version";
+  char *version = "$min_gtk_version.0.0";
 
   system ("touch conf.gtktest");
 

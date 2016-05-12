@@ -280,15 +280,13 @@ dnl
   if test "$GNATDRV" = "no" -o ! -f "$GTKADA_PRJ"; then
     no_gtk=yes
   else
-    gtk_major_version=`sed -n 's/version := \"\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)\";/\1/p' $GTKADA_PRJ`
-    gtk_minor_version=`sed -n 's/version := \"\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)\";/\2/p' $GTKADA_PRJ`
-    gtk_micro_version=`sed -n 's/version := \"\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)\";/\3/p' $GTKADA_PRJ`
+    # Full version number
+    version=`sed -n 's/version := \"\(.*\)\";/\1/p' $GTKADA_PRJ`
 
-dnl for now we disable the version check to be compatible with GPL 2015
-dnl so we set with a correct version if not found.
-    if test "$gtk_major_version" = ""; then gtk_major_version=3; fi
-    if test "$gtk_minor_version" = ""; then gtk_minor_version=14; fi
-    if test "$gtk_micro_version" = ""; then gtk_micro_version=3; fi
+    # Split it
+    gtk_major_version=`echo $version | cut -d. -f1`
+    gtk_minor_version=`echo $version.0 | cut -d. -f2`
+    gtk_micro_version=`echo $version.0.0 | cut -d. -f3`
 
 dnl
 dnl Now check if the installed GtkAda is sufficiently new.
@@ -301,7 +299,7 @@ int
 main ()
 {
   int major, minor, micro;
-  char *version = "$min_gtk_version";
+  char *version = "$min_gtk_version.0.0";
 
   system ("touch conf.gtktest");
 
