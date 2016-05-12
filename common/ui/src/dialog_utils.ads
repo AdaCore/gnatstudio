@@ -27,6 +27,7 @@ with Ada.Strings.Hash;
 
 with Gtk.Box;                               use Gtk.Box;
 with Gtk.Button;                            use Gtk.Button;
+with Gtk.Button_Box;                        use Gtk.Button_Box;
 with Gtk.Enums;                             use Gtk.Enums;
 with Gtk.Frame;                             use Gtk.Frame;
 with Gtk.Flow_Box;                          use Gtk.Flow_Box;
@@ -61,9 +62,12 @@ package Dialog_Utils is
    procedure Append
      (Self   : not null access Dialog_View_Record'Class;
       Widget : not null access Gtk_Widget_Record'Class;
-      Expand : Boolean := False;
-      Fill   : Boolean := False);
+      Expand : Boolean := True;
+      Fill   : Boolean := True);
    --  Append an already built widget to the given dialog view
+   --
+   --  The Expand and Fill properties have the same role as in the
+   --  Gtk.Box.Pack_Start procedure.
 
    procedure Remove_All_Children
      (Self : not null access Dialog_View_Record'Class);
@@ -130,11 +134,16 @@ package Dialog_Utils is
    --  the behavior of some tool).
 
    procedure Initialize
-     (Self        : not null access Dialog_Group_Widget_Record'Class;
-      Parent_View : not null access Dialog_View_Record'Class;
-      Group_Name  : String := "");
+     (Self                : not null access Dialog_Group_Widget_Record'Class;
+      Parent_View         : not null access Dialog_View_Record'Class;
+      Group_Name          : String := "";
+      Allow_Multi_Columns : Boolean := True);
    --  Initialize a group widget, associating it with it's parent dialog view.
    --  Group_Name is used to set the group's title label.
+   --
+   --  If Allow_Multi_Columns is True, widgets within this group can be
+   --  distributed into multiple columns when resizing. If False,  widgets are
+   --  always distributed into one column.
 
    function Create_Child
      (Self      : not null access Dialog_Group_Widget_Record'Class;
@@ -166,6 +175,16 @@ package Dialog_Utils is
    --  The function returns the widget corresponding to the entire newly
    --  created child.
 
+   function Create_Child
+     (Self         : not null access Dialog_Group_Widget_Record'Class;
+      Widget       : not null access Gtk_Widget_Record'Class;
+      Button       : access Gtk_Button_Record'Class := null;
+      Label_Widget : access Gtk_Widget_Record'Class;
+      Doc          : String := "";
+      Child_Key    : String := "") return Gtk_Widget;
+   --  Same as above, but allowing to add a custom label widget
+   --  (e.g : a check box).
+
    procedure Create_Child
      (Self      : not null access Dialog_Group_Widget_Record'Class;
       Widget    : not null access Gtk_Widget_Record'Class;
@@ -173,17 +192,29 @@ package Dialog_Utils is
       Label     : String := "";
       Doc       : String := "";
       Child_Key : String := "");
+   procedure Create_Child
+     (Self         : not null access Dialog_Group_Widget_Record'Class;
+      Widget       : not null access Gtk_Widget_Record'Class;
+      Button       : access Gtk_Button_Record'Class := null;
+      Label_Widget : access Gtk_Widget_Record'Class;
+      Doc          : String := "";
+      Child_Key    : String := "");
    --  Same as above, but without returning the newly created child
 
    procedure Append_Child
      (Self      : not null access Dialog_Group_Widget_Record'Class;
       Widget    : not null access Gtk_Widget_Record'Class;
+      Expand    : Boolean := True;
+      Fill      : Boolean := True;
       Child_Key : String := "");
    --  Append an already built widget to the group, associating it with an
    --  optional Child_Key.
    --
    --  Children created via this procedure will not be aligned with the
    --  children created with the 'Create_Child' subprograms.
+   --
+   --  The Expand and Fill properties have the same role as in the
+   --  Gtk.Box.Pack_Start procedure.
 
 private
 
@@ -196,7 +227,7 @@ private
 
    type Dialog_View_Record is new Gtk_Scrolled_Window_Record
    with record
-      Page_Box          : Gtk_Vbox;
+      Main_Box          : Gtk_Vbox;
       --  The main container of the dialog view
 
       Label_Size_Group  : Gtk_Size_Group;
@@ -210,11 +241,8 @@ private
 
    type Dialog_View_With_Button_Box_Record is new Dialog_View_Record
    with record
-      Button_Box            : Gtk_Box;
+      Button_Box : Gtk_Button_Box;
       --  The button box containing all the appended buttons
-
-      Button_Box_Size_Group : Gtk_Size_Group;
-      --  The size group used to align the appended buttons
    end record;
 
    type Dialog_Group_Widget_Record is new Gtk_Frame_Record with record

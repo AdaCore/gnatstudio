@@ -51,10 +51,10 @@ with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
+with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Table;                 use Gtk.Table;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;     use Gtk.Tree_Model_Filter;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
@@ -69,6 +69,7 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Basic_Types;               use Basic_Types;
+with Dialog_Utils;              use Dialog_Utils;
 with File_Utils;                use File_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
@@ -1694,7 +1695,7 @@ package body Project_Properties is
       use Gtk.Enums.String_List;
 
    begin
-      Initialize_Vbox (Self, Homogeneous => False);
+      Dialog_Utils.Initialize (Self);
 
       Gtk_New (Group, Both);
 
@@ -1702,7 +1703,7 @@ package body Project_Properties is
 
       Gtk_New (Frame, -"Name & Location");
       Set_Border_Width (Frame, 5);
-      Self.Pack_Start (Frame, Expand => False);
+      Self.Append (Frame, Expand => False);
 
       Gtk_New_Vbox (Box, Homogeneous => True);
       Add (Frame, Box);
@@ -3905,7 +3906,8 @@ package body Project_Properties is
       Col              : Gtk_Tree_View_Column;
       Num              : Gint;
       Render           : Gtk_Cell_Renderer_Text;
-      Table            : Gtk_Table;
+      Main_Pane        : Gtk_Paned;
+      Page_Pane        : Gtk_Paned;
       P                : access Project_Editor_Page_Record'Class;
       pragma Unreferenced (Num);
 
@@ -3923,16 +3925,14 @@ package body Project_Properties is
       Editor.Get_Content_Area.Pack_Start (Editor.Errors, Expand => False);
       Set_No_Show_All (Editor.Errors, No_Show_All => True);
 
-      Gtk_New (Table, Rows => 1, Columns => 3, Homogeneous => False);
-
+      Gtk_New (Main_Pane, Orientation_Horizontal);
       Editor.Get_Content_Area.Pack_Start
-        (Table, Expand => True, Fill => True);
+        (Main_Pane, Expand => True, Fill => True);
 
       --  The list of pages, as a tree
       Gtk_New (Scrolled);
       Scrolled.Set_Policy (Policy_Never, Policy_Automatic);
-      Table.Attach (Scrolled, 0, 1, 0, 1, Xoptions => Fill);
-
+      Main_Pane.Pack1 (Scrolled, Resize => False, Shrink => False);
       Gtk_New (Editor.List_Of_Pages,
                (Column_Page_Name     => GType_String,
                 Column_Page_Contents => GType_Object,
@@ -3955,13 +3955,16 @@ package body Project_Properties is
       Col.Pack_Start (Render, Expand => True);
       Col.Add_Attribute (Render, "text", Column_Page_Name);
 
+      Gtk_New (Page_Pane, Orientation_Horizontal);
+      Main_Pane.Pack2 (Page_Pane, Resize => True);
+
       --  The contents of the page
       Gtk_New_Vbox (Editor.Current_Page);
-      Table.Attach (Editor.Current_Page, 1, 2, 0, 1);
+      Page_Pane.Pack1 (Editor.Current_Page, Resize => True, Shrink => False);
 
       if not Read_Only then
          Gtk_New_Vbox (Box, Homogeneous => False);
-         Table.Attach (Box, 2, 3, 0, 1, Xoptions => Fill);
+         Page_Pane.Pack2 (Box, Resize => False, Shrink => False);
 
          Gtk_New (Label, -"Apply changes to:");
          Set_Alignment (Label, 0.0, 0.0);
@@ -4177,7 +4180,7 @@ package body Project_Properties is
       W_Expandable : Boolean;
       W            : Gtk_Widget;
    begin
-      Initialize_Vbox (Self, Homogeneous => False);
+      Dialog_Utils.Initialize (Self);
 
       for S in Self.Descr.Sections'Range loop
          Box   := null;
@@ -4219,9 +4222,9 @@ package body Project_Properties is
 
          if Box /= null then
             if Self.Descr.Sections (S).Name.all /= "" then
-               Self.Pack_Start (Frame, Expand => Expandable, Fill => True);
+               Self.Append (Frame, Expand => Expandable, Fill => True);
             else
-               Self.Pack_Start (Box, Expand => Expandable, Fill => True);
+               Self.Append (Box, Expand => Expandable, Fill => True);
             end if;
          end if;
       end loop;
@@ -4359,13 +4362,15 @@ package body Project_Properties is
          Self.Filter.Convert_Iter_To_Child_Iter (Iter, Filter_Iter);
 
          --  Remove the page currently displayed. It is not destroyed.
-         Remove_All_Children (Self.Current_Page);
+         if Current /= null then
+            Self.Current_Page.Remove (Current);
+         end if;
 
          --  Change the page that is displayed
          Page := Project_Editor_Page
            (Self.List_Of_Pages.Get_Object (Iter, Column_Page_Contents));
          if Page /= null then
-            Self.Current_Page.Pack_Start (Page, Expand => True, Fill => True);
+            Self.Current_Page.Add (Page);
             Page.Show_All;
 
             if Self.Prj_Selector /= null then

@@ -24,6 +24,7 @@ with Gtk.Label;               use Gtk.Label;
 with Gtk.Size_Group;          use Gtk.Size_Group;
 with Gtk.Widget;              use Gtk.Widget;
 
+with Dialog_Utils;            use Dialog_Utils;
 with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Project;      use GPS.Kernel, GPS.Kernel.Project;
 
@@ -67,12 +68,12 @@ package body Custom_Naming_Editors is
       P          : Project_Type := Project;
 
    begin
-      Initialize_Vbox (Self, Homogeneous => False);
+      Dialog_Utils.Initialize (Self);
 
       Gtk_New (Group);
 
       Gtk_New (Frame, -"Details");
-      Self.Pack_Start (Frame, Expand => False);
+      Self.Append (Frame);
 
       Gtk_New_Vbox (Vbox, Homogeneous => True);
       Frame.Add (Vbox);
@@ -109,7 +110,7 @@ package body Custom_Naming_Editors is
 
       if Extensions'Length /= 0 then
          Gtk_New (Frame, -"Predefined extensions");
-         Self.Pack_Start (Frame, Expand => False);
+         Self.Append (Frame);
          Gtk_New_Vbox (Vbox, Homogeneous => True);
          Frame.Add (Vbox);
 
@@ -140,7 +141,7 @@ package body Custom_Naming_Editors is
       --  ??? These are implementation exceptions, should have support for
       --  spec exceptions
       Gtk_New (Frame, -"Exceptions");
-      Self.Pack_Start (Frame, Expand => True, Fill => True);
+      Self.Append (Frame, Expand => True, Fill => True);
 
       Gtk_New (Self.Exceptions, Self.Language.all);
       Self.Exceptions.Set_Border_Width (3);

@@ -23,6 +23,7 @@ with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with Basic_Types; use Basic_Types;
 
+private with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 private with Ada.Containers.Indefinite_Hashed_Maps;
 private with Ada.Containers.Indefinite_Hashed_Sets;
 private with Ada.Containers.Indefinite_Ordered_Maps;
@@ -184,9 +185,10 @@ package Toolchains is
    function Is_Base_Name (This : Toolchain; Lang : String) return Boolean;
    --  Same as above for a compiler
 
-   procedure Reset_To_Default (This : Toolchain; Name : Tools);
-   procedure Reset_To_Default (This : Toolchain; Lang : String);
-   --  Reset the specified tool or compiler to its default value
+   procedure Reset_Tool_To_Default (This : Toolchain; Name : Tools);
+   procedure Reset_Compiler_To_Default (This : Toolchain; Lang : String);
+   procedure Reset_Runtime_To_Default (This : Toolchain; Lang : String);
+   --  Reset the specified tool, compiler or runtime to its default value
 
    procedure Add_Compiler
      (This   : Toolchain;
@@ -283,6 +285,42 @@ package Toolchains is
    procedure Initialize_Known_Toolchain (This : Toolchain; Name : String);
    --  Sets the toolchain values according to the known toolchain name
    --  given in parameter. This doesn't add the toolchain in the manager.
+
+   function Get_Defined_Runtimes
+     (Tc                 : Toolchain;
+      Lang               : String;
+      Used_Runtime_Index : out Integer) return GNAT.Strings.String_List;
+   --  Return the list of all the runtimes defined for this toolchain and the
+   --  given language.
+   --  Index
+   --  The index of the currently used runtime is set into Used_Runtime_Index.
+   --  If there is not any runtime used for this language, Used_Runtime_Index
+   --  is set to -1.
+
+   function Get_Used_Runtime
+     (Tc   : Toolchain;
+      Lang : String) return String;
+   --  Return the runtime currently used by this toolchain for the given
+   --  language.
+
+   procedure Set_Used_Runtime
+     (Tc      : Toolchain;
+      Lang    : String;
+      Runtime : String);
+   --  Set the runtime used by this toolchain for the given language.
+
+   function Is_Runtime_Defined
+     (Tc      : Toolchain;
+      Lang    : String;
+      Runtime : String) return Boolean;
+   --  Return True if the given runtime is valid fos this toolchain and this
+   --  language, False otherwise.
+
+   function Is_Default_Runtime_Used
+     (Tc   : Toolchain;
+      Lang : String) return Boolean;
+   --  Return True if the runtime currently used by this toolchain and this
+   --  language is the default one, False otherwise.
 
    -----------------------
    -- Toolchain_Manager --
@@ -511,6 +549,24 @@ private
       Hash            => Ada.Strings.Hash_Case_Insensitive,
       Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive);
 
+   package Runtime_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
+     (Element_Type => String,
+      "="          => Ada.Strings.Equal_Case_Insensitive);
+
+   package Runtime_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,
+      Element_Type    => String,
+      Hash            => Ada.Strings.Hash_Case_Insensitive,
+      Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive,
+      "="             => "=");
+
+   package Runtime_Lists_Maps is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,
+      Element_Type    => Runtime_Lists.List,
+      Hash            => Ada.Strings.Hash_Case_Insensitive,
+      Equivalent_Keys => Ada.Strings.Equal_Case_Insensitive,
+      "="             => Runtime_Lists."=");
+
    type Toolchain_Record is record
       Name : String_Access;
       --  The triplet used as the name of the toolchain, or "native" if it's
@@ -538,6 +594,12 @@ private
 
       Used_Compiler_List : Compiler_Ref_Maps.Map;
       --  The compilers currently in use, indexed by language.
+
+      Defined_Runtimes : Runtime_Lists_Maps.Map;
+      --  The runtimes defined for this toolchain, indexed by language.
+
+      Used_Runtimes : Runtime_Maps.Map;
+      --  The runtimes currently used by this toolchain, indexed by language.
 
       Compilers_Scanned : Boolean := False;
 

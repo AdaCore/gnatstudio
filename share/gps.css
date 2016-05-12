@@ -76,7 +76,7 @@ GtkTextView.readonly {
  * GPS dialog views *
  ********************/
 
-.dialog-views-pages {
+.dialog-views {
    background-color: @theme_base_color;
 }
 
@@ -112,6 +112,13 @@ GtkTextView.readonly {
    /* Reduce the font size for the inlined preferences documentation */
    font-size: 9px;
    color: @inactive_tab_color;
+}
+
+.dialog-views-button-boxes {
+   -GtkButtonBox-child-min-width: 0;
+   -GtkButtonBox-child-min-height: 0;
+   -GtkButtonBox-child-internal-pad-y: 0;
+   -GtkButtonBox-child-internal-pad-x: 0;
 }
 
 /*********************

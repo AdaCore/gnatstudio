@@ -34,15 +34,15 @@ package body Dialog_Utils is
       Gtk.Scrolled_Window.Initialize (Self);
       Self.Set_Policy (Policy_Automatic, Policy_Automatic);
 
-      Get_Style_Context (Self).Add_Class ("dialog-views-pages");
+      Get_Style_Context (Self).Add_Class ("dialog-views");
 
       Gtk_New (Self.Label_Size_Group);
       Gtk_New (Self.Widget_Size_Group);
       Gtk_New (Self.Button_Size_Group);
 
-      Gtk_New_Vbox (Self.Page_Box);
+      Gtk_New_Vbox (Self.Main_Box, Homogeneous => False);
 
-      Self.Add (Self.Page_Box);
+      Self.Add (Self.Main_Box);
    end Initialize;
 
    ----------------
@@ -53,42 +53,42 @@ package body Dialog_Utils is
      (Self        : not null access Dialog_View_With_Button_Box_Record'Class;
       Orientation : Gtk_Orientation)
    is
-      Box : Gtk_Box;
-      Sep : Gtk_Separator;
+      Box     : Gtk_Box;
+      Sep     : Gtk_Separator;
    begin
       Gtk.Scrolled_Window.Initialize (Self);
       Self.Set_Policy (Policy_Automatic, Policy_Automatic);
 
-      Get_Style_Context (Self).Add_Class ("dialog-views-pages");
+      Get_Style_Context (Self).Add_Class ("dialog-views");
 
       Gtk_New (Self.Label_Size_Group);
       Gtk_New (Self.Widget_Size_Group);
       Gtk_New (Self.Button_Size_Group);
-      Gtk_New (Self.Button_Box_Size_Group);
 
       if Orientation = Orientation_Vertical then
          Gtk_New_Hbox (Box);
-         Gtk_New_Vseparator (Sep);
       else
          Gtk_New_Vbox (Box);
-         Gtk_New_Hseparator (Sep);
       end if;
 
       Self.Add (Box);
 
-      Gtk_New_Vbox (Self.Page_Box);
-      Box.Pack_Start (Self.Page_Box, Expand => True, Fill => True);
-
-      Box.Pack_Start (Sep, Expand => False);
-
-      Gtk.Box.Gtk_New
+      --  Create the button box
+      Gtk_New
         (Self.Button_Box,
-         Orientation => Orientation,
-         Spacing     => 5);
-      Box.Pack_Start (Self.Button_Box, Expand => False);
-
+         Orientation => Orientation);
+      Self.Button_Box.Set_Layout (Buttonbox_Start);
       Get_Style_Context (Self.Button_Box).Add_Class
         ("dialog-views-button-boxes");
+      Box.Pack_Start (Self.Button_Box, Expand => False);
+
+      --  Add a separator
+      Gtk_New (Sep, Orientation => Orientation);
+      Box.Pack_Start (Sep, Expand => False);
+
+      --  Create the main box
+      Gtk_New_Vbox (Self.Main_Box, Homogeneous => False);
+      Box.Pack_Start (Self.Main_Box, Expand => True, Fill => True);
    end Initialize;
 
    ------------
@@ -98,22 +98,22 @@ package body Dialog_Utils is
    procedure Append
      (Self   : not null access Dialog_View_Record'Class;
       Widget : not null access Gtk_Widget_Record'Class;
-      Expand : Boolean := False;
-      Fill   : Boolean := False)
+      Expand : Boolean := True;
+      Fill   : Boolean := True)
    is
    begin
       --  Add a separator before the given widget if the dialog view already
       --  has children.
-      if Has_Children (Self.Page_Box) then
+      if Has_Children (Self.Main_Box) then
          declare
             Sep : Gtk_Separator;
          begin
             Gtk_New_Hseparator (Sep);
-            Self.Page_Box.Pack_Start (Sep, Expand => False);
+            Self.Main_Box.Pack_Start (Sep, Expand => False);
          end;
       end if;
 
-      Self.Page_Box.Pack_Start (Widget, Expand => Expand, Fill => Fill);
+      Self.Main_Box.Pack_Start (Widget, Expand => Expand, Fill => Fill);
    end Append;
 
    -------------------------
@@ -123,7 +123,7 @@ package body Dialog_Utils is
    procedure Remove_All_Children
      (Self : not null access Dialog_View_Record'Class) is
    begin
-      GUI_Utils.Remove_All_Children (Self.Page_Box);
+      GUI_Utils.Remove_All_Children (Self.Main_Box);
       Self.Children_Map.Clear;
    end Remove_All_Children;
 
@@ -210,7 +210,6 @@ package body Dialog_Utils is
      (Self   : not null access Dialog_View_With_Button_Box_Record'Class;
       Button : not null access Gtk_Button_Record'Class) is
    begin
-      Self.Button_Box_Size_Group.Add_Widget (Button);
       Self.Button_Box.Pack_Start (Button, Expand => False);
    end Append_Button;
 
@@ -219,11 +218,15 @@ package body Dialog_Utils is
    ----------------
 
    procedure Initialize
-     (Self        : not null access Dialog_Group_Widget_Record'Class;
-      Parent_View : not null access Dialog_View_Record'Class;
-      Group_Name  : String := "")
+     (Self                : not null access Dialog_Group_Widget_Record'Class;
+      Parent_View         : not null access Dialog_View_Record'Class;
+      Group_Name          : String := "";
+      Allow_Multi_Columns : Boolean := True)
    is
-      VBox : Gtk_Box;
+      Max_Children_Per_Line : constant Guint := (if Allow_Multi_Columns then
+                                                    2
+                                                 else
+                                                    1);
    begin
       Gtk.Frame.Initialize (Self, Group_Name);
       Get_Style_Context (Self).Add_Class ("dialog-views-groups");
@@ -231,16 +234,14 @@ package body Dialog_Utils is
       Gtk_New (Self.Flow_Box);
       Self.Flow_Box.Set_Orientation (Orientation_Horizontal);
       Self.Flow_Box.Set_Row_Spacing (0);
-      Self.Flow_Box.Set_Max_Children_Per_Line (2);
+      Self.Flow_Box.Set_Max_Children_Per_Line (Max_Children_Per_Line);
       Self.Flow_Box.Set_Selection_Mode (Selection_None);
       Self.Flow_Box.Set_Homogeneous (False);
 
-      Gtk_New_Vbox (VBox);
-      VBox.Pack_Start (Self.Flow_Box, Expand => False);
-      Self.Add (VBox);
+      Self.Add (Self.Flow_Box);
 
       Self.Parent_View := Dialog_View (Parent_View);
-      Self.Parent_View.Page_Box.Pack_Start (Self, Expand => False);
+      Self.Parent_View.Main_Box.Pack_Start (Self, Expand => False);
    end Initialize;
 
    ----------------
@@ -255,15 +256,41 @@ package body Dialog_Utils is
       Doc       : String := "";
       Child_Key : String := "") return Gtk_Widget
    is
-      Child_Box    : Gtk_Box;
       Label_Widget : Gtk_Label;
-      Padding      : constant Guint := (if Label = "" then 0 else 5);
    begin
-      Gtk_New_Hbox (Child_Box, Homogeneous => False);
-
+      --  Create the label widget from the given Label string, if non-empty
       if Label /= "" then
          Gtk_New (Label_Widget, Label);
          Label_Widget.Set_Alignment (0.0, 0.5);
+      end if;
+
+      --  Finally, create the child
+      return Self.Create_Child
+        (Widget       => Widget,
+         Button       => Button,
+         Label_Widget => Label_Widget,
+         Doc          => Doc,
+         Child_Key    => Child_Key);
+   end Create_Child;
+
+   ------------------
+   -- Create_Child --
+   ------------------
+
+   function Create_Child
+     (Self         : not null access Dialog_Group_Widget_Record'Class;
+      Widget       : not null access Gtk_Widget_Record'Class;
+      Button       : access Gtk_Button_Record'Class := null;
+      Label_Widget : access Gtk_Widget_Record'Class;
+      Doc          : String := "";
+      Child_Key    : String := "") return Gtk_Widget
+   is
+      Child_Box    : Gtk_Box;
+      Padding      : constant Guint := (if Label_Widget = null then 0 else 5);
+   begin
+      Gtk_New_Hbox (Child_Box, Homogeneous => False);
+
+      if Label_Widget /= null then
          Self.Parent_View.Label_Size_Group.Add_Widget (Label_Widget);
          Child_Box.Pack_Start (Label_Widget, Expand => False);
       end if;
@@ -301,7 +328,7 @@ package body Dialog_Utils is
          end;
       end if;
 
-      Self.Append_Child (Child_Box);
+      Self.Append_Child (Child_Box, Expand => False);
 
       --  Insert it in the dialog view children map if a key has been specified
       if Child_Key /= "" then
@@ -310,6 +337,7 @@ package body Dialog_Utils is
       end if;
 
       return Child_Box.Get_Parent;
+
    end Create_Child;
 
    ----------------
@@ -338,14 +366,51 @@ package body Dialog_Utils is
    end Create_Child;
 
    ------------------
+   -- Create_Child --
+   ------------------
+
+   procedure Create_Child
+     (Self         : not null access Dialog_Group_Widget_Record'Class;
+      Widget       : not null access Gtk_Widget_Record'Class;
+      Button       : access Gtk_Button_Record'Class := null;
+      Label_Widget : access Gtk_Widget_Record'Class;
+      Doc          : String := "";
+      Child_Key    : String := "")
+   is
+      Row : constant Gtk_Widget :=
+              Create_Child
+                (Self         => Self,
+                 Widget       => Widget,
+                 Button       => Button,
+                 Label_Widget => Label_Widget,
+                 Doc          => Doc,
+                 Child_Key    => Child_Key);
+      pragma Unreferenced (Row);
+   begin
+      null;
+   end Create_Child;
+
+   ------------------
    -- Append_Child --
    ------------------
 
    procedure Append_Child
      (Self      : not null access Dialog_Group_Widget_Record'Class;
       Widget    : not null access Gtk_Widget_Record'Class;
-      Child_Key : String := "") is
+      Expand    : Boolean := True;
+      Fill      : Boolean := True;
+      Child_Key : String := "")
+   is
+      Valign : constant Gtk_Align := (if Expand and then Fill then
+                                         Align_Fill
+                                      else
+                                         Align_Start);
    begin
+      --  Set the Vexpand and Valign properties on the widget itself, depending
+      --  on the Expand and Fill parameters.
+      Widget.Set_Vexpand (Expand);
+      Widget.Set_Valign (Valign);
+
       Self.Flow_Box.Add (Widget);
       Get_Style_Context (Widget.Get_Parent).Add_Class
         ("dialog-views-groups-rows");

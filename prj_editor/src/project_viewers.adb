@@ -35,6 +35,7 @@ with Glib.Convert;                 use Glib.Convert;
 with Glib.Object;                  use Glib.Object;
 with Glib_Values_Utils;            use Glib_Values_Utils;
 
+with Gtk.Box;                      use Gtk.Box;
 with Gtk.Cell_Renderer_Text;       use Gtk.Cell_Renderer_Text;
 with Gtk.Enums;                    use Gtk.Enums;
 with Gtk.Label;                    use Gtk.Label;
@@ -1392,10 +1393,10 @@ package body Project_Viewers is
    is
       Label    : Gtk_Label;
    begin
-      Initialize_Vbox (Self, Homogeneous => False);
+      Dialog_Utils.Initialize (Self);
 
       Gtk_New (Self.Notebook);
-      Self.Pack_Start (Self.Notebook, Fill => True, Expand => True);
+      Self.Append (Self.Notebook, Fill => True, Expand => True);
 
       for Descr of Self.Pages loop
          Gtk_New (Label, To_String (Descr.Title));

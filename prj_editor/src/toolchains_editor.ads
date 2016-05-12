@@ -16,15 +16,17 @@
 ------------------------------------------------------------------------------
 
 with GNAT.Strings;
+
 with Glib.Object;               use Glib.Object;
 with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
-with Gtk.Table;         use Gtk.Table;
-with Gtk.Tree_Store;    use Gtk.Tree_Store;
-with Gtk.Tree_View;     use Gtk.Tree_View;
-with GNATCOLL.Projects; use GNATCOLL.Projects;
-with GPS.Kernel;        use GPS.Kernel;
-with Project_Viewers;   use Project_Viewers;
-with Toolchains;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
+with Gtk.Tree_View;             use Gtk.Tree_View;
+
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with Dialog_Utils;              use Dialog_Utils;
+with GPS.Kernel;                use GPS.Kernel;
+with Project_Viewers;           use Project_Viewers;
+with Toolchains;                use Toolchains;
 
 package Toolchains_Editor is
 
@@ -96,16 +98,17 @@ private
    type Toolchain_Page_Record is new Project_Editor_Page_Record
      (Flags => Multiple_Projects or Multiple_Scenarios)
    with record
-      Kernel          : access Kernel_Handle_Record'Class;
-      Toolchains_Tree : Gtk_Tree_View;
-      Model           : Gtk_Tree_Store;
-      Details_View    : Gtk_Table;
-      Toolchain       : Toolchains.Toolchain := Toolchains.Null_Toolchain;
-      Updating        : Boolean := False;
-      Read_Only       : Boolean := False;
-      Edited_Prj      : GNATCOLL.Projects.Project_Type;
+      Kernel            : access Kernel_Handle_Record'Class;
+      Toolchains_Tree   : Gtk_Tree_View;
+      Model             : Gtk_Tree_Store;
+      Toolchains_View   : Dialog_View_With_Button_Box;
+      Details_View      : Dialog_View;
+      Toolchain         : Toolchains.Toolchain := Toolchains.Null_Toolchain;
+      Compilers_Scanned : Boolean := False;
+      Read_Only         : Boolean := False;
+      Edited_Prj        : GNATCOLL.Projects.Project_Type;
 
-      Languages_Cache : GNAT.Strings.String_List_Access;
+      Languages_Cache   : GNAT.Strings.String_List_Access;
       --  A cache so that we can easily reset the displayed tools
    end record;
 

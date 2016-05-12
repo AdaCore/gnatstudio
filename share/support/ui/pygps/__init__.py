@@ -305,6 +305,12 @@ try:
                     return x
         return None
 
+    def get_button_from_icon_name(parents, icon_name):
+        """Return the first button with the matching icon"""
+        return [x for x in WidgetTree(parents) if isinstance(x, Gtk.Button)
+                and x.get_image()
+                and x.get_image().get_icon_name()[0] == icon_name][0]
+
     # ##########
     # # Menus ##
     # ##########

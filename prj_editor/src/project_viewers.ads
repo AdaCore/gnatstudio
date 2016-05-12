@@ -19,10 +19,10 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with GNAT.Strings;       use GNAT.Strings;
 with GNATCOLL.Projects;  use GNATCOLL.Projects;
-with Gtk.Box;            use Gtk.Box;
 with Gtk.Notebook;       use Gtk.Notebook;
 with Gtk.Widget;         use Gtk.Widget;
 with GPS.Kernel;         use GPS.Kernel;
+with Dialog_Utils;       use Dialog_Utils;
 
 package Project_Viewers is
 
@@ -48,7 +48,8 @@ package Project_Viewers is
    --  properties dialog.
 
    type Project_Editor_Page_Record
-     (Flags : Selector_Flags) is abstract new Gtk_Box_Record with null record;
+     (Flags : Selector_Flags) is abstract new Dialog_View_Record with
+     null record;
    type Project_Editor_Page is access all Project_Editor_Page_Record'Class;
    --  A widget used to edit some properties of a project.
    --  This is used in the project properties editor

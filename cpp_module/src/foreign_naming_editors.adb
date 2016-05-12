@@ -26,6 +26,7 @@ with Gtk.Label;                        use Gtk.Label;
 with Gtk.Size_Group;                   use Gtk.Size_Group;
 with Gtk.Widget;                       use Gtk.Widget;
 
+with Dialog_Utils;                     use Dialog_Utils;
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel.Project;               use GPS.Kernel.Project;
 
@@ -66,12 +67,12 @@ package body Foreign_Naming_Editors is
       Label     : Gtk_Label;
       Group     : Gtk_Size_Group;
    begin
-      Initialize_Vbox (Self, Homogeneous => False);
+      Dialog_Utils.Initialize (Self);
 
       Gtk_New (Group);
 
       Gtk_New (Frame, -"Details");
-      Self.Pack_Start (Frame, Expand => False);
+      Self.Append (Frame);
 
       Gtk_New_Vbox (Vbox, Homogeneous => True);
       Frame.Add (Vbox);
@@ -111,7 +112,7 @@ package body Foreign_Naming_Editors is
       Self.Body_Ext.Append_Text (".cpp");
 
       Gtk_New (Frame, -"Exceptions");
-      Self.Pack_Start (Frame, Expand => True, Fill => True);
+      Self.Append (Frame, Expand => True, Fill => True);
       Gtk_New (Self.Exceptions, Self.Language.all);
       Self.Exceptions.Set_Border_Width (3);
       Frame.Add (Self.Exceptions);

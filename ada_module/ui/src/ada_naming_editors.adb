@@ -38,6 +38,7 @@ with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 
+with Dialog_Utils;             use Dialog_Utils;
 with GPR;                      use GPR;
 with GPS.Intl;                 use GPS.Intl;
 with GUI_Utils;                use GUI_Utils;
@@ -111,7 +112,7 @@ package body Ada_Naming_Editors is
       Size_Group   : Gtk_Size_Group;
       Idx          : Gint := 0;
    begin
-      Initialize_Vbox (Self, Homogeneous => False);
+      Dialog_Utils.Initialize (Self);
 
       Gtk_New (Self.GUI);
 
@@ -150,7 +151,7 @@ package body Ada_Naming_Editors is
 
       Ref (Self.GUI.Main_Box);
       Unparent (Self.GUI.Main_Box);
-      Self.Pack_Start (Self.GUI.Main_Box, Fill => True, Expand => True);
+      Self.Append (Self.GUI.Main_Box, Fill => True, Expand => True);
 
       Reset_Exception_Fields (Self.GUI);
 

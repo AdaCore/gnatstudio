@@ -32,6 +32,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Commands;                  use Commands;
+with Dialog_Utils;              use Dialog_Utils;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -155,7 +156,7 @@ package body Switches_Editors is
         (Project           => Project,
          Use_Initial_Value => False);
    begin
-      Initialize_Vbox (Self, Homogeneous => False);
+      Dialog_Utils.Initialize (Self);
 
       Self.Switches := new Multi_Page_Switches_Editor_Record;
       Self.Switches.Tool_From_Name := Self.Tool_From_Name;
@@ -166,7 +167,7 @@ package body Switches_Editors is
          Read_Only          => Read_Only,
          History            => null,
          Key                => No_Key);
-      Self.Pack_Start (Self.Switches, Fill => True, Expand => True);
+      Self.Append (Self.Switches, Fill => True, Expand => True);
 
       Set_Command_Line (Self.Switches, Argument_List_To_String (List));
       Free (List);
