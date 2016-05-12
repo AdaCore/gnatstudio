@@ -49,24 +49,26 @@ package body GPS.Project_Properties is
 
    function Find_Editor_Page_By_Name
      (Module : access Base_Properties_Module;
-      Name   : String) return Positive;
-   --  Find the index in Module.Pages of the page Name.
-   --  If this page doesn't exist yet, it is created as appropriate
+      Name   : String) return Attribute_Page;
+   --  Find the page assiciated with the given name.
+   --  If this page doesn't exist yet, create it.
 
    function Find_Editor_Section_By_Name
-     (Module : access Base_Properties_Module;
-      Page : Natural;
-      Name : String) return Natural;
-   --  Find the index of a specific attribute section in the given page
+     (Page               : Attribute_Page;
+      Name               : String;
+      Mutually_Exclusive : Boolean := False) return Attribute_Page_Section;
+   --  Find the section associated with the given name.
+   --  If this section doesn't exist yet, create it.
 
    function Find_Attribute_By_Name
-     (Module    : access Base_Properties_Module;
-      Page      : Natural;
-      Section   : Natural;
-      Name, Pkg : String;
-      Indexed   : Boolean) return Attribute_Description_Access;
-   --  Find the index of a specific attribute in a section. The attribute is
-   --  created if necessary.
+     (Module             : access Base_Properties_Module;
+      Section            : Attribute_Page_Section;
+      Name, Pkg          : String;
+      Indexed            : Boolean;
+      Mutually_Exclusive : Boolean := False)
+      return Attribute_Description_Access;
+   --  Find the attribute associated with the given name.
+   --  If this attribute doesn't exist yet, create it.
 
    procedure Free (Typ : in out Attribute_Type);
    --  Free the memory occupied by Typ
@@ -74,7 +76,7 @@ package body GPS.Project_Properties is
    procedure Free (Index : in out Indexed_Attribute_Type_List);
    --  Free the memory occupied by Index
 
-   procedure Free (Attribute : in out Attribute_Description'Class);
+   procedure Free (Attr : in out Attribute_Description_Access);
    --  Free the memory occupied by Attribute
 
    procedure Free (Section : in out Attribute_Page_Section);
@@ -86,17 +88,38 @@ package body GPS.Project_Properties is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Indexed_Attribute_Type_Array, Indexed_Attribute_Type_List);
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Attribute_Description'Class, Attribute_Description_Access);
+   --------------
+   -- Get_Name --
+   --------------
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Attribute_Description_Array, Attribute_Description_List);
+   function Get_Name
+     (Section : not null access Attribute_Page_Section_Record'Class)
+      return String
+   is
+     (if Section.Name /= null then Section.Name.all else "");
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Attribute_Page_Section_Array, Attribute_Page_Section_List);
+   ---------------------
+   -- Get_Description --
+   ---------------------
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Attribute_Page_Array, Attribute_Page_List);
+   function Get_Description
+     (Section : not null access Attribute_Page_Section_Record'Class)
+      return String
+   is
+     (if not Section.Mutually_Exclusive or else Section.Description = null
+      then
+         ""
+      else
+         Section.Description.all);
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
+     (Page : not null access Attribute_Page_Record'Class) return String
+   is
+      (if Page.Name /= null then Page.Name.all else "");
 
    ----------------------
    -- Attribute_Exists --
@@ -120,18 +143,52 @@ package body GPS.Project_Properties is
          Index => Lower_Attribute_Index);
    end Attribute_Exists;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Attr : Attribute_Description) return String
+   is
+     (if Attr.Name /= null then Attr.Name.all else "");
+
+   -------------
+   -- Get_Pkg --
+   -------------
+
+   function Get_Pkg (Attr : Attribute_Description) return String
+   is
+      (if Attr.Pkg /= null then Attr.Pkg.all else "");
+
    --------------------
    -- Attribute_Name --
    --------------------
 
-   function Attribute_Name (Attr : Attribute_Description) return String is
+   function Get_Full_Name (Attr : Attribute_Description) return String
+   is
+      Pkg : constant String := Attr.Get_Pkg;
    begin
-      if Attr.Pkg.all /= "" then
-         return Attr.Pkg.all & "'" & Attr.Name.all;
+      if Pkg /= "" then
+         return Pkg & "'" & Attr.Get_Name;
       else
-         return Attr.Name.all;
+         return Attr.Get_Name;
       end if;
-   end Attribute_Name;
+   end Get_Full_Name;
+
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   function Get_Label (Attr : Attribute_Description) return String
+   is
+     (if Attr.Label /= null then Attr.Label.all else "");
+
+   ---------------------
+   -- Get_Description --
+   ---------------------
+
+   function Get_Description (Attr : Attribute_Description) return String
+   is
+     (if Attr.Description /= null then Attr.Description.all else "");
 
    ---------------
    -- Customize --
@@ -144,41 +201,153 @@ package body GPS.Project_Properties is
       Level  : Customization_Level)
    is
       pragma Unreferenced (File, Level);
-   begin
-      if Node.Tag.all = "project_attribute" then
-         declare
-            Editor_Page    : constant Natural :=
-              Find_Editor_Page_By_Name
-                (Module,
-                 Get_Attribute
-                   (Node, "editor_page",
-                    Default => ""));
-            Editor_Section : constant Natural :=
-              Find_Editor_Section_By_Name
-                (Module,
-                 Editor_Page,
-                 Get_Attribute (Node, "editor_section"));
-            Name           : String := Get_Attribute (Node, "name");
-            Pkg            : String := Get_Attribute (Node, "package");
-            Indexed        : constant Boolean := Node.Child /= null
-              and then (Node.Child.Tag.all = "index"
-                        or else Node.Child.Tag.all = "specialized_index");
-            Attribute      : Attribute_Description_Access;
-         begin
-            To_Lower (Pkg);
-            To_Lower (Name);
 
-            if Name = "" then
+      procedure Parse_Mutually_Exclusive_Node (Parent : Node_Ptr);
+      --  Used to parse a '<mutually_exclusive>' node
+
+      function Parse_Project_Attribute_Node
+        (Parent : Node_Ptr) return Attribute_Description_Access;
+      procedure Parse_Project_Attribute_Node (Parent : Node_Ptr);
+      --  Used to parse a '<project_attribute>' node
+
+      -----------------------------------
+      -- Parse_Mutually_Exclusive_Node --
+      -----------------------------------
+
+      procedure Parse_Mutually_Exclusive_Node (Parent : Node_Ptr) is
+         Name      : constant String := Get_Attribute (Parent, "name");
+         Desc      : constant String := Get_Attribute (Parent, "description");
+         Page_Name : constant String := Get_Attribute (Parent, "editor_page");
+         Page      : constant Attribute_Page :=
+                       Find_Editor_Page_By_Name (Module, Page_Name);
+         Section   : Attribute_Page_Section;
+         Child     : Node_Ptr := Parent.Child;
+         Attr      : Attribute_Description_Access;
+
+         function Is_Child_Valid return Boolean;
+         --  Check the validity of the '<mutually_exclusive>' children nodes.
+         --  Display an error message if not valid.
+
+         --------------------
+         -- Is_Child_Valid --
+         --------------------
+
+         function Is_Child_Valid return Boolean is
+         begin
+            if Child.Tag.all /= "project_attribute" then
                Module.Kernel.Messages_Window.Insert
-                 (-"<project_attribute> must specify a ""name"" attribute",
+                 (-"<mutually_exclusive> Parent should only have "
+                  & "<project_attribute> Parents as children",
                   Mode => Error);
+
+               return False;
+            elsif Get_Attribute (Child, "editor_page") /= Page_Name then
+               Module.Kernel.Messages_Window.Insert
+                 (-"<mutually_exclusive> children ""editor_page"" attribute "
+                  & "should be equal to their parent's one",
+                 Mode => Error);
+
+               return False;
             end if;
 
-            Attribute := Find_Attribute_By_Name
-              (Module, Editor_Page, Editor_Section, Name, Pkg, Indexed);
-            Parse_Attribute_Description
-              (Module.Kernel, Node, Attribute);
-         end;
+            return True;
+         end Is_Child_Valid;
+
+      begin
+         if Name = "" then
+            Module.Kernel.Messages_Window.Insert
+              (-"<mutually_exclusive> node must specify a ""name"" attribute",
+               Mode => Error);
+         end if;
+
+         Section := Find_Editor_Section_By_Name
+           (Page               => Page,
+            Name               => Name,
+            Mutually_Exclusive => True);
+
+         --  Set the mutually exclusive section documentation
+         if Desc /= "" then
+            Section.Description := new String'(Desc);
+         end if;
+
+         while Child /= null and then Is_Child_Valid loop
+            --  Parse the project attribute node and mark it as mutually
+            --  exclusive.
+            Attr := Parse_Project_Attribute_Node (Child);
+            Attr.Mutually_Exclusive := True;
+            Section.Attributes.Append (Attr);
+
+            Child := Child.Next;
+         end loop;
+
+         --  If an error has occured during the parsing, delete the entire
+         --  section from the page.
+         if Child /= null then
+            declare
+               Section_Pos : Attribute_Page_Section_Lists.Cursor :=
+                              Page.Sections.Find (Section);
+            begin
+               Page.Sections.Delete (Section_Pos);
+            end;
+         end if;
+      end Parse_Mutually_Exclusive_Node;
+
+      ----------------------------------
+      -- Parse_Project_Attribute_Node --
+      ----------------------------------
+
+      function Parse_Project_Attribute_Node
+        (Parent : Node_Ptr) return Attribute_Description_Access
+      is
+         Page      : constant Attribute_Page :=
+                       Find_Editor_Page_By_Name
+                         (Module,
+                          Name => Get_Attribute (Parent, "editor_page"));
+         Section   : constant Attribute_Page_Section :=
+                       Find_Editor_Section_By_Name
+                         (Page => Page,
+                          Name => Get_Attribute (Parent, "editor_section"));
+         Name      : String := Get_Attribute (Parent, "name");
+         Pkg       : String := Get_Attribute (Parent, "package");
+         Indexed   : constant Boolean := Parent.Child /= null
+           and then (Parent.Child.Tag.all = "index"
+                     or else Parent.Child.Tag.all = "specialized_index");
+         Attribute : Attribute_Description_Access;
+      begin
+         To_Lower (Pkg);
+         To_Lower (Name);
+
+         if Name = "" then
+            Module.Kernel.Messages_Window.Insert
+              (-"<project_attribute> must specify a ""name"" attribute",
+               Mode => Error);
+         end if;
+
+         Attribute := Find_Attribute_By_Name
+           (Module, Section, Name, Pkg, Indexed);
+         Parse_Attribute_Description
+           (Module.Kernel, Parent, Attribute);
+
+         return Attribute;
+      end Parse_Project_Attribute_Node;
+
+      ----------------------------------
+      -- Parse_Project_Attribute_Node --
+      ----------------------------------
+
+      procedure Parse_Project_Attribute_Node (Parent : Node_Ptr) is
+         Attr : constant Attribute_Description_Access :=
+                  Parse_Project_Attribute_Node (Parent);
+         pragma Unreferenced (Attr);
+      begin
+         null;
+      end Parse_Project_Attribute_Node;
+
+   begin
+      if Node.Tag.all = "project_attribute" then
+         Parse_Project_Attribute_Node (Node);
+      elsif Node.Tag.all = "mutually_exclusive" then
+         Parse_Mutually_Exclusive_Node (Node);
       end if;
    end Customize;
 
@@ -189,12 +358,11 @@ package body GPS.Project_Properties is
    overriding procedure Destroy
      (Module : in out Base_Properties_Module) is
    begin
-      if Module.Pages /= null then
-         for P in Module.Pages'Range loop
-            Free (Module.Pages (P));
-         end loop;
-         Unchecked_Free (Module.Pages);
-      end if;
+      for Page of Module.Pages loop
+         Free (Page);
+      end loop;
+
+      Module.Pages.Clear;
    end Destroy;
 
    ------------------------------
@@ -202,30 +370,21 @@ package body GPS.Project_Properties is
    ------------------------------
 
    function Find_Editor_Page_By_Name (Module : access Base_Properties_Module;
-                                      Name   : String) return Positive is
-      Tmp : Attribute_Page_List;
+                                      Name   : String) return Attribute_Page is
+      New_Page : Attribute_Page;
    begin
-      if Module.Pages /= null then
-         for P in Module.Pages'Range loop
-            if Module.Pages (P).Name.all = Name then
-               return P;
-            end if;
-         end loop;
+      for Page of Module.Pages loop
+         if Page.Name.all = Name then
+            return Page;
+         end if;
+      end loop;
 
-         Tmp := Module.Pages;
-         Module.Pages :=
-           new Attribute_Page_Array (1 .. Tmp'Length + 1);
-         Module.Pages (1 .. Tmp'Length) := Tmp.all;
-         Unchecked_Free (Tmp);
-      else
-         Module.Pages := new Attribute_Page_Array (1 .. 1);
-      end if;
-
-      Module.Pages (Module.Pages'Last) :=
+      New_Page := new Attribute_Page_Record'
         (Name     => new String'(Name),
-         Sections => null);
+         Sections => <>);
+      Module.Pages.Append (New_Page);
 
-      return Module.Pages'Last;
+      return New_Page;
    end Find_Editor_Page_By_Name;
 
    ---------------------------------
@@ -233,33 +392,24 @@ package body GPS.Project_Properties is
    ---------------------------------
 
    function Find_Editor_Section_By_Name
-     (Module : access Base_Properties_Module;
-      Page   : Natural;
-      Name   : String) return Natural
+     (Page               : Attribute_Page;
+      Name               : String;
+      Mutually_Exclusive : Boolean := False) return Attribute_Page_Section
    is
-      P   : Attribute_Page renames Module.Pages (Page);
-      Tmp : Attribute_Page_Section_List;
+      New_Section : Attribute_Page_Section;
    begin
-      if P.Sections /= null then
-         for S in P.Sections'Range loop
-            if P.Sections (S).Name.all = Name then
-               return S;
-            end if;
-         end loop;
+      for Section of Page.Sections loop
+         if Section.Name.all = Name then
+            return Section;
+         end if;
+      end loop;
 
-         Tmp := P.Sections;
-         P.Sections := new Attribute_Page_Section_Array (1 .. Tmp'Length + 1);
-         P.Sections (1 .. Tmp'Length) := Tmp.all;
-         Unchecked_Free (Tmp);
+      New_Section  := new Attribute_Page_Section_Record (Mutually_Exclusive);
+      New_Section.Name := new String'(Name);
 
-      else
-         P.Sections := new Attribute_Page_Section_Array (1 .. 1);
-      end if;
+      Page.Sections.Append (New_Section);
 
-      P.Sections (P.Sections'Last) :=
-        (Name       => new String'(Name),
-         Attributes => null);
-      return P.Sections'Last;
+      return New_Section;
    end Find_Editor_Section_By_Name;
 
    ----------------------------
@@ -267,41 +417,31 @@ package body GPS.Project_Properties is
    ----------------------------
 
    function Find_Attribute_By_Name
-     (Module    : access Base_Properties_Module;
-      Page      : Natural;
-      Section   : Natural;
-      Name, Pkg : String;
-      Indexed   : Boolean) return Attribute_Description_Access
+     (Module             : access Base_Properties_Module;
+      Section            : Attribute_Page_Section;
+      Name, Pkg          : String;
+      Indexed            : Boolean;
+      Mutually_Exclusive : Boolean := False)
+      return Attribute_Description_Access
    is
-      S   : Attribute_Page_Section renames
-        Module.Pages (Page).Sections (Section);
-      Tmp  : Attribute_Description_List;
-      Self : Base_Properties_Module'Class renames
-        Base_Properties_Module'Class (Module.all);
+
+      Self     : Base_Properties_Module'Class renames
+                   Base_Properties_Module'Class (Module.all);
+      New_Attr : Attribute_Description_Access;
    begin
-      if S.Attributes /= null then
-         for A in S.Attributes'Range loop
-            if S.Attributes (A).Name.all = Name
-              and then S.Attributes (A).Pkg.all = Pkg
-            then
-               return S.Attributes (A);
-            end if;
-         end loop;
+      for Attr of Section.Attributes loop
+         if Attr.Name.all = Name and then Attr.Pkg.all = Pkg then
+            return Attr;
+         end if;
+      end loop;
 
-         Tmp := S.Attributes;
-         S.Attributes := new Attribute_Description_Array (1 .. Tmp'Length + 1);
-         S.Attributes (1 .. Tmp'Length) := Tmp.all;
-         Unchecked_Free (Tmp);
-      else
-         S.Attributes := new Attribute_Description_Array (1 .. 1);
-      end if;
+      New_Attr := Self.New_Attribute_Description (Indexed);
+      New_Attr.Name := new String'(Name);
+      New_Attr.Pkg  := new String'(Pkg);
+      New_Attr.Mutually_Exclusive := Mutually_Exclusive;
+      Section.Attributes.Append (New_Attr);
 
-      S.Attributes (S.Attributes'Last) :=
-        Self.New_Attribute_Description (Indexed);
-      S.Attributes (S.Attributes'Last).Name := new String'(Name);
-      S.Attributes (S.Attributes'Last).Pkg  := new String'(Pkg);
-
-      return S.Attributes (S.Attributes'Last);
+      return New_Attr;
    end Find_Attribute_By_Name;
 
    ---------------------------
@@ -376,20 +516,26 @@ package body GPS.Project_Properties is
    -- Free --
    ----------
 
-   procedure Free (Attribute : in out Attribute_Description'Class) is
+   procedure Free (Attr : in out Attribute_Description_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Attribute_Description'Class, Attribute_Description_Access);
    begin
-      Free (Attribute.Name);
-      Free (Attribute.Pkg);
-      Free (Attribute.Description);
-      Free (Attribute.Label);
-      Free (Attribute.Hide_In);
-      Free (Attribute.Disable);
-      if Attribute.Indexed then
-         Free (Attribute.Index_Attribute);
-         Free (Attribute.Index_Package);
-         Free (Attribute.Index_Types);
-      else
-         Free (Attribute.Non_Index_Type);
+      if Attr /= null then
+         Free (Attr.Name);
+         Free (Attr.Pkg);
+         Free (Attr.Description);
+         Free (Attr.Label);
+         Free (Attr.Hide_In);
+
+         if Attr.Indexed then
+            Free (Attr.Index_Attribute);
+            Free (Attr.Index_Package);
+            Free (Attr.Index_Types);
+         else
+            Free (Attr.Non_Index_Type);
+         end if;
+
+         Unchecked_Free (Attr);
       end if;
    end Free;
 
@@ -398,13 +544,18 @@ package body GPS.Project_Properties is
    ----------
 
    procedure Free (Page : in out Attribute_Page) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Attribute_Page_Record'Class, Attribute_Page);
    begin
-      Free (Page.Name);
-      if Page.Sections /= null then
-         for S in Page.Sections'Range loop
-            Free (Page.Sections (S));
+      if Page /= null then
+         Free (Page.Name);
+
+         for Section of Page.Sections loop
+            Free (Section);
          end loop;
-         Unchecked_Free (Page.Sections);
+
+         Page.Sections.Clear;
+         Unchecked_Free (Page);
       end if;
    end Free;
 
@@ -413,14 +564,22 @@ package body GPS.Project_Properties is
    ----------
 
    procedure Free (Section : in out Attribute_Page_Section) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Attribute_Page_Section_Record'Class, Attribute_Page_Section);
    begin
-      Free (Section.Name);
-      if Section.Attributes /= null then
-         for A in Section.Attributes'Range loop
-            Free (Section.Attributes (A).all);
-            Unchecked_Free (Section.Attributes (A));
+      if Section /= null then
+         Free (Section.Name);
+
+         if Section.Mutually_Exclusive then
+            Free (Section.Description);
+         end if;
+
+         for Attr of Section.Attributes loop
+            Free (Attr);
          end loop;
-         Unchecked_Free (Section.Attributes);
+
+         Section.Attributes.Clear;
+         Unchecked_Free (Section);
       end if;
    end Free;
 
@@ -509,24 +668,15 @@ package body GPS.Project_Properties is
       Pkg    : String;
       Name   : String) return Attribute_Description_Access is
    begin
-      if Module.Pages /= null then
-         for P in Module.Pages'Range loop
-            for S in Module.Pages (P).Sections'Range loop
-               declare
-                  Sect : Attribute_Page_Section renames
-                    Module.Pages (P).Sections (S);
-               begin
-                  for A in Sect.Attributes'Range loop
-                     if Sect.Attributes (A).Pkg.all = Pkg
-                       and then Sect.Attributes (A).Name.all = Name
-                     then
-                        return Sect.Attributes (A);
-                     end if;
-                  end loop;
-               end;
+      for Page of Module.Pages loop
+         for Section of Page.Sections loop
+            for Attr of Section.Attributes loop
+               if Attr.Pkg.all = Pkg and then Attr.Name.all = Name then
+                  return Attr;
+               end if;
             end loop;
          end loop;
-      end if;
+      end loop;
 
       return null;
    end Get_Attribute_Type_From_Name;
@@ -786,11 +936,9 @@ package body GPS.Project_Properties is
    -----------
 
    function Pages
-     (Self : Base_Properties_Module)
-      return Attribute_Page_List is
-   begin
-      return Self.Pages;
-   end Pages;
+     (Self : Base_Properties_Module) return Attribute_Page_Lists.List
+   is
+     (Self.Pages);
 
    ---------------------------------
    -- Parse_Attribute_Description --
@@ -825,7 +973,6 @@ package body GPS.Project_Properties is
       Disable_If_Not_Set   : constant String :=
                                Get_Attribute
                                  (N, "disable_if_not_set", "false");
-      Disable              : constant String := Get_Attribute (N, "disable");
       Child                : Node_Ptr;
 
       procedure Parse_Indexed_Type (Value : String);
@@ -908,7 +1055,6 @@ package body GPS.Project_Properties is
 
       A.Disable_If_Not_Set := Disable_If_Not_Set = "true"
         or else Disable_If_Not_Set = "1";
-      A.Disable := new String'(Disable);
 
       if Indexed then
          Child := N.Child;

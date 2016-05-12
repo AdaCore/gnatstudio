@@ -35,7 +35,6 @@ with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Glib_Values_Utils;         use Glib_Values_Utils;
 
-with Gtk.Alignment;             use Gtk.Alignment;
 with Gtk.Arrow;                 use Gtk.Arrow;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
@@ -46,15 +45,14 @@ with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Editable;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Event_Box;             use Gtk.Event_Box;
-with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Paned;                 use Gtk.Paned;
+with Gtk.Radio_Button;          use Gtk.Radio_Button;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Toggle_Button;         use Gtk.Toggle_Button;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;     use Gtk.Tree_Model_Filter;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
@@ -106,6 +104,12 @@ package body Project_Properties is
      new Attribute_Description (Indexed) with
    record
       Editor : Attribute_Editor;
+      --  The attribute's editor widget that allows the user to change the
+      --  attribute's value.
+
+      Active_Toggle_Button : Gtk_Toggle_Button;
+      --  Set if the editor is not always activated, and this indicates the
+      --  state of the editor in this case.
    end record;
 
    type Editable_Attribute_Description_Access is
@@ -160,30 +164,40 @@ package body Project_Properties is
       --  is used when validating fields, to display appropriate error
       --  messages.
 
-      Active_Check : Gtk_Check_Button;
-      --  Set if the editor is not always activated, and this indicates the
-      --  state of the editor in this case.
+      Group_Widget : Dialog_Group_Widget;
+      --  Set if the editor is within a group.
+      --  This is the case if a section has been specified for the editor's
+      --  attribute. It is also the case for indexed attributes or if the
+      --  editor is displayed as a list.
    end record;
 
-   procedure Create_Widget_Attribute
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Wiz         : Wizard;
-      Project     : Project_Type;
-      Attr        : Editable_Attribute_Description_Access;
-      Size_Group  : in out Gtk_Size_Group;
-      Read_Only   : Boolean;
-      Path_Widget : Gtk_Entry;
-      Widget      : out Gtk_Widget;
-      Expandable  : out Boolean;
-      Context     : String);
-   --  Create the widget used to edit Attr.
-   --  Size_Group, if specified, is used to properly align all the labels. It
-   --  is created as needed.
-   --  Expandable indicates whether the resulting widget should be expandable
-   --  in its container box when the latter is resized, or whether it should
-   --  keep its current size.
-   --  Path_Widget should contain the full directory to the project file's
-   --  location, and is used to resolve relative names.
+   function Is_Visible
+     (Attr    : Editable_Attribute_Description_Access;
+      Project : Project_Type;
+      Context : String) return Boolean;
+   --  Return True if the attribute should be accessible in via the Project
+   --  Properties editor, False otherwise.
+
+   procedure Initialize_Attribute_Editor
+     (Kernel               : not null access Kernel_Handle_Record'Class;
+      Page                 : not null access Project_Editor_Page_Record'Class;
+      Wiz                  : Wizard;
+      Project              : Project_Type;
+      Editable_Attr        : Editable_Attribute_Description_Access;
+      Section              : Attribute_Page_Section;
+      Section_Group_Widget : Dialog_Group_Widget;
+      Read_Only            : Boolean;
+      Path_Widget          : Gtk_Entry);
+   --  Create and initialize the widget used to edit Editable_Attr.
+   --
+   --  . Page refers to the page that should contain the attribute editor.
+   --  . Section refers to the section containing Editable_Attr.
+   --  . Section_Group_Widget is the group widget that should contain the
+   --    attribute editor.
+   --  . Read_Only is used to set the attribute editor's sentivity.
+   --  . Path_Widget should contain the full directory to the project file's
+   --    location, and is used to resolve relative names.
+   --
    --  See the description of Attribute_Editor_Record.Wiz for info on the Wiz
    --  parameter.
 
@@ -212,6 +226,13 @@ package body Project_Properties is
    --  Ask the user (through a dialog) for a new value for the attribute.
    --  Multiple values can be returned if the attribute is a list. Returned
    --  value must be freed by the user.
+
+   procedure Set_Attribute_Editor_Accessible
+     (Editor   : not null access Attribute_Editor_Record'Class;
+      Visible  : Boolean;
+      Editable : Boolean);
+   --  Make the attribute editor accesssible or non-accesssible from the
+   --  Project Properties editor according to Editable.
 
    -----------------------------------------------
    -- Attribute editors (files and directories) --
@@ -265,13 +286,15 @@ package body Project_Properties is
    --  Called when the user selects the "Browse" button in the
    --  File_Attribute_Editor
 
-   procedure Remove_String_From_List (Editor : access Gtk_Widget_Record'Class);
-   procedure Add_String_In_List (Editor : access Gtk_Widget_Record'Class);
+   procedure Remove_String_From_List
+     (Self : access Glib.Object.GObject_Record'Class);
+   procedure Add_String_In_List
+     (Self : access Glib.Object.GObject_Record'Class);
    --  Add or remove a string from a list of strings, as a result of a user
    --  pressing a button.
 
-   procedure Move_String_Up (Editor : access Gtk_Widget_Record'Class);
-   procedure Move_String_Down (Editor : access Gtk_Widget_Record'Class);
+   procedure Move_String_Up (Self : access Glib.Object.GObject_Record'Class);
+   procedure Move_String_Down (Self : access Glib.Object.GObject_Record'Class);
    --  Change the position of the current item in the list
 
    procedure Recursive_Directory_Changed
@@ -492,11 +515,6 @@ package body Project_Properties is
      (Editor : Properties_Editor) return String_List_Access;
    --  Return the list of languages currently set in the editor
 
-   procedure Toggle_Sensitive
-     (Check : access Gtk_Widget_Record'Class;
-      Attr  : Editable_Attribute_Description_Access);
-   --  Toggle the sensitivity state of an editor
-
    function Get_Current_Page
      (Self : not null access Properties_Editor_Record'Class)
       return Project_Editor_Page;
@@ -587,6 +605,24 @@ package body Project_Properties is
      (Description : access Attribute_Description'Class) return History_Key;
    --  Return the name of the history key associated with Description
 
+   type On_Activate_Attribute_Data is record
+      Attr      : Editable_Attribute_Description_Access;
+      Section   : Attribute_Page_Section;
+      Read_Only : Boolean;
+   end record;
+   package On_Activate_Attribute_Callback is new Gtk.Handlers.User_Callback
+     (Widget_Type => Gtk_Toggle_Button_Record,
+      User_Type   => On_Activate_Attribute_Data);
+   --  Callback package/type used for mutually exclusive attributes or
+   --  attributes that should be disable if not set in the project.
+
+   procedure On_Activate_Attribute
+     (Toggle : access Gtk_Toggle_Button_Record'Class;
+      Data   : On_Activate_Attribute_Data);
+   --  Called when an mutually exclusive attribute or an attribute that should
+   --  be disabled when not in the project set is explicitly activated by the
+   --  user.
+
    ------------------
    -- Wizard pages --
    ------------------
@@ -664,7 +700,7 @@ package body Project_Properties is
       Attribute_Index    : String := "")
    is
       Attribute             : constant Attribute_Pkg_String :=
-                                Build (Attr.Pkg.all, Attr.Name.all);
+                                Build (Attr.Get_Pkg, Attr.Get_Name);
       Lower_Attribute_Index : String := Attribute_Index;
    begin
       if not Attr.Case_Sensitive_Index then
@@ -673,7 +709,7 @@ package body Project_Properties is
 
       if Attribute_Exists (Attr, Project, Attribute_Index) then
          Trace (Me, "Project changed since attribute "
-                & Attr.Pkg.all & "'" & Attr.Name.all
+                & Attr.Get_Full_Name
                 & " was removed");
 
          Project.Delete_Attribute
@@ -698,7 +734,7 @@ package body Project_Properties is
       Attribute_Index    : String := "")
    is
       Attribute             : constant Attribute_Pkg_String :=
-                                Build (Attr.Pkg.all, Attr.Name.all);
+                                Build (Attr.Get_Pkg, Attr.Get_Name);
       Lower_Attribute_Index : String := Attribute_Index;
    begin
       if not Attr.Case_Sensitive_Index then
@@ -734,7 +770,7 @@ package body Project_Properties is
 
             if Active (Me) then
                Trace (Me, "Change for string attribute "
-                      & Attr.Pkg.all & "'" & Attr.Name.all
+                      & Attr.Get_Full_Name
                       & " (" & Lower_Attribute_Index
                       & ") Old=""" & Old_Value
                       & """ Default=""" & Default_Value
@@ -760,7 +796,7 @@ package body Project_Properties is
       Project_Changed    : in out Boolean)
    is
       Attribute             : constant Attribute_Pkg_List :=
-                                Build (Attr.Pkg.all, Attr.Name.all);
+                                Build (Attr.Get_Pkg, Attr.Get_Name);
       Lower_Attribute_Index : String := Attribute_Index;
       Equal                 : Boolean;
 
@@ -810,7 +846,7 @@ package body Project_Properties is
 
             if Active (Me) then
                Trace (Me, "Change for list attribute "
-                      & Attr.Pkg.all & "'" & Attr.Name.all & "("
+                      & Attr.Get_Full_Name
                       & Lower_Attribute_Index & ")");
             end if;
 
@@ -826,27 +862,24 @@ package body Project_Properties is
    --------------
 
    function Is_Valid (Page : Attribute_Page) return String is
-      Attr  : Editable_Attribute_Description_Access;
+      Editable_Attr  : Editable_Attribute_Description_Access;
    begin
-      if Page.Sections /= null then
-         for Section in Page.Sections'Range loop
-            if Page.Sections (Section).Attributes /= null then
-               for J in Page.Sections (Section).Attributes'Range loop
-                  Attr := Editable_Attribute_Description_Access
-                    (Page.Sections (Section).Attributes (J));
-                  if Attr.Editor /= null then
-                     declare
-                        Msg : constant String := Is_Valid (Attr.Editor);
-                     begin
-                        if Msg /= "" then
-                           return Msg;
-                        end if;
-                     end;
+      for Section of Page.Sections loop
+         for Attr of Section.Attributes loop
+            Editable_Attr := Editable_Attribute_Description_Access (Attr);
+
+            if Editable_Attr.Editor /= null then
+               declare
+                  Msg : constant String := Is_Valid (Editable_Attr.Editor);
+               begin
+                  if Msg /= "" then
+                     return Msg;
                   end if;
-               end loop;
+               end;
             end if;
          end loop;
-      end if;
+      end loop;
+
       return "";
    end Is_Valid;
 
@@ -874,7 +907,7 @@ package body Project_Properties is
         and then Get_Safe_Text (Editor.Ent) = ""
       then
          return -"Empty value not allowed for "
-           & Attribute_Name (Editor.Attribute.all);
+           & Get_Full_Name (Editor.Attribute.all);
       else
          return "";
       end if;
@@ -1086,8 +1119,8 @@ package body Project_Properties is
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
       Attr  : constant Attribute_Pkg_String :=
                 Build
-                  (Package_Name   => Editor.Attribute.Pkg.all,
-                   Attribute_Name => Editor.Attribute.Name.all);
+                  (Package_Name   => Editor.Attribute.Get_Pkg,
+                   Attribute_Name => Editor.Attribute.Get_Name);
       Indexes : GNAT.Strings.String_List := Project.Attribute_Indexes (Attr);
 
    begin
@@ -1118,8 +1151,7 @@ package body Project_Properties is
       for A in Indexes'Range loop
          if Indexes (A) /= null then
             Trace (Me, "Removing obsolete value "
-                   & Editor.Attribute.Pkg.all
-                   & ":" & Editor.Attribute.Name.all
+                   & Editor.Attribute.Get_Full_Name
                    & " (" & Indexes (A).all & ")");
             Project.Delete_Attribute
               (Scenario  => Scenario_Variables,
@@ -1685,93 +1717,69 @@ package body Project_Properties is
       Project   : Project_Type := No_Project)
    is
       pragma Unreferenced (Kernel);
-      Button2   : Gtk_Button;
-      Label     : Gtk_Label;
-      Frame     : Gtk_Frame;
-      Group     : Gtk_Size_Group;
-      Box, Hbox : Gtk_Box;
-      Event     : Gtk_Event_Box;
+      Browse_Button : Gtk_Button;
+      Group_Widget  : Dialog_Group_Widget;
 
       use Gtk.Enums.String_List;
 
    begin
       Dialog_Utils.Initialize (Self);
 
-      Gtk_New (Group, Both);
+      --  Name and location group
 
-      --  Name and location frame
-
-      Gtk_New (Frame, -"Name & Location");
-      Set_Border_Width (Frame, 5);
-      Self.Append (Frame, Expand => False);
-
-      Gtk_New_Vbox (Box, Homogeneous => True);
-      Add (Frame, Box);
-
-      Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Pack_Start (Box, Hbox);
+      Group_Widget := new Dialog_Group_Widget_Record;
+      Initialize (Group_Widget,
+                  Parent_View => Self,
+                  Group_Name  => "Name & Location");
 
       --  Name
-
-      Gtk_New (Event);
-      Pack_Start (Hbox, Event, Expand => False);
-      Gtk_New (Label, -"Name:");
-      Set_Alignment (Label, 0.0, 0.5);
-      Add (Event, Label);
-      Add_Widget (Group, Label);
-      Set_Tooltip_Text
-        (Event,
-         (-"Name of the project. ") &
-         (-"Only applies to the project you selected initially"));
 
       Gtk_New (Self.Name);
       Self.Name.Set_Sensitive (not Read_Only);
       Set_Width_Chars (Self.Name, 0);
       Set_Text (Self.Name, Project.Name);
-      Pack_Start (Hbox, Self.Name, Expand => True);
-
-      Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Pack_Start (Box, Hbox);
+      Group_Widget.Create_Child
+        (Widget    => Self.Name,
+         Label     => "Name",
+         Doc       =>  "Name of the project. " &
+           "Only applies to the project you selected initially");
 
       --  Path
-
-      Gtk_New (Event);
-      Pack_Start (Hbox, Event, Expand => False);
-      Gtk_New (Label, -"Path:");
-      Set_Alignment (Label, 0.0, 0.5);
-      Add (Event, Label);
-      Add_Widget (Group, Label);
-      Set_Tooltip_Text
-        (Event,
-         -("Directory containing the project file. Changing this field"
-           & " will move the project file. This field only applies to"
-           & " the project you selected initially"));
 
       Gtk_New (Self.Path);
       Self.Path.Set_Sensitive (not Read_Only);
       Set_Width_Chars (Self.Path, 0);
       Set_Text (Self.Path, Display_Full_Name (Project_Directory (Project)));
-      Pack_Start (Hbox, Self.Path, Expand => True);
 
-      Gtk_New (Button2, -"Browse");
-      Button2.Set_Sensitive (not Read_Only);
-      Pack_Start (Hbox, Button2, Expand => False);
+      Gtk_New (Browse_Button, -"Browse");
+      Browse_Button.Set_Sensitive (not Read_Only);
       Widget_Callback.Object_Connect
-        (Button2, Gtk.Button.Signal_Clicked, Browse_Location'Access,
+        (Browse_Button, Gtk.Button.Signal_Clicked, Browse_Location'Access,
          Slot_Object => Self.Path);
+
+      Group_Widget.Create_Child
+        (Widget    => Self.Path,
+         Button    => Browse_Button,
+         Label     => "Path",
+         Doc       =>
+           "Directory containing the project file. Changing this field"
+         & " will move the project file. This field only applies to"
+         & " the project you selected initially");
+
+      --  Relative paths
 
       Gtk_New (Self.Use_Relative_Paths, -"Paths should be relative paths");
       Self.Use_Relative_Paths.Set_Sensitive (not Read_Only);
       Set_Active
         (Self.Use_Relative_Paths, Paths_Are_Relative (Project));
-      Pack_Start (Box, Self.Use_Relative_Paths);
-      Set_Tooltip_Text
+
+      Group_Widget.Create_Child
         (Self.Use_Relative_Paths,
-         -("If this field is activated, then all the path information in"
-           & " the project (source and build directories, dependencies"
-           & " between projects,...) will be stored as paths relative"
-           & " to the location of the project file. It will thus be"
-           & " easier to move the project file to another directory"));
+         Doc => "If this field is activated, then all the path information in"
+         & " the project (source and build directories, dependencies"
+         & " between projects,...) will be stored as paths relative"
+         & " to the location of the project file. It will thus be"
+         & " easier to move the project file to another directory");
    end Initialize;
 
    ------------------------------
@@ -1790,60 +1798,53 @@ package body Project_Properties is
       --  Find all attributes with this one as an index. Add (or remove) new
       --  entries in their editing widget
 
-      for P in Properties_Module_ID.Pages'Range loop
-         for S in Properties_Module_ID.Pages (P).Sections'Range loop
-            declare
-               Sect : Attribute_Page_Section renames
-                 Properties_Module_ID.Pages (P).Sections (S);
-            begin
-               for A in Sect.Attributes'Range loop
-                  if Sect.Attributes (A).Indexed
-                    and then Sect.Attributes (A).Index_Package.all = Index_Pkg
-                    and then
-                      Sect.Attributes (A).Index_Attribute.all = Index_Name
-                  then
-                     declare
-                        Att  : constant Editable_Attribute_Description_Access
-                          := Editable_Attribute_Description_Access
-                             (Sect.Attributes (A));
-                        Ed   : constant Indexed_Attribute_Editor :=
-                          Indexed_Attribute_Editor (Att.Editor);
-                     begin
-                        if Ed /= null
-                          and then Ed.Model /= null
-                          and then Is_Selected
-                        then
-                           Append (Ed.Model, New_Iter, Null_Iter);
+      for Page of Properties_Module_ID.Pages loop
+         for Section of Page.Sections loop
+            for Attr of Section.Attributes loop
+               if Attr.Indexed
+                 and then Attr.Index_Package.all = Index_Pkg
+                 and then Attr.Index_Attribute.all = Index_Name
+               then
+                  declare
+                     Ed_Attr : constant Editable_Attribute_Description_Access
+                       := Editable_Attribute_Description_Access (Attr);
+                     Ed      : constant Indexed_Attribute_Editor :=
+                                 Indexed_Attribute_Editor (Ed_Attr.Editor);
+                  begin
+                     if Ed /= null
+                       and then Ed.Model /= null
+                       and then Is_Selected
+                     then
+                        Append (Ed.Model, New_Iter, Null_Iter);
 
-                           Set_And_Clear
-                             (Ed.Model, New_Iter,
-                              (0 => As_String (Index_Value),
-                               1 => As_String
-                                 (Get_Value_From_Project
-                                    (Project       => Project,
-                                     Attr          => Att,
-                                     Index         => Index_Value)),
-                               2 => As_Boolean
-                                 (Is_Any_String (Att, Index_Value))));
+                        Set_And_Clear
+                          (Ed.Model, New_Iter,
+                           (0 => As_String (Index_Value),
+                            1 => As_String
+                              (Get_Value_From_Project
+                                 (Project       => Project,
+                                  Attr          => Ed_Attr,
+                                  Index         => Index_Value)),
+                            2 => As_Boolean
+                              (Is_Any_String (Ed_Attr, Index_Value))));
 
-                        elsif Ed /= null
-                          and then Ed.Model /= null
-                        then  --  Remove
-                           New_Iter := Get_Iter_First (Ed.Model);
-                           while New_Iter /= Null_Iter loop
-                              if Get_String (Ed.Model, New_Iter, 0) =
-                                Index_Value
-                              then
-                                 Remove (Ed.Model, New_Iter);
-                                 exit;
-                              end if;
-                              Next (Ed.Model, New_Iter);
-                           end loop;
-                        end if;
-                     end;
-                  end if;
-               end loop;
-            end;
+                     elsif Ed /= null
+                       and then Ed.Model /= null
+                     then  --  Remove
+                        New_Iter := Get_Iter_First (Ed.Model);
+                        while New_Iter /= Null_Iter loop
+                           if Get_String (Ed.Model, New_Iter, 0) =
+                             Index_Value
+                           then
+                              Remove (Ed.Model, New_Iter);
+                              exit;
+                           end if;
+                           Next (Ed.Model, New_Iter);
+                        end loop;
+                     end if;
+                  end;
+               end if;
+            end loop;
          end loop;
       end loop;
    end Select_Attribute_In_List;
@@ -1865,8 +1866,8 @@ package body Project_Properties is
    begin
       Set (Ed.Model, Iter, 1, Selected);
       Select_Attribute_In_List
-        (Index_Pkg   => Ed.Attribute.Pkg.all,
-         Index_Name  => Ed.Attribute.Name.all,
+        (Index_Pkg   => Ed.Attribute.Get_Pkg,
+         Index_Name  => Ed.Attribute.Get_Name,
          Project     => Ed.Project,
          Index_Value => Get_String (Ed.Model, Iter, 0),
          Is_Selected => Selected);
@@ -1979,7 +1980,10 @@ package body Project_Properties is
          Gtk_New (Text);
          Gtk_New (Toggle);
          Widget_Callback.Object_Connect
-           (Toggle, Signal_Toggled, Attribute_List_Changed'Access, Editor);
+           (Widget      => Toggle,
+            Name        => Gtk.Cell_Renderer_Toggle.Signal_Toggled,
+            Cb          => Attribute_List_Changed'Access,
+            Slot_Object => Editor);
 
          Gtk_New (Col);
          Ignore := Append_Column (View, Col);
@@ -2238,12 +2242,14 @@ package body Project_Properties is
    -- Add_String_In_List --
    ------------------------
 
-   procedure Add_String_In_List (Editor : access Gtk_Widget_Record'Class) is
-      Ed    : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
+   procedure Add_String_In_List
+     (Self : access Glib.Object.GObject_Record'Class)
+   is
+      Ed    : constant File_Attribute_Editor := File_Attribute_Editor (Self);
       Value : GNAT.Strings.String_List :=
                 Create_Attribute_Dialog
                   (Ed.Kernel,
-                   Gtk_Window (Get_Toplevel (Editor)),
+                   Gtk_Window (Get_Toplevel (Ed)),
                    Ed.Project,
                    Ed.Attribute,
                    Attribute_Index => "",
@@ -2281,15 +2287,15 @@ package body Project_Properties is
          if Ed.Attribute.Base_Name_Only then
             Select_Attribute_In_List
               (Project     => Ed.Project,
-               Index_Pkg   => Ed.Attribute.Pkg.all,
-               Index_Name  => Ed.Attribute.Name.all,
+               Index_Pkg   => Ed.Attribute.Get_Pkg,
+               Index_Name  => Ed.Attribute.Get_Name,
                Index_Value => Base_Name (Value (V).all),
                Is_Selected => True);
          else
             Select_Attribute_In_List
               (Project     => Ed.Project,
-               Index_Pkg   => Ed.Attribute.Pkg.all,
-               Index_Name  => Ed.Attribute.Name.all,
+               Index_Pkg   => Ed.Attribute.Get_Pkg,
+               Index_Name  => Ed.Attribute.Get_Name,
                Index_Value => Value (V).all,
                Is_Selected => True);
          end if;
@@ -2302,9 +2308,9 @@ package body Project_Properties is
    -----------------------------
 
    procedure Remove_String_From_List
-     (Editor : access Gtk_Widget_Record'Class)
+     (Self : access Glib.Object.GObject_Record'Class)
    is
-      Ed   : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
+      Ed   : constant File_Attribute_Editor := File_Attribute_Editor (Self);
       M    : Gtk_Tree_Model;
       Iter : Gtk_Tree_Iter;
    begin
@@ -2313,15 +2319,15 @@ package body Project_Properties is
          if Ed.Attribute.Base_Name_Only then
             Select_Attribute_In_List
               (Project     => Ed.Project,
-               Index_Pkg   => Ed.Attribute.Pkg.all,
-               Index_Name  => Ed.Attribute.Name.all,
+               Index_Pkg   => Ed.Attribute.Get_Pkg,
+               Index_Name  => Ed.Attribute.Get_Name,
                Index_Value => Get_String (Ed.Model, Iter, 0),
                Is_Selected => False);
          else
             Select_Attribute_In_List
               (Project     => Ed.Project,
-               Index_Pkg   => Ed.Attribute.Pkg.all,
-               Index_Name  => Ed.Attribute.Name.all,
+               Index_Pkg   => Ed.Attribute.Get_Pkg,
+               Index_Name  => Ed.Attribute.Get_Name,
                Index_Value => Get_String (Ed.Model, Iter, 0),
                Is_Selected => False);
          end if;
@@ -2334,9 +2340,9 @@ package body Project_Properties is
    -- Move_String_Up --
    --------------------
 
-   procedure Move_String_Up (Editor : access Gtk_Widget_Record'Class) is
+   procedure Move_String_Up (Self : access Glib.Object.GObject_Record'Class) is
       Ed          : constant File_Attribute_Editor :=
-                      File_Attribute_Editor (Editor);
+                      File_Attribute_Editor (Self);
       M           : Gtk_Tree_Model;
       Iter, Iter2 : Gtk_Tree_Iter;
       Path        : Gtk_Tree_Path;
@@ -2371,9 +2377,10 @@ package body Project_Properties is
    -- Move_String_Down --
    ----------------------
 
-   procedure Move_String_Down (Editor : access Gtk_Widget_Record'Class) is
+   procedure Move_String_Down (Self : access Glib.Object.GObject_Record'Class)
+   is
       Ed          : constant File_Attribute_Editor :=
-                      File_Attribute_Editor (Editor);
+                      File_Attribute_Editor (Self);
       M           : Gtk_Tree_Model;
       Iter, Iter2 : Gtk_Tree_Iter;
    begin
@@ -2451,7 +2458,7 @@ package body Project_Properties is
    is
    begin
       return "pp_"
-        & History_Key (Description.Pkg.all & '_' & Description.Name.all);
+        & History_Key (Description.Get_Pkg & '_' & Description.Get_Name);
    end History_Name;
 
    ----------------------------------
@@ -2468,19 +2475,70 @@ package body Project_Properties is
       Is_List         : Boolean) return File_Attribute_Editor
    is
       Editor     : File_Attribute_Editor;
-      Button     : Gtk_Button;
+      List_View  : Dialog_View_With_Button_Box;
       Scrolled   : Gtk_Scrolled_Window;
-      Box        : Gtk_Box;
       Text       : Gtk_Cell_Renderer_Text;
       Toggle     : Gtk_Cell_Renderer_Toggle;
+      Button     : Gtk_Button;
       Col        : Gtk_Tree_View_Column;
-      Arrow      : Gtk_Arrow;
-      Ignore : Gint;
+      Ignore     : Gint;
       pragma Unreferenced (Ignore);
 
       Attr       : constant Attribute_Type :=
                      Get_Attribute_Type_From_Description
                        (Description, Attribute_Index);
+
+      procedure Fill_Button_Box;
+      --  Fill the left-side button box with buttons allowing to 'add',
+      --  'remove' or reorder the files displayed in the tree view.
+
+      ---------------------
+      -- Fill_Button_Box --
+      ---------------------
+
+      procedure Fill_Button_Box is
+         Arrow : Gtk_Arrow;
+      begin
+         --  Append an up arrow button if it's an ordered list
+         if Description.Ordered_List then
+            Gtk_New (Button);
+            Button.Set_Relief (Relief_None);
+            List_View.Append_Button (Button);
+            Gtk_New (Arrow, Arrow_Up, Shadow_None);
+            Add (Button, Arrow);
+            Button.On_Clicked (Move_String_Up'Access, Slot => Editor);
+         end if;
+
+         --  Append an 'add' and 'remove' button if it's a list
+         if Is_List then
+            Gtk_New_From_Icon_Name
+              (Button,
+               Icon_Name => "gps-add-symbolic",
+               Size      => Icon_Size_Small_Toolbar);
+            Button.Set_Relief (Relief_None);
+            Button.On_Clicked (Add_String_In_List'Access, Slot => Editor);
+            List_View.Append_Button (Button);
+
+            Gtk_New_From_Icon_Name
+              (Button,
+               Icon_Name => "gps-remove-symbolic",
+               Size      => Icon_Size_Small_Toolbar);
+            Button.Set_Relief (Relief_None);
+            Button.On_Clicked (Remove_String_From_List'Access, Slot => Editor);
+            List_View.Append_Button (Button);
+         end if;
+
+         --  Append a down arrow button if it's an ordered list
+         if Description.Ordered_List then
+            Gtk_New (Button);
+            Button.Set_Relief (Relief_None);
+            List_View.Append_Button (Button);
+            Gtk_New (Arrow, Arrow_Down, Shadow_None);
+            Add (Button, Arrow);
+            Button.On_Clicked (Move_String_Down'Access, Slot => Editor);
+         end if;
+      end Fill_Button_Box;
+
    begin
       Editor := new File_Attribute_Editor_Record;
       Initialize_Hbox (Editor, Homogeneous => False);
@@ -2497,67 +2555,30 @@ package body Project_Properties is
       Assert (Me, Editor.Path_Widget /= null, "No path widget given");
 
       if Is_List then
+         List_View := new Dialog_View_With_Button_Box_Record;
+         Initialize (List_View, Orientation => Orientation_Vertical);
+         Editor.Pack_Start (List_View, Expand => True, Fill => True);
+
          Gtk_New (Scrolled);
-         Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-         Pack_Start (Editor, Scrolled, Expand => True, Fill => True);
-
-         Gtk_New_Vbox (Box, Homogeneous => False);
-         Pack_Start (Editor, Box, Expand => False);
-
-         Gtk_New_From_Stock (Button, Stock_Add);
-         Pack_Start (Box, Button, Expand => False);
-         Widget_Callback.Object_Connect
-           (Button, Gtk.Button.Signal_Clicked, Add_String_In_List'Access,
-            Slot_Object => Editor);
-
-         Gtk_New_From_Stock (Button, Stock_Remove);
-         Pack_Start (Box, Button, Expand => False);
-         Widget_Callback.Object_Connect
-           (Button, Gtk.Button.Signal_Clicked, Remove_String_From_List'Access,
-            Slot_Object => Editor);
+         Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+         List_View.Append (Scrolled, Expand => True, Fill => True);
 
          Gtk_New (Editor.Model, (0 => GType_String,   --  display name
                                  1 => GType_Boolean,  --  recursive ?
                                  2 => GType_String)); --  relative name
 
          Gtk_New (Editor.View, Editor.Model);
-         Set_Headers_Visible (Editor.View, Editor.As_Directory);
-         Add (Scrolled, Editor.View);
+         Scrolled.Add (Editor.View);
 
-         Gtk_New (Text);
-         Gtk_New (Col);
-         Set_Resizable (Col, True);
-         Set_Title (Col, -"Directory");
-         Ignore := Append_Column (Editor.View, Col);
-         Pack_Start (Col, Text, True);
-         Add_Attribute (Col, Text, "text", 0);
-
-         if Description.Ordered_List then
-            Gtk_New (Button);
-            Pack_Start (Box, Button, Expand => False);
-            Gtk_New (Arrow, Arrow_Up, Shadow_None);
-            Add (Button, Arrow);
-            Widget_Callback.Object_Connect
-              (Button, Gtk.Button.Signal_Clicked, Move_String_Up'Access,
-               Slot_Object => Editor);
-
-            Gtk_New (Button);
-            Pack_Start (Box, Button, Expand => False);
-            Gtk_New (Arrow, Arrow_Down, Shadow_None);
-            Add (Button, Arrow);
-            Widget_Callback.Object_Connect
-              (Button, Gtk.Button.Signal_Clicked, Move_String_Down'Access,
-               Slot_Object => Editor);
-         else
-            Set_Sort_Column_Id (Col, 0);
-            Clicked (Col);
-         end if;
-
+         --  Add an 'Include subdirectories' option if the list displays
+         --  dierctories.
          if Editor.As_Directory then
             Gtk_New (Toggle);
             Widget_Callback.Object_Connect
-              (Toggle, Signal_Toggled,
-               Recursive_Directory_Changed'Access, Editor);
+              (Widget      => Toggle,
+               Name        => Gtk.Cell_Renderer_Toggle.Signal_Toggled,
+               Cb          => Recursive_Directory_Changed'Access,
+               Slot_Object => Editor);
             Gtk_New (Col);
             Set_Resizable (Col, True);
             Set_Title (Col, -"Include subdirectories");
@@ -2570,6 +2591,27 @@ package body Project_Properties is
                Project_Path_Changed'Access, Slot_Object => Editor);
          end if;
 
+         --  Create the column displaying the files (or directories)
+         Gtk_New (Text);
+         Gtk_New (Col);
+         Set_Resizable (Col, True);
+         Set_Title
+           (Col,
+            Title => (if Editor.As_Directory then "Directory" else "File"));
+         Ignore := Append_Column (Editor.View, Col);
+         Pack_Start (Col, Text, True);
+         Add_Attribute (Col, Text, "text", 0);
+
+         --  Fill the left-side button box
+         Fill_Button_Box;
+
+         --  Allow to reorder the column if it's not an ordered list
+         if not Description.Ordered_List then
+            Set_Sort_Column_Id (Col, 0);
+            Clicked (Col);
+         end if;
+
+         --  Fill the tree view model
          declare
             Iter  : Gtk_Tree_Iter;
             Sort  : constant Gint := Freeze_Sort (Editor.Model);
@@ -3340,6 +3382,10 @@ package body Project_Properties is
         Get_Attribute_Type_From_Name
                           (Pkg  => Attr.Index_Package.all,
                            Name => Attr.Index_Attribute.all);
+      Index_Label   : constant String := (if Index /= null then
+                                             Index.Get_Label
+                                          else
+                                             "");
       Current_Index : String_List_Access;
 
       procedure Value_Cb (Value : String; Selected : Boolean);
@@ -3446,7 +3492,7 @@ package body Project_Properties is
                if not Index.Is_List then
                   Insert (Kernel,
                           -"Index for project attribute """
-                          & Attribute_Name (Attr.all)
+                          & Get_Full_Name (Attr.all)
                           & """ must be a list",
                           Mode => Error);
                else
@@ -3472,10 +3518,10 @@ package body Project_Properties is
       Gtk_New (Col);
       Set_Resizable (Col, True);
 
-      if Index.Label = null then
-         Set_Title (Col, Index.Name.all);
+      if Index_Label = "" then
+         Set_Title (Col, Index.Get_Name);
       else
-         Set_Title (Col, Index.Label.all);
+         Set_Title (Col, Index_Label);
       end if;
 
       Ignore := Append_Column (Ed.View, Col);
@@ -3494,11 +3540,7 @@ package body Project_Properties is
       Gtk_New (Col);
       Set_Resizable (Col, True);
 
-      if Attr.Label /= null then
-         Set_Title (Col, Attr.Label.all & (-" (Click to edit)"));
-      else
-         Set_Title (Col, -"(Click to edit)");
-      end if;
+      Set_Title (Col, Attr.Get_Label & (-" (Click to edit)"));
 
       Ignore := Append_Column (Ed.View, Col);
       Pack_Start (Col, Text, True);
@@ -3510,32 +3552,49 @@ package body Project_Properties is
       return Ed;
    end Create_Indexed_Attribute_Editor;
 
-   -----------------------------
-   -- Create_Widget_Attribute --
-   -----------------------------
+   -----------------------------------
+   -- Set_Attribute_Editor_Editable --
+   -----------------------------------
 
-   procedure Create_Widget_Attribute
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Wiz         : Wizard;
-      Project     : Project_Type;
-      Attr        : Editable_Attribute_Description_Access;
-      Size_Group  : in out Gtk_Size_Group;
-      Read_Only   : Boolean;
-      Path_Widget : Gtk_Entry;
-      Widget      : out Gtk_Widget;
-      Expandable  : out Boolean;
-      Context     : String)
+   procedure Set_Attribute_Editor_Accessible
+     (Editor   : not null access Attribute_Editor_Record'Class;
+      Visible  : Boolean;
+      Editable : Boolean)
    is
-      Label       : Gtk_Label;
-      Box         : Gtk_Box;
-      Vbox        : Gtk_Box;
-      Align       : Gtk_Alignment;
-      Event       : Gtk_Event_Box;
-      Check       : Gtk_Check_Button;
-      First, Last : Natural;
-      Exists      : Boolean := True;
+      Container : constant Gtk_Widget :=
+                    (if Editor.Group_Widget /= null
+                     and then Editor.Group_Widget.Get_Number_Of_Children = 1
+                     then
+                        Gtk_Widget (Editor.Group_Widget)
+                     else
+                        Gtk_Widget (Editor));
+   begin
+      --  Show or Hide the editor's container depending on Visible
+      if Visible then
+         Container.Set_No_Show_All (False);
+         Container.Show_All;
+      else
+         Container.Hide;
+         Container.Set_No_Show_All (True);
+      end if;
+
+      --  Set the editor's sensitivity depending on Editable
+      Editor.Set_Sensitive (Editable);
+   end Set_Attribute_Editor_Accessible;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   function Is_Visible
+     (Attr    : Editable_Attribute_Description_Access;
+      Project : Project_Type;
+      Context : String) return Boolean
+   is
+      First, Last    : Natural;
    begin
       --  Should the page be displayed ?
+
       if Attr.Hide_In /= null then
          First := Attr.Hide_In'First;
 
@@ -3556,11 +3615,9 @@ package body Project_Properties is
             if First <= Attr.Hide_In'Last
               and then
                 (Attr.Hide_In (First .. Last - 1) = Context
-                   or else Attr.Hide_In (First .. Last - 1) = "all")
+                 or else Attr.Hide_In (First .. Last - 1) = "all")
             then
-               Widget := null;
-               Expandable := False;
-               return;
+               return False;
             end if;
 
             First := Last + 1;
@@ -3577,179 +3634,171 @@ package body Project_Properties is
           (Project = No_Project
            or else Extended_Project (Project) = GNATCOLL.Projects.No_Project)
       then
-         Widget := null;
-         Expandable := False;
-         return;
+         return False;
       end if;
 
-      --  Prepare the display of the page
+      return True;
+   end Is_Visible;
 
-      Gtk_New_Hbox (Box, Homogeneous => False);
+   ---------------------------------
+   -- Initialize_Attribute_Editor --
+   ---------------------------------
 
-      if Attr.Label /= null or else Attr.Disable_If_Not_Set then
-         Gtk_New_Hbox (Vbox, Homogeneous => False);
-         Pack_Start (Box, Vbox, Expand => False, Fill => False);
-      end if;
+   procedure Initialize_Attribute_Editor
+     (Kernel               : not null access Kernel_Handle_Record'Class;
+      Page                 : not null access Project_Editor_Page_Record'Class;
+      Wiz                  : Wizard;
+      Project              : Project_Type;
+      Editable_Attr        : Editable_Attribute_Description_Access;
+      Section              : Attribute_Page_Section;
+      Section_Group_Widget : Dialog_Group_Widget;
+      Read_Only            : Boolean;
+      Path_Widget          : Gtk_Entry)
+   is
+      Exists     : constant Boolean :=
+                     Attribute_Exists
+                       (Editable_Attr, Project, Attribute_Index => "");
+      Expandable : constant Boolean :=
+                     Editable_Attr.Indexed or else Editable_Attr.Is_List;
 
-      if Attr.Disable_If_Not_Set then
-         Exists := Attribute_Exists (Attr, Project, Attribute_Index => "");
+      function Get_Attribute_Editor_Label_Widget return Gtk_Widget;
+      --  Return the label widget for the given attribute. If the given
+      --  attribute should be disable when not set in the project, a check
+      --  button is displayed next to the label.
 
-         Gtk_New (Align, Xalign => 0.0, Yalign => 0.5,
-                  Xscale        => 0.0, Yscale => 0.0);
-         Set_Border_Width (Align, 0);
-         Pack_Start (Vbox, Align, Expand => False, Fill => False);
-         Gtk_New (Check, "");
-         Check.Set_Sensitive (not Read_Only);
-         Add (Align, Check);
-         Set_Active (Check, Exists);
-         Attribute_Handler.Connect
-           (Check, Signal_Toggled, Toggle_Sensitive'Access, Attr);
-      end if;
+      ---------------------------------------
+      -- Get_Attribute_Editor_Label_Widget --
+      ---------------------------------------
 
-      if Attr.Label /= null then
-         --  Put the label inside an event box, so that we can associate it
-         --  with a tooltip. Put the event box inside the box, so that the
-         --  size of the event box is just that of the label, and the tooltip
-         --  doesn't appear far from the label
-
-         Gtk_New (Align, Xalign => 0.0, Yalign => 0.5,
-                  Xscale        => 0.0, Yscale => 0.0);
-         Set_Border_Width (Align, 0);
-         Pack_Start (Vbox, Align, Expand => False, Fill => False);
-         Gtk_New (Event);
-         Add (Align, Event);
-         Gtk_New (Label, Attr.Label.all & ':');
-
-         if Size_Group = null then
-            Gtk_New (Size_Group);
-         end if;
-
-         Add_Widget (Size_Group, Align);
-         Add (Event, Label);
-
-         if Attr.Description /= null
-           and then Attr.Description.all /= ""
+      function Get_Attribute_Editor_Label_Widget return Gtk_Widget is
+         Label_Widget : Gtk_Widget;
+      begin
+         if Editable_Attr.Disable_If_Not_Set
+           and then not Editable_Attr.Mutually_Exclusive
          then
-            Set_Tooltip_Text (Event, Attr.Description.all);
+            Editable_Attr.Active_Toggle_Button := Gtk_Toggle_Button
+              (Gtk_Check_Button_New_With_Label (Editable_Attr.Get_Label));
+            On_Activate_Attribute_Callback.Connect
+              (Editable_Attr.Active_Toggle_Button,
+               Name        => Gtk.Toggle_Button.Signal_Toggled,
+               Cb          => On_Activate_Attribute'Access,
+               User_Data   => On_Activate_Attribute_Data'
+                 (Attr      => Editable_Attr,
+                  Section   => Section,
+                  Read_Only => Read_Only));
+
+            Label_Widget := Gtk_Widget (Editable_Attr.Active_Toggle_Button);
+         else
+            Label_Widget :=
+              Gtk_Widget (Gtk.Label.Gtk_Label_New (Editable_Attr.Get_Label));
+            Gtk_Label (Label_Widget).Set_Alignment (0.0, 0.5);
          end if;
-      end if;
 
-      Attr.Editor := null;
-      --  removing previous reference
+         return Label_Widget;
+      end Get_Attribute_Editor_Label_Widget;
 
-      if Attr.Indexed then
-         Attr.Editor := Attribute_Editor
+   begin
+      --  Removing previous reference
+      Editable_Attr.Editor := null;
+
+      --  Create the attribute editor main widget depending on the attribute's
+      --  type
+      if Editable_Attr.Indexed then
+         Editable_Attr.Editor := Attribute_Editor
            (Create_Indexed_Attribute_Editor
-              (Kernel, Project, Attr, Path_Widget => Path_Widget));
+              (Kernel, Project, Editable_Attr, Path_Widget => Path_Widget));
       else
-         Attr.Editor := Create_Widget_Attribute
+         Editable_Attr.Editor := Create_Widget_Attribute
            (Kernel,
             Wiz,
             Project,
-            Attr,
+            Editable_Attr,
             Attribute_Index => "",
             Path_Widget     => Path_Widget,
-            Is_List         => Attr.Is_List);
+            Is_List         => Editable_Attr.Is_List);
       end if;
-
-      Attr.Editor.Wiz := Wiz;
 
       Attribute_Handler.Connect
-        (Attr.Editor, Signal_Destroy, Editor_Destroyed'Access, Attr);
+        (Widget    => Editable_Attr.Editor,
+         Name      => Signal_Destroy,
+         Cb        => Editor_Destroyed'Access,
+         User_Data => Editable_Attr);
 
-      Pack_Start (Box, Attr.Editor, Expand => True, Fill => True);
-      if Attr.Description /= null
-        and then Attr.Description.all /= ""
-      then
-         Set_Tooltip_Text (Attr.Editor, Attr.Description.all);
+      Editable_Attr.Editor.Wiz := Wiz;
+
+      --  Add the attribute's editor to the section group if it's not
+      --  expandable, or create a specific group for the editor otherwise.
+      if not Expandable then
+         Section_Group_Widget.Create_Child
+           (Widget        => Editable_Attr.Editor,
+            Label_Widget  => Get_Attribute_Editor_Label_Widget,
+            Doc           => Editable_Attr.Get_Description);
+         Editable_Attr.Editor.Group_Widget := Section_Group_Widget;
+      else
+         declare
+            Group_Widget : Dialog_Group_Widget;
+         begin
+            Group_Widget := new Dialog_Group_Widget_Record;
+            Initialize
+              (Group_Widget,
+               Parent_View         => Page,
+               Group_Name          => Editable_Attr.Get_Label,
+               Allow_Multi_Columns => False);
+
+            Group_Widget.Append_Child
+              (Widget    => Editable_Attr.Editor,
+               Expand    => True,
+               Fill      => True);
+            Editable_Attr.Editor.Group_Widget := Group_Widget;
+         end;
       end if;
 
-      Attr.Editor.Active_Check := Check;
-      Attr.Editor.Set_Sensitive (Exists and then not Read_Only);
+      --  Set the attribute's editor visibility and sensitivity
+      Editable_Attr.Editor.Set_Attribute_Editor_Accessible
+        (Visible  => not Editable_Attr.Mutually_Exclusive or else Exists,
+         Editable =>
+            not Read_Only and then not Editable_Attr.Disable_If_Not_Set);
 
-      Widget := Gtk_Widget (Box);
-      Expandable := Attr.Indexed or else Attr.Is_List;
-   end Create_Widget_Attribute;
+      --  If the attribute can be enabled/disable with a toggle button, set
+      --  its state regarding if it's set in the project or not.
+      if Editable_Attr.Active_Toggle_Button /= null then
+         Editable_Attr.Active_Toggle_Button.Set_Active (Exists);
+      end if;
+   end Initialize_Attribute_Editor;
 
-   ----------------------
-   -- Toggle_Sensitive --
-   ----------------------
+   ---------------------------
+   -- On_Activate_Attribute --
+   ---------------------------
 
-   procedure Toggle_Sensitive
-     (Check : access Gtk_Widget_Record'Class;
-      Attr  : Editable_Attribute_Description_Access)
+   procedure On_Activate_Attribute
+     (Toggle : access Gtk_Toggle_Button_Record'Class;
+      Data   : On_Activate_Attribute_Data)
    is
-      Active     : constant Boolean :=
-        Get_Active
-          (Gtk_Check_Button (Check));
-      Attr2      : Editable_Attribute_Description_Access;
-      Page       : Attribute_Page;
-      Pkg_Start  : Natural;
-      Pkg_End    : Natural;
-      Name_Start : Natural;
-      Index      : Natural;
+      Active : constant Boolean := Toggle.Get_Active;
    begin
-      if Attr.Editor /= null
-        and then Active /= Is_Sensitive (Attr.Editor)
-      then
-         Set_Sensitive (Attr.Editor, Active);
-
-         if Active and then Attr.Disable /= null then
-            Index := Attr.Disable'First;
-            while Index <= Attr.Disable'Last loop
-               Pkg_Start := Index;
-               while Index <= Attr.Disable'Last
-                 and then Attr.Disable (Index) /= ' '
-                 and then Attr.Disable (Index) /= '.'
-               loop
-                  Index := Index + 1;
-               end loop;
-
-               if Index <= Attr.Disable'Last
-                 and then Attr.Disable (Index) = '.'
-               then
-                  Name_Start := Index + 1;
-                  Pkg_End    := Index - 1;
-
-                  while Index <= Attr.Disable'Last
-                    and then Attr.Disable (Index) /= ' '
-                  loop
-                     Index := Index + 1;
-                  end loop;
-
-               else
-                  Name_Start := Pkg_Start;
-                  Pkg_End    := Pkg_Start - 1;
-               end if;
-
-               for P in Properties_Module_ID.Pages'Range loop
-                  Page := Properties_Module_ID.Pages (P);
-                  for S in Page.Sections'Range loop
-                     for A in Page.Sections (S).Attributes'Range loop
-                        Attr2 := Editable_Attribute_Description_Access
-                          (Page.Sections (S).Attributes (A));
-
-                        if Attr2.Name.all =
-                          Attr.Disable (Name_Start .. Index - 1)
-                          and then Attr2.Pkg.all =
-                            Attr.Disable (Pkg_Start  .. Pkg_End)
-                        then
-                           if Attr2.Editor /= null
-                             and then Attr2.Editor.Active_Check /= null
-                           then
-                              Set_Active (Attr2.Editor.Active_Check, False);
-                           end if;
-                           exit;
-                        end if;
-                     end loop;
-                  end loop;
-               end loop;
-
-               Index := Index + 1;
-            end loop;
-         end if;
+      --  Make the selected attribute's editor accessible or not accessible
+      if Data.Attr /= null then
+         Set_Attribute_Editor_Accessible
+           (Data.Attr.Editor,
+            Visible  => True,
+            Editable => not Data.Read_Only and then Active);
       end if;
-   end Toggle_Sensitive;
+
+      --  Hide the other attributes of the section if it's a mutually exclusive
+      --  section.
+      if Active and then Data.Section.Mutually_Exclusive then
+         for Attr of Data.Section.Attributes loop
+            if Data.Attr = null
+              or else Attr.Get_Full_Name /= Data.Attr.Get_Full_Name
+            then
+               Set_Attribute_Editor_Accessible
+                 (Editable_Attribute_Description_Access (Attr).Editor,
+                  Visible  => False,
+                  Editable => False);
+            end if;
+         end loop;
+      end if;
+   end On_Activate_Attribute;
 
    -------------------------
    -- Find_Or_Create_Page --
@@ -3833,37 +3882,35 @@ package body Project_Properties is
    is
       XML_Page : XML_Page_Access;
    begin
-      if Properties_Module_ID.Pages /= null then
-         for P in Properties_Module_ID.Pages'Range loop
-            declare
-               N : constant String := Properties_Module_ID.Pages (P).Name.all;
-            begin
-               if N /= "" then
-                  XML_Page := new XML_Page_Record;
-                  XML_Page.Descr := Properties_Module_ID.Pages (P);
-                  XML_Page.Path := Gtk_GEntry (Path);
-                  XML_Page.Context := new String'(Context);
-                  XML_Page.Initialize (Kernel, Read_Only, Project);
+      for Page of Properties_Module_ID.Pages loop
+         declare
+            Page_Name : constant String := Page.Get_Name;
+         begin
+            if Page_Name /= "" then
+               XML_Page := new XML_Page_Record;
+               XML_Page.Descr := Page;
+               XML_Page.Path := Gtk_GEntry (Path);
+               XML_Page.Context := new String'(Context);
+               XML_Page.Initialize (Kernel, Read_Only, Project);
 
-                  if not XML_Page.Has_Contents then
-                     --  Not needed after all, no attribute is displayed
-                     Destroy (XML_Page.all);
-                     XML_Page.Ref_Sink;
-                     XML_Page.Unref;
+               if not XML_Page.Has_Contents then
+                  --  Not needed after all, no attribute is displayed
+                  Destroy (XML_Page.all);
+                  XML_Page.Ref_Sink;
+                  XML_Page.Unref;
+               else
+                  --  Do not add custom attributes to the hard-coded pages
+                  if Page_Name = -"General" then
+                     Callback (-"General/Attributes", XML_Page);
+                  elsif Page_Name = -"Languages" then
+                     Callback (-"Languages/Attributes", XML_Page);
                   else
-                     --  Do not add custom attributes to the hard-coded pages
-                     if N = -"General" then
-                        Callback (-"General/Attributes", XML_Page);
-                     elsif N = -"Languages" then
-                        Callback (-"Languages/Attributes", XML_Page);
-                     else
-                        Callback (N, XML_Page);
-                     end if;
+                     Callback (Page_Name, XML_Page);
                   end if;
                end if;
-            end;
-         end loop;
-      end if;
+            end if;
+         end;
+      end loop;
    end For_Each_Project_Editor_Page;
 
    --------------------
@@ -4131,34 +4178,34 @@ package body Project_Properties is
       Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
       pragma Unreferenced (Kernel, Languages);
-      Attr    : Editable_Attribute_Description_Access;
-      Changed : Boolean := False;
+      Editable_Attr : Editable_Attribute_Description_Access;
+      Changed       : Boolean := False;
    begin
-      for S in Self.Descr.Sections'Range loop
-         for A in Self.Descr.Sections (S).Attributes'Range loop
-            Attr := Editable_Attribute_Description_Access
-              (Self.Descr.Sections (S).Attributes (A));
+      for Section of Self.Descr.Sections loop
+         for Attr of Section.Attributes loop
+            Editable_Attr := Editable_Attribute_Description_Access (Attr);
 
-            if Attr.Editor = null then
+            if Editable_Attr.Editor = null then
                Trace (Me, "No editor created for "
-                      & Attr.Pkg.all & "'" & Attr.Name.all);
+                      & Editable_Attr.Get_Full_Name);
 
-            elsif Is_Sensitive (Attr.Editor) then
+            elsif Is_Sensitive (Editable_Attr.Editor) then
                Generate_Project
-                 (Attr.Editor, Project, Scenario_Variables, Changed);
+                 (Editable_Attr.Editor, Project, Scenario_Variables, Changed);
 
             else
                --  The editor is insensitive, which means the user doesn't
                --  want to use that attribute
                Delete_Attribute_Value
                  (Project            => Project,
-                  Attr               => Attr,
+                  Attr               => Editable_Attr,
                   Attribute_Index    => "",
                   Scenario_Variables => Scenario_Variables,
                   Project_Changed    => Changed);
             end if;
          end loop;
       end loop;
+
       return Changed;
    end Edit_Project;
 
@@ -4172,60 +4219,111 @@ package body Project_Properties is
       Read_Only    : Boolean;
       Project      : Project_Type := No_Project)
    is
-      Attr         : Editable_Attribute_Description_Access;
-      Box          : Gtk_Box;
-      Frame        : Gtk_Frame;
-      Size         : Gtk_Size_Group;
-      Expandable   : Boolean;
-      W_Expandable : Boolean;
-      W            : Gtk_Widget;
+      Editable_Attr        : Editable_Attribute_Description_Access;
+      Section_Group_Widget : Dialog_Group_Widget;
+
+      procedure Create_Mutually_Exclusive_Section_Widget
+        (Section : Attribute_Page_Section);
+      --  Create a group with radio buttons so that the user can select
+      --  whcih mutually exclusive attribute he wants to use/edit.
+
+      ----------------------------------------------
+      -- Create_Mutually_Exclusive_Section_Widget --
+      ----------------------------------------------
+
+      procedure Create_Mutually_Exclusive_Section_Widget
+        (Section : Attribute_Page_Section)
+      is
+         Radio_Box    : Gtk_Hbox;
+         Radio_Button : Gtk_Radio_Button;
+      begin
+         Gtk_New_Hbox (Radio_Box, Homogeneous => False);
+
+         --  Add the 'Implicit' radio button, which disables all the attributes
+         --  belonging to this section.
+         Gtk_New (Radio_Button, Label => "Implicit");
+         On_Activate_Attribute_Callback.Connect
+           (Radio_Button,
+            Name        => Gtk.Toggle_Button.Signal_Toggled,
+            Cb          => On_Activate_Attribute'Access,
+            User_Data   => On_Activate_Attribute_Data'
+              (Attr      => null,
+               Section   => Section,
+               Read_Only => Read_Only));
+         Radio_Box.Pack_Start (Radio_Button, Expand => False);
+
+         --  Create a radio button for each mutually exclusive attribute of the
+         --  section.
+         for Attr of Section.Attributes loop
+            Editable_Attr := Editable_Attribute_Description_Access (Attr);
+
+            Gtk_New
+              (Radio_Button,
+               Group => Radio_Button.Get_Group,
+               Label => Attr.Get_Label);
+            On_Activate_Attribute_Callback.Connect
+              (Radio_Button,
+               Name        => Gtk.Toggle_Button.Signal_Toggled,
+               Cb          => On_Activate_Attribute'Access,
+               User_Data   => On_Activate_Attribute_Data'
+                 (Attr      => Editable_Attr,
+                  Section   => Section,
+                  Read_Only => Read_Only));
+            Radio_Box.Pack_Start (Radio_Button, Expand => False);
+
+            Editable_Attr.Active_Toggle_Button :=
+              Gtk_Toggle_Button (Radio_Button);
+         end loop;
+
+         --  Add the radio button group
+         Section_Group_Widget := new Dialog_Group_Widget_Record;
+         Initialize
+           (Section_Group_Widget,
+            Parent_View          => Self,
+            Group_Name           => Section.Get_Name);
+         Section_Group_Widget.Create_Child
+           (Widget => Radio_Box,
+            Doc    => Section.Get_Description);
+      end Create_Mutually_Exclusive_Section_Widget;
+
    begin
       Dialog_Utils.Initialize (Self);
 
-      for S in Self.Descr.Sections'Range loop
-         Box   := null;
-         Frame := null;
-         Expandable := False;
+      for Section of Self.Descr.Sections loop
+         Section_Group_Widget := null;
 
-         for A in Self.Descr.Sections (S).Attributes'Range loop
-            Attr := Editable_Attribute_Description_Access
-              (Self.Descr.Sections (S).Attributes (A));
+         if Section.Mutually_Exclusive then
+            Create_Mutually_Exclusive_Section_Widget (Section);
+         else
+            --  Create a widget for each attribute defined in the section
+            for Attr of Section.Attributes loop
+               Editable_Attr := Editable_Attribute_Description_Access (Attr);
 
-            Create_Widget_Attribute
-              (Kernel,
-               null,  --  wizard
-               Project,
-               Attr,
-               Size,
-               Read_Only   => Read_Only,
-               Path_Widget => Self.Path,
-               Widget      => W,
-               Expandable  => W_Expandable,
-               Context     => Self.Context.all);
+               if Is_Visible (Editable_Attr, Project, Self.Context.all) then
+                  Self.Has_Contents := True;
 
-            if W /= null then
-               if Box = null then
-                  Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 2);
-
-                  if Self.Descr.Sections (S).Name.all /= "" then
-                     Gtk_New (Frame, Self.Descr.Sections (S).Name.all);
-                     Frame.Set_Border_Width (5);
-                     Frame.Add (Box);
+                  --  Create the section group widget if not initialized yet
+                  if Section_Group_Widget = null then
+                     Section_Group_Widget := new Dialog_Group_Widget_Record;
+                     Initialize
+                       (Section_Group_Widget,
+                        Parent_View => Self,
+                        Group_Name  => Section.Get_Name);
                   end if;
+
+                  --  Initialize the attribute's editor
+                  Initialize_Attribute_Editor
+                    (Kernel               => Kernel,
+                     Page                 => Self,
+                     Wiz                  => null,
+                     Project              => Project,
+                     Editable_Attr        => Editable_Attr,
+                     Section              => Section,
+                     Section_Group_Widget => Section_Group_Widget,
+                     Read_Only            => Read_Only,
+                     Path_Widget          => Self.Path);
                end if;
-
-               Expandable := Expandable or W_Expandable;
-               Box.Pack_Start (W, Expand => W_Expandable, Fill => True);
-               Self.Has_Contents := True;
-            end if;
-         end loop;
-
-         if Box /= null then
-            if Self.Descr.Sections (S).Name.all /= "" then
-               Self.Append (Frame, Expand => Expandable, Fill => True);
-            else
-               Self.Append (Box, Expand => Expandable, Fill => True);
-            end if;
+            end loop;
          end if;
       end loop;
    end Initialize;

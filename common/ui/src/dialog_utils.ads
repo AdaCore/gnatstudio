@@ -59,15 +59,23 @@ package Dialog_Utils is
      (Self : not null access Dialog_View_Record'Class);
    --  Initialize the common attributes for all the dialog views
 
+   function Get_Number_Of_Children
+     (Self : not null access Dialog_View_Record'Class) return Natural;
+   --  Return the number of children the given dialog view
+
    procedure Append
-     (Self   : not null access Dialog_View_Record'Class;
-      Widget : not null access Gtk_Widget_Record'Class;
-      Expand : Boolean := True;
-      Fill   : Boolean := True);
+     (Self          : not null access Dialog_View_Record'Class;
+      Widget        : not null access Gtk_Widget_Record'Class;
+      Expand        : Boolean := True;
+      Fill          : Boolean := True;
+      Add_Separator : Boolean := True);
    --  Append an already built widget to the given dialog view
    --
    --  The Expand and Fill properties have the same role as in the
    --  Gtk.Box.Pack_Start procedure.
+   --
+   --  If Add_Separator is True, a separator is appended before the given
+   --  Widget.
 
    procedure Remove_All_Children
      (Self : not null access Dialog_View_Record'Class);
@@ -144,6 +152,10 @@ package Dialog_Utils is
    --  If Allow_Multi_Columns is True, widgets within this group can be
    --  distributed into multiple columns when resizing. If False,  widgets are
    --  always distributed into one column.
+
+   function Get_Number_Of_Children
+     (Self : not null access Dialog_Group_Widget_Record'Class) return Natural;
+   --  Return the number of children the given group widget
 
    function Create_Child
      (Self      : not null access Dialog_Group_Widget_Record'Class;
@@ -227,15 +239,18 @@ private
 
    type Dialog_View_Record is new Gtk_Scrolled_Window_Record
    with record
-      Main_Box          : Gtk_Vbox;
+      Main_Box           : Gtk_Vbox;
       --  The main container of the dialog view
 
-      Label_Size_Group  : Gtk_Size_Group;
-      Widget_Size_Group : Gtk_Size_Group;
-      Button_Size_Group : Gtk_Size_Group;
+      Label_Size_Group   : Gtk_Size_Group;
+      Widget_Size_Group  : Gtk_Size_Group;
+      Button_Size_Group  : Gtk_Size_Group;
       --  Used to align the children created via the 'Create_Child' subprograms
 
-      Children_Map      : Widget_Maps.Map;
+      Number_Of_Children : Natural := 0;
+      --  The current number of children of the dialog view
+
+      Children_Map       : Widget_Maps.Map;
       --  Contains all the widgets that have been associated with a key
    end record;
 
@@ -246,11 +261,14 @@ private
    end record;
 
    type Dialog_Group_Widget_Record is new Gtk_Frame_Record with record
-      Parent_View : Dialog_View;
+      Parent_View        : Dialog_View;
       --  The parent dialog view of the group
 
-      Flow_Box    : Gtk_Flow_Box;
+      Flow_Box           : Gtk_Flow_Box;
       --  The main container of the group widget
+
+      Number_Of_Children : Natural := 0;
+      --  The current number of children of the group widget
    end record;
 
 end Dialog_Utils;

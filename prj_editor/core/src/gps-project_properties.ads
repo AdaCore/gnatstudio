@@ -23,16 +23,18 @@
 --  GPS project editor.
 --  </description>
 
+with Ada.Containers.Doubly_Linked_Lists;
+
 with GNAT.Strings;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib;                        use GNAT.OS_Lib;
 
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.VFS;                       use GNATCOLL.VFS;
+with GNATCOLL.Projects;                  use GNATCOLL.Projects;
 
-with GPS.Core_Kernels;          use GPS.Core_Kernels;
-with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
+with GPS.Core_Kernels;                   use GPS.Core_Kernels;
+with GPS.Customizable_Modules;           use GPS.Customizable_Modules;
 
-with XML_Utils;                 use XML_Utils;
+with XML_Utils;                          use XML_Utils;
 
 package GPS.Project_Properties is
 
@@ -100,13 +102,12 @@ package GPS.Project_Properties is
 
       Disable_If_Not_Set   : Boolean := False;
       --  If True, the project attribute needs to be explicitly specified by
-      --  the user, or the editor is greyed out (a check button is also shown
-      --  to allow the edition of the attribute)
+      --  the user or the editor is greyed out (non-mutually exclusive
+      --  attributes) or hidden (mutually exclusive attributes).
 
-      Disable              : GNAT.Strings.String_Access;
-      --  Space-separated list of attributes that are disabled when this
-      --  attribute is set. This assumes that Disable_If_Not_Set is True,
-      --  otherwise nothing happens.
+      Mutually_Exclusive   : Boolean := False;
+      --  If True, this project attribute is mutually exclusive with other
+      --  project attributes.
 
       case Indexed is
          when True =>
@@ -117,9 +118,32 @@ package GPS.Project_Properties is
             Non_Index_Type  : Attribute_Type;
       end case;
    end record;
+   type Attribute_Description_Access is access all Attribute_Description'Class;
+   --  Type used to represent an attribute description
 
-   function Attribute_Name (Attr : Attribute_Description) return String;
-   --  Return a string suitable for display that describes the attribute
+   package Attribute_Description_Lists is
+     new Ada.Containers.Doubly_Linked_Lists
+       (Element_Type => Attribute_Description_Access,
+        "="          => "=");
+
+   function Get_Name (Attr : Attribute_Description) return String;
+   --  Return the name of the given attribute
+
+   function Get_Pkg (Attr : Attribute_Description) return String;
+   --  Return the package name of the attribute, or an empty string if the
+   --  attribute does not belong to any package.
+
+   function Get_Full_Name (Attr : Attribute_Description) return String;
+   --  Return the full name of the attribute, with the following format:
+   --  "[<package>']<name>"
+
+   function Get_Label (Attr : Attribute_Description) return String;
+   --  Return the label to display for this attribute.
+   --  If the attribute has no label, return an empty string.
+
+   function Get_Description (Attr : Attribute_Description) return String;
+   --  Return the attribute's description.
+   --  If the attribute has no description, return an empty string.
 
    function Get_Default_Value
      (Attr          : access Attribute_Description'Class;
@@ -173,28 +197,59 @@ package GPS.Project_Properties is
       Callback : List_Attribute_Callback);
    --  Calls Callback for each possible value of the attribute
 
-   type Attribute_Description_Access is access all Attribute_Description'Class;
+   type Attribute_Page_Section_Record (Mutually_Exclusive : Boolean := False)
+   is tagged limited record
+      Name               : GNAT.Strings.String_Access;
+      --  Name of the section
 
-   type Attribute_Description_Array
-     is array (Natural range <>) of Attribute_Description_Access;
-   type Attribute_Description_List is access Attribute_Description_Array;
+      Attributes         : Attribute_Description_Lists.List;
+      --  List of the attributes belonging to this section
 
-   type Attribute_Page_Section is record
-      Name       : GNAT.Strings.String_Access;  --  "" for unnamed sections
-      Attributes : Attribute_Description_List;
+      case Mutually_Exclusive is
+         when True =>
+            Description : GNAT.Strings.String_Access;
+         when others =>
+            null;
+      end case;
    end record;
+   type Attribute_Page_Section is
+     access all Attribute_Page_Section_Record'Class;
+   --  Type used to represent a page section containing attributes.
+   --
+   --  If Mutually_Exclusive is True, all the attributes belonging to this
+   --  section are mutually exclusive.
 
-   type Attribute_Page_Section_Array
-     is array (Natural range <>) of Attribute_Page_Section;
-   type Attribute_Page_Section_List is access Attribute_Page_Section_Array;
+   package Attribute_Page_Section_Lists is
+     new Ada.Containers.Doubly_Linked_Lists
+       (Element_Type => Attribute_Page_Section,
+        "="          => "=");
 
-   type Attribute_Page is record
+   function Get_Name
+     (Section : not null access Attribute_Page_Section_Record'Class)
+      return String;
+   --  Return the name of the attributes section
+
+   function Get_Description
+     (Section : not null access Attribute_Page_Section_Record'Class)
+      return String;
+   --  Return the  attributes section's description.
+   --  If the section has no description, return an empty string.
+
+   type Attribute_Page_Record is tagged record
       Name     : GNAT.Strings.String_Access;
-      Sections : Attribute_Page_Section_List;
+      Sections : Attribute_Page_Section_Lists.List;
    end record;
+   type Attribute_Page is access all Attribute_Page_Record'Class;
+   --  Type used to represent page containing sections of attributes
 
-   type Attribute_Page_Array is array (Natural range <>) of Attribute_Page;
-   type Attribute_Page_List is access Attribute_Page_Array;
+   package Attribute_Page_Lists is
+     new Ada.Containers.Doubly_Linked_Lists
+       (Element_Type => Attribute_Page,
+        "="          => "=");
+
+   function Get_Name
+     (Page : not null access Attribute_Page_Record'Class) return String;
+   --  Return the name of the attribute page
 
    -----------------------
    -- Properties module --
@@ -203,8 +258,9 @@ package GPS.Project_Properties is
    type Base_Properties_Module (Kernel : access Core_Kernel_Record'Class) is
      new Customizable_Module_Record with private;
 
-   function Pages (Self : Base_Properties_Module) return Attribute_Page_List;
-   --  Return list of pages of attributes known to the module
+   function Pages
+     (Self : Base_Properties_Module) return Attribute_Page_Lists.List;
+   --  Return list of pages of attribute pages known to the module
 
    function Get_Attribute_Type_From_Name
      (Module : access Base_Properties_Module;
@@ -225,7 +281,7 @@ private
    type Base_Properties_Module (Kernel : access Core_Kernel_Record'Class) is
      new Customizable_Module_Record with
    record
-      Pages  : Attribute_Page_List;
+      Pages  : Attribute_Page_Lists.List;
    end record;
 
    overriding procedure Destroy (Module : in out Base_Properties_Module);

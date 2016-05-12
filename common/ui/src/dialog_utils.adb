@@ -45,6 +45,15 @@ package body Dialog_Utils is
       Self.Add (Self.Main_Box);
    end Initialize;
 
+   ----------------------------
+   -- Get_Number_Of_Children --
+   ----------------------------
+
+   function Get_Number_Of_Children
+     (Self : not null access Dialog_View_Record'Class) return Natural
+   is
+      (Self.Number_Of_Children);
+
    ----------------
    -- Initialize --
    ----------------
@@ -96,15 +105,16 @@ package body Dialog_Utils is
    ------------
 
    procedure Append
-     (Self   : not null access Dialog_View_Record'Class;
-      Widget : not null access Gtk_Widget_Record'Class;
-      Expand : Boolean := True;
-      Fill   : Boolean := True)
+     (Self          : not null access Dialog_View_Record'Class;
+      Widget        : not null access Gtk_Widget_Record'Class;
+      Expand        : Boolean := True;
+      Fill          : Boolean := True;
+      Add_Separator : Boolean := True)
    is
    begin
       --  Add a separator before the given widget if the dialog view already
       --  has children.
-      if Has_Children (Self.Main_Box) then
+      if Add_Separator and then Has_Children (Self.Main_Box) then
          declare
             Sep : Gtk_Separator;
          begin
@@ -114,6 +124,9 @@ package body Dialog_Utils is
       end if;
 
       Self.Main_Box.Pack_Start (Widget, Expand => Expand, Fill => Fill);
+
+      --  Update the number of children
+      Self.Number_Of_Children := Self.Number_Of_Children + 1;
    end Append;
 
    -------------------------
@@ -125,6 +138,7 @@ package body Dialog_Utils is
    begin
       GUI_Utils.Remove_All_Children (Self.Main_Box);
       Self.Children_Map.Clear;
+      Self.Number_Of_Children := 0;
    end Remove_All_Children;
 
    -------------------------
@@ -241,8 +255,20 @@ package body Dialog_Utils is
       Self.Add (Self.Flow_Box);
 
       Self.Parent_View := Dialog_View (Parent_View);
-      Self.Parent_View.Main_Box.Pack_Start (Self, Expand => False);
+      Self.Parent_View.Append
+        (Widget        => Self,
+         Expand        => False,
+         Add_Separator => False);
    end Initialize;
+
+   ----------------------------
+   -- Get_Number_Of_Children --
+   ----------------------------
+
+   function Get_Number_Of_Children
+     (Self : not null access Dialog_Group_Widget_Record'Class) return Natural
+   is
+      (Self.Number_Of_Children);
 
    ----------------
    -- Create_Row --
@@ -337,7 +363,6 @@ package body Dialog_Utils is
       end if;
 
       return Child_Box.Get_Parent;
-
    end Create_Child;
 
    ----------------
@@ -420,6 +445,9 @@ package body Dialog_Utils is
          Self.Parent_View.Children_Map.Insert
            (Child_Key, Widget.Get_Parent);
       end if;
+
+      --  Update the number of children
+      Self.Number_Of_Children := Self.Number_Of_Children + 1;
    end Append_Child;
 
 end Dialog_Utils;
