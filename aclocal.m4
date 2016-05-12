@@ -287,13 +287,11 @@ dnl
   if test "$GNATDRV" = "no" -o ! -f "$GTKADA_PRJ"; then
     no_gtk=yes
   else
-    gtk_major_version=`sed -n 's/version := \"\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)\";/\1/p' $GTKADA_PRJ`
-    gtk_minor_version=`sed -n 's/version := \"\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)\";/\2/p' $GTKADA_PRJ`
+    # Full version number
+    version=`sed -n 's/version := \"\(.*\)\";/\1/p' $GTKADA_PRJ | sed -e 's/w//'`
 
-dnl for now we disable the version check to be compatible with GPL 2015
-dnl so we set with a correct version if not found.
-    if test "$gtk_major_version" = ""; then gtk_major_version=17; fi
-    if test "$gtk_minor_version" = ""; then gtk_minor_version=0; fi
+    gtk_major_version=`echo $version | cut -d. -f1`
+    gtk_minor_version=`echo $version.0 | cut -d. -f2`
 
 dnl
 dnl Now check if the installed GtkAda is sufficiently new.
