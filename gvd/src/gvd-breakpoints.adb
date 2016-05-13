@@ -61,7 +61,8 @@ with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
 with GUI_Utils;                 use GUI_Utils;
-with GVD.Code_Editors;          use GVD, GVD.Code_Editors;
+with GVD;                       use GVD;
+with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Generic_View;          use GVD.Generic_View;
 with GVD.Process;               use GVD.Process;
 with GVD.Types;                 use GVD.Types;
@@ -1472,13 +1473,11 @@ package body GVD.Breakpoints is
          Process   := Get_Process (View);
          Selection := Get_Selection_Index (View);
          if Selection /= -1 then
-            Load_File
-              (Process.Editor_Text,
-               Process.Breakpoints (Selection).File);
-            Set_Line
-              (Process.Editor_Text,
-               Process.Breakpoints (Selection).Line,
-               GObject (Process));
+            --  ??? We should not be changing the current location, just
+            --  showing the editor
+            Process.Editor_Text.Set_Current_File_And_Line
+              (File => Process.Breakpoints (Selection).File,
+               Line => Process.Breakpoints (Selection).Line);
          end if;
       end if;
       return Success;

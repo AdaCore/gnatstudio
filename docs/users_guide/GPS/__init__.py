@@ -2175,6 +2175,18 @@ class Debugger(object):
        GPS.Hook("debugger_process_stopped").add(debugger_stopped)
     """
 
+    current_file = None
+    """
+    A :class:`GPS.File` which indicates the current file for the debugger.
+    This is the place where the debugger stopped, or when the user selected
+    a new frame, the file corresponding to that frame.
+    """
+
+    current_line = 0
+    """
+    The current line. See description of `GPS.Debugger.current_file`.
+    """
+
     def __init__(self):
         """
         It is an error to create a :class:`Debugger` instance

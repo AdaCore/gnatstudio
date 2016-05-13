@@ -161,6 +161,15 @@ package body GVD.Assembly_View is
    package Assembly_View_Event_Cb is
      new Return_Callback (Assembly_View_Record, Boolean);
 
+   type On_Location_Changed is new Debugger_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self     : On_Location_Changed;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class);
+   --  Hook for "debugger_location_changed"
+   --  Highlight frame number Frame based on the current debugger output
+   --  stored in Process.
+
    function Key_Press_Cb
      (View  : access Assembly_View_Record'Class;
       Event : Gdk_Event) return Boolean;
@@ -302,27 +311,29 @@ package body GVD.Assembly_View is
      (View        : Assembly_View;
       Source_Line : Natural) is
    begin
-      if View = null then
-         return;
+      if View /= null then
+         Get_Line_Address
+           (Visual_Debugger (Get_Process (View)).Debugger,
+            Source_Line,
+            View.Source_Line_Start,
+            View.Source_Line_End);
       end if;
-
-      Get_Line_Address
-        (Visual_Debugger (Get_Process (View)).Debugger,
-         Source_Line,
-         View.Source_Line_Start,
-         View.Source_Line_End);
    end Set_Source_Line;
 
-   ---------------------
-   -- Set_Source_Line --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Set_Source_Line
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
-      Line     : Natural) is
+   overriding procedure Execute
+     (Self     : On_Location_Changed;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class)
+   is
+      pragma Unreferenced (Self, Kernel);
+      Process     : constant Visual_Debugger := Visual_Debugger (Debugger);
    begin
-      Set_Source_Line (Get_View (Debugger), Line);
-   end Set_Source_Line;
+      Set_Source_Line (Get_View (Process), Process.Editor_Text.Get_Line);
+   end Execute;
 
    --------------
    -- Set_Text --
@@ -884,7 +895,7 @@ package body GVD.Assembly_View is
          return;
       end if;
 
-      Set_Source_Line (Assembly_View (View), Get_Line (Process.Editor_Text));
+      Set_Source_Line (Assembly_View (View), Process.Editor_Text.Get_Line);
 
       Address_Low := View.Source_Line_Start;
       Address_High := View.Source_Line_End;
@@ -1018,6 +1029,9 @@ package body GVD.Assembly_View is
       Hook := new On_Pref_Changed;
       Hook.View := Assembly_View (Widget);
       Preferences_Changed_Hook.Add (Hook, Watch => Widget);
+
+      Debugger_Location_Changed_Hook.Add
+        (new On_Location_Changed, Watch => Widget);
 
       return Gtk_Widget (Widget.View);
    end Initialize;

@@ -19,13 +19,8 @@
 --  code.
 
 with GPS.Kernel;
-with GVD.Process;
 
 package GVD.Assembly_View is
-
-   procedure Set_Source_Line
-     (Debugger : access GVD.Process.Visual_Debugger_Record'Class;
-      Line     : Natural);
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

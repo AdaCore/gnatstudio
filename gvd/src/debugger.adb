@@ -39,7 +39,6 @@ with Config;                     use Config;
 with GVD;                        use GVD;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Process;                use GVD.Process;
-with GVD.Source_Editor;          use GVD.Source_Editor;
 with GVD.Types;                  use GVD.Types;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Remote;          use GPS.Kernel.Remote;
@@ -565,8 +564,7 @@ package body Debugger is
          if Mode /= Internal
            and then Kind = Execution_Command
          then
-            Unhighlight_Current_Line
-              (Get_Source (Process.Editor_Text), GObject (Process));
+            Process.Editor_Text.Unhighlight_Current_Line;
          end if;
 
          --  Display the command in the output window if necessary

@@ -433,6 +433,14 @@ Classes
 
 
 
+
+   .. autoattribute:: GPS.Debugger.current_file
+
+
+
+   .. autoattribute:: GPS.Debugger.current_line
+
+
    .. automethod:: GPS.Debugger.__init__
 
    .. automethod:: GPS.Debugger.close

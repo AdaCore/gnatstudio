@@ -651,15 +651,16 @@ else:
                     debugger._modeling_map.load(f)
 
         @staticmethod
-        @gps_utils.hook('debugger_process_stopped')
-        def __on_debugger_process_stopped(debugger):
-            ed = GPS.EditorBuffer.get(open=False)
+        @gps_utils.hook('debugger_location_changed')
+        def __on_debugger_location_changed(debugger):
+            """
+            Show the model corresponding to the current editor and line
+            """
+            filename = debugger.current_file.name()
+            line = debugger.current_line
 
-            if ed and hasattr(debugger, '_modeling_map'):
-                view = ed.current_view()
-                filename = ed.file().name()
-                blocks = debugger._modeling_map.get_blocks(
-                    filename, view.cursor().line())
+            if filename and hasattr(debugger, '_modeling_map'):
+                blocks = debugger._modeling_map.get_blocks(filename, line)
                 mdl = debugger._modeling_map.get_mdl_file(filename)
 
                 if mdl:
@@ -677,8 +678,9 @@ else:
 
                         for block in blocks:
                             item = viewer.diags.get_diagram_for_item(block)
-                            viewer.diagram = item[0]
-                            viewer.diagram.select(item[1])
+                            if item:
+                                viewer.diagram = item[0]
+                                viewer.diagram.select(item[1])
 
                     QGEN_Diagram_Viewer.get_or_create(
                         mdl, on_loaded=__on_loaded)

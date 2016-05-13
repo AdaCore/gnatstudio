@@ -349,6 +349,16 @@ class Predefined_Hooks:
       :param GPS.Debugger debugger:
         """
 
+    # debugger_location_changed = 'debugger_location_changed'
+    def debugger_location_changed(name,debugger):
+        """
+      Emitted whenever the debugger reports a new current location, for instance
+      when it stops at a breakpoint, when the user switches frame or thread,...
+
+      :param str name:
+      :param GPS.Debugger debugger:
+        """
+
     # debugger_process_stopped = 'debugger_process_stopped'
     def debugger_process_stopped(name,debugger):
         """

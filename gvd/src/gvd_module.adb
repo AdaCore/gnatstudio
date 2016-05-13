@@ -67,8 +67,6 @@ with GVD.Preferences;           use GVD.Preferences;
 with GVD.Process;               use GVD.Process;
 with GVD.Process_Lists;         use GVD.Process_Lists;
 with GVD.Scripts;               use GVD.Scripts;
-with GVD.Source_Editor.GPS;     use GVD.Source_Editor.GPS;
-with GVD.Source_Editor;         use GVD.Source_Editor;
 with GVD.Types;                 use GVD.Types;
 with Histories;                 use Histories;
 with Language;                  use Language;
@@ -1293,11 +1291,10 @@ package body GVD_Module is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
-      Edit : constant GEdit := GEdit (Get_Source (Process.Editor_Text));
-      Name : constant Virtual_File := Get_Current_File (Edit);
+      Name : constant Virtual_File := Process.Editor_Text.Get_Current_File;
    begin
       if Name /= GNATCOLL.VFS.No_File then
-         Highlight_Current_Line (Edit);
+         Process.Editor_Text.Highlight_Current_Line;
       end if;
       return Commands.Success;
    end Execute;

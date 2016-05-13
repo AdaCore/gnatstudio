@@ -15,16 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GVD.Process;
 with GPS.Kernel;
 
 package GVD.Call_Stack is
-
-   procedure Highlight_Call_Stack_Frame
-     (Process : access GVD.Process.Visual_Debugger_Record'Class);
-   --  Highlight frame number Frame based on the current debugger output
-   --  stored in Process. Nothing is done if Process is not associated with
-   --  a call stack
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

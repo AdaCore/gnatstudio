@@ -139,14 +139,7 @@ package GVD.Process is
       --  This is needed to avoid matching twice the same string and to
       --  optimize the handling of regexp filters.
 
-      Current_File            : GNATCOLL.VFS.Virtual_File;
-      --  The file containing the current location.
-
-      Current_Line            : Integer := 0;
-      --  The current line in Current_File.
-
-      Pc                      : GVD.Types.Address_Type :=
-                                  GVD.Types.Invalid_Address;
+      Pc : GVD.Types.Address_Type := GVD.Types.Invalid_Address;
    end record;
    type Visual_Debugger is access all Visual_Debugger_Record'Class;
 
@@ -325,25 +318,6 @@ package GVD.Process is
    --  emitted to the debugger.
    --  False is returned when there is no such breakpoint in the list (or the
    --  list of breakpoints has never been parsed before).
-
-   ---------------------
-   -- Source location --
-   ---------------------
-
-   procedure Set_Current_Source_Location
-     (Process : access Visual_Debugger_Record;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Line    : Integer);
-   --  Set the source location.
-
-   function Get_Current_Source_File
-     (Process : access Visual_Debugger_Record)
-      return GNATCOLL.VFS.Virtual_File;
-   --  Get the file containing the current location, or "" if there is none.
-
-   function Get_Current_Source_Line
-     (Process : access Visual_Debugger_Record) return Integer;
-   --  Get the current line, or 0 if there is none.
 
 private
 

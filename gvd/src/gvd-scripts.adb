@@ -198,35 +198,45 @@ package body GVD.Scripts is
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          if Process.Current_Command /= null then
-            Set_Return_Value
-              (Data,
-               Breakpoints_Changed
+            Data.Set_Return_Value
+              (Breakpoints_Changed
                  (Process.Debugger, Process.Current_Command.all));
          else
-            Set_Return_Value (Data, False);
+            Data.Set_Return_Value (False);
          end if;
 
       elsif Command = "get_executable" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
-         Set_Return_Value
-           (Data, Create_File
-              (Get_Script (Data), Get_Executable (Process.Debugger)));
+         Data.Set_Return_Value
+           (Create_File (Data.Get_Script, Get_Executable (Process.Debugger)));
 
       elsif Command = "get_num" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
-         Set_Return_Value (Data, Integer (Get_Num (Process)));
+         Data.Set_Return_Value (Integer (Get_Num (Process)));
 
       elsif Command = "is_busy" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
-         Set_Return_Value (Data, Command_In_Process (Process));
+         Data.Set_Return_Value (Command_In_Process (Process));
 
       elsif Command = "close" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Close_Debugger (Process);
+
+      elsif Command = "current_file" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Data.Set_Return_Value
+           (Create_File
+              (Data.Get_Script, Process.Editor_Text.Get_Current_File));
+
+      elsif Command = "current_line" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Data.Set_Return_Value (Process.Editor_Text.Get_Line);
 
       elsif Command = "spawn" then
          declare
@@ -259,76 +269,62 @@ package body GVD.Scripts is
    is
       Class : constant Class_Type := New_Class (Kernel, "Debugger");
    begin
-      Register_Command
-        (Kernel,
-         Constructor_Method,
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Handler      => Shell_Handler'Access,
          Class        => Class);
-      Register_Command
-        (Kernel.Scripts,
-         "get",
+      Kernel.Scripts.Register_Property
+        ("current_file",
+         Class        => Class,
+         Getter       => Shell_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("current_line",
+         Class        => Class,
+         Getter       => Shell_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("get",
          Params       => (1 => Param ("id", Optional => True)),
          Handler      => Shell_Handler'Access,
          Class        => Class,
          Static_Method => True);
-      Register_Command
-        (Kernel.Scripts,
-         "list",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+      Kernel.Scripts.Register_Command
+        ("list",
          Handler      => Shell_Handler'Access,
          Class        => Class,
          Static_Method => True);
-      Register_Command
-        (Kernel.Scripts,
-         "send",
+      Kernel.Scripts.Register_Command
+        ("send",
          Params =>
            (1 => Param ("cmd"),
             2 => Param ("output", Optional => True),
             3 => Param ("show_in_console", Optional => True)),
          Handler      => Shell_Handler'Access,
          Class        => Class);
-      Register_Command
-        (Kernel.Scripts,
-         "non_blocking_send",
+      Kernel.Scripts.Register_Command
+        ("non_blocking_send",
          Params =>
            (1 => Param ("cmd"),
             2 => Param ("output", Optional => True)),
          Handler      => Shell_Handler'Access,
          Class        => Class);
-      Register_Command
-        (Kernel.Scripts,
-         "get_executable",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+      Kernel.Scripts.Register_Command
+        ("get_executable",
          Handler      => Shell_Handler'Access,
          Class        => Class);
-      Register_Command
-        (Kernel.Scripts,
-         "get_num",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+      Kernel.Scripts.Register_Command
+        ("get_num",
          Handler      => Shell_Handler'Access,
          Class        => Class);
-      Register_Command
-        (Kernel.Scripts,
-         "is_busy",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+      Kernel.Scripts.Register_Command
+        ("is_busy",
          Handler      => Shell_Handler'Access,
          Class        => Class);
-      Register_Command
-        (Kernel.Scripts,
-         "close",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+      Kernel.Scripts.Register_Command
+        ("close",
          Handler      => Shell_Handler'Access,
          Class        => Class);
-      Register_Command
-        (Kernel.Scripts,
-         "spawn",
+      Kernel.Scripts.Register_Command
+        ("spawn",
          Params =>
            (1 => Param ("executable"),
             2 => Param ("args", Optional => True),
@@ -337,32 +333,20 @@ package body GVD.Scripts is
          Handler       => Shell_Handler'Access,
          Class         => Class,
          Static_Method => True);
-      Register_Command
-        (Kernel.Scripts,
-         "command",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+      Kernel.Scripts.Register_Command
+        ("command",
          Handler      => Shell_Handler'Access,
          Class        => Class);
-      Register_Command
-        (Kernel.Scripts,
-         "is_exec_command",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+      Kernel.Scripts.Register_Command
+        ("is_exec_command",
          Handler      => Shell_Handler'Access,
          Class        => Class);
-      Register_Command
-        (Kernel.Scripts,
-         "is_context_command",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+      Kernel.Scripts.Register_Command
+        ("is_context_command",
          Handler      => Shell_Handler'Access,
          Class        => Class);
-      Register_Command
-        (Kernel.Scripts,
-         "is_break_command",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+      Kernel.Scripts.Register_Command
+        ("is_break_command",
          Handler      => Shell_Handler'Access,
          Class        => Class);
    end Create_Hooks;

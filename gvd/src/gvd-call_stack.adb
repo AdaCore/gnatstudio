@@ -44,6 +44,7 @@ with Debugger;               use Debugger;
 with Generic_Views;          use Generic_Views;
 with GPS.Debuggers;          use GPS.Debuggers;
 with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
@@ -168,6 +169,15 @@ package body GVD.Call_Stack is
    procedure On_Selection_Changed
      (Object : access Glib.Object.GObject_Record'Class);
    --  Callback for the selection change.
+
+   type On_Location_Changed is new Debugger_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self     : On_Location_Changed;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class);
+   --  Hook for "debugger_location_changed"
+   --  Highlight frame number Frame based on the current debugger output
+   --  stored in Process.
 
    --------------
    -- Get_View --
@@ -378,21 +388,27 @@ package body GVD.Call_Stack is
         (Get_Selection (Widget.Tree), Signal_Changed,
          On_Selection_Changed'Access, Widget);
 
+      Debugger_Location_Changed_Hook.Add
+        (new On_Location_Changed, Watch => Widget);
+
       return Gtk_Widget (Widget.Tree);
    end Initialize;
 
-   --------------------------------
-   -- Highlight_Call_Stack_Frame --
-   --------------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Highlight_Call_Stack_Frame
-     (Process : access GVD.Process.Visual_Debugger_Record'Class)
+   overriding procedure Execute
+     (Self     : On_Location_Changed;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : access Base_Visual_Debugger'Class)
    is
+      pragma Unreferenced (Self, Kernel);
+      Process     : constant Visual_Debugger := Visual_Debugger (Debugger);
       S           : constant Call_Stack := Get_View (Process);
       Frame       : Unbounded_String;
       Frame_Info  : Frame_Info_Type := Location_Not_Found;
       Path        : Gtk_Tree_Path;
-
    begin
       if S /= null then
          Found_Frame_Info
@@ -413,7 +429,7 @@ package body GVD.Call_Stack is
                           -"There is no debug information for this frame.");
          end if;
       end if;
-   end Highlight_Call_Stack_Frame;
+   end Execute;
 
    ---------------------
    -- Register_Module --

@@ -55,13 +55,9 @@ with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Main_Window;            use GPS.Main_Window;
-with GVD.Assembly_View;
-with GVD.Call_Stack;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Consoles;               use GVD.Consoles;
 with GVD.Preferences;            use GVD.Preferences;
-with GVD.Source_Editor;          use GVD.Source_Editor;
-with GVD.Source_Editor.GPS;      use GVD.Source_Editor.GPS;
 with GVD.Types;                  use GVD.Types;
 with GVD_Module;                 use GVD_Module;
 with Language_Handlers;          use Language_Handlers;
@@ -118,19 +114,9 @@ package body GVD.Process is
       Kernel : not null access Kernel_Handle_Record'Class) return Boolean;
    --  Called before exiting
 
-   type On_Pref_Changed is new Preferences_Hooks_Function with record
-      Process : access Visual_Debugger_Record'Class;
-   end record;
-   overriding procedure Execute
-     (Self   : On_Pref_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Preference);
-   --  Called when the preferences have changed
-
    procedure Initialize
      (Process : access Visual_Debugger_Record'Class;
-      Window  : access GPS.Main_Window.GPS_Window_Record'Class;
-      Source  : GVD.Source_Editor.Source_Editor);
+      Window  : access GPS.Main_Window.GPS_Window_Record'Class);
    --  Internal initialize procedure
 
    procedure On_Console_Destroy
@@ -665,36 +651,18 @@ package body GVD.Process is
 
       --  Do we have a file name or line number indication?
 
-      if Length (File) /= 0 then
-         --  Override the language currently defined in the editor
-
-         declare
-            File_Name : constant Virtual_File :=
-              To_Local
-                (Create (+To_String (File),
-                         Get_Nickname (Debug_Server),
-                         Normalize => True));
-         begin
-            Load_File (Process.Editor_Text, File_Name);
-         end;
+      if Length (File) /= 0 and then Line /= 0 then
+         Process.Editor_Text.Set_Current_File_And_Line
+           (File => To_Local
+              (Create (+To_String (File),
+               Get_Nickname (Debug_Server))),
+            Line => Line);
       end if;
-
-      if Line /= 0
-        and then Mode /= Internal
-      then
-         Set_Line (Process.Editor_Text, Line, GObject (Process));
-         Assembly_View.Set_Source_Line (Process, Line);
-      end if;
-
-      --  Change the current assembly source displayed, before updating
-      --  the breakpoints. Otherwise, they won't be correctly updated for the
-      --  newly displayed frame.
-
-      GVD.Call_Stack.Highlight_Call_Stack_Frame (Process);
 
       --  Last step is to update the breakpoints once all the rest has been
       --  set up correctly.
       --  If there is no breakpoint defined, we force an update.
+      --  ??? Should be linked to Debugger_Location_Changed_Hook
 
       if Length (File) /= 0 then
          if Process.Breakpoints = null then
@@ -917,23 +885,13 @@ package body GVD.Process is
 
    procedure Initialize
      (Process : access Visual_Debugger_Record'Class;
-      Window  : access GPS.Main_Window.GPS_Window_Record'Class;
-      Source  : GVD.Source_Editor.Source_Editor) is
+      Window  : access GPS.Main_Window.GPS_Window_Record'Class) is
    begin
       Initialize (Process);
       Ref (Process);
       Process.Kernel := Window.Kernel;
 
-      Gtk_New_Hbox (Process.Editor_Text, Process);
-
-      --  Initialize the code editor.
-      --  This should be done before initializing the debugger, in case the
-      --  debugger outputs a file name that should be displayed in the editor.
-      --  The language of the editor will automatically be set by the output
-      --  filter.
-
-      Configure
-        (Process.Editor_Text, Source, Default_Style.Get_Pref_Font);
+      Gtk_New (Process.Editor_Text, Process.Kernel, Process);
 
       Set_Current_Debugger (Window.Kernel, Process);
       Add_Debugger (Window.Kernel, Process);
@@ -1090,7 +1048,7 @@ package body GVD.Process is
          Free (Process.Breakpoints);
       end if;
 
-      Free_Debug_Info (GEdit (Get_Source (Process.Editor_Text)));
+      Process.Editor_Text.Free_Debug_Info;
 
       Free (Process.Breakpoints);
       Unregister_Dialog (Process);
@@ -1379,55 +1337,6 @@ package body GVD.Process is
       return Gtk_Widget (Process.Debugger_Text);
    end Get_Console;
 
-   ---------------------------------
-   -- Set_Current_Source_Location --
-   ---------------------------------
-
-   procedure Set_Current_Source_Location
-     (Process : access Visual_Debugger_Record;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Line    : Integer) is
-   begin
-      Process.Current_File := File;
-      Process.Current_Line := Line;
-   end Set_Current_Source_Location;
-
-   -----------------------------
-   -- Get_Current_Source_File --
-   -----------------------------
-
-   function Get_Current_Source_File
-     (Process : access Visual_Debugger_Record) return Virtual_File is
-   begin
-      return Process.Current_File;
-   end Get_Current_Source_File;
-
-   -----------------------------
-   -- Get_Current_Source_Line --
-   -----------------------------
-
-   function Get_Current_Source_Line
-     (Process : access Visual_Debugger_Record) return Integer is
-   begin
-      return Process.Current_Line;
-   end Get_Current_Source_Line;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Self   : On_Pref_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Preference)
-   is
-      pragma Unreferenced (Kernel, Pref);
-   begin
-      if Self.Process.Editor_Text /= null then
-         Self.Process.Editor_Text.Preferences_Changed;
-      end if;
-   end Execute;
-
    -------------
    -- Execute --
    -------------
@@ -1462,13 +1371,11 @@ package body GVD.Process is
       Top          : constant GPS_Window :=
                        GPS_Window (Get_Main_Window (Kernel));
       Process      : Visual_Debugger;
-      Edit         : GVD.Source_Editor.GPS.GEdit;
       Program_Args : GNAT.Strings.String_Access;
       Blank_Pos    : Natural;
       Proxy        : Process_Proxy_Access;
       Success      : Boolean;
       Property     : Breakpoint_Property_Record;
-      H            : access On_Pref_Changed;
       Exit_H       : access On_Before_Exit;
 
       function Get_Main return Virtual_File;
@@ -1577,9 +1484,7 @@ package body GVD.Process is
 
    begin
       Process := new Visual_Debugger_Record;
-      GVD.Source_Editor.GPS.Gtk_New (Edit, Top);
-      GVD.Process.Initialize
-        (Process, Top, GVD.Source_Editor.Source_Editor (Edit));
+      GVD.Process.Initialize (Process, Top);
 
       Program_Args := new String'("");
 
@@ -1669,10 +1574,6 @@ package body GVD.Process is
             Load_Breakpoints_From_Property (Process, Property);
          end if;
       end if;
-
-      H := new On_Pref_Changed;
-      H.Process := Process;
-      Preferences_Changed_Hook.Add (H, Watch => Process);
 
       Exit_H := new On_Before_Exit;
       Exit_H.Process := Process;
