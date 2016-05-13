@@ -735,6 +735,20 @@ else:
             viewer.topleft = info['topleft']
             return GPS.MDI.get_by_child(viewer)
 
+        def __contextual_name_for_break_on_block(self, context):
+            debugger = GPS.Debugger.get()
+            it = None
+            if debugger and hasattr(context, "modeling_item"):
+                it = context.modeling_item
+                while it and not hasattr(it, "id"):
+                    it = it.parent
+
+            if it:
+                return 'Debug/Break on block %s' % (
+                    it.id.replace("/", "\\/"), )
+            else:
+                return 'Debug/Break on block'
+
         def setup(self):
             """
             Initialize the support for modeling in GPS.
@@ -756,7 +770,7 @@ else:
 
             gps_utils.make_interactive(
                 name='MDL break debugger on block',
-                contextual='Debug/Break on block',
+                contextual=self.__contextual_name_for_break_on_block,
                 filter=CLI.is_model_block_and_debugger,
                 callback=QGEN_Debugger_Support.set_breakpoint)
 
