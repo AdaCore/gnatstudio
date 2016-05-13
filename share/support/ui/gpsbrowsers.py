@@ -254,15 +254,21 @@ class JSON_Diagram(B.Diagram):
             it = self.__parse_item(o)
             self.add(it)
 
-        for l in d.get('links', []):
-            f = l.get('from')
+        for link in d.get('links', []):
+            # Expand templates first, in case the type is defined there
+            if 'template' in link:
+                JSON_Diagram.merge_template(
+                    link, self.__file.templates[link['template']])
+                del link['template']
+
+            f = link.get('from')
             fitem = self.__items.get(f.get('ref'))
             if not fitem:
                 GPS.Console().write(
                     "Object not found ('%s')\n" % f.get('ref'))
                 continue
 
-            t = l.get('to')
+            t = link.get('to')
             titem = self.__items.get(t.get('ref'))
             if not titem:
                 GPS.Console().write(
@@ -270,8 +276,8 @@ class JSON_Diagram(B.Diagram):
                 continue
 
             label = None
-            if l.get('label'):
-                label = self.__parse_item(l.get('label'))
+            if link.get('label'):
+                label = self.__parse_item(link.get('label'))
 
             fromLabel = None
             if f.get('label'):
@@ -281,11 +287,11 @@ class JSON_Diagram(B.Diagram):
             if t.get('label'):
                 toLabel = self.__parse_item(t.get('label'))
 
-            link = B.Link(
+            browserlink = B.Link(
                 origin=fitem,
                 to=titem,
-                style=self.__file.styles.parse(l.get('style'), 'link'),
-                routing=l.get('route'),
+                style=self.__file.styles.parse(link.get('style'), 'link'),
+                routing=link.get('route'),
                 label=label,
                 fromX=f.get('anchorx'),
                 fromY=f.get('anchory'),
@@ -295,20 +301,21 @@ class JSON_Diagram(B.Diagram):
                 toY=t.get('anchory'),
                 toLabel=toLabel,
                 toSide=f.get("side", B.Link.Side.AUTO))
-            link.id = l.get('id')
+            browserlink.id = link.get('id')
 
-            w = l.get('waypoints')
+            w = link.get('waypoints')
             if w:
                 if isinstance(w, list):
-                    link.set_waypoints(l['waypoints'], relative=False)
+                    browserlink.set_waypoints(
+                        link['waypoints'], relative=False)
                 else:
-                    link.set_waypoints(
+                    browserlink.set_waypoints(
                         w['points'], relative=w.get('relative', False))
 
-            self.add(link)
+            self.add(browserlink)
 
-            if link.id is not None:
-                self.__items[link.id] = link
+            if browserlink.id is not None:
+                self.__items[browserlink.id] = browserlink
 
     @staticmethod
     def merge_template(orig, template):
