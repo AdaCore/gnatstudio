@@ -1442,10 +1442,6 @@ package body Custom_Module is
                Icon_Name => Actual_Icon_Name);
          end;
       elsif Command = "contextual" then
-         Name_Parameters (Data, (2 => Path_Cst'Access,
-                                 3 => Ref_Cst'Access,
-                                 4 => Add_Before_Cst'Access,
-                                 5 => Group_Cst'Access));
          Inst := Nth_Arg (Data, 1, Action_Class);
 
          declare
@@ -1555,11 +1551,13 @@ package body Custom_Module is
          Minimum_Args  => 1,
          Maximum_Args  => 3,
          Handler       => Action_Handler'Access);
-      Register_Command
-        (Kernel, "contextual",
+      Kernel.Scripts.Register_Command
+        ("contextual",
          Class         => Action_Class,
-         Minimum_Args  => 1,
-         Maximum_Args  => 3,
+         Params        => (2 => Param ("path"),
+                           3 => Param ("ref",        Optional => True),
+                           4 => Param ("add_before", Optional => True),
+                           5 => Param ("group",      Optional => True)),
          Handler       => Action_Handler'Access);
       Kernel.Scripts.Register_Command
         ("button",

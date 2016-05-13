@@ -265,11 +265,7 @@ class Action():
 
     def contextual(self, path, ref='', add_before=True, group=0):
         """
-        Create a new contextual menu associated with the command. This
-        function is somewhat of a duplicate of :func:`GPS.Contextual.create`,
-        but with one major difference: the callback for the action is a
-        Python function that takes no argument while the callback for
-        :func:`GPS.Contextual` receives one argument.
+        Create a new contextual menu associated with the action.
 
         :param path: A string or a function(GPS.Context):string, which
            describes the path for the contextual menu.
