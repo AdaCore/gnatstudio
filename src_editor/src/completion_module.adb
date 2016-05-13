@@ -1479,7 +1479,9 @@ package body Completion_Module is
       --  ??? Do we have a way to check whether the character is coming from
       --  user interaction or script ? That would be a better solution.
 
-      if Buffer.Context_Is_Frozen then
+      if Buffer = null
+        or else Buffer.Context_Is_Frozen
+      then
          return;
       end if;
 
