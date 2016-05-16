@@ -210,6 +210,16 @@ KP-62-P309-043 GPS: GNATemu plug-in doesn't use Exec_Dir attribute
 
   Workaround: None.
 
+KP-62-P216-047 GPS: the menu Tools->Metrics does not appear
+
+  Problem:    The menu Tools->Metrics does not appear when the context does
+              not match, ie when the window that currently has the focus
+              does not contain information about an Ada source or a project.
+
+  Status:     This was fixed in 17.0 on 2016-03-29
+
+  Workaround: Give the focus to a graphical element to which the menu applies.
+
 KP-62-P216-002 GPS: Libclang parsing files task not finishing.
 
   Problem:    When working on C/C++ projects, the "libclang parsing files" task
@@ -218,6 +228,16 @@ KP-62-P216-002 GPS: Libclang parsing files task not finishing.
   Status:     This was fixed in 17.0 on 2016-03-20
 
   Workaround: Disable clang crossrefs via the LIBCLANG_XREF trace.
+
+KP-62-P212-014 GPS: Preference "highlight entities" not taken into account
+
+  Problem:    The preference "highlight entities" in the
+              auto_highlight_occurrences plugin is not taken into account,
+              and is considered always enabled.
+
+  Status:     This was fixed in 17.0 on 2016-02-16
+
+  Workaround: None.
 
 KP-62-P211-059 GPS: Wrong sort order of directories in Project View
 
