@@ -52,6 +52,14 @@ NF-17-P403-002 GPS: Home goes to beginning or first-non-blank (2016-04-04)
   first non-blank character of the line). This is a feature available in
   other code editors.
 
+NF-17-P324-010 GPS: Add the possibility to filter switches (2016-04-07)
+
+  Switches defined for a specific tool using XML can now be filtered by
+  specifying a named filter for the 'filter' attribute of a switch tag.
+  These filters can be either predefined in GPS or created by the user
+  (see the <filter> tag in the XML files). Use the GPS.Filter.list
+  static method to list all the registered named filters.
+
 NF-17-P323-017 GPS: speed up search and replace (2016-04-05)
 
   The "search and replace all occurrences" has been sped up by a factor of
