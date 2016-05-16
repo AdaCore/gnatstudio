@@ -482,15 +482,15 @@ class ProcessWrapper(object):
         """
         Called by the user to force the process to end and resolve
         the associated promises.
-        Kill the attached process.
+        Interrupt the attached process.
         """
 
         # get end timestamp
         end_time = time.time()
 
-        # Kill the process, if any
+        # Interrupt the process, if any
         if not self.finished:
-            self.__process.kill()
+            self.__process.interrupt()
 
             if self.__console:
                 self.__console.write(
@@ -500,10 +500,9 @@ class ProcessWrapper(object):
     def __on_console_destroy(self, console):
         """
         Called when the console is being destroyed.
-        Kill the attached process.
+        Interrupt the attached process.
         """
-
-        self.__process.kill()
+        self.__process.interrupt()
         self.finished = True
         self.__console = None
 
