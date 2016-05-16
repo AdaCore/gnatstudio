@@ -960,6 +960,15 @@ KP-62-OA07-003 GPS: Crash when using libclang cross references
   Workaround: Deactivate the libclang xref engine via the LIBCLANG_XREF
               trace
 
+KP-62-O806-012 GPS: save_on_compile plugin doesn't work with aggregate projects
+
+  Problem:    The plugin would assume that the project necessarily had an
+              object dir, which isn't the case for aggregate project.
+
+  Status:     This is fixed in 6.2.1 on 2015-09-04
+
+  Workaround: Save the files manually.
+
 KP-62-O708-028 GNATdoc: Incorrect formatting of text for parameters
 
   Problem:    Trailing lines of description of parameter is generated as source
