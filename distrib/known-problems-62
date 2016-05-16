@@ -208,6 +208,14 @@ KP-62-P211-059 GPS: Wrong sort order of directories in Project View
 
   Workaround: None.
 
+KP-62-P211-035 GPS: Bad performance on C++ projects
+
+  Problem:    All around typing performance in C++ was too slow.
+
+  Status:     This was fixed in 17.0 on 2016-04-07
+
+  Workaround: Disable clang crossrefs via the LIBCLANG_XREF trace.
+
 KP-62-P204-004 GPS: rewind source file on debugger initialization
 
   Problem:    Initialization of debugger session rewind source file to the
