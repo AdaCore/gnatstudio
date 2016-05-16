@@ -20,8 +20,6 @@
 --  to open them.
 --  This package must be instanciated at library-level
 
-with Gdk.Event;
-
 with GPS.Kernel.Modules;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Search;

@@ -52,8 +52,6 @@ with Gtkada.Handlers;                       use Gtkada.Handlers;
 with Dialog_Utils;                          use Dialog_Utils;
 with GPS.Kernel;                            use GPS.Kernel;
 with GPS.Kernel.Custom;                     use GPS.Kernel.Custom;
-with GPS.Kernel.Hooks;                      use GPS.Kernel.Hooks;
-with GPS.Kernel.Preferences;                use GPS.Kernel.Preferences;
 with GPS.Intl;                              use GPS.Intl;
 with GPS.Main_Window;                       use GPS.Main_Window;
 

@@ -17,8 +17,6 @@
 
 with Ada.Strings.Maps.Constants;         use Ada.Strings.Maps.Constants;
 
-with GNATCOLL.VFS;                       use GNATCOLL.VFS;
-
 with Glib;                               use Glib;
 with Gtk.Box;                            use Gtk.Box;
 with Gtk.Cell_Renderer_Pixbuf;           use Gtk.Cell_Renderer_Pixbuf;

@@ -22,7 +22,6 @@ pragma Warnings (On);
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Main_Window;           use GPS.Main_Window;
-with Gtkada.MDI;                use Gtkada.MDI;
 
 package body GPS.Callbacks is
 

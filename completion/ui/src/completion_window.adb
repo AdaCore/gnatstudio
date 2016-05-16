@@ -51,7 +51,6 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Language.Icons;            use Language.Icons;
 with Xref;
 
