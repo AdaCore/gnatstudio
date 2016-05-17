@@ -895,7 +895,7 @@ package body GPS.Kernel.Preferences_Views is
      (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Show_Advanced := Kernel.Get_Preferences.Create_Invisible_Pref
-        (Name    => "show-avanced-preferences",
+        (Name    => "show-advanced-preferences",
          Default => False,
          Label   => "Show advanced preferences",
          Doc     => ("Show the advanced preferences in the preferences editor"
