@@ -24,7 +24,6 @@ with Gdk.Event;              use Gdk.Event;
 with Gdk.Rectangle;          use Gdk.Rectangle;
 with Gdk.Types;              use Gdk.Types;
 with Gtk.Box;                use Gtk.Box;
-with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Label;              use Gtk.Label;
