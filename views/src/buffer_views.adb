@@ -390,13 +390,16 @@ package body Buffer_Views is
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
       Iter2 : Gtk_Tree_Iter;
    begin
+      if Child = null then
+         return;
+      end if;
+
       Trace (Me, "Child_Selected " & Get_Title (Child));
+
       --  If we are in the buffers view, do not show it, since otherwise that
       --  breaks the selection of multiple lines
 
-      if Child /= null
-        and then MDI_Child (Generic_View.Child_From_View (V)) /= Child
-      then
+      if MDI_Child (Generic_View.Child_From_View (V)) /= Child then
          declare
             Selected : constant String := Get_Title (Child);
          begin
