@@ -20,6 +20,7 @@
 --  to open them.
 --  This package must be instanciated at library-level
 
+private with Gdk.Event;
 with GPS.Kernel.Modules;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Search;
@@ -36,7 +37,7 @@ private with GNAT.Strings;
 with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Tool_Item;
-private with Gtk.Tool_Button;
+private with Gtk.Toggle_Tool_Button;
 with Gtk.Widget;
 private with Gtkada.Entry_Completion;
 private with Gtkada.Search_Entry;
@@ -342,10 +343,12 @@ package Generic_Views is
         GPS.Kernel.MDI.Load_Desktop_Function := Load_Desktop'Access;
       --  Support functions for the MDI
 
-      procedure On_Display_Local_Config
-        (View : access Glib.Object.GObject_Record'Class);
+      function On_Display_Local_Config
+        (View : access Glib.Object.GObject_Record'Class;
+         Event : Gdk.Event.Gdk_Event_Button) return Boolean;
       On_Display_Local_Config_Access : constant
-        Gtk.Button.Cb_GObject_Void := On_Display_Local_Config'Access;
+        Gtk.Widget.Cb_GObject_Gdk_Event_Button_Boolean :=
+        On_Display_Local_Config'Access;
       --  Called to display the local config menu
 
       function On_Delete_Event
@@ -411,7 +414,7 @@ private
       Filter  : Filter_Panel;   --  might be null
       Search  : Search_Panel;   --  might be null
 
-      Config  : Gtk.Tool_Button.Gtk_Tool_Button;
+      Config  : Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button;
       Config_Menu : Gtk.Menu.Gtk_Menu;
       --  The button that shows the config menu, and the menu itself
    end record;

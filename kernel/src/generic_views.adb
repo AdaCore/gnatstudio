@@ -31,14 +31,13 @@ with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
 with Gtk.Dialog;              use Gtk.Dialog;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.GEntry;              use Gtk.GEntry;
-with Gtk.Main;                use Gtk.Main;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Style_Context;       use Gtk.Style_Context;
 with Gtk.Radio_Menu_Item;     use Gtk.Radio_Menu_Item;
 with Gtk.Separator_Menu_Item; use Gtk.Separator_Menu_Item;
 with Gtk.Separator_Tool_Item; use Gtk.Separator_Tool_Item;
-with Gtk.Tool_Button;         use Gtk.Tool_Button;
+with Gtk.Toggle_Tool_Button;  use Gtk.Toggle_Tool_Button;
 with Gtk.Tool_Item;           use Gtk.Tool_Item;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Widget;              use Gtk.Widget;
@@ -812,9 +811,7 @@ package body Generic_Views is
    procedure On_Menu_Deactivate (View : access GObject_Record'Class) is
       V  : constant Abstract_View_Access := Abstract_View_Access (View);
    begin
-      V.Config.Get_Child.Set_State_Flags
-        (Gtk_State_Flag_Normal, Clear => True);
-      V.Config_Menu.Destroy;
+      V.Config.Set_Active (False);
       V.Config_Menu := null;
    end On_Menu_Deactivate;
 
@@ -973,8 +970,9 @@ package body Generic_Views is
       -- On_Display_Local_Config --
       -----------------------------
 
-      procedure On_Display_Local_Config
-        (View  : access GObject_Record'Class)
+      function On_Display_Local_Config
+        (View  : access GObject_Record'Class;
+         Event : Gdk_Event_Button) return Boolean
       is
          V     : constant Abstract_View_Access := Abstract_View_Access (View);
          Child : MDI_Child;
@@ -1001,7 +999,7 @@ package body Generic_Views is
                          Action => "unfloat view");
          end if;
 
-         V.Grab_Focus;
+         V.Config_Menu.Attach_To_Widget (V.Config, Detacher => null);
          V.Config_Menu.Show_All;
 
          --  See comments in GUI_Utils.Button_Press_For_Contextual_Menu
@@ -1009,15 +1007,18 @@ package body Generic_Views is
          if Host = Windows then
             Popup (V.Config_Menu,
                    Button        => 1,
-                   Activate_Time => Gtk.Main.Get_Current_Event_Time
+                   Activate_Time => Event.Time
                    + Guint32 ((Clock - Time_Before_Factory) * 1000));
          else
             Popup (V.Config_Menu,
                    Button        => 1,
-                   Activate_Time => Gtk.Main.Get_Current_Event_Time);
+                   Activate_Time => Event.Time);
          end if;
 
          V.Config_Menu.On_Deactivate (On_Menu_Deactivate'Access, V);
+
+         V.Config.Set_Active (True);
+         return True;
       end On_Display_Local_Config;
 
       -----------
@@ -1383,7 +1384,7 @@ package body Generic_Views is
       is
          Box            : Gtk_Box;
          Toolbar        : Gtk_Toolbar;
-         Config         : Gtk_Tool_Button;
+         Config         : Gtk_Toggle_Tool_Button;
       begin
          --  If no local toolbar is needed, either to contain a custom toolbar
          --  or for a local config menu, return View.
@@ -1419,7 +1420,7 @@ package body Generic_Views is
             Config.Set_Name ("local-config");
             Config.Set_Tooltip_Text (-"Configure this panel");
             View.Append_Toolbar (Toolbar, Config, Right_Align => True);
-            Gtk_Button (Config.Get_Child).On_Pressed
+            Gtk_Button (Config.Get_Child).On_Button_Press_Event
               (On_Display_Local_Config_Access, View);
          end if;
 
