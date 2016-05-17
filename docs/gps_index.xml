@@ -22,10 +22,10 @@
    </documentation_file>
 
    <documentation_file>
-      <name>html/users_guide/GPS.html</name>
-      <descr>GPS extensions for Python</descr>
-      <menu>/Help/Python extensions</menu>
-      <category>Scripts</category>
+      <name>html/tutorial/index.html</name>
+      <descr>GNAT Programming Studio Tutorial</descr>
+      <category>GPS</category>
+      <menu>/Help/GPS/Tutorial</menu>
    </documentation_file>
 
    <documentation_file>
@@ -36,10 +36,10 @@
    </documentation_file>
 
    <documentation_file>
-      <name>html/tutorial/index.html</name>
-      <descr>GNAT Programming Studio Tutorial</descr>
-      <category>GPS</category>
-      <menu>/Help/GPS/Tutorial</menu>
+      <name>html/users_guide/GPS.html</name>
+      <descr>GPS extensions for Python</descr>
+      <menu>/Help/GPS/Python extensions</menu>
+      <category>Scripts</category>
    </documentation_file>
 
    <documentation_file>

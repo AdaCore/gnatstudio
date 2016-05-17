@@ -4774,7 +4774,7 @@ If Python support has been enabled, the Python shell is accessible through
 the :guilabel:`Python` window at the bottom of the GPS window. You can also
 display it by using the :menuselection:`Tools --> Consoles --> Python` menu.
 The full documentation on what GPS makes visible through Python is available
-from the :menuselection:`Help --> Python extensions` menu.
+from the :menuselection:`Help --> GPS --> Python extensions` menu.
 
 The same example as shown for the GPS shell follows, now using Python.  As
 you notice, the name of the commands is similar, although they are not run
@@ -5527,8 +5527,8 @@ In particular, GPS comes with pygobject, a Python binding to Gtk+.  Using
 pygobject, you can create your own dialogs and graphical windows using the
 Python capabilities provided by GPS.
 
-See the :menuselection:`Help --> Python Extensions` menu, specifically the
-documentation for :class:`GPS.MDI`, for a sample of code on how to create
+See the :menuselection:`Help --> GPS --> Python Extensions` menu, specifically
+the documentation for :class:`GPS.MDI`, for a sample of code on how to create
 your own graphical interfaces and integrate them with GPS.
 
 .. _Hooks:
@@ -5551,7 +5551,7 @@ define your own commands to be executed in such cases.
 You can find the list of hooks that GPS currently supports by calling the
 :func:`Hook.list` function, which takes no argument and returns a list of
 the names of all hooks.  You can get more advanced description for each
-hook using the :menuselection:`Help --> Python Extensions` menu::
+hook using the :menuselection:`Help --> GPS --> Python Extensions` menu::
 
   GPS> Hook.list
   project_changed
