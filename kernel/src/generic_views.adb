@@ -978,6 +978,10 @@ package body Generic_Views is
          Child : MDI_Child;
          Time_Before_Factory : Time;
       begin
+         if Event.Button /= 1 then
+            return False;
+         end if;
+
          if Host = Windows then
             Time_Before_Factory := Clock;
          end if;
@@ -1420,7 +1424,7 @@ package body Generic_Views is
             Config.Set_Name ("local-config");
             Config.Set_Tooltip_Text (-"Configure this panel");
             View.Append_Toolbar (Toolbar, Config, Right_Align => True);
-            Gtk_Button (Config.Get_Child).On_Button_Press_Event
+            Config.Get_Child.On_Button_Press_Event
               (On_Display_Local_Config_Access, View);
          end if;
 
