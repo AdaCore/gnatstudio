@@ -127,6 +127,27 @@
    </documentation_file>
 
    <documentation_file>
+      <name>binutils.html</name>
+      <descr>Using Binary Utilities (nm, objdump, strip..)</descr>
+      <menu>/Help/GNU Tools/Using Binary Utilities</menu>
+      <category>General</category>
+   </documentation_file>
+
+   <documentation_file>
+      <name>ld.html</name>
+      <descr>Using the Linker</descr>
+      <menu>/Help/GNU Tools/Using the Linker</menu>
+      <category>General</category>
+   </documentation_file>
+
+   <documentation_file>
+      <name>as.html</name>
+      <descr>Using the Assembler</descr>
+      <menu>/Help/GNU Tools/Using the Assembler</menu>
+      <category>General</category>
+   </documentation_file>
+
+   <documentation_file>
       <name>gnatcheck_rm.html</name>
       <descr>GNATcheck Reference Manual - Predefined Rules</descr>
       <menu>/Help/GNAT/GNATcheck Reference Manual - Predefined Rules</menu>
