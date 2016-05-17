@@ -390,16 +390,16 @@ package body Outline_View.Model is
 
          if not (Model.Filter.Flat_View or else Sem_Parent = No_Semantic_Node)
          then
-            --  Place any with-clause into top with-root node
-            if Sem_Node.Category = Cat_With then
-               Parent_Node := Model.Root_With;
-            end if;
-
             Parent_Node := Get_Node (Model, Sem_Parent);
             if Model.Filter.Group_Spec_And_Body and then Parent_Node = null
             then
                Parent_Node := Get_Node_Next_Part (Model, Sem_Parent);
             end if;
+         end if;
+
+         --  Place any with-clause into top with-root node
+         if Sem_Node.Category = Cat_With then
+            Parent_Node := Model.Root_With;
          end if;
 
          if Parent_Node = null then
