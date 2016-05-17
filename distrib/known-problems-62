@@ -53,6 +53,17 @@ KP-62-P415-043 WB: toolchains not set when converting vx6/vx6cert projects
 
   Workaround: Check manually the toolchains used by the project's build specs.
 
+KP-62-P415-035 GB: UI freeze adding watch expression
+
+  Problem:    During a debug session and running "Add Watch Expression" menu,
+              if the cursor or the selection is not pointing to ada variable(s)
+              the UI is freezed. GNATbench process should be killed and
+              restarted.
+
+  Status:     This was fixed in 17.0 on 2016-05-03
+
+  Workaround: None.
+
 KP-62-P412-027 GPS: 'load' command automatically sent to GDB
 
   Problem:    GPS automatically loads the executable being debugged
