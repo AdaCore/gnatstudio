@@ -472,6 +472,10 @@ package body Browsers.Scripts is
          Model.Add (Item);
          Model.Refresh_Layout;
 
+      elsif Command = "changed" then
+         Model := Get_Model (Inst);
+         Model.Refresh_Layout;
+
       elsif Command = "set_selection_mode" then
          Model := Get_Model (Inst);
          Model.Set_Selection_Mode
@@ -1407,6 +1411,7 @@ package body Browsers.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Item : access PText_Record;
+      Text : Text_Item;
    begin
       if Command = Constructor_Method then
          Item := new PText_Record;
@@ -1416,6 +1421,14 @@ package body Browsers.Scripts is
             Directed => Text_Arrow_Direction'Val
               (Data.Nth_Arg (4, Text_Arrow_Direction'Pos (No_Text_Arrow))));
          Item_Proxies.Store_In_Instance (Item.Inst, Data.Nth_Arg (1), Item);
+
+      elsif Command = "text" then
+         Text := Text_Item (Item_Proxies.From_Instance (Data.Nth_Arg (1)));
+         if Data.Number_Of_Arguments = 1 then
+            Data.Set_Return_Value (Text.Get_Text);
+         else
+            Text.Set_Text (Data.Nth_Arg (2));
+         end if;
       end if;
    end Text_Handler;
 
@@ -1495,6 +1508,7 @@ package body Browsers.Scripts is
       Inst, Inst2  : Class_Instance;
       Link  : access Plink_Record;
       Label, Label_From, Label_To : Container_Item;
+      The_Link : Canvas_Link;
    begin
       if Command = Constructor_Method then
          Inst2 := Nth_Arg (Data, L_Label, Allow_Null => True);
@@ -1542,6 +1556,37 @@ package body Browsers.Scripts is
          Canvas_Link (Item_Proxies.From_Instance (Inst)).Set_Waypoints
            (Points   => Points_From_Param (Data, 2),
             Relative => Nth_Arg (Data, 3, False));
+
+      elsif Command = "label" then
+         Inst := Nth_Arg (Data, 1);
+         The_Link := Canvas_Link (Item_Proxies.From_Instance (Inst));
+         if The_Link.Get_Label /= null then
+            Data.Set_Return_Value
+              (Item_Proxies.Get_Or_Create_Instance
+                 (Python_Item_Access (The_Link.Get_Label).Inst_List.all,
+                  Abstract_Item (The_Link), Data.Get_Script));
+         end if;
+
+      elsif Command = "fromLabel" then
+         Inst := Nth_Arg (Data, 1);
+         The_Link := Canvas_Link (Item_Proxies.From_Instance (Inst));
+         if The_Link.Get_Label_From /= null then
+            Data.Set_Return_Value
+              (Item_Proxies.Get_Or_Create_Instance
+                 (Python_Item_Access (The_Link.Get_Label_From).Inst_List.all,
+                  Abstract_Item (The_Link), Data.Get_Script));
+         end if;
+
+      elsif Command = "toLabel" then
+         Inst := Nth_Arg (Data, 1);
+         The_Link := Canvas_Link (Item_Proxies.From_Instance (Inst));
+         if The_Link.Get_Label_To /= null then
+            Data.Set_Return_Value
+              (Item_Proxies.Get_Or_Create_Instance
+                 (Python_Item_Access (The_Link.Get_Label_To).Inst_List.all,
+                  Abstract_Item (The_Link), Data.Get_Script));
+         end if;
+
       end if;
    end Link_Handler;
 
@@ -1630,89 +1675,78 @@ package body Browsers.Scripts is
          Class   => Style_Class,
          Handler => Style_Handler'Access);
 
-      Register_Command
-        (Kernel.Scripts,
-         Constructor_Method,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Class   => Diagram_Class,
          Handler => Diagram_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "add",
+      Kernel.Scripts.Register_Command
+        ("add",
          Params  => (2 => Param ("item")),
          Class   => Diagram_Class,
          Handler => Diagram_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "remove",
+      Kernel.Scripts.Register_Command
+        ("remove",
          Params  => (2 => Param ("item")),
          Class   => Diagram_Class,
          Handler => Diagram_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "clear",
+      Kernel.Scripts.Register_Command
+        ("clear",
          Params  => (2 => Param ("item")),
          Class   => Diagram_Class,
          Handler => Diagram_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "set_selection_mode",
+      Kernel.Scripts.Register_Command
+        ("changed",
+         Class   => Diagram_Class,
+         Handler => Diagram_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("set_selection_mode",
          Params  => (2 => Param ("mode")),
          Class   => Diagram_Class,
          Handler => Diagram_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "is_selected",
+      Kernel.Scripts.Register_Command
+        ("is_selected",
          Params  => (2 => Param ("item")),
          Class   => Diagram_Class,
          Handler => Diagram_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "select",
+      Kernel.Scripts.Register_Command
+        ("select",
          Params  => (2 => Param ("item")),
          Class   => Diagram_Class,
          Handler => Diagram_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "unselect",
+      Kernel.Scripts.Register_Command
+        ("unselect",
          Params  => (2 => Param ("item")),
          Class   => Diagram_Class,
          Handler => Diagram_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "clear_selection",
+      Kernel.Scripts.Register_Command
+        ("clear_selection",
          Class   => Diagram_Class,
          Handler => Diagram_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "raise_item",
+      Kernel.Scripts.Register_Command
+        ("raise_item",
          Params  => (2 => Param ("item")),
          Class   => Diagram_Class,
          Handler => Diagram_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "lower_item",
+      Kernel.Scripts.Register_Command
+        ("lower_item",
          Params  => (2 => Param ("item")),
          Class   => Diagram_Class,
          Handler => Diagram_Handler'Access);
-      Register_Property
-        (Kernel.Scripts,
-         "selected",
+      Kernel.Scripts.Register_Property
+        ("selected",
          Class   => Diagram_Class,
          Getter  => Diagram_Handler'Access);
-      Register_Property
-        (Kernel.Scripts,
-         "items",
+      Kernel.Scripts.Register_Property
+        ("items",
          Class   => Diagram_Class,
          Getter  => Diagram_Handler'Access);
 
-      Register_Command
-        (Kernel.Scripts,
-         Constructor_Method,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Class   => Module.View_Class,
          Handler => View_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "create",
+      Kernel.Scripts.Register_Command
+        ("create",
          Class   => Module.View_Class,
          Params  => (1 => Param ("diagram"),
                      2 => Param ("title"),
@@ -1720,153 +1754,129 @@ package body Browsers.Scripts is
                      4 => Param ("snap_to_grid", Optional => True),
                      5 => Param ("snap_to_guides", Optional => True)),
          Handler => View_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "set_selection_style",
+      Kernel.Scripts.Register_Command
+        ("set_selection_style",
          Params  => (2 => Param ("style")),
          Class   => Module.View_Class,
          Handler => View_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "set_background",
+      Kernel.Scripts.Register_Command
+        ("set_background",
          Params  => (Param ("type"),
                      Param ("style", Optional => True),
                      Param ("size", Optional => True)),
          Class   => Module.View_Class,
          Handler => View_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "scale_to_fit",
+      Kernel.Scripts.Register_Command
+        ("scale_to_fit",
          Params  => (1 => Param ("max_scale", Optional => True)),
          Class   => Module.View_Class,
          Handler => View_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "set_read_only",
+      Kernel.Scripts.Register_Command
+        ("set_read_only",
          Class   => Module.View_Class,
          Params  => (1 => Param ("readonly", Optional => True)),
          Handler => View_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "scroll_into_view",
+      Kernel.Scripts.Register_Command
+        ("scroll_into_view",
          Class   => Module.View_Class,
          Params  => (1 => Param ("item")),
          Handler => View_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "center_on",
+      Kernel.Scripts.Register_Command
+        ("center_on",
          Class   => Module.View_Class,
          Params  => (2 => Param ("point"),
                      3 => Param ("xpos", Optional => True),
                      4 => Param ("ypos", Optional => True)),
          Handler => View_Handler'Access);
 
-      Register_Command
-        (Kernel.Scripts,
-         "export_pdf",
+      Kernel.Scripts.Register_Command
+        ("export_pdf",
          Class   => Module.View_Class,
          Params  => (2 => Param ("filename"),
                      3 => Param ("format", Optional => True),
                      4 => Param ("visible_only", Optional => True)),
          Handler => View_Handler'Access);
-      Register_Property
-        (Kernel.Scripts,
-         "scale",
+      Kernel.Scripts.Register_Property
+        ("scale",
          Class => Module.View_Class,
          Setter => View_Handler'Access,
          Getter => View_Handler'Access);
-      Register_Property
-        (Kernel.Scripts,
-         "topleft",
+      Kernel.Scripts.Register_Property
+        ("topleft",
          Class => Module.View_Class,
          Setter => View_Handler'Access,
          Getter => View_Handler'Access);
-      Register_Property
-        (Kernel.Scripts,
-         "diagram",
+      Kernel.Scripts.Register_Property
+        ("diagram",
          Class => Module.View_Class,
          Setter => View_Handler'Access,
          Getter => View_Handler'Access);
 
-      Register_Command
-        (Kernel.Scripts,
-         Constructor_Method,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Class   => Module.Item_Class,
          Handler => Item_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "set_position",
+      Kernel.Scripts.Register_Command
+        ("set_position",
          Params  => (Param ("x", Optional => True),
                      Param ("y", Optional => True),
                      Param ("anchorx", Optional => True),
                      Param ("anchory", Optional => True)),
          Class   => Module.Item_Class,
          Handler => Item_Handler'Access);
-      Register_Property
-        (Kernel.Scripts,
-         "parent",
+      Kernel.Scripts.Register_Property
+        ("parent",
          Class  => Module.Item_Class,
          Getter => Item_Handler'Access);
-      Register_Property
-        (Kernel.Scripts,
-         "x",
+      Kernel.Scripts.Register_Property
+        ("x",
          Class  => Module.Item_Class,
          Getter => Item_Handler'Access);
-      Register_Property
-        (Kernel.Scripts,
-         "y",
+      Kernel.Scripts.Register_Property
+        ("y",
          Class  => Module.Item_Class,
          Getter => Item_Handler'Access);
-      Register_Property
-        (Kernel.Scripts,
-         "width",
+      Kernel.Scripts.Register_Property
+        ("width",
          Class  => Module.Item_Class,
          Getter => Item_Handler'Access);
-      Register_Property
-        (Kernel.Scripts,
-         "height",
+      Kernel.Scripts.Register_Property
+        ("height",
          Class  => Module.Item_Class,
          Getter => Item_Handler'Access);
-      Register_Property
-        (Kernel.Scripts,
-         "is_link",
+      Kernel.Scripts.Register_Property
+        ("is_link",
          Class => Module.Item_Class,
          Getter => Item_Handler'Access);
-      Register_Property
-        (Kernel.Scripts,
-         "children",
+      Kernel.Scripts.Register_Property
+        ("children",
          Class => Module.Item_Class,
          Getter => Item_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "set_child_layout",
+      Kernel.Scripts.Register_Command
+        ("set_child_layout",
          Params  => (1 => Param ("layout")),
          Class   => Module.Item_Class,
          Handler => Item_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "set_size",
+      Kernel.Scripts.Register_Command
+        ("set_size",
          Params  => (1 => Param ("width", Optional => True),
                      2 => Param ("height", Optional => True)),
          Class   => Module.Item_Class,
          Handler => Item_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "set_width_range",
+      Kernel.Scripts.Register_Command
+        ("set_width_range",
          Params  => (2 => Param ("min",  Optional => True),
                      3 => Param ("max", Optional => True)),
          Class   => Module.Item_Class,
          Handler => Item_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "set_height_range",
+      Kernel.Scripts.Register_Command
+        ("set_height_range",
          Params  => (2 => Param ("min",  Optional => True),
                      3 => Param ("max", Optional => True)),
          Class   => Module.Item_Class,
          Handler => Item_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "add",
+      Kernel.Scripts.Register_Command
+        ("add",
          Params  => (PA_Item     => Param ("item"),
                      PA_Align    => Param ("align", Optional => True),
                      PA_Margin   => Param ("margin", Optional => True),
@@ -1875,9 +1885,8 @@ package body Browsers.Scripts is
          Class   => Module.Item_Class,
          Handler => Item_Handler'Access);
 
-      Register_Command
-        (Kernel.Scripts,
-         Constructor_Method,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Params  => (Param ("style"),
                      Param ("width",  Optional => True),
                      Param ("height", Optional => True),
@@ -1885,18 +1894,16 @@ package body Browsers.Scripts is
          Class   => Rect_Item,
          Handler => Rect_Item_Handler'Access);
 
-      Register_Command
-        (Kernel.Scripts,
-         Constructor_Method,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Params  => (Param ("style"),
                      Param ("width",  Optional => True),
                      Param ("height", Optional => True)),
          Class   => Ellipse_Item,
          Handler => Ellipse_Handler'Access);
 
-      Register_Command
-        (Kernel.Scripts,
-         Constructor_Method,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Params  => (Param ("style"),
                      Param ("points"),
                      Param ("close", Optional => True),
@@ -1904,27 +1911,29 @@ package body Browsers.Scripts is
          Class   => Polyline,
          Handler => Polyline_Handler'Access);
 
-      Register_Command
-        (Kernel.Scripts,
-         Constructor_Method,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Params  => (Param ("style"),
                      Param ("text"),
                      Param ("directed", Optional => True)),
          Class   => Text,
          Handler => Text_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("text",
+         Class   => Text,
+         Getter  => Text_Handler'Access,
+         Setter  => Text_Handler'Access);
 
-      Register_Command
-        (Kernel.Scripts,
-         Constructor_Method,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Params  => (Param ("style"),
                      Param ("text"),
                      Param ("directed", Optional => True)),
          Class   => Editable_Text,
          Handler => Editable_Text_Handler'Access);
 
-      Register_Command
-        (Kernel.Scripts,
-         Constructor_Method,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Params  => (Param ("style"),
                      Param ("filename"),
                      Param ("width", Optional => True),
@@ -1932,17 +1941,15 @@ package body Browsers.Scripts is
          Class   => Image,
          Handler => Image_Handler'Access);
 
-      Register_Command
-        (Kernel.Scripts,
-         Constructor_Method,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Params  => (Param ("style"),
                      Param ("text", Optional => True)),
          Class   => Hr,
          Handler => Hr_Handler'Access);
 
-      Register_Command
-        (Kernel.Scripts,
-         Constructor_Method,
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
          Params  => (L_From       => Param ("origin"),
                      L_To         => Param ("to"),
                      L_Style      => Param ("style"),
@@ -1958,13 +1965,25 @@ package body Browsers.Scripts is
                      L_To_Side    => Param ("toSide",    Optional => True)),
          Class   => Link,
          Handler => Link_Handler'Access);
-      Register_Command
-        (Kernel.Scripts,
-         "set_waypoints",
+      Kernel.Scripts.Register_Command
+        ("set_waypoints",
          Params  => (Param ("points"),
                      Param ("relative", Optional => True)),
          Class   => Link,
          Handler => Link_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("label",
+         Class   => Link,
+         Getter  => Link_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("fromLabel",
+         Class   => Link,
+         Getter  => Link_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("toLabel",
+         Class   => Link,
+         Getter  => Link_Handler'Access);
+
    end Register_Module;
 
 end Browsers.Scripts;

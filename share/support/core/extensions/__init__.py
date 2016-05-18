@@ -7,33 +7,90 @@ import gps_utils
 #########################################
 
 
+class extend_module:
+    """
+    A decorator that should be used on a class.
+    All methods in this class will override the methods for the
+    homonym class in module.
+    For instance:
+
+        @extend_module(GPS)
+        class File:
+            def a_new_method(self):
+                # A new method
+                pass
+
+            @override_gps_method
+            def project(self):
+                # Overrides, but call GPS-exported method
+                return self._internal_project()
+
+    """
+
+    def __init__(self, module):
+        """
+        :type module: The module that contains the class to extend
+        """
+        self.module = module
+
+    def __call__(self, kls):
+        """
+        :type kls: The type to extend
+        """
+        class_name = kls.__name__
+        orig_class = getattr(self.module, class_name, None)
+
+        if not orig_class:
+            setattr(self.module, class_name, kls)
+        else:
+            for name, method in kls.__dict__.iteritems():
+                # Do not override built-in methods
+                if name in ("__module__", "__dict__", "__doc__",
+                            "__weakref__"):
+                    continue
+
+                is_override = hasattr(method, "override_gps_method")
+
+                if not hasattr(orig_class, name):
+                    if is_override:
+                        GPS.Console().write(
+                            "Method %s.%s is not overriding\n" % (
+                                class_name, name))
+                    setattr(orig_class, name, method)
+
+                else:
+                    if not is_override:
+                        GPS.Console().write(
+                            "Method %s.%s is overriding, ignored\n" % (
+                                class_name, name))
+                    else:
+                        # Save the gps internal method (can be useful to call
+                        # it in the new implementation for example)
+
+                        original_method = getattr(orig_class, name)
+                        backup_name = "_internal_" + name
+                        setattr(orig_class, backup_name, original_method)
+
+                        # Add the new method
+                        setattr(orig_class, name, method)
+
+        return kls
+
+
 def extend_gps(kls):
     """
-    :type kls: type
+    Extends classes from the GPS module.
+    See `extend_module` for more information.
     """
-    class_name = kls.__name__
-    gps_class = getattr(GPS, class_name, None)
-
-    if not gps_class:
-        setattr(GPS, class_name, kls)
-    else:
-        for name, method in kls.__dict__.iteritems():
-            if not hasattr(gps_class, name):
-                setattr(gps_class, name, method)
-            elif hasattr(method, "override_gps_method"):
-                # Save the gps internal method (can be useful to call it in the
-                # new implementation for example)
-                original_method = getattr(gps_class, name)
-                backup_name = "_internal_" + name
-                setattr(gps_class, backup_name, original_method)
-
-                # Add the new method
-                setattr(gps_class, name, method)
-
-    return kls
+    return extend_module(GPS)(kls)
 
 
 def override_gps_method(method):
+    """
+    For use with the `extend_module` or `extend_gps` decorators.
+    This should be used on methods that override the ones exported
+    by GPS.
+    """
     method.override_gps_method = True
     return method
 
@@ -219,7 +276,6 @@ class Libclang(object):
 @extend_gps
 class Contextual(object):
 
-    @override_gps_method
     def create(
             self, on_activate, label=None, filter=None, ref='',
             add_before=True,

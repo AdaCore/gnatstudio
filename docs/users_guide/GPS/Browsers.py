@@ -347,6 +347,23 @@ class Item(object):
            be ellipsized if it does not fit in the box.
         """
 
+    def recurse(self):
+        """
+        A generator that returns self and all its child items.
+        For instance:
+
+            for it in item.recurse():
+                ...
+        """
+
+    def get_parent_with_id(self):
+        """
+        Returns either self (if it has an "id" attribute), or its first
+        parent that does. It might return None if nothing is found.
+        Such "id" attributes are in general used to identify items with
+        semantic information, rather than just display purposes.
+        """
+
 
 class RectItem(Item):
     """
@@ -428,6 +445,12 @@ class TextItem(Item):
     TextArrow = enum(
         'TextItem.Text_Arrow', NONE=0, UP=1, DOWN=2, LEFT=3, RIGHT=4)
 
+    text = None
+    """
+    The text to display. This can be modified as needed, but you then need to
+    call `GPS.Browsers.Diagram.changed` to let GPS know of the change.
+    """
+
     def __init__(self, style, text, directed=TextArrow.NONE):
         """
         Creates a new text item
@@ -507,6 +530,24 @@ class Link(object):
     Side = enum('Link.Side',
                 AUTO=0, TOP=1, RIGHT=2, BOTTOM=3, LEFT=4, NO_CLIP=5)
 
+    label = None
+    """
+    Returns a `GPS.Browsers.Item` element (or None) corresponding to
+    the link's label.
+    """
+
+    fromLabel = None
+    """
+    Returns a `GPS.Browsers.Item` element (or None) corresponding to
+    the link's source label.
+    """
+
+    toLabel = None
+    """
+    Returns a `GPS.Browsers.Item` element (or None) corresponding to
+    the link's target label.
+    """
+
     def __init__(
         self,
         origin,
@@ -584,7 +625,14 @@ class Link(object):
 
         :param bool relative: whether the coordinates are relative to
            the previous point, or absolte.
+        """
 
+    def recurse(self):
+        """
+        Returns self and its labels.
+        This matches `GPS.Browsers.Item.recurse`. Note that a label
+        doesn't have self as its parent, so you cannot get back to the
+        link from one of its labels.
         """
 
 
@@ -896,6 +944,14 @@ class Diagram(object):
 
         :param GPS.Browsers.Item item: the item to check
         :return: a boolean
+        """
+
+    def changed(self):
+        """
+        This method should be called whenever the contents of the diagram has
+        changed, or some items have been modified. This will trigger a
+        re-display of the diagram.
+        Not needed when you only added a new item to the diagram.
         """
 
     def clear(self):

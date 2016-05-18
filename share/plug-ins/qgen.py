@@ -570,6 +570,7 @@ class Mapping_File(object):
         self.blocks = {}   # block_id => set([(file,line), (file,line)])
         self.lines = {}    # (file,line) => set([block_id])
         self.files = {}    # sourcefile => mdlfile
+        self.symbols = {}  # block_id => set(symbols)
 
     def load(self, mdlfile):
         """
@@ -598,12 +599,16 @@ class Mapping_File(object):
             self.files[f.name()] = mdlfile
 
             for blockid, blockinfo in blocks.iteritems():
-                for line in blockinfo['lines']:
-                    a = self.blocks.setdefault(blockid, set())
+                a = self.blocks.setdefault(blockid, set())
+                for line in blockinfo.get('lines', []):
                     a.add((f, line))
 
-                    a = self.lines.setdefault((f.name(), line), set())
-                    a.add(blockid)
+                    b = self.lines.setdefault((f.name(), line), set())
+                    b.add(blockid)
+
+                a = self.symbols.setdefault(blockid, set())
+                for symbol in blockinfo.get('symbols', []):
+                    a.add(symbol)
 
     def get_breakpoints(self, blockid):
         """
@@ -611,6 +616,12 @@ class Mapping_File(object):
         remove breakpoints, for a given block.
         """
         return self.blocks.get(blockid, set())
+
+    def get_symbols(self, blockid):
+        """
+        Returns the set of source code symbols (variables) for this block.
+        """
+        return self.symbols.get(blockid, set())
 
     def get_blocks(self, filename, line):
         """
@@ -640,15 +651,123 @@ else:
     class QGEN_Debugger_Support(object):
         """
         Support for interacting with the debugger.
+        Instances of this class are associated with each instance of the
+        debugger.
         """
+
+        def __init__(self, debugger):
+            """
+            Associate self with the debugger, and parse the mapping files
+            """
+            self.debugger = debugger
+            debugger.qgen = self
+
+            self.modeling_map = Mapping_File()
+            for f in GPS.Project.root().sources(recursive=True):
+                if CLI.is_model_file(f):
+                    self.modeling_map.load(f)
 
         @staticmethod
         @gps_utils.hook('debugger_started')
         def __on_debugger_started(debugger):
-            debugger._modeling_map = Mapping_File()
-            for f in GPS.Project.root().sources(recursive=True):
-                if CLI.is_model_file(f):
-                    debugger._modeling_map.load(f)
+            """
+            Associate the new debugger with a QGEN_Debugger_Support instance
+            """
+            QGEN_Debugger_Support(debugger)
+
+        def compute_item_values(self, diagram, toplevel, item):
+            """
+            Recompute the value for all symbols related to item, and update
+            the display of item to show their values.
+            :param (GPS.Browsers.Item|GPS.Browsers.Link) toplevel: the
+               toplevel item (generally a link)
+            :param GPS.Browsers.Item item: the item that has an "auto"
+               property that indicates its value should be displayed.
+            """
+
+            # Find the parent with an id. When item is the label of a link, the
+            # parent will be set to None, so we default to toplevel (the link,
+            # in that case)
+
+            parent = item.get_parent_with_id() or toplevel
+
+            # The list of symbols to compute from the debugger
+
+            symbols = self.modeling_map.get_symbols(blockid=parent.id)
+            if symbols:
+                s = symbols.pop()  # Get the first symbol
+                # Function calls do not have a '/'
+                if '/' in s:
+                    ss = s.split('/')[-1].strip()  # Remove the "context/" part
+
+                    # ??? Should check that the context matches the current
+                    # debugger frame. For now, we assume this is true since the
+                    # diagram corresponds to the current frame.
+
+                    # ??? We are hard-coding a gdb command here
+                    value = self.debugger.send("print %s" % (ss, ))
+                    value = value.split('=')[-1].strip()
+
+                    item.text = value
+
+        def forall_auto_items(self, diagrams):
+            """
+            Return the list of all items with an "auto" property (i.e. whose
+            value should be displayed in the browser).
+            :param diagrams: a sequence of `GPS.Browsers.Diagram`
+            :return: a sequence of tuples (diagram, toplevel_item, item)
+            """
+
+            if diagrams:
+                for d in diagrams:
+                    for item in d.items:
+                        for it in item.recurse():
+                            if hasattr(it, "data") and \
+                               it.data.get('auto') == "true":
+                                yield (d, item, it)
+
+        def __on_viewer_loaded(self, viewer):
+            """
+            Called when a MDL browser needs refreshing.
+            :param QGEN_Diagram_Viewer viewer: the viewer that is now
+               ready. It should contain the list of diagrams.
+            """
+            assert isinstance(viewer, QGEN_Diagram_Viewer)
+
+            filename = self.debugger.current_file.name()
+            line = self.debugger.current_line
+            diags = set()   # All the diagrams to check
+
+            # Unselect items from the previous step
+            viewer.diags.clear_selection()
+
+            # Select the blocks corresponding to the current line
+            for block in self.modeling_map.get_blocks(filename, line):
+                info = viewer.diags.get_diagram_for_item(block)
+                if info:
+                    diagram, item = info
+                    viewer.diagram = diagram  # Change visible diagram
+                    diags.add(diagram)
+                    diagram.select(item)
+
+            # Compute the value for all needed items
+            for diag, toplevel, it in self.forall_auto_items(diags):
+                self.compute_item_values(diag, toplevel=toplevel, item=it)
+
+            # Update the display
+            for d in diags:
+                d.changed()
+
+        def load_current_mdl(self):
+            """
+            Display the MDL diagram for the current file/line
+            """
+            filename = self.debugger.current_file.name()
+            if filename:
+                mdl = self.modeling_map.get_mdl_file(filename)
+                if mdl:
+                    QGEN_Diagram_Viewer.get_or_create(
+                        mdl, on_loaded=self.__on_viewer_loaded)
 
         @staticmethod
         @gps_utils.hook('debugger_location_changed')
@@ -656,34 +775,8 @@ else:
             """
             Show the model corresponding to the current editor and line
             """
-            filename = debugger.current_file.name()
-            line = debugger.current_line
-
-            if filename and hasattr(debugger, '_modeling_map'):
-                blocks = debugger._modeling_map.get_blocks(filename, line)
-                mdl = debugger._modeling_map.get_mdl_file(filename)
-
-                if mdl:
-                    def __on_loaded(viewer):
-                        """
-                        The diagrams have been loaded from the MDL file
-                        """
-                        assert isinstance(viewer, QGEN_Diagram_Viewer)
-
-                        # Unselect items from the previous step
-                        # ??? Should do the same for all open viewers
-                        viewer.diags.clear_selection()
-
-                        # Select the blocks corresponding to the current line
-
-                        for block in blocks:
-                            item = viewer.diags.get_diagram_for_item(block)
-                            if item:
-                                viewer.diagram = item[0]
-                                viewer.diagram.select(item[1])
-
-                    QGEN_Diagram_Viewer.get_or_create(
-                        mdl, on_loaded=__on_loaded)
+            if hasattr(debugger, 'qgen'):
+                debugger.qgen.load_current_mdl()
 
         @staticmethod
         def set_breakpoint():
@@ -692,12 +785,11 @@ else:
             """
             ctx = GPS.contextual_context() or GPS.current_context()
             debug = GPS.Debugger.get()
-            if debug and hasattr(debug, "_modeling_map"):
-                it = ctx.modeling_item
-                while it and not hasattr(it, "id"):
-                    it = it.parent
+            if debug and hasattr(debug, "qgen"):
+                self = debug.qgen
+                it = ctx.modeling_item.get_parent_with_id()
                 if it:
-                    br = debug._modeling_map.get_breakpoints(it.id)
+                    br = self.modeling_map.get_breakpoints(it.id)
                     if br:
                         for b in br:
                             debug.send("break %s:%s" % (b[0], b[1]))
@@ -741,15 +833,11 @@ else:
             debugger = GPS.Debugger.get()
             it = None
             if debugger and hasattr(context, "modeling_item"):
-                it = context.modeling_item
-                while it and not hasattr(it, "id"):
-                    it = it.parent
-
-            if it:
-                return 'Debug/Break on block %s' % (
-                    it.id.replace("/", "\\/"), )
-            else:
-                return 'Debug/Break on block'
+                it = context.modeling_item.get_parent_with_id()
+                if it:
+                    return 'Debug/Break on block %s' % (
+                        it.id.replace("/", "\\/"), )
+            return 'Debug/Break on block'
 
         def setup(self):
             """

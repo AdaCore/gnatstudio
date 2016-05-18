@@ -7,6 +7,7 @@ import GPS
 import GPS.Browsers as B
 import json
 import traceback
+import extensions
 
 
 class Styles(object):
@@ -255,67 +256,8 @@ class JSON_Diagram(B.Diagram):
             self.add(it)
 
         for link in d.get('links', []):
-            # Expand templates first, in case the type is defined there
-            if 'template' in link:
-                JSON_Diagram.merge_template(
-                    link, self.__file.templates[link['template']])
-                del link['template']
-
-            f = link.get('from')
-            fitem = self.__items.get(f.get('ref'))
-            if not fitem:
-                GPS.Console().write(
-                    "Object not found ('%s')\n" % f.get('ref'))
-                continue
-
-            t = link.get('to')
-            titem = self.__items.get(t.get('ref'))
-            if not titem:
-                GPS.Console().write(
-                    "Object not found ('%s')\n" % t.get('ref'))
-                continue
-
-            label = None
-            if link.get('label'):
-                label = self.__parse_item(link.get('label'))
-
-            fromLabel = None
-            if f.get('label'):
-                fromLabel = self.__parse_item(f.get('label'))
-
-            toLabel = None
-            if t.get('label'):
-                toLabel = self.__parse_item(t.get('label'))
-
-            browserlink = B.Link(
-                origin=fitem,
-                to=titem,
-                style=self.__file.styles.parse(link.get('style'), 'link'),
-                routing=link.get('route'),
-                label=label,
-                fromX=f.get('anchorx'),
-                fromY=f.get('anchory'),
-                fromSide=f.get("side", B.Link.Side.AUTO),
-                fromLabel=fromLabel,
-                toX=t.get('anchorx'),
-                toY=t.get('anchory'),
-                toLabel=toLabel,
-                toSide=f.get("side", B.Link.Side.AUTO))
-            browserlink.id = link.get('id')
-
-            w = link.get('waypoints')
-            if w:
-                if isinstance(w, list):
-                    browserlink.set_waypoints(
-                        link['waypoints'], relative=False)
-                else:
-                    browserlink.set_waypoints(
-                        w['points'], relative=w.get('relative', False))
-
+            browserlink = self.__parse_link(link)
             self.add(browserlink)
-
-            if browserlink.id is not None:
-                self.__items[browserlink.id] = browserlink
 
     @staticmethod
     def merge_template(orig, template):
@@ -330,6 +272,74 @@ class JSON_Diagram(B.Diagram):
                 merge_template(o, value)  # recursive merge
             elif isinstance(o, list):
                 o.extend(value)  # add the values
+
+    def __parse_link(self, json):
+        """
+        Create a link from JSON.
+        :param json: the JSON data for the link
+        :return: the GPS.Browsers.Link
+        """
+
+        # Expand templates first, in case the type is defined there
+        if 'template' in json:
+            JSON_Diagram.merge_template(
+                json, self.__file.templates[json['template']])
+            del json['template']
+
+        f = json.get('from')
+        fitem = self.__items.get(f.get('ref'))
+        if not fitem:
+            GPS.Console().write(
+                "Object not found ('%s')\n" % f.get('ref'))
+            return None
+
+        t = json.get('to')
+        titem = self.__items.get(t.get('ref'))
+        if not titem:
+            GPS.Console().write(
+                "Object not found ('%s')\n" % t.get('ref'))
+            return None
+
+        label = None
+        if json.get('label'):
+            label = self.__parse_item(json.get('label'))
+
+        fromLabel = None
+        if f.get('label'):
+            fromLabel = self.__parse_item(f.get('label'))
+
+        toLabel = None
+        if t.get('label'):
+            toLabel = self.__parse_item(t.get('label'))
+
+        browserlink = B.Link(
+            origin=fitem,
+            to=titem,
+            style=self.__file.styles.parse(json.get('style'), 'link'),
+            routing=json.get('route'),
+            label=label,
+            fromX=f.get('anchorx'),
+            fromY=f.get('anchory'),
+            fromSide=f.get("side", B.Link.Side.AUTO),
+            fromLabel=fromLabel,
+            toX=t.get('anchorx'),
+            toY=t.get('anchory'),
+            toLabel=toLabel,
+            toSide=f.get("side", B.Link.Side.AUTO))
+
+        self.__parse_id(browserlink, json)
+        browserlink.data = json.get('data', {})
+
+        w = json.get('waypoints')
+        if w:
+            if isinstance(w, list):
+                browserlink.set_waypoints(
+                    json['waypoints'], relative=False)
+            else:
+                browserlink.set_waypoints(
+                    w['points'], relative=w.get('relative', False))
+
+        return browserlink
 
     def __parse_item(self, json):
         """
@@ -382,14 +392,8 @@ class JSON_Diagram(B.Diagram):
         if json.get('hbox') is not None:
             it.set_child_layout(B.Item.Layout.HORIZONTAL)
 
-        id = json.get('id')
-        if id is not None:
-            it.id = id
-            self.__items[id] = it
-
-        data = json.get('data')
-        if data is not None:
-            it.data = data
+        self.__parse_id(it, json)
+        it.data = json.get('data', {})
 
         for o in json.get('vbox') or json.get('hbox') or []:
             it2 = self.__parse_item(o)
@@ -397,9 +401,9 @@ class JSON_Diagram(B.Diagram):
                 o['type'], {})
 
             margin = o.get('margin', it2_default.get('margin'))
-            if (margin is not None
-                and (isinstance(margin, float)
-                     or isinstance(margin, int))):
+            if (margin is not None and
+                (isinstance(margin, float) or
+                 isinstance(margin, int))):
 
                 margin = [margin, margin, margin, margin]
 
@@ -429,32 +433,85 @@ class JSON_Diagram(B.Diagram):
 
         return it
 
-
-def load_json_file(file, diagramFactory=None):
-    """
-    Load the contents of the JSON file into the specified diagram. See the
-    GPS.Browsers documentation for more information on the format.
-
-    :param file: A file-like object, or a string, the name of the file
-    :return: an instance of JSON_Diagram_File
-    """
-
-    try:
-        if isinstance(file, str):
-            file = open(file)
-
-        return load_json_data(json.load(file), diagramFactory)
-    except Exception as e:
-        GPS.Console().write("Unexpected exception %s\n%s\n" % (
-            e, traceback.format_exc()))
+    def __parse_id(self, item, json):
+        """
+        Check whether an id is defined in json.
+        :param GPS.Browser.Item item: the link or item created from json
+        :param json: the JSON data
+        """
+        id = json.get('id')
+        if id is not None:
+            item.id = id
+            self.__items[id] = item
 
 
-def load_json_data(data, diagramFactory=None):
-    """
-    :return: an instance of JSON_Diagram_File
-    """
-    return JSON_Diagram_File(data, diagramFactory)
+@extensions.extend_module(GPS.Browsers)
+class Item:
+    def recurse(self):
+        """
+        Return self and all its child items.
+        """
+        yield self
+        if self.children:
+            for child in self.children:
+                for it in child.recurse():
+                    yield it
+
+    def get_parent_with_id(self):
+        """
+        Return self if it has an id, or its first parent with an id
+        :return: a `GPS.Browser.Item`
+        """
+        item = self
+        while item and not hasattr(item, "id"):
+            item = item.parent
+        return item
 
 
-B.Diagram.load_json = staticmethod(load_json_file)
-B.Diagram.load_json_data = staticmethod(load_json_data)
+@extensions.extend_module(GPS.Browsers)
+class Link:
+    def recurse(self):
+        """
+        Return self and all its child items.
+        """
+        yield self
+        if self.label:
+            for it in self.label.recurse():
+                yield it
+        if self.fromLabel:
+            for it in self.fromLabel.recurse():
+                yield it
+        if self.toLabel:
+            for it in self.toLabel.recurse():
+                yield it
+
+
+@extensions.extend_module(GPS.Browsers)
+class Diagram:
+
+    @staticmethod
+    def load_json(file, diagramFactory=None):
+        """
+        Load the contents of the JSON file into the specified diagram. See the
+        GPS.Browsers documentation for more information on the format.
+
+        :param file: A file-like object, or a string, the name of the file
+        :return: an instance of JSON_Diagram_File
+        """
+
+        try:
+            if isinstance(file, str):
+                file = open(file)
+
+            return GPS.Browsers.Diagram.load_json_data(
+                json.load(file), diagramFactory)
+        except Exception as e:
+            GPS.Console().write("Unexpected exception %s\n%s\n" % (
+                e, traceback.format_exc()))
+
+    @staticmethod
+    def load_json_data(data, diagramFactory=None):
+        """
+        :return: an instance of JSON_Diagram_File
+        """
+        return JSON_Diagram_File(data, diagramFactory)

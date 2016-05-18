@@ -148,6 +148,10 @@ Classes
 
    .. automethod:: GPS.Browsers.Item.add
 
+   .. automethod:: GPS.Browsers.Item.get_parent_with_id
+
+   .. automethod:: GPS.Browsers.Item.recurse
+
    .. automethod:: GPS.Browsers.Item.set_child_layout
 
    .. automethod:: GPS.Browsers.Item.set_height_range
@@ -173,7 +177,21 @@ Classes
    .. autoattribute:: GPS.Browsers.Link.Side
 
 
+
+   .. autoattribute:: GPS.Browsers.Link.fromLabel
+
+
+
+   .. autoattribute:: GPS.Browsers.Link.label
+
+
+
+   .. autoattribute:: GPS.Browsers.Link.toLabel
+
+
    .. automethod:: GPS.Browsers.Link.__init__
+
+   .. automethod:: GPS.Browsers.Link.recurse
 
    .. automethod:: GPS.Browsers.Link.set_waypoints
 

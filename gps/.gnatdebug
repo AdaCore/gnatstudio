@@ -123,7 +123,7 @@ TERM=no
 PYTHON.TB=no
 
 --  Debug handles related to the debugger
-GVD.OUT=yes
+GVD.OUT=no
 GVD.Process.Verbose=no
 
 REMOTE_FULL=no
@@ -139,3 +139,8 @@ buffer_debug=no
 GPS.KERNEL.MODULES.UI=yes
 
 SQL.SQLITE.GNADE=yes
+
+--  Disable traces for mdl2json (QGen). They interfer with sending the
+--  JSON on stdout
+PREFS=no
+FRONTENDS_Q=no
