@@ -61,7 +61,7 @@ with Ada.Containers.Indefinite_Holders;
 
 package Completion_Window is
 
-   type Smart_Completion_Type is (Disabled, Normal, Dynamic);
+   type Smart_Completion_Type is (Disabled, Manual, Normal, Dynamic);
 
    type Completion_Window_Record is new Gtk_Window_Record with private;
    type Completion_Window_Access is access all Completion_Window_Record'Class;

@@ -1387,6 +1387,10 @@ package body Completion_Module is
       if Lang = null then
          return False;
       elsif Lang = Ada_Lang then
+
+         --  We want to complete only when certain specific tokens that
+         --  indicate certain language constructs precede the current cursor.
+
          if C = ' ' then
             declare
                Exp      : Parsed_Expression;
@@ -1405,8 +1409,7 @@ package body Completion_Module is
                The_Text := new String'(Buffer.Get_Text (Beg, It));
 
                Exp := Parse_Expression_Backward
-                 (The_Text,
-                  String_Index_Type (Get_Byte_Index (It)));
+                 (The_Text, String_Index_Type (Get_Byte_Index (It)));
 
                Ret := Token_List.Length (Exp.Tokens) = 1
                  and then
@@ -1454,7 +1457,8 @@ package body Completion_Module is
 
       Is_Dynamic : constant Boolean :=
         Smart_Completion.Get_Pref = Dynamic
-          and then Lang not in C_Lang | Cpp_Lang;
+        and then Lang not in C_Lang | Cpp_Lang;
+      --  Dynamic mode is disabled in the case of C/C++.
 
       -----------------------------------
       -- Char_Triggers_Auto_Completion --
@@ -1504,9 +1508,7 @@ package body Completion_Module is
             Dummy  : Boolean;
             pragma Unreferenced (Dummy);
          begin
-            if Buffer /= null
-              and then not Buffer.Is_Inserting_Internally
-            then
+            if Buffer /= null and then not Buffer.Is_Inserting_Internally then
                if Char_Triggers_Auto_Completion then
                   --  If we are hitting a completion trigger, remove
                   --  immediately any window that might be present.
@@ -1528,16 +1530,20 @@ package body Completion_Module is
                Dummy := Trigger_Timeout_Callback;
             end if;
          end;
-      else
-         if Char_Triggers_Auto_Completion then
-            Completion_Module.Trigger_Timeout :=
-              Glib.Main.Timeout_Add
-                (Interval =>
-                   Guint (Smart_Completion_Trigger_Timeout.Get_Pref),
-                 Func     => Trigger_Timeout_Callback'Access);
 
-            Completion_Module.Has_Trigger_Timeout := True;
-         end if;
+      --  If we enter here, completion can be either in:
+      --  - Normal mode in Ada
+      --  - Normal or Dynamic in C/C++, which are equivalent.
+      --  It cannot be in Disabled mode because this code isn't even triggered.
+      elsif Smart_Completion.Get_Pref /= Manual
+        and then Char_Triggers_Auto_Completion
+      then
+         Completion_Module.Trigger_Timeout :=
+           Glib.Main.Timeout_Add
+             (Interval => Guint (Smart_Completion_Trigger_Timeout.Get_Pref),
+              Func     => Trigger_Timeout_Callback'Access);
+
+         Completion_Module.Has_Trigger_Timeout := True;
       end if;
 
    exception
@@ -1559,9 +1565,11 @@ package body Completion_Module is
          Label => -"Smart Completion",
          Path  => -"Editor:Smart Completion",
          Doc   =>
-           -("Control the display of smart completion: either on specific"
-             & " key or timeout (""Normal""), or after every key press"
-             & " (""Dynamic"")."),
+           -("Control the display of smart completion:"
+             & """Disabled"" means the feature is entirely disabled."
+             & """Manual"" means only when the user triggers it."
+             & """Normal"" is ""Manual"" + language specific characters."
+             & """Dynamic"" is on very character."),
          Default => Dynamic);
 
       Smart_Completion_Trigger_Timeout := Create
