@@ -5677,6 +5677,16 @@ class File(object):
         """
         pass  # implemented in Ada
 
+    def unit(self):
+        """
+        Return the unit name for this file.
+        For Ada source files, this is the unit name (i.e. the name of the
+        package or the library-level subprogram). For other languages, this
+        function always returns the empty string.
+
+        :return: a string
+        """
+
     def used_by(self):
         """
         Displays in the dependency browser the list of files that depends on

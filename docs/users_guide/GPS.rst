@@ -969,6 +969,8 @@ Classes
 
    .. automethod:: GPS.File.set_property
 
+   .. automethod:: GPS.File.unit
+
    .. automethod:: GPS.File.used_by
 
    .. automethod:: GPS.File.uses
