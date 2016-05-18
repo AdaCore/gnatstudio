@@ -1809,13 +1809,13 @@ class GNATprove_Parser(tool_output.OutputParser):
         reg2 = re.compile(r".* in call inlined at ([\w\.-]+):[0-9]+$")
         reg3 = re.compile(r".* in inherited contract at ([\w\.-]+):[0-9]+$")
 
-        def get_unit_for_message(msg):
-            """Return the unit for a given message, so that extra information
-               for the message will be found in the file unit.spark. For
-               generic instantiations, inlined calls and inherited contracts,
-               this corresponds to the last unit in the chain of locations.
-               Otherwise, this is simply the unit where the message is
-               reported."""
+        def get_compunit_for_message(msg):
+            """Return the compilation unit for a given message, so that extra
+               information for the message will be found in the file
+               unit.spark. For generic instantiations, inlined calls and
+               inherited contracts, this corresponds to the last unit in the
+               chain of locations. Otherwise, this is simply the compilation
+               unit where the message is reported."""
 
             text = msg.get_text()
             m = re.match(reg1, text)
@@ -1826,7 +1826,7 @@ class GNATprove_Parser(tool_output.OutputParser):
             if m:
                 fname = m.group(1)
             else:
-                fname = msg.get_file().name()
+                fname = os.path.basename(msg.get_file().name())
             return os.path.splitext(fname)[0]
 
         objdir = os.path.join(
@@ -1843,7 +1843,7 @@ class GNATprove_Parser(tool_output.OutputParser):
                 m.get_text())
             if text in self.msg_id:
                 id = self.msg_id[text]
-                unit = get_unit_for_message(m)
+                unit = get_compunit_for_message(m)
                 full_id = unit, id
                 if unit not in imported_units:
                     self.parsejson(unit, os.path.join(objdir, unit + ".spark"))
