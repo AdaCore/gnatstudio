@@ -30,7 +30,6 @@ private with Glib.Object;
 with XML_Utils;
 with Gtkada.Handlers;
 with Gtk.Box;
-private with Gtk.Button;
 private with Gtk.Check_Menu_Item;
 private with Gtk.Radio_Menu_Item;
 private with GNAT.Strings;
