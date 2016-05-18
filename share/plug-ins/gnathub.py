@@ -60,7 +60,7 @@ XML = r"""<?xml version="1.0" ?>
 """
 
 
-def on_compilation_finished(self, hook, category,
+def on_compilation_finished(hook, category,
                             target_name="", mode_name="", status=""):
 
     if not status and target_name in ["gnathub"]:
