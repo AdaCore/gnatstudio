@@ -236,6 +236,8 @@ private
 
    type As_Is_Status is (Disabled, Enabled, Sticky_Enabled);
 
+   type Handlers_Array is array (Natural range <>) of Gtk.Handlers.Handler_Id;
+
    type Source_View_Record is new Gtk_Text_View_Record with record
       Project_Path : GNATCOLL.VFS.Virtual_File;
       --  The project that this file is from.
@@ -382,6 +384,8 @@ private
       --  to be changed.
 
       Extend_Selection             : Boolean := False;
+
+      Source_Buffer_Handlers : Handlers_Array (1 .. 6);
    end record;
 
 end Src_Editor_View;

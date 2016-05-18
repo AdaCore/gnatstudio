@@ -1384,6 +1384,19 @@ package body Src_Editor_View is
       V : constant Source_View := Source_View (View);
    begin
       Trace (Me, "Source_View is being destroyed");
+
+      --  The buffer might outlive the view: deregister all callbacks to this
+      --  view, since it is being destroyed. Otherwise the call to
+      --  Register_View below could lead to, for instance, a mark being set
+      --  or the cursor location changing, and the registered callbacks would
+      --  access the view data.
+
+      for J in V.Source_Buffer_Handlers'Range loop
+         Gtk.Handlers.Disconnect
+           (Get_Buffer (V),
+            V.Source_Buffer_Handlers (J));
+      end loop;
+
       Register_View (Source_Buffer (Get_Buffer (V)), Add => False);
    end On_Destroy;
 
@@ -1572,41 +1585,42 @@ package body Src_Editor_View is
          Widget_Callback.To_Marshaller (Paste_Clipboard_Before'Access),
          After => False);
 
-      Source_Buffer_Callback.Connect
-        (Buffer, Signal_Cursor_Position_Changed,
-         Cb        => Cursor_Position_Changed'Access,
-         User_Data => Source_View (View),
-         After     => True);
+      View.Source_Buffer_Handlers :=
+        (Source_Buffer_Callback.Connect
+           (Buffer, Signal_Cursor_Position_Changed,
+            Cb        => Cursor_Position_Changed'Access,
+            User_Data => Source_View (View),
+            After     => True),
 
-      Source_Buffer_Callback.Connect
-        (Buffer, Signal_Mark_Set,
-         Cb        => On_Mark_Set'Access,
-         User_Data => Source_View (View),
-         After     => True);
+         Source_Buffer_Callback.Connect
+           (Buffer, Signal_Mark_Set,
+            Cb        => On_Mark_Set'Access,
+            User_Data => Source_View (View),
+            After     => True),
 
-      Source_Buffer_Callback.Connect
-        (Buffer, Signal_Side_Column_Changed,
-         Cb        => Side_Columns_Change_Handler'Access,
-         User_Data => Source_View (View),
-         After     => True);
+         Source_Buffer_Callback.Connect
+           (Buffer, Signal_Side_Column_Changed,
+            Cb        => Side_Columns_Change_Handler'Access,
+            User_Data => Source_View (View),
+            After     => True),
 
-      Source_Buffer_Callback.Connect
-        (Buffer, Signal_Side_Column_Configuration_Changed,
-         Cb        => Side_Columns_Config_Change_Handler'Access,
-         User_Data => Source_View (View),
-         After     => True);
+         Source_Buffer_Callback.Connect
+           (Buffer, Signal_Side_Column_Configuration_Changed,
+            Cb        => Side_Columns_Config_Change_Handler'Access,
+            User_Data => Source_View (View),
+            After     => True),
 
-      Source_Buffer_Callback.Connect
-        (Buffer, Signal_Buffer_Information_Changed,
-         Cb        => Buffer_Information_Change_Handler'Access,
-         User_Data => Source_View (View),
-         After     => True);
+         Source_Buffer_Callback.Connect
+           (Buffer, Signal_Buffer_Information_Changed,
+            Cb        => Buffer_Information_Change_Handler'Access,
+            User_Data => Source_View (View),
+            After     => True),
 
-      Source_Buffer_Callback.Connect
-        (Buffer, Signal_Line_Highlights_Changed,
-         Cb        => Line_Highlight_Change_Handler'Access,
-         User_Data => Source_View (View),
-         After     => True);
+         Source_Buffer_Callback.Connect
+           (Buffer, Signal_Line_Highlights_Changed,
+            Cb        => Line_Highlight_Change_Handler'Access,
+            User_Data => Source_View (View),
+            After     => True));
 
       Gtkada.Handlers.Return_Callback.Connect
         (View,
