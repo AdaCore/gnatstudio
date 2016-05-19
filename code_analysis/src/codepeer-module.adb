@@ -1284,11 +1284,9 @@ package body CodePeer.Module is
    is
       pragma Unreferenced (Self);
    begin
-      --  Load the default perspective before closing the report view. This
-      --  is necessary because the position of views is memorized at this
-      --  time: if views are closed before the perspective change, their
-      --  position is lost.
-      Load_Perspective (Kernel, "Default");
+      if Save_Desktop_On_Exit.Get_Pref then
+         Save_Desktop (Kernel, "Default");
+      end if;
 
       --  Destroy report window
 

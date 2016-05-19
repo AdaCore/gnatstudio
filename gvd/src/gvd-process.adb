@@ -51,6 +51,7 @@ with GPS.Properties;             use GPS.Properties;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Main_Window;            use GPS.Main_Window;
@@ -1342,10 +1343,12 @@ package body GVD.Process is
 
    overriding function Execute
      (Self   : On_Before_Exit;
-      Kernel : not null access Kernel_Handle_Record'Class) return Boolean
-   is
-      pragma Unreferenced (Kernel);
+      Kernel : not null access Kernel_Handle_Record'Class) return Boolean is
    begin
+      if Save_Desktop_On_Exit.Get_Pref then
+         Save_Desktop (Kernel, "Default");
+      end if;
+
       --  Close the debugger immediately when receiving the "before exit"
       --  action hook. This is needed so that the perspective can be saved
       --  and the default perspective can be reset before the main window

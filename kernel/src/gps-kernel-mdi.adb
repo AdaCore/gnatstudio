@@ -1050,7 +1050,11 @@ package body GPS.Kernel.MDI is
    -- Save_Desktop --
    ------------------
 
-   procedure Save_Desktop (Handle : access Kernel_Handle_Record'Class) is
+   procedure Save_Desktop
+     (Handle              : access Kernel_Handle_Record'Class;
+      Desktop_Perspective : String := "")
+   is
+
       function Get_Project_Name return Virtual_File;
       --  Return the project name to match in the file
 
@@ -1082,6 +1086,10 @@ package body GPS.Kernel.MDI is
       Perspectives, Central : Glib.Xml_Int.Node_Ptr;
       Perspectives_Convert, Central_Convert : Node_Ptr;
    begin
+      if UI_Module.Desktop_Saved then
+         return;
+      end if;
+
       --  Read the previous contents of the file, to save the desktops for
       --  other projects
 
@@ -1120,6 +1128,13 @@ package body GPS.Kernel.MDI is
       else
          Central_Convert := XML_Utils.GtkAda.Convert (Central);
          Add_File_Child (Central_Convert, "project", Project_Name);
+      end if;
+
+      if Central_Convert /= null
+        and then Desktop_Perspective /= ""
+      then
+         Set_Attribute (Central_Convert, "perspective", Desktop_Perspective);
+         UI_Module.Desktop_Saved := True;
       end if;
 
       --  Traverse old, and replace the perspectives node with the new one.

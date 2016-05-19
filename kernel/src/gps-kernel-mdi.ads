@@ -42,7 +42,7 @@ with Gtkada.MDI;            use Gtkada.MDI;
 
 package GPS.Kernel.MDI is
 
-   type General_UI_Module_Record is new Module_ID_Record with null record;
+   type General_UI_Module_Record is new Module_ID_Record with private;
    type General_UI_Module is access all General_UI_Module_Record'Class;
 
    overriding function Bookmark_Handler
@@ -85,8 +85,14 @@ package GPS.Kernel.MDI is
    --  if the default desktop is used.
 
    procedure Save_Desktop
-     (Handle : access Kernel_Handle_Record'Class);
+     (Handle              : access Kernel_Handle_Record'Class;
+      Desktop_Perspective : String := "");
    --  Save the current desktop.
+   --  Current perspective will be replaced to passed in parameter in
+   --  XML file and will be used as first perspective when GPS starts
+   --  next time. This does not modify perspective for current session.
+   --  Next attempts to call this procedure will do nothing if
+   --  Desktop_Perspective is set.
 
    function Load_Desktop
      (Handle      : access Kernel_Handle_Record'Class;
@@ -482,6 +488,11 @@ package GPS.Kernel.MDI is
    --  Generic callback that can be used to connect a signal to a kernel
 
 private
+
+   type General_UI_Module_Record is new Module_ID_Record with record
+      Desktop_Saved : Boolean := False;
+      --  Control whether desktop already saved and no more needed to save it
+   end record;
 
    type Monitored_File is record
       File      : GNATCOLL.VFS.Virtual_File;
