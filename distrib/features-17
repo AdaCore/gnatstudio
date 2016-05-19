@@ -52,6 +52,16 @@ NF-17-P403-002 GPS: Home goes to beginning or first-non-blank (2016-04-04)
   first non-blank character of the line). This is a feature available in
   other code editors.
 
+NF-17-P330-028 GPS: Integration with QGen (2016-05-18)
+
+  GPS now provides a convenient interface to QGen, the code generator
+  for Simulink models. This includes: displaying graphically the diagrams
+  from MDL files (read-only), toolbar buttons to easily generate code then
+  build (and optionally then debug), tight integration with the debugger
+  so that whenever the debugger stops, GPS highlights the current block
+  in the diagram, adds contextual menus to easily break on specific
+  blocks, and shows the current value of signals.
+
 NF-17-P324-010 GPS: Add the possibility to filter switches (2016-04-07)
 
   Switches defined for a specific tool using XML can now be filtered by
