@@ -35,6 +35,17 @@ KP-62-P513-042 GPS: With clauses not shown properly in outline
 
   Workaround: None.
 
+KP-62-P429-023 GPS: renaming entity also change 'renames' statements
+
+  Problem:    When an Ada entity is declared as a renaming of another one
+              ("procedure A renames Pkg.A") and you use the code refactoring
+              to rename the first A, then GPS also renames the second A
+              entity above.
+
+  Status:     This was fixed in 17.0 on 2016-05-10
+
+  Workaround: Rename the first A, then rename the second A back to "A".
+
 KP-62-P422-012 GPS: segfaults on very long identifiers
 
   Problem:    Identifiers with more than 256 characters could
