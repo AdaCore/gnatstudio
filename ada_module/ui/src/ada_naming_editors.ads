@@ -15,19 +15,31 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.GEntry;
-with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
-with GPS.Kernel;               use GPS.Kernel;
-with GNATCOLL.Projects;        use GNATCOLL.Projects;
+with GNATCOLL.Projects;  use GNATCOLL.Projects;
 with GNAT.Strings;
-with Project_Viewers;          use Project_Viewers;
+
+with Gtk;                use Gtk;
+with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
+with Gtk.Label;          use Gtk.Label;
+with Gtk.Tree_Store;     use Gtk.Tree_Store;
+with Gtk.Tree_View;      use Gtk.Tree_View;
+
+with Dialog_Utils;       use Dialog_Utils;
+with GPS.Kernel;         use GPS.Kernel;
+with Project_Viewers;    use Project_Viewers;
 
 package Ada_Naming_Editors is
+
+   -----------------------
+   -- Ada Naming Editor --
+   -----------------------
 
    type Ada_Naming_Editor_Record is
      new Project_Editor_Page_Record
        (Flags => Multiple_Projects or Multiple_Scenarios) with private;
    type Ada_Naming_Editor is access all Ada_Naming_Editor_Record'Class;
+   --  Type used to create the 'Naming/Ada' page in the project properties
+   --  editor.
 
    overriding procedure Initialize
      (Self         : not null access Ada_Naming_Editor_Record;
@@ -40,52 +52,25 @@ package Ada_Naming_Editors is
       Kernel             : not null access Kernel_Handle_Record'Class;
       Languages          : GNAT.Strings.String_List;
       Scenario_Variables : Scenario_Variable_Array) return Boolean;
-   overriding procedure Destroy (Self : in out Ada_Naming_Editor_Record);
    overriding function Is_Visible
      (Self      : not null access Ada_Naming_Editor_Record;
       Languages : GNAT.Strings.String_List) return Boolean;
 
-   ---------------
-   -- Callbacks --
-   ---------------
-   --  The following subprograms are meant to be used only as callbacks for
-   --  the GUI, and shouldn't be called directly.
-
-   procedure Set_Predefined_Scheme
-     (Editor : access Naming_Scheme_Editor_Record'Class;
-      Scheme_Num : Natural);
-   --  Changes all the fields in the GUI to the specified predefined scheme.
-   --  The definition for Scheme_Num depends on the order of the entries in
-   --  the combo box.
-
-   procedure Add_New_Exception
-     (Editor : access Naming_Scheme_Editor_Record'Class);
-   --  Define a new exception based on the contents of the fields.
-   --  If the unit name is the name of a unit already in the exceptions list,
-   --  it is replaced.
-
-   procedure Reset_Exception_Fields
-     (Editor : access Naming_Scheme_Editor_Record'Class;
-      Field  : Gtk.GEntry.Gtk_Entry := null);
-   --  Put a default value in the entry fields for the exceptions. These
-   --  values are used to provide help to the user.
-   --  If Field is null, all fields are reset, otherwise only a specific one
-   --  is.
-
-   procedure Clear_Unit_Name
-     (Editor : access Naming_Scheme_Editor_Record'Class);
-   procedure Clear_Spec_Name
-     (Editor : access Naming_Scheme_Editor_Record'Class);
-   procedure Clear_Body_Name
-     (Editor : access Naming_Scheme_Editor_Record'Class);
-   --  Remove the text in one of the exception fields if it contains the
-   --  default help value
-
 private
+
    type Ada_Naming_Editor_Record is
      new Project_Editor_Page_Record
        (Flags => Multiple_Projects or Multiple_Scenarios)
    with record
-      GUI : Naming_Scheme_Editor_Access;
+      Standard_Scheme           : Gtk_Combo_Box_Text;
+      Spec_Extension            : Gtk_Combo_Box_Text;
+      Body_Extension            : Gtk_Combo_Box_Text;
+      Separate_Extension        : Gtk_Combo_Box_Text;
+      Dot_Replacement           : Gtk_Combo_Box_Text;
+      Label_Casing              : Gtk_Label;
+      Casing                    : Gtk_Combo_Box_Text;
+      Exception_List_View       : Dialog_View_With_Button_Box;
+      Exception_List            : Gtk.Tree_View.Gtk_Tree_View;
+      Exception_List_Model      : Gtk.Tree_Store.Gtk_Tree_Store;
    end record;
 end Ada_Naming_Editors;

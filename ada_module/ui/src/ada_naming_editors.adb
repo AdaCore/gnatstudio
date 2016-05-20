@@ -15,41 +15,52 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
+with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;             use GNAT.Strings;
-with GNATCOLL.Utils;           use GNATCOLL.Utils;
-with System;                   use System;
+with GNAT.Strings;               use GNAT.Strings;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with System;                     use System;
 
-with Glib;                     use Glib;
-with Glib.Object;              use Glib.Object;
-with Glib.Values;
-with Glib_Values_Utils;        use Glib_Values_Utils;
+with Glib;                       use Glib;
+with Glib.Object;                use Glib.Object;
 
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Combo_Box_Text;       use Gtk.Combo_Box_Text;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.GEntry;               use Gtk.GEntry;
-with Gtk.List_Store;           use Gtk.List_Store;
-with Gtk.Size_Group;           use Gtk.Size_Group;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Tree_View;            use Gtk.Tree_View;
-with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.Handlers;            use Gtkada.Handlers;
+with Gtk.Button;                 use Gtk.Button;
+with Gtk.Combo_Box;              use Gtk.Combo_Box;
+with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
+with Gtk.List_Store;             use Gtk.List_Store;
+with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Tree_Model;             use Gtk.Tree_Model;
+with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
+with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
+with Gtk.Widget;                 use Gtk.Widget;
 
-with Dialog_Utils;             use Dialog_Utils;
-with GPR;                      use GPR;
-with GPS.Intl;                 use GPS.Intl;
-with GUI_Utils;                use GUI_Utils;
-
+with GPR;                        use GPR;
+with GPS.Intl;                   use GPS.Intl;
+with GUI_Utils;                  use GUI_Utils;
 with String_Hash;
 
 package body Ada_Naming_Editors is
 
-   Empty_Unit_Name : constant String := "<unit_name>";
-   Empty_Spec_Name : constant String := "<spec_file> [<at index>]";
-   Empty_Body_Name : constant String := "<body_file> [<at index>]";
+   Unit_Column     : constant := 0;
+   --  Column where the unit name of the naming exception is stored
+
+   Spec_Column     : constant := 1;
+   --  Column where the spec name of the naming exception is stored
+
+   Body_Column     : constant := 2;
+   --  Column where the body name of the naming exception is stored
+
+   Editable_Column : constant := 3;
+   --  Column indicating if the given row is editable
+
+   Exception_List_Column_Types : constant GType_Array :=
+                                   (Unit_Column     => GType_String,
+                                    Spec_Column     => GType_String,
+                                    Body_Column     => GType_String,
+                                    Editable_Column => GType_Boolean);
+   --  Column types used for the naming exceptions list tree view
 
    Default_Gnat_Dot_Replacement : constant String := "-";
    Default_Gnat_Spec_Suffix     : constant String := ".ads";
@@ -61,6 +72,35 @@ package body Ada_Naming_Editors is
    Apex_Naming_Scheme   : constant := 1;
    Dec_Naming_Scheme    : constant := 2;
    Custom_Naming_Scheme : constant := 3;
+   --  Indexes of the predefined naming schemes combo choices
+
+   Empty_Unit_Name : constant String := "<unit_name>";
+   Empty_Spec_Name : constant String := "<spec_file> [<at index>]";
+   Empty_Body_Name : constant String := "<body_file> [<at index>]";
+   --  Used to fill newly created rows of the naming exceptions list tree view
+
+   procedure On_Add_Naming_Exception
+     (Self : access Glib.Object.GObject_Record'Class);
+   --  Called when clicking on the '+' button of the exception list view
+
+   procedure On_Remove_Naming_Exception
+     (Self : access Glib.Object.GObject_Record'Class);
+   --  Called when clicking on the '-' button of the exception list view
+
+   procedure On_Standard_Scheme_Changed
+     (Object : access Gtk_Widget_Record'Class);
+   --  Called when the standard naming cheme has changed
+
+   procedure Customized
+     (Object : access Gtk_Widget_Record'Class);
+   --  Called when a specific naming scheme option has changed
+
+   procedure Set_Predefined_Scheme
+     (Editor     : access Ada_Naming_Editor_Record'Class;
+      Scheme_Num : Natural);
+   --  Changes all the fields in the GUI to the specified predefined scheme.
+   --  The definition for Scheme_Num depends on the order of the entries in
+   --  the combo box.
 
    procedure Show_Project_Settings
      (Editor             : access Ada_Naming_Editor_Record'Class;
@@ -83,6 +123,106 @@ package body Ada_Naming_Editors is
       Free_Data => Free,
       Null_Ptr  => null);
    use Naming_Hash.String_Hash_Table;
+
+   -----------------------------
+   -- On_Add_Naming_Exception --
+   -----------------------------
+
+   procedure On_Add_Naming_Exception
+     (Self : access Glib.Object.GObject_Record'Class)
+   is
+      Editor   : constant Ada_Naming_Editor := Ada_Naming_Editor (Self);
+      New_Iter : Gtk_Tree_Iter;
+   begin
+      Editor.Exception_List_Model.Append (New_Iter, Parent => Null_Iter);
+
+      Editor.Exception_List_Model.Set
+        (New_Iter,
+         Column => Unit_Column,
+         Value  => Empty_Unit_Name);
+      Editor.Exception_List_Model.Set
+        (New_Iter,
+         Column => Spec_Column,
+         Value  => Empty_Spec_Name);
+      Editor.Exception_List_Model.Set
+        (New_Iter,
+         Column => Body_Column,
+         Value  => Empty_Body_Name);
+      Editor.Exception_List_Model.Set
+        (New_Iter,
+         Column => Editable_Column,
+         Value  => True);
+
+      Editor.Exception_List.Scroll_To_Cell
+        (Get_Path (Editor.Exception_List_Model, New_Iter),
+         Column    => Get_Column (Editor.Exception_List, Unit_Column),
+         Use_Align => False,
+         Row_Align => 0.0,
+         Col_Align => 0.0);
+      Editor.Exception_List.Set_Cursor_On_Cell
+        (Get_Path (Editor.Exception_List_Model, New_Iter),
+         Focus_Column  => Get_Column (Editor.Exception_List, Unit_Column),
+         Focus_Cell    => null,
+         Start_Editing => True);
+   end On_Add_Naming_Exception;
+
+   --------------------------------
+   -- On_Remove_Naming_Exception --
+   --------------------------------
+
+   procedure On_Remove_Naming_Exception
+     (Self : access Glib.Object.GObject_Record'Class)
+   is
+      Editor : constant Ada_Naming_Editor := Ada_Naming_Editor (Self);
+      Model  : Gtk_Tree_Model;
+      Iter   : Gtk_Tree_Iter;
+   begin
+      Get_Selected (Get_Selection (Editor.Exception_List), Model, Iter);
+
+      if Iter /= Null_Iter then
+         Editor.Exception_List_Model.Remove (Iter);
+      end if;
+   end On_Remove_Naming_Exception;
+
+   --------------------------------
+   -- On_Standard_Scheme_Changed --
+   --------------------------------
+
+   procedure On_Standard_Scheme_Changed
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      use Widget_List;
+
+      E     : constant Ada_Naming_Editor := Ada_Naming_Editor (Object);
+      Value : Gint;
+
+   begin
+      if Get_Active_Iter (E.Standard_Scheme) /= Null_Iter then
+         Value := Get_Active (E.Standard_Scheme);
+
+         if Value /= Custom_Naming_Scheme then
+            Set_Predefined_Scheme (E, Natural (Value));
+
+            --  Restore the contents of the standard scheme buttons, that has
+            --  been changed through callbacks when the changed the contents of
+            --  the GUI.
+
+            Set_Active (E.Standard_Scheme, Value);
+         end if;
+      end if;
+   end On_Standard_Scheme_Changed;
+
+   ----------------
+   -- Customized --
+   ----------------
+
+   procedure Customized
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      E : constant Ada_Naming_Editor := Ada_Naming_Editor (Object);
+   begin
+      Set_Active (E.Standard_Scheme, Custom_Naming_Scheme);
+   end Customized;
 
    ----------
    -- Free --
@@ -109,67 +249,230 @@ package body Ada_Naming_Editors is
       Read_Only    : Boolean;
       Project      : Project_Type := GNATCOLL.Projects.No_Project)
    is
-      Size_Group   : Gtk_Size_Group;
-      Idx          : Gint := 0;
+      Idx : Gint := 0;
+      Group_Widget : Dialog_Group_Widget;
+      Button       : Gtk_Button;
+      Col_Number   : Gint;
+
+      procedure Create_Naming_Scheme_Combo
+        (Combo      : out Gtk_Combo_Box_Text;
+         Label      : String;
+         Values     : Unbounded_String_Array;
+         Default    : Gint := 0;
+         Doc        : String := "";
+         With_Entry : Boolean := True;
+         Changed_Cb : Widget_Callback.Simple_Handler := Customized'Access);
+      --  Create a combo widget with the given Label and using Values as valid
+      --  choices.
+
+      --------------------------------
+      -- Create_Naming_Scheme_Combo --
+      --------------------------------
+
+      procedure Create_Naming_Scheme_Combo
+        (Combo      : out Gtk_Combo_Box_Text;
+         Label      : String;
+         Values     : Unbounded_String_Array;
+         Default    : Gint := 0;
+         Doc        : String := "";
+         With_Entry : Boolean := True;
+         Changed_Cb : Widget_Callback.Simple_Handler := Customized'Access) is
+      begin
+         if With_Entry then
+            Gtk_New_With_Entry (Combo);
+         else
+            Gtk_New (Combo);
+         end if;
+
+         Group_Widget.Create_Child
+           (Widget    => Combo,
+            Label     => Label,
+            Doc       => Doc);
+
+         for Value of Values loop
+            Combo.Append_Text (To_String (Value));
+         end loop;
+
+         Combo.Set_Active (Default);
+         Widget_Callback.Object_Connect
+           (Combo, Gtk.Combo_Box.Signal_Changed,
+            Changed_Cb, Self);
+      end Create_Naming_Scheme_Combo;
+
+      procedure Create_Exceptions_List_Column (Name : String);
+      --  Create and append a column to the exceptions list tree view
+
+      -----------------------------------
+      -- Create_Exceptions_List_Column --
+      -----------------------------------
+
+      procedure Create_Exceptions_List_Column (Name : String)
+      is
+         Render       : Gtk_Cell_Renderer_Text;
+         Col          : Gtk_Tree_View_Column;
+      begin
+         Gtk_New (Col);
+         Col_Number := Append_Column (Self.Exception_List, Col);
+         Set_Title (Col, Name);
+         Gtk_New (Render);
+         Pack_Start (Col, Render, False);
+         Set_Sort_Column_Id (Col, Col_Number - 1);
+         Add_Attribute (Col, Render, "text", Col_Number - 1);
+         Add_Attribute (Col, Render, "editable", 3);
+         Set_Editable_And_Callback
+           (Self.Exception_List_Model, Render, Col_Number - 1);
+      end Create_Exceptions_List_Column;
+
    begin
       Dialog_Utils.Initialize (Self);
 
-      Gtk_New (Self.GUI);
+      --  Create the 'Scheme' group widget
+      Group_Widget := new Dialog_Group_Widget_Record;
+      Initialize
+        (Group_Widget,
+         Parent_View => Self,
+         Group_Name  => "Scheme");
 
-      Self.GUI.Unit_Name_Entry.Set_Sensitive (not Read_Only);
-      Set_Width_Chars (Self.GUI.Unit_Name_Entry, 8);
+      --  Create the naming scheme editor combo widget
+      Create_Naming_Scheme_Combo
+        (Self.Standard_Scheme,
+         Label      => "Naming scheme",
+         Values     => (1 => To_Unbounded_String ("GNAT default"),
+                        2 => To_Unbounded_String ("unit.separate.1.ada"),
+                        3 => To_Unbounded_String ("unit__separate_.ada"),
+                        4 => To_Unbounded_String ("<custom>")),
+         Doc        => "Choose among a list of predefined Ada naming schemes.",
+         With_Entry => False,
+         Changed_Cb => On_Standard_Scheme_Changed'Access);
 
-      Self.GUI.Spec_Filename_Entry.Set_Sensitive (not Read_Only);
-      Set_Width_Chars (Self.GUI.Spec_Filename_Entry, 8);
+      --  Create the 'Details' group widget
+      Group_Widget := new Dialog_Group_Widget_Record;
+      Initialize
+        (Group_Widget,
+         Parent_View => Self,
+         Group_Name  => "Details");
 
-      Self.GUI.Body_Filename_Entry.Set_Sensitive (not Read_Only);
-      Set_Width_Chars (Self.GUI.Body_Filename_Entry, 8);
+      --  Create the filename casing editor combo widget
+      Create_Naming_Scheme_Combo
+        (Self.Casing,
+         Label  => "Filename casing",
+         Values => (1 => Null_Unbounded_String),
+         Doc    => "Choose a casing policy for file names.");
 
-      Self.GUI.Standard_Scheme.Set_Sensitive (not Read_Only);
-      Self.GUI.Dot_Replacement.Set_Sensitive (not Read_Only);
-      Self.GUI.Spec_Extension.Set_Sensitive (not Read_Only);
-      Self.GUI.Body_Extension.Set_Sensitive (not Read_Only);
-      Self.GUI.Separate_Extension.Set_Sensitive (not Read_Only);
-      Self.GUI.Update.Set_Sensitive (not Read_Only);
+      --  Create the dot replacement entry widget
+      Create_Naming_Scheme_Combo
+        (Self.Dot_Replacement,
+         Label      => "Dot replacement",
+         Values     => (1 => To_Unbounded_String ("-")),
+         Doc        => "Choose the string used to replace the dot in"
+         & "unit names.");
 
-      Set_Size_Request (Self.GUI.Exception_List, -1, 170);
-      Gtk_New (Size_Group, Both);
-      Add_Widget (Size_Group, Self.GUI.Standard_Scheme);
-      Add_Widget (Size_Group, Self.GUI.Casing);
-      Add_Widget (Size_Group, Self.GUI.Dot_Replacement);
-      Add_Widget (Size_Group, Self.GUI.Spec_Extension);
-      Add_Widget (Size_Group, Self.GUI.Body_Extension);
-      Add_Widget (Size_Group, Self.GUI.Separate_Extension);
+      --  Create the combo widgets for the extensions
+      Create_Naming_Scheme_Combo
+        (Self.Spec_Extension,
+         Label  => "Spec extensions",
+         Values => (1 => To_Unbounded_String (".ads"),
+                    2 => To_Unbounded_String (".1.ada"),
+                    3 => To_Unbounded_String ("_.ada")),
+         Doc    => "Choose a suffix for file names that contain "
+         & "specifications.");
+      Create_Naming_Scheme_Combo
+        (Self.Body_Extension,
+         Label  => "Body extensions",
+         Values => (1 => To_Unbounded_String (".adb"),
+                    2 => To_Unbounded_String (".2.ada"),
+                    3 => To_Unbounded_String (".ada")),
+         Doc    => "Choose a suffix for file names that contain bodies.");
+      Create_Naming_Scheme_Combo
+        (Self.Separate_Extension,
+         Label  => "Separate extensions",
+         Values => (1 => To_Unbounded_String (".adb"),
+                    2 => To_Unbounded_String (".2.ada"),
+                    3 => To_Unbounded_String (".ada")),
+         Doc    => "Choose a suffix for file names that contain subunits "
+         & "(separate bodies)");
 
-      Gtk_New (Size_Group, Both);
-      Add_Widget (Size_Group, Self.GUI.Label_Naming_Scheme);
-      Add_Widget (Size_Group, Self.GUI.Label_Casing);
-      Add_Widget (Size_Group, Self.GUI.Label_Dot_Replacement);
-      Add_Widget (Size_Group, Self.GUI.Label_Spec_Extensions);
-      Add_Widget (Size_Group, Self.GUI.Label_Body_Extensions);
-      Add_Widget (Size_Group, Self.GUI.Label_Separate_Extensions);
+      --  Create the 'Exceptions' group widget
+      Group_Widget := new Dialog_Group_Widget_Record;
+      Initialize
+        (Group_Widget,
+         Parent_View         => Self,
+         Group_Name          => "Exceptions",
+         Allow_Multi_Columns => False);
 
-      Ref (Self.GUI.Main_Box);
-      Unparent (Self.GUI.Main_Box);
-      Self.Append (Self.GUI.Main_Box, Fill => True, Expand => True);
+      --  Create the list view containing all the naming exceptions
+      Self.Exception_List_View := new Dialog_View_With_Button_Box_Record;
+      Initialize
+        (Self.Exception_List_View,
+         Orientation => Orientation_Vertical);
+      Group_Widget.Append_Child
+        (Widget    => Self.Exception_List_View,
+         Expand    => True,
+         Fill      => True);
 
-      Reset_Exception_Fields (Self.GUI);
+      --  Create the 'add' and 'remove' buttons
+      Gtk_New_From_Icon_Name
+        (Button,
+         Icon_Name => "gps-add-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      Button.Set_Relief (Relief_None);
+      Button.On_Clicked
+        (Call  => On_Add_Naming_Exception'Access,
+         Slot  => Self);
+      Self.Exception_List_View.Append_Button (Button);
 
-      Gtk_List_Store'(-(Self.GUI.Casing.Get_Model)).Clear;
+      Gtk_New_From_Icon_Name
+        (Button,
+         Icon_Name => "gps-remove-symbolic",
+         Size      => Icon_Size_Small_Toolbar);
+      Button.Set_Relief (Relief_None);
+      Button.On_Clicked
+        (Call  => On_Remove_Naming_Exception'Access,
+         Slot  => Self);
+      Self.Exception_List_View.Append_Button (Button);
+
+      --  Create the naming exceptions list tree view
+      Gtk_New (Self.Exception_List_Model, Exception_List_Column_Types);
+      Gtk_New (Self.Exception_List,
+               Self.Exception_List_Model);
+      Self.Exception_List_View.Append
+        (Widget        => Self.Exception_List,
+         Expand        => True,
+         Fill          => True);
+
+      Set_Mode
+        (Get_Selection (Self.Exception_List),
+         Selection_Single);
+
+      --  Create the naming exceptions list tree view columns
+      Create_Exceptions_List_Column ("Unit name");
+      Create_Exceptions_List_Column ("Spec filename");
+      Create_Exceptions_List_Column ("Body filename");
+
+      Dialog_Utils.Initialize (Self);
+
+      Self.Standard_Scheme.Set_Sensitive (not Read_Only);
+      Self.Dot_Replacement.Set_Sensitive (not Read_Only);
+      Self.Spec_Extension.Set_Sensitive (not Read_Only);
+      Self.Body_Extension.Set_Sensitive (not Read_Only);
+      Self.Separate_Extension.Set_Sensitive (not Read_Only);
+      Self.Exception_List_View.Set_Sensitive (not Read_Only);
+
+      Gtk_List_Store'(-(Self.Casing.Get_Model)).Clear;
 
       for Casing in Casing_Type loop
          if Casing /= Unknown then
-            Self.GUI.Casing.Append_Text (-GPR.Image (Casing));
+            Self.Casing.Append_Text (-GPR.Image (Casing));
 
             if Casing = All_Lower_Case then
-               Self.GUI.Casing.Set_Active (Idx);
+               Self.Casing.Set_Active (Idx);
             end if;
 
             Idx := Idx + 1;
          end if;
       end loop;
 
-      Set_Active (Self.GUI.Standard_Scheme, Gnat_Naming_Scheme);
+      Set_Active (Self.Standard_Scheme, Gnat_Naming_Scheme);
 
       Show_Project_Settings
         (Self, Kernel, Project, Display_Exceptions => True);
@@ -188,61 +491,32 @@ package body Ada_Naming_Editors is
       return In_List ("ada", Languages);
    end Is_Visible;
 
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Self : in out Ada_Naming_Editor_Record) is
-   begin
-      Destroy (Self.GUI);   --  a widget that was not attached
-   end Destroy;
-
-   ----------------------------
-   -- Reset_Exception_Fields --
-   ----------------------------
-
-   procedure Reset_Exception_Fields
-     (Editor : access Naming_Scheme_Editor_Record'Class;
-      Field  : Gtk.GEntry.Gtk_Entry := null) is
-   begin
-      if Field = null then
-         Set_Text (Editor.Unit_Name_Entry, Empty_Unit_Name);
-         Set_Text (Editor.Spec_Filename_Entry, Empty_Spec_Name);
-         Set_Text (Editor.Body_Filename_Entry, Empty_Body_Name);
-
-      elsif Field = Editor.Unit_Name_Entry then
-         Set_Text (Field, Empty_Unit_Name);
-
-      elsif Field = Editor.Spec_Filename_Entry then
-         Set_Text (Field, Empty_Spec_Name);
-
-      elsif Field = Editor.Body_Filename_Entry then
-         Set_Text (Field, Empty_Body_Name);
-      end if;
-   end Reset_Exception_Fields;
-
    ---------------------------
    -- Set_Predefined_Scheme --
    ---------------------------
 
    procedure Set_Predefined_Scheme
-     (Editor : access Naming_Scheme_Editor_Record'Class;
+     (Editor : access Ada_Naming_Editor_Record'Class;
       Scheme_Num : Natural) is
    begin
       case Scheme_Num is
          when Gnat_Naming_Scheme =>
             --  GNAT Default
-            Set_Active_Text (Editor.Casing, -GPR.Image (All_Lower_Case));
-            Set_Text (Editor.Dot_Replacement, Default_Gnat_Dot_Replacement);
-            Set_Active_Text (Editor.Spec_Extension, Default_Gnat_Spec_Suffix);
-            Set_Active_Text (Editor.Body_Extension, Default_Gnat_Body_Suffix);
-            Set_Active_Text (Editor.Separate_Extension,
-                             Default_Gnat_Separate_Suffix);
+            Set_Active_Text
+              (Editor.Casing, -GPR.Image (All_Lower_Case));
+            Set_Active_Text
+              (Editor.Dot_Replacement, Default_Gnat_Dot_Replacement);
+            Set_Active_Text
+              (Editor.Spec_Extension, Default_Gnat_Spec_Suffix);
+            Set_Active_Text
+              (Editor.Body_Extension, Default_Gnat_Body_Suffix);
+            Set_Active_Text
+              (Editor.Separate_Extension, Default_Gnat_Separate_Suffix);
 
          when Apex_Naming_Scheme =>
             --  APEX Default
             Set_Active_Text (Editor.Casing, -GPR.Image (All_Lower_Case));
-            Set_Text (Editor.Dot_Replacement, ".");
+            Set_Active_Text (Editor.Dot_Replacement, ".");
             Set_Active_Text (Editor.Spec_Extension, ".1.ada");
             Set_Active_Text (Editor.Body_Extension, ".2.ada");
             Set_Active_Text (Editor.Separate_Extension, ".2.ada");
@@ -250,7 +524,7 @@ package body Ada_Naming_Editors is
          when Dec_Naming_Scheme =>
             --  DEC Ada Default
             Set_Active_Text (Editor.Casing, -GPR.Image (All_Lower_Case));
-            Set_Text (Editor.Dot_Replacement, "__");
+            Set_Active_Text (Editor.Dot_Replacement, "__");
             Set_Active_Text (Editor.Spec_Extension, "_.ada");
             Set_Active_Text (Editor.Body_Extension, ".ada");
             Set_Active_Text (Editor.Separate_Extension, ".ada");
@@ -275,7 +549,7 @@ package body Ada_Naming_Editors is
       Changed    : Boolean := False;
       Iter       : Gtk_Tree_Iter;
       Ada_Scheme : constant Boolean :=
-                     Get_Active (Editor.GUI.Standard_Scheme) = 0;
+                     Get_Active (Editor.Standard_Scheme) = 0;
       Cache      : Naming_Hash.String_Hash_Table.Instance;
       Data       : Naming_Data;
 
@@ -337,7 +611,7 @@ package body Ada_Naming_Editors is
            Project.Attribute_Indexes (Attr);
          Data        : Naming_Data_Access;
          Cache_Iter  : Naming_Hash.String_Hash_Table.Cursor;
-         Val         : String_Access;
+         Val         : GNAT.Strings.String_Access;
          Last        : Natural;
          Idx         : Integer;
 
@@ -433,32 +707,33 @@ package body Ada_Naming_Editors is
    begin
       Update_If_Required
         (Spec_Suffix_Attribute,
-         Get_Active_Text (Editor.GUI.Spec_Extension), "ada");
+         Get_Active_Text (Editor.Spec_Extension), "ada");
       Update_If_Required
         (Impl_Suffix_Attribute,
-         Get_Active_Text (Editor.GUI.Body_Extension), "ada");
+         Get_Active_Text (Editor.Body_Extension), "ada");
       Update_If_Required
         (Separate_Suffix_Attribute,
-         Get_Active_Text (Editor.GUI.Separate_Extension), "");
+         Get_Active_Text (Editor.Separate_Extension), "");
       Update_If_Required
         (Casing_Attribute,
          GPR.Image (Casing_Type'Val
-                    (Get_Active (Editor.GUI.Casing))), "");
+                    (Get_Active (Editor.Casing))), "");
       Update_If_Required
-        (Dot_Replacement_Attribute, Get_Text (Editor.GUI.Dot_Replacement), "");
+        (Dot_Replacement_Attribute,
+         Get_Active_Text (Editor.Dot_Replacement), "");
 
       --  Fill the hash table
 
-      Iter := Get_Iter_First (Editor.GUI.Exception_List_Model);
+      Iter := Get_Iter_First (Editor.Exception_List_Model);
 
       while Iter /= Null_Iter loop
          declare
             U : constant String :=
-                  Get_String (Editor.GUI.Exception_List_Model, Iter, 0);
+                  Get_String (Editor.Exception_List_Model, Iter, 0);
             Spec : constant String :=
-                     Get_String (Editor.GUI.Exception_List_Model, Iter, 1);
+                     Get_String (Editor.Exception_List_Model, Iter, 1);
             Bod : constant String :=
-                     Get_String (Editor.GUI.Exception_List_Model, Iter, 2);
+                     Get_String (Editor.Exception_List_Model, Iter, 2);
          begin
             if Spec /= "" then
                Data.Spec_Name := new String'(Spec);
@@ -475,7 +750,7 @@ package body Ada_Naming_Editors is
             Set (Cache, U, new Naming_Data'(Data));
          end;
 
-         Next (Editor.GUI.Exception_List_Model, Iter);
+         Next (Editor.Exception_List_Model, Iter);
       end loop;
 
       --  Update the project if needed
@@ -538,14 +813,14 @@ package body Ada_Naming_Editors is
       Id              : Gint;
 
    begin
-      Set_Text (Editor.GUI.Dot_Replacement,           Dot_Replacement);
-      Set_Active_Text (Editor.GUI.Casing,            -Casing);
-      Set_Active_Text (Editor.GUI.Spec_Extension,     Spec_Suffix);
-      Set_Active_Text (Editor.GUI.Body_Extension,     Body_Suffix);
-      Set_Active_Text (Editor.GUI.Separate_Extension, Separate_Suffix);
+      Set_Active_Text (Editor.Dot_Replacement, Dot_Replacement);
+      Set_Active_Text (Editor.Casing, -Casing);
+      Set_Active_Text (Editor.Spec_Extension, Spec_Suffix);
+      Set_Active_Text (Editor.Body_Extension, Body_Suffix);
+      Set_Active_Text (Editor.Separate_Extension, Separate_Suffix);
 
-      Clear (Editor.GUI.Exception_List_Model);
-      Id := Freeze_Sort (Editor.GUI.Exception_List_Model);
+      Clear (Editor.Exception_List_Model);
+      Id := Freeze_Sort (Editor.Exception_List_Model);
 
       if Display_Exceptions then
          declare
@@ -557,9 +832,9 @@ package body Ada_Naming_Editors is
             Iter   : Gtk_Tree_Iter;
          begin
             for S in Specs'Range loop
-               Append (Editor.GUI.Exception_List_Model, Iter, Null_Iter);
+               Append (Editor.Exception_List_Model, Iter, Null_Iter);
                Set_Unit_Spec
-                 (Get_Object (Editor.GUI.Exception_List_Model), Iter,
+                 (Get_Object (Editor.Exception_List_Model), Iter,
                   Col   => 0,
                   Unit  => Specs (S).all & ASCII.NUL,
                   Col2  => 1,
@@ -576,18 +851,18 @@ package body Ada_Naming_Editors is
                declare
                   Unit : constant String := Bodies (B).all;
                begin
-                  Iter := Get_Iter_First (Editor.GUI.Exception_List_Model);
+                  Iter := Get_Iter_First (Editor.Exception_List_Model);
                   while Iter /= Null_Iter loop
                      exit when Get_String
-                       (Editor.GUI.Exception_List_Model, Iter, 0) = Unit;
-                     Next (Editor.GUI.Exception_List_Model, Iter);
+                       (Editor.Exception_List_Model, Iter, 0) = Unit;
+                     Next (Editor.Exception_List_Model, Iter);
                   end loop;
                end;
 
                if Iter = Null_Iter then
-                  Append (Editor.GUI.Exception_List_Model, Iter, Null_Iter);
+                  Append (Editor.Exception_List_Model, Iter, Null_Iter);
                   Set_Unit_Spec
-                    (Get_Object (Editor.GUI.Exception_List_Model), Iter,
+                    (Get_Object (Editor.Exception_List_Model), Iter,
                      Col   => 0,
                      Unit  => Bodies (B).all & ASCII.NUL,
                      Col2  => 2,
@@ -596,7 +871,7 @@ package body Ada_Naming_Editors is
                        & ASCII.NUL);
 
                else
-                  Set (Editor.GUI.Exception_List_Model, Iter,
+                  Set (Editor.Exception_List_Model, Iter,
                        Column => 2,
                        Value  => Project.Attribute_Value
                          (Body_Attribute, Index => Bodies (B).all)
@@ -609,161 +884,43 @@ package body Ada_Naming_Editors is
          end;
       end if;
 
-      Thaw_Sort (Editor.GUI.Exception_List_Model, Id);
+      Thaw_Sort (Editor.Exception_List_Model, Id);
 
       --  GNAT naming scheme ?
-      if Get_Iter_First (Editor.GUI.Exception_List_Model) /= Null_Iter
-        or else Get_Active_Text (Editor.GUI.Casing) /=
+      if Get_Iter_First (Editor.Exception_List_Model) /= Null_Iter
+        or else Get_Active_Text (Editor.Casing) /=
           -GPR.Image (All_Lower_Case)
       then
-         Set_Active (Editor.GUI.Standard_Scheme, Custom_Naming_Scheme);
+         Set_Active (Editor.Standard_Scheme, Custom_Naming_Scheme);
 
-      elsif Get_Text (Editor.GUI.Dot_Replacement) =
+      elsif Get_Active_Text (Editor.Dot_Replacement) =
           Default_Gnat_Dot_Replacement
-        and then Get_Active_Text (Editor.GUI.Spec_Extension) =
+        and then Get_Active_Text (Editor.Spec_Extension) =
         Default_Gnat_Spec_Suffix
-        and then Get_Active_Text (Editor.GUI.Body_Extension) =
+        and then Get_Active_Text (Editor.Body_Extension) =
         Default_Gnat_Body_Suffix
-        and then Get_Active_Text (Editor.GUI.Separate_Extension) =
+        and then Get_Active_Text (Editor.Separate_Extension) =
         Default_Gnat_Separate_Suffix
       then
-         Set_Active (Editor.GUI.Standard_Scheme, Gnat_Naming_Scheme);
+         Set_Active (Editor.Standard_Scheme, Gnat_Naming_Scheme);
 
-      elsif Get_Text (Editor.GUI.Dot_Replacement) = "."
-        and then Get_Active_Text (Editor.GUI.Spec_Extension) = ".1.ada"
-        and then Get_Active_Text (Editor.GUI.Body_Extension) = ".2.ada"
-        and then Get_Active_Text (Editor.GUI.Separate_Extension) = ".2.ada"
+      elsif Get_Active_Text (Editor.Dot_Replacement) = "."
+        and then Get_Active_Text (Editor.Spec_Extension) = ".1.ada"
+        and then Get_Active_Text (Editor.Body_Extension) = ".2.ada"
+        and then Get_Active_Text (Editor.Separate_Extension) = ".2.ada"
       then
-         Set_Active (Editor.GUI.Standard_Scheme, Apex_Naming_Scheme);
+         Set_Active (Editor.Standard_Scheme, Apex_Naming_Scheme);
 
-      elsif Get_Text (Editor.GUI.Dot_Replacement) = "__"
-        and then Get_Active_Text (Editor.GUI.Spec_Extension) = "_.ada"
-        and then Get_Active_Text (Editor.GUI.Body_Extension) = ".ada"
-        and then Get_Active_Text (Editor.GUI.Separate_Extension) = ".ada"
+      elsif Get_Active_Text (Editor.Dot_Replacement) = "__"
+        and then Get_Active_Text (Editor.Spec_Extension) = "_.ada"
+        and then Get_Active_Text (Editor.Body_Extension) = ".ada"
+        and then Get_Active_Text (Editor.Separate_Extension) = ".ada"
       then
-         Set_Active (Editor.GUI.Standard_Scheme, Dec_Naming_Scheme);
+         Set_Active (Editor.Standard_Scheme, Dec_Naming_Scheme);
 
       else
-         Set_Active (Editor.GUI.Standard_Scheme, Custom_Naming_Scheme);
+         Set_Active (Editor.Standard_Scheme, Custom_Naming_Scheme);
       end if;
    end Show_Project_Settings;
-
-   -----------------------
-   -- Add_New_Exception --
-   -----------------------
-
-   procedure Add_New_Exception
-     (Editor : access Naming_Scheme_Editor_Record'Class)
-   is
-      Unit      : constant String := Get_Text (Editor.Unit_Name_Entry);
-      Spec_Name : constant String := Get_Text (Editor.Spec_Filename_Entry);
-      Body_Name : constant String := Get_Text (Editor.Body_Filename_Entry);
-      Iter      : Gtk_Tree_Iter;
-      Id        : Gint;
-
-      Values    : Glib.Values.GValue_Array (1 .. 4);
-      Columns   : Columns_Array (Values'Range);
-      Last      : Gint := 0;
-   begin
-      if Unit /= Empty_Unit_Name
-        and then (Spec_Name /= Empty_Spec_Name
-                  or else Body_Name /= Empty_Body_Name)
-      then
-         --  Check if there is already an entry for this unit
-
-         Iter := Get_Iter_First (Editor.Exception_List_Model);
-         while Iter /= Null_Iter loop
-            declare
-               U : constant String :=
-                 Get_String (Editor.Exception_List_Model, Iter, 0);
-            begin
-               if U = Unit then
-                  exit;
-               elsif  U > Unit then
-                  Iter := Null_Iter;
-                  exit;
-               end if;
-            end;
-            Next (Editor.Exception_List_Model, Iter);
-         end loop;
-
-         Id := Freeze_Sort (Editor.Exception_List_Model);
-
-         if Iter = Null_Iter then
-            Append (Editor.Exception_List_Model, Iter, Null_Iter);
-
-            Columns (1 .. 2) := (0, 3);
-            Values  (1 .. 2) :=
-              (1 => As_String  (Unit),
-               2 => As_Boolean (True));
-            Last := 2;
-         end if;
-
-         if Spec_Name /= Empty_Spec_Name then
-            Last := Last + 1;
-            Columns (Last) := 1;
-            Glib.Values.Init_Set_String (Values (Last), Spec_Name);
-         end if;
-
-         if Body_Name /= Empty_Body_Name then
-            Last := Last + 1;
-            Columns (Last) := 2;
-            Glib.Values.Init_Set_String (Values (Last), Body_Name);
-         end if;
-
-         if Last /= 0 then
-            Set_And_Clear
-              (Editor.Exception_List_Model, Iter,
-               Columns (1 .. Last), Values (1 .. Last));
-         end if;
-
-         Thaw_Sort (Editor.Exception_List_Model, Id);
-
-         Scroll_To_Cell
-           (Editor.Exception_List,
-            Get_Path (Editor.Exception_List_Model, Iter),
-            Column => Get_Column (Editor.Exception_List, 0),
-            Use_Align => False,
-            Row_Align => 0.0,
-            Col_Align => 0.0);
-         Reset_Exception_Fields (Editor);
-      end if;
-   end Add_New_Exception;
-
-   ---------------------
-   -- Clear_Unit_Name --
-   ---------------------
-
-   procedure Clear_Unit_Name
-     (Editor : access Naming_Scheme_Editor_Record'Class) is
-   begin
-      if Get_Text (Editor.Unit_Name_Entry) = Empty_Unit_Name then
-         Set_Text (Editor.Unit_Name_Entry, "");
-      end if;
-   end Clear_Unit_Name;
-
-   ---------------------
-   -- Clear_Spec_Name --
-   ---------------------
-
-   procedure Clear_Spec_Name
-     (Editor : access Naming_Scheme_Editor_Record'Class) is
-   begin
-      if Get_Text (Editor.Spec_Filename_Entry) = Empty_Spec_Name then
-         Set_Text (Editor.Spec_Filename_Entry, "");
-      end if;
-   end Clear_Spec_Name;
-
-   ---------------------
-   -- Clear_Body_Name --
-   ---------------------
-
-   procedure Clear_Body_Name
-     (Editor : access Naming_Scheme_Editor_Record'Class) is
-   begin
-      if Get_Text (Editor.Body_Filename_Entry) = Empty_Body_Name then
-         Set_Text (Editor.Body_Filename_Entry, "");
-      end if;
-   end Clear_Body_Name;
 
 end Ada_Naming_Editors;

@@ -310,6 +310,7 @@ package body Toolchains_Editor is
       Read_Only    : Boolean;
       Project      : Project_Type := No_Project)
    is
+      Group_Widget    : Dialog_Group_Widget;
       Scroll          : Gtk_Scrolled_Window;
       Col             : Gtk_Tree_View_Column;
       Ignore          : Gint;
@@ -337,11 +338,21 @@ package body Toolchains_Editor is
       Self.Kernel := Kernel;
       Self.Read_Only := Read_Only;
 
+      --  Create the 'Toolchains' group widget
+      Group_Widget := new Dialog_Group_Widget_Record;
+      Initialize (Group_Widget,
+                  Parent_View         => Self,
+                  Group_Name          => "Toolchains",
+                  Allow_Multi_Columns => False);
+
       Self.Toolchains_View := new Dialog_View_With_Button_Box_Record;
       Dialog_Utils.Initialize
         (Self.Toolchains_View,
          Orientation => Orientation_Vertical);
-      Self.Append (Self.Toolchains_View, Expand => True, Fill => True);
+      Group_Widget.Append_Child
+        (Self.Toolchains_View,
+         Expand    => True,
+         Fill      => True);
 
       Gtk.Box.Gtk_New_Hbox (Tc_Box);
       Self.Toolchains_View.Append (Tc_Box, Expand => True, Fill => True);

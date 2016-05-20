@@ -15,22 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.OS_Lib;                      use GNAT.OS_Lib;
+with GNAT.OS_Lib;        use GNAT.OS_Lib;
 
-with Gtk.Box;                          use Gtk.Box;
-with Gtk.Combo_Box_Text;               use Gtk.Combo_Box_Text;
-with Gtk.Enums;                        use Gtk.Enums;
-with Gtk.Frame;                        use Gtk.Frame;
-with Gtk.GEntry;                       use Gtk.GEntry;
-with Gtk.Label;                        use Gtk.Label;
-with Gtk.Size_Group;                   use Gtk.Size_Group;
-with Gtk.Widget;                       use Gtk.Widget;
+with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
+with Gtk.Enums;          use Gtk.Enums;
+with Gtk.GEntry;         use Gtk.GEntry;
+with Gtk.Widget;         use Gtk.Widget;
 
-with Dialog_Utils;                     use Dialog_Utils;
-with GPS.Intl;                         use GPS.Intl;
-with GPS.Kernel.Project;               use GPS.Kernel.Project;
+with Dialog_Utils;       use Dialog_Utils;
+with GPS.Kernel.Project; use GPS.Kernel.Project;
 
-with Naming_Exceptions;                use Naming_Exceptions;
+with Naming_Exceptions;  use Naming_Exceptions;
 
 package body Foreign_Naming_Editors is
 
@@ -45,7 +40,7 @@ package body Foreign_Naming_Editors is
       pragma Unreferenced (Kernel);
       Result : Foreign_Naming_Editor;
    begin
-      Result := new Foreign_Naming_Editor_Record;
+      Result          := new Foreign_Naming_Editor_Record;
       Result.Language := new String'(Lang);
       return Result;
    end Naming_Editor_Factory;
@@ -55,67 +50,62 @@ package body Foreign_Naming_Editors is
    ----------------
 
    overriding procedure Initialize
-     (Self         : not null access Foreign_Naming_Editor_Record;
-      Kernel       : not null access Kernel_Handle_Record'Class;
-      Read_Only    : Boolean;
-      Project      : Project_Type := No_Project)
+     (Self      : not null access Foreign_Naming_Editor_Record;
+      Kernel    : not null access Kernel_Handle_Record'Class;
+      Read_Only : Boolean;
+      Project   : Project_Type := No_Project)
    is
       Display_Exceptions : constant Boolean := True;
-      P : Project_Type := Project;
-      Frame     : Gtk_Frame;
-      Box, Vbox : Gtk_Box;
-      Label     : Gtk_Label;
-      Group     : Gtk_Size_Group;
+      P                  : Project_Type     := Project;
+      Group_Widget       : Dialog_Group_Widget;
    begin
       Dialog_Utils.Initialize (Self);
 
-      Gtk_New (Group);
+      --  Create the 'Details' group widget
+      Group_Widget := new Dialog_Group_Widget_Record;
+      Initialize (Group_Widget, Parent_View => Self, Group_Name => "Details");
 
-      Gtk_New (Frame, -"Details");
-      Self.Append (Frame);
-
-      Gtk_New_Vbox (Vbox, Homogeneous => True);
-      Frame.Add (Vbox);
-
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Vbox.Pack_Start (Box, Expand => False);
-
-      Gtk_New (Label, -"Header files:");
-      Label.Set_Alignment (0.0, 0.5);
-      Group.Add_Widget (Label);
-      Box.Pack_Start (Label);
-
+      --  Create the header files entry widget
       Gtk_New_With_Entry (Self.Spec_Ext);
       Self.Spec_Ext.Set_Sensitive (not Read_Only);
       Self.Spec_Ext.Set_Entry_Text_Column (0);
-      Box.Pack_Start (Self.Spec_Ext);
       Self.Spec_Ext.Append_Text (".h");
       Self.Spec_Ext.Append_Text (".hh");
       Self.Spec_Ext.Append_Text (".H");
       Self.Spec_Ext.Append_Text (".hpp");
 
-      Gtk_New_Hbox (Box, Homogeneous => False);
-      Vbox.Pack_Start (Box, Expand => False);
+      Group_Widget.Create_Child
+        (Widget => Self.Spec_Ext,
+         Label  => "Header files",
+         Doc    => "Choose a sufffix for header file names.");
 
-      Gtk_New (Label, -"Implementation:");
-      Label.Set_Alignment (0.0, 0.5);
-      Group.Add_Widget (Label);
-      Box.Pack_Start (Label);
-
+      --  Create the implementation files entry widget
       Gtk_New_With_Entry (Self.Body_Ext);
       Self.Body_Ext.Set_Sensitive (not Read_Only);
       Self.Body_Ext.Set_Entry_Text_Column (0);
-      Box.Pack_Start (Self.Body_Ext);
       Self.Body_Ext.Append_Text (".c");
       Self.Body_Ext.Append_Text (".cc");
       Self.Body_Ext.Append_Text (".C");
       Self.Body_Ext.Append_Text (".cpp");
 
-      Gtk_New (Frame, -"Exceptions");
-      Self.Append (Frame, Expand => True, Fill => True);
+      Group_Widget.Create_Child
+        (Widget => Self.Body_Ext,
+         Label  => "Implementation",
+         Doc    => "Choose a suffix for implementation file names.");
+
+      --  Create the 'Exceptions' group widget
+      Group_Widget := new Dialog_Group_Widget_Record;
+      Initialize
+        (Group_Widget,
+         Parent_View         => Self,
+         Group_Name          => "Exceptions",
+         Allow_Multi_Columns => False);
+
       Gtk_New (Self.Exceptions, Self.Language.all);
-      Self.Exceptions.Set_Border_Width (3);
-      Frame.Add (Self.Exceptions);
+      Group_Widget.Append_Child
+        (Widget => Self.Exceptions,
+         Expand => True,
+         Fill   => True);
 
       --  Now show the project's settings
 
@@ -130,11 +120,11 @@ package body Foreign_Naming_Editors is
       Set_Text
         (Gtk_Entry (Get_Child (Self.Spec_Ext)),
          P.Attribute_Value
-           (Spec_Suffix_Attribute, Index => Self.Language.all));
+         (Spec_Suffix_Attribute, Index => Self.Language.all));
       Set_Text
         (Gtk_Entry (Get_Child (Self.Body_Ext)),
          P.Attribute_Value
-           (Impl_Suffix_Attribute, Index => Self.Language.all));
+         (Impl_Suffix_Attribute, Index => Self.Language.all));
 
       if Display_Exceptions then
          Show_Project_Settings (Self.Exceptions, Project);
@@ -155,8 +145,8 @@ package body Foreign_Naming_Editors is
    ----------------
 
    overriding function Is_Visible
-     (Self         : not null access Foreign_Naming_Editor_Record;
-      Languages    : GNAT.Strings.String_List) return Boolean
+     (Self      : not null access Foreign_Naming_Editor_Record;
+      Languages : GNAT.Strings.String_List) return Boolean
    is
    begin
       return In_List (Self.Language.all, Languages);
@@ -174,34 +164,38 @@ package body Foreign_Naming_Editors is
       Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
       pragma Unreferenced (Languages, Kernel);
-      Changed  : Boolean;
+      Changed : Boolean;
    begin
-      Changed := Create_Project_Entry
-        (Self.Exceptions, Project, Scenario_Variables);
+      Changed :=
+        Create_Project_Entry (Self.Exceptions, Project, Scenario_Variables);
 
       if Project = No_Project
-        or else Project.Attribute_Value
-          (Attribute => Spec_Suffix_Attribute,
-           Index     => Self.Language.all) /= Get_Active_Text (Self.Spec_Ext)
+        or else
+          Project.Attribute_Value
+          (Attribute => Spec_Suffix_Attribute, Index => Self.Language.all) /=
+          Get_Active_Text (Self.Spec_Ext)
       then
          Project.Set_Attribute
-           (Scenario  => Scenario_Variables,
-            Attribute => Spec_Suffix_Attribute,
-            Value     => Get_Active_Text (Self.Spec_Ext),
-            Index     => Self.Language.all);
+         (Scenario                                 =>
+            Scenario_Variables, Attribute          =>
+            Spec_Suffix_Attribute, Value           =>
+            Get_Active_Text (Self.Spec_Ext), Index =>
+            Self.Language.all);
          Changed := True;
       end if;
 
       if Project = No_Project
-        or else Project.Attribute_Value
-          (Attribute => Impl_Suffix_Attribute,
-           Index     => Self.Language.all) /= Get_Active_Text (Self.Body_Ext)
+        or else
+          Project.Attribute_Value
+          (Attribute => Impl_Suffix_Attribute, Index => Self.Language.all) /=
+          Get_Active_Text (Self.Body_Ext)
       then
          Project.Set_Attribute
-           (Scenario  => Scenario_Variables,
-            Attribute => Impl_Suffix_Attribute,
-            Value     => Get_Active_Text (Self.Body_Ext),
-            Index     => Self.Language.all);
+         (Scenario                                 =>
+            Scenario_Variables, Attribute          =>
+            Impl_Suffix_Attribute, Value           =>
+            Get_Active_Text (Self.Body_Ext), Index =>
+            Self.Language.all);
          Changed := True;
       end if;
 
