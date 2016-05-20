@@ -164,7 +164,7 @@ package body GNAThub.Filters_Views is
      new GPS.Kernel.MDI.GPS_MDI_Child_Record with null record;
 
    package Views is new Generic_Views.Simple_Views
-     (Module_Name        => "gnathub filters",
+     (Module_Name        => "gnathub_filters",
       View_Name          => "GNATHub Filters",
       Formal_View_Record => Filters_View_Record,
       Formal_MDI_Child   => Filters_Child_Record,
