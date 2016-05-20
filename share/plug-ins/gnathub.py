@@ -60,20 +60,18 @@ XML = r"""<?xml version="1.0" ?>
 </GPS>
 """
 
-
-def on_compilation_finished(hook, category,
-                            target_name="", mode_name="", status=""):
-
-    if not status and target_name in ["gnathub"]:
-        GPS.execute_action("gnathub display analysis")
-
 # Check for gnathub executable and GNAThub module active status:
 
 logger = GPS.Logger("MODULE.GNAThub")
 
 if os_utils.locate_exec_on_path("gnathub") and logger.active:
     GPS.parse_xml(XML)
-    GPS.Hook('compilation_finished').add(on_compilation_finished)
 
     for J in tools:
         register_menu(J)
+
+    @gps_utils.hook("compilation_finished")
+    def __hook(category, target="", mode="", shadow=False, background=False,
+               status=0, *args):
+        if not status and target == "gnathub":
+            GPS.execute_action("gnathub display analysis")
