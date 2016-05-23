@@ -290,10 +290,13 @@ package body GNAThub.Filters_Views is
    is
       pragma Unreferenced (Command);
 
+      Kernel : constant access GPS.Kernel.Kernel_Handle_Record'Class :=
+        GPS.Kernel.Get_Kernel (Context.Context);
       Ignore : Views.View_Access;
    begin
-      Ignore := Views.Get_Or_Create_View
-        (GPS.Kernel.Get_Kernel (Context.Context));
+      Views.Close (Kernel);
+
+      Ignore := Views.Get_Or_Create_View (Kernel);
 
       return Commands.Success;
    end Execute;

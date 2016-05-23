@@ -15,10 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.VFS;
-with GPS.Intl;              use GPS.Intl;
+with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Actions;
 with GPS.Kernel.Messages;
 
@@ -29,6 +30,51 @@ with GNAThub.Loader;
 package body GNAThub.Module is
 
    Module_Id : GNAThub_Module_Id;
+
+   -----------
+   -- Clean --
+   -----------
+
+   procedure Clean (Self : in out GNAThub_Module_Id_Record'Class) is
+      generic
+         type Element is limited private;
+         type Element_Access is access all Element;
+         with package Sets is new Ada.Containers.Ordered_Sets
+           (Element_Access, others => <>);
+      procedure Clean_Set (Set : in out Sets.Set);
+
+      ---------------
+      -- Clean_Set --
+      ---------------
+
+      procedure Clean_Set (Set : in out Sets.Set) is
+         procedure Free is new Ada.Unchecked_Deallocation
+           (Element, Element_Access);
+      begin
+         while not Set.Is_Empty loop
+            declare
+               Item : Element_Access := Set.First_Element;
+            begin
+               Set.Delete_First;
+               Free (Item);
+            end;
+         end loop;
+      end Clean_Set;
+
+      procedure Clean_Severity_Set is new Clean_Set
+        (Severity_Record, Severity_Access, Severities_Ordered_Sets);
+
+      procedure Clean_Tool_Set is new Clean_Set
+        (Tool_Record, Tool_Access, Tools_Ordered_Sets);
+
+      procedure Clean_Rule_Set is new Clean_Set
+        (Rule_Record, Rule_Access, Rule_Sets);
+
+   begin
+      Clean_Severity_Set (Self.Severities);
+      Clean_Tool_Set (Self.Tools);
+      Clean_Rule_Set (Self.Rules);
+   end Clean;
 
    ------------------
    -- Display_Data --
@@ -44,6 +90,7 @@ package body GNAThub.Module is
 
    begin
       if Database.Is_Regular_File then
+         Self.Clean;
          Self.Loader.Load (Database);
 
          Ignore := GPS.Kernel.Actions.Execute_Action

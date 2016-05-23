@@ -42,6 +42,9 @@ package GNAThub.Module is
    --  Loads and displays analysis data. Doesn't run GNAThub, reports error
    --  when database is not exists.
 
+   procedure Clean (Self : in out GNAThub_Module_Id_Record'Class);
+   --  Deallocate all loaded data
+
    procedure Message_Loaded (Self : in out GNAThub_Module_Id_Record'Class);
    --  Call when a new message loaded
 
