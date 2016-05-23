@@ -17,7 +17,8 @@ def register_menu(tool):
                            name="Run gnathub: " + tool)
     def action():
         target = GPS.BuildTarget("gnathub")
-        target.execute(extra_args="--incremental --plugins=" + tool)
+        target.execute(extra_args="--incremental --plugins=" + tool,
+                       synchronous=False)
 
 XML = r"""<?xml version="1.0" ?>
 <GPS>
