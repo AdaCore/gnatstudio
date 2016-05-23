@@ -695,7 +695,7 @@ else:
 
             symbols = self.modeling_map.get_symbols(blockid=parent.id)
             if symbols:
-                s = symbols.pop()  # Get the first symbol
+                s = next(iter(symbols))  # Get the first symbol
                 # Function calls do not have a '/'
                 if '/' in s:
                     ss = s.split('/')[-1].strip()  # Remove the "context/" part
