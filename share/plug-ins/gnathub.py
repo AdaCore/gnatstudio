@@ -67,9 +67,11 @@ def on_compilation_finished(hook, category,
     if not status and target_name in ["gnathub"]:
         GPS.execute_action("gnathub display analysis")
 
-# Check for gnathub executable:
+# Check for gnathub executable and GNAThub module active status:
 
-if os_utils.locate_exec_on_path("gnathub"):
+logger = GPS.Logger("MODULE.GNAThub")
+
+if os_utils.locate_exec_on_path("gnathub") and logger.active:
     GPS.parse_xml(XML)
     GPS.Hook('compilation_finished').add(on_compilation_finished)
 
