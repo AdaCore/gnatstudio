@@ -40,9 +40,7 @@ package body Items.Simples is
    --  Protect non-printable characters in the string
 
    type Xref_Item_Record is
-     new Component_Item_Record and Clickable_Item with record
-        null;
-     end record;
+     new Component_Item_Record and Clickable_Item with null record;
    overriding procedure On_Click
      (Self    : not null access Xref_Item_Record;
       View    : not null access GPS_Canvas_View_Record'Class;
