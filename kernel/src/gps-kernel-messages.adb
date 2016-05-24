@@ -1426,7 +1426,7 @@ package body GPS.Kernel.Messages is
             end return;
 
          else
-            raise Program_Error;
+            raise Program_Error with "there are no unprocessed messages";
             --  Must never happen
          end if;
       end Get_Unprocessed;
