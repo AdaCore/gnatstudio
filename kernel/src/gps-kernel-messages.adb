@@ -1495,7 +1495,7 @@ package body GPS.Kernel.Messages is
             begin
                if not Self.Removed_Listeners.Contains (Listener)
                  and then (Listener.Flags = Empty_Message_Flags
-                           or else Match (Listener.Flags, Message.Flags))
+                           or else Match (Listener.Flags, Message.Get_Flags))
                then
                   Result :=
                     Result and Listener.Message_Can_Be_Destroyed (Message);
@@ -1749,7 +1749,7 @@ package body GPS.Kernel.Messages is
             begin
                if not Self.Removed_Listeners.Contains (Listener)
                  and then (Listener.Flags = Empty_Message_Flags
-                           or else Match (Listener.Flags, Message.Flags))
+                           or else Match (Listener.Flags, Message.Get_Flags))
                then
                   Listener.Message_Property_Changed (Message, Property);
                end if;
@@ -2249,7 +2249,9 @@ package body GPS.Kernel.Messages is
       File_Flags     : Message_Flags;
 
    begin
-      if Flags = Empty_Message_Flags or else Match (Message.Flags, Flags) then
+      if Flags = Empty_Message_Flags
+        or else Match (Message.Get_Flags, Flags)
+      then
          for J in reverse 1 .. Message.Children.Last_Index loop
             declare
                Secondary : Message_Access :=
@@ -2261,7 +2263,7 @@ package body GPS.Kernel.Messages is
          end loop;
 
          Notifiers.Notify_Listeners_About_Message_Removed
-           (Self, Message, Message.Flags);
+           (Self, Message, Message.Get_Flags);
 
          if Message.Level = Primary then
             --  Removal of primary message may result in removal of category
