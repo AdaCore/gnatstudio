@@ -440,7 +440,11 @@
          <menu label='GNAT Runtime'>
             <menu label='Standard'  action='display standard.ads'/>
          </menu>
-         <menu label='GNAT'/>
+         <menu label='GNAT'>
+            <menu label='Examples'>
+               <menu label='Native'/>
+            </menu>
+         </menu>
          <menu label='GNU Tools'/>
          <menu label='Gprbuild'/>
          <menu label='XMLAda'/>
