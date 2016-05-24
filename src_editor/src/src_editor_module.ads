@@ -30,7 +30,6 @@ with GPS.Kernel.Style_Manager;    use GPS.Kernel.Style_Manager;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
 with GPS.Kernel;                  use GPS.Kernel;
-with Generic_List;
 with Glib;                        use Glib;
 with Glib.Object;
 with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
@@ -246,10 +245,8 @@ private
    -- Marks --
    -----------
 
-   procedure Do_Nothing (X : in out Location_Marker) is null;
-   --  Free memory associated to X
-
-   package Marker_List is new Generic_List (Location_Marker, Do_Nothing);
+   package Marker_List is
+     new Ada.Containers.Doubly_Linked_Lists (Location_Marker);
 
    -----------------------------
    -- Highlighting categories --

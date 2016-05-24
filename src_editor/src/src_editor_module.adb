@@ -2645,7 +2645,7 @@ package body Src_Editor_Module is
       High_Iter : List_Of_Highlighters.Cursor;
       H         : Highlighter_Record;
    begin
-      Marker_List.Free (Id.Stored_Marks);
+      Id.Stored_Marks.Clear;
 
       Free (Id.Search_Pattern);
 

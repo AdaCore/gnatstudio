@@ -86,7 +86,6 @@ package body Src_Editor_Module.Markers is
       use Marker_List;
       Module : constant Source_Editor_Module :=
                  Source_Editor_Module (Src_Editor_Module_Id);
-      Node   : List_Node;
 
    begin
       Trace (Me, "List of persistent markers");
@@ -95,14 +94,11 @@ package body Src_Editor_Module.Markers is
          return;
       end if;
 
-      Node := First (Module.Stored_Marks);
-
-      while Node /= Null_Node loop
+      for Node of Module.Stored_Marks loop
          Trace (Me, "     marker="
                 & System.Address_Image
-                  (Convert (File_Marker (Data (Node))))
-                & " " & To_String (Data (Node)));
-         Node := Next (Node);
+                  (Convert (File_Marker (Node)))
+                & " " & To_String (Node));
       end loop;
    end Dump_Persistent_Markers;
 
@@ -119,6 +115,7 @@ package body Src_Editor_Module.Markers is
       Marker.Id            := Module.Next_Mark_Id;
       Module.Next_Mark_Id  := Module.Next_Mark_Id + 1;
       Marker_List.Append (Module.Stored_Marks,  Location_Marker (Marker));
+      Marker.Position := Marker_List.Last (Module.Stored_Marks);
    end Register_Persistent_Marker;
 
    ---------------
@@ -126,26 +123,21 @@ package body Src_Editor_Module.Markers is
    ---------------
 
    function Find_Mark (Id : Natural) return File_Marker is
-      use type Marker_List.List_Node;
       Module : constant Source_Editor_Module :=
                  Source_Editor_Module (Src_Editor_Module_Id);
       Marker : File_Marker;
-      Node   : Marker_List.List_Node;
 
    begin
       if Module = null then
          return null;
       end if;
 
-      Node := Marker_List.First (Module.Stored_Marks);
-      while Node /= Marker_List.Null_Node loop
-         Marker := File_Marker (Marker_List.Data (Node));
+      for Node of Module.Stored_Marks loop
+         Marker := File_Marker (Node);
 
          if Marker.Id = Id then
             return Marker;
          end if;
-
-         Node := Marker_List.Next (Node);
       end loop;
 
       return null;
@@ -162,7 +154,6 @@ package body Src_Editor_Module.Markers is
       use Marker_List;
       Module : constant Source_Editor_Module :=
                  Source_Editor_Module (Src_Editor_Module_Id);
-      Node   : List_Node;
       Marker : File_Marker;
 
    begin
@@ -170,15 +161,12 @@ package body Src_Editor_Module.Markers is
          return;
       end if;
 
-      Node := First (Module.Stored_Marks);
-      while Node /= Null_Node loop
-         Marker := File_Marker (Data (Node));
+      for Node of Module.Stored_Marks loop
+         Marker := File_Marker (Node);
 
          if Marker.File = File then
             Create_Text_Mark (Kernel, Marker);
          end if;
-
-         Node := Next (Node);
       end loop;
    end Reset_Markers_For_File;
 
@@ -238,16 +226,11 @@ package body Src_Editor_Module.Markers is
       Module : constant Source_Editor_Module :=
                  Source_Editor_Module (Src_Editor_Module_Id);
       M1     : constant File_Marker := Marker'Unchecked_Access;
-      M      : File_Marker;
-      Node   : Marker_List.List_Node;
-      Prev   : Marker_List.List_Node := Marker_List.Null_Node;
 
    begin
       if Module = null then
          return;
       end if;
-
-      Node := Marker_List.First (Module.Stored_Marks);
 
       if Marker.Mark /= null then
          --  We explicitly remove the weak_unref on the mark, even though
@@ -293,16 +276,9 @@ package body Src_Editor_Module.Markers is
          Marker.Buffer := null;
       end if;
 
-      while Node /= Marker_List.Null_Node loop
-         M := File_Marker (Marker_List.Data (Node));
-         if M = M1 then
-            Remove_Nodes (Module.Stored_Marks, Prev, Node);
-            exit;
-         end if;
-
-         Prev := Node;
-         Node := Marker_List.Next (Node);
-      end loop;
+      if Marker_List.Has_Element (Marker.Position) then
+         Marker_List.Delete (Module.Stored_Marks, Marker.Position);
+      end if;
    end Destroy;
 
    ----------------------
@@ -432,16 +408,17 @@ package body Src_Editor_Module.Markers is
    begin
       Marker := new File_Marker_Record'
         (Location_Marker_Record with
-         Id      => Natural'Last,
-         File    => File,
-         Project => Project,
-         Line    => Line,
-         Column  => Column,
-         Length  => Length,
-         Buffer  => null,
-         Mark    => null,
-         Cid     => <>,
-         Kernel  => Kernel_Handle (Kernel));
+         Id       => Natural'Last,
+         File     => File,
+         Project  => Project,
+         Line     => Line,
+         Column   => Column,
+         Length   => Length,
+         Buffer   => null,
+         Mark     => null,
+         Cid      => <>,
+         Kernel   => Kernel_Handle (Kernel),
+         Position => Marker_List.No_Element);
       Create_Text_Mark (Kernel, Marker);
       Register_Persistent_Marker (Marker);
       return Marker;
@@ -461,16 +438,17 @@ package body Src_Editor_Module.Markers is
    begin
       Marker := new File_Marker_Record'
         (Location_Marker_Record with
-         Id      => Natural'Last,
-         File    => File,
-         Project => Project,
-         Line    => 0,
-         Column  => 1,
-         Length  => 0,
-         Buffer  => Get_Buffer (Mark),
-         Mark    => Mark,
-         Cid     => <>,
-         Kernel  => Kernel_Handle (Kernel));
+         Id       => Natural'Last,
+         File     => File,
+         Project  => Project,
+         Line     => 0,
+         Column   => 1,
+         Length   => 0,
+         Buffer   => Get_Buffer (Mark),
+         Mark     => Mark,
+         Cid      => <>,
+         Kernel   => Kernel_Handle (Kernel),
+         Position => Marker_List.No_Element);
 
       Marker.Cid := Markers_Callback.Connect
         (Source_Buffer (Marker.Buffer), Signal_Changed,

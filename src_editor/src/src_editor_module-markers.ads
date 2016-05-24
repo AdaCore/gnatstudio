@@ -98,16 +98,17 @@ private
    type File_Marker_Record
      is new GPS.Kernel.Location_Marker_Record with
       record
-         Id     : Natural;   --  Needed only for the shell API
-         File   : GNATCOLL.VFS.Virtual_File;
-         Project : GNATCOLL.Projects.Project_Type;
-         Line   : Editable_Line_Type;
-         Column : Visible_Column_Type;
-         Length : Natural := 1;
-         Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
-         Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;
-         Kernel : Kernel_Handle;
-         Cid    : Gtk.Handlers.Handler_Id;
+         Id       : Natural;   --  Needed only for the shell API
+         File     : GNATCOLL.VFS.Virtual_File;
+         Project  : GNATCOLL.Projects.Project_Type;
+         Line     : Editable_Line_Type;
+         Column   : Visible_Column_Type;
+         Length   : Natural := 1;
+         Mark     : Gtk.Text_Mark.Gtk_Text_Mark;
+         Buffer   : Gtk.Text_Buffer.Gtk_Text_Buffer;
+         Kernel   : Kernel_Handle;
+         Cid      : Gtk.Handlers.Handler_Id;
+         Position : Marker_List.Cursor := Marker_List.No_Element;
       end record;
 
    overriding procedure Destroy (Marker : in out File_Marker_Record);
