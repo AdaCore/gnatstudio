@@ -619,21 +619,18 @@ private
 
       type Abstract_Message_Access is access all Abstract_Message_Node'Class;
 
-      package Abstract_Message_Vectors is
-        new Ada.Containers.Vectors (Positive, Abstract_Message_Access);
+      package Message_Lists is
+         new Ada.Containers.Doubly_Linked_Lists (Abstract_Message_Access);
 
       type Container is tagged limited record
-         Messages    : Abstract_Message_Vectors.Vector;
-         Unprocessed : Positive := 1;
+         Messages    : Message_Lists.List;
+         Unprocessed : Message_Lists.Cursor;
          --  Points to first message to be processed
-         Unused      : Natural  := 0;
-         --  Count of unused elements in vector to decide when it should be
-         --  reconstructed.
       end record;
 
       type Abstract_Message_Node is
         abstract new Node_Record (Node_Message) with record
-         Index : Natural := 0;
+         Position : Message_Lists.Cursor;
       end record;
 
    end Message_Collections;

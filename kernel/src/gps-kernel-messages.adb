@@ -1396,35 +1396,18 @@ package body GPS.Kernel.Messages is
       -------------
 
       procedure Exclude (Self : not null access Abstract_Message_Node'Class) is
+         use type Message_Lists.Cursor;
+
          Container : constant Messages_Container_Access :=
                        Message_Access (Self).Get_Container;
 
       begin
-         if Self.Index /= 0 then
-            Container.Messages.Messages.Replace_Element (Self.Index, null);
-            Container.Messages.Unused := Container.Messages.Unused + 1;
-         end if;
+         if Message_Lists.Has_Element (Self.Position) then
+            if Container.Messages.Unprocessed = Self.Position then
+               Message_Lists.Next (Container.Messages.Unprocessed);
+            end if;
 
-         if Natural (Container.Messages.Messages.Length)
-              < Container.Messages.Unused * 2
-         then
-            --  Remove empty elements from the vector
-
-            for J in reverse Container.Messages.Messages.First_Index
-              .. Container.Messages.Messages.Last_Index
-            loop
-               if Container.Messages.Messages (J) = null then
-                  Container.Messages.Messages.Delete (J);
-               end if;
-            end loop;
-
-            --  Update indicies of messages
-
-            for J in Container.Messages.Messages.First_Index
-              .. Container.Messages.Messages.Last_Index
-            loop
-               Container.Messages.Messages (J).Index := J;
-            end loop;
+            Container.Messages.Messages.Delete (Self.Position);
          end if;
       end Exclude;
 
@@ -1435,11 +1418,17 @@ package body GPS.Kernel.Messages is
       function Get_Unprocessed
         (Self : in out Container'Class) return Message_Access is
       begin
-         return Message : constant Message_Access :=
-           Message_Access (Self.Messages.Element (Self.Unprocessed))
-         do
-            Self.Unprocessed := Self.Unprocessed + 1;
-         end return;
+         if Message_Lists.Has_Element (Self.Unprocessed) then
+            return Message : constant Message_Access :=
+              Message_Access (Message_Lists.Element (Self.Unprocessed))
+            do
+               Message_Lists.Next (Self.Unprocessed);
+            end return;
+
+         else
+            raise Program_Error;
+            --  Must never happen
+         end if;
       end Get_Unprocessed;
 
       ---------------------
@@ -1449,13 +1438,7 @@ package body GPS.Kernel.Messages is
       function Has_Unprocessed
         (Self : in out Container'Class) return Boolean is
       begin
-         while Self.Unprocessed <= Self.Messages.Last_Index
-           and then Self.Messages (Self.Unprocessed) = null
-         loop
-            Self.Unprocessed := Self.Unprocessed + 1;
-         end loop;
-
-         return Self.Unprocessed <= Self.Messages.Last_Index;
+         return Message_Lists.Has_Element (Self.Unprocessed);
       end Has_Unprocessed;
 
       -------------
@@ -1468,7 +1451,7 @@ package body GPS.Kernel.Messages is
 
       begin
          Container.Messages.Messages.Append (Self);
-         Self.Index := Container.Messages.Messages.Last_Index;
+         Self.Position := Container.Messages.Messages.Last;
       end Include;
 
       ------------------
@@ -1477,7 +1460,7 @@ package body GPS.Kernel.Messages is
 
       procedure Unfilter_All (Self : in out Container'Class) is
       begin
-         Self.Unprocessed := Self.Messages.First_Index;
+         Self.Unprocessed := Self.Messages.First;
       end Unfilter_All;
 
    end Message_Collections;
