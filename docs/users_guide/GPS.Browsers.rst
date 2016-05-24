@@ -35,6 +35,8 @@ Classes
 
    .. automethod:: GPS.Browsers.Diagram.add
 
+   .. automethod:: GPS.Browsers.Diagram.changed
+
    .. automethod:: GPS.Browsers.Diagram.clear
 
    .. automethod:: GPS.Browsers.Diagram.clear_selection
@@ -247,6 +249,10 @@ Classes
 
 
    .. autoattribute:: GPS.Browsers.TextItem.TextArrow
+
+
+
+   .. autoattribute:: GPS.Browsers.TextItem.text
 
 
    .. automethod:: GPS.Browsers.TextItem.__init__
