@@ -24,13 +24,15 @@ with Gdk.Event;              use Gdk.Event;
 with Gdk.Rectangle;          use Gdk.Rectangle;
 with Gdk.Types;              use Gdk.Types;
 with Gtk.Box;                use Gtk.Box;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Label;              use Gtk.Label;
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Notebook;           use Gtk.Notebook;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
-with Gtk.Tree_View;          use Gtk.Tree_View;
+with Gtk.Toolbar;            use Gtk.Toolbar;
 with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
 with Gtk.Tree_Store;         use Gtk.Tree_Store;
@@ -38,10 +40,11 @@ with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.MDI;             use Gtkada.MDI;
+with Gtkada.Tree_View;       use Gtkada.Tree_View;
 
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Default_Preferences;    use Default_Preferences;
-with Generic_Views;
+with Generic_Views;          use Generic_Views;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
@@ -69,7 +72,7 @@ package body Buffer_Views is
    Data_Column      : constant := 2;
 
    Column_Types : constant GType_Array :=
-     (Icon_Name_Column => GType_Icon_Name_String,
+     (Icon_Name_Column => GType_String,
       Name_Column      => GType_String,
       Data_Column      => GType_String);
 
@@ -85,14 +88,29 @@ package body Buffer_Views is
       Event : Gdk.Event.Gdk_Event := null)
       return Selection_Context;
 
+   type Buffer_Tree_View_Record is new Gtkada.Tree_View.Tree_View_Record with
+      record
+         Pattern  : Search_Pattern_Access;
+      end record;
+   type Buffer_Tree_View is access all Buffer_Tree_View_Record'Class;
+   overriding function Is_Visible
+     (Self       : not null access Buffer_Tree_View_Record;
+      Store_Iter : Gtk_Tree_Iter) return Boolean;
+
    type Buffer_View_Record is new Generic_Views.View_Record with record
-      Tree              : Gtk_Tree_View;
+      Tree              : Buffer_Tree_View;
       File              : Virtual_File; -- current selected file (cache)
       Child_Selected_Id : Gtk.Handlers.Handler_Id;
    end record;
    overriding procedure Create_Menu
      (View    : not null access Buffer_View_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+   overriding procedure Create_Toolbar
+     (Self    : not null access Buffer_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Filter_Changed
+     (Self    : not null access Buffer_View_Record;
+      Pattern : in out Search_Pattern_Access);
 
    function Initialize
      (View   : access Buffer_View_Record'Class) return Gtk_Widget;
@@ -131,9 +149,10 @@ package body Buffer_Views is
    --  Callback for the "button_press" event
 
    function Get_Path_At_Event
-     (Tree  : Gtk_Tree_View;
+     (Self  : Buffer_View_Access;
       Event : Gdk_Event_Button) return Gtk_Tree_Path;
    --  Return the path at which Event has occured.
+   --  The path referenced the filter model, not the underlying model.
    --  User must free memory associated to the returned path.
 
    type Close_Command is new Interactive_Command with null record;
@@ -196,23 +215,22 @@ package body Buffer_Views is
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
-      Tree  : constant Gtk_Tree_View := Gtk_Tree_View (Widget);
-      Model : constant Gtk_Tree_Model := Get_Model (Tree);
-      Iter  : Gtk_Tree_Iter;
+      View  : constant Buffer_View_Access := Buffer_View_Access (Widget);
+      Filter_Iter  : Gtk_Tree_Iter;
       Area  : Gdk_Rectangle;
       Label : Gtk_Label;
 
    begin
-      Initialize_Tooltips (Tree, X, Y, Area, Iter);
+      Initialize_Tooltips (View.Tree, X, Y, Area, Filter_Iter);
 
-      if Iter /= Null_Iter then
+      if Filter_Iter /= Null_Iter then
          Tooltip.Set_Tip_Area (Area);
 
          declare
             Name : constant String :=
-              Get_String (Model, Iter, Name_Column);
+              View.Tree.Filter.Get_String (Filter_Iter, Name_Column);
             Title : constant String :=
-              Get_String (Model, Iter, Data_Column);
+              View.Tree.Filter.Get_String (Filter_Iter, Data_Column);
          begin
             Gtk_New
               (Label, "<b>Name:</b> "
@@ -297,12 +315,39 @@ package body Buffer_Views is
       return Success;
    end Execute;
 
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   overriding function Is_Visible
+     (Self       : not null access Buffer_Tree_View_Record;
+      Store_Iter : Gtk_Tree_Iter) return Boolean is
+   begin
+      return Self.Pattern = null
+        or else Self.Pattern.Start
+          (Self.Model.Get_String (Store_Iter, Name_Column))
+            /= GPS.Search.No_Match;
+   end Is_Visible;
+
+   --------------------
+   -- Filter_Changed --
+   --------------------
+
+   overriding procedure Filter_Changed
+     (Self    : not null access Buffer_View_Record;
+      Pattern : in out Search_Pattern_Access) is
+   begin
+      GPS.Search.Free (Self.Tree.Pattern);
+      Self.Tree.Pattern := Pattern;
+      Self.Tree.Refilter;  --  Recompute visibility of rows
+   end Filter_Changed;
+
    -----------------------
    -- Get_Path_At_Event --
    -----------------------
 
    function Get_Path_At_Event
-     (Tree  : Gtk_Tree_View;
+     (Self  : Buffer_View_Access;
       Event : Gdk_Event_Button) return Gtk_Tree_Path
    is
       Buffer_X  : Gint;
@@ -312,7 +357,7 @@ package body Buffer_Views is
       Column    : Gtk_Tree_View_Column := null;
    begin
       Get_Path_At_Pos
-        (Tree, Gint (Event.X), Gint (Event.Y),
+        (Self.Tree, Gint (Event.X), Gint (Event.Y),
          Path, Column, Buffer_X, Buffer_Y, Row_Found);
       return Path;
    end Get_Path_At_Event;
@@ -327,9 +372,8 @@ package body Buffer_Views is
    is
       Explorer : constant Buffer_View_Access := Buffer_View_Access (View);
       Kernel   : constant Kernel_Handle := Explorer.Kernel;
-      Model    : constant Gtk_Tree_Store := -Get_Model (Explorer.Tree);
-      Path     : Gtk_Tree_Path;
-      Iter     : Gtk_Tree_Iter;
+      Filter_Path : Gtk_Tree_Path;
+      Filter_Iter : Gtk_Tree_Iter;
       Child    : MDI_Child;
    begin
       Trace (Me, "Button_Press X=" & Event.X'Img & " Y=" & Event.Y'Img
@@ -343,17 +387,18 @@ package body Buffer_Views is
          return False;
       end if;
 
-      Path := Get_Path_At_Event (Explorer.Tree, Event);
-      if Path /= Null_Gtk_Tree_Path then
-         Iter := Get_Iter (Model, Path);
-         Path_Free (Path);
+      Filter_Path := Get_Path_At_Event (Explorer, Event);
+      if Filter_Path /= Null_Gtk_Tree_Path then
+         Filter_Iter := Explorer.Tree.Filter.Get_Iter (Filter_Path);
+         Path_Free (Filter_Path);
 
          --  Only for actual windows
-         if Children (Model, Iter) = Null_Iter then
+         if Explorer.Tree.Filter.Children (Filter_Iter) = Null_Iter then
 
             Child := Find_MDI_Child_By_Name
-              (Get_MDI (Kernel), Get_String (Model, Iter, Data_Column));
-            Trace (Me, "Clicked on row for child " & Get_Title (Child));
+              (Get_MDI (Kernel),
+               Explorer.Tree.Filter.Get_String (Filter_Iter, Data_Column));
+            Trace (Me, "Clicked on row for child " & Child.Get_Title);
 
             if Event.Button = 3 then
                --  Right click ?
@@ -384,9 +429,8 @@ package body Buffer_Views is
 
    procedure Child_Selected (View : access Gtk_Widget_Record'Class) is
       V     : constant Buffer_View_Access := Buffer_View_Access (View);
-      Model : constant Gtk_Tree_Store := -Get_Model (V.Tree);
       Child : constant MDI_Child := Get_Focus_Child (Get_MDI (V.Kernel));
-      Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
+      Iter  : Gtk_Tree_Iter;
       Iter2 : Gtk_Tree_Iter;
    begin
       if Child = null then
@@ -402,30 +446,35 @@ package body Buffer_Views is
          declare
             Selected : constant String := Get_Title (Child);
          begin
-            Unselect_All (Get_Selection (V.Tree));
+            V.Tree.Get_Selection.Unselect_All;
 
+            Iter := V.Tree.Model.Get_Iter_First;
             while Iter /= Null_Iter loop
-               Iter2 := Children (Model, Iter);
+               Iter2 := V.Tree.Model.Children (Iter);
 
                if Iter2 = Null_Iter then
-                  if Get_String (Model, Iter, Data_Column) = Selected then
-                     Select_Iter (Get_Selection (V.Tree), Iter);
+                  if V.Tree.Model.Get_String
+                    (Iter, Data_Column) = Selected
+                  then
+                     V.Tree.Get_Selection.Select_Iter
+                       (V.Tree.Convert_To_Filter_Iter (Iter));
                      exit;
                   end if;
 
                else
                   while Iter2 /= Null_Iter loop
-                     if Get_String (Model, Iter2, Data_Column) =
+                     if V.Tree.Model.Get_String (Iter2, Data_Column) =
                        Selected
                      then
-                        Select_Iter (Get_Selection (V.Tree), Iter2);
+                        V.Tree.Get_Selection.Select_Iter
+                          (V.Tree.Convert_To_Filter_Iter (Iter2));
                         return;
                      end if;
-                     Next (Model, Iter2);
+                     V.Tree.Model.Next (Iter2);
                   end loop;
                end if;
 
-               Next (Model, Iter);
+               V.Tree.Model.Next (Iter);
             end loop;
          end;
       end if;
@@ -437,12 +486,11 @@ package body Buffer_Views is
 
    procedure Refresh (View : access Gtk_Widget_Record'Class) is
       V       : constant Buffer_View_Access := Buffer_View_Access (View);
-      Model   : constant Gtk_Tree_Store := -Get_Model (V.Tree);
       P_Editors_Only   : constant Boolean := Editors_Only.Get_Pref;
       P_Show_Notebooks : constant Boolean := Show_Notebooks.Get_Pref;
 
-      Notebook_Index : Integer := -1;
-      Iter           : Gtk_Tree_Iter := Null_Iter;
+      Notebook_Index      : Integer := -1;
+      Notebook_Store_Iter : Gtk_Tree_Iter := Null_Iter;
 
       procedure Show_Child (Parent : Gtk_Tree_Iter; Child : MDI_Child);
       --  Insert the line for Child in the view
@@ -458,24 +506,26 @@ package body Buffer_Views is
       procedure Purify is
          Iter2 : Gtk_Tree_Iter;
       begin
-         if Iter /= Null_Iter then
-            Iter2 := Children (Model, Iter);
+         if Notebook_Store_Iter /= Null_Iter then
+            Iter2 := V.Tree.Model.Children (Notebook_Store_Iter);
 
             if Iter2 = Null_Iter then
                --  If we had an empty notebook, remove it
-               Remove (Model, Iter);
+               V.Tree.Model.Remove (Notebook_Store_Iter);
 
-            elsif N_Children (Model, Iter) = 1 then
+            elsif V.Tree.Model.N_Children (Notebook_Store_Iter) = 1 then
                --  Single child ?
                Set_And_Clear
-                 (Model, Iter,
+                 (V.Tree.Model, Notebook_Store_Iter,
                   (Icon_Name_Column, Name_Column, Data_Column),
                   (1 => As_String
-                       (Get_String (Model, Iter2, Icon_Name_Column)),
-                   2 => As_String (Get_String (Model, Iter2, Name_Column)),
-                   3 => As_String (Get_String (Model, Iter2, Data_Column))));
+                     (V.Tree.Model.Get_String (Iter2, Icon_Name_Column)),
+                   2 => As_String
+                     (V.Tree.Model.Get_String (Iter2, Name_Column)),
+                   3 => As_String
+                     (V.Tree.Model.Get_String (Iter2, Data_Column))));
 
-               Remove (Model, Iter2);
+               V.Tree.Model.Remove (Iter2);
 
             else
                Notebook_Index := Notebook_Index + 1;
@@ -496,15 +546,15 @@ package body Buffer_Views is
          if not P_Editors_Only
            or else Is_Source_Box (Child)
          then
-            Append (Model, Iter, Parent);
+            V.Tree.Model.Append (Iter, Parent);
             if Name = "" then
                Set_And_Clear
-                 (Model, Iter, (Name_Column, Data_Column),
+                 (V.Tree.Model, Iter, (Name_Column, Data_Column),
                   (As_String (Untitled), As_String (Untitled)));
 
             else
                Set_And_Clear
-                 (Model, Iter,
+                 (V.Tree.Model, Iter,
                   (Icon_Name_Column, Name_Column, Data_Column),
                   (1 => As_String (Get_Icon_Name (Child)),
                    2 => As_String (Name),
@@ -512,7 +562,8 @@ package body Buffer_Views is
             end if;
 
             if Child = Get_Focus_Child (Get_MDI (V.Kernel)) then
-               Select_Iter (Get_Selection (V.Tree), Iter);
+               V.Tree.Get_Selection.Select_Iter
+                 (V.Tree.Convert_To_Filter_Iter (Iter));
             end if;
          end if;
       end Show_Child;
@@ -528,12 +579,12 @@ package body Buffer_Views is
          return;
       end if;
 
-      Model.Clear;
+      V.Tree.Model.Clear;
 
       if P_Show_Notebooks then
-         Column := Model.Freeze_Sort;
+         Column := V.Tree.Model.Freeze_Sort;
       else
-         Model.Thaw_Sort (1);
+         V.Tree.Model.Thaw_Sort (1);
       end if;
 
       I_Child := First_Child
@@ -549,12 +600,13 @@ package body Buffer_Views is
             then
                Purify;
                Current_Notebook := Get_Notebook (I_Child);
-               Append (Model, Iter, Null_Iter);
-               Model.Set (Iter, Name_Column,
-                          -"Notebook" & Integer'Image (Notebook_Index));
+               V.Tree.Model.Append (Notebook_Store_Iter, Null_Iter);
+               V.Tree.Model.Set
+                 (Notebook_Store_Iter, Name_Column,
+                  -"Notebook" & Integer'Image (Notebook_Index + 1));
             end if;
 
-            Show_Child (Iter, Child);
+            Show_Child (Notebook_Store_Iter, Child);
 
          else
             Show_Child (Null_Iter, Child);
@@ -582,6 +634,23 @@ package body Buffer_Views is
       Append_Menu (Menu, View.Kernel, Editors_Only);
       Append_Menu (Menu, View.Kernel, Show_Notebooks);
    end Create_Menu;
+
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   overriding procedure Create_Toolbar
+     (Self    : not null access Buffer_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
+   begin
+      Self.Build_Filter
+        (Toolbar,
+         Hist_Prefix => "windows",
+         Tooltip     => -"Filter the contents of the Windows view",
+         Placeholder => -"filter",
+         Options     =>
+           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy);
+   end Create_Toolbar;
 
    -------------------
    -- Build_Context --
@@ -630,6 +699,10 @@ package body Buffer_Views is
    is
       Tooltip   : Tooltips.Tooltips_Access;
       Scrolled  : Gtk_Scrolled_Window;
+      Col       : Gtk_Tree_View_Column;
+      Text      : Gtk_Cell_Renderer_Text;
+      Icon      : Gtk_Cell_Renderer_Pixbuf;
+      Dummy     : Gint;
    begin
       Initialize_Vbox (View, Homogeneous => False);
 
@@ -637,17 +710,28 @@ package body Buffer_Views is
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
       View.Pack_Start (Scrolled, Expand => True, Fill => True);
 
-      View.Tree := Create_Tree_View
-        (Column_Types       => Column_Types,
-         Column_Names       => (1 => null, 2 => null),
-         Show_Column_Titles => False,
-         Selection_Mode     => Selection_Multiple,
-         Sortable_Columns   => True,
-         Initial_Sort_On    => 2,
-         Hide_Expander      => False);
+      View.Tree := new Buffer_Tree_View_Record;
+      Initialize
+        (View.Tree,
+         Column_Types       => Column_Types,
+         Filtered           => True,
+         Set_Visible_Func   => True);
       Scrolled.Add (View.Tree);
+      View.Tree.Set_Headers_Visible (False);
+      View.Tree.Get_Selection.Set_Mode (Selection_Multiple);
+      View.Tree.Set_Enable_Search (True);
 
-      Set_Font_And_Colors (View.Tree, Fixed_Font => True);
+      Gtk_New (Col);
+      Dummy := View.Tree.Append_Column (Col);
+      Col.Set_Sort_Column_Id (Name_Column);
+
+      Gtk_New (Icon);
+      Col.Pack_Start (Icon, False);
+      Col.Add_Attribute (Icon, "icon-name", Icon_Name_Column);
+
+      Gtk_New (Text);
+      Col.Pack_Start (Text, True);
+      Col.Add_Attribute (Text, "text", Name_Column);
 
       Widget_Callback.Object_Connect
         (Get_MDI (View.Kernel), Signal_Child_Added,
@@ -676,12 +760,13 @@ package body Buffer_Views is
         (Kernel          => View.Kernel,
          Event_On_Widget => View.Tree);
 
+      Set_Font_And_Colors (View.Tree, Fixed_Font => True);
       Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => View);
 
       --  Initialize tooltips
 
       Tooltip := new Buffer_View_Tooltips;
-      Tooltip.Set_Tooltip (View.Tree);
+      Tooltip.Set_Tooltip (View);
 
       Refresh (View);
 
@@ -888,7 +973,7 @@ package body Buffer_Views is
         (Kernel, "Windows view close selected",
          new Close_Command,
          -"Close all windows currently selected in the Windows view",
-         Icon_Name => "gps-close-symbolic",
+         Icon_Name => "gps-remove-symbolic",
          Category => -"Windows view");
 
       P := new Opened_Windows_Search;

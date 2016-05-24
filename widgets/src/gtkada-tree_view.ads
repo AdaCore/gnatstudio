@@ -90,6 +90,9 @@ package Gtkada.Tree_View is
    --  a row is given by an extra column in the model. This column can be
    --  recomputed by calling Refilter below. This should be False if you
    --  intend to set your own more complex visibility function.
+   --
+   --  ??? This function creates both model and view, so can't easily create
+   --  multiple views of the same model.
 
    ---------------
    -- Expansion --
