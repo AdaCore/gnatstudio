@@ -933,6 +933,10 @@ Classes
 
 
 
+
+   .. autoattribute:: GPS.File.executable_path
+
+
    .. automethod:: GPS.File.__init__
 
    .. automethod:: GPS.File.compile
@@ -1493,8 +1497,6 @@ Classes
    .. automethod:: GPS.Project.get_attribute_as_string
 
    .. automethod:: GPS.Project.get_executable_name
-
-   .. automethod:: GPS.Project.get_executable_path
 
    .. automethod:: GPS.Project.get_property
 

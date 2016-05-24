@@ -5281,6 +5281,14 @@ class File(object):
     .. seealso:: :func:`GPS.File.__init__`
     """
 
+    executable_path = None
+    """
+    If this :class:`File` instance refers to a main file, return a
+    :class:`File` instance of the executable associated with this file.
+    An exception is raised if the :class:`File` instance does not refer
+    to a main file.
+    """
+
     def __cmp__(self, file):
         """
         Compares two instances of :func:`GPS.File` and returns -1, 0 or 1
@@ -8571,17 +8579,6 @@ class Project(object):
         """
         Returns the name of the executable, either read from the project or
         computed from `main`.
-
-        :param GPS.File main: the main source file.
-        :return: A string
-
-        """
-        pass  # implemented in Ada
-
-    def get_executable_path(self, main):
-        """
-        Returns the full path of the executable, either read from the
-        project or computed from `main`.
 
         :param GPS.File main: the main source file.
         :return: A string

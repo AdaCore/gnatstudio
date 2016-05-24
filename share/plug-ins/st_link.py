@@ -122,7 +122,7 @@ class BoardLoader(Module):
             return
 
         msg_is("Creating the binary (flashable) image.")
-        exe = GPS.Project.root().get_executable_path(GPS.File(main_name))
+        exe = GPS.File(main_name).executable_path.name()
         binary = exe + ".bin"
         cmd = ["arm-eabi-objcopy", "-O", "binary", exe, binary]
         msg_is(' '.join(cmd))
@@ -198,8 +198,8 @@ class BoardLoader(Module):
 
         # Spawn the debugger on the executable and load it
         msg_is("Launching debugger.")
-        exe = GPS.Project.root().get_executable_path(GPS.File(main_name))
-        debugger_promise = promises.DebuggerWrapper(GPS.File(exe))
+        exe = GPS.File(main_name).executable_path
+        debugger_promise = promises.DebuggerWrapper(exe)
         r2 = yield debugger_promise.wait_and_send(
             cmd="load",
             block=True)

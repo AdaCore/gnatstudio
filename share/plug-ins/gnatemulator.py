@@ -130,8 +130,7 @@ class GNATemulator(Module):
         log("... done.")
 
         # STEP 2 load with Emulator
-        self.run_gnatemu(
-            [GPS.Project.root().get_executable_path(GPS.File(main_name))])
+        self.run_gnatemu([GPS.File(main_name).executable_path.name()])
 
     def __emu_debug_wf(self, main_name):
         """

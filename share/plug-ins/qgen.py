@@ -391,9 +391,8 @@ class CLI(GPS.Process):
             w = TargetWrapper(target_name='Build Main')
             status = yield w.wait_on_execute(main_name=main_name)
         if status == 0:
-            f = GPS.File(main_name)
-            e = f.project().get_executable_path(f)
-            GPS.Debugger.spawn(GPS.File(e))
+            exe = GPS.File(main_name).executable_path
+            GPS.Debugger.spawn(exe)
 
 
 class QGEN_Diagram(gpsbrowsers.JSON_Diagram):
