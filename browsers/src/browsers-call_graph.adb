@@ -25,6 +25,7 @@ with GNATCOLL.Scripts;              use GNATCOLL.Scripts;
 with GNATCOLL.Traces;               use GNATCOLL.Traces;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
 with GNATCOLL.Xref;
+with GPS.Editors;                   use GPS.Editors;
 with GPS.Intl;                      use GPS.Intl;
 with GPS.Kernel.Actions;            use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;           use GPS.Kernel.Contexts;
@@ -118,6 +119,17 @@ package body Browsers.Call_Graph is
       Circle     : Ellipse_Item;
    end record;
    type Entity_Item is access all Entity_Item_Record'Class;
+
+   type Xref_Text_Record is new Text_Item_Record and Clickable_Item with
+      record
+         File : Virtual_File;
+         Line : Integer;
+      end record;
+   type Xref_Text is access all Xref_Text_Record'Class;
+   overriding procedure On_Click
+     (Self    : not null access Xref_Text_Record;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access);
 
    overriding function Save_To_XML
      (Self : not null access Entity_Item_Record)
@@ -289,6 +301,24 @@ package body Browsers.Call_Graph is
       return Gtk_Widget (View.Get_View);
    end Initialize;
 
+   --------------
+   -- On_Click --
+   --------------
+
+   overriding procedure On_Click
+     (Self    : not null access Xref_Text_Record;
+      View    : not null access GPS_Canvas_View_Record'Class;
+      Details : Gtkada.Canvas_View.Event_Details_Access)
+   is
+      pragma Unreferenced (View);
+      It : constant Entity_Item := Entity_Item (Details.Toplevel_Item);
+      Editor : constant Editor_Buffer'Class :=
+        Get_Kernel (It.Browser).Get_Buffer_Factory.Get (Self.File);
+   begin
+      Editor.Current_View.Cursor_Goto
+        (Editor.New_Location_At_Line (Self.Line));
+   end On_Click;
+
    ---------------------------
    -- Create_Or_Find_Entity --
    ---------------------------
@@ -322,7 +352,7 @@ package body Browsers.Call_Graph is
          declare
             Decl   : constant General_Location := Get_Declaration (Entity).Loc;
             Name   : constant String := Get_Name (Entity);
-            Text   : Text_Item;
+            Text   : Xref_Text;
             S      : constant access Browser_Styles :=
               Browser.Get_View.Get_Styles;
             Left   : constant access Left_Arrow_Record'Class :=
@@ -342,8 +372,13 @@ package body Browsers.Call_Graph is
                Name  => Name,
                Left  => Left,
                Right => Right);
-            Text := Gtk_New_Text
-              (S.Text_Font,
+
+            Text := new Xref_Text_Record;
+            Text.File := Decl.File;
+            Text.Line := Decl.Line;
+            Initialize_Text
+              (Text,
+               S.Hyper_Link,
                Decl.File.Display_Base_Name & ':' & Image (Decl.Line));
             Item.Add_Child (Text, Margin => (2.0, 2.0, 2.0, 2.0));
 

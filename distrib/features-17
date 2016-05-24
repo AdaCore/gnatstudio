@@ -23,6 +23,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P512-010 GPS: filter in the Windows view (2016-05-24)
+
+  The Windows view now also has a local filter, to help search for specific
+  windows.
+
+NF-17-P511-020 GPS: hyper links in call graph browser (2016-05-24)
+
+  In the Call Graph Browser, file locations are now clickable and open
+  the corresponding file/line.
+
 NF-17-P419-042 GPS: proposed value of message review status (2016-04-21)
 
   In CodePeer message review dialog proposed value of message review status
