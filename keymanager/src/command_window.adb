@@ -38,6 +38,8 @@ with Gtk.Text_Iter;           use Gtk.Text_Iter;
 with Gtk.Text_View;           use Gtk.Text_View;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Window;              use Gtk.Window;
+with Pango.Enums;             use Pango.Enums;
+with Pango.Font;              use Pango.Font;
 
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
@@ -443,20 +445,35 @@ package body Command_Window is
          Set_Transient_For (Window, Gtk_Window (Get_Toplevel (Applies_To)));
       end if;
 
-      Show_All (Window);
+      --  We want to put the window at the bottom of the editor. For this, we
+      --  need to know its size. Unfortunately, until it is realized, a
+      --  GtK_Text_View will always request a height of 0, and thus our
+      --  window would start at the bottom of the editor, and extend below the
+      --  editor.
+      --  So instead we do the following: compute an approximate height by
+      --  using the font properties. Move the window to that position, and
+      --  show it (we move it first so that the window does not show briefly
+      --  at coordinates 0,0). After this, we request the actual size now that
+      --  the Gtk_Text_View has been realized, and slightly adjust the
+      --  position of the window.
 
-      --  Aim for our window to appear as a strip over the bottom of
-      --  the Applies_To widget.
+      Min_H := Get_Size (View_Fixed_Font.Get_Pref) / Pango_Scale + 4;
 
       Get_Origin (Get_Window (Applies_To), X, Y);
+      Window.Set_Size_Request
+        (Width  => Get_Allocated_Width (Applies_To), Height => Min_H);
+      Move (Window,
+            X => X, Y => Y + Get_Allocated_Height (Applies_To) - Min_H);
+
+      Window.Show_All;  --  Now realize Window.Line so that we know its size
+
       Get_Preferred_Height_For_Width
         (Window.Line, Applies_To.Get_Allocated_Width, Min_H, Natural_H);
+
       Window.Set_Size_Request
-        (Width  => Get_Allocated_Width (Applies_To),
-         Height => Min_H);
+        (Width  => Get_Allocated_Width (Applies_To), Height => Min_H);
       Move (Window,
-            X => X,
-            Y => Y + Get_Allocated_Height (Applies_To) - Min_H);
+            X => X, Y => Y + Get_Allocated_Height (Applies_To) - Min_H);
 
       Window.Parent := Gtk_Window (Get_Toplevel (Applies_To));
       Window.Parent_Geometry := Get_Geometry (Window.Parent);
