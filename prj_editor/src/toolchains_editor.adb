@@ -384,7 +384,7 @@ package body Toolchains_Editor is
       Gtk_New (Col);
       Ignore := Self.Toolchains_Tree.Append_Column (Col);
       Gtk_New (String_Renderer);
-      Col.Set_Title (-"Name");
+      Col.Set_Title (-"Target");
       Col.Pack_Start (String_Renderer, False);
       Col.Add_Attribute (String_Renderer, "text", Label_Column);
 
