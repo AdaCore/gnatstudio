@@ -704,7 +704,10 @@ else:
                     # diagram corresponds to the current frame.
 
                     # ??? We are hard-coding a gdb command here
-                    value = self.debugger.send("print %s" % (ss, ))
+                    value = self.debugger.send(
+                        "print %s" % (ss, ),
+                        output=False,
+                        show_in_console=False)
                     value = value.split('=')[-1].strip()
 
                     item.text = value
