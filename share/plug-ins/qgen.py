@@ -74,7 +74,7 @@ class Project_Support(object):
             </Language>
             <Language>
               <Name>Simulink_Json</Name>
-              <Body_Suffix>.mdl.json</Body_Suffix>
+              <Body_Suffix>.mdl_json</Body_Suffix>
               <Obj_Suffix>-</Obj_Suffix>
             </Language>
           </GPS>""")
