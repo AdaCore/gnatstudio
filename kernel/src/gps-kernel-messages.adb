@@ -1447,11 +1447,16 @@ package body GPS.Kernel.Messages is
 
       procedure Include (Self : not null access Abstract_Message_Node'Class) is
          Container : constant Messages_Container_Access :=
-                       Get_Container (Message_Access (Self));
+                       Message_Access (Self).Get_Container;
 
       begin
          Container.Messages.Messages.Append (Self);
          Self.Position := Container.Messages.Messages.Last;
+
+         if not Message_Lists.Has_Element (Container.Messages.Unprocessed) then
+            Container.Messages.Unprocessed :=
+              Container.Messages.Messages.First;
+         end if;
       end Include;
 
       ------------------
