@@ -463,20 +463,6 @@ KP-62-OB18-028 GPS: Replace All corrupts edited source file
 
   Workaround: Replace occurences one by one using "Replace & Find" function.
 
-KP-62-OA29-031 WB: fixed ada problems markers not cleared automatically
-
-  Problem:    Ada problem markers created during "compile ada file"
-              action execution are not cleared by "(re)build project" action
-              executions even if the errors are fixed.
-              Ada problem markers created during "(re)build project" action
-              execution cannot be cleared by "compile ada file" action
-              executions.
-
-  Status:     This was fixed in 17.0 on 2016-01-04
-
-  Workaround: clear the markers manually or relaunch the action that had
-              created the markers.
-
 KP-62-OA28-042 GPS: memory leak linked to completions
 
   Problem:    Using the dynamic completion causes GPS to leak memory.
@@ -934,6 +920,20 @@ KP-62-OB23-034 GNATdoc: compiling does not update cross references
   Status:     This was fixed in 6.2.2 on 2016-01-15
 
   Workaround: None.
+
+KP-62-OA29-031 WB: fixed ada problems markers not cleared automatically
+
+  Problem:    Ada problem markers created during "compile ada file"
+              action execution are not cleared by "(re)build project" action
+              executions even if the errors are fixed.
+              Ada problem markers created during "(re)build project" action
+              execution cannot be cleared by "compile ada file" action
+              executions.
+
+  Status:     This was fixed in 2.10.2 on 2016-01-04
+
+  Workaround: clear the markers manually or relaunch the action that had
+              created the markers.
 
 KP-62-O708-055 GPS: hyperlinks not very visible in Darkside and Monokai themes
 
