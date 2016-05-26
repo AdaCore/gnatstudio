@@ -286,14 +286,11 @@ package body Language.Libclang is
          if Clang_Module_Id.TU_Cache.Contains (U_File_Name) then
             Cache := Clang_Module_Id.TU_Cache.Element (U_File_Name);
          else
-            Trace (Me,
-                   "In get tu, creating new cache entry for file" & File_Name);
             Cache :=
               new TU_Cache_Record'(TU => No_Translation_Unit, Version => 0,
                                    Is_Ready => False);
             Clang_Module_Id.TU_Cache.Include (+File_Name, Cache);
          end if;
-         Trace (Me, "In get tu, is_ready => " & Cache.Is_Ready'Img);
          Ret.Cache := Cache;
       end return;
    end Get_TU;
@@ -636,8 +633,6 @@ package body Language.Libclang is
       pragma Unreferenced (Project);
       Callback : Parse_Callback_Access := null;
    begin
-      Trace (Me, "Calling enqueue, will wait on tu");
-
       Enqueue_Translation_Unit
         (Kernel, File, Reparse,
          Options      => Options,
@@ -646,7 +641,6 @@ package body Language.Libclang is
          Callback     => Callback);
 
       if Clang_Module_Id /= null then
-         Trace (Me, "Now waiting on tu for file " & Full_Name (File));
          return Get_TU (Full_Name (File)).Get_Blocking;
       end if;
 
