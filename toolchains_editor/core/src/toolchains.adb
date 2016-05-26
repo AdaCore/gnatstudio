@@ -1450,6 +1450,8 @@ package body Toolchains is
    is
       Target_Str    : aliased constant String :=
                         Attribute_Value (Project, Target_Attribute);
+      Runtime_Str   : aliased constant String :=
+                        Attribute_Value (Project, Runtime_Attribute, "ada");
       GNAT_List_Str : aliased constant String :=
                         Attribute_Value (Project, Gnatlist_Attribute);
       GNAT_Str      : aliased constant String :=
@@ -1658,6 +1660,15 @@ package body Toolchains is
 
             if Toolchain_Matches (Ret) then
                --  Exact match, we can return this toolchain
+
+               --  Set the toolchain's Ada runtime, if any
+               if Runtime_Str /= "" then
+                  Set_Used_Runtime
+                    (Ret,
+                     Lang    => "ada",
+                     Runtime => Runtime_Str);
+               end if;
+
                return Ret;
             end if;
 
@@ -1820,6 +1831,14 @@ package body Toolchains is
       end if;
 
       Compute_Predefined_Paths (Ret);
+
+      --  Set the toolchain's Ada runtime, if any
+      if Runtime_Str /= "" then
+         Set_Used_Runtime
+           (Ret,
+            Lang    => "ada",
+            Runtime => Runtime_Str);
+      end if;
 
       return Ret;
    end Get_Toolchain;
