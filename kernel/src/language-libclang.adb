@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar;                  use Ada.Calendar;
 with Ada.Unchecked_Deallocation;
 with Ada.Streams.Stream_IO;         use Ada.Streams.Stream_IO;
 with Ada.Text_IO;                   use Ada.Text_IO;
@@ -752,6 +753,10 @@ package body Language.Libclang is
 
    type Parse_Files_Data_Type is record
       Max_Idx, Current_Idx : Natural := 0;
+
+      Last_Updated_At : Time;
+      Last_Index : Natural := 0;
+
       Kernel : Core_Kernel;
    end record;
    type Parse_Files_Data_Type_Access is access all Parse_Files_Data_Type;
@@ -776,6 +781,21 @@ package body Language.Libclang is
    begin
       Command.Set_Progress
         (Progress_Record'(Running, Data.Current_Idx, Data.Max_Idx));
+
+      --  This command is just used to display a progress bar to the user.
+      --  In this version, there is a race condition that could cause
+      --  such a command to be left running and never updated. To prevent
+      --  this, we simply remove the command if it has been idle for 10s
+      --  without moving. This is the safest approach.
+      if Data.Current_Idx = Data.Last_Index then
+         if Clock - Data.Last_Updated_At > 10.0 then
+            Result := Success;
+            return;
+         end if;
+      else
+         Data.Last_Index := Data.Current_Idx;
+         Data.Last_Updated_At := Clock;
+      end if;
 
       if Data.Current_Idx = Data.Max_Idx then
          Result := Success;
@@ -1145,6 +1165,8 @@ package body Language.Libclang is
          --  Call Translation_Unit on them to populate the cache for the file
          Command_Data.Max_Idx := Natural (Filtered_Files.Length);
          Command_Data.Kernel := Core_Kernel (Kernel);
+
+         Command_Data.Last_Updated_At := Clock;
 
          for F of Filtered_Files loop
             declare
