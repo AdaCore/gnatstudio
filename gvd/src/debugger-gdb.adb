@@ -1885,6 +1885,7 @@ package body Debugger.Gdb is
         or else Starts_With (Command, "awatch")
         or else Starts_With (Command, "rwatch")
         or else Starts_With (Command, "delete")
+        or else Starts_With (Command, "clear")
         or else Starts_With (Command, "del ")
         or else Starts_With (Command, "d ")
         or else Starts_With (Command, "disable")

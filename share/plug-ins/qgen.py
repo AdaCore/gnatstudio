@@ -305,20 +305,6 @@ class CLI(GPS.Process):
             return False
 
     @staticmethod
-    def is_model_block_and_debugger(ctx):
-        """
-        Whether the current context is a model block.
-        """
-        try:
-            debug = GPS.Debugger.get()
-            return (
-                debug is not None and                  # in a debugger
-                hasattr(ctx, "modeling_item") and  # see on_create_context
-                CLI.is_model_file(ctx))
-        except:
-            return False
-
-    @staticmethod
     def __compile_files_to_source_code(files):
         """
         A python generator that generates code for the `mdl` source file.
@@ -609,7 +595,7 @@ class Mapping_File(object):
                 for symbol in blockinfo.get('symbols', []):
                     a.add(symbol)
 
-    def get_breakpoints(self, blockid):
+    def get_source_lines(self, blockid):
         """
         Returns the set of (filename, line) tuples on which we should set or
         remove breakpoints, for a given block.
@@ -665,6 +651,13 @@ else:
             for f in GPS.Project.root().sources(recursive=True):
                 if CLI.is_model_file(f):
                     self.modeling_map.load(f)
+
+        @staticmethod
+        def is_qgen_debugger(debugger):
+            """
+            Whether the given debugger has support for QGen
+            """
+            return debugger and hasattr(debugger, "qgen")
 
         @staticmethod
         @gps_utils.hook('debugger_started')
@@ -777,26 +770,25 @@ else:
             """
             Show the model corresponding to the current editor and line
             """
-            if hasattr(debugger, 'qgen'):
+            if QGEN_Debugger_Support.is_qgen_debugger(debugger):
                 debugger.qgen.load_current_mdl()
 
-        @staticmethod
-        def set_breakpoint():
+        def get_item_with_sources(self, item):
             """
-            Set a breakpoint, in the current debugger, on the current block
+            Return item or its closest parent with corresponding source
+            lines
             """
-            ctx = GPS.contextual_context() or GPS.current_context()
-            debug = GPS.Debugger.get()
-            if debug and hasattr(debug, "qgen"):
-                self = debug.qgen
-                it = ctx.modeling_item.get_parent_with_id()
-                if it:
-                    br = self.modeling_map.get_breakpoints(it.id)
-                    if br:
-                        for b in br:
-                            debug.send("break %s:%s" % (b[0], b[1]))
-                    else:
-                        GPS.Console().write("No breakpoint for '%s'\n" % it.id)
+            while (item and
+                   (not item.id or not self.block_source_lines(item.id))):
+                item = item.parent
+            return item
+
+        def block_source_lines(self, blockid):
+            """
+            Whether there are any breakpoint associated with
+            blockid. Returns the list of source locations.
+            """
+            return self.modeling_map.get_source_lines(blockid)
 
     class QGEN_Module(modules.Module):
 
@@ -831,15 +823,57 @@ else:
             viewer.topleft = info['topleft']
             return GPS.MDI.get_by_child(viewer)
 
+        def __contextual_filter(self, context):
+            """
+            Whether the current context is a model block with
+            source lines (or one of its parents has source lines)
+            """
+            try:
+                # Assume debugger is setup for QGen, and context has an
+                # item. Otherwise, we'll just get an exception
+                debug = GPS.Debugger.get()
+                it = debug.qgen.get_item_with_sources(context.modeling_item)
+                return it is not None
+            except Exception as e:
+                return False
+
         def __contextual_name_for_break_on_block(self, context):
-            debugger = GPS.Debugger.get()
-            it = None
-            if debugger and hasattr(context, "modeling_item"):
-                it = context.modeling_item.get_parent_with_id()
-                if it:
-                    return 'Debug/Break on block %s' % (
-                        it.id.replace("/", "\\/"), )
-            return 'Debug/Break on block'
+            # Only called when we have a debugger with qgen support
+            debug = GPS.Debugger.get()
+            it = debug.qgen.get_item_with_sources(context.modeling_item)
+            return 'Debug/Break on %s' % (it.id.replace("/", "\\/"), )
+
+        def __contextual_name_for_unbreak_on_block(self, context):
+            debug = GPS.Debugger.get()
+            it = debug.qgen.get_item_with_sources(context.modeling_item)
+            id = it.id.replace("/", "\\/")
+            return 'Debug/Delete breakpoints on %s' % (id, )
+
+        def __contextual_set_breakpoint(self):
+            """
+            Set a breakpoint, in the current debugger, on the current block
+            """
+            ctx = GPS.contextual_context() or GPS.current_context()
+            debug = GPS.Debugger.get()
+            it = debug.qgen.get_item_with_sources(ctx.modeling_item)
+            br = debug.qgen.block_source_lines(it.id)
+            if br:
+                for b in br:
+                    debug.send("break %s:%s" % (b[0], b[1]))
+
+        def __contextual_delete_breakpoint(self):
+            """
+            Set a breakpoint, in the current debugger, on the current block
+            """
+            ctx = GPS.contextual_context() or GPS.current_context()
+            debug = GPS.Debugger.get()
+            it = debug.qgen.get_item_with_sources(ctx.modeling_item)
+            br = debug.qgen.block_source_lines(it.id)
+
+            # ??? Need to lookup breakpoint number
+            if br:
+                for b in br:
+                    debug.send("clear %s:%s" % (b[0], b[1]))
 
         def setup(self):
             """
@@ -863,8 +897,14 @@ else:
             gps_utils.make_interactive(
                 name='MDL break debugger on block',
                 contextual=self.__contextual_name_for_break_on_block,
-                filter=CLI.is_model_block_and_debugger,
-                callback=QGEN_Debugger_Support.set_breakpoint)
+                filter=self.__contextual_filter,
+                callback=self.__contextual_set_breakpoint)
+
+            gps_utils.make_interactive(
+                name='MDL delete breakpoints on block',
+                contextual=self.__contextual_name_for_unbreak_on_block,
+                filter=self.__contextual_filter,
+                callback=self.__contextual_delete_breakpoint)
 
             workflows.create_target_from_workflow(
                 target_name="MDL Generate code then build",
