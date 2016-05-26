@@ -266,8 +266,8 @@ def create_target_from_workflow(target_name, workflow_name, workflow,
 <in-toolbar>%s</in-toolbar>
 <iconname>%s</iconname>
 <launch-mode>MANUALLY</launch-mode>
-<read-only>TRUE</read-only>
-<do-not-save>TRUE</do-not-save>
+<read-only>FALSE</read-only>
+<do-not-save>FALSE</do-not-save>
 <target-type>main</target-type>
 <command-line>
     <arg>workflows.run_registered_workflows("%s", "%s", "</arg>
