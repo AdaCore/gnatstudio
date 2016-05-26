@@ -690,7 +690,7 @@ package body Toolchains_Editor is
          Val  : String) is
       begin
          if Project.Attribute_Value
-           (Attr, Idx, "dummy-default-val") /= Val
+           (Attr, Idx) /= Val
          then
             Project.Set_Attribute
               (Attribute => Attr,
@@ -710,11 +710,10 @@ package body Toolchains_Editor is
          Idx  : String)
       is
       begin
-         --  Use Attribute_Value here with a dummy value as default, as
-         --  calls to Has_Attribute seems to be incorrect when an index is
-         --  specified.
+         --  Clear the Attr project attribute if it's not set to
+         --  it's default value.
          if Project.Attribute_Value
-           (Attr, Idx, "dummy-default-val") /= "dummy-default-val"
+           (Attr, Idx) /= ""
          then
             Project.Delete_Attribute (Attr, Scenario_Variables, Idx);
             Modified := True;
