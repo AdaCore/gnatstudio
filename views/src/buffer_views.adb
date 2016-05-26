@@ -255,7 +255,6 @@ package body Buffer_Views is
       Kernel      : constant Kernel_Handle := Get_Kernel (Context.Context);
       View        : constant Buffer_View_Access :=
         Generic_View.Retrieve_View (Kernel);
-      Model       : Gtk_Tree_Store;
       Child       : MDI_Child;
       Iter, Iter2 : Gtk_Tree_Iter;
       Count       : Natural := 0;
@@ -264,8 +263,6 @@ package body Buffer_Views is
       if View = null then
          return Commands.Failure;
       end if;
-
-      Model := -Get_Model (View.Tree);
 
       while Get (CIter) /= null loop
          Count := Count + 1;
@@ -277,32 +274,34 @@ package body Buffer_Views is
       begin
          Count := Children'First;
 
-         Iter := Get_Iter_First (Model);
+         Iter := View.Tree.Filter.Get_Iter_First;
          while Iter /= Null_Iter loop
-            Iter2 := Model.Children (Iter);
+            Iter2 := View.Tree.Filter.Children (Iter);
             while Iter2 /= Null_Iter loop
-               if Iter_Is_Selected (Get_Selection (View.Tree), Iter2) then
+               if View.Tree.Get_Selection.Iter_Is_Selected (Iter2) then
                   Child := Find_MDI_Child_By_Name
-                    (Get_MDI (Kernel), Model.Get_String (Iter2, Data_Column));
+                    (Get_MDI (Kernel),
+                     View.Tree.Filter.Get_String (Iter2, Data_Column));
                   if Child /= null then
                      Children (Count) := Child;
                      Count := Count + 1;
                   end if;
                end if;
 
-               Model.Next (Iter2);
+               View.Tree.Filter.Next (Iter2);
             end loop;
 
-            if Iter_Is_Selected (Get_Selection (View.Tree), Iter) then
+            if View.Tree.Get_Selection.Iter_Is_Selected (Iter) then
                Child := Find_MDI_Child_By_Name
-                 (Get_MDI (Kernel), Model.Get_String (Iter, Data_Column));
+                 (Get_MDI (Kernel),
+                  View.Tree.Filter.Get_String (Iter, Data_Column));
                if Child /= null then
                   Children (Count) := Child;
                   Count := Count + 1;
                end if;
             end if;
 
-            Model.Next (Iter);
+            View.Tree.Filter.Next (Iter);
          end loop;
 
          for C in Children'Range loop
