@@ -354,12 +354,12 @@ package body GNATTest_Module is
 
       Category : constant String := "GNATtest";
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Messages : constant GPS.Kernel.Messages.Messages_Container_Access :=
-        GPS.Kernel.Messages.Get_Messages_Container (Kernel);
+      Messages : constant not null GPS.Kernel.Messages_Container_Access :=
+                   Kernel.Get_Messages_Container;
       Cursor   : Source_Entity_Maps.Cursor := Map.Source_Map.First;
+
    begin
-      GPS.Kernel.Messages.Get_Messages_Container (Kernel).Remove_Category
-        (Category, Flags);
+      Kernel.Get_Messages_Container.Remove_Category (Category, Flags);
 
       while Source_Entity_Maps.Has_Element (Cursor) loop
          declare

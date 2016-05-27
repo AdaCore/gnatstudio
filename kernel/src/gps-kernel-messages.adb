@@ -220,11 +220,6 @@ package body GPS.Kernel.Messages is
       return GNATCOLL.VFS.Virtual_File;
    --  Return file where save messages for current project
 
-   function To_Address is
-     new Ada.Unchecked_Conversion (Messages_Container_Access, System.Address);
-   function To_Messages_Container_Access is
-     new Ada.Unchecked_Conversion (System.Address, Messages_Container_Access);
-
    procedure Free is
      new Ada.Unchecked_Deallocation (Node_Record'Class, Node_Access);
 
@@ -266,9 +261,9 @@ package body GPS.Kernel.Messages is
 
    function Create_Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class)
-      return System.Address
+      return not null GPS.Kernel.Messages_Container_Access
    is
-      Result : constant Messages_Container_Access :=
+      Result : constant not null Messages_Container_Access :=
                  new Messages_Container (Kernel);
    begin
       GPS.Kernel.Messages.Simple.Register (Result);
@@ -280,7 +275,7 @@ package body GPS.Kernel.Messages is
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
       File_Renamed_Hook.Add (new On_File_Renamed);
 
-      return To_Address (Result);
+      return Result;
    end Create_Messages_Container;
 
    ----------------------
@@ -767,17 +762,6 @@ package body GPS.Kernel.Messages is
 
       return Message_Array'(1 .. 0 => null);
    end Get_Messages;
-
-   ----------------------------
-   -- Get_Messages_Container --
-   ----------------------------
-
-   function Get_Messages_Container
-     (Kernel : not null access Kernel_Handle_Record'Class)
-      return not null Messages_Container_Access is
-   begin
-      return To_Messages_Container_Access (Kernel.Messages_Container);
-   end Get_Messages_Container;
 
    ----------------------
    -- Get_Message_File --

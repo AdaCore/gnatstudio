@@ -1715,6 +1715,17 @@ package body GPS.Kernel is
       return Kernel.Messages.Get_Console_Window;
    end Get_Messages_Console;
 
+   ----------------------------
+   -- Get_Messages_Container --
+   ----------------------------
+
+   function Get_Messages_Container
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return not null Messages_Container_Access is
+   begin
+      return Kernel.Messages_Container;
+   end Get_Messages_Container;
+
    -------------------------
    -- Get_Messages_Window --
    -------------------------

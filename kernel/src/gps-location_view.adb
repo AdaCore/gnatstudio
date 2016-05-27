@@ -353,7 +353,7 @@ package body GPS.Location_View is
 
    procedure Export_Messages
      (Out_File  : Ada.Text_IO.File_Type;
-      Container : GPS.Kernel.Messages.Messages_Container_Access;
+      Container : not null GPS.Kernel.Messages_Container_Access;
       Category  : Ada.Strings.Unbounded.Unbounded_String;
       File      : GNATCOLL.VFS.Virtual_File);
    --  Exports messages of the specified category and file into text file.
@@ -447,12 +447,12 @@ package body GPS.Location_View is
 
    procedure Export_Messages
      (Out_File  : Ada.Text_IO.File_Type;
-      Container : GPS.Kernel.Messages.Messages_Container_Access;
+      Container : not null GPS.Kernel.Messages_Container_Access;
       Category  : Ada.Strings.Unbounded.Unbounded_String;
       File      : GNATCOLL.VFS.Virtual_File)
    is
       Messages : constant GPS.Kernel.Messages.Message_Array :=
-        Container.Get_Messages (Category, File);
+                   Container.Get_Messages (Category, File);
 
    begin
       for K in Messages'Range loop
@@ -1868,8 +1868,8 @@ package body GPS.Location_View is
       Iter        : Gtk_Tree_Iter;
       Model       : Gtk_Tree_Model;
       Export_File : GNATCOLL.VFS.Virtual_File;
-      Container   : constant GPS.Kernel.Messages.Messages_Container_Access :=
-        Get_Messages_Container (View.Kernel);
+      Container   : constant not null GPS.Kernel.Messages_Container_Access :=
+                      View.Kernel.Get_Messages_Container;
       List        : Gtk_Tree_Path_List.Glist;
       G_Iter      : Gtk_Tree_Path_List.Glist;
       Export      : Boolean := False;

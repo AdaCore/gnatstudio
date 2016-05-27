@@ -48,9 +48,6 @@ package GPS.Kernel.Messages is
 
    type Messages_Container (<>) is tagged limited private;
 
-   type Messages_Container_Access is
-     access all Messages_Container'Class;
-
    type Message_Visibility_Kind is
      (Editor_Side, --  Messages displayed on the side of editors
       Locations    --  Messages displayed in the locations view
@@ -323,11 +320,6 @@ package GPS.Kernel.Messages is
    -- Messages Container --
    ------------------------
 
-   function Get_Messages_Container
-     (Kernel : not null access Kernel_Handle_Record'Class)
-      return not null Messages_Container_Access;
-   --  Returns messages conntainer for the specified instance of the kernel.
-
    function Has_Category
      (Self     : not null access constant Messages_Container'Class;
       Category : String) return Boolean;
@@ -481,7 +473,7 @@ package GPS.Kernel.Messages is
 
    function Create_Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class)
-      return System.Address;
+      return not null  GPS.Kernel.Messages_Container_Access;
    --  Creates new nessages container and returns its address. Address is used
    --  to break circular dependency between Kernel and Messages_Container.
 

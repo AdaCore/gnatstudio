@@ -61,7 +61,7 @@ package body GNAThub.Messages is
 
    procedure Initialize
      (Self      : not null access Message'Class;
-      Container : not null GPS.Kernel.Messages.Messages_Container_Access;
+      Container : not null GPS.Kernel.Messages_Container_Access;
       Severity  : Severity_Access;
       Rule      : Rule_Access;
       Text      : Ada.Strings.Unbounded.Unbounded_String;

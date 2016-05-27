@@ -177,7 +177,7 @@ package body Code_Coverage.Gcov is
          Added := True;
          Message :=
            Create_Simple_Message
-             (Get_Messages_Container (Kernel),
+             (Kernel.Get_Messages_Container,
               Uncovered_Category,
               File,
               Line_Number,

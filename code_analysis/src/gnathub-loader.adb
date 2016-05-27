@@ -23,7 +23,6 @@ with GNATCOLL.SQL.Sqlite;
 
 with Basic_Types;
 with Commands;
-with GPS.Kernel.Messages;
 with GPS.Kernel.Task_Manager;
 
 with GNAThub.Messages;
@@ -219,8 +218,7 @@ package body GNAThub.Loader is
             GNAThub.Messages.Initialize
               (Self      => Message,
                Container =>
-                 GPS.Kernel.Messages.Get_Messages_Container
-                   (Self.Module.Get_Kernel),
+                 Self.Module.Get_Kernel.Get_Messages_Container,
                Severity  => Severity,
                Rule      => Rule,
                Text      => To_Unbounded_String (Orm.Data (M)),

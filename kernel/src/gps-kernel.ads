@@ -65,6 +65,7 @@ with Xref;
 with GPS.Editors;
 with GPS.Environments;                use GPS.Environments;
 with GPS.Core_Kernels;                use GPS.Core_Kernels;
+limited with GPS.Kernel.Messages;
 with GPS.Messages_Windows;
 with GPS.Process_Launchers;
 with GPS.Process_Launchers.Implementation;
@@ -781,6 +782,18 @@ package GPS.Kernel is
    subtype Abstract_Module_ID_Record is Abstract_Module_Record;
    --  Type aliases for compability
 
+   ------------------------
+   -- Messages container --
+   ------------------------
+
+   type Messages_Container_Access is
+     access all GPS.Kernel.Messages.Messages_Container'Class;
+
+   function Get_Messages_Container
+     (Kernel : not null access Kernel_Handle_Record'Class)
+      return not null Messages_Container_Access;
+   --  Returns messages conntainer for the specified instance of the kernel.
+
 private
 
    type Filter_Type is (Filter_And, Filter_Or, Filter_Not, Standard_Filter);
@@ -1161,7 +1174,7 @@ private
       Hyper_Mode                   : Boolean := False;
       --  Whether we are in hyper mode
 
-      Messages_Container : System.Address := System.Null_Address;
+      Messages_Container : Messages_Container_Access;
       --  The message container for this instance of kernel
 
       Key_Setter_Function : Key_Setter;

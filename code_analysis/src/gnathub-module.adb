@@ -186,9 +186,8 @@ package body GNAThub.Module is
       Module_Id.Loader.Initialize;
       Module_Id.Filter := new GNAThub.Filters.Message_Filter;
       GNAThub.Filters_Views.Register_Module (Kernel, Module_Id);
-      GPS.Kernel.Messages.Register_Filter
-        (GPS.Kernel.Messages.Get_Messages_Container (Kernel),
-         GPS.Kernel.Messages.Message_Filter_Access (Module_Id.Filter));
+      Kernel.Get_Messages_Container.Register_Filter
+        (GPS.Kernel.Messages.Message_Filter_Access (Module_Id.Filter));
    end Register_Module;
 
 end GNAThub.Module;

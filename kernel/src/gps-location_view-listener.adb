@@ -197,8 +197,7 @@ package body GPS.Location_View.Listener is
           13 => As_Int     (0),
           14 => As_Int
             (Sort_Order_Hint'Pos
-               (GPS.Kernel.Messages.Get_Messages_Container
-                    (Self.Kernel).Get_Sort_Order_Hint
+               (Self.Kernel.Get_Messages_Container.Get_Sort_Order_Hint
                     (To_String (Category)))),
           15 => As_Pointer (System.Null_Address)));
    end Category_Added;
@@ -867,9 +866,8 @@ package body GPS.Location_View.Listener is
          14 => As_Int (0),
          15 => As_Int
            (Sort_Order_Hint'Pos
-                (GPS.Kernel.Messages.Get_Messages_Container
-                     (Self.Kernel).Get_Sort_Order_Hint
-                   (To_String (Message.Get_Category)))),
+                (Self.Kernel.Get_Messages_Container.Get_Sort_Order_Hint
+                     (To_String (Message.Get_Category)))),
          --  XXX Can it be changed dynamically?
          16 => As_Pointer
            (Message_Conversions.To_Address
@@ -1024,8 +1022,8 @@ package body GPS.Location_View.Listener is
    function Register
      (Kernel : Kernel_Handle) return Locations_Listener_Access
    is
-      Container  : constant GPS.Kernel.Messages.Messages_Container_Access :=
-                     Get_Messages_Container (Kernel);
+      Container  : constant not null GPS.Kernel.Messages_Container_Access :=
+                     Kernel.Get_Messages_Container;
       Success    : Boolean;
       Self       : Locations_Listener_Access;
       File_Added : Boolean;

@@ -1446,8 +1446,8 @@ package body CodePeer.Module is
    procedure Remove_Codepeer_Messages
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Container : constant GPS.Kernel.Messages.Messages_Container_Access :=
-                    Get_Messages_Container (Kernel);
+      Container : constant GPS.Kernel.Messages_Container_Access :=
+                    Kernel.Get_Messages_Container;
 
    begin
       Container.Remove_Category (CodePeer_Category_Name, Empty_Message_Flags);
@@ -1721,7 +1721,7 @@ package body CodePeer.Module is
 
       Module.Listener := new CodePeer.Listeners.Listener;
       GPS.Kernel.Messages.Register_Listener
-        (GPS.Kernel.Messages.Get_Messages_Container (Kernel),
+        (Kernel.Get_Messages_Container,
          GPS.Kernel.Messages.Listener_Access (Module.Listener),
          GPS.Kernel.Messages.Empty_Message_Flags);
 
@@ -1731,8 +1731,7 @@ package body CodePeer.Module is
       --  This command is shared for all CodePeer messages.
 
       Module.Filter := new Message_Filter;
-      GPS.Kernel.Messages.Get_Messages_Container (Kernel).Register_Filter
-        (Module.Filter);
+      Kernel.Get_Messages_Container.Register_Filter (Module.Filter);
 
       Module.Check_CodePeer_Version;
 

@@ -346,7 +346,7 @@ package body Code_Coverage.GNATcov is
       begin
          Msg :=
            Create_Simple_Message
-             (Get_Messages_Container (Kernel),
+             (Kernel.Get_Messages_Container,
               Coverage_Category.all,
               File,
               Line_Number,

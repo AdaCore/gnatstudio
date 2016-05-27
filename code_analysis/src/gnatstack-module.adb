@@ -350,7 +350,7 @@ package body GNATStack.Module is
          if Entry_Subprogram.Identifier.Locations.Is_Empty then
             Entry_Message :=
               GPS.Kernel.Messages.Simple.Create_Simple_Message
-                (GPS.Kernel.Messages.Get_Messages_Container (Self.Kernel),
+                (Self.Kernel.Get_Messages_Container,
                  Stack_Analysis_Name,
                  GNATCOLL.VFS.No_File,
                  0,
@@ -363,7 +363,7 @@ package body GNATStack.Module is
          else
             Entry_Message :=
               GPS.Kernel.Messages.Simple.Create_Simple_Message
-                (GPS.Kernel.Messages.Get_Messages_Container (Self.Kernel),
+                (Self.Kernel.Get_Messages_Container,
                  Stack_Analysis_Name,
                  GNATCOLL.VFS.Create
                    (GNATCOLL.VFS.Filesystem_String
@@ -385,7 +385,7 @@ package body GNATStack.Module is
       end Process_Entry_Point;
 
    begin
-      GPS.Kernel.Messages.Get_Messages_Container (Self.Kernel).Remove_Category
+      Self.Kernel.Get_Messages_Container.Remove_Category
         (Stack_Analysis_Name, Stack_Message_Flags);
 
       Self.Data.Entry_Set.Iterate (Process_Entry_Point'Access);
@@ -424,8 +424,7 @@ package body GNATStack.Module is
             Self.CI_Editor_MDI := null;
          end if;
 
-         GPS.Kernel.Messages.Get_Messages_Container
-           (Self.Kernel).Remove_Category
+         Self.Kernel.Get_Messages_Container.Remove_Category
            (Stack_Analysis_Name, Stack_Message_Flags);
          Editors.Hide_Stack_Usage_In_Opened_Editors (Self);
          Clear (Self.Data);
@@ -541,8 +540,7 @@ package body GNATStack.Module is
    is
       pragma Unreferenced (Command, Context);
    begin
-      GPS.Kernel.Messages.Get_Messages_Container
-        (Module.Kernel).Remove_Category
+      Module.Kernel.Get_Messages_Container.Remove_Category
         (Stack_Analysis_Name, Stack_Message_Flags);
       Editors.Hide_Stack_Usage_In_Opened_Editors (Module);
 
