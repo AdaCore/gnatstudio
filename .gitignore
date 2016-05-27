@@ -44,6 +44,7 @@ docs/programmers_guide/_build/
 docs/users_guide/_build/
 docs/tutorial/_build/
 docs/release_notes/build/
+docs/users_guide/GPS/generated_hooks.py
 docs/gps-welcome.html
 docs/gps-welcome-public.html
 docs/gps

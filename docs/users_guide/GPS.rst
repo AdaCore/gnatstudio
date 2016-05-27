@@ -1088,6 +1088,14 @@ Classes
 
    .. automethod:: GPS.Hook.run_until_success
 
+:class:`GPS.Predefined_Hooks`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Predefined_Hooks
+    :members:
+
+
+
 :class:`GPS.Invalid_Argument`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
