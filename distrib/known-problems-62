@@ -64,16 +64,6 @@ KP-62-P418-042 GPS: no harness project found in gnatcov mode
 
   Workaround: None.
 
-KP-62-P415-043 WB: toolchains not set when converting vx6/vx6cert projects
-
-  Problem:    When converting a vx6 or vx6cert Wind River Workbench project,
-              the selected toolchains of the last dialog box are not based on
-              the project's available build specs.
-
-  Status:     This was fixed in 17.0 on 2016-04-29
-
-  Workaround: Check manually the toolchains used by the project's build specs.
-
 KP-62-P415-035 GB: UI freeze adding watch expression
 
   Problem:    During a debug session and running "Add Watch Expression" menu,
@@ -557,6 +547,16 @@ KP-62-P509-035 GNATdoc: ignore comments for subtype of enumeration type
   Status:     This was fixed in 6.2.2 on 2016-05-09
 
   Workaround: None.
+
+KP-62-P415-043 WB: toolchains not set when converting vx6/vx6cert projects
+
+  Problem:    When converting a vx6 or vx6cert Wind River Workbench project,
+              the selected toolchains of the last dialog box are not based on
+              the project's available build specs.
+
+  Status:     This was fixed in 2.10.2 on 2016-04-29
+
+  Workaround: Check manually the toolchains used by the project's build specs.
 
 KP-62-P415-008 GPS: incorrect reload of breakpoints
 
