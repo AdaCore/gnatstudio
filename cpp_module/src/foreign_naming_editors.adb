@@ -77,7 +77,7 @@ package body Foreign_Naming_Editors is
       Group_Widget.Create_Child
         (Widget => Self.Spec_Ext,
          Label  => "Header files",
-         Doc    => "Choose a sufffix for header file names.");
+         Doc    => "Choose a suffix for header file names.");
 
       --  Create the implementation files entry widget
       Gtk_New_With_Entry (Self.Body_Ext);
