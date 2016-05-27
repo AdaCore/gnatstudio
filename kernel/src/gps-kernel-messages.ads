@@ -473,7 +473,7 @@ package GPS.Kernel.Messages is
 
    function Create_Messages_Container
      (Kernel : not null access Kernel_Handle_Record'Class)
-      return not null  GPS.Kernel.Messages_Container_Access;
+      return not null GPS.Kernel.Messages_Container_Access;
    --  Creates new nessages container and returns its address. Address is used
    --  to break circular dependency between Kernel and Messages_Container.
 
