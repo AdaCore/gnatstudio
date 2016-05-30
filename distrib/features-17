@@ -23,6 +23,10 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P526-049 GPS: Improve outline view's "with Clauses" (2016-05-30)
+
+  Do not show "with Clauses" node in outline view if no withes.
+
 NF-17-P512-010 GPS: filter in the Windows view (2016-05-24)
 
   The Windows view now also has a local filter, to help search for specific
