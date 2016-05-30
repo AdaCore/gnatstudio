@@ -438,8 +438,9 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
 
         :param GPS.File file: the file to display
         :param callable on_loaded: called when the diagram is loaded, or
-           immediately if the diagram was already loaded. The funtion
-           receives a single parameter, which is the viewer itself.
+           immediately if the diagram was already loaded. The function
+           receives one parameter:
+               - the viewer itself
         :return QGEN_Diagram_Viewer: the viewer.
            It might not contain any diagram yet, since those are read
            asynchronously.
@@ -452,6 +453,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                     json, diagramFactory=QGEN_Diagram)
                 if v.diags:
                     v.diagram = v.diags.get()
+                    v.scale_to_fit(2)
 
                 if on_loaded:
                     on_loaded(v)
@@ -747,6 +749,8 @@ else:
                 line = debugger.current_line
                 diags = set()   # All the diagrams to check
 
+                scroll_to = None
+
                 # Unselect items from the previous step
                 viewer.diags.clear_selection()
 
@@ -759,6 +763,7 @@ else:
                         viewer.diagram = diagram  # Change visible diagram
                         diags.add(diagram)
                         diagram.select(item)
+                        scroll_to = item
 
                 # Compute the value for all needed items
                 for diag, toplevel, it in QGEN_Module.forall_auto_items(diags):
@@ -768,6 +773,9 @@ else:
                 # Update the display
                 for d in diags:
                     d.changed()
+
+                if scroll_to:
+                    viewer.scroll_into_view(scroll_to)
 
             filename = debugger.current_file
             if filename:
