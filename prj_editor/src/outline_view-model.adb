@@ -520,6 +520,21 @@ package body Outline_View.Model is
       end if;
 
       Add_Array_Recursive (Model, Sem_Tree.Root_Nodes, No_Semantic_Node);
+
+      if Model.Root_With /= null
+        and then Model.Root_With.Children.Is_Empty
+      then
+         --  Remove empty With_Clause node
+         Path := Get_Path (Model, Model.Root_With);
+         Model.Phantom_Root.Children.Delete_First;
+         for Node of Model.Phantom_Root.Children loop
+            Node.Index_In_Siblings := Node.Index_In_Siblings - 1;
+         end loop;
+         Free (Model.Root_With);
+         Row_Deleted (+Model, Path);
+         Path_Free (Path);
+      end if;
+
       Trace
         (Me, "Time elapsed to compute outline: " & Duration'Image (Clock - T));
    end Set_Tree;
