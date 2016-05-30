@@ -245,7 +245,7 @@ class rulesEditor(Gtk.Dialog):
         self.fileEntry.set_editable(True)
         self.fileEntry.show()
         if None != defaultfile:
-            self.fileEntry.set_text(defaultfile.name())
+            self.fileEntry.set_text(defaultfile.path)
         self.fileEntry.connect('changed', self.on_file_entry_changed)
         hbox.pack_start(self.fileEntry, True, True, 0)
 
@@ -349,8 +349,8 @@ class rulesEditor(Gtk.Dialog):
     def on_coding_standard_file_browse(self, *args):
         """Callback to coding standard 'Browse' button"""
         file = GPS.MDI.file_selector()
-        if file.name() != "":
-            self.fileEntry.set_text(file.name())
+        if file.path != "":
+            self.fileEntry.set_text(file.path)
 
     def on_cancel(self, *args):
         """Callback to 'Cancel' button"""
@@ -359,7 +359,7 @@ class rulesEditor(Gtk.Dialog):
     def on_save(self, *args):
         """Callback to 'Save' button"""
         file = self.get_filename()
-        f = open(file.name(), "w")
+        f = open(file.path, "w")
         content = self.SwitchesChooser.get_cmd_line()
         content = re.sub(" +", "\n", content)
         f.write(content)

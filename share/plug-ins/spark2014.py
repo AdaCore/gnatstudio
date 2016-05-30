@@ -1826,7 +1826,7 @@ class GNATprove_Parser(tool_output.OutputParser):
             if m:
                 fname = m.group(1)
             else:
-                fname = os.path.basename(msg.get_file().name())
+                fname = os.path.basename(msg.get_file().path)
             return os.path.splitext(fname)[0]
 
         objdir = os.path.join(
@@ -1835,7 +1835,7 @@ class GNATprove_Parser(tool_output.OutputParser):
 
         imported_units = set()
         for m in GPS.Message.list():
-            file = os.path.basename(m.get_file().name())
+            file = os.path.basename(m.get_file().path)
             text = self.build_msg_full_text(
                 file,
                 m.get_line(),
@@ -1923,7 +1923,7 @@ def on_prove_line(self):
     target = ""
     try:
         llarg = "--limit-line=" \
-                + os.path.basename(self.message().get_file().name()) \
+                + os.path.basename(self.message().get_file().path) \
                 + ":" + str(self.message().get_line())
         args.append(llarg)
         target = prove_line_loc()
@@ -1947,7 +1947,7 @@ def mk_debug_loc_string(sloc):
 
     curfile = sloc.file() if isinstance(sloc, GPS.FileLocation) \
         else sloc.buffer().file()
-    locstring = os.path.basename(curfile.name()) + ':' \
+    locstring = os.path.basename(curfile.path) + ':' \
         + str(sloc.line()) + ':' + str(sloc.column())
     return locstring
 
@@ -1956,7 +1956,7 @@ def mk_loc_string(sloc):
     """Return a location suitable to pass to switch --limit-subp.
        sloc should be a FileLocation."""
 
-    locstring = os.path.basename(sloc.file().name()) + ':' \
+    locstring = os.path.basename(sloc.file().path) + ':' \
         + str(sloc.line())
     return locstring
 
@@ -2259,7 +2259,7 @@ def get_vc_kind(msg):
 
 
 def limit_line_option(msg, vc_kind):
-    return "--limit-line=" + os.path.basename(msg.get_file().name()) \
+    return "--limit-line=" + os.path.basename(msg.get_file().path) \
                            + ":" + str(msg.get_line()) \
                            + ":" + str(msg.get_column()) \
                            + ":" + vc_kind

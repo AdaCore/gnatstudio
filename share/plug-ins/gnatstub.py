@@ -19,7 +19,7 @@ class OnExit(object):
         GPS.Project.recompute()
         f2 = self.file.other_file()
 
-        if os.path.isfile(f2.name()):
+        if os.path.isfile(f2.path):
             GPS.EditorBuffer.get(f2)
         else:
             GPS.Locations.parse(output, "gnatstub")
@@ -39,9 +39,9 @@ body file.
     file = GPS.current_context().file()
     command = '"%s" stub "%s" %s "%s" "%s"' % (
         gps_utils.get_gnat_driver_cmd(),
-        "-P%s" % proj.file().name() if proj else "",
+        "-P%s" % proj.file().path if proj else "",
         GPS.Project.scenario_variables_cmd_line("-X"),
-        file.name(),
+        file.path,
         file.directory())
 
     proc = GPS.Process(

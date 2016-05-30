@@ -74,7 +74,7 @@ class LocalHistory:
         """Create a new instance of LocalHistory.
            File must be an instance of GPS.File"""
 
-        self.file = file.name()
+        self.file = file.path
         project = file.project(default_to_root=False)
         if project:
             dir = project.object_dirs(recursive=False)[0]
@@ -288,7 +288,7 @@ def has_RCS_on_path():
 def on_file_saved(hook, file):
     """Called when a file has been saved"""
     try:
-        Logger("LocalHist").log("saving file in local history: " + file.name())
+        Logger("LocalHist").log("saving file in local history: " + file.path)
         hist = LocalHistory(file)
         hist.add_to_history()
         hist.cleanup_history()

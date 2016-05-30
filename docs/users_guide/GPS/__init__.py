@@ -5283,10 +5283,16 @@ class File(object):
 
     executable_path = None
     """
-    If this :class:`File` instance refers to a main file, return a
+    If this :class:`GPS.File` instance refers to a main file, return a
     :class:`File` instance of the executable associated with this file.
     An exception is raised if the :class:`File` instance does not refer
     to a main file.
+    """
+
+    path = ""
+    """
+    The absolute path name for the current instance of :class:`GPS.File`,
+    including directories from the root of the filesystem.
     """
 
     def __cmp__(self, file):
@@ -5509,7 +5515,10 @@ class File(object):
 
         If ``remote_server`` is set, the function returns the equivalent path
         on the specified server. GPS_Server (default) is always the local
-        machine.
+        machine. This argument is currently ignored.
+
+        This function returns the same value as the `self.path` property,
+        and the latter might lead to more readable code.
 
         :param remote_server: A string. Possible values are "GPS_Server"
            (or empty string), "Build_Server", "Debug_Server",

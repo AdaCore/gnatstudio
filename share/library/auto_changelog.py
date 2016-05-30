@@ -9,7 +9,7 @@ from GPS import *
 
 
 def on_file_edited(hook, file):
-    name = file.name()
+    name = file.path
     l = len(name)
 
     #  If the file that has been opened is not a changelog, return.

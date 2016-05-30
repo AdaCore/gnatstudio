@@ -27,11 +27,11 @@ subprograms_re = re.compile(
 def __find_subprogram_decl():
     """ Return the subprogram declaration closest to the cursor. This returns
         a (MatchObject, line) tuple for the regexp subprograms_re """
-    f = GPS.current_context().file().name()
+    f = GPS.current_context().file().path
     line = GPS.current_context().location().line()
     while line > 0:
         match = re.search(subprograms_re, GPS.Editor.get_chars(f, line, 1))
-        if match != None:
+        if match is not None:
             return (match, line)
         line = line - 1
     return (None, 0)
@@ -39,7 +39,11 @@ def __find_subprogram_decl():
 
 @interactive("Editor", "Source editor", name="goto declaration or body")
 def goto_declaration_body():
-    """Jump to the declaration of the current entity. If the cursor is already on the declaration, jump to the body/implementation of the entity instead"""
+    """
+    Jump to the declaration of the current entity. If the cursor
+    is already on the declaration, jump to the body/implementation
+    of the entity instead.
+    """
     current_file = GPS.current_context().file()
     current_line = GPS.current_context().location().line()
 
@@ -63,5 +67,5 @@ def goto_declaration_body():
                             column=entity.declaration().column())
         GPS.Editor.mark_current_location()
     except:
-        print "Not found " + name + ":" + current_file.name() + ":" + `line`
-        GPS.Editor.edit(current_file.other_file().name())
+        print "Not found %s:%s:%s" % (name, current_file.path, line)
+        GPS.Editor.edit(current_file.other_file().path)

@@ -23,7 +23,7 @@ file_name_pref = Preference("Plugins/save_on_compile/file_name").create(
 @hook('compilation_finished')
 def on_compilation_finished(category, target_name, mode_name, status):
     obj_dirs = Project.root().object_dirs(False)
-    path = obj_dirs[0] if obj_dirs else dirname(Project.root().file().name())
+    path = obj_dirs[0] if obj_dirs else dirname(Project.root().file().path)
     base = file_name_pref.get()
 
     if not base:

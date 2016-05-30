@@ -87,7 +87,7 @@ class GNATemulator(Module):
     def run_gnatemu(self, args):
         gnatemu = self.get_gnatemu_name()
         proj = GPS.Project.root()
-        project_arg = "-P%s " % proj.file().name() if proj else ""
+        project_arg = "-P%s " % proj.file().path if proj else ""
         var_args = GPS.Project.scenario_variables_cmd_line("-X")
 
         jargs = "%s %s %s" % (project_arg, var_args, " ".join(args))
@@ -130,7 +130,7 @@ class GNATemulator(Module):
         log("... done.")
 
         # STEP 2 load with Emulator
-        self.run_gnatemu([GPS.File(main_name).executable_path.name()])
+        self.run_gnatemu([GPS.File(main_name).executable_path.path])
 
     def __emu_debug_wf(self, main_name):
         """

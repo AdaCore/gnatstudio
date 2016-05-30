@@ -96,15 +96,15 @@ def __filter(context):
     else:
         # Let GPS search in all source dirs and predefined paths
         f = GPS.File(data.file)
-        if exists(f.name()):
-            data.file = f.name()
+        if exists(f.path):
+            data.file = f.path
             return True
 
         # Search with just the basename (otherwise "src/file.c" where
         # "src/" is a source_dir would not be found)
         f = GPS.File(basename(data.file))
-        if exists(f.name()):
-            data.file = f.name()
+        if exists(f.path):
+            data.file = f.path
             return True
 
         # One more try, include standard include paths for C files

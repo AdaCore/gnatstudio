@@ -26,7 +26,7 @@ def newline_no_auto_indent():
     line first (as opposed to what <return> does).
     """
     ctx = GPS.current_context()
-    f = ctx.file().name()
+    f = ctx.file().path
     GPS.Editor.replace_text(
         f, GPS.Editor.cursor_get_line(f), GPS.Editor.cursor_get_column(f),
         "\n", 0, 0)

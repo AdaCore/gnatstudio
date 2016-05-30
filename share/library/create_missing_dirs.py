@@ -38,7 +38,7 @@ def on_project_changed(self):
                     i.get_attribute_as_string("Library_Src_Dir")]
             for j in dirs:
                 if i and i not in [".", "", " "]:
-                    dir = join(dirname(i.file().name()), j).strip()
+                    dir = join(dirname(i.file().path), j).strip()
                     if not exists(dir):
                         os.makedirs(dir)
                         created.append(dir)

@@ -69,16 +69,16 @@ class Output:
         """Indicate a new GPS.Project dependency for the current project"""
         show_diff = Preference("Plugins/dependencies/show_diff").get()
         if removed and show_diff:
-            Console().write(" - " + dependency.name() + "\n")
+            Console().write(" - " + dependency.path + "\n")
         elif newdep or not show_diff:
-            Console().write(" + " + dependency.name() + "\n")
+            Console().write(" + " + dependency.path + "\n")
 
     def explain_dependency(self, file, depends_on):
         """Explains the last add_dependency: file depends on depends_on"""
         if Preference("Plugins/dependencies/show_source").get():
             Console().write(
                 "   => {} depends on {}\n".format(
-                    basename(file.name()), basename(depends_on.name())
+                    basename(file.path), basename(depends_on.path)
                 )
             )
 
@@ -119,12 +119,12 @@ class XMLOutput:
         else:
             extra = "extra=''"
         self.xml = self.xml + "<dependency name='" + \
-            dependency.name() + "' " + extra + ">\n"
+            dependency.path + "' " + extra + ">\n"
 
     def explain_dependency(self, file, depends_on):
         self.xml = self.xml + \
             "<file src='" + \
-            file.name() + "'>" + depends_on.name() + "</file>\n"
+            file.path + "'>" + depends_on.path + "</file>\n"
 
     def parse_attrs(self, attrs):
         """Parse an XML attribute string  attr='foo' attr="bar" """
@@ -205,7 +205,7 @@ def compute_project_dependencies(output):
                     pass
 
             for dep in current_deps[p]:
-                if dep.name().lower() not in no_source_projects:
+                if dep.path.lower() not in no_source_projects:
                     output.add_dependency(dep, newdep=False, removed=True)
 
         output.close()

@@ -119,7 +119,7 @@ class Sqlite_Cross_References(object):
         # The project might not exist, for instance when GPS is loading the
         # default project in a directory
 
-        if not os.path.exists(GPS.Project.root().file().name()):
+        if not os.path.exists(GPS.Project.root().file().path):
             return
 
         # We are about to launch gnatinspect

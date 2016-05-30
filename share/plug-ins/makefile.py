@@ -145,7 +145,7 @@ class Builder:
            itself. If none is specified there, we default on the build file
            found in the same directory as the root project"""
 
-        root_dir = dirname(Project.root().file().name())
+        root_dir = dirname(Project.root().file().path)
         self.buildfile = Project.root().get_attribute_as_string(
             self.build_file_attr, self.pkg_name)
 

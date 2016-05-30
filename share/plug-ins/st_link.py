@@ -122,7 +122,7 @@ class BoardLoader(Module):
             return
 
         msg_is("Creating the binary (flashable) image.")
-        exe = GPS.File(main_name).executable_path.name()
+        exe = GPS.File(main_name).executable_path.path
         binary = exe + ".bin"
         cmd = ["arm-eabi-objcopy", "-O", "binary", exe, binary]
         msg_is(' '.join(cmd))

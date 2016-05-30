@@ -15,17 +15,20 @@ creation of new basic project files:
 import GPS
 import os.path
 
-GPS.parse_xml ("""
-  <action name="simple_project_from_dialog" show-command="false" category="Projects">
+GPS.parse_xml("""
+  <action name="simple_project_from_dialog"
+          show-command="false" category="Projects">
      <shell lang="python">simple_project.create_from_dialog()</shell>
   </action>
 
-  <action name="simple_project_from_current" show-command="false" category="Projects">
+  <action name="simple_project_from_current"
+          show-command="false" category="Projects">
     <filter id="Source editor" />
     <shell lang="python">simple_project.create_from_context()</shell>
   </action>
 
-  <action name="simple_project_and_main" show-command="false" category="Projects">
+  <action name="simple_project_and_main"
+          show-command="false" category="Projects">
     <shell lang="python">simple_project.create_project_and_main()</shell>
   </action>
 
@@ -69,24 +72,30 @@ def create_from_main(main_file, create_main=0):
 
 
 def create_from_dialog():
-    """Create a new project file, asking the user for the name of the main unit"""
-    main = GPS.MDI.input_dialog \
-        ("Please enter file name that contains the main unit", "main unit")[0]
+    """
+    Create a new project file, asking the user for the name of
+    the main unit.
+    """
+    main = GPS.MDI.input_dialog(
+        "Please enter file name that contains the main unit", "main unit")[0]
     create_from_main(main)
 
 
 def create_from_context():
     """Create a new project file, using the current source as main"""
     try:
-        create_from_main(GPS.current_context().file().name())
+        create_from_main(GPS.current_context().file().path)
     except:
         pass
 
 
 def create_project_and_main():
-    """Ask the user for a project name, and create a main unit and project file"""
-    dir, main = GPS.MDI.input_dialog \
-        ("Enter the name of the project", "directory", "name")
+    """
+    Ask the user for a project name, and create a main unit
+    and project file.
+    """
+    dir, main = GPS.MDI.input_dialog(
+        "Enter the name of the project", "directory", "name")
     dir = os.path.abspath(dir)
     if not os.path.isdir(dir):
         os.mkdir(dir)

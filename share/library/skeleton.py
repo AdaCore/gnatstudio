@@ -35,7 +35,7 @@ GPS.Preference(template_pref).create(
 
 
 def add_skeleton(hook_name, file):
-    if not os.path.exists(file.name()):
+    if not os.path.exists(file.path):
         # Only for new files
         ed = GPS.EditorBuffer.get(file)
         loc = ed.at(1, 1)

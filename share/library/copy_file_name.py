@@ -21,13 +21,13 @@ def copy_file_name():
 
     ctxt = GPS.current_context()
     if ctxt.file():
-        f = ctxt.file().name()
+        f = ctxt.file().path
     elif ctxt.directory():
         f = ctxt.directory()
     else:
         b = GPS.EditorBuffer.get(open=False)
         if b:
-            f = b.file().name()
+            f = b.file().path
 
     if not f:
         GPS.Console().write("No file found\n")

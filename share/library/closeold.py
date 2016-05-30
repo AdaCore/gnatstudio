@@ -38,7 +38,7 @@ def __close_editors_if_needed(keep=set()):
            and not getattr(ed, 'pinned', False)):
 
             GPS.Console().write(
-                'Automatically closing %s\n' % ed.file().name())
+                'Automatically closing %s\n' % ed.file().path)
             ed.close(force=False)
             toclose -= 1
 

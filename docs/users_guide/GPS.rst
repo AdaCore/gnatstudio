@@ -937,6 +937,10 @@ Classes
    .. autoattribute:: GPS.File.executable_path
 
 
+
+   .. autoattribute:: GPS.File.path
+
+
    .. automethod:: GPS.File.__init__
 
    .. automethod:: GPS.File.compile

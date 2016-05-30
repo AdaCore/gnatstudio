@@ -50,7 +50,7 @@ def __activate():
     while not location.starts_word():
         location = location.forward_word(-1)
 
-    entity_file = os.path.basename(loc.file().name())
+    entity_file = os.path.basename(loc.file().path)
     entity_line = location.line()
     entity_column = location.column()
     source_dirs = GPS.Project.root().get_attribute_as_list("source_dirs")

@@ -88,7 +88,7 @@ class PythonResolver(CompletionResolver):
         except:
             jedi_log = GPS.Logger("JEDI_PARSING")
             jedi_log.log("jedi fails to parse:" +
-                         loc.buffer().file().name())
+                         loc.buffer().file().path)
             result = []
 
         # restore sys.path before exit

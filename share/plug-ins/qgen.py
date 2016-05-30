@@ -200,7 +200,7 @@ class Project_Support(object):
             package='QGen', attribute='Output_Dir')
         if dir:
             # Get absolute directory from Output_Dir
-            dir = os.path.join(os.path.dirname(p.file().name()), dir)
+            dir = os.path.join(os.path.dirname(p.file().path), dir)
         else:
             try:
                 return p.object_dirs()[0]
@@ -217,7 +217,7 @@ class Project_Support(object):
         try:
             switches = file.project().get_attribute_as_string(
                 attribute='Switches', package='QGen',
-                index=os.path.basename(file.name()))
+                index=os.path.basename(file.path))
             if not switches:
                 switches = file.project().get_attribute_as_string(
                     attribute='Switches', package='QGen',
@@ -270,7 +270,7 @@ class CLI(GPS.Process):
             "--full-flattening", "", project_support.get_switches(file))
         outdir = project_support.get_output_dir(file)
 
-        cmd = ' '.join([CLI.mdl2json, file.name(), switches])
+        cmd = ' '.join([CLI.mdl2json, file.path, switches])
 
         def __on_exit(proc, exit_status, output):
             if exit_status == 0:
@@ -318,13 +318,13 @@ class CLI(GPS.Process):
         st = 1
         for f in files:
             if CLI.is_model_file(f):
-                base = os.path.splitext(os.path.basename(f.name()))[0]
+                base = os.path.splitext(os.path.basename(f.path))[0]
                 switches = [
                     "-o", project_support.get_output_dir(f),
                     "-t", "%s_types.txt" % base]
                 switches = (' '.join(switches) +
                             ' ' + project_support.get_switches(f) +
-                            ' ' + f.name())
+                            ' ' + f.path)
                 w = TargetWrapper(target_name='QGen for file')
                 st = yield w.wait_on_execute(file=f, extra_args=switches)
                 if st != 0:
@@ -419,7 +419,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         v.diags = None   # a gpsbrowsers.JSON_Diagram_File
         v.create(
             diagram=GPS.Browsers.Diagram(),  # a temporary diagram
-            title=os.path.basename(file.name()),
+            title=os.path.basename(file.path),
             save_desktop=v.save_desktop)
         v.set_read_only(True)
 
@@ -488,7 +488,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
     def save_desktop(self, child):
         """Save the contents of the viewer in the desktop"""
         info = {
-            'file': self.file.name(),
+            'file': self.file.path,
             'scale': self.scale,
             'topleft': self.topleft}
         return (module.name(), json.dumps(info))
@@ -572,7 +572,7 @@ class Mapping_File(object):
         """
         filename = os.path.join(
             project_support.get_output_dir(mdlfile),
-            '%s.json' % os.path.basename(mdlfile.name()))
+            '%s.json' % os.path.basename(mdlfile.path))
 
         try:
             f = open(filename)
@@ -589,9 +589,9 @@ class Mapping_File(object):
 
         for filename, blocks in js.iteritems():
             f = GPS.File(filename)
-            self._mdl[f.name()] = mdlfile
+            self._mdl[f.path] = mdlfile
 
-            b = self._files.setdefault(f.name(), {})
+            b = self._files.setdefault(f.path, {})
 
             for blockid, blockinfo in blocks.iteritems():
                 a = self._blocks.setdefault(blockid, set())
@@ -631,7 +631,7 @@ class Mapping_File(object):
         The block name corresponding to a given source line
         :param GPS.File filename:
         """
-        a = self._files.get(file.name(), [])
+        a = self._files.get(file.path, [])
         return a[line]
 
     def get_mdl_file(self, file):
@@ -640,7 +640,7 @@ class Mapping_File(object):
         :param GPS.File file: the source file
         :return: a `GPS.File`
         """
-        return self._mdl.get(file.name(), None)
+        return self._mdl.get(file.path, None)
 
 
 project_support = Project_Support()
@@ -815,7 +815,7 @@ else:
             if file.language() == 'simulink_json':
                 logger.log('Open %s' % file)
                 viewer = QGEN_Diagram_Viewer.open_json(
-                    file, open(file.name()).read())
+                    file, open(file.path).read())
                 return True
             return False
 
@@ -823,11 +823,11 @@ else:
             """Restore the contents from the desktop"""
             info = json.loads(data)
             f = GPS.File(info['file'])
-            if f.name().endswith('.mdl'):
+            if f.path.endswith('.mdl'):
                 viewer = QGEN_Diagram_Viewer.get_or_create(f)
             else:
                 viewer = QGEN_Diagram_Viewer.open_json(
-                    f, open(f.name()).read())
+                    f, open(f.path).read())
             viewer.scale = info['scale']
             viewer.topleft = info['topleft']
             return GPS.MDI.get_by_child(viewer)

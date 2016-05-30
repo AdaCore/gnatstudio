@@ -374,7 +374,7 @@ documentation for the standard python library. It is accessed through the
 
         try:
             f = GPS.current_context().file()
-            module = os.path.splitext(os.path.basename(f.name()))[0]
+            module = os.path.splitext(os.path.basename(f.path))[0]
 
             # The actual import and reload must be done in the context of the
             # GPS console so that they are visible there. The current function
@@ -389,9 +389,9 @@ documentation for the standard python library. It is accessed through the
 
             else:
                 try:
-                    sys.path.index(os.path.dirname(f.name()))
+                    sys.path.index(os.path.dirname(f.path))
                 except:
-                    sys.path = [os.path.dirname(f.name())] + sys.path
+                    sys.path = [os.path.dirname(f.path)] + sys.path
                 mod = __import__(module)
 
                 # This would import in the current context, not what we want

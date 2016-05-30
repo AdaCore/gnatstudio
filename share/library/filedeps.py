@@ -40,7 +40,7 @@ def internal_dependency_path(from_file, to_file, include_implicit):
         # imports does not list the dependency from body to spec, so we add it
         # explicitly if from_file is a body.
 
-        ext = os.path.splitext(from_file.name())
+        ext = os.path.splitext(from_file.path)
         if ext[1] == ".adb" or (ext[1] == ".ada" and ext[0][-2:] == ".2"):
             imports.append(from_file.other_file())
 
@@ -59,7 +59,7 @@ def internal_dependency_path(from_file, to_file, include_implicit):
 
     while target:
         targets.append(target)
-        result = " -> " + target.name() + "\n" + result
+        result = " -> " + target.path + "\n" + result
         if target not in deps:
             result = "No dependency between these two files"
             break
@@ -107,7 +107,7 @@ def dependency_path(from_file, to_file, fill_location=False, title=""):
             #   - parent-child.ads -> parent.child
             #   - parent.child.1.ada -> parent.child
             # ??? Would be good to have a file_to_unit API instead
-            unit = os.path.splitext(os.path.basename(target.name()))[0]
+            unit = os.path.splitext(os.path.basename(target.path))[0]
 
             if len(unit) > 2 and (unit[-2:] == ".1" or unit[-2:] == ".2"):
                 unit = unit[0:len(unit) - 2]
@@ -139,8 +139,8 @@ def dependency_path(from_file, to_file, fill_location=False, title=""):
 
 
 def print_dependency_path(from_file, to_file):
-    title = "Dependencies from " + os.path.basename(from_file.name()) + \
-        " to " + os.path.basename(to_file.name())
+    title = "Dependencies from " + os.path.basename(from_file.path) + \
+        " to " + os.path.basename(to_file.path)
     result = dependency_path(from_file, to_file, True, title)
     GPS.Console().write(title + "\n" + result + "\n")
 

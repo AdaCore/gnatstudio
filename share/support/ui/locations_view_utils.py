@@ -76,7 +76,7 @@ def export_locations_to_editor():
         files_list.sort()
 
         for f in files_list:
-            text += "    " + f.name() + "\n"
+            text += "    %s\n" % f.path
             messages = categories[c][f]
             messages.sort(message_compare)
 
@@ -113,7 +113,7 @@ def on_filter(context):
     category='Locations', filter=on_filter,
     name='Clear locations for file',
     contextual=lambda ctx: 'Clear locations for <b>%s</b>' % (
-         os.path.basename(ctx.file().name())), )
+         os.path.basename(ctx.file().path)), )
 def on_contextual():
     context = GPS.current_context()
     list = GPS.Message.list(file=context.file())

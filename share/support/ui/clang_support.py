@@ -53,7 +53,8 @@ class Clang(object):
             # Skip diagnostics that are not in the current file. If diagnostic
             # has no file, it might be a config error (bad switch for example)
             # so we want to show it
-            if d.location.file and d.location.file.name != f.name():
+            # ??? Did we mean 'name()' (or path) below, instead of just 'name'
+            if d.location.file and d.location.file.name != f.path:
                 continue
             m = GPS.Message(
                 category="Clang live diagnostics",

@@ -138,7 +138,7 @@ def show_gnatdg(for_subprogram=False, in_external_editor=False):
     """Show the .dg file of the current file"""
     GPS.MDI.save_all(False)
     context = GPS.current_context()
-    local_file = context.file().name()
+    local_file = context.file().path
     file = context.file().name("Build_Server")
     line = context.location().line()
 
@@ -212,4 +212,4 @@ def clear_expanded_code():
     """Show the expanded code of the current subprogram"""
 
     context = GPS.current_context()
-    clear_dg(context.file().name())
+    clear_dg(context.file().path)

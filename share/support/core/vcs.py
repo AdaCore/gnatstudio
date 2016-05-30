@@ -59,7 +59,7 @@ def only_in_submenu(context):
         if GPS.File(context.directory()) == file:
             return False
 
-        if file.name().endswith("$log"):
+        if file.path.endswith("$log"):
             return False
 
         return not context.module_name.startswith("VCS_Explorer")

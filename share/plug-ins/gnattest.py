@@ -30,7 +30,7 @@ def run(project, target, extra_args=""):
 
 def get_driver_list():
     """ Check if root project has test_drivers.list file and return it. """
-    root_project = GPS.Project.root().file().name()
+    root_project = GPS.Project.root().file().path
     (name, ext) = os.path.splitext(root_project)
     name = name + ".list"
     if os.path.exists(name):
@@ -84,11 +84,11 @@ def open_harness_project(cur):
     prj = get_harness_project_file(cur)
 
     if os.path.exists(prj):
-        last_gnattest['root'] = GPS.Project.root().file().name()
+        last_gnattest['root'] = GPS.Project.root().file().path
         GPS.Project.load(prj, False, True)
         GPS.Console("Messages").write("Switched to harness project: " +
-                                      GPS.Project.root().file().name() + "\n")
-        last_gnattest['harness'] = GPS.Project.root().file().name()
+                                      GPS.Project.root().file().path + "\n")
+        last_gnattest['harness'] = GPS.Project.root().file().path
     else:
         GPS.Console("Messages").write("No harness project found: %s!\n" %
                                       (prj))
@@ -98,14 +98,14 @@ def exit_harness_project():
     """ Leave harness project and open user's project. """
     root_project = GPS.Project.root()
 
-    if last_gnattest['harness'] == root_project.file().name():
+    if last_gnattest['harness'] == root_project.file().path:
         user_project = last_gnattest['root']
     else:
-        user_project = root_project.original_project().file().name()
+        user_project = root_project.original_project().file().path
 
     GPS.Project.load(user_project, False, True)
     GPS.Console("Messages").write("Exit harness project to: " +
-                                  GPS.Project.root().file().name() + "\n")
+                                  GPS.Project.root().file().path + "\n")
 
 
 @hook('compilation_finished')

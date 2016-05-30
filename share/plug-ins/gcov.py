@@ -147,7 +147,7 @@ on which you have permission to read and write.
         sources = p.sources(False)
 
         for s in sources:
-            n = s.name()
+            n = s.path
             basename = n[max(n.rfind('\\'), n.rfind('/')) + 1:len(n)]
             unit = basename[0:basename.rfind('.')]
 

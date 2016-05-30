@@ -62,7 +62,7 @@ class rulesSelector(Gtk.Dialog):
         hbox.pack_start(self.fileEntry, True, True, 0)
 
         if None != defaultfile:
-            self.fileEntry.set_text(defaultfile.name())
+            self.fileEntry.set_text(defaultfile.path)
         self.fileEntry.connect('changed', self.on_file_entry_changed)
         self.on_file_entry_changed()
 
@@ -85,8 +85,8 @@ class rulesSelector(Gtk.Dialog):
     def on_coding_standard_file_browse(self, *args):
         """Callback to coding standard 'Browse' button"""
         file = GPS.MDI.file_selector()
-        if file.name() != "":
-            self.fileEntry.set_text(file.name())
+        if file.path != "":
+            self.fileEntry.set_text(file.path)
 
     def on_ok(self, *args):
         """Callback to 'Cancel' button"""
@@ -320,7 +320,7 @@ def __contextualMenuFilter(context):
         found = False
         data.files = []
         for f in srcs:
-            filename = f.name()
+            filename = f.path
             if filename.find(data.dir) == 0:
                 if f.language().lower() == "ada":
                     data.files.append(f)
@@ -346,7 +346,7 @@ def __contextualMenuLabel(context):
     data = context.gnatcheck
     if data.desttype == "file":
         fmt = "Check Coding standard of <b>{}</b>"
-        name = os.path.basename(data.file.name())
+        name = os.path.basename(data.file.path)
     elif data.desttype == "dir":
         fmt = "Check Coding standard of files in <b>{}</b>"
         name = os.path.basename(os.path.dirname(data.dir))

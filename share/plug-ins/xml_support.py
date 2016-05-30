@@ -66,7 +66,7 @@ def check_wf():
         file = EditorBuffer.get().file()
         handler = xml.sax.handler.ContentHandler()
         errors = GPSErrorHandler()
-        tmp = xml.sax.parse(file.name(), handler, errors)
+        tmp = xml.sax.parse(file.path, handler, errors)
 
         Locations.remove_category('XML well-formedness')
         if not errors.output:
@@ -105,7 +105,7 @@ def quote_selection():
 def view_as_tree():
     try:
         buffer = EditorBuffer.get()
-        view = XMLViewer(buffer.file().name())
+        view = XMLViewer(buffer.file().path)
         view.parse_string(buffer.get_chars())
     except:
         pass

@@ -142,7 +142,7 @@ If this line is never reached, the debugger will not stop.
     try:
         debug = Debugger.get()
         debug.send("tbreak %s:%s" %
-                   (context.file().name(), context.location().line()))
+                   (context.file().path, context.location().line()))
         debug.send("cont")
     except:
         pass  # No debugger active
@@ -153,7 +153,7 @@ If this line is never reached, the debugger will not stop.
 #########################
 
 def debug_add_br_exception_label(context):
-    f = "%s:%s" % (os.path.basename(context.file().name()),
+    f = "%s:%s" % (os.path.basename(context.file().path),
                    context.location().line())
     if f in autocont_br:
         return ("Debug/Do not ignore exception breakpoints on line <b>%d</b>" %
@@ -197,7 +197,7 @@ def add_breakpoint_exception():
     global autocont_br
     # Only consider base names of files, since the debugger does not always
     # show the full name in the "frame" command
-    f = "%s:%s" % (os.path.basename(context.file().name()),
+    f = "%s:%s" % (os.path.basename(context.file().path),
                    context.location().line())
     if f in autocont_br:
         autocont_br.remove(f)
