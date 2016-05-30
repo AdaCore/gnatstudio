@@ -107,6 +107,7 @@ class hook:
         do_work.__name__ = fn.__name__   # Reset name for interactive()
         do_work.__doc__ = fn.__doc__
         GPS.Hook(self.name).add(do_work, last=self.last)
+        return do_work
 
 
 def save_dir(fn):

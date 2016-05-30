@@ -727,6 +727,10 @@ else:
         @staticmethod
         @gps_utils.hook('debugger_location_changed')
         def __on_debugger_location_changed(debugger):
+            QGEN_Module.__show_diagram_and_signal_values(debugger)
+
+        @staticmethod
+        def __show_diagram_and_signal_values(debugger):
             """
             Show the model corresponding to the current editor and line
             """
@@ -832,6 +836,18 @@ else:
             except:
                 return False
 
+        def __contextual_filter_debug_and_symbols(self, context):
+            """
+            Whether the current context is a model block with
+            symbols. The debugger must have been started too.
+            """
+            try:
+                d = GPS.Debugger.get()   # or raise exception
+                it = context.modeling_item
+                return len(self.modeling_map.get_symbols(blockid=it.id)) != 0
+            except:
+                return False
+
         def __contextual_filter_sources(self, context):
             """
             Whether the current context is a model block with
@@ -851,6 +867,22 @@ else:
             it = self.get_item_with_sources(context.modeling_item)
             id = it.id.replace("/", "\\/")
             return 'Debug/Delete breakpoints on %s' % (id, )
+
+        def __contextual_set_signal_value(self):
+            ctx = GPS.contextual_context() or GPS.current_context()
+            it = ctx.modeling_item
+            debug = GPS.Debugger.get()
+
+            for s in self.modeling_map.get_symbols(blockid=it.id):
+                ss = s.split('/')[-1].strip()  # Remove the "context/" part
+                current = debug.send("print %s" % ss, output=False)
+                current = current.split('=')[-1].strip()
+                v = GPS.MDI.input_dialog(
+                    "Value for block %s" % it.id,
+                    "value=%s" % current)
+                debug.send("set variable %s := %s" % (ss, v[0]), output=False)
+
+            QGEN_Module.__show_diagram_and_signal_values(debug)
 
         def __contextual_set_breakpoint(self):
             """
@@ -921,6 +953,12 @@ else:
                 contextual=self.__contextual_name_for_unbreak_on_block,
                 filter=self.__contextual_filter_debug_and_sources,
                 callback=self.__contextual_delete_breakpoint)
+
+            gps_utils.make_interactive(
+                name='MDL set signal value',
+                contextual='Debug/Set value for signal',
+                filter=self.__contextual_filter_debug_and_symbols,
+                callback=self.__contextual_set_signal_value)
 
             gps_utils.make_interactive(
                 name='MDL show source for block',
