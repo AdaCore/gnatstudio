@@ -332,6 +332,7 @@ class CLI(GPS.Process):
 
         if st == 0:
             GPS.Project.recompute()  # Add generated files to the project
+
         yield st
 
     @staticmethod
@@ -544,18 +545,22 @@ class Mapping_File(object):
     lines to blocks, and back. The format of this mapping file is:
        { "filename.adb": {   # repeated for each file
               "block1": {    # repeated for each block
-                  "line": [1, 2],    # lines impacted by this block
+                  "line": ["1-10", "65-70"], # lines impacted by this block
                   "symbol": ["s1", "s2"]   # variables from this block
               }
        }
     """
 
     def __init__(self, filename=None):
-        # In the following, a `file` is an instance of `GPS.File`
-        self.blocks = {}   # block_id => set([(file,line), (file,line)])
-        self.lines = {}    # (file,line) => set([block_id])
-        self.files = {}    # sourcefile => mdlfile
-        self.symbols = {}  # block_id => set(symbols)
+        # In the following:
+        #   - `file`:  an instance of `GPS.File`
+        #   - `linerange`: a tuple (start, end)
+        #   - `filename`: a string
+
+        self._blocks = {}   # block_id => set of (file,linerange)
+        self._files = {}    # filename => {line => blockid}
+        self._mdl = {}      # sourcefile => mdlfile
+        self._symbols = {}  # block_id => set(symbols)
 
     def load(self, mdlfile):
         """
@@ -570,7 +575,8 @@ class Mapping_File(object):
         try:
             f = open(filename)
         except IOError:
-            GPS.Console().write('Mapping file %s not found\n' % filename)
+            # Do not print an error: this is the normal case when no code
+            # has been generated yet
             return
 
         try:
@@ -581,47 +587,58 @@ class Mapping_File(object):
 
         for filename, blocks in js.iteritems():
             f = GPS.File(filename)
-            self.files[f.name()] = mdlfile
+            self._mdl[f.name()] = mdlfile
+
+            b = self._files.setdefault(f.name(), {})
 
             for blockid, blockinfo in blocks.iteritems():
-                a = self.blocks.setdefault(blockid, set())
-                for line in blockinfo.get('lines', []):
-                    a.add((f, line))
+                a = self._blocks.setdefault(blockid, set())
+                for linerange in blockinfo.get('lines', []):
+                    if isinstance(linerange, int):
+                        rg = (linerange, linerange)
+                    elif '-' in linerange:
+                        s = linerange.split('-')
+                        rg = (int(s[0]), int(s[1]))
+                    else:
+                        rg = (int(linerange), int(linerange))
 
-                    b = self.lines.setdefault((f.name(), line), set())
-                    b.add(blockid)
+                    a.add((f, rg))
 
-                a = self.symbols.setdefault(blockid, set())
+                    for line in range(rg[0], rg[1] + 1):
+                        b[line] = blockid
+
+                a = self._symbols.setdefault(blockid, set())
                 for symbol in blockinfo.get('symbols', []):
                     a.add(symbol)
 
-    def get_source_lines(self, blockid):
+    def get_source_ranges(self, blockid):
         """
-        Returns the set of (filename, line) tuples on which we should set or
-        remove breakpoints, for a given block.
+        Returns the set of (filename, linerange) tuples for the source lines
+        generated from that block.
         """
-        return self.blocks.get(blockid, set())
+        return self._blocks.get(blockid, set())
 
     def get_symbols(self, blockid):
         """
         Returns the set of source code symbols (variables) for this block.
         """
-        return self.symbols.get(blockid, set())
+        return self._symbols.get(blockid, set())
 
-    def get_blocks(self, filename, line):
+    def get_block(self, file, line):
         """
-        The set of block names corresponding to a given source line
-        :param str filename:
+        The block name corresponding to a given source line
+        :param GPS.File filename:
         """
-        return self.lines.get((filename, line), set())
+        a = self._files.get(file.name(), [])
+        return a[line]
 
-    def get_mdl_file(self, filename):
+    def get_mdl_file(self, file):
         """
         Return the name of the MDL file used to generate the given file
-        :param str file: the source file
+        :param GPS.File file: the source file
         :return: a `GPS.File`
         """
-        return self.files.get(filename, None)
+        return self._mdl.get(file.name(), None)
 
 
 project_support = Project_Support()
@@ -633,41 +650,28 @@ if not CLI.is_available():
 else:
     project_support.register_tool()
 
-    class QGEN_Debugger_Support(object):
-        """
-        Support for interacting with the debugger.
-        Instances of this class are associated with each instance of the
-        debugger.
-        """
+    class QGEN_Module(modules.Module):
 
-        def __init__(self, debugger):
-            """
-            Associate self with the debugger, and parse the mapping files
-            """
-            self.debugger = debugger
-            debugger.qgen = self
+        modeling_map = None   # a Mapping_File instance
 
-            self.modeling_map = Mapping_File()
+        @staticmethod
+        @gps_utils.hook('project_view_changed')
+        def __on_project_view_changed():
+            """
+            Load all mapping files used in this project.
+            We need them for the debugger interaction (so we could load
+            them only when the debugger is started), but we also need them
+            when interacting with the diagram, for instance to show the
+            source associated with a block.
+            """
+
+            QGEN_Module.modeling_map = Mapping_File()
             for f in GPS.Project.root().sources(recursive=True):
                 if CLI.is_model_file(f):
-                    self.modeling_map.load(f)
+                    QGEN_Module.modeling_map.load(f)
 
         @staticmethod
-        def is_qgen_debugger(debugger):
-            """
-            Whether the given debugger has support for QGen
-            """
-            return debugger and hasattr(debugger, "qgen")
-
-        @staticmethod
-        @gps_utils.hook('debugger_started')
-        def __on_debugger_started(debugger):
-            """
-            Associate the new debugger with a QGEN_Debugger_Support instance
-            """
-            QGEN_Debugger_Support(debugger)
-
-        def compute_item_values(self, diagram, toplevel, item):
+        def compute_item_values(debugger, diagram, toplevel, item):
             """
             Recompute the value for all symbols related to item, and update
             the display of item to show their values.
@@ -685,7 +689,7 @@ else:
 
             # The list of symbols to compute from the debugger
 
-            symbols = self.modeling_map.get_symbols(blockid=parent.id)
+            symbols = QGEN_Module.modeling_map.get_symbols(blockid=parent.id)
             if symbols:
                 s = next(iter(symbols))  # Get the first symbol
                 # Function calls do not have a '/'
@@ -697,15 +701,14 @@ else:
                     # diagram corresponds to the current frame.
 
                     # ??? We are hard-coding a gdb command here
-                    value = self.debugger.send(
+                    value = debugger.send(
                         "print %s" % (ss, ),
                         output=False,
                         show_in_console=False)
-                    value = value.split('=')[-1].strip()
+                    item.text = value.split('=')[-1].strip()
 
-                    item.text = value
-
-        def forall_auto_items(self, diagrams):
+        @staticmethod
+        def forall_auto_items(diagrams):
             """
             Return the list of all items with an "auto" property (i.e. whose
             value should be displayed in the browser).
@@ -721,57 +724,60 @@ else:
                                it.data.get('auto') == "true":
                                 yield (d, item, it)
 
-        def __on_viewer_loaded(self, viewer):
-            """
-            Called when a MDL browser needs refreshing.
-            :param QGEN_Diagram_Viewer viewer: the viewer that is now
-               ready. It should contain the list of diagrams.
-            """
-            assert isinstance(viewer, QGEN_Diagram_Viewer)
-
-            filename = self.debugger.current_file.name()
-            line = self.debugger.current_line
-            diags = set()   # All the diagrams to check
-
-            # Unselect items from the previous step
-            viewer.diags.clear_selection()
-
-            # Select the blocks corresponding to the current line
-            for block in self.modeling_map.get_blocks(filename, line):
-                info = viewer.diags.get_diagram_for_item(block)
-                if info:
-                    diagram, item = info
-                    viewer.diagram = diagram  # Change visible diagram
-                    diags.add(diagram)
-                    diagram.select(item)
-
-            # Compute the value for all needed items
-            for diag, toplevel, it in self.forall_auto_items(diags):
-                self.compute_item_values(diag, toplevel=toplevel, item=it)
-
-            # Update the display
-            for d in diags:
-                d.changed()
-
-        def load_current_mdl(self):
-            """
-            Display the MDL diagram for the current file/line
-            """
-            filename = self.debugger.current_file.name()
-            if filename:
-                mdl = self.modeling_map.get_mdl_file(filename)
-                if mdl:
-                    QGEN_Diagram_Viewer.get_or_create(
-                        mdl, on_loaded=self.__on_viewer_loaded)
-
         @staticmethod
         @gps_utils.hook('debugger_location_changed')
         def __on_debugger_location_changed(debugger):
             """
             Show the model corresponding to the current editor and line
             """
-            if QGEN_Debugger_Support.is_qgen_debugger(debugger):
-                debugger.qgen.load_current_mdl()
+
+            def __on_viewer_loaded(viewer):
+                """
+                Called when a MDL browser needs refreshing.
+                :param QGEN_Diagram_Viewer viewer: the viewer that is now
+                   ready. It should contain the list of diagrams.
+                """
+                assert isinstance(viewer, QGEN_Diagram_Viewer)
+
+                filename = debugger.current_file
+                line = debugger.current_line
+                diags = set()   # All the diagrams to check
+
+                # Unselect items from the previous step
+                viewer.diags.clear_selection()
+
+                # Select the blocks corresponding to the current line
+                block = QGEN_Module.modeling_map.get_block(filename, line)
+                if block:
+                    info = viewer.diags.get_diagram_for_item(block)
+                    if info:
+                        diagram, item = info
+                        viewer.diagram = diagram  # Change visible diagram
+                        diags.add(diagram)
+                        diagram.select(item)
+
+                # Compute the value for all needed items
+                for diag, toplevel, it in QGEN_Module.forall_auto_items(diags):
+                    QGEN_Module.compute_item_values(
+                        debugger, diag, toplevel=toplevel, item=it)
+
+                # Update the display
+                for d in diags:
+                    d.changed()
+
+            filename = debugger.current_file
+            if filename:
+                mdl = QGEN_Module.modeling_map.get_mdl_file(filename)
+                if mdl:
+                    QGEN_Diagram_Viewer.get_or_create(
+                        mdl, on_loaded=__on_viewer_loaded)
+
+        def block_source_ranges(self, blockid):
+            """
+            Whether there are any breakpoint associated with
+            blockid. Returns the list of source locations.
+            """
+            return self.modeling_map.get_source_ranges(blockid)
 
         def get_item_with_sources(self, item):
             """
@@ -779,18 +785,9 @@ else:
             lines
             """
             while (item and
-                   (not item.id or not self.block_source_lines(item.id))):
+                   (not item.id or not self.block_source_ranges(item.id))):
                 item = item.parent
             return item
-
-        def block_source_lines(self, blockid):
-            """
-            Whether there are any breakpoint associated with
-            blockid. Returns the list of source locations.
-            """
-            return self.modeling_map.get_source_lines(blockid)
-
-    class QGEN_Module(modules.Module):
 
         @staticmethod
         @gps_utils.hook('open_file_action_hook', last=False)
@@ -823,29 +820,35 @@ else:
             viewer.topleft = info['topleft']
             return GPS.MDI.get_by_child(viewer)
 
-        def __contextual_filter(self, context):
+        def __contextual_filter_debug_and_sources(self, context):
+            """
+            Whether the current context is a model block with
+            source lines (or one of its parents has source lines). The
+            debugger must have been started too.
+            """
+            try:
+                d = GPS.Debugger.get()   # or raise exception
+                return self.__contextual_filter_sources(context)
+            except:
+                return False
+
+        def __contextual_filter_sources(self, context):
             """
             Whether the current context is a model block with
             source lines (or one of its parents has source lines)
             """
             try:
-                # Assume debugger is setup for QGen, and context has an
-                # item. Otherwise, we'll just get an exception
-                debug = GPS.Debugger.get()
-                it = debug.qgen.get_item_with_sources(context.modeling_item)
+                it = self.get_item_with_sources(context.modeling_item)
                 return it is not None
-            except Exception as e:
+            except:
                 return False
 
         def __contextual_name_for_break_on_block(self, context):
-            # Only called when we have a debugger with qgen support
-            debug = GPS.Debugger.get()
-            it = debug.qgen.get_item_with_sources(context.modeling_item)
+            it = self.get_item_with_sources(context.modeling_item)
             return 'Debug/Break on %s' % (it.id.replace("/", "\\/"), )
 
         def __contextual_name_for_unbreak_on_block(self, context):
-            debug = GPS.Debugger.get()
-            it = debug.qgen.get_item_with_sources(context.modeling_item)
+            it = self.get_item_with_sources(context.modeling_item)
             id = it.id.replace("/", "\\/")
             return 'Debug/Delete breakpoints on %s' % (id, )
 
@@ -854,26 +857,39 @@ else:
             Set a breakpoint, in the current debugger, on the current block
             """
             ctx = GPS.contextual_context() or GPS.current_context()
-            debug = GPS.Debugger.get()
-            it = debug.qgen.get_item_with_sources(ctx.modeling_item)
-            br = debug.qgen.block_source_lines(it.id)
-            if br:
-                for b in br:
-                    debug.send("break %s:%s" % (b[0], b[1]))
+            it = self.get_item_with_sources(ctx.modeling_item)
+            ranges = self.block_source_ranges(it.id)
+            if ranges:
+                debug = GPS.Debugger.get()
+                for file, rg in ranges:
+                    # Set a breakpoint only on the first line of a range
+                    debug.send("break %s:%s" % (file, rg[0]))
 
         def __contextual_delete_breakpoint(self):
             """
             Set a breakpoint, in the current debugger, on the current block
             """
             ctx = GPS.contextual_context() or GPS.current_context()
-            debug = GPS.Debugger.get()
-            it = debug.qgen.get_item_with_sources(ctx.modeling_item)
-            br = debug.qgen.block_source_lines(it.id)
+            it = self.get_item_with_sources(ctx.modeling_item)
+            ranges = self.block_source_ranges(it.id)
+            if ranges:
+                debug = GPS.Debugger.get()
+                for file, rg in ranges:
+                    debug.send("clear %s:%s" % (file, rg[0]))
 
-            # ??? Need to lookup breakpoint number
-            if br:
-                for b in br:
-                    debug.send("clear %s:%s" % (b[0], b[1]))
+        def __contextual_show_source_code(self):
+            """
+            Show the first line of code for an item
+            """
+            ctx = GPS.contextual_context() or GPS.current_context()
+            it = self.get_item_with_sources(ctx.modeling_item)
+            for file, rg in self.block_source_ranges(it.id):
+                buffer = GPS.EditorBuffer.get(file)
+                view = buffer.current_view()
+                view.goto(buffer.at(rg[0], 1))
+                view.center()
+                GPS.MDI.get_by_child(view).raise_window()
+                break
 
         def setup(self):
             """
@@ -897,14 +913,20 @@ else:
             gps_utils.make_interactive(
                 name='MDL break debugger on block',
                 contextual=self.__contextual_name_for_break_on_block,
-                filter=self.__contextual_filter,
+                filter=self.__contextual_filter_debug_and_sources,
                 callback=self.__contextual_set_breakpoint)
 
             gps_utils.make_interactive(
                 name='MDL delete breakpoints on block',
                 contextual=self.__contextual_name_for_unbreak_on_block,
-                filter=self.__contextual_filter,
+                filter=self.__contextual_filter_debug_and_sources,
                 callback=self.__contextual_delete_breakpoint)
+
+            gps_utils.make_interactive(
+                name='MDL show source for block',
+                contextual='Models/Show source code',
+                filter=self.__contextual_filter_sources,
+                callback=self.__contextual_show_source_code)
 
             workflows.create_target_from_workflow(
                 target_name="MDL Generate code then build",
