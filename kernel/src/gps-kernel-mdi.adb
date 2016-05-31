@@ -2145,4 +2145,47 @@ package body GPS.Kernel.MDI is
       return Child.Toolbar;
    end Get_Toolbar;
 
+   --------------------------
+   -- Get_Tooltip_For_File --
+   --------------------------
+
+   function Get_Tooltip_For_File
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project)
+      return String
+   is
+   begin
+      return
+        File.Display_Base_Name & ASCII.LF
+        & "<b>Absolute:</b>" & ASCII.LF
+        & File.Dir.Display_Full_Name & ASCII.LF
+        & "<b>Relative to root:</b>" & ASCII.LF
+        & (+File.Dir.Relative_Path
+           (Get_Project (Kernel).Project_Path.Dir)) & ASCII.LF
+        & (if Project = No_Project
+           then "" else "<b>In project:</b> " & Project.Name);
+   end Get_Tooltip_For_File;
+
+   -------------------------------
+   -- Get_Tooltip_For_Directory --
+   -------------------------------
+
+   function Get_Tooltip_For_Directory
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Directory : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project)
+      return String
+   is
+   begin
+      return "<b>Absolute directory:</b>" & ASCII.LF
+        & Directory.Display_Full_Name & ASCII.LF
+        & "<b>Relative to root:</b>" & ASCII.LF
+        & (+Directory.Relative_Path
+           (Get_Project (Kernel).Project_Path.Dir)) & ASCII.LF
+        & (if Project = No_Project
+           then ""
+           else "<b>In project:</b> " & Project.Name);
+   end Get_Tooltip_For_Directory;
+
 end GPS.Kernel.MDI;

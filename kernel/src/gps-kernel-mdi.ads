@@ -319,6 +319,32 @@ package GPS.Kernel.MDI is
    --  something less drastic than killing the whole process), and return
    --  True.
 
+   --------------
+   -- Tooltips --
+   --------------
+   --  GPS provides tooltips in notebook tabs. The text of those tooltips can
+   --  be controlled by overridden via Gtkada.MDI.Get_Tooltips.
+   --  The following provides standard tooltips for some of the data types
+   --  manipulated by GPS:
+
+   function Get_Tooltip_For_File
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project)
+      return String;
+   --  Return the tooltip text for a file (which belongs to a specific
+   --  project, possibly looked up dynamically if unspecified and
+   --  unambiguous).
+   --  This is markup text (including <b> special markup)
+
+   function Get_Tooltip_For_Directory
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Directory : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project)
+      return String;
+   --  Return the tooltip text for a directory.
+   --  This is markup text (including <b> special markup)
+
    ---------------------
    -- Views and files --
    ---------------------

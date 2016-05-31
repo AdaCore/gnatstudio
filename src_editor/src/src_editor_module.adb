@@ -101,6 +101,10 @@ package body Src_Editor_Module is
    Backspace  : constant Gunichar := 8;
 
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
+   overriding function Get_Tooltip
+     (Self  : not null access Editor_Child_Record) return String;
+   overriding function Get_Tooltip_Is_Markup
+     (Self  : not null access Editor_Child_Record) return Boolean is (True);
    overriding procedure Tab_Contextual
      (Child : access Editor_Child_Record;
       Menu  : access Gtk.Menu.Gtk_Menu_Record'Class);
@@ -275,7 +279,9 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class; File : Virtual_File);
    --  Add an entry for File to the Recent menu, if needed
 
-   function Get_Filename (Child : MDI_Child) return GNATCOLL.VFS.Virtual_File;
+   function Get_Filename
+     (Child : not null access MDI_Child_Record'Class)
+      return GNATCOLL.VFS.Virtual_File;
    --  If Child is a file editor, return the corresponding filename,
    --  otherwise return an empty string.
 
@@ -563,7 +569,10 @@ package body Src_Editor_Module is
    -- Get_Filename --
    ------------------
 
-   function Get_Filename (Child : MDI_Child) return Virtual_File is
+   function Get_Filename
+     (Child : not null access MDI_Child_Record'Class)
+      return GNATCOLL.VFS.Virtual_File
+   is
    begin
       if Child /= null
         and then Get_Widget (Child) /= null
@@ -579,7 +588,8 @@ package body Src_Editor_Module is
    -- Get_Project --
    -----------------
 
-   function Get_Project (Child : MDI_Child) return Project_Type is
+   function Get_Project
+     (Child : not null access MDI_Child_Record'Class) return Project_Type is
    begin
       if Child /= null
         and then Get_Widget (Child) /= null
@@ -2710,7 +2720,8 @@ package body Src_Editor_Module is
 
       Child := Get_Focus_Child (Get_MDI (Kernel));
 
-      if Get_Filename (Child) = File
+      if Child /= null
+        and then Get_Filename (Child) = File
         and then Project_Matches (Child)
       then
          return Child;
@@ -2864,6 +2875,19 @@ package body Src_Editor_Module is
          return Id.Character_Width;
       end if;
    end Line_Number_Character_Width;
+
+   -----------------
+   -- Get_Tooltip --
+   -----------------
+
+   overriding function Get_Tooltip
+     (Self  : not null access Editor_Child_Record) return String is
+   begin
+      return Get_Tooltip_For_File
+        (Kernel    => Self.Kernel,
+         File      => Get_Filename (Self),
+         Project   => Get_Project (Self));
+   end Get_Tooltip;
 
    --------------------
    -- Tab_Contextual --

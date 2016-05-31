@@ -206,7 +206,8 @@ package Src_Editor_Module is
    --  ???
 
    function Get_Project
-     (Child : MDI_Child) return GNATCOLL.Projects.Project_Type;
+     (Child : not null access MDI_Child_Record'Class)
+      return GNATCOLL.Projects.Project_Type;
    --  Return the project associated with the Child, which should be a
    --  source editor view. Return No_Project if no project was found.
 

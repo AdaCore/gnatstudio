@@ -37,6 +37,13 @@ NF-17-P511-020 GPS: hyper links in call graph browser (2016-05-24)
   In the Call Graph Browser, file locations are now clickable and open
   the corresponding file/line.
 
+NF-17-P428-038 GPS: tooltips show dirs relative to root project (2016-05-31)
+
+  The tooltips in notebook tabs, in the Project view and in the Windows
+  view now show both the absolute name for files as well as their location
+  relative to the root project. The latter path can often be much shorter,
+  depending on your setup.
+
 NF-17-P419-042 GPS: proposed value of message review status (2016-04-21)
 
   In CodePeer message review dialog proposed value of message review status

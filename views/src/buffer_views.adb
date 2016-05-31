@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Glib;                   use Glib;
-with Glib.Convert;           use Glib.Convert;
 with Glib.Object;            use Glib.Object;
 with Glib_Values_Utils;      use Glib_Values_Utils;
 
@@ -90,6 +89,7 @@ package body Buffer_Views is
 
    type Buffer_Tree_View_Record is new Gtkada.Tree_View.Tree_View_Record with
       record
+         Kernel   : access Kernel_Handle_Record'Class;
          Pattern  : Search_Pattern_Access;
       end record;
    type Buffer_Tree_View is access all Buffer_Tree_View_Record'Class;
@@ -215,29 +215,34 @@ package body Buffer_Views is
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
-      View  : constant Buffer_View_Access := Buffer_View_Access (Widget);
+      Tree  : constant Buffer_Tree_View := Buffer_Tree_View (Widget);
       Filter_Iter  : Gtk_Tree_Iter;
-      Area  : Gdk_Rectangle;
-      Label : Gtk_Label;
+      Area         : Gdk_Rectangle;
+      Label        : Gtk_Label;
+      Child        : MDI_Child;
 
    begin
-      Initialize_Tooltips (View.Tree, X, Y, Area, Filter_Iter);
-
+      Initialize_Tooltips (Tree, X, Y, Area, Filter_Iter);
       if Filter_Iter /= Null_Iter then
          Tooltip.Set_Tip_Area (Area);
 
-         declare
-            Name : constant String :=
-              View.Tree.Filter.Get_String (Filter_Iter, Name_Column);
-            Title : constant String :=
-              View.Tree.Filter.Get_String (Filter_Iter, Data_Column);
-         begin
-            Gtk_New
-              (Label, "<b>Name:</b> "
-               & Escape_Text (Name) & ASCII.LF
-               & "<b>Title:</b> " & Escape_Text (Title));
-            Label.Set_Use_Markup (True);
-         end;
+         Child := Find_MDI_Child_By_Name
+           (Get_MDI (Tree.Kernel),
+            Tree.Filter.Get_String (Filter_Iter, Data_Column));
+         if Child /= null then
+            declare
+               Tip : constant String := Child.Get_Tooltip;
+            begin
+               if Tip /= "" then
+                  Gtk_New (Label, Tip);
+                  Label.Set_Use_Markup (Child.Get_Tooltip_Is_Markup);
+               end if;
+            end;
+         end if;
+
+         if Label = null then
+            Gtk_New (Label, Tree.Filter.Get_String (Filter_Iter, Name_Column));
+         end if;
       end if;
 
       return Gtk_Widget (Label);
@@ -710,6 +715,7 @@ package body Buffer_Views is
       View.Pack_Start (Scrolled, Expand => True, Fill => True);
 
       View.Tree := new Buffer_Tree_View_Record;
+      View.Tree.Kernel := View.Kernel;
       Initialize
         (View.Tree,
          Column_Types       => Column_Types,
@@ -765,7 +771,7 @@ package body Buffer_Views is
       --  Initialize tooltips
 
       Tooltip := new Buffer_View_Tooltips;
-      Tooltip.Set_Tooltip (View);
+      Tooltip.Set_Tooltip (View.Tree);
 
       Refresh (View);
 

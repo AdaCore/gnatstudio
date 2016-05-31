@@ -42,7 +42,6 @@ with Gdk.Window;                use Gdk.Window;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Box;                   use Gtk.Box;
-with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
@@ -1382,7 +1381,8 @@ package body Project_Explorers is
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Widget);
-
+      Kernel     : constant access Kernel_Handle_Record'Class :=
+        Tooltip.Explorer.Kernel;
       Filter_Path : Gtk_Tree_Path;
       Column     : Gtk_Tree_View_Column;
       Cell_X,
@@ -1390,10 +1390,9 @@ package body Project_Explorers is
       Row_Found  : Boolean := False;
       Par, Filter_Iter, Iter  : Gtk_Tree_Iter;
       Node_Type  : Node_Types;
-      File       : Virtual_File;
+      File         : Virtual_File;
       Area       : Gdk_Rectangle;
       Label      : Gtk_Label;
-      P          : Project_Type;
    begin
       Get_Path_At_Pos
         (Tooltip.Explorer.Tree, X, Y, Filter_Path,
@@ -1429,28 +1428,28 @@ package body Project_Explorers is
             Gtk_New (Label, File.Display_Full_Name);
 
          when Directory_Node_Types =>
-            --  Directroy full pathname and project name
-            --  Get parent node which is the project name
-            Par := Parent (Tooltip.Explorer.Tree.Model, Iter);
-
-            File := Get_File (Tooltip.Explorer.Tree.Model, Iter, File_Column);
-            Gtk_New
-              (Label, File.Display_Full_Name
-               & ASCII.LF &
-               (-"in project ") &
-               Get_String
-                 (Tooltip.Explorer.Tree.Model, Par, Display_Name_Column));
-
-         when File_Node =>
-            File := Get_File_From_Node (Tooltip.Explorer.Tree.Model, Iter);
-            P := Get_Project_From_Node
-              (Tooltip.Explorer.Tree.Model, Tooltip.Explorer.Kernel,
-               Iter, Importing => False);
             Gtk_New
               (Label,
-               File.Display_Full_Name
-               & ASCII.LF &
-               (-"in project ") & P.Name);
+               Get_Tooltip_For_Directory
+                 (Kernel    => Kernel,
+                  Directory => Get_File
+                    (Tooltip.Explorer.Tree.Model, Iter, File_Column),
+                  Project   => Get_Project_From_Node
+                    (Tooltip.Explorer.Tree.Model, Kernel,
+                     Iter, Importing => False)));
+            Label.Set_Use_Markup (True);
+
+         when File_Node =>
+            Gtk_New
+              (Label,
+               Get_Tooltip_For_File
+                 (Kernel      => Kernel,
+                  File        => Get_File_From_Node
+                    (Tooltip.Explorer.Tree.Model, Iter),
+                  Project     => Get_Project_From_Node
+                    (Tooltip.Explorer.Tree.Model, Kernel,
+                     Iter, Importing => False)));
+            Label.Set_Use_Markup (True);
 
          when Entity_Node =>
             --  Entity (parameters) declared at Filename:line
