@@ -2075,9 +2075,8 @@ package body Toolchains is
    --------------------------
 
    function Get_Defined_Runtimes
-     (Tc                 : Toolchain;
-      Lang               : String;
-      Used_Runtime_Index : out Integer) return GNAT.Strings.String_List
+     (Tc   : Toolchain;
+      Lang : String) return GNAT.Strings.String_List
    is
       Lang_Runtimes : constant Runtime_Lists.List :=
                         (if Tc.Defined_Runtimes.Contains (Lang) then
@@ -2086,17 +2085,9 @@ package body Toolchains is
                             Runtime_Lists.Empty_List);
       Runtimes      : GNAT.Strings.String_List
         (1 .. Integer (Lang_Runtimes.Length));
-      Used_Runtime  : constant String := Get_Used_Runtime (Tc, Lang);
       I             : Integer := Runtimes'First;
    begin
-      Used_Runtime_Index := -1;
-
       for Runtime of Lang_Runtimes loop
-         --  Check if the runtime to add is used currently
-         if Used_Runtime = Runtime then
-            Used_Runtime_Index := I;
-         end if;
-
          Runtimes (I) := new String'(Runtime);
 
          I := I + 1;

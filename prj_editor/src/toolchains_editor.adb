@@ -929,7 +929,7 @@ package body Toolchains_Editor is
          Tool             : Toolchains.Tools;
          Lang             : String;
          Values           : GNAT.Strings.String_List;
-         Default_Index    : Integer;
+         Default_Value    : String;
          Is_Editable      : Boolean);
       --  Append a widget to the details view for the given tool.
       --
@@ -949,7 +949,7 @@ package body Toolchains_Editor is
          Tool             : Toolchains.Tools;
          Lang             : String;
          Values           : GNAT.Strings.String_List;
-         Default_Index    : Integer;
+         Default_Value    : String;
          Is_Editable      : Boolean)
       is
          Widget        : Gtk_Widget;
@@ -957,11 +957,6 @@ package body Toolchains_Editor is
          Btn           : Gtk_Button := null;
          Ent_Name      : constant String := To_Lower (Tool'Image) & "_tool";
          Tool_Label    : constant String := Get_Label (Kind, Tool, Lang);
-         Default_Value : constant String :=
-                           (if Default_Index in Values'Range then
-                               Values (Default_Index).all
-                            else
-                               "");
       begin
          --  Use a combo box with an entry if several possible values have
          --  been given for this tool.
@@ -985,20 +980,19 @@ package body Toolchains_Editor is
             Ent.Set_Sensitive (Is_Editable and then not Page.Read_Only);
          end if;
 
+         Tool_Callback.Object_Connect
+           (Ent, Gtk.Editable.Signal_Changed,
+            On_Tool_Value_Changed'Access,
+            Slot_Object => Page,
+            User_Data   => Tool_Callback_User_Object'
+              (Tool_Label   => To_Unbounded_String (Tool_Label),
+               Ent          => Ent,
+               Reset_Button => Btn,
+               Kind         => Kind,
+               Tool         => Tool,
+               Lang         => To_Unbounded_String (Lang)));
          Ent.Add_Events (Gdk.Event.Leave_Notify_Mask);
          Ent.Set_Name (Ent_Name);
-         Ent.Set_Text (Default_Value);
-         Tool_Callback.Object_Connect
-                        (Ent, Gtk.Editable.Signal_Changed,
-                         On_Tool_Value_Changed'Access,
-                         Slot_Object => Page,
-                         User_Data   => Tool_Callback_User_Object'
-                           (Tool_Label   => To_Unbounded_String (Tool_Label),
-                            Ent          => Ent,
-                            Reset_Button => Btn,
-                            Kind         => Kind,
-                            Tool         => Tool,
-                            Lang         => To_Unbounded_String (Lang)));
 
          if Is_Editable then
             Gtk_New (Btn, "Reset");
@@ -1021,6 +1015,8 @@ package body Toolchains_Editor is
             Button    => Btn,
             Label     => Tool_Label,
             Child_Key => Tool_Label);
+
+         Ent.Set_Text (Default_Value);
       end Add_Detail;
 
    begin
@@ -1062,12 +1058,10 @@ package body Toolchains_Editor is
 
       for Lang of Languages loop
          declare
-            Used_Runtime_Index : Integer;
             Runtimes           : GNAT.Strings.String_List :=
                                    Get_Defined_Runtimes
                                      (Tc,
-                                      Lang.all,
-                                      Used_Runtime_Index);
+                                      Lang.all);
          begin
             if Runtimes'Length > 0 then
                Add_Detail
@@ -1075,7 +1069,7 @@ package body Toolchains_Editor is
                   Tool             => Unknown,
                   Lang             => Lang.all,
                   Values           => Runtimes,
-                  Default_Index    => Used_Runtime_Index,
+                  Default_Value    => Get_Used_Runtime (Tc, Lang.all),
                   Is_Editable      => True);
             end if;
 
@@ -1101,7 +1095,7 @@ package body Toolchains_Editor is
                Tool             => Tool,
                Lang             => "",
                Values           => Values,
-               Default_Index    => Values'First,
+               Default_Value    => Values (Values'First).all,
                Is_Editable      => Tool /= GNAT_Driver);
             Free (Values);
          end;
@@ -1130,10 +1124,10 @@ package body Toolchains_Editor is
                Tool             => Unknown,
                Lang             => Lang.all,
                Values           => Values,
-               Default_Index    => (if not Compiler_Is_Used then
-                                       Values'First
+               Default_Value    => (if not Compiler_Is_Used then
+                                       Values (Values'First).all
                                     else
-                                       Values'First + 1),
+                                       Values (Values'First + 1).all),
                Is_Editable      => True);
             Free (Values);
          end;
@@ -1159,29 +1153,27 @@ package body Toolchains_Editor is
 
       case User_Data.Kind is
          when Tool_Kind_Runtime =>
-            if Get_Used_Runtime (Tc, Lang) /= Val then
-               Set_Used_Runtime (Tc, Lang, Val);
+            Set_Used_Runtime (Tc, Lang, Val);
 
-               --  Set the reset button to be sensitive if it's not the default
-               --  runtime.
-               if User_Data.Reset_Button /= null then
-                  User_Data.Reset_Button.Set_Sensitive
-                    (Is_Default_Runtime_Used (Tc, Lang));
-               end if;
+            --  Set the reset button to be sensitive if it's not the default
+            --  runtime.
+            if User_Data.Reset_Button /= null then
+               User_Data.Reset_Button.Set_Sensitive
+                 (Is_Default_Runtime_Used (Tc, Lang));
+            end if;
 
-               --  If the runtime is not valid, show it to the user
-               if not Is_Runtime_Defined (Tc, Lang, Val)
-                 and then not Is_Default_Runtime_Used (Tc, Lang)
-               then
-                  Self.Details_View.Display_Information_On_Child
-                    (Child_Key => To_String (User_Data.Tool_Label),
-                     Message   =>
-                       "This runtime is not defined for this target.",
-                     Is_Error  => True);
-               else
-                  Self.Details_View.Remove_Information_On_Child
-                    (Child_Key => To_String (User_Data.Tool_Label));
-               end if;
+            --  If the runtime is not valid, show it to the user
+            if not Is_Runtime_Defined (Tc, Lang, Val)
+              and then not Is_Default_Runtime_Used (Tc, Lang)
+            then
+               Self.Details_View.Display_Information_On_Child
+                 (Child_Key => To_String (User_Data.Tool_Label),
+                  Message   =>
+                    "This runtime is not defined for this target.",
+                  Is_Error  => True);
+            else
+               Self.Details_View.Remove_Information_On_Child
+                 (Child_Key => To_String (User_Data.Tool_Label));
             end if;
 
          when Tool_Kind_Tool =>
@@ -1212,7 +1204,7 @@ package body Toolchains_Editor is
          when Tool_Kind_Compiler =>
             if Val = "not compiled ..." then
                Set_Compiler_Is_Used (Tc, Lang, False);
-            elsif Get_Exe (Get_Compiler (Tc, Lang)) /= Val then
+            else
                Set_Compiler (Tc, Lang, Val);
 
                --  If the compiler is not in PATH, show it to the user

@@ -287,15 +287,10 @@ package Toolchains is
    --  given in parameter. This doesn't add the toolchain in the manager.
 
    function Get_Defined_Runtimes
-     (Tc                 : Toolchain;
-      Lang               : String;
-      Used_Runtime_Index : out Integer) return GNAT.Strings.String_List;
+     (Tc   : Toolchain;
+      Lang : String) return GNAT.Strings.String_List;
    --  Return the list of all the runtimes defined for this toolchain and the
    --  given language.
-   --  Index
-   --  The index of the currently used runtime is set into Used_Runtime_Index.
-   --  If there is not any runtime used for this language, Used_Runtime_Index
-   --  is set to -1.
 
    function Get_Used_Runtime
      (Tc   : Toolchain;
