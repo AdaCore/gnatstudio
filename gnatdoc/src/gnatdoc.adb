@@ -28,6 +28,7 @@ with GPS.Messages_Windows;    use GPS.Messages_Windows;
 with GNATdoc.Atree;           use GNATdoc.Atree;
 with GNATdoc.Backend;         use GNATdoc.Backend;
 with GNATdoc.Frontend;        use GNATdoc.Frontend;
+with GNATdoc.Project_Environments;
 with GNATdoc.Time;            use GNATdoc.Time;
 with GNATdoc.Treepr;          use GNATdoc.Treepr;
 with GNATdoc.Utils;           use GNATdoc.Utils;
@@ -1013,7 +1014,6 @@ package body GNATdoc is
          end Write;
 
          Is_GPL_Version : constant Boolean := False;
-         GNAT_Version   : GNAT.Strings.String_Access;
 
       begin
          Write ('+');
@@ -1038,10 +1038,10 @@ package body GNATdoc is
          Write_Line ("- " & (+File.Base_Name));
          Write_Line;
 
-         Kernel.Registry.Environment.Set_Path_From_Gnatls
-           ("gnatls", GNAT_Version);
-
-         Write_Line ("Compiler version: " & GNAT_Version.all);
+         Write_Line
+           ("Compiler version: "
+            & GNATdoc.Project_Environments.GNATdoc_Project_Environment'Class
+              (Kernel.Registry.Environment.all).Get_GNAT_Version);
          Write_Line (" GNATdoc version: 0.9w (" & Config.Source_Date & ")");
          Write_Line ("            Host: " & Config.Target);
 

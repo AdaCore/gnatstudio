@@ -39,7 +39,7 @@ package Projects is
 
    function Create
      (Tree : not null access GNATCOLL.Projects.Project_Tree'Class;
-      Env  : access GNATCOLL.Projects.Project_Environment'Class := null)
+      Env  : GNATCOLL.Projects.Project_Environment_Access := null)
       return Project_Registry_Access;
    --  Create a new project registry (associated with a custom tree).
    --  Env can be passed a specific value if you want to extend

@@ -315,9 +315,11 @@ package body GPS.Core_Kernels is
    ----------------
 
    procedure Initialize
-     (Self : not null access Core_Kernel_Record'Class;
-      Symbols : GNATCOLL.Symbols.Symbol_Table_Access := null) is
+     (Self    : not null access Core_Kernel_Record'Class;
+      Symbols : GNATCOLL.Symbols.Symbol_Table_Access := null)
+   is
       Handler : Language_Handler;
+
    begin
       if Symbols /= null then
          Self.Symbols := Symbols;

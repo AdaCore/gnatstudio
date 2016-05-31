@@ -244,13 +244,13 @@ package body Projects is
 
    function Create
      (Tree : not null access GNATCOLL.Projects.Project_Tree'Class;
-      Env  : access GNATCOLL.Projects.Project_Environment'Class := null)
+      Env  : GNATCOLL.Projects.Project_Environment_Access := null)
       return Project_Registry_Access
    is
       Reg : constant Project_Registry_Access := new Project_Registry;
    begin
       Reg.Tree := Project_Tree_Access (Tree);
-      Reg.Env  := Project_Environment_Access (Env);
+      Reg.Env  := Env;
       Initialize (Reg.Env);
       return Reg;
    end Create;

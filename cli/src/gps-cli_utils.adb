@@ -49,7 +49,7 @@ with GNAT.OS_Lib;
 package body GPS.CLI_Utils is
 
    procedure Register_Classes
-     (Kernel : access GPS.CLI_Kernels.CLI_Kernel_Record);
+     (Kernel : access GPS.CLI_Kernels.CLI_Kernel_Record'Class);
    --  Register GPS script's classes
 
    procedure Register_Output_Parsers
@@ -61,7 +61,7 @@ package body GPS.CLI_Utils is
    ----------------------
 
    procedure Register_Classes
-     (Kernel : access GPS.CLI_Kernels.CLI_Kernel_Record) is
+     (Kernel : access GPS.CLI_Kernels.CLI_Kernel_Record'Class) is
    begin
       GPS.Scripts.Entities.Register_Commands (Kernel);
       GPS.Scripts.File_Locations.Register_Commands (Kernel);
@@ -95,8 +95,9 @@ package body GPS.CLI_Utils is
    ----------------------------
 
    procedure Create_Kernel_Context
-     (Kernel                  : access GPS.CLI_Kernels.CLI_Kernel_Record;
-      Install_Semantic_Parser : Boolean := True) is
+     (Kernel                  : access GPS.CLI_Kernels.CLI_Kernel_Record'Class;
+      Install_Semantic_Parser : Boolean := True)
+   is
 
       use Commands.Builder;
 
@@ -173,7 +174,7 @@ package body GPS.CLI_Utils is
    ----------------------------
 
    procedure Destroy_Kernel_Context
-     (Kernel : access GPS.CLI_Kernels.CLI_Kernel_Record) is
+     (Kernel : access GPS.CLI_Kernels.CLI_Kernel_Record'Class) is
    begin
       GPS.Core_Kernels.Destroy (Kernel);
    end Destroy_Kernel_Context;
@@ -183,7 +184,7 @@ package body GPS.CLI_Utils is
    ------------------------------
 
    procedure Parse_And_Execute_Script
-     (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record;
+     (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record'Class;
       Script_Name : String;
       Script      : out Scripting_Language) is
    begin
@@ -221,7 +222,7 @@ package body GPS.CLI_Utils is
 
    procedure Parse_Command_Line
      (Command_Line : Command_Line_Configuration;
-      Kernel       : access GPS.CLI_Kernels.CLI_Kernel_Record)
+      Kernel       : access GPS.CLI_Kernels.CLI_Kernel_Record'Class)
    is
       procedure Local_Parse_Command_Line (Switch, Parameter, Section : String);
       --  Allow to manage every occurrence of -X switch for scenario variable.
@@ -312,7 +313,7 @@ package body GPS.CLI_Utils is
    --------------------
 
    function Execute_Batch
-     (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record;
+     (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record'Class;
       Lang_Name   : String;
       Script_Name : String) return Boolean
    is

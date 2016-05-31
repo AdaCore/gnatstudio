@@ -81,7 +81,7 @@ package body GPS.Kernel.Project is
    overriding function Gnatls_Host
      (Self : GPS_Project_Environment) return String;
    overriding procedure Set_GNAT_Version
-     (Self         : GPS_Project_Environment;
+     (Self         : in out GPS_Project_Environment;
       Version      : String);
 
    package String_Maps is new Ada.Containers.Indefinite_Hashed_Maps
@@ -239,7 +239,7 @@ package body GPS.Kernel.Project is
    ----------------------
 
    overriding procedure Set_GNAT_Version
-     (Self    : GPS_Project_Environment;
+     (Self    : in out GPS_Project_Environment;
       Version : String) is
    begin
       Self.Kernel.GNAT_Version := To_Unbounded_String (Version);

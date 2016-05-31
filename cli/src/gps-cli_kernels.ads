@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 --  Kernel for CLI
 
+with GNATCOLL.Projects;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
 
 with GPS.Core_Kernels;                 use GPS.Core_Kernels;

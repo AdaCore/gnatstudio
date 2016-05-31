@@ -31,22 +31,22 @@ with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 with GPS.CLI_Utils;         use GPS.CLI_Utils;
-with GPS.CLI_Kernels;       use GPS.CLI_Kernels;
 
+with Config;
 with GNATdoc;               use GNATdoc;
 with GNATdoc.Customization.Tag_Handlers.Images;
 with GNATdoc.Customization.Tag_Handlers.Shell;
-with Xref;                  use Xref;
-with String_List_Utils;     use String_List_Utils;
+with GNATdoc.Kernels;
 with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
-with Config;
+with String_List_Utils;     use String_List_Utils;
+with Xref;                  use Xref;
 
 procedure GNATdoc_Main is
 
    use String_List_Utils.String_List;
 
-   Kernel : constant GPS.CLI_Kernels.CLI_Kernel :=
-              new GPS.CLI_Kernels.CLI_Kernel_Record;
+   Kernel : constant GNATdoc.Kernels.GNATdoc_Kernel_Access :=
+              new GNATdoc.Kernels.GNATdoc_Kernel_Record;
 
    Cmdline         : Command_Line_Configuration;
    Project_File    : Virtual_File;

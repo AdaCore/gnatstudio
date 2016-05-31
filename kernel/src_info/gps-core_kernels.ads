@@ -171,7 +171,7 @@ package GPS.Core_Kernels is
       Manager : Toolchains.Toolchain_Manager);
 
    procedure Initialize
-     (Self : not null access Core_Kernel_Record'Class;
+     (Self    : not null access Core_Kernel_Record'Class;
       Symbols : GNATCOLL.Symbols.Symbol_Table_Access := null);
 
    procedure Destroy (Self : not null access Core_Kernel_Record'Class);

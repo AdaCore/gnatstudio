@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNATCOLL.Projects;
 with GNATCOLL.Utils;
 
 package body GPS.CLI_Kernels is
@@ -46,7 +45,7 @@ package body GPS.CLI_Kernels is
       Tree : constant GNATCOLL.Projects.Project_Tree_Access :=
         new GNATCOLL.Projects.Project_Tree;
    begin
-      Result := Projects.Create (Tree => Tree);
+      Result := Projects.Create (Tree);
       Tree.Load_Empty_Project;
    end Create_Registry;
 

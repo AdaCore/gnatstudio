@@ -15,11 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.CLI_Kernels;
-with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GNAT.Command_Line; use GNAT.Command_Line;
 with GNAT.Strings;      use GNAT.Strings;
+
+with GNATCOLL.Projects;
+with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+
+with GPS.CLI_Kernels;
 
 --  This package gathered utility procedures and functions related to:
 --     - the initialisation of core kernels
@@ -28,7 +31,7 @@ with GNAT.Strings;      use GNAT.Strings;
 package GPS.CLI_Utils is
 
    procedure Create_Kernel_Context
-     (Kernel                  : access GPS.CLI_Kernels.CLI_Kernel_Record;
+     (Kernel                  : access GPS.CLI_Kernels.CLI_Kernel_Record'Class;
       Install_Semantic_Parser : Boolean := True);
    --  Build kernel context.
    --
@@ -38,12 +41,12 @@ package GPS.CLI_Utils is
    --  Add support for semantic parsers if Install_Semantic_Parser is True.
 
    procedure Destroy_Kernel_Context
-     (Kernel : access GPS.CLI_Kernels.CLI_Kernel_Record);
+     (Kernel : access GPS.CLI_Kernels.CLI_Kernel_Record'Class);
    --  Free allocated memory of variable related to the kernel context.
 
    procedure Parse_Command_Line
      (Command_Line : Command_Line_Configuration;
-      Kernel       : access GPS.CLI_Kernels.CLI_Kernel_Record);
+      Kernel       : access GPS.CLI_Kernels.CLI_Kernel_Record'Class);
    --  Handles -X switch for scenario variable.
    --  Change directly the environment of the Kernel passed as a parameter,
    --  with scenario variable retrieve from command line.
@@ -65,7 +68,7 @@ package GPS.CLI_Utils is
    --  Return: Wheter the file exists or not.
 
    function Execute_Batch
-     (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record;
+     (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record'Class;
       Lang_Name   : String;
       Script_Name : String) return Boolean;
    --  Execute a batch Script_Name in Lang_Name language.
@@ -76,7 +79,7 @@ package GPS.CLI_Utils is
    --          is unknown. True otherwises
 
    procedure Parse_And_Execute_Script
-     (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record;
+     (Kernel      : access GPS.CLI_Kernels.CLI_Kernel_Record'Class;
       Script_Name : String;
       Script      : out Scripting_Language);
    --  Take Script_Name in form 'lang:script.py', split it to parts and
