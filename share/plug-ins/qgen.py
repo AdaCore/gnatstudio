@@ -888,7 +888,10 @@ else:
                 v = GPS.MDI.input_dialog(
                     "Value for block %s" % it.id,
                     "value=%s" % current)
-                debug.send("set variable %s := %s" % (ss, v[0]), output=False)
+
+                # ??? If we are in Ada mode, should use ":=". Currently, our
+                # customers mostly use C, so let's use that.
+                debug.send("set variable %s = %s" % (ss, v[0]), output=False)
 
             QGEN_Module.__show_diagram_and_signal_values(debug)
 
