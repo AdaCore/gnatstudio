@@ -1191,6 +1191,10 @@ package body Src_Editor_Box is
       if not Get_Writable (Editor.Source_Buffer)
         and then Filename = GNATCOLL.VFS.No_File
       then
+         Editor.Kernel.Insert
+           (-"Could not open file for writing: "
+            & File.Display_Full_Name,
+            Mode => GPS.Kernel.Error);
          Success := False;
          return;
       end if;
