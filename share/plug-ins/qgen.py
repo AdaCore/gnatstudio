@@ -707,7 +707,25 @@ else:
                         "print %s" % (ss, ),
                         output=False,
                         show_in_console=False)
-                    item.text = value.split('=')[-1].strip()
+                    numerical_value = value.split('=')[-1].strip()
+
+                    # Check whether the value is a float or is an integer
+                    # with more than 6 digits then display it
+                    # in scientific notation.
+                    # Otherwise no formatting is done on the value
+
+                    # ??? Structures are going to take a lot of space
+                    # to display in general, they need another formatting
+                    # step.
+                    try:
+                        if len(numerical_value) < 7 \
+                                and float(numerical_value) \
+                                == int(numerical_value):
+                            item.text = numerical_value
+                        else:
+                            item.text = '%.2e' % float(numerical_value)
+                    except ValueError:
+                        item.text = numerical_value
 
         @staticmethod
         def forall_auto_items(diagrams):
