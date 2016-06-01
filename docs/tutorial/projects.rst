@@ -47,10 +47,10 @@ In particular, you can easily set the default file
 extensions (e.g by using one of the predefined schemes) and you
 can also specify exceptions that use non standard file names.
 
-Click on `Forward`: we're now in the switch selector.
-Select `Recompile if switches changed`.
+Click on `Forward`: we're now in the switch selector. Go on the `Builder`
+switch page and select `Recompile if switches changed`.
 
-Click on `Ada` page.
+Select the `Ada` switch page.
 
 Select `Full errors` and `Overflow checking`.  The boxes and the command line
 (the text entry at the bottom of the page) are fully synchronized, e.g if you
@@ -160,4 +160,3 @@ Sdc recursively`.
 
 In the browser, you can move the project items, and select them to highlight
 the dependencies.
-

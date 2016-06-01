@@ -14,6 +14,8 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Glib.Object;               use Glib.Object;
 with Glib;                      use Glib;
@@ -30,10 +32,10 @@ with Creation_Wizard.Simple;    use Creation_Wizard.Simple;
 with Creation_Wizard.GNATname;  use Creation_Wizard.GNATname;
 with Creation_Wizard;           use Creation_Wizard;
 with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel;                use GPS.Kernel;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+
 with Wizards;                   use Wizards;
 
 package body Creation_Wizard.Selector is
@@ -142,6 +144,11 @@ package body Creation_Wizard.Selector is
       P    : Wizard_Selector_Page_Access;
       Name : Virtual_File;
    begin
+      --  Run the Project_Editor_Hook so that XML-defined tool switches
+      --  get registered before creating a new project, allowing the user to
+      --  modify them directly when creating the project.
+      Project_Editor_Hook.Run (Kernel);
+
       Gtk_New (Wiz, Kernel, -"Create New Project");
       P := new Wizard_Selector_Page;
       Add_Page
