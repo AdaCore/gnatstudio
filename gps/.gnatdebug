@@ -140,7 +140,10 @@ GPS.KERNEL.MODULES.UI=yes
 
 SQL.SQLITE.GNADE=yes
 
+MODULE.GNAThub=yes
+
 --  Disable traces for mdl2json (QGen). They interfer with sending the
 --  JSON on stdout
 PREFS=no
 FRONTENDS_Q=no
+
