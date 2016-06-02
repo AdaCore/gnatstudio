@@ -332,7 +332,7 @@ package body Interactive_Consoles is
      (Console : access Interactive_Virtual_Console_Record; Txt : String) is
    begin
       Insert (Console.Console, Txt,
-              Add_LF      => True,
+              Add_LF      => False,
               Highlight   => True,
               Show_Prompt => False);
 

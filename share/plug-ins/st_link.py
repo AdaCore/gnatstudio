@@ -1,6 +1,6 @@
 """
 This plugin creates buttons on the toolbar to conveniently
-flash and debug programs for the STM32F4* boards.
+flash and debug programs for the STM32F* boards.
 
 The utility program st-util must be present on the PATH for
 the buttons to be made visible. This utility is included in
@@ -17,6 +17,7 @@ plugin is not concerned with that aspect.
 import GPS
 from modules import Module
 from target_connector import TargetConnector
+from gps_utils.internal.dialogs import *
 import workflows
 import workflows.promises as promises
 from gps_utils.console_process import Console_Process
@@ -61,11 +62,65 @@ class BoardLoader(Module):
     # and the associated promises
     __connection = None
 
+    # The debugger used to debug on the board
+    __debugger = None
+
     def __error_exit(self, msg=""):
-        """ Emit an error and reset the workflows """
-        GPS.Console("Messages").write(
-            msg + " [workflow stopped]",
-            mode="error")
+        """ Emit an error, reset the workflows and close the debugger if any"""
+        GPS.Console("Messages").write(msg + " [workflow stopped]\n",
+                                      mode="error")
+        self.__reset_all()
+
+        if self.__debugger:
+            self.__debugger.close()
+            self.__debugger = None
+
+    @workflows.run_as_workflow
+    def __open_remote_project_properties(self, text):
+        """
+        Open the Project Properties editor and go to the page
+        defining the remote settings used to debug on a board.
+        """
+
+        editor = Project_Properties_Editor()
+        yield editor.open_and_yield(wait_scan=False)
+        yield editor.select("Build/Cross-Platform")
+
+    def __verify_connection_settings(self, debugger):
+        """
+        Verify that the remote debug settings have correctly been set for
+        the given debugger in order to debug on board.
+
+        Return a error message if errors have been found or an empty string
+        if the settings are correctly set.
+        """
+
+        console = GPS.Console("Messages")
+
+        remote_target = debugger.remote_target
+        remote_protocol = debugger.remote_protocol
+
+        if not remote_target:
+            console.create_link("IDE'Protocol_Host",
+                                self.__open_remote_project_properties)
+            console.write(("Can't debug on board: no remote target specified. "
+                           "Please set the "),
+                          mode="error")
+            console.write_with_links("IDE'Protocol_Host")
+            console.write(" project attribute\n",
+                          mode="error")
+
+        if not remote_protocol:
+            console.create_link("IDE'Communication_Protocol",
+                                self.__open_remote_project_properties)
+            console.write(("Can't debug on board: no remote protocol specified"
+                           ". Please set the "),
+                          mode="error")
+            console.write_with_links("IDE'Communication_Protocol")
+            console.write(" project attribute\n",
+                          mode="error")
+
+        return remote_target and remote_protocol
 
     def __reset_all(self, manager_delete=True, connection_delete=True):
         """ Reset the workflows """
@@ -169,6 +224,7 @@ class BoardLoader(Module):
         if self.__connection is not None:
             self.__reset_all()
 
+        # Check if we have a main to debug
         if main_name is None:
             self.__error_exit(msg="Main not specified")
             return
@@ -193,13 +249,23 @@ class BoardLoader(Module):
             120000)
 
         if not r1:
-            self.__error_exit(msg="Could not connect to the device.")
+            self.__error_exit(msg="Could not connect to the board.")
             return
 
         # Spawn the debugger on the executable and load it
         msg_is("Launching debugger.")
         exe = GPS.File(main_name).executable_path
         debugger_promise = promises.DebuggerWrapper(exe)
+        self.__debugger = debugger_promise.get()
+
+        # Check that the debugger settings are correctly set to connect
+        # to the device
+        success = self.__verify_connection_settings(debugger_promise.get())
+        if not success:
+            self.__error_exit(msg="Could not connect to the board.")
+            return
+
+        # Load the executable
         r2 = yield debugger_promise.wait_and_send(
             cmd="load",
             block=True)

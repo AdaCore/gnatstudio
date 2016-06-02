@@ -211,6 +211,16 @@ package body GVD.Scripts is
          Data.Set_Return_Value
            (Create_File (Data.Get_Script, Get_Executable (Process.Debugger)));
 
+      elsif Command = "remote_target" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Data.Set_Return_Value (Process.Debugger.Get_Remote_Target);
+
+      elsif Command = "remote_protocol" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Data.Set_Return_Value (Process.Debugger.Get_Remote_Protocol);
+
       elsif Command = "get_num" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
@@ -310,6 +320,14 @@ package body GVD.Scripts is
       Kernel.Scripts.Register_Command
         ("get_executable",
          Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Property
+        ("remote_target",
+         Getter       => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Property
+        ("remote_protocol",
+         Getter       => Shell_Handler'Access,
          Class        => Class);
       Kernel.Scripts.Register_Command
         ("get_num",

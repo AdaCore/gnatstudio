@@ -2187,6 +2187,22 @@ class Debugger(object):
     The current line. See description of `GPS.Debugger.current_file`.
     """
 
+    remote_target = None
+    """
+    A string set to the currently used debugger's remote target.
+    This remote target is either retrieved from the IDE'Protocol_Host
+    project atttribute or from a manually sent
+    'target [remote_protocol] [remote_target]' command.
+    """
+
+    remote_protocol = None
+    """
+    A string set to the debugger's currently used remote protocol. This remote
+    target is either retrieved from the IDE'Communication_Protocol project
+    atttribute or from a manually sent
+    'target [remote_protocol] [remote_target]' command.
+    """
+
     def __init__(self):
         """
         It is an error to create a :class:`Debugger` instance

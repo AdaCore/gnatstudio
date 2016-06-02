@@ -243,6 +243,18 @@ def driver(gen_inst):
     resume()
 
 
+def run_as_workflow(workflow):
+    """
+    Decorator used to run a function as a worfklow.
+
+    :param workflow: the function to be run as a workflow.
+    """
+    def internal_run_as_wf(*args, **kwargs):
+        return driver(workflow(*args, **kwargs))
+
+    return internal_run_as_wf
+
+
 def create_target_from_workflow(target_name, workflow_name, workflow,
                                 icon_name="gps-print-symbolic",
                                 in_toolbar=True):

@@ -441,6 +441,14 @@ Classes
    .. autoattribute:: GPS.Debugger.current_line
 
 
+
+   .. autoattribute:: GPS.Debugger.remote_protocol
+
+
+
+   .. autoattribute:: GPS.Debugger.remote_target
+
+
    .. automethod:: GPS.Debugger.__init__
 
    .. automethod:: GPS.Debugger.close
