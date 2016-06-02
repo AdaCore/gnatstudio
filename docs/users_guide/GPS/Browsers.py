@@ -364,6 +364,16 @@ class Item(object):
         semantic information, rather than just display purposes.
         """
 
+    def show(self):
+        """
+        Show an item that has been hidden.
+        """
+
+    def hide(self):
+        """
+        Temporarily hide the item, until `GPS.Browsers.Item.show` is called.
+        """
+
 
 class RectItem(Item):
     """

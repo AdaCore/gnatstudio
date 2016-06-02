@@ -632,7 +632,7 @@ class Mapping_File(object):
         :param GPS.File filename:
         """
         a = self._files.get(file.path, [])
-        return a[line]
+        return a.get(line, None)
 
     def get_mdl_file(self, file):
         """
@@ -707,7 +707,7 @@ else:
                         "print %s" % (ss, ),
                         output=False,
                         show_in_console=False)
-                    numerical_value = value.split('=')[-1].strip()
+                    value = value.split('=')[-1].strip()
 
                     # Check whether the value is a float or is an integer
                     # with more than 6 digits then display it
@@ -718,14 +718,17 @@ else:
                     # to display in general, they need another formatting
                     # step.
                     try:
-                        if len(numerical_value) < 7 \
-                                and float(numerical_value) \
-                                == int(numerical_value):
-                            item.text = numerical_value
-                        else:
-                            item.text = '%.2e' % float(numerical_value)
+                        if (len(value) >= 7 or
+                           float(value) != int(value)):
+                            value = '%.2e' % float(value)
                     except ValueError:
-                        item.text = numerical_value
+                        pass
+
+                    if value:
+                        parent.show()
+                        item.text = value
+                    else:
+                        parent.hide()
 
         @staticmethod
         def forall_auto_items(diagrams):

@@ -1136,6 +1136,14 @@ package body Browsers.Scripts is
          Container_Item (Item_Proxies.From_Instance (Inst)).Set_Child_Layout
            (Child_Layout_Strategy'Val
               (Nth_Arg (Data, 2, Child_Layout_Strategy'Pos (Vertical_Stack))));
+
+      elsif Command = "hide" then
+         Inst := Nth_Arg (Data, 1);
+         Container_Item (Item_Proxies.From_Instance (Inst)).Hide;
+
+      elsif Command = "show" then
+         Inst := Nth_Arg (Data, 1);
+         Container_Item (Item_Proxies.From_Instance (Inst)).Show;
       end if;
    end Item_Handler;
 
@@ -1882,6 +1890,14 @@ package body Browsers.Scripts is
                      PA_Margin   => Param ("margin", Optional => True),
                      PA_Float    => Param ("float",  Optional => True),
                      PA_Overflow => Param ("overflow", Optional => True)),
+         Class   => Module.Item_Class,
+         Handler => Item_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("show",
+         Class   => Module.Item_Class,
+         Handler => Item_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("hide",
          Class   => Module.Item_Class,
          Handler => Item_Handler'Access);
 

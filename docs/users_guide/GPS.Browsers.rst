@@ -152,6 +152,8 @@ Classes
 
    .. automethod:: GPS.Browsers.Item.get_parent_with_id
 
+   .. automethod:: GPS.Browsers.Item.hide
+
    .. automethod:: GPS.Browsers.Item.recurse
 
    .. automethod:: GPS.Browsers.Item.set_child_layout
@@ -163,6 +165,8 @@ Classes
    .. automethod:: GPS.Browsers.Item.set_size
 
    .. automethod:: GPS.Browsers.Item.set_width_range
+
+   .. automethod:: GPS.Browsers.Item.show
 
 :class:`GPS.Browsers.Link`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
