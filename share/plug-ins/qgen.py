@@ -397,8 +397,9 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
     file = None   # The associated .mdl file
     diags = None  # The list of diagrams read from this file
 
-    def __init(self):
-        self.__events = {}
+    def __init__(self):
+        # The set of callbacks to call when a new diagram is displayed
+        self.__on_diagram_loaded = set()
         super(QGEN_Diagram_Viewer, self).__init__()
 
     @staticmethod
@@ -520,7 +521,21 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 return
 
         if name == 'showdiagram':
-            self.diagram = self.diags.get(args[0])
+            self.set_diagram(self.diags.get(args[0]))
+
+    def on_diagram_loaded(self, cb):
+        """
+        Adds a callback to be exectued when a new diagram is to be displayed
+        :param cb: The callback to be added to the list, taking a diagram as
+           a single parameter
+        """
+
+        self.__on_diagram_loaded.add(cb)
+
+    def set_diagram(self, diag):
+        self.diagram = diag
+        for cb in self.__on_diagram_loaded:
+            cb(self.diagram)
 
     # @overriding
     def on_item_double_clicked(self, topitem, item, x, y, *args):
@@ -747,6 +762,22 @@ else:
                                it.data.get('auto') == "true":
                                 yield (d, item, it)
 
+        # This callback is called when a new subsystem or diagram is displayed
+        # to recompute all the signals values that can be displayed
+        @staticmethod
+        def __on_diagram_changed(diag):
+            debugger = GPS.Debugger.get()
+            if not debugger:
+                return
+
+            # Compute the value for all needed items
+            for diag, toplevel, it in QGEN_Module.forall_auto_items([diag]):
+                QGEN_Module.compute_item_values(
+                    debugger, diag, toplevel=toplevel, item=it)
+
+            # Update the display
+            diag.changed()
+
         @staticmethod
         @gps_utils.hook('debugger_location_changed')
         def __on_debugger_location_changed(debugger):
@@ -772,6 +803,8 @@ else:
 
                 scroll_to = None
 
+                viewer.on_diagram_loaded(QGEN_Module.__on_diagram_changed)
+
                 # Unselect items from the previous step
                 viewer.diags.clear_selection()
 
@@ -781,19 +814,10 @@ else:
                     info = viewer.diags.get_diagram_for_item(block)
                     if info:
                         diagram, item = info
-                        viewer.diagram = diagram  # Change visible diagram
+                        viewer.set_diagram(diagram)  # Change visible diagram
                         diags.add(diagram)
                         diagram.select(item)
                         scroll_to = item
-
-                # Compute the value for all needed items
-                for diag, toplevel, it in QGEN_Module.forall_auto_items(diags):
-                    QGEN_Module.compute_item_values(
-                        debugger, diag, toplevel=toplevel, item=it)
-
-                # Update the display
-                for d in diags:
-                    d.changed()
 
                 if scroll_to:
                     viewer.scroll_into_view(scroll_to)
