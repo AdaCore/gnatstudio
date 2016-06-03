@@ -743,7 +743,7 @@ KP-62-P301-024 GPS: GPS.Hook.remove not working
 
   Problem:    The GPS.Hook.remove method does not remove the hook callback
               given in argument from the list of callbacks to call when
-              the given hoos is run.
+              the given hook is run.
 
   Status:     This was fixed in 6.2.2 on 2016-03-04
 
