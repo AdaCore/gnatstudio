@@ -196,6 +196,13 @@ def on_edit(hook_name, file_name):
     in alias expansion is highlighted (via the aliases overlay)
     """
     editor = EditorBuffer.get(file_name)
+
+    # This hook is global: it could happen that we are calling it on another
+    # editor than the one where the alias expansion is occurring: simply
+    # return in this case.
+    if not is_in_alias_expansion(editor):
+        return
+
     if editor.current_alias_mark_index > 0:
         marks_list = editor.alias_marks[
             editor.current_alias_mark_index - 1
@@ -212,6 +219,13 @@ def on_move(hook_name, file_name, line, column):
     when the cursor gets out of the zone.
     """
     editor = EditorBuffer.get(file_name)
+
+    # This hook is global: it could happen that we are calling it on another
+    # editor than the one where the alias expansion is occurring: simply
+    # return in this case.
+    if not is_in_alias_expansion(editor):
+        return
+
     index = editor.current_alias_mark_index - 1
     start_mark, end_mark = editor.alias_marks[index][0]
     start_loc = start_mark.location()

@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P603-024 GPS: Python exceptions when using aliases and switching editors
+
+  Problem:    If you switch editors while an alias expansion is ongoing,
+              Python exceptions will appear in the console when typing or
+              moving the cursor in the other editor.
+
+  Status:     This was fixed in 17.0 on 2016-06-03
+
+  Workaround: Press ESC to terminate alias expansion before switching editors.
+
 KP-62-P513-042 GPS: With clauses not shown properly in outline
 
   Problem:    When the "show with clauses" option was activated, instead of
