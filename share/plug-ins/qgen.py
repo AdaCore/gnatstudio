@@ -533,6 +533,11 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         self.__on_diagram_loaded.add(cb)
 
     def set_diagram(self, diag):
+        """
+        Sets the diagram that has to be displayed and calls
+        the callbacks that have to be executed when the diagram changes
+        :param diag: The new diagram to display
+        """
         self.diagram = diag
         for cb in self.__on_diagram_loaded:
             cb(self.diagram)
