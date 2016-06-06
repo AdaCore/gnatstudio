@@ -970,9 +970,16 @@ package body Builder_Facility_Module is
       N       : Node_Ptr;
       Success : Boolean;
    begin
+      --  Execute the switch filters, with Before_Save = True so that we don't
+      --- consider that a Build Target has changed if it has only changed
+      --  because of a filter.
       Execute_Switch_Filters_For_All_Targets (Before_Save => True);
+
       N := Save_All_Targets_To_XML (Builder_Module_ID.Registry);
       Print (N, Get_Targets_File, Success);
+
+      --  Execute the switch filters again, with Before_Save = False this time
+      Execute_Switch_Filters_For_All_Targets (Before_Save => False);
 
       if not Success then
          Trace (Me, "Error when saving targets file");
