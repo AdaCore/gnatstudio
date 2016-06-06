@@ -1164,7 +1164,6 @@ package body GPS.Kernel.Scripts is
    procedure Register_Default_Script_Commands
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Console_Class_Name : constant String := "Console";
       Console_Class      : constant Class_Type := New_Class
         (Kernel.Scripts, Console_Class_Name, Base => Get_GUI_Class (Kernel));
       History_Class : constant Class_Type :=

@@ -457,6 +457,8 @@ Classes
 
    .. automethod:: GPS.Debugger.get
 
+   .. automethod:: GPS.Debugger.get_console
+
    .. automethod:: GPS.Debugger.get_executable
 
    .. automethod:: GPS.Debugger.get_num

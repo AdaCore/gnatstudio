@@ -19,7 +19,8 @@
 
 with GPS.Debuggers;
 with GVD.Process;
-with GPS.Kernel;      use GPS.Kernel;
+with GPS.Kernel;           use GPS.Kernel;
+with Interactive_Consoles; use Interactive_Consoles;
 
 package GVD.Consoles is
 
@@ -31,6 +32,12 @@ package GVD.Consoles is
    --  If an unattached console exists in the desktop, it is reused.
    --  If none exists, one is created if Create_If_Necessary is true.
    --  Nothing is done when Debugger is already attached to a console.
+
+   function Get_Debugger_Interactive_Console
+     (Process : not null access GPS.Debuggers.Base_Visual_Debugger'Class)
+      return access Interactive_Console_Record'Class;
+   --  Return the interactive console associated with the given debugger.
+   --  If no interactive console is associated with this debugger, return null.
 
    procedure Attach_To_Debuggee_Console
      (Debugger            : access GPS.Debuggers.Base_Visual_Debugger'Class;

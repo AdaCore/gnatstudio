@@ -344,6 +344,13 @@ package Interactive_Consoles is
    ------------------------------
    -- Adapter for GNATCOLL.Scripts --
    ------------------------------
+
+   function Get_Or_Create_Instance
+     (Script  : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Console : access Interactive_Console_Record'Class)
+      return GNATCOLL.Scripts.Class_Instance;
+   --  Get or create an existing instance associated with Console.
+
    --  The following functions can be used to integrate an interactive
    --  console with a GNATCOLL.Scripts.Virtual_Console.
 

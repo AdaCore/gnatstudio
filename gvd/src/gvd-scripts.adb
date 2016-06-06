@@ -20,10 +20,14 @@ with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
+with Gtkada.MDI;              use Gtkada.MDI;
+with Gtk.Widget;              use Gtk.Widget;
+
 with Debugger;                use Debugger;
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
 with GPS.Debuggers;           use GPS.Debuggers;
+with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Intl;                use GPS.Intl;
@@ -31,6 +35,8 @@ with GVD.Preferences;         use GVD.Preferences;
 with GVD.Process;             use GVD.Process;
 with GVD.Types;
 with GVD_Module;              use GVD_Module;
+with Interactive_Consoles;    use Interactive_Consoles;
+with GVD.Consoles;            use GVD.Consoles;
 
 package body GVD.Scripts is
 
@@ -248,6 +254,20 @@ package body GVD.Scripts is
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Data.Set_Return_Value (Process.Editor_Text.Get_Line);
 
+      elsif Command = "get_console" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+
+         declare
+            Console : constant Interactive_Console :=
+                        Get_Debugger_Interactive_Console (Process);
+         begin
+            if Console /= null then
+               Data.Set_Return_Value
+                 (Get_Or_Create_Instance (Data.Get_Script, Console));
+            end if;
+         end;
+
       elsif Command = "spawn" then
          declare
             File_Inst       : constant Class_Instance := Nth_Arg
@@ -339,6 +359,10 @@ package body GVD.Scripts is
          Class        => Class);
       Kernel.Scripts.Register_Command
         ("close",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("get_console",
          Handler      => Shell_Handler'Access,
          Class        => Class);
       Kernel.Scripts.Register_Command

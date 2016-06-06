@@ -52,7 +52,6 @@ with GVD.Process;            use GVD.Process;
 with GVD.Types;              use GVD.Types;
 with GVD_Module;             use GVD_Module;
 with Histories;              use Histories;
-with Interactive_Consoles;   use Interactive_Consoles;
 with Process_Proxies;        use Process_Proxies;
 with String_List_Utils;      use String_List_Utils;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
@@ -191,6 +190,23 @@ package body GVD.Consoles is
 
    procedure On_Grab_Focus (Console : access Gtk_Widget_Record'Class);
    --  Callback for the "grab_focus" signal on the console.
+
+   --------------------------------------
+   -- Get_Debugger_Interactive_Console --
+   --------------------------------------
+
+   function Get_Debugger_Interactive_Console
+     (Process : not null access GPS.Debuggers.Base_Visual_Debugger'Class)
+      return access Interactive_Console_Record'Class
+   is
+      Console : constant Debugger_Console := Get_Debugger_Console (Process);
+   begin
+      if Console /= null then
+         return Console.Console;
+      else
+         return null;
+      end if;
+   end Get_Debugger_Interactive_Console;
 
    --------------------------
    -- Get_Debugger_Console --

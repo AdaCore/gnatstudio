@@ -2351,6 +2351,15 @@ class Debugger(object):
         """
         pass  # implemented in Ada
 
+    def get_console(self):
+        """
+        Returns the :class:`GPS.Console` instance associated with the
+        the given debugger's console.
+
+        :return: An instance of :class:`GPS.Console`
+        """
+        pass  # implemented in Ada
+
     @staticmethod
     def spawn(executable, args='', remote_target='', remote_protocol=''):
         """

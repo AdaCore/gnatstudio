@@ -69,6 +69,7 @@ with GNATCOLL.Iconv;        use GNATCOLL.Iconv;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
 with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
 with GPS.Stock_Icons;       use GPS.Stock_Icons;
 
@@ -466,6 +467,26 @@ package body Interactive_Consoles is
    begin
       return Read (Console.Console, Whole_Line);
    end Read;
+
+   ----------------------------
+   -- Get_Or_Create_Instance --
+   ----------------------------
+
+   function Get_Or_Create_Instance
+     (Script  : access GNATCOLL.Scripts.Scripting_Language_Record'Class;
+      Console : access Interactive_Console_Record'Class)
+         return GNATCOLL.Scripts.Class_Instance
+   is
+      Inst : Class_Instance := Get_Instance (Script, Console);
+   begin
+      if Inst = No_Class_Instance then
+         Inst := New_Instance
+           (Script, New_Class (Get_Kernel (Script), Console_Class_Name));
+         Set_Data (Inst, GObject (Console));
+      end if;
+
+      return Inst;
+   end Get_Or_Create_Instance;
 
    -----------------------------------
    -- Get_Or_Create_Virtual_Console --

@@ -35,6 +35,10 @@ package GPS.Kernel.Scripts is
    --  Name for the GPS.GUI class
 
    GPS_Shell_Name      : constant String := "Shell";
+   --  Name for the GPS.Shell class
+
+   Console_Class_Name : constant String := "Console";
+   --  Name for the GPS.Console class
 
    function Get_Kernel (Data : GNATCOLL.Scripts.Callback_Data'Class)
       return GPS.Kernel.Kernel_Handle;
