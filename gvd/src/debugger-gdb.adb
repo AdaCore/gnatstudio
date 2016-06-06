@@ -1804,6 +1804,9 @@ package body Debugger.Gdb is
          Interrupt (Descriptor.all);
          Set_Interrupted (Proxy);
       end if;
+
+      --  Interrupting the debugger closes any remote connection
+      Debugger.Target_Connected := False;
    end Interrupt;
 
    ------------------
