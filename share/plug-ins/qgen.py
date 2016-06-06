@@ -265,9 +265,7 @@ class CLI(GPS.Process):
 
         promise = Promise()
 
-        # Get switches, but remove the ones that do not apply to mdl2json
-        switches = re.sub(
-            "--full-flattening", "", project_support.get_switches(file))
+        switches = project_support.get_switches(file)
         outdir = project_support.get_output_dir(file)
 
         cmd = ' '.join([CLI.mdl2json, file.path, switches])
@@ -745,10 +743,10 @@ else:
                         pass
 
                     if value:
-                        parent.show()
+                        item.show()
                         item.text = value
                     else:
-                        parent.hide()
+                        item.hide()
 
         @staticmethod
         def forall_auto_items(diagrams):
