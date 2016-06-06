@@ -26,8 +26,8 @@ and select the `struct` directory, then click on `OK` to validate.
 Click on `Forward`: we are now on the `VCS page`. *VCS* stands for *Version
 Control System*.  GPS provides a generic framework for *VCS* which allows it to
 support new systems easily. Systems supported by default are CVS, ClearCase,
-Subversion and GIT. Select `Auto`, which means that GPS will automatically
-detect the version control system used, if any.
+GIT, Mercurial and Subversion. Select `Auto`, which means that GPS will
+automatically detect the version control system used, if any.
 
 Click on `Forward`: this is the `Build` and `Exec` directory
 selection, used to store object, ali files, ...
@@ -142,20 +142,21 @@ Project dependencies
 
 Back in the project view, on the *Sdc* project, select the contextual menu
 `Project->Dependencies`, then on the `Add From File`, then open the *tutorial*
-directory and click on the `projects` subdirectory. Select the file `prj1.gpr`.
-Click on `Apply` to validate the change.
+directory and click on the `projects` subdirectory. Select the file `prj1.gpr`,
+click on `OK`.  Click on `Apply` to validate the change.
 
-You can see the new dependency added in the project view, as a tree of
-projects. In particular, project dependencies are duplicated: if you open the
-`prj1` icon by clicking on the triangle, and then similarly
-open the `prj2` icon, you will notice that the project `prj4` is displayed
-twice: once as a dependency of `prj2`, and once as a dependency of `prj1`.
+You can see the new dependency added in the project view, as a list (or tree,
+if 'Show flat view' is enabled in local configuration menu) of projects. In
+particular, project dependencies are duplicated when tree view is used: if you
+open the `prj1` icon by clicking on the triangle, and then similarly open the
+`prj2` icon, you will notice that the project `prj4` is displayed twice: once
+as a dependency of `prj2`, and once as a dependency of `prj1`.
 
 GPS can also display the graph of dependencies between projects: on *Sdc*
 project, use the contextual menu `Show projects imported by Sdc`: this will
 open a project hierarchy browser.
 
-On the `Sdc.gpr` project, select the contextual menu `Show projects imported by
+On the *Sdc* project, select the contextual menu `Show projects imported by
 Sdc recursively`.
 
 In the browser, you can move the project items, and select them to highlight

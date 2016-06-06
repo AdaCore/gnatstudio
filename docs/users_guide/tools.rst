@@ -638,7 +638,7 @@ Stack Analysis
 .. index:: Stack Analysis
 
 GPS provides an interface to :program:`GNATstack`, the static stack
-analysis tool.  This interface is only availbale if you have the
+analysis tool.  This interface is only available if you have the
 :file:`gnatstack` executable installed and available on your path.  GPS
 computes, loads, and visually displays stack usage information for the
 entire project hierarchy.  You can enter stack usage information for

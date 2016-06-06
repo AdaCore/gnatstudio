@@ -21,8 +21,10 @@ pieces of information can be displayed or removed in the call stack. From this
 contextual menu, add the `Frame Number` info by clicking on it.
 
 Now select the menu `Debug->Run...` and type `input.txt` in the text input
-field. Click on `OK`: the debugger should stop on an exception
-(`Constraint_Error` in the file :file:`stack.adb`, at line 49).
+field. Check that 'Stop at beginning of main subprogram' and 'Use exec dir
+instead of current dir' are not selected. Click on `OK`: the debugger should
+stop on an exception (`Constraint_Error` in the file :file:`stack.adb`, at line
+49).
 
 Go up in the call stack by clicking on the `tokens.process` frame (frame number
 will vary, depending on your GNAT version and platform).
