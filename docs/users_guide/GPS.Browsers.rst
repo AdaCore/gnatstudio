@@ -197,9 +197,13 @@ Classes
 
    .. automethod:: GPS.Browsers.Link.__init__
 
+   .. automethod:: GPS.Browsers.Link.hide
+
    .. automethod:: GPS.Browsers.Link.recurse
 
    .. automethod:: GPS.Browsers.Link.set_waypoints
+
+   .. automethod:: GPS.Browsers.Link.show
 
 :class:`GPS.Browsers.PolylineItem`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

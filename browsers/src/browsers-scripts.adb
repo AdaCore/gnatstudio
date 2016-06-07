@@ -1595,6 +1595,13 @@ package body Browsers.Scripts is
                   Abstract_Item (The_Link), Data.Get_Script));
          end if;
 
+      elsif Command = "hide" then
+         Inst := Nth_Arg (Data, 1);
+         Canvas_Link (Item_Proxies.From_Instance (Inst)).Hide;
+
+      elsif Command = "show" then
+         Inst := Nth_Arg (Data, 1);
+         Canvas_Link (Item_Proxies.From_Instance (Inst)).Show;
       end if;
    end Link_Handler;
 
@@ -1999,6 +2006,14 @@ package body Browsers.Scripts is
         ("toLabel",
          Class   => Link,
          Getter  => Link_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("show",
+         Class   => Link,
+         Handler => Link_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("hide",
+         Class   => Link,
+         Handler => Link_Handler'Access);
 
    end Register_Module;
 

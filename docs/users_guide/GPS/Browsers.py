@@ -645,6 +645,16 @@ class Link(object):
         link from one of its labels.
         """
 
+    def show(self):
+        """
+        Show a link that has been hidden.
+        """
+
+    def hide(self):
+        """
+        Temporarily hide the link, until `GPS.Browsers.Link.show` is called.
+        """
+
 
 class Diagram(object):
     """
