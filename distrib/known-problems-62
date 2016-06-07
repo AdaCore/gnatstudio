@@ -35,6 +35,16 @@ KP-62-P603-024 GPS: Python exceptions when using aliases and switching editors
 
   Workaround: Press ESC to terminate alias expansion before switching editors.
 
+KP-62-P602-052 GPS: focus issues with floating dialogs
+
+  Problem:    When using the keyboard to open floating dialogs (for instance
+              ctrl-f for the Search dialog), giving the focus back to the main
+              window can cause the current MDI window to change.
+
+  Status:     This was fixed in 17.0 on 2016-06-07
+
+  Workaround: None.
+
 KP-62-P513-042 GPS: With clauses not shown properly in outline
 
   Problem:    When the "show with clauses" option was activated, instead of
