@@ -2,10 +2,10 @@
 Epilogue
 ********
 
-This terminates our tour of GPS, the GNAT Programming Studio.
-We hope this tutorial gave you a good overview of the general capabilities
-available with GPS. A non exhaustive list of the features not mentioned in
-this document includes:
+This completes our tour of GPS, the GNAT Programming Studio. We hope
+this tutorial gave you a good overview of the general capabilities of
+GPS. A non-exhaustive list of the features not mentioned in this
+document includes:
 
 * Documentation generation
 * Automatic generation of body files
@@ -17,7 +17,5 @@ this document includes:
 * Coding standard verification
 * Extensive customization through Python
 
-For more information, please look at the *User's Guide* (`gps.html
-<gps.html>`_), and also look at the `Tools` menu which gives access to most of
-these capabilities.
-
+For more information, please see the *User's Guide* (`gps.html <gps.html`_) or
+look at the `Tools` menu, which gives access to most of these capabilities.
