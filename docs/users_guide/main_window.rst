@@ -167,9 +167,9 @@ Browsers provide the following additional capabilities:
 
 * Grid
 
-  By default, GPS displays a grid (small dots) on the canvas.  Use the
-  local settings menu to hide the grid (uncheck :guilabel:`Draw grid`) or
-  to force items to align on the grid (:guilabel:`Align on grid`).
+  By default, GPS doesn't display a grid on the canvas. Use the local settings
+  menu to show the grid (uncheck :guilabel:`Draw grid`) or to force items to
+  align on the grid (:guilabel:`Align on grid`).
 
 Icons for source language entities
 __________________________________
@@ -277,7 +277,7 @@ dialog, giving you the following choices:
   look for a project called :file:`default.gpr` in the current directory
   and load it if found. Otherwise, it copies the default project
   :file:`<prefix>/share/gps/default.gpr` into the current directory and
-  loads it.  GPS removs this temporary copy when exiting or loading another
+  loads it. GPS removes this temporary copy when exiting or loading another
   project if you have not modified the copy.
 
   The default project contains all the Ada source files from the specified
@@ -991,8 +991,8 @@ Change the current value by clicking on it and selecting the new value
 among the ones that pop up.
 
 Across sessions, GPS will remember the values you set for scenario variables.
-On startup, the initial values for the scenario variables comes, in
-decreasing order of priority:
+On startup, the initial values of the scenario variables come, in decreasing
+order of priority:
 
 * from the :file:`-X` command line arguments;
 * from existing environment variables;
