@@ -858,17 +858,8 @@ Emitted when a range of lines becomes visible on the screen.'''),
 
     Hook('source_lines_unfolded', 'two_lines_hooks'),
 
-    Hook('task_changed', 'task_hooks', descr='''
-Emitted when a background task's status is changed (such as making
-progress or paused). For efficiency, GPS will not necessarily emit
-this hook for each progress made by the task when this progress is
-frequent.'''),
-
-    Hook('task_started', 'task_hooks', descr='''
+    Hook('task_started', 'simple_hooks', descr='''
 Emitted when a new background task is started'''),
-
-    Hook('task_terminated', 'task_hooks', descr='''
-Emitted when a background task is terminated'''),
 
     Hook('variable_changed', 'simple_hooks', descr='''
 Emitted when one of the scenario variables has been renamed, removed or

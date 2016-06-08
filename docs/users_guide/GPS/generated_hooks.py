@@ -930,31 +930,12 @@ class Predefined_Hooks:
       :param str name:
         """
 
-    # task_changed = 'task_changed'
-    def task_changed(queue_id):
-        """
-      Emitted when a background task's status is changed (such as making
-      progress or paused). For efficiency, GPS will not necessarily emit
-      this hook for each progress made by the task when this progress is
-      frequent.
-
-      :param GPS.Task queue_id:
-        """
-
     # task_started = 'task_started'
-    def task_started(queue_id):
+    def task_started(name):
         """
       Emitted when a new background task is started
 
-      :param GPS.Task queue_id:
-        """
-
-    # task_terminated = 'task_terminated'
-    def task_terminated(queue_id):
-        """
-      Emitted when a background task is terminated
-
-      :param GPS.Task queue_id:
+      :param str name:
         """
 
     # variable_changed = 'variable_changed'

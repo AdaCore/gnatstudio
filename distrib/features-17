@@ -127,6 +127,10 @@ NF-17-P314-001 GPS: view the tasks directly from the toolbar (2016-05-12)
   allows viewing and interrupting tasks directly from the toolbar, without
   the need to have the Task Manager view present in the MDI.
 
+  For Python plugins: the hooks 'task_changed' and 'task_removed' have
+  been removed as part of this: use GPS.Task.list() periodically to get
+  the list of tasks.
+
 NF-17-P310-018 GPS: Support for arm-sysgo-pikeos (2016-04-04)
 
   GPS now supports the arm-sysgo-pikeos toolchain.

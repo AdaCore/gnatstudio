@@ -52,7 +52,7 @@ class HUD_Widget():
         vbox.pack_start(label_box, True, True, 0)
         vbox.pack_start(self.progress_bar, True, False, 0)
         self.hbox.pack_start(self.button, False, True, 0)
-        self.refresh_timeout = GLib.timeout_add(300, self.refresh)
+        self.refresh_timeout = None
 
         self.hbox.connect("destroy", self.__destroy)
 
@@ -68,9 +68,13 @@ class HUD_Widget():
         GPS.Hook("preferences_changed").add(self.__on_preferences_changed)
         self.__on_preferences_changed(None)
 
+        self.start_monitoring()
+
     def __destroy(self, widget):
         """ Callback on destroy """
-        GLib.source_remove(self.refresh_timeout)
+        if self.refresh_timeout is not None:
+            GLib.source_remove(self.refresh_timeout)
+            self.refresh_timeout = None
         GPS.Hook("preferences_changed").remove(self.__on_preferences_changed)
         self.window.destroy()
 
@@ -122,6 +126,11 @@ class HUD_Widget():
             self.progress_bar.hide()
             self.button.hide()
             self.__hide_auxiliary_window()
+
+            # Stop monitoring if there are no tasks left
+            self.refresh_timeout = None
+            return False
+
         else:
             self.progress_bar.show_all()
             self.button.show_all()
@@ -142,6 +151,11 @@ class HUD_Widget():
                 self.progress_label.set_text("")
 
         return True
+
+    def start_monitoring(self):
+        """ Start the background loop which refreshes the HUD """
+        if not self.refresh_timeout:
+            self.refresh_timeout = GLib.timeout_add(300, self.refresh)
 
     def __on_preferences_changed(self, pref):
         font_string_pref = GPS.Preference("General-Small-Font")
@@ -195,12 +209,14 @@ class Task_Manager_Widget():
         # Connect to a click on the tree view
         self.view.connect("button_press_event", self.__on_click)
 
-        self.timeout = GLib.timeout_add(300, self.refresh)
+        self.timeout = None
 
         self.box.connect("destroy", self.__destroy)
 
         # Initial fill: we need to do this, since the widget will not get
         # notifications for tasks that have started before it is created
+
+        self.start_monitoring()
 
         for t in GPS.Task.list():
             self.__task_changed(t)
@@ -231,7 +247,9 @@ class Task_Manager_Widget():
         # First refresh the status of all tasks
 
         task_ids = []
-        for t in GPS.Task.list():
+        tasks = GPS.Task.list()
+
+        for t in tasks:
             self.__task_changed(t)
             task_ids.append(str(id(t)))
 
@@ -247,7 +265,17 @@ class Task_Manager_Widget():
             else:
                 iter = self.store.iter_next(iter)
 
+        # Stop monitoring if there are no tasks left
+        if not tasks:
+            self.timeout = None
+            return False
+
         return True
+
+    def start_monitoring(self):
+        """ Start the background loop which refreshes the HUD """
+        if not self.timeout:
+            self.timeout = GLib.timeout_add(300, self.refresh)
 
     def __task_from_row(self, path):
         """ Return the GPS.Task corresponding to the row at path.
@@ -318,7 +346,9 @@ class Task_Manager(Module):
     view_title = "Task Manager"
 
     def __init__(self):
-        self.widget = None
+        self.widget = None  # The task manager view, if any
+        self.HUD = None  # The toolbar HUD widget, if any
+
         GPS.Hook("before_exit_action_hook").add(self.on_exit)
 
     def on_exit(self, hook):
@@ -367,9 +397,17 @@ class Task_Manager(Module):
             name="open Task Manager")
 
         # Create a HUD widget and add it to the toolbar
-        HUD = HUD_Widget().hbox
-        HUD.show_all()
-        pygps.get_widget_by_name("toolbar-box").pack_end(HUD, False, False, 3)
+        self.HUD = HUD_Widget()
+        self.HUD.hbox.show_all()
+        pygps.get_widget_by_name("toolbar-box").pack_end(
+            self.HUD.hbox, False, False, 3
+        )
+
+    def task_started(self):
+        if self.HUD is not None:
+            self.HUD.start_monitoring()
+        if self.widget is not None:
+            self.widget.start_monitoring()
 
     def create_view(self):
         self.widget = Task_Manager_Widget()

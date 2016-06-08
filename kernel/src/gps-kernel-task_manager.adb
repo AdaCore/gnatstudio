@@ -20,6 +20,8 @@ with Gtk.Widget;                use Gtk.Widget;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Task_Manager.Shell;        use Task_Manager.Shell;
 
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+
 package body GPS.Kernel.Task_Manager is
    Me : constant Trace_Handle := Create ("Tasks");
 
@@ -91,6 +93,7 @@ package body GPS.Kernel.Task_Manager is
       Wrapper : constant Scheduled_Command_Access :=
                   Create_Wrapper (Command);
    begin
+      Task_Started_Hook.Run (Kernel);
       Add_Command
         (Manager, Wrapper,
          Active            => Active,

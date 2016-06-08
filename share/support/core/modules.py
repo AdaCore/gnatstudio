@@ -134,9 +134,7 @@ class Module(object):
         "file_edited",
         "project_changed",   # not called for the initial project
         "compilation_finished",
-        "task_started",
-        "task_changed",
-        "task_terminated")
+        "task_started")
     # As a special case, if you class has a subprogram with a name of any
     # of the hooks below, that function will automatically be connected to
     # the hook (and disconnected when the module is teared down.
