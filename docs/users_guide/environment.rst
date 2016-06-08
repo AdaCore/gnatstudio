@@ -477,7 +477,7 @@ installing GPS.
   .. index:: Unix
   .. index:: Windows
 
-  and the Task Manager under Windows. This will terminate your debugging
+  and the Tasks view under Windows. This will terminate your debugging
   session and will unblock GPS.
 
 *My Ada program fails during elaboration. How can I debug it?*

@@ -19,7 +19,7 @@ keys are recognized:
          remembered across sessions
   - "a": Accept this word during this session. This setting will be
          remembered until you either kill the aspell process in the
-         task manager, or exit GPS
+         Tasks view, or exit GPS
   - "r": Replace current word with typed-in value. The replacement
          is rechecked after insertion
   - "space": Ignore this word, and go to the next word

@@ -72,15 +72,15 @@ Tip: Disable indentation temporarily
 To disable casing and indentation on the next key (e.g. Enter key), you
 can use the control-q key and then press e.g. Enter.
 
-Tip: Task Manager
+Tip: Tasks View
 Img: tip_task_manager.png
 
 When a task is on going in background (e.g. build, search), GPS displays
 a progress bar summarizing the current state of the running task(s).
 To get more details, you can double-click on the progress bar, which will
-open a <i>Task Manager</i> where you can see each separate task, suspend
+open a <i>Tasks</i> view where you can see each separate task, suspend
 them, interrupt them, etc.
-You can also display the task manager at any time using the Tools->Views->Task
+You can also display the Tasks view at any time using the Tools->Views->Task
 menu.
 
 Tip: OS shell

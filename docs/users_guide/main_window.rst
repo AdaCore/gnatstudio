@@ -445,14 +445,13 @@ The tool bar provides shortcuts to some common actions:
 .. index:: tool bar; progress bar
 
 When GPS is performing background actions, such as loading cross-reference
-information or all actions involving external processes (including
-compiling), it displays a progress bar in the toolbar showing when the
-current task(s) will be completed.  Click on the button to pop up a window
-showing the details of the tasks. This window is a Task Manager, and can
-therefore be used to pause or interrupt running tasks (see
-:ref:`The_Task_Manager`). This window can be discarded by pressing
-:guilabel:`ESC` or by clicking anywhere else in the GPS. This window also
-disappears when there are no more running tasks.
+information or all actions involving external processes (including compiling),
+it displays a progress bar in the toolbar showing when the current task(s) will
+be completed. Click on the button to pop up a window showing the details of
+the tasks. This window is a Tasks view, and can be used to pause or interrupt
+running tasks (see :ref:`The_Task_Manager`). This window can be discarded by
+pressing :guilabel:`ESC` or by clicking anywhere else in the GPS. This window
+also disappears when there are no more running tasks.
 
 .. index:: omni-search
 .. index:: seealso: search; omni-search
@@ -1483,26 +1482,26 @@ still running, GPS displays a dialog window asking if you want to kill it.
 
 
 .. index:: tasks
-.. index:: windows; task manager
+.. index:: windows; tasks view
 .. _The_Task_Manager:
 
-The :guilabel:`Task Manager`
+The :guilabel:`Tasks` view
 ============================
 
 .. image:: task-manager.png
 
-The :guilabel:`Task Manager` window displays all running GPS
+The :guilabel:`Tasks` view displays all running GPS
 operations currently running in the background, such as builds,
 searches, or VCS commands.
 
-For each task, the :guilabel:`Task Manager` displays its status and current
+For each task, the :guilabel:`Tasks` view displays its status and current
 progress.  Suspend the execution of a task by clicking the small
 :guilabel:`pause` button next to the task. Or kill a task by clicking the
 :guilabel:`interrupt` button.
 
 .. index:: menu; tools --> views --> tasks
 
-Open the :guilabel:`Task Manager` by double clicking on the progress bar in
+Open the :guilabel:`Tasks` view by double clicking on the progress bar in
 the main toolbar or using the :menuselection:`Tools --> Views --> Tasks`
 menu.  You can move it placed anywhere on your desktop.
 

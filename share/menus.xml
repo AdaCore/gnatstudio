@@ -292,7 +292,7 @@
             <menu label="Project"                   action="open project"/>
             <menu label="_Remote"                    action="open remote"/>
             <menu label="Scenario"                  action="open scenario"/>
-            <menu label="Tasks"                     action="open task manager"/>
+            <menu label="Tasks"                     action="open Tasks"/>
             <menu label="VCS _Activities"            action="VCS open activities window"/>
             <menu label="_VCS Explorer"              action="VCS open explorer"/> <!-- duplicate-->
             <menu label="_Windows"                   action="open windows"/>

@@ -459,7 +459,7 @@ following attributes:
 
 * :file:`show-task-manager` (optional, default :command:`false`)
 
-  Whether an entry is in the task manager to show this command. The
+  Whether an entry is in the tasks view to show this command. The
   progress bar indicaton is associated with this entry so if you hide the
   entry, no progress bar is shown. Alternatively, several progress bars may
   displayed for your action if this is enabled, which might be an issue
@@ -559,14 +559,14 @@ The valid children of :file:`<action>` are the following XML tags:
   * :file:`show-task-manager` (optional, default inherited from
     :file:`<action>`)
 
-    Whether an entry is created in the task manager to show this command.
+    Whether an entry is created in the tasks view to show this command.
     The progress bar indicator is associated with this entry, so if you
     hide the entry, no progress is shown. Alternatively, several progress
     bars may be displayed for your action if this is enabled, which might
     be an issue depending on the context.
 
     If set a value for `progress-regexp`, this attribute is automatically
-    set to true so the progress bar is displayed in the task manager.
+    set to true so the progress bar is displayed in the tasks view.
 
   Note for Windows users: like Unix, scripts can be called from a custom
   menu.  To allow that, you need to write your script in a :file:`.bat` or

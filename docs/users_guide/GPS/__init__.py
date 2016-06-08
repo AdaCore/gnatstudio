@@ -1382,7 +1382,7 @@ class Command(object):
     def get(name):
         """
         Returns the list of commands of the name given in the parameter,
-        scheduled or running in the task manager
+        scheduled or running in the tasks view
 
         :param string name: A string
         :rtype: list[:class:`GPS.Command`]
@@ -1405,7 +1405,7 @@ class Command(object):
     @staticmethod
     def list():
         """
-        Returns the list of commands scheduled or running in the task manager.
+        Returns the list of commands scheduled or running in the tasks view.
 
         :rtype: list[:class:`GPS.Command`]
         """
@@ -7414,7 +7414,7 @@ class Process(Command):
 
         ``before_kill`` is a subprogram called just before the process is
         about to be killed. It is called when the user is interrupting the
-        process through the task manager, or when GPS exits. It is not called
+        process through the tasks view, or when GPS exits. It is not called
         when the process terminates normally. When it is called, the process
         is still valid and can be send commands. Its parameters are:
 
@@ -7430,7 +7430,7 @@ class Process(Command):
           :func:`on_match`
 
           If ``task_manager`` is True, the process will be visible in the GPS
-          task manager and can be interrupted or paused by users. Otherwise,
+          tasks view and can be interrupted or paused by users. Otherwise,
           it is running in the background and never visible to the user.  If
           ``progress_regexp`` is specified, the output of the process will be
           scanned for this regexp. The part that matches will not be returned
@@ -7442,7 +7442,7 @@ class Process(Command):
           command to complete. For example, if your process outputs lines like
           "done 2 out of 5", you should create a regular expression that
           matches the 2 and the 5 to guess the current progress. As a result,
-          a progress bar is displayed in the task manager of GPS, and will
+          a progress bar is displayed in the tasks view of GPS, and will
           allow users to monitor commands.
 
           ``remote_server`` represents the server used to spawn the
@@ -8870,7 +8870,7 @@ class Task(object):
     This class provides an interface to the background tasks being handled by
     GPS, such as the build commands, the query of cross references,
     etc. These are the same tasks that are visible through the GPS
-    :guilabel:`Task Manager`.
+    :guilabel:`Tasks` view.
 
     Note that the classes represented with this class cannot be stored.
     """
@@ -8878,7 +8878,7 @@ class Task(object):
     visible = False
     """
     Whether the task has a visible progress bar in GPS's toolbar or the
-    task manager.
+    Tasks view.
     """
 
     def interrupt(self):

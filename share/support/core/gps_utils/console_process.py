@@ -64,7 +64,7 @@ class Console_Process(GPS.Console, GPS.Process):
         management through ANSI commands (like a Unix shell for instance).
 
      :param boolean task_manager: If True, the process will be visible in the
-          GPS task manager and can be interrupted or paused by users.
+          GPS tasks view and can be interrupted or paused by users.
           Otherwise, it is running in the background and never visible to the
           user.
      """

@@ -1,5 +1,5 @@
 """
-This plugin implements the "Task Manager" view.
+This plugin implements the "Tasks" view.
 """
 
 
@@ -39,10 +39,8 @@ class HUD_Widget():
         self.button = Gtk.Button()
         self.button.set_relief(Gtk.ReliefStyle.NONE)
         self.button.connect("clicked", self.__on_button_clicked)
-        config_image = Gtk.Image.new_from_icon_name(
-            "gps-config-menu-symbolic", icon_size_action
-            )
-        self.button.set_image(config_image)
+        arrow = Gtk.Arrow(Gtk.ArrowType.DOWN, Gtk.ShadowType.NONE)
+        self.button.add(arrow)
 
         vbox = Gtk.VBox()
         self.hbox.pack_start(vbox, True, True, 0)
@@ -56,7 +54,7 @@ class HUD_Widget():
 
         self.hbox.connect("destroy", self.__destroy)
 
-        # The window that shows the mini task manager
+        # The window that shows the mini tasks view
         self.window = Gtk.Window()
         self.window.set_decorated(False)
         self.window.connect("focus_out_event", self.__on_window_focus_out)
@@ -79,7 +77,7 @@ class HUD_Widget():
         self.window.destroy()
 
     def __hide_auxiliary_window(self):
-        """ Hide the window that is showing the mini task manager """
+        """ Hide the window that is showing the mini tasks view """
         self.window.hide()
         if self.window.get_child():
             self.window.get_child().destroy()
@@ -94,8 +92,8 @@ class HUD_Widget():
         self.__hide_auxiliary_window()
 
     def __on_button_clicked(self, button):
-        """ Callback for a click on the task manager button """
-        # show a mini task manager
+        """ Callback for a click on the local button """
+        # show a mini tasks view
 
         parent_window = self.button.get_parent_window()
         parent_x, parent_y = parent_window.get_root_coords(0, 0)
@@ -105,7 +103,7 @@ class HUD_Widget():
         self.window.set_default_size(width, height)
         self.window.set_attached_to(self.button)
 
-        m = Task_Manager_Widget()
+        m = Tasks_View_Widget()
         self.window.add(m.box)
 
         self.window.move(
@@ -172,9 +170,9 @@ class HUD_Widget():
             self.progress_label.override_font(font)
 
 
-class Task_Manager_Widget():
+class Tasks_View_Widget():
 
-    """ A widget containing a task manager """
+    """ A widget containing a task view """
 
     def __init__(self):
         self.box = Gtk.VBox()
@@ -340,13 +338,13 @@ class Task_Manager_Widget():
         return None
 
 
-class Task_Manager(Module):
+class Tasks_View(Module):
     """ A GPS module, providing a view that wraps around a task manager """
 
-    view_title = "Task Manager"
+    view_title = "Tasks"
 
     def __init__(self):
-        self.widget = None  # The task manager view, if any
+        self.widget = None  # The tasks view, if any
         self.HUD = None  # The toolbar HUD widget, if any
 
         GPS.Hook("before_exit_action_hook").add(self.on_exit)
@@ -370,7 +368,7 @@ class Task_Manager(Module):
         l.set_alignment(0.0, 0.0)
         d.get_content_area().pack_start(l, False, False, 10)
 
-        t = Task_Manager_Widget()
+        t = Tasks_View_Widget()
         d.get_content_area().pack_start(t.box, True, True, 3)
 
         quit_button = d.add_button("gtk-quit", Gtk.ResponseType.YES)
@@ -390,11 +388,11 @@ class Task_Manager(Module):
         return False
 
     def setup(self):
-        # Add the Task Manager view
+        # Add the Tasks view
         make_interactive(
             self.get_view,
             category="Views",
-            name="open Task Manager")
+            name="open Tasks")
 
         # Create a HUD widget and add it to the toolbar
         self.HUD = HUD_Widget()
@@ -410,5 +408,5 @@ class Task_Manager(Module):
             self.widget.start_monitoring()
 
     def create_view(self):
-        self.widget = Task_Manager_Widget()
+        self.widget = Tasks_View_Widget()
         return self.widget.box

@@ -179,7 +179,7 @@ def safe_exit(expected_commands=[], delay=0, force=1):
         simple_error('Commands still running at end of test: ' +
                      str(unexpected_commands))
 
-    # exit GPS after a timeout, so that the Task Manager has time to remove
+    # exit GPS after a timeout, so that the Tasks view has time to remove
     # the interrupted commands from the list.
     GPS.Timeout(max(delay, 100) + 300 * commands_found,
                 lambda timeout: GPS.exit(force, status=exit_status))

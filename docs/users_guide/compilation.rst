@@ -222,7 +222,7 @@ what is documented here are the default menus (see
 * :menuselection:`Tools --> Views --> Tasks`
 
     The easiest way to interrupt a specific operation, whether it was the
-    last one started or not, is to start the :guilabel:`Task Manager` via
+    last one started or not, is to start the :guilabel:`Tasks` view via
     the :menuselection:`Tools --> Views --> Tasks` menu, which shows one
     line for each running process.  Right-clicking on any of these lines
     allows interrupting that process.
