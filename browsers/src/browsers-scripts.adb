@@ -35,10 +35,8 @@ with GNAT.Strings;              use GNAT.Strings;
 with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Style;              use Gtkada.Style;
-with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Widget;                use Gtk.Widget;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Contexts;
@@ -110,11 +108,6 @@ package body Browsers.Scripts is
    L_To_Label           : constant := 14;
    --  All the parameters for GPS.Browsers.Link
 
-   type Browsers_Scripts_Module is new Module_ID_Record with record
-      View_Class : Class_Type;
-      Item_Class : Class_Type;
-   end record;
-
    type Style_Properties_Record is new Instance_Property_Record with record
       Style : Drawing_Style;
    end record;
@@ -161,6 +154,8 @@ package body Browsers.Scripts is
    procedure Diagram_Handler
      (Data : in out Callback_Data'Class; Command : String);
    procedure View_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   procedure Abstract_Item_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all commands for the python classes in this package.
 
@@ -987,10 +982,8 @@ package body Browsers.Scripts is
       Inst : Class_Instance;
       M    : Margins := No_Margins;
       Item : Container_Item;
-      It   : Abstract_Item;
       X, Y : Gdouble := Gdouble'First;
       AnchorX, AnchorY : Gdouble;
-      Pos  : Gtkada.Style.Point;
    begin
       if Command = Constructor_Method then
          Set_Error_Msg (Data, "GPS.Browsers.Item is an abstract class");
@@ -1011,42 +1004,6 @@ package body Browsers.Scripts is
 
          Container_Item (Item_Proxies.From_Instance (Inst)).Set_Position
            ((X, Y), Anchor_X => AnchorX, Anchor_Y => AnchorY);
-
-      elsif Command = "parent" then
-         Inst := Nth_Arg (Data, 1);
-         It := Item_Proxies.From_Instance (Inst);
-         if It.Parent /= null then
-            Data.Set_Return_Value
-               (Item_Proxies.Get_Or_Create_Instance
-                   (Python_Item_Access (It.Parent).Inst_List.all, It,
-                    Data.Get_Script));
-         end if;
-
-      elsif Command = "x" then
-         Inst := Nth_Arg (Data, 1);
-         Pos := Item_Proxies.From_Instance (Inst).Position;
-         Data.Set_Return_Value (Float (Pos.X));
-
-      elsif Command = "y" then
-         Inst := Nth_Arg (Data, 1);
-         Pos := Item_Proxies.From_Instance (Inst).Position;
-         Data.Set_Return_Value (Float (Pos.Y));
-
-      elsif Command = "width" then
-         Inst := Nth_Arg (Data, 1);
-         It := Item_Proxies.From_Instance (Inst);
-         Data.Set_Return_Value (Float (It.Bounding_Box.Width));
-
-      elsif Command = "height" then
-         Inst := Nth_Arg (Data, 1);
-         It := Item_Proxies.From_Instance (Inst);
-         Pos := It.Position;
-         Data.Set_Return_Value (Float (It.Bounding_Box.Height));
-
-      elsif Command = "is_link" then
-         Inst := Nth_Arg (Data, 1);
-         It := Item_Proxies.From_Instance (Inst);
-         Data.Set_Return_Value (It.Is_Link);
 
       elsif Command = "children" then
          Inst := Nth_Arg (Data, 1);
@@ -1137,15 +1094,96 @@ package body Browsers.Scripts is
            (Child_Layout_Strategy'Val
               (Nth_Arg (Data, 2, Child_Layout_Strategy'Pos (Vertical_Stack))));
 
+      end if;
+   end Item_Handler;
+
+   ---------------------------
+   -- Abstract_Item_Handler --
+   ---------------------------
+
+   procedure Abstract_Item_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Inst : Class_Instance;
+      It   : Abstract_Item;
+      Pos  : Gtkada.Style.Point;
+   begin
+      if Command = "parent" then
+         Inst := Nth_Arg (Data, 1);
+         It := Item_Proxies.From_Instance (Inst);
+         if It.Parent /= null then
+            Data.Set_Return_Value
+              (Item_Proxies.Get_Or_Create_Instance
+                 (Python_Item_Access (It.Parent).Inst_List.all, It,
+                  Data.Get_Script));
+         end if;
+
+      elsif Command = "x" then
+         Inst := Nth_Arg (Data, 1);
+         Pos := Item_Proxies.From_Instance (Inst).Position;
+         Data.Set_Return_Value (Float (Pos.X));
+
+      elsif Command = "y" then
+         Inst := Nth_Arg (Data, 1);
+         Pos := Item_Proxies.From_Instance (Inst).Position;
+         Data.Set_Return_Value (Float (Pos.Y));
+
+      elsif Command = "width" then
+         Inst := Nth_Arg (Data, 1);
+         It := Item_Proxies.From_Instance (Inst);
+         Data.Set_Return_Value (Float (It.Bounding_Box.Width));
+
+      elsif Command = "height" then
+         Inst := Nth_Arg (Data, 1);
+         It := Item_Proxies.From_Instance (Inst);
+         Pos := It.Position;
+         Data.Set_Return_Value (Float (It.Bounding_Box.Height));
+
+      elsif Command = "is_link" then
+         Inst := Nth_Arg (Data, 1);
+         It := Item_Proxies.From_Instance (Inst);
+         Data.Set_Return_Value (It.Is_Link);
+
       elsif Command = "hide" then
          Inst := Nth_Arg (Data, 1);
-         Container_Item (Item_Proxies.From_Instance (Inst)).Hide;
+         Item_Proxies.From_Instance (Inst).Hide;
 
       elsif Command = "show" then
          Inst := Nth_Arg (Data, 1);
-         Container_Item (Item_Proxies.From_Instance (Inst)).Show;
+         Item_Proxies.From_Instance (Inst).Show;
+
+      elsif Command = "style" then
+         declare
+            Kernel  : constant Kernel_Handle := Get_Kernel (Data);
+            BModule : constant Module_Type :=
+              Kernel.Scripts.Lookup_Module ("@.Browsers");
+            Style   : constant Class_Type :=
+              Kernel.Scripts.New_Class ("Link", Module => BModule);
+         begin
+            Inst := Nth_Arg (Data, 1);
+            It := Item_Proxies.From_Instance (Inst);
+            if It.all in Container_Item_Record'Class then
+               if Data.Number_Of_Arguments = 1 then
+                  Inst := Data.Get_Script.New_Instance (Style);
+                  Set_Style (Inst, Container_Item (It).Get_Style);
+                  Data.Set_Return_Value (Inst);
+               else
+                  Container_Item (It).Set_Style (Get_Style (Data.Nth_Arg (2)));
+               end if;
+
+            else
+               if Data.Number_Of_Arguments = 1 then
+                  Inst := Data.Get_Script.New_Instance (Style);
+                  Set_Style (Inst, Canvas_Link (It).Get_Style);
+                  Data.Set_Return_Value (Inst);
+               else
+                  Canvas_Link (It).Set_Style (Get_Style (Data.Nth_Arg (2)));
+               end if;
+            end if;
+         end;
       end if;
-   end Item_Handler;
+
+   end Abstract_Item_Handler;
 
    -------------------
    -- Style_Handler --
@@ -1618,36 +1656,37 @@ package body Browsers.Scripts is
         Kernel.Scripts.New_Class ("Style", Module => BModule);
       Diagram_Class : constant Class_Type :=
         Kernel.Scripts.New_Class ("Diagram", Module => BModule);
-      Rect_Item, Ellipse_Item, Polyline, Text, Hr, Link, Image : Class_Type;
+      Rect_Item, Ellipse_Item, Polyline, Text, Hr, Image : Class_Type;
+      Abstract_Item, View, Link, Item : Class_Type;
       Editable_Text : Class_Type;
-      Module : access Browsers_Scripts_Module'Class;
    begin
-      Module := new Browsers_Scripts_Module;
-      Browser_Views.Register_Module (Kernel, Module_ID (Module));
+      Browser_Views.Register_Module (Kernel);
 
-      Module.View_Class := Kernel.Scripts.New_Class
+      Abstract_Item := Kernel.Scripts.New_Class
+        ("AbstractItem", Module => BModule);
+
+      View := Kernel.Scripts.New_Class
         ("View",
          Module => BModule,
          Base   => Get_GUI_Class (Kernel));
-      Module.Item_Class := Kernel.Scripts.New_Class
-        ("Item", Module => BModule);
-
+      Item := Kernel.Scripts.New_Class
+        ("Item", Module => BModule, Base => Abstract_Item);
       Rect_Item := Kernel.Scripts.New_Class
-        ("RectItem", Module => BModule, Base => Module.Item_Class);
+        ("RectItem", Module => BModule, Base => Item);
       Ellipse_Item := Kernel.Scripts.New_Class
-        ("EllipseItem", Module => BModule, Base => Module.Item_Class);
+        ("EllipseItem", Module => BModule, Base => Item);
       Polyline := Kernel.Scripts.New_Class
-        ("PolylineItem", Module => BModule, Base => Module.Item_Class);
+        ("PolylineItem", Module => BModule, Base => Item);
       Text := Kernel.Scripts.New_Class
-        ("TextItem", Module => BModule, Base => Module.Item_Class);
+        ("TextItem", Module => BModule, Base => Item);
       Editable_Text := Kernel.Scripts.New_Class
         ("EditableTextItem", Module => BModule, Base => Text);
       Image := Kernel.Scripts.New_Class
-        ("ImageItem", Module => BModule, Base => Module.Item_Class);
+        ("ImageItem", Module => BModule, Base => Item);
       Hr := Kernel.Scripts.New_Class
-        ("HrItem", Module => BModule, Base => Module.Item_Class);
+        ("HrItem", Module => BModule, Base => Item);
       Link := Kernel.Scripts.New_Class
-        ("Link", Module => BModule);
+        ("Link", Module => BModule, Base => Abstract_Item);
 
       Register_Command
         (Kernel.Scripts,
@@ -1758,11 +1797,11 @@ package body Browsers.Scripts is
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Class   => Module.View_Class,
+         Class   => View,
          Handler => View_Handler'Access);
       Kernel.Scripts.Register_Command
         ("create",
-         Class   => Module.View_Class,
+         Class   => View,
          Params  => (1 => Param ("diagram"),
                      2 => Param ("title"),
                      3 => Param ("save_desktop", Optional => True),
@@ -1772,64 +1811,102 @@ package body Browsers.Scripts is
       Kernel.Scripts.Register_Command
         ("set_selection_style",
          Params  => (2 => Param ("style")),
-         Class   => Module.View_Class,
+         Class   => View,
          Handler => View_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_background",
          Params  => (Param ("type"),
                      Param ("style", Optional => True),
                      Param ("size", Optional => True)),
-         Class   => Module.View_Class,
+         Class   => View,
          Handler => View_Handler'Access);
       Kernel.Scripts.Register_Command
         ("scale_to_fit",
          Params  => (1 => Param ("max_scale", Optional => True)),
-         Class   => Module.View_Class,
+         Class   => View,
          Handler => View_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_read_only",
-         Class   => Module.View_Class,
+         Class   => View,
          Params  => (1 => Param ("readonly", Optional => True)),
          Handler => View_Handler'Access);
       Kernel.Scripts.Register_Command
         ("scroll_into_view",
-         Class   => Module.View_Class,
+         Class   => View,
          Params  => (1 => Param ("item")),
          Handler => View_Handler'Access);
       Kernel.Scripts.Register_Command
         ("center_on",
-         Class   => Module.View_Class,
+         Class   => View,
          Params  => (2 => Param ("point"),
                      3 => Param ("xpos", Optional => True),
                      4 => Param ("ypos", Optional => True)),
          Handler => View_Handler'Access);
 
       Kernel.Scripts.Register_Command
+        ("show",
+         Class   => Abstract_Item,
+         Handler => Abstract_Item_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("hide",
+         Class   => Abstract_Item,
+         Handler => Abstract_Item_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("style",
+         Class   => Abstract_Item,
+         Getter  => Abstract_Item_Handler'Access,
+         Setter  => Abstract_Item_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("parent",
+         Class  => Abstract_Item,
+         Getter => Abstract_Item_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("x",
+         Class  => Abstract_Item,
+         Getter => Abstract_Item_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("y",
+         Class  => Abstract_Item,
+         Getter => Abstract_Item_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("width",
+         Class  => Abstract_Item,
+         Getter => Abstract_Item_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("height",
+         Class  => Abstract_Item,
+         Getter => Abstract_Item_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("is_link",
+         Class  => Abstract_Item,
+         Getter => Abstract_Item_Handler'Access);
+
+      Kernel.Scripts.Register_Command
         ("export_pdf",
-         Class   => Module.View_Class,
+         Class   => View,
          Params  => (2 => Param ("filename"),
                      3 => Param ("format", Optional => True),
                      4 => Param ("visible_only", Optional => True)),
          Handler => View_Handler'Access);
       Kernel.Scripts.Register_Property
         ("scale",
-         Class => Module.View_Class,
+         Class => View,
          Setter => View_Handler'Access,
          Getter => View_Handler'Access);
       Kernel.Scripts.Register_Property
         ("topleft",
-         Class => Module.View_Class,
+         Class => View,
          Setter => View_Handler'Access,
          Getter => View_Handler'Access);
       Kernel.Scripts.Register_Property
         ("diagram",
-         Class => Module.View_Class,
+         Class => View,
          Setter => View_Handler'Access,
          Getter => View_Handler'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
-         Class   => Module.Item_Class,
+         Class   => Item,
          Handler => Item_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_position",
@@ -1837,58 +1914,34 @@ package body Browsers.Scripts is
                      Param ("y", Optional => True),
                      Param ("anchorx", Optional => True),
                      Param ("anchory", Optional => True)),
-         Class   => Module.Item_Class,
+         Class   => Item,
          Handler => Item_Handler'Access);
       Kernel.Scripts.Register_Property
-        ("parent",
-         Class  => Module.Item_Class,
-         Getter => Item_Handler'Access);
-      Kernel.Scripts.Register_Property
-        ("x",
-         Class  => Module.Item_Class,
-         Getter => Item_Handler'Access);
-      Kernel.Scripts.Register_Property
-        ("y",
-         Class  => Module.Item_Class,
-         Getter => Item_Handler'Access);
-      Kernel.Scripts.Register_Property
-        ("width",
-         Class  => Module.Item_Class,
-         Getter => Item_Handler'Access);
-      Kernel.Scripts.Register_Property
-        ("height",
-         Class  => Module.Item_Class,
-         Getter => Item_Handler'Access);
-      Kernel.Scripts.Register_Property
-        ("is_link",
-         Class => Module.Item_Class,
-         Getter => Item_Handler'Access);
-      Kernel.Scripts.Register_Property
         ("children",
-         Class => Module.Item_Class,
+         Class => Item,
          Getter => Item_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_child_layout",
          Params  => (1 => Param ("layout")),
-         Class   => Module.Item_Class,
+         Class   => Item,
          Handler => Item_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_size",
          Params  => (1 => Param ("width", Optional => True),
                      2 => Param ("height", Optional => True)),
-         Class   => Module.Item_Class,
+         Class   => Item,
          Handler => Item_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_width_range",
          Params  => (2 => Param ("min",  Optional => True),
                      3 => Param ("max", Optional => True)),
-         Class   => Module.Item_Class,
+         Class   => Item,
          Handler => Item_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_height_range",
          Params  => (2 => Param ("min",  Optional => True),
                      3 => Param ("max", Optional => True)),
-         Class   => Module.Item_Class,
+         Class   => Item,
          Handler => Item_Handler'Access);
       Kernel.Scripts.Register_Command
         ("add",
@@ -1897,15 +1950,7 @@ package body Browsers.Scripts is
                      PA_Margin   => Param ("margin", Optional => True),
                      PA_Float    => Param ("float",  Optional => True),
                      PA_Overflow => Param ("overflow", Optional => True)),
-         Class   => Module.Item_Class,
-         Handler => Item_Handler'Access);
-      Kernel.Scripts.Register_Command
-        ("show",
-         Class   => Module.Item_Class,
-         Handler => Item_Handler'Access);
-      Kernel.Scripts.Register_Command
-        ("hide",
-         Class   => Module.Item_Class,
+         Class   => Item,
          Handler => Item_Handler'Access);
 
       Kernel.Scripts.Register_Command
@@ -2006,15 +2051,6 @@ package body Browsers.Scripts is
         ("toLabel",
          Class   => Link,
          Getter  => Link_Handler'Access);
-      Kernel.Scripts.Register_Command
-        ("show",
-         Class   => Link,
-         Handler => Link_Handler'Access);
-      Kernel.Scripts.Register_Command
-        ("hide",
-         Class   => Link,
-         Handler => Link_Handler'Access);
-
    end Register_Module;
 
 end Browsers.Scripts;

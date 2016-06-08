@@ -152,43 +152,10 @@ class Style(object):
         """
 
 
-class Item(object):
+class AbstractItem(object):
     """
-    This abstract class represents any of the items that can be displayed in
-    a browser.
-    Such items have an outline, whose form depends on the type of the item
-    (rectangular, polygone,...)
-    They can almost all contain children. Unless you specified an explicit
-    size for the item, its size will be computed to include all the children.
-    The children are stacked either vertically or horizontally within their
-    container, so that one child appears by default immediately below or to
-    the right of the previous one.
-    Extra margins can be specified to force extra space.
-    """
-
-    Align = enum('Item.Align', START=0, MIDDLE=1, END=2)
-    Overflow = enum('Item.Overflow', PREVENT=0, HIDE=1)
-    Layout = enum('Item.Layout', HORIZONTAL=0, VERTICAL=1)
-
-    Size = enum('Item.Size', FIT=-1, AUTO=-2)
-    """
-    Describes the size of an item. In general, the size is given as a number
-    of pixels. There are however a few special values.
-
-       - FIT indicates that the item is sized so that it fits exactly in its
-         parent container, including the child margins. So for instance given a
-         parent with a vertical layout, of width 200px, and a child with
-         10px margins both on left and right, then the child's width will be
-         set to 180px.
-
-       - AUTO indicates that the item's size is computed so that all of its
-         children fit exactly inside the item.
-    """
-
-    children = None
-    """
-    The list of :class:`GPS.Browsers.Item` that were added to the item.
-    This property is not writable.
+    This abstract class represents either items or links displayed in the
+    canvas, and provide common behavior.
     """
 
     is_link = False
@@ -227,6 +194,63 @@ class Item(object):
     """
     The :class:`GPS.Browsers.Item` that contains this item.
     This is a read-only propery.
+    """
+
+    style = None
+    """
+    A read-write property that let you retrieve or set the style to
+    apply to the item.
+    :type: :class:`GPS.Browsers.Style`
+    """
+
+    def show(self):
+        """
+        Show an item that has been hidden.
+        """
+
+    def hide(self):
+        """
+        Temporarily hide the item, until `GPS.Browsers.Item.show` is called.
+        """
+
+
+class Item(AbstractItem):
+    """
+    This abstract class represents any of the items that can be displayed in
+    a browser.
+    Such items have an outline, whose form depends on the type of the item
+    (rectangular, polygone,...)
+    They can almost all contain children. Unless you specified an explicit
+    size for the item, its size will be computed to include all the children.
+    The children are stacked either vertically or horizontally within their
+    container, so that one child appears by default immediately below or to
+    the right of the previous one.
+    Extra margins can be specified to force extra space.
+    """
+
+    Align = enum('Item.Align', START=0, MIDDLE=1, END=2)
+    Overflow = enum('Item.Overflow', PREVENT=0, HIDE=1)
+    Layout = enum('Item.Layout', HORIZONTAL=0, VERTICAL=1)
+
+    Size = enum('Item.Size', FIT=-1, AUTO=-2)
+    """
+    Describes the size of an item. In general, the size is given as a number
+    of pixels. There are however a few special values.
+
+       - FIT indicates that the item is sized so that it fits exactly in its
+         parent container, including the child margins. So for instance given a
+         parent with a vertical layout, of width 200px, and a child with
+         10px margins both on left and right, then the child's width will be
+         set to 180px.
+
+       - AUTO indicates that the item's size is computed so that all of its
+         children fit exactly inside the item.
+    """
+
+    children = None
+    """
+    The list of :class:`GPS.Browsers.Item` that were added to the item.
+    This property is not writable.
     """
 
     def __init__(self):
@@ -362,16 +386,6 @@ class Item(object):
         parent that does. It might return None if nothing is found.
         Such "id" attributes are in general used to identify items with
         semantic information, rather than just display purposes.
-        """
-
-    def show(self):
-        """
-        Show an item that has been hidden.
-        """
-
-    def hide(self):
-        """
-        Temporarily hide the item, until `GPS.Browsers.Item.show` is called.
         """
 
 
@@ -528,7 +542,7 @@ class HrItem(Item):
         """
 
 
-class Link(object):
+class Link(AbstractItem):
     """
     A line between two items.
     When the items are moved, the line is automatically adjusted to
@@ -643,16 +657,6 @@ class Link(object):
         This matches `GPS.Browsers.Item.recurse`. Note that a label
         doesn't have self as its parent, so you cannot get back to the
         link from one of its labels.
-        """
-
-    def show(self):
-        """
-        Show a link that has been hidden.
-        """
-
-    def hide(self):
-        """
-        Temporarily hide the link, until `GPS.Browsers.Link.show` is called.
         """
 
 

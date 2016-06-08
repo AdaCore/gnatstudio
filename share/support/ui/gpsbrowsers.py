@@ -182,6 +182,27 @@ class JSON_Diagram_File():
         for d in self.diagrams:
             d.clear_selection()
 
+    def set_item_style(self, item, style):
+        """
+        Change the style of an item. This function can be used to temporarily
+        alter the style of items to show special statuses for instance.
+
+        :param item: the item or link to alter
+        :param style: Either a string (the name of a style to lookup in the
+           templates, or an object (an expanded style), or None (to restore
+           the original style).
+        """
+
+        # Save original style if needed
+        if not hasattr(item, "_standard_style"):
+            item._standard_style = item.style
+
+        # Apply the new style
+        if style is None:
+            item.style = item._standard_style
+        else:
+            item.style = self.styles.parse(style, 'link')
+
     def __load(self, data):
         """
         Load a JSON string.

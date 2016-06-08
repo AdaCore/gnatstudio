@@ -12,6 +12,45 @@ Classes
 -------
 
 
+:class:`GPS.Browsers.AbstractItem`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: AbstractItem
+
+
+
+
+   .. autoattribute:: GPS.Browsers.AbstractItem.height
+
+
+
+   .. autoattribute:: GPS.Browsers.AbstractItem.is_link
+
+
+
+   .. autoattribute:: GPS.Browsers.AbstractItem.parent
+
+
+
+   .. autoattribute:: GPS.Browsers.AbstractItem.style
+
+
+
+   .. autoattribute:: GPS.Browsers.AbstractItem.width
+
+
+
+   .. autoattribute:: GPS.Browsers.AbstractItem.x
+
+
+
+   .. autoattribute:: GPS.Browsers.AbstractItem.y
+
+
+   .. automethod:: GPS.Browsers.AbstractItem.hide
+
+   .. automethod:: GPS.Browsers.AbstractItem.show
+
 :class:`GPS.Browsers.Diagram`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -100,7 +139,7 @@ Classes
 
 .. autoclass:: Item
 
-
+   .. inheritance-diagram:: GPS.Browsers.Item
 
 
    .. autoattribute:: GPS.Browsers.Item.Align
@@ -122,37 +161,11 @@ Classes
    .. autoattribute:: GPS.Browsers.Item.children
 
 
-
-   .. autoattribute:: GPS.Browsers.Item.height
-
-
-
-   .. autoattribute:: GPS.Browsers.Item.is_link
-
-
-
-   .. autoattribute:: GPS.Browsers.Item.parent
-
-
-
-   .. autoattribute:: GPS.Browsers.Item.width
-
-
-
-   .. autoattribute:: GPS.Browsers.Item.x
-
-
-
-   .. autoattribute:: GPS.Browsers.Item.y
-
-
    .. automethod:: GPS.Browsers.Item.__init__
 
    .. automethod:: GPS.Browsers.Item.add
 
    .. automethod:: GPS.Browsers.Item.get_parent_with_id
-
-   .. automethod:: GPS.Browsers.Item.hide
 
    .. automethod:: GPS.Browsers.Item.recurse
 
@@ -166,14 +179,12 @@ Classes
 
    .. automethod:: GPS.Browsers.Item.set_width_range
 
-   .. automethod:: GPS.Browsers.Item.show
-
 :class:`GPS.Browsers.Link`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: Link
 
-
+   .. inheritance-diagram:: GPS.Browsers.Link
 
 
    .. autoattribute:: GPS.Browsers.Link.Routing
@@ -197,13 +208,9 @@ Classes
 
    .. automethod:: GPS.Browsers.Link.__init__
 
-   .. automethod:: GPS.Browsers.Link.hide
-
    .. automethod:: GPS.Browsers.Link.recurse
 
    .. automethod:: GPS.Browsers.Link.set_waypoints
-
-   .. automethod:: GPS.Browsers.Link.show
 
 :class:`GPS.Browsers.PolylineItem`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

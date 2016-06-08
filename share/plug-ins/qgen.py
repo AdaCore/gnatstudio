@@ -451,8 +451,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 v.diags = GPS.Browsers.Diagram.load_json_data(
                     json, diagramFactory=QGEN_Diagram)
                 if v.diags:
-                    v.diagram = v.diags.get()
-                    v.scale_to_fit(2)
+                    v.set_diagram(v.diags.get())
 
                 if on_loaded:
                     on_loaded(v)
@@ -523,11 +522,11 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
 
     def on_diagram_loaded(self, cb):
         """
-        Adds a callback to be exectued when a new diagram is to be displayed
-        :param cb: The callback to be added to the list, taking a diagram as
-           a single parameter
+        Adds a callback to be executed when a new diagram is displayed
+        :param cb: The callback to be added to the list. Cb must have the
+           following profile:
+              def cb(viewer, diagram)
         """
-
         self.__on_diagram_loaded.add(cb)
 
     def set_diagram(self, diag):
@@ -537,8 +536,9 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         :param diag: The new diagram to display
         """
         self.diagram = diag
+        self.scale_to_fit(2)
         for cb in self.__on_diagram_loaded:
-            cb(self.diagram)
+            cb(self, self.diagram)
 
     # @overriding
     def on_item_double_clicked(self, topitem, item, x, y, *args):
@@ -727,26 +727,31 @@ else:
                         show_in_console=False)
                     value = value.split('=')[-1].strip()
 
-                    # Check whether the value is a float or is an integer
-                    # with more than 6 digits then display it
-                    # in scientific notation.
-                    # Otherwise no formatting is done on the value
-
-                    # ??? Structures are going to take a lot of space
-                    # to display in general, they need another formatting
-                    # step.
-                    try:
-                        if (len(value) >= 7 or
-                           float(value) != int(value)):
-                            value = '%.2e' % float(value)
-                    except ValueError:
-                        pass
-
-                    if value:
-                        item.show()
-                        item.text = value
-                    else:
+                    # Skip case when the variable is unknown
+                    if "No definition" in value:
                         item.hide()
+
+                    else:
+                        # Check whether the value is a float or is an integer
+                        # with more than 6 digits then display it
+                        # in scientific notation.
+                        # Otherwise no formatting is done on the value
+
+                        # ??? Structures are going to take a lot of space
+                        # to display in general, they need another formatting
+                        # step.
+                        try:
+                            if (len(value) >= 7 or
+                               float(value) != int(value)):
+                                value = '%.2e' % float(value)
+                        except ValueError:
+                            pass
+
+                        if value:
+                            item.show()
+                            item.text = value
+                        else:
+                            item.hide()
 
         @staticmethod
         def forall_auto_items(diagrams):
@@ -765,18 +770,41 @@ else:
                                it.data.get('auto') == "true":
                                 yield (d, item, it)
 
-        # This callback is called when a new subsystem or diagram is displayed
-        # to recompute all the signals values that can be displayed
         @staticmethod
-        def __on_diagram_changed(diag):
+        def __on_diagram_changed(viewer, diag):
+            """
+            Called whenever a new diagram is displayed in viewer. This change
+            might have been triggered either by the user or programmatically.
+            :param viewer: a QGEN_Diagram_Viewer
+            :param diag: a QGEN_Diagram
+            """
+
+            assert(isinstance(viewer.diags, gpsbrowsers.JSON_Diagram_File))
+
             debugger = GPS.Debugger.get()
             if not debugger:
                 return
 
-            # Compute the value for all needed items
+            # Compute the value for all items with an "auto" property
             for diag, toplevel, it in QGEN_Module.forall_auto_items([diag]):
                 QGEN_Module.compute_item_values(
                     debugger, diag, toplevel=toplevel, item=it)
+
+            # Highlights blocks with breakpoints
+            # ??? Need to get the list of breakpoints from GPS. We should
+            # not parse it from this script, since this is slow and
+            # debugger-specific. The loop here is just an example, and should
+            # only impact items with breakpoints
+
+            # for top in diag.items:
+            #    for it in top.recurse():
+            #        try:
+            #            id = getattr(it, "id", None)
+            #            viewer.diags.set_item_style(
+            #                it, it.data.get('style_if_breakpoint'))
+            #        except:
+            #            # No style_if_breakpoint defined
+            #            pass
 
             # Update the display
             diag.changed()
@@ -787,10 +815,17 @@ else:
             QGEN_Module.__show_diagram_and_signal_values(debugger)
 
         @staticmethod
-        def __show_diagram_and_signal_values(debugger):
+        def __show_diagram_and_signal_values(
+                debugger, filename=None, line=None):
             """
             Show the model corresponding to the current editor and line
+            :param GPS.File file: if specified, show the diagram for this
+               file instead of the current debugger file
+            :param line: if specified, show the diagram for this line instead
             """
+
+            filename = filename or debugger.current_file
+            line = line or debugger.current_line
 
             def __on_viewer_loaded(viewer):
                 """
@@ -800,12 +835,9 @@ else:
                 """
                 assert isinstance(viewer, QGEN_Diagram_Viewer)
 
-                filename = debugger.current_file
-                line = debugger.current_line
-                diags = set()   # All the diagrams to check
-
-                scroll_to = None
-
+                # Make sure we ill recompute the value of signals when the
+                # user selects a new diagram. This call has no effect if we
+                # had already registered the callback for this viewer.
                 viewer.on_diagram_loaded(QGEN_Module.__on_diagram_changed)
 
                 # Unselect items from the previous step
@@ -813,19 +845,18 @@ else:
 
                 # Select the blocks corresponding to the current line
                 block = QGEN_Module.modeling_map.get_block(filename, line)
+                scroll_to = None
                 if block:
                     info = viewer.diags.get_diagram_for_item(block)
                     if info:
                         diagram, item = info
-                        viewer.set_diagram(diagram)  # Change visible diagram
-                        diags.add(diagram)
+                        viewer.set_diagram(diagram)  # calls on_diagram_loaded
                         diagram.select(item)
                         scroll_to = item
 
                 if scroll_to:
                     viewer.scroll_into_view(scroll_to)
 
-            filename = debugger.current_file
             if filename:
                 mdl = QGEN_Module.modeling_map.get_mdl_file(filename)
                 if mdl:
@@ -949,12 +980,25 @@ else:
             """
             ctx = GPS.contextual_context() or GPS.current_context()
             it = self.get_item_with_sources(ctx.modeling_item)
+            debug = GPS.Debugger.get()
+
+            # Create the breakpoints
+
             ranges = self.block_source_ranges(it.id)
+            filename = None
+            line = None
             if ranges:
-                debug = GPS.Debugger.get()
                 for file, rg in ranges:
+                    filename = filename or file
+                    line = line or rg[0]
+
                     # Set a breakpoint only on the first line of a range
                     debug.send("break %s:%s" % (file, rg[0]))
+
+            # Force a refresh to show blocks with breakpoints
+
+            QGEN_Module.__show_diagram_and_signal_values(
+                debug, filename=filename, line=line)
 
         def __contextual_delete_breakpoint(self):
             """
