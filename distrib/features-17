@@ -23,6 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P601-006 GPS: new functions exported to GPS.Debugger (2016-06-08)
+
+  GPS exports more debugger functions to python, allowing scripts to be
+  more independent of which exact debugger is actually used. These
+  are GPS.Debugger.value_of, GPS.Debugger.set_variable,
+  GPS.Debugger.break_at_location and GPS.Debugger.unbreak_at_location.
+
 NF-17-P526-049 GPS: Improve outline view's "with Clauses" (2016-05-30)
 
   Do not show "with Clauses" node in outline view if no withes.

@@ -2340,7 +2340,13 @@ class Debugger(object):
         If ``show_in_console`` is True, the output of the command is displayed
         in the debugger console, but is not returned by this function. If
         ``show_in_console`` is False, the result is not displayed in the
-        console, but is returned by this function
+        console, but is returned by this function.
+
+        There exists a number of functions that execute specific commands and
+        parse the output appropriately. It is better to use this functions
+        directly, since they will change the actual command emitted depending
+        on which debugger is running, whether it is currently in a C or Ada
+        frame,...
 
         :param cmd: A string
         :param output: A boolean
@@ -2348,8 +2354,54 @@ class Debugger(object):
         :return: A string
 
         .. seealso:: :func:`GPS.Debugger.non_blocking_send`
+        .. seealso:: :func:`GPS.Debugger.value_of`
+        .. seealso:: :func:`GPS.Debugger.set_variable`
+        .. seealso:: :func:`GPS.Debugger.break_at_location`
+        .. seealso:: :func:`GPS.Debugger.unbreak_at_location`
         """
-        pass  # implemented in Ada
+
+    def value_of(self, expression):
+        """
+        Compute the value of expression in the current context.
+
+        Equivalent gdb command is "print".
+
+        :param str expression: the expression to evaluate.
+        :return: a string, or "" if the expression could not be evaluated in
+           the current context.
+        """
+
+    def set_variable(self, variable, value):
+        """
+        Set the value of a specific variable in the current context.
+
+        Equivalent gdb command is "set variable".
+
+        :param str variable: the name of the variable to set.
+        :param str value: the value to set it to, as a string
+        """
+
+    def break_at_location(self, file, line):
+        """
+        Set a breakpoint at a specific location.
+
+        Equivalent gdb command is "break".
+
+        :param GPS.File file: the file to break into
+        :param int line: the line to break at
+        :return int: The identifier for the breakpoint. This identifier might
+           only be valid until another breakpoint is set or removed.
+        """
+
+    def unbreak_at_location(self, file, line):
+        """
+        Remove any breakpoint set at a specific location.
+
+        Equivalent gdb command is "clear".
+
+        :param GPS.File file: the file to break into
+        :param int line: the line to break at
+        """
 
     def get_console(self):
         """

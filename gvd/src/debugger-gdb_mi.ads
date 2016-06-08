@@ -223,6 +223,12 @@ package Debugger.Gdb_MI is
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier;
 
+   overriding procedure Remove_Breakpoint_At
+     (Debugger : not null access Gdb_MI_Debugger;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Positive;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
    overriding function Break_Exception
      (Debugger  : access Gdb_MI_Debugger;
       Name      : String  := "";

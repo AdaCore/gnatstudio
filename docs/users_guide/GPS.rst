@@ -451,6 +451,8 @@ Classes
 
    .. automethod:: GPS.Debugger.__init__
 
+   .. automethod:: GPS.Debugger.break_at_location
+
    .. automethod:: GPS.Debugger.close
 
    .. automethod:: GPS.Debugger.command
@@ -477,7 +479,13 @@ Classes
 
    .. automethod:: GPS.Debugger.send
 
+   .. automethod:: GPS.Debugger.set_variable
+
    .. automethod:: GPS.Debugger.spawn
+
+   .. automethod:: GPS.Debugger.unbreak_at_location
+
+   .. automethod:: GPS.Debugger.value_of
 
 :class:`GPS.Editor`
 ^^^^^^^^^^^^^^^^^^^

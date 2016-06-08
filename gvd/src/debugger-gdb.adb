@@ -2066,6 +2066,21 @@ package body Debugger.Gdb is
       end if;
    end Break_Source;
 
+   --------------------------
+   -- Remove_Breakpoint_At --
+   --------------------------
+
+   overriding procedure Remove_Breakpoint_At
+     (Debugger : not null access Gdb_Debugger;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Positive;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      Debugger.Send
+        ("clear " & File.Display_Full_Name & ":" & Image (Line),
+         Mode => Mode);
+   end Remove_Breakpoint_At;
+
    ---------------------
    -- Break_Exception --
    ---------------------

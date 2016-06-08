@@ -720,15 +720,10 @@ else:
                     # debugger frame. For now, we assume this is true since the
                     # diagram corresponds to the current frame.
 
-                    # ??? We are hard-coding a gdb command here
-                    value = debugger.send(
-                        "print %s" % (ss, ),
-                        output=False,
-                        show_in_console=False)
-                    value = value.split('=')[-1].strip()
+                    value = debugger.value_of("%s" % (ss, ))
 
                     # Skip case when the variable is unknown
-                    if "No definition" in value:
+                    if value is None:
                         item.hide()
 
                     else:
@@ -962,15 +957,12 @@ else:
 
             for s in self.modeling_map.get_symbols(blockid=it.id):
                 ss = s.split('/')[-1].strip()  # Remove the "context/" part
-                current = debug.send("print %s" % ss, output=False)
-                current = current.split('=')[-1].strip()
-                v = GPS.MDI.input_dialog(
-                    "Value for block %s" % it.id,
-                    "value=%s" % current)
-
-                # ??? If we are in Ada mode, should use ":=". Currently, our
-                # customers mostly use C, so let's use that.
-                debug.send("set variable %s = %s" % (ss, v[0]), output=False)
+                current = debug.value_of(ss)
+                if current is not None:
+                    v = GPS.MDI.input_dialog(
+                        "Value for block %s" % it.id,
+                        "value=%s" % current)
+                    debug.set_variable(ss, v[0])
 
             QGEN_Module.__show_diagram_and_signal_values(debug)
 
@@ -991,9 +983,8 @@ else:
                 for file, rg in ranges:
                     filename = filename or file
                     line = line or rg[0]
-
                     # Set a breakpoint only on the first line of a range
-                    debug.send("break %s:%s" % (file, rg[0]))
+                    debug.break_at_location(file, line=rg[0])
 
             # Force a refresh to show blocks with breakpoints
 
@@ -1010,7 +1001,7 @@ else:
             if ranges:
                 debug = GPS.Debugger.get()
                 for file, rg in ranges:
-                    debug.send("clear %s:%s" % (file, rg[0]))
+                    debug.unbreak_at_location(file, line=rg[0])
 
         def __contextual_show_source_code(self):
             """

@@ -20,7 +20,6 @@ with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
-with Gtkada.MDI;              use Gtkada.MDI;
 with Gtk.Widget;              use Gtk.Widget;
 
 with Debugger;                use Debugger;
@@ -176,6 +175,35 @@ package body GVD.Scripts is
            (Process, Nth_Arg (Data, 2),
             Output_Command => Nth_Arg (Data, 3, True),
             Mode           => GVD.Types.User);
+
+      elsif Command = "value_of" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         --   ??? Should return None if variable is undefined
+         Data.Set_Return_Value
+           (Process.Debugger.Value_Of (Entity => Data.Nth_Arg (2)));
+
+      elsif Command = "set_variable" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Process.Debugger.Set_Variable
+           (Var_Name => Data.Nth_Arg (2),
+            Value    => Data.Nth_Arg (3));
+
+      elsif Command = "break_at_location" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Data.Set_Return_Value
+           (Integer (Process.Debugger.Break_Source
+            (File  => Nth_Arg (Data, 2),
+             Line  => Data.Nth_Arg (3))));
+
+      elsif Command = "unbreak_at_location" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Process.Debugger.Remove_Breakpoint_At
+           (File  => Nth_Arg (Data, 2),
+            Line  => Data.Nth_Arg (3));
 
       elsif Command = "command" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
@@ -389,6 +417,29 @@ package body GVD.Scripts is
          Class        => Class);
       Kernel.Scripts.Register_Command
         ("is_break_command",
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("value_of",
+         Params       => (1 => Param ("expression")),
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("set_variable",
+         Params       => (1 => Param ("variable"),
+                          2 => Param ("value")),
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("break_at_location",
+         Params       => (1 => Param ("file"),
+                          2 => Param ("line")),
+         Handler      => Shell_Handler'Access,
+         Class        => Class);
+      Kernel.Scripts.Register_Command
+        ("unbreak_at_location",
+         Params       => (1 => Param ("file"),
+                          2 => Param ("line")),
          Handler      => Shell_Handler'Access,
          Class        => Class);
    end Create_Hooks;

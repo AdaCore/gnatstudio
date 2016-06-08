@@ -1492,6 +1492,22 @@ package body Debugger.Gdb_MI is
          Mode => Mode);
    end Break_Source;
 
+   --------------------------
+   -- Remove_Breakpoint_At --
+   --------------------------
+
+   overriding procedure Remove_Breakpoint_At
+     (Debugger : not null access Gdb_MI_Debugger;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Positive;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      pragma Unreferenced (Debugger, File, Line, Mode);
+   begin
+      --  ??? Is there an equivalent to "clear" in gdb-mi ?
+      null;
+   end Remove_Breakpoint_At;
+
    ---------------------
    -- Break_Exception --
    ---------------------

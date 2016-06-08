@@ -654,6 +654,13 @@ package Debugger is
    --  Num is always the number returned in the Num field of the
    --  Breakpoint_Data record.
 
+   procedure Remove_Breakpoint_At
+     (Debugger : not null access Debugger_Root;
+      File     : GNATCOLL.VFS.Virtual_File;
+      Line     : Positive;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   --  Remove any breakpoint set at that location
+
    function List_Breakpoints
      (Debugger  : access Debugger_Root)
       return GVD.Types.Breakpoint_Array is abstract;
