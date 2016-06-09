@@ -483,6 +483,32 @@ class Breakpoints_View():
         return _Breakpoints_Editor('debug create breakpoint')
 
 
+###################
+# Debug_Run_Dialog
+###################
+
+class Debug_Run_Dialog(Dialog):
+
+    def open_and_yield(self):
+        """
+        Compatible with run_test_driver, to be used in a yield statement
+            dialog = Debug_Run_Dialog()
+            yield dialog.open_and_yield()
+        """
+        yield self._open_and_yield("/Debug/Run...")
+        yield wait_idle()
+
+    def set_use_exec_dir(self, value):
+        """
+        Check or uncheck "Use exec dir"
+
+        :param value: True or False
+        """
+        check = [w for w in get_widgets_by_type(Gtk.CheckButton, self.dialogs)
+                 if w.get_label().startswith("Use exec dir")][0]
+        check.set_active(value)
+
+
 ##########################
 # Gtk_File_Chooser_Dialog
 ##########################
