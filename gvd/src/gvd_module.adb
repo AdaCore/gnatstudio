@@ -26,9 +26,7 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Tool_Button;           use Gtk.Tool_Button;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 
@@ -112,15 +110,6 @@ package body GVD_Module is
       Actions : Action_Lists.List;
       --  Actions that have been registered dynamically by this module,
       --  for the dynamic menus
-
-      Delete_Id                      : Handler_Id := (Null_Handler_Id, null);
-
-      Cont_Button,
-      Step_Button,
-      Next_Button,
-      Finish_Button,
-      Up_Button,
-      Down_Button                    : Gtk.Tool_Button.Gtk_Tool_Button;
 
       Debugger_List                  : Debugger_Lists.List;
       --  Points to the list of debuggers

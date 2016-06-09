@@ -516,9 +516,6 @@ package body VCS_Module is
       VCS_Class            : constant Class_Type := New_Class (Kernel, "VCS");
       VCS_Activities_Class : constant Class_Type :=
                                New_Class (Kernel, "Activities");
-
-      VCS_Action_Context   : constant Action_Filter := GPS.Kernel.Create;
-
    begin
       VCS_Module_ID := new VCS_Module_ID_Record;
       VCS_Explorer_Module_Id := new VCS_Explorer_Module_ID_Record;
@@ -778,8 +775,6 @@ package body VCS_Module is
          Handler       => VCS_Activities_Command_Handler'Access);
 
       --  Register the main VCS menu and the VCS actions
-
-      Register_Filter (Kernel, VCS_Action_Context, "VCS");
 
       Register_Action
         (Kernel, "VCS open explorer", new Explorer_Command,

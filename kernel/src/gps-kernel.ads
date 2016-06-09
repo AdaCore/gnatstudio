@@ -468,6 +468,7 @@ package GPS.Kernel is
    --  It does a logical AND for all its attributes specified as parameters.
    --  The default values for the parameters indicate that no special filter
    --  is done for this particular parameter.
+   --  It might return null if no criteria is specified.
 
    procedure Free (Filter : in out Action_Filter_Record) is null;
    --  Free the memory associated with the filter. This must never be called
@@ -494,10 +495,10 @@ package GPS.Kernel is
      (Filter : access Action_Filter_Record'Class) return Unbounded_String;
    --  Return the error message to display if the filter doesn't match
 
-   function Get_Name
-     (Filter : access Action_Filter_Record'Class) return Unbounded_String;
+   function Get_Debug_Name
+     (Filter : access Action_Filter_Record) return String;
    --  Return the description of the filter (a short string suitable for
-   --  display in the key manager GUI
+   --  display in the logs)
 
    function Filter_Matches
      (Filter  : access Action_Filter_Record'Class;
@@ -830,6 +831,8 @@ private
             Not1 : Action_Filter;
       end case;
    end record;
+   overriding function Get_Debug_Name
+     (Filter : access Base_Action_Filter_Record) return String;
 
    package Filter_Result_Map is new Ada.Containers.Ordered_Maps
      (Key_Type     => System.Address,

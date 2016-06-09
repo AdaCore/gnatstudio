@@ -41,15 +41,40 @@ package body GPS.Kernel.Macros is
    -------------------
 
    function Create_Filter
-     (Command : String;
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Command : String;
       Filter  : Macro_Filter := null) return Macro_Filter
    is
-      F : Macro_Filter := Filter;
+      Req : Requirements :=
+        (if Filter /= null
+         then Filter.Requires else (Project => ' ', others => False));
 
       function Substitution
         (Param  : String;
          Quoted : Boolean) return String;
       --  Check whether the command has a '%' + digit parameter
+
+      function Hash (Req : Requirements) return String;
+      --  Return a hash string for req, to this filter in the global list of
+      --  registered filters
+
+      ----------
+      -- Hash --
+      ----------
+
+      function Hash (Req : Requirements) return String is
+      begin
+         return "macro "
+           & (if Req.File then 'f' else '.')
+           & (if Req.Directory then 'd' else '.')
+           & (if Req.Entity then 'e' else '.')
+           & (if Req.Line then 'l' else '.')
+           & (if Req.Column then 'c' else '.')
+           & (if Req.Category then 't' else '.')
+           & (if Req.Importing then 'i' else '.')
+           & (if Req.Single_Line then 's' else '.')
+           & Req.Project;
+      end Hash;
 
       ------------------
       -- Substitution --
@@ -65,58 +90,62 @@ package body GPS.Kernel.Macros is
            or else Param = "F"
            or else Param = "fk"
          then
-            F.Requires.File := True;
+            Req.File := True;
 
          elsif Param = "d"
            or else Param = "dk"
          then
-            F.Requires.Directory := True;
+            Req.Directory := True;
 
          elsif Param = "e"
            or else Param = "ek"
          then
-            F.Requires.Entity := True;
+            Req.Entity := True;
 
          elsif Param = "l" then
-            F.Requires.Line := True;
+            Req.Line := True;
 
          elsif Param = "c" then
-            F.Requires.Column := True;
+            Req.Column := True;
 
          elsif Param = "a" then
-            F.Requires.Category := True;
+            Req.Category := True;
 
          elsif Param = "i" then
-            F.Requires.Importing := True;
+            Req.Importing := True;
 
          elsif Param = "s" then
-            F.Requires.Single_Line := True;
+            Req.Single_Line := True;
 
          elsif Param (Param'First) = 'p' or else Param (Param'First) = 'P' then
             if Param /= "pps" and then Param /= "PPs" then
-               F.Requires.Project := Param (Param'First);
+               Req.Project := Param (Param'First);
             end if;
          end if;
 
          return "";
       end Substitution;
 
+      Dummy : constant String := Substitute
+        (Command,
+         Delimiter => Special_Character,
+         Callback  => Substitution'Unrestricted_Access,
+         Recursive => False);
+      F     : Macro_Filter := Filter;
+
    begin
-      if F = null then
-         F := new Macro_Filter_Record;
+      if Req /= (Project => ' ', others => False) then
+         declare
+            N : constant String := Hash (Req);
+         begin
+            F := Macro_Filter (Kernel.Lookup_Filter (N));
+            if F = null then
+               F := new Macro_Filter_Record;
+               F.Requires := Req;
+               Register_Filter (Kernel, Filter => F, Name => N);
+            end if;
+         end;
       end if;
-
-      declare
-         Tmp : constant String := Substitute
-           (Command,
-            Delimiter => Special_Character,
-            Callback  => Substitution'Unrestricted_Access,
-            Recursive => False);
-         pragma Unreferenced (Tmp);
-      begin
-         null;
-      end;
-
       return F;
    end Create_Filter;
 
@@ -311,6 +340,26 @@ package body GPS.Kernel.Macros is
          return Project_Information (Context);
       end if;
    end Project_From_Param;
+
+   --------------------
+   -- Get_Debug_Name --
+   --------------------
+
+   overriding function Get_Debug_Name
+     (Filter  : access Macro_Filter_Record) return String is
+   begin
+      return "Macro filter, must have "
+        & (if Filter.Requires.File then "file " else "")
+        & (if Filter.Requires.Directory then "directory " else "")
+        & (if Filter.Requires.Entity then "entity " else "")
+        & (if Filter.Requires.Line then "line " else "")
+        & (if Filter.Requires.Column then "column " else "")
+        & (if Filter.Requires.Category then "category " else "")
+        & (if Filter.Requires.Importing then "importing " else "")
+        & (if Filter.Requires.Single_Line then "singleLine " else "")
+        & (if Filter.Requires.Project /= ' '
+           then "project " & Filter.Requires.Project else "");
+   end Get_Debug_Name;
 
    ------------------------------
    -- Filter_Matches_Primitive --

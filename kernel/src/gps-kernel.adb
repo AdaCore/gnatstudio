@@ -87,8 +87,10 @@ with Language.Abstract_Construct_Tree; use Language.Abstract_Construct_Tree;
 package body GPS.Kernel is
 
    Me        : constant Trace_Handle := Create ("gps_kernel");
+   Me_Filters : constant Trace_Handle :=
+      Create ("FILTERS", GNATCOLL.Traces.Off);
    Create_Me : constant Trace_Handle :=
-                 Create ("Contexts.Mem", GNATCOLL.Traces.Off);
+      Create ("Contexts.Mem", GNATCOLL.Traces.Off);
    Me_Hooks  : constant Trace_Handle := Create ("HOOKS", GNATCOLL.Traces.Off);
 
    History_Max_Length : constant Positive := 10;
@@ -1282,13 +1284,17 @@ package body GPS.Kernel is
       F : constant Base_Action_Filter :=
         new Base_Action_Filter_Record (Standard_Filter);
    begin
-      F.Language := To_Unbounded_String (Language);
-      F.Shell := To_Unbounded_String (Shell);
-      F.Shell_Lang :=
-        (if Shell /= ""
-         then To_Unbounded_String (Shell_Lang) else Null_Unbounded_String);
-      F.Module := To_Unbounded_String (Module);
-      return Action_Filter (F);
+      if Language = "" and then Shell = "" and then Module = "" then
+         return null;
+      else
+         F.Language := To_Unbounded_String (Language);
+         F.Shell := To_Unbounded_String (Shell);
+         F.Shell_Lang :=
+           (if Shell /= ""
+            then To_Unbounded_String (Shell_Lang) else Null_Unbounded_String);
+         F.Module := To_Unbounded_String (Module);
+         return Action_Filter (F);
+      end if;
    end Create;
 
    -----------
@@ -1386,19 +1392,41 @@ package body GPS.Kernel is
       return Self.Env;
    end Get_Environment;
 
-   --------------
-   -- Get_Name --
-   --------------
+   --------------------
+   -- Get_Debug_Name --
+   --------------------
 
-   function Get_Name
-     (Filter : access Action_Filter_Record'Class) return Unbounded_String is
+   function Get_Debug_Name
+     (Filter : access Action_Filter_Record) return String is
    begin
-      if Filter /= null then
-         return Filter.Name;
+      if Filter /= null and then Filter.Name /= "" then
+         return To_String (Filter.Name);
       else
-         return Null_Unbounded_String;
+         return External_Tag (Action_Filter_Record'Class (Filter.all)'Tag);
       end if;
-   end Get_Name;
+   end Get_Debug_Name;
+
+   --------------------
+   -- Get_Debug_Name --
+   --------------------
+
+   overriding function Get_Debug_Name
+     (Filter : access Base_Action_Filter_Record) return String is
+   begin
+      case Filter.Kind is
+         when Standard_Filter =>
+            return "Base"
+              & (if Filter.Language /= ""
+                 then " lang=" & To_String (Filter.Language) else "")
+              & (if Filter.Shell /= ""
+                 then " shell=" & To_String (Filter.Shell) else "")
+              & (if Filter.Module /= ""
+                 then " module=" & To_String (Filter.Module) else "");
+         when Filter_And      => return """and""";
+         when Filter_Not      => return """not""";
+         when Filter_Or       => return """or""";
+      end case;
+   end Get_Debug_Name;
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -1548,7 +1576,17 @@ package body GPS.Kernel is
       if Has_Element (C) then
          return Element (C);
       else
+         if Active (Me_Filters) then
+            Increase_Indent
+               (Me_Filters, "Running filter " & Filter.Get_Debug_Name);
+         end if;
+
          Result := Filter_Matches_Primitive (Filter, Context);
+
+         if Active (Me_Filters) then
+            Decrease_Indent (Me_Filters, "");
+         end if;
+
          Context.Ref.Get.Computed_Filters.Insert
            (Filter.all'Address, Result);
          return Result;

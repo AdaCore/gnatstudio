@@ -116,7 +116,8 @@ package Commands.Custom is
    --  Name is used in the progress bar while the command is executing
 
    function Create_Filter
-     (Command : XML_Utils.Node_Ptr) return Action_Filter;
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Command : XML_Utils.Node_Ptr) return Action_Filter;
    --  Return null or a filter suitable for Command. This filter ensures that
    --  all %f,... parameters can be properly substituted.
    --  This filter should be checked if the command is used as an action in

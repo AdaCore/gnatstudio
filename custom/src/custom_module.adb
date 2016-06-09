@@ -102,7 +102,6 @@ package body Custom_Module is
    overriding function Filter_Matches_Primitive
      (Filter  : access Action_Filter_Wrapper;
       Context : Selection_Context) return Boolean;
-   --  A filter that executes a shell subprogram
    overriding procedure Customize
      (Module : access Custom_Module_ID_Record;
       File   : GNATCOLL.VFS.Virtual_File;
@@ -110,6 +109,10 @@ package body Custom_Module is
       Level  : Customization_Level);
    --  See inherited documentation
    overriding procedure Free (Filter : in out Action_Filter_Wrapper);
+   overriding function Get_Debug_Name
+     (Self : access Action_Filter_Wrapper) return String
+     is ("python filter: " & Self.Filter.Get_Name);
+   --  A filter that executes a shell subprogram
 
    procedure Menu_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -141,6 +144,9 @@ package body Custom_Module is
       Filter     : Subprogram_Type;
    end record;
    type Subprogram_Filter is access all Subprogram_Filter_Record'Class;
+   overriding function Get_Debug_Name
+     (Self : access Subprogram_Filter_Record) return String
+     is ("python subprogram: " & Self.Filter.Get_Name);
    overriding function Filter_Matches_Primitive
      (Filter  : access Subprogram_Filter_Record;
       Context : Selection_Context) return Boolean;
@@ -768,7 +774,7 @@ package body Custom_Module is
                  Show_Command         => To_Lower
                    (Get_Attribute (Node, "show-command", "true")) = "true");
 
-         Implicit_Filter := Create_Filter (Node.Child);
+         Implicit_Filter := Create_Filter (Kernel, Node.Child);
 
          if Implicit_Filter /= null then
             if Filter_A /= null then
@@ -1317,11 +1323,26 @@ package body Custom_Module is
       --  filter. It could be a subprogram_type in some scripting languages so
       --  we try that as well. We let the Invalid_Parameter exception through
       --  in case some other type of argument was specified.
+      --
+      --  Since we want to reduce the number of filters that are run by GPS,
+      --  we try to reuse existing filters when possible. This is done by
+      --  registering the python filters as the name and address of the python
+      --  subprogram to run.
 
       Filter_Cb := Nth_Arg (Data, Nth);
-      return new Subprogram_Filter_Record'
-        (Action_Filter_Record with
-         Filter     => Filter_Cb);
+
+      declare
+         N : constant String := "script: " & Filter_Cb.Get_Name;
+      begin
+         Filter := Get_Kernel (Data).Lookup_Filter (N);
+         if Filter = null then
+            Filter := new Subprogram_Filter_Record'
+              (Action_Filter_Record with
+               Filter     => Filter_Cb);
+            Get_Kernel (Data).Register_Filter (Filter, N);
+         end if;
+         return Filter;
+      end;
    end Filter_From_Argument;
 
    --------------------

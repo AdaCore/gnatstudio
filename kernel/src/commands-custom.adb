@@ -179,14 +179,15 @@ package body Commands.Custom is
    -------------------
 
    function Create_Filter
-     (Command : XML_Utils.Node_Ptr) return Action_Filter
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Command : XML_Utils.Node_Ptr) return Action_Filter
    is
       Filter : Macro_Filter;
       N      : Node_Ptr := Command;
    begin
       while N /= null loop
          if N.Value /= null then
-            Filter := Create_Filter (N.Value.all, Filter);
+            Filter := Create_Filter (Kernel, N.Value.all, Filter);
          end if;
          N := N.Next;
       end loop;

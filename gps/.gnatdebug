@@ -106,6 +106,9 @@ GPS.KERNEL.HELP = no
 --  Enable the fallback on the construct tree for xref queries (on by default)
 ENTITIES.CONSTRUCTS = yes
 
+--  Debugging slow filters
+FILTERS=no
+
 --  Debug handles related to scripts
 
 SHELL_SCRIPT=no

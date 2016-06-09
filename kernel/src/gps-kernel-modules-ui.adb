@@ -1196,6 +1196,8 @@ package body GPS.Kernel.Modules.UI is
      (User  : Contextual_Menu_User_Data;
       Event : Gdk_Event) return Gtk_Menu
    is
+      Dummy   : constant Block_Trace_Handle :=
+         Create (Me, "Creating contextual menu");
       Context : Selection_Context;
       Menu    : Gtk_Menu := null;
       Win    : constant GPS_Window := GPS_Window (User.Kernel.Get_Main_Window);
@@ -2398,9 +2400,9 @@ package body GPS.Kernel.Modules.UI is
          T.Custom := Custom;
 
          if Filter /= null then
-            T.Filter := Create_Filter (Label) and Filter;
+            T.Filter := Create_Filter (Kernel, Label) and Filter;
          else
-            T.Filter := Action_Filter (Create_Filter (Label));
+            T.Filter := Action_Filter (Create_Filter (Kernel, Label));
          end if;
       elsif Filter /= null then
          T        := new Contextual_Label_Parameters;
@@ -2593,7 +2595,7 @@ package body GPS.Kernel.Modules.UI is
          T        := new Contextual_Label_Parameters;
          T.Label  := new String'(Label);
          T.Custom := null;
-         T.Filter := Action_Filter (Create_Filter (Label));
+         T.Filter := Action_Filter (Create_Filter (Kernel, Label));
       end if;
 
       Add_Contextual_Menu

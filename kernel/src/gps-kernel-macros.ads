@@ -29,15 +29,16 @@ package GPS.Kernel.Macros is
 
    type Macro_Filter_Record is
      new GPS.Kernel.Action_Filter_Record with private;
-   type Macro_Filter is access Macro_Filter_Record'Class;
+   type Macro_Filter is access all Macro_Filter_Record'Class;
 
    function Create_Filter
-     (Command : String;
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Command : String;
       Filter  : Macro_Filter := null) return Macro_Filter;
    --  Create a new filter, by checking in Command whether there is a %f, %e...
    --  If Filter is not null, it is returned after being modified to take into
    --  account the new macro expansion in Command.
-   --  null is never returned
+   --  This function returns null if no requirement is necessary.
 
    function Substitute
      (Param     : String;
@@ -110,10 +111,11 @@ private
    type Macro_Filter_Record is new GPS.Kernel.Action_Filter_Record with record
       Requires : Requirements;
    end record;
-
    overriding function Filter_Matches_Primitive
      (Filter  : access Macro_Filter_Record;
       Context : Selection_Context) return Boolean;
+   overriding function Get_Debug_Name
+     (Filter  : access Macro_Filter_Record) return String;
    --  See doc for inherited subprogram
 
 end GPS.Kernel.Macros;
