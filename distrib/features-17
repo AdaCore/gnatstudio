@@ -36,6 +36,17 @@ NF-17-P603-005 GPS: improve debugger call stack view (2016-06-09)
   is configured so that it also does not try to compute them, which on some
   systems might significantly speed up operations with the debugger.
 
+NF-17-P602-053 GPS: display basenames in Project view (2016-06-09)
+
+  The Project view has gained a new configuration, to display only the
+  basenames of the directories. So now if you have a project file at
+  /some/path/file.gpr and one source directory at
+  /some/path/sources/src1/, you can choose to display any of the following
+  in the Project view:
+      /some/path/sources/src1/  (not showing basenames, and absolute paths)
+      sources/src1/             (not showing basenames, and relatied paths)
+      src1                      (showing basenames)
+
 NF-17-P601-006 GPS: new functions exported to GPS.Debugger (2016-06-08)
 
   GPS exports more debugger functions to python, allowing scripts to be
