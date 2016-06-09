@@ -1778,7 +1778,7 @@ package body GVD_Module is
                      A (J).Image := Line_Has_Disabled_Breakpoint_Pixbuf;
                      A (J).Tooltip_Text := To_Unbounded_String
                        ("A disabled breakpoint has been set on this line");
-                  elsif Tab.Breakpoints (Bps (J)).Condition /= null then
+                  elsif Tab.Breakpoints (Bps (J)).Condition /= "" then
                      A (J).Image := Line_Has_Conditional_Breakpoint_Pixbuf;
                      A (J).Tooltip_Text := To_Unbounded_String
                        ("A conditional breakpoint has been set on this line");

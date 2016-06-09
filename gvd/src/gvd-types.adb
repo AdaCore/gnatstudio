@@ -16,36 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Unbounded;
 with String_Utils;
 
 package body GVD.Types is
-
-   use GNAT.Strings;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Br : in out Breakpoint_Data) is
-   begin
-      Free (Br.Expression);
-      Free (Br.Except);
-      Free (Br.Subprogram);
-      Free (Br.Condition);
-      Free (Br.Commands);
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Br_Array : in out Breakpoint_Array) is
-   begin
-      for B in Br_Array'Range loop
-         Free (Br_Array (B));
-      end loop;
-   end Free;
 
    ----------
    -- Free --
@@ -56,20 +29,8 @@ package body GVD.Types is
         (Breakpoint_Array, Breakpoint_Array_Ptr);
    begin
       if Br_Access /= null then
-         Free (Br_Access.all);
          Internal_Free (Br_Access);
       end if;
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Exception_Access : in out Exception_Array) is
-   begin
-      for E in Exception_Access'Range loop
-         Free (Exception_Access (E).Name);
-      end loop;
    end Free;
 
    -----------------------
@@ -106,7 +67,6 @@ package body GVD.Types is
    -----------------------
 
    function Address_To_String (Address : Address_Type) return String is
-      use Ada.Strings.Unbounded;
    begin
       if Address.Offset = 0 then
          return Address.Address_String

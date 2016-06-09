@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Debugger;                  use Debugger;
 with Gdk.Event;                 use Gdk.Event;
@@ -359,10 +360,11 @@ package body GVD.Breakpoints is
          Glib.Values.Init_Set_String
            (Values (4), To_Lower (Br.Disposition'Img));
 
-         if Br.Expression /= null then
+         if Br.Expression /= "" then
             Last := Last + 1;
             Columns (Last) := Col_File;
-            Glib.Values.Init_Set_String (Values (Last), Br.Expression.all);
+            Glib.Values.Init_Set_String
+              (Values (Last), To_String (Br.Expression));
          end if;
 
          if Br.File /= GNATCOLL.VFS.No_File then
@@ -380,16 +382,17 @@ package body GVD.Breakpoints is
               (Values (Last), Integer'Image (Br.Line));
          end if;
 
-         if Br.Except /= null then
+         if Br.Except /= "" then
             Last := Last + 1;
             Columns (Last) := Col_Exception;
-            Glib.Values.Init_Set_String (Values (Last), Br.Except.all);
+            Glib.Values.Init_Set_String (Values (Last), To_String (Br.Except));
          end if;
 
-         if Br.Subprogram /= null then
+         if Br.Subprogram /= "" then
             Last := Last + 1;
             Columns (Last) := Col_Subprogs;
-            Glib.Values.Init_Set_String (Values (Last), Br.Subprogram.all);
+            Glib.Values.Init_Set_String
+              (Values (Last), To_String (Br.Subprogram));
          end if;
 
          Set_And_Clear (Model, Iter, Columns (1 .. Last), Values (1 .. Last));
@@ -943,19 +946,20 @@ package body GVD.Breakpoints is
    begin
       --  Fill the information
 
-      if Br.Except /= null then
+      if Br.Except /= "" then
          Self.Breakpoint_Type.Set_Active
            (Breakpoint_Type'Pos (Break_On_Exception));
          Set_Active (Self.Stop_Always_Exception, True);
 
-         if Br.Except.all = "all" then
+         if Br.Except = "all" then
             Set_Active_Text (Self.Exception_Name, -"All Ada exceptions");
-         elsif Br.Except.all = "unhandled" then
+         elsif Br.Except = "unhandled" then
             Set_Active_Text (Self.Exception_Name, -"All Ada exceptions");
             Set_Active (Self.Stop_Not_Handled_Exception, True);
          else
             Add_Unique_Combo_Entry
-              (Self.Exception_Name, Br.Except.all, Select_Text => True);
+              (Self.Exception_Name,
+               To_String (Br.Except), Select_Text => True);
          end if;
 
          Set_Active (Self.Temporary, Br.Disposition /= Keep);
@@ -970,9 +974,9 @@ package body GVD.Breakpoints is
          --  ??? What if the filesystem path is non-UTF8?
          Set_Value (Self.Line_Spin, Grange_Float (Br.Line));
 
-         if Br.Subprogram /= null then
+         if Br.Subprogram /= "" then
             Add_Unique_Combo_Entry
-              (Self.Subprogram_Combo, Br.Subprogram.all, True);
+              (Self.Subprogram_Combo, To_String (Br.Subprogram), True);
          end if;
 
       else
@@ -1000,9 +1004,10 @@ package body GVD.Breakpoints is
 
       --  Advanced: condition
 
-      if Br.Condition /= null then
+      if Br.Condition /= "" then
          Add_Unique_Combo_Entry
-           (Self.Condition_Combo, Br.Condition.all, Select_Text => True);
+           (Self.Condition_Combo,
+            To_String (Br.Condition), Select_Text => True);
       else
          Self.Condition_Combo.Set_Active (-1);
       end if;
@@ -1017,8 +1022,8 @@ package body GVD.Breakpoints is
       Get_Bounds (Buffer, Start, The_End);
       Delete (Buffer, Start, The_End);
 
-      if Br.Commands /= null then
-         Insert_At_Cursor (Buffer, Br.Commands.all);
+      if Br.Commands /= "" then
+         Insert_At_Cursor (Buffer, To_String (Br.Commands));
       end if;
 
       --  Set the scope and action, if appropriate
@@ -1241,9 +1246,7 @@ package body GVD.Breakpoints is
          declare
             S : constant String := Self.Condition_Combo.Get_Active_Text;
          begin
-            if S /= ""
-              or else (Br.Condition /= null and then Br.Condition.all /= "")
-            then
+            if S /= "" or else Br.Condition /= "" then
                Set_Breakpoint_Condition
                  (Self.Process.Debugger, Num, S, Internal);
                Modified := True;
@@ -1257,9 +1260,7 @@ package body GVD.Breakpoints is
             T : constant String := Get_Text
               (Get_Buffer (Self.Command_Descr), Start, The_End);
          begin
-            if T /= ""
-              or else (Br.Commands /= null and then Br.Commands.all /= "")
-            then
+            if T /= "" or else Br.Commands /= "" then
                Set_Breakpoint_Command
                  (Self.Process.Debugger, Num, T, Internal);
                Modified := True;
@@ -1386,7 +1387,7 @@ package body GVD.Breakpoints is
      (W : access GObject_Record'Class)
    is
       View    : constant Properties_Editor := Properties_Editor (W);
-      Exception_Arr : Exception_Array :=
+      Exception_Arr : constant Exception_Array :=
         List_Exceptions (View.Process.Debugger);
    begin
       if Exception_Arr'Length > 0 then
@@ -1397,11 +1398,9 @@ package body GVD.Breakpoints is
 
          for J in Exception_Arr'Range loop
             Add_Unique_Combo_Entry
-              (View.Exception_Name, Exception_Arr (J).Name.all);
+              (View.Exception_Name, To_String (Exception_Arr (J).Name));
          end loop;
       end if;
-
-      Free (Exception_Arr);
    end On_Load_Exception_List_Clicked;
 
    -------------

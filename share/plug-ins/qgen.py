@@ -785,21 +785,29 @@ else:
                 QGEN_Module.compute_item_values(
                     debugger, diag, toplevel=toplevel, item=it)
 
-            # Highlights blocks with breakpoints
-            # ??? Need to get the list of breakpoints from GPS. We should
-            # not parse it from this script, since this is slow and
-            # debugger-specific. The loop here is just an example, and should
-            # only impact items with breakpoints
+            # Restore default style for all visible items, in case they used
+            # to have a breakpoint.
+            # ??? This seems inefficient, might need to revisit in the future
 
-            # for top in diag.items:
-            #    for it in top.recurse():
-            #        try:
-            #            id = getattr(it, "id", None)
-            #            viewer.diags.set_item_style(
-            #                it, it.data.get('style_if_breakpoint'))
-            #        except:
-            #            # No style_if_breakpoint defined
-            #            pass
+            for top in diag.items:
+                for it in top.recurse():
+                    viewer.diags.set_item_style(it, None)
+
+            # Highlights blocks with breakpoints
+
+            map = QGEN_Module.modeling_map
+            for b in debugger.breakpoints:
+                blockid = map.get_block(file=b.file, line=b.line)
+                item = diag.get_item(blockid)
+                if item:
+                    for it in item.recurse():
+                        try:
+                            id = getattr(item, "id", None)
+                            viewer.diags.set_item_style(
+                                item, item.data.get('style_if_breakpoint'))
+                        except:
+                            # No style_if_breakpoint defined
+                            pass
 
             # Update the display
             diag.changed()
@@ -807,6 +815,12 @@ else:
         @staticmethod
         @gps_utils.hook('debugger_location_changed')
         def __on_debugger_location_changed(debugger):
+            QGEN_Module.__show_diagram_and_signal_values(debugger)
+
+        @staticmethod
+        @gps_utils.hook('debugger_breakpoints_changed')
+        def __on_debugger_breakpoints_changed(debugger):
+            # Show blocks with breakpoints
             QGEN_Module.__show_diagram_and_signal_values(debugger)
 
         @staticmethod

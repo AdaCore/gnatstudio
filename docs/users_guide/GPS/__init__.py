@@ -2203,6 +2203,14 @@ class Debugger(object):
     'target [remote_protocol] [remote_target]' command.
     """
 
+    breakpoints = []
+    """
+    A read-only property that returns the list of breakpoints currently set
+    in the debugger. This information is updated automatically by GPS whenever
+    a command that might modify this list of breakpoints is executed.
+    The elements in this list are instances of :class:`GPS.DebuggerBreakpoint`
+    """
+
     def __init__(self):
         """
         It is an error to create a :class:`Debugger` instance
@@ -2431,6 +2439,41 @@ class Debugger(object):
         :return: An instance of :class:`GPS.Debugger`
         """
         pass  # implemented in Ada
+
+
+###########################################################
+# DebuggerBreakpoint
+###########################################################
+
+class DebuggerBreakpoint(object):
+    """
+    Instances of this class represents one breakpoint set in the debugger.
+    """
+
+    num = 0
+    """The identifier for this breakpoint"""
+
+    type = ""
+    """Either 'breakpoint' or 'watchpoint'"""
+
+    enabled = True
+    """Whether this breakpoint is enabled"""
+
+    watched = ""
+    """
+    If the breakpoint is a watchpoint, i.e. monitors changes to a
+    variable, this property gives the name of the variable.
+    """
+
+    file = None
+    """
+    An instance of GPS.File, where the debugger will stop.
+    """
+
+    line = 0
+    """
+    The line on which the debugger will stop
+    """
 
 
 ###########################################################

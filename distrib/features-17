@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P608-039 GPS: new python function GPS.Debugger.breakpoints (2016-06-09)
+
+  GPS now exports the list of breakpoints that are currently set in the
+  debugger. This is both more efficient and more reliable than having scripts
+  parse it again, and avoids hard-coding gdb commands in scripts.
+
 NF-17-P601-006 GPS: new functions exported to GPS.Debugger (2016-06-08)
 
   GPS exports more debugger functions to python, allowing scripts to be

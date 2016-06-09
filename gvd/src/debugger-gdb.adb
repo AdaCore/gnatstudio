@@ -3548,21 +3548,19 @@ package body Debugger.Gdb is
          if Matched (0) /= No_Match then
             if Matched (1) /= No_Match then
                if Matched (3) /= No_Match then
-                  Br (Num).Except := new String'
+                  Br (Num).Except := To_Unbounded_String
                     (S (Matched (3).First .. Matched (3).Last));
                else
-                  Br (Num).Except :=
-                    new String'
-                      (S (Matched (2).First .. Matched (2).Last));
+                  Br (Num).Except := To_Unbounded_String
+                    (S (Matched (2).First .. Matched (2).Last));
                end if;
             else
                if Matched (5) /= No_Match then
-                  Br (Num).Except := new String'
+                  Br (Num).Except := To_Unbounded_String
                     (S (Matched (5).First .. Matched (5).Last));
                else
-                  Br (Num).Except :=
-                    new String'
-                      (S (Matched (4).First .. Matched (4).Last));
+                  Br (Num).Except := To_Unbounded_String
+                    (S (Matched (4).First .. Matched (4).Last));
                end if;
             end if;
             Has_Matched := True;
@@ -3570,7 +3568,7 @@ package body Debugger.Gdb is
 
          Match (Subprogram_In_Breakpoint, S (First .. Last - 2), Matched);
          if Matched (0) /= No_Match then
-            Br (Num).Subprogram := new String'
+            Br (Num).Subprogram := To_Unbounded_String
               (S (Matched (1).First .. Matched (1).Last));
             Has_Matched := True;
          end if;
@@ -3592,7 +3590,7 @@ package body Debugger.Gdb is
          Match
            (Condition_In_Breakpoint, S (First .. Last - 2), Matched);
          if Matched (0) /= No_Match then
-            Br (Num).Condition := new String'
+            Br (Num).Condition := To_Unbounded_String
               (S (Matched (1).First .. Matched (1).Last));
             M := True;
          end if;
@@ -3619,8 +3617,8 @@ package body Debugger.Gdb is
                end loop;
 
                if First /= Last then
-                  Br (Num).Commands :=
-                    new String'(S (First .. Last - 2));
+                  Br (Num).Commands := To_Unbounded_String
+                    (S (First .. Last - 2));
                end if;
             end if;
          end if;
@@ -3724,8 +3722,8 @@ package body Debugger.Gdb is
                   Br (Num).Address := String_To_Address
                     ("0x" & S (Matched (8).First .. Matched (8).Last));
                else
-                  Br (Num).Expression :=
-                    new String'(S (Matched (9).First .. Matched (9).Last));
+                  Br (Num).Expression := To_Unbounded_String
+                    (S (Matched (9).First .. Matched (9).Last));
                end if;
 
                --  Go to beginning of next line.
@@ -3894,7 +3892,7 @@ package body Debugger.Gdb is
          while Index <= S'Last and then Num <= Nums loop
             Start := Index;
             Skip_To_Char (S, Index, ':');
-            Arr (Num).Name := new String'(S (Start .. Index - 1));
+            Arr (Num).Name := To_Unbounded_String (S (Start .. Index - 1));
             Skip_To_Char (S, Index, ASCII.LF);
             Index := Index + 1;
             Num := Num + 1;

@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with GNAT.Strings;            use GNAT.Strings;
 with GNATCOLL.Scripts;        use GNATCOLL.Scripts;
 with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts.Gtkada;
@@ -32,17 +33,104 @@ with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Intl;                use GPS.Intl;
 with GVD.Preferences;         use GVD.Preferences;
 with GVD.Process;             use GVD.Process;
-with GVD.Types;
+with GVD.Types;               use GVD.Types;
 with GVD_Module;              use GVD_Module;
 with Interactive_Consoles;    use Interactive_Consoles;
 with GVD.Consoles;            use GVD.Consoles;
 
 package body GVD.Scripts is
 
+   Debugger_Breakpoint_Class_Name : constant String := "DebuggerBreakpoint";
+
+   type Breakpoint_Info_Property is new Instance_Property_Record with record
+      Data : Breakpoint_Data;
+   end record;
+   function Create_Debugger_Breakpoint
+     (Script : not null access Scripting_Language_Record'Class;
+      Data   : Breakpoint_Data) return Class_Instance;
+   function Get_Breakpoint (Inst : Class_Instance) return Breakpoint_Data;
+   --  Class instances for a Debugger_Breakpoint
+
    procedure Shell_Handler
      (Data    : in out Callback_Data'Class;
       Command : String);
    --  Interactive script handler for the debugger module
+
+   procedure Info_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Hander for Debugger_Breakpoint class
+
+   ------------------
+   -- Info_Handler --
+   ------------------
+
+   procedure Info_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String) is
+   begin
+      if Command = Constructor_Method then
+         Data.Set_Error_Msg
+           ("Cannot construct instances of DebuggerBreakpoint");
+
+      elsif Command = "num" then
+         Data.Set_Return_Value
+           (Integer (Get_Breakpoint (Data.Nth_Arg (1)).Num));
+
+      elsif Command = "type" then
+         case Get_Breakpoint (Data.Nth_Arg (1)).The_Type is
+            when Breakpoint =>
+               Data.Set_Return_Value (String'("breakpoint"));
+            when Watchpoint =>
+               Data.Set_Return_Value (String'("watchpoint"));
+         end case;
+
+      elsif Command = "enabled" then
+         Data.Set_Return_Value (Get_Breakpoint (Data.Nth_Arg (1)).Enabled);
+
+      elsif Command = "watched" then
+         Data.Set_Return_Value
+           (To_String (Get_Breakpoint (Data.Nth_Arg (1)).Expression));
+
+      elsif Command = "file" then
+         Data.Set_Return_Value
+           (Create_File
+              (Data.Get_Script,
+               Get_Breakpoint (Data.Nth_Arg (1)).File));
+
+      elsif Command = "line" then
+         Data.Set_Return_Value
+           (Get_Breakpoint (Data.Nth_Arg (1)).Line);
+      end if;
+   end Info_Handler;
+
+   --------------------------------
+   -- Create_Debugger_Breakpoint --
+   --------------------------------
+
+   function Create_Debugger_Breakpoint
+     (Script : not null access Scripting_Language_Record'Class;
+      Data   : Breakpoint_Data) return Class_Instance
+   is
+      Inst : constant Class_Instance := Script.New_Instance
+        (Script.Get_Repository.New_Class (Debugger_Breakpoint_Class_Name));
+   begin
+      Set_Data
+        (Inst, Debugger_Breakpoint_Class_Name,
+         Breakpoint_Info_Property'(Data => Data));
+      return Inst;
+   end Create_Debugger_Breakpoint;
+
+   --------------------
+   -- Get_Breakpoint --
+   --------------------
+
+   function Get_Breakpoint (Inst : Class_Instance) return Breakpoint_Data is
+      Data : constant Instance_Property :=
+        Get_Data (Inst, Debugger_Breakpoint_Class_Name);
+   begin
+      return Breakpoint_Info_Property (Data.all).Data;
+   end Get_Breakpoint;
 
    -------------------
    -- Shell_Handler --
@@ -315,6 +403,17 @@ package body GVD.Scripts is
             Set_Return_Value
               (Data, Get_Or_Create_Instance (Get_Script (Data), Process));
          end;
+
+      elsif Command = "breakpoints" then
+         Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
+         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
+         Data.Set_Return_Value_As_List;
+         if Process.Breakpoints /= null then
+            for B of Process.Breakpoints.all loop
+               Data.Set_Return_Value
+                 (Create_Debugger_Breakpoint (Data.Get_Script, B));
+            end loop;
+         end if;
       end if;
    end Shell_Handler;
 
@@ -326,6 +425,8 @@ package body GVD.Scripts is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Class : constant Class_Type := New_Class (Kernel, "Debugger");
+      Info  : constant Class_Type := New_Class
+        (Kernel, Debugger_Breakpoint_Class_Name);
    begin
       Kernel.Scripts.Register_Command
         (Constructor_Method,
@@ -442,6 +543,27 @@ package body GVD.Scripts is
                           2 => Param ("line")),
          Handler      => Shell_Handler'Access,
          Class        => Class);
+      Kernel.Scripts.Register_Property
+        ("breakpoints",
+         Getter       => Shell_Handler'Access,
+         Class        => Class);
+
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
+         Handler      => Info_Handler'Access,
+         Class        => Info);
+      Kernel.Scripts.Register_Property
+        ("num", Getter => Info_Handler'Access, Class => Info);
+      Kernel.Scripts.Register_Property
+        ("type", Getter => Info_Handler'Access, Class => Info);
+      Kernel.Scripts.Register_Property
+        ("enabled", Getter => Info_Handler'Access, Class => Info);
+      Kernel.Scripts.Register_Property
+        ("watched", Getter => Info_Handler'Access, Class => Info);
+      Kernel.Scripts.Register_Property
+        ("file", Getter => Info_Handler'Access, Class => Info);
+      Kernel.Scripts.Register_Property
+        ("line", Getter => Info_Handler'Access, Class => Info);
    end Create_Hooks;
 
 end GVD.Scripts;

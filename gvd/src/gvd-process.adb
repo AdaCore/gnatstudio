@@ -17,6 +17,7 @@
 
 with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
@@ -67,7 +68,6 @@ with Remote;                     use Remote;
 with Toolchains_Old;             use Toolchains_Old;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with XML_Utils;                  use XML_Utils;
-with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
 package body GVD.Process is
    Me      : constant Trace_Handle := Create ("GVD.Process");
@@ -206,17 +206,20 @@ package body GVD.Process is
                if not Br.Enabled then
                   Set_Attribute (Breaks, "enabled", "false");
                end if;
-               if Br.Expression /= null then
-                  Set_Attribute (Breaks, "expression", Br.Expression.all);
+               if Br.Expression /= "" then
+                  Set_Attribute
+                    (Breaks, "expression", To_String (Br.Expression));
                end if;
                if Br.File /= GNATCOLL.VFS.No_File then
                   Add_File_Child (Breaks, "file", Br.File);
                end if;
-               if Br.Except /= null then
-                  Set_Attribute (Breaks, "exception", Br.Except.all);
+               if Br.Except /= "" then
+                  Set_Attribute
+                    (Breaks, "exception", To_String (Br.Except));
                end if;
-               if Br.Subprogram /= null then
-                  Set_Attribute (Breaks, "subprogram", Br.Subprogram.all);
+               if Br.Subprogram /= "" then
+                  Set_Attribute
+                    (Breaks, "subprogram", To_String (Br.Subprogram));
                end if;
                if Br.Line /= 0 then
                   Set_Attribute (Breaks, "line", Integer'Image (Br.Line));
@@ -229,11 +232,13 @@ package body GVD.Process is
                   Set_Attribute
                     (Breaks, "ignore", Integer'Image (Br.Ignore));
                end if;
-               if Br.Condition /= null then
-                  Set_Attribute (Breaks, "condition", Br.Condition.all);
+               if Br.Condition /= "" then
+                  Set_Attribute
+                    (Breaks, "condition", To_String (Br.Condition));
                end if;
-               if Br.Commands /= null then
-                  Set_Attribute (Breaks, "command", Br.Commands.all);
+               if Br.Commands /= "" then
+                  Set_Attribute
+                    (Breaks, "command", To_String (Br.Commands));
                end if;
                if Br.Scope /= No_Scope then
                   Set_Attribute
@@ -259,20 +264,20 @@ package body GVD.Process is
       Breaks : Node_Ptr;
       Count  : Natural := 0;
 
-      function Get_String (Attr : String) return GNAT.Strings.String_Access;
+      function Get_String (Attr : String) return Unbounded_String;
       --  return the value of Attr (or null if the Attr doesn't exist
 
       ----------------
       -- Get_String --
       ----------------
 
-      function Get_String (Attr : String) return GNAT.Strings.String_Access is
+      function Get_String (Attr : String) return Unbounded_String is
          Value : constant String := Get_Attribute (Breaks, Attr, "");
       begin
          if Value = "" then
-            return null;
+            return Null_Unbounded_String;
          else
-            return new String'(Value);
+            return To_Unbounded_String (Value);
          end if;
       end Get_String;
 
@@ -347,18 +352,18 @@ package body GVD.Process is
             Id      : Breakpoint_Identifier := Breakpoint_Identifier'Last;
             Num     : Breakpoint_Identifier with Unreferenced;
          begin
-            if Br.Except /= null then
+            if Br.Except /= "" then
                Num := Break_Exception
-                 (Process.Debugger, Br.Except.all,
+                 (Process.Debugger, To_String (Br.Except),
                   Temporary => Br.Disposition /= Keep, Mode => Internal,
                   Unhandled => False);
             elsif Br.Line /= 0 and then Br.File /= GNATCOLL.VFS.No_File then
                Num := Break_Source
                  (Process.Debugger, Br.File, Br.Line,
                   Temporary => Br.Disposition /= Keep, Mode => Internal);
-            elsif Br.Subprogram /= null then
+            elsif Br.Subprogram /= "" then
                Num := Break_Subprogram
-                 (Process.Debugger, Br.Subprogram.all,
+                 (Process.Debugger, To_String (Br.Subprogram),
                   Temporary => Br.Disposition /= Keep, Mode => Internal);
 
             elsif Br.Address /= Invalid_Address then
@@ -378,20 +383,22 @@ package body GVD.Process is
                     (Process.Debugger, Id, Br.Enabled, Internal);
                end if;
 
-               if Br.Condition /= null then
+               if Br.Condition /= "" then
                   if Id = Breakpoint_Identifier'Last then
                      Id := Get_Last_Breakpoint_Id (Process.Debugger);
                   end if;
                   Set_Breakpoint_Condition
-                    (Process.Debugger, Id, Br.Condition.all, Mode => Internal);
+                     (Process.Debugger, Id,
+                      To_String (Br.Condition), Mode => Internal);
                end if;
 
-               if Br.Commands /= null then
+               if Br.Commands /= "" then
                   if Id = Breakpoint_Identifier'Last then
                      Id := Get_Last_Breakpoint_Id (Process.Debugger);
                   end if;
                   Set_Breakpoint_Command
-                    (Process.Debugger, Id, Br.Commands.all, Internal);
+                    (Process.Debugger, Id,
+                     To_String (Br.Commands), Internal);
                end if;
 
                if Br.Ignore /= 0 then
@@ -932,9 +939,7 @@ package body GVD.Process is
             declare
                Br : Breakpoint_Data renames Process.Breakpoints (B);
             begin
-               if Br.Except = null
-                 or else Br.Except.all /= "all"
-               then
+               if Br.Except = "" or else Br.Except /= "all" then
                   Count := Count + 1;
                end if;
             end;
@@ -947,13 +952,9 @@ package body GVD.Process is
             declare
                Br : Breakpoint_Data renames Process.Breakpoints (B);
             begin
-               if Br.Except = null
-                 or else Br.Except.all /= "all"
-               then
+               if Br.Except = "" or else Br.Except /= "all" then
                   Property.Breakpoints (Count) :=  Br;
                   Count := Count + 1;
-               else
-                  Free (Br);
                end if;
             end;
          end loop;

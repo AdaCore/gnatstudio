@@ -434,6 +434,10 @@ Classes
 
 
 
+   .. autoattribute:: GPS.Debugger.breakpoints
+
+
+
    .. autoattribute:: GPS.Debugger.current_file
 
 
@@ -486,6 +490,39 @@ Classes
    .. automethod:: GPS.Debugger.unbreak_at_location
 
    .. automethod:: GPS.Debugger.value_of
+
+:class:`GPS.DebuggerBreakpoint`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: DebuggerBreakpoint
+
+
+
+
+   .. autoattribute:: GPS.DebuggerBreakpoint.enabled
+
+
+
+   .. autoattribute:: GPS.DebuggerBreakpoint.file
+
+
+
+   .. autoattribute:: GPS.DebuggerBreakpoint.line
+
+
+
+   .. autoattribute:: GPS.DebuggerBreakpoint.num
+
+
+
+   .. autoattribute:: GPS.DebuggerBreakpoint.type
+
+
+
+   .. autoattribute:: GPS.DebuggerBreakpoint.watched
+
+
+   .. automethod:: GPS.DebuggerBreakpoint.__init__
 
 :class:`GPS.Editor`
 ^^^^^^^^^^^^^^^^^^^

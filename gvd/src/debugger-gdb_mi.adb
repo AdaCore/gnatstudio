@@ -2203,7 +2203,7 @@ package body Debugger.Gdb_MI is
                      if Text.all = "func" then
                         Next (C2, 2);
                         Result (J).Subprogram :=
-                          new String'(Element (C2).Text.all);
+                          To_Unbounded_String (Element (C2).Text.all);
                      elsif Text.all = "file" then
                         Next (C2, 2);
                         Result (J).File :=
@@ -2227,7 +2227,7 @@ package body Debugger.Gdb_MI is
                      elsif Text.all = "what" then
                         Next (C2, 2);
                         Result (J).Expression :=
-                          new String'(Element (C2).Text.all);
+                          To_Unbounded_String (Element (C2).Text.all);
                      else
                         exit;
                      end if;
@@ -2239,7 +2239,8 @@ package body Debugger.Gdb_MI is
             else  -- Watchpoint
                C2 := Find_Identifier (C2, "what");
                Next (C2, 2);
-               Result (J).Expression := new String'(Element (C2).Text.all);
+               Result (J).Expression :=
+                 To_Unbounded_String (Element (C2).Text.all);
             end if;
 
             Next (C2, 2);
@@ -2255,7 +2256,7 @@ package body Debugger.Gdb_MI is
 
                   if Text.all = "cond" then
                      Result (J).Condition :=
-                       new String'(Element (C2).Text.all);
+                       To_Unbounded_String (Element (C2).Text.all);
                   elsif Text.all = "ignore" then
                      Result (J).Ignore :=
                        Integer'Value (Element (C2).Text.all);
@@ -2366,7 +2367,7 @@ package body Debugger.Gdb_MI is
          while Index <= S'Last and then Num <= Nums loop
             Start := Index;
             Skip_To_Char (S, Index, ':');
-            Arr (Num).Name := new String'(S (Start .. Index - 1));
+            Arr (Num).Name := To_Unbounded_String (S (Start .. Index - 1));
             Skip_To_Char (S, Index, ASCII.LF);
             Index := Index + 1;
             Num := Num + 1;

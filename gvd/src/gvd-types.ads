@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 with GNATCOLL.VFS;
 with GNAT.Strings;
 
@@ -161,14 +162,14 @@ package GVD.Types is
       --  The action that causes the watchpoint to break the program.  The
       --  value set here is valid only for watchpoints.
 
-      Expression  : GNAT.Strings.String_Access;
+      Expression  : Unbounded_String;
       --  The name of the variable to watch for watchpoints. This is left to
       --  null for breakpoints.
 
-      Except      : GNAT.Strings.String_Access;
+      Except      : Unbounded_String;
       --  Name of the exception on which we break
 
-      Subprogram  : GNAT.Strings.String_Access;
+      Subprogram  : Unbounded_String;
       --  Name of the subprogram we stop in.
 
       File        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
@@ -178,13 +179,13 @@ package GVD.Types is
       Line        : Integer := 0;
       --  The line that contains the breakpoint
 
-      Condition   : GNAT.Strings.String_Access;
+      Condition   : Unbounded_String;
       --  Condition on which this breakpoint is activated
 
       Ignore      : Natural := 0;
       --  Number of hits that will be ignored before actually stopping
 
-      Commands    : GNAT.Strings.String_Access;
+      Commands    : Unbounded_String;
       --  Commands to execute when the debugger stops at this breakpoint
 
       Scope       : Scope_Type := No_Scope;
@@ -199,12 +200,6 @@ package GVD.Types is
 
    type Breakpoint_Array_Ptr is access Breakpoint_Array;
 
-   procedure Free (Br : in out Breakpoint_Data);
-   --  Free the memory allocated for a breakpoint data
-
-   procedure Free (Br_Array : in out Breakpoint_Array);
-   --  Free the memory allocated for a breakpoint array
-
    procedure Free (Br_Access : in out Breakpoint_Array_Ptr);
    --  Free the memory allocate for the array.
 
@@ -213,13 +208,11 @@ package GVD.Types is
    ----------------
 
    type Exception_Data is record
-      Name : GNAT.Strings.String_Access;
+      Name : Unbounded_String;
    end record;
    --  Description of an exception that can occur in the current application.
 
    type Exception_Array is array (Natural range <>) of Exception_Data;
-
-   procedure Free (Exception_Access : in out Exception_Array);
 
    ------------------------
    -- Program_Descriptor --

@@ -20,7 +20,6 @@ with Ada.Unchecked_Deallocation;
 with Commands.Debugger;            use Commands.Debugger;
 with Commands;                     use Commands;
 with Debugger_Pixmaps;             use Debugger_Pixmaps;
-with GNAT.Strings;                 use GNAT.Strings;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
@@ -154,9 +153,6 @@ package body GVD.Code_Editors is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Breakpoint_Array, Breakpoint_Array_Ptr);
 
-      function Copy_Bp (D : Breakpoint_Data) return Breakpoint_Data;
-      --  Deep copy of a breakpoint.
-
       procedure Add_Unique_Info
         (A     : in out Breakpoint_Array_Ptr;
          N     : Breakpoint_Data;
@@ -166,54 +162,6 @@ package body GVD.Code_Editors is
       --  Perform a resize on A if necessary.
       --  If the entry existed in A before calling Add_Unique_Info,
       --  Added is set to False, True otherwise.
-
-      -------------
-      -- Copy_Bp --
-      -------------
-
-      function Copy_Bp (D : Breakpoint_Data) return Breakpoint_Data is
-         Result : Breakpoint_Data;
-      begin
-         Result.Num := D.Num;
-         Result.The_Type := D.The_Type;
-         Result.Disposition := D.Disposition;
-         Result.Enabled := D.Enabled;
-
-         if D.Address /= Invalid_Address then
-            Result.Address := D.Address;
-         end if;
-
-         if D.Expression /= null then
-            Result.Expression := new String'(D.Expression.all);
-         end if;
-
-         Result.File := D.File;
-
-         if D.Except /= null then
-            Result.Except := new String'(D.Except.all);
-         end if;
-
-         if D.Subprogram /= null then
-            Result.Subprogram := new String'(D.Subprogram.all);
-         end if;
-
-         Result.Line := D.Line;
-
-         Result.Ignore := D.Ignore;
-
-         if D.Condition /= null then
-            Result.Condition := new String'(D.Condition.all);
-         end if;
-
-         if D.Commands /= null then
-            Result.Commands := new String'(D.Commands.all);
-         end if;
-
-         Result.Scope := D.Scope;
-         Result.Action := D.Action;
-
-         return Result;
-      end Copy_Bp;
 
       ---------------------
       -- Add_Unique_Info --
@@ -261,13 +209,13 @@ package body GVD.Code_Editors is
                  (A'First .. A'Last + 16);
             begin
                B (A'First .. A'Last) := A.all;
-               B (A'Last + 1) := Copy_Bp (N);
+               B (A'Last + 1) := N;
                Unchecked_Free (A);
                A := B;
             end;
 
          else
-            A (First_Zero) := Copy_Bp (N);
+            A (First_Zero) := N;
          end if;
       end Add_Unique_Info;
 
@@ -301,7 +249,7 @@ package body GVD.Code_Editors is
                   A (L).Tooltip_Text := To_Unbounded_String
                     ("A disabled breakpoint has been set on this line");
 
-               elsif Br (J).Condition /= null then
+               elsif Br (J).Condition /= "" then
                   A (L).Image := Line_Has_Conditional_Breakpoint_Pixbuf;
                   A (L).Tooltip_Text := To_Unbounded_String
                     ("A conditional breakpoint has been set on this line");
@@ -398,8 +346,6 @@ package body GVD.Code_Editors is
                      Info       => A);
                   Unchecked_Free (A);
                end;
-
-               Free (Editor.Current_Breakpoints (J));
             end if;
          end if;
       end loop;
