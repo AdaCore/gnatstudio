@@ -987,7 +987,7 @@ shortcuts` menu).
 * :menuselection:`Edit --> Rectangles --> Clear`
 
   Replaces the contents of the selected rectangle with spaces. If you start
-  from our initial exmaple, you end up with the following. Note the
+  from our initial example, you end up with the following. Note the
   difference between this and :menuselection:`Edit --> Rectangles -->
   Delete` menu::
 
