@@ -310,6 +310,14 @@ package Debugger.Gdb is
       Value    : out Backtrace_Array;
       Len      : out Natural);
 
+   overriding procedure Configure_Backtrace
+     (Self                 : not null access Gdb_Debugger;
+      Show_Id              : Boolean := True;
+      Show_PC              : Boolean := True;
+      Show_Subprogram_Name : Boolean := True;
+      Show_Parameters      : Boolean := True;
+      Show_Location        : Boolean := True);
+
    overriding procedure Task_Switch
      (Debugger : access Gdb_Debugger;
       Task_Num : Natural;

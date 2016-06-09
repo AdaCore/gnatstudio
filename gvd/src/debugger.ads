@@ -548,6 +548,10 @@ package Debugger is
    --  See above for details on Display.
    --  GDB_COMMAND: "finish"
 
+   ---------------
+   -- Backtrace --
+   ---------------
+
    type Backtrace_Record is record
       Frame_Id        : Natural;
       Program_Counter : GNAT.Strings.String_Access;
@@ -566,6 +570,19 @@ package Debugger is
       Len      : out Natural) is abstract;
    --  Return the current backtrace.
    --  GDB_COMMAND: "bt"
+
+   procedure Configure_Backtrace
+     (Self                 : not null access Debugger_Root;
+      Show_Id              : Boolean := True;
+      Show_PC              : Boolean := True;
+      Show_Subprogram_Name : Boolean := True;
+      Show_Parameters      : Boolean := True;
+      Show_Location        : Boolean := True) is null;
+   --  Configure which information will be displayed in the call stack view.
+   --  By taking advantage of which info is not necessary, this might speed up
+   --  the computation of the call stack in the debugger.
+   --
+   --  GDB_COMMAND: set print frame-arguments
 
    -------------------------
    -- Breakpoint Handling --

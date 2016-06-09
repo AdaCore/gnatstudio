@@ -1982,6 +1982,28 @@ package body Debugger.Gdb is
       end loop;
    end Parse_Backtrace_Info;
 
+   -------------------------
+   -- Configure_Backtrace --
+   -------------------------
+
+   overriding procedure Configure_Backtrace
+     (Self                 : not null access Gdb_Debugger;
+      Show_Id              : Boolean := True;
+      Show_PC              : Boolean := True;
+      Show_Subprogram_Name : Boolean := True;
+      Show_Parameters      : Boolean := True;
+      Show_Location        : Boolean := True)
+   is
+      pragma Unreferenced
+        (Show_Id, Show_PC, Show_Subprogram_Name, Show_Location);
+   begin
+      if Show_Parameters then
+         Self.Send ("set print frame-arguments scalar");
+      else
+         Self.Send ("set print frame-arguments none");
+      end if;
+   end Configure_Backtrace;
+
    ---------------
    -- Backtrace --
    ---------------

@@ -25,9 +25,7 @@ with Glib_Values_Utils;      use Glib_Values_Utils;
 with Gtk.Box;                use Gtk.Box;
 with Gtk.Check_Menu_Item;    use Gtk.Check_Menu_Item;
 with Gtk.Enums;              use Gtk.Enums;
-with Gtk.Handlers;           use Gtk.Handlers;
 with Gtk.Menu;               use Gtk.Menu;
-with Gtk.Menu_Item;          use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;    use Gtk.Scrolled_Window;
 with Gtk.Tree_Model;         use Gtk.Tree_Model;
 with Gtk.Tree_Selection;     use Gtk.Tree_Selection;
@@ -41,6 +39,7 @@ with Gtkada.MDI;             use Gtkada.MDI;
 
 with Config;                 use Config;
 with Debugger;               use Debugger;
+with Default_Preferences;    use Default_Preferences;
 with Generic_Views;          use Generic_Views;
 with GPS.Debuggers;          use GPS.Debuggers;
 with GPS.Kernel;             use GPS.Kernel;
@@ -48,6 +47,7 @@ with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
 with GUI_Utils;              use GUI_Utils;
 with GVD.Code_Editors;       use GVD.Code_Editors;
@@ -56,7 +56,6 @@ with GVD.Process;            use GVD.Process;
 with GVD.Types;              use GVD.Types;
 with GVD_Module;             use GVD_Module;
 with Process_Proxies;        use Process_Proxies;
-with XML_Utils;              use XML_Utils;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
 package body GVD.Call_Stack is
@@ -82,36 +81,26 @@ package body GVD.Call_Stack is
    -- Local subprograms --
    -----------------------
 
-   type Stack_List_Mask is mod 2 ** 16;
-   Frame_Num       : constant Stack_List_Mask := 2 ** 0;
-   Program_Counter : constant Stack_List_Mask := 2 ** 1;
-   Subprog_Name    : constant Stack_List_Mask := 2 ** 2;
-   Params          : constant Stack_List_Mask := 2 ** 3;
-   File_Location   : constant Stack_List_Mask := 2 ** 4;
-   --  Lists the information to be displayed in the stack list window.
+   Show_Frame_Number    : Boolean_Preference;
+   Show_Program_Counter : Boolean_Preference;
+   Show_Subprogram_Name : Boolean_Preference;
+   Show_Parameters      : Boolean_Preference;
+   Show_File_Location   : Boolean_Preference;
 
-   type Call_Stack_Record is new Process_View_Record with
-      record
-         Tree                       : Gtk_Tree_View;
-         Model                      : Gtk_Tree_Store;
-         Block                      : Boolean := False;
-         --  Whether to process selection events.
-
-         Backtrace_Mask             : Stack_List_Mask := Subprog_Name;
-         --  What columns to be displayed in the stack list window
-      end record;
-   type Call_Stack is access all Call_Stack_Record'Class;
-
+   type Call_Stack_Record is new Process_View_Record with record
+      Tree                       : Gtk_Tree_View;
+      Model                      : Gtk_Tree_Store;
+      Block                      : Boolean := False;
+      --  Whether to process selection events.
+   end record;
    overriding procedure Update (View   : not null access Call_Stack_Record);
    overriding procedure On_Process_Terminated
      (View : not null access Call_Stack_Record);
    overriding procedure On_State_Changed
      (View : not null access Call_Stack_Record; New_State : Debugger_State);
-   overriding procedure Load_From_XML
-     (View : access Call_Stack_Record; XML : XML_Utils.Node_Ptr);
-   overriding procedure Save_To_XML
-     (View : access Call_Stack_Record;
-      XML  : in out XML_Utils.Node_Ptr);
+   overriding procedure Create_Menu
+     (Self : not null access Call_Stack_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
    --  See inherited documentation
 
    function Initialize
@@ -139,10 +128,14 @@ package body GVD.Call_Stack is
       Formal_MDI_Child   => CS_Child_Record,
       Reuse_If_Exist     => False,
       Commands_Category  => "",
+      Local_Config       => True,
       Areas              => Gtkada.MDI.Sides_Only,
       Group              => Group_Debugger_Stack,
       Position           => Position_Right,
       Initialize         => Initialize);
+   subtype Call_Stack is CS_MDI_Views.View_Access;
+   use type Call_Stack;
+
    package Simple_Views is new GVD.Generic_View.Simple_Views
      (Views              => CS_MDI_Views,
       Formal_View_Record => Call_Stack_Record,
@@ -150,21 +143,8 @@ package body GVD.Call_Stack is
       Get_View           => Get_View,
       Set_View           => Set_View);
 
-   package Call_Stack_Cb is new Gtk.Handlers.User_Callback
-     (Call_Stack_Record, Stack_List_Mask);
-
-   procedure Set_Column_Types (Tree : access Call_Stack_Record'Class);
+   procedure Set_Column_Types (Self : not null access Call_Stack_Record'Class);
    --  Setup the columns.
-
-   procedure Context_Factory
-     (Context      : Selection_Context;
-      Menu         : Gtk_Menu);
-   --  Create the context for the contextual menus
-
-   procedure Change_Mask
-     (Stack  : access Call_Stack_Record'Class;
-      Mask   : Stack_List_Mask);
-   --  Toggle the display of a specific column in the Stack_List window.
 
    procedure On_Selection_Changed
      (Object : access Glib.Object.GObject_Record'Class);
@@ -178,6 +158,13 @@ package body GVD.Call_Stack is
    --  Hook for "debugger_location_changed"
    --  Highlight frame number Frame based on the current debugger output
    --  stored in Process.
+
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
+   --  Called when the preferences have changed
 
    --------------
    -- Get_View --
@@ -208,6 +195,9 @@ package body GVD.Call_Stack is
 
       if View = null and then Old /= null then
          On_Process_Terminated (Old);
+      elsif View /= null then
+         --  Configure the backtrace info retrieved from the debugger
+         Set_Column_Types (View);
       end if;
    end Set_View;
 
@@ -222,31 +212,41 @@ package body GVD.Call_Stack is
       Model : Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
    begin
-      if Get_Process (Stack) = null or else Stack.Block then
-         return;
-      end if;
-
-      Get_Selected (Get_Selection (Stack.Tree), Model, Iter);
-      if Iter /= Null_Iter then
-         Stack_Frame
-           (Visual_Debugger (Get_Process (Stack)).Debugger,
-            Natural'Value
-              (Get_String (Stack.Model, Iter, Frame_Num_Column)) + 1,
-            GVD.Types.Visible);
+      if Get_Process (Stack) /= null and then not Stack.Block then
+         Get_Selected (Get_Selection (Stack.Tree), Model, Iter);
+         if Iter /= Null_Iter then
+            Stack_Frame
+              (Visual_Debugger (Get_Process (Stack)).Debugger,
+               Natural'Value
+                 (Get_String (Stack.Model, Iter, Frame_Num_Column)) + 1,
+               GVD.Types.Visible);
+         end if;
       end if;
    end On_Selection_Changed;
 
-   -----------------
-   -- Change_Mask --
-   -----------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Change_Mask
-     (Stack  : access Call_Stack_Record'Class;
-      Mask   : Stack_List_Mask) is
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
+   is
+      pragma Unreferenced (Self);
+      Stack : Call_Stack;
    begin
-      Stack.Backtrace_Mask := Stack.Backtrace_Mask xor Mask;
-      Set_Column_Types (Stack);
-   end Change_Mask;
+      if Pref = null
+        or else Pref = Preference (Show_Frame_Number)
+        or else Pref = Preference (Show_Program_Counter)
+        or else Pref = Preference (Show_Subprogram_Name)
+        or else Pref = Preference (Show_Parameters)
+        or else Pref = Preference (Show_Frame_Number)
+      then
+         Stack := CS_MDI_Views.Retrieve_View (Kernel);
+         Set_Column_Types (Stack);
+      end if;
+   end Execute;
 
    -------------------
    -- Build_Context --
@@ -275,73 +275,46 @@ package body GVD.Call_Stack is
       return Context;
    end Build_Context;
 
-   ---------------------
-   -- Context_Factory --
-   ---------------------
+   -----------------
+   -- Create_Menu --
+   -----------------
 
-   procedure Context_Factory
-     (Context : Selection_Context;
-      Menu    : Gtk_Menu)
+   overriding procedure Create_Menu
+     (Self : not null access Call_Stack_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Stack : Call_Stack;
-      Check : Gtk_Check_Menu_Item;
    begin
-      --  ??? Should be in local config menu instead
-      Stack := Call_Stack
-        (GPS_MDI_Child (Get_MDI (Get_Kernel (Context)).Get_Focus_Child)
-         .Get_Actual_Widget);
-      if Stack = null then
-         return;
-      end if;
-
-      Gtk_New (Check, Label => -"Frame Number");
-      Set_Active (Check, (Stack.Backtrace_Mask and Frame_Num) /= 0);
-      Append (Menu, Check);
-      Call_Stack_Cb.Object_Connect
-        (Check, Signal_Activate, Change_Mask'Access, Stack, Frame_Num);
-
-      Gtk_New (Check, Label => -"Program Counter");
-      Set_Active (Check, (Stack.Backtrace_Mask and Program_Counter) /= 0);
-      Append (Menu, Check);
-      Call_Stack_Cb.Object_Connect
-        (Check, Signal_Activate,
-         Change_Mask'Access, Stack, Program_Counter);
-
-      Gtk_New (Check, Label => -"Subprogram Name");
-      Set_Active (Check, (Stack.Backtrace_Mask and Subprog_Name) /= 0);
-      Append (Menu, Check);
-      Call_Stack_Cb.Object_Connect
-        (Check, Signal_Activate, Change_Mask'Access, Stack, Subprog_Name);
-
-      Gtk_New (Check, Label => -"Parameters");
-      Set_Active (Check, (Stack.Backtrace_Mask and Params) /= 0);
-      Append (Menu, Check);
-      Call_Stack_Cb.Object_Connect
-        (Check, Signal_Activate, Change_Mask'Access, Stack, Params);
-
-      Gtk_New (Check, Label => -"File Location");
-      Set_Active (Check, (Stack.Backtrace_Mask and File_Location) /= 0);
-      Append (Menu, Check);
-      Call_Stack_Cb.Object_Connect
-        (Check, Signal_Activate, Change_Mask'Access, Stack, File_Location);
-   end Context_Factory;
+      Append_Menu (Menu, Self.Kernel, Show_Frame_Number);
+      Append_Menu (Menu, Self.Kernel, Show_Program_Counter);
+      Append_Menu (Menu, Self.Kernel, Show_Subprogram_Name);
+      Append_Menu (Menu, Self.Kernel, Show_Parameters);
+      Append_Menu (Menu, Self.Kernel, Show_File_Location);
+   end Create_Menu;
 
    ----------------------
    -- Set_Column_Types --
    ----------------------
 
-   procedure Set_Column_Types (Tree : access Call_Stack_Record'Class) is
+   procedure Set_Column_Types
+     (Self : not null access Call_Stack_Record'Class)
+   is
+      Process : Visual_Debugger;
    begin
-      Set_Visible (Get_Column (Tree.Tree, 0),
-                   (Tree.Backtrace_Mask and Frame_Num) /= 0);
-      Set_Visible (Get_Column (Tree.Tree, 1),
-                   (Tree.Backtrace_Mask and Program_Counter) /= 0);
-      Set_Visible (Get_Column (Tree.Tree, 2),
-                   (Tree.Backtrace_Mask and Subprog_Name) /= 0);
-      Set_Visible (Get_Column (Tree.Tree, 3),
-                   (Tree.Backtrace_Mask and Params) /= 0);
-      Set_Visible (Get_Column (Tree.Tree, 4),
-                   (Tree.Backtrace_Mask and File_Location) /= 0);
+      Set_Visible (Get_Column (Self.Tree, 0), Show_Frame_Number.Get_Pref);
+      Set_Visible (Get_Column (Self.Tree, 1), Show_Program_Counter.Get_Pref);
+      Set_Visible (Get_Column (Self.Tree, 2), Show_Subprogram_Name.Get_Pref);
+      Set_Visible (Get_Column (Self.Tree, 3), Show_Parameters.Get_Pref);
+      Set_Visible (Get_Column (Self.Tree, 4), Show_File_Location.Get_Pref);
+
+      Process := Get_Process (Self);
+      if Process /= null then
+         Process.Debugger.Configure_Backtrace
+           (Show_Id              => Show_Frame_Number.Get_Pref,
+            Show_PC              => Show_Program_Counter.Get_Pref,
+            Show_Subprogram_Name => Show_Subprogram_Name.Get_Pref,
+            Show_Parameters      => Show_Parameters.Get_Pref,
+            Show_Location        => Show_File_Location.Get_Pref);
+      end if;
    end Set_Column_Types;
 
    ----------------
@@ -381,8 +354,7 @@ package body GVD.Call_Stack is
 
       Setup_Contextual_Menu
         (Kernel          => Get_Kernel (Debugger_Module_ID.all),
-         Event_On_Widget => Widget.Tree,
-         Context_Func    => Context_Factory'Access);
+         Event_On_Widget => Widget.Tree);
 
       Gtkada.Handlers.Object_Callback.Object_Connect
         (Get_Selection (Widget.Tree), Signal_Changed,
@@ -390,6 +362,7 @@ package body GVD.Call_Stack is
 
       Debugger_Location_Changed_Hook.Add
         (new On_Location_Changed, Watch => Widget);
+      Preferences_Changed_Hook.Add (new On_Pref_Changed, Watch => Widget);
 
       return Gtk_Widget (Widget.Tree);
    end Initialize;
@@ -443,35 +416,23 @@ package body GVD.Call_Stack is
         (Kernel,
          Action_Name => "open debugger call stack",
          Description => -"Open the Call Stack window for the debugger");
+
+      Show_Frame_Number := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("debug-callstack-show-frame-num", False,
+         Label => -"Show Frame Number");
+      Show_Program_Counter := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("debug-callstack-show-program-counter", False,
+         Label => -"Show Program Counter");
+      Show_Subprogram_Name := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("debug-callstack-show-subprogram", True,
+         Label => -"Show Subprogram Name");
+      Show_Parameters := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("debug-callstack-show-parameters", False,
+         Label => -"Show Parameters");
+      Show_File_Location := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("debug-callstack-show-file-loc", False,
+         Label => -"Show File Location Number");
    end Register_Module;
-
-   -------------------
-   -- Load_From_XML --
-   -------------------
-
-   overriding procedure Load_From_XML
-     (View : access Call_Stack_Record; XML : XML_Utils.Node_Ptr) is
-   begin
-      View.Backtrace_Mask := Stack_List_Mask'Value (XML.Value.all);
-   exception
-      when others =>
-         View.Backtrace_Mask := Subprog_Name;
-   end Load_From_XML;
-
-   -----------------
-   -- Save_To_XML --
-   -----------------
-
-   overriding procedure Save_To_XML
-     (View : access Call_Stack_Record;
-      XML  : in out XML_Utils.Node_Ptr)
-   is
-      N : constant Node_Ptr := new Node;
-   begin
-      N.Tag   := new String'("mask");
-      N.Value := new String'(Stack_List_Mask'Image (View.Backtrace_Mask));
-      XML.Child := N;
-   end Save_To_XML;
 
    ----------------------
    -- On_State_Changed --

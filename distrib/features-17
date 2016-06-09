@@ -29,6 +29,13 @@ NF-17-P608-039 GPS: new python function GPS.Debugger.breakpoints (2016-06-09)
   debugger. This is both more efficient and more reliable than having scripts
   parse it again, and avoids hard-coding gdb commands in scripts.
 
+NF-17-P603-005 GPS: improve debugger call stack view (2016-06-09)
+
+  This view now has a local configuration menu to chose which information
+  should be displayed. When you chose not to show subprogram parameters, gdb
+  is configured so that it also does not try to compute them, which on some
+  systems might significantly speed up operations with the debugger.
+
 NF-17-P601-006 GPS: new functions exported to GPS.Debugger (2016-06-08)
 
   GPS exports more debugger functions to python, allowing scripts to be
