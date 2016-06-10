@@ -16,14 +16,6 @@ class TargetConnector(GPS.BuildTarget):
         """
 
         xml = r"""
-        <target-model name="target connector" category="">
-        <description>Connect to a target using a
-        command line tool</description>
-        <is-run>True</is-run>
-        <iconname>gps-connect-to-target-symbolic</iconname>
-        <switches command=""/>
-        </target-model>
-
         <target model="target connector" category="Bareboard"
         name="%s">
         <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
@@ -41,3 +33,16 @@ class TargetConnector(GPS.BuildTarget):
         except GPS.Exception:
             GPS.parse_xml(xml)
             super(TargetConnector, self).__init__(tool_name)
+
+
+# Register the build target model for target connectors
+target_model_xml = r"""
+        <target-model name="target connector" category="">
+        <description>Connect to a target using a
+        command line tool</description>
+        <is-run>True</is-run>
+        <iconname>gps-connect-to-target-symbolic</iconname>
+        <switches command=""/>
+        </target-model>"""
+
+GPS.parse_xml(target_model_xml)
