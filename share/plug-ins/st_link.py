@@ -201,10 +201,10 @@ class BoardLoader(Module):
             self.__error_exit("Could not connect to the board.")
             return
 
-        r2 = yield con.wait_until_match(
+        r2, output = yield con.wait_until_match(
             "Starting verification of write complete",
             120000)
-        r3 = yield con.wait_until_match(
+        r3, output = yield con.wait_until_match(
             "Flash written and verified! jolly good!",
             500)
 
@@ -244,7 +244,7 @@ class BoardLoader(Module):
         cmd = self.__connector.get_command_line()
         msg_is("Launching st-util.")
         self.__connection = promises.ProcessWrapper(cmd, spawn_console=True)
-        r1 = yield self.__connection.wait_until_match(
+        r1, output = yield self.__connection.wait_until_match(
             "Listening at",
             120000)
 

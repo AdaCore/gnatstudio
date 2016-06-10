@@ -392,7 +392,7 @@ class ProcessWrapper(object):
             if p:
                 self.__current_answered = True
                 self.__output = self.__output[p.span()[1]::]
-                self.__current_promise.resolve(True)
+                self.__current_promise.resolve((True, self.__output))
 
     def __on_exit(self, process, status, remaining_output):
         """
@@ -409,7 +409,7 @@ class ProcessWrapper(object):
         # check if there's unanswered match promises
         # if there is --> pattern has never been found, answer with False
         if self.__current_promise and not self.__current_answered:
-            self.__current_promise.resolve(False)
+            self.__current_promise.resolve((False, ""))
 
         # check if I had made a promise to finish the process
         # if there is, answer with whatever the exit status is
@@ -433,8 +433,10 @@ class ProcessWrapper(object):
     def wait_until_match(self, pattern=None, timeout=0):
         """
         Called by user. Make a promise to them that:
-        I'll let you know when the pattern is matched/never matches
-        * Promise made here will be answered with: True/False
+        I'll let you know when the pattern is matched/never matches and return
+        the remaining output if the pattern matched.
+        * Promise made here will be answered with a tuple:
+            (True/False, remaining_output)
         """
 
         # keep the pattern info and return my promise
@@ -475,7 +477,7 @@ class ProcessWrapper(object):
             self.__current_pattern = None
             self.__current_answered = True
             # answer the promise with False
-            self.__current_promise.resolve(False)
+            self.__current_promise.resolve((False, ""))
         return False
 
     def terminate(self):
@@ -717,5 +719,6 @@ class TargetWrapper():
            Called by GPS when target finishes executing.
            Will answer the promise with exiting status.
         """
+
         self.__status = status
         GLib.timeout_add(200, self.__timeout_after_exit)
