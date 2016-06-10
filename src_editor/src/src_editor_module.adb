@@ -933,8 +933,7 @@ package body Src_Editor_Module is
          --  (Area_Context), see below.
          if Has_File_Information (Context) then
             declare
-               Infos : Line_Information_Data :=
-                  new Line_Information_Array (Line1 .. Line2);
+               Infos : Line_Information_Array (Line1 .. Line2);
             begin
                for J in Infos'Range loop
                   Infos (J).Text := To_Unbounded_String (Image (J));
@@ -945,7 +944,6 @@ package body Src_Editor_Module is
                  File       => File_Information (Context),
                  Identifier => Src_Editor_Module_Name,
                  Info       => Infos);
-               Unchecked_Free (Infos);
             end;
          end if;
       end if;

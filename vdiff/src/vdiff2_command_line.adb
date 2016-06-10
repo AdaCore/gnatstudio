@@ -174,14 +174,13 @@ package body Vdiff2_Command_Line is
                   VRange (Num_File), VRange (Diff.Ref_File));
 
       declare
-         Info : Line_Information_Data := new Line_Information_Array
+         Info : Line_Information_Array
              (VRange (Num_File).First - 1 .. VRange (Num_File).First - 1);
          Null_Line_Info : Line_Information_Record;
 
       begin
          Info (Info'First) := Null_Line_Info;
          Add_Line_Information (Kernel, File, "Vdiff2_Col_Merge", Info => Info);
-         Unchecked_Free (Info);
          Unhighlight_Block
            (Kernel, VFile (Num_File), VRange (Num_File), "Change_diff");
          Unhighlight_Block
@@ -240,14 +239,13 @@ package body Vdiff2_Command_Line is
                     VRange (Num_File), VRange (Diff.Ref_File));
 
       declare
-         Info           : Line_Information_Data := new Line_Information_Array
+         Info           : Line_Information_Array
              (VRange (Num_File).First - 1 .. VRange (Num_File).First - 1);
          Null_Line_Info : Line_Information_Record;
 
       begin
          Info (Info'First) := Null_Line_Info;
          Add_Line_Information (Kernel, File, "Vdiff2_Col_Merge", Info => Info);
-         Unchecked_Free (Info);
          Unhighlight_Block
            (Kernel, VFile (Num_File), VRange (Num_File), "Change_diff");
          Unhighlight_Block

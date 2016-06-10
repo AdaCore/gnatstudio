@@ -1443,7 +1443,7 @@ package body Debugger.Gdb_MI is
          return Breakpoint_Identifier'Value
            (C (M (1).First .. M (1).Last));
       else
-         return 0;
+         return No_Breakpoint;
       end if;
    end Internal_Set_Breakpoint;
 
@@ -2118,73 +2118,66 @@ package body Debugger.Gdb_MI is
    -- List_Breakpoints --
    ----------------------
 
-   overriding function List_Breakpoints
-     (Debugger  : access Gdb_MI_Debugger) return Breakpoint_Array
+   overriding procedure List_Breakpoints
+     (Debugger  : not null access Gdb_MI_Debugger;
+      List      : out Breakpoint_Vectors.Vector)
    is
       use Token_Lists;
-
       S      : constant String := Send_And_Get_Clean_Output
         (Debugger, "-break-list", Mode => Internal);
-      List   : Token_List := Build_Tokens (S);
+      Tokens : Token_List := Build_Tokens (S);
       C, C2  : Token_Lists.Cursor;
       Start  : Token_Lists.Cursor;
-      Num_Bp : Natural := 0;
 
    begin
-      C := Find_Identifier (First (List), "body");
+      List.Clear;
+
+      C := Find_Identifier (First (Tokens), "body");
 
       if C = No_Element then
-         Clear_Token_List (List);
-         return (1 .. 0 => <>);
+         Clear_Token_List (Tokens);
+         return;
       end if;
 
       --  Skip body=[
       Next (C, 3);
       Start := C;
 
-      --  Count number of breakpoints
+      C2 := Start;
+
       loop
-         C := Find_Identifier (C, "number");
-         exit when C = No_Element;
-         Num_Bp := Num_Bp + 1;
-         Next (C);
-      end loop;
+         C2 := Find_Identifier (C2, "number");
+         exit when C2 = No_Element;
+         Next (C2, 2);
 
-      declare
-         Result : Breakpoint_Array (1 .. Num_Bp);
-      begin
-         C2 := Start;
-
-         for J in 1 .. Num_Bp loop
-            C2 := Find_Identifier (C2, "number");
-            Next (C2, 2);
-            Result (J).Num :=
-              Breakpoint_Identifier'Value (Element (C2).Text.all);
+         declare
+            B : Breakpoint_Data;
+         begin
+            B.Num := Breakpoint_Identifier'Value (Element (C2).Text.all);
 
             C2 := Find_Identifier (C2, "type");
             Next (C2, 2);
-            Result (J).The_Type :=
-              Breakpoint_Type'Value (Element (C2).Text.all);
+            B.The_Type := Breakpoint_Type'Value (Element (C2).Text.all);
 
             C2 := Find_Identifier (C2, "disp");
             Next (C2, 2);
-            Result (J).Disposition :=
+            B.Disposition :=
               Breakpoint_Disposition'Value (Element (C2).Text.all);
 
             C2 := Find_Identifier (C2, "enabled");
             Next (C2, 2);
-            Result (J).Enabled := Element (C2).Text.all = "y";
+            B.Enabled := Element (C2).Text.all = "y";
 
             C2 := Find_Identifier (C2, "addr");
             Next (C2, 2);
-            Result (J).Address := String_To_Address (Element (C2).Text.all);
+            B.Address := String_To_Address (Element (C2).Text.all);
 
             --  ??? missing Trigger & Expression for watchpoints
             --  ??? missing Except
 
             Next (C2, 2);
 
-            if Result (J).The_Type = Breakpoint then
+            if B.The_Type = Breakpoint then
                loop
                   declare
                      Text : constant Ada.Strings.Unbounded.String_Access :=
@@ -2192,11 +2185,11 @@ package body Debugger.Gdb_MI is
                   begin
                      if Text.all = "func" then
                         Next (C2, 2);
-                        Result (J).Subprogram :=
+                        B.Subprogram :=
                           To_Unbounded_String (Element (C2).Text.all);
                      elsif Text.all = "file" then
                         Next (C2, 2);
-                        Result (J).File :=
+                        B.File :=
                           Debugger.Get_Kernel.Create_From_Base
                             (+Element (C2).Text.all);
 
@@ -2204,19 +2197,19 @@ package body Debugger.Gdb_MI is
                         Next (C2, 2);
                         --  Translate the matched filename into local file if
                         --  needed
-                        Result (J).File :=
+                        B.File :=
                           To_Local
                             (Create (+Strip_Escape (Element (C2).Text.all),
                              Get_Nickname (Debug_Server)));
 
                      elsif Text.all = "line" then
                         Next (C2, 2);
-                        Result (J).Line :=
+                        B.Line :=
                           Integer'Value (Element (C2).Text.all);
 
                      elsif Text.all = "what" then
                         Next (C2, 2);
-                        Result (J).Expression :=
+                        B.Expression :=
                           To_Unbounded_String (Element (C2).Text.all);
                      else
                         exit;
@@ -2229,8 +2222,7 @@ package body Debugger.Gdb_MI is
             else  -- Watchpoint
                C2 := Find_Identifier (C2, "what");
                Next (C2, 2);
-               Result (J).Expression :=
-                 To_Unbounded_String (Element (C2).Text.all);
+               B.Expression := To_Unbounded_String (Element (C2).Text.all);
             end if;
 
             Next (C2, 2);
@@ -2245,27 +2237,26 @@ package body Debugger.Gdb_MI is
                   Next (C2, 2);
 
                   if Text.all = "cond" then
-                     Result (J).Condition :=
+                     B.Condition :=
                        To_Unbounded_String (Element (C2).Text.all);
                   elsif Text.all = "ignore" then
-                     Result (J).Ignore :=
-                       Integer'Value (Element (C2).Text.all);
+                     B.Ignore := Integer'Value (Element (C2).Text.all);
                   end if;
                   --  ??? missing Commands
                end;
 
                Next (C2, 2);
             end loop;
-         end loop;
 
-         Clear_Token_List (List);
-         return Result;
+            List.Append (B);
+         end;
+      end loop;
 
-      exception
-         when Constraint_Error =>
-            Clear_Token_List (List);
-            return Result;
-      end;
+      Clear_Token_List (Tokens);
+
+   exception
+      when Constraint_Error =>
+         Clear_Token_List (Tokens);
    end List_Breakpoints;
 
    -----------------------

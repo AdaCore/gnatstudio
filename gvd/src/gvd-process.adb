@@ -19,7 +19,6 @@ with Ada.Characters.Handling;    use Ada.Characters.Handling;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
-with Ada.Unchecked_Deallocation;
 
 pragma Warnings (Off);
 with GNAT.TTY;                   use GNAT.TTY;
@@ -48,12 +47,10 @@ with Debugger.Gdb_MI;            use Debugger.Gdb_MI;
 with Default_Preferences;        use Default_Preferences;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GPS.Intl;                   use GPS.Intl;
-with GPS.Properties;             use GPS.Properties;
 with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
-with GPS.Kernel.Properties;      use GPS.Kernel.Properties;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Main_Window;            use GPS.Main_Window;
 with GVD.Code_Editors;           use GVD.Code_Editors;
@@ -67,7 +64,6 @@ with Projects;                   use Projects;
 with Remote;                     use Remote;
 with Toolchains_Old;             use Toolchains_Old;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
-with XML_Utils;                  use XML_Utils;
 
 package body GVD.Process is
    Me      : constant Trace_Handle := Create ("GVD.Process");
@@ -132,298 +128,6 @@ package body GVD.Process is
       Mode           : Command_Type;
       Output         : String_Access_Access);
    --  Wrapper implementing common code for Process_User_Command routines
-
-   ----------------
-   -- Properties --
-   ----------------
-
-   type Breakpoint_Property_Record is new Property_Record with record
-      Breakpoints : Breakpoint_Array_Ptr;
-   end record;
-   type Breakpoint_Property is access all Breakpoint_Property_Record'Class;
-
-   overriding procedure Save
-     (Property : access Breakpoint_Property_Record;
-      Node     : in out XML_Utils.Node_Ptr);
-   overriding procedure Load
-     (Property : in out Breakpoint_Property_Record;
-      From     : XML_Utils.Node_Ptr);
-   overriding procedure Destroy (Property : in out Breakpoint_Property_Record);
-   --  See inherited documentation
-
-   procedure Load_Breakpoints_From_Property
-     (Process  : access Visual_Debugger_Record'Class;
-      Property : Breakpoint_Property_Record'Class);
-   --  Restore the breakpoints stored in the property
-
-   procedure Save_Breakpoints_In_Properties
-     (Process  : access Visual_Debugger_Record'Class;
-      Property : Breakpoint_Property);
-   --  Save the breakpoints currently set in Process into Property.
-   --  Breakpoints that are set automatically by GPS are filtered out
-
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy
-     (Property : in out Breakpoint_Property_Record) is
-   begin
-      Free (Property.Breakpoints);
-   end Destroy;
-
-   ----------
-   -- Save --
-   ----------
-
-   overriding procedure Save
-     (Property : access Breakpoint_Property_Record;
-      Node     : in out XML_Utils.Node_Ptr)
-   is
-      Breaks : Node_Ptr;
-   begin
-      GNATCOLL.Traces.Trace (Me, "Saving breakpoints for future sessions");
-      if Property.Breakpoints /= null then
-         for B in reverse Property.Breakpoints'Range loop
-            declare
-               Br : Breakpoint_Data renames Property.Breakpoints (B);
-            begin
-               Breaks := new XML_Utils.Node;
-               Breaks.Next := Node.Child;
-               Node.Child := Breaks;
-               Breaks.Tag := new String'("breakpoint");
-               if Br.The_Type /= Breakpoint then
-                  Set_Attribute
-                    (Breaks, "type", Breakpoint_Type'Image (Br.The_Type));
-               end if;
-               if Br.Disposition /= Keep then
-                  Set_Attribute
-                    (Breaks, "disposition",
-                     Breakpoint_Disposition'Image (Br.Disposition));
-               end if;
-               if not Br.Enabled then
-                  Set_Attribute (Breaks, "enabled", "false");
-               end if;
-               if Br.Expression /= "" then
-                  Set_Attribute
-                    (Breaks, "expression", To_String (Br.Expression));
-               end if;
-               if Br.File /= GNATCOLL.VFS.No_File then
-                  Add_File_Child (Breaks, "file", Br.File);
-               end if;
-               if Br.Except /= "" then
-                  Set_Attribute
-                    (Breaks, "exception", To_String (Br.Except));
-               end if;
-               if Br.Subprogram /= "" then
-                  Set_Attribute
-                    (Breaks, "subprogram", To_String (Br.Subprogram));
-               end if;
-               if Br.Line /= 0 then
-                  Set_Attribute (Breaks, "line", Integer'Image (Br.Line));
-               end if;
-               if Br.Address /= Invalid_Address then
-                  Set_Attribute
-                    (Breaks, "address", Address_To_String (Br.Address));
-               end if;
-               if Br.Ignore /= 0 then
-                  Set_Attribute
-                    (Breaks, "ignore", Integer'Image (Br.Ignore));
-               end if;
-               if Br.Condition /= "" then
-                  Set_Attribute
-                    (Breaks, "condition", To_String (Br.Condition));
-               end if;
-               if Br.Commands /= "" then
-                  Set_Attribute
-                    (Breaks, "command", To_String (Br.Commands));
-               end if;
-               if Br.Scope /= No_Scope then
-                  Set_Attribute
-                    (Breaks, "scope", Scope_Type'Image (Br.Scope));
-               end if;
-               if Br.Action /= No_Action then
-                  Set_Attribute
-                    (Breaks, "action", Action_Type'Image (Br.Action));
-               end if;
-            end;
-         end loop;
-      end if;
-   end Save;
-
-   ----------
-   -- Load --
-   ----------
-
-   overriding procedure Load
-     (Property : in out Breakpoint_Property_Record;
-      From     : XML_Utils.Node_Ptr)
-   is
-      Breaks : Node_Ptr;
-      Count  : Natural := 0;
-
-      function Get_String (Attr : String) return Unbounded_String;
-      --  return the value of Attr (or null if the Attr doesn't exist
-
-      ----------------
-      -- Get_String --
-      ----------------
-
-      function Get_String (Attr : String) return Unbounded_String is
-         Value : constant String := Get_Attribute (Breaks, Attr, "");
-      begin
-         if Value = "" then
-            return Null_Unbounded_String;
-         else
-            return To_Unbounded_String (Value);
-         end if;
-      end Get_String;
-
-   begin
-      GNATCOLL.Traces.Trace
-        (Me, "Restoring breakpoints from previous session");
-      Breaks := From.Child;
-      while Breaks /= null loop
-         Count := Count + 1;
-         Breaks := Breaks.Next;
-      end loop;
-
-      Property.Breakpoints := new Breakpoint_Array (1 .. Count);
-      Count := Property.Breakpoints'First;
-
-      Breaks := From.Child;
-      while Breaks /= null loop
-         declare
-            Br : Breakpoint_Data renames Property.Breakpoints (Count);
-         begin
-            Br.The_Type := Breakpoint_Type'Value
-              (Get_Attribute
-                 (Breaks, "type", Breakpoint_Type'Image (Breakpoint)));
-            Br.Disposition := Breakpoint_Disposition'Value
-              (Get_Attribute
-                 (Breaks, "disposition", Breakpoint_Disposition'Image (Keep)));
-            Br.Enabled := Boolean'Value
-              (Get_Attribute (Breaks, "enabled", "true"));
-            Br.Expression := Get_String ("expression");
-            Br.Except     := Get_String ("exception");
-            Br.Subprogram := Get_String ("subprogram");
-            Br.Line := Integer'Value (Get_Attribute (Breaks, "line", "0"));
-            Br.Address    := String_To_Address
-              (Get_Attribute (Breaks, "address", ""));
-            Br.Ignore := Integer'Value (Get_Attribute (Breaks, "ignore", "0"));
-            Br.Condition  := Get_String ("condition");
-            Br.Commands   := Get_String ("command");
-            Br.Scope      := Scope_Type'Value
-              (Get_Attribute (Breaks, "scope", Scope_Type'Image (No_Scope)));
-            Br.Action     := Action_Type'Value
-              (Get_Attribute
-                 (Breaks, "action", Action_Type'Image (No_Action)));
-            Br.File := Get_File_Child (Breaks, "file");
-         end;
-
-         Count := Count + 1;
-         Breaks := Breaks.Next;
-      end loop;
-   end Load;
-
-   ------------------------------------
-   -- Load_Breakpoints_From_Property --
-   ------------------------------------
-
-   procedure Load_Breakpoints_From_Property
-     (Process  : access Visual_Debugger_Record'Class;
-      Property : Breakpoint_Property_Record'Class) is
-   begin
-      --  ??? Should be done in GVD.Breakpoints, since we are duplicating some
-      --  of the logic here to choose with type of breakpoint to create
-
-      if Process.Debugger = null
-        or else Property.Breakpoints = null
-      then
-         return;
-      end if;
-
-      for B in Property.Breakpoints'Range loop
-         declare
-            Br      : Breakpoint_Data renames Property.Breakpoints (B);
-            Created : Boolean := True;
-            Id      : Breakpoint_Identifier := Breakpoint_Identifier'Last;
-            Num     : Breakpoint_Identifier with Unreferenced;
-         begin
-            if Br.Except /= "" then
-               Num := Break_Exception
-                 (Process.Debugger, To_String (Br.Except),
-                  Temporary => Br.Disposition /= Keep, Mode => Internal,
-                  Unhandled => False);
-            elsif Br.Line /= 0 and then Br.File /= GNATCOLL.VFS.No_File then
-               Num := Break_Source
-                 (Process.Debugger, Br.File, Br.Line,
-                  Temporary => Br.Disposition /= Keep, Mode => Internal);
-            elsif Br.Subprogram /= "" then
-               Num := Break_Subprogram
-                 (Process.Debugger, To_String (Br.Subprogram),
-                  Temporary => Br.Disposition /= Keep, Mode => Internal);
-
-            elsif Br.Address /= Invalid_Address then
-               Num := Break_Address
-                 (Process.Debugger, Br.Address,
-                  Temporary => Br.Disposition /= Keep, Mode => Internal);
-            else
-               Created := False;
-            end if;
-
-            if Created then
-               if not Br.Enabled then
-                  if Id = Breakpoint_Identifier'Last then
-                     Id := Get_Last_Breakpoint_Id (Process.Debugger);
-                  end if;
-                  Enable_Breakpoint
-                    (Process.Debugger, Id, Br.Enabled, Internal);
-               end if;
-
-               if Br.Condition /= "" then
-                  if Id = Breakpoint_Identifier'Last then
-                     Id := Get_Last_Breakpoint_Id (Process.Debugger);
-                  end if;
-                  Set_Breakpoint_Condition
-                     (Process.Debugger, Id,
-                      To_String (Br.Condition), Mode => Internal);
-               end if;
-
-               if Br.Commands /= "" then
-                  if Id = Breakpoint_Identifier'Last then
-                     Id := Get_Last_Breakpoint_Id (Process.Debugger);
-                  end if;
-                  Set_Breakpoint_Command
-                    (Process.Debugger, Id,
-                     To_String (Br.Commands), Internal);
-               end if;
-
-               if Br.Ignore /= 0 then
-                  if Id = Breakpoint_Identifier'Last then
-                     Id := Get_Last_Breakpoint_Id (Process.Debugger);
-                  end if;
-                  Set_Breakpoint_Ignore_Count
-                    (Process.Debugger, Id, Br.Ignore, Internal);
-               end if;
-
-               if Br.Scope /= No_Scope or else Br.Action /= No_Action then
-                  if Id = Breakpoint_Identifier'Last then
-                     Id := Get_Last_Breakpoint_Id (Process.Debugger);
-                  end if;
-                  Set_Scope_Action
-                    (Process.Debugger, Br.Scope, Br.Action, Id, Internal);
-               end if;
-            end if;
-         end;
-      end loop;
-
-      if Property.Breakpoints /= null
-        and then Property.Breakpoints'Length /= 0
-      then
-         Update_Breakpoints (Process, Force => True);
-      end if;
-   end Load_Breakpoints_From_Property;
 
    ----------------
    -- Get_Kernel --
@@ -655,6 +359,7 @@ package body GVD.Process is
       end if;
 
       --  Do we have a file name or line number indication?
+      --  This runs the Debugger_Location_Changed_Hook hook
 
       if Length (File) /= 0 and then Line /= 0 then
          Process.Editor_Text.Set_Current_File_And_Line
@@ -662,22 +367,6 @@ package body GVD.Process is
               (Create (+To_String (File),
                Get_Nickname (Debug_Server))),
             Line => Line);
-      end if;
-
-      --  Last step is to update the breakpoints once all the rest has been
-      --  set up correctly.
-      --  If there is no breakpoint defined, we force an update.
-      --  ??? Should be linked to Debugger_Location_Changed_Hook
-
-      if Length (File) /= 0 then
-         if Process.Breakpoints = null then
-            --  If we have never parsed the breakpoints info
-            Update_Breakpoints (Process, Force => True);
-
-         elsif Process.Breakpoints'Length > 0 then
-            Update_Breakpoints
-              (Process.Editor_Text, Process.Breakpoints.all);
-         end if;
       end if;
 
       Process.Post_Processing := False;
@@ -696,7 +385,11 @@ package body GVD.Process is
       end if;
 
       if Always_Emit_Hooks or else Mode /= Internal then
-         --  Postprocessing (e.g handling of auto-update).
+         if Breakpoints_Might_Have_Changed
+           or else Process.Breakpoints.Has_Temporary_Breakpoint
+         then
+            Refresh_Breakpoints_List (Process.Kernel, Process);
+         end if;
 
          case Category is
             when Load_Command =>
@@ -708,10 +401,6 @@ package body GVD.Process is
             when Misc_Command =>
                null;
          end case;
-
-         --  ??? This has already be run above if we discovered a file name and
-         --  we never parsed breakpoints info before
-         Update_Breakpoints (Process, Force => Breakpoints_Might_Have_Changed);
       end if;
    end Final_Post_Process;
 
@@ -917,62 +606,6 @@ package body GVD.Process is
       Close_Debugger (Proc);
    end On_Console_Destroy;
 
-   ------------------------------------
-   -- Save_Breakpoints_In_Properties --
-   ------------------------------------
-
-   procedure Save_Breakpoints_In_Properties
-     (Process  : access Visual_Debugger_Record'Class;
-      Property : Breakpoint_Property)
-   is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Breakpoint_Array, Breakpoint_Array_Ptr);
-      Count : Natural := 0;
-   begin
-      --  Filter breakpoints that are created automatically by GPS as a
-      --  result of preferences.
-
-      if Break_On_Exception.Get_Pref then
-         for B in reverse Process.Breakpoints'Range loop
-            declare
-               Br : Breakpoint_Data renames Process.Breakpoints (B);
-            begin
-               if Br.Except = "" or else Br.Except /= "all" then
-                  Count := Count + 1;
-               end if;
-            end;
-         end loop;
-
-         Property.Breakpoints := new Breakpoint_Array (1 .. Count);
-         Count := Property.Breakpoints'First;
-
-         for B in reverse Process.Breakpoints'Range loop
-            declare
-               Br : Breakpoint_Data renames Process.Breakpoints (B);
-            begin
-               if Br.Except = "" or else Br.Except /= "all" then
-                  Property.Breakpoints (Count) :=  Br;
-                  Count := Count + 1;
-               end if;
-            end;
-         end loop;
-
-         Unchecked_Free (Process.Breakpoints);
-
-      else
-         Property.Breakpoints := Process.Breakpoints;
-      end if;
-
-      Process.Breakpoints  := null;
-
-      Set_Property
-        (Kernel     => Process.Kernel,
-         File       => Get_Executable (Process.Debugger),
-         Name       => "breakpoints",
-         Property   => Property,
-         Persistent => True);
-   end Save_Breakpoints_In_Properties;
-
    --------------------
    -- Close_Debugger --
    --------------------
@@ -997,8 +630,6 @@ package body GVD.Process is
       end Callback;
 
       Kernel           : constant Kernel_Handle := Process.Kernel;
-      Is_Last_Debugger : Boolean;
-      Property         : Breakpoint_Property;
    begin
       if Process.Exiting then
          return;
@@ -1008,33 +639,13 @@ package body GVD.Process is
 
       Process.Exiting := True;
       For_Each_Debugger (Kernel, Callback'Access);
-      Is_Last_Debugger := Count = 1;
-
-      --  Save the breakpoints if needed
-
-      if Preserve_State_On_Exit.Get_Pref then
-         if Process.Breakpoints /= null then
-            GNATCOLL.Traces.Trace (Me, "Saving breakpoints in properties");
-            --  Take into account breakpoints that have been set manually
-            --  through the console, when the breakpoints window is not shown.
-
-            Update_Breakpoints (Process, Force => True);
-            Property := new Breakpoint_Property_Record;
-            Save_Breakpoints_In_Properties (Process, Property);
-         else
-            Remove_Property
-              (Process.Kernel,
-               File => Get_Executable (Process.Debugger),
-               Name => "breakpoints");
-         end if;
-      end if;
 
       --  Load the default perspective before closing the debugger. This is
       --  necessary because the position of views is memorized at this time:
       --  if views are closed before the perspective change, their position
       --  is lost.
 
-      if Is_Last_Debugger then
+      if Count = 1 then
          Load_Perspective (Kernel, "Default");
       end if;
 
@@ -1043,13 +654,8 @@ package body GVD.Process is
       Debugger_State_Changed_Hook.Run (Process.Kernel, Process, Debug_None);
       Debugger_Terminated_Hook.Run (Process.Kernel, Process);
 
-      if Process.Breakpoints /= null then
-         Free (Process.Breakpoints);
-      end if;
-
       Process.Editor_Text.Free_Debug_Info;
 
-      Free (Process.Breakpoints);
       Unregister_Dialog (Process);
       Free (Process.Command_History);
 
@@ -1071,7 +677,7 @@ package body GVD.Process is
       Remove_Debugger (Kernel, Process);
       Unref (Process);
 
-      if Is_Last_Debugger then
+      if Count = 1 then
          Debug_Terminate (Kernel);
       end if;
    end Close_Debugger;
@@ -1242,79 +848,6 @@ package body GVD.Process is
       end if;
    end Unregister_Dialog;
 
-   ------------------------
-   -- Update_Breakpoints --
-   ------------------------
-
-   procedure Update_Breakpoints
-     (Process : access GObject_Record'Class;
-      Force   : Boolean)
-   is
-      Debugger  : constant Visual_Debugger := Visual_Debugger (Process);
-   begin
-      if Debugger.Debugger = null
-         or else Command_In_Process (Get_Process (Debugger.Debugger))
-      then
-         return;
-      end if;
-
-      --  We only need to update the list of breakpoints when we have a
-      --  temporary breakpoint (since its status might be changed upon
-      --  reaching the line).
-
-      if Force or else Debugger.Has_Temporary_Breakpoint then
-         Free (Debugger.Breakpoints);
-         Debugger.Breakpoints := new Breakpoint_Array'
-           (List_Breakpoints (Debugger.Debugger));
-
-         --  Check whether there is any temporary breakpoint
-
-         Debugger.Has_Temporary_Breakpoint := False;
-
-         for J in Debugger.Breakpoints'Range loop
-            if Debugger.Breakpoints (J).Disposition /= Keep
-              and then Debugger.Breakpoints (J).Enabled
-            then
-               Debugger.Has_Temporary_Breakpoint := True;
-               exit;
-            end if;
-         end loop;
-
-         --  Update the breakpoints in the editor
-         Update_Breakpoints (Debugger.Editor_Text, Debugger.Breakpoints.all);
-
-         Debugger_Breakpoints_Changed_Hook.Run (Debugger.Kernel, Debugger);
-      end if;
-   end Update_Breakpoints;
-
-   -----------------------------
-   -- Toggle_Breakpoint_State --
-   -----------------------------
-
-   function Toggle_Breakpoint_State
-     (Process        : access Visual_Debugger_Record;
-      Breakpoint_Num : Breakpoint_Identifier) return Boolean is
-   begin
-      --  ??? Maybe we should also update the icons in the code_editor to have
-      --  an icon of a different color ?
-
-      if Process.Breakpoints /= null then
-         for J in Process.Breakpoints'Range loop
-            if Process.Breakpoints (J).Num = Breakpoint_Num then
-               Process.Breakpoints (J).Enabled :=
-                 not Process.Breakpoints (J).Enabled;
-               Enable_Breakpoint
-                 (Process.Debugger, Breakpoint_Num,
-                  Process.Breakpoints (J).Enabled,
-                  Mode => GVD.Types.Visible);
-               return Process.Breakpoints (J).Enabled;
-            end if;
-         end loop;
-      end if;
-
-      return False;
-   end Toggle_Breakpoint_State;
-
    -------------
    -- Get_Num --
    -------------
@@ -1375,8 +908,6 @@ package body GVD.Process is
       Program_Args : GNAT.Strings.String_Access;
       Blank_Pos    : Natural;
       Proxy        : Process_Proxy_Access;
-      Success      : Boolean;
-      Property     : Breakpoint_Property_Record;
       Exit_H       : access On_Before_Exit;
 
       function Get_Main return Virtual_File;
@@ -1564,16 +1095,6 @@ package body GVD.Process is
 
       --  Force the creation of the project if needed
       Load_Project_From_Executable (Kernel, Process);
-
-      --  Restore the breakpoints
-      if Preserve_State_On_Exit.Get_Pref then
-         Get_Property
-           (Property, Get_Executable (Process.Debugger),
-            Name => "breakpoints", Found => Success);
-         if Success then
-            Load_Breakpoints_From_Property (Process, Property);
-         end if;
-      end if;
 
       Exit_H := new On_Before_Exit;
       Exit_H.Process := Process;

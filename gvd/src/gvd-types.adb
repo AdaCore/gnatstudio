@@ -15,23 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
 with String_Utils;
 
 package body GVD.Types is
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Br_Access : in out Breakpoint_Array_Ptr) is
-      procedure Internal_Free is new Ada.Unchecked_Deallocation
-        (Breakpoint_Array, Breakpoint_Array_Ptr);
-   begin
-      if Br_Access /= null then
-         Internal_Free (Br_Access);
-      end if;
-   end Free;
 
    -----------------------
    -- String_To_Address --

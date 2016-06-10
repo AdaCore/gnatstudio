@@ -36,7 +36,9 @@ Create multiple debuggers by using the :menuselection:`Debug -->
 Initialize` menu several times: this creates a new debugger each time.  All
 debugger-related actions (e.g. stepping, running) are performed in the
 current debugger, represented by the current debugger console.  To switch
-to a different debugger, select its corresponding console.
+to a different debugger, select its corresponding console. Setting
+breakpoints, though, will be done for all debuggers, to help debug when you
+work on multiple executables that share code.
 
 After the debugger has been initialized, you have access to two new
 windows: the data browser (in the top of the working area) and the debugger
@@ -311,9 +313,9 @@ items. Failure to do so will result in empty windows.
   being executed.  See :ref:`The_Assembly_Window` for more details.
 
 
-.. index:: menu; debug --> data --> edit breakpoints
+.. index:: menu; debug --> data --> breakpoints
 
-* :menuselection:`Debug --> Data --> Edit Breakpoints`
+* :menuselection:`Debug --> Data --> Breakpoints`
 
   Opens an advanced window to create and modify any kind of breakpoint,
   including watchpoints (see :ref:`The_Breakpoint_Editor`).  For simple
@@ -769,9 +771,11 @@ the breakpoint or watchpoint at the top.
 
 If you enabled the preference :menuselection:`Debugger --> Preserve state
 on exit`, GPS automatically saves the currently set breakpoints and
-restores them the next time you debug the same executable. This allows you
+restores them the next time you debug an executable in the same
+project. This allows you
 to immediately start debugging your application without having to set the
-breakpoints every time.
+breakpoints every time. These breakpoints will be reused for all
+executables in the same project.
 
 .. index:: memory view
 .. _The_Memory_View:
@@ -853,8 +857,8 @@ displays the source files, with syntax highlighting.  If you hold the
 pointer over a variable, GPS displays a tooltip showing the value of that
 variable.  Disable these automatic tooltips using the preferences menu.
 
-When the debugger is active, the contextual menu of the source window
-contains a :menuselection:`Debug` submenu providing the entries
+At all times, the contextual menu of the source window
+contains a :menuselection:`Debug` submenu providing some or all of the entries
 below. These entries are dynamic and apply to the entity under the pointer
 (depending on the current language). In addition, if you have made a
 selection in the editor, the text of the selection is used instead. This
@@ -883,10 +887,16 @@ debugger).
 * :menuselection:`Set Breakpoint on Line *xx*`
 
   Sets a breakpoint on the line under the pointer.
+  This menu is always enabled, even when no debugger is started. This means
+  that you can prepare breakpoints while working on the code, before you even
+  start the debugger.
 
 * :menuselection:`Set Breakpoint on *selection*`
 
   Sets a breakpoint at the beginning of the subprogram named *selection*.
+  This menu is always enabled, even when no debugger is started. This means
+  that you can prepare breakpoints while working on the code, before you even
+  start the debugger.
 
 * :menuselection:`Continue Until Line *xx*`
 
@@ -1071,28 +1081,28 @@ Here is the code::
 
   aliases={}
 
-  def set_alias (name, command):
+  def set_alias(name, command):
      """Set a new debugger alias. Typing this alias in a debugger window
         will execute command"""
      global aliases
      aliases[name] = command
 
-  def execute_alias (debugger, name):
-     return debugger.send (aliases[name], output=False)
+  def execute_alias(debugger, name):
+     return debugger.send(aliases[name], output=False)
 
-  def debugger_commands (hook, debugger, command):
+  def debugger_commands(hook, debugger, command):
      global aliases
      words = command.split()
      if words[0] == "alias":
-        set_alias (words[1], " ".join (words [2:]))
+        set_alias(words[1], " ".join (words [2:]))
         return True
-     elif aliases.has_key (words [0]):
-        debugger.set_output (execute_alias (debugger, words[0]))
+     elif aliases.has_key(words [0]):
+        debugger.set_output(execute_alias(debugger, words[0]))
         return True
      else:
         return False
 
-  GPS.Hook ("debugger_command_action_hook").add (debugger_commands)
+  GPS.Hook("debugger_command_action_hook").add(debugger_commands)
 
 The list of aliases is stored in the global variable :command:`aliases`,
 which is modified by :command:`set_alias`. Whenever the user executes an

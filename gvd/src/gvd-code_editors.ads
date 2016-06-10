@@ -27,7 +27,6 @@
 --  This information is also computed in a lazy fashion, ie while nothing
 --  else is happening in the application.
 
-with GVD.Types;
 with GNATCOLL.VFS;
 with GPS.Debuggers;            use GPS.Debuggers;
 with GPS.Kernel;               use GPS.Kernel;
@@ -60,15 +59,6 @@ package GVD.Code_Editors is
    function Get_Line (Editor : access Code_Editor_Record) return Natural;
    --  Set or get the file and line which the debugger is stopped at.
 
-   procedure Update_Breakpoints
-     (Editor    : access Code_Editor_Record;
-      Br        : GVD.Types.Breakpoint_Array);
-   --  Change the list of breakpoints to highlight in the editor (source and
-   --  assembly editors).
-   --  All the breakpoints that previously existed are removed from the screen,
-   --  and replaced by the new ones.
-   --  The breakpoints that do not apply to the current file are ignored.
-
    procedure Free_Debug_Info (Editor : access Code_Editor_Record);
    --  Free dynamic memory associated to Editor, relative to debugger
    --  information.
@@ -85,13 +75,6 @@ private
    type Code_Editor_Record is tagged record
       Kernel       : access Kernel_Handle_Record'Class;
       Process      : access Base_Visual_Debugger'Class;
-
-      Current_Breakpoints : GVD.Types.Breakpoint_Array_Ptr;
-      --  This array contains the currently set breakpoints in the
-      --  File.
-      --  Entries in this array may be set to 0, in order to avoid
-      --  necessity to reallocate it every time the set of breakpoints
-      --  is updated.
 
       Current_File        : GNATCOLL.VFS.Virtual_File;
       Current_Line        : Natural := 0;

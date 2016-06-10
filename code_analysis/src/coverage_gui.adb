@@ -244,32 +244,33 @@ package body Coverage_GUI is
      (Kernel    : Kernel_Handle;
       File_Node : Code_Analysis.File_Access)
    is
-      Line_Info : Line_Information_Data;
    begin
       if File_Node.Analysis_Data.Coverage_Data.Is_Valid then
-         Line_Info := new Line_Information_Array (File_Node.Lines'Range);
-         for J in File_Node.Lines'Range loop
-            if File_Node.Lines (J) /= Null_Line then
-               declare
-                  Line_Cov : Line_Coverage'Class renames
-                    Line_Coverage'Class
-                      (File_Node.Lines (J).Analysis_Data.Coverage_Data.all);
-               begin
-                  Line_Info (J) := Line_Coverage_Info
-                    (Line_Cov'Access,
-                     Kernel,
-                     Binary_Coverage_Mode);
-               end;
-            else
-               Line_Info (J).Text := Space_String;
-            end if;
-         end loop;
+         declare
+            Line_Info : Line_Information_Array (File_Node.Lines'Range);
+         begin
+            for J in File_Node.Lines'Range loop
+               if File_Node.Lines (J) /= Null_Line then
+                  declare
+                     Line_Cov : Line_Coverage'Class renames
+                       Line_Coverage'Class
+                         (File_Node.Lines (J).Analysis_Data.Coverage_Data.all);
+                  begin
+                     Line_Info (J) := Line_Coverage_Info
+                       (Line_Cov'Access,
+                        Kernel,
+                        Binary_Coverage_Mode);
+                  end;
+               else
+                  Line_Info (J).Text := Space_String;
+               end if;
+            end loop;
 
-         Create_Line_Information_Column
-            (Kernel, File_Node.Name, CodeAnalysis_Cst);
-         Add_Line_Information
-            (Kernel, File_Node.Name, CodeAnalysis_Cst, Line_Info);
-         Unchecked_Free (Line_Info);
+            Create_Line_Information_Column
+              (Kernel, File_Node.Name, CodeAnalysis_Cst);
+            Add_Line_Information
+              (Kernel, File_Node.Name, CodeAnalysis_Cst, Line_Info);
+         end;
       end if;
    end Add_File_Coverage_Annotations;
 

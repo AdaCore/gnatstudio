@@ -1979,7 +1979,7 @@ package body VCS.Generic_VCS is
       declare
          use Ada.Strings.Unbounded;
          Max_Length : Integer := 0;
-         A : Line_Information_Data := new Line_Information_Array (1 .. Max);
+         A : Line_Information_Array (1 .. Max);
       begin
          loop
             Match (Parser.Regexp.all, S, Matches, Start, S'Last);
@@ -2071,7 +2071,6 @@ package body VCS.Generic_VCS is
              File       => File,
              Identifier => Annotation_Id,
              Info       => A);
-         Unchecked_Free (A);
       end;
 
       Annotation_Parsed_Hook.Run (Kernel);

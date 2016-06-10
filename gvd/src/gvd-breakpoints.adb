@@ -63,6 +63,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
 with GUI_Utils;                 use GUI_Utils;
 with GVD;                       use GVD;
+with GVD.Breakpoints_List;      use GVD.Breakpoints_List;
 with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Generic_View;          use GVD.Generic_View;
 with GVD.Process;               use GVD.Process;
@@ -229,11 +230,9 @@ package body GVD.Breakpoints is
    --  Update the list of breakpoints in the dialog.
    --  The list is taken from the one stored in the current debugger session.
 
-   function Get_Selection_Index
-     (View : access Breakpoint_Editor_Record'Class) return Integer;
-   --  Return the index of the currently selected line in the breakpoint
-   --  editor. The index is the element in Editor.Process.Breakpoints, or
-   --  -1 if there is no selection
+   function Get_Selection
+     (View : access Breakpoint_Editor_Record'Class) return Breakpoint_Data;
+   --  Return information on the currently selected breakpoint.
 
    function Breakpoint_Clicked
      (Widget : access GObject_Record'Class;
@@ -311,9 +310,7 @@ package body GVD.Breakpoints is
      (View   : access Breakpoint_Editor_Record'Class)
    is
       Process      : constant Visual_Debugger := Get_Process (View);
-      Selection    : constant Integer := Get_Selection_Index (View);
-      Selected     : Breakpoint_Identifier := 0;
-      Br           : Breakpoint_Data;
+      Selection    : constant Breakpoint_Data := Get_Selection (View);
       Size         : Gint;
       pragma Unreferenced (Size);
       Model : constant Gtk_Tree_Store :=
@@ -328,19 +325,7 @@ package body GVD.Breakpoints is
    begin
       Clear (Model);
 
-      if Selection /= -1 then
-         Selected := Process.Breakpoints (Selection).Num;
-      end if;
-
-      if Process.Breakpoints = null
-        or else Process.Breakpoints'Length <= 0
-      then
-         return;
-      end if;
-
-      for B in Process.Breakpoints'Range loop
-         Br := Process.Breakpoints (B);
-
+      for Br of Process.Breakpoints.List loop
          --  Create a new line
 
          Append (Model, Iter, Null_Iter);
@@ -397,7 +382,7 @@ package body GVD.Breakpoints is
 
          Set_And_Clear (Model, Iter, Columns (1 .. Last), Values (1 .. Last));
 
-         if Selection /= -1 and then Br.Num = Selected then
+         if Br = Selection then
             Selected_Iter := Iter;
          end if;
       end loop;
@@ -1065,14 +1050,12 @@ package body GVD.Breakpoints is
 
             Model.Set
               (Iter, Col_Enb,
-               Toggle_Breakpoint_State
-                 (Visual_Debugger (Get_Process (View)),
+               Toggle_Breakpoint
+                 (View.Kernel,
                   Breakpoint_Num => Breakpoint_Identifier'Value
                     (Get_String (Model, Iter, Col_Num))));
 
-            Update_Breakpoints (Get_Process (View), Force => True);
-
-            --  Stop propagation of the current signal, to avoid extra calls
+            --  Stop propagating of the current signal, to avoid extra calls
             --  to Select/Unselect row.
 
             return True;
@@ -1082,33 +1065,27 @@ package body GVD.Breakpoints is
       return False;
    end Breakpoint_Clicked;
 
-   -------------------------
-   -- Get_Selection_Index --
-   -------------------------
+   -------------------
+   -- Get_Selection --
+   -------------------
 
-   function Get_Selection_Index
-     (View : access Breakpoint_Editor_Record'Class) return Integer
+   function Get_Selection
+     (View : access Breakpoint_Editor_Record'Class) return Breakpoint_Data
    is
-      Process   : constant Visual_Debugger := Get_Process (View);
-      Br_Num    : Breakpoint_Identifier;
       Iter      : Gtk_Tree_Iter;
       The_Model : Gtk_Tree_Model;
    begin
       Get_Selected (Get_Selection (View.Breakpoint_List), The_Model, Iter);
 
       if Iter /= Null_Iter then
-         Br_Num := Breakpoint_Identifier'Value
-           (Get_String (The_Model, Iter, Col_Num));
-
-         for B in Process.Breakpoints'Range loop
-            if Process.Breakpoints (B).Num = Br_Num then
-               return B;
-            end if;
-         end loop;
+         return Get_Breakpoint_From_Id
+           (View.Kernel,
+            Breakpoint_Identifier'Value
+              (Get_String (The_Model, Iter, Col_Num)));
       end if;
 
-      return -1;
-   end Get_Selection_Index;
+      return Null_Breakpoint;
+   end Get_Selection;
 
    -----------
    -- Apply --
@@ -1137,21 +1114,18 @@ package body GVD.Breakpoints is
                File : constant Filesystem_String := +Get_Text (Self.File_Name);
                --  ??? What if the filesystem path is non-UTF8?
             begin
-               --  ??? Should also check Temporary
-               Num := Break_Source
-                 (Self.Process.Debugger,
+               Break_Source
+                 (Self.Process.Kernel,
                   File      => Create_From_Base (File),
                   Line      => Integer'Value (Self.Line_Spin.Get_Text),
-                  Temporary => Temporary,
-                  Mode      => GVD.Types.Visible);
+                  Temporary => Temporary);
             end;
 
          when Break_On_Subprogram =>
-            Num := Break_Subprogram
-              (Self.Process.Debugger,
-               Name      => Self.Subprogram_Combo.Get_Active_Text,
-               Temporary => Temporary,
-               Mode      => GVD.Types.Visible);
+            Break_Subprogram
+              (Self.Process.Kernel,
+               Subprogram => Self.Subprogram_Combo.Get_Active_Text,
+               Temporary  => Temporary);
 
          when Break_At_Address =>
             Num := Break_Address
@@ -1211,11 +1185,10 @@ package body GVD.Breakpoints is
                      Mode      => GVD.Types.Visible);
 
                elsif Name = -"Ada assertions" then
-                  Num := Break_Subprogram
-                    (Self.Process.Debugger,
-                     Name      => "assert",
-                     Temporary => Temporary,
-                     Mode      => GVD.Types.Visible);
+                  Break_Subprogram
+                    (Self.Process.Kernel,
+                     Subprogram => "assert",
+                     Temporary  => Temporary);
 
                else
                   Num := Break_Exception
@@ -1294,12 +1267,12 @@ package body GVD.Breakpoints is
               (Self.Process.Debugger, Scope_Value, Action_Value);
          end if;
 
-         Set_Scope_Action
-           (Self.Process.Debugger, Scope_Value, Action_Value, Num);
+         Self.Process.Debugger.Set_Scope_Action
+           (Scope_Value, Action_Value, Num);
       end if;
 
       if Modified then
-         Update_Breakpoints (Self.Process, Force => True);
+         Refresh_Breakpoints_List (Self.Process.Kernel, Self.Process);
       end if;
    end Apply;
 
@@ -1347,21 +1320,21 @@ package body GVD.Breakpoints is
       View  : constant Breakpoint_Editor :=
         Breakpoint_Editor
           (Breakpoints_MDI_Views.Retrieve_View (Get_Kernel (Context.Context)));
-      Current : Integer;
+      Current : Breakpoint_Data;
       Process : Visual_Debugger;
       Props   : Properties_Editor;
    begin
       if View /= null then
-         Current := Get_Selection_Index (View);
-         if Current /= -1 then
+         Current := Get_Selection (View);
+         if Current /= Null_Breakpoint then
             Process := Get_Process (View);
 
             Props := new Properties_Editor_Record;
             Initialize (Props, Process, View.Kernel);
-            Fill (Props, Process.Breakpoints (Current));
+            Fill (Props, Current);
 
             if Props.Run = Gtk_Response_Apply then
-               Apply (Props, Process.Breakpoints (Current));
+               Apply (Props, Current);
             end if;
 
             Props.Destroy;
@@ -1408,23 +1381,23 @@ package body GVD.Breakpoints is
           (Breakpoints_MDI_Views.Retrieve_View (Get_Kernel (Context.Context)));
       Process   : Visual_Debugger;
       Model     : Gtk_Tree_Store;
-      Selection : Integer;
+      Selection : Breakpoint_Data;
    begin
       if View /= null then
          Process   := Get_Process (View);
          Model     := -Get_Model (View.Breakpoint_List);
-         Selection := Get_Selection_Index (View);
+         Selection := Get_Selection (View);
 
-         if Selection /= -1 then
+         if Selection /= Null_Breakpoint then
             Remove_Breakpoint
               (Process.Debugger,
-               Process.Breakpoints (Selection).Num,
+               Selection.Num,
                Mode => GVD.Types.Visible);
 
             --  Reselect the next line for convenience, so that the user can
             --  press "Remove" several times in a row
 
-            if Gint (Selection) >= N_Children (Model, Null_Iter) then
+            if Gint (Selection.Num) >= N_Children (Model, Null_Iter) then
                Select_Iter
                  (Get_Selection (View.Breakpoint_List),
                   Nth_Child
@@ -1437,7 +1410,7 @@ package body GVD.Breakpoints is
                   Nth_Child
                     (Model,
                      Parent => Null_Iter,
-                     N      => Gint (Selection)));
+                     N      => Gint (Selection.Num)));
             end if;
          end if;
       end if;
@@ -1457,17 +1430,17 @@ package body GVD.Breakpoints is
         Breakpoint_Editor
           (Breakpoints_MDI_Views.Retrieve_View (Get_Kernel (Context.Context)));
       Process   : Visual_Debugger;
-      Selection : Integer;
+      Selection : Breakpoint_Data;
    begin
       if View /= null then
          Process   := Get_Process (View);
-         Selection := Get_Selection_Index (View);
-         if Selection /= -1 then
+         Selection := Get_Selection (View);
+         if Selection /= Null_Breakpoint then
             --  ??? We should not be changing the current location, just
             --  showing the editor
             Process.Editor_Text.Set_Current_File_And_Line
-              (File => Process.Breakpoints (Selection).File,
-               Line => Process.Breakpoints (Selection).Line);
+              (File => Selection.File,
+               Line => Selection.Line);
          end if;
       end if;
       return Success;

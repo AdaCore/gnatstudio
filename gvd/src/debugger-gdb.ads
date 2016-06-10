@@ -358,8 +358,9 @@ package Debugger.Gdb is
       Result   : out Boolean;
       Lines    : out Line_Array);
 
-   overriding function List_Breakpoints
-     (Debugger : access Gdb_Debugger) return GVD.Types.Breakpoint_Array;
+   overriding procedure List_Breakpoints
+     (Debugger  : not null access Gdb_Debugger;
+      List      : out Breakpoint_Vectors.Vector);
 
    overriding function List_Exceptions
      (Debugger : access Gdb_Debugger) return GVD.Types.Exception_Array;

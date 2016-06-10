@@ -941,7 +941,7 @@ package GPS.Kernel.Hooks is
      (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       File       : GNATCOLL.VFS.Virtual_File;
       Identifier : String;
-      Info       : access GPS.Editors.Line_Information.Line_Information_Array;
+      Info       : GPS.Editors.Line_Information.Line_Information_Array;
       Tooltip    : String := "";
       Icon_Name  : String := "");
    --  Add line information to File.
@@ -1060,7 +1060,7 @@ package body GPS.Kernel.Hooks is
      (Kernel     : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       File       : GNATCOLL.VFS.Virtual_File;
       Identifier : String;
-      Info       : access GPS.Editors.Line_Information.Line_Information_Array;
+      Info       : GPS.Editors.Line_Information.Line_Information_Array;
       Tooltip    : String := "";
       Icon_Name  : String := "") is
    begin
@@ -1069,7 +1069,7 @@ package body GPS.Kernel.Hooks is
             (Kernel       => Kernel,
              File         => File,
              Identifier   => Identifier,
-             Info         => Info,
+             Info         => Info'Unrestricted_Access,
              Tooltip      => Tooltip,
              Icon_Name    => Icon_Name);
       else
@@ -1078,7 +1078,7 @@ package body GPS.Kernel.Hooks is
                (Kernel       => Kernel,
                 File         => File,
                 Identifier   => Identifier,
-                Info         => Info,
+                Info         => Info'Unrestricted_Access,
                 Tooltip      => Tooltip,
                 Icon_Name    => Icon_Name);
          end loop;

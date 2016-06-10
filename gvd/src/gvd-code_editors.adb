@@ -16,9 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
-with Ada.Unchecked_Deallocation;
-with Commands.Debugger;            use Commands.Debugger;
-with Commands;                     use Commands;
 with Debugger_Pixmaps;             use Debugger_Pixmaps;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;                 use GNATCOLL.VFS;
@@ -26,8 +23,6 @@ with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 with GVD.Preferences;              use GVD.Preferences;
-with GVD.Process;                  use GVD.Process;
-with GVD.Types;                    use GVD.Types;
 
 package body GVD.Code_Editors is
 
@@ -108,19 +103,19 @@ package body GVD.Code_Editors is
 
       if Prev_Current_Line /= 0 then
          declare
-            Info : aliased Line_Information_Array :=
+            Info : constant Line_Information_Array :=
               (Prev_Current_Line => Empty_Line_Information);
          begin
             Add_Line_Information
               (Editor.Kernel,
                File       => Prev_File,
                Identifier => "Current Line",
-               Info       => Info'Access);
+               Info       => Info);
          end;
       end if;
 
       declare
-         Info : aliased Line_Information_Array :=
+         Info : constant Line_Information_Array :=
            (Line => Line_Information_Record'
               (Text               => Null_Unbounded_String,
                Tooltip_Text       => Null_Unbounded_String,
@@ -132,224 +127,13 @@ package body GVD.Code_Editors is
            (Editor.Kernel,
             File       => Editor.Current_File,
             Identifier => "Current Line",
-            Info       => Info'Access);
+            Info       => Info);
       end;
 
       Highlight_Current_Line (Editor);
 
       Debugger_Location_Changed_Hook.Run (Editor.Kernel, Editor.Process);
    end Set_Current_File_And_Line;
-
-   ------------------------
-   -- Update_Breakpoints --
-   ------------------------
-
-   procedure Update_Breakpoints
-     (Editor    : access Code_Editor_Record;
-      Br        : GVD.Types.Breakpoint_Array)
-   is
-      Tab     : constant Visual_Debugger := Visual_Debugger (Editor.Process);
-
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Breakpoint_Array, Breakpoint_Array_Ptr);
-
-      procedure Add_Unique_Info
-        (A     : in out Breakpoint_Array_Ptr;
-         N     : Breakpoint_Data;
-         Added : out Boolean);
-      --  Add an entry N in A, if A does not already contain such an entry.
-      --  N is set to an entry that contains no valid breakpoint..
-      --  Perform a resize on A if necessary.
-      --  If the entry existed in A before calling Add_Unique_Info,
-      --  Added is set to False, True otherwise.
-
-      ---------------------
-      -- Add_Unique_Info --
-      ---------------------
-
-      procedure Add_Unique_Info
-        (A     : in out Breakpoint_Array_Ptr;
-         N     : Breakpoint_Data;
-         Added : out Boolean)
-      is
-         First_Zero : Integer := -1;
-      begin
-         if N.File = GNATCOLL.VFS.No_File then
-            Added := False;
-            return;
-         end if;
-
-         if A = null then
-            A := new Breakpoint_Array (1 .. 16);
-         end if;
-
-         for J in A'Range loop
-            if A (J).Line = N.Line
-              and then A (J).File = N.File
-              and then A (J).Num  = N.Num
-            then
-               Added := False;
-               return;
-            end if;
-
-            if First_Zero = -1
-              and then A (J).File = GNATCOLL.VFS.No_File
-            then
-               First_Zero := J;
-            end if;
-         end loop;
-
-         Added := True;
-
-         if First_Zero = -1 then
-            --  We need to resize A.
-
-            declare
-               B : constant Breakpoint_Array_Ptr := new Breakpoint_Array
-                 (A'First .. A'Last + 16);
-            begin
-               B (A'First .. A'Last) := A.all;
-               B (A'Last + 1) := N;
-               Unchecked_Free (A);
-               A := B;
-            end;
-
-         else
-            A (First_Zero) := N;
-         end if;
-      end Add_Unique_Info;
-
-      Result : Boolean := False;
-      Found  : Boolean := False;
-      Index  : Natural;
-      File   : Virtual_File;
-
-   begin
-      --  Add new breakpoints to the column information.
-      for J in Br'Range loop
-         Add_Unique_Info (Editor.Current_Breakpoints, Br (J), Result);
-
-         if Result then
-            declare
-               Other_Command : Set_Breakpoint_Command_Access;
-               L             : constant Integer := Br (J).Line;
-               A             : Line_Information_Data :=
-                 new Line_Information_Array (L .. L);
-            begin
-               Create
-                 (Other_Command,
-                  Kernel_Handle (Editor.Kernel),
-                  Tab,
-                  Unset,
-                  Br (J).File,
-                  Br (J).Line);
-
-               if not Br (J).Enabled then
-                  A (L).Image := Line_Has_Disabled_Breakpoint_Pixbuf;
-                  A (L).Tooltip_Text := To_Unbounded_String
-                    ("A disabled breakpoint has been set on this line");
-
-               elsif Br (J).Condition /= "" then
-                  A (L).Image := Line_Has_Conditional_Breakpoint_Pixbuf;
-                  A (L).Tooltip_Text := To_Unbounded_String
-                    ("A conditional breakpoint has been set on this line");
-
-               else
-                  A (L).Image := Line_Has_Breakpoint_Pixbuf;
-                  A (L).Tooltip_Text := To_Unbounded_String
-                    ("An active breakpoint has been set on this line");
-               end if;
-
-               A (L).Associated_Command := Command_Access (Other_Command);
-
-               --  Try to resolve file when it is not present to handle
-               --  relocation of project.
-
-               File := Br (J).File;
-
-               if not File.Is_Regular_File then
-                  File := Editor.Kernel.Create_From_Base (File.Full_Name);
-               end if;
-
-               Add_Line_Information
-                 (Editor.Kernel,
-                  File       => File,
-                  Identifier => Breakpoints_Column_Id,
-                  Info       => A);
-               Unchecked_Free (A);
-            end;
-         end if;
-      end loop;
-
-      --  Remove old breakpoints from the column information.
-      if Editor.Current_Breakpoints = null then
-         return;
-      end if;
-
-      for J in Editor.Current_Breakpoints'Range loop
-         if Editor.Current_Breakpoints (J).File /= GNATCOLL.VFS.No_File then
-            Found := False;
-            Index := Br'First;
-
-            while (not Found)
-              and then Index <= Br'Last
-            loop
-               if Editor.Current_Breakpoints (J).Line = Br (Index).Line
-                 and then Editor.Current_Breakpoints (J).File =
-                 Br (Index).File
-               then
-                  Found := True;
-               end if;
-
-               Index := Index + 1;
-            end loop;
-
-            if not Found then
-               declare
-                  Other_Command : Set_Breakpoint_Command_Access;
-                  L             : constant Integer :=
-                    Editor.Current_Breakpoints (J).Line;
-                  A             : Line_Information_Data :=
-                    new Line_Information_Array (L .. L);
-               begin
-                  Create
-                    (Other_Command,
-                     Kernel_Handle (Editor.Kernel),
-                     Tab,
-                     Set,
-                     Editor.Current_Breakpoints (J).File,
-                     Editor.Current_Breakpoints (J).Line);
-
-                  if Editor_Show_Line_With_Code.Get_Pref then
-                     A (L).Image := Line_Has_Code_Pixbuf;
-                  else
-                     A (L).Image := Line_Might_Have_Code_Pixbuf;
-                  end if;
-
-                  A (L).Associated_Command :=
-                    Command_Access (Other_Command);
-
-                  --  Try to resolve file when it is not present to handle
-                  --  relocation of project.
-
-                  File := Editor.Current_Breakpoints (J).File;
-
-                  if not File.Is_Regular_File then
-                     File :=
-                       Editor.Kernel.Create_From_Base (File.Full_Name);
-                  end if;
-
-                  Add_Line_Information
-                    (Editor.Kernel,
-                     File       => File,
-                     Identifier => Breakpoints_Column_Id,
-                     Info       => A);
-                  Unchecked_Free (A);
-               end;
-            end if;
-         end if;
-      end loop;
-   end Update_Breakpoints;
 
    ----------------------
    -- Get_Current_File --
@@ -367,7 +151,6 @@ package body GVD.Code_Editors is
 
    procedure Free_Debug_Info (Editor : access Code_Editor_Record) is
    begin
-      Free (Editor.Current_Breakpoints);
       Editor.Unhighlight_Current_Line;
    end Free_Debug_Info;
 
@@ -411,7 +194,7 @@ package body GVD.Code_Editors is
 
       if Editor.Current_Line /= 0 then
          declare
-            Info : aliased Line_Information_Array :=
+            Info : constant Line_Information_Array :=
               (Editor.Current_Line => Empty_Line_Information);
          begin
             Add_Line_Information
@@ -419,7 +202,7 @@ package body GVD.Code_Editors is
                File       => Editor.Current_File,
                Identifier => "Current Line",
                --  ??? we should get that from elsewhere.
-               Info       => Info'Access);
+               Info       => Info);
          end;
       end if;
 

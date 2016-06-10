@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Containers.Doubly_Linked_Lists;
 
 with GNAT.OS_Lib;
@@ -33,16 +32,13 @@ with Gtk.Window;                use Gtk.Window;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 
-with Commands.Debugger;         use Commands.Debugger;
 with Commands.Interactive;      use Commands.Interactive;
 with Commands;                  use Commands;
 with Debugger;                  use Debugger;
-with Debugger_Pixmaps;          use Debugger_Pixmaps;
 with Default_Preferences;       use Default_Preferences;
 with GNATCOLL.Any_Types;        use GNATCOLL.Any_Types;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
@@ -89,13 +85,6 @@ package body GVD_Module is
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Callback for the "file_edited" hook
-
-   type On_Lines_Revealed is new Context_Hooks_Function with null record;
-   overriding procedure Execute
-     (Self    : On_Lines_Revealed;
-      Kernel  : not null access Kernel_Handle_Record'Class;
-      Context : Selection_Context);
-   --  Callback for the "source_lines_revealed_hook" hook
 
    package Debugger_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Element_Type => Base_Visual_Debugger_Access);
@@ -413,12 +402,6 @@ package body GVD_Module is
      (Filter  : access Printable_Variable_Filter;
       Context : Selection_Context) return Boolean;
 
-   type Subprogram_Variable_Filter
-     is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Subprogram_Variable_Filter;
-      Context : Selection_Context) return Boolean;
-
    type Set_Value_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Set_Value_Command;
@@ -427,14 +410,6 @@ package body GVD_Module is
    type Show_Location_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Show_Location_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-
-   type Set_Breakpoint_Command is new Interactive_Command with record
-      On_Line       : Boolean := False;  --  If False, on entity
-      Continue_Till : Boolean := False;  --  Continue until given line ?
-   end record;
-   overriding function Execute
-     (Command : access Set_Breakpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    ------------------
@@ -556,12 +531,6 @@ package body GVD_Module is
       --  Create the information column for the current line
       Create_Line_Information_Column
          (Kernel, File, "Current Line", Every_Line => False);
-
-      --  Create the information column for the breakpoints
-      Create_Line_Information_Column
-        (Kernel     => Kernel,
-         Identifier => Breakpoints_Column_Id,
-         File       => File);
    end Create_Debugger_Columns;
 
    -----------------------------
@@ -573,8 +542,6 @@ package body GVD_Module is
       File   : Virtual_File) is
    begin
       Remove_Line_Information_Column (Kernel, File, "Current Line");
-      Remove_Line_Information_Column
-        (Kernel, File, Breakpoints_Column_Id);
    end Remove_Debugger_Columns;
 
    -------------
@@ -1315,42 +1282,6 @@ package body GVD_Module is
       return Commands.Success;
    end Execute;
 
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Set_Breakpoint_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      Debugger : constant Debugger_Access :=
-        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)))
-        .Debugger;
-      Num : Breakpoint_Identifier with Unreferenced;
-   begin
-      if not Command.On_Line then
-         Num := Break_Subprogram
-           (Debugger,
-            Entity_Name_Information (Context.Context),
-            Mode => GVD.Types.Visible);
-      elsif Command.Continue_Till then
-         Num := Break_Source
-           (Debugger,
-            File_Information (Context.Context),
-            GPS.Kernel.Contexts.Line_Information (Context.Context),
-            Temporary => True);
-         Continue (Debugger, Mode => GVD.Types.Visible);
-      else
-         Num := Break_Source
-           (Debugger,
-            File_Information (Context.Context),
-            GPS.Kernel.Contexts.Line_Information (Context.Context),
-            Mode => GVD.Types.Visible);
-      end if;
-
-      return Commands.Success;
-   end Execute;
-
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -1379,27 +1310,6 @@ package body GVD_Module is
         Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context)));
    begin
       return Process /= null and then Process.Debugger /= null;
-   end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Subprogram_Variable_Filter;
-      Context : Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-   begin
-      if Has_Entity_Name_Information (Context) then
-         declare
-            Entity : constant Root_Entity'Class := Get_Entity (Context);
-         begin
-            return Is_Fuzzy (Entity)
-              or else Is_Subprogram (Entity);
-         end;
-      end if;
-      return False;
    end Filter_Matches_Primitive;
 
    ------------------------------
@@ -1531,7 +1441,6 @@ package body GVD_Module is
       if not GVD_Module_ID.Initialized then
          --  Add columns information for not currently opened files
 
-         Source_Lines_Revealed_Hook.Add (new On_Lines_Revealed, Watch => Top);
          File_Edited_Hook.Add
             (new On_File_Edited'(File_Hooks_Function with Top => Top),
              Watch => Top);
@@ -1688,126 +1597,6 @@ package body GVD_Module is
    -------------
 
    overriding procedure Execute
-     (Self    : On_Lines_Revealed;
-      Kernel  : not null access Kernel_Handle_Record'Class;
-      Context : Selection_Context)
-   is
-      pragma Unreferenced (Self);
-      Process : constant Visual_Debugger :=
-        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context)));
-   begin
-      if Process = null
-        or else Process.Debugger = null
-        or else not Has_Area_Information (Context)
-      then
-         return;
-      end if;
-
-      declare
-         File         : constant Virtual_File := File_Information (Context);
-         Line1, Line2 : Integer;
-      begin
-         Get_Area (Context, Line1, Line2);
-
-         if GVD_Module_ID.Show_Lines_With_Code
-           and then Command_In_Process (Get_Process (Process.Debugger))
-         then
-            return;
-         end if;
-
-         declare
-            type Bp_Array is array (Integer range <>) of Integer;
-            --  For each line of the file, the index of the breakpoint in
-            --  Tab.Breakpoints. Integer'First when there are no breakpoints
-
-            Tab         : constant Visual_Debugger :=
-              Visual_Debugger (Get_Current_Debugger (Kernel));
-            Lines       : Line_Array (Line1 .. Line2);
-            A           : Line_Information_Data :=
-               new Line_Information_Array (Line1 .. Line2);
-            C           : Set_Breakpoint_Command_Access;
-            Mode        : Breakpoint_Command_Mode := Set;
-            Bps         : Bp_Array (Line1 .. Line2) :=
-              (others => Integer'First);
-            Lines_Valid : Boolean := False;
-
-         begin
-            if GVD_Module_ID.Show_Lines_With_Code then
-               Lines_With_Code (Process.Debugger, File, Lines_Valid, Lines);
-            end if;
-
-            --  Build an array of breakpoints in the current range, more
-            --  efficient than re-browsing the whole array of breakpoints
-            --  for each line.
-
-            if Tab.Breakpoints /= null then
-               for J in Tab.Breakpoints'Range loop
-                  if Tab.Breakpoints (J).Line in Bps'Range
-                    and then Tab.Breakpoints (J).File /= GNATCOLL.VFS.No_File
-                    and then Tab.Breakpoints (J).File = File
-                  then
-                     Bps (Tab.Breakpoints (J).Line) := J;
-                  end if;
-               end loop;
-            end if;
-
-            for J in A'Range loop
-               if Lines_Valid then
-                  if Lines (J) then
-                     A (J).Image := Line_Has_Code_Pixbuf;
-                  end if;
-               else
-                  A (J).Image := Line_Might_Have_Code_Pixbuf;
-               end if;
-
-               if Bps (J) /= Integer'First then
-                  Mode        := Unset;
-
-                  if not Tab.Breakpoints (Bps (J)).Enabled then
-                     A (J).Image := Line_Has_Disabled_Breakpoint_Pixbuf;
-                     A (J).Tooltip_Text := To_Unbounded_String
-                       ("A disabled breakpoint has been set on this line");
-                  elsif Tab.Breakpoints (Bps (J)).Condition /= "" then
-                     A (J).Image := Line_Has_Conditional_Breakpoint_Pixbuf;
-                     A (J).Tooltip_Text := To_Unbounded_String
-                       ("A conditional breakpoint has been set on this line");
-                  else
-                     A (J).Image := Line_Has_Breakpoint_Pixbuf;
-                     A (J).Tooltip_Text := To_Unbounded_String
-                       ("An active breakpoint has been set on this line");
-                  end if;
-               else
-                  Mode := Set;
-               end if;
-
-               if (not Lines_Valid)
-                 or else Lines (J)
-               then
-                  Create (C, Kernel_Handle (Kernel), Tab, Mode, File, J);
-                  A (J).Associated_Command := Command_Access (C);
-               end if;
-            end loop;
-
-            Add_Line_Information
-              (Kernel     => Kernel,
-               Identifier => Breakpoints_Column_Id,
-               File       => File,
-               Info       => A);
-            Unchecked_Free (A);
-         end;
-      end;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Close_Debugger (Process);
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
       (Self   : On_View_Changed;
        Kernel : not null access Kernel_Handle_Record'Class)
    is
@@ -1943,12 +1732,9 @@ package body GVD_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Command           : Interactive_Command_Access;
       Debugger_Filter   : Action_Filter;
-      Stopped_And_In_File : Action_Filter;
       Debugger_Active   : Action_Filter;
       Printable_Filter  : Action_Filter;
-      Subprogram_Filter : Action_Filter;
    begin
       Create_GVD_Module (Kernel);
       GVD.Preferences.Register_Default_Preferences (Get_Preferences (Kernel));
@@ -1962,14 +1748,9 @@ package body GVD_Module is
       Debugger_Active := new Debugger_Active_Filter;
       Register_Filter (Kernel, Debugger_Active, "Debugger active");
 
-      Stopped_And_In_File :=
-        Debugger_Filter and Lookup_Filter (Kernel, "Source editor");
-
       Printable_Filter  := new Printable_Variable_Filter;
       Register_Filter
         (Kernel, Printable_Filter, "Debugger printable variable");
-
-      Subprogram_Filter := new Subprogram_Variable_Filter;
 
       Register_Contextual_Submenu (Kernel, "Debug", Ref_Item => "References");
 
@@ -1983,44 +1764,6 @@ package body GVD_Module is
         (Kernel => Kernel,
          Label  => -"Debug/Set value of %S",
          Action => "debug set value");
-
-      Register_Action
-        (Kernel, "debug set subprogram breakpoint",
-         Command     => new Set_Breakpoint_Command,
-         Description => "Set a breakpoint on subprogram",
-         Filter      => Debugger_Filter and Subprogram_Filter,
-         Category    => -"Debug");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Debug/Set breakpoint on %e",
-         Action => "debug set subprogram breakpoint");
-
-      Command := new Set_Breakpoint_Command;
-      Set_Breakpoint_Command (Command.all).On_Line := True;
-      Register_Action
-        (Kernel, "debug set line breakpoint",
-         Command     => Command,
-         Description => "Set a breakpoint on line",
-         Filter      => Stopped_And_In_File,
-         Category    => -"Debug");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Debug/Set breakpoint on line %l",
-         Action => "debug set line breakpoint");
-
-      Command := new Set_Breakpoint_Command;
-      Set_Breakpoint_Command (Command.all).On_Line := True;
-      Set_Breakpoint_Command (Command.all).Continue_Till := True;
-      Register_Action
-        (Kernel, "debug continue until",
-         Command     => Command,
-         Description => "Continue executing until the given line",
-         Filter      => Stopped_And_In_File,
-         Category    => -"Debug");
-      Register_Contextual_Menu
-        (Kernel => Kernel,
-         Label  => -"Debug/Continue until line %l",
-         Action => "debug continue until");
 
       Register_Action
         (Kernel, "debug show current location",

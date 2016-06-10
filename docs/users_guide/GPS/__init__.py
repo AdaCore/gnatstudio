@@ -2400,13 +2400,13 @@ class Debugger(object):
     def break_at_location(self, file, line):
         """
         Set a breakpoint at a specific location.
+        If no debugger is currently running, this commands ensures that a
+        breakpoint will be set when a debugger is actually started.
 
         Equivalent gdb command is "break".
 
         :param GPS.File file: the file to break into
         :param int line: the line to break at
-        :return int: The identifier for the breakpoint. This identifier might
-           only be valid until another breakpoint is set or removed.
         """
 
     def unbreak_at_location(self, file, line):
@@ -2414,6 +2414,9 @@ class Debugger(object):
         Remove any breakpoint set at a specific location.
 
         Equivalent gdb command is "clear".
+        If no debugger is currently running, this commands ensures that no
+        breakpoint will be set at that location when a debugger is actually
+        started.
 
         :param GPS.File file: the file to break into
         :param int line: the line to break at

@@ -30,6 +30,7 @@ with Generic_Views;        use Generic_Views;
 with GPS.Debuggers;        use GPS.Debuggers;
 with GPS.Kernel;           use GPS.Kernel;
 with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
+with GVD.Breakpoints_List; use GVD.Breakpoints_List;
 with GVD.Code_Editors;
 with GVD.Types;
 with GVD.Histories;
@@ -85,8 +86,8 @@ package GVD.Process is
       Variables_View          : Generic_Views.Abstract_View_Access;
       --  All views potentially associated with a debugger
 
-      Breakpoints             : GVD.Types.Breakpoint_Array_Ptr;
-      --  The list of breakpoints and watchpoints currently defined.
+      Breakpoints             : GVD.Breakpoints_List.Breakpoint_List;
+      --  The list of breakpoints and watchpoints specific to this debugger.
 
       Descriptor              : GVD.Types.Program_Descriptor;
       --  This is used to store the launching method.
@@ -124,9 +125,6 @@ package GVD.Process is
       --  Currently displayed dialog that should be deleted on next user input.
       --  This is mostly used for question dialogs, since the user can also
       --  type its input directly in the command window.
-
-      Has_Temporary_Breakpoint : Boolean := True;
-      --  Whether there exists a temporary breakpoint in Breakpoints.
 
       Post_Processing         : Boolean := False;
       --  True if the debugger is handling post processing of a command.
@@ -299,29 +297,6 @@ package GVD.Process is
      (Process : access Visual_Debugger_Record'Class) return Boolean;
    --  Return whether current command is likely to change the callstack when it
    --  finishes its execution
-
-   --------------------------
-   -- Breakpoints handling --
-   --------------------------
-
-   procedure Update_Breakpoints
-     (Process : access Glib.Object.GObject_Record'Class;
-      Force   : Boolean);
-   --  Update the list of breakpoints every time the process is stopped.
-   --  This also updates all the visual windows where the breakpoints are
-   --  displayed.
-   --  Not that the list of breakpoints is not reparsed if Force is False and
-   --  there is no temporary breakpoint in the current list.
-
-   function Toggle_Breakpoint_State
-     (Process        : access Visual_Debugger_Record;
-      Breakpoint_Num : GVD.Types.Breakpoint_Identifier) return Boolean;
-   --  Toggle the enabled/disabled state of a specific breakpoint in the
-   --  current process, and return the new state.
-   --  The internal list of breakpoints is also updated, but no command is
-   --  emitted to the debugger.
-   --  False is returned when there is no such breakpoint in the list (or the
-   --  list of breakpoints has never been parsed before).
 
 private
 

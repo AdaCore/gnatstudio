@@ -73,6 +73,15 @@ NF-17-P601-006 GPS: new functions exported to GPS.Debugger (2016-06-08)
   are GPS.Debugger.value_of, GPS.Debugger.set_variable,
   GPS.Debugger.break_at_location and GPS.Debugger.unbreak_at_location.
 
+NF-17-P527-030 GPS: setting breakpoints before debugger starts (2016-06-13)
+
+  It is now possible to set breakpoints even before a debugger is started.
+  This can be done as usual via the Debug/Set Breakpoint contextual menu,
+  or by clicking on the side of editor lines. These breakpoints will be
+  set automatically when a debugger is started.
+  The permanent breakpoints are now saved and restored for every executable
+  in the project, not for each executable individually.
+
 NF-17-P526-049 GPS: Improve outline view's "with Clauses" (2016-05-30)
 
   Do not show "with Clauses" node in outline view if no withes.

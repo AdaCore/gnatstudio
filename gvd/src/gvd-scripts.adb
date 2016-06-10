@@ -31,6 +31,7 @@ with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with GPS.Intl;                use GPS.Intl;
+with GVD.Breakpoints_List;    use GVD.Breakpoints_List;
 with GVD.Preferences;         use GVD.Preferences;
 with GVD.Process;             use GVD.Process;
 with GVD.Types;               use GVD.Types;
@@ -280,17 +281,16 @@ package body GVD.Scripts is
 
       elsif Command = "break_at_location" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
-         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
-         Data.Set_Return_Value
-           (Integer (Process.Debugger.Break_Source
-            (File  => Nth_Arg (Data, 2),
-             Line  => Data.Nth_Arg (3))));
+         Break_Source
+           (Kernel => Kernel,
+            File  => Nth_Arg (Data, 2),
+            Line   => Data.Nth_Arg (3));
 
       elsif Command = "unbreak_at_location" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
-         Process := Visual_Debugger (GObject'(Get_Data (Inst)));
-         Process.Debugger.Remove_Breakpoint_At
-           (File  => Nth_Arg (Data, 2),
+         Unbreak_Source
+           (Kernel,
+            File  => Nth_Arg (Data, 2),
             Line  => Data.Nth_Arg (3));
 
       elsif Command = "command" then
@@ -408,12 +408,10 @@ package body GVD.Scripts is
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Data.Set_Return_Value_As_List;
-         if Process.Breakpoints /= null then
-            for B of Process.Breakpoints.all loop
-               Data.Set_Return_Value
-                 (Create_Debugger_Breakpoint (Data.Get_Script, B));
-            end loop;
-         end if;
+         for B of Process.Breakpoints.List loop
+            Data.Set_Return_Value
+              (Create_Debugger_Breakpoint (Data.Get_Script, B));
+         end loop;
       end if;
    end Shell_Handler;
 

@@ -576,8 +576,7 @@ package body Vdiff2_Module.Utils is
          Line_End   : Natural;
          Symbol     : String)
       is
-         Infos : Line_Information_Data :=
-            new Line_Information_Array (Line_Start .. Line_End);
+         Infos : Line_Information_Array (Line_Start .. Line_End);
       begin
          for J in Infos'Range loop
             Infos (J).Text := To_Unbounded_String (Symbol);
@@ -588,7 +587,6 @@ package body Vdiff2_Module.Utils is
             File       =>  File,
             Identifier => Id_Col_Vdiff,
             Info       => Infos);
-         Unchecked_Free (Infos);
       end Add_Side_Symbol;
 
       --------------------------
@@ -1038,11 +1036,11 @@ package body Vdiff2_Module.Utils is
       end loop;
 
       Add_Line_Information
-        (Kernel, Item.Files (1), Id_Col_Vdiff, Info => Info (1));
+        (Kernel, Item.Files (1), Id_Col_Vdiff, Info => Info (1).all);
       Add_Line_Information
-        (Kernel, Item.Files (2), Id_Col_Vdiff, Info => Info (2));
+        (Kernel, Item.Files (2), Id_Col_Vdiff, Info => Info (2).all);
       Add_Line_Information
-        (Kernel, Item.Files (3), Id_Col_Vdiff, Info => Info (3));
+        (Kernel, Item.Files (3), Id_Col_Vdiff, Info => Info (3).all);
       Move_Mark (Res, Item.List);
       Free (Res);
       Free (Res);

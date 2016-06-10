@@ -22,13 +22,14 @@ with GNAT.Strings;
 with Process_Proxies;
 with GNAT.Regpat;
 
+with GVD.Breakpoints_List;     use GVD.Breakpoints_List;
 with GVD.Types;
 with GVD.Proc_Utils;
-with GPS.Kernel;          use GPS.Kernel;
+with GPS.Kernel;               use GPS.Kernel;
 with GNATCOLL.VFS;
 with Ada.Unchecked_Deallocation;
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 
 package Debugger is
 
@@ -594,8 +595,8 @@ package Debugger is
    --  If Temporary is True, then the breakpoint should be deleted
    --  automatically the first time it is hit.
    --  It returns the identifier associated with the newly created breakpoint.
-   --  GDB_COMMAND: "break name" or "tbreak name" (or 0 if the debugger is
-   --  busy and the command was queued)
+   --  GDB_COMMAND: "break name" or "tbreak name" (or No_Breakpoint if the
+   --  debugger is busy and the command was queued)
 
    function Break_Source
      (Debugger  : access Debugger_Root;
@@ -673,9 +674,9 @@ package Debugger is
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Remove any breakpoint set at that location
 
-   function List_Breakpoints
-     (Debugger  : access Debugger_Root)
-      return GVD.Types.Breakpoint_Array is abstract;
+   procedure List_Breakpoints
+     (Debugger  : not null access Debugger_Root;
+      List      : out Breakpoint_Vectors.Vector) is abstract;
    --  Return the list of breakpoints set in the current session.
 
    function Get_Last_Breakpoint_Id

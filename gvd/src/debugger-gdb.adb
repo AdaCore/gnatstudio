@@ -2027,7 +2027,7 @@ package body Debugger.Gdb is
          return Breakpoint_Identifier'Value
            (C (M (1).First .. M (1).Last));
       else
-         return 0;
+         return No_Breakpoint;
       end if;
    end Internal_Set_Breakpoint;
 
@@ -2260,7 +2260,7 @@ package body Debugger.Gdb is
          --  scope of the breakpoint indicated by Num
 
          --  These commands are sent as Internal to avoid the call
-         --  to Update_Breakpoints in Send_Internal_Post, which causes
+         --  to Refresh_Breakpoints_List in Send_Internal_Post, which causes
          --  the Action radio button to jump to its previous setting
 
          if Num = 0 then
@@ -3425,50 +3425,37 @@ package body Debugger.Gdb is
    -- List_Breakpoints --
    ----------------------
 
-   overriding function List_Breakpoints
-     (Debugger  : access Gdb_Debugger) return Breakpoint_Array
+   overriding procedure List_Breakpoints
+     (Debugger  : not null access Gdb_Debugger;
+      List      : out Breakpoint_Vectors.Vector)
    is
-      S               : constant String :=
-                          Send_And_Get_Output
-                            (Debugger, "info breakpoints", Mode => Internal);
-      Num_Breakpoints : Natural := 0;
+      S : constant String :=
+        Send_And_Get_Output (Debugger, "info breakpoints", Mode => Internal);
       Index           : Natural := S'First;
       Tmp             : Natural;
 
-      Breakpoint_Number          : Long_Integer;
-      Previous_Breakpoint_Number : Long_Integer := 0;
-
-      procedure Fill_Scope_Action
-        (Debugger        : access Gdb_Debugger;
-         List            : in out Breakpoint_Array;
-         Num_Breakpoints : Natural);
+      procedure Fill_Scope_Action (Debugger : access Gdb_Debugger);
       --  Assign values of Scope and Action for the breakpoints in
       --  List as reported by the debugger.
 
       procedure Match_Breakpoint_Info
         (First       : Integer;
          Last        : Integer;
-         Num         : Natural;
-         Br          : in out Breakpoint_Array;
+         Current     : in out Breakpoint_Data;
          Has_Matched : out Boolean);
       --  Match in S (First .. Last) file name, exception name and subprogram
       --  name associated with the current breakpoint.
 
       procedure Match_Extra_Breakpoint_Info
-        (First : Integer;
-         Last  : in out Integer;
-         Num   : Natural;
-         Br    : in out Breakpoint_Array);
+        (First   : Integer;
+         Last    : in out Integer;
+         Current : in out Breakpoint_Data);
 
       -----------------------
       -- Fill_Scope_Action --
       -----------------------
 
-      procedure Fill_Scope_Action
-        (Debugger        : access Gdb_Debugger;
-         List            : in out Breakpoint_Array;
-         Num_Breakpoints : Natural)
-      is
+      procedure Fill_Scope_Action (Debugger : access Gdb_Debugger) is
          S : constant String := Send_And_Get_Clean_Output
            (Debugger, "info breakpoints-extra-info",
             Mode => Internal);
@@ -3477,13 +3464,14 @@ package body Debugger.Gdb is
          Matched : Match_Array (0 .. 4);
          Scope   : GVD.Types.Scope_Type;
          Action  : GVD.Types.Action_Type;
+         J       : Integer := List.First_Index;
       begin
          --  skip the first line
 
          Skip_To_Char (S, Index, ASCII.LF);
          Index := Index + 1;
 
-         for J in 1 .. Num_Breakpoints loop
+         while Index <= S'Last loop
             Match (Breakpoint_Extra_Info, S (Index .. S'Last), Matched);
 
             if Matched (0) /= No_Match then
@@ -3520,6 +3508,8 @@ package body Debugger.Gdb is
                List (J).Scope := No_Scope;
                List (J).Action := No_Action;
             end if;
+
+            J := J + 1;
          end loop;
       end Fill_Scope_Action;
 
@@ -3530,8 +3520,7 @@ package body Debugger.Gdb is
       procedure Match_Breakpoint_Info
         (First       : Integer;
          Last        : Integer;
-         Num         : Natural;
-         Br          : in out Breakpoint_Array;
+         Current     : in out Breakpoint_Data;
          Has_Matched : out Boolean)
       is
          Matched : Match_Array (0 .. 10);
@@ -3541,17 +3530,17 @@ package body Debugger.Gdb is
          Match (File_Name_In_Breakpoint, S (First .. Last - 2), Matched);
          if Matched (0) /= No_Match then
             --  Translate the matched filename into local file if needed
-            Br (Num).File := To_Local
+            Current.File := To_Local
               (Create
                  (+S (Matched (1).First .. Matched (1).Last),
                   Get_Nickname (Debug_Server)));
 
-            if not Br (Num).File.Is_Absolute_Path then
-               Br (Num).File := Debugger.Kernel.Create_From_Base
-                 (Br (Num).File.Full_Name);
+            if not Current.File.Is_Absolute_Path then
+               Current.File := Debugger.Kernel.Create_From_Base
+                 (Current.File.Full_Name);
             end if;
 
-            Br (Num).Line := Integer'Value
+            Current.Line := Integer'Value
               (S (Matched (2).First .. Matched (2).Last));
             Has_Matched := True;
          end if;
@@ -3560,18 +3549,18 @@ package body Debugger.Gdb is
          if Matched (0) /= No_Match then
             if Matched (1) /= No_Match then
                if Matched (3) /= No_Match then
-                  Br (Num).Except := To_Unbounded_String
+                  Current.Except := To_Unbounded_String
                     (S (Matched (3).First .. Matched (3).Last));
                else
-                  Br (Num).Except := To_Unbounded_String
+                  Current.Except := To_Unbounded_String
                     (S (Matched (2).First .. Matched (2).Last));
                end if;
             else
                if Matched (5) /= No_Match then
-                  Br (Num).Except := To_Unbounded_String
+                  Current.Except := To_Unbounded_String
                     (S (Matched (5).First .. Matched (5).Last));
                else
-                  Br (Num).Except := To_Unbounded_String
+                  Current.Except := To_Unbounded_String
                     (S (Matched (4).First .. Matched (4).Last));
                end if;
             end if;
@@ -3580,7 +3569,7 @@ package body Debugger.Gdb is
 
          Match (Subprogram_In_Breakpoint, S (First .. Last - 2), Matched);
          if Matched (0) /= No_Match then
-            Br (Num).Subprogram := To_Unbounded_String
+            Current.Subprogram := To_Unbounded_String
               (S (Matched (1).First .. Matched (1).Last));
             Has_Matched := True;
          end if;
@@ -3591,18 +3580,16 @@ package body Debugger.Gdb is
       ---------------------------------
 
       procedure Match_Extra_Breakpoint_Info
-        (First : Integer;
-         Last  : in out Integer;
-         Num   : Natural;
-         Br    : in out Breakpoint_Array)
+        (First   : Integer;
+         Last    : in out Integer;
+         Current : in out Breakpoint_Data)
       is
          Matched : Match_Array (0 .. 10);
          M       : Boolean := False;
       begin
-         Match
-           (Condition_In_Breakpoint, S (First .. Last - 2), Matched);
+         Match (Condition_In_Breakpoint, S (First .. Last - 2), Matched);
          if Matched (0) /= No_Match then
-            Br (Num).Condition := To_Unbounded_String
+            Current.Condition := To_Unbounded_String
               (S (Matched (1).First .. Matched (1).Last));
             M := True;
          end if;
@@ -3610,7 +3597,7 @@ package body Debugger.Gdb is
          if not M then
             Match (Ignore_In_Breakpoint, S (First .. Last - 2), Matched);
             if Matched (0) /= No_Match then
-               Br (Num).Ignore := Natural'Value
+               Current.Ignore := Natural'Value
                  (S (Matched (1).First .. Matched (1).Last));
                M := True;
             end if;
@@ -3629,35 +3616,17 @@ package body Debugger.Gdb is
                end loop;
 
                if First /= Last then
-                  Br (Num).Commands := To_Unbounded_String
+                  Current.Commands := To_Unbounded_String
                     (S (First .. Last - 2));
                end if;
             end if;
          end if;
       end Match_Extra_Breakpoint_Info;
 
+      Breakpoint_Number : Long_Integer;
+
    begin
-      --  Skip the first line (that indicates there is no breakpoints,
-      --  or that gives the title of each column).
-      --  A breakpoint exists for each line that starts with a number except
-      --  for multiple locations breakpoint. In this case a line with a
-      --  breakpoint number N can be followed by several lines starting with
-      --  N.M where M is the location number of the multiple locations
-      --  breakpoint.
-
-      while Index <= S'Last loop
-         if S (Index) in '0' .. '9' then
-            Parse_Num (S, Index, Breakpoint_Number);
-
-            if Breakpoint_Number /= Previous_Breakpoint_Number then
-               Num_Breakpoints := Num_Breakpoints + 1;
-               Previous_Breakpoint_Number := Breakpoint_Number;
-            end if;
-         end if;
-
-         Skip_To_Char (S, Index, ASCII.LF);
-         Index := Index + 1;
-      end loop;
+      List.Clear;
 
       --  Parse each line. The general format looks like:
       --  Num Type           Disp Enb Address    What
@@ -3684,57 +3653,57 @@ package body Debugger.Gdb is
       --  the commands to execute upon stopping.
 
       declare
-         Br       : Breakpoint_Array (1 .. Num_Breakpoints);
-         Num      : Natural := 1;
          Matched  : Match_Array (0 .. 10);
          M        : Boolean;
          Multiple : Boolean;
+         B        : Breakpoint_Data;
       begin
          Index := S'First;
          Skip_To_Char (S, Index, ASCII.LF);
          Index := Index + 1;
 
-         while Num <= Num_Breakpoints loop
+         while Index <= S'Last loop
             Multiple := False;
             Match (Breakpoint_Pattern, S (Index .. S'Last), Matched);
 
             if Matched (0) /= No_Match then
                Multiple := Matched (5) /= No_Match;
 
-               Br (Num).Num := Breakpoint_Identifier'Value
+               B := (others => <>);
+               B.Num := Breakpoint_Identifier'Value
                  (S (Matched (1).First .. Matched (1).Last));
 
                case S (Matched (2).First) is
                   when 'b' =>
                      --  "breakpoint"
-                     Br (Num).The_Type := Breakpoint;
+                     B.The_Type := Breakpoint;
                   when 'a' =>
                      --  "acc watchpoint"
-                     Br (Num).The_Type := Watchpoint;
-                     Br (Num).Trigger  := Read_Write;
+                     B.The_Type := Watchpoint;
+                     B.Trigger  := Read_Write;
                   when 'r' =>
                      --  "read watchpoint"
-                     Br (Num).The_Type := Watchpoint;
-                     Br (Num).Trigger  := Read;
+                     B.The_Type := Watchpoint;
+                     B.Trigger  := Read;
                   when others =>
                      --  "hw watchpoint"
-                     Br (Num).The_Type := Watchpoint;
-                     Br (Num).Trigger  := Write;
+                     B.The_Type := Watchpoint;
+                     B.Trigger  := Write;
                end case;
 
                case S (Matched (3).First) is
-                  when 'k'    => Br (Num).Disposition := Keep;
-                  when 'd'    => Br (Num).Disposition := Disable;
-                  when others => Br (Num).Disposition := Delete;
+                  when 'k'    => B.Disposition := Keep;
+                  when 'd'    => B.Disposition := Disable;
+                  when others => B.Disposition := Delete;
                end case;
 
-               Br (Num).Enabled := S (Matched (4).First) = 'y';
+               B.Enabled := S (Matched (4).First) = 'y';
 
-               if Br (Num).The_Type = Breakpoint then
-                  Br (Num).Address := String_To_Address
+               if B.The_Type = Breakpoint then
+                  B.Address := String_To_Address
                     ("0x" & S (Matched (8).First .. Matched (8).Last));
                else
-                  Br (Num).Expression := To_Unbounded_String
+                  B.Expression := To_Unbounded_String
                     (S (Matched (9).First .. Matched (9).Last));
                end if;
 
@@ -3755,7 +3724,7 @@ package body Debugger.Gdb is
                      Tmp := Index;
                      Skip_To_Char (S, Index, ASCII.LF);
                      Index := Index + 1;
-                     Match_Extra_Breakpoint_Info (Tmp, Index, Num, Br);
+                     Match_Extra_Breakpoint_Info (Tmp, Index, B);
                   end loop;
 
                   --  We are now on the line correponding to the first location
@@ -3768,7 +3737,7 @@ package body Debugger.Gdb is
                   Match
                     (Multiloc_Breakpoint_Instance_Pattern,
                      S (Tmp .. Index - 2), Matched);
-                  Match_Breakpoint_Info (Matched (1).First, Index, Num, Br, M);
+                  Match_Breakpoint_Info (Matched (1).First, Index, B, M);
 
                   --  Skip the following lines that correspond to other
                   --  instances of the same multiple locations breakpoint.
@@ -3778,7 +3747,7 @@ package body Debugger.Gdb is
                      Parse_Num (S, Tmp, Breakpoint_Number);
 
                      exit when Integer (Breakpoint_Number) /=
-                       Integer (Br (Num).Num);
+                       Integer (B.Num);
 
                      Skip_To_Char (S, Index, ASCII.LF);
                      Index := Index + 1;
@@ -3803,27 +3772,25 @@ package body Debugger.Gdb is
                   --  File name, exception name and subprogram name can be
                   --  found on the same line.
 
-                  Match_Breakpoint_Info (Tmp, Index, Num, Br, M);
+                  Match_Breakpoint_Info (Tmp, Index, B, M);
 
                   --  If no file/subprogram/exception was found on the line, we
                   --  look for extra information (ignore count, commands,
                   --  conditions).
 
                   if not M then
-                     Match_Extra_Breakpoint_Info (Tmp, Index, Num, Br);
+                     Match_Extra_Breakpoint_Info (Tmp, Index, B);
                   end if;
                end loop;
             end if;
 
-            Num := Num + 1;
+            List.Append (B);
          end loop;
 
          --  Fill the breakpoints extra information
          if VxWorks_Version (Debugger) = Vx653 then
-            Fill_Scope_Action (Debugger, Br, Num_Breakpoints);
+            Fill_Scope_Action (Debugger);
          end if;
-
-         return Br;
       end;
    end List_Breakpoints;
 

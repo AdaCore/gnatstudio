@@ -1305,12 +1305,22 @@ package body GPS.Kernel is
      (Filter1, Filter2 : access Action_Filter_Record'Class)
       return Action_Filter is
    begin
-      return new Base_Action_Filter_Record'
-        (Kind       => Filter_And,
-         Error_Msg  => Null_Unbounded_String,
-         Name       => Null_Unbounded_String,
-         Registered => False,
-         And1 => Action_Filter (Filter1), And2 => Action_Filter (Filter2));
+      if Filter1 = null then
+         return Action_Filter (Filter2);
+      elsif Filter2 = null then
+         return Action_Filter (Filter1);
+      else
+         --  ??? The use of Unrestricted_Access is ugly, but it allows nicer
+         --  user code, since it won't require temporary variable. Also done
+         --  for actions themselves.
+         return new Base_Action_Filter_Record'
+           (Kind       => Filter_And,
+            Error_Msg  => Null_Unbounded_String,
+            Name       => Null_Unbounded_String,
+            Registered => False,
+            And1       => Filter1.all'Unrestricted_Access,
+            And2       => Filter2.all'Unrestricted_Access);
+      end if;
    end "and";
 
    ----------
@@ -1321,13 +1331,19 @@ package body GPS.Kernel is
      (Filter1, Filter2 : access Action_Filter_Record'Class)
       return Action_Filter is
    begin
-      return new Base_Action_Filter_Record'
-        (Kind       => Filter_Or,
-         Error_Msg  => Null_Unbounded_String,
-         Name       => Null_Unbounded_String,
-         Registered => False,
-         Or1        => Action_Filter (Filter1),
-         Or2        => Action_Filter (Filter2));
+      if Filter1 = null then
+         return Action_Filter (Filter2);
+      elsif Filter2 = null then
+         return Action_Filter (Filter1);
+      else
+         return new Base_Action_Filter_Record'
+           (Kind       => Filter_Or,
+            Error_Msg  => Null_Unbounded_String,
+            Name       => Null_Unbounded_String,
+            Registered => False,
+            Or1        => Filter1.all'Unrestricted_Access,
+            Or2        => Filter2.all'Unrestricted_Access);
+      end if;
    end "or";
 
    -----------
@@ -1337,12 +1353,16 @@ package body GPS.Kernel is
    function "not"
      (Filter : access Action_Filter_Record'Class) return Action_Filter is
    begin
-      return new Base_Action_Filter_Record'
-        (Kind       => Filter_Not,
-         Registered => False,
-         Error_Msg  => Null_Unbounded_String,
-         Name       => Null_Unbounded_String,
-         Not1       => Action_Filter (Filter));
+      if Filter = null then
+         return null;
+      else
+         return new Base_Action_Filter_Record'
+           (Kind       => Filter_Not,
+            Registered => False,
+            Error_Msg  => Null_Unbounded_String,
+            Name       => Null_Unbounded_String,
+            Not1       => Filter.all'Unrestricted_Access);
+      end if;
    end "not";
 
    ---------------------

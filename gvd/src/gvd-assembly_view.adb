@@ -419,24 +419,17 @@ package body GVD.Assembly_View is
 
          --  Highlight breakpoint lines
 
-         if Process.Breakpoints /= null then
-            for B in Process.Breakpoints'Range loop
-               if Process.Breakpoints (B).Address /= Invalid_Address then
-                  Iter_From_Address
-                    (View,
-                     Process.Breakpoints (B).Address,
-                     Start_Iter,
-                     Found);
-
-                  if Found then
-                     Copy (Start_Iter, Dest => End_Iter);
-                     Forward_To_Line_End (End_Iter, Dummy);
-                     Apply_Tag
-                       (Buffer, View.Breakpoint_Tag, Start_Iter, End_Iter);
-                  end if;
+         for B of Process.Breakpoints.List loop
+            if B.Address /= Invalid_Address then
+               Iter_From_Address (View, B.Address, Start_Iter, Found);
+               if Found then
+                  Copy (Start_Iter, Dest => End_Iter);
+                  Forward_To_Line_End (End_Iter, Dummy);
+                  Apply_Tag
+                    (Buffer, View.Breakpoint_Tag, Start_Iter, End_Iter);
                end if;
-            end loop;
-         end if;
+            end if;
+         end loop;
 
          --  Highlight PC line
 
@@ -541,7 +534,8 @@ package body GVD.Assembly_View is
       Result : out Boolean;
       Num    : out Breakpoint_Identifier)
    is
-      Breakpoints_Array : GVD.Types.Breakpoint_Array_Ptr;
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Process (View));
    begin
       if View = null then
          Num := Breakpoint_Identifier'Last;
@@ -549,11 +543,9 @@ package body GVD.Assembly_View is
          return;
       end if;
 
-      Breakpoints_Array := Visual_Debugger (Get_Process (View)).Breakpoints;
-
-      for Index in Breakpoints_Array'Range loop
-         if Breakpoints_Array (Index).Address = Addr then
-            Num := Breakpoints_Array (Index).Num;
+      for B of Process.Breakpoints.List loop
+         if B.Address = Addr then
+            Num := B.Num;
             Result := True;
             return;
          end if;

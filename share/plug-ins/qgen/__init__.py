@@ -1199,6 +1199,7 @@ else:
                 name='MDL generate code for whole project',
                 category='QGen')
 
+            # ??? Should work when no debugger is currently running
             gps_utils.make_interactive(
                 name='MDL break debugger on block',
                 contextual=self.__contextual_name_for_break_on_block,

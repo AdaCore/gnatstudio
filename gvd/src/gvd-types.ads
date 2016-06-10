@@ -95,19 +95,17 @@ package GVD.Types is
    -- Breakpoints --
    -----------------
 
-   type Breakpoint_Type is (Breakpoint, Watchpoint);
-   --  Types of breakpoints
-
-   type Breakpoint_Disposition is (Delete, Disable, Keep);
-   --  What to do with a breakpoint when it is reached.
-
-   type Breakpoint_Identifier is new Natural;
-   --  How breakpoints are identified. Currently, the debuggers supported
-   --  by gvd all associate numbers with breakpoints.
-
    type VxWorks_Version_Type is (Vx_None, Vx5, Vx6, Vx653, Vx_Unknown);
    --  Used to keep track of the VxWorks version running on the target, as
    --  different versions have different debugging capabilities
+
+   type Breakpoint_Identifier is new Natural;
+   No_Breakpoint : constant Breakpoint_Identifier := 0;
+   --  How breakpoints are identified. Currently, the debuggers supported
+   --  by gvd all associate numbers with breakpoints.
+
+   type Watchpoint_Trigger is (Read, Write, Read_Write);
+   --  The kind of memory access that triggers a watchpoint
 
    type Scope_Type is (Current_Task, Tasks_In_PD, Any_Task, No_Scope);
    type Action_Type is (Current_Task, Tasks_In_PD, All_Tasks, No_Action);
@@ -138,70 +136,6 @@ package GVD.Types is
    --   any          task       "any" only allowed in kernel domain
    --   any          pd         "any" only allowed in kernel domain
    --   any          all        "any" only allowed in kernel domain
-
-   type Watchpoint_Trigger is (Read, Write, Read_Write);
-   --  The kind of memory access that triggers a watchpoint
-
-   type Breakpoint_Data is record
-      Num         : Breakpoint_Identifier;
-      --  breakpoint number (internal to the debugger)
-
-      The_Type    : Breakpoint_Type := Breakpoint;
-      --  The type of breakpoint
-
-      Disposition : Breakpoint_Disposition := Keep;
-      --  What is done when the breakpoint is reached
-
-      Enabled     : Boolean := True;
-      --  Whether the breakpoint is currently enabled
-
-      Address     : Address_Type := Invalid_Address;
-      --  The address of the breakpoint.
-
-      Trigger     : Watchpoint_Trigger := Write;
-      --  The action that causes the watchpoint to break the program.  The
-      --  value set here is valid only for watchpoints.
-
-      Expression  : Unbounded_String;
-      --  The name of the variable to watch for watchpoints. This is left to
-      --  null for breakpoints.
-
-      Except      : Unbounded_String;
-      --  Name of the exception on which we break
-
-      Subprogram  : Unbounded_String;
-      --  Name of the subprogram we stop in.
-
-      File        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      --  The file name that contains the breakpoint.
-      --  Must be stored as an absolute file name.
-
-      Line        : Integer := 0;
-      --  The line that contains the breakpoint
-
-      Condition   : Unbounded_String;
-      --  Condition on which this breakpoint is activated
-
-      Ignore      : Natural := 0;
-      --  Number of hits that will be ignored before actually stopping
-
-      Commands    : Unbounded_String;
-      --  Commands to execute when the debugger stops at this breakpoint
-
-      Scope       : Scope_Type := No_Scope;
-      --  The scope of the breakpoint
-
-      Action      : Action_Type := No_Action;
-      --  The action of the breakpoint
-   end record;
-   --  Information for a specific breakpoint
-
-   type Breakpoint_Array is array (Natural range <>) of Breakpoint_Data;
-
-   type Breakpoint_Array_Ptr is access Breakpoint_Array;
-
-   procedure Free (Br_Access : in out Breakpoint_Array_Ptr);
-   --  Free the memory allocate for the array.
 
    ----------------
    -- Exceptions --
