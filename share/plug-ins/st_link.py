@@ -1,17 +1,39 @@
 """
 This plugin creates buttons on the toolbar to conveniently
-flash and debug programs for the STM32F* boards.
+flash and debug programs on external boards.
 
-The utility program st-util must be present on the PATH for
-the buttons to be made visible. This utility is included in
-recent Windows-based versions of GNAT for the arm-eabi targets,
-or can be downloaded from https://github.com/texane/stlink and
-built. In addition, the utility st-flash is required to be
-on the path in order to flash memory as a separate operation.
-Note that the USB driver for these utility programs must be
-installed in order for them to operate correctly, but this
-plugin is not concerned with that aspect.
+Two tool suites are currently supported by GPS to flash/debug
+a specific board:
 
+. st-util/st-flash (for STM32 family boards only)
+
+   These utilities are included in recent Windows-based versions of
+   GNAT for the arm-eabi targets, or can be downloaded from
+   https://github.com/texane/stlink and built.
+
+   To use st-util/st-flash in order to debug/flash a specific board, set
+   the IDE'Connection_Tool project attribute to 'st-util'. These two
+   utilities need to be in the PATH in order to use them from GPS.
+
+   Note that the USB driver for these utility programs
+   must be installed in order for them to operate correctly, but this
+   plugin is not concerned with that aspect.
+
+. OpenOCD (for possibly any board supporting JTAG connections )
+
+   OpenOCD (Open On-Chip Debugger) is open-source software that interfaces with
+   a hardware debugger's JTAG port. It can be retrieved on the OpenOCD official
+   website: http://openocd.org/getting-openocd
+
+   To use OpenOCD in order to debug/flash a specific board, set the
+   IDE'Connection_Tool project attribute to 'openocd'.
+
+   In addition, OpenOCD needs a board-specific configuration file
+   in order to interact with a given board. OpenOCD comes with a
+   set of default configuration files that can generally be found in
+   the '/usr/local/share/openocd/scripts/board' directory. Set the
+   IDE'Configuration_File project attribute to choose the configuration file
+   to use with OpenOCD for your project.
 """
 
 import GPS
@@ -23,57 +45,73 @@ import workflows.promises as promises
 from gps_utils.console_process import Console_Process
 
 
-def msg_is(msg):
-    GPS.Console("Messages").write(msg + "\n")
-
-
-def uses_stm32(prj):
-    """ Search the project to see if it uses the STM32 boards
-    """
-    s = prj.get_attribute_as_string(package="Builder",
-                                    attribute="Default_Switches",
-                                    index="Ada")
-    if "stm32" in s:
-        return True
-
-    s = prj.get_attribute_as_string(package="Builder",
-                                    attribute="Switches",
-                                    index="Ada")
-    if "stm32" in s:
-        return True
-
-    s = prj.get_attribute_as_string("runtime", index="Ada")
-    if "stm32" in s:
-        return True
-
-    return False
-
-
 class BoardLoader(Module):
 
     # The build targets that have been created lazily. See comments in
     # gnatemulator.py
     __buildTargets = []
 
-    # The build target associated with the 'st-util' command line
+    # The target on which we want to debug/flash.
+    # Retrieved from the Target project attribute.
+    __target = None
+
+    # The tool spawned to interface with the device when debugging.
+    # Retrieved from the IDE'Communication_Tool project attribute.
+    __connection_tool = None
+
+    # The optional configuration file used to configure the connection
+    # tool.
+    # Retrieved from the IDE'Communication_Config_File project attribute.
+    __config_file = None
+
+    # The build target associated with the connection tool
     __connector = None
 
-    # The ProcessWrapper instance used to spawn the 'st-util' tool
+    # The ProcessWrapper instance used to spawn the connection tool
     # and the associated promises
     __connection = None
 
-    # The debugger used to debug on the board
-    __debugger = None
+    # Name or IP address of the target we want to connect.
+    # Retrieved from the IDE'Program_Host project attribute.
+    __remote_target = None
+
+    # Protocol used to connect to the target.
+    # Retrieved from the IDE'Communication_Protocol project attribute.
+    __remote_protocol = None
+
+    # The address where we should load the executable. Retrieved using objdump.
+    __load_address = None
+
+    # Set to True if a workflow is still being processed.
+    # This is used to avoid launching more than one workflow at the time.
+    __is_busy = False
+
+    def __is_non_native_project(self, prj):
+        """
+        Used to know if the project is set for a native target or a
+        BB/cross target.m
+        """
+
+        return self.__target != "" and self.__target != "native"
+
+    def __display_message(self, msg, mode="text"):
+        """
+        Display the given message in the GPS Messages windows.
+        Use the 'error' mode for to display warning/error messages.
+        """
+
+        GPS.Console("Messages").write(msg + "\n", mode=mode)
 
     def __error_exit(self, msg=""):
-        """ Emit an error, reset the workflows and close the debugger if any"""
-        GPS.Console("Messages").write(msg + " [workflow stopped]\n",
-                                      mode="error")
-        self.__reset_all()
+        """
+        Display the given error message and reset the workflows
+        """
 
-        if self.__debugger:
-            self.__debugger.close()
-            self.__debugger = None
+        self.__display_message(msg, mode="error")
+        self.__display_message("[workflow stopped]", mode="error")
+
+        self.__reset_all()
+        self.__is_busy = False
 
     @workflows.run_as_workflow
     def __open_remote_project_properties(self, text):
@@ -86,60 +124,202 @@ class BoardLoader(Module):
         yield editor.open_and_yield(wait_scan=False)
         yield editor.select("Build/Cross-Platform")
 
-    def __verify_connection_settings(self, debugger):
+    def __verify_settings(self, for_debug=False):
         """
-        Verify that the remote debug settings have correctly been set for
-        the given debugger in order to debug on board.
+        Verify that the settings have correctly been set in order to flash,
+        and, if for_debug is True, to debug a remote target.
 
-        Return a error message if errors have been found or an empty string
-        if the settings are correctly set.
+
+        Return True if the settings are correctly set, False otherwise.
         """
 
         console = GPS.Console("Messages")
+        message_header = ("Can't debug on board:" if for_debug
+                          else "Can't flash the board:")
 
-        remote_target = debugger.remote_target
-        remote_protocol = debugger.remote_protocol
+        if not self.__connection_tool:
+            console.create_link("IDE'Connection_Tool",
+                                self.__open_remote_project_properties)
+            console.write(("%s no connection tool specified. Please set the "
+                           % (message_header)),
+                          mode="error")
+            console.write_with_links("IDE'Connection_Tool")
+            console.write(" project attribute\n",
+                          mode="error")
 
-        if not remote_target:
+        if for_debug and not self.__remote_target:
             console.create_link("IDE'Protocol_Host",
                                 self.__open_remote_project_properties)
-            console.write(("Can't debug on board: no remote target specified. "
-                           "Please set the "),
+            console.write(("%s no remote target specified. Please set the "
+                           % (message_header)),
                           mode="error")
             console.write_with_links("IDE'Protocol_Host")
             console.write(" project attribute\n",
                           mode="error")
 
-        if not remote_protocol:
+        if for_debug and not self.__remote_protocol:
             console.create_link("IDE'Communication_Protocol",
                                 self.__open_remote_project_properties)
-            console.write(("Can't debug on board: no remote protocol specified"
-                           ". Please set the "),
+            console.write(("%s no remote protocol specified. Please set the "
+                           % (message_header)),
                           mode="error")
             console.write_with_links("IDE'Communication_Protocol")
             console.write(" project attribute\n",
                           mode="error")
 
-        return remote_target and remote_protocol
+        return (self.__connection_tool and (not for_debug or
+                (self.__remote_target and
+                 self.__remote_protocol)))
+
+    def __get_flashing_command_line(self, binary):
+        """
+        Get the command line used to invoke the currently set flashing tool.
+        The flashing tool is deduced from the IDE'Connection_Tool (i.e: use
+        'st-flash' if IDE'Connection_Tool is set to 'st-util'.).
+        """
+
+        cmd = [self.__flashing_tool]
+        args = []
+
+        if self.__flashing_tool == "openocd":
+            # Replace backslashes by forward slashes.
+            # This is used to support OpenOCD on Windows.
+            binary = binary.replace('\\', '/')
+            args = ["-f", '"%s"' % (self.__config_file), "-c", '"program',
+                    binary, "verify", "reset", "exit",
+                    '%s"' % (self.__load_address)]
+
+        elif self.__flashing_tool == "st-flash":
+            args = ["write", binary, self.__load_address]
+
+        return cmd + args
+
+    def __get_flashing_complete_regexp(self):
+        """
+        Get the regexp used to detect when the flashing tool has successfully
+        flashed the board.
+        This regexp depends on the currently used flashing tool.
+        """
+
+        if self.__flashing_tool == "st-flash":
+            return "Flash written and verified! jolly good!"
+        elif self.__flashing_tool == "openocd":
+            return "Verified OK"
+        else:
+            return ""
+
+    def __update_settings(self, project):
+        """
+        Update the settings used to flash/debug by retrieving the related
+        project attributes.
+        """
+
+        self.__target = project.get_attribute_as_string(
+            package="",
+            attribute="Target")
+
+        self.__remote_target = project.get_attribute_as_string(
+            package="IDE",
+            attribute="Program_Host")
+
+        self.__remote_protocol = project.get_attribute_as_string(
+            package="IDE",
+            attribute="Communication_Protocol")
+
+        self.__connection_tool = project.get_attribute_as_string(
+            package="IDE",
+            attribute="Connection_Tool").lower()
+
+        # Retrieve the configuration file only if we are using OpenOCD and
+        # set the flashing tool according to the connection tool.
+        if self.__connection_tool == "openocd":
+            self.__flashing_tool = "openocd"
+            self.__config_file = project.get_attribute_as_string(
+                package="IDE",
+                attribute="Connection_Config_File")
+        elif self.__connection_tool == "st-util":
+            self.__flashing_tool = "st-flash"
+            self.__config_file = ""
+        else:
+            self.__flashing_tool = ""
+            self.__config_file = ""
+
+    def __get_connection_command_line(self):
+        """
+        Get the command line used to invoke the currently set connection tool
+        (e.g: the target address/port used to interact with GDB).
+        """
+
+        cmd = [self.__connection_tool]
+        args = []
+        gdb_port = self.__remote_target.split(':')[-1]
+
+        if self.__connection_tool == "openocd":
+            args = ["-f", self.__config_file, "-c", '"gdb_port',
+                    '%s"' % (gdb_port)]
+        elif self.__connection_tool == "st-util":
+            args = ["-p", gdb_port]
+
+        return cmd + args
+
+    def __get_connection_detection_regexp(self):
+        """
+        Get the regexp used to detect when the target connector is successfully
+        connected to the board.
+        This regexp depends on the currently used connection tool.
+        """
+        if self.__connection_tool == "st-util":
+            return "Listening at"
+        elif self.__connection_tool == "openocd":
+            return "Target voltage"
+        else:
+            return ""
 
     def __reset_all(self, manager_delete=True, connection_delete=True):
         """ Reset the workflows """
+
         if self.__connection is not None and connection_delete:
-            msg_is("Resetting the connection")
+            self.__display_message("Resetting the connection")
+
+            # Close the connection
             self.__connection.terminate()
             self.__connection = None
 
-            interest = "st-util"
+            # Kill the task attached to the connection tool  if it still there
             for i in GPS.Task.list():
-                if interest in i.name():
+                if self.__connection_tool in i.name():
                     i.interrupt()
 
     def __create_targets_lazily(self):
-        active = uses_stm32(GPS.Project.root())
+        """
+        Create the 'Flash to Board', the 'Debug on Board' and the Target
+        Connector Build Targets.
+        This method is called each time the project changes.
+        """
 
-        if not self.__connector and active:
-            self.__connector = TargetConnector("st-util", [])
+        project = GPS.Project.root()
 
+        # Update the settings used for flash/debug
+        self.__update_settings(project)
+
+        # Check if it's a project for non-native targets
+        active = self.__is_non_native_project(project)
+
+        # Remove the previous Target Connector build target since the
+        # connection tool and/or its arguments may have changed.
+        if self.__connector:
+            self.__connector.remove()
+
+        # Create the Target Connector build target if a connection tool
+        # has been specified in the project.
+        if active and self.__connection_tool:
+            cmd = self.__get_connection_command_line()
+            self.__connector = TargetConnector(
+                tool_name=cmd[0],
+                default_args=cmd[1:])
+
+        # If the 'Flash to Board' and 'Debug on Board' build targets have
+        # not been created yet, create them.
         if not self.__buildTargets and active:
             workflows.create_target_from_workflow(
                 "Flash to Board", "flash-to-board", self.__flash_wf,
@@ -151,6 +331,7 @@ class BoardLoader(Module):
                 "gps-boardloading-debug-symbolic")
             self.__buildTargets.append(GPS.BuildTarget("Debug on Board"))
 
+        # Show/Hide the build targets accordingly
         if active:
             for b in self.__buildTargets:
                 b.show()
@@ -166,59 +347,113 @@ class BoardLoader(Module):
         """Workflow to build and flash the program on the board.
         """
 
+        # Return with a warning message if we are still processing a previously
+        # launched workflow.
+        if self.__is_busy:
+            self.__display_message(
+                msg="Warning: 'Debug on Board' already being executed",
+                mode="error")
+            return
+
+        self.__is_busy = True
+
+        # Check if we have a main to flash
         if main_name is None:
             self.__error_exit(msg="Could not find the name of the main.")
             return
 
+        # Build the executable
         builder = promises.TargetWrapper("Build Main")
         r0 = yield builder.wait_on_execute(main_name)
         if r0 is not 0:
             self.__error_exit(msg="Build error.")
             return
 
-        msg_is("Creating the binary (flashable) image.")
+        # Check that the settings are correctly set to flash the board
+        success = self.__verify_settings()
+        if not success:
+            self.__error_exit(msg="Could not flash the board.")
+            return
+
+        # Get the executable path
         exe = GPS.File(main_name).executable_path.path
-        binary = exe + ".bin"
-        cmd = ["arm-eabi-objcopy", "-O", "binary", exe, binary]
-        msg_is(' '.join(cmd))
+
+        # Retrieve the load address of the executable with objdump
+        self.__display_message("Retrieving the load address.")
+        cmd = ["%s-objdump" % (self.__target), exe, "-h"]
+        self.__display_message(' '.join(cmd))
 
         try:
             con = promises.ProcessWrapper(cmd)
         except:
-            self.__error_exit("Could not launch executable arm-eabi-objcopy.")
+            self.__error_exit("Could not launch executable %s" % (cmd[0]))
             return
 
-        r1, output = yield con.wait_until_terminate()
-        if r1 is not 0:
-            self.__error_exit("arm-eabi-objcopy returned an error.")
+        r1, output = yield con.wait_until_match("\.text")
+        if not r1:
+            self.__error_exit("%s returned an error." % (cmd[0]))
             return
 
-        msg_is("Flashing image to board.")
-        cmd = ["st-flash", "write", binary, "0x8000000"]
+        self.__load_address = "0x%s" % (output.split()[2])
+        self.__display_message("Load address is: %s" % (self.__load_address))
+
+        # Create the flashable binary with objcopy
+        self.__display_message("Creating the binary (flashable) image.")
+        binary = exe + ".bin"
+        cmd = ["%s-objcopy" % (self.__target), "-O", "binary", exe, binary]
+        self.__display_message(' '.join(cmd))
+
         try:
-            con = promises.ProcessWrapper(cmd, spawn_console=True)
+            con = promises.ProcessWrapper(cmd)
         except:
+            self.__error_exit("Could not launch executable %s." % (cmd[0]))
+            return
+
+        r2, output = yield con.wait_until_terminate()
+        if r2 is not 0:
+            self.__error_exit("%s returned an error." % (cmd[0]))
+            return
+
+        # Flash the binary and wait until it completes
+        self.__display_message("Flashing image to board.")
+        try:
+            con = promises.ProcessWrapper(
+                cmdargs=self.__get_flashing_command_line(binary),
+                spawn_console=True)
+        except Exception as e:
+            self.__error_exit(str(e))
             self.__error_exit("Could not connect to the board.")
             return
 
-        r2, output = yield con.wait_until_match(
-            "Starting verification of write complete",
-            120000)
         r3, output = yield con.wait_until_match(
-            "Flash written and verified! jolly good!",
-            500)
+            self.__get_flashing_complete_regexp(),
+            120000)
 
-        if not (r2 and r3):
+        if not r3:
             self.__error_exit(msg="Could not flash the executable.")
             con.terminate()
             return
 
-        msg_is("Flashing complete. You may need to reset (or cycle power).")
+        self.__display_message(("Flashing complete. "
+                                "You may need to reset (or cycle power)."))
+
+        # Not busy anymore
+        self.__is_busy = False
 
     def __debug_wf(self, main_name):
         """
         Workflow to build, flash and debug the program on the real board.
         """
+
+        # Return with a warning message if we are still processing a previously
+        # launched workflow.
+        if self.__is_busy:
+            self.__display_message(("Warning: 'Debug on Board' "
+                                    "already being executed"),
+                                   mode="error")
+            return
+
+        self.__is_busy = True
 
         # Reset the connection if still alive
         if self.__connection is not None:
@@ -236,16 +471,22 @@ class BoardLoader(Module):
             self.__error_exit("Build error.")
             return
 
+        # Check that the settings are correctly set to debug on board
+        success = self.__verify_settings(for_debug=True)
+        if not success:
+            self.__error_exit(msg="Could not connect to the board.")
+            return
+
         # Switch directly to the "Debug" perspective so that the
-        # 'st-util' console is still visible when spawning the debugger.
+        # connection tool console is still visible when spawning the debugger.
         GPS.MDI.load_perspective("Debug")
 
-        # Launch st-util with its associated console
+        # Launch the connection tool with its associated console
         cmd = self.__connector.get_command_line()
-        msg_is("Launching st-util.")
+        self.__display_message("Launching %s" % (self.__connection_tool))
         self.__connection = promises.ProcessWrapper(cmd, spawn_console=True)
         r1, output = yield self.__connection.wait_until_match(
-            "Listening at",
+            self.__get_connection_detection_regexp(),
             120000)
 
         if not r1:
@@ -253,17 +494,9 @@ class BoardLoader(Module):
             return
 
         # Spawn the debugger on the executable and load it
-        msg_is("Launching debugger.")
+        self.__display_message("Launching debugger.")
         exe = GPS.File(main_name).executable_path
         debugger_promise = promises.DebuggerWrapper(exe)
-        self.__debugger = debugger_promise.get()
-
-        # Check that the debugger settings are correctly set to connect
-        # to the device
-        success = self.__verify_connection_settings(debugger_promise.get())
-        if not success:
-            self.__error_exit(msg="Could not connect to the board.")
-            return
 
         # Load the executable
         r2 = yield debugger_promise.wait_and_send(
@@ -272,21 +505,30 @@ class BoardLoader(Module):
 
         # Reset the board
         r3 = yield debugger_promise.wait_and_send(
-            cmd="monitor jtag_reset",
+            cmd="monitor reset halt",
             block=True)
+
+        # Not busy anymore
+        self.__is_busy = False
 
     def setup(self):
         """
         When setting up the module, create target and buildTargets.
         """
+
         GPS.Hook("debugger_terminated").add(self.debugger_terminated)
         self.__create_targets_lazily()
 
     def project_view_changed(self):
+        """
+        Try to create the build targets when the project changes.
+        """
+
         self.__create_targets_lazily()
 
     def debugger_terminated(self, hookname, debugger):
         """
         When debugger terminates, terminate the connection.
         """
+
         self.__reset_all()
