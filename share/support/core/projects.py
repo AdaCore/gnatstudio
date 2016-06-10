@@ -287,6 +287,30 @@ XML = r"""<?xml version="1.0" ?>
        <string />
    </project_attribute>
 
+   <project_attribute
+      name="connection_tool"
+      package="IDE"
+      editor_page="Build/Cross-Platform"
+      editor_section="Cross environment"
+      description="Executable used to interface with a remote target when debugging. GPS currently supports OpenOCD and st-util."
+      hide_in="wizard library_wizard"
+      label="Connection tool">
+      <choice>st-util</choice>
+      <choice>openocd</choice>
+      <string />
+   </project_attribute>
+
+   <project_attribute
+      name="connection_config_file"
+      package="IDE"
+      editor_page="Build/Cross-Platform"
+      editor_section="Cross environment"
+      description="File used to configure the IDE'Connection_Tool. Used only when OpenOCD is set."
+      hide_in="wizard library_wizard"
+      label="Connection configuration file">
+      <string type="file"/>
+   </project_attribute>
+
     <!--  Main units -->
 
     <project_attribute
