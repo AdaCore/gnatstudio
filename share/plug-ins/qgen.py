@@ -673,6 +673,7 @@ else:
     class QGEN_Module(modules.Module):
 
         modeling_map = None   # a Mapping_File instance
+        previous_breakpoints = []
 
         @staticmethod
         @gps_utils.hook('project_view_changed')
@@ -785,29 +786,42 @@ else:
                 QGEN_Module.compute_item_values(
                     debugger, diag, toplevel=toplevel, item=it)
 
-            # Restore default style for all visible items, in case they used
-            # to have a breakpoint.
-            # ??? This seems inefficient, might need to revisit in the future
-
-            for top in diag.items:
-                for it in top.recurse():
-                    viewer.diags.set_item_style(it, None)
-
-            # Highlights blocks with breakpoints
-
+            # Restore default style for previous items with breakpoints
             map = QGEN_Module.modeling_map
-            for b in debugger.breakpoints:
-                blockid = map.get_block(file=b.file, line=b.line)
-                item = diag.get_item(blockid)
-                if item:
-                    for it in item.recurse():
-                        try:
-                            id = getattr(item, "id", None)
-                            viewer.diags.set_item_style(
-                                item, item.data.get('style_if_breakpoint'))
-                        except:
-                            # No style_if_breakpoint defined
-                            pass
+
+            def set_block_style(bp, style=None):
+                """
+                Update the style field of an item to the given style name
+                or reset it if no style is supplied
+                :param bp: a DebuggerBreakpoint object
+                :param style: a string representing the key containing
+                the style to set
+                """
+                if bp.type == "breakpoint":
+                    blockid = map.get_block(file=bp.file, line=bp.line)
+                    item = diag.get_item(blockid)
+                    if item:
+                        for it in item.recurse():
+                            try:
+                                id = getattr(item, "id", None)
+                                if style:
+                                    viewer.diags.set_item_style(
+                                        item, item.data.get(style)
+                                    )
+                                else:
+                                    viewer.diags.set_item_style(item, None)
+                            except:
+                                # No style_if_breakpoint defined
+                                pass
+
+            for b in QGEN_Module.previous_breakpoints:
+                set_block_style(b)
+
+            QGEN_Module.previous_breakpoints = debugger.breakpoints
+
+            # Highlights current blocks with breakpoints
+            for b in QGEN_Module.previous_breakpoints:
+                set_block_style(b, 'style_if_breakpoint')
 
             # Update the display
             diag.changed()
@@ -833,6 +847,7 @@ else:
             :param line: if specified, show the diagram for this line instead
             """
 
+            debugger_select = not filename and not line
             filename = filename or debugger.current_file
             line = line or debugger.current_line
 
@@ -844,13 +859,10 @@ else:
                 """
                 assert isinstance(viewer, QGEN_Diagram_Viewer)
 
-                # Make sure we ill recompute the value of signals when the
+                # Make sure we will recompute the value of signals when the
                 # user selects a new diagram. This call has no effect if we
                 # had already registered the callback for this viewer.
                 viewer.on_diagram_loaded(QGEN_Module.__on_diagram_changed)
-
-                # Unselect items from the previous step
-                viewer.diags.clear_selection()
 
                 # Select the blocks corresponding to the current line
                 block = QGEN_Module.modeling_map.get_block(filename, line)
@@ -860,8 +872,11 @@ else:
                     if info:
                         diagram, item = info
                         viewer.set_diagram(diagram)  # calls on_diagram_loaded
-                        diagram.select(item)
-                        scroll_to = item
+                        if debugger_select:
+                            # Unselect items from the previous step
+                            viewer.diags.clear_selection()
+                            diagram.select(item)
+                            scroll_to = item
 
                 if scroll_to:
                     viewer.scroll_into_view(scroll_to)
@@ -1000,10 +1015,9 @@ else:
                     # Set a breakpoint only on the first line of a range
                     debug.break_at_location(file, line=rg[0])
 
-            # Force a refresh to show blocks with breakpoints
-
-            QGEN_Module.__show_diagram_and_signal_values(
-                debug, filename=filename, line=line)
+                    # Force a refresh to show blocks with breakpoints
+                    QGEN_Module.__show_diagram_and_signal_values(
+                        debug, filename=filename, line=line)
 
         def __contextual_delete_breakpoint(self):
             """
@@ -1015,7 +1029,12 @@ else:
             if ranges:
                 debug = GPS.Debugger.get()
                 for file, rg in ranges:
-                    debug.unbreak_at_location(file, line=rg[0])
+                    filename = file
+                    line = rg[0]
+                    debug.unbreak_at_location(file, line=line)
+
+                QGEN_Module.__show_diagram_and_signal_values(
+                    debug, filename, line)
 
         def __contextual_show_source_code(self):
             """
