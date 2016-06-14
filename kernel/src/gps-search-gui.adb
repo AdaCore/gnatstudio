@@ -58,7 +58,6 @@ with GPS.Kernel.Search.Plugins;
 with GPS.Kernel.Search.Preferences;
 with GPS.Intl;                      use GPS.Intl;
 with GPS.Main_Window;               use GPS.Main_Window;
-with GUI_Utils;                     use GUI_Utils;
 with Histories;                     use Histories;
 
 package body GPS.Search.GUI is
@@ -83,10 +82,6 @@ package body GPS.Search.GUI is
       Current_Command : Global_Search_Command_Access;
       --  The command that was last used to give focus to the search (if any).
       --  Do not free.
-
-      Previous_Focus : Gtk_Widget;
-      --  The widget that had the focus before we gave it to the search field
-      --  for the last time
    end record;
    type Global_Search_Module is access all Global_Search_Module_Record'Class;
 
@@ -512,11 +507,6 @@ package body GPS.Search.GUI is
 
    procedure Reset is
    begin
-      --  Reset for when the user clicks in the field
-      if Module.Previous_Focus /= null then
-         Module.Previous_Focus.Unref;
-      end if;
-      Module.Previous_Focus := null;
       Module.Current_Command := null;
       Module.Search.Set_Completion (Module.Default_Command.Provider);
    end Reset;
@@ -526,12 +516,8 @@ package body GPS.Search.GUI is
    ---------------
 
    procedure On_Escape (Self : access Gtk_Widget_Record'Class) is
-      S : constant Gtkada_Entry := Gtkada_Entry (Self);
+      pragma Unreferenced (Self);
    begin
-      if Module.Previous_Focus /= null then
-         Grab_Toplevel_Focus (Get_MDI (S.Get_Kernel), Module.Previous_Focus);
-      end if;
-
       Reset;
    end On_Escape;
 
@@ -549,14 +535,6 @@ package body GPS.Search.GUI is
              S.Get_Text);
       end if;
 
-      --  Give the focus back, so that if for instance we are executing
-      --  a GPS action, it executes in the context of the original view, not
-      --  that of the global search entry.
-
-      if Module.Previous_Focus /= null then
-         Grab_Toplevel_Focus (Get_MDI (S.Get_Kernel), Module.Previous_Focus);
-      end if;
-
       Reset;
    end On_Activate;
 
@@ -571,11 +549,6 @@ package body GPS.Search.GUI is
       pragma Unreferenced (Context);
       Kernel : constant Kernel_Handle := Module.Get_Kernel;
    begin
-      Module.Previous_Focus := Get_Current_Focus_Widget (Kernel);
-      if Module.Previous_Focus /= null then
-         Module.Previous_Focus.Ref;
-      end if;
-
       Module.Current_Command := Global_Search_Command_Access (Self);
 
       Create_New_Key_If_Necessary

@@ -743,6 +743,14 @@ package body Gtkada.Entry_Completion is
       S : constant Gtkada_Entry := Gtkada_Entry (Self);
       pragma Unreferenced (Event);
    begin
+      --  Get the currently focused widget so that we can give it the focus
+      --  back when the user presses the ESCAPE key.
+      S.Previous_Focus := Gtk_Widget (Get_MDI (S.Kernel).Get_Focus_Child);
+
+      if S.Previous_Focus /= null then
+         S.Previous_Focus.Ref;
+      end if;
+
       --  Update the current context, so that key shortcuts like
       --  Backspace are sent to the omni-search, and not the editor that
       --  had the focus previously.
@@ -766,6 +774,14 @@ package body Gtkada.Entry_Completion is
       pragma Unreferenced (Event);
    begin
       Popdown (S);
+
+      --  Unref the previously focused widget and set it to null when the
+      --  focus goes out of the entry.
+      if S.Previous_Focus /= null then
+         S.Previous_Focus.Unref;
+         S.Previous_Focus := null;
+      end if;
+
       return False;
    end On_Focus_Out;
 
@@ -999,8 +1015,15 @@ package body Gtkada.Entry_Completion is
       elsif Event.Keyval = GDK_Escape then
          Popdown (Self);
          Reset (Self);
-         Widget_Callback.Emit_By_Name (Self, Signal_Escape);
 
+         --  Give the focus to the previously focused widget when pressing on
+         --  the ESCAPE key.
+         if Self.Previous_Focus /= null then
+            Grab_Toplevel_Focus (Get_MDI (Self.Kernel), Self.Previous_Focus);
+         end if;
+
+         Widget_Callback.Emit_By_Name (Self, Signal_Escape);
+         return True;
       elsif Event.Keyval = GDK_Tab then
          if Self.Pattern /= null then
             declare

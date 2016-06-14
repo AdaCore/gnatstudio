@@ -135,7 +135,11 @@ private
       Popup            : Gtk.Window.Gtk_Window;
       --  The popup window
 
-      Grab_Device             : Gdk.Device.Gdk_Device;
+      Previous_Focus   : Gtk.Widget.Gtk_Widget;
+      --  The widget that had the focus before we gave it to the search field
+      --  for the last time
+
+      Grab_Device      : Gdk.Device.Gdk_Device;
 
       Column_Provider  : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Column_Match     : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
