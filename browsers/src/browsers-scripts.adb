@@ -1610,7 +1610,7 @@ package body Browsers.Scripts is
             Data.Set_Return_Value
               (Item_Proxies.Get_Or_Create_Instance
                  (Python_Item_Access (The_Link.Get_Label).Inst_List.all,
-                  Abstract_Item (The_Link), Data.Get_Script));
+                  Abstract_Item (The_Link.Get_Label), Data.Get_Script));
          end if;
 
       elsif Command = "fromLabel" then
@@ -1620,7 +1620,7 @@ package body Browsers.Scripts is
             Data.Set_Return_Value
               (Item_Proxies.Get_Or_Create_Instance
                  (Python_Item_Access (The_Link.Get_Label_From).Inst_List.all,
-                  Abstract_Item (The_Link), Data.Get_Script));
+                  Abstract_Item (The_Link.Get_Label_From), Data.Get_Script));
          end if;
 
       elsif Command = "toLabel" then
@@ -1630,16 +1630,8 @@ package body Browsers.Scripts is
             Data.Set_Return_Value
               (Item_Proxies.Get_Or_Create_Instance
                  (Python_Item_Access (The_Link.Get_Label_To).Inst_List.all,
-                  Abstract_Item (The_Link), Data.Get_Script));
+                  Abstract_Item (The_Link.Get_Label_To), Data.Get_Script));
          end if;
-
-      elsif Command = "hide" then
-         Inst := Nth_Arg (Data, 1);
-         Canvas_Link (Item_Proxies.From_Instance (Inst)).Hide;
-
-      elsif Command = "show" then
-         Inst := Nth_Arg (Data, 1);
-         Canvas_Link (Item_Proxies.From_Instance (Inst)).Show;
       end if;
    end Link_Handler;
 

@@ -397,7 +397,6 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
 
     def __init__(self):
         # The set of callbacks to call when a new diagram is displayed
-        self.__on_diagram_loaded = set()
         super(QGEN_Diagram_Viewer, self).__init__()
 
     @staticmethod
@@ -520,15 +519,6 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         if name == 'showdiagram':
             self.set_diagram(self.diags.get(args[0]))
 
-    def on_diagram_loaded(self, cb):
-        """
-        Adds a callback to be executed when a new diagram is displayed
-        :param cb: The callback to be added to the list. Cb must have the
-           following profile:
-              def cb(viewer, diagram)
-        """
-        self.__on_diagram_loaded.add(cb)
-
     def set_diagram(self, diag):
         """
         Sets the diagram that has to be displayed and calls
@@ -537,8 +527,11 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         """
         self.diagram = diag
         self.scale_to_fit(2)
-        for cb in self.__on_diagram_loaded:
-            cb(self, self.diagram)
+
+        # Make sure we will recompute the value of signals when the
+        # user selects a new diagram.
+        if diag:
+            QGEN_Module.on_diagram_changed(self, diag)
 
     # @overriding
     def on_item_double_clicked(self, topitem, item, x, y, *args):
@@ -696,6 +689,8 @@ else:
             """
             Recompute the value for all symbols related to item, and update
             the display of item to show their values.
+            :param GPS.Debugger debugger: the debugger to query.
+               It can be None when no debugger is running.
             :param (GPS.Browsers.Item|GPS.Browsers.Link) toplevel: the
                toplevel item (generally a link)
             :param GPS.Browsers.Item item: the item that has an "auto"
@@ -708,10 +703,18 @@ else:
 
             parent = item.get_parent_with_id() or toplevel
 
+            # Find the parent to hide (the one that contains the label)
+
+            item_parent = item
+            p = item.parent
+            while p is not None:
+                item_parent = p
+                p = item_parent.parent
+
             # The list of symbols to compute from the debugger
 
             symbols = QGEN_Module.modeling_map.get_symbols(blockid=parent.id)
-            if symbols:
+            if symbols and debugger is not None:
                 s = next(iter(symbols))  # Get the first symbol
                 # Function calls do not have a '/'
                 if '/' in s:
@@ -725,7 +728,7 @@ else:
 
                     # Skip case when the variable is unknown
                     if value is None:
-                        item.hide()
+                        item_parent.hide()
 
                     else:
                         # Check whether the value is a float or is an integer
@@ -744,10 +747,13 @@ else:
                             pass
 
                         if value:
-                            item.show()
+                            item_parent.show()
                             item.text = value
                         else:
-                            item.hide()
+                            item_parent.hide()
+
+            else:
+                item_parent.hide()
 
         @staticmethod
         def forall_auto_items(diagrams):
@@ -767,7 +773,7 @@ else:
                                 yield (d, item, it)
 
         @staticmethod
-        def __on_diagram_changed(viewer, diag):
+        def on_diagram_changed(viewer, diag):
             """
             Called whenever a new diagram is displayed in viewer. This change
             might have been triggered either by the user or programmatically.
@@ -777,9 +783,10 @@ else:
 
             assert(isinstance(viewer.diags, gpsbrowsers.JSON_Diagram_File))
 
-            debugger = GPS.Debugger.get()
-            if not debugger:
-                return
+            try:
+                debugger = GPS.Debugger.get()
+            except:
+                debugger = None
 
             # Compute the value for all items with an "auto" property
             for diag, toplevel, it in QGEN_Module.forall_auto_items([diag]):
@@ -817,11 +824,14 @@ else:
             for b in QGEN_Module.previous_breakpoints:
                 set_block_style(b)
 
-            QGEN_Module.previous_breakpoints = debugger.breakpoints
+            if debugger:
+                QGEN_Module.previous_breakpoints = debugger.breakpoints
 
-            # Highlights current blocks with breakpoints
-            for b in QGEN_Module.previous_breakpoints:
-                set_block_style(b, 'style_if_breakpoint')
+                # Highlights current blocks with breakpoints
+                for b in QGEN_Module.previous_breakpoints:
+                    set_block_style(b, 'style_if_breakpoint')
+            else:
+                QGEN_Module.previous_breakpoints = []
 
             # Update the display
             diag.changed()
@@ -858,11 +868,6 @@ else:
                    ready. It should contain the list of diagrams.
                 """
                 assert isinstance(viewer, QGEN_Diagram_Viewer)
-
-                # Make sure we will recompute the value of signals when the
-                # user selects a new diagram. This call has no effect if we
-                # had already registered the callback for this viewer.
-                viewer.on_diagram_loaded(QGEN_Module.__on_diagram_changed)
 
                 # Select the blocks corresponding to the current line
                 block = QGEN_Module.modeling_map.get_block(filename, line)
