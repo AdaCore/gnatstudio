@@ -136,6 +136,7 @@ class BoardLoader(Module):
         console = GPS.Console("Messages")
         message_header = ("Can't debug on board:" if for_debug
                           else "Can't flash the board:")
+        result = True
 
         if not self.__connection_tool:
             console.create_link("IDE'Connection_Tool",
@@ -146,6 +147,19 @@ class BoardLoader(Module):
             console.write_with_links("IDE'Connection_Tool")
             console.write(" project attribute\n",
                           mode="error")
+            result = False
+
+        if self.__connection_tool == "openocd" and not self.__config_file:
+            console.create_link("IDE'Connection_Config_File",
+                                self.__open_remote_project_properties)
+            console.write(("%s no configuration file specified. "
+                           "Please set the "
+                           % (message_header)),
+                          mode="error")
+            console.write_with_links("IDE'Connection_Config_File")
+            console.write(" project attribute\n",
+                          mode="error")
+            result = False
 
         if for_debug and not self.__remote_target:
             console.create_link("IDE'Protocol_Host",
@@ -156,6 +170,7 @@ class BoardLoader(Module):
             console.write_with_links("IDE'Protocol_Host")
             console.write(" project attribute\n",
                           mode="error")
+            result = False
 
         if for_debug and not self.__remote_protocol:
             console.create_link("IDE'Communication_Protocol",
@@ -166,10 +181,9 @@ class BoardLoader(Module):
             console.write_with_links("IDE'Communication_Protocol")
             console.write(" project attribute\n",
                           mode="error")
+            result = False
 
-        return (self.__connection_tool and (not for_debug or
-                (self.__remote_target and
-                 self.__remote_protocol)))
+        return result
 
     def __get_flashing_command_line(self, binary):
         """
