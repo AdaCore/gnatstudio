@@ -400,7 +400,17 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         super(QGEN_Diagram_Viewer, self).__init__()
 
     @staticmethod
-    def __get_or_create_view(file):
+    def retrieve_qgen_viewers():
+        """
+        Returns the list of all qgen viewer instances currently open
+        in GPS
+        """
+        for win in GPS.MDI.children():
+            if hasattr(win, '_gmc_viewer'):
+                yield win._gmc_viewer
+
+    @staticmethod
+    def get_or_create_view(file):
         """
         Get an existing viewer for file, or create a new empty view.
         :return: (view, newly_created)
@@ -443,7 +453,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
            It might not contain any diagram yet, since those are read
            asynchronously.
         """
-        v, newly_created = QGEN_Diagram_Viewer.__get_or_create_view(file)
+        v, newly_created = QGEN_Diagram_Viewer.get_or_create_view(file)
 
         if newly_created:
             def __on_json(json):
@@ -474,7 +484,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
            so that we do not open multiple viewers for the same file.
         :param data: the actual json data to display.
         """
-        v, newly_created = QGEN_Diagram_Viewer.__get_or_create_view(file)
+        v, newly_created = QGEN_Diagram_Viewer.get_or_create_view(file)
         if newly_created:
             v.diags = GPS.Browsers.Diagram.load_json_data(
                 data, diagramFactory=QGEN_Diagram)
@@ -523,15 +533,16 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         """
         Sets the diagram that has to be displayed and calls
         the callbacks that have to be executed when the diagram changes
+        If diag is None a refresh on the current diagram is performed
         :param diag: The new diagram to display
         """
-        self.diagram = diag
-        self.scale_to_fit(2)
+        if diag and diag != self.diagram:
+            self.diagram = diag
+            self.scale_to_fit(2)
 
         # Make sure we will recompute the value of signals when the
-        # user selects a new diagram.
-        if diag:
-            QGEN_Module.on_diagram_changed(self, diag)
+        # user selects a new diagram, or forces an update
+        QGEN_Module.on_diagram_changed(self, self.diagram)
 
     # @overriding
     def on_item_double_clicked(self, topitem, item, x, y, *args):
@@ -642,7 +653,7 @@ class Mapping_File(object):
         The block name corresponding to a given source line
         :param GPS.File filename:
         """
-        a = self._files.get(file.path, [])
+        a = self._files.get(file.path, {})
         return a.get(line, None)
 
     def get_mdl_file(self, file):
@@ -666,7 +677,12 @@ else:
     class QGEN_Module(modules.Module):
 
         modeling_map = None   # a Mapping_File instance
+
+        # pair (id, status) for signals, if status is false
+        # the signal is no longer watched and has to be reset
+        watched_signal = set()
         previous_breakpoints = []
+        debugger = None
 
         @staticmethod
         @gps_utils.hook('project_view_changed')
@@ -683,6 +699,25 @@ else:
             for f in GPS.Project.root().sources(recursive=True):
                 if CLI.is_model_file(f):
                     QGEN_Module.modeling_map.load(f)
+
+        @staticmethod
+        def __clear(debugger):
+            """
+            Resets the diagram display when a new debugger is used
+            """
+            for id, st in QGEN_Module.watched_signal:
+                QGEN_Module.watched_signal.remove((id, st))
+                QGEN_Module.watched_signal.add((id, False))
+
+            for viewer in QGEN_Diagram_Viewer.retrieve_qgen_viewers():
+                for diag in viewer.diags.diagrams:
+                    diag.clear_selection()
+                    QGEN_Module.on_diagram_changed(viewer, diag, clear=True)
+
+            QGEN_Module.previous_breakpoints = debugger.breakpoints
+
+            QGEN_Module.watched_signal.clear()
+            del QGEN_Module.previous_breakpoints[:]
 
         @staticmethod
         def compute_item_values(debugger, diagram, toplevel, item):
@@ -714,6 +749,7 @@ else:
             # The list of symbols to compute from the debugger
 
             symbols = QGEN_Module.modeling_map.get_symbols(blockid=parent.id)
+
             if symbols and debugger is not None:
                 s = next(iter(symbols))  # Get the first symbol
                 # Function calls do not have a '/'
@@ -773,12 +809,14 @@ else:
                                 yield (d, item, it)
 
         @staticmethod
-        def on_diagram_changed(viewer, diag):
+        def on_diagram_changed(viewer, diag, clear=False):
             """
             Called whenever a new diagram is displayed in viewer. This change
             might have been triggered either by the user or programmatically.
             :param viewer: a QGEN_Diagram_Viewer
             :param diag: a QGEN_Diagram
+            :param clear: a boolean which is true when we are clearing
+            the diagram for a new debugger instance
             """
 
             assert(isinstance(viewer.diags, gpsbrowsers.JSON_Diagram_File))
@@ -796,7 +834,7 @@ else:
             # Restore default style for previous items with breakpoints
             map = QGEN_Module.modeling_map
 
-            def set_block_style(bp, style=None):
+            def __set_block_style(bp, style=None):
                 """
                 Update the style field of an item to the given style name
                 or reset it if no style is supplied
@@ -822,44 +860,71 @@ else:
                                 pass
 
             for b in QGEN_Module.previous_breakpoints:
-                set_block_style(b)
+                __set_block_style(b)
+
+            for (itid, st) in QGEN_Module.watched_signal:
+                item = diag.get_item(itid)
+                if item:
+                    label = getattr(item, "label", None)
+                    if st:
+                        viewer.diags.set_item_style(
+                            label, label.data.get('style_if_watchpoint'))
+                    else:
+                        viewer.diags.set_item_style(label, None)
+
+            # The clear method will reset the breakpoints after all the
+            # diagrams have been processed
+            if clear or not debugger:
+                # Update the display
+                diag.changed()
+                return
 
             if debugger:
                 QGEN_Module.previous_breakpoints = debugger.breakpoints
 
-                # Highlights current blocks with breakpoints
-                for b in QGEN_Module.previous_breakpoints:
-                    set_block_style(b, 'style_if_breakpoint')
-            else:
-                QGEN_Module.previous_breakpoints = []
+            # Highlights current blocks with breakpoints
+            for b in QGEN_Module.previous_breakpoints:
+                __set_block_style(b, 'style_if_breakpoint')
 
-            # Update the display
             diag.changed()
 
         @staticmethod
         @gps_utils.hook('debugger_location_changed')
         def __on_debugger_location_changed(debugger):
+            debugger.send("qgen_breakpoint_action", output=False)
             QGEN_Module.__show_diagram_and_signal_values(debugger)
 
         @staticmethod
+        def __load_debug_script(debugger):
+            script = "%sshare/gps/plug-ins/qgen/gdb_scripts.py" \
+                     % GPS.get_system_dir()
+
+            # gdb-mi handles the cli source command aswell
+            debugger.send("source %s" % script, output=False)
+
         @gps_utils.hook('debugger_breakpoints_changed')
         def __on_debugger_breakpoints_changed(debugger):
-            # Show blocks with breakpoints
-            QGEN_Module.__show_diagram_and_signal_values(debugger)
+
+            if QGEN_Module.debugger != debugger:
+                QGEN_Module.debugger = debugger
+                # Load qgen gdb script for custom commands
+                QGEN_Module.__load_debug_script(debugger)
+                QGEN_Module.__clear(debugger)
+            else:
+                # Show blocks with breakpoints
+                QGEN_Module.__show_diagram_and_signal_values(
+                    debugger, force=True)
 
         @staticmethod
         def __show_diagram_and_signal_values(
-                debugger, filename=None, line=None):
+                debugger, force=False):
             """
-            Show the model corresponding to the current editor and line
-            :param GPS.File file: if specified, show the diagram for this
-               file instead of the current debugger file
-            :param line: if specified, show the diagram for this line instead
+            Show the model corresponding to the current debugger file and line
+            :param force boolean: Used to force an update of the view after a
+            user interaction
             """
-
-            debugger_select = not filename and not line
-            filename = filename or debugger.current_file
-            line = line or debugger.current_line
+            filename = debugger.current_file
+            line = debugger.current_line
 
             def __on_viewer_loaded(viewer):
                 """
@@ -869,6 +934,11 @@ else:
                 """
                 assert isinstance(viewer, QGEN_Diagram_Viewer)
 
+                # User interaction happened, update the current diagram
+                if force:
+                    viewer.set_diagram(None)
+                    return
+
                 # Select the blocks corresponding to the current line
                 block = QGEN_Module.modeling_map.get_block(filename, line)
                 scroll_to = None
@@ -876,12 +946,11 @@ else:
                     info = viewer.diags.get_diagram_for_item(block)
                     if info:
                         diagram, item = info
-                        viewer.set_diagram(diagram)  # calls on_diagram_loaded
-                        if debugger_select:
-                            # Unselect items from the previous step
-                            viewer.diags.clear_selection()
-                            diagram.select(item)
-                            scroll_to = item
+                        viewer.set_diagram(diagram)  # calls on_diagram_changed
+                        scroll_to = item
+                        # Unselect items from the previous step
+                        viewer.diags.clear_selection()
+                        diagram.select(item)
 
                 if scroll_to:
                     viewer.scroll_into_view(scroll_to)
@@ -891,6 +960,9 @@ else:
                 if mdl:
                     QGEN_Diagram_Viewer.get_or_create(
                         mdl, on_loaded=__on_viewer_loaded)
+                else:
+                    for viewer in QGEN_Diagram_Viewer.retrieve_qgen_viewers():
+                        __on_viewer_loaded(viewer)
 
         def block_source_ranges(self, blockid):
             """
@@ -964,6 +1036,15 @@ else:
             except:
                 return False
 
+        def __contextual_filter_debug_and_watchpoint(self, context):
+            try:
+                d = GPS.Debugger.get()   # or raise exception
+                it = context.modeling_item
+
+                return (it.id, True) in QGEN_Module.watched_signal
+            except:
+                return False
+
         def __contextual_filter_sources(self, context):
             """
             Whether the current context is a model block with
@@ -992,13 +1073,52 @@ else:
             for s in self.modeling_map.get_symbols(blockid=it.id):
                 ss = s.split('/')[-1].strip()  # Remove the "context/" part
                 current = debug.value_of(ss)
+                added = False
+
                 if current is not None:
                     v = GPS.MDI.input_dialog(
                         "Value for block %s" % it.id,
                         "value=%s" % current)
-                    debug.set_variable(ss, v[0])
+                    if v:
+                        added = True
+                        debug.set_variable(ss, v[0])
 
-            QGEN_Module.__show_diagram_and_signal_values(debug)
+            if added:
+                QGEN_Module.__show_diagram_and_signal_values(debug, force=True)
+
+        def __contextual_set_persistent_signal_value(self):
+            ctx = GPS.contextual_context() or GPS.current_context()
+            it = ctx.modeling_item
+            debug = GPS.Debugger.get()
+            added = False
+
+            for s in self.modeling_map.get_symbols(blockid=it.id):
+                v = GPS.MDI.input_dialog(
+                    "Persistent value for signal %s" % it.id,
+                    "value=")
+                if v:
+                    added = True
+                    debug.send("qgen_watchpoint %s %s" % (s, v[0]),
+                               output=False)
+
+            if added:
+                QGEN_Module.watched_signal.add((it.id, True))
+                QGEN_Module.__show_diagram_and_signal_values(debug, force=True)
+
+        def __contextual_disable_persistent_signal_value(self):
+            ctx = GPS.contextual_context() or GPS.current_context()
+            it = ctx.modeling_item
+            debug = GPS.Debugger.get()
+            removed = False
+
+            for s in self.modeling_map.get_symbols(blockid=it.id):
+                removed = True
+                debug.send("qgen_delete_watchpoint %s" % s, output=False)
+
+            if removed:
+                QGEN_Module.watched_signal.remove((it.id, True))
+                QGEN_Module.watched_signal.add((it.id, False))
+                QGEN_Module.__show_diagram_and_signal_values(debug, force=True)
 
         def __contextual_set_breakpoint(self):
             """
@@ -1020,9 +1140,9 @@ else:
                     # Set a breakpoint only on the first line of a range
                     debug.break_at_location(file, line=rg[0])
 
-                    # Force a refresh to show blocks with breakpoints
-                    QGEN_Module.__show_diagram_and_signal_values(
-                        debug, filename=filename, line=line)
+                # Force a refresh to show blocks with breakpoints
+                QGEN_Module.__show_diagram_and_signal_values(
+                    debug, force=True)
 
         def __contextual_delete_breakpoint(self):
             """
@@ -1039,7 +1159,7 @@ else:
                     debug.unbreak_at_location(file, line=line)
 
                 QGEN_Module.__show_diagram_and_signal_values(
-                    debug, filename, line)
+                    debug, force=True)
 
         def __contextual_show_source_code(self):
             """
@@ -1091,6 +1211,18 @@ else:
                 contextual='Debug/Set value for signal',
                 filter=self.__contextual_filter_debug_and_symbols,
                 callback=self.__contextual_set_signal_value)
+
+            gps_utils.make_interactive(
+                name='MDL set persistent signal value',
+                contextual='Debug/Set persistent value for signal',
+                filter=self.__contextual_filter_debug_and_symbols,
+                callback=self.__contextual_set_persistent_signal_value)
+
+            gps_utils.make_interactive(
+                name='MDL disable persistent signal value',
+                contextual='Debug/Disable persistent value for signal',
+                filter=self.__contextual_filter_debug_and_watchpoint,
+                callback=self.__contextual_disable_persistent_signal_value)
 
             gps_utils.make_interactive(
                 name='MDL show source for block',
