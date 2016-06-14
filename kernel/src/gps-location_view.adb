@@ -84,6 +84,7 @@ package body GPS.Location_View is
 
    Locations_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (GPS.Kernel.Messages.Editor_Side => False,
+      GPS.Kernel.Messages.Editor_Line => False,
       GPS.Kernel.Messages.Locations   => True);
 
    type Locations_Child_Record is new GPS_MDI_Child_Record with null record;
@@ -821,7 +822,9 @@ package body GPS.Location_View is
 
       if not Locations_Save_In_Desktop.Get_Pref then
          Get_Messages_Container (V.Kernel).Remove_All_Messages
-           ((Editor_Side => False, GPS.Kernel.Messages.Locations => True));
+           ((Editor_Side                   => False,
+             Editor_Line                   => False,
+             GPS.Kernel.Messages.Locations => True));
       end if;
 
       if V.Idle_Expand_Handler /= No_Source_Id then
@@ -1502,6 +1505,7 @@ package body GPS.Location_View is
       Get_Messages_Container (Kernel).Register_Listener
         (Listener_Access (Manager),
          (Editor_Side => False,
+          Editor_Line => False,
           GPS.Kernel.Messages.Locations => True));
    end Register_Module;
 
@@ -1683,7 +1687,9 @@ package body GPS.Location_View is
          Name_Parameters (Data, Locations_Add_Parameters);
          Get_Messages_Container (Get_Kernel (Data)).Save
            (Create (Nth_Arg (Data, 1)),
-            (Editor_Side => False, Messages.Locations => True),
+            (Editor_Side        => False,
+             Editor_Line        => False,
+             Messages.Locations => True),
             True);
       end if;
    end Default_Command_Handler;
@@ -1755,6 +1761,7 @@ package body GPS.Location_View is
          Container := Get_Messages_Container (View.Kernel);
          Container.Remove_All_Messages
            ((Editor_Side => False,
+             Editor_Line => False,
              GPS.Kernel.Messages.Locations => True));
       end if;
       return Commands.Success;

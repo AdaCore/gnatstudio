@@ -92,6 +92,9 @@ NF-17-P527-030 GPS: setting breakpoints before debugger starts (2016-06-13)
   set automatically when a debugger is started.
   The permanent breakpoints are now saved and restored for every executable
   in the project, not for each executable individually.
+  Lines with breakpoints now highlight the line number, and no longer
+  display a red dot on the side of the line. Clicking on the line numbers
+  toggles breakpoints on and off.
 
 NF-17-P526-049 GPS: Improve outline view's "with Clauses" (2016-05-30)
 

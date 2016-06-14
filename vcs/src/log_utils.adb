@@ -859,9 +859,7 @@ package body Log_Utils is
       --  commands.
 
       Get_Messages_Container (Kernel).Remove_Category
-        (-"Style/Log Check",
-         (Editor_Side => True,
-          Locations   => True));
+        (-"Style/Log Check", Side_And_Locations);
 
       for J in Files'Range loop
          exit when Cancel_All;

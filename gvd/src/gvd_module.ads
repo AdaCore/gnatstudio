@@ -43,12 +43,6 @@ package GVD_Module is
    procedure Debug_Terminate (Kernel : GPS.Kernel.Kernel_Handle);
    --  Terminate the debugging session, and closes all remaining debuggers
 
-   procedure Setup_Side_Columns
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Create the hooks that are responsible for refreshing the side column
-   --  while at least one debugger is running. Does nothing if the hooks have
-   --  already been created
-
    function Get_Current_Debugger
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
       return access Base_Visual_Debugger'Class;

@@ -930,107 +930,138 @@ package body Src_Editor_Buffer.Line_Information is
       Layout       : Pango_Layout;
       Cr           : Cairo.Cairo_Context)
    is
-      L               : Buffer_Line_Type;
-      Editable_Line   : Editable_Line_Type;
-      Iter            : Gtk_Text_Iter;
-      Y_In_Buffer     : Gint;
-      Y_Pix_In_Window : Gint;
-      Line_Height     : Gint;
-      Dummy_Gint      : Gint;
-      More_Lines      : Boolean;
-      Line_Info       : Line_Info_Width;
-      Some_Line_Nums  : constant Boolean :=
-                          Display_Line_Numbers.Get_Pref = Some_Lines;
+      Line_Nums : constant Line_Number_Policy := Display_Line_Numbers.Get_Pref;
+      BL     : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
+      Ctxt      : constant Gtk_Style_Context := Get_Style_Context (Area);
+      Max_Width : constant Gdouble := Gdouble (Buffer.Line_Numbers_Width);
 
-      Line_Char_Width : constant Gint := Line_Number_Character_Width;
-
-      BL : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
-
-      procedure Draw_Info (Starting_X : Gint);
-      pragma Inline (Draw_Info);
-      --  Draw the info contained in Line_Info, at offset Starting_X
-
-      procedure Draw_Line_Info;
-      --  Draw the line number for Editable_Line
+      procedure Draw_Line_Info
+        (Y             : Gdouble;
+         Line          : Buffer_Line_Type;
+         Line_Height   : Gint) with Inline;
+      --  Draw line numbers and information for messsages.
+      --  This is for line number Line, which is displayed at
+      --  coordinates (0,Y) with the specified height
 
       --------------------
       -- Draw_Line_Info --
       --------------------
 
-      procedure Draw_Line_Info is
+      procedure Draw_Line_Info
+        (Y             : Gdouble;
+         Line          : Buffer_Line_Type;
+         Line_Height   : Gint)
+      is
+         Info : constant Line_Info_Width_Array_Access :=
+           Buffer.Line_Data (Line).Side_Info_Data;
+         Editable_Line : constant Editable_Line_Type :=
+           Get_Editable_Line (Buffer, Line);
+
+         --  Size depends on actual line height, but also on the size
+         --  we reserved for the column
+         Size          : constant Gint :=
+           Gint'Min (Default_Icon_Width, Line_Height - 2);
+
+         LH            : constant Gdouble := Gdouble (Line_Height);
+         X             : Gdouble;
+         Action        : Line_Information_Record;
          Height, Width : Gint;
-         Y          : constant Gdouble :=
-           Gdouble (Y_Pix_In_Window + Boolean'Pos (Some_Line_Nums));
       begin
-         if Editable_Line = 0 then
-            return;
-         end if;
+         --  Draw line numbers background
 
-         Set_Markup (Layout, Image (Integer (Editable_Line), Min_Width => 0));
-         Get_Pixel_Size (Layout, Width, Height);
+         for Col in BL.all'Range loop
+            Action := Get_Relevant_Action (Info (Col));
+            if not Action.Message.Is_Empty
+              and then Action.Message.Message.Get_Flags (Editor_Line)
+            then
+               Save (Cr);
+               Set_Source_RGBA
+                 (Cr,
+                  Get_Background
+                    (Action.Message.Message.Get_Highlighting_Style));
 
-         Move_To (Cr,
-                  Gdouble (Gint (Buffer.Line_Numbers_Width) - Width),
-                  Y);
-         Show_Layout (Cr, Layout);
-      end Draw_Line_Info;
+               New_Path (Cr);
+               Move_To (Cr, 0.0, Y);
+               Line_To (Cr, Max_Width, Y);
+               Line_To (Cr, Max_Width + 6.0, Y + LH / 2.0);
+               Line_To (Cr, Max_Width, Y + LH);
+               Line_To (Cr, 0.0, Y + LH);
+               Close_Path (Cr);
+               Cairo.Fill (Cr);
+               Restore (Cr);
+            end if;
+         end loop;
 
-      ---------------
-      -- Draw_Info --
-      ---------------
+         --  Check if we should show line numbers
 
-      procedure Draw_Info (Starting_X : Gint) is
-         Action : constant Line_Information_Record :=
-            Get_Relevant_Action (Line_Info);
-         Size : Gint;
-      begin
-         if Action.Text /= Null_Unbounded_String then
-            Set_Markup (Layout, To_String (Action.Text));
-
-            Move_To (Cr,
-                     Gdouble (Starting_X),
-                     Gdouble (Y_Pix_In_Window));
+         if Line_Nums = All_Lines
+           or else (Line_Nums = Some_Lines and then Editable_Line mod 5 = 0)
+         then
+            Layout.Set_Markup
+              (Image (Integer (Editable_Line), Min_Width => 0));
+            Get_Pixel_Size (Layout, Width, Height);
+            Move_To (Cr, Max_Width - Gdouble (Width), Y);
             Show_Layout (Cr, Layout);
          end if;
 
-         if Action.Image /= Null_Unbounded_String then
-            --  Size depends on actual line height, but also on the size
-            --  we reserved for the column
-            Size := Gint'Min (Default_Icon_Width, Line_Height - 2);
+         --  Draw messages
 
-            declare
-               P            : Gdk_Pixbuf;
-               Info         : Gtk_Icon_Info;
-               Was_Symbolic : aliased Boolean;
-               Error        : aliased Glib.Error.GError;
+         for Col in BL.all'Range loop
+            X := Gdouble (Buffer.Line_Numbers_Width + BL.all (Col).Starting_X);
+            Action := Get_Relevant_Action (Info (Col));
 
-               Ctxt : constant Gtk_Style_Context := Get_Style_Context (Area);
-               Strs : GNAT.Strings.String_List :=
-                 (1 => new String'(To_String (Action.Image)));
-
-            begin
-               Info := Choose_Icon_For_Scale
-                 (Gtk.Icon_Theme.Get_Default, Strs, Size, 1, 0);
-               Free (Strs);
-
-               if Info /= null then
-                  P := Load_Symbolic_For_Context
-                    (Icon_Info    => Info,
-                     Context      => Ctxt,
-                     Was_Symbolic => Was_Symbolic'Access,
-                     Error        => Error'Access);
-
-                  Render_Icon
-                    (Ctxt, Cr, P,
-                     Gdouble (Starting_X),
-                     Gdouble (Y_Pix_In_Window + (Line_Height - Size) / 2));
+            if Action.Message.Is_Empty
+              or else Action.Message.Message.Get_Flags (Editor_Side)
+            then
+               if Action.Text /= Null_Unbounded_String then
+                  Set_Markup (Layout, To_String (Action.Text));
+                  Move_To (Cr, X, Y);
+                  Show_Layout (Cr, Layout);
                end if;
 
-               Unref (Info);
-               Unref (P);
-            end;
-         end if;
-      end Draw_Info;
+               --  ??? If there is no image, should we look at the message's
+               --  style's icon ?
+
+               if Action.Image /= Null_Unbounded_String then
+                  declare
+                     P            : Gdk_Pixbuf;
+                     Info         : Gtk_Icon_Info;
+                     Was_Symbolic : aliased Boolean;
+                     Error        : aliased Glib.Error.GError;
+                     Strs         : GNAT.Strings.String_List :=
+                       (1 => new String'(To_String (Action.Image)));
+                  begin
+                     --   ??? Should have a cache
+                     Info := Choose_Icon_For_Scale
+                       (Gtk.Icon_Theme.Get_Default, Strs, Size, 1, 0);
+                     Free (Strs);
+
+                     if Info /= null then
+                        P := Load_Symbolic_For_Context
+                          (Icon_Info    => Info,
+                           Context      => Ctxt,
+                           Was_Symbolic => Was_Symbolic'Access,
+                           Error        => Error'Access);
+                        Render_Icon
+                          (Ctxt, Cr, P,
+                           X,
+                           Y + Gdouble ((Line_Height - Size) / 2));
+                        Unref (P);
+                        Unref (Info);
+                     end if;
+                  end;
+               end if;
+            end if;
+         end loop;
+      end Draw_Line_Info;
+
+      L               : Buffer_Line_Type;
+      Iter            : Gtk_Text_Iter;
+      Y_In_Buffer     : Gint;
+      Line_Height     : Gint;
+      Dummy_Gint      : Gint;
+      More_Lines      : Boolean;
+      Y_Pix_In_Window : Gint;
 
    begin
       L := Top_Line;
@@ -1041,7 +1072,7 @@ package body Src_Editor_Buffer.Line_Information is
       Drawing_Loop :
       while L <= Bottom_Line loop
 
-         Get_Line_Yrange (View, Iter, Y_In_Buffer, Line_Height);
+         Get_Line_Yrange (View, Iter, Y_In_Buffer, Height => Line_Height);
 
          --  Convert the buffer coords back to window coords
 
@@ -1053,47 +1084,32 @@ package body Src_Editor_Buffer.Line_Information is
          if L = Current_Line then
             --  Draw the current line color
 
+            Save (Cr);
             if As_Line then
-               Save (Cr);
                Set_Line_Width (Cr, 1.0);
                Draw_Line
                  (Cr, Line_Color,
                   0, Y_Pix_In_Window + Line_Height,
                   Gint (Buffer.Total_Column_Width) + 1,
                   Y_Pix_In_Window + Line_Height);
-               Restore (Cr);
             else
                Set_Source_RGBA (Cr, Line_Color);
-
                Cairo.Rectangle
                  (Cr, 0.0, Gdouble (Y_Pix_In_Window),
                   Gdouble (Buffer.Total_Column_Width) + 1.0,
                   Gdouble (Line_Height));
                Cairo.Fill (Cr);
-               Set_Source_RGBA (Cr, Color);
             end if;
+            Restore (Cr);
          end if;
-
-         Editable_Line := Get_Editable_Line (Buffer, L);
 
          if BL.all /= null
            and then Buffer.Line_Data (L).Side_Info_Data /= null
          then
-            for Col in BL.all'Range loop
-               Line_Info := Buffer.Line_Data (L).Side_Info_Data (Col);
-
-               Draw_Info
-                 (Gint (Buffer.Line_Numbers_Width
-                  + BL.all (Col).Starting_X));
-            end loop;
-
-            --  Check if line number should be shown
-
-            if Line_Char_Width > 0
-              and then (if Some_Line_Nums then Editable_Line mod 5 = 0)
-            then
-               Draw_Line_Info;
-            end if;
+            Draw_Line_Info
+              (Y           => Gdouble (Y_Pix_In_Window),
+               Line        => L,
+               Line_Height => Line_Height);
          end if;
 
          Forward_Line (Iter, More_Lines);
@@ -1150,6 +1166,8 @@ package body Src_Editor_Buffer.Line_Information is
       Offset : Gint)
    is
       BL     : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
+      Info   : constant Line_Info_Width_Array_Access :=
+        Buffer.Line_Data (Line).Side_Info_Data;
       Ignore : Command_Return_Type;
       pragma Unreferenced (Ignore);
 
@@ -1159,14 +1177,45 @@ package body Src_Editor_Buffer.Line_Information is
    begin
       Set_Cursor_Position (Buffer, Gint (Line - 1), 0, False);
 
-      if BL.all /= null then
+      if BL.all = null then
+         null;
+
+      --  Click on line numbers
+      elsif Offset <= Gint (Buffer.Line_Numbers_Width) then
+         for Col in BL.all'Range loop
+            Action := Get_Relevant_Action (Info (Col));
+            if not Action.Message.Is_Empty
+              and then Action.Message.Message.Get_Flags (Editor_Line)
+            then
+               Trace (Me, "Found one action in editor_line");
+               Context := Buffer.Kernel.New_Context (Src_Editor_Module_Id);
+               Set_Messages_Information
+                 (Context, (1 => Action.Message.Message));
+               Buffer.Kernel.Context_Changed (Context);
+               Ignore := Action.Associated_Command.Execute;
+               Buffer.Kernel.Refresh_Context;
+               return;
+            end if;
+         end loop;
+
+         Trace (Me, "Execute default action for click on line number");
+         Context := Buffer.Kernel.New_Context (Src_Editor_Module_Id);
+         Set_File_Information
+           (Context,
+            Files   => (1 => Buffer.Filename),
+            Line    => Integer (Line),
+            Column  => 0);
+         Execute_Default_Line_Number_Click (Buffer.Kernel, Context);
+
+      --  Click on other columns
+
+      else
          for Col in BL.all'Range loop
             if Offset < Gint
               (BL.all (Col).Width + BL.all (Col).Starting_X +
                  Buffer.Line_Numbers_Width)
             then
-               Action := Get_Relevant_Action
-                 (Buffer.Line_Data (Line).Side_Info_Data (Col));
+               Action := Get_Relevant_Action (Info (Col));
 
                if Action.Associated_Command /= null then
                   if Action.Associated_Command.all in
@@ -1180,12 +1229,14 @@ package body Src_Editor_Buffer.Line_Information is
                      --  Update selection context when message information was
                      --  associated with action.
 
-                     Context := Buffer.Kernel.New_Context;
+                     Context := Buffer.Kernel.New_Context
+                       (Src_Editor_Module_Id);
                      Set_Messages_Information
                        (Context, (1 => Action.Message.Message));
                      Buffer.Kernel.Context_Changed (Context);
                   end if;
 
+                  Trace (Me, "Execute command for line" & Line'Img);
                   Ignore := Action.Associated_Command.Execute;
 
                   if not Action.Message.Is_Empty then

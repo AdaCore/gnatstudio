@@ -226,6 +226,11 @@ package GPS.Kernel.Preferences is
    Highlight_Column          : Integer_Preference;
    Use_ACL                   : Boolean_Preference;
 
+   -- Debugger --
+   Breakpoint_Color              : Color_Preference;
+   Conditional_Breakpoint_Color  : Color_Preference;
+   Disabled_Breakpoint_Color     : Color_Preference;
+
    -- External Commands --
    List_Processes            : String_Preference;
    Html_Browser              : String_Preference;

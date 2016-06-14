@@ -762,7 +762,7 @@ package body Refactoring.Subprograms is
                      Context.Code.File, Line_Start.Line,
                      1, -"Extracted subprogram call inserted",
                      0,
-                     (Editor_Side => True, Locations => True));
+                     Side_And_Locations);
 
                   Insert_Subprogram_Body
                     (Context.Code.Context,

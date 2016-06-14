@@ -286,7 +286,7 @@ package body Refactoring.Rename is
                   Loc.Column,
                   -"error, failed to rename entity",
                   0,
-                  (Editor_Side => True, Locations => True));
+                  Side_And_Locations);
 
                Errors.Include (Loc.File);
 
@@ -302,7 +302,7 @@ package body Refactoring.Rename is
                   Loc.Column,
                   -"entity renamed",
                   0,
-                  (Editor_Side => True, Locations => True));
+                  Side_And_Locations);
             end if;
 
             Current_Loc := Loc;

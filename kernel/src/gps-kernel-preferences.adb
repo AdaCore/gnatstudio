@@ -1429,6 +1429,32 @@ package body GPS.Kernel.Preferences is
          Default => True,
          Path    => -"Documentation:General");
 
+      -- Debugger --
+
+      Breakpoint_Color := Create
+        (Manager   => Kernel.Preferences,
+         Name      => "Debugger-Line-With-Breakpoint",
+         Label     => -"Line with breakpoint",
+         Doc       => -"Color to highlight lines with breakpoints.",
+         Path      => -"Debugger:Editors",
+         Default   => "rgba(0,0,255,0.3)");
+
+      Conditional_Breakpoint_Color := Create
+        (Manager   => Kernel.Preferences,
+         Name      => "Debugger-Line-With-Conditional-Breakpoint",
+         Label     => -"Line with conditional breakpoint",
+         Doc      => -"Color to highlight lines with conditional breakpoints.",
+         Path      => -"Debugger:Editors",
+         Default   => "rgba(0,255,0,0.3)");
+
+      Disabled_Breakpoint_Color := Create
+        (Manager   => Kernel.Preferences,
+         Name      => "Debugger-Line-With-Disabled-Breakpoint",
+         Label     => -"Line with disabled breakpoint",
+         Doc       => -"Color to highlight lines with disabled breakpoints.",
+         Path      => -"Debugger:Editors",
+         Default   => "rgba(255,0,0,0.3)");
+
       Kernel.Preferences.Set_Is_Loading_Prefs (False);
    end Register_Global_Preferences;
 

@@ -278,10 +278,16 @@ private
    -- Source_Editor_Module --
    --------------------------
 
+   Minimum_Character_Width : constant Gint := 1;
+
    type Source_Editor_Module_Record is new Module_ID_Record with record
       Font                  : Pango.Font.Pango_Font_Description;
       Display_Line_Numbers  : Boolean    := False;
-      Character_Width       : Gint := 0;
+
+      Character_Width       : Gint := Minimum_Character_Width;
+      --  Width of the size column to display line numbers and breakpoint
+      --  info. This is set to a minimum size so that we can always display
+      --  breakpoint information.
 
       Show_Subprogram_Names : Boolean    := False;
 

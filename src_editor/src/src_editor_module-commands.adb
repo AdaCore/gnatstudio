@@ -427,8 +427,7 @@ package body Src_Editor_Module.Commands is
             Loc.Column,
             Get_Name (Entity) & " (" & Kind & ')',
             0,
-            (Editor_Side => True,
-             Locations   => True));
+            Side_And_Locations);
       end Insert;
 
       Entity      : constant Root_Entity'Class := Get_Entity (Context.Context);

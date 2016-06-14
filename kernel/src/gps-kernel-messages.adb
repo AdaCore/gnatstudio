@@ -2338,7 +2338,10 @@ package body GPS.Kernel.Messages is
         = GNATCOLL.Projects.From_File
       then
          if Locations_Save_In_Desktop.Get_Pref then
-            Self.Save (F, (True, True), False);
+            Self.Save (F,
+                       (Editor_Side => True,
+                        Locations   => True,
+                        Editor_Line => False), False);
          elsif F.Is_Regular_File then
             F.Delete (Success);
          end if;

@@ -366,9 +366,7 @@ package body Vdiff2_Module.Utils is
             Unhighlight_Range (Kernel, Item.Files (J), Fine_Change_Style);
 
             Get_Messages_Container (Kernel).Remove_File
-              (-"Visual differences", Item.Files (J),
-               (Editor_Side => True,
-                Locations   => True));
+              (-"Visual differences", Item.Files (J), Side_And_Locations);
          end if;
       end loop;
    end Hide_Differences;
@@ -770,7 +768,7 @@ package body Vdiff2_Module.Utils is
                1,
                "1 line " & Modification,
                0,
-               (Editor_Side => True, Locations => True));
+               Side_And_Locations);
 
          else
             Create_Simple_Message
@@ -781,7 +779,7 @@ package body Vdiff2_Module.Utils is
                1,
                Image (The_Range) & " lines " & Modification,
                0,
-               (Editor_Side => True, Locations => True));
+               Side_And_Locations);
          end if;
 
          Free (VStyle);
@@ -877,7 +875,7 @@ package body Vdiff2_Module.Utils is
                1,
                "1 line removed",
                0,
-               (Editor_Side => True, Locations => True));
+               Side_And_Locations);
 
          else
             Create_Simple_Message
@@ -888,7 +886,7 @@ package body Vdiff2_Module.Utils is
                1,
                Image (Arr'Length) & " lines removed",
                0,
-               (Editor_Side => True, Locations => True));
+               Side_And_Locations);
          end if;
 
          Unchecked_Free (Arr);
@@ -925,7 +923,7 @@ package body Vdiff2_Module.Utils is
                1,
                "1 line added",
                0,
-               (Editor_Side => True, Locations => True));
+               Side_And_Locations);
 
          else
             Create_Simple_Message
@@ -936,7 +934,7 @@ package body Vdiff2_Module.Utils is
                1,
                Image (Arr'Length) & " lines added",
                0,
-               (Editor_Side => True, Locations => True));
+               Side_And_Locations);
          end if;
 
          Unchecked_Free (Arr);

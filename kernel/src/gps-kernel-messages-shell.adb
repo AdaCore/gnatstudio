@@ -283,7 +283,8 @@ package body GPS.Kernel.Messages.Shell is
             Text       : constant String := Nth_Arg (Data, 6);
             Flags      : constant Message_Flags :=
               (Editor_Side => Nth_Arg (Data, 7, True),
-               Locations => Nth_Arg (Data, 8, True));
+               Editor_Line => False,
+               Locations   => Nth_Arg (Data, 8, True));
             Auto_First : constant Boolean := Nth_Arg (Data, 9, True);
             Message    : constant Markup_Message_Access :=
               Create_Markup_Message

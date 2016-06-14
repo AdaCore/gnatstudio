@@ -771,7 +771,7 @@ package body Src_Contexts is
                     Column    => Match.Start.Visible_Column,
                     Text      => Text,
                     Weight    => 0,
-                    Flags     => (Editor_Side => True, Locations => True));
+                    Flags     => Side_And_Locations);
             begin
                Message.Set_Highlighting (Search_Results_Style, Length);
             end;
@@ -2690,8 +2690,7 @@ package body Src_Contexts is
    begin
       Get_Messages_Container (Kernel).Remove_Category
         (Locations_Category_Name (Context_Look_For (Context)),
-         (Editor_Side => True,
-          Locations   => True));
+         Side_And_Locations);
       --  Call inherited Reset
       File_Search_Context (Context.all).Reset (Kernel);
    end Reset;

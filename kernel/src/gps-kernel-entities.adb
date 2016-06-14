@@ -69,6 +69,7 @@ package body GPS.Kernel.Entities is
 
    Call_Graph_Message_Flags : constant Message_Flags :=
      (Editor_Side => True,
+      Editor_Line => False,
       Locations   => True);
    --  Visibility of call graph's messages in the system at whole
 

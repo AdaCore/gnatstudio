@@ -207,7 +207,7 @@ package body CodePeer.Module is
      GNATCOLL.Projects.Build ("CodePeer", "CWE");
 
    Race_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
-     (Editor_Side => True, Locations => True);
+     (Editor_Side => True, Locations => True, Editor_Line => False);
 
    -----------
    -- Apply --
@@ -240,10 +240,12 @@ package body CodePeer.Module is
          return GPS.Kernel.Messages.Message_Flags is
       begin
          if Message.Lifeage = Removed then
-            return (Editor_Side => False, Locations => True);
+            return (Editor_Side => False, Locations => True,
+                    Editor_Line => False);
 
          else
-            return (Editor_Side => True, Locations => True);
+            return (Editor_Side => True, Locations => True,
+                    Editor_Line => False);
          end if;
       end Flags;
 
@@ -527,6 +529,7 @@ package body CodePeer.Module is
                Text'First + 10,
                Text'Last - 1,
                (Editor_Side => False,
+                Editor_Line => False,
                 Locations   => True));
          end;
       end if;

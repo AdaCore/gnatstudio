@@ -49,12 +49,25 @@ package GPS.Kernel.Messages is
    type Messages_Container (<>) is tagged limited private;
 
    type Message_Visibility_Kind is
-     (Editor_Side, --  Messages displayed on the side of editors
-      Locations    --  Messages displayed in the locations view
+     (Editor_Side,
+      --  Whether to display an icon on the side of editors.
+      --  The icon is set by calling Set_Action (see below)
+
+      Locations,
+      --  Whether to display the message in the Locations view
+
+      Editor_Line
+      --  Whether to highlight the line number on the side of editors
      );
 
    type Message_Flags is array (Message_Visibility_Kind) of Boolean;
    Empty_Message_Flags : constant Message_Flags := (others => False);
+   Side_And_Locations  : constant Message_Flags :=
+     (Editor_Side => True, Locations => True, others => False);
+   Sides_Only          : constant Message_Flags :=
+     (Editor_Side => True, others => False);
+   Locations_Only      : constant Message_Flags :=
+     (Locations => True, others => False);
    --  A list of potential locations where a message should be shown.
 
    function To_Int (Flags : Message_Flags) return Integer;
@@ -155,6 +168,8 @@ package GPS.Kernel.Messages is
       Action : Action_Item);
    --  Associate specified action with the message. Message takes ownership on
    --  the associated action. Previous action is deallocated.
+   --  This also sets the icon to use for the message on the side of the
+   --  editor.
 
    function Get_Action
      (Self : not null access constant Abstract_Message'Class)
@@ -200,7 +215,7 @@ package GPS.Kernel.Messages is
    function Has_Note
      (Self : not null access constant Abstract_Message'Class;
       Tag  : Ada.Tags.Tag) return Boolean;
-   --  Returns True when note of the given tagged type is allosicated with the
+   --  Returns True when note of the given tagged type is associated with the
    --  messages, otherwise returns False.
 
    function Get_Note

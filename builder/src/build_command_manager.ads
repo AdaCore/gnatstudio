@@ -40,11 +40,9 @@ with Remote;                 use Remote;
 package Build_Command_Manager is
 
    Builder_Message_Flags    : constant GPS.Kernel.Messages.Message_Flags :=
-     (GPS.Kernel.Messages.Editor_Side => True,
-      GPS.Kernel.Messages.Locations   => True);
+     GPS.Kernel.Messages.Side_And_Locations;
    Background_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
-     (GPS.Kernel.Messages.Editor_Side => True,
-      GPS.Kernel.Messages.Locations   => False);
+     GPS.Kernel.Messages.Sides_Only;
 
    function Get_Build_Console
      (Kernel              : GPS.Kernel.Kernel_Handle;

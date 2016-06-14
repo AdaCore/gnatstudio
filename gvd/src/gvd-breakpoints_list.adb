@@ -18,13 +18,16 @@
 with Commands;                     use Commands;
 with Commands.Interactive;         use Commands.Interactive;
 with Debugger;                     use Debugger;
-with Debugger_Pixmaps;             use Debugger_Pixmaps;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
+with GPS.Default_Styles;           use GPS.Default_Styles;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
+with GPS.Kernel.Messages.Simple;   use GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;        use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
@@ -47,10 +50,13 @@ package body GVD.Breakpoints_List is
       --  The list of persistent breakpoints for the current project. This
       --  list can be manipulated even when no debugger is running, and is
       --  loaded/saved to disk as needed
-
-      Editor_Breakpoints : Breakpoint_List;
-      --  The list of breakpoints currently highlighted in editors. This
    end record;
+
+   Messages_Category_For_Breakpoints : constant String := "breakpoints";
+   Breakpoints_Message_Flags         : constant Message_Flags :=
+     (Editor_Side => False,
+      Locations   => False,
+      Editor_Line => True);
 
    Module : access Breakpoints_Module;
 
@@ -101,40 +107,19 @@ package body GVD.Breakpoints_List is
    --  This is a good time to show, on the side of the editor, which lines
    --  have breakpoints.
 
-   type On_Lines_Revealed is new Context_Hooks_Function with null record;
-   overriding procedure Execute
-     (Self    : On_Lines_Revealed;
-      Kernel  : not null access Kernel_Handle_Record'Class;
-      Context : Selection_Context);
-   --  Called when a range of lines becomes visible on screen.
-   --  It shows lines with ranges.
-
    procedure Show_Breakpoints_In_All_Editors
      (Kernel : not null access Kernel_Handle_Record'Class);
    --  Update the side column for all editors, and show the breakpoints info
 
    procedure Add_Information
      (Kernel  : not null access Kernel_Handle_Record'Class;
-      Info    : in out Line_Information_Array;
-      B       : Breakpoint_Data;
-      Removed : Boolean);
-   --  Prepare the info to display on the side column for that breakpoint.
-   --  Removed should be True if the breakpoint is actually being removed.
-
-   procedure Create_Breakpoints_Column
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File);
-   procedure Remove_Breakpoints_Column
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File);
-   --  Create a new column on the size of the editors for File, where we can
-   --  display breakpoint information.
+      B       : Breakpoint_Data);
+   --  Create a new message to display information on the side of editors for
+   --  that breakpoint.
 
    --------------
    -- Commands --
    --------------
-
-   Breakpoints_Column_Id : constant String := "Debugger/Breakpoints";
 
    type Breakpoint_Command_Mode is (Set, Unset);
    type Set_Breakpoint_Command_At_Line is new Root_Command with record
@@ -593,6 +578,7 @@ package body GVD.Breakpoints_List is
         (Prop, Get_Project (Kernel), Name => "breakpoints", Found => Found);
       if Found then
          Module.Breakpoints.List := Prop.Breakpoints;
+         Show_Breakpoints_In_All_Editors (Kernel);
       end if;
    end Execute;
 
@@ -876,33 +862,53 @@ package body GVD.Breakpoints_List is
 
    procedure Add_Information
      (Kernel  : not null access Kernel_Handle_Record'Class;
-      Info    : in out Line_Information_Array;
-      B       : Breakpoint_Data;
-      Removed : Boolean) is
+      B       : Breakpoint_Data)
+   is
+      Msg : Simple_Message_Access;
    begin
-      if Removed then
-         Info (B.Line).Image := Line_Might_Have_Code_Pixbuf;
-      else
-         if not B.Enabled then
-            Info (B.Line).Image := Line_Has_Disabled_Breakpoint_Pixbuf;
-            Info (B.Line).Tooltip_Text := To_Unbounded_String
-              ("A disabled breakpoint has been set on this line");
-         elsif B.Condition /= "" then
-            Info (B.Line).Image := Line_Has_Conditional_Breakpoint_Pixbuf;
-            Info (B.Line).Tooltip_Text := To_Unbounded_String
-              ("A conditional breakpoint has been set on this line");
-         else
-            Info (B.Line).Image := Line_Has_Breakpoint_Pixbuf;
-            Info (B.Line).Tooltip_Text := To_Unbounded_String
-              ("An active breakpoint has been set on this line");
-         end if;
+      if B.File = No_File
+        or else B.Line = 0
+      then
+         return;
       end if;
 
-      Info (B.Line).Associated_Command := Create_Set_Breakpoint_Command
-        (Kernel,
-         Mode => (if Removed then Set else Unset),
-         File => B.File,
-         Line => B.Line);
+      Msg := Create_Simple_Message
+        (Get_Messages_Container (Kernel),
+         Category                 => Messages_Category_For_Breakpoints,
+         File                     => B.File,
+         Line                     => B.Line,
+         Column                   => 0,
+         Text                     =>
+           (if not B.Enabled
+            then "A disabled breakpoint has been set on this line"
+            elsif B.Condition /= ""
+            then "A conditional breakpoint has been set on this line"
+            else "An active breakpoint has been set on this line"),
+         Weight                   => 0,
+         Flags                    => Breakpoints_Message_Flags,
+         Allow_Auto_Jump_To_First => False);
+
+      Msg.Set_Action
+        (new Line_Information_Record'
+           (Text               => Null_Unbounded_String,
+            Tooltip_Text       => Msg.Get_Text,
+            Image              => Null_Unbounded_String,
+            Message            => Create (Message_Access (Msg)),
+            Associated_Command => Create_Set_Breakpoint_Command
+              (Kernel,
+               Mode => Unset,
+               File => B.File,
+               Line => B.Line)));
+
+      if not B.Enabled then
+         Msg.Set_Highlighting
+           (Debugger_Disabled_Breakpoint_Style, Length => 1);
+      elsif B.Condition /= "" then
+         Msg.Set_Highlighting
+           (Debugger_Conditional_Breakpoint_Style, Length => 1);
+      else
+         Msg.Set_Highlighting (Debugger_Breakpoint_Style, Length => 1);
+      end if;
    end Add_Information;
 
    -------------------------------------
@@ -914,206 +920,21 @@ package body GVD.Breakpoints_List is
    is
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
-
-      procedure Add (B : Breakpoint_Data);
-      procedure Remove (B : Breakpoint_Data);
-      --  Add or remove highlighting for a specific breakpoint
-
-      procedure Process_List (List : Breakpoint_List);
-      --  Display a specific list of breakpoints
-
-      procedure Add (B : Breakpoint_Data) is
-         A : Line_Information_Array (B.Line .. B.Line);
-      begin
-         Create_Breakpoints_Column (Kernel, B.File);
-         Add_Information (Kernel, A, B, Removed => False);
-         Add_Line_Information
-           (Kernel,
-            File       => B.File,
-            Identifier => Breakpoints_Column_Id,
-            Info       => A);
-      end Add;
-
-      procedure Remove (B : Breakpoint_Data) is
-         A             : Line_Information_Array (B.Line .. B.Line);
-      begin
-         Add_Information (Kernel, A, B, Removed => True);
-         Add_Line_Information
-           (Kernel,
-            File       => B.File,
-            Identifier => Breakpoints_Column_Id,
-            Info       => A);
-      end Remove;
-
-      ------------------
-      -- Process_List --
-      ------------------
-
-      procedure Process_List (List : Breakpoint_List) is
-         To_Remove : array (Module.Editor_Breakpoints.List.First_Index
-                            .. Module.Editor_Breakpoints.List.Last_Index)
-           of Boolean := (others => True);
-
-         Already_Visible : Boolean;
-         Index           : Natural;
-      begin
-         --  Add the new breakpoints that were not already visible.
-         --  Preserve those that are still visible
-
-         for B of List.List loop
-            if B.File /= No_File then
-               Already_Visible := False;
-               Index := To_Remove'First;
-               for C of Module.Editor_Breakpoints.List loop
-                  if C.Line = B.Line
-                    and then C.File = B.File
-                  then
-                     Already_Visible := True;
-                     To_Remove (Index) := False;
-                     exit;
-                  end if;
-                  Index := Index + 1;
-               end loop;
-
-               if not Already_Visible then
-                  Add (B);
-               end if;
-            end if;
-         end loop;
-
-         --  Now remove obsolete breakpoints
-
-         for B in To_Remove'Range loop
-            if To_Remove (B)
-              and then Module.Editor_Breakpoints.List (B).File /= No_File
-            then
-               Remove (Module.Editor_Breakpoints.List (B));
-            end if;
-         end loop;
-
-         --  Cache the list for the next refresh
-         Module.Editor_Breakpoints := List;
-      end Process_List;
-
    begin
+      Get_Messages_Container (Kernel).Remove_Category
+        (Messages_Category_For_Breakpoints,
+         Breakpoints_Message_Flags);
+
       if Process /= null then
-         Process_List (Process.Breakpoints);
+         for B of Process.Breakpoints.List loop
+            Add_Information (Kernel, B);
+         end loop;
       else
-         Process_List (Module.Breakpoints);
+         for B of Module.Breakpoints.List loop
+            Add_Information (Kernel, B);
+         end loop;
       end if;
    end Show_Breakpoints_In_All_Editors;
-
-   -------------------------------
-   -- Create_Breakpoints_Column --
-   -------------------------------
-
-   procedure Create_Breakpoints_Column
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File) is
-   begin
-      Create_Line_Information_Column
-        (Kernel     => Kernel,
-         Identifier => Breakpoints_Column_Id,
-         File       => File);
-   end Create_Breakpoints_Column;
-
-   -------------------------------
-   -- Remove_Breakpoints_Column --
-   -------------------------------
-
-   procedure Remove_Breakpoints_Column
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File) is
-   begin
-      Remove_Line_Information_Column (Kernel, File, Breakpoints_Column_Id);
-   end Remove_Breakpoints_Column;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Self    : On_Lines_Revealed;
-      Kernel  : not null access Kernel_Handle_Record'Class;
-      Context : Selection_Context)
-   is
-      pragma Unreferenced (Self);
-      Process : constant Visual_Debugger :=
-        Visual_Debugger (Get_Current_Debugger (Kernel));
-
-      Line1, Line2 : Integer;
-
-      procedure Process_List (List : Breakpoint_List);
-      --  Process a specific list of breakpoints
-
-      ------------------
-      -- Process_List --
-      ------------------
-
-      procedure Process_List (List : Breakpoint_List) is
-         type Bp_Array is array (Line1 .. Line2) of Integer;
-         --  For each line of the file, the index of the breakpoint in
-         --  List. Integer'First when there are no breakpoints
-
-         File         : constant Virtual_File := File_Information (Context);
-         A            : Line_Information_Array (Line1 .. Line2);
-         Index        : Natural;
-         Bps          : Bp_Array := (others => Integer'First);
-         Br           : Breakpoint_Data;
-         Has_Breakpoint : Boolean := False;
-
-      begin
-         --  Build an array of breakpoints in the current range, more
-         --  efficient than re-browsing the whole array of breakpoints
-         --  for each line.
-
-         Index := List.List.First_Index;
-         for B of List.List loop
-            if B.Line in Bps'Range and then B.File = File then
-               Bps (B.Line) := Index;
-               Has_Breakpoint := True;
-            end if;
-            Index := Index + 1;
-         end loop;
-
-         --  ??? Should be whether there is any breakpoint in the file
-         if True or else Has_Breakpoint then
-            Create_Breakpoints_Column (Kernel, File);
-         else
-            Remove_Breakpoints_Column (Kernel, File);
-         end if;
-
-         for J in A'Range loop
-            if Bps (J) /= Integer'First then
-               Add_Information
-                 (Kernel, A, List.List (Bps (J)), Removed => False);
-            else
-               Br.File := File;
-               Br.Line := J;
-               Add_Information (Kernel, A, Br, Removed => True);
-            end if;
-         end loop;
-
-         Add_Line_Information
-           (Kernel     => Kernel,
-            Identifier => Breakpoints_Column_Id,
-            File       => File,
-            Info       => A);
-      end Process_List;
-
-   begin
-      if not Has_Area_Information (Context) then
-         return;
-      end if;
-
-      Get_Area (Context, Line1, Line2);
-
-      if Process = null or else Process.Debugger = null then
-         Process_List (Module.Breakpoints);
-      elsif not Process.Command_In_Process then
-         Process_List (Process.Breakpoints);
-      end if;
-   end Execute;
 
    ---------------------
    -- Register_Module --
@@ -1130,7 +951,6 @@ package body GVD.Breakpoints_List is
       Project_Changed_Hook.Add (new On_Project_Changed);
       Project_Changing_Hook.Add (new On_Project_Changing);
       Before_Exit_Action_Hook.Add (new On_Before_Exit);
-      Source_Lines_Revealed_Hook.Add (new On_Lines_Revealed);
       Debugger_Terminated_Hook.Add (new On_Debugger_Terminated);
       Debugger_Started_Hook.Add (new On_Debugger_Started);
       Debugger_Location_Changed_Hook.Add (new On_Debugger_Location_Changed);
@@ -1161,6 +981,8 @@ package body GVD.Breakpoints_List is
         (Kernel => Kernel,
          Label  => -"Debug/Set breakpoint on line %l",
          Action => "debug set line breakpoint");
+
+      Kernel.Set_Default_Line_Number_Click ("debug set line breakpoint");
 
       Register_Action
         (Kernel, "debug continue until",

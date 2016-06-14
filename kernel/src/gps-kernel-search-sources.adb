@@ -595,8 +595,7 @@ package body GPS.Kernel.Search.Sources is
          Column                   => Visible_Column_Type (Self.Column),
          Text                     => Self.Short.all,
          Weight                   => 1,
-         Flags                    => (Editor_Side => True,
-                                      Locations   => True),
+         Flags                    => Side_And_Locations,
          Allow_Auto_Jump_To_First => True);
    end To_Message;
 

@@ -47,13 +47,12 @@ package body GNAThub.Filters is
               (Non_Applicable => False,
                Flags          =>
                  (Locations   => True,
+                  Editor_Line => False,
                   Editor_Side => M.Get_Severity.On_Sidebar));
 
          else
             return (Non_Applicable => False,
-                    Flags          =>
-                      (Locations   => False,
-                       Editor_Side => False));
+                    Flags          => GPS.Kernel.Messages.Empty_Message_Flags);
          end if;
       end;
    end Apply;

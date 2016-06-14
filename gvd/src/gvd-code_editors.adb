@@ -22,9 +22,16 @@ with GNATCOLL.VFS;                 use GNATCOLL.VFS;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Kernel.Messages.Simple;   use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
 with GVD.Preferences;              use GVD.Preferences;
 
 package body GVD.Code_Editors is
+
+   Messages_Category_For_Current_Line : constant String :=
+     "debugger-current-line";
+   Breakpoints_Current_Line_Flags     : constant Message_Flags :=
+     (Editor_Line => True, Locations => False, Editor_Side => False);
 
    -------------
    -- Gtk_New --
@@ -44,6 +51,7 @@ package body GVD.Code_Editors is
         ("debugger current line",
          Fg_Pref => null,
          Bg_Pref => Editor_Current_Line_Color);
+      Set_In_Speedbar (Editor.Current_Line_Style, True);
    end Gtk_New;
 
    --------------
@@ -79,8 +87,6 @@ package body GVD.Code_Editors is
       File   : GNATCOLL.VFS.Virtual_File;
       Line   : Natural)
    is
-      Prev_Current_Line : constant Integer := Editor.Current_Line;
-      Prev_File : constant Virtual_File := Editor.Current_File;
    begin
       if File = GNATCOLL.VFS.No_File then
          Editor.Current_File := GNATCOLL.VFS.No_File;
@@ -100,38 +106,7 @@ package body GVD.Code_Editors is
       end if;
 
       Editor.Current_Line := Line;
-
-      if Prev_Current_Line /= 0 then
-         declare
-            Info : constant Line_Information_Array :=
-              (Prev_Current_Line => Empty_Line_Information);
-         begin
-            Add_Line_Information
-              (Editor.Kernel,
-               File       => Prev_File,
-               Identifier => "Current Line",
-               Info       => Info);
-         end;
-      end if;
-
-      declare
-         Info : constant Line_Information_Array :=
-           (Line => Line_Information_Record'
-              (Text               => Null_Unbounded_String,
-               Tooltip_Text       => Null_Unbounded_String,
-               Image              => Current_Line_Pixbuf,
-               Message            => <>,
-               Associated_Command => null));
-      begin
-         Add_Line_Information
-           (Editor.Kernel,
-            File       => Editor.Current_File,
-            Identifier => "Current Line",
-            Info       => Info);
-      end;
-
       Highlight_Current_Line (Editor);
-
       Debugger_Location_Changed_Hook.Run (Editor.Kernel, Editor.Process);
    end Set_Current_File_And_Line;
 
@@ -159,9 +134,33 @@ package body GVD.Code_Editors is
    ----------------------------
 
    procedure Highlight_Current_Line
-     (Editor  : not null access Code_Editor_Record) is
+     (Editor  : not null access Code_Editor_Record)
+   is
+      Msg        : Simple_Message_Access;
    begin
-      if Editor.Current_File /= GNATCOLL.VFS.No_File then
+      if Editor.Current_File /= GNATCOLL.VFS.No_File
+        and then Editor.Current_Line /= 0
+      then
+         Unhighlight_Current_Line (Editor);
+         Msg := Create_Simple_Message
+           (Get_Messages_Container (Editor.Kernel),
+            Category                 => Messages_Category_For_Current_Line,
+            File                     => Editor.Current_File,
+            Line                     => Editor.Current_Line,
+            Column                   => 1,
+            Text                     => "Current line in debugger",
+            Weight                   => 0,
+            Flags                    => Breakpoints_Current_Line_Flags,
+            Allow_Auto_Jump_To_First => False);
+         Msg.Set_Highlighting (Editor.Current_Line_Style); --  Whole line
+         Msg.Set_Action
+           (new Line_Information_Record'
+              (Text         => Null_Unbounded_String,
+               Tooltip_Text =>
+                 To_Unbounded_String ("Current line in debugger"),
+               Image        => Current_Line_Pixbuf,
+               others       => <>));
+
          declare
             Buffer : constant Editor_Buffer'Class :=
               Editor.Kernel.Get_Buffer_Factory.Get (Editor.Current_File);
@@ -169,14 +168,6 @@ package body GVD.Code_Editors is
             Buffer.Current_View.Cursor_Goto
               (Location   => Buffer.New_Location_At_Line (Editor.Current_Line),
                Raise_View => True);
-
-            Buffer.Remove_Style
-              (Style      => Get_Name (Editor.Current_Line_Style),
-               Line       => 0);  --  whole buffer
-
-            Buffer.Apply_Style
-              (Style      => Get_Name (Editor.Current_Line_Style),
-               Line       => Editor.Current_Line);
          end;
       end if;
    end Highlight_Current_Line;
@@ -188,32 +179,9 @@ package body GVD.Code_Editors is
    procedure Unhighlight_Current_Line
      (Editor  : not null access Code_Editor_Record) is
    begin
-      if Editor.Current_File = GNATCOLL.VFS.No_File then
-         return;
-      end if;
-
-      if Editor.Current_Line /= 0 then
-         declare
-            Info : constant Line_Information_Array :=
-              (Editor.Current_Line => Empty_Line_Information);
-         begin
-            Add_Line_Information
-              (Editor.Kernel,
-               File       => Editor.Current_File,
-               Identifier => "Current Line",
-               --  ??? we should get that from elsewhere.
-               Info       => Info);
-         end;
-      end if;
-
-      declare
-         Buffer : constant Editor_Buffer'Class :=
-           Editor.Kernel.Get_Buffer_Factory.Get
-             (Editor.Current_File, Open_Buffer => False, Open_View => False);
-      begin
-         Buffer.Remove_Style
-           (Style => Get_Name (Editor.Current_Line_Style), Line => 0);
-      end;
+      Get_Messages_Container (Editor.Kernel).Remove_Category
+        (Messages_Category_For_Current_Line,
+         Breakpoints_Current_Line_Flags);
    end Unhighlight_Current_Line;
 
 end GVD.Code_Editors;

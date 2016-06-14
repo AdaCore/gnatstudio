@@ -40,9 +40,10 @@ to a different debugger, select its corresponding console. Setting
 breakpoints, though, will be done for all debuggers, to help debug when you
 work on multiple executables that share code.
 
-After the debugger has been initialized, you have access to two new
-windows: the data browser (in the top of the working area) and the debugger
-console (in a new page, after the :guilabel:`Messages` window).
+After the debugger has been initialized, you have access several new views: the
+debugger console (in a new page, after the :guilabel:`Messages` window), the
+:guilabel:`Breakpoints` views and the :guilabel:`Variables` view.
+
 You can now access any of the menus under :menuselection:`Debugger`, and you
 also have access to additional contextual menus, in particular in the source
 editor where you can easily display variables, set breakpoints, and get
@@ -257,6 +258,7 @@ items. Failure to do so will result in empty windows.
 * :menuselection:`Debug --> Data --> Variables`
 
   Displays the :guilabel:`Variables` view, or raise an already existing one.
+  See :ref:`The_Variables_View` for more details.
 
 .. index:: menu; debug --> data --> call stack
 
@@ -423,6 +425,9 @@ display in the call stack window (via check buttons):
 By default, only the subprogram name is displayed.  Hide the call stack
 view by closing it and show it again using the menu :menuselection:`Debug
 --> Data --> Call Stack` menu.
+
+Showing extra information like the value for parameters requires more
+work from the debugger, and thus will be slower.
 
 .. index:: debugger; variables view
 ..  _The_Variables_View:
@@ -826,28 +831,20 @@ Using the Source Editor when Debugging
 When debugging, the left area of each source editor provides the following
 information:
 
-*Lines with code*
-
-  Blue dots are shown next to lines for which the debugger has debug
-  information, i.e., lines that have been compiled with debug information
-  and for which the compiler has generated some code.  If you try to set a
-  breakpoint on lines not so marked, GPS sends the breakpoint command to the
-  underlying debugger, which usually (e.g in the case of :program:`gdb`)
-  results in setting a breakpoint at the closest location to the file and
-  line you specified.
-
 *Current line executed*
 
-  A green arrow showing the line about to be executed.
+  The line about to be executed by the debugger is highlighted in green (by
+  default), and a green arrow is displayed on its left side.
 
 *Lines with breakpoints*
   .. index:: breakpoint
 
-  A red mark is displayed on top of the blue dot on lines where breakpoints
-  have been set.  Add or delete breakpoints by clicking on this area (the
-  first click sets a breakpoint, the second click removes it).
+  The line number (if present, otherwise the first few pixels) is highlighted
+  with a background color for lines where breakpoints have been set. Add or
+  delete breakpoints by clicking on the line number.
+  These breakpoints can be set or unset even when no debugger is running.
 
-.. image:: tooltips.jpg
+.. image:: tooltips.png
 
 .. index:: syntax highlighting
 .. index:: tooltip
@@ -922,7 +919,7 @@ or source line you are currently debugging.
 Open the assembly window by using the :menuselection:`Debug --> Data -->
 Assembly` menu.
 
-.. image:: assembly.jpg
+.. image:: assembly.png
 
 The current assembler instruction is highlighted on the left with a green
 arrow.  The instructions corresponding to the current source line are

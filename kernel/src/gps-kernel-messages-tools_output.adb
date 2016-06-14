@@ -155,6 +155,7 @@ package body GPS.Kernel.Messages.Tools_Output is
                       Text,
                       Weight,
                       (Editor_Side => True,
+                       Editor_Line => False,
                        Locations   => Show_In_Locations),
                       Allow_Auto_Jump_To_First => Allow_Auto_Jump_To_First));
             Returned := Primary;
@@ -190,7 +191,8 @@ package body GPS.Kernel.Messages.Tools_Output is
                Text,
                Loc.First,
                Loc.Last,
-               (Editor_Side => True, Locations => Show_In_Locations));
+               (Editor_Side => True, Locations => Show_In_Locations,
+                Editor_Line => False));
             Node := Next (Node);
          end loop;
 

@@ -661,6 +661,17 @@ package GPS.Kernel is
      (Kernel  : access Kernel_Handle_Record;
       Factory : GPS.Editors.Editor_Buffer_Factory_Access);
 
+   procedure Set_Default_Line_Number_Click
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Action    : String);
+   --  Register the action to execute when clicking on a line number and there
+   --  is no message's action set on that line number.
+
+   procedure Execute_Default_Line_Number_Click
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Context   : Selection_Context);
+   --  Execute the default action when clicking on a line number
+
    -----------------
    -- Refactoring --
    -----------------
@@ -1188,6 +1199,9 @@ private
       Refactoring : Standard.Refactoring.Factory_Context;
 
       Messages : Abstract_Messages_Window_Access;
+
+      Default_Line_Click_Action : GNAT.Strings.String_Access;
+      --  default action to execute when clicking on a line
 
       Launcher : aliased GPS_Process_Launcher_Record;
       --  External process launcher

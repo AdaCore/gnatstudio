@@ -60,6 +60,7 @@ package body GNATStack.Module is
    Stack_Analysis_Name : constant String := "Stack Analysis";
    Stack_Message_Flags : constant GPS.Kernel.Messages.Message_Flags :=
      (GPS.Kernel.Messages.Editor_Side => False,
+      GPS.Kernel.Messages.Editor_Line => False,
       GPS.Kernel.Messages.Locations   => True);
 
    type GNATStack_Submenu_Factory_Record

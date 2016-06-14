@@ -274,7 +274,7 @@ package body Src_Editor_Module.Messages is
    begin
       Get_Messages_Container (Kernel).Register_Listener
         (Listener_Access (Manager),
-         (Editor_Side => True, Locations => False));
+         (Editor_Line => True, Editor_Side => True, Locations => False));
       Id.Highlighting_Manager := To_Address (Manager);
       File_Edited_Hook.Add
          (new On_File_Edited'(File_Hooks_Function with Manager => Manager),

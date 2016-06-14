@@ -1091,8 +1091,6 @@ package body GVD.Process is
 
       Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Process.Debugger_Text));
 
-      Setup_Side_Columns (Kernel);
-
       --  Force the creation of the project if needed
       Load_Project_From_Executable (Kernel, Process);
 

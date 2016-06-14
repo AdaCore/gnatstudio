@@ -14,20 +14,11 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
+
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package Debugger_Pixmaps is
 
-   Line_Has_Code_Pixbuf        : constant Unbounded_String :=
-      To_Unbounded_String ("gps-emblem-debugger-line-has-code");
-   Line_Might_Have_Code_Pixbuf : constant Unbounded_String :=
-      To_Unbounded_String ("gps-emblem-debugger-line-might-have-code");
-   Line_Has_Breakpoint_Pixbuf  : constant Unbounded_String :=
-      To_Unbounded_String ("gps-emblem-debugger-breakpoint");
-   Line_Has_Disabled_Breakpoint_Pixbuf  : constant Unbounded_String :=
-     To_Unbounded_String ("gps-emblem-debugger-disabled-breakpoint");
-   Line_Has_Conditional_Breakpoint_Pixbuf  : constant Unbounded_String :=
-     To_Unbounded_String ("gps-emblem-debugger-conditional-breakpoint");
    Current_Line_Pixbuf                  : constant Unbounded_String :=
       To_Unbounded_String ("gps-emblem-debugger-current");
 

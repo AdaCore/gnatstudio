@@ -1061,9 +1061,7 @@ package body GPS.Location_View.Listener is
 
       --  Register listener
 
-      Container.Register_Listener
-        (Listener_Access (Self),
-         (Editor_Side => False, GPS.Kernel.Messages.Locations => True));
+      Container.Register_Listener (Listener_Access (Self), Locations_Only);
 
       --  Construct tree for currently visible messages
 

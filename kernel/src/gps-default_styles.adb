@@ -166,6 +166,26 @@ package body GPS.Default_Styles is
             "",
             Bg => null, Speedbar => True);
 
+      --------------
+      -- Debugger --
+      --------------
+
+      Init (Debugger_Breakpoint_Style,
+            -"Lines with breakpoints",
+            Icon_Name => "gps-emblem-debugger-breakpoint",
+            Bg        => Breakpoint_Color,
+            Speedbar  => True);
+      Init (Debugger_Conditional_Breakpoint_Style,
+            -"Lines with conditional breakpoints",
+            Icon_Name => "gps-emblem-debugger-conditional-breakpoint",
+            Bg        => Conditional_Breakpoint_Color,
+            Speedbar  => True);
+      Init (Debugger_Disabled_Breakpoint_Style,
+            -"Lines with conditional breakpoints",
+            Icon_Name => "gps-emblem-debugger-disabled-breakpoint",
+            Bg        => Disabled_Breakpoint_Color,
+            Speedbar  => True);
+
       --------------------
       -- Analysis Tools --
       --------------------

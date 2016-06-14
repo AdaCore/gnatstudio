@@ -143,9 +143,8 @@ package body Src_Editor_Buffer is
    --  The timeout between the last time the cursor moves and the time it is
    --  considered as having stopped.
 
-   Src_Editor_Message_Flags : constant Message_Flags :=
-     (Editor_Side => True,
-      Locations   => True);
+   Src_Editor_Message_Flags  : constant Message_Flags :=
+     Side_And_Locations;
 
    package Buffer_Timeout is new Glib.Main.Generic_Sources (Source_Buffer);
 

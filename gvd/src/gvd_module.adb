@@ -77,22 +77,10 @@ package body GVD_Module is
    --  WARNING: this constant is shared with builder_module.adb, since we want
    --  to have the same history for the run command in GPS.
 
-   type On_File_Edited is new File_Hooks_Function with record
-      Top : GPS_Window;
-   end record;
-   overriding procedure Execute
-     (Self   : On_File_Edited;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File);
-   --  Callback for the "file_edited" hook
-
    package Debugger_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Element_Type => Base_Visual_Debugger_Access);
 
    type GVD_Module_Record is new Module_ID_Record with record
-      Initialized                    : Boolean := False;
-      --  Whether the debugger is running
-
       Actions : Action_Lists.List;
       --  Actions that have been registered dynamically by this module,
       --  for the dynamic menus
@@ -122,20 +110,6 @@ package body GVD_Module is
        Kernel : not null access Kernel_Handle_Record'Class);
    --  Called every time the project view changes, to recompute the dynamic
    --  menus.
-
-   procedure Remove_Debugger_Columns
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File);
-   --  Remove the side information columns corresponding to the debugger
-   --  in the editors for file.
-   --  If File is empty, remove them for all files.
-
-   procedure Create_Debugger_Columns
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File);
-   --  Create the side information columns corresponding to the debugger
-   --  in the editors for file.
-   --  If File is empty, create them for all files.
 
    procedure Debug_Init
      (Kernel  : GPS.Kernel.Kernel_Handle;
@@ -509,30 +483,6 @@ package body GVD_Module is
          No_File,
          Args);
    end Initialize_Debugger;
-
-   -----------------------------
-   -- Create_Debugger_Columns --
-   -----------------------------
-
-   procedure Create_Debugger_Columns
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File) is
-   begin
-      --  Create the information column for the current line
-      Create_Line_Information_Column
-         (Kernel, File, "Current Line", Every_Line => False);
-   end Create_Debugger_Columns;
-
-   -----------------------------
-   -- Remove_Debugger_Columns --
-   -----------------------------
-
-   procedure Remove_Debugger_Columns
-     (Kernel : Kernel_Handle;
-      File   : Virtual_File) is
-   begin
-      Remove_Line_Information_Column (Kernel, File, "Current Line");
-   end Remove_Debugger_Columns;
 
    -------------
    -- Execute --
@@ -1419,30 +1369,6 @@ package body GVD_Module is
       return Commands.Success;
    end Execute;
 
-   ------------------------
-   -- Setup_Side_Columns --
-   ------------------------
-
-   procedure Setup_Side_Columns
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Top : constant GPS_Window := GPS_Window (Get_Main_Window (Kernel));
-   begin
-      if not GVD_Module_ID.Initialized then
-         --  Add columns information for not currently opened files
-
-         File_Edited_Hook.Add
-            (new On_File_Edited'(File_Hooks_Function with Top => Top),
-             Watch => Top);
-
-         --  Add columns for debugging information to all the files that
-         --  are currently open.
-
-         Create_Debugger_Columns (Kernel, GNATCOLL.VFS.No_File);
-      end if;
-      GVD_Module_ID.Initialized := True;
-   end Setup_Side_Columns;
-
    ---------------------
    -- Debug_Terminate --
    ---------------------
@@ -1461,12 +1387,7 @@ package body GVD_Module is
          Close_Debugger (Visual_Debugger (J));
       end loop;
 
-      Remove_Debugger_Columns (Kernel, GNATCOLL.VFS.No_File);
-
-      if GVD_Module_ID.Initialized then
-         GVD_Module_ID.Initialized := False;
-         Kernel.Refresh_Context;
-      end if;
+      Kernel.Refresh_Context;
    end Debug_Terminate;
 
    -------------
@@ -1557,29 +1478,6 @@ package body GVD_Module is
       --  Verify the language used in the executable
 
       Detect_Language (Process.Debugger);
-
-      --  Re-create all debugger columns
-
-      Remove_Debugger_Columns (Kernel_Handle (Kernel), GNATCOLL.VFS.No_File);
-      Create_Debugger_Columns (Kernel_Handle (Kernel), GNATCOLL.VFS.No_File);
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Self   : On_File_Edited;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      File   : Virtual_File)
-   is
-      pragma Unreferenced (Self);
-   begin
-      Create_Debugger_Columns (Kernel_Handle (Kernel), File);
-   exception
-      when E : others =>
-         Trace (Me, E);
-         Close_Debugger (Visual_Debugger (Get_Current_Debugger (Kernel)));
    end Execute;
 
    -------------

@@ -2523,7 +2523,8 @@ package body Src_Editor_Module is
                Set_Font_Description (Layout, Default_Style.Get_Pref_Font);
                Set_Markup (Layout, "0000");
                Get_Pixel_Size (Layout, Width, Height);
-               Id.Character_Width := Width / 4;
+               Id.Character_Width :=
+                 Gint'Max (Width / 4, Minimum_Character_Width);
                Unref (Layout);
             end;
 
@@ -2542,7 +2543,7 @@ package body Src_Editor_Module is
                Next (Iter);
             end loop;
          else
-            Id.Character_Width := 0;
+            Id.Character_Width := Minimum_Character_Width;
          end if;
       end if;
 
@@ -2825,7 +2826,7 @@ package body Src_Editor_Module is
              Source_Editor_Module (Src_Editor_Module_Id);
    begin
       if Id = null then
-         return 0;
+         return Minimum_Character_Width;
       else
          return Id.Character_Width;
       end if;

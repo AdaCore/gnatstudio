@@ -57,6 +57,7 @@ package body GPS.Kernel.Project is
    --  project file
    Location_Message_Flags : constant Message_Flags :=
      (Editor_Side => True,
+      Editor_Line => False,
       Locations   => True);
 
    type GPS_Project_Tree is new Project_Tree with record

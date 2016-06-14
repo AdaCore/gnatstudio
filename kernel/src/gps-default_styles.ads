@@ -49,6 +49,15 @@ package GPS.Default_Styles is
    Hyper_Links_Default_Style : Style_Access;
    --  The style used for editors/consoles hyper links
 
+   --------------
+   -- Debugger --
+   --------------
+
+   Debugger_Breakpoint_Style             : Style_Access;
+   Debugger_Conditional_Breakpoint_Style : Style_Access;
+   Debugger_Disabled_Breakpoint_Style    : Style_Access;
+   --  Highlight line numbers when they have breakpoints
+
    -----------
    -- Build --
    -----------

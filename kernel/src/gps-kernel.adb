@@ -54,6 +54,7 @@ with Default_Preferences;       use Default_Preferences;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Editors;               use GPS.Editors;
 with GPS.Default_Styles;        use GPS.Default_Styles;
+with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Clipboard;      use GPS.Kernel.Clipboard;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Custom;         use GPS.Kernel.Custom;
@@ -213,7 +214,7 @@ package body GPS.Kernel is
       Create_Simple_Message
         (Get_Messages_Container (Self.Kernel),
          Category, File, Line, Column, Text,
-         0, (Editor_Side => True, Locations => True));
+         0, (Editor_Side => True, Locations => True, Editor_Line => False));
    end Report_Location;
 
    --------------------------
@@ -2148,5 +2149,35 @@ package body GPS.Kernel is
            (Kernel.Tasks.Scheduled_Command_From_Command (Command));
       end if;
    end Get_Scheduled_Command;
+
+   -----------------------------------
+   -- Set_Default_Line_Number_Click --
+   -----------------------------------
+
+   procedure Set_Default_Line_Number_Click
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Action    : String) is
+   begin
+      Free (Kernel.Default_Line_Click_Action);
+      Kernel.Default_Line_Click_Action := new String'(Action);
+   end Set_Default_Line_Number_Click;
+
+   ---------------------------------------
+   -- Execute_Default_Line_Number_Click --
+   ---------------------------------------
+
+   procedure Execute_Default_Line_Number_Click
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Context   : Selection_Context)
+   is
+      Dummy : Boolean;
+   begin
+      if Kernel.Default_Line_Click_Action /= null then
+         Dummy := Execute_Action
+           (Kernel,
+            Action  => Kernel.Default_Line_Click_Action.all,
+            Context => Context);
+      end if;
+   end Execute_Default_Line_Number_Click;
 
 end GPS.Kernel;
