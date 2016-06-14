@@ -331,12 +331,6 @@ package Debugger.Gdb_MI is
       Info     : out Thread_Information_Array;
       Len      : out Natural);
 
-   overriding procedure Lines_With_Code
-     (Debugger : access Gdb_MI_Debugger;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Result   : out Boolean;
-      Lines    : out Line_Array);
-
    overriding procedure List_Breakpoints
      (Debugger  : not null access Gdb_MI_Debugger;
       List      : out Breakpoint_Vectors.Vector);
@@ -457,10 +451,6 @@ private
       Mode             : Remote_GDB_Mode := Native;
       Target_Connected : Boolean := False;
       --  Whether we have connected to a target.
-
-      Cached_File  : GNATCOLL.VFS.Virtual_File;
-      Cached_Lines : Line_Array_Access;
-      --  Caches to speed up calls to Lines_With_Code
    end record;
 
 end Debugger.Gdb_MI;

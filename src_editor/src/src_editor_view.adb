@@ -936,12 +936,6 @@ package body Src_Editor_View is
       else
          View.Side_Columns_Up_To_Date := True;
       end if;
-      --  If necessary, emit the Source_Lines_Revealed signal
-
-      if Bottom_Line >= Top_Line then
-         Buffer.Source_Lines_Revealed
-           (View.Get_Project, Top_Line, Bottom_Line);
-      end if;
    end Recompute_Visible_Area;
 
    ---------------------

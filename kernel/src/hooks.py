@@ -853,9 +853,6 @@ macro.'''),
 
     Hook('source_lines_folded', 'two_lines_hooks'),
 
-    Hook('source_lines_revealed', 'context_hooks', descr='''
-Emitted when a range of lines becomes visible on the screen.'''),
-
     Hook('source_lines_unfolded', 'two_lines_hooks'),
 
     Hook('task_started', 'simple_hooks', descr='''

@@ -959,6 +959,8 @@ package body Src_Editor_Buffer.Line_Information is
 
       procedure Draw_Line_Info is
          Height, Width : Gint;
+         Y          : constant Gdouble :=
+           Gdouble (Y_Pix_In_Window + Boolean'Pos (Some_Line_Nums));
       begin
          if Editable_Line = 0 then
             return;
@@ -969,7 +971,7 @@ package body Src_Editor_Buffer.Line_Information is
 
          Move_To (Cr,
                   Gdouble (Gint (Buffer.Line_Numbers_Width) - Width),
-                  Gdouble (Y_Pix_In_Window + Boolean'Pos (Some_Line_Nums)));
+                  Y);
          Show_Layout (Cr, Layout);
       end Draw_Line_Info;
 

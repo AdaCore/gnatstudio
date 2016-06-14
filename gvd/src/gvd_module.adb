@@ -93,9 +93,6 @@ package body GVD_Module is
       Initialized                    : Boolean := False;
       --  Whether the debugger is running
 
-      Show_Lines_With_Code           : Boolean;
-      --  Whether the lines with code should be explicitly queried
-
       Actions : Action_Lists.List;
       --  Actions that have been registered dynamically by this module,
       --  for the dynamic menus
@@ -132,13 +129,6 @@ package body GVD_Module is
    --  Remove the side information columns corresponding to the debugger
    --  in the editors for file.
    --  If File is empty, remove them for all files.
-
-   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
-   overriding procedure Execute
-     (Self   : On_Pref_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Preference);
-   --  Called when the preferences are changed in the GPS kernel
 
    procedure Create_Debugger_Columns
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -1683,30 +1673,6 @@ package body GVD_Module is
          Debug_Terminate (Kernel_Handle (Kernel));
    end Execute;
 
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Self   : On_Pref_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Preference)
-   is
-      pragma Unreferenced (Self, Pref);
-      Prev   : Boolean;
-   begin
-      Prev   := GVD_Module_ID.Show_Lines_With_Code;
-      GVD_Module_ID.Show_Lines_With_Code :=
-        Editor_Show_Line_With_Code.Get_Pref;
-
-      if GVD_Module_ID.Initialized
-        and then Prev /= GVD_Module_ID.Show_Lines_With_Code
-      then
-         Remove_Debugger_Columns (Kernel_Handle (Kernel), No_File);
-         Create_Debugger_Columns (Kernel_Handle (Kernel), No_File);
-      end if;
-   end Execute;
-
    -----------------------
    -- Create_GVD_Module --
    -----------------------
@@ -1739,8 +1705,6 @@ package body GVD_Module is
       Create_GVD_Module (Kernel);
       GVD.Preferences.Register_Default_Preferences (Get_Preferences (Kernel));
       GVD.Scripts.Create_Hooks (Kernel);
-      GVD_Module_ID.Show_Lines_With_Code :=
-        Editor_Show_Line_With_Code.Get_Pref;
 
       Debugger_Filter := new Debugger_Stopped_Filter;
       Register_Filter (Kernel, Debugger_Filter, "Debugger stopped");
@@ -1950,7 +1914,6 @@ package body GVD_Module is
          Description => -"Terminate all running debugger",
          Filter      => Debugger_Active);
 
-      Preferences_Changed_Hook.Add (new On_Pref_Changed);
       Debugger_Executable_Changed_Hook.Add (new On_Executable_Changed);
    end Register_Module;
 

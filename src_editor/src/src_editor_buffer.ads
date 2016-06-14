@@ -635,16 +635,6 @@ package Src_Editor_Buffer is
       End_Line   : Editable_Line_Type);
    --  Emit the signal informing that source lines have been unfolded
 
-   procedure Source_Lines_Revealed
-     (Buffer     : access Source_Buffer_Record;
-      Project    : GNATCOLL.Projects.Project_Type;
-      Start_Line : Buffer_Line_Type;
-      End_Line   : Buffer_Line_Type);
-   --  Emit the signal to the kernel saying that an area in the source
-   --  has been revealed.
-   --  Project is the project from which the file is viewed (used for
-   --  aggregate projects)
-
    procedure Add_Controls (Buffer : access Source_Buffer_Record);
    --  Connect the Undo/Redo buttons to the queue containing the buffer
    --  commands. This MUST be called every time that the Buffer.Queue

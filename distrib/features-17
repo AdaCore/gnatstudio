@@ -42,6 +42,17 @@ NF-17-P615-027 GPS: new function GPS.Entity.instance_of (2016-06-17)
   A new python function is now available to find the generic entity that
   the current one instantiates.
 
+NF-17-P614-005 GPS: remove lines-with-code preference (2016-06-14)
+
+  GPS no longer supports the debugger preference to show lines with
+  code. This preference has been disabled by default for a while now,
+  and can be slow to run since it requires a lot of interaction with the
+  debugger (and while the debugger is working on getting us the info,
+  we can't send other commands like setting breakpoints). It also required
+  extra space on the left of editors to display the info.
+  As part of the simplification of the code, we removed the
+  source_lines_revealed hook.
+
 NF-17-P608-039 GPS: new python function GPS.Debugger.breakpoints (2016-06-09)
 
   GPS now exports the list of breakpoints that are currently set in the

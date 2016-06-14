@@ -201,9 +201,6 @@ package body Debugger.Gdb is
    Undefined_Info_Command    : constant String := "Undefined info command";
    --  Another string used to detect undefined info commands
 
-   List_Lines                : constant String := "^done,lines=[";
-   --  Used to parse output of -symbol-list-lines command
-
    Info_Tasks_Pattern : constant Pattern_Matcher := Compile
      ("^ +(ID) +(TID) +(P-ID) +(Pri) +(State) +(Name).*$");
    --  Used to parse the output of "info tasks"
@@ -1150,10 +1147,6 @@ package body Debugger.Gdb is
       end if;
 
       Close (Debugger_Root (Debugger.all)'Access);
-
-      --  Clear package-local cache.
-      Debugger.Cached_File := No_File;
-      Free (Debugger.Cached_Lines);
    end Close;
 
    -----------------------
@@ -2633,123 +2626,6 @@ package body Debugger.Gdb is
    begin
       return Debugger.VxWorks_Version;
    end VxWorks_Version;
-
-   ---------------------
-   -- Lines_With_Code --
-   ---------------------
-
-   overriding procedure Lines_With_Code
-     (Debugger : access Gdb_Debugger;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Result   : out Boolean;
-      Lines    : out Line_Array)
-   is
-      procedure Parse_List_Lines
-        (S         : String;
-         Lines     : Line_Array_Access;
-         Num_Lines : out Natural);
-      --  Parse S and set Num_Lines and Lines accordingly.
-      --  S is the output of the command -symbol-list-lines.
-      --  If Lines is null, only Num_Lines is computed.
-
-      ----------------------
-      -- Parse_List_Lines --
-      ----------------------
-
-      procedure Parse_List_Lines
-        (S         : String;
-         Lines     : Line_Array_Access;
-         Num_Lines : out Natural)
-      is
-         Pos, Last, Val : Natural;
-      begin
-         Num_Lines := 0;
-         Pos := S'First;
-
-         loop
-            Pos := Index (S (Pos .. S'Last), "line=");
-
-            exit when Pos = 0;
-
-            Pos  := Pos + 6;
-            Last := Index (S (Pos .. S'Last), """");
-            Val  := Integer'Value (S (Pos .. Last - 1));
-            --  Skip "},{pc="...
-            Pos := Last + 12;
-
-            if Val > Num_Lines then
-               Num_Lines := Val;
-            end if;
-
-            if Lines /= null and then Val in Lines'Range then
-               Lines (Val) := True;
-            end if;
-         end loop;
-
-      exception
-         when Constraint_Error =>
-            Result    := False;
-            Num_Lines := 0;
-      end Parse_List_Lines;
-
-   begin
-      Result := False;
-
-      if Debugger.Has_Symbol_List = 0 then
-         return;
-      end if;
-
-      --  We cache the result of -symbol-list-lines for the last file queried,
-      --  since Lines_With_Code is typically called for a line subset rather
-      --  than the whole file.
-
-      if Debugger.Cached_File = File then
-         Result := True;
-      else
-         Test_If_Has_Command
-           (Debugger, Debugger.Has_Symbol_List, "-symbol-list-lines");
-
-         if Debugger.Has_Symbol_List = 0 then
-            return;
-         end if;
-
-         declare
-            --  Send the gdb command to get the list of lines with code.
-            --  The call to "Format_Pathname" is to work a bug in some versions
-            --  of gdb under Windows.
-            S              : constant String := Send_And_Get_Clean_Output
-              (Debugger,
-               "-symbol-list-lines " & (+File.Unix_Style_Full_Name),
-               Mode => Internal);
-            Num_Lines, Pos : Natural;
-
-         begin
-            if S'Length < List_Lines'Length
-              or else S (S'First ..
-                         S'First + List_Lines'Length - 1) /= List_Lines
-            then
-               return;
-            end if;
-
-            Debugger.Cached_File := File;
-            Result      := True;
-            Pos         := S'First + List_Lines'Length;
-            Parse_List_Lines (S (Pos .. S'Last), null, Num_Lines);
-            Free (Debugger.Cached_Lines);
-            Debugger.Cached_Lines := new Line_Array'(1 .. Num_Lines => False);
-            Parse_List_Lines
-              (S (Pos .. S'Last), Debugger.Cached_Lines, Num_Lines);
-         end;
-      end if;
-
-      for Val in Lines'Range loop
-         if Val in Debugger.Cached_Lines'Range then
-            Lines (Val) := Debugger.Cached_Lines (Val);
-         else
-            Lines (Val) := False;
-         end if;
-      end loop;
-   end Lines_With_Code;
 
    --------------------------
    -- Highlighting_Pattern --

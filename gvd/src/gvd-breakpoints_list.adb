@@ -115,7 +115,6 @@ package body GVD.Breakpoints_List is
 
    procedure Add_Information
      (Kernel  : not null access Kernel_Handle_Record'Class;
-      Process : access Visual_Debugger_Record'Class;
       Info    : in out Line_Information_Array;
       B       : Breakpoint_Data;
       Removed : Boolean);
@@ -877,17 +876,12 @@ package body GVD.Breakpoints_List is
 
    procedure Add_Information
      (Kernel  : not null access Kernel_Handle_Record'Class;
-      Process : access Visual_Debugger_Record'Class;
       Info    : in out Line_Information_Array;
       B       : Breakpoint_Data;
       Removed : Boolean) is
    begin
       if Removed then
-         if Process /= null and then Editor_Show_Line_With_Code.Get_Pref then
-            Info (B.Line).Image := Line_Has_Code_Pixbuf;
-         else
-            Info (B.Line).Image := Line_Might_Have_Code_Pixbuf;
-         end if;
+         Info (B.Line).Image := Line_Might_Have_Code_Pixbuf;
       else
          if not B.Enabled then
             Info (B.Line).Image := Line_Has_Disabled_Breakpoint_Pixbuf;
@@ -932,7 +926,7 @@ package body GVD.Breakpoints_List is
          A : Line_Information_Array (B.Line .. B.Line);
       begin
          Create_Breakpoints_Column (Kernel, B.File);
-         Add_Information (Kernel, Process, A, B, Removed => False);
+         Add_Information (Kernel, A, B, Removed => False);
          Add_Line_Information
            (Kernel,
             File       => B.File,
@@ -943,7 +937,7 @@ package body GVD.Breakpoints_List is
       procedure Remove (B : Breakpoint_Data) is
          A             : Line_Information_Array (B.Line .. B.Line);
       begin
-         Add_Information (Kernel, Process, A, B, Removed => True);
+         Add_Information (Kernel, A, B, Removed => True);
          Add_Line_Information
            (Kernel,
             File       => B.File,
@@ -1047,8 +1041,6 @@ package body GVD.Breakpoints_List is
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
 
-      Show_Lines_With_Code : constant Boolean :=
-        Editor_Show_Line_With_Code.Get_Pref;
       Line1, Line2 : Integer;
 
       procedure Process_List (List : Breakpoint_List);
@@ -1064,21 +1056,13 @@ package body GVD.Breakpoints_List is
          --  List. Integer'First when there are no breakpoints
 
          File         : constant Virtual_File := File_Information (Context);
-         Lines        : Line_Array (Line1 .. Line2);
          A            : Line_Information_Array (Line1 .. Line2);
          Index        : Natural;
          Bps          : Bp_Array := (others => Integer'First);
          Br           : Breakpoint_Data;
          Has_Breakpoint : Boolean := False;
 
-         Lines_Valid  : Boolean := False;
-         --  Have we computed whether there is code or is this a guess ?
-
       begin
-         if Process /= null and then Show_Lines_With_Code then
-            Lines_With_Code (Process.Debugger, File, Lines_Valid, Lines);
-         end if;
-
          --  Build an array of breakpoints in the current range, more
          --  efficient than re-browsing the whole array of breakpoints
          --  for each line.
@@ -1102,11 +1086,11 @@ package body GVD.Breakpoints_List is
          for J in A'Range loop
             if Bps (J) /= Integer'First then
                Add_Information
-                 (Kernel, Process, A, List.List (Bps (J)), Removed => False);
-            elsif not Lines_Valid or else Lines (J) then
+                 (Kernel, A, List.List (Bps (J)), Removed => False);
+            else
                Br.File := File;
                Br.Line := J;
-               Add_Information (Kernel, Process, A, Br, Removed => True);
+               Add_Information (Kernel, A, Br, Removed => True);
             end if;
          end loop;
 

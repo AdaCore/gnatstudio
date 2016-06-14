@@ -18,7 +18,6 @@
 with Ada.Containers.Vectors;
 with Ada.Characters.Handling;           use Ada.Characters.Handling;
 with Ada.IO_Exceptions;                 use Ada.IO_Exceptions;
-with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 with GNAT.Regpat;                       use GNAT.Regpat;
 
@@ -237,13 +236,6 @@ package body Src_Editor_Module is
       Kernel : not null access Kernel_Handle_Record'Class;
       File   : Virtual_File);
    --  Callback for the "file_saved" hook
-
-   type On_Lines_Revealed is new Context_Hooks_Function with null record;
-   overriding procedure Execute
-     (Self    : On_Lines_Revealed;
-      Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Context : GPS.Kernel.Selection_Context);
-   --  Hook called when the "source_lines_revealed" hook is run
 
    type On_Cursor_Stopped is new File_Location_Hooks_Function
       with null record;
@@ -913,41 +905,6 @@ package body Src_Editor_Module is
          Trace (Me, E);
          return null;
    end Load_Desktop;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding procedure Execute
-     (Self    : On_Lines_Revealed;
-      Kernel  : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Context : GPS.Kernel.Selection_Context)
-   is
-      pragma Unreferenced (Self);
-      Line1, Line2 : Integer;
-   begin
-      if Has_Area_Information (Context) then
-         Get_Area (Context, Line1, Line2);
-
-         --  ??? This is probably unnecessary if not Has_File_Information
-         --  (Area_Context), see below.
-         if Has_File_Information (Context) then
-            declare
-               Infos : Line_Information_Array (Line1 .. Line2);
-            begin
-               for J in Infos'Range loop
-                  Infos (J).Text := To_Unbounded_String (Image (J));
-               end loop;
-
-               Add_Line_Information
-                (Kernel     => Kernel,
-                 File       => File_Information (Context),
-                 Identifier => Src_Editor_Module_Name,
-                 Info       => Infos);
-            end;
-         end if;
-      end if;
-   end Execute;
 
    ---------------------
    -- Get_Child_Class --

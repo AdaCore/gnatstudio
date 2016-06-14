@@ -81,15 +81,6 @@ package body GVD.Preferences is
          Path      => -"Debugger:Editors",
          Default   => "rgba(125,236,57,0.6)");
 
-      Editor_Show_Line_With_Code := Create
-        (Manager   => Prefs,
-         Name      => "Debugger-Editor-Show-Line-With-Code",
-         Label     => -"Show lines with code",
-         Doc       =>
-            -"Display dots in editor sidebar for lines that contain code.",
-         Path      => -"Debugger:Editors",
-         Default   => False);
-
       Assembly_Range_Size := Create
         (Manager  => Prefs,
          Name     => "Debugger-Assembly-Range-Size",

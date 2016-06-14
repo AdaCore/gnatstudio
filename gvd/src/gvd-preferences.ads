@@ -43,7 +43,6 @@ package GVD.Preferences is
    Debugger_Kind                 : Debugger_Kind_Preferences.Preference;
 
    -- Source Window --
-   Editor_Show_Line_With_Code    : Boolean_Preference;
    Editor_Current_Line_Color     : Color_Preference;
 
    -- Assembly Window --

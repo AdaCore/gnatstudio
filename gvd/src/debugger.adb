@@ -17,6 +17,7 @@
 
 with Ada.Strings;                use Ada.Strings;
 with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
+with Ada.Unchecked_Deallocation;
 with GNAT.Expect;                use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
@@ -384,21 +385,6 @@ package body Debugger is
    begin
       return Entity;
    end Get_Uniq_Id;
-
-   ---------------------
-   -- Lines_With_Code --
-   ---------------------
-
-   procedure Lines_With_Code
-     (Debugger : access Debugger_Root;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Result   : out Boolean;
-      Lines    : out Line_Array)
-   is
-      pragma Unreferenced (Debugger, File, Lines);
-   begin
-      Result := False;
-   end Lines_With_Code;
 
    -----------------------
    -- Source_Files_List --

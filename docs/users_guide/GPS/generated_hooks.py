@@ -895,15 +895,6 @@ class Predefined_Hooks:
       :param int line2:
         """
 
-    # source_lines_revealed = 'source_lines_revealed'
-    def source_lines_revealed(name,context):
-        """
-      Emitted when a range of lines becomes visible on the screen.
-
-      :param str name:
-      :param GPS.Context context:
-        """
-
     # source_lines_unfolded = 'source_lines_unfolded'
     def source_lines_unfolded(name,context,line1,line2):
         """

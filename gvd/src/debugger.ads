@@ -27,7 +27,6 @@ with GVD.Types;
 with GVD.Proc_Utils;
 with GPS.Kernel;               use GPS.Kernel;
 with GNATCOLL.VFS;
-with Ada.Unchecked_Deallocation;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 
@@ -823,28 +822,6 @@ package Debugger is
      (Debugger : access Debugger_Root)
      return GVD.Types.VxWorks_Version_Type;
    --  Retrieve the VxWorks version stored in the debugger record
-
-   -----------------------------
-   -- Source Related Commands --
-   -----------------------------
-
-   type Line_Array is array (Positive range <>) of Boolean;
-   pragma Pack (Line_Array);
-
-   type Line_Array_Access is access Line_Array;
-
-   procedure Free is new
-     Ada.Unchecked_Deallocation (Line_Array, Line_Array_Access);
-
-   procedure Lines_With_Code
-     (Debugger : access Debugger_Root;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Result   : out Boolean;
-      Lines    : out Line_Array);
-   --  Set to True every line in File that is associated with code.
-   --  Set Result to False if could not determine the state of the lines.
-   --  In this case, Lines isn't set.
-   --  Default implementation sets Result to False.
 
    -------------------
    -- Assembly code --

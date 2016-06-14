@@ -352,12 +352,6 @@ package Debugger.Gdb is
    overriding function VxWorks_Version
      (Debugger : access Gdb_Debugger) return GVD.Types.VxWorks_Version_Type;
 
-   overriding procedure Lines_With_Code
-     (Debugger : access Gdb_Debugger;
-      File     : GNATCOLL.VFS.Virtual_File;
-      Result   : out Boolean;
-      Lines    : out Line_Array);
-
    overriding procedure List_Breakpoints
      (Debugger  : not null access Gdb_Debugger;
       List      : out Breakpoint_Vectors.Vector);
@@ -484,10 +478,6 @@ private
       Mode             : Remote_GDB_Mode := Native;
       Target_Connected : Boolean := False;
       --  Whether we have connected to a target.
-
-      Cached_File  : GNATCOLL.VFS.Virtual_File;
-      Cached_Lines : Line_Array_Access;
-      --  Caches to speed up calls to Lines_With_Code
 
       Use_Catch_For_Exceptions : GNATCOLL.Tribooleans.Triboolean :=
         GNATCOLL.Tribooleans.Indeterminate;
