@@ -6,49 +6,44 @@ import GPS
 import gps_utils
 import os_utils
 
-gnathub_menu = "/Gnathub/Run "
+gnathub_menu = "/Gnathub/"
 tools = ['codepeer', 'gcov', 'gnatcoverage', 'gnatcheck', 'gnatmetric',
          'gnatprove']
 
-
-def register_menu(tool):
-    @gps_utils.interactive(category="Gnathub",
-                           menu=gnathub_menu+tool,
-                           name="Run gnathub: " + tool)
-    def action():
-        target = GPS.BuildTarget("gnathub")
-        target.execute(extra_args="--incremental --plugins=" + tool,
-                       synchronous=False)
 
 XML = r"""<?xml version="1.0" ?>
 <GPS>
   <target-model name="gnathub">
     <iconname>call-start</iconname>
-    <description>Run gnathup executable</description>
+    <description>Run gnathub executable</description>
     <command-line>
       <arg>gnathub</arg>
       <arg>-P%PP</arg>
       <arg>%X</arg>
     </command-line>
-    <switches command="%(tool_name)s" columns="1">
-    <field label="Execute" switch="--exec="
+    <switches command="%(tool_name)s" columns="2">
+    <title line="1" column="1">Available plugins</title>
+    {}
+    <title line="1" column="2">Other options</title>
+    <field line="1" column="2" label="Execute" switch="--exec="
       tip="Python script to execute (implies --incremental)"/>
-    <field label="Plugins" switch="--plugins="
+    <field line="1" column="2" label="Plugins" switch="--plugins="
       tip="Comma separated list of plugins to execute"/>
-    <spin label="Parallel" switch="-j"
+    <spin line="1" column="2" label="Parallel" switch="-j"
       tip="Number of jobs to run in parallel"
       max="99" min="0" default="0"/>
-    <check label="Incremental" switch="-i"
+    <check line="1" column="2" label="Incremental" switch="-i"
       tip="Do not remove database if exists"/>
-    <check label="Quiet" switch="-q"
+    <check line="1" column="2" label="Quiet" switch="-q"
       tip="Toggle quiet mode on"/>
-    <check label="Verbose" switch="-v"
+    <check line="1" column="2" label="Verbose" switch="-v"
       tip="Toggle verbose mode on"/>
     </switches>
   </target-model>
 
   <target name="gnathub" category="_Project_" model="gnathub">
-    <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+    <read-only>TRUE</read-only>
+    <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
     <in-menu>FALSE</in-menu>
     <command-line>
       <arg>gnathub</arg>
@@ -60,18 +55,29 @@ XML = r"""<?xml version="1.0" ?>
 </GPS>
 """
 
+# Template to insert into target-model for each gnathub plugin
+template = r"""<check line="1" column="1"
+ label="{}" switch="--plugins={}" tip="Run {} plugin"/>
+"""
+
+
 # Check for gnathub executable and GNAThub module active status:
 
 logger = GPS.Logger("MODULE.GNAThub")
 
 if os_utils.locate_exec_on_path("gnathub") and logger.active:
-    GPS.parse_xml(XML)
+    checkboxes = reduce(lambda x, y: x+template.format(y, y, y), tools, "")
 
-    for J in tools:
-        register_menu(J)
+    GPS.parse_xml(XML.format(checkboxes))
+
+    @gps_utils.interactive(category="Gnathub",
+                           menu=gnathub_menu+"Run...",
+                           name="Run gnathub...")
+    def show_dialog_and_run_gnathub():
+        target = GPS.BuildTarget("gnathub")
+        target.execute(synchronous=False)
 
     @gps_utils.hook("compilation_finished")
-    def __hook(category, target="", mode="", shadow=False, background=False,
-               status=0, *args):
-        if not status and target == "gnathub":
+    def __hook(category, target_name="", mode_name="", status=""):
+        if not status and target_name == "gnathub":
             GPS.execute_action("gnathub display analysis")
