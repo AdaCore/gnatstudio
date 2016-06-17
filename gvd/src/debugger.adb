@@ -113,6 +113,12 @@ package body Debugger is
    --  null).
    --  See Send for the explanation for the other parameters.
 
+   procedure On_Debugger_Died
+     (Debugger : not null access Debugger_Root'Class);
+   --  This is called when the debugger process has died.
+   --  Diaplay a message dialog to prevent the user that the undelying debugger
+   --  is dead and close the debugging session.
+
    ---------------------
    -- Command Queuing --
    ---------------------
@@ -495,6 +501,12 @@ package body Debugger is
       return True;
 
    exception
+      when E : Process_Died =>
+         Trace (Me, E);
+
+         On_Debugger_Died (Debugger);
+         return False;
+
       when E : others =>
          --  Will close the debugger in GVD.Process when getting this
          --  exception the next time.
@@ -661,7 +673,6 @@ package body Debugger is
       Mode            : Command_Type := Hidden)
    is
       Process  : constant Visual_Debugger := GVD.Process.Convert (Debugger);
-      Dummy    : Message_Dialog_Buttons;
       Last     : Positive := Cmd'First;
       Cmd_Last : Natural;
       First    : Positive;
@@ -825,27 +836,38 @@ package body Debugger is
       end loop;
 
    exception
-      when Process_Died =>
-         Trace (Me, "underlying debugger died unexpectedly in 'send'");
-         Set_Command_In_Process (Get_Process (Debugger), False);
+      when E : Process_Died =>
+         Trace (Me, E);
 
-         if Process /= null then
-            Free (Process.Current_Command);
-
-            if Process.Exiting then
-               return;
-            end if;
-
-            Dummy :=
-              Message_Dialog
-                (Expect_Out (Get_Process (Debugger)) & ASCII.LF &
-                 (-"The underlying debugger died unexpectedly. Closing it"),
-                 Error, Button_OK, Button_OK,
-                 Parent => Debugger.Kernel.Get_Main_Window);
-            Unregister_Dialog (Process);
-            Close_Debugger (Process);
-         end if;
+         On_Debugger_Died (Debugger);
    end Internal_Send;
+
+   ----------------------
+   -- On_Debugger_Died --
+   ----------------------
+
+   procedure On_Debugger_Died
+     (Debugger : not null access Debugger_Root'Class)
+   is
+      Process : constant Visual_Debugger := GVD.Process.Convert (Debugger);
+      Dummy   : Message_Dialog_Buttons;
+   begin
+      if Process /= null then
+         Free (Process.Current_Command);
+
+         if Process.Exiting then
+            return;
+         end if;
+
+         Dummy :=
+           Message_Dialog
+             (Expect_Out (Get_Process (Debugger)) & ASCII.LF &
+              (-"The underlying debugger died unexpectedly. Closing it"),
+              Error, Button_OK, Button_OK,
+              Parent => Debugger.Kernel.Get_Main_Window);
+         Close_Debugger (Process);
+      end if;
+   end On_Debugger_Died;
 
    ----------
    -- Send --
