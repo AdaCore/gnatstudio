@@ -267,12 +267,17 @@ class CLI(GPS.Process):
 
         switches = project_support.get_switches(file)
         outdir = project_support.get_output_dir(file)
+        if outdir:
+            switches += ' -o ' + outdir
 
         cmd = ' '.join([CLI.mdl2json, file.path, switches])
 
         def __on_exit(proc, exit_status, output):
             if exit_status == 0:
-                promise.resolve(output)
+                promise.resolve(
+                    os.path.join(
+                        outdir,
+                        '.' + os.path.basename(file.path) + '_mdl2json'))
             else:
                 GPS.Console().write('When running mdl2json: %s\n' % (
                     output), mode='error')
@@ -456,9 +461,9 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         v, newly_created = QGEN_Diagram_Viewer.get_or_create_view(file)
 
         if newly_created:
-            def __on_json(json):
-                v.diags = GPS.Browsers.Diagram.load_json_data(
-                    json, diagramFactory=QGEN_Diagram)
+            def __on_json(jsonfile):
+                v.diags = GPS.Browsers.Diagram.load_json(
+                    jsonfile, diagramFactory=QGEN_Diagram)
                 if v.diags:
                     v.set_diagram(v.diags.get())
 
