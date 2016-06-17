@@ -5015,6 +5015,17 @@ class Entity(object):
         :return: a list of :class:`GPS.Entity`
         """
 
+    def instance_of(self):
+        """
+        If self is an instantiation of some other generic entity, this
+        returns that entity. For instance, if the Ada code contains
+             procedure Foo is new Generic_Proc (Integer);
+        and `e` is an instance of :class:`GPS.Entity` for Foo, then
+        `e.instance_of()` returns an entity for Generic_Proc.
+
+        :return: an instance of :class:`GPS.Entity` or None
+        """
+
     def is_subprogram(self):
         """
         Whether the entity is a subprogram, procedure or function.

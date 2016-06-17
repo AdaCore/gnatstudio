@@ -329,6 +329,10 @@ package body GPS.Scripts.Entities is
          Set_Return_Value
            (Data, Create_Entity (Get_Script (Data), Entity.Get_Type_Of));
 
+      elsif Command = "instance_of" then
+         Set_Return_Value
+           (Data, Create_Entity (Get_Script (Data), Entity.Instance_Of));
+
       elsif Command = "is_predefined" then
          Set_Return_Value
            (Data, Entity.Is_Predefined_Entity);
@@ -591,6 +595,10 @@ package body GPS.Scripts.Entities is
          Handler      => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("get_called_entities",
+         Class        => C,
+         Handler      => Entity_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("instance_of",
          Class        => C,
          Handler      => Entity_Command_Handler'Access);
       Kernel.Scripts.Register_Command

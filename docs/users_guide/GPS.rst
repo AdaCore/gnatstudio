@@ -930,6 +930,8 @@ Classes
 
    .. automethod:: GPS.Entity.get_called_entities
 
+   .. automethod:: GPS.Entity.instance_of
+
    .. automethod:: GPS.Entity.is_access
 
    .. automethod:: GPS.Entity.is_array
