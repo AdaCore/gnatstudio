@@ -221,9 +221,7 @@ package body Ada_Module is
          Name    => "Ada-Use-Tabs",
          Default => False,
          Doc     =>
-         -("Use tabulations when indenting. " &
-           "This preference does NOT modify the TAB key which will still " &
-           "insert TAB characters."),
+         -"Use tabulations when indenting.",
          Label    => -"Use tabulations");
 
       Ada_Format_Operators := Create
