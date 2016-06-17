@@ -99,7 +99,8 @@ package body Cpp_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       Handler : constant Language_Handler := Get_Language_Handler (Kernel);
-      P : access On_Pref_Changed;
+      Manager : constant Preferences_Manager := Kernel.Get_Preferences;
+      P       : access On_Pref_Changed;
    begin
       Register_Language (Handler, C_Lang, null);
       Get_Registry (Kernel).Environment.Register_Default_Language_Extension
@@ -115,15 +116,21 @@ package body Cpp_Module is
          Default_Body_Suffix => ".cpp",
          Obj_Suffix          => ".o");
 
+      Manager.Register_Page
+        (Name             => "Editor/C & C++",
+         Page             => new Default_Preferences_Page_Record,
+         Priority         => -2,
+         Replace_If_Exist => True);
+
       C_Automatic_Indentation := Indentation_Kind_Preferences.Create
-        (Get_Preferences (Kernel),
+        (Manager,
          Path    => -"Editor/C & C++:Indentation",
          Name    => "C-Auto-Indentation",
          Default => Extended,
          Doc     => -"Enable auto-indentation for C and C++ sources.",
          Label   => -"Auto indentation");
 
-      C_Indentation_Level := Kernel.Get_Preferences.Create
+      C_Indentation_Level := Manager.Create
         (Path    => -"Editor/C & C++:Indentation",
          Name    => "C-Indent-Level",
          Minimum => 1,
@@ -132,14 +139,14 @@ package body Cpp_Module is
          Doc     => -"Number of spaces for the default indentation.",
          Label   => -"Default indentation");
 
-      C_Use_Tabs := Kernel.Get_Preferences.Create
+      C_Use_Tabs := Manager.Create
         (Path    => -"Editor/C & C++:Indentation",
          Name    => "C-Use-Tabs",
          Default => True,
          Doc     => -"Use tabulations when indenting.",
          Label   => -"Use tabulations");
 
-      C_Indent_Extra := Kernel.Get_Preferences.Create
+      C_Indent_Extra := Manager.Create
         (Path    => -"Editor/C & C++:Indentation",
          Name    => "C-Indent-Extra",
          Default => True,
@@ -147,7 +154,7 @@ package body Cpp_Module is
             -"Indent if/loop/switch constructs an extra level after '{'",
          Label   => -"Extra indentation");
 
-      C_Indent_Comments := Kernel.Get_Preferences.Create
+      C_Indent_Comments := Manager.Create
         (Path    => -"Editor/C & C++:Indentation",
          Name    => "C-Indent-Comments",
          Default => True,
