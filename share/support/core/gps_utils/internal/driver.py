@@ -12,6 +12,16 @@ from gi.repository import Gtk
 from workflows.promises import hook, timeout, wait_tasks, wait_idle
 
 
+def do_exit(timeout):
+    """ Force an exit of GPS right now, logging as an error the contents
+        of the Messages window. This is useful for capturing more traces
+        for stalled tests that are about to get killed by rlimit.
+    """
+    timeout.remove()
+    simple_error(GPS.Console("Messages").get_text())
+    GPS.exit(force=1)
+
+
 def run_test_driver(action_fn):
     """
     This function runs a test driver. A test driver is a workflow (see
@@ -58,6 +68,16 @@ def run_test_driver(action_fn):
         finally:
             if "GPS_PREVENT_EXIT" not in os.environ:
                 GPS.exit(force=True)
+
+    # Install a timeout to catch the errors in GPS, if any, before rlimit
+    # kills everything.
+
+    # Exit GPS 10 seconds before the rlimit expires. If the rlimit
+    # is not set, default to waiting 130 seconds.
+    timeout_seconds = int(os.environ.get('GPS_RLIMIT_SECONDS', '130')) - 10
+    GPS.Timeout(timeout_seconds * 1000, do_exit)
+
+    # Run the workflow
 
     driver(workflow())
 
