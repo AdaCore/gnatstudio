@@ -15,63 +15,66 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Fixed;   use Ada.Strings.Fixed;
+with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
-with System;              use System;
+with System;                   use System;
 
-with GNAT.Expect;         use GNAT.Expect;
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
-with GNAT.Regpat;         use GNAT.Regpat;
-with GNATCOLL.Scripts.Gtkada; use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
-with GNATCOLL.Utils;      use GNATCOLL.Utils;
+with GNAT.Expect;              use GNAT.Expect;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNAT.Regpat;              use GNAT.Regpat;
+with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
+with GNATCOLL.Iconv;           use GNATCOLL.Iconv;
+with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNATCOLL.Scripts.Gtkada;  use GNATCOLL.Scripts, GNATCOLL.Scripts.Gtkada;
+with GNATCOLL.Utils;           use GNATCOLL.Utils;
+with GNATCOLL.VFS;             use GNATCOLL.VFS;
 
-with Config;              use Config;
-
-with Glib;                use Glib;
-with Glib.Main;           use Glib.Main;
+with Glib;                     use Glib;
+with Glib.Main;                use Glib.Main;
 with Glib.Convert;
-with Glib.Values;         use Glib.Values;
-with Glib.Object;         use Glib.Object;
-with Glib.Properties;     use Glib.Properties;
-with Glib.Unicode;        use Glib.Unicode;
-with Gdk.Keyval;          use Gdk.Keyval;
-with Gdk.Types;           use Gdk, Gdk.Types;
-with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
-with Gdk.Event;           use Gdk.Event;
-with Gdk.RGBA;            use Gdk.RGBA;
-with Gtk.Box;             use Gtk.Box;
-with Gtk.Enums;           use Gtk.Enums;
+with Glib.Values;              use Glib.Values;
+with Glib.Object;              use Glib.Object;
+with Glib.Properties;          use Glib.Properties;
+with Glib.Unicode;             use Glib.Unicode;
+with Gdk.Keyval;               use Gdk.Keyval;
+with Gdk.Types;                use Gdk, Gdk.Types;
+with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
+with Gdk.Event;                use Gdk.Event;
+with Gdk.RGBA;                 use Gdk.RGBA;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Handlers;
-with Gtk.Main;            use Gtk.Main;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Style_Context;   use Gtk.Style_Context;
-with Gtk.Text_Buffer;     use Gtk.Text_Buffer;
-with Gtk.Text_View;       use Gtk.Text_View;
-with Gtk.Text_Iter;       use Gtk.Text_Iter;
-with Gtk.Text_Mark;       use Gtk.Text_Mark;
-with Gtk.Text_Tag;        use Gtk.Text_Tag;
-with Gtk.Text_Tag_Table;  use Gtk.Text_Tag_Table;
-with Gtk.Toolbar;         use Gtk.Toolbar;
-with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Selection_Data;  use Gtk.Selection_Data;
-with Gtk.Arguments;       use Gtk.Arguments;
-with Gtkada.Handlers;     use Gtkada.Handlers;
-with Gtkada.Terminal;     use Gtkada.Terminal;
-with Gtkada.MDI;          use Gtkada.MDI;
-with Pango.Enums;         use Pango.Enums;
+with Gtk.Main;                 use Gtk.Main;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Style_Context;        use Gtk.Style_Context;
+with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
+with Gtk.Text_View;            use Gtk.Text_View;
+with Gtk.Text_Iter;            use Gtk.Text_Iter;
+with Gtk.Text_Mark;            use Gtk.Text_Mark;
+with Gtk.Text_Tag;             use Gtk.Text_Tag;
+with Gtk.Text_Tag_Table;       use Gtk.Text_Tag_Table;
+with Gtk.Toolbar;              use Gtk.Toolbar;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Selection_Data;       use Gtk.Selection_Data;
+with Gtk.Arguments;            use Gtk.Arguments;
+with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtkada.Terminal;          use Gtkada.Terminal;
+with Gtkada.MDI;               use Gtkada.MDI;
+with Pango.Enums;              use Pango.Enums;
 
-with GNATCOLL.Traces;       use GNATCOLL.Traces;
-with Histories;             use Histories;
-with String_List_Utils;     use String_List_Utils;
-with GUI_Utils;             use GUI_Utils;
-with GNATCOLL.Arg_Lists;    use GNATCOLL.Arg_Lists;
-with GNATCOLL.Iconv;        use GNATCOLL.Iconv;
-with GNATCOLL.VFS;          use GNATCOLL.VFS;
-with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
-with GPS.Kernel.Modules.UI; use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
-with GPS.Kernel.Hooks;      use GPS.Kernel.Hooks;
-with GPS.Stock_Icons;       use GPS.Stock_Icons;
+with Config;                   use Config;
+with Histories;                use Histories;
+with String_List_Utils;        use String_List_Utils;
+with GUI_Utils;                use GUI_Utils;
+
+with GPS.Default_Styles;       use GPS.Default_Styles;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
+with GPS.Kernel.Style_Manager; use GPS.Kernel.Style_Manager;
+with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
+with GPS.Stock_Icons;          use GPS.Stock_Icons;
 
 package body Interactive_Consoles is
    Me : constant Trace_Handle := Create ("Console");
@@ -1566,7 +1569,9 @@ package body Interactive_Consoles is
       --  console without losing its contents.
       Unref (Console.Buffer);
 
-      for J in Console.Tags'Range loop
+      --  Create a new Gtk_Tag for each Console specific tag (i.e: not linker
+      --  with a general style defined in GPS.Default_Styles).
+      for J in Uneditable_Tag .. Highlight_Tag loop
          Gtk_New (Console.Tags (J));
          Add (Get_Tag_Table (Console.Buffer), Console.Tags (J));
       end loop;
@@ -1578,6 +1583,15 @@ package body Interactive_Consoles is
         (Console.Tags (External_Messages_Tag),
          Gtk.Text_Tag.Style_Property,
          Pango_Style_Normal);
+
+      --  Retrieve the tag used for hyperlinks from GPS.Default_Styles, add it
+      --  to the buffer's tag table and tell to underline all the hyperlinks.
+      Console.Tags (Hyper_Links_Tag) := Get_Tag (Hyper_Links_Default_Style);
+      Add (Get_Tag_Table (Console.Buffer), Console.Tags (Hyper_Links_Tag));
+      Set_Property
+        (Console.Tags (Hyper_Links_Tag),
+         Gtk.Text_Tag.Underline_Property,
+         Pango_Underline_Single);
 
       Set_Highlight_Color (Console, Highlight);
 
@@ -2029,26 +2043,34 @@ package body Interactive_Consoles is
       Underline  : Boolean;
       Font       : String)
    is
-      Tag : constant Gtk_Text_Tag := new Hyper_Link_Tag_Record;
+      Tag : Gtk_Text_Tag;
    begin
-      Gtk.Text_Tag.Initialize (Tag);
-      Add (Get_Tag_Table (Console.Buffer), Tag);
+      --  Create a new hyperlink tag if non-empty values have been provided for
+      --  at least one of the parameters. Otherwise, use the defaut hyperlink
+      --  tag.
+      if Foreground /= "" or else Background /= "" or else Font /= "" then
+         Tag := new Hyper_Link_Tag_Record;
+         Gtk.Text_Tag.Initialize (Tag);
+         Add (Get_Tag_Table (Console.Buffer), Tag);
 
-      if Font /= "" then
-         Set_Property (Tag, Gtk.Text_Tag.Font_Property, Font);
-      end if;
+         if Font /= "" then
+            Set_Property (Tag, Gtk.Text_Tag.Font_Property, Font);
+         end if;
 
-      if Foreground /= "" then
-         Set_Property (Tag, Gtk.Text_Tag.Foreground_Property, Foreground);
-      end if;
+         if Foreground /= "" then
+            Set_Property (Tag, Gtk.Text_Tag.Foreground_Property, Foreground);
+         end if;
 
-      if Background /= "" then
-         Set_Property (Tag, Gtk.Text_Tag.Background_Property, Background);
-      end if;
+         if Background /= "" then
+            Set_Property (Tag, Gtk.Text_Tag.Background_Property, Background);
+         end if;
 
-      if Underline then
-         Set_Property
-           (Tag, Gtk.Text_Tag.Underline_Property, Pango_Underline_Single);
+         if Underline then
+            Set_Property
+              (Tag, Gtk.Text_Tag.Underline_Property, Pango_Underline_Single);
+         end if;
+      else
+         Tag := Console.Tags (Hyper_Links_Tag);
       end if;
 
       Console.Links := new Hyper_Link_Record'
@@ -2277,6 +2299,44 @@ package body Interactive_Consoles is
 
       Terminate_Output (Console, Internal, Show_Prompt => False);
    end Insert_With_Links;
+
+   -----------------------
+   -- Insert_Hyper_Link --
+   -----------------------
+
+   procedure Insert_Hyper_Link
+     (Console  : not null access Interactive_Console_Record;
+      Text     : String;
+      Callback : not null access Hyper_Link_Callback_Record'Class)
+   is
+      Internal  : Boolean;
+      Last_Iter : Gtk_Text_Iter;
+      Tag       : constant Gtk_Text_Tag := Console.Tags (Hyper_Links_Tag);
+   begin
+      --  Create the hyper link
+      Console.Links := new Hyper_Link_Record'
+        (Pattern  => null,
+         Callback => Hyper_Link_Callback (Callback),
+         Tag      => Tag,
+         Next     => Console.Links);
+      Console.Links_Count := Console.Links_Count + 1;
+
+      --  Insert it in the console
+      Prepare_For_Output
+        (Console,
+         Text_Is_Input => False,
+         Internal      => Internal,
+         Last_Iter     => Last_Iter);
+
+      Get_End_Iter (Console.Buffer, Last_Iter);
+      Insert_With_Tags
+        (Buffer => Console.Buffer,
+         Iter   => Last_Iter,
+         Text   => Text,
+         Tag    => Tag);
+
+      Terminate_Output (Console, Internal, Show_Prompt => False);
+   end Insert_Hyper_Link;
 
    ---------------
    -- Interrupt --

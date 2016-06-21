@@ -123,6 +123,11 @@ package body GPS.Default_Styles is
          Style   => Default_Style,
          Variant => Ephemeral_Highlighting_Simple);
 
+      Hyper_Links_Default_Style := M.Create_From_Preferences
+        (Key     => "Hyper links default style",
+         Style   => Default_Style,
+         Variant => Hyper_Links_Style);
+
       ------------
       -- Search --
       ------------

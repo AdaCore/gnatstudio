@@ -1014,7 +1014,7 @@ package body GPS.Kernel.Scripts is
               (Console,
                Regexp     => Compile (Nth_Arg (Data, 2)),
                Callback   => Cb,
-               Foreground => Nth_Arg (Data, 4, "blue"),
+               Foreground => Nth_Arg (Data, 4, ""),
                Background => Nth_Arg (Data, 5, ""),
                Underline  => Nth_Arg (Data, 6, True),
                Font       => Nth_Arg (Data, 7, ""));
@@ -1041,6 +1041,18 @@ package body GPS.Kernel.Scripts is
            (Console,
             Text      => Nth_Arg (Data, 2),
             Add_LF    => False);
+      elsif Command = "insert_link" then
+         Console := Interactive_Console (GObject'(Get_Data (Inst)));
+         declare
+            Cb : constant Hyper_Link_Callback := new Hyper_Link_Subprogram'
+              (Hyper_Link_Callback_Record with
+               Subprogram => Nth_Arg (Data, 3));
+         begin
+            Insert_Hyper_Link
+              (Console,
+               Text     => Nth_Arg (Data, 2),
+               Callback => Cb);
+         end;
       elsif Command = "select_all" then
          Console := Interactive_Console (GObject'(Get_Data (Inst)));
          if Console /= null then
@@ -1248,6 +1260,12 @@ package body GPS.Kernel.Scripts is
          Minimum_Args => 1,
          Maximum_Args => 1,
          Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("insert_link",
+         Class        => Console_Class,
+         Params       => (1 => Param ("text"),
+                          2 => Param ("on_click")),
          Handler      => Console_Command_Handler'Access);
       Kernel.Scripts.Register_Command
         ("select_all",

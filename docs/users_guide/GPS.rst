@@ -335,6 +335,8 @@ Classes
 
    .. automethod:: GPS.Console.get_text
 
+   .. automethod:: GPS.Console.insert_link
+
    .. automethod:: GPS.Console.isatty
 
    .. automethod:: GPS.Console.read

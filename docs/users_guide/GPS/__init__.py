@@ -1886,6 +1886,19 @@ class Console(GUI):
         """
         pass  # implemented in Ada
 
+    def insert_link(self, text, on_click):
+        """
+        Inserts the given text in the console as an hyperlink, using the
+        default hyperlink style.
+        If the user clicks on that text, :func:`on_click` is called with one
+        parameter, the text that was clicked on. This can, for example, be used
+        to jump to an editor or open a web browser.
+
+        :param text: A string
+        :param on_click: A subprogram
+        """
+        pass  # implemented in Ada
+
     def isatty(self):
         """
         Returns True if the console behaves like a terminal. Mostly needed for

@@ -139,46 +139,42 @@ class BoardLoader(Module):
         result = True
 
         if not self.__connection_tool:
-            console.create_link("IDE'Connection_Tool",
-                                self.__open_remote_project_properties)
             console.write(("%s no connection tool specified. Please set the "
                            % (message_header)),
                           mode="error")
-            console.write_with_links("IDE'Connection_Tool")
+            console.insert_link("IDE'Connection_Tool",
+                                self.__open_remote_project_properties)
             console.write(" project attribute\n",
                           mode="error")
             result = False
 
         if self.__connection_tool == "openocd" and not self.__config_file:
-            console.create_link("IDE'Connection_Config_File",
-                                self.__open_remote_project_properties)
             console.write(("%s no configuration file specified. "
                            "Please set the "
                            % (message_header)),
                           mode="error")
-            console.write_with_links("IDE'Connection_Config_File")
+            console.insert_link("IDE'Connection_Config_File",
+                                self.__open_remote_project_properties)
             console.write(" project attribute\n",
                           mode="error")
             result = False
 
         if for_debug and not self.__remote_target:
-            console.create_link("IDE'Protocol_Host",
-                                self.__open_remote_project_properties)
             console.write(("%s no remote target specified. Please set the "
                            % (message_header)),
                           mode="error")
-            console.write_with_links("IDE'Protocol_Host")
+            console.insert_link("IDE'Protocol_Host",
+                                self.__open_remote_project_properties)
             console.write(" project attribute\n",
                           mode="error")
             result = False
 
         if for_debug and not self.__remote_protocol:
-            console.create_link("IDE'Communication_Protocol",
-                                self.__open_remote_project_properties)
             console.write(("%s no remote protocol specified. Please set the "
                            % (message_header)),
                           mode="error")
-            console.write_with_links("IDE'Communication_Protocol")
+            console.insert_link("IDE'Communication_Protocol",
+                                self.__open_remote_project_properties)
             console.write(" project attribute\n",
                           mode="error")
             result = False
