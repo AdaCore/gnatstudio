@@ -188,6 +188,11 @@ package body Tooltips is
          X := X + 10;
          Y := Y + 10;
 
+         --  Do a first placement of the tooltip at the given coordinates,
+         --  in order not to display the window at 0,0. We will readjust
+         --  the coordinates below, to clamp to monitor dimensions.
+         Global_Tooltip.Move (X, Y);
+
          --  Widget is realized and shown to ensure that the width/height are
          --  properly retrieved below.
 
