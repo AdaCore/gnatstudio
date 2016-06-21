@@ -35,6 +35,7 @@
          <menu label='Save _As...'                   action='save as'/>
          <menu label='Save _More'>
             <menu label='_All'                       action='save files and projects'/>
+            <menu label='_Projects'                  action='save all projects'/>
             <menu label='_Desktop'                   action='save desktop'/>
          </menu>
          <separator />
@@ -206,7 +207,6 @@
          <separator />
          <menu label='_Properties...' optional='true' hide='true'
                action='open project properties'/>
-         <menu label='Save _All'                      action='save all projects'/>
          <menu label='R_eload'                        action='reload project'/>
          <menu label='Edit File Switches...' optional='true' hide='true'
                action='open switches editor'/> <!-- duplicate-->

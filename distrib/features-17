@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P621-001 GPS: new menu /File/Save More/Projects (2016-06-21)
+
+  The menu /Project/Save All was moved to a new location to make its
+  semantics easier to understand.
+
 NF-17-P615-027 GPS: new function GPS.Entity.instance_of (2016-06-17)
 
   A new python function is now available to find the generic entity that
