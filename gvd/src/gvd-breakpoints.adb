@@ -749,7 +749,7 @@ package body GVD.Breakpoints is
       Label.Set_Alignment (0.0, 0.5);
       Vbox9.Pack_Start (Label, False, False, 0);
 
-      Gtk_New (Adj, 0.0, 0.0, 10000.0, 1.0, 10.0);
+      Gtk_New (Adj, 0.0, 0.0, 100_000.0, 1.0, 10.0);
       Gtk_New (Self.Ignore_Count_Combo, Adj, 1.0, 0);
       Self.Ignore_Count_Combo.Set_Numeric (False);
       Self.Ignore_Count_Combo.Set_Snap_To_Ticks (True);
