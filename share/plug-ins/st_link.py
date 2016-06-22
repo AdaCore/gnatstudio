@@ -251,7 +251,7 @@ class BoardLoader(Module):
             self.__flashing_tool = "st-flash"
             self.__config_file = ""
         else:
-            self.__flashing_tool = ""
+            self.__flashing_tool = self.__connection_tool
             self.__config_file = ""
 
     def __get_connection_command_line(self):
@@ -430,18 +430,15 @@ class BoardLoader(Module):
             con = promises.ProcessWrapper(
                 cmdargs=self.__get_flashing_command_line(binary),
                 spawn_console=True)
-        except Exception as e:
-            self.__error_exit(str(e))
+            r3, output = yield con.wait_until_match(
+                self.__get_flashing_complete_regexp(),
+                120000)
+            if not r3:
+                self.__error_exit(msg="Could not flash the executable.")
+                con.terminate()
+                return
+        except:
             self.__error_exit("Could not connect to the board.")
-            return
-
-        r3, output = yield con.wait_until_match(
-            self.__get_flashing_complete_regexp(),
-            120000)
-
-        if not r3:
-            self.__error_exit(msg="Could not flash the executable.")
-            con.terminate()
             return
 
         self.__display_message(("Flashing complete. "
@@ -494,13 +491,18 @@ class BoardLoader(Module):
         # Launch the connection tool with its associated console
         cmd = self.__connector.get_command_line()
         self.__display_message("Launching %s" % (self.__connection_tool))
-        self.__connection = promises.ProcessWrapper(cmd, spawn_console=True)
-        r1, output = yield self.__connection.wait_until_match(
-            self.__get_connection_detection_regexp(),
-            120000)
-
-        if not r1:
-            self.__error_exit(msg="Could not connect to the board.")
+        try:
+            self.__connection = promises.ProcessWrapper(
+                cmdargs=cmd,
+                spawn_console=True)
+            r1, output = yield self.__connection.wait_until_match(
+                self.__get_connection_detection_regexp(),
+                120000)
+            if not r1:
+                self.__error_exit(msg="Could not connect to the board.")
+                return
+        except:
+            self.__error_exit("Could not connect to the board.")
             return
 
         # Spawn the debugger on the executable and load it

@@ -335,6 +335,10 @@ class ProcessWrapper(object):
         # handler of process will be created -> start running
         self.__command = ' '.join(cmdargs)
 
+        # The console associated with the process.
+        # Created only if spawn_console is set to True.
+        self.__console = None
+
         # Launch the command
         self.__process = GPS.Process(
             command=self.__command,
@@ -344,8 +348,6 @@ class ProcessWrapper(object):
 
         # Save the start time
         self.__start_time = time.time()
-
-        self.__console = None
 
         # If requested, spawn a console to display the process output
         if spawn_console:
@@ -438,6 +440,9 @@ class ProcessWrapper(object):
         * Promise made here will be answered with a tuple:
             (True/False, remaining_output)
         """
+        # process has already terminated, return nothing
+        if self.finished:
+            return None
 
         # keep the pattern info and return my promise
         self.__current_pattern = pattern
