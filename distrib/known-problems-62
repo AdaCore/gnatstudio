@@ -252,9 +252,9 @@ KP-62-P309-043 GPS: GNATemu plug-in doesn't use Exec_Dir attribute
 
   Workaround: None.
 
-KP-62-P216-047 GPS: the menu Tools->Metrics does not appear
+KP-62-P216-047 GPS: the menu Tools/Metrics does not appear
 
-  Problem:    The menu Tools->Metrics does not appear when the context does
+  Problem:    The menu Tools/Metrics does not appear when the context does
               not match, ie when the window that currently has the focus
               does not contain information about an Ada source or a project.
 
@@ -270,6 +270,17 @@ KP-62-P216-002 GPS: Libclang parsing files task not finishing.
   Status:     This was fixed in 17.0 on 2016-03-20
 
   Workaround: Disable clang crossrefs via the LIBCLANG_XREF trace.
+
+KP-62-P212-047 GPS: The menu Tools -> Metrics is not always visible
+
+  Problem:    The global menu Tools -> Metrics is not always visible, but
+              only visible when it applies to the current selection, ie
+              when the current window is a source editor, or when a project
+              is selected in the Project view, for instance.
+
+  Status:     This was fixed in 17.0 on 2016-03-30
+
+  Workaround: Select an editor or project before bringing up this menu.
 
 KP-62-P212-014 GPS: Preference "highlight entities" not taken into account
 
