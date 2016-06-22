@@ -31,8 +31,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Gtk.Window;                use Gtk.Window;
-
 with Config;                    use Config;
 with Debugger.Gdb.Ada;          use Debugger.Gdb.Ada;
 with Debugger.Gdb.C;            use Debugger.Gdb.C;
@@ -899,7 +897,6 @@ package body Debugger.Gdb is
       Debugger_Args   : GNAT.OS_Lib.Argument_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
-      Window          : Gtk.Window.Gtk_Window;
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
       Debugger_Name   : String := "")
@@ -984,14 +981,7 @@ package body Debugger.Gdb is
            (Process,
             Continuation_Line_Filter'Access, Continuation_Line_Pattern);
 
-         Add_Filter
-           (Get_Descriptor (Debugger.Process).all,
-            Output_Filter'Access, Output,
-            Window.all'Address);
-         Add_Filter
-           (Get_Descriptor (Debugger.Process).all,
-            Input_Filter'Access, Input,
-            Window.all'Address);
+         Set_Input_Output_Filter (Process);
       end if;
    end Spawn;
 

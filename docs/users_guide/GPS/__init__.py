@@ -2162,11 +2162,6 @@ class Debugger(object):
     your own debugger commands, that the user can then type in the debugger
     console. This is a nice way to implement debugger macros.
 
-    While developping such debugger interfaces, it might be useful to modify
-    the file :file:`$HOME/.gps/traces.cfg`, and add a line "GVD.Out=yes" in
-    it. This copies all input/output with the debuggers into the GPS log
-    file.
-
     .. seealso:: :func:`GPS.Debugger.__init__`
 
     .. code-block:: python

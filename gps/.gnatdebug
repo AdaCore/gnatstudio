@@ -125,10 +125,6 @@ TERM=no
 --  Display full traceback for all calls from python to Ada (expensive)
 PYTHON.TB=no
 
---  Debug handles related to the debugger
-GVD.OUT=no
-GVD.Process.Verbose=no
-
 REMOTE_FULL=no
 PYTHON_REF_COUNT=no
 

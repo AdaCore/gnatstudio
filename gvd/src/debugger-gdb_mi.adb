@@ -30,8 +30,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Gtk.Window;                use Gtk.Window;
-
 with Config;                    use Config;
 with Default_Preferences;       use Default_Preferences;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -591,7 +589,6 @@ package body Debugger.Gdb_MI is
       Debugger_Args   : GNAT.OS_Lib.Argument_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
-      Window          : Gtk.Window.Gtk_Window;
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
       Debugger_Name   : String := "")
@@ -654,14 +651,7 @@ package body Debugger.Gdb_MI is
          Add_Regexp_Filter (Process, Stopped_Filter'Access, Stopped_Pattern);
          Add_Regexp_Filter (Process, Context_Filter'Access, Context_Pattern);
 
-         Add_Filter
-           (Get_Descriptor (Debugger.Process).all,
-            Output_Filter'Access, Output,
-            Window.all'Address);
-         Add_Filter
-           (Get_Descriptor (Debugger.Process).all,
-            Input_Filter'Access, Input,
-            Window.all'Address);
+         Set_Input_Output_Filter (Process);
       end if;
    end Spawn;
 

@@ -21,7 +21,6 @@
 with GNAT.Strings;
 with Debugger;
 with GNAT.Regpat;
-with Gtk.Window;
 with GVD.Types;
 with GNATCOLL.VFS;
 
@@ -36,7 +35,6 @@ package Debugger.Gdb_MI is
       Debugger_Args   : GNAT.Strings.String_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
-      Window          : Gtk.Window.Gtk_Window;
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
       Debugger_Name   : String := "");

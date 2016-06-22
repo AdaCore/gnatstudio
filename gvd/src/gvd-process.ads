@@ -134,6 +134,10 @@ package GVD.Process is
       Filters                 : Regexp_Filter_List;
       --  List of regexp filters registered to this process.
 
+      Log_Lines : Natural := 0;
+      --  Number of lines output in the log file, while executing commands
+      --  with gdb (see gvd-trace.ads). We only log some of the output.
+
       Last_Match              : Natural := 0;
       --  Last match in Current_Output.
       --  This is needed to avoid matching twice the same string and to

@@ -71,8 +71,6 @@ with XML_Utils;                  use XML_Utils;
 
 package body GVD.Process is
    Me      : constant Trace_Handle := Create ("GVD.Process");
-   Verbose : constant Trace_Handle :=
-               Create ("GVD.Process.Verbose", GNATCOLL.Traces.Off);
 
    type GPS_Proxy is new Process_Proxy with record
       Process : Visual_Debugger;
@@ -1515,7 +1513,6 @@ package body GVD.Process is
          Debugger_Args   => Args2 (2 .. Args2'Last),
          Executable_Args => Program_Args.all,
          Proxy           => Proxy,
-         Window          => Gtk_Window (Top),
          Remote_Target   => Actual_Remote_Target,
          Remote_Protocol => Actual_Remote_Protocol,
          Debugger_Name   => Process.Descriptor.Debugger_Name.all);
@@ -1807,9 +1804,9 @@ package body GVD.Process is
             end;
          end loop;
 
-         GNATCOLL.Traces.Trace (Verbose, "Setting Source_Dirs:");
+         GNATCOLL.Traces.Trace (Me, "Setting Source_Dirs:");
          for D in Dirs'First .. Dirs_Index - 1 loop
-            GNATCOLL.Traces.Trace (Verbose, "   " & Dirs (D).all);
+            GNATCOLL.Traces.Trace (Me, "   " & Dirs (D).all);
          end loop;
 
          Project.Set_Attribute
@@ -1817,9 +1814,9 @@ package body GVD.Process is
             Values             => Dirs (Dirs'First .. Dirs_Index - 1));
          Free (Dirs);
 
-         GNATCOLL.Traces.Trace (Verbose, "Setting Source_Files:");
+         GNATCOLL.Traces.Trace (Me, "Setting Source_Files:");
          for B in Bases'First .. Bases_Index - 1 loop
-            GNATCOLL.Traces.Trace (Verbose, "   " & Bases (B).all);
+            GNATCOLL.Traces.Trace (Me, "   " & Bases (B).all);
          end loop;
 
          Project.Set_Attribute
@@ -1827,9 +1824,9 @@ package body GVD.Process is
             Values             => Bases (Bases'First .. Bases_Index - 1));
          Free (Bases);
 
-         GNATCOLL.Traces.Trace (Verbose, "Setting Languages:");
+         GNATCOLL.Traces.Trace (Me, "Setting Languages:");
          for L in Langs'First .. Lang_Index - 1 loop
-            GNATCOLL.Traces.Trace (Verbose, "   " & Langs (L).all);
+            GNATCOLL.Traces.Trace (Me, "   " & Langs (L).all);
          end loop;
 
          if Lang_Index = Langs'First then

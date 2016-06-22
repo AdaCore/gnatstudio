@@ -22,11 +22,9 @@ with GNAT.Strings;
 with Process_Proxies;
 with GNAT.Regpat;
 
-with Gtk.Window;
-
 with GVD.Types;
 with GVD.Proc_Utils;
-with GPS.Kernel; use GPS.Kernel;
+with GPS.Kernel;          use GPS.Kernel;
 with GNATCOLL.VFS;
 with Ada.Unchecked_Deallocation;
 with Ada.Containers.Doubly_Linked_Lists;
@@ -47,7 +45,6 @@ package Debugger is
       Debugger_Args   : GNAT.Strings.String_List;
       Executable_Args : String;
       Proxy           : Process_Proxies.Process_Proxy_Access;
-      Window          : Gtk.Window.Gtk_Window;
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
       Debugger_Name   : String := "") is abstract;
@@ -63,8 +60,6 @@ package Debugger is
    --
    --  Proxy is assigned to the debugger, after its underlying process has
    --  been created.
-   --
-   --  Window is the main window that is associated with this debugger.
    --
    --  If Remote_Host is different from the empty string, the debugger
    --  is spawned on the remote host specified.
