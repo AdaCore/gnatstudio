@@ -906,15 +906,15 @@ package body Generic_Views is
             end if;
          end if;
 
+         X := Gint'Value (Hist_X (Hist_X'First).all);
+         Y := Gint'Value (Hist_Y (Hist_Y'First).all);
+
          Screen := Gtk_Window (Win).Get_Screen;
 
-         Monitor := Screen.Get_Monitor_At_Window (Win.Get_Window);
+         Monitor := Screen.Get_Monitor_At_Point (X, Y);
          Screen.Get_Monitor_Geometry (Monitor, Rect);
 
-         X := Gint'Value (Hist_X (Hist_X'First).all);
          X := Gint'Min (Gint'Max (X, Rect.X), Rect.X + Rect.Width - 10);
-
-         Y := Gint'Value (Hist_Y (Hist_Y'First).all);
          Y := Gint'Min (Gint'Max (Y, Rect.Y), Rect.Y + Rect.Height - 10);
 
          Position_Found := True;
