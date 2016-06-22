@@ -883,9 +883,7 @@ package body GVD.Breakpoints is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-   is
-      Filter : Action_Filter;
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
       Simple_Views.Register_Module (Kernel);
       Simple_Views.Register_Open_View_Action
@@ -893,16 +891,12 @@ package body GVD.Breakpoints is
          Action_Name => "open breakpoints editor",
          Description => -"Open the Breakpoints Editor for the debugger");
 
-      Filter := Create
-        (Module => Breakpoints_MDI_Views.Get_Module.Module_Name);
-
       Register_Action
         (Kernel,
          "debug delete breakpoint", new Remove_Breakpoint_Command,
          -("Delete the currently selected breakpoint"
            & " (from the Breakpoints view)"),
          Icon_Name => "gps-remove-symbolic",
-         Filter    => Filter,
          Category  => -"Debug");
 
       Register_Action
@@ -911,7 +905,6 @@ package body GVD.Breakpoints is
          -("View the source editor containing the selected breakpoint"
            & " (from the Breakpoints view)"),
          Icon_Name => "gps-edit-symbolic",
-         Filter    => Filter,
          Category  => -"Debug");
 
       Register_Action
@@ -921,7 +914,6 @@ package body GVD.Breakpoints is
            & " like its condition, repeat count,..."
            & " (from the Breakpoints view)"),
          Icon_Name => "gps-settings-symbolic",
-         Filter    => Filter,
          Category  => -"Debug");
 
       Register_Action
@@ -929,7 +921,6 @@ package body GVD.Breakpoints is
          "debug create breakpoint", new Add_Command,
          -"Create a new breakpoint, from the Breakpoints view",
          Icon_Name => "gps-add-symbolic",
-         Filter    => Filter,
          Category  => -"Debug");
    end Register_Module;
 
