@@ -389,7 +389,7 @@ def check_root_project():
 @interactive(name='gnatcheck root project recursive',
              category='Coding Standard')
 def check_root_project_recursive():
-    "Check coding standard fo the root project and its subprojects"
+    "Check coding standard for the root project and its subprojects"
     gnatcheckproc.check_project(GPS.Project.root(), True)
 
 
