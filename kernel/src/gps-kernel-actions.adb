@@ -562,7 +562,8 @@ package body GPS.Kernel.Actions is
    begin
       if Use_Markup then
          if Menus /= Null_Unbounded_String then
-            Menus := "<b>Menu:</b> " & Menus;
+            Menus := "<b>Menu:</b> " & To_Unbounded_String
+              (Escape_Text (To_String (Menus)));
          end if;
 
          return
