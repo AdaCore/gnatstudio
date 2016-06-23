@@ -5,7 +5,7 @@ project @_project_name_@ is
    for Main use ("@_main_name_@.adb");
    for Source_Dirs use ("src");
    for Object_Dir use "obj";
-   
+
    package Compiler is
       for Switches ("ada") use ("-g", "-gnatwa", "-gnatQ", "-gnat12");
    end Compiler;
@@ -18,6 +18,8 @@ project @_project_name_@ is
    for Target use "arm-eabi";
 
    package Ide is
+      for Connection_Tool use "openocd";
+      for Connection_Config_File use "board/stm32f4discovery.cfg";
       for Program_Host use "localhost:4242";
       for Communication_Protocol use "remote";
    end Ide;
@@ -27,4 +29,3 @@ project @_project_name_@ is
    end Emulator;
 
 end @_project_name_@;
-
