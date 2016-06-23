@@ -288,7 +288,7 @@ def create_target_from_workflow(target_name, workflow_name, workflow,
            icon_name, workflow_name, target_name)
 
     xml2 = """
-    <arg>%T</arg>
+    <arg>%TT</arg>
     <arg>")</arg>
 </command-line>
 </target>"""

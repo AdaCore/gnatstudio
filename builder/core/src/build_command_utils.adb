@@ -298,9 +298,7 @@ package body Build_Command_Utils is
       Index        : Natural := Result'Last;
       The_Project  : Project_Type;
       M            : String_List_Access;
-      P            : Project_Type;
       File         : Virtual_File;
-      Main_Found   : Boolean;
 
       --  The main units, when defined in an extended project, are
       --  always added for the extending project (since we always want
@@ -319,58 +317,51 @@ package body Build_Command_Utils is
 
       while Current (Iterator) /= No_Project loop
          The_Project := Current (Iterator);
+
          if The_Project.Extending_Project = No_Project then
 
-            P := The_Project;
-            Main_Found := False;
+            --  Retrieve the list of mains either from the project itself or
+            --  from the extended one, if any.
+            M := The_Project.Attribute_Value
+              (Attribute    => Main_Attribute,
+               Use_Extended => True);
 
-            Add_Mains_From_Extended :
+            if M /= null then
+               for Basename of M.all loop
+                  if Basename.all /= "" then
 
-            while P /= No_Project
-               --  Stop searching when we found a valid Main attribute, which
-               --  overrides the one from the extended projects.
-               and then not Main_Found
-            loop
-               M := P.Attribute_Value (Main_Attribute);
-               if M /= null then
-                  for Basename of M.all loop
-                     if Basename.all /= "" then
+                     --  Resolve to full path
 
-                        --  Resolve to full path
-
-                        if GNAT.Directory_Operations.File_Extension
-                           (Basename.all) = ""
-                        then
-                           --  The project files used to support the form
-                           --     for Main use ("basename");
-                           --  If this is the case here, add ".adb" to get the
-                           --  real name of  the source unit.
-                           File := Registry.Tree.Create
-                             (Filesystem_String (Basename.all & ".adb"),
-                              Use_Object_Path => False);
-                        else
-                           File := Registry.Tree.Create
-                              (Name    => Filesystem_String (Basename.all),
-                               Project => P,
-                               Use_Object_Path => False);
-                        end if;
-
-                        if File = GNATCOLL.VFS.No_File then
-                           File := Create_From_Base (+Basename.all);
-                        end if;
-
-                        Result (Index) :=
-                           (Project => The_Project, Main => File);
-                        Index := Index - 1;
-                        Main_Found := True;
-                        exit when Index < Result'First;
+                     if GNAT.Directory_Operations.File_Extension
+                       (Basename.all) = ""
+                     then
+                        --  The project files used to support the form
+                        --     for Main use ("basename");
+                        --  If this is the case here, add ".adb" to get the
+                        --  real name of  the source unit.
+                        File := Registry.Tree.Create
+                          (Filesystem_String (Basename.all & ".adb"),
+                           Use_Object_Path => False);
+                     else
+                        File := Registry.Tree.Create
+                          (Name            => Filesystem_String (Basename.all),
+                           Use_Object_Path => False);
                      end if;
-                  end loop;
-                  Free (M);
-               end if;
 
-               P := P.Extended_Project;
-            end loop Add_Mains_From_Extended;
+                     if File = GNATCOLL.VFS.No_File then
+                        File := Create_From_Base (+Basename.all);
+                     end if;
+
+                     Result (Index) :=
+                       (Project => The_Project, Main => File);
+                     Index := Index - 1;
+
+                     exit when Index < Result'First;
+                  end if;
+               end loop;
+
+               Free (M);
+            end if;
          end if;
 
          Next (Iterator);

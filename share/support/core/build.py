@@ -437,7 +437,7 @@ name="U_pdate file XRef in background">
        <arg>%eL</arg>
        <arg>-P%PP</arg>
        <arg>%X</arg>
-       <arg>%T</arg>
+       <arg>%TT</arg>
        <arg>-largs</arg>
        <arg>-Wl,--print-memory-usage</arg>
     </command-line>
