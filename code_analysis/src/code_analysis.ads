@@ -158,9 +158,9 @@ package Code_Analysis is
    type File;
    type Project;
 
-   type Subprogram_Access is access all Subprogram;
-   type File_Access       is access all File;
-   type Project_Access    is access all Project;
+   type Subprogram_Access is access all Subprogram'Class;
+   type File_Access       is access all File'Class;
+   type Project_Access    is access all Project'Class;
    type Node_Access       is access all Node'Class;
 
    function Less (V1, V2 : String) return Boolean;
@@ -327,15 +327,15 @@ private
      Ada.Unchecked_Deallocation (String, String_Access);
 
    procedure Unchecked_Free is new
-     Ada.Unchecked_Deallocation (Subprogram, Subprogram_Access);
+     Ada.Unchecked_Deallocation (Subprogram'Class, Subprogram_Access);
 
    procedure Unchecked_Free is new
-     Ada.Unchecked_Deallocation (File, File_Access);
+     Ada.Unchecked_Deallocation (File'Class, File_Access);
 
    procedure Unchecked_Free is new
      Ada.Unchecked_Deallocation (Line_Array, Line_Array_Access);
 
    procedure Unchecked_Free is new
-     Ada.Unchecked_Deallocation (Project, Project_Access);
+     Ada.Unchecked_Deallocation (Project'Class, Project_Access);
 
 end Code_Analysis;

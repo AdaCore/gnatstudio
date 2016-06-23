@@ -15,37 +15,41 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNATCOLL.Python;           use GNATCOLL.Python;
-with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
-with GNATCOLL.Scripts.Python;   use GNATCOLL.Scripts.Python;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNAT.Strings;              use GNAT.Strings;
+with Ada.Exceptions;             use Ada.Exceptions;
+with Ada.Characters.Handling;    use Ada.Characters.Handling;
+with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with GNATCOLL.Python;            use GNATCOLL.Python;
+with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Python;    use GNATCOLL.Scripts.Python;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNAT.Strings;               use GNAT.Strings;
 
-with XML_Utils;                 use XML_Utils;
+with XML_Utils;                  use XML_Utils;
 
-with Pango.Font;                use Pango.Font;
-with Glib.Object;               use Glib.Object;
-with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
-with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
-with Gtk.Widget;                use Gtk.Widget;
+with Pango.Font;                 use Pango.Font;
+with Glib.Object;                use Glib.Object;
+with Gdk.RGBA;                   use Gdk.RGBA;
+with Gtk.Check_Menu_Item;        use Gtk.Check_Menu_Item;
+with Gtk.Color_Selection_Dialog; use Gtk.Color_Selection_Dialog;
+with Gtk.Dialog;                 use Gtk.Dialog;
+with Gtk.Menu_Item;              use Gtk.Menu_Item;
+with Gtk.Tree_Model;             use Gtk.Tree_Model;
+with Gtk.Tree_View_Column;       use Gtk.Tree_View_Column;
+with Gtk.Widget;                 use Gtk.Widget;
 
 with Config;
 with Defaults;
-with Default_Preferences.Enums; use Default_Preferences.Enums;
-with Default_Preferences.GUI;   use Default_Preferences.GUI;
-with Dialog_Utils;              use Dialog_Utils;
-with GPS.Customizable_Modules;  use GPS.Customizable_Modules;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel.Charsets;       use GPS.Kernel.Charsets;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with Language;                  use Language;
+with Default_Preferences.Enums;  use Default_Preferences.Enums;
+with Default_Preferences.GUI;    use Default_Preferences.GUI;
+with Dialog_Utils;               use Dialog_Utils;
+with GPS.Customizable_Modules;   use GPS.Customizable_Modules;
+with GPS.Intl;                   use GPS.Intl;
+with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
+with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
+with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with Language;                   use Language;
 
 package body GPS.Kernel.Preferences is
    Me : constant Trace_Handle := Create ("GPS_KERNEL");
@@ -1890,5 +1894,68 @@ package body GPS.Kernel.Preferences is
       P.Check := C;
       Preferences_Changed_Hook.Add (P, Watch => C);
    end Append_Menu;
+
+   --------------------------
+   -- Color_Menu_Item_Pref --
+   --------------------------
+
+   type Color_Menu_Item_Pref_Record is new Gtk_Menu_Item_Record with
+      record
+         Kernel : access Kernel_Handle_Record'Class;
+         Pref   : Color_Preference;
+      end record;
+   type Color_Menu_Item_Pref is access all Color_Menu_Item_Pref_Record'Class;
+
+   procedure On_Color_Menu_Item_Activated
+     (Item : access Gtk_Menu_Item_Record'Class);
+
+   -----------------
+   -- Append_Menu --
+   -----------------
+
+   procedure Append_Menu
+     (Menu    : not null access Gtk_Menu_Record'Class;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Pref    : Color_Preference)
+   is
+      C   : constant Color_Menu_Item_Pref := new Color_Menu_Item_Pref_Record;
+      Doc : constant String := Pref.Get_Doc;
+   begin
+      Initialize_With_Label (C, Pref.Get_Label);
+      C.Kernel := Kernel;
+      C.Pref   := Pref;
+
+      Menu.Add (C);
+
+      if Doc /= "" then
+         C.Set_Tooltip_Text (Doc);
+      end if;
+
+      C.On_Activate (On_Color_Menu_Item_Activated'Access);
+   end Append_Menu;
+
+   ----------------------------------
+   -- On_Color_Menu_Item_Activated --
+   ----------------------------------
+
+   procedure On_Color_Menu_Item_Activated
+     (Item : access Gtk_Menu_Item_Record'Class)
+   is
+      It     : constant Color_Menu_Item_Pref := Color_Menu_Item_Pref (Item);
+      Dialog : Gtk_Color_Selection_Dialog;
+      Color  : Gdk_RGBA;
+   begin
+      Dialog := Gtk_Color_Selection_Dialog_New (It.Pref.Get_Label);
+      Dialog.Get_Color_Selection.Set_Current_Rgba (It.Pref.Get_Pref);
+
+      if Dialog.Run = Gtk_Response_OK then
+         Dialog.Get_Color_Selection.Get_Current_Rgba (Color);
+         if Color /= It.Pref.Get_Pref then
+            Set_Pref (It.Pref, It.Kernel.Get_Preferences, To_String (Color));
+         end if;
+      end if;
+
+      Dialog.Destroy;
+   end On_Color_Menu_Item_Activated;
 
 end GPS.Kernel.Preferences;

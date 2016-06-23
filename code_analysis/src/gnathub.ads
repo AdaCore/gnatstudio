@@ -21,6 +21,10 @@ with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 
+with Code_Analysis;                  use Code_Analysis;
+with GPS.Kernel.Messages.References; use GPS.Kernel.Messages.References;
+with Default_Preferences;            use Default_Preferences;
+
 package GNAThub is
 
    type Tool_Record;
@@ -33,6 +37,7 @@ package GNAThub is
    type Severity_Record is limited record
       Name       : Ada.Strings.Unbounded.Unbounded_String;
       On_Sidebar : Boolean;
+      Color      : Color_Preference;
    end record;
 
    type Severity_Access is access all Severity_Record;
@@ -45,11 +50,12 @@ package GNAThub is
    package Severity_Natural_Maps is
      new Ada.Containers.Hashed_Maps (Severity_Access, Natural, Hash, "=");
 
-   function Less (L, R : GNAThub.Severity_Access) return Boolean is
-     (Ada.Strings.Unbounded."<" (L.Name, R.Name));
+   function Less (L, R : GNAThub.Severity_Access) return Boolean;
 
    package Severities_Ordered_Sets is new Ada.Containers.Ordered_Sets
      (GNAThub.Severity_Access, Less, "=");
+
+   Severity_History_Prefix : constant String := "gnathub-severities";
 
    ----------
    -- Rule --
@@ -86,5 +92,47 @@ package GNAThub is
 
    package Tools_Ordered_Sets is new Ada.Containers.Ordered_Sets
      (GNAThub.Tool_Access, Less, "=");
+
+   --------------
+   -- Analisis --
+   --------------
+
+   package Messages_Vectors is
+     new Ada.Containers.Vectors (Positive, Message_Reference);
+
+   type Counts_Array is array (Positive range <>) of Integer;
+   type Counts_Array_Access is access all Counts_Array;
+
+   ----------------------
+   --  GNAThub_Project --
+   ----------------------
+
+   type GNAThub_Project (Counts_Size : Natural) is
+     new Code_Analysis.Project with record
+      Counts : Counts_Array (1 .. Counts_Size);
+   end record;
+   type GNAThub_Project_Access is access all GNAThub_Project;
+
+   -------------------
+   --  GNAThub_File --
+   -------------------
+
+   type GNAThub_File (Counts_Size : Natural) is
+     new Code_Analysis.File with record
+      Counts   : Counts_Array (1 .. Counts_Size);
+      Messages : Messages_Vectors.Vector;
+   end record;
+   type GNAThub_File_Access is access all GNAThub_File;
+
+   ------------------------
+   -- GNAThub_Subprogram --
+   ------------------------
+
+   type GNAThub_Subprogram (Counts_Size : Natural) is
+     new Code_Analysis.Subprogram with record
+      Counts   : Counts_Array (1 .. Counts_Size);
+      Messages : Messages_Vectors.Vector;
+   end record;
+   type GNAThub_Subprogram_Access is access all GNAThub_Subprogram;
 
 end GNAThub;

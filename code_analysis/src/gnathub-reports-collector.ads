@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                       Copyright (C) 2016, AdaCore                        --
+--                     Copyright (C) 2011-2016, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -14,34 +14,38 @@
 -- COPYING3.  If not, go to http://www.gnu.org/licenses for a complete copy --
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
---  Filter to be used by messages container to manage visibility of GNAThub
---  messages.
 
-with GPS.Kernel.Messages;
+--  Collector for all GNAThub's reports which organizes all reports
+--  as a tabs in one notebook
 
-package GNAThub.Filters is
+with Gtk.Box;
+with GPS.Kernel;
+with GNAThub.Reports.Messages;
 
-   type Message_Filter is
-     new GPS.Kernel.Messages.Abstract_Message_Filter with private;
+package GNAThub.Reports.Collector is
 
-   procedure Fill
-     (Self       : in out Message_Filter;
-      Tools      : Tools_Ordered_Sets.Set;
-      Severities : Severities_Ordered_Sets.Set;
-      Rules      : Rule_Sets.Set);
+   type GNAThub_Report_Collector is new Gtk.Box.Gtk_Vbox_Record with private;
 
-   overriding function Apply
-     (Self    : in out Message_Filter;
-      Message : GPS.Kernel.Messages.Abstract_Message'Class)
-      return GPS.Kernel.Messages.Filter_Result;
+   type Report is access all GNAThub_Report_Collector'Class;
+
+   procedure Gtk_New
+     (Widget     : out Report;
+      Kernel     : GPS.Kernel.Kernel_Handle;
+      Tree       : Code_Analysis.Code_Analysis_Tree;
+      Severities : GNAThub.Severities_Ordered_Sets.Set);
+
+   procedure Initialize
+     (Self       : not null access GNAThub_Report_Collector'Class;
+      Kernel     : GPS.Kernel.Kernel_Handle;
+      Tree       : Code_Analysis.Code_Analysis_Tree;
+      Severities : GNAThub.Severities_Ordered_Sets.Set);
+
+   procedure Update (Self : not null access GNAThub_Report_Collector'Class);
 
 private
 
-   type Message_Filter is
-     new GPS.Kernel.Messages.Abstract_Message_Filter with record
-      Tools      : Tools_Ordered_Sets.Set;
-      Severities : Severities_Ordered_Sets.Set;
-      Rules      : Rule_Sets.Set;
+   type GNAThub_Report_Collector is new Gtk.Box.Gtk_Vbox_Record with record
+      Messages_Report : GNAThub.Reports.Messages.Messages_Report;
    end record;
 
-end GNAThub.Filters;
+end GNAThub.Reports.Collector;

@@ -53,9 +53,6 @@ package body GNAThub.Generic_Criteria_Editors is
       Self   : Criteria_Editor);
    --  Called on changes in the underlying model
 
-   procedure On_Destroy (Self : access Criteria_Editor_Record'Class);
-   --  Called on widget destroy
-
    procedure Update_Toggle_State
      (Self : not null access Criteria_Editor_Record'Class);
    --  Updates state of 'select/unselect all' toggle
@@ -205,12 +202,6 @@ package body GNAThub.Generic_Criteria_Editors is
          Parameters    => Signal_Parameters);
       Glib.Object.G_New (Self, Class_Record);
 
-      Message_Categories_Criteria_Editor_Callbacks.Connect
-        (Self,
-         Gtk.Widget.Signal_Destroy,
-         Message_Categories_Criteria_Editor_Callbacks.To_Marshaller
-           (On_Destroy'Access));
-
       Self.Set_Policy (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
 
       Criteria_Models.Gtk_New
@@ -304,15 +295,6 @@ package body GNAThub.Generic_Criteria_Editors is
    begin
       return Self.Model.Item_At (Self.Model.Get_Iter (Path));
    end Item_By_Path;
-
-   ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy (Self : access Criteria_Editor_Record'Class) is
-   begin
-      Self.Model.Clear;
-   end On_Destroy;
 
    --------------------------
    -- On_Model_Row_Changed --

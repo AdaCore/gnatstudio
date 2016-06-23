@@ -132,6 +132,12 @@ package GPS.Kernel.Preferences is
    --  Append a new entry in the menu showing the preference.
    --  This entry stays synchronizes with the preference at all time.
 
+   procedure Append_Menu
+     (Menu    : not null access Gtk_Menu_Record'Class;
+      Kernel  : not null access Kernel_Handle_Record'Class;
+      Pref    : Color_Preference);
+   --  Some as above but for color preference.
+
    -----------------------
    -- List of constants --
    -----------------------

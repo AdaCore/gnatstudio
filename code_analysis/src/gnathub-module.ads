@@ -17,8 +17,10 @@
 --  Main entry point for GNAThub module
 
 with GPS.Kernel.Modules;
+with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 
 with GNAThub.Filters;
+with GNAThub.Reports.Collector;
 limited with GNAThub.Loader;
 
 package GNAThub.Module is
@@ -27,13 +29,22 @@ package GNAThub.Module is
 
    type Loader_Access is access all GNAThub.Loader.Loader'Class;
 
+   type GNAThub_Child_Record is new GPS_MDI_Child_Record with null record;
+   type GNAThub_Child is access all GNAThub_Child_Record'Class;
+
    type GNAThub_Module_Id_Record is
      new GPS.Kernel.Modules.Module_ID_Record with record
-      Tools      : Tools_Ordered_Sets.Set;
-      Severities : Severities_Ordered_Sets.Set;
-      Rules      : Rule_Sets.Set;
-      Filter     : Filter_Access;
-      Loader     : Loader_Access;
+      Kernel        : GPS.Kernel.Kernel_Handle;
+      Tools         : Tools_Ordered_Sets.Set;
+      Severities    : Severities_Ordered_Sets.Set;
+      Severities_Id : Severity_Natural_Maps.Map;
+      Rules         : Rule_Sets.Set;
+      Filter        : Filter_Access;
+      Loader        : Loader_Access;
+
+      Tree          : Code_Analysis.Code_Analysis_Tree;
+      Collector     : GNAThub.Reports.Collector.Report;
+      Report        : GNAThub_Child;
    end record;
 
    type GNAThub_Module_Id is access all GNAThub_Module_Id_Record'Class;
@@ -47,6 +58,12 @@ package GNAThub.Module is
 
    procedure Message_Loaded (Self : in out GNAThub_Module_Id_Record'Class);
    --  Call when a new message loaded
+
+   procedure Display_Report (Self : in out GNAThub_Module_Id_Record'Class);
+   --  Call when all messages loaded to display report
+
+   procedure Update_Report (Self : in out GNAThub_Module_Id_Record'Class);
+   --  Called when preferences or filter criterias for report have been changed
 
    function New_Severity
      (Self       : in out GNAThub_Module_Id_Record'Class;

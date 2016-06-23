@@ -16,12 +16,12 @@
 ------------------------------------------------------------------------------
 --  This package contains loader code to load data from the database.
 
-private with Ada.Containers.Ordered_Maps;
+with GNATCOLL.VFS;
+with GNAThub.Module;
 
 private with GPS.Scripts.Commands;
-with GNATCOLL.VFS;
-
-with GNAThub.Module;
+private with GNATCOLL.Projects;
+private with Ada.Containers.Ordered_Maps;
 
 package GNAThub.Loader is
 
@@ -57,15 +57,17 @@ private
    type Loader
      (Module : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class)
    is tagged limited record
-      Severities : Severity_Maps.Map;
-      Rules      : Rule_Maps.Map;
+      Severities   : Severity_Maps.Map;
+      Rules        : Rule_Maps.Map;
       --  Database's id to object mappings.
 
-      Resources  : Resource_Maps.Map;
-      Current    : Resource_Maps.Cursor;
+      Resources    : Resource_Maps.Map;
+      Current      : Resource_Maps.Cursor;
 
-      Command    : GPS.Scripts.Commands.Scheduled_Command_Access;
+      Command      : GPS.Scripts.Commands.Scheduled_Command_Access;
       --  Command that is used to load data from database
+
+      Source_Files : GNATCOLL.Projects.File_And_Project_Array_Access;
    end record;
 
 end GNAThub.Loader;

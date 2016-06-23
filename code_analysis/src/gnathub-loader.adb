@@ -17,16 +17,21 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
+with GNAT.Strings;
 
 with GNATCOLL.SQL.Sessions;
+with GNATCOLL.Symbols;
 with GNATCOLL.SQL.Sqlite;
 
 with Basic_Types;
 with Commands;
+
+with GPS.Kernel.Project;
 with GPS.Kernel.Task_Manager;
 
 with GNAThub.Messages;
 with Orm;
+with Language.Abstract_Language_Tree;
 
 package body GNAThub.Loader is
 
@@ -83,6 +88,7 @@ package body GNAThub.Loader is
 
       Self.Severities.Clear;
       Self.Rules.Clear;
+      GNATCOLL.Projects.Free (Self.Source_Files);
 
       GNATCOLL.SQL.Sessions.Free;
    end Cleanup;
@@ -106,6 +112,8 @@ package body GNAThub.Loader is
          return Commands.Execute_Again;
 
       else
+         GNATCOLL.Projects.Free (Self.Loader.Source_Files);
+         Self.Loader.Module.Display_Report;
          Self.Loader.Command := null;
          Self.Loader.Cleanup;
 
@@ -144,6 +152,7 @@ package body GNAThub.Loader is
       --  necessary accessibility level, otherwise acccessibility check will
       --  fail inside Launch_Background_Command subprogram.
 
+      Id : Natural := 1;
    begin
       Self.Cleanup;
 
@@ -156,6 +165,15 @@ package body GNAThub.Loader is
       Self.Load_Resources;
 
       if not Self.Resources.Is_Empty then
+         Self.Source_Files := GNATCOLL.Projects.Source_Files
+           (GPS.Kernel.Project.Get_Project
+              (Self.Module.Get_Kernel), True, True);
+
+         for Item of Self.Module.Severities loop
+            Self.Module.Severities_Id.Include (Item, Id);
+            Id := Id + 1;
+         end loop;
+
          Aux := new Loader_Command (Self'Unchecked_Access);
          Self.Current := Self.Resources.First;
          Self.Command :=
@@ -179,20 +197,184 @@ package body GNAThub.Loader is
       Resource_Id   : Natural;
       Resource_Name : String)
    is
-      File     : constant GNATCOLL.VFS.Virtual_File :=
-                   GNATCOLL.VFS.Create_From_UTF8 (Resource_Name);
-      Session  : constant GNATCOLL.SQL.Sessions.Session_Type :=
-                   GNATCOLL.SQL.Sessions.Get_New_Session;
-      List     : Orm.Resource_Message_List :=
-                   Orm.All_Resources_Messages.Filter
-                     (Resource_Id => Resource_Id).Get (Session);
-      R        : Orm.Resource_Message;
-      M        : Orm.Message;
-      Message  : GNAThub.Messages.Message_Access;
-      Rule     : GNAThub.Rule_Access;
-      Severity : GNAThub.Severity_Access;
-      Position : GNAThub.Severity_Natural_Maps.Cursor;
+      use GNATCOLL.Projects;
+      use type GNATCOLL.VFS.Virtual_File;
 
+      File            : constant GNATCOLL.VFS.Virtual_File :=
+                         GNATCOLL.VFS.Create_From_UTF8 (Resource_Name);
+      Session         : constant GNATCOLL.SQL.Sessions.Session_Type :=
+                         GNATCOLL.SQL.Sessions.Get_New_Session;
+      List            : Orm.Resource_Message_List :=
+                         Orm.All_Resources_Messages.Filter
+                           (Resource_Id => Resource_Id).Get (Session);
+      R               : Orm.Resource_Message;
+      M               : Orm.Message;
+      Message         : GNAThub.Messages.Message_Access;
+      Visible         : Boolean;
+      Rule            : GNAThub.Rule_Access;
+      Severity        : GNAThub.Severity_Access;
+      Severity_Id     : Positive;
+      Position        : GNAThub.Severity_Natural_Maps.Cursor;
+
+      Project         : GNATCOLL.Projects.Project_Type;
+      Tree_Project    : GNAThub_Project_Access;
+      Tree_File       : GNAThub_File_Access;
+      Tree_Subprogram : GNAThub_Subprogram_Access;
+
+      function Insert
+        (Project : GNATCOLL.Projects.Project_Type)
+        return GNAThub_Project_Access;
+
+      function Insert
+        (Project : GNAThub_Project_Access;
+         File    : GNATCOLL.VFS.Virtual_File)
+         return GNAThub_File_Access;
+
+      function Find_Subprogram return GNAThub_Subprogram_Access;
+
+      ---------------------
+      -- Find_Subprogram --
+      ---------------------
+
+      function Find_Subprogram return GNAThub_Subprogram_Access
+      is
+         use Language.Abstract_Language_Tree;
+         use GNAT.Strings;
+         use type Basic_Types.Visible_Column_Type;
+
+         Tree   : constant Semantic_Tree'Class :=
+           Self.Module.Get_Kernel.Get_Abstract_Tree_For_File (File);
+         Result : GNAThub_Subprogram_Access := null;
+      begin
+         if Tree = No_Semantic_Tree then
+            return Result;
+         end if;
+
+         declare
+            Iter : Semantic_Tree_Iterator'Class := Root_Iterator (Tree);
+         begin
+            while Has_Element (Iter) loop
+               declare
+                  Node : Semantic_Node'Class := Element (Iter);
+               begin
+                  if Node.Is_Valid
+                    and then Node.Sloc_Start.Line <= R.Line
+                    and then Node.Sloc_Start.Column <=
+                      Basic_Types.Visible_Column_Type (R.Column)
+                    and then Node.Sloc_End.Line >= R.Line
+                    and then Node.Sloc_End.Column >=
+                      Basic_Types.Visible_Column_Type (R.Column)
+                    and then
+                      (Result = null
+                       or else
+                         (Result.Line < Node.Sloc_Start.Line
+                          or else Result.Column < Natural
+                            (Node.Sloc_Start.Column)))
+                  then
+                     if Result = null then
+                        Result := new GNAThub_Subprogram'
+                          (Analysis_Data => (null, null),
+                           Name          => null,
+                           Counts_Size   => Natural
+                             (Self.Module.Severities.Length) + 1,
+                           Counts        => (others => 0),
+                           Messages      =>
+                             Messages_Vectors.Empty_Vector,
+                           others => 0);
+                     end if;
+
+                     if Result.Name /= null then
+                        Free (Result.Name);
+                     end if;
+
+                     Result.Name := new String'
+                       (GNATCOLL.Symbols.Get (Node.Name).all);
+                     Result.Line   := Node.Sloc_Start.Line;
+                     Result.Column := Natural (Node.Sloc_Start.Column);
+                  end if;
+               end;
+               Next (Iter);
+            end loop;
+         end;
+
+         return Result;
+      end Find_Subprogram;
+
+      ------------
+      -- Insert --
+      ------------
+
+      function Insert
+        (Project : GNATCOLL.Projects.Project_Type)
+         return GNAThub_Project_Access
+      is
+         use Code_Analysis.Project_Maps;
+
+         Cursor : Code_Analysis.Project_Maps.Cursor;
+         Result : GNAThub_Project_Access;
+      begin
+         Cursor := Self.Module.Tree.Find (Project);
+         if Has_Element (Cursor) then
+            Result := GNAThub_Project_Access (Element (Cursor));
+         else
+            Result := new GNAThub_Project'
+              (Analysis_Data => (null, null),
+               Name          => Project,
+               Files         => Code_Analysis.File_Maps.Empty_Map,
+               Counts_Size   => Natural (Self.Module.Severities.Length) + 1,
+               Counts        => (others => 0));
+            Self.Module.Tree.Include
+              (Project, Code_Analysis.Project_Access (Result));
+         end if;
+
+         if Visible then
+            Result.Counts (Severity_Id) := Result.Counts (Severity_Id) + 1;
+            Result.Counts (Result.Counts'Last) :=
+              Result.Counts (Result.Counts'Last) + 1;
+         end if;
+
+         return Result;
+      end Insert;
+
+      ------------
+      -- Insert --
+      ------------
+
+      function Insert
+        (Project : GNAThub_Project_Access;
+         File    : GNATCOLL.VFS.Virtual_File)
+         return GNAThub_File_Access
+      is
+         use Code_Analysis.File_Maps;
+
+         Cursor : Code_Analysis.File_Maps.Cursor;
+         Result : GNAThub_File_Access;
+      begin
+         Cursor := Project.Files.Find (File);
+         if Has_Element (Cursor) then
+            Result := GNAThub_File_Access (Element (Cursor));
+         else
+            Result := new GNAThub_File'
+              (Analysis_Data => (null, null),
+               Name          => File,
+               Subprograms   => Code_Analysis.Subprogram_Maps.Empty_Map,
+               Lines         => null,
+               Counts_Size   => Natural (Self.Module.Severities.Length) + 1,
+               Counts        => (others => 0),
+               Messages      => Messages_Vectors.Empty_Vector);
+            Project.Files.Include (File, Code_Analysis.File_Access (Result));
+         end if;
+
+         if Visible then
+            Result.Counts (Severity_Id) := Result.Counts (Severity_Id) + 1;
+            Result.Counts (Result.Counts'Last) :=
+              Result.Counts (Result.Counts'Last) + 1;
+         end if;
+
+         return Result;
+      end Insert;
+
+      Filter_Result : GPS.Kernel.Messages.Filter_Result;
    begin
       while List.Has_Row loop
          R := List.Element;
@@ -225,6 +407,71 @@ package body GNAThub.Loader is
                File      => File,
                Line      => R.Line,
                Column    => Basic_Types.Visible_Column_Type (R.Col_Begin));
+
+            --  Update module's tree
+
+            Severity_Id := Self.Module.Severities_Id.Element (Severity);
+
+            Filter_Result := Self.Module.Filter.Apply (Message.all);
+            Visible := not Filter_Result.Non_Applicable
+              and then Filter_Result.Flags (GPS.Kernel.Messages.Locations);
+
+            for Index in Self.Source_Files'Range loop
+               if Self.Source_Files (Index).File = File then
+                  Project := Self.Source_Files (Index).Project;
+                  exit;
+               end if;
+            end loop;
+
+            Tree_Project := Insert (Project);
+            Tree_File    := Insert (Tree_Project, File);
+
+            if Project /= No_Project then
+               Tree_Subprogram := Find_Subprogram;
+            else
+               Tree_Subprogram := null;
+            end if;
+
+            if Tree_Subprogram /= null then
+               declare
+                  use Subprogram_Maps;
+                  Cursor : constant Subprogram_Maps.Cursor :=
+                    Tree_File.Subprograms.Find
+                      (Tree_Subprogram.Name.all);
+
+                  procedure Unchecked_Free is new
+                    Ada.Unchecked_Deallocation
+                      (GNAThub_Subprogram, GNAThub_Subprogram_Access);
+
+               begin
+                  if Has_Element (Cursor) then
+                     GNAT.Strings.Free (Tree_Subprogram.Name);
+                     Unchecked_Free (Tree_Subprogram);
+                     Tree_Subprogram := GNAThub_Subprogram_Access
+                       (Subprogram_Maps.Element (Cursor));
+                  else
+                     Tree_File.Subprograms.Include
+                       (Tree_Subprogram.Name.all,
+                        Subprogram_Access (Tree_Subprogram));
+                  end if;
+               end;
+
+               Tree_Subprogram.Messages.Append
+                 (GPS.Kernel.Messages.References.Create
+                    (GPS.Kernel.Messages.Message_Access (Message)));
+
+               if Visible then
+                  Tree_Subprogram.Counts (Severity_Id) :=
+                    Tree_Subprogram.Counts (Severity_Id) + 1;
+                  Tree_Subprogram.Counts (Tree_Subprogram.Counts'Last) :=
+                    Tree_Subprogram.Counts (Tree_Subprogram.Counts'Last) + 1;
+               end if;
+
+            else
+               Tree_File.Messages.Append
+                 (GPS.Kernel.Messages.References.Create
+                    (GPS.Kernel.Messages.Message_Access (Message)));
+            end if;
          end if;
 
          List.Next;

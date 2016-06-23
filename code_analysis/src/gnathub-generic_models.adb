@@ -172,7 +172,7 @@ package body GNAThub.Generic_Models is
         Histories.History_Key
           (Ada.Strings.Unbounded.To_String (Self.History_Prefix)
              & '-'
-             & Get_History_Name (Item.all, Self.View));
+             & Get_History_Name (Item.all, Self.View) & "-active");
    end History_Key;
 
    ----------------
@@ -250,7 +250,8 @@ package body GNAThub.Generic_Models is
    begin
       Self.Selected_Items.Include (Item);
       Histories.Set_History
-        (Self.Kernel.Get_History.all, Self.History_Key (Item), True);
+        (Self.Kernel.Get_History.all,
+         Self.History_Key (Item), True);
 
       Self.Row_Changed (Item);
    end Show;

@@ -17,23 +17,29 @@
 
 with Commands.Interactive;
 
-with Glib;                             use Glib;
+with Glib;                              use Glib;
 with Glib.Values;
+
 with Gtk.Box;
 with Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Flow_Box;
+with Gtk.Menu;
 with Gtk.Tree_Model;
 with Gtk.Widget;
-with Gtkada.MDI;
-with Generic_Views;
 
+with Gtkada.MDI;
+
+with Generic_Views;
 with GNAThub.Generic_Criteria_Editors;
+with GNAThub.Messages;
 with GNAThub.Module;                   use GNAThub.Module;
 
 with GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
 with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;
 
 package body GNAThub.Filters_Views is
 
@@ -160,6 +166,10 @@ package body GNAThub.Filters_Views is
       return Gtk.Widget.Gtk_Widget;
    --  Create a new explorer, and return the focus widget.
 
+   overriding procedure Create_Menu
+     (View : not null access Filters_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class);
+
    type Filters_Child_Record is
      new GPS.Kernel.MDI.GPS_MDI_Child_Record with null record;
 
@@ -169,6 +179,7 @@ package body GNAThub.Filters_Views is
       Formal_View_Record => Filters_View_Record,
       Formal_MDI_Child   => Filters_Child_Record,
       Reuse_If_Exist     => True,
+      Local_Config       => True,
       Areas              => Gtkada.MDI.Sides_Only,
       Position           => Gtkada.MDI.Position_Left,
       Initialize         => Initialize);
@@ -176,6 +187,16 @@ package body GNAThub.Filters_Views is
 
    procedure Apply_Filters (View : access Filters_View_Record'Class);
    --  Apply selected rules/severities/tools
+
+   -- Commands --
+
+   type On_Before_Exit is
+     new GPS.Kernel.Hooks.Return_Boolean_Hooks_Function with null record;
+   overriding function Execute
+     (Self   : On_Before_Exit;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Boolean;
+   --  Called before GPS exits. Switchs perspective to default.
 
    -- Internal Routines --
 
@@ -235,14 +256,85 @@ package body GNAThub.Filters_Views is
    -- Apply_Filters --
    -------------------
 
-   procedure Apply_Filters (View : access Filters_View_Record'Class) is
+   procedure Apply_Filters (View : access Filters_View_Record'Class)
+   is
+
+      procedure Add (From : Counts_Array; To : in out Counts_Array);
+
+      procedure Calculate
+        (Messages : Messages_Vectors.Vector;
+         Counts   : in out Counts_Array);
+
+      ---------
+      -- Add --
+      ---------
+
+      procedure Add (From : Counts_Array; To : in out Counts_Array) is
+      begin
+         for Index in From'Range loop
+            To (Index) := To (Index) + From (Index);
+         end loop;
+      end Add;
+
+      ---------------
+      -- Calculate --
+      ---------------
+
+      procedure Calculate
+        (Messages : Messages_Vectors.Vector;
+         Counts   : in out Counts_Array)
+      is
+         use type GNAThub.Messages.Message_Access;
+
+         Severity_Id   : Positive;
+         Message       : GNAThub.Messages.Message_Access;
+         Filter_Result : GPS.Kernel.Messages.Filter_Result;
+      begin
+         for Item of Messages loop
+            Message := GNAThub.Messages.Message_Access (Item.Message);
+            if Message /= null then
+               Filter_Result := GNAThub_Module.Filter.Apply (Message.all);
+               if not Filter_Result.Non_Applicable
+                 and then Filter_Result.Flags (GPS.Kernel.Messages.Locations)
+               then
+                  Severity_Id := GNAThub_Module.Severities_Id.Element
+                    (Message.Get_Severity);
+                  Counts (Severity_Id) := Counts (Severity_Id) + 1;
+                  Counts (Counts'Last) := Counts (Counts'Last) + 1;
+               end if;
+            end if;
+         end loop;
+      end Calculate;
+
    begin
       GNAThub_Module.Filter.Fill
         (View.Tools_Editor.Get_Visible_Items,
          View.Severities_Editor.Get_Visible_Items,
          View.Rules_Editor.Get_Visible_Items);
 
-      GNAThub_Module.Filter.Criteria_Changed;
+      --  Update tree counts
+
+      for Project of GNAThub_Module.Tree.all loop
+         GNAThub_Project_Access (Project).Counts := (others => 0);
+
+         for File of GNAThub_Project_Access (Project).Files loop
+            GNAThub_File_Access (File).Counts := (others => 0);
+
+            for Subprogram of GNAThub_File_Access (File).Subprograms loop
+               GNAThub_Subprogram_Access (Subprogram).Counts := (others => 0);
+               Calculate (GNAThub_Subprogram_Access (Subprogram).Messages,
+                          GNAThub_Subprogram_Access (Subprogram).Counts);
+               Add (GNAThub_Subprogram_Access (Subprogram).Counts,
+                    GNAThub_File_Access (File).Counts);
+            end loop;
+            Calculate (GNAThub_File_Access (File).Messages,
+                       GNAThub_File_Access (File).Counts);
+            Add (GNAThub_File_Access (File).Counts,
+                 GNAThub_Project_Access (Project).Counts);
+         end loop;
+      end loop;
+
+      GNAThub_Module.Update_Report;
 
       View.On_Update := False;
    end Apply_Filters;
@@ -278,6 +370,22 @@ package body GNAThub.Filters_Views is
          return 0;
       end if;
    end Count;
+
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View : not null access Filters_View_Record;
+      Menu : not null access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (View);
+   begin
+      for Severety of GNAThub_Module.Severities loop
+         GPS.Kernel.Preferences.Append_Menu
+           (Menu, GNAThub_Module.Kernel, Severety.Color);
+      end loop;
+   end Create_Menu;
 
    -------------
    -- Execute --
@@ -324,6 +432,21 @@ package body GNAThub.Filters_Views is
       else
          return Commands.Failure;
       end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self   : On_Before_Exit;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Self);
+   begin
+      Views.Close (Kernel);
+      return True;
    end Execute;
 
    --------------------
@@ -491,7 +614,7 @@ package body GNAThub.Filters_Views is
          Kernel         => Self.Kernel,
          View           => Gtk.Widget.Gtk_Widget (Self),
          Title          => "Severities",
-         History_Prefix => "gnathub-severities",
+         History_Prefix => Severity_History_Prefix,
          Items          => GNAThub_Module.Severities,
          Default        => True);
       Self.Severities_Editor.Set_Name ("gnathub severities editor");
@@ -529,6 +652,9 @@ package body GNAThub.Filters_Views is
          Self);
 
       Apply_Filters (Views.View_Access (Self));
+
+      GPS.Kernel.Hooks.Before_Exit_Action_Hook.Add
+        (new On_Before_Exit, Watch => Gtk.Widget.Gtk_Widget (Self.Flow_Box));
 
       return Gtk.Widget.Gtk_Widget (Self.Flow_Box);
    end Initialize;

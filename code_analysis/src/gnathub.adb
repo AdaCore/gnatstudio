@@ -39,4 +39,38 @@ package body GNAThub is
       return Left.Name < Right.Name;
    end Less;
 
+   ----------
+   -- Less --
+   ----------
+
+   function Less (L, R : GNAThub.Severity_Access) return Boolean is
+      Index_L, Index_R : Natural;
+   begin
+      Index_L := Ada.Strings.Unbounded.Index (L.Name, "_");
+      if Index_L < 1 then
+         return (Ada.Strings.Unbounded."<" (L.Name, R.Name));
+      end if;
+
+      Index_R := Ada.Strings.Unbounded.Index (R.Name, "_");
+      if Index_R < 1 then
+         return (Ada.Strings.Unbounded."<" (L.Name, R.Name));
+      end if;
+
+      if Ada.Strings.Unbounded.Slice (L.Name, 1, Index_L) =
+        Ada.Strings.Unbounded.Slice (R.Name, 1, Index_R)
+      then
+         return (Ada.Strings.Unbounded."<" (L.Name, R.Name));
+      end if;
+
+      if Ada.Strings.Unbounded.Slice (L.Name, 1, Index_L) = "HIGH_" then
+         return True;
+      elsif Ada.Strings.Unbounded.Slice (R.Name, 1, Index_R) = "HIGH_" then
+         return False;
+      elsif Ada.Strings.Unbounded.Slice (L.Name, 1, Index_L) = "MEDIUM_" then
+         return True;
+      else
+         return False;
+      end if;
+   end Less;
+
 end GNAThub;

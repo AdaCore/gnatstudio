@@ -70,6 +70,8 @@ package body GNAThub.Filters is
       Self.Tools      := Tools;
       Self.Severities := Severities;
       Self.Rules      := Rules;
+
+      Self.Criteria_Changed;
    end Fill;
 
 end GNAThub.Filters;

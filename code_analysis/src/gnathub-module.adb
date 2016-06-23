@@ -19,9 +19,13 @@ with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.VFS;
+with Gtkada.MDI;
+
 with GPS.Intl;                     use GPS.Intl;
 with GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;
+with GPS.Kernel.Preferences;
 
 with GNAThub.Actions;
 with GNAThub.Filters_Views;
@@ -29,7 +33,15 @@ with GNAThub.Loader;
 
 package body GNAThub.Module is
 
-   Module_Id : GNAThub_Module_Id;
+   Module : GNAThub_Module_Id;
+
+   type On_Before_Exit is
+     new GPS.Kernel.Hooks.Return_Boolean_Hooks_Function with null record;
+   overriding function Execute
+     (Self   : On_Before_Exit;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Boolean;
+   --  Called before GPS exits. Switchs perspective to default.
 
    -----------
    -- Clean --
@@ -74,13 +86,17 @@ package body GNAThub.Module is
       Clean_Severity_Set (Self.Severities);
       Clean_Tool_Set (Self.Tools);
       Clean_Rule_Set (Self.Rules);
+      Self.Severities_Id.Clear;
    end Clean;
 
    ------------------
    -- Display_Data --
    ------------------
 
-   procedure Display_Data (Self : in out GNAThub_Module_Id_Record'Class) is
+   procedure Display_Data (Self : in out GNAThub_Module_Id_Record'Class)
+   is
+      use type Gtkada.MDI.MDI_Child;
+
       Database : constant GNATCOLL.VFS.Virtual_File :=
                    Self.Get_Kernel.Get_Project_Tree.Root_Project.Object_Dir
                      .Create_From_Dir ("gnathub")
@@ -90,6 +106,14 @@ package body GNAThub.Module is
 
    begin
       if Database.Is_Regular_File then
+
+         if GPS.Kernel.MDI.Get_MDI
+           (Self.Kernel).Find_MDI_Child_By_Tag
+           (GNAThub.Reports.Collector.GNAThub_Report_Collector'Tag) /= null
+         then
+            GPS.Kernel.MDI.Get_MDI (Self.Kernel).Close (Self.Report);
+         end if;
+
          Self.Clean;
          Self.Loader.Load (Database);
 
@@ -103,6 +127,45 @@ package body GNAThub.Module is
             Mode => GPS.Kernel.Error);
       end if;
    end Display_Data;
+
+   --------------------
+   -- Display_Report --
+   --------------------
+
+   procedure Display_Report (Self : in out GNAThub_Module_Id_Record'Class) is
+   begin
+      GNAThub.Reports.Collector.Gtk_New
+        (Self.Collector, Self.Kernel, Self.Tree, Self.Severities);
+
+      Self.Report := new GNAThub_Child_Record;
+      GPS.Kernel.MDI.Initialize
+        (Self.Report, Self.Collector, Self.Kernel, Module => Module);
+      Self.Report.Set_Title (-"GNAThub report");
+
+      GPS.Kernel.Hooks.Before_Exit_Action_Hook.Add
+        (new On_Before_Exit, Watch => Self.Collector);
+
+      GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put (Self.Report);
+      Self.Report.Raise_Child;
+   end Display_Report;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Self   : On_Before_Exit;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Self);
+      pragma Unreferenced (Kernel);
+   begin
+      --  Destroy report window
+      Module.Collector.Destroy;
+
+      return True;
+   end Execute;
 
    --------------------
    -- Message_Loaded --
@@ -146,12 +209,38 @@ package body GNAThub.Module is
    function New_Severity
      (Self       : in out GNAThub_Module_Id_Record'Class;
       Name       : Ada.Strings.Unbounded.Unbounded_String;
-      On_Sidebar : Boolean) return Severity_Access is
+      On_Sidebar : Boolean) return Severity_Access
+   is
+      function Get_Default_Color return String;
+
+      -----------------
+      -- Get_Default --
+      -----------------
+
+      function Get_Default_Color return String is
+      begin
+         if Ada.Strings.Unbounded.Index (Name, "HIGH_") > 0 then
+            return GPS.Kernel.Preferences.High_Messages_Highlight.Get_Pref;
+         elsif Ada.Strings.Unbounded.Index (Name, "MEDIUM_") > 0 then
+            return GPS.Kernel.Preferences.Medium_Messages_Highlight.Get_Pref;
+         else
+            return GPS.Kernel.Preferences.Low_Messages_Highlight.Get_Pref;
+         end if;
+      end Get_Default_Color;
+
+      N : constant String := Ada.Strings.Unbounded.To_String (Name);
+
    begin
       return Severity : constant Severity_Access :=
         new Severity_Record'
           (Name       => Name,
-           On_Sidebar => On_Sidebar)
+           On_Sidebar => On_Sidebar,
+           Color      => Self.Kernel.Get_Preferences.Create
+             (Path    => ":Local Configuration",
+              Name    => Severity_History_Prefix & "-" & N & "-color",
+              Label   => "Color for " & N,
+              Doc     => "",
+              Default => Get_Default_Color))
       do
          Self.Severities.Insert (Severity);
       end return;
@@ -172,6 +261,24 @@ package body GNAThub.Module is
       end return;
    end New_Tool;
 
+   -------------------
+   -- Update_Report --
+   -------------------
+
+   procedure Update_Report (Self : in out GNAThub_Module_Id_Record'Class) is
+      use type Gtkada.MDI.MDI_Child;
+
+      MDI : Gtkada.MDI.MDI_Child;
+   begin
+      MDI := GPS.Kernel.MDI.Get_MDI
+        (Self.Kernel).Find_MDI_Child_By_Tag
+        (GNAThub.Reports.Collector.GNAThub_Report_Collector'Tag);
+
+      if MDI /= null then
+         GNAThub.Reports.Collector.Report (MDI.Get_Widget).Update;
+      end if;
+   end Update_Report;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -179,15 +286,18 @@ package body GNAThub.Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Module_Id := new GNAThub_Module_Id_Record;
-      Module_Id.Register_Module (Kernel, "GNAThub");
-      GNAThub.Actions.Register_Actions (Module_Id);
-      Module_Id.Loader := new GNAThub.Loader.Loader (Module_Id);
-      Module_Id.Loader.Initialize;
-      Module_Id.Filter := new GNAThub.Filters.Message_Filter;
-      GNAThub.Filters_Views.Register_Module (Kernel, Module_Id);
+      Module        := new GNAThub_Module_Id_Record;
+      Module.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
+      Module.Tree   := new Project_Maps.Map;
+
+      Module.Register_Module (Kernel, "GNAThub");
+      GNAThub.Actions.Register_Actions (Module);
+      Module.Loader := new GNAThub.Loader.Loader (Module);
+      Module.Loader.Initialize;
+      Module.Filter := new GNAThub.Filters.Message_Filter;
+      GNAThub.Filters_Views.Register_Module (Kernel, Module);
       Kernel.Get_Messages_Container.Register_Filter
-        (GPS.Kernel.Messages.Message_Filter_Access (Module_Id.Filter));
+        (GPS.Kernel.Messages.Message_Filter_Access (Module.Filter));
    end Register_Module;
 
 end GNAThub.Module;
