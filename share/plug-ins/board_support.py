@@ -224,9 +224,7 @@ class BoardLoader(Module):
         project attributes.
         """
 
-        self.__target = project.get_attribute_as_string(
-            package="",
-            attribute="Target")
+        self.__target = project.target
 
         self.__remote_target = project.get_attribute_as_string(
             package="IDE",

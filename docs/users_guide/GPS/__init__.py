@@ -7727,6 +7727,15 @@ class Project(object):
       this one.
     """
 
+    target = None
+    """
+    Returns the Target project attribute value or an empty string if not
+    defined.
+
+    If the given project extends from another project, the attribute is also
+    looked up in the extended project.
+    """
+
     def __cmp__(self, file):
         """
         Compares two instances of :class:`GPS.Project` and returns -1, 0 or 1

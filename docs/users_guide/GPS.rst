@@ -1539,6 +1539,10 @@ Classes
 
 
 
+
+   .. autoattribute:: GPS.Project.target
+
+
    .. automethod:: GPS.Project.__init__
 
    .. automethod:: GPS.Project.add_attribute_values
