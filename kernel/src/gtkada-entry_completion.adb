@@ -76,7 +76,6 @@ with GPS.Main_Window;            use GPS.Main_Window;
 with GPS.Search;                 use GPS.Search;
 with GUI_Utils;                  use GUI_Utils;
 with Histories;                  use Histories;
-with Pango.Layout;               use Pango.Layout;
 with System;
 with Interfaces.C.Strings;       use Interfaces.C.Strings;
 
@@ -183,11 +182,6 @@ package body Gtkada.Entry_Completion is
    function Need_Preview
      (Self : access Gtkada_Entry_Record'Class) return Boolean;
    --  Whether the preview should be displayed.
-
-   function Auto_Resize_Popup
-     (Self : access Gtkada_Entry_Record'Class) return Boolean;
-   --  Whether the popup window should be automatically resized (True) or
-   --  occupy the whole height.
 
    procedure Resize_Popup
       (Self : not null access Gtkada_Entry_Record'Class;
@@ -691,9 +685,6 @@ package body Gtkada.Entry_Completion is
                        Search_Kind'Image (Fuzzy)));
 
       Create_New_Boolean_Key_If_Necessary
-        (Get_History (Kernel).all, "global-search-auto-resize",
-         Default_Value => True);
-      Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, Name & "-preview",
          Default_Value => True);
 
@@ -1087,17 +1078,6 @@ package body Gtkada.Entry_Completion is
         (Get_History (Self.Kernel).all, Self.Name.all & "-preview");
    end Need_Preview;
 
-   -----------------------
-   -- Auto_Resize_Popup --
-   -----------------------
-
-   function Auto_Resize_Popup
-     (Self : access Gtkada_Entry_Record'Class) return Boolean is
-   begin
-      return Get_History
-        (Get_History (Self.Kernel).all, "global-search-auto-resize");
-   end Auto_Resize_Popup;
-
    ------------------
    -- Show_Preview --
    ------------------
@@ -1275,10 +1255,6 @@ package body Gtkada.Entry_Completion is
       Alloc : Gtk_Allocation;
       Popup : Gtk_Window;
       Height : Gint;
-      Iter : Gtk_Tree_Iter;
-      Result : Search_Result_Access;
-      Layout : Pango_Layout;
-      W, H : Gint;
    begin
       if Self.Popup /= null then
          --  Position of the completion entry within its toplevel window
@@ -1306,50 +1282,7 @@ package body Gtkada.Entry_Completion is
              Result_Width + Provider_Label_Width);
          X := Gint'Min (Gdk_X, MaxX - Width - 13);
          Y := Gdk_Y + Self.GEntry.Get_Allocated_Height;
-
-         if Auto_Resize_Popup (Self) then
-            --  Unfortunately, there doesn't seem to be a convenient way to
-            --  compute the ideal height for a GtkTreeView (using the upper
-            --  value of the vadjustment doesn't work either since it never
-            --  decreases), and Get_Preferred_Height always returns 0 unless
-            --  we are using Fixed_Height mode, but in our case the rows do not
-            --  all have the same height. Self.View.Get_Cell_Area returns the
-            --  height of a row, but only if it is visible which is not the
-            --  case yet).
-
-            Layout := Create_Pango_Layout (Self.View);
-            Layout.Set_Text ("0mp");
-            Layout.Get_Pixel_Size (W, H);
-            Unref (Layout);
-
-            --  '3' is the height of the separator. Should be computed from the
-            --  widget itself perhaps
-            Height := Self.Settings.Get_Allocated_Height + 3;
-
-            Iter := Self.Completions.Get_Iter_First;
-            while Iter /= Null_Iter loop
-               Result := Convert
-                 (Get_Address (+Self.Completions, Iter, Column_Data));
-
-               --  5 is the height of separators between rows. It comes from
-               --  the theme, though, so this is only an approximation. At
-               --  worse the popup window will be too high
-               Height := Height + H + 5;
-
-               if Result.Long /= null then
-                  Height := Height + H;
-               end if;
-
-               exit when Height > MaxY - Y;  --  no need to go further
-
-               Next (Self.Completions, Iter);
-            end loop;
-
-            Height := Gint'Min (Height, MaxY - Y);
-
-         else
-            Height := MaxY - Y;
-         end if;
+         Height := MaxY - Y;
 
          if not Height_Only then
             Self.Popup.Move (X, Y);
@@ -1628,7 +1561,6 @@ package body Gtkada.Entry_Completion is
       Button : Gtk_Widget;
       pragma Unreferenced (Resp, Button);
       Preview : Gtk_Check_Button;
-      Resize  : Gtk_Check_Button;
       Label   : Gtk_Label;
       Box     : Gtk_Box;
    begin
@@ -1648,14 +1580,6 @@ package body Gtkada.Entry_Completion is
                  Default => True);
       Win.Get_Content_Area.Pack_Start (Preview, Expand => False);
       Preview.On_Toggled (On_Settings_Changed'Access, Self);
-
-      Gtk_New (Resize, -"Auto-resize popup");
-      Associate (Get_History (S.Kernel).all,
-                 "global-search-auto-resize",
-                 Resize,
-                 Default => False);
-      Win.Get_Content_Area.Pack_Start (Resize, Expand => False);
-      Resize.On_Toggled (On_Settings_Changed'Access, Self);
 
       Gtk_New_Hbox (Box, Homogeneous => False);
       Win.Get_Content_Area.Pack_Start (Box, Expand => False);

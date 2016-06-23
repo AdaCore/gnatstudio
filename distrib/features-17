@@ -23,6 +23,15 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P622-023 GPS: remove settings to auto-resize omnisearch (2016-06-23)
+
+  The omnisearch (i.e. the search box at the top-right corner of the GPS
+  window) had a setting to automatically resize the popup window
+  vertically. Unfortunately, due to limitations in the gtk+ toolkit in
+  computing the ideal size of a window, this never worked correctly. This
+  setting has thus been removed, and the window will now always occupy the
+  full height of the GPS window.
+
 NF-17-P621-001 GPS: new menu /File/Save More/Projects (2016-06-21)
 
   The menu /Project/Save All was moved to a new location to make its
