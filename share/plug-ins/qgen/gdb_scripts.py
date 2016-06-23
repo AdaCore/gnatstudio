@@ -1,6 +1,28 @@
 watchdog_dict = {}
 
 
+class Utils:
+    separator = None
+
+    @staticmethod
+    def set_variable(var, val):
+        """
+        Sets a variable to a given value
+        :param string var: the name of the variable to set
+        :param string val: the desired value
+        """
+
+        if not Utils.separator:
+            lang = gdb.execute("show language", to_string=True).rsplit(
+                "\"")[-2].rsplit(" ", 1)[-1]
+            if lang == "ada":
+                Utils.separator = ":="
+            else:
+                Utils.separator = "="
+
+        gdb.execute("set variable %s %s %s" % (var, Utils.separator, val))
+
+
 class Watchpoint_Add (gdb.Command):
     """
     QGen Debugger watchpoint handling command called qgen_watchpoint
@@ -35,6 +57,7 @@ class Watchpoint_Add (gdb.Command):
                         symbol, args[1], gdb.BP_WATCHPOINT
                     )
                     watchdog_dict[context][0].watchpoint_dict[symbol] = (wp, 0)
+                    Utils.set_variable(symbol, args[1])
                 except RuntimeError:
                     watchdog_dict[context][0].watchpoint_dict[symbol] \
                         = (args[1], 0)
@@ -108,7 +131,7 @@ class Watchpoint_Action (gdb.Command):
             for symbol, (wp, whit) in bp.watchpoint_dict.iteritems():
                 if wp.hit_count > whit:
                     bp.watchpoint_dict[symbol] = (wp, wp.hit_count)
-                    gdb.execute("set variable %s := %s" % (wp.var, wp.value))
+                    Utils.set_variable(wp.var, wp.value)
 
 Watchpoint_Action()
 
