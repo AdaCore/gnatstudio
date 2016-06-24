@@ -15,12 +15,9 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Ada.Environment_Variables; use Ada.Environment_Variables;
 
 package body GPS.Environments is
-
-   procedure g_unsetenv (Name : String);
-   pragma Import (C, g_unsetenv, "g_unsetenv");
 
    ------------
    -- Append --
@@ -53,9 +50,9 @@ package body GPS.Environments is
               To_String (Maps.Element (Cursor).GPS_Value);
          begin
             if Value = "" then
-               g_unsetenv (Name & ASCII.NUL);
+               Clear (Name);
             else
-               Setenv (Name, Value);
+               Set (Name, Value);
             end if;
 
             Maps.Next (Cursor);
@@ -77,9 +74,9 @@ package body GPS.Environments is
               To_String (Maps.Element (Cursor).Users_Value);
          begin
             if Value = "" then
-               g_unsetenv (Name & ASCII.NUL);
+               Clear (Name);
             else
-               Setenv (Name, Value);
+               Set (Name, Value);
             end if;
 
             Maps.Next (Cursor);
