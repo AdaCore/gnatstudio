@@ -456,7 +456,7 @@ package body Startup_Module is
       Doc_Text_Buffer := Doc_Text_View.Get_Buffer;
       Doc_Text_Buffer.Get_End_Iter (Doc_Text_Iter);
       Doc_Text_Buffer.Insert (Iter => Doc_Text_Iter,
-                              Text => Self.Doc.all);
+                              Text => Self.Get_Documentation);
       Doc_Group_Widget.Append_Child (Doc_Text_View);
 
       return Gtk_Widget (Page_View);
