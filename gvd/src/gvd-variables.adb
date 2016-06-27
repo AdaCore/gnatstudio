@@ -21,6 +21,7 @@ with Commands.Interactive;     use Commands, Commands.Interactive;
 with Debugger;                 use Debugger;
 with Default_Preferences;      use Default_Preferences;
 with Gdk.Event;                use Gdk.Event;
+with Gdk.RGBA;                 use Gdk.RGBA;
 with Generic_Views;            use Generic_Views;
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
@@ -53,6 +54,7 @@ with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.MDI;               use Gtkada.MDI;
+with Gtkada.Style;             use Gtkada.Style;
 with Gtkada.Tree_View;         use Gtkada.Tree_View;
 with GUI_Utils;                use GUI_Utils;
 with GVD.Contexts;             use GVD.Contexts;
@@ -752,6 +754,10 @@ package body GVD.Variables is
       Ent   : Generic_Type_Access;
       Dummy : Boolean;
 
+      Fg    : constant String := To_String (Default_Style.Get_Pref_Fg);
+      Contrast : constant String :=
+        To_Hex (Shade_Or_Lighten (Default_Style.Get_Pref_Fg));
+
       function Display_Type_Name return String with Inline;
       function Display_Name return String with Inline;
       --  Return the display name or type name
@@ -772,7 +778,7 @@ package body GVD.Variables is
          if T'Length = 0 or else not Show_Types.Get_Pref then
             return "";
          else
-            return "<span foreground=""#999"">("
+            return "<span foreground=""" & Contrast & """ > ("
               & XML_Utils.Protect (T) & ")</span> ";
          end if;
       end Display_Type_Name;
@@ -802,7 +808,7 @@ package body GVD.Variables is
                then System.Null_Address else Entity.all'Address)),
             Column_Fg           => As_String
               (if Entity /= null and then Entity.Is_Changed
-               then Change_Color.Get_Pref else "black"),
+               then Change_Color.Get_Pref else Fg),
             Column_Full_Name    => As_String (Full_Name)
            ));
 
