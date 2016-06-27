@@ -904,7 +904,7 @@ package body GVD.Breakpoints is
          "debug view breakpoint", new View_Breakpoint_Command,
          -("View the source editor containing the selected breakpoint"
            & " (from the Breakpoints view)"),
-         Icon_Name => "gps-edit-symbolic",
+         Icon_Name => "gps-goto-symbolic",
          Category  => -"Debug");
 
       Register_Action
