@@ -17,7 +17,6 @@
 
 with Ada.Unchecked_Conversion;
 with System;                    use System;
-with System.Address_Image;
 with Glib.Object;               use Glib.Object;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
@@ -26,15 +25,13 @@ with GNATCOLL.Xref;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with Src_Editor_Box;            use Src_Editor_Box;
+with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with String_Utils;              use String_Utils;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
 
 package body Src_Editor_Module.Markers is
    use type GNATCOLL.Xref.Visible_Column;
-
-   Me : constant Trace_Handle := Create ("Markers");
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, File_Marker);
@@ -51,97 +48,40 @@ package body Src_Editor_Module.Markers is
    --  no longer attached to a buffer. This is called only when the mark
    --  is explicitly removed from the buffer.
 
-   procedure On_Closed
+   procedure On_Closed_Or_Changed
      (Buffer  : access GObject_Record'Class;
       Marker : File_Marker);
    --  Called when buffer is about to close
 
    procedure Update_Marker_Location
-     (Marker : access File_Marker_Record'Class);
+     (Marker : not null access File_Marker_Data'Class);
    --  Update the location stored in Marker according to the one stored in the
    --  associated Gtk_Text_Mark
 
-   procedure Register_Persistent_Marker
-     (Marker  : access File_Marker_Record'Class);
+   procedure Register_Persistent_Marker (Marker  : Location_Marker)
+     with Pre => Marker.Get.Element.all in File_Marker_Data'Class;
    --  Register Marker as a permanent marker. This means that if the associated
    --  file is closed, reopened, modified,... the marker will always point to
    --  the same location
 
    procedure Create_Text_Mark
      (Kernel : access Kernel_Handle_Record'Class;
-      Marker : access File_Marker_Record'Class);
+      Marker : not null access File_Marker_Data'Class;
+      Box    : Source_Editor_Box := null);
    --  Create a text mark that will keep the location of the marker even when
    --  the text is changed
    --  If the mark already exists, update its location.
-
-   procedure Dump_Persistent_Markers;
-   pragma Unreferenced (Dump_Persistent_Markers);
-   --  Debug procedure to dump the list of persistent markers
-
-   -----------------------------
-   -- Dump_Persistent_Markers --
-   -----------------------------
-
-   procedure Dump_Persistent_Markers is
-      use Marker_List;
-      Module : constant Source_Editor_Module :=
-                 Source_Editor_Module (Src_Editor_Module_Id);
-
-   begin
-      Trace (Me, "List of persistent markers");
-
-      if Module = null then
-         return;
-      end if;
-
-      for Node of Module.Stored_Marks loop
-         Trace (Me, "     marker="
-                & System.Address_Image
-                  (Convert (File_Marker (Node)))
-                & " " & To_String (Node));
-      end loop;
-   end Dump_Persistent_Markers;
 
    --------------------------------
    -- Register_Persistent_Marker --
    --------------------------------
 
-   procedure Register_Persistent_Marker
-     (Marker : access File_Marker_Record'Class)
-   is
+   procedure Register_Persistent_Marker (Marker : Location_Marker) is
       Module : constant Source_Editor_Module :=
                  Source_Editor_Module (Src_Editor_Module_Id);
    begin
-      Marker.Id            := Module.Next_Mark_Id;
-      Module.Next_Mark_Id  := Module.Next_Mark_Id + 1;
-      Marker_List.Append (Module.Stored_Marks,  Location_Marker (Marker));
-      Marker.Position := Marker_List.Last (Module.Stored_Marks);
+      Marker_List.Append (Module.Stored_Marks,  Marker.Weak);
    end Register_Persistent_Marker;
-
-   ---------------
-   -- Find_Mark --
-   ---------------
-
-   function Find_Mark (Id : Natural) return File_Marker is
-      Module : constant Source_Editor_Module :=
-                 Source_Editor_Module (Src_Editor_Module_Id);
-      Marker : File_Marker;
-
-   begin
-      if Module = null then
-         return null;
-      end if;
-
-      for Node of Module.Stored_Marks loop
-         Marker := File_Marker (Node);
-
-         if Marker.Id = Id then
-            return Marker;
-         end if;
-      end loop;
-
-      return null;
-   end Find_Mark;
 
    ----------------------------
    -- Reset_Markers_For_File --
@@ -153,21 +93,40 @@ package body Src_Editor_Module.Markers is
    is
       use Marker_List;
       Module : constant Source_Editor_Module :=
-                 Source_Editor_Module (Src_Editor_Module_Id);
-      Marker : File_Marker;
-
+        Source_Editor_Module (Src_Editor_Module_Id);
+      F      : File_Marker;
+      M      : Location_Marker;
+      W      : Weak_Location_Marker;
+      C, C2  : Marker_List.Cursor;
+      Box    : Source_Editor_Box;
    begin
-      if Module = null then
-         return;
+      if Module /= null then
+         C := Module.Stored_Marks.First;
+         while Has_Element (C) loop
+            W := Marker_List.Element (C);
+            C2 := Next (C);
+            if W.Was_Freed then
+               --  Cleanup the list to keep it short
+               Module.Stored_Marks.Delete (C);
+            else
+               if Box = null then
+                  Box := Get_Source_Box_From_MDI
+                    (Find_Editor
+                       (Kernel, File,
+                        Project => GNATCOLL.Projects.No_Project));
+               end if;
+
+               if Box /= null then
+                  M.Set (W);
+                  F := File_Marker (M.Unchecked_Get);
+                  if F.File = File then
+                     Create_Text_Mark (Kernel, F, Box => Box);
+                  end if;
+               end if;
+            end if;
+            C := C2;
+         end loop;
       end if;
-
-      for Node of Module.Stored_Marks loop
-         Marker := File_Marker (Node);
-
-         if Marker.File = File then
-            Create_Text_Mark (Kernel, Marker);
-         end if;
-      end loop;
    end Reset_Markers_For_File;
 
    ----------------------------
@@ -175,7 +134,7 @@ package body Src_Editor_Module.Markers is
    ----------------------------
 
    procedure Update_Marker_Location
-     (Marker : access File_Marker_Record'Class)
+     (Marker : not null access File_Marker_Data'Class)
    is
       Iter : Gtk_Text_Iter;
    begin
@@ -184,9 +143,7 @@ package body Src_Editor_Module.Markers is
       then
          Get_Iter_At_Mark (Marker.Buffer, Iter, Marker.Mark);
          Get_Iter_Position
-           (Source_Buffer (Marker.Buffer), Iter,
-            Marker.Line,
-            Marker.Column);
+           (Source_Buffer (Marker.Buffer), Iter, Marker.Line, Marker.Column);
       end if;
    end Update_Marker_Location;
 
@@ -204,24 +161,24 @@ package body Src_Editor_Module.Markers is
       M.Buffer := null;
    end On_Destroy_Buffer;
 
-   ---------------
-   -- On_Closed --
-   ---------------
+   --------------------------
+   -- On_Closed_Or_Changed --
+   --------------------------
 
-   procedure On_Closed
+   procedure On_Closed_Or_Changed
      (Buffer : access GObject_Record'Class;
       Marker : File_Marker)
    is
       pragma Unreferenced (Buffer);
    begin
       Update_Marker_Location (Marker);
-   end On_Closed;
+   end On_Closed_Or_Changed;
 
    -------------
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Marker : in out File_Marker_Record) is
+   overriding procedure Destroy (Marker : in out File_Marker_Data) is
       use Marker_List;
       Module : constant Source_Editor_Module :=
                  Source_Editor_Module (Src_Editor_Module_Id);
@@ -231,6 +188,8 @@ package body Src_Editor_Module.Markers is
       if Module = null then
          return;
       end if;
+
+      Free (Marker.Instances);
 
       if Marker.Mark /= null then
          --  We explicitly remove the weak_unref on the mark, even though
@@ -270,14 +229,8 @@ package body Src_Editor_Module.Markers is
          --      # a then goes out of scope. Destructor of EditorMark deletes
          --      # the mark
 
-         --  Delete_Mark (Marker.Buffer, Marker.Mark);
-
          Marker.Mark := null;
          Marker.Buffer := null;
-      end if;
-
-      if Marker_List.Has_Element (Marker.Position) then
-         Marker_List.Delete (Module.Stored_Marks, Marker.Position);
       end if;
    end Destroy;
 
@@ -287,12 +240,16 @@ package body Src_Editor_Module.Markers is
 
    procedure Create_Text_Mark
      (Kernel : access Kernel_Handle_Record'Class;
-      Marker : access File_Marker_Record'Class)
+      Marker : not null access File_Marker_Data'Class;
+      Box    : Source_Editor_Box := null)
    is
-      Child  : constant MDI_Child :=
-        Find_Editor (Kernel, Marker.File, Marker.Project);
-      Source : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
+      Source : Source_Editor_Box := Box;
    begin
+      if Source = null then
+         Source := Get_Source_Box_From_MDI
+           (Find_Editor (Kernel, Marker.File, Marker.Project));
+      end if;
+
       if Source /= null then
          if Marker.Mark = null
            or else Marker.Mark.Get_Deleted
@@ -326,12 +283,11 @@ package body Src_Editor_Module.Markers is
             --  of that.
 
             Weak_Ref
-              (Marker.Buffer,
-               On_Destroy_Buffer'Access, Convert (File_Marker (Marker)));
+              (Marker.Buffer, On_Destroy_Buffer'Access, Convert (Marker));
 
             Marker.Cid := Markers_Callback.Connect
               (Source_Buffer (Marker.Buffer), Signal_Closed,
-               Markers_Callback.To_Marshaller (On_Closed'Access),
+               Markers_Callback.To_Marshaller (On_Closed_Or_Changed'Access),
                File_Marker (Marker));
 
          else
@@ -365,8 +321,8 @@ package body Src_Editor_Module.Markers is
    -- Get_File --
    --------------
 
-   function Get_File
-     (Marker : access File_Marker_Record'Class) return Virtual_File is
+   overriding function Get_File
+     (Marker : not null access File_Marker_Data) return Virtual_File is
    begin
       return Marker.File;
    end Get_File;
@@ -376,21 +332,11 @@ package body Src_Editor_Module.Markers is
    --------------
 
    function Get_Mark
-     (Marker : access File_Marker_Record'Class)
+     (Marker : not null access File_Marker_Data'Class)
       return Gtk.Text_Mark.Gtk_Text_Mark is
    begin
       return Marker.Mark;
    end Get_Mark;
-
-   ------------
-   -- Get_Id --
-   ------------
-
-   function Get_Id
-     (Marker : access File_Marker_Record'Class) return Integer is
-   begin
-      return Marker.Id;
-   end Get_Id;
 
    ------------------------
    -- Create_File_Marker --
@@ -402,26 +348,24 @@ package body Src_Editor_Module.Markers is
       Project : GNATCOLL.Projects.Project_Type;
       Line    : Editable_Line_Type;
       Column  : Visible_Column_Type;
-      Length  : Natural := 0) return File_Marker
+      Length  : Natural := 0) return Location_Marker
    is
-      Marker : File_Marker;
    begin
-      Marker := new File_Marker_Record'
-        (Location_Marker_Record with
-         Id       => Natural'Last,
-         File     => File,
-         Project  => Project,
-         Line     => Line,
-         Column   => Column,
-         Length   => Length,
-         Buffer   => null,
-         Mark     => null,
-         Cid      => <>,
-         Kernel   => Kernel_Handle (Kernel),
-         Position => Marker_List.No_Element);
-      Create_Text_Mark (Kernel, Marker);
-      Register_Persistent_Marker (Marker);
-      return Marker;
+      return M : Location_Marker do
+         M.Set (File_Marker_Data'
+                  (File     => File,
+                   Project  => Project,
+                   Line     => Line,
+                   Column   => Column,
+                   Length   => Length,
+                   Buffer   => null,
+                   Mark     => null,
+                   Cid      => <>,
+                   Instances => <>,
+                   Kernel   => Kernel_Handle (Kernel)));
+         Register_Persistent_Marker (M);
+         Create_Text_Mark (Kernel, File_Marker (M.Unchecked_Get), Box => null);
+      end return;
    end Create_File_Marker;
 
    ------------------------
@@ -432,37 +376,50 @@ package body Src_Editor_Module.Markers is
      (Kernel  : access Kernel_Handle_Record'Class;
       File    : GNATCOLL.VFS.Virtual_File;
       Project : GNATCOLL.Projects.Project_Type;
-      Mark    : Gtk.Text_Mark.Gtk_Text_Mark) return File_Marker
+      Mark    : Gtk.Text_Mark.Gtk_Text_Mark) return Location_Marker
    is
-      Marker : File_Marker;
+      Module : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (Mark));
+      D : File_Marker;
    begin
-      Marker := new File_Marker_Record'
-        (Location_Marker_Record with
-         Id       => Natural'Last,
-         File     => File,
-         Project  => Project,
-         Line     => 0,
-         Column   => 1,
-         Length   => 0,
-         Buffer   => Get_Buffer (Mark),
-         Mark     => Mark,
-         Cid      => <>,
-         Kernel   => Kernel_Handle (Kernel),
-         Position => Marker_List.No_Element);
+      --  Check whether there is already a Location_Marker for this mark
+      for Node of Module.Stored_Marks loop
+         if not Node.Was_Freed then
+            declare
+               M : Location_Marker;
+            begin
+               M.Set (Node);
+               if File_Marker (M.Unchecked_Get).Mark = Mark then
+                  return M;
+               end if;
+            end;
+         end if;
+      end loop;
 
-      Marker.Cid := Markers_Callback.Connect
-        (Source_Buffer (Marker.Buffer), Signal_Changed,
-         Markers_Callback.To_Marshaller (On_Closed'Access), Marker);
-      Weak_Ref (Marker.Buffer, On_Destroy_Buffer'Access, Convert (Marker));
+      return M : Location_Marker do
+         M.Set (File_Marker_Data'
+                  (File     => File,
+                   Project  => Project,
+                   Line     => 0,
+                   Column   => 1,
+                   Length   => 0,
+                   Buffer   => Get_Buffer (Mark),
+                   Mark     => Mark,
+                   Cid      => <>,
+                   Instances => <>,
+                   Kernel   => Kernel_Handle (Kernel)));
 
-      --  No need to add an extra Ref to the mark, its reference already
-      --  belongs to the buffer, and it would make no sense to keep it alive
-      --  longer than the buffer
-      --      Ref (Marker.Mark);
+         D := File_Marker (M.Unchecked_Get);
 
-      Update_Marker_Location (Marker);
-      Register_Persistent_Marker (Marker);
-      return Marker;
+         D.Cid := Markers_Callback.Connect
+           (Buffer, Signal_Closed,
+            Markers_Callback.To_Marshaller (On_Closed_Or_Changed'Access), D);
+         Weak_Ref (Buffer, On_Destroy_Buffer'Access, Convert (D));
+
+         Update_Marker_Location (D);
+         Register_Persistent_Marker (M);
+      end return;
    end Create_File_Marker;
 
    ----------
@@ -470,7 +427,7 @@ package body Src_Editor_Module.Markers is
    ----------
 
    procedure Move
-     (Marker : access File_Marker_Record'Class;
+     (Marker : not null access File_Marker_Data'Class;
       Mark   : Gtk.Text_Mark.Gtk_Text_Mark)
    is
    begin
@@ -525,11 +482,10 @@ package body Src_Editor_Module.Markers is
    -----------
 
    overriding function Go_To
-     (Marker : access File_Marker_Record;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Boolean
+     (Marker : not null access File_Marker_Data) return Boolean
    is
       Child : constant MDI_Child := Find_Editor
-        (Kernel, Marker.File, Marker.Project);
+        (Marker.Kernel, Marker.File, Marker.Project);
       Box   : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
    begin
       if Marker.Mark /= null then
@@ -540,7 +496,7 @@ package body Src_Editor_Module.Markers is
 
       else
          Open_File_Action_Hook.Run
-           (Kernel,
+           (Marker.Kernel,
             File      => Marker.File,
             Project   => Marker.Project,
             Line      => Integer (Marker.Line),
@@ -558,8 +514,9 @@ package body Src_Editor_Module.Markers is
    -- Get_Line --
    --------------
 
-   function Get_Line
-     (Marker : access File_Marker_Record'Class) return Editable_Line_Type is
+   overriding function Get_Line
+     (Marker : not null access File_Marker_Data)
+     return Editable_Line_Type is
    begin
       Update_Marker_Location (Marker);
       return Marker.Line;
@@ -569,8 +526,9 @@ package body Src_Editor_Module.Markers is
    -- Get_Column --
    ----------------
 
-   function Get_Column
-     (Marker : access File_Marker_Record'Class) return Visible_Column_Type is
+   overriding function Get_Column
+     (Marker : not null access File_Marker_Data)
+     return Visible_Column_Type is
    begin
       Update_Marker_Location (Marker);
       return Marker.Column;
@@ -581,7 +539,7 @@ package body Src_Editor_Module.Markers is
    ---------------
 
    overriding function To_String
-     (Marker : access File_Marker_Record) return String
+     (Marker : not null access File_Marker_Data) return String
    is
       function Get_Subprogram_Name return String;
       --  Returns the subprogram name at the marker position
@@ -619,31 +577,12 @@ package body Src_Editor_Module.Markers is
       end;
    end To_String;
 
-   -----------
-   -- Clone --
-   -----------
-
-   overriding function Clone
-     (Marker : access File_Marker_Record) return Location_Marker
-   is
-
-   begin
-      return Location_Marker
-        (Create_File_Marker
-           (Marker.Kernel,
-            Marker.File,
-            Marker.Project,
-            Marker.Get_Line,
-            Marker.Get_Column));
-
-   end Clone;
-
    ----------
    -- Save --
    ----------
 
    overriding function Save
-     (Marker : access File_Marker_Record) return XML_Utils.Node_Ptr
+     (Marker : not null access File_Marker_Data) return XML_Utils.Node_Ptr
    is
       Node : constant Node_Ptr := new XML_Utils.Node;
    begin
@@ -671,33 +610,31 @@ package body Src_Editor_Module.Markers is
    begin
       if From_XML /= null then
          if From_XML.Tag.all = "file_marker" then
-            return Location_Marker
-              (Create_File_Marker
-                 (Kernel  => Kernel,
-                  File    => Get_File_Child (From_XML, "file"),
-                  Project => Get_Registry (Kernel).Tree.Project_From_Path
-                      (Get_File_Child (From_XML, "project")),
-                  Line    => Editable_Line_Type'Value
-                   (Get_Attribute (From_XML, "line")),
-                  Column  =>
-                    Visible_Column_Type'Value
-                      (Get_Attribute (From_XML, "column"))));
+            return Create_File_Marker
+              (Kernel  => Kernel,
+               File    => Get_File_Child (From_XML, "file"),
+               Project => Get_Registry (Kernel).Tree.Project_From_Path
+               (Get_File_Child (From_XML, "project")),
+               Line    => Editable_Line_Type'Value
+                 (Get_Attribute (From_XML, "line")),
+               Column  =>
+                 Visible_Column_Type'Value
+                   (Get_Attribute (From_XML, "column")));
          end if;
 
       else
          Source := Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
          if Source /= null then
             Get_Cursor_Position (Get_Buffer (Source), Line, Column);
-            return Location_Marker
-              (Create_File_Marker
-                 (Kernel  => Kernel,
-                  File    => Get_Filename (Source),
-                  Project => Get_Project (Source),
-                  Line    => Line,
-                  Column  => Column));
+            return Create_File_Marker
+              (Kernel  => Kernel,
+               File    => Get_Filename (Source),
+               Project => Get_Project (Source),
+               Line    => Line,
+               Column  => Column);
          end if;
       end if;
-      return null;
+      return No_Marker;
    end Load;
 
    -------------
@@ -705,17 +642,17 @@ package body Src_Editor_Module.Markers is
    -------------
 
    overriding function Similar
-     (Left  : access File_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Boolean
-   is
-      FM : File_Marker;
+     (Left  : not null access File_Marker_Data;
+      Right : not null access Location_Marker_Data'Class) return Boolean is
    begin
-      if Right.all in File_Marker_Record'Class then
-         FM := File_Marker (Right);
-         Update_Marker_Location (Left);
-         Update_Marker_Location (FM);
-         return (FM.File = Left.File) and then
-           (FM.Line = Left.Line);
+      if Right.all in File_Marker_Data'Class then
+         declare
+            R : constant File_Marker := File_Marker (Right);
+         begin
+            Update_Marker_Location (Left);
+            Update_Marker_Location (R);
+            return R.File = Left.File and then R.Line = Left.Line;
+         end;
       else
          return False;
       end if;
@@ -726,17 +663,16 @@ package body Src_Editor_Module.Markers is
    --------------
 
    overriding function Distance
-     (Left  : access File_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Integer
+     (Left  : not null access File_Marker_Data;
+      Right : not null access Location_Marker_Data'Class) return Integer
    is
    begin
-      if Right.all in File_Marker_Record'Class then
+      if Right.all in File_Marker_Data'Class then
          declare
-            Right_Record : File_Marker_Record'Class renames
-              File_Marker_Record'Class (Right.all);
+            R : constant File_Marker := File_Marker (Right);
          begin
-            if Left.File = Right_Record.File then
-               return Integer (Right_Record.Line - Left.Line);
+            if Left.File = R.File then
+               return Integer (R.Line - Left.Line);
             end if;
          end;
       end if;
@@ -744,14 +680,41 @@ package body Src_Editor_Module.Markers is
       return Integer'Last;
    end Distance;
 
-   ----------------
-   -- Get_Kernel --
-   ----------------
+   ----------------------------
+   -- Get_Or_Create_Instance --
+   ----------------------------
 
-   function Get_Kernel
-     (Marker : access File_Marker_Record'Class) return Kernel_Handle is
+   function Get_Or_Create_Instance
+     (Self            : Location_Marker;
+      Script          : not null access Scripting_Language_Record'Class)
+      return Class_Instance
+   is
+      F : constant File_Marker := File_Marker (Self.Unchecked_Get);
    begin
-      return Marker.Kernel;
-   end Get_Kernel;
+      return Proxies.Get_Or_Create_Instance (F.Instances, Self, Script);
+   end Get_Or_Create_Instance;
+
+   ------------------------------
+   -- Unset_Marker_In_Instance --
+   ------------------------------
+
+   procedure Unset_Marker_In_Instance (Self : Class_Instance) is
+      Dummy : File_Marker_Proxy;
+   begin
+      Proxies.Store_In_Instance (Dummy, Self, No_Marker);
+      Free (Dummy);
+   end Unset_Marker_In_Instance;
+
+   -------------------
+   -- From_Instance --
+   -------------------
+
+   function From_Instance (Inst : Class_Instance) return Location_Marker is
+   begin
+      return Proxies.From_Instance (Inst);
+   exception
+      when No_Data_Set_For_Instance =>
+         return No_Marker;
+   end From_Instance;
 
 end Src_Editor_Module.Markers;

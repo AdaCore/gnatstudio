@@ -30,6 +30,7 @@ with GPS.Kernel.Style_Manager;    use GPS.Kernel.Style_Manager;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
 with GPS.Kernel;                  use GPS.Kernel;
+with GPS.Markers;                 use GPS.Markers;
 with Glib;                        use Glib;
 with Glib.Object;
 with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
@@ -39,7 +40,6 @@ with Gtkada.MDI;                  use Gtkada.MDI;
 with HTables;
 with Src_Contexts;
 with Src_Editor_Box;
-with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with System;
 with XML_Utils;                   use XML_Utils;
 with Pango.Font;
@@ -246,8 +246,12 @@ private
    -- Marks --
    -----------
 
+   subtype Weak_Location_Marker is GPS.Markers.Markers.Weak_Ref;
    package Marker_List is
-     new Ada.Containers.Doubly_Linked_Lists (Location_Marker);
+     new Ada.Containers.Doubly_Linked_Lists
+       (Weak_Location_Marker, GPS.Markers.Markers."=");
+   --  These do not hold a reference to the marker, which therefore has its
+   --  own independent life cycle.
 
    -----------------------------
    -- Highlighting categories --
@@ -292,7 +296,6 @@ private
       Show_Subprogram_Names : Boolean    := False;
 
       Stored_Marks          : Marker_List.List;
-      Next_Mark_Id          : Natural := 0;
 
       Recent_File_Actions   : Action_Lists.List;
       --  Actions registered dynamically for the list of recent files

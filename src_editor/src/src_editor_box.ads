@@ -33,7 +33,7 @@ with Gtk.Handlers;
 with Gtk.Text_Mark;
 
 with Basic_Types;           use Basic_Types;
-with GPS.Editors;
+with GPS.Editors;           use GPS.Editors;
 with GPS.Kernel;
 with GPS.Kernel.Modules.UI;
 with GPS.Kernel.Messages;   use GPS.Kernel.Messages;
@@ -188,30 +188,30 @@ package Src_Editor_Box is
 
    function Get_Block_Start
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural;
+      Line   : Editable_Line_Type) return Natural;
    --  Return the line number where block enclosing Line starts. Returns 0
    --  if Line is not in a block.
 
    function Get_Block_End
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural;
+      Line   : Editable_Line_Type) return Natural;
    --  Return the line number where block enclosing Line ends. Returns 0
    --  if Line is not in a block.
 
    function Get_Block_Name
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return String;
+      Line   : Editable_Line_Type) return String;
    --  Return the name for the block enclosing Line
 
    function Get_Block_Type
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return String;
+      Line   : Editable_Line_Type) return String;
    --  Return the type for block enclosing Line. Returns 0 if Line is not
    --  in a block.
 
    function Get_Block_Level
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural;
+      Line   : Editable_Line_Type) return Natural;
    --  Return the line number where block enclosing Line ends. Returns 0
    --  if Line is not in a block.
 
@@ -229,7 +229,7 @@ package Src_Editor_Box is
 
    function Get_Subprogram_Name
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return String;
+      Line   : Editable_Line_Type) return String;
    --  Return the name for the subprogram enclosing Line.
 
    procedure Check_Writable (Editor : access Source_Editor_Box_Record);

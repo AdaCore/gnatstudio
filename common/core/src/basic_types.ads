@@ -105,6 +105,18 @@ package Basic_Types is
       File   : GNATCOLL.VFS.Virtual_File) is abstract;
    --  Used to report errors while parsing files
 
+   ----------------
+   -- Line types --
+   ----------------
+
+   type Editable_Line_Type is new Natural;
+   --  Editable lines are the lines in the buffer that can be edited (ie
+   --  all lines except blank lines, post-it notes, etc), plus lines that
+   --  could be edited but are not displayed in the buffer (hidden lines in
+   --  folded blocks belong to that category).
+   --  The Editable lines are the lines that are saved to disk when the
+   --  Source_Buffer is saved.
+
    ------------------
    -- Column types --
    ------------------

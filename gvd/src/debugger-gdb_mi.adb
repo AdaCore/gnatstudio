@@ -1466,7 +1466,7 @@ package body Debugger.Gdb_MI is
    overriding function Break_Source
      (Debugger  : access Gdb_MI_Debugger;
       File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Positive;
+      Line      : Editable_Line_Type;
       Temporary : Boolean := False;
       Mode      : Command_Type := Hidden)
       return GVD.Types.Breakpoint_Identifier is
@@ -1474,7 +1474,7 @@ package body Debugger.Gdb_MI is
       return Internal_Set_Breakpoint
         (Debugger,
          "-break-insert " & (if Temporary then "-t " else "")
-         & (+Base_Name (File)) & ':' & Image (Line),
+         & (+Base_Name (File)) & ':' & Image (Integer (Line)),
          Mode => Mode);
    end Break_Source;
 
@@ -1485,7 +1485,7 @@ package body Debugger.Gdb_MI is
    overriding procedure Remove_Breakpoint_At
      (Debugger : not null access Gdb_MI_Debugger;
       File     : GNATCOLL.VFS.Virtual_File;
-      Line     : Positive;
+      Line     : Editable_Line_Type;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
       pragma Unreferenced (Debugger, File, Line, Mode);
@@ -1938,6 +1938,7 @@ package body Debugger.Gdb_MI is
 
    overriding procedure List_Breakpoints
      (Debugger  : not null access Gdb_MI_Debugger;
+      Kernel    : not null access Kernel_Handle_Record'Class;
       List      : out Breakpoint_Vectors.Vector)
    is
       use Token_Lists;
@@ -1969,7 +1970,9 @@ package body Debugger.Gdb_MI is
          Next (C2, 2);
 
          declare
-            B : Breakpoint_Data;
+            B    : Breakpoint_Data;
+            F    : Virtual_File;
+            Line : Editable_Line_Type;
          begin
             B.Num := Breakpoint_Identifier'Value (Element (C2).Text.all);
 
@@ -1996,6 +1999,9 @@ package body Debugger.Gdb_MI is
             Next (C2, 2);
 
             if B.The_Type = Breakpoint then
+               F    := No_File;
+               Line := 0;
+
                loop
                   declare
                      Text : constant Ada.Strings.Unbounded.String_Access :=
@@ -2007,23 +2013,21 @@ package body Debugger.Gdb_MI is
                           To_Unbounded_String (Element (C2).Text.all);
                      elsif Text.all = "file" then
                         Next (C2, 2);
-                        B.File :=
-                          Debugger.Get_Kernel.Create_From_Base
-                            (+Element (C2).Text.all);
+                        F := Debugger.Get_Kernel.Create_From_Base
+                          (+Element (C2).Text.all);
 
                      elsif Text.all = "fullname" then
                         Next (C2, 2);
                         --  Translate the matched filename into local file if
                         --  needed
-                        B.File :=
-                          To_Local
-                            (Create (+Strip_Escape (Element (C2).Text.all),
-                             Get_Nickname (Debug_Server)));
+                        F := To_Local
+                          (Create (+Strip_Escape (Element (C2).Text.all),
+                           Get_Nickname (Debug_Server)));
 
                      elsif Text.all = "line" then
                         Next (C2, 2);
-                        B.Line :=
-                          Integer'Value (Element (C2).Text.all);
+                        Line :=
+                          Editable_Line_Type'Value (Element (C2).Text.all);
 
                      elsif Text.all = "what" then
                         Next (C2, 2);
@@ -2036,6 +2040,20 @@ package body Debugger.Gdb_MI is
 
                   Next (C2, 2);
                end loop;
+
+               --  Convert from a path returned by the debugger to the actual
+               --  path in the project, in case sources have changed.
+
+               if not F.Is_Absolute_Path or else not F.Is_Regular_File then
+                  F := Debugger.Kernel.Create_From_Base (F.Full_Name);
+               end if;
+
+               if Line /= 0 then
+                  B.Location := Kernel.Get_Buffer_Factory.Create_Marker
+                    (File   => F,
+                     Line   => Line,
+                     Column => 1);
+               end if;
 
             else  -- Watchpoint
                C2 := Find_Identifier (C2, "what");

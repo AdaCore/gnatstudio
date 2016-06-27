@@ -21,6 +21,7 @@ with Files_Extra_Info_Pkg;
 with Find_Utils;                    use Find_Utils;
 with GNAT.Regexp;
 with GNATCOLL.VFS;                  use GNATCOLL.VFS;
+with GPS.Editors;                   use GPS.Editors;
 with GPS.Kernel;
 with GPS.Search;
 with Generic_List;
@@ -30,7 +31,6 @@ with Gtk.Text_Iter;
 with Gtk.Text_Mark;                 use Gtk.Text_Mark;
 with Gtk.Widget;
 with Language_Handlers;
-with Src_Editor_Buffer;             use Src_Editor_Buffer;
 with GPS.Search.Replaces;           use GPS.Search.Replaces;
 
 package Src_Contexts is

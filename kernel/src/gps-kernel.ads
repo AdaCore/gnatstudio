@@ -65,6 +65,7 @@ with Xref;
 with GPS.Editors;
 with GPS.Environments;                use GPS.Environments;
 with GPS.Core_Kernels;                use GPS.Core_Kernels;
+with GPS.Markers;                     use GPS.Markers;
 limited with GPS.Kernel.Messages;
 with GPS.Messages_Windows;
 with GPS.Process_Launchers;
@@ -375,56 +376,12 @@ package GPS.Kernel is
    --  represent a location in a source editor, but also a location within
    --  a browser,...
 
-   type Location_Marker_Record is abstract tagged private;
-   type Location_Marker is access all Location_Marker_Record'Class;
-
-   function Go_To
-     (Marker : access Location_Marker_Record;
-      Kernel : access Kernel_Handle_Record'Class) return Boolean is abstract;
-   --  Move the focus in GPS to the location marked by M.
-   --  If this function returns False, it is assumed the marker is no longer
-   --  legal, and should be removed from the history.
-
-   function Clone
-     (Marker : access Location_Marker_Record)
-      return Location_Marker is abstract;
-   --  Return a clone of Marker
-
-   procedure Destroy (Marker : in out Location_Marker_Record);
-   --  Free the memory used by Marker. By default, this does nothing.
-
-   function To_String
-     (Marker : access Location_Marker_Record) return String is abstract;
-   --  Return a displayable string describing marker.
-   --  This string doesn't need to be unique for each marker, it is used in the
-   --  user interface to allow the user to select a specific marker.
-
-   function Save
-     (Marker : access Location_Marker_Record)
-      return XML_Utils.Node_Ptr is abstract;
-   --  Saves the marker to an XML node, so that it can be reloaded later on,
-   --  possibly in a different GPS session.
-
    procedure Push_Marker_In_History
      (Kernel : access Kernel_Handle_Record'Class;
-      Marker : access Location_Marker_Record'Class);
+      Marker : Location_Marker);
    --  Push a new marker in the list of previous locations the user has
    --  visited. This is the basic interface for the handling of the history of
    --  locations. It emits the hook Marker_Added_To_History.
-
-   function Similar
-     (Left  : access Location_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Boolean is abstract;
-   --  Return True if Left and Right point to the same location in the sense
-   --  that GPS should not add a new marker in history for two locations that
-   --  are the same.
-
-   function Distance
-     (Left  : access Location_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Integer is abstract;
-   --  Return a value represented distance between two locations.
-   --  Return Integer'Last if locations are not comparable, for example marks
-   --  are in different files.
 
    --------------------
    -- Action filters --
@@ -1059,8 +1016,6 @@ private
    --  Delete Func from the hook.
    --  This also frees the corresponding function, unless it is attached to
    --  multiple hooks.
-
-   type Location_Marker_Record is abstract tagged null record;
 
    type Custom_Load_State is (None, System_Level, User_Level);
    --  None         : loading not started

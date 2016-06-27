@@ -17,6 +17,7 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Debugger;                  use Debugger;
 with Gdk.Event;                 use Gdk.Event;
@@ -29,11 +30,13 @@ with Glib_Values_Utils;         use Glib_Values_Utils;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Debuggers;             use GPS.Debuggers;
+with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks; use GPS.Kernel;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Main_Window;           use GPS.Main_Window;
+with GPS.Markers;               use GPS.Markers;
 with Gtk.Adjustment;            use Gtk.Adjustment;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
@@ -352,19 +355,20 @@ package body GVD.Breakpoints is
               (Values (Last), To_String (Br.Expression));
          end if;
 
-         if Br.File /= GNATCOLL.VFS.No_File then
+         if Br.Location /= No_Marker then
             if Last < 5 then
                Last := Last + 1;
                Columns (Last) := Col_File;
                Glib.Values.Init
                  (Values (Last), Column_Types (Guint (Col_File)));
             end if;
-            Glib.Values.Set_String (Values (Last), +Base_Name (Br.File));
+            Glib.Values.Set_String
+              (Values (Last), +Base_Name (Get_File (Br.Location)));
 
             Last := Last + 1;
             Columns (Last) := Col_Line;
             Glib.Values.Init_Set_String
-              (Values (Last), Integer'Image (Br.Line));
+              (Values (Last), Get_Line (Br.Location)'Img);
          end if;
 
          if Br.Except /= "" then
@@ -940,15 +944,15 @@ package body GVD.Breakpoints is
 
          Set_Active (Self.Temporary, Br.Disposition /= Keep);
 
-      elsif Br.File /= GNATCOLL.VFS.No_File
+      elsif Br.Location /= No_Marker
         or else Br.Num = 0   --  a new breakpoint
       then
          Self.Breakpoint_Type.Set_Active
            (Breakpoint_Type'Pos (Break_On_Source_Loc));
 
-         Set_Text (Self.File_Name, +Base_Name (Br.File));
+         Set_Text (Self.File_Name, +Base_Name (Get_File (Br.Location)));
          --  ??? What if the filesystem path is non-UTF8?
-         Set_Value (Self.Line_Spin, Grange_Float (Br.Line));
+         Set_Value (Self.Line_Spin, Grange_Float (Get_Line (Br.Location)));
 
          if Br.Subprogram /= "" then
             Add_Unique_Combo_Entry
@@ -1117,7 +1121,8 @@ package body GVD.Breakpoints is
                Break_Source
                  (Self.Process.Kernel,
                   File      => Create_From_Base (File),
-                  Line      => Integer'Value (Self.Line_Spin.Get_Text),
+                  Line      =>
+                    Editable_Line_Type'Value (Self.Line_Spin.Get_Text),
                   Temporary => Temporary);
             end;
 
@@ -1439,8 +1444,8 @@ package body GVD.Breakpoints is
             --  ??? We should not be changing the current location, just
             --  showing the editor
             Process.Editor_Text.Set_Current_File_And_Line
-              (File => Selection.File,
-               Line => Selection.Line);
+              (File => Get_File (Selection.Location),
+               Line => Natural (Get_Line (Selection.Location)));
          end if;
       end if;
       return Success;

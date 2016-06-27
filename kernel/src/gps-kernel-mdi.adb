@@ -1499,12 +1499,15 @@ package body GPS.Kernel.MDI is
    -- Create --
    ------------
 
-   function Create_MDI_Marker (Name : String) return MDI_Location_Marker is
-      M : MDI_Location_Marker;
+   function Create_MDI_Marker
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Name   : String) return Location_Marker is
    begin
-      M := new MDI_Location_Marker_Record;
-      M.Title := To_Unbounded_String (Name);
-      return M;
+      return L : Location_Marker do
+         L.Set (MDI_Location_Marker_Data'
+                  (Kernel => Kernel,
+                   Title  => To_Unbounded_String (Name)));
+      end return;
    end Create_MDI_Marker;
 
    -----------
@@ -1512,12 +1515,11 @@ package body GPS.Kernel.MDI is
    -----------
 
    overriding function Go_To
-     (Marker : access MDI_Location_Marker_Record;
-      Kernel : access Kernel_Handle_Record'Class) return Boolean
+     (Marker : not null access MDI_Location_Marker_Data) return Boolean
    is
       Child : MDI_Child;
    begin
-      Child := Find_MDI_Child_By_Name (MDI  => Get_MDI (Kernel),
+      Child := Find_MDI_Child_By_Name (MDI  => Get_MDI (Marker.Kernel),
                                        Name => To_String (Marker.Title));
 
       if Child /= null then
@@ -1528,23 +1530,12 @@ package body GPS.Kernel.MDI is
       return False;
    end Go_To;
 
-   -----------
-   -- Clone --
-   -----------
-
-   overriding function Clone
-     (Marker : access MDI_Location_Marker_Record) return Location_Marker
-   is
-   begin
-      return Location_Marker (Create_MDI_Marker (To_String (Marker.Title)));
-   end Clone;
-
    ---------------
    -- To_String --
    ---------------
 
    overriding function To_String
-     (Marker : access MDI_Location_Marker_Record) return String is
+     (Marker : not null access MDI_Location_Marker_Data) return String is
    begin
       return "MDI: " & To_String (Marker.Title);
    end To_String;
@@ -1554,7 +1545,9 @@ package body GPS.Kernel.MDI is
    ----------
 
    overriding function Save
-     (Marker : access MDI_Location_Marker_Record) return XML_Utils.Node_Ptr is
+     (Marker : not null access MDI_Location_Marker_Data)
+      return XML_Utils.Node_Ptr
+   is
       Node : constant Node_Ptr := new XML_Utils.Node;
    begin
       Node.Tag := new String'("mdi_marker");
@@ -1567,16 +1560,13 @@ package body GPS.Kernel.MDI is
    -------------
 
    overriding function Similar
-     (Left  : access MDI_Location_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Boolean
+     (Left  : not null access MDI_Location_Marker_Data;
+      Right : not null access Location_Marker_Data'Class) return Boolean
    is
       use type Ada.Tags.Tag;
    begin
-      if Right.all'Tag /= MDI_Location_Marker_Record'Tag then
-         return False;
-      end if;
-
-      return Left.Title = MDI_Location_Marker (Right).Title;
+      return Right.all'Tag = MDI_Location_Marker_Data'Tag
+        and then Left.Title = MDI_Location_Marker_Data (Right.all).Title;
    end Similar;
 
    -------------
@@ -1597,8 +1587,8 @@ package body GPS.Kernel.MDI is
    --------------
 
    overriding function Distance
-     (Left  : access MDI_Location_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Integer is
+     (Left  : not null access MDI_Location_Marker_Data;
+      Right : not null access Location_Marker_Data'Class) return Integer is
    begin
       if Similar (Left, Right) then
          return 0;
@@ -1614,16 +1604,15 @@ package body GPS.Kernel.MDI is
    overriding function Bookmark_Handler
      (Module : access General_UI_Module_Record;
       Load   : XML_Utils.Node_Ptr := null) return Location_Marker is
-      pragma Unreferenced (Module);
    begin
       if Load /= null
         and then Load.Tag.all = "mdi_marker"
       then
-         return Location_Marker
-           (Create_MDI_Marker (Get_Attribute (Load, "title")));
+         return Create_MDI_Marker
+           (Module.Get_Kernel, Get_Attribute (Load, "title"));
       end if;
 
-      return null;
+      return No_Marker;
    end Bookmark_Handler;
 
    -------------

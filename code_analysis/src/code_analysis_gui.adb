@@ -364,7 +364,7 @@ package body Code_Analysis_GUI is
         (Kernel, File_Node, Quiet, Allow_Auto_Jump_To_First => False);
 
       Push_Marker_In_History
-        (Kernel, Create_MDI_Marker (View.Name & (-" Report")));
+        (Kernel, Create_MDI_Marker (Kernel, View.Name & (-" Report")));
 
       Open_File_Action_Hook.Run
         (Kernel,

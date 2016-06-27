@@ -54,6 +54,7 @@ with Language_Handlers;            use Language_Handlers;
 with Projects;                     use Projects;
 with Src_Contexts;                 use Src_Contexts;
 with Src_Editor_Box;               use Src_Editor_Box;
+with Src_Editor_Buffer;            use Src_Editor_Buffer;
 with Src_Editor_Buffer.Blocks;     use Src_Editor_Buffer.Blocks;
 with Src_Editor_Buffer.Debug;
 with Src_Editor_Buffer.Line_Information;
@@ -270,6 +271,11 @@ package body Src_Editor_Module.Shell is
    --  Return the mark stored in the Arg-th parameter.
    --  Set Mark to null if it wasn't a valid instance
 
+   function Get_Marker
+     (Data : Callback_Data'Class;
+      Arg  : Positive) return Location_Marker;
+   --  Return the location marker itself, stored in the Arg-th parameter
+
    function Get_Buffer
      (Data   : Callback_Data'Class;
       Arg    : Positive) return GPS_Editor_Buffer'Class;
@@ -400,8 +406,7 @@ package body Src_Editor_Module.Shell is
      (Script : access Scripting_Language_Record'Class;
       Mark   : Editor_Mark'Class) return Class_Instance is
    begin
-      return Instance_From_Mark
-        (Script, New_Class (Get_Kernel (Script), "EditorMark"), Mark);
+      return Instance_From_Mark (Script, Mark);
    end Create_Editor_Mark;
 
    --------------
@@ -420,6 +425,21 @@ package body Src_Editor_Module.Shell is
         (Src_Editor_Buffer_Factory
            (Get_Buffer_Factory (Get_Kernel (Data)).all), Inst);
    end Get_Mark;
+
+   --------------
+   -- Get_Mark --
+   --------------
+
+   function Get_Marker
+     (Data : Callback_Data'Class;
+      Arg  : Positive) return Location_Marker
+   is
+      EditorMark : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "EditorMark");
+      Inst       : constant Class_Instance := Nth_Arg (Data, Arg, EditorMark);
+   begin
+      return Src_Editor_Module.Markers.From_Instance (Inst);
+   end Get_Marker;
 
    -------------------
    -- Create_Cursor --
@@ -726,14 +746,12 @@ package body Src_Editor_Module.Shell is
    procedure Edit_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (File_Marker_Record'Class, File_Marker);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Length : Natural := 0;
       Line   : Natural := 1;
       Column : Visible_Column_Type := 1;
       Force  : Boolean;
-      Marker : File_Marker;
+      Marker : Location_Marker;
 
    begin
       if Command = "edit" or else Command = "create_mark" then
@@ -783,14 +801,15 @@ package body Src_Editor_Module.Shell is
                   end if;
 
                elsif Command = "create_mark" then
-                  --  ??? Wrong conversion here?
                   Marker := Create_File_Marker
                     (Kernel,
                      File,
                      No_Project,
                      Editable_Line_Type (Line),
                      Column, Length);
-                  Set_Return_Value (Data, Get_Id (Marker));
+                  Data.Set_Return_Value
+                    (Src_Editor_Module.Markers.Get_Or_Create_Instance
+                       (Marker, Script => Data.Get_Script));
                end if;
             end if;
          end;
@@ -1027,19 +1046,12 @@ package body Src_Editor_Module.Shell is
          end;
 
       elsif Command = "goto_mark" then
-         Marker := Find_Mark (Nth_Arg (Data, 1));
+         Marker := Get_Marker (Data, 1);
          Push_Current_Editor_Location_In_History (Kernel);
-         Force := Go_To (Marker, Kernel);
+         Force := Go_To (Marker);
 
       elsif Command = "mark_current_location" then
          Push_Current_Editor_Location_In_History (Kernel);
-
-      elsif Command = "delete_mark" then
-         Marker := Find_Mark (Nth_Arg (Data, 1));
-         if Marker /= null then
-            Destroy (Marker.all);
-            Unchecked_Free (Marker);
-         end if;
 
       elsif Command = "get_chars" then
          Name_Parameters (Data, Get_Chars_Args);
@@ -1120,18 +1132,6 @@ package body Src_Editor_Module.Shell is
                Insert (Buffer, Line, Column, Text);
             end if;
          end;
-
-      elsif Command = "get_line" then
-         Marker := Find_Mark (Nth_Arg (Data, 1));
-         Set_Return_Value (Data, Natural (Get_Line (Marker)));
-
-      elsif Command = "get_column" then
-         Marker := Find_Mark (Nth_Arg (Data, 1));
-         Set_Return_Value (Data, Natural (Get_Column (Marker)));
-
-      elsif Command = "get_file" then
-         Marker := Find_Mark (Nth_Arg (Data, 1));
-         Set_Return_Value (Data, Full_Name (Get_File (Marker)));
 
       elsif Command = "get_last_line" then
          declare
@@ -1467,7 +1467,9 @@ package body Src_Editor_Module.Shell is
                        (Get_Buffer (Box),
                         Editable_Line_Type (Line),
                         Style, Number, "", "", null));
-                  Set_Return_Value (Data, Get_Id (Marker));
+                  Data.Set_Return_Value
+                    (Src_Editor_Module.Markers.Get_Or_Create_Instance
+                       (Marker, Data.Get_Script));
                end if;
             else
                Set_Error_Msg (Data, -"file not open");
@@ -1475,21 +1477,24 @@ package body Src_Editor_Module.Shell is
          end;
 
       elsif Command = "remove_blank_lines" then
-         Marker := Find_Mark (Nth_Arg (Data, 1));
+         Marker := Get_Marker (Data, 1);
          declare
             Child  : MDI_Child;
             Number : Integer := 0;
             Box    : Source_Editor_Box;
+            F      : File_Marker;
          begin
             if Number_Of_Arguments (Data) >= 2 then
                Number := Nth_Arg (Data, 2);
             end if;
 
-            if Get_Mark (Marker) /= null then
-               Child := Find_Editor (Kernel, Get_File (Marker), No_Project);
+            F := File_Marker (Marker.Unchecked_Get);
+
+            if Get_Mark (F) /= null then
+               Child := Find_Editor (Kernel, Get_File (F), No_Project);
                Box := Source_Editor_Box (Get_Widget (Child));
                Src_Editor_Buffer.Line_Information.Remove_Blank_Lines
-                 (Get_Buffer (Box), Get_Mark (Marker), Number);
+                 (Get_Buffer (Box), Get_Mark (F), Number);
             else
                Set_Error_Msg (Data, -"file not found or not open");
             end if;
@@ -2235,8 +2240,8 @@ package body Src_Editor_Module.Shell is
       elsif Command = "create_mark" then
          Name_Parameters (Data, (1 => Name_Cst'Access,
                                  2 => Left_Gravity_Cst'Access));
-         Set_Return_Value
-           (Data, Create_Editor_Mark
+         Data.Set_Return_Value
+           (Create_Editor_Mark
               (Get_Script (Data),
                Get_Location (Data, 1).Create_Mark
                (Nth_Arg (Data, 2, ""), Nth_Arg (Data, 3, True))));
@@ -2336,25 +2341,9 @@ package body Src_Editor_Module.Shell is
       if Command = Constructor_Method then
          Set_Error_Msg (Data, "Cannot create an EditorMark directly");
 
-      elsif Command = Destructor_Method then
-         --  Do not delete named marks, since we can still access them
-         --  through get_mark() anyway
-         begin
-            declare
-               M : constant Editor_Mark'Class := Get_Mark (Data, 1);
-            begin
-               if M.Name = "" then
-                  M.Delete;
-               end if;
-            end;
-         exception
-            when Editor_Exception =>
-               null;  --  The gtk+ mark might already have been destroyed, so
-                        --  this isn't an error
-         end;
-
       elsif Command = "delete" then
-         Get_Mark (Data, 1).Delete;
+         --  Remove one reference to the mark, possibly deleting it
+         Unset_Marker_In_Instance (Data.Nth_Arg (1));
 
       elsif Command = "is_present" then
          Set_Return_Value (Data, Get_Mark (Data, 1).Is_Present);
@@ -2363,6 +2352,17 @@ package body Src_Editor_Module.Shell is
          Set_Return_Value
            (Data, Create_Editor_Location
               (Get_Script (Data), Get_Mark (Data, 1).Location));
+
+      elsif Command = "file" then
+         Set_Return_Value
+           (Data, Create_File
+              (Data.Get_Script, Get_File (Get_Marker (Data, 1))));
+
+      elsif Command = "line" then
+         Set_Return_Value (Data, Integer (Get_Line (Get_Marker (Data, 1))));
+
+      elsif Command = "column" then
+         Set_Return_Value (Data, Integer (Get_Column (Get_Marker (Data, 1))));
 
       elsif Command = "move" then
          Name_Parameters (Data, (1 => Location_Cst'Access));
@@ -2732,14 +2732,24 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, Constructor_Method, 0, 0, Mark_Cmds'Access, EditorMark);
       Register_Command
-        (Kernel, Destructor_Method, 0, 0, Mark_Cmds'Access, EditorMark);
-      Register_Command
         (Kernel, "delete", 0, 0, Mark_Cmds'Access, EditorMark);
       Register_Command
         (Kernel, "is_present", 0, 0, Mark_Cmds'Access, EditorMark);
       Register_Command
         (Kernel, "location", 0, 0, Mark_Cmds'Access, EditorMark);
       Register_Command (Kernel, "move", 1, 1, Mark_Cmds'Access, EditorMark);
+      Kernel.Scripts.Register_Property
+        ("file",
+         Class => EditorMark,
+         Getter => Mark_Cmds'Access);
+      Kernel.Scripts.Register_Property
+        ("line",
+         Class  => EditorMark,
+         Getter => Mark_Cmds'Access);
+      Kernel.Scripts.Register_Property
+        ("column",
+         Class  => EditorMark,
+         Getter => Mark_Cmds'Access);
 
       --  MultiCursor
 
@@ -2966,19 +2976,7 @@ package body Src_Editor_Module.Shell is
         (Kernel, "goto_mark", 1, 1, Edit_Command_Handler'Access, Editor_Class,
          True);
       Register_Command
-        (Kernel, "delete_mark", 1, 1, Edit_Command_Handler'Access,
-         Editor_Class, True);
-      Register_Command
         (Kernel, "get_chars", 1, 5, Edit_Command_Handler'Access, Editor_Class,
-         True);
-      Register_Command
-        (Kernel, "get_line", 1, 1, Edit_Command_Handler'Access, Editor_Class,
-         True);
-      Register_Command
-        (Kernel, "get_column", 1, 1, Edit_Command_Handler'Access, Editor_Class,
-         True);
-      Register_Command
-        (Kernel, "get_file", 1, 1, Edit_Command_Handler'Access, Editor_Class,
          True);
       Register_Command
         (Kernel, "get_last_line", 1, 1, Edit_Command_Handler'Access,

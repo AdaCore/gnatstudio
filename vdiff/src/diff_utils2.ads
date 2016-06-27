@@ -44,11 +44,11 @@ package Diff_Utils2 is
       First            : Natural := 0;
       Last             : Natural := 0;
       Action           : Diff_Action := Nothing;
-      Blank_Lines_Mark : Natural := Invalid_Mark;
+      Blank_Lines_Mark : Editor_Mark_Access;
       Special_Lines_Mark : Editor_Mark_Access;
    end record;
 
-   Null_Range : constant Diff_Range := (0, 0, Nothing, 0, null);
+   Null_Range : constant Diff_Range := (0, 0, Nothing, null, null);
 
    type T_VRange  is array (1 .. 3) of Diff_Range;
    type T_VStr    is array (1 .. 3) of String_Access;

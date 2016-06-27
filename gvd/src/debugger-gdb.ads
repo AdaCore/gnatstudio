@@ -218,7 +218,7 @@ package Debugger.Gdb is
    overriding function Break_Source
      (Debugger  : access Gdb_Debugger;
       File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Positive;
+      Line      : Editable_Line_Type;
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
      return GVD.Types.Breakpoint_Identifier;
@@ -226,7 +226,7 @@ package Debugger.Gdb is
    overriding procedure Remove_Breakpoint_At
      (Debugger : not null access Gdb_Debugger;
       File     : GNATCOLL.VFS.Virtual_File;
-      Line     : Positive;
+      Line     : Editable_Line_Type;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    overriding function Break_Exception
@@ -354,6 +354,7 @@ package Debugger.Gdb is
 
    overriding procedure List_Breakpoints
      (Debugger  : not null access Gdb_Debugger;
+      Kernel    : not null access Kernel_Handle_Record'Class;
       List      : out Breakpoint_Vectors.Vector);
 
    overriding function List_Exceptions

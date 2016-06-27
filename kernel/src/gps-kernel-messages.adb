@@ -1011,7 +1011,7 @@ package body GPS.Kernel.Messages is
          Self.Mark :=
            new Editor_Mark'Class'
              (Parent.Get_Container.Kernel.Get_Buffer_Factory.New_Mark
-                  (File, Actual_Line, Actual_Column));
+                (File, Actual_Line, Actual_Column));
       end if;
 
       Self.Parent := Node_Access (Parent);
@@ -1059,7 +1059,7 @@ package body GPS.Kernel.Messages is
          Self.Mark :=
            new Editor_Mark'Class'
              (Container.Kernel.Get_Buffer_Factory.New_Mark
-                  (File, Actual_Line, Actual_Column));
+                (File, Actual_Line, Actual_Column));
       end if;
 
       --  Resolve category node, create new one when there is no existent node

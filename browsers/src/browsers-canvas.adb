@@ -67,6 +67,7 @@ with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;            use GPS.Kernel.Preferences;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
+with GPS.Markers;                       use GPS.Markers;
 with GPS.Stock_Icons;                   use GPS.Stock_Icons;
 with Histories;                         use Histories;
 with XML_Utils;                         use XML_Utils;
@@ -207,32 +208,30 @@ package body Browsers.Canvas is
    -- Markers --
    -------------
 
-   type Browser_Marker_Record is new Location_Marker_Record with record
-      Title : GNAT.Strings.String_Access;
+   type Browser_Marker_Data is new Location_Marker_Data with record
+      Title  : GNAT.Strings.String_Access;
+      Kernel : not null access Kernel_Handle_Record'Class;
    end record;
-   type Browser_Marker is access all Browser_Marker_Record'Class;
-
    overriding function Go_To
-     (Marker : access Browser_Marker_Record;
-      Kernel : access Kernel_Handle_Record'Class) return Boolean;
-   overriding function Clone
-     (Marker : access Browser_Marker_Record)
-      return Location_Marker;
-   overriding procedure Destroy (Marker : in out Browser_Marker_Record);
+     (Marker : not null access Browser_Marker_Data) return Boolean;
+   overriding procedure Destroy (Marker : in out Browser_Marker_Data);
    overriding function To_String
-     (Marker : access Browser_Marker_Record) return String;
+     (Marker : not null access Browser_Marker_Data) return String;
    overriding function Save
-     (Marker : access Browser_Marker_Record) return XML_Utils.Node_Ptr;
+     (Marker : not null access Browser_Marker_Data) return XML_Utils.Node_Ptr;
    overriding function Similar
-     (Left  : access Browser_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Boolean;
+     (Left  : not null access Browser_Marker_Data;
+      Right : not null access Location_Marker_Data'Class) return Boolean
+     is (False);
    overriding function Distance
-     (Left  : access Browser_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Integer;
+     (Left  : not null access Browser_Marker_Data;
+      Right : not null access Location_Marker_Data'Class) return Integer
+     is (Integer'Last);
    --  See inherited documentation
 
    function Create_Browser_Marker
-     (Browser_Name : String) return Browser_Marker;
+     (Kernel       : not null access Kernel_Handle_Record'Class;
+      Browser_Name : String) return Location_Marker;
    --  Create a new marker that will bring the user back to the browser
 
    --------------------------
@@ -1088,7 +1087,7 @@ package body Browsers.Canvas is
       Title  : String) is
    begin
       Push_Marker_In_History
-        (Kernel, Create_Browser_Marker (Browser_Name => Title));
+        (Kernel, Create_Browser_Marker (Kernel, Browser_Name => Title));
    end Add_Navigation_Location;
 
    -----------
@@ -1096,11 +1095,10 @@ package body Browsers.Canvas is
    -----------
 
    overriding function Go_To
-     (Marker : access Browser_Marker_Record;
-      Kernel : access Kernel_Handle_Record'Class) return Boolean
+     (Marker : not null access Browser_Marker_Data) return Boolean
    is
       Child : constant MDI_Child := Find_MDI_Child_By_Name
-        (Get_MDI (Kernel), Marker.Title.all);
+        (Get_MDI (Marker.Kernel), Marker.Title.all);
    begin
       if Child = null then
          return False;
@@ -1114,7 +1112,7 @@ package body Browsers.Canvas is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Marker : in out Browser_Marker_Record) is
+   overriding procedure Destroy (Marker : in out Browser_Marker_Data) is
    begin
       Free (Marker.Title);
    end Destroy;
@@ -1124,7 +1122,7 @@ package body Browsers.Canvas is
    ---------------
 
    overriding function To_String
-     (Marker : access Browser_Marker_Record) return String is
+     (Marker : not null access Browser_Marker_Data) return String is
    begin
       return "Browser: " & Marker.Title.all;
    end To_String;
@@ -1134,7 +1132,7 @@ package body Browsers.Canvas is
    ----------
 
    overriding function Save
-     (Marker : access Browser_Marker_Record) return XML_Utils.Node_Ptr
+     (Marker : not null access Browser_Marker_Data) return XML_Utils.Node_Ptr
    is
       N : constant Node_Ptr := new Node;
    begin
@@ -1143,53 +1141,20 @@ package body Browsers.Canvas is
       return N;
    end Save;
 
-   -------------
-   -- Similar --
-   -------------
-
-   overriding function Similar
-     (Left  : access Browser_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Boolean
-   is
-      pragma Unreferenced (Left, Right);
-   begin
-      return False;
-   end Similar;
-
-   --------------
-   -- Distance --
-   --------------
-
-   overriding function Distance
-     (Left  : access Browser_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Integer
-   is
-      pragma Unreferenced (Left, Right);
-   begin
-      return Integer'Last;
-   end Distance;
-
    ---------------------------
    -- Create_Browser_Marker --
    ---------------------------
 
    function Create_Browser_Marker
-     (Browser_Name : String) return Browser_Marker is
+     (Kernel       : not null access Kernel_Handle_Record'Class;
+      Browser_Name : String) return Location_Marker is
    begin
-      return new Browser_Marker_Record'
-        (Location_Marker_Record with Title => new String'(Browser_Name));
+      return L : Location_Marker do
+         L.Set (Browser_Marker_Data'
+                  (Kernel => Kernel,
+                   Title  => new String'(Browser_Name)));
+      end return;
    end Create_Browser_Marker;
-
-   -----------
-   -- Clone --
-   -----------
-
-   overriding function Clone
-     (Marker : access Browser_Marker_Record)
-      return Location_Marker is
-   begin
-      return Location_Marker (Create_Browser_Marker (Marker.Title.all));
-   end Clone;
 
    ----------------------
    -- Register_Actions --

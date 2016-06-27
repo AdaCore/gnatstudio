@@ -23,10 +23,12 @@ with GNATCOLL.VFS;            use GNATCOLL.VFS;
 
 with Gtk.Widget;              use Gtk.Widget;
 
+with Basic_Types;             use Basic_Types;
 with Debugger;                use Debugger;
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
 with GPS.Debuggers;           use GPS.Debuggers;
+with GPS.Editors;             use GPS.Editors;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
@@ -97,11 +99,12 @@ package body GVD.Scripts is
          Data.Set_Return_Value
            (Create_File
               (Data.Get_Script,
-               Get_Breakpoint (Data.Nth_Arg (1)).File));
+               Get_File (Get_Breakpoint (Data.Nth_Arg (1)).Location)));
 
       elsif Command = "line" then
          Data.Set_Return_Value
-           (Get_Breakpoint (Data.Nth_Arg (1)).Line);
+           (Natural
+              (Get_Line (Get_Breakpoint (Data.Nth_Arg (1)).Location)));
       end if;
    end Info_Handler;
 
@@ -284,14 +287,14 @@ package body GVD.Scripts is
          Break_Source
            (Kernel => Kernel,
             File  => Nth_Arg (Data, 2),
-            Line   => Data.Nth_Arg (3));
+            Line   => Editable_Line_Type (Integer'(Data.Nth_Arg (3))));
 
       elsif Command = "unbreak_at_location" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Unbreak_Source
            (Kernel,
             File  => Nth_Arg (Data, 2),
-            Line  => Data.Nth_Arg (3));
+            Line  => Editable_Line_Type (Integer'(Data.Nth_Arg (3))));
 
       elsif Command = "command" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));

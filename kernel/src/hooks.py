@@ -185,8 +185,8 @@ types = {
     'Location': Mapping(
         ada='Location_Marker',
         python='GPS.Location',
-        topython='To_String (%(ada)s)',
-        toada='null'),
+        topython='GPS.Markers.To_String (%(ada)s)',
+        toada='GPS.Markers.No_Marker'),
 
     'Distant_Server': Mapping(
         ada='Remote.Distant_Server_Type',

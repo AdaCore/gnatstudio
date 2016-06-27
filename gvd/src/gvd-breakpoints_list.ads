@@ -17,10 +17,12 @@
 
 with Ada.Containers.Vectors; use Ada.Containers;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with Basic_Types;            use Basic_Types;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GVD.Types;              use GVD.Types;
 with GPS.Debuggers;          use GPS.Debuggers;
 with GPS.Kernel;             use GPS.Kernel;
+with GPS.Markers;            use GPS.Markers;
 
 package GVD.Breakpoints_List is
 
@@ -57,12 +59,12 @@ package GVD.Breakpoints_List is
    procedure Break_Source
      (Kernel        : not null access Kernel_Handle_Record'Class;
       File          : Virtual_File;
-      Line          : Natural;
+      Line          : Editable_Line_Type;
       Temporary     : Boolean := False);
    procedure Unbreak_Source
      (Kernel        : not null access Kernel_Handle_Record'Class;
       File          : Virtual_File;
-      Line          : Natural);
+      Line          : Editable_Line_Type);
    --  Set a breakpoint on the given location.
    --  If no debugger is currently running, the breakpoint will be applied when
    --  one is started. If one or more debuggers are running, they all break
@@ -107,12 +109,8 @@ package GVD.Breakpoints_List is
       Subprogram  : Unbounded_String;
       --  Name of the subprogram we stop in.
 
-      File        : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
-      --  The file name that contains the breakpoint.
-      --  Must be stored as an absolute file name.
-
-      Line        : Integer := 0;
-      --  The line that contains the breakpoint
+      Location    : Location_Marker := No_Marker;
+      --  The location of the breakpoint
 
       Condition   : Unbounded_String;
       --  Condition on which this breakpoint is activated

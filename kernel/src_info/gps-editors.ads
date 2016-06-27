@@ -18,13 +18,16 @@
 --  An abstract definition of what editors are and what they can do.
 
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
-with Ada.Finalization; use Ada.Finalization;
-with Basic_Types;      use Basic_Types;
-with GNATCOLL.Scripts; use GNATCOLL.Scripts;
-with GNATCOLL.VFS;     use GNATCOLL.VFS;
-with GNATCOLL.Xref;    use GNATCOLL.Xref;
-with Language;         use Language;
+with Ada.Finalization;  use Ada.Finalization;
+with Basic_Types;       use Basic_Types;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.Xref;     use GNATCOLL.Xref;
+with GPS.Markers;       use GPS.Markers;
+with Language;          use Language;
 with System;
+with XML_Utils;
 
 package GPS.Editors is
 
@@ -284,7 +287,7 @@ package GPS.Editors is
    function Is_Present (This : Editor_Mark) return Boolean is abstract;
    --  Returns True if mark's location is still present in the buffer
 
-   procedure Delete (This : Editor_Mark) is abstract;
+   procedure Delete (This : in out Editor_Mark) is abstract;
    --  Deletes the physical mark from the buffer.
 
    function Name (This : Editor_Mark) return String is abstract;
@@ -786,7 +789,66 @@ package GPS.Editors is
       Cursor_Location : Editor_Location'Class;
       From_User       : Boolean) is abstract;
 
+   ----------------------
+   -- Location markers --
+   ----------------------
+
+   type Abstract_File_Marker_Data is
+      new Location_Marker_Data with null record;
+   type Abstract_File_Marker is access all Abstract_File_Marker_Data'Class;
+   --  Type should be abstract, but AJIS fails in that case.
+
+   function Get_File
+     (Self : not null access Abstract_File_Marker_Data)
+      return GNATCOLL.VFS.Virtual_File is (GNATCOLL.VFS.No_File);
+   function Get_Line
+     (Self : not null access Abstract_File_Marker_Data)
+      return Editable_Line_Type is (0);
+   function Get_Column
+     (Self : not null access Abstract_File_Marker_Data)
+      return Visible_Column_Type is (0);
+   --  Return the current location of the marker
+
+   function Get_File (Self : Location_Marker) return GNATCOLL.VFS.Virtual_File
+     is (if Self.Is_Null
+         or else Self.Unchecked_Get.all not in Abstract_File_Marker_Data'Class
+         then GNATCOLL.VFS.No_File
+         else Get_File (Abstract_File_Marker (Self.Unchecked_Get)));
+   function Get_Line (Self : Location_Marker) return Editable_Line_Type
+     is (if Self.Is_Null
+         or else Self.Unchecked_Get.all not in Abstract_File_Marker_Data'Class
+         then 0
+         else Get_Line (Abstract_File_Marker (Self.Unchecked_Get)));
+   function Get_Column (Self : Location_Marker) return Visible_Column_Type
+     is (if Self.Is_Null
+         or else Self.Unchecked_Get.all not in Abstract_File_Marker_Data'Class
+         then 0
+         else Get_Column (Abstract_File_Marker (Self.Unchecked_Get)));
+
+   function Create_Marker
+     (This    : Editor_Buffer_Factory;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project;
+      Line    : Editable_Line_Type;
+      Column  : Visible_Column_Type;
+      Length  : Natural := 0) return Location_Marker is abstract;
+   --  Create a mark at a specific location in a file.
+   --  Whenever the file is edited, the mark will move to keep pointing to the
+   --  same position (hooks are set up even if the file is not currently
+   --  edited).
+
 private
+
+   overriding function Go_To
+     (Self  : not null access Abstract_File_Marker_Data) return Boolean
+     is (False);
+   overriding function To_String
+     (Self : not null access Abstract_File_Marker_Data) return String is ("");
+   overriding function Save
+     (Self : not null access Abstract_File_Marker_Data)
+     return XML_Utils.Node_Ptr is (null);
+   --  Dummy functions for the sake of AJIS. Will be removed when we can make
+   --  Abstract_File_Marker_Data abstract
 
    -------------------------
    -- Nil_Editor_Location --
@@ -903,7 +965,7 @@ private
 
    overriding function Is_Present (This : Dummy_Editor_Mark) return Boolean;
 
-   overriding procedure Delete (This : Dummy_Editor_Mark) is null;
+   overriding procedure Delete (This : in out Dummy_Editor_Mark) is null;
 
    overriding procedure Move
      (This : Dummy_Editor_Mark; Location : Editor_Location'Class) is null;

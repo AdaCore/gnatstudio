@@ -2051,7 +2051,7 @@ package body Debugger.Gdb is
    overriding function Break_Source
      (Debugger  : access Gdb_Debugger;
       File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Positive;
+      Line      : Editable_Line_Type;
       Temporary : Boolean := False;
       Mode      : Command_Type := Hidden)
       return GVD.Types.Breakpoint_Identifier
@@ -2060,13 +2060,13 @@ package body Debugger.Gdb is
       if Temporary then
          return Internal_Set_Breakpoint
            (Debugger,
-            "tbreak " & (+Base_Name (File)) & ":" & Image (Line),
+            "tbreak " & (+Base_Name (File)) & ":" & Image (Integer (Line)),
             Mode => Mode);
 
       else
          return Internal_Set_Breakpoint
            (Debugger,
-            "break " & (+Base_Name (File)) & ':' & Image (Line),
+            "break " & (+Base_Name (File)) & ':' & Image (Integer (Line)),
             Mode => Mode);
       end if;
    end Break_Source;
@@ -2078,11 +2078,11 @@ package body Debugger.Gdb is
    overriding procedure Remove_Breakpoint_At
      (Debugger : not null access Gdb_Debugger;
       File     : GNATCOLL.VFS.Virtual_File;
-      Line     : Positive;
+      Line     : Editable_Line_Type;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
       Debugger.Send
-        ("clear " & File.Display_Full_Name & ":" & Image (Line),
+        ("clear " & File.Display_Full_Name & ":" & Image (Integer (Line)),
          Mode => Mode);
    end Remove_Breakpoint_At;
 
@@ -3303,6 +3303,7 @@ package body Debugger.Gdb is
 
    overriding procedure List_Breakpoints
      (Debugger  : not null access Gdb_Debugger;
+      Kernel    : not null access Kernel_Handle_Record'Class;
       List      : out Breakpoint_Vectors.Vector)
    is
       S : constant String :=
@@ -3400,24 +3401,30 @@ package body Debugger.Gdb is
          Has_Matched : out Boolean)
       is
          Matched : Match_Array (0 .. 10);
+         F : Virtual_File;
       begin
          Has_Matched := False;
 
          Match (File_Name_In_Breakpoint, S (First .. Last - 2), Matched);
          if Matched (0) /= No_Match then
             --  Translate the matched filename into local file if needed
-            Current.File := To_Local
+            F := To_Local
               (Create
                  (+S (Matched (1).First .. Matched (1).Last),
                   Get_Nickname (Debug_Server)));
 
-            if not Current.File.Is_Absolute_Path then
-               Current.File := Debugger.Kernel.Create_From_Base
-                 (Current.File.Full_Name);
+            --  Convert from a path returned by the debugger to the actual
+            --  path in the project, in case sources have changed.
+            if not F.Is_Absolute_Path or else not F.Is_Regular_File then
+               F := Debugger.Kernel.Create_From_Base (F.Full_Name);
             end if;
 
-            Current.Line := Integer'Value
-              (S (Matched (2).First .. Matched (2).Last));
+            Current.Location := Kernel.Get_Buffer_Factory.Create_Marker
+              (File => F,
+               Line => Editable_Line_Type'Value
+                 (S (Matched (2).First .. Matched (2).Last)),
+               Column => 1);
+
             Has_Matched := True;
          end if;
 

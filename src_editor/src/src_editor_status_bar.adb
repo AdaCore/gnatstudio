@@ -16,13 +16,11 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with Basic_Types;               use Basic_Types;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GPS.Editors;               use GPS.Editors;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;

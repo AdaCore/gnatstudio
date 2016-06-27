@@ -17,18 +17,22 @@
 
 --  This package provides wraper for shell command.
 
+with Basic_Types;   use Basic_Types;
+with Diff_Utils2;   use Diff_Utils2;
+with GPS.Editors;   use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+
 package Vdiff2_Module.Utils.Shell_Command is
 
    function Add_Line
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : Virtual_File;
-      Pos    : Natural;
+      Buffer : GPS_Editor_Buffer'Class;
+      Pos    : Editable_Line_Type;
       Style  : String := "";
-      Number : Natural := 1) return Natural;
+      Number : Natural := 1) return Editor_Mark_Access;
    --  Add a blank line at line Pos of a given file editor,
    --  using Style for color.
    --  Return corresponding Mark.
-   pragma Inline (Add_Line);
 
    procedure Edit
      (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -63,17 +67,6 @@ package Vdiff2_Module.Utils.Shell_Command is
    --  Return the number of line in file File
    pragma Inline (Get_File_Last_Line);
 
-   function Get_Line_Number
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Mark   : String) return Natural;
-   --  Returns the current line of Mark
-   pragma Inline (Get_Line_Number);
-
-   procedure Delete_Mark
-     (Kernel : Kernel_Handle;
-      Link   : String);
-   pragma Inline (Delete_Mark);
-
    procedure Highlight_Line
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
@@ -99,9 +92,8 @@ package Vdiff2_Module.Utils.Shell_Command is
 
    procedure Remove_Blank_Lines
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Mark   : Natural);
+      Mark   : Editor_Mark'Class);
    --  Remove blank lines located at mark
-   pragma Inline (Remove_Blank_Lines);
 
    procedure Replace_Text
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;

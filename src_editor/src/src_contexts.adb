@@ -64,13 +64,13 @@ with Language_Handlers;          use Language_Handlers;
 with GPR.Osint;
 with Projects;                   use Projects;
 with Src_Editor_Box;             use Src_Editor_Box;
+with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
 with Src_Editor_Module;          use Src_Editor_Module;
 with Src_Editor_View;            use Src_Editor_View;
 with GNATCOLL.Traces;                     use GNATCOLL.Traces;
 with Vsearch;                    use Vsearch;
 with UTF8_Utils;
-with GPS.Editors;
 with GNAT.Strings;
 
 package body Src_Contexts is

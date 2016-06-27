@@ -62,6 +62,7 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Search;         use GPS.Kernel.Search;
+with GPS.Markers;               use GPS.Markers;
 with GPS.Search.GUI;            use GPS.Search.GUI;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Scripts;               use GPS.Scripts;
@@ -151,8 +152,6 @@ package body Bookmark_Views is
      (System.Address, Bookmark_Data_Access);
    function Convert is new Ada.Unchecked_Conversion
      (Bookmark_Data_Access, System.Address);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Location_Marker_Record'Class, Location_Marker);
 
    procedure Refresh (View : access Bookmark_View_Record'Class);
    --  Refresh the contents of the Bookmark view
@@ -316,23 +315,23 @@ package body Bookmark_Views is
          Has_Next := True;
          Bookmark := Data (Self.List);
 
-         C := Self.Pattern.Start (Bookmark.Name.all);
-         if C /= GPS.Search.No_Match then
-            Result := new Bookmarks_Search_Result'
-              (Kernel   => Self.Kernel,
-               Provider => Self,
-               Score    => C.Score,
-               Short    => new String'
-                 (Self.Pattern.Highlight_Match (Bookmark.Name.all, C)),
-               Long     => new String'(To_String (Bookmark.Marker)),
-               Id       => new String'(Bookmark.Name.all),
-               Bookmark => Bookmark);
-            Self.Adjust_Score (Result);
+         declare
+            Loc : constant String := To_String (Bookmark.Marker);
+         begin
+            C := Self.Pattern.Start (Bookmark.Name.all);
+            if C /= GPS.Search.No_Match then
+               Result := new Bookmarks_Search_Result'
+                 (Kernel   => Self.Kernel,
+                  Provider => Self,
+                  Score    => C.Score,
+                  Short    => new String'
+                    (Self.Pattern.Highlight_Match (Bookmark.Name.all, C)),
+                  Long     => new String'(Loc),
+                  Id       => new String'(Bookmark.Name.all),
+                  Bookmark => Bookmark);
+               Self.Adjust_Score (Result);
 
-         else
-            declare
-               Loc : constant String := To_String (Bookmark.Marker);
-            begin
+            else
                C := Self.Pattern.Start (Loc);
                if C /= GPS.Search.No_Match then
                   Result := new Bookmarks_Search_Result'
@@ -346,8 +345,8 @@ package body Bookmark_Views is
                      Bookmark => Bookmark);
                   Self.Adjust_Score (Result);
                end if;
-            end;
-         end if;
+            end if;
+         end;
 
          Self.List := Next (Self.List);
       end if;
@@ -398,8 +397,8 @@ package body Bookmark_Views is
       pragma Unreferenced (Ignore, Give_Focus);
    begin
       if Self.Bookmark /= null then
-         Ignore := Go_To (Self.Bookmark.Marker, Self.Kernel);
-         Push_Marker_In_History (Self.Kernel, Clone (Self.Bookmark.Marker));
+         Ignore := Go_To (Self.Bookmark.Marker);
+         Push_Marker_In_History (Self.Kernel, Self.Bookmark.Marker);
       end if;
    end Execute;
 
@@ -631,7 +630,7 @@ package body Bookmark_Views is
         (False => 1, True => -1);
 
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Marker  : Location_Marker := Create_Marker (Kernel);
+      Marker  : constant Location_Marker := Create_Marker (Kernel);
       List    : Bookmark_List.List_Node := First (Bookmark_Views_Module.List);
       Nearest : Location_Marker;
       Min     : Integer := Integer'Last;
@@ -639,12 +638,12 @@ package body Bookmark_Views is
    begin
       while List /= Null_Node loop
          declare
-            Next     : constant Location_Marker := Data (List).Marker;
-            Distance : constant Integer := Sign * Marker.Distance (Next);
+            Next : constant Location_Marker := Data (List).Marker;
+            Dist : constant Integer := Sign * Distance (Marker, Next);
          begin
-            if Distance > 0 and abs Distance /= Integer'Last then
-               if Min > Distance then
-                  Min := Distance;
+            if Dist > 0 and abs Dist /= Integer'Last then
+               if Min > Dist then
+                  Min := Dist;
                   Nearest := Next;
                end if;
             end if;
@@ -653,10 +652,7 @@ package body Bookmark_Views is
          List := Next (List);
       end loop;
 
-      Destroy (Marker.all);
-      Unchecked_Free (Marker);
-
-      if Min /= Integer'Last and then Nearest.Go_To (Kernel) then
+      if Min /= Integer'Last and then Go_To (Nearest) then
          return Success;
       else
          return Failure;
@@ -671,10 +667,8 @@ package body Bookmark_Views is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Bookmark_Data, Bookmark_Data_Access);
    begin
-      Destroy (Data.Marker.all);
       Data.Instances.Free;
       Free (Data.Name);
-      Unchecked_Free (Data.Marker);
       Unchecked_Free (Data);
    end Free;
 
@@ -738,9 +732,8 @@ package body Bookmark_Views is
             Marker := Convert (Get_Address (Model, Iter, Data_Column));
 
             if Marker /= null then
-               --  Push_Current_Editor_Location_In_History (View.Kernel);
-               Ignore := Go_To (Marker.Marker, View.Kernel);
-               Push_Marker_In_History (View.Kernel, Clone (Marker.Marker));
+               Ignore := Go_To (Marker.Marker);
+               Push_Marker_In_History (View.Kernel, Marker.Marker);
 
                --  Return True here to prevent focus from flickering between
                --  editor and bookmark view.
@@ -778,7 +771,7 @@ package body Bookmark_Views is
       pragma Unreferenced (Ignore);
 
    begin
-      if Mark /= null then
+      if not Mark.Is_Null then
          Append (Bookmark_Views_Module.List,
                  new Bookmark_Data'
                    (Marker => Mark,
@@ -983,17 +976,18 @@ package body Bookmark_Views is
             while Child /= null loop
                Marker := Create_Marker (Kernel, Child);
 
-               if Marker /= null then
+               if not Marker.Is_Null then
                   declare
                      Name : constant String :=
                               Get_Attribute (Child, "bookmark_name", "");
                   begin
                      if Name = "" then
-                        Append (Bookmark_Views_Module.List,
-                                new Bookmark_Data'
-                                  (Marker    => Marker,
-                                   Instances => <>,
-                                   Name   => new String'(To_String (Marker))));
+                        Append
+                          (Bookmark_Views_Module.List,
+                           new Bookmark_Data'
+                             (Marker    => Marker,
+                              Instances => <>,
+                              Name      => new String'(To_String (Marker))));
                      else
                         Append (Bookmark_Views_Module.List,
                                 new Bookmark_Data'
@@ -1106,7 +1100,7 @@ package body Bookmark_Views is
       elsif Command = "create" then
          Name_Parameters (Data, (1 => Name_Cst'Unchecked_Access));
          Marker := Create_Marker (Kernel);
-         if Marker = null then
+         if Marker.Is_Null then
             Set_Error_Msg (Data, "Can't create bookmark for this context");
          else
             Prepend
@@ -1157,9 +1151,9 @@ package body Bookmark_Views is
          Inst := Data.Nth_Arg (1, Bookmark_Class);
          B := Bookmark_Proxies.From_Instance (Inst);
          if B /= null
-           and then Go_To (B.Marker, Kernel)
+           and then Go_To (B.Marker)
          then
-            Push_Marker_In_History (Kernel, Clone (B.Marker));
+            Push_Marker_In_History (Kernel, B.Marker);
          else
             Data.Set_Error_Msg ("Invalid bookmark");
          end if;

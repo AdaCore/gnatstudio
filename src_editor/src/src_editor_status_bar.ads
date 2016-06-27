@@ -22,12 +22,14 @@ with Ada.Unchecked_Deallocation;
 with Gtk.Box;       use Gtk.Box;
 with Gtk.Event_Box; use Gtk.Event_Box;
 
+with Basic_Types;       use Basic_Types;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
-with Src_Editor_View; use Src_Editor_View;
+with Src_Editor_View;   use Src_Editor_View;
 with Gtk.Label;
 with Gtk.Image;
 with Gtk.Handlers;
 with Gtk.Widget;
+with GPS.Editors;      use GPS.Editors;
 
 package Src_Editor_Status_Bar is
 

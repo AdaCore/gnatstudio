@@ -61,19 +61,6 @@ package body GPS.Kernel.Modules is
       return null;
    end Tooltip_Handler;
 
-   ----------------------
-   -- Bookmark_Handler --
-   ----------------------
-
-   function Bookmark_Handler
-     (Module : access Module_ID_Record;
-      Load   : XML_Utils.Node_Ptr := null) return Location_Marker
-   is
-      pragma Unreferenced (Module, Load);
-   begin
-      return null;
-   end Bookmark_Handler;
-
    ----------
    -- Free --
    ----------

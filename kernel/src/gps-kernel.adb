@@ -993,9 +993,9 @@ package body GPS.Kernel is
 
    procedure Push_Marker_In_History
      (Kernel : access Kernel_Handle_Record'Class;
-      Marker : access Location_Marker_Record'Class) is
+      Marker : Location_Marker) is
    begin
-      Marker_Added_To_History_Hook.Run (Kernel, Location_Marker (Marker));
+      Marker_Added_To_History_Hook.Run (Kernel, Marker);
    end Push_Marker_In_History;
 
    -----------------
@@ -1613,16 +1613,6 @@ package body GPS.Kernel is
          return Result;
       end if;
    end Filter_Matches;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Marker : in out Location_Marker_Record) is
-      pragma Unreferenced (Marker);
-   begin
-      null;
-   end Destroy;
 
    ----------------------
    -- Enter_Hyper_Mode --

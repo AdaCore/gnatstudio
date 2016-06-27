@@ -56,7 +56,6 @@ with Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Find_Utils;                 use Find_Utils;
-with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
@@ -1498,7 +1497,7 @@ package body Src_Editor_Box is
 
    function Get_Block_Start
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
+      Line   : Editable_Line_Type) return Natural
    is
       Block : constant Block_Record := Get_Block
         (Editor.Source_Buffer, Line, True);
@@ -1512,7 +1511,7 @@ package body Src_Editor_Box is
 
    function Get_Block_End
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
+      Line   : Editable_Line_Type) return Natural
    is
       Block : constant Block_Record := Get_Block
         (Editor.Source_Buffer, Line, True);
@@ -1526,7 +1525,7 @@ package body Src_Editor_Box is
 
    function Get_Block_Name
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return String
+      Line   : Editable_Line_Type) return String
    is
       Block : constant Block_Record := Get_Block
         (Editor.Source_Buffer, Line, True);
@@ -1540,7 +1539,7 @@ package body Src_Editor_Box is
 
    function Get_Block_Type
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return String
+      Line   : Editable_Line_Type) return String
    is
       Block : constant Block_Record := Get_Block
         (Editor.Source_Buffer, Line, True);
@@ -1554,7 +1553,7 @@ package body Src_Editor_Box is
 
    function Get_Block_Level
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return Natural
+      Line   : Editable_Line_Type) return Natural
    is
       Block : constant Block_Record := Get_Block
         (Editor.Source_Buffer, Line, True);
@@ -1568,7 +1567,7 @@ package body Src_Editor_Box is
 
    function Get_Subprogram_Name
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return String
+      Line   : Editable_Line_Type) return String
    is
       Block       : Block_Record;
    begin

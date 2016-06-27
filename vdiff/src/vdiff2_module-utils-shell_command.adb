@@ -20,8 +20,9 @@ with GNAT.OS_Lib;        use GNAT.OS_Lib;
 with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 with GNATCOLL.Utils;     use GNATCOLL.Utils;
 
-with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
-with String_Utils;       use String_Utils;
+with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
+with GPS.Kernel.Style_Manager;     use GPS.Kernel.Style_Manager;
+with String_Utils;                 use String_Utils;
 
 package body Vdiff2_Module.Utils.Shell_Command is
 
@@ -31,32 +32,36 @@ package body Vdiff2_Module.Utils.Shell_Command is
 
    function Add_Line
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : Virtual_File;
-      Pos    : Natural;
+      Buffer : GPS_Editor_Buffer'Class;
+      Pos    : Editable_Line_Type;
       Style  : String := "";
-      Number : Natural := 1) return Natural
+      Number : Natural := 1) return Editor_Mark_Access
    is
-      CL : Arg_List := Create ("Editor.add_blank_lines");
    begin
-      Append_Argument (CL, +Full_Name (File), One_Arg);
-      Append_Argument (CL, Image (Pos), One_Arg);
-      Append_Argument (CL, Image (Number), One_Arg);
-      Append_Argument (CL, Style, One_Arg);
-      return Natural'Value (Execute_GPS_Shell_Command (Kernel, CL));
+      return new Editor_Mark'Class'(Add_Special_Line
+         (This       => Buffer,
+          Start_Line => Integer (Pos),
+          Text       => (1 .. Number - 1 => ASCII.LF),
+          Style      => Get_Style_Manager (Kernel_Handle (Kernel)).Get (Style),
+          Name       => "",
+          Column_Id  => "",
+          Info       => null));
    end Add_Line;
 
-   -----------------
-   -- Delete_Mark --
-   -----------------
+   --------------------------
+   --  Remove_Blank_Lines  --
+   --------------------------
 
-   procedure Delete_Mark
-     (Kernel : Kernel_Handle;
-      Link   : String)
+   procedure Remove_Blank_Lines
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Mark   : Editor_Mark'Class)
    is
-      pragma Unreferenced (Kernel, Link);
+      pragma Unreferenced (Kernel);
+      Buffer : constant Editor_Buffer'Class := Mark.Location (False).Buffer;
    begin
-      null; -- ??? corrected when nico add delete_mark command
-   end Delete_Mark;
+      Remove_Special_Lines
+         (GPS_Editor_Buffer'Class (Buffer), Mark, Integer'Last);
+   end Remove_Blank_Lines;
 
    ----------
    -- Edit --
@@ -131,20 +136,6 @@ package body Vdiff2_Module.Utils.Shell_Command is
       Append_Argument (CL, +Full_Name (File), One_Arg);
       return Natural'Value (Execute_GPS_Shell_Command (Kernel, CL));
    end Get_File_Last_Line;
-
-   ----------------------
-   -- Get_Line_Number  --
-   ----------------------
-
-   function Get_Line_Number
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Mark   : String) return Natural
-   is
-      CL : Arg_List := Create ("Editor.get_line");
-   begin
-      Append_Argument (CL, Mark, One_Arg);
-      return Natural'Value (Execute_GPS_Shell_Command (Kernel, CL));
-   end Get_Line_Number;
 
    --------------------
    -- Highlight_Line --
@@ -266,22 +257,6 @@ package body Vdiff2_Module.Utils.Shell_Command is
       VDiff2_Module (Vdiff_Module_ID).Enable_Fine_Diff
         := (Change_Fine_Color /= Change_Color);
    end Register_Highlighting;
-
-   --------------------------
-   --  Remove_Blank_Lines  --
-   --------------------------
-
-   procedure Remove_Blank_Lines
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Mark   : Natural)
-   is
-      CL : Arg_List := Create ("Editor.remove_blank_lines");
-   begin
-      if Mark /= Invalid_Mark then
-         Append_Argument (CL, Image (Mark), One_Arg);
-         Execute_GPS_Shell_Command (Kernel, CL);
-      end if;
-   end Remove_Blank_Lines;
 
    ------------------
    -- Replace_Text --

@@ -21,7 +21,7 @@ with Items;
 with GNAT.Strings;
 with Process_Proxies;
 with GNAT.Regpat;
-
+with Basic_Types;              use Basic_Types;
 with GVD.Breakpoints_List;     use GVD.Breakpoints_List;
 with GVD.Types;
 with GVD.Proc_Utils;
@@ -600,7 +600,7 @@ package Debugger is
    function Break_Source
      (Debugger  : access Debugger_Root;
       File      : GNATCOLL.VFS.Virtual_File;
-      Line      : Positive;
+      Line      : Editable_Line_Type;
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
       return GVD.Types.Breakpoint_Identifier
@@ -669,12 +669,13 @@ package Debugger is
    procedure Remove_Breakpoint_At
      (Debugger : not null access Debugger_Root;
       File     : GNATCOLL.VFS.Virtual_File;
-      Line     : Positive;
+      Line     : Editable_Line_Type;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Remove any breakpoint set at that location
 
    procedure List_Breakpoints
      (Debugger  : not null access Debugger_Root;
+      Kernel    : not null access Kernel_Handle_Record'Class;
       List      : out Breakpoint_Vectors.Vector) is abstract;
    --  Return the list of breakpoints set in the current session.
 

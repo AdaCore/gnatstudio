@@ -722,10 +722,10 @@ package body Refactoring.Subprograms is
 
          if Method_Body /= Null_Unbounded_String then
             declare
-               Line_Start : constant Editor_Mark'Class :=
+               Line_Start : Editor_Mark'Class :=
                  Buffer.New_Location_At_Line
                    (Context.Code.From_Line).Create_Mark;
-               Line_End : constant Editor_Mark'Class :=
+               Line_End : Editor_Mark'Class :=
                  Buffer.New_Location_At_Line (Context.Code.To_Line)
                  .End_Of_Line.Create_Mark;
             begin

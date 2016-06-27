@@ -567,21 +567,13 @@ Classes
 
    .. automethod:: GPS.Editor.cut
 
-   .. automethod:: GPS.Editor.delete_mark
-
    .. automethod:: GPS.Editor.edit
 
    .. automethod:: GPS.Editor.get_buffer
 
    .. automethod:: GPS.Editor.get_chars
 
-   .. automethod:: GPS.Editor.get_column
-
-   .. automethod:: GPS.Editor.get_file
-
    .. automethod:: GPS.Editor.get_last_line
-
-   .. automethod:: GPS.Editor.get_line
 
    .. automethod:: GPS.Editor.goto_mark
 
@@ -837,6 +829,18 @@ Classes
 
 .. autoclass:: EditorMark
 
+
+
+
+   .. autoattribute:: GPS.EditorMark.column
+
+
+
+   .. autoattribute:: GPS.EditorMark.file
+
+
+
+   .. autoattribute:: GPS.EditorMark.line
 
 
    .. automethod:: GPS.EditorMark.__init__

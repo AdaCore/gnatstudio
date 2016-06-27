@@ -52,6 +52,7 @@ with Language_Handlers;          use Language_Handlers;
 with Language_Handlers.GUI;      use Language_Handlers.GUI;
 with Projects;                   use Projects;
 with Src_Editor_Box;             use Src_Editor_Box;
+with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;

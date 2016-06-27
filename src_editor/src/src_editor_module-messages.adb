@@ -22,6 +22,7 @@ with GPS.Kernel.Hooks;               use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.References;
 with GNATCOLL.Projects;              use GNATCOLL.Projects;
 with Src_Editor_Box;                 use Src_Editor_Box;
+with Src_Editor_Buffer;              use Src_Editor_Buffer;
 
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;

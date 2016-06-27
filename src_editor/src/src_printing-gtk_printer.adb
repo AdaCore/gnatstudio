@@ -27,6 +27,7 @@ with Cairo;
 with Pango.Layout;
 with Pango.Cairo;
 with GNATCOLL.VFS;
+with Basic_Types;        use Basic_Types;
 
 package body Src_Printing.Gtk_Printer is
 
@@ -149,7 +150,7 @@ package body Src_Printing.Gtk_Printer is
       Printer.Editor := Editor;
       Printer.From_Line := From;
       Printer.To_Line := Editable_Line_Type'Min
-        (To, Src_Editor_Buffer.Editable_Line_Type (Editor.Get_Last_Line));
+        (To, Editable_Line_Type (Editor.Get_Last_Line));
       Printer.Font := GPS.Kernel.Preferences.View_Fixed_Font.Get_Pref;
 
       Ignore := Gtkada.Printing.Connect_And_Run

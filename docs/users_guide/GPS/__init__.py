@@ -2697,12 +2697,13 @@ class Editor(object):
 
         Adds number_of_lines non-editable lines to the buffer editing file,
         starting at line start_line. If category is specified, use it for
-        highlighting. Create a mark at beginning of block and return its ID.
+        highlighting. Create a mark at beginning of block and return it.
 
         :param file: A string
         :param start_line: An integer
         :param number_of_lines: An integer
         :param category: A string
+        :return: an instance of :class:`GPS.EditorMark`
         """
         pass  # implemented in Ada
 
@@ -2841,7 +2842,7 @@ class Editor(object):
         :param line: An integer
         :param column: An integer
         :param length: An integer
-        :return: A string
+        :return: An instance of :class:`GPS.EditorMark`
 
         .. seealso::
 
@@ -2910,19 +2911,6 @@ class Editor(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def delete_mark(identifier):
-        """
-        OBSOLESCENT.
-
-        Deletes the mark corresponding to identifier.
-
-        :param identifier: A string
-
-        .. seealso:: :func:`GPS.Editor.create_mark`
-        """
-        pass  # implemented in Ada
-
-    @staticmethod
     def edit(filename, line=1, column=1, length=0, force=False, position=5):
         """
         OBSOLESCENT.
@@ -2985,30 +2973,6 @@ class Editor(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def get_column(mark):
-        """
-        OBSOLESCENT.
-
-        Returns the current column of mark.
-
-        :param mark: An identifier
-        :return: An integer
-        """
-        pass  # implemented in Ada
-
-    @staticmethod
-    def get_file(mark):
-        """
-        OBSOLESCENT.
-
-        Returns the current file of mark.
-
-        :param mark: An identifier
-        :return: A file
-        """
-        pass  # implemented in Ada
-
-    @staticmethod
     def get_last_line(file):
         """
         OBSOLESCENT.
@@ -3021,25 +2985,13 @@ class Editor(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def get_line(mark):
-        """
-        OBSOLESCENT.
-
-        Returns the current line of mark.
-
-        :param mark: An identifier
-        :return: An integer
-        """
-        pass  # implemented in Ada
-
-    @staticmethod
-    def goto_mark(identifier):
+    def goto_mark(mark):
         """
         OBSOLESCENT.
 
         Jumps to the location of the mark corresponding to identifier.
 
-        :param identifier: A string
+        :param mark: A instance of :class:`GPS.EditorMark`
 
         .. seealso:: :func:`GPS.Editor.create_mark`
         """
@@ -3190,7 +3142,7 @@ class Editor(object):
         Removes blank lines located at mark. If number is specified, remove
         only the number first lines.
 
-        :param mark: A string
+        :param mark: an instance of :class:`GPS.EditorMark`
         :param number: An integer
         """
         pass  # implemented in Ada
@@ -4288,7 +4240,9 @@ class EditorLocation(object):
         """
         Creates a mark at that location in the buffer. The mark will stay
         permanently at that location, and follows it if the buffer is
-        modified.
+        modified. In fact, even if the buffer is closed and then reopened,
+        the mark will keep track of the location, but of course not if the
+        file is edited outside of GPS.
 
         :param str name: The name of the mark. If specified, this creates a
            named mark, which can later be retrieved through a call to
@@ -4514,6 +4468,24 @@ class EditorMark(object):
 
     """
 
+    file = None
+    """
+    Read only property that gives the location of the mark.
+    :type: :class:`GPS.File`
+    """
+
+    line = 0
+    """
+    Read only property that gives the location of the mark.
+    :type: int
+    """
+
+    column = 0
+    """
+    Read only property that gives the location of the mark.
+    :type: int
+    """
+
     def __del__(self):
         """
         This subprogram is automatically called whenever self is unreferenced
@@ -4551,6 +4523,7 @@ class EditorMark(object):
         """
         Returns the current location of the mark. This location will vary
         depending on the changes that take place in the buffer.
+        Calling this function will open the corresponding source editor.
 
         :return: An instance of :class:`GPS.EditorLocation`
 
@@ -6310,7 +6283,6 @@ class Invalid_Argument(Exception):
 ###########################################################
 
 class Locations(object):
-
     """
     General interface to the :guilabel:`Locations` view.
     """

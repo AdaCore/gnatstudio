@@ -15,7 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Editors;      use GPS.Editors;
+with GPS.Editors;       use GPS.Editors;
+with Src_Editor_Buffer; use Src_Editor_Buffer;
 
 package Src_Editor_Module.Editors is
 
@@ -44,6 +45,13 @@ package Src_Editor_Module.Editors is
       Column : Integer) return Editor_Mark'Class;
    overriding function Buffers
      (This   : Src_Editor_Buffer_Factory) return Buffer_Lists.List;
+   overriding function Create_Marker
+     (This    : Src_Editor_Buffer_Factory;
+      File    : GNATCOLL.VFS.Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project;
+      Line    : Editable_Line_Type;
+      Column  : Visible_Column_Type;
+      Length  : Natural := 0) return Location_Marker;
 
    function Get
      (This   : Src_Editor_Buffer_Factory'Class;
@@ -110,7 +118,6 @@ package Src_Editor_Module.Editors is
 
    function Instance_From_Mark
      (Script  : access Scripting_Language_Record'Class;
-      Class   : Class_Type;
       Mark    : Editor_Mark'Class) return Class_Instance;
    function Mark_From_Instance
      (This     : Src_Editor_Buffer_Factory;

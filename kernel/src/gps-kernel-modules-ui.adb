@@ -770,14 +770,14 @@ package body GPS.Kernel.Modules.UI is
          while Has_Element (Current) loop
             Module := Module_ID (Abstract_Module_List.Element (Current));
             Marker := Bookmark_Handler (Module, Load);
-            if Marker /= null then
+            if not Marker.Is_Null then
                return Marker;
             end if;
             Current := Abstract_Module_List.Next (Current);
          end loop;
       end if;
 
-      return null;
+      return No_Marker;
    end Create_Marker;
 
    -----------------------

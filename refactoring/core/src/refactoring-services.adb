@@ -876,7 +876,7 @@ package body Refactoring.Services is
 
          if Self.Shared then
             declare
-               TM : constant Editor_Mark'Class := To.Create_Mark;
+               TM : Editor_Mark'Class := To.Create_Mark;
             begin
                --  Only remove the name of the entity and the preceding or
                --  leading comma

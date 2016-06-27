@@ -68,6 +68,7 @@ with Projects;                          use Projects;
 with Remote;                            use Remote;
 with Src_Contexts;                      use Src_Contexts;
 with Src_Editor_Box;                    use Src_Editor_Box;
+with Src_Editor_Buffer;                 use Src_Editor_Buffer;
 with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer.Buffer_Commands;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;

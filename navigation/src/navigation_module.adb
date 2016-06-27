@@ -33,6 +33,7 @@ with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with GPS.Markers;                use GPS.Markers;
 with Glib.Object;                use Glib.Object;
 with Glib;                       use Glib;
 with Gtk.Widget;                 use Gtk.Widget;
@@ -68,42 +69,34 @@ package body Navigation_Module is
    end record;
    type Navigation_Module is access all Navigation_Module_Record'Class;
 
-   type Shell_Marker_Record is new Location_Marker_Record with record
+   type Shell_Marker_Data is new Location_Marker_Data with record
       Script  : Scripting_Language;
       Command : GNAT.Strings.String_Access;
    end record;
-   type Shell_Marker is access all Shell_Marker_Record'Class;
+   overriding function Go_To
+     (Marker : not null access Shell_Marker_Data) return Boolean;
+   overriding function To_String
+     (Marker : not null access Shell_Marker_Data) return String;
+   overriding function Save
+     (Marker : not null access Shell_Marker_Data) return XML_Utils.Node_Ptr;
+   overriding function Similar
+     (Left  : not null access Shell_Marker_Data;
+      Right : not null access Location_Marker_Data'Class) return Boolean
+     is (False);
+   overriding function Distance
+     (Left  : not null access Shell_Marker_Data;
+      Right : not null access Location_Marker_Data'Class) return Integer
+     is (Integer'Last);
 
    function Create_Shell_Marker
      (Script  : access Scripting_Language_Record'Class;
-      Command : String) return Shell_Marker;
+      Command : String) return Location_Marker;
    --  Create a new marker associated with a shell command
-
-   overriding function Go_To
-     (Marker : access Shell_Marker_Record;
-      Kernel : access Kernel_Handle_Record'Class) return Boolean;
-   overriding procedure Destroy (Marker : in out Shell_Marker_Record);
-   overriding function Clone
-     (Marker : access Shell_Marker_Record)
-      return Location_Marker;
-   overriding function To_String
-     (Marker : access Shell_Marker_Record) return String;
-   overriding function Save
-     (Marker : access Shell_Marker_Record) return XML_Utils.Node_Ptr;
-   overriding function Similar
-     (Left  : access Shell_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Boolean;
-   overriding function Distance
-     (Left  : access Shell_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Integer;
-   --  See inherited documentation
 
    -----------------------
    -- Local subprograms --
    -----------------------
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Location_Marker_Record'Class, Location_Marker);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Location_Marker_Array, Location_Marker_Array_Access);
 
@@ -239,7 +232,7 @@ package body Navigation_Module is
    --  Move backward or forward in the list of markers. The effect is
    --  immediately visible in the GPS interface.
 
-   procedure Go_To_Current_Marker (Kernel : access Kernel_Handle_Record'Class);
+   procedure Go_To_Current_Marker;
    --  Go to the location pointed to by the current marker in the history
 
    procedure Save_History_Markers
@@ -280,8 +273,6 @@ package body Navigation_Module is
       pragma Unreferenced (Self, Kernel);
       Module : constant Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
-
-      Local : Location_Marker;
    begin
       if Module.Markers = null then
          Module.Markers := new Location_Marker_Array
@@ -296,8 +287,6 @@ package body Navigation_Module is
          Module.Current_Marker := Module.Current_Marker + 1;
 
          if Module.Current_Marker > Module.Markers'Last then
-            Destroy (Module.Markers (Module.Markers'First).all);
-            Unchecked_Free (Module.Markers (Module.Markers'First));
             Module.Markers (Module.Markers'First .. Module.Markers'Last - 1) :=
               Module.Markers (Module.Markers'First + 1 .. Module.Markers'Last);
             Module.Current_Marker := Module.Markers'Last;
@@ -305,11 +294,6 @@ package body Navigation_Module is
 
          Module.Markers (Module.Current_Marker) := Marker;
          Module.Last_Marker := Module.Current_Marker;
-      else
-         --  We are not storing marker: release memory now.
-         Marker.Destroy;
-         Local := Marker;
-         Unchecked_Free (Local);
       end if;
    end Execute;
 
@@ -512,7 +496,7 @@ package body Navigation_Module is
                while Child /= null loop
                   Marker := Create_Marker (Kernel, Child);
 
-                  if Marker /= null then
+                  if not Marker.Is_Null then
                      M.Last_Marker := M.Last_Marker + 1;
                      M.Markers (M.Last_Marker) := Marker;
 
@@ -593,9 +577,7 @@ package body Navigation_Module is
    -- Go_To_Current_Marker --
    --------------------------
 
-   procedure Go_To_Current_Marker
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
+   procedure Go_To_Current_Marker is
       Module : constant Navigation_Module :=
                  Navigation_Module (Navigation_Module_ID);
    begin
@@ -603,9 +585,7 @@ package body Navigation_Module is
         and then Module.Current_Marker >= Module.Markers'First
         and then Module.Current_Marker <= Module.Last_Marker
       then
-         if not Go_To (Module.Markers (Module.Current_Marker), Kernel) then
-            Destroy (Module.Markers (Module.Current_Marker).all);
-            Unchecked_Free (Module.Markers (Module.Current_Marker));
+         if not Go_To (Module.Markers (Module.Current_Marker)) then
             Module.Markers (Module.Current_Marker .. Module.Last_Marker - 1) :=
               Module.Markers (Module.Current_Marker + 1 .. Module.Last_Marker);
             Module.Last_Marker := Module.Last_Marker - 1;
@@ -738,10 +718,8 @@ package body Navigation_Module is
    -----------
 
    overriding function Go_To
-     (Marker : access Shell_Marker_Record;
-      Kernel : access Kernel_Handle_Record'Class) return Boolean
+     (Marker : not null access Shell_Marker_Data) return Boolean
    is
-      pragma Unreferenced (Kernel);
       Errors : Boolean;
    begin
       Execute_Command
@@ -754,44 +732,22 @@ package body Navigation_Module is
       return not Errors;
    end Go_To;
 
-   -------------
-   -- Destroy --
-   -------------
-
-   overriding procedure Destroy (Marker : in out Shell_Marker_Record) is
-   begin
-      Free (Marker.Command);
-      Destroy (Location_Marker_Record (Marker));
-   end Destroy;
-
    ---------------
    -- To_String --
    ---------------
 
    overriding function To_String
-     (Marker : access Shell_Marker_Record) return String is
+     (Marker : not null access Shell_Marker_Data) return String is
    begin
       return Marker.Command.all;
    end To_String;
-
-   -----------
-   -- Clone --
-   -----------
-
-   overriding function Clone
-     (Marker : access Shell_Marker_Record)
-      return Location_Marker is
-   begin
-      return Location_Marker
-        (Create_Shell_Marker (Marker.Script, Marker.Command.all));
-   end Clone;
 
    ----------
    -- Save --
    ----------
 
    overriding function Save
-     (Marker : access Shell_Marker_Record) return XML_Utils.Node_Ptr
+     (Marker : not null access Shell_Marker_Data) return XML_Utils.Node_Ptr
    is
       N : constant Node_Ptr := new Node;
    begin
@@ -800,44 +756,19 @@ package body Navigation_Module is
       return N;
    end Save;
 
-   -------------
-   -- Similar --
-   -------------
-
-   overriding function Similar
-     (Left  : access Shell_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Boolean
-   is
-      pragma Unreferenced (Left, Right);
-   begin
-      return False;
-   end Similar;
-
-   --------------
-   -- Distance --
-   --------------
-
-   overriding function Distance
-     (Left  : access Shell_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Integer
-   is
-      pragma Unreferenced (Left, Right);
-   begin
-      return Integer'Last;
-   end Distance;
-
    -------------------------
    -- Create_Shell_Marker --
    -------------------------
 
    function Create_Shell_Marker
      (Script  : access Scripting_Language_Record'Class;
-      Command : String) return Shell_Marker is
+      Command : String) return Location_Marker is
    begin
-      return new Shell_Marker_Record'
-        (Location_Marker_Record with
-         Script  => Scripting_Language (Script),
-         Command => new String'(Command));
+      return L : Location_Marker do
+         L.Set (Shell_Marker_Data'
+                  (Script  => Scripting_Language (Script),
+                   Command => new String'(Command)));
+      end return;
    end Create_Shell_Marker;
 
    ---------------------
@@ -918,15 +849,7 @@ package body Navigation_Module is
 
    procedure Free (Markers : in out Location_Marker_Array_Access) is
    begin
-      if Markers /= null then
-         for M in Markers'Range loop
-            if Markers (M) /= null then
-               Markers (M).Destroy;
-               Unchecked_Free (Markers (M));
-            end if;
-         end loop;
-         Unchecked_Free (Markers);
-      end if;
+      Unchecked_Free (Markers);
    end Free;
 
    -------------
@@ -941,7 +864,7 @@ package body Navigation_Module is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Move_In_Marker_History (Kernel, Move_Back => True);
-      Go_To_Current_Marker (Kernel);
+      Go_To_Current_Marker;
       return Commands.Success;
    end Execute;
 
@@ -957,7 +880,7 @@ package body Navigation_Module is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       Move_In_Marker_History (Kernel, Move_Back => False);
-      Go_To_Current_Marker (Kernel);
+      Go_To_Current_Marker;
       return Commands.Success;
    end Execute;
 

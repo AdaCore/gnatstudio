@@ -26,6 +26,7 @@ with GNAT.SHA1;             use GNAT.SHA1;
 with GNATCOLL.Scripts;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
+with GPS.Markers;           use GPS.Markers;
 with Gdk.Event;             use Gdk.Event;
 with Glib.Main;
 with Glib.Object;
@@ -402,28 +403,26 @@ package GPS.Kernel.MDI is
 
    --  These location markers allow placing a location mark on an MDI child.
 
-   type MDI_Location_Marker_Record
-     is new GPS.Kernel.Location_Marker_Record with private;
-   type MDI_Location_Marker is access all MDI_Location_Marker_Record'Class;
+   type MDI_Location_Marker_Data is new Location_Marker_Data with private;
 
-   function Create_MDI_Marker (Name : String) return MDI_Location_Marker;
+   function Create_MDI_Marker
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Name   : String) return Location_Marker;
    --  Create a location marker from the name of an MDI child
 
    overriding function Go_To
-     (Marker : access MDI_Location_Marker_Record;
-      Kernel : access Kernel_Handle_Record'Class) return Boolean;
-   overriding function Clone
-     (Marker : access MDI_Location_Marker_Record) return Location_Marker;
+     (Marker : not null access MDI_Location_Marker_Data) return Boolean;
    overriding function To_String
-     (Marker : access MDI_Location_Marker_Record) return String;
+     (Marker : not null access MDI_Location_Marker_Data) return String;
    overriding function Save
-     (Marker : access MDI_Location_Marker_Record) return XML_Utils.Node_Ptr;
+     (Marker : not null access MDI_Location_Marker_Data)
+     return XML_Utils.Node_Ptr;
    overriding function Similar
-     (Left  : access MDI_Location_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Boolean;
+     (Left  : not null access MDI_Location_Marker_Data;
+      Right : not null access Location_Marker_Data'Class) return Boolean;
    overriding function Distance
-     (Left  : access MDI_Location_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Integer;
+     (Left  : not null access MDI_Location_Marker_Data;
+      Right : not null access Location_Marker_Data'Class) return Integer;
 
    -----------------------------------
    -- Misc Gtk+ Related Subprograms --
@@ -542,10 +541,9 @@ private
       Files               : Monitored_File := No_Monitored_File;
    end record;
 
-   type MDI_Location_Marker_Record
-     is new GPS.Kernel.Location_Marker_Record
-   with record
-      Title : Unbounded_String;
+   type MDI_Location_Marker_Data is new Location_Marker_Data with record
+      Title  : Unbounded_String;
+      Kernel : access Kernel_Handle_Record'Class;
    end record;
 
 end GPS.Kernel.MDI;

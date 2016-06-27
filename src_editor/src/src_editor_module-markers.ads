@@ -19,16 +19,18 @@ with XML_Utils;
 with Gtk.Handlers;
 with Gtk.Text_Mark;
 
+with GPS.Editors;          use GPS.Editors;
 with GPS.Kernel;
+with GPS.Markers;          use GPS.Markers;
+with GPS.Scripts;          use GPS.Scripts;
 with GNATCOLL.Projects;
+with GNATCOLL.Scripts;     use GNATCOLL.Scripts;
 with GNATCOLL.VFS;
 
 package Src_Editor_Module.Markers is
 
-   type File_Marker_Record
-     is new GPS.Kernel.Location_Marker_Record with private;
-   type File_Marker is access all File_Marker_Record'Class;
-   pragma No_Strict_Aliasing (File_Marker);
+   type File_Marker_Data is new Abstract_File_Marker_Data with private;
+   type File_Marker is access all File_Marker_Data'Class;
 
    function Create_File_Marker
      (Kernel  : access Kernel_Handle_Record'Class;
@@ -36,7 +38,7 @@ package Src_Editor_Module.Markers is
       Project : GNATCOLL.Projects.Project_Type;
       Line    : Editable_Line_Type;
       Column  : Visible_Column_Type;
-      Length  : Natural := 0) return File_Marker;
+      Length  : Natural := 0) return Location_Marker;
    --  Create a new marker that represents a position inside a file. It isn't
    --  related to a specific editor. The mark will always indicate the same
    --  position in the file, even if the file is closed, reopened or modified.
@@ -45,12 +47,12 @@ package Src_Editor_Module.Markers is
      (Kernel  : access Kernel_Handle_Record'Class;
       File    : GNATCOLL.VFS.Virtual_File;
       Project : GNATCOLL.Projects.Project_Type;
-      Mark    : Gtk.Text_Mark.Gtk_Text_Mark) return File_Marker;
+      Mark    : Gtk.Text_Mark.Gtk_Text_Mark) return Location_Marker;
    --  Create a new marker from an existing text mark. The mark will always
    --  indicate the same position in the file.
 
    procedure Move
-     (Marker : access File_Marker_Record'Class;
+     (Marker : not null access File_Marker_Data'Class;
       Mark   : Gtk.Text_Mark.Gtk_Text_Mark);
    --  Move the marker to a new location within an open editor
 
@@ -66,27 +68,20 @@ package Src_Editor_Module.Markers is
       From_XML : XML_Utils.Node_Ptr := null) return Location_Marker;
    --  Create a new marker either from From_XML or from the current context
 
-   function Get_File
-     (Marker : access File_Marker_Record'Class)
-      return GNATCOLL.VFS.Virtual_File;
+   overriding function Get_File
+     (Marker : not null access File_Marker_Data)
+      return GNATCOLL.VFS.Virtual_File with Inline;
    --  Return the file in which Marker is set
-   function Get_Line
-     (Marker : access File_Marker_Record'Class) return Editable_Line_Type;
-   function Get_Column
-     (Marker : access File_Marker_Record'Class) return Visible_Column_Type;
+   overriding function Get_Line
+     (Marker : not null access File_Marker_Data)
+      return Editable_Line_Type with Inline;
+   overriding function Get_Column
+     (Marker : not null access File_Marker_Data)
+      return Visible_Column_Type with Inline;
    function Get_Mark
-     (Marker : access File_Marker_Record'Class)
-      return Gtk.Text_Mark.Gtk_Text_Mark;
-   function Get_Id
-     (Marker : access File_Marker_Record'Class) return Integer;
-   function Get_Kernel
-     (Marker : access File_Marker_Record'Class) return Kernel_Handle;
-   pragma Inline
-     (Get_File, Get_Line, Get_Column, Get_Mark, Get_Id, Get_Kernel);
+     (Marker : not null access File_Marker_Data'Class)
+      return Gtk.Text_Mark.Gtk_Text_Mark with Inline;
    --  Return the coordinates of the marker
-
-   function Find_Mark (Id : Natural) return File_Marker;
-   --  Find the mark corresponding to Id, or return null
 
    procedure Reset_Markers_For_File
      (Kernel : access Kernel_Handle_Record'Class;
@@ -94,39 +89,58 @@ package Src_Editor_Module.Markers is
    --  Rests all markers that were set for File, so that we recreate the
    --  text_marks associated with them.
 
-private
-   type File_Marker_Record
-     is new GPS.Kernel.Location_Marker_Record with
-      record
-         Id       : Natural;   --  Needed only for the shell API
-         File     : GNATCOLL.VFS.Virtual_File;
-         Project  : GNATCOLL.Projects.Project_Type;
-         Line     : Editable_Line_Type;
-         Column   : Visible_Column_Type;
-         Length   : Natural := 1;
-         Mark     : Gtk.Text_Mark.Gtk_Text_Mark;
-         Buffer   : Gtk.Text_Buffer.Gtk_Text_Buffer;
-         Kernel   : Kernel_Handle;
-         Cid      : Gtk.Handlers.Handler_Id;
-         Position : Marker_List.Cursor := Marker_List.No_Element;
-      end record;
+   ------------
+   -- Script --
+   ------------
 
-   overriding procedure Destroy (Marker : in out File_Marker_Record);
+   function Get_Or_Create_Instance
+     (Self            : Location_Marker;
+      Script          : not null access Scripting_Language_Record'Class)
+     return Class_Instance;
+   --  If Self was already associated with a class instance in the given
+   --  scripting language, returns that same instance.
+   --  Otherwise, create a new instance to wrap Self.
+
+   procedure Unset_Marker_In_Instance (Self : Class_Instance);
+   --  Unset the marker stored in Self.
+
+   function From_Instance (Inst : Class_Instance) return Location_Marker;
+   --  Return the location stored in Inst
+
+private
+   type File_Marker_Proxy is new Script_Proxy with null record;
+   overriding function Class_Name (Self : File_Marker_Proxy) return String
+     is ("EditorMark");
+
+   type File_Marker_Data is new Abstract_File_Marker_Data with record
+      File     : GNATCOLL.VFS.Virtual_File;
+      Project  : GNATCOLL.Projects.Project_Type;
+      Line     : Editable_Line_Type;
+      Column   : Visible_Column_Type;
+      Length   : Natural := 1;
+      Mark     : Gtk.Text_Mark.Gtk_Text_Mark;
+      Buffer   : Gtk.Text_Buffer.Gtk_Text_Buffer;
+      Kernel   : Kernel_Handle;
+      Cid      : Gtk.Handlers.Handler_Id;
+      Instances : File_Marker_Proxy;
+   end record;
+   overriding procedure Destroy (Marker : in out File_Marker_Data);
    overriding function Go_To
-     (Marker : access File_Marker_Record;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) return Boolean;
+     (Marker : not null access File_Marker_Data) return Boolean;
    overriding function To_String
-     (Marker : access File_Marker_Record) return String;
-   overriding function Clone
-     (Marker : access File_Marker_Record) return Location_Marker;
+     (Marker : not null access File_Marker_Data) return String;
    overriding function Save
-     (Marker : access File_Marker_Record) return XML_Utils.Node_Ptr;
+     (Marker : not null access File_Marker_Data) return XML_Utils.Node_Ptr;
    overriding function Similar
-     (Left  : access File_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Boolean;
+     (Left  : not null access File_Marker_Data;
+      Right : not null access Location_Marker_Data'Class) return Boolean;
    overriding function Distance
-     (Left  : access File_Marker_Record;
-      Right : access Location_Marker_Record'Class) return Integer;
+     (Left  : not null access File_Marker_Data;
+      Right : not null access Location_Marker_Data'Class) return Integer;
    --  See inherited documentation
+
+   package Proxies is new Script_Proxies
+     (Element_Type => Location_Marker,
+      Proxy        => File_Marker_Proxy);
 
 end Src_Editor_Module.Markers;

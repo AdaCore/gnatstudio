@@ -27,6 +27,7 @@ with GNAT.Calendar.Time_IO;
 
 with GNATCOLL.Scripts;                  use GNATCOLL.Scripts;
 
+with Basic_Types;                       use Basic_Types;
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
@@ -44,7 +45,6 @@ with Input_Sources.File;
 with Sax.Readers;
 with Sax.Attributes;
 with Src_Editor_Box;
-with Src_Editor_Buffer;
 with Unicode.CES;
 with Xref;                              use Xref;
 
@@ -587,7 +587,7 @@ package body GNATTest_Module is
         (Kernel      => Kernel,
          Filename    => File,
          Project     => Project,
-         Line        => Src_Editor_Buffer.Editable_Line_Type (Line),
+         Line        => Editable_Line_Type (Line),
          Column      => Column,
          Entity_Name => Subprogram_Name);
    end Open_File;
