@@ -383,7 +383,9 @@ package body GVD.Call_Stack is
       Frame_Info  : Frame_Info_Type := Location_Not_Found;
       Path        : Gtk_Tree_Path;
    begin
-      if S /= null then
+      if S /= null
+        and then Process.Current_Output /= null
+      then
          Found_Frame_Info
            (Process.Debugger,
             Process.Current_Output
