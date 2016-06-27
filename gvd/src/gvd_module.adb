@@ -56,7 +56,6 @@ with GVD.Canvas;                use GVD.Canvas;
 with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Consoles;              use GVD.Consoles;
 with GVD.Contexts;              use GVD.Contexts;
-with GVD.Menu;                  use GVD.Menu;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Process;               use GVD.Process;
 with GVD.Process_Lists;         use GVD.Process_Lists;
@@ -133,60 +132,6 @@ package body GVD_Module is
    --  exec dir of the program is also provided, similar to the Build->Run
    --  dialog.
 
-   -----------------
-   -- Dbg_Command --
-   -----------------
-
-   --  This subpackage defines a new Debugger_Command type, that is used as a
-   --  basis for every debugger command type
-
-   package Dbg_Command is
-      type Debugger_Command is abstract new Interactive_Command
-      with null record;
-      --  Abstract type that is the basis for debugger commands. Will take care
-      --  of some boilerplate code, like checking that the debugger is active,
-      --  and checking wether the command has been issued from the debugger
-      --  console Debugger commands don't need to override Execute, as is
-      --  usual with Interactive_Commands, but Execute_Dbg
-
-      type Debugger_Command_Access is access all Debugger_Command'Class;
-
-      overriding function Execute
-        (Command : access Debugger_Command;
-         Context : Interactive_Command_Context) return Command_Return_Type;
-      --  Overridden Execute primitive to take care of Debugger_Command
-      --  boilerplate, do not override
-
-      function Execute_Dbg
-        (Command : access Debugger_Command;
-         Process : Visual_Debugger) return Command_Return_Type is abstract;
-      --  Types derived from Debugger_Command need to override this primitive
-      --  Process is the process of the active debugger for the command.
-
-   end Dbg_Command;
-
-   package body Dbg_Command is
-      overriding function Execute
-        (Command : access Debugger_Command;
-         Context : Interactive_Command_Context) return Command_Return_Type
-      is
-         Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-         Process : Visual_Debugger;
-      begin
-         Process := Visual_Debugger (Get_Current_Debugger (Kernel));
-
-         if Process = null or else Process.Debugger = null then
-            return Commands.Failure;
-         end if;
-
-         if Debugger_Console_Has_Focus (Process) then
-            Process.Is_From_Dbg_Console := True;
-         end if;
-
-         return Debugger_Command_Access (Command).Execute_Dbg (Process);
-      end Execute;
-   end Dbg_Command;
-
    --------------------
    -- Menu Callbacks --
    --------------------
@@ -241,32 +186,6 @@ package body GVD_Module is
      (Command : access Kill_Command;
       Process : Visual_Debugger) return Command_Return_Type;
    --  Debug->Debug->Kill
-
-   type Local_Vars_Command is new Dbg_Command.Debugger_Command
-   with null record;
-
-   overriding function Execute_Dbg
-     (Command : access Local_Vars_Command;
-      Process : Visual_Debugger) return Command_Return_Type;
-   --  Debug->Data->Display Local Variables
-
-   type Arguments_Command is new Dbg_Command.Debugger_Command with null record;
-   overriding function Execute_Dbg
-     (Command : access Arguments_Command;
-      Process : Visual_Debugger) return Command_Return_Type;
-   --  Debug->Data->Display Arguments
-
-   type Registers_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Registers_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Debug->Data->Display Registers
-
-   type Expression_Command is new Interactive_Command with null record;
-   overriding function Execute
-     (Command : access Expression_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Debug->Data->Display Any Expression
 
    type Start_Command is new Interactive_Command with null record;
    overriding function Execute
@@ -770,89 +689,6 @@ package body GVD_Module is
 
       return Commands.Success;
    end Execute_Dbg;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute_Dbg
-     (Command : access Local_Vars_Command;
-      Process : Visual_Debugger) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-   begin
-      --  ???? won't work with GDB/MI
-      Process_User_Command
-        (Process,
-         "graph display `" & Info_Locals (Process.Debugger) & '`',
-         Output_Command => True);
-      return Commands.Success;
-   end Execute_Dbg;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute_Dbg
-     (Command : access Arguments_Command;
-      Process : Visual_Debugger) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-   begin
-      --  ???? won't work with GDB/MI
-      Process_User_Command
-        (Process,
-         "graph display `" & Info_Args (Process.Debugger) & '`',
-         Output_Command => True);
-      return Commands.Success;
-   end Execute_Dbg;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Registers_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Process : constant Visual_Debugger :=
-        Visual_Debugger (Get_Current_Debugger (Kernel));
-
-   begin
-      if Process = null or else Process.Debugger = null then
-         return Commands.Failure;
-      end if;
-
-      --  ???? won't work with GDB/MI
-      Process_User_Command
-        (Process,
-         "graph display `" & Info_Registers (Process.Debugger) & '`',
-         Output_Command => True);
-      return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Expression_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Process : constant Visual_Debugger :=
-        Visual_Debugger (Get_Current_Debugger (Kernel));
-   begin
-      if Process = null or else Process.Debugger = null then
-         return Commands.Failure;
-      end if;
-
-      Display_Expression (Process);
-      return Commands.Success;
-   end Execute;
 
    -------------------
    -- Start_Program --
@@ -1700,30 +1536,6 @@ package body GVD_Module is
 
       GVD.Canvas.Register_Module (Kernel);
       GVD.Consoles.Register_Module (Kernel);
-
-      Register_Action
-        (Kernel, "debug display local variables", new Local_Vars_Command,
-         Filter      => Debugger_Filter,
-         Description => -"Display local variables in the data window",
-         Category    => -"Debug");
-
-      Register_Action
-        (Kernel, "debug display arguments", new Arguments_Command,
-         Filter      => Debugger_Filter,
-         Description => -"Display arguments to the current subprogram",
-         Category    => -"Debug");
-
-      Register_Action
-        (Kernel, "debug display registers", new Registers_Command,
-         Description => -"Display the contents of registers in data window",
-         Filter      => Debugger_Filter,
-         Category    => -"Debug");
-
-      Register_Action
-        (Kernel, "Debug display any expression", new Expression_Command,
-         Description => -"Opens a dialog to choose an expression to display",
-         Filter      => Debugger_Filter,
-         Category    => -"Debug");
 
       Register_Action
         (Kernel, "debug run dialog", new Start_Command,

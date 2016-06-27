@@ -41,6 +41,7 @@ with Gtk;                        use Gtk;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
+with Commands;                   use Commands;
 with Config;                     use Config;
 with Debugger.Gdb;               use Debugger.Gdb;
 with Debugger.Gdb_MI;            use Debugger.Gdb_MI;
@@ -1389,5 +1390,31 @@ package body GVD.Process is
       Project_Changed_Hook.Run (Kernel);
       Recompute_View (Kernel);
    end Load_Project_From_Executable;
+
+   -----------------
+   -- Dbg_Command --
+   -----------------
+
+   package body Dbg_Command is
+      overriding function Execute
+        (Command : access Debugger_Command;
+         Context : Interactive_Command_Context) return Command_Return_Type
+      is
+         Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+         Process : Visual_Debugger;
+      begin
+         Process := Visual_Debugger (Get_Current_Debugger (Kernel));
+
+         if Process = null or else Process.Debugger = null then
+            return Commands.Failure;
+         end if;
+
+         if Debugger_Console_Has_Focus (Process) then
+            Process.Is_From_Dbg_Console := True;
+         end if;
+
+         return Debugger_Command_Access (Command).Execute_Dbg (Process);
+      end Execute;
+   end Dbg_Command;
 
 end GVD.Process;

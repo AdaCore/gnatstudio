@@ -758,12 +758,13 @@ package body Debugger is
                    Debugger => Process,
                    Str      => Cmd (First .. Last - 1));
             begin
-               if Tmp /= "" then
+               if Tmp = Command_Intercepted then
+                  return;
+
+               elsif Tmp /= "" then
                   if Mode in Visible_Command then
-                     if Tmp /= Command_Intercepted then
-                        Output_Text (Process, Tmp, Is_Command  => False,
-                                     Set_Position              => True);
-                     end if;
+                     Output_Text (Process, Tmp, Is_Command  => False,
+                                  Set_Position              => True);
                      Debugger_Root'Class (Debugger.all).Display_Prompt;
                   end if;
                   return;

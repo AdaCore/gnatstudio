@@ -101,7 +101,6 @@ package body GVD.Canvas is
    --  Format of the graph print commands, and how to parse them
 
    Graph_Cmd_Max_Paren           : constant := 15;
-   Graph_Cmd_Cmd_Paren           : constant := 1;
    Graph_Cmd_Type_Paren          : constant := 2;
    Graph_Cmd_Expression_Paren    : constant := 4;
    Graph_Cmd_Quoted_Paren        : constant := 5;
@@ -193,6 +192,31 @@ package body GVD.Canvas is
       Process : access GPS.Debuggers.Base_Visual_Debugger'Class;
       Command : String) return String;
    --  Handles the "graph display", "graph enable", ... custom commands
+
+   type Local_Vars_Command is new Dbg_Command.Debugger_Command
+   with null record;
+   overriding function Execute_Dbg
+     (Command : access Local_Vars_Command;
+      Process : Visual_Debugger) return Command_Return_Type;
+   --  Debug->Data->Display Local Variables
+
+   type Arguments_Command is new Dbg_Command.Debugger_Command with null record;
+   overriding function Execute_Dbg
+     (Command : access Arguments_Command;
+      Process : Visual_Debugger) return Command_Return_Type;
+   --  Debug->Data->Display Arguments
+
+   type Registers_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Registers_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Debug->Data->Display Registers
+
+   type Expression_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Expression_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Debug->Data->Display Any Expression
 
    type On_Pref_Changed is new Preferences_Hooks_Function with record
       Canvas : GVD_Canvas;
@@ -443,6 +467,89 @@ package body GVD.Canvas is
       end if;
       return False;
    end Filter_Matches_Primitive;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute_Dbg
+     (Command : access Local_Vars_Command;
+      Process : Visual_Debugger) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+   begin
+      --  ???? won't work with GDB/MI
+      Process_User_Command
+        (Process,
+         "graph display `" & Info_Locals (Process.Debugger) & '`',
+         Output_Command => True);
+      return Commands.Success;
+   end Execute_Dbg;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute_Dbg
+     (Command : access Arguments_Command;
+      Process : Visual_Debugger) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+   begin
+      --  ???? won't work with GDB/MI
+      Process_User_Command
+        (Process,
+         "graph display `" & Info_Args (Process.Debugger) & '`',
+         Output_Command => True);
+      return Commands.Success;
+   end Execute_Dbg;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Registers_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+
+   begin
+      if Process = null or else Process.Debugger = null then
+         return Commands.Failure;
+      end if;
+
+      --  ???? won't work with GDB/MI
+      Process_User_Command
+        (Process,
+         "graph display `" & Info_Registers (Process.Debugger) & '`',
+         Output_Command => True);
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Expression_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+   begin
+      if Process = null or else Process.Debugger = null then
+         return Commands.Failure;
+      end if;
+
+      Display_Expression (Process);
+      return Commands.Success;
+   end Execute;
 
    -------------
    -- Execute --
@@ -911,9 +1018,7 @@ package body GVD.Canvas is
          if Matched (Graph_Cmd_Expression_Paren) /= No_Match then
             First  := Matched (Graph_Cmd_Expression_Paren).First;
             Last   := Matched (Graph_Cmd_Expression_Paren).Last;
-            Info := Wrap_Debugger_Command
-              (Cmd (Matched (Graph_Cmd_Cmd_Paren).First
-               .. Matched (Graph_Cmd_Cmd_Paren).Last));
+            Info := Wrap_Debugger_Command (Cmd (First .. Last));
          else
             if Matched (Graph_Cmd_Quoted_Paren) /= No_Match then
                First := Matched (Graph_Cmd_Quoted_Paren).First;
@@ -1725,6 +1830,32 @@ package body GVD.Canvas is
          Label  => -"Debug/Graph Display %C",
          Custom => Custom_Label_Expansion'Access,
          Action => "debug display dereferenced variable");
+
+      Filter := Kernel.Lookup_Filter ("Debugger stopped");
+
+      Register_Action
+        (Kernel, "debug display local variables", new Local_Vars_Command,
+         Filter      => Filter,
+         Description => -"Display local variables in the data window",
+         Category    => -"Debug");
+
+      Register_Action
+        (Kernel, "debug display arguments", new Arguments_Command,
+         Filter      => Filter,
+         Description => -"Display arguments to the current subprogram",
+         Category    => -"Debug");
+
+      Register_Action
+        (Kernel, "debug display registers", new Registers_Command,
+         Description => -"Display the contents of registers in data window",
+         Filter      => Filter,
+         Category    => -"Debug");
+
+      Register_Action
+        (Kernel, "Debug display any expression", new Expression_Command,
+         Description => -"Opens a dialog to choose an expression to display",
+         Filter      => Filter,
+         Category    => -"Debug");
    end Register_Module;
 
    -------------

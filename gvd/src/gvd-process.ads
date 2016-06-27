@@ -25,6 +25,7 @@ with GNAT.Expect;          use GNAT.Expect;
 
 with Gtk.Widget;
 
+with Commands.Interactive; use Commands.Interactive;
 with Debugger;             use Debugger;
 with Generic_Views;        use Generic_Views;
 with GPS.Debuggers;        use GPS.Debuggers;
@@ -297,6 +298,38 @@ package GVD.Process is
      (Process : access Visual_Debugger_Record'Class) return Boolean;
    --  Return whether current command is likely to change the callstack when it
    --  finishes its execution
+
+   --------------
+   -- Commands --
+   --------------
+   --  This subpackage defines a new Debugger_Command type, that is used as a
+   --  basis for every debugger command type
+
+   package Dbg_Command is
+      type Debugger_Command is abstract new Interactive_Command
+      with null record;
+      type Debugger_Command_Access is access all Debugger_Command'Class;
+      --  Abstract type that is the basis for debugger commands. Will take care
+      --  of some boilerplate code, like checking that the debugger is active,
+      --  and checking wether the command has been issued from the debugger
+      --  console Debugger commands don't need to override Execute, as is
+      --  usual with Interactive_Commands, but Execute_Dbg
+
+      overriding function Execute
+        (Command : access Debugger_Command;
+         Context : Interactive_Command_Context)
+        return Commands.Command_Return_Type;
+      --  Overridden Execute primitive to take care of Debugger_Command
+      --  boilerplate, do not override
+
+      function Execute_Dbg
+        (Command : access Debugger_Command;
+         Process : Visual_Debugger)
+        return Commands.Command_Return_Type is abstract;
+      --  Types derived from Debugger_Command need to override this primitive
+      --  Process is the process of the active debugger for the command.
+
+   end Dbg_Command;
 
 private
 
