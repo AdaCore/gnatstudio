@@ -82,6 +82,56 @@ XML = r"""<?xml version="1.0" ?>
    </project_attribute>
 
    <project_attribute
+      name="connection_tool"
+      package="IDE"
+      editor_page="Embedded"
+      editor_section="Tools"
+      description="Executable used to interface with a remote target when debugging. GPS currently supports OpenOCD and st-util."
+      hide_in="wizard library_wizard"
+      label="Connection tool">
+      <choice>st-util</choice>
+      <choice>openocd</choice>
+      <string />
+   </project_attribute>
+
+   <project_attribute
+      name="connection_config_file"
+      package="IDE"
+      editor_page="Embedded"
+      editor_section="Tools"
+      description="File used to configure the IDE'Connection_Tool. Used only when OpenOCD is set."
+      hide_in="wizard library_wizard"
+      label="Connection configuration file">
+      <string type="file"/>
+   </project_attribute>
+
+   <project_attribute
+       name="program_host"
+       package="IDE"
+       editor_page="Embedded"
+       editor_section="Communication Settings"
+       description="Name or IP address of the embedded target. This field should be left blank if you are not working on an embedded application"
+       hide_in="wizard library_wizard"
+       label="Program host">
+       <string />
+   </project_attribute>
+
+   <project_attribute
+       name="communication_protocol"
+       package="IDE"
+       editor_page="Embedded"
+       editor_section="Communication Settings"
+       description="Protocol used to connect to the embedded target. This field should be left blank if you are not working on an embedded application"
+       hide_in="wizard library_wizard"
+       label="Protocol">
+       <choice>wtx</choice>
+       <choice>dfw</choice>
+       <choice>dfw-rtp</choice>
+       <choice>remote</choice>
+       <string />
+   </project_attribute>
+
+   <project_attribute
        name="Compiler_Command"
        package="IDE"
        editor_page=""
@@ -260,56 +310,6 @@ XML = r"""<?xml version="1.0" ?>
         omit_if_default="true">
         <string type="directory" default="(subdir doc in build directory)" allow_empty="False" />
     </project_attribute>
-
-   <project_attribute
-       name="program_host"
-       package="IDE"
-       editor_page="Build/Cross-Platform"
-       editor_section="Cross environment"
-       description="Name or IP address of the embedded target. This field should be left blank if you are not working on an embedded application"
-       hide_in="wizard library_wizard"
-       label="Program host">
-       <string />
-   </project_attribute>
-
-   <project_attribute
-       name="communication_protocol"
-       package="IDE"
-       editor_page="Build/Cross-Platform"
-       editor_section="Cross environment"
-       description="Protocol used to connect to the embedded target. This field should be left blank if you are not working on an embedded application"
-       hide_in="wizard library_wizard"
-       label="Protocol">
-       <choice>wtx</choice>
-       <choice>dfw</choice>
-       <choice>dfw-rtp</choice>
-       <choice>remote</choice>
-       <string />
-   </project_attribute>
-
-   <project_attribute
-      name="connection_tool"
-      package="IDE"
-      editor_page="Build/Cross-Platform"
-      editor_section="Cross environment"
-      description="Executable used to interface with a remote target when debugging. GPS currently supports OpenOCD and st-util."
-      hide_in="wizard library_wizard"
-      label="Connection tool">
-      <choice>st-util</choice>
-      <choice>openocd</choice>
-      <string />
-   </project_attribute>
-
-   <project_attribute
-      name="connection_config_file"
-      package="IDE"
-      editor_page="Build/Cross-Platform"
-      editor_section="Cross environment"
-      description="File used to configure the IDE'Connection_Tool. Used only when OpenOCD is set."
-      hide_in="wizard library_wizard"
-      label="Connection configuration file">
-      <string type="file"/>
-   </project_attribute>
 
     <!--  Main units -->
 

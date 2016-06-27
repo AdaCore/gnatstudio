@@ -112,7 +112,7 @@ NF-17-P406-027 GPS: OpenOCD support to flash/debug boards (2016-06-27)
   In order to use OpenOCD, set the IDE'Connection_Tool project attribute
   to 'openocd' and specify a board-specific OpenOCD configuration file via
   the IDE'Connection_Config_File project attribute (boat attributes are
-  editable in the 'Cross-Platform' Project Properties editor page).
+  editable in the 'Embedded' Project Properties editor page).
 
 NF-17-P404-008 GPS: do not highlight occurrences of keywords (2016-04-05)
 

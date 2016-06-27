@@ -122,7 +122,7 @@ class BoardLoader(Module):
 
         editor = Project_Properties_Editor()
         yield editor.open_and_yield(wait_scan=False)
-        yield editor.select("Build/Cross-Platform")
+        yield editor.select("Embedded")
 
     def __verify_settings(self, for_debug=False):
         """
