@@ -384,6 +384,39 @@ class CLI(GPS.Process):
             exe = GPS.File(main_name).executable_path
             GPS.Debugger.spawn(exe)
 
+    @staticmethod
+    def action_goto_previous_subsystem():
+        """
+        Retrieves the focused QGen Diagram viewer and changes the
+        diagram to display based on the `text` field of the
+        `qgen_navigation_info` item of the current diagram.
+        """
+        viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
+        if viewer:
+            diag_name = viewer.diagram.get_item('qgen_navigation_info').text
+            if diag_name != "":
+                new_diag = viewer.diags.get(diag_name)
+                viewer.set_diagram(new_diag, update_prev=False)
+                # ??? Disable previous button when no previous
+
+    @staticmethod
+    def action_goto_parent_subsystem():
+        """
+        Retrieves the focused QGen Diagram viewer and changes the
+        diagram to display based on the `parent` field of the
+        `qgen_navigation_info` item of the current diagram.
+        """
+        viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
+        if viewer:
+            navigation_info = viewer.diagram.get_item('qgen_navigation_info')
+            diag_name = navigation_info.data.get('parent')
+            if diag_name != "":
+                new_diag = viewer.diags.get(diag_name)
+                new_diag.get_item(
+                    'qgen_navigation_info').text = viewer.diagram.id
+                viewer.set_diagram(new_diag, update_prev=False)
+                # ??? Disable parent button when no parent
+
 
 class QGEN_Diagram(gpsbrowsers.JSON_Diagram):
     def on_selection_changed(self, item, *args):
@@ -413,6 +446,19 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         for win in GPS.MDI.children():
             if hasattr(win, '_gmc_viewer'):
                 yield win._gmc_viewer
+
+    @staticmethod
+    def retrieve_active_qgen_viewer():
+        """
+        Returns the focused qgen viewer if possible
+        :return: a QGEN_Diagram_Viewer instance
+        """
+        try:
+            win = GPS.MDI.current()
+            if hasattr(win, '_gmc_viewer'):
+                return win._gmc_viewer
+        except:
+            return None
 
     @staticmethod
     def get_or_create_view(file):
@@ -465,7 +511,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 v.diags = GPS.Browsers.Diagram.load_json(
                     jsonfile, diagramFactory=QGEN_Diagram)
                 if v.diags:
-                    v.set_diagram(v.diags.get())
+                    v.set_diagram(v.diags.get(), update_prev=False)
 
                 if on_loaded:
                     on_loaded(v)
@@ -534,14 +580,19 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         if name == 'showdiagram':
             self.set_diagram(self.diags.get(args[0]))
 
-    def set_diagram(self, diag):
+    def set_diagram(self, diag, update_prev=True):
         """
         Sets the diagram that has to be displayed and calls
         the callbacks that have to be executed when the diagram changes
         If diag is None a refresh on the current diagram is performed
         :param diag: The new diagram to display
+        :param update_prev: If true, store the previous subsystem
+        for navigation purposes
         """
         if diag and diag != self.diagram:
+            if update_prev:
+                navigation_info = diag.get_item('qgen_navigation_info')
+                navigation_info.text = self.diagram.id
             self.diagram = diag
             self.scale_to_fit(2)
 
@@ -1050,6 +1101,13 @@ else:
             except:
                 return False
 
+        def __contextual_filter_viewer_active(self, context):
+            try:
+                return QGEN_Diagram_Viewer.retrieve_active_qgen_viewer() \
+                    is not None
+            except:
+                return False
+
         def __contextual_filter_sources(self, context):
             """
             Whether the current context is a model block with
@@ -1229,6 +1287,20 @@ else:
                 contextual='Debug/Disable persistent value for signal',
                 filter=self.__contextual_filter_debug_and_watchpoint,
                 callback=self.__contextual_disable_persistent_signal_value)
+
+            gps_utils.make_interactive(
+                callback=CLI.action_goto_parent_subsystem,
+                name='MDL goto parent subsystem',
+                category='Browsers',
+                filter=self.__contextual_filter_viewer_active,
+                icon='gps-upward-symbolic')
+
+            gps_utils.make_interactive(
+                callback=CLI.action_goto_previous_subsystem,
+                name='MDL goto previous subsystem',
+                category='Browsers',
+                filter=self.__contextual_filter_viewer_active,
+                icon='gps-backward-symbolic')
 
             gps_utils.make_interactive(
                 name='MDL show source for block',
