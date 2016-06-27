@@ -106,6 +106,14 @@ NF-17-P412-011 GPS: automatic fix for adding Elaborate_All pragma (2016-04-15)
   pragma Elaborate_All (NAME) after corresponding with-clause in the spec or
   body of given compilation unit.
 
+NF-17-P406-027 GPS: OpenOCD support to flash/debug boards (2016-06-27)
+
+  GPS now supports OpenOCD in order to flash and/or debug an external board.
+  In order to use OpenOCD, set the IDE'Connection_Tool project attribute
+  to 'openocd' and specify a board-specific OpenOCD configuration file via
+  the IDE'Connection_Config_File project attribute (boat attributes are
+  editable in the 'Cross-Platform' Project Properties editor page).
+
 NF-17-P404-008 GPS: do not highlight occurrences of keywords (2016-04-05)
 
   The plug-in auto_highlight_occurrences.py highlights all occurrences of
