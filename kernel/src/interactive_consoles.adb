@@ -2158,8 +2158,9 @@ package body Interactive_Consoles is
       Highlight : Boolean := False)
    is
       type Link_And_Location is record
-         Link        : Hyper_Links;
-         First, Last : Natural;
+         Link  : Hyper_Links := null;
+         First : Natural := Integer'Last;
+         Last  : Natural := Integer'Last;
       end record;
       Locs : array (1 .. Console.Links_Count) of Link_And_Location;
       --  Index in Text of the first occurrence of each regexp
@@ -2180,6 +2181,12 @@ package body Interactive_Consoles is
       procedure Update_Pattern_Loc (L : Natural; Link : Hyper_Links) is
          Matches : Match_Array (0 .. 1);
       begin
+         --  Do nothing if the hyperlink does not apply to any regexp
+         --  (i.e : when created with Insert_Hyper_Link).
+         if Link.Pattern = null then
+            return;
+         end if;
+
          Match (Link.Pattern.all, Fixed, Matches, Data_First => Index);
 
          if Matches (0) = No_Match then
