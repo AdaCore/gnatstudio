@@ -778,7 +778,7 @@ package body GVD.Variables is
          if T'Length = 0 or else not Show_Types.Get_Pref then
             return "";
          else
-            return "<span foreground=""" & Contrast & """ > ("
+            return "<span foreground=""" & Contrast & """>("
               & XML_Utils.Protect (T) & ")</span> ";
          end if;
       end Display_Type_Name;
