@@ -2759,7 +2759,7 @@ package body Ada_Analyzer is
            or else ((Top_Token.Token = Tok_Exception
                      or else Top_Token.Token = Tok_Case
                      or else Top_Token.Token = Tok_Select)
-                    and then Reserved = Tok_When
+                    and then (Reserved = Tok_When and then Num_Parens = 0)
                     and then Prev_Token /= Tok_Exit
                     and then Prev_Prev_Token /= Tok_Exit)
            or else (Top_Token.In_Declaration
