@@ -85,13 +85,15 @@ private
 
    overriding function Is_Changed
      (Self    : access Messages_Model_Record;
-      Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean is (True);
+      Project : Code_Analysis.Tree_Models.Project_Item_Access) return Boolean
+     is (True);
    --  Returns True if specified project data has been changed
 
    overriding function Is_Changed
      (Self    : access Messages_Model_Record;
       Project : Code_Analysis.Tree_Models.Project_Item_Access;
-      File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean is (True);
+      File    : Code_Analysis.Tree_Models.File_Item_Access) return Boolean
+     is (True);
    --  Returns True if specified file data has been changed
 
    overriding function Is_Changed
