@@ -35,6 +35,9 @@ with Language.Abstract_Language_Tree;
 
 package body GNAThub.Loader is
 
+   Empty_Severity_Id : constant := 0;
+   --  Code for unspecified (NULL) severity
+
    procedure Cleanup (Self : in out Loader'Class);
    --  Stop loading (when necessary) and cleanup resources.
 
@@ -384,7 +387,9 @@ package body GNAThub.Loader is
          if Self.Rules.Contains (M.Rule_Id) then
             --  This is message
 
-            Severity := Self.Severities (M.Category_Id);
+            --  Use Empty_Severity_Id if M.Category_Id is NULL
+            Severity := Self.Severities
+              (Natural'Max (Empty_Severity_Id, M.Category_Id));
             Rule     := Self.Rules (M.Rule_Id);
             Position := Rule.Count.Find (Severity);
 
@@ -521,6 +526,14 @@ package body GNAThub.Loader is
          Self.Severities.Insert (S.Id, Severity);
          List.Next;
       end loop;
+
+      if not Self.Severities.Contains (Empty_Severity_Id) then
+         Severity :=
+           Self.Module.New_Severity
+             (Name       => To_Unbounded_String ("Unspecified"),
+              On_Sidebar => True);
+         Self.Severities.Insert (Empty_Severity_Id, Severity);
+      end if;
    end Load_Severities;
 
    --------------------------
