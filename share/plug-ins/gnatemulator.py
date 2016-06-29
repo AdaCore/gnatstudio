@@ -149,7 +149,7 @@ class GNATemulator(Module):
         if r0 is not 0:
             self.__error_exit(msg="Build error.")
             return
-        binary = GPS.Project.root().get_executable_path(GPS.File(main_name))
+        binary = GPS.File(main_name).executable_path.path
 
         log("... done.")
 
