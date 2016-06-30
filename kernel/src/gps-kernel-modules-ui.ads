@@ -410,6 +410,15 @@ package GPS.Kernel.Modules.UI is
    --  Its contents is read from the XML file in Install_Menus. Any button
    --  registered for it later on will be dynamically added to the toolbar.
 
+   procedure Declare_Toolbar
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Id            : String;
+      Inherits      : String := "");
+   --  Declares a new toolbar (as would be done by modifying menus.xml),
+   --  empty unless it inherits from another toolbar.
+   --  This has no effect if the toolbar already exists, for instance because
+   --  it was defined in menus.xml.
+
    -------------------------
    -- Drag'n'drop support --
    -------------------------

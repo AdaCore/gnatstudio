@@ -1118,7 +1118,8 @@ class View(GPS.GUI):
         """
 
     def create(self, diagram, title, save_desktop=None,
-               snap_to_grid=True, snap_to_guides=False):
+               snap_to_grid=True, snap_to_guides=False,
+               toolbar='Browser'):
         """
         Creates a new view that shows the given diagram.
         This view is automatically made visible in GPS.
@@ -1142,6 +1143,12 @@ class View(GPS.GUI):
            interests of the other items (typically the top, middle and bottom
            of the bounding box). This feature is useful to help user align
            items.
+        :param str toolbar: The name of the toolbar definition to use for the
+           local toolbar of the browser. Such definitions are found in the
+           file share/gps/menus.xml in the GPS install. If the name is not
+           defined in that file, a new definition will be used that extends
+           the standard browsers toolbar. You can later add custom actions
+           to the toolbar by using :func:`GPS.Action.button`
         """
 
     def scale_to_fit(self, max_scale=4.0):

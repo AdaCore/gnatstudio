@@ -159,8 +159,8 @@ package body Browsers.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all commands for the python classes in this package.
 
-   type Browser_View_Record is new Browsers.Canvas.General_Browser_Record with
-      null record;
+   type Browser_View_Record is new Browsers.Canvas.General_Browser_Record
+     with null record;
 
    function Initialize
      (Self : access Browser_View_Record'Class) return Gtk_Widget;
@@ -793,21 +793,30 @@ package body Browsers.Scripts is
          null;  --  nothing to do
 
       elsif Command = "create" then
-         Model := Get_Model (Nth_Arg (Data, 2));
-         View := Browser_Views.Get_Or_Create_View (Get_Kernel (Data));
-         View.Get_View.Set_Model (Model);
 
-         C := Browser_Views.Child_From_View (View);
-         C.Set_Title (Nth_Arg (Data, 3));
-         GPS_MDI_Child (C).Set_Save_Desktop_Callback
-           (Nth_Arg (Data, 4, Default => null));
+         declare
+            Toolbar_Id : constant String := Data.Nth_Arg (7, "Browser");
+         begin
+            Declare_Toolbar
+              (Get_Kernel (Data), Toolbar_Id, Inherits => "Browser");
 
-         View.Get_View.Set_Snap
-           (Snap_To_Grid   => Nth_Arg (Data, 5, True),
-            Snap_To_Guides => Nth_Arg (Data, 6, False));
+            Model := Get_Model (Data.Nth_Arg (2));
+            View := Browser_Views.Get_Or_Create_View
+              (Get_Kernel (Data), Toolbar_Id => Toolbar_Id);
+            View.Get_View.Set_Model (Model);
 
-         Inst := Nth_Arg (Data, 1);
-         Set_Data (Inst, Widget => GObject (View));
+            C := Browser_Views.Child_From_View (View);
+            C.Set_Title (Data.Nth_Arg (3));
+            GPS_MDI_Child (C).Set_Save_Desktop_Callback
+              (Nth_Arg (Data, 4, Default => null));
+
+            View.Get_View.Set_Snap
+              (Snap_To_Grid   => Data.Nth_Arg (5, True),
+               Snap_To_Guides => Data.Nth_Arg (6, False));
+
+            Inst := Data.Nth_Arg (1);
+            Set_Data (Inst, Widget => GObject (View));
+         end;
 
       elsif Command = "set_background" then
          Inst := Nth_Arg (Data, 1);
@@ -1794,11 +1803,12 @@ package body Browsers.Scripts is
       Kernel.Scripts.Register_Command
         ("create",
          Class   => View,
-         Params  => (1 => Param ("diagram"),
-                     2 => Param ("title"),
-                     3 => Param ("save_desktop", Optional => True),
-                     4 => Param ("snap_to_grid", Optional => True),
-                     5 => Param ("snap_to_guides", Optional => True)),
+         Params  => (2 => Param ("diagram"),
+                     3 => Param ("title"),
+                     4 => Param ("save_desktop", Optional => True),
+                     5 => Param ("snap_to_grid", Optional => True),
+                     6 => Param ("snap_to_guides", Optional => True),
+                     7 => Param ("toolbar", Optional => True)),
          Handler => View_Handler'Access);
       Kernel.Scripts.Register_Command
         ("set_selection_style",

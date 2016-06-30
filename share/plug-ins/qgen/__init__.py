@@ -479,7 +479,8 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         v.create(
             diagram=GPS.Browsers.Diagram(),  # a temporary diagram
             title=os.path.basename(file.path),
-            save_desktop=v.save_desktop)
+            save_desktop=v.save_desktop,
+            toolbar="MDL Browser")
         v.set_read_only(True)
 
         c = GPS.MDI.get_by_child(v)

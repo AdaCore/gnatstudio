@@ -3229,6 +3229,24 @@ package body GPS.Kernel.Modules.UI is
       return Menubar;
    end Create_Menubar_From_Model;
 
+   ---------------------
+   -- Declare_Toolbar --
+   ---------------------
+
+   procedure Declare_Toolbar
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Id            : String;
+      Inherits      : String := "")
+   is
+      pragma Unreferenced (Kernel);
+      Descr : Toolbar_Description;
+   begin
+      if not Globals.Toolbars.Contains (Id) then
+         Descr.Inherit := To_Unbounded_String (Inherits);
+         Globals.Toolbars.Include (Id, Descr);
+      end if;
+   end Declare_Toolbar;
+
    -------------------------------
    -- Parse_Menu_Model_From_XML --
    -------------------------------

@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P628-025 GPS: new toolbar parameter for GPS.Browser.create (2016-07-04)
+
+  A new browser can now be created with a custom toolbar. It is thus possible
+  to add buttons via GPS.Action.button() that will only apply to this browser.
+
 NF-17-P622-023 GPS: remove settings to auto-resize omnisearch (2016-06-23)
 
   The omnisearch (i.e. the search box at the top-right corner of the GPS

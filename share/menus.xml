@@ -579,9 +579,6 @@
       <button action='browser clear'/>
       <button action='browser remove unselected'/>
       <button action='browser remove selected'/>
-      <separator/>
-      <button hide='true' action='MDL goto parent subsystem'/>
-      <button hide='true' action='MDL goto previous subsystem'/>
       <separator id='export'/>
    </toolbar>
    <toolbar id='Call Graph Browser' inherit='Browser'/>
@@ -590,4 +587,10 @@
    <toolbar id='Entity Browser' inherit='Browser'/>
    <toolbar id='Project Browser' inherit='Browser'/>
    <toolbar id='Debugger Data' inherit='Browser'/>
+
+   <toolbar id="MDL Browser" inherit='Browser'>
+      <separator/>
+      <button action='MDL goto parent subsystem'/>
+      <button action='MDL goto previous subsystem'/>
+   </toolbar>
 </GPS>

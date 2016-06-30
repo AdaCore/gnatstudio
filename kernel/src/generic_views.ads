@@ -287,19 +287,28 @@ package Generic_Views is
       --  Return the module ID corresponding to that view
 
       function Create_Finalized_View
-        (View         : not null access Formal_View_Record'Class)
+        (View       : not null access Formal_View_Record'Class;
+         Toolbar_Id : String := View_Name)
          return Gtk.Widget.Gtk_Widget;
       --  If a local toolbar is needed for View, create a parent container
       --  widget for View, containing a newly created toolbar on the top.
       --  If no local toolbar is needed, return View.
+      --  Toolbar_Id is the name of the toolbar to use. It refers to names in
+      --  menus.xml, or toolbars created via
+      --  GPS.Kernel.Module.UI.Create_Toolbar.
 
       function Get_Or_Create_View
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Focus  : Boolean := True)
+        (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Focus      : Boolean := True;
+         Toolbar_Id : String := View_Name)
          return View_Access;
       --  Return the view (create a new one if necessary, or always if
       --  Reuse_If_Exist is False).
       --  The view gets the focus automatically if Focus is True.
+      --
+      --  Toolbar_Id is the name of the toolbar to use. It refers to names in
+      --  menus.xml, or toolbars from GPS.Kernel.Module.UI.Create_Toolbar. This
+      --  has no effect, though, if the view already existed.
 
       function Retrieve_View
         (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)

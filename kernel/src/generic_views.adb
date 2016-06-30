@@ -846,7 +846,8 @@ package body Generic_Views is
       procedure Create_If_Needed
         (Kernel       : access Kernel_Handle_Record'Class;
          Child        : out GPS_MDI_Child;
-         View         : out View_Access);
+         View         : out View_Access;
+         Toolbar_Id   : String := View_Name);
       --  Create or reuse a view.
 
       procedure Find
@@ -1189,7 +1190,8 @@ package body Generic_Views is
       procedure Create_If_Needed
         (Kernel       : access Kernel_Handle_Record'Class;
          Child        : out GPS_MDI_Child;
-         View         : out View_Access)
+         View         : out View_Access;
+         Toolbar_Id   : String := View_Name)
       is
          Focus_Widget   : Gtk_Widget;
          Finalized_View : Gtk_Widget;
@@ -1206,7 +1208,8 @@ package body Generic_Views is
          Focus_Widget := Initialize (View);
 
          --  Create the finalized view, creating its local toolbar if needed
-         Finalized_View := Create_Finalized_View (View);
+         Finalized_View := Create_Finalized_View
+           (View, Toolbar_Id => Toolbar_Id);
 
          --  A simple check that the widget can indeed get the keyboard focus.
          --  If it can't, this might result in surprising behavior: for
@@ -1384,7 +1387,8 @@ package body Generic_Views is
       ---------------------------
 
       function Create_Finalized_View
-        (View : not null access Formal_View_Record'Class) return Gtk_Widget
+        (View       : not null access Formal_View_Record'Class;
+         Toolbar_Id : String := View_Name) return Gtk_Widget
       is
          Box            : Gtk_Box;
          Toolbar        : Gtk_Toolbar;
@@ -1401,7 +1405,8 @@ package body Generic_Views is
          Initialize_Vbox (Box);
          Toplevel_Box (Box.all).Initial := View_Access (View);
 
-         Toolbar := Create_Toolbar (View.Kernel, Id => View_Name);
+         Trace (Me, "Create toolbar, from id=" & Toolbar_Id);
+         Toolbar := Create_Toolbar (View.Kernel, Id => Toolbar_Id);
          Toolbar.Set_Icon_Size (Icon_Size_Local_Toolbar);
          Toolbar.Set_Style (Toolbar_Icons);
          Get_Style_Context (Toolbar).Add_Class ("gps-local-toolbar");
@@ -1438,14 +1443,15 @@ package body Generic_Views is
       ------------------------
 
       function Get_Or_Create_View
-        (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-         Focus  : Boolean := True)
+        (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+         Focus      : Boolean := True;
+         Toolbar_Id : String := View_Name)
          return View_Access
       is
          Child        : GPS_MDI_Child;
          View         : View_Access;
       begin
-         Create_If_Needed (Kernel, Child, View);
+         Create_If_Needed (Kernel, Child, View, Toolbar_Id => Toolbar_Id);
 
          if Focus then
             Raise_Child (Child);
