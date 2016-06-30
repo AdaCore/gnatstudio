@@ -5425,10 +5425,11 @@ class File(object):
 
     executable_path = None
     """
-    If this :class:`GPS.File` instance refers to a main file, return a
-    :class:`File` instance of the executable associated with this file.
-    An exception is raised if the :class:`File` instance does not refer
-    to a main file.
+    Return a :class:`File` instance of the executable associated with this
+    file.
+
+    The result may be meaningless if the given :class:`File` is not supposed
+    to produce an executable.
     """
 
     path = ""
