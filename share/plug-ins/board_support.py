@@ -111,7 +111,6 @@ class BoardLoader(Module):
         self.__display_message("[workflow stopped]", mode="error")
 
         self.__reset_all()
-        self.__is_busy = False
 
     @workflows.run_as_workflow
     def __open_remote_project_properties(self, text):
@@ -298,6 +297,10 @@ class BoardLoader(Module):
                 if self.__connection_tool in i.name():
                     i.interrupt()
 
+        # Workflow has been reset and any existing connection has been killed:
+        # we are not busy anymore.
+        self.__is_busy = False
+
     def __create_targets_lazily(self):
         """
         Create the 'Flash to Board', the 'Debug on Board' and the Target
@@ -374,7 +377,7 @@ class BoardLoader(Module):
         builder = promises.TargetWrapper("Build Main")
         r0 = yield builder.wait_on_execute(main_name)
         if r0 is not 0:
-            self.__error_exit(msg="Build error.")
+            self.__reset_all()
             return
 
         # Check that the settings are correctly set to flash the board
@@ -458,11 +461,12 @@ class BoardLoader(Module):
                                    mode="error")
             return
 
-        self.__is_busy = True
-
         # Reset the connection if still alive
-        if self.__connection is not None:
-            self.__reset_all()
+        self.__reset_all()
+
+        # Tell GPS that we can't run another workflow until we finish
+        # the one that is currently running.
+        self.__is_busy = True
 
         # Check if we have a main to debug
         if main_name is None:
@@ -473,7 +477,7 @@ class BoardLoader(Module):
         builder = promises.TargetWrapper("Build Main")
         r0 = yield builder.wait_on_execute(main_name)
         if r0 is not 0:
-            self.__error_exit("Build error.")
+            self.__reset_all()
             return
 
         # Check that the settings are correctly set to debug on board
@@ -540,5 +544,3 @@ class BoardLoader(Module):
         """
         When debugger terminates, terminate the connection.
         """
-
-        self.__reset_all()
