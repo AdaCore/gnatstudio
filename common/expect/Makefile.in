@@ -6,7 +6,8 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CC = @CC@
+# Force 32bits compiler for explaunch.exe
+CC_32 = i686-pc-mingw32-gcc
 CFLAGS = -g -O2
 LDFLAGS = @LDFLAGS@
 LIBS = -limagehlp
@@ -45,10 +46,10 @@ clean:
 	rm -f *.o *~ $(EXPLAUNCH)
 
 $(EXPLAUNCH): $(EXPLAUNCH_OBJS) $(EXPLAUNCH_DEPS)
-	$(CC) -o $@ $(LDFLAGS) $(EXPLAUNCH_OBJS) $(LIBS)
+	$(CC_32) -o $@ $(LDFLAGS) $(EXPLAUNCH_OBJS) $(LIBS)
 
 .c.o:
-	$(CC) -c $(CFLAGS) $<
+	$(CC_32) -c $(CFLAGS) $<
 
 expWinSlaveDbgW.o: expWinSlaveDbg.c
-	$(CC) -c -DUNICODE $(CFLAGS) $< -o $@
+	$(CC_32) -c -DUNICODE $(CFLAGS) $< -o $@
