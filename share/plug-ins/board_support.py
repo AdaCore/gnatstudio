@@ -303,8 +303,12 @@ class BoardLoader(Module):
 
     def __create_targets_lazily(self):
         """
-        Create the 'Flash to Board', the 'Debug on Board' and the Target
-        Connector Build Targets.
+        Create all the build targets needed to flash/debug a board. Here is
+        the list of these build targets:
+          . 'Flash to Board' and 'Flash <current file> to Board' build targets
+          . 'Debug on Board' and 'Debug <current file> on Board' build targets
+          . TargetConnector build target (created from IDE'Connection_Tool)
+
         This method is called each time the project changes.
         """
 
@@ -329,18 +333,42 @@ class BoardLoader(Module):
                 tool_name=cmd[0],
                 default_args=cmd[1:])
 
-        # If the 'Flash to Board' and 'Debug on Board' build targets have
-        # not been created yet, create them.
+        # Create the build targets needed in order to flash/debug the board
+        # if not created yet.
         if not self.__buildTargets and active:
             workflows.create_target_from_workflow(
-                "Flash to Board", "flash-to-board", self.__flash_wf,
-                "gps-boardloading-flash-symbolic")
+                target_name="Flash to Board",
+                workflow_name="flash-to-board",
+                workflow=self.__flash_wf,
+                icon_name="gps-boardloading-flash-symbolic")
             self.__buildTargets.append(GPS.BuildTarget("Flash to Board"))
 
             workflows.create_target_from_workflow(
-                "Debug on Board", "debug-on-board", self.__debug_wf,
-                "gps-boardloading-debug-symbolic")
+                target_name="Debug on Board",
+                workflow_name="debug-on-board",
+                workflow=self.__debug_wf,
+                icon_name="gps-boardloading-debug-symbolic")
             self.__buildTargets.append(GPS.BuildTarget("Debug on Board"))
+
+            workflows.create_target_from_workflow(
+                target_name="Flash &lt;current file&gt; to Board",
+                workflow_name="flash-current-to-board",
+                workflow=self.__flash_wf,
+                icon_name="gps-boardloading-flash-symbolic",
+                in_toolbar=False,
+                main_arg="%fp")
+            self.__buildTargets.append(
+                GPS.BuildTarget("Flash <current file> to Board"))
+
+            workflows.create_target_from_workflow(
+                target_name="Debug &lt;current file&gt; on Board",
+                workflow_name="debug-current-on-board",
+                workflow=self.__debug_wf,
+                icon_name="gps-boardloading-debug-symbolic",
+                in_toolbar=False,
+                main_arg="%fp")
+            self.__buildTargets.append(
+                GPS.BuildTarget("Debug <current file> on Board"))
 
         # Show/Hide the build targets accordingly
         if active:
@@ -362,7 +390,7 @@ class BoardLoader(Module):
         # launched workflow.
         if self.__is_busy:
             self.__display_message(
-                msg="Warning: 'Debug on Board' already being executed",
+                msg="Warning: 'Flash to Board' already being executed",
                 mode="error")
             return
 

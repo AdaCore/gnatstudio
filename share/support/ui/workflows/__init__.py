@@ -257,13 +257,16 @@ def run_as_workflow(workflow):
 
 def create_target_from_workflow(target_name, workflow_name, workflow,
                                 icon_name="gps-print-symbolic",
-                                in_toolbar=True):
+                                in_toolbar=True,
+                                main_arg="%TT"):
     """
     Create a Target under the category Workflow from a given workflow.
     Executing this target runs the workflow.
-    The `workflow` receives the `main_name` as argument.
+    By default, the `workflow` receives the `main_name` as argument.
+    You can modify `main_arg` to receive the argument of your choice, by
+    specifying a GPS macro.
 
-    target_name and workflow_name are strings
+    target_name, workflow_name and main_arg are strings
     """
 
     # going to store the feeded workflow in a global variable
@@ -277,21 +280,24 @@ def create_target_from_workflow(target_name, workflow_name, workflow,
 <target model="python" category="Workflow" name="%s">
 <in-toolbar>%s</in-toolbar>
 <iconname>%s</iconname>
-<launch-mode>MANUALLY</launch-mode>
+<launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
 <read-only>FALSE</read-only>
+<target-type>%s</target-type>
 <do-not-save>FALSE</do-not-save>
-<target-type>main</target-type>
 <command-line>
     <arg>workflows.run_registered_workflows("%s", "%s", "</arg>
     """ % (target_name,
            "TRUE" if in_toolbar else "FALSE",
-           icon_name, workflow_name, target_name)
+           icon_name,
+           "main" if main_arg == "%TT" else "",
+           workflow_name,
+           target_name)
 
     xml2 = """
-    <arg>%TT</arg>
+    <arg>%s</arg>
     <arg>")</arg>
 </command-line>
-</target>"""
+</target>""" % (main_arg)
 
     XML = xml1 + xml2
     GPS.parse_xml(XML)
