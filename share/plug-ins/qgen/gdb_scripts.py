@@ -127,6 +127,12 @@ class Watchpoint_Action (gdb.Command):
                         bp.watchpoint_dict[symbol] = (Qgen_Watchpoint(
                             symbol, wp.value, gdb.BP_WATCHPOINT
                         ), 0)
+                    # A watchpoint will not trigger if the value written
+                    # is equal to its previous value.
+                    # By forcing the value at the beginning
+                    # of the scope we ensure that the desired value will be set
+                    # or force the watchpoint to trigger
+                    Utils.set_variable(symbol, wp.value)
 
             for symbol, (wp, whit) in bp.watchpoint_dict.iteritems():
                 if wp.hit_count > whit:
