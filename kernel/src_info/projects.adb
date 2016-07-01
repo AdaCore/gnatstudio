@@ -251,7 +251,7 @@ package body Projects is
    begin
       Reg.Tree := Project_Tree_Access (Tree);
       Reg.Env  := Env;
-      Initialize (Reg.Env);
+      Initialize (Reg.Env, IDE_Mode => True);
       return Reg;
    end Create;
 
