@@ -29,6 +29,8 @@ with GPS.Kernel.Preferences;
 with Pango.Enums;
 with Glib;
 
+with Src_Editor_Buffer;
+
 package body Src_Printing.Win32_Printer is
 
    use Src_Editor_Buffer;
