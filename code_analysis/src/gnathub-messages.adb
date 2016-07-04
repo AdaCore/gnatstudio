@@ -41,9 +41,11 @@ package body GNAThub.Messages is
 
    overriding function Get_Text
      (Self : not null access constant Message)
-      return Ada.Strings.Unbounded.Unbounded_String is
+      return Ada.Strings.Unbounded.Unbounded_String
+   is
+      use Ada.Strings.Unbounded;
    begin
-      return Self.Text;
+      return Self.Rule.Tool.Name & ": " & Self.Text;
    end Get_Text;
 
    --------------
