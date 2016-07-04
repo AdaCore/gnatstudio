@@ -44,8 +44,27 @@ package GNAThub.Reports.Collector is
 
 private
 
+   ----------------------
+   -- Message_Listener --
+   ----------------------
+
+   type Message_Listener (View : Gtk.Box.Gtk_Vbox) is
+     new GPS.Kernel.Messages.Abstract_Listener with null record;
+
+   type Message_Listener_Access is access all Message_Listener'Class;
+
+   overriding procedure Message_Added
+     (Self    : not null access Message_Listener;
+      Message : not null access GPS.Kernel.Messages.Abstract_Message'Class);
+
+   ------------------------------
+   -- GNAThub_Report_Collector --
+   ------------------------------
+
    type GNAThub_Report_Collector is new Gtk.Box.Gtk_Vbox_Record with record
+      Kernel          : GPS.Kernel.Kernel_Handle;
       Messages_Report : GNAThub.Reports.Messages.Messages_Report;
+      Listener        : Message_Listener_Access;
    end record;
 
 end GNAThub.Reports.Collector;

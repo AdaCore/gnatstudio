@@ -704,7 +704,7 @@ package body Outline_View is
 
       Outline.Tree.On_Button_Press_Event (Button_Press'Access, Outline);
 
-      Widget_Callback.Connect
+      Gtkada.Handlers.Widget_Callback.Connect
         (Outline, Signal_Destroy, On_Destroy'Access);
 
       Setup_Contextual_Menu

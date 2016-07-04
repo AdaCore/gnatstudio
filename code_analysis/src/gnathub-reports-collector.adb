@@ -15,9 +15,19 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 with Gtk.Notebook;
+with Gtk.Widget;
+with Gtkada.Handlers;
+with GNAThub.Messages;
 
 package body GNAThub.Reports.Collector is
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Message_Listener'Class, Message_Listener_Access);
+
+   procedure On_Destroy (View : access Gtk.Widget.Gtk_Widget_Record'Class);
 
    -------------
    -- Gtk_New --
@@ -46,6 +56,7 @@ package body GNAThub.Reports.Collector is
       Notebook : Gtk.Notebook.Gtk_Notebook;
    begin
       Gtk.Box.Initialize_Vbox (Self);
+      Self.Kernel := Kernel;
 
       --  Notebook
 
@@ -59,7 +70,47 @@ package body GNAThub.Reports.Collector is
 
       Notebook.Append_Page (Self.Messages_Report);
       Notebook.Set_Tab_Label_Text (Self.Messages_Report, "Messages");
+
+      Self.Listener := new Message_Listener (Gtk.Box.Gtk_Vbox (Self));
+
+      GPS.Kernel.Messages.Register_Listener
+        (Kernel.Get_Messages_Container,
+         GPS.Kernel.Messages.Listener_Access (Self.Listener),
+         GPS.Kernel.Messages.Locations_Only);
+
+      Gtkada.Handlers.Widget_Callback.Connect
+        (Self, Gtk.Widget.Signal_Destroy, On_Destroy'Access);
    end Initialize;
+
+   -------------------
+   -- Message_Added --
+   -------------------
+
+   overriding procedure Message_Added
+     (Self    : not null access Message_Listener;
+      Message : not null access GPS.Kernel.Messages.Abstract_Message'Class)
+   is
+      View : constant Report := Report (Self.View);
+   begin
+      if Message.all in GNAThub.Messages.Message'Class then
+         View.Update;
+      end if;
+   end Message_Added;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (View : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Self : constant Report := Report (View);
+   begin
+      GPS.Kernel.Messages.Unregister_Listener
+        (Self.Kernel.Get_Messages_Container,
+         GPS.Kernel.Messages.Listener_Access (Self.Listener));
+
+      Free (Self.Listener);
+   end On_Destroy;
 
    ------------
    -- Update --

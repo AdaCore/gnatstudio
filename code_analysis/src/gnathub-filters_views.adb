@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
+
 with Commands.Interactive;
 
 with Glib;                              use Glib;
@@ -28,6 +30,7 @@ with Gtk.Menu;
 with Gtk.Tree_Model;
 with Gtk.Widget;
 
+with Gtkada.Handlers;
 with Gtkada.MDI;
 
 with Generic_Views;
@@ -49,24 +52,6 @@ package body GNAThub.Filters_Views is
 
    type Gnathub_Filters_Module is
      access all Gnathub_Filters_Module_Record'Class;
-
-   type Display_Command is
-     new Commands.Interactive.Interactive_Command with null record;
-
-   overriding function Execute
-     (Command : access Display_Command;
-      Context : Commands.Interactive.Interactive_Command_Context)
-      return Commands.Command_Return_Type;
-   --  Displey GnatHub filters view
-
-   type Update_Command is
-     new Commands.Interactive.Interactive_Command with null record;
-
-   overriding function Execute
-     (Command : access Update_Command;
-      Context : Commands.Interactive.Interactive_Command_Context)
-      return Commands.Command_Return_Type;
-   --  Update filters' counters
 
    -- Tools --
 
@@ -149,7 +134,25 @@ package body GNAThub.Filters_Views is
         Rule_Sets,
         Is_Rule_Visible'Access);
 
+   ----------------------
+   -- Message_Listener --
+   ----------------------
+
+   type Message_Listener (View : Generic_Views.Abstract_View_Access) is
+     new GPS.Kernel.Messages.Abstract_Listener with null record;
+
+   type Message_Listener_Access is access all Message_Listener'Class;
+
+   overriding procedure Message_Added
+     (Self    : not null access Message_Listener;
+      Message : not null access GPS.Kernel.Messages.Abstract_Message'Class);
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Message_Listener'Class, Message_Listener_Access);
+
+   -----------
    --  View --
+   -----------
 
    type Filters_View_Record is new Generic_Views.View_Record with record
       On_Update         : Boolean := True;
@@ -159,7 +162,10 @@ package body GNAThub.Filters_Views is
       Rules_Editor      : Rules_Editors.Criteria_Editor;
 
       Flow_Box          : Gtk.Flow_Box.Gtk_Flow_Box;
+      Listener          : Message_Listener_Access;
    end record;
+
+   type Filters_View_Access is access all Filters_View_Record;
 
    function Initialize
      (Self : access Filters_View_Record'Class)
@@ -185,10 +191,24 @@ package body GNAThub.Filters_Views is
       Initialize         => Initialize);
    use Views;
 
+   procedure On_Destroy (View : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Called when the view is destroyed
+
    procedure Apply_Filters (View : access Filters_View_Record'Class);
    --  Apply selected rules/severities/tools
 
+   --------------
    -- Commands --
+   --------------
+
+   type Display_Command is
+     new Commands.Interactive.Interactive_Command with null record;
+
+   overriding function Execute
+     (Command : access Display_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
+   --  Displey GnatHub filters view
 
    type On_Before_Exit is
      new GPS.Kernel.Hooks.Return_Boolean_Hooks_Function with null record;
@@ -414,31 +434,6 @@ package body GNAThub.Filters_Views is
    -------------
 
    overriding function Execute
-     (Command : access Update_Command;
-      Context : Commands.Interactive.Interactive_Command_Context)
-      return Commands.Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-
-      View : constant Views.View_Access := Views.Retrieve_View
-        (GPS.Kernel.Get_Kernel (Context.Context));
-   begin
-      if View /= null then
-         View.Tools_Editor.Update;
-         View.Rules_Editor.Update;
-         View.Severities_Editor.Update;
-         return Commands.Success;
-
-      else
-         return Commands.Failure;
-      end if;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
      (Self   : On_Before_Exit;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
       return Boolean
@@ -656,6 +651,17 @@ package body GNAThub.Filters_Views is
       GPS.Kernel.Hooks.Before_Exit_Action_Hook.Add
         (new On_Before_Exit, Watch => Gtk.Widget.Gtk_Widget (Self.Flow_Box));
 
+      Self.Listener := new Message_Listener
+        (Generic_Views.Abstract_View_Access (Self));
+
+      GPS.Kernel.Messages.Register_Listener
+        (GNAThub_Module.Kernel.Get_Messages_Container,
+         GPS.Kernel.Messages.Listener_Access (Self.Listener),
+         GPS.Kernel.Messages.Locations_Only);
+
+      Gtkada.Handlers.Widget_Callback.Connect
+        (Self, Gtk.Widget.Signal_Destroy, On_Destroy'Access);
+
       return Gtk.Widget.Gtk_Widget (Self.Flow_Box);
    end Initialize;
 
@@ -751,6 +757,38 @@ package body GNAThub.Filters_Views is
 
       return False;
    end Is_Severity_Visible;
+
+   -------------------
+   -- Message_Added --
+   -------------------
+
+   overriding procedure Message_Added
+     (Self    : not null access Message_Listener;
+      Message : not null access GPS.Kernel.Messages.Abstract_Message'Class)
+   is
+      View : constant Filters_View_Access := Filters_View_Access (Self.View);
+   begin
+      if Message.all in GNAThub.Messages.Message'Class then
+         View.Tools_Editor.Update;
+         View.Rules_Editor.Update;
+         View.Severities_Editor.Update;
+      end if;
+   end Message_Added;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (View : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Self : constant Filters_View_Access := Filters_View_Access (View);
+   begin
+      GPS.Kernel.Messages.Unregister_Listener
+        (GNAThub_Module.Kernel.Get_Messages_Container,
+         GPS.Kernel.Messages.Listener_Access (Self.Listener));
+
+      Free (Self.Listener);
+   end On_Destroy;
 
    --------------------------------
    -- On_Flow_Box_Size_Allocated --
@@ -1020,10 +1058,7 @@ package body GNAThub.Filters_Views is
       Views.Register_Module (Kernel, Module_ID (Gnathub_Filters));
 
       GPS.Kernel.Actions.Register_Action
-        (Kernel, "open gnathub filters_view", new Display_Command);
-
-      GPS.Kernel.Actions.Register_Action
-        (Kernel, "update gnathub filters_view", new Update_Command);
+        (Kernel, "open gnathub_filters", new Display_Command);
    end Register_Module;
 
 end GNAThub.Filters_Views;

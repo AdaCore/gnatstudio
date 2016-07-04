@@ -106,7 +106,6 @@ package body GNAThub.Module is
 
    begin
       if Database.Is_Regular_File then
-
          if GPS.Kernel.MDI.Get_MDI
            (Self.Kernel).Find_MDI_Child_By_Tag
            (GNAThub.Reports.Collector.GNAThub_Report_Collector'Tag) /= null
@@ -118,7 +117,21 @@ package body GNAThub.Module is
          Self.Loader.Load (Database);
 
          Ignore := GPS.Kernel.Actions.Execute_Action
-           (Self.Get_Kernel, "open gnathub filters_view");
+           (Self.Get_Kernel, "open gnathub_filters");
+
+         GNAThub.Reports.Collector.Gtk_New
+           (Self.Collector, Self.Kernel, Self.Tree, Self.Severities);
+
+         Self.Report := new GNAThub_Child_Record;
+         GPS.Kernel.MDI.Initialize
+           (Self.Report, Self.Collector, Self.Kernel, Module => Module);
+         Self.Report.Set_Title (-"GNAThub report");
+
+         GPS.Kernel.Hooks.Before_Exit_Action_Hook.Add
+           (new On_Before_Exit, Watch => Self.Collector);
+
+         GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put (Self.Report);
+         Self.Report.Raise_Child;
 
       else
          Self.Get_Kernel.Insert
@@ -127,27 +140,6 @@ package body GNAThub.Module is
             Mode => GPS.Kernel.Error);
       end if;
    end Display_Data;
-
-   --------------------
-   -- Display_Report --
-   --------------------
-
-   procedure Display_Report (Self : in out GNAThub_Module_Id_Record'Class) is
-   begin
-      GNAThub.Reports.Collector.Gtk_New
-        (Self.Collector, Self.Kernel, Self.Tree, Self.Severities);
-
-      Self.Report := new GNAThub_Child_Record;
-      GPS.Kernel.MDI.Initialize
-        (Self.Report, Self.Collector, Self.Kernel, Module => Module);
-      Self.Report.Set_Title (-"GNAThub report");
-
-      GPS.Kernel.Hooks.Before_Exit_Action_Hook.Add
-        (new On_Before_Exit, Watch => Self.Collector);
-
-      GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put (Self.Report);
-      Self.Report.Raise_Child;
-   end Display_Report;
 
    -------------
    -- Execute --
@@ -166,18 +158,6 @@ package body GNAThub.Module is
 
       return True;
    end Execute;
-
-   --------------------
-   -- Message_Loaded --
-   --------------------
-
-   procedure Message_Loaded (Self : in out GNAThub_Module_Id_Record'Class)
-   is
-      Ignore : Boolean;
-   begin
-      Ignore := GPS.Kernel.Actions.Execute_Action
-        (Self.Get_Kernel, "update gnathub filters_view");
-   end Message_Loaded;
 
    --------------
    -- New_Rule --

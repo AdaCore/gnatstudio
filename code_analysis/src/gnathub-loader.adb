@@ -109,14 +109,11 @@ package body GNAThub.Loader is
 
       Resource_Maps.Next (Self.Loader.Current);
 
-      Self.Loader.Module.Message_Loaded;
-
       if Resource_Maps.Has_Element (Self.Loader.Current) then
          return Commands.Execute_Again;
 
       else
          GNATCOLL.Projects.Free (Self.Loader.Source_Files);
-         Self.Loader.Module.Display_Report;
          Self.Loader.Command := null;
          Self.Loader.Cleanup;
 

@@ -56,12 +56,6 @@ package GNAThub.Module is
    procedure Clean (Self : in out GNAThub_Module_Id_Record'Class);
    --  Deallocate all loaded data
 
-   procedure Message_Loaded (Self : in out GNAThub_Module_Id_Record'Class);
-   --  Call when a new message loaded
-
-   procedure Display_Report (Self : in out GNAThub_Module_Id_Record'Class);
-   --  Call when all messages loaded to display report
-
    procedure Update_Report (Self : in out GNAThub_Module_Id_Record'Class);
    --  Called when preferences or filter criterias for report have been changed
 
