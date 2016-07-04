@@ -20,6 +20,7 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;                    use System;
 
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -50,9 +51,11 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
+with Basic_Types;               use Basic_Types;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Default_Preferences;       use Default_Preferences;
 with Generic_Views;
+with GPS.Editors;               use GPS.Editors;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -760,10 +763,7 @@ package body Bookmark_Views is
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Mark   : constant Location_Marker := Create_Marker (Kernel);
-      Child  : constant MDI_Child :=
-                 Find_MDI_Child_By_Tag
-                   (Get_MDI (Kernel), Bookmark_View_Record'Tag);
+      Mark   : Location_Marker := Create_Marker (Kernel);
       View   : Bookmark_View_Access;
       Model  : Gtk_Tree_Store;
       Iter   : Gtk_Tree_Iter;
@@ -771,18 +771,39 @@ package body Bookmark_Views is
       pragma Unreferenced (Ignore);
 
    begin
+      --  If the current module doesn't support creating bookmarks, we fall
+      --  back to the last editor that had focus, since that's what users will
+      --  expect most of the time.
+
+      if Mark.Is_Null then
+         Trace (Me, "Current module cannot create bookmark, try last editor");
+         declare
+            --  Side effect is to give focus to the source edtor module to
+            --  create the bookmark
+            Buffer : constant Editor_Buffer'Class :=
+              Get_Buffer_Factory (Kernel).Get
+              (Open_Buffer => False, Open_View => False, Focus => False);
+            Cursor : constant Editor_Location'Class :=
+              Buffer.Current_View.Cursor;
+
+         begin
+            Mark := Get_Buffer_Factory (Kernel).Create_Marker
+              (File    => Buffer.File,
+               Project => No_Project,
+               Line    => Editable_Line_Type (Cursor.Line),
+               Column  => Cursor.Column);
+         end;
+      end if;
+
       if not Mark.Is_Null then
+         Trace (Me, "bookmark created");
          Append (Bookmark_Views_Module.List,
                  new Bookmark_Data'
                    (Marker => Mark,
                     Name   => new String'(To_String (Mark)),
                     Instances => <>));
 
-         if Child = null then
-            View := Generic_View.Get_Or_Create_View (Kernel);
-         else
-            View := Bookmark_View_Access (Get_Widget (Child));
-         end if;
+         View := Generic_View.Get_Or_Create_View (Kernel);
 
          Model := -Get_Model (View.Tree);
          Refresh (View);
@@ -1207,7 +1228,7 @@ package body Bookmark_Views is
         (Kernel, "bookmark create", new Create_Bookmark_Command,
          -("Create a bookmark at the current location"),
          Icon_Name => "gps-add-symbolic",
-         Category => -"Bookmarks", Filter => Src_Action_Context);
+         Category => -"Bookmarks");
 
       Register_Action
         (Kernel      => Kernel,
