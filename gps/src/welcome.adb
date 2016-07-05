@@ -97,6 +97,18 @@ package body Welcome is
       Stock_Button : Gtk_Widget;
       pragma Warnings (Off, Stock_Button);
 
+      function File_Exsist (Item : String) return Boolean;
+      --  Check if the Item represent a regular file
+
+      -----------------
+      -- File_Exsist --
+      -----------------
+
+      function File_Exsist (Item : String) return Boolean is
+      begin
+         return GNATCOLL.VFS.Create_From_UTF8 (Item).Is_Regular_File;
+      end File_Exsist;
+
    begin
       Screen := new Welcome_Screen_Record;
 
@@ -201,7 +213,8 @@ package body Welcome is
 
       Gtk_New_With_Entry (Screen.Open_Project);
       Get_History (Get_History (Kernel).all,
-                   "project_files", Screen.Open_Project);
+                   "project_files", Screen.Open_Project,
+                   Filter => File_Exsist'Access);
       Pack_Start (Hbox, Screen.Open_Project, Expand => True, Fill => True);
       --  Synchronize the name of the key with gps-menu.adb
 

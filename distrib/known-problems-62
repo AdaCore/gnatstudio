@@ -42,6 +42,16 @@ KP-62-P704-019 GPS: searching for short patterns with fuzzy match is slow
 
   Workaround: Click anywhere in GPS to interrrupt the search.
 
+KP-62-P629-029 GPS: Welcome window shows removed projects.
+
+  Problem:    "Open existing project" combobox contains projects
+              which were removed from disk.
+              Same problem is in Project/Recent menu.
+
+  Status:     This was fixed in 17.0 on 2016-07-05
+
+  Workaround: None.
+
 KP-62-P621-008 GPS: Tooltips flashing in the top-left of the screen
 
   Problem:    On slow displays (for instance when using an X11 version of

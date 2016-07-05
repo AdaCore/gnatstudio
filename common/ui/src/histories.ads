@@ -123,10 +123,12 @@ package Histories is
       Combo       : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
       Clear_Combo : Boolean := True;
       Prepend     : Boolean := False;
-      Col         : Glib.Gint := 0);
+      Col         : Glib.Gint := 0;
+      Filter      : access function (Item : String) return Boolean := null);
    --  Set the contents of the combo to the list of strings associated with
    --  Key.
    --  If Clear_Combo is False, then the previous contents of the combo is kept
+   --  Filter is used to filter content of combobox
 
    procedure Add_To_History
      (Hist      : in out History_Record;

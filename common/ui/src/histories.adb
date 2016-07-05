@@ -454,7 +454,8 @@ package body Histories is
       Combo       : access Gtk.Combo_Box.Gtk_Combo_Box_Record'Class;
       Clear_Combo : Boolean := True;
       Prepend     : Boolean := False;
-      Col         : Gint := 0)
+      Col         : Gint := 0;
+      Filter      : access function (Item : String) return Boolean := null)
    is
       List  : constant Gtk_List_Store := -Get_Model (Combo);
       Value : constant String_List_Access := Get_History (Hist, Key);
@@ -470,7 +471,9 @@ package body Histories is
             --  Do not add the empty item. It is stored internally to properly
             --  restore the contents of the entry, but shouldn't appear in the
             --  list.
-            if Value (V).all /= "" then
+            if Value (V).all /= ""
+              and then (Filter = null or else Filter (Value (V).all))
+            then
                --  Do not add the item directly, in case there was already a
                --  similar entry in the list if it wasn't cleared
                if Clear_Combo then

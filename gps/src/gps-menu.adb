@@ -303,20 +303,22 @@ package body GPS.Menu is
 
       --  Add new menus
       for N of V.all loop
-         F := Create (+N.all);
-         Register_Action
-           (Kernel,
-            Name  => "open recent project: " & N.all,
-            Command => new On_Open_Recent'
-              (Interactive_Command with File => F),
-            Description => "Reopen the project " & N.all,
-            Category    => "Internal");
-         Register_Menu
-           (Kernel,
-            Path   => "/Project/Recent/" & F.Display_Base_Name,
-            Action => "open recent project: " & N.all);
-         Menu_Module.Recent_Project_Actions.Append
-           ("open recent project: " & N.all);
+         if GNATCOLL.VFS.Create_From_UTF8 (N.all).Is_Regular_File then
+            F := Create (+N.all);
+            Register_Action
+              (Kernel,
+               Name  => "open recent project: " & N.all,
+               Command => new On_Open_Recent'
+                 (Interactive_Command with File => F),
+               Description => "Reopen the project " & N.all,
+               Category    => "Internal");
+            Register_Menu
+              (Kernel,
+               Path   => "/Project/Recent/" & F.Display_Base_Name,
+               Action => "open recent project: " & N.all);
+            Menu_Module.Recent_Project_Actions.Append
+              ("open recent project: " & N.all);
+         end if;
       end loop;
       return Success;
    end Execute;
