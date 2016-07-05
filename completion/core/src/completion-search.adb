@@ -201,6 +201,22 @@ package body Completion.Search is
                   Long     => L,
                   Id       => new String'(Name & ":" & L.all),
                   Entity   => To_Entity_Persistent_Access (Entity));
+
+               --  Matches in runtime files should get a lower score, so that
+               --  we first list those matches in user code. "10" is similar
+               --  to what is done for filenames, so that in fuzzy matching
+               --  this correpsonds to having characters separated by 9 others
+
+               declare
+                  Inf : constant File_Info'Class :=
+                    Get_Project_Tree (Self.Kernel.all).Info
+                    (Get_File_Path (File));
+               begin
+                  if Inf.Project (Root_If_Not_Found => False) = No_Project then
+                     Result.Score := Result.Score - 10;
+                  end if;
+               end;
+
                Self.Adjust_Score (Result);
             end if;
          end;
