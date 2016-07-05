@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P704-020 GPS: display bookmarks on the side of editors (2016-07-05)
+
+  Lines for which a bookmark has been set will now show special highlighting
+  in the scrollbar of editors, as well as an icon on the left side of the
+  line, as a quick way to identify them.
+
 NF-17-P628-025 GPS: new toolbar parameter for GPS.Browser.create (2016-07-04)
 
   A new browser can now be created with a custom toolbar. It is thus possible

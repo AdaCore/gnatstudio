@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with System;                    use System;
@@ -51,26 +51,30 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
-with Basic_Types;               use Basic_Types;
-with Commands.Interactive;      use Commands, Commands.Interactive;
-with Default_Preferences;       use Default_Preferences;
+with Basic_Types;                  use Basic_Types;
+with Commands.Interactive;         use Commands, Commands.Interactive;
+with Default_Preferences;          use Default_Preferences;
 with Generic_Views;
-with GPS.Editors;               use GPS.Editors;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Search;         use GPS.Kernel.Search;
-with GPS.Markers;               use GPS.Markers;
-with GPS.Search.GUI;            use GPS.Search.GUI;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Scripts;               use GPS.Scripts;
-with GPS.Search;                use GPS.Search;
-with GUI_Utils;                 use GUI_Utils;
+with GPS.Default_Styles;           use GPS.Default_Styles;
+with GPS.Editors;                  use GPS.Editors;
+with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
+with GPS.Kernel;                   use GPS.Kernel;
+with GPS.Kernel.Actions;           use GPS.Kernel.Actions;
+with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
+with GPS.Kernel.Messages;          use GPS.Kernel.Messages;
+with GPS.Kernel.Messages.Simple;   use GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Modules;           use GPS.Kernel.Modules;
+with GPS.Kernel.Modules.UI;        use GPS.Kernel.Modules.UI;
+with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
+with GPS.Kernel.Search;            use GPS.Kernel.Search;
+with GPS.Markers;                  use GPS.Markers;
+with GPS.Search.GUI;               use GPS.Search.GUI;
+with GPS.Intl;                     use GPS.Intl;
+with GPS.Scripts;                  use GPS.Scripts;
+with GPS.Search;                   use GPS.Search;
+with GUI_Utils;                    use GUI_Utils;
 with Generic_List;
 with Tooltips;
 with XML_Parsers;               use XML_Parsers;
@@ -81,6 +85,13 @@ package body Bookmark_Views is
    Me : constant Trace_Handle := Create ("Bookmarks");
 
    Bookmark_Class_Name : constant String := "Bookmark";
+
+   Icon_For_Bookmarks  : constant String := "gps-goto-symbolic";
+   Messages_Category_For_Bookmarks : constant String := "bookmarks";
+   Message_Flags_For_Bookmarks     : constant Message_Flags :=
+     (Editor_Side => True,
+      Locations   => False,
+      Editor_Line => False);
 
    Icon_Name_Column : constant := 0;
    Name_Column      : constant := 1;
@@ -101,8 +112,20 @@ package body Bookmark_Views is
       Marker    : Location_Marker;
       Name      : GNAT.Strings.String_Access;
       Instances : Bookmark_Proxy;
+
+      Message   : Simple_Message_Access;
+      --  To highlight lines in the editor. This is only set when the bookmark
+      --  is associated with a source file, but not for other kinds of
+      --  bookmarks.
    end record;
    type Bookmark_Data_Access is access Bookmark_Data;
+
+   function New_Bookmark
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Mark   : Location_Marker;
+      Name   : String := "")
+     return Bookmark_Data_Access;
+   --  Allocate a new bookmark data
 
    package Bookmark_Proxies is new Script_Proxies
       (Bookmark_Data_Access, Bookmark_Proxy);
@@ -112,6 +135,7 @@ package body Bookmark_Views is
    use Bookmark_List;
 
    type Bookmark_Views_Module_Record is new Module_ID_Record with record
+      Loaded : Boolean := False;  --  whether bookmarks were loaded
       List : Bookmark_List.List;
    end record;
    type Bookmark_Views_Module_Access
@@ -176,12 +200,18 @@ package body Bookmark_Views is
       Pref   : Default_Preferences.Preference);
    --  Called when the preferences have changed
 
+   type On_Project_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
+   --  Called when the project changes. This is a good time to load the
+   --  persistent bookmarks
+
    function Button_Press
      (Clip  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event) return Boolean;
    --  Called every time a row is clicked
 
-   procedure Load_Bookmarks (Kernel : access Kernel_Handle_Record'Class);
    procedure Save_Bookmarks (Kernel : access Kernel_Handle_Record'Class);
    --  Load or save the bookmarks from the XML file
 
@@ -670,9 +700,15 @@ package body Bookmark_Views is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Bookmark_Data, Bookmark_Data_Access);
    begin
-      Data.Instances.Free;
-      Free (Data.Name);
-      Unchecked_Free (Data);
+      if Data /= null then
+         if Data.Message /= null then
+            Remove (Data.Message);
+         end if;
+
+         Data.Instances.Free;
+         Free (Data.Name);
+         Unchecked_Free (Data);
+      end if;
    end Free;
 
    -------------------
@@ -753,6 +789,48 @@ package body Bookmark_Views is
          return False;
    end Button_Press;
 
+   ------------------
+   -- New_Bookmark --
+   ------------------
+
+   function New_Bookmark
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Mark   : Location_Marker;
+      Name   : String := "")
+      return Bookmark_Data_Access
+   is
+      Msg    : Simple_Message_Access;
+   begin
+      --  If the mark is associated with a file editor and a location
+      if Get_Line (Mark) /= 0 then
+         Msg := Create_Simple_Message
+           (Get_Messages_Container (Kernel),
+            Category                 => Messages_Category_For_Bookmarks,
+            File                     => Get_File (Mark),
+            Line                     => Integer (Get_Line (Mark)),
+            Column                   => Get_Column (Mark),
+            Text                     => To_String (Mark),
+            Weight                   => 0,
+            Flags                    => Message_Flags_For_Bookmarks,
+            Allow_Auto_Jump_To_First => False);
+         Msg.Set_Highlighting
+           (Bookmark_Default_Style, Length => Highlight_None);
+         Msg.Set_Action
+           (new Line_Information_Record'
+              (Text         => Null_Unbounded_String,
+               Tooltip_Text => To_Unbounded_String ("Bookmark"),
+               Image        => To_Unbounded_String (Icon_For_Bookmarks),
+               others       => <>));
+      end if;
+
+      return new Bookmark_Data'
+        (Marker    => Mark,
+         Message   => Msg,
+         Name      => new String'
+           (if Name = "" then To_String (Mark) else Name),
+         Instances => <>);
+   end New_Bookmark;
+
    -------------
    -- Execute --
    -------------
@@ -767,8 +845,7 @@ package body Bookmark_Views is
       View   : Bookmark_View_Access;
       Model  : Gtk_Tree_Store;
       Iter   : Gtk_Tree_Iter;
-      Ignore : G_Source_Id;
-      pragma Unreferenced (Ignore);
+      Ignore : G_Source_Id with Unreferenced;
 
    begin
       --  If the current module doesn't support creating bookmarks, we fall
@@ -797,12 +874,8 @@ package body Bookmark_Views is
 
       if not Mark.Is_Null then
          Trace (Me, "bookmark created");
-         Append (Bookmark_Views_Module.List,
-                 new Bookmark_Data'
-                   (Marker => Mark,
-                    Name   => new String'(To_String (Mark)),
-                    Instances => <>));
 
+         Append (Bookmark_Views_Module.List, New_Bookmark (Kernel, Mark));
          View := Generic_View.Get_Or_Create_View (Kernel);
 
          Model := -Get_Model (View.Tree);
@@ -855,7 +928,7 @@ package body Bookmark_Views is
          Set_And_Clear
            (Model, Iter,
             (Icon_Name_Column, Name_Column, Data_Column, Editable_Column),
-            (1 => As_String  ("gps-goto-symbolic"),
+            (1 => As_String  (Icon_For_Bookmarks),
              2 => As_String  (Data (List).Name.all),
              3 => As_Pointer (Convert (Data (List))),
              4 => As_Boolean (True)));
@@ -972,17 +1045,31 @@ package body Bookmark_Views is
       end if;
    end Execute;
 
-   --------------------
-   -- Load_Bookmarks --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Load_Bookmarks (Kernel : access Kernel_Handle_Record'Class) is
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
       Filename    : constant Virtual_File :=
                       Create_From_Dir (Get_Home_Dir (Kernel), "bookmarks.xml");
       File, Child : Node_Ptr;
-      Err         : String_Access;
+      Err         : GNAT.Strings.String_Access;
       Marker      : Location_Marker;
    begin
+      --  For now, the list of bookmarks is global to all projects, so we only
+      --  need to load once (but we can't do it from Register_Module directly,
+      --  since messages are not initialized yet)
+
+      if Bookmark_Views_Module.Loaded then
+         return;
+      end if;
+
+      Bookmark_Views_Module.Loaded := True;
+
       if Is_Regular_File (Filename) then
          Trace (Me, "Loading " & Filename.Display_Full_Name);
          XML_Parsers.Parse (Filename, File, Err);
@@ -998,25 +1085,11 @@ package body Bookmark_Views is
                Marker := Create_Marker (Kernel, Child);
 
                if not Marker.Is_Null then
-                  declare
-                     Name : constant String :=
-                              Get_Attribute (Child, "bookmark_name", "");
-                  begin
-                     if Name = "" then
-                        Append
-                          (Bookmark_Views_Module.List,
-                           new Bookmark_Data'
-                             (Marker    => Marker,
-                              Instances => <>,
-                              Name      => new String'(To_String (Marker))));
-                     else
-                        Append (Bookmark_Views_Module.List,
-                                new Bookmark_Data'
-                                  (Marker    => Marker,
-                                   Instances => <>,
-                                   Name      => new String'(Name)));
-                     end if;
-                  end;
+                  Append
+                    (Bookmark_Views_Module.List,
+                     New_Bookmark
+                       (Kernel, Marker,
+                        Name => Get_Attribute (Child, "bookmark_name", "")));
                end if;
 
                Child := Child.Next;
@@ -1027,7 +1100,7 @@ package body Bookmark_Views is
 
          Bookmark_Added_Hook.Run (Kernel, "");
       end if;
-   end Load_Bookmarks;
+   end Execute;
 
    --------------------
    -- Save_Bookmarks --
@@ -1126,10 +1199,7 @@ package body Bookmark_Views is
          else
             Prepend
               (Bookmark_Views_Module.List,
-               new Bookmark_Data'
-                 (Marker    => Marker,
-                  Instances => <>,
-                  Name      => new String'(Nth_Arg (Data, 1))));
+               New_Bookmark (Kernel, Marker, Name => Data.Nth_Arg (1)));
             Save_Bookmarks (Kernel);
             Bookmark_Added_Hook.Run (Kernel, Data.Nth_Arg (1));
             Bookmark := First (Bookmark_Views_Module.List);
@@ -1210,8 +1280,6 @@ package body Bookmark_Views is
       Bookmark_Views_Module := new Bookmark_Views_Module_Record;
       Generic_View.Register_Module (Kernel, Module_ID (Bookmark_Views_Module));
 
-      Load_Bookmarks (Kernel);
-
       Register_Action
         (Kernel, "bookmark rename", new Rename_Bookmark_Command,
          -("Interactively rename the bookmark currently selected in the"
@@ -1267,6 +1335,8 @@ package body Bookmark_Views is
 
       P := new Bookmarks_Search_Provider;
       Register_Provider_And_Action (Kernel, P);
+
+      Project_Changed_Hook.Add (new On_Project_Changed);
    end Register_Module;
 
 end Bookmark_Views;

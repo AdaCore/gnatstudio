@@ -888,6 +888,14 @@ package body GPS.Kernel.Preferences is
          Default_Bg      => "rgba(252,172,79,0.4)",
          Path            => -"Editor/Fonts & Colors:Ephemeral highlighting");
 
+      Bookmark_Color            := Create
+        (Manager         => Kernel.Preferences,
+         Name            => "Src-Editor-Bookmarks",
+         Label           => -"Lines with a bookmark",
+         Doc             => -"Highlight color for lines with a bookmark",
+         Default         => "rgba(205,0,255,0.3)",
+         Path            => -"Editor/Fonts & Colors:Bookmarks");
+
       -- Refactoring --
 
       Add_Subprogram_Box := Create

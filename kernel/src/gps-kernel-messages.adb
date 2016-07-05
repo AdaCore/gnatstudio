@@ -681,7 +681,8 @@ package body GPS.Kernel.Messages is
    -----------------------------
 
    function Get_Highlighting_Length
-     (Self : not null access constant Abstract_Message'Class) return Natural is
+     (Self : not null access constant Abstract_Message'Class)
+      return Highlight_Length is
    begin
       return Self.Length;
    end Get_Highlighting_Length;
@@ -1174,10 +1175,11 @@ package body GPS.Kernel.Messages is
                                  Visible_Column_Type'Image (Column)));
          Style_Name    : constant String :=
                            Get_Attribute (XML_Node, "highlighting_style", "");
-         Length        : constant Natural :=
-                           Natural'Value
+         Length        : constant Highlight_Length :=
+                           Highlight_Length'Value
                              (Get_Attribute
-                                (XML_Node, "highlighting_length", "0"));
+                                (XML_Node, "highlighting_length",
+                                 Highlight_Whole_Line'Img));
          Message       : Message_Access;
          XML_Child     : Node_Ptr := XML_Node.Child;
          Style         : Style_Access;
@@ -1200,13 +1202,7 @@ package body GPS.Kernel.Messages is
          if Style_Name /= "" then
             Style := Get_Style_Manager
               (Kernel_Handle (Self.Kernel)).Get_Or_Create (Style_Name);
-
-            if Length = 0 then
-               Set_Highlighting (Message, Style);
-
-            else
-               Set_Highlighting (Message, Style, Length);
-            end if;
+            Set_Highlighting (Message, Style, Length);
          end if;
 
          while XML_Child /= null loop
@@ -2452,11 +2448,13 @@ package body GPS.Kernel.Messages is
                      "highlighting_style",
                      Get_Name (Current_Node.Style));
 
-                  if Current_Node.Length /= 0 then
+                  if Current_Node.Length /= Highlight_Whole_Line then
                      Set_Attribute
                        (XML_Node,
                         "highlighting_length",
-                        Trim (Integer'Image (Current_Node.Length), Both));
+                        Trim
+                          (Highlight_Length'Image (Current_Node.Length),
+                           Both));
                   end if;
                end if;
 
@@ -2652,25 +2650,10 @@ package body GPS.Kernel.Messages is
    procedure Set_Highlighting
      (Self   : not null access Abstract_Message'Class;
       Style  : Style_Access;
-      Length : Positive) is
+      Length : Highlight_Length := Highlight_Whole_Line) is
    begin
       Self.Style := Style;
       Self.Length := Length;
-
-      Notifiers.Notify_Listeners_About_Message_Property_Changed
-        (Self.Get_Container, Self, "highlighting");
-   end Set_Highlighting;
-
-   ----------------------
-   -- Set_Highlighting --
-   ----------------------
-
-   procedure Set_Highlighting
-     (Self  : not null access Abstract_Message'Class;
-      Style : Style_Access) is
-   begin
-      Self.Style := Style;
-      Self.Length := 0;
 
       Notifiers.Notify_Listeners_About_Message_Property_Changed
         (Self.Get_Container, Self, "highlighting");

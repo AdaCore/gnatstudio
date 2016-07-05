@@ -1670,7 +1670,8 @@ package body GPS.Location_View is
                     Get_Style_Manager
                       (Get_Kernel (Data)).Get
                     (Nth_Arg (Data, 6, ""), Allow_Null => True),
-                    Nth_Arg (Data, 7, 0),
+                    Highlight_Length
+                      (Nth_Arg (Data, 7, Integer (Highlight_Whole_Line))),
                     Nth_Arg (Data, 8, False),
                     Show_In_Locations => True);
             end if;

@@ -71,7 +71,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       Text               : String;
       Weight             : Natural;
       Highlight_Category : GPS.Kernel.Style_Manager.Style_Access;
-      Length             : Natural;
+      Length             : Highlight_Length;
       Look_For_Secondary : Boolean;
       Show_In_Locations  : Boolean;
       Allow_Auto_Jump_To_First : Boolean := True) return Message_Access
@@ -161,12 +161,7 @@ package body GPS.Kernel.Messages.Tools_Output is
             Returned := Primary;
 
             if Highlight_Category /= null then
-               if Length = 0 then
-                  Primary.Set_Highlighting (Highlight_Category);
-
-               else
-                  Primary.Set_Highlighting (Highlight_Category, Length);
-               end if;
+               Primary.Set_Highlighting (Highlight_Category, Length);
             end if;
          end if;
 
@@ -449,7 +444,7 @@ package body GPS.Kernel.Messages.Tools_Output is
       Column        : Basic_Types.Visible_Column_Type := 1;
       Weight        : Natural;
 
-      Length        : Natural;
+      Length        : Highlight_Length;
       C             : Style_Access;
 
       -----------------
@@ -471,7 +466,7 @@ package body GPS.Kernel.Messages.Tools_Output is
 
    begin
       if Show_In_Locations then
-         Length := 0;
+         Length := Highlight_Whole_Line;
       else
          Length := 2;
       end if;

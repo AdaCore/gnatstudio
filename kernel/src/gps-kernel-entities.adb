@@ -644,7 +644,8 @@ package body GPS.Kernel.Entities is
       end if;
 
       Message.Set_Highlighting
-        (Search_Results_Style, UTF8_Utils.UTF8_Length (Name));
+        (Search_Results_Style,
+         Highlight_Length (UTF8_Utils.UTF8_Length (Name)));
    end Print_Ref;
 
    -------------------------

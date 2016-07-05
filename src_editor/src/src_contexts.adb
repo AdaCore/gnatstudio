@@ -725,7 +725,7 @@ package body Src_Contexts is
 
       procedure Do_Highlight
         (Column_End : Basic_Types.Visible_Column_Type;
-         Length     : Positive);
+         Length     : Highlight_Length);
       --  Common code to highlight text
 
       -----------------
@@ -747,7 +747,7 @@ package body Src_Contexts is
 
       procedure Do_Highlight
         (Column_End : Basic_Types.Visible_Column_Type;
-         Length     : Positive) is
+         Length     : Highlight_Length) is
       begin
          if Interactive then
             Open_File_Action_Hook.Run
@@ -786,8 +786,8 @@ package body Src_Contexts is
       elsif Match.Start.Line = Match.Finish.Line then
          Do_Highlight
            (Column_End => Match.Finish.Visible_Column + 1,
-            Length     => Integer (Match.Finish.Visible_Column
-                                     - Match.Start.Visible_Column) + 1);
+            Length     => Highlight_Length
+              (Match.Finish.Visible_Column - Match.Start.Visible_Column) + 1);
       else
          --  When the location spans on multiple lines, we base the length
          --  to highlight on the pattern length.
@@ -797,7 +797,8 @@ package body Src_Contexts is
                Match.Start.Visible_Column
                  + Visible_Column_Type
                    (Match.Finish.Index - Match.Start.Index + 1),
-            Length     => Match.Finish.Index - Match.Start.Index + 1);
+            Length     => Highlight_Length
+              (Match.Finish.Index - Match.Start.Index + 1));
       end if;
    end Highlight_Result;
 

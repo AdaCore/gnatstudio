@@ -206,6 +206,7 @@ package GPS.Kernel.Preferences is
    Strings_Style             : Variant_Preference;
    Numbers_Style             : Variant_Preference;
    Hyper_Links_Style         : Variant_Preference;
+   Bookmark_Color            : Color_Preference;
 
    Ephemeral_Highlighting_Simple : Variant_Preference;
    Ephemeral_Highlighting_Smart  : Variant_Preference;

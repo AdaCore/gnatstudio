@@ -103,7 +103,7 @@ package GPS.Kernel.Messages.Tools_Output is
       Text               : String;
       Weight             : Natural;
       Highlight_Category : GPS.Kernel.Style_Manager.Style_Access;
-      Length             : Natural;
+      Length             : Highlight_Length;
       Look_For_Secondary : Boolean;
       Show_In_Locations  : Boolean;
       Allow_Auto_Jump_To_First : Boolean := True) return Message_Access;

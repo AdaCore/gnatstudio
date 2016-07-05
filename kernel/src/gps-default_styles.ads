@@ -49,6 +49,9 @@ package GPS.Default_Styles is
    Hyper_Links_Default_Style : Style_Access;
    --  The style used for editors/consoles hyper links
 
+   Bookmark_Default_Style : Style_Access;
+   --  Highlighting lines with bookmarks
+
    --------------
    -- Debugger --
    --------------

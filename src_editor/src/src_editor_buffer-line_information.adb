@@ -1422,6 +1422,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Result    : Boolean;
       Has_Iters : Boolean := False;
+      Length    : Highlight_Length;
 
       Mark : constant Editor_Mark'Class := Message.Get_Editor_Mark;
    begin
@@ -1471,21 +1472,22 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end if;
 
-      To_Column   := From_Column +
-        Visible_Column_Type (Message.Get_Highlighting_Length);
-
       if Style /= null then
-         if From_Column = To_Column then
-            Remove_Line_Highlighting (Buffer, Line, Style);
-         else
-            if Has_Iters then
-               Highlight_Range
-                 (Buffer, Style, Line, Start_Iter, End_Iter, True);
-            else
-               Highlight_Range
-                 (Buffer, Style, Line, From_Column, To_Column, True);
-            end if;
-         end if;
+         Length := Message.Get_Highlighting_Length;
+
+         case Length is
+            when Highlight_None | Highlight_Whole_Line =>
+               Remove_Line_Highlighting (Buffer, Line, Style);
+            when others =>
+               To_Column := From_Column + Visible_Column_Type (Length);
+               if Has_Iters then
+                  Highlight_Range
+                    (Buffer, Style, Line, Start_Iter, End_Iter, True);
+               else
+                  Highlight_Range
+                    (Buffer, Style, Line, From_Column, To_Column, True);
+               end if;
+         end case;
       end if;
    end Remove_Message_Highlighting;
 
@@ -1500,7 +1502,7 @@ package body Src_Editor_Buffer.Line_Information is
       Message       : Message_Access)
    is
       Style    : Style_Access;
-      Length   : Natural;
+      Length   : Highlight_Length;
       End_Col  : Visible_Column_Type;
       EL       : Editable_Line_Type := 0; --  The actual buffer line
       BL       : Buffer_Line_Type := 0;   --  The actual editable line
@@ -1565,35 +1567,20 @@ package body Src_Editor_Buffer.Line_Information is
       if Style /= null then
          Length := Message.Get_Highlighting_Length;
 
-         if Length = 0 then
-            Compute_BL;
+         Compute_BL;
+         Set_Line_Highlighting
+           (Editor       => Buffer,
+            Line         => BL,
+            Style        => Style,
+            Set          => True,
+            Highlight_In =>
+              (Highlight_Speedbar => Get_In_Speedbar (Style),
+               Highlight_Editor   => Length = Highlight_Whole_Line));
+         Line_Highlights_Changed (Buffer);
 
-            Set_Line_Highlighting
-              (Editor       => Buffer,
-               Line         => BL,
-               Style        => Style,
-               Set          => True,
-               Highlight_In =>
-                 (Highlight_Speedbar => Get_In_Speedbar (Style),
-                  Highlight_Editor   => True));
-
-            Line_Highlights_Changed (Buffer);
-         else
-            if Get_In_Speedbar (Style) then
-               Compute_BL;
-
-               Set_Line_Highlighting
-                 (Editor       => Buffer,
-                  Line         => BL,
-                  Style        => Style,
-                  Set          => True,
-                  Highlight_In =>
-                    (Highlight_Speedbar => Get_In_Speedbar (Style),
-                     Highlight_Editor   => False));
-
-               Line_Highlights_Changed (Buffer);
-            end if;
-
+         if Length /= Highlight_Whole_Line
+           and then Length /= Highlight_None
+         then
             Compute_EL;
 
             End_Col := Message.Get_Column + Visible_Column_Type (Length);

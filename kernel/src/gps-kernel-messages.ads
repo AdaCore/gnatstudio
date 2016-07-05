@@ -176,17 +176,19 @@ package GPS.Kernel.Messages is
       return Action_Item;
    --  Returns action associated with the message.
 
+   type Highlight_Length is new Natural;
+   Highlight_Whole_Line : constant Highlight_Length := Highlight_Length'Last;
+   Highlight_None       : constant Highlight_Length := 0;
+   --  Which part of the line should be highlighted.
+   --  If Highlight_None, then nothing is highlighted (except possibly the
+   --  speedbar). All other values highlight at least part of the line.
+
    procedure Set_Highlighting
      (Self   : not null access Abstract_Message'Class;
       Style  : GPS.Kernel.Style_Manager.Style_Access;
-      Length : Positive);
+      Length : Highlight_Length := Highlight_Whole_Line);
    --  Set highlighting style and span to be used in the editor to highlight
    --  corresponding location.
-
-   procedure Set_Highlighting
-     (Self  : not null access Abstract_Message'Class;
-      Style : GPS.Kernel.Style_Manager.Style_Access);
-   --  Set style for line highlighting in the editor.
 
    function Get_Highlighting_Style
      (Self : not null access constant Abstract_Message'Class)
@@ -195,7 +197,8 @@ package GPS.Kernel.Messages is
    --  message.
 
    function Get_Highlighting_Length
-     (Self : not null access constant Abstract_Message'Class) return Natural;
+     (Self : not null access constant Abstract_Message'Class)
+      return Highlight_Length;
    --  Returns length of highlighting. Zero length means all line must be
    --  highlighted.
 
@@ -587,7 +590,7 @@ private
             Mark   : Editor_Mark_Access;
             Action : Action_Item;
             Style  : GPS.Kernel.Style_Manager.Style_Access;
-            Length : Natural := 0;
+            Length : Highlight_Length := Highlight_Whole_Line;
             Notes  : Note_Maps.Map;
             Flags  : Message_Flags;
       end case;

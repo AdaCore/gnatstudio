@@ -229,17 +229,13 @@ package body GPS.Kernel.Messages.Shell is
          declare
             Length     : Integer := Nth_Arg (Data, 3, -1);
          begin
-            if Length = -1 then
+            if Length < 0 then
                --  Reuse the previous length of the message
-               Length := Message.Get_Highlighting_Length;
+               Length := Integer (Message.Get_Highlighting_Length);
             end if;
 
-            if Length = 0 then
-               Message.Set_Highlighting (Get_Style (Nth_Arg (Data, 2)));
-            else
-               Message.Set_Highlighting
-                 (Get_Style (Nth_Arg (Data, 2)), Length);
-            end if;
+            Message.Set_Highlighting
+              (Get_Style (Nth_Arg (Data, 2)), Highlight_Length (Length));
          end;
       elsif Command = "execute_action" then
          declare

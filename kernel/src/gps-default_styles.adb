@@ -128,6 +128,12 @@ package body GPS.Default_Styles is
          Style   => Default_Style,
          Variant => Hyper_Links_Style);
 
+      Init (Bookmark_Default_Style,
+            -"Editor bookmarks",
+            Icon_Name => "gps-goto-symbolic",
+            Bg        => Bookmark_Color,
+            Speedbar  => True);
+
       ------------
       -- Search --
       ------------
