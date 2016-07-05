@@ -1338,6 +1338,9 @@ package body Commands.Custom is
                end if;
             end if;
 
+            --  In case the command has terminated early
+            exit when Command.Execution = null;
+
             if Context.Synchronous
               and then
                 Custom_Component (Current.Component).The_Type =
