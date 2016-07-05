@@ -16,9 +16,10 @@ You can also look at the various debug menu item and tool bar buttons which are
 now activated.
 
 On the call stack window (you can use the menu `Debug->Data->Call Stack` to
-open it if you do not have it displayed), select the contextual menu: various
-pieces of information can be displayed or removed in the call stack. From this
-contextual menu, add the `Frame Number` info by clicking on it.
+open it if you do not have it displayed), select the local configuration menu:
+various pieces of information can be displayed or removed in the call stack.
+From this local configuration menu, add the `Frame Number` info by clicking on
+it.
 
 Now select the menu `Debug->Run...` and type `input.txt` in the text input
 field. Check that 'Stop at beginning of main subprogram' and 'Use exec dir
