@@ -397,7 +397,7 @@ Click on any frame to switch to that caller's context; this updates the
 display in the source window.  Use the up and down buttons in the tool bar
 to go up and down one frame in the call stack.
 
-The contextual menu allows you to choose which information you want to
+The local configuration menu allows you to choose which information you want to
 display in the call stack window (via check buttons):
 
 * :menuselection:`Frame number`:
