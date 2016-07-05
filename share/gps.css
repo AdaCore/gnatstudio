@@ -67,11 +67,6 @@
     background-color: #B4D5FF;
 }
 
-GtkTextView.readonly {
-   /* for read-only editors */
-   /* background-color: rgb(200,200,200); */
-}
-
 /********************
  * GPS dialog views *
  ********************/
