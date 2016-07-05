@@ -261,11 +261,13 @@ package body Src_Editor_Module.Commands is
       Box : constant Source_Editor_Box := Source_Editor_Box (Widget);
    begin
       declare
-         Str : constant String := Simple_Entry_Dialog
+         Str : constant String := Display_Text_Input_Dialog
            (Get_Current_Window (Kernel),
-            -"Goto Line...", -"Enter line number:",
-            Win_Pos_Center_On_Parent, Get_History (Kernel), "Goto_Line");
-
+            Title    => -"Goto Line...",
+            Message  => -"Enter line number:",
+            Position => Win_Pos_Center_On_Parent,
+            History  => Get_History (Kernel),
+            Key      => "Goto_Line");
       begin
          if Str = "" or else Str (Str'First) = ASCII.NUL then
             return;

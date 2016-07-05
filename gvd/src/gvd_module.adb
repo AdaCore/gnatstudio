@@ -753,10 +753,11 @@ package body GVD_Module is
       declare
          Arguments : constant String :=
            Strip_Ending_Linebreaks
-             (Display_Entry_Dialog
+             (Display_Text_Input_Dialog
                 (Parent         => Process.Kernel.Get_Main_Window,
                  Title          => -"Run/Start",
                  Message        => Cmd_Msg.all,
+                 Multi_Line     => True,
                  Key            => Run_Arguments_History_Key,
                  History        => Get_History (Process.Kernel),
                  Check_Msg      => Msg1.all,
@@ -1045,11 +1046,12 @@ package body GVD_Module is
       Variable : constant String :=
                    Get_Variable_Name (Context.Context, False);
       S        : constant String :=
-                   Simple_Entry_Dialog
+                   Display_Text_Input_Dialog
                      (Parent   => Process.Kernel.Get_Main_Window,
                       Title    => -"Setting value of " & Variable,
                       Message  => -"Setting value of " & Variable & ':',
                       Position => Win_Pos_Center_On_Parent,
+                      History  => Get_Kernel (Context.Context).Get_History,
                       Key      => "gvd_set_value_dialog");
    begin
       if S /= "" and then S (S'First) /= ASCII.NUL then

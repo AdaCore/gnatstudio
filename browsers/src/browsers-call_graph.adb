@@ -724,12 +724,15 @@ package body Browsers.Call_Graph is
 
       declare
          Str  : constant String :=
-           Simple_Entry_Dialog
+           Display_Text_Input_Dialog
              (Get_Main_Window (Kernel),
-              -"Complete Call Graph",
-              -("Computing complete call graph may take a long time." &
-                ASCII.LF & "Enter maximum number of items to display: "),
-              Win_Pos_Center_On_Parent, History, Key);
+              Title    => -"Complete Call Graph",
+              Message  => -("Computing complete call graph may take a "
+                & "long time." & ASCII.LF
+                & "Enter maximum number of items to display: "),
+              Position => Win_Pos_Center_On_Parent,
+              History  => History,
+              Key      => Key);
       begin
          if Str /= "" and then Str (Str'First) /= ASCII.NUL then
             Max_Items := Integer'Value (Str);

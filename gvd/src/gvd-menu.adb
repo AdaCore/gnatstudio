@@ -41,7 +41,7 @@ package body GVD.Menu is
 
       declare
          Is_Func    : aliased Boolean;
-         Expression : constant String := Display_Entry_Dialog
+         Expression : constant String := Display_Text_Input_Dialog
            (Parent        => Debugger.Kernel.Get_Main_Window,
             Title         => -"Expression Selection",
             Message       => -"Enter an expression to display:",

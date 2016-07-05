@@ -485,7 +485,7 @@ package body GVD.Variables is
       pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Is_Func    : aliased Boolean;
-      Expression : constant String := Display_Entry_Dialog
+      Expression : constant String := Display_Text_Input_Dialog
         (Parent        => Kernel.Get_Main_Window,
          Title         => -"Display the value of an expression",
          Message       => -"Enter an expression to display:",

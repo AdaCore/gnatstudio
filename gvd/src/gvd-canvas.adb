@@ -1629,7 +1629,7 @@ package body GVD.Canvas is
    is
       Name : constant String := To_String (Item.Component.Name);
       S : constant String :=
-        Simple_Entry_Dialog
+        Display_Text_Input_Dialog
         (Parent   => Item.Item.Debugger.Kernel.Get_Main_Window,
          Title    => -"Setting value of " & Name,
          Message  => -"Setting value of " & Name & ':',
