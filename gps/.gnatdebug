@@ -133,6 +133,9 @@ COMPLETION_ADVANCED=no
 --  Debug handles related to the editor
 buffer_debug=no
 
+--  Omnisearch
+SEARCH.*=yes
+
 --  Active in development mode
 
 GPS.KERNEL.MODULES.UI=yes

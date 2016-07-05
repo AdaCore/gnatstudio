@@ -51,6 +51,8 @@ with GPS.Search;                 use GPS.Search;
 
 package body GPS.Kernel.Search.Sources is
 
+   Me : constant Trace_Handle := Create ("SEARCH.SOURCES", Off);
+
    type Source_Search_Result is new Kernel_Search_Result with record
       File                 : GNATCOLL.VFS.Virtual_File;
       Project              : GNATCOLL.Projects.Project_Type;
@@ -245,6 +247,7 @@ package body GPS.Kernel.Search.Sources is
       if File /= Self.File
         or else Project /= Self.Project
       then
+         Trace (Me, "Examining " & (+File.Full_Name.all));
          Free (Self.Text);
          Self.File    := File;
          Self.Project := Project;
