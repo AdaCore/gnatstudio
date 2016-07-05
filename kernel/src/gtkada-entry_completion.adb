@@ -1228,7 +1228,8 @@ package body Gtkada.Entry_Completion is
 
       if Active (Me) then
          Trace (Me, "Tested" & Count'Img & " chunks ("
-                & Matched'Img & " matches)");
+                & Matched'Img & " matches) for "
+                &  Self.Completion.Display_Name);
       end if;
 
       if Inserted then

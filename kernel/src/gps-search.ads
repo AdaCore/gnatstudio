@@ -43,7 +43,11 @@ package GPS.Search is
    --  insertion, deletion or substitution). This is mostly suitable when
    --  matching in long texts. The implementation of this algorithm is
    --  optimized so that characters are matched only once, but the total length
-   --  of the pattern is limited to 64 characters.
+   --  of the pattern is limited to 64 characters. The exact number of errors
+   --  depends on the length of the pattern:
+   --      patterns of length <= 4  => no error allowed
+   --      patterns of length <= 10 => one error allowed
+   --      long patterns            => up to two errors
 
    Max_Capturing_Groups : constant := 10;
    --  Maximum number of capturing parenthesis groups for which we want to

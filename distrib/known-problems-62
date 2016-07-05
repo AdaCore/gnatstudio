@@ -25,6 +25,23 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P704-019 GPS: searching for short patterns with fuzzy match is slow
+
+  Problem:    If you type a short text like "nmi" in the omnisearch, while
+              using fuzzy matching, GPS will take a very long time parsing
+              all source files. This is because it uses an approximate search
+              which allows up to 2 errors in the match. As a result, any
+              sequence of three characters that contains any of the characters
+              from the pattern will patch, resulting in tens of thousands of
+              matches.
+              The algorithm has been modified to allow no error for short
+              patterns (less than 4 characters), one error for patterns up to
+              10 characters long, and two errors for long patterns.
+
+  Status:     This was fixed in 17.0 on 2016-07-05
+
+  Workaround: Click anywhere in GPS to interrrupt the search.
+
 KP-62-P621-008 GPS: Tooltips flashing in the top-left of the screen
 
   Problem:    On slow displays (for instance when using an X11 version of

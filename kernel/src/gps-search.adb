@@ -94,7 +94,9 @@ package body GPS.Search is
       Case_Sensitive  : Boolean;
       Whole_Word      : Boolean;
       Allow_Highlight : Boolean;
-      Negate          : Boolean) return Approximate_Search_Access;
+      Negate          : Boolean;
+      Max_Errors      : Integer := Approximate_Max_Errors)
+     return Approximate_Search_Access;
    --  Compile the pattern
 
    overriding function Start
@@ -1060,7 +1062,9 @@ package body GPS.Search is
       Case_Sensitive  : Boolean;
       Whole_Word      : Boolean;
       Allow_Highlight : Boolean;
-      Negate          : Boolean) return Approximate_Search_Access
+      Negate          : Boolean;
+      Max_Errors      : Integer := Approximate_Max_Errors)
+     return Approximate_Search_Access
    is
       Result : constant Approximate_Search_Access := new Approximate_Search'
         (Text            => new String'(Pattern),
@@ -1069,12 +1073,7 @@ package body GPS.Search is
          Kind            => Approximate,
          Negate          => Negate,
          Pattern         => null,
-
-         --  We want at least two characters of the pattern to match, otherwise
-         --  it doesn't make sense.
-         Max_Errors      => Integer'Max
-           (0, Integer'Min (Approximate_Max_Errors, Pattern'Length - 1)),
-
+         Max_Errors      => Max_Errors,
          Result          => new Approximate_Status,
          Allow_Highlight => Allow_Highlight,
          Matched         =>  2 ** (Pattern'Length - 1));
@@ -1154,8 +1153,8 @@ package body GPS.Search is
                Kind            => Kind);
 
          when Approximate =>
-            if Pattern'Length > 64 then
-               --  Fallback to Full_Text, pattern is too long
+            if Pattern'Length <= 4 or else Pattern'Length > 64 then
+               --  Fallback to Full_Text, pattern is too long or too short
                BM := new GNATCOLL.Boyer_Moore.Pattern;
                Compile (BM.all, Pattern, Case_Sensitive => Case_Sensitive);
                return new Full_Text_Search'
@@ -1169,12 +1168,22 @@ package body GPS.Search is
                   Length          => Pattern'Length);
 
             else
+               --  The maximum number of errors depends on the length of the
+               --  patterns.
+               --  For a very short pattern, allow no error, otherwise for
+               --  instance "naa" would match "nmi", which is surprising to
+               --  users). As the length of the pattern extends, allow more
+               --  errors.
                return Search_Pattern_Access (Compile_Approximate
                  (Pattern,
                   Allow_Highlight => Allow_Highlight,
                   Case_Sensitive  => Case_Sensitive,
                   Negate          => Negate,
-                  Whole_Word      => Whole_Word));
+                  Whole_Word      => Whole_Word,
+                  Max_Errors      =>
+                     (if Pattern'Length <= 4 then 0
+                      elsif Pattern'Length <= 10 then 1
+                      else 2)));
             end if;
 
          when Regexp =>
