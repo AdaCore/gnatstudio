@@ -37,6 +37,15 @@ NF-17-P704-020 GPS: display bookmarks on the side of editors (2016-07-05)
   in the scrollbar of editors, as well as an icon on the left side of the
   line, as a quick way to identify them.
 
+NF-17-P704-009 GPS: changes in Bookmarks view (2016-07-06)
+
+  You now need to double-click on a bookmark to jump to the corresponding
+  editor, or long-click to start editing (although there is still a button in
+  the local toolbar for that purpose). This makes it more consistent with
+  other views in GPS like the Breakpoints view.
+  Bookmarks are no longer sorted by default. Instead, you can use
+  drag-and-drop to organize them in the order you want.
+
 NF-17-P630-007 GPS: preserve the size of simple text input dialogs (2016-07-08)
 
   The size of simple text input dialogs (e.g: the 'Debug/Run' dialog) is now

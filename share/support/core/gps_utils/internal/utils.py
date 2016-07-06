@@ -448,15 +448,6 @@ try:
             gps_fatal_error("Notebook doesn't contain " + label + ' page')
         return result
 
-    ###################
-    # Bookmarks View ##
-    ###################
-
-    def get_bookmarks_view(open=1):
-        if open:
-            GPS.execute_action("open Bookmarks")
-        return get_widget_by_name('Bookmark TreeView')
-
     ######################
     # Open From Project ##
     ######################

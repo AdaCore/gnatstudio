@@ -1381,13 +1381,18 @@ different place in the file.
 .. index:: menu; edit --> create bookmark
 
 Use the :menuselection:`Edit --> Create Bookmark` menu to create a bookmark
-at the current location (either in the editor or the browser).
+at the current location (either in the editor or the browser). You can also
+use the :label:`[+]` button in the local toolbar of the :guilabel:`Bookmarks`
+view, see below.
 
 .. index:: menu; tools --> views --> bookmarks
 
 All bookmarks you created are visible in the :menuselection:`Tools -->
-Views --> Bookmarks` view. Clicking on the bookmark opens an editor with
+Views --> Bookmarks` view. Double-clicking on the bookmark opens an editor with
 the cursor at that position.
+
+You can organize bookmarks in the order you want by dragging and dropping any
+of them anywhere in the :guilabel:`Bookmarks` view.
 
 The local toolbar of the :guilabel:`Bookmarks` view provides three buttons
 to act on bookmarks:
@@ -1402,11 +1407,19 @@ to act on bookmarks:
 * :guilabel:`Rename`
 
   Renames the currently-selected bookmark.
+  You can also execute this by pressing the mouse for a short while on any
+  of the bookmarks.
 
 * :guilabel:`Remove`
 
   Deletes the selected bookmark.
 
+Bookmarks can be organized into groups. This is especially useful when you
+have lots of them, or bookmarks that you wish to keep for a long time. To
+create such groups, simply select a bookmark in the list, and then drag and
+drop it onto another bookmark. This will create a new group that includes
+both bookmarks. If you drop the bookmark onto an existing group, it will be
+added to that group, without creating a new one.
 
 .. index:: consoles; python console
 .. index:: consoles; shell console

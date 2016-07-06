@@ -187,6 +187,17 @@ class Project_View(Dialog, Tree):
         self.dialog = get_widget_by_name('Project Explorer Tree')
 
 
+#############
+# Bookmarks #
+#############
+
+class Bookmarks(Dialog):
+
+    def open_and_yield(self):
+        yield self._open_and_yield('open Bookmarks')
+        self.treeview = get_widget_by_name('Bookmark TreeView')
+
+
 #################
 # Key Shortcuts #
 #################

@@ -783,9 +783,6 @@ package body GUI_Utils is
    begin
       Iter := Get_Iter_From_String (M, Path_String);
       Set_Value (M, Iter, Data, Text_Value);
-
-   exception
-      when E : others => Trace (Me, E);
    end Edited_Callback;
 
    -------------------------
@@ -812,10 +809,6 @@ package body GUI_Utils is
       Event : Gdk.Event.Gdk_Event) return Gtk.Tree_Model.Gtk_Tree_Iter
    is
       X, Y      : Gdouble;
-      Buffer_X  : Gint;
-      Buffer_Y  : Gint;
-      Row_Found : Boolean;
-      Path      : Gtk_Tree_Path;
       N_Model   : Gtk_Tree_Model;
       Iter      : Gtk_Tree_Iter := Null_Iter;
       Column    : Gtk_Tree_View_Column := null;
@@ -837,22 +830,8 @@ package body GUI_Utils is
         and then Get_Event_Type (Event) in Button_Press .. Button_Release
       then
          Get_Coords (Event, X, Y);
-         Get_Path_At_Pos
-           (Tree,
-            Gint (X),
-            Gint (Y),
-            Path,
-            Column,
-            Buffer_X,
-            Buffer_Y,
-            Row_Found);
-
-         if Path = Null_Gtk_Tree_Path then
-            return Null_Iter;
-         end if;
-
-         Iter := Get_Iter (Get_Model (Tree), Path);
-         Path_Free (Path);
+         Coordinates_For_Event (Tree, X, Y, Iter, Column);
+         return Iter;
 
       elsif Tree.Get_Selection.Get_Mode = Selection_Multiple then
          Tree.Get_Selection.Selected_Foreach (On_Selected'Unrestricted_Access);
@@ -870,37 +849,43 @@ package body GUI_Utils is
 
    procedure Coordinates_For_Event
      (Tree   : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
-      Event  : Gdk.Event.Gdk_Event_Button;
+      X, Y   : Gdouble;
       Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : out Gtk.Tree_View_Column.Gtk_Tree_View_Column)
    is
       Buffer_X  : Gint;
       Buffer_Y  : Gint;
-      Row_Found : Boolean;
+      Found     : Boolean;
       Path      : Gtk_Tree_Path;
-      N_Model   : Gtk_Tree_Model;
    begin
       Column := null;
+      Get_Path_At_Pos
+        (Tree, Gint (X), Gint (Y), Path, Column, Buffer_X, Buffer_Y, Found);
 
-      if Event.The_Type in Button_Press .. Button_Release then
-         Get_Path_At_Pos
-           (Tree,
-            Gint (Event.X),
-            Gint (Event.Y),
-            Path,
-            Column,
-            Buffer_X,
-            Buffer_Y,
-            Row_Found);
-
-         if Path = Null_Gtk_Tree_Path then
-            Iter := Null_Iter;
-            return;
-         end if;
-
+      if Path = Null_Gtk_Tree_Path then
+         Iter := Null_Iter;
+      else
          Iter := Get_Iter (Get_Model (Tree), Path);
          Path_Free (Path);
+      end if;
+   end Coordinates_For_Event;
+
+   ---------------------------
+   -- Coordinates_For_Event --
+   ---------------------------
+
+   procedure Coordinates_For_Event
+     (Tree   : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      Event  : Gdk.Event.Gdk_Event_Button;
+      Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter;
+      Column : out Gtk.Tree_View_Column.Gtk_Tree_View_Column)
+   is
+      N_Model   : Gtk_Tree_Model;
+   begin
+      if Event.The_Type in Button_Press .. Button_Release then
+         Coordinates_For_Event (Tree, Event.X, Event.Y, Iter, Column);
       else
+         Column := null;
          Get_Selected (Get_Selection (Tree), N_Model, Iter);
       end if;
    end Coordinates_For_Event;
@@ -1777,8 +1762,9 @@ package body GUI_Utils is
       Hide_Expander      : Boolean := False;
       Merge_Icon_Columns : Boolean := True;
       Editable_Columns   : Gint_Array := (1 .. 0 => -1);
-      Editable_Callback  : Editable_Callback_Array := (1 .. 0 => null))
-      return Gtk.Tree_View.Gtk_Tree_View
+      Editable_Callback  : Editable_Callback_Array := (1 .. 0 => null);
+      Editing_Canceled   : Editing_Canceled_Cb := null)
+     return Gtk.Tree_View.Gtk_Tree_View
    is
       View              : Gtk_Tree_View;
       Col               : Gtk_Tree_View_Column;
@@ -1874,6 +1860,12 @@ package body GUI_Utils is
                        (Editable_Callback (Integer (ColNum))),
                      Slot_Object => View, After => True);
                end if;
+
+               if Editing_Canceled /= null then
+                  Toggle_Render.On_Editing_Canceled
+                    (Gtk.Cell_Renderer.Cb_GObject_Void (Editing_Canceled),
+                     Slot => View);
+               end if;
             end if;
 
          elsif Column_Types (ColNum) = GType_String
@@ -1907,6 +1899,12 @@ package body GUI_Utils is
                Tree_Model_Callback.Object_Connect
                  (Text_Render, Signal_Edited, Edited_Callback'Access,
                   Slot_Object => Model, User_Data => Gint (N));
+
+               if Editing_Canceled /= null then
+                  Text_Render.On_Editing_Canceled
+                    (Gtk.Cell_Renderer.Cb_GObject_Void (Editing_Canceled),
+                     Slot => View);
+               end if;
             end if;
 
          elsif Is_Icon then

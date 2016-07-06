@@ -270,6 +270,11 @@ package GUI_Utils is
       Event  : Gdk.Event.Gdk_Event_Button;
       Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter;
       Column : out Gtk.Tree_View_Column.Gtk_Tree_View_Column);
+   procedure Coordinates_For_Event
+     (Tree   : access Gtk.Tree_View.Gtk_Tree_View_Record'Class;
+      X, Y   : Gdouble;
+      Iter   : out Gtk.Tree_Model.Gtk_Tree_Iter;
+      Column : out Gtk.Tree_View_Column.Gtk_Tree_View_Column);
    --  Get the Iter and Column corresponding to the position under the
    --  cursor corresponding to Event, if any. Otherwise return the current
    --  selection.
@@ -312,6 +317,9 @@ package GUI_Utils is
       Params : Glib.Values.GValues);
    type Editable_Callback_Array is array (Natural range <>) of Editable_Cb;
 
+   type Editing_Canceled_Cb is access procedure
+     (Tree   : access Glib.Object.GObject_Record'Class);
+
    GType_Icon_Name_String : constant GType := GType'Last - GType_String;
    --  Special value for use in Column_Types (and only there!) to indicate
    --  that the column contains the name of an icon
@@ -327,8 +335,9 @@ package GUI_Utils is
       Hide_Expander      : Boolean := False;
       Merge_Icon_Columns : Boolean := True;
       Editable_Columns   : Glib.Gint_Array := (1 .. 0 => -1);
-      Editable_Callback  : Editable_Callback_Array := (1 .. 0 => null))
-      return Gtk.Tree_View.Gtk_Tree_View;
+      Editable_Callback  : Editable_Callback_Array := (1 .. 0 => null);
+      Editing_Canceled   : Editing_Canceled_Cb := null)
+     return Gtk.Tree_View.Gtk_Tree_View;
    --  Create a new simple tree view, where each column in the view is
    --  associated with a column in the model.
    --  Column_Names'Length is the number of columns in the view. If there are
@@ -383,6 +392,10 @@ package GUI_Utils is
    --      Set_Editable_And_Callback (Get_Model (View), Text_Render, 1);
    --      Widget_Callback.Object_Connect
    --       (Text_Render, "edited", Callback'Access, Slot_Object => View);
+   --
+   --  If specified, Editing_Canceled is called whenever editing stops, after
+   --  the user presses <esc>. In this case, the Editable_Callback is not
+   --  called.
    --
    --  Limitations:
    --     Radio buttons not supported,
