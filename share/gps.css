@@ -65,6 +65,7 @@
 *:selected,
 *:selected:focused {
     background-color: #B4D5FF;
+    color: @theme_fg_color;
 }
 
 /********************
