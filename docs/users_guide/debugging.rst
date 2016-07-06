@@ -711,13 +711,16 @@ You can quickly and conveniently enable or disable breakpoints by
 clicking on the checkboxes directly in the list.
 
 Select a breakpoint in the list and click on the :guilabel:`View` button
-in the toolbar to shows the corresponding editor at that location.
+in the toolbar to shows the corresponding editor at that location. You
+can alternatively double-click on the breakpoint.
 
 .. image:: bp-advanced.png
 
 To view the details of a breakpoint, select it in the list and click on
-the :guilabel:`Edit` button in the toolbar. This opens up a separate
-dialog that shows the various attributes:
+the :guilabel:`Edit` button in the toolbar. You can also do a long click
+on the breakpoint (keep your mouse pressed for a short while).
+
+This opens up a separate dialog that shows the various attributes:
 
    - Details on where the breakpoint is set: the file and line, the
      specific address in memory, or the name of the exception which will

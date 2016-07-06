@@ -27,6 +27,8 @@ with Glib.Object;               use Glib.Object;
 with Glib.Values;
 with Glib;                      use Glib;
 with Glib_Values_Utils;         use Glib_Values_Utils;
+with Gtk.Gesture_Multi_Press;   use Gtk.Gesture_Multi_Press;
+with Gtk.Gesture_Long_Press;    use Gtk.Gesture_Long_Press;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GPS.Debuggers;             use GPS.Debuggers;
@@ -110,7 +112,9 @@ package body GVD.Breakpoints is
 
    type Breakpoint_Editor_Record is new Process_View_Record with
       record
-         Breakpoint_List      : Gtk_Tree_View;
+         Breakpoint_List  : Gtk_Tree_View;
+         Multipress       : Gtk_Gesture_Multi_Press;
+         Longpress        : Gtk_Gesture_Long_Press;
       end record;
    type Breakpoint_Editor is access all Breakpoint_Editor_Record'Class;
 
@@ -269,6 +273,25 @@ package body GVD.Breakpoints is
    procedure On_Load_Exception_List_Clicked (W : access GObject_Record'Class);
    procedure On_Type_Changed                (W : access GObject_Record'Class);
    --  Callbacks for the various buttons
+
+   procedure Show_Selected_Breakpoint_In_Editor
+     (View : not null access Breakpoint_Editor_Record'Class);
+   --  Show the editor location corresponding to the selected breakpoint
+
+   procedure Show_Selected_Breakpoint_Details
+     (View : not null access Breakpoint_Editor_Record'Class);
+   --  Show the details of the selected breakpoint
+
+   procedure On_Multipress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      N_Press : Gint;
+      X, Y    : Gdouble);
+   --  Called when the user double clicks on a breakpoint
+
+   procedure On_Longpress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      X, Y    : Gdouble);
+   --  Called when the user long presses on a breakpoint
 
    --------------
    -- Get_View --
@@ -445,6 +468,39 @@ package body GVD.Breakpoints is
       Clear (Model);
    end On_Process_Terminated;
 
+   -------------------
+   -- On_Multipress --
+   -------------------
+
+   procedure On_Multipress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      N_Press : Gint;
+      X, Y    : Gdouble)
+   is
+      pragma Unreferenced (X, Y);
+      View : constant Breakpoint_Editor := Breakpoint_Editor (Self);
+   begin
+      if N_Press = 2 then
+         Show_Selected_Breakpoint_In_Editor (View);
+         View.Multipress.Set_State (Event_Sequence_Claimed);
+      end if;
+   end On_Multipress;
+
+   ------------------
+   -- On_Longpress --
+   ------------------
+
+   procedure On_Longpress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      X, Y    : Gdouble)
+   is
+      pragma Unreferenced (X, Y);
+      View : constant Breakpoint_Editor := Breakpoint_Editor (Self);
+   begin
+      Show_Selected_Breakpoint_Details (View);
+      View.Longpress.Set_State (Event_Sequence_Claimed);
+   end On_Longpress;
+
    ----------------
    -- Initialize --
    ----------------
@@ -473,6 +529,14 @@ package body GVD.Breakpoints is
       Self.Breakpoint_List.On_Button_Press_Event
         (Breakpoint_Clicked'Access, Self);
       Main_Vbox.Pack_Start (Self.Breakpoint_List);
+
+      Gtk_New (Self.Multipress, Widget => Self.Breakpoint_List);
+      Self.Multipress.On_Pressed (On_Multipress'Access, Slot => Self);
+      Self.Multipress.Watch (Self);
+
+      Gtk_New (Self.Longpress, Widget => Self.Breakpoint_List);
+      Self.Longpress.On_Pressed (On_Longpress'Access, Slot => Self);
+      Self.Longpress.Watch (Self);
 
       Debugger_Breakpoints_Changed_Hook.Add
         (new On_Breakpoints_Changed, Watch => Self);
@@ -1313,6 +1377,33 @@ package body GVD.Breakpoints is
       return Success;
    end Execute;
 
+   --------------------------------------
+   -- Show_Selected_Breakpoint_Details --
+   --------------------------------------
+
+   procedure Show_Selected_Breakpoint_Details
+     (View : not null access Breakpoint_Editor_Record'Class)
+   is
+      Current : Breakpoint_Data;
+      Process : Visual_Debugger;
+      Props   : Properties_Editor;
+   begin
+      Current := Get_Selection (View);
+      if Current /= Null_Breakpoint then
+         Process := Get_Process (View);
+
+         Props := new Properties_Editor_Record;
+         Initialize (Props, Process, View.Kernel);
+         Fill (Props, Current);
+
+         if Props.Run = Gtk_Response_Apply then
+            Apply (Props, Current);
+         end if;
+
+         Props.Destroy;
+      end if;
+   end Show_Selected_Breakpoint_Details;
+
    -------------
    -- Execute --
    -------------
@@ -1325,25 +1416,9 @@ package body GVD.Breakpoints is
       View  : constant Breakpoint_Editor :=
         Breakpoint_Editor
           (Breakpoints_MDI_Views.Retrieve_View (Get_Kernel (Context.Context)));
-      Current : Breakpoint_Data;
-      Process : Visual_Debugger;
-      Props   : Properties_Editor;
    begin
       if View /= null then
-         Current := Get_Selection (View);
-         if Current /= Null_Breakpoint then
-            Process := Get_Process (View);
-
-            Props := new Properties_Editor_Record;
-            Initialize (Props, Process, View.Kernel);
-            Fill (Props, Current);
-
-            if Props.Run = Gtk_Response_Apply then
-               Apply (Props, Current);
-            end if;
-
-            Props.Destroy;
-         end if;
+         Show_Selected_Breakpoint_Details (View);
       end if;
       return Success;
    end Execute;
@@ -1422,6 +1497,27 @@ package body GVD.Breakpoints is
       return Success;
    end Execute;
 
+   ----------------------------------------
+   -- Show_Selected_Breakpoint_In_Editor --
+   ----------------------------------------
+
+   procedure Show_Selected_Breakpoint_In_Editor
+     (View : not null access Breakpoint_Editor_Record'Class)
+   is
+      Process   : Visual_Debugger;
+      Selection : Breakpoint_Data;
+   begin
+      Process   := Get_Process (View);
+      Selection := Get_Selection (View);
+      if Selection /= Null_Breakpoint then
+         --  ??? We should not be changing the current location, just
+         --  showing the editor
+         Process.Editor_Text.Set_Current_File_And_Line
+           (File => Get_File (Selection.Location),
+            Line => Natural (Get_Line (Selection.Location)));
+      end if;
+   end Show_Selected_Breakpoint_In_Editor;
+
    -------------
    -- Execute --
    -------------
@@ -1434,19 +1530,9 @@ package body GVD.Breakpoints is
       View  : constant Breakpoint_Editor :=
         Breakpoint_Editor
           (Breakpoints_MDI_Views.Retrieve_View (Get_Kernel (Context.Context)));
-      Process   : Visual_Debugger;
-      Selection : Breakpoint_Data;
    begin
       if View /= null then
-         Process   := Get_Process (View);
-         Selection := Get_Selection (View);
-         if Selection /= Null_Breakpoint then
-            --  ??? We should not be changing the current location, just
-            --  showing the editor
-            Process.Editor_Text.Set_Current_File_And_Line
-              (File => Get_File (Selection.Location),
-               Line => Natural (Get_Line (Selection.Location)));
-         end if;
+         Show_Selected_Breakpoint_In_Editor (View);
       end if;
       return Success;
    end Execute;

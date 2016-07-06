@@ -23,6 +23,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P706-011 GPS: double-click in breakpoints to see editor (2016-07-06)
+
+  If you double-click on a breakpoint in the Breakpoints view, GPS will
+  show you the corresponding editor (same as using the toolbar button, but
+  more convenient).
+  Likewise, a long click on the breakpoint will show its details, same as
+  clicking on the toolbar button would do.
+
 NF-17-P704-020 GPS: display bookmarks on the side of editors (2016-07-05)
 
   Lines for which a bookmark has been set will now show special highlighting
