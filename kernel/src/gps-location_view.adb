@@ -453,7 +453,7 @@ package body GPS.Location_View is
       File      : GNATCOLL.VFS.Virtual_File)
    is
       Messages : constant GPS.Kernel.Messages.Message_Array :=
-                   Container.Get_Messages (Category, File);
+        Container.Get_Messages (Category, File);
 
    begin
       for K in Messages'Range loop
@@ -1870,96 +1870,147 @@ package body GPS.Location_View is
       return Commands.Command_Return_Type
    is
       pragma Unreferenced (Self);
+      use type Gtk_Tree_Path_List.Glist;
+
       View        : constant Location_View :=
         Location_Views.Retrieve_View (Get_Kernel (Context.Context));
       Path        : Gtk_Tree_Path;
-      Iter        : Gtk_Tree_Iter;
       Model       : Gtk_Tree_Model;
       Export_File : GNATCOLL.VFS.Virtual_File;
       Container   : constant not null GPS.Kernel.Messages_Container_Access :=
                       View.Kernel.Get_Messages_Container;
       List        : Gtk_Tree_Path_List.Glist;
       G_Iter      : Gtk_Tree_Path_List.Glist;
-      Export      : Boolean := False;
       File        : Ada.Text_IO.File_Type;
+      Result      : Commands.Command_Return_Type := Commands.Success;
 
-      use type Gtk_Tree_Path_List.Glist;
+      Have_Selection : Boolean := False;
+
+      procedure Export (Path : Gtk_Tree_Path);
+      --  Export Path to file
+
+      ------------
+      -- Export --
+      ------------
+
+      procedure Export (Path : Gtk_Tree_Path) is
+         Iter : constant Gtk_Tree_Iter := Get_Iter (Model, Path);
+      begin
+         if Path.Get_Depth = 1 then
+            declare
+               Category : constant Unbounded_String :=
+                 To_Unbounded_String
+                   (Get_String (Model, Iter, Category_Column));
+               Files    : constant Virtual_File_Array :=
+                 Container.Get_Files (Category);
+            begin
+               for J in Files'Range loop
+                  Export_Messages (File, Container, Category, Files (J));
+               end loop;
+            end;
+
+         elsif Path.Get_Depth = 2 then
+            --  Prevent duplicates
+            if not Is_Parent_Selected
+              (View.View.Get_Selection, Path)
+            then
+               declare
+                  Category : constant Unbounded_String :=
+                    To_Unbounded_String
+                      (Get_String (Model, Iter, Category_Column));
+                  F        : constant Virtual_File :=
+                    GNATCOLL.VFS.GtkAda.Get_File
+                      (Model, Iter, File_Column);
+               begin
+                  Export_Messages (File, Container, Category, F);
+               end;
+            end if;
+
+         elsif Path.Get_Depth >= 3 then
+            null;   --  Nothing to do
+         end if;
+      end Export;
+
+      Iter : Gtk_Tree_Iter;
    begin
       if View = null then
          return Commands.Failure;
       end if;
 
       View.View.Get_Selection.Get_Selected_Rows (Model, List);
-      if Model = Null_Gtk_Tree_Model
-        or else List = Gtk_Tree_Path_List.Null_List
+      if Model /= Null_Gtk_Tree_Model
+        and then List /= Gtk_Tree_Path_List.Null_List
       then
-         Free (List);
-         return Commands.Failure;
-      end if;
+         --  Have selected elements
+         G_Iter := Gtk_Tree_Path_List.First (List);
+         while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+            Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
+            if Path.Get_Depth in 1 .. 2 then
+               Have_Selection := True;
+               exit;
+            end if;
+            G_Iter := Gtk_Tree_Path_List.Next (G_Iter);
+         end loop;
 
-      G_Iter := Gtk_Tree_Path_List.First (List);
-      while G_Iter /= Gtk_Tree_Path_List.Null_List loop
-         Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
-         if Path.Get_Depth in 1 .. 2 then
-            Export := True;
-            exit;
+         if Have_Selection then
+            --  Valid elements are selected
+            Export_File := Gtkada.File_Selector.Select_File;
+
+            if Export_File /= No_File then
+               --  User selected file, exporting
+               Create (File, Out_File, String (Export_File.Full_Name.all));
+
+               G_Iter := Gtk_Tree_Path_List.First (List);
+               while G_Iter /= Gtk_Tree_Path_List.Null_List loop
+                  Path := Gtk_Tree_Path
+                    (Gtk_Tree_Path_List.Get_Data (G_Iter));
+                  Export (Path);
+                  G_Iter := Gtk_Tree_Path_List.Next (G_Iter);
+               end loop;
+               Ada.Text_IO.Close (File);
+            end if;
+
+         else
+            --  Have no valid elements
+            View.Kernel.Messages_Window.Insert
+              (-"The selected rows in the Locations view cannot be exported, " &
+                 "please select files and/or categories.",
+               Mode => Error);
+            Result := Commands.Failure;
          end if;
-         G_Iter := Gtk_Tree_Path_List.Next (G_Iter);
-      end loop;
 
-      if Export then
-         Export_File := Gtkada.File_Selector.Select_File;
-         if Export_File /= No_File then
-            Create (File, Out_File, String (Export_File.Full_Name.all));
+      else
+         --  Processing all messages
+         if View.View.Get_Model /= Null_Gtk_Tree_Model
+         then
+            Iter := Get_Iter_First (View.View.Get_Model);
+         end if;
 
-            G_Iter := Gtk_Tree_Path_List.First (List);
-            while G_Iter /= Gtk_Tree_Path_List.Null_List loop
-               Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (G_Iter));
-               Iter := Get_Iter (Model, Path);
+         if Iter /= Null_Iter then
+            Export_File := Gtkada.File_Selector.Select_File;
 
-               if Path.Get_Depth = 1 then
-                  declare
-                     Category : constant Unbounded_String :=
-                       To_Unbounded_String
-                         (Get_String (Model, Iter, Category_Column));
-                     Files    : constant Virtual_File_Array :=
-                       Container.Get_Files (Category);
-                  begin
-                     for J in Files'Range loop
-                        Export_Messages (File, Container, Category, Files (J));
-                     end loop;
-                  end;
+            if Export_File /= No_File then
+               --  User selected file, exporting
+               Create (File, Out_File, String (Export_File.Full_Name.all));
 
-               elsif Path.Get_Depth = 2 then
-                  --  prevent dublicate
-                  if not Is_Parent_Selected
-                    (View.View.Get_Selection, Path)
-                  then
-                     declare
-                        Category : constant Unbounded_String :=
-                          To_Unbounded_String
-                            (Get_String (Model, Iter, Category_Column));
-                        F        : constant Virtual_File :=
-                          GNATCOLL.VFS.GtkAda.Get_File
-                            (Model, Iter, File_Column);
-                     begin
-                        Export_Messages (File, Container, Category, F);
-                     end;
-                  end if;
+               while Iter /= Null_Iter loop
+                  Export (Get_Path (Model, Iter));
+                  Next (Model, Iter);
+               end loop;
+               Ada.Text_IO.Close (File);
+            end if;
 
-               elsif Path.Get_Depth >= 3 then
-                  null;   --  Nothing to do
-               end if;
-
-               G_Iter := Gtk_Tree_Path_List.Next (G_Iter);
-            end loop;
-
-            Ada.Text_IO.Close (File);
+         else
+            --  Locations is empty
+            View.Kernel.Messages_Window.Insert
+              (-"The Locations view has no rows to export",
+               Mode => Error);
+            Result := Commands.Failure;
          end if;
       end if;
       Free (List);
 
-      return Commands.Success;
+      return Result;
    end Execute;
 
    ------------------------
