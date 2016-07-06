@@ -1973,8 +1973,8 @@ package body GPS.Location_View is
          else
             --  Have no valid elements
             View.Kernel.Messages_Window.Insert
-              (-"The selected rows in the Locations view cannot be exported, " &
-                 "please select files and/or categories.",
+              (-"The selected rows in the Locations view cannot be exported, "
+               & "please select files and/or categories.",
                Mode => Error);
             Result := Commands.Failure;
          end if;
