@@ -91,6 +91,9 @@ package body GVD.Variables is
 
    package Item_Vectors is new Ada.Containers.Vectors (Positive, Item);
 
+   function Deep_Copy (X : Item_Vectors.Vector) return Item_Vectors.Vector;
+   --  Make a deep copy of X
+
    type Variable_Tree_View_Record is new Gtkada.Tree_View.Tree_View_Record with
       record
          Process : Visual_Debugger;
@@ -645,6 +648,25 @@ package body GVD.Variables is
    end On_Attach;
 
    ---------------
+   -- Deep_Copy --
+   ---------------
+
+   function Deep_Copy (X : Item_Vectors.Vector) return Item_Vectors.Vector is
+      Result : Item_Vectors.Vector;
+      It     : Item;
+   begin
+      for E of X loop
+         It := E;
+         if E.Info.Entity /= null then
+            It.Info.Entity := Clone (E.Info.Entity.all);
+         end if;
+         Result.Append (It);
+      end loop;
+
+      return Result;
+   end Deep_Copy;
+
+   ---------------
    -- On_Detach --
    ---------------
 
@@ -656,7 +678,7 @@ package body GVD.Variables is
    begin
       if Preserve_State_On_Exit.Get_Pref then
          Property := new Variables_Property_Record;
-         Property.Items := Self.Tree.Items;
+         Property.Items := Deep_Copy (Self.Tree.Items);
          Set_Property
            (Kernel     => Self.Kernel,
             File       => Get_Executable (Visual_Debugger (Process).Debugger),
