@@ -116,6 +116,9 @@ package body GNAThub.Module is
          Self.Clean;
          Self.Loader.Load (Database);
 
+         --  Switch to GNATHub perspective.
+         Load_Perspective (Self.Kernel, "Analyze");
+
          Ignore := GPS.Kernel.Actions.Execute_Action
            (Self.Get_Kernel, "open gnathub_filters");
 
@@ -151,9 +154,13 @@ package body GNAThub.Module is
       return Boolean
    is
       pragma Unreferenced (Self);
-      pragma Unreferenced (Kernel);
    begin
-      --  Destroy report window
+      --  Store GNATHub perspective and prevent use it
+      --  as default on next startup
+      if GPS.Kernel.Preferences.Save_Desktop_On_Exit.Get_Pref then
+         GPS.Kernel.MDI.Save_Desktop (Kernel, "Default");
+      end if;
+
       Module.Collector.Destroy;
 
       return True;

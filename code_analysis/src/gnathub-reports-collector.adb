@@ -21,6 +21,7 @@ with Gtk.Notebook;
 with Gtk.Widget;
 with Gtkada.Handlers;
 with GNAThub.Messages;
+with GPS.Kernel.MDI;
 
 package body GNAThub.Reports.Collector is
 
@@ -105,6 +106,9 @@ package body GNAThub.Reports.Collector is
    is
       Self : constant Report := Report (View);
    begin
+      --  Restore default perspective
+      GPS.Kernel.MDI.Load_Perspective (Self.Kernel, "Default");
+
       GPS.Kernel.Messages.Unregister_Listener
         (Self.Kernel.Get_Messages_Container,
          GPS.Kernel.Messages.Listener_Access (Self.Listener));
