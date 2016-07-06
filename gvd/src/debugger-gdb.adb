@@ -3640,34 +3640,34 @@ package body Debugger.Gdb is
                   Index := Tmp;
                end if;
 
+               if not Multiple then
+                  while Index <= S'Last
+                    and then not (S (Index) in '0' .. '9')
+                  loop
+                     Tmp := Index;
+                     Skip_To_Char (S, Index, ASCII.LF);
+                     Index := Index + 1;
+
+                     --  File name, exception name and subprogram name can be
+                     --  found on the same line.
+
+                     Match_Breakpoint_Info (Tmp, Index, B, M);
+
+                     --  If no file/subprogram/exception was found on the line,
+                     --  we look for extra information (ignore count, commands,
+                     --  conditions).
+
+                     if not M then
+                        Match_Extra_Breakpoint_Info (Tmp, Index, B);
+                     end if;
+                  end loop;
+               end if;
+
+               List.Append (B);
+
             else
-               Tmp := Index;
+               exit;
             end if;
-
-            if not Multiple then
-               while Index <= S'Last
-                 and then not (S (Index) in '0' .. '9')
-               loop
-                  Tmp := Index;
-                  Skip_To_Char (S, Index, ASCII.LF);
-                  Index := Index + 1;
-
-                  --  File name, exception name and subprogram name can be
-                  --  found on the same line.
-
-                  Match_Breakpoint_Info (Tmp, Index, B, M);
-
-                  --  If no file/subprogram/exception was found on the line, we
-                  --  look for extra information (ignore count, commands,
-                  --  conditions).
-
-                  if not M then
-                     Match_Extra_Breakpoint_Info (Tmp, Index, B);
-                  end if;
-               end loop;
-            end if;
-
-            List.Append (B);
          end loop;
 
          --  Fill the breakpoints extra information
