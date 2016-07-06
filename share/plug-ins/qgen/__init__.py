@@ -106,6 +106,18 @@ class Project_Support(object):
                 </index>
              </project_attribute>
 
+             <project_attribute
+              package="QGen"
+              name="Target"
+              editor_page="QGen"
+              list="true"
+              label="Target"
+              hide_in="wizard library_wizard">
+                <index attribute='Languages'>
+                   <string />
+                </index>
+             </project_attribute>
+
              <target-model name="QGenc" category="">
                <description>Generic launch of QGen</description>
                <iconname>gps-build-all-symbolic</iconname>
@@ -207,6 +219,26 @@ class Project_Support(object):
             except:
                 return GPS.Project.root().object_dirs()[0]
         return dir
+
+    def get_models(self, filename):
+        """
+        Return the models to generated code for
+        for a specific target
+        :param string filename: the target file
+        :return GPS.File list: the list of model files
+        """
+        f = GPS.File(filename)
+        models_files = []
+        try:
+            models = f.project().get_attribute_as_list(
+                attribute='Target', package='QGen',
+                index=os.path.basename(filename))
+            for mod in models:
+                models_files.append(GPS.File(mod))
+        except:
+            models_files = []
+
+        return models_files
 
     def get_switches(self, file):
         """
@@ -363,7 +395,10 @@ class CLI(GPS.Process):
         This is a workflow, and should be used via the functions in
         workflows.py.
         """
-        status = yield CLI.workflow_compile_project_to_source_code()
+        models = project_support.get_models(main_name)
+
+        status = yield CLI.__compile_files_to_source_code(models)
+
         if status == 0:
             w = TargetWrapper(target_name='Build Main')
             yield w.wait_on_execute(main_name=main_name)
@@ -376,7 +411,10 @@ class CLI(GPS.Process):
         This is a workflow, and should be used via the functions in
         workflows.py.
         """
-        status = yield CLI.workflow_compile_project_to_source_code()
+        models = project_support.get_models(main_name)
+
+        status = yield CLI.__compile_files_to_source_code(models)
+
         if status == 0:
             w = TargetWrapper(target_name='Build Main')
             status = yield w.wait_on_execute(main_name=main_name)
