@@ -262,23 +262,17 @@ class Project_Support(object):
 
 class CLI(GPS.Process):
     """
-    An interface to the mdl2json executable. This is responsible for
+    An interface to the qgenc executable. This is responsible for
     converting an mdl file to a JSON format that can be displayed by GPS.
     """
 
     qgenc = os_utils.locate_exec_on_path('qgenc')
     # path to qgenc
 
-    mdl2json = os.path.normpath(
-        os.path.join(
-            os.path.dirname(qgenc),
-            '..', 'libexec', 'qgen', 'bin', 'mdl2json'))
-    # path to mdl2json
-
     @staticmethod
     def is_available():
         """
-        Whether mdl2json is available on the system.
+        Whether qgenc is available on the system.
         """
         # Testing None or empty string
         if CLI.qgenc:
@@ -297,25 +291,37 @@ class CLI(GPS.Process):
 
         promise = Promise()
 
-        switches = project_support.get_switches(file)
+        filepath = file.path
+        base = os.path.splitext(os.path.basename(filepath))[0]
+        switches = project_support.get_switches(
+            file) + " -t %s_types.txt" % base
         outdir = project_support.get_output_dir(file)
+
+        result_path = os.path.join(
+            outdir, '.' + os.path.basename(filepath) + '_mdl2json')
+
+        if os.path.isfile(result_path):
+            # If the mdl file is older than the previous json file no need
+            # to recompute
+            if os.path.getmtime(result_path) >= os.path.getmtime(filepath):
+                promise.resolve(result_path)
+                return promise
+
         if outdir:
             switches += ' -o ' + outdir
 
-        cmd = ' '.join([CLI.mdl2json, file.path, switches])
+        cmd = ' '.join(
+            [CLI.qgenc, filepath, switches + ' --with-gui-only --incremental'])
 
         def __on_exit(proc, exit_status, output):
             if exit_status == 0:
-                promise.resolve(
-                    os.path.join(
-                        outdir,
-                        '.' + os.path.basename(file.path) + '_mdl2json'))
+                promise.resolve(result_path)
             else:
-                GPS.Console().write('When running mdl2json: %s\n' % (
+                GPS.Console().write('When running qgenc for gui: %s\n' % (
                     output), mode='error')
                 promise.reject()
 
-        # mdl2json is relatively fast, and since the user is waiting for
+        # qgenc is relatively fast, and since the user is waiting for
         # its output to see the diagram, we run in active mode below.
         GPS.Process(command=cmd, on_exit=__on_exit, active=True)
         return promise
@@ -356,7 +362,7 @@ class CLI(GPS.Process):
                 base = os.path.splitext(os.path.basename(f.path))[0]
                 switches = [
                     "-o", project_support.get_output_dir(f),
-                    "-t", "%s_types.txt" % base]
+                    "-t", "%s_types.txt" % base, "--with-gui"]
                 switches = (' '.join(switches) +
                             ' ' + project_support.get_switches(f) +
                             ' ' + f.path)
@@ -751,6 +757,22 @@ class Mapping_File(object):
         a = self._files.get(file.path, {})
         return a.get(line, None)
 
+    def get_diagram_for_item(self, diags, block):
+        """
+        A block will have an id of the form diagram/blockid
+        that allows to compute the diagram to fetch and look for
+        the item inside it, instead of fetching all diagrams
+        using Browsers.get_diagram_for_item
+        :param JSON_Diagram_File diags: The file to search in
+        :param string block: The block to search for
+        """
+        diag = diags.get(block.rsplit('/', 1)[0])
+        if diag:
+            it = diag.get_item(block)
+            return (diag, it)
+
+        return None
+
     def get_mdl_file(self, file):
         """
         Return the name of the MDL file used to generate the given file
@@ -764,7 +786,7 @@ project_support = Project_Support()
 project_support.register_languages()  # available before project is loaded
 
 if not CLI.is_available():
-    logger.log('mdl2json not found')
+    logger.log('qgenc not found')
 
 else:
     project_support.register_tool()
@@ -1038,14 +1060,17 @@ else:
                 block = QGEN_Module.modeling_map.get_block(filename, line)
                 scroll_to = None
                 if block:
-                    info = viewer.diags.get_diagram_for_item(block)
+
+                    info = QGEN_Module.modeling_map.get_diagram_for_item(
+                        viewer.diags, block)
                     if info:
                         diagram, item = info
                         viewer.set_diagram(diagram)  # calls on_diagram_changed
-                        scroll_to = item
-                        # Unselect items from the previous step
-                        viewer.diags.clear_selection()
-                        diagram.select(item)
+                        if item:
+                            scroll_to = item
+                            # Unselect items from the previous step
+                            viewer.diags.clear_selection()
+                            diagram.select(item)
 
                 if scroll_to:
                     viewer.scroll_into_view(scroll_to)
