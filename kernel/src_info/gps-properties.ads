@@ -33,7 +33,7 @@
 --     end;
 
 with GNAT.Strings;
-with XML_Utils;
+with GNATCOLL.JSON;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
 with String_Hash;
@@ -50,29 +50,30 @@ package GPS.Properties is
    --  Such properties can be marked as persistent, that is they will exist
    --  from one session of GPS to the next, transparently.
 
+   function Store
+     (Property : access Property_Record'Class)
+      return GNATCOLL.JSON.JSON_Value;
+   --  Result represents property as a JSON value.
+   --  This function stores property's Tag and call Save (below)
+
    procedure Save
      (Property : access Property_Record;
-      Node     : in out XML_Utils.Node_Ptr) is abstract;
-   --  Save the property to an XML node.
-   --  The Node has already been created, and its name must not be changed.
-   --  Attributes can be added if needed, though.
-   --  In the end, the XML file will contain something like:
-   --     <properties file="...">
-   --        <property name="...">save1</property>
-   --        <property name="...">save2</property>
-   --     </properties>
-   --  where "save1" and "save2" are set by Save.
+      Value    : in out GNATCOLL.JSON.JSON_Value) is abstract;
+   --  This procedure intended to convert property's data in to JSON format.
+
+   procedure Restore
+     (Property : in out Property_Record'Class;
+      Value    : GNATCOLL.JSON.JSON_Value;
+      Valid    : out Boolean);
+   --  Load a property from an JSON string.
+   --  Valid is set to False if type of data is incorrect for this property.
+   --  Calls Load if type is correct.
 
    procedure Load
-     (Property : in out Property_Record; From : XML_Utils.Node_Ptr)
-     is abstract;
-   --  Load a property from an XML node.
-   --  From has been found automatically by GPS based on the property node. If
-   --  it doesn't match the type expected by Property, it is likely because two
-   --  properties have the same name. In this case, an error message should be
-   --  written in the console.
-   --  You mustn't keep references to the Node_Ptr, which will be destroyed
-   --  after the call to Load
+     (Property : in out Property_Record;
+      Value    : GNATCOLL.JSON.JSON_Value)
+   is abstract;
+   --  This procedure intended to extracting property's data from JSON format.
 
    procedure Destroy (Property : in out Property_Record);
    --  Free the memory occupied by the property. You should always call the
@@ -83,12 +84,11 @@ package GPS.Properties is
    -------------------------------------------
 
    procedure Get_Property
-     (Property    : out Property_Record'Class;
-      Index_Name  : String;
-      Index_Value : String;
-      Name        : String;
-      Found       : out Boolean);
-   --  Return the given named property associated with Index.
+     (Property : out Property_Record'Class;
+      Key      : String;
+      Name     : String;
+      Found    : out Boolean);
+   --  Return the given named property associated with Key/Name.
    --  null is returned if there is no such property.
    --  Property names are case sensitive.
    --
@@ -176,13 +176,9 @@ package GPS.Properties is
 
    type Property_Description is record
       Value      : Property_Access;
-      --  The actual value of the property. This is still null if the property
-      --  hasn't been parsed yet (and then Unparsed it not null and contains
-      --  the value read from the XML file). This parsing is implemented
-      --  lazily so that we do not have to register the property types in
-      --  advance, and they are only needed when actually reading a property
+      --  The actual value of the property. This may be null in order to
+      --  represent not existing property.
 
-      Unparsed   : XML_Utils.Node_Ptr;
       Persistent : Boolean;
    end record;
    type Property_Description_Access is access Property_Description;
@@ -212,24 +208,48 @@ package GPS.Properties is
    --      and Get_Property, thus making the API harder to use.
    --  For now, we'll live with this global variable.
 
+   --------------
+   -- Internal --
+   --------------
+   --  This is a registry mechanism to avoid circular dependency.
+   --  Set_Extractor needs to be called before doing any of the operations
+   --  that require the extractor to be set. Kernel makes this setup on startup
+
+   type Property_Extractor_Proc is access procedure
+     (Key      : String;
+      Name     : String;
+      Property : out Property_Record'Class;
+      Found    : out Boolean);
+   --  Callback to extract the property from storage.
+
+   procedure Set_Extractor (Extractor : Property_Extractor_Proc);
+   --  Set current extractor. Used internally by kernel.
+
 private
+
    overriding procedure Destroy (Property : in out String_Property);
    overriding procedure Save
-     (Property : access String_Property; Node : in out XML_Utils.Node_Ptr);
+     (Property : access String_Property;
+      Value    : in out GNATCOLL.JSON.JSON_Value);
    overriding procedure Load
-     (Property : in out String_Property; From : XML_Utils.Node_Ptr);
+     (Property : in out String_Property;
+      Value    : GNATCOLL.JSON.JSON_Value);
    --  See inherited documentation
 
    overriding procedure Save
-     (Property : access Integer_Property; Node : in out XML_Utils.Node_Ptr);
+     (Property : access Integer_Property;
+      Value    : in out GNATCOLL.JSON.JSON_Value);
    overriding procedure Load
-     (Property : in out Integer_Property; From : XML_Utils.Node_Ptr);
+     (Property : in out Integer_Property;
+      Value    : GNATCOLL.JSON.JSON_Value);
    --  See inherited documentation
 
    overriding procedure Save
-     (Property : access Boolean_Property; Node : in out XML_Utils.Node_Ptr);
+     (Property : access Boolean_Property;
+      Value    : in out GNATCOLL.JSON.JSON_Value);
    overriding procedure Load
-     (Property : in out Boolean_Property; From : XML_Utils.Node_Ptr);
+     (Property : in out Boolean_Property;
+      Value    : GNATCOLL.JSON.JSON_Value);
    --  See inherited documentation
 
 end GPS.Properties;

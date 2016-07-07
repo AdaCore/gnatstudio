@@ -19,6 +19,7 @@ with Ada.Command_Line;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.Strings;              use GNAT.Strings;
+with GNATCOLL.JSON;
 with GNATCOLL.Scripts.Gtkada;   use GNATCOLL.Scripts.Gtkada;
 with GNATCOLL.Templates;        use GNATCOLL.Templates;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -82,7 +83,6 @@ with GPS.Properties;            use GPS.Properties;
 with GUI_Utils;
 with Task_Manager;              use Task_Manager;
 with User_Interface_Tools;
-with XML_Utils;                 use XML_Utils;
 
 package body GPS.Main_Window is
    Me : constant Trace_Handle := Create ("MAIN");
@@ -132,11 +132,11 @@ package body GPS.Main_Window is
       Width, Height : Gint;
    end record;
    overriding procedure Save
-      (Self : access Window_Size_Property;
-       Node : in out XML_Utils.Node_Ptr);
+     (Self  : access Window_Size_Property;
+      Value : in out GNATCOLL.JSON.JSON_Value);
    overriding procedure Load
       (Self : in out Window_Size_Property;
-       From : XML_Utils.Node_Ptr);
+      Value : GNATCOLL.JSON.JSON_Value);
    --  Save the preferred size of a window in the persistent properties
 
    type Toolbar_Icons_Size
@@ -1641,11 +1641,10 @@ package body GPS.Main_Window is
           Height => Event.Configure.Height);
       Set_Property
          (Data.Kernel,
-          Index_Name  => "window",
-          Index_Value => To_String (Data.Name),
-          Name        => "size",
-          Property    => Prop,
-          Persistent  => True);
+          Key        => To_String (Data.Name),
+          Name       => "size",
+          Property   => Prop,
+          Persistent => True);
       return False;
    end On_Configure;
 
@@ -1664,11 +1663,10 @@ package body GPS.Main_Window is
       Data  : Configure_Event_Data;
    begin
       Get_Property
-         (Property    => Prop,
-          Index_Name  => "window",
-          Index_Value => Name,
-          Name        => "size",
-          Found       => Found);
+         (Property => Prop,
+          Key      => Name,
+          Name     => "size",
+          Found    => Found);
 
       --  ??? Can we check that the size is small enough for the screen ? We
       --  do not know yet what screen the window will be displayed on (since
@@ -1701,14 +1699,14 @@ package body GPS.Main_Window is
    ----------
 
    overriding procedure Save
-      (Self : access Window_Size_Property;
-       Node : in out XML_Utils.Node_Ptr)
+     (Self  : access Window_Size_Property;
+      Value : in out GNATCOLL.JSON.JSON_Value)
    is
+      use GNATCOLL.JSON;
    begin
-      Set_Attribute
-         (Node, "width", Image (Integer (Self.Width), Min_Width => 0));
-      Set_Attribute
-         (Node, "height", Image (Integer (Self.Height), Min_Width => 0));
+      Value.Set_Field ("width", Image (Integer (Self.Width), Min_Width => 0));
+      Value.Set_Field
+        ("height", Image (Integer (Self.Height), Min_Width => 0));
    end Save;
 
    ----------
@@ -1716,11 +1714,11 @@ package body GPS.Main_Window is
    ----------
 
    overriding procedure Load
-      (Self : in out Window_Size_Property;
-       From : XML_Utils.Node_Ptr) is
+     (Self  : in out Window_Size_Property;
+      Value : GNATCOLL.JSON.JSON_Value) is
    begin
-      Self.Width := Gint'Value (Get_Attribute (From, "width", "200"));
-      Self.Height := Gint'Value (Get_Attribute (From, "height", "200"));
+      Self.Width  := Gint'Value (Value.Get ("width"));
+      Self.Height := Gint'Value (Value.Get ("height"));
    end Load;
 
 end GPS.Main_Window;

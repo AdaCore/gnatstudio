@@ -402,7 +402,8 @@ package body GPS.Kernel is
             Create_From_Dir (Handle.Home_Dir, "histories.xml"));
       Set_Max_Length (Handle.History.all, History_Max_Length);
 
-      Restore_Persistent_Properties (Handle);
+      Open_Persistent_Properties_DB (Handle);
+      GPS.Properties.Set_Extractor (Extract_Property'Access);
 
       Create_Clipboard (Handle);
 
@@ -909,7 +910,7 @@ package body GPS.Kernel is
 
       Save_Scenario_Vars_On_Exit (Handle);
 
-      Save_Persistent_Properties (Handle);
+      Close_Persistent_Properties_DB (Handle);
       Reset_Properties (Handle);
 
       Trace (Me, "Saving histories.xml");

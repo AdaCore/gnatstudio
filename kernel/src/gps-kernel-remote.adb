@@ -24,6 +24,7 @@ with GNAT.Expect.TTY;            use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 
+with GNATCOLL.JSON;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -31,7 +32,6 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with Glib;                       use Glib;
 with Glib.Main;                  use Glib.Main;
 with Glib.Object;                use Glib.Object;
-with XML_Utils;                  use XML_Utils;
 
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Properties;             use GPS.Properties;
@@ -85,9 +85,10 @@ package body GPS.Kernel.Remote is
 
    overriding procedure Save
      (Property : access Servers_Property;
-      Node     : in out XML_Utils.Node_Ptr);
+      Value    : in out GNATCOLL.JSON.JSON_Value);
    overriding procedure Load
-     (Property : in out Servers_Property; From : XML_Utils.Node_Ptr);
+     (Property : in out Servers_Property;
+      Value    : GNATCOLL.JSON.JSON_Value);
    overriding procedure Destroy
      (Property : in out Servers_Property);
 
@@ -159,18 +160,25 @@ package body GPS.Kernel.Remote is
 
    overriding procedure Save
      (Property : access Servers_Property;
-      Node     : in out XML_Utils.Node_Ptr)
+      Value    : in out GNATCOLL.JSON.JSON_Value)
    is
-      Srv : Node_Ptr;
+      use GNATCOLL.JSON;
+
+      Values : JSON_Array;
    begin
       Trace (Me, "Saving remote property");
 
       for J in Property.Servers'Range loop
-         Srv := new XML_Utils.Node;
-         Srv.Tag := new String'(Server_Type'Image (J));
-         Srv.Value := new String'(Property.Servers (J).Nickname.all);
-         Add_Child (Node, Srv);
+         declare
+            Value : constant JSON_Value := Create_Object;
+         begin
+            Value.Set_Field ("name", Server_Type'Image (J));
+            Value.Set_Field ("value", Property.Servers (J).Nickname.all);
+            Append (Values, Value);
+         end;
       end loop;
+      Value.Set_Field ("value", Values);
+      Trace (Me, "Saving remote property");
    end Save;
 
    ----------
@@ -178,37 +186,47 @@ package body GPS.Kernel.Remote is
    ----------
 
    overriding procedure Load
-     (Property : in out Servers_Property; From : XML_Utils.Node_Ptr)
+     (Property : in out Servers_Property;
+      Value    : GNATCOLL.JSON.JSON_Value)
    is
-      Srv : Node_Ptr;
+      use GNATCOLL.JSON;
+
+      Values : JSON_Array;
+      Item   : JSON_Value;
+
    begin
       Trace (Me, "Loading remote property");
 
-      if From.Child /= null then
-         for J in Property.Servers'Range loop
-            Srv := Find_Tag (From.Child, Server_Type'Image (J));
+      Values := Value.Get ("value");
 
-            Free (Property.Servers (J).Nickname);
-
-            if Srv /= null
-              and then Gexpect.Db.Is_Configured (Srv.Value.all)
-              and then Srv.Value.all /= ""
-            then
-               Property.Servers (J) :=
-                 (Is_Local => False,
-                  Nickname => new String'(Srv.Value.all));
-            else
-               Property.Servers (J) :=
-                 (Is_Local => True, Nickname => new String'(Local_Nickname));
-            end if;
-         end loop;
-
-      else
+      if Length (Values) = 0 then
          for J in Property.Servers'Range loop
             Free (Property.Servers (J).Nickname);
             Property.Servers (J) :=
               (Is_Local => True,
                Nickname => new String'(Local_Nickname));
+         end loop;
+      else
+         for J in Property.Servers'Range loop
+            Item := JSON_Null;
+            for Index in 1 .. Length (Values) loop
+               Item := Get (Values, Index);
+               exit when Item.Get ("name") = Server_Type'Image (J);
+            end loop;
+
+            Free (Property.Servers (J).Nickname);
+
+            if Item /= JSON_Null
+              and then Gexpect.Db.Is_Configured (Item.Get ("value"))
+              and then String'(Item.Get ("value")) /= ""
+            then
+               Property.Servers (J) :=
+                 (Is_Local => False,
+                  Nickname => new String'(Item.Get ("value")));
+            else
+               Property.Servers (J) :=
+                 (Is_Local => True, Nickname => new String'(Local_Nickname));
+            end if;
          end loop;
       end if;
    end Load;

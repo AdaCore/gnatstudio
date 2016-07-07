@@ -30,6 +30,7 @@ with Glib.Object;              use Glib.Object;
 with Glib;                     use Glib;
 with GNAT.Regpat;              use GNAT.Regpat;
 with GNAT.Strings;             use GNAT.Strings;
+with GNATCOLL.JSON;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GNATCOLL.VFS;             use GNATCOLL.VFS;
@@ -71,7 +72,6 @@ with Items.Simples;            use Items.Simples;
 with Language;                 use Language;
 with Pango.Font;               use Pango.Font;
 with String_Utils;             use String_Utils;
-with XML_Utils;                use XML_Utils;
 with Xref;                     use Xref;
 
 package body GVD.Canvas is
@@ -597,10 +597,10 @@ package body GVD.Canvas is
 
    overriding procedure Save
      (Property : access GVD_Items_Property_Record;
-      Node     : in out XML_Utils.Node_Ptr);
+      Value    : in out GNATCOLL.JSON.JSON_Value);
    overriding procedure Load
      (Property : in out GVD_Items_Property_Record;
-      From     : XML_Utils.Node_Ptr);
+      Value    : GNATCOLL.JSON.JSON_Value);
    overriding procedure Destroy (Property : in out GVD_Items_Property_Record);
    --  See inherited documentation
 
@@ -744,18 +744,23 @@ package body GVD.Canvas is
 
    overriding procedure Save
      (Property : access GVD_Items_Property_Record;
-      Node     : in out XML_Utils.Node_Ptr)
+      Value    : in out GNATCOLL.JSON.JSON_Value)
    is
-      Tmp : XML_Utils.Node_Ptr;
+      use GNATCOLL.JSON;
+
+      Values : JSON_Array;
    begin
       if Property.Items /= null then
-         for Item in reverse Property.Items'Range loop
-            Tmp := new XML_Utils.Node;
-            Add_Child (Node, Tmp);
-            Tmp.Tag   := new String'("item");
-            Tmp.Value := new String'(Property.Items (Item).all);
+         for Item in Property.Items'Range loop
+            declare
+               Value : constant JSON_Value := Create_Object;
+            begin
+               Value.Set_Field ("value", Property.Items (Item).all);
+               Append (Values, Value);
+            end;
          end loop;
       end if;
+      Value.Set_Field ("items", Values);
    end Save;
 
    ----------
@@ -764,24 +769,19 @@ package body GVD.Canvas is
 
    overriding procedure Load
      (Property : in out GVD_Items_Property_Record;
-      From     : XML_Utils.Node_Ptr)
+      Value    : GNATCOLL.JSON.JSON_Value)
    is
-      Tmp   : XML_Utils.Node_Ptr := From.Child;
-      Count : Natural := 0;
+      use GNATCOLL.JSON;
+
+      Values : constant JSON_Array := Value.Get ("items");
    begin
-      while Tmp /= null loop
-         Count := Count + 1;
-         Tmp   := Tmp.Next;
-      end loop;
-
-      Property.Items := new GNAT.Strings.String_List (1 .. Count);
-      Count := Property.Items'First;
-
-      Tmp := From.Child;
-      while Tmp /= null loop
-         Property.Items (Count) := new String'(Tmp.Value.all);
-         Count := Count + 1;
-         Tmp   := Tmp.Next;
+      Property.Items := new GNAT.Strings.String_List (1 .. Length (Values));
+      for Index in 1 .. Length (Values) loop
+         declare
+            V : constant JSON_Value := Get (Values, Index);
+         begin
+            Property.Items (Index) := new String'(V.Get ("value"));
+         end;
       end loop;
    end Load;
 

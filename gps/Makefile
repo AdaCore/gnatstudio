@@ -40,6 +40,7 @@ include ../Makefile.gnat
 # gnat.adc (No_Tasking restriction) on all gnatcoll sources.
 all: resources do_links
 	cd ../kernel/src; ${PYTHON} hooks.py
+	cd ../kernel/generated; gnatcoll_db2ada -api=GPS.Kernel.Properties.Database -adacreate -dbmodel=../src/properties_schema.txt
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -ws -P../spark/spark
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws -XTP_TASKING=No_Tasking \
 	  $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps -largs `pkg-config gmodule-2.0 --libs`

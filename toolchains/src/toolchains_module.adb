@@ -15,14 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.JSON;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Glib.Object;               use Glib.Object;
-with XML_Utils;                 use XML_Utils;
 with Gtk.Dialog;                use Gtk.Dialog;
-with GNATCOLL.Traces;                    use GNATCOLL.Traces;
 with GPS.Intl;                  use GPS.Intl;
 with GPS.Properties;            use GPS.Properties;
 with GPS.Kernel;                use GPS.Kernel;
@@ -33,6 +33,7 @@ with GPS.Kernel.Properties;     use GPS.Kernel.Properties;
 with Toolchains_Old;            use Toolchains_Old;
 with Toolchains_Dialog;         use Toolchains_Dialog;
 with Builder_Facility_Module;
+with JSON_Utils;
 
 package body Toolchains_Module is
    Me : constant Trace_Handle := Create ("TOOLCHAINS");
@@ -46,9 +47,10 @@ package body Toolchains_Module is
 
    overriding procedure Save
      (Property : access Toolchains_Property;
-      Node     : in out XML_Utils.Node_Ptr);
+      Value    : in out GNATCOLL.JSON.JSON_Value);
    overriding procedure Load
-     (Property : in out Toolchains_Property; From : XML_Utils.Node_Ptr);
+     (Property : in out Toolchains_Property;
+      Value    : GNATCOLL.JSON.JSON_Value);
    overriding procedure Destroy (Property : in out Toolchains_Property);
    --  See inherited doc.
 
@@ -82,37 +84,21 @@ package body Toolchains_Module is
 
    overriding procedure Save
      (Property : access Toolchains_Property;
-      Node     : in out XML_Utils.Node_Ptr)
+      Value    : in out GNATCOLL.JSON.JSON_Value)
    is
-      Child : XML_Utils.Node_Ptr;
+      use GNATCOLL.JSON;
+
    begin
-      if Property.Active then
-         Child := new XML_Utils.Node;
-         Child.Tag := new String'("active");
-         Add_Child (Node, Child);
-      end if;
-
-      if Property.Use_Xrefs_Subdir then
-         Child := new XML_Utils.Node;
-         Child.Tag := new String'("use_xrefs_subdir");
-         Add_Child (Node, Child);
-      end if;
-
-      if Property.Tools_Path /= No_File then
-         Add_File_Child
-           (Node, "tools_path", Property.Tools_Path,
-            Use_VFS_Prefix => False);
-      end if;
-
-      if Property.Compiler_Path /= No_File then
-         Add_File_Child
-           (Node, "compiler_path", Property.Compiler_Path,
-            Use_VFS_Prefix => False);
-      end if;
+      Value.Set_Field ("active", Property.Active);
+      Value.Set_Field ("use_xrefs_subdir", Property.Use_Xrefs_Subdir);
+      Value.Set_Field ("tools_path", JSON_Utils.Save (Property.Tools_Path));
+      Value.Set_Field
+        ("compiler_path", JSON_Utils.Save (Property.Compiler_Path));
 
    exception
       when E : others =>
          Trace (Me, E);
+         raise;
    end Save;
 
    ----------
@@ -120,24 +106,24 @@ package body Toolchains_Module is
    ----------
 
    overriding procedure Load
-     (Property : in out Toolchains_Property; From : XML_Utils.Node_Ptr)
+     (Property : in out Toolchains_Property;
+      Value    : GNATCOLL.JSON.JSON_Value)
    is
-      Child : XML_Utils.Node_Ptr;
+      use GNATCOLL.JSON;
+
    begin
-      Child := Find_Tag (From.Child, "active");
-      Property.Active := Child /= null;
+
+      Property.Active := Value.Get ("active");
 
       --  Set Use_Xrefs_Subdir on by default when the module is not active.
       --  This has no impact on its actual xrefs_subdir state (Property.Active
       --  state is always checked first), but this will check the corresponding
       --  button in the dialog by default, which is a desirable thing.
-      Child := Find_Tag (From.Child, "use_xrefs_subdir");
-      Property.Use_Xrefs_Subdir := Child /= null or else not Property.Active;
+      Property.Use_Xrefs_Subdir := Value.Get ("use_xrefs_subdir")
+        or else not Property.Active;
 
-      Property.Tools_Path :=
-        Get_File_Child (From, "tools_path", Use_VFS_Prefix => False);
-      Property.Compiler_Path :=
-        Get_File_Child (From, "compiler_path", Use_VFS_Prefix => False);
+      Property.Tools_Path    := JSON_Utils.Load (Value.Get ("tools_path"));
+      Property.Compiler_Path := JSON_Utils.Load (Value.Get ("compiler_path"));
    end Load;
 
    -------------
@@ -269,11 +255,10 @@ package body Toolchains_Module is
          Prop_Access := new Toolchains_Property'(Property);
          Set_Property
            (Kernel,
-            Index_Name  => "toolchains_property",
-            Index_Value => "toolchains_property",
-            Name        => "property",
-            Property    => Prop_Access,
-            Persistent  => True);
+            Key        => "toolchains_property",
+            Name       => "property",
+            Property   => Prop_Access,
+            Persistent => True);
 
          Apply (Property, Kernel);
       end if;
@@ -292,10 +277,9 @@ package body Toolchains_Module is
    begin
       Get_Property
         (Property,
-         Index_Name  => "toolchains_property",
-         Index_Value => "toolchains_property",
-         Name        => "property",
-         Found       => Success);
+         Key   => "toolchains_property",
+         Name  => "property",
+         Found => Success);
 
       if not Success then
          return Toolchains_Property'

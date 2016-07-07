@@ -18,6 +18,7 @@
 with Commands;                     use Commands;
 with Commands.Interactive;         use Commands.Interactive;
 with Debugger;                     use Debugger;
+with GNATCOLL.JSON;
 with GNATCOLL.Scripts;             use GNATCOLL.Scripts;
 with GNATCOLL.Traces;              use GNATCOLL.Traces;
 with GPS.Default_Styles;           use GPS.Default_Styles;
@@ -39,8 +40,8 @@ with GPS.Properties;               use GPS.Properties;
 with GVD_Module;                   use GVD_Module;
 with GVD.Preferences;              use GVD.Preferences;
 with GVD.Process;                  use GVD.Process;
-with XML_Utils;                    use XML_Utils;
 with Xref;                         use Xref;
+with JSON_Utils;
 
 package body GVD.Breakpoints_List is
 
@@ -176,10 +177,10 @@ package body GVD.Breakpoints_List is
    type Breakpoint_Property is access all Breakpoint_Property_Record'Class;
    overriding procedure Save
      (Property : access Breakpoint_Property_Record;
-      Node     : in out XML_Utils.Node_Ptr);
+      Value    : in out GNATCOLL.JSON.JSON_Value);
    overriding procedure Load
      (Property : in out Breakpoint_Property_Record;
-      From     : XML_Utils.Node_Ptr);
+      Value    : GNATCOLL.JSON.JSON_Value);
 
    procedure Save_Persistent_Breakpoints
      (Kernel   : not null access Kernel_Handle_Record'Class);
@@ -443,59 +444,50 @@ package body GVD.Breakpoints_List is
 
    overriding procedure Save
      (Property : access Breakpoint_Property_Record;
-      Node     : in out XML_Utils.Node_Ptr)
+      Value    : in out GNATCOLL.JSON.JSON_Value)
    is
-      X : Node_Ptr;
+      use GNATCOLL.JSON;
+
+      Values : JSON_Array;
+
    begin
-      Trace (Me, "Saving breakpoints for future sessions");
-      for B of reverse Property.Breakpoints loop
-         X := new XML_Utils.Node;
-         X.Tag := new String'("breakpoint");
-         X.Next := Node.Child;
-         Node.Child := X;
-         if B.The_Type /= Breakpoint then
-            Set_Attribute (X, "type", Breakpoint_Type'Image (B.The_Type));
-         end if;
-         if B.Disposition /= Keep then
-            Set_Attribute
-              (X, "disposition", Breakpoint_Disposition'Image (B.Disposition));
-         end if;
-         if not B.Enabled then
-            Set_Attribute (X, "enabled", "false");
-         end if;
-         if B.Expression /= "" then
-            Set_Attribute (X, "expression", To_String (B.Expression));
-         end if;
-         if not B.Location.Is_Null then
-            Add_File_Child (X, "file", Get_File (B.Location));
-            Set_Attribute
-              (X, "line", Editable_Line_Type'Image (Get_Line (B.Location)));
-         end if;
-         if B.Except /= "" then
-            Set_Attribute (X, "exception", To_String (B.Except));
-         end if;
-         if B.Subprogram /= "" then
-            Set_Attribute (X, "subprogram", To_String (B.Subprogram));
-         end if;
-         if B.Address /= Invalid_Address then
-            Set_Attribute (X, "address", Address_To_String (B.Address));
-         end if;
-         if B.Ignore /= 0 then
-            Set_Attribute (X, "ignore", Integer'Image (B.Ignore));
-         end if;
-         if B.Condition /= "" then
-            Set_Attribute (X, "condition", To_String (B.Condition));
-         end if;
-         if B.Commands /= "" then
-            Set_Attribute (X, "command", To_String (B.Commands));
-         end if;
-         if B.Scope /= No_Scope then
-            Set_Attribute (X, "scope", Scope_Type'Image (B.Scope));
-         end if;
-         if B.Action /= No_Action then
-            Set_Attribute (X, "action", Action_Type'Image (B.Action));
-         end if;
+      GNATCOLL.Traces.Trace (Me, "Saving breakpoints for future sessions");
+
+      for B of Property.Breakpoints loop
+         declare
+            Value : constant JSON_Value := Create_Object;
+         begin
+            Value.Set_Field ("type", Breakpoint_Type'Image (B.The_Type));
+            Value.Set_Field
+              ("disposition",
+               Breakpoint_Disposition'Image (B.Disposition));
+            Value.Set_Field ("enabled", B.Enabled);
+            Value.Set_Field ("expression", To_String (B.Expression));
+            if B.Location.Is_Null then
+               Value.Set_Field ("file", "");
+               Value.Set_Field ("line", "");
+            else
+               Value.Set_Field
+                 ("file", JSON_Utils.Save (Get_File (B.Location)));
+               Value.Set_Field
+                 ("line", Editable_Line_Type'Image (Get_Line (B.Location)));
+            end if;
+            Value.Set_Field ("exception", To_String (B.Except));
+            Value.Set_Field ("subprogram", To_String (B.Subprogram));
+            if B.Address /= Invalid_Address then
+               Value.Set_Field ("address", Address_To_String (B.Address));
+            else
+               Value.Set_Field ("address", "");
+            end if;
+            Value.Set_Field ("ignore", B.Ignore);
+            Value.Set_Field ("condition", To_String (B.Condition));
+            Value.Set_Field ("command", To_String (B.Commands));
+            Value.Set_Field ("scope", Scope_Type'Image (B.Scope));
+            Value.Set_Field ("action", Action_Type'Image (B.Action));
+            Append (Values, Value);
+         end;
       end loop;
+      Value.Set_Field ("breakpoints", Values);
    end Save;
 
    ----------
@@ -504,68 +496,52 @@ package body GVD.Breakpoints_List is
 
    overriding procedure Load
      (Property : in out Breakpoint_Property_Record;
-      From     : XML_Utils.Node_Ptr)
+      Value    : GNATCOLL.JSON.JSON_Value)
    is
-      X : Node_Ptr;
-      B : Breakpoint_Data;
+      use GNATCOLL.JSON;
 
-      function Get_String (Attr : String) return Unbounded_String;
-      --  return the value of Attr (or null if the Attr doesn't exist
+      Values : JSON_Array;
+      B      : Breakpoint_Data;
 
-      ----------------
-      -- Get_String --
-      ----------------
-
-      function Get_String (Attr : String) return Unbounded_String is
-         Value : constant String := Get_Attribute (X, Attr, "");
-      begin
-         if Value = "" then
-            return Null_Unbounded_String;
-         else
-            return To_Unbounded_String (Value);
-         end if;
-      end Get_String;
-
-      M : Location_Marker;
    begin
-      Trace (Me, "Restoring breakpoints from previous session");
+      GNATCOLL.Traces.Trace
+        (Me, "Restoring breakpoints from previous session");
 
-      X := From.Child;
-      while X /= null loop
-         if Get_Attribute (X, "line", "") /= "" then
-            M := Property.Kernel.Get_Buffer_Factory.Create_Marker
-              (File   => Get_File_Child (X, "file"),
-               Line   => Editable_Line_Type'Value
-                 (Get_Attribute (X, "line", "0")),
-               Column => 1);
-         else
-            M := No_Marker;
-         end if;
+      Values := Value.Get ("breakpoints");
 
-         B :=
-           (Num         => Breakpoint_Identifier'Last,
-            Trigger     => Write,
-            The_Type => Breakpoint_Type'Value
-              (Get_Attribute
-                 (X, "type", Breakpoint_Type'Image (Breakpoint))),
-            Disposition => Breakpoint_Disposition'Value
-              (Get_Attribute
-                   (X, "disposition", Breakpoint_Disposition'Image (Keep))),
-            Enabled    => Boolean'Value (Get_Attribute (X, "enabled", "true")),
-            Expression => Get_String ("expression"),
-            Except     => Get_String ("exception"),
-            Subprogram  => Get_String ("subprogram"),
-            Location   => M,
-            Address    => String_To_Address (Get_Attribute (X, "address", "")),
-            Ignore     => Integer'Value (Get_Attribute (X, "ignore", "0")),
-            Condition  => Get_String ("condition"),
-            Commands   => Get_String ("command"),
-            Scope      => Scope_Type'Value
-              (Get_Attribute (X, "scope", Scope_Type'Image (No_Scope))),
-            Action     => Action_Type'Value
-              (Get_Attribute (X, "action", Action_Type'Image (No_Action))));
-         Property.Breakpoints.Append (B);
-         X := X.Next;
+      for Index in 1 .. Length (Values) loop
+         declare
+            Item : constant JSON_Value := Get (Values, Index);
+            Loc  : Location_Marker     := No_Marker;
+         begin
+            if String'(Item.Get ("line")) /= ""
+              and then String'(Item.Get ("file")) /= ""
+            then
+               Loc := Property.Kernel.Get_Buffer_Factory.Create_Marker
+                 (File   => JSON_Utils.Load (Item.Get ("file")),
+                  Line   => Editable_Line_Type'Value (Item.Get ("line")),
+                  Column => 1);
+            end if;
+
+            B :=
+              (Num         => Breakpoint_Identifier'Last,
+               Trigger     => Write,
+               The_Type    => Breakpoint_Type'Value (Item.Get ("type")),
+               Disposition => Breakpoint_Disposition'Value
+                 (Item.Get ("disposition")),
+               Enabled     => Item.Get ("enabled"),
+               Expression  => Item.Get ("expression"),
+               Except      => Item.Get ("exception"),
+               Subprogram  => Item.Get ("subprogram"),
+               Location    => Loc,
+               Address     => String_To_Address (Item.Get ("address")),
+               Ignore      => Item.Get ("ignore"),
+               Condition   => Item.Get ("condition"),
+               Commands    => Item.Get ("command"),
+               Scope       => Scope_Type'Value (Item.Get ("scope")),
+               Action      => Action_Type'Value (Item.Get ("action")));
+            Property.Breakpoints.Append (B);
+         end;
       end loop;
    end Load;
 

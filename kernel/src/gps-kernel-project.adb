@@ -18,6 +18,7 @@
 with Ada.Characters.Handling;          use Ada.Characters.Handling;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
+with GNATCOLL.JSON;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Traces;                  use GNATCOLL.Traces;
 with GNATCOLL.VFS;                     use GNATCOLL.VFS;
@@ -42,7 +43,6 @@ with GPS.Kernel.Properties;            use GPS.Kernel.Properties;
 with GPS.Kernel.Remote;                use GPS.Kernel.Remote;
 with GPS.Kernel.MDI;                   use GPS.Kernel.MDI;
 with GPS.Properties;                   use GPS.Properties;
-with XML_Utils;                        use XML_Utils;
 with Xref;
 
 package body GPS.Kernel.Project is
@@ -95,11 +95,11 @@ package body GPS.Kernel.Project is
       Map : String_Maps.Map;
    end record;
    overriding procedure Save
-     (Self : access Scenario_Vars_Property;
-      Node : in out XML_Utils.Node_Ptr);
+     (Self  : access Scenario_Vars_Property;
+      Value : in out GNATCOLL.JSON.JSON_Value);
    overriding procedure Load
-     (Self : in out Scenario_Vars_Property;
-      Node : XML_Utils.Node_Ptr);
+     (Self  : in out Scenario_Vars_Property;
+      Value : GNATCOLL.JSON.JSON_Value);
    --  A property used to store the current scenario for the next GPS session.
 
    procedure Restore_Scenario_Vars
@@ -123,21 +123,26 @@ package body GPS.Kernel.Project is
    ----------
 
    overriding procedure Save
-     (Self : access Scenario_Vars_Property;
-      Node : in out XML_Utils.Node_Ptr)
+     (Self  : access Scenario_Vars_Property;
+      Value : in out GNATCOLL.JSON.JSON_Value)
    is
       use String_Maps;
-      C  : String_Maps.Cursor := Self.Map.First;
-      N  : Node_Ptr;
+      use GNATCOLL.JSON;
+
+      Values : JSON_Array;
+      C      : String_Maps.Cursor := Self.Map.First;
    begin
       while Has_Element (C) loop
-         N := new XML_Utils.Node;
-         N.Tag := new String'("var");
-         Set_Attribute (N, "name", Key (C));
-         Set_Attribute (N, "value", Element (C));
-         Add_Child (Node, N);
+         declare
+            Value : constant JSON_Value := Create_Object;
+         begin
+            Value.Set_Field ("name", Key (C));
+            Value.Set_Field ("value", Element (C));
+            Append (Values, Value);
+         end;
          Next (C);
       end loop;
+      Value.Set_Field ("value", Values);
    end Save;
 
    ----------
@@ -145,18 +150,19 @@ package body GPS.Kernel.Project is
    ----------
 
    overriding procedure Load
-     (Self : in out Scenario_Vars_Property;
-      Node : XML_Utils.Node_Ptr)
+     (Self  : in out Scenario_Vars_Property;
+      Value : GNATCOLL.JSON.JSON_Value)
    is
-      N : Node_Ptr := Node.Child;
+      use GNATCOLL.JSON;
+
+      Values : constant JSON_Array := Value.Get ("value");
    begin
-      while N /= null loop
-         if N.Tag.all = "var" then
-            Self.Map.Include
-              (Get_Attribute (N, "name"),
-               Get_Attribute (N, "value"));
-         end if;
-         N := N.Next;
+      for Index in 1 .. Length (Values) loop
+         declare
+            V : constant JSON_Value := Get (Values, Index);
+         begin
+            Self.Map.Include (V.Get ("name"), V.Get ("value"));
+         end;
       end loop;
    end Load;
 

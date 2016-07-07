@@ -35,6 +35,8 @@
 with GNATCOLL.Projects;
 with GPS.Properties; use GPS.Properties;
 
+private with Ada.Finalization;
+
 package GPS.Kernel.Properties is
 
    -------------------------------------------
@@ -42,24 +44,22 @@ package GPS.Kernel.Properties is
    -------------------------------------------
 
    procedure Set_Property
-     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Index_Name  : String;
-      Index_Value : String;
-      Name        : String;
-      Property    : access Property_Record'Class;
-      Persistent  : Boolean := False);
-   --  Associate a given property with Index, so that it can be queried
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Key        : String;
+      Name       : String;
+      Property   : access Property_Record'Class;
+      Persistent : Boolean := False);
+   --  Associate a given property with Key/Name, so that it can be queried
    --  later through Get_File_Property.
    --  If Persistent is True, the property will be preserved from one
    --  session of GPS to the next.
    --  Property names are case sensitive.
 
    procedure Remove_Property
-     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Index_Name  : String;
-      Index_Value : String;
-      Name        : String);
-   --  Remove the named property (persistent or not) associated with Index.
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Key    : String;
+      Name   : String);
+   --  Remove the named property (persistent or not) associated with Key/Name.
 
    ---------------------------------------
    -- Associating properties with files --
@@ -118,14 +118,13 @@ package GPS.Kernel.Properties is
    -- Saving and restoring all properties --
    -----------------------------------------
 
-   procedure Save_Persistent_Properties
+   procedure Close_Persistent_Properties_DB
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Save all persistent properties for all files in the current project.
+   --  Close DB. This subprogram should only be called by the kernel itself.
 
-   procedure Restore_Persistent_Properties
+   procedure Open_Persistent_Properties_DB
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Restore persistent properties for the files in the current project.
-   --  This subprogram should only be called by the kernel itself.
+   --  Open DB. This subprogram should only be called by the kernel itself.
 
    procedure Reset_Properties
      (Kernel : access Kernel_Handle_Record'Class);
@@ -140,5 +139,55 @@ package GPS.Kernel.Properties is
    procedure Register_Script_Commands
      (Kernel : access Kernel_Handle_Record'Class);
    --  Register the script commands associated with this module
+
+   ----------------------
+   -- Extract_Property --
+   ----------------------
+
+   procedure Extract_Property
+     (Key      : String;
+      Name     : String;
+      Property : out Property_Record'Class;
+      Found    : out Boolean);
+   --  Extract property from database. Used internally by kernel.
+
+private
+
+   -----------------
+   -- Writer_Type --
+   -----------------
+
+   type Writer_Record is
+     abstract new Ada.Finalization.Controlled with null record;
+   type Writer is access all Writer_Record'Class;
+   --  Base class to manage database
+
+   procedure Get_Value
+     (Self     : not null access Writer_Record;
+      Key      : String;
+      Name     : String;
+      Property : out Property_Record'Class;
+      Found    : out Boolean) is abstract;
+
+   procedure Insert
+     (Self     : not null access Writer_Record;
+      Key      : String;
+      Name     : String;
+      Property : Property_Description) is abstract;
+
+   procedure Update
+     (Self     : not null access Writer_Record;
+      Key      : String;
+      Name     : String;
+      Property : Property_Description) is abstract;
+
+   procedure Remove
+     (Self : not null access Writer_Record;
+      Key  : String;
+      Name : String) is abstract;
+
+   procedure Dump_Database
+     (Self : not null access Writer_Record) is abstract;
+   --  Dump database's data to test file
 
 end GPS.Kernel.Properties;

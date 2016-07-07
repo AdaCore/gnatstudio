@@ -15,43 +15,45 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Indefinite_Ordered_Maps;
-with Ada.Strings.Fixed;
-
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
-with XML_Utils;                  use XML_Utils;
-with GNATCOLL.Traces;                     use GNATCOLL.Traces;
+with GNATCOLL.JSON;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.SQL;               use GNATCOLL.SQL;
+with GNATCOLL.SQL.Exec;          use GNATCOLL.SQL.Exec;
+with GNATCOLL.SQL.Sqlite;
+with GPS.Kernel.Properties.Database;
 
 package body GPS.Kernel.Properties is
 
    use Properties_Hash.String_Hash_Table;
 
-   Me : constant Trace_Handle := Create ("Properties");
+   Me   : constant Trace_Handle := Create ("Properties");
+   Dump : constant Trace_Handle := Create ("TESTSUITE.DUMP_PROPERTIES", Off);
 
    function Get_Properties_Filename
-     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File;
+     (Kernel : access Kernel_Handle_Record'Class;
+      Dump   : Boolean := False)
+      return Virtual_File;
    --  Return the filename to use when saving the persistent properties for the
    --  current project
 
    procedure Set_Resource_Property
-     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Resource_Key  : String;
-      Resource_Kind : String;
-      Name          : String;
-      Property      : Property_Description);
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Key      : String;
+      Name     : String;
+      Property : Property_Description);
    --  Set property for any kind of resource. This is the internal
    --  implementation of Set_*_Property.
 
    procedure Remove_Resource_Property
-     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Resource_Key  : String;
-      Resource_Kind : String;
-      Name          : String);
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Key    : String;
+      Name   : String);
    --  Remove property for any kind of resource
 
    procedure File_Command_Handler
@@ -66,39 +68,240 @@ package body GPS.Kernel.Properties is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles script commands for properties
 
+   -- Database routines --
+
+   type Dummy_Writer_Record is new Writer_Record with null record;
+
+   overriding procedure Get_Value
+     (Self     : not null access Dummy_Writer_Record;
+      Key      : String;
+      Name     : String;
+      Property : out Property_Record'Class;
+      Found    : out Boolean);
+
+   overriding procedure Insert
+     (Self     : not null access Dummy_Writer_Record;
+      Key      : String;
+      Name     : String;
+      Property : Property_Description) is null;
+
+   overriding procedure Update
+     (Self     : not null access Dummy_Writer_Record;
+      Key      : String;
+      Name     : String;
+      Property : Property_Description) is null;
+
+   overriding procedure Remove
+     (Self : not null access Dummy_Writer_Record;
+      Key  : String;
+      Name : String) is null;
+
+   overriding procedure Dump_Database
+     (Self : not null access Dummy_Writer_Record) is null;
+
+   -------------------
+   -- SQLite_Writer --
+   -------------------
+
+   package SQLite_Writer is
+
+      type SQLite_Writer_Record (Kernel : access Kernel_Handle_Record'Class) is
+        new Writer_Record with private;
+      type SQLite_Writer is access all SQLite_Writer_Record'Class;
+
+      overriding procedure Get_Value
+        (Self     : not null access SQLite_Writer_Record;
+         Key      : String;
+         Name     : String;
+         Property : out Property_Record'Class;
+         Found    : out Boolean);
+
+      overriding procedure Insert
+        (Self     : not null access SQLite_Writer_Record;
+         Key      : String;
+         Name     : String;
+         Property : Property_Description);
+
+      overriding procedure Update
+        (Self     : not null access SQLite_Writer_Record;
+         Key      : String;
+         Name     : String;
+         Property : Property_Description);
+
+      overriding procedure Remove
+        (Self : not null access SQLite_Writer_Record;
+         Key  : String;
+         Name : String);
+
+      overriding procedure Dump_Database
+        (Self   : not null access SQLite_Writer_Record);
+
+      function Constructor
+        (Kernel : access Kernel_Handle_Record'Class)
+         return Writer;
+
+   private
+      type SQLite_Writer_Record (Kernel : access Kernel_Handle_Record'Class) is
+        new Writer_Record with record
+         DB : GNATCOLL.SQL.Exec.Database_Description;
+         --  The description of the database we are currently connected to.
+         --  This must not be freed while where exists connections to this
+         --  database, since the connections have a pointer to this descr.
+
+         Connection : GNATCOLL.SQL.Exec.Database_Connection;
+         --  A thread-specific access to a database
+      end record;
+
+      overriding procedure Finalize   (Self : in out SQLite_Writer_Record);
+
+      procedure Init
+        (Self : not null access SQLite_Writer_Record;
+         File : Virtual_File);
+
+      procedure Create_Database
+        (Self : not null access SQLite_Writer_Record);
+      --  Create the database tables and initial contents.
+
+      procedure Create_If_Needed
+        (Self         : not null access SQLite_Writer_Record;
+         Key          : String;
+         Name         : String;
+         Resource_Id  : out Integer;
+         Property_Id  : out Integer);
+      --  Insert new value of Property and Resource if not exsist in DB
+      --  and return Primary keys
+
+      procedure Delete_If_No_Used
+        (Self         : not null access SQLite_Writer_Record;
+         Resource_Id  : Integer;
+         Property_Id  : Integer);
+      --  Delete unused Property and Resource
+
+      procedure Get_Ids
+        (Self         : not null access SQLite_Writer_Record;
+         Key          : String;
+         Name         : String;
+         Resource_Id  : out Integer;
+         Property_Id  : out Integer);
+      --  Retrive Ids of Property and Resource
+
+      procedure Insert_Or_Update
+        (Self         : not null access SQLite_Writer_Record;
+         Query        : Prepared_Statement;
+         Key          : String;
+         Name         : String;
+         Property     : Property_Description);
+      --  Insert or Update Value. Behavior depends on Query.
+
+   end SQLite_Writer;
+
+   procedure Free is
+     new Ada.Unchecked_Deallocation (Writer_Record'Class, Writer);
+
+   Current_Writer : Writer := new Dummy_Writer_Record;
+
+   -----------------------------------
+   -- Open_Persistent_Properties_DB --
+   -----------------------------------
+
+   procedure Open_Persistent_Properties_DB
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Object : constant Writer := SQLite_Writer.Constructor (Kernel);
+   begin
+      if Object /= null then
+         Free (Current_Writer);
+         Current_Writer := Object;
+      end if;
+
+      if Current_Writer = null then
+         Current_Writer := new Dummy_Writer_Record;
+      end if;
+   end Open_Persistent_Properties_DB;
+
+   ------------------------------------
+   -- Close_Persistent_Properties_DB --
+   ------------------------------------
+
+   procedure Close_Persistent_Properties_DB
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Free (Current_Writer);
+   end Close_Persistent_Properties_DB;
+
    ---------------------------
    -- Set_Resource_Property --
    ---------------------------
 
    procedure Set_Resource_Property
-     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Resource_Key  : String;
-      Resource_Kind : String;
-      Name          : String;
-      Property      : Property_Description)
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Key      : String;
+      Name     : String;
+      Property : Property_Description)
    is
-      pragma Unreferenced (Resource_Kind, Kernel);
-      --  Not used yet, the idea is to have various attributes in the XML file
-      --  depending on the resource type
+      pragma Unreferenced (Kernel);
 
+      Descr     : Property_Description_Access;
+      New_Value : Boolean;
    begin
-      Set (All_Properties, Resource_Key & Sep & Name,
+      if Property.Persistent then
+         Descr := Get (All_Properties, Key & Sep & Name);
+         New_Value := Descr = null or else Descr.Value = null;
+      end if;
+
+      Set (All_Properties, Key & Sep & Name,
            new Property_Description'(Property));
+
+      if Property.Value /= null
+        and then Property.Persistent
+      then
+         if New_Value then
+            Current_Writer.Insert (Key, Name, Property);
+         else
+            Current_Writer.Update (Key, Name, Property);
+         end if;
+      end if;
    end Set_Resource_Property;
+
+   ----------------------
+   -- Extract_Property --
+   ----------------------
+
+   procedure Extract_Property
+     (Key      : String;
+      Name     : String;
+      Property : out Property_Record'Class;
+      Found    : out Boolean) is
+   begin
+      Current_Writer.Get_Value (Key, Name, Property, Found);
+   end Extract_Property;
 
    ------------------------------
    -- Remove_Resource_Property --
    ------------------------------
 
    procedure Remove_Resource_Property
-     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Resource_Key  : String;
-      Resource_Kind : String;
-      Name          : String)
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Key    : String;
+      Name   : String)
    is
-      pragma Unreferenced (Resource_Kind, Kernel);
+      pragma Unreferenced (Kernel);
+
+      Descr : Property_Description_Access;
+
    begin
-      Remove (All_Properties, Resource_Key & Sep & Name);
+      Descr := Get (All_Properties, Key & Sep & Name);
+      if Descr /= null
+        and then Descr.Value /= null
+      then
+         if Descr.Persistent then
+            Current_Writer.Remove (Key, Name);
+         end if;
+      end if;
+
+      Remove (All_Properties, Key & Sep & Name);
    end Remove_Resource_Property;
 
    ------------------
@@ -106,18 +309,16 @@ package body GPS.Kernel.Properties is
    ------------------
 
    procedure Set_Property
-     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Index_Name  : String;
-      Index_Value : String;
-      Name        : String;
-      Property    : access Property_Record'Class;
-      Persistent  : Boolean := False) is
+     (Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Key        : String;
+      Name       : String;
+      Property   : access Property_Record'Class;
+      Persistent : Boolean := False) is
    begin
       Set_Resource_Property
         (Kernel,
-         Index_Value, Index_Name, Name,
+         Key, Name,
          Property_Description'(Value      => Property_Access (Property),
-                               Unparsed   => null,
                                Persistent => Persistent));
    end Set_Property;
 
@@ -126,12 +327,11 @@ package body GPS.Kernel.Properties is
    ---------------------
 
    procedure Remove_Property
-     (Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Index_Name  : String;
-      Index_Value : String;
-      Name        : String) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Key    : String;
+      Name   : String) is
    begin
-      Remove_Resource_Property (Kernel, Index_Value, Index_Name, Name);
+      Remove_Resource_Property (Kernel, Key, Name);
    end Remove_Property;
 
    ------------------
@@ -146,7 +346,7 @@ package body GPS.Kernel.Properties is
       Persistent : Boolean := False) is
    begin
       Set_Property
-        (Kernel, "file", To_String (File), Name, Property, Persistent);
+        (Kernel, To_String (File), Name, Property, Persistent);
    end Set_Property;
 
    ------------------
@@ -161,7 +361,7 @@ package body GPS.Kernel.Properties is
       Persistent : Boolean := False) is
    begin
       Set_Property
-        (Kernel, "project", To_String (Project), Name, Property, Persistent);
+        (Kernel, To_String (Project), Name, Property, Persistent);
    end Set_Property;
 
    ---------------------
@@ -173,7 +373,7 @@ package body GPS.Kernel.Properties is
       File     : GNATCOLL.VFS.Virtual_File;
       Name     : String) is
    begin
-      Remove_Property (Kernel, "file", To_String (File), Name);
+      Remove_Property (Kernel, To_String (File), Name);
    end Remove_Property;
 
    ---------------------
@@ -185,7 +385,7 @@ package body GPS.Kernel.Properties is
       Project  : Project_Type;
       Name     : String) is
    begin
-      Remove_Property (Kernel, "project", To_String (Project), Name);
+      Remove_Property (Kernel, To_String (Project), Name);
    end Remove_Property;
 
    -----------------------------
@@ -193,151 +393,18 @@ package body GPS.Kernel.Properties is
    -----------------------------
 
    function Get_Properties_Filename
-     (Kernel : access Kernel_Handle_Record'Class) return Virtual_File is
+     (Kernel : access Kernel_Handle_Record'Class;
+      Dump   : Boolean := False)
+      return Virtual_File is
    begin
-      --  We could use the .gps directory, but that would mean we have to keep
-      --  in memory information for files that do not belong to the current
+      --  We are using the .gps directory, but that would mean we have to keep
+      --  in database information for files that do not belong to the current
       --  project.
 
-      return Create_From_Dir (Get_Home_Dir (Kernel), "properties.xml");
+      return Create_From_Dir
+        (Get_Home_Dir (Kernel), "properties" &
+           (if Dump then ".dump" else ".db"));
    end Get_Properties_Filename;
-
-   --------------------------------
-   -- Save_Persistent_Properties --
-   --------------------------------
-
-   procedure Save_Persistent_Properties
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      Filename : constant Virtual_File :=
-                   Get_Properties_Filename (Kernel);
-      Iter     : Properties_Hash.String_Hash_Table.Cursor;
-      Root     : Node_Ptr;
-      Descr    : Property_Description_Access;
-      Val      : XML_Utils.String_Ptr;
-      Success  : Boolean;
-
-      package Resource_Hash is new Ada.Containers.Indefinite_Ordered_Maps
-        (Key_Type     => String,
-         Element_Type => Node_Ptr);
-      --  For each resource, stores the XML node that represents it. The goal
-      --  is that each resource has a single node
-
-      use Resource_Hash;
-      Nodes : Resource_Hash.Map;
-      C     : Resource_Hash.Cursor;
-      File  : Node_Ptr;
-
-   begin
-      Trace (Me, "Saving " & Filename.Display_Full_Name);
-      Root := new Node'
-        (Tag        => new String'("persistent_properties"),
-         Attributes => null,
-         Value      => null,
-         Parent     => null,
-         Child      => null,
-         Next       => null,
-         Specific_Data => 1);
-
-      Get_First (All_Properties, Iter);
-      loop
-         Descr := Get_Element (Iter);
-         exit when Descr = null;
-
-         if Descr.Persistent then
-            declare
-               Prop : Node_Ptr;
-               Key  : constant String := Get_Key (Iter);
-               Pos  : constant Integer := Ada.Strings.Fixed.Index (Key, Sep);
-               Src  : Node_Ptr;
-            begin
-               if Descr.Value = null then
-
-                  --  Descr.Unparsed.Value might be null if the properties is
-                  --  represented by XML children instead
-                  if Descr.Unparsed.Value /= null then
-                     Val := new String'(Descr.Unparsed.Value.all);
-                  else
-                     Val := null;
-                  end if;
-
-                  Prop := new Node'
-                    (Tag        => new String'("property"),
-                     Attributes => new String'
-                       (Descr.Unparsed.Attributes.all),
-                     Value      => Val,
-                     Parent     => null,
-                     Child      => null,
-                     Next       => null,
-                     Specific_Data => 1);
-
-                  --  If there are any children to Descr.Unparsed, we must
-                  --  preserve them
-
-                  Src := Descr.Unparsed.Child;
-                  while Src /= null loop
-                     Add_Child (Prop, Deep_Copy (Src), Append => True);
-                     Src := Src.Next;
-                  end loop;
-
-               else
-                  Prop := new Node'
-                    (Tag        => new String'("property"),
-                     Attributes => new String'
-                       ("name='" & Key (Pos + 2 .. Key'Last) & "'"),
-                     Value      => null,
-                     Parent     => null,
-                     Child      => null,
-                     Next       => null,
-                     Specific_Data => 1);
-                  Save (Descr.Value, Prop);
-               end if;
-
-               if Prop /= null then
-                  C := Find (Nodes, Key (Key'First .. Pos - 1));
-                  if Has_Element (C) then
-                     File := Element (C);
-                  else
-                     File := new Node'
-                       (Tag        => new String'("properties"),
-                        Attributes => new String'
-                          ("file='" & Key (Key'First .. Pos - 1) & "'"),
-                        Value      => null,
-                        Parent     => null,
-                        Child      => null,
-                        Next       => null,
-                        Specific_Data => 1);
-
-                     Include (Nodes, Key (Key'First .. Pos - 1), File);
-                  end if;
-
-                  Add_Child (File, Prop);
-               end if;
-            end;
-         end if;
-
-         Get_Next (All_Properties, Iter);
-      end loop;
-
-      --  Save the file in sorted order. This is really for the sake of the
-      --  testsuite.
-
-      C := First (Nodes);
-      while Has_Element (C) loop
-         File := Element (C);
-         Add_Child (Root, File);
-         Next (C);
-      end loop;
-
-      Print (Root, Filename, Success);
-      Free (Root);
-
-      Clear (Nodes);
-
-      if not Success then
-         Report_Preference_File_Error (Kernel, Filename);
-      end if;
-   end Save_Persistent_Properties;
 
    ----------------------
    -- Reset_Properties --
@@ -350,55 +417,6 @@ package body GPS.Kernel.Properties is
    begin
       Reset (All_Properties);
    end Reset_Properties;
-
-   -----------------------------------
-   -- Restore_Persistent_Properties --
-   -----------------------------------
-
-   procedure Restore_Persistent_Properties
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      Filename : constant Virtual_File :=
-                   Get_Properties_Filename (Kernel);
-      Root, File, Prop, Prop2 : Node_Ptr;
-   begin
-      Trace (Me, "Loading " & Filename.Display_Full_Name);
-
-      if Is_Regular_File (Filename) then
-         Root := Parse (Filename);
-
-         if Root /= null then
-            File := Root.Child;
-         end if;
-
-         while File /= null loop
-            Prop := File.Child;
-
-            while Prop /= null loop
-               Prop2 := Deep_Copy (Prop);
-               Free (Prop2.Tag);
-               --  Prop.Tag is not needed, always "property", and this
-               --  saves space in memory
-
-               Set_Resource_Property
-                 (Kernel,
-                  Resource_Key  => Get_Attribute (File, "file"),
-                  Resource_Kind => "file",
-                  Name          => Get_Attribute (Prop, "name"),
-                  Property      => (Value      => null,
-                                    Unparsed   => Prop2,
-                                    Persistent => True));
-               Prop := Prop.Next;
-            end loop;
-
-            File := File.Next;
-         end loop;
-         Free (Root);
-      end if;
-
-   exception
-      when E : others => Trace (Me, E);
-   end Restore_Persistent_Properties;
 
    ----------------------------
    -- Set_Language_From_File --
@@ -538,10 +556,17 @@ package body GPS.Kernel.Properties is
    --------------------------------
 
    procedure Properties_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String) is
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      pragma Unreferenced (Data);
    begin
+      --  This procedure was left for testing purposes. It is no nessesary
+      --  to use it in other cases because properties are stored on fly.
+
       if Command = "save_persistent_properties" then
-         Save_Persistent_Properties (Get_Kernel (Data));
+         if Active (Dump) then
+            Current_Writer.Dump_Database;
+         end if;
       end if;
    end Properties_Command_Handler;
 
@@ -597,5 +622,552 @@ package body GPS.Kernel.Properties is
         (Kernel, "save_persistent_properties",
          Handler => Properties_Command_Handler'Access);
    end Register_Script_Commands;
+
+   ---------------
+   -- Get_Value --
+   ---------------
+
+   overriding procedure Get_Value
+     (Self     : not null access Dummy_Writer_Record;
+      Key      : String;
+      Name     : String;
+      Property : out Property_Record'Class;
+      Found    : out Boolean)
+   is
+      pragma Unreferenced (Self, Key, Name, Property);
+   begin
+      Found := False;
+   end Get_Value;
+
+   -------------------
+   -- SQLite_Writer --
+   -------------------
+
+   package body SQLite_Writer is
+
+      use GPS.Kernel.Properties.Database;
+
+      Schema_Version : constant Integer := 1;
+      --  The current version of the database schema.
+
+      -- Queries --
+
+      Query_Get_Resource_Id : constant Prepared_Statement :=
+        Prepare
+          (SQL_Select
+             (Fields => Resources.Id,
+              From   => Resources,
+              Where  => Resources.Name = Text_Param (1),
+              Limit  => 1),
+           On_Server => True, Name => "get_resource_id");
+      --  Retrieve the id of resource
+
+      Query_Insert_Resource : constant Prepared_Statement :=
+        Prepare
+          (SQL_Insert
+             ((Resources.Name = Text_Param (1))),
+           On_Server => True, Name => "insert_resource");
+      --  Insert new resource
+
+      Query_Delete_Resource : constant Prepared_Statement :=
+        Prepare
+          (SQL_Delete
+             (From  => Resources,
+              Where => Resources.Id = Integer_Param (1)),
+           On_Server => True, Name => "delete_resource");
+      --  Delete resource
+
+      Query_Get_Property_Id : constant Prepared_Statement :=
+        Prepare
+          (SQL_Select
+             (Fields => Database.Properties.Id,
+              From   => Database.Properties,
+              Where  => Database.Properties.Name = Text_Param (1),
+              Limit  => 1),
+           On_Server => True, Name => "get_property_id");
+      --  Retrieve the id of resource
+
+      Query_Insert_Property : constant Prepared_Statement :=
+        Prepare
+          (SQL_Insert
+             ((Database.Properties.Name = Text_Param (1))),
+           On_Server => True, Name => "insert_property");
+      --  Insert new property
+
+      Query_Delete_Property : constant Prepared_Statement :=
+        Prepare
+          (SQL_Delete
+             (From  => Database.Properties,
+              Where => Database.Properties.Id = Integer_Param (1)),
+           On_Server => True, Name => "delete_property");
+      --  Delete property
+
+      Query_Is_Resource_In_Use : constant Prepared_Statement :=
+        Prepare
+          (SQL_Select
+             (Fields => Items.Resource,
+              From   => Items,
+              Where  => Items.Resource = Integer_Param (1),
+              Limit  => 1),
+           On_Server => True, Name => "is_resource_in_use");
+      --  Retrive record if some value use resource
+
+      Query_Is_Property_In_Use : constant Prepared_Statement :=
+        Prepare
+          (SQL_Select
+             (Fields => Items.Property,
+              From   => Items,
+              Where  => Items.Property = Integer_Param (1),
+              Limit  => 1),
+           On_Server => True, Name => "is_property_in_use");
+      --  Retrive record if some value use property
+
+      Query_Insert_Value : constant Prepared_Statement :=
+        Prepare
+          (SQL_Insert
+             ((Items.Item = Text_Param (1))
+              & (Items.Resource = Integer_Param (2))
+              & (Items.Property = Integer_Param (3))),
+           On_Server => True, Name => "insert_item");
+      --  Insert new value into database
+
+      Query_Get_Value : constant Prepared_Statement :=
+        Prepare
+          (SQL_Select
+             (Items.Item,
+              From => Items,
+              Where => Items.Resource = Integer_Param (1)
+              and Items.Property = Integer_Param (2)),
+           On_Server => True, Name => "get_item");
+      --  Retrive value
+
+      Query_Update_Value : constant Prepared_Statement :=
+        Prepare
+          (SQL_Update
+             (Set   => Items.Item = Text_Param (1),
+              Table => Items,
+              Where => Items.Resource = Integer_Param (2)
+              and Items.Property = Integer_Param (3)),
+           On_Server => True, Name => "update_item");
+
+      Query_Delete_Value : constant Prepared_Statement :=
+        Prepare
+          (SQL_Delete
+             (From  => Items,
+              Where => Items.Resource = Integer_Param (1)
+              and Items.Property = Integer_Param (2)),
+           On_Server => True, Name => "delete_item");
+      --  Delete value
+
+      -----------------
+      -- Constructor --
+      -----------------
+
+      function Constructor
+        (Kernel : access Kernel_Handle_Record'Class)
+         return Writer
+      is
+         File : constant Virtual_File := Get_Properties_Filename (Kernel);
+      begin
+         Trace (Me, "Open " & File.Display_Full_Name);
+
+         if not Create (File.Dir_Name).Is_Writable
+           or else
+             (File.Is_Regular_File and then not File.Is_Writable)
+         then
+            Trace (Me, "Properties file is not writable " &
+                     File.Display_Full_Name);
+            return null;
+         end if;
+
+         return W : constant Writer := new SQLite_Writer_Record (Kernel) do
+            SQLite_Writer (W).Init (File);
+         end return;
+
+      exception
+         when E : others => Trace (Me, E);
+            return null;
+      end Constructor;
+
+      ---------------------
+      -- Create_Database --
+      ---------------------
+
+      procedure Create_Database
+        (Self : not null access SQLite_Writer_Record)
+      is
+         Transaction : Transaction_Controller (Self.Connection);
+      begin
+         Create_Database (Self.Connection);
+         Self.Connection.Execute
+           ("PRAGMA user_version=" & Schema_Version'Img & ";");
+      end Create_Database;
+
+      ----------------------
+      -- Create_If_Needed --
+      ----------------------
+
+      procedure Create_If_Needed
+        (Self         : not null access SQLite_Writer_Record;
+         Key          : String;
+         Name         : String;
+         Resource_Id  : out Integer;
+         Property_Id  : out Integer)
+      is
+         procedure Create
+           (Query : Prepared_Statement;
+            PK    : SQL_Field_Integer;
+            Name  : String;
+            Id    : in out Integer);
+
+         ------------
+         -- Create --
+         ------------
+
+         procedure Create
+           (Query : Prepared_Statement;
+            PK    : SQL_Field_Integer;
+            Name  : String;
+            Id    : in out Integer) is
+         begin
+            if Id < 0 then
+               Id := Self.Connection.Insert_And_Get_PK
+                 (Query, Params => (1 => +Name), PK => PK);
+            end if;
+         end Create;
+
+      begin
+         Self.Get_Ids (Key, Name, Resource_Id, Property_Id);
+
+         Create (Query_Insert_Resource, Resources.Id, Key, Resource_Id);
+         Create
+           (Query_Insert_Property, Database.Properties.Id, Name, Property_Id);
+      end Create_If_Needed;
+
+      -----------------------
+      -- Delete_If_No_Used --
+      -----------------------
+
+      procedure Delete_If_No_Used
+        (Self         : not null access SQLite_Writer_Record;
+         Resource_Id  : Integer;
+         Property_Id  : Integer)
+      is
+         procedure Delete
+           (In_Use_Query : Prepared_Statement;
+            Delete_Query : Prepared_Statement;
+            Id           : Natural);
+
+         ------------
+         -- Delete --
+         ------------
+
+         procedure Delete
+           (In_Use_Query : Prepared_Statement;
+            Delete_Query : Prepared_Statement;
+            Id           : Natural)
+         is
+            Cursor : Forward_Cursor;
+         begin
+            Cursor.Fetch (Self.Connection, In_Use_Query, Params => (1 => +Id));
+
+            if not Cursor.Has_Row then
+               Self.Connection.Execute (Delete_Query, Params => (1 => +Id));
+            end if;
+         end Delete;
+
+      begin
+         Delete
+           (Query_Is_Resource_In_Use, Query_Delete_Resource, Resource_Id);
+         Delete
+           (Query_Is_Property_In_Use, Query_Delete_Property, Property_Id);
+      end Delete_If_No_Used;
+
+      -------------------
+      -- Dump_Database --
+      -------------------
+
+      overriding procedure Dump_Database
+        (Self : not null access SQLite_Writer_Record)
+      is
+         use Properties_Hash.String_Hash_Table;
+
+         File : Writable_File := Write_File
+           (Get_Properties_Filename (Self.Kernel, True));
+
+         Get_Values : constant Prepared_Statement :=
+           Prepare
+             (SQL_Select
+                (Items.Item & Items.Resource & Items.Property,
+                 From => Items),
+              On_Server => True, Name => "get_items");
+
+         Get_Resource : constant Prepared_Statement :=
+           Prepare
+             (SQL_Select
+                (Fields => Resources.Name,
+                 From   => Resources,
+                 Where  => Resources.Id = Integer_Param (1),
+                 Limit  => 1),
+              On_Server => True, Name => "get_resource_name");
+
+         Get_Property : constant Prepared_Statement :=
+           Prepare
+             (SQL_Select
+                (Fields => Database.Properties.Name,
+                 From   => Database.Properties,
+                 Where  => Database.Properties.Id = Integer_Param (1),
+                 Limit  => 1),
+              On_Server => True, Name => "get_property_name");
+
+         function Get
+           (Query : Prepared_Statement;
+            Id    : Integer)
+            return String;
+         --  Retrieve record with Id and return result's first column as string
+
+         ---------
+         -- Get --
+         ---------
+
+         function Get
+           (Query : Prepared_Statement;
+            Id    : Integer)
+            return String
+         is
+            Cursor : Forward_Cursor;
+         begin
+            Cursor.Fetch (Self.Connection, Query, Params => (1 => +Id));
+
+            if Cursor.Has_Row then
+               return Cursor.Value (0);
+            else
+               return "";
+            end if;
+         end Get;
+
+         R : Forward_Cursor;
+      begin
+         R.Fetch (Self.Connection, Get_Values);
+
+         while R.Has_Row loop
+            Write
+              (File,
+               Get (Get_Resource, R.Integer_Value (1)) & "@" &
+                 Get (Get_Property, R.Integer_Value (2)) & ":" &
+                 R.Value (0) & ASCII.LF);
+
+            R.Next;
+         end loop;
+
+         Close (File);
+      end Dump_Database;
+
+      ----------
+      -- Init --
+      ----------
+
+      procedure Init
+        (Self : not null access SQLite_Writer_Record;
+         File : Virtual_File)
+      is
+         R      : Forward_Cursor;
+         Create : Boolean;
+      begin
+         Self.DB := GNATCOLL.SQL.Sqlite.Setup (+File.Full_Name.all);
+
+         Self.Connection := Self.DB.Build_Connection;
+
+         R.Fetch (Self.Connection, "PRAGMA user_version;");
+         Create := not Self.Connection.Success
+           or else R.Integer_Value (0) /= Schema_Version;
+
+         Self.Connection.Execute ("PRAGMA mmap_size=268435456;");
+
+         if Create then
+            Self.Create_Database;
+         end if;
+         Self.Connection.Automatic_Transactions (False);
+      end Init;
+
+      ------------
+      -- Insert --
+      ------------
+
+      overriding procedure Insert
+        (Self     : not null access SQLite_Writer_Record;
+         Key      : String;
+         Name     : String;
+         Property : Property_Description) is
+      begin
+         Self.Insert_Or_Update (Query_Insert_Value, Key, Name, Property);
+      end Insert;
+
+      ----------------------
+      -- Insert_Or_Update --
+      ----------------------
+
+      procedure Insert_Or_Update
+        (Self     : not null access SQLite_Writer_Record;
+         Query    : Prepared_Statement;
+         Key      : String;
+         Name     : String;
+         Property : Property_Description)
+      is
+         use GNATCOLL.JSON;
+
+         Transaction : Transaction_Controller (Self.Connection);
+         Resource_Id : Natural;
+         Property_Id : Natural;
+         Value       : constant GNATCOLL.JSON.JSON_Value :=
+           Property.Value.Store;
+      begin
+         if Value = JSON_Null then
+            return;
+         end if;
+
+         Self.Create_If_Needed (Key, Name, Resource_Id, Property_Id);
+
+         Self.Connection.Execute
+           (Query,
+            Params => (1 => +String'(GNATCOLL.JSON.Write (Value)),
+                       2 => +Resource_Id,
+                       3 => +Property_Id));
+      end Insert_Or_Update;
+
+      --------------
+      -- Finalize --
+      --------------
+
+      overriding procedure Finalize (Self : in out SQLite_Writer_Record) is
+      begin
+         if Active (Dump) then
+            Self.Dump_Database;
+         end if;
+
+         Free (Self.Connection);
+         Free (Self.DB);
+
+      exception
+         when E : others => Trace (Me, E);
+      end Finalize;
+
+      -------------
+      -- Get_Ids --
+      -------------
+
+      procedure Get_Ids
+        (Self         : not null access SQLite_Writer_Record;
+         Key          : String;
+         Name         : String;
+         Resource_Id  : out Integer;
+         Property_Id  : out Integer)
+      is
+         function Get
+           (Query : Prepared_Statement;
+            Name  : String)
+            return Integer;
+
+         ------------
+         -- Get_Id --
+         ------------
+
+         function Get
+           (Query : Prepared_Statement;
+            Name  : String)
+            return Integer
+         is
+            Cursor : Forward_Cursor;
+         begin
+            Cursor.Fetch (Self.Connection, Query, Params => (1 => +Name));
+
+            if Cursor.Has_Row then
+               return Cursor.Integer_Value (0);
+            else
+               return -1;
+            end if;
+         end Get;
+
+      begin
+         Resource_Id := Get (Query_Get_Resource_Id, Key);
+         Property_Id := Get (Query_Get_Property_Id, Name);
+      end Get_Ids;
+
+      ---------------
+      -- Get_Value --
+      ---------------
+
+      overriding procedure Get_Value
+        (Self     : not null access SQLite_Writer_Record;
+         Key      : String;
+         Name     : String;
+         Property : out Property_Record'Class;
+         Found    : out Boolean)
+      is
+         Transaction : Transaction_Controller (Self.Connection);
+         Resource_Id : Integer;
+         Property_Id : Integer;
+         Cursor      : Forward_Cursor;
+      begin
+         Found := False;
+         Self.Get_Ids (Key, Name, Resource_Id, Property_Id);
+
+         if Resource_Id < 0
+           or else Property_Id < 0
+         then
+            return;
+         end if;
+
+         Cursor.Fetch
+           (Self.Connection,
+            Query_Get_Value,
+            Params =>
+              (1 => +Resource_Id,
+               2 => +Property_Id));
+
+         if Cursor.Has_Row then
+
+            Property.Restore (GNATCOLL.JSON.Read (Cursor.Value (0)), Found);
+            Found := True;
+         end if;
+      end Get_Value;
+
+      ------------
+      -- Remove --
+      ------------
+
+      overriding procedure Remove
+        (Self : not null access SQLite_Writer_Record;
+         Key  : String;
+         Name : String)
+      is
+         Transaction : Transaction_Controller (Self.Connection);
+         Resource_Id : Integer;
+         Property_Id : Integer;
+
+      begin
+         Self.Get_Ids (Key, Name, Resource_Id, Property_Id);
+
+         Self.Connection.Execute
+           (Query_Delete_Value,
+            Params => (1 => +Resource_Id, 2 => +Property_Id));
+
+         Self.Delete_If_No_Used (Resource_Id, Property_Id);
+      end Remove;
+
+      ------------
+      -- Update --
+      ------------
+
+      overriding procedure Update
+        (Self     : not null access SQLite_Writer_Record;
+         Key      : String;
+         Name     : String;
+         Property : Property_Description) is
+      begin
+         Self.Insert_Or_Update (Query_Update_Value, Key, Name, Property);
+      end Update;
+
+   end SQLite_Writer;
 
 end GPS.Kernel.Properties;

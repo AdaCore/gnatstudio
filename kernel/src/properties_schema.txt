@@ -1,0 +1,14 @@
+# Schema of GPS properties
+
+| TABLE    | resources     |          |   | A resource is a GPS object (file, project,...) to which a property can be attached |
+| id       | AUTOINCREMENT | PK       |   | Auto-generated id        |
+| name     | TEXT          | NOT NULL |   | The name of the resource |
+
+| TABLE    | properties    |          |   | Name of property attached to a resource |
+| id       | AUTOINCREMENT | PK       |   | Auto-generated id        |
+| name     | TEXT          | NOT NULL |   | The name of the property |
+
+| TABLE    | items         |          |   | Value of resource/property |
+| item     | TEXT          | NOT NULL |   | Value itself               |
+| resource | FK resources  | NOT NULL |   | Reference to a resource    |
+| property | FK properties | NOT NULL |   | Reference to a property    |

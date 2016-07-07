@@ -28,6 +28,7 @@ with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
 with Glib_Values_Utils;        use Glib_Values_Utils;
 with GNAT.Regpat;              use GNAT.Regpat;
+with GNATCOLL.JSON;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with GNATCOLL.Utils;           use GNATCOLL.Utils;
 with GPS.Intl;                 use GPS.Intl;
@@ -160,11 +161,11 @@ package body GVD.Variables is
       Items : Item_Vectors.Vector;
    end record;
    overriding procedure Save
-     (Self : access Variables_Property_Record;
-      Node : in out XML_Utils.Node_Ptr);
+     (Self  : access Variables_Property_Record;
+      Value : in out GNATCOLL.JSON.JSON_Value);
    overriding procedure Load
-     (Self : in out Variables_Property_Record;
-      From : XML_Utils.Node_Ptr);
+     (Self  : in out Variables_Property_Record;
+      Value : GNATCOLL.JSON.JSON_Value);
    --  Saving and loading which variables are displayed for a given executable
 
    type Variable_MDI_Child_Record is new GPS_MDI_Child_Record with null record;
@@ -315,33 +316,35 @@ package body GVD.Variables is
    ----------
 
    overriding procedure Save
-     (Self : access Variables_Property_Record;
-      Node : in out XML_Utils.Node_Ptr)
+     (Self  : access Variables_Property_Record;
+      Value : in out GNATCOLL.JSON.JSON_Value)
    is
-      Tmp : XML_Utils.Node_Ptr;
+      use GNATCOLL.JSON;
+
+      Values : JSON_Array;
    begin
       Trace (Me, "Saving variable view to xml, has items ?"
              & Self.Items.Length'Img);
 
       for Item of Self.Items loop
          if not Item.Nested then
-            Tmp := new XML_Utils.Node;
-            Add_Child (Node, Tmp);
+            declare
+               Value : constant JSON_Value := Create_Object;
+            begin
+               if Item.Info.Cmd /= "" then
+                  Value.Set_Field ("tag", "cmd");
+                  Value.Set_Field ("value", To_String (Item.Info.Cmd));
+                  Value.Set_Field ("split", Item.Info.Split_Lines);
 
-            if Item.Info.Cmd /= "" then
-               Tmp.Tag := new String'("cmd");
-               Tmp.Value := new String'(To_String (Item.Info.Cmd));
-
-               if Item.Info.Split_Lines then
-                  Set_Attribute (Tmp, "split", "true");
+               else
+                  Value.Set_Field ("tag", "variable");
+                  Value.Set_Field ("value", To_String (Item.Info.Varname));
                end if;
-
-            else
-               Tmp.Tag := new String'("variable");
-               Tmp.Value := new String'(To_String (Item.Info.Varname));
-            end if;
+               Append (Values, Value);
+            end;
          end if;
       end loop;
+      Value.Set_Field ("value", Values);
    end Save;
 
    ----------
@@ -349,33 +352,38 @@ package body GVD.Variables is
    ----------
 
    overriding procedure Load
-     (Self : in out Variables_Property_Record;
-      From : XML_Utils.Node_Ptr)
+     (Self  : in out Variables_Property_Record;
+      Value : GNATCOLL.JSON.JSON_Value)
    is
-      Tmp  : XML_Utils.Node_Ptr := From.Child;
-      It   : Item;
+      use GNATCOLL.JSON;
+
+      It     : Item;
+      Values : constant JSON_Array := Value.Get ("value");
    begin
-      Trace (Me, "Loading variable view from xml, has items ?"
-             &  Boolean'Image (Tmp /= null));
-      while Tmp /= null loop
-         if Tmp.Tag.all = "cmd" then
-            It :=
-              (Info   => Wrap_Debugger_Command
-                 (Tmp.Value.all,
-                  Split_Lines => Get_Attribute (Tmp, "split") /= ""),
-               Nested => False,
-               Id     => Unknown_Id);
-            Self.Items.Prepend (It);
+      Trace (Me, "Loading variable view from JSON, has items ?"
+             &  Boolean'Image (Length (Values) > 0));
 
-         elsif Tmp.Tag.all = "variable" then
-            It :=
-              (Info   => Wrap_Variable (Tmp.Value.all),
-               Nested => False,
-               Id     => Unknown_Id);
-            Self.Items.Prepend (It);
-         end if;
+      for Index in 1 .. Length (Values) loop
+         declare
+            V : constant JSON_Value := Get (Values, Index);
+         begin
+            if String'(V.Get ("tag")) = "cmd" then
+               It :=
+                 (Info   => Wrap_Debugger_Command
+                    (V.Get ("value"),
+                     Split_Lines => V.Get ("split")),
+                  Nested => False,
+                  Id     => Unknown_Id);
+               Self.Items.Prepend (It);
 
-         Tmp := Tmp.Next;
+            elsif String'(V.Get ("tag")) = "variable" then
+               It :=
+                 (Info   => Wrap_Variable (V.Get ("value")),
+                  Nested => False,
+                  Id     => Unknown_Id);
+               Self.Items.Prepend (It);
+            end if;
+         end;
       end loop;
    end Load;
 

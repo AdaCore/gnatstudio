@@ -15,11 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Tags;
 with Ada.Unchecked_Deallocation;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
-with XML_Utils;                  use XML_Utils;
 with GPR.Osint;                  use GPR.Osint;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
@@ -27,12 +27,13 @@ package body GPS.Properties is
 
    use Properties_Hash.String_Hash_Table;
 
+   Current_Extractor : Property_Extractor_Proc;
+
    procedure Get_Resource_Property
-     (Property      : out Property_Record'Class;
-      Resource_Key  : String;
-      Resource_Kind : String;
-      Name          : String;
-      Found         : out Boolean);
+     (Property : out Property_Record'Class;
+      Key      : String;
+      Name     : String;
+      Found    : out Boolean);
    --  Get property for any kind of resource
 
    ----------
@@ -50,10 +51,6 @@ package body GPS.Properties is
          Unchecked_Free (Description.Value);
       end if;
 
-      if Description.Unparsed /= null then
-         Free (Description.Unparsed);
-      end if;
-
       Unchecked_Free (Description);
    end Free;
 
@@ -67,16 +64,38 @@ package body GPS.Properties is
       null;
    end Destroy;
 
+   -----------
+   -- Store --
+   -----------
+
+   function Store
+     (Property : access Property_Record'Class)
+      return GNATCOLL.JSON.JSON_Value
+   is
+      use GNATCOLL.JSON;
+      Result : JSON_Value := Create_Object;
+   begin
+      Result.Set_Field ("type", Ada.Tags.External_Tag (Property.all'Tag));
+      Property.Save (Result);
+      return Result;
+
+   exception
+      when others =>
+         return JSON_Null;
+   end Store;
+
    ----------
    -- Save --
    ----------
 
    overriding procedure Save
      (Property : access String_Property;
-      Node     : in out XML_Utils.Node_Ptr) is
+      Value    : in out GNATCOLL.JSON.JSON_Value) is
    begin
       if Property.Value /= null then
-         Node.Value := new String'(Property.Value.all);
+         Value.Set_Field ("value", Property.Value.all);
+      else
+         Value.Set_Field ("value", "");
       end if;
    end Save;
 
@@ -86,9 +105,9 @@ package body GPS.Properties is
 
    overriding procedure Save
      (Property : access Integer_Property;
-      Node     : in out XML_Utils.Node_Ptr) is
+      Value    : in out GNATCOLL.JSON.JSON_Value) is
    begin
-      Node.Value := new String'(Integer'Image (Property.Value));
+      Value.Set_Field ("value", Property.Value);
    end Save;
 
    ----------
@@ -97,9 +116,9 @@ package body GPS.Properties is
 
    overriding procedure Save
      (Property : access Boolean_Property;
-      Node     : in out XML_Utils.Node_Ptr) is
+      Value    : in out GNATCOLL.JSON.JSON_Value) is
    begin
-      Node.Value := new String'(Boolean'Image (Property.Value));
+      Value.Set_Field ("value", Property.Value);
    end Save;
 
    ----------
@@ -107,12 +126,13 @@ package body GPS.Properties is
    ----------
 
    overriding procedure Load
-     (Property : in out String_Property; From : XML_Utils.Node_Ptr) is
+     (Property : in out String_Property;
+      Value    : GNATCOLL.JSON.JSON_Value)
+   is
+      Data : constant String := Value.Get ("value");
    begin
-      if From.Value /= null then
-         Property.Value := new String'(From.Value.all);
-      else
-         Property.Value := null;
+      if Data /= "" then
+         Property.Value := new String'(Data);
       end if;
    end Load;
 
@@ -121,9 +141,11 @@ package body GPS.Properties is
    ----------
 
    overriding procedure Load
-     (Property : in out Integer_Property; From : XML_Utils.Node_Ptr) is
+     (Property : in out Integer_Property;
+      Value    : GNATCOLL.JSON.JSON_Value) is
    begin
-      Property.Value := Integer'Value (From.Value.all);
+      Property.Value := Value.Get ("value");
+
    exception
       when Constraint_Error =>
          Property.Value := 0;
@@ -134,9 +156,11 @@ package body GPS.Properties is
    ----------
 
    overriding procedure Load
-     (Property : in out Boolean_Property; From : XML_Utils.Node_Ptr) is
+     (Property : in out Boolean_Property;
+      Value    : GNATCOLL.JSON.JSON_Value) is
    begin
-      Property.Value := Boolean'Value (From.Value.all);
+      Property.Value := Value.Get ("value");
+
    exception
       when Constraint_Error =>
          Property.Value := True;
@@ -156,28 +180,33 @@ package body GPS.Properties is
    ---------------------------
 
    procedure Get_Resource_Property
-     (Property      : out Property_Record'Class;
-      Resource_Key  : String;
-      Resource_Kind : String;
-      Name          : String;
-      Found         : out Boolean)
+     (Property : out Property_Record'Class;
+      Key      : String;
+      Name     : String;
+      Found    : out Boolean)
    is
-      pragma Unreferenced (Resource_Kind);
       Descr : Property_Description_Access;
 
    begin
-      Descr := Get (All_Properties, Resource_Key & Sep & Name);
-      Found := Descr /= null;
+      Descr := Get (All_Properties, Key & Sep & Name);
 
-      if Found then
-         if Descr.Value = null then
-            Load (Property, Descr.Unparsed);
+      if Descr = null then
+         --  Getting property the first time
+         Current_Extractor (Key, Name, Property, Found);
+         Descr := new Property_Description;
+         if Found then
             Descr.Value := new Property_Record'Class'(Property);
-            Free (Descr.Unparsed);  --  No longer needed
          end if;
+         Set (All_Properties, Key & Sep & Name, Descr);
 
-         Property := Descr.Value.all;
-         Found := True;
+      else
+         if Descr.Value = null then
+            --  Already looked up and not found last time
+            Found := False;
+         else
+            Property := Descr.Value.all;
+            Found := True;
+         end if;
       end if;
 
    exception
@@ -190,13 +219,12 @@ package body GPS.Properties is
    ------------------
 
    procedure Get_Property
-     (Property    : out Property_Record'Class;
-      Index_Name  : String;
-      Index_Value : String;
-      Name        : String;
-      Found       : out Boolean) is
+     (Property : out Property_Record'Class;
+      Key      : String;
+      Name     : String;
+      Found    : out Boolean) is
    begin
-      Get_Resource_Property (Property, Index_Value, Index_Name, Name, Found);
+      Get_Resource_Property (Property, Key, Name, Found);
    end Get_Property;
 
    ---------------
@@ -231,7 +259,7 @@ package body GPS.Properties is
       Name     : String;
       Found    : out Boolean) is
    begin
-      Get_Property (Property, "file", To_String (File), Name, Found);
+      Get_Property (Property, To_String (File), Name, Found);
    end Get_Property;
 
    ------------------
@@ -244,7 +272,37 @@ package body GPS.Properties is
       Name     : String;
       Found    : out Boolean) is
    begin
-      Get_Property (Property, "project", To_String (Project), Name, Found);
+      Get_Property (Property, To_String (Project), Name, Found);
    end Get_Property;
+
+   -------------------
+   -- Set_Extractor --
+   -------------------
+
+   procedure Set_Extractor (Extractor : Property_Extractor_Proc) is
+   begin
+      Current_Extractor := Extractor;
+   end Set_Extractor;
+
+   -------------
+   -- Restore --
+   -------------
+
+   procedure Restore
+     (Property : in out Property_Record'Class;
+      Value    : GNATCOLL.JSON.JSON_Value;
+      Valid    : out Boolean)
+   is
+      use GNATCOLL.JSON;
+   begin
+      if String'(Value.Get ("type")) =
+        Ada.Tags.External_Tag (Property'Tag)
+      then
+         Valid := True;
+         Property.Load (Value);
+      else
+         Valid := False;
+      end if;
+   end Restore;
 
 end GPS.Properties;
