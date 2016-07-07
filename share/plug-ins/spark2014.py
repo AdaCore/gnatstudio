@@ -659,6 +659,10 @@ xml_gnatprove = """<?xml version="1.0"?>
           <combo-entry label="statistics" value="statistics"
                        tip="Detailed proof attempts"/>
         </combo>
+        <check
+          label="Display previous results" switch="--output-msg-only"
+          column="1" tip="Do not run provers, only use previous results"
+        />
 <combo
 label="Proof level"
 switch="--level"
@@ -743,6 +747,10 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
          <check label="Report checks proved" switch="--report=all" column="1"
                 tip="Report the status of all checks, including those proved"
          />
+         <check
+           label="Display previous results" switch="--output-msg-only"
+           column="1" tip="Do not run provers, only use previous results"
+         />
          <title column="2" line="1" >Prover</title>
 <combo
 label="Proof level"
@@ -806,6 +814,10 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
            tip="Re-start analysis from scratch, ignoring previous results" />
          <check label="Report checks proved" switch="--report=all" column="1"
                 tip="Report the status of all checks, including those proved"
+         />
+         <check
+           label="Display previous results" switch="--output-msg-only"
+           column="1" tip="Do not run provers, only use previous results"
          />
          <title column="2" line="1" >Prover</title>
          <combo
