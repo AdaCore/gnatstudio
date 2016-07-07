@@ -60,7 +60,6 @@ with Src_Editor_Buffer.Text_Handling;   use Src_Editor_Buffer.Text_Handling;
 with Src_Editor_Module;          use Src_Editor_Module;
 with Src_Editor_View;            use Src_Editor_View;
 with Src_Printing.Fabric;
-with Std_Dialogs;                use Std_Dialogs;
 with UTF8_Utils;                 use UTF8_Utils;
 with Xref;                       use Xref;
 
@@ -262,11 +261,11 @@ package body Src_Editor_Module.Commands is
    begin
       declare
          Str : constant String := Display_Text_Input_Dialog
-           (Get_Current_Window (Kernel),
+           (Kernel   => Kernel,
+            Parent   => Get_Current_Window (Kernel),
             Title    => -"Goto Line...",
             Message  => -"Enter line number:",
             Position => Win_Pos_Center_On_Parent,
-            History  => Get_History (Kernel),
             Key      => "Goto_Line");
       begin
          if Str = "" or else Str (Str'First) = ASCII.NUL then

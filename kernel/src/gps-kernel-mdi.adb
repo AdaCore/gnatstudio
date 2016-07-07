@@ -44,7 +44,6 @@ with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Combo_Box;             use Gtk.Combo_Box;
-with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -70,6 +69,7 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Main_Window;           use GPS.Main_Window;
+with Std_Dialogs;               use Std_Dialogs;
 
 with GPS.Editors;               use GPS.Editors;
 with GPS.Editors.GtkAda;
@@ -2054,6 +2054,57 @@ package body GPS.Kernel.MDI is
 
       Self.On_Focus_In_Event (On_GPS_Dialog_Focus_In'Access);
    end Initialize;
+
+   -------------------------------
+   -- Display_Text_Input_Dialog --
+   -------------------------------
+
+   function Display_Text_Input_Dialog
+     (Kernel         : not null access Kernel_Handle_Record'Class;
+      Parent         : access Gtk_Window_Record'Class;
+      Title          : String;
+      Message        : String;
+      Position       : Gtk_Window_Position := Win_Pos_Center_On_Parent;
+      Key            : History_Key := "";
+      Check_Msg      : String := "";
+      Button_Active  : access Boolean := null;
+      Key_Check      : Histories.History_Key := "";
+      Check_Msg2     : String := "";
+      Button2_Active : access Boolean := null;
+      Key_Check2     : Histories.History_Key := "") return String
+   is
+      Dialog  : constant Text_Input_Dialog := new Text_Input_Dialog_Record;
+      History : constant Histories.History := Kernel.Get_History;
+   begin
+      Initialize
+        (Dialog,
+         Parent     => Parent,
+         Title      => Title,
+         Message    => Message,
+         Position   => Position,
+         History    => History,
+         Key        => Key,
+         Check_Msg  => Check_Msg,
+         Key_Check  => Key_Check,
+         Check_Msg2 => Check_Msg2,
+         Key_Check2 => Key_Check2);
+
+      Set_Default_Size_From_History
+        (Win    => Dialog,
+         Name   => Title,
+         Kernel => Kernel,
+         Width  => 0,
+         Height => 0);
+
+      return Input : constant String := Dialog.Run_And_Get_Input
+        (History        => History,
+         Key            => Key,
+         Button_Active  => Button_Active,
+         Button_Active2 => Button2_Active)
+      do
+         Destroy (Dialog);
+      end return;
+   end Display_Text_Input_Dialog;
 
    ----------------------------
    -- On_GPS_Dialog_Focus_In --

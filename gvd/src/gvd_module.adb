@@ -64,7 +64,6 @@ with GVD.Types;                 use GVD.Types;
 with Histories;                 use Histories;
 with Language;                  use Language;
 with Process_Proxies;           use Process_Proxies;
-with Std_Dialogs;               use Std_Dialogs;
 with String_Utils;              use String_Utils;
 with Xref;                      use Xref;
 
@@ -709,8 +708,8 @@ package body GVD_Module is
       Dir_Key      : aliased String := "run_in_executable_directory";
       Multi_Key    : aliased String := "multitask_mode_debugger";
       No_Msg       : aliased String := "";
-      Button1      : Boolean_Access := null;
-      Button2      : Boolean_Access := null;
+      Button1      : access Boolean := null;
+      Button2      : access Boolean := null;
       Cmd_Msg      : GNAT.Strings.String_Access := Arg_Msg'Unchecked_Access;
       Msg1         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
       Msg2         : GNAT.Strings.String_Access;
@@ -754,12 +753,11 @@ package body GVD_Module is
          Arguments : constant String :=
            Strip_Ending_Linebreaks
              (Display_Text_Input_Dialog
-                (Parent         => Process.Kernel.Get_Main_Window,
+                (Kernel         => Process.Kernel,
+                 Parent         => Process.Kernel.Get_Main_Window,
                  Title          => -"Run/Start",
                  Message        => Cmd_Msg.all,
-                 Multi_Line     => True,
                  Key            => Run_Arguments_History_Key,
-                 History        => Get_History (Process.Kernel),
                  Check_Msg      => Msg1.all,
                  Check_Msg2     => Msg2.all,
                  Button_Active  => Button1,
@@ -1047,11 +1045,11 @@ package body GVD_Module is
                    Get_Variable_Name (Context.Context, False);
       S        : constant String :=
                    Display_Text_Input_Dialog
-                     (Parent   => Process.Kernel.Get_Main_Window,
+                     (Kernel   => Process.Kernel,
+                      Parent   => Process.Kernel.Get_Main_Window,
                       Title    => -"Setting value of " & Variable,
                       Message  => -"Setting value of " & Variable & ':',
                       Position => Win_Pos_Center_On_Parent,
-                      History  => Get_Kernel (Context.Context).Get_History,
                       Key      => "gvd_set_value_dialog");
    begin
       if S /= "" and then S (S'First) /= ASCII.NUL then

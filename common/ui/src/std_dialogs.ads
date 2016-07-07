@@ -15,64 +15,73 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Gtk.Enums;  use Gtk.Enums;
-with Gtk.Window; use Gtk.Window;
-with Histories;  use Histories;
+with Gtk.Box;            use Gtk.Box;
+with Gtk.Check_Button;   use Gtk.Check_Button;
+with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
+with Gtk.Dialog;         use Gtk.Dialog;
+with Gtk.Enums;          use Gtk.Enums;
+with Gtk.Window;         use Gtk.Window;
+with Histories;          use Histories;
 
 package Std_Dialogs is
 
-   type Boolean_Access is access all Boolean;
+   type Text_Input_Dialog_Record is new Gtk_Dialog_Record with private;
+   type Text_Input_Dialog is access
+     all Text_Input_Dialog_Record'Class;
+   --  Base type for all the text input dialogs
 
-   function Display_Text_Input_Dialog
-     (Parent         : access Gtk_Window_Record'Class;
-      Title          : String;
-      Message        : String;
-      Position       : Gtk_Window_Position := Win_Pos_Center_On_Parent;
-      Multi_Line     : Boolean := False;
-      History        : Histories.History := null;
-      Key            : History_Key := "";
-      Check_Msg      : String := "";
-      Button_Active  : Boolean_Access := null;
-      Key_Check      : Histories.History_Key := "";
-      Check_Msg2     : String := "";
-      Button2_Active : Boolean_Access := null;
-      Key_Check2     : Histories.History_Key := "") return String;
-   --  Display a simple text input dialog and returns the contents of the
-   --  text input field (or ASCII.NUL if the user selected cancel).
+   procedure Initialize
+     (Self       : not null access Text_Input_Dialog_Record'Class;
+      Parent     : access Gtk.Window.Gtk_Window_Record'Class;
+      Title      : String;
+      Message    : String;
+      Position   : Gtk_Window_Position := Win_Pos_Center_On_Parent;
+      History    : Histories.History;
+      Key        : History_Key := "";
+      Check_Msg  : String := "";
+      Key_Check  : Histories.History_Key := "";
+      Check_Msg2 : String := "";
+      Key_Check2 : Histories.History_Key := "");
+   --  Initialize the common attributes of text input dialogs.
    --
-   --  The dialog is set up as a child of Parent, so that, depending on the
-   --  window manager, it isn't displayed below it.
+   --  If Parent is specified, it is set as the transient window for the
+   --  dialog.
+   --
+   --  Position indicates where the dialog shoudl be positioned.
 
-   --  If Multi_Line is True, a text view is displayed instead of an entry for
-   --  the text input field.
-
-   --  if non-empty values are given for Kistory and Key, then the text input
+   --  If non-empty values are given for Kistory and Key, then the text input
    --  field content is initialized from the corresponding entry in History.
    --
-   --  Position indicates where the dialog should be positionned.
+   --  The Check_Msg and Key_Check optional parameters can be used to display
+   --  additional checkboxes under the text input field, saving the state
+   --  of each checkbox in their corresponding entry in History.
+
+   function Run_And_Get_Input
+     (Self           : not null access Text_Input_Dialog_Record'Class;
+      History        : Histories.History;
+      Key            : History_Key;
+      Button_Active  : access Boolean := null;
+      Button_Active2 : access Boolean := null) return String;
+   --  Run the text input dialog and return the input typed by the user.
    --
-   --  The Check_Msg, Button_Active and Key_Check optional parameters can be
-   --  used to display additional checkboxes under the text input field, saving
-   --  the state of each checkbox in their corresponding entry in History.
+   --  If the text input dialog has been initialized with extra checkboxes,
+   --  Button_Active and Button_Active2 are set to their active state after
+   --  clicking on the 'Ok' button.
 
 private
 
-   type Text_Input_Dialog_Interface is interface;
-   type Text_Input_Dialog_Interface_Access is
-     access all Text_Input_Dialog_Interface'Class;
-   --  Interface for all the text input dialogs
+   type Text_Input_Dialog_Record is new Gtk_Dialog_Record with record
+      Main_View    : Gtk_Vbox;
+      --  The text input dialog's main view
 
-   procedure Initialize
-     (Self    : not null access Text_Input_Dialog_Interface;
-      Message : String;
-      History : Histories.History;
-      Key     : Histories.History_Key) is abstract;
-   --  Initialize the given text input dialog, retrieving the previous input
-   --  from History and Key.
+      Combo_Entry  : Gtk_Combo_Box_Text;
+      --  The text input field
 
-   function Get_Input_Text
-     (Self : not null access Text_Input_Dialog_Interface)
-      return String is abstract;
-   --  Return the text input by the user
+      Check        : Gtk_Check_Button;
+      --  First optional check box
+
+      Check2       : Gtk_Check_Button;
+      --  Second optional check box
+   end record;
 
 end Std_Dialogs;

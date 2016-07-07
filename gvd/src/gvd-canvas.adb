@@ -70,7 +70,6 @@ with Histories;                use Histories;
 with Items.Simples;            use Items.Simples;
 with Language;                 use Language;
 with Pango.Font;               use Pango.Font;
-with Std_Dialogs;              use Std_Dialogs;
 with String_Utils;             use String_Utils;
 with XML_Utils;                use XML_Utils;
 with Xref;                     use Xref;
@@ -1630,12 +1629,12 @@ package body GVD.Canvas is
       Name : constant String := To_String (Item.Component.Name);
       S : constant String :=
         Display_Text_Input_Dialog
-        (Parent   => Item.Item.Debugger.Kernel.Get_Main_Window,
-         Title    => -"Setting value of " & Name,
-         Message  => -"Setting value of " & Name & ':',
-         Position => Win_Pos_Center_On_Parent,
-         History  => Get_History (Get_Kernel (Item.Canvas)),
-         Key      => "gvd_set_value_dialog");
+                 (Kernel   => Item.Item.Debugger.Kernel,
+                  Parent   => Item.Item.Debugger.Kernel.Get_Main_Window,
+                  Title    => -"Setting value of " & Name,
+                  Message  => -"Setting value of " & Name & ':',
+                  Position => Win_Pos_Center_On_Parent,
+                  Key      => "gvd_set_value_dialog");
 
    begin
       if S /= "" and then S (S'First) /= ASCII.NUL then

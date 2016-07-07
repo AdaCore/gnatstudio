@@ -18,11 +18,11 @@
 with Debugger;             use Debugger;
 with GPS.Intl;             use GPS.Intl;
 with GPS.Kernel;           use GPS.Kernel;
+with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with GVD.Process;          use GVD.Process;
 with GVD;                  use GVD;
 with Histories;            use Histories;
 with Process_Proxies;      use Process_Proxies;
-with Std_Dialogs;          use Std_Dialogs;
 
 package body GVD.Menu is
 
@@ -42,12 +42,12 @@ package body GVD.Menu is
       declare
          Is_Func    : aliased Boolean;
          Expression : constant String := Display_Text_Input_Dialog
-           (Parent        => Debugger.Kernel.Get_Main_Window,
+           (Kernel        => Debugger.Kernel,
+            Parent        => Debugger.Kernel.Get_Main_Window,
             Title         => -"Expression Selection",
             Message       => -"Enter an expression to display:",
             Key           => "gvd_display_expression_dialog",
             Check_Msg     => -"Expression is a subprogram call",
-            History       => Get_History (Debugger.Kernel),
             Key_Check     => "expression_subprogram_debugger",
             Button_Active => Is_Func'Unchecked_Access);
 

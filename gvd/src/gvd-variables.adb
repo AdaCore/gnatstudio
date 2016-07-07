@@ -67,7 +67,6 @@ with Items;                    use Items;
 with Items.Simples;            use Items.Simples;
 with Language;                 use Language;
 with Language.Icons;           use Language.Icons;
-with Std_Dialogs;              use Std_Dialogs;
 with System;
 with System.Storage_Elements;  use System.Storage_Elements;
 with XML_Utils;                use XML_Utils;
@@ -489,12 +488,12 @@ package body GVD.Variables is
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Is_Func    : aliased Boolean;
       Expression : constant String := Display_Text_Input_Dialog
-        (Parent        => Kernel.Get_Main_Window,
+        (Kernel        => Kernel,
+         Parent        => Kernel.Get_Main_Window,
          Title         => -"Display the value of an expression",
          Message       => -"Enter an expression to display:",
          Key           => "gvd_display_expression_dialog",
          Check_Msg     => -"Expression is a debugger command",
-         History       => Get_History (Kernel),
          Key_Check     => "expression_subprogram_debugger",
          Button_Active => Is_Func'Unchecked_Access);
    begin

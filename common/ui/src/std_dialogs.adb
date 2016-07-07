@@ -15,230 +15,133 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib;               use Glib;
-with Gtk;                use Gtk;
-with Gtk.Box;            use Gtk.Box;
-with Gtk.Combo_Box_Text; use Gtk.Combo_Box_Text;
-with Gtk.Check_Button;   use Gtk.Check_Button;
-with Gtk.Dialog;         use Gtk.Dialog;
-with Gtk.Label;          use Gtk.Label;
-with Gtk.Stock;          use Gtk.Stock;
-with Gtk.Text_Buffer;    use Gtk.Text_Buffer;
-with Gtk.Text_Iter;      use Gtk.Text_Iter;
-with Gtk.Text_View;      use Gtk.Text_View;
-with Gtk.Widget;         use Gtk.Widget;
+with Glib;            use Glib;
+with Gtk;             use Gtk;
+with Gtk.GEntry;
+with Gtk.Label;       use Gtk.Label;
+with Gtk.Stock;       use Gtk.Stock;
+with Gtk.Widget;      use Gtk.Widget;
+with Gtkada.Handlers; use Gtkada.Handlers;
 
 package body Std_Dialogs is
 
+   procedure On_Enter_Key_Press
+     (Dialog : access Gtk_Widget_Record'Class);
+   --  Called when the user presses the 'Enter' key.
+   --  Validate the text input dialog.
+
    ------------------------
-   -- Text Input Dialogs --
+   -- On_Enter_Key_Press --
    ------------------------
 
-   type Text_Input_Dialog_Record is abstract
-   new Gtk_Dialog_Record and Text_Input_Dialog_Interface with record
-      Main_View    : Gtk_Vbox;
-      --  The text input dialog's main view
+   procedure On_Enter_Key_Press
+     (Dialog : access Gtk_Widget_Record'Class) is
+   begin
+      Gtk_Dialog (Dialog).Response (Gtk_Response_OK);
+   end On_Enter_Key_Press;
 
-      Check        : Gtk_Check_Button;
-      --  First optional check box
-
-      Check2       : Gtk_Check_Button;
-      --  Second optional check box
-   end record;
-   type Text_Input_Dialog is access
-     all Text_Input_Dialog_Record'Class;
-   --  Base type for all the text input dialogs
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
-     (Dialog     : access Text_Input_Dialog_Record'Class;
+     (Self       : not null access Text_Input_Dialog_Record'Class;
       Parent     : access Gtk.Window.Gtk_Window_Record'Class;
-      Extra_Box  : Gtk_Check_Button := null;
-      Extra_Box2 : Gtk_Check_Button := null;
       Title      : String;
       Message    : String;
       Position   : Gtk_Window_Position := Win_Pos_Center_On_Parent;
       History    : Histories.History;
-      Key        : History_Key := "");
-   --  Initialize the common attributes of text input dialogs
-
-   function Run_And_Get_Input
-     (Self    : not null access Text_Input_Dialog_Record'Class;
-      History : Histories.History;
-      Key     : History_Key) return String;
-   --  Run the text input dialog and return the input typed by the user
-
-   ------------------------------------
-   -- Single Line Text Input Dialogs --
-   ------------------------------------
-
-   type Single_Line_Text_Input_Dialog_Record is new Text_Input_Dialog_Record
-   with record
-      Combo_Entry : Gtk_Combo_Box_Text;
-   end record;
-   --  Type used to represent single line text input dialogs, which use
-   --  a combobox with an entry to retrieve the user's input.
-
-   overriding procedure Initialize
-     (Self    : not null access Single_Line_Text_Input_Dialog_Record;
-      Message : String;
-      History : Histories.History;
-      Key     : Histories.History_Key);
-   overriding function Get_Input_Text
-     (Self : not null access Single_Line_Text_Input_Dialog_Record)
-      return String;
-
-   -----------------------------------
-   -- Multi Line Text Input Dialogs --
-   -----------------------------------
-
-   type Multi_Line_Text_Input_Dialog_Record is new Text_Input_Dialog_Record
-   with record
-      Text_View : Gtk_Text_View;
-   end record;
-   --  Type used to represent multi-line text input dialogs, which use a
-   --  text view to retrieve the user's input.
-
-   overriding procedure Initialize
-     (Self    : not null access Multi_Line_Text_Input_Dialog_Record;
-      Message : String;
-      History : Histories.History;
-      Key     : Histories.History_Key);
-   overriding function Get_Input_Text
-     (Self : not null access Multi_Line_Text_Input_Dialog_Record)
-      return String;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   overriding procedure Initialize
-     (Self    : not null access Single_Line_Text_Input_Dialog_Record;
-      Message : String;
-      History : Histories.History;
-      Key     : Histories.History_Key)
-   is
-      Label : Gtk_Label;
-      Hbox  : Gtk_Hbox;
-   begin
-      Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Self.Main_View.Pack_Start (Hbox, Expand => False);
-
-      Gtk_New (Label, Message);
-      Label.Set_Halign (Align_Start);
-      Hbox.Pack_Start (Label, Expand => False, Padding => 5);
-
-      Gtk_New_With_Entry (Self.Combo_Entry);
-      Hbox.Pack_Start (Self.Combo_Entry);
-
-      if Key /= "" and then History /= null then
-         Get_History (History.all, Key, Self.Combo_Entry);
-      end if;
-   end Initialize;
-
-   --------------------
-   -- Get_Input_Text --
-   --------------------
-
-   overriding function Get_Input_Text
-     (Self : not null access Single_Line_Text_Input_Dialog_Record)
-      return String
-   is
-      (Self.Combo_Entry.Get_Active_Text);
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   overriding procedure Initialize
-     (Self    : not null access Multi_Line_Text_Input_Dialog_Record;
-      Message : String;
-      History : Histories.History;
-      Key     : Histories.History_Key)
-   is
-      Label_Widget : Gtk_Label;
-   begin
-      --  Set a default size so that users can see that it is a multi-line
-      --  text view.
-      Self.Set_Default_Size (400, 200);
-
-      Gtk_New (Label_Widget, Message);
-      Label_Widget.Set_Halign (Align_Start);
-      Self.Main_View.Pack_Start (Label_Widget, Expand => False, Padding => 5);
-
-      Gtk_New (Self.Text_View);
-      Self.Text_View.Set_Wrap_Mode (Wrap_Char);
-
-      Self.Main_View.Pack_Start (Self.Text_View);
-
-      if Key /= "" and then History /= null then
-         Self.Text_View.Get_Buffer.Set_Text (Most_Recent (History, Key));
-      end if;
-   end Initialize;
-
-   --------------------
-   -- Get_Input_Text --
-   --------------------
-
-   overriding function Get_Input_Text
-     (Self : not null access Multi_Line_Text_Input_Dialog_Record)
-      return String
-   is
-      Start_Iter, End_Iter : Gtk_Text_Iter;
-      Buffer               : constant Gtk_Text_Buffer :=
-                               Self.Text_View.Get_Buffer;
-   begin
-      Buffer.Get_Start_Iter (Start_Iter);
-      Buffer.Get_End_Iter (End_Iter);
-
-      return Buffer.Get_Text (Start_Iter, End_Iter);
-   end Get_Input_Text;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Dialog          : access Text_Input_Dialog_Record'Class;
-      Parent          : access Gtk_Window_Record'Class;
-      Extra_Box       : Gtk_Check_Button := null;
-      Extra_Box2      : Gtk_Check_Button := null;
-      Title           : String;
-      Message         : String;
-      Position        : Gtk_Window_Position := Win_Pos_Center_On_Parent;
-      History         : Histories.History;
-      Key             : History_Key := "")
+      Key        : History_Key := "";
+      Check_Msg  : String := "";
+      Key_Check  : Histories.History_Key := "";
+      Check_Msg2 : String := "";
+      Key_Check2 : Histories.History_Key := "")
    is
       Button : Gtk_Widget;
       pragma Unreferenced (Button);
+
+      procedure Create_Text_Input_Widget;
+      --  Create the text input field area, with its associated label
+
+      procedure Create_Extra_Check_Boxes_If_Needed;
+      --  Create extra checkboxes if Check_Msg and or Check_Msg2 are non-empty.
+      ---
+      --  If non-empty keys have been provided, associate them respectively
+      --  with Key_Check and Key_Check2 in History.
+
+      ------------------------------
+      -- Create_Text_Input_Widget --
+      ------------------------------
+
+      procedure Create_Text_Input_Widget is
+         Label : Gtk_Label;
+         Hbox  : Gtk_Hbox;
+      begin
+         Gtk_New_Hbox (Hbox, Homogeneous => False);
+         Self.Main_View.Pack_Start (Hbox, Expand => False);
+
+         Gtk_New (Label, Message);
+         Label.Set_Halign (Align_Start);
+         Hbox.Pack_Start (Label, Expand => False, Padding => 5);
+
+         Gtk_New_With_Entry (Self.Combo_Entry);
+
+         Widget_Callback.Object_Connect
+           (Widget      => Self.Combo_Entry.Get_Child,
+            Name        => Gtk.GEntry.Signal_Activate,
+            Cb          => On_Enter_Key_Press'Access,
+            Slot_Object => Self);
+         Hbox.Pack_Start (Self.Combo_Entry);
+
+         if Key /= "" and then History /= null then
+            Get_History (History.all, Key, Self.Combo_Entry);
+         end if;
+      end Create_Text_Input_Widget;
+
+      ----------------------------------------
+      -- Create_Extra_Check_Boxes_If_Needed --
+      ----------------------------------------
+
+      procedure Create_Extra_Check_Boxes_If_Needed is
+      begin
+         if Check_Msg /= "" then
+            Gtk_New (Self.Check, Check_Msg);
+            Self.Main_View.Pack_Start (Self.Check, Expand => False);
+
+            if History /= null then
+               Associate (History.all, Key_Check, Self.Check);
+            end if;
+         end if;
+
+         if Check_Msg2 /= "" then
+            Gtk_New (Self.Check2, Check_Msg2);
+            Self.Main_View.Pack_Start (Self.Check2, Expand => False);
+
+            if History /= null then
+               Associate (History.all, Key_Check2, Self.Check2);
+            end if;
+         end if;
+      end Create_Extra_Check_Boxes_If_Needed;
+
    begin
       Gtk.Dialog.Initialize
-        (Dialog,
+        (Self,
          Title  => Title,
          Parent => Gtk_Window (Parent),
          Flags  => Use_Header_Bar_From_Settings (Parent));
-      Dialog.Set_Modal;
-      Dialog.Set_Position (Position);
+      Self.Set_Modal;
+      Self.Set_Position (Position);
 
-      Gtk_New_Vbox (Dialog.Main_View, Homogeneous => False);
-      Dialog.Get_Content_Area.Pack_Start (Dialog.Main_View);
+      Gtk_New_Vbox (Self.Main_View, Homogeneous => False);
+      Self.Get_Content_Area.Pack_Start (Self.Main_View);
 
-      Initialize
-        (Dialog,
-         Message => Message,
-         History => History,
-         Key     => Key);
+      Create_Text_Input_Widget;
 
-      if Extra_Box /= null then
-         Dialog.Main_View.Pack_Start (Extra_Box, Expand => False);
-      end if;
+      Create_Extra_Check_Boxes_If_Needed;
 
-      if Extra_Box2 /= null then
-         Dialog.Main_View.Pack_Start (Extra_Box2, Expand => False);
-      end if;
-
-      Button := Dialog.Add_Button (Stock_Ok, Gtk_Response_OK);
-      Button := Dialog.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
-      Dialog.Set_Default_Response (Gtk_Response_OK);
+      Button := Self.Add_Button (Stock_Ok, Gtk_Response_OK);
+      Button := Self.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
+      Self.Set_Default_Response (Gtk_Response_OK);
    end Initialize;
 
    -----------------------
@@ -246,18 +149,28 @@ package body Std_Dialogs is
    -----------------------
 
    function Run_And_Get_Input
-     (Self    : not null access Text_Input_Dialog_Record'Class;
-      History : Histories.History;
-      Key     : History_Key) return String is
+     (Self           : not null access Text_Input_Dialog_Record'Class;
+      History        : Histories.History;
+      Key            : History_Key;
+      Button_Active  : access Boolean := null;
+      Button_Active2 : access Boolean := null) return String is
    begin
       Self.Show_All;
 
       if Self.Run = Gtk_Response_OK then
          declare
-            S : constant String := Self.Get_Input_Text;
+            S : constant String := Self.Combo_Entry.Get_Active_Text;
          begin
             if History /= null then
                Add_To_History (History.all, Key, S);
+            end if;
+
+            if Self.Check /= null then
+               Button_Active.all := Self.Check.Get_Active;
+            end if;
+
+            if Self.Check2 /= null then
+               Button_Active2.all := Self.Check2.Get_Active;
             end if;
 
             return S;
@@ -266,68 +179,5 @@ package body Std_Dialogs is
 
       return (1 => ASCII.NUL);
    end Run_And_Get_Input;
-
-   -------------------------------
-   -- Display_Text_Input_Dialog --
-   -------------------------------
-
-   function Display_Text_Input_Dialog
-     (Parent         : access Gtk_Window_Record'Class;
-      Title          : String;
-      Message        : String;
-      Position       : Gtk_Window_Position := Win_Pos_Center_On_Parent;
-      Multi_Line     : Boolean := False;
-      History        : Histories.History := null;
-      Key            : History_Key := "";
-      Check_Msg      : String := "";
-      Button_Active  : Boolean_Access := null;
-      Key_Check      : Histories.History_Key := "";
-      Check_Msg2     : String := "";
-      Button2_Active : Boolean_Access := null;
-      Key_Check2     : Histories.History_Key := "") return String
-   is
-      Dialog : constant Text_Input_Dialog :=
-                 (if Multi_Line then
-                     new Multi_Line_Text_Input_Dialog_Record
-                  else
-                     new Single_Line_Text_Input_Dialog_Record);
-   begin
-      if Check_Msg /= "" then
-         Gtk_New (Dialog.Check, Check_Msg);
-         Associate (History.all, Key_Check, Dialog.Check);
-      end if;
-
-      if Check_Msg2 /= "" then
-         Gtk_New (Dialog.Check2, Check_Msg2);
-         Associate (History.all, Key_Check2, Dialog.Check2);
-      end if;
-
-      Initialize
-        (Dialog,
-         Parent    => Parent,
-         Extra_Box  => Dialog.Check,
-         Extra_Box2 => Dialog.Check2,
-         Title      => Title,
-         Message    => Message,
-         Position   => Position,
-         History    => History,
-         Key        => Key);
-
-      declare
-         Input : constant String := Dialog.Run_And_Get_Input (History, Key);
-      begin
-         if Dialog.Check /= null then
-            Button_Active.all := Get_Active (Dialog.Check);
-         end if;
-
-         if Dialog.Check2 /= null then
-            Button2_Active.all := Get_Active (Dialog.Check2);
-         end if;
-
-         Destroy (Dialog);
-
-         return Input;
-      end;
-   end Display_Text_Input_Dialog;
 
 end Std_Dialogs;

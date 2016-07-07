@@ -34,12 +34,14 @@ with Glib.Xml_Int;
 with Gtk.Accel_Group;
 with Gtk.Container;         use Gtk.Container;
 with Gtk.Dialog;            use Gtk.Dialog;
+with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Handlers;          use Gtk.Handlers;
 with Gtk.Menu;
 with Gtk.Toolbar;
 with Gtk.Widget;
 with Gtk.Window;            use Gtk.Window;
 with Gtkada.MDI;            use Gtkada.MDI;
+with Histories;             use Histories;
 
 package GPS.Kernel.MDI is
 
@@ -473,6 +475,28 @@ package GPS.Kernel.MDI is
    --  If you are subclassing the GtkDialog class to add new signals, pass the
    --  id of the new class in the Typ parameter, so that the proper gtk+
    --  widget is allocated.
+
+   function Display_Text_Input_Dialog
+     (Kernel         : not null access Kernel_Handle_Record'Class;
+      Parent         : access Gtk_Window_Record'Class;
+      Title          : String;
+      Message        : String;
+      Position       : Gtk_Window_Position := Win_Pos_Center_On_Parent;
+      Key            : History_Key := "";
+      Check_Msg      : String := "";
+      Button_Active  : access Boolean := null;
+      Key_Check      : Histories.History_Key := "";
+      Check_Msg2     : String := "";
+      Button2_Active : access Boolean := null;
+      Key_Check2     : Histories.History_Key := "") return String;
+   --  Display a simple text input dialog and returns the contents of the
+   --  text input field (or ASCII.NUL if the user selected cancel).
+   --
+   --  The dialog is set up as a child of Parent, so that, depending on the
+   --  window manager, it isn't displayed below it.
+
+   --  The dialog's size is automatically saved in the GPS properties retrieved
+   --  from the given Kernel so that it can be retrieved the next time.
 
    ---------------------
    -- Signal emission --
