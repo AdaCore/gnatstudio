@@ -630,14 +630,20 @@ package body Gtkada.File_Selector is
          if Use_Native_Dialog
            and then NativeFileSelectionSupported /= 0
          then
-            S := NativeFileSelection
-              (Title & ASCII.NUL,
-               +Full_Name (Initial_Dir).all & ASCII.NUL,
-               +File_Pattern & ASCII.NUL,
-               Pattern_Name & ASCII.NUL,
-               +Default_Name & ASCII.NUL,
-               Pos_Mouse,
-               File_Selector_Kind'Pos (Kind));
+            if Kind = Open_Directory then
+               S := NativeDirSelection
+                 (Title & ASCII.NUL,
+                  +Full_Name (Initial_Dir).all & ASCII.NUL);
+            else
+               S := NativeFileSelection
+                 (Title & ASCII.NUL,
+                  +Full_Name (Initial_Dir).all & ASCII.NUL,
+                  +File_Pattern & ASCII.NUL,
+                  Pattern_Name & ASCII.NUL,
+                  +Default_Name & ASCII.NUL,
+                  Pos_Mouse,
+                  File_Selector_Kind'Pos (Kind));
+            end if;
 
             declare
                Val : constant String := Interfaces.C.Strings.Value (S);
@@ -653,11 +659,11 @@ package body Gtkada.File_Selector is
                Ignore : Boolean;
                Button : Gtk.Widget.Gtk_Widget;
 
-               To_Action : constant array (File_Selector_Kind) of
+               To_Action : constant array (Open_File .. Open_Directory) of
                  Gtk.File_Chooser.Gtk_File_Chooser_Action :=
-                   (Open_File   => Gtk.File_Chooser.Action_Open,
-                    Save_File   => Gtk.File_Chooser.Action_Save,
-                    Unspecified => Gtk.File_Chooser.Action_Select_Folder);
+                   (Open_File      => Gtk.File_Chooser.Action_Open,
+                    Save_File      => Gtk.File_Chooser.Action_Save,
+                    Open_Directory => Gtk.File_Chooser.Action_Select_Folder);
             begin
                Dialog := Gtk_File_Chooser_Dialog_New
                  (Title  => Title,
@@ -709,12 +715,22 @@ package body Gtkada.File_Selector is
 
       if Base_Directory = No_File then
          Gtk_New
-           (File_Selector, Get_Root (Initial_Dir), Initial_Dir,
-            Title, History => History, Remote_Browsing => Remote_Browsing);
+           (File_Selector_Window => File_Selector,
+            Root                 => Get_Root (Initial_Dir),
+            Initial_Directory    => Initial_Dir,
+            Dialog_Title         => Title,
+            Show_Files           => Kind /= Open_Directory,
+            History              => History,
+            Remote_Browsing      => Remote_Browsing);
       else
          Gtk_New
-           (File_Selector, Get_Root (Base_Directory), Base_Directory,
-            Title, History => History, Remote_Browsing => Remote_Browsing);
+           (File_Selector_Window => File_Selector,
+            Root                 => Get_Root (Base_Directory),
+            Initial_Directory    => Base_Directory,
+            Dialog_Title         => Title,
+            Show_Files           => Kind /= Open_Directory,
+            History              => History,
+            Remote_Browsing      => Remote_Browsing);
       end if;
 
       Set_Position (File_Selector, Win_Pos_Mouse);
@@ -731,8 +747,16 @@ package body Gtkada.File_Selector is
 
       Set_Busy (Parent, False);
 
-      return Select_File (File_Selector, Parent);
+      if Kind = Open_Directory then
+         return Select_Directory (File_Selector, Parent);
+      else
+         return Select_File (File_Selector, Parent);
+      end if;
    end Select_File;
+
+   -----------------
+   -- Select_File --
+   -----------------
 
    function Select_File
      (File_Selector : File_Selector_Window_Access;
@@ -780,73 +804,18 @@ package body Gtkada.File_Selector is
       Use_Native_Dialog : Boolean := False;
       History           : Histories.History := null) return Virtual_File
    is
-      File_Selector_Window : File_Selector_Window_Access;
-      S                    : Chars_Ptr;
-      Working_Dir          : Virtual_File;
+     (Select_File
+        (Title             => Title,
+         Base_Directory    => Base_Directory,
+         Parent            => Parent,
+         Remote_Browsing   => not Is_Local (Base_Directory),
+         Use_Native_Dialog => Use_Native_Dialog,
+         Kind              => Open_Directory,
+         History           => History));
 
-   begin
-      if Use_Native_Dialog
-        and then NativeFileSelectionSupported /= 0
-        and then Is_Local (Base_Directory)
-      then
-         --  Save working directory
-         Working_Dir := Get_Current_Dir;
-
-         if Base_Directory = No_File then
-            if Last_Directory = No_File then
-               Last_Directory := Working_Dir;
-            end if;
-
-            S := NativeDirSelection
-              (Title & ASCII.NUL,
-               Display_Full_Name (Last_Directory) & ASCII.NUL);
-
-         else
-            S := NativeDirSelection
-              (Title & ASCII.NUL,
-               Display_Full_Name (Base_Directory) & ASCII.NUL);
-         end if;
-
-         --  Change back to working directory
-         Change_Dir (Working_Dir);
-
-         declare
-            Val : constant String := Interfaces.C.Strings.Value (S);
-         begin
-            c_free (S);
-
-            if Val = "" then
-               return GNATCOLL.VFS.No_File;
-
-            else
-               Last_Directory := Create (+Val);
-
-               return Last_Directory;
-            end if;
-         end;
-      end if;
-
-      Set_Busy (Parent, True);
-
-      if Base_Directory = No_File then
-         if Last_Directory = No_File then
-            Last_Directory := GNATCOLL.VFS.Get_Current_Dir;
-         end if;
-
-         Gtk_New
-           (File_Selector_Window, Get_Root (Last_Directory), Last_Directory,
-            Title, False, History);
-      else
-         Gtk_New
-           (File_Selector_Window, Get_Root (Base_Directory), Base_Directory,
-            Title, False, History);
-      end if;
-
-      Set_Position (File_Selector_Window, Win_Pos_Mouse);
-      Set_Busy (Parent, False);
-
-      return Select_Directory (File_Selector_Window, Parent);
-   end Select_Directory;
+   ----------------------
+   -- Select_Directory --
+   ----------------------
 
    function Select_Directory
      (File_Selector : File_Selector_Window_Access;

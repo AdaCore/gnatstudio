@@ -77,7 +77,8 @@ with GNATCOLL.VFS;
 
 package Gtkada.File_Selector is
 
-   type File_Selector_Kind is (Open_File, Save_File, Unspecified);
+   type File_Selector_Kind is
+     (Open_File, Save_File, Open_Directory, Unspecified);
 
    function Select_File
      (Title             : String  := "Select a file";
