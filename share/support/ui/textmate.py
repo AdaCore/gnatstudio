@@ -45,6 +45,7 @@ light_common = {
     "Diff-Change-Color": "rgb(236,236,170)",
     "Diff-Remove-Color": "rgb(255,160,160)",
     "Diff-Append-Color": "rgb(136,238,170)",
+    "Debugger-Line-With-Breakpoint": "rgba(0,0,255,0.3)",
 
     "Plugins/dispatching/color": "rgb(255,243,194)",
     "Plugins/ispell/bgcolor": "rgb(255,255,0)",
@@ -86,6 +87,7 @@ dark_common = {
     "Diff-Change-Color": "rgb(107,73,19)",
     "Diff-Remove-Color": "rgb(88,43,43)",
     "Diff-Append-Color": "rgb(38,68,36)",
+    "Debugger-Line-With-Breakpoint": "rgb(190,191,196)",
 
     "Plugins/dispatching/color": "rgb(46,52,56)",
     "Plugins/ispell/bgcolor": "rgb(206,92,0)",
@@ -110,7 +112,6 @@ text_variant_prefs = {
     "constant.preprocessor.c":        "Editor/General/preprocessor",
     "constant.preprocessor.c.entity": "Editor/General/preprocessor",
     "meta.preprocessor":              "Editor/General/preprocessor",
-
 }
 
 color_prefs = {
