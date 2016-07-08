@@ -449,8 +449,6 @@ package body Ada_Naming_Editors is
       Create_Exceptions_List_Column ("Spec filename");
       Create_Exceptions_List_Column ("Body filename");
 
-      Dialog_Utils.Initialize (Self);
-
       Self.Standard_Scheme.Set_Sensitive (not Read_Only);
       Self.Dot_Replacement.Set_Sensitive (not Read_Only);
       Self.Spec_Extension.Set_Sensitive (not Read_Only);
