@@ -503,6 +503,7 @@
       <button action='bookmark create'/>
       <separator/>
       <button action='bookmark rename'/>
+      <button action='bookmark edit note'/>
       <button action='bookmark remove'/>
    </toolbar>
 

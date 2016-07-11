@@ -49,6 +49,8 @@ NF-17-P704-009 GPS: changes in Bookmarks view (2016-07-06)
   another bookmark, a new group is created that contains both. These groups
   can be used to organize large numbers of bookmarks.
   Add a filter to the Bookmarks view, to match what is done for other views.
+  Comments can be added to bookmarks, either that an explicit toolbar button
+  or dragging and dropping text from a source editor.
 
 NF-17-P630-007 GPS: preserve the size of simple text input dialogs (2016-07-08)
 

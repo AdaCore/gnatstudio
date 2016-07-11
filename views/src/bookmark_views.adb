@@ -37,12 +37,14 @@ with Glib_Values_Utils;         use Glib_Values_Utils;
 
 with Gdk.Drag_Contexts;         use Gdk.Drag_Contexts;
 with Gdk.Event;                 use Gdk.Event;
+with Gdk.Property;              use Gdk.Property;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
 
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Gesture_Long_Press;    use Gtk.Gesture_Long_Press;
@@ -52,6 +54,9 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Selection_Data;        use Gtk.Selection_Data;
 with Gtk.Target_List;           use Gtk.Target_List;
+with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
+with Gtk.Text_Iter;             use Gtk.Text_Iter;
+with Gtk.Text_View;             use Gtk.Text_View;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tooltip;               use Gtk.Tooltip;
 with Gtk.Tree_Drag_Source;      use Gtk.Tree_Drag_Source;
@@ -81,6 +86,7 @@ with GPS.Kernel.Modules.UI;        use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;           use GPS.Kernel.Scripts;
 with GPS.Kernel.Search;            use GPS.Kernel.Search;
+with GPS.Main_Window;              use GPS.Main_Window;
 with GPS.Markers;                  use GPS.Markers;
 with GPS.Search.GUI;               use GPS.Search.GUI;
 with GPS.Intl;                     use GPS.Intl;
@@ -99,6 +105,7 @@ package body Bookmark_Views is
 
    Icon_For_Bookmarks  : constant String := "gps-goto-symbolic";
    Icon_For_Groups     : constant String := "gps-emblem-directory-open";
+   Icon_For_Tag        : constant String := "gps-tag-symbolic";
 
    Messages_Category_For_Bookmarks : constant String := "bookmarks";
    Message_Flags_For_Bookmarks     : constant Message_Flags :=
@@ -109,11 +116,13 @@ package body Bookmark_Views is
    Icon_Name_Column : constant := 0;
    Name_Column      : constant := 1;
    Data_Column      : constant := 2;
+   Icon_Tag_Column  : constant := 3;
 
    Column_Types : constant GType_Array :=
      (Icon_Name_Column => GType_String,
       Name_Column      => GType_String,
-      Data_Column      => GType_Pointer);
+      Data_Column      => GType_Pointer,
+      Icon_Tag_Column  => GType_String);
 
    type Bookmark_Proxy is new Script_Proxy with null record;
    overriding function Class_Name (Self : Bookmark_Proxy) return String
@@ -126,6 +135,9 @@ package body Bookmark_Views is
       Name      : GNAT.Strings.String_Access;
       --  Name of bookmark or group.
       --  Set to null for the toplevel group.
+
+      Note      : Unbounded_String;
+      --  Extra information associated with the bookmark
 
       Previous_Same_Level : Bookmark_Data_Access;
       Next_Same_Level     : Bookmark_Data_Access;
@@ -270,6 +282,13 @@ package body Bookmark_Views is
    --  Refresh the contents of the Bookmark view.
    --  If Expand is specified, the corresponding row is expanded
 
+   procedure Add_Note
+     (Self     : not null access Bookmark_View_Record'Class;
+      Bookmark : Bookmark_Data_Access;
+      Note     : String;
+      Append   : Boolean);
+   --  Add a note to the bookmark
+
    procedure Delete_Bookmark
      (Kernel   : access Kernel_Handle_Record'Class;
       Bookmark : in out Bookmark_Data_Access);
@@ -333,6 +352,9 @@ package body Bookmark_Views is
    --  The actual work is done in On_Drag_Data_Received, but we need to
    --  override On_Drag_Drop to prevent the gtk+ default behavior since we
    --  can't prevent it from On_Drag_Data_Received.
+   --  Also, with the implementation in gtktreeview.c, On_Drag_Data_Received is
+   --  called every time the mouse moves to verify whether the drop is
+   --  possible.
 
    procedure On_Edited
      (V           : access GObject_Record'Class;
@@ -379,6 +401,12 @@ package body Bookmark_Views is
      (Command : access Rename_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Rename the selected bookmark
+
+   type Edit_Note_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Edit_Note_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Edit note for selected bookmark
 
    type Next_Bookmark_Command (Backward : Boolean) is
      new Interactive_Command with null record;
@@ -748,7 +776,8 @@ package body Bookmark_Views is
       begin
          if Iter /= Null_Iter then
             --  Make the rows editable temporarily
-            Set_Property (View.Tree.Text, Editable_Property, True);
+            Set_Property
+              (View.Tree.Text, Gtk.Cell_Renderer_Text.Editable_Property, True);
             Set_Cursor_On_Cell
               (View.Tree,
                Path          => Path,
@@ -794,6 +823,75 @@ package body Bookmark_Views is
          end if;
       end if;
       return Failure;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Edit_Note_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      View   : constant Bookmark_View_Access :=
+        Generic_View.Get_Or_Create_View (Kernel);
+      Filter_Iter : Gtk_Tree_Iter;
+      Model       : Gtk_Tree_Model;
+      Data        : Bookmark_Data_Access;
+      Dialog      : GPS_Dialog;
+      Editor      : Gtk_Text_View;
+      Buffer      : Gtk_Text_Buffer;
+      From, To    : Gtk_Text_Iter;
+      Scrolled    : Gtk_Scrolled_Window;
+      W           : Gtk_Widget;
+
+   begin
+      if View /= null then
+         View.Tree.Get_Selection.Get_Selected (Model, Filter_Iter);
+
+         if Filter_Iter /= Null_Iter then
+            Data := View.Tree.Get_Data
+              (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
+
+            Gtk_New
+              (Self   => Dialog,
+               Title  => "Edit Note for Bookmark",
+               Kernel => Kernel);
+            Set_Default_Size_From_History
+              (Win    => Dialog,
+               Name   => "Edit Note for Bookmark",
+               Kernel => Kernel,
+               Width  => 600,
+               Height => 300);
+
+            Gtk_New (Scrolled);
+            Dialog.Get_Content_Area.Pack_Start (Scrolled, Expand => True);
+            Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+
+            Gtk_New (Buffer);
+            Gtk_New (Editor, Buffer);
+            Unref (Buffer);
+            Scrolled.Add (Editor);
+            Buffer.Set_Text (To_String (Data.Note));
+
+            W := Dialog.Add_Button (-"Apply", Gtk_Response_OK);
+            W.Grab_Default;
+            W := Dialog.Add_Button (-"Cancel", Gtk_Response_Cancel);
+            Dialog.Show_All;
+
+            if Dialog.Run = Gtk_Response_OK then
+               Buffer.Get_Start_Iter (From);
+               Buffer.Get_End_Iter (To);
+               View.Add_Note
+                 (Data, Buffer.Get_Text (From, To), Append => False);
+            end if;
+
+            Dialog.Destroy;
+         end if;
+      end if;
+      return Success;
    end Execute;
 
    -------------
@@ -937,6 +1035,7 @@ package body Bookmark_Views is
          Next_Same_Level     => null,
          Previous_Same_Level => null,
          Parent              => null,
+         Note                => Null_Unbounded_String,
          Name                => new String'(Name));
    end New_Group;
 
@@ -980,6 +1079,7 @@ package body Bookmark_Views is
          Previous_Same_Level => null,
          Next_Same_Level     => null,
          Parent              => null,
+         Note                => Null_Unbounded_String,
          Name                => new String'
            (if Name = "" then To_String (Mark) else Name),
          Instances           => <>);
@@ -1126,12 +1226,16 @@ package body Bookmark_Views is
             View.Tree.Model.Append (Store_Iter, Store_Parent);
             Set_And_Clear
               (View.Tree.Model, Store_Iter,
-               (Icon_Name_Column, Name_Column, Data_Column),
+               (Icon_Name_Column, Name_Column, Data_Column,
+                Icon_Tag_Column),
                (1 => As_String
                     (if Tmp.Is_Group
                      then Icon_For_Groups else Icon_For_Bookmarks),
                 2 => As_String  (Tmp.Name.all),
-                3 => As_Pointer (Convert (Tmp))));
+                3 => As_Pointer (Convert (Tmp)),
+                4 => As_String
+                  (if Tmp.Note /= Null_Unbounded_String
+                   then Icon_For_Tag else "")));
 
             if Tmp.Is_Group then
                Add_Level (Tmp.First_Child, Store_Iter);
@@ -1170,7 +1274,8 @@ package body Bookmark_Views is
       View : constant Bookmark_View_Access := Bookmark_View_Access (V);
    begin
       --  Prevent interactive editing via single click
-      Set_Property (View.Tree.Text, Editable_Property, False);
+      Set_Property
+        (View.Tree.Text, Gtk.Cell_Renderer_Text.Editable_Property, False);
    end On_Editing_Canceled;
 
    ---------------
@@ -1194,7 +1299,8 @@ package body Bookmark_Views is
       Save_Bookmarks (Get_Kernel (Bookmark_Views_Module.all));
       View.Refresh;
 
-      Set_Property (View.Tree.Text, Editable_Property, False);
+      Set_Property
+        (View.Tree.Text, Gtk.Cell_Renderer_Text.Editable_Property, False);
    end On_Edited;
 
    -------------
@@ -1212,6 +1318,32 @@ package body Bookmark_Views is
    begin
       Set_Font_And_Colors (View.Tree, Fixed_Font => True, Pref => Pref);
    end Execute;
+
+   --------------
+   -- Add_Note --
+   --------------
+
+   procedure Add_Note
+     (Self     : not null access Bookmark_View_Record'Class;
+      Bookmark : Bookmark_Data_Access;
+      Note     : String;
+      Append   : Boolean) is
+   begin
+      if Note = "" then
+         Bookmark.Note := Null_Unbounded_String;
+      elsif Append then
+         if Bookmark.Note /= Null_Unbounded_String then
+            Ada.Strings.Unbounded.Append (Bookmark.Note, "" & ASCII.LF);
+         end if;
+         Ada.Strings.Unbounded.Append (Bookmark.Note, Note);
+
+      else
+         Bookmark.Note := To_Unbounded_String (Note);
+      end if;
+
+      --  Display tag icon next to bookmarks with a note
+      Self.Refresh;
+   end Add_Note;
 
    ---------------------------
    -- On_Drag_Data_Received --
@@ -1240,6 +1372,26 @@ package body Bookmark_Views is
 
       View.Data_Dropped := False;
 
+      --  Get target row
+
+      if not View.Tree.Get_Dest_Row_At_Pos
+        (Drag_X => X, Drag_Y => Y, Path => Path'Access, Pos => Pos'Access)
+      then
+         return;
+      end if;
+
+      Iter := View.Tree.Filter.Get_Iter (Path);
+      Target := View.Tree.Get_Data
+        (Store_Iter => View.Tree.Convert_To_Store_Iter (Iter));
+      Path_Free (Path);
+
+      --  Dropping some text (possibly from the editor, or an external
+      --  terminal) ?
+      if Atom_Name (Data.Get_Target) = "UTF8_STRING" then
+         Add_Note (View, Target, Data.Get_Text, Append => True);
+         return;
+      end if;
+
       --  Get source row
 
       Gtk.Tree_Drag_Source.Get_Row_Drag_Data
@@ -1253,18 +1405,6 @@ package body Bookmark_Views is
 
       Iter := Get_Iter (Model, Path);
       Source := View.Tree.Get_Data (Iter);
-      Path_Free (Path);
-
-      --  Get target row
-
-      if not View.Tree.Get_Dest_Row_At_Pos
-        (Drag_X => X, Drag_Y => Y, Path => Path'Access, Pos => Pos'Access)
-      then
-         return;
-      end if;
-
-      Iter := Get_Iter (Model, Path);
-      Target := View.Tree.Get_Data (Iter);
       Path_Free (Path);
 
       if Target = Source then
@@ -1424,6 +1564,7 @@ package body Bookmark_Views is
       Filter_Iter    : Gtk_Tree_Iter;
       Success : Boolean;
       Data    : Bookmark_Data_Access;
+      Text    : Unbounded_String;
    begin
       View.Tree.Get_Tooltip_Context
         (X => X2, Y => Y2, Keyboard_Tip => Keyboard_Mode,
@@ -1441,14 +1582,20 @@ package body Bookmark_Views is
                Location : constant String := To_String (Data.Marker);
             begin
                if Location = Data.Name.all then
-                  Tip.Set_Markup ("<b>Location:</b> " & Location);
+                  Text := To_Unbounded_String ("<b>Location:</b> " & Location);
                else
-                  Tip.Set_Markup
+                  Text := To_Unbounded_String
                     ("<b>Name:</b> " & Data.Name.all & ASCII.LF &
                        "<b>Location:</b> " & Location);
                end if;
+
+               if Data.Note /= Null_Unbounded_String then
+                  Append (Text, ASCII.LF & "<b>Note:</b>" & ASCII.LF
+                          & "<tt>" & To_String (Data.Note) & "</tt>");
+               end if;
             end;
 
+            Tip.Set_Markup (To_String (Text));
             View.Tree.Set_Tooltip_Row (Tip, Filter_Path);
             Path_Free (Filter_Path);
             return True;
@@ -1495,12 +1642,17 @@ package body Bookmark_Views is
 
       Gtk_New (View.Tree.Text);
 
-      Set_Property (View.Tree.Text, Editable_Property, False);
-      Col.Pack_Start (View.Tree.Text, Expand => True);
+      Set_Property
+        (View.Tree.Text, Gtk.Cell_Renderer_Text.Editable_Property, False);
+      Col.Pack_Start (View.Tree.Text, Expand => False);
       Col.Add_Attribute (View.Tree.Text, "text", Name_Column);
       View.Tree.Text.On_Edited (On_Edited'Access, Slot => View);
       View.Tree.Text.On_Editing_Canceled
         (On_Editing_Canceled'Access, Slot => View);
+
+      Gtk_New (Pixbuf);
+      Col.Pack_Start (Pixbuf, Expand => False);
+      Col.Add_Attribute (Pixbuf, "icon_name", Icon_Tag_Column);
 
       Gtk_New (View.Multipress, Widget => View.Tree);
       View.Multipress.On_Pressed (On_Multipress'Access, Slot => View);
@@ -1524,6 +1676,7 @@ package body Bookmark_Views is
       View.Tree.Set_Has_Tooltip (True);
 
       View.Tree.Set_Reorderable (True);
+      Dest_Add_Text_Targets (View.Tree);
       View.Tree.On_Drag_Drop (On_Drag_Drop'Access, Slot => View);
       View.Tree.On_Drag_Data_Received
         (On_Drag_Data_Received'Access, Slot => View);
@@ -1575,7 +1728,7 @@ package body Bookmark_Views is
       procedure Load_Same_Level
         (Parent : Bookmark_Data_Access; First : Node_Ptr)
       is
-         Child : Node_Ptr := First;
+         Child, Tmp : Node_Ptr := First;
          B     : Bookmark_Data_Access;
          Last  : Bookmark_Data_Access := null;
       begin
@@ -1595,6 +1748,16 @@ package body Bookmark_Views is
             end if;
 
             if B /= null then
+               --  Load notes
+
+               Tmp := Child.Child;
+               while Tmp /= null loop
+                  if Tmp.Tag.all = "note" then
+                     Append (B.Note, Encoded_ASCII_To_String (Tmp.Value.all));
+                  end if;
+                  Tmp := Tmp.Next;
+               end loop;
+
                --  Insert in the same order we read them, so append
                Insert (B, After => Last, In_Group => Parent);
                Last := B;
@@ -1653,7 +1816,7 @@ package body Bookmark_Views is
         (Parent : Node_Ptr; First : Bookmark_Data_Access)
       is
          Tmp   : Bookmark_Data_Access := First;
-         Child : Node_Ptr;
+         Child, Note : Node_Ptr;
       begin
          while Tmp /= null loop
             if Tmp.Is_Group then
@@ -1667,6 +1830,14 @@ package body Bookmark_Views is
             if Child /= null then
                Set_Attribute (Child, "bookmark_name", Tmp.Name.all);
                Add_Child (Parent, Child, Append => True);
+
+               if Tmp.Note /= Null_Unbounded_String then
+                  Note := new Node;
+                  Note.Tag := new String'("note");
+                  Note.Value := new String'
+                    (String_To_Encoded_ASCII (To_String (Tmp.Note)));
+                  Add_Child (Child, Note, Append => True);
+               end if;
             end if;
 
             Tmp := Tmp.Next_Same_Level;
@@ -1846,6 +2017,12 @@ package body Bookmark_Views is
          -("Create a bookmark at the current location"),
          Icon_Name => "gps-add-symbolic",
          Category => -"Bookmarks");
+
+      Register_Action
+        (Kernel, "bookmark edit note", new Edit_Note_Command,
+         -("Edit the note associated with the selected bookmark"),
+         Icon_Name   => Icon_For_Tag,
+         Category    => -"Bookmarks");
 
       Register_Action
         (Kernel      => Kernel,

@@ -1414,6 +1414,14 @@ to act on bookmarks:
 
   Deletes the selected bookmark.
 
+* :guilabel:`Edit Note`
+  
+  Text can be added to a bookmark, as a reminder of why it was created in
+  the first place for instance. This text can be edited via this toolbar
+  button. An alternative is to select text in a source editor, and then
+  dragging and dropping it on top of a bookmark. In this case, the text
+  is added to the note, it doesn't replace it.
+
 Bookmarks can be organized into groups. This is especially useful when you
 have lots of them, or bookmarks that you wish to keep for a long time. To
 create such groups, simply select a bookmark in the list, and then drag and
