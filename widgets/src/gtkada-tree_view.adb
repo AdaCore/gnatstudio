@@ -15,11 +15,63 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Glib.Object;     use Glib.Object;
-with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Widget;      use Gtk.Widget;
+with Interfaces.C.Strings; use Interfaces.C.Strings;
+with Gdk.Drag_Contexts;    use Gdk.Drag_Contexts;
+with Glib.Object;          use Glib.Object;
+with Glib.Types;           use Glib.Types;
+with Glib.Values;          use Glib.Values;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Selection_Data;   use Gtk.Selection_Data;
+with Gtk.Tree_Drag_Dest;   use Gtk.Tree_Drag_Dest;
+with Gtk.Widget;           use Gtk.Widget;
+with System;               use System;
 
 package body Gtkada.Tree_View is
+
+   ------------------
+   -- Filter_Model --
+   ------------------
+
+   Filter_Model_With_Dnd_Klass : aliased Ada_GObject_Class :=
+     Uninitialized_Class;
+   --  A special implementation of Gtk.Tree_Model_Filter, which also
+   --  implements the drag-and-drop related interfaces to the underlying
+   --  model.
+
+   function Get_Filter_Model_Type return GType;
+   --  Support for creating a new gtk+ class for Filter_Model_With_Dnd_Klass
+
+   type Gtkada_Tree_Model_Filter_Record is new Gtk_Tree_Model_Filter_Record
+     with null record;
+   type Gtkada_Tree_Model_Filter is
+     access all Gtkada_Tree_Model_Filter_Record'Class;
+
+   procedure Init_Tree_Drag_IFace
+     (IFace : Tree_Drag_Dest_Interface_Descr;
+      Data  : System.Address)
+     with Convention => C;
+   --  Initialize the interfaces that the tree model implements
+
+   function On_Drag_Data_Received_Proxy
+     (Self           : Gtk_Tree_Drag_Dest;
+      Dest           : System.Address;
+      Selection_Data : System.Address) return Glib.Gboolean
+     with Convention => C;
+   function On_Row_Drop_Possible_Proxy
+     (Self           : Gtk_Tree_Drag_Dest;
+      Dest           : System.Address;
+      Selection_Data : System.Address) return Glib.Gboolean
+     with Convention => C;
+   --  Forward events to the child model
+
+   package Implements_Gtk_Tree_Drag_Dest is new Glib.Types.Implements
+     (Gtk.Tree_Drag_Dest.Gtk_Tree_Drag_Dest,
+      Gtkada_Tree_Model_Filter_Record,
+      Gtkada_Tree_Model_Filter);
+
+   ---------------
+   -- Callbacks --
+   ---------------
 
    procedure Row_Expanded_Callback
      (Widget      : access Gtk_Tree_View_Record'Class;
@@ -46,6 +98,21 @@ package body Gtkada.Tree_View is
       Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
       Self        : Tree_View) return Boolean;
    --  Support for filtering the tree model
+
+   -------------------
+   -- Drag and drop --
+   -------------------
+
+   procedure On_Drag_Begin
+     (Self    : access GObject_Record'Class;
+      Context : not null access Drag_Context_Record'Class);
+   procedure On_Drag_End
+     (Self    : access GObject_Record'Class;
+      Context : not null access Drag_Context_Record'Class);
+   --  Called when a drag operation starts or end.
+   --  When we use a filter, we must disable filtering during such an
+   --  operation, since the selection_data manipulated by gtk+ internally
+   --  manipulates paths from the child model which we cannot override.
 
    -----------
    -- Flags --
@@ -87,6 +154,153 @@ package body Gtkada.Tree_View is
       Iter : Gtk_Tree_Iter;
       F    : Flags) with Inline;
    --   Set or unset a flag on a specific row
+
+   ---------------------------------
+   -- On_Drag_Data_Received_Proxy --
+   ---------------------------------
+
+   function On_Drag_Data_Received_Proxy
+     (Self           : Gtk_Tree_Drag_Dest;
+      Dest           : System.Address;
+      Selection_Data : System.Address) return Glib.Gboolean
+   is
+      Filter      : constant Gtkada_Tree_Model_Filter :=
+        Implements_Gtk_Tree_Drag_Dest.To_Object (Self);
+      Child_IFace : constant Gtk_Tree_Drag_Dest :=
+        Gtk.Tree_Store.Implements_Gtk_Tree_Drag_Dest.To_Interface
+          (Gtk.Tree_Store.Implements_Gtk_Tree_Model.To_Object
+             (Filter.Get_Model));
+      Path        : constant Gtk_Tree_Path :=
+        Filter.Convert_Path_To_Child_Path (From_Object (Dest));
+      Result      : Boolean;
+   begin
+      --  This only works if no filtering is active during this phase, since
+      --  the selection_data will contains paths relative to the child model.
+      --  This is why we connect to drag-begin to disable filtering
+
+      Result := Gtk.Tree_Drag_Dest.Drag_Data_Received
+        (Self           => Child_IFace,
+         Dest           => Path,
+         Selection_Data => From_Object (Selection_Data));
+      Path_Free (Path);
+      return (if Result then 1 else 0);
+   end On_Drag_Data_Received_Proxy;
+
+   --------------------------------
+   -- On_Row_Drop_Possible_Proxy --
+   --------------------------------
+
+   function On_Row_Drop_Possible_Proxy
+     (Self           : Gtk_Tree_Drag_Dest;
+      Dest           : System.Address;
+      Selection_Data : System.Address) return Glib.Gboolean
+   is
+      Filter      : constant Gtkada_Tree_Model_Filter :=
+        Implements_Gtk_Tree_Drag_Dest.To_Object (Self);
+      Child_IFace : constant Gtk_Tree_Drag_Dest :=
+        Gtk.Tree_Store.Implements_Gtk_Tree_Drag_Dest.To_Interface
+          (Gtk.Tree_Store.Implements_Gtk_Tree_Model.To_Object
+             (Filter.Get_Model));
+      Path        : constant Gtk_Tree_Path :=
+        Filter.Convert_Path_To_Child_Path (From_Object (Dest));
+      Result      : Boolean;
+   begin
+      --  This only works if no filtering is active during this phase, since
+      --  the selection_data will contains paths relative to the child model.
+
+      if Path = Null_Gtk_Tree_Path then
+         return 0;
+      else
+         Result := Gtk.Tree_Drag_Dest.Row_Drop_Possible
+           (Self           => Child_IFace,
+            Dest_Path      => Path,
+            Selection_Data => From_Object (Selection_Data));
+         Path_Free (Path);
+         return (if Result then 1 else 0);
+      end if;
+   end On_Row_Drop_Possible_Proxy;
+
+   --------------------------
+   -- Init_Tree_Drag_IFace --
+   --------------------------
+
+   procedure Init_Tree_Drag_IFace
+     (IFace : Tree_Drag_Dest_Interface_Descr;
+      Data  : System.Address)
+   is
+      pragma Unreferenced (Data);
+   begin
+      Set_Drag_Data_Received
+        (Self    => IFace,
+         Handler => On_Drag_Data_Received_Proxy'Access);
+      Set_Row_Drop_Possible
+        (Self    => IFace,
+         Handler => On_Row_Drop_Possible_Proxy'Access);
+   end Init_Tree_Drag_IFace;
+
+   -------------------
+   -- On_Drag_Begin --
+   -------------------
+
+   procedure On_Drag_Begin
+     (Self    : access GObject_Record'Class;
+      Context : not null access Drag_Context_Record'Class)
+   is
+      pragma Unreferenced (Context);
+      V : constant Tree_View := Tree_View (Self);
+   begin
+      --  Disable filtering during a drag-and-drop if we are using a filter,
+      --  since the selection_data manipulates paths referencing the child
+      --  model.
+      if V.Filter /= null then
+         V.Filter_Disabled := True;
+         V.Refilter;
+      end if;
+   end On_Drag_Begin;
+
+   -----------------
+   -- On_Drag_End --
+   -----------------
+
+   procedure On_Drag_End
+     (Self    : access GObject_Record'Class;
+      Context : not null access Drag_Context_Record'Class)
+   is
+      pragma Unreferenced (Context);
+      V : constant Tree_View := Tree_View (Self);
+   begin
+      --  Disable filtering during a drag-and-drop if we are using a filter,
+      --  since the selection_data manipulates paths referencing the child
+      --  model.
+      if V.Filter /= null then
+         V.Filter_Disabled := False;
+         V.Refilter;
+      end if;
+   end On_Drag_End;
+
+   ---------------------------
+   -- Get_Filter_Model_Type --
+   ---------------------------
+
+   function Get_Filter_Model_Type return GType is
+      Info : access GInterface_Info;
+   begin
+      if Initialize_Class_Record
+        (Ancestor     => Gtk.Tree_Model_Filter.Get_Type,
+         Class_Record => Filter_Model_With_Dnd_Klass'Access,
+         Type_Name    => "Gtkada_Filter_Model",
+         Class_Init   => null)
+      then
+         Info := new GInterface_Info'
+           (Interface_Init     => Init_Tree_Drag_IFace'Access,
+            Interface_Finalize => null,
+            Interface_Data     => System.Null_Address);
+         Add_Interface (Filter_Model_With_Dnd_Klass,
+                        Gtk.Tree_Drag_Dest.Get_Type,
+                        Info);
+      end if;
+      return Filter_Model_With_Dnd_Klass.The_Type;
+   end Get_Filter_Model_Type;
 
    --------------
    -- Set_Flag --
@@ -312,7 +526,9 @@ package body Gtkada.Tree_View is
       Tree : constant Tree_View := Tree_View (Widget);
       F    : Flags := 0;
    begin
-      if Tree.Filter /= null and then Tree.Is_Visible (Iter) then
+      if Tree.Filter /= null
+        and then (Tree.Filter_Disabled or else Tree.Is_Visible (Iter))
+      then
          F := F or Flag_Is_Visible;
       end if;
 
@@ -358,6 +574,7 @@ package body Gtkada.Tree_View is
       Filtered         : Boolean;
       Set_Visible_Func : Boolean := False)
    is
+      Params            : GParameter_Array (1 .. 1);
       Real_Column_Types : constant GType_Array := Column_Types & (GType_Int);
       --  Reserve space for extra information
 
@@ -368,8 +585,22 @@ package body Gtkada.Tree_View is
       Gtk_New (Widget.Model, Real_Column_Types);
 
       if Filtered then
-         Gtk_New (Widget.Filter, +Widget.Model);
+         Init (Params (1).Value, Gtk.Tree_Model.Get_Type);
+         Set_Object (Params (1).Value, Widget.Model);
+         Params (1).Name := New_String ("child-model");
+
+         Widget.Filter := new Gtkada_Tree_Model_Filter_Record;
+         G_New (Widget.Filter, Get_Filter_Model_Type, Params);
+
+         Free (Params);
+
+         Unref (Widget.Model);  --  owned by the filter
+
          Initialize (Gtk_Tree_View (Widget), +Widget.Filter);
+         Unref (Widget.Filter);  --  owned by the widget
+
+         Widget.On_Drag_Begin (On_Drag_Begin'Access, Slot => Widget);
+         Widget.On_Drag_End (On_Drag_End'Access, Slot => Widget);
 
          if Set_Visible_Func then
             Set_Visible_Funcs.Set_Visible_Func
@@ -378,6 +609,7 @@ package body Gtkada.Tree_View is
 
       else
          Initialize (Gtk_Tree_View (Widget), +Widget.Model);
+         Unref (Widget.Model);  --  owned by the widget
       end if;
 
       --  We can't connect with After => True, because then the Gtk_Tree_Iter
@@ -412,6 +644,11 @@ package body Gtkada.Tree_View is
          pragma Unreferenced (Model, Path);
          Child : Gtk_Tree_Iter;
       begin
+         if Self.Filter_Disabled then
+            Set_Flag (Self, Iter, Flag_Is_Visible);
+            return False;  --  keep traversing
+         end if;
+
          --  Since we are doing depth-first search, the children have already
          --  been computed. So we look at their status first
 

@@ -45,6 +45,10 @@ NF-17-P704-009 GPS: changes in Bookmarks view (2016-07-06)
   other views in GPS like the Breakpoints view.
   Bookmarks are no longer sorted by default. Instead, you can use
   drag-and-drop to organize them in the order you want.
+  Bookmarks can be grouped: when you drag and drop a bookmark on top of
+  another bookmark, a new group is created that contains both. These groups
+  can be used to organize large numbers of bookmarks.
+  Add a filter to the Bookmarks view, to match what is done for other views.
 
 NF-17-P630-007 GPS: preserve the size of simple text input dialogs (2016-07-08)
 

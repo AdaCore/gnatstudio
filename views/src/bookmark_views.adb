@@ -52,6 +52,7 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Selection_Data;        use Gtk.Selection_Data;
 with Gtk.Target_List;           use Gtk.Target_List;
+with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tooltip;               use Gtk.Tooltip;
 with Gtk.Tree_Drag_Source;      use Gtk.Tree_Drag_Source;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
@@ -65,7 +66,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Basic_Types;                  use Basic_Types;
 with Commands.Interactive;         use Commands, Commands.Interactive;
 with Default_Preferences;          use Default_Preferences;
-with Generic_Views;
+with Generic_Views;                use Generic_Views;
 with GPS.Default_Styles;           use GPS.Default_Styles;
 with GPS.Editors;                  use GPS.Editors;
 with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
@@ -192,9 +193,13 @@ package body Bookmark_Views is
 
    type Bookmark_Tree_Record is new Gtkada.Tree_View.Tree_View_Record with
       record
-         Text : Gtk_Cell_Renderer_Text;
+         Text    : Gtk_Cell_Renderer_Text;
+         Pattern : Search_Pattern_Access;
       end record;
    type Bookmark_Tree is access all Bookmark_Tree_Record'Class;
+   overriding function Is_Visible
+     (Self       : not null access Bookmark_Tree_Record;
+      Store_Iter : Gtk_Tree_Iter) return Boolean;
 
    type Bookmark_View_Record is new Generic_Views.View_Record with record
       Tree      : Bookmark_Tree;
@@ -209,6 +214,12 @@ package body Bookmark_Views is
       --  Whether we just completed a drag-and-drop operation. This is used to
       --  perform the actual work in On_Drag_Data_Received
    end record;
+   overriding procedure Create_Toolbar
+     (Self    : not null access Bookmark_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Filter_Changed
+     (Self    : not null access Bookmark_View_Record;
+      Pattern : in out Search_Pattern_Access);
 
    function Initialize
      (View   : access Bookmark_View_Record'Class) return Gtk_Widget;
@@ -237,9 +248,9 @@ package body Bookmark_Views is
      (Bookmark_Data_Access, System.Address);
 
    function Get_Data
-     (Self : not null access Bookmark_Tree_Record'Class;
-      Row  : Gtk_Tree_Iter) return Bookmark_Data_Access
-     is (Convert (Self.Model.Get_Address (Row, Data_Column)));
+     (Self       : not null access Bookmark_Tree_Record'Class;
+      Store_Iter : Gtk_Tree_Iter) return Bookmark_Data_Access
+     is (Convert (Self.Model.Get_Address (Store_Iter, Data_Column)));
    --  Retrieve the bookmark data stored in each row of the tree
 
    function Hash (B : Bookmark_Data_Access) return Ada.Containers.Hash_Type
@@ -324,9 +335,9 @@ package body Bookmark_Views is
    --  can't prevent it from On_Drag_Data_Received.
 
    procedure On_Edited
-     (V        : access GObject_Record'Class;
-      Path     : Glib.UTF8_String;
-      New_Text : Glib.UTF8_String);
+     (V           : access GObject_Record'Class;
+      Filter_Path : Glib.UTF8_String;
+      New_Text    : Glib.UTF8_String);
    --  Called when a line is edited in the view
 
    procedure On_Editing_Canceled (V : access GObject_Record'Class);
@@ -630,18 +641,18 @@ package body Bookmark_Views is
                 Generic_View.Get_Or_Create_View (Get_Kernel (Context.Context));
       Model : Gtk_Tree_Model;
       Data  : Bookmark_Data_Access;
-      Iter  : Gtk_Tree_Iter;
+      Filter_Iter  : Gtk_Tree_Iter;
    begin
       if View /= null then
          View.Deleting := True;
-         View.Tree.Get_Selection.Get_Selected (Model, Iter);
+         View.Tree.Get_Selection.Get_Selected (Model, Filter_Iter);
 
-         if Iter /= Null_Iter then
-            Data := View.Tree.Get_Data (Iter);
+         if Filter_Iter /= Null_Iter then
+            Data := View.Tree.Get_Data
+              (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
 
             if Data /= null then
                Delete_Bookmark (Get_Kernel (Context.Context), Data);
-               Remove (-Model, Iter);
             end if;
          end if;
          View.Deleting := False;
@@ -650,6 +661,68 @@ package body Bookmark_Views is
 
       return Success;
    end Execute;
+
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   overriding procedure Create_Toolbar
+     (Self    : not null access Bookmark_View_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
+   begin
+      Self.Build_Filter
+        (Toolbar,
+         Hist_Prefix => "bookmarks",
+         Tooltip     => -"Filter the contents of the Bookmarks view",
+         Placeholder => -"filter",
+         Options     =>
+           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy);
+   end Create_Toolbar;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   overriding function Is_Visible
+     (Self       : not null access Bookmark_Tree_Record;
+      Store_Iter : Gtk_Tree_Iter) return Boolean
+   is
+      B : Bookmark_Data_Access;
+   begin
+      if Self.Pattern = null then
+         return True;
+      end if;
+
+      if Self.Pattern.Start (Self.Model.Get_String (Store_Iter, Name_Column))
+        /= GPS.Search.No_Match
+      then
+         return True;
+      end if;
+
+      B := Get_Data (Self, Store_Iter => Store_Iter);
+      if not B.Is_Group
+        and then Self.Pattern.Start
+          (To_String (B.Marker)) /= GPS.Search.No_Match
+      then
+         return True;
+      end if;
+
+      return False;
+   end Is_Visible;
+
+   --------------------
+   -- Filter_Changed --
+   --------------------
+
+   overriding procedure Filter_Changed
+     (Self    : not null access Bookmark_View_Record;
+      Pattern : in out Search_Pattern_Access)
+   is
+   begin
+      GPS.Search.Free (Self.Tree.Pattern);
+      Self.Tree.Pattern := Pattern;
+      Self.Tree.Refilter;  --  Recompute visibility of rows
+   end Filter_Changed;
 
    ------------------------
    -- Start_Editing_Idle --
@@ -964,7 +1037,6 @@ package body Bookmark_Views is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Mark   : Location_Marker := Create_Marker (Kernel);
       View   : Bookmark_View_Access;
-      Model  : Gtk_Tree_Store;
       Iter   : Gtk_Tree_Iter;
       Ignore : G_Source_Id with Unreferenced;
 
@@ -1001,20 +1073,20 @@ package body Bookmark_Views is
             After => null, In_Group => null);
          View := Generic_View.Get_Or_Create_View (Kernel);
 
-         Model := -Get_Model (View.Tree);
          Refresh (View);
          Bookmark_Added_Hook.Run (Kernel, To_String (Mark));
 
          --  Start editing the name of the bookmark immediately
 
-         Iter := Get_Iter_First (Model);
+         Iter := View.Tree.Model.Get_Iter_First;
          while Iter /= Null_Iter loop
-            if View.Tree.Get_Data (Iter).Marker = Mark then
-               Unselect_All (Get_Selection (View.Tree));
-               Select_Iter (Get_Selection (View.Tree), Iter);
+            if View.Tree.Get_Data (Store_Iter => Iter).Marker = Mark then
+               View.Tree.Get_Selection.Unselect_All;
+               View.Tree.Get_Selection.Select_Iter
+                 (View.Tree.Convert_To_Filter_Iter (Iter));
                exit;
             end if;
-            Next (Get_Model (View.Tree), Iter);
+            View.Tree.Model.Next (Iter);
          end loop;
 
          --  Register a callback for editing the selected node
@@ -1034,11 +1106,10 @@ package body Bookmark_Views is
      (View   : access Bookmark_View_Record'Class;
       Expand : Bookmark_Data_Access := null)
    is
-      Model : constant Gtk_Tree_Store := -Get_Model (View.Tree);
       Expand_Path : Gtk_Tree_Path := Null_Gtk_Tree_Path;
 
       procedure Add_Level
-        (First : Bookmark_Data_Access; Parent : Gtk_Tree_Iter);
+        (First : Bookmark_Data_Access; Store_Parent : Gtk_Tree_Iter);
       --  Add all nodes for a given level, and their children
 
       ---------------
@@ -1046,15 +1117,15 @@ package body Bookmark_Views is
       ---------------
 
       procedure Add_Level
-        (First : Bookmark_Data_Access; Parent : Gtk_Tree_Iter)
+        (First : Bookmark_Data_Access; Store_Parent : Gtk_Tree_Iter)
       is
-         Iter : Gtk_Tree_Iter;
+         Store_Iter : Gtk_Tree_Iter;
          Tmp  : Bookmark_Data_Access := First;
       begin
          while Tmp /= null loop
-            Append (Model, Iter, Parent);
+            View.Tree.Model.Append (Store_Iter, Store_Parent);
             Set_And_Clear
-              (Model, Iter,
+              (View.Tree.Model, Store_Iter,
                (Icon_Name_Column, Name_Column, Data_Column),
                (1 => As_String
                     (if Tmp.Is_Group
@@ -1063,11 +1134,12 @@ package body Bookmark_Views is
                 3 => As_Pointer (Convert (Tmp))));
 
             if Tmp.Is_Group then
-               Add_Level (Tmp.First_Child, Iter);
+               Add_Level (Tmp.First_Child, Store_Iter);
             end if;
 
             if Expand = Tmp then
-               Expand_Path := View.Tree.Get_Filter_Path_For_Store_Iter (Iter);
+               Expand_Path := View.Tree.Get_Filter_Path_For_Store_Iter
+                 (Store_Iter);
             end if;
 
             Tmp := Tmp.Next_Same_Level;
@@ -1079,7 +1151,7 @@ package body Bookmark_Views is
    begin
       if not View.Deleting then
          Tree_Expansion.Get_Expansion_Status (View.Tree, Expansion);
-         Clear (Model);
+         View.Tree.Model.Clear;
          Add_Level (Bookmark_Views_Module.Root, Null_Iter);
          Tree_Expansion.Set_Expansion_Status (View.Tree, Expansion);
 
@@ -1106,16 +1178,17 @@ package body Bookmark_Views is
    ---------------
 
    procedure On_Edited
-     (V        : access GObject_Record'Class;
-      Path     : Glib.UTF8_String;
-      New_Text : Glib.UTF8_String)
+     (V           : access GObject_Record'Class;
+      Filter_Path : Glib.UTF8_String;
+      New_Text    : Glib.UTF8_String)
    is
       View  : constant Bookmark_View_Access := Bookmark_View_Access (V);
-      Iter  : Gtk_Tree_Iter;
+      Filter_Iter  : Gtk_Tree_Iter;
       Mark  : Bookmark_Data_Access;
    begin
-      Iter := View.Tree.Model.Get_Iter_From_String (Path);
-      Mark := View.Tree.Get_Data (Iter);
+      Filter_Iter := View.Tree.Filter.Get_Iter_From_String (Filter_Path);
+      Mark := View.Tree.Get_Data
+        (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
       Free (Mark.Name);
       Mark.Name := new String'(New_Text);
       Save_Bookmarks (Get_Kernel (Bookmark_Views_Module.all));
@@ -1287,21 +1360,22 @@ package body Bookmark_Views is
    is
       View   : constant Bookmark_View_Access := Bookmark_View_Access (Self);
       Column : Gtk_Tree_View_Column with Unreferenced;
-      Path   : Gtk_Tree_Path;
-      Iter   : Gtk_Tree_Iter;
-      B      : Bookmark_Data_Access;
-      Dummy  : Boolean;
+      Filter_Path : Gtk_Tree_Path;
+      Filter_Iter : Gtk_Tree_Iter;
+      B           : Bookmark_Data_Access;
+      Dummy       : Boolean;
    begin
       Trace (Me, "Bookmarks multipress: " & N_Press'Img);
       if N_Press = 2 then
-         Coordinates_For_Event (View.Tree, X, Y, Iter, Column);
-         if Iter /= Null_Iter then
+         Coordinates_For_Event (View.Tree, X, Y, Filter_Iter, Column);
+         if Filter_Iter /= Null_Iter then
             --  Select the row that was clicked
-            Path := Get_Path (View.Tree.Model, Iter);
-            Set_Cursor (View.Tree, Path, null, Start_Editing => False);
-            Path_Free (Path);
+            Filter_Path := View.Tree.Filter.Get_Path (Filter_Iter);
+            View.Tree.Set_Cursor (Filter_Path, null, Start_Editing => False);
+            Path_Free (Filter_Path);
 
-            B := View.Tree.Get_Data (Iter);
+            B := View.Tree.Get_Data
+              (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
             if B /= null and then not B.Is_Group then
                Dummy := Go_To (B.Marker);
                Push_Marker_In_History (View.Kernel, B.Marker);
@@ -1320,12 +1394,12 @@ package body Bookmark_Views is
       X, Y    : Gdouble)
    is
       View  : constant Bookmark_View_Access := Bookmark_View_Access (Self);
-      Iter  : Gtk_Tree_Iter;
-      Col   : Gtk_Tree_View_Column;
-      Dummy : G_Source_Id;
+      Filter_Iter : Gtk_Tree_Iter;
+      Col         : Gtk_Tree_View_Column;
+      Dummy       : G_Source_Id;
    begin
-      Coordinates_For_Event (View.Tree, X, Y, Iter, Col);
-      if Iter /= Null_Iter then
+      Coordinates_For_Event (View.Tree, X, Y, Filter_Iter, Col);
+      if Filter_Iter /= Null_Iter then
          Dummy := Idle_Add (Start_Editing_Idle'Access, View);
          View.Longpress.Set_State (Event_Sequence_Claimed);
       end if;
@@ -1345,20 +1419,22 @@ package body Bookmark_Views is
       Tip     : constant Gtk_Tooltip := Gtk_Tooltip (Tooltip);
       X2      : Gint := X;
       Y2      : Gint := Y;
-      Path    : Gtk_Tree_Path;
+      Filter_Path    : Gtk_Tree_Path;
       Model   : Gtk_Tree_Model;
-      Iter    : Gtk_Tree_Iter;
+      Filter_Iter    : Gtk_Tree_Iter;
       Success : Boolean;
       Data    : Bookmark_Data_Access;
    begin
       View.Tree.Get_Tooltip_Context
         (X => X2, Y => Y2, Keyboard_Tip => Keyboard_Mode,
-         Model => Model, Path => Path, Iter => Iter, Success => Success);
+         Model => Model, Path => Filter_Path,
+         Iter  => Filter_Iter, Success => Success);
 
       if Success then
-         Data := View.Tree.Get_Data (Iter);
+         Data := View.Tree.Get_Data
+           (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
          if Data.Is_Group then
-            Path_Free (Path);
+            Path_Free (Filter_Path);
             return False;
          else
             declare
@@ -1373,8 +1449,8 @@ package body Bookmark_Views is
                end if;
             end;
 
-            View.Tree.Set_Tooltip_Row (Tip, Path);
-            Path_Free (Path);
+            View.Tree.Set_Tooltip_Row (Tip, Filter_Path);
+            Path_Free (Filter_Path);
             return True;
          end if;
 
@@ -1403,8 +1479,9 @@ package body Bookmark_Views is
 
       View.Tree := new Bookmark_Tree_Record;
       View.Tree.Initialize
-        (Column_Types => Column_Types,
-         Filtered     => False);
+        (Column_Types     => Column_Types,
+         Filtered         => True,
+         Set_Visible_Func => True);
       View.Tree.Set_Name ("Bookmark TreeView"); --  For the testsuite
       Scrolled.Add (View.Tree);
       View.Tree.Set_Headers_Visible (False);

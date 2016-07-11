@@ -44,6 +44,12 @@
 --       to indicate that a node might have children (so that an expansion
 --       arrow is visible), and then the children rows will be added lazily
 --       when and if the user expands the node.
+--
+--     * Support for reorderable rows
+--       The filter model we use is compatible with a Gtk_Tree_View that has
+--       reorderable rows. For this to work, it properly forwards the events
+--       to the child model, and temporarily unsets the filter during a drag
+--       operation.
 
 with Ada.Containers.Indefinite_Hashed_Sets;
 with Gtk.Tree_View;         use Gtk.Tree_View;
@@ -69,6 +75,10 @@ package Gtkada.Tree_View is
       --  Whether the expand callbacks should do anything.
       --  It's useful to set this lock to True when the user wants to
       --  control expansion himself.
+
+      Filter_Disabled : Boolean := False;
+      --  If true, filtering is temporarily disabled. This is necessary during
+      --  a drag-and-drop operation.
    end record;
    type Tree_View is access all Tree_View_Record'Class;
 
