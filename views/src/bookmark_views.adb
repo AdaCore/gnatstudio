@@ -124,6 +124,10 @@ package body Bookmark_Views is
       Data_Column      => GType_Pointer,
       Icon_Tag_Column  => GType_String);
 
+   Editor_Link  : Boolean_Preference;
+   --  Whether we should automatically select the bookmark corresponding to
+   --  the current location in the editor.
+
    type Bookmark_Proxy is new Script_Proxy with null record;
    overriding function Class_Name (Self : Bookmark_Proxy) return String
       is (Bookmark_Class_Name) with Inline;
@@ -229,6 +233,9 @@ package body Bookmark_Views is
    overriding procedure Create_Toolbar
      (Self    : not null access Bookmark_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
+   overriding procedure Create_Menu
+     (View    : not null access Bookmark_View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
    overriding procedure Filter_Changed
      (Self    : not null access Bookmark_View_Record;
       Pattern : in out Search_Pattern_Access);
@@ -248,6 +255,7 @@ package body Bookmark_Views is
       View_Name          => "Bookmarks",
       Reuse_If_Exist     => True,
       Local_Toolbar      => True,
+      Local_Config       => True,
       Areas              => Gtkada.MDI.Sides_Only,
       Formal_MDI_Child   => Bookmark_Child_Record,
       Formal_View_Record => Bookmark_View_Record);
@@ -311,6 +319,15 @@ package body Bookmark_Views is
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the project changes. This is a good time to load the
    --  persistent bookmarks
+
+   type On_Loc_Changed is new File_Location_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self         : On_Loc_Changed;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
+      Line, Column : Integer;
+      Project      : Project_Type);
+   --  Called when the current editor reaches a new location
 
    function On_Query_Tooltip
      (Self          : access GObject_Record'Class;
@@ -706,6 +723,17 @@ package body Bookmark_Views is
          Options     =>
            Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy);
    end Create_Toolbar;
+
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View    : not null access Bookmark_View_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
+   begin
+      Append_Menu (Menu, View.Kernel, Editor_Link);
+   end Create_Menu;
 
    ----------------
    -- Is_Visible --
@@ -1314,9 +1342,56 @@ package body Bookmark_Views is
    is
       pragma Unreferenced (Self);
       View : constant Bookmark_View_Access :=
-               Generic_View.Get_Or_Create_View (Kernel, Focus => False);
+        Generic_View.Retrieve_View (Kernel);
    begin
-      Set_Font_And_Colors (View.Tree, Fixed_Font => True, Pref => Pref);
+      if View /= null then
+         Set_Font_And_Colors (View.Tree, Fixed_Font => True, Pref => Pref);
+      end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self         : On_Loc_Changed;
+      Kernel       : not null access Kernel_Handle_Record'Class;
+      File         : Virtual_File;
+      Line, Column : Integer;
+      Project      : Project_Type)
+   is
+      pragma Unreferenced (Self, Project, Column);
+      View : constant Bookmark_View_Access :=
+        Generic_View.Retrieve_View (Kernel);
+
+      function On_Row
+        (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
+         return Boolean;
+      --  For each row
+
+      function On_Row
+        (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
+         return Boolean
+      is
+         pragma Unreferenced (Model, Path);
+         B : constant Bookmark_Data_Access :=
+           View.Tree.Get_Data (Store_Iter => Iter);
+      begin
+         if not B.Is_Group
+           and then Integer (Get_Line (B.Marker)) = Line
+           and then Get_File (B.Marker) = File
+         then
+            View.Tree.Get_Selection.Select_Iter
+              (View.Tree.Convert_To_Filter_Iter (Iter));
+            return True;  --  Stop iteration
+         end if;
+         return False;  --  Continue iteration
+      end On_Row;
+
+   begin
+      if View /= null and then Editor_Link.Get_Pref then
+         View.Tree.Model.Foreach (On_Row'Unrestricted_Access);
+      end if;
    end Execute;
 
    --------------
@@ -1671,6 +1746,7 @@ package body Bookmark_Views is
 
       Bookmark_Added_Hook.Add (new Refresh_Hook, Watch => View);
       Bookmark_Removed_Hook.Add (new Refresh_Hook, Watch => View);
+      Location_Changed_Hook.Add (new On_Loc_Changed, Watch => View);
 
       View.Tree.On_Query_Tooltip (On_Query_Tooltip'Access, Slot => View);
       View.Tree.Set_Has_Tooltip (True);
@@ -2061,6 +2137,9 @@ package body Bookmark_Views is
 
       P := new Bookmarks_Search_Provider;
       Register_Provider_And_Action (Kernel, P);
+
+      Editor_Link := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("bookmark-editor-link", True, Label => -"Dynamic link with editor");
 
       Project_Changed_Hook.Add (new On_Project_Changed);
    end Register_Module;

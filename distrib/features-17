@@ -51,6 +51,9 @@ NF-17-P704-009 GPS: changes in Bookmarks view (2016-07-06)
   Add a filter to the Bookmarks view, to match what is done for other views.
   Comments can be added to bookmarks, either that an explicit toolbar button
   or dragging and dropping text from a source editor.
+  A new configuration "link with editor" is also available, which
+  automatically selects the first bookmark associated with the current editor
+  line, whenever the latter changes.
 
 NF-17-P630-007 GPS: preserve the size of simple text input dialogs (2016-07-08)
 
