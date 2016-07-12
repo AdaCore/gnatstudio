@@ -501,6 +501,7 @@
 
    <toolbar id='Bookmarks'>
       <button action='bookmark create'/>
+      <button action='bookmark create group'/>
       <separator/>
       <button action='bookmark rename'/>
       <button action='bookmark edit note'/>

@@ -407,7 +407,9 @@ package body Bookmark_Views is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Delete the selected bookmark
 
-   type Create_Bookmark_Command is new Interactive_Command with null record;
+   type Create_Bookmark_Command is new Interactive_Command with record
+      Create_Group : Boolean := False;
+   end record;
    overriding function Execute
      (Command : access Create_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
@@ -1161,12 +1163,39 @@ package body Bookmark_Views is
      (Command : access Create_Bookmark_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
       Mark   : Location_Marker := Create_Marker (Kernel);
       View   : Bookmark_View_Access;
-      Iter   : Gtk_Tree_Iter;
-      Ignore : G_Source_Id with Unreferenced;
+      Group, Bookmark : Bookmark_Data_Access;
+      Filter_Iter : Gtk_Tree_Iter;
+      Model       : Gtk_Tree_Model;
+
+      function On_Row
+        (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
+         return Boolean;
+      --  Start editing the newly inserted row
+
+      function On_Row
+        (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
+         return Boolean
+      is
+         pragma Unreferenced (Model, Path);
+         Dummy  : G_Source_Id;
+         B      : constant Bookmark_Data_Access :=
+           View.Tree.Get_Data (Store_Iter => Iter);
+      begin
+         if B = Bookmark then
+            View.Tree.Get_Selection.Unselect_All;
+            View.Tree.Get_Selection.Select_Iter
+              (View.Tree.Convert_To_Filter_Iter (Iter));
+            Dummy := Idle_Add
+              (Start_Editing_Idle'Access, View,
+               Priority => Priority_High_Idle);
+            return True;  --  stop iteration
+         else
+            return False; --  continue iteration
+         end if;
+      end On_Row;
 
    begin
       --  If the current module doesn't support creating bookmarks, we fall
@@ -1196,31 +1225,32 @@ package body Bookmark_Views is
       if not Mark.Is_Null then
          Trace (Me, "bookmark created");
 
-         Insert
-           (New_Bookmark (Kernel, Mark),
-            After => null, In_Group => null);
          View := Generic_View.Get_Or_Create_View (Kernel);
+
+         --  If we have a selection, insert in the same group
+
+         View.Tree.Get_Selection.Get_Selected (Model, Filter_Iter);
+         if Filter_Iter /= Null_Iter then
+            Group := View.Tree.Get_Data
+              (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
+            if not Group.Is_Group then
+               Group := Group.Parent;
+            end if;
+         end if;
+
+         if Command.Create_Group then
+            Bookmark := New_Group ("group");
+         else
+            Bookmark := New_Bookmark (Kernel, Mark);
+         end if;
+
+         Insert (Bookmark, After => null, In_Group => Group);
 
          Refresh (View);
          Bookmark_Added_Hook.Run (Kernel, To_String (Mark));
 
-         --  Start editing the name of the bookmark immediately
-
-         Iter := View.Tree.Model.Get_Iter_First;
-         while Iter /= Null_Iter loop
-            if View.Tree.Get_Data (Store_Iter => Iter).Marker = Mark then
-               View.Tree.Get_Selection.Unselect_All;
-               View.Tree.Get_Selection.Select_Iter
-                 (View.Tree.Convert_To_Filter_Iter (Iter));
-               exit;
-            end if;
-            View.Tree.Model.Next (Iter);
-         end loop;
-
-         --  Register a callback for editing the selected node
-
-         Ignore := Idle_Add
-           (Start_Editing_Idle'Access, View, Priority => Priority_High_Idle);
+         --  Start editing the name of the bookmark
+         View.Tree.Model.Foreach (On_Row'Unrestricted_Access);
          return Success;
       end if;
       return Failure;
@@ -2092,7 +2122,15 @@ package body Bookmark_Views is
         (Kernel, "bookmark create", new Create_Bookmark_Command,
          -("Create a bookmark at the current location"),
          Icon_Name => "gps-add-symbolic",
-         Category => -"Bookmarks");
+         Category  => -"Bookmarks");
+
+      Register_Action
+        (Kernel, "bookmark create group",
+         new Create_Bookmark_Command'
+           (Interactive_Command with Create_Group => True),
+         -("Create an empty bookmark group (visible in Bookmarks view)"),
+         Icon_Name => "gps-add-folder-symbolic",
+         Category  => -"Bookmarks");
 
       Register_Action
         (Kernel, "bookmark edit note", new Edit_Note_Command,
