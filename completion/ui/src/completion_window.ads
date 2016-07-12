@@ -77,19 +77,6 @@ package Completion_Window is
    --  navigating among the completion proposals.
 
    procedure Gtk_New
-     (Explorer : out Completion_Explorer_Access;
-      Kernel   : Kernel_Handle);
-   --  Create a new Completion_Explorer
-
-   procedure Initialize
-     (Explorer : access Completion_Explorer_Record'Class;
-      Kernel   : Kernel_Handle);
-   --  Internal initialization procedure
-
-   procedure Delete (Explorer : access Completion_Explorer_Record'Class);
-   --  Delete explorer procedure
-
-   procedure Gtk_New
      (Window : out Completion_Window_Access;
       Kernel : Kernel_Handle);
    --  Create a new Completion_Window
@@ -142,12 +129,6 @@ package Completion_Window is
 
    procedure Delete (Window : access Completion_Window_Record'Class);
    --  Destroy the window and its contents.
-
-   procedure Gtk_New (Window : out Completion_Notes_Window);
-   --  Create a new completion notes window and initialize it
-
-   procedure Initialize (Window : access Completion_Notes_Window_Record'Class);
-   --  Initialize the given completion notes window
 
    --  ??? Need a function to set case sensitivity
 

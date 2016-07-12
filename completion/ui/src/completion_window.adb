@@ -72,6 +72,37 @@ package body Completion_Window is
 
    Notes_Window_Left_Padding : constant := 5;
 
+   -------------------------
+   -- Completion explorer --
+   -------------------------
+
+   procedure Gtk_New
+     (Explorer : out Completion_Explorer_Access;
+      Kernel   : Kernel_Handle);
+   --  Create a new Completion_Explorer
+
+   procedure Initialize
+     (Explorer : access Completion_Explorer_Record'Class;
+      Kernel   : Kernel_Handle);
+   --  Internal initialization procedure
+
+   procedure Delete (Explorer : access Completion_Explorer_Record'Class);
+   --  Delete explorer procedure
+
+   ----------------------
+   -- Completion notes --
+   ----------------------
+
+   procedure Gtk_New (Window : out Completion_Notes_Window);
+   --  Create a new completion notes window and initialize it
+
+   procedure Initialize (Window : access Completion_Notes_Window_Record'Class);
+   --  Initialize the given completion notes window
+
+   -----------------------
+   -- Local subprograms --
+   -----------------------
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (String, String_Access);
 
