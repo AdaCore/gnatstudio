@@ -42,6 +42,13 @@ NF-17-P704-020 GPS: display bookmarks on the side of editors (2016-07-05)
   in the scrollbar of editors, as well as an icon on the left side of the
   line, as a quick way to identify them.
 
+NF-17-P704-010 GPS: new action to select the current subprogram (2014-07-12)
+
+  A new action "select subprogram" has been added to GPS, which selects
+  the current subprogram, extending the selection to the englobing subprogram
+  if a subprogram is already selected. This can be useful, for instance, to
+  limit a search to the context of the current subprogram.
+
 NF-17-P704-009 GPS: changes in Bookmarks view (2016-07-06)
 
   You now need to double-click on a bookmark to jump to the corresponding

@@ -41,6 +41,10 @@ GPS.Preference("Plugins/emacs/bgcolor").create(
     """Background color for popup windows (zap-to-char,...)""",
     "yellow")
 
+SUBPROGRAM_BLOCKS = set(["CAT_PROCEDURE", "CAT_FUNCTION", "CAT_ENTRY",
+                         "CAT_PROTECTED", "CAT_TASK", "CAT_PACKAGE"])
+# The block_types that are considered to be "subprogram" blocks
+
 
 def parse_parentheses(editor, begin=None, end=None):
     """
@@ -127,15 +131,13 @@ def goto_subprogram_start(cursor):
     Return an EditorLocation corresponding to the subprogram in which
     cursor is
     """
-    blocks = {"CAT_PROCEDURE": 1, "CAT_FUNCTION": 1, "CAT_ENTRY": 1,
-              "CAT_PROTECTED": 1, "CAT_TASK": 1, "CAT_PACKAGE": 1}
 
     if cursor.block_type() == "CAT_UNKNOWN":
         return None
 
     min = cursor.buffer().beginning_of_buffer()
     cursor = cursor.block_start()
-    while not cursor.block_type() in blocks and cursor > min:
+    while cursor.block_type() not in SUBPROGRAM_BLOCKS and cursor > min:
         cursor = cursor.block_start() - 1
 
     if cursor > min:
@@ -247,6 +249,44 @@ def select_line():
     buffer = GPS.EditorBuffer.get()
     loc = buffer.current_view().cursor()
     buffer.select(loc.beginning_of_line(), loc.end_of_line() + 1)
+
+
+@interactive("Editor", "Source editor", name="select subprogram")
+def select_enclosing_block():
+    """
+    Select the subprogram which contains the current selection.
+
+    If there is no selection, select the block that contains the cursor.
+    If there is a selection, select the subprogram which contains the first
+    line of the selection - so you can call this action multiple times in
+    a row to select parent subprograms.
+    """
+    b = GPS.EditorBuffer.get()
+    sel_start, sel_end = b.selection_start(), b.selection_end()
+
+    # the first line is already selected? There isn't an "enclosing"
+    # subprogram, so let's select everything.
+    if sel_start.line() == 1:
+        b.select()
+        return
+
+    # Find the enclosing subprogram
+    loc = sel_start
+
+    while (loc.block_type() not in SUBPROGRAM_BLOCKS and
+           loc.line() > 1) or (sel_start == loc.block_start()):
+        start = loc.block_start()
+        if start.line() == 1:
+            loc = start
+            break
+        else:
+            loc = b.at(start.line() - 1, 1)
+
+    if loc.line() <= 1:
+        b.select()
+        return
+
+    b.select(loc.block_start(), loc.block_end())
 
 
 def get_selection_or_buffer(buffer=None):
