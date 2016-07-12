@@ -83,6 +83,7 @@ with GPS.Main_Window;           use GPS.Main_Window;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
 with System;                    use System;
+with Tooltips;                  use Tooltips;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
 with Input_Sources.File;        use Input_Sources.File;
@@ -1675,8 +1676,10 @@ package body GPS.Kernel.Modules.UI is
 
          if Action /= null then
             if Self.all in Gtk_Widget_Record'Class then
-               Gtk_Widget (Self).Set_Tooltip_Markup
-                 (Get_Full_Description (Action, Data.Kernel));
+               Tooltips.Set_Static_Tooltip
+                 (Gtk_Widget (Self),
+                  Text       => Get_Full_Description (Action, Data.Kernel),
+                  Use_Markup => True);
                Get_Style_Context (Gtk_Widget (Self)).Remove_Class
                  ("nogpsaction");
             end if;
@@ -1710,8 +1713,10 @@ package body GPS.Kernel.Modules.UI is
             end if;
 
          elsif Self.all in Gtk_Widget_Record'Class then
-            Gtk_Widget (Self).Set_Tooltip_Markup
-              ("Action not found: " & Escape_Text (Data.Action.all));
+            Tooltips.Set_Static_Tooltip
+              (Gtk_Widget (Self),
+               Text => "Action not found: " & Escape_Text (Data.Action.all),
+               Use_Markup => True);
             Get_Style_Context (Gtk_Widget (Self)).Add_Class ("nogpsaction");
          end if;
       end if;

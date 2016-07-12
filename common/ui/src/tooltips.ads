@@ -84,6 +84,7 @@ package Tooltips is
       Area    : Gdk.Rectangle.Gdk_Rectangle);
    --  Set the active area for the tooltip. While the cursor remains in this
    --  area, the tooltip is kept on screen with the same contents.
+   --  Coordinates are relative to the widget.
 
    procedure Set_Tooltip
      (Tooltip   : access Tooltips'Class;
@@ -92,7 +93,20 @@ package Tooltips is
    --  the tooltip is displayed.
    --  You can attach a given tooltip to a single widget for the time being.
    --  A Program_Error will be raised if you do not respect that.
-   --  Tooltip is automatically destroyed when the widget is destroyed.
+   --  Tooltip is automatically destroyed and freed when the widget is
+   --  destroyed.
+
+   ---------------
+   -- Shortcuts --
+   ---------------
+
+   procedure Set_Static_Tooltip
+     (Widget     : not null access Gtk_Widget_Record'Class;
+      Text       : String;
+      Use_Markup : Boolean := True);
+   --  Set static text for a tooltip.
+   --  This is similar to Gtk.Widget.Set_Tooltip_Text, but the placement of
+   --  tooltips is different.
 
 private
    type Tooltips is abstract tagged null record;

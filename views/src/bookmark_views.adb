@@ -37,6 +37,7 @@ with Glib_Values_Utils;         use Glib_Values_Utils;
 
 with Gdk.Drag_Contexts;         use Gdk.Drag_Contexts;
 with Gdk.Event;                 use Gdk.Event;
+with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Property;              use Gdk.Property;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
@@ -58,7 +59,6 @@ with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_View;             use Gtk.Text_View;
 with Gtk.Toolbar;               use Gtk.Toolbar;
-with Gtk.Tooltip;               use Gtk.Tooltip;
 with Gtk.Tree_Drag_Source;      use Gtk.Tree_Drag_Source;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
@@ -94,6 +94,7 @@ with GPS.Scripts;                  use GPS.Scripts;
 with GPS.Search;                   use GPS.Search;
 with Gtkada.Tree_View;             use Gtkada.Tree_View;
 with GUI_Utils;                    use GUI_Utils;
+with Tooltips;                     use Tooltips;
 with XML_Parsers;                  use XML_Parsers;
 with XML_Utils;                    use XML_Utils;
 
@@ -329,11 +330,11 @@ package body Bookmark_Views is
       Project      : Project_Type);
    --  Called when the current editor reaches a new location
 
-   function On_Query_Tooltip
-     (Self          : access GObject_Record'Class;
-      X, Y          : Gint;
-      Keyboard_Mode : Boolean;
-      Tooltip       : not null access GObject_Record'Class) return Boolean;
+   type Bookmark_View_Tooltips is new Tooltips.Tooltips with null record;
+   overriding function Create_Contents
+     (Tooltip         : not null access Bookmark_View_Tooltips;
+      Widget          : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y            : Glib.Gint) return Gtk.Widget.Gtk_Widget;
    --  Support for tooltips: set the contents of the tooltips
 
    procedure On_Multipress
@@ -1650,66 +1651,61 @@ package body Bookmark_Views is
       end if;
    end On_Longpress;
 
-   ----------------------
-   -- On_Query_Tooltip --
-   ----------------------
+   ---------------------
+   -- Create_Contents --
+   ---------------------
 
-   function On_Query_Tooltip
-     (Self          : access GObject_Record'Class;
-      X, Y          : Gint;
-      Keyboard_Mode : Boolean;
-      Tooltip       : not null access GObject_Record'Class) return Boolean
+   overriding function Create_Contents
+     (Tooltip         : not null access Bookmark_View_Tooltips;
+      Widget          : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y            : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
-      View    : constant Bookmark_View_Access := Bookmark_View_Access (Self);
-      Tip     : constant Gtk_Tooltip := Gtk_Tooltip (Tooltip);
-      X2      : Gint := X;
-      Y2      : Gint := Y;
+      Tree    : constant Bookmark_Tree := Bookmark_Tree (Widget);
       Filter_Path    : Gtk_Tree_Path;
-      Model   : Gtk_Tree_Model;
       Filter_Iter    : Gtk_Tree_Iter;
-      Success : Boolean;
       Data    : Bookmark_Data_Access;
-      Text    : Unbounded_String;
+      Text           : Unbounded_String;
+      Area    : Gdk_Rectangle;
+      Label   : Gtk_Label;
    begin
-      View.Tree.Get_Tooltip_Context
-        (X => X2, Y => Y2, Keyboard_Tip => Keyboard_Mode,
-         Model => Model, Path => Filter_Path,
-         Iter  => Filter_Iter, Success => Success);
+      Tooltips.Initialize_Tooltips (Tree, X, Y, Area, Filter_Iter);
+      Tooltip.Set_Tip_Area (Area);
 
-      if Success then
-         Data := View.Tree.Get_Data
-           (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
+      if Filter_Iter /= Null_Iter then
+         Data := Tree.Get_Data
+           (Store_Iter => Tree.Convert_To_Store_Iter (Filter_Iter));
          if Data.Is_Group then
-            Path_Free (Filter_Path);
-            return False;
+            Text := To_Unbounded_String
+               ("<b>Name:</b> " & Protect (Data.Name.all));
          else
             declare
                Location : constant String := To_String (Data.Marker);
             begin
                if Location = Data.Name.all then
-                  Text := To_Unbounded_String ("<b>Location:</b> " & Location);
+                  Text := To_Unbounded_String
+                     ("<b>Location:</b> " & Protect (Location));
                else
                   Text := To_Unbounded_String
-                    ("<b>Name:</b> " & Data.Name.all & ASCII.LF &
-                       "<b>Location:</b> " & Location);
-               end if;
-
-               if Data.Note /= Null_Unbounded_String then
-                  Append (Text, ASCII.LF & "<b>Note:</b>" & ASCII.LF
-                          & "<tt>" & To_String (Data.Note) & "</tt>");
+                    ("<b>Name:</b> " & Protect (Data.Name.all) & ASCII.LF &
+                     "<b>Location:</b> " & Protect (Location));
                end if;
             end;
-
-            Tip.Set_Markup (To_String (Text));
-            View.Tree.Set_Tooltip_Row (Tip, Filter_Path);
-            Path_Free (Filter_Path);
-            return True;
          end if;
 
+         if Data.Note /= Null_Unbounded_String then
+            Append (Text, ASCII.LF & "<b>Note:</b>" & ASCII.LF
+                    & "<tt>" & Protect (To_String (Data.Note)) & "</tt>");
+         end if;
+
+         Gtk_New (Label, To_String (Text));
+         Label.Set_Use_Markup (True);
+         Path_Free (Filter_Path);
+         return Gtk_Widget (Label);
+
       else
-         return False;
+         return null;
       end if;
-   end On_Query_Tooltip;
+   end Create_Contents;
 
    ----------------
    -- Initialize --
@@ -1722,6 +1718,7 @@ package body Bookmark_Views is
       Num       : Gint with Unreferenced;
       Scrolled  : Gtk_Scrolled_Window;
       Pixbuf    : Gtk_Cell_Renderer_Pixbuf;
+      Tooltip   : Tooltips.Tooltips_Access;
    begin
       Initialize_Vbox (View, Homogeneous => False);
 
@@ -1778,8 +1775,8 @@ package body Bookmark_Views is
       Bookmark_Removed_Hook.Add (new Refresh_Hook, Watch => View);
       Location_Changed_Hook.Add (new On_Loc_Changed, Watch => View);
 
-      View.Tree.On_Query_Tooltip (On_Query_Tooltip'Access, Slot => View);
-      View.Tree.Set_Has_Tooltip (True);
+      Tooltip := new Bookmark_View_Tooltips;
+      Tooltip.Set_Tooltip (View.Tree);
 
       View.Tree.Set_Reorderable (True);
       Dest_Add_Text_Targets (View.Tree);
