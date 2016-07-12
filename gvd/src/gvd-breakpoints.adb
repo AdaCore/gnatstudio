@@ -247,6 +247,12 @@ package body GVD.Breakpoints is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Remove the selected breakpoint
 
+   type Clear_Breakpoints_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Clear_Breakpoints_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Remove all breakpoints
+
    type View_Breakpoint_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access View_Breakpoint_Command;
@@ -933,6 +939,13 @@ package body GVD.Breakpoints is
 
       Register_Action
         (Kernel,
+         "debug clear breakpoints", new Clear_Breakpoints_Command,
+         -"Delete all existing breakpoints",
+         Icon_Name => "gps-clear-symbolic",
+         Category  => -"Debug");
+
+      Register_Action
+        (Kernel,
          "debug view breakpoint", new View_Breakpoint_Command,
          -("View the source editor containing the selected breakpoint"
            & " (from the Breakpoints view)"),
@@ -1477,6 +1490,28 @@ package body GVD.Breakpoints is
                View.Breakpoint_List.Get_Selection.Select_Iter (Iter);
             end if;
          end if;
+      end if;
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Clear_Breakpoints_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View      : constant Breakpoint_Editor :=
+        Breakpoint_Editor
+          (Breakpoints_MDI_Views.Retrieve_View (Get_Kernel (Context.Context)));
+      Model     : Gtk_Tree_Store;
+   begin
+      if View /= null then
+         Clear_All_Breakpoints (Get_Kernel (Context.Context));
+         Model := -Get_Model (View.Breakpoint_List);
+         Clear (Model);
       end if;
       return Success;
    end Execute;

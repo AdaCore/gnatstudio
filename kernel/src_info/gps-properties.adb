@@ -21,9 +21,11 @@ with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GPR.Osint;                  use GPR.Osint;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 package body GPS.Properties is
+   Me : constant Trace_Handle := Create ("PROPERTIES");
 
    use Properties_Hash.String_Hash_Table;
 
@@ -210,7 +212,8 @@ package body GPS.Properties is
       end if;
 
    exception
-      when others =>
+      when E : others =>
+         Trace (Me, E);
          Found := False;
    end Get_Resource_Property;
 

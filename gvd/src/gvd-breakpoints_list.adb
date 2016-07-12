@@ -625,10 +625,12 @@ package body GVD.Breakpoints_List is
       end if;
 
       Trace (Me, "Loading persistent breakpoints");
+      Prop.Kernel := Kernel;
       Get_Property
         (Prop, Get_Project (Kernel), Name => "breakpoints", Found => Found);
       if Found then
          Module.Breakpoints.List := Prop.Breakpoints;
+         Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
          Show_Breakpoints_In_All_Editors (Kernel);
       end if;
    end Execute;
@@ -672,6 +674,13 @@ package body GVD.Breakpoints_List is
    is
       pragma Unreferenced (Self);
    begin
+      --  We always save the debugger-specific breakpoints to the global list,
+      --  so that later debuggers are started with the same list. If we don't
+      --  do that, and the Preserve_State_On_Exit pref is disabled, we would
+      --  end up with complex cases where breakpoints set before the debugger
+      --  is started are set when the debugger starts, but not those set while
+      --  the debugger is running
+
       --  In case the user has set breakpoints manually via the console,
       --  synchronize the global list of breakpoints
 
@@ -736,10 +745,6 @@ package body GVD.Breakpoints_List is
       Process : constant Visual_Debugger := Visual_Debugger (Debugger);
       Id      : Breakpoint_Identifier;
    begin
-      if not Preserve_State_On_Exit.Get_Pref then
-         return;
-      end if;
-
       for B of Module.Breakpoints.List loop
          if B.Except /= "" then
             Id := Process.Debugger.Break_Exception
