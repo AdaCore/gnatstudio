@@ -36,6 +36,7 @@ private with Ada.Strings.Unbounded.Hash;
 with Ada.Unchecked_Conversion;
 with Ada.Tags;
 
+with Gdk.RGBA;
 with Default_Preferences;           use Default_Preferences;
 with GNATCOLL.VFS;
 limited with GPS.Editors.Line_Information;
@@ -239,6 +240,12 @@ package GPS.Kernel.Messages is
      (Self : not null access Abstract_Message'Class;
       Tag  : Ada.Tags.Tag);
    --  Remove the note associated with Self
+
+   function Get_Background_Color
+     (Self : not null access Abstract_Message)
+      return Gdk.RGBA.Gdk_RGBA;
+   --  Return message's background color for mark this message,
+   --  for example in Locations view
 
    procedure Initialize
      (Self          : not null access Abstract_Message'Class;

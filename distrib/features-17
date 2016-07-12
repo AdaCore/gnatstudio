@@ -66,6 +66,12 @@ NF-17-P630-007 GPS: preserve the size of simple text input dialogs (2016-07-08)
   preserved: GPS will now restore it when the dialog is displayed again in
   the future (either in the current session or in a later session).
 
+NF-17-P629-018 GPS: Show color of messages in the Locations view (2016-07-13)
+
+  For messages which have an associated background color
+  (for instance compiler errors), the Locations view shows this
+  background color on the side of the row for this message.
+
 NF-17-P628-025 GPS: new toolbar parameter for GPS.Browser.create (2016-07-04)
 
   A new browser can now be created with a custom toolbar. It is thus possible

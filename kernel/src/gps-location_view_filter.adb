@@ -56,6 +56,8 @@ package body GPS.Location_View_Filter is
       Value        : in out Glib.Values.GValue;
       Column       : Gint)
    is
+      use GPS.Location_View.Listener;
+
       Self        : constant Location_View_Filter_Model :=
         Location_View_Filter_Model (Gtk_Tree_Model_Filter'(-Filter_Model));
       Child_Model : constant Gtk_Tree_Model := Self.Get_Model;
@@ -74,7 +76,7 @@ package body GPS.Location_View_Filter is
       --  columns, so can unset value and lets underlying model to fill it.
       Gtk.Tree_Model.Get_Value (Child_Model, Child_Iter, Column, Value);
 
-      if Column = GPS.Location_View.Listener.Node_Markup_Column then
+      if Column = -Node_Markup_Column then
          --  Modify markup text for categories and files level rows.
 
          Proxy_Path := Self.Get_Path (Iter);
@@ -86,7 +88,7 @@ package body GPS.Location_View_Filter is
                  Get_Int
                    (Child_Model,
                     Child_Iter,
-                    GPS.Location_View.Listener.Number_Of_Children_Column);
+                    -Number_Of_Children_Column);
                Total_Image : constant String :=
                  GNATCOLL.Utils.Image (Natural (Total), 1);
                Visible     : Natural;
@@ -171,6 +173,8 @@ package body GPS.Location_View_Filter is
       Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
       Self        : Location_View_Filter_Model) return Boolean
    is
+      use GPS.Location_View.Listener;
+
       P     : constant Gtk_Tree_Iter := Parent (Child_Model, Iter);
       P2    : Gtk_Tree_Iter;
       Child : Gtk.Tree_Model.Gtk_Tree_Iter;
@@ -191,7 +195,7 @@ package body GPS.Location_View_Filter is
 
          declare
             Text  : constant String := Get_String
-              (Child_Model, Iter, GPS.Location_View.Listener.Text_Column);
+              (Child_Model, Iter, -Text_Column);
          begin
             --  when the filter is negated, ignore file names, since otherwise
             --  we cannot easily filter "warning"
@@ -225,10 +229,10 @@ package body GPS.Location_View_Filter is
 
          declare
             Text  : constant String := Get_String
-              (Child_Model, Iter, GPS.Location_View.Listener.Text_Column);
+              (Child_Model, Iter, -Text_Column);
             File : constant Virtual_File :=
               Get_File
-                (Child_Model, Iter, GPS.Location_View.Listener.File_Column);
+                (Child_Model, Iter, -File_Column);
          begin
             if Self.Pattern = null then
                return True;

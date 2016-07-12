@@ -258,18 +258,13 @@ package body GNAThub.Loader is
                   Node : Semantic_Node'Class := Element (Iter);
                begin
                   if Node.Is_Valid
+                    and then Node.Category in
+                      Language.Cat_Procedure .. Language.Cat_Destructor
                     and then Node.Sloc_Start.Line <= R.Line
-                    and then Node.Sloc_Start.Column <=
-                      Basic_Types.Visible_Column_Type (R.Column)
                     and then Node.Sloc_End.Line >= R.Line
-                    and then Node.Sloc_End.Column >=
-                      Basic_Types.Visible_Column_Type (R.Column)
                     and then
                       (Result = null
-                       or else
-                         (Result.Line < Node.Sloc_Start.Line
-                          or else Result.Column < Natural
-                            (Node.Sloc_Start.Column)))
+                       or else Result.Line < Node.Sloc_Start.Line)
                   then
                      if Result = null then
                         Result := new GNAThub_Subprogram'

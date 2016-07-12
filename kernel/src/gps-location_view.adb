@@ -488,7 +488,7 @@ package body GPS.Location_View is
          Iter := Get_Iter_First (Model);
 
          while Iter /= Null_Iter loop
-            exit Requests when Get_String (Model, Iter, Category_Column)
+            exit Requests when Get_String (Model, Iter, -Category_Column)
               = Self.Requests.First_Element.Category;
 
             Next (Model, Iter);
@@ -523,7 +523,7 @@ package body GPS.Location_View is
 
          while Iter /= Null_Iter loop
             exit when
-              GNATCOLL.VFS.GtkAda.Get_File (Model, Iter, File_Column)
+              GNATCOLL.VFS.GtkAda.Get_File (Model, Iter, -File_Column)
                 = Self.Requests.First_Element.File;
 
             Next (Model, Iter);
@@ -878,7 +878,7 @@ package body GPS.Location_View is
             Path := Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (List));
             if Path.Get_Depth >= 3 then
                Message := Get_Message
-                 (Model, Get_Iter (Model, Path), Message_Column);
+                 (Model, Get_Iter (Model, Path), -Message_Column);
 
                Set_Messages_Information (Context, (1 => Message));
 
@@ -905,7 +905,7 @@ package body GPS.Location_View is
                if Path.Get_Depth >= 3 then
                   Messages_Index := Messages_Index + 1;
                   Messages (Messages_Index) := Get_Message
-                    (Model, Get_Iter (Model, Path), Message_Column);
+                    (Model, Get_Iter (Model, Path), -Message_Column);
 
                   if Messages_Index = 1 then
                      --  Store first message's file
@@ -1032,8 +1032,8 @@ package body GPS.Location_View is
               (Model, Gtk_Tree_Path (Gtk_Tree_Path_List.Get_Data (Cursor)));
 
             if Iter /= Null_Iter
-              and then Get_File (Model, Iter, File_Column) = File
-              and then Integer (Get_Int (Model, Iter, Line_Column)) = Line
+              and then Get_File (Model, Iter, -File_Column) = File
+              and then Integer (Get_Int (Model, Iter, -Line_Column)) = Line
             then
                Free (List);
                return;
@@ -1056,7 +1056,7 @@ package body GPS.Location_View is
          Category_Iter := Get_Iter_First (Model);
 
          while Category_Iter /= Null_Iter loop
-            exit when Get_String (Model, Category_Iter, Category_Column)
+            exit when Get_String (Model, Category_Iter, -Category_Column)
               = "Builder results";
 
             Next (Model, Category_Iter);
@@ -1083,7 +1083,7 @@ package body GPS.Location_View is
          File_Iter := Children (Model, Category_Iter);
 
          while File_Iter /= Null_Iter loop
-            exit when Get_File (Model, File_Iter, File_Column) = File;
+            exit when Get_File (Model, File_Iter, -File_Column) = File;
 
             Next (Model, File_Iter);
          end loop;
@@ -1095,7 +1095,7 @@ package body GPS.Location_View is
 
             while Message_Iter /= Null_Iter loop
                exit when
-                 Integer (Get_Int (Model, Message_Iter, Line_Column)) = Line;
+                 Integer (Get_Int (Model, Message_Iter, -Line_Column)) = Line;
 
                Next (Model, Message_Iter);
             end loop;
@@ -1112,7 +1112,7 @@ package body GPS.Location_View is
 
                Message_Selected_Hook.Run
                  (Locations.Kernel,
-                  Get_Message (Model, Message_Iter, Message_Column));
+                  Get_Message (Model, Message_Iter, -Message_Column));
             end if;
          end if;
       end if;
@@ -1231,7 +1231,7 @@ package body GPS.Location_View is
          On_Location_Clicked (Self, Path, Iter);
       end if;
 
-      Get_Value (Self.View.Get_Model, Iter, Action_Command_Column, Value);
+      Get_Value (Self.View.Get_Model, Iter, -Action_Command_Column, Value);
       Action := To_Action_Item (Get_Address (Value));
 
       if Action /= null
@@ -1277,12 +1277,12 @@ package body GPS.Location_View is
       declare
          Mark     : constant Editor_Mark'Class :=
            Get_Mark (Gtk.Tree_Model."-" (Self.View.Get_Model),
-                     Iter, Node_Mark_Column);
+                     Iter, -Node_Mark_Column);
          Message  : constant Message_Access :=
-           Get_Message (Self.View.Get_Model, Iter, Message_Column);
+           Get_Message (Self.View.Get_Model, Iter, -Message_Column);
          File     : constant Virtual_File :=
            Get_File (Gtk.Tree_Model."-" (Self.View.Get_Model),
-                     Iter, File_Column);
+                     Iter, -File_Column);
 
       begin
          --  Notify about change of selected message
@@ -1823,20 +1823,20 @@ package body GPS.Location_View is
          if Iter /= Null_Iter then
             if Path.Get_Depth = 1 then
                Get_Messages_Container (View.Kernel).Remove_Category
-                 (Get_String (Model, Iter, Category_Column),
+                 (Get_String (Model, Iter, -Category_Column),
                   Locations_Message_Flags);
 
             elsif Path.Get_Depth = 2 then
                if not Is_Parent_Selected (Selection, Path) then
                   Get_Messages_Container (View.Kernel).Remove_File
-                    (Get_String (Model, Iter, Category_Column),
-                     Get_File (Model, Iter, File_Column),
+                    (Get_String (Model, Iter, -Category_Column),
+                     Get_File (Model, Iter, -File_Column),
                      Locations_Message_Flags);
                end if;
 
             elsif Path.Get_Depth >= 3 then
                if not Is_Parent_Selected (Selection, Path, 2) then
-                  Message := Get_Message (Model, Iter, Message_Column);
+                  Message := Get_Message (Model, Iter, -Message_Column);
                   Message.Remove;
                end if;
             end if;
@@ -1900,7 +1900,7 @@ package body GPS.Location_View is
             declare
                Category : constant Unbounded_String :=
                  To_Unbounded_String
-                   (Get_String (Model, Iter, Category_Column));
+                   (Get_String (Model, Iter, -Category_Column));
                Files    : constant Virtual_File_Array :=
                  Container.Get_Files (Category);
             begin
@@ -1917,10 +1917,10 @@ package body GPS.Location_View is
                declare
                   Category : constant Unbounded_String :=
                     To_Unbounded_String
-                      (Get_String (Model, Iter, Category_Column));
+                      (Get_String (Model, Iter, -Category_Column));
                   F        : constant Virtual_File :=
                     GNATCOLL.VFS.GtkAda.Get_File
-                      (Model, Iter, File_Column);
+                      (Model, Iter, -File_Column);
                begin
                   Export_Messages (File, Container, Category, F);
                end;

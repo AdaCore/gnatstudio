@@ -154,6 +154,7 @@ package body GPS.Tree_View.Locations is
       Model : Gtk.Tree_Model.Gtk_Tree_Model)
    is
       Pixbuf_Renderer : Gtk_Cell_Renderer_Pixbuf;
+      Color_Column    : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
       Dummy           : Gint;
       pragma Unreferenced (Dummy);
    begin
@@ -173,13 +174,23 @@ package body GPS.Tree_View.Locations is
       Self.Set_Enable_Search (False);
       Self.Set_Activate_On_Single_Click (True);
 
+      --  Highlighting
+
+      Gtk_New (Color_Column);
+      Gtk_New (Pixbuf_Renderer);
+      Color_Column.Pack_Start (Pixbuf_Renderer, False);
+      Color_Column.Add_Attribute
+        (Pixbuf_Renderer, "cell-background-rgba",
+         -Background_Color_Column);
+      Dummy := Self.Append_Column (Color_Column);
+
       --  Action column
 
       Gtk_New (Self.Action_Column);
       Gtk_New (Pixbuf_Renderer);
       Self.Action_Column.Pack_Start (Pixbuf_Renderer, False);
       Self.Action_Column.Add_Attribute
-        (Pixbuf_Renderer, "icon-name", Icon_Name_Column);
+        (Pixbuf_Renderer, "icon-name", -Icon_Name_Column);
       Dummy := Self.Append_Column (Self.Action_Column);
 
       --  Text column
@@ -188,14 +199,14 @@ package body GPS.Tree_View.Locations is
       Gtk_New (Pixbuf_Renderer);
       Self.Location_Column.Pack_Start (Pixbuf_Renderer, False);
       Self.Location_Column.Add_Attribute
-        (Pixbuf_Renderer, "icon-name", Node_Icon_Name_Column);
+        (Pixbuf_Renderer, "icon-name", -Node_Icon_Name_Column);
 
       Gtk_New (Self.Text_Renderer);
       Self.Location_Column.Pack_Start (Self.Text_Renderer, False);
       Self.Location_Column.Add_Attribute
         (Self.Text_Renderer,
          Property_Name (Markup_Property),
-         Node_Markup_Column);
+         -Node_Markup_Column);
       Dummy := Self.Append_Column (Self.Location_Column);
       Self.Set_Expander_Column (Self.Location_Column);
 
@@ -421,7 +432,7 @@ package body GPS.Tree_View.Locations is
          Self.Get_Cell_Area (Path, Self.Action_Column, Rect);
 
          if Rect.X <= X and X <= Rect.X + Rect.Width then
-            Column := Action_Tooltip_Column;
+            Column := -Action_Tooltip_Column;
 
          else
             --  Check whether text column is partially hidden.
@@ -445,7 +456,7 @@ package body GPS.Tree_View.Locations is
                if X1 <= Rect.X or X2 >= (Rect.X + Rect.Width) then
                   --  Text column is partially hidden, display text tooltip.
 
-                  Column := Node_Tooltip_Column;
+                  Column := -Node_Tooltip_Column;
                end if;
             end if;
          end if;

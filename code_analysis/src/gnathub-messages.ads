@@ -18,6 +18,7 @@
 
 with Ada.Strings.Unbounded;
 
+with Gdk.RGBA;
 with GNATCOLL.VFS;
 
 with Basic_Types;
@@ -49,6 +50,10 @@ package GNAThub.Messages is
 
    function Get_Rule (Self : Message) return Rule_Access;
    --  Returns rule of the message
+
+   overriding function Get_Background_Color
+     (Self : not null access Message)
+      return Gdk.RGBA.Gdk_RGBA;
 
 private
 

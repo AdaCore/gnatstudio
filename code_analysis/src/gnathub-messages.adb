@@ -17,6 +17,17 @@
 
 package body GNAThub.Messages is
 
+   --------------------------
+   -- Get_Background_Color --
+   --------------------------
+
+   overriding function Get_Background_Color
+     (Self : not null access Message)
+      return Gdk.RGBA.Gdk_RGBA is
+   begin
+      return Self.Severity.Color.Get_Pref;
+   end Get_Background_Color;
+
    --------------
    -- Get_Rule --
    --------------

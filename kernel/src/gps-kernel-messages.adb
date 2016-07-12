@@ -33,6 +33,7 @@ with GPS.Kernel.Hooks;              use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages.Hyperlink;
 with GPS.Kernel.Messages.Markup;
 with GPS.Kernel.Messages.Simple;
+with GPS.Kernel.Preferences;
 with GPS.Kernel.Project;            use GPS.Kernel.Project;
 with GPS.Kernel.Style_Manager;      use GPS.Kernel.Style_Manager;
 with GPS.Kernel.Task_Manager;
@@ -450,6 +451,19 @@ package body GPS.Kernel.Messages is
    begin
       return Self.Action;
    end Get_Action;
+
+   --------------------------
+   -- Get_Background_Color --
+   --------------------------
+
+   function Get_Background_Color
+     (Self : not null access Abstract_Message)
+      return Gdk.RGBA.Gdk_RGBA
+   is
+      pragma Unreferenced (Self);
+   begin
+      return GPS.Kernel.Preferences.Browsers_Bg_Color.Get_Pref;
+   end Get_Background_Color;
 
    ------------------
    -- Has_Category --
