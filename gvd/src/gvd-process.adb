@@ -363,11 +363,13 @@ package body GVD.Process is
       --  This runs the Debugger_Location_Changed_Hook hook
 
       if Length (File) /= 0 and then Line /= 0 then
-         Process.Editor_Text.Set_Current_File_And_Line
-           (File => To_Local
+         Set_Current_File_And_Line
+           (Kernel  => Process.Kernel,
+            Process => Process,
+            File    => To_Local
               (Create (+To_String (File),
                Get_Nickname (Debug_Server))),
-            Line => Line);
+            Line    => Line);
       end if;
 
       Process.Post_Processing := False;
@@ -586,8 +588,6 @@ package body GVD.Process is
       Ref (Process);
       Process.Kernel := Window.Kernel;
 
-      Gtk_New (Process.Editor_Text, Process.Kernel, Process);
-
       Set_Current_Debugger (Window.Kernel, Process);
       Add_Debugger (Window.Kernel, Process);
    end Initialize;
@@ -655,7 +655,7 @@ package body GVD.Process is
       Debugger_State_Changed_Hook.Run (Process.Kernel, Process, Debug_None);
       Debugger_Terminated_Hook.Run (Process.Kernel, Process);
 
-      Process.Editor_Text.Free_Debug_Info;
+      Unhighlight_Current_Line (Process.Kernel);
 
       Unregister_Dialog (Process);
       Free (Process.Command_History);

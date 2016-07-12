@@ -290,7 +290,9 @@ class Predefined_Hooks:
     def debugger_breakpoints_changed(name,debugger):
         """
       The list of breakpoints set in the debugger was reloaded. It might
-      not have changed since the last time.
+      not have changed since the last time. The Debugger given in argument
+      might actually be set to none when the list of breakpoints is changed
+      before the debugger starts.
 
       :param str name:
       :param GPS.Debugger debugger:

@@ -562,7 +562,7 @@ package body Debugger is
          if Mode /= Internal
            and then Kind = Execution_Command
          then
-            Process.Editor_Text.Unhighlight_Current_Line;
+            Unhighlight_Current_Line (Debugger.Kernel);
          end if;
 
          --  Display the command in the output window if necessary

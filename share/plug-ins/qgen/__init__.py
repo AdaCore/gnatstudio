@@ -1021,6 +1021,10 @@ else:
 
         @gps_utils.hook('debugger_breakpoints_changed')
         def __on_debugger_breakpoints_changed(debugger):
+            # ??? Could highlight blocks even though the debugger is not
+            # started
+            if debugger is None:
+                return
 
             if QGEN_Module.debugger != debugger:
                 QGEN_Module.debugger = debugger

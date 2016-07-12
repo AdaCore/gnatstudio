@@ -138,9 +138,9 @@ package body GVD.Generic_View is
             --  P := Visual_Debugger
             --     (GVD_Module.Get_Current_Debugger (Kernel));
             null;
+         else
+            View := Get_View (Process);
          end if;
-
-         View := Get_View (Process);
 
          if View = null then
             --  Do we have an existing unattached view ?
@@ -320,7 +320,7 @@ package body GVD.Generic_View is
          Process : constant access Base_Visual_Debugger'Class :=
            Get_Current_Debugger (Kernel);
       begin
-         if Process /= null then
+         if Works_Without_Debugger or else Process /= null then
             Attach_To_View (Process, Kernel, Create_If_Necessary => True);
          end if;
          return Commands.Success;
@@ -334,13 +334,19 @@ package body GVD.Generic_View is
         (Kernel      : not null access GPS.Kernel.Kernel_Handle_Record'Class;
          Action_Name : String;
          Description : String;
-         Filter      : Action_Filter := null) is
+         Filter      : Action_Filter := null)
+      is
+         F : Action_Filter := Filter;
       begin
+         if not Works_Without_Debugger then
+            F := F and Lookup_Filter (Kernel, "Debugger active");
+         end if;
+
          Register_Action
            (Kernel, Action_Name, new Open_Command,
             Description => Description,
             Category    => -"Views",
-            Filter      => Filter);
+            Filter      => F);
       end Register_Open_View_Action;
 
    end Simple_Views;

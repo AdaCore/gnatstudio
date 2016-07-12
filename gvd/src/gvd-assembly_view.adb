@@ -49,7 +49,7 @@ with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GVD.Code_Editors;        use GVD.Code_Editors;
+with GVD.Breakpoints_List;    use GVD.Breakpoints_List;
 with GVD.Generic_View;        use GVD.Generic_View;
 with GVD.Preferences;         use GVD.Preferences;
 with GVD.Process;             use GVD.Process;
@@ -332,7 +332,7 @@ package body GVD.Assembly_View is
       pragma Unreferenced (Self, Kernel);
       Process     : constant Visual_Debugger := Visual_Debugger (Debugger);
    begin
-      Set_Source_Line (Get_View (Process), Process.Editor_Text.Get_Line);
+      Set_Source_Line (Get_View (Process), Process.Current_Line);
    end Execute;
 
    --------------
@@ -419,7 +419,7 @@ package body GVD.Assembly_View is
 
          --  Highlight breakpoint lines
 
-         for B of Process.Breakpoints.List loop
+         for B of Get_Stored_List_Of_Breakpoints (Process).List loop
             if B.Address /= Invalid_Address then
                Iter_From_Address (View, B.Address, Start_Iter, Found);
                if Found then
@@ -543,7 +543,7 @@ package body GVD.Assembly_View is
          return;
       end if;
 
-      for B of Process.Breakpoints.List loop
+      for B of Get_Stored_List_Of_Breakpoints (Process).List loop
          if B.Address = Addr then
             Num := B.Num;
             Result := True;
@@ -887,7 +887,7 @@ package body GVD.Assembly_View is
          return;
       end if;
 
-      Set_Source_Line (Assembly_View (View), Process.Editor_Text.Get_Line);
+      Set_Source_Line (Assembly_View (View), Process.Current_Line);
 
       Address_Low := View.Source_Line_Start;
       Address_High := View.Source_Line_End;
@@ -966,10 +966,13 @@ package body GVD.Assembly_View is
        Debugger : access Base_Visual_Debugger'Class)
    is
       pragma Unreferenced (Self, Kernel);
-      V : constant access Assembly_View_Record'Class := Get_View (Debugger);
+      V : access Assembly_View_Record'Class;
    begin
-      if V /= null then
-         Highlight (V);
+      if Debugger /= null then
+         V := Get_View (Debugger);
+         if V /= null then
+            Highlight (V);
+         end if;
       end if;
    end Execute;
 

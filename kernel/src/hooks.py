@@ -564,7 +564,9 @@ and store precomputed data in it.\n
 
     Hook('debugger_breakpoints_changed', 'debugger_hooks', descr='''
 The list of breakpoints set in the debugger was reloaded. It might
-not have changed since the last time.'''),
+not have changed since the last time. The Debugger given in argument
+might actually be set to none when the list of breakpoints is changed
+before the debugger starts.'''),
 
     Hook('debugger_command_action_hook', 'debugger_string_hooks',
          descr='''

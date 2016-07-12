@@ -1768,8 +1768,13 @@ package body GPS.Kernel.Scripts is
      (Script  : access Scripting_Language_Record'Class;
       Process : access Base_Visual_Debugger'Class) return Class_Instance
    is
-      Inst : Class_Instance := Get_Instance (Script, Process);
+      Inst : Class_Instance;
    begin
+      if Process = null then
+         return No_Class_Instance;
+      end if;
+
+      Inst := Get_Instance (Script, Process);
       if Inst = No_Class_Instance then
          Inst := New_Instance
            (Script, New_Class (Get_Kernel (Script), "Debugger"));

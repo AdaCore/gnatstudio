@@ -880,6 +880,10 @@ package body GVD.Variables is
       Lang      : Language.Language_Access;
       Expansion : Expansions.Expansion_Status;
    begin
+      if Process = null then
+         return;
+      end if;
+
       if Process.Debugger /= null then
          --  Compute the new value for all the items
          for Item of Self.Tree.Items loop

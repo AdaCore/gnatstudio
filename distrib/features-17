@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P712-016 GPS: Breakpoints view can be displayed anywhere (2016-07-12)
+
+  Since we can now set breakpoints even when no debugger is running, it
+  is also useful to edit them outside of the Debug perspective.
+
 NF-17-P706-011 GPS: double-click in breakpoints to see editor (2016-07-06)
 
   If you double-click on a breakpoint in the Breakpoints view, GPS will

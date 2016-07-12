@@ -93,6 +93,10 @@ package GVD.Generic_View is
       return access Base_Visual_Debugger'Class;
 
    generic
+      Works_Without_Debugger : Boolean := False;
+      --  If true, the user can open this view even when no debugger is
+      --  running.
+
       type Formal_View_Record is
         new Generic_Views.View_Record and View_With_Process with private;
       --  The type used as a parent for the view, and used to store the view in

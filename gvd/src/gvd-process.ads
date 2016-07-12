@@ -61,7 +61,6 @@ package GVD.Process is
    type Regexp_Filter_List is private;
 
    type Visual_Debugger_Record is new Base_Visual_Debugger with record
-      Editor_Text             : GVD.Code_Editors.Code_Editor;
       Debugger_Num            : Natural;
       --  The number identifying the debugger.
 
@@ -87,7 +86,7 @@ package GVD.Process is
       Variables_View          : Generic_Views.Abstract_View_Access;
       --  All views potentially associated with a debugger
 
-      Breakpoints             : GVD.Breakpoints_List.Breakpoint_List;
+      Breakpoints             : aliased GVD.Breakpoints_List.Breakpoint_List;
       --  The list of breakpoints and watchpoints specific to this debugger.
 
       Descriptor              : GVD.Types.Program_Descriptor;
@@ -116,6 +115,11 @@ package GVD.Process is
       --  True if the current command was issued by the user from the console.
       --  Valid both for command typed manually, and for commands issued by
       --  shortcuts while the focus is in the console
+
+      Current_File            : GNATCOLL.VFS.Virtual_File;
+      Current_Line            : Natural := 0;
+      --  The file/line on which the debugger is stopped (ie these were set
+      --  when the Set_Current parameter is True for Set_line and Load_File)
 
       ------------
       --  private fields

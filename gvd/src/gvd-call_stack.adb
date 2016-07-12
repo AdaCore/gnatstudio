@@ -41,6 +41,7 @@ with Config;                 use Config;
 with Debugger;               use Debugger;
 with Default_Preferences;    use Default_Preferences;
 with Generic_Views;          use Generic_Views;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GPS.Debuggers;          use GPS.Debuggers;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
@@ -376,7 +377,7 @@ package body GVD.Call_Stack is
       Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class;
       Debugger : access Base_Visual_Debugger'Class)
    is
-      pragma Unreferenced (Self, Kernel);
+      pragma Unreferenced (Self);
       Process     : constant Visual_Debugger := Visual_Debugger (Debugger);
       S           : constant Call_Stack := Get_View (Process);
       Frame       : Unbounded_String;
@@ -400,8 +401,9 @@ package body GVD.Call_Stack is
             S.Block := False;
 
          elsif Frame_Info = No_Debug_Info then
-            Show_Message (Process.Editor_Text,
-                          -"There is no debug information for this frame.");
+            Kernel.Insert (-"There is no debug information for this frame.");
+            Set_Current_File_And_Line
+              (Kernel, Process, GNATCOLL.VFS.No_File, 0);
          end if;
       end if;
    end Execute;

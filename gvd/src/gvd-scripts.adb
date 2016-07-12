@@ -366,12 +366,12 @@ package body GVD.Scripts is
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Data.Set_Return_Value
            (Create_File
-              (Data.Get_Script, Process.Editor_Text.Get_Current_File));
+              (Data.Get_Script, Process.Current_File));
 
       elsif Command = "current_line" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
-         Data.Set_Return_Value (Process.Editor_Text.Get_Line);
+         Data.Set_Return_Value (Process.Current_Line);
 
       elsif Command = "get_console" then
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
@@ -411,7 +411,7 @@ package body GVD.Scripts is
          Inst := Nth_Arg (Data, 1, New_Class (Kernel, "Debugger"));
          Process := Visual_Debugger (GObject'(Get_Data (Inst)));
          Data.Set_Return_Value_As_List;
-         for B of Process.Breakpoints.List loop
+         for B of Get_Stored_List_Of_Breakpoints (Process).List loop
             Data.Set_Return_Value
               (Create_Debugger_Breakpoint (Data.Get_Script, B));
          end loop;

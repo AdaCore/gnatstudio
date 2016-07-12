@@ -48,7 +48,7 @@ package body GVD.Breakpoints_List is
    Me : constant Trace_Handle := Create ("Breakpoints");
 
    type Breakpoints_Module is new Module_ID_Record with record
-      Breakpoints : Breakpoint_List;
+      Breakpoints : aliased Breakpoint_List;
       --  The list of persistent breakpoints for the current project. This
       --  list can be manipulated even when no debugger is running, and is
       --  loaded/saved to disk as needed
@@ -278,8 +278,12 @@ package body GVD.Breakpoints_List is
                    (File   => File,
                     Line   => Line,
                     Column => 1),
+               Num         => Module.Breakpoints.Dummy_Id,
                Disposition => (if Temporary then Delete else Keep),
-               others => <>));
+               others      => <>));
+         Module.Breakpoints.Dummy_Id :=
+           Module.Breakpoints.Dummy_Id + 1;
+         Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
          Show_Breakpoints_In_All_Editors (Kernel);
       else
          For_Each_Debugger (Kernel, On_Debugger'Access);
@@ -328,11 +332,63 @@ package body GVD.Breakpoints_List is
                exit;
             end if;
          end loop;
+         Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
          Show_Breakpoints_In_All_Editors (Kernel);
       else
          For_Each_Debugger (Kernel, On_Debugger'Access);
       end if;
    end Unbreak_Source;
+
+   -----------------------
+   -- Delete_Breakpoint --
+   -----------------------
+
+   procedure Delete_Breakpoint
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Num           : Breakpoint_Identifier)
+   is
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+   begin
+      if Process = null then
+         for Idx in Module.Breakpoints.List.First_Index
+           .. Module.Breakpoints.List.Last_Index
+         loop
+            if Module.Breakpoints.List (Idx).Num = Num then
+               Module.Breakpoints.List.Delete (Idx);
+               exit;
+            end if;
+         end loop;
+         Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
+         Show_Breakpoints_In_All_Editors (Kernel);
+      else
+         Process.Debugger.Remove_Breakpoint (Num, Mode => GVD.Types.Visible);
+      end if;
+   end Delete_Breakpoint;
+
+   ---------------------------
+   -- Clear_All_Breakpoints --
+   ---------------------------
+
+   procedure Clear_All_Breakpoints
+     (Kernel        : not null access Kernel_Handle_Record'Class)
+   is
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Kernel));
+   begin
+      if Process = null then
+         Module.Breakpoints.List.Clear;
+         Debugger_Breakpoints_Changed_Hook.Run (Kernel, null);
+         Show_Breakpoints_In_All_Editors (Kernel);
+      else
+         --  Only for the current breakpoint, not all
+         for Br of Process.Breakpoints.List loop
+            Process.Debugger.Remove_Breakpoint
+              (Br.Num, Mode => GVD.Types.Visible);
+         end loop;
+
+      end if;
+   end Clear_All_Breakpoints;
 
    ----------------------
    -- Break_Subprogram --
@@ -371,8 +427,12 @@ package body GVD.Breakpoints_List is
          Module.Breakpoints.List.Append
            (Breakpoint_Data'
               (Subprogram => To_Unbounded_String (Subprogram),
+               Num         => Module.Breakpoints.Dummy_Id,
                Disposition => (if Temporary then Delete else Keep),
-               others     => <>));
+               others      => <>));
+         Module.Breakpoints.Dummy_Id :=
+           Module.Breakpoints.Dummy_Id + 1;
+         Show_Breakpoints_In_All_Editors (Kernel);
          Show_Breakpoints_In_All_Editors (Kernel);
       else
          For_Each_Debugger (Kernel, On_Debugger'Access);
@@ -745,24 +805,16 @@ package body GVD.Breakpoints_List is
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
    begin
-      if Process /= null then
-         for B of Process.Breakpoints.List loop
-            if B.Num = Breakpoint_Num then
-               B.Enabled := not B.Enabled;
+      for B of Get_Stored_List_Of_Breakpoints (Process).List loop
+         if B.Num = Breakpoint_Num then
+            B.Enabled := not B.Enabled;
+            if Process /= null then
                Process.Debugger.Enable_Breakpoint
                  (B.Num, B.Enabled, Mode => GVD.Types.Visible);
-               return B.Enabled;
             end if;
-         end loop;
-
-      else
-         for B of Module.Breakpoints.List loop
-            if B.Num = Breakpoint_Num then
-               B.Enabled := not B.Enabled;
-               return B.Enabled;
-            end if;
-         end loop;
-      end if;
+            return B.Enabled;
+         end if;
+      end loop;
 
       Show_Breakpoints_In_All_Editors (Kernel);
       return False;
@@ -780,19 +832,11 @@ package body GVD.Breakpoints_List is
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
    begin
-      if Process /= null then
-         for B of Process.Breakpoints.List loop
-            if B.Num = Id then
-               return B;
-            end if;
-         end loop;
-      else
-         for B of Module.Breakpoints.List loop
-            if B.Num = Id then
-               return B;
-            end if;
-         end loop;
-      end if;
+      for B of Get_Stored_List_Of_Breakpoints (Process).List loop
+         if B.Num = Id then
+            return B;
+         end if;
+      end loop;
       return Null_Breakpoint;
    end Get_Breakpoint_From_Id;
 
@@ -802,27 +846,26 @@ package body GVD.Breakpoints_List is
 
    procedure Refresh_Breakpoints_List
      (Kernel   : not null access Kernel_Handle_Record'Class;
-      Debugger : not null access Base_Visual_Debugger'Class)
+      Debugger : access Base_Visual_Debugger'Class)
    is
       Process  : constant Visual_Debugger := Visual_Debugger (Debugger);
    begin
-      if Process.Debugger = null
-        or else Process.Command_In_Process
+      if Process /= null
+        and then Process.Debugger /= null
+        and then not Process.Command_In_Process
       then
-         return;
+         Process.Debugger.List_Breakpoints (Kernel, Process.Breakpoints.List);
+         Process.Breakpoints.Has_Temporary_Breakpoint := False;
+
+         --  Check whether we have temporary breakpoints
+
+         for B of Process.Breakpoints.List loop
+            if B.Disposition /= Keep and then B.Enabled then
+               Process.Breakpoints.Has_Temporary_Breakpoint := True;
+               exit;
+            end if;
+         end loop;
       end if;
-
-      Process.Debugger.List_Breakpoints (Kernel, Process.Breakpoints.List);
-      Process.Breakpoints.Has_Temporary_Breakpoint := False;
-
-      --  Check whether we have temporary breakpoints
-
-      for B of Process.Breakpoints.List loop
-         if B.Disposition /= Keep and then B.Enabled then
-            Process.Breakpoints.Has_Temporary_Breakpoint := True;
-            exit;
-         end if;
-      end loop;
 
       Show_Breakpoints_In_All_Editors (Kernel);
       Debugger_Breakpoints_Changed_Hook.Run (Kernel, Process);
@@ -914,16 +957,25 @@ package body GVD.Breakpoints_List is
         (Messages_Category_For_Breakpoints,
          Breakpoints_Message_Flags);
 
-      if Process /= null then
-         for B of Process.Breakpoints.List loop
-            Add_Information (Kernel, B);
-         end loop;
-      else
-         for B of Module.Breakpoints.List loop
-            Add_Information (Kernel, B);
-         end loop;
-      end if;
+      for B of Get_Stored_List_Of_Breakpoints (Process).List loop
+         Add_Information (Kernel, B);
+      end loop;
    end Show_Breakpoints_In_All_Editors;
+
+   ------------------------------------
+   -- Get_Stored_List_Of_Breakpoints --
+   ------------------------------------
+
+   function Get_Stored_List_Of_Breakpoints
+     (Debugger : access Base_Visual_Debugger'Class := null)
+      return access Breakpoint_List is
+   begin
+      if Debugger = null then
+         return Module.Breakpoints'Access;
+      else
+         return Visual_Debugger (Debugger).Breakpoints'Access;
+      end if;
+   end Get_Stored_List_Of_Breakpoints;
 
    ---------------------
    -- Register_Module --

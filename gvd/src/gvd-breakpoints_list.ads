@@ -43,7 +43,7 @@ package GVD.Breakpoints_List is
 
    procedure Refresh_Breakpoints_List
      (Kernel   : not null access Kernel_Handle_Record'Class;
-      Debugger : not null access Base_Visual_Debugger'Class);
+      Debugger : access Base_Visual_Debugger'Class);
    --  Reload the list of breakpoints from the running debugger.
    --  This runs the Debugger_Breakpoints_Changed_Hook.
 
@@ -78,6 +78,15 @@ package GVD.Breakpoints_List is
    --  If no debugger is currently running, the breakpoint will be applied when
    --  one is started. If one or more debuggers are running, they all break
    --  on that subprogram.
+
+   procedure Delete_Breakpoint
+     (Kernel        : not null access Kernel_Handle_Record'Class;
+      Num           : Breakpoint_Identifier);
+   --  Remove the specified breakpoint
+
+   procedure Clear_All_Breakpoints
+     (Kernel        : not null access Kernel_Handle_Record'Class);
+   --  Remove all breakpoints
 
    type Breakpoint_Data is record
       Num         : Breakpoint_Identifier := GVD.Types.No_Breakpoint;
@@ -141,6 +150,11 @@ package GVD.Breakpoints_List is
    type Breakpoint_List is record
       List                     : Breakpoint_Vectors.Vector;
       Has_Temporary_Breakpoint : Boolean := False;
+
+      Dummy_Id                 : Breakpoint_Identifier := 1;
+      --  To be able to assign dummy identifiers to breakpoints created before
+      --  the debugger starts. These are used to manipulate them in the
+      --  Breakpoints view.
    end record;
 
    function Get_Breakpoint_From_Id
@@ -148,6 +162,14 @@ package GVD.Breakpoints_List is
       Id      : Breakpoint_Identifier)
       return Breakpoint_Data;
    --  Return the breakpint with the given identifier, or Null_Breakpoint
+
+   function Get_Stored_List_Of_Breakpoints
+     (Debugger : access Base_Visual_Debugger'Class := null)
+     return access Breakpoint_List;
+   --  Return the list of breakpoints.
+   --  If Debugger is specified, this is the list of breakpoints specific to
+   --  that debugger. Otherwise, this is the global list of persistent
+   --  breakpoints.
 
 private
    Null_Breakpoint : constant Breakpoint_Data :=

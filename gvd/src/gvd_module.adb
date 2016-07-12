@@ -1022,10 +1022,10 @@ package body GVD_Module is
       Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Process : constant Visual_Debugger :=
         Visual_Debugger (Get_Current_Debugger (Kernel));
-      Name : constant Virtual_File := Process.Editor_Text.Get_Current_File;
+      Name : constant Virtual_File := Process.Current_File;
    begin
       if Name /= GNATCOLL.VFS.No_File then
-         Process.Editor_Text.Highlight_Current_Line;
+         Goto_Current_Line (Kernel, Process);
       end if;
       return Commands.Success;
    end Execute;
