@@ -43,6 +43,7 @@ with Gdk.Types;                 use Gdk.Types;
 with Gdk.Window;                use Gdk.Window;
 
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -117,13 +118,13 @@ package body Bookmark_Views is
    Icon_Name_Column : constant := 0;
    Name_Column      : constant := 1;
    Data_Column      : constant := 2;
-   Icon_Tag_Column  : constant := 3;
+   Has_Note_Column  : constant := 3;
 
    Column_Types : constant GType_Array :=
      (Icon_Name_Column => GType_String,
       Name_Column      => GType_String,
       Data_Column      => GType_Pointer,
-      Icon_Tag_Column  => GType_String);
+      Has_Note_Column  => GType_Boolean);
 
    Editor_Link  : Boolean_Preference;
    --  Whether we should automatically select the bookmark corresponding to
@@ -210,8 +211,9 @@ package body Bookmark_Views is
 
    type Bookmark_Tree_Record is new Gtkada.Tree_View.Tree_View_Record with
       record
-         Text    : Gtk_Cell_Renderer_Text;
-         Pattern : Search_Pattern_Access;
+         Text        : Gtk_Cell_Renderer_Text;
+         Note_Pixbuf : Gtk_Cell_Renderer_Pixbuf;
+         Pattern     : Search_Pattern_Access;
       end record;
    type Bookmark_Tree is access all Bookmark_Tree_Record'Class;
    overriding function Is_Visible
@@ -297,6 +299,11 @@ package body Bookmark_Views is
       Note     : String;
       Append   : Boolean);
    --  Add a note to the bookmark
+
+   procedure Edit_Note
+     (View : not null access Bookmark_View_Record'Class;
+      Data : not null Bookmark_Data_Access);
+   --  Edit the note for a bookmark
 
    procedure Delete_Bookmark
      (Kernel   : access Kernel_Handle_Record'Class;
@@ -856,6 +863,56 @@ package body Bookmark_Views is
       return Failure;
    end Execute;
 
+   ---------------
+   -- Edit_Note --
+   ---------------
+
+   procedure Edit_Note
+     (View : not null access Bookmark_View_Record'Class;
+      Data : not null Bookmark_Data_Access)
+   is
+      Dialog      : GPS_Dialog;
+      Editor      : Gtk_Text_View;
+      Buffer      : Gtk_Text_Buffer;
+      From, To    : Gtk_Text_Iter;
+      Scrolled    : Gtk_Scrolled_Window;
+      W           : Gtk_Widget;
+   begin
+      Gtk_New
+        (Self   => Dialog,
+         Title  => "Edit Note for Bookmark",
+         Kernel => View.Kernel);
+      Set_Default_Size_From_History
+        (Win    => Dialog,
+         Name   => "Edit Note for Bookmark",
+         Kernel => View.Kernel,
+         Width  => 600,
+         Height => 300);
+
+      Gtk_New (Scrolled);
+      Dialog.Get_Content_Area.Pack_Start (Scrolled, Expand => True);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+
+      Gtk_New (Buffer);
+      Gtk_New (Editor, Buffer);
+      Unref (Buffer);
+      Scrolled.Add (Editor);
+      Buffer.Set_Text (To_String (Data.Note));
+
+      W := Dialog.Add_Button (-"Apply", Gtk_Response_OK);
+      W.Grab_Default;
+      Dialog.Add_Button (-"Cancel", Gtk_Response_Cancel).Show;
+      Dialog.Show_All;
+
+      if Dialog.Run = Gtk_Response_OK then
+         Buffer.Get_Start_Iter (From);
+         Buffer.Get_End_Iter (To);
+         View.Add_Note (Data, Buffer.Get_Text (From, To), Append => False);
+      end if;
+
+      Dialog.Destroy;
+   end Edit_Note;
+
    -------------
    -- Execute --
    -------------
@@ -871,13 +928,6 @@ package body Bookmark_Views is
       Filter_Iter : Gtk_Tree_Iter;
       Model       : Gtk_Tree_Model;
       Data        : Bookmark_Data_Access;
-      Dialog      : GPS_Dialog;
-      Editor      : Gtk_Text_View;
-      Buffer      : Gtk_Text_Buffer;
-      From, To    : Gtk_Text_Iter;
-      Scrolled    : Gtk_Scrolled_Window;
-      W           : Gtk_Widget;
-
    begin
       if View /= null then
          View.Tree.Get_Selection.Get_Selected (Model, Filter_Iter);
@@ -885,41 +935,7 @@ package body Bookmark_Views is
          if Filter_Iter /= Null_Iter then
             Data := View.Tree.Get_Data
               (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
-
-            Gtk_New
-              (Self   => Dialog,
-               Title  => "Edit Note for Bookmark",
-               Kernel => Kernel);
-            Set_Default_Size_From_History
-              (Win    => Dialog,
-               Name   => "Edit Note for Bookmark",
-               Kernel => Kernel,
-               Width  => 600,
-               Height => 300);
-
-            Gtk_New (Scrolled);
-            Dialog.Get_Content_Area.Pack_Start (Scrolled, Expand => True);
-            Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
-
-            Gtk_New (Buffer);
-            Gtk_New (Editor, Buffer);
-            Unref (Buffer);
-            Scrolled.Add (Editor);
-            Buffer.Set_Text (To_String (Data.Note));
-
-            W := Dialog.Add_Button (-"Apply", Gtk_Response_OK);
-            W.Grab_Default;
-            W := Dialog.Add_Button (-"Cancel", Gtk_Response_Cancel);
-            Dialog.Show_All;
-
-            if Dialog.Run = Gtk_Response_OK then
-               Buffer.Get_Start_Iter (From);
-               Buffer.Get_End_Iter (To);
-               View.Add_Note
-                 (Data, Buffer.Get_Text (From, To), Append => False);
-            end if;
-
-            Dialog.Destroy;
+            Edit_Note (View, Data);
          end if;
       end if;
       return Success;
@@ -1286,15 +1302,13 @@ package body Bookmark_Views is
             Set_And_Clear
               (View.Tree.Model, Store_Iter,
                (Icon_Name_Column, Name_Column, Data_Column,
-                Icon_Tag_Column),
+                Has_Note_Column),
                (1 => As_String
                     (if Tmp.Is_Group
                      then Icon_For_Groups else Icon_For_Bookmarks),
                 2 => As_String  (Tmp.Name.all),
                 3 => As_Pointer (Convert (Tmp)),
-                4 => As_String
-                  (if Tmp.Note /= Null_Unbounded_String
-                   then Icon_For_Tag else "")));
+                4 => As_Boolean (Tmp.Note /= Null_Unbounded_String)));
 
             if Tmp.Is_Group then
                Add_Level (Tmp.First_Child, Store_Iter);
@@ -1605,27 +1619,64 @@ package body Bookmark_Views is
       X, Y    : Gdouble)
    is
       View   : constant Bookmark_View_Access := Bookmark_View_Access (Self);
-      Column : Gtk_Tree_View_Column with Unreferenced;
+      Column : Gtk_Tree_View_Column;
       Filter_Path : Gtk_Tree_Path;
-      Filter_Iter : Gtk_Tree_Iter;
       B           : Bookmark_Data_Access;
       Dummy       : Boolean;
+      Cell_X, Cell_Y  : Gint;
+      Success         : Boolean;
+      Area, Cell_Area : Gdk_Rectangle;
    begin
       Trace (Me, "Bookmarks multipress: " & N_Press'Img);
       if N_Press = 2 then
-         Coordinates_For_Event (View.Tree, X, Y, Filter_Iter, Column);
-         if Filter_Iter /= Null_Iter then
-            --  Select the row that was clicked
-            Filter_Path := View.Tree.Filter.Get_Path (Filter_Iter);
-            View.Tree.Set_Cursor (Filter_Path, null, Start_Editing => False);
-            Path_Free (Filter_Path);
 
+         View.Tree.Get_Path_At_Pos
+           (Gint (X), Gint (Y), Filter_Path,
+            Column, Cell_X, Cell_Y, Success);
+         if Success then
+            --  Select the row that was clicked
+            View.Tree.Set_Cursor (Filter_Path, null, Start_Editing => False);
             B := View.Tree.Get_Data
-              (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
-            if B /= null and then not B.Is_Group then
-               Dummy := Go_To (B.Marker);
-               Push_Marker_In_History (View.Kernel, B.Marker);
-               View.Multipress.Set_State (Event_Sequence_Claimed);
+              (Store_Iter =>
+                 View.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path));
+
+            if B /= null then
+               if B.Note /= Null_Unbounded_String then
+                  --  Check whether we clicked on the note icon
+
+                  --  Area is the rectangle, within the TreeView, where the
+                  --  column is displayed. For instance x=20 to 264
+                  View.Tree.Get_Cell_Area (Filter_Path, Column, Area);
+
+                  --  Aligned area is the rectangle within the rectangle where
+                  --  the renderer is displayed. Only the size seems to be set
+                  --  to an interesting value, the X coordinate is unclear.
+                  --  Since the bookmarks view displays one icon for
+                  --  'bookmark/folder', the one optional one for 'tag',
+                  --  we just assume both have the same size.
+
+                  View.Tree.Note_Pixbuf.Get_Aligned_Area
+                    (Widget       => View.Tree,
+                     Flags        => Gtk.Cell_Renderer.Cell_Renderer_Focused,
+                     Cell_Area    => Area,
+                     Aligned_Area => Cell_Area);
+
+                  if Cell_Area.Width <= Gint (X) - Area.X
+                    and then Gint (X) - Area.X <= 2 * Cell_Area.Width
+                  then
+                     Edit_Note (View, B);
+                     Path_Free (Filter_Path);
+                     return;
+                  end if;
+               end if;
+
+               Path_Free (Filter_Path);
+
+               if not B.Is_Group then
+                  Dummy := Go_To (B.Marker);
+                  Push_Marker_In_History (View.Kernel, B.Marker);
+                  View.Multipress.Set_State (Event_Sequence_Claimed);
+               end if;
             end if;
          end if;
       end if;
@@ -1660,13 +1711,13 @@ package body Bookmark_Views is
       Widget          : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y            : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
-      Tree    : constant Bookmark_Tree := Bookmark_Tree (Widget);
-      Filter_Path    : Gtk_Tree_Path;
-      Filter_Iter    : Gtk_Tree_Iter;
-      Data    : Bookmark_Data_Access;
-      Text           : Unbounded_String;
-      Area    : Gdk_Rectangle;
-      Label   : Gtk_Label;
+      Tree        : constant Bookmark_Tree := Bookmark_Tree (Widget);
+      Filter_Path : Gtk_Tree_Path;
+      Filter_Iter : Gtk_Tree_Iter;
+      Data        : Bookmark_Data_Access;
+      Text        : Unbounded_String;
+      Area        : Gdk_Rectangle;
+      Label       : Gtk_Label;
    begin
       Tooltips.Initialize_Tooltips (Tree, X, Y, Area, Filter_Iter);
       Tooltip.Set_Tip_Area (Area);
@@ -1700,11 +1751,9 @@ package body Bookmark_Views is
          Gtk_New (Label, To_String (Text));
          Label.Set_Use_Markup (True);
          Path_Free (Filter_Path);
-         return Gtk_Widget (Label);
-
-      else
-         return null;
       end if;
+
+      return Gtk_Widget (Label);
    end Create_Contents;
 
    ----------------
@@ -1742,6 +1791,11 @@ package body Bookmark_Views is
       Col.Pack_Start (Pixbuf, Expand => False);
       Col.Add_Attribute (Pixbuf, "icon_name",  Icon_Name_Column);
 
+      Gtk_New (View.Tree.Note_Pixbuf);
+      Col.Pack_Start (View.Tree.Note_Pixbuf, Expand => False);
+      Set_Property (View.Tree.Note_Pixbuf, Icon_Name_Property, Icon_For_Tag);
+      Col.Add_Attribute (View.Tree.Note_Pixbuf, "visible", Has_Note_Column);
+
       Gtk_New (View.Tree.Text);
 
       Set_Property
@@ -1751,10 +1805,6 @@ package body Bookmark_Views is
       View.Tree.Text.On_Edited (On_Edited'Access, Slot => View);
       View.Tree.Text.On_Editing_Canceled
         (On_Editing_Canceled'Access, Slot => View);
-
-      Gtk_New (Pixbuf);
-      Col.Pack_Start (Pixbuf, Expand => False);
-      Col.Add_Attribute (Pixbuf, "icon_name", Icon_Tag_Column);
 
       Gtk_New (View.Multipress, Widget => View.Tree);
       View.Multipress.On_Pressed (On_Multipress'Access, Slot => View);
