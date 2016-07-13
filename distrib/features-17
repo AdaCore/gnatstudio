@@ -503,3 +503,8 @@ NF-17-0000-001 GPS: Incompatible changes in Python API (2016-01-04)
     which can also be bound to keyshortcuts or toolbar buttons. This encourages
     code reuse, and allows disabling all GUI items related to a given action
     more easily.
+
+  debugger_breakpoints_changed hook can receive a None debugger (2016-07-12)
+
+    Breakpoints can be set before a debugger is started, but the hook is
+    still run. In this case, the debugger parameter is set to None

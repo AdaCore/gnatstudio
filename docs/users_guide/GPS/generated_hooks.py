@@ -291,7 +291,7 @@ class Predefined_Hooks:
         """
       The list of breakpoints set in the debugger was reloaded. It might
       not have changed since the last time. The Debugger given in argument
-      might actually be set to none when the list of breakpoints is changed
+      might actually be set to None when the list of breakpoints is changed
       before the debugger starts.
 
       :param str name:

@@ -206,7 +206,7 @@ package body Bookmark_Views is
           then Bookmark_Iter (Iter.Next_Same_Level)
           elsif Iter.Parent = null then null
           else Next_Recursive (Bookmark_Iter (Iter.Parent)));
-   --  Iter the whole true recursively.
+   --  Iter the whole tree recursively.
 
    type Bookmark_Tree_Record is new Gtkada.Tree_View.Tree_View_Record with
       record
