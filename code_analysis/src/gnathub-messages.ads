@@ -55,6 +55,9 @@ package GNAThub.Messages is
      (Self : not null access Message)
       return Gdk.RGBA.Gdk_RGBA;
 
+   Category : constant String := "GNAThub Analysis Data";
+   --  Category for GNAThub messages
+
 private
 
    type Message is

@@ -28,4 +28,8 @@ package GNAThub.Filters_Views is
       Module : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class);
    --  Register the module into the list
 
+   procedure Close_View
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Close the filter's view
+
 end GNAThub.Filters_Views;

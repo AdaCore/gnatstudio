@@ -19,6 +19,9 @@ with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.VFS;
+
+with Gtk.Widget;
+with Gtkada.Handlers;
 with Gtkada.MDI;
 
 with GPS.Intl;                     use GPS.Intl;
@@ -30,6 +33,7 @@ with GPS.Kernel.Preferences;
 with GNAThub.Actions;
 with GNAThub.Filters_Views;
 with GNAThub.Loader;
+with GNAThub.Messages;
 
 package body GNAThub.Module is
 
@@ -43,11 +47,24 @@ package body GNAThub.Module is
       return Boolean;
    --  Called before GPS exits. Switchs perspective to default.
 
+   type On_Project_Changed is
+     new GPS.Kernel.Hooks.Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Called when project view is changed. Close report and clean all data.
+
+   procedure On_Report_Destroy
+     (View : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Called when report closing
+
    -----------
    -- Clean --
    -----------
 
    procedure Clean (Self : in out GNAThub_Module_Id_Record'Class) is
+      use type Gtkada.MDI.MDI_Child;
+
       generic
          type Element is limited private;
          type Element_Access is access all Element;
@@ -83,10 +100,23 @@ package body GNAThub.Module is
         (Rule_Record, Rule_Access, Rule_Sets);
 
    begin
+      if Self.Report /= null then
+         Self.Report.Destroy;
+      end if;
+
+      GNAThub.Filters_Views.Close_View (Self.Kernel);
+
+      Self.Filter.Clear;
+
       Clean_Severity_Set (Self.Severities);
       Clean_Tool_Set (Self.Tools);
       Clean_Rule_Set (Self.Rules);
       Self.Severities_Id.Clear;
+
+      GPS.Kernel.Messages.Remove_Category
+        (Self.Kernel.Get_Messages_Container,
+         GNAThub.Messages.Category,
+         GPS.Kernel.Messages.Empty_Message_Flags);
    end Clean;
 
    ------------------
@@ -95,25 +125,16 @@ package body GNAThub.Module is
 
    procedure Display_Data (Self : in out GNAThub_Module_Id_Record'Class)
    is
-      use type Gtkada.MDI.MDI_Child;
-
       Database : constant GNATCOLL.VFS.Virtual_File :=
                    Self.Get_Kernel.Get_Project_Tree.Root_Project.Object_Dir
                      .Create_From_Dir ("gnathub")
                      .Create_From_Dir ("gnathub.db");
 
       Ignore : Boolean;
-
    begin
-      if Database.Is_Regular_File then
-         if GPS.Kernel.MDI.Get_MDI
-           (Self.Kernel).Find_MDI_Child_By_Tag
-           (GNAThub.Reports.Collector.GNAThub_Report_Collector'Tag) /= null
-         then
-            GPS.Kernel.MDI.Get_MDI (Self.Kernel).Close (Self.Report);
-         end if;
+      Self.Clean;
 
-         Self.Clean;
+      if Database.Is_Regular_File then
          Self.Loader.Load (Database);
 
          --  Switch to GNATHub perspective.
@@ -133,6 +154,9 @@ package body GNAThub.Module is
          GPS.Kernel.Hooks.Before_Exit_Action_Hook.Add
            (new On_Before_Exit, Watch => Self.Collector);
 
+         Gtkada.Handlers.Widget_Callback.Connect
+           (Self.Report, Gtk.Widget.Signal_Destroy, On_Report_Destroy'Access);
+
          GPS.Kernel.MDI.Get_MDI (Self.Kernel).Put (Self.Report);
          Self.Report.Raise_Child;
 
@@ -143,6 +167,19 @@ package body GNAThub.Module is
             Mode => GPS.Kernel.Error);
       end if;
    end Display_Data;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Project_Changed;
+      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self, Kernel);
+   begin
+      Module.Clean;
+   end Execute;
 
    -------------
    -- Execute --
@@ -161,7 +198,7 @@ package body GNAThub.Module is
          GPS.Kernel.MDI.Save_Desktop (Kernel, "Default");
       end if;
 
-      Module.Collector.Destroy;
+      Module.Clean;
 
       return True;
    end Execute;
@@ -248,6 +285,20 @@ package body GNAThub.Module is
       end return;
    end New_Tool;
 
+   -----------------------
+   -- On_Report_Destroy --
+   -----------------------
+
+   procedure On_Report_Destroy
+     (View : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      pragma Unreferenced (View);
+   begin
+      --  Restore default perspective
+      GPS.Kernel.MDI.Load_Perspective (Module.Kernel, "Default");
+      Module.Report := null;
+   end On_Report_Destroy;
+
    -------------------
    -- Update_Report --
    -------------------
@@ -283,8 +334,10 @@ package body GNAThub.Module is
       Module.Loader.Initialize;
       Module.Filter := new GNAThub.Filters.Message_Filter;
       GNAThub.Filters_Views.Register_Module (Kernel, Module);
+
       Kernel.Get_Messages_Container.Register_Filter
         (GPS.Kernel.Messages.Message_Filter_Access (Module.Filter));
+      GPS.Kernel.Hooks.Project_Changed_Hook.Add (new On_Project_Changed);
    end Register_Module;
 
 end GNAThub.Module;

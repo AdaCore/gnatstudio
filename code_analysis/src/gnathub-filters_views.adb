@@ -210,14 +210,6 @@ package body GNAThub.Filters_Views is
       return Commands.Command_Return_Type;
    --  Displey GnatHub filters view
 
-   type On_Before_Exit is
-     new GPS.Kernel.Hooks.Return_Boolean_Hooks_Function with null record;
-   overriding function Execute
-     (Self   : On_Before_Exit;
-      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Boolean;
-   --  Called before GPS exits. Switchs perspective to default.
-
    -- Internal Routines --
 
    procedure On_Flow_Box_Size_Allocated
@@ -359,6 +351,16 @@ package body GNAThub.Filters_Views is
       View.On_Update := False;
    end Apply_Filters;
 
+   ----------------
+   -- Close_View --
+   ----------------
+
+   procedure Close_View
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Views.Close (Kernel);
+   end Close_View;
+
    -----------
    -- Count --
    -----------
@@ -422,26 +424,9 @@ package body GNAThub.Filters_Views is
         GPS.Kernel.Get_Kernel (Context.Context);
       Ignore : Views.View_Access;
    begin
-      Views.Close (Kernel);
-
       Ignore := Views.Get_Or_Create_View (Kernel);
 
       return Commands.Success;
-   end Execute;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Self   : On_Before_Exit;
-      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
-      return Boolean
-   is
-      pragma Unreferenced (Self);
-   begin
-      Views.Close (Kernel);
-      return True;
    end Execute;
 
    --------------------
@@ -647,9 +632,6 @@ package body GNAThub.Filters_Views is
          Self);
 
       Apply_Filters (Views.View_Access (Self));
-
-      GPS.Kernel.Hooks.Before_Exit_Action_Hook.Add
-        (new On_Before_Exit, Watch => Gtk.Widget.Gtk_Widget (Self.Flow_Box));
 
       Self.Listener := new Message_Listener
         (Generic_Views.Abstract_View_Access (Self));

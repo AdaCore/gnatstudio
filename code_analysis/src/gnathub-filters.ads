@@ -30,6 +30,8 @@ package GNAThub.Filters is
       Severities : Severities_Ordered_Sets.Set;
       Rules      : Rule_Sets.Set);
 
+   procedure Clear (Self : in out Message_Filter);
+
    overriding function Apply
      (Self    : in out Message_Filter;
       Message : GPS.Kernel.Messages.Abstract_Message'Class)

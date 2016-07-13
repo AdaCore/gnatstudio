@@ -89,7 +89,7 @@ package body GNAThub.Messages is
       GPS.Kernel.Messages.Initialize
         (Self          => Self,
          Container     => Container,
-         Category      => "GNAThub Analysis Data",
+         Category      => Category,
          File          => File,
          Line          => Line,
          Column        => Column,

@@ -57,6 +57,17 @@ package body GNAThub.Filters is
       end;
    end Apply;
 
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Self : in out Message_Filter) is
+   begin
+      Self.Tools.Clear;
+      Self.Severities.Clear;
+      Self.Rules.Clear;
+   end Clear;
+
    ----------
    -- Fill --
    ----------
