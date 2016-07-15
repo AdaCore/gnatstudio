@@ -620,14 +620,6 @@ package body Remote.Db is
          return;
       end if;
 
-      if Start_Command = null then
-         Kernel.Insert
-           (-("XML Error: remote_connection_config is missing a " &
-              "start_command field for " & Name),
-            Add_LF => True, Mode => Error);
-         return;
-      end if;
-
       Tmp := Get_Field (Node, "start_command_common_args");
       if Tmp = null then
          Start_Command_Common_Args := new String_List'(1 .. 0 => <>);

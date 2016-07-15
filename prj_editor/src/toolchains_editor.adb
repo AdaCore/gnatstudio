@@ -1481,7 +1481,7 @@ package body Toolchains_Editor is
       if Locate_On_Path (+Get_Command (Args), Get_Nickname (Build_Server)) =
         No_File
       then
-         raise GNAT.Expect.Process_Died;
+         raise Process_Died;
       end if;
 
       GPS.Kernel.Remote.Spawn
@@ -1489,9 +1489,8 @@ package body Toolchains_Editor is
          Remote.Build_Server, Pd, Status);
 
       if not Status then
-         raise GNAT.Expect.Process_Died;
+         raise Process_Died;
       else
-         declare
          begin
             loop
                if Handle_GUI_Events then

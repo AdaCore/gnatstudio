@@ -554,7 +554,7 @@ package body Vdiff2_Module.Utils is
 
       Highlight_File : Virtual_File;
       Modification   : String (1 .. 8);
-      The_Range      : Natural;
+      The_Range      : Natural := 0;
       Line           : Integer;
       Split_MDI      : Boolean;
 

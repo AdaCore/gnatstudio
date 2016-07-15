@@ -255,10 +255,10 @@ package body Creation_Wizard.Extending is
       --------------
 
       procedure Add_File (Prj : Project_Type; File : Virtual_File) is
-         P   : Integer;
+         P : Integer;
       begin
          P := Projects'First;
-         while P <= Projects'Last
+         while P < Projects'Last
            and then Projects (P) /= Prj
            and then Projects (P) /= No_Project
          loop

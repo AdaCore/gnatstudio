@@ -122,7 +122,7 @@ package body VCS is
       use type GNAT.Strings.String_Access;
    begin
       return (S1.Label = null and then S2.Label = null
-              and then S2.Icon_Name = null and then S2.Icon_Name = null)
+              and then S1.Icon_Name = null and then S2.Icon_Name = null)
         or else
           (S1.Label /= null
            and then S2.Label /= null

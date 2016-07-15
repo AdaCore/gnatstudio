@@ -969,16 +969,14 @@ package body Revision_Views is
       -------------
 
       procedure Iterate (Iter : Gtk_Tree_Iter) is
-         Quit : Boolean := False;
-         J    : Gtk_Tree_Iter := Iter;
+         J : Gtk_Tree_Iter := Iter;
       begin
-         while not Quit and then J /= Null_Iter loop
+         while J /= Null_Iter loop
             if Has_Child (Store, J) then
                Iterate (Children (Store, J));
             end if;
 
             if Get_String (Store, J, Rev_Info_Column) = Rev then
-               Quit := True;
                Result := J;
                return;
             end if;

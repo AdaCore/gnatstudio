@@ -176,7 +176,9 @@ package body Ada_Semantic_Tree.Interfaces is
         (Entity         : Language_Entity;
          Sloc_Start     : Source_Location;
          Sloc_End       : Source_Location;
-         Partial_Entity : Boolean) return Boolean;
+         Partial_Entity : Boolean) return Boolean
+        with Pre => Sloc_Start.Index > 0
+          and Sloc_End.Index >= Sloc_Start.Index;
 
       type Arg_Rec is record
          Sloc_Start : Source_Location;
@@ -355,37 +357,39 @@ package body Ada_Semantic_Tree.Interfaces is
                begin
                   Entity := To_Entity_Access (File, It);
 
-                  if P.Kind = Import then
-                     Annot :=
-                       (Other_Kind,
-                        new Interface_Annotation_Record'
-                          (General_Annotation_Record
-                           with
-                           Name       => new String'(P.Name),
-                           Convention => new String'(P.Convention)));
+                  case P.Kind is
+                     when Import =>
+                        Annot :=
+                          (Other_Kind,
+                           new Interface_Annotation_Record'
+                             (General_Annotation_Record
+                              with
+                              Name       => new String'(P.Name),
+                              Convention => new String'(P.Convention)));
 
-                     Set_Annotation
-                       (Get_Annotation_Container (Tree, It).all,
-                        Assistant.Import_Key,
-                        Annot);
-                  elsif P.Kind = Export then
-                     if Assistant.Exports.Contains (P.Name) then
-                        --  If there's already a reference, then remove it
-                        --  from the base. It's either OBE or duplicate, and
-                        --  we don't handle either of the two cases.
+                        Set_Annotation
+                          (Get_Annotation_Container (Tree, It).all,
+                           Assistant.Import_Key,
+                           Annot);
+
+                     when Export =>
+                        if Assistant.Exports.Contains (P.Name) then
+                           --  If there's already a reference, then remove it
+                           --  from the base. It's either OBE or duplicate, and
+                           --  we don't handle either of the two cases.
+
+                           Entity_Persistent :=
+                             Assistant.Exports.Element (P.Name);
+
+                           Unref (Entity_Persistent);
+
+                           Assistant.Exports.Delete (P.Name);
+                        end if;
 
                         Entity_Persistent :=
-                          Assistant.Exports.Element (P.Name);
-
-                        Unref (Entity_Persistent);
-
-                        Assistant.Exports.Delete (P.Name);
-                     end if;
-
-                     Entity_Persistent :=
-                       To_Entity_Persistent_Access (Entity);
-                     Assistant.Exports.Insert (P.Name, Entity_Persistent);
-                  end if;
+                          To_Entity_Persistent_Access (Entity);
+                        Assistant.Exports.Insert (P.Name, Entity_Persistent);
+                  end case;
                end;
 
                Current_Associations.Delete

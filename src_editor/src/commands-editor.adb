@@ -370,9 +370,7 @@ package body Commands.Editor is
             Set_Manual_Sync (C);
          end if;
 
-         if not Avoid_Move_Cursor (Command)
-           and then not User_Executed
-         then
+         if not Avoid_Move_Cursor (Command) then
             Set_Cursor_Position (First_Loc, First_Loc, View);
          end if;
 

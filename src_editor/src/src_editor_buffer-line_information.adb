@@ -1626,13 +1626,18 @@ package body Src_Editor_Buffer.Line_Information is
       BL       : Buffer_Line_Type := 0;
 
       EL       : Editable_Line_Type := Editable_Line;
-      Mark     : constant Editor_Mark'Class := Message.Get_Editor_Mark;
 
    begin
-      --  If the message has a mark, we get the line information from this
-      --  mark.
-      if Mark /= Nil_Editor_Mark then
-         EL := Editable_Line_Type (Mark.Line);
+      if Message /= null then
+         declare
+            Mark : constant Editor_Mark'Class := Message.Get_Editor_Mark;
+         begin
+            --  If the message has a mark, we get the line information
+            --  from this mark.
+            if Mark /= Nil_Editor_Mark then
+               EL := Editable_Line_Type (Mark.Line);
+            end if;
+         end;
       end if;
 
       if Buffer_Line = 0 then

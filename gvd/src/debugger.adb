@@ -1162,16 +1162,6 @@ package body Debugger is
       return False;
    end Support_TTY;
 
-   -------------
-   -- Set_TTY --
-   -------------
-
-   procedure Set_TTY (Debugger : access Debugger_Root; TTY : String) is
-      pragma Unreferenced (Debugger, TTY);
-   begin
-      raise Unknown_Command;
-   end Set_TTY;
-
    -----------------------
    -- Continuation_Line --
    -----------------------

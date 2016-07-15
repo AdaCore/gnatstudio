@@ -959,13 +959,17 @@ package body Call_Graph_Views is
                Dispatching_Calls => True,
                Background_Mode   => True);
          end case;
+
+         Thaw_Sort (M, Column);
+      exception
+         when E : others =>
+            Trace (Me, E);
+            Thaw_Sort (M, Column);
       end;
 
-      Thaw_Sort (M, Column);
    exception
       when E : others =>
          Trace (Me, E);
-         Thaw_Sort (M, Column);
    end On_Row_Expanded;
 
    -------------

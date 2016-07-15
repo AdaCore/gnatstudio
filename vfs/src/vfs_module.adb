@@ -559,6 +559,8 @@ package body VFS_Module is
          Renamed : Virtual_File := No_File;
          Project : Project_Type;
       begin
+         Prj_Changed := False;
+
          if Is_Directory (File_In) then
             declare
                Res : constant String :=
@@ -591,9 +593,7 @@ package body VFS_Module is
          end if;
 
          if Renamed = File_In or else Renamed = No_File then
-            Success     := True;
-            Prj_Changed := False;
-
+            Success := True;
             return;
          end if;
 
@@ -636,11 +636,9 @@ package body VFS_Module is
                   Parent => Get_Kernel (Context.Context).Get_Main_Window);
 
                if Button = Button_Yes then
-                  Rename_In_Prj
-                    (File_In, Renamed, Prj_Changed);
-               else
-                  Prj_Changed := False;
+                  Rename_In_Prj (File_In, Renamed, Prj_Changed);
                end if;
+
             else
                Button := Gtkada.Dialogs.Message_Dialog
                  (-("The file is referenced in the project ") &

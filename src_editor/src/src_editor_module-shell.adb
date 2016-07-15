@@ -800,7 +800,7 @@ package body Src_Editor_Module.Shell is
                         Force_Reload => Force);
                   end if;
 
-               elsif Command = "create_mark" then
+               else -- elsif Command = "create_mark" then <- always true
                   Marker := Create_File_Marker
                     (Kernel,
                      File,
@@ -1037,7 +1037,7 @@ package body Src_Editor_Module.Shell is
 
                      if Command = "redo" then
                         Redo (Box);
-                     elsif Command = "undo" then
+                     else --  elsif Command = "undo" then <- always true
                         Undo (Box);
                      end if;
                   end if;
