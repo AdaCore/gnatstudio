@@ -485,3 +485,99 @@ class Menu(GPS.GUI):
             a.create(lambda: on_activate(m),
                      filter=filter)
             m = a.menu(path, add_before=add_before, ref=ref)
+
+
+@extend_gps
+class ToolButton(GPS.GUI):
+    """Represents a Button that can be placed in the Toolbar.
+
+       This class is provided for backwards compatibility only.
+       Instead of using this, use GPS.Action and GPS.Action.button().
+    """
+
+    def __init__(self, stock_id, label, on_click):
+        """This class is provided for backwards compatibility only.
+
+           Instead of using this, use GPS.Action and GPS.Action.button().
+        """
+        self.action_name = "ToolButton {}:{}".format(label, on_click.__name__)
+        self.on_click = on_click
+        self.stock_id = stock_id
+
+
+@extend_gps
+class Button(GPS.GUI):
+    """Represents a Button that can be placed in the Toolbar.
+
+       This class is provided for backwards compatibility only.
+       Instead of using this, use GPS.Action and GPS.Action.button().
+    """
+
+    def __init__(self, id, label, on_click):
+        """This class is provided for backwards compatibility only.
+
+           Instead of using this, use GPS.Action and GPS.Action.button().
+        """
+        self.action_name = label
+        self.on_click = on_click
+        self.stock_id = ""
+
+    def set_text(self, label):
+        """Set the text of the button"""
+        self.action_name = label
+
+
+@extend_gps
+class Toolbar(GPS.GUI):
+    """The main GPS Toolbar.
+
+       This class is provided for backwards compatibility only.
+       Instead of using this, use GPS.Action and GPS.Action.button().
+    """
+
+    def __init__(self):
+        """This class is provided for backwards compatibility only.
+
+           Instead of using this, use GPS.Action and GPS.Action.button().
+        """
+        pass
+
+    def append(self, widget, tooltip=''):
+        """Append a widget to the Toolbar.
+
+           The widget must be either a GPS.ToolButton or a GPS.Button."""
+        self.action = GPS.Action(widget.action_name)
+        self.action.create(on_activate=lambda: widget.on_click(widget),
+                           filter="",
+                           category="Custom ToolButtons",
+                           description=tooltip,
+                           icon=widget.stock_id)
+        self.action.button()
+
+    def insert(self, widget, pos, tooltip):
+        """Append a widget to the Toolbar.
+
+           To insert a widget at a specific position in the toolbar, use
+           GPS.Action.button instead, and set a value to the 'section'
+           parameter.
+        """
+        GPS.Console("Messages").write(
+            "GPS.Toolbar.insert() is deprecated: use GPS.Action.button.\n"
+        )
+        self.append(widget, tooltip)
+
+    def get(self, id):
+        """Does nothing and writes an error message
+
+           This function is to help detect compatibility errors in plugins.
+        """
+        GPS.Console("Messages").write("GPS.Toolbar.get() is deprecated.\n")
+
+    def get_by_pos(self, pos):
+        """Does nothing and writes an error message
+
+           This function is to help detect compatibility errors in plugins.
+        """
+        GPS.Console("Messages").write(
+            "GPS.Toolbar.get_by_pos() is deprecated.\n"
+        )

@@ -183,6 +183,17 @@ Classes
 
    .. automethod:: GPS.BuildTarget.show
 
+:class:`GPS.Button`
+^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Button
+
+   .. inheritance-diagram:: GPS.Button
+
+   .. automethod:: GPS.Button.__init__
+
+   .. automethod:: GPS.Button.set_text
+
 :class:`GPS.Clipboard`
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1827,6 +1838,32 @@ Classes
    .. automethod:: GPS.Timeout.__init__
 
    .. automethod:: GPS.Timeout.remove
+
+:class:`GPS.ToolButton`
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: ToolButton
+
+   .. inheritance-diagram:: GPS.ToolButton
+
+   .. automethod:: GPS.ToolButton.__init__
+
+:class:`GPS.Toolbar`
+^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Toolbar
+
+   .. inheritance-diagram:: GPS.Toolbar
+
+   .. automethod:: GPS.Toolbar.__init__
+
+   .. automethod:: GPS.Toolbar.append
+
+   .. automethod:: GPS.Toolbar.get
+
+   .. automethod:: GPS.Toolbar.get_by_pos
+
+   .. automethod:: GPS.Toolbar.insert
 
 :class:`GPS.Unexpected_Exception`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
