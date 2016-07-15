@@ -721,13 +721,40 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
 
     <target-model name="gnatprove-examine">
        <description>Target model for GNATprove Examine commands</description>
-       <command-line>
-          <arg>gnatprove</arg>
-          <arg>-P%PP</arg>
-          <arg>%X</arg>
-          <arg>--mode=flow</arg>
-       </command-line>
        <iconname>gps-build-all-symbolic</iconname>
+       <switches command="%(tool_name)s">
+         <title column="1" line="1" >General</title>
+         <check
+           label="Multiprocessing" switch="-j0" column="1"
+           tip="Use as many cores as available on the machine"
+         />
+         <check label="Do not report warnings" switch="--warnings=off"
+                column="1" tip="Do not issue warnings at all"
+         />
+         <check label="Report checks proved" switch="--report=all" column="1"
+                tip="Report the status of all checks, including those proved"
+         />
+         <check
+           label="Display previous results" switch="--output-msg-only"
+           column="1" tip="Do not run provers, only use previous results"
+         />
+         <title column="2" line="1" >Prover</title>
+<combo
+label="Analysis Mode"
+switch="--mode"
+separator="="
+column="2"
+tip="Select analysis mode" >
+    <combo-entry label="check fast" value="check"
+                 tip="partially check conformance with SPARK restrictions
+(fast)"/>
+    <combo-entry label="check all" value="check_all"
+                 tip="fully check conformance with SPARK restrictions
+(slower)"/>
+    <combo-entry label="flow analysis" value="flow"
+                 tip="run flow analysis"/>
+</combo>
+       </switches>
        <persistent-history>False</persistent-history>
     </target-model>
 
@@ -850,7 +877,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
     <target model="gnatprove-examine" name="Examine All" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <iconname>gps-build-all-symbolic</iconname>
-       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatprove</arg>
@@ -874,7 +901,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
             category="GNATprove">
        <in-menu>FALSE</in-menu>
        <iconname>gps-build-all-symbolic</iconname>
-       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatprove</arg>
@@ -899,7 +926,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
             name="Examine Single File" category="GNATprove">
        <in-menu>FALSE</in-menu>
        <iconname>gps-build-all-symbolic</iconname>
-       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatprove</arg>
@@ -925,7 +952,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
             category="GNATprove">
        <in-menu>FALSE</in-menu>
        <iconname>gps-build-all-symbolic</iconname>
-       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
+       <launch-mode>MANUALLY_WITH_DIALOG</launch-mode>
        <read-only>TRUE</read-only>
        <command-line>
           <arg>gnatprove</arg>
