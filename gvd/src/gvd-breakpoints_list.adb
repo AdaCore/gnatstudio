@@ -575,7 +575,7 @@ package body GVD.Breakpoints_List is
             Loc  : Location_Marker     := No_Marker;
          begin
             if String'(Item.Get ("line")) /= ""
-              and then String'(Item.Get ("file")) /= ""
+              and then JSON_Value'(Item.Get ("file")) /= JSON_Null
             then
                Loc := Property.Kernel.Get_Buffer_Factory.Create_Marker
                  (File   => JSON_Utils.Load (Item.Get ("file")),
