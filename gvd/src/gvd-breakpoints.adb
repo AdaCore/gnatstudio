@@ -209,7 +209,7 @@ package body GVD.Breakpoints is
       View_Name          => -"Breakpoints",
       Formal_View_Record => Breakpoint_Editor_Record,
       Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => False,
+      Reuse_If_Exist     => True,
       Commands_Category  => "",
       Local_Toolbar      => True,
       Areas              => Gtkada.MDI.Sides_Only,
