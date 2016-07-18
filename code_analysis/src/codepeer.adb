@@ -19,6 +19,8 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Unbounded.Hash;
 with Ada.Unchecked_Deallocation;
 
+with Gtkada.Style;
+
 package body CodePeer is
 
    --------------
@@ -161,6 +163,30 @@ package body CodePeer is
 
       GPS.Kernel.Messages.Primary_Abstract_Message (Self.all).Finalize;
    end Finalize;
+
+   ----------------
+   -- Get_Markup --
+   ----------------
+
+   overriding function Get_Markup
+     (Self : not null access constant Message)
+      return Ada.Strings.Unbounded.Unbounded_String is
+   begin
+      return Result : Ada.Strings.Unbounded.Unbounded_String :=
+        GPS.Kernel.Messages.Abstract_Message (Self.all).Get_Markup
+      do
+         if Self.Lifeage = Removed then
+            Insert
+              (Result,
+               1,
+               "<span font_style=""italic"""
+               & " foreground="""
+               & Gtkada.Style.To_Hex (Self.Removed_Color.Get_Pref)
+               & """>");
+            Append (Result, "</span>");
+         end if;
+      end return;
+   end Get_Markup;
 
    --------------
    -- Get_Name --

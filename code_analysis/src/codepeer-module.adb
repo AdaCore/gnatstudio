@@ -470,7 +470,8 @@ package body CodePeer.Module is
          Display_CWEs    =>
            Project.Has_Attribute (CWE_Attribute)
              and then Ada.Characters.Handling.To_Lower
-               (Project.Attribute_Value (CWE_Attribute)) = "true");
+               (Project.Attribute_Value (CWE_Attribute)) = "true",
+         Removed_Color   => Module.Removed_Message_Color);
       Style   : constant Style_Access := Module.Message_Styles (Ranking);
 
    begin
@@ -1694,6 +1695,16 @@ package body CodePeer.Module is
            Doc     => -("Color to use for the background of suppressed"
              & " messages"),
            Default => "#EFEFEF");
+
+      Module.Removed_Message_Color :=
+        Default_Preferences.Create
+          (Kernel.Get_Preferences,
+           Name    => "CodePeer-Messages-Removed-Foreground",
+           Label   => -"Color for 'removed' messages",
+           Path    => -"CodePeer:Colors",
+           Doc     => -("Color to use for the foreground of removed messages"
+             & " in Locations view"),
+           Default => "#5A5A5A");
 
       --  CodePeer styles initialization
 

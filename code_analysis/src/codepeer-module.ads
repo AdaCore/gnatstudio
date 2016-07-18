@@ -162,6 +162,7 @@ private
       Report                 : CodePeer.Reports.Report;
       Annotations_Style      : GPS.Kernel.Style_Manager.Style_Access;
       Message_Colors         : Message_Ranking_Color_Preference_Array;
+      Removed_Message_Color  : Default_Preferences.Color_Preference;
       Message_Styles         : Message_Ranking_Style_Array;
       Listener               : CodePeer.Listeners.Listener_Access;
 

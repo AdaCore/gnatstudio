@@ -22,6 +22,8 @@ with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 
 with GNATCOLL.VFS;
+
+with Default_Preferences;
 with GPS.Editors;
 with GPS.Kernel.Messages;
 with Code_Analysis;
@@ -124,9 +126,16 @@ package CodePeer is
       CWEs             : CWE_Category_Sets.Set;
       Display_CWEs     : Boolean;
       --  Enable displaying of CWEs
+      Removed_Color    : Default_Preferences.Color_Preference;
+      --  Reference to preference value of which is used for foreground color
+      --  of removed messages.
    end record;
 
    overriding function Get_Text
+     (Self : not null access constant Message)
+      return Ada.Strings.Unbounded.Unbounded_String;
+
+   overriding function Get_Markup
      (Self : not null access constant Message)
       return Ada.Strings.Unbounded.Unbounded_String;
 
