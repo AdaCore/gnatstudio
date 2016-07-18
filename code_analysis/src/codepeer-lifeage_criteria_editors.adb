@@ -131,11 +131,7 @@ package body CodePeer.Lifeage_Criteria_Editors is
           (Kernel.Get_History.all,
            Histories.History_Key
              (To_String (Self.History_Prefix) & "-unchanged"));
-      Self.Criteria (Removed)   :=
-        Histories.Get_History
-          (Kernel.Get_History.all,
-           Histories.History_Key
-             (To_String (Self.History_Prefix) & "-removed"));
+      Self.Criteria (Removed)   := False;
 
       --  Initialize internal components.
 
@@ -217,10 +213,6 @@ package body CodePeer.Lifeage_Criteria_Editors is
       Self   : Lifeage_Criteria_Editor) is
    begin
       Self.Criteria (Removed) := Object.Get_Active;
-      Histories.Set_History
-        (Self.Kernel.Get_History.all,
-         Histories.History_Key (To_String (Self.History_Prefix) & "-removed"),
-         Self.Criteria (Removed));
       Emit_By_Name (Self.Get_Object, Signal_Criteria_Changed & ASCII.NUL);
    end On_Show_Removed_Messages_Toggled;
 
