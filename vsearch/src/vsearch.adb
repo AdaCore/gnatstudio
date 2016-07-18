@@ -183,21 +183,22 @@ package body Vsearch is
    --  Create a new search window and returns the focus widget
 
    package Search_Views is new Generic_Views.Simple_Views
-     (Module_Name        => Search_Module_Name,
-      View_Name          => -"Search",
-      Formal_View_Record => Vsearch_Record,
-      Formal_MDI_Child   => GPS_MDI_Child_Record,
-      Reuse_If_Exist     => True,
-      Initialize         => Initialize,
-      Local_Toolbar      => False,
-      Local_Config       => True,
-      Position           => Position_Float,
-      Group              => Group_View,
-      Commands_Category  => "",  --  no automatic command
+     (Module_Name            => Search_Module_Name,
+      View_Name              => -"Search",
+      Formal_View_Record     => Vsearch_Record,
+      Formal_MDI_Child       => GPS_MDI_Child_Record,
+      Reuse_If_Exist         => True,
+      Hide_Rather_Than_Close => True,
+      Initialize             => Initialize,
+      Local_Toolbar          => False,
+      Local_Config           => True,
+      Position               => Position_Float,
+      Group                  => Group_View,
+      Commands_Category      => "",  --  no automatic command
       MDI_Flags        => All_Buttons or Float_To_Main or Always_Destroy_Float,
-      Areas              => Sides_Only,
-      Default_Width      => -1,
-      Default_Height     => -1,
+      Areas                  => Sides_Only,
+      Default_Width          => -1,
+      Default_Height         => -1,
       Add_Close_Button_On_Float => True);
    use Search_Views;
    subtype Vsearch_Access is Search_Views.View_Access;

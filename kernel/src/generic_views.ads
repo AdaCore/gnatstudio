@@ -220,6 +220,10 @@ package Generic_Views is
       Reuse_If_Exist : Boolean := True;
       --  If True a single MDI child will be created and shared
 
+      Hide_Rather_Than_Close : Boolean := False;
+      --  If True, then the view widget will never be destroyed when the
+      --  MDI child is closed. This is only valid if Reuse_If_Exist.
+
       with function Initialize
         (View : access Formal_View_Record'Class)
          return Gtk.Widget.Gtk_Widget is <>;
@@ -366,11 +370,24 @@ package Generic_Views is
           On_Delete_Event'Access;
       --  Propagate the delete event to the view
 
+      procedure On_Destroy_View_Parent_Box
+        (Box : access Gtk.Widget.Gtk_Widget_Record'Class);
+      --  Called when the box containing View is destroyed
+      On_Destroy_View_Parent_Box_Access : constant
+        Gtkada.Handlers.Widget_Callback.Simple_Handler :=
+          On_Destroy_View_Parent_Box'Access;
+
       procedure On_Float_Child
         (Child : access Gtk.Widget.Gtk_Widget_Record'Class);
       On_Float_Child_Access : constant
         Gtkada.Handlers.Widget_Callback.Simple_Handler :=
           On_Float_Child'Access;
+
+      procedure On_Unfloat_Child
+        (Child : access Gtk.Widget.Gtk_Widget_Record'Class);
+      On_Unfloat_Child_Access : constant
+        Gtkada.Handlers.Widget_Callback.Simple_Handler :=
+          On_Unfloat_Child'Access;
 
       function On_Delete_Floating_Child
         (Self : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
@@ -384,6 +401,18 @@ package Generic_Views is
       On_Close_Floating_Child_Access : constant
         Gtkada.Handlers.Widget_Callback.Simple_Handler :=
           On_Close_Floating_Child'Access;
+
+      type Global_View (Hide : Boolean) is record
+         case Hide is
+            when True  =>  Stored_View : View_Access;
+            when False => null;
+         end case;
+      end record;
+
+      Global : Global_View (Hide_Rather_Than_Close);
+
+      --  The stored view, if it is not currently displayed in the MDI and
+      --  Hide_Rather_Than_Close is true.
 
    end Simple_Views;
 
