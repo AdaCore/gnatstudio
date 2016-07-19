@@ -305,11 +305,6 @@ package Switches_Chooser is
       --  Return the switches configuration used for this editor
 
       function Get_Command_Line
-        (Editor : access Root_Switches_Editor)
-         return Command_Line;
-      --  Return the current command line
-
-      function Get_Command_Line
         (Editor   : access Root_Switches_Editor;
          Expanded : Boolean) return GNAT.Strings.String_List_Access;
       --  Return the command line. Result value must be freed by the user

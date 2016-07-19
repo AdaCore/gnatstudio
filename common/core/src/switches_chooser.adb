@@ -1526,18 +1526,6 @@ package body Switches_Chooser is
          return Editor.Config;
       end Get_Config;
 
-      ----------------------
-      -- Get_Command_Line --
-      ----------------------
-
-      function Get_Command_Line
-        (Editor : access Root_Switches_Editor)
-         return Command_Line
-      is
-      begin
-         return Editor.Cmd_Line;
-      end Get_Command_Line;
-
    end Switches_Editors;
 
    ----------------
