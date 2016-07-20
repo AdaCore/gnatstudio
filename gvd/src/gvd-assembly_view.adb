@@ -534,8 +534,7 @@ package body GVD.Assembly_View is
       Result : out Boolean;
       Num    : out Breakpoint_Identifier)
    is
-      Process : constant Visual_Debugger :=
-        Visual_Debugger (Get_Process (View));
+      Process : Visual_Debugger;
    begin
       if View = null then
          Num := Breakpoint_Identifier'Last;
@@ -543,6 +542,7 @@ package body GVD.Assembly_View is
          return;
       end if;
 
+      Process := Visual_Debugger (Get_Process (View));
       for B of Get_Stored_List_Of_Breakpoints (Process).List loop
          if B.Address = Addr then
             Num := B.Num;
@@ -748,7 +748,7 @@ package body GVD.Assembly_View is
       end if;
 
       --  Should we prepend to the current buffer ?
-      if not Start_In_Range and then End_In_Range then
+      if End_In_Range then
          Get_Machine_Code
            (Process.Debugger,
             Range_Start     => Start,
@@ -765,7 +765,7 @@ package body GVD.Assembly_View is
          Free (S2);
 
       --  Should we append to the current buffer ?
-      elsif Start_In_Range and then not End_In_Range then
+      elsif Start_In_Range then
          Get_Machine_Code
            (Process.Debugger,
             Range_Start     => Start,

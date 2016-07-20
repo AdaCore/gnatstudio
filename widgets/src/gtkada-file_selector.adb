@@ -591,7 +591,7 @@ package body Gtkada.File_Selector is
                Fo := 0;
             end if;
 
-            if Nl < Pattern_Name'Last and then Pattern_Name (Nl) = ';' then
+            if Pattern_Name (Nl) = ';' then
                No := 1;
             else
                No := 0;

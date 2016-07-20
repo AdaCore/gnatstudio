@@ -138,7 +138,7 @@ package body GPS.Tree_View.Locations is
    -------------
 
    procedure Gtk_New
-     (Object : in out GPS_Locations_Tree_View;
+     (Object : out GPS_Locations_Tree_View;
       Model  : Gtk_Tree_Model) is
    begin
       Object := new GPS_Locations_Tree_View_Record;

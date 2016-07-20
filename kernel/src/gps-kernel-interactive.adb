@@ -109,9 +109,8 @@ package body GPS.Kernel.Interactive is
             Highlight_Child (NChild);
          end if;
 
-         if Console /= null then
-            Enable_Prompt_Display (Console, Accept_Input);
-         end if;
+         Enable_Prompt_Display (Console, Accept_Input);
+
       elsif Child /= null then
          Console := Interactive_Console (Get_Widget (Child));
          Enable_Prompt_Display (Console, Accept_Input);

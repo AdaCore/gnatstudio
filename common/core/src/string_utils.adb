@@ -941,7 +941,7 @@ package body String_Utils is
 
    function Do_Tab_Expansion
      (Text     : String;
-      Tab_Size : Integer) return String
+      Tab_Size : Positive) return String
    is
       Num_Tabs : Natural := 0;
       Col      : Integer := 1;

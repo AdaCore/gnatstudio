@@ -2239,15 +2239,21 @@ package body Debugger.Gdb is
       Scope_String  : GNAT.Strings.String_Access;
       Action_String : GNAT.Strings.String_Access;
    begin
-      if Scope /= No_Scope then
-         if Scope = Current_Task then
+      case Scope is
+         when Current_Task =>
             Scope_String := Task_String'Access;
-         elsif Scope = Tasks_In_PD then
-            Scope_String := PD_String'Access;
-         elsif Scope = Any_Task then
-            Scope_String := Any_String'Access;
-         end if;
 
+         when Tasks_In_PD =>
+            Scope_String := PD_String'Access;
+
+         when Any_Task =>
+            Scope_String := Any_String'Access;
+
+         when No_Scope =>
+            null;
+      end case;
+
+      if Scope /= No_Scope then
          --  If the breakpoint identifier is 0, then set the
          --  session-wide default scope, otherwise change only the
          --  scope of the breakpoint indicated by Num
@@ -2265,15 +2271,21 @@ package body Debugger.Gdb is
          end if;
       end if;
 
-      if Action /= No_Action then
-         if Action = Current_Task then
+      case Action is
+         when Current_Task =>
             Action_String := Task_String'Access;
-         elsif Action = Tasks_In_PD then
-            Action_String := PD_String'Access;
-         elsif Action = All_Tasks then
-            Action_String := All_String'Access;
-         end if;
 
+         when Tasks_In_PD =>
+            Action_String := PD_String'Access;
+
+         when All_Tasks =>
+            Action_String := All_String'Access;
+
+         when No_Action =>
+            null;
+      end case;
+
+      if Action /= No_Action then
          --  If the breakpoint identifier is 0, then set the
          --  session-wide default action, otherwise change only the
          --  scope of breakpoint indicated by Num
@@ -2405,12 +2417,12 @@ package body Debugger.Gdb is
 
          Header_Found : Boolean := False;
 
-         ID_End : Natural;
-         TID_End : Natural;
-         P_ID_End : Natural;
-         Pri_End : Natural;
+         ID_End      : Natural;
+         TID_End     : Natural;
+         P_ID_End    : Natural;
+         Pri_End     : Natural;
          State_Start : Natural;
-         Name_Start : Natural;
+         Name_Start  : Natural;
 
       begin
          for L in Lines'Range loop
@@ -2423,12 +2435,12 @@ package body Debugger.Gdb is
                   if Matched (0) /= No_Match then
                      Header_Found := True;
 
-                     ID_End := Matched (1).Last - S'First;
-                     TID_End := Matched (2).Last - S'First;
-                     P_ID_End := Matched (3).Last - S'First;
-                     Pri_End := Matched (4).Last - S'First;
+                     ID_End      := Matched (1).Last - S'First;
+                     TID_End     := Matched (2).Last - S'First;
+                     P_ID_End    := Matched (3).Last - S'First;
+                     Pri_End     := Matched (4).Last - S'First;
                      State_Start := Matched (5).First - S'First;
-                     Name_Start := Matched (6).First - S'First;
+                     Name_Start  := Matched (6).First - S'First;
 
                      Len := Len + 1;
                      Info (Len) :=

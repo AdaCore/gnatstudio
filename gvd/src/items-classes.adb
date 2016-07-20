@@ -370,8 +370,7 @@ package body Items.Classes is
 
       if not Result then
          if Item1.Num_Ancestors /= 0 then
-            Result := Result or else Structurally_Equivalent
-              (Item1.Ancestors (1), Item2);
+            Result := Structurally_Equivalent (Item1.Ancestors (1), Item2);
          end if;
 
          if Class_Type_Access (Item2).Num_Ancestors /= 0 then

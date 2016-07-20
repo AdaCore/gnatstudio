@@ -109,7 +109,7 @@ package body CodePeer.Single_Message_Review_Dialogs is
    -------------
 
    procedure Gtk_New
-     (Dialog  : in out Message_Review_Dialog;
+     (Dialog  : out Message_Review_Dialog;
       Kernel  : not null access Kernel_Handle_Record'Class;
       Message : CodePeer.Message_Access)
    is

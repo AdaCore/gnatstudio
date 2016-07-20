@@ -333,10 +333,9 @@ package body Src_Editor_Box.Tooltips is
 
                   if Text /= Null_Unbounded_String then
 
-                     if Image = null
-                       and then Message.Get_Action /= null
-                       and then Message.Get_Action.Image
-                                  /= Null_Unbounded_String
+                     if Message.Get_Action /= null
+                       and then Message.Get_Action.Image /=
+                         Null_Unbounded_String
                      then
                         Gtk_New_From_Icon_Name
                            (Image, To_String (Message.Get_Action.Image), 20);

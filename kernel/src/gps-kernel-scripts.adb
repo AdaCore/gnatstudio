@@ -628,28 +628,6 @@ package body GPS.Kernel.Scripts is
               (Data, Directory_Information (Context).Full_Name);
          end if;
 
-      elsif Command = "location" then
-         Context := Get_Context (Data.Nth_Arg (1));
-
-         if Has_Line_Information (Context) then
-            L := Line_Information (Context);
-         end if;
-
-         if Has_Column_Information (Context) then
-            C := Integer (Column_Information (Context));
-         end if;
-
-         if Has_File_Information (Context) then
-            Set_Return_Value
-              (Data,
-               Create_File_Location
-                 (Get_Script (Data),
-                  (Create_File (Get_Script (Data),
-                   File_Information (Context))),
-                  L,
-                  Visible_Column_Type (C)));
-         end if;
-
       elsif Command = "current_context"
         or else Command = "contextual_context"
       then

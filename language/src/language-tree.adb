@@ -801,14 +801,8 @@ package body Language.Tree is
       if Iter1.Node.Construct.Name = Iter2.Node.Construct.Name
         and then Iter1.Node.Construct.Category = Iter2.Node.Construct.Category
       then
-         if Iter1.Node.Parent_Index = 0
-           and then Iter2.Node.Parent_Index = 0
-         then
-            return True;
-         elsif Iter1.Node.Parent_Index = 0
-           and then Iter2.Node.Parent_Index /= 0
-         then
-            return False;
+         if Iter1.Node.Parent_Index = 0 then
+            return Iter2.Node.Parent_Index = 0;
          elsif Iter2.Node.Parent_Index = 0 then
             return False;
          else

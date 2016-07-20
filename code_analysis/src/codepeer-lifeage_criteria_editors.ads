@@ -32,7 +32,7 @@ package CodePeer.Lifeage_Criteria_Editors is
      access all Lifeage_Criteria_Editor_Record'Class;
 
    procedure Gtk_New
-     (Editor         : in out Lifeage_Criteria_Editor;
+     (Editor         : out Lifeage_Criteria_Editor;
       Kernel         : GPS.Kernel.Kernel_Handle;
       Title          : String;
       History_Prefix : String);

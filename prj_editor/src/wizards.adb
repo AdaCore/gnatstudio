@@ -320,11 +320,14 @@ package body Wizards is
      (Wiz : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       W : constant Wizard := Wizard (Wiz);
-      Msg : constant String := Is_Complete (W.Pages (W.Current_Page));
    begin
-      W.Pages (W.Current_Page).Was_Complete := Msg = "";
-      if Msg /= "" then
-         Display_Message (W, Msg, As_Error => True);
+      if W.Pages /= null then
+         declare
+            Msg : constant String := Is_Complete (W.Pages (W.Current_Page));
+         begin
+            W.Pages (W.Current_Page).Was_Complete := Msg = "";
+            Display_Message (W, Msg, As_Error => Msg /= "");
+         end;
       else
          Display_Message (W, "", As_Error => False);
       end if;

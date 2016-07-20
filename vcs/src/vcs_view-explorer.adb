@@ -545,7 +545,7 @@ package body VCS_View.Explorer is
                             Get_Registered_Status (VCS_Identifier);
 
       Status_Temp       : File_Status_List.List_Node;
-      Sort_Id           : Gint;
+      Sort_Id           : Gint := 0;
 
       Up_To_Date_Status : VCS_File_Status;
       Filter_Status     : Status_Array_Access :=

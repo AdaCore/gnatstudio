@@ -558,9 +558,7 @@ package body Xref is
                Name      => Entity_Name);
 
             if Result /= Null_Entity_Access
-               and then
-                  (Entity_Name = "" or else
-                   Get (Get_Construct (Result).Name).all = Entity_Name)
+               and then Get (Get_Construct (Result).Name).all = Entity_Name
             then
                Result_Loc := Get_Construct (Result).Sloc_Entity;
 
@@ -819,8 +817,6 @@ package body Xref is
            then Get_Name (Entity) & " fuzzy=" & Is_Fuzzy (Entity)'Img
            else "")) with Unreferenced;
 
-      No_Location_If_First : constant Boolean := False;
-
       function Extract_Next_By_Heuristics return General_Location;
       --  Return the next body location using the construct heuristics
 
@@ -907,13 +903,6 @@ package body Xref is
                   --  return it if we got back to the initial body and the
                   --  caller doesn't want to loop back.
 
-                  if After /= No_Location
-                    and then No_Location_If_First
-                    and then C_Entity = Tree_Lang.Find_First_Part (C_Entity)
-                  then
-                     return No_Location;
-                  end if;
-
                   if New_Entity /= C_Entity then
                      P := Loc.Project.Create_From_Project
                        (Get_File_Path (Get_File (New_Entity)).Full_Name.all)
@@ -958,8 +947,7 @@ package body Xref is
               (Candidate = No_Location
 
                --  it's OK to return the first entity.
-               or else (not No_Location_If_First
-                        and then not Is_Location_For_Entity (Candidate)))
+               or else not Is_Location_For_Entity (Candidate))
 
             then
                Candidate := H_Loc;
@@ -968,13 +956,6 @@ package body Xref is
                if Active (Me) then
                   Trace (Me, "Use body from constructs");
                end if;
-
-               --  If we don't have any more information to extract from the
-               --  construct database, then return the first entity if allowed
-               --  by the flags, or null.
-
-            elsif No_Location_If_First then
-               Candidate := No_Location;
             end if;
          end;
       end if;

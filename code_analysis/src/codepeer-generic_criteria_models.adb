@@ -119,7 +119,7 @@ package body CodePeer.Generic_Criteria_Models is
    -------------
 
    procedure Gtk_New
-     (Model          : in out Criteria_Model;
+     (Model          : out Criteria_Model;
       Kernel         : GPS.Kernel.Kernel_Handle;
       History_Prefix : String;
       Items          : Item_Sets.Set;

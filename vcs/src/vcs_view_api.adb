@@ -1027,8 +1027,7 @@ package body VCS_View_API is
                  and then Get_File_Activity (Files (K)) = Activity;
             end loop;
 
-            if (File_Section
-                 and then not Has_Activity_Information (Context)
+            if (not Has_Activity_Information (Context)
                  and then not Log_File
                  and then Consistent
                  and then Activity = No_Activity)
@@ -1044,8 +1043,7 @@ package body VCS_View_API is
                Set_Sensitive (Menu_Item, Section_Active);
             end if;
 
-            if (File_Section
-                 and then First /= No_Activity
+            if (First /= No_Activity
                  and then not Has_Activity_Information (Context))
               or else Show_Everything
             then

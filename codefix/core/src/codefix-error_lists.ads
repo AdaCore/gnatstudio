@@ -30,7 +30,7 @@ package Codefix.Error_Lists is
 
    type Error_Message_List is private;
 
-   procedure Initialize (This : in out Error_Message_List);
+   procedure Initialize (This : out Error_Message_List);
    --  Initialize the error message list - this has to be called before any of
    --  the primitives on this type.
 

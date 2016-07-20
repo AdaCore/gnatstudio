@@ -351,21 +351,20 @@ package body Templates_Parser.Utils is
                Last := K + 1;
 
                Quoted_Value : loop
-                  if T (Last) = '"'
-                    and then Last < T'Last
-                    and then T (Last + 1) = '"'
-                  then
-                     --  Skip this quote
-                     Last := Last + 1;
+                  if T (Last) = '"' then
+                     if Last < T'Last
+                       and then T (Last + 1) = '"'
+                     then
+                        --  Skip this quote
+                        Last := Last + 1;
 
-                  elsif T (Last) = '"'
-                    and then (Last = T'Last or else T (Last + 1) /= '"')
-                  then
-                     --  Found matching quote, add this value
-                     Result := Result & Clear_Quote (T (K + 1 .. Last - 1));
-                     K := Last;
-                     --  and leave loop
-                     exit Quoted_Value;
+                     else
+                        --  Found matching quote, add this value
+                        Result := Result & Clear_Quote (T (K + 1 .. Last - 1));
+                        K := Last;
+                        --  and leave loop
+                        exit Quoted_Value;
+                     end if;
 
                   elsif Last = T'Last then
                      --  No matching quote

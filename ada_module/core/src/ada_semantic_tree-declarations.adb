@@ -297,41 +297,42 @@ package body Ada_Semantic_Tree.Declarations is
    overriding procedure Next (It : in out Declaration_Id_Iterator) is
    begin
       loop
-         if It.Stage = File_Hierarchy then
-            --  Stage 1: We return the visible constructs from the current
-            --  file.
+         case It.Stage is
+            when File_Hierarchy =>
+               --  Stage 1: We return the visible constructs from the current
+               --  file.
 
-            if It.Visible_Index < It.Visible_Constructs'Length then
-               It.Visible_Index := It.Visible_Index + 1;
-            else
-               --  If we finished to analyze the current visible constructs,
-               --  we've got to switch to the database.
-
-               Free (It.Visible_Constructs);
-               It.Stage := Database;
-
-               if not It.Is_Partial
-                 and then Is_Hidden (It.Hidden_Entities, Get (It.Name).all)
-               then
-                  --  If this name is already hidden by the entities extracted
-                  --  and if it's not partial, then there's nothing more to
-                  --  extract (all other names will be hidden). Finish
-                  --  here the iteration
-
-                  It.Db_Iterator := Null_Construct_Db_Iterator;
+               if It.Visible_Index < It.Visible_Constructs'Length then
+                  It.Visible_Index := It.Visible_Index + 1;
                else
-                  It.Db_Iterator := Start
-                    (It.Construct_Db, Get (It.Name).all, It.Is_Partial);
+                  --  If we finished to analyze the current visible constructs,
+                  --  we've got to switch to the database.
+
+                  Free (It.Visible_Constructs);
+                  It.Stage := Database;
+
+                  if not It.Is_Partial
+                    and then Is_Hidden (It.Hidden_Entities, Get (It.Name).all)
+                  then
+                     --  If this name is already hidden by the entities
+                     --  extracted and if it's not partial, then there's
+                     --  nothing more to extract (all other names will be
+                     --  hidden). Finish here the iteration
+
+                     It.Db_Iterator := Null_Construct_Db_Iterator;
+                  else
+                     It.Db_Iterator := Start
+                       (It.Construct_Db, Get (It.Name).all, It.Is_Partial);
+                  end if;
                end if;
-            end if;
 
-         elsif It.Stage = Database then
-            --  Stage 2: We return the files from the database
+            when Database =>
+               --  Stage 2: We return the files from the database
 
-            if not At_End (It.Db_Iterator) then
-               Next (It.Db_Iterator);
-            end if;
-         end if;
+               if not At_End (It.Db_Iterator) then
+                  Next (It.Db_Iterator);
+               end if;
+         end case;
 
          Computes_Visibility (It);
          exit when Is_Valid (It);
@@ -422,20 +423,19 @@ package body Ada_Semantic_Tree.Declarations is
          return True;
       end if;
 
-      if It.Stage = File_Hierarchy then
-         if It.Visible_Constructs /= null
-           and then It.Visible_Index <= It.Visible_Constructs'Last
-         then
-            return True;
-         else
-            return False;
-         end if;
+      case It.Stage is
+         when File_Hierarchy =>
+            if It.Visible_Constructs /= null
+              and then It.Visible_Index <= It.Visible_Constructs'Last
+            then
+                           return True;
+            else
+               return False;
+            end if;
 
-      elsif It.Stage = Database then
-         return It.Valid;
-      end if;
-
-      return True;
+         when Database =>
+            return It.Valid;
+      end case;
    end Is_Valid;
 
    ------------

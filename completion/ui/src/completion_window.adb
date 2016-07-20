@@ -757,9 +757,7 @@ package body Completion_Window is
 
                --  Set all columns
                Explorer.Model.Set (Iter, Markup_Column, Info.Markup.all);
-               if Icon_Name /= null then
-                  Explorer.Model.Set (Iter, Icon_Name_Column, Icon_Name.all);
-               end if;
+               Explorer.Model.Set (Iter, Icon_Name_Column, Icon_Name.all);
                Explorer.Model.Set
                  (Iter, Index_Column, Gint (Explorer.Index));
                Explorer.Model.Set (Iter, Completion_Column, Info.Text.all);
@@ -2056,8 +2054,9 @@ package body Completion_Window is
          --  Display an integer number of lines in the tree view
          Rows := (Gint (Window.Explorer.Index - 1) *
                   (Max_Height)) / Requisition.Height;
-         Height := Rows * (Requisition.Height /
-                             Gint (Window.Explorer.Index - 1)) + 5;
+         Height := Rows *
+           (Requisition.Height /
+              Gint'Max (Gint (Window.Explorer.Index - 1), 1)) + 5;
       else
          Height := Max_Height + 5;
       end if;

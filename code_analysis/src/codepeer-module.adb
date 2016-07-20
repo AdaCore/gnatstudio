@@ -1500,7 +1500,7 @@ package body CodePeer.Module is
         CodePeer.Single_Message_Review_Dialogs.Message_Review_Dialog;
       Multiple_Review :
         CodePeer.Multiple_Message_Review_Dialogs.Message_Review_Dialog;
-      Loaded        : Boolean;
+      Loaded        : Boolean := False;
 
    begin
       --  Check that all messages has loaded audit trail.

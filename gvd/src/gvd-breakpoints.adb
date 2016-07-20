@@ -1158,8 +1158,8 @@ package body GVD.Breakpoints is
       Modified       : Boolean := False;
       Start, The_End : Gtk_Text_Iter;
       C              : Integer;
-      Scope_Value    : Scope_Type;
-      Action_Value   : Action_Type;
+      Scope_Value    : Scope_Type := No_Scope;
+      Action_Value   : Action_Type := No_Action;
       T              : constant Breakpoint_Type :=
         Breakpoint_Type'Val (Get_Active (Self.Breakpoint_Type));
       Temporary      : constant Boolean := Self.Temporary.Get_Active;

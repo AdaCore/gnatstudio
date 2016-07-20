@@ -321,6 +321,7 @@ package body GPS.Kernel.Preferences is
             else
                Set_Error_Msg (Data,
                               -"Wrong value for default_font_style parameter");
+               return;
             end if;
 
             Pref := Preference

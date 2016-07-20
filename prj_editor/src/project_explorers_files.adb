@@ -591,7 +591,6 @@ package body Project_Explorers_Files is
       end if;
 
       if D.Depth >= 0
-        and then D.Files /= null
         and then D.File_Index <= D.Files'Last
       then
          if D.Files (D.File_Index) = No_File then

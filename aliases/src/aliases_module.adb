@@ -2098,9 +2098,7 @@ package body Aliases_Module is
             begin
                Expand := null;
 
-               if N.Tag.all /= "alias"
-                 or else Name = ""
-               then
+               if Name = "" then
                   Insert
                     (Kernel, -"Invalid alias format for " & Name,
                      Mode => Error);

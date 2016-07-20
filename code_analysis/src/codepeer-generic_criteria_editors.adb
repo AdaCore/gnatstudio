@@ -133,7 +133,7 @@ package body CodePeer.Generic_Criteria_Editors is
    -------------
 
    procedure Gtk_New
-     (Editor         : in out Criteria_Editor;
+     (Editor         : out Criteria_Editor;
       Kernel         : GPS.Kernel.Kernel_Handle;
       Title          : String;
       History_Prefix : String;

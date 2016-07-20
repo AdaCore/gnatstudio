@@ -1421,8 +1421,12 @@ package body GPS.Kernel is
    function Get_Debug_Name
      (Filter : access Action_Filter_Record) return String is
    begin
-      if Filter /= null and then Filter.Name /= "" then
+      if Filter = null then
+         return "";
+
+      elsif Filter.Name /= "" then
          return To_String (Filter.Name);
+
       else
          return External_Tag (Action_Filter_Record'Class (Filter.all)'Tag);
       end if;

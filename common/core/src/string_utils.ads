@@ -220,7 +220,7 @@ package String_Utils is
    --  characters.
 
    function Do_Tab_Expansion
-     (Text : String; Tab_Size : Integer) return String;
+     (Text : String; Tab_Size : Positive) return String;
    --  Return a version of Text after all tabs have been correctly expanded
    --  depending on the value of Tab_Size.
    --  This function works correctly with multiple-line strings.

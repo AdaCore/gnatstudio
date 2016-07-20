@@ -1512,40 +1512,47 @@ package body Project_Explorers is
       Set_Node_Type (T.Tree.Model, Iter, N_Type, Expanded => True);
 
       Sort_Col := Freeze_Sort (T.Tree.Model);
+      begin
+         case N_Type is
+            when Project_Node_Types =>
+               if Has_Dummy_Iter (T.Tree.Model, Iter) then
+                  Refresh_Project_Node
+                    (T, Iter, Flat_View => Show_Flat_View.Get_Pref);
+                  Success := Expand_Row
+                    (T.Tree, Filter_Path, Open_All => False);
+               end if;
 
-      case N_Type is
-         when Project_Node_Types =>
-            if Has_Dummy_Iter (T.Tree.Model, Iter) then
-               Refresh_Project_Node
-                 (T, Iter, Flat_View => Show_Flat_View.Get_Pref);
+            when File_Node =>
+               if Has_Dummy_Iter (T.Tree.Model, Iter) then
+                  Append_File_Info
+                    (T.Kernel, T.Tree.Model, Iter,
+                     Get_File_From_Node (T.Tree.Model, Iter), Sorted => False);
+                  Success := Expand_Row
+                    (T.Tree, Filter_Path, Open_All => False);
+               end if;
+
+            when Runtime_Node =>
+               --  Following does nothing if info is aleeady there
+               Append_Runtime_Info (T.Kernel, T.Tree.Model, Iter);
                Success := Expand_Row (T.Tree, Filter_Path, Open_All => False);
-            end if;
 
-         when File_Node =>
-            if Has_Dummy_Iter (T.Tree.Model, Iter) then
-               Append_File_Info
-                 (T.Kernel, T.Tree.Model, Iter,
-                  Get_File_From_Node (T.Tree.Model, Iter), Sorted => False);
-               Success := Expand_Row (T.Tree, Filter_Path, Open_All => False);
-            end if;
+            when Directory_Node_Types | Category_Node | Entity_Node
+               | Dummy_Node =>
+               null;   --  nothing to do
+         end case;
 
-         when Runtime_Node =>
-            --  Following does nothing if info is aleeady there
-            Append_Runtime_Info (T.Kernel, T.Tree.Model, Iter);
-            Success := Expand_Row (T.Tree, Filter_Path, Open_All => False);
+         Thaw_Sort (T.Tree.Model, Sort_Col);
 
-         when Directory_Node_Types | Category_Node | Entity_Node
-            | Dummy_Node =>
-            null;   --  nothing to do
-      end case;
-
-      Thaw_Sort (T.Tree.Model, Sort_Col);
+      exception
+         when E : others =>
+            Trace (Me, E);
+            Thaw_Sort (T.Tree.Model, Sort_Col);
+      end;
       T.Expanding := False;
 
    exception
       when E : others =>
          Trace (Me, E);
-         Thaw_Sort (T.Tree.Model, Sort_Col);
          T.Expanding := False;
    end Expand_Row_Cb;
 

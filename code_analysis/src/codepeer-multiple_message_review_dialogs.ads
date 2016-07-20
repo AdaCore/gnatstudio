@@ -32,7 +32,7 @@ package CodePeer.Multiple_Message_Review_Dialogs is
      access all Message_Review_Dialog_Record'Class;
 
    procedure Gtk_New
-     (Dialog   : in out Message_Review_Dialog;
+     (Dialog   : out Message_Review_Dialog;
       Kernel   : not null access Kernel_Handle_Record'Class;
       Messages : CodePeer.Message_Vectors.Vector);
    procedure Initialize

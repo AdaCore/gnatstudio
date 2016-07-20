@@ -168,7 +168,9 @@ package body Case_Handling.IO is
       Free (File);
 
    exception
-      when E : others => Trace (Me, E);
+      when E : others =>
+         Trace (Me, E);
+         Success := False;
    end Save_Exceptions;
 
 end Case_Handling.IO;

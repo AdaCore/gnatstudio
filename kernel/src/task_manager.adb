@@ -419,10 +419,10 @@ package body Task_Manager is
    is
       use GNAT.Strings;
 
-      procedure Init (Q : in out Task_Queue_Access);
+      procedure Init (Q : out Task_Queue_Access);
       --  Set the fields of the queue
 
-      procedure Init (Q : in out Task_Queue_Access) is
+      procedure Init (Q : out Task_Queue_Access) is
       begin
          Q := new Task_Queue_Record;
          Q.Id := new String'(Queue_Id);
@@ -503,7 +503,6 @@ package body Task_Manager is
 
       for J in Manager.Queues'Range loop
          if Manager.Queues (J).Id /= null
-           and then Manager.Queues (J).Id /= null
            and then Manager.Queues (J).Id.all = Queue_Id
          then
             return True;

@@ -1736,35 +1736,40 @@ package body Codefix.Text_Manager.Ada_Commands is
         (Search_With
            (Current_Text, This.File_Destination, Pkg_Name));
 
-      if This.Mode = Add_Use then
-         if This.With_Could_Miss and then With_Cursor = Null_File_Cursor then
-            Current_Text.Add_Line
-              (Get_Next_With_Position (Current_Text, This.File_Destination),
-               "with " & Pkg_Name & "; use " & Pkg_Name & ";");
-         else
-            Current_Text.Add_Line
-              (With_Cursor,
-               "use " & Pkg_Name & ";");
-         end if;
-      elsif This.Mode = Prefix then
-         if This.With_Could_Miss and then With_Cursor = Null_File_Cursor then
-            Current_Text.Add_Line
-              (Get_Next_With_Position (Current_Text, This.File_Destination),
-               "with " & Pkg_Name & ";");
-         end if;
-
-         declare
-            Prefix : constant String := Get_Full_Prefix
-              (Current_Text, Source_Position);
-            Object_Position : constant File_Cursor'Class :=
-              Current_Text.Get_Current_Cursor (This.Object_Position.all);
-         begin
-            if Prefix /= "" then
-               Current_Text.Replace (Object_Position, 0, Prefix & ".");
+      case This.Mode is
+         when Add_Use =>
+            if This.With_Could_Miss
+              and then With_Cursor = Null_File_Cursor
+            then
+               Current_Text.Add_Line
+                 (Get_Next_With_Position (Current_Text, This.File_Destination),
+                  "with " & Pkg_Name & "; use " & Pkg_Name & ";");
+            else
+               Current_Text.Add_Line
+                 (With_Cursor,
+                  "use " & Pkg_Name & ";");
             end if;
-         end;
 
-      end if;
+         when Prefix =>
+            if This.With_Could_Miss
+              and then With_Cursor = Null_File_Cursor
+            then
+               Current_Text.Add_Line
+                 (Get_Next_With_Position (Current_Text, This.File_Destination),
+                  "with " & Pkg_Name & ";");
+            end if;
+
+            declare
+               Prefix : constant String := Get_Full_Prefix
+                 (Current_Text, Source_Position);
+               Object_Position : constant File_Cursor'Class :=
+                 Current_Text.Get_Current_Cursor (This.Object_Position.all);
+            begin
+               if Prefix /= "" then
+                  Current_Text.Replace (Object_Position, 0, Prefix & ".");
+               end if;
+            end;
+      end case;
    end Execute;
 
    ----------

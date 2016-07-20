@@ -62,7 +62,7 @@ package GPS.Tree_View.Locations is
    --  Returns filter model.
 
    procedure Gtk_New
-     (Object : in out GPS_Locations_Tree_View;
+     (Object : out GPS_Locations_Tree_View;
       Model  : Gtk.Tree_Model.Gtk_Tree_Model);
 
    procedure Initialize

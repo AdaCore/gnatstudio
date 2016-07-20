@@ -1306,6 +1306,9 @@ package body GPS.Search.GUI is
       Inst : Class_Instance;
       R    : Result_Property;
    begin
+      Result   := null;
+      Has_Next := False;
+
       while Has_Element (Curs) loop
          Inst := Element (Self.Inst, Curs);
          declare

@@ -239,31 +239,37 @@ package body Toolchains.Parsers is
                      Dummy_Project := Dummy_Project_Tree.Root_Project;
                   end if;
 
-                  if Attr.Kind = Compiler_Kind then
-                     Dummy_Project.Set_Attribute
-                       (Attribute => Build ("ide", "compiler_command"),
-                        Value     => Attr.String_Expression.all,
-                        Index     => Element (Attr.Lang));
-                  elsif Attr.Kind = Tool_Kind then
-                     case Attr.Tool is
-                        when Unknown =>
-                           null;
-                        when GNAT_Driver =>
-                           Dummy_Project.Set_Attribute
-                             (Attribute => Build ("ide", "gnat"),
-                              Value     => Attr.String_Expression.all);
-                        when GNAT_List =>
-                           Dummy_Project.Set_Attribute
-                             (Attribute => Build ("ide", "gnatlist"),
-                              Value     => Attr.String_Expression.all);
-                        when Debugger =>
-                           Dummy_Project.Set_Attribute
-                             (Attribute => Build ("ide", "debugger_command"),
-                              Value     => Attr.String_Expression.all);
-                        when CPP_Filt =>
-                           null;
-                     end case;
-                  end if;
+                  case Attr.Kind is
+                     when Compiler_Kind =>
+                        Dummy_Project.Set_Attribute
+                          (Attribute => Build ("ide", "compiler_command"),
+                           Value     => Attr.String_Expression.all,
+                           Index     => Element (Attr.Lang));
+
+                     when Tool_Kind =>
+                        case Attr.Tool is
+                           when Unknown =>
+                              null;
+                           when GNAT_Driver =>
+                              Dummy_Project.Set_Attribute
+                                (Attribute => Build ("ide", "gnat"),
+                                 Value     => Attr.String_Expression.all);
+                           when GNAT_List =>
+                              Dummy_Project.Set_Attribute
+                                (Attribute => Build ("ide", "gnatlist"),
+                                 Value     => Attr.String_Expression.all);
+                           when Debugger =>
+                              Dummy_Project.Set_Attribute
+                                (Attribute => Build
+                                   ("ide", "debugger_command"),
+                                 Value     => Attr.String_Expression.all);
+                           when CPP_Filt =>
+                              null;
+                        end case;
+
+                     when Unknown_Kind =>
+                        null;
+                  end case;
                end if;
 
                if Attr.Kind /= Unknown_Kind then
@@ -391,6 +397,7 @@ package body Toolchains.Parsers is
                      else
                         Error_Found := new String'(Attr.Error.all);
                      end if;
+
                   elsif Attr.Kind /= Unknown_Kind then
                      if Error_Found /= null then
                         This.Error := Error_Found;
@@ -404,16 +411,22 @@ package body Toolchains.Parsers is
                      if Ada_Toolchain /= null
                        and then Ada_Toolchain.Is_Custom
                      then
-                        if Attr.Kind = Tool_Kind then
-                           Set_Command
-                             (Ada_Toolchain, Attr.Tool,
-                              Attr.String_Expression.all, From_Project, False);
-                        elsif Attr.Kind = Compiler_Kind then
-                           Set_Compiler
-                             (Ada_Toolchain,
-                              Element (Attr.Lang),
-                              Attr.String_Expression.all);
-                        end if;
+                        case Attr.Kind is
+                           when Tool_Kind =>
+                              Set_Command
+                                (Ada_Toolchain, Attr.Tool,
+                                 Attr.String_Expression.all,
+                                 From_Project, False);
+
+                           when Compiler_Kind =>
+                              Set_Compiler
+                                (Ada_Toolchain,
+                                 Element (Attr.Lang),
+                                 Attr.String_Expression.all);
+
+                           when Unknown_Kind =>
+                              null;
+                        end case;
                      end if;
                   end if;
 

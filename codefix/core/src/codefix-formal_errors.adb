@@ -1009,7 +1009,7 @@ package body Codefix.Formal_Errors is
                        (New_Command,
                         "Add pragma Unreferenced to parameter """
                         & Name & """");
-                  elsif Actual_Category = Cat_Discriminant then
+                  else
                      Set_Caption
                        (New_Command,
                         "Add pragma Unreferenced to discriminant """

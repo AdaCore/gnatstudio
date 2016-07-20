@@ -63,7 +63,8 @@ package body Debugger.Gdb.Cpp is
       Entity   : String;
       Index    : in out Natural;
       Is_Union : Boolean;
-      Result   : out Generic_Type_Access);
+      Result   : out Generic_Type_Access)
+     with Pre => Type_Str (Index - 1) = '{';
    --  Parse the contents of a class/union in C++ (ie the part after '{'
    --  Index should point to the character after '{'
 
@@ -381,9 +382,6 @@ package body Debugger.Gdb.Cpp is
       Name_Start, Name_End, Field_End : Natural;
 
    begin
-      pragma Assert (Result = null);
-      pragma Assert (Type_Str (Index - 1) = '{');
-
       --  Count the number of fields.
       --  Gdb first displays the fields (along with public:, protected: or
       --  private:), then a blank line, and the methods with their visibility.

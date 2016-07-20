@@ -885,18 +885,18 @@ package body Call_Graph_Views is
    is
       pragma Unreferenced (Path);
 
-      V      : constant Callgraph_View_Access :=
-                 Callgraph_View_Access (View);
-      M      : constant Gtk_Tree_Store := -Get_Model (V.Tree);
-      Child  : Gtk_Tree_Iter := Null_Iter;
-      Dummy  : Gtk_Tree_Iter;
-      Column : Gint;
-      Data   : Ancestors_User_Data_Access;
+      V              : constant Callgraph_View_Access :=
+                        Callgraph_View_Access (View);
+      M              : constant Gtk_Tree_Store := -Get_Model (V.Tree);
+      Child          : Gtk_Tree_Iter := Null_Iter;
+      Dummy          : Gtk_Tree_Iter;
+      Column         : Gint;
+      Data           : Ancestors_User_Data_Access;
       Computing_Iter : Gtk_Tree_Iter := Null_Iter;
 
-      Local_Path  : Gtk_Tree_Path;
-      Model : constant Gtk_Tree_Model := V.Tree.Get_Model;
-      Row : Gtk_Tree_Row_Reference;
+      Local_Path     : Gtk_Tree_Path;
+      Model          : constant Gtk_Tree_Model := V.Tree.Get_Model;
+      Row            : Gtk_Tree_Row_Reference;
    begin
       if V.Block_On_Expanded then
          return;
@@ -912,59 +912,61 @@ package body Call_Graph_Views is
          end if;
 
          Column := Freeze_Sort (M);
+         begin
+            --  We always recompute the call graph. gtk+ would lose the
+            --  expanded status of children anyway, so we might as well
+            --  recompute everything. It is also more logical from the user's
+            --  point of view that this would act as a refresh. Keep one child
+            --  (the computing node), or the expanded status is lost by gtk+.
 
-         --  We always recompute the call graph. gtk+ would lose the expanded
-         --  status of children anyway, so we might as well recompute
-         --  everything. It is also more logical from the user's point of view
-         --  that this would act as a refresh. Keep one child (the computing
-         --  node), or the expanded status is lost by gtk+.
+            Local_Path := Get_Path (Model, Iter);
+            Gtk_New (Row, Model, Local_Path);
+            Data := new Ancestors_User_Data'
+              (Commands_User_Data_Record with
+               View        => V,
+               Computing_Ref => Null_Gtk_Tree_Row_Reference,
+               Entity_Ref    => Row);
+            Path_Free (Local_Path);
 
-         Local_Path := Get_Path (Model, Iter);
-         Gtk_New (Row, Model, Local_Path);
-         Data := new Ancestors_User_Data'
-           (Commands_User_Data_Record with
-            View        => V,
-            Computing_Ref => Null_Gtk_Tree_Row_Reference,
-            Entity_Ref    => Row);
-         Path_Free (Local_Path);
+            Prepend (M, Computing_Iter, Iter);
+            Set (M, Computing_Iter, Name_Column, Computing_Label);
 
-         Prepend (M, Computing_Iter, Iter);
-         Set (M, Computing_Iter, Name_Column, Computing_Label);
+            Child := Computing_Iter;
+            Next (M, Child);
 
-         Child := Computing_Iter;
-         Next (M, Child);
+            Local_Path := Get_Path (Model, Computing_Iter);
+            Gtk_New (Data.Computing_Ref, Model, Local_Path);
+            Path_Free (Local_Path);
 
-         Local_Path := Get_Path (Model, Computing_Iter);
-         Gtk_New (Data.Computing_Ref, Model, Local_Path);
-         Path_Free (Local_Path);
+            while Child /= Null_Iter loop
+               Free_And_Remove (M, Child);
+            end loop;
 
-         while Child /= Null_Iter loop
-            Free_And_Remove (M, Child);
-         end loop;
+            case Get_View_Type (Get_Model (V.Tree), Iter) is
+               when View_Calls     =>
+                  Examine_Entity_Call_Graph
+                    (Entity            => Entity,
+                     User_Data         => Data,
+                     Dispatching_Calls => True,
+                     Get_All_Refs      => True);
 
-         case Get_View_Type (Get_Model (V.Tree), Iter) is
-         when View_Calls     =>
-            Examine_Entity_Call_Graph
-              (Entity            => Entity,
-               User_Data         => Data,
-               Dispatching_Calls => True,
-               Get_All_Refs      => True);
+               when View_Called_By =>
+                  Examine_Ancestors_Call_Graph
+                    (Kernel            => V.Kernel,
+                     Entity            => Entity,
+                     User_Data         => Data,
+                     Watch             => Gtk_Widget (V),
+                     Dispatching_Calls => True,
+                     Background_Mode   => True);
+            end case;
 
-         when View_Called_By =>
-            Examine_Ancestors_Call_Graph
-              (Kernel            => V.Kernel,
-               Entity            => Entity,
-               User_Data         => Data,
-               Watch             => Gtk_Widget (V),
-               Dispatching_Calls => True,
-               Background_Mode   => True);
-         end case;
-
-         Thaw_Sort (M, Column);
-      exception
-         when E : others =>
-            Trace (Me, E);
             Thaw_Sort (M, Column);
+
+         exception
+            when E : others =>
+               Trace (Me, E);
+               Thaw_Sort (M, Column);
+         end;
       end;
 
    exception

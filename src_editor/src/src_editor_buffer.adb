@@ -2908,7 +2908,7 @@ package body Src_Editor_Buffer is
          --  this case, since we cannot use from the byte index due to
          --  limitations in gtk+
 
-         if Sloc_Start.Line = 0 then
+         if Sloc_Start.Line < 1 then
             return False;
          end if;
 
@@ -2923,10 +2923,6 @@ package body Src_Editor_Buffer is
 
          Col := Gint (Sloc_Start.Column) + Offset - 1;
          Buffer_Line := Buffer_Line_Type (Sloc_Start.Line) + Slice_Offset_Line;
-
-         if Buffer_Line = 0 then
-            return False;
-         end if;
 
          End_Buffer_Line :=
            Buffer_Line_Type (Sloc_End.Line) + Slice_Offset_Line;
@@ -6932,7 +6928,7 @@ package body Src_Editor_Buffer is
          begin
             for K in 1 .. Line.Length loop
                if Line.Contents (K) /= ' '
-                 or else Line.Contents (K) /= ASCII.HT
+                 and then Line.Contents (K) /= ASCII.HT
                then
                   Result := False;
                end if;

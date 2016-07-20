@@ -1465,13 +1465,9 @@ package body Completion_Module is
       -----------------------------------
 
       function Char_Triggers_Auto_Completion return Boolean is
-         Char_Buffer  : Glib.UTF8_String (1 .. 6);
-         Last         : Natural;
+         Char_Buffer : Glib.UTF8_String (1 .. 6);
+         Last        : Natural;
       begin
-         if Buffer = null then
-            return False;
-         end if;
-
          Unichar_To_UTF8 (Char, Char_Buffer, Last);
          return Last = 1
            and then Triggers_Auto_Completion (Buffer, Char_Buffer (Last));
@@ -1508,7 +1504,7 @@ package body Completion_Module is
             Dummy  : Boolean;
             pragma Unreferenced (Dummy);
          begin
-            if Buffer /= null and then not Buffer.Is_Inserting_Internally then
+            if not Buffer.Is_Inserting_Internally then
                if Char_Triggers_Auto_Completion then
                   --  If we are hitting a completion trigger, remove
                   --  immediately any window that might be present.

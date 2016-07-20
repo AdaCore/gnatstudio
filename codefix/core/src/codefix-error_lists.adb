@@ -28,7 +28,7 @@ package body Codefix.Error_Lists is
    -- Initialize --
    ----------------
 
-   procedure Initialize (This : in out Error_Message_List) is
+   procedure Initialize (This : out Error_Message_List) is
    begin
       This := new Error_Message_List_Record;
    end Initialize;
