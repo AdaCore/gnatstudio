@@ -3037,31 +3037,19 @@ Adding custom icons
 -------------------
 
 You can also provide custom icons to be used throughout GPS in places such as
-buttons, menus and toolbars. To do this place :file:`index.theme`
-in :file:`.gps/icons/` directory. This file defines a set of directories to
-look for icons in and nominal icon size. Detailed description of the file
-could be found in a separate document - `Icon Theme Specification
-<http://www.freedesktop.org/wiki/Specifications/icon-theme-spec/>`_.
-We provide an example here::
+buttons, menus and toolbars. To do this place the icon file
+into :file:`.gps/icons/` directory. This file should be in PNG, XPM or SVG
+format. Optionally you can install icons in different sizes.
+For example, icons with size 48 pixels should be placed in
+:file:`.gps/icons/hicolor/48x48/apps/` directory.
 
-    [Icon Theme]
-    Name=hicolor
-    Comment=User defined icon theme
-    Hidden=true
-    Directories=vcs_icons
+If you have::
 
-    [vcs_icons]
-    Size=24
-
-The corresponding directory tree in the :file:`.gps/icons` directory could
-look like this::
-
-    index.theme
-    vcs_icons/my-vcs-up-to-date-symbolic.svg
+    .gps/icons/my-vcs-up-to-date.svg
 
 .. highlight:: xml
 
-And usage in VCS plugin would be::
+Then usage in VCS plugin would be::
 
     <status label="Up to date" iconname="my-vcs-up-to-date" />
 
@@ -3070,7 +3058,7 @@ By default, gtk+ loads the Adwaita icon theme, which is found in the
 directory :file:`prefix/share/icons/`.
 An extra theme, hicolor, is also defined, and acts as a fallback when
 icons are not found in Adwaita. GPS adds extra directories to that
-hicolor theme (:file:`gpsprefix/share/icons/hicolor/*`), which contain GPS
+hicolor theme (:file:`prefix/share/icons/hicolor/*`), which contain GPS
 specific icons. As a result, icons from the user's theme (Adwaita) have
 priority, and GPS icons are loaded as fallbacks.
 
@@ -3091,6 +3079,10 @@ In GPS, the following conventions are used:
 As shown in the example above, you should prefix the icon with a unique
 name, here :file:`my-vcs-`, to make sure predefined icons do not
 get overridden by your icons.
+
+Further information about icons could be found in a separate document -
+`Icon Theme Specification
+<http://www.freedesktop.org/wiki/Specifications/icon-theme-spec/>`_.
 
 .. _Remote_programming_customization:
 
