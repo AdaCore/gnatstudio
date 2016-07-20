@@ -1,0 +1,54 @@
+with "../gps/gps";
+with "../gnatdoc/gnatdoc";
+with "../shared";
+
+project Testsuite_Drivers is
+
+   for Languages use ("Ada");
+
+   for Source_Dirs use ("src");
+   for Object_Dir use "obj";
+   for Exec_Dir use "exec";
+
+   package Builder is
+      for Switches ("Ada") use ("-gnat12", "-ws", "-g", "-j0", "-m", "-gnaty");
+   end Builder;
+
+   package Binder is
+      for Switches ("Ada") use ("-E");
+   end Binder;
+
+   for Main use (--  common
+                 "test_arrays.adb",
+                 "test_htables.adb",
+                 "test_strings.adb",
+                 "test_trie.adb",
+
+                 --  vsearch
+                 "run_vsearch.adb",
+                 "completion-test.adb",
+
+                 --  gnatdoc
+                 "gnatdoc-backend-parser_test.adb",
+
+                 --  syntax
+                 "syntax_gnatdiff.adb",
+                 "syntax_gnatpp.adb",
+                 "syntax_gnathighlight.adb",
+                 "syntax_gnatunit.adb",
+                 "syntax_gnatparse.adb",
+
+                 --  semantic
+                 "ada_semantic_tree-test.adb",
+
+                 --  utilities
+                 "sortxml.adb");
+
+   package Naming is
+      for Implementation_Suffix ("C++") use ".cc";
+   end Naming;
+
+   package Linker renames Shared.Linker;
+
+end Testsuite_Drivers;
+

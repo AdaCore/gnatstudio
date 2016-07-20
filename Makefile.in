@@ -20,6 +20,7 @@ SYS := $(shell gcc -dumpmachine)
 all default:
 	$(MAKE) -C gps default
 	$(MAKE) -C cli default
+	$(MAKE) -C testsuite default
 
 codepeer:
 	$(MAKE) -C gps scil
@@ -29,6 +30,7 @@ codepeer:
 clean:
 	$(MAKE) -C gps $@
 	$(MAKE) -C cli $@
+	$(MAKE) -C testsuite $@
 
 test-clean:
 	(cd scripts; ./testsuites clean)
