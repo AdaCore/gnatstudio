@@ -19,9 +19,13 @@ project Src_Editor is
          when "Windows_NT" =>
             for Implementation ("src_printing.fabric") use
               "src_printing-fabric__win32.adb";
+            for Implementation ("src_printing.win32_printer") use
+              "src_printing-win32_printer.adb";
          when "unix" | "osx" =>
             for Implementation ("src_printing.fabric") use
               "src_printing-fabric__default.adb";
+            for Implementation ("src_printing.win32_printer") use
+              "src_printing-dummy.adb";
       end case;
    end Naming;
 

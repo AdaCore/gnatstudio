@@ -1118,9 +1118,9 @@ package body MI.Utils is
 
    type Stream_Getter is new Record_List_Visitor with record
       Output_Type : Stream_Output_Record_Type;
-      Fill_Strings : Boolean := false;
+      Fill_Strings : Boolean := False;
       Strings     : String_List;
-      Fill_Content : Boolean := false;
+      Fill_Content : Boolean := False;
       Content     : Unbounded_String;
    end record;
    --  Visitor used to get the streams contents

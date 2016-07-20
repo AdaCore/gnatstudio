@@ -95,9 +95,10 @@ begin
             Strings : Completion_Strings;
             pragma Unreferenced (Strings);
          begin
-            for J in 1 .. Num_Results (Completion) loop
-               Strings := Spelling (Nth_Result (Completion, J));
-            end loop;
+            --  This code is an example of libclang completions
+--              for J in 1 .. Num_Results (Completion) loop
+--                 Strings := Spelling (Nth_Result (Completion, J));
+--              end loop;
 
             Dispose (Completion);
          end;

@@ -191,7 +191,7 @@ package MI.Ast is
    --  variable is a string which represent the variable's name, and the value
    --  is of the MI_Value abstract type.
 
-   function "=" (Left, Right : Result_Pair) return Boolean;
+   overriding function "=" (Left, Right : Result_Pair) return Boolean;
    --  Equality function between two Result_Pair(s) need to instanciate the
    --  generic package Doubly_Linked_Lists with the Result_Pair type.
 

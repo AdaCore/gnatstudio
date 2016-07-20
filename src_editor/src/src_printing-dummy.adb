@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                  G P S                                   --
 --                                                                          --
---                     Copyright (C) 2001-2016, AdaCore                     --
+--                     Copyright (C) 2003-2016, AdaCore                     --
 --                                                                          --
 -- This is free software;  you can redistribute it  and/or modify it  under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,27 +15,23 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Language; use Language;
+--  Dummy version of this file
 
-package Syntax_Diff is
+pragma Warnings (Off);
 
-   type Diff_Kind is (Added, Removed, Moved, Profile_Changed);
+package body Src_Printing.Win32_Printer is
 
-   type Result_Record;
-   type Result_Link is access all Result_Record;
-   type Result_Record (Kind : Diff_Kind) is record
-      Construct     : Construct_Access;
-      Category      : Language_Category;
-      New_Construct : Construct_Access;
-      Next          : Result_Link;
-   end record;
+   overriding procedure Print
+     (This       : Printer;
+      Editor     : Src_Editor_Box.Source_Editor_Box;
+      From       : Editable_Line_Type := 1;
+      To         : Editable_Line_Type := Editable_Line_Type'Last)
+   is null;
 
-   function Syntax_Diff
-     (Old_Constructs, New_Constructs : Construct_List) return Result_Link;
-   --  Build a list of syntax differences between Old_Construct and
-   --  New_Construct
+   function Create return Printer is
+      Dummy : Printer;
+   begin
+      return Dummy;
+   end Create;
 
-   procedure Print_Results (Results : Result_Link);
-   --  Print the list of results to stdout
-
-end Syntax_Diff;
+end Src_Printing.Win32_Printer;

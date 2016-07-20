@@ -23,7 +23,7 @@ package body MI.Ast is
    -- Function "=" for Result_Pair --
    ----------------------------------
 
-   function "=" (Left, Right : Result_Pair) return Boolean is
+   overriding function "=" (Left, Right : Result_Pair) return Boolean is
    begin
       return Left.Variable.all = Right.Variable.all
         and then Left.Value.all = Right.Value.all;
@@ -185,7 +185,7 @@ package body MI.Ast is
    -- Accept_Visitor --
    --------------------
 
-   procedure Accept_Visitor
+   overriding procedure Accept_Visitor
      (This : in out Stream_Output_Record;
       V    : in out Visitor'Class) is
    begin
@@ -196,7 +196,7 @@ package body MI.Ast is
    -- Accept_Visitor --
    --------------------
 
-   procedure Accept_Visitor
+   overriding procedure Accept_Visitor
      (This : in out String_Value;
       V    : in out Visitor'Class) is
    begin
@@ -207,7 +207,7 @@ package body MI.Ast is
    -- Accept_Visitor --
    --------------------
 
-   procedure Accept_Visitor
+   overriding procedure Accept_Visitor
      (This : in out Result_List_Value;
       V    : in out Visitor'Class) is
    begin
@@ -218,7 +218,7 @@ package body MI.Ast is
    -- Accept_Visitor --
    --------------------
 
-   procedure Accept_Visitor
+   overriding procedure Accept_Visitor
      (This : in out Value_List_Value;
       V    : in out Visitor'Class) is
    begin
@@ -229,7 +229,7 @@ package body MI.Ast is
    -- Accept_Visitor --
    --------------------
 
-   procedure Accept_Visitor
+   overriding procedure Accept_Visitor
      (This : in out Result_Record;
       V    : in out Visitor'Class) is
    begin
@@ -240,7 +240,7 @@ package body MI.Ast is
    -- Accept_Visitor --
    --------------------
 
-   procedure Accept_Visitor
+   overriding procedure Accept_Visitor
      (This : in out Stream_Output_Record;
       V    : in out Mutable_Visitor'Class) is
    begin
@@ -251,7 +251,7 @@ package body MI.Ast is
    -- Accept_Visitor --
    --------------------
 
-   procedure Accept_Visitor
+   overriding procedure Accept_Visitor
      (This : in out String_Value;
       V    : in out Mutable_Visitor'Class) is
    begin
@@ -262,7 +262,7 @@ package body MI.Ast is
    -- Accept_Visitor --
    --------------------
 
-   procedure Accept_Visitor
+   overriding procedure Accept_Visitor
      (This : in out Result_List_Value;
       V    : in out Mutable_Visitor'Class) is
    begin
@@ -273,7 +273,7 @@ package body MI.Ast is
    -- Accept_Visitor --
    --------------------
 
-   procedure Accept_Visitor
+   overriding procedure Accept_Visitor
      (This : in out Value_List_Value;
       V    : in out Mutable_Visitor'Class) is
    begin
@@ -284,7 +284,7 @@ package body MI.Ast is
    -- Accept_Visitor --
    --------------------
 
-   procedure Accept_Visitor
+   overriding procedure Accept_Visitor
      (This : in out Result_Record;
       V    : in out Mutable_Visitor'Class) is
    begin
