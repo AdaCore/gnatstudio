@@ -95,6 +95,7 @@ with GPS.Scripts;                  use GPS.Scripts;
 with GPS.Search;                   use GPS.Search;
 with Gtkada.Tree_View;             use Gtkada.Tree_View;
 with GUI_Utils;                    use GUI_Utils;
+with GPS.Dialogs;                  use GPS.Dialogs;
 with Tooltips;                     use Tooltips;
 with XML_Parsers;                  use XML_Parsers;
 with XML_Utils;                    use XML_Utils;

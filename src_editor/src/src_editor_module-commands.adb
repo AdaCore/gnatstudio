@@ -55,20 +55,22 @@ with Src_Editor_Box;             use Src_Editor_Box;
 with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
-with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
-with Src_Editor_Buffer.Text_Handling;   use Src_Editor_Buffer.Text_Handling;
-with Src_Editor_Module;          use Src_Editor_Module;
-with Src_Editor_View;            use Src_Editor_View;
+with Src_Editor_Module.Markers;       use Src_Editor_Module.Markers;
+with Src_Editor_Buffer.Text_Handling; use Src_Editor_Buffer.Text_Handling;
+with Src_Editor_Module;               use Src_Editor_Module;
+with Src_Editor_View;                 use Src_Editor_View;
 with Src_Printing.Fabric;
-with UTF8_Utils;                 use UTF8_Utils;
-with Xref;                       use Xref;
+with GPS.Dialogs;                     use GPS.Dialogs;
+with UTF8_Utils;                      use UTF8_Utils;
+with Xref;                            use Xref;
 
 package body Src_Editor_Module.Commands is
 
    Me : constant Trace_Handle := Create ("Source_Editor_Module.Commands");
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Root_Entity'Class, Root_Entity_Access);
+     (Root_Entity'Class,
+      Root_Entity_Access);
 
    procedure Comment_Uncomment
      (Kernel  : Kernel_Handle;
@@ -99,7 +101,7 @@ package body Src_Editor_Module.Commands is
       Context : GPS.Kernel.Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Count  : Integer := 0;
+      Count : Integer := 0;
 
       function On_Callee (Callee : Root_Entity'Class) return Boolean;
 
@@ -191,15 +193,16 @@ package body Src_Editor_Module.Commands is
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
-      Event  : constant Gdk_Event := Get_Current_Event;
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
-      Editor : constant Source_Editor_Box  :=
-                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+      Event  : constant Gdk_Event         := Get_Current_Event;
+      Kernel : constant Kernel_Handle     := Get_Kernel (Context);
+      Editor : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
 
    begin
       return Event /= null
         and then Editor /= null
-        and then Get_Window (Event) =
+        and then
+          Get_Window (Event) =
           Get_Window (Editor.Get_View, Text_Window_Left);
    end Filter_Matches_Primitive;
 
@@ -214,18 +217,21 @@ package body Src_Editor_Module.Commands is
       pragma Unreferenced (Command);
       Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
       File       : constant Virtual_File := File_Information (Context.Context);
-      Other_File : constant Virtual_File :=
+      Other_File : constant Virtual_File  :=
         Get_Registry (Kernel).Tree.Other_File (File);
    begin
-      Trace (Me, "Goto_Other_File_Command File="
-             & Display_Full_Name (File)
-             & " Other_File=" & Display_Full_Name (Other_File));
+      Trace
+        (Me,
+         "Goto_Other_File_Command File=" &
+         Display_Full_Name (File) &
+         " Other_File=" &
+         Display_Full_Name (Other_File));
 
       if Other_File /= GNATCOLL.VFS.No_File then
          Open_File_Action_Hook.Run
-           (Kernel, Other_File,
-            Project => Project_Information (Context.Context),
-            Line => 0);
+         (Kernel, Other_File,
+          Project => Project_Information (Context.Context),
+          Line    => 0);
          return Standard.Commands.Success;
       else
          return Standard.Commands.Failure;
@@ -241,9 +247,9 @@ package body Src_Editor_Module.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Box : constant Source_Editor_Box :=
-              Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+      Kernel : constant Kernel_Handle     := Get_Kernel (Context.Context);
+      Box    : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       On_Goto_Line (Box, Kernel);
       return Standard.Commands.Success;
@@ -260,13 +266,12 @@ package body Src_Editor_Module.Commands is
       Box : constant Source_Editor_Box := Source_Editor_Box (Widget);
    begin
       declare
-         Str : constant String := Display_Text_Input_Dialog
-           (Kernel   => Kernel,
-            Parent   => Get_Current_Window (Kernel),
-            Title    => -"Goto Line...",
-            Message  => -"Enter line number:",
-            Position => Win_Pos_Center_On_Parent,
-            Key      => "Goto_Line");
+         Str : constant String :=
+           Display_Text_Input_Dialog
+             (Kernel  => Kernel,
+              Title   => -"Goto Line...",
+              Message => -"Enter line number:",
+              Key     => "Goto_Line");
       begin
          if Str = "" or else Str (Str'First) = ASCII.NUL then
             return;
@@ -274,13 +279,15 @@ package body Src_Editor_Module.Commands is
 
          Push_Current_Editor_Location_In_History (Kernel);
          Set_Cursor_Location
-           (Box, Editable_Line_Type'Value (Str), 1, Centering => With_Margin);
+           (Box,
+            Editable_Line_Type'Value (Str),
+            1,
+            Centering => With_Margin);
          Add_Navigation_Location (Box);
 
       exception
          when Constraint_Error =>
-            Kernel.Insert
-              (-"Invalid line number: " & Str, Mode => Error);
+            Kernel.Insert (-"Invalid line number: " & Str, Mode => Error);
       end;
    end On_Goto_Line;
 
@@ -293,9 +300,9 @@ package body Src_Editor_Module.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel : constant Kernel_Handle     := Get_Kernel (Context.Context);
       Box    : constant Source_Editor_Box :=
-                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Box /= null then
          Goto_Declaration_Or_Body
@@ -316,8 +323,8 @@ package body Src_Editor_Module.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Entity  : constant Root_Entity'Class := Get_Entity (Context.Context);
+      Kernel : constant Kernel_Handle     := Get_Kernel (Context.Context);
+      Entity : constant Root_Entity'Class := Get_Entity (Context.Context);
 
    begin
       if Entity = No_Root_Entity then
@@ -326,9 +333,9 @@ package body Src_Editor_Module.Commands is
          --  a message should have already been printed. So, just abort.
 
          Kernel.Insert
-           (-"No cross-reference information found for "
-            & Entity_Name_Information (Context.Context) & ASCII.LF,
-            Mode => Error);
+            (-"No cross-reference information found for " &
+             Entity_Name_Information (Context.Context) & ASCII.LF,
+             Mode => Error);
          return Standard.Commands.Failure;
 
       else
@@ -339,9 +346,9 @@ package body Src_Editor_Module.Commands is
          begin
             if Is_Predefined_Entity (Entity_Type) then
                Kernel.Insert
-                 (Get_Name (Entity)
-                  & " is of predefined type "
-                  & Get_Name (Entity_Type));
+               (Get_Name (Entity) &
+                " is of predefined type " &
+                Get_Name (Entity_Type));
                return Standard.Commands.Failure;
 
             else
@@ -386,7 +393,8 @@ package body Src_Editor_Module.Commands is
       ---------------------
 
       function Get_Type_Or_Ref
-        (Entity : Root_Entity'Class) return Root_Entity'Class is
+        (Entity : Root_Entity'Class) return Root_Entity'Class
+      is
       begin
          if Is_Access (Entity) then
             return Pointed_Type (Entity);
@@ -418,7 +426,7 @@ package body Src_Editor_Module.Commands is
       ------------
 
       procedure Insert (Name : String; Entity : Root_Entity'Class) is
-         Kind : constant String := Get_Display_Kind (Entity);
+         Kind : constant String           := Get_Display_Kind (Entity);
          Loc  : constant General_Location := Get_Declaration (Entity).Loc;
       begin
          Create_Simple_Message
@@ -442,9 +450,9 @@ package body Src_Editor_Module.Commands is
          --  a message should have already been printed. So, just abort.
 
          Kernel.Insert_UTF8
-           (-"No cross-reference information found for "
-            & Entity_Name_Information (Context.Context) & ASCII.LF,
-            Mode => Error);
+            (-"No cross-reference information found for "
+             & Entity_Name_Information (Context.Context) & ASCII.LF,
+             Mode => Error);
          return Standard.Commands.Failure;
 
       else
@@ -460,8 +468,8 @@ package body Src_Editor_Module.Commands is
 
             if Is_Predefined_Entity (Entity_Type.all) then
                Kernel.Insert
-                 (Name & (-" is of predefined type ")
-                  & Get_Name (Entity_Type.all));
+                  (Name & (-" is of predefined type ") &
+                   Get_Name (Entity_Type.all));
                Unchecked_Free (Entity_Type);
                return Standard.Commands.Failure;
             end if;
@@ -496,23 +504,24 @@ package body Src_Editor_Module.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Dir     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Kernel : constant Kernel_Handle    := Get_Kernel (Context.Context);
+      Dir    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
    begin
       if Has_Directory_Information (Context.Context) then
          Dir := Directory_Information (Context.Context);
       end if;
 
       declare
-         Filename : constant Virtual_File := Select_File
-           (Title             => -"Open File",
-            Base_Directory    => Dir,
-            Parent            => Get_Current_Window (Kernel),
-            Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-            Kind              => Open_File,
-            File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-            Pattern_Name      => -"All files;Ada files;C/C++ files",
-            History           => Get_History (Kernel));
+         Filename : constant Virtual_File :=
+           Select_File
+             (Title             => -"Open File",
+              Base_Directory    => Dir,
+              Parent            => Get_Current_Window (Kernel),
+              Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+              Kind              => Open_File,
+              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+              Pattern_Name      => -"All files;Ada files;C/C++ files",
+              History           => Get_History (Kernel));
       begin
          if Filename /= GNATCOLL.VFS.No_File then
             --  Open with the first possible project, the user cannot choose
@@ -536,15 +545,16 @@ package body Src_Editor_Module.Commands is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
       declare
-         Filename : constant Virtual_File := Select_File
-           (Title             => -"Open Remote File",
-            Parent            => Get_Current_Window (Kernel),
-            Remote_Browsing   => True,
-            Use_Native_Dialog => False,
-            Kind              => Open_File,
-            File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-            Pattern_Name      => -"All files;Ada files;C/C++ files",
-            History           => Get_History (Kernel));
+         Filename : constant Virtual_File :=
+           Select_File
+             (Title             => -"Open Remote File",
+              Parent            => Get_Current_Window (Kernel),
+              Remote_Browsing   => True,
+              Use_Native_Dialog => False,
+              Kind              => Open_File,
+              File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+              Pattern_Name      => -"All files;Ada files;C/C++ files",
+              History           => Get_History (Kernel));
 
       begin
          if Filename /= GNATCOLL.VFS.No_File then
@@ -564,23 +574,24 @@ package body Src_Editor_Module.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Ignore  : Source_Editor_Box;
+      Ignore : Source_Editor_Box;
       pragma Unreferenced (Command, Ignore);
-      Dir     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+      Dir : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
 
    begin
       if Has_Directory_Information (Context.Context) then
          Dir := Directory_Information (Context.Context);
       end if;
 
-      Ignore := Open_File
-        (Kernel,
-         File    => GNATCOLL.VFS.No_File,
-         Project => GNATCOLL.Projects.No_Project,
-         Line    => 1,
-         Column  => 1,
-         Column_End => 1,
-         Initial_Dir => Dir);
+      Ignore :=
+        Open_File
+          (Kernel,
+           File        => GNATCOLL.VFS.No_File,
+           Project     => GNATCOLL.Projects.No_Project,
+           Line        => 1,
+           Column      => 1,
+           Column_End  => 1,
+           Initial_Dir => Dir);
       return Standard.Commands.Success;
    end Execute;
 
@@ -592,7 +603,7 @@ package body Src_Editor_Module.Commands is
      (Command : access Save_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
       Success : Boolean;
       pragma Unreferenced (Command);
    begin
@@ -609,25 +620,26 @@ package body Src_Editor_Module.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel  : constant Kernel_Handle     := Get_Kernel (Context.Context);
       Success : Boolean;
       Source  : constant Source_Editor_Box :=
-                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Source /= null then
          declare
             Old_Name : constant Virtual_File := Get_Filename (Source);
-            New_Name : constant Virtual_File := Select_File
-              (Title             => -"Save File As",
-               Parent            => Get_Current_Window (Kernel),
-               Base_Directory    => Dir (Old_Name),
-               Default_Name      => Base_Name (Old_Name),
-               Remote_Browsing   => not Is_Local (Old_Name),
-               Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
-               Kind              => Save_File,
-               File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
-               Pattern_Name      => -"All files;Ada files;C/C++ files",
-               History           => Get_History (Kernel));
+            New_Name : constant Virtual_File :=
+              Select_File
+                (Title             => -"Save File As",
+                 Parent            => Get_Current_Window (Kernel),
+                 Base_Directory    => Dir (Old_Name),
+                 Default_Name      => Base_Name (Old_Name),
+                 Remote_Browsing   => not Is_Local (Old_Name),
+                 Use_Native_Dialog => Use_Native_Dialogs.Get_Pref,
+                 Kind              => Save_File,
+                 File_Pattern      => "*;*.ad?;{*.c,*.h,*.cpp,*.cc,*.C}",
+                 Pattern_Name      => -"All files;Ada files;C/C++ files",
+                 History           => Get_History (Kernel));
 
          begin
             if New_Name /= GNATCOLL.VFS.No_File then
@@ -647,8 +659,8 @@ package body Src_Editor_Module.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      MDI   : MDI_Window;
-      Child : MDI_Child;
+      MDI    : MDI_Window;
+      Child  : MDI_Child;
    begin
       case Command.Mode is
          when Close_All =>
@@ -657,7 +669,7 @@ package body Src_Editor_Module.Commands is
             end if;
 
          when Close_One =>
-            MDI := Get_MDI (Kernel);
+            MDI   := Get_MDI (Kernel);
             Child := Get_Focus_Child (MDI);
 
             if Child /= null then
@@ -697,8 +709,8 @@ package body Src_Editor_Module.Commands is
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Child            : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source           : Source_Editor_Box;
+      Child  : constant MDI_Child     := Find_Current_Editor (Kernel);
+      Source : Source_Editor_Box;
    begin
       if Get_Focus_Child (Get_MDI (Kernel)) /= Child then
          Kernel.Insert ("No source file selected", Mode => Error);
@@ -725,9 +737,9 @@ package body Src_Editor_Module.Commands is
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Child            : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source           : Source_Editor_Box;
-      Start_Line, End_Line   : Editable_Line_Type;
+      Child : constant MDI_Child     := Find_Current_Editor (Kernel);
+      Source               : Source_Editor_Box;
+      Start_Line, End_Line : Editable_Line_Type;
    begin
       if Has_Area_Information (Context.Context) then
          Get_Area (Context.Context, Natural (Start_Line), Natural (End_Line));
@@ -775,9 +787,9 @@ package body Src_Editor_Module.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel : constant Kernel_Handle     := Get_Kernel (Context.Context);
       Editor : constant Source_Editor_Box :=
-                 Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Editor = null then
          return Standard.Commands.Failure;
@@ -815,9 +827,9 @@ package body Src_Editor_Module.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel  : constant Kernel_Handle     := Get_Kernel (Context.Context);
       Current : constant Source_Editor_Box :=
-                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Current /= null then
          Src_Editor_Buffer.Line_Information.Fold_All (Get_Buffer (Current));
@@ -834,9 +846,9 @@ package body Src_Editor_Module.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel  : constant Kernel_Handle     := Get_Kernel (Context.Context);
       Current : constant Source_Editor_Box :=
-                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Current /= null then
          Src_Editor_Buffer.Line_Information.Unfold_All (Get_Buffer (Current));
@@ -867,10 +879,10 @@ package body Src_Editor_Module.Commands is
      (Command : access Refill_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Kernel  : constant Kernel_Handle     := Get_Kernel (Context.Context);
       Current : constant Source_Editor_Box :=
-                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-      Ignore  : Boolean;
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+      Ignore : Boolean;
       pragma Unreferenced (Command, Ignore);
    begin
       if Current /= null then
@@ -890,8 +902,9 @@ package body Src_Editor_Module.Commands is
       pragma Unreferenced (Command);
       Line : Natural;
    begin
-      Trace (Me, "On_Edit_File: "
-             & (+Full_Name (File_Information (Context.Context))));
+      Trace
+        (Me,
+         "On_Edit_File: " & (+Full_Name (File_Information (Context.Context))));
 
       if Has_Line_Information (Context.Context) then
          Line := Contexts.Line_Information (Context.Context);
@@ -900,11 +913,11 @@ package body Src_Editor_Module.Commands is
       end if;
 
       Open_File_Action_Hook.Run
-        (Get_Kernel (Context.Context),
-         File      => File_Information (Context.Context),
-         Project   => Project_Information (Context.Context),
-         Line      => Line,
-         Column    => Column_Information (Context.Context));
+         (Get_Kernel (Context.Context),
+          File    => File_Information (Context.Context),
+          Project => Project_Information (Context.Context),
+          Line    => Line,
+          Column  => Column_Information (Context.Context));
       return Success;
    end Execute;
 
@@ -917,32 +930,34 @@ package body Src_Editor_Module.Commands is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      File   : constant GNATCOLL.VFS.Virtual_File :=
+      File : constant GNATCOLL.VFS.Virtual_File :=
         File_Information (Context.Context);
-      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Dialog  : Gtk_Dialog;
-      Label   : Gtk_Label;
-      Lang    : Gtk_Combo_Box_Text;
-      Charset : Gtk_Combo_Box_Text;
-      Strip   : Gtk_Check_Button;
+      Kernel      : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Dialog      : Gtk_Dialog;
+      Label       : Gtk_Label;
+      Lang        : Gtk_Combo_Box_Text;
+      Charset     : Gtk_Combo_Box_Text;
+      Strip       : Gtk_Check_Button;
       Strip_Lines : Gtk_Check_Button;
-      Box     : Gtk_Box;
-      Size    : Gtk_Size_Group;
-      Buffer  : Source_Buffer;
-      Ignore  : Gtk_Widget;
+      Box         : Gtk_Box;
+      Size        : Gtk_Size_Group;
+      Buffer      : Source_Buffer;
+      Ignore      : Gtk_Widget;
       pragma Unreferenced (Ignore);
 
    begin
-      Buffer := Get_Buffer
-        (Get_Source_Box_From_MDI (Get_Focus_Child (Get_MDI (Kernel))));
+      Buffer :=
+        Get_Buffer
+          (Get_Source_Box_From_MDI (Get_Focus_Child (Get_MDI (Kernel))));
       if Buffer = null then
          return Failure;
       end if;
 
-      Gtk_New (Dialog,
-               Title  => -"Properties for " & Display_Full_Name (File),
-               Parent => Get_Main_Window (Kernel),
-               Flags  => Destroy_With_Parent);
+      Gtk_New
+        (Dialog,
+         Title  => -"Properties for " & Display_Full_Name (File),
+         Parent => Get_Main_Window (Kernel),
+         Flags  => Destroy_With_Parent);
       Set_Default_Size_From_History (Dialog, "editor-props", Kernel, 400, 200);
 
       Gtk_New (Size);
@@ -981,9 +996,11 @@ package body Src_Editor_Module.Commands is
       Add_Widget (Size, Label);
       Pack_Start (Box, Label, Expand => False);
 
-      Lang := Create_Language_Combo
-        (Get_Language_Handler (Kernel), File,
-         Default => Get_Name (Get_Language (Buffer)));
+      Lang :=
+        Create_Language_Combo
+          (Get_Language_Handler (Kernel),
+           File,
+           Default => Get_Name (Get_Language (Buffer)));
       Pack_Start (Box, Lang, Expand => True, Fill => True);
 
       --  Charset
@@ -996,8 +1013,7 @@ package body Src_Editor_Module.Commands is
       Add_Widget (Size, Label);
       Pack_Start (Box, Label, Expand => False);
 
-      Charset := Create_Charset_Combo
-        (File, Default => Get_Charset (Buffer));
+      Charset := Create_Charset_Combo (File, Default => Get_Charset (Buffer));
       Pack_Start (Box, Charset, Expand => True, Fill => True);
 
       --  Trailing spaces
@@ -1037,7 +1053,7 @@ package body Src_Editor_Module.Commands is
          declare
             Text   : constant String := Get_Active_Text (Lang);
             Header : constant String := -"(From project) ";
-            Index  : Natural := Text'First;
+            Index  : Natural         := Text'First;
          begin
             if Text'Length >= Header'Length
               and then Text (Index .. Index + Header'Length - 1) = Header
@@ -1046,7 +1062,8 @@ package body Src_Editor_Module.Commands is
             end if;
 
             Set_Language
-              (Buffer, Get_Language_By_Name
+              (Buffer,
+               Get_Language_By_Name
                  (Get_Language_Handler (Kernel),
                   Text (Index .. Text'Last)));
             Set_Charset (Buffer, Selected_Charset (Charset));
@@ -1065,8 +1082,8 @@ package body Src_Editor_Module.Commands is
    ------------------
 
    procedure Save_To_File
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Name    : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
+     (Kernel  :     access Kernel_Handle_Record'Class;
+      Name    :     GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;
       Success : out Boolean)
    is
       Child  : constant MDI_Child := Find_Current_Editor (Kernel);
@@ -1085,12 +1102,10 @@ package body Src_Editor_Module.Commands is
    -- New_View --
    --------------
 
-   procedure New_View
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
+   procedure New_View (Kernel : access Kernel_Handle_Record'Class) is
       Current : constant Source_Editor_Box :=
-                  Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-      Ignore  : Source_Editor_Box;
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+      Ignore : Source_Editor_Box;
       pragma Unreferenced (Ignore);
 
    begin
@@ -1118,10 +1133,10 @@ package body Src_Editor_Module.Commands is
          declare
             Lang  : Language_Access;
             File  : constant Virtual_File := File_Information (Context);
-            Block : Unbounded_String := Null_Unbounded_String;
+            Block : Unbounded_String      := Null_Unbounded_String;
          begin
             declare
-               Prj : constant Project_Type := Project_Information (Context);
+               Prj    : constant Project_Type := Project_Information (Context);
                Editor : MDI_Child := Find_Editor (Kernel, File, Prj);
             begin
                if Editor = null then
@@ -1138,15 +1153,15 @@ package body Src_Editor_Module.Commands is
                Get_Area (Context, Natural (Start_Line), Natural (End_Line));
 
             elsif Has_Line_Information (Context) then
-               Start_Line := Editable_Line_Type
-                 (Contexts.Line_Information (Context));
-               End_Line   := Start_Line;
+               Start_Line :=
+                 Editable_Line_Type (Contexts.Line_Information (Context));
+               End_Line := Start_Line;
             else
                return;
             end if;
 
-            Lang := Get_Language_From_File
-              (Get_Language_Handler (Kernel), File);
+            Lang :=
+              Get_Language_From_File (Get_Language_Handler (Kernel), File);
 
             --  Create a String representing the selected block
 

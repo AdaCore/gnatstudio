@@ -32,6 +32,7 @@ with GPS.Kernel.Task_Manager;        use GPS.Kernel.Task_Manager;
 with GPS.Kernel.Scripts;             use GPS.Kernel.Scripts;
 with GPS.Main_Window;                use GPS.Main_Window;
 with GPS.Kernel;                     use GPS.Kernel;
+with GPS.Dialogs;                    use GPS.Dialogs;
 
 with Glib.Convert;                   use Glib.Convert;
 with Glib.Object;                    use Glib.Object;

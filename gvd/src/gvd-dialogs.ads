@@ -27,6 +27,7 @@ with Gtk.Tree_Store;      use Gtk.Tree_Store;
 with GVD.Process;
 with Debugger;            use Debugger;
 with GNAT.Strings;
+with GPS.Dialogs;         use GPS.Dialogs;
 
 package GVD.Dialogs is
 

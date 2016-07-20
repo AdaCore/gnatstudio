@@ -48,12 +48,12 @@ package body New_Variable_Editor_Pkg is
       Kernel              : not null access Kernel_Handle_Record'Class)
    is
    begin
-      GPS.Kernel.MDI.Initialize
+      GPS.Dialogs.Initialize
         (New_Variable_Editor,
          Title => Title,
          Kernel => Kernel);
       Set_Default_Size_From_History
-         (New_Variable_Editor, "project-variable", Kernel, 600, 400);
+        (New_Variable_Editor, "project-variable", Kernel, 600, 400);
 
       New_Variable_Editor.Dialog_Vbox1 :=
         Get_Content_Area (New_Variable_Editor);

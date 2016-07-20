@@ -44,6 +44,7 @@ with Gtkada.Canvas_View;            use Gtkada.Canvas_View;
 with Gtkada.Canvas_View.Views;      use Gtkada.Canvas_View.Views;
 with Gtkada.MDI;                    use Gtkada.MDI;
 with Histories;                     use Histories;
+with GPS.Dialogs;                   use GPS.Dialogs;
 with String_Utils;                  use String_Utils;
 with XML_Utils;                     use XML_Utils;
 with Xref;                          use Xref;
@@ -724,12 +725,10 @@ package body Browsers.Call_Graph is
       declare
          Str  : constant String := Display_Text_Input_Dialog
            (Kernel   => Kernel,
-            Parent   => Get_Main_Window (Kernel),
             Title    => -"Complete Call Graph",
             Message  => -("Computing complete call graph may take a "
               & "long time." & ASCII.LF
               & "Enter maximum number of items to display: "),
-            Position => Win_Pos_Center_On_Parent,
             Key      => Key);
       begin
          if Str /= "" and then Str (Str'First) /= ASCII.NUL then

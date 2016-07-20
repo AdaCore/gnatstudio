@@ -48,6 +48,7 @@ with Refactoring.Performers; use Refactoring.Performers;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.Utils;         use GNATCOLL.Utils;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GPS.Dialogs;            use GPS.Dialogs;
 with Xref;                   use Xref;
 
 package body Refactoring.Subprograms is
@@ -847,7 +848,7 @@ package body Refactoring.Subprograms is
       Gtk_New (Dialog,
                Title  => -"Extract Method",
                Kernel => Get_Kernel (Context.Context),
-               Flags  => Modal);
+               Flags  => Destroy_With_Parent or Modal);
       Gtk_New (Label, -"Name of the new subprogram:");
       Pack_Start (Get_Content_Area (Dialog), Label, Expand => False);
 

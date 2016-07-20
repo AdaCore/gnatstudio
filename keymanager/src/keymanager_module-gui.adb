@@ -88,6 +88,7 @@ with GPS.Search;               use GPS.Search;
 with GUI_Utils;                use GUI_Utils;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 with Histories;                use Histories;
+with GPS.Dialogs;              use GPS.Dialogs;
 
 package body KeyManager_Module.GUI is
    Me : constant Trace_Handle := Create ("KEYMGR");

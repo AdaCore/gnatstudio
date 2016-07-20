@@ -24,6 +24,8 @@ with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 
+with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Widget;                use Gtk.Widget;
@@ -64,6 +66,7 @@ with GVD.Types;                 use GVD.Types;
 with Histories;                 use Histories;
 with Language;                  use Language;
 with Process_Proxies;           use Process_Proxies;
+with GPS.Dialogs;               use GPS.Dialogs;
 with String_Utils;              use String_Utils;
 with Xref;                      use Xref;
 
@@ -696,108 +699,78 @@ package body GVD_Module is
    procedure Start_Program
      (Process : Visual_Debugger; Start_Cmd : Boolean := False)
    is
-      Is_Multitask : aliased Boolean := False;
-      Is_Start     : aliased Boolean := False;
-      Use_Exec_Dir : aliased Boolean := False;
-      Arg_Msg      : aliased String := -"Run arguments:";
-      Entry_Msg    : aliased String := -"Entry point and arguments:";
-      Start_Msg    : aliased String := -"Stop at beginning of main subprogram";
-      Dir_Msg      : aliased String := -"Use exec dir instead of current dir";
-      Multi_Msg    : aliased String := -"Enable VxWorks multi-tasks mode";
-      Start_Key    : aliased String := "stop_beginning_debugger";
-      Dir_Key      : aliased String := "run_in_executable_directory";
-      Multi_Key    : aliased String := "multitask_mode_debugger";
-      No_Msg       : aliased String := "";
-      Button1      : access Boolean := null;
-      Button2      : access Boolean := null;
-      Cmd_Msg      : GNAT.Strings.String_Access := Arg_Msg'Unchecked_Access;
-      Msg1         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
-      Msg2         : GNAT.Strings.String_Access;
-      Key1         : GNAT.Strings.String_Access := No_Msg'Unchecked_Access;
-      Key2         : GNAT.Strings.String_Access;
+      On_Vx_56 : constant Boolean :=
+        VxWorks_Version (Process.Debugger) in Vx5 .. Vx6;
 
+      Dialog       : GPS_Dialog;
+      Args         : Combo_Box;
+      Is_Start     : Gtk_Check_Button;
+      Is_Multitask : Gtk_Check_Button;
+      Use_Exec_Dir : Gtk_Check_Button;
    begin
+      Gtk_New
+        (Dialog,
+         Title  => -"Run/Start",
+         Flags  => Destroy_With_Parent or Modal,
+         Kernel => Process.Kernel);
+      Dialog.Add_OK_Cancel;
+
+      Args := Dialog.Add_Combo
+        (Message => (if On_Vx_56
+                     then -"Entry point and arguments:"
+                     else -"Run arguments:"),
+         Key     => Run_Arguments_History_Key);
+
       --  If the user has already requested to stop at the beginning (Start
       --  command) do not ask the same question again. Otherwise, we enable
       --  a checkbox so that the user can select whether he/she wants to
       --  stop at the beginning of the main program.
 
-      if Start_Cmd then
-         Is_Start := True;
-      else
-         Button1 := Is_Start'Unchecked_Access;
-         Msg1    := Start_Msg'Unchecked_Access;
-         Key1    := Start_Key'Unchecked_Access;
+      if not Start_Cmd then
+         Is_Start := Dialog.Add_Check_Button
+           (Message => -"Stop at beginning of main subprogram",
+            Key     => "stop_beginning_debugger");
       end if;
 
-      --  If we are debugging against VxWorks we as for the entry point to be
+      --  If we are debugging on VxWorks we ask for the entry point to be
       --  executed, and we enable the multi-tasks-mode checkbox.
 
-      if VxWorks_Version (Process.Debugger) in Vx5 .. Vx6 then
-         --  Change the message in the dialog window indicating that the entry
-         --  point needs to be specified together with the arguments.
-
-         Cmd_Msg := Entry_Msg'Unchecked_Access;
-
-         Button2 := Is_Multitask'Unchecked_Access;
-         Msg2    := Multi_Msg'Unchecked_Access;
-         Key2    := Multi_Key'Unchecked_Access;
-
+      if On_Vx_56 then
+         Is_Multitask := Dialog.Add_Check_Button
+           (Message => -"Enable VxWorks multi-tasks mode",
+            Key     => "multitask_mode_debugger");
       else
-         Button2 := Use_Exec_Dir'Unchecked_Access;
-         Msg2    := Dir_Msg'Unchecked_Access;
-         Key2    := Dir_Key'Unchecked_Access;
+         Use_Exec_Dir := Dialog.Add_Check_Button
+           (Message => -"Use exec dir instead of current dir",
+            Key     => "run_in_executable_directory");
       end if;
 
-      declare
-         Arguments : constant String :=
-           Strip_Ending_Linebreaks
-             (Display_Text_Input_Dialog
-                (Kernel         => Process.Kernel,
-                 Parent         => Process.Kernel.Get_Main_Window,
-                 Title          => -"Run/Start",
-                 Message        => Cmd_Msg.all,
-                 Key            => Run_Arguments_History_Key,
-                 Check_Msg      => Msg1.all,
-                 Check_Msg2     => Msg2.all,
-                 Button_Active  => Button1,
-                 Button2_Active => Button2,
-                 Key_Check      => History_Key (Key1.all),
-                 Key_Check2     => History_Key (Key2.all)));
+      Dialog.Show_All;
 
-      begin
-         if Arguments = ""
-           or else Arguments (Arguments'First) /= ASCII.NUL
-         then
-            --  For VxWorks we need to set the desired multi-tasks-mode mode
-
-            if VxWorks_Version (Process.Debugger) in Vx5 .. Vx6 then
-               if Is_Multitask then
-                  Send
-                    (Process.Debugger,
-                     "set multi-tasks-mode on",
-                     Mode => GVD.Types.Hidden);
-               else
-                  Send
-                    (Process.Debugger,
-                     "set multi-tasks-mode off",
-                     Mode => GVD.Types.Hidden);
-               end if;
-            end if;
-
-            if Use_Exec_Dir then
-               Change_Directory
-                 (Process.Debugger,
-                  Process.Descriptor.Program.Dir);
-            end if;
-
-            if Is_Start then
-               Start (Process.Debugger, Arguments, Mode => GVD.Types.Visible);
-            else
-               Run (Process.Debugger, Arguments, Mode => GVD.Types.Visible);
-            end if;
+      if Dialog.Run = Gtk_Response_OK then
+         if Is_Multitask /= null then
+            Process.Debugger.Send
+              ("set multi-tasks-mode "
+               & (if Is_Multitask.Get_Active then "on" else "off"),
+               Mode => GVD.Types.Hidden);
          end if;
-      end;
+
+         if Use_Exec_Dir /= null and then Use_Exec_Dir.Get_Active then
+            Process.Debugger.Change_Directory (Process.Descriptor.Program.Dir);
+         end if;
+
+         declare
+            A : constant String := Strip_Ending_Linebreaks (Args.Get_Text);
+         begin
+            if Is_Start = null or else Is_Start.Get_Active then
+               Process.Debugger.Start (A, Mode => GVD.Types.Visible);
+            else
+               Process.Debugger.Run (A, Mode => GVD.Types.Visible);
+            end if;
+         end;
+      end if;
+
+      Dialog.Destroy;
    end Start_Program;
 
    -------------
@@ -1046,10 +1019,8 @@ package body GVD_Module is
       S        : constant String :=
                    Display_Text_Input_Dialog
                      (Kernel   => Process.Kernel,
-                      Parent   => Process.Kernel.Get_Main_Window,
                       Title    => -"Setting value of " & Variable,
                       Message  => -"Setting value of " & Variable & ':',
-                      Position => Win_Pos_Center_On_Parent,
                       Key      => "gvd_set_value_dialog");
    begin
       if S /= "" and then S (S'First) /= ASCII.NUL then

@@ -38,6 +38,7 @@ with GVD.Histories;
 pragma Elaborate_All (GVD.Histories);
 with GNATCOLL.Projects;    use GNATCOLL.Projects;
 with GNATCOLL.VFS;
+with GPS.Dialogs;          use GPS.Dialogs;
 
 package GVD.Process is
 

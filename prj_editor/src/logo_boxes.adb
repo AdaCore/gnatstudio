@@ -61,7 +61,7 @@ package body Logo_Boxes is
       Image       : Gtk_Image;
       Success : Boolean;
    begin
-      GPS.Kernel.MDI.Initialize
+      GPS.Dialogs.Initialize
         (Self    => Win,
          Title   => Title,
          Kernel  => Kernel,
@@ -159,7 +159,7 @@ package body Logo_Boxes is
    ------------------
 
    function Get_Side_Box (Win : access Logo_Box_Record)
-      return Gtk.Box.Gtk_Box is
+                          return Gtk.Box.Gtk_Box is
    begin
       return Win.Side_Box;
    end Get_Side_Box;
@@ -169,7 +169,7 @@ package body Logo_Boxes is
    ---------------------
 
    function Get_Title_Label (Win : access Logo_Box_Record)
-      return Gtk.Label.Gtk_Label is
+                             return Gtk.Label.Gtk_Label is
    begin
       return Win.Title;
    end Get_Title_Label;
@@ -179,7 +179,7 @@ package body Logo_Boxes is
    ------------------
 
    function Get_Contents (Win : access Logo_Box_Record)
-      return Gtk.Box.Gtk_Box is
+                          return Gtk.Box.Gtk_Box is
    begin
       return Win.Content;
    end Get_Contents;

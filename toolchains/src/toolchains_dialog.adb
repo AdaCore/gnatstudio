@@ -203,11 +203,11 @@ package body Toolchains_Dialog is
       Widget.Active       := Active;
       Widget.Xrefs_Subdir := Use_Xrefs_Subdirs;
 
-      GPS.Kernel.MDI.Initialize
+      GPS.Dialogs.Initialize
         (Widget,
          Title  => -"Toolchains Configuration",
          Kernel => Kernel,
-         Flags  => Gtk.Dialog.Modal);
+         Flags  => Gtk.Dialog.Modal or Destroy_With_Parent);
 
       Widget.OK_Button :=
         Gtk_Button (Widget.Add_Button (Gtk.Stock.Stock_Ok, Gtk_Response_OK));

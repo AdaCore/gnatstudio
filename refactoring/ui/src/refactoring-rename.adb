@@ -45,6 +45,7 @@ with Refactoring.UI;             use Refactoring.UI;
 with Refactoring.Performers;     use Refactoring.Performers;
 with Refactoring.Services;       use Refactoring.Services;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GPS.Dialogs;                use GPS.Dialogs;
 with Xref;                       use Xref;
 
 package body Refactoring.Rename is
@@ -124,11 +125,10 @@ package body Refactoring.Rename is
       end if;
 
       Dialog := new Entity_Renaming_Dialog_Record;
-      GPS.Kernel.MDI.Initialize
+      GPS.Dialogs.Initialize
         (Dialog,
          Title  => -"Renaming entity",
-         Kernel => Kernel,
-         Flags  => Destroy_With_Parent);
+         Kernel => Kernel);
 
       Gtk_New (Label, -"Renaming " & Qualified_Name (Entity));
       Set_Alignment (Label, 0.0, 0.0);

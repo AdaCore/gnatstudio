@@ -90,6 +90,7 @@ with GPS.Kernel;               use GPS.Kernel;
 with GPS.Main_Window;          use GPS.Main_Window;
 with GUI_Utils;                use GUI_Utils;
 with Histories;                use Histories;
+with GPS.Dialogs;              use GPS.Dialogs;
 with String_Hash;
 with String_Utils;             use String_Utils;
 with XML_Utils;                use XML_Utils;

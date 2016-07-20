@@ -690,7 +690,7 @@ package body GVD.Dialogs is
       Label     : Gtk_Label;
 
    begin
-      GPS.Kernel.MDI.Initialize
+      GPS.Dialogs.Initialize
         (Dialog,
          Title   => -"Question",
          Kernel  => Kernel);

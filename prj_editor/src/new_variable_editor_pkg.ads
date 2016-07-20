@@ -26,6 +26,7 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Table;           use Gtk.Table;
 with Gtk.Tree_View;       use Gtk.Tree_View;
 with Gtk.Viewport;        use Gtk.Viewport;
+with GPS.Dialogs;         use GPS.Dialogs;
 
 package New_Variable_Editor_Pkg is
 

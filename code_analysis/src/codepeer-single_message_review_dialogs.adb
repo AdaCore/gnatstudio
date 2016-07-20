@@ -43,6 +43,7 @@ with Gtk.Widget;
 
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.MDI;
+with GPS.Dialogs;
 
 package body CodePeer.Single_Message_Review_Dialogs is
 
@@ -247,7 +248,7 @@ package body CodePeer.Single_Message_Review_Dialogs is
          Type_Name    => "CodePeerSingleMessageReviewDialog",
          Parameters   => Signal_Parameters);
 
-      GPS.Kernel.MDI.Initialize
+      GPS.Dialogs.Initialize
         (Self,
          Title  => -"CodePeer message review",
          Kernel => Kernel,

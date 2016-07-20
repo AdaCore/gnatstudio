@@ -36,6 +36,7 @@ with Gtk.Box;
 with Gtk.Label;
 with Gtk.Style;
 with Pango.Font;
+with GPS.Dialogs;      use GPS.Dialogs;
 
 package Logo_Boxes is
 

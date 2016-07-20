@@ -44,6 +44,7 @@ with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Combo_Box;             use Gtk.Combo_Box;
+with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -69,7 +70,7 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Main_Window;           use GPS.Main_Window;
-with Std_Dialogs;               use Std_Dialogs;
+with GPS.Dialogs;               use GPS.Dialogs;
 
 with GPS.Editors;               use GPS.Editors;
 with GPS.Editors.GtkAda;
@@ -172,11 +173,6 @@ package body GPS.Kernel.MDI is
 
    function Check_Timestamp_Idle (Kernel : Kernel_Handle) return Boolean;
    --  Checks whether any of the monitored files has been modified on disk.
-
-   function On_GPS_Dialog_Focus_In
-     (Dialog : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event_Focus) return Boolean;
-   --  Called when a dialog gets the focus. This updates the kernel context.
 
    ------------------------
    -- Get_Current_Window --
@@ -2003,123 +1999,6 @@ package body GPS.Kernel.MDI is
 
       return False;
    end Check_Monitored_Files;
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Self   : out GPS_Dialog;
-      Title  : Glib.UTF8_String;
-      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Flags  : Gtk_Dialog_Flags := Destroy_With_Parent;
-      Typ    : Glib.GType := Gtk.Dialog.Get_Type) is
-   begin
-      Self := new GPS_Dialog_Record;
-      Initialize (Self, Title, Kernel, Flags, Typ);
-   end Gtk_New;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Self   : not null access GPS_Dialog_Record'Class;
-      Title  : Glib.UTF8_String;
-      Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class;
-      Flags  : Gtk_Dialog_Flags := Destroy_With_Parent;
-      Typ    : Glib.GType := Gtk.Dialog.Get_Type)
-   is
-      Win : constant Gtk_Window := Get_Current_Window (Kernel);
-      F   : constant Gtk_Dialog_Flags := Flags
-        or Destroy_With_Parent
-        or Use_Header_Bar_From_Settings (Win);
-   begin
-      Self.Kernel := Kernel;
-
-      G_New_Dialog (Self, Flags => F, Typ => Typ);
-
-      Self.Set_Title (Title);
-      Self.Set_Transient_For (Win);
-
-      if (F and Gtk.Dialog.Modal) /= 0 then
-         Self.Set_Modal (True);
-      end if;
-
-      if (F and Gtk.Dialog.Destroy_With_Parent) /= 0 then
-         Self.Set_Destroy_With_Parent (True);
-      end if;
-
-      Self.Set_Position (Win_Pos_Center_On_Parent);
-
-      Self.On_Focus_In_Event (On_GPS_Dialog_Focus_In'Access);
-   end Initialize;
-
-   -------------------------------
-   -- Display_Text_Input_Dialog --
-   -------------------------------
-
-   function Display_Text_Input_Dialog
-     (Kernel         : not null access Kernel_Handle_Record'Class;
-      Parent         : access Gtk_Window_Record'Class;
-      Title          : String;
-      Message        : String;
-      Position       : Gtk_Window_Position := Win_Pos_Center_On_Parent;
-      Key            : History_Key := "";
-      Check_Msg      : String := "";
-      Button_Active  : access Boolean := null;
-      Key_Check      : Histories.History_Key := "";
-      Check_Msg2     : String := "";
-      Button2_Active : access Boolean := null;
-      Key_Check2     : Histories.History_Key := "") return String
-   is
-      Dialog  : constant Text_Input_Dialog := new Text_Input_Dialog_Record;
-      History : constant Histories.History := Kernel.Get_History;
-   begin
-      Initialize
-        (Dialog,
-         Parent     => Parent,
-         Title      => Title,
-         Message    => Message,
-         Position   => Position,
-         History    => History,
-         Key        => Key,
-         Check_Msg  => Check_Msg,
-         Key_Check  => Key_Check,
-         Check_Msg2 => Check_Msg2,
-         Key_Check2 => Key_Check2);
-
-      Set_Default_Size_From_History
-        (Win    => Dialog,
-         Name   => Title,
-         Kernel => Kernel,
-         Width  => 0,
-         Height => 0);
-
-      return Input : constant String := Dialog.Run_And_Get_Input
-        (History        => History,
-         Key            => Key,
-         Button_Active  => Button_Active,
-         Button_Active2 => Button2_Active)
-      do
-         Destroy (Dialog);
-      end return;
-   end Display_Text_Input_Dialog;
-
-   ----------------------------
-   -- On_GPS_Dialog_Focus_In --
-   ----------------------------
-
-   function On_GPS_Dialog_Focus_In
-     (Dialog : access Gtk_Widget_Record'Class;
-      Event  : Gdk_Event_Focus) return Boolean
-   is
-      Self : constant GPS_Dialog := GPS_Dialog (Dialog);
-      pragma Unreferenced (Event);
-   begin
-      Self.Kernel.Context_Changed (No_Context);
-      return False;   --  propagate the event
-   end On_GPS_Dialog_Focus_In;
 
    ------------------------------------------
    -- Set_Default_Size_For_Floating_Window --

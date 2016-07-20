@@ -20,6 +20,7 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Main_Window;        use GPS.Main_Window;
 with GPS.Intl;               use GPS.Intl;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
+with GPS.Dialogs;            use GPS.Dialogs;
 
 with Glib;                   use Glib;
 with Glib_Values_Utils;      use Glib_Values_Utils;
@@ -62,7 +63,7 @@ package body Refactoring.UI is
                   Kernel => Kernel,
                   Flags  => Destroy_With_Parent or Modal);
          Set_Default_Size_From_History
-            (Dialog, "refactoring", Kernel, -1, 350);
+           (Dialog, "refactoring", Kernel, -1, 350);
 
          Gtk_New (Label, Msg);
          Set_Alignment (Label, 0.0, 0.0);

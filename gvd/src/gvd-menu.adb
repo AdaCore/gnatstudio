@@ -23,6 +23,7 @@ with GVD.Process;          use GVD.Process;
 with GVD;                  use GVD;
 with Histories;            use Histories;
 with Process_Proxies;      use Process_Proxies;
+with GPS.Dialogs;          use GPS.Dialogs;
 
 package body GVD.Menu is
 
@@ -43,7 +44,6 @@ package body GVD.Menu is
          Is_Func    : aliased Boolean;
          Expression : constant String := Display_Text_Input_Dialog
            (Kernel        => Debugger.Kernel,
-            Parent        => Debugger.Kernel.Get_Main_Window,
             Title         => -"Expression Selection",
             Message       => -"Enter an expression to display:",
             Key           => "gvd_display_expression_dialog",

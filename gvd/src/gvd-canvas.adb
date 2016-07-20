@@ -71,6 +71,7 @@ with Histories;                use Histories;
 with Items.Simples;            use Items.Simples;
 with Language;                 use Language;
 with Pango.Font;               use Pango.Font;
+with GPS.Dialogs;              use GPS.Dialogs;
 with String_Utils;             use String_Utils;
 with Xref;                     use Xref;
 
@@ -1630,10 +1631,8 @@ package body GVD.Canvas is
       S : constant String :=
         Display_Text_Input_Dialog
                  (Kernel   => Item.Item.Debugger.Kernel,
-                  Parent   => Item.Item.Debugger.Kernel.Get_Main_Window,
                   Title    => -"Setting value of " & Name,
                   Message  => -"Setting value of " & Name & ':',
-                  Position => Win_Pos_Center_On_Parent,
                   Key      => "gvd_set_value_dialog");
 
    begin
