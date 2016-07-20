@@ -17,7 +17,7 @@ PATH_STYLE=UNIX
 SSH_ESCAPE='~'
 
 ## We need to double the quotes here, since this is inserted in an Ada file
-DEFAULT_PS='sh -c """"""ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps""""""'
+DEFAULT_PS='sh -c """"""ps x -w -w 2> /dev/null || ps -u \$USER 2> /dev/null || ps""""""'
 
 PRINT_CMD="lp"
 OPAQUE_MDI=True

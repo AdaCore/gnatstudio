@@ -25,6 +25,18 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P719-032 GPS: truncates process names on unix systems
+
+  Problem:    When using the /Debug/Debug/Attach menu, the name of processes
+              is truncated to about 80 characters. This is because "ps"
+              by default truncates to the size of its terminal.
+
+  Status:     This was fixed in 17.0 on 2016-07-20
+
+  Workaround: Open the /Edit/Preferences dialog, then "External commands",
+              and change the "List processes" preferences to add the "-w -w"
+              switches to ps.
+
 KP-62-P704-019 GPS: searching for short patterns with fuzzy match is slow
 
   Problem:    If you type a short text like "nmi" in the omnisearch, while
