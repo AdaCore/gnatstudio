@@ -24,9 +24,16 @@ project Testsuite_Drivers is
                  "test_strings.adb",
                  "test_trie.adb",
 
+                 --  gvd
+                 "test_parse.adb",
+                 "test_parse_c.adb",
+                 "test_parse_cpp.adb",
+
                  --  vsearch
                  "run_vsearch.adb",
-                 "completion-test.adb",
+
+                 --  completion
+                 "completion-test_driver.adb",
 
                  --  gnatdoc
                  "gnatdoc-backend-parser_test.adb",
@@ -39,7 +46,7 @@ project Testsuite_Drivers is
                  "syntax_gnatparse.adb",
 
                  --  semantic
-                 "ada_semantic_tree-test.adb",
+                 "ada_semantic_tree-test_driver.adb",
 
                  --  utilities
                  "sortxml.adb");
