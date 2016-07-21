@@ -8,7 +8,7 @@ project Testsuite_Drivers is
 
    for Source_Dirs use ("src");
    for Object_Dir use "obj";
-   for Exec_Dir use "exec";
+   for Exec_Dir use "bin";
 
    package Builder is
       for Switches ("Ada") use ("-gnat12", "-ws", "-g", "-j0", "-m", "-gnaty");
