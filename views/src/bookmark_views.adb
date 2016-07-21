@@ -136,9 +136,11 @@ package body Bookmark_Views is
       is (Bookmark_Class_Name) with Inline;
    --  Interface with python
 
+   type Bookmark_Type is (Standard, Group, Unattached);
+
    type Bookmark_Data;
    type Bookmark_Data_Access is access all Bookmark_Data;
-   type Bookmark_Data (Is_Group : Boolean) is record
+   type Bookmark_Data (Typ : Bookmark_Type) is record
       Name      : GNAT.Strings.String_Access;
       --  Name of bookmark or group.
       --  Set to null for the toplevel group.
@@ -151,10 +153,12 @@ package body Bookmark_Views is
       Parent              : Bookmark_Data_Access;
       --  Next node at same level
 
-      case Is_Group is
-         when True =>
+      case Typ is
+         when Group =>
             First_Child : Bookmark_Data_Access;
-         when False =>
+         when Unattached =>
+            null;
+         when Standard =>
             Marker      : Location_Marker;
             Instances   : Bookmark_Proxy;
             Message     : Simple_Message_Access;
@@ -289,8 +293,9 @@ package body Bookmark_Views is
       Hash        => Hash);
 
    procedure Refresh
-     (View   : access Bookmark_View_Record'Class;
-      Expand : Bookmark_Data_Access := null);
+     (View     : access Bookmark_View_Record'Class;
+      Expand   : Bookmark_Data_Access := null;
+      Selected : Bookmark_Data_Access := null);
    --  Refresh the contents of the Bookmark view.
    --  If Expand is specified, the corresponding row is expanded
 
@@ -417,7 +422,7 @@ package body Bookmark_Views is
    --  Delete the selected bookmark
 
    type Create_Bookmark_Command is new Interactive_Command with record
-      Create_Group : Boolean := False;
+      Mode : Bookmark_Type := Standard;
    end record;
    overriding function Execute
      (Command : access Create_Bookmark_Command;
@@ -505,9 +510,12 @@ package body Bookmark_Views is
                 & " parent="
                 & (if Tmp.Parent = null then ""
                   else Tmp.Parent.Name.all));
-         if Tmp.Is_Group then
-            Dump (Me, Tmp.First_Child);
-         end if;
+         case Tmp.Typ is
+            when Group =>
+               Dump (Me, Tmp.First_Child);
+            when Unattached | Standard =>
+               null;
+         end case;
          Tmp := Tmp.Next_Same_Level;
       end loop;
       Decrease_Indent (Me);
@@ -542,44 +550,52 @@ package body Bookmark_Views is
       if Self.Pos = null then
          Has_Next := False;
          Result := null;
-      elsif Self.Pos.Is_Group then
-         Has_Next := True;
-         Result := null;
       else
-         Has_Next := True;
+         case Self.Pos.Typ is
+            when Group =>
+               Has_Next := True;
+               Result := null;
 
-         declare
-            Loc : constant String := To_String (Self.Pos.Marker);
-         begin
-            C := Self.Pattern.Start (Self.Pos.Name.all);
-            if C /= GPS.Search.No_Match then
-               Result := new Bookmarks_Search_Result'
-                 (Kernel   => Self.Kernel,
-                  Provider => Self,
-                  Score    => C.Score,
-                  Short    => new String'
-                    (Self.Pattern.Highlight_Match (Self.Pos.Name.all, C)),
-                  Long     => new String'(Loc),
-                  Id       => new String'(Self.Pos.Name.all),
-                  Bookmark => Bookmark_Data_Access (Self.Pos));
-               Self.Adjust_Score (Result);
+            when Unattached | Standard =>
+               Has_Next := True;
 
-            else
-               C := Self.Pattern.Start (Loc);
-               if C /= GPS.Search.No_Match then
-                  Result := new Bookmarks_Search_Result'
-                    (Kernel   => Self.Kernel,
-                     Provider => Self,
-                     Score    => C.Score,
-                     Short    => new String'(Self.Pos.Name.all),
-                     Long     => new String'
-                       (Self.Pattern.Highlight_Match (Loc, C)),
-                     Id       => new String'(Self.Pos.Name.all),
-                     Bookmark => Bookmark_Data_Access (Self.Pos));
-                  Self.Adjust_Score (Result);
-               end if;
-            end if;
-         end;
+               declare
+                  Loc : constant String :=
+                    (if Self.Pos.Typ = Standard
+                     then To_String (Self.Pos.Marker)
+                     else "");
+               begin
+                  C := Self.Pattern.Start (Self.Pos.Name.all);
+                  if C /= GPS.Search.No_Match then
+                     Result := new Bookmarks_Search_Result'
+                       (Kernel   => Self.Kernel,
+                        Provider => Self,
+                        Score    => C.Score,
+                        Short    => new String'
+                          (Self.Pattern.Highlight_Match
+                               (Self.Pos.Name.all, C)),
+                        Long     => new String'(Loc),
+                        Id       => new String'(Self.Pos.Name.all),
+                        Bookmark => Bookmark_Data_Access (Self.Pos));
+                     Self.Adjust_Score (Result);
+
+                  else
+                     C := Self.Pattern.Start (Loc);
+                     if C /= GPS.Search.No_Match then
+                        Result := new Bookmarks_Search_Result'
+                          (Kernel   => Self.Kernel,
+                           Provider => Self,
+                           Score    => C.Score,
+                           Short    => new String'(Self.Pos.Name.all),
+                           Long     => new String'
+                             (Self.Pattern.Highlight_Match (Loc, C)),
+                           Id       => new String'(Self.Pos.Name.all),
+                           Bookmark => Bookmark_Data_Access (Self.Pos));
+                        Self.Adjust_Score (Result);
+                     end if;
+                  end if;
+               end;
+         end case;
 
          Self.Pos := Next_Recursive (Self.Pos);
       end if;
@@ -602,13 +618,11 @@ package body Bookmark_Views is
       Self.Set_Pattern (Pattern);
 
       while Self.Pos /= null loop
-         if not Self.Pos.Is_Group then
-            C := Self.Pattern.Start (Self.Pos.Name.all);
-            if C /= GPS.Search.No_Match then
-               Self.Pattern.Compute_Suffix
-                 (C, Self.Pos.Name.all, Suffix, Suffix_Last);
-               exit when Suffix_Last = 0;
-            end if;
+         C := Self.Pattern.Start (Self.Pos.Name.all);
+         if C /= GPS.Search.No_Match then
+            Self.Pattern.Compute_Suffix
+              (C, Self.Pos.Name.all, Suffix, Suffix_Last);
+            exit when Suffix_Last = 0;
          end if;
 
          Self.Pos := Next_Recursive (Self.Pos);
@@ -698,12 +712,44 @@ package body Bookmark_Views is
       Model : Gtk_Tree_Model;
       Data  : Bookmark_Data_Access;
       Filter_Iter  : Gtk_Tree_Iter;
+      Filter_Path  : Gtk_Tree_Path;
+
+      function Path_To_Select (Iter : Gtk_Tree_Iter) return Gtk_Tree_Path;
+      --  Return the path that will be selected after we have deleted Iter
+
+      function Path_To_Select (Iter : Gtk_Tree_Iter) return Gtk_Tree_Path is
+         P, P2 : Gtk_Tree_Path;
+         Iter2 : Gtk_Tree_Iter;
+         Dummy : Boolean;
+      begin
+         P := View.Tree.Filter.Get_Path (Iter);
+
+         --  If there is a next node, it will be found at the same position as
+         --  Iter, so we use the same path.
+         Iter2 := Iter;
+         View.Tree.Filter.Next (Iter2);
+         if Iter2 /= Null_Iter then
+            return P;
+         end if;
+
+         --  Otherwise, select the previous node at the same level
+         P2 := Copy (P);
+         if Prev (P2) then
+            Path_Free (P);
+            return P2;
+         end if;
+
+         --  Otherwise, select the parent
+         Dummy := Up (P);
+         return P;
+      end Path_To_Select;
+
    begin
       if View /= null then
          View.Deleting := True;
          View.Tree.Get_Selection.Get_Selected (Model, Filter_Iter);
-
          if Filter_Iter /= Null_Iter then
+            Filter_Path := Path_To_Select (Filter_Iter);
             Data := View.Tree.Get_Data
               (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
 
@@ -712,7 +758,17 @@ package body Bookmark_Views is
             end if;
          end if;
          View.Deleting := False;
+
          Refresh (View);
+
+         --  Select another row, to make it easy to do multiple deletions
+         if Filter_Path /= Null_Gtk_Tree_Path then
+            Filter_Iter := View.Tree.Filter.Get_Iter (Filter_Path);
+            if Filter_Iter /= Null_Iter then
+               View.Tree.Get_Selection.Select_Iter (Filter_Iter);
+            end if;
+            Path_Free (Filter_Path);
+         end if;
       end if;
 
       return Success;
@@ -767,14 +823,9 @@ package body Bookmark_Views is
       end if;
 
       B := Get_Data (Self, Store_Iter => Store_Iter);
-      if not B.Is_Group
+      return B.Typ = Standard
         and then Self.Pattern.Start
-          (To_String (B.Marker)) /= GPS.Search.No_Match
-      then
-         return True;
-      end if;
-
-      return False;
+          (To_String (B.Marker)) /= GPS.Search.No_Match;
    end Is_Visible;
 
    --------------------
@@ -961,7 +1012,7 @@ package body Bookmark_Views is
       Sign    : constant Integer := Direction (Command.Backward);
    begin
       while C /= null loop
-         if not C.Is_Group then
+         if C.Typ = Standard then
             declare
                Next : constant Location_Marker := C.Marker;
                Dist : constant Integer := Sign * Distance (Marker, Next);
@@ -1027,21 +1078,25 @@ package body Bookmark_Views is
 
          --  Free node specific data
 
-         if Data.Is_Group then
-            while Data.First_Child /= null loop
-               --  Can't pass Data.First_Child directly, or it will be set to
-               --  null directly (otherwise it is only set to null when freeing
-               --  the last child)
-               Tmp := Data.First_Child;
-               Free (Tmp);
-            end loop;
+         case Data.Typ is
+            when Group =>
+               while Data.First_Child /= null loop
+                  --  Can't pass Data.First_Child directly, or it will be set
+                  --  to null directly (otherwise it is only set to null when
+                  --  freeing the last child)
+                  Tmp := Data.First_Child;
+                  Free (Tmp);
+               end loop;
 
-         else
-            if Data.Message /= null then
-               Remove (Data.Message);
-            end if;
-            Data.Instances.Free;
-         end if;
+            when Unattached =>
+               null;
+
+            when Standard =>
+               if Data.Message /= null then
+                  Remove (Data.Message);
+               end if;
+               Data.Instances.Free;
+         end case;
 
          Unchecked_Free (Data);
       end if;
@@ -1078,7 +1133,7 @@ package body Bookmark_Views is
    function New_Group (Name : String) return Bookmark_Data_Access is
    begin
       return new Bookmark_Data'
-        (Is_Group            => True,
+        (Typ                 => Group,
          First_Child         => null,
          Next_Same_Level     => null,
          Previous_Same_Level => null,
@@ -1120,17 +1175,28 @@ package body Bookmark_Views is
                others       => <>));
       end if;
 
-      return new Bookmark_Data'
-        (Is_Group            => False,
-         Marker              => Mark,
-         Message             => Msg,
-         Previous_Same_Level => null,
-         Next_Same_Level     => null,
-         Parent              => null,
-         Note                => Null_Unbounded_String,
-         Name                => new String'
-           (if Name = "" then To_String (Mark) else Name),
-         Instances           => <>);
+      if Mark = No_Marker then
+         return new Bookmark_Data'
+           (Typ                 => Unattached,
+            Previous_Same_Level => null,
+            Next_Same_Level     => null,
+            Parent              => null,
+            Note                => Null_Unbounded_String,
+            Name                => new String'
+              (if Name = "" then To_String (Mark) else Name));
+      else
+         return new Bookmark_Data'
+           (Typ                 => Standard,
+            Marker              => Mark,
+            Message             => Msg,
+            Previous_Same_Level => null,
+            Next_Same_Level     => null,
+            Parent              => null,
+            Note                => Null_Unbounded_String,
+            Name                => new String'
+              (if Name = "" then To_String (Mark) else Name),
+            Instances           => <>);
+      end if;
    end New_Bookmark;
 
    ------------
@@ -1182,9 +1248,8 @@ package body Bookmark_Views is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      Mark   : Location_Marker := Create_Marker (Kernel);
       View   : Bookmark_View_Access;
-      Group, Bookmark : Bookmark_Data_Access;
+      Gr, Bookmark : Bookmark_Data_Access;
       Filter_Iter : Gtk_Tree_Iter;
       Model       : Gtk_Tree_Model;
 
@@ -1192,6 +1257,48 @@ package body Bookmark_Views is
         (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
          return Boolean;
       --  Start editing the newly inserted row
+
+      function Get_Current_Mark return Location_Marker;
+      --  Create a new marker for the current location
+
+      ----------------------
+      -- Get_Current_Mark --
+      ----------------------
+
+      function Get_Current_Mark return Location_Marker is
+         Mark   : Location_Marker;
+      begin
+         --  If the current module doesn't support creating bookmarks, we fall
+         --  back to the last editor that had focus, since that's what users
+         --  will expect most of the time.
+
+         Mark := Create_Marker (Kernel);
+         if Mark.Is_Null then
+            Trace
+              (Me, "Current module cannot create bookmark, try last editor");
+            declare
+               --  Side effect is to give focus to the source edtor module to
+               --  create the bookmark
+               Buffer : constant Editor_Buffer'Class :=
+                 Get_Buffer_Factory (Kernel).Get
+                 (Open_Buffer => False, Open_View => False, Focus => False);
+               Cursor : constant Editor_Location'Class :=
+                 Buffer.Current_View.Cursor;
+
+            begin
+               Mark := Get_Buffer_Factory (Kernel).Create_Marker
+                 (File    => Buffer.File,
+                  Project => No_Project,
+                  Line    => Editable_Line_Type (Cursor.Line),
+                  Column  => Cursor.Column);
+            end;
+         end if;
+         return Mark;
+      end Get_Current_Mark;
+
+      ------------
+      -- On_Row --
+      ------------
 
       function On_Row
         (Model : Gtk_Tree_Model; Path : Gtk_Tree_Path; Iter : Gtk_Tree_Iter)
@@ -1216,62 +1323,47 @@ package body Bookmark_Views is
       end On_Row;
 
    begin
-      --  If the current module doesn't support creating bookmarks, we fall
-      --  back to the last editor that had focus, since that's what users will
-      --  expect most of the time.
+      Trace (Me, "bookmark create");
+      View := Generic_View.Get_Or_Create_View (Kernel);
 
-      if Mark.Is_Null then
-         Trace (Me, "Current module cannot create bookmark, try last editor");
-         declare
-            --  Side effect is to give focus to the source edtor module to
-            --  create the bookmark
-            Buffer : constant Editor_Buffer'Class :=
-              Get_Buffer_Factory (Kernel).Get
-              (Open_Buffer => False, Open_View => False, Focus => False);
-            Cursor : constant Editor_Location'Class :=
-              Buffer.Current_View.Cursor;
+      --  If we have a selection, insert in the same group
 
-         begin
-            Mark := Get_Buffer_Factory (Kernel).Create_Marker
-              (File    => Buffer.File,
-               Project => No_Project,
-               Line    => Editable_Line_Type (Cursor.Line),
-               Column  => Cursor.Column);
-         end;
+      View.Tree.Get_Selection.Get_Selected (Model, Filter_Iter);
+      if Filter_Iter /= Null_Iter then
+         Gr := View.Tree.Get_Data
+           (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
+         if Gr.Typ /= Group then
+            Gr := Gr.Parent;
+         end if;
       end if;
 
-      if not Mark.Is_Null then
-         Trace (Me, "bookmark created");
+      --  Create the bookmark
 
-         View := Generic_View.Get_Or_Create_View (Kernel);
-
-         --  If we have a selection, insert in the same group
-
-         View.Tree.Get_Selection.Get_Selected (Model, Filter_Iter);
-         if Filter_Iter /= Null_Iter then
-            Group := View.Tree.Get_Data
-              (Store_Iter => View.Tree.Convert_To_Store_Iter (Filter_Iter));
-            if not Group.Is_Group then
-               Group := Group.Parent;
-            end if;
-         end if;
-
-         if Command.Create_Group then
+      case Command.Mode is
+         when Group =>
             Bookmark := New_Group ("group");
-         else
-            Bookmark := New_Bookmark (Kernel, Mark);
-         end if;
+         when Standard =>
+            declare
+               Mark   : constant Location_Marker := Get_Current_Mark;
+            begin
+               if Mark.Is_Null then
+                  return Failure;
+               else
+                  Bookmark := New_Bookmark (Kernel, Mark);
+               end if;
+            end;
+         when Unattached =>
+            Bookmark := New_Bookmark (Kernel, No_Marker, Name => "unnamed");
+      end case;
 
-         Insert (Bookmark, After => null, In_Group => Group);
+      Insert (Bookmark, After => null, In_Group => Gr);
 
-         Refresh (View);
-         Bookmark_Added_Hook.Run (Kernel, To_String (Mark));
+      Refresh (View, Expand => Gr, Selected => Bookmark);
+      Bookmark_Added_Hook.Run (Kernel, Bookmark.Name.all);
 
-         --  Start editing the name of the bookmark
-         View.Tree.Model.Foreach (On_Row'Unrestricted_Access);
-         return Success;
-      end if;
-      return Failure;
+      --  Start editing the name of the bookmark
+      View.Tree.Model.Foreach (On_Row'Unrestricted_Access);
+      return Success;
    end Execute;
 
    -------------
@@ -1279,10 +1371,12 @@ package body Bookmark_Views is
    -------------
 
    procedure Refresh
-     (View   : access Bookmark_View_Record'Class;
-      Expand : Bookmark_Data_Access := null)
+     (View     : access Bookmark_View_Record'Class;
+      Expand   : Bookmark_Data_Access := null;
+      Selected : Bookmark_Data_Access := null)
    is
       Expand_Path : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      Select_Path : Gtk_Tree_Path := Null_Gtk_Tree_Path;
 
       procedure Add_Level
         (First : Bookmark_Data_Access; Store_Parent : Gtk_Tree_Iter);
@@ -1305,18 +1399,25 @@ package body Bookmark_Views is
                (Icon_Name_Column, Name_Column, Data_Column,
                 Has_Note_Column),
                (1 => As_String
-                    (if Tmp.Is_Group
-                     then Icon_For_Groups else Icon_For_Bookmarks),
+                    (case Tmp.Typ is
+                        when Group      => Icon_For_Groups,
+                        when Unattached => "",
+                        when Standard   => Icon_For_Bookmarks),
                 2 => As_String  (Tmp.Name.all),
                 3 => As_Pointer (Convert (Tmp)),
                 4 => As_Boolean (Tmp.Note /= Null_Unbounded_String)));
 
-            if Tmp.Is_Group then
+            if Tmp.Typ = Group then
                Add_Level (Tmp.First_Child, Store_Iter);
             end if;
 
             if Expand = Tmp then
                Expand_Path := View.Tree.Get_Filter_Path_For_Store_Iter
+                 (Store_Iter);
+            end if;
+
+            if Selected = Tmp then
+               Select_Path := View.Tree.Get_Filter_Path_For_Store_Iter
                  (Store_Iter);
             end if;
 
@@ -1336,6 +1437,12 @@ package body Bookmark_Views is
          if Expand_Path /= Null_Gtk_Tree_Path then
             Dummy := View.Tree.Expand_Row (Expand_Path, Open_All => False);
             Path_Free (Expand_Path);
+         end if;
+
+         if Select_Path /= Null_Gtk_Tree_Path then
+            View.Tree.Get_Selection.Select_Iter
+              (View.Tree.Filter.Get_Iter (Select_Path));
+            Path_Free (Select_Path);
          end if;
       end if;
    end Refresh;
@@ -1371,7 +1478,7 @@ package body Bookmark_Views is
       Free (Mark.Name);
       Mark.Name := new String'(New_Text);
       Save_Bookmarks (Get_Kernel (Bookmark_Views_Module.all));
-      View.Refresh;
+      View.Refresh (Selected => Mark);
 
       Set_Property
         (View.Tree.Text, Gtk.Cell_Renderer_Text.Editable_Property, False);
@@ -1423,7 +1530,7 @@ package body Bookmark_Views is
          B : constant Bookmark_Data_Access :=
            View.Tree.Get_Data (Store_Iter => Iter);
       begin
-         if not B.Is_Group
+         if B.Typ = Standard
            and then Integer (Get_Line (B.Marker)) = Line
            and then Get_File (B.Marker) = File
          then
@@ -1482,10 +1589,10 @@ package body Bookmark_Views is
       View   : constant Bookmark_View_Access := Bookmark_View_Access (Self);
       Model  : Gtk_Tree_Model;
       Iter   : Gtk_Tree_Iter;
-      Source, Target, Group  : Bookmark_Data_Access;
-      Path         : aliased Gtk_Tree_Path;
-      Pos          : aliased Gtk_Tree_View_Drop_Position;
-      Success          : Boolean;
+      Source, Target, Gr  : Bookmark_Data_Access;
+      Path    : aliased Gtk_Tree_Path;
+      Pos     : aliased Gtk_Tree_View_Drop_Position;
+      Success : Boolean;
    begin
       if not View.Data_Dropped then
          return;
@@ -1545,26 +1652,27 @@ package body Bookmark_Views is
             Insert (Source,
                     After    => Target.Previous_Same_Level,
                     In_Group => Target.Parent);
-            View.Refresh;
+            View.Refresh (Selected => Source);
 
          when Tree_View_Drop_After =>
             Insert (Source, After => Target, In_Group => Target.Parent);
-            View.Refresh;
+            View.Refresh (Selected => Source);
 
          when Tree_View_Drop_Into_Or_Before
             | Tree_View_Drop_Into_Or_After =>
 
-            if Target.Is_Group then
-               Insert (Source, After => null, In_Group => Target);
-               View.Refresh;
-            else
-               Group := New_Group (Name => "group for " & Source.Name.all);
-               Insert (Group,  After => Target, In_Group => Target.Parent);
-               Remove_But_Not_Free (Target);
-               Insert (Source, After => null,   In_Group => Group);
-               Insert (Target, After => Source, In_Group => Group);
-               View.Refresh (Expand => Group);
-            end if;
+            case Target.Typ is
+               when Group =>
+                  Insert (Source, After => null, In_Group => Target);
+                  View.Refresh;
+               when Unattached | Standard =>
+                  Gr := New_Group (Name => "group for " & Source.Name.all);
+                  Insert (Gr,  After => Target, In_Group => Target.Parent);
+                  Remove_But_Not_Free (Target);
+                  Insert (Source, After => null,   In_Group => Gr);
+                  Insert (Target, After => Source, In_Group => Gr);
+                  View.Refresh (Expand => Gr, Selected => Gr);
+            end case;
       end case;
 
       Save_Bookmarks (View.Kernel);
@@ -1673,7 +1781,7 @@ package body Bookmark_Views is
 
                Path_Free (Filter_Path);
 
-               if not B.Is_Group then
+               if B.Typ = Standard then
                   Dummy := Go_To (B.Marker);
                   Push_Marker_In_History (View.Kernel, B.Marker);
                   View.Multipress.Set_State (Event_Sequence_Claimed);
@@ -1726,23 +1834,24 @@ package body Bookmark_Views is
       if Filter_Iter /= Null_Iter then
          Data := Tree.Get_Data
            (Store_Iter => Tree.Convert_To_Store_Iter (Filter_Iter));
-         if Data.Is_Group then
-            Text := To_Unbounded_String
-               ("<b>Name:</b> " & Protect (Data.Name.all));
-         else
-            declare
-               Location : constant String := To_String (Data.Marker);
-            begin
-               if Location = Data.Name.all then
-                  Text := To_Unbounded_String
-                     ("<b>Location:</b> " & Protect (Location));
-               else
-                  Text := To_Unbounded_String
-                    ("<b>Name:</b> " & Protect (Data.Name.all) & ASCII.LF &
-                     "<b>Location:</b> " & Protect (Location));
-               end if;
-            end;
-         end if;
+         case Data.Typ is
+            when Group | Unattached =>
+               Text := To_Unbounded_String
+                 ("<b>Name:</b> " & Protect (Data.Name.all));
+            when Standard =>
+               declare
+                  Location : constant String := To_String (Data.Marker);
+               begin
+                  if Location = Data.Name.all then
+                     Text := To_Unbounded_String
+                       ("<b>Location:</b> " & Protect (Location));
+                  else
+                     Text := To_Unbounded_String
+                       ("<b>Name:</b> " & Protect (Data.Name.all) & ASCII.LF &
+                          "<b>Location:</b> " & Protect (Location));
+                  end if;
+               end;
+         end case;
 
          if Data.Note /= Null_Unbounded_String then
             Append (Text, ASCII.LF & "<b>Note:</b>" & ASCII.LF
@@ -1892,6 +2001,10 @@ package body Bookmark_Views is
             if Child.Tag.all = "group" then
                B := New_Group (Get_Attribute (Child, "bookmark_name", ""));
                Load_Same_Level (Parent => B, First => Child.Child);
+            elsif Child.Tag.all = "unattached" then
+               B := New_Bookmark
+                 (Kernel, No_Marker,
+                  Name => Get_Attribute (Child, "bookmark_name", ""));
             else
                Marker := Create_Marker (Kernel, Child);
                if not Marker.Is_Null then
@@ -1973,13 +2086,17 @@ package body Bookmark_Views is
          Child, Note : Node_Ptr;
       begin
          while Tmp /= null loop
-            if Tmp.Is_Group then
-               Child := new Node;
-               Child.Tag := new String'("group");
-               Save_Same_Level (Child, Tmp.First_Child);
-            else
-               Child := Save (Tmp.Marker);
-            end if;
+            case Tmp.Typ is
+               when Group =>
+                  Child := new Node;
+                  Child.Tag := new String'("group");
+                  Save_Same_Level (Child, Tmp.First_Child);
+               when Unattached =>
+                  Child := new Node;
+                  Child.Tag := new String'("unattached");
+               when Standard =>
+                  Child := Save (Tmp.Marker);
+            end case;
 
             if Child /= null then
                Set_Attribute (Child, "bookmark_name", Tmp.Name.all);
@@ -2125,7 +2242,7 @@ package body Bookmark_Views is
          Set_Return_Value_As_List (Data);
          Bookmark := Bookmark_Iter_First;
          while Bookmark /= null loop
-            if not Bookmark.Is_Group then
+            if Bookmark.Typ = Standard then
                Data.Set_Return_Value
                  (Bookmark_Proxies.Get_Or_Create_Instance
                     (Self   => Bookmark.Instances,
@@ -2168,14 +2285,23 @@ package body Bookmark_Views is
 
       Register_Action
         (Kernel, "bookmark create", new Create_Bookmark_Command,
-         -("Create a bookmark at the current location"),
+         -("Create a bookmark at the current location in the editor"),
+         Icon_Name => "gps-add-symbolic",
+         Category  => -"Bookmarks");
+
+      Register_Action
+        (Kernel, "bookmark create unattached",
+         new Create_Bookmark_Command'
+           (Interactive_Command with Mode => Unattached),
+         -("Create a bookmark at no specific location. This is mostly useful"
+           & " as a way to have TODO items into the Bookmarks view"),
          Icon_Name => "gps-add-symbolic",
          Category  => -"Bookmarks");
 
       Register_Action
         (Kernel, "bookmark create group",
          new Create_Bookmark_Command'
-           (Interactive_Command with Create_Group => True),
+           (Interactive_Command with Mode => Group),
          -("Create an empty bookmark group (visible in Bookmarks view)"),
          Icon_Name => "gps-add-folder-symbolic",
          Category  => -"Bookmarks");
