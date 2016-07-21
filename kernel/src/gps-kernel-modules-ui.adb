@@ -1713,10 +1713,8 @@ package body GPS.Kernel.Modules.UI is
             end if;
 
          elsif Self.all in Gtk_Widget_Record'Class then
-            Tooltips.Set_Static_Tooltip
-              (Gtk_Widget (Self),
-               Text => "Action not found: " & Escape_Text (Data.Action.all),
-               Use_Markup => True);
+            Gtk_Widget (Self).Set_Tooltip_Text
+              ("Action not found: " & Data.Action.all);
             Get_Style_Context (Gtk_Widget (Self)).Add_Class ("nogpsaction");
          end if;
       end if;

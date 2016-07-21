@@ -80,6 +80,16 @@ package body Tooltips is
 
    package Tooltip_User_Data is new Glib.Object.User_Data (Tooltips_Access);
 
+   function Can_Have_Tooltip
+     (Widget : not null access Gtk_Widget_Record'Class)
+      return Boolean
+     is (Widget.Get_Has_Window
+         or else Widget.all in Gtk_Menu_Item_Record'Class);
+   --  Whether this widget is compatible with our tooltips.
+   --  ??? Our tooltips do not work on widgets that do not have their own
+   --  Gdk_Window (except for menu items). For static tooltips, users should
+   --  fallback on using gtk+ tooltips.
+
    type Tooltip_Object_Record is new Gtk.Window.Gtk_Window_Record with record
       Timeout_Id             : G_Source_Id := 0;
       Browse_Mode_Timeout_Id : G_Source_Id := 0;
@@ -105,13 +115,13 @@ package body Tooltips is
    -- Static tooltips --
    ---------------------
 
-   type Static_Tooltips is new Tooltips with record
+   type Static_Tooltips_Record is new Tooltips with record
       Text       : GNAT.Strings.String_Access;
       Use_Markup : Boolean;
    end record;
-   overriding procedure Destroy (Self : access Static_Tooltips);
+   overriding procedure Destroy (Self : access Static_Tooltips_Record);
    overriding function Create_Contents
-     (Self   : not null access Static_Tooltips;
+     (Self   : not null access Static_Tooltips_Record;
       Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y   : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
@@ -404,9 +414,11 @@ package body Tooltips is
 
    function Tooltip_Event_Cb
      (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Event   : Gdk.Event.Gdk_Event) return Boolean is
+      Event   : Gdk.Event.Gdk_Event) return Boolean
+   is
+      T : constant Gdk_Event_Type := Get_Event_Type (Event);
    begin
-      if Get_Event_Type (Event) = Motion_Notify
+      if T = Motion_Notify
 
         --  Only if the user doesn't have the mouse button pressed, or a key
         --  press (since otherwise we might be in a drag-and-drop operation)
@@ -433,13 +445,27 @@ package body Tooltips is
      (Tooltip   : access Tooltips'Class;
       On_Widget : access Gtk.Widget.Gtk_Widget_Record'Class) is
    begin
-      Add_Events
-        (On_Widget,
-         Pointer_Motion_Mask
-         or Enter_Notify_Mask
-         or Focus_Change_Mask
-         or Button_Press_Mask
-         or Leave_Notify_Mask);
+      Assert
+        (Me, Can_Have_Tooltip (On_Widget),
+         "Widgets must have their own Gdk_Window to use tooltips.adb",
+         Raise_Exception => False);
+
+      --  from gtk_widget_real_set_has_tooltip
+      if On_Widget.Get_Realized
+        and then not On_Widget.Get_Has_Window
+      then
+         Gdk.Window.Set_Events
+           (On_Widget.Get_Window,
+            Gdk.Window.Get_Events (On_Widget.Get_Window)
+            or Leave_Notify_Mask
+            or Pointer_Motion_Mask);
+      else
+         On_Widget.Add_Events
+           (Pointer_Motion_Mask
+            or Focus_Change_Mask
+            or Button_Press_Mask
+            or Leave_Notify_Mask);
+      end if;
 
       --  Do not connect to "destroy", since this will also result in a
       --  leave_notify event, which we are already monitoring
@@ -511,7 +537,7 @@ package body Tooltips is
    -- Destroy --
    -------------
 
-   overriding procedure Destroy (Self : access Static_Tooltips) is
+   overriding procedure Destroy (Self : access Static_Tooltips_Record) is
    begin
       Free (Self.Text);
    end Destroy;
@@ -521,7 +547,7 @@ package body Tooltips is
    ---------------------
 
    overriding function Create_Contents
-     (Self     : not null access Static_Tooltips;
+     (Self     : not null access Static_Tooltips_Record;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
@@ -530,6 +556,8 @@ package body Tooltips is
       Alloc : Gtk_Allocation;
    begin
       Gtk_New (Label, Self.Text.all);
+      Label.Set_Line_Wrap (True);
+      Label.Set_Max_Width_Chars (70);  --  Match standard gtk+ tooltips
       Label.Set_Use_Markup (Self.Use_Markup);
       Widget.Get_Allocation (Alloc);
       Self.Set_Tip_Area ((X      => Alloc.X,
@@ -550,7 +578,16 @@ package body Tooltips is
    is
       Tip : Tooltips_Access;
    begin
-      Tip := new Static_Tooltips'
+      if not Can_Have_Tooltip (Widget) then
+         if Use_Markup then
+            Widget.Set_Tooltip_Markup (Text);
+         else
+            Widget.Set_Tooltip_Text (Text);
+         end if;
+         return;
+      end if;
+
+      Tip := new Static_Tooltips_Record'
         (Tooltips with
          Text       => new String'(Text),
          Use_Markup => Use_Markup);
