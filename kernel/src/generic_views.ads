@@ -370,12 +370,12 @@ package Generic_Views is
           On_Delete_Event'Access;
       --  Propagate the delete event to the view
 
-      procedure On_Destroy_View_Parent_Box
-        (Box : access Gtk.Widget.Gtk_Widget_Record'Class);
+      procedure On_Before_Destroy_Child
+        (Child : access Gtk.Widget.Gtk_Widget_Record'Class);
       --  Called when the box containing View is destroyed
-      On_Destroy_View_Parent_Box_Access : constant
+      On_Before_Destroy_Child_Access : constant
         Gtkada.Handlers.Widget_Callback.Simple_Handler :=
-          On_Destroy_View_Parent_Box'Access;
+          On_Before_Destroy_Child'Access;
 
       procedure On_Float_Child
         (Child : access Gtk.Widget.Gtk_Widget_Record'Class);
@@ -383,11 +383,11 @@ package Generic_Views is
         Gtkada.Handlers.Widget_Callback.Simple_Handler :=
           On_Float_Child'Access;
 
-      procedure On_Unfloat_Child
+      procedure On_Before_Unfloat_Child
         (Child : access Gtk.Widget.Gtk_Widget_Record'Class);
-      On_Unfloat_Child_Access : constant
+      On_Before_Unfloat_Child_Access : constant
         Gtkada.Handlers.Widget_Callback.Simple_Handler :=
-          On_Unfloat_Child'Access;
+          On_Before_Unfloat_Child'Access;
 
       function On_Delete_Floating_Child
         (Self : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;

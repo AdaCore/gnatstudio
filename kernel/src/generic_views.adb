@@ -973,14 +973,16 @@ package body Generic_Views is
          return Prevent_Delete;
       end On_Delete_Event;
 
-      --------------------------------
-      -- On_Destroy_View_Parent_Box --
-      --------------------------------
+      -----------------------------
+      -- On_Before_Destroy_Child --
+      -----------------------------
 
-      procedure On_Destroy_View_Parent_Box
-        (Box : access Gtk.Widget.Gtk_Widget_Record'Class)
+      procedure On_Before_Destroy_Child
+        (Child : access Gtk_Widget_Record'Class)
       is
-         View : constant View_Access := Toplevel_Box (Box.all).Initial;
+         Self   : constant Local_Formal_MDI_Child_Access :=
+           Local_Formal_MDI_Child_Access (Child);
+         View   : constant View_Access := View_From_Child (Self);
       begin
          if Hide_Rather_Than_Close
            and then Reuse_If_Exist
@@ -988,10 +990,10 @@ package body Generic_Views is
             --  We are about to close the MDI child containing a view which
             --  has the flag Hide_Rather_Than_Close: save this view here.
             View.Ref;
-            Gtk_Container (Box).Remove (View);
+            Gtk_Container (View.Get_Parent).Remove (View);
             Global.Stored_View := View;
          end if;
-      end On_Destroy_View_Parent_Box;
+      end On_Before_Destroy_Child;
 
       -----------------------------
       -- On_Display_Local_Config --
@@ -1204,11 +1206,13 @@ package body Generic_Views is
          View.Set_Size_Request (Req.Width, Req.Height);
       end On_Float_Child;
 
-      ----------------------
-      -- On_Unfloat_Child --
-      ----------------------
+      -----------------------------
+      -- On_Before_Unfloat_Child --
+      -----------------------------
 
-      procedure On_Unfloat_Child (Child : access Gtk_Widget_Record'Class) is
+      procedure On_Before_Unfloat_Child
+        (Child : access Gtk_Widget_Record'Class)
+      is
          Self   : constant Local_Formal_MDI_Child_Access :=
            Local_Formal_MDI_Child_Access (Child);
          View   : constant View_Access := View_From_Child (Self);
@@ -1216,7 +1220,7 @@ package body Generic_Views is
          --  Store the position of the floating window
          Store_Position (View);
          View.Set_Size_Request (-1, -1);
-      end On_Unfloat_Child;
+      end On_Before_Unfloat_Child;
 
       ----------------------
       -- Create_If_Needed --
@@ -1304,8 +1308,13 @@ package body Generic_Views is
             Widget_Callback.Connect
               (Child, Signal_Float_Child, On_Float_Child_Access);
             Widget_Callback.Connect
-              (Child, Signal_Unfloat_Child, On_Unfloat_Child_Access);
+              (Child, Signal_Before_Unfloat_Child,
+               On_Before_Unfloat_Child_Access);
          end if;
+
+         Widget_Callback.Connect
+           (Child, Signal_Before_Destroy_Child,
+            On_Before_Destroy_Child_Access);
 
          --  Put the child in the MDI
 
@@ -1485,11 +1494,6 @@ package body Generic_Views is
          end if;
 
          View.On_Destroy (On_Destroy_View'Access);
-
-         Widget_Callback.Connect
-           (Box,
-            Signal_Destroy,
-            On_Destroy_View_Parent_Box_Access);
 
          return Gtk_Widget (Box);
       end Create_Finalized_View;
