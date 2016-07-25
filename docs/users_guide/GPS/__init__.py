@@ -4657,7 +4657,7 @@ class EditorOverlay(object):
         - *rise* (an integer)
 
           Offset of text above the baseline (below the baseline if rise is
-          negative, in Pango units.
+          negative), in Pango units.
 
         - *pixels-above-lines* (an integer)
 
@@ -6138,7 +6138,7 @@ class Hook(object):
         .. code-block:: python
 
            def filed_edited(hook_name, file):
-              print "File edited (hook=" + hook_name + " file=" + file.name()
+              print "File edited hook=" + hook_name + " file=" + file.name()
               GPS.Hook("file_edited").add(file_edited)
 
               """
@@ -6475,7 +6475,6 @@ class Logger(object):
            log.check(1 == 2, "Invalid operation")
 
         """
-
     count = None
 
     active = True
