@@ -25,7 +25,6 @@ with Gtkada.Handlers;
 with Gtkada.MDI;
 
 with GPS.Intl;                     use GPS.Intl;
-with GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;
 with GPS.Kernel.Preferences;
@@ -140,8 +139,7 @@ package body GNAThub.Module is
          --  Switch to GNATHub perspective.
          Load_Perspective (Self.Kernel, "Analyze");
 
-         Ignore := GPS.Kernel.Actions.Execute_Action
-           (Self.Get_Kernel, "open gnathub_filters");
+         GNAThub.Filters_Views.Open_View (Self.Kernel, Module);
 
          GNAThub.Reports.Collector.Gtk_New
            (Self.Collector, Self.Kernel, Self.Tree, Self.Severities);
@@ -333,7 +331,6 @@ package body GNAThub.Module is
       Module.Loader := new GNAThub.Loader.Loader (Module);
       Module.Loader.Initialize;
       Module.Filter := new GNAThub.Filters.Message_Filter;
-      GNAThub.Filters_Views.Register_Module (Kernel, Module);
 
       Kernel.Get_Messages_Container.Register_Filter
         (GPS.Kernel.Messages.Message_Filter_Access (Module.Filter));

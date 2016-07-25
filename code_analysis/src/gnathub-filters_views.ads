@@ -23,10 +23,10 @@ with GNAThub.Module;
 
 package GNAThub.Filters_Views is
 
-   procedure Register_Module
+   procedure Open_View
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Module : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class);
-   --  Register the module into the list
+   --  Open the filter's view
 
    procedure Close_View
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);

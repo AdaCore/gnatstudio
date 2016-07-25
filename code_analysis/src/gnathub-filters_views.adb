@@ -17,8 +17,6 @@
 
 with Ada.Unchecked_Deallocation;
 
-with Commands.Interactive;
-
 with Glib;                              use Glib;
 with Glib.Values;
 
@@ -38,20 +36,10 @@ with GNAThub.Generic_Criteria_Editors;
 with GNAThub.Messages;
 with GNAThub.Module;                   use GNAThub.Module;
 
-with GPS.Kernel.Actions;
-with GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;
-with GPS.Kernel.Modules;               use GPS.Kernel.Modules;
 with GPS.Kernel.Preferences;
 
 package body GNAThub.Filters_Views is
-
-   -- Module --
-
-   type Gnathub_Filters_Module_Record is new Module_ID_Record with null record;
-
-   type Gnathub_Filters_Module is
-     access all Gnathub_Filters_Module_Record'Class;
 
    -- Tools --
 
@@ -197,19 +185,6 @@ package body GNAThub.Filters_Views is
    procedure Apply_Filters (View : access Filters_View_Record'Class);
    --  Apply selected rules/severities/tools
 
-   --------------
-   -- Commands --
-   --------------
-
-   type Display_Command is
-     new Commands.Interactive.Interactive_Command with null record;
-
-   overriding function Execute
-     (Command : access Display_Command;
-      Context : Commands.Interactive.Interactive_Command_Context)
-      return Commands.Command_Return_Type;
-   --  Displey GnatHub filters view
-
    -- Internal Routines --
 
    procedure On_Flow_Box_Size_Allocated
@@ -261,8 +236,7 @@ package body GNAThub.Filters_Views is
       Tool     : Tool_Access)
       return Boolean;
 
-   GNAThub_Module  : GNAThub_Module_Id;
-   Gnathub_Filters : Gnathub_Filters_Module;
+   GNAThub_Module : GNAThub_Module_Id;
 
    -------------------
    -- Apply_Filters --
@@ -408,26 +382,6 @@ package body GNAThub.Filters_Views is
            (Menu, GNAThub_Module.Kernel, Severety.Color);
       end loop;
    end Create_Menu;
-
-   -------------
-   -- Execute --
-   -------------
-
-   overriding function Execute
-     (Command : access Display_Command;
-      Context : Commands.Interactive.Interactive_Command_Context)
-      return Commands.Command_Return_Type
-   is
-      pragma Unreferenced (Command);
-
-      Kernel : constant access GPS.Kernel.Kernel_Handle_Record'Class :=
-        GPS.Kernel.Get_Kernel (Context.Context);
-      Ignore : Views.View_Access;
-   begin
-      Ignore := Views.Get_Or_Create_View (Kernel);
-
-      return Commands.Success;
-   end Execute;
 
    --------------------
    -- Get_Rule_Value --
@@ -1026,21 +980,19 @@ package body GNAThub.Filters_Views is
          end if;
    end On_Tools_Changed;
 
-   ---------------------
-   -- Register_Module --
-   ---------------------
+   ---------------
+   -- Open_View --
+   ---------------
 
-   procedure Register_Module
+   procedure Open_View
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Module : not null access GNAThub.Module.GNAThub_Module_Id_Record'Class)
    is
+      View : Views.View_Access;
+      pragma Unreferenced (View);
    begin
-      GNAThub_Module  := GNAThub_Module_Id (Module);
-      Gnathub_Filters := new Gnathub_Filters_Module_Record;
-      Views.Register_Module (Kernel, Module_ID (Gnathub_Filters));
-
-      GPS.Kernel.Actions.Register_Action
-        (Kernel, "open gnathub_filters", new Display_Command);
-   end Register_Module;
+      GNAThub_Module := GNAThub_Module_Id (Module);
+      View := Views.Get_Or_Create_View (Kernel);
+   end Open_View;
 
 end GNAThub.Filters_Views;

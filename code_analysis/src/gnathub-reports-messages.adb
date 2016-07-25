@@ -15,19 +15,26 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Glib.Object;
 with Glib.Values;
+
 with Gtk.Enums;
 with Gtk.Paned;
 with Gtk.Scrolled_Window;
 with Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;
-with Gtk.Tree_Model;        use Gtk.Tree_Model;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;
 with Gtk.Tree_Sortable;
 
-with GPS.Intl;              use GPS.Intl;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Location_View;
+
+with GNAThub.Messages;
 
 package body GNAThub.Reports.Messages is
+
+   use Gtk.Gesture_Multi_Press;
 
    package Compare_Functions is
      new Gtk.Tree_Sortable.Set_Default_Sort_Func_User_Data (Messages_Report);
@@ -38,6 +45,12 @@ package body GNAThub.Reports.Messages is
       B         : Gtk.Tree_Model.Gtk_Tree_Iter;
       Self      : Messages_Report) return Glib.Gint;
    --  Compare two rows in the model.
+
+   procedure On_Multipress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      N_Press : Glib.Gint;
+      X, Y    : Glib.Gdouble);
+   --  Called every time a row is clicked
 
    -------------
    -- Compare --
@@ -142,6 +155,7 @@ package body GNAThub.Reports.Messages is
 
       Index : Glib.Gint := GNAThub.Reports.Models.Entity_Name_Column + 1;
    begin
+      Self.Kernel       := Kernel;
       Self.Total_Column := Glib.Gint (Severities.Length) + 2;
 
       Gtk.Box.Initialize_Vbox (Self);
@@ -205,7 +219,68 @@ package body GNAThub.Reports.Messages is
 
       Gtk.Tree_View_Column.Gtk_New (Column);
       Dummy := Self.Analysis_View.Append_Column (Column);
+
+      Gtk_New (Self.Multipress, Widget => Self.Analysis_View);
+      Self.Multipress.On_Pressed (On_Multipress'Access, Slot => Self);
+      Self.Multipress.Watch (Self);
    end Initialize;
+
+   -------------------
+   -- On_Multipress --
+   -------------------
+
+   procedure On_Multipress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      N_Press : Glib.Gint;
+      X, Y    : Glib.Gdouble)
+   is
+      use Glib;
+
+      View           : constant Messages_Report := Messages_Report (Self);
+      Column         : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      Path           : Gtk_Tree_Path;
+      Iter           : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Sort_Iter      : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Cell_X, Cell_Y : Gint;
+      Success        : Boolean;
+   begin
+      if N_Press /= 2 then
+         return;
+      end if;
+
+      View.Multipress.Set_State (Gtk.Enums.Event_Sequence_Claimed);
+
+      View.Analysis_View.Get_Path_At_Pos
+        (Gint (X), Gint (Y), Path,
+         Column, Cell_X, Cell_Y, Success);
+
+      if not Success then
+         return;
+      end if;
+
+      --  Select the row that was clicked
+      Sort_Iter := View.Analysis_Sort_Model.Get_Iter (Path);
+      View.Analysis_Sort_Model.Convert_Iter_To_Child_Iter
+        (Iter, Sort_Iter);
+
+      declare
+         File_Node : constant Code_Analysis.File_Access :=
+           View.Analysis_Model.File_At (Iter);
+
+      begin
+         --  Request Locations View to expand corresponding file
+         --  and open source
+         if File_Node /= null then
+            GPS.Location_View.Expand_File
+              (GPS.Location_View.Get_Or_Create_Location_View (View.Kernel),
+               GNAThub.Messages.Category,
+               File_Node.Name,
+               Goto_First => True);
+         end if;
+      end;
+
+      Path_Free (Path);
+   end On_Multipress;
 
    ------------
    -- Update --

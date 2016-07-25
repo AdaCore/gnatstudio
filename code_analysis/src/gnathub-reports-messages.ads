@@ -23,6 +23,7 @@ private with Glib;
 private with Gtk.Tree_Model_Sort;
 private with Gtk.Tree_View;
 private with GNAThub.Reports.Models;
+private with Gtk.Gesture_Multi_Press;
 
 package GNAThub.Reports.Messages is
 
@@ -48,10 +49,12 @@ private
 
    type GNAThub_Report_Messages is
      new Gtk.Box.Gtk_Vbox_Record with record
+      Kernel              : GPS.Kernel.Kernel_Handle;
       Analysis_Model      : GNAThub.Reports.Models.Messages_Model;
       Analysis_Sort_Model : Gtk.Tree_Model_Sort.Gtk_Tree_Model_Sort;
       Analysis_View       : Gtk.Tree_View.Gtk_Tree_View;
       Total_Column        : Glib.Gint;
+      Multipress          : Gtk.Gesture_Multi_Press.Gtk_Gesture_Multi_Press;
    end record;
 
 end GNAThub.Reports.Messages;
