@@ -1406,6 +1406,17 @@ package body Custom_Module is
             Action      => String'(Get_Data (Inst, Action_Class)),
             Default_Key => Nth_Arg (Data, 2));
 
+      elsif Command = "can_execute" then
+         Inst := Data.Nth_Arg (1, Action_Class);
+         declare
+            A : constant Action_Record_Access := Lookup_Action
+              (Kernel, Get_Data (Inst, Action_Class));
+         begin
+            Data.Set_Return_Value
+              (A /= null
+               and then Filter_Matches (A, Get_Current_Context (Kernel)));
+         end;
+
       elsif Command = "execute_if_possible" then
          Inst := Data.Nth_Arg (1, Action_Class);
          Data.Set_Return_Value
@@ -1554,6 +1565,10 @@ package body Custom_Module is
       Kernel.Scripts.Register_Command
         ("disable",
          Params        => (1 => Param ("disabled", Optional => True)),
+         Class         => Action_Class,
+         Handler       => Action_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("can_execute",
          Class         => Action_Class,
          Handler       => Action_Handler'Access);
       Kernel.Scripts.Register_Command

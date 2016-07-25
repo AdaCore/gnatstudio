@@ -409,9 +409,9 @@ def in_ada_file(context):
     if not hasattr(context, "in_ada_file"):
         buffer = EditorBuffer.get(open=False)
         context.in_ada_file = (
-            context.module_name == "Source_Editor"
-            and buffer
-            and buffer.file().language().lower() == "ada")
+            context.module_name == "Source_Editor" and
+            buffer and
+            buffer.file().language().lower() == "ada")
     return context.in_ada_file
 
 
@@ -432,9 +432,9 @@ def in_xml_file(context):
     if not hasattr(context, "in_xml_file"):
         buffer = EditorBuffer.get(open=False)
         context.in_xml_file = (
-            context.module_name == "Source_Editor"
-            and buffer
-            and buffer.file().language().lower() in ["xml", "html"])
+            context.module_name == "Source_Editor" and
+            buffer and
+            buffer.file().language().lower() in ["xml", "html"])
     return context.in_xml_file
 
 

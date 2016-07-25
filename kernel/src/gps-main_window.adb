@@ -979,6 +979,11 @@ package body GPS.Main_Window is
          Class       => MDI_Window_Class,
          Handler     => Default_Window_Command_Handler'Access);
       Register_Command
+        (Main_Window.Kernel.Scripts, "close",
+         Params      => (1 => Param ("force", Optional => True)),
+         Class       => MDI_Window_Class,
+         Handler     => Default_Window_Command_Handler'Access);
+      Register_Command
         (Main_Window.Kernel, "get_child",
          Class        => MDI_Window_Class,
          Handler      => Default_Window_Command_Handler'Access);
@@ -1100,6 +1105,9 @@ package body GPS.Main_Window is
 
       elsif Command = "is_floating" then
          Set_Return_Value (Data, Is_Floating (Child));
+
+      elsif Command = "close" then
+         Close_Child (Child, Data.Nth_Arg (2, False));
 
       elsif Command = "raise_window" then
          Raise_Child (Child, Give_Focus => True);

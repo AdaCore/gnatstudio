@@ -1031,7 +1031,8 @@ package body GPS.Kernel is
       Default_Key : String)
    is
       Err : constant String := Add_Customization_String
-        (Kernel, "<key action=""" & Action & """>" & Default_Key & "</key>",
+        (Kernel,
+         "<key action=""" & Action & """>" & Default_Key & "</key>",
          From_File => "<gps_internal>");
       pragma Unreferenced (Err);
    begin

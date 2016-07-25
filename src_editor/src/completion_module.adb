@@ -266,6 +266,18 @@ package body Completion_Module is
       File   : Virtual_File);
    --  Called when a file is changed
 
+   type Has_Completion_Filter is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Completion_Filter;
+      Context : Selection_Context) return Boolean;
+   --  This filter tests for the presence of the completion window
+
+   function Has_Completion return Boolean is
+      (not (Completion_Module = null
+              or else Completion_Module.Has_Smart_Completion = False
+              or else Completion_Module.Smart_Completion = null));
+   --  Utility function, returns whether a completion is in progress
+
    procedure Register_Preferences
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences are changed
@@ -477,6 +489,12 @@ package body Completion_Module is
    --  Complete the word under the cursor based on the
    --  contents of the buffer.
 
+   type Cancel_Completion_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Cancel_Completion_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Complete the word under the cursor based on the
+   --  contents of the buffer.
    -------------
    -- Destroy --
    -------------
@@ -494,16 +512,26 @@ package body Completion_Module is
       Completion_Module := null;
    end Destroy;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Completion_Filter;
+      Context : Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter, Context);
+   begin
+      return Has_Completion;
+   end Filter_Matches_Primitive;
+
    -----------------------
    -- Remove_Completion --
    -----------------------
 
    procedure Remove_Completion is
    begin
-      if Completion_Module = null
-        or else Completion_Module.Has_Smart_Completion = False
-        or else Completion_Module.Smart_Completion = null
-      then
+      if not Has_Completion then
          return;
       end if;
 
@@ -1155,6 +1183,21 @@ package body Completion_Module is
    -- Execute --
    -------------
 
+   overriding function Execute
+     (Command : access Cancel_Completion_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command, Context);
+   begin
+      Remove_Completion;
+
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
    overriding procedure Execute
       (Self   : On_View_Changed;
        Kernel : not null access Kernel_Handle_Record'Class)
@@ -1283,6 +1326,13 @@ package body Completion_Module is
          -("Complete current identifier based on advanced entities database"),
          Category => "Editor",
          Filter   => Src_Action_Context);
+
+      Register_Action
+        (Kernel, "Cancel completion",
+         new Cancel_Completion_Command,
+         -("Remove the completion window, if it exists"),
+         Category => "Editor",
+         Filter   => new Has_Completion_Filter);
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
       Project_View_Changed_Hook.Add (new On_View_Changed);

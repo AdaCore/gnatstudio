@@ -73,6 +73,8 @@ Classes
 
    .. automethod:: GPS.Action.button
 
+   .. automethod:: GPS.Action.can_execute
+
    .. automethod:: GPS.Action.contextual
 
    .. automethod:: GPS.Action.create
@@ -1379,6 +1381,8 @@ Classes
    .. inheritance-diagram:: GPS.MDIWindow
 
    .. automethod:: GPS.MDIWindow.__init__
+
+   .. automethod:: GPS.MDIWindow.close
 
    .. automethod:: GPS.MDIWindow.float
 

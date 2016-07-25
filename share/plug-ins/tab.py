@@ -84,7 +84,7 @@ def python_tab_indent(e, beginning, end, indenting_block=False):
 
     # if multiple lines selected, indent each one by order
     if beginning.line() != end.line():
-        for i in range(beginning.line(), end.line()+1):
+        for i in range(beginning.line(), end.line() + 1):
             tmp = e.get_chars(e.at(i, 1), e.at(i, 1).end_of_line())
 
             # if line is not empty, indent by 4
@@ -97,22 +97,70 @@ def python_tab_indent(e, beginning, end, indenting_block=False):
         indent = 4 - n % 4
         if indenting_block and n % 4 != 0:
             indent += 4
-        e.insert(e.at(end.line(), 1), " "*indent)
+        e.insert(e.at(end.line(), 1), " " * indent)
 
     e.main_cursor().move(e.at(end.line(), end.column() + indent))
     return indent
 
 
-@interactive(name='smart escape',
-             category='Editor',
-             filter="Source editor")
+def should_escape(context):
+    """ Filter for the 'smart escape' action """
+    editor = GPS.EditorBuffer.get(force=False, open=False)
+
+    if editor:
+        if aliases.is_in_alias_expansion(editor):
+            return True
+
+        if editor.has_slave_cursors():
+            return True
+
+        if GPS.Action("Cancel completion").can_execute():
+            return True
+
+    if [c for c in GPS.MDI.children()
+       if (c.is_floating() and c.get_child().__class__ == GPS.GUI)]:
+        return True
+
+    return False
+
+
+@interactive(name='smart escape', category='General',
+             key="Escape", filter=should_escape)
 def smart_escape():
     """
-    This action is the default binding for the Escape key, and will
-    interrupt the current alias expansion (if any).
+    This action is the default binding for the Escape key, and will, in order:
+      - close the completion window (if any)
+      - interrupt the current alias expansion (if any).
+      - remove multiple cursors
+      - remove the completion if it exists
+      - close the most recent floating view, if any
     """
-    editor = GPS.EditorBuffer.get()
-    if aliases.is_in_alias_expansion(editor):
-        aliases.exit_alias_expand(editor)
 
-    editor.remove_all_slave_cursors()
+    def do_something():
+        """ React to the Esc key, and return True iff something was done. """
+
+        editor = GPS.EditorBuffer.get(force=False, open=False)
+
+        if editor:
+            if aliases.is_in_alias_expansion(editor):
+                aliases.exit_alias_expand(editor)
+                return True
+
+            if editor.has_slave_cursors():
+                editor.remove_all_slave_cursors()
+                return True
+
+            if GPS.Action("Cancel completion").execute_if_possible():
+                return True
+
+        c = [c for c in GPS.MDI.children()
+             if (c.is_floating() and c.get_child().__class__ == GPS.GUI)]
+
+        if c:
+            c[0].close()
+            return True
+
+    if do_something():
+        # We did something in reaction to the ESC key being pressed:
+        # force a refresh of the context, so the filter gets reevaluated.
+        GPS.current_context(True)

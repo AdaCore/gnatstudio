@@ -29,6 +29,12 @@ NF-17-P725-041 GPS: new "All files from prj dirs" in Files view (2016-07-27)
   files in any of the directories of the project. In particular, this shows
   the object and executable files in the object directories.
 
+NF-17-P725-028 GPS: improved behavior of the ESC key (2016-07-28)
+
+  The Escape key can now be used to close floating dialogs (such as the
+  Search dialog, or the Preferences dialog) even when the input focus is
+  not currently on these dialogs.
+
 NF-17-P712-016 GPS: Breakpoints view can be displayed anywhere (2016-07-12)
 
   Since we can now set breakpoints even when no debugger is running, it
@@ -288,7 +294,7 @@ NF-17-P310-018 GPS: Support for arm-sysgo-pikeos (2016-04-04)
 
   GPS now supports the arm-sysgo-pikeos toolchain.
 
-NF-17-P217-017 GPS: New Pythin API to get Build Targets commands (2016-03-01)
+NF-17-P217-017 GPS: New Python API to get Build Targets commands (2016-03-01)
 
   A new GPS.BuildTarget.get_command_line() method has been added in order
   to be able to retrieve the current command line of a specific Build Target.

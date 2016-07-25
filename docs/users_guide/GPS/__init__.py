@@ -323,6 +323,13 @@ class Action():
         """
         pass  # implemented in Ada
 
+    def can_execute(self):
+        """
+        Return True if the action can be executed in the current context.
+
+        :rtype: boolean
+        """
+
     def execute_if_possible(self):
         """
         Execute the action if its filter matches the current context. If it
@@ -6799,6 +6806,16 @@ class MDIWindow(GUI):
         Prevents the creation of instances of :class:`GPS.MDIWindow`. This is
         done by calling the various subprograms in the :class:`GPS.MDI`
         class.
+        """
+        pass  # implemented in Ada
+
+    def close(self, force=False):
+        """
+        Close the window. If force is False, give the window an opportunity
+        to prevent its deletion (for instance through a save confirmation
+        dialog).
+
+        :param force: A boolean
         """
         pass  # implemented in Ada
 
