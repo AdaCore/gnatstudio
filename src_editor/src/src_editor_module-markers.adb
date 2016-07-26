@@ -488,7 +488,9 @@ package body Src_Editor_Module.Markers is
         (Marker.Kernel, Marker.File, Marker.Project);
       Box   : constant Source_Editor_Box := Get_Source_Box_From_MDI (Child);
    begin
-      if Marker.Mark /= null then
+      if Child /= null
+        and then Marker.Mark /= null
+      then
          Raise_Child (Child);
          Set_Focus_Child (Child);
          Grab_Focus (Box);
