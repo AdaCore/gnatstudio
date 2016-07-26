@@ -25,4 +25,5 @@ share/plug-ins/mercurial.py   no-precommit-check
 share/plug-ins/spark.py       no-precommit-check
 share/plug-ins/subversion.py  no-precommit-check
 share/library/parasail.py     no-precommit-check
+share/plug-ins/c_support.py   no-precommit-check
 kernel/src/hooks.py           no-precommit-check

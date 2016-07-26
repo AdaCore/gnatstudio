@@ -61,10 +61,6 @@ XML = r"""<?xml version="1.0" ?>
                tip="This enables all the warnings about constructions that some users consider questionable, and that are easy to avoid" />
         <check label="Strict ANSI" switch="-ansi" line="2"
                tip="In C mode, support all ANSI standard C programs" />
-
-        <check label="Generate xref information" switch="-fdump-xref"
-               line="2" column="2"
-               tip="Generate cross-reference information for C sources. Requires a recent C compiler" />
       </switches>
    </tool>
 
@@ -113,10 +109,6 @@ XML = r"""<?xml version="1.0" ?>
                tip="This enables all the warnings about constructions that some users consider questionable, and that are easy to avoid" />
         <check label="Overloaded virtual" switch="-Woverloaded-virtual"
                line="2" />
-
-        <check label="Generate xref information" switch="-fdump-xref"
-               line="2" column="2"
-               tip="Generate cross-reference information for C++ sources. Requires a recent C compiler" />
       </switches>
    </tool>
 
