@@ -2202,8 +2202,9 @@ package body GUI_Utils is
    -------------------------
 
    procedure Grab_Toplevel_Focus
-     (MDI    : not null access Gtkada.MDI.MDI_Window_Record'Class;
-      Widget : not null access Gtk.Widget.Gtk_Widget_Record'Class)
+     (MDI     : not null access Gtkada.MDI.MDI_Window_Record'Class;
+      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      Present : Boolean := True)
    is
       Win : Gtk_Widget;
       Id : Glib.Main.G_Source_Id;
@@ -2235,18 +2236,20 @@ package body GUI_Utils is
       --  GPS.Main_Window rather than the one coming from the desktop
       --  saved in the MDI.
 
-      if Win /= null
-        and then Win.Get_Realized
-        and then Win.all in Gtk_Window_Record'Class
-      then
-         Gtk_Window (Win).Present;
-      else
-         Win := MDI.Get_Toplevel;
+      if Present then
          if Win /= null
            and then Win.Get_Realized
            and then Win.all in Gtk_Window_Record'Class
          then
             Gtk_Window (Win).Present;
+         else
+            Win := MDI.Get_Toplevel;
+            if Win /= null
+              and then Win.Get_Realized
+              and then Win.all in Gtk_Window_Record'Class
+            then
+               Gtk_Window (Win).Present;
+            end if;
          end if;
       end if;
 

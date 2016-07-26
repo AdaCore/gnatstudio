@@ -745,7 +745,7 @@ package body Gtkada.Entry_Completion is
       --  Update the current context, so that key shortcuts like
       --  Backspace are sent to the omni-search, and not the editor that
       --  had the focus previously.
-      Grab_Toplevel_Focus (Get_MDI (S.Kernel), S.GEntry);
+      Grab_Toplevel_Focus (Get_MDI (S.Kernel), S.GEntry, Present => False);
 
       --  This is needed to make sure the MDI doesn't continue to believe
       --  that another child has the focus.
@@ -1381,7 +1381,8 @@ package body Gtkada.Entry_Completion is
       --  Force the focus, so that focus-out-event is meaningful and the user
       --  can immediately interact through the keyboard
       if not Self.GEntry.Has_Focus then
-         Grab_Toplevel_Focus (Get_MDI (Self.Kernel), Self.GEntry);
+         Grab_Toplevel_Focus (Get_MDI (Self.Kernel), Self.GEntry,
+                              Present => False);
       end if;
    end Popup;
 
