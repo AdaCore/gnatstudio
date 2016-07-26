@@ -549,6 +549,14 @@ package body GPS.Kernel.Actions is
    is
       use Ada.Strings.Unbounded;
 
+      function Tag (T : String) return String is
+        (if Use_Markup then "<b>" & T & "</b>" else T);
+      --  Utility function, to highlight a bit of text
+
+      function Escape (T : String) return String is
+         (if Use_Markup then Escape_Text (T) else T);
+      --  Utility function, to escape a bit of text
+
       Shortcut : constant String :=
         (if Kernel = null
          then ""
@@ -560,39 +568,23 @@ package body GPS.Kernel.Actions is
          Menu_List_For_Action (Action.Name.all);
 
    begin
-      if Use_Markup then
-         if Menus /= Null_Unbounded_String then
-            Menus := "<b>Menu:</b> " & To_Unbounded_String
-              (Escape_Text (To_String (Menus)));
-         end if;
-
-         return
-           Escape_Text (Action.Description.all)
-           & ASCII.LF & ASCII.LF
-           & "<b>Action:</b> "
-           & Escape_Text (Action.Name.all) & ASCII.LF
-           & "<b>Category:</b> "
-           & Escape_Text
-           ((if Action.Category = null then "" else Action.Category.all))
-           & ASCII.LF
-           & "<b>Shortcut:</b> " & Shortcut & ASCII.LF
-           & To_String (Menus);
-      else
-         if Menus /= Null_Unbounded_String then
-            Menus := "Menu: " & Menus;
-         end if;
-         return
-           (Action.Description.all
-            & ASCII.LF & ASCII.LF
-            & "Action: "
-            & Action.Name.all
-            & ASCII.LF
-            & "Category: "
-            & ((if Action.Category = null then "" else Action.Category.all))
-            & ASCII.LF
-            & "Shortcut: " & Shortcut & ASCII.LF
-            & To_String (Menus));
+      if Menus /= Null_Unbounded_String then
+         Menus := Tag ("Menu: ") & To_Unbounded_String
+           (Escape (To_String (Menus)));
       end if;
+
+      return
+        Escape (Action.Description.all)
+        & ASCII.LF & ASCII.LF
+        & Tag ("Action: ")
+        & Escape (Action.Name.all) & ASCII.LF
+        & Tag ("Category: ")
+        & Escape
+        ((if Action.Category = null then "" else Action.Category.all))
+        & ASCII.LF
+        & (if Shortcut = "" then ""
+           else Tag ("Shortcut: ") & Shortcut & ASCII.LF)
+        & To_String (Menus);
    end Get_Full_Description;
 
    ------------------
