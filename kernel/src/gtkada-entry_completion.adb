@@ -1237,6 +1237,11 @@ package body Gtkada.Entry_Completion is
       end if;
 
       return True;
+   exception
+      when E : others =>
+         Trace (Me, E);
+         Self.Idle := No_Source_Id;
+         return False;
    end On_Idle;
 
    ------------------

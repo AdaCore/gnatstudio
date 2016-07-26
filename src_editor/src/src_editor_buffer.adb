@@ -1100,6 +1100,7 @@ package body Src_Editor_Buffer is
    exception
       when E : others =>
          Trace (Me, E);
+         Buffer.Blocks_Timeout_Registered := False;
          return False;
    end Edition_Timeout;
 
