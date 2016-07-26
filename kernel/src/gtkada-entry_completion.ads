@@ -114,6 +114,9 @@ package Gtkada.Entry_Completion is
    --  Emitted when the user activates a search proposal.
    --  This is called just prior to executing the action.
 
+   Signal_Changed : constant Glib.Signal_Name := "changed";
+   --  Emitted when the text changes in the entry
+
 private
    type History_Key_Access is access all Histories.History_Key;
 
@@ -164,6 +167,9 @@ private
       Notes_Scroll     : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Notes_Idle       : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
       --   Display extra information on the currently selected item
+
+      Focus_Check_Idle : Glib.Main.G_Source_Id := Glib.Main.No_Source_Id;
+      --  Idle handler on focus checking
    end record;
 
 end Gtkada.Entry_Completion;

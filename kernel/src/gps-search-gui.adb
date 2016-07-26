@@ -123,6 +123,9 @@ package body GPS.Search.GUI is
    procedure On_Activate (Self : access Gtk_Widget_Record'Class);
    --  Called when the user activates one of the search proposals
 
+   procedure On_Entry_Changed (Self : access Gtk_Widget_Record'Class);
+   --  Called when the user changes the text in the entry
+
    procedure Reset;
    --  Reset the global search entry after <escape> or a search is selected
 
@@ -520,6 +523,21 @@ package body GPS.Search.GUI is
    begin
       Reset;
    end On_Escape;
+
+   ----------------------
+   -- On_Entry_Changed --
+   ----------------------
+
+   procedure On_Entry_Changed (Self : access Gtk_Widget_Record'Class) is
+      S : constant Gtkada_Entry := Gtkada_Entry (Self);
+   begin
+      if Module.Current_Command /= null then
+         Add_To_History
+           (Get_History (S.Get_Kernel).all,
+            Module.Current_Command.History.all,
+            S.Get_Text);
+      end if;
+   end On_Entry_Changed;
 
    -----------------
    -- On_Activate --
@@ -1498,7 +1516,10 @@ package body GPS.Search.GUI is
 
       Widget_Callback.Connect (Module.Search, Signal_Escape, On_Escape'Access);
       Widget_Callback.Connect
-         (Module.Search, Signal_Activate, On_Activate'Access);
+        (Module.Search, Signal_Activate, On_Activate'Access);
+
+      Widget_Callback.Connect
+        (Module.Search, Signal_Changed, On_Entry_Changed'Access);
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
 

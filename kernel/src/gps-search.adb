@@ -24,8 +24,12 @@ with GNAT.Expect;
 with GNAT.Regpat;                 use GNAT.Regpat;
 with GNAT.Strings;                use GNAT.Strings;
 with Glib.Convert;
+with Gtkada.Style;                use Gtkada.Style;
 with Interfaces;                  use Interfaces;
 with Unicode.CES.Utf8;            use Unicode, Unicode.CES.Utf8;
+
+with Default_Preferences;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 package body GPS.Search is
    Me : constant Trace_Handle := Create ("SEARCH");
@@ -344,6 +348,7 @@ package body GPS.Search is
                Finish       => (F, 1, 1, 1),  --  line/col updated below
                Score        => 50,
                Groups       => (others => GNAT.Regpat.No_Match),
+               Color_String => Get_Default_Fg,
                Buffer_Start => S,
                Buffer_End   => F,
                Ref          => R);
@@ -359,6 +364,7 @@ package body GPS.Search is
             Finish       => (Index + Self.Length - 1, 1, 1, 1),
             Score        => 100,
             Groups       => (others => GNAT.Regpat.No_Match),
+            Color_String => Get_Default_Fg,
             Buffer_Start => S,
             Buffer_End   => F,
             Ref          => R);
@@ -390,6 +396,7 @@ package body GPS.Search is
            Finish             => <>,
            Score              => 100,
            Groups             => <>,
+           Color_String       => Get_Default_Fg,
            Buffer_Start       => S,
            Buffer_End         => (if F = 0 then Positive'Last else F),
            Ref                => R);
@@ -446,7 +453,7 @@ package body GPS.Search is
       R : constant Buffer_Position :=
         (if Ref.Index = -1 then (Buffer'First, 1, 1, 1) else Ref);
       Start : Natural := Natural'Last;
-      Score : Integer;
+      Score : Integer := 0;
 
       T : Natural := Self.Text'First;
       Context : Search_Context;
@@ -456,7 +463,22 @@ package body GPS.Search is
       B1 : Natural;
 
    begin
+      if Self.Text.all = "" then
+         Context := Search_Context'
+           (Start              => (S, 1, 1, 1),
+            Finish             => (F, 1, 1, 1),
+            Score              => Score,
+            Groups             => (others => GNAT.Regpat.No_Match),
+            Color_String       => Get_Default_Fg,
+            Buffer_Start       => S,
+            Buffer_End         => F,
+            Ref                => R);
+         Update_Location (Context, Buffer);
+         return Context;
+      end if;
+
       Utf8_Get_Char (Self.Text.all, T, C2);  --  also moves T to next char
+
       if not Self.Case_Sensitive then
          C2 := To_Lower (C2);
       end if;
@@ -486,6 +508,7 @@ package body GPS.Search is
                      Finish             => (B - 1, 1, 1, 1),
                      Score              => Score,
                      Groups             => (others => GNAT.Regpat.No_Match),
+                     Color_String       => Get_Default_Fg,
                      Buffer_Start       => S,
                      Buffer_End         => F,
                      Ref                => R);
@@ -507,6 +530,7 @@ package body GPS.Search is
             Finish             => (F, 1, 1, 1),
             Score              => 100,
             Groups             => (others => GNAT.Regpat.No_Match),
+            Color_String       => Get_Default_Fg,
             Buffer_Start       => S,
             Buffer_End         => F,
             Ref                => R);
@@ -545,6 +569,7 @@ package body GPS.Search is
          Finish       => (S - 1, 1, 1, 1), --  last byte of last char read
          Score        => 100,
          Groups       => (others => GNAT.Regpat.No_Match),
+         Color_String       => Get_Default_Fg,
          Buffer_Start => S,
          Buffer_End   => F,
          Ref          => R);
@@ -741,9 +766,9 @@ package body GPS.Search is
          end if;
 
          if C2 /= Unicode_Char'Last and then C = C2 then
-            Append (Result, "<b>"
-                    & Glib.Convert.Escape_Text
-                      ("" & Buffer (B1 .. B - 1)) & "</b>");
+            Append (Result,
+                    Tag (Context, Glib.Convert.Escape_Text
+                      ("" & Buffer (B1 .. B - 1))));
 
             if T <= Self.Text'Last then
                Utf8_Get_Char (Self.Text.all, T, C2); --  moves T forward
@@ -878,10 +903,8 @@ package body GPS.Search is
       E := Integer'Min (E, Buffer'Last);
 
       return Glib.Convert.Escape_Text (Buffer (B .. S - 1))
-         & "<b>"
-         & Glib.Convert.Escape_Text (Buffer (S .. E))
-         & "</b>"
-         & Glib.Convert.Escape_Text (Buffer (E + 1 .. F));
+        & Tag (Context, Glib.Convert.Escape_Text (Buffer (S .. E)))
+        & Glib.Convert.Escape_Text (Buffer (E + 1 .. F));
    end Highlight_Match;
 
    ----------
@@ -1425,6 +1448,21 @@ package body GPS.Search is
         & "," & Pos.Column'Img & "," & Pos.Visible_Column'Img & ')';
    end Image;
 
+   --------------------
+   -- Get_Default_Fg --
+   --------------------
+
+   function Get_Default_Fg return RGB_String is
+      use Default_Preferences;
+   begin
+      --  By default, use the numbers style
+      if Numbers_Style = null then
+         return Blue;
+      else
+         return To_Hex (Numbers_Style.Get_Pref_Fg);
+      end if;
+   end Get_Default_Fg;
+
    -----------------------
    -- Index_After_Match --
    -----------------------
@@ -1437,5 +1475,15 @@ package body GPS.Search is
          return Self.Finish.Index + 1;
       end if;
    end Index_After_Match;
+
+   ---------
+   -- Tag --
+   ---------
+
+   function Tag (Self : Search_Context; Text : String) return String is
+   begin
+      return "<span foreground=""" & Self.Color_String & """>"
+        & Text & "</span>";
+   end Tag;
 
 end GPS.Search;

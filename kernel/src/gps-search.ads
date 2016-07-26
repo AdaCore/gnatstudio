@@ -77,6 +77,13 @@ package GPS.Search is
 
    function Image (Pos : Buffer_Position) return String;
    --  ??? MANU temporary
+   --  NICO likes this
+
+   subtype RGB_String is String (1 .. 7);
+   Blue : constant RGB_String := "#0000ff";
+
+   function Get_Default_Fg return RGB_String;
+   --  Convenience function to get the default foreground for search highlight
 
    type Search_Context is record
       Start, Finish : Buffer_Position;
@@ -96,9 +103,15 @@ package GPS.Search is
       Groups        : GNAT.Regpat.Match_Array (0 .. Max_Capturing_Groups);
       --  The parenthesis groups that matched. This is only set when matching
       --  a regexp.
+
+      Color_String  : RGB_String := Blue;
    end record;
    No_Match : constant Search_Context;
    --  The current state for a search matcher
+
+   function Tag (Self : Search_Context; Text : String) return String;
+   --  Utility function, used to tag a string with pango markup for
+   --  highlighting search results.
 
    function Failed (Self : Search_Context) return Boolean
       is (Self.Start.Index = -1);
@@ -499,7 +512,8 @@ private
       Buffer_Start       => -1,
       Buffer_End         => -1,
       Ref                => Unknown_Position,
-      Groups             => (others => GNAT.Regpat.No_Match));
+      Groups             => (others => GNAT.Regpat.No_Match),
+      Color_String       => <>);
 
    type Provider_Info is record
       Provider : Search_Provider_Access;

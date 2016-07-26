@@ -126,6 +126,10 @@ package body Gtkada.Entry_Completion is
    function On_Preview_Idle (Self : Gtkada_Entry) return Boolean;
    --  Called on idle to display the preview of the current selection
 
+   function Check_Focus_Idle (Self : Gtkada_Entry) return Boolean;
+   --  Called in an idle callback to check whether S has the focus, and
+   --  popdown the window otherwise.
+
    package Completion_Sources is new Glib.Main.Generic_Sources (Gtkada_Entry);
 
    procedure Clear (Self : access Gtkada_Entry_Record'Class);
@@ -244,7 +248,8 @@ package body Gtkada.Entry_Completion is
 
    Signals : constant chars_ptr_array :=
       (1 => New_String (String (Signal_Activate)),
-       2 => New_String (String (Signal_Escape)));
+       2 => New_String (String (Signal_Escape)),
+       3 => New_String (String (Signal_Changed)));
 
    Col_Types : constant Glib.GType_Array :=
       (Column_Label    => GType_String,
@@ -751,6 +756,32 @@ package body Gtkada.Entry_Completion is
       return False;
    end On_Focus_In;
 
+   ----------------------
+   -- Check_Focus_Idle --
+   ----------------------
+
+   function Check_Focus_Idle (Self : Gtkada_Entry) return Boolean is
+   begin
+      if not Self.Has_Focus then
+         Popdown (Self);
+
+         --  Unref the previously focused widget and set it to null when the
+         --  focus goes out of the entry.
+         if Self.Previous_Focus /= null then
+            Self.Previous_Focus.Unref;
+            Self.Previous_Focus := null;
+         end if;
+      end if;
+
+      Self.Focus_Check_Idle := No_Source_Id;
+      return False;
+   exception
+      when E : others =>
+         Trace (Me, E);
+         Self.Focus_Check_Idle := No_Source_Id;
+         return False;
+   end Check_Focus_Idle;
+
    ------------------
    -- On_Focus_Out --
    ------------------
@@ -762,15 +793,16 @@ package body Gtkada.Entry_Completion is
       S : constant Gtkada_Entry := Gtkada_Entry (Self);
       pragma Unreferenced (Event);
    begin
-      Popdown (S);
-
-      --  Unref the previously focused widget and set it to null when the
-      --  focus goes out of the entry.
-      if S.Previous_Focus /= null then
-         S.Previous_Focus.Unref;
-         S.Previous_Focus := null;
+      --  We have received a focus_out on the entry: we want to popdown.,,
+      --  however, this could happen, in "unoptimized" window enviornments
+      --  such as Xvfb, that the focus_out is happening immediately in
+      --  response to the popup window being popped up. In this case, then
+      --  we know that the focus will be given back to the entry immediately.
+      --  This is why we schedule an idle handler to check this.
+      if S.Focus_Check_Idle = No_Source_Id then
+         S.Focus_Check_Idle := Completion_Sources.Idle_Add
+           (Check_Focus_Idle'Access, Self);
       end if;
-
       return False;
    end On_Focus_Out;
 
@@ -1160,6 +1192,11 @@ package body Gtkada.Entry_Completion is
          Destroy (S.Popup);
       end if;
 
+      if S.Focus_Check_Idle /= No_Source_Id then
+         Glib.Main.Remove (S.Focus_Check_Idle);
+         S.Focus_Check_Idle := No_Source_Id;
+      end if;
+
       Unchecked_Free (S.Name);
       Free (S.Pattern);
       Free (S.Completion);
@@ -1288,8 +1325,8 @@ package body Gtkada.Entry_Completion is
          --  the entry).
 
          Width := Gint'Max
-            (Self.GEntry.Get_Allocated_Width,
-             Result_Width + Provider_Label_Width);
+            (Toplevel.Get_Allocated_Width * 2 / 3,
+             Result_Width + Provider_Label_Width * 2);
          X := Gint'Min (Gdk_X, MaxX - Width - 13);
          Y := Gdk_Y + Self.GEntry.Get_Allocated_Height;
          Height := MaxY - Y;
@@ -1453,6 +1490,8 @@ package body Gtkada.Entry_Completion is
    begin
       Free (S.Pattern);
       S.Completion.Count := 0;
+
+      Widget_Callback.Emit_By_Name (S, Signal_Changed);
 
       if Text /= "" then
          S.Pattern := GPS.Search.Build
