@@ -41,6 +41,9 @@ include ../Makefile.gnat
 all: resources do_links
 	cd ../kernel/src; ${PYTHON} hooks.py
 	cd ../kernel/generated; gnatcoll_db2ada -api=GPS.Kernel.Properties.Database -adacreate -dbmodel=../src/properties_schema.txt
+ifeq ($(OS),Windows_NT)
+	dos2unix ../kernel/generated/*
+endif
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -ws -P../spark/spark
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws -XTP_TASKING=No_Tasking \
 	  $(GPRBUILD_BUILD_TYPE_FLAGS) -Pgps -largs `pkg-config gmodule-2.0 --libs`
