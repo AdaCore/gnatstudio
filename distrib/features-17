@@ -423,6 +423,11 @@ NF-17-O727-014 GPS: "Find all references" finds overridden (2016-01-26)
   all the entities overriding it, all entities it overrides, and
   all entities overriding the entities it overrides.
 
+NF-17-O315-001 GPS: Messages are displayed with different font (2016-07-27)
+
+  CodePeer's messages with lifeage "removed" are displayed with different font
+  to help distinguish them from regular messages.
+
 NF-17-O314-006 GPS: saving project before opening it's source (2015-11-05)
 
   Edit-source button in project properties rewrites project's
