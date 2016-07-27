@@ -633,6 +633,9 @@ package body Build_Configurations is
       --  target is user-created.
       Dest.Properties.Read_Only := False;
       Dest.Properties.Do_Not_Save := False;
+
+      Set_Default_Command_Line
+        (Dest, Get_Default_Command_Line_Unexpanded (Src));
    end Duplicate_Target;
 
    --------------------------------------

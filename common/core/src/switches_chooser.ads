@@ -23,7 +23,7 @@ with Ada.Containers;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
-with GNAT.Command_Line; use GNAT.Command_Line;
+private with GNAT.Command_Line;
 with GNAT.Strings;      use GNAT.Strings;
 private with Shared_Macros;
 
@@ -256,13 +256,6 @@ package Switches_Chooser is
    --  builder, "-gnatwc" will be defaulted to True. Unselecting it will
    --  then add its Switch_Unset value: "-gnatwC"
 
-   procedure Get_Command_Line
-     (Cmd      : in out Command_Line;
-      Expanded : Boolean;
-      Result   : out GNAT.Strings.String_List_Access);
-   --  Return the arguments of the command line. Expanded indicates whether
-   --  the expanded command line, or the shortest command line, is returned.
-
    generic
       type Root_Widget_Record is tagged private;
       --  The general type used for widget in the graphical toolkit
@@ -382,7 +375,7 @@ package Switches_Chooser is
 
       type Root_Switches_Editor is abstract new Root_Editor with record
          Config     : Switches_Editor_Config;
-         Cmd_Line   : Command_Line;
+         Cmd_Line   : GNAT.Command_Line.Command_Line;
          Widgets    : Widget_Array_Access;
          Block      : Boolean := False;
       end record;
@@ -506,11 +499,6 @@ package Switches_Chooser is
       return Positive;
    --  Switches_Editor_Config object Columns field getter
 
-   function Get_Config
-     (Switches : Switches_Editor_Config)
-      return Command_Line_Configuration;
-   --  Switches_Editor_Config object Config field getter
-
    function Is_Show_Command_Line
      (Switches : Switches_Editor_Config)
       return Boolean;
@@ -563,10 +551,19 @@ package Switches_Chooser is
    --  Return the switch associated to the given filter
 
    procedure Apply
-     (Config  : not null access Switches_Editor_Config_Record'Class;
-      Filter  : not null Switch_Filter_Description;
-      Matches : Boolean);
-   --  Enable or disable the switch associated to Filter depending on Matches
+     (Config       : not null access Switches_Editor_Config_Record'Class;
+      Filter       : not null Switch_Filter_Description;
+      Matches      : Boolean;
+      Before_Save  : Boolean;
+      Default_Line : GNAT.Strings.String_List;
+      Command_Line : in out GNAT.Strings.String_List_Access);
+   --  Enable or disable the switch associated to Filter depending on Matches.
+   --  Modify Command_Line according to Matches, Before_Save and Default_Line.
+   --  Default_Line is default value of command line.
+   --  If Before_Save is True, the non-matched switch is put back on
+   --  the command line if it is present in the default command line:
+   --  this is done in order to save only the modifications that
+   --  have been explicitly set by the user.
 
    type Switch_Filter_Cursor is private;
    function First
@@ -706,7 +703,7 @@ private
    type Switches_Editor_Config_Record is tagged record
       Lines             : Positive;
       Columns           : Positive;
-      Config            : Command_Line_Configuration;
+      Config            : GNAT.Command_Line.Command_Line_Configuration;
       Show_Command_Line : Boolean := True;
       Default_Separator : Ada.Strings.Unbounded.Unbounded_String;
       Sections          : Ada.Strings.Unbounded.Unbounded_String;

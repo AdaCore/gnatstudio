@@ -22,6 +22,7 @@ with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
 package body Switches_Chooser is
    use Switch_Description_Vectors, Combo_Switch_Vectors;
    use Frame_Description_Vectors;
+   use GNAT.Command_Line;
 
    procedure Add_To_Getopt
      (Config    : Switches_Editor_Config;
@@ -32,6 +33,13 @@ package body Switches_Chooser is
    --  might have no separator.
    --  If it is ASCII.LF, the switch takes no parameter.
    --  If it is ASCII.CR, the switch takes an optional parameter
+
+   procedure Get_Command_Line
+     (Cmd      : in out Command_Line;
+      Expanded : Boolean;
+      Result   : out GNAT.Strings.String_List_Access);
+   --  Return the arguments of the command line. Expanded indicates whether
+   --  the expanded command line, or the shortest command line, is returned.
 
    procedure Free_List (Deps : in out Dependency_Description_Access);
    --  Free the whole list of dependencies
@@ -1702,17 +1710,6 @@ package body Switches_Chooser is
       return Switches.Columns;
    end Get_Columns;
 
-   ----------------
-   -- Get_Config --
-   ----------------
-
-   function Get_Config
-     (Switches : Switches_Editor_Config)
-      return Command_Line_Configuration is
-   begin
-      return Switches.Config;
-   end Get_Config;
-
    --------------------------
    -- Is_Show_Command_Line --
    --------------------------
@@ -1920,14 +1917,105 @@ package body Switches_Chooser is
    -----------
 
    procedure Apply
-     (Config  : not null access Switches_Editor_Config_Record'Class;
-      Filter  : not null Switch_Filter_Description;
-      Matches : Boolean)
+     (Config       : not null access Switches_Editor_Config_Record'Class;
+      Filter       : not null Switch_Filter_Description;
+      Matches      : Boolean;
+      Before_Save  : Boolean;
+      Default_Line : GNAT.Strings.String_List;
+      Command_Line : in out GNAT.Strings.String_List_Access)
    is
+
+      procedure Apply_Filter_On_Command_Line;
+      --  Apply the filter's result on the target's command line
+
+      ----------------------------------
+      -- Apply_Filter_On_Command_Line --
+      ----------------------------------
+
+      procedure Apply_Filter_On_Command_Line is
+         Switches_Config  : constant Switches_Editor_Config
+           := Switches_Editor_Config (Config);
+         Default_Cmd_Line : GNAT.Command_Line.Command_Line;
+         Cmd_Line         : GNAT.Command_Line.Command_Line;
+         Config           : constant Command_Line_Configuration :=
+                              Switches_Config.Config;
+         Switch_Char      : constant Character :=
+                              Get_Switch_Char (Switches_Config);
+         Switch           : constant Switch_Description :=
+                              Get_Switch (Switches_Config, Filter);
+         Success          : Boolean;
+      begin
+         --  Set the command line configuration
+         Set_Configuration (Cmd_Line, Config);
+
+         --  Build the command line
+         Set_Command_Line
+           (Cmd_Line,
+            Switches           => Argument_List_To_String (Command_Line.all),
+            Switch_Char        => Switch_Char);
+
+         if not Before_Save and then not Matches then
+            --  If we are not saving the target and if the filter does not
+            --  match, remove its associated switch if present in the target's
+            --  command line.
+
+            Remove_Switch
+              (Cmd_Line,
+               Switch    => Get_Switch (Switch),
+               Section   => Get_Section (Switch),
+               Success   => Success);
+         else
+            --  It it matches or if the target is going to be saved, check if
+            --  the switch is present in the target's default command line and
+            --  put it back on the target's current command line in this case.
+
+            declare
+               Iter : Command_Line_Iterator;
+            begin
+               Set_Configuration (Default_Cmd_Line, Config);
+
+               Set_Command_Line
+                 (Default_Cmd_Line,
+                  Switches    => Argument_List_To_String (Default_Line),
+                  Switch_Char => Switch_Char);
+
+               Start (Default_Cmd_Line, Iter, Expanded => True);
+
+               while Has_More (Iter) loop
+                  exit when Get_Switch (Switch) = Current_Switch (Iter)
+                    and then
+                      Get_Section (Switch) = Current_Section (Iter);
+
+                  Next (Iter);
+               end loop;
+
+               if not Has_More (Iter) then
+                  return;
+               end if;
+
+               Add_Switch
+                 (Cmd_Line,
+                  Switch     => Current_Switch (Iter),
+                  Parameter  => Current_Parameter (Iter),
+                  Separator  => Get_Separator (Switch),
+                  Section    => Get_Section (Switch),
+                  Add_Before => Is_Add_First (Switch),
+                  Success    => Success);
+            end;
+         end if;
+
+         --  Update the command line if the filter has affected it
+         if Success then
+            Get_Command_Line
+              (Cmd_Line, Expanded => False, Result => Command_Line);
+         end if;
+      end Apply_Filter_On_Command_Line;
+
       Switch : Switch_Description := Config.Switches (Filter.Switch);
    begin
       Switch.Active := Matches;
       Config.Switches.Replace_Element (Filter.Switch, Switch);
+      Apply_Filter_On_Command_Line;
    end Apply;
 
    -----------

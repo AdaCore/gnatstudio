@@ -19,7 +19,6 @@ with Ada.Containers.Ordered_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Command_Line;         use GNAT.Command_Line;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Glib;                      use Glib;
@@ -27,7 +26,6 @@ with Glib.Object;               use Glib.Object;
 
 with Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Tool_Item;             use Gtk.Tool_Item;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Widget;                use Gtk.Widget;
@@ -62,7 +60,6 @@ with GPS.Search.GUI;            use GPS.Search.GUI;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
 
-with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Any_Types;        use GNATCOLL.Any_Types;
@@ -102,9 +99,6 @@ package body Builder_Facility_Module is
 
    package String_Callback is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Target_And_Main);
-
-   package Buttons_List is new Ada.Containers.Doubly_Linked_Lists
-     (Gtk_Tool_Item);
 
    type Model_And_Target_XML is record
       Model_Name : Unbounded_String;
@@ -771,92 +765,9 @@ package body Builder_Facility_Module is
       Filter_Description : Switch_Filter_Description;
       Filter             : Action_Filter;
       Matches            : Boolean;
-
-      procedure Apply_Filter_On_Command_Line;
-      --  Apply the filter's result on the target's command line
-
-      ----------------------------------
-      -- Apply_Filter_On_Command_Line --
-      ----------------------------------
-
-      procedure Apply_Filter_On_Command_Line is
-         Default_Cmd_Line : Command_Line;
-         Cmd_Line         : Command_Line;
-         Config           : constant Command_Line_Configuration :=
-                              Get_Config (Switches_Config);
-         Switch_Char      : constant Character :=
-                              Get_Switch_Char (Switches_Config);
-         Switch           : constant Switch_Description :=
-                              Get_Switch (Switches_Config, Filter_Description);
-         New_Cmd_Line     : GNAT.OS_Lib.Argument_List_Access;
-         Success          : Boolean;
-      begin
-         --  Set the command lines configuration
-         Set_Configuration (Default_Cmd_Line, Config);
-         Set_Configuration (Cmd_Line, Config);
-
-         --  Build the command lines
-         Set_Command_Line
-           (Default_Cmd_Line,
-            Switches           => Argument_List_To_String
-              (Get_Default_Command_Line_Unexpanded (Target)),
-            Switch_Char        => Switch_Char);
-         Set_Command_Line
-           (Cmd_Line,
-            Switches           => Argument_List_To_String
-              (Get_Command_Line_Unexpanded (Target)),
-            Switch_Char        => Switch_Char);
-
-         if not Before_Save and then not Matches then
-            --  If we are not saving the target and if the filter does not
-            --  match, remove its associated switch if present in the target's
-            --  command line.
-
-            Remove_Switch
-              (Cmd_Line,
-               Switch    => Get_Switch (Switch),
-               Section   => Get_Section (Switch),
-               Success   => Success);
-         else
-            --  It it matches or if the target is going to be saved, check if
-            --  the switch is present in the target's default command line and
-            --  put it back on the target's current command line in this case.
-
-            declare
-               Iter : Command_Line_Iterator;
-            begin
-               Start (Default_Cmd_Line, Iter, Expanded => True);
-
-               while Has_More (Iter) loop
-                  exit when Get_Switch (Switch) = Current_Switch (Iter)
-                    and then
-                      Get_Section (Switch) = Current_Section (Iter);
-
-                  Next (Iter);
-               end loop;
-
-               if not Has_More (Iter) then
-                  return;
-               end if;
-
-               Add_Switch
-                 (Cmd_Line,
-                  Switch     => Current_Switch (Iter),
-                  Parameter  => Current_Parameter (Iter),
-                  Separator  => Get_Separator (Switch),
-                  Section    => Get_Section (Switch),
-                  Add_Before => Is_Add_First (Switch),
-                  Success    => Success);
-            end;
-         end if;
-
-         --  Update the command line if the filter has affected it
-         if Success then
-            Get_Command_Line
-              (Cmd_Line, Expanded => False, Result => New_Cmd_Line);
-            Set_Command_Line (Target, New_Cmd_Line.all);
-         end if;
-      end Apply_Filter_On_Command_Line;
+      Default_Line       : constant GNAT.OS_Lib.Argument_List :=
+        Get_Default_Command_Line_Unexpanded (Target);
+      New_Cmd_Line       : GNAT.OS_Lib.Argument_List_Access;
 
    begin
       Switches_Config := Get_Switches (Target_Model);
@@ -864,6 +775,12 @@ package body Builder_Facility_Module is
       if Switches_Config = null then
          return;
       end if;
+
+      New_Cmd_Line := new GNAT.OS_Lib.Argument_List'(Default_Line);
+
+      for J in New_Cmd_Line'Range loop
+         New_Cmd_Line (J) := new String'(New_Cmd_Line (J).all);
+      end loop;
 
       Cursor := First (Switches_Config);
 
@@ -880,10 +797,12 @@ package body Builder_Facility_Module is
          if Filter /= null then
             Matches := Filter.Filter_Matches (Context);
             Apply
-              (Config  => Switches_Config,
-               Filter  => Filter_Description,
-               Matches => Matches);
-            Apply_Filter_On_Command_Line;
+              (Config       => Switches_Config,
+               Filter       => Filter_Description,
+               Matches      => Matches,
+               Before_Save  => Before_Save,
+               Default_Line => Default_Line,
+               Command_Line => New_Cmd_Line);
          else
             Insert
               (Kernel => Builder_Module_ID.Get_Kernel,
@@ -897,6 +816,9 @@ package body Builder_Facility_Module is
 
          Next (Cursor);
       end loop;
+
+      Set_Command_Line (Target, New_Cmd_Line.all);
+      Free (New_Cmd_Line);
    end Execute_Switch_Filters_For_Target;
 
    --------------------------------------------
