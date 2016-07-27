@@ -9,8 +9,8 @@ raised. Click on `Close` to close dialog.
 
 Now select the menu `Debug->Initialize->Sdc->sdc`: GPS automatically switches
 to the *Debug* perspective as shown in the menu `Window->Perspectives`, and new
-windows have appeared: the debugger data window on top, the call stack window
-on the right, and the debugger console at the bottom.
+windows have appeared: the debugger variables window, the breakpoints view and
+the debugger console at the bottom, and the call stack window on the right.
 
 You can also look at the various debug menu item and tool bar buttons which are
 now activated.
