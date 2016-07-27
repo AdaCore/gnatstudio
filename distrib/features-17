@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P725-041 GPS: new "All files from prj dirs" in Files view (2016-07-27)
+
+  A new local configuration has been added to the Files view, to show all
+  files in any of the directories of the project. In particular, this shows
+  the object and executable files in the object directories.
+
 NF-17-P712-016 GPS: Breakpoints view can be displayed anywhere (2016-07-12)
 
   Since we can now set breakpoints even when no debugger is running, it

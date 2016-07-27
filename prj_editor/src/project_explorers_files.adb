@@ -77,6 +77,7 @@ package body Project_Explorers_Files is
    Me : constant Trace_Handle := Create ("FILES");
 
    File_View_Shows_Only_Project : Boolean_Preference;
+   Dirs_From_Project            : Boolean_Preference;
 
    type Append_Directory_Idle_Data;
    type Append_Directory_Idle_Data_Access is access Append_Directory_Idle_Data;
@@ -629,6 +630,31 @@ package body Project_Explorers_Files is
                   end if;
                end;
             end if;
+
+         elsif Dirs_From_Project.Get_Pref then
+            if Is_Directory (D.Files (D.File_Index)) then
+               if not Get_Registry (D.Explorer.Kernel).Tree.
+                 Directory_Belongs_To_Project
+                 (D.Files (D.File_Index).Full_Name,
+                  Direct_Only => False)
+               then
+                  --  Remove from the list
+                  D.Files (D.File_Index) := No_File;
+               end if;
+
+            else
+               declare
+                  Dir : constant Virtual_File := D.Files (D.File_Index).Dir;
+               begin
+                  if not Get_Registry (D.Explorer.Kernel).Tree.
+                    Directory_Belongs_To_Project
+                       (Dir.Full_Name, Direct_Only => True)
+                  then
+                     --  Remove from the list
+                     D.Files (D.File_Index) := No_File;
+                  end if;
+               end;
+            end if;
          end if;
 
          if D.Depth = 0 then
@@ -977,6 +1003,7 @@ package body Project_Explorers_Files is
    is
    begin
       Append_Menu (Menu, View.Kernel, File_View_Shows_Only_Project);
+      Append_Menu (Menu, View.Kernel, Dirs_From_Project);
    end Create_Menu;
 
    ----------------------------
@@ -1195,7 +1222,9 @@ package body Project_Explorers_Files is
       Clear (Explorer.File_Model);
       File_Remove_Idle_Calls (Explorer);
 
-      if File_View_Shows_Only_Project.Get_Pref then
+      if File_View_Shows_Only_Project.Get_Pref
+         or else Dirs_From_Project.Get_Pref
+      then
          declare
             Inc : constant File_Array :=
                     Source_Dirs (Get_Project (Explorer.Kernel), True);
@@ -1564,6 +1593,7 @@ package body Project_Explorers_Files is
 
          if Pref = null
            or else Pref = Preference (File_View_Shows_Only_Project)
+           or else Pref = Preference (Dirs_From_Project)
          then
             Refresh (Explorer);
          end if;
@@ -1589,7 +1619,19 @@ package body Project_Explorers_Files is
       File_View_Shows_Only_Project :=
         Kernel.Get_Preferences.Create_Invisible_Pref
           ("explorers-file-show-project-only", False,
-           Label => -"Show files from project only");
+           Label => -"Show files from project only",
+           Doc => -("Binary files are not shown"
+                & " in object directories, and source directories only"
+                & " contain files that match the project naming scheme."));
+
+      Dirs_From_Project :=
+        Kernel.Get_Preferences.Create_Invisible_Pref
+          ("explorers-file-dirs-from-project", False,
+           Label => -"Show all files in any project directory",
+           Doc =>
+                -("In particular, shows binary files in object directories"
+                & " and all files found in any of the source directories."
+                & " No effect if 'Show files from project only' is selected"));
 
       Register_Action
         (Kernel, "refresh files view", new Refresh_Command,
