@@ -106,6 +106,10 @@ package Gtkada.Entry_Completion is
    procedure Popdown (Self : not null access Gtkada_Entry_Record);
    --  Force the display of the completion list (in case it is in a popup)
 
+   procedure Start_Searching
+     (Self : not null access Gtkada_Entry_Record'Class);
+   --  Start the search engine and start filling the popup window
+
    Signal_Escape : constant Glib.Signal_Name := "escape";
    --  Emitted when the user presses <escape> in the search field. This is
    --  called just after calling popdown.

@@ -436,7 +436,9 @@ package body GPS.Kernel.Search.Sources is
    begin
       Result := null;
 
-      if Self.Index > Self.Files'Last then
+      if Self.Pattern.Get_Text = ""
+        or else Self.Index > Self.Files'Last
+      then
          Has_Next := False;
          return;
       end if;

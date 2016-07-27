@@ -583,6 +583,7 @@ package body GPS.Search.GUI is
       --  see where the focus is.
 
       Module.Search.Popup;
+      Module.Search.Start_Searching;
 
       return Commands.Success;
    end Execute;

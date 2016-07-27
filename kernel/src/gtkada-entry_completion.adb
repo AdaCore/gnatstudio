@@ -1480,6 +1480,29 @@ package body Gtkada.Entry_Completion is
       On_Entry_Changed (S);
    end On_Settings_Changed;
 
+   ---------------------
+   -- Start_Searching --
+   ---------------------
+
+   procedure Start_Searching
+     (Self : not null access Gtkada_Entry_Record'Class)
+   is
+      Text : constant String := Self.GEntry.Get_Text;
+   begin
+      Self.Pattern := GPS.Search.Build
+        (Pattern         => Text,
+         Allow_Highlight => True,
+         Case_Sensitive  => Self.Settings_Case_Sensitive.Get_Active,
+         Whole_Word      => Self.Settings_Whole_Word.Get_Active,
+         Kind        => Search_Kind'Value (Self.Settings_Kind.Get_Active_Id));
+      Self.Completion.Set_Pattern (Self.Pattern);
+      Self.Need_Clear := True;
+
+      if Self.Idle = No_Source_Id then
+         Self.Idle := Completion_Sources.Idle_Add (On_Idle'Access, Self);
+      end if;
+   end Start_Searching;
+
    ----------------------
    -- On_Entry_Changed --
    ----------------------
@@ -1492,16 +1515,6 @@ package body Gtkada.Entry_Completion is
       S.Completion.Count := 0;
 
       Widget_Callback.Emit_By_Name (S, Signal_Changed);
-
-      if Text /= "" then
-         S.Pattern := GPS.Search.Build
-           (Pattern         => Text,
-            Allow_Highlight => True,
-            Case_Sensitive  => S.Settings_Case_Sensitive.Get_Active,
-            Whole_Word      => S.Settings_Whole_Word.Get_Active,
-            Kind        => Search_Kind'Value (S.Settings_Kind.Get_Active_Id));
-         S.Completion.Set_Pattern (S.Pattern);
-      end if;
 
       --  Since the list of completions will change shortly, give up on
       --  loading the preview.
@@ -1516,11 +1529,7 @@ package body Gtkada.Entry_Completion is
 
       else
          Popup (S);
-         S.Need_Clear := True;
-
-         if S.Idle = No_Source_Id then
-            S.Idle := Completion_Sources.Idle_Add (On_Idle'Access, S);
-         end if;
+         Start_Searching (S);
       end if;
    end On_Entry_Changed;
 

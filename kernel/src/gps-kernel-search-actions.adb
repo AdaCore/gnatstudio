@@ -52,7 +52,10 @@ package body GPS.Kernel.Search.Actions is
       pragma Unreferenced (Limit);
    begin
       Self.Pattern := Search_Pattern_Access (Pattern);
-      Self.Iter := Start (Self.Kernel);
+
+      if Pattern.Get_Text /= "" then
+         Self.Iter := Start (Self.Kernel);
+      end if;
    end Set_Pattern;
 
    ----------

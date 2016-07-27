@@ -145,6 +145,11 @@ package body Completion.Search is
 
       Free (Self.Iter);
 
+      if Pattern.Get_Text = "" then
+         Self.Iter := Null_Construct_Db_Iterator;
+         return;
+      end if;
+
       Self.Pattern := Search_Pattern_Access (Pattern);
       Self.Iter := Start
         (Self.Kernel.Databases.Constructs, Prefix => "", Is_Partial => True);

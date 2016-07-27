@@ -537,6 +537,14 @@ package body GPS.Kernel.Search.Filenames is
 
    begin
       Result := null;
+
+      --  We do not want this search provider to be active when there is no
+      --  pattern to search for.
+      if Self.Pattern.Get_Text = "" then
+         Has_Next := False;
+         return;
+      end if;
+
       Check_Pattern (Self, Has_Next, Callback'Access);
    end Next;
 
