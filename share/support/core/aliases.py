@@ -92,10 +92,13 @@ def exit_alias_expand(editor):
 @interactive("Editor", name="Expand alias under cursor")
 def expand_alias_action():
     """
-    Action to expand the alias under cursor directly from
+    Action to expand the alias under cursor
     the editor
     """
-    editor = EditorBuffer.get()
+    editor = EditorBuffer.get(open=False, force=False)
+    if not editor:
+        return
+
     if is_in_alias_expansion(editor):
         return
     editor.start_undo_group()
@@ -108,7 +111,7 @@ def expand_alias_action():
         expand_alias(editor, alias)
 
 
-@interactive("Editor",  name="Toggle to next alias field")
+@interactive("Editor", name="Toggle to next alias field")
 def toggle_next_field(editor=None):
     """
     When in alias expansion, toggle to next field
