@@ -401,10 +401,6 @@ package body Builder_Facility_Module is
      (Before_Save : Boolean := False);
    --  Call Execute_Switch_Filter_For_Target on all the registered targets
 
-   procedure Parse_Mode_Node (XML : Node_Ptr);
-   --  Parse XML node describing a mode. See spec for a description of the
-   --  XML format.
-
    type Dynamic_Menu_Item_Record is new Gtk_Menu_Item_Record with null record;
    type Dynamic_Menu_Item is access all Dynamic_Menu_Item_Record'Class;
    --  So that items created for the dynamic Make and Run menus have a special
@@ -1646,19 +1642,6 @@ package body Builder_Facility_Module is
       return Commands.Success;
    end Execute;
 
-   ---------------------
-   -- Parse_Mode_Node --
-   ---------------------
-
-   procedure Parse_Mode_Node (XML : Node_Ptr) is
-      Mode       : Mode_Record;
-      pragma Unreferenced (Mode);
-   begin
-      --  Create the mode and add it to the list of supported modes
-
-      Mode := Load_Mode_From_XML (Builder_Module_ID.Registry, XML);
-   end Parse_Mode_Node;
-
    ---------------
    -- Customize --
    ---------------
@@ -1717,7 +1700,18 @@ package body Builder_Facility_Module is
          end loop;
 
       elsif Node.Tag.all = "builder-mode" then
-         Parse_Mode_Node (Node);
+         declare
+            Mode       : constant Mode_Record := Load_Mode_From_XML
+               (Builder_Module_ID.Registry, Node);
+            Kernel : constant Kernel_Handle := Builder_Module_ID.Get_Kernel;
+         begin
+            if Mode.Name = Get_Build_Mode (Kernel) then
+               --  If this is actually the current build mode, reset the object
+               --  subdirectories and other attributes of the mode
+               Trace (Me, "Loaded information about the current build mode");
+               Set_Build_Mode (Kernel, To_String (Mode.Name));
+            end if;
+         end;
       end if;
    end Customize;
 
@@ -1898,7 +1892,10 @@ package body Builder_Facility_Module is
       Reg  : Project_Registry renames
                Project_Registry (Get_Registry (Kernel).all);
    begin
-      if Reg.Environment.Object_Subdir /= Get_Mode_Subdir (Registry, Mode) then
+      if Contains_Mode (Registry, To_Unbounded_String (Mode))
+         and then Reg.Environment.Object_Subdir /=
+            Get_Mode_Subdir (Registry, Mode)
+      then
          Reg.Environment.Set_Object_Subdir (Get_Mode_Subdir (Registry, Mode));
          Recompute_View (Get_Kernel);
       end if;

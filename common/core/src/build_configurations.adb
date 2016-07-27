@@ -24,6 +24,7 @@ with String_Utils;             use String_Utils;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
 
 package body Build_Configurations is
+   Me : constant Trace_Handle := Create ("Build_Configurations");
 
    use GNAT.OS_Lib;
    use Target_List;
@@ -49,7 +50,7 @@ package body Build_Configurations is
      Ada.Strings.Maps.To_Set (" " & CR & LF & HT);
    --  Character set to separate parser names in a list
 
-   Me          : constant Trace_Handle := Create ("Build_Configurations");
+   Unknown_Mode : constant Mode_Record := (others => <>);
 
    ------------------------
    -- Local declarations --
@@ -692,9 +693,15 @@ package body Build_Configurations is
 
    function Element_Mode
      (Registry : Build_Config_Registry_Access;
-      Name     : Unbounded_String) return Mode_Record is
+      Name     : Unbounded_String) return Mode_Record
+   is
+      C : constant Mode_Map.Cursor := Registry.Modes.Find (Name);
    begin
-      return Registry.Modes.Element (Name);
+      if Mode_Map.Has_Element (C) then
+         return Mode_Map.Element (C);
+      else
+         return Unknown_Mode;
+      end if;
    end Element_Mode;
 
    ---------------------
@@ -1603,9 +1610,7 @@ package body Build_Configurations is
       end loop;
 
       Insert_Mode (Registry, Mode.Name, Mode);
-
       return Mode;
-
    end Load_Mode_From_XML;
 
    ------------------------------------------
