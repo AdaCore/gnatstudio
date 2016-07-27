@@ -1167,7 +1167,7 @@ package body Browsers.Scripts is
             BModule : constant Module_Type :=
               Kernel.Scripts.Lookup_Module ("@.Browsers");
             Style   : constant Class_Type :=
-              Kernel.Scripts.New_Class ("Link", Module => BModule);
+              Kernel.Scripts.New_Class ("Style", Module => BModule);
          begin
             Inst := Nth_Arg (Data, 1);
             It := Item_Proxies.From_Instance (Inst);
