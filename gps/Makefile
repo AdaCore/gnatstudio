@@ -42,7 +42,7 @@ all: resources do_links
 	cd ../kernel/src; ${PYTHON} hooks.py
 	cd ../kernel/generated; gnatcoll_db2ada -api=GPS.Kernel.Properties.Database -adacreate -dbmodel=../src/properties_schema.txt
 ifeq ($(OS),Windows_NT)
-	dos2unix ../kernel/generated/*
+	for f in ../kernel/generated/*; do cat $$f | tr -d '\015' > $$f-aux; mv -f $$f-aux $$f; done
 endif
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -ws -P../spark/spark
 	$(GPRBUILD) $(GPRBUILD_FLAGS) -m -p -ws -XTP_TASKING=No_Tasking \
