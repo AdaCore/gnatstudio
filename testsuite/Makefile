@@ -1,3 +1,6 @@
+GPRBUILD=gprbuild
+GPRCLEAN=gprclean
+
 SYS := $(shell gcc -dumpmachine)
 ifeq ($(OS),Windows_NT)
         OS := Windows_NT
@@ -10,7 +13,7 @@ endif
 endif
 
 all default: package
-	gprbuild -P testsuite_drivers.gpr -m -XOS=${OS} -j0
+	$(GPRBUILD) -P testsuite_drivers.gpr -m -XOS=${OS} -j0
 
 package:
 	mkdir -p share/doc
@@ -19,5 +22,5 @@ package:
 	cp ../docs/users_guide/GPS.Browsers.rst share/doc
 	cp ../docs/users_guide/generate.py share/doc
 clean:
-	gprclean -P testsuite_drivers.gpr
+	$(GPRCLEAN) -P testsuite_drivers.gpr
 	rm -rf share
