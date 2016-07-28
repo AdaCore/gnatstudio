@@ -564,6 +564,7 @@ package body GPS.Kernel.Search.Filenames is
       Label : Gtk_Label;
       UTF8   : Gtkada.Types.Chars_Ptr;
       Length : Natural;
+      Count  : Natural;
       Props  : File_Props;
       pragma Unreferenced (Props);
    begin
@@ -589,7 +590,8 @@ package body GPS.Kernel.Search.Filenames is
          UTF8_Len => Length,
          Props    => Props);
       if UTF8 /= Gtkada.Types.Null_Ptr then
-         Tmp := new String'(Value (UTF8, size_t (Length)));
+         Tmp := new String (1 .. Length);
+         To_Ada (Value (UTF8, size_t (Length)), Tmp.all, Count, False);
          Free (UTF8);
       end if;
 

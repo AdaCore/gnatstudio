@@ -27,3 +27,6 @@ share/plug-ins/subversion.py  no-precommit-check
 share/library/parasail.py     no-precommit-check
 share/plug-ins/c_support.py   no-precommit-check
 kernel/src/hooks.py           no-precommit-check
+
+# Temporary, while P728-041 is being investigated
+distrib/known-problems-62     no-precommit-check

@@ -25,6 +25,19 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P728-040 GPS: crash when using the omnisearch
+
+  Problem:    When using the omnisearch, when the categories for "Sources" or
+              "Current file" are activated, GPS might crash when attempting
+              to load particularly large files.
+              This could also happen when GPS is trying to display the preview
+              for a large file.
+
+  Status:     This was fixed in 17.0 on 2016-07-28
+
+  Workaround: In the omnisearch settings, disable categories "Sources" and
+              "Current file" and disable the preview.
+
 KP-62-P719-032 GPS: truncates process names on unix systems
 
   Problem:    When using the /Debug/Debug/Attach menu, the name of processes

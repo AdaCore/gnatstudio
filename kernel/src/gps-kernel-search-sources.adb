@@ -241,6 +241,7 @@ package body GPS.Kernel.Search.Sources is
    is
       UTF8   : Gtkada.Types.Chars_Ptr;
       Length : Natural;
+      Count  : Natural;
       Props  : File_Props;
       pragma Unreferenced (Props);
    begin
@@ -263,7 +264,9 @@ package body GPS.Kernel.Search.Sources is
                UTF8_Len => Length,
                Props    => Props);
 
-            Self.Text := new String'(Value (UTF8, size_t (Length)));
+            Self.Text := new String (1 .. Length);
+            To_Ada
+              (Value (UTF8, size_t (Length)), Self.Text.all, Count, False);
             Free (UTF8);
          end if;
       end if;
@@ -520,6 +523,7 @@ package body GPS.Kernel.Search.Sources is
 
       UTF8   : Gtkada.Types.Chars_Ptr;
       Length : Natural;
+      Count  : Natural;
       Props  : File_Props;
       pragma Unreferenced (Props);
    begin
@@ -528,7 +532,9 @@ package body GPS.Kernel.Search.Sources is
          UTF8     => UTF8,
          UTF8_Len => Length,
          Props    => Props);
-      Tmp := new String'(Value (UTF8, size_t (Length)));
+
+      Tmp := new String (1 .. Length);
+      To_Ada (Value (UTF8, size_t (Length)), Tmp.all, Count, False);
       Free (UTF8);
 
       if Tmp = null then
