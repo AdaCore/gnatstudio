@@ -108,7 +108,7 @@ KP-62-P602-052 GPS: focus issues with floating dialogs
 
   Workaround: None.
 
-KP-62-P602-048 GPS: wrong codde formatting after case expression
+KP-62-P602-048 GPS: wrong code formatting after case expression
 
   Problem:    Automatic code formatting use incorrect indentation level after
               case expression inside of case statement.
