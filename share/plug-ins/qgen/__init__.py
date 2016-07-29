@@ -403,6 +403,12 @@ class CLI(GPS.Process):
         """
         models = project_support.get_models(main_name)
 
+        if not models:
+            GPS.Console().write(
+                "No models specified for %s: use the 'Target' property "
+                "in the project file to fix. See QGen Model Debugger "
+                "user guide for more detail.\n" % main_name)
+
         status = yield CLI.__compile_files_to_source_code(models)
 
         if status == 0:
@@ -418,6 +424,12 @@ class CLI(GPS.Process):
         workflows.py.
         """
         models = project_support.get_models(main_name)
+
+        if not models:
+            GPS.Console().write(
+                "No models specified for %s: use the 'Target' property "
+                "in the project file to fix. See QGen Model Debugger "
+                "user guide for more detail.\n" % main_name)
 
         status = yield CLI.__compile_files_to_source_code(models)
 
