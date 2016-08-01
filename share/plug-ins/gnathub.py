@@ -14,7 +14,7 @@ tools = ['codepeer', 'gcov', 'gnatcoverage', 'gnatcheck', 'gnatmetric',
 XML = r"""<?xml version="1.0" ?>
 <GPS>
   <target-model name="gnathub">
-    <iconname>call-start</iconname>
+    <iconname>gps-build-all-symbolic</iconname>
     <description>Run gnathub executable</description>
     <command-line>
       <arg>gnathub</arg>
