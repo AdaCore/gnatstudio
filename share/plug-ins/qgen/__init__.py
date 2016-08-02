@@ -475,6 +475,12 @@ class CLI(GPS.Process):
 
 
 class QGEN_Diagram(gpsbrowsers.JSON_Diagram):
+
+    def __init__(self, file, json):
+        self.current_priority = 0
+        self.reset_priority = False
+        super(QGEN_Diagram, self).__init__(file, json)
+
     def on_selection_changed(self, item, *args):
         """React to a change in selection of an item."""
         pass
@@ -938,6 +944,38 @@ else:
                                 yield (d, item, it)
 
         @staticmethod
+        def update_priority_style(viewer, diagrams, exclude_list=[]):
+            """
+            Browses all items and updates their style when they have a lower
+            priority than their containing diagram, meaning they were
+            processed.
+            :param viewer: a QGEN_Diagram_Viewer
+            :param diagrams: a list of QGEN_Diagram
+            :param exclude_list: a list of items that do not have to be
+            processed
+            """
+            if diagrams:
+                for d in diagrams:
+                    for item in d.items:
+                            for it in item.recurse():
+                                if it not in exclude_list:
+                                    if hasattr(it, "data"):
+                                        prio = it.data.get('priority')
+                                        if prio is not None:
+                                            if prio > 0\
+                                               and prio < d.current_priority:
+                                                # If the current block is
+                                                # processed, fade its colors by
+                                                # updating the style
+                                                viewer.diags.set_item_style(
+                                                    it, it.data.get(
+                                                        'style_if_processed'))
+                                            elif d.reset_priority:
+                                                viewer.diags.set_item_style(
+                                                    it, None)
+                    d.reset_priority = False
+
+        @staticmethod
         def on_diagram_changed(viewer, diag, clear=False):
             """
             Called whenever a new diagram is displayed in viewer. This change
@@ -963,6 +1001,12 @@ else:
             # Restore default style for previous items with breakpoints
             map = QGEN_Module.modeling_map
 
+            # This will contain the list of blocks with breakpoints
+            # that have their priority style updated before the
+            # update_priority_style call and can therefore be excluded
+            # from the update
+            bp_blocks = []
+
             def __set_block_style(bp, style=None):
                 """
                 Update the style field of an item to the given style name
@@ -977,15 +1021,24 @@ else:
                     if item:
                         for it in item.recurse():
                             try:
-                                id = getattr(item, "id", None)
+                                id = getattr(it, "id", None)
                                 if style:
-                                    viewer.diags.set_item_style(
-                                        item, item.data.get(style)
-                                    )
+                                    bp_blocks.append(it)
+                                    prio = it.data.get('priority')
+                                    if prio is not None and prio > 0 \
+                                       and prio < diag.current_priority:
+                                        viewer.diags.set_item_style(
+                                            it, it.data.get(
+                                                style + '_processed')
+                                        )
+                                    else:
+                                        viewer.diags.set_item_style(
+                                            it, it.data.get(style)
+                                        )
                                 else:
-                                    viewer.diags.set_item_style(item, None)
+                                    viewer.diags.set_item_style(it, None)
                             except:
-                                # No style_if_breakpoint defined
+                                # No corresponding style defined
                                 pass
 
             for b in QGEN_Module.previous_breakpoints:
@@ -1004,6 +1057,9 @@ else:
             # The clear method will reset the breakpoints after all the
             # diagrams have been processed
             if clear or not debugger:
+                diag.reset_priority = True
+                diag.current_priority = 0
+                QGEN_Module.update_priority_style(viewer, [diag], bp_blocks)
                 # Update the display
                 diag.changed()
                 return
@@ -1015,6 +1071,7 @@ else:
             for b in QGEN_Module.previous_breakpoints:
                 __set_block_style(b, 'style_if_breakpoint')
 
+            QGEN_Module.update_priority_style(viewer, [diag], bp_blocks)
             diag.changed()
 
         @staticmethod
@@ -1081,12 +1138,20 @@ else:
                         viewer.diags, block)
                     if info:
                         diagram, item = info
-                        viewer.set_diagram(diagram)  # calls on_diagram_changed
                         if item:
                             scroll_to = item
                             # Unselect items from the previous step
                             viewer.diags.clear_selection()
                             diagram.select(item)
+                            item_prio = item.data.get('priority')
+                            if item_prio is not None and item_prio > 0:
+                                if diagram.current_priority > item_prio:
+                                    # If the priority is going down then we
+                                    # reached a new iteration and have
+                                    # to reset the processed styles
+                                    diagram.reset_priority = True
+                                diagram.current_priority = item_prio
+                        viewer.set_diagram(diagram)  # calls on_diagram_changed
 
                 if scroll_to:
                     viewer.scroll_into_view(scroll_to)
