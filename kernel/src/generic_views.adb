@@ -29,7 +29,6 @@ with Gtk.Box;                 use Gtk.Box;
 with Gtk.Button;              use Gtk.Button;
 with Gtk.Check_Menu_Item;     use Gtk.Check_Menu_Item;
 with Gtk.Container;           use Gtk.Container;
-with Gtk.Dialog;              use Gtk.Dialog;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Menu;                use Gtk.Menu;
@@ -71,6 +70,8 @@ with Config;    use Config;
 
 package body Generic_Views is
    Me : constant Trace_Handle := Create ("Views");
+   No_Transient_Views : constant Trace_Handle :=
+     Create ("Views.No_Transient_Views", Default => Off);
 
    function Has_Toolbar_Separator
      (Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
@@ -1183,22 +1184,26 @@ package body Generic_Views is
          Self   : constant Local_Formal_MDI_Child_Access :=
            Local_Formal_MDI_Child_Access (Child);
          View   : constant View_Access := View_From_Child (Self);
+         V      : constant Abstract_View_Access := Abstract_View_Access (View);
+
          Close_Button : Gtk_Button;
          Req : Gtk_Requisition;
       begin
-         Gtk_Dialog (View.Get_Toplevel).Set_Resizable (True);
-
-         --  Add the "Close" button.
-         Close_Button := Gtk_Button
-           (Gtk_Dialog (View.Get_Toplevel).Add_Button
-            (-"Close", Gtk_Response_Cancel));
+         --  Add the "Close" button if it doesn't exist
+         if V.Button_Box = null then
+            Gtk_New (Close_Button, -"Close");
+            Gtk_New_Hbox (V.Button_Box);
+            V.Button_Box.Pack_End (Close_Button, False, False, 3);
+            V.Pack_End (V.Button_Box, False, False, 3);
+            Widget_Callback.Object_Connect
+              (Close_Button, Gtk.Button.Signal_Clicked,
+               On_Close_Floating_Child_Access, View);
+            V.Button_Box.Show_All;
+         end if;
 
          Return_Callback.Object_Connect
            (View.Get_Toplevel, Gtk.Widget.Signal_Delete_Event,
             On_Delete_Floating_Child_Access, View);
-         Widget_Callback.Object_Connect
-           (Close_Button, Gtk.Button.Signal_Clicked,
-            On_Close_Floating_Child_Access, View);
 
          --  Set the position of the floating window
          View.Set_Size_Request (-1, -1);
@@ -1216,10 +1221,17 @@ package body Generic_Views is
          Self   : constant Local_Formal_MDI_Child_Access :=
            Local_Formal_MDI_Child_Access (Child);
          View   : constant View_Access := View_From_Child (Self);
+         V      : constant Abstract_View_Access := Abstract_View_Access (View);
       begin
          --  Store the position of the floating window
          Store_Position (View);
          View.Set_Size_Request (-1, -1);
+
+         --  Remove the 'Close' button
+         if V.Button_Box /= null then
+            V.Remove (V.Button_Box);
+            V.Button_Box := null;
+         end if;
       end On_Before_Unfloat_Child;
 
       ----------------------
@@ -1298,7 +1310,12 @@ package body Generic_Views is
                      Default_Width  => Default_Width,
                      Default_Height => Default_Height,
                      Focus_Widget   => Focus_Widget,
-                     Flags          => MDI_Flags,
+                     Flags          =>
+                       (if Active (No_Transient_Views) then
+                         MDI_Flags
+                           and not (Float_As_Transient or Float_To_Main)
+                        else
+                           MDI_Flags),
                      Module         => Module,
                      Group          => Group,
                      Areas          => Areas);
@@ -1509,14 +1526,43 @@ package body Generic_Views is
          return View_Access
       is
          Child        : GPS_MDI_Child;
+         Existed_Before : Boolean := False;
          View         : View_Access;
       begin
+         if Active (No_Transient_Views) then
+            Find (Kernel, Child, View);
+            if Child /= null then
+               Existed_Before := True;
+            end if;
+         end if;
+
          Create_If_Needed (Kernel, Child, View, Toolbar_Id => Toolbar_Id);
 
          if Focus then
             Raise_Child (Child);
             Set_Focus_Child (Child);
 
+            if Active (No_Transient_Views) then
+               --  If this mode is active, this means we are on an old X11
+               --  implementation, where the Present() called by Raise_Child
+               --  above might not work. Force the presentation here.
+               if Child.Is_Floating
+                 and then Existed_Before
+               then
+                  declare
+                     Window : constant Gtk_Window :=
+                       Gtk_Window (View.Get_Toplevel);
+                     X, Y : Gint;
+                  begin
+                     Window.Get_Position (X, Y);
+                     --  This is of course a hack, but the only way (I found)
+                     --  to convince Xming to raise a window to the front.
+                     Window.Hide;
+                     Window.Show_All;
+                     Window.Move (X, Y);
+                  end;
+               end if;
+            end if;
             --  ??? browsers used to do the following:
 
             --  Add_Navigation_Location (Kernel, -"Call graph Browser");

@@ -23,6 +23,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P729-031 GPS: new trace for old Xming compatibility (2016-08-03)
+
+  A new trace "Views.No_Transient_Views" has been added. When activated
+  (in .gps/traces.cfg or via the --traceon switch), this prevents the use
+  of "transient" windows for floating views. This is needed mostly for
+  compatibility with the Xming X11 server which does not allow resizing
+  transient windows, and calculates their size wrongly.
+
 NF-17-P725-041 GPS: new "All files from prj dirs" in Files view (2016-07-27)
 
   A new local configuration has been added to the Files view, to show all

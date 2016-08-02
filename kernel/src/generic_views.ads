@@ -454,6 +454,10 @@ private
       Config  : Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button;
       Config_Menu : Gtk.Menu.Gtk_Menu;
       --  The button that shows the config menu, and the menu itself
+
+      Button_Box : Gtk.Box.Gtk_Hbox := null;
+      --  The button box that contains the "close" button, for dialog-like
+      --  views.
    end record;
 
 end Generic_Views;
