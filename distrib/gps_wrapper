@@ -104,6 +104,8 @@ save_and_export GSETTINGS_BACKEND
 
 if [ "$debug" = debug ]; then
    gdb -args "$root/bin/${prog}_exe" "$@"
-else
+elif [ "$GPS_WRAPPER" = "" ]; then
    exec "$root/bin/${prog}_exe" "$@"
+else
+   $GPS_WRAPPER "$root/bin/${prog}_exe" "$@"
 fi
