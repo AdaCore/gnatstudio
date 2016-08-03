@@ -493,10 +493,10 @@ package body GPS.Location_View.Listener is
 
       use Gdk.RGBA;
 
-      Browser        : Boolean;
-      Browser_Bg, Bg : Glib.Values.GValue;
-      Message        : Message_Access;
-      Color          : Gdk.RGBA.Gdk_RGBA;
+      Browser    : Boolean;
+      Browser_Bg : Glib.Values.GValue;
+      Message    : Message_Access;
+      Color      : Gdk.RGBA.Gdk_RGBA;
 
       function Traverse
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
@@ -504,12 +504,19 @@ package body GPS.Location_View.Listener is
          Iter  : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean;
       --  Process a row
 
+      --------------
+      -- Traverse --
+      --------------
+
       function Traverse
         (Model : Gtk.Tree_Model.Gtk_Tree_Model;
          Path  : Gtk.Tree_Model.Gtk_Tree_Path;
          Iter  : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
       is
          pragma Unreferenced (Model);
+
+         Bg : Glib.Values.GValue;
+
       begin
          if Path.Get_Depth < 3 then
             if Browser then
@@ -528,6 +535,8 @@ package body GPS.Location_View.Listener is
                Self.Tree.Set_Value
                  (Iter, -Background_Color_Column, Bg);
             end if;
+
+            Glib.Values.Unset (Bg);
          end if;
 
          return False;
@@ -545,6 +554,8 @@ package body GPS.Location_View.Listener is
       then
          Self.Tree.Foreach (Traverse'Unrestricted_Access);
       end if;
+
+      Glib.Values.Unset (Browser_Bg);
    end Execute;
 
    ----------------
