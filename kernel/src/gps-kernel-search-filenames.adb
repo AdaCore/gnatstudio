@@ -23,9 +23,11 @@ with Interfaces.C.Strings;      use Interfaces.C, Interfaces.C.Strings;
 with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Strings;              use GNAT.Strings;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.Mmap;             use GNATCOLL.Mmap;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
+with Glib.Convert;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Toggle_Button;         use Gtk.Toggle_Button;
 with Gtk.Label;                 use Gtk.Label;
@@ -39,6 +41,7 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Search;                use GPS.Search;
 with Histories;                 use Histories;
+with String_Utils;              use String_Utils;
 
 package body GPS.Kernel.Search.Filenames is
    Me : constant Trace_Handle := Create ("SEARCH.FILENAMES");
@@ -47,6 +50,9 @@ package body GPS.Kernel.Search.Filenames is
      "omni-search-include-all-from-source-dirs";
    --  whether to include files found in the source dirs and that are not
    --  sources of the project.
+
+   Bytes_To_Preview : constant := 10000;
+   --  Number of bytes to load in a preview
 
    type On_Project_View_Changed is new Simple_Hooks_Function with record
       Provider : access Filenames_Search_Provider;
@@ -563,7 +569,6 @@ package body GPS.Kernel.Search.Filenames is
       Tmp   : GNAT.Strings.String_Access;
       Label : Gtk_Label;
       UTF8   : Gtkada.Types.Chars_Ptr;
-      Length : Natural;
       Count  : Natural;
       Props  : File_Props;
       pragma Unreferenced (Props);
@@ -584,16 +589,51 @@ package body GPS.Kernel.Search.Filenames is
          end if;
       end;
 
-      Read_File_With_Charset
-        (Self.File,
-         UTF8     => UTF8,
-         UTF8_Len => Length,
-         Props    => Props);
-      if UTF8 /= Gtkada.Types.Null_Ptr then
-         Tmp := new String (1 .. Length);
-         To_Ada (Value (UTF8, size_t (Length)), Tmp.all, Count, False);
-         Free (UTF8);
+      --  The call to this function is blocking, we do not want to stay
+      --  here too long, so do not try to preview a non-local file.
+
+      if not Self.File.Is_Local then
+         Gtk_New (Label, -"File not available locally.");
+         Label.Modify_Font (View_Fixed_Font.Get_Pref);
+         return Gtk.Widget.Gtk_Widget (Label);
       end if;
+
+      --  Similarly, we do not want to do the work of reading, converting,
+      --  entering in a label, a file which is too big: preview the first N
+      --  bytes only.
+
+      declare
+         File   : Mapped_File := Open_Read (+Self.File.Full_Name.all);
+         Region : Mapped_Region;
+         R      : GNAT.Strings.String_Access;
+         L      : Integer;
+         Ignored_1, Ignored_2, Ignored_3 : Boolean;
+         Ignore        : aliased Natural;
+         Length        : aliased Natural;
+      begin
+         Read (File, Region, Offset => 0, Length => Bytes_To_Preview);
+         Close (File);
+
+         if Region /= Invalid_Mapped_Region then
+            L := Last (Region);
+            R := new String (1 .. L);
+            R.all := String (Data (Region).all (1 .. L));
+
+            Strip_CR_And_NUL (R.all, L, Ignored_1, Ignored_2, Ignored_3);
+
+            UTF8 := Glib.Convert.Convert
+              (R (R'First .. L), "UTF-8", Get_File_Charset (Self.File),
+               Ignore'Unchecked_Access, Length'Unchecked_Access);
+
+            Free (R);
+         end if;
+
+         if UTF8 /= Gtkada.Types.Null_Ptr then
+            Tmp := new String (1 .. Length);
+            To_Ada (Value (UTF8, size_t (Length)), Tmp.all, Count, False);
+            Free (UTF8);
+         end if;
+      end;
 
       if Tmp = null then
          return null;
