@@ -197,7 +197,8 @@ package body Default_Preferences.Enums is
       Path                      : Preference_Path;
       Name, Label, Doc          : String;
       Choices                   : GNAT.Strings.String_List_Access;
-      Default                   : Integer)
+      Default                   : Integer;
+      Priority                  : Integer := -1)
       return Choice_Preference
    is
       Result : constant Choice_Preference := new Choice_Preference_Record;
@@ -209,25 +210,43 @@ package body Default_Preferences.Enums is
       --  in a group named using the preference's label.
       if Choices'Length > Needs_Combo_Threshold then
          Manager.Register
-           (Name  => Name,
-            Path  => Path,
-            Label => Label,
-            Doc   => Doc,
-            Pref  => Result);
+           (Name     => Name,
+            Path     => Path,
+            Label    => Label,
+            Doc      => Doc,
+            Pref     => Result,
+            Priority => Priority);
       else
          declare
-            Page_Name   : Preferences_Page_Name_Access;
-            Group_Name  : Preferences_Group_Name_Access;
+            Page_Name       : Preferences_Page_Name_Access;
+            Group_Name      : Preferences_Group_Name_Access;
+            Registered_Page : Preferences_Page;
          begin
             Extract_Page_And_Group_Names (Path       => Path,
                                           Page_Name  => Page_Name,
                                           Group_Name => Group_Name);
+
+            --  Get/create the corresponding preferences page and register
+            --  the preference as a group, without forgetting to set the
+            --  group's priority to the preference's priority since it will
+            --  contain only this preference.
+
+            Registered_Page := Manager.Get_Registered_Page
+              (Name             => Page_Name.all,
+               Create_If_Needed => True);
+            Registered_Page.Register_Group
+              (Name             => Label,
+               Group            => new Preferences_Group_Record,
+               Priority         => Priority);
+
             Manager.Register
-              (Name  => Name,
-               Path  => Page_Name.all & ':' & Label,
-               Label => Label,
-               Doc   =>  Doc,
-               Pref  => Result);
+              (Name     => Name,
+               Path     => Page_Name.all & ':' & Label,
+               Label    => Label,
+               Doc      => Doc,
+               Pref     => Result,
+               Priority => Priority);
+
             Free (Page_Name);
             Free (Group_Name);
          end;
@@ -329,7 +348,8 @@ package body Default_Preferences.Enums is
         (Manager                   : access Preferences_Manager_Record'Class;
          Path                      : Preference_Path;
          Name, Label, Doc          : String;
-         Default                   : Enumeration)
+         Default                   : Enumeration;
+         Priority                  : Integer := -1)
          return Preference
       is
          P      : constant Default_Preferences.Preference :=
@@ -362,25 +382,42 @@ package body Default_Preferences.Enums is
          --  them in a group named using the preference's label.
          if Enumeration'Range_Length > Needs_Combo_Threshold then
             Manager.Register
-              (Path  => Path,
-               Name  => Name,
-               Label => Label,
-               Doc   => Doc,
-               Pref  => Result);
+              (Path     => Path,
+               Name     => Name,
+               Label    => Label,
+               Doc      => Doc,
+               Pref     => Result,
+               Priority => Priority);
          else
             declare
-               Page_Name   : Preferences_Page_Name_Access;
-               Group_Name  : Preferences_Group_Name_Access;
+               Page_Name       : Preferences_Page_Name_Access;
+               Group_Name      : Preferences_Group_Name_Access;
+               Registered_Page : Preferences_Page;
             begin
                Extract_Page_And_Group_Names (Path       => Path,
                                              Page_Name  => Page_Name,
                                              Group_Name => Group_Name);
+
+               --  Get/create the corresponding preferences page and register
+               --  the preference as a group, without forgetting to set the
+               --  group's priority to the preference's priority since it will
+               --  contain only this preference.
+
+               Registered_Page := Manager.Get_Registered_Page
+                 (Name             => Page_Name.all,
+                  Create_If_Needed => True);
+               Registered_Page.Register_Group
+                 (Name             => Label,
+                  Group            => new Preferences_Group_Record,
+                  Priority         => Priority);
+
                Manager.Register
-                 (Path  => Page_Name.all & ':' & Label,
-                  Name  => Name,
-                  Label => Label,
-                  Doc   => Doc,
-                  Pref  => Result);
+                 (Name     => Name,
+                  Path     => Page_Name.all & ':' & Label,
+                  Label    => Label,
+                  Doc      => Doc,
+                  Pref     => Result,
+                  Priority => Priority);
 
                Free (Page_Name);
                Free (Group_Name);

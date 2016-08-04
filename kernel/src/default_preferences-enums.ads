@@ -25,7 +25,8 @@ package Default_Preferences.Enums is
       Path                      : Preference_Path;
       Name, Label, Doc          : String;
       Choices                   : GNAT.Strings.String_List_Access;
-      Default                   : Integer)
+      Default                   : Integer;
+      Priority                  : Integer := -1)
       return Choice_Preference;
    --  Create a new preference whose values are among Choices.
    --  Choices will be freed when the preference itself is destroyed, and must
@@ -41,7 +42,8 @@ package Default_Preferences.Enums is
         (Manager                   : access Preferences_Manager_Record'Class;
          Path                      : Preference_Path;
          Name, Label, Doc          : String;
-         Default                   : Enumeration)
+         Default                   : Enumeration;
+         Priority                  : Integer := -1)
          return Preference;
       --  Create a new preference whose possibles values are given by
       --  Enumeration
