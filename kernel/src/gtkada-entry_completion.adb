@@ -1137,6 +1137,12 @@ package body Gtkada.Entry_Completion is
       --  No need to retry
       Self.Notes_Idle := No_Source_Id;
       return False;
+   exception
+      when E : others =>
+         Trace (Me, E);
+         --  In case of exception, bandon and reset the idle flag
+         Self.Notes_Idle := No_Source_Id;
+         return False;
    end On_Preview_Idle;
 
    ----------------------
