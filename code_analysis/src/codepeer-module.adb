@@ -1668,7 +1668,8 @@ package body CodePeer.Module is
       CodePeer.Module.Actions.Register_Actions (Module);
 
       --  Reuse existing preferences regarding Analysis Tools for low, medium
-      --  and high prirority messages.
+      --  and high priority messages.
+
       Module.Message_Colors (CodePeer.High) := High_Messages_Highlight;
 
       Module.Message_Colors (CodePeer.Medium) := Medium_Messages_Highlight;
@@ -1679,19 +1680,19 @@ package body CodePeer.Module is
       Module.Message_Colors (CodePeer.Info) :=
         Default_Preferences.Create
           (Kernel.Get_Preferences,
-           Name    => "CodePeer-Messages-Informational-Background",
+           Name    => "Messages-Informational-Background",
            Label   => -"Color for 'informational' messages",
-           Path    => -"CodePeer:Colors",
-           Doc     => -("Color to use for the background of information"
+           Path    => -"Messages:Analysis Tools",
+           Doc     => -("Color to use for the background of informational"
              & " messages"),
            Default => "#DFDFDF");
 
       Module.Message_Colors (CodePeer.Suppressed) :=
         Default_Preferences.Create
           (Kernel.Get_Preferences,
-           Name    => "CodePeer-Messages-Suppressed-Background",
+           Name    => "Messages-Suppressed-Background",
            Label   => -"Color for 'suppressed' messages",
-           Path    => -"CodePeer:Colors",
+           Path    => -"Messages:Analysis Tools",
            Doc     => -("Color to use for the background of suppressed"
              & " messages"),
            Default => "#EFEFEF");
@@ -1699,9 +1700,9 @@ package body CodePeer.Module is
       Module.Removed_Message_Color :=
         Default_Preferences.Create
           (Kernel.Get_Preferences,
-           Name    => "CodePeer-Messages-Removed-Foreground",
+           Name    => "Messages-Removed-Foreground",
            Label   => -"Color for 'removed' messages",
-           Path    => -"CodePeer:Colors",
+           Path    => -"Messages:Analysis Tools",
            Doc     => -("Color to use for the foreground of removed messages"
              & " in Locations view"),
            Default => "#5A5A5A");

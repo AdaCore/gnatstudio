@@ -1089,7 +1089,9 @@ package body GPS.Kernel.Preferences is
            Name    => "High-Importance-Messages-Highlight",
            Label   => -"High importance messages",
            Path    => -"Messages:Analysis Tools",
-           Doc     => -("Color for high priority messages."),
+           Doc     => -("Color for high priority messages. This preference is "
+             & "also used by external tools integrated in GPS "
+             & "(e.g: CodePeer)."),
            Default => "#F75D59");
 
       Medium_Messages_Highlight :=
@@ -1098,7 +1100,9 @@ package body GPS.Kernel.Preferences is
            Name    => "Medium-Importance-Messages-Highlight",
            Label   => -"Medium importance messages",
            Path    => -"Messages:Analysis Tools",
-           Doc     => -("Color for medium priority messages."),
+           Doc     => -("Color for medium priority messages. This preference "
+             & "is also used by external tools integrated in GPS "
+             & "(e.g: CodePeer)."),
            Default => "#F88017");
 
       Low_Messages_Highlight :=
@@ -1107,7 +1111,9 @@ package body GPS.Kernel.Preferences is
            Name    => "Low-Importance-Messages-Highlight",
            Label   => -"Low importance messages",
            Path    => -"Messages:Analysis Tools",
-           Doc     => -("Color for low priority messages."),
+           Doc     => -("Color for low priority messages. This preference is "
+             & "also used by external tools integrated in GPS "
+             & "(e.g: CodePeer)."),
            Default => "#FFE87C");
 
       File_Pattern := Create
