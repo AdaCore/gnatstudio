@@ -214,15 +214,15 @@ package body Completion.C.Libclang is
              Documentation => Strs.Doc,
              Category =>
                (case Kind (The_Res) is
-                   when EnumDecl
-                        | EnumConstantDecl => Cat_Literal,
-                   when FieldDecl => Cat_Field,
-                   when FunctionDecl
-                        | FunctionTemplate => Cat_Function,
-                   when ParmDecl => Cat_Parameter,
-                   when TypedefDecl
-                        | TypeAliasDecl => Cat_Type,
-                   when VarDecl => Cat_Variable,
+                   when CXCursor_EnumDecl
+                        | CXCursor_EnumConstantDecl => Cat_Literal,
+                   when CXCursor_FieldDecl => Cat_Field,
+                   when CXCursor_FunctionDecl
+                        | CXCursor_FunctionTemplate => Cat_Function,
+                   when CXCursor_ParmDecl => Cat_Parameter,
+                   when CXCursor_TypedefDecl
+                        | CXCursor_TypeAliasDecl => Cat_Type,
+                   when CXCursor_VarDecl => Cat_Variable,
                    when others => Cat_Unknown)));
       end if;
    end Compute_Next;

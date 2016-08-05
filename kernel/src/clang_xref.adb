@@ -257,7 +257,7 @@ package body Clang_Xref is
    begin
       Ret := Get_Clang_Cursor (E.Kernel, E.Ref_Loc);
 
-      if Kind (Ret) = InclusionDirective then
+      if Kind (Ret) = CXCursor_InclusionDirective then
          return Ret;
       end if;
 
@@ -296,7 +296,7 @@ package body Clang_Xref is
       --  unsupported anyway, so no harm in trying to recover a meaningful
       --  cursor
 
-      if Ret.kind = UnexposedAttr then
+      if Ret.kind = CXCursor_UnexposedAttr then
          Ret := Cursor_At
            (TU, Loc.File, Loc.Line, Natural'Max (1, Line_Offset - 1));
       end if;
@@ -311,12 +311,12 @@ package body Clang_Xref is
       --  inclusion directive cursor, so test if we are in that case, and
       --  then return the proper cursor
 
-      if Kind (Ret) = NoDeclFound then
+      if Kind (Ret) = CXCursor_NoDeclFound then
          declare
             Tmp : constant Clang_Cursor
               := Cursor_At (TU, Loc.File, Loc.Line, 1);
          begin
-            if Kind (Tmp) = InclusionDirective then
+            if Kind (Tmp) = CXCursor_InclusionDirective then
                Ret := Tmp;
             end if;
          end;
@@ -532,7 +532,7 @@ package body Clang_Xref is
       Cursor := Get_Clang_Cursor (Entity);
 
       --  Special case for inclusion directives
-      if Kind (Cursor) = InclusionDirective then
+      if Kind (Cursor) = CXCursor_InclusionDirective then
          return General_Entity_Declaration'
            (Loc                      =>
               General_Location'
@@ -560,7 +560,7 @@ package body Clang_Xref is
 
       Def := Referenced (Cursor);
 
-      if Kind (Def) = InvalidFile then
+      if Kind (Def) = CXCursor_InvalidFile then
          Def := Cursor;
       end if;
 
@@ -813,7 +813,7 @@ package body Clang_Xref is
 
          --  Straightforwardly get every children of decl that is a method
 
-         return Get_Children (Type_Decl, CXXMethod);
+         return Get_Children (Type_Decl, CXCursor_CXXMethod);
 
       else
          return Cursors_Arrays.Empty_Array;
@@ -1032,7 +1032,7 @@ package body Clang_Xref is
 
          --  An entity is a global if its parent is the translation unit.
 
-         return P.kind in TranslationUnit | Namespace
+         return P.kind in CXCursor_TranslationUnit | CXCursor_Namespace
            or else (Is_Type (P.kind) and then Internal (P));
       end Internal;
    begin
@@ -1141,7 +1141,7 @@ package body Clang_Xref is
       --  Since we store the declaration of the cursor in entity, if it's a
       --  parameter, its kind should be parmdecl
 
-      if C.kind = ParmDecl then
+      if C.kind = CXCursor_ParmDecl then
          return Cursor_As_Entity
            (Entity, Semantic_Parent (C));
       end if;
@@ -1279,7 +1279,7 @@ package body Clang_Xref is
       function Get_Fields (C : Clang_Cursor) return Array_Type
       is
       begin
-         return (Get_Children (C, FieldDecl)
+         return (Get_Children (C, CXCursor_FieldDecl)
                  & Id_Flat_Map (Parent_Types (C, True), Get_Fields'Access));
       end Get_Fields;
 
@@ -1305,7 +1305,7 @@ package body Clang_Xref is
       C : constant Clang_Cursor := Get_Clang_Cursor (Entity);
    begin
       return To_Entity_Array
-        (Entity, Get_Children (C, EnumConstantDecl));
+        (Entity, Get_Children (C, CXCursor_EnumConstantDecl));
    end Literals;
 
    -----------------------
@@ -1320,7 +1320,7 @@ package body Clang_Xref is
 
       if Entity.Is_Generic then
          return To_Entity_Array
-           (Entity, Get_Children (C, TemplateTypeParameter));
+           (Entity, Get_Children (C, CXCursor_TemplateTypeParameter));
       end if;
 
       return No_Entity_Array;
@@ -1420,7 +1420,7 @@ package body Clang_Xref is
 
    begin
       for Ref of Refs.all loop
-         if Ref.Kind = CXXBaseSpecifier then
+         if Ref.Kind = CXCursor_CXXBaseSpecifier then
             Cursors (Count) :=
               Get_Clang_Cursor (Entity.Kernel, Ref.Get_Location);
             Count := Count + 1;
@@ -1452,7 +1452,7 @@ package body Clang_Xref is
       is
       begin
          return (Id_Map
-                  (Get_Children (Type_Decl, CXXBaseSpecifier),
+                  (Get_Children (Type_Decl, CXCursor_CXXBaseSpecifier),
                    Referenced'Access));
       end Get_Base_Classes;
 
@@ -1539,15 +1539,15 @@ package body Clang_Xref is
         (
          --  When the call expr references a method, we actually want to get
          --  the member reference expression to have correct locations.
-         if Kind (Referenced (C)) = CXXMethod
-         then Get_Children (C, MemberRefExpr) (1)
+         if Kind (Referenced (C)) = CXCursor_CXXMethod
+         then Get_Children (C, CXCursor_MemberRefExpr) (1)
          else C);
 
       function Get_Calls (C : Clang_Cursor) return Array_Type;
       function Get_Calls (C : Clang_Cursor) return Array_Type
       is
       begin
-         return (Get_Children (C, CallExpr)
+         return (Get_Children (C, CXCursor_CallExpr)
                  & Id_Flat_Map (Get_Children (C), Get_Calls'Access));
       end Get_Calls;
 
@@ -1557,7 +1557,7 @@ package body Clang_Xref is
       Body_CC : Clang_Cursor := CC;
 
    begin
-      if Kind (CC) = FunctionDecl then
+      if Kind (CC) = CXCursor_FunctionDecl then
          Body_Entity := Get_Body (Entity);
          Body_CC := Get_Clang_Cursor (Body_Entity);
       end if;
@@ -1775,7 +1775,7 @@ package body Clang_Xref is
       --  be explored, we want to explore the body, not the decl.
       --  TODO ??? Explore other decls when it makes sense
       Real_Scope : constant Clang_Entity :=
-        (if Kind (Get_Clang_Cursor (In_Scope)) = FunctionDecl
+        (if Kind (Get_Clang_Cursor (In_Scope)) = CXCursor_FunctionDecl
          then Get_Body (In_Scope)
          else In_Scope);
 
@@ -1790,9 +1790,11 @@ package body Clang_Xref is
           --  Referenced call, but the cursor is not a reference. We want to
           --  consider only reference cursors.
           and then Kind (C)
-          in DeclRefExpr | MemberRefExpr | TypeRef | TemplateRef
-            | NamespaceRef | MemberRef | LabelRef | OverloadedDeclRef
-              | VariableRef);
+            in CXCursor_DeclRefExpr   | CXCursor_MemberRefExpr
+              | CXCursor_TypeRef      | CXCursor_TemplateRef
+              | CXCursor_NamespaceRef | CXCursor_MemberRef
+              | CXCursor_LabelRef     | CXCursor_OverloadedDeclRef
+              | CXCursor_VariableRef);
 
       function Find_References (Scope : Clang_Cursor) return Array_Type;
       function Find_References (Scope : Clang_Cursor) return Array_Type

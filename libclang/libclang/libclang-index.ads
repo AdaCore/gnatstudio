@@ -752,22 +752,22 @@ package Libclang.Index is
 
    function Is_Function (K : Clang_Cursor_Kind) return Boolean
    is
-     (K in FunctionDecl
-        | FunctionTemplate | CXXMethod
-          | ConversionFunction);
+     (K in CXCursor_FunctionDecl
+        | CXCursor_FunctionTemplate | CXCursor_CXXMethod
+          | CXCursor_ConversionFunction);
    --  Helper to determine if a cursor kind is a function kind
 
    function Is_Object_Type (K : Clang_Cursor_Kind) return Boolean
    is
-     (K in ClassDecl | ClassTemplate
-        | ClassTemplatePartialSpecialization
-          | StructDecl);
+     (K in CXCursor_ClassDecl | CXCursor_ClassTemplate
+        | CXCursor_ClassTemplatePartialSpecialization
+          | CXCursor_StructDecl);
    --  Helper to determine if type is an object type, eg. can it have methods.
 
    function Is_Type (K : Clang_Cursor_Kind) return Boolean is
      (Is_Object_Type (K) or else
-      K in TypeAliasDecl
-        | TypedefDecl | EnumDecl | UnionDecl);
+      K in CXCursor_TypeAliasDecl
+        | CXCursor_TypedefDecl | CXCursor_EnumDecl | CXCursor_UnionDecl);
    --  Helper to determine if cursor is a type
 
    function Is_Array (K : CXTypeKind) return Boolean
@@ -779,8 +779,8 @@ package Libclang.Index is
    --  Helper to determine if a kind is one of an array
 
    function Is_Subprogram (K : Clang_Cursor_Kind) return Boolean is
-     (K in FunctionDecl | CXXMethod
-        | FunctionTemplate);
+     (K in CXCursor_FunctionDecl | CXCursor_CXXMethod
+        | CXCursor_FunctionTemplate);
 
    function Is_Container
      (K : Clang_Cursor_Kind) return Boolean
@@ -790,10 +790,10 @@ package Libclang.Index is
    function Is_Generic
      (K : Clang_Cursor_Kind) return Boolean is
      (K in
-        ClassTemplatePartialSpecialization
-          | ClassTemplate
-            | FunctionTemplate
-              | TemplateRef);
+        CXCursor_ClassTemplatePartialSpecialization
+          | CXCursor_ClassTemplate
+            | CXCursor_FunctionTemplate
+              | CXCursor_TemplateRef);
 
 private
 
@@ -805,7 +805,7 @@ private
    Aliased_0 : aliased constant Interfaces.C.unsigned := 0;
 
    No_CXCompletionResult : aliased clang_c_Index_h.CXCompletionResult
-     := (clang_c_Index_h.UnexposedDecl,
+     := (clang_c_Index_h.CXCursor_UnexposedDecl,
          clang_c_Index_h.CXCompletionString (System.Null_Address));
 
    No_CXCodeCompleteResults : aliased clang_c_Index_h.CXCodeCompleteResults

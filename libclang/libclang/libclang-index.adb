@@ -388,13 +388,13 @@ package body Libclang.Index is
               Indexer_Callbacks'Access,
               Indexer_Callbacks'Size,
               Index_Options,
-              Source_Filename       => C_Source_Filename,
-              Command_Line_Args     => C_Command_Line_Args,
-              Num_Command_Line_Args => int (First_Free - CL'First),
-              Unsaved_Files         => C_Unsaved_Files,
-              Num_Unsaved_Files     => Unsaved_Files'Length,
-              Out_TU                => TU'Address,
-              TU_Options               => unsigned (Options));
+              source_filename       => C_Source_Filename,
+              command_line_args     => C_Command_Line_Args,
+              num_command_line_args => int (First_Free - CL'First),
+              unsaved_files         => C_Unsaved_Files,
+              num_unsaved_files     => Unsaved_Files'Length,
+              out_TU                => TU'Address,
+              TU_options               => unsigned (Options));
 
          Free (C_Source_Filename);
 

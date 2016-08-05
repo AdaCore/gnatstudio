@@ -422,8 +422,9 @@ package body Language.Libclang is
               (Diagnostics,
                To_String
                  (clang_formatDiagnostic
-                      (D, DisplaySourceLocationh
-                       or DisplayColumn or DisplaySourceRanges)));
+                      (D, CXDiagnostic_DisplaySourceLocation
+                       or CXDiagnostic_DisplayColumn
+                       or CXDiagnostic_DisplaySourceRanges)));
          end;
       end loop;
    end Diagnostic;
@@ -482,7 +483,7 @@ package body Language.Libclang is
          if Info.entityInfo.kind = CXIdxEntity_CXXClass then
             for C of
               Get_Children
-                (Clang_Cursor (Info.cursor), CXXBaseSpecifier)
+                (Clang_Cursor (Info.cursor), CXCursor_CXXBaseSpecifier)
             loop
                Sym :=
                  Clang_Symbol_Table.Find (USR (Referenced (C)));

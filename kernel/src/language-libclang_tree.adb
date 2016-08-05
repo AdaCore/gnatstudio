@@ -59,7 +59,7 @@ package body Language.Libclang_Tree is
 
    function Filter_Children (C : Clang_Cursor) return Boolean
    is
-     (not (Kind (C) in UnionDecl | StructDecl
+     (not (Kind (C) in CXCursor_UnionDecl | CXCursor_StructDecl
            and then Spelling (C) = ""));
 
    ----------------------
@@ -216,38 +216,38 @@ package body Language.Libclang_Tree is
    ---------------------------
 
    type Clang_Cursor_Kind_To_Category_Array is
-     array (CXCursorKind) of Language_Category;
+     array (CXCursor_MIN_VALUE .. CXCursor_MAX_VALUE) of Language_Category;
 
    Clang_Cursor_Kind_To_Category :
    constant Clang_Cursor_Kind_To_Category_Array :=
-     (StructDecl => Cat_Structure,
-      UnionDecl => Cat_Union,
-      UnexposedDecl => Cat_Type,
-      ClassDecl => Cat_Class,
-      EnumDecl => Cat_Type,
-      FieldDecl => Cat_Field,
-      EnumConstantDecl => Cat_Field,
-      FunctionDecl => Cat_Function,
-      CXXMethod => Cat_Method,
-      VarDecl => Cat_Variable,
-      ParmDecl => Cat_Parameter,
-      TypedefDecl => Cat_Type,
-      Namespace => Cat_Namespace,
-      Constructor => Cat_Constructor,
-      Destructor => Cat_Destructor,
-      ConversionFunction => Cat_Function,
-      FunctionTemplate => Cat_Function,
-      ClassTemplate => Cat_Class,
-      ClassTemplatePartialSpecialization => Cat_Class,
-      NamespaceAlias => Cat_Namespace,
-      UsingDirective => Cat_Use,
-      UsingDeclaration => Cat_Use,
-      TypeAliasDecl => Cat_Type,
-      IfStmt => Cat_If_Statement,
-      ForStmt => Cat_Loop_Statement,
-      WhileStmt => Cat_Loop_Statement,
-      DoStmt => Cat_Loop_Statement,
-      CaseStmt => Cat_Case_Statement,
+     (CXCursor_StructDecl => Cat_Structure,
+      CXCursor_UnionDecl => Cat_Union,
+      CXCursor_UnexposedDecl => Cat_Type,
+      CXCursor_ClassDecl => Cat_Class,
+      CXCursor_EnumDecl => Cat_Type,
+      CXCursor_FieldDecl => Cat_Field,
+      CXCursor_EnumConstantDecl => Cat_Field,
+      CXCursor_FunctionDecl => Cat_Function,
+      CXCursor_CXXMethod => Cat_Method,
+      CXCursor_VarDecl => Cat_Variable,
+      CXCursor_ParmDecl => Cat_Parameter,
+      CXCursor_TypedefDecl => Cat_Type,
+      CXCursor_Namespace => Cat_Namespace,
+      CXCursor_Constructor => Cat_Constructor,
+      CXCursor_Destructor => Cat_Destructor,
+      CXCursor_ConversionFunction => Cat_Function,
+      CXCursor_FunctionTemplate => Cat_Function,
+      CXCursor_ClassTemplate => Cat_Class,
+      CXCursor_ClassTemplatePartialSpecialization => Cat_Class,
+      CXCursor_NamespaceAlias => Cat_Namespace,
+      CXCursor_UsingDirective => Cat_Use,
+      CXCursor_UsingDeclaration => Cat_Use,
+      CXCursor_TypeAliasDecl => Cat_Type,
+      CXCursor_IfStmt => Cat_If_Statement,
+      CXCursor_ForStmt => Cat_Loop_Statement,
+      CXCursor_WhileStmt => Cat_Loop_Statement,
+      CXCursor_DoStmt => Cat_Loop_Statement,
+      CXCursor_CaseStmt => Cat_Case_Statement,
       others => Cat_Unknown);
 
    --------------
@@ -318,7 +318,7 @@ package body Language.Libclang_Tree is
       loop
          Parent := Semantic_Parent (Cursor);
          exit when Parent = No_Cursor
-           or else Parent.kind = TranslationUnit;
+           or else Parent.kind = CXCursor_TranslationUnit;
          Cursor := Parent;
       end loop;
 
@@ -363,10 +363,10 @@ package body Language.Libclang_Tree is
    is
       C : constant Cursors_Arrays.Array_Type := Get_Children (Self.Cursor);
    begin
-      if Kind (Self.Cursor) = TypedefDecl
+      if Kind (Self.Cursor) = CXCursor_TypedefDecl
         and then C'Length = 1
         and then
-          Kind (C (1)) in StructDecl | UnionDecl
+          Kind (C (1)) in CXCursor_StructDecl | CXCursor_UnionDecl
       then
          if Spelling (C (1)) = "" then
             return Clang_Node_Array'
@@ -402,7 +402,7 @@ package body Language.Libclang_Tree is
    overriding function Name
      (Self : Clang_Node) return GNATCOLL.Symbols.Symbol is
    begin
-      if Kind (Self.Cursor) = TranslationUnit then
+      if Kind (Self.Cursor) = CXCursor_TranslationUnit then
 
          --  If the cursor is the translation unit, then spelling will be the
          --  full file path. In that case we want only the file name
@@ -443,7 +443,7 @@ package body Language.Libclang_Tree is
                return "";
             end if;
          end;
-      elsif K in FieldDecl | VarDecl then
+      elsif K in CXCursor_FieldDecl | CXCursor_VarDecl then
          return Spelling (Get_Type (Self.Cursor));
       end if;
 

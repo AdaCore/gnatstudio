@@ -11,6 +11,6 @@ package clang_c_CXErrorCode_h is
       CXError_Crashed,
       CXError_InvalidArguments,
       CXError_ASTReadError);
-   pragma Convention (C, CXErrorCode);  -- /export/work/setton/src/GPS/src/gps/libclang/cfe-3.5.0.src/include/clang-c/CXErrorCode.h:29
+   pragma Convention (C, CXErrorCode);  -- /export/work/setton/src/ANCR/src/gps/libclang/cfe-3.7.1.src/include/clang-c/CXErrorCode.h:29
 
 end clang_c_CXErrorCode_h;

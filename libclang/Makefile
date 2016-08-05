@@ -1,10 +1,11 @@
 TMP_GEN_DIR=gen
-CLANG_SRC_DIR=cfe-3.5.0.src
+CLANG_RELEASE=3.7.1
+CLANG_SRC_DIR=cfe-$(CLANG_RELEASE).src
 CLANG_INCLUDE_DIR=$(shell pwd)/$(CLANG_SRC_DIR)/include
 CLANG_INCLUDE_DIR_C=$(CLANG_INCLUDE_DIR)/clang-c
 DL=wget
 CLANG_SRC_FNAME=$(CLANG_SRC_DIR).tar.xz
-CLANG_SRC_LINK=http://llvm.org/releases/3.5.0/$(CLANG_SRC_FNAME)
+CLANG_SRC_LINK=http://llvm.org/releases/$(CLANG_RELEASE)/$(CLANG_SRC_FNAME)
 
 ifeq ($(wildcard binding/clang.ads),)
 all: clean_imports
