@@ -23,7 +23,7 @@ with Ada.Containers;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
-private with GNAT.Command_Line;
+private with Command_Lines;
 with GNAT.Strings;      use GNAT.Strings;
 private with Shared_Macros;
 
@@ -375,7 +375,7 @@ package Switches_Chooser is
 
       type Root_Switches_Editor is abstract new Root_Editor with record
          Config     : Switches_Editor_Config;
-         Cmd_Line   : GNAT.Command_Line.Command_Line;
+         Cmd_Line   : Command_Lines.Command_Line;
          Widgets    : Widget_Array_Access;
          Block      : Boolean := False;
       end record;
@@ -703,7 +703,7 @@ private
    type Switches_Editor_Config_Record is tagged record
       Lines             : Positive;
       Columns           : Positive;
-      Config            : GNAT.Command_Line.Command_Line_Configuration;
+      Config            : Command_Lines.Command_Line_Configuration;
       Show_Command_Line : Boolean := True;
       Default_Separator : Ada.Strings.Unbounded.Unbounded_String;
       Sections          : Ada.Strings.Unbounded.Unbounded_String;

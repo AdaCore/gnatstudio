@@ -22,7 +22,7 @@ with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
 package body Switches_Chooser is
    use Switch_Description_Vectors, Combo_Switch_Vectors;
    use Frame_Description_Vectors;
-   use GNAT.Command_Line;
+   use Command_Lines;
 
    procedure Add_To_Getopt
      (Config    : Switches_Editor_Config;
@@ -261,22 +261,13 @@ package body Switches_Chooser is
          --  No parameter
          Define_Switch (Config.Config, Switch);
       elsif Separator = ASCII.NUL then
-         Define_Switch (Config.Config, Switch & "!");
-      elsif Separator = '=' then
-         Define_Switch (Config.Config, Switch & "=");
+         Define_Switch_With_Parameter (Config.Config, Switch);
       elsif Separator = ASCII.CR then
-         Define_Switch (Config.Config, Switch & "?");
-      elsif Separator = ' ' then
-         Define_Switch (Config.Config, Switch & ":");
+         Define_Switch_With_Parameter
+           (Config.Config, Switch, Optional => True);
       else
-         --  Any other separator is not supported by Getopt out of the box.
-         --  So we just indicate that there is no space, and let the
-         --  application deal with removing the separator.
-         --  For instance, if the separator is ':' and we pass
-         --    +RCyclomatic_Complexity:10
-         --  getopt will return ":10" as the argument.
-
-         Define_Switch (Config.Config, Switch & "!");
+         Define_Switch_With_Parameter
+           (Config.Config, Switch, Separator => Separator);
       end if;
    end Add_To_Getopt;
 
@@ -1302,9 +1293,9 @@ package body Switches_Chooser is
          end if;
 
          Editor.Block := True;
+         Set_Configuration (Editor.Cmd_Line, Editor.Config.Config);
          Set_Command_Line
            (Editor.Cmd_Line, Cmd_Line,
-            Get_Switches (Editor.Config.Config, Editor.Config.Switch_Char),
             Switch_Char => Editor.Config.Switch_Char);
          Editor.Block := False;
          On_Command_Line_Changed (Editor);
@@ -1327,20 +1318,27 @@ package body Switches_Chooser is
          --  the separator for S if needed
 
          function Get_Param (S : Switch_Description) return String is
-            Param : constant String := Current_Parameter (Iter);
          begin
-            case S.Separator is
-               when ASCII.NUL | ASCII.LF | '=' | ASCII.CR | ' ' =>
-                  return Param;
-               when others =>
-                  if Param'Length > 0
-                    and then Param (Param'First) = S.Separator
-                  then
-                     return Param (Param'First + 1 .. Param'Last);
-                  else
+            if not Has_More (Iter) then
+               return "";
+            end if;
+
+            declare
+               Param : constant String := Current_Parameter (Iter);
+            begin
+               case S.Separator is
+                  when ASCII.NUL | ASCII.LF | '=' | ASCII.CR | ' ' =>
                      return Param;
-                  end if;
-            end case;
+                  when others =>
+                     if Param'Length > 0
+                       and then Param (Param'First) = S.Separator
+                     then
+                        return Param (Param'First + 1 .. Param'Last);
+                     else
+                        return Param;
+                     end if;
+               end case;
+            end;
          end Get_Param;
 
       begin
@@ -1935,15 +1933,15 @@ package body Switches_Chooser is
       procedure Apply_Filter_On_Command_Line is
          Switches_Config  : constant Switches_Editor_Config
            := Switches_Editor_Config (Config);
-         Default_Cmd_Line : GNAT.Command_Line.Command_Line;
-         Cmd_Line         : GNAT.Command_Line.Command_Line;
+         Default_Cmd_Line : Command_Lines.Command_Line;
+         Cmd_Line         : Command_Lines.Command_Line;
          Config           : constant Command_Line_Configuration :=
                               Switches_Config.Config;
          Switch_Char      : constant Character :=
                               Get_Switch_Char (Switches_Config);
          Switch           : constant Switch_Description :=
                               Get_Switch (Switches_Config, Filter);
-         Success          : Boolean;
+         Success          : Boolean := False;
       begin
          --  Set the command line configuration
          Set_Configuration (Cmd_Line, Config);
@@ -1964,7 +1962,12 @@ package body Switches_Chooser is
                Switch    => Get_Switch (Switch),
                Section   => Get_Section (Switch),
                Success   => Success);
-         else
+
+         elsif not Has_Switch
+           (Cmd_Line,
+            Switch    => Get_Switch (Switch),
+            Section   => Get_Section (Switch))
+         then
             --  It it matches or if the target is going to be saved, check if
             --  the switch is present in the target's default command line and
             --  put it back on the target's current command line in this case.
@@ -1989,18 +1992,16 @@ package body Switches_Chooser is
                   Next (Iter);
                end loop;
 
-               if not Has_More (Iter) then
-                  return;
+               if Has_More (Iter) then
+                  Add_Switch
+                    (Cmd_Line,
+                     Switch     => Current_Switch (Iter),
+                     Parameter  => Current_Parameter (Iter),
+                     Separator  => Get_Separator (Switch),
+                     Section    => Get_Section (Switch),
+                     Add_Before => Is_Add_First (Switch),
+                     Success    => Success);
                end if;
-
-               Add_Switch
-                 (Cmd_Line,
-                  Switch     => Current_Switch (Iter),
-                  Parameter  => Current_Parameter (Iter),
-                  Separator  => Get_Separator (Switch),
-                  Section    => Get_Section (Switch),
-                  Add_Before => Is_Add_First (Switch),
-                  Success    => Success);
             end;
          end if;
 
