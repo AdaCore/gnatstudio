@@ -27,6 +27,8 @@ with GNATCOLL.VFS; use GNATCOLL.VFS;
 with Libclang.Index; use Libclang.Index;
 with Ada.Text_IO; use Ada.Text_IO;
 with GNAT.Strings;
+with System; use System;
+with System.Address_Image;
 
 ----------------
 -- Test_Index --
@@ -101,6 +103,22 @@ begin
 --              end loop;
 
             Dispose (Completion);
+         end;
+
+         --  Get_Cursor
+
+         declare
+            Ret : Clang_Cursor;
+         begin
+            Ret := Cursor_At (TU, Source_File, Line, Column);
+
+            Put_Line ("Cursor: " & ASCII.LF
+                      & "   Kind: " & Ret.kind'Img
+                      & "   Data: " & ASCII.LF
+                      & "       " & System.Address_Image (Ret.data (0))
+                      & "       " & System.Address_Image (Ret.data (1))
+                      & "       " & System.Address_Image (Ret.data (2)));
+
          end;
 
          Dispose (TU);
