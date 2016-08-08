@@ -89,6 +89,9 @@ package body Project_Explorers_Files is
    package Timeout_Id_List is new Ada.Containers.Doubly_Linked_Lists
      (Glib.Main.G_Source_Id);
 
+   package Virtual_Files_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Virtual_File);
+
    type Project_Explorer_Files_Record is new Generic_Views.View_Record with
       record
          File_Tree           : Gtk.Tree_View.Gtk_Tree_View;
@@ -1218,6 +1221,28 @@ package body Project_Explorers_Files is
       Cur_Dir      : constant Virtual_File := Get_Current_Dir;
       Dir_Inserted : Boolean := False;
 
+      procedure Add_Drives_From_Files (Files : File_Array);
+      --  Add all the logical drives used by Files in the files explorer.
+
+      procedure Add_Drives_From_Files (Files : File_Array)
+      is
+         Added_Drives : Virtual_Files_Lists.List;
+      begin
+         for File of Files loop
+            if not Added_Drives.Contains (File.Get_Root) then
+               File_Append_Directory
+                 (Explorer      => Explorer,
+                  Dir           => File.Get_Root,
+                  Base          => Null_Iter,
+                  Depth         => 1,
+                  Append_To_Dir => Get_Current_Dir,
+                  Idle          => True);
+
+               Added_Drives.Append (File.Get_Root);
+            end if;
+         end loop;
+      end Add_Drives_From_Files;
+
    begin
       Clear (Explorer.File_Model);
       File_Remove_Idle_Calls (Explorer);
@@ -1226,18 +1251,24 @@ package body Project_Explorers_Files is
          or else Dirs_From_Project.Get_Pref
       then
          declare
-            Inc : constant File_Array :=
+            Inc         : constant File_Array :=
                     Source_Dirs (Get_Project (Explorer.Kernel), True);
-            Obj : constant File_Array :=
+            Obj         : constant File_Array :=
                     Object_Path (Get_Project (Explorer.Kernel), True, False);
+            Common_Path : constant Virtual_File :=
+                            Greatest_Common_Path (Inc & Obj);
          begin
-            File_Append_Directory
-              (Explorer      => Explorer,
-               Dir           => Greatest_Common_Path (Inc & Obj),
-               Base          => Null_Iter,
-               Depth         => 1,
-               Append_To_Dir => Get_Current_Dir,
-               Idle          => True);
+            if Common_Path /= No_File then
+               File_Append_Directory
+                 (Explorer      => Explorer,
+                  Dir           => Common_Path,
+                  Base          => Null_Iter,
+                  Depth         => 1,
+                  Append_To_Dir => Get_Current_Dir,
+                  Idle          => True);
+            else
+               Add_Drives_From_Files (Files => Inc & Obj);
+            end if;
          end;
 
       else
