@@ -434,6 +434,18 @@ available, apart of course for the spec files and the bodies of generic packages
    </project_attribute>
 
    <project_attribute
+       name="library_standalone"
+       editor_page="Library/Standalone"
+       editor_section="Standalone library"
+       label="Stand-alone library kind"
+       hide_in="wizard"
+       description="This attribute defines the kind of stand-alone library to build. Values are either 'standard' (the default), 'no' or 'encapsulated'. Choose 'encapsulated' if your library depend only on static libraries (including the GNAT runtime) or 'no' to make it clear that your library should not be stand-alone.">
+       <choice default="true">standard</choice>
+       <choice>encapsulated</choice>
+       <choice>no</choice>
+   </project_attribute>
+
+   <project_attribute
        name="library_auto_init"
        editor_page="Library/Standalone"
        editor_section="Standalone library"
