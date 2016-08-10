@@ -61,6 +61,10 @@ package body Language.Libclang is
    Me       : constant Trace_Handle := GNATCOLL.Traces.Create ("LIBCLANG");
    --  Main libclang trace
 
+   Cache_Constant_Marker : constant Natural := 123454321;
+   --  An integer to allow us to recognize cache files that are recent enough
+   --  to have our version identifier.
+
    Libclang_Queue_Id : constant String := "libclang parsing files";
    --  Name of the queue in the task manager running the command to parse
    --  files.
@@ -950,6 +954,33 @@ package body Language.Libclang is
             Destroy (M);
          end loop;
 
+         Trace (Me, "Reading our special marker and version number");
+         declare
+            Marker  : Natural;
+            Version : String (1 .. 10);
+            Validated : Boolean := False;
+         begin
+            Marker := Natural'Input (Cache_Stream);
+            if Marker /= Cache_Constant_Marker then
+               Trace (Me, "Cache marker not found - removing this cache");
+            else
+               Version := String'Input (Cache_Stream);
+               if Version = clang_c_Index_h.Version then
+                  Validated := True;
+               else
+                  Trace (Me, "Cache version: " & Version & ASCII.LF
+                         & "Clang version: " & clang_c_Index_h.Version
+                         & ASCII.LF & "... removing this cache");
+               end if;
+            end if;
+
+            if not Validated then
+               Close (Cache_File);
+               Cache_VFS.Delete (Dummy);
+               return;
+            end if;
+         end;
+
          Clang_Module_Id.Refs := Clang_Crossrefs_Cache'Input (Cache_Stream);
       exception
          when E : others =>
@@ -1000,6 +1031,10 @@ package body Language.Libclang is
       end;
 
       Cache_Stream := Stream (Cache_File);
+
+      Trace (Me, "Writing our special marker and version number to cache");
+      Natural'Output (Cache_Stream, Cache_Constant_Marker);
+      String'Output (Cache_Stream, clang_c_Index_h.Version);
 
       Trace (Me, "Writing the cache to disk");
       Clang_Crossrefs_Cache'Output

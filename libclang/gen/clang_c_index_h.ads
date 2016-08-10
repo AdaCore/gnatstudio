@@ -11,6 +11,12 @@ with clang_c_CXErrorCode_h;
 
 package clang_c_Index_h is
 
+   Version : String (1 .. 10) := "3.7.1     ";
+   --  A 10-byte string identifying the version of the API. Used to make
+   --  an unique identifier in our on-disk cache. This is intentionally
+   --  placed in this automatically generated file to force us to update
+   --  it with each regeneration.
+
    --  unsupported macro: CINDEX_VERSION_MAJOR 0
    --  unsupported macro: CINDEX_VERSION_MINOR 30
    --  arg-macro: function CINDEX_VERSION_ENCODE ( ((major) * 10000) + ((minor) * 1)
