@@ -1984,7 +1984,7 @@ package body Src_Editor_Module is
    is
       UR                       : constant Undo_Redo :=
                                    new Undo_Redo_Information;
-      Selector                 : Scope_Selector;
+      Selector                 : Simple_Scope_Selector;
       Extra                    : Files_Extra_Scope;
       Command                  : Interactive_Command_Access;
       Label                    : Contextual_Menu_Label_Creator;
@@ -2364,49 +2364,52 @@ package body Src_Editor_Module is
 
       --  Register the search functions
 
-      Gtk_New (Selector, Kernel);
-      Gtk_New (Extra, Kernel);
+      Selector := new Simple_Scope_Selector_Record;
+      Initialize (Selector, Kernel);
+
+      Extra := new Files_Extra_Scope_Record;
+      Initialize (Extra, Kernel);
 
       Register_Search_Function
         (Kernel            => Kernel,
          Label             => -"Files From Projects",
          Factory           => Files_From_Project_Factory'Access,
-         Extra_Information => Selector,
+         Selector          => Selector,
          Id                => Src_Editor_Module_Id,
          Mask              => All_Options and not Search_Backward);
       Register_Search_Function
         (Kernel            => Kernel,
          Label             => -"Files From Runtime",
          Factory           => Files_From_Runtime_Factory'Access,
-         Extra_Information => Selector,
+         Selector          => Selector,
          Id                => Src_Editor_Module_Id,
          Mask              => All_Options and not Search_Backward);
       Register_Search_Function
         (Kernel            => Kernel,
          Label             => -"Files From Project '%p'",
          Factory           => Files_From_Root_Project_Factory'Access,
-         Extra_Information => Selector,
+         Selector          => Selector,
          Id                => Src_Editor_Module_Id,
          Mask              => All_Options and not Search_Backward);
       Register_Search_Function
         (Kernel            => Kernel,
          Label             => -"Files...",
          Factory           => Files_Factory'Access,
-         Extra_Information => Extra,
+         Selector          => Extra,
          Id                => Src_Editor_Module_Id,
          Mask              => All_Options and not Search_Backward);
       Register_Search_Function
         (Kernel => Kernel,
          Label             => -"Open Files",
          Factory           => Open_Files_Factory'Access,
-         Extra_Information => Selector,
+         Selector          => Selector,
          Id                => Src_Editor_Module_Id,
          Mask              => All_Options and not Search_Backward);
       Register_Search_Function
         (Kernel            => Kernel,
          Label             => -"Current Selection",
          Factory           => Current_Selection_Factory'Access,
-         Extra_Information => Selector,
+         Selector          => Selector,
          Id                => Src_Editor_Module_Id,
          Mask              => All_Options,
          In_Selection      => True);
@@ -2414,7 +2417,7 @@ package body Src_Editor_Module is
         (Kernel => Kernel,
          Label             => -"Current File",
          Factory           => Current_File_Factory'Access,
-         Extra_Information => Selector,
+         Selector          => Selector,
          Id                => Src_Editor_Module_Id,
          Mask              => All_Options);
 

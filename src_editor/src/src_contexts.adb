@@ -22,7 +22,9 @@ with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Regexp;                use GNAT.Regexp;
 with GNAT.Regpat;                use GNAT.Regpat;
+with GNAT.Strings;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.Xref;
 
@@ -36,8 +38,6 @@ with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
 with Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.GEntry;                 use Gtk.GEntry;
-with Gtk.Label;                  use Gtk.Label;
-with Gtk.Table;                  use Gtk.Table;
 with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Toggle_Button;          use Gtk.Toggle_Button;
@@ -68,10 +68,8 @@ with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
 with Src_Editor_Module;          use Src_Editor_Module;
 with Src_Editor_View;            use Src_Editor_View;
-with GNATCOLL.Traces;                     use GNATCOLL.Traces;
-with Vsearch;                    use Vsearch;
 with UTF8_Utils;
-with GNAT.Strings;
+with Vsearch;                    use Vsearch;
 
 package body Src_Contexts is
    use type GNATCOLL.Xref.Visible_Column;
@@ -1342,16 +1340,14 @@ package body Src_Contexts is
    --------------------------
 
    function Current_File_Factory
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences   : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access
-   is
-      Scope    : constant Scope_Selector := Scope_Selector (Extra_Information);
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences : Boolean;
+      Selector        : Scope_Selector)
+      return Root_Search_Context_Access is
    begin
       return Current_File_Factory
         (Kernel, All_Occurrences,
-         Scope => Search_Scope'Val (Get_Active (Scope.Combo)));
+         Scope => Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active));
    end Current_File_Factory;
 
    --------------------------
@@ -1382,15 +1378,13 @@ package body Src_Contexts is
    -------------------------------
 
    function Current_Selection_Factory
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences   : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences : Boolean;
+      Selector        : Scope_Selector)
       return Root_Search_Context_Access
    is
-      Selector : constant Scope_Selector := Scope_Selector (Extra_Information);
-      Scope    : constant Search_Scope :=
-        Search_Scope'Val (Get_Active (Selector.Combo));
-
+      Scope  : constant Search_Scope :=
+                 Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
       Result : Current_Selection_Context_Access;
    begin
       Result := new Current_Selection_Context;
@@ -1647,16 +1641,15 @@ package body Src_Contexts is
    --------------------------------
 
    function Files_From_Project_Factory
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences   : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences : Boolean;
+      Selector        : Scope_Selector)
       return Root_Search_Context_Access
    is
-      Scope   : constant Scope_Selector := Scope_Selector (Extra_Information);
       Context : constant Files_Project_Context_Access :=
                   new Files_Project_Context;
    begin
-      Context.Scope      := Search_Scope'Val (Get_Active (Scope.Combo));
+      Context.Scope := Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
       Context.All_Occurrences := All_Occurrences;
       Context.Current         := GPS.Search.No_Match;
       Set_File_List (Context, Get_Project (Kernel).Source_Files (True));
@@ -1685,18 +1678,18 @@ package body Src_Contexts is
    -------------------------------------
 
    function Files_From_Root_Project_Factory
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences   : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences : Boolean;
+      Selector        : Scope_Selector)
       return Root_Search_Context_Access
    is
       Project  : constant Standard.Projects.Project_Type_Array :=
         Vsearch.Get_Selected_Project (Kernel);
-      Scope    : constant Scope_Selector := Scope_Selector (Extra_Information);
       Context  : constant Files_Project_Context_Access :=
                   new Files_Project_Context;
    begin
-      Context.Scope           := Search_Scope'Val (Get_Active (Scope.Combo));
+      Context.Scope           :=
+        Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
       Context.All_Occurrences := All_Occurrences;
       Context.Current         := GPS.Search.No_Match;
 
@@ -1716,12 +1709,11 @@ package body Src_Contexts is
    --------------------------------
 
    function Files_From_Runtime_Factory
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences   : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences : Boolean;
+      Selector        : Scope_Selector)
       return Root_Search_Context_Access
    is
-      Scope   : constant Scope_Selector := Scope_Selector (Extra_Information);
       Files   : GNATCOLL.VFS.File_Array :=
         Get_Registry (Kernel).Environment.Predefined_Source_Files;
       Last    : Natural := Files'First - 1;
@@ -1736,7 +1728,8 @@ package body Src_Contexts is
          end if;
       end loop;
 
-      Context.Scope      := Search_Scope'Val (Get_Active (Scope.Combo));
+      Context.Scope           :=
+        Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
       Context.All_Occurrences := All_Occurrences;
       Context.Current         := GPS.Search.No_Match;
       Set_File_List (Context, new File_Array'(Files (Files'First .. Last)));
@@ -1766,12 +1759,11 @@ package body Src_Contexts is
    ------------------------
 
    function Open_Files_Factory
-     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences    : Boolean;
-      Extra_Information  : Gtk.Widget.Gtk_Widget)
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences : Boolean;
+      Selector        : Scope_Selector)
       return Root_Search_Context_Access
    is
-      Scope : constant Scope_Selector := Scope_Selector (Extra_Information);
       Context : constant Open_Files_Context_Access := new Open_Files_Context;
    begin
       --  GPS.Kernel.Open_Files returns a File_Array, but Set_File_List
@@ -1779,7 +1771,7 @@ package body Src_Contexts is
       --  Set_File_List
 
       Context.Scope           :=
-        Search_Scope'Val (Get_Active (Scope.Combo));
+        Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
       Context.All_Occurrences := All_Occurrences;
       Context.Current         := GPS.Search.No_Match;
       Set_File_List (Context, Kernel.Open_Files.all);
@@ -1825,25 +1817,26 @@ package body Src_Contexts is
    -------------------
 
    function Files_Factory
-     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences    : Boolean;
-      Extra_Information  : Gtk.Widget.Gtk_Widget)
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences : Boolean;
+      Selector        : Scope_Selector)
       return Root_Search_Context_Access
    is
       pragma Unreferenced (Kernel);
 
-      Context : Files_Context_Access;
-      Extra   : constant Files_Extra_Scope := Files_Extra_Scope
-        (Extra_Information);
-      Re      : GNAT.Regexp.Regexp;
-
+      Context        : Files_Context_Access;
+      Extra          : constant Files_Extra_Scope := Files_Extra_Scope
+        (Selector);
+      Files_Selector : constant Files_Extra_Info_Access :=
+                         Files_Extra_Info_Access (Extra.Get_Optional_Widget);
+      Re             : GNAT.Regexp.Regexp;
    begin
-      if Get_Text (Extra.Files_Entry) /= "" then
+      if Get_Text (Files_Selector.Files_Entry) /= "" then
          Context := Files_Factory
            (All_Occurrences,
-            Search_Scope'Val (Get_Active (Extra.Combo)));
+            Search_Scope'Val (Extra.Get_Scope_Combo.Get_Active));
          Re := Compile
-           (Get_Text (Extra.Files_Entry),
+           (Get_Text (Files_Selector.Files_Entry),
             Glob => True,
             Case_Sensitive => Integer
               (GPR.Osint.Get_File_Names_Case_Sensitive) /= 0);
@@ -1851,8 +1844,8 @@ package body Src_Contexts is
            (Context,
             Files_Pattern => Re,
             Directory     =>
-              Create_From_UTF8 (Get_Text (Extra.Directory_Entry)),
-            Recurse       => Get_Active (Extra.Subdirs_Check));
+              Create_From_UTF8 (Get_Text (Files_Selector.Directory_Entry)),
+            Recurse       => Get_Active (Files_Selector.Subdirs_Check));
 
          return Root_Search_Context_Access (Context);
       end if;
@@ -3041,64 +3034,78 @@ package body Src_Contexts is
          Kernel_Handle (Kernel));
    end Initialize_Scope_Combo;
 
-   -------------
-   -- Gtk_New --
-   -------------
+   ----------------
+   -- Initialize --
+   ----------------
 
-   procedure Gtk_New
-     (Selector : out Scope_Selector;
-      Kernel   : access Kernel_Handle_Record'Class)
-   is
-      Box   : Gtk.Box.Gtk_Hbox;
-      Label : Gtk_Label;
-
+   overriding procedure Initialize
+     (Selector : not null access Simple_Scope_Selector_Record;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Selector := new Scope_Selector_Record;
-      Gtk.Box.Initialize_Vbox (Gtk.Box.Gtk_Box (Selector));
-
-      Gtk.Box.Gtk_New_Hbox (Box);
-      Pack_Start (Selector, Box, False, True, 2);
-
-      Gtk_New (Label, -"In:");
-      Set_Alignment (Label, 0.0, 0.5);
-      Gtk.Box.Pack_Start (Box, Label, False);
-
       Gtk_New (Selector.Combo);
-      Gtk.Box.Pack_Start (Box, Selector.Combo, True, True, 2);
       Initialize_Scope_Combo (Selector.Combo, Kernel);
-   end Gtk_New;
+   end Initialize;
 
-   -------------
-   -- Gtk_New --
-   -------------
+   ---------------------
+   -- Get_Scope_Combo --
+   ---------------------
 
-   procedure Gtk_New
-     (Extra  : out Files_Extra_Scope;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   overriding function Get_Scope_Combo
+     (Selector : not null access Simple_Scope_Selector_Record)
+      return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text
    is
-      Label : Gtk_Label;
+      (Selector.Combo);
+
+   -------------------------
+   -- Get_Optional_Widget --
+   -------------------------
+
+   overriding function Get_Optional_Widget
+     (Selector : not null access Simple_Scope_Selector_Record)
+      return Gtk.Widget.Gtk_Widget
+   is
+     (null);
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   overriding procedure Initialize
+     (Selector : not null access Files_Extra_Scope_Record;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class) is
    begin
-      Extra := new Files_Extra_Scope_Record;
-      Files_Extra_Info_Pkg.Initialize (Extra, Kernel, 1);
+      Initialize (Simple_Scope_Selector_Record (Selector.all)'Access, Kernel);
 
-      Gtk_New (Label, -"In:");
-      Set_Alignment (Label, 0.0, 0.5);
-      Attach (Extra.Files_Table, Label, 0, 1, 0, 1, Fill, 0);
-
-      Gtk_New (Extra.Combo);
-      Initialize_Scope_Combo (Extra.Combo, Kernel);
-      Attach (Extra.Files_Table, Extra.Combo, 1, 2, 0, 1, Fill, 0);
+      Selector.File_Info_Widget := new Files_Extra_Info_Record;
+      Files_Extra_Info_Pkg.Initialize
+        (Selector.File_Info_Widget, Kernel, 1);
 
       Kernel_Callback.Connect
-        (Extra.Subdirs_Check, Signal_Toggled, Reset_Search'Access,
+        (Selector.File_Info_Widget.Subdirs_Check,
+         Signal_Toggled,
+         Reset_Search'Access,
          Kernel_Handle (Kernel));
       Kernel_Callback.Connect
-        (Extra.Files_Entry, Gtk.Editable.Signal_Changed, Reset_Search'Access,
+        (Selector.File_Info_Widget.Files_Entry,
+         Gtk.Editable.Signal_Changed,
+         Reset_Search'Access,
          Kernel_Handle (Kernel));
       Kernel_Callback.Connect
-        (Extra.Directory_Entry, Gtk.Editable.Signal_Changed,
-         Reset_Search'Access, Kernel_Handle (Kernel));
-   end Gtk_New;
+        (Selector.File_Info_Widget.Directory_Entry,
+         Gtk.Editable.Signal_Changed,
+         Reset_Search'Access,
+         Kernel_Handle (Kernel));
+   end Initialize;
+
+   -------------------------
+   -- Get_Optional_Widget --
+   -------------------------
+
+   overriding function Get_Optional_Widget
+     (Selector : not null access Files_Extra_Scope_Record)
+      return Gtk.Widget.Gtk_Widget
+   is
+      (Gtk_Widget (Selector.File_Info_Widget));
 
    ---------------------
    -- Context_Look_In --
