@@ -2562,6 +2562,8 @@ package body Vsearch is
    is
       pragma Unreferenced (Object);
    begin
+      --  Call this to avoid dangling pointers in View.Projects
+      Set_Selected_Project (Kernel, Kernel.Get_Current_Context);
       Search_Reset_Hook.Run (Kernel);
    end Reset_Search;
 
