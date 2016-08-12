@@ -23,7 +23,7 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
-NF-17-P803-016 GPS: Files view: wrong display for multi-drive projects (2016-08-08)
+NF-17-P803-016 GPS: wrong file view for multi-drive projects (2016-08-08)
 
   When the 'Show files from project only' option is enabled, the Files view now
   correctly displays the project files that reside on multiple logical drives.
@@ -537,4 +537,4 @@ NF-17-0000-001 GPS: Incompatible changes in Python API (2016-01-04)
   debugger_breakpoints_changed hook can receive a None debugger (2016-07-12)
 
     Breakpoints can be set before a debugger is started, but the hook is
-    still run. In this case, the debugger parameter is set to None
+    still run. In this case, the debugger parameter is set to None.
