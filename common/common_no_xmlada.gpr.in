@@ -1,4 +1,5 @@
 with "gnatcoll_sqlite.gpr";
+with "gnatcoll_xref.gpr";
 with "../shared";
 
 project Common is

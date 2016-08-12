@@ -45,6 +45,7 @@ project CLI is
          "gnatcoll_iconv", 
          "gnatcoll_python",
          "gnatcoll_sqlite",
+         "gnatcoll_xref",
          "templates_parser",
          "xmlada",
          "xmlada_sax",
