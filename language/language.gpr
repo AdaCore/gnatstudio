@@ -4,7 +4,6 @@
 with "../common/common";
 with "../shared";
 with "gnatcoll_sqlite";
-with "gnatcoll_xref";
 
 project Language is
 
