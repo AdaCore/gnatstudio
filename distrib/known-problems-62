@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P811-024 GPS: extraneous messages in clang live diagnostics
+
+  Problem:    When using C/C++ switches that are not supported by
+              libclang (the engine that GPS uses for C/C++ code intelligence),
+              these are reported as part of the Clang live diagnostics.
+
+  Status:     This was fixed in 17.0 on 2016-08-15
+
+  Workaround: None, but these warnings can be safely ignored.
+
 KP-62-P728-040 GPS: crash when using the omnisearch
 
   Problem:    When using the omnisearch, when the categories for "Sources" or
