@@ -54,7 +54,7 @@ class Clang(object):
             # has no file, it might be a config error (bad switch for example)
             # so we want to show it
             # ??? Did we mean 'name()' (or path) below, instead of just 'name'
-            if d.location.file and d.location.file.name != f.path:
+            if not d.location.file or d.location.file.name != f.path:
                 continue
             m = GPS.Message(
                 category="Clang live diagnostics",
