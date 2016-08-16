@@ -11,7 +11,7 @@ from workflows.promises import timeout, wait_idle, Promise, modal_dialog, \
     idle_modal_dialog, wait_tasks
 from pygps import get_stock_button, get_widget_by_name, WidgetTree, \
     get_button_from_label, get_widgets_by_type, select_combo, \
-    get_window_by_prefix
+    get_window_by_prefix, get_window_by_title
 import pygps.tree
 from pygps.tree import select_in_tree, click_in_tree
 import gps_utils
@@ -607,3 +607,16 @@ class Variables_View(Dialog):
             return result
 
         return internal(m.get_iter_first())
+
+
+##############
+# Custom Build
+##############
+
+class Custom_Build_Dialog(Dialog):
+    def open_and_yield(self):
+        yield self._open_and_yield("/Build/Project/Custom Build...")
+        self.dialog = get_window_by_title("Custom Build...")
+
+    def get_command_line_entry(self):
+        return get_widgets_by_type(Gtk.Entry, self.dialog)[0]
