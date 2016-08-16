@@ -398,7 +398,8 @@ package body Command_Lines is
                     (Is_Set    => True,
                      Separator => Switch_Conf.Parameter.Separator,
                      Value     => To_Unbounded_String
-                       (Arg (Arg'First + Length (Item.Switch) .. Arg'Last)));
+                       (Arg (Arg'First + Length (Item.Switch) + 1
+                             .. Arg'Last)));
 
                else
                   Item.Switch := Switch_Conf.Switch;
@@ -406,8 +407,7 @@ package body Command_Lines is
                     (Is_Set    => True,
                      Separator => (Is_Set => False),
                      Value     => To_Unbounded_String
-                       (Arg (Arg'First + Length (Item.Switch) - 1
-                             .. Arg'Last)));
+                       (Arg (Arg'First + Length (Item.Switch) .. Arg'Last)));
 
                end if;
 
