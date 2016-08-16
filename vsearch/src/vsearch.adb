@@ -1229,12 +1229,12 @@ package body Vsearch is
               Data.Selector.Get_Optional_Widget;
 
             Gtk_New (Vsearch.Scope_Separator_Label, "In:");
-            Vsearch.Scope_Selector_Box.Pack_Start
+            Vsearch.Scope_Selector_Box.Pack_End
               (Vsearch.Scope_Separator_Label,
                Expand  => False,
                Padding => 5);
 
-            Vsearch.Scope_Selector_Box.Pack_Start
+            Vsearch.Scope_Selector_Box.Pack_End
               (Vsearch.Scope_Selector_Combo,
                Expand => True,
                Fill   => True);
@@ -1834,7 +1834,7 @@ package body Vsearch is
 
       Gtk_New (Self.Context_Combo);
       Self.Context_Combo.Set_Tooltip_Text (-"The context of the search");
-      Self.Scope_Selector_Box.Pack_Start
+      Self.Scope_Selector_Box.Pack_End
         (Self.Context_Combo,
          Expand => True,
          Fill   => True);
