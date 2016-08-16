@@ -46,6 +46,7 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.List_Store;            use Gtk.List_Store;
+with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Selection_Data;        use Gtk.Selection_Data;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
@@ -97,28 +98,17 @@ package body Vsearch is
 
    Pattern_Hist_Key   : constant History_Key := "search_patterns";
    Replace_Hist_Key   : constant History_Key := "search_replace";
-   Select_On_Match_Hist_Key    : constant History_Key := "select_on_match";
-   Close_On_Match_Hist_Key     : constant History_Key := "close_on_match";
    --  The key for the histories.
 
    Last_Function_In_Module_Key : constant History_Key := "search_function_";
    --  The prefix used to store the name of the last search function used for
    --  each module. The name of the module is appended to form the real key.
 
+   Select_On_Match                  : Boolean_Preference;
+   Close_On_Match                   : Boolean_Preference;
    Ask_Confirmation_For_Replace_All : Boolean_Preference;
    Keep_Previous_Search_Context     : Boolean_Preference;
    --  The preferences
-
-   Close_On_Match_Description : constant String :=
-     -("If this is selected, the search dialog is closed when a match is"
-       & " found. You can still search for the next occurrence by using"
-       & " the appropriate shortcut (Ctrl-N by default)");
-
-   Select_On_Match_Description : constant String :=
-     -("When a match is found, give the focus to the matching editor. If"
-       & " unselected, the focus is left on the search window, which means"
-       & " you can keep typing Enter to go to the next search, but can't"
-       & " modify the editor directly");
 
    type Search_Regexp is record
       Name           : GNAT.Strings.String_Access;
@@ -178,6 +168,9 @@ package body Vsearch is
       --  the widget.
    end record;
 
+   overriding procedure Create_Menu
+     (View    : not null access Vsearch_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
    overriding procedure On_Create
      (Self  : not null access Vsearch_Record;
       Child : not null access GPS_MDI_Child_Record'Class);
@@ -197,7 +190,7 @@ package body Vsearch is
       Local_Toolbar          => False,
       Local_Config           => True,
       Position               => Position_Float,
-      Group                  => Group_View,
+      Group                  => Group_Consoles,
       Commands_Category      => "",  --  no automatic command
       MDI_Flags        => All_Buttons or Float_To_Main or Always_Destroy_Float,
       Areas                  => Sides_Only,
@@ -552,9 +545,6 @@ package body Vsearch is
         Search_Views.View_From_Child (Child);
    begin
       if Is_Floating (Child) then
-
-         Vsearch.Get_Toolbar.Show_All;
-
          if Vsearch.Scrolled /= null then
             Ref (Vsearch.Scrolled);
             Vsearch.Remove (Vsearch.Scrolled);
@@ -563,15 +553,7 @@ package body Vsearch is
             Vsearch.Scrolled := null;
          end if;
          Vsearch.Set_Border_Width (0);
-
-         Show_All (Vsearch.Auto_Hide_Check);
-         Set_Child_Visible (Vsearch.Auto_Hide_Check, True);
       else
-         --  Hide the toolbar, which only contains the local config
-         --  for "Unfloat"
-         Vsearch.Get_Toolbar.Hide;
-         Vsearch.Get_Toolbar.Set_No_Show_All (True);
-
          --  Create a scrolled window and put vsearch's content in it
          if Vsearch.Scrolled = null then
             Gtk_New (Vsearch.Scrolled);
@@ -583,9 +565,6 @@ package body Vsearch is
             Vsearch.Add (Vsearch.Scrolled);
             Unref (Vsearch.View);
          end if;
-
-         Hide (Vsearch.Auto_Hide_Check);
-         Set_Child_Visible (Vsearch.Auto_Hide_Check, False);
       end if;
    end On_Float;
 
@@ -909,9 +888,8 @@ package body Vsearch is
          if All_Occurrences then
             C := new Search_Command'
               (Interactive_Command with
-               Select_Editor_On_Match =>
-                 Vsearch.Select_Editor_Check.Get_Active,
-               Kernel           => Vsearch.Kernel,
+               Select_Editor_On_Match => Select_On_Match.Get_Pref,
+               Kernel            => Vsearch.Kernel,
                Search_Backward   => False,
                Context           => Ctxt,
                Context_Is_Owned  => True,  --  command will free context
@@ -925,7 +903,7 @@ package body Vsearch is
               (Ctxt,
                Vsearch.Kernel,
                Search_Backward => False,
-               Give_Focus      => Get_Active (Vsearch.Select_Editor_Check),
+               Give_Focus      => Select_On_Match.Get_Pref,
                Found           => Found,
                Continue        => Has_Next);
 
@@ -968,8 +946,8 @@ package body Vsearch is
 
       if not Replace
         and then Vsearch.Get_Realized
-        and then Get_Child_Visible (Vsearch.Auto_Hide_Check)
-        and then Get_Active (Vsearch.Auto_Hide_Check)
+        and then Is_Floating (Search_Views.Child_From_View (Vsearch))
+        and then Close_On_Match.Get_Pref
       then
          Search_Views.Close (Vsearch.Kernel);
       end if;
@@ -1006,7 +984,7 @@ package body Vsearch is
            (Ctxt,
             Vsearch.Kernel,
             Search_Backward => True,
-            Give_Focus      => Vsearch.Select_Editor_Check.Get_Active,
+            Give_Focus      => Select_On_Match.Get_Pref,
             Found           => Found,
             Continue        => Has_Next);
 
@@ -1147,9 +1125,8 @@ package body Vsearch is
          Context                => Ctxt,
          Context_Is_Owned       => All_Occurrences,  --  command will free ctxt
          Kernel                 => Vsearch.Kernel,
-         Select_Editor_On_Match =>
-           Vsearch.Select_Editor_Check.Get_Active,
          Case_Preserving        => Vsearch.Case_Preserving_Replace.Get_Active,
+         Select_Editor_On_Match => Select_On_Match.Get_Pref,
          Found                  => False,
          Replace_With           =>
             new String'(Get_Active_Text (Vsearch.Replace_Combo)));
@@ -1789,16 +1766,6 @@ package body Vsearch is
          Self.Case_Check, Default => False);
       Self.Options_Vbox.Attach (Self.Case_Check, 0, 1, 2, 3);
 
-      Gtk_New (Self.Select_Editor_Check, -"Select on Match");
-      Self.Select_Editor_Check.Set_Tooltip_Text
-        (Select_On_Match_Description);
-      Associate
-        (Hist   => Get_History (Self.Kernel).all,
-         Key    => Select_On_Match_Hist_Key,
-         Button => Self.Select_Editor_Check,
-         Default => True);
-      Self.Options_Vbox.Attach (Self.Select_Editor_Check, 1, 2, 0, 1);
-
       Gtk_New (Self.Case_Preserving_Replace, -"Preserve Casing");
       Self.Case_Preserving_Replace.Set_Tooltip_Text
         (-"Select this to preserve original word casing when replacing");
@@ -1809,15 +1776,6 @@ package body Vsearch is
          Self.Case_Preserving_Replace, Default => True);
       Self.Options_Vbox.Attach (Self.Case_Preserving_Replace, 1, 2, 1, 2);
       Self.Case_Preserving_Replace.Set_Sensitive (False);
-
-      Gtk_New (Self.Auto_Hide_Check, -"Close on Match");
-      Self.Auto_Hide_Check.Set_Tooltip_Text (-Close_On_Match_Description);
-      Associate
-        (Hist    => Get_History (Self.Kernel).all,
-         Key     => Close_On_Match_Hist_Key,
-         Default => False,
-         Button  => Self.Auto_Hide_Check);
-      Self.Options_Vbox.Attach (Self.Auto_Hide_Check,  1, 2, 2, 3);
 
       --  Context specific search
 
@@ -1930,6 +1888,24 @@ package body Vsearch is
          Set_Active_Text (View.Pattern_Combo, Text);
       end if;
    end Receive_Text;
+
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   overriding procedure Create_Menu
+     (View    : not null access Vsearch_Record;
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
+   begin
+      Append_Menu
+        (Menu,
+         Kernel => View.Kernel,
+         Pref   => Close_On_Match);
+      Append_Menu
+        (Menu,
+         Kernel => View.Kernel,
+         Pref   => Select_On_Match);
+   end Create_Menu;
 
    ---------------
    -- On_Create --
@@ -2601,6 +2577,29 @@ package body Vsearch is
    procedure Register_Preferences
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
+      Select_On_Match := Create
+        (Get_Preferences (Kernel),
+         Name    => "Search-Select-On-Match",
+         Label   => -"Select on match",
+         Path    => -":Search",
+         Doc     =>
+           -"When a match is found, give the focus to the matching editor. If"
+         & " unselected, the focus is left on the search window, which means"
+         & " you can keep typing Enter to go to the next search, but can't"
+         & " modify the editor directly",
+         Default => False);
+
+      Close_On_Match := Create
+        (Get_Preferences (Kernel),
+         Name    => "Search-Close-On-Match",
+         Label   => -"Close on match",
+         Path    => -":Search",
+         Doc     =>
+           -"If this is selected, the search dialog is closed when a match is"
+         & " found. You can still search for the next occurrence by using"
+         & " the appropriate shortcut (Ctrl-N by default)",
+         Default => False);
+
       Ask_Confirmation_For_Replace_All := Create
         (Get_Preferences (Kernel),
          Name  => "Ask-Confirmation-For-Replace-All",

@@ -397,13 +397,10 @@ class Search(Dialog):
             self.look_in = combos[3] if len(combos) >= 4 else combos[2]
             self.previous = get_button_from_label("Previous", self.dialog)
 
-            checks = get_widgets_by_type(Gtk.CheckButton, self.dialog)
-            self.regexp = checks[5]
-            self.whole_word = checks[4]
-            self.case = checks[3]
-            self.select_on_match = checks[2]
-            self.case_preserving = checks[1]
-            self.close_on_match = checks[0]
+            toggle_buttons = get_widgets_by_type(Gtk.ToggleButton, self.dialog)
+            self.regexp = toggle_buttons[0]
+            self.case = toggle_buttons[1]
+            self.whole_word = toggle_buttons[2]
 
     def current_scope(self):
         """
