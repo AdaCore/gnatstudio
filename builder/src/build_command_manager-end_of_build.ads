@@ -49,8 +49,9 @@ private
    end record;
 
    type Parser is new Tools_Output_Parser with record
-      Builder : Builder_Context;
-      Build   : Build_Information;
+      Builder    : Builder_Context;
+      Build      : Build_Information;
+      Force_File : Virtual_File;
    end record;
 
 end Build_Command_Manager.End_Of_Build;

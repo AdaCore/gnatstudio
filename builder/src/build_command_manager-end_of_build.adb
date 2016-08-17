@@ -19,8 +19,10 @@ with GPS.Intl;                         use GPS.Intl;
 with GPS.Kernel;                       use GPS.Kernel;
 with GPS.Kernel.Hooks;                 use GPS.Kernel.Hooks;
 with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
+with GPS.Location_View;
 with GPS.Main_Window;                  use GPS.Main_Window;
 with Build_Configurations;             use Build_Configurations;
+with Commands.Builder;
 with Extending_Environments;           use Extending_Environments;
 with Remote;                           use Remote;
 with Build_Configurations.Gtkada;      use Build_Configurations.Gtkada;
@@ -225,7 +227,8 @@ package body Build_Command_Manager.End_Of_Build is
       Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access
    is
-      Build  : Build_Information := Self.Builder.Get_Last_Build;
+      Build      : Build_Information := Self.Builder.Get_Last_Build;
+      Force_File : Virtual_File;
    begin
       Expand_Command_Line (Self.Builder, Build);
 
@@ -243,12 +246,18 @@ package body Build_Command_Manager.End_Of_Build is
             Background => Build.Background);
       end if;
 
+      Force_File := Self.Builder.Get_Last_Build.Force_File;
+      if Force_File = No_File then
+         Force_File := Build.Force_File;
+      end if;
+
       --  Update Builder.Last_Build with new Full expanded command line
       Self.Builder.Set_Last_Build (Build);
 
-      return new Parser'(Child   => Child,
-                         Builder => Self.Builder,
-                         Build   => Self.Builder.Get_Last_Build);
+      return new Parser'(Child      => Child,
+                         Builder    => Self.Builder,
+                         Build      => Self.Builder.Get_Last_Build,
+                         Force_File => Force_File);
    end Create;
 
    ---------
@@ -319,6 +328,21 @@ package body Build_Command_Manager.End_Of_Build is
          Self.Build.Shadow,
          Self.Build.Background,
          Status);
+
+      --  Reopen Locations view for same file
+      if Self.Force_File /= No_File
+        and then Get_Messages
+          (Get_Messages_Container (Kernel),
+           Ada.Strings.Unbounded.To_Unbounded_String
+             (Commands.Builder.Error_Category),
+           Self.Force_File)'Length > 0
+      then
+         GPS.Location_View.Expand_File
+           (GPS.Location_View.Get_Or_Create_Location_View (Kernel),
+            Commands.Builder.Error_Category,
+            Self.Force_File, True);
+         GPS.Location_View.Raise_Locations_Window (Kernel);
+      end if;
    end End_Of_Stream;
 
 end Build_Command_Manager.End_Of_Build;

@@ -204,8 +204,16 @@ package body Build_Command_Manager is
    overriding
    procedure Remove_Error_Builder_Message_From_File
      (Adapter : Build_Command_Adapter;
-      File     : Virtual_File) is
+      File     : Virtual_File)
+   is
+      Build : Build_Information := Adapter.Builder.Get_Last_Build;
    begin
+      --  Store info about compiling file in build information
+      if Build.Force_File = No_File then
+         Build.Force_File := File;
+         Adapter.Builder.Set_Last_Build (Build);
+      end if;
+
       Get_Messages_Container
         (Kernel_Handle (Adapter.Builder.Kernel)).Remove_File
           (Commands.Builder.Error_Category, File, Builder_Message_Flags);

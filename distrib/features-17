@@ -480,6 +480,12 @@ NF-17-N714-016 GPS: configurable window title (2015-11-05)
   the GPS window. Through it, you can chose whether to display any of base
   names, directory names, project name,... in the title bar.
 
+NF-17-JA31-005 GPS: preserve more build errors after recompiling (2016-08-17)
+
+  When the Locations view contains build errors, and one of the files is
+  being recompiled, the Locations view will now only update the entries
+  for that file, rather than removing all build errors.
+
 NF-17-J810-010 GPS: use Gtk dialog for open/save files (2016-04-15)
 
   GtkFileChooserDialog used instead dialog of GPS if system doesn't have

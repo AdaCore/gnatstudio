@@ -949,7 +949,6 @@ package body Builder_Facility_Module is
       Background      : Boolean)
    is
       Console : Interactive_Console;
-
    begin
       if Clear_Console then
          Console := Get_Build_Console (Kernel, Shadow, Background, False);
@@ -961,6 +960,9 @@ package body Builder_Facility_Module is
 
       if Clear_Locations
         and then not Background
+      --  Do not remove previous results when compile one file
+      --  to save messages from other files
+        and then Builder_Module_ID.Builder.Get_Last_Build.Force_File = No_File
       then
          Get_Messages_Container (Kernel).Remove_Category
            (Category, Builder_Message_Flags);
