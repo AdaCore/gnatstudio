@@ -2140,6 +2140,10 @@ package body Vsearch is
       Set : File_Info_Set;
       Idx : Integer;
    begin
+      if View = null then
+         return;
+      end if;
+
       Free (View.Projects);
 
       if Has_Project_Information (Context) then
