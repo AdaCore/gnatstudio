@@ -28,6 +28,7 @@ with Glib.Properties;      use Glib.Properties;
 with GNAT.Strings;         use GNAT.Strings;
 with GNATCOLL.Traces;      use GNATCOLL.Traces;
 with Gtkada.Handlers;      use Gtkada.Handlers;
+with Gtk.Accel_Group;      use Gtk.Accel_Group;
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Label;            use Gtk.Label;
 with Gtk.Main;
@@ -422,7 +423,7 @@ package body Tooltips is
 
         --  Only if the user doesn't have the mouse button pressed, or a key
         --  press (since otherwise we might be in a drag-and-drop operation)
-        and then Event.Motion.State = 0
+        and then (Event.Motion.State and Get_Default_Mod_Mask) = 0
 
         and then
           (Widget.all in Gtk_Menu_Item_Record'Class
