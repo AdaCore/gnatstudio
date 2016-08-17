@@ -91,7 +91,7 @@ def mc_all_entity_references():
             ploc = loc.forward_char(-1)
             # If we are really not in an identifier, exit
             if not id_pattern.match(ploc.get_char()):
-                return
+                return None, None
             else:
                 loc_id_end = ploc
 
@@ -100,7 +100,11 @@ def mc_all_entity_references():
     editor = GPS.EditorBuffer.get()
     marks = []
     loc = editor.current_view().cursor()
+
     loc_id_start, loc_id_end = get_word_bounds(loc)
+    if not loc_id_start or not loc_id_end:
+        return
+
     identifier = editor.get_chars(loc_id_start, loc_id_end)
 
     try:
