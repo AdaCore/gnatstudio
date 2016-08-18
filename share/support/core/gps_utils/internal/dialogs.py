@@ -394,7 +394,7 @@ class Search(Dialog):
                 "search scope combo", self.dialog)
             self.pattern = combos[0].get_child()
             self.replace_text = combos[1].get_child()
-            self.look_in = combos[3] if len(combos) >= 4 else combos[2]
+            self.look_in = combos[2]
             self.previous = get_button_from_label("Previous", self.dialog)
 
             checks = get_widgets_by_type(Gtk.CheckButton, self.dialog)
