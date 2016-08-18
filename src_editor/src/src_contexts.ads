@@ -16,36 +16,45 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded;
-with GNAT.Regexp;
-with GNATCOLL.VFS;          use GNATCOLL.VFS;
-
-with Gtk.Combo_Box_Text;
-with Gtk.Text_Iter;
-with Gtk.Text_Mark;         use Gtk.Text_Mark;
-with Gtk.Widget;
-
-with Basic_Types;           use Basic_Types;
+with Basic_Types;                   use Basic_Types;
 with Files_Extra_Info_Pkg;
-with Find_Utils;            use Find_Utils;
-with Generic_List;
-with GPS.Editors;           use GPS.Editors;
+with Find_Utils;                    use Find_Utils;
+with GNAT.Regexp;
+with GNATCOLL.VFS;                  use GNATCOLL.VFS;
+with GPS.Editors;                   use GPS.Editors;
 with GPS.Kernel;
 with GPS.Search;
-with GPS.Search.Replaces;   use GPS.Search.Replaces;
+with Generic_List;
+with Gtk.Box;
+with Gtk.Combo_Box_Text;
+with Gtk.Text_Iter;
+with Gtk.Text_Mark;                 use Gtk.Text_Mark;
+with Gtk.Widget;
 with Language_Handlers;
+with GPS.Search.Replaces;           use GPS.Search.Replaces;
 
 package Src_Contexts is
 
-   type Simple_Scope_Selector_Record is
-     new Scope_Selector_Interface with private;
-   type Simple_Scope_Selector is access all Simple_Scope_Selector_Record'Class;
-   --  Type used to create a simple scope selector widget
+   type Scope_Selector_Record is new Gtk.Box.Gtk_Box_Record with private;
+   type Scope_Selector is access all Scope_Selector_Record'Class;
+   --  The widget used to ask the extra information for the search algorithms
+   --  in source files
 
-   type Files_Extra_Scope_Record is
-     new Simple_Scope_Selector_Record with private;
+   procedure Gtk_New
+     (Selector : out Scope_Selector;
+      Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Create a new scope selector
+
+   type Files_Extra_Scope_Record is new
+     Files_Extra_Info_Pkg.Files_Extra_Info_Record with private;
    type Files_Extra_Scope is access all Files_Extra_Scope_Record'Class;
-   --  Type used to create a scope selector widget with advanced options
-   --  regarding files.
+   --  A widget that groups the Files_Extra_Info widget and a combo box to
+   --  select the scope
+
+   procedure Gtk_New
+     (Extra  : out Files_Extra_Scope;
+      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Create a new widget
 
    type Search_Scope is
      (Whole,
@@ -78,7 +87,7 @@ package Src_Contexts is
    function Current_File_Factory
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences   : Boolean;
-      Selector : Scope_Selector)
+      Extra_Information : Gtk.Widget.Gtk_Widget)
       return Root_Search_Context_Access;
    --  Factory for "Current File". A Files_Project_Context is returned if
    --  searching for All_Occurrences
@@ -150,9 +159,9 @@ package Src_Contexts is
      (Self : Current_Selection_Context) return String;
 
    function Current_Selection_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
       return Root_Search_Context_Access;
    --  Factory for "Current Selection".
 
@@ -221,9 +230,9 @@ package Src_Contexts is
    --  Set the list of files to search
 
    function Files_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences    : Boolean;
+      Extra_Information  : Gtk.Widget.Gtk_Widget)
       return Root_Search_Context_Access;
    --  Factory for "Files..."
 
@@ -267,9 +276,9 @@ package Src_Contexts is
    --  longer needs it.
 
    function Files_From_Project_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
       return Root_Search_Context_Access;
    --  Factory for "Files From Project".
    --  The list of files is automatically set to the files of the root project
@@ -282,9 +291,9 @@ package Src_Contexts is
    --  No file is set, you need to call Set_File_List explicitely
 
    function Files_From_Root_Project_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
       return Root_Search_Context_Access;
    --  Factory for "Files From Current Project".
    --  The list of files is automatically set to the files of the root project
@@ -305,9 +314,9 @@ package Src_Contexts is
      (Self : Runtime_Files_Context) return String;
 
    function Files_From_Runtime_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
       return Root_Search_Context_Access;
    --  Factory for "Files From Runtime".
    --  The list of files is automatically set to the *.ads files from
@@ -341,9 +350,9 @@ package Src_Contexts is
    --  longer needs it.
 
    function Open_Files_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
+     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
       return Root_Search_Context_Access;
    --  Factory for "Open Files".
    --  The list of files is automatically set to the currently opend files
@@ -501,32 +510,15 @@ private
    procedure Move_To_First_File (Context : access Open_Files_Context);
    overriding procedure Free (Context : in out Open_Files_Context);
 
-   type Simple_Scope_Selector_Record is
-     new  Scope_Selector_Interface with record
+   type Scope_Selector_Record is new Gtk.Box.Gtk_Box_Record with record
       Combo : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
    end record;
 
-   overriding procedure Initialize
-     (Selector : not null access Simple_Scope_Selector_Record;
-      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class);
-   overriding function Get_Scope_Combo
-     (Selector : not null access Simple_Scope_Selector_Record)
-      return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
-   overriding function Get_Optional_Widget
-     (Selector : not null access Simple_Scope_Selector_Record)
-      return Gtk.Widget.Gtk_Widget;
-
-   type Files_Extra_Scope_Record is
-     new Simple_Scope_Selector_Record with record
-      File_Info_Widget : Files_Extra_Info_Pkg.Files_Extra_Info_Access;
+   type Files_Extra_Scope_Record is new
+     Files_Extra_Info_Pkg.Files_Extra_Info_Record with
+   record
+      Combo : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;
    end record;
-
-   overriding procedure Initialize
-     (Selector : not null access Files_Extra_Scope_Record;
-      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class);
-   overriding function Get_Optional_Widget
-     (Selector : not null access Files_Extra_Scope_Record)
-      return Gtk.Widget.Gtk_Widget;
 
    type Runtime_Files_Context is new Files_Project_Context with null record;
 

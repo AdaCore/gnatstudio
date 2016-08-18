@@ -44,12 +44,10 @@
 --    undefined behavior.
 --  * Allowed chars in a word are found in g-regpat.ads.
 
-with Gtk.Combo_Box_Text;
-with Gtk.Widget;
-
-with Basic_Types; use Basic_Types;
 with GPS.Kernel;
-with GPS.Search;  use GPS.Search;
+with GPS.Search;    use GPS.Search;
+with Gtk.Widget;
+with Basic_Types; use Basic_Types;
 
 package Find_Utils is
 
@@ -222,31 +220,10 @@ package Find_Utils is
    -- Searching --
    ---------------
 
-   type Scope_Selector_Interface is interface;
-   type Scope_Selector is access all Scope_Selector_Interface'Class;
-   --  Interface defining a common API for both simple scope selectors and
-   --  the advanced ones (e.g: the ones asking for a specific set of files).
-
-   procedure Initialize
-     (Selector : not null access Scope_Selector_Interface;
-      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class)
-   is abstract;
-   --  Initialize the Selector's widgets
-
-   function Get_Scope_Combo
-     (Selector : not null access Scope_Selector_Interface)
-      return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text is abstract;
-   --  Return the Selector's scope combo widget
-
-   function Get_Optional_Widget
-     (Selector : not null access Scope_Selector_Interface)
-      return Gtk.Widget.Gtk_Widget is abstract;
-   --  Return the Selector's optional widget container
-
    type Module_Search_Context_Factory is access function
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
+     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences    : Boolean;
+      Extra_Information  : Gtk.Widget.Gtk_Widget)
       return Root_Search_Context_Access;
    --  Function called to create the search context.
    --  It should return null if it couldn't create the context, and thus if the
