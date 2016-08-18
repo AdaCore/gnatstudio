@@ -51,7 +51,8 @@ with Gtk.Selection_Data;        use Gtk.Selection_Data;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_View;             use Gtk.Text_View;
-with Gtk.Toggle_Button;         use Gtk.Toggle_Button;
+with Gtk.Toggle_Tool_Button;    use Gtk.Toggle_Tool_Button;
+with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Box;                   use Gtk.Box;
@@ -139,11 +140,9 @@ package body Vsearch is
       Scope_Separator_Label   : Gtk_Label;
       Scope_Selector_Optional : Gtk_Widget;
       Select_Editor_Check     : Gtk_Check_Button;
-      Case_Check              : Gtk_Check_Button;
-      Case_Preserving_Replace : Gtk_Check_Button;
-      Whole_Word_Check        : Gtk_Check_Button;
-      Auto_Hide_Check         : Gtk_Check_Button;
-      Regexp_Check            : Gtk_Check_Button;
+      Case_Toggle             : Gtk_Toggle_Tool_Button;
+      Whole_Word_Toggle       : Gtk_Toggle_Tool_Button;
+      Regexp_Toggle           : Gtk_Toggle_Tool_Button;
       Search_Next_Button      : Gtk.Button.Gtk_Button;
       Replace_Button          : Gtk.Button.Gtk_Button;
       Replace_Search_Button   : Gtk.Button.Gtk_Button;
@@ -168,6 +167,9 @@ package body Vsearch is
       --  the widget.
    end record;
 
+   overriding procedure Create_Toolbar
+     (View    : not null access Vsearch_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
    overriding procedure Create_Menu
      (View    : not null access Vsearch_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
@@ -187,7 +189,7 @@ package body Vsearch is
       Reuse_If_Exist         => True,
       Hide_Rather_Than_Close => True,
       Initialize             => Initialize,
-      Local_Toolbar          => False,
+      Local_Toolbar          => True,
       Local_Config           => True,
       Position               => Position_Float,
       Group                  => Group_Consoles,
@@ -766,16 +768,23 @@ package body Vsearch is
       return Find_Utils.Root_Search_Context_Access
    is
       use Widget_List;
-      Data    : constant Search_Module_Data :=
-                  Find_Module
-                    (Vsearch.Kernel, Get_Active_Id (Vsearch.Context_Combo));
-      Pattern : constant String := Get_Active_Text (Vsearch.Pattern_Combo);
-      Replace_Text : constant String :=
-        Get_Active_Text (Vsearch.Replace_Combo);
-      Whole_Word   : constant Boolean := Get_Active (Vsearch.Whole_Word_Check);
-      Case_Sensitive : constant Boolean := Get_Active (Vsearch.Case_Check);
-      Kind : constant GPS.Search.Search_Kind :=
-        (if Get_Active (Vsearch.Regexp_Check) then Regexp else Full_Text);
+      Data           : constant Search_Module_Data :=
+                         Find_Module
+                           (Vsearch.Kernel,
+                            Get_Active_Id (Vsearch.Context_Combo));
+      Pattern        : constant String :=
+                         Get_Active_Text (Vsearch.Pattern_Combo);
+      Replace_Text   : constant String :=
+                         Get_Active_Text (Vsearch.Replace_Combo);
+      Whole_Word     : constant Boolean :=
+                         Get_Active (Vsearch.Whole_Word_Toggle);
+      Case_Sensitive : constant Boolean :=
+                         Get_Active (Vsearch.Case_Toggle);
+      Kind           : constant GPS.Search.Search_Kind :=
+                         (if Get_Active (Vsearch.Regexp_Toggle) then
+                             Regexp
+                          else
+                             Full_Text);
       Ctxt : Root_Search_Context_Access;
    begin
       if Data.Factory /= null and then Pattern /= "" then
@@ -808,9 +817,9 @@ package body Vsearch is
       --  reason. This also resets the options to the unwanted selection,
       --  so we also need to override them.
       Set_Active_Text (Vsearch.Pattern_Combo, Pattern);
-      Vsearch.Case_Check.Set_Active (Case_Sensitive);
-      Vsearch.Whole_Word_Check.Set_Active (Whole_Word);
-      Vsearch.Regexp_Check.Set_Active (Kind = Regexp);
+      Vsearch.Case_Toggle.Set_Active (Case_Sensitive);
+      Vsearch.Whole_Word_Toggle.Set_Active (Whole_Word);
+      Vsearch.Regexp_Toggle.Set_Active (Kind = Regexp);
 
       Add_Unique_Combo_Entry
         (Vsearch.Replace_Combo, Replace_Text, Prepend => True);
@@ -1161,17 +1170,17 @@ package body Vsearch is
          end if;
 
          if (Data.Mask and Case_Sensitive) = 0 then
-            Set_Active (Vsearch.Case_Check, False);
+            Set_Active (Vsearch.Case_Toggle, False);
          end if;
 
          if (Data.Mask and Whole_Word) = 0 then
-            Set_Active (Vsearch.Whole_Word_Check, False);
+            Set_Active (Vsearch.Whole_Word_Toggle, False);
          end if;
 
          Set_Sensitive
-           (Vsearch.Case_Check, (Data.Mask and Case_Sensitive) /= 0);
+           (Vsearch.Case_Toggle, (Data.Mask and Case_Sensitive) /= 0);
          Set_Sensitive
-           (Vsearch.Whole_Word_Check, (Data.Mask and Whole_Word) /= 0);
+           (Vsearch.Whole_Word_Toggle, (Data.Mask and Whole_Word) /= 0);
          Set_Sensitive (Vsearch.Search_Previous_Button,
                         (Data.Mask and Search_Backward) /= 0);
 
@@ -1394,9 +1403,9 @@ package body Vsearch is
          Whole_Word := Get_Boolean
            (Search.Pattern_Combo.Get_Model, Iter, Column_Whole_Word);
 
-         Set_Active (Search.Case_Check, Case_Sensitive);
-         Set_Active (Search.Regexp_Check, Is_Regexp);
-         Set_Active (Search.Whole_Word_Check, Whole_Word);
+         Set_Active (Search.Case_Toggle, Case_Sensitive);
+         Set_Active (Search.Regexp_Toggle, Is_Regexp);
+         Set_Active (Search.Whole_Word_Toggle, Whole_Word);
       end if;
 
    exception
@@ -1416,9 +1425,9 @@ package body Vsearch is
       Search : constant Vsearch_Access := Search_Views.Retrieve_View (Kernel);
       Item    : Gtk_Tree_Iter;
       List    : Gtk_List_Store;
-      Casing     : constant Boolean := Get_Active (Search.Case_Check);
-      Whole_Word : constant Boolean := Get_Active (Search.Whole_Word_Check);
-      Regexp     : constant Boolean := Get_Active (Search.Regexp_Check);
+      Casing     : constant Boolean := Get_Active (Search.Case_Toggle);
+      Whole_Word : constant Boolean := Get_Active (Search.Whole_Word_Toggle);
+      Regexp     : constant Boolean := Get_Active (Search.Regexp_Toggle);
 
    begin
       for R of Vsearch_Module_Id.Search_Regexps.all loop
@@ -1433,9 +1442,9 @@ package body Vsearch is
       --  Restore the options as before (they might have changed depending
       --  on the last predefined regexp we inserted)
 
-      Set_Active (Search.Case_Check, Casing);
-      Set_Active (Search.Whole_Word_Check, Whole_Word);
-      Set_Active (Search.Regexp_Check, Regexp);
+      Set_Active (Search.Case_Toggle, Casing);
+      Set_Active (Search.Whole_Word_Toggle, Whole_Word);
+      Set_Active (Search.Regexp_Toggle, Regexp);
    end Execute;
 
    ---------------------------
@@ -1580,7 +1589,6 @@ package body Vsearch is
       Layout      : Gtk_Cell_Layout;
       Renderer    : Gtk_Cell_Renderer_Text;
       Value       : String_List_Access;
-      Options_Box : Gtk_Frame;
       Scope_Box   : Gtk_Frame;
       Alignment   : Gtk_Alignment;
       Model       : Gtk_List_Store;
@@ -1718,50 +1726,6 @@ package body Vsearch is
         (Self.Replace_All_Button, Signal_Clicked,
          On_Replace_All'Access, Self);
 
-      --  Main (fixed) options
-
-      Gtk_New (Options_Box, -"Options");
-      Self.Main.Pack_Start (Options_Box, False, False, 2);
-
-      Gtk_New_Vbox (Self.Options_Frame, Homogeneous => False);
-      Self.Options_Frame.Set_Border_Width (4);
-      Options_Box.Add (Self.Options_Frame);
-
-      Gtk_New (Self.Options_Vbox, 4, 2, False);
-      Self.Options_Frame.Pack_Start (Self.Options_Vbox);
-
-      Gtk_New (Self.Regexp_Check, -"Regexp");
-      Self.Regexp_Check.Set_Tooltip_Text
-        (-"The pattern is a regular expression");
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Self.Kernel).all, "regexp_search", False);
-      Associate
-        (Get_History (Self.Kernel).all, "regexp_search", Self.Regexp_Check,
-         Default => False);
-      Self.Options_Vbox.Attach (Self.Regexp_Check, 0, 1, 0, 1);
-
-      Gtk_New (Self.Whole_Word_Check, -"Whole Word");
-      Self.Whole_Word_Check.Set_Tooltip_Text
-        (-("Select this if the pattern should only match a whole word, never"
-           & " part of a word"));
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Self.Kernel).all, "whole_word_search", False);
-      Associate
-        (Get_History (Self.Kernel).all, "whole_word_search",
-         Self.Whole_Word_Check, Default => False);
-      Self.Options_Vbox.Attach (Self.Whole_Word_Check, 0, 1, 1, 2);
-
-      Gtk_New (Self.Case_Check, -"Case Sensitive");
-      Self.Case_Check.Set_Tooltip_Text
-        (-("Select this to differenciate upper from lower casing in search"
-           & " results"));
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Self.Kernel).all, "case_sensitive_search", False);
-      Associate
-        (Get_History (Self.Kernel).all, "case_sensitive_search",
-         Self.Case_Check, Default => False);
-      Self.Options_Vbox.Attach (Self.Case_Check, 0, 1, 2, 3);
-
       --  Context specific search
 
       Gtk_New (Scope_Box, -"Scope");
@@ -1806,21 +1770,6 @@ package body Vsearch is
       Kernel_Callback.Connect
         (Self.Context_Combo, Gtk.Combo_Box.Signal_Changed,
          Reset_Search'Access, Self.Kernel);
-      Kernel_Callback.Connect
-        (Self.Case_Check,
-         Gtk.Toggle_Button.Signal_Toggled, Reset_Search'Access, Self.Kernel);
-      Kernel_Callback.Connect
-        (Self.Whole_Word_Check, Gtk.Toggle_Button.Signal_Toggled,
-         Reset_Search'Access, Self.Kernel);
-      Kernel_Callback.Connect
-        (Self.Regexp_Check,
-         Gtk.Toggle_Button.Signal_Toggled, Reset_Search'Access, Self.Kernel);
-
-      --  Include all the patterns that have been predefined so far, and make
-      --  sure that new patterns will be automatically added.
-      Widget_Callback.Object_Connect
-        (Self.Pattern_Combo, Gtk.Combo_Box.Signal_Changed,
-         Selection_Changed'Access, Self);
 
       --  Fill the replace combo first, so that the selection remains in
       --  the pattern combo
@@ -1870,6 +1819,73 @@ package body Vsearch is
          Set_Active_Text (View.Pattern_Combo, Text);
       end if;
    end Receive_Text;
+
+   --------------------
+   -- Create_Toolbar --
+   --------------------
+
+   overriding procedure Create_Toolbar
+     (View    : not null access Vsearch_Record;
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
+   is
+
+   begin
+      Gtk_New (View.Regexp_Toggle);
+      View.Regexp_Toggle.Set_Icon_Name ("gps-regexp-symbolic");
+      View.Regexp_Toggle.Set_Tooltip_Text
+        (-"The pattern is a regular expression");
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (View.Kernel).all, "regexp_search", False);
+      Associate
+        (Get_History (View.Kernel).all, "regexp_search", View.Regexp_Toggle,
+         Default => False);
+      Kernel_Callback.Connect
+        (View.Regexp_Toggle,
+         Gtk.Toggle_Tool_Button.Signal_Toggled,
+         Reset_Search'Access,
+         View.Kernel);
+      Toolbar.Insert (View.Regexp_Toggle);
+
+      Gtk_New (View.Case_Toggle);
+      View.Case_Toggle.Set_Icon_Name ("gps-case-sensitive-symbolic");
+      View.Case_Toggle.Set_Tooltip_Text
+        (-("Select this to differenciate upper from lower casing in search"
+         & " results"));
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (View.Kernel).all, "case_sensitive_search", False);
+      Associate
+        (Get_History (View.Kernel).all, "case_sensitive_search",
+         View.Case_Toggle, Default => False);
+      Kernel_Callback.Connect
+        (View.Case_Toggle,
+         Gtk.Toggle_Tool_Button.Signal_Toggled,
+         Reset_Search'Access,
+         View.Kernel);
+      Toolbar.Insert (View.Case_Toggle);
+
+      Gtk_New (View.Whole_Word_Toggle);
+      View.Whole_Word_Toggle.Set_Icon_Name ("gps-whole-word-symbolic");
+      View.Whole_Word_Toggle.Set_Tooltip_Text
+        (-("Select this if the pattern should only match a whole word, never"
+         & " part of a word"));
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (View.Kernel).all, "whole_word_search", False);
+      Associate
+        (Get_History (View.Kernel).all, "whole_word_search",
+         View.Whole_Word_Toggle, Default => False);
+      Kernel_Callback.Connect
+        (View.Whole_Word_Toggle,
+         Gtk.Toggle_Tool_Button.Signal_Toggled,
+         Reset_Search'Access,
+         View.Kernel);
+      Toolbar.Insert (View.Whole_Word_Toggle);
+
+      --  Include all the patterns that have been predefined so far, and make
+      --  sure that new patterns will be automatically added.
+      Widget_Callback.Object_Connect
+        (View.Pattern_Combo, Gtk.Combo_Box.Signal_Changed,
+         Selection_Changed'Access, View);
+   end Create_Toolbar;
 
    -----------------
    -- Create_Menu --
