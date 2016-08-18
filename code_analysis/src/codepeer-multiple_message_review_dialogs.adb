@@ -44,6 +44,8 @@ with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.MDI;
 with GPS.Dialogs;
 
+with Glib_Values_Utils;        use Glib_Values_Utils;
+
 package body CodePeer.Multiple_Message_Review_Dialogs is
 
    Messages_Model_Ranking_Column  : constant := 0;
@@ -139,63 +141,6 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       Dummy_I       : Glib.Gint;
       pragma Warnings (Off, Dummy_I);
 
-      function Ranking_Image
-        (Probability : CodePeer.Message_Ranking_Level) return String;
-
-      function Status_Image (Status : Audit_Status_Kinds) return String;
-
-      -------------------
-      -- Ranking_Image --
-      -------------------
-
-      function Ranking_Image
-        (Probability : CodePeer.Message_Ranking_Level) return String is
-      begin
-         case Probability is
-            when CodePeer.Info =>
-               return "Info";
-
-            when CodePeer.Low =>
-               return "Low";
-
-            when CodePeer.Medium =>
-               return "Medium";
-
-            when CodePeer.High =>
-               return "High";
-
-            when CodePeer.Suppressed =>
-               return "Suppressed";
-         end case;
-      end Ranking_Image;
-
-      ------------------
-      -- Status_Image --
-      ------------------
-
-      function Status_Image (Status : Audit_Status_Kinds) return String is
-      begin
-         case Status is
-            when Unclassified =>
-               return "Unclassified";
-
-            when Pending =>
-               return "Pending";
-
-            when Not_A_Bug =>
-               return "Not a bug";
-
-            when False_Positive =>
-               return "False positive";
-
-            when Intentional =>
-               return "Intentional";
-
-            when Bug =>
-               return "Bug";
-         end case;
-      end Status_Image;
-
    begin
       Glib.Object.Initialize_Class_Record
         (Ancestor     => Gtk.Dialog.Get_Type,
@@ -280,22 +225,16 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
 
          begin
             Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-            Store.Set
-              (Iter,
-               Messages_Model_Ranking_Column,
-               Ranking_Image (Message.Ranking));
-            Store.Set
-              (Iter,
-               Messages_Model_Status_Column,
-               Status_Image (Message.Status));
-            Store.Set
-              (Iter,
-               Messages_Model_Location_Column,
-               Location_Text);
-            Store.Set
-              (Iter,
-               Messages_Model_Text_Column,
-               To_String (Message.Get_Text));
+            Set_All_And_Clear
+              (Store, Iter,
+               (Messages_Model_Ranking_Column  =>
+                  As_String (Image (Message.Ranking)),
+                Messages_Model_Status_Column   =>
+                  As_String (Image (Message.Status)),
+                Messages_Model_Location_Column =>
+                  As_String (Location_Text),
+                Messages_Model_Text_Column     =>
+                  As_String (To_String (Message.Get_Text))));
          end;
       end loop;
 

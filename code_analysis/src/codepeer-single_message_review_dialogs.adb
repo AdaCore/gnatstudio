@@ -41,11 +41,23 @@ with Gtk.Tree_View;
 with Gtk.Tree_View_Column;
 with Gtk.Widget;
 
+with GNATCOLL.Xref;
 with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.MDI;
 with GPS.Dialogs;
 
 package body CodePeer.Single_Message_Review_Dialogs is
+
+   Messages_Model_Ranking_Column  : constant := 0;
+   Messages_Model_Status_Column   : constant := 1;
+   Messages_Model_Location_Column : constant := 2;
+   Messages_Model_Text_Column     : constant := 3;
+
+   Messages_Model_Types : constant Glib.GType_Array :=
+     (Messages_Model_Ranking_Column  => Glib.GType_String,
+      Messages_Model_Status_Column   => Glib.GType_String,
+      Messages_Model_Location_Column => Glib.GType_String,
+      Messages_Model_Text_Column     => Glib.GType_String);
 
    Status_Model_Label_Column : constant := 0;
    Status_Model_Value_Column : constant := 1;
@@ -134,7 +146,6 @@ package body CodePeer.Single_Message_Review_Dialogs is
       Table         : Gtk.Table.Gtk_Table;
       Store         : Gtk.Tree_Store.Gtk_Tree_Store;
       Iter          : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Text_Entry    : Gtk.GEntry.Gtk_Entry;
       Text_Renderer : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
       Tree_View     : Gtk.Tree_View.Gtk_Tree_View;
       Column        : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
@@ -146,64 +157,7 @@ package body CodePeer.Single_Message_Review_Dialogs is
       procedure Process_Audit (Position : CodePeer.Audit_V3_Vectors.Cursor);
       --  Fill GtkTreeStore of history view
 
-      function Ranking_Image
-        (Probability : CodePeer.Message_Ranking_Level) return String;
-
-      function Status_Image (Status : Audit_Status_Kinds) return String;
-
       procedure Set_Audit_Status (Name : String; Status : Audit_Status_Kinds);
-
-      -------------------
-      -- Ranking_Image --
-      -------------------
-
-      function Ranking_Image
-        (Probability : CodePeer.Message_Ranking_Level) return String is
-      begin
-         case Probability is
-            when CodePeer.Info =>
-               return "Info";
-
-            when CodePeer.Low =>
-               return "Low";
-
-            when CodePeer.Medium =>
-               return "Medium";
-
-            when CodePeer.High =>
-               return "High";
-
-            when CodePeer.Suppressed =>
-               return "Suppressed";
-         end case;
-      end Ranking_Image;
-
-      ------------------
-      -- Status_Image --
-      ------------------
-
-      function Status_Image (Status : Audit_Status_Kinds) return String is
-      begin
-         case Status is
-            when Unclassified =>
-               return "Unclassified";
-
-            when Pending =>
-               return "Pending";
-
-            when Not_A_Bug =>
-               return "Not a bug";
-
-            when False_Positive =>
-               return "False positive";
-
-            when Intentional =>
-               return "Intentional";
-
-            when Bug =>
-               return "Bug";
-         end case;
-      end Status_Image;
 
       -------------------
       -- Process_Audit --
@@ -218,7 +172,7 @@ package body CodePeer.Single_Message_Review_Dialogs is
          Set_All_And_Clear
            (Store, Iter,
             (0 => As_String (To_String (Audit.Timestamp)),
-             1 => As_String (Status_Image (Audit.Status)),
+             1 => As_String (Image (Audit.Status)),
              2 => As_String (To_String (Audit.Approved_By)),
              3 => As_String (To_String (Audit.Comment))));
       end Process_Audit;
@@ -256,24 +210,79 @@ package body CodePeer.Single_Message_Review_Dialogs is
 
       Self.Message := Message;
 
+      --  Messages view and underling model
+
+      Gtk.Scrolled_Window.Gtk_New (Scrolled);
+      Scrolled.Set_Size_Request (Height => 70, Width => 700);
+      Scrolled.Set_Policy
+        (Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Automatic);
+      Self.Get_Content_Area.Pack_Start (Scrolled, False, False);
+
+      Gtk.Tree_Store.Gtk_New (Store, Messages_Model_Types);
+
+      Gtk.Tree_View.Gtk_New (Tree_View, Store);
+      Scrolled.Add (Tree_View);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
+      Column.Set_Title (-"Ranking");
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_Start (Text_Renderer, False);
+      Column.Add_Attribute
+        (Text_Renderer, "text", Messages_Model_Ranking_Column);
+      Dummy_I := Tree_View.Append_Column (Column);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
+      Column.Set_Title (-"Status");
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_Start (Text_Renderer, False);
+      Column.Add_Attribute
+        (Text_Renderer, "text", Messages_Model_Status_Column);
+      Dummy_I := Tree_View.Append_Column (Column);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
+      Column.Set_Title (-"Location");
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_Start (Text_Renderer, False);
+      Column.Add_Attribute
+        (Text_Renderer, "text", Messages_Model_Location_Column);
+      Dummy_I := Tree_View.Append_Column (Column);
+
+      Gtk.Tree_View_Column.Gtk_New (Column);
+      Column.Set_Title (-"Text");
+      Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
+      Column.Pack_Start (Text_Renderer, False);
+      Column.Add_Attribute
+        (Text_Renderer, "text", Messages_Model_Text_Column);
+      Dummy_I := Tree_View.Append_Column (Column);
+
+      declare
+         Line_Image    : constant String :=
+           Integer'Image (Message.Get_Line);
+         Column_Image  : constant String :=
+           GNATCOLL.Xref.Visible_Column'Image (Message.Get_Column);
+         Location_Text : constant String :=
+           Message.Get_File.Display_Base_Name
+           & ':'
+           & Line_Image (Line_Image'First + 1 .. Line_Image'Last)
+           & ':'
+           & Column_Image (Column_Image'First + 1 .. Column_Image'Last);
+
+      begin
+         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
+         Set_All_And_Clear
+           (Store, Iter,
+            (Messages_Model_Ranking_Column  =>
+                 As_String (Image (Message.Ranking)),
+             Messages_Model_Status_Column   =>
+               As_String (Image (Message.Status)),
+             Messages_Model_Location_Column =>
+               As_String (Location_Text),
+             Messages_Model_Text_Column     =>
+               As_String (To_String (Message.Get_Text))));
+      end;
+
       Gtk.Table.Gtk_New (Table, 2, 4, False);
       Self.Get_Content_Area.Pack_Start (Table, False, False);
-
-      Gtk.Label.Gtk_New (Label, "Current ranking");
-      Table.Attach (Label, 0, 1, 0, 1);
-
-      Gtk.GEntry.Gtk_New (Text_Entry);
-      Text_Entry.Set_Editable (False);
-      Text_Entry.Set_Text (Ranking_Image (Message.Ranking));
-      Table.Attach (Text_Entry, 1, 2, 0, 1);
-
-      Gtk.Label.Gtk_New (Label, "Current status");
-      Table.Attach (Label, 0, 1, 1, 2);
-
-      Gtk.GEntry.Gtk_New (Text_Entry);
-      Text_Entry.Set_Editable (False);
-      Text_Entry.Set_Text (Status_Image (Message.Status));
-      Table.Attach (Text_Entry, 1, 2, 1, 2);
 
       if Message.Status_Editable then
          --  New status combobox and underling model

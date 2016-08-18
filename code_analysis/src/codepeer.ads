@@ -44,6 +44,8 @@ package CodePeer is
 
    type Message_Ranking_Level is (Suppressed, Info, Low, Medium, High);
 
+   function Image (Level : CodePeer.Message_Ranking_Level) return String;
+
    type Audit_Status_Kinds is
      (Unclassified,
       Pending,
@@ -51,6 +53,8 @@ package CodePeer is
       False_Positive,
       Intentional,
       Bug);
+
+   function Image (Status : Audit_Status_Kinds) return String;
 
    type CWE_Identifier is new Natural;
 

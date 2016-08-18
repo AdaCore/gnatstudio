@@ -409,6 +409,57 @@ package body CodePeer is
       return Ada.Strings.Unbounded.Hash (Item.Name);
    end Hash;
 
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Level : CodePeer.Message_Ranking_Level) return String is
+   begin
+      case Level is
+         when CodePeer.Info =>
+            return "Info";
+
+         when CodePeer.Low =>
+            return "Low";
+
+         when CodePeer.Medium =>
+            return "Medium";
+
+         when CodePeer.High =>
+            return "High";
+
+         when CodePeer.Suppressed =>
+            return "Suppressed";
+      end case;
+   end Image;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Status : Audit_Status_Kinds) return String is
+   begin
+      case Status is
+         when Unclassified =>
+            return "Unclassified";
+
+         when Pending =>
+            return "Pending";
+
+         when Not_A_Bug =>
+            return "Not a bug";
+
+         when False_Positive =>
+            return "False positive";
+
+         when Intentional =>
+            return "Intentional";
+
+         when Bug =>
+            return "Bug";
+      end case;
+   end Image;
+
    ----------
    -- Less --
    ----------
