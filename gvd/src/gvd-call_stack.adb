@@ -17,7 +17,6 @@
 
 with GNAT.Strings;           use GNAT.Strings;
 
-with Gdk.Event;              use Gdk.Event;
 with Glib;                   use Glib;
 with Glib.Object;            use Glib.Object;
 with Glib_Values_Utils;      use Glib_Values_Utils;
@@ -46,8 +45,6 @@ with GPS.Debuggers;          use GPS.Debuggers;
 with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;  use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Intl;               use GPS.Intl;
 with GUI_Utils;              use GUI_Utils;
@@ -117,10 +114,6 @@ package body GVD.Call_Stack is
    --  Store or retrieve the view from the process
 
    type CS_Child_Record is new GPS_MDI_Child_Record with null record;
-   overriding function Build_Context
-     (Self  : not null access CS_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return GPS.Kernel.Selection_Context;
 
    package CS_MDI_Views is new Generic_Views.Simple_Views
      (Module_Name        => "Call_Stack",
@@ -248,33 +241,6 @@ package body GVD.Call_Stack is
       end if;
    end Execute;
 
-   -------------------
-   -- Build_Context --
-   -------------------
-
-   overriding function Build_Context
-     (Self  : not null access CS_Child_Record;
-      Event : Gdk.Event.Gdk_Event := null)
-      return GPS.Kernel.Selection_Context
-   is
-      Stack   : constant Call_Stack :=
-        Call_Stack (GPS_MDI_Child (Self).Get_Actual_Widget);
-      Iter    : Gtk_Tree_Iter;
-      Path    : Gtk_Tree_Path;
-      Context : Selection_Context;
-   begin
-      Context := GPS_MDI_Child_Record (Self.all).Build_Context (Event);
-      if Event /= null then
-         Iter := Find_Iter_For_Event (Stack.Tree, Event);
-         if Iter /= Null_Iter then
-            Path := Get_Path (Stack.Tree.Get_Model, Iter);
-            Stack.Tree.Set_Cursor (Path, null, False);
-            Path_Free (Path);
-         end if;
-      end if;
-      return Context;
-   end Build_Context;
-
    -----------------
    -- Create_Menu --
    -----------------
@@ -351,10 +317,6 @@ package body GVD.Call_Stack is
       Scrolled.Add (Widget.Tree);
 
       Set_Column_Types (Widget);
-
-      Setup_Contextual_Menu
-        (Kernel          => Get_Kernel (Debugger_Module_ID.all),
-         Event_On_Widget => Widget.Tree);
 
       Gtkada.Handlers.Object_Callback.Object_Connect
         (Get_Selection (Widget.Tree), Signal_Changed,
