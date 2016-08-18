@@ -314,7 +314,6 @@ package body Vsearch is
 
       Found                  : Boolean := False;
       Select_Editor_On_Match : Boolean;
-      Case_Preserving        : Boolean;
    end record;
    overriding procedure Primitive_Free (Self : in out Abstract_Search_Command);
 
@@ -679,12 +678,12 @@ package body Vsearch is
       pragma Unreferenced (Context);
    begin
       if Replace
-        (Self.Context,
-         Self.Kernel,
-         Self.Replace_With.all,
-         Self.Case_Preserving,
-         Self.Search_Backward,
-         Give_Focus => Self.Select_Editor_On_Match)
+        (Context         => Self.Context,
+         Kernel          => Self.Kernel,
+         Replace_String  => Self.Replace_With.all,
+         Case_Preserving => True,
+         Search_Backward => Self.Search_Backward,
+         Give_Focus      => Self.Select_Editor_On_Match)
       then
          Self.Set_Progress
            ((Running,
@@ -893,7 +892,6 @@ package body Vsearch is
                Search_Backward   => False,
                Context           => Ctxt,
                Context_Is_Owned  => True,  --  command will free context
-               Case_Preserving   => Vsearch.Case_Preserving_Replace.Get_Active,
                Found             => False);
             Launch_Background_Command
               (Vsearch.Kernel, C, True, True, Search_Category);
@@ -1125,7 +1123,6 @@ package body Vsearch is
          Context                => Ctxt,
          Context_Is_Owned       => All_Occurrences,  --  command will free ctxt
          Kernel                 => Vsearch.Kernel,
-         Case_Preserving        => Vsearch.Case_Preserving_Replace.Get_Active,
          Select_Editor_On_Match => Select_On_Match.Get_Pref,
          Found                  => False,
          Replace_With           =>
@@ -1155,7 +1152,6 @@ package body Vsearch is
          Set_Sensitive (Vsearch.Replace_Label, Replace);
          Set_Sensitive (Vsearch.Replace_Combo, Replace);
          Set_Sensitive (Vsearch.Replace_All_Button, Replace);
-         Set_Sensitive (Vsearch.Case_Preserving_Replace, Replace);
 
          if (Data.Mask and All_Occurrences) = 0 then
             Set_Sensitive (Vsearch.Replace_All_Button, False);
@@ -1766,17 +1762,6 @@ package body Vsearch is
          Self.Case_Check, Default => False);
       Self.Options_Vbox.Attach (Self.Case_Check, 0, 1, 2, 3);
 
-      Gtk_New (Self.Case_Preserving_Replace, -"Preserve Casing");
-      Self.Case_Preserving_Replace.Set_Tooltip_Text
-        (-"Select this to preserve original word casing when replacing");
-      Create_New_Boolean_Key_If_Necessary
-        (Get_History (Self.Kernel).all, "case_preserving_replace", True);
-      Associate
-        (Get_History (Self.Kernel).all, "case_preserving_replace",
-         Self.Case_Preserving_Replace, Default => True);
-      Self.Options_Vbox.Attach (Self.Case_Preserving_Replace, 1, 2, 1, 2);
-      Self.Case_Preserving_Replace.Set_Sensitive (False);
-
       --  Context specific search
 
       Gtk_New (Scope_Box, -"Scope");
@@ -1823,9 +1808,6 @@ package body Vsearch is
          Reset_Search'Access, Self.Kernel);
       Kernel_Callback.Connect
         (Self.Case_Check,
-         Gtk.Toggle_Button.Signal_Toggled, Reset_Search'Access, Self.Kernel);
-      Kernel_Callback.Connect
-        (Self.Case_Preserving_Replace,
          Gtk.Toggle_Button.Signal_Toggled, Reset_Search'Access, Self.Kernel);
       Kernel_Callback.Connect
         (Self.Whole_Word_Check, Gtk.Toggle_Button.Signal_Toggled,
