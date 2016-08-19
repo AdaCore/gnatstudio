@@ -20,6 +20,12 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Strings;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Templates;
+with GNATCOLL.Traces;           use GNATCOLL.Traces;
+with GNATCOLL.VFS;
 
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Types;                 use Gdk.Types;
@@ -73,19 +79,15 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Search;                use GPS.Search;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
 with Default_Preferences;       use Default_Preferences;
 with Generic_Views;             use Generic_Views;
 with GUI_Utils;                 use GUI_Utils;
-with GNATCOLL.Projects;         use GNATCOLL.Projects;
-with GNATCOLL.Templates;
-with GNATCOLL.VFS;
+
 with Histories;                 use Histories;
 with Projects;                  use Projects;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with XML_Utils;                 use XML_Utils;
 
 package body Vsearch is
@@ -141,15 +143,17 @@ package body Vsearch is
       Options_Frame           : Gtk_Box;
       Options_Vbox            : Gtk_Table;
       Scope_Frame             : Gtk_Box;
-      Scope_Table             : Gtk_Table;
+      Scope_Selector_Box      : Gtk_Box;
+      Scope_Optional_Box      : Gtk_Box;
+      Scope_Selector_Combo    : Gtk_Combo_Box_Text;
+      Scope_Separator_Label   : Gtk_Label;
+      Scope_Selector_Optional : Gtk_Widget;
       Select_Editor_Check     : Gtk_Check_Button;
       Case_Check              : Gtk_Check_Button;
       Case_Preserving_Replace : Gtk_Check_Button;
       Whole_Word_Check        : Gtk_Check_Button;
       Auto_Hide_Check         : Gtk_Check_Button;
       Regexp_Check            : Gtk_Check_Button;
-      Context_Specific        : Gtk_Box;
-
       Search_Next_Button      : Gtk.Button.Gtk_Button;
       Replace_Button          : Gtk.Button.Gtk_Button;
       Replace_Search_Button   : Gtk.Button.Gtk_Button;
@@ -157,7 +161,7 @@ package body Vsearch is
       Search_Previous_Button  : Gtk.Button.Gtk_Button;
       Search_All_Button       : Gtk.Button.Gtk_Button;
       Replace_Only_Button     : Gtk.Button.Gtk_Button;
-      Extra_Information       : Gtk.Widget.Gtk_Widget;
+      Selector                : Scope_Selector;
 
       Find_Next               : Boolean := False;
       Selection_From          : Gtk_Text_Mark;
@@ -214,18 +218,19 @@ package body Vsearch is
       renames Implements_Editable.To_Interface;
 
    type Search_Module_Data is record
-      Mask              : Search_Options_Mask;
-      Factory           : Module_Search_Context_Factory;
+      Mask         : Search_Options_Mask;
+      Factory      : Module_Search_Context_Factory;
 
-      Extra_Information : Gtk.Widget.Gtk_Widget;
-      --  Store this widget, since it was created by other modules when they
-      --  registered a new search context. We could have factories instead, but
-      --  that means it would be harder to preserve the current extra
-      --  information when users switch between contexts.
+      Selector     : Scope_Selector;
+      --  Store the scope selector, which holds a reference to the scope
+      --  selection widgets.
+      --  We could have factories instead, but that means it would be harder
+      --  to preserve the current extra information when users switch between
+      --  contexts.
 
       Id                : Module_ID;
-      Label             : GNAT.Strings.String_Access;
-      In_Selection      : Boolean;
+      Label        : GNAT.Strings.String_Access;
+      In_Selection : Boolean;
    end record;
 
    No_Search : constant Search_Module_Data :=
@@ -233,7 +238,7 @@ package body Vsearch is
       Mask              => 0,
       Factory           => null,
       Id                => null,
-      Extra_Information => null,
+      Selector => null,
       In_Selection      => False);
 
    procedure Set_Last_Of_Module
@@ -590,8 +595,12 @@ package body Vsearch is
 
    procedure Free (Data : in out Search_Module_Data) is
    begin
-      if Data.Extra_Information /= null then
-         Unref (Data.Extra_Information);
+      if Data.Selector /= null then
+         Unref (Gtk_Widget (Data.Selector.Get_Scope_Combo));
+
+         if Data.Selector.Get_Optional_Widget /= null then
+            Unref (Data.Selector.Get_Optional_Widget);
+         end if;
       end if;
 
       Free (Data.Label);
@@ -793,7 +802,9 @@ package body Vsearch is
    begin
       if Data.Factory /= null and then Pattern /= "" then
          Ctxt := Data.Factory
-           (Vsearch.Kernel, All_Occurrences, Vsearch.Extra_Information);
+           (Vsearch.Kernel,
+            All_Occurrences,
+            Vsearch.Selector);
       end if;
 
       if Ctxt = null then
@@ -1191,18 +1202,50 @@ package body Vsearch is
          Set_Sensitive (Vsearch.Search_Previous_Button,
                         (Data.Mask and Search_Backward) /= 0);
 
-         if Vsearch.Extra_Information /= null then
-            --  We remove it, but there is still one reference one by the
-            --  module, so it isn't destroyed.
-            Remove (Vsearch.Context_Specific, Vsearch.Extra_Information);
-            Vsearch.Extra_Information := null;
+         --  We remove the scope selector widgets, but there is still one
+         --  reference hold by the module, so they don't get destroyed.
+         if Vsearch.Scope_Selector_Combo /= null then
+            Vsearch.Scope_Selector_Box.Remove
+              (Vsearch.Scope_Separator_Label);
+            Vsearch.Scope_Selector_Box.Remove
+              (Vsearch.Scope_Selector_Combo);
          end if;
 
-         if Data.Extra_Information /= null then
-            Pack_Start (Vsearch.Context_Specific,
-                        Data.Extra_Information, Expand => False);
-            Show_All (Vsearch.Context_Specific);
-            Vsearch.Extra_Information := Data.Extra_Information;
+         if Vsearch.Scope_Selector_Optional /= null then
+            Vsearch.Scope_Optional_Box.Remove
+              (Vsearch.Scope_Selector_Optional);
+         end if;
+
+         Vsearch.Selector := null;
+         Vsearch.Scope_Selector_Combo := null;
+         Vsearch.Scope_Selector_Optional := null;
+
+         if Data.Selector /= null then
+            Vsearch.Selector := Data.Selector;
+            Vsearch.Scope_Selector_Combo :=
+              Data.Selector.Get_Scope_Combo;
+            Vsearch.Scope_Selector_Optional :=
+              Data.Selector.Get_Optional_Widget;
+
+            Gtk_New (Vsearch.Scope_Separator_Label, "In:");
+            Vsearch.Scope_Selector_Box.Pack_Start
+              (Vsearch.Scope_Separator_Label,
+               Expand  => False,
+               Padding => 5);
+
+            Vsearch.Scope_Selector_Box.Pack_Start
+              (Vsearch.Scope_Selector_Combo,
+               Expand => True,
+               Fill   => True);
+
+            if Vsearch.Scope_Selector_Optional /= null then
+               Vsearch.Scope_Optional_Box.Pack_Start
+                 (Vsearch.Scope_Selector_Optional,
+                  Expand => True,
+                  Fill   => True);
+            end if;
+
+            Show_All (Vsearch.Scope_Frame);
          end if;
 
          Child := Search_Views.Child_From_View (Vsearch);
@@ -1520,19 +1563,19 @@ package body Vsearch is
 
    procedure On_Vsearch_Destroy (Self : access Gtk_Widget_Record'Class) is
       Vsearch : constant Vsearch_Access := Vsearch_Access (Self);
-      Children : Widget_List.Glist := Get_Children (Vsearch.Context_Specific);
-      L : Widget_List.Glist := Children;
-      use Widget_List;
    begin
       --  The widgets in Context_Specific have a longer lifecycle than the
       --  dialog itself: make sure here that they are not destroyed when the
       --  dialog is destroyed.
-      while L /= Null_List loop
-         Get_Data (L).Ref;
-         Vsearch.Context_Specific.Remove (Get_Data (L));
-         L := Next (L);
-      end loop;
-      Free (Children);
+      if Vsearch.Scope_Selector_Combo /= null then
+         Vsearch.Scope_Selector_Box.Remove
+           (Vsearch.Scope_Selector_Combo);
+      end if;
+
+      if Vsearch.Scope_Selector_Optional /= null then
+         Vsearch.Scope_Optional_Box.Remove
+           (Vsearch.Scope_Selector_Optional);
+      end if;
 
       Reset_Interactive_Context (Vsearch);
    end On_Vsearch_Destroy;
@@ -1785,16 +1828,25 @@ package body Vsearch is
       Self.Scope_Frame.Set_Border_Width (4);
       Scope_Box.Add (Self.Scope_Frame);
 
+      Gtk_New_Hbox (Self.Scope_Selector_Box, Homogeneous => False);
+      Self.Scope_Frame.Pack_Start (Self.Scope_Selector_Box, Expand => False);
+
       Gtk_New (Self.Context_Combo);
       Self.Context_Combo.Set_Tooltip_Text (-"The context of the search");
-      Self.Scope_Frame.Pack_Start (Self.Context_Combo);
+      Self.Scope_Selector_Box.Pack_Start
+        (Self.Context_Combo,
+         Expand => True,
+         Fill   => True);
       Widget_Callback.Object_Connect
         (Self.Context_Combo, Gtk.Combo_Box.Signal_Changed,
          On_Context_Combo_Changed'Access, Self);
       Self.Context_Combo.Set_Name ("search scope combo");
 
-      Gtk_New_Vbox (Self.Context_Specific, Homogeneous => False);
-      Self.Scope_Frame.Pack_Start (Self.Context_Specific, False);
+      Gtk_New_Vbox (Self.Scope_Optional_Box, Homogeneous => False);
+      Self.Scope_Frame.Pack_Start
+        (Self.Scope_Optional_Box,
+         Expand => True,
+         Fill   => True);
 
       Self.On_Destroy (On_Vsearch_Destroy'Access);
 
@@ -2236,22 +2288,22 @@ package body Vsearch is
    ------------------------------
 
    procedure Register_Search_Function
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Label             : String;
-      Factory           : Find_Utils.Module_Search_Context_Factory;
-      Extra_Information : access Gtk.Widget.Gtk_Widget_Record'Class := null;
-      Id          : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
-      Mask              : Search_Options_Mask := All_Options;
-      In_Selection      : Boolean := False)
+     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Label        : String;
+      Factory      : Find_Utils.Module_Search_Context_Factory;
+      Selector     : access Scope_Selector_Interface'Class := null;
+      Id           : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
+      Mask         : Search_Options_Mask := All_Options;
+      In_Selection : Boolean := False)
    is
       Data : constant Search_Module_Data :=
         Search_Module_Data'
-          (Label             => new String'(Label),
-           Factory           => Factory,
-           Extra_Information => Gtk_Widget (Extra_Information),
-           Id                => Module_ID (Id),
-           Mask              => Mask,
-           In_Selection      => In_Selection);
+          (Label         => new String'(Label),
+           Factory       => Factory,
+           Selector      => Selector,
+           Id            => Module_ID (Id),
+           Mask          => Mask,
+           In_Selection  => In_Selection);
    begin
       if Id /= null then
          Create_New_Key_If_Necessary
@@ -2266,16 +2318,28 @@ package body Vsearch is
 
       Prepend (Vsearch_Module_Id.Search_Modules, Data);
 
-      if Data.Extra_Information /= null then
-         --  Make sure the extra information is not destroyed for the duration
-         --  of GPS, even when the search window is destroyed (since the same
-         --  extra info widget will be reused for the next search window, to
-         --  preserve the current values).
-         Data.Extra_Information.Ref_Sink;
+      if Data.Selector /= null then
+         declare
+            Scope_Combo    : constant Gtk_Widget := Gtk_Widget
+              (Data.Selector.Get_Scope_Combo);
+            Scope_Optional : constant Gtk_Widget :=
+                               Data.Selector.Get_Optional_Widget;
+         begin
+            --  Make sure the extra information is not destroyed for the
+            --  duration of GPS, even when the search window is destroyed
+            --  (since the same extra info widget will be reused for the next
+            --  search window, to preserve the current values).
+            Scope_Combo.Ref_Sink;
 
-         --  Since the same widget could be shared amongst several search
-         --  contexts, we should own one extra ref for each search context
-         Data.Extra_Information.Ref;
+            --  Since the same widget could be shared amongst several search
+            --  contexts, we should own one extra ref for each search context
+            Scope_Combo.Ref;
+
+            if Scope_Optional /= null then
+               Scope_Optional.Ref_Sink;
+               Scope_Optional.Ref;
+            end if;
+         end;
       end if;
 
       Register_Action
