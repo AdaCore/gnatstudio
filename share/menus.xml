@@ -593,7 +593,9 @@
    <toolbar id='Debugger Data' inherit='Browser'/>
 
    <toolbar id="MDL Browser" inherit='Browser'>
-      <separator/>
+     <separator/>
+      <button action='Log model values'/>
+      <button action='Log subsystem values'/>
       <button action='MDL goto parent subsystem'/>
       <button action='MDL goto previous subsystem'/>
    </toolbar>

@@ -207,6 +207,9 @@ class Project_Support(object):
 
         :param GPS.File file: the .mdl file
         """
+        if file is None:
+            return None
+
         p = file.project()
         dir = p.get_attribute_as_string(
             package='QGen', attribute='Output_Dir')
@@ -439,6 +442,54 @@ class CLI(GPS.Process):
         if status == 0:
             exe = GPS.File(main_name).executable_path
             GPS.Debugger.spawn(exe)
+
+    @staticmethod
+    def log_values_in_file(diagrams, filename):
+        """
+        This function retrieves all the values from the signals (items
+        with an 'auto' property) and stores them in the given logfile
+        in the output directory of the project.
+        :param diagrams: a list of QGEN_Diagram to look into
+        :param filename: the name of the logfile to write in
+        """
+        ctxt = GPS.current_context()
+        with open(os.path.join(project_support.get_output_dir(
+                ctxt.file()), filename), 'w+') as f:
+            for diag, toplevel, it in QGEN_Module.forall_auto_items(diagrams):
+                parent = it.get_parent_with_id() or toplevel
+                # We remove the last part of the id because it has no meaning
+                # in the simulink diagram
+                f.write("'%s' = %s\n" % (parent.id.rsplit('/', 1)[0], it.text))
+            GPS.Console().write(
+                "Logfile successfully written in %s\n" % f.name)
+
+    @staticmethod
+    def log_subsystem_values():
+        """
+        Logs all values for signals of the subsystem in relation to their
+        containing variables in the specified log file
+        """
+        viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
+
+        if viewer:
+            GPS.CommandWindow(prompt='Please enter the logfile name:',
+                              on_activate=lambda filename:
+                              CLI.log_values_in_file(
+                                  [viewer.diagram], filename))
+
+    @staticmethod
+    def log_model_values():
+        """
+        Logs all values for signals of the model in relation to their
+        containing variables in the specified log file
+        """
+        viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
+
+        if viewer:
+            GPS.CommandWindow(prompt='Please enter the logfile name:',
+                              on_activate=lambda filename:
+                              CLI.log_values_in_file(
+                                  viewer.diags.diagrams, filename))
 
     @staticmethod
     def action_goto_previous_subsystem():
@@ -1204,7 +1255,7 @@ else:
             """Restore the contents from the desktop"""
             info = json.loads(data)
             f = GPS.File(info['file'])
-            if f.path.endswith('.mdl'):
+            if f.path.endswith('.mdl') or f.path.endswith('.slx'):
                 viewer = QGEN_Diagram_Viewer.get_or_create(f)
             else:
                 viewer = QGEN_Diagram_Viewer.open_json(
@@ -1446,6 +1497,20 @@ else:
                 category='Browsers',
                 filter=self.__contextual_filter_viewer_active,
                 icon='gps-backward-symbolic')
+
+            gps_utils.make_interactive(
+                callback=CLI.log_model_values,
+                name='Log model values',
+                category='Browsers',
+                filter=self.__contextual_filter_viewer_active,
+                icon='gps-save-symbolic')
+
+            gps_utils.make_interactive(
+                callback=CLI.log_subsystem_values,
+                name='Log subsystem values',
+                category='Browsers',
+                filter=self.__contextual_filter_viewer_active,
+                icon='gps-save-symbolic')
 
             gps_utils.make_interactive(
                 name='MDL show source for block',
