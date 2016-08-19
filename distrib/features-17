@@ -28,6 +28,12 @@ NF-17-P803-016 GPS: wrong file view for multi-drive projects (2016-08-08)
   When the 'Show files from project only' option is enabled, the Files view now
   correctly displays the project files that reside on multiple logical drives.
 
+NF-17-P802-014 GPS: more info when reviewing a codepeer message (2016-08-19)
+
+  The CodePeer dialog for reviewing a single message now contains
+  information about a message, similariliy to the dialog for reviewing
+  multiple messages.
+
 NF-17-P729-031 GPS: new trace for old Xming compatibility (2016-08-03)
 
   A new trace "Views.No_Transient_Views" has been added. When activated
