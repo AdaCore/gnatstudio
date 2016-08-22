@@ -235,6 +235,16 @@ KP-62-P330-050 GPS: select row in Attach dialog scrolls to top
   Workaround: Scroll back the list as needed. The selection was properly
               handled, so you can also click on the OK button directly.
 
+KP-62-P329-001 GB: random crash using GPR files having missing with-ed GPR
+
+  Problem:    When importing, using, or saving GPR files having at least one
+              with statement that cannot be resolved, GNATbench crashes
+              randomly.
+
+  Status:     This was fixed in 17.0 on 2016-08-05
+
+  Workaround: Fix the missing with-ed GPR file and restart GNATbench. 
+
 KP-62-P328-005 Indentation engine on aggregates
 
   Problem:    The following is wrongly auto-indented if the preferences for
