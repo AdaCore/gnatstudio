@@ -99,6 +99,7 @@ package body Vsearch is
 
    Search_Module_Name : constant String := "Search";
 
+   Mode_Hist_Key      : constant History_Key := "search_mode";
    Pattern_Hist_Key   : constant History_Key := "search_patterns";
    Replace_Hist_Key   : constant History_Key := "search_replace";
    --  The key for the histories.
@@ -122,7 +123,21 @@ package body Vsearch is
    type Search_Regexps_Array is array (Natural range <>) of Search_Regexp;
    type Search_Regexps_Array_Access is access Search_Regexps_Array;
 
+   type Vsearch_Mode is (Unknown, Find_Only, Find_And_Replace);
+   --  Type used to represent the different search view modes.
+   --  Here is a short description of each mode:
+   --
+   --    . Unknown: default mode. Used to know whether we should set the mode
+   --      of the search view from the history.
+   --
+   --    . Find_Only: the search view can only be used to find occurences
+   --      (no replacing).
+   --
+   --    . Find_And_Replace: the search view can also be used to replace
+   --      occurences.
+
    type Vsearch_Record is new View_Record with record
+      Mode                    : Vsearch_Mode := Unknown;
       Scrolled                : Gtk_Scrolled_Window;
       View                    : Gtk_Viewport;
       Pane                    : Gtk_Paned;
@@ -179,8 +194,14 @@ package body Vsearch is
       Child : not null access GPS_MDI_Child_Record'Class);
 
    function Initialize
-     (Self   : access Vsearch_Record'Class) return Gtk_Widget;
+     (Self : access Vsearch_Record'Class) return Gtk_Widget;
    --  Create a new search window and returns the focus widget
+
+   procedure Set_Vsearch_Mode
+     (Self : not null access Vsearch_Record'Class;
+      Mode : Vsearch_Mode);
+   --  Set the mode of the given search mode, hiding or showing the widgets
+   --  related with replacing depending on With_Replace.
 
    package Search_Views is new Generic_Views.Simple_Views
      (Module_Name            => Search_Module_Name,
@@ -299,10 +320,18 @@ package body Vsearch is
    overriding function Execute
      (Action  : access Search_Specific_Context;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  A command that opens the search dialog and presets the Look In field to
+   --  A command that opens the search view and presets the Look In field to
    --  a specific function. If Context is null, then the previous context is
    --  preserve if the preference Keep_Previous_Search_Context is set,
    --  otherwise the context is reset depending on the current module.
+
+   type Replace_Specific_Context is new Search_Specific_Context with
+     null record;
+   overriding function Execute
+     (Action  : access Replace_Specific_Context;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Same as Search_Specific_Context commands but opens the search view in
+   --  the replace mode (i.e: showing the replace-related widgets).
 
    type Abstract_Search_Command is abstract new Interactive_Command with record
       Kernel                 : access Kernel_Handle_Record'Class;
@@ -429,12 +458,14 @@ package body Vsearch is
      (Kernel        : access Kernel_Handle_Record'Class;
       Raise_Widget  : Boolean := False;
       Reset_Entries : Boolean := False;
-      Context       : GNAT.Strings.String_Access := null)
+      Context       : GNAT.Strings.String_Access := null;
+      Mode          : Vsearch_Mode := Find_Only)
       return Vsearch_Access;
    --  Return a valid vsearch widget, creating one if necessary.
    --  If Reset_Entries is True, the fields in the dialog are reset depending
    --  on the current module. Context indicates the value that should be
    --  set for "Look In". If null, this will be set based on the current module
+   --  The replace-related widgets are shown/hidden depending on Mode.
 
    function Create_Context
      (Vsearch         : not null access Vsearch_Record'Class;
@@ -1568,11 +1599,15 @@ package body Vsearch is
    ----------------
 
    function Initialize
-     (Self   : access Vsearch_Record'Class) return Gtk_Widget
+     (Self : access Vsearch_Record'Class) return Gtk_Widget
    is
 
       procedure Disable_Button_Focus (Combo_Box : Gtk_Combo_Box);
       --  Disable focus on internal button in given Combo_Box
+
+      procedure Set_Mode_From_History;
+      --  If the vsearch mode is Unknown, set it from its corresponding history
+      --  key.
 
       --------------------------
       -- Disable_Button_Focus --
@@ -1588,6 +1623,21 @@ package body Vsearch is
       end Disable_Button_Focus;
 
       Hbox             : Gtk_Hbox;
+      ---------------------------
+      -- Set_Mode_From_History --
+      ---------------------------
+
+      procedure Set_Mode_From_History is
+         Last_Mode : constant String_List_Access :=
+                       Get_History
+                         (Get_History (Self.Kernel).all, Mode_Hist_Key);
+      begin
+         if Last_Mode /= null and then Self.Mode = Unknown then
+            Self.Set_Vsearch_Mode
+              (Mode => Vsearch_Mode'Value (Last_Mode (Last_Mode'Last).all));
+         end if;
+      end Set_Mode_From_History;
+
       Layout           : Gtk_Cell_Layout;
       Renderer         : Gtk_Cell_Renderer_Text;
       Value            : String_List_Access;
@@ -1655,6 +1705,7 @@ package body Vsearch is
       Self.Main.Pack_Start (Hbox, Expand => False);
 
       Gtk_New (Self.Replace_Label, -("Replace"));
+      Self.Replace_Label.Set_No_Show_All (True);
       Label_Size_Group.Add_Widget (Self.Replace_Label);
       Self.Replace_Label.Set_Alignment (0.0, 0.5);
       Hbox.Pack_Start (Self.Replace_Label, Expand => False);
@@ -1662,6 +1713,7 @@ package body Vsearch is
       Gtk.List_Store.Gtk_New (Model, (0 .. 0 => GType_String));
 
       Gtk_New_With_Model_And_Entry (Self.Replace_Combo, +Model);
+      Self.Replace_Combo.Set_No_Show_All (True);
       Self.Replace_Combo.Set_Entry_Text_Column (0);
       Hbox.Pack_Start (Self.Replace_Combo, Expand => True, Fill => True);
       Self.Replace_Combo.Set_Tooltip_Text
@@ -1731,6 +1783,10 @@ package body Vsearch is
       Self.Buttons_Box.Pack_Start
         (Self.Search_Previous_Button,
          Expand => False);
+      Self.Search_Previous_Button.Set_No_Show_All (True);
+      Self.Buttons_Box.Pack_Start
+        (Self.Search_Previous_Button,
+         Expand => False);
       Self.Search_Previous_Button.Set_Tooltip_Text
         (-"Search previous occurrence");
       Widget_Callback.Object_Connect
@@ -1738,6 +1794,7 @@ package body Vsearch is
          On_Search_Previous'Access, Self);
 
       Gtk_New_With_Mnemonic (Self.Search_All_Button, -"Find All");
+      Self.Search_All_Button.Set_No_Show_All (True);
       Self.Buttons_Box.Pack_Start (Self.Search_All_Button, Expand => False);
       Self.Search_All_Button.Set_Tooltip_Text (-"Find all occurences");
       Widget_Callback.Object_Connect
@@ -1746,6 +1803,7 @@ package body Vsearch is
 
       Gtk_New (Self.Replace_Button, -"Replace");
       Self.Buttons_Box.Pack_Start (Self.Replace_Button, Expand => False);
+      Self.Replace_Button.Set_No_Show_All (True);
       Self.Replace_Button.Set_Tooltip_Text (-"Replace next occurrence");
       Widget_Callback.Object_Connect
         (Self.Replace_Button, Signal_Clicked,
@@ -1753,6 +1811,7 @@ package body Vsearch is
       Self.Replace_Button.Set_Sensitive (False);
 
       Gtk_New_With_Mnemonic (Self.Replace_Search_Button, -"Replace & Find");
+      Self.Replace_Search_Button.Set_No_Show_All (True);
       Self.Buttons_Box.Pack_Start
         (Self.Replace_Search_Button,
          Expand => False);
@@ -1764,6 +1823,7 @@ package body Vsearch is
 
       Gtk_New_With_Mnemonic (Self.Replace_All_Button, -"Repl All");
       Self.Buttons_Box.Pack_Start (Self.Replace_All_Button, Expand => False);
+      Self.Replace_All_Button.Set_No_Show_All (True);
       Self.Replace_All_Button.Set_Tooltip_Text
         (-"Replace all occurences");
       Widget_Callback.Object_Connect
@@ -1805,6 +1865,18 @@ package body Vsearch is
          Set_Active_Text (Self.Pattern_Combo, "");
       end if;
 
+      --  Create a key in the history to save the last used vsearch mode and
+      --  retrieve it if it already exists.
+      Create_New_Key_If_Necessary
+        (Get_History (Self.Kernel).all,
+         Key       => Mode_Hist_Key,
+         Key_Type  => Strings);
+      Set_Max_Length
+        (Get_History (Self.Kernel).all,
+         Num  => 1,
+         Key  => Mode_Hist_Key);
+      Set_Mode_From_History;
+
       Search_Reset_Hook.Add (new Set_First_Next_Mode_Cb);
       Search_Functions_Changed_Hook.Add (new Search_Functions_Changed);
       Search_Regexps_Changed_Hook.Add (new New_Predefined_Regexp);
@@ -1816,20 +1888,29 @@ package body Vsearch is
       return Self.Pattern_Combo.Get_Child;
    end Initialize;
 
-   -------------------------
-   -- Change_Vsearch_Mode --
-   -------------------------
+   ----------------------
+   -- Set_Vsearch_Mode --
+   ----------------------
 
    procedure Set_Vsearch_Mode
-     (Self         : not null access Vsearch_Record'Class;
-      With_Replace : Boolean) is
+     (Self : not null access Vsearch_Record'Class;
+      Mode : Vsearch_Mode)
+   is
+      Show_Replace_Widgets : constant Boolean := Mode = Find_And_Replace;
    begin
-         Self.Replace_Label.Set_Visible (With_Replace);
-         Self.Replace_Combo.Set_Visible (With_Replace);
-         Self.Replace_Button.Set_Visible (With_Replace);
-         Self.Replace_All_Button.Set_Visible (With_Replace);
-         Self.Search_Previous_Button.Set_Visible (not With_Replace);
-         Self.Search_All_Button.Set_Visible (not With_Replace);
+      Self.Mode := Mode;
+      Add_To_History
+        (Self.Kernel,
+         Key       => Mode_Hist_Key,
+         New_Entry => Mode'Image);
+
+      Self.Replace_Label.Set_Visible (Show_Replace_Widgets);
+      Self.Replace_Combo.Set_Visible (Show_Replace_Widgets);
+      Self.Replace_Button.Set_Visible (Show_Replace_Widgets);
+      Self.Replace_All_Button.Set_Visible (Show_Replace_Widgets);
+      Self.Replace_Search_Button.Set_Visible (Show_Replace_Widgets);
+      Self.Search_Previous_Button.Set_Visible (not Show_Replace_Widgets);
+      Self.Search_All_Button.Set_Visible (not Show_Replace_Widgets);
    end Set_Vsearch_Mode;
 
    ------------------
@@ -1963,7 +2044,8 @@ package body Vsearch is
      (Kernel        : access Kernel_Handle_Record'Class;
       Raise_Widget  : Boolean := False;
       Reset_Entries : Boolean := False;
-      Context       : GNAT.Strings.String_Access := null) return Vsearch_Access
+      Context       : GNAT.Strings.String_Access := null;
+      Mode          : Vsearch_Mode := Find_Only) return Vsearch_Access
    is
       --  We must create the search dialog only after we have found the current
       --  context, otherwise it would return the context of the search widget
@@ -1982,7 +2064,7 @@ package body Vsearch is
 
       View     : Vsearch_Access;
       Dummy    : Boolean;
-      Default_Pattern : GNAT.Strings.String_Access := null;
+      Default_Pattern         : GNAT.Strings.String_Access := null;
 
    begin
       declare
@@ -2088,6 +2170,10 @@ package body Vsearch is
 
          Grab_Toplevel_Focus (Get_MDI (Kernel), View.Pattern_Combo.Get_Child);
       end if;
+
+      --  Set the mode of the search view
+      View.Set_Vsearch_Mode (Mode => Mode);
+
       return View;
    end Get_Or_Create_Vsearch;
 
@@ -2284,7 +2370,28 @@ package body Vsearch is
         (Get_Kernel (Context.Context),
          Raise_Widget  => True,
          Reset_Entries => True,
-         Context       => Action.Context);
+         Context       => Action.Context,
+         Mode          => Find_Only);
+      return Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Action  : access Replace_Specific_Context;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Vsearch : Vsearch_Access;
+      pragma Unreferenced (Vsearch);
+   begin
+      Vsearch := Get_Or_Create_Vsearch
+        (Get_Kernel (Context.Context),
+         Raise_Widget  => True,
+         Reset_Entries => True,
+         Context       => Action.Context,
+         Mode          => Find_And_Replace);
       return Success;
    end Execute;
 
@@ -2575,6 +2682,18 @@ package body Vsearch is
          new Search_Specific_Context'
            (Interactive_Command with Context => null),
          Description => -("Open the search dialog. If you have selected the"
+           & " preference Search/Preserve Search Context, the same context"
+           & " will be selected, otherwise the context is reset depending on"
+           & " the active window"),
+         Icon_Name   => "gps-search-symbolic",
+         Category    => -"Search");
+
+      Register_Action
+        (Kernel, "Replace",
+         new Replace_Specific_Context'
+           (Interactive_Command with Context => null),
+         Description => -("Open the search dialog in the replace mode."
+           & " If you have selected the"
            & " preference Search/Preserve Search Context, the same context"
            & " will be selected, otherwise the context is reset depending on"
            & " the active window"),
