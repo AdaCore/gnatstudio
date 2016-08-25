@@ -462,6 +462,9 @@ package body Command_Lines is
 
       Section    : Section_Configuration renames Conf.Sections (Item.Section);
       Prefix     : Unbounded_String;
+      Pos        : Switch_Vectors.Cursor;
+      Switches   : constant Switch_Vector_References.Element_Access :=
+        Cmd.Switches.Unchecked_Get;
    begin
       if not Item.Parameter.Is_Set then
          Prefix := Find_Prefix (Conf, Item.Switch);
@@ -499,7 +502,7 @@ package body Command_Lines is
 
       if Prefix /= "" then
          --  Try to merge switches with common prefix
-         for J of Cmd.Switches.Unchecked_Get.all loop
+         for J of Switches.all loop
             if J.Section = Item.Section
               and then Starts_With (J.Switch, Prefix)
             then
@@ -517,29 +520,33 @@ package body Command_Lines is
 
       if Add_Before then
          --  Look for first switch in the section
-         for J in Cmd.Switches.Get.Iterate loop
-            if Switch_Vectors.Element (J).Section = Item.Section then
-               Cmd.Switches.Get.Insert
-                 (Before   => J,
+         Pos := Switches.First;
+
+         while Switch_Vectors.Has_Element (Pos) loop
+            if Switches.all (Pos).Section = Item.Section then
+               Switches.Insert
+                 (Before   => Pos,
                   New_Item => Item);
 
                return;
             end if;
+
+            Switch_Vectors.Next (Pos);
          end loop;
 
          --  No such section in command line yet
          if Item.Section = "" then
-            Cmd.Switches.Get.Prepend (Item);
+            Switches.Prepend (Item);
          else
-            Cmd.Switches.Get.Append (Item);
+            Switches.Append (Item);
          end if;
       else  --  Add_Before = False
          if Item.Section = ""
-           and then not Cmd.Switches.Get.Is_Empty
-           and then Cmd.Switches.Get.First_Element.Section /= ""
+           and then not Switches.Is_Empty
+           and then Switches.First_Element.Section /= ""
          then
             --  Add at the beggining of the command line
-            Cmd.Switches.Get.Prepend (Item);
+            Switches.Prepend (Item);
 
             return;
          end if;
@@ -547,25 +554,29 @@ package body Command_Lines is
          declare
             Found : Boolean := False;  --  If we have found the section
          begin
-            for J in Cmd.Switches.Get.Iterate loop
+            Pos := Switches.First;
+
+            while Switch_Vectors.Has_Element (Pos) loop
                if not Found
-                 and then Switch_Vectors.Element (J).Section = Item.Section
+                 and then Switch_Vectors.Element (Pos).Section = Item.Section
                then
                   Found := True;
 
                elsif Found
-                 and then Switch_Vectors.Element (J).Section /= Item.Section
+                 and then Switch_Vectors.Element (Pos).Section /= Item.Section
                then
-                  Cmd.Switches.Get.Insert
-                    (Before   => J,
+                  Switches.Insert
+                    (Before   => Pos,
                      New_Item => Item);
 
                   return;
                end if;
+
+               Switch_Vectors.Next (Pos);
             end loop;
 
             --  Append to the end
-            Cmd.Switches.Get.Append (Item);
+            Switches.Append (Item);
          end;
       end if;
    end Append;
