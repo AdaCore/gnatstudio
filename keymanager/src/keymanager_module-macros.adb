@@ -40,7 +40,6 @@ with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Intl;                  use GPS.Intl;
@@ -282,7 +281,7 @@ package body KeyManager_Module.Macros is
          Free (Keymanager_Macro_Module.Current_Macro);
          Keymanager_Macro_Module.Current_Macro :=
            Record_Macro (Get_Kernel (Data), All_Keyboard_Events);
-         Update_Menus_And_Buttons (Get_Kernel (Data));
+         Get_Kernel (Data).Refresh_Context;
       end if;
 
    exception
@@ -340,7 +339,7 @@ package body KeyManager_Module.Macros is
                Free (Keymanager_Macro_Module.Current_Macro);
                Keymanager_Macro_Module.Current_Macro := Record_Macro
                  (Kernel, All_Keyboard_Events);
-               Update_Menus_And_Buttons (Kernel);
+               Kernel.Refresh_Context;
             end if;
 
          when Action_Start_Mouse =>
@@ -355,7 +354,7 @@ package body KeyManager_Module.Macros is
                Free (Keymanager_Macro_Module.Current_Macro);
                Keymanager_Macro_Module.Current_Macro := Record_Macro
                  (Kernel, All_Keyboard_Events or All_Mouse_Events);
-               Update_Menus_And_Buttons (Kernel);
+               Kernel.Refresh_Context;
             end if;
 
          when Action_Stop =>
@@ -365,11 +364,10 @@ package body KeyManager_Module.Macros is
                Remove_Event_Handler
                  (Kernel, General_Event_Handler'Access);
 
-               --  We need to recompute the context, not reuse Context.Context,
-               --  since it is already caching some of the In_Macro filter and
-               --  thus would not recompute them even though the state has
-               --  changed.
-               Update_Menus_And_Buttons (Kernel);
+               --  We need to refresh the context because response from
+               --  In_Macro filter was cached in the context and this cache
+               --  will not be dropped until context is changed.
+               Kernel.Refresh_Context;
             end if;
 
          when Action_Play =>
