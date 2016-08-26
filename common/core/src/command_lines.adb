@@ -22,7 +22,7 @@ package body Command_Lines is
    procedure Make_Default_Section (Config : in out Command_Line_Configuration);
    --  Make sure that there is a section with empty name in Config
 
-   procedure Check_Initialized (Cmd : in out Command_Line);
+   procedure Check_Initialized (Cmd : in out Command_Line'Class);
    --  Check if Cmd is initialized and initialize it otherwise
 
    function Starts_With (Value, Prefix : Unbounded_String) return Boolean;
@@ -239,7 +239,7 @@ package body Command_Lines is
    -- Check_Initialized --
    -----------------------
 
-   procedure Check_Initialized (Cmd : in out Command_Line) is
+   procedure Check_Initialized (Cmd : in out Command_Line'Class) is
    begin
       if Cmd.Switches.Is_Null then
          Cmd.Switches.Set (Switch_Vectors.Empty_Vector);
@@ -251,7 +251,7 @@ package body Command_Lines is
    -----------------------
 
    procedure Set_Configuration
-     (Cmd    : in out Command_Line;
+     (Cmd    : in out Command_Line'Class;
       Config : Command_Line_Configuration) is
    begin
       Cmd.Configuration := Config;
@@ -264,8 +264,7 @@ package body Command_Lines is
    -----------------------
 
    function Get_Configuration
-     (Cmd : Command_Line)
-      return Command_Line_Configuration is
+     (Cmd : Command_Line'Class) return Command_Line_Configuration is
    begin
       return Cmd.Configuration;
    end Get_Configuration;

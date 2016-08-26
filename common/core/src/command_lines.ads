@@ -39,7 +39,7 @@ package Command_Lines is
 
    --  See GNAT.Command_Line for examples on how to use these subprograms
 
-   type Command_Line_Configuration is private;
+   type Command_Line_Configuration is tagged private;
 
    procedure Define_Section
      (Config  : in out Command_Line_Configuration;
@@ -144,13 +144,13 @@ package Command_Lines is
    --         --   Args is now  ["-O2", "-gnatycd"]
    --      end;
 
-   type Command_Line is private;
+   type Command_Line is tagged private;
 
    procedure Set_Configuration
-     (Cmd    : in out Command_Line;
+     (Cmd    : in out Command_Line'Class;
       Config : Command_Line_Configuration);
    function Get_Configuration
-     (Cmd : Command_Line) return Command_Line_Configuration;
+     (Cmd : Command_Line'Class) return Command_Line_Configuration;
    --  Set or retrieve the configuration used for that command line. The Config
    --  must have been initialized first, by calling one of the Define_Switches
    --  subprograms.
@@ -361,7 +361,7 @@ private
    package Switch_Vector_References is new GNATCOLL.Refcount.Shared_Pointers
      (Switch_Vectors.Vector);
 
-   type Command_Line is record
+   type Command_Line is tagged record
       Configuration : Command_Line_Configuration;
       Switches      : Switch_Vector_References.Ref;
       --  Vector of unexpanded switches
