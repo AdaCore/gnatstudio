@@ -135,7 +135,7 @@ package body Build_Configurations is
         (Name                  => T.Name,
          Model                 => T.Model,
          Command_Line          => Deep_Copy (T.Command_Line),
-         Default_Command_Line  => Deep_Copy (T.Default_Command_Line),
+         Default_Command_Line  => T.Default_Command_Line,
          Properties            => T.Properties);
    end Copy;
 
@@ -184,7 +184,7 @@ package body Build_Configurations is
         or else T1.Model      /= T2.Model
         or else T1.Properties /= T2.Properties
         or else not Equals (T1.Command_Line, T2.Command_Line)
-        or else not Equals (T1.Default_Command_Line, T2.Default_Command_Line)
+        or else T1.Default_Command_Line /= T2.Default_Command_Line
       then
          return False;
       end if;
@@ -641,8 +641,7 @@ package body Build_Configurations is
       Dest.Properties.Read_Only := False;
       Dest.Properties.Do_Not_Save := False;
 
-      Set_Default_Command_Line
-        (Dest, Get_Default_Command_Line_Unexpanded (Src));
+      Dest.Default_Command_Line := Src.Default_Command_Line;
    end Duplicate_Target;
 
    --------------------------------------
@@ -810,25 +809,6 @@ package body Build_Configurations is
       end loop;
    end Set_Command_Line;
 
-   ------------------------------
-   -- Set_Default_Command_Line --
-   ------------------------------
-
-   procedure Set_Default_Command_Line
-     (Target               : Target_Access;
-      Default_Command_Line : GNAT.OS_Lib.Argument_List) is
-   begin
-      Free (String_List_Access (Target.Default_Command_Line));
-
-      Target.Default_Command_Line := new GNAT.OS_Lib.Argument_List
-        (Default_Command_Line'Range);
-
-      for J in Default_Command_Line'Range loop
-         Target.Default_Command_Line (J) :=
-           new String'(Default_Command_Line (J).all);
-      end loop;
-   end Set_Default_Command_Line;
-
    --------------
    -- Contains --
    --------------
@@ -949,14 +929,15 @@ package body Build_Configurations is
       Empty : constant Argument_List (1 .. 0) := (others => null);
    begin
       if Target = null
-        or else Target.Default_Command_Line = null
+        or else Target.Default_Command_Line.Is_Empty
       then
          --  A target command line should at least contain the command to
          --  launch; if none can be found, return.
          return Empty;
       end if;
 
-      return Target.Default_Command_Line.all;
+      return Target.Default_Command_Line.To_String_List
+        (Expanded => False).all;
    end Get_Default_Command_Line_Unexpanded;
 
    ----------
@@ -967,7 +948,6 @@ package body Build_Configurations is
    begin
       String_List_Utils.String_List.Free (Target.Properties.Parser_List);
       GNAT.OS_Lib.Free (Target.Command_Line);
-      GNAT.OS_Lib.Free (Target.Default_Command_Line);
    end Free;
 
    ----------------------------------
@@ -1349,7 +1329,9 @@ package body Build_Configurations is
             Free (Target.Command_Line);
             Target.Command_Line := new GNAT.OS_Lib.Argument_List'
               (XML_To_Command_Line (Child));
-            Set_Default_Command_Line (Target, Target.Command_Line.all);
+            Target.Default_Command_Line.Clear;
+            Target.Default_Command_Line.Append_Switches
+              (Target.Command_Line.all);
 
          elsif Child.Value = null then
             Log (Registry, -"Warning: empty node in target: " & Child.Tag.all);
@@ -1484,8 +1466,9 @@ package body Build_Configurations is
                end if;
 
                --  Save the new default command line for Target
-               Set_Default_Command_Line
-                 (Target, Get_Command_Line_Unexpanded (Target));
+               Target.Default_Command_Line.Clear;
+               Target.Default_Command_Line.Append_Switches
+                 (Get_Command_Line_Unexpanded (Target));
             end if;
          end if;
 
@@ -1925,15 +1908,13 @@ package body Build_Configurations is
       Target.Model := Model;
       if Model.Default_Command_Line.Is_Empty then
          Set_Command_Line (Target, (1 .. 0 => null));
-         Set_Default_Command_Line (Target, (1 .. 0 => null));
+         Target.Default_Command_Line.Clear;
       else
          Set_Command_Line
            (Target,
             Model.Default_Command_Line.To_String_List (Expanded => False).all);
 
-         Set_Default_Command_Line
-           (Target,
-            Model.Default_Command_Line.To_String_List (Expanded => False).all);
+         Target.Default_Command_Line := Model.Default_Command_Line;
       end if;
    end Set_Model;
 
@@ -2032,7 +2013,6 @@ package body Build_Configurations is
       if Target /= null then
          --  Target.Model;   --  No need to free, references in the Registry
          Free (Target.Command_Line);
-         Free (Target.Default_Command_Line);
 
          Unchecked_Free (Target);
       end if;

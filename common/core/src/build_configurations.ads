@@ -695,7 +695,7 @@ private
       Command_Line : GNAT.OS_Lib.Argument_List_Access;
       --  This stores the command line between launches of the graphical editor
 
-      Default_Command_Line : GNAT.OS_Lib.Argument_List_Access;
+      Default_Command_Line : Command_Lines.Command_Line;
       --  This stores the default command line of the target, the one specified
       --  via XML.
 
@@ -704,11 +704,6 @@ private
    end record;
 
    -- Private subprograms --
-
-   procedure Set_Default_Command_Line
-     (Target               : Target_Access;
-      Default_Command_Line : GNAT.OS_Lib.Argument_List);
-   --  Set the default command line of Target.
 
    procedure Log
      (Registry : Build_Config_Registry_Access;
