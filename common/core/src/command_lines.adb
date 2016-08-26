@@ -908,4 +908,73 @@ package body Command_Lines is
       end if;
    end Next;
 
+   --------------------
+   -- To_String_List --
+   --------------------
+
+   function To_String_List
+     (Cmd      : Command_Line;
+      Expanded : Boolean) return GNAT.Strings.String_List_Access
+   is
+      Result : GNAT.Strings.String_List_Access;
+      Iter   : Command_Line_Iterator;
+      Count  : Natural := 0;
+   begin
+      Start (Cmd, Iter, Expanded => Expanded);
+
+      while Has_More (Iter) loop
+         Count := Count + 1;
+
+         if Is_New_Section (Iter) then
+            Count := Count + 1;
+         end if;
+
+         if Current_Separator (Iter) = " "
+           and then Current_Parameter (Iter) /= ""
+         then
+            Count := Count + 1;
+         end if;
+
+         Next (Iter);
+      end loop;
+
+      Result := new GNAT.Strings.String_List (1 .. Count);
+      Count := Result'First;
+      Start (Cmd, Iter, Expanded => Expanded);
+
+      while Has_More (Iter) loop
+         if Is_New_Section (Iter) then
+            Result (Count) := new String'(Current_Section (Iter));
+            Count := Count + 1;
+         end if;
+
+         if Current_Separator (Iter) /= " " then
+            if Current_Parameter (Iter) /= "" then
+               Result (Count) := new String'
+                 (Current_Switch (Iter)
+                  & Current_Separator (Iter)
+                  & Current_Parameter (Iter));
+
+            else
+               Result (Count) := new String'(Current_Switch (Iter));
+            end if;
+
+            Count := Count + 1;
+
+         else
+            Result (Count) := new String'(Current_Switch (Iter));
+            Count := Count + 1;
+
+            if Current_Parameter (Iter) /= "" then
+               Result (Count) := new String'(Current_Parameter (Iter));
+               Count := Count + 1;
+            end if;
+         end if;
+
+         Next (Iter);
+      end loop;
+
+      return Result;
+   end To_String_List;
+
 end Command_Lines;

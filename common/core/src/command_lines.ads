@@ -19,6 +19,8 @@
 --  The reason of this package in that it doesn't strip duplicated switches
 --  from a command line if any.
 
+with GNAT.Strings;
+
 private with Ada.Strings.Unbounded;
 private with Ada.Containers.Ordered_Maps;
 private with Ada.Containers.Vectors;
@@ -236,6 +238,13 @@ package Command_Lines is
       Switch  : String;
       Section : String  := "") return Boolean;
    --  Check if there is the Switch in given Section
+
+   function To_String_List
+     (Cmd      : Command_Line;
+      Expanded : Boolean) return GNAT.Strings.String_List_Access;
+   --  Return the arguments of the command line. Expanded indicates whether
+   --  the expanded command line, or the shortest command line, is returned.
+   --  Result should be freed by caller after use.
 
    Invalid_Section : exception;
 

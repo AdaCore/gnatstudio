@@ -34,13 +34,6 @@ package body Switches_Chooser is
    --  If it is ASCII.LF, the switch takes no parameter.
    --  If it is ASCII.CR, the switch takes an optional parameter
 
-   procedure Get_Command_Line
-     (Cmd      : in out Command_Line;
-      Expanded : Boolean;
-      Result   : out GNAT.Strings.String_List_Access);
-   --  Return the arguments of the command line. Expanded indicates whether
-   --  the expanded command line, or the shortest command line, is returned.
-
    procedure Free_List (Deps : in out Dependency_Description_Access);
    --  Free the whole list of dependencies
 
@@ -716,73 +709,6 @@ package body Switches_Chooser is
       end if;
    end Add_Default_Value_Dependency;
 
-   ----------------------
-   -- Get_Command_Line --
-   ----------------------
-
-   procedure Get_Command_Line
-     (Cmd      : in out Command_Line;
-      Expanded : Boolean;
-      Result   : out GNAT.Strings.String_List_Access)
-   is
-      Iter  : Command_Line_Iterator;
-      Count : Natural := 0;
-   begin
-      Start (Cmd, Iter, Expanded => Expanded);
-
-      while Has_More (Iter) loop
-         Count := Count + 1;
-
-         if Is_New_Section (Iter) then
-            Count := Count + 1;
-         end if;
-
-         if Current_Separator (Iter) = " "
-           and then Current_Parameter (Iter) /= ""
-         then
-            Count := Count + 1;
-         end if;
-
-         Next (Iter);
-      end loop;
-
-      Result := new String_List (1 .. Count);
-      Count := Result'First;
-      Start (Cmd, Iter, Expanded => Expanded);
-
-      while Has_More (Iter) loop
-         if Is_New_Section (Iter) then
-            Result (Count) := new String'(Current_Section (Iter));
-            Count := Count + 1;
-         end if;
-
-         if Current_Separator (Iter) /= " " then
-            if Current_Parameter (Iter) /= "" then
-               Result (Count) := new String'
-                 (Current_Switch (Iter)
-                  & Current_Separator (Iter)
-                  & Current_Parameter (Iter));
-
-            else
-               Result (Count) := new String'(Current_Switch (Iter));
-            end if;
-
-            Count := Count + 1;
-
-         else
-            Result (Count) := new String'(Current_Switch (Iter));
-            Count := Count + 1;
-
-            if Current_Parameter (Iter) /= "" then
-               Result (Count) := new String'(Current_Parameter (Iter));
-               Count := Count + 1;
-            end if;
-         end if;
-
-         Next (Iter);
-      end loop;
-   end Get_Command_Line;
-
    ---------------------------
    -- Root_Switches_Editors --
    ---------------------------
@@ -810,12 +736,9 @@ package body Switches_Chooser is
 
       function Get_Command_Line
         (Editor   : access Root_Switches_Editor;
-         Expanded : Boolean) return GNAT.Strings.String_List_Access
-      is
-         Result : String_List_Access;
+         Expanded : Boolean) return GNAT.Strings.String_List_Access is
       begin
-         Get_Command_Line (Editor.Cmd_Line, Expanded, Result);
-         return Result;
+         return Editor.Cmd_Line.To_String_List (Expanded);
       end Get_Command_Line;
 
       ----------------
@@ -2007,8 +1930,7 @@ package body Switches_Chooser is
 
          --  Update the command line if the filter has affected it
          if Success then
-            Get_Command_Line
-              (Cmd_Line, Expanded => False, Result => Command_Line);
+            Command_Line := Cmd_Line.To_String_List (Expanded => False);
          end if;
       end Apply_Filter_On_Command_Line;
 
