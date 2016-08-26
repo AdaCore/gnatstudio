@@ -249,7 +249,7 @@ package Command_Lines is
    type Command_Line_Iterator is private;
 
    procedure Start
-     (Cmd      : in out Command_Line;
+     (Cmd      : Command_Line;
       Iter     : in out Command_Line_Iterator;
       Expanded : Boolean := False);
    --  Start iterating over the command line arguments. If Expanded is true,

@@ -724,17 +724,18 @@ package body Command_Lines is
    -----------
 
    procedure Start
-     (Cmd      : in out Command_Line;
+     (Cmd      : Command_Line;
       Iter     : in out Command_Line_Iterator;
       Expanded : Boolean := False)
    is
+      Copy : Command_Line := Cmd;
    begin
-      Check_Initialized (Cmd);
+      Check_Initialized (Copy);
 
       if Expanded then
          Iter :=
            (Expanded       => True,
-            Line           => Cmd,
+            Line           => Copy,
             Switch_Index   => 1,
             Char_Index     => 1,
             Prefix         => 0,
@@ -742,9 +743,9 @@ package body Command_Lines is
 
          if Has_More (Iter) then
             declare
-               Next   : constant Switch := Cmd.Switches.Get.First_Element;
+               Next   : constant Switch := Copy.Switches.Get.First_Element;
                Prefix : constant Unbounded_String :=
-                 Find_Prefix (Cmd.Configuration.Unchecked_Get, Next.Switch);
+                 Find_Prefix (Copy.Configuration.Unchecked_Get, Next.Switch);
             begin
                if Prefix = "" then
                   Iter.Char_Index := Length (Next.Switch);
@@ -758,7 +759,7 @@ package body Command_Lines is
       else
          Iter :=
            (Expanded       => False,
-            Line           => Cmd,
+            Line           => Copy,
             Switch_Index   => 1,
             Is_New_Section => False);
       end if;
