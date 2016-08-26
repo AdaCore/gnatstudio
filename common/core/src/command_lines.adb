@@ -275,10 +275,8 @@ package body Command_Lines is
 
    procedure Set_Command_Line
      (Cmd                : in out Command_Line;
-      Switches           : String;
-      Switch_Char        : Character := '-')
+      Switches           : String)
    is
-      pragma Unreferenced (Switch_Char);
       use GNAT.OS_Lib;
 
       function Is_Section (Name : String) return Boolean;

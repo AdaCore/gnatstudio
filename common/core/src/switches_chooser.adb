@@ -1167,11 +1167,7 @@ package body Switches_Chooser is
          --  ??? Not efficient to go back to a string
 
          Set_Configuration (Cmd2, Get_Configuration (Editor.Cmd_Line));
-         Set_Command_Line
-           (Cmd2,
-            Argument_List_To_String (Args),
-            --  Get_Switches (Editor.Config.Config, Editor.Config.Switch_Char),
-            Switch_Char => Editor.Config.Switch_Char);
+         Set_Command_Line (Cmd2, Argument_List_To_String (Args));
 
          --  The two command lines are equal if the switches are exactly in the
          --  same order. This is needed for instance when the user has typed
@@ -1217,9 +1213,7 @@ package body Switches_Chooser is
 
          Editor.Block := True;
          Set_Configuration (Editor.Cmd_Line, Editor.Config.Config);
-         Set_Command_Line
-           (Editor.Cmd_Line, Cmd_Line,
-            Switch_Char => Editor.Config.Switch_Char);
+         Set_Command_Line (Editor.Cmd_Line, Cmd_Line);
          Editor.Block := False;
          On_Command_Line_Changed (Editor);
       end On_Command_Line_Changed;
@@ -1419,8 +1413,7 @@ package body Switches_Chooser is
 
       procedure Set_Command_Line
         (Editor   : access Root_Switches_Editor;
-         Cmd_Line : String)
-      is
+         Cmd_Line : String) is
       begin
          Set_Graphical_Command_Line
            (Root_Switches_Editor'Class (Editor.all), Cmd_Line);
@@ -1435,8 +1428,7 @@ package body Switches_Chooser is
       procedure Set_Command_Line
         (Editor         : access Root_Switches_Editor;
          Cmd_Line       : GNAT.Strings.String_List;
-         Protect_Quotes : Boolean := True)
-      is
+         Protect_Quotes : Boolean := True) is
       begin
          --  ??? Not very efficient to go through a string
          Set_Command_Line
@@ -1860,8 +1852,6 @@ package body Switches_Chooser is
          Cmd_Line         : Command_Lines.Command_Line;
          Config           : constant Command_Line_Configuration :=
                               Switches_Config.Config;
-         Switch_Char      : constant Character :=
-                              Get_Switch_Char (Switches_Config);
          Switch           : constant Switch_Description :=
                               Get_Switch (Switches_Config, Filter);
          Success          : Boolean := False;
@@ -1871,9 +1861,7 @@ package body Switches_Chooser is
 
          --  Build the command line
          Set_Command_Line
-           (Cmd_Line,
-            Switches           => Argument_List_To_String (Command_Line.all),
-            Switch_Char        => Switch_Char);
+           (Cmd_Line, Argument_List_To_String (Command_Line.all));
 
          if not Before_Save and then not Matches then
             --  If we are not saving the target and if the filter does not
@@ -1901,9 +1889,7 @@ package body Switches_Chooser is
                Set_Configuration (Default_Cmd_Line, Config);
 
                Set_Command_Line
-                 (Default_Cmd_Line,
-                  Switches    => Argument_List_To_String (Default_Line),
-                  Switch_Char => Switch_Char);
+                 (Default_Cmd_Line, Argument_List_To_String (Default_Line));
 
                Start (Default_Cmd_Line, Iter, Expanded => True);
 

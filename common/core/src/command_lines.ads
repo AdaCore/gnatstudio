@@ -158,9 +158,8 @@ package Command_Lines is
    --  subprograms.
 
    procedure Set_Command_Line
-     (Cmd                : in out Command_Line;
-      Switches           : String;
-      Switch_Char        : Character := '-');
+     (Cmd      : in out Command_Line;
+      Switches : String);
    --  Set the new content of the command line, by replacing the current
    --  version with Switches.
 
