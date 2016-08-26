@@ -1720,15 +1720,19 @@ procedure GPS.Main is
       -----------------
 
       procedure Setup_Debug is
+         Empty_Project : Boolean := False;
       begin
          File_Opened := True;
          Auto_Load_Project := False;
 
-         if Project_Name /= No_File then
+         if Project_Name /= No_File
+           and then Is_Regular_File (Project_Name)
+         then
             --  Do not clear to keep the welcome message on kernel's console
             Load_Project (GPS_Main.Kernel, Project_Name, Clear => False);
             Project := Get_Project (GPS_Main.Kernel);
          else
+            Empty_Project := True;
             Load_Empty_Project (GPS_Main.Kernel);
             Project := Get_Project (GPS_Main.Kernel);
             Get_Registry (GPS_Main.Kernel).Tree.Set_Status (From_Executable);
@@ -1766,11 +1770,13 @@ procedure GPS.Main is
                Value     => Protocol.all);
          end if;
 
-         Project.Set_Attribute
-           (Scenario  => All_Scenarios,
-            Attribute => Languages_Attribute,
-            Values    =>
-              (new String'("ada"), new String'("c"), new String'("c++")));
+         if Empty_Project then
+            Project.Set_Attribute
+              (Scenario  => All_Scenarios,
+               Attribute => Languages_Attribute,
+               Values    =>
+                 (new String'("ada"), new String'("c"), new String'("c++")));
+         end if;
 
          Project.Set_Modified (False);
 

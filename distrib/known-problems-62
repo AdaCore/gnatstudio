@@ -24,6 +24,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
+KP-62-P822-023 GPS: Command line parameter "debug" may hung GPS
+
+  Problem:    GPS may hung when a project contains a case statement
+              and a command line for GPS contains "debug" parameter.
+
+  Status:     This was fixed in 17.0 on 2016-08-26
+
+  Workaround: Use "/Debug/Initialize" menu instead command line parameter.
 
 KP-62-P811-024 GPS: extraneous messages in clang live diagnostics
 
