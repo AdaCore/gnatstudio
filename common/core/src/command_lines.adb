@@ -269,6 +269,15 @@ package body Command_Lines is
       return Cmd.Configuration;
    end Get_Configuration;
 
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Self : in out Command_Line) is
+   begin
+      Self.Switches.Set (Switch_Vectors.Empty_Vector);
+   end Clear;
+
    ----------------------
    -- Set_Command_Line --
    ----------------------
