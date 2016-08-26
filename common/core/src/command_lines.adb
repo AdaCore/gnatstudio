@@ -283,8 +283,24 @@ package body Command_Lines is
    ----------------------
 
    procedure Set_Command_Line
-     (Cmd                : in out Command_Line;
-      Switches           : String)
+     (Cmd      : in out Command_Line;
+      Switches : String)
+   is
+      List : GNAT.OS_Lib.Argument_List_Access :=
+        GNAT.OS_Lib.Argument_String_To_List (Switches);
+   begin
+      Cmd.Clear;
+      Cmd.Append_Switches (List.all);
+      GNAT.OS_Lib.Free (List);
+   end Set_Command_Line;
+
+   ------------------
+   -- Add_Switches --
+   ------------------
+
+   procedure Append_Switches
+     (Cmd  : in out Command_Line;
+      List : GNAT.Strings.String_List)
    is
       use GNAT.OS_Lib;
 
@@ -352,7 +368,6 @@ package body Command_Lines is
          Found := False;
       end Find_Switch;
 
-      List    : Argument_List_Access := Argument_String_To_List (Switches);
       Last    : Natural := 0;
 
       Switch_Conf  : Switch_Configuration;
@@ -367,7 +382,7 @@ package body Command_Lines is
       Make_Default_Section (Cmd.Configuration);
       Conf := Cmd.Configuration.Unchecked_Get;
 
-      for Arg of List.all loop
+      for Arg of List loop
          if Is_Parameter then
             Is_Parameter := False;
 
@@ -423,9 +438,7 @@ package body Command_Lines is
             end;
          end if;
       end loop;
-
-      Free (List);
-   end Set_Command_Line;
+   end Append_Switches;
 
    -----------------
    -- Starts_With --
@@ -591,7 +604,7 @@ package body Command_Lines is
    -- Add_Switch --
    ----------------
 
-   procedure Add_Switch
+   procedure Append_Switch
      (Cmd        : in out Command_Line;
       Switch     : String;
       Parameter  : String    := "";
@@ -601,15 +614,15 @@ package body Command_Lines is
    is
       Success : Boolean;
    begin
-      Add_Switch
+      Append_Switch
         (Cmd, Switch, Parameter, Separator, Section, Add_Before, Success);
-   end Add_Switch;
+   end Append_Switch;
 
    ----------------
    -- Add_Switch --
    ----------------
 
-   procedure Add_Switch
+   procedure Append_Switch
      (Cmd        : in out Command_Line;
       Switch     : String;
       Parameter  : String    := "";
@@ -637,7 +650,7 @@ package body Command_Lines is
 
       Append (Cmd, Item, Add_Before);
       Success := True;
-   end Add_Switch;
+   end Append_Switch;
 
    -------------------
    -- Remove_Switch --

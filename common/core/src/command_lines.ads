@@ -163,14 +163,19 @@ package Command_Lines is
    --  Set the new content of the command line, by replacing the current
    --  version with Switches.
 
-   procedure Add_Switch
+   procedure Append_Switches
+     (Cmd  : in out Command_Line;
+      List : GNAT.Strings.String_List);
+   --  Append given switches to command line
+
+   procedure Append_Switch
      (Cmd        : in out Command_Line;
       Switch     : String;
       Parameter  : String    := "";
       Separator  : Character := ASCII.NUL;
       Section    : String    := "";
       Add_Before : Boolean   := False);
-   procedure Add_Switch
+   procedure Append_Switch
      (Cmd        : in out Command_Line;
       Switch     : String;
       Parameter  : String    := "";

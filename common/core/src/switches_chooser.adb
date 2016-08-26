@@ -800,7 +800,7 @@ package body Switches_Chooser is
                   --  editable anyway.
 
                   if Deps.Slave_Status then
-                     Add_Switch
+                     Append_Switch
                        (Tool.Cmd_Line,
                         Section => Deps.Slave_Section.all,
                         Switch  => Deps.Slave_Switch.all,
@@ -973,7 +973,7 @@ package body Switches_Chooser is
                      case S.Typ is
                         when Switch_Check =>
                            if Parameter = "Checked" then
-                              Add_Switch
+                              Append_Switch
                                 (Editor.Cmd_Line,
                                  Section    => To_String (S.Section),
                                  Switch     => To_String (S.Switch),
@@ -985,7 +985,7 @@ package body Switches_Chooser is
                                  --  If 'unchecked' while the default state
                                  --  is 'checked', explicitely add the
                                  --  deactivation switch
-                                 Add_Switch
+                                 Append_Switch
                                    (Editor.Cmd_Line,
                                     Section    => To_String (S.Section),
                                     Switch     => To_String (S.Switch_Unset),
@@ -1015,7 +1015,7 @@ package body Switches_Chooser is
 
                         when Switch_Radio =>
                            if Boolean'Value (Parameter) then
-                              Add_Switch
+                              Append_Switch
                                 (Editor.Cmd_Line,
                                  Section    => To_String (S.Section),
                                  Switch     => To_String (S.Switch),
@@ -1034,7 +1034,7 @@ package body Switches_Chooser is
                               --  GNAT GPL 2011 is out, see other calls to
                               --  Add_Switch in this package
 
-                              Add_Switch
+                              Append_Switch
                                 (Editor.Cmd_Line,
                                  Section    => To_String (S.Section),
                                  Switch     => To_String (S.Switch),
@@ -1050,7 +1050,7 @@ package body Switches_Chooser is
 
                         when Switch_Spin =>
                            if Integer'Value (Parameter) /= S.Default then
-                              Add_Switch
+                              Append_Switch
                                 (Editor.Cmd_Line,
                                  Section    => To_String (S.Section),
                                  Switch     => To_String (S.Switch),
@@ -1075,7 +1075,7 @@ package body Switches_Chooser is
                                        To_String (S.Section),
                                        False);
                                  elsif Element (Combo).Value = S.No_Digit then
-                                    Add_Switch
+                                    Append_Switch
                                       (Editor.Cmd_Line,
                                        Section    => To_String (S.Section),
                                        Switch     => To_String (S.Switch),
@@ -1086,7 +1086,7 @@ package body Switches_Chooser is
                                        To_String (S.Section),
                                        True);
                                  else
-                                    Add_Switch
+                                    Append_Switch
                                       (Editor.Cmd_Line,
                                        Section    => To_String (S.Section),
                                        Switch     => To_String (S.Switch),
@@ -1902,7 +1902,7 @@ package body Switches_Chooser is
                end loop;
 
                if Has_More (Iter) then
-                  Add_Switch
+                  Append_Switch
                     (Cmd_Line,
                      Switch     => Current_Switch (Iter),
                      Parameter  => Current_Parameter (Iter),
