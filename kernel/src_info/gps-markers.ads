@@ -69,8 +69,8 @@ package GPS.Markers is
    --  Destroy self and reclame memory.
 
    package Markers is new Shared_Pointers
-     (Element_Type  => Location_Marker_Data'Class,
-      Release       => Free);
+     (Element_Type => Location_Marker_Data'Class,
+      Release      => Free);
    subtype Location_Marker is Markers.Ref;
    No_Marker : constant Location_Marker := Markers.Null_Ref;
    --  Make locations refcounted, so that they can more conveniently be stored
