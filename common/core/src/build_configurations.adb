@@ -69,6 +69,7 @@ package body Build_Configurations is
       Tag : String) return Node_Ptr;
    function XML_To_Command_Line
      (N : Node_Ptr) return GNAT.OS_Lib.Argument_List;
+   function XML_To_Command_Line (N : Node_Ptr) return Command_Line;
    --  Convert between a command line to/from the following XML representation
    --          <command-line>
    --             <arg>COMMAND</arg>
@@ -264,7 +265,8 @@ package body Build_Configurations is
    function Get_Default_Command_Line (Target_Model : Target_Model_Access)
      return GNAT.OS_Lib.Argument_List_Access is
    begin
-      return Target_Model.Default_Command_Line;
+      return Target_Model.Default_Command_Line.To_String_List
+        (Expanded => False);
    end Get_Default_Command_Line;
 
    -----------------
@@ -369,8 +371,7 @@ package body Build_Configurations is
                end if;
 
             elsif Child.Tag.all = "command-line" then
-               Model.Default_Command_Line :=
-                 new GNAT.OS_Lib.Argument_List'(XML_To_Command_Line (Child));
+               Model.Default_Command_Line := XML_To_Command_Line (Child);
 
             elsif Child.Tag.all = "iconname" then
                if Child.Value /= null then
@@ -498,9 +499,13 @@ package body Build_Configurations is
 
       if Command_Line'Length > 0 then
          Set_Command_Line (Target, Command_Line);
-      elsif The_Model.Default_Command_Line /= null then
+      elsif not The_Model.Default_Command_Line.Is_Empty then
          Set_Command_Line
-           (Target, The_Model.Default_Command_Line.all);
+           (Target,
+            The_Model.Default_Command_Line.To_String_List
+              (Expanded => False).all);
+         --  FIXME: Memory leak here. It's expected that we will replace
+         --  String_List here by Command_Line
       end if;
 
       Add_Target (Registry, Target);
@@ -545,7 +550,7 @@ package body Build_Configurations is
       --  cases, except when the model's command line is empty, in which case,
       --  reset the command line.
 
-      if The_Model.Default_Command_Line = null then
+      if The_Model.Default_Command_Line.Is_Empty then
          Set_Command_Line (The_Target, (1 .. 0 => null));
       else
          declare
@@ -553,11 +558,13 @@ package body Build_Configurations is
                              Get_Command_Line_Unexpanded (The_Target);
             New_Cmd_Line : Argument_List (Old_Cmd_Line'Range);
 
+            Iter         : Command_Line_Iterator;
          begin
             if New_Cmd_Line'Length > 0 then
+               The_Model.Default_Command_Line.Start (Iter);
+
                New_Cmd_Line (New_Cmd_Line'First) :=
-                 new String'(The_Model.Default_Command_Line
-                             (The_Model.Default_Command_Line'First).all);
+                 new String'(Current_Switch (Iter));
 
                for J in New_Cmd_Line'First + 1 .. New_Cmd_Line'Last loop
                   New_Cmd_Line (J) := new String'(Old_Cmd_Line (J).all);
@@ -1105,6 +1112,18 @@ package body Build_Configurations is
 
          return CL;
       end;
+   end XML_To_Command_Line;
+
+   -------------------------
+   -- XML_To_Command_Line --
+   -------------------------
+
+   function XML_To_Command_Line (N : Node_Ptr) return Command_Line is
+      List : constant GNAT.OS_Lib.Argument_List := XML_To_Command_Line (N);
+   begin
+      return Result : Command_Line do
+         Result.Append_Switches (List);
+      end return;
    end XML_To_Command_Line;
 
    ------------------------
@@ -1904,12 +1923,17 @@ package body Build_Configurations is
       Model    : Target_Model_Access) is
    begin
       Target.Model := Model;
-      if Model.Default_Command_Line = null then
+      if Model.Default_Command_Line.Is_Empty then
          Set_Command_Line (Target, (1 .. 0 => null));
          Set_Default_Command_Line (Target, (1 .. 0 => null));
       else
-         Set_Command_Line (Target, Model.Default_Command_Line.all);
-         Set_Default_Command_Line (Target, Model.Default_Command_Line.all);
+         Set_Command_Line
+           (Target,
+            Model.Default_Command_Line.To_String_List (Expanded => False).all);
+
+         Set_Default_Command_Line
+           (Target,
+            Model.Default_Command_Line.To_String_List (Expanded => False).all);
       end if;
    end Set_Model;
 
@@ -2042,7 +2066,6 @@ package body Build_Configurations is
       while Has_Element (C) loop
          M := Element (C);
 
-         Free (M.Default_Command_Line);
          Free (M.Switches);
          Unchecked_Free (M);
 

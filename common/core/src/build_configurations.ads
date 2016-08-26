@@ -38,6 +38,7 @@ with GNAT.OS_Lib;
 
 with GNATCOLL.VFS;
 
+with Command_Lines;    use Command_Lines;
 with Remote;           use Remote;
 with Switches_Chooser; use Switches_Chooser;
 with XML_Utils;        use XML_Utils;
@@ -648,7 +649,7 @@ private
       Switches             : Switches_Editor_Config;
       --  The configuration of switches to display in the target
 
-      Default_Command_Line : GNAT.OS_Lib.Argument_List_Access;
+      Default_Command_Line : Command_Line;
       --  The command line to use when creating targets of this model
 
       Persistent_History   : Boolean := True;
