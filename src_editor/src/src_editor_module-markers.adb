@@ -33,20 +33,29 @@ with String_Utils;              use String_Utils;
 package body Src_Editor_Module.Markers is
    use type GNATCOLL.Xref.Visible_Column;
 
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, File_Marker);
-   function Convert is new Ada.Unchecked_Conversion
-     (File_Marker, System.Address);
-
    package Markers_Callback is new Gtk.Handlers.User_Callback
      (GObject_Record, File_Marker);
 
-   procedure On_Destroy_Buffer
-     (Marker : System.Address; Buffer : System.Address);
-   pragma Convention (C, On_Destroy_Buffer);
+   procedure On_Mark_Deleted
+     (Self : access Gtk.Text_Buffer.Gtk_Text_Buffer_Record'Class;
+      Mark : not null access Gtk.Text_Mark.Gtk_Text_Mark_Record'Class);
    --  Called when a gtk_text_mark is destroyed. At this point, the mark is
    --  no longer attached to a buffer. This is called only when the mark
    --  is explicitly removed from the buffer.
+
+   procedure On_Destroy_Mark
+     (M : System.Address; Mark : System.Address)
+     with Convention => C;
+   --  Handles destruction of GtkTextMark
+
+   procedure Link_Mark (Self : not null access File_Marker_Data'Class);
+   --  Link GtkTextMark with marker.
+
+   procedure Unlink_Mark
+     (Self  : not null access File_Marker_Data'Class;
+      Reset : Boolean);
+   --  Unlink underlying GtkTextMark for this marker. When Reset is True
+   --  reference to marker in GtkTextMark is reset too.
 
    procedure On_Closed_Or_Changed
      (Buffer  : access GObject_Record'Class;
@@ -72,6 +81,34 @@ package body Src_Editor_Module.Markers is
    --  the text is changed
    --  If the mark already exists, update its location.
 
+   procedure Set_Qdata
+     (Obj   : System.Address;
+      Quark : Glib.GQuark;
+      Data  : System.Address)
+     with Import        => True,
+          Convention    => C,
+          External_Name => "g_object_set_qdata";
+
+   function Get_Qdata
+     (Object : System.Address;
+      Quark  : Glib.GQuark) return System.Address
+     with Import        => True,
+          Convention    => C,
+          External_Name => "g_object_get_qdata";
+
+   Marker_Quark_Name  : constant String := "GPS_MARKER_QUARK" & ASCII.NUL;
+   Marker_Quark_Value : Glib.GQuark;
+
+   function Marker_Quark return Glib.GQuark;
+
+   function To_Address is
+     new Ada.Unchecked_Conversion
+       (GPS.Markers.Markers.Element_Access, System.Address);
+
+   function To_Marker is
+     new Ada.Unchecked_Conversion
+       (System.Address, GPS.Markers.Markers.Element_Access);
+
    --------------------------------
    -- Register_Persistent_Marker --
    --------------------------------
@@ -82,6 +119,43 @@ package body Src_Editor_Module.Markers is
    begin
       Marker_List.Append (Module.Stored_Marks,  Marker.Weak);
    end Register_Persistent_Marker;
+
+   ---------------
+   -- Link_Mark --
+   ---------------
+
+   procedure Link_Mark
+     (Self : not null access File_Marker_Data'Class) is
+   begin
+      Set_Qdata (Self.Mark.Get_Object, Marker_Quark, To_Address (Self));
+      Self.Mark.Weak_Ref (On_Destroy_Mark'Access);
+
+      --  Marker_Quark is reused for GtkTextBuffer to mark buffer that handler
+      --  of "mark-deleted" signal has been setup.
+
+      if Get_Qdata (Self.Buffer.Get_Object, Marker_Quark) = Null_Address then
+         Set_Qdata
+           (Self.Buffer.Get_Object, Marker_Quark, Self.Buffer.Get_Object);
+         Self.Buffer.On_Mark_Deleted (On_Mark_Deleted'Access);
+      end if;
+   end Link_Mark;
+
+   -----------------
+   -- Unlink_Mark --
+   -----------------
+
+   procedure Unlink_Mark
+     (Self  : not null access File_Marker_Data'Class;
+      Reset : Boolean) is
+   begin
+      if Reset then
+         Set_Qdata (Self.Mark.Get_Object, Marker_Quark, System.Null_Address);
+         Self.Mark.Weak_Unref (On_Destroy_Mark'Access);
+      end if;
+
+      Self.Mark   := null;
+      Self.Buffer := null;
+   end Unlink_Mark;
 
    ----------------------------
    -- Reset_Markers_For_File --
@@ -147,20 +221,6 @@ package body Src_Editor_Module.Markers is
       end if;
    end Update_Marker_Location;
 
-   -----------------------
-   -- On_Destroy_Buffer --
-   -----------------------
-
-   procedure On_Destroy_Buffer
-     (Marker : System.Address; Buffer : System.Address)
-   is
-      pragma Unreferenced (Buffer);
-      M : constant File_Marker := Convert (Marker);
-   begin
-      M.Mark   := null;
-      M.Buffer := null;
-   end On_Destroy_Buffer;
-
    --------------------------
    -- On_Closed_Or_Changed --
    --------------------------
@@ -174,6 +234,43 @@ package body Src_Editor_Module.Markers is
       Update_Marker_Location (Marker);
    end On_Closed_Or_Changed;
 
+   ---------------------
+   -- On_Destroy_Mark --
+   ---------------------
+
+   procedure On_Destroy_Mark
+     (M : System.Address; Mark : System.Address)
+   is
+      pragma Unreferenced (M);
+
+      Marker : constant File_Marker :=
+        File_Marker (To_Marker (Get_Qdata (Mark, Marker_Quark)));
+
+   begin
+      if Marker /= null then
+         Marker.Unlink_Mark (False);
+      end if;
+   end On_Destroy_Mark;
+
+   ---------------------
+   -- On_Mark_Deleted --
+   ---------------------
+
+   procedure On_Mark_Deleted
+     (Self : access Gtk.Text_Buffer.Gtk_Text_Buffer_Record'Class;
+      Mark : not null access Gtk.Text_Mark.Gtk_Text_Mark_Record'Class)
+   is
+      pragma Unreferenced (Self);
+
+      Marker : constant File_Marker :=
+        File_Marker (To_Marker (Get_Qdata (Mark.Get_Object, Marker_Quark)));
+
+   begin
+      if Marker /= null then
+         Marker.Unlink_Mark (True);
+      end if;
+   end On_Mark_Deleted;
+
    ------------
    -- Delete --
    ------------
@@ -182,11 +279,15 @@ package body Src_Editor_Module.Markers is
    begin
       if Self.Mark /= null then
          if not Self.Mark.Get_Deleted then
-            Self.Buffer.Delete_Mark (Self.Mark);
-            Disconnect (Self.Buffer, Self.Cid);
-            Self.Buffer.Weak_Unref (On_Destroy_Buffer'Access, Convert (Self));
-            Self.Mark   := null;
-            Self.Buffer := null;
+            declare
+               B : constant Gtk_Text_Buffer := Self.Buffer;
+               M : constant Gtk_Text_Mark   := Self.Mark;
+
+            begin
+               Disconnect (Self.Buffer, Self.Cid);
+               Self.Unlink_Mark (True);
+               B.Delete_Mark (M);
+            end;
          end if;
       end if;
    end Delete;
@@ -196,10 +297,8 @@ package body Src_Editor_Module.Markers is
    -------------
 
    overriding procedure Destroy (Marker : in out File_Marker_Data) is
-      use Marker_List;
       Module : constant Source_Editor_Module :=
                  Source_Editor_Module (Src_Editor_Module_Id);
-      M1     : constant File_Marker := Marker'Unchecked_Access;
 
    begin
       if Module = null then
@@ -207,48 +306,7 @@ package body Src_Editor_Module.Markers is
       end if;
 
       Free (Marker.Instances);
-
-      if Marker.Mark /= null then
-         --  We explicitly remove the weak_unref on the mark, even though
-         --  it is likely it will be destroyed as a result of Delete_Mark.
-         --  However, if someone happened to have a Ref on it, we want to be
-         --  sure that On_Destroy_Mark will never be call with the dangling
-         --  File_Marker pointer.
-
-         if not Source_Buffer (Marker.Buffer).In_Destruction then
-            Disconnect (Marker.Buffer, Marker.Cid);
-            Weak_Unref (Marker.Buffer,
-                        On_Destroy_Buffer'Access, Convert (M1));
-         end if;
-
-         --  Remove the mark from the buffer, but do not Unref it (since we do
-         --  not own a reference, the buffer does).
-
-         --  What we really want is to destroy the mark in gtk+ if no other
-         --  file_marker or python class instance references it. However, none
-         --  of those is ref'ing it, so we can't know that. If we do delete the
-         --  mark, we end up with the following wrong scenario:
-         --       GPS.EditorBuffer.add_special_line creates a file_marker, and
-         --          a python class. Then the refcount of the file_marker goes
-         --          to 0, and this Destroy is called, thus the mark is deleted
-         --          and python instance no longer references a mark.
-         --  So we cannot remove the mark explicitly from the buffer, and it
-         --  will be destroyed when the buffer is destroyed. This might mean
-         --  extra memory use over time, until the buffer is closed.
-         --
-         --  One solution would be to have a boolean that indicates whether
-         --  there is a python class for the mark (in fact we can check that
-         --  directly), and delete if there is none. That would at least
-         --  remove the cases where we leave the mark
-         --  Scenario:
-         --      a = GPS.EditorBuffer.add_special_line
-         --      # no more file_marker, but a exists, so don't delete mark
-         --      # a then goes out of scope. Destructor of EditorMark deletes
-         --      # the mark
-
-         Marker.Mark := null;
-         Marker.Buffer := null;
-      end if;
+      Marker.Delete;
    end Destroy;
 
    ----------------------
@@ -299,9 +357,7 @@ package body Src_Editor_Module.Markers is
             --  directly, it will be destroyed anyway, so we need to be aware
             --  of that.
 
-            Weak_Ref
-              (Marker.Buffer, On_Destroy_Buffer'Access, Convert (Marker));
-
+            Marker.Link_Mark;
             Marker.Cid := Markers_Callback.Connect
               (Source_Buffer (Marker.Buffer), Signal_Closed,
                Markers_Callback.To_Marshaller (On_Closed_Or_Changed'Access),
@@ -380,8 +436,8 @@ package body Src_Editor_Module.Markers is
                    Cid      => <>,
                    Instances => <>,
                    Kernel   => Kernel_Handle (Kernel)));
-         Register_Persistent_Marker (M);
          Create_Text_Mark (Kernel, File_Marker (M.Unchecked_Get), Box => null);
+         Register_Persistent_Marker (M);
       end return;
    end Create_File_Marker;
 
@@ -428,16 +484,28 @@ package body Src_Editor_Module.Markers is
                    Kernel   => Kernel_Handle (Kernel)));
 
          D := File_Marker (M.Unchecked_Get);
-
+         D.Link_Mark;
          D.Cid := Markers_Callback.Connect
            (Buffer, Signal_Closed,
             Markers_Callback.To_Marshaller (On_Closed_Or_Changed'Access), D);
-         Weak_Ref (Buffer, On_Destroy_Buffer'Access, Convert (D));
 
          Update_Marker_Location (D);
          Register_Persistent_Marker (M);
       end return;
    end Create_File_Marker;
+
+   ------------------
+   -- Marker_Quark --
+   ------------------
+
+   function Marker_Quark return Glib.GQuark is
+   begin
+      if Marker_Quark_Value = Glib.Unknown_Quark then
+         Marker_Quark_Value := Glib.Quark_From_String (Marker_Quark_Name);
+      end if;
+
+      return Marker_Quark_Value;
+   end Marker_Quark;
 
    ----------
    -- Move --
@@ -449,17 +517,13 @@ package body Src_Editor_Module.Markers is
    is
    begin
       if Marker.Mark /= null then
-         Weak_Unref
-           (Marker.Buffer, On_Destroy_Buffer'Access,
-            Convert (File_Marker (Marker)));
+         Marker.Unlink_Mark (True);
       end if;
 
       Marker.Buffer := Get_Buffer (Mark);
       Marker.Mark   := Mark;
 
-      Weak_Ref
-        (Marker.Buffer, On_Destroy_Buffer'Access,
-         Convert (File_Marker (Marker)));
+      Marker.Link_Mark;
       Update_Marker_Location (Marker);
    end Move;
 
