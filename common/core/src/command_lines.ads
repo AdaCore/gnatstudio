@@ -233,6 +233,9 @@ package Command_Lines is
    --  on the command line "-g -cargs -g" will result in "-g", while if
    --  called with (Cmd_Line, "-g") this will result in "-cargs -g".
 
+   function Is_Empty (Self : Command_Line) return Boolean;
+   --  Check if there is some switch on given command line
+
    function Has_Switch
      (Cmd     : Command_Line;
       Switch  : String;

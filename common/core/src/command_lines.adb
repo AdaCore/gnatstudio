@@ -684,6 +684,16 @@ package body Command_Lines is
       Success := False;
    end Remove_Switch;
 
+   --------------
+   -- Is_Empty --
+   --------------
+
+   function Is_Empty (Self : Command_Line) return Boolean is
+   begin
+      return Self.Switches.Is_Null
+        or else Self.Switches.Unchecked_Get.Is_Empty;
+   end Is_Empty;
+
    ----------------
    -- Has_Switch --
    ----------------
