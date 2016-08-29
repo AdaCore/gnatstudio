@@ -113,6 +113,9 @@ package body Vsearch is
    Keep_Previous_Search_Context     : Boolean_Preference;
    --  The preferences
 
+   H_Padding : constant Guint := 5;
+   --  The horizontal padding used between widgets of a same row
+
    type Search_Regexp is record
       Name           : GNAT.Strings.String_Access;
       Regexp         : GNAT.Strings.String_Access;
@@ -1237,7 +1240,7 @@ package body Vsearch is
             Vsearch.Scope_Selector_Box.Pack_End
               (Vsearch.Scope_Separator_Label,
                Expand  => False,
-               Padding => 5);
+               Padding => H_Padding);
 
             Vsearch.Scope_Selector_Box.Pack_End
               (Vsearch.Scope_Selector_Combo,
@@ -1666,7 +1669,7 @@ package body Vsearch is
       Gtk_New (Label, -("Find"));
       Label_Size_Group.Add_Widget (Label);
       Label.Set_Alignment (0.0, 0.5);
-      Row.Pack_Start (Label, Expand => False);
+      Row.Pack_Start (Label, Expand => False, Padding => H_Padding);
 
       Gtk.List_Store.Gtk_New
         (Model,
@@ -1702,7 +1705,10 @@ package body Vsearch is
       Self.Replace_Label.Set_No_Show_All (True);
       Label_Size_Group.Add_Widget (Self.Replace_Label);
       Self.Replace_Label.Set_Alignment (0.0, 0.5);
-      Row.Pack_Start (Self.Replace_Label, Expand => False);
+      Row.Pack_Start
+        (Self.Replace_Label,
+         Expand  => False,
+         Padding => H_Padding);
 
       Gtk.List_Store.Gtk_New (Model, (0 .. 0 => GType_String));
 
@@ -1740,7 +1746,10 @@ package body Vsearch is
       Gtk_New (Label, -("Where"));
       Label_Size_Group.Add_Widget (Label);
       Label.Set_Alignment (0.0, 0.5);
-      Self.Scope_Selector_Box.Pack_Start (Label, Expand => False);
+      Self.Scope_Selector_Box.Pack_Start
+        (Label,
+         Expand  => False,
+         Padding => H_Padding);
 
       Gtk_New (Self.Context_Combo);
       Self.Context_Combo.Set_Tooltip_Text (-"The context of the search");
