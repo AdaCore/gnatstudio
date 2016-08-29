@@ -33,6 +33,17 @@ KP-62-P822-023 GPS: Command line parameter "debug" may hung GPS
 
   Workaround: Use "/Debug/Initialize" menu instead command line parameter.
 
+KP-62-P818-025 GPS: incorrect display of the "Stop Recording" menu
+
+  Problem:    The menu "/Tools/Macro/Stop Recording" item may remain sensitive
+              after it has been activated. This is purely a graphical glitch:
+              the recording of macros stops correctly even if the menu does
+              not reflect this.
+
+  Status:     This was fixed in 17.0 on 2016-08-26
+
+  Workaround: None.
+
 KP-62-P811-024 GPS: extraneous messages in clang live diagnostics
 
   Problem:    When using C/C++ switches that are not supported by
