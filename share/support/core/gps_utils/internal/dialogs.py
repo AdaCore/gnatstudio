@@ -386,7 +386,9 @@ class Search(Dialog):
             self.next = self.find   # This is in fact the same button
 
             self.replace = get_button_from_label("Replace", self.dialog)
-            self.replace_all = get_button_from_label("Repl All", self.dialog)
+            self.replace_all = get_button_from_label(
+                "Replace All",
+                self.dialog)
             self.close = get_button_from_label("Close", self.dialog)
             self.replace_and_find = get_button_from_label(
                 "Replace & Find", self.dialog)
