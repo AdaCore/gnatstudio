@@ -454,20 +454,71 @@ class CLI(GPS.Process):
         """
         ctxt = GPS.current_context()
         with open(os.path.join(project_support.get_output_dir(
-                ctxt.file()), filename), 'w+') as f:
+                ctxt.file()), filename + '.html'), 'w+') as f:
+            # The output file contains an html table
+            # where each block is associated with its value
+            f.write("""<!DOCTYPE html>
+            <!--For the links to work this file has to be opened inside\
+the Matlab browser-->
+            <html>
+            <head>
+            <style>
+            table, td, th {
+            border: 1px solid #ddd;
+            }
+            table {
+            border-collapse: collapse;
+            width: 100%;
+            }
+            th, td {
+            text-align: left;
+            padding: 8px;
+            }
+            tr:nth-child(even){background-color: #f2f2f2}
+            th {
+            background-color: #ff9933;
+            color: black;
+            }
+            </style>
+            </head>
+            <body>
+            <table>
+            <thead>
+            <tr>
+            <th>Block</th>
+            <th>Value</th>
+            </tr>
+            </thead>
+            <tbody>""")
             for diag, toplevel, it in QGEN_Module.forall_auto_items(diagrams):
+                if it.text == "":
+                    continue
                 parent = it.get_parent_with_id() or toplevel
                 # We remove the last part of the id because it has no meaning
                 # in the simulink diagram
-                f.write("'%s' = %s\n" % (parent.id.rsplit('/', 1)[0], it.text))
+                # The block name is added as a matlab link to highlight it
+                # in the model
+                parent_name = parent.id.rsplit('/', 1)[0]
+                f.write("""<tr>
+                <td><a href="matlab:open_system('%s');\
+hilite_system('%s')">%s</a></td>
+                <td>%s</td>
+                </tr>
+                """ % (ctxt.file(), parent_name,  parent_name, it.text))
+            f.write("""</tbody>
+            </table>
+            </body>
+            </html>""")
             GPS.Console().write(
-                "Logfile successfully written in %s\n" % f.name)
+                "Logfile successfully written in %s, open it in the Matlab"
+                " web browser.\n" % f.name)
 
     @staticmethod
     def log_subsystem_values():
         """
         Logs all values for signals of the subsystem in relation to their
-        containing variables in the specified log file
+        containing variables in an html file that should be
+        opened in the Matlab browser in order to have working links.
         """
         viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
 
@@ -481,7 +532,8 @@ class CLI(GPS.Process):
     def log_model_values():
         """
         Logs all values for signals of the model in relation to their
-        containing variables in the specified log file
+        containing variables in an html file that should be
+        opened in the Matlab browser in order to have working links.
         """
         viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
 
