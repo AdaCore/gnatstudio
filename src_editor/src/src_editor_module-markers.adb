@@ -451,24 +451,25 @@ package body Src_Editor_Module.Markers is
       Project : GNATCOLL.Projects.Project_Type;
       Mark    : Gtk.Text_Mark.Gtk_Text_Mark) return Location_Marker
    is
-      Module : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (Mark));
-      D : File_Marker;
+      D      : File_Marker;
+
    begin
       --  Check whether there is already a Location_Marker for this mark
-      for Node of Module.Stored_Marks loop
-         if not Node.Was_Freed then
-            declare
-               M : Location_Marker;
-            begin
-               M.Set (Node);
-               if File_Marker (M.Unchecked_Get).Mark = Mark then
-                  return M;
-               end if;
-            end;
+
+      declare
+         use type GPS.Markers.Markers.Element_Access;
+
+         M : constant GPS.Markers.Markers.Element_Access :=
+           To_Marker (Get_Qdata (Mark.Get_Object, Marker_Quark));
+
+      begin
+         if M /= null then
+            return L : Location_Marker do
+               L.From_Element (M);
+            end return;
          end if;
-      end loop;
+      end;
 
       return M : Location_Marker do
          M.Set (File_Marker_Data'
