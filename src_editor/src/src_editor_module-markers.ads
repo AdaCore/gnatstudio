@@ -56,6 +56,9 @@ package Src_Editor_Module.Markers is
       Mark   : Gtk.Text_Mark.Gtk_Text_Mark);
    --  Move the marker to a new location within an open editor
 
+   procedure Delete (Self : not null access File_Marker_Data'Class);
+   --  Delete underling low level marker.
+
    procedure Push_Current_Editor_Location_In_History
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Push the location in the current editor in the history of locations.

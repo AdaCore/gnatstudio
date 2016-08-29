@@ -2425,13 +2425,9 @@ package body Src_Editor_Module.Editors is
    ------------
 
    overriding procedure Delete (This : in out Src_Editor_Mark) is
-      T : Gtk_Text_Mark;
    begin
       if not This.Mark.Is_Null then
-         T := Get_Mark (File_Marker (This.Mark.Unchecked_Get));
-         if T /= null then
-            Delete_Mark (Get_Buffer (T), T);
-         end if;
+         File_Marker (This.Mark.Unchecked_Get).Delete;
          This.Mark := No_Marker;
       end if;
    end Delete;

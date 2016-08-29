@@ -174,6 +174,23 @@ package body Src_Editor_Module.Markers is
       Update_Marker_Location (Marker);
    end On_Closed_Or_Changed;
 
+   ------------
+   -- Delete --
+   ------------
+
+   procedure Delete (Self : not null access File_Marker_Data'Class) is
+   begin
+      if Self.Mark /= null then
+         if not Self.Mark.Get_Deleted then
+            Self.Buffer.Delete_Mark (Self.Mark);
+            Disconnect (Self.Buffer, Self.Cid);
+            Self.Buffer.Weak_Unref (On_Destroy_Buffer'Access, Convert (Self));
+            Self.Mark   := null;
+            Self.Buffer := null;
+         end if;
+      end if;
+   end Delete;
+
    -------------
    -- Destroy --
    -------------
