@@ -162,7 +162,9 @@ package Dialog_Utils is
       Button    : access Gtk_Button_Record'Class := null;
       Label     : String := "";
       Doc       : String := "";
-      Child_Key : String := "") return Gtk_Widget;
+      Child_Key : String := "";
+      Expand    : Boolean := True;
+      Fill      : Boolean := True) return Gtk_Widget;
    --  Create a new child in the group widget containing the given Widget,
    --  associating it with an optional Child_Key.
    --
@@ -185,6 +187,9 @@ package Dialog_Utils is
    --
    --  The function returns the widget corresponding to the entire newly
    --  created child.
+   --
+   --  The Expand and Fill properties have the same role as in the
+   --  Gtk.Box.Pack_Start procedure.
 
    function Create_Child
      (Self         : not null access Dialog_Group_Widget_Record'Class;
@@ -192,7 +197,9 @@ package Dialog_Utils is
       Button       : access Gtk_Button_Record'Class := null;
       Label_Widget : access Gtk_Widget_Record'Class;
       Doc          : String := "";
-      Child_Key    : String := "") return Gtk_Widget;
+      Child_Key    : String := "";
+      Expand       : Boolean := True;
+      Fill         : Boolean := True) return Gtk_Widget;
    --  Same as above, but allowing to add a custom label widget
    --  (e.g : a check box).
 
@@ -202,14 +209,18 @@ package Dialog_Utils is
       Button    : access Gtk_Button_Record'Class := null;
       Label     : String := "";
       Doc       : String := "";
-      Child_Key : String := "");
+      Child_Key : String := "";
+      Expand    : Boolean := True;
+      Fill      : Boolean := True);
    procedure Create_Child
      (Self         : not null access Dialog_Group_Widget_Record'Class;
       Widget       : not null access Gtk_Widget_Record'Class;
       Button       : access Gtk_Button_Record'Class := null;
       Label_Widget : access Gtk_Widget_Record'Class;
       Doc          : String := "";
-      Child_Key    : String := "");
+      Child_Key    : String := "";
+      Expand       : Boolean := True;
+      Fill         : Boolean := True);
    --  Same as above, but without returning the newly created child
 
    procedure Append_Child

@@ -287,7 +287,8 @@ package body Ada_Naming_Editors is
          Group_Widget.Create_Child
            (Widget    => Combo,
             Label     => Label,
-            Doc       => Doc);
+            Doc       => Doc,
+            Expand    => False);
 
          for Value of Values loop
             Combo.Append_Text (To_String (Value));

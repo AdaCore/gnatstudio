@@ -302,7 +302,9 @@ package body Dialog_Utils is
       Button    : access Gtk_Button_Record'Class := null;
       Label     : String := "";
       Doc       : String := "";
-      Child_Key : String := "") return Gtk_Widget
+      Child_Key : String := "";
+      Expand    : Boolean := True;
+      Fill      : Boolean := True) return Gtk_Widget
    is
       Label_Widget : Gtk_Label;
    begin
@@ -318,7 +320,9 @@ package body Dialog_Utils is
          Button       => Button,
          Label_Widget => Label_Widget,
          Doc          => Doc,
-         Child_Key    => Child_Key);
+         Child_Key    => Child_Key,
+         Expand       => Expand,
+         Fill         => Fill);
    end Create_Child;
 
    ------------------
@@ -331,12 +335,15 @@ package body Dialog_Utils is
       Button       : access Gtk_Button_Record'Class := null;
       Label_Widget : access Gtk_Widget_Record'Class;
       Doc          : String := "";
-      Child_Key    : String := "") return Gtk_Widget
+      Child_Key    : String := "";
+      Expand       : Boolean := True;
+      Fill         : Boolean := True) return Gtk_Widget
    is
-      Child_Box    : Gtk_Box;
-      Padding      : constant Guint := (if Label_Widget = null then 0 else 5);
+      Child_Box : Gtk_Box;
+      Spacing   : constant Gint := 5;
    begin
       Gtk_New_Hbox (Child_Box, Homogeneous => False);
+      Child_Box.Set_Spacing (Spacing);
 
       if Label_Widget /= null then
          Self.Parent_View.Label_Size_Group.Add_Widget (Label_Widget);
@@ -344,11 +351,14 @@ package body Dialog_Utils is
       end if;
 
       Self.Parent_View.Widget_Size_Group.Add_Widget (Widget);
-      Child_Box.Pack_Start (Widget, Expand => False, Padding => Padding);
+      Child_Box.Pack_Start
+        (Widget,
+         Expand  => Expand,
+         Fill    => Fill);
 
       if Button /= null then
          Self.Parent_View.Button_Size_Group.Add_Widget (Button);
-         Child_Box.Pack_Start (Button, Expand => False, Padding => Padding);
+         Child_Box.Pack_Start (Button, Expand => False);
       end if;
 
       if Doc /= "" then
@@ -397,7 +407,9 @@ package body Dialog_Utils is
       Button    : access Gtk_Button_Record'Class := null;
       Label     : String := "";
       Doc       : String := "";
-      Child_Key : String := "")
+      Child_Key : String := "";
+      Expand    : Boolean := True;
+      Fill      : Boolean := True)
    is
       Row : constant Gtk_Widget :=
               Create_Child
@@ -406,7 +418,9 @@ package body Dialog_Utils is
                  Button    => Button,
                  Label     => Label,
                  Doc       => Doc,
-                 Child_Key => Child_Key);
+                 Child_Key => Child_Key,
+                 Expand    => Expand,
+                 Fill      => Fill);
       pragma Unreferenced (Row);
    begin
       null;
@@ -422,7 +436,9 @@ package body Dialog_Utils is
       Button       : access Gtk_Button_Record'Class := null;
       Label_Widget : access Gtk_Widget_Record'Class;
       Doc          : String := "";
-      Child_Key    : String := "")
+      Child_Key    : String := "";
+      Expand       : Boolean := True;
+      Fill         : Boolean := True)
    is
       Row : constant Gtk_Widget :=
               Create_Child
@@ -431,7 +447,9 @@ package body Dialog_Utils is
                  Button       => Button,
                  Label_Widget => Label_Widget,
                  Doc          => Doc,
-                 Child_Key    => Child_Key);
+                 Child_Key    => Child_Key,
+                 Expand       => Expand,
+                 Fill         => Fill);
       pragma Unreferenced (Row);
    begin
       null;

@@ -1014,7 +1014,8 @@ package body Toolchains_Editor is
            (Widget,
             Button    => Btn,
             Label     => Tool_Label,
-            Child_Key => Tool_Label);
+            Child_Key => Tool_Label,
+            Expand    => False);
 
          Ent.Set_Text (Default_Value);
       end Add_Detail;
