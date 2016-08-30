@@ -81,6 +81,13 @@ package Dialog_Utils is
      (Self : not null access Dialog_View_Record'Class);
    --  Remove all the children that have been appended to the dialog view
 
+   procedure Set_Child_Visible
+     (Self      : not null access Dialog_View_Record'Class;
+      Child_Key : String;
+      Visible   : Boolean);
+   --  Set the visibility of the dialog view child associated with Child_Key.
+   --  Do nothing if there is no association for the given Child_Key.
+
    procedure Set_Child_Highlighted
      (Self      : not null access Dialog_View_Record'Class;
       Child_Key : String;

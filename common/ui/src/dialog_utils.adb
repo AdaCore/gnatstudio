@@ -163,6 +163,31 @@ package body Dialog_Utils is
       Self.Number_Of_Children := 0;
    end Remove_All_Children;
 
+   -----------------------
+   -- Set_Child_Visible --
+   -----------------------
+
+   procedure Set_Child_Visible
+     (Self      : not null access Dialog_View_Record'Class;
+      Child_Key : String;
+      Visible   : Boolean)
+   is
+      Child : Gtk_Widget;
+   begin
+      --  Do nothing if the map does not contain any association for Row_Key
+      if not Self.Children_Map.Contains (Child_Key) then
+         return;
+      end if;
+
+      Child := Self.Children_Map (Child_Key);
+
+      if Visible then
+         Child.Show_All;
+      else
+         Child.Hide;
+      end if;
+   end Set_Child_Visible;
+
    -------------------------
    -- Set_Row_Highlighted --
    -------------------------
