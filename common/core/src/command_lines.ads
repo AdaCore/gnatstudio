@@ -220,6 +220,17 @@ package Command_Lines is
    --  Add_Before allows insertion of the switch at the beginning of the
    --  command line.
 
+   procedure Append
+     (Cmd   : in out Command_Line;
+      Value : Command_Line'Class);
+   --  Append switches of Value to given command line
+
+   function Append
+     (Cmd   : Command_Line'Class;
+      Value : Command_Line'Class) return Command_Line;
+   --  Append switches of Value to given command line and return the result.
+   --  The function keeps both arguments unchanged.
+
    procedure Remove_Switch
      (Cmd           : in out Command_Line;
       Switch        : String;

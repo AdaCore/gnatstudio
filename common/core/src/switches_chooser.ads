@@ -23,7 +23,7 @@ with Ada.Containers;
 with Ada.Containers.Indefinite_Vectors;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
-private with Command_Lines;
+with Command_Lines;
 with GNAT.Strings;      use GNAT.Strings;
 private with Shared_Macros;
 
@@ -533,6 +533,12 @@ package Switches_Chooser is
      (Switches : Switches_Editor_Config)
      return Ada.Containers.Count_Type;
    --  Switches_Editor_Config object Switches vector length getter
+
+   function Empty_Command_Line
+     (Switches : access Switches_Editor_Config_Record'Class)
+     return Command_Lines.Command_Line;
+   --  Return empty command line configured using current settings of
+   --  given Switches_Editor_Config
 
    Command_Line_Editor_Tooltip_Text : aliased constant String;
    --  builder target command line field editor tool tip text

@@ -68,7 +68,9 @@ package body Build_Configurations is
    function Command_Line_To_XML
      (Cmd : Command_Line;
       Tag : String) return Node_Ptr;
-   function XML_To_Command_Line (N : Node_Ptr) return Command_Line;
+   function XML_To_Command_Line
+     (N      : Node_Ptr;
+      Config : Switches_Editor_Config) return Command_Line;
    --  Convert between a command line to/from the following XML representation
    --          <command-line>
    --             <arg>COMMAND</arg>
@@ -310,7 +312,8 @@ package body Build_Configurations is
                end if;
 
             elsif Child.Tag.all = "command-line" then
-               Model.Default_Command_Line := XML_To_Command_Line (Child);
+               Model.Default_Command_Line :=
+                 XML_To_Command_Line (Child, Model.Switches);
 
             elsif Child.Tag.all = "iconname" then
                if Child.Value /= null then
@@ -367,6 +370,11 @@ package body Build_Configurations is
          end if;
 
          Model.Switches := Switches;
+
+         --  Apply switch configuration to command line just in case if command
+         --  line appeared before switch definition
+         Model.Default_Command_Line :=
+           Switches.Empty_Command_Line.Append (Model.Default_Command_Line);
       end Parse_Switches_Node;
 
    begin
@@ -437,7 +445,8 @@ package body Build_Configurations is
       Target.Model := The_Model;
 
       if Command_Line'Length > 0 then
-         Set_Command_Line (Target, Command_Line);
+         Target.Command_Line := The_Model.Switches.Empty_Command_Line;
+         Target.Command_Line.Append_Switches (Command_Line);
       elsif not The_Model.Default_Command_Line.Is_Empty then
          Target.Command_Line := The_Model.Default_Command_Line;
       end if;
@@ -485,31 +494,26 @@ package body Build_Configurations is
       --  reset the command line.
 
       if The_Model.Default_Command_Line.Is_Empty then
-         The_Target.Command_Line.Clear;
+         The_Target.Command_Line := The_Model.Default_Command_Line;
       else
          declare
-            Old_Cmd_Line : constant Argument_List :=
-                             Get_Command_Line_Unexpanded (The_Target);
-            New_Cmd_Line : Argument_List (Old_Cmd_Line'Range);
-
-            Iter         : Command_Line_Iterator;
+            Iter     : Command_Line_Iterator;
+            Cmd_Line : GNAT.Strings.String_List_Access :=
+              The_Target.Command_Line.To_String_List (Expanded => False);
          begin
-            if New_Cmd_Line'Length > 0 then
+            if Cmd_Line'Length > 0 then
                The_Model.Default_Command_Line.Start (Iter);
 
-               New_Cmd_Line (New_Cmd_Line'First) :=
-                 new String'(Current_Switch (Iter));
-
-               for J in New_Cmd_Line'First + 1 .. New_Cmd_Line'Last loop
-                  New_Cmd_Line (J) := new String'(Old_Cmd_Line (J).all);
-               end loop;
-
-               Set_Command_Line (The_Target, New_Cmd_Line);
-
-               for J in New_Cmd_Line'Range loop
-                  Free (New_Cmd_Line (J));
-               end loop;
+               GNAT.Strings.Free (Cmd_Line (Cmd_Line'First));
+               Cmd_Line (Cmd_Line'First) := new String'(Current_Switch (Iter));
             end if;
+
+            The_Target.Command_Line :=
+              The_Target.Model.Switches.Empty_Command_Line;
+
+            The_Target.Command_Line.Append_Switches (Cmd_Line.all);
+
+            GNAT.Strings.Free (Cmd_Line);
          end;
       end if;
    end Change_Model;
@@ -542,19 +546,16 @@ package body Build_Configurations is
       end if;
 
       declare
-         Orig_CL : constant Argument_List := Get_Command_Line_Unexpanded (Src);
-         New_CL : Argument_List (Orig_CL'Range);
+         CL : GNAT.Strings.String_List_Access :=
+           Src.Command_Line.To_String_List (Expanded => False);
       begin
-         --  We need to make a copy of the CL to avoid mixing pointers
-         for J in Orig_CL'Range loop
-            New_CL (J) := new String'(Orig_CL (J).all);
-         end loop;
-
          Create_Target (Registry     => Registry,
                         Name         => New_Name,
                         Category     => New_Category,
                         Model        => To_String (Src.Model.Name),
-                        Command_Line => New_CL);
+                        Command_Line => CL.all);
+
+         GNAT.Strings.Free (CL);
       end;
 
       Dest := Get_Target_From_Name (Registry, New_Name);
@@ -993,7 +994,8 @@ package body Build_Configurations is
    -------------------------
 
    function XML_To_Command_Line
-     (N : Node_Ptr) return Command_Line
+     (N      : Node_Ptr;
+      Config : Switches_Editor_Config) return Command_Line
    is
       Count : Natural := 0;
       Arg   : Node_Ptr;
@@ -1021,9 +1023,18 @@ package body Build_Configurations is
             Arg := Arg.Next;
          end loop;
 
-         return Result : Command_Line do
-            Result.Append_Switches (CL);
-         end return;
+         if Config = null then
+            --  If we don't have model switches yet use default convertion
+            --  and apply switch configuration when it appear
+            return Result : Command_Line do
+               Result.Append_Switches (CL);
+            end return;
+         else
+            --  Otherwise take switch config into account
+            return Result : Command_Line := Config.Empty_Command_Line do
+               Result.Append_Switches (CL);
+            end return;
+         end if;
       end;
    end XML_To_Command_Line;
 
@@ -1244,7 +1255,8 @@ package body Build_Configurations is
 
       while Child /= null loop
          if Child.Tag.all = "command-line" then
-            Target.Command_Line := XML_To_Command_Line (Child);
+            Target.Command_Line :=
+              XML_To_Command_Line (Child, Target.Model.Switches);
             Target.Default_Command_Line := Target.Command_Line;
 
          elsif Child.Value = null then
@@ -1380,9 +1392,7 @@ package body Build_Configurations is
                end if;
 
                --  Save the new default command line for Target
-               Target.Default_Command_Line.Clear;
-               Target.Default_Command_Line.Append_Switches
-                 (Get_Command_Line_Unexpanded (Target));
+               Target.Default_Command_Line := Target.Command_Line;
             end if;
          end if;
 
@@ -1820,13 +1830,8 @@ package body Build_Configurations is
       Model    : Target_Model_Access) is
    begin
       Target.Model := Model;
-      if Model.Default_Command_Line.Is_Empty then
-         Target.Command_Line.Clear;
-         Target.Default_Command_Line.Clear;
-      else
-         Target.Command_Line := Model.Default_Command_Line;
-         Target.Default_Command_Line := Model.Default_Command_Line;
-      end if;
+      Target.Command_Line := Model.Default_Command_Line;
+      Target.Default_Command_Line := Model.Default_Command_Line;
    end Set_Model;
 
    ----------------

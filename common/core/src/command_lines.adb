@@ -507,6 +507,41 @@ package body Command_Lines is
    ------------
 
    procedure Append
+     (Cmd   : in out Command_Line;
+      Value : Command_Line'Class)
+   is
+      List : GNAT.Strings.String_List_Access :=
+        Value.To_String_List (Expanded => False);
+   begin
+      Cmd.Append_Switches (List.all);
+      GNAT.OS_Lib.Free (List);
+   end Append;
+
+   ------------
+   -- Append --
+   ------------
+
+   function Append
+     (Cmd   : Command_Line'Class;
+      Value : Command_Line'Class) return Command_Line is
+   begin
+      return Result : Command_Line do
+         Result.Set_Configuration (Cmd.Get_Configuration);
+         Check_Initialized (Result);
+
+         if not Cmd.Switches.Is_Null then
+            Result.Switches.Get.Append (Cmd.Switches.Get);
+         end if;
+
+         Result.Append (Value);
+      end return;
+   end Append;
+
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append
      (Cmd         : in out Command_Line;
       Item        : Switch;
       Add_Before  : Boolean   := False)
