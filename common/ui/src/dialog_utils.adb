@@ -181,11 +181,7 @@ package body Dialog_Utils is
 
       Child := Self.Children_Map (Child_Key);
 
-      if Visible then
-         Child.Show_All;
-      else
-         Child.Hide;
-      end if;
+      Child.Set_Visible (Visible);
    end Set_Child_Visible;
 
    -------------------------

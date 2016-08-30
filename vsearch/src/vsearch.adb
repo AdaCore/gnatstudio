@@ -46,9 +46,7 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.List_Store;            use Gtk.List_Store;
 with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Paned;                 use Gtk.Paned;
 with Gtk.Selection_Data;        use Gtk.Selection_Data;
-with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_View;             use Gtk.Text_View;
@@ -58,13 +56,10 @@ with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
-with Gtk.Button_Box;            use Gtk.Button_Box;
 with Gtk.Check_Button;          use Gtk.Check_Button;
 with Gtk.Combo_Box;             use Gtk.Combo_Box;
 with Gtk.Combo_Box_Text;        use Gtk.Combo_Box_Text;
 with Gtk.Label;                 use Gtk.Label;
-with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Viewport;              use Gtk.Viewport;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -86,6 +81,7 @@ with GPS.Search;                use GPS.Search;
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
 with Default_Preferences;       use Default_Preferences;
+with Dialog_Utils;              use Dialog_Utils;
 with Generic_Views;             use Generic_Views;
 with GUI_Utils;                 use GUI_Utils;
 
@@ -140,13 +136,10 @@ package body Vsearch is
 
    type Vsearch_Record is new View_Record with record
       Mode                    : Vsearch_Mode := Unknown;
-      Scrolled                : Gtk_Scrolled_Window;
-      View                    : Gtk_Viewport;
-      Replace_Label           : Gtk_Label;
+      Main_View               : Dialog_View_With_Button_Box;
       Replace_Combo           : Gtk_Combo_Box;
       Context_Combo           : Gtk_Combo_Box_Text;
       Pattern_Combo           : Gtk_Combo_Box;
-      Scope_Main_Box          : Gtk_Box;
       Scope_Selector_Box      : Gtk_Box;
       Scope_Optional_Box      : Gtk_Box;
       Scope_Selector_Combo    : Gtk_Combo_Box_Text;
@@ -548,9 +541,6 @@ package body Vsearch is
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the list of registered search functions has changed.
 
-   procedure On_Float (Search_Child : access Gtk_Widget_Record'Class);
-   --  The floating state of the search widget has changed
-
    procedure Add_To_History_And_Combo
      (Vsearch        : not null access Vsearch_Record'Class;
       Pattern        : String;
@@ -558,6 +548,10 @@ package body Vsearch is
       Case_Sensitive : Boolean;
       Regexp         : Boolean);
    --  Add the current settings to the history, and updates the combo box
+
+   procedure On_Float (Search_Child : access Gtk_Widget_Record'Class);
+   --  Called when the floating state of the search widget has changed.
+   --  Used to disable teh search view scrolled window when floating.
 
    procedure Add_History_To_Combo
      (Vsearch : not null access Vsearch_Record'Class;
@@ -571,28 +565,12 @@ package body Vsearch is
    procedure On_Float (Search_Child : access Gtk_Widget_Record'Class) is
       Child   : constant MDI_Child := MDI_Child (Search_Child);
       Vsearch : constant Vsearch_Access :=
-        Search_Views.View_From_Child (Child);
+                  Search_Views.View_From_Child (Child);
    begin
       if Is_Floating (Child) then
-         if Vsearch.Scrolled /= null then
-            Ref (Vsearch.Scrolled);
-            Vsearch.Remove (Vsearch.Scrolled);
-            Vsearch.View.Reparent (Vsearch);
-            Unref (Vsearch.Scrolled);
-            Vsearch.Scrolled := null;
-         end if;
+         Vsearch.Main_View.Set_Policy (Policy_Never, Policy_Never);
       else
-         --  Create a scrolled window and put vsearch's content in it
-         if Vsearch.Scrolled = null then
-            Gtk_New (Vsearch.Scrolled);
-            Vsearch.Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
-            Show (Vsearch.Scrolled);
-
-            Ref (Vsearch.View);
-            Vsearch.View.Reparent (Vsearch.Scrolled);
-            Vsearch.Add (Vsearch.Scrolled);
-            Unref (Vsearch.View);
-         end if;
+         Vsearch.Main_View.Set_Policy (Policy_Automatic, Policy_Automatic);
       end if;
    end On_Float;
 
@@ -1185,7 +1163,6 @@ package body Vsearch is
       if Data /= No_Search then
          Set_Last_Of_Module (Vsearch.Kernel, Data);
          Replace := (Data.Mask and Supports_Replace) /= 0;
-         Set_Sensitive (Vsearch.Replace_Label, Replace);
          Set_Sensitive (Vsearch.Replace_Combo, Replace);
          Set_Sensitive (Vsearch.Replace_All_Button, Replace);
 
@@ -1247,14 +1224,15 @@ package body Vsearch is
                Expand => True,
                Fill   => True);
 
+            Vsearch.Scope_Selector_Box.Show_All;
+
             if Vsearch.Scope_Selector_Optional /= null then
                Vsearch.Scope_Optional_Box.Pack_Start
                  (Vsearch.Scope_Selector_Optional,
                   Expand => True,
                   Fill   => True);
+               Vsearch.Scope_Optional_Box.Show_All;
             end if;
-
-            Show_All (Vsearch.Scope_Main_Box);
          end if;
 
          Child := Search_Views.Child_From_View (Vsearch);
@@ -1632,44 +1610,27 @@ package body Vsearch is
          end if;
       end Set_Mode_From_History;
 
-      Pane             : Gtk_Paned;
-      Main_Vbox        : Gtk_Vbox;
-      Button_Box       : Gtk_Button_Box;
-      Row              : Gtk_Hbox;
+      Group_Widget     : Dialog_Group_Widget;
       Layout           : Gtk_Cell_Layout;
       Renderer         : Gtk_Cell_Renderer_Text;
       Value            : String_List_Access;
       Model            : Gtk_List_Store;
-      Label            : Gtk_Label;
-      Label_Size_Group : Gtk_Size_Group;
    begin
       Gtk.Box.Initialize_Vbox (Self);
 
-      Gtk_New (Self.View);
-      Self.View.Set_Shadow_Type (Shadow_None);
-      Self.Add (Self.View);
-
-      Gtk_New_Hpaned (Pane);
-      Self.View.Add (Pane);
-
-      Gtk_New_Vbox (Main_Vbox, False, 0);
-      Main_Vbox.Set_Border_Width (5);
-      Pane.Pack1
-        (Main_Vbox,
-         Resize => True,
-         Shrink => False);
-
-      Gtk_New (Label_Size_Group);
+      Self.Main_View := new Dialog_View_With_Button_Box_Record;
+      Dialog_Utils.Initialize
+        (Self.Main_View,
+         Position => Pos_Right);
+      Self.Pack_Start (Self.Main_View, Expand => True, Fill => True);
 
       --  Find/Replace combo boxes
 
-      Gtk_New_Hbox (Row, Homogeneous => False);
-      Main_Vbox.Pack_Start (Row, Expand => False);
-
-      Gtk_New (Label, -("Find"));
-      Label_Size_Group.Add_Widget (Label);
-      Label.Set_Alignment (0.0, 0.5);
-      Row.Pack_Start (Label, Expand => False, Padding => H_Padding);
+      Group_Widget := new Dialog_Group_Widget_Record;
+      Initialize
+        (Group_Widget,
+         Parent_View         => Self.Main_View,
+         Allow_Multi_Columns => False);
 
       Gtk.List_Store.Gtk_New
         (Model,
@@ -1680,12 +1641,10 @@ package body Vsearch is
           Guint (Column_Whole_Word)     => GType_Boolean));
       Gtk_New_With_Model_And_Entry (Self.Pattern_Combo, +Model);
       Self.Pattern_Combo.Set_Entry_Text_Column (Column_Pattern);
-      Row.Pack_Start (Self.Pattern_Combo, Expand => True, Fill => True);
       Layout := +Self.Pattern_Combo;
 
       Self.Pattern_Combo.Get_Child.On_Button_Press_Event
         (On_Button_Press'Access, After => False);
-
       Self.Pattern_Combo.Get_Child.On_Button_Release_Event
         (On_Button_Release'Access, After => False);
 
@@ -1698,24 +1657,15 @@ package body Vsearch is
       Set_Tooltip_Text (Self.Pattern_Combo,
                         -"The searched word or pattern");
 
-      Gtk_New_Hbox (Row, Homogeneous => False);
-      Main_Vbox.Pack_Start (Row, Expand => False);
-
-      Gtk_New (Self.Replace_Label, -("Replace"));
-      Self.Replace_Label.Set_No_Show_All (True);
-      Label_Size_Group.Add_Widget (Self.Replace_Label);
-      Self.Replace_Label.Set_Alignment (0.0, 0.5);
-      Row.Pack_Start
-        (Self.Replace_Label,
-         Expand  => False,
-         Padding => H_Padding);
+      Group_Widget.Create_Child
+        (Self.Pattern_Combo,
+         Label  => "Find",
+         Expand => True,
+         Fill   => True);
 
       Gtk.List_Store.Gtk_New (Model, (0 .. 0 => GType_String));
-
       Gtk_New_With_Model_And_Entry (Self.Replace_Combo, +Model);
-      Self.Replace_Combo.Set_No_Show_All (True);
       Self.Replace_Combo.Set_Entry_Text_Column (0);
-      Row.Pack_Start (Self.Replace_Combo, Expand => True, Fill => True);
       Self.Replace_Combo.Set_Tooltip_Text
         (-("The text that will replace each match. Next special patterns are" &
            " recognized in regexp mode:" & ASCII.LF &
@@ -1729,27 +1679,17 @@ package body Vsearch is
 
       Self.Replace_Combo.Get_Child.On_Button_Press_Event
         (On_Button_Press'Access, After => False);
-
       Self.Replace_Combo.Get_Child.On_Button_Release_Event
         (On_Button_Release'Access, After => False);
 
+      Group_Widget.Create_Child
+        (Self.Replace_Combo,
+         Label     => "Replace",
+         Child_Key => "replace_combo");
+
       --  Context specific search
 
-      Gtk_New_Vbox (Self.Scope_Main_Box, Homogeneous => False);
-      Main_Vbox.Pack_Start (Self.Scope_Main_Box, Expand => False);
-
       Gtk_New_Hbox (Self.Scope_Selector_Box, Homogeneous => False);
-      Self.Scope_Main_Box.Pack_Start
-        (Self.Scope_Selector_Box,
-         Expand => False);
-
-      Gtk_New (Label, -("Where"));
-      Label_Size_Group.Add_Widget (Label);
-      Label.Set_Alignment (0.0, 0.5);
-      Self.Scope_Selector_Box.Pack_Start
-        (Label,
-         Expand  => False,
-         Padding => H_Padding);
 
       Gtk_New (Self.Context_Combo);
       Self.Context_Combo.Set_Tooltip_Text (-"The context of the search");
@@ -1762,23 +1702,20 @@ package body Vsearch is
          On_Context_Combo_Changed'Access, Self);
       Self.Context_Combo.Set_Name ("search scope combo");
 
+      Group_Widget.Create_Child
+        (Self.Scope_Selector_Box,
+         Label     => "Where",
+         Expand    => True,
+         Fill      => True);
+
       Gtk_New_Vbox (Self.Scope_Optional_Box, Homogeneous => False);
-      Self.Scope_Main_Box.Pack_Start
-        (Self.Scope_Optional_Box,
-         Expand => True,
-         Fill   => True);
+      Group_Widget.Append_Child (Self.Scope_Optional_Box, Expand => False);
 
       --  The buttons
 
-      Gtk_New (Button_Box, Orientation => Orientation_Vertical);
-      Button_Box.Set_Layout (Buttonbox_Start);
-      Pane.Pack2 (Button_Box,
-                  Resize => False,
-                  Shrink => False);
-
       Gtk_New_With_Mnemonic (Self.Search_Next_Button, -"_Find");
       Set_First_Next_Mode (Self, Find_Next => False);
-      Button_Box.Pack_Start (Self.Search_Next_Button, Expand => False);
+      Self.Main_View.Append_Button (Self.Search_Next_Button);
       Self.Search_Next_Button.Set_Tooltip_Text (-"Search next occurrence");
       Widget_Callback.Object_Connect
         (Self.Search_Next_Button, Signal_Clicked,
@@ -1786,9 +1723,7 @@ package body Vsearch is
 
       Gtk_New_With_Mnemonic (Self.Search_Previous_Button, -"_Previous");
       Self.Search_Previous_Button.Set_No_Show_All (True);
-      Button_Box.Pack_Start
-        (Self.Search_Previous_Button,
-         Expand => False);
+      Self.Main_View.Append_Button (Self.Search_Previous_Button);
       Self.Search_Previous_Button.Set_Tooltip_Text
         (-"Search previous occurrence");
       Widget_Callback.Object_Connect
@@ -1797,7 +1732,7 @@ package body Vsearch is
 
       Gtk_New_With_Mnemonic (Self.Search_All_Button, -"Find All");
       Self.Search_All_Button.Set_No_Show_All (True);
-      Button_Box.Pack_Start (Self.Search_All_Button, Expand => False);
+      Self.Main_View.Append_Button (Self.Search_All_Button);
       Self.Search_All_Button.Set_Tooltip_Text (-"Find all occurences");
       Widget_Callback.Object_Connect
         (Self.Search_All_Button, Signal_Clicked,
@@ -1805,7 +1740,7 @@ package body Vsearch is
 
       Gtk_New (Self.Replace_Button, -"Replace");
       Self.Replace_Button.Set_No_Show_All (True);
-      Button_Box.Pack_Start (Self.Replace_Button, Expand => False);
+      Self.Main_View.Append_Button (Self.Replace_Button);
       Self.Replace_Button.Set_Tooltip_Text (-"Replace next occurrence");
       Widget_Callback.Object_Connect
         (Self.Replace_Button, Signal_Clicked,
@@ -1814,9 +1749,7 @@ package body Vsearch is
 
       Gtk_New_With_Mnemonic (Self.Replace_Search_Button, -"Replace & Find");
       Self.Replace_Search_Button.Set_No_Show_All (True);
-      Button_Box.Pack_Start
-        (Self.Replace_Search_Button,
-         Expand => False);
+      Self.Main_View.Append_Button (Self.Replace_Search_Button);
       Self.Replace_Search_Button.Set_Tooltip_Text
         (-"Replace, then find next occurrence");
       Widget_Callback.Object_Connect
@@ -1825,7 +1758,7 @@ package body Vsearch is
 
       Gtk_New_With_Mnemonic (Self.Replace_All_Button, -"Replace All");
       Self.Replace_All_Button.Set_No_Show_All (True);
-      Button_Box.Pack_Start (Self.Replace_All_Button, Expand => False);
+      Self.Main_View.Append_Button (Self.Replace_All_Button);
       Self.Replace_All_Button.Set_Tooltip_Text
         (-"Replace all occurences");
       Widget_Callback.Object_Connect
@@ -1885,7 +1818,7 @@ package body Vsearch is
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
 
       --  ??? Should be changed when prefs are changed
-      Set_Font_And_Colors (Main_Vbox, Fixed_Font => False);
+      Set_Font_And_Colors (Self.Main_View, Fixed_Font => False);
 
       return Self.Pattern_Combo.Get_Child;
    end Initialize;
@@ -1906,8 +1839,9 @@ package body Vsearch is
          Key       => Mode_Hist_Key,
          New_Entry => Mode'Image);
 
-      Self.Replace_Label.Set_Visible (Show_Replace_Widgets);
-      Self.Replace_Combo.Set_Visible (Show_Replace_Widgets);
+      Self.Main_View.Set_Child_Visible
+        (Child_Key => "replace_combo",
+         Visible   => Show_Replace_Widgets);
       Self.Replace_Button.Set_Visible (Show_Replace_Widgets);
       Self.Replace_All_Button.Set_Visible (Show_Replace_Widgets);
       Self.Replace_Search_Button.Set_Visible (Show_Replace_Widgets);
@@ -2035,7 +1969,8 @@ package body Vsearch is
 
       Widget_Callback.Connect (Child, Signal_Float_Child, On_Float'Access);
       Widget_Callback.Connect (Child, Signal_Unfloat_Child, On_Float'Access);
-      On_Float (Child);  --  hide or show the buttons
+
+      On_Float (Child);
    end On_Create;
 
    ---------------------------
