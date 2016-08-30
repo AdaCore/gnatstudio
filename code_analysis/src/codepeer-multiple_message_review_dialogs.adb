@@ -22,7 +22,6 @@ with System;
 
 with Glib.Object;
 with Gtk.Button;
-with Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;
@@ -46,6 +45,9 @@ with GPS.Dialogs;
 
 with Glib_Values_Utils;        use Glib_Values_Utils;
 
+with CodePeer.Message_Review_Dialogs.Utils;
+use CodePeer.Message_Review_Dialogs.Utils;
+
 package body CodePeer.Multiple_Message_Review_Dialogs is
 
    Messages_Model_Ranking_Column  : constant := 0;
@@ -58,13 +60,6 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
       Messages_Model_Status_Column   => Glib.GType_String,
       Messages_Model_Location_Column => Glib.GType_String,
       Messages_Model_Text_Column     => Glib.GType_String);
-
-   Status_Model_Label_Column : constant := 0;
-   Status_Model_Value_Column : constant := 1;
-
-   Status_Model_Types : constant Glib.GType_Array :=
-     (Status_Model_Label_Column => Glib.GType_String,
-      Status_Model_Value_Column => Glib.GType_Int);
 
    package Message_Review_Callbacks is
      new Gtk.Handlers.User_Callback
@@ -247,58 +242,8 @@ package body CodePeer.Multiple_Message_Review_Dialogs is
          Gtk.Label.Gtk_New (Label, "New status:");
          Table.Attach (Label, 0, 1, 0, 1);
 
-         Gtk.Tree_Store.Gtk_New (Store, Status_Model_Types);
-
-         Gtk.Combo_Box.Gtk_New_With_Model (Self.New_Status, +Store);
+         Self.New_Status := Create_Status_Combo_Box (Unclassified);
          Table.Attach (Self.New_Status, 1, 2, 0, 1);
-
-         Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-         Gtk.Cell_Layout.Pack_Start
-           (Gtk.Combo_Box."+" (Self.New_Status), Text_Renderer, True);
-         Gtk.Cell_Layout.Add_Attribute
-           (Gtk.Combo_Box."+" (Self.New_Status),
-            Text_Renderer,
-            "text",
-            Status_Model_Label_Column);
-
-         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Store.Set (Iter, Status_Model_Label_Column, -"Unclassified");
-         Store.Set
-           (Iter,
-            Status_Model_Value_Column,
-            Audit_Status_Kinds'Pos (Unclassified));
-         Self.New_Status.Set_Active_Iter (Iter);
-
-         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Store.Set (Iter, Status_Model_Label_Column, -"Pending");
-         Store.Set
-           (Iter, Status_Model_Value_Column, Audit_Status_Kinds'Pos (Pending));
-
-         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Store.Set (Iter, Status_Model_Label_Column, -"Not a bug");
-         Store.Set
-           (Iter,
-            Status_Model_Value_Column,
-            Audit_Status_Kinds'Pos (Not_A_Bug));
-
-         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Store.Set (Iter, Status_Model_Label_Column, -"False positive");
-         Store.Set
-           (Iter,
-            Status_Model_Value_Column,
-            Audit_Status_Kinds'Pos (False_Positive));
-
-         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Store.Set (Iter, Status_Model_Label_Column, -"Intentional");
-         Store.Set
-           (Iter,
-            Status_Model_Value_Column,
-            Audit_Status_Kinds'Pos (Intentional));
-
-         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Store.Set (Iter, Status_Model_Label_Column, -"Bug");
-         Store.Set
-           (Iter, Status_Model_Value_Column, Audit_Status_Kinds'Pos (Bug));
 
          --  "Approved by" entry
 

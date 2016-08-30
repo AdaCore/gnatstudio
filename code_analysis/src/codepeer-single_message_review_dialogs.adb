@@ -24,7 +24,6 @@ with Glib.Object;
 with Glib_Values_Utils;        use Glib_Values_Utils;
 
 with Gtk.Button;
-with Gtk.Cell_Layout;
 with Gtk.Cell_Renderer_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;
@@ -46,6 +45,9 @@ with GPS.Intl; use GPS.Intl;
 with GPS.Kernel.MDI;
 with GPS.Dialogs;
 
+with CodePeer.Message_Review_Dialogs.Utils;
+use CodePeer.Message_Review_Dialogs.Utils;
+
 package body CodePeer.Single_Message_Review_Dialogs is
 
    Messages_Model_Ranking_Column  : constant := 0;
@@ -58,13 +60,6 @@ package body CodePeer.Single_Message_Review_Dialogs is
       Messages_Model_Status_Column   => Glib.GType_String,
       Messages_Model_Location_Column => Glib.GType_String,
       Messages_Model_Text_Column     => Glib.GType_String);
-
-   Status_Model_Label_Column : constant := 0;
-   Status_Model_Value_Column : constant := 1;
-
-   Status_Model_Types : constant Glib.GType_Array :=
-     (Status_Model_Label_Column => Glib.GType_String,
-      Status_Model_Value_Column => Glib.GType_Int);
 
    History_Model_Timestamp_Column : constant := 0;
    History_Model_Status_Column    : constant := 1;
@@ -157,8 +152,6 @@ package body CodePeer.Single_Message_Review_Dialogs is
       procedure Process_Audit (Position : CodePeer.Audit_V3_Vectors.Cursor);
       --  Fill GtkTreeStore of history view
 
-      procedure Set_Audit_Status (Name : String; Status : Audit_Status_Kinds);
-
       -------------------
       -- Process_Audit --
       -------------------
@@ -176,23 +169,6 @@ package body CodePeer.Single_Message_Review_Dialogs is
              2 => As_String (To_String (Audit.Approved_By)),
              3 => As_String (To_String (Audit.Comment))));
       end Process_Audit;
-
-      ----------------------
-      -- Set_Audit_Status --
-      ----------------------
-
-      procedure Set_Audit_Status
-        (Name : String; Status : Audit_Status_Kinds) is
-      begin
-         Set_All_And_Clear
-           (Store, Iter,
-            (0 => As_String (Name),
-             1 => As_Int    (Audit_Status_Kinds'Pos (Status))));
-
-         if Message.Status = Status then
-            Self.New_Status.Set_Active_Iter (Iter);
-         end if;
-      end Set_Audit_Status;
 
    begin
       Glib.Object.Initialize_Class_Record
@@ -290,37 +266,8 @@ package body CodePeer.Single_Message_Review_Dialogs is
          Gtk.Label.Gtk_New (Label, "New status:");
          Table.Attach (Label, 0, 1, 2, 3);
 
-         Gtk.Tree_Store.Gtk_New (Store, Status_Model_Types);
-
-         Gtk.Combo_Box.Gtk_New_With_Model (Self.New_Status, +Store);
+         Self.New_Status := Create_Status_Combo_Box (Message.Status);
          Table.Attach (Self.New_Status, 1, 2, 2, 3);
-
-         Gtk.Cell_Renderer_Text.Gtk_New (Text_Renderer);
-         Gtk.Cell_Layout.Pack_Start
-           (Gtk.Combo_Box."+" (Self.New_Status), Text_Renderer, True);
-         Gtk.Cell_Layout.Add_Attribute
-           (Gtk.Combo_Box."+" (Self.New_Status),
-            Text_Renderer,
-            "text",
-            Status_Model_Label_Column);
-
-         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Set_Audit_Status ("Unclassified", Unclassified);
-
-         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Set_Audit_Status ("Pending", Pending);
-
-         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Set_Audit_Status ("Not a bug", Not_A_Bug);
-
-         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Set_Audit_Status ("False positive", False_Positive);
-
-         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Set_Audit_Status ("Intentional", Intentional);
-
-         Store.Append (Iter, Gtk.Tree_Model.Null_Iter);
-         Set_Audit_Status ("Bug", Bug);
 
          --  "Approved by" entry
 
