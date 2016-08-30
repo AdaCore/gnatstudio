@@ -504,10 +504,11 @@ package body Build_Configurations.Gtkada is
 
       --  Set initial values of command line and switches entries
 
-      if UI.Target.Command_Line /= null
-        and then UI.Target.Command_Line'Length > 0
-      then
-         Set_Command_Line (UI.Editor, UI.Target.Command_Line.all, False);
+      if not UI.Target.Command_Line.Is_Empty then
+         Set_Command_Line
+           (UI.Editor,
+            UI.Target.Command_Line.To_String_List (Expanded => False).all,
+            False);
       end if;
 
       Add (UI.Frame, UI.Editor);
@@ -1550,8 +1551,9 @@ package body Build_Configurations.Gtkada is
          declare
             List    : constant GNAT.Strings.String_List_Access :=
               Get_History (History.all, Target_To_Key (UI.Target_UI.Target));
-            Default : constant String :=
-              Argument_List_To_String (UI.Target_UI.Target.Command_Line.all);
+            Default : constant String := Argument_List_To_String
+              (UI.Target_UI.Target.Command_Line.To_String_List
+                 (Expanded => False).all);
 
          begin
             if List /= null

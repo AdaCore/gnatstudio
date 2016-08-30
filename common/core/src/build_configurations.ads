@@ -692,7 +692,7 @@ private
       Model        : Target_Model_Access;
       --  The model of which the Target is an instance
 
-      Command_Line : GNAT.OS_Lib.Argument_List_Access;
+      Command_Line : Command_Lines.Command_Line;
       --  This stores the command line between launches of the graphical editor
 
       Default_Command_Line : Command_Lines.Command_Line;

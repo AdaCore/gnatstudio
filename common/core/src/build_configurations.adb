@@ -22,6 +22,7 @@ with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Switches_Parser;
 with String_Utils;             use String_Utils;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNAT.Strings;
 
 package body Build_Configurations is
    Me : constant Trace_Handle := Create ("Build_Configurations");
@@ -65,10 +66,8 @@ package body Build_Configurations is
    --  Convenient shortcut to the Gettext function
 
    function Command_Line_To_XML
-     (CL  : GNAT.OS_Lib.Argument_List;
+     (Cmd : Command_Line;
       Tag : String) return Node_Ptr;
-   function XML_To_Command_Line
-     (N : Node_Ptr) return GNAT.OS_Lib.Argument_List;
    function XML_To_Command_Line (N : Node_Ptr) return Command_Line;
    --  Convert between a command line to/from the following XML representation
    --          <command-line>
@@ -88,9 +87,6 @@ package body Build_Configurations is
    function Copy (T : Target_Access) return Target_Access;
    --  Allocate and return a deep copy of T
 
-   function Deep_Copy (CL : Argument_List_Access) return Argument_List_Access;
-   --  Allocate and return a deep copy of CL
-
    function Equals (T1 : Target_Access; T2 : Target_Access) return Boolean;
    --  Deep comparison between T1 and T2
 
@@ -103,28 +99,6 @@ package body Build_Configurations is
    Build_Menu : constant String := '/' & ("_Build") & '/';
    --  -"Build"
 
-   ---------------
-   -- Deep_Copy --
-   ---------------
-
-   function Deep_Copy
-     (CL : Argument_List_Access) return Argument_List_Access
-   is
-      CL2 : Argument_List_Access;
-   begin
-      if CL = null then
-         return null;
-      end if;
-
-      CL2 := new Argument_List (CL'Range);
-      for J in CL'Range loop
-         if CL (J) /= null then
-            CL2 (J) := new String'(CL (J).all);
-         end if;
-      end loop;
-      return CL2;
-   end Deep_Copy;
-
    ----------
    -- Copy --
    ----------
@@ -134,7 +108,7 @@ package body Build_Configurations is
       return new Target_Type'
         (Name                  => T.Name,
          Model                 => T.Model,
-         Command_Line          => Deep_Copy (T.Command_Line),
+         Command_Line          => T.Command_Line,
          Default_Command_Line  => T.Default_Command_Line,
          Properties            => T.Properties);
    end Copy;
@@ -144,46 +118,11 @@ package body Build_Configurations is
    ------------
 
    function Equals (T1 : Target_Access; T2 : Target_Access) return Boolean is
-
-      function Equals (A, B : Argument_List_Access) return Boolean;
-      --  Comparison function
-
-      ------------
-      -- Equals --
-      ------------
-
-      function Equals (A, B : Argument_List_Access) return Boolean is
-      begin
-         if A = null and then B = null then
-            return True;
-         end if;
-
-         if        A = null
-           or else B = null
-           or else A'First /= B'First
-           or else A'Last /= B'Last
-         then
-            return False;
-         end if;
-
-         for J in A'Range loop
-            if not (A (J) = null and then B (J) = null) then
-               if A (J) = null
-                 or else B (J) = null
-                 or else A (J).all /= B (J).all
-               then
-                  return False;
-               end if;
-            end if;
-         end loop;
-         return True;
-      end Equals;
-
    begin
       if        T1.Name       /= T2.Name
         or else T1.Model      /= T2.Model
         or else T1.Properties /= T2.Properties
-        or else not Equals (T1.Command_Line, T2.Command_Line)
+        or else T1.Command_Line /= T2.Command_Line
         or else T1.Default_Command_Line /= T2.Default_Command_Line
       then
          return False;
@@ -500,12 +439,7 @@ package body Build_Configurations is
       if Command_Line'Length > 0 then
          Set_Command_Line (Target, Command_Line);
       elsif not The_Model.Default_Command_Line.Is_Empty then
-         Set_Command_Line
-           (Target,
-            The_Model.Default_Command_Line.To_String_List
-              (Expanded => False).all);
-         --  FIXME: Memory leak here. It's expected that we will replace
-         --  String_List here by Command_Line
+         Target.Command_Line := The_Model.Default_Command_Line;
       end if;
 
       Add_Target (Registry, Target);
@@ -551,7 +485,7 @@ package body Build_Configurations is
       --  reset the command line.
 
       if The_Model.Default_Command_Line.Is_Empty then
-         Set_Command_Line (The_Target, (1 .. 0 => null));
+         The_Target.Command_Line.Clear;
       else
          declare
             Old_Cmd_Line : constant Argument_List :=
@@ -799,14 +733,8 @@ package body Build_Configurations is
      (Target       : Target_Access;
       Command_Line : GNAT.OS_Lib.Argument_List) is
    begin
-      Free (String_List_Access (Target.Command_Line));
-
-      Target.Command_Line := new GNAT.OS_Lib.Argument_List
-        (Command_Line'Range);
-
-      for J in Command_Line'Range loop
-         Target.Command_Line (J) := new String'(Command_Line (J).all);
-      end loop;
+      Target.Command_Line.Clear;
+      Target.Command_Line.Append_Switches (Command_Line);
    end Set_Command_Line;
 
    --------------
@@ -909,14 +837,14 @@ package body Build_Configurations is
       Empty : constant Argument_List (1 .. 0) := (others => null);
    begin
       if Target = null
-        or else Target.Command_Line = null
+        or else Target.Command_Line.Is_Empty
       then
          --  A target command line should at least contain the command to
          --  launch; if none can be found, return.
          return Empty;
       end if;
 
-      return Target.Command_Line.all;
+      return Target.Command_Line.To_String_List (Expanded => False).all;
    end Get_Command_Line_Unexpanded;
 
    -----------------------------------------
@@ -947,7 +875,6 @@ package body Build_Configurations is
    procedure Free (Target : in out Target_Type) is
    begin
       String_List_Utils.String_List.Free (Target.Properties.Parser_List);
-      GNAT.OS_Lib.Free (Target.Command_Line);
    end Free;
 
    ----------------------------------
@@ -1029,9 +956,11 @@ package body Build_Configurations is
    -------------------------
 
    function Command_Line_To_XML
-     (CL   : GNAT.OS_Lib.Argument_List;
+     (Cmd  : Command_Line;
       Tag  : String) return Node_Ptr
    is
+      CL : GNAT.Strings.String_List_Access :=
+        Cmd.To_String_List (Expanded => False);
       N, Arg : Node_Ptr;
    begin
       N := new Node;
@@ -1054,6 +983,8 @@ package body Build_Configurations is
          end if;
       end loop;
 
+      Free (CL);
+
       return N;
    end Command_Line_To_XML;
 
@@ -1062,7 +993,7 @@ package body Build_Configurations is
    -------------------------
 
    function XML_To_Command_Line
-     (N : Node_Ptr) return GNAT.OS_Lib.Argument_List
+     (N : Node_Ptr) return Command_Line
    is
       Count : Natural := 0;
       Arg   : Node_Ptr;
@@ -1090,20 +1021,10 @@ package body Build_Configurations is
             Arg := Arg.Next;
          end loop;
 
-         return CL;
+         return Result : Command_Line do
+            Result.Append_Switches (CL);
+         end return;
       end;
-   end XML_To_Command_Line;
-
-   -------------------------
-   -- XML_To_Command_Line --
-   -------------------------
-
-   function XML_To_Command_Line (N : Node_Ptr) return Command_Line is
-      List : constant GNAT.OS_Lib.Argument_List := XML_To_Command_Line (N);
-   begin
-      return Result : Command_Line do
-         Result.Append_Switches (List);
-      end return;
    end XML_To_Command_Line;
 
    ------------------------
@@ -1220,10 +1141,7 @@ package body Build_Configurations is
       C.Tag := new String'("output-parsers");
       C.Value := new String'(To_String (Target.Properties.Parser_List));
 
-      if Target.Command_Line /= null then
-         C.Next := Command_Line_To_XML
-           (Target.Command_Line.all, "command-line");
-      end if;
+      C.Next := Command_Line_To_XML (Target.Command_Line, "command-line");
 
       return N;
    end Save_Target_To_XML;
@@ -1326,12 +1244,8 @@ package body Build_Configurations is
 
       while Child /= null loop
          if Child.Tag.all = "command-line" then
-            Free (Target.Command_Line);
-            Target.Command_Line := new GNAT.OS_Lib.Argument_List'
-              (XML_To_Command_Line (Child));
-            Target.Default_Command_Line.Clear;
-            Target.Default_Command_Line.Append_Switches
-              (Target.Command_Line.all);
+            Target.Command_Line := XML_To_Command_Line (Child);
+            Target.Default_Command_Line := Target.Command_Line;
 
          elsif Child.Value = null then
             Log (Registry, -"Warning: empty node in target: " & Child.Tag.all);
@@ -1907,13 +1821,10 @@ package body Build_Configurations is
    begin
       Target.Model := Model;
       if Model.Default_Command_Line.Is_Empty then
-         Set_Command_Line (Target, (1 .. 0 => null));
+         Target.Command_Line.Clear;
          Target.Default_Command_Line.Clear;
       else
-         Set_Command_Line
-           (Target,
-            Model.Default_Command_Line.To_String_List (Expanded => False).all);
-
+         Target.Command_Line := Model.Default_Command_Line;
          Target.Default_Command_Line := Model.Default_Command_Line;
       end if;
    end Set_Model;
@@ -2011,9 +1922,6 @@ package body Build_Configurations is
         (Target_Type'Class, Target_Access);
    begin
       if Target /= null then
-         --  Target.Model;   --  No need to free, references in the Registry
-         Free (Target.Command_Line);
-
          Unchecked_Free (Target);
       end if;
    end Free;

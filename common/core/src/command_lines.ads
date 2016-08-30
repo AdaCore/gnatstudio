@@ -43,6 +43,9 @@ package Command_Lines is
 
    type Command_Line_Configuration is tagged private;
 
+   function "=" (Left, Right : Command_Line_Configuration'Class)
+     return Boolean;
+
    procedure Define_Section
      (Config  : in out Command_Line_Configuration;
       Section : String);
@@ -147,6 +150,8 @@ package Command_Lines is
    --      end;
 
    type Command_Line is tagged private;
+
+   function "=" (Left, Right : Command_Line'Class) return Boolean;
 
    procedure Set_Configuration
      (Cmd    : in out Command_Line'Class;

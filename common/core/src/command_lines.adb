@@ -39,6 +39,41 @@ package body Command_Lines is
       Add_Before  : Boolean   := False);
    --  Append given Switch to command line. Keep Cmd unexpanded
 
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (Left, Right : Command_Line_Configuration'Class)
+                 return Boolean
+   is
+      Empty : Configuration;
+   begin
+      if Left.Is_Null then
+         return Right.Is_Null or else Right.Unchecked_Get.all = Empty;
+      elsif Right.Is_Null then
+         return Left.Unchecked_Get.all = Empty;
+      end if;
+
+      return Left.Unchecked_Get.all = Right.Unchecked_Get.all;
+   end "=";
+
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (Left, Right : Command_Line'Class) return Boolean is
+      use type Switch_Vectors.Vector;
+   begin
+      if Left.Switches.Is_Null then
+         return Right.Is_Empty;
+      elsif Right.Switches.Is_Null then
+         return Left.Is_Empty;
+      else
+         return Left.Switches.Unchecked_Get.all =
+           Right.Switches.Unchecked_Get.all;
+      end if;
+   end "=";
+
    --------------------
    -- Define_Section --
    --------------------
