@@ -336,7 +336,7 @@ package body Toolchains_Editor is
       Self.Toolchains_View := new Dialog_View_With_Button_Box_Record;
       Dialog_Utils.Initialize
         (Self.Toolchains_View,
-         Orientation => Orientation_Vertical);
+         Position => Pos_Left);
       Group_Widget.Append_Child
         (Self.Toolchains_View,
          Expand    => True,

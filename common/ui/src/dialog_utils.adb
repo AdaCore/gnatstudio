@@ -59,11 +59,18 @@ package body Dialog_Utils is
    ----------------
 
    procedure Initialize
-     (Self        : not null access Dialog_View_With_Button_Box_Record'Class;
-      Orientation : Gtk_Orientation)
+     (Self     : not null access Dialog_View_With_Button_Box_Record'Class;
+      Position : Gtk_Position_Type)
    is
-      Box     : Gtk_Box;
-      Sep     : Gtk_Separator;
+      Box         : Gtk_Box;
+      Sep         : Gtk_Separator;
+      Orientation : constant Gtk_Orientation :=
+                      (if Position in Pos_Left .. Pos_Right then
+                          Orientation_Vertical
+                       else
+                          Orientation_Horizontal);
+      At_Start    : constant Boolean :=
+                      Position = Pos_Left or else Position = Pos_Top;
    begin
       Gtk.Scrolled_Window.Initialize (Self);
       Self.Set_Policy (Policy_Automatic, Policy_Automatic);
@@ -89,15 +96,30 @@ package body Dialog_Utils is
       Self.Button_Box.Set_Layout (Buttonbox_Start);
       Get_Style_Context (Self.Button_Box).Add_Class
         ("dialog-views-button-boxes");
-      Box.Pack_Start (Self.Button_Box, Expand => False);
+
+      if At_Start then
+         Box.Pack_Start (Self.Button_Box, Expand => False);
+      else
+         Box.Pack_End (Self.Button_Box, Expand => False);
+      end if;
 
       --  Add a separator
       Gtk_New (Sep, Orientation => Orientation);
-      Box.Pack_Start (Sep, Expand => False);
+
+      if At_Start then
+         Box.Pack_Start (Sep, Expand => False);
+      else
+         Box.Pack_End (Sep, Expand => False);
+      end if;
 
       --  Create the main box
       Gtk_New_Vbox (Self.Main_Box, Homogeneous => False);
-      Box.Pack_Start (Self.Main_Box, Expand => True, Fill => True);
+
+      if At_Start then
+         Box.Pack_Start (Self.Main_Box, Expand => True, Fill => True);
+      else
+         Box.Pack_End (Self.Main_Box, Expand => True, Fill => True);
+      end if;
    end Initialize;
 
    ------------

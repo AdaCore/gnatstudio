@@ -2556,7 +2556,7 @@ package body Project_Properties is
 
       if Is_List then
          List_View := new Dialog_View_With_Button_Box_Record;
-         Initialize (List_View, Orientation => Orientation_Vertical);
+         Initialize (List_View, Position => Pos_Left);
          Editor.Pack_Start (List_View, Expand => True, Fill => True);
 
          Gtk_New (Scrolled);

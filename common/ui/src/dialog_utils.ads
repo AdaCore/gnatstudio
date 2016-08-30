@@ -116,11 +116,10 @@ package Dialog_Utils is
    --  Type representing a dialog view with its associated button box.
 
    procedure Initialize
-     (Self        : not null access Dialog_View_With_Button_Box_Record'Class;
-      Orientation : Gtk_Orientation);
-   --  Initialize the dialog view and its associated button box.
-   --  The button box is put on the right-side of the dialog view or at the
-   --  bottom depending on Orientation.
+     (Self     : not null access Dialog_View_With_Button_Box_Record'Class;
+      Position : Gtk_Position_Type);
+   --  Initialize the dialog view and its associated button box, placing it at
+   --  the given Position.
 
    procedure Append_Button
      (Self   : not null access Dialog_View_With_Button_Box_Record'Class;
