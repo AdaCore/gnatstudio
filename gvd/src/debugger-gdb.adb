@@ -2081,8 +2081,16 @@ package body Debugger.Gdb is
       Line     : Editable_Line_Type;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
+      --  ??? We use the base name here, because older versions of gdb on
+      --  Windows do not work well with a full name:
+      --      clear Z:\foo\bar.adb:2
+      --  fails, when
+      --      clear bar.adb:2
+      --  works.
+      --  Since the risk of having two files with the same basename and a
+      --  breakpoint on the same line is limited, we simply use base names.
       Debugger.Send
-        ("clear " & File.Display_Full_Name & ":" & Image (Integer (Line)),
+        ("clear " & File.Display_Base_Name & ":" & Image (Integer (Line)),
          Mode => Mode);
    end Remove_Breakpoint_At;
 
