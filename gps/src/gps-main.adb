@@ -62,7 +62,6 @@ with Gtk.Icon_Theme;                   use Gtk.Icon_Theme;
 with Gtk.Image;                        use Gtk.Image;
 with Gtk.Handlers;
 with Gtk.Main;
-with Gtk.Settings;                     use Gtk.Settings;
 with Gtk.Style_Provider;               use Gtk.Style_Provider;
 with Gtk.Widget;                       use Gtk.Widget;
 with Gtk.Window;                       use Gtk.Window;
@@ -1392,16 +1391,6 @@ procedure GPS.Main is
       Kernel_Callback.Connect
         (Get_MDI (App.Kernel), Signal_Child_Title_Changed,
          Title_Changed'Access, App.Kernel);
-
-      --  Under Windows, pressing the primary button outside of the slider
-      --  should jump by a page increment.
-
-      if Config.Host = Windows then
-         Set_Property
-           (Gtk.Settings.Get_Default,
-            Gtk_Primary_Button_Warps_Slider_Property,
-            False);
-      end if;
 
       --  Load CSS must be loaded *after* the call to GPS.Main_Window.Gtk_New
       --  above, since that call loads the theme (Adwaita) and the CSS file
