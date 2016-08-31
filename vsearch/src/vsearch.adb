@@ -258,8 +258,8 @@ package body Vsearch is
      (Id           : not null access Module_ID_Record'Class;
       Handle       : access Kernel_Handle_Record'Class;
       In_Selection : Boolean := False) return Search_Module_Data;
-   --  Return the first search context that matches Id, or No_Search if there
-   --  is none.
+   --  Return the first search context that matches Id, or the default one if
+   --  there is none.
 
    procedure Free (Data : in out Search_Module_Data);
    --  Free the memory associated with Data
@@ -269,17 +269,21 @@ package body Vsearch is
    use Search_Modules_List;
 
    type Vsearch_Module_Record is new Module_ID_Record with record
-      Search_Modules : Search_Modules_List.List;
+      Search_Modules        : Search_Modules_List.List;
       --  Global variable that contains the list of all registered search
       --  functions.
 
-      Search_Started : Boolean := False;
+      Default_Search_Module : Search_Module_Data := No_Search;
+      --  The default search module to use when no one matches with the current
+      --  context.
+
+      Search_Started        : Boolean := False;
       --  Whether the user has started a search (Next and Previous should work)
 
-      Search_Regexps : Search_Regexps_Array_Access;
+      Search_Regexps        : Search_Regexps_Array_Access;
       --  The list of predefined regexps for the search module.
 
-      Has_Focus_On_Click : Boolean := False;
+      Has_Focus_On_Click    : Boolean := False;
       --  If Patern/Replace combo has focus on mouse click
    end record;
    type Vsearch_Module is access all Vsearch_Module_Record'Class;
@@ -2343,7 +2347,8 @@ package body Vsearch is
       Selector     : access Scope_Selector_Interface'Class := null;
       Id           : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
       Mask         : Search_Options_Mask := All_Options;
-      In_Selection : Boolean := False)
+      In_Selection : Boolean := False;
+      Is_Default   : Boolean := False)
    is
       Data : constant Search_Module_Data :=
         Search_Module_Data'
@@ -2366,6 +2371,10 @@ package body Vsearch is
       end if;
 
       Prepend (Vsearch_Module_Id.Search_Modules, Data);
+
+      if Is_Default then
+         Vsearch_Module_Id.Default_Search_Module := Data;
+      end if;
 
       if Data.Selector /= null then
          declare
@@ -2488,7 +2497,9 @@ package body Vsearch is
          return Element (Last_Matching_Node);
       end if;
 
-      return No_Search;
+      --  Return the default module to use when Id does not match any
+      --  registered search module.
+      return Vsearch_Module_Id.Default_Search_Module;
    end Search_Context_From_Module;
 
    ------------------------

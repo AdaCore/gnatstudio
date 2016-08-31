@@ -2376,7 +2376,8 @@ package body Src_Editor_Module is
          Factory           => Files_From_Project_Factory'Access,
          Selector          => Selector,
          Id                => Src_Editor_Module_Id,
-         Mask              => All_Options and not Search_Backward);
+         Mask              => All_Options and not Search_Backward,
+         Is_Default        => True);
       Register_Search_Function
         (Kernel            => Kernel,
          Label             => -"Files From Runtime",

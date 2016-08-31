@@ -52,7 +52,8 @@ package Vsearch is
       Selector     : access Scope_Selector_Interface'Class := null;
       Id           : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
       Mask         : Search_Options_Mask := All_Options;
-      In_Selection : Boolean := False);
+      In_Selection : Boolean := False;
+      Is_Default   : Boolean := False);
    --  Register a new search function.
    --  This will be available under the title Label in the search combo box.
    --  This procedure immediately emits the kernel signal
@@ -83,6 +84,10 @@ package Vsearch is
 
    --  When Id is not null and In_Selection = True it will be used to set the
    --  default search context when there multiline selection in an editor.
+   --
+   --  When Is_Default is True, the search function will be used by default
+   --  when no module has been found when creating the dialog (e.g: when the
+   --  user dit not focus any module-related widget yet).
 
    procedure Reset_Search
      (Object : access Glib.Object.GObject_Record'Class;
