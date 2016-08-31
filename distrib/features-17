@@ -23,6 +23,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P830-006 GPS: search icons in GPS_CUSTOM_PATH (2016-08-31)
+
+  Icons used in plug-ins are now also searched in any of the directories
+  specified in the environment variable GPS_CUSTOM_PATH.
+
 NF-17-P803-016 GPS: wrong file view for multi-drive projects (2016-08-08)
 
   When the 'Show files from project only' option is enabled, the Files view now

@@ -1382,7 +1382,7 @@ different place in the file.
 
 Use the :menuselection:`Edit --> Create Bookmark` menu to create a bookmark
 at the current location (either in the editor or the browser). You can also
-use the :label:`[+]` button in the local toolbar of the :guilabel:`Bookmarks`
+use the :guilabel:`[+]` button in the local toolbar of the :guilabel:`Bookmarks`
 view, see below.
 
 .. index:: menu; tools --> views --> bookmarks

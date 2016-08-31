@@ -18,6 +18,7 @@
 with GNATCOLL.Traces;   use GNATCOLL.Traces;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GPS.Kernel;        use GPS.Kernel;
+with GPS.Kernel.Custom; use GPS.Kernel.Custom;
 with Glib;              use Glib;
 with Gtk.Enums;         use Gtk.Enums;
 with Gtk.Icon_Factory;  use Gtk.Icon_Factory;
@@ -82,5 +83,14 @@ package body GPS.Stock_Icons is
 
       Theme.Prepend_Search_Path
         (Create_From_Dir (GPS_Home, "icons").Display_Full_Name);
+
+      --  Add each directory from the custom path
+      declare
+         P : constant File_Array := Get_Custom_Path;
+      begin
+         for F of P loop
+            Theme.Prepend_Search_Path (F.Display_Full_Name);
+         end loop;
+      end;
    end Register_Stock_Icons;
 end GPS.Stock_Icons;

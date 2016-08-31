@@ -285,10 +285,13 @@ versions of GPS you should not have keep other files in these directories.
   the preferences editor dialog.
 
   This is a convenient way to have project-specific customization
-  files. You can, for example, create scripts or icons that set the
+  files. You can, for example, create scripts that set the
   appropriate value for the variable and then start GPS. Depending on your
   project, this allows you to load specific aliases which do not make sense
   for other projects.
+
+  These directories are also used to search for icons referenced in your
+  plug-ins.
 
 * Automatically loaded user directory
 
@@ -1565,9 +1568,12 @@ tag, it requires an :file:`action` attribute, which specifies what should
 be done when the button is pressed. The button is not created if the action
 action does not exist.
 
+.. index:: icons
+.. index:: images
+
 This tag accepts one optional attribute, :file:`iconname` which you can use to
 override the default image registered for the action or set one if the
-action no image. The value for this attribute is an icon name.
+action no image. See :ref:`Adding_stock_icons` for more information on icons.
 
 The following example defines a new button::
 
@@ -3037,52 +3043,59 @@ Adding custom icons
 -------------------
 
 You can also provide custom icons to be used throughout GPS in places such as
-buttons, menus and toolbars. To do this place the icon file
-into :file:`.gps/icons/` directory. This file should be in PNG, XPM or SVG
-format. Optionally you can install icons in different sizes.
-For example, icons with size 48 pixels should be placed in
-:file:`.gps/icons/hicolor/48x48/apps/` directory.
+buttons, menus and toolbars.
 
-If you have::
+Images must be either in the PNG or SVG format. The latter (scalable vector
+graphic) is preferred, since the image will always display sharply whatever
+size is used on the screen. GPS itself always uses SVG icons.
 
-    .gps/icons/my-vcs-up-to-date.svg
+.. index:: GPS_CUSTOM_PATH
 
-.. highlight:: xml
+The images are searched in multiple base directories:
 
-Then usage in VCS plugin would be::
+   * Any directory mentioned in the environment variable GPS_CUSTOM_PATH.
+   * :file:`HOME/.gps/icons`
+   * :file:`<gps_install>/share/gps/icons`
 
-    <status label="Up to date" iconname="my-vcs-up-to-date" />
+In all these cases, icons can be in either the directory itself, or in
+subdirectories named :file:`hicolor/48x48/apps`, with the following
+conventions:
 
+   * :file:`hicolor` is the name of the icon theme. The default is
+     'hicolor', and that cannot be changed from GPS itself.
+   * :file:`48x48` is the size of the icon.
+     This is only relevant to PNG images, in case you want to provide
+     multiple sizes for the image. The directory name should match the
+     size of the icon, and GPS will automatically select the most
+     appropriate format when it needs to display the image. For SVG
+     images, can you instead choose a subdirectory named
+     :file:`hicolor/scalable/16x16`, where the final size does not
+     matter since these images can always be resized to any size.
 
-By default, gtk+ loads the Adwaita icon theme, which is found in the
-directory :file:`prefix/share/icons/`.
-An extra theme, hicolor, is also defined, and acts as a fallback when
-icons are not found in Adwaita. GPS adds extra directories to that
-hicolor theme (:file:`prefix/share/icons/hicolor/*`), which contain GPS
-specific icons. As a result, icons from the user's theme (Adwaita) have
-priority, and GPS icons are loaded as fallbacks.
+Icons are referenced with the basename of the file (no directory info)
+with no extension. gtk+ will automatically try a number of variants
+like :file:`name.svg`, :file:`name.png`, :file:`name-rtl.svg`,
+:file:`name-symbolic.svg`, ...
 
-In GPS, the following conventions are used:
-
-* All icons should be scalable SVG icons, so that the icons display
-  properly on hidpi screens.
-
-* By convention in gtk+, the basename of the file is the name by
-  which the icon is refered to in the code. gtk+ automatically looks
-  for variants, for instance :file:`basename-rtl.svg` when using
-  right-to-left writing conventions.
-
-* In GPS, icon files most often end with :file:`-symbolic.svg`. This is a
-  special convention in gtk+. Such icons are displayed as grayscale
-  only, and automatically adapt to dark themes.
+If you name your icon :file:`name-symbolic.svg`, GPS will automatically
+change the foreground and background colors to match the selected color
+theme by the user (dark or light). But these icons are only displayed
+in grayscale.
 
 As shown in the example above, you should prefix the icon with a unique
 name, here :file:`my-vcs-`, to make sure predefined icons do not
 get overridden by your icons.
 
+So for instance, if you have put a file :file:`mylogo.png` in
+:file:`/dir/plug-ins/`, then you should do the following:
+
+   * set `GPS_CUSTOM_PATH` to include '/dir/plug-ins/'
+   * use `iconname="mylogo"` in your plug-in
+
 Further information about icons could be found in a separate document -
 `Icon Theme Specification
 <http://www.freedesktop.org/wiki/Specifications/icon-theme-spec/>`_.
+
 
 .. _Remote_programming_customization:
 
