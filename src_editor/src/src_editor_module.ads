@@ -16,7 +16,9 @@
 ------------------------------------------------------------------------------
 
 with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Unchecked_Deallocation;
+
 with Basic_Types;                 use Basic_Types;
 with Commands.Controls;
 with GNAT.Expect;
@@ -253,6 +255,14 @@ private
    --  These do not hold a reference to the marker, which therefore has its
    --  own independent life cycle.
 
+   package File_Marker_Maps is
+     new Ada.Containers.Indefinite_Hashed_Maps
+       (GNATCOLL.VFS.Virtual_File,
+        Marker_List.List,
+        GNATCOLL.VFS.Full_Name_Hash,
+        GNATCOLL.VFS."=",
+        Marker_List."=");
+
    -----------------------------
    -- Highlighting categories --
    -----------------------------
@@ -295,7 +305,8 @@ private
 
       Show_Subprogram_Names : Boolean    := False;
 
-      Stored_Marks          : Marker_List.List;
+      Stored_Marks          : File_Marker_Maps.Map;
+      --  Lists of markers for files.
 
       Recent_File_Actions   : Action_Lists.List;
       --  Actions registered dynamically for the list of recent files

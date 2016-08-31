@@ -114,10 +114,20 @@ package body Src_Editor_Module.Markers is
    --------------------------------
 
    procedure Register_Persistent_Marker (Marker : Location_Marker) is
-      Module : constant Source_Editor_Module :=
-                 Source_Editor_Module (Src_Editor_Module_Id);
+      Module        : constant Source_Editor_Module :=
+                        Source_Editor_Module (Src_Editor_Module_Id);
+      File          : constant GNATCOLL.VFS.Virtual_File :=
+                        File_Marker (Marker.Unchecked_Get).File;
+      File_Position : File_Marker_Maps.Cursor :=
+                        Module.Stored_Marks.Find (File);
+
    begin
-      Marker_List.Append (Module.Stored_Marks,  Marker.Weak);
+      if not File_Marker_Maps.Has_Element (File_Position) then
+         Module.Stored_Marks.Insert (File, Marker_List.Empty_List);
+         File_Position := Module.Stored_Marks.Find (File);
+      end if;
+
+      Module.Stored_Marks.Reference (File_Position).Append (Marker.Weak);
    end Register_Persistent_Marker;
 
    ---------------
@@ -173,34 +183,49 @@ package body Src_Editor_Module.Markers is
       W      : Weak_Location_Marker;
       C, C2  : Marker_List.Cursor;
       Box    : Source_Editor_Box;
-   begin
-      if Module /= null then
-         C := Module.Stored_Marks.First;
-         while Has_Element (C) loop
-            W := Marker_List.Element (C);
-            C2 := Next (C);
-            if W.Was_Freed then
-               --  Cleanup the list to keep it short
-               Module.Stored_Marks.Delete (C);
-            else
-               if Box = null then
-                  Box := Get_Source_Box_From_MDI
-                    (Find_Editor
-                       (Kernel, File,
-                        Project => GNATCOLL.Projects.No_Project));
-               end if;
+      FP     : File_Marker_Maps.Cursor;
 
-               if Box /= null then
-                  M.Set (W);
-                  F := File_Marker (M.Unchecked_Get);
-                  if F.File = File then
-                     Create_Text_Mark (Kernel, F, Box => Box);
-                  end if;
+   begin
+      if Module = null then
+         return;
+      end if;
+
+      FP := Module.Stored_Marks.Find (File);
+
+      if not File_Marker_Maps.Has_Element (FP) then
+         return;
+      end if;
+
+      C := Module.Stored_Marks.Reference (FP).First;
+
+      while Has_Element (C) loop
+         W := Marker_List.Element (C);
+         C2 := Next (C);
+
+         if W.Was_Freed then
+            --  Cleanup the list to keep it short
+            Module.Stored_Marks.Reference (FP).Delete (C);
+
+         else
+            if Box = null then
+               Box := Get_Source_Box_From_MDI
+                 (Find_Editor
+                    (Kernel, File,
+                     Project => GNATCOLL.Projects.No_Project));
+            end if;
+
+            if Box /= null then
+               M.Set (W);
+               F := File_Marker (M.Unchecked_Get);
+
+               if F.File = File then
+                  Create_Text_Mark (Kernel, F, Box => Box);
                end if;
             end if;
-            C := C2;
-         end loop;
-      end if;
+         end if;
+
+         C := C2;
+      end loop;
    end Reset_Markers_For_File;
 
    ----------------------------
