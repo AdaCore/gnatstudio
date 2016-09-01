@@ -51,10 +51,51 @@ import os.path
 import os_utils
 import re
 import workflows
+import constructs
 from workflows.promises import Promise, ProcessWrapper, TargetWrapper
 
 
 logger = GPS.Logger('MODELING')
+
+
+class MDL_Language(GPS.Language):
+    """
+    A class that describes the MDL and Simulink language for GPS.
+    """
+
+    # @overriding
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def register():
+        """Add support for the Simulink language"""
+        GPS.Language.register(
+            MDL_Language(),
+            name="Simulink",
+            body_suffix=".mdl",
+            spec_suffix=".slx",
+            obj_suffix="-")
+
+    # @overriding
+    def parse_constructs(self, clist, file, file_contents):
+        """
+        Provides support for the Outline view
+        """
+        viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
+        if viewer:
+            for it in viewer.diagram.items:
+                for it2 in it.recurse():
+                    if hasattr(it2, 'id'):
+                        clist.add_construct(
+                            category=constructs.CAT_CLASS,
+                            is_declaration=True,
+                            visibility=constructs.VISIBILITY_PUBLIC,
+                            name=it2.id,
+                            profile='',
+                            sloc_start=(0, 0, 0),
+                            sloc_end=(0, 0, 0),
+                            sloc_entity=(0, 0, 0))
 
 
 class Project_Support(object):
@@ -62,18 +103,6 @@ class Project_Support(object):
     This class provides an interface to the project facilities, to be
     used by QGen.
     """
-
-    def register_languages(self):
-        """Add support for the Simulink language"""
-        GPS.parse_xml("""<?xml version='1.0' ?>
-          <GPS>
-            <Language>
-              <Name>Simulink</Name>
-              <Body_Suffix>.mdl</Body_Suffix>
-              <Spec_Suffix>.slx</Spec_Suffix>
-              <Obj_Suffix>-</Obj_Suffix>
-            </Language>
-          </GPS>""")
 
     def register_tool(self):
         """Register the QGENC tool and its switches"""
@@ -901,7 +930,7 @@ class Mapping_File(object):
 
 
 project_support = Project_Support()
-project_support.register_languages()  # available before project is loaded
+MDL_Language.register()   # available before project is loaded
 
 if not CLI.is_available():
     logger.log('qgenc not found')
