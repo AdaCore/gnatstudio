@@ -164,6 +164,8 @@ XML = r"""<?xml version="1.0" ?>
       <arg>-d</arg>
       <arg>%eL</arg>
       <arg>-P%PP</arg>
+      <arg>%config</arg>
+      <arg>%autoconf</arg>
       <arg>%X</arg>
    </command-line>
    <iconname>gps-build-all-symbolic</iconname>
@@ -419,6 +421,8 @@ name="U_pdate file XRef in background">
        <arg>-u</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
+       <arg>%config</arg>
+       <arg>%autoconf</arg>
        <arg>%X</arg>
        <arg>%fp</arg>
     </command-line>
@@ -436,6 +440,8 @@ name="U_pdate file XRef in background">
        <arg>-d</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
+       <arg>%config</arg>
+       <arg>%autoconf</arg>
        <arg>%X</arg>
        <arg>%TT</arg>
        <arg>-largs</arg>
@@ -454,6 +460,8 @@ name="U_pdate file XRef in background">
        <arg>-d</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
+       <arg>%config</arg>
+       <arg>%autoconf</arg>
        <arg>%X</arg>
        <arg>-largs</arg>
        <arg>-Wl,--print-memory-usage</arg>
@@ -470,6 +478,8 @@ name="U_pdate file XRef in background">
        <arg>-d</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
+       <arg>%config</arg>
+       <arg>%autoconf</arg>
        <arg>%X</arg>
     </command-line>
 </target>
@@ -483,6 +493,8 @@ name="U_pdate file XRef in background">
        <arg>-d</arg>
        <arg>%eL</arg>
        <arg>-P%PP</arg>
+       <arg>%config</arg>
+       <arg>%autoconf</arg>
        <arg>%X</arg>
        <arg>%fp</arg>
     </command-line>

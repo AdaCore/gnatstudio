@@ -602,6 +602,9 @@ package body Build_Command_Utils is
       --  Create an Arg_List containing the given Command, and possibly
       --  appended with --target=xxx if Tc is a cross toolchain.
 
+      Environment : Project_Environment_Access renames
+        Adapter.Kernel_Registry.Environment;
+
       ---------------
       -- Get_Index --
       ---------------
@@ -981,6 +984,26 @@ package body Build_Command_Utils is
                -"Could not determine the executable name for main.",
                Mode => Error);
             raise Invalid_Argument;
+         end if;
+
+      elsif Arg = "%config" then
+         if Environment.Get_Automatic_Config_File
+           or else Environment.Get_Config_File = No_File
+         then
+            return Result;
+         else
+            Result.Args := Create
+              ("--config=" & Environment.Get_Config_File.Display_Full_Name);
+         end if;
+
+      elsif Arg = "%autoconf" then
+         if not Environment.Get_Automatic_Config_File
+           or else Environment.Get_Config_File = No_File
+         then
+            return Result;
+         else
+            Result.Args := Create
+              ("--autoconf=" & Environment.Get_Config_File.Display_Full_Name);
          end if;
 
       else
