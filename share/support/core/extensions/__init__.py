@@ -365,7 +365,7 @@ class Contextual(object):
                  self.data = "Menu Name"
                  self.create(on_activate=self.on_contextual,
                              filter=self.on_filter,
-                             label=self.label)
+                             label=self.on_label)
         """
 
         # Unless we are creating a separator
