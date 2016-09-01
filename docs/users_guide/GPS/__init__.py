@@ -9731,6 +9731,48 @@ class History(object):
         """
 
 
+class ConstructsList(object):
+    """
+    This class is closely associated with the :class:`GPS.Language` class,
+    and is used by plug-ins to describe the semantic organization in a source
+    file.
+
+    This can be used in particular to populate the Outline view for custom
+    languages (see the :file:`python_support.py` plugin in the GPS sources).
+    """
+
+    def add_construct(self, category, is_declaration, visiblity, name,
+                      profile, sloc_start, sloc_end, sloc_entity):
+        """
+        Register a new semantic construct from the file.
+
+        :param int category: the name of the category. It should be one of the
+           CAT_* constants in the :file:`constructs.py` module. If your
+           language has different constructs, you should map them to one of the
+           existing categories.
+
+        :param bool is_declaration: whether this is the declaration for the
+           entity, or a reference to it.
+
+        :param int visibility: whether the entity is public, protected or
+           private. It should be one of the constants in the
+           :file:`constructs.py` module.
+
+        :param str name: the name of the entity
+
+        :param str profile: a description of its profile (the list of
+           parameters for a subprogram, for instance).
+
+        :param (int,int,int) sloc_start: the position at which this constructs
+           starts. This is a tuple (line, column, offset), where offset is the
+           number of bytes since the start of the file.
+        :param (int,int,int) sloc_end: the position at which this constructs
+           ends. This is a tuple (line, column, offset).
+        :param (int,int,int) sloc_entity: the position at which the entity name
+           starts. This is a tuple (line, column, offset).
+        """
+
+
 class Language(object):
 
     @staticmethod
@@ -9767,12 +9809,12 @@ class Language(object):
         - Block highlighting/folding support
         - Entity search support
 
-        TODO: Explain how to build a proper construct list
+        ..  seealso: :class:`GPS.ConstructsList`
 
-        :param ConstructList constructs_list: The list of constructs to
+        :param GPS.ConstructList constructs_list: The list of constructs to
             populate.
-        :param File gps_file: The gps file corresponding to the file to parse.
-        :param string content_string: The content of the file
+        :param GPS.File gps_file: the name of the file to parse.
+        :param str content_string: The content of the file
         """
         pass
 
