@@ -1563,8 +1563,8 @@ package body Generic_Views is
                   end;
                end if;
             end if;
-            --  ??? browsers used to do the following:
 
+            --  ??? browsers used to do the following:
             --  Add_Navigation_Location (Kernel, -"Call graph Browser");
          end if;
 

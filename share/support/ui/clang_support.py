@@ -108,7 +108,10 @@ class Clang_Module(Module):
         This hook is called when a new file editor is being opened
         """
         if self.is_on():
-            self.clang_instance.refresh_buffer(GPS.EditorBuffer.get(f))
+            # The file might have been opened in a QGen browser for instance
+            buffer = GPS.EditorBuffer.get(f, open=False)
+            if buffer:
+                self.clang_instance.refresh_buffer(buffer)
 
     def preferences_changed(self, *args):
         if show_diags_pref.get() != self.show_diags_pref_val:

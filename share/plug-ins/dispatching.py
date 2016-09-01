@@ -21,7 +21,11 @@ GPS.Preference("Plugins/dispatching/color").create(
 
 GPS.Preference("Plugins/dispatching/context").create(
     "Search context", "integer",
-    """When the cross-reference information is not up-to-date, GPS will search a few lines around the original location for matching entities. This preference indicates how many lines it will search -- the bigger the slower of course, and potentially less precise too""", 5, 0, 50)
+    """When the cross-reference information is not up-to-date, \
+GPS will search a few lines around the original location for \
+matching entities. This preference indicates how many lines \
+it will search -- the bigger the slower of course, and potentially \
+less precise too""", 5, 0, 50)
 
 
 class Dispatching_Highlighter(Location_Highlighter):
@@ -71,10 +75,14 @@ class Dispatching_Highlighter(Location_Highlighter):
             self.__on_compilation_finished()
 
     def __on_file_edited(self, hook, file):
-        self.start_highlight(GPS.EditorBuffer.get(file, open=False))
+        # File might have been opened in a QGen browser
+        buffer = GPS.EditorBuffer.get(file, open=False)
+        if buffer:
+            self.start_highlight(buffer)
 
     def __on_compilation_finished(
-            self, hook=None, category="", target_name="", mode_name="", status=""):
+            self, hook=None, category="", target_name="",
+            mode_name="", status=""):
         """Re-highlight all editors"""
 
         for b in GPS.EditorBuffer.list():

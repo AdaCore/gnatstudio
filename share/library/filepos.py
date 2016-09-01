@@ -8,9 +8,11 @@ restore it when the editor is reopened later on.
 ############################################################################
 
 from GPS import *
+import gps_utils
 
 
-def on_file_closed(hook, file):
+@gps_utils.hook('file_closed')
+def on_file_closed(file):
     buffer = EditorBuffer.get(file, open=False)
     if buffer:
         line = buffer.current_view().cursor().line()
@@ -19,13 +21,18 @@ def on_file_closed(hook, file):
         file.set_property("lastloc_column", repr(column), persistent=True)
 
 
-def on_file_edited(hook, file):
+@gps_utils.hook('file_edited')
+def on_file_edited(file):
     try:
-        buffer = EditorBuffer.get(file)
-        cursor = buffer.current_view().cursor()
+        # If the file was opened inside an editor (as opposed to a
+        # QGen browser for instance)
+        buffer = EditorBuffer.get(file, open=False)
+        if not buffer:
+            return
 
         # Do not change the line if the editor was already scrolled for
         # any reason
+        cursor = buffer.current_view().cursor()
         if cursor.line() == 1 and cursor.column() == 1:
             line = file.get_property("lastloc_line")
             column = file.get_property("lastloc_column")
@@ -33,6 +40,3 @@ def on_file_edited(hook, file):
                 buffer.at(int(line), int(column)))
     except:
         pass
-
-Hook("file_closed").add(on_file_closed)
-Hook("file_edited").add(on_file_edited)

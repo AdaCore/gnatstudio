@@ -40,6 +40,7 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Widget;                use Gtk.Widget;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
@@ -786,7 +787,7 @@ package body Browsers.Scripts is
       Item   : Abstract_Item;
       View   : Browser_View;
       Model  : Model_Type;
-      C      : MDI_Child;
+      C      : GPS_MDI_Child;
       Pos    : Model_Point;
    begin
       if Command = Constructor_Method then
@@ -807,8 +808,7 @@ package body Browsers.Scripts is
 
             C := Browser_Views.Child_From_View (View);
             C.Set_Title (Data.Nth_Arg (3));
-            GPS_MDI_Child (C).Set_Save_Desktop_Callback
-              (Nth_Arg (Data, 4, Default => null));
+            C.Set_Save_Desktop_Callback (Nth_Arg (Data, 4, Default => null));
 
             View.Get_View.Set_Snap
               (Snap_To_Grid   => Data.Nth_Arg (5, True),
@@ -816,6 +816,8 @@ package body Browsers.Scripts is
 
             Inst := Data.Nth_Arg (1);
             Set_Data (Inst, Widget => GObject (View));
+
+            Get_Kernel (Data).Context_Changed (C.Build_Context);
          end;
 
       elsif Command = "set_background" then

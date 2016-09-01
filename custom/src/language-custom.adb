@@ -223,7 +223,7 @@ package body Language.Custom is
       Comment_Start           : String_Ptr;
       Comment_End             : String_Ptr;
       Tmp_Str                 : String_Ptr;
-      Flags                   : Regexp_Flags := No_Flags;
+      Flags                   : Regexp_Flags := Multiple_Lines;
       New_Line_Comment_Start  : String_Ptr;
       Num_Categories          : Natural := 0;
       Tmp                     : Project_Field_Array_Access;
@@ -564,10 +564,8 @@ package body Language.Custom is
          Parse_Boolean
            (Node, "Use_Semicolon", Lang.Context.Use_Semicolon, False);
 
-         if Lang.Context.Case_Sensitive then
-            Flags := Multiple_Lines;
-         else
-            Flags := Multiple_Lines or Case_Insensitive;
+         if not Lang.Context.Case_Sensitive then
+            Flags := Flags or Case_Insensitive;
          end if;
       end if;
 

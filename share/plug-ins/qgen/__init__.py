@@ -70,11 +70,7 @@ class Project_Support(object):
             <Language>
               <Name>Simulink</Name>
               <Body_Suffix>.mdl</Body_Suffix>
-              <Obj_Suffix>-</Obj_Suffix>
-            </Language>
-            <Language>
-              <Name>Simulink_Json</Name>
-              <Body_Suffix>.mdl_json</Body_Suffix>
+              <Spec_Suffix>.slx</Spec_Suffix>
               <Obj_Suffix>-</Obj_Suffix>
             </Language>
           </GPS>""")
@@ -651,6 +647,7 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         c = GPS.MDI.get_by_child(v)
         c._gmc_viewer = v
 
+        GPS.Hook('file_edited').run(file)
         return (v, True)
 
     @staticmethod
@@ -1295,11 +1292,6 @@ else:
             if file.language() == 'simulink':
                 logger.log('Open %s' % file)
                 viewer = QGEN_Diagram_Viewer.get_or_create(file)
-                return True
-            if file.language() == 'simulink_json':
-                logger.log('Open %s' % file)
-                viewer = QGEN_Diagram_Viewer.open_json(
-                    file, open(file.path).read())
                 return True
             return False
 
