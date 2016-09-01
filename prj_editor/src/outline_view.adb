@@ -839,7 +839,7 @@ package body Outline_View is
         Outline_Views.Retrieve_View (Kernel);
    begin
       if Outline /= null then
-         if Outline.File = GNATCOLL.VFS.No_File then
+         if Outline.File /= File then
             Outline.Set_File (File);
          end if;
 
@@ -889,10 +889,12 @@ package body Outline_View is
         Outline_Views.Retrieve_View (Kernel);
    begin
       if Outline /= null
+
+        --  We disable the Outline view for some specific modules (instead
+        --  of allowing for a specific set of modules, because the user could
+        --  create his own like we do for QGen).
         and then Module /= null
-        and then
-          (Get_Name (Module) = "Source_Editor"
-           or else Get_Name (Module) = Outline_View_Module_Name)
+        and then Get_Name (Module) /= "Location_View_Record"
       then
          On_Changed (Outline, Context);
       end if;
