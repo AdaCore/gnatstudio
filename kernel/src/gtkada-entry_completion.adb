@@ -264,9 +264,9 @@ package body Gtkada.Entry_Completion is
       pragma Unreferenced (Kernel);
 
    begin
-      --  Update the color of the provider column (left one) only if the theme
-      --  preference has changed.
-      if Pref /= Preference (Gtk_Theme) then
+      --  The color of the providers renderer is derived from the background
+      --  color of editors.
+      if Pref /= Preference (Default_Style) then
          return;
       end if;
 
@@ -275,8 +275,7 @@ package body Gtkada.Entry_Completion is
          Render : constant Gtk_Cell_Renderer :=  Cell_Renderer_List.Get_Data
            (Self.Entry_View.Column_Provider.Get_Cells);
       begin
-         Get_Style_Context (Self.Entry_View.View).Get_Background_Color
-           (Gtk_State_Flag_Normal, Color);
+         Color := Default_Style.Get_Pref_Bg;
 
          Set_Property
            (Render,
@@ -607,8 +606,7 @@ package body Gtkada.Entry_Completion is
       Self.Column_Provider.Add_Attribute
         (Render, "markup", Column_Provider);
 
-      Get_Style_Context (Self.View).Get_Background_Color
-        (Gtk_State_Flag_Normal, Color);
+      Color := Default_Style.Get_Pref_Bg;
       Set_Property
         (Render, Gtk.Cell_Renderer_Text.Foreground_Rgba_Property,
          Shade_Or_Lighten (Color, Provider_Column_Fg_Modifier));
