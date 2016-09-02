@@ -256,6 +256,34 @@ package body Language.Shell is
       return Null_Context'Access;
    end Get_Language_Context;
 
+   ------------------------------------
+   -- Should_Refresh_Constructs_Tree --
+   ------------------------------------
+
+   overriding function Should_Refresh_Constructs_Tree
+     (Lang   : not null access Shell_Language;
+      File   : GNATCOLL.VFS.Virtual_File)
+      return Boolean
+   is
+      Sub    : constant Subprogram_Type :=
+        Get_Method (Lang.Object, "should_refresh_constructs");
+   begin
+      if Sub = null then
+         return False;  --  unless the file's timestamp has changed on disk
+      end if;
+
+      declare
+         Script : constant Scripting_Language  := Get_Script (Sub.all);
+         Args   : Callback_Data'Class := Create (Script, 1);
+         Result : Boolean;
+      begin
+         Args.Set_Nth_Arg (1, GPS.Scripts.Files.Create_File (Script, File));
+         Result := Execute (Sub, Args);
+         Free (Args);
+         return Result;
+      end;
+   end Should_Refresh_Constructs_Tree;
+
    ----------------------
    -- Parse_Constructs --
    ----------------------
@@ -395,6 +423,11 @@ package body Language.Shell is
          Params         => (1 => Param ("name")),
          Class          => Language_Class,
          Static_Method  => True,
+         Handler        => Language_Handler'Access);
+      Kernel.Scripts.Register_Command   --  for documentation only, no impl.
+        ("should_refresh_constructs",
+         Params         => (1 => Param ("file")),
+         Class          => Language_Class,
          Handler        => Language_Handler'Access);
 
       Kernel.Scripts.Register_Command

@@ -9810,6 +9810,7 @@ class Language(object):
         - Entity search support
 
         ..  seealso: :class:`GPS.ConstructsList`
+        ..  seealso: :func:`GPS.Language.should_refresh_constructs`
 
         :param GPS.ConstructList constructs_list: The list of constructs to
             populate.
@@ -9817,6 +9818,19 @@ class Language(object):
         :param str content_string: The content of the file
         """
         pass
+
+    def should_refresh_constructs(self, file):
+        """
+        Whether GPS should call parse_constructs to refresh the list.
+        This is called when the file has not changed on the disk, but GPS
+        thinks there might be a need to refresh because various hooks have
+        been run.
+        By default, this returns False, so that parse_constructs is only
+        called when the file changes on the disk.
+
+        :param GPS.File file: the file to test
+        :return: a bool
+        """
 
     @staticmethod
     def get(name):

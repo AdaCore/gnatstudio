@@ -628,6 +628,16 @@ package Language is
    --  Parse the constructs contained in Buffer and store all the language
    --  constructs with their source location in Result.
 
+   function Should_Refresh_Constructs_Tree
+     (Lang   : not null access Language_Root;
+      File   : GNATCOLL.VFS.Virtual_File)
+      return Boolean is (False);
+   --  Whether Parse_Constructs should be called to refresh the contents of
+   --  the semantic tree associated with the file.
+   --  This is only called when the timestamp of the file on the disk has not
+   --  changed, but it might be useful sometimes to force a refresh, in
+   --  particular when files are not edited in a standard source editor.
+
    type Replace_Text_Callback is access procedure
      (Line    : Natural;
       First   : Natural;

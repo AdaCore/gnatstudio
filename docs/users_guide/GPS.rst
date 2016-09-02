@@ -1205,6 +1205,8 @@ Classes
 
    .. automethod:: GPS.Language.register
 
+   .. automethod:: GPS.Language.should_refresh_constructs
+
 :class:`GPS.LanguageInfo`
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 

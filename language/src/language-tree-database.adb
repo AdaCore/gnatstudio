@@ -23,7 +23,6 @@ with System;            use System;
 with String_Utils;      use String_Utils;
 with UTF8_Utils;        use UTF8_Utils;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with Ada.Text_IO; use Ada.Text_IO;
 
 package body Language.Tree.Database is
 
@@ -197,8 +196,6 @@ package body Language.Tree.Database is
             Formater.Add_Result
               (Mode    => "",
                Of_Type => Buffer (Type_Start.Index .. Type_End.Index));
-            Put_Line ("ADDING "
-                      & Buffer (Type_Start.Index .. Type_End.Index) & " PD");
          end if;
 
       elsif Get_Construct (Node).Category in Data_Category then
@@ -350,9 +347,7 @@ package body Language.Tree.Database is
       S     : Day_Duration;
    begin
       Stamp := File.File_Time_Stamp;
-
       Split (Stamp, Y, M, D, S);
-
       return D * 86400 + Integer (S);
    end Get_Timestamp;
 
@@ -823,6 +818,7 @@ package body Language.Tree.Database is
       if File.Timestamp = -1
         or else Timestamp = -1
         or else File.Timestamp /= Timestamp
+        or else File.Lang.Should_Refresh_Constructs_Tree (File.File)
         or else Is_Active (Test_Update_Cache)
       then
          File.Timestamp := Timestamp;
@@ -916,6 +912,11 @@ package body Language.Tree.Database is
          end;
 
          Free (Old_Tree);
+      else
+         if Active (Me) then
+            Trace (Me, "File's tree is already up-to-date: "
+                   & File.File.Display_Full_Name);
+         end if;
       end if;
    end Internal_Update_Contents;
 

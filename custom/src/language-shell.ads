@@ -64,21 +64,24 @@ package Language.Shell is
    overriding function Get_Language_Context
      (Lang : access Shell_Language) return Language_Context_Access;
 
-   overriding
-   procedure Parse_Constructs
+   overriding procedure Parse_Constructs
      (Lang    : access Shell_Language;
       File    : GNATCOLL.VFS.Virtual_File;
       Buffer  : UTF8_String;
       Result  : out Construct_List);
 
-   overriding
-   procedure Parse_Entities
+   overriding function Should_Refresh_Constructs_Tree
+     (Lang   : not null access Shell_Language;
+      File   : GNATCOLL.VFS.Virtual_File)
+      return Boolean;
+
+   overriding procedure Parse_Entities
      (Lang     : access Shell_Language;
       Buffer   : String;
       Callback : Entity_Callback);
 
-   procedure Setup
-     (Kernel : GPS.Kernel.Kernel_Handle);
+   procedure Setup (Kernel : GPS.Kernel.Kernel_Handle);
+   --  ??? Missing documentation
 
 private
    type Shell_Language is new Language_Root with record

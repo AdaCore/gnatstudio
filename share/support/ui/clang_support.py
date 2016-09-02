@@ -101,7 +101,10 @@ class Clang_Module(Module):
 
     def buffer_edited(self, f):
         if self.is_on():
-            Clang_Module.clang_instance.refresh_buffer(GPS.EditorBuffer.get(f))
+            # The file might have been opened in a QGen browser for instance
+            buffer = GPS.EditorBuffer.get(f, open=False)
+            if buffer:
+                Clang_Module.clang_instance.refresh_buffer(buffer)
 
     def file_edited(self, f):
         """

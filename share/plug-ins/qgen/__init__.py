@@ -78,24 +78,60 @@ class MDL_Language(GPS.Language):
             obj_suffix="-")
 
     # @overriding
+    def should_refresh_constructs(self, file):
+        # Always refresh when GPS believes the file has changed (for instance
+        # after the buffer_edited hook).
+        return True
+
+    # @overriding
     def parse_constructs(self, clist, file, file_contents):
         """
         Provides support for the Outline view
         """
+
+        def process_item(item, start_offset):
+            """
+            Return an item and its simulated sloc.
+            The source locations are simulated so that nesting can be computed
+            automatically by GPS based on the line/column info. GPS uses
+            indexes when they are positive.
+
+            :return: (item, sloc_start, sloc_end)
+            """
+            max_offset = start_offset
+            if hasattr(item, 'children') and item.children:
+                for child in item.children:
+                    for result in process_item(
+                            child, start_offset=max_offset + 1):
+                        max_offset = result[2][2]
+                        yield result
+
+            if hasattr(item, 'id') and item.id != 'qgen_navigation_info':
+                yield (item,
+                       (0, 0, start_offset),
+                       (0, 0, max_offset + 1))
+
         viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
+        if not viewer:
+            viewer, created = QGEN_Diagram_Viewer.get_or_create_view(file)
+
         if viewer:
+            offset = 1
             for it in viewer.diagram.items:
-                for it2 in it.recurse():
-                    if hasattr(it2, 'id'):
-                        clist.add_construct(
-                            category=constructs.CAT_CLASS,
-                            is_declaration=True,
-                            visibility=constructs.VISIBILITY_PUBLIC,
-                            name=it2.id,
-                            profile='',
-                            sloc_start=(0, 0, 0),
-                            sloc_end=(0, 0, 0),
-                            sloc_entity=(0, 0, 0))
+                if isinstance(it, GPS.Browsers.Link):
+                    continue
+
+                for it2, sloc_start, sloc_end in process_item(it, offset):
+                    offset = max(offset, sloc_end[2]) + 1
+                    clist.add_construct(
+                        category=constructs.CAT_CLASS,
+                        is_declaration=True,
+                        visibility=constructs.VISIBILITY_PUBLIC,
+                        name=it2.id,
+                        profile='',
+                        sloc_start=sloc_start,
+                        sloc_end=sloc_end,
+                        sloc_entity=sloc_start)
 
 
 class Project_Support(object):
@@ -787,6 +823,10 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
                 navigation_info.text = self.diagram.id
             self.diagram = diag
             self.scale_to_fit(2)
+
+        # Let GPS views, in particular the outline, know when we select
+        # a new diagram
+        GPS.Hook('buffer_edited').run(self.file)
 
         # Make sure we will recompute the value of signals when the
         # user selects a new diagram, or forces an update

@@ -1761,7 +1761,7 @@ package body Bookmark_Views is
                   --  the renderer is displayed. Only the size seems to be set
                   --  to an interesting value, the X coordinate is unclear.
                   --  Since the bookmarks view displays one icon for
-                  --  'bookmark/folder', the one optional one for 'tag',
+                  --  'bookmark/folder', then one optional one for 'tag',
                   --  we just assume both have the same size.
 
                   View.Tree.Note_Pixbuf.Get_Aligned_Area
