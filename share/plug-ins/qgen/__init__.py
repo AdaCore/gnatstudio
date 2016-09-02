@@ -1199,6 +1199,10 @@ else:
                 QGEN_Module.debugger = debugger
                 # Load qgen gdb script for custom commands
                 QGEN_Module.__load_debug_script(debugger)
+                sim_file = os.environ.get('QGEN_DEBUG_SIM_NAME')
+                if sim_file:
+                    debugger.send("set args %s test_out 0.0" % sim_file)
+
                 QGEN_Module.__clear(debugger)
             else:
                 # Show blocks with breakpoints
