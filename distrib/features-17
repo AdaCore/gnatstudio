@@ -207,6 +207,13 @@ NF-17-P511-020 GPS: hyper links in call graph browser (2016-05-24)
   In the Call Graph Browser, file locations are now clickable and open
   the corresponding file/line.
 
+NF-17-P506-019 GPS: Pass the configuration file to the builder (2016-09-02)
+
+   The configuration file (.cgpr) set by the "--config" command-line
+   switch is now passed on to the builder. Also, GPS now also passes the
+   configuration file which was automatically generated when the
+   "--autoconf" option was given.
+
 NF-17-P504-037 GPS: adjust score for runtime files in omnisearch (2016-07-05)
 
   When you search via the omnisearch, GPS will now ensure that matches in
