@@ -37,6 +37,7 @@ private package Outline_View.Model is
    Spec_Pixbuf_Column  : constant := 0;
    Display_Name_Column : constant := 1;
    Body_Pixbuf_Column  : constant := 2;
+   Has_Body_Column     : constant := 3;
 
    type Outline_Model_Record
      is new Gtkada.Abstract_Tree_Model.Gtk_Abstract_Tree_Model_Record

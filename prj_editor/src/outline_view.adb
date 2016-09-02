@@ -22,7 +22,9 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 
 with Gtk.Box;                   use Gtk.Box;
+with Gtk.Cell_Renderer;         use Gtk.Cell_Renderer;
 with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Gesture_Multi_Press;   use Gtk.Gesture_Multi_Press;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
@@ -103,8 +105,13 @@ package body Outline_View is
       File        : GNATCOLL.VFS.Virtual_File;
       Filter      : Gtk.GEntry.Gtk_Entry;
 
-      Spec_Column : Gtk_Tree_View_Column;
-      Body_Column : Gtk_Tree_View_Column;
+      Multipress  : Gtk_Gesture_Multi_Press;
+
+      Spec_Pixbuf      : Gtk_Cell_Renderer_Pixbuf;
+      Body_Pixbuf      : Gtk_Cell_Renderer_Pixbuf;
+      --  One of the cell renderers used for the spec and body icons. This is
+      --  used to compute the size of the icons, and thus whether the user
+      --  clicked on one or the other.
    end record;
    overriding procedure Create_Toolbar
      (View    : not null access Outline_View_Record;
@@ -142,9 +149,10 @@ package body Outline_View is
    procedure Force_Refresh (View : access Gtk_Widget_Record'Class);
    --  Same as above, but force a full refresh
 
-   function Button_Press
-     (Outline : access GObject_Record'Class;
-      Event   : Gdk_Event_Button) return Boolean;
+   procedure On_Multipress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      N_Press : Gint;
+      X, Y    : Gdouble);
    --  Called every time a row is clicked
 
    procedure On_Changed
@@ -511,25 +519,25 @@ package body Outline_View is
          Flat_View           => Flat_View.Get_Pref);
    end Get_Filter_Record;
 
-   ------------------
-   -- Button_Press --
-   ------------------
+   -------------------
+   -- On_Multipress --
+   -------------------
 
-   function Button_Press
-     (Outline : access GObject_Record'Class;
-      Event   : Gdk_Event_Button) return Boolean
+   procedure On_Multipress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      N_Press : Gint;
+      X, Y    : Gdouble)
    is
-      View                : constant Outline_View_Access :=
-                              Outline_View_Access (Outline);
+      View : constant Outline_View_Access := Outline_View_Access (Self);
       Model : constant Outline_Model := Outline_Model (-Get_Model (View.Tree));
-      Iter                : Gtk_Tree_Iter;
-      Path                : Gtk_Tree_Path;
-      Col                 : Gtk_Tree_View_Column;
+      Iter  : Gtk_Tree_Iter;
 
-      procedure Goto_Node (Node : Semantic_Node_Info; Is_Spec : Boolean);
-      --  goto and highlight the entity
+      procedure Goto_Node (Node : Semantic_Node_Info; Fallback : Boolean);
+      --  goto and highlight the entity.
+      --  If Fallback is true, and the buffer is already showing node's
+      --  location, then we jump to the body.
 
-      procedure Goto_Node (Node : Semantic_Node_Info; Is_Spec : Boolean) is
+      procedure Goto_Node (Node : Semantic_Node_Info; Fallback : Boolean) is
       begin
          if Node = No_Node_Info then
             return;
@@ -555,17 +563,16 @@ package body Outline_View is
                  Node.Sloc_Def.Column
                  + Get (Node.Name)'Length)
                else Location);
-            Editor : constant Editor_View'Class := Current_View (Buffer);
+            Editor       : constant Editor_View'Class := Current_View (Buffer);
+
          begin
-            if Col /= View.Spec_Column
-              and then Col /= View.Body_Column
-              and then Is_Spec
+            if Fallback
               and then Location.Line = Editor.Cursor.Line
             then
                --  Clicking on the name will jump to the spec, unless this is
                --  already the current location
                Goto_Node (Get_Info (Model, Iter, Body_Pixbuf_Column),
-                            Is_Spec => False);
+                          Fallback => False);
             else
                Editor.Cursor_Goto (Location, Raise_View => True);
                Select_Text (Buffer, Location, End_Location);
@@ -573,56 +580,62 @@ package body Outline_View is
          end;
       end Goto_Node;
 
+      Cell_X, Cell_Y  : Gint;
+      Column          : Gtk_Tree_View_Column;
+      Success         : Boolean;
+      Area, Cell_Area : Gdk_Rectangle;
+      Filter_Path     : Gtk_Tree_Path;
+      Filter     : constant Tree_Filter := Get_Filter_Record (View.Kernel);
    begin
-      if Event.Button = 1 then
-         if View.File = No_File then
-            return False;
-         end if;
+      if N_Press = 1
+        and then View.File /= No_File
+      then
+         View.Tree.Get_Path_At_Pos
+           (Gint (X), Gint (Y), Filter_Path,
+            Column, Cell_X, Cell_Y, Success);
 
-         Coordinates_For_Event
-           (Tree   => View.Tree,
-            Event  => Event,
-            Iter   => Iter,
-            Column => Col);
+         if Success then
+            --  Area is the rectangle, within the TreeView, where the
+            --  column is displayed. For instance x=20 to 264
+            View.Tree.Get_Cell_Area (Filter_Path, Column, Area);
 
-         if Col = View.Tree.Get_Expander_Column then
-            --  Verify that we are not clicking on an expander. If this is the
-            --  case, let the click through.
+            --  Aligned area is the rectangle within the rectangle where
+            --  the renderer is displayed. Only the size seems to be set
+            --  to an interesting value, the X coordinate is unclear.
+            --  Since the bookmarks view displays one icon for
+            --  'bookmark/folder', then one optional one for 'tag',
+            --  we just assume both have the same size.
 
-            declare
-               Path : Gtk_Tree_Path;
-               Rect : Gdk_Rectangle;
-            begin
-               Path := Model.Get_Path (Iter);
+            View.Spec_Pixbuf.Get_Aligned_Area
+              (Widget       => View.Tree,
+               Flags        => Gtk.Cell_Renderer.Cell_Renderer_Focused,
+               Cell_Area    => Area,
+               Aligned_Area => Cell_Area);
 
-               View.Tree.Get_Cell_Area (Path   => Path,
-                                        Column => Col,
-                                        Rect   => Rect);
+            Iter := Model.Get_Iter (Filter_Path);
+            Path_Free (Filter_Path);
 
-               Path_Free (Path);
+            --  If we clicked on the spec column always jump to exact location
 
-               if Rect.X > Gint (Event.X) then
-                  return False;
-               end if;
-            end;
-         end if;
+            if Gint (X) - Area.X <= Cell_Area.Width then
+               Goto_Node (Get_Info (Model, Iter), Fallback => False);
 
-         if Iter /= Null_Iter then
-            Path := Get_Path (Model, Iter);
-            Set_Cursor (View.Tree, Path, null, False);
-            Path_Free (Path);
-
-            if Col = View.Body_Column then
+            --  If we clicked in the body column, assuming it was displayed
+            elsif Filter.Group_Spec_And_Body
+              and then Cell_Area.Width <= Gint (X) - Area.X
+              and then Gint (X) - Area.X <= 2 * Cell_Area.Width
+            then
                Goto_Node (Get_Info (Model, Iter, Body_Pixbuf_Column),
-                            Is_Spec => False);
+                          Fallback => False);
+
             else
-               Goto_Node (Get_Info (Model, Iter), Is_Spec => True);
+               Goto_Node (Get_Info (Model, Iter), Fallback => True);
             end if;
-            return True;
+
+            View.Multipress.Set_State (Event_Sequence_Claimed);
          end if;
       end if;
-      return False;
-   end Button_Press;
+   end On_Multipress;
 
    --------------------
    -- Filter_Changed --
@@ -647,7 +660,6 @@ package body Outline_View is
       Text_Col      : Gtk_Tree_View_Column;
       Col_Number    : Gint;
       Text_Render   : Gtk_Cell_Renderer_Text;
-      Pixbuf_Render : Gtk_Cell_Renderer_Pixbuf;
       Tooltip       : Outline_View_Tooltips_Access;
       Scrolled      : Gtk_Scrolled_Window;
 
@@ -673,26 +685,23 @@ package body Outline_View is
 
       --  Create an explicit columns for the expander
 
-      Gtk_New (Outline.Spec_Column);
-      Outline.Spec_Column.Set_Sizing (Tree_View_Column_Autosize);
-      Col_Number := Append_Column (Outline.Tree, Outline.Spec_Column);
-      Gtk_New (Pixbuf_Render);
-      Pack_Start (Outline.Spec_Column, Pixbuf_Render, False);
-      Add_Attribute
-        (Outline.Spec_Column, Pixbuf_Render, "icon-name", Spec_Pixbuf_Column);
-
-      Gtk_New (Outline.Body_Column);
-      Outline.Body_Column.Set_Sizing (Tree_View_Column_Autosize);
-      Col_Number := Append_Column (Outline.Tree, Outline.Body_Column);
-      Gtk_New (Pixbuf_Render);
-      Pack_Start (Outline.Body_Column, Pixbuf_Render, False);
-      Add_Attribute
-        (Outline.Body_Column, Pixbuf_Render, "icon-name", Body_Pixbuf_Column);
-
       Gtk_New (Text_Col);
       Col_Number := Append_Column (Outline.Tree, Text_Col);
+
+      Gtk_New (Outline.Spec_Pixbuf);
+      Text_Col.Pack_Start (Outline.Spec_Pixbuf, Expand => False);
+      Text_Col.Add_Attribute
+        (Outline.Spec_Pixbuf, "icon-name", Spec_Pixbuf_Column);
+
+      Gtk_New (Outline.Body_Pixbuf);
+      Text_Col.Pack_Start (Outline.Body_Pixbuf, Expand => False);
+      Text_Col.Add_Attribute
+        (Outline.Body_Pixbuf, "visible", Has_Body_Column);
+      Text_Col.Add_Attribute
+        (Outline.Body_Pixbuf, "icon-name", Body_Pixbuf_Column);
+
       Gtk_New (Text_Render);
-      Pack_Start (Text_Col, Text_Render, False);
+      Text_Col.Pack_Start (Text_Render, Expand => False);
       Add_Attribute
         (Text_Col, Text_Render,
          "markup", Outline_View.Model.Display_Name_Column);
@@ -702,7 +711,9 @@ package body Outline_View is
 
       Set_Font_And_Colors (Outline.Tree, Fixed_Font => True);
 
-      Outline.Tree.On_Button_Press_Event (Button_Press'Access, Outline);
+      Gtk_New (Outline.Multipress, Widget => Outline.Tree);
+      Outline.Multipress.On_Pressed (On_Multipress'Access, Slot => Outline);
+      Outline.Multipress.Watch (Outline);
 
       Gtkada.Handlers.Widget_Callback.Connect
         (Outline, Signal_Destroy, On_Destroy'Access);
@@ -949,7 +960,6 @@ package body Outline_View is
       --  and should take their new value into account.
 
       Outline.Tree.Set_Show_Expanders (Enabled => not Filter.Flat_View);
-      Outline.Body_Column.Set_Visible (Filter.Group_Spec_And_Body);
 
       Model.Set_Tree (Tree, Filter);
 

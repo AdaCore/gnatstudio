@@ -554,7 +554,7 @@ package body Outline_View.Model is
 
    overriding function Get_N_Columns
      (Self : access Outline_Model_Record) return Glib.Gint
-   is (3);
+   is (4);
 
    ---------------------
    -- Get_Column_Type --
@@ -643,13 +643,14 @@ package body Outline_View.Model is
       Column : Glib.Gint;
       Value  : out Glib.Values.GValue)
    is
-      Info   : constant Semantic_Node_Info := Get_Info (Self, Iter, Column);
+      Info   : Semantic_Node_Info;
    begin
 
       if Column in Spec_Pixbuf_Column | Body_Pixbuf_Column
       then
          Init (Value, GType_String);
 
+         Info := Get_Info (Self, Iter, Column);
          if Info /= No_Node_Info
            and then
              (
@@ -659,10 +660,8 @@ package body Outline_View.Model is
               not Self.Filter.Group_Spec_And_Body
               --  If not, we want to only show the icon in the appropriate
               --  column
-              or else
-                ((Column = Spec_Pixbuf_Column and then Info.Is_Decl)
-                 or else
-                   (Column = Body_Pixbuf_Column and then not Info.Is_Decl))
+              or else (Column = Spec_Pixbuf_Column and then Info.Is_Decl)
+              or else (Column = Body_Pixbuf_Column and then not Info.Is_Decl)
               )
          then
             Set_String (Value, Icon_For_Node (Info));
@@ -676,8 +675,18 @@ package body Outline_View.Model is
             Set_String (Value, "");
          end if;
 
+      elsif Column = Has_Body_Column then
+         --  We only display the second icon column when we group spec and
+         --  bodies, for proper alignment of the text. In all other cases,
+         --  the first icon will be either for spec or body, but this is
+         --  computed above already.
+
+         Init (Value, GType_Boolean);
+         Set_Boolean (Value, Self.Filter.Group_Spec_And_Body);
+
       elsif Column = Display_Name_Column then
          Init (Value, GType_String);
+         Info := Get_Info (Self, Iter, Column);
 
          if Info.Name /= No_Symbol then
             if Self.Filter.Show_Profile then
