@@ -1204,7 +1204,6 @@ package body Src_Editor_Module is
       File_Exists : constant Boolean := Is_Regular_File (File);
       Writable    : Writable_File;
       Is_Writable : Boolean;
-      F           : Virtual_File;
    begin
       --  Create a new editor only if the file exists or we are asked to
       --  create a new empty one anyway.
@@ -1220,10 +1219,8 @@ package body Src_Editor_Module is
 
          if File = GNATCOLL.VFS.No_File or else File.Is_Directory then
             Is_Writable := True;
-            F := Dir;   --  a directory, not a file
 
          else
-            F := File;
             Writable := Write_File (File);
             Is_Writable := Writable /= Invalid_File;
 
@@ -1243,7 +1240,14 @@ package body Src_Editor_Module is
 
          if Is_Writable then
             Gtk_New (Editor, Project, Kernel_Handle (Kernel),
-                     Filename    => F);
+                     Filename    => File);
+
+            if File = GNATCOLL.VFS.No_File
+              and then Dir /= GNATCOLL.VFS.No_File
+            then
+               Editor.Get_Buffer.Set_Initial_Dir (Dir);
+            end if;
+
          end if;
       end if;
 

@@ -1741,6 +1741,7 @@ package body Src_Editor_Module.Shell is
    is
       Kernel    : constant Kernel_Handle := Get_Kernel (Data);
       File_Inst : Class_Instance;
+      File      : Virtual_File;
    begin
       if Command = Constructor_Method then
          Set_Error_Msg (Data, -("Cannot build instances of EditorBuffer."
@@ -1754,11 +1755,19 @@ package body Src_Editor_Module.Shell is
            (Data, 1, Get_File_Class (Kernel),
             Default => No_Class_Instance, Allow_Null => True);
 
+         File := Get_Data (File_Inst);
+
+         if File.Is_Directory then
+            --  It makes no sense to open a file editor for a directory;
+            --  instead, open an unnamed file editor.
+            File := GNATCOLL.VFS.No_File;
+         end if;
+
          Set_Return_Value
            (Data, Create_Editor_Buffer
               (Get_Script (Data),
                Get_Buffer_Factory (Kernel).Get
-                 (File        => Get_Data (File_Inst),
+                 (File        => File,
                   Force       => Nth_Arg (Data, 2, Default => False),
                   Open_View   => Nth_Arg (Data, 3, Default => True),
                   Open_Buffer => False)));

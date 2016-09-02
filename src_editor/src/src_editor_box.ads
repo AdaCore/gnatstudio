@@ -55,7 +55,8 @@ package Src_Editor_Box is
      (Box         : out Source_Editor_Box;
       Project     : GNATCOLL.Projects.Project_Type;
       Kernel      : GPS.Kernel.Kernel_Handle;
-      Filename    : GNATCOLL.VFS.Virtual_File);
+      Filename    : GNATCOLL.VFS.Virtual_File)
+     with Pre => not Filename.Is_Directory;
    procedure Initialize
      (Box         : access Source_Editor_Box_Record'Class;
       Project     : GNATCOLL.Projects.Project_Type;
