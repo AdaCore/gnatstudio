@@ -603,24 +603,30 @@ package body Build_Configurations is
                     & "    " & Mode.Name  & ": "
                     & Mode.Description & "  ");
 
-            if Mode.Args /= null
-              and then Mode.Args'Length /= 0
-            then
-               Append (Tooltip, ASCII.LF & "        ("
-                       & Mode.Args (Mode.Args'First).all);
-               Len := Mode.Args (Mode.Args'First)'Length;
+            if not Mode.Args.Is_Empty then
+               declare
+                  Iter : Command_Line_Iterator;
+               begin
+                  Mode.Args.Start (Iter, Expanded => False);
 
-               for J in Mode.Args'First + 1 .. Mode.Args'Last loop
-                  if Len > 40 then
-                     Append (Tooltip, ASCII.LF & "         ");
-                     Len := 0;
-                  end if;
+                  Append (Tooltip, ASCII.LF & "        ("
+                          & Current_Switch (Iter));
+                  Len := Current_Switch (Iter)'Length;
 
-                  Append (Tooltip, " " & Mode.Args (J).all);
-                  Len := Len + Mode.Args (J)'Length;
-               end loop;
+                  while Has_More (Iter) loop
+                     if Len > 40 then
+                        Append (Tooltip, ASCII.LF & "         ");
+                        Len := 0;
+                     end if;
 
-               Append (Tooltip, ")");
+                     Append (Tooltip, " " & Current_Switch (Iter));
+                     Len := Len + Current_Switch (Iter)'Length;
+
+                     Next (Iter);
+                  end loop;
+
+                  Append (Tooltip, ")");
+               end;
             end if;
          end if;
 
@@ -1492,27 +1498,7 @@ package body Build_Configurations is
             end;
 
          elsif N.Tag.all = "extra-args" then
-            --  Count the nodes
-            C := N.Child;
-            while C /= null loop
-               Count := Count + 1;
-               C := C.Next;
-            end loop;
-
-            --  Create the argument list
-            declare
-               Args : Argument_List (1 .. Count);
-            begin
-               C := N.Child;
-               Count := 0;
-               while C /= null loop
-                  Count := Count + 1;
-                  Args (Count) := new String'(C.Value.all);
-                  C := C.Next;
-               end loop;
-
-               Mode.Args := new Argument_List'(Args);
-            end;
+            Mode.Args := XML_To_Command_Line (N, null);
          end if;
       end Parse_Node;
 
@@ -1979,7 +1965,6 @@ package body Build_Configurations is
    begin
       while Has_Element (C) loop
          M := Element (C);
-         Free (M.Args);
          Free (M.Subst_Src);
          Free (M.Subst_Dest);
          Next (C);

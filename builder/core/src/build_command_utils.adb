@@ -19,6 +19,7 @@ with Ada.Strings;                      use Ada.Strings;
 with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
+with Command_Lines;                    use Command_Lines;
 with Custom_Tools_Output;
 
 with GNAT.Directory_Operations;
@@ -148,25 +149,26 @@ package body Build_Command_Utils is
       Supported : Boolean;
 
       function Compute_Num_Args
-        (Args : GNAT.OS_Lib.Argument_List; Filter : String) return Natural;
+        (Args : Command_Line; Filter : String) return Natural;
       --  Compute number of relevant arguments in Args that match Filter
 
       function Compute_Num_Args
-        (Args : GNAT.OS_Lib.Argument_List; Filter : String) return Natural
+        (Args : Command_Line; Filter : String) return Natural
       is
          Result  : Natural := 0;
+         Iter    : Command_Line_Iterator;
       begin
-         if Filter = "" then
-            return Args'Length;
-         else
-            for J in Args'Range loop
-               if Match (Filter, Args (J).all) then
-                  Result := Result + 1;
-               end if;
-            end loop;
+         Args.Start (Iter, False);
 
-            return Result;
-         end if;
+         while Has_More (Iter) loop
+            if Filter = "" or else Match (Filter, Current_Switch (Iter)) then
+               Result := Result + 1;
+            end if;
+
+            Next (Iter);
+         end loop;
+
+         return Result;
       end Compute_Num_Args;
 
    begin
@@ -184,11 +186,8 @@ package body Build_Command_Utils is
          M := Element_Mode
            (Registry, To_Unbounded_String (Mode));
 
-         if (M.Args = null
-             or else M.Args'Length = 0)
-           and then
-             (M.Subst_Src = null
-              or else M.Subst_Src'Length = 0)
+         if M.Args.Is_Empty and then
+           (M.Subst_Src = null or else M.Subst_Src'Length = 0)
          then
             Supported := False;
          end if;
@@ -224,14 +223,9 @@ package body Build_Command_Utils is
 
       --  Now let's apply the Mode. First we create the result with enough
       --  room.
-      if M.Args /= null then
-         Res := new GNAT.OS_Lib.Argument_List
-           (1 .. Cmd_Line'Length
-                  + Compute_Num_Args
-                      (M.Args.all, To_String (Model_Rec.Filter)));
-      else
-         Res := new GNAT.OS_Lib.Argument_List (1 .. Cmd_Line'Length);
-      end if;
+      Res := new GNAT.OS_Lib.Argument_List
+        (1 .. Cmd_Line'Length
+               + Compute_Num_Args (M.Args, To_String (Model_Rec.Filter)));
 
       --  Let's apply substitutions if needed
       if M.Subst_Src /= null then
@@ -264,25 +258,22 @@ package body Build_Command_Utils is
          end loop;
       end if;
 
-      if Length (Model_Rec.Filter) = 0 then
-         --  Append the extra args
-         for J in 1 .. Res'Last - Cmd_Line'Length loop
-            Res (J + Cmd_Line'Length) :=
-              new String'(M.Args (M.Args'First + J - 1).all);
+      declare
+         Filter : constant String := To_String (Model_Rec.Filter);
+         Index  : Natural := Cmd_Line'Length + 1;
+         Iter   : Command_Line_Iterator;
+      begin
+         M.Args.Start (Iter, False);
+
+         while Has_More (Iter) loop
+            if Filter = "" or else Match (Filter, Current_Switch (Iter)) then
+               Res (Index) := new String'(Current_Switch (Iter));
+               Index := Index + 1;
+            end if;
+
+            Next (Iter);
          end loop;
-      else
-         declare
-            Filter : constant String := To_String (Model_Rec.Filter);
-            Index  : Natural := Cmd_Line'Length + 1;
-         begin
-            for J in M.Args'Range loop
-               if Match (Filter, M.Args (J).all) then
-                  Res (Index) := new String'(M.Args (J).all);
-                  Index := Index + 1;
-               end if;
-            end loop;
-         end;
-      end if;
+      end;
 
       return Res;
    end Apply_Mode_Args;

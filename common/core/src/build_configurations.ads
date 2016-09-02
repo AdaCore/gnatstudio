@@ -178,7 +178,7 @@ package Build_Configurations is
       Name        : Unbounded_String;
       Description : Unbounded_String;
       Models      : Model_List.List;
-      Args        : GNAT.OS_Lib.Argument_List_Access;
+      Args        : Command_Line;
       Subst_Src   : GNAT.OS_Lib.Argument_List_Access;
       Subst_Dest  : GNAT.OS_Lib.Argument_List_Access;
       Shadow      : Boolean := False;

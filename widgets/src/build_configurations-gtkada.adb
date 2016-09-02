@@ -1902,9 +1902,13 @@ package body Build_Configurations.Gtkada is
                  Xpadding => 2, Ypadding => 2);
          Gtk_New (Ent);
 
-         if Mode.Args /= null then
-            Set_Text (Ent, Argument_List_To_String (Mode.Args.all));
-         end if;
+         declare
+            List : String_List_Access :=
+              Mode.Args.To_String_List (Expanded => False);
+         begin
+            Set_Text (Ent, Argument_List_To_String (List.all));
+            Free (List);
+         end;
 
          Attach (Table, Ent, 1, 2, 2, 3, Ypadding => 2, Yoptions => 0);
 
