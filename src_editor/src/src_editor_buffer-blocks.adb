@@ -73,17 +73,14 @@ package body Src_Editor_Buffer.Blocks is
                   then
                      declare
                         Command     : Hide_Editable_Lines_Command;
-                        Iter        : Gtk_Text_Iter;
                         Buffer_Line : Buffer_Line_Type;
                      begin
                         Buffer_Line := Get_Buffer_Line
                           (Buffer, Editable_Line_Type (Node.Sloc_Start.Line));
 
                         if Buffer_Line /= 0 then
-                           Command := new Hide_Editable_Lines_Type;
+                           Command        := new Hide_Editable_Lines_Type;
                            Command.Buffer := Source_Buffer (Buffer);
-                           Get_Iter_At_Line
-                             (Buffer, Iter, Gint (Buffer_Line - 1) + 1);
                            Command.Number := Editable_Line_Type
                              (Node.Sloc_End.Line - Node.Sloc_Start.Line);
 

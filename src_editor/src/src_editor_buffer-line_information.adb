@@ -2141,17 +2141,24 @@ package body Src_Editor_Buffer.Line_Information is
 
       Cursor_Move    : constant Boolean := Buffer.Do_Not_Move_Cursor;
       Blocks_Timeout : constant Boolean := Buffer.Blocks_Timeout_Registered;
+      L              : Gint;
    begin
       Buffer.Modifying_Real_Lines := True;
 
       Line_Start := Get_Editable_Line (Buffer, Line);
-      Line_End := Line_Start + Number;
+      Line_End   := Line_Start + Number;
 
       --  If there is no ASCII.LF at the end of the last line, add one since
       --  otherwise moving the cursor to the end of the buffer crashes GPS.
 
-      Get_Iter_At_Line
-       (Buffer, Start_Iter, Gint (Get_Buffer_Line (Buffer, Line_End) - 1));
+      --  We can't locate line if several blocks end in same line and
+      --  one of them is folded so we can take next line for checking
+      L := Gint (Get_Buffer_Line (Buffer, Line_End));
+      if L = 0 then
+         L := Gint (Get_Buffer_Line (Buffer, Line_End + 1));
+      end if;
+
+      Get_Iter_At_Line (Buffer, Start_Iter, L - 1);
 
       if not Ends_Line (Start_Iter) then
          Forward_To_Line_End (Start_Iter, Result);
