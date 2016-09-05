@@ -122,7 +122,7 @@ package Language.Abstract_Language_Tree is
       --  The name of this node if applicable
       Profile    : Unbounded_String;
       --  The profile of this node, if this node is a subprogram
-      --  declaration/body.
+      --  declaration/body
       Unique_Id  : Unbounded_String;
       --  The unique Id of this node
       Is_Decl    : Boolean;
@@ -272,7 +272,8 @@ package Language.Abstract_Language_Tree is
    --  Return the ending source location for node.
 
    function Profile
-     (Self : Semantic_Node) return String is abstract
+     (Self             : Semantic_Node;
+      Show_Param_Names : Boolean := True) return String is abstract
      with Pre'Class => (Self.Is_Valid);
    --  Return the profile for node, if applicable (typically if node is a
    --  subprogram node)
@@ -302,8 +303,10 @@ package Language.Abstract_Language_Tree is
    --  Return the visibility of this node
 
    function Info
-     (Self : Semantic_Node) return Semantic_Node_Info is abstract;
-   --  Return a static information record for this node
+     (Self             : Semantic_Node'Class;
+      Show_Param_Names : Boolean := True) return Semantic_Node_Info;
+   --  Return a static information record for this node.
+   --  See the Profile function for a definition of Show_Param_Names.
 
    function Hash
      (SN : Semantic_Node'Class) return Hash_Type is
@@ -382,11 +385,6 @@ private
    overriding function Documentation_Header
      (SN : Dummy_Semantic_Node) return String is ("");
 
-   overriding function Info
-     (Self : Dummy_Semantic_Node) return Semantic_Node_Info
-   is
-     (No_Node_Info);
-
    overriding function Visibility
      (Self : Dummy_Semantic_Node) return Semantic_Node_Visibility
    is
@@ -422,7 +420,8 @@ private
    is (Sloc_T'(others => <>));
 
    overriding function Profile
-     (Self : Dummy_Semantic_Node) return String is ("");
+     (Self             : Dummy_Semantic_Node;
+      Show_Param_Names : Boolean := True) return String is ("");
 
    overriding function Definition
      (Self : Dummy_Semantic_Node) return Semantic_Node'Class is

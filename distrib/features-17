@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P902-038 GPS: outline option to hide parameter names (2016-09-05)
+
+  A new setting for the Outline view allows you to hide the name of
+  parameters in the profile of subprograms. This saves some space, and
+  helps differentiate homonym subprograms.
+
 NF-17-P830-006 GPS: search icons in GPS_CUSTOM_PATH (2016-08-31)
 
   Icons used in plug-ins are now also searched in any of the directories

@@ -76,16 +76,15 @@ package Language.Tree.Database is
    --       [(parameters)][return type]     on one line.
    --  For a variable, it would be:
    --       : [type]    on one line
-   --  If With_Aspects is true and the profile has aspects then they are
-   --  appended at the end of the returned string.
    --  Formater is responsible for formating and keep resulting text.
 
    function Get_Profile
-     (Lang       : access Tree_Language;
-      Entity     : Entity_Access;
-      With_Aspects : Boolean := False) return String;
+     (Lang             : access Tree_Language;
+      Entity           : Entity_Access;
+      With_Aspects     : Boolean := False;
+      Show_Param_Names : Boolean := True) return String;
    --  Shortcut to Get_Profile that uses a default text formatter, and caches
-   --  its results.
+   --  its results in some cases.
 
    function Get_Declaration
      (Lang   : access Tree_Language;
@@ -258,8 +257,8 @@ package Language.Tree.Database is
    --  not be deleted.
 
    function Get_Tree
-     (File : Structured_File_Access) return Construct_Tree;
-   pragma Inline (Get_Tree);
+     (File : Structured_File_Access) return Construct_Tree
+     with Inline;
    --  Return the complete tree corresponding to this file. It the tree is not
    --  cached, then it will be computed.
 

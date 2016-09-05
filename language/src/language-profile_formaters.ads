@@ -63,11 +63,17 @@ package Language.Profile_Formaters is
    type Text_Profile_Formater is new Profile_Formater with private;
    --  Profile formater to generate plain text
 
+   procedure Configure
+     (Self             : in out Text_Profile_Formater;
+      Show_Param_Names : Boolean := True);
+   --  Configure the output of the formater
+
 private
 
    type Text_Profile_Formater is new Profile_Formater with record
-      Text          : Ada.Strings.Unbounded.Unbounded_String;
-      Has_Parameter : Boolean := False;
+      Text             : Ada.Strings.Unbounded.Unbounded_String;
+      Has_Parameter    : Boolean := False;
+      Show_Param_Names : Boolean := True;
    end record;
 
    overriding procedure Add_Parameter

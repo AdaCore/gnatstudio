@@ -19,6 +19,18 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
 package body Language.Profile_Formaters is
 
+   ---------------
+   -- Configure --
+   ---------------
+
+   procedure Configure
+     (Self : in out Text_Profile_Formater;
+      Show_Param_Names : Boolean := True)
+   is
+   begin
+      Self.Show_Param_Names := Show_Param_Names;
+   end Configure;
+
    -------------------
    -- Add_Parameter --
    -------------------
@@ -41,12 +53,21 @@ package body Language.Profile_Formaters is
          Append (Self.Text, "; ");
       end if;
 
-      Append (Self.Text, Trim (Name, Ada.Strings.Right));
+      if Self.Show_Param_Names then
+         Append (Self.Text, Trim (Name, Ada.Strings.Right));
+      end if;
 
       if Of_Type /= "" then
-         Append (Self.Text, " : ");
+         if Self.Show_Param_Names then
+            Append (Self.Text, " : ");
+         end if;
 
-         if Mode_Image /= "" then
+         --  Do not display "in" when also hiding parameter names, since the
+         --  goal is to save as much space as possible
+         if Mode_Image /= ""
+           and then (Self.Show_Param_Names
+                     or else Mode_Image /= "in")
+         then
             Append (Self.Text, Mode_Image);
             Append (Self.Text, " ");
          end if;

@@ -51,9 +51,7 @@ package body Language.Tree is
       if Tree /= null then
          for J in Tree.Contents'Range loop
             Ref := Tree.Contents (J).Referenced_Ids;
-            if Tree.Contents (J).Construct.Profile_Cache /= null then
-               Free (Tree.Contents (J).Construct.Profile_Cache);
-            end if;
+            Free (Tree.Contents (J).Construct.Profile_Cache);
 
             while Ref.Contents /= null loop
                Garbage := Ref;

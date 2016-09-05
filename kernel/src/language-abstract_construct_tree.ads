@@ -117,7 +117,8 @@ package Language.Abstract_Construct_Tree is
      (Self : Construct_Node) return GNATCOLL.Symbols.Symbol;
 
    overriding function Profile
-     (Self : Construct_Node) return String;
+     (Self : Construct_Node;
+      Show_Param_Names : Boolean) return String;
 
    overriding function Is_Valid
      (Self : Construct_Node) return Boolean is (True);
@@ -146,11 +147,7 @@ package Language.Abstract_Construct_Tree is
    overriding function Visibility
      (Self : Construct_Node) return Semantic_Node_Visibility;
 
-   overriding function Unique_Id
-     (Self : Construct_Node) return String;
-
-   overriding function Info
-     (Self : Construct_Node) return Semantic_Node_Info;
+   overriding function Unique_Id (Self : Construct_Node) return String;
 
    overriding function Documentation_Body
      (Self : Construct_Node) return String;

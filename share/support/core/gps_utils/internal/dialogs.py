@@ -15,6 +15,7 @@ from pygps import get_stock_button, get_widget_by_name, WidgetTree, \
 import pygps.tree
 from pygps.tree import select_in_tree, click_in_tree
 import gps_utils
+from gps_utils.internal.tree import dump_tree_model
 import re
 
 
@@ -261,6 +262,39 @@ class Preferences(Dialog):
     def get_selected_page_name(self):
         model, iter = self.tree.get_selection().get_selected()
         return model.get_value(iter, column=0)
+
+
+###########
+# Outline
+###########
+
+class Outline_View(Dialog):
+
+    def open_and_yield(self):
+        """
+        Compatible with run_test_driver, to be used in a yield statement
+            view = Outline_View()
+            yield view.open_and_yield()
+        """
+        yield self._open_and_yield('open Outline')
+        self.tree = get_widget_by_name("Outline View Tree")
+
+    def model(self):
+        """
+        Return the tree model of what is currently displayed in the Outline
+        """
+        return dump_tree_model(self.tree.get_model(), 1)
+
+    def set_options(self,
+                    show_profiles=None,
+                    show_param_names=None):
+        """
+        Overrides some of the configuration parameters
+        """
+        if show_param_names is not None:
+            GPS.Preference('outline-no-param-names').set(not show_param_names)
+        if show_profiles is not None:
+            GPS.Preference('outline-show-profile').set(show_profiles)
 
 
 ########################

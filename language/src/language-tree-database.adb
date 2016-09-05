@@ -119,7 +119,6 @@ package body Language.Tree.Database is
       With_Aspects : Boolean := False)
    is
       pragma Unreferenced (With_Aspects);
-
       Tree   : constant Construct_Tree :=
         Get_Tree (Get_File (Entity));
       Buffer : constant GNAT.Strings.String_Access :=
@@ -219,24 +218,42 @@ package body Language.Tree.Database is
       end if;
    end Get_Profile;
 
+   -----------------
+   -- Get_Profile --
+   -----------------
+
    function Get_Profile
-     (Lang       : access Tree_Language;
-      Entity     : Entity_Access;
-      With_Aspects : Boolean := False) return String
+     (Lang             : access Tree_Language;
+      Entity           : Entity_Access;
+      With_Aspects     : Boolean := False;
+      Show_Param_Names : Boolean := True) return String
    is
       Formater : aliased Text_Profile_Formater;
       Node   : constant Construct_Tree_Iterator :=
         To_Construct_Tree_Iterator (Entity);
       use type Ada.Strings.Unbounded.String_Access;
    begin
-      if Get_Construct (Node).Profile_Cache /= null then
-         return Get_Construct (Node).Profile_Cache.all;
+      --  Only use the cache when we show parameter names (this also includes
+      --  the computation of the Unique_Id). Otherwise, this is for display
+      --  only, and is cached at other levels when needed.
+
+      if not Show_Param_Names
+        or else Get_Construct (Node).Profile_Cache = null
+      then
+         Formater.Configure
+           (Show_Param_Names => Show_Param_Names);
+         Tree_Language_Access (Lang).Get_Profile
+           (Entity, Formater'Access, With_Aspects => With_Aspects);
+
+         if Show_Param_Names then
+            Get_Construct (Node).Profile_Cache :=
+              new String'(Formater.Get_Text);
+         end if;
+
+         return Formater.Get_Text;
       end if;
 
-      Tree_Language_Access (Lang).Get_Profile
-        (Entity, Formater'Access, With_Aspects);
-      Get_Construct (Node).Profile_Cache := new String'(Formater.Get_Text);
-      return Formater.Get_Text;
+      return Get_Construct (Node).Profile_Cache.all;
    end Get_Profile;
 
    ---------------------

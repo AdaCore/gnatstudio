@@ -25,7 +25,6 @@ with Commands;                use Commands;
 with GPS.Kernel.Hooks;
 with GPS.Kernel.Task_Manager;
 with GPS.Kernel.Xref;         use GPS.Kernel.Xref;
-with String_Utils;
 with Tooltips;
 with Xref;                    use Xref;
 
@@ -322,42 +321,15 @@ package body Language.Abstract_Construct_Tree is
             when Visibility_Protected => Visibility_Protected);
    end Visibility;
 
-   ----------
-   -- Info --
-   ----------
-
-   overriding function Info
-     (Self : Construct_Node) return Semantic_Node_Info
-   is
-      use String_Utils;
-   begin
-      return A : Semantic_Node_Info do
-         A := (Category   => Self.Category,
-               Name       => Self.Name,
-               Profile    => +Self.Profile,
-               Unique_Id  => +Self.Unique_Id,
-               Is_Decl    => Self.Is_Declaration,
-               Visibility => Self.Visibility,
-               Sloc_Start => Self.Sloc_Start,
-               Sloc_Def   => Self.Sloc_Def);
-
-         pragma Assert (if A.Name /= No_Symbol
-                        then A.Unique_Id /= Null_Unbounded_String
-                        else True);
-      end return;
-   end Info;
-
    ---------------
    -- Unique_Id --
    ---------------
 
-   overriding function Unique_Id
-     (Self : Construct_Node) return String
-   is
+   overriding function Unique_Id (Self : Construct_Node) return String is
       P : constant Semantic_Node'Class := Self.Parent;
       Base_Id : constant String :=
         To_Lower (Get (Self.Name).all)
-        & To_Lower (Self.Profile)
+        & To_Lower (Self.Profile (Show_Param_Names => True))
         & Self.Category'Img;
    begin
       if P = No_Semantic_Node
@@ -383,7 +355,9 @@ package body Language.Abstract_Construct_Tree is
    -- Profile --
    -------------
 
-   overriding function Profile (Self : Construct_Node) return String
+   overriding function Profile
+     (Self             : Construct_Node;
+      Show_Param_Names : Boolean) return String
    is
       Construct : constant access Simple_Construct_Information :=
         Get_Construct (Self);
@@ -392,10 +366,11 @@ package body Language.Abstract_Construct_Tree is
         Construct.Category in Subprogram_Category
       then
          return Get_Profile
-           (Lang     =>
+           (Lang             =>
               Self.Kernel.Lang_Handler.Get_Tree_Language_From_File
                 (Get_File_Path (Self.Construct_File)),
-            Entity   => Self.Entity);
+            Entity           => Self.Entity,
+            Show_Param_Names => Show_Param_Names);
       else
          return "";
       end if;

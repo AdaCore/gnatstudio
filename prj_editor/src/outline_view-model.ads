@@ -62,6 +62,7 @@ private package Outline_View.Model is
       Sorted            : Boolean;
       Group_Spec_And_Body : Boolean := False;
       Flat_View           : Boolean := False;
+      Show_Param_Names    : Boolean := False;
    end record;
    --  Group_Spec_And_Body indicates whether to group the spec and body for
    --  a given entity on the same line. This doesn't force a refresh of the
@@ -84,7 +85,6 @@ private package Outline_View.Model is
    --  Setting the file forces a refresh of the model.
 
    type Sorted_Node is private;
-
    type Sorted_Node_Access is access all Sorted_Node;
 
    function Get_Info (S : Sorted_Node) return Semantic_Node_Info;
@@ -178,8 +178,7 @@ private package Outline_View.Model is
       Line, Column : Integer) return Gtk_Tree_Path;
    --  Return the closest path enclosing the {line, column} from the model
 
-   function Get_Sorted_Node
-     (Iter : Gtk_Tree_Iter) return Sorted_Node_Access;
+   function Get_Sorted_Node (Iter : Gtk_Tree_Iter) return Sorted_Node_Access;
    --  Return the node stored in the iter
 
 private
@@ -195,14 +194,13 @@ private
       --  body of an entity). Here we keep the persistent info about those
       --  entities
 
-      Parent : Sorted_Node_Access;
+      Parent               : Sorted_Node_Access;
+      Children             : Sorted_Node_Vector.Vector;
 
       Index_In_Siblings : Integer := -1;
       --  This is used to build a Gtk_Tree_Path from a node
 
       Model : Outline_Model;
-
-      Children : Sorted_Node_Vector.Vector;
    end record;
 
    function Get_Info (S : Sorted_Node) return Semantic_Node_Info is

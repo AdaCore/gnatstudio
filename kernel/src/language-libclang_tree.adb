@@ -428,8 +428,11 @@ package body Language.Libclang_Tree is
    -------------
 
    overriding function Profile
-     (Self : Clang_Node) return String
+     (Self             : Clang_Node;
+      Show_Param_Names : Boolean := True) return String
    is
+      --  ??? Does libclang supports not showing the parameter names
+      pragma Unreferenced (Show_Param_Names);
       K : constant Clang_Cursor_Kind := Kind (Self.Cursor);
    begin
       if Is_Function (K) or else Is_Object_Type (K) or else Is_Type (K) then
@@ -540,32 +543,10 @@ package body Language.Libclang_Tree is
    -- Unique_Id --
    ---------------
 
-   overriding function Unique_Id
-     (Self : Clang_Node) return String is
+   overriding function Unique_Id (Self : Clang_Node) return String is
    begin
       return USR (Self.Cursor);
    end Unique_Id;
-
-   ----------
-   -- Info --
-   ----------
-
-   overriding function Info
-     (Self : Clang_Node) return Semantic_Node_Info
-   is
-      use String_Utils;
-   begin
-      return A : Semantic_Node_Info do
-         A := (Category   => Self.Category,
-               Name       => Self.Name,
-               Profile    => +Self.Profile,
-               Unique_Id  => +Self.Unique_Id,
-               Is_Decl    => Self.Is_Declaration,
-               Visibility => Self.Visibility,
-               Sloc_Start => Self.Sloc_Start,
-               Sloc_Def   => Self.Sloc_Def);
-      end return;
-   end Info;
 
    ------------------------
    -- Documentation_Body --

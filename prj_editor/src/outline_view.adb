@@ -85,6 +85,7 @@ package body Outline_View is
    Show_With              : Boolean_Preference;
    Group_Spec_And_Body    : Boolean_Preference;
    Flat_View              : Boolean_Preference;
+   No_Param_Names         : Boolean_Preference;
 
    type Outline_Child_Record is new GPS_MDI_Child_Record with null record;
    overriding function Build_Context
@@ -393,6 +394,7 @@ package body Outline_View is
            or else Pref = Preference (Show_With)
            or else Pref = Preference (Group_Spec_And_Body)
            or else Pref = Preference (Flat_View)
+           or else Pref = Preference (No_Param_Names)
          then
             Force_Refresh (Outline);
          end if;
@@ -479,6 +481,8 @@ package body Outline_View is
       Sep      : Gtk_Menu_Item;
    begin
       Append_Menu (Menu, K, Show_Profile);
+      Append_Menu (Menu, K, No_Param_Names);
+
       Append_Menu (Menu, K, Show_Types);
       Append_Menu (Menu, K, Show_Objects);
       Append_Menu (Menu, K, Show_Tasks);
@@ -516,6 +520,7 @@ package body Outline_View is
          Show_Profile        => Show_Profile.Get_Pref,
          Sorted              => Sort_Alphabetical.Get_Pref,
          Group_Spec_And_Body => Group_Spec_And_Body.Get_Pref,
+         Show_Param_Names    => not No_Param_Names.Get_Pref,
          Flat_View           => Flat_View.Get_Pref);
    end Get_Filter_Record;
 
@@ -933,6 +938,13 @@ package body Outline_View is
          Label => -"Group spec and body");
       Flat_View := Kernel.Get_Preferences.Create_Invisible_Pref
         ("outline-flat-view", False, Label => -"Flat view");
+      No_Param_Names := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("outline-no-param-names",
+         Default => False,
+         Label   => -"Hide parameter names (Ada)",
+         Doc     =>
+           -("Hide the name of parameters in subprogram profiles. This"
+           & " only applies to some programming languages, notably Ada"));
    end Register_Module;
 
    --------------

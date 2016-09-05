@@ -108,12 +108,12 @@ package body Outline_View.Model is
 
    function S_Unique_Id (N : Semantic_Node'Class) return String
    is (N.Unique_Id & (if N.Is_Declaration then "" else "B"));
-   --  Unique Id function that adds the information of wether the entity is a
+   --  Unique Id function that adds the information of whether the entity is a
    --  spec or a body
 
    function S_Unique_Id (N : Semantic_Node_Info) return String
    is (+N.Unique_Id & (if N.Is_Decl then "" else "B"));
-   --  Unique Id function that adds the information of wether the entity is a
+   --  Unique Id function that adds the information of whether the entity is a
    --  spec or a body
 
    procedure Reindex (Vec  : Sorted_Node_Vector.Vector; From : Natural := 0);
@@ -319,6 +319,8 @@ package body Outline_View.Model is
          declare
             N_Sem_Nodes : Semantic_Node_Array'Class := Sem_Nodes;
 
+            --  ??? This is slow, since it will be recomputed several times
+            --  for each node
             function "<"  (L, R : Semantic_Node'Class) return Boolean
             is (Lt (L.Info, R.Info, Model.Filter.Sorted));
          begin
@@ -420,9 +422,11 @@ package body Outline_View.Model is
                if
                  Sem_Node.Is_Declaration and then Root.Spec_Info = No_Node_Info
                then
-                  Root.Spec_Info := Sem_Node.Info;
+                  Root.Spec_Info := Sem_Node.Info
+                    (Show_Param_Names => Model.Filter.Show_Param_Names);
                elsif Root.Body_Info = No_Node_Info then
-                  Root.Body_Info := Sem_Node.Info;
+                  Root.Body_Info := Sem_Node.Info
+                    (Show_Param_Names => Model.Filter.Show_Param_Names);
                else
                   Root := null;  --  should not happen, create new node
                end if;
@@ -441,9 +445,11 @@ package body Outline_View.Model is
                                      others => <>);
 
             if Sem_Node.Is_Declaration then
-               Root.Spec_Info := Sem_Node.Info;
+               Root.Spec_Info := Sem_Node.Info
+                 (Show_Param_Names => Model.Filter.Show_Param_Names);
             else
-               Root.Body_Info := Sem_Node.Info;
+               Root.Body_Info := Sem_Node.Info
+                 (Show_Param_Names => Model.Filter.Show_Param_Names);
             end if;
 
             pragma Assert
@@ -491,7 +497,6 @@ package body Outline_View.Model is
       Path : Gtk_Tree_Path;
       T : constant Time := Clock;
    begin
-
       --  First delete the nodes, with the previous filters, otherwise we might
       --  be changing the ordering and therefore all operations on .Children
       --  would not find the nodes and clearing the tree would not work well.
@@ -645,9 +650,7 @@ package body Outline_View.Model is
    is
       Info   : Semantic_Node_Info;
    begin
-
-      if Column in Spec_Pixbuf_Column | Body_Pixbuf_Column
-      then
+      if Column in Spec_Pixbuf_Column | Body_Pixbuf_Column then
          Init (Value, GType_String);
 
          Info := Get_Info (Self, Iter, Column);
@@ -687,7 +690,6 @@ package body Outline_View.Model is
       elsif Column = Display_Name_Column then
          Init (Value, GType_String);
          Info := Get_Info (Self, Iter, Column);
-
          if Info.Name /= No_Symbol then
             if Self.Filter.Show_Profile then
                declare
@@ -1010,8 +1012,8 @@ package body Outline_View.Model is
             if NI = No_Node_Info then
                return;
             end if;
-            declare
 
+            declare
                Sem_Child_Idx : constant Natural :=
                  Find_Child_With_Id (S_Unique_Id (NI));
                Sem_Child : constant Semantic_Node'Class :=
@@ -1025,6 +1027,7 @@ package body Outline_View.Model is
                   else
                      El.Body_Info := Sem_Child.Info;
                   end if;
+
                   New_Nodes (Sem_Child_Idx) := False;
                   Update_Nodes
                     (El.Children, Sem_Child.Children, Sem_Child);
@@ -1046,7 +1049,6 @@ package body Outline_View.Model is
          end loop;
 
          C := Model_Nodes.First;
-
          while Has_Element (C) loop
             El := Element (C);
             Process_Node (El.Spec_Info);
@@ -1069,6 +1071,10 @@ package body Outline_View.Model is
 
       end Update_Nodes;
    begin
+      --  ??? Using a Gtkada.Tree_View, we could just clear the model and
+      --  recreate from scratch, which would be faster than trying to preserve
+      --  existing nodes.
+
       if Model.Filter.Flat_View or else Model.Filter_Pattern /= null then
          --  Don't use the selective update mode in flat view or when there
          --  is an active filter pattern. Just reset the tree. For the filter
