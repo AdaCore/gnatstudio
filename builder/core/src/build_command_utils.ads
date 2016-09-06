@@ -36,6 +36,7 @@ with GPS.Core_Kernels;                 use GPS.Core_Kernels;
 with GPS.Messages_Windows;             use GPS.Messages_Windows;
 
 with Build_Configurations;             use Build_Configurations;
+with Command_Lines;                    use Command_Lines;
 with Commands;                         use Commands;
 with Extending_Environments;           use Extending_Environments;
 with GPS_Preferences_Types;            use GPS_Preferences_Types;
@@ -193,7 +194,7 @@ package Build_Command_Utils is
 
    function Expand_Command_Line
      (Adapter    : Abstract_Build_Command_Adapter_Access;
-      CL         : Argument_List;
+      Cmd_Line   : Command_Line;
       Target     : Target_Access;
       Server     : Server_Type;
       Force_File : Virtual_File;
@@ -370,7 +371,7 @@ package Build_Command_Utils is
 
    function Expand_Command_Line
      (Builder    : Builder_Context;
-      CL         : Argument_List;
+      CL         : Command_Line;
       Target     : Target_Access;
       Server     : Server_Type;
       Force_File : Virtual_File;

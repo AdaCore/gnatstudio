@@ -219,21 +219,17 @@ package body Commands.Builder is
          Mode       : constant String := To_String (Result.Mode);
          CL         : constant Argument_List :=
            Get_Command_Line_Unexpanded (Result.Target);
-         With_Extra : Argument_List_Access;
          CL_Mode    : Command_Line :=
            Result.Target.Apply_Mode_Args (Mode, CL);
          Subdir     : constant Filesystem_String :=
            Get_Mode_Subdir (Builder.Registry, Mode);
       begin
          CL_Mode.Append_Switches (Result.Extra_Args.all);
-         With_Extra := CL_Mode.To_String_List (Expanded => False);
 
          Result.Full := Expand_Command_Line
-           (Builder, With_Extra.all, Result.Target,
+           (Builder, CL_Mode, Result.Target,
             Server, Result.Force_File, Result.Main, Subdir, Result.Background,
             False);
-
-         Free (With_Extra);
       end Expand_Command_Line;
 
       Result          : Build_Information;

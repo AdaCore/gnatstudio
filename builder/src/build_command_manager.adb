@@ -239,7 +239,7 @@ package body Build_Command_Manager is
 
    function Expand_Command_Line
      (Builder    : Builder_Context;
-      CL         : Argument_List;
+      CL         : Command_Line;
       Target     : Target_Access;
       Server     : Server_Type;
       Force_File : Virtual_File;

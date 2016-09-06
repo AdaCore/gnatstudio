@@ -842,7 +842,7 @@ package body Build_Command_Utils is
 
    function Expand_Command_Line
      (Adapter    : Abstract_Build_Command_Adapter_Access;
-      CL         : Argument_List;
+      Cmd_Line   : Command_Line;
       Target     : Target_Access;
       Server     : Server_Type;
       Force_File : Virtual_File;
@@ -851,19 +851,14 @@ package body Build_Command_Utils is
       Background : Boolean;
       Simulate   : Boolean) return Expansion_Result
    is
+      CL      : GNAT.Strings.String_List_Access :=
+        Cmd_Line.To_String_List (Expanded => False);
       Result  : Expansion_Result;
       Final   : Expansion_Result;
       Failed  : Boolean := False;
 
    begin
       for J in CL'Range loop
-         if CL (J) = null then
-            --  This should not happen
-            Console_Insert (Adapter.all, (-"Invalid command line"),
-               Mode => Error);
-            return (Empty_Command_Line, No_File, To_Unbounded_String (""));
-         end if;
-
          declare
             Arg : constant String := CL (J).all;
          begin
@@ -897,6 +892,7 @@ package body Build_Command_Utils is
          return (Empty_Command_Line, No_File, To_Unbounded_String (""));
       end if;
 
+      Free (CL);
       return Final;
    end Expand_Command_Line;
 
@@ -1074,7 +1070,7 @@ package body Build_Command_Utils is
 
    function Expand_Command_Line
      (Builder    : Builder_Context;
-      CL         : Argument_List;
+      CL         : Command_Line;
       Target     : Target_Access;
       Server     : Server_Type;
       Force_File : Virtual_File;
@@ -1505,9 +1501,8 @@ package body Build_Command_Utils is
          Get_Target_From_Name (Build_Registry, Target_Name);
       CL_Args   : Argument_List_Access :=
          Argument_String_To_List (Command_Line);
-      Mode_Args : Argument_List_Access :=
-        T.Apply_Mode_Args (Mode_Name, CL_Args.all)
-          .To_String_List (Expanded => False);
+      Mode_Args : constant Command_Lines.Command_Line :=
+        T.Apply_Mode_Args (Mode_Name, CL_Args.all);
       Res       : Expansion_Result;
    begin
       Initialize (Adapter.all, Proj_Registry, Proj_Type, Toolchains,
@@ -1515,12 +1510,11 @@ package body Build_Command_Utils is
                   Multi_Language_Builder);
       Adapter.Project_File := Project_File;
       Res := Expand_Command_Line
-         (Abstract_Build_Command_Adapter_Access (Adapter), Mode_Args.all, T,
+         (Abstract_Build_Command_Adapter_Access (Adapter), Mode_Args, T,
           Get_Server (Build_Registry, Mode_Name, T), Force_File, Main_File,
           Get_Mode_Subdir (Build_Registry, Mode_Name), False, Simulate);
       Res.Status := Adapter.Status;
       Free (CL_Args);
-      Free (Mode_Args);
       Free_Adapter (Adapter);
       return Res;
    end Expand_Command_Line;

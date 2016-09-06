@@ -23,12 +23,11 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
-
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 with GPS.Kernel.Messages;
 
+with Command_Lines;          use Command_Lines;
 with Commands;               use Commands;
 with Commands.Interactive;   use Commands.Interactive;
 with Build_Command_Utils;    use Build_Command_Utils;
@@ -56,7 +55,7 @@ package Build_Command_Manager is
 
    function Expand_Command_Line
      (Builder    : Builder_Context;
-      CL         : Argument_List;
+      CL         : Command_Line;
       Target     : Target_Access;
       Server     : Server_Type;
       Force_File : Virtual_File;
@@ -66,7 +65,6 @@ package Build_Command_Manager is
       Simulate   : Boolean;
       Background_Env : Extending_Environment) return Expansion_Result;
    --  Expand all macros contained in CL using the GPS macro language.
-   --  User must free the result.
    --  CL must contain at least one element.
    --  If Simulate is true, never fail on unknown parameters.
 
