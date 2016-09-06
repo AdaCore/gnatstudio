@@ -1077,4 +1077,80 @@ package body Command_Lines is
       return Result;
    end To_String_List;
 
+   ---------
+   -- Map --
+   ---------
+
+   function Map
+     (Cmd    : Command_Line;
+      Update : access procedure
+        (Switch    : in out Unbounded_String;
+         Section   : in out Unbounded_String;
+         Parameter : in out Argument)) return Command_Line
+   is
+      Result : Command_Line;
+      Pos    : Switch_Vectors.Cursor;
+   begin
+      Result.Set_Configuration (Cmd.Get_Configuration);
+
+      if not Cmd.Switches.Is_Null then
+         Check_Initialized (Result);
+         Pos := Cmd.Switches.Get.First;
+
+         while Switch_Vectors.Has_Element (Pos) loop
+            declare
+               Item : Command_Lines.Switch :=
+                 Switch_Vectors.Element (Pos);
+            begin
+               Update (Item.Switch, Item.Section, Item.Parameter);
+               Append (Result, Item);
+               Switch_Vectors.Next (Pos);
+            end;
+         end loop;
+      end if;
+
+      return Result;
+   end Map;
+
+   ------------
+   -- Filter --
+   ------------
+
+   function Filter
+     (Cmd    : Command_Line;
+      Delete : access function
+        (Switch    : String;
+         Section   : String;
+         Parameter : Argument) return Boolean)
+      return Command_Line
+   is
+      Result : Command_Line;
+      Pos    : Switch_Vectors.Cursor;
+   begin
+      Result.Set_Configuration (Cmd.Get_Configuration);
+
+      if not Cmd.Switches.Is_Null then
+         Check_Initialized (Result);
+         Pos := Cmd.Switches.Get.First;
+
+         while Switch_Vectors.Has_Element (Pos) loop
+            declare
+               Item : constant Command_Lines.Switch :=
+                 Switch_Vectors.Element (Pos);
+            begin
+               if not Delete (To_String (Item.Switch),
+                              To_String (Item.Section),
+                              Item.Parameter)
+               then
+                  Append (Result, Item);
+               end if;
+
+               Switch_Vectors.Next (Pos);
+            end;
+         end loop;
+      end if;
+
+      return Result;
+   end Filter;
+
 end Command_Lines;

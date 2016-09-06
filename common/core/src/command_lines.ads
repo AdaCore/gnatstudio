@@ -21,7 +21,7 @@
 
 with GNAT.Strings;
 
-private with Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;                use Ada.Strings.Unbounded;
 private with Ada.Containers.Ordered_Maps;
 private with Ada.Containers.Vectors;
 private with GNATCOLL.Refcount;
@@ -272,6 +272,47 @@ package Command_Lines is
    --  the expanded command line, or the shortest command line, is returned.
    --  Result should be freed by caller after use.
 
+   --  This represents separator between switch and its argument
+   type Separator (Is_Set : Boolean := False) is record
+      case Is_Set is
+         when True =>
+            Value : Character;
+         when False =>
+            null;
+      end case;
+   end record;
+
+   --  This represents argument of some switch
+   type Argument (Is_Set : Boolean := False) is record
+      case Is_Set is
+         when True =>
+            Separator : Command_Lines.Separator;
+            Value     : Ada.Strings.Unbounded.Unbounded_String;
+         when False =>
+            null;
+      end case;
+   end record;
+
+   function Map
+     (Cmd    : Command_Line;
+      Update : access procedure
+        (Switch    : in out Unbounded_String;
+         Section   : in out Unbounded_String;
+         Parameter : in out Argument))
+      return Command_Line;
+   --  This function creates a copy of given command line where some switches
+   --  are modified by the given Update procedure
+
+   function Filter
+     (Cmd    : Command_Line;
+      Delete : access function
+        (Switch    : String;
+         Section   : String;
+         Parameter : Argument) return Boolean)
+      return Command_Line;
+   --  This function creates a copy of given command line where some switсhes
+   --  are deleted according to Delete result.
+
    Invalid_Section : exception;
 
    ---------------
@@ -315,20 +356,9 @@ package Command_Lines is
 
 private
 
-   use Ada.Strings.Unbounded;
-
    package String_Vectors is new Ada.Containers.Vectors
      (Index_Type   => Positive,
       Element_Type => Unbounded_String);
-
-   type Separator (Is_Set : Boolean := False) is record
-      case Is_Set is
-         when True =>
-            Value : Character;
-         when False =>
-            null;
-      end case;
-   end record;
 
    type Parameter_Configuration (Is_Set : Boolean := False) is record
       case Is_Set is
@@ -372,16 +402,6 @@ private
 
    type Command_Line_Configuration is new Configuration_References.Ref
      with null record;
-
-   type Argument (Is_Set : Boolean := False) is record
-      case Is_Set is
-         when True =>
-            Separator : Command_Lines.Separator;
-            Value     : Unbounded_String;
-         when False =>
-            null;
-      end case;
-   end record;
 
    type Switch is record
       Switch       : Unbounded_String;
