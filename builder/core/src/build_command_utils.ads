@@ -80,15 +80,6 @@ package Build_Command_Utils is
       Mode : String) return Filesystem_String;
    --  Return the special directory ("subdir") for Mode
 
-   function Apply_Mode_Args
-     (Registry : Build_Config_Registry_Access;
-      Model : String;
-      Mode : String;
-      Cmd_Line : GNAT.OS_Lib.Argument_List)
-      return GNAT.OS_Lib.Argument_List_Access;
-   --  Applies the mode arguments to the command_line passed as argument.
-   --  The returned argument_list should be freed by the caller
-
    type Abstract_Build_Command_Adapter is abstract tagged private;
    --  This type provides values to expand macros in command arguments.
    --  Actual expansion done in Expand_Command_Line subprogram

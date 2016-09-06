@@ -22,6 +22,7 @@ with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Switches_Parser;
 with String_Utils;             use String_Utils;
 with GNATCOLL.Traces;          use GNATCOLL.Traces;
+with GNAT.Regpat;              use GNAT.Regpat;
 with GNAT.Strings;
 
 package body Build_Configurations is
@@ -403,6 +404,7 @@ package body Build_Configurations is
       end if;
 
       --  Register the model
+      Model.Registry := Registry;
       Registry.Models.Insert (Model.Name, new Target_Model_Type'(Model));
    end Create_Model_From_XML;
 
@@ -2139,5 +2141,120 @@ package body Build_Configurations is
 
       return To_String (Result);
    end To_String;
+
+   ---------------------
+   -- Apply_Mode_Args --
+   ---------------------
+
+   function Apply_Mode_Args
+     (Target   : access Target_Type;
+      Mode     : String;
+      Cmd_Line : GNAT.OS_Lib.Argument_List)
+      return GNAT.OS_Lib.Argument_List_Access
+   is
+      use Model_List;
+      Model     : constant Target_Model_Access := Target.Model;
+      M         : Mode_Record;
+      Model_Rec : Model_Record;
+      C         : Model_List.Cursor;
+      Supported : Boolean := True;
+      Result    : Command_Line := Model.Switches.Empty_Command_Line;
+
+   begin
+      Result.Append_Switches (Cmd_Line);
+
+      if Mode = "" then
+         Supported := False;
+      else
+         M := Element_Mode
+           (Model.Registry, To_Unbounded_String (Mode));
+
+         Supported := False;
+
+         if not M.Models.Is_Empty
+           and then (not M.Args.Is_Empty
+             or else (M.Subst_Src /= null and then M.Subst_Src'Length /= 0))
+         then
+            C := M.Models.First;
+
+            while Has_Element (C) loop
+               Model_Rec := Element (C);
+
+               if Model_Rec.Model = Model.Name then
+                  Supported := True;
+                  exit;
+               end if;
+
+               Next (C);
+            end loop;
+         end if;
+      end if;
+
+      --  We finished the check to see if the Mode should be active
+      --  If unsupported, return a copy of the initial command line.
+      if not Supported then
+         return Result.To_String_List (Expanded => False);
+      end if;
+
+      --  Let's apply substitutions if needed
+
+      if M.Subst_Src /= null then
+         declare
+            procedure Update
+              (Switch    : in out Unbounded_String;
+               Section   : in out Unbounded_String;
+               Parameter : in out Argument);
+            --  Substitute Switch according to M.Subst_Src/M.Subst_Dest map
+
+            ------------
+            -- Update --
+            ------------
+
+            procedure Update
+              (Switch    : in out Unbounded_String;
+               Section   : in out Unbounded_String;
+               Parameter : in out Argument)
+            is
+               pragma Unreferenced (Section);
+               pragma Unreferenced (Parameter);
+            begin
+               for K in M.Subst_Src'Range loop
+                  if Switch = M.Subst_Src (K).all then
+                     Switch := To_Unbounded_String (M.Subst_Dest (K).all);
+                     exit;
+                  end if;
+               end loop;
+            end Update;
+         begin
+            Result := Result.Map (Update'Access);
+         end;
+      end if;
+
+      declare
+         function Delete
+           (Switch, Section : String; Parameter : Argument) return Boolean;
+         --  Match filtered switches
+
+         Filter : constant String := To_String (Model_Rec.Filter);
+
+         ------------
+         -- Delete --
+         ------------
+
+         function Delete
+           (Switch, Section : String; Parameter : Argument) return Boolean
+         is
+            pragma Unreferenced (Section);
+            pragma Unreferenced (Parameter);
+         begin
+            return Filter /= "" and then not Match (Filter, Switch);
+         end Delete;
+
+      begin
+         Result := Result.Append (M.Args.Filter (Delete'Access));
+      end;
+
+      return Result.To_String_List (Expanded => False);
+   end Apply_Mode_Args;
 
 end Build_Configurations;

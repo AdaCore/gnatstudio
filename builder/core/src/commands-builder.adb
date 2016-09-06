@@ -219,8 +219,7 @@ package body Commands.Builder is
          CL      : constant Argument_List :=
            Get_Command_Line_Unexpanded (Result.Target);
          CL_Mode : Argument_List_Access :=
-           Apply_Mode_Args (Builder.Registry, Get_Model (Result.Target),
-                            Mode, CL);
+           Result.Target.Apply_Mode_Args (Mode, CL);
          Subdir  : constant Filesystem_String :=
            Get_Mode_Subdir (Builder.Registry, Mode);
       begin

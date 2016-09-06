@@ -68,10 +68,8 @@ package body Build_Command_Manager.End_Of_Build is
       function Expand_Cmd_Line (CL : String) return String is
          CL_Args   : Argument_List_Access := Argument_String_To_List (CL);
          Mode_Args : Argument_List_Access :=
-           Apply_Mode_Args (Builder.Registry,
-                            Get_Model (Build.Target),
-                            Mode,
-                            CL_Args.all);
+           Build.Target.Apply_Mode_Args (Mode, CL_Args.all);
+
          Res       : constant Expansion_Result :=
            Expand_Command_Line
              (Builder,
@@ -160,8 +158,7 @@ package body Build_Command_Manager.End_Of_Build is
 
          declare
             CL_Mode : Argument_List_Access :=
-              Apply_Mode_Args (Builder.Registry, Get_Model (Build.Target),
-                               Mode, Command_Line.all);
+              Build.Target.Apply_Mode_Args (Mode, Command_Line.all);
          begin
             Build.Full := Expand_Command_Line
               (Builder, CL_Mode.all & Build.Extra_Args.all, Build.Target,
@@ -176,10 +173,7 @@ package body Build_Command_Manager.End_Of_Build is
             CL      : constant Argument_List :=
                         Get_Command_Line_Unexpanded (Build.Target);
             CL_Mode : Argument_List_Access :=
-              Apply_Mode_Args (Builder.Registry,
-                               Get_Model (Build.Target),
-                               Mode,
-                               CL);
+              Build.Target.Apply_Mode_Args (Mode, CL);
          begin
             --  Sanity check that the command line contains at least one
             --  item (the command itself). It can happen that this is not

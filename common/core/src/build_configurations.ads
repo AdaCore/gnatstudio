@@ -428,6 +428,14 @@ package Build_Configurations is
    (Target : Target_Access; Launch_Mode : Launch_Mode_Type);
    --  Change Launch_Mode value
 
+   function Apply_Mode_Args
+     (Target   : access Target_Type;
+      Mode     : String;
+      Cmd_Line : GNAT.OS_Lib.Argument_List)
+      return GNAT.OS_Lib.Argument_List_Access;
+   --  Applies the mode arguments to the command_line passed as argument.
+   --  The returned argument_list should be freed by the caller
+
    -----------------------
    -- XML import/export --
    -----------------------
@@ -630,6 +638,9 @@ private
    -- Types --
 
    type Target_Model_Type is tagged record
+      Registry             : Build_Config_Registry_Access;
+      --  Registry that contains given model
+
       Name                 : Unbounded_String;
       --  The name of a target model
 

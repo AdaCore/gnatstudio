@@ -19,11 +19,9 @@ with Ada.Strings;                      use Ada.Strings;
 with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
-with Command_Lines;                    use Command_Lines;
 with Custom_Tools_Output;
 
 with GNAT.Directory_Operations;
-with GNAT.Regpat;               use GNAT.Regpat;
 
 with GNATCOLL.Templates;          use GNATCOLL.Templates;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
@@ -129,154 +127,6 @@ package body Build_Command_Utils is
 
    procedure Free_Adapter is new Ada.Unchecked_Deallocation
      (Build_Command_Adapter, Build_Command_Adapter_Access);
-
-   ---------------------
-   -- Apply_Mode_Args --
-   ---------------------
-
-   function Apply_Mode_Args
-     (Registry : Build_Config_Registry_Access;
-      Model : String;
-      Mode : String;
-      Cmd_Line : GNAT.OS_Lib.Argument_List)
-      return GNAT.OS_Lib.Argument_List_Access
-   is
-      use Model_List;
-      M         : Mode_Record;
-      Model_Rec : Model_Record;
-      C         : Model_List.Cursor;
-      Res       : GNAT.OS_Lib.Argument_List_Access;
-      Supported : Boolean;
-
-      function Compute_Num_Args
-        (Args : Command_Line; Filter : String) return Natural;
-      --  Compute number of relevant arguments in Args that match Filter
-
-      function Compute_Num_Args
-        (Args : Command_Line; Filter : String) return Natural
-      is
-         Result  : Natural := 0;
-         Iter    : Command_Line_Iterator;
-      begin
-         Args.Start (Iter, False);
-
-         while Has_More (Iter) loop
-            if Filter = "" or else Match (Filter, Current_Switch (Iter)) then
-               Result := Result + 1;
-            end if;
-
-            Next (Iter);
-         end loop;
-
-         return Result;
-      end Compute_Num_Args;
-
-   begin
-      Supported := True;
-
-      if Model = "" then
-         Supported := False;
-      end if;
-
-      if Mode = "" then
-         Supported := False;
-      end if;
-
-      if Supported then
-         M := Element_Mode
-           (Registry, To_Unbounded_String (Mode));
-
-         if M.Args.Is_Empty and then
-           (M.Subst_Src = null or else M.Subst_Src'Length = 0)
-         then
-            Supported := False;
-         end if;
-      end if;
-
-      if Supported and then not M.Models.Is_Empty then
-         C := M.Models.First;
-
-         Supported := False;
-         while Has_Element (C) loop
-            Model_Rec := Element (C);
-
-            if Model_Rec.Model = Model then
-               Supported := True;
-               exit;
-            end if;
-
-            Next (C);
-         end loop;
-      end if;
-
-      --  We finished the check to see if the Mode should be active
-      --  If unsupported, return a copy of the initial command line.
-      if not Supported then
-         Res := new GNAT.OS_Lib.Argument_List (Cmd_Line'Range);
-
-         for J in Cmd_Line'Range loop
-            Res (J) := new String'(Cmd_Line (J).all);
-         end loop;
-
-         return Res;
-      end if;
-
-      --  Now let's apply the Mode. First we create the result with enough
-      --  room.
-      Res := new GNAT.OS_Lib.Argument_List
-        (1 .. Cmd_Line'Length
-               + Compute_Num_Args (M.Args, To_String (Model_Rec.Filter)));
-
-      --  Let's apply substitutions if needed
-      if M.Subst_Src /= null then
-         for J in 1 .. Cmd_Line'Length loop
-            declare
-               Found : Boolean := False;
-            begin
-               for K in M.Subst_Src'Range loop
-                  if Cmd_Line (Cmd_Line'First + J - 1).all =
-                    M.Subst_Src (K).all
-                  then
-                     Res (J) := new String'(M.Subst_Dest (K).all);
-                     Found := True;
-                     exit;
-                  end if;
-               end loop;
-
-               if not Found then
-                  Res (J) :=
-                    new String'(Cmd_Line (Cmd_Line'First + J - 1).all);
-               end if;
-            end;
-         end loop;
-
-      else
-         --  Simple copy of the initial command line
-         for J in 1 .. Cmd_Line'Length loop
-            Res (J) :=
-              new String'(Cmd_Line (Cmd_Line'First + J - 1).all);
-         end loop;
-      end if;
-
-      declare
-         Filter : constant String := To_String (Model_Rec.Filter);
-         Index  : Natural := Cmd_Line'Length + 1;
-         Iter   : Command_Line_Iterator;
-      begin
-         M.Args.Start (Iter, False);
-
-         while Has_More (Iter) loop
-            if Filter = "" or else Match (Filter, Current_Switch (Iter)) then
-               Res (Index) := new String'(Current_Switch (Iter));
-               Index := Index + 1;
-            end if;
-
-            Next (Iter);
-         end loop;
-      end;
-
-      return Res;
-   end Apply_Mode_Args;
 
    ---------------
    -- Get_Mains --
@@ -1656,8 +1506,7 @@ package body Build_Command_Utils is
       CL_Args   : Argument_List_Access :=
          Argument_String_To_List (Command_Line);
       Mode_Args : Argument_List_Access :=
-         Apply_Mode_Args (Build_Registry, Get_Model (T), Mode_Name,
-                          CL_Args.all);
+         T.Apply_Mode_Args (Mode_Name, CL_Args.all);
       Res       : Expansion_Result;
    begin
       Initialize (Adapter.all, Proj_Registry, Proj_Type, Toolchains,
