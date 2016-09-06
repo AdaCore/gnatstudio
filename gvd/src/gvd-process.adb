@@ -366,9 +366,7 @@ package body GVD.Process is
          Set_Current_File_And_Line
            (Kernel  => Process.Kernel,
             Process => Process,
-            File    => To_Local
-              (Create (+To_String (File),
-               Get_Nickname (Debug_Server))),
+            File    => To_File (Process.Kernel, To_String (File)),
             Line    => Line);
       end if;
 

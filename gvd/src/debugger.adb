@@ -26,6 +26,7 @@ with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Regpat;                use GNAT.Regpat;
 with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
 with GNATCOLL.Utils;             use GNATCOLL.Utils;
+with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 with Glib;                       use Glib;
 with Glib.Convert;
@@ -1454,5 +1455,28 @@ package body Debugger is
    begin
       return False;
    end Is_Quit_Command;
+
+   -------------
+   -- To_File --
+   -------------
+
+   function To_File
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      Name    : String)
+     return GNATCOLL.VFS.Virtual_File
+   is
+      F : Virtual_File;
+   begin
+      --  Translate filename into local file if needed
+      F := To_Local (Create (+Name, Get_Nickname (Debug_Server)));
+
+      --  Convert from a patch returned by the debugger to the actual
+      --  path in the project, in case sources have changed
+      if not F.Is_Absolute_Path or else not F.Is_Regular_File then
+         F := Kernel.Create_From_Base (F.Full_Name);
+      end if;
+
+      return F;
+   end To_File;
 
 end Debugger;

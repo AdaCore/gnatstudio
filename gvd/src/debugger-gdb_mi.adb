@@ -2018,11 +2018,8 @@ package body Debugger.Gdb_MI is
 
                      elsif Text.all = "fullname" then
                         Next (C2, 2);
-                        --  Translate the matched filename into local file if
-                        --  needed
-                        F := To_Local
-                          (Create (+Strip_Escape (Element (C2).Text.all),
-                           Get_Nickname (Debug_Server)));
+                        F := To_File
+                           (Kernel, Strip_Escape (Element (C2).Text.all));
 
                      elsif Text.all = "line" then
                         Next (C2, 2);

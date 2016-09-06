@@ -3427,18 +3427,7 @@ package body Debugger.Gdb is
 
          Match (File_Name_In_Breakpoint, S (First .. Last - 2), Matched);
          if Matched (0) /= No_Match then
-            --  Translate the matched filename into local file if needed
-            F := To_Local
-              (Create
-                 (+S (Matched (1).First .. Matched (1).Last),
-                  Get_Nickname (Debug_Server)));
-
-            --  Convert from a path returned by the debugger to the actual
-            --  path in the project, in case sources have changed.
-            if not F.Is_Absolute_Path or else not F.Is_Regular_File then
-               F := Debugger.Kernel.Create_From_Base (F.Full_Name);
-            end if;
-
+            F := To_File (Kernel, S (Matched (1).First .. Matched (1).Last));
             Current.Location := Kernel.Get_Buffer_Factory.Create_Marker
               (File => F,
                Line => Editable_Line_Type'Value
