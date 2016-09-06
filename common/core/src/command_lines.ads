@@ -223,7 +223,8 @@ package Command_Lines is
    procedure Append
      (Cmd   : in out Command_Line;
       Value : Command_Line'Class);
-   --  Append switches of Value to given command line
+   --  Append switches of Value to given command line. Configuration of Cmd
+   --  will be updated to include section definitions from Value configuration
 
    function Append
      (Cmd   : Command_Line'Class;

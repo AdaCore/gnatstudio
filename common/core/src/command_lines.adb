@@ -512,6 +512,19 @@ package body Command_Lines is
       List : GNAT.Strings.String_List_Access :=
         Value.To_String_List (Expanded => False);
    begin
+      Make_Default_Section (Cmd.Configuration);
+
+      if not Value.Configuration.Is_Null then
+         --  Append absent section definitions
+         for J of Value.Configuration.Unchecked_Get.Sections loop
+            if not Cmd.Configuration.Unchecked_Get.Sections.Contains (J.Name)
+            then
+               Cmd.Configuration.Unchecked_Get.Sections.Insert
+                 (J.Name, J);
+            end if;
+         end loop;
+      end if;
+
       Cmd.Append_Switches (List.all);
       GNAT.OS_Lib.Free (List);
    end Append;
