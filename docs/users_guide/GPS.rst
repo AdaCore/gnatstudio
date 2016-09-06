@@ -362,6 +362,27 @@ Classes
 
    .. automethod:: GPS.Console.write_with_links
 
+:class:`GPS.Construct`
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Construct
+
+
+
+
+   .. autoattribute:: GPS.Construct.file
+
+
+
+   .. autoattribute:: GPS.Construct.name
+
+
+
+   .. autoattribute:: GPS.Construct.start
+
+
+   .. automethod:: GPS.Construct.__init__
+
 :class:`GPS.ConstructsList`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1204,8 +1225,6 @@ Classes
    .. automethod:: GPS.Language.get
 
    .. automethod:: GPS.Language.register
-
-   .. automethod:: GPS.Language.should_refresh_constructs
 
 :class:`GPS.LanguageInfo`
 ^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -311,7 +311,7 @@ package body Language.Abstract_Construct_Tree is
    ----------------
 
    overriding function Visibility
-     (Self : Construct_Node) return Semantic_Node_Visibility
+     (Self : Construct_Node) return Construct_Visibility
    is
    begin
       return

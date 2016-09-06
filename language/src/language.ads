@@ -15,17 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Maps;  use Ada.Strings.Maps;
+with Ada.Strings.Maps;       use Ada.Strings.Maps;
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Case_Handling;
 with GNAT.Expect;
-with GNAT.Regpat;       use GNAT;
+with GNAT.Regpat;            use GNAT;
 with GNAT.Strings;
-with GNATCOLL.Symbols;
+with GNATCOLL.Symbols;       use GNATCOLL.Symbols;
 with GNATCOLL.Xref;
-with Basic_Types;       use Basic_Types;
-with GNATCOLL.Traces;   use GNATCOLL.Traces;
+with Basic_Types;            use Basic_Types;
+with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.VFS;
-with Ada.Strings.Unbounded;
 
 package Language is
 
@@ -282,6 +282,8 @@ package Language is
       --  Index in the buffer for this entity
    end record;
    pragma Convention (C, Source_Location);
+   --  See also Sloc_T for a similar construct that store the real column
+   --  in characters.
 
    function ">" (S1, S2 : Source_Location) return Boolean;
    function ">=" (S1, S2 : Source_Location) return Boolean;
@@ -494,6 +496,10 @@ package Language is
    --  Name is an optional value, which is returned by this function if
    --  not null.
 
+   ----------------
+   -- Constructs --
+   ----------------
+
    type Construct_Visibility is
      (Visibility_Private,
       Visibility_Protected,
@@ -605,20 +611,54 @@ package Language is
    procedure Free (List : in out Construct_List);
    --  Free the contents of List.
 
-   function Word_Character_Set
-     (Lang : access Language_Root) return Character_Set;
-   --  Returns the character set used for the language identifiers
+   type Offset_T is mod 2 ** 32;
 
-   function Comment_Block
-     (Lang    : access Language_Root;
-      Block   : String;
-      Comment : Boolean := True;
-      Clean   : Boolean := False) return String;
-   --  Comment or uncomment (if Comment is false) a text block
-   --  Comment_Block (L, Comment_Block (L, A), Comment => False)
-   --  should return A.
-   --  If Clean is True, a clean up of of the block should be performed
-   --  (e.g. leading spaces are removed for each line).
+   type Sloc_T is record
+      Line   : Natural;
+      --  Line in the file, starting at 1
+      Column : Visible_Column_Type;
+      --  Column in the file, starting at 1
+      Index  : Offset_T;
+      --  Absolute index in the file
+   end record;
+   --  This is just a simple source location type, that is meant to use real
+   --  columns rather than character offsets, unlike the Source_Location type
+
+   type Semantic_Node_Info is record
+      Category   : Language_Category;
+      --  The category/kind of this node
+
+      Name       : GNATCOLL.Symbols.Symbol;
+      --  The name of this node if applicable
+
+      Profile    : Unbounded_String;
+      --  The profile of this node, if this node is a subprogram
+      --  declaration/body
+
+      Unique_Id  : Unbounded_String;
+      --  The unique Id of this node
+
+      Is_Decl    : Boolean;
+      --  Wether this node represents a declaration
+
+      Visibility : Construct_Visibility;
+      --  Visibility of this node at a package level
+
+      Sloc_Start : Sloc_T;
+      --  The starting source location of this node
+
+      Sloc_Def   : Sloc_T;
+      --  The source location where the defining identifier of this node is, if
+      --  there is one
+   end record;
+   --  This type represents the static information about a node.
+   --  It is a copy of the information stored in a tree. This copy can outlive
+   --  the tree itself or its refresh, so should be used to store the
+   --  information outside the tree.
+
+   No_Node_Info : Semantic_Node_Info :=
+     (Cat_Unknown, No_Symbol, Null_Unbounded_String,
+      Null_Unbounded_String, False, Visibility_Public, (0, 0, 0), (0, 0, 0));
 
    procedure Parse_Constructs
      (Lang   : access Language_Root;
@@ -637,6 +677,36 @@ package Language is
    --  This is only called when the timestamp of the file on the disk has not
    --  changed, but it might be useful sometimes to force a refresh, in
    --  particular when files are not edited in a standard source editor.
+
+   function Clicked_On_Construct
+     (Lang      : not null access Language_Root;
+      File      : GNATCOLL.VFS.Virtual_File;
+      Construct : Semantic_Node_Info) return Boolean is (False);
+   --  Called when the user clicked on a construct (in particular in the
+   --  Outline).
+   --  This function should return True if it handled the click, and False for
+   --  the default behavior, which opens a source editor on the correct
+   --  location. This is mostly intended for languages that display their
+   --  sources in special ways, like a browser for instance.
+
+   ----------
+   -- Misc --
+   ----------
+
+   function Word_Character_Set
+     (Lang : access Language_Root) return Character_Set;
+   --  Returns the character set used for the language identifiers
+
+   function Comment_Block
+     (Lang    : access Language_Root;
+      Block   : String;
+      Comment : Boolean := True;
+      Clean   : Boolean := False) return String;
+   --  Comment or uncomment (if Comment is false) a text block
+   --  Comment_Block (L, Comment_Block (L, A), Comment => False)
+   --  should return A.
+   --  If Clean is True, a clean up of of the block should be performed
+   --  (e.g. leading spaces are removed for each line).
 
    type Replace_Text_Callback is access procedure
      (Line    : Natural;

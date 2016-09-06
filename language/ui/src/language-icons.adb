@@ -23,34 +23,31 @@ package body Language.Icons is
 
    function Stock_From_Category
      (Is_Declaration : Boolean;
-      Visibility     : Semantic_Node_Visibility;
+      Visibility     : Construct_Visibility;
       Category       : Language_Category) return String
    is
       function Get_Name (Suffix : String) return String;
       function Get_Name (Suffix : String) return String is
-      begin
-         --  Do not use -symbolic icons, since we want to preserve the colors
-         return
-           (case Category is
+        ( --  Do not use -symbolic icons, since we want to preserve the colors
+         case Category is
             when Cat_Unknown | Cat_With
                | Cat_Use   | Cat_Include
                | Construct_Category | Cat_Exception_Handler
                | Cat_Pragma | Cat_Aspect =>
-               "gps-emblem-entity-generic",
+               "gps-emblem-entity-generic" & Suffix,
             when Cat_Package | Cat_Namespace | Cat_Custom =>
                "gps-emblem-entity-package",
             when Cat_Task | Cat_Procedure   | Cat_Function
                | Cat_Method    | Cat_Constructor | Cat_Destructor
                | Cat_Protected | Cat_Entry =>
-               "gps-emblem-entity-subprogram",
+               "gps-emblem-entity-subprogram" & Suffix,
             when Cat_Class | Cat_Structure | Cat_Union
                | Cat_Type  | Cat_Subtype | Cat_Case_Inside_Record =>
-               "gps-emblem-entity-type",
+               "gps-emblem-entity-type" & Suffix,
             when Cat_Variable    | Cat_Local_Variable
                | Cat_Parameter | Cat_Discriminant | Cat_Field
                | Cat_Literal   | Cat_Representation_Clause =>
-               "gps-emblem-entity-variable") & Suffix;
-      end Get_Name;
+               "gps-emblem-entity-variable" & Suffix);
 
    begin
       if Is_Declaration then

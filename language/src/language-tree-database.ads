@@ -209,7 +209,8 @@ package Language.Tree.Database is
 
    function Get_Buffer
      (Provider : access Buffer_Provider;
-      File     : GNATCOLL.VFS.Virtual_File) return String_Access is abstract;
+      File     : GNATCOLL.VFS.Virtual_File)
+      return GNAT.Strings.String_Access is abstract;
    --  Return the buffer corresponding to this buffer provider. The returned
    --  access type is supposed to be a copy of the actual buffer - it will be
    --  freed by the completion engine when needed.
@@ -227,7 +228,7 @@ package Language.Tree.Database is
 
    overriding function Get_Buffer
      (Provider : access File_Buffer_Provider;
-      File     : GNATCOLL.VFS.Virtual_File) return String_Access;
+      File     : GNATCOLL.VFS.Virtual_File) return GNAT.Strings.String_Access;
    --  Return the buffer corresponding to the file given in parameter - by
    --  default just read the file.
    --  ??? What is the encoding of the returned data?
@@ -262,7 +263,8 @@ package Language.Tree.Database is
    --  Return the complete tree corresponding to this file. It the tree is not
    --  cached, then it will be computed.
 
-   function Get_Buffer (File : Structured_File_Access) return String_Access;
+   function Get_Buffer
+     (File : Structured_File_Access) return GNAT.Strings.String_Access;
    --  Return the buffer associated to this file note. Once the request is
    --  done, the buffer is stored in a cache so that the same buffer can be
    --  returned if this function is queried twice. The returned value must
@@ -790,7 +792,7 @@ private
       Tree         : Construct_Tree;
       Db_Data_Tree : Construct_Db_Data_Access;
 
-      Cache_Buffer : String_Access;
+      Cache_Buffer : GNAT.Strings.String_Access;
 
       Line_Starts  : Line_Start_Indexes_Access;
 

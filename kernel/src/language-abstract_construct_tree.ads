@@ -145,7 +145,7 @@ package Language.Abstract_Construct_Tree is
      (Self : Construct_Node) return Boolean;
 
    overriding function Visibility
-     (Self : Construct_Node) return Semantic_Node_Visibility;
+     (Self : Construct_Node) return Construct_Visibility;
 
    overriding function Unique_Id (Self : Construct_Node) return String;
 

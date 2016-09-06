@@ -42,8 +42,6 @@ package body Language.Profile_Formaters is
       Of_Type : String;
       Default : String)
    is
-      use Ada.Strings.Unbounded;
-
       Mode_Image : constant String := Trim (Mode, Ada.Strings.Right);
    begin
       if not Self.Has_Parameter then
@@ -90,7 +88,6 @@ package body Language.Profile_Formaters is
       Mode    : String;
       Of_Type : String)
    is
-      use Ada.Strings.Unbounded;
    begin
       if Self.Has_Parameter then
          Append (Self.Text, ")");
@@ -108,9 +105,7 @@ package body Language.Profile_Formaters is
    overriding procedure Add_Variable
      (Self    : access Text_Profile_Formater;
       Mode    : String;
-      Of_Type : String)
-   is
-      use Ada.Strings.Unbounded;
+      Of_Type : String) is
    begin
       Append (Self.Text, " ");
       Append (Self.Text, Mode);
@@ -135,9 +130,7 @@ package body Language.Profile_Formaters is
 
    overriding procedure Add_Comments
      (Self : access Text_Profile_Formater;
-      Text : String)
-   is
-      use Ada.Strings.Unbounded;
+      Text : String) is
    begin
       if Self.Has_Parameter then
          Append (Self.Text, ")");
@@ -157,7 +150,6 @@ package body Language.Profile_Formaters is
    overriding function Get_Text
      (Self : access Text_Profile_Formater) return String
    is
-      use Ada.Strings.Unbounded;
    begin
       if Self.Has_Parameter then
          Append (Self.Text, ")");

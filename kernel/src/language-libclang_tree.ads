@@ -154,7 +154,7 @@ package Language.Libclang_Tree is
      (Self : Clang_Node) return Boolean;
 
    overriding function Visibility
-     (Self : Clang_Node) return Semantic_Node_Visibility;
+     (Self : Clang_Node) return Construct_Visibility;
 
    overriding function Unique_Id (Self : Clang_Node) return String;
 

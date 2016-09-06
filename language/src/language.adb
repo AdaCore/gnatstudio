@@ -17,12 +17,10 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Maps.Constants;
-with Ada.Strings.Unbounded;            use Ada.Strings.Unbounded;
 with Ada.Wide_Wide_Characters.Unicode; use Ada.Wide_Wide_Characters.Unicode;
 with Ada.Characters.Wide_Wide_Latin_1;
 with GNAT.Expect;                 use GNAT.Expect;
 with GNAT.Regpat;                 use GNAT.Regpat;
-with GNATCOLL.Symbols;            use GNATCOLL.Symbols;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with String_Utils;                use String_Utils;
 with UTF8_Utils;                  use UTF8_Utils;

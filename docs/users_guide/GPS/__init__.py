@@ -9731,6 +9731,29 @@ class History(object):
         """
 
 
+class Construct(object):
+    """
+    One node of the semantic tree when parsing a file for a given programming
+    language.
+    Instances of such classes are only created by GPS internally
+
+    .. seealso: GPS.Language.clicked_on_construct
+    """
+
+    def __init__(self):
+        """Instances are only created by GPS itself"""
+
+    name = ''
+    """The name of the construct"""
+
+    file = ''
+    """The GPS.File in which the construct occurs"""
+
+    start = (0, 0, 0)
+    """The source location for the beginning of this construct,
+       (line, column offset)"""
+
+
 class ConstructsList(object):
     """
     This class is closely associated with the :class:`GPS.Language` class,
@@ -9740,6 +9763,9 @@ class ConstructsList(object):
     This can be used in particular to populate the Outline view for custom
     languages (see the :file:`python_support.py` plugin in the GPS sources).
     """
+
+    def __init__(self):
+        """Instances are only created by GPS itself"""
 
     def add_construct(self, category, is_declaration, visiblity, name,
                       profile, sloc_start, sloc_end, sloc_entity):
@@ -9774,6 +9800,56 @@ class ConstructsList(object):
 
 
 class Language(object):
+    """
+        A few methods can be overridden when you create your own child class
+        of :class:`GPS.Language`, to provide support for the Outline view.
+        They are not defined by default, and thus the documentation is given
+        below:
+
+        def parse_constructs(self, constructs_list, gps_file, content_string):
+            '''
+            Abstract method that has to be implemented by the subclasses.
+
+            Given an empty list of constructs, a file instance and a string
+            containing the contents of the file, this needs to populate the
+            list of language constructs. In turn this will give support for a
+            number of features in GPS including:
+
+            - Outline support
+            - Block highlighting/folding support
+            - Entity search support
+
+            ..  seealso: :class:`GPS.ConstructsList`
+            ..  seealso: :func:`GPS.Language.should_refresh_constructs`
+
+            :param GPS.ConstructList constructs_list: The list of constructs to
+                populate.
+            :param GPS.File gps_file: the name of the file to parse.
+            :param str content_string: The content of the file
+            '''
+
+        def should_refresh_constructs(self, file):
+            '''
+            Whether GPS should call parse_constructs to refresh the list.
+            This is called when the file has not changed on the disk, but GPS
+            thinks there might be a need to refresh because various hooks have
+            been run.
+            By default, this returns False, so that parse_constructs is only
+            called when the file changes on the disk.
+
+            :param GPS.File file: the file to test
+            :return: a bool
+            '''
+
+        def clicked_on_construct(self, construct):
+            '''
+            Called when the user wants to jump to a specific construct.
+            The default is to open an editor for the file/line/column.
+
+            :param GPS.Construct construct: the construct as build in
+               :func:`GPS.Language.parse_constructs`.
+            '''
+    """
 
     @staticmethod
     def register(instance, name, body_suffix, spec_suffix="", obj_suffix="",
@@ -9795,42 +9871,6 @@ class Language(object):
             indented.
         """
         pass
-
-    def parse_constructs(self, constructs_list, gps_file, content_string):
-        """
-        Abstract method that has to be implemented by the subclasses.
-
-        Given an empty list of constructs, a file instance and a string
-        containing the contents of the file, this needs to populate the list of
-        language constructs. In turn this will give support for a number of
-        features in GPS including:
-
-        - Outline support
-        - Block highlighting/folding support
-        - Entity search support
-
-        ..  seealso: :class:`GPS.ConstructsList`
-        ..  seealso: :func:`GPS.Language.should_refresh_constructs`
-
-        :param GPS.ConstructList constructs_list: The list of constructs to
-            populate.
-        :param GPS.File gps_file: the name of the file to parse.
-        :param str content_string: The content of the file
-        """
-        pass
-
-    def should_refresh_constructs(self, file):
-        """
-        Whether GPS should call parse_constructs to refresh the list.
-        This is called when the file has not changed on the disk, but GPS
-        thinks there might be a need to refresh because various hooks have
-        been run.
-        By default, this returns False, so that parse_constructs is only
-        called when the file changes on the disk.
-
-        :param GPS.File file: the file to test
-        :return: a bool
-        """
 
     @staticmethod
     def get(name):

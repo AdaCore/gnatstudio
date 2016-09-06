@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with GNATCOLL.Symbols;        use GNATCOLL.Symbols;
 with GNATCOLL.Utils;          use GNATCOLL.Utils;
 with String_Utils;            use String_Utils;
 
@@ -46,7 +45,6 @@ package body Language.Tree is
         (Referenced_Identifiers_List_Record, Access_Referenced_List);
       Ref     : Referenced_Identifiers_List;
       Garbage : Referenced_Identifiers_List;
-      use Ada.Strings.Unbounded;
    begin
       if Tree /= null then
          for J in Tree.Contents'Range loop

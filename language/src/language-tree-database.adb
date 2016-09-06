@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Calendar;          use Ada.Calendar;
-with GNATCOLL.Symbols;      use GNATCOLL.Symbols;
 with GNATCOLL.Utils;        use GNATCOLL.Utils;
 
 with System;            use System;
@@ -231,7 +230,6 @@ package body Language.Tree.Database is
       Formater : aliased Text_Profile_Formater;
       Node   : constant Construct_Tree_Iterator :=
         To_Construct_Tree_Iterator (Entity);
-      use type Ada.Strings.Unbounded.String_Access;
    begin
       --  Only use the cache when we show parameter names (this also includes
       --  the computation of the Unique_Id). Otherwise, this is for display

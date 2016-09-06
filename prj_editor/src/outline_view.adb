@@ -543,10 +543,20 @@ package body Outline_View is
       --  location, then we jump to the body.
 
       procedure Goto_Node (Node : Semantic_Node_Info; Fallback : Boolean) is
+         Lang : Language_Access;
       begin
          if Node = No_Node_Info then
             return;
          end if;
+
+         --  Does the language have a special handling for constructs ?
+
+         Lang := View.Kernel.Lang_Handler.Get_Language_From_File (View.File);
+         if Lang.Clicked_On_Construct (View.File, Node) then
+            return;
+         end if;
+
+         --  If not, the default is to open a source editor
 
          declare
             use type Visible_Column_Type;

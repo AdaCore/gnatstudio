@@ -84,6 +84,21 @@ class MDL_Language(GPS.Language):
         return True
 
     # @overriding
+    def clicked_on_construct(self, construct):
+        def __on_loaded(view):
+            info = QGEN_Module.modeling_map.get_diagram_for_item(
+                view.diags, construct.name)
+            if info:
+                diagram, item = info
+                view.diags.clear_selection()
+                diagram.select(item)
+                view.set_diagram(diagram)
+                view.scroll_into_view(item)
+
+        QGEN_Diagram_Viewer.get_or_create(
+            construct.file, on_loaded=__on_loaded)
+
+    # @overriding
     def parse_constructs(self, clist, file, file_contents):
         """
         Provides support for the Outline view
@@ -128,7 +143,7 @@ class MDL_Language(GPS.Language):
                         is_declaration=True,
                         visibility=constructs.VISIBILITY_PUBLIC,
                         name=it2.id,
-                        profile='',
+                        profile='no params',
                         sloc_start=sloc_start,
                         sloc_end=sloc_end,
                         sloc_entity=sloc_start)

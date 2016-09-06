@@ -23,7 +23,7 @@ package Language.Icons is
 
    function Stock_From_Category
      (Is_Declaration : Boolean;
-      Visibility     : Semantic_Node_Visibility;
+      Visibility     : Construct_Visibility;
       Category       : Language_Category) return String;
    --  Return the icon to use for a given entity
 end Language.Icons;

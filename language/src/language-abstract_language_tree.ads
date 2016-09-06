@@ -55,28 +55,13 @@
 
 with Language.Tree; use Language.Tree;
 with Ada.Containers; use Ada.Containers;
-with GNATCOLL.Symbols; use GNATCOLL.Symbols;
 with Ada.Containers.Indefinite_Holders;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 package Language.Abstract_Language_Tree is
 
    ----------------------
    -- Type definitions --
    ----------------------
-
-   type Offset_T is mod 2 ** 32;
-
-   type Sloc_T is record
-      Line   : Natural;
-      --  Line in the file, starting at 1
-      Column : Visible_Column_Type;
-      --  Column in the file, starting at 1
-      Index  : Offset_T;
-      --  Absolute index in the file
-   end record;
-   --  This is just a simple source location type, that is meant to use real
-   --  columns rather than character offsets, unlike the Source_Location type
 
    No_Sloc_T : constant Sloc_T := (0, 0, 0);
 
@@ -112,34 +97,6 @@ package Language.Abstract_Language_Tree is
    --  starting index is 1
 
    type Semantic_Tree_Iterator is interface;
-
-   subtype Semantic_Node_Visibility is Language.Construct_Visibility;
-
-   type Semantic_Node_Info is record
-      Category   : Language_Category;
-      --  The category/kind of this node
-      Name       : GNATCOLL.Symbols.Symbol;
-      --  The name of this node if applicable
-      Profile    : Unbounded_String;
-      --  The profile of this node, if this node is a subprogram
-      --  declaration/body
-      Unique_Id  : Unbounded_String;
-      --  The unique Id of this node
-      Is_Decl    : Boolean;
-      --  Wether this node represents a declaration
-      Visibility : Semantic_Node_Visibility;
-      --  Visibility of this node at a package level
-      Sloc_Start : Sloc_T;
-      --  The starting source location of this node
-      Sloc_Def   : Sloc_T;
-      --  The source location where the defining identifier of this node is, if
-      --  there is one
-   end record;
-   --  This type represents the static information about a node.
-
-   No_Node_Info : Semantic_Node_Info :=
-     (Cat_Unknown, No_Symbol, Null_Unbounded_String,
-      Null_Unbounded_String, False, Visibility_Public, (0, 0, 0), (0, 0, 0));
 
    type Sort_Pred is
      access function (L, R : Semantic_Node'Class) return Boolean;
@@ -299,7 +256,7 @@ package Language.Abstract_Language_Tree is
    --  Return the unique id for this node
 
    function Visibility
-     (SN : Semantic_Node) return Semantic_Node_Visibility is abstract;
+     (SN : Semantic_Node) return Construct_Visibility is abstract;
    --  Return the visibility of this node
 
    function Info
@@ -386,9 +343,8 @@ private
      (SN : Dummy_Semantic_Node) return String is ("");
 
    overriding function Visibility
-     (Self : Dummy_Semantic_Node) return Semantic_Node_Visibility
-   is
-      (Visibility_Public);
+     (Self : Dummy_Semantic_Node) return Construct_Visibility
+     is (Visibility_Public);
 
    overriding function Is_Valid
      (SN : Dummy_Semantic_Node) return Boolean is (False);

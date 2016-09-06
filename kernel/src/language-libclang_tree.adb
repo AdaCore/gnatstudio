@@ -532,7 +532,7 @@ package body Language.Libclang_Tree is
    ----------------
 
    overriding function Visibility
-     (Self : Clang_Node) return Semantic_Node_Visibility is
+     (Self : Clang_Node) return Construct_Visibility is
       pragma Unreferenced (Self);
    begin
       --  TODO: At a later stage figure that out for C++ class members
