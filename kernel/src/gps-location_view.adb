@@ -442,6 +442,18 @@ package body GPS.Location_View is
       end if;
    end Expand_File;
 
+   -----------------
+   -- Expand_File --
+   -----------------
+
+   procedure Expand_File
+     (Self     : Location_View_Access;
+      Category : String;
+      File     : GNATCOLL.VFS.Virtual_File) is
+   begin
+      Expand_File (Self, Category, File, Auto_Jump_To_First.Get_Pref);
+   end Expand_File;
+
    ---------------------
    -- Export_Messages --
    ---------------------

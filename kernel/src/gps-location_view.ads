@@ -64,6 +64,13 @@ package GPS.Location_View is
    --  Requests to expand specified category and file and goto first visible
    --  location.
 
+   procedure Expand_File
+     (Self     : Location_View_Access;
+      Category : String;
+      File     : GNATCOLL.VFS.Virtual_File);
+   --  Same as above but jump to first visible location is controlled
+   --  by locations-auto-jump-to-first preference
+
    procedure Raise_Locations_Window
      (Self             : not null access Kernel_Handle_Record'Class;
       Give_Focus       : Boolean := True;
