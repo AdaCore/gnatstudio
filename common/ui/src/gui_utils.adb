@@ -2202,9 +2202,9 @@ package body GUI_Utils is
    -------------------------
 
    procedure Grab_Toplevel_Focus
-     (MDI     : not null access Gtkada.MDI.MDI_Window_Record'Class;
-      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      Present : Boolean := True)
+     (MDI         : not null access Gtkada.MDI.MDI_Window_Record'Class;
+      Widget      : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      Present     : Boolean := True)
    is
       Win : Gtk_Widget;
       Id : Glib.Main.G_Source_Id;
@@ -2215,8 +2215,9 @@ package body GUI_Utils is
    begin
 
       --  Don't do anything if GPS doesn't have the focus at a Window Manager
-      --  level - that is, if none of it's toplevel windows has toplevel focus
-
+      --  level - that is, if none of its toplevel windows has toplevel focus
+      --  ??? This is not documented, and this seems strange: isn't it
+      --  the point of Grab_Toplevel_Focus to actually grab the focus?
       if not GPS_Has_Focus then
          return;
       end if;
@@ -2225,6 +2226,10 @@ package body GUI_Utils is
       if C /= null then
          --  GPS will receive a signal, and adjust the current context
          MDI.Set_Focus_Child (C);
+
+         if Present then
+            Gtkada.MDI.Raise_Child (C);
+         end if;
       else
          MDI.Child_Selected (null);  --  force update of the context
       end if;

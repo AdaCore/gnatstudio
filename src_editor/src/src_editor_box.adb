@@ -1344,18 +1344,41 @@ package body Src_Editor_Box is
       Line        : Editable_Line_Type;
       Column      : Character_Offset_Type := 1;
       Force_Focus : Boolean := True;
+      Raise_Child : Boolean := False;
       Centering   : Centering_Type := Minimal;
       Extend_Selection : Boolean := False)
    is
       Editable_Line : Editable_Line_Type renames Line;
 
+      procedure Raise_And_Focus;
+      --  Raise and/or focus the editor, or do nothing, as requested by the
+      --  Force_Focus and Raise_Child parameters.
+
+      ---------------------
+      -- Raise_And_Focus --
+      ---------------------
+
+      procedure Raise_And_Focus is
+         C : constant MDI_Child := Find_MDI_Child_From_Widget (Editor);
+      begin
+         if C /= null then
+            if Force_Focus then
+               Set_Focus_Child (Get_MDI (Editor.Kernel), C);
+               Grab_Toplevel_Focus (Get_MDI (Editor.Kernel), Editor,
+                                    Present => True);
+            end if;
+
+            if Force_Focus or Raise_Child then
+               Gtkada.MDI.Raise_Child (C);
+            end if;
+         end if;
+      end Raise_And_Focus;
+
    begin
       End_Action (Editor.Source_Buffer);
 
       if Is_Valid_Position (Editor.Source_Buffer, Editable_Line, Column) then
-         if Force_Focus then
-            Grab_Toplevel_Focus (Get_MDI (Editor.Kernel), Editor);
-         end if;
+         Raise_And_Focus;
 
          Set_Cursor_Position
            (Editor.Source_Buffer, Editable_Line, Column,
@@ -1376,9 +1399,7 @@ package body Src_Editor_Box is
          --  and the column is no longer valid, so we silently ignore this.
          --  ??? Consider going to the last column instead of the first
 
-         if Force_Focus then
-            Grab_Toplevel_Focus (Get_MDI (Editor.Kernel), Editor);
-         end if;
+         Raise_And_Focus;
 
          Set_Cursor_Position
            (Editor.Source_Buffer, Editable_Line, 1, False,

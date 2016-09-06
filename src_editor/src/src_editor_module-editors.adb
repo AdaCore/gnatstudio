@@ -2550,10 +2550,11 @@ package body Src_Editor_Module.Editors is
 
                Set_Cursor_Location
                  (This.Contents.Box,
-                  Line        => Line,
-                  Column      => Col,
-                  Force_Focus => Raise_View,
-                  Centering   => Centering,
+                  Line         => Line,
+                  Column       => Col,
+                  Force_Focus  => Raise_View,
+                  Raise_Child  => Raise_View,
+                  Centering    => Centering,
                   Extend_Selection => Extend_Selection);
 
                --  Remembrer new location in history for /Navigate/Forward

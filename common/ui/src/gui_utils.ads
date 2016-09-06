@@ -101,14 +101,15 @@ package GUI_Utils is
    -----------
 
    procedure Grab_Toplevel_Focus
-     (MDI     : not null access Gtkada.MDI.MDI_Window_Record'Class;
-      Widget  : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      Present : Boolean := True);
+     (MDI         : not null access Gtkada.MDI.MDI_Window_Record'Class;
+      Widget      : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      Present     : Boolean := True);
    --  Grab the focus on the widget and its toplevel window.
-   --  Simply caliing Grab_Focus would not change the toplevel window, so the
+   --  Simply calling Grab_Focus would not change the toplevel window, so the
    --  actual keyboard focus would not be given directly to the widget until
    --  the user explicitly changes the active toplevel window.
-   --  If Present, then also call Gtk.Windows.Present on the window.
+   --  If Present, then also call Gtk.Windows.Present on the window, and
+   --  Raise the child that is being given the focus.
 
    -------------
    -- Buttons --

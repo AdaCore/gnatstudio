@@ -142,16 +142,18 @@ package Src_Editor_Box is
    --  If filename is null, use the filename associated with Editor.
 
    procedure Set_Cursor_Location
-     (Editor      : access Source_Editor_Box_Record;
-      Line        : Editable_Line_Type;
-      Column      : Character_Offset_Type := 1;
-      Force_Focus : Boolean := True;
-      Centering   : GPS.Editors.Centering_Type := GPS.Editors.Minimal;
+     (Editor       : access Source_Editor_Box_Record;
+      Line         : Editable_Line_Type;
+      Column       : Character_Offset_Type := 1;
+      Force_Focus  : Boolean := True;
+      Raise_Child  : Boolean := False;
+      Centering    : GPS.Editors.Centering_Type := GPS.Editors.Minimal;
       Extend_Selection : Boolean := False);
    --  Move the insert cursor to the given location. Success is set to False
    --  if the position is outside of the buffer.
    --  If Force_Focus is False, then the editor will not grab the focus
    --  before setting the cursor position.
+   --  If Raise_Child, the MDI child for Editor will also get raised.
    --  Centering indicates the behavior when scrolling the editor to reveal
    --  the cursor location.
    --  If Extend_Selection is True, extend the selection from the current
