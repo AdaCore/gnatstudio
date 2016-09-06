@@ -568,6 +568,12 @@ package body Buffer_Views is
             if Child = Get_Focus_Child (Get_MDI (V.Kernel)) then
                V.Tree.Get_Selection.Select_Iter
                  (V.Tree.Convert_To_Filter_Iter (Iter));
+               V.Tree.Scroll_To_Cell
+                 (V.Tree.Model.Get_Path (Iter),
+                  Column    => null,
+                  Use_Align => False,
+                  Row_Align => 0.0,
+                  Col_Align => 0.0);
             end if;
          end if;
       end Show_Child;
