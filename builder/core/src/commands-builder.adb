@@ -25,6 +25,7 @@ with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 with GPS.Intl;                         use GPS.Intl;
 with GPS.Tools_Output;                 use GPS.Tools_Output;
 with Build_Configurations;             use Build_Configurations;
+with Command_Lines;                    use Command_Lines;
 with Extending_Environments;           use Extending_Environments;
 with Remote;                           use Remote;
 
@@ -215,20 +216,24 @@ package body Commands.Builder is
       -------------------------
 
       procedure Expand_Command_Line (Result : in out Build_Information) is
-         Mode    : constant String := To_String (Result.Mode);
-         CL      : constant Argument_List :=
+         Mode       : constant String := To_String (Result.Mode);
+         CL         : constant Argument_List :=
            Get_Command_Line_Unexpanded (Result.Target);
-         CL_Mode : Argument_List_Access :=
+         With_Extra : Argument_List_Access;
+         CL_Mode    : Command_Line :=
            Result.Target.Apply_Mode_Args (Mode, CL);
-         Subdir  : constant Filesystem_String :=
+         Subdir     : constant Filesystem_String :=
            Get_Mode_Subdir (Builder.Registry, Mode);
       begin
+         CL_Mode.Append_Switches (Result.Extra_Args.all);
+         With_Extra := CL_Mode.To_String_List (Expanded => False);
+
          Result.Full := Expand_Command_Line
-           (Builder, CL_Mode.all & Result.Extra_Args.all, Result.Target,
+           (Builder, With_Extra.all, Result.Target,
             Server, Result.Force_File, Result.Main, Subdir, Result.Background,
             False);
 
-         Free (CL_Mode);
+         Free (With_Extra);
       end Expand_Command_Line;
 
       Result          : Build_Information;

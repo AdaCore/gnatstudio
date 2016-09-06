@@ -432,9 +432,8 @@ package Build_Configurations is
      (Target   : access Target_Type;
       Mode     : String;
       Cmd_Line : GNAT.OS_Lib.Argument_List)
-      return GNAT.OS_Lib.Argument_List_Access;
+      return Command_Line;
    --  Applies the mode arguments to the command_line passed as argument.
-   --  The returned argument_list should be freed by the caller
 
    -----------------------
    -- XML import/export --

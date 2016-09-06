@@ -1506,7 +1506,8 @@ package body Build_Command_Utils is
       CL_Args   : Argument_List_Access :=
          Argument_String_To_List (Command_Line);
       Mode_Args : Argument_List_Access :=
-         T.Apply_Mode_Args (Mode_Name, CL_Args.all);
+        T.Apply_Mode_Args (Mode_Name, CL_Args.all)
+          .To_String_List (Expanded => False);
       Res       : Expansion_Result;
    begin
       Initialize (Adapter.all, Proj_Registry, Proj_Type, Toolchains,

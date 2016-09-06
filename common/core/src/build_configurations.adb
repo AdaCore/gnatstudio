@@ -2150,7 +2150,7 @@ package body Build_Configurations is
      (Target   : access Target_Type;
       Mode     : String;
       Cmd_Line : GNAT.OS_Lib.Argument_List)
-      return GNAT.OS_Lib.Argument_List_Access
+      return Command_Line
    is
       use Model_List;
       Model     : constant Target_Model_Access := Target.Model;
@@ -2193,7 +2193,7 @@ package body Build_Configurations is
       --  We finished the check to see if the Mode should be active
       --  If unsupported, return a copy of the initial command line.
       if not Supported then
-         return Result.To_String_List (Expanded => False);
+         return Result;
       end if;
 
       --  Let's apply substitutions if needed
@@ -2254,7 +2254,7 @@ package body Build_Configurations is
          Result := Result.Append (M.Args.Filter (Delete'Access));
       end;
 
-      return Result.To_String_List (Expanded => False);
+      return Result;
    end Apply_Mode_Args;
 
 end Build_Configurations;
