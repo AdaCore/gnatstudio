@@ -413,7 +413,6 @@ package body Command_Lines is
 
    begin
       Check_Initialized (Cmd);
-      Cmd.Switches.Get.Clear;
       Make_Default_Section (Cmd.Configuration);
       Conf := Cmd.Configuration.Unchecked_Get;
 
