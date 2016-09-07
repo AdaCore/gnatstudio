@@ -361,7 +361,7 @@ private
       Completion_Window    : Completion_Window_Access;
       --  The current completion window
 
-      Redraw_Registered : Boolean := False;
+      Redraw_Registered    : Boolean := False;
       --  Whether we have registered an idle redraw of the highlights
 
       Redraw_Idle_Handler : Glib.Main.G_Source_Id;
@@ -385,7 +385,7 @@ private
 
       Extend_Selection             : Boolean := False;
 
-      Source_Buffer_Handlers : Handlers_Array (1 .. 6);
+      Source_Buffer_Handlers       : Handlers_Array (1 .. 6);
    end record;
 
 end Src_Editor_View;

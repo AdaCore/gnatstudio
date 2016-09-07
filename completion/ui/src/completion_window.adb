@@ -1928,11 +1928,7 @@ package body Completion_Window is
 
    procedure Initialize
      (Window : access Completion_Window_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Dummy   : Gint;
-      pragma Unreferenced (Dummy);
-      use Gdk;
+      Kernel : Kernel_Handle) is
    begin
       Gtk_New (Window.Explorer, Kernel);
 
