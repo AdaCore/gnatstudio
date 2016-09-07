@@ -490,6 +490,10 @@ package body Src_Editor_Module.Editors is
    overriding procedure Finalize (This : in out Src_Editor_Buffer);
    overriding function "="
      (This : Src_Editor_Buffer; Buffer : Src_Editor_Buffer) return Boolean;
+   overriding procedure Set_Extend_Existing_Selection
+     (This : Src_Editor_Buffer; Extend : Boolean);
+   overriding function Extend_Existing_Selection
+     (This : Src_Editor_Buffer) return Boolean;
 
    function Convert is new Ada.Unchecked_Conversion
      (Buffer_Reference_Access, System.Address);
@@ -545,12 +549,6 @@ package body Src_Editor_Module.Editors is
      (Contents : System.Address; View : System.Address);
    pragma Convention (C, On_View_Destroyed);
    --  Called when the gtk+ object is destroyed, to reset internal fields
-
-   overriding function Get_Extend_Selection
-     (This : Src_Editor_View) return Boolean;
-
-   overriding procedure Set_Extend_Selection
-     (This : Src_Editor_View; Extend_Selection : Boolean);
 
    ------------------------
    -- Src_Editor_Overlay --
@@ -2432,25 +2430,25 @@ package body Src_Editor_Module.Editors is
       end if;
    end Delete;
 
-   --------------------------
-   -- Get_Extend_Selection --
-   --------------------------
+   -------------------------------
+   -- Extend_Existing_Selection --
+   -------------------------------
 
-   overriding function Get_Extend_Selection
-     (This : Src_Editor_View) return Boolean is
+   overriding function Extend_Existing_Selection
+     (This : Src_Editor_Buffer) return Boolean is
    begin
-      return This.Contents.Box.Get_View.Get_Extend_Selection;
-   end Get_Extend_Selection;
+      return This.Contents.Buffer.Extend_Existing_Selection;
+   end Extend_Existing_Selection;
 
-   --------------------------
-   -- Set_Extend_Selection --
-   --------------------------
+   -----------------------------------
+   -- Set_Extend_Existing_Selection --
+   -----------------------------------
 
-   overriding procedure Set_Extend_Selection
-     (This : Src_Editor_View; Extend_Selection : Boolean) is
+   overriding procedure Set_Extend_Existing_Selection
+     (This : Src_Editor_Buffer; Extend : Boolean) is
    begin
-      This.Contents.Box.Get_View.Set_Extend_Selection (Extend_Selection);
-   end Set_Extend_Selection;
+      This.Contents.Buffer.Set_Extend_Existing_Selection (Extend);
+   end Set_Extend_Existing_Selection;
 
    -------------------
    -- Set_Read_Only --

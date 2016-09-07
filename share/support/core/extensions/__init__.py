@@ -109,6 +109,22 @@ GPS.MessageContext = GPS.Context
 ######################
 
 @extend_gps
+class EditorView(object):
+
+    def set_extend_selection(self, extend):
+        """
+        See :func:`GPS.EditorBuffer.extend_existing_selection`
+        """
+        self.buffer().extend_existing_selection = extend
+
+    def get_extend_selection(self):
+        """
+        See :func:`GPS.EditorBuffer.extend_existing_selection`
+        """
+        return self.buffer().extend_existing_selection
+
+
+@extend_gps
 class EditorBuffer(object):
 
     def insert(self, loc_or_text, text=None):

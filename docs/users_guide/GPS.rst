@@ -679,6 +679,10 @@ Classes
 
 
 
+
+   .. autoattribute:: GPS.EditorBuffer.extend_existing_selection
+
+
    .. automethod:: GPS.EditorBuffer.__init__
 
    .. automethod:: GPS.EditorBuffer.add_cursor

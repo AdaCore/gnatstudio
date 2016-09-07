@@ -3355,6 +3355,19 @@ class EditorBuffer(object):
     manipulated through this class.
     """
 
+    extend_existing_selection = False
+    """
+    When set to True, this flag puts the editor in a special mode where all
+    cursor moves will create and extend the selection.
+    This is used to emulate the behavior of some editors, like Emacs, or
+    vi's "v" mode".
+
+    The default behavior is that cursor moves will cancel any existing
+    selection, unless they are associated with the :kbd:`shift` key. In
+    this case, a new selection is created if none exists, and the selection
+    is extended to include the new cursor location.
+    """
+
     def __init__(self):
         """
         Prevents the direct creation of instances of
@@ -4758,15 +4771,6 @@ class EditorView(GUI):
         """
         pass  # implemented in Ada
 
-    def get_extend_selection(self):
-        """
-
-        :rtype: bool
-        :return: A boolean, whether the user is currently performing a
-           selection. This should impact cursor movements (since moving
-           the cursor should extend the selection).
-        """
-
     def goto(self, location, extend_selection=False):
         """
         Moves the cursor to the given location. Each view of a particular
@@ -4790,17 +4794,6 @@ class EditorView(GUI):
         .. seealso:: :func:`GPS.EditorBuffer.is_read_only`
         """
         pass  # implemented in Ada
-
-    def set_extend_selection(self, extend):
-        """
-        Sets the mode for cursor movement. When the parameter is true,
-        moving the cursor extends the selection (for instance shift+cursor
-        keys, or the Emacs mode of setting the mark with ctrl-space and
-        then moving the cursor). When the parameter is false, cursor
-        movement cancels the selection.
-
-        :param bool extend: A boolean
-        """
 
     def set_read_only(self, read_only=True):
         """

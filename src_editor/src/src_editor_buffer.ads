@@ -364,6 +364,25 @@ package Src_Editor_Buffer is
       Column : out Gint);
    --  Same as above, for the cursor position
 
+   procedure Set_Extend_Existing_Selection
+     (Buffer : not null access Source_Buffer_Record;
+      Extend : Boolean);
+   function Extend_Existing_Selection
+     (Buffer        : not null access Source_Buffer_Record) return Boolean;
+   --  See GPS.Editors.Set_Extend_Existing_Selection
+
+   function Should_Extend_Selection
+     (Buffer           : not null access Source_Buffer_Record;
+      Extend_Selection : Boolean) return Boolean;
+   --  Computes whether the selection should be extended as part of moving a
+   --  cursor.
+   --  The behavior depends on the Extend_Selection parameter (which basically
+   --  indicates whether the user has used the modifier, typically 'shift, to
+   --  force this behavior, and on whether Extend_Existing_Selection is true,
+   --  to emulate Emacs-like selection.
+   --  When this function returns True, a new selection should be created, if
+   --  none exists, and then extended to include the new cursor location.
+
    procedure Get_Selection_Bounds
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : out Editable_Line_Type;
@@ -1508,6 +1527,9 @@ private
 
       Non_Editable_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
       --  A tag for text that cannot be interactively deleted
+
+      Extend_Existing_Selection : Boolean := False;
+      --  See Set_Extend_Existing_Selection
 
       Insert_Mark      : Gtk.Text_Mark.Gtk_Text_Mark;
       --  This is a copy of the "insert" mark.

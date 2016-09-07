@@ -540,8 +540,8 @@ def serialize(increment=1):
             eol = repl.end_of_line()
             if repl + frm_col > eol:
                 buffer.insert(eol,
-                              " " * ((eol - repl) - frm_col + 2)
-                              + format % value)
+                              " " * ((eol - repl) - frm_col + 2) +
+                              format % value)
             else:
                 replace(repl + frm_col, min(repl + end_col, eol),
                         format % value)
@@ -613,9 +613,9 @@ def kill_line(location=None, count=1):
             end = bol.end_of_line()
             str = buffer.get_chars(start, end)
             strip_str = str.rstrip()
-            if (count == 1
-                    and len(str) > 0
-                    and str[len(str) - 1] == '\n' and strip_str != ""):
+            if (count == 1 and
+               len(str) > 0 and
+               str[len(str) - 1] == '\n' and strip_str != ""):
                 end = end.forward_char(-1)
             bol = end + 1
 
@@ -718,8 +718,7 @@ def _goto_line_bound(beginning, extend_selection):
                 else:
                     d = d.end_of_line()
 
-                c.move(d, extend_selection or
-                       ed.current_view().get_extend_selection())
+                c.move(d, extend_selection or ed.extend_existing_selection)
 
 
 @interactive("Editor", filter_text_actions,
@@ -1373,7 +1372,9 @@ def set_mark_command(location=None):
     """
     if not location:
         location = GPS.EditorBuffer.get().current_view().cursor()
-    location.buffer().current_view().set_extend_selection(True)
+
+    location.buffer().extend_existing_selection = True
+
     if has_pygtk:
         location.create_mark("selection_bound")
         override_key_bindings(select=True)
@@ -1390,7 +1391,9 @@ def cancel_mark_command(buffer=None):
     """
     if not buffer:
         buffer = GPS.EditorBuffer.get()
-    buffer.current_view().set_extend_selection(False)
+
+    buffer.extend_existing_selection = False
+
     try:
         buffer.unselect()
         if has_pygtk:

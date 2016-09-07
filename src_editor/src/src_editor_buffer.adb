@@ -4560,6 +4560,39 @@ package body Src_Editor_Buffer is
       return Buffer.Lang;
    end Get_Language;
 
+   -----------------------------
+   -- Should_Extend_Selection --
+   -----------------------------
+
+   function Should_Extend_Selection
+     (Buffer           : not null access Source_Buffer_Record;
+      Extend_Selection : Boolean) return Boolean is
+   begin
+      return Extend_Selection
+        or else Buffer.Extend_Existing_Selection;
+   end Should_Extend_Selection;
+
+   -----------------------------------
+   -- Set_Extend_Existing_Selection --
+   -----------------------------------
+
+   procedure Set_Extend_Existing_Selection
+     (Buffer : not null access Source_Buffer_Record;
+      Extend : Boolean) is
+   begin
+      Buffer.Extend_Existing_Selection := Extend;
+   end Set_Extend_Existing_Selection;
+
+   -------------------------------
+   -- Extend_Existing_Selection --
+   -------------------------------
+
+   function Extend_Existing_Selection
+     (Buffer : not null access Source_Buffer_Record) return Boolean is
+   begin
+      return Buffer.Extend_Existing_Selection;
+   end Extend_Existing_Selection;
+
    -------------------------
    -- Set_Cursor_Position --
    -------------------------
@@ -4593,7 +4626,7 @@ package body Src_Editor_Buffer is
 
       Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
 
-      if Extend_Selection then
+      if Buffer.Should_Extend_Selection (Extend_Selection) then
          Move_Mark (Buffer, Buffer.Insert_Mark, Iter);
       else
          Place_Cursor (Buffer, Iter);

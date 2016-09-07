@@ -2056,6 +2056,15 @@ package body Src_Editor_Module.Shell is
            (Create_Language_Info
               (Get_Script (Data), Get_Buffer (Data, 1).Get_Language));
 
+      elsif Command = "extend_existing_selection" then
+         if Data.Number_Of_Arguments = 2 then
+            Get_Buffer (Data, 1).Set_Extend_Existing_Selection
+              (Data.Nth_Arg (2));
+         else
+            Data.Set_Return_Value
+              (Get_Buffer (Data, 1).Extend_Existing_Selection);
+         end if;
+
       else
          Set_Error_Msg (Data, -"Command not implemented: " & Command);
       end if;
@@ -2425,13 +2434,6 @@ package body Src_Editor_Module.Shell is
          Set_Return_Value
            (Data, Create_Editor_Location
               (Get_Script (Data), Get_View (Data, 1).Cursor));
-
-      elsif Command = "get_extend_selection" then
-         Data.Set_Return_Value (Get_View (Data, 1).Get_Extend_Selection);
-
-      elsif Command = "set_extend_selection" then
-         Get_View (Data, 1).Set_Extend_Selection (Nth_Arg (Data, 2));
-
       end if;
    end View_Cmds;
 
@@ -2789,7 +2791,6 @@ package body Src_Editor_Module.Shell is
         (Kernel, "apply_overlay",  1, 3, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "remove_overlay",  1, 3, Buffer_Cmds'Access, EditorBuffer);
-
       Register_Command
         (Kernel, "add_cursor",  1, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
@@ -2809,7 +2810,6 @@ package body Src_Editor_Module.Shell is
         (Kernel, "main_cursor",  0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "has_slave_cursors",  0, 0, Buffer_Cmds'Access, EditorBuffer);
-
       Register_Command
         (Kernel, "file", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
@@ -2898,6 +2898,11 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel,
          "at", 2, 3, Buffer_Cmds'Access, EditorBuffer);
+      Kernel.Scripts.Register_Property
+        ("extend_existing_selection",
+         Class  => EditorBuffer,
+         Setter => Buffer_Cmds'Access,
+         Getter => Buffer_Cmds'Access);
 
       --  EditorView
 
@@ -2909,10 +2914,6 @@ package body Src_Editor_Module.Shell is
         (Kernel, "set_read_only", 0, 1, View_Cmds'Access, EditorView);
       Register_Command
         (Kernel, "is_read_only", 0, 0, View_Cmds'Access, EditorView);
-      Register_Command
-        (Kernel, "set_extend_selection", 0, 1, View_Cmds'Access, EditorView);
-      Register_Command
-        (Kernel, "get_extend_selection", 0, 0, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "center", 0, 1, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "goto", 1, 2, View_Cmds'Access, EditorView);
       Register_Command (Kernel, "cursor", 0, 0, View_Cmds'Access, EditorView);

@@ -401,18 +401,6 @@ package GPS.Editors is
    --  Get_User_Data needs to be used to convert to a MDI_Child -- this is
    --  to prevent the need for a No_Strict_Aliasing pragma on MDI_Child).
 
-   function Get_Extend_Selection
-     (This : Editor_View) return Boolean is abstract;
-   --  Get the value of the Extend_Selection property. This property determines
-   --  if any movement command will extend the selection without any modifiers
-   --  or not. Note that for user-defined actions, this depends on the user
-   --  actually reading this flag and implementing the correct behavior
-
-   procedure Set_Extend_Selection
-     (This : Editor_View; Extend_Selection : Boolean) is abstract;
-   --  Set the value of the Extend_Selection property. Default value is False,
-   --  which means, editor commands don't extend the user's selection.
-
    package View_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (Editor_View'Class);
 
@@ -711,6 +699,30 @@ package GPS.Editors is
        Lang   : Language.Language_Access) is null;
    --  Set the language of the given buffer. The syntax highlighting is
    --  recomputed using the new language.
+
+   procedure Set_Extend_Existing_Selection
+     (This : Editor_Buffer; Extend : Boolean) is abstract;
+   function Extend_Existing_Selection
+     (This : Editor_Buffer) return Boolean is abstract;
+   --  This mode controls the handling of selection when the cursor is
+   --  moved:
+   --  * for subprograms that receive an Extend_Selection parameter set to
+   --    True, GPS will always create a new selection if none exists, and
+   --    then extend it to include the new location of the cursor. This is
+   --    the standard handling of shortcuts like shift-arrow keys
+   --  * for subprograms that receive an Extend_Selection parameter set to
+   --    False, the behavior depends on Always_Extend_Selection:
+   --       - if False, then GPS always resets and cancels the current
+   --         selection when the cursor moves. This is the standard behavior
+   --         when using arrow keys for instance.
+   --       - if True, GPS creates a new selection, and extend it.
+   --         This is the standard Emacs mode where the mark is set
+   --         independently (or vi's "v" mode).
+   --         ??? This behavior requires that the emacs mode sets and unsets
+   --         this flag when the mark is set or cancelled. Unfortunately, we
+   --         can't simply look at whether there is a selection already,
+   --         because in gtk having no selection or an empty selection is the
+   --         same.
 
    package Buffer_Lists is new Ada.Containers.Indefinite_Doubly_Linked_Lists
      (Editor_Buffer'Class);
@@ -1169,6 +1181,11 @@ private
    overriding function "="
      (This : Dummy_Editor_Buffer; Buffer : Dummy_Editor_Buffer) return Boolean;
 
+   overriding procedure Set_Extend_Existing_Selection
+     (This : Dummy_Editor_Buffer; Extend : Boolean) is null;
+   overriding function Extend_Existing_Selection
+     (This : Dummy_Editor_Buffer) return Boolean is (False);
+
    Nil_Editor_Buffer : constant Editor_Buffer'Class :=
      Dummy_Editor_Buffer'(Controlled with null record);
 
@@ -1205,12 +1222,6 @@ private
 
    overriding function Buffer
      (This : Dummy_Editor_View) return Editor_Buffer'Class;
-
-   overriding function Get_Extend_Selection
-     (This : Dummy_Editor_View) return Boolean is (False);
-
-   overriding procedure Set_Extend_Selection
-     (This : Dummy_Editor_View; Extend_Selection : Boolean) is null;
 
    Nil_Editor_View : constant Editor_View'Class :=
      Dummy_Editor_View'(Controlled with null record);

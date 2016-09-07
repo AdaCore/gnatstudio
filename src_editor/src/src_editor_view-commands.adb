@@ -122,8 +122,9 @@ package body Src_Editor_View.Commands is
         := Get_Main_Cursor (Buffer);
       Column       : constant Gint :=
         Get_Column_Memory (Get_Main_Cursor (Buffer));
+
       Extend_Selection : constant Boolean :=
-        View.Get_Extend_Selection or Command.Extend_Selection;
+        Buffer.Should_Extend_Selection (Command.Extend_Selection);
 
       pragma Unreferenced (Context, Moved);
 
@@ -135,7 +136,13 @@ package body Src_Editor_View.Commands is
          Adj      := Get_Vadjustment (Scrolled);
          Adj.Set_Value
            (Adj.Get_Value + Gdouble (Command.Step) * Adj.Get_Page_Increment);
-         Moved := Move_Mark_Onscreen (View, Buffer.Get_Insert);
+
+         if Extend_Selection then
+            Moved := Move_Mark_Onscreen (View, Buffer.Get_Insert);
+         else
+            Moved := Place_Cursor_Onscreen (View)
+              or Move_Mark_Onscreen (View, Mark);
+         end if;
 
       else
 
