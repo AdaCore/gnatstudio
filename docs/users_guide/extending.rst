@@ -3692,8 +3692,16 @@ child tags:
 
 * :file:`<extra-args>`
 
+* :file:`sections`
+
+  Optional attribute :file:`sections` contains spaceseparated list of
+  switches delimiting a section of a command line (such as
+  :command:`-bargs -cargs -largs`).  See more details in
+  :ref:`Defining_tool_switches`.
+  
   List of :file:`<arg>` tags, each containing one extra argument to append
   to the command line when launching targets while this mode is active.
+  Optional attribute :file:`section` sets section of given argument.
   Macros are supported in the `<arg>` nodes::
 
      <my_mode>
@@ -3703,10 +3711,9 @@ child tags:
        <supported-model>builder</supported-model>
        <supported-model>gnatmake</supported-model>
        <supported-model filter="--subdirs=">gprclean</supported-model>
-       <extra-args>
+       <extra-args sections="-cargs">
           <arg>--subdirs=%subdir</arg>
-          <arg>-cargs</arg>
-          <arg>-O2</arg>
+          <arg section="-cargs">-O2</arg>
        </extra-args>
       </builder-mode>
      </my_mode>

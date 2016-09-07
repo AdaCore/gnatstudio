@@ -80,6 +80,10 @@ package body Build_Configurations is
    --             <arg>ARGN</arg>
    --          </command-line>
 
+   function XML_To_Configure_Command_Line
+     (N : Node_Ptr) return Command_Line;
+   --  Read command line from XML taking sections into account
+
    function Create_Build_Config_Registry
      (Logger : Logger_Type) return Build_Config_Registry_Access;
    --  Build config registry creator
@@ -1046,6 +1050,39 @@ package body Build_Configurations is
       end;
    end XML_To_Command_Line;
 
+   -----------------------------------
+   -- XML_To_Configure_Command_Line --
+   -----------------------------------
+
+   function XML_To_Configure_Command_Line
+     (N : Node_Ptr) return Command_Line
+   is
+      Config   : Command_Line_Configuration;
+      Sections : Argument_List_Access := Argument_String_To_List
+        (Get_Attribute (N, "sections", ""));
+      Arg    : Node_Ptr := N.Child;
+   begin
+      for Section of Sections.all loop
+         Config.Define_Section (Section.all);
+      end loop;
+
+      return Result : Command_Line do
+         Result.Set_Configuration (Config);
+
+         while Arg /= null loop
+            if Arg.Value /= null then
+               Result.Append_Switch
+                 (Arg.Value.all,
+                  Section => Get_Attribute (Arg, "section", ""));
+            end if;
+
+            Arg := Arg.Next;
+         end loop;
+
+         Free (Sections);
+      end return;
+   end XML_To_Configure_Command_Line;
+
    ------------------------
    -- Save_Target_To_XML --
    ------------------------
@@ -1500,7 +1537,7 @@ package body Build_Configurations is
             end;
 
          elsif N.Tag.all = "extra-args" then
-            Mode.Args := XML_To_Command_Line (N, null);
+            Mode.Args := XML_To_Configure_Command_Line (N);
          end if;
       end Parse_Node;
 

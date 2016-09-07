@@ -16,11 +16,10 @@ XML = r"""<?xml version="1.0" ?>
   <supported-model>gnatmake</supported-model>
   <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
-  <extra-args>
+  <extra-args sections="-cargs">
      <arg>--subdirs=%subdir</arg>
-     <arg>-cargs</arg>
-     <arg>-g</arg>
-     <arg>-O0</arg>
+     <arg section="-cargs">-g</arg>
+     <arg section="-cargs">-O0</arg>
   </extra-args>
  </builder-mode>
 
@@ -35,22 +34,21 @@ XML = r"""<?xml version="1.0" ?>
     <substitute src="%builder" dest="%gprbuild"/>
     <substitute src="%gnatmake" dest="%gprbuild"/>
   </substitutions>
-  <extra-args>
+  <extra-args sections="-cargs:Ada -cargs:C -cargs:C++">
      <arg>--subdirs=%subdir</arg>
-     <arg>-cargs:Ada</arg>
-     <arg>-g</arg>
-     <arg>-O0</arg>
-     <arg>-gnato</arg>
-     <arg>-fstack-check</arg>
-     <arg>-gnatVa</arg>
-     <arg>-cargs:C</arg>
-     <arg>-g</arg>
-     <arg>-O0</arg>
-     <arg>-fstack-check</arg>
-     <arg>-cargs:C++</arg>
-     <arg>-g</arg>
-     <arg>-O0</arg>
-     <arg>-fstack-check</arg>
+     <arg section="-cargs:Ada">-g</arg>
+     <arg section="-cargs:Ada">-O0</arg>
+     <arg section="-cargs:Ada">-gnato</arg>
+     <arg section="-cargs:Ada">-fstack-check</arg>
+     <arg section="-cargs:Ada">-gnatVa</arg>
+
+     <arg section="-cargs:C">-g</arg>
+     <arg section="-cargs:C">-O0</arg>
+     <arg section="-cargs:C">-fstack-check</arg>
+
+     <arg section="-cargs:C++">-g</arg>
+     <arg section="-cargs:C++">-O0</arg>
+     <arg section="-cargs:C++">-fstack-check</arg>
   </extra-args>
  </builder-mode>
 
@@ -65,15 +63,12 @@ XML = r"""<?xml version="1.0" ?>
     <substitute src="%builder" dest="%gprbuild"/>
     <substitute src="%gnatmake" dest="%gprbuild"/>
   </substitutions>
-  <extra-args>
+  <extra-args sections="-cargs:Ada -cargs:C -cargs:C++">
      <arg>--subdirs=%subdir</arg>
-     <arg>-cargs:Ada</arg>
-     <arg>-O2</arg>
-     <arg>-gnatn</arg>
-     <arg>-cargs:C</arg>
-     <arg>-O2</arg>
-     <arg>-cargs:C++</arg>
-     <arg>-O2</arg>
+     <arg section="-cargs:Ada">-O2</arg>
+     <arg section="-cargs:Ada">-gnatn</arg>
+     <arg section="-cargs:C">-O2</arg>
+     <arg section="-cargs:C++">-O2</arg>
   </extra-args>
  </builder-mode>
 
@@ -84,14 +79,12 @@ XML = r"""<?xml version="1.0" ?>
   <supported-model>gnatmake</supported-model>
   <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
-  <extra-args>
+  <extra-args sections="-cargs -largs">
      <arg>--subdirs=%subdir</arg>
-     <arg>-cargs</arg>
-     <arg>-g</arg>
-     <arg>-fprofile-arcs</arg>
-     <arg>-ftest-coverage</arg>
-     <arg>-largs</arg>
-     <arg>--coverage</arg>
+     <arg section="-cargs">-g</arg>
+     <arg section="-cargs">-fprofile-arcs</arg>
+     <arg section="-cargs">-ftest-coverage</arg>
+     <arg section="-largs">--coverage</arg>
   </extra-args>
  </builder-mode>
 
@@ -102,13 +95,11 @@ XML = r"""<?xml version="1.0" ?>
   <supported-model>gnatmake</supported-model>
   <supported-model>gprbuild</supported-model>
   <supported-model filter="--subdirs=">gprclean</supported-model>
-  <extra-args>
+  <extra-args sections="-cargs -largs">
      <arg>--subdirs=%subdir</arg>
-     <arg>-cargs</arg>
-     <arg>-g</arg>
-     <arg>-pg</arg>
-     <arg>-largs</arg>
-     <arg>-pg</arg>
+     <arg section="-cargs">-g</arg>
+     <arg section="-cargs">-pg</arg>
+     <arg section="-largs">-pg</arg>
   </extra-args>
  </builder-mode>
 

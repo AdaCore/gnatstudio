@@ -172,13 +172,12 @@ class GNATcovPlugin(object):
             X('supported-model', filter='--subdirs=').children(
                 'gnatcov-coverage'),
             X('supported-model', filter='--subdirs=').children('gprclean'),
-            X('extra-args').children(
+            X('extra-args', sections='-cargs').children(
                 X('arg').children("%attr(ide_coverage'gnatcov_mode_switches)"),
                 X('arg').children('--subdirs=%subdir'),
-                X('arg').children('-cargs'),
-                X('arg').children('-g'),
-                X('arg').children('-fdump-scos'),
-                X('arg').children('-fpreserve-control-flow'),
+                X('arg', section='-cargs').children('-g'),
+                X('arg', section='-cargs').children('-fdump-scos'),
+                X('arg', section='-cargs').children('-fpreserve-control-flow'),
             )
         )
     ]
