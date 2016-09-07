@@ -24,6 +24,20 @@ If no tag is specified, the entry is relevant to all IDEs.
 
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
+
+KP-62-P902-013 GPS: emacs-mode page up/down loses selection
+
+  Problem:    If you have activated the Emacs mode in the preferences Key
+              Shortcuts, you can use ctrl-space to set a mark. Keyboard
+              navigation then always extends the selection. But using key
+              shortcuts like ctrl-v (move to next page) or alt-v (move to
+              previous page) resets the location of the mark and thus
+              the selection.
+
+  Status:     This was fixed in 17.0 on 2016-09-07
+
+  Workaround: Use the PageUp and PageDown keys on your keyboard.
+
 KP-62-P822-023 GPS: Command line parameter "debug" may hung GPS
 
   Problem:    GPS may hung when a project contains a case statement

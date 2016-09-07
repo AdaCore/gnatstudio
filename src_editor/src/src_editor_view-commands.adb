@@ -133,19 +133,10 @@ package body Src_Editor_View.Commands is
       if Command.Kind = Page then
          Scrolled := Gtk_Scrolled_Window (Get_Parent (View));
          Adj      := Get_Vadjustment (Scrolled);
-         if Command.Step > 0 then
-            Set_Value
-              (Adj,
-               Get_Value (Adj)
-               + Gdouble (Command.Step) * Get_Page_Increment (Adj));
-         else
-            Set_Value
-              (Adj,
-               Get_Value (Adj)
-               + Gdouble (Command.Step) * Get_Page_Increment (Adj));
-         end if;
-         Moved := Place_Cursor_Onscreen (View);
-         Moved := Move_Mark_Onscreen (View, Mark);
+         Adj.Set_Value
+           (Adj.Get_Value + Gdouble (Command.Step) * Adj.Get_Page_Increment);
+         Moved := Move_Mark_Onscreen (View, Buffer.Get_Insert);
+
       else
 
          for Cursor of Get_Cursors (Buffer) loop
