@@ -6,7 +6,7 @@
 GPS |version| Release Notes
 ===========================
 
-Release date: |today|
+Release date: June 2016
 
 .. image:: gps6.png
 

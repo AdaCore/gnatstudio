@@ -58,7 +58,7 @@ copyright = get_copyright()
 # built documents.
 #
 # The short X.Y version.
-version = get_version()
+version = '6.2'
 # The full version, including alpha/beta/rc tags.
 release = version
 
