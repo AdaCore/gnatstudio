@@ -618,6 +618,7 @@ package body GPS.Kernel.Search.Filenames is
             L := Last (Region);
             R := new String (1 .. L);
             R.all := String (Data (Region).all (1 .. L));
+            Free (Region);
 
             Strip_CR_And_NUL (R.all, L, Ignored_1, Ignored_2, Ignored_3);
 
