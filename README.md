@@ -1,6 +1,7 @@
-## GPS - the GNAT Programming Studio
+# GPS - the GNAT Programming Studio
 
 - [What is GPS?](#what-is-gps)
+- [Building](#building)
 
 ## What is GPS?
 
