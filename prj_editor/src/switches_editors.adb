@@ -343,13 +343,18 @@ package body Switches_Editors is
                      end if;
 
                   else
-                     Attr_Name := To_Unbounded_String ("default_switches");
+                     --  Use Switches, unless the user was already using
+                     --  Default_Switches.
+
+                     Attr_Name := To_Unbounded_String ("switches");
                      if Project.Has_Attribute
-                       (Attribute_Pkg_List'(Build
-                        (To_String (Self.Tool.Project_Package), "switches")),
+                       (Attribute_Pkg_List'
+                          (Build
+                            (To_String (Self.Tool.Project_Package),
+                             "default_switches")),
                         Index => To_String (Self.Tool.Project_Index))
                      then
-                        Attr_Name := To_Unbounded_String ("switches");
+                        Attr_Name := To_Unbounded_String ("default_switches");
                      end if;
 
                      if Args'Length /= 0 then
