@@ -572,3 +572,5 @@ class BoardLoader(Module):
         """
         When debugger terminates, terminate the connection.
         """
+
+        self.__reset_all()
