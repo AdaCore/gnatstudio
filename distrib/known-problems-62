@@ -25,6 +25,17 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P903-002 GPS: Clicking on an item may scroll the Windows view to the top
+
+  Problem:    When the Windows view needs to display a scrolled window in
+              order to display all its items, clicking on an item placed
+              at the bottom and that requires scrolling automatically scrolls
+              the Windows view to the top.
+
+  Status:     This was fixed in 17.0 on 2016-08-08
+
+  Workaround: None.
+
 KP-62-P902-013 GPS: emacs-mode page up/down loses selection
 
   Problem:    If you have activated the Emacs mode in the preferences Key
@@ -276,7 +287,7 @@ KP-62-P329-001 GB: random crash using GPR files having missing with-ed GPR
 
   Status:     This was fixed in 17.0 on 2016-08-05
 
-  Workaround: Fix the missing with-ed GPR file and restart GNATbench. 
+  Workaround: Fix the missing with-ed GPR file and restart GNATbench.
 
 KP-62-P328-005 Indentation engine on aggregates
 
