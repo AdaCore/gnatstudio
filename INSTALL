@@ -7,7 +7,7 @@ prerequisite.
 You need to use a recent version of the GNAT compiler (e.g. GNAT 7.0.2
 or GNAT GPL 2012).
 
-You then need to install the Gtk+ 2.x suite (e.g 2.24.5).
+You then need to install the Gtk+ 3.x suite (e.g 3.14).
 To download and build Gtk+, follow the instructions given at www.gtk.org.
 On most linux systems, gtk+ is installed by default and you do not need to
 reinstall it yourself.
@@ -25,19 +25,12 @@ Then you need to install the latest version of XML/Ada, and set the
 GPR_PROJECT_PATH environment variable to point to <xml-install>/lib/gnat,
 unless XML/Ada is installed in the same directory as GNAT.
 
-Optionally, you might want to install python on your system if it isn't
-already installed. Another optional package is PyGTK, the python bindings for
-the gtk+ library. If found, GPS will provide a few extra functions so that
-you can incorporate your own GUI within the GPS MDI.
-
-Once XML/Ada has been installed, extract the GPS sources:
-
-  $ gzip -dc gps-*-src.tgz | tar xvf -
-  $ cd gps*
+You will also need an install of Python which includes PyGObject and
+Pycairo.
 
 GPS needs to access a few of the GNAT sources to automatically find the list
 of supported switches for the compiler. This can be done by creating a
-link named 'gnat_src' to the directory that contains the gnat sources. This
+link named 'gnat' to the directory that contains the GNAT sources. This
 is optional. If you don't do this, GPS will not know about the GNAT
 command line switches.
 
