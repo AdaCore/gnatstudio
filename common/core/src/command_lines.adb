@@ -22,7 +22,7 @@ package body Command_Lines is
    procedure Make_Default_Section (Config : in out Command_Line_Configuration);
    --  Make sure that there is a section with empty name in Config
 
-   procedure Check_Initialized (Cmd : in out Command_Line);
+   procedure Check_Initialized (Cmd : in out Command_Line'Class);
    --  Check if Cmd is initialized and initialize it otherwise
 
    function Starts_With (Value, Prefix : Unbounded_String) return Boolean;
@@ -38,6 +38,41 @@ package body Command_Lines is
       Item        : Switch;
       Add_Before  : Boolean   := False);
    --  Append given Switch to command line. Keep Cmd unexpanded
+
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (Left, Right : Command_Line_Configuration'Class)
+                 return Boolean
+   is
+      Empty : Configuration;
+   begin
+      if Left.Is_Null then
+         return Right.Is_Null or else Right.Unchecked_Get.all = Empty;
+      elsif Right.Is_Null then
+         return Left.Unchecked_Get.all = Empty;
+      end if;
+
+      return Left.Unchecked_Get.all = Right.Unchecked_Get.all;
+   end "=";
+
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (Left, Right : Command_Line'Class) return Boolean is
+      use type Switch_Vectors.Vector;
+   begin
+      if Left.Switches.Is_Null then
+         return Right.Is_Empty;
+      elsif Right.Switches.Is_Null then
+         return Left.Is_Empty;
+      else
+         return Left.Switches.Unchecked_Get.all =
+           Right.Switches.Unchecked_Get.all;
+      end if;
+   end "=";
 
    --------------------
    -- Define_Section --
@@ -239,7 +274,7 @@ package body Command_Lines is
    -- Check_Initialized --
    -----------------------
 
-   procedure Check_Initialized (Cmd : in out Command_Line) is
+   procedure Check_Initialized (Cmd : in out Command_Line'Class) is
    begin
       if Cmd.Switches.Is_Null then
          Cmd.Switches.Set (Switch_Vectors.Empty_Vector);
@@ -251,7 +286,7 @@ package body Command_Lines is
    -----------------------
 
    procedure Set_Configuration
-     (Cmd    : in out Command_Line;
+     (Cmd    : in out Command_Line'Class;
       Config : Command_Line_Configuration) is
    begin
       Cmd.Configuration := Config;
@@ -264,22 +299,44 @@ package body Command_Lines is
    -----------------------
 
    function Get_Configuration
-     (Cmd : Command_Line)
-      return Command_Line_Configuration is
+     (Cmd : Command_Line'Class) return Command_Line_Configuration is
    begin
       return Cmd.Configuration;
    end Get_Configuration;
+
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Self : in out Command_Line) is
+   begin
+      Self.Switches.Set (Switch_Vectors.Empty_Vector);
+   end Clear;
 
    ----------------------
    -- Set_Command_Line --
    ----------------------
 
    procedure Set_Command_Line
-     (Cmd                : in out Command_Line;
-      Switches           : String;
-      Switch_Char        : Character := '-')
+     (Cmd      : in out Command_Line;
+      Switches : String)
    is
-      pragma Unreferenced (Switch_Char);
+      List : GNAT.OS_Lib.Argument_List_Access :=
+        GNAT.OS_Lib.Argument_String_To_List (Switches);
+   begin
+      Cmd.Clear;
+      Cmd.Append_Switches (List.all);
+      GNAT.OS_Lib.Free (List);
+   end Set_Command_Line;
+
+   ------------------
+   -- Add_Switches --
+   ------------------
+
+   procedure Append_Switches
+     (Cmd  : in out Command_Line;
+      List : GNAT.Strings.String_List)
+   is
       use GNAT.OS_Lib;
 
       function Is_Section (Name : String) return Boolean;
@@ -346,7 +403,6 @@ package body Command_Lines is
          Found := False;
       end Find_Switch;
 
-      List    : Argument_List_Access := Argument_String_To_List (Switches);
       Last    : Natural := 0;
 
       Switch_Conf  : Switch_Configuration;
@@ -357,11 +413,10 @@ package body Command_Lines is
 
    begin
       Check_Initialized (Cmd);
-      Cmd.Switches.Get.Clear;
       Make_Default_Section (Cmd.Configuration);
       Conf := Cmd.Configuration.Unchecked_Get;
 
-      for Arg of List.all loop
+      for Arg of List loop
          if Is_Parameter then
             Is_Parameter := False;
 
@@ -417,9 +472,7 @@ package body Command_Lines is
             end;
          end if;
       end loop;
-
-      Free (List);
-   end Set_Command_Line;
+   end Append_Switches;
 
    -----------------
    -- Starts_With --
@@ -447,6 +500,54 @@ package body Command_Lines is
 
       return Null_Unbounded_String;
    end Find_Prefix;
+
+   ------------
+   -- Append --
+   ------------
+
+   procedure Append
+     (Cmd   : in out Command_Line;
+      Value : Command_Line'Class)
+   is
+      List : GNAT.Strings.String_List_Access :=
+        Value.To_String_List (Expanded => False);
+   begin
+      Make_Default_Section (Cmd.Configuration);
+
+      if not Value.Configuration.Is_Null then
+         --  Append absent section definitions
+         for J of Value.Configuration.Unchecked_Get.Sections loop
+            if not Cmd.Configuration.Unchecked_Get.Sections.Contains (J.Name)
+            then
+               Cmd.Configuration.Unchecked_Get.Sections.Insert
+                 (J.Name, J);
+            end if;
+         end loop;
+      end if;
+
+      Cmd.Append_Switches (List.all);
+      GNAT.OS_Lib.Free (List);
+   end Append;
+
+   ------------
+   -- Append --
+   ------------
+
+   function Append
+     (Cmd   : Command_Line'Class;
+      Value : Command_Line'Class) return Command_Line is
+   begin
+      return Result : Command_Line do
+         Result.Set_Configuration (Cmd.Get_Configuration);
+         Check_Initialized (Result);
+
+         if not Cmd.Switches.Is_Null then
+            Result.Switches.Get.Append (Cmd.Switches.Get);
+         end if;
+
+         Result.Append (Value);
+      end return;
+   end Append;
 
    ------------
    -- Append --
@@ -585,7 +686,7 @@ package body Command_Lines is
    -- Add_Switch --
    ----------------
 
-   procedure Add_Switch
+   procedure Append_Switch
      (Cmd        : in out Command_Line;
       Switch     : String;
       Parameter  : String    := "";
@@ -595,15 +696,15 @@ package body Command_Lines is
    is
       Success : Boolean;
    begin
-      Add_Switch
+      Append_Switch
         (Cmd, Switch, Parameter, Separator, Section, Add_Before, Success);
-   end Add_Switch;
+   end Append_Switch;
 
    ----------------
    -- Add_Switch --
    ----------------
 
-   procedure Add_Switch
+   procedure Append_Switch
      (Cmd        : in out Command_Line;
       Switch     : String;
       Parameter  : String    := "";
@@ -631,7 +732,7 @@ package body Command_Lines is
 
       Append (Cmd, Item, Add_Before);
       Success := True;
-   end Add_Switch;
+   end Append_Switch;
 
    -------------------
    -- Remove_Switch --
@@ -685,6 +786,16 @@ package body Command_Lines is
       Success := False;
    end Remove_Switch;
 
+   --------------
+   -- Is_Empty --
+   --------------
+
+   function Is_Empty (Self : Command_Line) return Boolean is
+   begin
+      return Self.Switches.Is_Null
+        or else Self.Switches.Unchecked_Get.Is_Empty;
+   end Is_Empty;
+
    ----------------
    -- Has_Switch --
    ----------------
@@ -725,17 +836,18 @@ package body Command_Lines is
    -----------
 
    procedure Start
-     (Cmd      : in out Command_Line;
+     (Cmd      : Command_Line;
       Iter     : in out Command_Line_Iterator;
       Expanded : Boolean := False)
    is
+      Copy : Command_Line := Cmd;
    begin
-      Check_Initialized (Cmd);
+      Check_Initialized (Copy);
 
       if Expanded then
          Iter :=
            (Expanded       => True,
-            Line           => Cmd,
+            Line           => Copy,
             Switch_Index   => 1,
             Char_Index     => 1,
             Prefix         => 0,
@@ -743,9 +855,9 @@ package body Command_Lines is
 
          if Has_More (Iter) then
             declare
-               Next   : constant Switch := Cmd.Switches.Get.First_Element;
+               Next   : constant Switch := Copy.Switches.Get.First_Element;
                Prefix : constant Unbounded_String :=
-                 Find_Prefix (Cmd.Configuration.Unchecked_Get, Next.Switch);
+                 Find_Prefix (Copy.Configuration.Unchecked_Get, Next.Switch);
             begin
                if Prefix = "" then
                   Iter.Char_Index := Length (Next.Switch);
@@ -759,7 +871,7 @@ package body Command_Lines is
       else
          Iter :=
            (Expanded       => False,
-            Line           => Cmd,
+            Line           => Copy,
             Switch_Index   => 1,
             Is_New_Section => False);
       end if;
@@ -907,5 +1019,150 @@ package body Command_Lines is
          end if;
       end if;
    end Next;
+
+   --------------------
+   -- To_String_List --
+   --------------------
+
+   function To_String_List
+     (Cmd      : Command_Line;
+      Expanded : Boolean) return GNAT.Strings.String_List_Access
+   is
+      Result : GNAT.Strings.String_List_Access;
+      Iter   : Command_Line_Iterator;
+      Count  : Natural := 0;
+   begin
+      Start (Cmd, Iter, Expanded => Expanded);
+
+      while Has_More (Iter) loop
+         Count := Count + 1;
+
+         if Is_New_Section (Iter) then
+            Count := Count + 1;
+         end if;
+
+         if Current_Separator (Iter) = " "
+           and then Current_Parameter (Iter) /= ""
+         then
+            Count := Count + 1;
+         end if;
+
+         Next (Iter);
+      end loop;
+
+      Result := new GNAT.Strings.String_List (1 .. Count);
+      Count := Result'First;
+      Start (Cmd, Iter, Expanded => Expanded);
+
+      while Has_More (Iter) loop
+         if Is_New_Section (Iter) then
+            Result (Count) := new String'(Current_Section (Iter));
+            Count := Count + 1;
+         end if;
+
+         if Current_Separator (Iter) /= " " then
+            if Current_Parameter (Iter) /= "" then
+               Result (Count) := new String'
+                 (Current_Switch (Iter)
+                  & Current_Separator (Iter)
+                  & Current_Parameter (Iter));
+
+            else
+               Result (Count) := new String'(Current_Switch (Iter));
+            end if;
+
+            Count := Count + 1;
+
+         else
+            Result (Count) := new String'(Current_Switch (Iter));
+            Count := Count + 1;
+
+            if Current_Parameter (Iter) /= "" then
+               Result (Count) := new String'(Current_Parameter (Iter));
+               Count := Count + 1;
+            end if;
+         end if;
+
+         Next (Iter);
+      end loop;
+
+      return Result;
+   end To_String_List;
+
+   ---------
+   -- Map --
+   ---------
+
+   function Map
+     (Cmd    : Command_Line;
+      Update : access procedure
+        (Switch    : in out Unbounded_String;
+         Section   : in out Unbounded_String;
+         Parameter : in out Argument)) return Command_Line
+   is
+      Result : Command_Line;
+      Pos    : Switch_Vectors.Cursor;
+   begin
+      Result.Set_Configuration (Cmd.Get_Configuration);
+
+      if not Cmd.Switches.Is_Null then
+         Check_Initialized (Result);
+         Pos := Cmd.Switches.Get.First;
+
+         while Switch_Vectors.Has_Element (Pos) loop
+            declare
+               Item : Command_Lines.Switch :=
+                 Switch_Vectors.Element (Pos);
+            begin
+               Update (Item.Switch, Item.Section, Item.Parameter);
+               Append (Result, Item);
+               Switch_Vectors.Next (Pos);
+            end;
+         end loop;
+      end if;
+
+      return Result;
+   end Map;
+
+   ------------
+   -- Filter --
+   ------------
+
+   function Filter
+     (Cmd    : Command_Line;
+      Delete : access function
+        (Switch    : String;
+         Section   : String;
+         Parameter : Argument) return Boolean)
+      return Command_Line
+   is
+      Result : Command_Line;
+      Pos    : Switch_Vectors.Cursor;
+   begin
+      Result.Set_Configuration (Cmd.Get_Configuration);
+
+      if not Cmd.Switches.Is_Null then
+         Check_Initialized (Result);
+         Pos := Cmd.Switches.Get.First;
+
+         while Switch_Vectors.Has_Element (Pos) loop
+            declare
+               Item : constant Command_Lines.Switch :=
+                 Switch_Vectors.Element (Pos);
+            begin
+               if not Delete (To_String (Item.Switch),
+                              To_String (Item.Section),
+                              Item.Parameter)
+               then
+                  Append (Result, Item);
+               end if;
+
+               Switch_Vectors.Next (Pos);
+            end;
+         end loop;
+      end if;
+
+      return Result;
+   end Filter;
 
 end Command_Lines;

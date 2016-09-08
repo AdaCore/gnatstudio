@@ -19,7 +19,9 @@
 --  The reason of this package in that it doesn't strip duplicated switches
 --  from a command line if any.
 
-private with Ada.Strings.Unbounded;
+with GNAT.Strings;
+
+with Ada.Strings.Unbounded;                use Ada.Strings.Unbounded;
 private with Ada.Containers.Ordered_Maps;
 private with Ada.Containers.Vectors;
 private with GNATCOLL.Refcount;
@@ -39,7 +41,10 @@ package Command_Lines is
 
    --  See GNAT.Command_Line for examples on how to use these subprograms
 
-   type Command_Line_Configuration is private;
+   type Command_Line_Configuration is tagged private;
+
+   function "=" (Left, Right : Command_Line_Configuration'Class)
+     return Boolean;
 
    procedure Define_Section
      (Config  : in out Command_Line_Configuration;
@@ -144,32 +149,38 @@ package Command_Lines is
    --         --   Args is now  ["-O2", "-gnatycd"]
    --      end;
 
-   type Command_Line is private;
+   type Command_Line is tagged private;
+
+   function "=" (Left, Right : Command_Line'Class) return Boolean;
 
    procedure Set_Configuration
-     (Cmd    : in out Command_Line;
+     (Cmd    : in out Command_Line'Class;
       Config : Command_Line_Configuration);
    function Get_Configuration
-     (Cmd : Command_Line) return Command_Line_Configuration;
+     (Cmd : Command_Line'Class) return Command_Line_Configuration;
    --  Set or retrieve the configuration used for that command line. The Config
    --  must have been initialized first, by calling one of the Define_Switches
    --  subprograms.
 
    procedure Set_Command_Line
-     (Cmd                : in out Command_Line;
-      Switches           : String;
-      Switch_Char        : Character := '-');
+     (Cmd      : in out Command_Line;
+      Switches : String);
    --  Set the new content of the command line, by replacing the current
    --  version with Switches.
 
-   procedure Add_Switch
+   procedure Append_Switches
+     (Cmd  : in out Command_Line;
+      List : GNAT.Strings.String_List);
+   --  Append given switches to command line
+
+   procedure Append_Switch
      (Cmd        : in out Command_Line;
       Switch     : String;
       Parameter  : String    := "";
       Separator  : Character := ASCII.NUL;
       Section    : String    := "";
       Add_Before : Boolean   := False);
-   procedure Add_Switch
+   procedure Append_Switch
      (Cmd        : in out Command_Line;
       Switch     : String;
       Parameter  : String    := "";
@@ -209,6 +220,18 @@ package Command_Lines is
    --  Add_Before allows insertion of the switch at the beginning of the
    --  command line.
 
+   procedure Append
+     (Cmd   : in out Command_Line;
+      Value : Command_Line'Class);
+   --  Append switches of Value to given command line. Configuration of Cmd
+   --  will be updated to include section definitions from Value configuration
+
+   function Append
+     (Cmd   : Command_Line'Class;
+      Value : Command_Line'Class) return Command_Line;
+   --  Append switches of Value to given command line and return the result.
+   --  The function keeps both arguments unchanged.
+
    procedure Remove_Switch
      (Cmd           : in out Command_Line;
       Switch        : String;
@@ -231,11 +254,65 @@ package Command_Lines is
    --  on the command line "-g -cargs -g" will result in "-g", while if
    --  called with (Cmd_Line, "-g") this will result in "-cargs -g".
 
+   procedure Clear (Self : in out Command_Line);
+   --  Reset command line to empty state. The Configuration isn't altered.
+
+   function Is_Empty (Self : Command_Line) return Boolean;
+   --  Check if there is some switch on given command line
+
    function Has_Switch
      (Cmd     : Command_Line;
       Switch  : String;
       Section : String  := "") return Boolean;
    --  Check if there is the Switch in given Section
+
+   function To_String_List
+     (Cmd      : Command_Line;
+      Expanded : Boolean) return GNAT.Strings.String_List_Access;
+   --  Return the arguments of the command line. Expanded indicates whether
+   --  the expanded command line, or the shortest command line, is returned.
+   --  Result should be freed by caller after use.
+
+   --  This represents separator between switch and its argument
+   type Separator (Is_Set : Boolean := False) is record
+      case Is_Set is
+         when True =>
+            Value : Character;
+         when False =>
+            null;
+      end case;
+   end record;
+
+   --  This represents argument of some switch
+   type Argument (Is_Set : Boolean := False) is record
+      case Is_Set is
+         when True =>
+            Separator : Command_Lines.Separator;
+            Value     : Ada.Strings.Unbounded.Unbounded_String;
+         when False =>
+            null;
+      end case;
+   end record;
+
+   function Map
+     (Cmd    : Command_Line;
+      Update : access procedure
+        (Switch    : in out Unbounded_String;
+         Section   : in out Unbounded_String;
+         Parameter : in out Argument))
+      return Command_Line;
+   --  This function creates a copy of given command line where some switches
+   --  are modified by the given Update procedure
+
+   function Filter
+     (Cmd    : Command_Line;
+      Delete : access function
+        (Switch    : String;
+         Section   : String;
+         Parameter : Argument) return Boolean)
+      return Command_Line;
+   --  This function creates a copy of given command line where some switсhes
+   --  are deleted according to Delete result.
 
    Invalid_Section : exception;
 
@@ -249,7 +326,7 @@ package Command_Lines is
    type Command_Line_Iterator is private;
 
    procedure Start
-     (Cmd      : in out Command_Line;
+     (Cmd      : Command_Line;
       Iter     : in out Command_Line_Iterator;
       Expanded : Boolean := False);
    --  Start iterating over the command line arguments. If Expanded is true,
@@ -280,20 +357,9 @@ package Command_Lines is
 
 private
 
-   use Ada.Strings.Unbounded;
-
    package String_Vectors is new Ada.Containers.Vectors
      (Index_Type   => Positive,
       Element_Type => Unbounded_String);
-
-   type Separator (Is_Set : Boolean := False) is record
-      case Is_Set is
-         when True =>
-            Value : Character;
-         when False =>
-            null;
-      end case;
-   end record;
 
    type Parameter_Configuration (Is_Set : Boolean := False) is record
       case Is_Set is
@@ -338,16 +404,6 @@ private
    type Command_Line_Configuration is new Configuration_References.Ref
      with null record;
 
-   type Argument (Is_Set : Boolean := False) is record
-      case Is_Set is
-         when True =>
-            Separator : Command_Lines.Separator;
-            Value     : Unbounded_String;
-         when False =>
-            null;
-      end case;
-   end record;
-
    type Switch is record
       Switch       : Unbounded_String;
       Section      : Unbounded_String;
@@ -361,7 +417,7 @@ private
    package Switch_Vector_References is new GNATCOLL.Refcount.Shared_Pointers
      (Switch_Vectors.Vector);
 
-   type Command_Line is record
+   type Command_Line is tagged record
       Configuration : Command_Line_Configuration;
       Switches      : Switch_Vector_References.Ref;
       --  Vector of unexpanded switches

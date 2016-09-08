@@ -22,7 +22,6 @@ with Ada.Unchecked_Deallocation;
 with Custom_Tools_Output;
 
 with GNAT.Directory_Operations;
-with GNAT.Regpat;               use GNAT.Regpat;
 
 with GNATCOLL.Templates;          use GNATCOLL.Templates;
 with GNATCOLL.Utils;              use GNATCOLL.Utils;
@@ -128,164 +127,6 @@ package body Build_Command_Utils is
 
    procedure Free_Adapter is new Ada.Unchecked_Deallocation
      (Build_Command_Adapter, Build_Command_Adapter_Access);
-
-   ---------------------
-   -- Apply_Mode_Args --
-   ---------------------
-
-   function Apply_Mode_Args
-     (Registry : Build_Config_Registry_Access;
-      Model : String;
-      Mode : String;
-      Cmd_Line : GNAT.OS_Lib.Argument_List)
-      return GNAT.OS_Lib.Argument_List_Access
-   is
-      use Model_List;
-      M         : Mode_Record;
-      Model_Rec : Model_Record;
-      C         : Model_List.Cursor;
-      Res       : GNAT.OS_Lib.Argument_List_Access;
-      Supported : Boolean;
-
-      function Compute_Num_Args
-        (Args : GNAT.OS_Lib.Argument_List; Filter : String) return Natural;
-      --  Compute number of relevant arguments in Args that match Filter
-
-      function Compute_Num_Args
-        (Args : GNAT.OS_Lib.Argument_List; Filter : String) return Natural
-      is
-         Result  : Natural := 0;
-      begin
-         if Filter = "" then
-            return Args'Length;
-         else
-            for J in Args'Range loop
-               if Match (Filter, Args (J).all) then
-                  Result := Result + 1;
-               end if;
-            end loop;
-
-            return Result;
-         end if;
-      end Compute_Num_Args;
-
-   begin
-      Supported := True;
-
-      if Model = "" then
-         Supported := False;
-      end if;
-
-      if Mode = "" then
-         Supported := False;
-      end if;
-
-      if Supported then
-         M := Element_Mode
-           (Registry, To_Unbounded_String (Mode));
-
-         if (M.Args = null
-             or else M.Args'Length = 0)
-           and then
-             (M.Subst_Src = null
-              or else M.Subst_Src'Length = 0)
-         then
-            Supported := False;
-         end if;
-      end if;
-
-      if Supported and then not M.Models.Is_Empty then
-         C := M.Models.First;
-
-         Supported := False;
-         while Has_Element (C) loop
-            Model_Rec := Element (C);
-
-            if Model_Rec.Model = Model then
-               Supported := True;
-               exit;
-            end if;
-
-            Next (C);
-         end loop;
-      end if;
-
-      --  We finished the check to see if the Mode should be active
-      --  If unsupported, return a copy of the initial command line.
-      if not Supported then
-         Res := new GNAT.OS_Lib.Argument_List (Cmd_Line'Range);
-
-         for J in Cmd_Line'Range loop
-            Res (J) := new String'(Cmd_Line (J).all);
-         end loop;
-
-         return Res;
-      end if;
-
-      --  Now let's apply the Mode. First we create the result with enough
-      --  room.
-      if M.Args /= null then
-         Res := new GNAT.OS_Lib.Argument_List
-           (1 .. Cmd_Line'Length
-                  + Compute_Num_Args
-                      (M.Args.all, To_String (Model_Rec.Filter)));
-      else
-         Res := new GNAT.OS_Lib.Argument_List (1 .. Cmd_Line'Length);
-      end if;
-
-      --  Let's apply substitutions if needed
-      if M.Subst_Src /= null then
-         for J in 1 .. Cmd_Line'Length loop
-            declare
-               Found : Boolean := False;
-            begin
-               for K in M.Subst_Src'Range loop
-                  if Cmd_Line (Cmd_Line'First + J - 1).all =
-                    M.Subst_Src (K).all
-                  then
-                     Res (J) := new String'(M.Subst_Dest (K).all);
-                     Found := True;
-                     exit;
-                  end if;
-               end loop;
-
-               if not Found then
-                  Res (J) :=
-                    new String'(Cmd_Line (Cmd_Line'First + J - 1).all);
-               end if;
-            end;
-         end loop;
-
-      else
-         --  Simple copy of the initial command line
-         for J in 1 .. Cmd_Line'Length loop
-            Res (J) :=
-              new String'(Cmd_Line (Cmd_Line'First + J - 1).all);
-         end loop;
-      end if;
-
-      if Length (Model_Rec.Filter) = 0 then
-         --  Append the extra args
-         for J in 1 .. Res'Last - Cmd_Line'Length loop
-            Res (J + Cmd_Line'Length) :=
-              new String'(M.Args (M.Args'First + J - 1).all);
-         end loop;
-      else
-         declare
-            Filter : constant String := To_String (Model_Rec.Filter);
-            Index  : Natural := Cmd_Line'Length + 1;
-         begin
-            for J in M.Args'Range loop
-               if Match (Filter, M.Args (J).all) then
-                  Res (Index) := new String'(M.Args (J).all);
-                  Index := Index + 1;
-               end if;
-            end loop;
-         end;
-      end if;
-
-      return Res;
-   end Apply_Mode_Args;
 
    ---------------
    -- Get_Mains --
@@ -1024,7 +865,7 @@ package body Build_Command_Utils is
 
    function Expand_Command_Line
      (Adapter    : Abstract_Build_Command_Adapter_Access;
-      CL         : Argument_List;
+      Cmd_Line   : Command_Line;
       Target     : Target_Access;
       Server     : Server_Type;
       Force_File : Virtual_File;
@@ -1033,19 +874,14 @@ package body Build_Command_Utils is
       Background : Boolean;
       Simulate   : Boolean) return Expansion_Result
    is
+      CL      : GNAT.Strings.String_List_Access :=
+        Cmd_Line.To_String_List (Expanded => False);
       Result  : Expansion_Result;
       Final   : Expansion_Result;
       Failed  : Boolean := False;
 
    begin
       for J in CL'Range loop
-         if CL (J) = null then
-            --  This should not happen
-            Console_Insert (Adapter.all, (-"Invalid command line"),
-               Mode => Error);
-            return (Empty_Command_Line, No_File, To_Unbounded_String (""));
-         end if;
-
          declare
             Arg : constant String := CL (J).all;
          begin
@@ -1079,6 +915,7 @@ package body Build_Command_Utils is
          return (Empty_Command_Line, No_File, To_Unbounded_String (""));
       end if;
 
+      Free (CL);
       return Final;
    end Expand_Command_Line;
 
@@ -1256,7 +1093,7 @@ package body Build_Command_Utils is
 
    function Expand_Command_Line
      (Builder    : Builder_Context;
-      CL         : Argument_List;
+      CL         : Command_Line;
       Target     : Target_Access;
       Server     : Server_Type;
       Force_File : Virtual_File;
@@ -1687,9 +1524,8 @@ package body Build_Command_Utils is
          Get_Target_From_Name (Build_Registry, Target_Name);
       CL_Args   : Argument_List_Access :=
          Argument_String_To_List (Command_Line);
-      Mode_Args : Argument_List_Access :=
-         Apply_Mode_Args (Build_Registry, Get_Model (T), Mode_Name,
-                          CL_Args.all);
+      Mode_Args : constant Command_Lines.Command_Line :=
+        T.Apply_Mode_Args (Mode_Name, CL_Args.all);
       Res       : Expansion_Result;
    begin
       Initialize (Adapter.all, Proj_Registry, Proj_Type, Toolchains,
@@ -1697,12 +1533,11 @@ package body Build_Command_Utils is
                   Multi_Language_Builder);
       Adapter.Project_File := Project_File;
       Res := Expand_Command_Line
-         (Abstract_Build_Command_Adapter_Access (Adapter), Mode_Args.all, T,
+         (Abstract_Build_Command_Adapter_Access (Adapter), Mode_Args, T,
           Get_Server (Build_Registry, Mode_Name, T), Force_File, Main_File,
           Get_Mode_Subdir (Build_Registry, Mode_Name), False, Simulate);
       Res.Status := Adapter.Status;
       Free (CL_Args);
-      Free (Mode_Args);
       Free_Adapter (Adapter);
       return Res;
    end Expand_Command_Line;

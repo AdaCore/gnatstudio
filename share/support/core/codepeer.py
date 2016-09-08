@@ -356,10 +356,9 @@ creating/updating the database" />
       <substitutions>
         <substitute src="%builder" dest="codepeer-gprbuild"/>
       </substitutions>
-      <extra-args>
-        <arg>-margs</arg>
-        <arg>-k</arg>
-        <arg>--codepeer</arg>
+      <extra-args sections="-margs">
+        <arg section="-margs">-k</arg>
+        <arg section="-margs">--codepeer</arg>
       </extra-args>
     </builder-mode>
 

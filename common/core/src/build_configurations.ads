@@ -38,6 +38,7 @@ with GNAT.OS_Lib;
 
 with GNATCOLL.VFS;
 
+with Command_Lines;    use Command_Lines;
 with Remote;           use Remote;
 with Switches_Chooser; use Switches_Chooser;
 with XML_Utils;        use XML_Utils;
@@ -177,7 +178,7 @@ package Build_Configurations is
       Name        : Unbounded_String;
       Description : Unbounded_String;
       Models      : Model_List.List;
-      Args        : GNAT.OS_Lib.Argument_List_Access;
+      Args        : Command_Line;
       Subst_Src   : GNAT.OS_Lib.Argument_List_Access;
       Subst_Dest  : GNAT.OS_Lib.Argument_List_Access;
       Shadow      : Boolean := False;
@@ -427,6 +428,13 @@ package Build_Configurations is
    (Target : Target_Access; Launch_Mode : Launch_Mode_Type);
    --  Change Launch_Mode value
 
+   function Apply_Mode_Args
+     (Target   : access Target_Type;
+      Mode     : String;
+      Cmd_Line : GNAT.OS_Lib.Argument_List)
+      return Command_Line;
+   --  Applies the mode arguments to the command_line passed as argument.
+
    -----------------------
    -- XML import/export --
    -----------------------
@@ -629,6 +637,9 @@ private
    -- Types --
 
    type Target_Model_Type is tagged record
+      Registry             : Build_Config_Registry_Access;
+      --  Registry that contains given model
+
       Name                 : Unbounded_String;
       --  The name of a target model
 
@@ -648,7 +659,7 @@ private
       Switches             : Switches_Editor_Config;
       --  The configuration of switches to display in the target
 
-      Default_Command_Line : GNAT.OS_Lib.Argument_List_Access;
+      Default_Command_Line : Command_Line;
       --  The command line to use when creating targets of this model
 
       Persistent_History   : Boolean := True;
@@ -691,10 +702,10 @@ private
       Model        : Target_Model_Access;
       --  The model of which the Target is an instance
 
-      Command_Line : GNAT.OS_Lib.Argument_List_Access;
+      Command_Line : Command_Lines.Command_Line;
       --  This stores the command line between launches of the graphical editor
 
-      Default_Command_Line : GNAT.OS_Lib.Argument_List_Access;
+      Default_Command_Line : Command_Lines.Command_Line;
       --  This stores the default command line of the target, the one specified
       --  via XML.
 
@@ -703,11 +714,6 @@ private
    end record;
 
    -- Private subprograms --
-
-   procedure Set_Default_Command_Line
-     (Target               : Target_Access;
-      Default_Command_Line : GNAT.OS_Lib.Argument_List);
-   --  Set the default command line of Target.
 
    procedure Log
      (Registry : Build_Config_Registry_Access;

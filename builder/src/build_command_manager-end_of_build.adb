@@ -22,6 +22,7 @@ with GPS.Kernel.Messages;              use GPS.Kernel.Messages;
 with GPS.Location_View;
 with GPS.Main_Window;                  use GPS.Main_Window;
 with Build_Configurations;             use Build_Configurations;
+with Command_Lines;                    use Command_Lines;
 with Commands.Builder;
 with Extending_Environments;           use Extending_Environments;
 with Remote;                           use Remote;
@@ -30,6 +31,7 @@ with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
 with Gtk.Window;                       use Gtk.Window;
+with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 
 package body Build_Command_Manager.End_Of_Build is
 
@@ -66,25 +68,26 @@ package body Build_Command_Manager.End_Of_Build is
       ---------------------
 
       function Expand_Cmd_Line (CL : String) return String is
-         CL_Args   : Argument_List_Access := Argument_String_To_List (CL);
-         Mode_Args : Argument_List_Access :=
-           Apply_Mode_Args (Builder.Registry,
-                            Get_Model (Build.Target),
-                            Mode,
-                            CL_Args.all);
-         Res       : constant Expansion_Result :=
+         CL_Args    : Argument_List_Access := Argument_String_To_List (CL);
+         Mode_Args  : Command_Line :=
+           Build.Target.Apply_Mode_Args (Mode, CL_Args.all);
+
+         Res : Expansion_Result;
+
+      begin
+         Mode_Args.Append_Switches (Build.Extra_Args.all);
+
+         Res :=
            Expand_Command_Line
              (Builder,
-              Mode_Args.all & Build.Extra_Args.all,
+              Mode_Args,
               Build.Target,
               Server,
               Build.Force_File, Build.Main, Subdir, Build.Shadow,
               Simulate       => True,
               Background_Env => Build.Env);
 
-      begin
          Free (CL_Args);
-         Free (Mode_Args);
          return To_Display_String (Res.Args);
       end Expand_Cmd_Line;
 
@@ -159,51 +162,47 @@ package body Build_Command_Manager.End_Of_Build is
          end if;
 
          declare
-            CL_Mode : Argument_List_Access :=
-              Apply_Mode_Args (Builder.Registry, Get_Model (Build.Target),
-                               Mode, Command_Line.all);
+            CL_Mode    : Command_Lines.Command_Line :=
+              Build.Target.Apply_Mode_Args (Mode, Command_Line.all);
          begin
+            CL_Mode.Append_Switches (Build.Extra_Args.all);
+
             Build.Full := Expand_Command_Line
-              (Builder, CL_Mode.all & Build.Extra_Args.all, Build.Target,
+              (Builder, CL_Mode, Build.Target,
                Server, Build.Force_File, Build.Main, Subdir, False, False,
                Build.Env);
             Free (Command_Line);
-            Free (CL_Mode);
          end;
 
       else
          declare
-            CL      : constant Argument_List :=
+            CL         : constant Argument_List :=
                         Get_Command_Line_Unexpanded (Build.Target);
-            CL_Mode : Argument_List_Access :=
-              Apply_Mode_Args (Builder.Registry,
-                               Get_Model (Build.Target),
-                               Mode,
-                               CL);
+            CL_Mode    : Command_Lines.Command_Line :=
+              Build.Target.Apply_Mode_Args (Mode, CL);
          begin
             --  Sanity check that the command line contains at least one
             --  item (the command itself). It can happen that this is not
             --  the case if the user has modified the command by hand.
 
-            if CL_Mode'Length = 0 then
+            if CL_Mode.Is_Empty then
                Builder.Kernel.Messages_Window.Insert
                  (-"Command line is empty for target: " &
                     Get_Name (Build.Target),
                   Mode => Error);
-               Free (CL_Mode);
                Build.Launch := False;
                return;
             end if;
 
             --  Expand the command line
 
+            CL_Mode.Append_Switches (Build.Extra_Args.all);
+
             Build.Full := Expand_Command_Line
-              (Builder, CL_Mode.all & Build.Extra_Args.all, Build.Target,
+              (Builder, CL_Mode, Build.Target,
                Server, Build.Force_File,
                Build.Main, Subdir, Build.Background, False,
                Build.Env);
-
-            Free (CL_Mode);
          end;
       end if;
 

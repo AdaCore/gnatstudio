@@ -34,13 +34,6 @@ package body Switches_Chooser is
    --  If it is ASCII.LF, the switch takes no parameter.
    --  If it is ASCII.CR, the switch takes an optional parameter
 
-   procedure Get_Command_Line
-     (Cmd      : in out Command_Line;
-      Expanded : Boolean;
-      Result   : out GNAT.Strings.String_List_Access);
-   --  Return the arguments of the command line. Expanded indicates whether
-   --  the expanded command line, or the shortest command line, is returned.
-
    procedure Free_List (Deps : in out Dependency_Description_Access);
    --  Free the whole list of dependencies
 
@@ -246,6 +239,23 @@ package body Switches_Chooser is
             Line_Span => Line_Span,
             Col_Span  => Col_Span));
    end Set_Frame_Title;
+
+   ------------------------
+   -- Empty_Command_Line --
+   ------------------------
+
+   function Empty_Command_Line
+     (Switches : access Switches_Editor_Config_Record'Class)
+      return Command_Lines.Command_Line is
+   begin
+      if Switches = null then
+         return Result : Command_Lines.Command_Line;
+      end if;
+
+      return Result : Command_Lines.Command_Line do
+         Result.Set_Configuration (Switches.Config);
+      end return;
+   end Empty_Command_Line;
 
    -------------------
    -- Add_To_Getopt --
@@ -716,73 +726,6 @@ package body Switches_Chooser is
       end if;
    end Add_Default_Value_Dependency;
 
-   ----------------------
-   -- Get_Command_Line --
-   ----------------------
-
-   procedure Get_Command_Line
-     (Cmd      : in out Command_Line;
-      Expanded : Boolean;
-      Result   : out GNAT.Strings.String_List_Access)
-   is
-      Iter  : Command_Line_Iterator;
-      Count : Natural := 0;
-   begin
-      Start (Cmd, Iter, Expanded => Expanded);
-
-      while Has_More (Iter) loop
-         Count := Count + 1;
-
-         if Is_New_Section (Iter) then
-            Count := Count + 1;
-         end if;
-
-         if Current_Separator (Iter) = " "
-           and then Current_Parameter (Iter) /= ""
-         then
-            Count := Count + 1;
-         end if;
-
-         Next (Iter);
-      end loop;
-
-      Result := new String_List (1 .. Count);
-      Count := Result'First;
-      Start (Cmd, Iter, Expanded => Expanded);
-
-      while Has_More (Iter) loop
-         if Is_New_Section (Iter) then
-            Result (Count) := new String'(Current_Section (Iter));
-            Count := Count + 1;
-         end if;
-
-         if Current_Separator (Iter) /= " " then
-            if Current_Parameter (Iter) /= "" then
-               Result (Count) := new String'
-                 (Current_Switch (Iter)
-                  & Current_Separator (Iter)
-                  & Current_Parameter (Iter));
-
-            else
-               Result (Count) := new String'(Current_Switch (Iter));
-            end if;
-
-            Count := Count + 1;
-
-         else
-            Result (Count) := new String'(Current_Switch (Iter));
-            Count := Count + 1;
-
-            if Current_Parameter (Iter) /= "" then
-               Result (Count) := new String'(Current_Parameter (Iter));
-               Count := Count + 1;
-            end if;
-         end if;
-
-         Next (Iter);
-      end loop;
-   end Get_Command_Line;
-
    ---------------------------
    -- Root_Switches_Editors --
    ---------------------------
@@ -810,12 +753,9 @@ package body Switches_Chooser is
 
       function Get_Command_Line
         (Editor   : access Root_Switches_Editor;
-         Expanded : Boolean) return GNAT.Strings.String_List_Access
-      is
-         Result : String_List_Access;
+         Expanded : Boolean) return GNAT.Strings.String_List_Access is
       begin
-         Get_Command_Line (Editor.Cmd_Line, Expanded, Result);
-         return Result;
+         return Editor.Cmd_Line.To_String_List (Expanded);
       end Get_Command_Line;
 
       ----------------
@@ -877,7 +817,7 @@ package body Switches_Chooser is
                   --  editable anyway.
 
                   if Deps.Slave_Status then
-                     Add_Switch
+                     Append_Switch
                        (Tool.Cmd_Line,
                         Section => Deps.Slave_Section.all,
                         Switch  => Deps.Slave_Switch.all,
@@ -1050,7 +990,7 @@ package body Switches_Chooser is
                      case S.Typ is
                         when Switch_Check =>
                            if Parameter = "Checked" then
-                              Add_Switch
+                              Append_Switch
                                 (Editor.Cmd_Line,
                                  Section    => To_String (S.Section),
                                  Switch     => To_String (S.Switch),
@@ -1062,7 +1002,7 @@ package body Switches_Chooser is
                                  --  If 'unchecked' while the default state
                                  --  is 'checked', explicitely add the
                                  --  deactivation switch
-                                 Add_Switch
+                                 Append_Switch
                                    (Editor.Cmd_Line,
                                     Section    => To_String (S.Section),
                                     Switch     => To_String (S.Switch_Unset),
@@ -1092,7 +1032,7 @@ package body Switches_Chooser is
 
                         when Switch_Radio =>
                            if Boolean'Value (Parameter) then
-                              Add_Switch
+                              Append_Switch
                                 (Editor.Cmd_Line,
                                  Section    => To_String (S.Section),
                                  Switch     => To_String (S.Switch),
@@ -1111,7 +1051,7 @@ package body Switches_Chooser is
                               --  GNAT GPL 2011 is out, see other calls to
                               --  Add_Switch in this package
 
-                              Add_Switch
+                              Append_Switch
                                 (Editor.Cmd_Line,
                                  Section    => To_String (S.Section),
                                  Switch     => To_String (S.Switch),
@@ -1127,7 +1067,7 @@ package body Switches_Chooser is
 
                         when Switch_Spin =>
                            if Integer'Value (Parameter) /= S.Default then
-                              Add_Switch
+                              Append_Switch
                                 (Editor.Cmd_Line,
                                  Section    => To_String (S.Section),
                                  Switch     => To_String (S.Switch),
@@ -1152,7 +1092,7 @@ package body Switches_Chooser is
                                        To_String (S.Section),
                                        False);
                                  elsif Element (Combo).Value = S.No_Digit then
-                                    Add_Switch
+                                    Append_Switch
                                       (Editor.Cmd_Line,
                                        Section    => To_String (S.Section),
                                        Switch     => To_String (S.Switch),
@@ -1163,7 +1103,7 @@ package body Switches_Chooser is
                                        To_String (S.Section),
                                        True);
                                  else
-                                    Add_Switch
+                                    Append_Switch
                                       (Editor.Cmd_Line,
                                        Section    => To_String (S.Section),
                                        Switch     => To_String (S.Switch),
@@ -1244,11 +1184,7 @@ package body Switches_Chooser is
          --  ??? Not efficient to go back to a string
 
          Set_Configuration (Cmd2, Get_Configuration (Editor.Cmd_Line));
-         Set_Command_Line
-           (Cmd2,
-            Argument_List_To_String (Args),
-            --  Get_Switches (Editor.Config.Config, Editor.Config.Switch_Char),
-            Switch_Char => Editor.Config.Switch_Char);
+         Set_Command_Line (Cmd2, Argument_List_To_String (Args));
 
          --  The two command lines are equal if the switches are exactly in the
          --  same order. This is needed for instance when the user has typed
@@ -1294,9 +1230,7 @@ package body Switches_Chooser is
 
          Editor.Block := True;
          Set_Configuration (Editor.Cmd_Line, Editor.Config.Config);
-         Set_Command_Line
-           (Editor.Cmd_Line, Cmd_Line,
-            Switch_Char => Editor.Config.Switch_Char);
+         Set_Command_Line (Editor.Cmd_Line, Cmd_Line);
          Editor.Block := False;
          On_Command_Line_Changed (Editor);
       end On_Command_Line_Changed;
@@ -1496,8 +1430,7 @@ package body Switches_Chooser is
 
       procedure Set_Command_Line
         (Editor   : access Root_Switches_Editor;
-         Cmd_Line : String)
-      is
+         Cmd_Line : String) is
       begin
          Set_Graphical_Command_Line
            (Root_Switches_Editor'Class (Editor.all), Cmd_Line);
@@ -1512,8 +1445,7 @@ package body Switches_Chooser is
       procedure Set_Command_Line
         (Editor         : access Root_Switches_Editor;
          Cmd_Line       : GNAT.Strings.String_List;
-         Protect_Quotes : Boolean := True)
-      is
+         Protect_Quotes : Boolean := True) is
       begin
          --  ??? Not very efficient to go through a string
          Set_Command_Line
@@ -1937,8 +1869,6 @@ package body Switches_Chooser is
          Cmd_Line         : Command_Lines.Command_Line;
          Config           : constant Command_Line_Configuration :=
                               Switches_Config.Config;
-         Switch_Char      : constant Character :=
-                              Get_Switch_Char (Switches_Config);
          Switch           : constant Switch_Description :=
                               Get_Switch (Switches_Config, Filter);
          Success          : Boolean := False;
@@ -1948,9 +1878,7 @@ package body Switches_Chooser is
 
          --  Build the command line
          Set_Command_Line
-           (Cmd_Line,
-            Switches           => Argument_List_To_String (Command_Line.all),
-            Switch_Char        => Switch_Char);
+           (Cmd_Line, Argument_List_To_String (Command_Line.all));
 
          if not Before_Save and then not Matches then
             --  If we are not saving the target and if the filter does not
@@ -1978,9 +1906,7 @@ package body Switches_Chooser is
                Set_Configuration (Default_Cmd_Line, Config);
 
                Set_Command_Line
-                 (Default_Cmd_Line,
-                  Switches    => Argument_List_To_String (Default_Line),
-                  Switch_Char => Switch_Char);
+                 (Default_Cmd_Line, Argument_List_To_String (Default_Line));
 
                Start (Default_Cmd_Line, Iter, Expanded => True);
 
@@ -1993,7 +1919,7 @@ package body Switches_Chooser is
                end loop;
 
                if Has_More (Iter) then
-                  Add_Switch
+                  Append_Switch
                     (Cmd_Line,
                      Switch     => Current_Switch (Iter),
                      Parameter  => Current_Parameter (Iter),
@@ -2007,8 +1933,7 @@ package body Switches_Chooser is
 
          --  Update the command line if the filter has affected it
          if Success then
-            Get_Command_Line
-              (Cmd_Line, Expanded => False, Result => Command_Line);
+            Command_Line := Cmd_Line.To_String_List (Expanded => False);
          end if;
       end Apply_Filter_On_Command_Line;
 
