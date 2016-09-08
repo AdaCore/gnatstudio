@@ -265,8 +265,12 @@ package body GPS.Kernel.Search.Sources is
                Props    => Props);
 
             Self.Text := new String (1 .. Length);
-            To_Ada
-              (Value (UTF8, size_t (Length)), Self.Text.all, Count, False);
+
+            if Length > 0 then
+               To_Ada
+                 (Value (UTF8, size_t (Length)), Self.Text.all, Count, False);
+            end if;
+
             Free (UTF8);
          end if;
       end if;
