@@ -168,6 +168,8 @@ package Gtkada.Tree_View is
    --  should be made visible. The parent rows are automatically made visible
    --  as well.
    --  This only has an effect if a filter has been set.
+   --  This procedure needs to be called every time the model is repopulated if
+   --  a filter pattern is currently applied to the view.
 
    function Is_Visible
      (Self    : not null access Tree_View_Record;

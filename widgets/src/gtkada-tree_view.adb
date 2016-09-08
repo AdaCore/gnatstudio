@@ -524,15 +524,11 @@ package body Gtkada.Tree_View is
    is
       pragma Unreferenced (Path);
       Tree : constant Tree_View := Tree_View (Widget);
-      F    : Flags := 0;
    begin
-      if Tree.Filter /= null
-        and then (Tree.Filter_Disabled or else Tree.Is_Visible (Iter))
-      then
-         F := F or Flag_Is_Visible;
-      end if;
-
-      Set (Tree.Model, Iter, Tree.Column_Extra, Gint (F));
+      --  Make the newly inserted rows visible by default since their
+      --  visibility needs to be computed from their parents too (and thus
+      --  using the Refilter procedure).
+      Set_Flag (Tree, Iter, Flag_Is_Visible);
    end Row_Inserted_Callback;
 
    -----------------------------

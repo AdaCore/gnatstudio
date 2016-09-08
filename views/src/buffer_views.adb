@@ -630,6 +630,10 @@ package body Buffer_Views is
       end if;
 
       Expand_All (V.Tree);
+
+      if V.Tree.Pattern /= null then
+         V.Tree.Refilter;
+      end if;
    end Refresh;
 
    -----------------
