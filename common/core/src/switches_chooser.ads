@@ -606,6 +606,7 @@ private
       & "[exec_dir] exec dir from the project" & LF
       & "%fp        base name of the file to compile" & LF
       & "%TT        absolute path of main source to compile" & LF
+      & "%TP        absolute path of main source's project" & LF
       & "%T         base name of main source to compile" & LF
       & "%E" & LF
       & LF & Shared_Macros.Doc;

@@ -217,6 +217,7 @@ package body Commands.Builder.Scripts is
                            Dialog       => Mode,
                            Via_Menu     => False,
                            Main         => Create (+Main),
+                           Main_Project => No_Project,
                            Background   => False,
                            Directory    => Dir,
                            On_Exit      => On_Exit);
@@ -279,6 +280,7 @@ package body Commands.Builder.Scripts is
                         Dialog       => Default,
                         Via_Menu     => False,
                         Background   => False,
+                        Main_Project => No_Project,
                         Main         => No_File);
 
          Free (Extra_Args);
@@ -301,6 +303,7 @@ package body Commands.Builder.Scripts is
                         Dialog       => Default,
                         Via_Menu     => False,
                         Background   => False,
+                        Main_Project => No_Project,
                         Main         => No_File);
 
          Free (Extra_Args);
@@ -320,6 +323,7 @@ package body Commands.Builder.Scripts is
                         Dialog       => Default,
                         Via_Menu     => False,
                         Background   => False,
+                        Main_Project => No_Project,
                         Main         => No_File);
 
       elsif Command = "check_semantic" then
@@ -337,6 +341,7 @@ package body Commands.Builder.Scripts is
                         Dialog       => Default,
                         Via_Menu     => False,
                         Background   => False,
+                        Main_Project => No_Project,
                         Main         => No_File);
 
       elsif Command = "get_build_mode" then

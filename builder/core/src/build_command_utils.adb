@@ -109,15 +109,16 @@ package body Build_Command_Utils is
    --  Raised by Expand_Arg below
 
    function Expand_Arg
-     (Adapter     : Abstract_Build_Command_Adapter_Access;
-      Target     : Target_Access;
-      Arg        : String;
-      Server     : Server_Type;
-      Force_File : Virtual_File;
-      Main       : Virtual_File;
-      Subdir     : Filesystem_String;
-      Background : Boolean;
-      Simulate   : Boolean) return Expansion_Result;
+     (Adapter      : Abstract_Build_Command_Adapter_Access;
+      Target       : Target_Access;
+      Arg          : String;
+      Server       : Server_Type;
+      Force_File   : Virtual_File;
+      Main         : Virtual_File;
+      Main_Project : Project_Type;
+      Subdir       : Filesystem_String;
+      Background   : Boolean;
+      Simulate     : Boolean) return Expansion_Result;
    --  Expand macros contained in Arg.
    --  Caller must free the result.
    --  Will raise Invalid_Argument if an invalid/non existent argument is
@@ -412,15 +413,16 @@ package body Build_Command_Utils is
    ----------------
 
    function Expand_Arg
-     (Adapter    : Abstract_Build_Command_Adapter_Access;
-      Target     : Target_Access;
-      Arg        : String;
-      Server     : Server_Type;
-      Force_File : Virtual_File;
-      Main       : Virtual_File;
-      Subdir     : Filesystem_String;
-      Background : Boolean;
-      Simulate   : Boolean) return Expansion_Result
+     (Adapter      : Abstract_Build_Command_Adapter_Access;
+      Target       : Target_Access;
+      Arg          : String;
+      Server       : Server_Type;
+      Force_File   : Virtual_File;
+      Main         : Virtual_File;
+      Main_Project : Project_Type;
+      Subdir       : Filesystem_String;
+      Background   : Boolean;
+      Simulate     : Boolean) return Expansion_Result
    is
       Result : Expansion_Result;
 
@@ -751,6 +753,12 @@ package body Build_Command_Utils is
             end if;
          end;
 
+      elsif Starts_With (Arg, "%TP") then
+         Result.Args := Create
+           (+Main_Project.Project_Path.Full_Name &
+              --  Get_Context_Project (Adapter.all).Project_Path.Full_Name &
+              Arg (Arg'First + 3 .. Arg'Last));
+
       elsif Starts_With (Arg, "%TT") then
          if Main /= No_File then
             Result.Args :=
@@ -870,6 +878,7 @@ package body Build_Command_Utils is
       Server     : Server_Type;
       Force_File : Virtual_File;
       Main       : Virtual_File;
+      Main_Project : Project_Type;
       Subdir     : Filesystem_String;
       Background : Boolean;
       Simulate   : Boolean) return Expansion_Result
@@ -887,7 +896,7 @@ package body Build_Command_Utils is
          begin
             Result := Expand_Arg
               (Adapter, Target, CL (J).all, Server,
-               Force_File, Main, Subdir, Background, Simulate);
+               Force_File, Main, Main_Project, Subdir, Background, Simulate);
          exception
             when Invalid_Argument =>
                Console_Insert
@@ -1098,17 +1107,20 @@ package body Build_Command_Utils is
       Server     : Server_Type;
       Force_File : Virtual_File;
       Main       : Virtual_File;
+      Main_Project : Project_Type;
       Subdir     : Filesystem_String;
       Background : Boolean;
       Simulate   : Boolean) return Expansion_Result
    is
       Adapter   : Build_Command_Adapter_Access := new Build_Command_Adapter;
-      Res     : Expansion_Result;
+      Res       : Expansion_Result;
    begin
       Initialize
         (Adapter.all,
          Builder.Kernel.Registry,
-         Builder.Kernel.Registry.Tree.Root_Project,
+         (if Main_Project = No_Project
+          then Builder.Kernel.Registry.Tree.Root_Project
+          else Main_Project),
          Builder.Kernel.Get_Toolchains_Manager,
          Context_File_Information => No_File,
          Kernel_Macros_Special_Character => '%',
@@ -1118,7 +1130,7 @@ package body Build_Command_Utils is
 
       Res := Expand_Command_Line
         (Abstract_Build_Command_Adapter_Access (Adapter), CL, Target, Server,
-         Force_File, Main, Subdir, Background, Simulate);
+         Force_File, Main, Main_Project, Subdir, Background, Simulate);
       Free_Adapter (Adapter);
       return Res;
    end Expand_Command_Line;
@@ -1517,8 +1529,9 @@ package body Build_Command_Utils is
       Simulate         : Boolean;
       Trusted_Mode     : Boolean;
       Multi_Language_Builder : Multi_Language_Builder_Policy;
-      Execute_Command  : String
-      ) return Expansion_Result is
+      Execute_Command        : String)
+     return Expansion_Result
+   is
       Adapter   : Build_Command_Adapter_Access := new Build_Command_Adapter;
       T         : constant Target_Access :=
          Get_Target_From_Name (Build_Registry, Target_Name);
@@ -1534,8 +1547,12 @@ package body Build_Command_Utils is
       Adapter.Project_File := Project_File;
       Res := Expand_Command_Line
          (Abstract_Build_Command_Adapter_Access (Adapter), Mode_Args, T,
-          Get_Server (Build_Registry, Mode_Name, T), Force_File, Main_File,
-          Get_Mode_Subdir (Build_Registry, Mode_Name), False, Simulate);
+          Get_Server (Build_Registry, Mode_Name, T), Force_File,
+          Main         => Main_File,
+          Main_Project => Proj_Type,
+          Subdir       => Get_Mode_Subdir (Build_Registry, Mode_Name),
+          Background   => False,
+          Simulate     => Simulate);
       Res.Status := Adapter.Status;
       Free (CL_Args);
       Free_Adapter (Adapter);

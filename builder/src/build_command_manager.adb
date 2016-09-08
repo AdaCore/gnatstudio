@@ -27,7 +27,6 @@ with GPS.Kernel.Project;          use GPS.Kernel.Project;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Intl;                    use GPS.Intl;
 with GNATCOLL.Any_Types;          use GNATCOLL.Any_Types;
-with GNATCOLL.Projects;           use GNATCOLL.Projects;
 
 with Gtk.Text_View;               use Gtk.Text_View;
 
@@ -244,6 +243,7 @@ package body Build_Command_Manager is
       Server     : Server_Type;
       Force_File : Virtual_File;
       Main       : Virtual_File;
+      Main_Project : Project_Type;
       Subdir     : Filesystem_String;
       Background : Boolean;
       Simulate   : Boolean;
@@ -271,7 +271,12 @@ package body Build_Command_Manager is
 
       Res := Expand_Command_Line
         (Abstract_Build_Command_Adapter_Access (Adapter), CL, Target, Server,
-         Force_File, Main, Subdir, Background, Simulate);
+         Force_File,
+         Main         => Main,
+         Main_Project => Main_Project,
+         Subdir       => Subdir,
+         Background   => Background,
+         Simulate     => Simulate);
       Free_Adapter (Adapter);
       return Res;
    end Expand_Command_Line;
@@ -280,8 +285,7 @@ package body Build_Command_Manager is
    -- Execute --
    -------------
 
-   overriding
-   function Execute
+   overriding function Execute
      (Command : access Build_Command;
       Context : Interactive_Command_Context) return Command_Return_Type is
    begin
@@ -296,6 +300,7 @@ package body Build_Command_Manager is
          Synchronous  => False,
          Background   => False,
          Main         => Command.Main,
+         Main_Project => Command.Main_Project,
          Builder      => Command.Builder);
       return Success;
    end Execute;
@@ -309,6 +314,7 @@ package body Build_Command_Manager is
       Builder     : Builder_Context;
       Target_Name : String;
       Main        : Virtual_File;
+      Main_Project : Project_Type;
       Quiet       : Boolean;
       Dialog      : Dialog_Mode) is
    begin
@@ -316,6 +322,7 @@ package body Build_Command_Manager is
       Item.Builder := Builder;
       Item.Target_Name := To_Unbounded_String (Target_Name);
       Item.Main := Main;
+      Item.Main_Project := Main_Project;
       Item.Dialog := Dialog;
       Item.Quiet := Quiet;
    end Create;
@@ -330,13 +337,15 @@ package body Build_Command_Manager is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       Target_Type : constant String := To_String (Command.Target_Type);
+      Kernel      : constant Kernel_Handle :=
+        Kernel_Handle (Command.Builder.Kernel);
       Mains       : Any_Type := Compute_Build_Targets_Hook.Run
-         (Kernel => Kernel_Handle (Command.Builder.Kernel),
+         (Kernel => Kernel,
           Str    => Target_Type);
    begin
       if Mains.T /= List_Type then
          Insert
-           (Kernel_Handle (Command.Builder.Kernel),
+           (Kernel,
             (-"The command for determining the target type of target " &
              Target_Type & (-" returned a ") & Mains.T'Img
                & (-("but should return a LIST_TYPE "
@@ -366,6 +375,8 @@ package body Build_Command_Manager is
          Synchronous => False,
          Background  => False,
          Main        => Create (+Mains.List (Command.Main).Tuple (2).Str),
+         Main_Project => Get_Project_Tree (Kernel).Project_From_Name
+           (Mains.List (Command.Main).Tuple (3).Str),
          Builder     => Command.Builder);
 
       Free (Mains);

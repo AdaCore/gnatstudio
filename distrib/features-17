@@ -23,6 +23,13 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P908-014 GPS: new %TP macro in builder targets (2016-09-08)
+
+  A new macro %TP is available in builder targets. It will be replaced
+  with the name of the project file to which the main unit belongs. It
+  is for instance used when you do not want to pass the root project
+  to gprbuild, but directly the unit's own project
+
 NF-17-P902-038 GPS: outline option to hide parameter names (2016-09-05)
 
   A new setting for the Outline view allows you to hide the name of

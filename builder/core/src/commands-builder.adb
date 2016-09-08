@@ -19,7 +19,6 @@ with Ada.Strings;                      use Ada.Strings;
 with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
-with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Utils;                   use GNATCOLL.Utils;
 
 with GPS.Intl;                         use GPS.Intl;
@@ -59,7 +58,8 @@ package body Commands.Builder is
       Dialog      : Dialog_Mode;
       Via_Menu    : Boolean;
       Main        : Virtual_File;
-      Background  : Boolean;
+      Main_Project : Project_Type;
+      Background   : Boolean;
       Directory   : Virtual_File := No_File;
       On_Exit     : Subprogram_Type := null)
    is
@@ -136,8 +136,9 @@ package body Commands.Builder is
          --  Configure output parser fabrics
          Launch_Build_Command
            (Builder          => Builder,
-            Build            => (Target     => T,
-                                 Main       => Main,
+            Build            => (Target       => T,
+                                 Main         => Main,
+                                 Main_Project => Main_Project,
                                  Force_File => Force_File,
                                  Env        => Background_Env,
                                  Category   => Category_Name,
@@ -227,9 +228,16 @@ package body Commands.Builder is
          CL_Mode.Append_Switches (Result.Extra_Args.all);
 
          Result.Full := Expand_Command_Line
-           (Builder, CL_Mode, Result.Target,
-            Server, Result.Force_File, Result.Main, Subdir, Result.Background,
-            False);
+           (Builder      => Builder,
+            CL           => CL_Mode,
+            Target       => Result.Target,
+            Server       => Server,
+            Force_File   => Result.Force_File,
+            Main         => Result.Main,
+            Main_Project => Result.Main_Project,
+            Subdir       => Subdir,
+            Background   => Result.Background,
+            Simulate     => False);
       end Expand_Command_Line;
 
       Result          : Build_Information;

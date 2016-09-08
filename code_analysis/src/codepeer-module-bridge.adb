@@ -285,8 +285,9 @@ package body CodePeer.Module.Bridge is
          Dialog      => Force_No_Dialog,
          Via_Menu    => False,
          Main        => No_File,
-         Background  => True,
-         Directory   => No_File);
+         Main_Project => No_Project,
+         Background   => True,
+         Directory    => No_File);
       Free (Extra_Args (1));
       Free (Extra_Args);
    end Run_GPS_Codepeer_Bridge;

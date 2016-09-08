@@ -21,6 +21,7 @@ with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Scripts;          use GNATCOLL.Scripts;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with Build_Command_Utils;       use Build_Command_Utils;
@@ -41,6 +42,7 @@ package Commands.Builder is
       Dialog      : Dialog_Mode;
       Via_Menu    : Boolean;
       Main        : Virtual_File;
+      Main_Project : Project_Type;
       Background  : Boolean;
       Directory   : Virtual_File := No_File;
       On_Exit     : Subprogram_Type := null);
@@ -57,7 +59,11 @@ package Commands.Builder is
    --  If Synchronous is True, GPS will block until the command is terminated.
    --  See document of Dialog_Mode for details on Dialog values.
    --  Via_Menu is true iff the target was launched via the global menu.
+   --
    --  Main, if not empty, indicates the main to build.
+   --  It belongs to the Main_Project projec (important in case we are using
+   --  aggregate projects)
+   --
    --  If Directory is not empty, indicates which directory the target should
    --  be run under. Default is the project's directory.
    --  If Background, run the compile in the background.

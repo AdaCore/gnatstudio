@@ -23,6 +23,7 @@
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
+with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 with GPS.Kernel.Messages;
@@ -60,6 +61,7 @@ package Build_Command_Manager is
       Server     : Server_Type;
       Force_File : Virtual_File;
       Main       : Virtual_File;
+      Main_Project : Project_Type;
       Subdir     : Filesystem_String;
       Background : Boolean;
       Simulate   : Boolean;
@@ -78,14 +80,14 @@ package Build_Command_Manager is
    type Build_Command is new Interactive_Command with record
       Target_Name  : Unbounded_String;
       Main         : Virtual_File;
+      Main_Project : Project_Type;
       Dialog       : Dialog_Mode;
       Quiet        : Boolean;
       Builder      : Builder_Context;
    end record;
    type Build_Command_Access is access all Build_Command'Class;
 
-   overriding
-   function Execute
+   overriding function Execute
      (Command : access Build_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  See inherited documentation
@@ -95,6 +97,7 @@ package Build_Command_Manager is
       Builder     : Builder_Context;
       Target_Name : String;
       Main        : Virtual_File;
+      Main_Project : Project_Type;
       Quiet       : Boolean;
       Dialog      : Dialog_Mode);
    --  Create a build command

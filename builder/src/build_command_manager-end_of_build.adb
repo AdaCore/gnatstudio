@@ -77,15 +77,18 @@ package body Build_Command_Manager.End_Of_Build is
       begin
          Mode_Args.Append_Switches (Build.Extra_Args.all);
 
-         Res :=
-           Expand_Command_Line
-             (Builder,
-              Mode_Args,
-              Build.Target,
-              Server,
-              Build.Force_File, Build.Main, Subdir, Build.Shadow,
-              Simulate       => True,
-              Background_Env => Build.Env);
+         Res := Expand_Command_Line
+           (Builder,
+            Mode_Args,
+            Build.Target,
+            Server,
+            Build.Force_File,
+            Main           => Build.Main,
+            Main_Project   => Build.Main_Project,
+            Subdir         => Subdir,
+            Background     => Build.Shadow,
+            Simulate       => True,
+            Background_Env => Build.Env);
 
          Free (CL_Args);
          return To_Display_String (Res.Args);
@@ -169,8 +172,13 @@ package body Build_Command_Manager.End_Of_Build is
 
             Build.Full := Expand_Command_Line
               (Builder, CL_Mode, Build.Target,
-               Server, Build.Force_File, Build.Main, Subdir, False, False,
-               Build.Env);
+               Server, Build.Force_File,
+               Main           => Build.Main,
+               Main_Project   => Build.Main_Project,
+               Subdir         => Subdir,
+               Background     => False,
+               Simulate       => False,
+               Background_Env => Build.Env);
             Free (Command_Line);
          end;
 
@@ -201,8 +209,12 @@ package body Build_Command_Manager.End_Of_Build is
             Build.Full := Expand_Command_Line
               (Builder, CL_Mode, Build.Target,
                Server, Build.Force_File,
-               Build.Main, Subdir, Build.Background, False,
-               Build.Env);
+               Main           => Build.Main,
+               Main_Project   => Build.Main_Project,
+               Subdir         => Subdir,
+               Background     => Build.Background,
+               Simulate       => False,
+               Background_Env => Build.Env);
          end;
       end if;
 

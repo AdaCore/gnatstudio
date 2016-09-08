@@ -199,6 +199,7 @@ package Build_Command_Utils is
       Server     : Server_Type;
       Force_File : Virtual_File;
       Main       : Virtual_File;
+      Main_Project : Project_Type;
       Subdir     : Filesystem_String;
       Background : Boolean;
       Simulate   : Boolean) return Expansion_Result;
@@ -340,6 +341,7 @@ package Build_Command_Utils is
    type Build_Information is record
       Target      : Target_Access;
       Main        : Virtual_File;
+      Main_Project : Project_Type;
       Force_File  : Virtual_File;
       Env         : Extending_Environment;
       Category    : Unbounded_String;
@@ -370,15 +372,16 @@ package Build_Command_Utils is
    --  Cleanup internal data
 
    function Expand_Command_Line
-     (Builder    : Builder_Context;
-      CL         : Command_Line;
-      Target     : Target_Access;
-      Server     : Server_Type;
-      Force_File : Virtual_File;
-      Main       : Virtual_File;
-      Subdir     : Filesystem_String;
-      Background : Boolean;
-      Simulate   : Boolean) return Expansion_Result;
+     (Builder      : Builder_Context;
+      CL           : Command_Line;
+      Target       : Target_Access;
+      Server       : Server_Type;
+      Force_File   : Virtual_File;
+      Main         : Virtual_File;
+      Main_Project : Project_Type;
+      Subdir       : Filesystem_String;
+      Background   : Boolean;
+      Simulate     : Boolean) return Expansion_Result;
    --  Expand command line CL using trivial Build_Command_Adapter.
 
    function Expand_Command_Line

@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with Glib;                       use Glib;
@@ -75,7 +76,8 @@ package body Builder_Module is
             Dialog      => Build_Command_Utils.Force_No_Dialog,
             Via_Menu    => False,
             Background  => False,
-            Main        => GNATCOLL.VFS.No_File);
+            Main        => GNATCOLL.VFS.No_File,
+            Main_Project => GNATCOLL.Projects.No_Project);
 
       elsif Command = "compute_xref_bg" then
          Launch_Target
@@ -88,7 +90,8 @@ package body Builder_Module is
             Background  => False,
             Dialog      => Build_Command_Utils.Force_No_Dialog,
             Via_Menu    => False,
-            Main        => GNATCOLL.VFS.No_File);
+            Main         => GNATCOLL.VFS.No_File,
+            Main_Project => GNATCOLL.Projects.No_Project);
       end if;
    end Compile_Command;
 

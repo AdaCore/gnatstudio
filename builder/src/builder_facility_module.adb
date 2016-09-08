@@ -93,8 +93,9 @@ package body Builder_Facility_Module is
       (Any_Type, Any_Type_Access);
 
    type Target_And_Main is record
-      Target : Unbounded_String;
-      Main   : Virtual_File;
+      Target       : Unbounded_String;
+      Main         : Virtual_File;
+      Main_Project : Project_Type;
    end record;
 
    package String_Callback is new Gtk.Handlers.User_Callback
@@ -415,6 +416,7 @@ package body Builder_Facility_Module is
       Context     : Selection_Context;
       Menu        : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context);
       For_Files   : constant Boolean := Has_File_Information (Context);
       For_Project : constant Boolean := Has_Project_Information (Context)
         and then not For_Files
@@ -449,12 +451,12 @@ package body Builder_Facility_Module is
                           Mains.List (J).Tuple (1).Str;
                         Full    : constant String :=
                           Mains.List (J).Tuple (2).Str;
-                        Prj     : constant Virtual_File :=
-                          Create (+Mains.List (J).Tuple (3).Str);
+                        Prj     : constant Project_Type :=
+                          Get_Project_Tree (Kernel).Project_From_Name
+                          (Mains.List (J).Tuple (3).Str);
                      begin
                         if not Has_Project_Information (Context)
-                          or else
-                            Project_Information (Context).Project_Path = Prj
+                          or else Project_Information (Context) = Prj
                         then
                            Mitem := new Dynamic_Menu_Item_Record;
                            Gtk.Menu_Item.Initialize
@@ -463,8 +465,9 @@ package body Builder_Facility_Module is
                            String_Callback.Connect
                              (Mitem, Signal_Activate,
                               On_Button_Or_Menu_Click'Access,
-                              (To_Unbounded_String (Get_Name (T)),
-                               Create (+Full)));
+                              (Target => To_Unbounded_String (Get_Name (T)),
+                               Main_Project => Prj,
+                               Main => Create (+Full)));
                         end if;
                      end;
                   end if;
@@ -480,8 +483,9 @@ package body Builder_Facility_Module is
             String_Callback.Connect
               (Mitem, Signal_Activate,
                On_Button_Or_Menu_Click'Access,
-               (To_Unbounded_String (Get_Name (T)),
-                No_File));
+               (Target       => To_Unbounded_String (Get_Name (T)),
+                Main_Project => No_Project,
+                Main         => No_File));
          end if;
       end Add_Contextual;
 
@@ -730,7 +734,9 @@ package body Builder_Facility_Module is
 
       else
          Create
-           (C, Builder_Module_ID.Builder'Access, N, No_File, False, Default);
+           (C, Builder_Module_ID.Builder'Access, N,
+            Main => No_File, Main_Project => No_Project,
+            Quiet => False, Dialog => Default);
          Replace_Action
            (Main         => No_File,
             Project      => No_Project,
@@ -1253,6 +1259,7 @@ package body Builder_Facility_Module is
                            Background   => Background,
                            Dialog       => Default,
                            Via_Menu     => False,
+                           Main_Project => No_Project,
                            Main         => No_File);
             --  ??? Should we attempt to compute which is the "relevant" main
             --  in On_File_Save mode?
@@ -1398,11 +1405,18 @@ package body Builder_Facility_Module is
       pragma Unreferenced (Widget);
    begin
       Launch_Target
-        (Builder_Module_ID.Builder'Access,
-         To_String (Data.Target),
-         "",
-         No_File,
-         null, False, False, Default, False, Data.Main, False);
+        (Builder      => Builder_Module_ID.Builder'Access,
+         Target_Name  => To_String (Data.Target),
+         Mode_Name    => "",
+         Force_File   => No_File,
+         Extra_Args   => null,
+         Quiet        => False,
+         Synchronous  => False,
+         Dialog       => Default,
+         Via_Menu     => False,
+         Main         => Data.Main,
+         Main_Project => Data.Main_Project,
+         Background   => False);
    exception
       when E : others =>
          Trace (Me, E);
