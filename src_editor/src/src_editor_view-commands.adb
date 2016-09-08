@@ -41,6 +41,50 @@ package body Src_Editor_View.Commands is
       Horiz_Offset : Gint := -1);
    --  Move the iterator according to Kind. Kind should be different from page
 
+   procedure Skip_Whitespace
+     (Iter    : in out Gtk_Text_Iter;
+      Forward : Boolean);
+   --  Skip whitespaces (space and tabs). Stops at the first non-whitespace or
+   --  newline character. Does nothing if the iterator is already next to the
+   --  first non-whitespace.
+
+   ---------------------
+   -- Skip_Whitespace --
+   ---------------------
+
+   procedure Skip_Whitespace
+     (Iter    : in out Gtk_Text_Iter;
+      Forward : Boolean)
+   is
+      Success : Boolean;
+      G       : Gunichar;
+   begin
+      if Forward then
+         loop
+            G := Get_Char (Iter);
+            exit when G /= Character'Pos (' ')
+              and then G /= Character'Pos (ASCII.HT);
+
+            Forward_Char (Iter, Success);
+            exit when not Success;
+         end loop;
+
+      else
+         loop
+            Backward_Char (Iter, Success);
+            exit when not Success;
+
+            G := Get_Char (Iter);
+            exit when G /= Character'Pos (' ')
+              and then G /= Character'Pos (ASCII.HT);
+         end loop;
+
+         if Success then
+            Forward_Char (Iter, Success);
+         end if;
+      end if;
+   end Skip_Whitespace;
+
    ---------------
    -- Move_Iter --
    ---------------
@@ -51,8 +95,8 @@ package body Src_Editor_View.Commands is
       Step : Integer;
       Horiz_Offset : Gint := -1)
    is
-      Ignored : Boolean;
-      Offset  : Gint;
+      Ignored, Success : Boolean;
+      Offset           : Gint;
    begin
       case Kind is
          when Word =>
@@ -64,9 +108,32 @@ package body Src_Editor_View.Commands is
 
          when Paragraph =>
             if Step > 0 then
-               Forward_Sentence_Ends (Iter, Gint (Step), Ignored);
+               Move_Paragraph_Forward :
+               for J in 1 .. Step loop
+                  loop
+                     Forward_Line (Iter, Success);  --  to start of next line
+                     exit Move_Paragraph_Forward when not Success;
+
+                     --  We are at beginning of line, skip spaces
+                     --  If at end of line, we found a new paragraph
+                     Skip_Whitespace (Iter, Forward => True);
+                     exit when Ends_Line (Iter);
+                  end loop;
+               end loop Move_Paragraph_Forward;
+
             else
-               Backward_Sentence_Starts (Iter, -Gint (Step), Ignored);
+               Move_Paragraph_Backward :
+               for J in 1 .. abs (Step) loop
+                  loop
+                     Set_Line_Index (Iter, 0);
+                     Backward_Char (Iter, Success); --  to end of previous line
+                     exit Move_Paragraph_Backward when not Success;
+
+                     --  We are at beginning of line, skip spaces
+                     Skip_Whitespace (Iter, Forward => False);
+                     exit when Starts_Line (Iter);
+                  end loop;
+               end loop Move_Paragraph_Backward;
             end if;
 
          when Char =>

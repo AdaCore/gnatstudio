@@ -25,6 +25,18 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P907-019 GPS: paragraph navigation stops at line ends
+
+  Problem:    The actions "move to next paragraph" or "move to previous
+              paragraph" stops at the first newline character they find, like
+              a word processor would do. However, for code, the proper
+              behavior is to move to hthe next or previous blank line instead.
+
+  Status:     This was fixed in 17.0 on 2016-09-08
+
+  Workaround: Use one of the other navigation commands, maybe to move to the
+              next subprogram instead.
+
 KP-62-P903-002 GPS: Clicking on an item may scroll the Windows view to the top
 
   Problem:    When the Windows view needs to display a scrolled window in
@@ -32,7 +44,7 @@ KP-62-P903-002 GPS: Clicking on an item may scroll the Windows view to the top
               at the bottom and that requires scrolling automatically scrolls
               the Windows view to the top.
 
-  Status:     This was fixed in 17.0 on 2016-08-08
+  Status:     This was fixed in 17.0 on 2016-09-08
 
   Workaround: None.
 

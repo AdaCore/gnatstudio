@@ -72,6 +72,8 @@
 
   <key action="move to previous page">cmd-v</key>
   <key action="move to next page">control-v</key>
+  <key action="move to previous paragraph">cmd-{</key>
+  <key action="move to next paragraph">cmd-}</key>
 
   <key action="move to next window">control-x control-b</key>
   <key action="move to previous window" />
