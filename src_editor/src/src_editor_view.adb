@@ -1337,9 +1337,8 @@ package body Src_Editor_View is
       Time    : Guint)
    is
       use GNATCOLL.VFS;
-      Result : Boolean;
-      pragma Unreferenced (Result, X, Y, Info, Time);
-      View : constant Source_View   := Source_View (Self);
+      pragma Unreferenced (X, Y, Info, Time);
+      View : constant Source_View := Source_View (Self);
    begin
       if Atom_Name (Data.Get_Target) = "text/uri-list" then
          Gtk.Handlers.Emit_Stop_By_Name
@@ -1364,8 +1363,6 @@ package body Src_Editor_View is
          if not Get_Editable (Source_View (Self)) then
             Gtk.Handlers.Emit_Stop_By_Name
               (Object => Self, Name => "drag-data-received");
-
-            return;
          end if;
       end if;
    end View_On_Drag_Data_Received;
@@ -1460,7 +1457,8 @@ package body Src_Editor_View is
       View.Set_Buffer (Buffer);
 
       Gtk.Dnd.Dest_Set
-        (View, Dest_Default_All,
+        (View,
+         Dest_No_Default, --  GtkTextView handles drag_drop signal
          Target_Table,
          Gdk.Dnd.Action_Any);
 
