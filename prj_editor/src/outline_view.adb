@@ -630,9 +630,14 @@ package body Outline_View is
             Iter := Model.Get_Iter (Filter_Path);
             Path_Free (Filter_Path);
 
+            --  In the expander column ?
+
+            if Gint (X) < Cell_Area.Width then
+               null;
+
             --  If we clicked on the spec column always jump to exact location
 
-            if Gint (X) - Area.X <= Cell_Area.Width then
+            elsif Gint (X) - Area.X <= Cell_Area.Width then
                Goto_Node (Get_Info (Model, Iter), Fallback => False);
 
             --  If we clicked in the body column, assuming it was displayed
