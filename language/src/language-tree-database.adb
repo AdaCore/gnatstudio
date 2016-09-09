@@ -230,13 +230,17 @@ package body Language.Tree.Database is
       Formater : aliased Text_Profile_Formater;
       Node   : constant Construct_Tree_Iterator :=
         To_Construct_Tree_Iterator (Entity);
+      Sym      : Symbol_Table_Access;
    begin
       --  Only use the cache when we show parameter names (this also includes
       --  the computation of the Unique_Id). Otherwise, this is for display
       --  only, and is cached at other levels when needed.
 
+      Trace (Me, "MANU Get_Profile has cache="
+             & Boolean'Image
+               (Get_Construct (Node).Profile /= No_Symbol));
       if not Show_Param_Names
-        or else Get_Construct (Node).Profile_Cache = null
+        or else Get_Construct (Node).Profile = No_Symbol
       then
          Formater.Configure
            (Show_Param_Names => Show_Param_Names);
@@ -244,14 +248,18 @@ package body Language.Tree.Database is
            (Entity, Formater'Access, With_Aspects => With_Aspects);
 
          if Show_Param_Names then
-            Get_Construct (Node).Profile_Cache :=
-              new String'(Formater.Get_Text);
+            Sym := Tree_Language'Class (Lang.all).Get_Language.Symbols;
+            if Sym /= null then
+               Get_Construct (Node).Profile := Sym.Find (Formater.Get_Text);
+            else
+               Get_Construct (Node).Profile := Empty_String;
+            end if;
          end if;
 
          return Formater.Get_Text;
       end if;
 
-      return Get_Construct (Node).Profile_Cache.all;
+      return Get (Get_Construct (Node).Profile).all;
    end Get_Profile;
 
    ---------------------

@@ -65,34 +65,34 @@ begin
       exit when Info = null;
 
       declare
-         Cat : String := Info.Category'Img;
+         Cat : String := Info.Info.Category'Img;
       begin
          To_Lower (Cat (5 .. Cat'Last));
          Put (Cat (5 .. Cat'Last) & " ");
       end;
 
-      if Info.Name /= No_Symbol then
-         Put (Get (Info.Name).all & " ");
+      if Info.Info.Name /= No_Symbol then
+         Put (Get (Info.Info.Name).all & " ");
       end if;
 
-      if Info.Profile /= null then
-         Put (Reduce (Info.Profile.all) & " ");
+      if Info.Info.Profile /= No_Symbol then
+         Put (Reduce (Get (Info.Info.Profile).all) & " ");
       end if;
 
-      if Info.Is_Generic_Spec then
+      if Info.Info.Is_Generic_Spec then
          Put ("(gen) ");
-      elsif Info.Is_Declaration then
+      elsif Info.Info.Is_Declaration then
          Put ("(spec) ");
       end if;
 
       Put ("First => " &
-           Image (Info.Sloc_Start.Line) & ":" &
-           Image (Info.Sloc_Start.Column) & ", ");
+           Image (Info.Info.Sloc_Start.Line) & ":" &
+           Image (Info.Info.Sloc_Start.Column) & ", ");
       Put ("Last => " &
-           Image (Info.Sloc_End.Line) & ":" &
-           Image (Info.Sloc_End.Column) & ", ");
+           Image (Info.Info.Sloc_End.Line) & ":" &
+           Image (Info.Info.Sloc_End.Column) & ", ");
       Put ("Visibility => " &
-        Construct_Visibility'Image (Info.Visibility));
+        Construct_Visibility'Image (Info.Info.Visibility));
       New_Line;
       Info := Info.Next;
    end loop;

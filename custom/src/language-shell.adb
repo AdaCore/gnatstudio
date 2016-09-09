@@ -239,20 +239,24 @@ package body Language.Shell is
         Python_List_To_Sloc (Data.Nth_Arg (9));
 
       CInfo : constant Construct_Access := new Construct_Information'
-        (Category => Language_Category'Val (Category),
-         Category_Name => GNATCOLL.Symbols.Empty_String,
-         Is_Declaration => Is_Declaration,
-         Is_Generic_Spec => False,
-         Visibility => Construct_Visibility'Val (Visibility),
-         Name => (if Name /= "" then CList.Lang.Symbols.Find (Name)
-                  else GNATCOLL.Symbols.No_Symbol),
-         Profile => new String'(Profile),
-         Sloc_Start => Sloc_Start,
-         Sloc_End => Sloc_End,
-         Sloc_Entity => Sloc_Entity,
+        (Info     =>
+           (Category        => Language_Category'Val (Category),
+            Category_Name   => GNATCOLL.Symbols.Empty_String,
+            Is_Declaration  => Is_Declaration,
+            Is_Generic_Spec => False,
+            Visibility      => Construct_Visibility'Val (Visibility),
+            Name            =>
+              (if Name /= "" then CList.Lang.Symbols.Find (Name)
+               else GNATCOLL.Symbols.No_Symbol),
+            Profile         =>
+              (if Profile /= "" then CList.Lang.Symbols.Find (Profile)
+               else GNATCOLL.Symbols.No_Symbol),
+            Attributes      => (others => False),
+            Sloc_Start      => Sloc_Start,
+            Sloc_End        => Sloc_End,
+            Sloc_Entity     => Sloc_Entity),
          Prev => CList.CList.Last,
-         Next => null,
-         Attributes => (others => False));
+         Next => null);
    begin
       CList.CList.Last := CInfo;
 

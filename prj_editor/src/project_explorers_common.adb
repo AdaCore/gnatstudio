@@ -19,8 +19,6 @@ with Ada.Containers;            use Ada.Containers;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 
-with GNAT.Strings;              use GNAT.Strings;
-
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
@@ -514,7 +512,7 @@ package body Project_Explorers_Common is
 
       function Escape return String is
          C : Character;
-         Str : constant Cst_String_Access := Get (Construct.Name);
+         Str : constant Cst_String_Access := Get (Construct.Info.Name);
       begin
          if Str.all = "" then
             return "";
@@ -532,9 +530,10 @@ package body Project_Explorers_Common is
       Name : constant String := Reduce (Escape);
 
    begin
-      if Show_Profiles and then Construct.Profile /= null then
+      if Show_Profiles and then Construct.Info.Profile /= No_Symbol then
          return Name & " <span foreground=""#A0A0A0"">"
-           & Escape_Text (Reduce (Construct.Profile.all, Max_Profile_Length))
+           & Escape_Text
+              (Reduce (Get (Construct.Info.Profile).all, Max_Profile_Length))
            & "</span>";
       else
          return Name;
@@ -546,13 +545,8 @@ package body Project_Explorers_Common is
    --------------------
 
    function Entity_Icon_Of
-     (Construct : Construct_Information) return String is
-   begin
-      return Stock_From_Category
-        (Is_Declaration => Construct.Is_Declaration,
-         Visibility     => Construct.Visibility,
-         Category       => Construct.Category);
-   end Entity_Icon_Of;
+     (Construct : Construct_Information) return String
+     is (Entity_Icon_Of (Construct.Info));
 
    function Entity_Icon_Of
      (Construct : Simple_Construct_Information) return String
@@ -583,7 +577,7 @@ package body Project_Explorers_Common is
          Sibling := Children (Model, Parent_Iter);
          while Sibling /= Null_Iter
            and then Get_String (Model, Sibling, Display_Name_Column)
-           <= Get (Construct.Name).all
+           <= Get (Construct.Info.Name).all
          loop
             Next (Model, Sibling);
          end loop;
@@ -606,23 +600,24 @@ package body Project_Explorers_Common is
          Add_Column_Icon (Entity_Icon_Of (Construct), Columns, Values, Last);
          Add_Column_File (File, Columns, Values, Last);
 
-         if Construct.Sloc_Entity.Line /= 0 then
+         if Construct.Info.Sloc_Entity.Line /= 0 then
             Add_Column_Line
-              (Gint (Construct.Sloc_Entity.Line), Columns, Values, Last);
+              (Gint (Construct.Info.Sloc_Entity.Line), Columns, Values, Last);
             Add_Column_Column
-              (Gint (Construct.Sloc_Entity.Column), Columns, Values, Last);
+              (Gint (Construct.Info.Sloc_Entity.Column),
+               Columns, Values, Last);
          else
             Add_Column_Line
-              (Gint (Construct.Sloc_Start.Line), Columns, Values, Last);
+              (Gint (Construct.Info.Sloc_Start.Line), Columns, Values, Last);
             Add_Column_Column
-              (Gint (Construct.Sloc_Start.Column), Columns, Values, Last);
+              (Gint (Construct.Info.Sloc_Start.Column), Columns, Values, Last);
          end if;
 
          Last := Last + 1;
          Columns (Integer (Last)) := Entity_Base_Column;
          Glib.Values.Init (Values (Last), Glib.GType_String);
          Glib.Values.Set_String
-           (Values (Last), Reduce (Get (Construct.Name).all));
+           (Values (Last), Reduce (Get (Construct.Info.Name).all));
 
          Set (Model, N, Columns, Values);
 
@@ -676,18 +671,16 @@ package body Project_Explorers_Common is
          Constructs.Current := Constructs.First;
 
          while Constructs.Current /= null loop
-            if Constructs.Current.Name /= No_Symbol then
-               Category := Filter_Category (Constructs.Current.Category);
+            if Constructs.Current.Info.Name /= No_Symbol then
+               Category := Filter_Category (Constructs.Current.Info.Category);
 
                if Category /= Cat_Unknown
                  and then Category /= Cat_Parameter
                  and then Category /= Cat_Field
                then
                   declare
-                     Name     : constant String :=
-                                  Category_Name (Category,
-                                                 Constructs.Current.
-                                                   Category_Name);
+                     Name     : constant String := Category_Name
+                       (Category, Constructs.Current.Info.Category_Name);
                      Cursor   : Iter_Map.Cursor;
                      New_Iter : Gtk_Tree_Iter;
 
@@ -701,7 +694,7 @@ package body Project_Explorers_Common is
                               File_Name,
                               Category      => Category,
                               Category_Name =>
-                                Constructs.Current.Category_Name,
+                                Constructs.Current.Info.Category_Name,
                               Parent_Iter   => Node,
                               Sorted        => Sorted);
                         Insert (Categories, Name, New_Iter);

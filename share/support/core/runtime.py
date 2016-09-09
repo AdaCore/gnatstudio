@@ -2247,6 +2247,12 @@ XML = """<?xml version="1.0"?>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "i-vxinco.ads"</shell>
+   <descr>Interfaces.VxWorks.Int_Connection</descr>
+   <menu>/Help/GNAT Runtime/Interfaces/VxWorks/Int__Connection</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "system.ads"</shell>
    <descr>System</descr>
    <menu>/Help/GNAT Runtime/System/&lt;&gt;</menu>

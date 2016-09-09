@@ -34,7 +34,7 @@ package body Syntax_Diff is
       New_Construct : Construct_Access := null);
    --  Append a result to the list of results
 
-   function Profile_Image (Profile : GNAT.Strings.String_Access) return String;
+   function Profile_Image (Profile : Symbol) return String;
    --  Return a string suitable for printing Profile.
 
    function Image (Info : Construct_Access) return String;
@@ -100,7 +100,7 @@ package body Syntax_Diff is
       Link  : Result_Link;
       Prev  : Result_Link;
       R     : Result_Link;
-      Index : constant Natural := Construct.Sloc_Start.Index;
+      Index : constant Natural := Construct.Info.Sloc_Start.Index;
 
    begin
       Link := new Result_Record (Kind);
@@ -115,7 +115,7 @@ package body Syntax_Diff is
       loop
          exit when R = null;
 
-         if Index < R.Construct.Sloc_Start.Index then
+         if Index < R.Construct.Info.Sloc_Start.Index then
             if Prev = null then
                Results := Link;
             else
@@ -177,8 +177,8 @@ package body Syntax_Diff is
       loop
          exit when Info = null;
 
-         if Info.Category = C.Category
-           and then Info.Is_Declaration = C.Is_Declaration
+         if Info.Info.Category = C.Info.Category
+           and then Info.Info.Is_Declaration = C.Info.Is_Declaration
            and then Name_Equal (Info, C)
            and then Same_Scope (Info, C)
          then
@@ -208,12 +208,13 @@ package body Syntax_Diff is
 
    function Profile_Equal (C1, C2 : Construct_Access) return Boolean is
    begin
-      if C1.Profile = null then
-         return C2.Profile = null;
-      elsif C2.Profile = null then
+      if C1.Info.Profile = No_Symbol then
+         return C2.Info.Profile = No_Symbol;
+      elsif C2.Info.Profile = No_Symbol then
          return False;
       else
-         return Reduce (C1.Profile.all) = Reduce (C2.Profile.all);
+         return Reduce (Get (C1.Info.Profile).all) =
+                Reduce (Get (C2.Info.Profile).all);
       end if;
    end Profile_Equal;
 
@@ -223,7 +224,7 @@ package body Syntax_Diff is
 
    function Name_Equal (C1, C2 : Construct_Access) return Boolean is
    begin
-      return C1.Name = C2.Name;
+      return C1.Info.Name = C2.Info.Name;
    end Name_Equal;
 
    --------------
@@ -236,14 +237,14 @@ package body Syntax_Diff is
          return C2 = null;
       elsif C2 = null then
          return False;
-      elsif C1.Category = Cat_Unknown
-        or else C2.Category = Cat_Unknown
+      elsif C1.Info.Category = Cat_Unknown
+        or else C2.Info.Category = Cat_Unknown
       then
          return True;
       else
-         return C1.Category = C2.Category
+         return C1.Info.Category = C2.Info.Category
            and then Name_Equal (C1, C2)
-           and then C1.Is_Declaration = C2.Is_Declaration
+           and then C1.Info.Is_Declaration = C2.Info.Is_Declaration
            and then Profile_Equal (C1, C2);
       end if;
    end Is_Equal;
@@ -254,8 +255,8 @@ package body Syntax_Diff is
 
    function Within_Scope (C, Scope : Construct_Access) return Boolean is
    begin
-      return C.Sloc_Start.Index > Scope.Sloc_Start.Index
-        and then C.Sloc_End.Index < Scope.Sloc_End.Index;
+      return C.Info.Sloc_Start.Index > Scope.Info.Sloc_Start.Index
+        and then C.Info.Sloc_End.Index < Scope.Info.Sloc_End.Index;
    end Within_Scope;
 
    -----------------
@@ -326,19 +327,19 @@ package body Syntax_Diff is
       function Loc_Info return String is
       begin
          return "at " &
-                Image (Info.Sloc_Start.Line) & ":" &
-                Image (Info.Sloc_Start.Column);
+                Image (Info.Info.Sloc_Start.Line) & ":" &
+                Image (Info.Info.Sloc_Start.Column);
       end Loc_Info;
 
    begin
-      if Info.Name = No_Symbol then
+      if Info.Info.Name = No_Symbol then
          return Loc_Info;
-      elsif Info.Is_Declaration
-        and then Info.Category in Enclosing_Entity_Category
+      elsif Info.Info.Is_Declaration
+        and then Info.Info.Category in Enclosing_Entity_Category
       then
-         return Get (Info.Name).all & " (spec) " & Loc_Info;
+         return Get (Info.Info.Name).all & " (spec) " & Loc_Info;
       else
-         return Get (Info.Name).all & " " & Loc_Info;
+         return Get (Info.Info.Name).all & " " & Loc_Info;
       end if;
    end Image;
 
@@ -346,21 +347,19 @@ package body Syntax_Diff is
    -- Profile_Image --
    -------------------
 
-   function Profile_Image
-     (Profile : GNAT.Strings.String_Access) return String
-   is
+   function Profile_Image (Profile : Symbol) return String is
       Line_Length : constant := 72;
    begin
-      if Profile = null then
+      if Profile = No_Symbol then
          return "<none>";
       else
          declare
-            Prof : constant String := Reduce (Profile.all);
+            Prof : constant String := Reduce (Get (Profile).all);
          begin
             if Prof'Length < Line_Length then
                return Prof;
             else
-               return Profile.all;
+               return Get (Profile).all;
             end if;
          end;
       end if;
@@ -380,7 +379,7 @@ package body Syntax_Diff is
       Profile : Boolean;
 
    begin
-      if Filter_Category (Info.Category) then
+      if Filter_Category (Info.Info.Category) then
          Find_Construct (Info, C2, Info2, Profile);
 
          if Info2 = null then
@@ -389,34 +388,35 @@ package body Syntax_Diff is
 
             Upper := Upper_Scope (Info);
 
-            if Upper = null or else Upper.Category /= Cat_Unknown then
-               Add_Result (Results, Removed, Info, Info.Category);
+            if Upper = null or else Upper.Info.Category /= Cat_Unknown then
+               Add_Result (Results, Removed, Info, Info.Info.Category);
             end if;
 
-            Info.Category := Cat_Unknown;
+            Info.Info.Category := Cat_Unknown;
 
          else
             --  Mark Info2 as analyzed/found
 
-            Info2.Category := Cat_Unknown;
+            Info2.Info.Category := Cat_Unknown;
 
             --  Look for moved entities:
             --  Only consider enclosing entities, to avoid too many false
             --  matches; Also ignore small moves.
 
-            if Info.Category in Enclosing_Entity_Category
+            if Info.Info.Category in Enclosing_Entity_Category
               and then abs
-                (Info.Sloc_Start.Line - Info2.Sloc_Start.Line) > Move_Threshold
+                (Info.Info.Sloc_Start.Line - Info2.Info.Sloc_Start.Line) >
+                 Move_Threshold
               and then not
                 (Is_Equal (Info.Prev, Info2.Prev)
                  and then Is_Equal (Info.Next, Info2.Next))
             then
-               Add_Result (Results, Moved, Info, Info.Category, Info2);
+               Add_Result (Results, Moved, Info, Info.Info.Category, Info2);
             end if;
 
             if not Profile then
                Add_Result
-                 (Results, Profile_Changed, Info, Info.Category, Info2);
+                 (Results, Profile_Changed, Info, Info.Info.Category, Info2);
             end if;
          end if;
       end if;
@@ -454,10 +454,10 @@ package body Syntax_Diff is
       loop
          exit when Info = null;
 
-         if Filter_Category (Info.Category) then
+         if Filter_Category (Info.Info.Category) then
             --  Upper := Upper_Scope (Info);
             --  if Upper = null or else Upper.Category /= Cat_Unknown then
-            Add_Result (Results, Added, Info, Info.Category);
+            Add_Result (Results, Added, Info, Info.Info.Category);
          end if;
 
          Info := Info.Next;
@@ -480,13 +480,14 @@ package body Syntax_Diff is
             when Moved =>
                Put_Line ("* " & Image (R.Category) & " " &
                          Image (R.Construct) & " moved to " &
-                         Image (R.New_Construct.Sloc_Start.Line) & ":" &
-                         Image (R.New_Construct.Sloc_Start.Column));
+                         Image (R.New_Construct.Info.Sloc_Start.Line) & ":" &
+                         Image (R.New_Construct.Info.Sloc_Start.Column));
 
             when Profile_Changed =>
                Put_Line ("* profile changed for " & Image (R.Construct) & ":");
-               Put_Line ("< old: " & Profile_Image (R.Construct.Profile));
-               Put_Line ("> new: " & Profile_Image (R.New_Construct.Profile));
+               Put_Line ("< old: " & Profile_Image (R.Construct.Info.Profile));
+               Put_Line
+                  ("> new: " & Profile_Image (R.New_Construct.Info.Profile));
 
             when Added =>
                Put_Line ("+ " & Image (R.Category) & " " &

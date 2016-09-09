@@ -125,10 +125,7 @@ package body Language is
    begin
       Info := List.First;
 
-      loop
-         exit when Info = null;
-
-         GNAT.Strings.Free (Info.Profile);
+      while Info /= null loop
          Tmp := Info;
          Info := Info.Next;
          Free (Tmp);
@@ -407,30 +404,6 @@ package body Language is
       end loop;
    end Looking_At;
 
-   -------------------------------------
-   -- To_Simple_Construct_Information --
-   -------------------------------------
-
-   procedure To_Simple_Construct_Information
-     (Construct : Construct_Information;
-      Simple    : out Simple_Construct_Information;
-      Full_Copy : Boolean)
-   is
-      pragma Unreferenced (Full_Copy);
-   begin
-      Simple :=
-        (Category        => Construct.Category,
-         Is_Declaration  => Construct.Is_Declaration,
-         Is_Generic_Spec => Construct.Is_Generic_Spec,
-         Visibility      => Construct.Visibility,
-         Name            => Construct.Name,
-         Sloc_Start      => Construct.Sloc_Start,
-         Sloc_Entity     => Construct.Sloc_Entity,
-         Sloc_End        => Construct.Sloc_End,
-         Attributes      => Construct.Attributes,
-         Profile_Cache    => null);
-   end To_Simple_Construct_Information;
-
    ------------------
    -- Comment_Line --
    ------------------
@@ -570,25 +543,24 @@ package body Language is
                end if;
 
                Result.Last := Result.Current;
-               Result.Current.Category := Categories (C).Category;
-               Result.Current.Category_Name := Categories (C).Category_Name;
                Result.Size := Result.Size + 1;
 
-               if Categories (C).Make_Entry /= null then
-                  Result.Current.Name := Lang.Symbols.Find
-                    (Categories (C).Make_Entry (Buffer, Matches));
-               else
-                  Result.Current.Name := Lang.Symbols.Find
-                    (Buffer (Matches (Match_Index).First ..
-                             Matches (Match_Index).Last));
-               end if;
-
-               --  Result.Current.Profile := ???
-
-               Result.Current.Sloc_Entity    := Sloc_Entity;
-               Result.Current.Sloc_Start     := Sloc_Start;
-               Result.Current.Sloc_End       := Sloc_End;
-               Result.Current.Is_Declaration := False;
+               Result.Current.Info :=
+                 (Category        => Categories (C).Category,
+                  Category_Name   => Categories (C).Category_Name,
+                  Is_Declaration  => False,
+                  Is_Generic_Spec => False,
+                  Visibility      => Visibility_Public,
+                  Name            => Lang.Symbols.Find
+                    (if Categories (C).Make_Entry /= null
+                     then Categories (C).Make_Entry (Buffer, Matches)
+                     else Buffer (Matches (Match_Index).First ..
+                         Matches (Match_Index).Last)),
+                  Profile         => No_Symbol,
+                  Sloc_Start      => Sloc_Start,
+                  Sloc_End        => Sloc_End,
+                  Sloc_Entity     => Sloc_Entity,
+                  Attributes      => <>);
             end if;
 
             First := Matches (End_Index).Last + 1;

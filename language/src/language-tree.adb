@@ -30,8 +30,8 @@ package body Language.Tree is
 
    function Contains (Scope, Item : Construct_Access) return Boolean is
    begin
-      return Scope.Sloc_Start <= Item.Sloc_Start
-        and then Scope.Sloc_End >= Item.Sloc_End;
+      return Scope.Info.Sloc_Start <= Item.Info.Sloc_Start
+        and then Scope.Info.Sloc_End >= Item.Info.Sloc_End;
    end Contains;
 
    ----------
@@ -49,7 +49,6 @@ package body Language.Tree is
       if Tree /= null then
          for J in Tree.Contents'Range loop
             Ref := Tree.Contents (J).Referenced_Ids;
-            Free (Tree.Contents (J).Construct.Profile_Cache);
 
             while Ref.Contents /= null loop
                Garbage := Ref;
@@ -125,19 +124,7 @@ package body Language.Tree is
 
             Tree_Index := Tree_Index - 1;
 
-            if Free_List then
-               --  In this case, since we are going to free the list, we can
-               --  just get a handle on the name, and set null to the construct
-               --  name since we are not going to need it anyway.
-
-               To_Simple_Construct_Information
-                 (Parent.all, Tree.Contents (Tree_Index).Construct, False);
-               Parent.Name := No_Symbol;
-            else
-               To_Simple_Construct_Information
-                 (Parent.all, Tree.Contents (Tree_Index).Construct, True);
-            end if;
-
+            Tree.Contents (Tree_Index).Construct := Parent.Info;
             Tree.Contents (Tree_Index).Sub_Nodes_Length :=
               Start_Index - Tree_Index - 1;
 

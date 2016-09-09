@@ -51,16 +51,16 @@ begin
 
    if Info = null
      or else
-       (Info.Category /= Cat_Procedure
-        and then Info.Category /= Cat_Function
-        and then Info.Category /= Cat_Package)
-     or else Info.Name = No_Symbol
+       (Info.Info.Category /= Cat_Procedure
+        and then Info.Info.Category /= Cat_Function
+        and then Info.Info.Category /= Cat_Package)
+     or else Info.Info.Name = No_Symbol
    then
       Put_Line ("No unit found in file " & Name);
    else
-      Put ("Unit " & Get (Info.Name).all);
+      Put ("Unit " & Get (Info.Info.Name).all);
 
-      if Info.Is_Declaration then
+      if Info.Info.Is_Declaration then
          Put (" (spec)");
       else
          Put (" (body)");

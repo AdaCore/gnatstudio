@@ -1706,11 +1706,11 @@ package body Ada_Analyzer is
                Current : Construct_Access := Constructs.Current;
             begin
                while Current /= null
-                 and then Current.Category in Data_Category
-                 and then Current.Sloc_Start.Index <= Prec
-                 and then Current.Sloc_End.Index >= Prec
+                 and then Current.Info.Category in Data_Category
+                 and then Current.Info.Sloc_Start.Index <= Prec
+                 and then Current.Info.Sloc_End.Index >= Prec
                loop
-                  Current.Attributes := Value.Attributes;
+                  Current.Info.Attributes := Value.Attributes;
                   Current := Current.Prev;
                end loop;
             end;
@@ -1735,92 +1735,91 @@ package body Ada_Analyzer is
             Constructs.Last := Constructs.Current;
             Constructs.Size := Constructs.Size + 1;
 
-            Constructs.Current.Visibility := Value.Visibility;
-            Constructs.Current.Attributes := Value.Attributes;
-
-            Constructs.Current.Is_Generic_Spec := Value.Is_Generic_Param;
+            Constructs.Current.Info.Visibility := Value.Visibility;
+            Constructs.Current.Info.Attributes := Value.Attributes;
+            Constructs.Current.Info.Is_Generic_Spec := Value.Is_Generic_Param;
 
             if Value.Attributes (Ada_Tagged_Attribute) then
-               Constructs.Current.Category := Cat_Class;
+               Constructs.Current.Info.Category := Cat_Class;
 
             elsif Value.Attributes (Ada_Record_Attribute) then
                if Value.Token = Tok_Case then
                   --  A case statement inside a record
-                  Constructs.Current.Category := Cat_Case_Inside_Record;
+                  Constructs.Current.Info.Category := Cat_Case_Inside_Record;
                else
-                  Constructs.Current.Category := Cat_Structure;
+                  Constructs.Current.Info.Category := Cat_Structure;
                end if;
 
             else
                case Value.Token is
                   when Tok_Package =>
-                     Constructs.Current.Category := Cat_Package;
+                     Constructs.Current.Info.Category := Cat_Package;
                   when Tok_Procedure =>
-                     Constructs.Current.Category := Cat_Procedure;
+                     Constructs.Current.Info.Category := Cat_Procedure;
                   when Tok_Function =>
-                     Constructs.Current.Category := Cat_Function;
+                     Constructs.Current.Info.Category := Cat_Function;
                   when Tok_Task =>
-                     Constructs.Current.Category := Cat_Task;
+                     Constructs.Current.Info.Category := Cat_Task;
                   when Tok_Protected =>
-                     Constructs.Current.Category := Cat_Protected;
+                     Constructs.Current.Info.Category := Cat_Protected;
                   when Tok_Entry =>
-                     Constructs.Current.Category := Cat_Entry;
+                     Constructs.Current.Info.Category := Cat_Entry;
 
                   when Tok_Type =>
-                     Constructs.Current.Category := Cat_Type;
+                     Constructs.Current.Info.Category := Cat_Type;
                   when Tok_Subtype =>
-                     Constructs.Current.Category := Cat_Subtype;
+                     Constructs.Current.Info.Category := Cat_Subtype;
                   when Tok_For =>
-                     Constructs.Current.Category := Cat_Representation_Clause;
+                     Constructs.Current.Info.Category :=
+                       Cat_Representation_Clause;
                   when Tok_Identifier =>
                      if Is_Library_Level (Stack) then
-                        Constructs.Current.Category := Cat_Variable;
+                        Constructs.Current.Info.Category := Cat_Variable;
                      elsif Value.Variable_Kind = Parameter_Kind then
-                        Constructs.Current.Category := Cat_Parameter;
+                        Constructs.Current.Info.Category := Cat_Parameter;
                      elsif Value.Variable_Kind = Discriminant_Kind then
-                        Constructs.Current.Category := Cat_Discriminant;
+                        Constructs.Current.Info.Category := Cat_Discriminant;
                      elsif Value.Is_In_Type_Definition then
                         if Top (Stack).Type_Declaration
                           or else Top (Stack).Protected_Declaration
                           or else Top (Stack).Attributes (Ada_Record_Attribute)
                         then
-                           Constructs.Current.Category := Cat_Field;
+                           Constructs.Current.Info.Category := Cat_Field;
                         else
-                           Constructs.Current.Category := Cat_Literal;
+                           Constructs.Current.Info.Category := Cat_Literal;
                         end if;
                      else
-                        Constructs.Current.Category := Cat_Local_Variable;
+                        Constructs.Current.Info.Category := Cat_Local_Variable;
                      end if;
                   when Tok_With =>
-                     Constructs.Current.Category := Cat_With;
+                     Constructs.Current.Info.Category := Cat_With;
                   when Tok_Use =>
-                     Constructs.Current.Category := Cat_Use;
-
+                     Constructs.Current.Info.Category := Cat_Use;
                   when Tok_Loop =>
-                     Constructs.Current.Category := Cat_Loop_Statement;
+                     Constructs.Current.Info.Category := Cat_Loop_Statement;
                   when Tok_Then =>
-                     Constructs.Current.Category := Cat_If_Statement;
+                     Constructs.Current.Info.Category := Cat_If_Statement;
                   when Tok_Case =>
-                     Constructs.Current.Category := Cat_Case_Statement;
+                     Constructs.Current.Info.Category := Cat_Case_Statement;
                   when Tok_Select =>
-                     Constructs.Current.Category := Cat_Select_Statement;
+                     Constructs.Current.Info.Category := Cat_Select_Statement;
                   when Tok_Accept | Tok_Do =>
-                     Constructs.Current.Category := Cat_Accept_Statement;
+                     Constructs.Current.Info.Category := Cat_Accept_Statement;
                   when Tok_Declare =>
-                     Constructs.Current.Category := Cat_Declare_Block;
+                     Constructs.Current.Info.Category := Cat_Declare_Block;
                   when Tok_Begin =>
-                     Constructs.Current.Category := Cat_Simple_Block;
+                     Constructs.Current.Info.Category := Cat_Simple_Block;
                   when Tok_Return =>
-                     Constructs.Current.Category := Cat_Return_Block;
+                     Constructs.Current.Info.Category := Cat_Return_Block;
 
                   when Tok_Exception =>
-                     Constructs.Current.Category := Cat_Exception_Handler;
+                     Constructs.Current.Info.Category := Cat_Exception_Handler;
                   when Tok_Pragma =>
-                     Constructs.Current.Category := Cat_Pragma;
+                     Constructs.Current.Info.Category := Cat_Pragma;
                   when Tok_Arrow =>
-                     Constructs.Current.Category := Cat_Aspect;
+                     Constructs.Current.Info.Category := Cat_Aspect;
                   when others =>
-                     Constructs.Current.Category := Cat_Unknown;
+                     Constructs.Current.Info.Category := Cat_Unknown;
                end case;
             end if;
 
@@ -1830,33 +1829,36 @@ package body Ada_Analyzer is
                     Buffer (Value.Sloc_Name.Index
                               .. Value.Sloc_Name.Index + Value.Ident_Len - 1);
                begin
-                  Constructs.Current.Name := Symbols.Find (Name);
-                  Constructs.Current.Sloc_Entity := Value.Sloc_Name;
+                  Constructs.Current.Info.Name := Symbols.Find (Name);
+                  Constructs.Current.Info.Sloc_Entity := Value.Sloc_Name;
                end;
             end if;
 
-            if Value.Profile_Start /= 0 then
-               Constructs.Current.Profile :=
-                 new String'
-                   (Buffer (Value.Profile_Start .. Value.Profile_End));
-            end if;
+            --  ??? Do not store the profile here. We will in fact compute it
+            --  when needed, i.e. for tooltips (where it should include
+            --  newlines) and for the outline (where the name of parameters
+            --  might be visible or not).
+            --    if Value.Profile_Start /= 0 then
+            --       Constructs.Current.Info.Profile := Symbols.Find
+            --         (Buffer (Value.Profile_Start .. Value.Profile_End));
+            --    end if;
 
-            Constructs.Current.Sloc_Start := Value.Sloc;
+            Constructs.Current.Info.Sloc_Start := Value.Sloc;
 
             if Comments_Skipped then
-               Constructs.Current.Sloc_End := (Prev_Line, Column, Prec);
+               Constructs.Current.Info.Sloc_End := (Prev_Line, Column, Prec);
             else
-               Constructs.Current.Sloc_End := (Line_Count, Column, Prec);
+               Constructs.Current.Info.Sloc_End := (Line_Count, Column, Prec);
             end if;
 
-            case Constructs.Current.Category is
+            case Constructs.Current.Info.Category is
                when Cat_Parameter | Cat_Discriminant =>
                   --  Adjust the Sloc_End to the next semicolon for enclosing
                   --  entities and variable declarations, or next closing
                   --  parenthesis
 
                   Look_For_End_Of_Data_Declaration
-                    (Constructs.Current.Sloc_End);
+                    (Constructs.Current.Info.Sloc_End);
 
                when Cat_Variable | Cat_Local_Variable | Cat_Field |
                     Cat_Declare_Block | Cat_Simple_Block |
@@ -1869,13 +1871,13 @@ package body Ada_Analyzer is
                   --  identifier.
 
                   if Prev_Token /= Tok_For then
-                     Look_For (Constructs.Current.Sloc_End, ';');
+                     Look_For (Constructs.Current.Info.Sloc_End, ';');
                   else
-                     Constructs.Current.Sloc_End.Column :=
-                       Constructs.Current.Sloc_End.Column +
+                     Constructs.Current.Info.Sloc_End.Column :=
+                       Constructs.Current.Info.Sloc_End.Column +
                          Value.Ident_Len - 1;
-                     Constructs.Current.Sloc_End.Index :=
-                       Constructs.Current.Sloc_End.Index +
+                     Constructs.Current.Info.Sloc_End.Index :=
+                       Constructs.Current.Info.Sloc_End.Index +
                          Value.Ident_Len - 1;
                   end if;
 
@@ -1883,7 +1885,7 @@ package body Ada_Analyzer is
                   null;
             end case;
 
-            Constructs.Current.Is_Declaration :=
+            Constructs.Current.Info.Is_Declaration :=
               In_Declaration in Subprogram_Decl .. Subprogram_Aspect
                 or else Value.Type_Declaration
                 or else Value.Package_Declaration

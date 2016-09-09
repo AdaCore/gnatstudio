@@ -143,7 +143,7 @@ class MDL_Language(GPS.Language):
                         is_declaration=True,
                         visibility=constructs.VISIBILITY_PUBLIC,
                         name=it2.id,
-                        profile='no params',
+                        profile='',
                         sloc_start=sloc_start,
                         sloc_end=sloc_end,
                         sloc_entity=sloc_start)

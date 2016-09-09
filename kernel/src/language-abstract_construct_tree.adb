@@ -371,6 +371,11 @@ package body Language.Abstract_Construct_Tree is
                 (Get_File_Path (Self.Construct_File)),
             Entity           => Self.Entity,
             Show_Param_Names => Show_Param_Names);
+
+      --  In case the language has defined a profile anyway
+      elsif Construct.Profile /= No_Symbol then
+         return Get (Construct.Profile).all;
+
       else
          return "";
       end if;

@@ -528,74 +528,60 @@ package Language is
    type Construct_Information;
    type Construct_Access is access all Construct_Information;
 
-   type Construct_Information is record
-      Category       : Language_Category;
+   type Simple_Construct_Information is record
+      Category        : Language_Category;
       --  Define the kind of construct
 
       Category_Name  : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
       --  Optional category name. Used if Category = Cat_Custom.
 
-      Is_Declaration : Boolean;
+      Is_Declaration  : Boolean;
       --  Is this a declaration (e.g function specification) ?
 
       Is_Generic_Spec : Boolean := False;
       --  Is this in a generic parameter?
 
-      Visibility     : Construct_Visibility := Visibility_Public;
+      Visibility      : Construct_Visibility := Visibility_Public;
       --  Is the construct public, private or protected ?
 
-      Name           : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
+      Name            : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
       --  Name of the enclosing token. Null if not relevant for Token
       --  This is encoded in UTF-8
 
-      Profile        : Strings.String_Access;
+      Profile         : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
       --  Subprogram profile, if Category is in Subprogram_Category.
-      --  Note that even for Subprogram_Category, Profile can be null if the
+      --  This can either be set when the construct is created, or will be
+      --  computed automatically from the subprogram's name and list of
+      --  parameters.
+      --  Note that even for Subprogram_Category, Profile can be unset if the
       --  subprogram does not have any parameter.
       --  This is encoded in UTF-8.
 
-      Sloc_Start     : Source_Location;
+      Sloc_Start      : Source_Location;
       --  Location of beginning of the construct
 
-      Sloc_Entity    : Source_Location;
+      Sloc_Entity     : Source_Location;
       --  Location of beginning of the name of the entity. Only relevant if
       --  Name is non null. This is different from Sloc_Start since Sloc_Start
       --  is the beginning of the construct itself, e.g for
       --  "procedure Foo;", Sloc_Start will point to the first character, while
       --  Sloc_Entity will point to the 11th character.
 
-      Sloc_End       : Source_Location;
+      Sloc_End        : Source_Location;
       --  Location of end of the construct
+
+      Attributes      : Construct_Attribute_Map := (others => False);
+      --  Set of construct attributes
+   end record;
+
+   type Construct_Information is record
+      Info           : Simple_Construct_Information;
 
       Prev, Next     : Construct_Access;
       --  Links to the previous and the next construct info
-
-      Attributes     : Construct_Attribute_Map := (others => False);
-      --  Set of construct attributes
    end record;
    --  Information needed to define a language construct (e.g procedure,
    --  loop statement, ...).
-
-   type Simple_Construct_Information is record
-      Category        : Language_Category;
-      Is_Declaration  : Boolean;
-      Is_Generic_Spec : Boolean := False;
-      Visibility      : Construct_Visibility := Visibility_Public;
-      Name            : aliased GNATCOLL.Symbols.Symbol;
-      Sloc_Start      : aliased Source_Location;
-      Sloc_Entity     : aliased Source_Location;
-      Sloc_End        : aliased Source_Location;
-      Attributes      : aliased Construct_Attribute_Map;
-      Profile_Cache   : Ada.Strings.Unbounded.String_Access := null;
-   end record;
-   --  Same as above, but containing only the needed construct information, no
-   --  list constructions.
-
-   procedure To_Simple_Construct_Information
-     (Construct : Construct_Information;
-      Simple    : out Simple_Construct_Information;
-      Full_Copy : Boolean);
-   --  Convert a Construct_Information into a simple construct information
 
    Null_Construct_Info : constant Construct_Information;
 
@@ -916,31 +902,22 @@ private
       Token_First          => 0,
       Token_Last           => 0);
 
-   Null_Construct_Info : constant Construct_Information :=
-                           (Category        => Cat_Unknown,
-                            Category_Name   => GNATCOLL.Symbols.No_Symbol,
-                            Is_Declaration  => False,
-                            Is_Generic_Spec => False,
-                            Visibility      => Visibility_Public,
-                            Name            => GNATCOLL.Symbols.No_Symbol,
-                            Profile         => null,
-                            Sloc_Start      => (0, 0, 0),
-                            Sloc_Entity     => (0, 0, 0),
-                            Sloc_End        => (0, 0, 0),
-                            Prev            => null,
-                            Next            => null,
-                            Attributes      => (others => False));
-
    Null_Simple_Construct_Info : constant Simple_Construct_Information :=
-                                  (Category        => Cat_Unknown,
-                                   Is_Declaration  => False,
-                                   Is_Generic_Spec => False,
-                                   Visibility      => Visibility_Public,
-                                   Name          => GNATCOLL.Symbols.No_Symbol,
-                                   Sloc_Start      => (0, 0, 0),
-                                   Sloc_Entity     => (0, 0, 0),
-                                   Sloc_End        => (0, 0, 0),
-                                   Attributes      => (others => False),
-                                  Profile_Cache => null);
+     (Category        => Cat_Unknown,
+      Category_Name   => GNATCOLL.Symbols.No_Symbol,
+      Is_Declaration  => False,
+      Is_Generic_Spec => False,
+      Visibility      => Visibility_Public,
+      Name            => GNATCOLL.Symbols.No_Symbol,
+      Sloc_Start      => (0, 0, 0),
+      Sloc_Entity     => (0, 0, 0),
+      Sloc_End        => (0, 0, 0),
+      Attributes      => (others => False),
+      Profile         => GNATCOLL.Symbols.No_Symbol);
+
+   Null_Construct_Info        : constant Construct_Information :=
+     (Info => Null_Simple_Construct_Info,
+      Prev            => null,
+      Next            => null);
 
 end Language;

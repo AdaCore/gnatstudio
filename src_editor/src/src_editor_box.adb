@@ -1219,17 +1219,17 @@ package body Src_Editor_Box is
 
             if Info = null
               or else
-                (Info.Category /= Cat_Procedure
-                 and then Info.Category /= Cat_Function
-                 and then Info.Category /= Cat_Package)
-              or else Info.Name = No_Symbol
+                (Info.Info.Category /= Cat_Procedure
+                 and then Info.Info.Category /= Cat_Function
+                 and then Info.Info.Category /= Cat_Package)
+              or else Info.Info.Name = No_Symbol
             then
                --  No unit name found
                New_Base_Name := new Filesystem_String'("");
             else
                --  Info.Name is a valid Ada unit name
 
-               if Info.Is_Declaration then
+               if Info.Info.Is_Declaration then
                   Part := Unit_Spec;
                else
                   Part := Unit_Body;
@@ -1237,7 +1237,7 @@ package body Src_Editor_Box is
 
                New_Base_Name := new Filesystem_String'
                  (Get_Project (Editor.Kernel).File_From_Unit
-                    (Unit_Name       => To_Lower (Get (Info.Name).all),
+                    (Unit_Name       => To_Lower (Get (Info.Info.Name).all),
                      Part            => Part,
                      File_Must_Exist => False,
                      Language        => "ada"));

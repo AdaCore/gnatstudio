@@ -751,17 +751,17 @@ package body C_Analyzer is
                when Tok_Pound =>
                   --  Tok_Pound is used for #include
 
-                  Constructs.Current.Category := Cat_Include;
-                  Constructs.Current.Name := Symbols.Find
+                  Constructs.Current.Info.Category := Cat_Include;
+                  Constructs.Current.Info.Name := Symbols.Find
                     (Buffer (Value.Name_Start .. Value.Name_End));
-                  Constructs.Current.Sloc_Entity := Value.Sloc_Name;
+                  Constructs.Current.Info.Sloc_Entity := Value.Sloc_Name;
 
                when Tok_Do | Tok_For | Tok_While =>
-                  Constructs.Current.Category := Cat_Loop_Statement;
+                  Constructs.Current.Info.Category := Cat_Loop_Statement;
                when Tok_If | Tok_Else =>
-                  Constructs.Current.Category := Cat_If_Statement;
+                  Constructs.Current.Info.Category := Cat_If_Statement;
                when Tok_Switch =>
-                  Constructs.Current.Category := Cat_Case_Statement;
+                  Constructs.Current.Info.Category := Cat_Case_Statement;
                when Tok_Void =>
                   --  Tok_Void is used for blocks: {}
 
@@ -769,35 +769,35 @@ package body C_Analyzer is
                      --  ??? Would be nice to be able to find the parameters
                      --  of this function
 
-                     Constructs.Current.Category := Cat_Function;
-                     Constructs.Current.Name := Symbols.Find
+                     Constructs.Current.Info.Category := Cat_Function;
+                     Constructs.Current.Info.Name := Symbols.Find
                        (Buffer (Value.Name_Start .. Value.Name_End));
 
                   else
-                     Constructs.Current.Category := Cat_Simple_Block;
+                     Constructs.Current.Info.Category := Cat_Simple_Block;
                   end if;
 
                when Tok_Struct =>
-                  Constructs.Current.Category := Cat_Structure;
-                  Constructs.Current.Name := Symbols.Find
+                  Constructs.Current.Info.Category := Cat_Structure;
+                  Constructs.Current.Info.Name := Symbols.Find
                     (Buffer (Value.Name_Start .. Value.Name_End));
                when Tok_Union =>
-                  Constructs.Current.Category := Cat_Union;
-                  Constructs.Current.Name := Symbols.Find
+                  Constructs.Current.Info.Category := Cat_Union;
+                  Constructs.Current.Info.Name := Symbols.Find
                     (Buffer (Value.Name_Start .. Value.Name_End));
                when Tok_Class =>
-                  Constructs.Current.Category := Cat_Class;
-                  Constructs.Current.Name := Symbols.Find
+                  Constructs.Current.Info.Category := Cat_Class;
+                  Constructs.Current.Info.Name := Symbols.Find
                     (Buffer (Value.Name_Start .. Value.Name_End));
                when Tok_Enum =>
-                  Constructs.Current.Category := Cat_Type;
+                  Constructs.Current.Info.Category := Cat_Type;
                when others =>
-                  Constructs.Current.Category := Cat_Unknown;
+                  Constructs.Current.Info.Category := Cat_Unknown;
             end case;
 
-            Constructs.Current.Sloc_Start     := Value.Sloc;
-            Constructs.Current.Sloc_End       := (Line, Column, Index);
-            Constructs.Current.Is_Declaration := False;
+            Constructs.Current.Info.Sloc_Start     := Value.Sloc;
+            Constructs.Current.Info.Sloc_End       := (Line, Column, Index);
+            Constructs.Current.Info.Is_Declaration := False;
          end if;
       end Pop;
 

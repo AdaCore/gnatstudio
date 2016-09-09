@@ -816,30 +816,31 @@ package body Language.Custom is
       Prev, Next     : Construct_Access)
    is
       N : Symbol := No_Symbol;
-      P : GNAT.Strings.String_Access;
+      P : Symbol := No_Symbol;
    begin
       if Name /= Null_Ptr then
          N := Symbols.Find (Value (Name));
       end if;
 
       if Profile /= Null_Ptr then
-         P := new String'(Value (Profile));
+         P := Symbols.Find (Value (Profile));
       end if;
 
       Construct.all :=
-        (Category,
-         No_Symbol,
-         Is_Declaration  => Is_Declaration,
-         Visibility      => Visibility_Public,
-         Name            => N,
-         Profile         => P,
-         Sloc_Start      => Sloc_Start,
-         Sloc_Entity     => Sloc_Entity,
-         Sloc_End        => Sloc_End,
+        (Info =>
+           (Category        => Category,
+            Category_Name   => No_Symbol,
+            Is_Declaration  => Is_Declaration,
+            Visibility      => Visibility_Public,
+            Name            => N,
+            Profile         => P,
+            Attributes      => (others => False),
+            Is_Generic_Spec => False,
+            Sloc_Start      => Sloc_Start,
+            Sloc_Entity     => Sloc_Entity,
+            Sloc_End        => Sloc_End),
          Prev            => Prev,
-         Next            => Next,
-         Attributes      => (others => False),
-         Is_Generic_Spec => False);
+         Next            => Next);
    end Set_Construct;
 
    ------------------
