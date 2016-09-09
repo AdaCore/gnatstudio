@@ -7,7 +7,7 @@
 
 GPS is a lightweight, extensible IDE, intended to develop high-integrity software in **Ada** and **SPARK**, with support for **C** and **C++** as well.
 
-![GPS - Screenshot](/docs/users_guide/gps-main.png?raw=true)
+![GPS - Screenshot](/docs/users_guide/gps-main-window.png?raw=true)
 
 ## Building
 
