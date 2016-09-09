@@ -1364,70 +1364,199 @@ See also :ref:`browsers_features` for more capabilities of the GPS browsers.
 The :guilabel:`Bookmarks` view
 ==============================
 
-.. image:: bookmarks.png
+Basic usage: Creating a new bookmark
+------------------------------------
 
-Bookmarks are a convenient way to remember places in your code or
-environment so you can go back to them at some later point.  These
-bookmarks are saved automatically and restored when GPS is reloaded, so
-they exist across GPS sessions.
+The basic usage of bookmarks is as follows: you open a source editor and
+navigate to the line of interest. You can then create a new bookmark by either
+using the menu :menuselection:`Edit --> Create Bookmark` or by opening the
+:guilabel:`Bookmarks` view (:menuselection:`Tools --> Views --> Bookmarks`) and
+then clicking on the [+] button in the local toolbar. In both cases, the
+:guilabel:`Bookmarks` view is opened, a new bookmark is created and selected so
+that you can immediately change its name.
 
-Bookmarks automatically remember the exact location in an editor, not in
-terms of line and column, but in terms of which character they point to. If
-you modify the file through GPS, the bookmark is automatically updated so
-it refers to the same place.  However, if the file is modified outside of
-GPS, it will not be aware of that change and the bookmark may reference a
-different place in the file.
+.. image:: bookmark_create.png
+   :width: 300px
+   :align: center
 
-.. index:: menu; edit --> create bookmark
+The default name of bookmark is the name of the enclosing subprogram and the
+initial location of the bookmark (file:line). But you can start typing a new
+name, and press Enter to finally create the bookmark.
 
-Use the :menuselection:`Edit --> Create Bookmark` menu to create a bookmark
-at the current location (either in the editor or the browser). You can also
-use the :guilabel:`[+]` button in the local toolbar of the :guilabel:`Bookmarks`
-view, see below.
+In practice, this is really just a few clicks (one of the menu and press
+:kbd:`Enter` to use the new name), or even just two key strokes if you have set
+a keyboard shortcut for the menu, via the Preferences dialog.
 
-.. index:: menu; tools --> views --> bookmarks
+At any point in time, you can rename an existing bookmark by either clicking on
+the button in the local toolbar, or simply with a long press on the bookmark
+itself.
 
-All bookmarks you created are visible in the :menuselection:`Tools -->
-Views --> Bookmarks` view. Double-clicking on the bookmark opens an editor with
-the cursor at that position.
+Note the goto icon on the left of the editor line 1646, which indicates there
+is a bookmark there, as well as the colored mark in the editor scrollbar that
+helps navigate in the file.
 
-You can organize bookmarks in the order you want by dragging and dropping any
-of them anywhere in the :guilabel:`Bookmarks` view.
+Even though the default name of the bookmark includes a file location, the
+major benefit of the bookmarks is that they will remain at the same location as
+the text is edited. In our example, if we add a new subprogram before
+`Display_Splash_Screen`, the bookmark will still point at the line containing
+the call to `Gtk_New`, even though that line might now be 1700 for instance.
 
-The local toolbar of the :guilabel:`Bookmarks` view provides three buttons
-to act on bookmarks:
+Of course, GPS is not able to monitor changes that you might do through other
+editors, so in this case the marks might be altered and stop pointing to the
+expected location.
 
-* :guilabel:`Create`
+Adding more bookmarks
+---------------------
 
-  Similar to the :menuselection:`Edit --> Create Bookmark` menu.  Creates a
-  bookmark at the current location. After pressing that button, you can
-  type a custom name for the bookmark or just press :kbd:`enter` to keep
-  the default name, which is based on the name of the enclosing subprogram.
+We can create any number of bookmarks, and these have limited impact on
+performance. So let's do that and create a few more bookmarks, in various
+files. As you can see in the scrollbar of the editor, we have two bookmarks set
+in the file bookmark_views.adb, and we can easily jump to them by clicking on
+the color mark.
 
-* :guilabel:`Rename`
+.. image:: bookmark_add.png
+   :width: 300px
+   :align: center
 
-  Renames the currently-selected bookmark.
-  You can also execute this by pressing the mouse for a short while on any
-  of the bookmarks.
+But of course, it is much simpler to double-click inside the
+:guilabel:`Bookmarks` view itself, on the bookmark of interest to us.
 
-* :guilabel:`Remove`
+At this point, we have a rather long unorganized list of bookmarks, let's
+improve.
 
-  Deletes the selected bookmark.
+Organizing bookmarks into groups
+--------------------------------
 
-* :guilabel:`Edit Note`
+When we create new bookmarks, GPS adds them at the top of the list. We might
+want to organize them differently, which we can do simply with a drag and drop
+operation: select the bookmark, keep the mouse pressed, and move it to a better
+place in the list.
+
+.. image:: bookmark_organize.png
+   :width: 300px
+   :align: center
+
+Things become more interesting when you drop a bookmark on top of another one.
+In this case, GPS creates a group that contains the two bookmarks (and that
+basically behaves like a folder for files). The group is immediately selected
+so that you can rename it as you see fit.
+
+In our example, we created two groups, corresponding to two features we are
+working on.
+
+Groups can be nested to any depth, providing great flexibility. So let's create
+two nested groups, which we'll name TODO, beneath the two we have created. This
+is a great way to create a short todo list: one top-level group for the name of
+the feature, then below one group for the todo list, and a few additional
+bookmarks to relevant places in the code.
+
+.. image:: bookmark_unattached.png
+   :width: 300px
+   :align: center
+
+To create these additional groups, we will select the Source editor group, then
+click on the :guilabel:`Create New Group` button in the local toolbar, and type
+"TODO<enter>". This will automatically add the new group beneath Source editor.
+Let's do the same for the bookmarks groups. These two groups are empty for now.
+
+Let's add new entries to them. if we already know where code should be added to
+implement the new todo item, we can do as before: open the editor, select the
+line, then click on the :guilabel:`[+]` button. Most often, though, we don't
+yet know where the implementation will go.
+
+So we want to create an unattached bookmark. Using the name bookmark here is
+really an abuse of language, since these have no associated source location.
+But since they are visible in the :guilabel:`Bookmarks` view, it is convenient
+to name them bookmarks.
+
+To create them, let's select one of the TODO groups, then select the
+:guilabel:`Create Unattached Bookmark` in the local toolbar, and immediately
+start typing a brief description of the todo. As you can see in the screenshot,
+these bookmarks do not have a goto icon, since you cannot double click on them
+to jump to a source location.
+
+When you :guilabel:`delete` a group, all bookmarks within are also deleted. So
+once you are done implementing a feature, simply delete the corresponding group
+to clean up the bookmarks view.
+
+Adding notes
+------------
+
+The short name we gave the bookmark is not enough to list all the great ideas
+we might have for it. Fortunately, we can now add notes to bookmarks, as a way
+to store more information.
+
+.. image:: bookmark_note.png
+   :width: 300px
+   :align: center
+
+Let's select the "write a blog post" item, then click on the :guilabel:`Edit
+Note` button in the local toolbar. This opens a small dialog with a large text
+area where we can type anything we want. Press :guilabel:`Apply` to save the
+text.
+
+Note how a new tag icon was added next to the bookmark, to indicate it has more
+information. You can view this information in one of three ways:
+
+  * select the bookmark, and click again on the :guilabel:`Edit Note` button as before
+
+  * :guilabel:`double-click` on the tag icon.
   
-  Text can be added to a bookmark, as a reminder of why it was created in
-  the first place for instance. This text can be edited via this toolbar
-  button. An alternative is to select text in a source editor, and then
-  dragging and dropping it on top of a bookmark. In this case, the text
-  is added to the note, it doesn't replace it.
+  * leave the mouse hover the bookmark line. This will display a tooltip with
+    extra information on the bookmark: its name, its current location and any
+    note it might have. This is useful if you only want to quickly glance at
+    the notes for one or more bookmarks
 
-Bookmarks can be organized into groups. This is especially useful when you
-have lots of them, or bookmarks that you wish to keep for a long time. To
-create such groups, simply select a bookmark in the list, and then drag and
-drop it onto another bookmark. This will create a new group that includes
-both bookmarks. If you drop the bookmark onto an existing group, it will be
-added to that group, without creating a new one.
+Add note with drag and drop
+---------------------------
+
+Sometimes, though, you want to associate code with the note (i.e. the bookmark
+should not only point to a location, but you also want to remember the code
+that was in that location). The simplest to do this is to select the text in
+the editor, and then drag and drop the selected text directly onto the
+bookmark. This will create a note (if needed) or add to the existing note the
+full selected text.
+
+.. image:: bookmark_drag_text.png
+   :width: 300px
+   :align: center
+
+In the tooltips, we use a non-proportional font, so that the code is properly
+rendered and alignment preserved.
+
+Filtering bookmarks
+--------------------
+
+If you start creating a lot of bookmarks, and even if you have properly
+organized them into groups, it might become difficult to find them later on. So
+we added a standard filter in the local toolbar, like was done already for a
+lot of other views. As soon as you start typing text in that filter, only the
+bookmarks that match (name, location or note) are left visible, and all the
+others are hidden.
+
+.. image:: bookmark_filter.png
+   :width: 300px
+   :align: center
+
+Favorite files
+--------------
+
+GPS provides a large number of ways to navigate your code, and in particular to
+open source files. The most efficient one is likely the omni-search (the search
+field at the top-right corner).
+
+.. image:: bookmark_file.png
+   :width: 300px
+   :align: center
+
+But some users like to have a short list of favorite files that they go to
+frequently. The :guilabel:`Bookmarks` view can be used to implement this.
+
+Simply create a new group (here named `Favorite` files), and create one new
+bookmark in this group for each file you are interested in. I like to create
+the bookmark on line 1, but I always remove the line number indication in the
+name of the bookmark since the exact line is irrelevant here.
+
 
 .. index:: consoles; python console
 .. index:: consoles; shell console
