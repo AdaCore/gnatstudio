@@ -53,6 +53,27 @@ NF-17-P729-031 GPS: new trace for old Xming compatibility (2016-08-03)
   compatibility with the Xming X11 server which does not allow resizing
   transient windows, and calculates their size wrongly.
 
+NF-17-P727-029 GPS: GUI enhancements to the Omnisearch (2016-09-08)
+
+  The Omnisearch feature has received a number of enhancements:
+
+     - A default key shortcut (control-u) brings up the omnisearch
+
+     - When bringing up the omnisearch through the key shortcut
+       completions start appearing even before anything is typed
+       in the entry. This allows, for instance, using the arrow keys
+       to select one of the currently open windows.
+
+     - The size of the popup window has been increased to take up to
+       2/3 of the main window. This is useful when listing directories
+       with long names, for instance.
+
+     - The highlighting of the fuzzy-matched characters now uses a
+       color.
+
+     - If the text in the global entry has been manually deleted,
+       it no longer reappears next time the search is activated.
+
 NF-17-P725-041 GPS: new "All files from prj dirs" in Files view (2016-07-27)
 
   A new local configuration has been added to the Files view, to show all
