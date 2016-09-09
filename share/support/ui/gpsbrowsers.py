@@ -140,6 +140,7 @@ class JSON_Diagram_File():
         self.styles = Styles()
         self.templates = {}  # id -> template (JSON data)
         self.diagrams = []
+        self.index = []  # (id, children (JSON Array))
         self.factory = factory
         self.__load(data)
 
@@ -223,6 +224,9 @@ class JSON_Diagram_File():
 
         for id, t in data.get('templates', {}).iteritems():
             self.templates[id] = t
+
+        for entry in data.get('index', []):
+            self.index.append((entry['name'], entry['children']))
 
         for d in data.get('diagrams', []):
             # ??? should build diagrams only when they are displayed

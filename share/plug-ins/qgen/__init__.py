@@ -86,14 +86,20 @@ class MDL_Language(GPS.Language):
     # @overriding
     def clicked_on_construct(self, construct):
         def __on_loaded(view):
-            info = QGEN_Module.modeling_map.get_diagram_for_item(
-                view.diags, construct.id)
-            if info:
-                diagram, item = info
-                view.diags.clear_selection()
-                diagram.select(item)
-                view.set_diagram(diagram)
-                view.scroll_into_view(item)
+            diag = view.diags.get(construct.id)
+            # If the construct was a diagram, open it
+            # otherwise highlight the item
+            if diag.id == construct.id:
+                view.set_diagram(diag)
+            else:
+                info = QGEN_Module.modeling_map.get_diagram_for_item(
+                    view.diags, construct.id)
+                if info:
+                    diagram, item = info
+                    view.diags.clear_selection()
+                    diagram.select(item)
+                    view.set_diagram(diagram)
+                    view.scroll_into_view(item)
 
         QGEN_Diagram_Viewer.get_or_create(
             construct.file, on_loaded=__on_loaded)
@@ -106,50 +112,85 @@ class MDL_Language(GPS.Language):
 
         flat = GPS.Preference('outline-flat-view').get()
 
-        def process_item(item, start_offset):
+        def process_item(item, item_id, children, start_offset):
             """
             Return an item and its simulated sloc.
             The source locations are simulated so that nesting can be computed
             automatically by GPS based on the line/column info. GPS uses
             indexes when they are positive.
 
-            :return: (item, sloc_start, sloc_end)
+            :return: (item, sloc_start, sloc_end, constructs_CAT)
             """
             max_offset = start_offset
-            if hasattr(item, 'children') and item.children:
-                for child in item.children:
-                    for result in process_item(
-                            child, start_offset=max_offset + 1):
-                        max_offset = result[2][2]
-                        yield result
+            subsystem_list = []
+            # When processing the current diagram, this list stores what
+            # subsystems where already added in the Outline to avoid
+            # duplication when adding items
+            exclude_subsystem = item_id == viewer.diagram.id
 
-            if hasattr(item, 'id') and item.id != 'qgen_navigation_info':
-                yield (item,
-                       (0, 0, start_offset),
-                       (0, 0, max_offset + 1))
+            # The index entry contains a JSON_Array of entries with
+            # a 'name' and 'diagram' fields. They respectively correspond
+            # to the simulink name of the item and its corresponding JSON id
+            if children is not []:
+                for child in children:
+                    child_name = child["name"]
+                    child_id = child["diagram"]
+                    if exclude_subsystem:
+                        subsystem_list.append(child_id)
+                    for child_entry_name, child_children in viewer.diags.index:
+                        # Each child of the current diagram is processed
+                        if child_entry_name == child_id:
+                            for result in process_item(
+                                    child_name, child_id, child_children,
+                                    start_offset=max_offset + 1):
+                                max_offset = result[3][2]
+                                yield result
+                            break
+
+            # Adding all generic blocks to the outline for the current diagram
+            if exclude_subsystem:
+                for it in viewer.diagram.items:
+                    if isinstance(it, GPS.Browsers.Link):
+                        continue
+                    try:
+                        for child in it.children:
+                            # The qgen_navigation_info is a custom item
+                            # used by this plugin for navigation we do not
+                            # want to display it
+                            if child.id != 'qgen_navigation_info' and \
+                               child.id not in subsystem_list:
+                                max_offset = max_offset + 2
+                                # A block item will have the same name and id
+                                # both set to child.id
+                                yield (child.id, child.id,
+                                       (0, 0, max_offset - 1),
+                                       (0, 0, max_offset),
+                                       constructs.CAT_ENTRY)
+                    except:
+                        None
+            yield (item, item_id,
+                   (0, 0, start_offset),
+                   (0, 0, max_offset + 1),
+                   constructs.CAT_CLASS)
 
         viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
-        if not viewer:
-            viewer, created = QGEN_Diagram_Viewer.get_or_create_view(file)
 
-        if viewer:
+        if viewer and viewer.diags:
             offset = 1
-            for it in viewer.diagram.items:
-                if isinstance(it, GPS.Browsers.Link):
-                    continue
-
-                for it2, sloc_start, sloc_end in process_item(it, offset):
-                    offset = max(offset, sloc_end[2]) + 1
-                    clist.add_construct(
-                        category=constructs.CAT_CLASS,
-                        is_declaration=True,
-                        visibility=constructs.VISIBILITY_PUBLIC,
-                        name=it2.id if flat else os.path.basename(it2.id),
-                        profile='',
-                        id=it2.id,
-                        sloc_start=sloc_start,
-                        sloc_end=sloc_end,
-                        sloc_entity=sloc_start)
+            id, val = viewer.diags.index[0]
+            for it_name, it_id, sloc_start, sloc_end, type in process_item(
+                    id, id, val, 0):
+                offset = max(offset, sloc_end[2]) + 1
+                clist.add_construct(
+                    category=type,
+                    is_declaration=True,
+                    visibility=constructs.VISIBILITY_PUBLIC,
+                    name=it_name if flat else os.path.basename(it_name),
+                    profile='',
+                    id=it_id,
+                    sloc_start=sloc_start,
+                    sloc_end=sloc_end,
+                    sloc_entity=sloc_start)
 
 
 class Project_Support(object):
@@ -673,9 +714,10 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
     A Simulink diagram viewer. It might be associated with several
     diagrams, which are used as the user opens blocks.
     """
-
-    file = None   # The associated .mdl file
-    diags = None  # The list of diagrams read from this file
+    # The associated .mdl file
+    file = None
+    # The list of diagrams read from this file a JSON_Diagram_File instance
+    diags = None
 
     def __init__(self):
         # The set of callbacks to call when a new diagram is displayed
@@ -1094,15 +1136,13 @@ else:
                         # in scientific notation.
                         # Otherwise no formatting is done on the value
 
-                        # ??? Structures are going to take a lot of space
-                        # to display in general, they need another formatting
-                        # step.
                         try:
                             if (len(value) >= 7 or
                                float(value) != int(value)):
                                 value = '%.2e' % float(value)
                         except ValueError:
-                            pass
+                            if len(value) >= 7:
+                                value = '%s ..' % value[:6]
 
                         if value:
                             item_parent.show()
