@@ -4738,7 +4738,7 @@ $as_echo "$as_me:     use ADA_PROJECT_PATH to find xmlada.gpr" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: --------------------------------------------------" >&5
 $as_echo "$as_me: --------------------------------------------------" >&6;}
 
-ac_config_files="$ac_config_files shared.gpr Makefile docs/Makefile po/Makefile common/core/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/support/core/protocols.py osx_bundle/Makefile osx_bundle/scripts/install.py docs/gps-welcome.html docs/gps-welcome-public.html"
+ac_config_files="$ac_config_files shared.gpr Makefile docs/Makefile common/core/src/config.ads common/expect/Makefile common/common.gpr:common/common_${XMLADA_GPR}.gpr.in share/support/core/protocols.py osx_bundle/Makefile osx_bundle/scripts/install.py docs/gps-welcome.html docs/gps-welcome-public.html"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -5450,7 +5450,6 @@ do
     "shared.gpr") CONFIG_FILES="$CONFIG_FILES shared.gpr" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "docs/Makefile") CONFIG_FILES="$CONFIG_FILES docs/Makefile" ;;
-    "po/Makefile") CONFIG_FILES="$CONFIG_FILES po/Makefile" ;;
     "common/core/src/config.ads") CONFIG_FILES="$CONFIG_FILES common/core/src/config.ads" ;;
     "common/expect/Makefile") CONFIG_FILES="$CONFIG_FILES common/expect/Makefile" ;;
     "common/common.gpr") CONFIG_FILES="$CONFIG_FILES common/common.gpr:common/common_${XMLADA_GPR}.gpr.in" ;;
