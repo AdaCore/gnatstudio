@@ -754,7 +754,7 @@ package body Language.Tree.Database is
                  or else Get_Construct (Old_Obj).Is_Declaration /=
                  Get_Construct (New_Obj).Is_Declaration
                  or else Get_Construct (Old_Obj).Visibility /=
-                 Get_Construct (Old_Obj).Visibility
+                 Get_Construct (New_Obj).Visibility
                then
                   Current_Update_Kind := Structural_Change;
                end if;
