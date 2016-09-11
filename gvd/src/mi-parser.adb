@@ -519,7 +519,6 @@ package body MI.Parser is
            Token = "library-loaded" or else
            Token = "library-unloaded" or else
            Token = "traceframe-changed" or else
-           Token = "traceframe-changed" or else
            Token = "tsv-created" or else
            Token = "tsv-deleted" or else
            Token = "tsv-modified" or else
