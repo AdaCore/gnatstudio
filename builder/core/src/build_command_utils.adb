@@ -825,8 +825,20 @@ package body Build_Command_Utils is
 
       elsif Starts_With (Arg, "%E") then
          if Main /= No_File then
-            Result.Args := Create
-              (+To_Remote (Main, Get_Nickname (Server)).Full_Name);
+            declare
+               Executable : Virtual_File;
+            begin
+               if Get_Properties (Target).Target_Type /= "executable" then
+                  Executable := Create_From_Dir
+                    (Adapter.Context_Project.Executables_Directory,
+                     Adapter.Context_Project.Executable_Name (Main.Full_Name));
+               else
+                  Executable := Main;
+               end if;
+               Result.Args := Create
+                 (+To_Remote (Executable, Get_Nickname (Server)).Full_Name);
+            end;
+
          else
             Console_Insert
               (Adapter.all,
