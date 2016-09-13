@@ -40,6 +40,7 @@ with GPS.Main_Window;        use GPS.Main_Window;
 with Histories;              use Histories;
 with Projects;               use Projects;
 with File_Utils;             use File_Utils;
+with GUI_Utils;              use GUI_Utils;
 
 package body GPS.Menu is
    Project_History_Key : constant Histories.History_Key := "project_files";
@@ -314,7 +315,8 @@ package body GPS.Menu is
                Category    => "Internal");
             Register_Menu
               (Kernel,
-               Path   => "/Project/Recent/" & F.Display_Base_Name,
+               Path   => "/Project/Recent/" & Escape_Underscore
+                 (F.Display_Base_Name),
                Action => "open recent project: " & N.all);
             Menu_Module.Recent_Project_Actions.Append
               ("open recent project: " & N.all);
