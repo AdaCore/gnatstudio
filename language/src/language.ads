@@ -544,11 +544,11 @@ package Language is
       Visibility      : Construct_Visibility := Visibility_Public;
       --  Is the construct public, private or protected ?
 
-      Name            : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
+      Name     : aliased GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
       --  Name of the enclosing token. Null if not relevant for Token
       --  This is encoded in UTF-8
 
-      Profile         : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
+      Profile  : aliased GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
       --  Subprogram profile, if Category is in Subprogram_Category.
       --  This can either be set when the construct is created, or will be
       --  computed automatically from the subprogram's name and list of
@@ -557,25 +557,25 @@ package Language is
       --  subprogram does not have any parameter.
       --  This is encoded in UTF-8.
 
-      Sloc_Start      : Source_Location;
+      Sloc_Start      : aliased Source_Location;
       --  Location of beginning of the construct
 
-      Sloc_Entity     : Source_Location;
+      Sloc_Entity     : aliased Source_Location;
       --  Location of beginning of the name of the entity. Only relevant if
       --  Name is non null. This is different from Sloc_Start since Sloc_Start
       --  is the beginning of the construct itself, e.g for
       --  "procedure Foo;", Sloc_Start will point to the first character, while
       --  Sloc_Entity will point to the 11th character.
 
-      Sloc_End        : Source_Location;
+      Sloc_End        : aliased Source_Location;
       --  Location of end of the construct
 
-      Attributes      : Construct_Attribute_Map := (others => False);
+      Attributes      : aliased Construct_Attribute_Map := (others => False);
       --  Set of construct attributes
    end record;
 
    type Construct_Information is record
-      Info           : Simple_Construct_Information;
+      Info           : aliased Simple_Construct_Information;
 
       Prev, Next     : Construct_Access;
       --  Links to the previous and the next construct info
