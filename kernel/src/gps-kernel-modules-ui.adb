@@ -1599,6 +1599,7 @@ package body GPS.Kernel.Modules.UI is
       Item : Menu_Item_Info;
       C : Action_Elements.Cursor := Globals.Actions_To_UI.Find (Action);
    begin
+      Trace (Me, "Remove all UI for action " & Action);
       if Has_Element (C) then
          for M of Globals.Actions_To_UI.Reference (C) loop
             case M.Place is

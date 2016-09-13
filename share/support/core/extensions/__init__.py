@@ -419,8 +419,11 @@ class Menu(GPS.GUI):
         self.action.disable(not sensitive)
 
     def destroy(self):
-        # For backward compatibility only
-        pass
+        """
+        Remove the menu and all other graphical elements linked to
+        the same action.
+        """
+        self.action.destroy_ui()
 
     def hide(self):
         """Disable the action associated with the menu"""

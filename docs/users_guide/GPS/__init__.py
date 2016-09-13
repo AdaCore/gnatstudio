@@ -236,7 +236,7 @@ class Filter(object):
 # Action
 ###########################################################
 
-class Action():
+class Action(object):
     """
     This class gives access to the interactive commands in GPS. These are the
     commands to which the user can bind a key shortcut or for which we can
@@ -266,6 +266,8 @@ class Action():
     def contextual(self, path, ref='', add_before=True, group=0):
         """
         Create a new contextual menu associated with the action.
+
+        .. seealso: :func:`GPS.Action.destroy_ui` to remove this menu
 
         :param path: A string or a function(GPS.Context):string, which
            describes the path for the contextual menu.
@@ -314,6 +316,12 @@ class Action():
 
         """
 
+    def destroy_ui(self):
+        """
+        Remove all elements associated with this action (menus, toolbar
+        buttons, contextual menus,...). The action itself is not destroyed
+        """
+
     def disable(self, disabled=True):
         """
         Prevent the execution of the action, whether through menus,
@@ -356,6 +364,8 @@ class Action():
         no argument, whereas the callback for :func:`GPS.Menu` receives one
         argument.
 
+        .. seealso: :func:`GPS.Action.destroy_ui` to remove this menu
+
         :param string path: A string
             If path ends with a '-', a separator line is created, instead of a
             menu item with text.
@@ -370,6 +380,8 @@ class Action():
         """
         Add a new button in some toolbars.
         When this button is clicked, it executes the action from self.
+
+        .. seealso: :func:`GPS.Action.destroy_ui` to remove this button
 
         :param string toolbar: identifies which toolbar the action should be
            added to. The default is to add to the main toolbar for the main

@@ -1398,6 +1398,10 @@ package body Custom_Module is
                Disabled => Disabled);
          end;
 
+      elsif Command = "destroy_ui" then
+         Inst := Nth_Arg (Data, 1, Action_Class);
+         Remove_UI_For_Action (Kernel, Get_Data (Inst, Action_Class));
+
       elsif Command = "key" then
          Name_Parameters (Data, (1 => Key_Cst'Access));
          Inst := Nth_Arg (Data, 1, Action_Class);
@@ -1565,6 +1569,10 @@ package body Custom_Module is
       Kernel.Scripts.Register_Command
         ("disable",
          Params        => (1 => Param ("disabled", Optional => True)),
+         Class         => Action_Class,
+         Handler       => Action_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("destroy_ui",
          Class         => Action_Class,
          Handler       => Action_Handler'Access);
       Kernel.Scripts.Register_Command

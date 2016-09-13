@@ -79,6 +79,8 @@ Classes
 
    .. automethod:: GPS.Action.create
 
+   .. automethod:: GPS.Action.destroy_ui
+
    .. automethod:: GPS.Action.disable
 
    .. automethod:: GPS.Action.execute_if_possible
