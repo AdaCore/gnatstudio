@@ -105,9 +105,8 @@ package body Language.Shell is
       is access all Construct_List_Properties_Record;
 
    type Construct_Properties_Record is new Instance_Property_Record with record
-      Name       : Unbounded_String;
+      Info       : Semantic_Node_Info;
       File       : GNATCOLL.VFS.Virtual_File;
-      Sloc_Start : Sloc_T;
    end record;
    type Construct_Properties is access all Construct_Properties_Record;
 
@@ -145,7 +144,7 @@ package body Language.Shell is
       Prop := Construct_Properties (Get_Data (Inst, Construct_Class_Name));
 
       if Command = "name" then
-         Data.Set_Return_Value (To_String (Prop.Name));
+         Data.Set_Return_Value (Get (Prop.Info.Name).all);
 
       elsif Command = "file" then
          Data.Set_Return_Value
@@ -153,9 +152,12 @@ package body Language.Shell is
 
       elsif Command = "start" then
          Data.Set_Return_Value_As_List (Size => 3);
-         Data.Set_Return_Value (Prop.Sloc_Start.Line);
-         Data.Set_Return_Value (Integer (Prop.Sloc_Start.Column));
-         Data.Set_Return_Value (Integer (Prop.Sloc_Start.Index));
+         Data.Set_Return_Value (Prop.Info.Sloc_Start_No_Tab.Line);
+         Data.Set_Return_Value (Integer (Prop.Info.Sloc_Start_No_Tab.Column));
+         Data.Set_Return_Value (Integer (Prop.Info.Sloc_Start_No_Tab.Index));
+
+      elsif Command = "id" then
+         Data.Set_Return_Value (Get (Prop.Info.Unique_Id).all);
       end if;
    end Construct_Handler;
 
@@ -187,9 +189,8 @@ package body Language.Shell is
          Set_Data
            (Inst, Construct_Class_Name,
             Construct_Properties_Record'
-              (Name       => To_Unbounded_String (Get (Construct.Name).all),
-               File       => File,
-               Sloc_Start => Construct.Sloc_Start));
+              (Info       => Construct,
+               File       => File));
          Args.Set_Nth_Arg (1, Inst);
 
          declare
@@ -237,6 +238,7 @@ package body Language.Shell is
         Python_List_To_Sloc (Data.Nth_Arg (8));
       Sloc_Entity : constant Source_Location :=
         Python_List_To_Sloc (Data.Nth_Arg (9));
+      Id          : constant String := Data.Nth_Arg (10, "");
 
       CInfo : constant Construct_Access := new Construct_Information'
         (Info     =>
@@ -250,6 +252,9 @@ package body Language.Shell is
                else GNATCOLL.Symbols.No_Symbol),
             Profile         =>
               (if Profile /= "" then CList.Lang.Symbols.Find (Profile)
+               else GNATCOLL.Symbols.No_Symbol),
+            Unique_Id       =>
+              (if Id /= "" then CList.Lang.Symbols.Find (Id)
                else GNATCOLL.Symbols.No_Symbol),
             Attributes      => (others => False),
             Sloc_Start      => Sloc_Start,
@@ -481,17 +486,22 @@ package body Language.Shell is
         ("start",
          Class     => Construct_Class,
          Getter    => Construct_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("id",
+         Class     => Construct_Class,
+         Getter    => Construct_Handler'Access);
 
       Kernel.Scripts.Register_Command
         ("add_construct",
-         Params    => (Param ("category", False),
-                       Param ("is_declaration", False),
-                       Param ("visibility", False),
-                       Param ("name", False),
-                       Param ("profile", False),
-                       Param ("sloc_start", False),
-                       Param ("sloc_end", False),
-                       Param ("sloc_entity", False)),
+         Params    => (Param ("category"),
+                       Param ("is_declaration"),
+                       Param ("visibility"),
+                       Param ("name"),
+                       Param ("profile"),
+                       Param ("sloc_start"),
+                       Param ("sloc_end"),
+                       Param ("sloc_entity"),
+                       Param ("id", Optional => True)),
         Handler  => Add_Construct'Access,
          Class     => List_Class);
    end Setup;

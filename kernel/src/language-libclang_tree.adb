@@ -429,7 +429,7 @@ package body Language.Libclang_Tree is
 
    overriding function Profile
      (Self             : Clang_Node;
-      Show_Param_Names : Boolean := True) return String
+      Show_Param_Names : Boolean := True) return Symbol
    is
       --  ??? Does libclang supports not showing the parameter names
       pragma Unreferenced (Show_Param_Names);
@@ -441,16 +441,17 @@ package body Language.Libclang_Tree is
             Name : constant String := GNATCOLL.Symbols.Get (Self.Name).all;
          begin
             if Name'Length < Profile'Length then
-               return Profile (Name'Length + 1 .. Profile'Last);
+               return Self.Kernel.Symbols.Find
+                 (Profile (Name'Length + 1 .. Profile'Last));
             else
-               return "";
+               return Empty_String;
             end if;
          end;
       elsif K in CXCursor_FieldDecl | CXCursor_VarDecl then
-         return Spelling (Get_Type (Self.Cursor));
+         return Self.Kernel.Symbols.Find (Spelling (Get_Type (Self.Cursor)));
       end if;
 
-      return "";
+      return Empty_String;
    end Profile;
 
    -----------------
@@ -543,9 +544,9 @@ package body Language.Libclang_Tree is
    -- Unique_Id --
    ---------------
 
-   overriding function Unique_Id (Self : Clang_Node) return String is
+   overriding function Unique_Id (Self : Clang_Node) return Symbol is
    begin
-      return USR (Self.Cursor);
+      return Self.Kernel.Symbols.Find (USR (Self.Cursor));
    end Unique_Id;
 
    ------------------------

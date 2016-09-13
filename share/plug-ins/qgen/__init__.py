@@ -87,7 +87,7 @@ class MDL_Language(GPS.Language):
     def clicked_on_construct(self, construct):
         def __on_loaded(view):
             info = QGEN_Module.modeling_map.get_diagram_for_item(
-                view.diags, construct.name)
+                view.diags, construct.id)
             if info:
                 diagram, item = info
                 view.diags.clear_selection()
@@ -103,6 +103,8 @@ class MDL_Language(GPS.Language):
         """
         Provides support for the Outline view
         """
+
+        flat = GPS.Preference('outline-flat-view').get()
 
         def process_item(item, start_offset):
             """
@@ -142,8 +144,9 @@ class MDL_Language(GPS.Language):
                         category=constructs.CAT_CLASS,
                         is_declaration=True,
                         visibility=constructs.VISIBILITY_PUBLIC,
-                        name=it2.id,
+                        name=it2.id if flat else os.path.basename(it2.id),
                         profile='',
+                        id=it2.id,
                         sloc_start=sloc_start,
                         sloc_end=sloc_end,
                         sloc_entity=sloc_start)

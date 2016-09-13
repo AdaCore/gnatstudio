@@ -17,6 +17,7 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Maps.Constants;
+with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Wide_Wide_Characters.Unicode; use Ada.Wide_Wide_Characters.Unicode;
 with Ada.Characters.Wide_Wide_Latin_1;
 with GNAT.Expect;                 use GNAT.Expect;
@@ -557,6 +558,7 @@ package body Language is
                      else Buffer (Matches (Match_Index).First ..
                          Matches (Match_Index).Last)),
                   Profile         => No_Symbol,
+                  Unique_Id       => No_Symbol,
                   Sloc_Start      => Sloc_Start,
                   Sloc_End        => Sloc_End,
                   Sloc_Entity     => Sloc_Entity,

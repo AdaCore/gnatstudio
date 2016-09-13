@@ -236,9 +236,6 @@ package body Language.Tree.Database is
       --  the computation of the Unique_Id). Otherwise, this is for display
       --  only, and is cached at other levels when needed.
 
-      Trace (Me, "MANU Get_Profile has cache="
-             & Boolean'Image
-               (Get_Construct (Node).Profile /= No_Symbol));
       if not Show_Param_Names
         or else Get_Construct (Node).Profile = No_Symbol
       then

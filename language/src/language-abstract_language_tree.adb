@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with String_Utils;   use String_Utils;
-
 package body Language.Abstract_Language_Tree is
 
    ----------
@@ -29,19 +27,16 @@ package body Language.Abstract_Language_Tree is
    is
    begin
       return A : Semantic_Node_Info do
-         A := (Category   => Self.Category,
-               Name       => Self.Name,
-               Profile    =>
-                 +Self.Profile (Show_Param_Names => Show_Param_Names),
-               Unique_Id  => +Self.Unique_Id,
+         A := (Category => Self.Category,
+               Name     => Self.Name,
+               Profile  => Self.Profile (Show_Param_Names => Show_Param_Names),
+               Unique_Id  => Self.Unique_Id,
                Is_Decl    => Self.Is_Declaration,
                Visibility => Self.Visibility,
-               Sloc_Start => Self.Sloc_Start,
-               Sloc_Def   => Self.Sloc_Def);
+               Sloc_Start_No_Tab => Self.Sloc_Start,
+               Sloc_Def_No_Tab   => Self.Sloc_Def);
 
-         pragma Assert (if A.Name /= No_Symbol
-                        then A.Unique_Id /= Null_Unbounded_String
-                        else True);
+         pragma Assert (A.Name = No_Symbol or else A.Unique_Id /= No_Symbol);
       end return;
    end Info;
 

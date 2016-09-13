@@ -273,8 +273,8 @@ package body Outline_View is
             SN : constant Semantic_Node'Class :=
               Tooltip.Outline.Kernel.Get_Abstract_Tree_For_File
                 (Tooltip.Outline.File).Node_At
-              (Get_Info
-                 (Get_Outline_Model (Tooltip.Outline), Iter).Sloc_Start);
+              (Get_Info (Get_Outline_Model (Tooltip.Outline), Iter)
+               .Sloc_Start_No_Tab);
          begin
             if SN /= No_Semantic_Node then
                return Entities_Tooltips.Draw_Tooltip
@@ -436,10 +436,9 @@ package body Outline_View is
          Set_Entity_Information
            (Context       => Context,
             Entity_Name   => Get (Node_Info.Name).all,
-            Entity_Column =>
-              Node_Info.Sloc_Start.Column);
+            Entity_Column => Node_Info.Sloc_Start_No_Tab.Column);
 
-         Line := Node_Info.Sloc_Start.Line;
+         Line := Node_Info.Sloc_Start_No_Tab.Line;
       end if;
 
       Set_File_Information
@@ -563,19 +562,19 @@ package body Outline_View is
             Buffer   : constant Editor_Buffer'Class :=
               Get (Get_Buffer_Factory (View.Kernel).all,
                    View.File, False, False, False);
-            HSD : constant Boolean := Node.Sloc_Def.Index /= 0;
+            HSD : constant Boolean := Node.Sloc_Def_No_Tab.Index /= 0;
             Location : constant Editor_Location'Class :=
               (if HSD
-               then New_Location (Buffer, Node.Sloc_Def.Line,
-                                  Node.Sloc_Def.Column)
+               then New_Location (Buffer, Node.Sloc_Def_No_Tab.Line,
+                                  Node.Sloc_Def_No_Tab.Column)
                else New_Location
-                 (Buffer, Node.Sloc_Start.Line,
-                  Node.Sloc_Start.Column));
+                 (Buffer, Node.Sloc_Start_No_Tab.Line,
+                  Node.Sloc_Start_No_Tab.Column));
 
             End_Location : constant Editor_Location'Class :=
               (if HSD
-               then New_Location (Buffer, Node.Sloc_Def.Line,
-                 Node.Sloc_Def.Column
+               then New_Location (Buffer, Node.Sloc_Def_No_Tab.Line,
+                 Node.Sloc_Def_No_Tab.Column
                  + Get (Node.Name)'Length)
                else Location);
             Editor       : constant Editor_View'Class := Current_View (Buffer);

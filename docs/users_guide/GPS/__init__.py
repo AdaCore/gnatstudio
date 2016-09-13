@@ -9761,6 +9761,9 @@ class Construct(object):
     """The source location for the beginning of this construct,
        (line, column offset)"""
 
+    id = ''
+    """Unique id for the entity"""
+
 
 class ConstructsList(object):
     """
@@ -9776,7 +9779,7 @@ class ConstructsList(object):
         """Instances are only created by GPS itself"""
 
     def add_construct(self, category, is_declaration, visiblity, name,
-                      profile, sloc_start, sloc_end, sloc_entity):
+                      profile, sloc_start, sloc_end, sloc_entity, id=""):
         """
         Register a new semantic construct from the file.
 
@@ -9804,6 +9807,10 @@ class ConstructsList(object):
            ends. This is a tuple (line, column, offset).
         :param (int,int,int) sloc_entity: the position at which the entity name
            starts. This is a tuple (line, column, offset).
+        :param str id: a unique identifier for this identity. You can retrieve
+           it in calls to :func:`GPS.Language.clicked_on_construct`, and this
+           is used to identify overloading identifiers in the Outline view
+           when it is refreshed.
         """
 
 

@@ -127,7 +127,7 @@ package Language.Libclang_Tree is
 
    overriding function Profile
      (Self : Clang_Node;
-      Show_Param_Names : Boolean := True) return String;
+      Show_Param_Names : Boolean := True) return GNATCOLL.Symbols.Symbol;
 
    overriding function Is_Valid
      (Self : Clang_Node) return Boolean is (True);
@@ -156,7 +156,8 @@ package Language.Libclang_Tree is
    overriding function Visibility
      (Self : Clang_Node) return Construct_Visibility;
 
-   overriding function Unique_Id (Self : Clang_Node) return String;
+   overriding function Unique_Id
+     (Self : Clang_Node) return GNATCOLL.Symbols.Symbol;
 
    overriding function Documentation_Body
      (Self : Clang_Node) return String;

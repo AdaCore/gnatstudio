@@ -376,6 +376,10 @@ Classes
 
 
 
+   .. autoattribute:: GPS.Construct.id
+
+
+
    .. autoattribute:: GPS.Construct.name
 
 

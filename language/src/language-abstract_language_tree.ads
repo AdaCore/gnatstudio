@@ -230,7 +230,8 @@ package Language.Abstract_Language_Tree is
 
    function Profile
      (Self             : Semantic_Node;
-      Show_Param_Names : Boolean := True) return String is abstract
+      Show_Param_Names : Boolean := True)
+      return GNATCOLL.Symbols.Symbol is abstract
      with Pre'Class => (Self.Is_Valid);
    --  Return the profile for node, if applicable (typically if node is a
    --  subprogram node)
@@ -252,7 +253,7 @@ package Language.Abstract_Language_Tree is
    --  Return the file corresponding to node
 
    function Unique_Id
-     (SN : Semantic_Node) return String is abstract;
+     (SN : Semantic_Node) return GNATCOLL.Symbols.Symbol is abstract;
    --  Return the unique id for this node
 
    function Visibility
@@ -377,7 +378,8 @@ private
 
    overriding function Profile
      (Self             : Dummy_Semantic_Node;
-      Show_Param_Names : Boolean := True) return String is ("");
+      Show_Param_Names : Boolean := True) return GNATCOLL.Symbols.Symbol
+     is (GNATCOLL.Symbols.Empty_String);
 
    overriding function Definition
      (Self : Dummy_Semantic_Node) return Semantic_Node'Class is
@@ -391,7 +393,8 @@ private
    is (GNATCOLL.VFS.No_File);
 
    overriding function Unique_Id
-     (Self : Dummy_Semantic_Node) return String is ("");
+     (Self : Dummy_Semantic_Node) return GNATCOLL.Symbols.Symbol
+     is (GNATCOLL.Symbols.Empty_String);
 
    ----------------------------------
    -- Dummy_Semantic_Tree_Iterator --

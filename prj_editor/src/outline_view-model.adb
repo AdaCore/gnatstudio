@@ -33,7 +33,6 @@ with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with Basic_Types;                 use Basic_Types;
 with GPS.Search;                  use GPS.Search;
 with Language.Icons;              use Language.Icons;
-with String_Utils;                use String_Utils;
 with XML_Utils;                   use XML_Utils;
 
 package body Outline_View.Model is
@@ -107,12 +106,12 @@ package body Outline_View.Model is
       Sem_Parent : Semantic_Node'Class);
 
    function S_Unique_Id (N : Semantic_Node'Class) return String
-   is (N.Unique_Id & (if N.Is_Declaration then "" else "B"));
+   is (Get (N.Unique_Id).all & (if N.Is_Declaration then "" else "B"));
    --  Unique Id function that adds the information of whether the entity is a
    --  spec or a body
 
    function S_Unique_Id (N : Semantic_Node_Info) return String
-   is (+N.Unique_Id & (if N.Is_Decl then "" else "B"));
+   is (Get (N.Unique_Id).all & (if N.Is_Decl then "" else "B"));
    --  Unique Id function that adds the information of whether the entity is a
    --  spec or a body
 
@@ -188,7 +187,8 @@ package body Outline_View.Model is
          return
            (if Node.Is_Declaration
             then Get_Node (Model, C)
-            else Element_Or_Null (Model.Sem_To_Tree_Nodes, Node.Unique_Id));
+            else Element_Or_Null
+              (Model.Sem_To_Tree_Nodes, Get (Node.Unique_Id).all));
       end if;
 
       return null;
@@ -291,7 +291,7 @@ package body Outline_View.Model is
                  Less_Than (Get (Left.Name).all, Get (Right.Name).all)));
       else
          --  Positional sort
-         return Left.Sloc_Start < Right.Sloc_Start;
+         return Left.Sloc_Start_No_Tab < Right.Sloc_Start_No_Tab;
       end if;
    end Lt;
 
@@ -693,7 +693,7 @@ package body Outline_View.Model is
          if Info.Name /= No_Symbol then
             if Self.Filter.Show_Profile then
                declare
-                  Profile : constant String := +Info.Profile;
+                  Profile : constant String := Get (Info.Profile).all;
                begin
                   Set_String
                     (Value, Escape_Text (Get (Info.Name).all)

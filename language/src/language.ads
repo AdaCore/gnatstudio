@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Maps;       use Ada.Strings.Maps;
-with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 with Case_Handling;
 with GNAT.Expect;
 with GNAT.Regpat;            use GNAT;
@@ -548,6 +547,11 @@ package Language is
       --  Name of the enclosing token. Null if not relevant for Token
       --  This is encoded in UTF-8
 
+      Unique_Id       : GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
+      --  A unique identifier for this entity. Used to identify the id in the
+      --  Outline view, between refreshes. If this is unspecified, one will be
+      --  computed from the name and the profile info.
+
       Profile  : aliased GNATCOLL.Symbols.Symbol := GNATCOLL.Symbols.No_Symbol;
       --  Subprogram profile, if Category is in Subprogram_Category.
       --  This can either be set when the construct is created, or will be
@@ -617,11 +621,11 @@ package Language is
       Name       : GNATCOLL.Symbols.Symbol;
       --  The name of this node if applicable
 
-      Profile    : Unbounded_String;
+      Profile    : GNATCOLL.Symbols.Symbol;
       --  The profile of this node, if this node is a subprogram
       --  declaration/body
 
-      Unique_Id  : Unbounded_String;
+      Unique_Id  : GNATCOLL.Symbols.Symbol;
       --  The unique Id of this node
 
       Is_Decl    : Boolean;
@@ -630,12 +634,14 @@ package Language is
       Visibility : Construct_Visibility;
       --  Visibility of this node at a package level
 
-      Sloc_Start : Sloc_T;
-      --  The starting source location of this node
+      Sloc_Start_No_Tab : Sloc_T;
+      --  The starting source location of this node.
+      --  Tabs have been resolved to real columns
 
-      Sloc_Def   : Sloc_T;
+      Sloc_Def_No_Tab   : Sloc_T;
       --  The source location where the defining identifier of this node is, if
       --  there is one
+      --  Tabs have been resolved to real columns
    end record;
    --  This type represents the static information about a node.
    --  It is a copy of the information stored in a tree. This copy can outlive
@@ -643,8 +649,8 @@ package Language is
    --  information outside the tree.
 
    No_Node_Info : Semantic_Node_Info :=
-     (Cat_Unknown, No_Symbol, Null_Unbounded_String,
-      Null_Unbounded_String, False, Visibility_Public, (0, 0, 0), (0, 0, 0));
+     (Cat_Unknown, No_Symbol, No_Symbol, No_Symbol,
+      False, Visibility_Public, (0, 0, 0), (0, 0, 0));
 
    procedure Parse_Constructs
      (Lang   : access Language_Root;
@@ -909,6 +915,7 @@ private
       Is_Generic_Spec => False,
       Visibility      => Visibility_Public,
       Name            => GNATCOLL.Symbols.No_Symbol,
+      Unique_Id       => GNATCOLL.Symbols.No_Symbol,
       Sloc_Start      => (0, 0, 0),
       Sloc_Entity     => (0, 0, 0),
       Sloc_End        => (0, 0, 0),

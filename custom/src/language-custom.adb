@@ -834,6 +834,7 @@ package body Language.Custom is
             Visibility      => Visibility_Public,
             Name            => N,
             Profile         => P,
+            Unique_Id       => No_Symbol,
             Attributes      => (others => False),
             Is_Generic_Spec => False,
             Sloc_Start      => Sloc_Start,

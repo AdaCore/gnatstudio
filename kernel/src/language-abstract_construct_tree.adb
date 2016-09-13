@@ -325,20 +325,31 @@ package body Language.Abstract_Construct_Tree is
    -- Unique_Id --
    ---------------
 
-   overriding function Unique_Id (Self : Construct_Node) return String is
-      P : constant Semantic_Node'Class := Self.Parent;
-      Base_Id : constant String :=
-        To_Lower (Get (Self.Name).all)
-        & To_Lower (Self.Profile (Show_Param_Names => True))
-        & Self.Category'Img;
+   overriding function Unique_Id
+     (Self : Construct_Node) return GNATCOLL.Symbols.Symbol
+   is
+      Construct : constant access Simple_Construct_Information :=
+        Get_Construct (Self);
    begin
-      if P = No_Semantic_Node
-        or else Self.Entity = Construct_Node (P).Entity
-      then
-         return Base_Id;
-      else
-         return P.Unique_Id & Base_Id;
+      if Construct.Unique_Id /= No_Symbol then
+         return Construct.Unique_Id;
       end if;
+
+      declare
+         P : constant Semantic_Node'Class := Self.Parent;
+         Base_Id : constant String :=
+           To_Lower (Get (Self.Name).all)
+           & To_Lower (Get (Self.Profile (Show_Param_Names => True)).all)
+           & Self.Category'Img;
+      begin
+         if P = No_Semantic_Node
+           or else Self.Entity = Construct_Node (P).Entity
+         then
+            return Self.Kernel.Symbols.Find (Base_Id);
+         else
+            return Self.Kernel.Symbols.Find (Get (P.Unique_Id).all & Base_Id);
+         end if;
+      end;
    end Unique_Id;
 
    --------------------
@@ -357,7 +368,7 @@ package body Language.Abstract_Construct_Tree is
 
    overriding function Profile
      (Self             : Construct_Node;
-      Show_Param_Names : Boolean) return String
+      Show_Param_Names : Boolean) return Symbol
    is
       Construct : constant access Simple_Construct_Information :=
         Get_Construct (Self);
@@ -365,19 +376,20 @@ package body Language.Abstract_Construct_Tree is
       if Construct.Name /= No_Symbol and then
         Construct.Category in Subprogram_Category
       then
-         return Get_Profile
-           (Lang             =>
-              Self.Kernel.Lang_Handler.Get_Tree_Language_From_File
-                (Get_File_Path (Self.Construct_File)),
-            Entity           => Self.Entity,
-            Show_Param_Names => Show_Param_Names);
+         return Self.Kernel.Symbols.Find
+           (Get_Profile
+              (Lang             =>
+                 Self.Kernel.Lang_Handler.Get_Tree_Language_From_File
+                   (Get_File_Path (Self.Construct_File)),
+               Entity           => Self.Entity,
+               Show_Param_Names => Show_Param_Names));
 
       --  In case the language has defined a profile anyway
       elsif Construct.Profile /= No_Symbol then
-         return Get (Construct.Profile).all;
+         return Construct.Profile;
 
       else
-         return "";
+         return Empty_String;
       end if;
    end Profile;
 
