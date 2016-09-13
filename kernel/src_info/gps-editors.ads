@@ -123,20 +123,27 @@ package GPS.Editors is
    --  Return a location located at the end of the line on which self is
 
    function Block_Start
-     (This : Editor_Location) return Editor_Location'Class is abstract;
-   --  Return the location of the beginning of the current block
+     (This        : Editor_Location;
+      Update_Tree : Boolean := True) return Editor_Location'Class is abstract;
+   --  Return the location of the beginning of the current block.
+   --  Update_Tree indicates whether the internal cache should first be
+   --  refreshed.
 
    function Block_End
-     (This : Editor_Location) return Editor_Location'Class is abstract;
+     (This        : Editor_Location;
+      Update_Tree : Boolean := True) return Editor_Location'Class is abstract;
    --  Return the location of the end of the current block
 
    function Block_Type
-     (This : Editor_Location) return Language_Category is abstract;
+     (This        : Editor_Location;
+      Update_Tree : Boolean := True) return Language_Category is abstract;
    --  Return the type of the block surrounding the location. This type
    --  indicates whether the block is a subprogram, an if statement,...
 
    function Block_Name
-     (This : Editor_Location; Subprogram : Boolean) return String is abstract;
+     (This        : Editor_Location;
+      Subprogram  : Boolean;
+      Update_Tree : Boolean := True) return String is abstract;
    --  Return the name of the current block (if Subprogram is False) or the
    --  current subprogram (if Subprogram is True).
 
@@ -878,20 +885,22 @@ private
      (This : Dummy_Editor_Location) return Editor_Location'Class;
 
    overriding function Block_Start
-     (This : Dummy_Editor_Location) return Editor_Location'Class;
-
+     (This        : Dummy_Editor_Location;
+      Update_Tree : Boolean := True) return Editor_Location'Class;
    overriding function Block_End
-     (This : Dummy_Editor_Location) return Editor_Location'Class;
-
+     (This        : Dummy_Editor_Location;
+      Update_Tree : Boolean := True) return Editor_Location'Class;
    overriding function Block_Name
-     (This : Dummy_Editor_Location; Subprogram : Boolean) return String;
+     (This        : Dummy_Editor_Location;
+      Subprogram  : Boolean;
+      Update_Tree : Boolean := True) return String;
    overriding function Block_Level
      (This : Dummy_Editor_Location) return Natural;
    overriding procedure Block_Fold (This : Dummy_Editor_Location) is null;
    overriding procedure Block_Unfold (This : Dummy_Editor_Location) is null;
-
    overriding function Block_Type
-     (This : Dummy_Editor_Location) return Language_Category;
+     (This        : Dummy_Editor_Location;
+      Update_Tree : Boolean := True) return Language_Category;
 
    overriding function Line (This : Dummy_Editor_Location) return Integer;
    overriding function Column

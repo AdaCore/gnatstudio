@@ -49,25 +49,28 @@ package body GPS.Editors is
    end End_Of_Line;
 
    overriding function Block_Start
-     (This : Dummy_Editor_Location) return Editor_Location'Class
+     (This : Dummy_Editor_Location;
+      Update_Tree : Boolean := True) return Editor_Location'Class
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Update_Tree);
    begin
       return Nil_Editor_Location;
    end Block_Start;
 
    overriding function Block_End
-     (This : Dummy_Editor_Location) return Editor_Location'Class
+     (This : Dummy_Editor_Location;
+      Update_Tree : Boolean := True) return Editor_Location'Class
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Update_Tree);
    begin
       return Nil_Editor_Location;
    end Block_End;
 
    overriding function Block_Type
-     (This : Dummy_Editor_Location) return Language_Category
+     (This : Dummy_Editor_Location;
+      Update_Tree : Boolean := True) return Language_Category
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Update_Tree);
    begin
       return Cat_Unknown;
    end Block_Type;
@@ -462,9 +465,11 @@ package body GPS.Editors is
    ----------------
 
    overriding function Block_Name
-     (This : Dummy_Editor_Location; Subprogram : Boolean) return String
+     (This        : Dummy_Editor_Location;
+      Subprogram  : Boolean;
+      Update_Tree : Boolean := True) return String
    is
-      pragma Unreferenced (This, Subprogram);
+      pragma Unreferenced (This, Subprogram, Update_Tree);
    begin
       return "";
    end Block_Name;

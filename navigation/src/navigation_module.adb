@@ -687,7 +687,7 @@ package body Navigation_Module is
       Loc : constant Editor_Location'Class :=
         Editor.New_Location_At_Line (Line);
    begin
-      return Loc.Block_Start.Line;
+      return Loc.Block_Start (Update_Tree => False).Line;
    exception
       when Constraint_Error =>
          return 0;
@@ -707,7 +707,7 @@ package body Navigation_Module is
       Loc : constant Editor_Location'Class :=
         Editor.New_Location_At_Line (Line);
    begin
-      return Loc.Block_Type;
+      return Loc.Block_Type (Update_Tree => False);
    exception
       when Constraint_Error =>
          return Cat_Unknown;

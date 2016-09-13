@@ -155,8 +155,10 @@ package body Src_Editor_Module.Editors is
      (Location : Editor_Location'Class;
       Block    : out Block_Record;
       Success  : out Boolean;
-      As_Subprogram : Boolean := False);
-   --  Similar to Get_Location, but return the block information instead
+      As_Subprogram : Boolean := False;
+      Update_Tree : Boolean := True);
+   --  Similar to Get_Location, but return the block information instead.
+   --  Update_Tree indicates whether the tree needs to be refreshed first
 
    procedure Get_Locations
      (Iter1                : out Gtk_Text_Iter;
@@ -201,16 +203,21 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Location) return Editor_Location'Class;
 
    overriding function Block_Start
-     (This : Src_Editor_Location) return Editor_Location'Class;
+     (This : Src_Editor_Location;
+      Update_Tree : Boolean := True) return Editor_Location'Class;
 
    overriding function Block_End
-     (This : Src_Editor_Location) return Editor_Location'Class;
+     (This : Src_Editor_Location;
+      Update_Tree : Boolean := True) return Editor_Location'Class;
 
    overriding function Block_Type
-     (This : Src_Editor_Location) return Language_Category;
+     (This : Src_Editor_Location;
+      Update_Tree : Boolean := True) return Language_Category;
 
    overriding function Block_Name
-     (This : Src_Editor_Location; Subprogram : Boolean) return String;
+     (This        : Src_Editor_Location;
+      Subprogram  : Boolean;
+      Update_Tree : Boolean := True) return String;
    overriding function Block_Level (This : Src_Editor_Location) return Natural;
    overriding procedure Block_Fold (This : Src_Editor_Location);
    overriding procedure Block_Unfold (This : Src_Editor_Location);
@@ -977,7 +984,8 @@ package body Src_Editor_Module.Editors is
      (Location : Editor_Location'Class;
       Block    : out Block_Record;
       Success  : out Boolean;
-      As_Subprogram : Boolean := False)
+      As_Subprogram : Boolean := False;
+      Update_Tree : Boolean := True)
    is
       Line    : Buffer_Line_Type;
       Iter    : Gtk_Text_Iter;
@@ -994,8 +1002,9 @@ package body Src_Editor_Module.Editors is
               (Buffer, Get_Editable_Line (Buffer, Line));
          else
             Block  := Get_Block
-              (Buffer, Get_Editable_Line (Buffer, Line), True,
-               Filter => Language.Tree.Categories_For_Block_Highlighting);
+              (Buffer, Get_Editable_Line (Buffer, Line),
+               Filter => Language.Tree.Categories_For_Block_Highlighting,
+               Update_Immediately => Update_Tree);
          end if;
       end if;
    end Get_Block;
@@ -1005,12 +1014,13 @@ package body Src_Editor_Module.Editors is
    -----------------
 
    overriding function Block_Start
-     (This : Src_Editor_Location) return Editor_Location'Class
+     (This        : Src_Editor_Location;
+      Update_Tree : Boolean := True) return Editor_Location'Class
    is
       Success : Boolean;
       Block   : Block_Record;
    begin
-      Get_Block (This, Block, Success);
+      Get_Block (This, Block, Success, Update_Tree => Update_Tree);
 
       if Success then
          return Src_Editor_Location'
@@ -1029,13 +1039,14 @@ package body Src_Editor_Module.Editors is
    ---------------
 
    overriding function Block_End
-     (This : Src_Editor_Location) return Editor_Location'Class
+     (This        : Src_Editor_Location;
+      Update_Tree : Boolean := True) return Editor_Location'Class
    is
       Success     : Boolean;
       Block       : Block_Record;
       Iter, Iter2 : Gtk_Text_Iter;
    begin
-      Get_Block (This, Block, Success);
+      Get_Block (This, Block, Success, Update_Tree => Update_Tree);
 
       if Success then
          Get_Location (Iter, This, Iter, Success);
@@ -1060,12 +1071,13 @@ package body Src_Editor_Module.Editors is
    ---------------
 
    overriding function Block_Type
-     (This : Src_Editor_Location) return Language_Category
+     (This        : Src_Editor_Location;
+      Update_Tree : Boolean := True) return Language_Category
    is
       Success : Boolean;
       Block   : Block_Record;
    begin
-      Get_Block (This, Block, Success);
+      Get_Block (This, Block, Success, Update_Tree => Update_Tree);
 
       if Success then
          return Block.Block_Type;
@@ -1079,12 +1091,15 @@ package body Src_Editor_Module.Editors is
    ----------------
 
    overriding function Block_Name
-     (This : Src_Editor_Location; Subprogram : Boolean) return String
+     (This        : Src_Editor_Location;
+      Subprogram  : Boolean;
+      Update_Tree : Boolean := True) return String
    is
       Success : Boolean;
       Block   : Block_Record;
    begin
-      Get_Block (This, Block, Success, As_Subprogram => Subprogram);
+      Get_Block (This, Block, Success, As_Subprogram => Subprogram,
+                 Update_Tree => Update_Tree);
 
       if Success then
          return Get (Block.Name, True).all;
