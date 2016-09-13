@@ -56,17 +56,18 @@ def __activate():
     source_dirs = GPS.Project.root().get_attribute_as_list("source_dirs")
     object_dir = GPS.Project.root().get_attribute_as_string("object_dir")
 
-    ais = " ".join(["-aI%s" % d for d in source_dirs])
-
     # Create the gnatfind command line
 
-    command = "gnatfind -r %s -aO%s %s:%s:%s:%s" % (
-        ais, object_dir, entity_name, entity_file.split('\\')[-1],
-        entity_line, entity_column)
+    command = (["gnatfind", "-r"] +
+               ["-aI%s" % d for d in source_dirs] +
+               ["-aO", object_dir,
+                "%s:%s:%s:%s" % (
+                    entity_name, entity_file.split('\\')[-1],
+                    entity_line, entity_column)])
 
     # Write the command line in the Messages window
 
-    GPS.Console().write(command + "\n")
+    GPS.Console().write(" ".join(command) + "\n")
 
     # Launch the process
 

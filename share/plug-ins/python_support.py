@@ -54,8 +54,8 @@ class ASTVisitor(ast.NodeVisitor):
         self.lines_offsets = [0 for _ in self.buflines]
 
         for i in range(1, len(self.buflines)):
-            self.lines_offsets[i] = (self.lines_offsets[i - 1]
-                                     + len(self.buflines[i - 1]) + 1)
+            self.lines_offsets[i] = (self.lines_offsets[i - 1] +
+                                     len(self.buflines[i - 1]) + 1)
 
         self.clist = clist
 
@@ -82,9 +82,9 @@ class ASTVisitor(ast.NodeVisitor):
         argsd = (a.id for a in args.args)
 
         profile = "({0})".format(
-            ", ".join(argsd)
-            + ", %s" % args.vararg if args.vararg else ""
-            + ", %s" % args.kwarg if args.kwarg else ""
+            ", ".join(argsd) +
+            (", %s" % args.vararg if args.vararg else "") +
+            (", %s" % args.kwarg if args.kwarg else "")
         )
 
         return profile
@@ -424,7 +424,7 @@ documentation for the standard python library. It is accessed through the
         base = port = self.port_pref.get()
         if not self.pydoc_proc:
             while port - base < 10:
-                self.pydoc_proc = GPS.Process("pydoc -p %s" % port)
+                self.pydoc_proc = GPS.Process(["pydoc", "-p", "%s" % port])
                 out = self.pydoc_proc.expect(
                     "pydoc server ready|Address already in use", 10000)
                 try:

@@ -357,14 +357,27 @@ package body Expect_Interface is
       E               : Exit_Type;
       Dummy           : Boolean;
       Str             : Unbounded_String;
+      CL              : Arg_List;
 
    begin
       if Command = Constructor_Method then
+         --  Do we have a string as parameter ?
+         begin
+            CL := Parse_String (Data.Nth_Arg (2), Separate_Args);
+         exception
+            when Invalid_Parameter =>
+               --  Assume we have a list
+               declare
+                  List : constant List_Instance := Data.Nth_Arg (2);
+               begin
+                  for A in 1 .. List.Number_Of_Arguments loop
+                     Append_Argument (CL, List.Nth_Arg (A), One_Arg);
+                  end loop;
+               end;
+         end;
+
          declare
             Inst  : constant Class_Instance := Data.Nth_Arg (1, Process_Class);
-            Command_Line    : constant String := Data.Nth_Arg (2);
-            CL              : constant Arg_List :=
-              Parse_String (Command_Line, Separate_Args);
             Remote_Server   : constant String := Data.Nth_Arg (11, "");
             Dirname         : constant String := Data.Nth_Arg (17, "");
             Server          : Server_Type;
@@ -372,7 +385,7 @@ package body Expect_Interface is
             Created_Command : Scheduled_Command_Access;
             Dir             : Virtual_File := No_File;
          begin
-            if Command_Line = "" then
+            if Args_Length (CL) = -1 then
                Set_Error_Msg (Data, -"Argument for command cannot be empty");
                return;
             end if;
@@ -434,7 +447,8 @@ package body Expect_Interface is
 
             if not Success then
                Data.Set_Error_Msg
-                 (-"Could not launch command """ & Command_Line & """");
+                 (-"Could not launch command """
+                  & To_Display_String (CL) & """");
                return;
             end if;
 

@@ -7572,7 +7572,10 @@ class Process(Command):
 
           An exception is raised if the process could not be spawned.
 
-          :param command: A string
+          :param command: A string or list of strings.
+             The list of strings is preferred, since it provides a better
+             handling of arguments with spaces (like filenames). When you
+             are using a string, you need to quote such arguments.
           :param regexp: A string
           :param on_match: A subprogram, see the section
              "Subprogram parameters" in the GPS documentation

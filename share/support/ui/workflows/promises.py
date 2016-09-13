@@ -333,7 +333,7 @@ class ProcessWrapper(object):
         self.finished = False
 
         # handler of process will be created -> start running
-        self.__command = ' '.join(cmdargs)
+        self.__command = cmdargs
 
         # The console associated with the process.
         # Created only if spawn_console is set to True.

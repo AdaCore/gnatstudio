@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P913-020 GPS: GPS.Process accepts a list of args (2016-09-13)
+
+  The Python GPS.Process() now accepts the command as a list of
+  arguments instead of a string, which makes it easier to handle
+  arguments with spaces (no need for quoting)
+
 NF-17-P908-014 GPS: new %TP macro in builder targets (2016-09-08)
 
   A new macro %TP is available in builder targets. It will be replaced
