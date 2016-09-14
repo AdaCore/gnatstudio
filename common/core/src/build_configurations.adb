@@ -455,6 +455,7 @@ package body Build_Configurations is
          Target.Command_Line.Append_Switches (Command_Line);
       elsif not The_Model.Default_Command_Line.Is_Empty then
          Target.Command_Line := The_Model.Default_Command_Line;
+         Target.Default_Command_Line := The_Model.Default_Command_Line;
       end if;
 
       Add_Target (Registry, Target);

@@ -773,7 +773,8 @@ package body Builder_Facility_Module is
       Matches            : Boolean;
       Default_Line       : constant GNAT.OS_Lib.Argument_List :=
         Get_Default_Command_Line_Unexpanded (Target);
-      New_Cmd_Line       : GNAT.OS_Lib.Argument_List_Access;
+      New_Cmd_Line       : GNAT.OS_Lib.Argument_List_Access :=
+        new GNAT.OS_Lib.Argument_List'(Get_Command_Line_Unexpanded (Target));
 
    begin
       Switches_Config := Get_Switches (Target_Model);
@@ -781,12 +782,6 @@ package body Builder_Facility_Module is
       if Switches_Config = null then
          return;
       end if;
-
-      New_Cmd_Line := new GNAT.OS_Lib.Argument_List'(Default_Line);
-
-      for J in New_Cmd_Line'Range loop
-         New_Cmd_Line (J) := new String'(New_Cmd_Line (J).all);
-      end loop;
 
       Cursor := First (Switches_Config);
 
