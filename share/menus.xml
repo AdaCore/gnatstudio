@@ -51,6 +51,7 @@
          <menu label='Close All Editors'             action='close all editors' optional='true'/>
          <menu label='Close All Editors except Current' optional='true'
                action='close all editors except current'/>
+         <menu label='Reset all perspectives' action="reset perspectives"/>
          <separator />
          <menu label='_Exit'                         action='exit'/>
       </menu>

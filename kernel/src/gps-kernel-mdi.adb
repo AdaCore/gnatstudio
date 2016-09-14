@@ -148,6 +148,12 @@ package body GPS.Kernel.MDI is
      (Command : access Unfloat_View_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
+   type Reset_Perspectives is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Reset_Perspectives;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Reset all perspectives to their default
+
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -1630,6 +1636,31 @@ package body GPS.Kernel.MDI is
       return Commands.Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Reset_Perspectives;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Success  : Boolean;
+      File   : constant Virtual_File :=
+                 Create_From_Dir (Kernel.Home_Dir, Desktop_Name);
+   begin
+      File.Delete (Success => Success);
+      if not Success then
+         Trace (Me, "Could not delete " & File.Display_Full_Name);
+      end if;
+
+      Success := Load_Desktop
+         (Kernel,
+          For_Project => Get_Project (Kernel).Project_Path);
+      return Commands.Success;
+   end Execute;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1648,6 +1679,14 @@ package body GPS.Kernel.MDI is
         (Kernel, "unfloat view",
          Command     => new Unfloat_View_Command,
          Description => "Put back the current window in the main window",
+         Category    => -"Windows");
+
+      Register_Action
+        (Kernel, "reset perspectives",
+         Command     => new Reset_Perspectives,
+         Description =>
+            "Reset all perspectives for all projects to their default. This"
+            & " also closes all editors.",
          Category    => -"Windows");
    end Register_Module;
 

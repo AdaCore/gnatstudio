@@ -29,6 +29,12 @@ NF-17-P913-020 GPS: GPS.Process accepts a list of args (2016-09-13)
   arguments instead of a string, which makes it easier to handle
   arguments with spaces (no need for quoting)
 
+NF-17-P909-019 GPS: new menu /File/Reset All Perspectives (2016-09-14)
+
+  This menu restores the default window layout. This is in particular
+  useful to reset the Debug perspective that has changed in this release
+  of GPS.
+
 NF-17-P908-014 GPS: new %TP macro in builder targets (2016-09-08)
 
   A new macro %TP is available in builder targets. It will be replaced
