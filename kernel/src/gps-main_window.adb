@@ -86,6 +86,8 @@ with User_Interface_Tools;
 
 package body GPS.Main_Window is
    Me : constant Trace_Handle := Create ("MAIN");
+   Store_Window_Positions : constant Trace_Handle :=
+     Create ("STORE_WINDOW_POSITIONS", On);
 
    Force_Cst      : aliased constant String := "force";
    Msg_Cst        : aliased constant String := "msg";
@@ -1670,6 +1672,12 @@ package body GPS.Main_Window is
       Found : Boolean;
       Data  : Configure_Event_Data;
    begin
+      if not Active (Store_Window_Positions) then
+         Trace (Me, "Default size for " & Name & " from default");
+         Win.Set_Default_Size (Width, Height);
+         return;
+      end if;
+
       Get_Property
          (Property => Prop,
           Key      => Name,

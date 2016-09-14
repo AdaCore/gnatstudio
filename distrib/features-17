@@ -72,6 +72,10 @@ NF-17-P729-031 GPS: new trace for old Xming compatibility (2016-08-03)
   compatibility with the Xming X11 server which does not allow resizing
   transient windows, and calculates their size wrongly.
 
+  Another trace "Store_Window_Positions" has been added: this is on by
+  default, and, when switched off, will prevent GPS from saving the
+  size and positions of floating windows.
+
 NF-17-P727-029 GPS: GUI enhancements to the Omnisearch (2016-09-08)
 
   The Omnisearch feature has received a number of enhancements:
