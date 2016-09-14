@@ -453,7 +453,8 @@ package body GUI_Utils is
 
    package body User_Contextual_Menus is
 
-      package Pop is new Gtk.Menu.Popup_User_Data (Gdk.Event.Gdk_Event);
+      package Pop is new Gtk.Menu.Popup_For_Device_User_Data
+        (Gdk.Event.Gdk_Event);
 
       procedure Contextual_Menu_Position_Callback
         (Menu : not null access Gtk_Menu_Record'Class;
@@ -531,10 +532,12 @@ package body GUI_Utils is
       is
          Menu                : Gtk_Menu;
          Time_Before_Factory : Time;
-
+         Offset              : Guint32 := 0;
+         Stub                : Gdk_Device_Record;
+         pragma Unmodified (Stub);
       begin
-         if Get_Button (Event) = 3
-           and then Get_Event_Type (Event) = Button_Press
+         if Get_Event_Type (Event) = Button_Press
+           and then Event.Button.Button = 3
          then
             if Host = Windows then
                Time_Before_Factory := Clock;
@@ -543,23 +546,38 @@ package body GUI_Utils is
             Menu := User.Menu_Create (User.User, Event);
 
             if Menu /= null then
-               Grab_Focus (Widget);
-               Show_All (Menu);
+               Menu.Attach_To_Widget (Widget, Detacher => null);
+               Menu.Set_Take_Focus (True);
+               Menu.Show_All;
 
                --  See comments in Button_Press_For_Contextual_Menu above
 
                if Host = Windows then
-                  Pop.Popup (Menu,
-                         Button        => Gdk.Event.Get_Button (Event),
-                         Activate_Time => Gdk.Event.Get_Time (Event)
-                         + Guint32 ((Clock - Time_Before_Factory) * 1000),
-                         Func => Contextual_Menu_Position_Callback'Access,
-                         Data => Event);
-               else
-                  Popup (Menu,
-                         Button        => Gdk.Event.Get_Button (Event),
-                         Activate_Time => Gdk.Event.Get_Time (Event));
+                  Offset := Guint32 ((Clock - Time_Before_Factory) * 1000);
                end if;
+
+               --  The following call impacts the display on multiple screens,
+               --  at least on OSX: if GPS is on the first monitor, and the
+               --  second monitor is showing a maximized window, then
+               --  displaying the contextual menu will rotate the second
+               --  monitor to change the first virtual desktop.
+               --  This doesn't happen when using standard menus, so there is
+               --  some extra settings we might be missing here.
+               --  However, trying to preset the coordinates of the toplevel
+               --  has no impact:
+               --       Gtk_Window (Menu.Get_Toplevel).Move (0, 0);
+               --  This bug reproduces with the C gtk-demo program.
+
+               Pop.Popup_For_Device
+                 (Menu,
+                  Device           => Gdk_Device
+                    (Get_User_Data (Event.Button.Device, Stub)),
+                  Parent_Menu_Shell => null,
+                  Parent_Menu_Item  => null,
+                  Button           => Event.Button.Button,
+                  Activate_Time    => Event.Button.Time + Offset,
+                  Func             => Contextual_Menu_Position_Callback'Access,
+                  Data             => Event);
 
                Emit_Stop_By_Name (Widget, "button_press_event");
                return True;

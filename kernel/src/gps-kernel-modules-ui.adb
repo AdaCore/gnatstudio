@@ -1130,6 +1130,8 @@ package body GPS.Kernel.Modules.UI is
             Create_Item (C, Context, Item, Full_Name);
 
             if Item /= null then
+               Item.Show_All;
+
                --  Do not force the creation of the parent menu for a
                --  separator: if it is a contextual submenu, it will have been
                --  created already if that menu should be visible (its
