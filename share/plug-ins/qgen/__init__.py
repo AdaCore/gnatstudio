@@ -374,9 +374,9 @@ class CLI(GPS.Process):
         promise = Promise()
 
         filepath = file.path
-        base = os.path.splitext(os.path.basename(filepath))[0]
+        typefile = os.path.splitext(filepath)[0]
         switches = project_support.get_switches(
-            file) + " -t %s_types.txt" % base
+            file) + " -t %s_types.txt" % typefile
         outdir = project_support.get_output_dir(file)
 
         result_path = os.path.join(
@@ -441,10 +441,10 @@ class CLI(GPS.Process):
         st = 1
         for f in files:
             if CLI.is_model_file(f):
-                base = os.path.splitext(os.path.basename(f.path))[0]
+                typefile = os.path.splitext(f.path)[0]
                 switches = [
                     "-o", project_support.get_output_dir(f),
-                    "-t", "%s_types.txt" % base, "--with-gui"]
+                    "-t", "%s_types.txt" % typefile, "--with-gui"]
                 switches = (' '.join(switches) +
                             ' ' + project_support.get_switches(f) +
                             ' ' + f.path)
