@@ -601,3 +601,11 @@ installing GPS.
   cause GPS to crash if untrusted forwarding (:command:`ssh -X`) is used.
   Use the :command:`ssh -Y` option or the ForwardX11Trusted directive in
   ssh_config to use trusted X11 forwarding and avoid the GPS crash.
+
+*Working with Xming*
+
+  Some old versions of Xming (such as 6.9.0.31) have an issue in that they create
+  "transient" windows larger than the application requests, and do not allow
+  the user to resize these windows. To circumvent this, we have added a command line switch
+  to tell GPS not to store the window sizes and positions: activate this
+  by launching GPS with :command:`--traceoff=STORE_WINDOW_POSITIONS`.
