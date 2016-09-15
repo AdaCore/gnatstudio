@@ -631,7 +631,7 @@ package body Outline_View is
 
             --  In the expander column ?
 
-            if Gint (X) < Cell_Area.Width then
+            if Gint (X) < Area.X then
                null;
 
             --  If we clicked on the spec column always jump to exact location
@@ -643,6 +643,7 @@ package body Outline_View is
             elsif Filter.Group_Spec_And_Body
               and then Cell_Area.Width <= Gint (X) - Area.X
               and then Gint (X) - Area.X <= 2 * Cell_Area.Width
+              and then Model.Get_String (Iter, Body_Pixbuf_Column) /= ""
             then
                Goto_Node (Get_Info (Model, Iter, Body_Pixbuf_Column),
                           Fallback => False);
