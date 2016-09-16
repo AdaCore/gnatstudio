@@ -69,19 +69,17 @@
 
 with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with GNAT.Strings;
-with Glib.Action;
 with Glib.Object;
 with Glib.Values;
-with Gtk.Application;
 with Gtk.Handlers;
 with Gtk.Menu;
 with Gtk.Menu_Bar;       use Gtk.Menu_Bar;
-with Gtk.Menu_Item;
 with Gtk.Target_List;
 with Gtk.Toolbar;
 with Gtk.Widget;
 with Interfaces.C.Strings;
 with GPS.Kernel.Actions;   use GPS.Kernel.Actions;
+with GPS.Kernel.Project;   use GPS.Kernel.Project;
 with XML_Utils;
 
 package GPS.Kernel.Modules.UI is
@@ -357,6 +355,15 @@ package GPS.Kernel.Modules.UI is
       Action    : String);
    --  Append a new entry to the menu, that will execute the action.
    --  This is meant for local config menus.
+
+   function Group_Mains_Into_Projects
+     (Kernel      : not null access Kernel_Handle_Record'Class;
+      Mains_Count : Natural)
+      return Boolean
+     is (Mains_Count > 15
+         or else Get_Project (Kernel).Is_Aggregate_Project);
+   --  Whether the menus that display a list of main units should group them
+   --  into projects, or display a flat list.
 
    ---------------------
    -- Toolbar buttons --

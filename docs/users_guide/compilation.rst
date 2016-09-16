@@ -73,7 +73,9 @@ what is documented here are the default menus (see
 * :menuselection:`Build --> Project --> <main>`
 
   List all main units defined in your project hierarchy, if any.  Each menu
-  item builds the selected main.
+  item builds the selected main. The list is either a flat list when there is
+  a small number of mains, or they are grouped into projects when there is
+  a large number of the root project is an aggregate project.
 
 .. index:: menu; build --> project --> build all
 
@@ -150,7 +152,7 @@ what is documented here are the default menus (see
 
 .. index:: menu; build --> run --> <main>
 
-* :menuselection:`Build --> Run --> <main>`
+* :menuselection:`Build --> Run --> Project --> <main>`
 
    For each main source file defined in your top level project, displays an
    entry to run the executable associated with that file.  Running an

@@ -365,10 +365,9 @@ package body Builder_Facility_Module is
       Mode   : String);
    --  Called when the build mode is being changed by the user
 
-   procedure Add_Action_And_Menu_For_Target
-     (Target : not null Target_Access);
+   procedure Add_Action_And_Menu_For_Target (Target : not null Target_Access);
    --  Register a Kernel Action to build T and create a menu item to build
-   --  Target
+   --  Target.
 
    type Target_Callback is not null access procedure
      (Target : not null Target_Access);
@@ -376,10 +375,6 @@ package body Builder_Facility_Module is
      (Element_Type => Target_Callback,
       "="          => "=");
    --  Used to run callbacks on all the regsitered targets
-
-   procedure For_All_Targets (Callback : Target_Callback);
-   procedure For_All_Targets (Callback_List : Target_Callback_Lists.List);
-   --  Run the given callback(s) on all the registered targets
 
    procedure Execute_Switch_Filters_For_Target
      (Target      : not null Target_Access;
@@ -585,7 +580,8 @@ package body Builder_Facility_Module is
          Action_Name  : String;
          Menu_Name    : String;
          Button_Label : String;
-         Multiple_Mains : Boolean);
+         Multiple_Mains : Boolean;
+         Show_Project_In_Menu : Boolean);
       --  Replace the current definition for the action: remove the old menus
       --  and the old action, then register a new action and menu.
 
@@ -597,7 +593,8 @@ package body Builder_Facility_Module is
          Action_Name  : String;
          Menu_Name    : String;
          Button_Label : String;
-         Multiple_Mains : Boolean)
+         Multiple_Mains : Boolean;
+         Show_Project_In_Menu : Boolean)
       is
          Mnemonics : constant Boolean := Main = No_File;
          --  Always protect underscores in menu name when dealing with file
@@ -622,7 +619,7 @@ package body Builder_Facility_Module is
             declare
                Path : constant String :=
                  Cat_Path
-                 & (if Project = No_Project
+                 & (if not Show_Project_In_Menu or else Project = No_Project
                     then ""
                     else Escape_Menu_Name
                       (Escape_Underscore (Project.Name)) & '/')
@@ -664,6 +661,8 @@ package body Builder_Facility_Module is
                Compute_Build_Targets_Hook.Run (Kernel, To_String (Targets));
             D      : Dialog_Mode;
             Main   : Virtual_File;
+            Show_Project_In_Menu : constant Boolean :=
+              Group_Mains_Into_Projects (Kernel, Mains.Length);
 
          begin
             if Mains.Length > 0
@@ -709,7 +708,8 @@ package body Builder_Facility_Module is
                         Action_Name  => N & (-" Number") & J'Img,
                         Multiple_Mains => True,
                         Button_Label => Mains.List (J).Tuple (2).Str,
-                        Menu_Name    => Mains.List (J).Tuple (1).Str);
+                        Menu_Name      => Mains.List (J).Tuple (1).Str,
+                        Show_Project_In_Menu => Show_Project_In_Menu);
                   end if;
                end loop;
 
@@ -725,7 +725,8 @@ package body Builder_Facility_Module is
                      Action_Name  => N & (-" Number") & J'Img,
                      Multiple_Mains => True,
                      Button_Label   => "",
-                     Menu_Name    => "");
+                     Menu_Name      => "",
+                     Show_Project_In_Menu => Show_Project_In_Menu);
                end loop;
             end if;
 
@@ -745,7 +746,8 @@ package body Builder_Facility_Module is
             Action_Name  => N,
             Button_Label => N,
             Multiple_Mains => False,
-            Menu_Name    => Get_Menu_Name (Target));
+            Menu_Name      => Get_Menu_Name (Target),
+            Show_Project_In_Menu => False);
       end if;
    end Add_Action_And_Menu_For_Target;
 
@@ -840,37 +842,6 @@ package body Builder_Facility_Module is
          Next (C);
       end loop;
    end Execute_Switch_Filters_For_All_Targets;
-
-   ---------------------
-   -- For_All_Targets --
-   ---------------------
-
-   procedure For_All_Targets (Callback : Target_Callback) is
-      Callback_List : Target_Callback_Lists.List;
-   begin
-      Callback_List.Append (Callback);
-      For_All_Targets (Callback_List);
-   end For_All_Targets;
-
-   ---------------------
-   -- For_All_Targets --
-   ---------------------
-
-   procedure For_All_Targets (Callback_List : Target_Callback_Lists.List) is
-      C      : Target_Cursor := Get_First_Target (Builder_Module_ID.Registry);
-      Target : Target_Access;
-   begin
-      loop
-         Target := Get_Target (C);
-         exit when Target = null;
-
-         for Callback of Callback_List loop
-            Callback (Target);
-         end loop;
-
-         Next (C);
-      end loop;
-   end For_All_Targets;
 
    ----------------------
    -- Get_Targets_File --
@@ -1176,9 +1147,17 @@ package body Builder_Facility_Module is
    --------------------------------
 
    procedure Refresh_Graphical_Elements is
+      C      : Target_Cursor := Get_First_Target (Builder_Module_ID.Registry);
+      Target : Target_Access;
    begin
       Clear_Actions_Menus_And_Toolbars;
-      For_All_Targets (Add_Action_And_Menu_For_Target'Access);
+
+      loop
+         Target := Get_Target (C);
+         exit when Target = null;
+         Add_Action_And_Menu_For_Target (Target);
+         Next (C);
+      end loop;
    end Refresh_Graphical_Elements;
 
    -----------------------------------

@@ -1328,6 +1328,12 @@ package body GVD_Module is
         (Prj : Project_Type; Main : Virtual_File);
       --  Create the action and menu to initialize a specific executable
 
+      Mains : Any_Type :=
+        Compute_Build_Targets_Hook.Run (Kernel, "executable");
+
+      Show_Project_In_Menu : constant Boolean :=
+        Group_Mains_Into_Projects (Kernel, Mains.Length);
+
       ----------------------------
       -- Create_Action_And_Menu --
       ----------------------------
@@ -1345,7 +1351,7 @@ package body GVD_Module is
             "debug initialize " & Prj.Name & ":" & Main_Name;
          Menu    : constant String :=
            "/Debug/Initialize/"
-           & (if Main = No_File
+           & (if not Show_Project_In_Menu or else Main = No_File
               then "" else Escape_Underscore (Prj.Name) & '/')
            & Main_Name;
          Command : Interactive_Command_Access;
@@ -1365,9 +1371,6 @@ package body GVD_Module is
             Category => -"Debug");
          Register_Menu (Kernel, Menu, Action => Action);
       end Create_Action_And_Menu;
-
-      Mains : Any_Type :=
-         Compute_Build_Targets_Hook.Run (Kernel, "executable");
 
    begin
       for A of GVD_Module_ID.Actions loop

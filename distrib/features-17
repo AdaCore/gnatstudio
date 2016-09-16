@@ -521,6 +521,13 @@ NF-17-O314-006 GPS: saving project before opening it's source (2015-11-05)
   file (with user's confirmation) before opening it in editor.
   This closes the dialog.
 
+NF-17-O122-049 GPS: display list of mains as flat menu (2016-09-16)
+
+  When a project (and its subprojects) have a small number of main units,
+  and the root project is not an aggregate, we display the /Build/Project/,
+  /Build/Run/ and /Debug/Initialize menus as a flat list of mains, rather
+  than introduce one extra level of menu for the name of the project.
+
 NF-17-NB13-048 GPS: width of omnisearch popup (2016-03-31)
 
   The width of the popup window for the omnisearch (at the top-right
