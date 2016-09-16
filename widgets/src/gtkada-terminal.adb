@@ -393,14 +393,14 @@ package body Gtkada.Terminal is
                     Do_Nothing);  --  Output by bash
       Add_Sequence (FSM, ASCII.ESC & "]2;%s" & ASCII.BEL,
                     Do_Nothing);  --  Output by bash
-      Add_Sequence (FSM, ASCII.LF & "",      Newline);
-      Add_Sequence (FSM, ASCII.CR & "",      Beginning_Of_Line);
-      Add_Sequence (FSM, ASCII.BS & "",      Cursor_Left);
-      Add_Sequence (FSM, ASCII.BEL & "",     Do_Nothing);
-      Add_Sequence (FSM, ASCII.ESC & "[J",   Clear_To_End_Of_Screen);
-      Add_Sequence (FSM, ASCII.ESC & "[K",   Clear_To_End_Of_Line);
-      Add_Sequence (FSM, ASCII.ESC & "[7h",  Enable_Line_Wrap);
-      Add_Sequence (FSM, ASCII.ESC & "[7l",  Disable_Line_Wrap);
+      Add_Sequence (FSM, ASCII.LF & "",               Newline);
+      Add_Sequence (FSM, ASCII.CR & "",               Beginning_Of_Line);
+      Add_Sequence (FSM, ASCII.BS & "",               Cursor_Left);
+      Add_Sequence (FSM, ASCII.BEL & "",              Do_Nothing);
+      Add_Sequence (FSM, ASCII.ESC & "[J",            Clear_To_End_Of_Screen);
+      Add_Sequence (FSM, ASCII.ESC & "[K",            Clear_To_End_Of_Line);
+      Add_Sequence (FSM, ASCII.ESC & "[7h",           Enable_Line_Wrap);
+      Add_Sequence (FSM, ASCII.ESC & "[7l",           Disable_Line_Wrap);
       Add_Sequence (FSM, ASCII.ESC & "[%dr",          Scroll_Region);
       Add_Sequence (FSM, ASCII.ESC & "[%d;%dr",       Scroll_Region);
       Add_Sequence (FSM, ASCII.ESC & "[%d;%d;%dr",    Scroll_Region);
@@ -428,23 +428,23 @@ package body Gtkada.Terminal is
       Add_Sequence (FSM, ASCII.ESC & "[?1034h",  Meta_Mode_On);
       Add_Sequence (FSM, ASCII.ESC & "[?1034l",  Meta_Mode_Off);
 
-      Add_Sequence (FSM, ASCII.ESC & "[%dL", Insert_Lines);
-      Add_Sequence (FSM, ASCII.ESC & "[%dP",    Delete_Chars);
-      Add_Sequence (FSM, ASCII.ESC & "[%d;%dP", Delete_Chars);
-      Add_Sequence (FSM, ASCII.ESC & "[%dM", Delete_Lines);
-      Add_Sequence (FSM, ASCII.ESC & "[%d@", Insert_Chars);
-      Add_Sequence (FSM, ASCII.ESC & "OE",   Keypad_Center_Key);
-      Add_Sequence (FSM, ASCII.ESC & "[%dS", Normal_Scroll);
-      Add_Sequence (FSM, ASCII.ESC & "[%dT", Scroll_Back);
-      Add_Sequence (FSM, ASCII.ESC & "[L",   Insert_One_Line);
-      Add_Sequence (FSM, ASCII.BEL & "",     Audio_Bell);
-      Add_Sequence (FSM, ASCII.ESC & "[Z",   Move_To_Prev_Tab);
-      Add_Sequence (FSM, ASCII.ESC & "[3g",     Clear_Tabs);
-      Add_Sequence (FSM, ASCII.ESC & "[P",      Delete_One_Char);
-      Add_Sequence (FSM, ASCII.ESC & "[M",      Delete_One_Line);
-      Add_Sequence (FSM, ASCII.ESC & "[%dX",    Erase_Chars_At_Cursor);
-      Add_Sequence (FSM, ASCII.ESC & "[4l",     End_Insert_Mode);
-      Add_Sequence (FSM, ASCII.ESC & "[4h",     Begin_Insert_Mode);
+      Add_Sequence (FSM, ASCII.ESC & "[%dL",     Insert_Lines);
+      Add_Sequence (FSM, ASCII.ESC & "[%dP",     Delete_Chars);
+      Add_Sequence (FSM, ASCII.ESC & "[%d;%dP",  Delete_Chars);
+      Add_Sequence (FSM, ASCII.ESC & "[%dM",     Delete_Lines);
+      Add_Sequence (FSM, ASCII.ESC & "[%d@",     Insert_Chars);
+      Add_Sequence (FSM, ASCII.ESC & "OE",       Keypad_Center_Key);
+      Add_Sequence (FSM, ASCII.ESC & "[%dS",     Normal_Scroll);
+      Add_Sequence (FSM, ASCII.ESC & "[%dT",     Scroll_Back);
+      Add_Sequence (FSM, ASCII.ESC & "[L",       Insert_One_Line);
+      Add_Sequence (FSM, ASCII.BEL & "",         Audio_Bell);
+      Add_Sequence (FSM, ASCII.ESC & "[Z",       Move_To_Prev_Tab);
+      Add_Sequence (FSM, ASCII.ESC & "[3g",      Clear_Tabs);
+      Add_Sequence (FSM, ASCII.ESC & "[P",       Delete_One_Char);
+      Add_Sequence (FSM, ASCII.ESC & "[M",       Delete_One_Line);
+      Add_Sequence (FSM, ASCII.ESC & "[%dX",     Erase_Chars_At_Cursor);
+      Add_Sequence (FSM, ASCII.ESC & "[4l",      End_Insert_Mode);
+      Add_Sequence (FSM, ASCII.ESC & "[4h",      Begin_Insert_Mode);
       Add_Sequence (FSM, ASCII.ESC & "OP",       Function_1);
       Add_Sequence (FSM, ASCII.ESC & "OQ",       Function_2);
       Add_Sequence (FSM, ASCII.ESC & "OR",       Function_3);
@@ -1139,6 +1139,12 @@ package body Gtkada.Terminal is
                null;
             when Display_In_Status_Line =>
                On_Set_Title (Term, To_String (Str_Arg_First, Str_Arg_Last));
+
+               --  bash resend full line after a Status_Line,
+               --  so set cursor to the begin of line for replacing
+               Set_Line_Offset (Iter.all, 0);
+               Place_Cursor (Term, Iter.all);
+
             when Start_Alternative_Charset =>
                Term.Alternate_Charset := True;
             when End_Alternative_Charset =>
@@ -1520,7 +1526,7 @@ package body Gtkada.Terminal is
          return Insert_Callback;
       pragma Import (C, Replace_Insert_Text, "replace_insert_text");
 
-      Iter : Gtk_Text_Iter;
+      Iter  : Gtk_Text_Iter;
       Table : Gtk_Text_Tag_Table;
       F, B  : Gtk_Text_Tag;
    begin
