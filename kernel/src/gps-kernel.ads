@@ -747,6 +747,11 @@ package GPS.Kernel is
      (Self : not null access Kernel_Handle_Record) return String;
    --  Return the current runtime
 
+   overriding function Get_Runtime_Files
+     (Self : not null access Kernel_Handle_Record)
+      return GNATCOLL.VFS.File_Array;
+   --  Return the runtime files
+
    subtype Abstract_Module_ID        is Abstract_Module;
    subtype Abstract_Module_ID_Record is Abstract_Module_Record;
    --  Type aliases for compability

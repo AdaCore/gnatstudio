@@ -10377,6 +10377,16 @@ def get_runtime():
     pass  # implemented in Ada
 
 
+def get_runtime_files():
+    """
+    Returns the files included in the runtime defined in the project or
+    the GPS interface.
+
+    :return: a list of GPS.File objects.
+    """
+    pass  # implemented in Ada
+
+
 def get_build_output(target_name, shadow, background, as_string):
     """
     Returns the result of the last compilation command.

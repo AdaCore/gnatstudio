@@ -1970,6 +1970,17 @@ package body GPS.Kernel is
       return Self.Registry.Tree.Root_Project.Get_Runtime;
    end Get_Runtime;
 
+   -----------------------
+   -- Get_Runtime_Files --
+   -----------------------
+
+   overriding function Get_Runtime_Files
+     (Self : not null access Kernel_Handle_Record)
+      return GNATCOLL.VFS.File_Array is
+   begin
+      return Self.Registry.Environment.Predefined_Source_Files;
+   end Get_Runtime_Files;
+
    --------------
    -- Register --
    --------------

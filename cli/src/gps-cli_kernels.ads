@@ -71,4 +71,8 @@ private
    overriding function Get_Runtime
      (Kernel : not null access CLI_Kernel_Record) return String;
 
+   overriding function Get_Runtime_Files
+     (Kernel : not null access CLI_Kernel_Record)
+      return GNATCOLL.VFS.File_Array;
+
 end GPS.CLI_Kernels;

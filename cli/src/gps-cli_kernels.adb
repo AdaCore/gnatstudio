@@ -126,4 +126,15 @@ package body GPS.CLI_Kernels is
       return Kernel.Registry.Tree.Root_Project.Get_Runtime;
    end Get_Runtime;
 
+   -----------------------
+   -- Get_Runtime_Files --
+   -----------------------
+
+   overriding function Get_Runtime_Files
+     (Kernel : not null access CLI_Kernel_Record)
+      return GNATCOLL.VFS.File_Array is
+   begin
+      return Kernel.Registry.Environment.Predefined_Source_Files;
+   end Get_Runtime_Files;
+
 end GPS.CLI_Kernels;
