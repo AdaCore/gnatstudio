@@ -548,6 +548,11 @@ NF-17-N714-016 GPS: configurable window title (2015-11-05)
   the GPS window. Through it, you can chose whether to display any of base
   names, directory names, project name,... in the title bar.
 
+NF-17-M621-023 GPS: contextual menu to set watchpoint (2016-09-16)
+
+  Right-clicking on a variable while the debugger is running will now set
+  a watchpoint, so that the debugger stops any time the variable is modified.
+
 NF-17-JA31-005 GPS: preserve more build errors after recompiling (2016-08-17)
 
   When the Locations view contains build errors, and one of the files is

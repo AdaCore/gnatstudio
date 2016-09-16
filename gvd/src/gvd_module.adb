@@ -292,6 +292,11 @@ package body GVD_Module is
      (Command : access Set_Value_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
+   type Set_Watchpoint_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Set_Watchpoint_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
    type Show_Location_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Show_Location_Command;
@@ -1029,6 +1034,27 @@ package body GVD_Module is
       return Commands.Success;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Set_Watchpoint_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Process  : constant Visual_Debugger :=
+        Visual_Debugger (Get_Current_Debugger (Get_Kernel (Context.Context)));
+      Variable : constant String := Get_Variable_Name (Context.Context, False);
+      Id : Breakpoint_Identifier;
+      pragma Unreferenced (Command, Id);
+   begin
+      Id := Process.Debugger.Watch
+         (Name    => Variable,
+          Trigger => Write,
+          Mode    => GVD.Types.Visible);
+      return Commands.Success;
+   end Execute;
+
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -1433,6 +1459,19 @@ package body GVD_Module is
         (Kernel => Kernel,
          Label  => -"Debug/Set value of %S",
          Action => "debug set value");
+
+      Register_Action
+        (Kernel, "debug set watchpoint",
+         Command     => new Set_Watchpoint_Command,
+         Description =>
+            -("Set a watchpoint on the variable. The debugger will stop every"
+              & " time the variable's value is changed"),
+         Filter      => Debugger_Filter and Printable_Filter,
+         Category    => -"Debug");
+      Register_Contextual_Menu
+        (Kernel => Kernel,
+         Label  => -"Debug/Set watchpoint on %S",
+         Action => "debug set watchpoint");
 
       Register_Action
         (Kernel, "debug show current location",
