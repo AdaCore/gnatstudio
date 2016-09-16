@@ -1439,7 +1439,27 @@ package body GPS.Kernel.Modules.UI is
       Key    : Gdk_Key_Type;
       Mods   : Gdk_Modifier_Type;
       C      : constant Action_Elements.Cursor :=
-         Globals.Actions_To_UI.Find (Action);
+        Globals.Actions_To_UI.Find (Action);
+
+      procedure On_Button (C : not null access Gtk_Widget_Record'Class);
+      procedure On_Button (C : not null access Gtk_Widget_Record'Class) is
+         Action : constant access Action_Record := Lookup_Action (C);
+      begin
+         if Action /= null then
+            Tooltips.Set_Static_Tooltip
+              (Gtk_Widget (C),
+               Text       => Get_Full_Description (Action, Kernel),
+               Use_Markup => True);
+         end if;
+      end On_Button;
+
+      procedure For_Toolbar
+        (Toolbar : not null access Gtk_Toolbar_Record'Class);
+      procedure For_Toolbar
+        (Toolbar : not null access Gtk_Toolbar_Record'Class) is
+      begin
+         Toolbar.Foreach (On_Button'Unrestricted_Access);
+      end For_Toolbar;
 
       procedure Internal
          (Win : not null access GPS_Application_Window_Record'Class);
@@ -1462,7 +1482,10 @@ package body GPS.Kernel.Modules.UI is
                      end if;
 
                   when In_Toolbar =>
-                     null;
+                     For_Each_Toolbar
+                       (Kernel,
+                        To_String (M.Toolbar_Name),
+                        For_Toolbar'Access);
                end case;
             end loop;
          end if;

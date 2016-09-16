@@ -687,6 +687,16 @@ KP-62-O326-012 GPS: C rename refactoring
 
   Workaround: Manual renaming of the entity.
 
+KP-62-O122-007 GPS: shortcuts in toolbar buttons tooltips
+
+  Problem:    The tooltips on toolbar buttons did not display the proper key
+              shortcut (only the default one, but not the one you had set)
+
+  Status:     This was fixed in 17.0 on 2016-09-16
+
+  Workaround: The shortcut can be seen either in the Key Shortcuts dialog, or
+              in menu items.
+
 KP-62-NA21-042 GPS: No vertical scrolling of filters of CodePeer report
 
   Problem:    Bottom rows of CodePeer report are not visible when size of GPS
