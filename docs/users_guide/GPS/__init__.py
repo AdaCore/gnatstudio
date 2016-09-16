@@ -3398,6 +3398,9 @@ class EditorBuffer(object):
         :param int start_line: An integer
         :param string text: A string
         :param string category: A string
+           Reference one of the categories that were registered via
+           :func:`GPS.Editor.register_highlighting`. This can also be the
+           name of a style defined via :class:`GPS.Style`
         :param string name: A string
         :rtype: :class:`EditorMark`
 
