@@ -46,3 +46,14 @@ The :file:`gps_utils.console_process.py` module
 
 .. automodule:: gps_utils.console_process
    :members:
+
+Plugins for external tools
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+QGen
+----
+
+.. index:: qgen
+
+The QGen Debugger manual can be found within
+the `QGen User guide <http://docs.adacore.com/qgen-docs/html/>`_.
