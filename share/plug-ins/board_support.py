@@ -199,7 +199,7 @@ class BoardLoader(Module):
                     % (binary, self.__load_address)]
 
         elif self.__flashing_tool == "st-flash":
-            args = ["write", binary, self.__load_address]
+            args = ["--reset", "write", binary, self.__load_address]
 
         return cmd + args
 
