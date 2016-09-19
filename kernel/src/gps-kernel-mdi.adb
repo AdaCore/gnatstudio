@@ -1980,7 +1980,7 @@ package body GPS.Kernel.MDI is
             Dialog.Get_Action_Area.Pack_End (Auto_Reload, Expand => False);
             Auto_Reload.Set_Active (Auto_Reload_Files.Get_Pref);
 
-            Ignore := Add_Button (Dialog, -"Synchronize", Gtk_Response_Yes);
+            Ignore := Add_Button (Dialog, -"Reload", Gtk_Response_Yes);
             Ignore.Set_Tooltip_Text
               ("Reload selected files from disk and discard current changes."
                & ASCII.LF
