@@ -194,9 +194,9 @@ class BoardLoader(Module):
             # Replace backslashes by forward slashes.
             # This is used to support OpenOCD on Windows.
             binary = binary.replace('\\', '/')
-            args = ["-f", '"%s"' % (self.__config_file), "-c", '"program',
-                    binary, "verify", "reset", "exit",
-                    '%s"' % (self.__load_address)]
+            args = ["-f", self.__config_file, "-c",
+                    "program %s verify reset exit %s"
+                    % (binary, self.__load_address)]
 
         elif self.__flashing_tool == "st-flash":
             args = ["write", binary, self.__load_address]
@@ -262,8 +262,7 @@ class BoardLoader(Module):
         gdb_port = self.__remote_target.split(':')[-1]
 
         if self.__connection_tool == "openocd":
-            args = ["-f", self.__config_file, "-c", '"gdb_port',
-                    '%s"' % (gdb_port)]
+            args = ["-f", self.__config_file, "-c", "gdb_port %s" % (gdb_port)]
         elif self.__connection_tool == "st-util":
             args = ["-p", gdb_port]
 
