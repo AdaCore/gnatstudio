@@ -71,6 +71,13 @@ package GPS.Dialogs is
    --  Add [OK] and [Cancel] buttons, in the proper order.
    --  OK is always set as the default action for the dialog
 
+   procedure Add_Button
+     (Self       : not null access GPS_Dialog_Record'Class;
+      Text       : String;
+      Response   : Gtk_Response_Type;
+      Is_Default : Boolean := False);
+   --  Add a button with custom text
+
    -----------------
    -- Combo boxes --
    -----------------
@@ -99,6 +106,15 @@ package GPS.Dialogs is
    --  added previously.
    --  The check box's value is stored in history so that it is set to
    --  the same value in the future.
+
+   -----------
+   -- Label --
+   -----------
+
+   procedure Add_Label
+     (Self    : not null access GPS_Dialog_Record'Class;
+      Message : String);
+   --  Add a new static label to the dialog
 
    ----------------
    -- Text_Input --

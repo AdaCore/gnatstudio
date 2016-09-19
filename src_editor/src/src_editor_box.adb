@@ -38,6 +38,7 @@ with Glib;                       use Glib;
 
 with Gtk;                        use Gtk;
 with Gtk.Box;                    use Gtk.Box;
+with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Drawing_Area;           use Gtk.Drawing_Area;
 with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Event_Box;              use Gtk.Event_Box;
@@ -56,6 +57,7 @@ with Gtkada.Handlers;
 with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Find_Utils;                 use Find_Utils;
+with GPS.Dialogs;                use GPS.Dialogs;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Charsets;        use GPS.Kernel.Charsets;
@@ -1183,19 +1185,46 @@ package body Src_Editor_Box is
 
       Buffer        : GNAT.Strings.String_Access;
 
+      Dialog        : GPS_Dialog;
+
    begin
       --  Do not authorize saving a read-only file, unless we save it to
-      --  another disk file.
+      --  another disk file. We check on the disk, not the status of the file,
+      --  to prevent hijacking files intentionally made read-only on the disk
+      --  for instance by Clearcase.
 
-      if not Get_Writable (Editor.Source_Buffer)
+      if File /= GNATCOLL.VFS.No_File
+        and then not File.Is_Writable
         and then Filename = GNATCOLL.VFS.No_File
+        and then not Force
       then
-         Editor.Kernel.Insert
-           (-"Could not open file for writing: "
-            & File.Display_Full_Name,
-            Mode => GPS.Kernel.Error);
-         Success := False;
-         return;
+         --  No modal dialog in the testsuite
+         if Active (Testsuite_Handle) then
+            Editor.Kernel.Insert
+              ("File is read-only on disk " & File.Display_Full_Name,
+               Mode => Error);
+            Success := False;
+            return;
+         end if;
+
+         Gtk_New (Dialog,
+                  Title => -"Overwrite read-only file ?",
+                  Kernel => Editor.Kernel);
+         Dialog.Add_Label
+           (-"File is read-only on disk: " & ASCII.LF
+            & File.Display_Full_Name & ASCII.LF
+            & "Overwrite anyway ?");
+         Dialog.Add_Button ("Overwrite", Gtk_Response_Yes);
+         Dialog.Add_Button ("Do not save", Gtk_Response_No);
+
+         Dialog.Show_All;
+         if Dialog.Run = Gtk_Response_No then
+            Dialog.Destroy;
+            Success := False;
+            return;
+         end if;
+
+         Dialog.Destroy;
       end if;
 
       --  ??? Should we reset the read-only status to False: either the

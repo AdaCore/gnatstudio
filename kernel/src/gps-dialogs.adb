@@ -213,6 +213,39 @@ package body GPS.Dialogs is
       Self.Set_Default_Response (Gtk_Response_OK);
    end Add_OK_Cancel;
 
+   ----------------
+   -- Add_Button --
+   ----------------
+
+   procedure Add_Button
+     (Self       : not null access GPS_Dialog_Record'Class;
+      Text       : String;
+      Response   : Gtk_Response_Type;
+      Is_Default : Boolean := False)
+   is
+      Dummy : Gtk_Widget;
+   begin
+      Dummy := Self.Add_Button (Text, Response);
+      if Is_Default then
+         Self.Set_Default_Response (Response);
+      end if;
+   end Add_Button;
+
+   ---------------
+   -- Add_Label --
+   ---------------
+
+   procedure Add_Label
+     (Self    : not null access GPS_Dialog_Record'Class;
+      Message : String)
+   is
+      Label : Gtk_Label;
+   begin
+      Gtk_New (Label, Message);
+      Label.Set_Halign (Align_Start);
+      Self.Get_Content_Area.Pack_Start (Label, Expand => False);
+   end Add_Label;
+
    ---------------
    -- Add_Combo --
    ---------------

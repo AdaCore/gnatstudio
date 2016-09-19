@@ -5343,12 +5343,12 @@ class Entity(object):
         name in overriding or overridden subprograms are also renamed.
 
         If some renaming should be performed in a read-only file, the
-        behavior depends on ``make_writable``: if true, the file is made
+        behavior depends on `make_writable`: if true, the file is made
         writable and the renaming is performed; if false, no renaming is
         performed in that file, and a dialog is displayed asking whether you
         want to do the other renamings.
 
-        The files will be saved automatically if auto_``save is true``,
+        The files will be saved automatically if `auto_save` is true,
         otherwise they are left edited but unsaved.
 
         :param name: A string
