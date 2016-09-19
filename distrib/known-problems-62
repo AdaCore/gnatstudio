@@ -183,6 +183,17 @@ KP-62-P602-048 GPS: wrong code formatting after case expression
 
   Workaround: Don't use automatic code formatting.
 
+KP-62-P519-025 GPS: Custom action filters can cause selection problems
+
+  Problem:    Defining custom actions filters via XML can cause text selection
+              to fail when not dragging the mouse imediately after placing the
+              cursor at the beginning of the text to select to extend the
+              selection.
+
+  Status:     This was fixed in 17.0 on 2016-05-20
+
+  Workaround: Drag the mouse imediately to extend the selection.
+
 KP-62-P513-042 GPS: With clauses not shown properly in outline
 
   Problem:    When the "show with clauses" option was activated, instead of
