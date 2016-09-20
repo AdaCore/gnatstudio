@@ -523,6 +523,26 @@ package body KeyManager_Module is
             end if;
          end;
 
+      elsif Event_Type = Button_Release
+         and then Event.Button.Button = 4
+         and then Execute_Action
+            (Kernel, "backward locations history",
+             Context => Kernel.Get_Current_Context,
+             Event  => Event,
+             Error_Msg_In_Console => True)
+      then
+         return;
+
+      elsif Event_Type = Button_Release
+         and then Event.Button.Button = 5
+         and then Execute_Action
+            (Kernel, "forward locations history",
+             Context => Kernel.Get_Current_Context,
+             Event  => Event,
+             Error_Msg_In_Console => True)
+      then
+         return;
+
       elsif Event_Type = Button_Release then
          --  The command will be executed by gtk, we don't know exactly how
          if Keymanager_Module.Last_Command /= null then

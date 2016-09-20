@@ -567,6 +567,13 @@ NF-17-L404-006 GPS: ask before overwriting read-only file (2016-09-20)
   disk, it displays a confirmation dialog to let you chose whether to
   overwrite (and, in the context of Clearcase, hijack the file).
 
+NF-17-K531-011 GPS: mouse buttons 4 and 5 for locations (2016-09-20)
+
+  The mouse buttons 4 and 5 (available on some high-end mice) are mapped to
+  the locations command, and used to move in the locations history (back
+  to the previous position, and back). This is hard-coded, and cannot be
+  changed.
+
 NF-17-JA31-005 GPS: preserve more build errors after recompiling (2016-08-17)
 
   When the Locations view contains build errors, and one of the files is
