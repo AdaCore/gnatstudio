@@ -401,6 +401,7 @@ package body GVD.Variables is
    begin
       if Process /= null then
          Process_User_Command (Process, Cmd, Output_Command => True);
+         Process.Debugger.Display_Prompt;
       end if;
    end Execute_In_Debugger;
 
