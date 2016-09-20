@@ -16,7 +16,6 @@ project @_Project_Name_@ is
    end Builder;
 
    package Compiler is
-      for Switches ("Ada") use ("-gnat05");
       for Driver ("text") use "";
    end Compiler;
 

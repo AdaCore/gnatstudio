@@ -6,10 +6,5 @@ project @_Project_Name_@ is
    for Object_Dir use "obj";
    for Main use ("@_main_name_@.adb");
 
-   --  Enable Ada 2005.
-   package Compiler is
-      for Switches ("ada") use ("-gnat05");
-   end Compiler;
-
 end @_Project_Name_@;
 

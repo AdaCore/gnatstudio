@@ -13,8 +13,4 @@ project @_Project_Name_@ is
       for Executable ("@_project_name_@-main.adb") use "@_project_name_@";
    end Builder;
 
-   package Compiler is
-      for Switches ("Ada") use ("-gnat05");
-   end Compiler;
-
 end @_Project_Name_@;
