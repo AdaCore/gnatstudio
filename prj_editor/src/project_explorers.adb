@@ -601,10 +601,6 @@ package body Project_Explorers is
               (Explorer_Views.Child_From_View (T)),
             T.Tree, T.Tree.Model, Event, Add_Dummy => False);
       end if;
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
    end Button_Press;
 
    ---------------
@@ -618,10 +614,6 @@ package body Project_Explorers is
       T : constant Project_Explorer := Project_Explorer (Explorer);
    begin
       return On_Key_Press (T.Kernel, T.Tree, Event);
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
    end Key_Press;
 
    ------------------------

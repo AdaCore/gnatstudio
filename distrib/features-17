@@ -586,6 +586,11 @@ NF-17-GB12-010 GPS: different icon for disabled breakpoints (2016-04-05)
   breakpoints are now have a different color when the breakpoint is disabled
   or is conditional.
 
+NF-17-G928-020 GPS: using keyboard in Outline view (2016-09-20)
+
+  It is now possible to use <enter> in the Outline to jump to the
+  corresponding entity (same as clicking on the line).
+
 NF-17-G222-043 GPS: menubars for floating windows (2015-11-27)
 
   When an editor or a browser is made floating, its window now includes a

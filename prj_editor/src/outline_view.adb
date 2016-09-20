@@ -17,6 +17,7 @@
 
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Rectangle;             use Gdk.Rectangle;
+with Gdk.Types.Keysyms;         use Gdk.Types, Gdk.Types.Keysyms;
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
@@ -149,6 +150,20 @@ package body Outline_View is
 
    procedure Force_Refresh (View : access Gtk_Widget_Record'Class);
    --  Same as above, but force a full refresh
+
+   procedure Goto_Node
+     (View     : not null access Outline_View_Record'Class;
+      Iter     : Gtk_Tree_Iter;
+      Column   : Gint := Display_Name_Column;
+      Fallback : Boolean);
+   --  goto and highlight the entity.
+   --  If Fallback is true, and the buffer is already showing node's
+   --  location, then we jump to the body.
+
+   function On_Key_Press
+     (Outline : access GObject_Record'Class;
+      Event   : Gdk_Event_Key) return Boolean;
+   --  Handle key events in the outline
 
    procedure On_Multipress
      (Self    : access Glib.Object.GObject_Record'Class;
@@ -523,6 +538,69 @@ package body Outline_View is
          Flat_View           => Flat_View.Get_Pref);
    end Get_Filter_Record;
 
+   ---------------
+   -- Goto_Node --
+   ---------------
+
+   procedure Goto_Node
+     (View     : not null access Outline_View_Record'Class;
+      Iter     : Gtk_Tree_Iter;
+      Column   : Gint := Display_Name_Column;
+      Fallback : Boolean)
+   is
+      Model : constant Outline_Model := Outline_Model (-Get_Model (View.Tree));
+      Node : constant Semantic_Node_Info := Get_Info (Model, Iter, Column);
+      Lang : Language_Access;
+   begin
+      if Node = No_Node_Info then
+         return;
+      end if;
+
+      --  Does the language have a special handling for constructs ?
+
+      Lang := View.Kernel.Lang_Handler.Get_Language_From_File (View.File);
+      if Lang.Clicked_On_Construct (View.File, Node) then
+         return;
+      end if;
+
+      --  If not, the default is to open a source editor
+
+      declare
+         use type Visible_Column_Type;
+         Buffer   : constant Editor_Buffer'Class :=
+           Get (Get_Buffer_Factory (View.Kernel).all,
+                View.File, False, False, False);
+         HSD : constant Boolean := Node.Sloc_Def_No_Tab.Index /= 0;
+         Location : constant Editor_Location'Class :=
+           (if HSD
+            then New_Location (Buffer, Node.Sloc_Def_No_Tab.Line,
+              Node.Sloc_Def_No_Tab.Column)
+            else New_Location
+              (Buffer, Node.Sloc_Start_No_Tab.Line,
+               Node.Sloc_Start_No_Tab.Column));
+
+         End_Location : constant Editor_Location'Class :=
+           (if HSD
+            then New_Location (Buffer, Node.Sloc_Def_No_Tab.Line,
+              Node.Sloc_Def_No_Tab.Column
+              + Get (Node.Name)'Length)
+            else Location);
+         Editor       : constant Editor_View'Class := Current_View (Buffer);
+
+      begin
+         if Fallback
+           and then Location.Line = Editor.Cursor.Line
+         then
+            --  Clicking on the name will jump to the spec, unless this is
+            --  already the current location
+            Goto_Node (View, Iter, Body_Pixbuf_Column, Fallback => False);
+         else
+            Editor.Cursor_Goto (Location, Raise_View => True);
+            Select_Text (Buffer, Location, End_Location);
+         end if;
+      end;
+   end Goto_Node;
+
    -------------------
    -- On_Multipress --
    -------------------
@@ -535,64 +613,6 @@ package body Outline_View is
       View : constant Outline_View_Access := Outline_View_Access (Self);
       Model : constant Outline_Model := Outline_Model (-Get_Model (View.Tree));
       Iter  : Gtk_Tree_Iter;
-
-      procedure Goto_Node (Node : Semantic_Node_Info; Fallback : Boolean);
-      --  goto and highlight the entity.
-      --  If Fallback is true, and the buffer is already showing node's
-      --  location, then we jump to the body.
-
-      procedure Goto_Node (Node : Semantic_Node_Info; Fallback : Boolean) is
-         Lang : Language_Access;
-      begin
-         if Node = No_Node_Info then
-            return;
-         end if;
-
-         --  Does the language have a special handling for constructs ?
-
-         Lang := View.Kernel.Lang_Handler.Get_Language_From_File (View.File);
-         if Lang.Clicked_On_Construct (View.File, Node) then
-            return;
-         end if;
-
-         --  If not, the default is to open a source editor
-
-         declare
-            use type Visible_Column_Type;
-            Buffer   : constant Editor_Buffer'Class :=
-              Get (Get_Buffer_Factory (View.Kernel).all,
-                   View.File, False, False, False);
-            HSD : constant Boolean := Node.Sloc_Def_No_Tab.Index /= 0;
-            Location : constant Editor_Location'Class :=
-              (if HSD
-               then New_Location (Buffer, Node.Sloc_Def_No_Tab.Line,
-                                  Node.Sloc_Def_No_Tab.Column)
-               else New_Location
-                 (Buffer, Node.Sloc_Start_No_Tab.Line,
-                  Node.Sloc_Start_No_Tab.Column));
-
-            End_Location : constant Editor_Location'Class :=
-              (if HSD
-               then New_Location (Buffer, Node.Sloc_Def_No_Tab.Line,
-                 Node.Sloc_Def_No_Tab.Column
-                 + Get (Node.Name)'Length)
-               else Location);
-            Editor       : constant Editor_View'Class := Current_View (Buffer);
-
-         begin
-            if Fallback
-              and then Location.Line = Editor.Cursor.Line
-            then
-               --  Clicking on the name will jump to the spec, unless this is
-               --  already the current location
-               Goto_Node (Get_Info (Model, Iter, Body_Pixbuf_Column),
-                          Fallback => False);
-            else
-               Editor.Cursor_Goto (Location, Raise_View => True);
-               Select_Text (Buffer, Location, End_Location);
-            end if;
-         end;
-      end Goto_Node;
 
       Cell_X, Cell_Y  : Gint;
       Column          : Gtk_Tree_View_Column;
@@ -637,7 +657,7 @@ package body Outline_View is
             --  If we clicked on the spec column always jump to exact location
 
             elsif Gint (X) - Area.X <= Cell_Area.Width then
-               Goto_Node (Get_Info (Model, Iter), Fallback => False);
+               Goto_Node (View, Iter, Fallback => False);
 
             --  If we clicked in the body column, assuming it was displayed
             elsif Filter.Group_Spec_And_Body
@@ -645,11 +665,11 @@ package body Outline_View is
               and then Gint (X) - Area.X <= 2 * Cell_Area.Width
               and then Model.Get_String (Iter, Body_Pixbuf_Column) /= ""
             then
-               Goto_Node (Get_Info (Model, Iter, Body_Pixbuf_Column),
+               Goto_Node (View, Iter, Column => Body_Pixbuf_Column,
                           Fallback => False);
 
             else
-               Goto_Node (Get_Info (Model, Iter), Fallback => True);
+               Goto_Node (View, Iter, Fallback => True);
             end if;
 
             View.Multipress.Set_State (Event_Sequence_Claimed);
@@ -668,6 +688,29 @@ package body Outline_View is
       Get_Outline_Model (Self).Set_Filter (Pattern);
       Force_Refresh (Self);
    end Filter_Changed;
+
+   ------------------
+   -- On_Key_Press --
+   ------------------
+
+   function On_Key_Press
+     (Outline : access GObject_Record'Class;
+      Event   : Gdk_Event_Key) return Boolean
+   is
+      View  : constant Outline_View_Access := Outline_View_Access (Outline);
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+   begin
+      View.Tree.Get_Selection.Get_Selected (Model, Iter);
+      if Iter /= Null_Iter then
+         if Event.Keyval = GDK_Return then
+            Goto_Node (View, Iter, Fallback => True);
+            return True;
+         end if;
+      end if;
+
+      return False;
+   end On_Key_Press;
 
    ----------------
    -- Initialize --
@@ -737,6 +780,9 @@ package body Outline_View is
 
       Gtkada.Handlers.Widget_Callback.Connect
         (Outline, Signal_Destroy, On_Destroy'Access);
+
+      Outline.Tree.On_Key_Press_Event
+        (On_Key_Press'Access, Slot => Outline, After => False);
 
       Setup_Contextual_Menu
         (Kernel          => Outline.Kernel,
