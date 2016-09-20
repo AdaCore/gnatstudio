@@ -15,33 +15,54 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Calendar;
-with Ada.Containers.Ordered_Maps;
-with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
-
 with Commands.GNATTest;
 with Commands.Interactive;
 with Glib.Object;                       use Glib.Object;
+with Glib.Values;                       use Glib.Values;
 
 with GNAT.Calendar.Time_IO;
 
 with GNATCOLL.Scripts;                  use GNATCOLL.Scripts;
 
 with Basic_Types;                       use Basic_Types;
+with Entities_Tooltips;
+with GNATTest_Module.Tree_Models;       use GNATTest_Module.Tree_Models;
+with Language.Abstract_Language_Tree;   use Language.Abstract_Language_Tree;
+with Tooltips;                          use Tooltips;
+
 with GPS.Kernel;                        use GPS.Kernel;
 with GPS.Kernel.Actions;                use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;               use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;                  use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;                    use GPS.Kernel.MDI;
 with GPS.Kernel.Messages.Simple;
 with GPS.Kernel.Modules;                use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;             use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Project;
 with GPS.Kernel.Scripts;                use GPS.Kernel.Scripts;
+with Gdk.Event;                         use Gdk.Event;
+with Gdk.Rectangle;                     use Gdk.Rectangle;
+with Gdk.Types.Keysyms;                 use Gdk.Types.Keysyms;
+with Gtk.Box;                           use Gtk.Box;
+with Gtk.Cell_Renderer;
+with Gtk.Cell_Renderer_Pixbuf;          use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Text;            use Gtk.Cell_Renderer_Text;
+with Gtk.Enums;                         use Gtk.Enums;
+with Gtk.Gesture_Multi_Press;           use Gtk.Gesture_Multi_Press;
 with Gtk.Handlers;
+with Gtk.Label;                         use Gtk.Label;
 with Gtk.Menu;
 with Gtk.Menu_Item;
+with Gtk.Tree_Model;                    use Gtk.Tree_Model;
+with Gtk.Tree_View;                     use Gtk.Tree_View;
+with Gtk.Tree_View_Column;              use Gtk.Tree_View_Column;
+with Gtk.Scrolled_Window;               use Gtk.Scrolled_Window;
+with Gtk.Widget;                        use Gtk.Widget;
+with Gtkada.MDI;
+with Gtkada.Abstract_Tree_Model;
 
 with Input_Sources.File;
+with Generic_Views;
 with Sax.Readers;
 with Sax.Attributes;
 with Src_Editor_Box;
@@ -103,27 +124,6 @@ package body GNATTest_Module is
    overriding procedure Execute
      (Self   : On_Project_Changed;
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class);
-
-   type Source_Entity is record
-      Source_File      : Virtual_File;
-      Subprogram_Name  : Unbounded_String;
-      Line             : Natural := 0;
-      Column           : Natural := 0;
-      Test_Case_Name   : Unbounded_String;
-   end record;
-
-   function "<" (Left, Right : Source_Entity) return Boolean;
-
-   type Test_Entity is record
-      File_Name        : Virtual_File;
-      Line             : Natural;
-      Column           : Natural;
-      Stamp            : Ada.Calendar.Time;
-   end record;
-
-   package Source_Entity_Maps is new Ada.Containers.Ordered_Maps
-     (Key_Type     => Source_Entity,
-      Element_Type => Test_Entity);
 
    package Test_Entity_Maps is new Ada.Containers.Ordered_Maps
      (Key_Type     => Virtual_File,
@@ -190,6 +190,50 @@ package body GNATTest_Module is
    procedure Test_Entity_Callback
      (Widget    : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class;
       User_Data : Menu_Data);
+
+   type Testing_View_Record is new Generic_Views.View_Record with record
+      Tree_View     : Gtk_Tree_View;
+      Tree_Model    : Tree_Models.Tree_Model;
+      Icon_Column   : Gtk_Tree_View_Column;
+      Icon_Renderer : Gtk_Cell_Renderer_Pixbuf;
+      Multipress    : Gtk_Gesture_Multi_Press;
+   end record;
+
+   function Initialize
+     (Self : access Testing_View_Record'Class) return Gtk_Widget;
+   --  Initialize the testing view widget
+
+   procedure On_Multipress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      N_Press : Glib.Gint;
+      X, Y    : Glib.Gdouble);
+   --  Called every time a row in Testing View is clicked
+
+   function On_Key_Press
+     (Self  : access GObject_Record'Class;
+      Event : Gdk_Event_Key) return Boolean;
+   --  Handle key events in the Testing View
+
+   package Testing_MDI_Views is new Generic_Views.Simple_Views
+     (Module_Name               => "Testing_Views",
+      View_Name                 => "Testing View",
+      Formal_View_Record        => Testing_View_Record,
+      Formal_MDI_Child          => GPS_MDI_Child_Record,
+      Initialize                => Initialize,
+      Areas                     => Gtkada.MDI.Sides_Only,
+      Position                  => Gtkada.MDI.Position_Left);
+
+   --------------
+   -- Tooltips --
+   --------------
+
+   type Testing_View_Tooltip is new Tooltips.Tooltips with record
+      View : Testing_MDI_Views.View_Access;
+   end record;
+   overriding function Create_Contents
+     (Tooltip  : not null access Testing_View_Tooltip;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
    ---------
    -- "<" --
@@ -330,6 +374,70 @@ package body GNATTest_Module is
          end;
       end if;
    end Command_Handler;
+
+   ---------------------
+   -- Create_Contents --
+   ---------------------
+
+   overriding function Create_Contents
+     (Tooltip  : not null access Testing_View_Tooltip;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Widget);
+      Iter     : Gtk_Tree_Iter;
+      Area     : Gdk_Rectangle;
+      Value    : Glib.Values.GValue;
+   begin
+      Initialize_Tooltips (Tooltip.View.Tree_View, X, Y, Area, Iter);
+
+      if Iter = Null_Iter then
+         return null;
+      end if;
+
+      Tooltip.View.Tree_Model.Get_Value (Iter, File_Level_Column, Value);
+      Tooltip.Set_Tip_Area (Area);
+
+      declare
+         Src : constant Source_Entity :=
+           Tooltip.View.Tree_Model.Get_Source_Entity (Iter);
+
+         Ref : Root_Entity_Reference_Ref;
+
+         Entity : constant Root_Entity'Class :=
+           Tooltip.View.Kernel.Databases.Get_Entity
+             (Name        => To_String (Src.Subprogram_Name),
+              Closest_Ref => Ref,
+              Loc         =>
+                (File   => Src.Source_File,
+                 Line   => Src.Line,
+                 Column => Visible_Column_Type (Src.Column + 9),
+                 others => <>));
+
+      begin
+         if Get_Boolean (Value) then  --  If we are on file level of tree
+
+            declare
+               Label : Gtk_Label;
+            begin
+               Gtk_New
+                 (Label, Get_Tooltip_For_File
+                    (Tooltip.View.Kernel, Src.Source_File));
+
+               Label.Set_Use_Markup (True);
+
+               return Gtk_Widget (Label);
+            end;
+         else
+
+               return Entities_Tooltips.Draw_Tooltip
+                 (Kernel      => Tooltip.View.Kernel,
+                  Entity      => Entity,
+                  Ref         => Ref.Element,
+                  Draw_Border => True);
+         end if;
+      end;
+   end Create_Contents;
 
    -------------
    -- Execute --
@@ -538,11 +646,16 @@ package body GNATTest_Module is
       Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
-      Project : constant GNATCOLL.Projects.Project_Type :=
+
+      File : Input_Sources.File.File_Input;
+      View : Testing_MDI_Views.View_Access;
+      pragma Unreferenced (View);
+
+      Project       : constant GNATCOLL.Projects.Project_Type :=
          GPS.Kernel.Project.Get_Project (Kernel);
       Map_File_Name : constant String := Get_Mapping_File (Project);
-      File        : Input_Sources.File.File_Input;
    begin
+      Testing_MDI_Views.Close (Kernel);
       Map.Source_Map.Clear;
       Map.Test_Map.Clear;
       Map.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
@@ -551,8 +664,86 @@ package body GNATTest_Module is
          Input_Sources.File.Open (Map_File_Name, File);
          Map.Parse (File);
          Input_Sources.File.Close (File);
+         View := Testing_MDI_Views.Get_Or_Create_View (Kernel);
       end if;
    end Execute;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   function Initialize
+     (Self : access Testing_View_Record'Class) return Gtk_Widget
+   is
+
+      Icon_Renderer     : Gtk_Cell_Renderer_Pixbuf;
+      Tooltip           : Tooltips_Access;
+      Scrolled          : Gtk_Scrolled_Window;
+      Column            : Gtk_Tree_View_Column;
+      Text_Renderer     : Gtk_Cell_Renderer_Text;
+      Column_Id         : Glib.Gint;
+      pragma Unreferenced (Column_Id);
+   begin
+      --  Initialize the view itself
+      Initialize_Vbox (Self, Homogeneous => False);
+
+      --  Create a scrolled window to contain all the view's widgets
+      Gtk_New (Scrolled);
+      Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
+      Self.Pack_Start (Scrolled, Expand => True, Fill => True);
+
+      --  Create a tree view to display the test case list
+      Gtk_New (Self.Tree_Model, Map.Source_Map);
+      Gtk_New (Self.Tree_View,
+               Gtkada.Abstract_Tree_Model."+" (Self.Tree_Model));
+      Self.Tree_View.Set_Headers_Visible (False);
+      Self.Tree_View.Set_Search_Column (Name_Column);
+      Scrolled.Add (Self.Tree_View);
+
+      --  Create a tree view column to display icons
+      Gtk_New (Column);
+      --  Add setup/source icon
+      Gtk_New (Icon_Renderer);
+      Column.Pack_Start (Icon_Renderer, Expand => False);
+      Column.Add_Attribute (Icon_Renderer, "icon-name", First_Icon_Column);
+      Column.Set_Title ("Icons");
+      --  Keep Icon_Renderer to allow icon size calculaton on clicks
+      Self.Icon_Renderer := Icon_Renderer;
+
+      --  Add teardown icon
+      Gtk_New (Icon_Renderer);
+      Column.Pack_Start (Icon_Renderer, Expand => False);
+      Column.Add_Attribute (Icon_Renderer, "icon-name", Second_Icon_Column);
+      Column.Add_Attribute (Icon_Renderer, "visible", File_Level_Column);
+      --  This text renderer with empty text aligns icons to the left
+      Gtk_New (Text_Renderer);
+      Column.Pack_Start (Text_Renderer, Expand => True);
+
+      Column_Id := Self.Tree_View.Append_Column (Column);
+      Self.Icon_Column := Column;
+
+      --  Create a tree view column to display the tested source
+      Gtk_New (Column);
+      Gtk_New (Text_Renderer);
+      Column.Pack_Start (Text_Renderer, Expand => False);
+      Column.Add_Attribute (Text_Renderer, "text", Name_Column);
+      Column.Set_Title ("Name");
+      Column_Id := Self.Tree_View.Append_Column (Column);
+
+      Gtk_New (Self.Multipress, Widget => Self.Tree_View);
+      Self.Multipress.On_Pressed (On_Multipress'Access, Slot => Self);
+      Self.Multipress.Watch (Self);
+
+      Self.Tree_View.On_Key_Press_Event
+        (On_Key_Press'Access, Slot => Self, After => False);
+
+      Tooltip := new Testing_View_Tooltip'
+        (Tooltips.Tooltips with View => Testing_MDI_Views.View_Access (Self));
+
+      Tooltip.Set_Tooltip (Self.Tree_View);
+      --  No widget to focus
+      return null;
+   end Initialize;
 
    ------------------------
    -- Is_Harness_Project --
@@ -564,6 +755,174 @@ package body GNATTest_Module is
    begin
       return Get_Mapping_File (Project) /= "";
    end Is_Harness_Project;
+
+   ------------------
+   -- On_Key_Press --
+   ------------------
+
+   function On_Key_Press
+     (Self  : access GObject_Record'Class;
+      Event : Gdk_Event_Key) return Boolean
+   is
+      use type Gdk.Types.Gdk_Key_Type;
+
+      Iter        : Gtk_Tree_Iter;
+      Model       : Gtk_Tree_Model;
+      Source      : Source_Entity;
+      Destination : Test_Entity;
+      View        : constant Testing_MDI_Views.View_Access :=
+        Testing_MDI_Views.View_Access (Self);
+   begin
+      View.Tree_View.Get_Selection.Get_Selected (Model, Iter);
+
+      if Iter /= Null_Iter then
+         if Event.Keyval = GDK_Return then
+            Source := View.Tree_Model.Get_Source_Entity (Iter);
+
+            if Map.Source_Map.Contains (Source) then
+
+               Destination := Map.Source_Map.Element (Source);
+
+               Open_File
+                 (View.Kernel,
+                  GNATCOLL.Projects.No_Project,
+                  Destination.File_Name,
+                  Destination.Line,
+                  Basic_Types.Visible_Column_Type (Destination.Column));
+            else
+
+               Open_File
+                 (View.Kernel,
+                  GNATCOLL.Projects.No_Project,
+                  Source.Source_File, 1, 1);
+            end if;
+
+            return True;
+         end if;
+      end if;
+
+      return False;
+   end On_Key_Press;
+
+   -------------------
+   -- On_Multipress --
+   -------------------
+
+   procedure On_Multipress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      N_Press : Glib.Gint;
+      X, Y    : Glib.Gdouble)
+   is
+      use type Glib.Gint;
+
+      View : constant Testing_MDI_Views.View_Access :=
+        Testing_MDI_Views.View_Access (Self);
+      Iter  : Gtk_Tree_Iter;
+
+      Cell_X, Cell_Y  : Glib.Gint;
+      Column          : Gtk_Tree_View_Column;
+      Success         : Boolean;
+      Area, Cell_Area : Gdk_Rectangle;
+      Path            : Gtk_Tree_Path;
+      Source          : Source_Entity;
+      Destination     : Test_Entity;
+      Value           : Glib.Values.GValue;
+      Is_File_Level   : Boolean;
+   begin
+      View.Tree_View.Get_Path_At_Pos
+        (Glib.Gint (X), Glib.Gint (Y), Path, Column, Cell_X, Cell_Y, Success);
+
+      if N_Press = 2 and Success then
+         --  Area is the rectangle, within the TreeView, where the
+         --  column is displayed. For instance x=20 to 264
+         View.Tree_View.Get_Cell_Area (Path, Column, Cell_Area);
+
+         --  Aligned area is the rectangle within the rectangle where
+         --  the renderer is displayed. Only the size seems to be set
+         --  to an interesting value, the X coordinate is unclear.
+         --  We just assume all icons have the same size.
+
+         View.Icon_Renderer.Get_Aligned_Area
+           (Widget       => View.Tree_View,
+            Flags        => Gtk.Cell_Renderer.Cell_Renderer_Focused,
+            Cell_Area    => Cell_Area,
+            Aligned_Area => Area);
+
+         Iter := View.Tree_Model.Get_Iter (Path);
+         Source := View.Tree_Model.Get_Source_Entity (Iter);
+         View.Tree_Model.Get_Value (Iter, File_Level_Column, Value);
+         Is_File_Level := Get_Boolean (Value);
+
+         if Column = View.Icon_Column
+           and Glib.Gint (X) >= Cell_Area.X
+           and Source.Test_Case_Name /= ""
+         then
+            --  Click in some of icon in the icon column
+
+            if Glib.Gint (X) - Cell_Area.X <= Area.Width then
+
+               if Is_File_Level then
+                  --  Click on the first icon on file level (test setup)
+                  Source.Test_Case_Name := Test_Setup;
+                  Destination := Map.Source_Map.Element (Source);
+
+                  Open_File
+                    (View.Kernel,
+                     GNATCOLL.Projects.No_Project,
+                     Destination.File_Name,
+                     Destination.Line,
+                     Basic_Types.Visible_Column_Type (Destination.Column));
+               else
+                  --  Click on the first icon on test level (tested unit)
+
+                  Open_File
+                    (View.Kernel,
+                     GNATCOLL.Projects.No_Project,
+                     Source.Source_File,
+                     Source.Line,
+                     Basic_Types.Visible_Column_Type (Source.Column),
+                     To_String (Source.Subprogram_Name));
+               end if;
+
+            elsif Glib.Gint (X) - Cell_Area.X <= 2 * Area.Width then
+
+               if Is_File_Level then
+                  --  Click on the second icon (test teardown)
+                  Source.Test_Case_Name := Test_Teardown;
+                  Destination := Map.Source_Map.Element (Source);
+
+                  Open_File
+                    (View.Kernel,
+                     GNATCOLL.Projects.No_Project,
+                     Destination.File_Name,
+                     Destination.Line,
+                     Basic_Types.Visible_Column_Type (Destination.Column));
+               end if;
+            end if;
+         else
+
+            if Is_File_Level or else not Map.Source_Map.Contains (Source) then
+
+               Open_File
+                 (View.Kernel,
+                  GNATCOLL.Projects.No_Project,
+                  Source.Source_File, 1, 1);
+            else
+
+               Destination := Map.Source_Map.Element (Source);
+
+               Open_File
+                 (View.Kernel,
+                  GNATCOLL.Projects.No_Project,
+                  Destination.File_Name,
+                  Destination.Line,
+                  Basic_Types.Visible_Column_Type (Destination.Column));
+            end if;
+         end if;
+
+         View.Multipress.Set_State (Event_Sequence_Claimed);
+      end if;
+   end On_Multipress;
 
    ---------------
    -- Open_File --
@@ -660,6 +1019,7 @@ package body GNATTest_Module is
          Handler      => Command_Handler'Access);
 
       Project_View_Changed_Hook.Add (new On_Project_Changed);
+      Testing_MDI_Views.Register_Module (Kernel);
    end Register_Module;
 
    -------------------
@@ -687,11 +1047,10 @@ package body GNATTest_Module is
 
       procedure Add_Setup_Teardown is
       begin
-         Self.Last_Source.Test_Case_Name := To_Unbounded_String ("test setup");
+         Self.Last_Source.Test_Case_Name := Test_Setup;
          Self.Source_Map.Include (Self.Last_Source, Self.Setup);
 
-         Self.Last_Source.Test_Case_Name :=
-           To_Unbounded_String ("test teardown");
+         Self.Last_Source.Test_Case_Name := Test_Teardown;
          Self.Source_Map.Include (Self.Last_Source, Self.Teardown);
 
          if Self.First_Tested then

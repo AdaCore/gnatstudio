@@ -19,10 +19,12 @@
 
 with Basic_Types;
 with GNATCOLL.Projects;
-with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GPS.Kernel;
 
-with Ada.Strings.Unbounded;
+with Ada.Calendar;
+with Ada.Containers.Ordered_Maps;
+with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 
 package GNATTest_Module is
 
@@ -48,5 +50,36 @@ package GNATTest_Module is
    --  Open unit in editor and place cursor to given Line and Column.
    --  Project is recommended for cross-references in the case of aggregate
    --  projects.
+
+   type Source_Entity is record
+      Source_File      : Virtual_File;
+      Subprogram_Name  : Unbounded_String;
+      Line             : Natural := 0;
+      Column           : Natural := 0;
+      Test_Case_Name   : Unbounded_String;
+   end record;
+
+   function "<" (Left, Right : Source_Entity) return Boolean;
+
+   type Row_Index is array (1 .. 2) of Natural;
+   --  This type used in Tree_Model only
+
+   type Test_Entity is record
+      File_Name        : Virtual_File;
+      Line             : Natural;
+      Column           : Natural;
+      Stamp            : Ada.Calendar.Time;
+      Row              : Row_Index;
+   end record;
+
+   package Source_Entity_Maps is new Ada.Containers.Ordered_Maps
+     (Key_Type     => Source_Entity,
+      Element_Type => Test_Entity);
+
+   Test_Setup : constant Unbounded_String :=
+     To_Unbounded_String ("test setup");
+
+   Test_Teardown : constant Unbounded_String :=
+     To_Unbounded_String ("test teardown");
 
 end GNATTest_Module;
