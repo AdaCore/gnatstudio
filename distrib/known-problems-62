@@ -37,6 +37,15 @@ KP-62-P907-019 GPS: paragraph navigation stops at line ends
   Workaround: Use one of the other navigation commands, maybe to move to the
               next subprogram instead.
 
+KP-62-P906-032 GPS: Clicking on filtered Windows view clears it
+
+  Problem:    Clicking on a specific item of a filtered Windows view clears
+              all of its entries.
+
+  Status:     This was fixed in 17.0 on 2016-09-08
+
+  Workaround: Clear the Windows view filter entry to get all the entries back.
+
 KP-62-P903-002 GPS: Clicking on an item may scroll the Windows view to the top
 
   Problem:    When the Windows view needs to display a scrolled window in
