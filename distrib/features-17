@@ -567,6 +567,15 @@ NF-17-L404-006 GPS: ask before overwriting read-only file (2016-09-20)
   disk, it displays a confirmation dialog to let you chose whether to
   overwrite (and, in the context of Clearcase, hijack the file).
 
+NF-17-L126-023 GPS: new action "locate in Files view" (2016-09-20)
+
+  GPS now exports a new action to find the current file in the Files view.
+  This action is not visible by default in the contextual menu (as opposed
+  to Locate in Project view) in an effort to keep the menu simple. However,
+  it can be added with a small python script as in:
+       GPS.Action("Locate in Files view").contextual("Locate in Files")
+  The menu /Navigate/Locate in Files view has been added.
+
 NF-17-K531-011 GPS: mouse buttons 4 and 5 for locations (2016-09-20)
 
   The mouse buttons 4 and 5 (available on some high-end mice) are mapped to

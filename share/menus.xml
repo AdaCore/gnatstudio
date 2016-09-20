@@ -141,6 +141,7 @@
          <menu label='Goto Entity...'            action='global search in context: entities'/>
          <menu label='Goto _Line...'             action='goto line'/>
          <menu label='Goto File Spec&lt;-&gt;Body' action='goto other file'/>
+         <menu label='Locate in Files view'      action='Locate in Files view'/>
          <separator />
          <menu label='Start of Statement'        action='start of statement'/>
          <menu label='End of Statement'          action='end of statement'/>

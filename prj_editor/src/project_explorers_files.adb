@@ -228,6 +228,12 @@ package body Project_Explorers_Files is
       Pref   : Preference);
    --  Called when preferences change
 
+   type Locate_File_In_Files_View is
+     new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Locate_File_In_Files_View;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
    type Refresh_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Refresh_Command;
@@ -1197,6 +1203,73 @@ package body Project_Explorers_Files is
    -------------
 
    overriding function Execute
+     (Command : access Locate_File_In_Files_View;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      V : constant Project_Explorer_Files :=
+        Explorer_Files_Views.Get_Or_Create_View (Get_Kernel (Context.Context));
+
+      function Find_Node
+        (File   : Virtual_File; Expand : Boolean) return Gtk_Tree_Iter;
+      --  Expand the node for File (and its parent directories)
+
+      ---------------
+      -- Find_Node --
+      ---------------
+
+      function Find_Node
+        (File : Virtual_File; Expand : Boolean) return Gtk_Tree_Iter
+      is
+         Path : Gtk_Tree_Path;
+         Iter : Gtk_Tree_Iter;
+         F    : Virtual_File;
+         Dummy : Boolean;
+      begin
+         if File.Full_Name.all = "/" then
+            Iter := V.File_Model.Get_Iter_First;
+         else
+            Iter := Find_Node (File.Get_Parent, Expand => True);
+            Iter := V.File_Model.Children (Iter);
+         end if;
+
+         while Iter /= Null_Iter loop
+            F := Get_File (V.File_Model, Iter, File_Column);
+            if File = F then
+               if Expand then
+                  Path := V.File_Model.Get_Path (Iter);
+                  Dummy := V.File_Tree.Expand_Row (Path, Open_All => False);
+                  Iter := V.File_Model.Get_Iter (Path);
+                  Path_Free (Path);
+               end if;
+               return Iter;
+            end if;
+            V.File_Model.Next (Iter);
+         end loop;
+
+         return Null_Iter;
+      end Find_Node;
+
+      Iter : Gtk_Tree_Iter;
+      Path : Gtk_Tree_Path;
+   begin
+      Iter := Find_Node (File_Information (Context.Context), Expand => False);
+      if Iter /= Null_Iter then
+         V.File_Tree.Get_Selection.Select_Iter (Iter);
+         Path := V.File_Model.Get_Path (Iter);
+         V.File_Tree.Scroll_To_Cell
+           (Path, V.File_Tree.Get_Column (0),
+            Use_Align => False, Row_Align => 0.0, Col_Align => 0.0);
+         Path_Free (Path);
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
      (Command : access Refresh_Command;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
@@ -1204,9 +1277,7 @@ package body Project_Explorers_Files is
       V : constant Project_Explorer_Files :=
         Explorer_Files_Views.Retrieve_View (Get_Kernel (Context.Context));
    begin
-      if V /= null then
-         Refresh (V);
-      end if;
+      Refresh (V);
       return Commands.Success;
    end Execute;
 
@@ -1667,7 +1738,18 @@ package body Project_Explorers_Files is
       Register_Action
         (Kernel, "refresh files view", new Refresh_Command,
          -"Refrehs the contents of the Files view",
+         Category  => -"Files view",
          Icon_Name => "gps-refresh-symbolic");
+
+      Register_Action
+        (Kernel, "Locate in Files view",
+         Command => new Locate_File_In_Files_View,
+         Description =>
+           -("Display the files view, and expand nodes to show the"
+             & " selected file"),
+         Filter      => Kernel.Lookup_Filter ("File")
+            and not File_View_Filter,
+         Category    => -"Files view");
 
       Preferences_Changed_Hook.Add (new On_Pref_Changed);
    end Register_Module;
