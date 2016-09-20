@@ -1194,7 +1194,7 @@ package body GVD.Variables is
          Category    => -"Debug");
       Register_Contextual_Menu
         (Kernel,
-         Label       => -"Debug/Tree Display %S",
+         Label       => -"Debug/Display in Variables view",
          Action      => "debug tree display variable");
 
       Register_Action
