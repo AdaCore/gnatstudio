@@ -41,6 +41,7 @@ Launches GNAT to generate information on the layout of types (using -gnatR)
       </description>
       <iconname>gps-custom-build-symbolic</iconname>
       <server>Tools_Server</server>
+      <switches></switches>
    </target-model>
    <target name='Compute Types Layout' category='File' model='gnatR'>
       <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
