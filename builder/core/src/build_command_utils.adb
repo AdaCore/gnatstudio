@@ -15,21 +15,20 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings;                      use Ada.Strings;
-with Ada.Strings.Fixed;                use Ada.Strings.Fixed;
+with Ada.Strings;                use Ada.Strings;
+with Ada.Strings.Fixed;          use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
-
-with Custom_Tools_Output;
-
 with GNAT.Directory_Operations;
-
-with GNATCOLL.Templates;          use GNATCOLL.Templates;
-with GNATCOLL.Utils;              use GNATCOLL.Utils;
-
-with GPS.Intl;                    use GPS.Intl;
-with Shared_Macros;               use Shared_Macros;
-with GNATCOLL.Traces;                      use GNATCOLL.Traces;
 with GNAT.Strings;
+
+with GNATCOLL.Templates;         use GNATCOLL.Templates;
+with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
+
+with GPS.Intl;                   use GPS.Intl;
+with Custom_Tools_Output;
+with Shared_Macros;              use Shared_Macros;
+with String_Utils;               use String_Utils;
 
 package body Build_Command_Utils is
 
@@ -445,6 +444,16 @@ package body Build_Command_Utils is
       --  Create an Arg_List containing the given Command, and possibly
       --  appended with --target=xxx if Tc is a cross toolchain.
 
+      function Get_Python_Full_Name (File : Virtual_File) return String
+      is
+        (if Uses_Python (Target) then
+            Protect (+File.Full_Name)
+         else
+            +File.Full_Name);
+      --  If the Target uses python, Return a suitable python string from the
+      --  file's full name, escaping the backslashes when needed.
+      --  Otherwise, return the file's full name without any replacing.
+
       Environment : Project_Environment_Access renames
         Adapter.Kernel_Registry.Environment;
 
@@ -722,7 +731,7 @@ package body Build_Command_Utils is
                   --  normalized value)
                   if File.Display_Full_Name /=
                     Normalize_Pathname
-                      (File.Display_Full_Name, Resolve_Links => True)
+                      (Get_Python_Full_Name (File), Resolve_Links => True)
                     and then Get_Trusted_Mode_Preference (Adapter.all)
                   then
                      Console_Insert
@@ -755,15 +764,16 @@ package body Build_Command_Utils is
 
       elsif Starts_With (Arg, "%TP") then
          Result.Args := Create
-           (+Main_Project.Project_Path.Full_Name &
+           (Get_Python_Full_Name (Main_Project.Project_Path) &
               --  Get_Context_Project (Adapter.all).Project_Path.Full_Name &
               Arg (Arg'First + 3 .. Arg'Last));
 
       elsif Starts_With (Arg, "%TT") then
          if Main /= No_File then
             Result.Args :=
-              Create (+Main.To_Remote (Get_Nickname (Server)).Full_Name &
-                      Arg (Arg'First + 3 .. Arg'Last));
+              Create (Get_Python_Full_Name
+                      (Main.To_Remote (Get_Nickname (Server)))
+                      & Arg (Arg'First + 3 .. Arg'Last));
          else
             if Background then
                declare
@@ -778,9 +788,10 @@ package body Build_Command_Utils is
                         Mode => Error);
                      raise Invalid_Argument;
                   else
-                     Result.Args := Create
-                       (+M.To_Remote (Get_Nickname (Server)).Full_Name &
-                        Arg (Arg'First + 3 .. Arg'Last));
+                     Result.Args :=
+                       Create (Get_Python_Full_Name
+                               (M.To_Remote (Get_Nickname (Server)))
+                               & Arg (Arg'First + 3 .. Arg'Last));
                   end if;
                end;
             else
@@ -831,12 +842,14 @@ package body Build_Command_Utils is
                if Get_Properties (Target).Target_Type /= "executable" then
                   Executable := Create_From_Dir
                     (Adapter.Context_Project.Executables_Directory,
-                     Adapter.Context_Project.Executable_Name (Main.Full_Name));
+                     Adapter.Context_Project.Executable_Name
+                       (+Get_Python_Full_Name (Main)));
                else
                   Executable := Main;
                end if;
                Result.Args := Create
-                 (+To_Remote (Executable, Get_Nickname (Server)).Full_Name);
+                 (Get_Python_Full_Name
+                    (To_Remote (Executable, Get_Nickname (Server))));
             end;
 
          else
@@ -854,7 +867,8 @@ package body Build_Command_Utils is
             return Result;
          else
             Result.Args := Create
-              ("--config=" & Environment.Get_Config_File.Display_Full_Name);
+              ("--config="
+               & Get_Python_Full_Name (Environment.Get_Config_File));
          end if;
 
       elsif Arg = "%autoconf" then
@@ -864,7 +878,8 @@ package body Build_Command_Utils is
             return Result;
          else
             Result.Args := Create
-              ("--autoconf=" & Environment.Get_Config_File.Display_Full_Name);
+              ("--autoconf="
+               & Get_Python_Full_Name (Environment.Get_Config_File));
          end if;
 
       else
