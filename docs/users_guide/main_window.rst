@@ -1276,7 +1276,7 @@ full callgraph tree.  Closing and expanding a node again recomputes the
 callgraph for the entity.
 
 The right side of the main tree contains a list displays the locations of
-calls for the selected entity.  Click on a entry in this list to open an
+calls for the selected entity.  Click on an entry in this list to open an
 editor showing the corresponding location.
 
 The :guilabel:`Call tree` supports keyboard navigation: :kbd:`Up` and
@@ -1601,7 +1601,7 @@ The OS Shell Console
 .. image:: os_shell-window.png
 .. index:: menu; tools --> consoles --> OS Shell
 
-GPS also provides an OS shell console, providing a access to the underlying
+GPS also provides an OS shell console, providing an access to the underlying
 OS shell (as defined by the :samp:`{SHELL}` or :samp:`{COMSPEC}`
 environment variables).
 

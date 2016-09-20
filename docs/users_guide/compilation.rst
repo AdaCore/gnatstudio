@@ -474,7 +474,7 @@ remain untouched.
 .. index:: menu; tools --> consoles --> auxiliary builds
 
 Cross-reference files generation does not output anything in the
-:guilabel:`Messages` view so as to not to be confused with the output of the
+:guilabel:`Messages` view so as not to be confused with the output of the
 regular build process. If needed, you can see the output of the cross-ref
 generation command with the :menuselection:`Tools --> Consoles -->
 Auxiliary Builds` menu.

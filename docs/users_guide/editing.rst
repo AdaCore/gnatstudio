@@ -1086,7 +1086,7 @@ GPS supports this with several different methods:
   Macros` menu, but it is often more convenient to use these through key
   bindings, which you can of course override.
 
-  First, tell GPS to should start recording the keys you are pressing via
+  First, tell GPS that it should start recording the keys you are pressing via
   the :menuselection:`Tools --> Macros --> Start Keyboard Macro` menu.  As
   its name indicates, this only records keyboard events, not mouse events.
   GPS keeps recording the events until you select the :menuselection:`Tools
@@ -1240,7 +1240,7 @@ extendable, or make other similar improvements.  Refactoring techniques are
 generally things that programmers have done by hand, but which can be done
 faster and more securely when done automatically by a tool.
 
-A basic recommendations when you refactor your code is to recompile and
+A basic recommendation when you refactor your code is to recompile and
 test your application regularly to make sure each small modification you
 made did not change the behavior of your application.  This is particularly
 true with GPS, since it relies on the cross-references information
@@ -1264,7 +1264,7 @@ body, and all calls to it.  No comments are updated so you should probably
 manually check that the comment for the entity still applies.
 
 GPS handles primitive operations by also renaming the operations it
-overrides or that overrides it, so any dispatching call to that operation
+overrides or that override it, so any dispatching call to that operation
 is also renamed, allowing the application to continue to work properly. If
 you are renaming a parameter to a subprogram, GPS also renames parameters
 with the same name in overriding or overridden subprograms.

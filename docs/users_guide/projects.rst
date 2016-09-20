@@ -398,7 +398,7 @@ several hours to be fully compiled.  Most developers do not need to have the
 full copy of the project compiled on their own machine.
 
 However, it can still be useful to access other source files from the
-application. For example, a developer may need to find out whether a 
+application. For example, a developer may need to find out whether
 a subprogram can be changed, and where it is currently called.
 
 Such a setup can be achieved through project extensions. These are special
@@ -433,7 +433,7 @@ Once you load a project extension in GPS, most things are transparent to
 the extension. If you open a file through the :menuselection:`File --> Open
 From Project` dialog, the files found in the local directory of the
 extension project are picked up first.  Build actions create object files
-in the project extensions's directory, leaving the original project
+in the project extensions' directory, leaving the original project
 untouched.
 
 You may want to work on a source file you did not put in the project
@@ -459,7 +459,7 @@ Aggregate projects
 ==================
 
 Aggregate projects are a convenient way to group several independent
-projects into a single project that you can loaded in GPS. Using an
+projects into a single project that you can load in GPS. Using an
 aggregate project has several advantages:
 
 * There is no restriction on duplicate names within aggregate sources and
@@ -642,7 +642,7 @@ These entries are:
 The Project Wizard
 ==================
 
-The project wizard allows you to create a new project file in a few steps.
+The project wizard lets you create a new project file in a few steps.
 It contains a number of pages, each dedicated to editing a specific set of
 attributes of the project.
 
@@ -714,7 +714,7 @@ Several types of project wizards are provided in GPS:
 
   .. index:: project; extending
 
-  This specialized wizard allows you to easily create project extentions.
+  This specialized wizard lets you easily create project extensions.
   (See :ref:`Extending_Projects`).
 
 .. _Project_Naming_Page:
@@ -937,7 +937,7 @@ first, followed by the body.
 A naming scheme needs to be duplicated in each of the project file that
 uses the corresponding source language. An alternative is to put the
 definition of the naming scheme in a configuration file (with the extension
-:file:`.cgpr`), and have GPS load this file on startup. The same config
+:file:`.cgpr`), and have GPS load this file on startup. The same configuration
 file can also be used with gprbuild for instance. In the context of GPS,
 for instance, you could create :file:`config.cgpr` with::
 

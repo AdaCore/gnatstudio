@@ -146,7 +146,7 @@ The list of active entries includes:
 
   * :guilabel:`Auxiliary Builds`
 
-    Open the console containing auxiliary buils output. Only output from
+    Open the console containing auxiliary builds output. Only output from
     automated cross-reference generation is currently sent to this console.
     See :ref:`Working_with_two_compilers`.
 
@@ -250,7 +250,7 @@ different colors.  Each highlight color indicates a different type of line:
 
 *gray*
 
- All the line in the reference (left) file.
+ All the lines in the reference (left) file.
 
 *yellow*
 

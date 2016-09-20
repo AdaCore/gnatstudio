@@ -1063,7 +1063,7 @@ arguments.  This code is useful when you are writing a full python script.
 Another type of macros are expanded before commands are executed: they start
 with the :kbd:`$` character and represent parameters passed to the action
 by its caller. Depending on the context, GPS passes zero, one or many
-arguments to a action. You will commonly use these macros when you define
+arguments to an action. You will commonly use these macros when you define
 your own VCS system.  Also see the shell function :file:`execute_action`,
 which executes an action and passes it arguments.
 
