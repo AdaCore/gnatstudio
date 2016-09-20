@@ -352,14 +352,6 @@ package body Commands.Builder.Scripts is
 
       elsif Command = "get_runtime" then
          Set_Return_Value (Data, Kernel.Get_Runtime);
-
-      elsif Command = "get_runtime_files" then
-         Set_Return_Value_As_List (Data);
-         for F of Kernel.Get_Runtime_Files loop
-            Set_Return_Value (Data,
-                              Create_File (Get_Script (Data), F));
-         end loop;
-
       end if;
    end Shell_Handler;
 
@@ -422,10 +414,6 @@ package body Commands.Builder.Scripts is
 
       Register_Command (Kernel.Scripts,
                         Command       => "get_runtime",
-                        Handler       => Shell_Handler'Access);
-
-      Register_Command (Kernel.Scripts,
-                        Command       => "get_runtime_files",
                         Handler       => Shell_Handler'Access);
    end Register_Commands;
 

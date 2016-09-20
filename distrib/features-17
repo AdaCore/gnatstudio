@@ -23,13 +23,6 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
-NF-17-P913-041 GPS: compute the GNAT Runtime menu dynamically (2016-09-19)
-
-  The Help -> GNAT Runtime menu is now computed from the runtime that is
-  actually being used for the current project, rather than a static image
-  of a native runtime. This is particularly helpful when working with
-  embedded or restricted runtimes.
-
 NF-17-P913-020 GPS: GPS.Process accepts a list of args (2016-09-13)
 
   The Python GPS.Process() now accepts the command as a list of

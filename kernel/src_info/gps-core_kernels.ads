@@ -162,11 +162,6 @@ package GPS.Core_Kernels is
      (Self : not null access Core_Kernel_Record) return String is abstract;
    --  Return the current runtime
 
-   function Get_Runtime_Files
-     (Self : not null access Core_Kernel_Record)
-      return GNATCOLL.VFS.File_Array is abstract;
-   --  Return the current runtime files
-
    function Get_Toolchains_Manager
      (Self : not null access Core_Kernel_Record)
       return Toolchains.Toolchain_Manager;

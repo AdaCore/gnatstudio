@@ -32,7 +32,6 @@ Functions
 .. autofunction:: get_build_output
 .. autofunction:: get_home_dir
 .. autofunction:: get_runtime
-.. autofunction:: get_runtime_files
 .. autofunction:: get_system_dir
 .. autofunction:: get_target
 .. autofunction:: get_tmp_dir
