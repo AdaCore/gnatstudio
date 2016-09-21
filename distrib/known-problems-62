@@ -334,6 +334,17 @@ KP-62-P328-005 Indentation engine on aggregates
 
   Workaround: Indent manually.
 
+KP-62-P325-013 GPS: Dropping similar arguments from command line
+
+  Problem:    GPS drops the same command line arguments before execution
+              a command. This could cause a problem if such arguments are
+              required in different argument sections (for example -cargs and
+              -largs).
+
+  Status:     This was fixed in 17.0 on 2016-08-16
+
+  Workaround: None
+
 KP-62-P324-031 GB: xref not working on aggregate projects
 
   Problem:    Navigation & References are not working when working on aggregate
