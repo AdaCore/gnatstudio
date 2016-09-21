@@ -65,6 +65,8 @@ class MDL_Language(GPS.Language):
 
     # @overriding
     def __init__(self):
+        # The constant string used to create a construct id
+        self.const_id = "#QGEN#"
         pass
 
     @staticmethod
@@ -86,14 +88,15 @@ class MDL_Language(GPS.Language):
     # @overriding
     def clicked_on_construct(self, construct):
         def __on_loaded(view):
-            diag = view.diags.get(construct.id)
+            construct_id = construct.id.split(self.const_id, 1)[1]
+            diag = view.diags.get(construct_id)
             # If the construct was a diagram, open it
             # otherwise highlight the item
-            if diag.id == construct.id:
+            if diag.id == construct_id:
                 view.set_diagram(diag)
             else:
                 info = QGEN_Module.modeling_map.get_diagram_for_item(
-                    view.diags, construct.id)
+                    view.diags, construct_id)
                 if info:
                     diagram, item = info
                     view.diags.clear_selection()
@@ -136,7 +139,7 @@ class MDL_Language(GPS.Language):
                     child_name = child["name"]
                     child_id = child["diagram"]
                     if exclude_subsystem:
-                        subsystem_list.append(child_id)
+                        subsystem_list.append(child_name)
                     for child_entry_name, child_children in viewer.diags.index:
                         # Each child of the current diagram is processed
                         if child_entry_name == child_id:
@@ -187,7 +190,12 @@ class MDL_Language(GPS.Language):
                     visibility=constructs.VISIBILITY_PUBLIC,
                     name=it_name if flat else os.path.basename(it_name),
                     profile='',
-                    id=it_id,
+                    # We combine the name of the block with its id and a #QGEN#
+                    # string to both create a unique id (it_name is unique) and
+                    # be able to retrieve the id to display the correct diagram
+                    # when the construct is clicked (as long as the name did
+                    # not contain #QGEN# already, which is unlikely).
+                    id=it_name + self.const_id + it_id,
                     sloc_start=sloc_start,
                     sloc_end=sloc_end,
                     sloc_entity=sloc_start)
