@@ -78,8 +78,10 @@ package body Buffer_Views is
    Untitled    : constant String := "Untitled";
    --  Label used for new window that is not yet saved
 
-   Editors_Only   : Boolean_Preference;
-   Show_Notebooks : Boolean_Preference;
+   Editors_Only         : Boolean_Preference;
+   Show_Notebooks       : Boolean_Preference;
+   Sort_Alphabetical    : Boolean_Preference;
+   Hide_Empty_Notebooks : Boolean_Preference;
 
    type BV_Child_Record is new GPS_MDI_Child_Record with null record;
    overriding function Build_Context
@@ -492,6 +494,7 @@ package body Buffer_Views is
       V       : constant Buffer_View_Access := Buffer_View_Access (View);
       P_Editors_Only   : constant Boolean := Editors_Only.Get_Pref;
       P_Show_Notebooks : constant Boolean := Show_Notebooks.Get_Pref;
+      P_Hide_Empty     : constant Boolean := Hide_Empty_Notebooks.Get_Pref;
 
       Notebook_Index      : Integer := -1;
       Notebook_Store_Iter : Gtk_Tree_Iter := Null_Iter;
@@ -514,22 +517,30 @@ package body Buffer_Views is
             Iter2 := V.Tree.Model.Children (Notebook_Store_Iter);
 
             if Iter2 = Null_Iter then
-               --  If we had an empty notebook, remove it
-               V.Tree.Model.Remove (Notebook_Store_Iter);
+               if P_Hide_Empty then
+                  --  If we had an empty notebook, remove it
+                  V.Tree.Model.Remove (Notebook_Store_Iter);
+               else
+                  Notebook_Index := Notebook_Index + 1;
+               end if;
 
             elsif V.Tree.Model.N_Children (Notebook_Store_Iter) = 1 then
-               --  Single child ?
-               Set_And_Clear
-                 (V.Tree.Model, Notebook_Store_Iter,
-                  (Icon_Name_Column, Name_Column, Data_Column),
-                  (1 => As_String
-                     (V.Tree.Model.Get_String (Iter2, Icon_Name_Column)),
-                   2 => As_String
-                     (V.Tree.Model.Get_String (Iter2, Name_Column)),
-                   3 => As_String
-                     (V.Tree.Model.Get_String (Iter2, Data_Column))));
+               if P_Hide_Empty then
+                  --  Single child ?
+                  Set_And_Clear
+                    (V.Tree.Model, Notebook_Store_Iter,
+                     (Icon_Name_Column, Name_Column, Data_Column),
+                     (1 => As_String
+                          (V.Tree.Model.Get_String (Iter2, Icon_Name_Column)),
+                      2 => As_String
+                        (V.Tree.Model.Get_String (Iter2, Name_Column)),
+                      3 => As_String
+                        (V.Tree.Model.Get_String (Iter2, Data_Column))));
 
-               V.Tree.Model.Remove (Iter2);
+                  V.Tree.Model.Remove (Iter2);
+               else
+                  Notebook_Index := Notebook_Index + 1;
+               end if;
 
             else
                Notebook_Index := Notebook_Index + 1;
@@ -590,12 +601,7 @@ package body Buffer_Views is
       end if;
 
       V.Tree.Model.Clear;
-
-      if P_Show_Notebooks then
-         Column := V.Tree.Model.Freeze_Sort;
-      else
-         V.Tree.Model.Thaw_Sort (1);
-      end if;
+      Column := V.Tree.Model.Freeze_Sort;
 
       I_Child := First_Child
         (Get_MDI (V.Kernel), Group_By_Notebook => P_Show_Notebooks);
@@ -634,6 +640,10 @@ package body Buffer_Views is
       if V.Tree.Pattern /= null then
          V.Tree.Refilter;
       end if;
+
+      if Sort_Alphabetical.Get_Pref then
+         V.Tree.Model.Thaw_Sort (1);
+      end if;
    end Refresh;
 
    -----------------
@@ -642,11 +652,12 @@ package body Buffer_Views is
 
    overriding procedure Create_Menu
      (View    : not null access Buffer_View_Record;
-      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
+      Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class) is
    begin
       Append_Menu (Menu, View.Kernel, Editors_Only);
+      Append_Menu (Menu, View.Kernel, Sort_Alphabetical);
       Append_Menu (Menu, View.Kernel, Show_Notebooks);
+      Append_Menu (Menu, View.Kernel, Hide_Empty_Notebooks);
    end Create_Menu;
 
    --------------------
@@ -960,6 +971,8 @@ package body Buffer_Views is
          if Pref = null
            or else Pref = Preference (Editors_Only)
            or else Pref = Preference (Show_Notebooks)
+           or else Pref = Preference (Sort_Alphabetical)
+           or else Pref = Preference (Hide_Empty_Notebooks)
          then
             Refresh (V);
          end if;
@@ -983,13 +996,24 @@ package body Buffer_Views is
       Show_Notebooks := Kernel.Get_Preferences.Create_Invisible_Pref
         ("windows-view-show-notebooks", False,
          Label => "Show notebooks");
+      Sort_Alphabetical := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("windows-view-sort-alphabetical", True,
+         Label => "Sort alphabetically",
+         Doc   =>
+           -("Sort names alphabetically, if true. Otherwise preserve the"
+             & " order of notebook tabs (or in last-focus order when"
+             & " notebooks are not displayed"));
+      Hide_Empty_Notebooks := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("windows-view-hide-empty-notebooks", True,
+         Label => "Hide empty notebooks",
+         Doc   => -"Hide notebook nodes with one window or less");
 
       Register_Action
         (Kernel, "Windows view close selected",
          new Close_Command,
          -"Close all windows currently selected in the Windows view",
          Icon_Name => "gps-remove-symbolic",
-         Category => -"Windows view");
+         Category  => -"Windows view");
 
       P := new Opened_Windows_Search;
       Register_Provider_And_Action (Kernel, P);

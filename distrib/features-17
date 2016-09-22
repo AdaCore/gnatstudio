@@ -491,6 +491,18 @@ NF-17-O925-069 GPS: New GUI for the preferences dialog (2016-02-10)
   GPS hidden preferences can now be displayed and edited by activating the
   "Show advanced preferences" setting from the dialog's local menu.
 
+NF-17-O922-026 GPS: Windows view sort order (2016-09-22)
+
+  Two new settings have been added to the Windows view: you can now
+  chose whether to show nodes for notebooks that have a single window (the
+  default is still to display the window itself, but not its notebook in
+  this case); and you can chose whether to sort windows alphabetically,
+  or to preserve the order of tabs within the notebooks.
+  When the notebooks are not displayed, and sorting is disabled, the order
+  depends on which window had the keyboard focus last, which provides a
+  convenient way of switching quickly between a few editors among a lot of
+  them.
+
 NF-17-O807-036 GPS: Review multiple CodePeer messages at once (2016-02-01)
 
   GPS now allows reviewing multiple CodePeer messages at once.
