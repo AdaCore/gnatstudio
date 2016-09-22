@@ -50,7 +50,7 @@ def display():
         runtime = GPS.Project.root().get_attribute_as_string(
             "runtime", index="Ada")
         if runtime:
-            cmdline.append('--runtime=%s' % runtime)
+            cmdline.append('--RTS=%s' % runtime)
 
         cmdline.append('p.ads')
 
