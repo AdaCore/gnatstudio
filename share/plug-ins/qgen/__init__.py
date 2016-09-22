@@ -246,6 +246,16 @@ class Project_Support(object):
                 </index>
              </project_attribute>
 
+             <project_attribute
+              package="QGen"
+              name="Debug_Args"
+              editor_page="QGen"
+              label="Debug arguments"
+              description="Launch arguments for generated debug session"
+              hide_in="wizard library_wizard">
+                <string />
+             </project_attribute>
+
              <target-model name="QGenc" category="">
                <description>Generic launch of QGen</description>
                <iconname>gps-build-all-symbolic</iconname>
@@ -1334,9 +1344,11 @@ else:
                 QGEN_Module.debugger = debugger
                 # Load qgen gdb script for custom commands
                 QGEN_Module.__load_debug_script(debugger)
-                sim_file = os.environ.get('QGEN_DEBUG_SIM_NAME')
-                if sim_file:
-                    debugger.send("set args %s test_out 0.0" % sim_file)
+                debug_args = debugger.current_file.project(
+                ).get_attribute_as_string(attribute="Debug_Args",
+                                          package="QGen")
+                if debug_args != "":
+                    debugger.send("set args %s" % debug_args)
 
                 QGEN_Module.__clear(debugger)
             else:
