@@ -35,15 +35,8 @@ class rulesSelector(Gtk.Dialog):
         )
 
         # OK - Cancel buttons
-        self.okButton = Gtk.Button('OK')
-        self.okButton.connect('clicked', self.on_ok)
-        self.okButton.show()
-        self.action_area.pack_start(self.okButton, True, True, 0)
-
-        self.cancelButton = Gtk.Button('Cancel')
-        self.cancelButton.connect('clicked', self.on_cancel)
-        self.cancelButton.show()
-        self.action_area.pack_start(self.cancelButton, True, True, 0)
+        self.okButton = self.add_button('OK', Gtk.ResponseType.OK)
+        self.cancelButton = self.add_button('Cancel', Gtk.ResponseType.CANCEL)
 
         label = Gtk.Label(
             label="No check switches are defined for project {}"
@@ -87,14 +80,6 @@ class rulesSelector(Gtk.Dialog):
         file = GPS.MDI.file_selector()
         if file.path != "":
             self.fileEntry.set_text(file.path)
-
-    def on_ok(self, *args):
-        """Callback to 'Cancel' button"""
-        self.response(Gtk.ResponseType.OK)
-
-    def on_cancel(self, *args):
-        """Callback to 'Cancel' button"""
-        self.response(Gtk.ResponseType.CANCEL)
 
 
 class gnatCheckProc:
@@ -191,64 +176,39 @@ class gnatCheckProc:
             # There is a full output: run CodeFix.
             GPS.Codefix.parse(self.locations_string, self.full_output)
 
-    def internalSpawn(self, filestr, project, recursive=False):
-        self.full_output = ""
-        need_rules_file = False
-        opts = project.get_attribute_as_list(
-            "default_switches", package="check", index="ada")
-        if len(opts) == 0:
-            need_rules_file = True
-            opts = GPS.Project.root().get_attribute_as_list(
-                "default_switches", package="check", index="ada")
-            for opt in opts:
-                res = re.split("^\-from\=(.*)$", opt)
-                if len(res) > 1:
-                    # we cd to the root project's dir before creating the file,
-                    # as this will then correctly resolve if the file is
-                    # relative to the project's dir
-                    olddir = GPS.pwd()
-                    rootdir = GPS.Project.root().file().directory()
-                    GPS.cd(rootdir)
-                    self.rules_file = GPS.File(res[1])
-                    GPS.cd(olddir)
-
-        if need_rules_file:
-            selector = rulesSelector(project.name(), self.rules_file)
-
-            if selector.run() == Gtk.ResponseType.OK:
-                self.rules_file = selector.get_file()
-                selector.destroy()
-            else:
-                selector.destroy()
-                return
+    def on_spawn(self, filestr, project, recursive):
+        """
+        Spawn gnatcheck.
+        Must be called only after we have set the rules file
+        """
 
         self.updateGnatCmd()
 
         if self.gnatCmd == "":
             GPS.Console("Messages").write("Error: could not find gnatcheck")
             return
+
         # launch gnat check with specified project
-        cmd = self.gnatCmd + ' check -P """' + \
-            project.file().name("Tools_Server") + '"""'
+        cmd = [self.gnatCmd, 'check',
+               '-P', project.file().name("Tools_Server"),
+               '-dd']   # progress
 
         # also analyse subprojects ?
         if recursive:
-            cmd += " -U"
+            cmd.append('-U')
 
         # define the scenario variables
         scenario = GPS.Project.scenario_variables()
         if scenario is not None:
             for i, j in scenario.iteritems():
-                cmd += ' """-X' + i + '=' + j + '"""'
-        # use progress
-        cmd += " -dd"
+                cmd.append('-X%s=%s' % (i, j))
 
         # now specify the files to check
-        cmd += " " + filestr
+        cmd.append(filestr)
 
-        if need_rules_file:
-            cmd += ' -rules """-from=' + \
-                self.rules_file.name("Tools_Server") + '"""'
+        if self.rules_file:
+            cmd.extend(
+                ['-rules', '-from=%s' % self.rules_file.name("Tools_Server")])
 
         # clear the Checks category in the Locations view
         if GPS.Locations.list_categories().count(self.locations_string) > 0:
@@ -264,6 +224,65 @@ class gnatCheckProc:
             progress_total=2,
             remote_server="Tools_Server",
             show_command=True)
+
+    def internalSpawn(self, filestr, project, recursive=False):
+        if GPS.Preference('General-Auto-Save').get():
+            # Force, since otherwise we get a modal dialog while within
+            # a GPS action, which gtk+ doesn't like
+            modified = GPS.Project.root().is_modified(recursive=True)
+            GPS.MDI.save_all(force=True)
+            if modified:
+                GPS.Project.root().recompute()
+
+        self.full_output = ""
+        opts_project = project
+        opts = opts_project.get_attribute_as_list(
+            "switches", package="check", index="ada")
+        if len(opts) == 0:
+            opts = opts_project.get_attribute_as_list(
+                "default_switches", package="check", index="ada")
+        if len(opts) == 0:
+            opts_project = GPS.Project.root()
+            opts = opts_project.get_attribute_as_list(
+                "switches", package="check", index="ada")
+        if len(opts) == 0:
+            opts = opts_project.get_attribute_as_list(
+                "default_switches", package="check", index="ada")
+
+        # We need a rules file if none was specified in the project.
+        need_rules_file = True
+        if len(opts) != 0:
+            for opt in opts:
+                res = re.split("^\-from\=(.*)$", opt)
+                if len(res) > 1:
+                    # we cd to the project's dir before creating the file,
+                    # as this will then correctly resolve if the file is
+                    # relative to the project's dir
+                    olddir = GPS.pwd()
+                    GPS.cd(opts_project.file().directory())
+                    self.rules_file = GPS.File(res[1])
+                    GPS.cd(olddir)
+                    need_rules_file = False
+
+        if need_rules_file:
+            # Display a dialog, but without using run(), since we are
+            # running a GPS action in the task manager and that would
+            # crash GPS on some platforms
+
+            selector = rulesSelector(project.name(), self.rules_file)
+
+            def on_response(dialog, response_id):
+                if response_id == Gtk.ResponseType.OK:
+                    self.rules_file = selector.get_file()
+                    dialog.destroy()
+                    self.on_spawn(filestr, project, recursive)
+                else:
+                    dialog.destroy()
+
+            selector.connect('response', on_response)
+            selector.show_all()
+        else:
+            self.on_spawn(filestr, project, recursive)
 
     def check_project(self, project, recursive=False):
         try:

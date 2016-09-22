@@ -203,6 +203,18 @@ KP-62-P519-025 GPS: Custom action filters can cause selection problems
 
   Workaround: Drag the mouse imediately to extend the selection.
 
+KP-62-P519-023 GPS: running gnatcheck does not save the project or files
+
+  Problem:    If you edit the project to set the names of the rules file
+              for GnatCheck, or edit a source file, without explicitly saving
+              then running any item in /Tools/Coding Standard would not save
+              the project or file automatically. It might therefore not find
+              the rules file you want to use.
+
+  Status:     This was fixed in 17.0 on 2016-09-22
+
+  Workaround: Use /File/Save More/All before your run gnatcheck
+
 KP-62-P513-042 GPS: With clauses not shown properly in outline
 
   Problem:    When the "show with clauses" option was activated, instead of
