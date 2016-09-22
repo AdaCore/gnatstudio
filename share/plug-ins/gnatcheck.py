@@ -61,7 +61,7 @@ class rulesSelector(Gtk.Dialog):
         self.fileEntry.show()
         hbox.pack_start(self.fileEntry, True, True, 0)
 
-        if None != defaultfile:
+        if defaultfile is not None:
             self.fileEntry.set_text(defaultfile.path)
         self.fileEntry.connect('changed', self.on_file_entry_changed)
         self.on_file_entry_changed()
@@ -109,6 +109,8 @@ class gnatCheckProc:
         self.gnatCmd = ""
         self.full_output = ""
 
+        self.ruleseditor = None   # The GUI to edit rules
+
     def updateGnatCmd(self):
         self.gnatCmd = gps_utils.get_gnat_driver_cmd()
 
@@ -121,8 +123,20 @@ class gnatCheckProc:
             GPS.Console("Messages").write(
                 "Error: Could not initialize the gnatcheck module.\n")
 
+    def onResponse(self, dialog, response_id):
+        if response_id == Gtk.ResponseType.APPLY:
+            fname = self.ruleseditor.get_filename()
+            if fname != "":
+                self.rules_file = fname
+
+        self.ruleseditor.destroy()
+        self.ruleseditor = None
+
     def edit(self):
-        global ruleseditor
+        if self.ruleseditor:
+            # Already opened
+            return
+
         prev_cmd = self.gnatCmd
         self.updateGnatCmd()
 
@@ -141,17 +155,8 @@ class gnatCheckProc:
             if len(res) > 1:
                 self.rules_file = GPS.File(res[1])
 
-        try:
-            ruleseditor = rulesEditor(self.rules, self.rules_file)
-            ruleseditor.run()
-            fname = ruleseditor.get_filename()
-            if fname != "":
-                self.rules_file = fname
-            ruleseditor.destroy()
-        except:
-            GPS.Console("Messages").write(
-                "Unexpected exception in gnatcheck.py:\n%s\n" % (
-                    traceback.format_exc()))
+        self.ruleseditor = rulesEditor(self.rules, self.rules_file)
+        self.ruleseditor.connect('response', self.onResponse)
 
     def parse_output(self, msg):
         # gnatcheck sometimes displays incorrectly formatted warnings (not

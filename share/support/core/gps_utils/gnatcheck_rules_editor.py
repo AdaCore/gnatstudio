@@ -162,8 +162,8 @@ def get_supported_rules(gnatCmd):
         dom = minidom.parseString(xmlstring)
     except:
         GPS.Console("Messages").write(
-            "Warning: the gnatcheck module could not retrieve the gnatcheck"
-            + " rules. Using the default ones.\n")
+            "Warning: the gnatcheck module could not retrieve the gnatcheck" +
+            " rules. Using the default ones.\n")
         dom = minidom.parseString(gnatcheck_default)
     roots = dom.getElementsByTagName("gnatcheck")
 
@@ -244,7 +244,7 @@ class rulesEditor(Gtk.Dialog):
         # Connect callbacks on the file entry modifications
         self.fileEntry.set_editable(True)
         self.fileEntry.show()
-        if None != defaultfile:
+        if defaultfile is not None:
             self.fileEntry.set_text(defaultfile.path)
         self.fileEntry.connect('changed', self.on_file_entry_changed)
         hbox.pack_start(self.fileEntry, True, True, 0)
@@ -279,8 +279,8 @@ class rulesEditor(Gtk.Dialog):
 
         xml = self.main_cat.Xml("")
         xml = str(
-            '<?xml version="1.0"?><tool name="Coding_Standard" lines="1"'
-            + 'columns="1">%s</tool>' % (xml))
+            '<?xml version="1.0"?><tool name="Coding_Standard" lines="1"' +
+            'columns="1">%s</tool>' % (xml))
         self.SwitchesChooser = GPS.SwitchesChooser("Gnatcheck", xml)
         self.switchvbox.pack_start(
             self.SwitchesChooser.pywidget(), True, True, 0)
@@ -354,7 +354,7 @@ class rulesEditor(Gtk.Dialog):
 
     def on_cancel(self, *args):
         """Callback to 'Cancel' button"""
-        self.response(Gtk.ResponseType.NONE)
+        self.response(Gtk.ResponseType.CANCEL)
 
     def on_save(self, *args):
         """Callback to 'Save' button"""
@@ -366,4 +366,4 @@ class rulesEditor(Gtk.Dialog):
         f.close()
         if self.open_file_after_exit_check.get_active():
             GPS.EditorBuffer.get(file)
-        self.response(Gtk.ResponseType.NONE)
+        self.response(Gtk.ResponseType.APPLY)
