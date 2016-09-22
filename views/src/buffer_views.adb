@@ -777,6 +777,8 @@ package body Buffer_Views is
       Widget_Callback.Object_Connect
         (Get_MDI (View.Kernel), Signal_Float_Child, Refresh'Access, View);
       Widget_Callback.Object_Connect
+        (Get_MDI (View.Kernel), Signal_Unfloat_Child, Refresh'Access, View);
+      Widget_Callback.Object_Connect
         (Get_MDI (View.Kernel), Signal_Children_Reorganized, Refresh'Access,
          View);
 

@@ -689,6 +689,17 @@ KP-62-OA15-033 GPS: gnatcov's report not fully displayed
 
   Workaround: None.
 
+KP-62-O922-032 GPS: missing refresh in Windows view
+
+  Problem:    The Windows view is sometimes not refresh when moving
+              windows around (floating/unfloating, or splitting existing
+              notebooks)
+
+  Status:     This was fixed in 17.0 on 2016-09-22
+
+  Workaround: both a window on top of an existing window to force a
+              refresh.
+
 KP-62-O921-051 GNATdoc: No source code snippet for subtypes
 
   Problem:    GNATdoc doesn't generate source code snippet for declarations of
