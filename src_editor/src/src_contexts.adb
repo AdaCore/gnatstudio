@@ -292,10 +292,8 @@ package body Src_Contexts is
       Buffer      : Src_Editor_Buffer.Source_Buffer);
    --  Replace all search mathes in given Buffer with Replacement
 
-   procedure Focus_To_Editor
-     (Editor     : MDI_Child;
-      Give_Focus : Boolean);
-   --  Make Editor visible. If Give_Focus then raise it's window too.
+   procedure Focus_To_Editor (Editor : MDI_Child);
+   --  Make the given Editor visible
 
    -----------------
    -- Scan_Buffer --
@@ -1401,15 +1399,10 @@ package body Src_Contexts is
    -- Focus_To_Editor --
    ---------------------
 
-   procedure Focus_To_Editor
-     (Editor     : MDI_Child;
-      Give_Focus : Boolean) is
+   procedure Focus_To_Editor (Editor : MDI_Child) is
    begin
-      Raise_Child (Editor, Give_Focus);
-
-      if Give_Focus then
-         Present (Gtk_Window (Get_Toplevel (Get_Widget (Editor))));
-      end if;
+      Raise_Child (Editor, True);
+      Present (Gtk_Window (Get_Toplevel (Get_Widget (Editor))));
    end Focus_To_Editor;
 
    ------------
@@ -1490,7 +1483,9 @@ package body Src_Contexts is
 
       Editor := Get_Source_Box_From_MDI (Child);
 
-      Focus_To_Editor (Child, Give_Focus);
+      if Give_Focus then
+         Focus_To_Editor (Child);
+      end if;
 
       declare
          Buffer      : constant Gtk_Text_Buffer :=
@@ -2104,7 +2099,9 @@ package body Src_Contexts is
       Context.Current_File := To_Unbounded_String
         (Get_Filename (Buffer).Display_Full_Name);
 
-      Focus_To_Editor (Child, Give_Focus);
+      if Give_Focus then
+         Focus_To_Editor (Child);
+      end if;
 
       if not Context.All_Occurrences then
          Found := Auxiliary_Search (Context, Editor, Kernel, Search_Backward);
@@ -2199,7 +2196,10 @@ package body Src_Contexts is
          Case_Preserving => Case_Preserving,
          Is_Regexp       => Context.Is_Regexp);
 
-      Focus_To_Editor (Child, Give_Focus);
+      if Give_Focus then
+         Focus_To_Editor (Child);
+      end if;
+
       Editor := Get_Source_Box_From_MDI (Child);
 
       if Context.All_Occurrences then
