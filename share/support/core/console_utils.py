@@ -7,7 +7,7 @@ import GPS
 from gps_utils import hook
 
 # number of regexps
-cu_count = 3
+cu_count = 5
 
 
 # Initialize preference for regexp with number num
