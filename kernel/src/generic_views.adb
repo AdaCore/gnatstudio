@@ -775,7 +775,7 @@ package body Generic_Views is
          if Has_Toolbar_Separator (Toolbar) = -1 then
             Gtk_New (Sep);
             Sep.Set_Draw (False);
-            Sep.Set_Expand (True);
+            Sep.Set_Expand (False);
             Toolbar.Insert (Sep);
          end if;
 
