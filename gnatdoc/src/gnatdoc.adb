@@ -15,11 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
-
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Characters.Latin_1;  use Ada.Characters.Latin_1;
 with Ada.Command_Line;
+with Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
+
 with Config;
 with GNATCOLL.Iconv;
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
@@ -45,6 +46,9 @@ with GNAT.IO;
 
 package body GNATdoc is
    Me : constant Trace_Handle := Create ("GNATdoc.1");
+
+   Old_Documentation_Dir_Attribute : constant Attribute_Pkg_String :=
+     Build (Ide_Package, "documentation_dir");
 
    -----------------------
    -- Local Subprograms --
@@ -1816,12 +1820,25 @@ package body GNATdoc is
       Project  : Project_Type renames Kernel.Registry.Tree.Root_Project;
       Attr     : constant String :=
         Project.Attribute_Value (Documentation_Dir_Attribute);
+      Old_Attr : constant String :=
+        Project.Attribute_Value (Old_Documentation_Dir_Attribute);
       Base_Dir : Virtual_File;
 
    begin
       if Attr /= "" then
          Base_Dir :=
            Create_From_Base (+Attr, Project.Project_Path.Get_Parent.Full_Name);
+         Base_Dir.Ensure_Directory;
+
+         return Base_Dir;
+
+      elsif Old_Attr /= "" then
+         Ada.Text_IO.Put_Line
+           (Ada.Text_IO.Standard_Error,
+            "attribute Documentation_Dir in package IDE is obsolete");
+         Base_Dir :=
+           Create_From_Base
+             (+Old_Attr, Project.Project_Path.Get_Parent.Full_Name);
          Base_Dir.Ensure_Directory;
 
          return Base_Dir;

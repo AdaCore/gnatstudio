@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P921-032 GNATdoc: Documentation_Dir attribute (2016-09-22)
+
+  Attribute Documentation_Dir is defined in Documentation package now.
+  Attribute with same name in package IDE is obsolete. Its support will be
+  removed in future version of GNATdoc.
+
 NF-17-P913-020 GPS: GPS.Process accepts a list of args (2016-09-13)
 
   The Python GPS.Process() now accepts the command as a list of
