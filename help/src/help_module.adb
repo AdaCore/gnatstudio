@@ -52,6 +52,7 @@ with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
 with GPS.Intl;                   use GPS.Intl;
 with GPS.Kernel.Custom;          use GPS.Kernel.Custom;
 with Generic_List;
+with Toolchains;                 use Toolchains;
 with Welcome_Page;               use Welcome_Page;
 with XML_Parsers;
 with Config;
@@ -896,6 +897,8 @@ package body Help_Module is
       Contents   : GNAT.Strings.String_Access;
       About_Text : Unbounded_String;
 
+      Tc         : Toolchains.Toolchain;
+
    begin
       Contents := About_File.Read_File;
       if Contents = null then
@@ -929,6 +932,14 @@ package body Help_Module is
             when GNAT.Expect.Process_Died =>
                GNAT.Expect.TTY.Close (Fd);
          end;
+      end if;
+
+      Tc := Get_Toolchain
+        (Kernel.Get_Toolchains_Manager, Kernel.Get_Project_Tree.Root_Project);
+
+      if not Is_Native (Tc) then
+         Append
+           (About_Text, LF & "Active toolchain: " & Get_Name (Tc) & LF);
       end if;
 
       Ignore := Message_Dialog

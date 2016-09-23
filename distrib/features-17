@@ -572,6 +572,11 @@ NF-17-M621-023 GPS: contextual menu to set watchpoint (2016-09-16)
   Right-clicking on a variable while the debugger is running will now set
   a watchpoint, so that the debugger stops any time the variable is modified.
 
+NF-17-M130-020 GPS: toolchain information in About dialog (2016-09-23)
+
+  The About dialog now contains the name of the current project's toolchain
+  if this toolchain is not the native one.
+
 NF-17-L404-006 GPS: ask before overwriting read-only file (2016-09-20)
 
   GPS now checks the permission on the disk before saving a file (rather than
