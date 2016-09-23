@@ -309,6 +309,9 @@ package body GPS.Kernel.Macros is
             end if;
          end;
 
+      elsif Param = "" then
+         return "%";
+
       else
          return Shared_Macros_Substitute
            (Project_From_Kernel => Get_Project (Get_Kernel (Context)),
