@@ -103,6 +103,7 @@ package body Vsearch is
    --  The prefix used to store the name of the last search function used for
    --  each module. The name of the module is appended to form the real key.
 
+   Incremental_Search               : Boolean_Preference;
    Select_On_Match                  : Boolean_Preference;
    Close_On_Match                   : Boolean_Preference;
    Ask_Confirmation_For_Replace_All : Boolean_Preference;
@@ -1960,6 +1961,10 @@ package body Vsearch is
       Append_Menu
         (Menu,
          Kernel => View.Kernel,
+         Pref   => Incremental_Search);
+      Append_Menu
+        (Menu,
+         Kernel => View.Kernel,
          Pref   => Close_On_Match);
       Append_Menu
         (Menu,
@@ -2699,6 +2704,18 @@ package body Vsearch is
    procedure Register_Preferences
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
+      Incremental_Search := Create
+        (Get_Preferences (Kernel),
+         Name    => "Search-Incremental",
+         Label   => -"Incremental search",
+         Path    => -":Search",
+         Doc     =>
+           -"Enable the incremental mode. In this mode, a search will be "
+         & "automatically performed whenever the search pattern is modified, "
+         & "starting from the current location to next occurence in the "
+         & "current file.",
+         Default => False);
+
       Select_On_Match := Create
         (Get_Preferences (Kernel),
          Name    => "Search-Select-On-Match",
