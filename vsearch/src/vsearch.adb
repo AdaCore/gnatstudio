@@ -247,6 +247,11 @@ package body Vsearch is
       Selector => null,
       In_Selection      => False);
 
+   procedure Set_Search_Module
+     (Self          : not null access Vsearch_Record'Class;
+      Search_Module : Search_Module_Data);
+   --  Set the the current search module used by the Search view
+
    procedure Set_Last_Of_Module
      (Handle      : access Kernel_Handle_Record'Class;
       Search_Data : Search_Module_Data);
@@ -1501,6 +1506,11 @@ package body Vsearch is
             Num := Num + 1;
          end;
       end loop;
+
+      --  If no active search module is selected, select the default one
+      if Vsearch.Context_Combo.Get_Active = -1 then
+         Vsearch.Set_Search_Module (Vsearch_Module_Id.Default_Search_Module);
+      end if;
    end Refresh_Context_Combo;
 
    -------------
@@ -2501,6 +2511,22 @@ package body Vsearch is
       --  registered search module.
       return Vsearch_Module_Id.Default_Search_Module;
    end Search_Context_From_Module;
+
+   -----------------------
+   -- Set_Search_Module --
+   -----------------------
+
+   procedure Set_Search_Module
+     (Self          : not null access Vsearch_Record'Class;
+      Search_Module : Search_Module_Data)
+   is
+      Dummy : Boolean;
+   begin
+      if Search_Module /= No_Search then
+         Dummy := Self.Context_Combo.Set_Active_Id
+           (Search_Module.Label.all);
+      end if;
+   end Set_Search_Module;
 
    ------------------------
    -- Set_Last_Of_Module --
