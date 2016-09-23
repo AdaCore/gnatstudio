@@ -1622,6 +1622,8 @@ Classes
 
    .. automethod:: GPS.Project.exec_dir
 
+   .. automethod:: GPS.Project.external_sources
+
    .. automethod:: GPS.Project.file
 
    .. automethod:: GPS.Project.generate_doc

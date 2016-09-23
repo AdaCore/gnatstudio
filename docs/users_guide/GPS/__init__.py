@@ -8488,7 +8488,7 @@ class Project(object):
         """
         Changes the value of a scenario variable. You need to call
         :func:`GPS.Project.recompute` to activate this change (so that
-        multiple changes to the project can be grouped.
+        multiple changes to the project can be grouped).
 
         If name does not correspond to an actual scenario variable in
         your project (i.e. the name of the variable in an "external(...)"
@@ -8530,6 +8530,17 @@ class Project(object):
         one see while traversing the project hierarchy.
 
         :param recursive: A boolean
+        :return: A list of instances of :class:`GPS.File`
+        """
+        pass  # implemented in Ada
+
+    def external_sources(self):
+        """
+        Return the list of all sources visible to the builder, but that are
+        not part of a project. This includes sources found in one of the
+        predefined directories for the builder, or sources found in the
+        directories references in the ADA_SOURCE_PATH environment variable.
+
         :return: A list of instances of :class:`GPS.File`
         """
         pass  # implemented in Ada
