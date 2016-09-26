@@ -6645,10 +6645,10 @@ class MDI(object):
     @staticmethod
     def current():
         """
-        Returns the window that currently has the focus, or raises an error if
+        Returns the window that currently has the focus, or None if
         there is none.
 
-        :return: An instance of :class:`GPS.MDIWindow`
+        :return: An instance of :class:`GPS.MDIWindow` or None
 
         """
         pass  # implemented in Ada

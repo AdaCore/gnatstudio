@@ -72,7 +72,12 @@ GPS.Browsers.View.Background = enum(NONE=0, COLOR=1, GRID=2, DOTS=3)
 
 
 def get_focused_widget():
-    return GPS.MDI.current().get_child().pywidget().get_toplevel().get_focus()
+    current = GPS.MDI.current()
+
+    if current:
+        return current.get_child().pywidget().get_toplevel().get_focus()
+    else:
+        return None
 
 
 def filter_text_actions(*args):
