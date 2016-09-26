@@ -994,6 +994,38 @@ arguments.  This code is useful when you are writing a full python script.
   Like `%TT`, but the full path to main sources rather than the base
   filename.
 
+* :file:`%TP`
+
+  Similar to `%TT%`, but returns the name of the project to which the main
+  belongs.
+
+* :file:`%python(cmd)`
+
+  Executes the python command `cmd`. It should return either a string
+  (which is inserted as is in the command line), a list of strings (which
+  are each passed as a separate argument), or a boolean. If it returns
+  `False`, then the target is not executed at all.
+  
+  The cmd itself can include other macros, which will be expanded. Not
+  all macros are expanded though. For instance, a `%python()` cannot
+  include another `%(python)`, nor any other function-like macros, like
+  `%vars()` for instance.
+
+  The python function should have no side effect if possible, since it
+  might be called more than once (for instance as part of showing what
+  the command line will be when GPS display the dialog to let you edit
+  that command line prior to actual execution).
+
+  Due to the way command-line parsing works, it is recommended to
+  put triple quotes around the whole argument, as in::
+
+      -foo """%python(func("%TT", 1))""" -bar
+      -foo """%python("-one" if Choice else "-two")"""
+
+  to make sure the python argument is not split on spaces for instance.
+  The closing parenthesis must be the last character before the closing
+  triple quotes.
+
 * :file:`%attr(Package'Name[,{default}])`
 
   Project attribute :command:`Package'Name`L: the attribute :file:`Name`

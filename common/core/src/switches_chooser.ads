@@ -602,11 +602,12 @@ private
       & "%gprbuild gprbuild command" & LF
       & "%gnatmake gnatmake command" & LF
       & "%gprclean clean command (gprclean or gnat clean)" & LF
-      & "%external" & LF
+      & "%external  the ""execute command"" preference" & LF
       & "[exec_dir] exec dir from the project" & LF
       & "%fp        base name of the file to compile" & LF
       & "%TT        absolute path of main source to compile" & LF
       & "%TP        absolute path of main source's project" & LF
+      & "%python(cmd) a python command that returns one or more strings" & LF
       & "%T         base name of main source to compile" & LF
       & "%E         full path to the executable name corresponding"
       & " to the target" & LF

@@ -67,7 +67,7 @@ class Sqlite_Cross_References(object):
        <arg>--exit</arg>
        <arg>--tracefile=%GPS/gnatinspect_traces.cfg</arg>
        <arg>--config=%{O}gpsauto.cgpr</arg>
-       <arg>%python(cross_references.runtime_switch())</arg>
+       <!-- Runtime_switch support -->
        <arg>--encoding=iso-8859-1</arg>
        <arg>--check_db_version</arg>
        <arg>-P%PP</arg>
@@ -88,7 +88,14 @@ class Sqlite_Cross_References(object):
             "Index files in the runtime for cross references queries",
             False)
 
-        GPS.parse_xml(self.xml)
+        # When we support python, we add support for the --runtime attribute.
+        # This is not supported in GNAT Bench though
+        xml = self.xml
+        xml = xml.replace(
+            "<!-- Runtime_switch support -->",
+            "<arg>%python(cross_references.runtime_switch())</arg>")
+
+        GPS.parse_xml(xml)
         GPS.Hook("project_view_changed").add(self.on_project_view_changed)
         GPS.Hook("compilation_finished").add(self.on_compilation_finished)
         GPS.Hook("preferences_changed").add(self.on_preferences_changed)

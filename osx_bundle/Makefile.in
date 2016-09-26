@@ -58,7 +58,7 @@ $(PREFIX)/$(PKG): force
 	rm $(lib)/gdk-pixbuf-2.0/*/loaders.cache
 	mkdir -p $(etc)/gtk-3.0
 	cp srcs/settings.ini $(etc)/gtk-3.0/
-	cp -r $(GTK_PREFIX)/etc/pango $(etc)
+	-cp -r $(GTK_PREFIX)/etc/pango $(etc)
 
 # install gtk binaries and libraries
 	python ./scripts/install.py $(root) \

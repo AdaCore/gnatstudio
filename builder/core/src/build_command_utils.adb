@@ -234,6 +234,7 @@ package body Build_Command_Utils is
    procedure Initialize
      (Adapter     : in out Abstract_Build_Command_Adapter'Class;
       Kernel_Registry : Project_Registry_Access;
+      Scripts         : access Scripts_Repository_Record'Class := null;
       Context_Project : Project_Type;
       Context_Toolchains_Manager : Toolchain_Manager;
       Context_File_Information : Virtual_File;
@@ -243,6 +244,7 @@ package body Build_Command_Utils is
       Multi_Language_Builder : Multi_Language_Builder_Policy) is
    begin
       Adapter.Kernel_Registry := Kernel_Registry;
+      Adapter.Scripts := Scripts;
       Adapter.Context_Project := Context_Project;
       Adapter.Context_Toolchains_Manager := Context_Toolchains_Manager;
       Adapter.Context_File_Information := Context_File_Information;
@@ -444,9 +446,12 @@ package body Build_Command_Utils is
       --  Create an Arg_List containing the given Command, and possibly
       --  appended with --target=xxx if Tc is a cross toolchain.
 
+      Protect_Python : Boolean := Uses_Python (Target);
+      --  Whether to protect special characters when expanding a macro
+
       function Get_Python_Full_Name (File : Virtual_File) return String
       is
-        (if Uses_Python (Target) then
+        (if Protect_Python then
             Protect (+File.Full_Name)
          else
             +File.Full_Name);
@@ -487,6 +492,198 @@ package body Build_Command_Utils is
                return "";
             else
                return "--subdirs=" & (+Subdir);
+            end if;
+
+         elsif Param = "eL" then
+            if Get_Trusted_Mode_Preference (Adapter.all) then
+               return "";
+            else
+               return "-eL";
+            end if;
+
+         elsif Param = "fp" then
+            if not Simulate
+              and then Force_File /= No_File
+            then
+               --  We are launching a compile command involving Force_File:
+               --  remove reference to File from the Locations View.
+               --  See F830-003.
+               if Get_Properties (Target).Always_Clear_Locations then
+                  Remove_Error_Builder_Message_From_File
+                    (Adapter.all, Force_File);
+               end if;
+
+               return +Base_Name (Force_File);
+            end if;
+
+            declare
+               File : constant Virtual_File :=
+                 Get_Context_File_Information (Adapter.all);
+               Set  : File_Info_Set;
+            begin
+               if File = No_File then
+                  if Simulate then
+                     return "<current-file>";
+                  else
+                     Console_Insert
+                       (Adapter.all, -"No file selected", Mode => Error);
+                     raise Invalid_Argument;
+                  end if;
+               end if;
+
+               Set := Get_Kernel_Registry (Adapter.all).Tree.Info_Set (File);
+
+               if File_Info'Class (Set.First_Element).Project = No_Project then
+                  if Simulate then
+                     return "<current-file>";
+                  else
+                     Console_Insert
+                       (Adapter.all,
+                        -"Could not determine the project for file: "
+                        & Display_Full_Name (File),
+                        Mode => Error);
+
+                     --  Do not normalize through VFS so as to preserve the
+                     --  state of the file (since otherwise we would cache
+                     --  the normalized value)
+                     if File.Display_Full_Name /=
+                       Normalize_Pathname
+                         (Get_Python_Full_Name (File), Resolve_Links => True)
+                         and then Get_Trusted_Mode_Preference (Adapter.all)
+                     then
+                        Console_Insert
+                          (Adapter.all, -("You should"
+                           & " disable the preference Fast Project Loading for"
+                           & " full support of symbolic links"));
+                     end if;
+
+                     raise Invalid_Argument;
+                  end if;
+
+               else
+                  if Background then
+                     return +Base_Name
+                       (Get_Background_Environment_File (Adapter.all));
+                  else
+                     --  We are launching a compile command involving File:
+                     --  remove reference to File from the Locations View.
+                     --  See F830-003.
+                     if not Simulate then
+                        Remove_Error_Builder_Message_From_File
+                          (Adapter.all, File);
+                     end if;
+
+                     return +Base_Name (File);
+                  end if;
+               end if;
+            end;
+
+         elsif Param = "E" then
+            if Main /= No_File then
+               declare
+                  Executable : Virtual_File;
+               begin
+                  if Get_Properties (Target).Target_Type /= "executable" then
+                     Executable := Create_From_Dir
+                       (Adapter.Context_Project.Executables_Directory,
+                        Adapter.Context_Project.Executable_Name
+                          (+Get_Python_Full_Name (Main)));
+                  else
+                     Executable := Main;
+                  end if;
+                  return Get_Python_Full_Name
+                    (To_Remote (Executable, Get_Nickname (Server)));
+               end;
+
+            else
+               Console_Insert
+                 (Adapter.all,
+                  -"Could not determine the executable name for main.",
+                  Mode => Error);
+               raise Invalid_Argument;
+            end if;
+
+         elsif Param = "TP" then
+            return Get_Python_Full_Name (Main_Project.Project_Path);
+
+         elsif Param = "T" then
+            if Main /= No_File then
+               return +Main.Base_Name;
+            else
+               if Background then
+                  declare
+                     M : constant Virtual_File :=
+                       Get_Last_Main_For_Background_Target
+                         (Adapter.all, Target);
+                  begin
+                     if M = No_File then
+                        Console_Insert
+                          (Adapter.all,
+                           (-"Could not launch background build: no main(s)"
+                            & " found for target ") & Get_Name (Target),
+                           Mode => Error);
+                        raise Invalid_Argument;
+                     else
+                        return +M.Base_Name;
+                     end if;
+                  end;
+               else
+                  Console_Insert
+                    (Adapter.all, -"Could not determine the target to build.",
+                     Mode => Error);
+                  raise Invalid_Argument;
+               end if;
+            end if;
+
+         elsif Param = "TT" then
+            if Main /= No_File then
+               return Get_Python_Full_Name
+                 (Main.To_Remote (Get_Nickname (Server)));
+            else
+               if Background then
+                  declare
+                     M : constant Virtual_File :=
+                       Get_Last_Main_For_Background_Target
+                         (Adapter.all, Target);
+                  begin
+                     if M = No_File then
+                        Console_Insert
+                          (Adapter.all,
+                           (-"Could not launch background build: no main(s)"
+                            & " found for target ") & Get_Name (Target),
+                           Mode => Error);
+                        raise Invalid_Argument;
+                     else
+                        return Get_Python_Full_Name
+                          (M.To_Remote (Get_Nickname (Server)));
+                     end if;
+                  end;
+               else
+                  Console_Insert
+                    (Adapter.all, -"Could not determine the target to build.",
+                     Mode => Error);
+                  raise Invalid_Argument;
+               end if;
+            end if;
+
+         elsif Param = "config" then
+            if Environment.Get_Automatic_Config_File
+              or else Environment.Get_Config_File = No_File
+            then
+               return "";
+            else
+               return "--config="
+                  & Get_Python_Full_Name (Environment.Get_Config_File);
+            end if;
+
+         elsif Param = "autoconf" then
+            if not Environment.Get_Automatic_Config_File
+              or else Environment.Get_Config_File = No_File
+            then
+               return "";
+            else
+               return "--autoconf="
+                 & Get_Python_Full_Name (Environment.Get_Config_File);
             end if;
 
          elsif Background
@@ -570,7 +767,8 @@ package body Build_Command_Utils is
       --  switches_chooser.ads
       -------------------------
 
-      --  ??? Special case for "%X"
+      --  Special case for all macros that potentially return multiple
+      --  command line arguments.
       --  We are implementing a special case here since GPS.Kernel.Macros
       --  does not support returning an Argument_List.
       --  See H926-007.
@@ -579,25 +777,14 @@ package body Build_Command_Utils is
          Result.Args := Parse_String
            (Scenario_Variables_Cmd_Line (Adapter.all, "-X"), Separate_Args);
 
-      --  ??? Ditto for %vars
       elsif Arg = "%vars" then
          Result.Args := Parse_String
            (Scenario_Variables_Cmd_Line (Adapter.all, ""), Separate_Args);
 
-      --  ??? Would be nice to support a generic %vars(xxx)
       elsif Arg = "%vars(-D)" then
          Result.Args := Parse_String
            (Scenario_Variables_Cmd_Line (Adapter.all, "-D"), Separate_Args);
 
-      --  ??? Ditto for %eL
-      elsif Arg = "%eL" then
-         if Get_Trusted_Mode_Preference (Adapter.all) then
-            return Result;
-         else
-            Result.Args := Create ("-eL");
-         end if;
-
-      --  ??? Ditto for %attr
       elsif Starts_With (Arg, "%attr(") and then Arg (Arg'Last) = ')' then
          Result.Args := Parse_String (Get_Attr_Value (Arg, 5), Separate_Args);
 
@@ -613,7 +800,6 @@ package body Build_Command_Utils is
            (Result.Args, 0,
             GNAT.Directory_Operations.Base_Name (Nth_Arg (Result.Args, 0)));
 
-      --  ??? Ditto for %switches
       elsif Starts_With (Arg, "%switches(") and then Arg (Arg'Last) = ')' then
          declare
             List : GNAT.Strings.String_List_Access :=
@@ -631,7 +817,6 @@ package body Build_Command_Utils is
             Free (List);
          end;
 
-      --  ??? Ditto for %builder, %gprbuild and %gprclean
       elsif Arg = "%builder"
         or else Arg = "%gprbuild"
         or else Arg = "%gprclean"
@@ -680,209 +865,83 @@ package body Build_Command_Utils is
             Result.Dir := Executables_Directory (Prj);
          end;
 
-      elsif Arg = "%fp" then
-         if not Simulate
-           and then Force_File /= No_File
-         then
-            --  We are launching a compile command involving Force_File:
-            --  remove reference to File from the Locations View.
-            --  See F830-003.
-            if Get_Properties (Target).Always_Clear_Locations then
-               Remove_Error_Builder_Message_From_File
-                 (Adapter.all, Force_File);
-            end if;
-
-            Result.Args := Create (+Base_Name (Force_File));
-            return Result;
-         end if;
-
+      elsif Starts_With (Arg, "%python(")
+        and then Arg (Arg'Last) = ')'
+        and then Arg'Length >= 9
+        and then Adapter.Scripts /= null
+      then
          declare
-            File : constant Virtual_File :=
-               Get_Context_File_Information (Adapter.all);
-            Set  : File_Info_Set;
+            Cmd : constant String := Arg (Arg'First + 8 .. Arg'Last - 1);
+            Old_Protect_Python : constant Boolean := Protect_Python;
+            Data : Callback_Data'Class :=
+              Create (Adapter.Scripts.Lookup_Scripting_Language ("python"), 0);
+
          begin
-            if File = No_File then
-               if Simulate then
-                  Result.Args := Create ("<current-file>");
-                  return Result;
+            --  Expand some macros recursively
+            Protect_Python := True;
+            Execute_Expression
+              (Data,
+               GNATCOLL.Templates.Substitute
+                 (Cmd, Delimiter =>
+                      Get_Kernel_Macros_Special_Character (Adapter.all),
+                  Callback       => Substitution'Unrestricted_Access),
+               Hide_Output => True);
+            Protect_Python := Old_Protect_Python;
 
-               else
-                  Console_Insert
-                    (Adapter.all, -"No file selected", Mode => Error);
-                  raise Invalid_Argument;
-               end if;
-            end if;
+            --  Process the result of the python command
+            Result.Args := Empty_Command_Line;
 
-            Set := Get_Kernel_Registry (Adapter.all).Tree.Info_Set (File);
-
-            if File_Info'Class (Set.First_Element).Project = No_Project then
-               if Simulate then
-                  Result.Args := Create ("<current-file>");
-                  return Result;
-
-               else
-                  Console_Insert
-                    (Adapter.all, -"Could not determine the project for file: "
-                     & Display_Full_Name (File),
-                     Mode => Error);
-
-                  --  Do not normalize through VFS so as to preserve the state
-                  --  of the file (since otherwise we would cache the
-                  --  normalized value)
-                  if File.Display_Full_Name /=
-                    Normalize_Pathname
-                      (Get_Python_Full_Name (File), Resolve_Links => True)
-                    and then Get_Trusted_Mode_Preference (Adapter.all)
-                  then
-                     Console_Insert
-                       (Adapter.all, -("You should"
-                        & " disable the preference Fast Project Loading for"
-                        & " full support of symbolic links"));
-                  end if;
-
-                  raise Invalid_Argument;
-               end if;
-
-            else
-               if Background then
-                  Result.Args := Create
-                    (+Base_Name (Get_Background_Environment_File
-                       (Adapter.all)));
-               else
-                  --  We are launching a compile command involving File:
-                  --  remove reference to File from the Locations View.
-                  --  See F830-003.
-                  if not Simulate then
-                     Remove_Error_Builder_Message_From_File
-                       (Adapter.all, File);
-                  end if;
-
-                  Result.Args := Create (+Base_Name (File));
-               end if;
-            end if;
-         end;
-
-      elsif Starts_With (Arg, "%TP") then
-         Result.Args := Create
-           (Get_Python_Full_Name (Main_Project.Project_Path) &
-              --  Get_Context_Project (Adapter.all).Project_Path.Full_Name &
-              Arg (Arg'First + 3 .. Arg'Last));
-
-      elsif Starts_With (Arg, "%TT") then
-         if Main /= No_File then
-            Result.Args :=
-              Create (Get_Python_Full_Name
-                      (Main.To_Remote (Get_Nickname (Server)))
-                      & Arg (Arg'First + 3 .. Arg'Last));
-         else
-            if Background then
-               declare
-                  M : constant Virtual_File :=
-                     Get_Last_Main_For_Background_Target (Adapter.all, Target);
-               begin
-                  if M = No_File then
-                     Console_Insert
-                       (Adapter.all,
-                        (-"Could not launch background build: no main(s)"
-                         & " found for target ") & Get_Name (Target),
-                        Mode => Error);
-                     raise Invalid_Argument;
-                  else
-                     Result.Args :=
-                       Create (Get_Python_Full_Name
-                               (M.To_Remote (Get_Nickname (Server)))
-                               & Arg (Arg'First + 3 .. Arg'Last));
-                  end if;
-               end;
-            else
-               Console_Insert
-                 (Adapter.all, -"Could not determine the target to build.",
-                  Mode => Error);
-               raise Invalid_Argument;
-            end if;
-         end if;
-
-      elsif Starts_With (Arg, "%T") then
-         if Main /= No_File then
-            Result.Args := Create
-              (+Main.Base_Name
-               & Arg (Arg'First + 2 .. Arg'Last));
-         else
-            if Background then
-               declare
-                  M : constant Virtual_File :=
-                     Get_Last_Main_For_Background_Target (Adapter.all, Target);
-               begin
-                  if M = No_File then
-                     Console_Insert
-                       (Adapter.all,
-                        (-"Could not launch background build: no main(s)"
-                         & " found for target ") & Get_Name (Target),
-                        Mode => Error);
-                     raise Invalid_Argument;
-                  else
-                     Result.Args := Create
-                       (+M.Base_Name &
-                        Arg (Arg'First + 3 .. Arg'Last));
-                  end if;
-               end;
-            else
-               Console_Insert
-                 (Adapter.all, -"Could not determine the target to build.",
-                  Mode => Error);
-               raise Invalid_Argument;
-            end if;
-         end if;
-
-      elsif Starts_With (Arg, "%E") then
-         if Main /= No_File then
-            declare
-               Executable : Virtual_File;
             begin
-               if Get_Properties (Target).Target_Type /= "executable" then
-                  Executable := Create_From_Dir
-                    (Adapter.Context_Project.Executables_Directory,
-                     Adapter.Context_Project.Executable_Name
-                       (+Get_Python_Full_Name (Main)));
-               else
-                  Executable := Main;
-               end if;
-               Result.Args := Create
-                 (Get_Python_Full_Name
-                    (To_Remote (Executable, Get_Nickname (Server))));
+               --  Did we receive a single string ?
+               declare
+                  S : constant String := Data.Return_Value;
+               begin
+                  if S /= "" then
+                     Append_Argument (Result.Args, S, One_Arg);
+                  end if;
+               end;
+
+            exception
+               when Invalid_Parameter =>
+                  begin
+                     --  Did we receive a list of strings ?
+                     declare
+                        L : constant List_Instance'Class :=
+                          Data.Return_Value;
+                     begin
+                        for S in 1 .. L.Number_Of_Arguments loop
+                           if String'(L.Nth_Arg (S)) /= "" then
+                              Append_Argument
+                                (Result.Args, L.Nth_Arg (S), One_Arg);
+                           end if;
+                        end loop;
+                     end;
+
+                  exception
+                     when Invalid_Parameter =>
+
+                        --  Did we receive a boolean
+                        declare
+                           B : constant Boolean := Data.Return_Value;
+                        begin
+                           if not B then
+                              --  Cancel the command
+                              raise Invalid_Argument;
+                           end if;
+                        end;
+                  end;
             end;
 
-         else
-            Console_Insert
-              (Adapter.all,
-               -"Could not determine the executable name for main.",
-               Mode => Error);
-            raise Invalid_Argument;
-         end if;
-
-      elsif Arg = "%config" then
-         if Environment.Get_Automatic_Config_File
-           or else Environment.Get_Config_File = No_File
-         then
-            return Result;
-         else
-            Result.Args := Create
-              ("--config="
-               & Get_Python_Full_Name (Environment.Get_Config_File));
-         end if;
-
-      elsif Arg = "%autoconf" then
-         if not Environment.Get_Automatic_Config_File
-           or else Environment.Get_Config_File = No_File
-         then
-            return Result;
-         else
-            Result.Args := Create
-              ("--autoconf="
-               & Get_Python_Full_Name (Environment.Get_Config_File));
-         end if;
+            Free (Data);
+         exception
+            when E : others =>
+               Trace (Me, E,
+                      "Error while executing python command from"
+                      & " command line argument: " & Arg & ASCII.LF);
+         end;
 
       else
+         --  Handle all macros that expand as a single string
          Result.Args :=
            Create (GNATCOLL.Templates.Substitute
                    (Str       => Arg,
@@ -1145,6 +1204,7 @@ package body Build_Command_Utils is
       Initialize
         (Adapter.all,
          Builder.Kernel.Registry,
+         Builder.Kernel.Scripts,
          (if Main_Project = No_Project
           then Builder.Kernel.Registry.Tree.Root_Project
           else Main_Project),
@@ -1568,7 +1628,7 @@ package body Build_Command_Utils is
         T.Apply_Mode_Args (Mode_Name, CL_Args.all);
       Res       : Expansion_Result;
    begin
-      Initialize (Adapter.all, Proj_Registry, Proj_Type, Toolchains,
+      Initialize (Adapter.all, Proj_Registry, null, Proj_Type, Toolchains,
                   Force_File, '%', Trusted_Mode, Execute_Command,
                   Multi_Language_Builder);
       Adapter.Project_File := Project_File;

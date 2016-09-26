@@ -261,6 +261,7 @@ package body Build_Command_Manager is
       Initialize
         (Adapter.all,
          Builder.Kernel.Registry,
+         Builder.Kernel.Scripts,
          Get_Project (Kernel),
          Kernel.Get_Toolchains_Manager,
          File_Information (Context),

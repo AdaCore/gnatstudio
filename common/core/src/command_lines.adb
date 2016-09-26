@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with GNAT.OS_Lib;
+with GNATCOLL.Scripts.Utils;  use GNATCOLL.Scripts.Utils;
 
 package body Command_Lines is
 
@@ -321,8 +322,11 @@ package body Command_Lines is
      (Cmd      : in out Command_Line;
       Switches : String)
    is
+      --  Do not use GNAT.OS_Lib.Argument_String_To_List, since it doesn't
+      --  properly handle quotes in arguments. For instance,
+      --     %python("foo")  becomes    1=> %python("foo" , 2 => ")"
       List : GNAT.OS_Lib.Argument_List_Access :=
-        GNAT.OS_Lib.Argument_String_To_List (Switches);
+        Argument_String_To_List_With_Triple_Quotes (Switches);
    begin
       Cmd.Clear;
       Cmd.Append_Switches (List.all);

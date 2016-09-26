@@ -211,6 +211,7 @@ package Build_Command_Utils is
    procedure Initialize
      (Adapter     : in out Abstract_Build_Command_Adapter'Class;
       Kernel_Registry : Project_Registry_Access;
+      Scripts         : access Scripts_Repository_Record'Class := null;
       Context_Project : Project_Type;
       Context_Toolchains_Manager : Toolchain_Manager;
       Context_File_Information : Virtual_File;
@@ -398,14 +399,16 @@ package Build_Command_Utils is
       Simulate         : Boolean;
       Trusted_Mode     : Boolean;
       Multi_Language_Builder : Multi_Language_Builder_Policy;
-      Execute_Command  : String
-      ) return Expansion_Result;
+      Execute_Command  : String)
+     return Expansion_Result;
    --  Expand command line CL compatible with gnatbench objects.
+   --  Do not remove, this function is needed for GNAT Bench
 
 private
    type Abstract_Build_Command_Adapter is abstract tagged record
 
       Kernel_Registry : Project_Registry_Access;
+      Scripts         : access Scripts_Repository_Record'Class;
 
       Context_Project : Project_Type;
       Context_Toolchains_Manager : Toolchain_Manager;

@@ -30,6 +30,7 @@ with Build_Configurations.Gtkada;      use Build_Configurations.Gtkada;
 with GNATCOLL.Arg_Lists;               use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;                use GNATCOLL.Projects;
 with GNATCOLL.Scripts;                 use GNATCOLL.Scripts;
+with GNATCOLL.Scripts.Utils;           use GNATCOLL.Scripts.Utils;
 with Gtk.Window;                       use Gtk.Window;
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 
@@ -68,7 +69,10 @@ package body Build_Command_Manager.End_Of_Build is
       ---------------------
 
       function Expand_Cmd_Line (CL : String) return String is
-         CL_Args    : Argument_List_Access := Argument_String_To_List (CL);
+         --  GNAT.OS_Lib.Argument_String_To_List does not properly handle
+         --  quotes, as in  %python("foo")
+         CL_Args    : Argument_List_Access :=
+           Argument_String_To_List_With_Triple_Quotes (CL);
          Mode_Args  : Command_Line :=
            Build.Target.Apply_Mode_Args (Mode, CL_Args.all);
 
