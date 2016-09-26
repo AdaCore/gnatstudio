@@ -467,10 +467,13 @@ NF-17-OB03-004 GPS: performance improvement in Project View (2015-11-20)
   The Project View is significantly faster to load - this is noticeable
   on projects that have a large number of files.
 
-NF-17-OA30-073 ECL: AJIS examples integration (2016-01-19)
+NF-17-OA30-073 ECL: AJIS examples integration (2016-09-19)
 
-  AJIS (17.0.20151202w or later) contains GNATbench examples that can be
-  imported/built/run in GNATbench without modifications.
+  A new "AJIS examples" importer is now available. It is accessible from
+  "File > Import..." menu in Ada folder.
+  This importer requires AJIS 17.0.20160919w or later installation.
+  These AJIS versions contain GNATbench examples that can be imported, built,
+  run and debugged in GNATbench without modifications.
 
 NF-17-OA29-048 GPS: collapse all project nodes in Project view (2015-11-02)
 
