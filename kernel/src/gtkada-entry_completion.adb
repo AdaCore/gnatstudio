@@ -85,11 +85,14 @@ package body Gtkada.Entry_Completion is
    Do_Grabs : constant Boolean := False;
    --  Whether to attempt grabbing the pointer
 
-   Preview_Right_Margin : constant := 10;
+   Bottom_Margin : constant := 10;
+   --  Between bottom of popup and bottom of GPS window
+
+   Preview_Right_Margin : constant := 5;
    --  between preview and completion popups
 
    Preview_Width       : constant := 500;
-   Preview_Height      : constant := 400;
+   Preview_Min_Height  : constant := 400;
 
    Provider_Label_Width : constant := 100;
    Result_Width : constant := 300;
@@ -1329,12 +1332,13 @@ package body Gtkada.Entry_Completion is
              Result_Width + Provider_Label_Width * 2);
          X := Gint'Min (Gdk_X, MaxX - Width - 13);
          Y := Gdk_Y + Self.GEntry.Get_Allocated_Height;
-         Height := MaxY - Y;
+         Height := MaxY - Y - Bottom_Margin;
 
          if not Height_Only then
             Self.Popup.Move (X, Y);
             Popup := Gtk_Window (Self.Notes_Popup);
-            Popup.Set_Size_Request (Preview_Width, Preview_Height);
+            Popup.Set_Size_Request
+              (Preview_Width, Gint'Max (Height, Preview_Min_Height));
             Popup.Move (X - Preview_Width - Preview_Right_Margin, Y);
          end if;
 
@@ -1352,8 +1356,6 @@ package body Gtkada.Entry_Completion is
       Status : Gdk_Grab_Status;
    begin
       if Self.Popup /= null and then not Self.Popup.Get_Visible then
-         Resize_Popup (Self, Height_Only => False);
-
          Toplevel := Self.Get_Toplevel;
          if Toplevel /= null
             and then Toplevel.all in Gtk_Window_Record'Class
@@ -1364,6 +1366,7 @@ package body Gtkada.Entry_Completion is
 
          Self.Popup.Set_Screen (Self.Get_Screen);
          Gtk_Window (Self.Notes_Popup).Set_Screen (Self.Get_Screen);
+         Resize_Popup (Self, Height_Only => False);
          Self.Popup.Show_All;
 
          --  Code from gtkcombobox.c
