@@ -7,6 +7,17 @@ import tool_output
 import gps_utils
 
 
+cross_ref_runtime = GPS.Preference('Project:Cross-References/runtime')
+
+
+def runtime_switch():
+    """
+    A function called from the target model, which returns the --runtime
+    switch if the user wants cross-references inside predefined files.
+    """
+    return "--runtime" if cross_ref_runtime.get() else ""
+
+
 class Sqlite_Cross_References(object):
 
     """
@@ -56,6 +67,7 @@ class Sqlite_Cross_References(object):
        <arg>--exit</arg>
        <arg>--tracefile=%GPS/gnatinspect_traces.cfg</arg>
        <arg>--config=%{O}gpsauto.cgpr</arg>
+       <arg>%python(cross_references.runtime_switch())</arg>
        <arg>--encoding=iso-8859-1</arg>
        <arg>--check_db_version</arg>
        <arg>-P%PP</arg>
@@ -69,6 +81,12 @@ class Sqlite_Cross_References(object):
     def __init__(self):
         # Whether we trust that there are no links in the project hierarchy
         self.trusted_mode = True
+
+        cross_ref_runtime.create(
+            "Cross references in runtime files",
+            'boolean',
+            "Index files in the runtime for cross references queries",
+            False)
 
         GPS.parse_xml(self.xml)
         GPS.Hook("project_view_changed").add(self.on_project_view_changed)
@@ -144,8 +162,8 @@ class Sqlite_Cross_References(object):
                             "Build All", "Make", "Compile All Sources",
                             "Build <current file>", "Custom Build...",
                             "Check Semantic", "Update file XRef",
-                            "Update file XRef in background"]
-                or category in ["Makefile", "CodePeer"]):
+                            "Update file XRef in background"] or
+                category in ["Makefile", "CodePeer"]):
             self.recompute_xref()
 
     def on_project_view_changed(self, hook):

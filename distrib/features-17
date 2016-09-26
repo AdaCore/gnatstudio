@@ -381,6 +381,13 @@ NF-17-P310-018 GPS: Support for arm-sysgo-pikeos (2016-04-04)
 
   GPS now supports the arm-sysgo-pikeos toolchain.
 
+NF-17-P309-057 GPS: cross-references from runtime files (2016-09-26)
+
+  It is now possible to force GPS to index runtime files so that you can
+  perform cross-references from them (it was always possible to cross-ref from
+  your own sources to the runtime). This takes longer to index, so is disabled
+  by default. See the preference Project/Cross References in Runtime Files.
+
 NF-17-P217-017 GPS: New Python API to get Build Targets commands (2016-03-01)
 
   A new GPS.BuildTarget.get_command_line() method has been added in order

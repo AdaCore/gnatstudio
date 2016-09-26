@@ -170,9 +170,8 @@ example, if you have a reference to :func:`Put_Line`, you will jump to its
 declaration in :file:`a-textio.ads`). But you cannot perform
 cross-reference queries from a runtime file itself.
 
-If you need this capability, modify one of the GPS plugins, named
-:file:`support/core/cross-references.py`, and add the :command:`--runtime`
-switch to the list of switches for :program:`gnatinspect`.
+If you need this capability, enable the preference :guilabel:`Project/Cross
+References in Runtime Files`.
 
 .. _The_Navigate_Menu:
 
