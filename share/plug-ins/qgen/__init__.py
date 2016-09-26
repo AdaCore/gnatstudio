@@ -1723,7 +1723,7 @@ else:
                 target_name="MDL Generate code then build then debug",
                 workflow_name="generate-from-mdl-then-build-then-debug",
                 workflow=CLI.workflow_generate_from_mdl_then_build_then_debug,
-                icon_name="gps-build-mdl-symbolic",
+                icon_name="gps-qgen-debug-symbolic",
                 in_toolbar=True)
 
     module = QGEN_Module()
