@@ -90,6 +90,18 @@ KP-62-P818-025 GPS: incorrect display of the "Stop Recording" menu
 
   Workaround: None.
 
+KP-62-P818-022 GB: cannot attach to application using GDB-7.10 + Eclipse 4.6.0
+
+  Problem:    When attaching to an application (Ada or C/C++) using GDB-7.10 on
+              Eclipse Neon (4.6.0) an error dialog box is displayed and the
+              debug session is terminated. The error message is "Trace method
+              could not be selected"
+
+  Status:     This was fixed in 17.0 on 2016-08-31
+
+  Workaround: Don't use Eclipse 4.6.0 (use Eclipse 4.5.x or 4.6.1 or later)
+              or use GDB older version.
+
 KP-62-P811-024 GPS: extraneous messages in clang live diagnostics
 
   Problem:    When using C/C++ switches that are not supported by
