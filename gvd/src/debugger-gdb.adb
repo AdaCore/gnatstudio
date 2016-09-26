@@ -1880,6 +1880,9 @@ package body Debugger.Gdb is
         or else Starts_With (Command, "start")
         or else Starts_With (Command, "ignore")
         or else Starts_With (Command, "command")
+        or else Starts_With (Command, "run")
+        or else Starts_With (Command, "r ")
+        or else Command = "r"
         or else Starts_With (Command, "condition")
         or else Starts_With (Command, "set break-command")
         or else Starts_With (Command, "change-break");
