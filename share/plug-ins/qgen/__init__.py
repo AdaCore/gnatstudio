@@ -564,6 +564,18 @@ class CLI(GPS.Process):
         This is a workflow, and should be used via the functions in
         workflows.py.
         """
+        exe = GPS.File(main_name).executable_path
+        debuggers_to_close = [
+            d for d in GPS.Debugger.list()
+            if d.get_executable().executable_path == exe]
+
+        if len(debuggers_to_close) > 0:
+            if GPS.MDI.yes_no_dialog(
+                    "One or more debuggers are already running for that"
+                    " executable, do you want to terminate them ?"):
+                for debugger in debuggers_to_close:
+                    debugger.close()
+
         models = project_support.get_models(main_name)
 
         if not models:
@@ -578,7 +590,6 @@ class CLI(GPS.Process):
             w = TargetWrapper(target_name='Build Main')
             status = yield w.wait_on_execute(main_name=main_name)
         if status == 0:
-            exe = GPS.File(main_name).executable_path
             GPS.Debugger.spawn(exe)
 
     @staticmethod
