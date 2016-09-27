@@ -24,6 +24,11 @@
         </Pane>
       </Pane>
     </perspective>
+    <perspective name="Maximized Editors" save_on_exit="False">
+      <Pane width=" 100%" Orientation="ORIENTATION_HORIZONTAL">
+        <central height=" 100%" />
+      </Pane>
+    </perspective>
     <perspective name="Debug">
       <Pane width=" 100%" Orientation="ORIENTATION_VERTICAL">
         <Pane height=" 100%" Orientation="ORIENTATION_HORIZONTAL">

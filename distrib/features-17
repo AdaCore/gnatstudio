@@ -344,6 +344,14 @@ NF-17-P324-010 GPS: Add the possibility to filter switches (2016-04-07)
   (see the <filter> tag in the XML files). Use the GPS.Filter.list
   static method to list all the registered named filters.
 
+NF-17-P323-042 GPS: new action to maximize a window (2016-09-27)
+
+  A new action ("maximize window") is provided to make the central area
+  of the desktop (that contains the editor) occupy the full GPS window,
+  hiding all other views. Executing the action again goes back to the
+  previous layout. You can bind a key shortcut to this action via the
+  Preferences/Key Bindings menu.
+
 NF-17-P323-017 GPS: speed up search and replace (2016-04-05)
 
   The "search and replace all occurrences" has been sped up by a factor of
