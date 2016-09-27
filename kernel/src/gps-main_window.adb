@@ -1046,6 +1046,11 @@ package body GPS.Main_Window is
          Class         => MDI_Class,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
+      Main_Window.Kernel.Scripts.Register_Command
+        ("current_perspective",
+         Class          => MDI_Class,
+         Static_Method  => True,
+         Handler        => Default_Command_Handler'Access);
    end Register_Keys;
 
    ------------------------------------
@@ -1494,6 +1499,9 @@ package body GPS.Main_Window is
          begin
             Load_Perspective (Kernel, Name);
          end;
+
+      elsif Command = "current_perspective" then
+         Data.Set_Return_Value (Get_MDI (Kernel).Current_Perspective);
       end if;
    end Default_Command_Handler;
 

@@ -1393,6 +1393,8 @@ Classes
 
    .. automethod:: GPS.MDI.current
 
+   .. automethod:: GPS.MDI.current_perspective
+
    .. automethod:: GPS.MDI.dialog
 
    .. automethod:: GPS.MDI.file_selector

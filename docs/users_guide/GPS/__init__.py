@@ -6573,6 +6573,13 @@ class MDI(object):
     POSITION_RIGHT = 0
     # constants to be used in GPS.MDI.add()
 
+    current_perspective = ""
+    """
+    The name of the current perspective.
+
+    .. seealso: :func:`GPS.MDI.load_perspective`
+    """
+
     @staticmethod
     def add(widget, title="", short="", group=0,
             position=0, save_desktop=None):

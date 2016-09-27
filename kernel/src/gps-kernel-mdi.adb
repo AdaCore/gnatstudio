@@ -154,6 +154,18 @@ package body GPS.Kernel.MDI is
       Context : Interactive_Command_Context) return Command_Return_Type;
    --  Reset all perspectives to their default
 
+   type Switch_Perspective_Command is new Interactive_Command with record
+      Perspective_Name : Unbounded_String;
+   end record;
+   overriding function Execute
+     (Command : access Switch_Perspective_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   procedure Register_Switch_Perspective_Command
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Name   : String);
+   --  Create a new command to switch perspectives
+
    -----------------------
    -- Local subprograms --
    -----------------------
@@ -176,6 +188,12 @@ package body GPS.Kernel.MDI is
      (MDI    : access GObject_Record'Class;
       Kernel : Kernel_Handle);
    --  Called when a different child gains the focus
+
+   procedure On_Perspectives_Added
+     (MDI    : access GObject_Record'Class;
+      Params : GValues;
+      Kernel : Kernel_Handle);
+   --  Called when the list of perspectives has changed in the MDI
 
    function Check_Timestamp_Idle (Kernel : Kernel_Handle) return Boolean;
    --  Checks whether any of the monitored files has been modified on disk.
@@ -945,6 +963,55 @@ package body GPS.Kernel.MDI is
       Check_Monitored_Files_In_Background (Kernel);
    end On_Child_Selected;
 
+   -----------------------------------------
+   -- Register_Switch_Perspective_Command --
+   -----------------------------------------
+
+   procedure Register_Switch_Perspective_Command
+     (Kernel : not null access Kernel_Handle_Record'Class;
+      Name   : String)
+   is
+      Cmd : constant access Switch_Perspective_Command :=
+        new Switch_Perspective_Command;
+   begin
+      Cmd.Perspective_Name := To_Unbounded_String (Name);
+      Register_Action
+        (Kernel,
+         "switch to perspective " & Name,
+         Cmd,
+         Description =>
+           -"Change the current perspective (the layout of windows and views");
+   end Register_Switch_Perspective_Command;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Switch_Perspective_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+   begin
+      Load_Perspective (Kernel, To_String (Command.Perspective_Name));
+      return Commands.Success;
+   end Execute;
+
+   ---------------------------
+   -- On_Perspectives_Added --
+   ---------------------------
+
+   procedure On_Perspectives_Added
+     (MDI    : access GObject_Record'Class;
+      Params : GValues;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (MDI);
+      Name  : constant String := Get_String (Nth (Params, 1));
+   begin
+      Register_Switch_Perspective_Command (Kernel, Name);
+   end On_Perspectives_Added;
+
    -------------
    -- Gtk_New --
    -------------
@@ -960,6 +1027,9 @@ package body GPS.Kernel.MDI is
 
       Kernel_Callback.Connect
         (MDI, Signal_Child_Selected, On_Child_Selected'Access,
+         Kernel_Handle (Kernel));
+      Kernel_Callback.Connect
+        (MDI, Signal_Perspectives_Added, On_Perspectives_Added'Access,
          Kernel_Handle (Kernel));
    end Gtk_New;
 
@@ -1324,6 +1394,21 @@ package body GPS.Kernel.MDI is
                    & Project_Name.Display_Full_Name);
          end if;
 
+         --  Unregister all previous actions
+
+         declare
+            Persp : constant String_List_Access := MDI.List_Of_Perspectives;
+         begin
+            if Persp /= null then
+               for Name of Persp.all loop
+                  Unregister_Action
+                    (Handle, "switch to perspective " & Name.all);
+               end loop;
+            end if;
+         end;
+
+         --  Load the desktop from XML
+
          Success_Loading_Desktop :=
            Kernel_Desktop.Restore_Desktop
              (MDI,
@@ -1353,6 +1438,18 @@ package body GPS.Kernel.MDI is
 
       --  Report the load of the desktop
       Desktop_Loaded_Hook.Run (Handle);
+
+      --  Create commands to switch perspectives
+
+      declare
+         Persp : constant String_List_Access := MDI.List_Of_Perspectives;
+      begin
+         if Persp /= null then
+            for Name of Persp.all loop
+               Register_Switch_Perspective_Command (Handle, Name.all);
+            end loop;
+         end if;
+      end;
 
       if Is_Default_Desktop then
          return False;
