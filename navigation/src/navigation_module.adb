@@ -16,12 +16,18 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Ada.Containers.Hashed_Maps;
+with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Calendar;               use Ada.Calendar;
+with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Commands.Interactive;       use Commands, Commands.Interactive;
 with GNAT.Strings;               use GNAT.Strings;
 with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
+with GNATCOLL.Symbols;           use GNATCOLL.Symbols;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
 with GNATCOLL.Traces;            use GNATCOLL.Traces;
+with GNATCOLL.Utils;             use GNATCOLL.Utils;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GPS.Editors;                use GPS.Editors;
 with GPS.Intl;                   use GPS.Intl;
@@ -33,6 +39,7 @@ with GPS.Kernel.Modules.UI;      use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Modules;         use GPS.Kernel.Modules;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;         use GPS.Kernel.Scripts;
+with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
 with GPS.Markers;                use GPS.Markers;
 with Glib.Object;                use Glib.Object;
 with Glib;                       use Glib;
@@ -40,6 +47,7 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Language;                   use Language;
 with XML_Parsers;                use XML_Parsers;
 with XML_Utils;                  use XML_Utils;
+with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package body Navigation_Module is
    Me : constant Trace_Handle := Create ("Navigation");
@@ -52,6 +60,31 @@ package body Navigation_Module is
 
    type Location_Marker_Array is array (Positive range <>) of Location_Marker;
    type Location_Marker_Array_Access is access Location_Marker_Array;
+
+   type Action_And_Path is record
+      Action : Action_Record_Access;
+      Path   : Unbounded_String;
+   end record;
+
+   package File_To_Action is new Ada.Containers.Hashed_Maps
+     (Key_Type        => Virtual_File,
+      Element_Type    => Action_And_Path,
+      Hash            => Full_Name_Hash,
+      Equivalent_Keys => "=");
+   use File_To_Action;
+
+   package File_List is new Ada.Containers.Doubly_Linked_Lists (Virtual_File);
+   use File_List;
+
+   package Action_List is new Ada.Containers.Doubly_Linked_Lists
+     (Action_And_Path);
+   use Action_List;
+
+   function "<" (Left, Right : Action_And_Path) return Boolean is
+      (Left.Path < Right.Path);
+   --  Compare based on Path
+
+   package Alpha_Sort is new Action_List.Generic_Sorting;
 
    type Navigation_Module_Record is new Module_ID_Record with record
       Markers        : Location_Marker_Array_Access;
@@ -66,6 +99,16 @@ package body Navigation_Module is
       Previous_Project : Virtual_File := No_File;
       Markers_File     : Virtual_File := No_File;
       --  File where history markers were loaded from
+
+      ----------------------------------
+      -- Handling of the Runtime menu --
+      ----------------------------------
+
+      Actions_With_A_Menu : Action_List.List;
+      --  All the actions which currently provide a Runtime menu
+
+      Runtime_Actions : File_To_Action.Map;
+      --  A store of all the "Runtime menu" actions that have been created
    end record;
    type Navigation_Module is access all Navigation_Module_Record'Class;
 
@@ -92,6 +135,30 @@ package body Navigation_Module is
      (Script  : access Scripting_Language_Record'Class;
       Command : String) return Location_Marker;
    --  Create a new marker associated with a shell command
+
+   --------------------------------------------
+   -- Commands for handling the Runtime menu --
+   --------------------------------------------
+
+   type Runtime_Processor_Command is new Interactive_Command with record
+      Files_To_Process : File_List.List;
+      --  The runtime files left to process
+
+      Menus_To_Create : Action_List.List;
+      --  The actions which have been created from the above files, for
+      --  which menus still need to be created.
+   end record;
+   overriding function Execute
+     (Command : access Runtime_Processor_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Open_File_Command is new Interactive_Command with record
+      File : Virtual_File;
+   end record;
+   type Open_File_Command_Access is access all Open_File_Command'Class;
+   overriding function Execute
+     (Command : access Open_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    -----------------------
    -- Local subprograms --
@@ -260,6 +327,10 @@ package body Navigation_Module is
 
    procedure Free (Markers : in out Location_Marker_Array_Access);
    --  Free allocated memory.
+
+   procedure Regenerate_Runtime_Menu
+     (Kernel : not null access Kernel_Handle_Record'Class);
+   --  Regenerate the Runtime menu
 
    -------------
    -- Execute --
@@ -442,7 +513,7 @@ package body Navigation_Module is
       Filename     : Virtual_File;
       File, Child, Project : Node_Ptr;
       Marker       : Location_Marker;
-      Err          : String_Access;
+      Err          : GNAT.Strings.String_Access;
    begin
       --  Keep markers only for ordinary projects (not empty nor default)
 
@@ -531,6 +602,9 @@ package body Navigation_Module is
 
       --  Load the history for the new project
       Load_History_Markers (Kernel);
+
+      --  Create the Help -> Runtime menu for the new project
+      Regenerate_Runtime_Menu (Kernel);
    end Execute;
 
    -------------
@@ -604,7 +678,7 @@ package body Navigation_Module is
       Editor : constant Editor_Buffer'Class :=
                  Kernel.Get_Buffer_Factory.Get (File);
       Location : constant Editor_Location'Class :=
-                   Cursor (Current_View (Editor));
+                   GPS.Editors.Cursor (Current_View (Editor));
 
    begin
       return Line (Location);
@@ -1227,5 +1301,260 @@ package body Navigation_Module is
       Save_History_Markers (Get_Kernel (Id));
       Free (Id.Markers);
    end Destroy;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Runtime_Processor_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Context);
+      Module : constant Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
+      Kernel : constant Kernel_Handle := Module.Get_Kernel;
+
+      procedure Process_File (File : Virtual_File);
+      --  Process one file: look for its corresponding menu, creating the
+      --  action if needed.
+
+      ------------------
+      -- Process_File --
+      ------------------
+
+      procedure Process_File (File : Virtual_File) is
+         Base : constant Filesystem_String := File.Base_Name;
+         AP   : Action_And_Path;
+      begin
+         --  We are not interested in bodies
+         if Base'Length < 4
+           or else Base (Base'Last - 3 .. Base'Last) /= ".ads"
+         then
+            return;
+         end if;
+
+         --  Do we have an action in store for this file?
+
+         if Module.Runtime_Actions.Contains (File) then
+            --  If so, use the stored action
+            AP := Module.Runtime_Actions.Element (File);
+         else
+            --  Otherwise, create the action now
+
+            declare
+               Tree   : constant Semantic_Tree'Class :=
+                 Kernel.Get_Abstract_Tree_For_File (File);
+               Root    : constant Semantic_Node_Array'Class := Tree.Root_Nodes;
+               Command : Open_File_Command_Access;
+               Name    : Symbol := No_Symbol;
+            begin
+               for J in 1 .. Root.Length loop
+                  if Root.Get (J).Category in
+                    Cat_Package | Cat_Procedure | Cat_Function
+                  then
+                     if Root.Get (J).Visibility = Visibility_Private then
+                        return;
+                     end if;
+
+                     Name := Root.Get (J).Name;
+                     exit;
+                  end if;
+               end loop;
+
+               if Name = No_Symbol then
+                  return;
+               end if;
+
+               Command := new Open_File_Command;
+               Command.File := File;
+
+               declare
+                  Unique_Name : constant String :=
+                    "open runtime file " & (+File.Full_Name.all);
+               begin
+                  Register_Action
+                    (Kernel      => Kernel,
+                     Name        => Unique_Name,
+                     Command     => Command,
+                     Description => Unique_Name,
+                     Category    => "Runtime Menu");
+
+                  AP.Action := Lookup_Action (Kernel, Unique_Name);
+                  AP.Path   := To_Unbounded_String (Get (Name).all);
+
+                  Replace (AP.Path, ".", "/");
+                  Replace (AP.Path, "_", "__");
+
+                  --  Add the action we have just created to the store
+                  Module.Runtime_Actions.Insert (Key      => File,
+                                                 New_Item => AP);
+               end;
+            end;
+         end if;
+
+         Command.Menus_To_Create.Append (AP);
+      end Process_File;
+
+      Start  : constant Time := Clock;
+      Max_Idle_Duration : constant Duration := 0.05;
+
+      File : Virtual_File;
+      C    : Action_List.Cursor;
+      Pre  : Unbounded_String;
+      Ele  : Action_And_Path;
+   begin
+      if Command.Files_To_Process.Is_Empty then
+         --  If we're seeing this at the beginning of Execute, that means we
+         --  are running for the first time: fill the list of files.
+         declare
+            Files : constant File_Array :=
+              Get_Registry (Kernel).Environment.Predefined_Source_Files;
+         begin
+            for F of Files loop
+               Command.Files_To_Process.Append (F);
+            end loop;
+         end;
+      end if;
+
+      while not Command.Files_To_Process.Is_Empty loop
+         if Clock - Start > Max_Idle_Duration then
+            --  We spent too much time already: come back at another time.
+            return Execute_Again;
+         end if;
+
+         --  Process the first file
+         File := Command.Files_To_Process.First_Element;
+         Command.Files_To_Process.Delete_First;
+         Process_File (File);
+      end loop;
+
+      --  If we reach this, this means we didn't timeout on the loop above,
+      --  and therfore that all files have been processed: create the menus
+      --  now.
+
+      Alpha_Sort.Sort (Command.Menus_To_Create);
+
+      --  Reverse iterate on the sorted list to filter out and change
+      --  some paths
+
+      Pre := Null_Unbounded_String;
+      C := Command.Menus_To_Create.Last;
+      while Has_Element (C) loop
+         Ele := Element (C);
+         declare
+            Path : constant String := To_String (Ele.Path);
+         begin
+            --  Filter out "/Ada" for instance
+            if not (Starts_With (Path, "Ada/")
+                      or else Starts_With (Path, "GNAT/")
+                      or else Starts_With (Path, "System/")
+                      or else Starts_With (Path, "Interfaces/"))
+            then
+               Ele.Path := Null_Unbounded_String;
+               Command.Menus_To_Create.Replace_Element (C, Ele);
+            else
+               --  Transform items of the form /Ada/Containers
+               --  into /Ada/Containers/<Containers>
+
+               if Pre /= Null_Unbounded_String
+                 and then Starts_With (To_String (Pre), Path)
+               then
+                  for J in reverse Path'Range loop
+                     if Path (J) = '/' then
+                        Ele.Path := To_Unbounded_String
+                            (Path & "/<" & Path (J + 1 .. Path'Last) & ">");
+
+                        Command.Menus_To_Create.Replace_Element (C, Ele);
+                        exit;
+                     end if;
+                  end loop;
+               end if;
+            end if;
+         end;
+         Pre := Ele.Path;
+         Previous (C);
+      end loop;
+
+      declare
+         Runtime : constant String := Kernel.Get_Runtime;
+         Root    : constant String :=
+           (if Runtime = "" then
+               "/Help/GNAT Runtime/"
+            else
+               "/Help/GNAT Runtime (" & Runtime & ")/");
+      begin
+         for AP of Command.Menus_To_Create loop
+            if AP.Path /= Null_Unbounded_String then
+               Register_Menu
+                 (Kernel     => Kernel,
+                  Path       => Root & To_String (AP.Path),
+                  Action     => Get_Name (AP.Action));
+               Module.Actions_With_A_Menu.Append (AP);
+            end if;
+         end loop;
+      end;
+
+      return Success;
+   end Execute;
+
+   -----------------------------
+   -- Regenerate_Runtime_Menu --
+   -----------------------------
+
+   procedure Regenerate_Runtime_Menu
+     (Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      Module : constant Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
+      Task_Name : constant String := "refreshing Runtime menu";
+      C : Interactive_Command_Access;
+   begin
+      --  Interrupt running task, if needed
+      Interrupt_Queue (Kernel   => Kernel,
+                       Queue_Id => Task_Name);
+
+      --  Remove old runtime menu
+      for AP of Module.Actions_With_A_Menu loop
+         Remove_UI_For_Action (Kernel => Kernel,
+                               Action => Get_Name (AP.Action));
+      end loop;
+      Module.Actions_With_A_Menu.Clear;
+
+      C := new Runtime_Processor_Command;
+
+      --  Schedule computation of new runtime menu
+      Launch_Background_Command
+        (Kernel            => Kernel,
+         Command           => C,
+         Active            => False,
+         Show_Bar          => True,
+         Queue_Id          => Task_Name,
+         Block_Exit        => False,
+         Start_Immediately => False);
+   end Regenerate_Runtime_Menu;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Open_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Module : constant Navigation_Module :=
+        Navigation_Module (Navigation_Module_ID);
+      Kernel : constant Kernel_Handle := Module.Get_Kernel;
+      B      : constant Editor_Buffer'Class := Kernel.Get_Buffer_Factory.Get
+        (File        => Command.File,
+         Force       => True,
+         Open_Buffer => True,
+         Open_View   => True,
+         Focus       => True);
+      pragma Unreferenced (B, Context);
+   begin
+      --  We took care of the opening of the buffer above
+      return Success;
+   end Execute;
 
 end Navigation_Module;

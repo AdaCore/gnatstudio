@@ -71,10 +71,6 @@ endif
 	$(RM) $(sharedir)/gps/support/ui/*.pyc
 	${RM} ${sharedir}/gps/perspectives.xml
 	$(RMDIR) $(sharedir)/gps/templates
-# update runtime.py before copying the plug-ins files.
-	[ -f gnat/impunit.adb ] && (cd distrib; $(PERL) from_impunit.pl) \
-           || echo "Warning: gnat/impunit.adb not found"
-	cd distrib; $(PERL) from_impunit.pl
 
 	(cd share; tar cf - plug-ins/*) | (cd $(sharedir)/gps; tar xf -)
 ifeq ($(OS),Windows_NT)
