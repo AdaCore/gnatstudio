@@ -681,6 +681,12 @@ package body GVD.Breakpoints_List is
       --  is started are set when the debugger starts, but not those set while
       --  the debugger is running
 
+      if Visual_Debugger (Debugger).Debugger.Get_Executable = No_File then
+         --  If there was no executable, we did not even try to set
+         --  breakpoints, so don't save them either
+         return;
+      end if;
+
       --  In case the user has set breakpoints manually via the console,
       --  synchronize the global list of breakpoints
 
@@ -745,6 +751,14 @@ package body GVD.Breakpoints_List is
       Process : constant Visual_Debugger := Visual_Debugger (Debugger);
       Id      : Breakpoint_Identifier;
    begin
+      if Process.Debugger.Get_Executable = No_File then
+         --  Do not try to restore breakpoints, since the debugger has no
+         --  source anyway. We do not want to lose the list of persistent
+         --  breakpoints.
+         return;
+      end if;
+
+      Trace (Me, "Restore persistent breakpoints");
       for B of Module.Breakpoints.List loop
          if B.Except /= "" then
             Id := Process.Debugger.Break_Exception
