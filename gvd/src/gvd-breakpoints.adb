@@ -326,7 +326,6 @@ package body GVD.Breakpoints is
       if Old /= null then
          On_Process_Terminated (Old);
       end if;
-
    end Set_View;
 
    ------------
@@ -336,7 +335,7 @@ package body GVD.Breakpoints is
    overriding procedure Update
      (View   : not null access Breakpoint_Editor_Record)
    is
-      Process   : constant Visual_Debugger := Get_Process (View);
+      Process   : Visual_Debugger := Get_Process (View);
       Selection : constant Breakpoint_Data := Get_Selection (View);
       Model     : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
       Iter      : Gtk_Tree_Iter;
@@ -346,6 +345,12 @@ package body GVD.Breakpoints is
       Last      : Gint;
 
    begin
+      --  If the view is being detached (but the process has not been reset
+      --  yet), we load the list of persistent breakpoints
+      if Process /= null and then Get_View (Process) = null then
+         Process := null;
+      end if;
+
       Clear (Model);
 
       for Br of Get_Stored_List_Of_Breakpoints (Process).List loop
@@ -353,7 +358,10 @@ package body GVD.Breakpoints is
 
          Columns (1 .. 4) := (Col_Num, Col_Enb, Col_Type, Col_Disp);
          Values  (1 .. 2) :=
-           (1 => As_String (Breakpoint_Identifier'Image (Br.Num)),
+           (1 => As_String (
+                  if Br.Num = Breakpoint_Identifier'Last
+                  then "0"
+                  else Breakpoint_Identifier'Image (Br.Num)),
             2 => As_Boolean (Br.Enabled));
          Last := 4;
 
@@ -446,7 +454,12 @@ package body GVD.Breakpoints is
    is
       Model : constant Gtk_Tree_Store := -Get_Model (View.Breakpoint_List);
    begin
-      Clear (Model);
+      if Count_Running_Debuggers (View.Kernel) <= 1 then
+         --  Show the persistent breakpoints instead
+         Update (View);
+      else
+         Clear (Model);
+      end if;
    end On_Process_Terminated;
 
    -------------------
@@ -519,8 +532,11 @@ package body GVD.Breakpoints is
       Self.Longpress.On_Pressed (On_Longpress'Access, Slot => Self);
       Self.Longpress.Watch (Self);
 
+      --  Initial display
       Debugger_Breakpoints_Changed_Hook.Add
-        (new On_Breakpoints_Changed, Watch => Self);
+         (new On_Breakpoints_Changed, Watch => Self);
+
+      Update (Self);
 
       return Gtk_Widget (Self.Breakpoint_List);
    end Initialize;

@@ -69,4 +69,9 @@ package GVD_Module is
         (Object : not null access Base_Visual_Debugger'Class));
    --  Execute callback Action for each debugger
 
+   function Count_Running_Debuggers
+     (Kernel : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+     return Natural;
+   --  Return the number of debuggers that are currently running
+
 end GVD_Module;

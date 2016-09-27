@@ -611,24 +611,8 @@ package body GVD.Process is
 
    procedure Close_Debugger (Process : access Visual_Debugger_Record) is
 
-      procedure Callback (Object : not null access Base_Visual_Debugger'Class);
-      --  Count number of active debugger processes
-
-      Count  : Natural := 0;  --  number of active debugger processes
-
-      --------------
-      -- Callback --
-      --------------
-
-      procedure Callback
-        (Object : not null access Base_Visual_Debugger'Class)
-      is
-         pragma Unreferenced (Object);
-      begin
-         Count := Count + 1;
-      end Callback;
-
-      Kernel           : constant Kernel_Handle := Process.Kernel;
+      Kernel : constant Kernel_Handle := Process.Kernel;
+      Count  : Natural;
    begin
       if Process.Exiting then
          return;
@@ -637,7 +621,7 @@ package body GVD.Process is
       GNATCOLL.Traces.Trace (Me, "Closing Debugger");
 
       Process.Exiting := True;
-      For_Each_Debugger (Kernel, Callback'Access);
+      Count := Count_Running_Debuggers (Kernel);
 
       --  Load the default perspective before closing the debugger. This is
       --  necessary because the position of views is memorized at this time:

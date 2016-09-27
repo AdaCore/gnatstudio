@@ -368,6 +368,19 @@ package body GVD_Module is
       end loop;
    end For_Each_Debugger;
 
+   -----------------------------
+   -- Count_Running_Debuggers --
+   -----------------------------
+
+   function Count_Running_Debuggers
+     (Kernel : not null access Kernel_Handle_Record'Class)
+     return Natural
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      return Natural (GVD_Module_ID.Debugger_List.Length);
+   end Count_Running_Debuggers;
+
    --------------------------
    -- Get_Current_Debugger --
    --------------------------
