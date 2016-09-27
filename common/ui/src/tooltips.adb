@@ -112,6 +112,19 @@ package body Tooltips is
 
    Global_Tooltip : Tooltip_Object;
 
+   procedure On_On_Widget_Destroy (Widget : access Gtk_Widget_Record'Class);
+   --  Called on "destroy" on Global_Tooltip.On_Widget
+
+   --------------------------
+   -- On_On_Widget_Destroy --
+   --------------------------
+
+   procedure On_On_Widget_Destroy (Widget : access Gtk_Widget_Record'Class) is
+      pragma Unreferenced (Widget);
+   begin
+      Global_Tooltip.On_Widget := null;
+   end On_On_Widget_Destroy;
+
    ---------------------
    -- Static tooltips --
    ---------------------
@@ -361,7 +374,8 @@ package body Tooltips is
       Hide_Tooltip;
 
       Global_Tooltip.On_Widget := Gtk_Widget (Widget);
-      Ref (Global_Tooltip.On_Widget);
+      Widget.On_Destroy (On_On_Widget_Destroy'Access);
+
       Global_Tooltip.X := X;
       Global_Tooltip.Y := Y;
       Global_Tooltip.Area_Is_Set := False;
@@ -388,11 +402,7 @@ package body Tooltips is
             return;
          end if;
 
-         if Global_Tooltip.On_Widget /= null then
-            Unref (Global_Tooltip.On_Widget);
-            Global_Tooltip.On_Widget := null;
-         end if;
-
+         Global_Tooltip.On_Widget := null;
          Global_Tooltip.Area_Is_Set := False;
          Global_Tooltip.Hide;
 
