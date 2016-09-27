@@ -181,7 +181,13 @@ package body Dialog_Utils is
 
       Child := Self.Children_Map (Child_Key);
 
-      Child.Set_Visible (Visible);
+      if Visible then
+         --  Show all the row's children too
+         Child.Set_No_Show_All (False);
+         Child.Show_All;
+      else
+         Child.Hide;
+      end if;
    end Set_Child_Visible;
 
    -------------------------

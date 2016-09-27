@@ -1625,11 +1625,12 @@ package body Vsearch is
          end if;
       end Set_Mode_From_History;
 
-      Group_Widget     : Dialog_Group_Widget;
-      Layout           : Gtk_Cell_Layout;
-      Renderer         : Gtk_Cell_Renderer_Text;
-      Value            : String_List_Access;
-      Model            : Gtk_List_Store;
+      Group_Widget : Dialog_Group_Widget;
+      Replace_Row  : Gtk_Widget;
+      Layout       : Gtk_Cell_Layout;
+      Renderer     : Gtk_Cell_Renderer_Text;
+      Value        : String_List_Access;
+      Model        : Gtk_List_Store;
    begin
       Gtk.Box.Initialize_Vbox (Self);
 
@@ -1697,10 +1698,11 @@ package body Vsearch is
       Self.Replace_Combo.Get_Child.On_Button_Release_Event
         (On_Button_Release'Access, After => False);
 
-      Group_Widget.Create_Child
+      Replace_Row := Group_Widget.Create_Child
         (Self.Replace_Combo,
          Label     => "Replace",
          Child_Key => "replace_combo");
+      Replace_Row.Set_No_Show_All (True);
 
       --  Context specific search
 
