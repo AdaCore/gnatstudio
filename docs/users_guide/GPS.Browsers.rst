@@ -105,6 +105,10 @@ Classes
 
    .. inheritance-diagram:: GPS.Browsers.EditableTextItem
 
+
+   .. autoattribute:: GPS.Browsers.EditableTextItem.editable
+
+
    .. automethod:: GPS.Browsers.EditableTextItem.__init__
 
 :class:`GPS.Browsers.EllipseItem`
@@ -203,6 +207,14 @@ Classes
 
 
 
+   .. autoattribute:: GPS.Browsers.Link.source
+
+
+
+   .. autoattribute:: GPS.Browsers.Link.target
+
+
+
    .. autoattribute:: GPS.Browsers.Link.toLabel
 
 
@@ -288,6 +300,10 @@ Classes
 
 
 
+   .. autoattribute:: GPS.Browsers.View.editing_in_progress
+
+
+
    .. autoattribute:: GPS.Browsers.View.scale
 
 
@@ -296,6 +312,8 @@ Classes
 
 
    .. automethod:: GPS.Browsers.View.__init__
+
+   .. automethod:: GPS.Browsers.View.cancel_editing
 
    .. automethod:: GPS.Browsers.View.center_on
 
@@ -312,3 +330,5 @@ Classes
    .. automethod:: GPS.Browsers.View.set_read_only
 
    .. automethod:: GPS.Browsers.View.set_selection_style
+
+   .. automethod:: GPS.Browsers.View.start_editing

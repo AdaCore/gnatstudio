@@ -492,9 +492,18 @@ class EditableTextItem(TextItem):
     """
     A text item (:class:`GPS.Browsers.TextItem`) that can be double-clicked
     on to edit its text.
+    See :func:`GPS.Browsers.View.start_editing` if you need to start the
+    editing from the script, instead of having the user double-click on the
+    item.
     """
 
-    def __init__(self, style, text, directed=TextItem.TextArrow.NONE):
+    editable = True
+    """
+    Whether this item is currently editable by the user
+    """
+
+    def __init__(self, style, text, directed=TextItem.TextArrow.NONE,
+                 on_edited=None):
         """
         Creates a new editable text item
 
@@ -504,6 +513,10 @@ class EditableTextItem(TextItem):
            to the text. This can be used for instance when the
            text is next to a link, and indicates in which direction
            the text applies.
+        :param on_edited: A callback whenever the text has been modified
+           interactively by the user. The profile is::
+               def on_edited(textitem, old_text):
+                   pass
         """
 
 
@@ -570,6 +583,16 @@ class Link(AbstractItem):
     """
     Returns a `GPS.Browsers.Item` element (or None) corresponding to
     the link's target label.
+    """
+
+    source = None
+    """
+    The source `GPS.Browsers.Item` for the link
+    """
+
+    target = None
+    """
+    The target `GPS.Browsers.Item` for the link
     """
 
     def __init__(
@@ -1107,6 +1130,13 @@ class View(GPS.GUI):
     This is a writable property.
     """
 
+    editing_in_progress = False
+    """
+    A read-only property that indicates whether the user is currently
+    interactively modifying the contents of an item (for instance an
+    EditableTextItem). See :func:`GPS.Browsers.View.start_editing`
+    """
+
     def __init__(self):
         """
         Creates the python class instance, but does not associate it with any
@@ -1222,4 +1252,17 @@ class View(GPS.GUI):
         :param bool visible_only: if True, the output will match was is
            visible in the view. If False, the output will include the
            whole contents of the diagram.
+        """
+
+    def start_editing(self, item):
+        """
+        If `item` is editable, start interactive editing, as if the user
+        had clicked on it.
+
+        .. seealso: :func:`GPS.Browsers.View.cancel_editing`
+        """
+
+    def cancel_editing(self):
+        """
+        Cancel any interactive editing that might be taking place
         """

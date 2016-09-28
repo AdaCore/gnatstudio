@@ -33,6 +33,7 @@ with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
 with GNAT.Strings;              use GNAT.Strings;
 with Gtkada.Canvas_View;        use Gtkada.Canvas_View;
+with Gtkada.Canvas_View.Views;  use Gtkada.Canvas_View.Views;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Style;              use Gtkada.Style;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -241,6 +242,7 @@ package body Browsers.Scripts is
    type PEditable_Text_Record is new Editable_Text_Item_Record and Python_Item
      with record
       Inst : aliased Item_Proxy;
+      On_Edited : Subprogram_Type;
    end record;
    overriding function Inst_List
      (Self : not null access PEditable_Text_Record)
@@ -248,6 +250,9 @@ package body Browsers.Scripts is
    overriding procedure Destroy
      (Self     : not null access PEditable_Text_Record;
       In_Model : not null access Canvas_Model_Record'Class);
+   overriding procedure On_Edited
+     (Self     : not null access PEditable_Text_Record;
+      Old_Text : String);
 
    type PHr_Record is new Hr_Item_Record and Python_Item with record
       Inst : aliased Item_Proxy;
@@ -375,8 +380,34 @@ package body Browsers.Scripts is
       In_Model : not null access Canvas_Model_Record'Class) is
    begin
       Self.Inst.Free;
+      Self.On_Edited.Free;
       Editable_Text_Item_Record (Self.all).Destroy (In_Model);  --  inherited
    end Destroy;
+
+   ---------------
+   -- On_Edited --
+   ---------------
+
+   overriding procedure On_Edited
+     (Self     : not null access PEditable_Text_Record;
+      Old_Text : String) is
+   begin
+      if Self.On_Edited /= null then
+         declare
+            Script : constant Scripting_Language := Self.On_Edited.Get_Script;
+            Data : Callback_Data'Class := Create (Script, 2);
+            Dummy : Boolean;
+         begin
+            Data.Set_Nth_Arg
+               (1,
+                Item_Proxies.Get_Or_Create_Instance
+                   (Self.Inst_List.all, Self, Script));
+            Data.Set_Nth_Arg (2, Old_Text);
+            Dummy := Self.On_Edited.Execute (Data);
+            Free (Data);
+         end;
+      end if;
+   end On_Edited;
 
    -------------
    -- Destroy --
@@ -955,6 +986,22 @@ package body Browsers.Scripts is
             Model := Get_Model (Nth_Arg (Data, 2, Allow_Null => True));
             View.Get_View.Set_Model (Model);
          end if;
+
+      elsif Command = "start_editing" then
+         Inst := Nth_Arg (Data, 1);
+         View := Browser_View (GObject'(Get_Data (Inst)));
+         Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
+         Start_Inline_Editing (View.Get_View, Item);
+
+      elsif Command = "cancel_editing" then
+         Inst := Nth_Arg (Data, 1);
+         View := Browser_View (GObject'(Get_Data (Inst)));
+         Cancel_Inline_Editing (View.Get_View);
+
+      elsif Command = "editing_in_progress" then
+         Inst := Nth_Arg (Data, 1);
+         View := Browser_View (GObject'(Get_Data (Inst)));
+         Data.Set_Return_Value (Inline_Editing_In_Progress (View.Get_View));
       end if;
    end View_Handler;
 
@@ -1515,6 +1562,7 @@ package body Browsers.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Item : access PEditable_Text_Record;
+      Editable : Editable_Text_Item;
    begin
       if Command = Constructor_Method then
          Item := new PEditable_Text_Record;
@@ -1523,7 +1571,18 @@ package body Browsers.Scripts is
             Text     => Data.Nth_Arg (3),
             Directed => Text_Arrow_Direction'Val
               (Data.Nth_Arg (4, Text_Arrow_Direction'Pos (No_Text_Arrow))));
+
+         Item.On_Edited := Data.Nth_Arg (5, null);
          Item_Proxies.Store_In_Instance (Item.Inst, Data.Nth_Arg (1), Item);
+
+      elsif Command = "editable" then
+         Editable := Editable_Text_Item
+            (Item_Proxies.From_Instance (Data.Nth_Arg (1)));
+         if Data.Number_Of_Arguments = 1 then
+            Data.Set_Return_Value (Editable.Is_Editable);
+         else
+            Editable.Set_Editable (Data.Nth_Arg (2));
+         end if;
       end if;
    end Editable_Text_Handler;
 
@@ -1643,6 +1702,18 @@ package body Browsers.Scripts is
                  (Python_Item_Access (The_Link.Get_Label_To).Inst_List.all,
                   Abstract_Item (The_Link.Get_Label_To), Data.Get_Script));
          end if;
+
+      elsif Command = "source" then
+         Data.Set_Return_Value
+            (Item_Proxies.Get_Or_Create_Instance
+               (Python_Item_Access (The_Link.Get_From).Inst_List.all,
+                The_Link.Get_From, Data.Get_Script));
+
+      elsif Command = "target" then
+         Data.Set_Return_Value
+            (Item_Proxies.Get_Or_Create_Instance
+               (Python_Item_Access (The_Link.Get_To).Inst_List.all,
+                The_Link.Get_To, Data.Get_Script));
       end if;
    end Link_Handler;
 
@@ -1846,6 +1917,19 @@ package body Browsers.Scripts is
                      3 => Param ("xpos", Optional => True),
                      4 => Param ("ypos", Optional => True)),
          Handler => View_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("start_editing",
+         Class    => View,
+         Params   => (2 => Param ("item")),
+         Handler  => View_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("cancel_editing",
+         Class    => View,
+         Handler  => View_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("editing_in_progress",
+         Class    => View,
+         Getter   => View_Handler'Access);
 
       Kernel.Scripts.Register_Command
         ("show",
@@ -2000,9 +2084,15 @@ package body Browsers.Scripts is
         (Constructor_Method,
          Params  => (Param ("style"),
                      Param ("text"),
-                     Param ("directed", Optional => True)),
+                     Param ("directed", Optional => True),
+                     Param ("on_edited", Optional => True)),
          Class   => Editable_Text,
          Handler => Editable_Text_Handler'Access);
+      Kernel.Scripts.Register_Property
+         ("editable",
+          Class  => Editable_Text,
+          Getter => Text_Handler'Access,
+          Setter => Text_Handler'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,
@@ -2053,6 +2143,14 @@ package body Browsers.Scripts is
          Getter  => Link_Handler'Access);
       Kernel.Scripts.Register_Property
         ("toLabel",
+         Class   => Link,
+         Getter  => Link_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("source",
+         Class   => Link,
+         Getter  => Link_Handler'Access);
+      Kernel.Scripts.Register_Property
+        ("target",
          Class   => Link,
          Getter  => Link_Handler'Access);
    end Register_Module;
