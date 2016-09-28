@@ -19,6 +19,7 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Tags;                  use Ada.Tags;
 with Ada.Unchecked_Conversion;
+with System.Address_Image;
 
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;
@@ -81,7 +82,6 @@ with Projects;                  use Projects;
 with Refactoring;               use Refactoring;
 with String_List_Utils;         use String_List_Utils;
 with Switches_Chooser;          use Switches_Chooser;
-with System.Address_Image;
 with Xref;                      use Xref;
 with Language.Abstract_Construct_Tree; use Language.Abstract_Construct_Tree;
 
@@ -233,12 +233,9 @@ package body GPS.Kernel is
    ----------
 
    function Hash
-     (Element : Commands.Command_Access) return Ada.Containers.Hash_Type
-   is
-      function Unchecked_Conversion is new Ada.Unchecked_Conversion
-        (Commands.Command_Access, Long_Integer);
+     (Element : Commands.Command_Access) return Ada.Containers.Hash_Type is
    begin
-      return Ada.Containers.Hash_Type'Mod (Unchecked_Conversion (Element));
+      return Ada.Strings.Hash (System.Address_Image (Element.all'Address));
    end Hash;
 
    --------------------------
