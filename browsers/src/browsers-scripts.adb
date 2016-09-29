@@ -1621,7 +1621,8 @@ package body Browsers.Scripts is
    procedure Link_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Inst, Inst2  : Class_Instance;
+      Inst : constant Class_Instance := Nth_Arg (Data, 1);
+      Inst2  : Class_Instance;
       Link  : access Plink_Record;
       Label, Label_From, Label_To : Container_Item;
       The_Link : Canvas_Link;
@@ -1665,17 +1666,18 @@ package body Browsers.Scripts is
                Toplevel_Side => Side_Attachment'Val
                  (Nth_Arg (Data, L_To_Side, Side_Attachment'Pos (Auto)))));
 
-         Item_Proxies.Store_In_Instance (Link.Inst, Data.Nth_Arg (1), Link);
+         Item_Proxies.Store_In_Instance (Link.Inst, Inst, Link);
+         return;
+      end if;
 
-      elsif Command = "set_waypoints" then
-         Inst := Nth_Arg (Data, 1);
-         Canvas_Link (Item_Proxies.From_Instance (Inst)).Set_Waypoints
+      The_Link := Canvas_Link (Item_Proxies.From_Instance (Inst));
+
+      if Command = "set_waypoints" then
+         The_Link.Set_Waypoints
            (Points   => Points_From_Param (Data, 2),
-            Relative => Nth_Arg (Data, 3, False));
+            Relative => Data.Nth_Arg (3, False));
 
       elsif Command = "label" then
-         Inst := Nth_Arg (Data, 1);
-         The_Link := Canvas_Link (Item_Proxies.From_Instance (Inst));
          if The_Link.Get_Label /= null then
             Data.Set_Return_Value
               (Item_Proxies.Get_Or_Create_Instance
@@ -1684,8 +1686,6 @@ package body Browsers.Scripts is
          end if;
 
       elsif Command = "fromLabel" then
-         Inst := Nth_Arg (Data, 1);
-         The_Link := Canvas_Link (Item_Proxies.From_Instance (Inst));
          if The_Link.Get_Label_From /= null then
             Data.Set_Return_Value
               (Item_Proxies.Get_Or_Create_Instance
@@ -1694,8 +1694,6 @@ package body Browsers.Scripts is
          end if;
 
       elsif Command = "toLabel" then
-         Inst := Nth_Arg (Data, 1);
-         The_Link := Canvas_Link (Item_Proxies.From_Instance (Inst));
          if The_Link.Get_Label_To /= null then
             Data.Set_Return_Value
               (Item_Proxies.Get_Or_Create_Instance

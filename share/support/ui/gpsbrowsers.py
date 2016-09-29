@@ -482,6 +482,16 @@ class Item:
                 for it in child.recurse():
                     yield it
 
+    def toplevel(self):
+        """
+        Return the toplevel parent
+        """
+        while self:
+            parent = self.parent
+            if parent is None:
+                return self
+            self = parent
+
     def get_parent_with_id(self):
         """
         Return self if it has an id, or its first parent with an id

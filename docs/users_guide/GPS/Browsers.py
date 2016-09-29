@@ -253,6 +253,13 @@ class Item(AbstractItem):
     This property is not writable.
     """
 
+    toplevel = None
+    """
+    The :class:`GPS.Browsers.AbstractItem` that contains self, or self
+    itself if it is already a toplevel item. This is simply computed by
+    using the :func:`GPS.Browsers.AbstractItem.parent` property.
+    """
+
     def __init__(self):
         """
         Will raise an exception, this is an abstract class.
