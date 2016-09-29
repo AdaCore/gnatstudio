@@ -711,6 +711,9 @@ tip="Formulas generated for each check (faster) or each path (more precise)" >
           min="0"
           max="1000000"
           tip="Set the prover maximum number of steps for individual proofs"/>
+         <check label="CodePeer Static Analysis"
+                switch="--codepeer=on" column="2"
+                tip="Enable CodePeer analysis in addition to provers" />
         <title line="1" column="2">Process control</title>
         <spin label="Multiprocessing" column="2" switch="-j"
               default="1" min="1" max="100"
@@ -805,6 +808,9 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
          <check label="Automatic timeout" switch="--timeout=auto" column="2"
                 tip="Adjust timeout to the proof level"
          />
+         <check label="CodePeer Static Analysis"
+                switch="--codepeer=on" column="2"
+                tip="Enable CodePeer analysis in addition to provers" />
        </switches>
        <persistent-history>False</persistent-history>
     </target-model>
