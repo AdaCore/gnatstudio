@@ -1986,6 +1986,10 @@ package body Src_Editor_Module is
                                    new Undo_Redo_Information;
       Selector                 : Simple_Scope_Selector;
       Extra                    : Files_Extra_Scope;
+      Default_Options_Mask     : constant Search_Options_Mask :=
+                                   All_Options
+                                       and not Search_Backward
+                                           and not Supports_Incremental;
       Command                  : Interactive_Command_Access;
       Label                    : Contextual_Menu_Label_Creator;
       Line_Numbers_Area_Filter : Action_Filter;
@@ -2376,7 +2380,7 @@ package body Src_Editor_Module is
          Factory           => Files_From_Project_Factory'Access,
          Selector          => Selector,
          Id                => Src_Editor_Module_Id,
-         Mask              => All_Options and not Search_Backward,
+         Mask              => Default_Options_Mask,
          Is_Default        => True);
       Register_Search_Function
         (Kernel            => Kernel,
@@ -2384,35 +2388,35 @@ package body Src_Editor_Module is
          Factory           => Files_From_Runtime_Factory'Access,
          Selector          => Selector,
          Id                => Src_Editor_Module_Id,
-         Mask              => All_Options and not Search_Backward);
+         Mask              => Default_Options_Mask);
       Register_Search_Function
         (Kernel            => Kernel,
          Label             => -"Files From Project '%p'",
          Factory           => Files_From_Root_Project_Factory'Access,
          Selector          => Selector,
          Id                => Src_Editor_Module_Id,
-         Mask              => All_Options and not Search_Backward);
+         Mask              => Default_Options_Mask);
       Register_Search_Function
         (Kernel            => Kernel,
          Label             => -"Files...",
          Factory           => Files_Factory'Access,
          Selector          => Extra,
          Id                => Src_Editor_Module_Id,
-         Mask              => All_Options and not Search_Backward);
+         Mask              => Default_Options_Mask);
       Register_Search_Function
         (Kernel => Kernel,
          Label             => -"Open Files",
          Factory           => Open_Files_Factory'Access,
          Selector          => Selector,
          Id                => Src_Editor_Module_Id,
-         Mask              => All_Options and not Search_Backward);
+         Mask              => Default_Options_Mask);
       Register_Search_Function
         (Kernel            => Kernel,
          Label             => -"Current Selection",
          Factory           => Current_Selection_Factory'Access,
          Selector          => Selector,
          Id                => Src_Editor_Module_Id,
-         Mask              => All_Options,
+         Mask              => All_Options and not Supports_Incremental,
          In_Selection      => True);
       Register_Search_Function
         (Kernel => Kernel,

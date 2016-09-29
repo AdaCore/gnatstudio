@@ -243,16 +243,20 @@ package body Src_Contexts is
    --  scope.
 
    function Auxiliary_Search
-     (Context         : access Current_File_Context'Class;
-      Editor          : Source_Editor_Box;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Start_Line      : Editable_Line_Type := 1;
-      Start_Column    : Character_Offset_Type := 1;
-      End_Line        : Editable_Line_Type := 0;
-      End_Column      : Character_Offset_Type := 0) return Boolean;
+     (Context              : access Current_File_Context'Class;
+      Editor               : Source_Editor_Box;
+      Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward      : Boolean;
+      From_Selection_Start : Boolean;
+      Start_Line           : Editable_Line_Type := 1;
+      Start_Column         : Character_Offset_Type := 1;
+      End_Line             : Editable_Line_Type := 0;
+      End_Column           : Character_Offset_Type := 0) return Boolean;
    --  Auxiliary function, factorizes code between Search and Replace.
    --  Return True in case of success.
+   --  When From_Selection_Start is True, the search begins at the beginning of
+   --  the currently selected text, if any. Otherwise, the search will start
+   --  from then end of the selected text.
    --  Restrict search to given range (if specified):
    --  Start_Line:Start_Column .. End_Line:End_Column
 
@@ -1427,12 +1431,13 @@ package body Src_Contexts is
    ------------
 
    overriding procedure Search
-     (Context         : access Current_Selection_Context;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Give_Focus      : Boolean;
-      Found           : out Boolean;
-      Continue        : out Boolean)
+     (Context              : access Current_Selection_Context;
+      Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward      : Boolean;
+      From_Selection_Start : Boolean;
+      Give_Focus           : Boolean;
+      Found                : out Boolean;
+      Continue             : out Boolean)
    is
       function Interactive_Callback
         (Match : GPS.Search.Search_Context;
@@ -1522,7 +1527,7 @@ package body Src_Contexts is
 
          if not Context.All_Occurrences then
             Found := Auxiliary_Search
-              (Context, Editor, Kernel, Search_Backward,
+              (Context, Editor, Kernel, Search_Backward, From_Selection_Start,
                Begin_Line, Begin_Column, End_Line, End_Column);
 
             if not Found then
@@ -1991,14 +1996,15 @@ package body Src_Contexts is
    ----------------------
 
    function Auxiliary_Search
-     (Context         : access Current_File_Context'Class;
-      Editor          : Source_Editor_Box;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Start_Line      : Editable_Line_Type := 1;
-      Start_Column    : Character_Offset_Type := 1;
-      End_Line        : Editable_Line_Type := 0;
-      End_Column      : Character_Offset_Type := 0) return Boolean
+     (Context              : access Current_File_Context'Class;
+      Editor               : Source_Editor_Box;
+      Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward      : Boolean;
+      From_Selection_Start : Boolean;
+      Start_Line           : Editable_Line_Type := 1;
+      Start_Column         : Character_Offset_Type := 1;
+      End_Line             : Editable_Line_Type := 0;
+      End_Column           : Character_Offset_Type := 0) return Boolean
    is
       Selection_Start : Gtk_Text_Iter;
       Selection_End   : Gtk_Text_Iter;
@@ -2012,7 +2018,10 @@ package body Src_Contexts is
 
       Search_In_Editor
         (Context         => Context,
-         Start_At        => Selection_End,
+         Start_At        => (if From_Selection_Start then
+                                Selection_Start
+                             else
+                                Selection_End),
          Kernel          => Kernel,
          Search_Backward => Search_Backward,
          Match_From      => Match_From,
@@ -2050,12 +2059,13 @@ package body Src_Contexts is
    ------------
 
    overriding procedure Search
-     (Context         : access Current_File_Context;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Give_Focus      : Boolean;
-      Found           : out Boolean;
-      Continue        : out Boolean)
+     (Context              : access Current_File_Context;
+      Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward      : Boolean;
+      From_Selection_Start : Boolean;
+      Give_Focus           : Boolean;
+      Found                : out Boolean;
+      Continue             : out Boolean)
    is
       Child  : constant MDI_Child := Find_Current_Editor (Kernel);
       Editor : Source_Editor_Box;
@@ -2121,7 +2131,12 @@ package body Src_Contexts is
       end if;
 
       if not Context.All_Occurrences then
-         Found := Auxiliary_Search (Context, Editor, Kernel, Search_Backward);
+         Found := Auxiliary_Search
+           (Context,
+            Editor,
+            Kernel,
+            Search_Backward,
+            From_Selection_Start);
          Continue := False; --  ??? Dummy boolean.
       else
          Search_From_Editor
@@ -2724,13 +2739,15 @@ package body Src_Contexts is
    ------------
 
    overriding procedure Search
-     (Context         : access Abstract_Files_Context;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Give_Focus      : Boolean;
-      Found           : out Boolean;
-      Continue        : out Boolean)
+     (Context              : access Abstract_Files_Context;
+      Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward      : Boolean;
+      From_Selection_Start : Boolean;
+      Give_Focus           : Boolean;
+      Found                : out Boolean;
+      Continue             : out Boolean)
    is
+      pragma Unreferenced (From_Selection_Start);
       C : constant Abstract_Files_Context_Access :=
         Abstract_Files_Context_Access (Context);
       --  For dispatching purposes

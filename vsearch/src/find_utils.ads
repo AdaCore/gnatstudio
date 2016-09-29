@@ -183,12 +183,13 @@ package Find_Utils is
    --  current one through the Next button).
 
    procedure Search
-     (Context         : access Root_Search_Context;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Give_Focus      : Boolean;
-      Found           : out Boolean;
-      Continue        : out Boolean) is abstract;
+     (Context              : access Root_Search_Context;
+      Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward      : Boolean;
+      From_Selection_Start : Boolean;
+      Give_Focus           : Boolean;
+      Found                : out Boolean;
+      Continue             : out Boolean) is abstract;
    --  This subprogram should search for the next occurrence of Context.
    --  Found tells whether an occurrence of the context was found.
    --  Continue is set to False if there is no other search to be performed and

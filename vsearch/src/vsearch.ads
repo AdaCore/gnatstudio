@@ -36,13 +36,13 @@ package Vsearch is
    ---------------------
 
    type Search_Options_Mask is mod 256;
-   Case_Sensitive    : constant Search_Options_Mask := 2 ** 1;
-   Whole_Word        : constant Search_Options_Mask := 2 ** 2;
-   --  Regexp            : constant Search_Options_Mask := 2 ** 3;
-   All_Occurrences   : constant Search_Options_Mask := 2 ** 4;
-   Search_Backward   : constant Search_Options_Mask := 2 ** 5;
-   Supports_Replace  : constant Search_Options_Mask := 2 ** 6;
-   All_Options       : constant Search_Options_Mask := 255;
+   Case_Sensitive       : constant Search_Options_Mask := 2 ** 1;
+   Whole_Word           : constant Search_Options_Mask := 2 ** 2;
+   All_Occurrences      : constant Search_Options_Mask := 2 ** 3;
+   Search_Backward      : constant Search_Options_Mask := 2 ** 4;
+   Supports_Replace     : constant Search_Options_Mask := 2 ** 5;
+   Supports_Incremental : constant Search_Options_Mask := 2 ** 6;
+   All_Options          : constant Search_Options_Mask := 255;
    --  Which options are supported by which contextual search
 
    procedure Register_Search_Function

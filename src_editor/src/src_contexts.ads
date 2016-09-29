@@ -144,12 +144,13 @@ package Src_Contexts is
    type Current_Selection_Context is new Current_File_Context with private;
 
    overriding procedure Search
-     (Context         : access Current_Selection_Context;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Give_Focus      : Boolean;
-      Found           : out Boolean;
-      Continue        : out Boolean);
+     (Context              : access Current_Selection_Context;
+      Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward      : Boolean;
+      From_Selection_Start : Boolean;
+      Give_Focus           : Boolean;
+      Found                : out Boolean;
+      Continue             : out Boolean);
    --  Search function for "Current Selection"
 
    overriding function Replace
@@ -370,12 +371,13 @@ package Src_Contexts is
 private
 
    overriding procedure Search
-     (Context         : access Current_File_Context;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Give_Focus      : Boolean;
-      Found           : out Boolean;
-      Continue        : out Boolean);
+     (Context              : access Current_File_Context;
+      Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward      : Boolean;
+      From_Selection_Start : Boolean;
+      Give_Focus           : Boolean;
+      Found                : out Boolean;
+      Continue             : out Boolean);
    --  Search function for "Current File"
 
    overriding function Replace
@@ -450,12 +452,13 @@ private
    --  See inherited documentation
 
    overriding procedure Search
-     (Context         : access Abstract_Files_Context;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Give_Focus      : Boolean;
-      Found           : out Boolean;
-      Continue        : out Boolean);
+     (Context              : access Abstract_Files_Context;
+      Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward      : Boolean;
+      From_Selection_Start : Boolean;
+      Give_Focus           : Boolean;
+      Found                : out Boolean;
+      Continue             : out Boolean);
    --  Search function for "Files From Project" and "Open_Files"
 
    overriding function Replace
