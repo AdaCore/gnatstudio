@@ -136,6 +136,17 @@ package body Navigation_Module is
       Command : String) return Location_Marker;
    --  Create a new marker associated with a shell command
 
+   procedure Extract_Unit_Info
+     (Kernel          : Kernel_Handle;
+      File            : Virtual_File;
+      Unit_Name       : out Symbol;
+      Unit_Visibility : out Construct_Visibility);
+   --  Extract unit name and visibility from a given file.
+   --  This will return the first subprogram or package found in the file, so
+   --  is mostly interesting on Ada sources.
+   --  If the info cannot be extracted Unit_Name will be set to No_Symbol and
+   --  Unit_Visibility to Visibility_Private.
+
    --------------------------------------------
    -- Commands for handling the Runtime menu --
    --------------------------------------------
@@ -1302,6 +1313,34 @@ package body Navigation_Module is
       Free (Id.Markers);
    end Destroy;
 
+   -----------------------
+   -- Extract_Unit_Info --
+   -----------------------
+
+   procedure Extract_Unit_Info
+     (Kernel          : Kernel_Handle;
+      File            : Virtual_File;
+      Unit_Name       : out Symbol;
+      Unit_Visibility : out Construct_Visibility)
+   is
+      Tree   : constant Semantic_Tree'Class :=
+        Kernel.Get_Abstract_Tree_For_File (File);
+      Root   : constant Semantic_Node_Array'Class := Tree.Root_Nodes;
+   begin
+      Unit_Name := No_Symbol;
+      Unit_Visibility := Visibility_Private;
+
+      for J in 1 .. Root.Length loop
+         if Root.Get (J).Category in
+           Cat_Package | Cat_Procedure | Cat_Function
+         then
+            Unit_Visibility := Root.Get (J).Visibility;
+            Unit_Name := Root.Get (J).Name;
+            return;
+         end if;
+      end loop;
+   end Extract_Unit_Info;
+
    -------------
    -- Execute --
    -------------
@@ -1343,26 +1382,15 @@ package body Navigation_Module is
             --  Otherwise, create the action now
 
             declare
-               Tree   : constant Semantic_Tree'Class :=
-                 Kernel.Get_Abstract_Tree_For_File (File);
-               Root    : constant Semantic_Node_Array'Class := Tree.Root_Nodes;
                Command : Open_File_Command_Access;
                Name    : Symbol := No_Symbol;
+               Visibility : Construct_Visibility;
             begin
-               for J in 1 .. Root.Length loop
-                  if Root.Get (J).Category in
-                    Cat_Package | Cat_Procedure | Cat_Function
-                  then
-                     if Root.Get (J).Visibility = Visibility_Private then
-                        return;
-                     end if;
+               Extract_Unit_Info (Kernel, File, Name, Visibility);
 
-                     Name := Root.Get (J).Name;
-                     exit;
-                  end if;
-               end loop;
-
-               if Name = No_Symbol then
+               if Name = No_Symbol
+                 or else Visibility /= Visibility_Public
+               then
                   return;
                end if;
 
@@ -1545,15 +1573,13 @@ package body Navigation_Module is
       Module : constant Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
       Kernel : constant Kernel_Handle := Module.Get_Kernel;
-      B      : constant Editor_Buffer'Class := Kernel.Get_Buffer_Factory.Get
-        (File        => Command.File,
-         Force       => True,
-         Open_Buffer => True,
-         Open_View   => True,
-         Focus       => True);
-      pragma Unreferenced (B, Context);
+      pragma Unreferenced (Context);
    begin
-      --  We took care of the opening of the buffer above
+      Open_File_Action_Hook.Run
+        (Kernel,
+         File     => Command.File,
+         Project  => No_Project,
+         New_File => False);
       return Success;
    end Execute;
 
