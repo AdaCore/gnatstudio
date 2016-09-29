@@ -2846,14 +2846,14 @@ package body Src_Editor_Module.Editors is
       Get_Location (Iter, This, Iter, Success);
       if Success then
          Search_In_Editor
-           (Context           => Context,
-            Start_At          => Iter,
-            Kernel            => This.Buffer.Contents.Kernel,
-            Match_From        => From,
-            Match_Up_To       => To,
-            Search_Backward   => Backward,
-            Dialog_On_Failure => Dialog_On_Failure,
-            Found             => Success);
+           (Context          => Context,
+            Start_At         => Iter,
+            Kernel           => This.Buffer.Contents.Kernel,
+            Match_From       => From,
+            Match_Up_To      => To,
+            Search_Backward  => Backward,
+            Failure_Response => (if Dialog_On_Failure then Dialog else None),
+            Found            => Success);
 
          if Success then
             Aux_Starts := Src_Editor_Location

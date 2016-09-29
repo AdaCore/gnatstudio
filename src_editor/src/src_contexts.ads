@@ -96,27 +96,41 @@ package Src_Contexts is
       Col  : Character_Offset_Type;
    end record;
 
+   type Search_Failure_Response is (None, Dialog, Informational_Popup);
+   --  Type enumerating the different possibilities that can be used when
+   --  a search fails to find another occurence.
+   --
+   --  . None: No response at all
+   --
+   --  . Dialog: a dialog warning the user that the search failed is displayed
+   --
+   --  . Informational_Popup: an ephemeral informatiional popup displaying a
+   --    loopback icon is displayed.
+
    procedure Search_In_Editor
-     (Context         : access Current_File_Context;
-      Start_At        : Gtk.Text_Iter.Gtk_Text_Iter;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Dialog_On_Failure : Boolean := True;
-      Match_From      : out Editor_Coordinates;
-      Match_Up_To     : out Editor_Coordinates;
-      Found           : out Boolean;
-      Start_Line      : Editable_Line_Type := 1;
-      Start_Column    : Character_Offset_Type := 1;
-      End_Line        : Editable_Line_Type := 0;
-      End_Column      : Character_Offset_Type := 0);
+     (Context          : access Current_File_Context;
+      Start_At         : Gtk.Text_Iter.Gtk_Text_Iter;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward  : Boolean;
+      Match_From       : out Editor_Coordinates;
+      Match_Up_To      : out Editor_Coordinates;
+      Found            : out Boolean;
+      Start_Line       : Editable_Line_Type := 1;
+      Start_Column     : Character_Offset_Type := 1;
+      End_Line         : Editable_Line_Type := 0;
+      End_Column       : Character_Offset_Type := 0;
+      Failure_Response : Search_Failure_Response := Informational_Popup);
    --  Search for Context in an editor. The search starts at the given
    --  location and only applies to that buffer.
+   --
    --  If Found is set to False on exit, then no match was found and the
    --  value of Match_From .. Match_Up_To is irrelevant.
-   --  If Dialog_On_Failure is true, then a dialog is displayed on the screen
-   --  in case of failure.
+   --
    --  Restrict search to given range (if specified):
    --  Start_Line:Start_Column .. End_Line:End_Column
+   --
+   --  Failure_Response is used to select which type of response is displayed
+   --  in case of failure.
 
    overriding
    function Get_Terminate_Message

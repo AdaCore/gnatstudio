@@ -32,6 +32,7 @@ with Glib;                       use Glib;
 with Glib.Convert;               use Glib.Convert;
 with Glib.Error;                 use Glib.Error;
 
+with Gdk.Window;                 use Gdk.Window;
 with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Combo_Box;
 with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
@@ -59,6 +60,7 @@ with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Search;                 use GPS.Search;
 with GUI_Utils;                  use GUI_Utils;
+with Informational_Popups;       use Informational_Popups;
 with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;
 with GPR.Osint;
@@ -161,31 +163,36 @@ package body Src_Contexts is
    --  for the file.
 
    procedure Scan_Next
-     (Context        : access Root_Search_Context'Class;
-      Kernel         : access Kernel_Handle_Record'Class;
-      Editor         : access Source_Buffer_Record'Class;
-      Scope          : Search_Scope;
-      Lexical_State  : in out Recognized_Lexical_States;
-      Lang           : Language_Access;
-      Current_Line   : Editable_Line_Type;
-      Current_Column : Character_Offset_Type;
-      Backward       : Boolean;
-      Dialog_On_Failure : Boolean := True;
-      Result         : out GPS.Search.Search_Context;
-      Start_Line     : Editable_Line_Type := 1;
-      Start_Column   : Character_Offset_Type := 1;
-      End_Line       : Editable_Line_Type := 0;
-      End_Column     : Character_Offset_Type := 0);
+     (Context          : access Root_Search_Context'Class;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Editor           : access Source_Buffer_Record'Class;
+      Scope            : Search_Scope;
+      Lexical_State    : in out Recognized_Lexical_States;
+      Lang             : Language_Access;
+      Current_Line     : Editable_Line_Type;
+      Current_Column   : Character_Offset_Type;
+      Backward         : Boolean;
+      Result           : out GPS.Search.Search_Context;
+      Start_Line       : Editable_Line_Type := 1;
+      Start_Column     : Character_Offset_Type := 1;
+      End_Line         : Editable_Line_Type := 0;
+      End_Column       : Character_Offset_Type := 0;
+      Failure_Response : Search_Failure_Response := Informational_Popup);
    --  Return the next occurrence of Context in Editor, just before or just
    --  after Current_Line, Current_Column. If no match is found after the
    --  current position, for a forward search, return the first occurrence from
    --  the beginning of the editor. Likewise for a backward search.
+   --
    --  Note that the index in the result might be incorrect, although the line
    --  and column will always be correct.
    --  null is returned if there is no match.
+   --
    --  Current_Scope is the scope at current_line, current_column.
    --  Restrict search to given range (if specified):
    --  Start_Line:Start_Column .. End_Line:End_Column
+   --
+   --  Failure_Response is used to select which type of response is displayed
+   --  in case of failure.
 
    procedure First_Match
      (Context       : access Root_Search_Context'Class;
@@ -803,27 +810,28 @@ package body Src_Contexts is
    ---------------
 
    procedure Scan_Next
-     (Context        : access Root_Search_Context'Class;
-      Kernel         : access Kernel_Handle_Record'Class;
-      Editor         : access Source_Buffer_Record'Class;
-      Scope          : Search_Scope;
-      Lexical_State  : in out Recognized_Lexical_States;
-      Lang           : Language_Access;
-      Current_Line   : Editable_Line_Type;
-      Current_Column : Character_Offset_Type;
-      Backward       : Boolean;
-      Dialog_On_Failure : Boolean := True;
-      Result         : out GPS.Search.Search_Context;
-      Start_Line     : Editable_Line_Type := 1;
-      Start_Column   : Character_Offset_Type := 1;
-      End_Line       : Editable_Line_Type := 0;
-      End_Column     : Character_Offset_Type := 0)
+     (Context          : access Root_Search_Context'Class;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Editor           : access Source_Buffer_Record'Class;
+      Scope            : Search_Scope;
+      Lexical_State    : in out Recognized_Lexical_States;
+      Lang             : Language_Access;
+      Current_Line     : Editable_Line_Type;
+      Current_Column   : Character_Offset_Type;
+      Backward         : Boolean;
+      Result           : out GPS.Search.Search_Context;
+      Start_Line       : Editable_Line_Type := 1;
+      Start_Column     : Character_Offset_Type := 1;
+      End_Line         : Editable_Line_Type := 0;
+      End_Column       : Character_Offset_Type := 0;
+      Failure_Response : Search_Failure_Response := Informational_Popup)
    is
       Continue_Till_End : Boolean := False;
 
-      function Continue_Dialog (Message : String) return Boolean;
-      --  Popup a dialog asking whether the user wants to continue, and return
-      --  the result.
+      function Continue_Search_Response
+        (Message : String := "") return Boolean;
+      --  Return True if we should continue the search in case of failure
+      --  depending On Failure_Response.
 
       function Stop_At_First_Callback
         (Match : GPS.Search.Search_Context;
@@ -883,29 +891,38 @@ package body Src_Contexts is
          return True;
       end Backward_Callback;
 
-      ---------------------
-      -- Continue_Dialog --
-      ---------------------
+      ------------------------------
+      -- Continue_Search_Response --
+      ------------------------------
 
-      function Continue_Dialog (Message : String) return Boolean is
+      function Continue_Search_Response
+        (Message : String := "") return Boolean
+      is
          Buttons : Message_Dialog_Buttons;
       begin
-         if Dialog_On_Failure then
-            Buttons := Message_Dialog
-              (Message,
-               Confirmation,
-               Button_Yes or Button_No,
-               Button_Yes,
-               "",
-               -"Continue search ?",
-               Justify_Center,
-               Get_Current_Window (Kernel));
+         case Failure_Response is
+            when Dialog =>
+               Buttons := Message_Dialog
+                 (Message,
+                  Confirmation,
+                  Button_Yes or Button_No,
+                  Button_Yes,
+                  "",
+                  -"Continue search ?",
+                  Justify_Center,
+                  Get_Current_Window (Kernel));
 
-            return Buttons = Button_Yes;
-         else
-            return False;
-         end if;
-      end Continue_Dialog;
+               return Buttons = Button_Yes;
+            when Informational_Popup =>
+               Display_Informational_Popup
+                 (Parent    => Get_Current_Window (Kernel),
+                  Icon_Name => "gps-undo-symbolic");
+
+               return True;
+            when None =>
+               return False;
+         end case;
+      end Continue_Search_Response;
 
       Was_Partial  : Boolean;
       Begin_Line   : Editable_Line_Type := Start_Line;
@@ -933,7 +950,7 @@ package body Src_Contexts is
          --  Start from the end if necessary.
 
          if Continue_Till_End
-           and then not Continue_Dialog
+           and then not Continue_Search_Response
              (-"No more matches, restart from the end ?")
          then
             Stop_Macro_Action_Hook.Run (Kernel);
@@ -975,7 +992,7 @@ package body Src_Contexts is
             if not Continue_Till_End then
                if Current_Line = 1 and then Current_Column = 1 then
                   return;
-               elsif not Continue_Dialog
+               elsif not Continue_Search_Response
                  (-"No more matches, restart from the beginning ?")
                then
                   Stop_Macro_Action_Hook.Run (Kernel);
@@ -1876,18 +1893,18 @@ package body Src_Contexts is
    ----------------------
 
    procedure Search_In_Editor
-     (Context         : access Current_File_Context;
-      Start_At        : Gtk.Text_Iter.Gtk_Text_Iter;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Dialog_On_Failure : Boolean := True;
-      Match_From      : out Editor_Coordinates;
-      Match_Up_To     : out Editor_Coordinates;
-      Found           : out Boolean;
-      Start_Line      : Editable_Line_Type := 1;
-      Start_Column    : Character_Offset_Type := 1;
-      End_Line        : Editable_Line_Type := 0;
-      End_Column      : Character_Offset_Type := 0)
+     (Context          : access Current_File_Context;
+      Start_At         : Gtk.Text_Iter.Gtk_Text_Iter;
+      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward  : Boolean;
+      Match_From       : out Editor_Coordinates;
+      Match_Up_To      : out Editor_Coordinates;
+      Found            : out Boolean;
+      Start_Line       : Editable_Line_Type := 1;
+      Start_Column     : Character_Offset_Type := 1;
+      End_Line         : Editable_Line_Type := 0;
+      End_Column       : Character_Offset_Type := 0;
+      Failure_Response : Search_Failure_Response := Informational_Popup)
    is
       Editor : constant Source_Buffer := Source_Buffer (Get_Buffer (Start_At));
       Lang   : Language_Access;
@@ -1921,19 +1938,19 @@ package body Src_Contexts is
 
       Scan_Next
         (Context, Kernel,
-         Editor         => Editor,
-         Scope          => Context.Scope,
-         Lexical_State  => Context.Current_Lexical,
-         Lang           => Lang,
-         Current_Line   => Line,
-         Current_Column => Column,
-         Dialog_On_Failure => Dialog_On_Failure,
-         Backward       => Search_Backward,
-         Result         => Context.Current,
-         Start_Line     => Start_Line,
-         Start_Column   => Start_Column,
-         End_Line       => End_Line,
-         End_Column     => End_Column);
+         Editor           => Editor,
+         Scope            => Context.Scope,
+         Lexical_State    => Context.Current_Lexical,
+         Lang             => Lang,
+         Current_Line     => Line,
+         Current_Column   => Column,
+         Failure_Response => Failure_Response,
+         Backward         => Search_Backward,
+         Result           => Context.Current,
+         Start_Line       => Start_Line,
+         Start_Column     => Start_Column,
+         End_Line         => End_Line,
+         End_Column       => End_Column);
 
       Found := Context.Current /= GPS.Search.No_Match;
       if Found then
