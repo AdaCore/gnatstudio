@@ -50,7 +50,7 @@ package GPS.Main_Window is
    --  Returns True if any menu has been clicked on by the user (from the
    --  menu bars of any window)
 
-   --------------
+   -------------
    -- Windows --
    -------------
    --  Utilities that apply to any window

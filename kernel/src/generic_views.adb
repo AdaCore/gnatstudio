@@ -1156,7 +1156,6 @@ package body Generic_Views is
         (Self : access Gtk_Widget_Record'Class)
       is
          View : constant View_Access := View_Access (Self);
-         C    : constant MDI_Child := Child_From_View (View);
       begin
          Store_Position (View);
 
@@ -1168,7 +1167,10 @@ package body Generic_Views is
             end if;
          end if;
 
-         C.Close_Child (Force => True);
+         --  Use Close rather than C.Close_Child, so that the parent window
+         --  has the opportunity to react to "delete_event", and store
+         --  its size, for example.
+         Gtk_Window (View.Get_Toplevel).Close;
 
          --  Give the focus back to the main Window, since this is not always
          --  done by the window manager (e.g. under Windows)
@@ -1205,7 +1207,7 @@ package body Generic_Views is
            (View.Get_Toplevel, Gtk.Widget.Signal_Delete_Event,
             On_Delete_Floating_Child_Access, View);
 
-         --  Set the position of the floating window
+         --  Set the size of the floating window
          View.Set_Size_Request (-1, -1);
          Size_Request (View, Req);
          View.Set_Size_Request (Req.Width, Req.Height);

@@ -247,19 +247,19 @@ package body GPS.Main_Window is
    function On_Focus_In (W : access Gtk_Widget_Record'Class) return Boolean;
    --  Called when the main window gains or loses focus.
 
-   type Configure_Event_Data is record
+   type Delete_Event_Data is record
       Kernel : access Kernel_Handle_Record'Class;
       Name   : Unbounded_String;
    end record;
 
-   package Configure_Events is new Gtk.Handlers.User_Return_Callback
+   package Delete_Events is new Gtk.Handlers.User_Return_Callback
       (Widget_Type => Gtk_Window_Record,
        Return_Type => Boolean,
-       User_Type   => Configure_Event_Data);
-   function On_Configure
+       User_Type   => Delete_Event_Data);
+   function On_Delete
       (Win   : access Gtk_Window_Record'Class;
        Event : Gdk_Event;
-       Data  : Configure_Event_Data) return Boolean;
+       Data  : Delete_Event_Data) return Boolean;
    --  Called when a window is resized, to store its size in the properties
    --  and be able to restore it later on.
 
@@ -1634,29 +1634,31 @@ package body GPS.Main_Window is
       return Result;
    end Is_Any_Menu_Open;
 
-   ------------------
-   -- On_Configure --
-   ------------------
+   ---------------
+   -- On_Delete --
+   ---------------
 
-   function On_Configure
+   function On_Delete
       (Win   : access Gtk_Window_Record'Class;
        Event : Gdk_Event;
-       Data  : Configure_Event_Data) return Boolean
+       Data  : Delete_Event_Data) return Boolean
    is
-      pragma Unreferenced (Win);
+      pragma Unreferenced (Event);
       Prop : access Window_Size_Property;
+      Width, Height : Gint;
    begin
+      Win.Get_Size (Width, Height);
       if Active (Me) then
          Trace (Me, "Storing new size for window "
             & To_String (Data.Name)
-            & " width=" & Event.Configure.Width'Img
-            & " height=" & Event.Configure.Height'Img);
+            & " width=" & Width'Img
+            & " height=" & Height'Img);
       end if;
 
       Prop := new Window_Size_Property'
          (Property_Record with
-          Width  => Event.Configure.Width,
-          Height => Event.Configure.Height);
+          Width  => Width,
+          Height => Height);
       Set_Property
          (Data.Kernel,
           Key        => To_String (Data.Name),
@@ -1664,7 +1666,7 @@ package body GPS.Main_Window is
           Property   => Prop,
           Persistent => True);
       return False;
-   end On_Configure;
+   end On_Delete;
 
    -----------------------------------
    -- Set_Default_Size_From_History --
@@ -1678,7 +1680,7 @@ package body GPS.Main_Window is
    is
       Prop  : Window_Size_Property;
       Found : Boolean;
-      Data  : Configure_Event_Data;
+      Data  : Delete_Event_Data;
    begin
       if not Active (Store_Window_Positions) then
          Trace (Me, "Default size for " & Name & " from default");
@@ -1713,9 +1715,9 @@ package body GPS.Main_Window is
 
       Data.Kernel := Kernel;
       Data.Name   := To_Unbounded_String (Name);
-      Configure_Events.Connect
-         (Win, Signal_Configure_Event,
-          Configure_Events.To_Marshaller (On_Configure'Access), Data);
+      Delete_Events.Connect
+         (Win, Gtk.Widget.Signal_Delete_Event,
+          Delete_Events.To_Marshaller (On_Delete'Access), Data);
    end Set_Default_Size_From_History;
 
    ----------

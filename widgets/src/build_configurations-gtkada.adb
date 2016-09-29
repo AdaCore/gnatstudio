@@ -1606,7 +1606,7 @@ package body Build_Configurations.Gtkada is
          end if;
       end if;
 
-      Destroy (Dialog);
+      Close (Dialog);
    end Single_Target_Dialog;
 
    -------------
