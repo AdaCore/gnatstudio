@@ -1673,7 +1673,7 @@ All actions can be bound to specific key shortcuts through the
 * `<key load='file.xml'/>` tells GPS to load the given key theme (either
   from the GPS predefined directory or from the user's own directory.
 
-* `<key action='name'>shortcut</key>`
+* `<key action='name' exclusive='true'>shortcut</key>`
   It requires one :file:`action` attribute to specify what to do when the key
   is pressed. The name of the action can start with a '/' to indicate that a
   menu should be executed instead of a user-defined action (although it is
@@ -1696,12 +1696,18 @@ All actions can be bound to specific key shortcuts through the
   - :command:`primary-` is the command key on OSX, or the control key on
     other keyboards.
 
-You can also define multi-key bindings similar to Emacs' by separating
-them by a space. For example, :command:`control-x control-k` means the user
-should press :kbd:`Ctrl-x`, followed by a :kbd:`Ctrl-k` to activate
-the corresponding action. This only works if the first key is not already
-bound to an action. If it is, you must first unbind it by passing an empty
-action to :file:`<key>`.
+  You can also define multi-key bindings similar to Emacs' by separating
+  them by a space. For example, :command:`control-x control-k` means the user
+  should press :kbd:`Ctrl-x`, followed by a :kbd:`Ctrl-k` to activate
+  the corresponding action. This only works if the first key is not already
+  bound to an action. If it is, you must first unbind it by passing an empty
+  action to :file:`<key>`.
+
+  This XML node has one optional attribute :command:`exclusive`. When this
+  is set to `true`, the shortcut will no longer be used for any action that
+  might be already using it. If you set it to `false`, multiple actions will
+  be bound to the same shortcut. The first one for which the filter applies
+  (i.e. the current context is right for the action) will be executed.
 
 Use an empty string as the key binding if you wish to deactivate a
 preexisting binding. The second example below deactivates the standard
@@ -1721,7 +1727,8 @@ sequentually, followed by any menu for which this key is an accelerator.
 
 When GPS processes a :file:`<key>` tag, it does the following:
 
-* Removes all actions bound to that key.  This ensures that any action
+* Removes all actions bound to that key if `exclusive` is true.  This
+  ensures that any action
   previously associated with it, either by default in GPS or in some other
   XML file, is no longer executed. This removal is not done when loading
   key themes (i.e. XML files from :file:`$HOME/.gps/key_themes` directory),

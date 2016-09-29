@@ -346,13 +346,18 @@ class Action(object):
         :rtype: boolean
         """
 
-    def key(self, key):
+    def key(self, key, exclusive=True):
         """
         Associate a default key binding with the action. This is ignored if
         the user defined his own key binding. You can experiment with
         possible values for keys by using the /Edit/Key Shortcuts dialog.
 
         :param string key: A string
+        :param bool exclusive: if True, the shortcut will no longer be
+           associated with any action is was previously bound to. If False,
+           the shortcut will be associated with multiple action. The first
+           one for which the filter matches is executed when the user
+           presses those keys.
         """
         pass  # implemented in Ada
 

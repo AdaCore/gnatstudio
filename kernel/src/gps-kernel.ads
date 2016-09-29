@@ -598,13 +598,17 @@ package GPS.Kernel is
    procedure Bind_Default_Key
      (Kernel      : access Kernel_Handle_Record;
       Action      : String;
-      Default_Key : String);
+      Default_Key : String;
+      Exclusive   : Boolean := True);
    --  Associate a default key binding with an action.
    --  Default_Key is ignored if the key was previously overridden by the user.
    --  Its format is something like "control-o" or "control-x control-k", the
    --  second form specifies that it uses a secondary keymap.
    --  Action need not exist when the key is bound. This is why we require
    --  a string instead of an Action_Record.
+   --
+   --  If Exclusive is True, the shortcut will no longer apply for any action
+   --  that it might currently be associated with.
 
    ---------------------
    --  Editor_Factory --

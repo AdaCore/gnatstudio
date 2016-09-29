@@ -1408,7 +1408,8 @@ package body Custom_Module is
          Bind_Default_Key
            (Kernel      => Kernel,
             Action      => String'(Get_Data (Inst, Action_Class)),
-            Default_Key => Nth_Arg (Data, 2));
+            Default_Key => Nth_Arg (Data, 2),
+            Exclusive   => Data.Nth_Arg (3, True));
 
       elsif Command = "can_execute" then
          Inst := Data.Nth_Arg (1, Action_Class);
@@ -1583,11 +1584,11 @@ package body Custom_Module is
         ("execute_if_possible",
          Class         => Action_Class,
          Handler       => Action_Handler'Access);
-      Register_Command
-        (Kernel, "key",
+      Kernel.Scripts.Register_Command
+        ("key",
          Class         => Action_Class,
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
+         Params        => (2 => Param ("key"),
+                           3 => Param ("exclusive", Optional => True)),
          Handler       => Action_Handler'Access);
       Register_Command
         (Kernel, "menu",

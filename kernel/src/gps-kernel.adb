@@ -1025,11 +1025,13 @@ package body GPS.Kernel is
    procedure Bind_Default_Key
      (Kernel      : access Kernel_Handle_Record;
       Action      : String;
-      Default_Key : String)
+      Default_Key : String;
+      Exclusive   : Boolean := True)
    is
       Err : constant String := Add_Customization_String
         (Kernel,
-         "<key action=""" & Action & """>" & Default_Key & "</key>",
+         "<key action=""" & Action & """ exclusive='"
+         & Boolean'Image (Exclusive) & "'>" & Default_Key & "</key>",
          From_File => "<gps_internal>");
       pragma Unreferenced (Err);
    begin

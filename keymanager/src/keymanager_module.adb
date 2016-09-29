@@ -1814,6 +1814,8 @@ package body KeyManager_Module is
       if Node.Tag.all = "key" then
          declare
             Action : constant String := Get_Attribute (Node, "action");
+            Exclusive : constant Boolean :=
+               To_Lower (Get_Attribute (Node, "exclusive", "true")) = "true";
          begin
             if Action = "" then
                if Node.Value /= null and then Node.Value.all /= "" then
@@ -1824,7 +1826,7 @@ package body KeyManager_Module is
                      Key    => Node.Value.all,
                      Save_In_Keys_XML                     => False,
                      Remove_Existing_Shortcuts_For_Action => False,
-                     Remove_Existing_Actions_For_Shortcut => True);
+                     Remove_Existing_Actions_For_Shortcut => Exclusive);
                end if;
             end if;
 
@@ -1850,7 +1852,7 @@ package body KeyManager_Module is
                Kernel            => Get_Kernel (Module.all),
                Action            => Action,
                Remove_Existing_Shortcuts_For_Action => False,
-               Remove_Existing_Actions_For_Shortcut => True,
+               Remove_Existing_Actions_For_Shortcut => Exclusive,
                Save_In_Keys_XML  => False,
                Key               => Node.Value.all);
          end;

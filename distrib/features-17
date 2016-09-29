@@ -23,6 +23,14 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 17.0 / GNATbench 17.0
 -----------------------------------------
 
+NF-17-P929-044 GPS: non-exclusive key bindings in plugins (2016-09-29)
+
+  It is now possible to bind keys to actions without unbinding the key.
+  This means that the same key binding might apply to several actions,
+  and the action that gets executed is the first one for which the
+  filter matches. In particular, this allows reusing keys like <enter>
+  or <tab> in contexts other than the editor.
+
 NF-17-P921-032 GNATdoc: Documentation_Dir attribute (2016-09-22)
 
   Attribute Documentation_Dir is defined in Documentation package now.

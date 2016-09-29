@@ -248,7 +248,11 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
                      contextual_ref='', icon='', description='',
 
                      # Adding buttons to a toolbar
-                     toolbar='', toolbar_section='', button_label=''):
+                     toolbar='', toolbar_section='', button_label='',
+
+                     # Keys
+                     key_exclusive=True):
+
     """
     Declare a new GPS action (an interactive function, in Emacs talk),
     associated with an optional menu and default key.
@@ -289,6 +293,10 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
 
     :param str name: The name for the action. The default is to use the
       callback's name.
+
+    :param bool key_exclusive: Only applies when a key is specified. If true,
+      the key will no longer execute any action it was previously bound to.
+      If false, the key will be bound to multiple actions.
 
     :param str description: the description for this action, as visible to the
       user. If not specified, the callback's own documentation will be used.
@@ -343,7 +351,7 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
         a.contextual(contextual, ref=contextual_ref)
 
     if key:
-        a.key(key)
+        a.key(key, exclusive=key_exclusive)
 
     if toolbar:
         a.button(toolbar=toolbar, section=toolbar_section, label=button_label)
