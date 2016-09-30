@@ -46,7 +46,12 @@ underscore) as a parameter to :func:`GPS.Browsers.View.create`.
 
 import GPS
 import gps_utils
-from gi.repository import GLib
+
+try:
+    # While building the doc, we might not have access to this module
+    from gi.repository import GLib
+except ImportError:
+    pass
 
 
 class Module_Metaclass(type):

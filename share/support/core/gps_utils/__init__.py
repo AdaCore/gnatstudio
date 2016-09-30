@@ -14,7 +14,10 @@ except:
 
 
 def enum(**enums):
-    return type('Enum', (), enums)
+    # Show valid values in the name of the type, for the documentation
+    name = 'Enum %s' % ', '.join(
+        "%s=%s" % (k, v) for k, v in enums.iteritems())
+    return type(name, (), enums)
 
 import GPS
 GPS.MDI.GROUP_DEFAULT = 0

@@ -1265,10 +1265,10 @@ class Codefix(object):
         this command.
 
         The regular expression specifies how locations are recognized. By
-        default, it matches file:line:column. The various indexes indicate the
-        index of the opening parenthesis that contains the relevant information
-        in the regular expression. Set it to 0 if that information is not
-        available.
+        default, it matches `file:line:column`. The various indexes indicate
+        the index of the opening parenthesis that contains the relevant
+        information in the regular expression. Set it to 0 if that information
+        is not available.
 
         Access the various suggested fixes through the methods of the
         :class:`Codefix` class.
@@ -5022,8 +5022,10 @@ class Entity(object):
     def instance_of(self):
         """
         If self is an instantiation of some other generic entity, this
-        returns that entity. For instance, if the Ada code contains
+        returns that entity. For instance, if the Ada code contains::
+
              procedure Foo is new Generic_Proc (Integer);
+
         and `e` is an instance of :class:`GPS.Entity` for Foo, then
         `e.instance_of()` returns an entity for Generic_Proc.
 
@@ -6393,7 +6395,7 @@ class Locations(object):
         category are not removed, see :func:`locations_remove_category`.
 
         The regular expression specifies how locations are recognized. By
-        default, it matches file:line:column. The various indexes indicate
+        default, it matches `file:line:column`. The various indexes indicate
         the index of the opening parenthesis that contains the relevant
         information in the regular expression. Set it to 0 if that
         information is not available. ``style_index`` and ``warning_index``,
@@ -6578,12 +6580,15 @@ class MDI(object):
     POSITION_RIGHT = 0
     # constants to be used in GPS.MDI.add()
 
-    current_perspective = ""
-    """
-    The name of the current perspective.
+    @staticmethod
+    def current_perspective():
+        """
+        The name of the current perspective.
 
-    .. seealso: :func:`GPS.MDI.load_perspective`
-    """
+        :return: str
+
+        .. seealso: :func:`GPS.MDI.load_perspective`
+        """
 
     @staticmethod
     def add(widget, title="", short="", group=0,
@@ -9867,6 +9872,7 @@ class Language(object):
                 populate.
             :param GPS.File gps_file: the name of the file to parse.
             :param str content_string: The content of the file
+
             '''
 
         def should_refresh_constructs(self, file):
@@ -9880,6 +9886,7 @@ class Language(object):
 
             :param GPS.File file: the file to test
             :return: a bool
+
             '''
 
         def clicked_on_construct(self, construct):
@@ -9889,6 +9896,7 @@ class Language(object):
 
             :param GPS.Construct construct: the construct as build in
                :func:`GPS.Language.parse_constructs`.
+
             '''
     """
 

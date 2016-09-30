@@ -1382,7 +1382,7 @@ that you can immediately change its name.
    :align: center
 
 The default name of bookmark is the name of the enclosing subprogram and the
-initial location of the bookmark (file:line). But you can start typing a new
+initial location of the bookmark (`file:line`). But you can start typing a new
 name, and press Enter to finally create the bookmark.
 
 In practice, this is really just a few clicks (one of the menu and press

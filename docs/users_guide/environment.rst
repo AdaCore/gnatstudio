@@ -325,7 +325,7 @@ Files
 
   Directory containing the sources used by the GPS tutorial.
 
-  See `gps-tutorial.html <gps-tutorial.html>`_.
+  See `gps-tutorial.html <http://docs.adacore.com/gps-docs/tutorial/_build/html/>`_.
 
 * :file:`prefix/share/gps/support`
 

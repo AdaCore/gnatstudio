@@ -2,11 +2,12 @@ import GPS
 from modules import Module
 
 try:
+    # While building the doc, we might not have gi.repository
     from gi.repository import Gtk, GLib, Gdk, Pango
+    from pygps import get_gtk_buffer, is_editor_visible
 except ImportError:
     pass
 
-from pygps import get_gtk_buffer, is_editor_visible
 import re
 from time import time
 
@@ -121,22 +122,25 @@ def to_line_end(textiter):
     return textiter.forward_to_line_end_n()
 
 
-for name in dir(Gtk.TextIter):
+try:
+    # Might fail while building the doc
     import re as r
+    for name in dir(Gtk.TextIter):
+        if r.match("(forward|set|backward).*$", name):
+            setattr(Gtk.TextIter, name + "_n", make_wrapper(name))
 
-    if r.match("(forward|set|backward).*$", name):
-        setattr(Gtk.TextIter, name + "_n", make_wrapper(name))
+    Gtk.TextIter.__str__ = iter_to_str
+    Gtk.TextIter.__repr__ = iter_to_str
+    Gtk.TextIter.__eq__ = iter_eq
+    Gtk.TextIter.to_line_end = to_line_end
+    Gtk.TextTag.__str__ = tag_to_str
+    Gtk.TextTag.__repr__ = tag_to_str
+    Gtk.TextIter.to_tuple = to_tuple
+    Gtk.TextBuffer.iter_from_tuple = iter_from_tuple
+    Gtk.TextBuffer.highlighting_initialized = False
 
-
-Gtk.TextIter.__str__ = iter_to_str
-Gtk.TextIter.__repr__ = iter_to_str
-Gtk.TextIter.__eq__ = iter_eq
-Gtk.TextIter.to_line_end = to_line_end
-Gtk.TextTag.__str__ = tag_to_str
-Gtk.TextTag.__repr__ = tag_to_str
-Gtk.TextIter.to_tuple = to_tuple
-Gtk.TextBuffer.iter_from_tuple = iter_from_tuple
-Gtk.TextBuffer.highlighting_initialized = False
+except NameError:
+    pass
 
 
 def propagate_change(pref):
@@ -365,8 +369,8 @@ class SubHighlighter(object):
 
         self.pattern = re.compile(
             "|".join("({0})".format(pat) for pat in patterns),
-            flags=re.M + (re.S if matchall else 0)
-            + (re.I if igncase else 0)
+            flags=re.M + (re.S if matchall else 0) +
+            (re.I if igncase else 0)
         )
         self.gtk_tag = None
         self.region_start = None

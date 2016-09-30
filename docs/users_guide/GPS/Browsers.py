@@ -5,20 +5,23 @@ Interface to the graph drawing API in GPS.
 import GPS
 
 
+class __enum_proxy(object):
+    def __init__(self, name, **enums):
+        for k, v in enums.iteritems():
+            setattr(self, k, "%s.%s" % (name, k))
+
+
 def enum(name, **enums):
+    """Replaces an enumeration so that the values are not displayed as
+       ints in the doc, but as a string representing the name.
+
+       This function is used whenever a value from the enum is accessed
+       (for instance for the default value of parameters).
+       However, for the class definition themselves, they use the enum()
+       defined in gps_utils, because of the order in which sphinx loads
+       things.
     """
-    A dummy implementation of enumerations only suitable for documentation.
-    Each of the individual enum value is accessible as an attribute, but
-    printing the enum itself results in a printable string, not <type Enum>.
-    The enum values are transformed into strings, since otherwise sphinx
-    will print their integer value, not the enumeration name.
-    """
-    d = dict()
-    for key, val in enums.items():
-        d[key] = "%s.%s" % (name, key)
-    e = type('Enum', (str, ), d)
-    sorteditems = sorted(enums.iteritems(), key=lambda x: x[1])
-    return e('Enumeration %s' % ','.join("%s=%s" % s for s in sorteditems))
+    return __enum_proxy("GPS.Browsers.%s" % name, **enums)
 
 
 class Style(object):
@@ -158,50 +161,69 @@ class AbstractItem(object):
     canvas, and provide common behavior.
     """
 
-    is_link = False
-    """
-    A boolean, set to True when the item is a link. This property is not
-    writable.
-    """
+    @property
+    def is_link(self):
+        """
+        Whether the item is a link.
 
-    x = 0
-    """
-    The position of the item. For a toplevel item, this is the position
-    within the diagram. For an item that was added to another item, this is
-    the position within its parent.
-    This property is writable, but you can also use set_position to modify it.
-    """
+        :type: (read-only) bool
+        """
 
-    y = 0
-    """
-    The position of the item. For a toplevel item, this is the position
-    within the diagram. For an item that was added to another item, this is
-    the position within its parent.
-    This property is writable, but you can also use set_position to modify it.
-    """
+    @property
+    def x(self):
+        """
+        The position of the item. For a toplevel item, this is the position
+        within the diagram. For an item that was added to another item, this is
+        the position within its parent.
 
-    width = 0
-    """
-    The width of the item (in its own coordinate space)
-    """
+        :type: (read-write) int
 
-    height = 0
-    """
-    The height of the item (in its own coordinate space)
-    """
+        .. seealso: :func:`GPS.Browsers.Item.set_position`
+        """
 
-    parent = None
-    """
-    The :class:`GPS.Browsers.Item` that contains this item.
-    This is a read-only propery.
-    """
+    @property
+    def y(self):
+        """
+        The position of the item. For a toplevel item, this is the position
+        within the diagram. For an item that was added to another item, this is
+        the position within its parent.
 
-    style = None
-    """
-    A read-write property that let you retrieve or set the style to
-    apply to the item.
-    :type: :class:`GPS.Browsers.Style`
-    """
+        :type: (read-write) int
+
+        .. seealso: :func:`GPS.Browsers.Item.set_position`
+        """
+
+    @property
+    def width(self):
+        """
+        The width of the item (in its own coordinate space)
+
+        :type: (read-write) int
+        """
+
+    @property
+    def height(self):
+        """
+        The height of the item (in its own coordinate space)
+
+        :type: (read-write) int
+        """
+
+    @property
+    def parent(self):
+        """
+        The parent item (to which self was added)
+
+        :type: (read-only) :class:`GPS.Browsers.Item`
+        """
+
+    @property
+    def style(self):
+        """
+        The style applied to the item
+
+        :type: (read-write) :class:`GPS.Browsers.Style`
+        """
 
     def show(self):
         """
@@ -211,6 +233,22 @@ class AbstractItem(object):
     def hide(self):
         """
         Temporarily hide the item, until `GPS.Browsers.Item.show` is called.
+        """
+
+    @property
+    def out_links(self):
+        """
+        Return the outgoing links for self
+
+        :type: list of :class:`GPS.Browsers.AbstractItem`
+        """
+
+    @property
+    def in_links(self):
+        """
+        Return the incoming links for self
+
+        :type: list of :class:`GPS.Browsers.AbstractItem`
         """
 
 
@@ -251,13 +289,6 @@ class Item(AbstractItem):
     """
     The list of :class:`GPS.Browsers.Item` that were added to the item.
     This property is not writable.
-    """
-
-    toplevel = None
-    """
-    The :class:`GPS.Browsers.AbstractItem` that contains self, or self
-    itself if it is already a toplevel item. This is simply computed by
-    using the :func:`GPS.Browsers.AbstractItem.parent` property.
     """
 
     def __init__(self):
@@ -331,6 +362,15 @@ class Item(AbstractItem):
 
         :param float min:  minimal height
         :param float max:  maximal height
+        """
+
+    def toplevel(self):
+        """
+        The item that contains self, or self
+        itself if it is already a toplevel item. This is simply computed by
+        using the :func:`GPS.Browsers.AbstractItem.parent` property.
+
+        :return: a :class:`GPS.Browsers.AbstractItem`
         """
 
     def add(self,
@@ -522,8 +562,10 @@ class EditableTextItem(TextItem):
            the text applies.
         :param on_edited: A callback whenever the text has been modified
            interactively by the user. The profile is::
+
                def on_edited(textitem, old_text):
                    pass
+
         """
 
 
