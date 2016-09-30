@@ -492,40 +492,37 @@ package body Browsers.Scripts is
          Set_Data (Inst, GObject (Model));
 
          Id := Model.On_Selection_Changed (On_Selection_Changed'Access);
+         return;
+      end if;
 
-      elsif Command = "add" then
-         Model := Get_Model (Inst);
+      Model := Get_Model (Inst);
+
+      if Command = "add" then
          Item := Item_Proxies.From_Instance (Data.Nth_Arg (PA_Item));
          Model.Add (Item);
          Model.Refresh_Layout;
 
       elsif Command = "changed" then
-         Model := Get_Model (Inst);
          Model.Refresh_Layout;
 
       elsif Command = "set_selection_mode" then
-         Model := Get_Model (Inst);
          Model.Set_Selection_Mode
            (Selection_Mode'Val
               (Nth_Arg (Data, 2, Selection_Mode'Pos (Selection_Single))));
 
       elsif Command = "is_selected" then
-         Model := Get_Model (Inst);
          Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
          Data.Set_Return_Value (Model.Is_Selected (Item));
 
       elsif Command = "select" then
-         Model := Get_Model (Inst);
          Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
          Model.Add_To_Selection (Item);
 
       elsif Command = "unselect" then
-         Model := Get_Model (Inst);
          Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
          Model.Remove_From_Selection (Item);
 
       elsif Command = "clear_selection" then
-         Model := Get_Model (Inst);
          Model.Clear_Selection;
 
       elsif Command = "selected" then
@@ -545,12 +542,10 @@ package body Browsers.Scripts is
                end if;
             end Add_Child;
          begin
-            Model := Get_Model (Inst);
             Model.For_Each_Item (Add_Child'Access, Selected_Only => True);
          end;
 
       elsif Command = "items" then
-         Set_Return_Value_As_List (Data);
          declare
             procedure Add_Child
               (Child : not null access Abstract_Item_Record'Class);
@@ -567,29 +562,52 @@ package body Browsers.Scripts is
                end if;
             end Add_Child;
          begin
-            Model := Get_Model (Inst);
+            Data.Set_Return_Value_As_List;
             Model.For_Each_Item (Add_Child'Access);
          end;
 
+      elsif Command = "links" then
+         declare
+            procedure On_Link
+               (Item : not null access Abstract_Item_Record'Class);
+            procedure On_Link
+               (Item : not null access Abstract_Item_Record'Class)
+            is
+               P : Python_Item_Access;
+            begin
+               if Item.all in Python_Item'Class then
+                  P := Python_Item_Access (Item);
+                  Data.Set_Return_Value
+                    (Item_Proxies.Get_Or_Create_Instance
+                       (P.Inst_List.all, Item, Data.Get_Script));
+               end if;
+            end On_Link;
+
+            Set : Item_Sets.Set;
+         begin
+            Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
+            Set.Include (Item);
+            Data.Set_Return_Value_As_List;
+            Model.For_Each_Link
+               (On_Link'Access,
+                From_Or_To => Set);
+         end;
+
       elsif Command = "remove" then
-         Model := Get_Model (Inst);
          Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
          Model.Remove (Item);
          Model.Refresh_Layout;
 
       elsif Command = "clear" then
-         Model := Get_Model (Inst);
          Model.Clear;
          Model.Refresh_Layout;
 
       elsif Command = "raise_item" then
-         Model := Get_Model (Inst);
          Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
          Model.Raise_Item (Item);
          Model.Refresh_Layout;
 
       elsif Command = "lower_item" then
-         Model := Get_Model (Inst);
          Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
          Model.Lower_Item (Item);
          Model.Refresh_Layout;
@@ -881,7 +899,8 @@ package body Browsers.Scripts is
          Inst := Nth_Arg (Data, 1);
          View := Browser_View (GObject'(Get_Data (Inst)));
          Item := Item_Proxies.From_Instance (Data.Nth_Arg (2));
-         View.Get_View.Scroll_Into_View (Item);
+         View.Get_View.Scroll_Into_View
+            (Item, Duration (Data.Nth_Arg (3, 0.0)));
 
       elsif Command = "center_on" then
          declare
@@ -1864,6 +1883,11 @@ package body Browsers.Scripts is
          Params  => (2 => Param ("item")),
          Class   => Diagram_Class,
          Handler => Diagram_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("links",
+         Params  => (2 => Param ("item")),
+         Class   => Diagram_Class,
+         Handler => Diagram_Handler'Access);
       Kernel.Scripts.Register_Property
         ("selected",
          Class   => Diagram_Class,
@@ -1912,7 +1936,8 @@ package body Browsers.Scripts is
       Kernel.Scripts.Register_Command
         ("scroll_into_view",
          Class   => View,
-         Params  => (1 => Param ("item")),
+         Params  => (1 => Param ("item"),
+                     2 => Param ("duration", Optional => True)),
          Handler => View_Handler'Access);
       Kernel.Scripts.Register_Command
         ("center_on",

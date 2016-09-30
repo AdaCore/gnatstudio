@@ -233,22 +233,6 @@ class AbstractItem(object):
         Temporarily hide the item, until `GPS.Browsers.Item.show` is called.
         """
 
-    @property
-    def out_links(self):
-        """
-        Return the outgoing links for self
-
-        :type: list of :class:`GPS.Browsers.AbstractItem`
-        """
-
-    @property
-    def in_links(self):
-        """
-        Return the incoming links for self
-
-        :type: list of :class:`GPS.Browsers.AbstractItem`
-        """
-
 
 class Item(AbstractItem):
     """
@@ -759,7 +743,7 @@ class Diagram(object):
     """
     The list of all :class:`GPS.Browsers.Item` in the diagram. This only
     include toplevel items, you will need to iterate their own children if
-    you need access to them.
+    you need access to them. This also includes links.
     """
 
     def __init__(self):
@@ -773,6 +757,15 @@ class Diagram(object):
         are set through item.set_position().
 
         :param GPS.Browsers.Item item: the item to add
+        """
+
+    def links(self, item):
+        """
+        Return the incoming or outgoing links for item (i.e. all links for
+        which item is a source or a target)
+
+        :param GPS.Browsers.AbstractItem item: the source of the links
+        :return: list of :class:`GPS.Browsers.AbstractItem`
         """
 
     def set_selection_mode(self, mode=Selection.SINGLE):
@@ -1295,11 +1288,13 @@ class View(GPS.GUI):
         :param tuple point: the point
         """
 
-    def scroll_into_view(self, item):
+    def scroll_into_view(self, item, duration=0.0):
         """
         Scrolls the view as little as possible so that item becomes visible.
 
         :param GPS.Browsers.Item item: the item to show
+        :param float duration: if not null, scrolling will be animated over
+           that period of time.
         """
 
     def export_pdf(self, filename, format="a4", visible_only=True):
