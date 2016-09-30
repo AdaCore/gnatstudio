@@ -204,6 +204,10 @@ package body Browsers.Canvas is
    --  Called when the selection changes. This highlights links to and from
    --  that item.
 
+   procedure Request_Context_Changed
+      (Self : access Gtk_Widget_Record'Class);
+   --  Invalid the current context in the kernel, and ask it to recompute
+
    -------------
    -- Markers --
    -------------
@@ -244,7 +248,18 @@ package body Browsers.Canvas is
    is
    begin
       Highlight_Related_Items (General_Browser (Self).Get_View, Item);
+      General_Browser (Self).Kernel.Refresh_Context;
    end On_Selection_Changed;
+
+   -----------------------------
+   -- Request_Context_Changed --
+   -----------------------------
+
+   procedure Request_Context_Changed
+      (Self : access Gtk_Widget_Record'Class) is
+   begin
+      General_Browser (Self).Kernel.Refresh_Context;
+   end Request_Context_Changed;
 
    -----------------------------
    -- Highlight_Related_Items --
@@ -358,6 +373,22 @@ package body Browsers.Canvas is
 
       Id := Browser.Get_View.Model.On_Selection_Changed
         (On_Selection_Changed'Access, Browser);
+
+      --  Refresh the kernel contexts in a number of cases. In particular,
+      --  this flushes the cache for the filters, for instance if a filter
+      --  tests which items are visible, or which zoom level we have,...
+      Widget_Callback.Object_Connect
+         (Browser.Get_View, Signal_Viewport_Changed,
+          Request_Context_Changed'Access, Slot_Object => Browser);
+      Widget_Callback.Object_Connect
+         (Browser.Get_View, Signal_Inline_Editing_Started,
+          Request_Context_Changed'Access, Slot_Object => Browser);
+      Widget_Callback.Object_Connect
+         (Browser.Get_View, Signal_Inline_Editing_Finished,
+          Request_Context_Changed'Access, Slot_Object => Browser);
+      Widget_Callback.Object_Connect
+         (Browser.Get_View.Model, Signal_Item_Destroyed,
+          Request_Context_Changed'Access, Slot_Object => Browser);
 
       Align_On_Grid := Browser.Kernel.Get_Preferences.Create_Invisible_Pref
         ("browsers-align-on-grid", True, Label => -"Align On Grid");
