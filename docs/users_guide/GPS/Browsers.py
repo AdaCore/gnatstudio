@@ -311,6 +311,9 @@ class Item(AbstractItem):
            0.5, x indicates the middle of the item. 1.0 indicates the right
            side of the item.
         :param float anchory: what position within the item y is refering to.
+
+        .. seealso: :func:`GPS.Browsers.View.animate_item_position`
+           This other function animates the item to its new position
         """
 
     def set_child_layout(self, layout=Layout.VERTICAL):
@@ -1250,6 +1253,20 @@ class View(GPS.GUI):
            be something like `linear 0 0 1000 1000 0 black 1 yellow`
 
         :param float size: the size of the grid, when using GRID or DOTS.
+        """
+
+    def animate_item_position(self, item, x, y, duration=0.4):
+        """
+        Moves an item to a new position.
+        This is animated, i.e. the item will go through various steps before
+        reaching that position.
+
+        :param GPS.Browsers.Item item: the item to move
+        :param float x: coordinates relative to parent or browser.
+        :param float y: coordinates relative to parent or browser.
+        :param float duration: how long the animation should take
+
+        .. seealso: :func:`GPS.Browsers.Item.set_position`
         """
 
     def set_selection_style(self, style):

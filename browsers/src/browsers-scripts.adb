@@ -987,6 +987,17 @@ package body Browsers.Scripts is
             View.Get_View.Set_Model (Model);
          end if;
 
+      elsif Command = "animate_item_position" then
+         Inst := Nth_Arg (Data, 1);
+         View := Browser_View (GObject'(Get_Data (Inst)));
+         Start
+            (Animate_Position
+               (Item          => Item_Proxies.From_Instance (Data.Nth_Arg (2)),
+                Final_Position => (Gdouble (Data.Nth_Arg (3, 0.0)),
+                                   Gdouble (Data.Nth_Arg (4, 0.0))),
+                Duration       => Duration (Data.Nth_Arg (5, 0.4))),
+             View.Get_View);
+
       elsif Command = "start_editing" then
          Inst := Nth_Arg (Data, 1);
          View := Browser_View (GObject'(Get_Data (Inst)));
@@ -1039,16 +1050,20 @@ package body Browsers.Scripts is
 
       Inst : Class_Instance;
       M    : Margins := No_Margins;
-      Item : Container_Item;
+      Item : Abstract_Item;
+      It   : Container_Item;
       X, Y : Gdouble := Gdouble'First;
       AnchorX, AnchorY : Gdouble;
    begin
       if Command = Constructor_Method then
          Set_Error_Msg (Data, "GPS.Browsers.Item is an abstract class");
+         return;
+      end if;
 
-      elsif Command = "set_position" then
-         Inst := Nth_Arg (Data, 1);
+      Inst := Nth_Arg (Data, 1);
+      Item := Item_Proxies.From_Instance (Inst);
 
+      if Command = "set_position" then
          if Nth_Arg (Data, 2, Float'First) /= Float'First then
             X := Gdouble (Nth_Arg (Data, 2, Float'First));
          end if;
@@ -1059,12 +1074,10 @@ package body Browsers.Scripts is
 
          AnchorX := Gdouble (Nth_Arg (Data, 4, 0.0));
          AnchorY := Gdouble (Nth_Arg (Data, 5, 0.0));
-
-         Container_Item (Item_Proxies.From_Instance (Inst)).Set_Position
+         Container_Item (Item).Set_Position
            ((X, Y), Anchor_X => AnchorX, Anchor_Y => AnchorY);
 
       elsif Command = "children" then
-         Inst := Nth_Arg (Data, 1);
          Set_Return_Value_As_List (Data);
 
          declare
@@ -1082,31 +1095,25 @@ package body Browsers.Scripts is
                end if;
             end Add_Child;
 
-            It : constant Abstract_Item := Item_Proxies.From_Instance (Inst);
          begin
-            if It.all in Container_Item_Record'Class then
-               Container_Item (It).For_Each_Child (Add_Child'Access);
+            if Item.all in Container_Item_Record'Class then
+               Container_Item (Item).For_Each_Child (Add_Child'Access);
             end if;
          end;
 
       elsif Command = "set_width_range" then
-         Inst := Nth_Arg (Data, 1);
-         Container_Item (Item_Proxies.From_Instance (Inst)).Set_Width_Range
+         Container_Item (Item).Set_Width_Range
            (Min => Get (2), Max => Get (3));
 
       elsif Command = "set_height_range" then
-         Inst := Nth_Arg (Data, 1);
-         Container_Item (Item_Proxies.From_Instance (Inst)).Set_Height_Range
+         Container_Item (Item).Set_Height_Range
            (Min => Get (2), Max => Get (3));
 
       elsif Command = "set_size" then
-         Inst := Nth_Arg (Data, 1);
-         Container_Item (Item_Proxies.From_Instance (Inst)).Set_Size
-           (Width  => Get (2), Height => Get (3));
+         Container_Item (Item).Set_Size (Width  => Get (2), Height => Get (3));
 
       elsif Command = "add" then
-         Inst := Nth_Arg (Data, 1);
-         Item  := Container_Item
+         It := Container_Item
             (Item_Proxies.From_Instance (Data.Nth_Arg (PA_Item)));
 
          begin
@@ -1135,8 +1142,8 @@ package body Browsers.Scripts is
                null;
          end;
 
-         Container_Item (Item_Proxies.From_Instance (Inst)).Add_Child
-           (Item,
+         Container_Item (Item).Add_Child
+           (It,
             Align => Alignment_Style'Val
               (Nth_Arg (Data, PA_Align, Alignment_Style'Pos (Align_Start))),
             Margin => M,
@@ -1147,8 +1154,7 @@ package body Browsers.Scripts is
                     Overflow_Style'Pos (Overflow_Prevent))));
 
       elsif Command = "set_child_layout" then
-         Inst := Nth_Arg (Data, 1);
-         Container_Item (Item_Proxies.From_Instance (Inst)).Set_Child_Layout
+         Container_Item (Item).Set_Child_Layout
            (Child_Layout_Strategy'Val
               (Nth_Arg (Data, 2, Child_Layout_Strategy'Pos (Vertical_Stack))));
 
@@ -1989,6 +1995,14 @@ package body Browsers.Scripts is
          Class => View,
          Setter => View_Handler'Access,
          Getter => View_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("animate_item_position",
+         Params  => (Param ("item"),
+                     Param ("x"),
+                     Param ("y"),
+                     Param ("duration", Optional => True)),
+         Class   => View,
+         Handler => View_Handler'Access);
 
       Kernel.Scripts.Register_Command
         (Constructor_Method,

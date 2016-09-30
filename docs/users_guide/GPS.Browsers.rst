@@ -315,6 +315,8 @@ Classes
 
    .. automethod:: GPS.Browsers.View.__init__
 
+   .. automethod:: GPS.Browsers.View.animate_item_position
+
    .. automethod:: GPS.Browsers.View.cancel_editing
 
    .. automethod:: GPS.Browsers.View.center_on
