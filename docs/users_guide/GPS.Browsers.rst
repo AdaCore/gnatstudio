@@ -183,6 +183,8 @@ Classes
 
    .. automethod:: GPS.Browsers.Item.set_width_range
 
+   .. automethod:: GPS.Browsers.Item.toplevel
+
 :class:`GPS.Browsers.Link`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
