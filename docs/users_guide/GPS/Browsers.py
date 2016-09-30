@@ -86,18 +86,16 @@ class Style(object):
 
         :param str fill: how closed objects should be filled.
            The format is either a color, as for stroke, or a string describing
-           a gradient as in the following:
-
-               "linear x0 y0 x1 y1 offset1 color1 offset2 color2 ..."
+           a gradient as in
+           `linear x0 y0 x1 y1 offset1 color1 offset2 color2 ...`
 
            where (x0,y0) and (x1,y1) define the orientation of the gradient.
            It is recommended that they are defined in the range 0..1, since
            the gradient will be automatically transformed to extend to the
            whole size of the object. The rest of the parameters are used to
            define each color the gradient is going through, and the offset
-           (in the range 0..1) where the color must occur. For instance:
-
-               "linear 0 0 1 1 0 rgba(255,0,0,0.2) 1 rgba(0,255,0,0.2)"
+           (in the range 0..1) where the color must occur. For instance
+           `linear 0 0 1 1 0 rgba(255,0,0,0.2) 1 rgba(0,255,0,0.2)`
 
         :param float lineWidth: the width of a line
 
@@ -561,10 +559,8 @@ class EditableTextItem(TextItem):
            text is next to a link, and indicates in which direction
            the text applies.
         :param on_edited: A callback whenever the text has been modified
-           interactively by the user. The profile is::
-
-               def on_edited(textitem, old_text):
-                   pass
+           interactively by the user. The profile is
+           `on_edited(textitem, old_text)`
 
         """
 
