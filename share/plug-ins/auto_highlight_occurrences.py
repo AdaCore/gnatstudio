@@ -187,8 +187,8 @@ class Current_Entity_Highlighter(Location_Highlighter):
                         visible_column += 1
 
                         if s[index] == '\t':
-                            visible_column = (visible_column
-                                              + 8 - (visible_column % 8))
+                            visible_column = (visible_column +
+                                              8 - (visible_column % 8))
 
                         index += 1
 
@@ -259,7 +259,7 @@ class Current_Entity_Highlighter(Location_Highlighter):
         self.stop_highlight()
         self.remove_highlight()
 
-        if not entity and not word:
+        if not buffer or (not entity and not word):
             self.entity = None
             self.word = None
             return
