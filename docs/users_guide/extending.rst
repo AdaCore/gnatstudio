@@ -2035,7 +2035,7 @@ register it via a call to ``GPS.Language.register``. Here is an example
 .. code:: python
 
     class JavaLang(GPS.Language):
-        def __init(self):
+        def __init__(self):
             pass
 
     GPS.Language.register(JavaLang(), "java", ".java", "", "", INDENTATION_SIMPLE)
