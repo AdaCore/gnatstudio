@@ -25,6 +25,18 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-P928-013 GPS: Mismatch between GNATcoverage and GPS coverage percentages
+
+  Problem:    Partially uncovered lines are not considered as uncovered when
+              computing the coverage percentages displayed in the
+              'Coverage Report' view, which leaded to a mismatch between the
+              coverage percentages displayed withing GPS and the ones output by
+              GNATcoverage (in the .xcov files).
+
+  Status:     This was fixed in 17.0 on 2016-09-30
+
+  Workaround: None.
+
 KP-62-P919-017 GB: GNAT project menus not working on linked GPR files.
 
   Problem:    Nothing occurs when running any sub-menu of "GNAT Project"
@@ -33,13 +45,13 @@ KP-62-P919-017 GB: GNAT project menus not working on linked GPR files.
 
   Status:     This was fixed in 17.0 on 2016-09-21
 
-  Workaround: - Run "Open With > GPR Project File Editor" menu to replace 
+  Workaround: - Run "Open With > GPR Project File Editor" menu to replace
                 "GNAT Project > Edit GPR File"
               - Start GPS and run "Project > Properties..." menu to replace
                 "GNAT Project > Edit Properties"
               - Double click ada file in Ada Runtime or source folders to open
-                AdaCore's ada editor to replace 
-                "GNAT Project > Open File From Project" 
+                AdaCore's ada editor to replace
+                "GNAT Project > Open File From Project"
 
 KP-62-P907-019 GPS: paragraph navigation stops at line ends
 

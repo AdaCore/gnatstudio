@@ -191,6 +191,7 @@ package body Code_Coverage.GNATcov is
 
             when '!' =>
                Line_Coverage.Status := Partially_Covered;
+               Not_Cov_Count := Not_Cov_Count + 1;
 
             when '?' =>
                Line_Coverage.Status := Branch_Partially_Covered;
@@ -215,11 +216,9 @@ package body Code_Coverage.GNATcov is
                pragma Assert (False);
          end case;
 
-         --  Set Coverage to 1 for partially and fully covered lines
+         --  Set Coverage to 1 for fully covered lines
 
-         if Line_Coverage.Status in GNATcov_Partially_Covered
-           or else Line_Coverage.Status in GNATcov_Fully_Covered
-         then
+         if Line_Coverage.Status in GNATcov_Fully_Covered then
             Line_Coverage.Coverage := 1;
          end if;
 
