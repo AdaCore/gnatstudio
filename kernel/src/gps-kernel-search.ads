@@ -22,6 +22,9 @@ with Glib.Object;
 with Gtk.Box;
 with Gtk.Widget;
 
+with GNATCOLL.Projects;
+with Histories;
+
 package GPS.Kernel.Search is
 
    type Kernel_Search_Result is abstract new GPS.Search.Search_Result
@@ -84,5 +87,19 @@ package GPS.Kernel.Search is
    Action_Name_Prefix : constant String := "Global Search in context: ";
    --  prefix for the actions, which should be followed by one of the provider
    --  ids.
+
+   Key_Search_Displays_Relative_Paths : constant Histories.History_Key :=
+     "search-displays-relative-paths";
+   --  Whether to display paths of project's sources as a relative
+   --  to the project's file
+
+   function Path_And_Name
+     (Kernel  : Kernel_Handle;
+      File    : Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type)
+      return String;
+   --  Return name and relative path of file if
+   --  Key_Search_Displays_Relative_Paths is set and absolute path and name
+   --  in other case.
 
 end GPS.Kernel.Search;

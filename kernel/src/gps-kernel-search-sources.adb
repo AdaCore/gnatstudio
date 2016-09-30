@@ -356,9 +356,9 @@ package body GPS.Kernel.Search.Sources is
       Result   : out GPS.Search.Search_Result_Access;
       Has_Next : out Boolean)
    is
-      L      : GNAT.Strings.String_Access;
+      L : GNAT.Strings.String_Access;
    begin
-      Result := null;
+      Result   := null;
       Has_Next := False;
 
       if Self.Text = null
@@ -374,53 +374,55 @@ package body GPS.Kernel.Search.Sources is
          Self.Pattern.Next (Self.Text.all, Self.Context);
       end if;
 
-      if Self.Context /= GPS.Search.No_Match then
-         declare
-            Matched_Line : constant String :=
-                (if not Is_Empty_Match (Self.Context) then
-                    Get_Surrounding_Line (Self.Text.all,
-                   Self.Context.Start.Index,
-                   Self.Context.Finish.Index)
-                 else
-                    Get_Surrounding_Line (Self.Text.all,
-                                Self.Context.Start.Index,
-                   Self.Context.Start.Index));
-
-            P_Name       : constant String :=
-                (if Self.Project = No_Project
-                  or else not Get_Registry
-                    (Self.Kernel).Tree.Root_Project.Is_Aggregate_Project
-                  then ""
-                  else ASCII.LF
-                  & "(" & Self.Project.Project_Path.Display_Base_Name & " -- "
-                  & (+Self.Project.Project_Path.Dir_Name) & ')');
-         begin
-            L := new String'
-              (Self.File.Display_Full_Name
-               & ":" & Image (Self.Context.Start.Line, Min_Width => 0)
-               & ":"
-               & Image (Integer (Self.Context.Start.Column), Min_Width => 0)
-               & P_Name);
-
-            Result   := new Source_Search_Result'
-              (Kernel     => Self.Kernel,
-               Provider   => Self,
-               Score      => Self.Context.Score,
-               Short      => new String'
-                 (Self.Pattern.Highlight_Match
-                      (Matched_Line, Self.Context)),
-               Long       => L,
-               Id         => L,
-               File       => Self.File,
-               Project    => Self.Project,
-               Line       => Self.Context.Start.Line,
-               Column     => Integer (Self.Context.Start.Column),
-               Line_End   => Self.Context.Finish.Line,
-               Column_End => Integer (Self.Context.Finish.Column));
-            Self.Adjust_Score (Result);
-            Has_Next := True;
-         end;
+      if Self.Context = GPS.Search.No_Match then
+         return;
       end if;
+
+      declare
+         Matched_Line : constant String :=
+           (if not Is_Empty_Match (Self.Context) then
+                 Get_Surrounding_Line (Self.Text.all,
+              Self.Context.Start.Index,
+              Self.Context.Finish.Index)
+            else
+               Get_Surrounding_Line (Self.Text.all,
+              Self.Context.Start.Index,
+              Self.Context.Start.Index));
+
+         P_Name       : constant String :=
+           (if Self.Project = No_Project
+            or else not Get_Registry
+              (Self.Kernel).Tree.Root_Project.Is_Aggregate_Project
+            then ""
+            else ASCII.LF
+            & "(" & Self.Project.Project_Path.Display_Base_Name & " -- "
+            & (+Self.Project.Project_Path.Dir_Name) & ')');
+      begin
+         L := new String'
+           (Path_And_Name (Self.Kernel, Self.File, Self.Project)
+            & ":" & Image (Self.Context.Start.Line, Min_Width => 0)
+            & ":"
+            & Image (Integer (Self.Context.Start.Column), Min_Width => 0)
+            & P_Name);
+
+         Result   := new Source_Search_Result'
+           (Kernel     => Self.Kernel,
+            Provider   => Self,
+            Score      => Self.Context.Score,
+            Short      => new String'
+              (Self.Pattern.Highlight_Match
+                   (Matched_Line, Self.Context)),
+            Long       => L,
+            Id         => L,
+            File       => Self.File,
+            Project    => Self.Project,
+            Line       => Self.Context.Start.Line,
+            Column     => Integer (Self.Context.Start.Column),
+            Line_End   => Self.Context.Finish.Line,
+            Column_End => Integer (Self.Context.Finish.Column));
+         Self.Adjust_Score (Result);
+         Has_Next := True;
+      end;
    end Next;
 
    ----------
@@ -630,7 +632,10 @@ package body GPS.Kernel.Search.Sources is
    begin
       Single_Source_Search_Provider (Self.all).Set_Pattern
          (Pattern, Limit);  --  inherited
-      Self.Set_File (Editor.File, Project => No_Project);
+      Self.Set_File
+        (Editor.File,
+         Project => Get_Registry
+           (Self.Kernel).Tree.Info (Editor.File).Project);
    end Set_Pattern;
 
 end GPS.Kernel.Search.Sources;

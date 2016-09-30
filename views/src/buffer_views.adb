@@ -57,7 +57,6 @@ with GPS.Search;             use GPS.Search;
 with GPS.Search.GUI;         use GPS.Search.GUI;
 with GUI_Utils;              use GUI_Utils;
 with Src_Editor_Module;      use Src_Editor_Module;
-with GNAT.Strings;           use GNAT.Strings;
 with GNATCOLL.Traces;        use GNATCOLL.Traces;
 with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with Tooltips;               use Tooltips;
@@ -835,38 +834,16 @@ package body Buffer_Views is
       else
          C := Self.Pattern.Start (Child.Get_Short_Title);
          if C /= GPS.Search.No_Match then
-            declare
-               L : GNAT.Strings.String_Access;
-            begin
-               if Child.Get_Title /= Child.Get_Short_Title then
-                  L := new String'(Child.Get_Title);
-               end if;
-               Result := new Opened_Windows_Result'
-                 (Kernel   => Self.Kernel,
-                  Provider => Self,
-                  Score    => C.Score,
-                  Short    => new String'
-                    (Self.Pattern.Highlight_Match
-                         (Child.Get_Short_Title, Context => C)),
-                  Long     => L,
-                  Id       => new String'(Child.Get_Title));
-               Self.Adjust_Score (Result);
-            end;
-
-         elsif Child.Get_Short_Title /= Child.Get_Title then
-            C := Self.Pattern.Start (Child.Get_Title);
-            if C /= GPS.Search.No_Match then
-               Result := new Opened_Windows_Result'
-                  (Kernel   => Self.Kernel,
-                   Provider => Self,
-                   Score    => C.Score,
-                   Short    => new String'(Child.Get_Short_Title),
-                   Long     => new String'
-                      (Self.Pattern.Highlight_Match
-                         (Child.Get_Title, Context => C)),
-                   Id       => new String'(Child.Get_Title));
-               Self.Adjust_Score (Result);
-            end if;
+            Result := new Opened_Windows_Result'
+              (Kernel   => Self.Kernel,
+               Provider => Self,
+               Score    => C.Score,
+               Short    => new String'
+                 (Self.Pattern.Highlight_Match
+                      (Child.Get_Short_Title, Context => C)),
+               Long     => new String'(Child.Get_Short_Title),
+               Id       => new String'(Child.Get_Title));
+            Self.Adjust_Score (Result);
          end if;
 
          Next (Self.Iter);

@@ -70,4 +70,26 @@ package body GPS.Kernel.Search is
       Self.Kernel.Add_To_History (Key, Result.Id.all);
    end On_Result_Executed;
 
+   -------------------
+   -- Path_And_Name --
+   -------------------
+
+   function Path_And_Name
+     (Kernel  : Kernel_Handle;
+      File    : Virtual_File;
+      Project : GNATCOLL.Projects.Project_Type)
+      return String
+   is
+      use GNATCOLL.Projects;
+   begin
+      if Project /= No_Project
+        and then Get_History
+          (Get_History (Kernel).all, Key_Search_Displays_Relative_Paths)
+      then
+         return +(Relative_Path (File, Project.Project_Path.Dir));
+      else
+         return +(File.Full_Name);
+      end if;
+   end Path_And_Name;
+
 end GPS.Kernel.Search;

@@ -32,10 +32,12 @@ with Gtk.Alignment;                 use Gtk.Alignment;
 with Gtk.Cell_Renderer;             use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Text;        use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;      use Gtk.Cell_Renderer_Toggle;
+with Gtk.Check_Button;              use Gtk.Check_Button;
 with Gtk.Enums;                     use Gtk.Enums;
 with Gtk.Frame;                     use Gtk.Frame;
 with Gtk.Label;                     use Gtk.Label;
 with Gtk.List_Store;                use Gtk.List_Store;
+with Gtk.Toggle_Button;             use Gtk.Toggle_Button;
 with Gtk.Tree_Model;                use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;          use Gtk.Tree_View_Column;
 with Gtk.Tree_View;                 use Gtk.Tree_View;
@@ -704,10 +706,24 @@ package body GPS.Search.GUI is
       Text     : Gtk_Cell_Renderer_Text;
       Iter     : Gtk_Tree_Iter;
       Val      : GValue;
+      Relative : Gtk_Check_Button;
       pragma Unreferenced (Colnum);
    begin
       Gtk_New_Hbox (B, Homogeneous => False);
       Box.Pack_Start (B, Expand => False);
+
+      Gtk_New (Relative, -"Display relative paths");
+      Relative.Set_Tooltip_Text
+        (-("Whether to display paths of project's sources as relative" &
+           " to the project file."));
+      Box.Pack_Start (Relative, Expand => False);
+      Associate (Get_History (Self.Kernel).all,
+                 Key_Search_Displays_Relative_Paths,
+                 Relative,
+                 Default => False);
+      Relative.On_Toggled
+        (Gtk.Toggle_Button.Cb_GObject_Void (On_Change),
+         Data, After => True);
 
       Gtk_New (Label, -"Proposals per context:");
       B.Pack_Start (Label, Expand => False);
@@ -1477,6 +1493,11 @@ package body GPS.Search.GUI is
            & Provider_Bookmarks & ";"
            & Provider_Sources & ";"
            & Provider_Plugins & ";");
+
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all,
+         Key_Search_Displays_Relative_Paths,
+         Default_Value => False);
 
       P := new GPS.Kernel.Search.Filenames.Filenames_Search_Provider;
       Register_Provider_And_Action

@@ -469,7 +469,8 @@ package body GPS.Kernel.Search.Filenames is
             & "(" & Project.Project_Path.Display_Base_Name & " -- "
             & (+Project.Project_Path.Dir_Name) & ')');
       begin
-         L := new String'(+File.Full_Name & P_Name);
+         L := new String'
+           (Path_And_Name (Self.Kernel, File, Project) & P_Name);
 
          if Context = GPS.Search.No_Match then
             Result := new Filenames_Search_Result'

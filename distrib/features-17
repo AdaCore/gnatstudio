@@ -31,6 +31,12 @@ NF-17-P929-044 GPS: non-exclusive key bindings in plugins (2016-09-29)
   filter matches. In particular, this allows reusing keys like <enter>
   or <tab> in contexts other than the editor.
 
+NF-17-P926-021 GPS: relative paths in the Omnisearch (2016-09-29)
+
+  The Omnisearch can now also display project relative paths instead
+  of absolute ones. This behavior can be controlled via a checkbox
+  present in the Omnisearch settings.
+
 NF-17-P921-032 GNATdoc: Documentation_Dir attribute (2016-09-22)
 
   Attribute Documentation_Dir is defined in Documentation package now.

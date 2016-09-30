@@ -452,7 +452,7 @@ package body GVD.Consoles is
       Allow_Duplicates
         (Get_History (Self.Kernel).all, "gvd_console", True, True);
 
-      Set_Highlight_Color    (Self.Console, Preference (Comments_Style));
+      Set_Highlight_Color (Self.Console, Preference (Comments_Style));
       Set_Completion_Handler
         (Self.Console, Complete_Command'Access, Self.all'Address);
       Widget_Callback.Object_Connect
