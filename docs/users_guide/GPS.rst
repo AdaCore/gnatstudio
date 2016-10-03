@@ -65,7 +65,7 @@ Classes
 :class:`GPS.Action`
 ^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Action
+.. autoclass:: Action()
 
 
 
@@ -94,7 +94,7 @@ Classes
 :class:`GPS.Activities`
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Activities
+.. autoclass:: Activities()
 
 
 
@@ -137,7 +137,7 @@ Classes
 :class:`GPS.Alias`
 ^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Alias
+.. autoclass:: Alias()
 
 
 
@@ -146,7 +146,7 @@ Classes
 :class:`GPS.Bookmark`
 ^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Bookmark
+.. autoclass:: Bookmark()
 
 
 
@@ -169,7 +169,7 @@ Classes
 :class:`GPS.BuildTarget`
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: BuildTarget
+.. autoclass:: BuildTarget()
 
 
 
@@ -190,7 +190,7 @@ Classes
 :class:`GPS.Button`
 ^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Button
+.. autoclass:: Button()
 
    .. inheritance-diagram:: GPS.Button
 
@@ -201,7 +201,7 @@ Classes
 :class:`GPS.Clipboard`
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Clipboard
+.. autoclass:: Clipboard()
 
 
 
@@ -216,7 +216,7 @@ Classes
 :class:`GPS.CodeAnalysis`
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: CodeAnalysis
+.. autoclass:: CodeAnalysis()
 
 
 
@@ -245,7 +245,7 @@ Classes
 :class:`GPS.Codefix`
 ^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Codefix
+.. autoclass:: Codefix()
 
 
 
@@ -262,7 +262,7 @@ Classes
 :class:`GPS.CodefixError`
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: CodefixError
+.. autoclass:: CodefixError()
 
 
 
@@ -279,7 +279,7 @@ Classes
 :class:`GPS.Command`
 ^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Command
+.. autoclass:: Command()
 
 
 
@@ -298,7 +298,7 @@ Classes
 :class:`GPS.CommandWindow`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: CommandWindow
+.. autoclass:: CommandWindow()
 
    .. inheritance-diagram:: GPS.CommandWindow
 
@@ -315,7 +315,7 @@ Classes
 :class:`GPS.Completion`
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Completion
+.. autoclass:: Completion()
 
 
 
@@ -324,7 +324,7 @@ Classes
 :class:`GPS.Console`
 ^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Console
+.. autoclass:: Console()
 
    .. inheritance-diagram:: GPS.Console
 
@@ -367,7 +367,7 @@ Classes
 :class:`GPS.Construct`
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Construct
+.. autoclass:: Construct()
 
 
 
@@ -392,7 +392,7 @@ Classes
 :class:`GPS.ConstructsList`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: ConstructsList
+.. autoclass:: ConstructsList()
 
 
 
@@ -401,7 +401,7 @@ Classes
 :class:`GPS.Context`
 ^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Context
+.. autoclass:: Context()
 
 
 
@@ -436,7 +436,7 @@ Classes
 :class:`GPS.Contextual`
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Contextual
+.. autoclass:: Contextual()
 
 
 
@@ -461,7 +461,7 @@ Classes
 :class:`GPS.Cursor`
 ^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Cursor
+.. autoclass:: Cursor()
 
 
 
@@ -480,7 +480,7 @@ Classes
 :class:`GPS.Debugger`
 ^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Debugger
+.. autoclass:: Debugger()
 
 
 
@@ -545,7 +545,7 @@ Classes
 :class:`GPS.DebuggerBreakpoint`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: DebuggerBreakpoint
+.. autoclass:: DebuggerBreakpoint()
 
 
 
@@ -578,7 +578,7 @@ Classes
 :class:`GPS.Editor`
 ^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Editor
+.. autoclass:: Editor()
 
 
 
@@ -681,7 +681,7 @@ Classes
 :class:`GPS.EditorBuffer`
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: EditorBuffer
+.. autoclass:: EditorBuffer()
 
 
 
@@ -798,7 +798,7 @@ Classes
 :class:`GPS.EditorHighlighter`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: EditorHighlighter
+.. autoclass:: EditorHighlighter()
 
 
 
@@ -809,7 +809,7 @@ Classes
 :class:`GPS.EditorLocation`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: EditorLocation
+.. autoclass:: EditorLocation()
 
 
 
@@ -880,7 +880,7 @@ Classes
 :class:`GPS.EditorMark`
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: EditorMark
+.. autoclass:: EditorMark()
 
 
 
@@ -909,7 +909,7 @@ Classes
 :class:`GPS.EditorOverlay`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: EditorOverlay
+.. autoclass:: EditorOverlay()
 
 
 
@@ -924,7 +924,7 @@ Classes
 :class:`GPS.EditorView`
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: EditorView
+.. autoclass:: EditorView()
 
    .. inheritance-diagram:: GPS.EditorView
 
@@ -951,7 +951,7 @@ Classes
 :class:`GPS.Entity`
 ^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Entity
+.. autoclass:: Entity()
 
 
 
@@ -1038,14 +1038,14 @@ Classes
 :class:`GPS.Exception`
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Exception
+.. autoclass:: Exception()
 
    .. inheritance-diagram:: GPS.Exception
 
 :class:`GPS.File`
 ^^^^^^^^^^^^^^^^^
 
-.. autoclass:: File
+.. autoclass:: File()
 
 
 
@@ -1102,7 +1102,7 @@ Classes
 :class:`GPS.FileLocation`
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: FileLocation
+.. autoclass:: FileLocation()
 
 
 
@@ -1117,7 +1117,7 @@ Classes
 :class:`GPS.Filter`
 ^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Filter
+.. autoclass:: Filter()
 
 
 
@@ -1126,7 +1126,7 @@ Classes
 :class:`GPS.GUI`
 ^^^^^^^^^^^^^^^^
 
-.. autoclass:: GUI
+.. autoclass:: GUI()
 
 
 
@@ -1147,7 +1147,7 @@ Classes
 :class:`GPS.HTML`
 ^^^^^^^^^^^^^^^^^
 
-.. autoclass:: HTML
+.. autoclass:: HTML()
 
 
 
@@ -1158,7 +1158,7 @@ Classes
 :class:`GPS.Help`
 ^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Help
+.. autoclass:: Help()
 
 
 
@@ -1173,7 +1173,7 @@ Classes
 :class:`GPS.History`
 ^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: History
+.. autoclass:: History()
 
 
 
@@ -1184,7 +1184,7 @@ Classes
 :class:`GPS.Hook`
 ^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Hook
+.. autoclass:: Hook()
 
 
 
@@ -1211,7 +1211,7 @@ Classes
 :class:`GPS.Predefined_Hooks`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Predefined_Hooks
+.. autoclass:: Predefined_Hooks()
     :members:
 
 
@@ -1219,14 +1219,14 @@ Classes
 :class:`GPS.Invalid_Argument`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Invalid_Argument
+.. autoclass:: Invalid_Argument()
 
    .. inheritance-diagram:: GPS.Invalid_Argument
 
 :class:`GPS.Language`
 ^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Language
+.. autoclass:: Language()
 
 
 
@@ -1239,7 +1239,7 @@ Classes
 :class:`GPS.LanguageInfo`
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: LanguageInfo
+.. autoclass:: LanguageInfo()
 
 
 
@@ -1254,7 +1254,7 @@ Classes
 :class:`GPS.Libclang`
 ^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Libclang
+.. autoclass:: Libclang()
 
 
 
@@ -1263,7 +1263,7 @@ Classes
 :class:`GPS.Locations`
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Locations
+.. autoclass:: Locations()
 
 
 
@@ -1284,7 +1284,7 @@ Classes
 :class:`GPS.Logger`
 ^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Logger
+.. autoclass:: Logger()
 
 
 
@@ -1307,7 +1307,7 @@ Classes
 :class:`GPS.MDI`
 ^^^^^^^^^^^^^^^^
 
-.. autoclass:: MDI
+.. autoclass:: MDI()
 
 
 
@@ -1418,7 +1418,7 @@ Classes
 :class:`GPS.MDIWindow`
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: MDIWindow
+.. autoclass:: MDIWindow()
 
    .. inheritance-diagram:: GPS.MDIWindow
 
@@ -1445,7 +1445,7 @@ Classes
 :class:`GPS.Menu`
 ^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Menu
+.. autoclass:: Menu()
 
 
 
@@ -1472,7 +1472,7 @@ Classes
 :class:`GPS.Message`
 ^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Message
+.. autoclass:: Message()
 
 
 
@@ -1525,14 +1525,14 @@ Classes
 :class:`GPS.Missing_Arguments`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Missing_Arguments
+.. autoclass:: Missing_Arguments()
 
    .. inheritance-diagram:: GPS.Missing_Arguments
 
 :class:`GPS.OutputParserWrapper`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: OutputParserWrapper
+.. autoclass:: OutputParserWrapper()
 
 
 
@@ -1547,7 +1547,7 @@ Classes
 :class:`GPS.Preference`
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Preference
+.. autoclass:: Preference()
 
 
 
@@ -1564,7 +1564,7 @@ Classes
 :class:`GPS.PreferencesPage`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: PreferencesPage
+.. autoclass:: PreferencesPage()
 
 
 
@@ -1573,7 +1573,7 @@ Classes
 :class:`GPS.Process`
 ^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Process
+.. autoclass:: Process()
 
    .. inheritance-diagram:: GPS.Process
 
@@ -1596,7 +1596,7 @@ Classes
 :class:`GPS.Project`
 ^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Project
+.. autoclass:: Project()
 
 
 
@@ -1693,7 +1693,7 @@ Classes
 :class:`GPS.ProjectTemplate`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: ProjectTemplate
+.. autoclass:: ProjectTemplate()
 
 
 
@@ -1702,7 +1702,7 @@ Classes
 :class:`GPS.ReferencesCommand`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: ReferencesCommand
+.. autoclass:: ReferencesCommand()
 
    .. inheritance-diagram:: GPS.ReferencesCommand
 
@@ -1711,7 +1711,7 @@ Classes
 :class:`GPS.Revision`
 ^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Revision
+.. autoclass:: Revision()
 
 
 
@@ -1726,7 +1726,7 @@ Classes
 :class:`GPS.Search`
 ^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Search
+.. autoclass:: Search()
 
 
 
@@ -1795,7 +1795,7 @@ Classes
 :class:`GPS.Search_Result`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Search_Result
+.. autoclass:: Search_Result()
 
 
 
@@ -1814,7 +1814,7 @@ Classes
 :class:`GPS.Style`
 ^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Style
+.. autoclass:: Style()
 
 
 
@@ -1839,7 +1839,7 @@ Classes
 :class:`GPS.SwitchesChooser`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: SwitchesChooser
+.. autoclass:: SwitchesChooser()
 
    .. inheritance-diagram:: GPS.SwitchesChooser
 
@@ -1852,7 +1852,7 @@ Classes
 :class:`GPS.Task`
 ^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Task
+.. autoclass:: Task()
 
 
 
@@ -1879,7 +1879,7 @@ Classes
 :class:`GPS.Timeout`
 ^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Timeout
+.. autoclass:: Timeout()
 
 
 
@@ -1890,7 +1890,7 @@ Classes
 :class:`GPS.ToolButton`
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: ToolButton
+.. autoclass:: ToolButton()
 
    .. inheritance-diagram:: GPS.ToolButton
 
@@ -1899,7 +1899,7 @@ Classes
 :class:`GPS.Toolbar`
 ^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Toolbar
+.. autoclass:: Toolbar()
 
    .. inheritance-diagram:: GPS.Toolbar
 
@@ -1916,14 +1916,14 @@ Classes
 :class:`GPS.Unexpected_Exception`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Unexpected_Exception
+.. autoclass:: Unexpected_Exception()
 
    .. inheritance-diagram:: GPS.Unexpected_Exception
 
 :class:`GPS.VCS`
 ^^^^^^^^^^^^^^^^
 
-.. autoclass:: VCS
+.. autoclass:: VCS()
 
 
 
@@ -1968,7 +1968,7 @@ Classes
 :class:`GPS.Vdiff`
 ^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Vdiff
+.. autoclass:: Vdiff()
 
 
 
@@ -1989,7 +1989,7 @@ Classes
 :class:`GPS.XMLViewer`
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: XMLViewer
+.. autoclass:: XMLViewer()
 
 
 

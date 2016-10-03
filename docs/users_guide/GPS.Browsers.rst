@@ -15,7 +15,7 @@ Classes
 :class:`GPS.Browsers.AbstractItem`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: AbstractItem
+.. autoclass:: AbstractItem()
 
 
 
@@ -54,7 +54,7 @@ Classes
 :class:`GPS.Browsers.Diagram`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Diagram
+.. autoclass:: Diagram()
 
 
 
@@ -82,6 +82,8 @@ Classes
 
    .. automethod:: GPS.Browsers.Diagram.is_selected
 
+   .. automethod:: GPS.Browsers.Diagram.links
+
    .. automethod:: GPS.Browsers.Diagram.load_json
 
    .. automethod:: GPS.Browsers.Diagram.load_json_data
@@ -101,7 +103,7 @@ Classes
 :class:`GPS.Browsers.EditableTextItem`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: EditableTextItem
+.. autoclass:: EditableTextItem()
 
    .. inheritance-diagram:: GPS.Browsers.EditableTextItem
 
@@ -114,7 +116,7 @@ Classes
 :class:`GPS.Browsers.EllipseItem`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: EllipseItem
+.. autoclass:: EllipseItem()
 
    .. inheritance-diagram:: GPS.Browsers.EllipseItem
 
@@ -123,7 +125,7 @@ Classes
 :class:`GPS.Browsers.HrItem`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: HrItem
+.. autoclass:: HrItem()
 
    .. inheritance-diagram:: GPS.Browsers.HrItem
 
@@ -132,7 +134,7 @@ Classes
 :class:`GPS.Browsers.ImageItem`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: ImageItem
+.. autoclass:: ImageItem()
 
    .. inheritance-diagram:: GPS.Browsers.ImageItem
 
@@ -141,7 +143,7 @@ Classes
 :class:`GPS.Browsers.Item`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Item
+.. autoclass:: Item()
 
    .. inheritance-diagram:: GPS.Browsers.Item
 
@@ -188,7 +190,7 @@ Classes
 :class:`GPS.Browsers.Link`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Link
+.. autoclass:: Link()
 
    .. inheritance-diagram:: GPS.Browsers.Link
 
@@ -229,7 +231,7 @@ Classes
 :class:`GPS.Browsers.PolylineItem`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: PolylineItem
+.. autoclass:: PolylineItem()
 
    .. inheritance-diagram:: GPS.Browsers.PolylineItem
 
@@ -238,7 +240,7 @@ Classes
 :class:`GPS.Browsers.RectItem`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: RectItem
+.. autoclass:: RectItem()
 
    .. inheritance-diagram:: GPS.Browsers.RectItem
 
@@ -247,7 +249,7 @@ Classes
 :class:`GPS.Browsers.Style`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: Style
+.. autoclass:: Style()
 
 
 
@@ -272,7 +274,7 @@ Classes
 :class:`GPS.Browsers.TextItem`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: TextItem
+.. autoclass:: TextItem()
 
    .. inheritance-diagram:: GPS.Browsers.TextItem
 
@@ -289,7 +291,7 @@ Classes
 :class:`GPS.Browsers.View`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: View
+.. autoclass:: View()
 
    .. inheritance-diagram:: GPS.Browsers.View
 

@@ -32,7 +32,7 @@ Classes
 :class:`%(module)s.%(name)s`
 %(underscore)s
 
-.. autoclass:: %(name)s
+.. autoclass:: %(name)s()
 %(members)s
 %(inheritance)s
 """
@@ -126,8 +126,8 @@ Exceptions
                 inheritance = ""
                 mro = inspect.getmro(c)  # first member is always c
                 if len(mro) > 2 \
-                   or (len(mro) == 2
-                       and mro[1].__name__ != "object"):
+                   or (len(mro) == 2 and
+                       mro[1].__name__ != "object"):
                     inheritance = \
                         "   .. inheritance-diagram:: %s.%s" % (n, name)
 
