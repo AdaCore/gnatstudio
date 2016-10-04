@@ -208,6 +208,7 @@ class Tasks_View_Widget():
         self.view.connect("button_press_event", self.__on_click)
 
         self.timeout = None
+        self.on_empty = None
 
         self.box.connect("destroy", self.__destroy)
 
@@ -223,6 +224,12 @@ class Tasks_View_Widget():
         if self.timeout:
             GLib.source_remove(self.timeout)
             self.timeout = None
+
+    def set_on_empty(self, cb):
+        """
+        Calls `cb` when there are no task pending any more
+        """
+        self.on_empty = cb
 
     def __task_terminated(self, task):
         iter = self.__iter_from_task(task)
@@ -266,6 +273,8 @@ class Tasks_View_Widget():
         # Stop monitoring if there are no tasks left
         if not tasks:
             self.timeout = None
+            if self.on_empty:
+                self.on_empty()
             return False
 
         return True
@@ -371,21 +380,29 @@ class Tasks_View(Module):
         t = Tasks_View_Widget()
         d.get_content_area().pack_start(t.box, True, True, 3)
 
+        # If the list of tasks becomes empty, assume the user has clicked Quit
+        def on_empty():
+            d.response(Gtk.ResponseType.YES)
+        t.set_on_empty(on_empty)
+
         quit_button = d.add_button("gtk-quit", Gtk.ResponseType.YES)
         quit_button.grab_default()
         cancel_button = d.add_button("gtk-cancel", Gtk.ResponseType.CANCEL)
 
         d.set_default_size(400, 300)
         d.show_all()
-        response = d.run()
 
-        d.get_content_area().remove(t.box)
-        d.destroy()
+        # We can't call d.run(), which results in storage_error on OSX at
+        # least. So instead we prevent closing GPS, and we will do so when
+        # we have a YES from the user.
+        def on_response(dialog, response):
+            dialog.get_content_area().remove(t.box)
+            dialog.destroy()
+            if response == Gtk.ResponseType.YES:
+                GPS.exit(force=True)   # force exit
+        d.connect('response', on_response)
 
-        if response == Gtk.ResponseType.YES:
-            return True
-
-        return False
+        return False   # prevent exit (and hide the "exit" task from dialog")
 
     def setup(self):
         # Add the Tasks view

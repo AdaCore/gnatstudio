@@ -435,6 +435,8 @@ package body GPS.Main_Window is
 
             --  Destroy (Main_Window);
             Main_Window.Application.Quit;
+         else
+            Main_Window.Is_Destroyed := False;
          end if;
       end if;
    end Quit;
