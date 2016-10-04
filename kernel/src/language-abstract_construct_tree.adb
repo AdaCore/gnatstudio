@@ -378,9 +378,7 @@ package body Language.Abstract_Construct_Tree is
       then
          return Self.Kernel.Symbols.Find
            (Get_Profile
-              (Lang             =>
-                 Self.Kernel.Lang_Handler.Get_Tree_Language_From_File
-                   (Get_File_Path (Self.Construct_File)),
+              (Lang             => Get_Tree_Language (Self.Construct_File),
                Entity           => Self.Entity,
                Show_Param_Names => Show_Param_Names));
 

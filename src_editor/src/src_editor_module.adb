@@ -1396,7 +1396,8 @@ package body Src_Editor_Module is
       if Active (Me) then
          Trace (Me, "Open file " & File.Display_Full_Name
                 & " Project=" & Project.Project_Path.Display_Full_Name
-                & " Focus=" & Focus'Img);
+                & " Focus=" & Focus'Img
+                & " Line=" & Line'Img);
       end if;
 
       if File /= GNATCOLL.VFS.No_File and then not File.Is_Directory then

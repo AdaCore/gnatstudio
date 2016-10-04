@@ -974,7 +974,7 @@ package body GPS.Kernel.Properties is
          R      : Forward_Cursor;
          Create : Boolean;
       begin
-         Self.DB := GNATCOLL.SQL.Sqlite.Setup (+File.Full_Name.all);
+         Self.DB := GNATCOLL.SQL.Sqlite.Setup (+File.Full_Name.all, True);
 
          Self.Connection := Self.DB.Build_Connection;
 

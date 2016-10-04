@@ -6238,10 +6238,7 @@ package body Src_Editor_Buffer is
       Update_Immediately : Boolean;
       Filter             : Language.Tree.Category_Array :=
         Language.Tree.Null_Category_Array;
-      Column             : Visible_Column_Type := 1) return Block_Record
-   is
-      Tree : constant Semantic_Tree'Class :=
-        Editor.Kernel.Get_Abstract_Tree_For_File (Editor.Filename);
+      Column             : Visible_Column_Type := 1) return Block_Record is
    begin
       if Line = 0 then
          return New_Block;
@@ -6255,30 +6252,36 @@ package body Src_Editor_Buffer is
          return New_Block;
       end if;
 
-      if Update_Immediately then
-         Tree.Update;
-      end if;
-
-      --  Take the first possible project. This should not impact block
-      --  computation, which does not need xref information
       declare
-         Node : constant Semantic_Node'Class := Tree.Node_At
-           ((Line => Integer (Line), Column => Column, others => <>), Filter);
+         Tree : constant Semantic_Tree'Class :=
+           Editor.Kernel.Get_Abstract_Tree_For_File (Editor.Filename);
       begin
-         if Node = No_Semantic_Node then
-            return New_Block;
-         else
-            return Block_Record'
-              (Indentation_Level => 0,
-               Offset_Start      => Integer (Node.Sloc_Start.Column),
-               Stored_Offset     => 0,
-               First_Line      => Editable_Line_Type (Node.Sloc_Start.Line),
-               Last_Line         => Editable_Line_Type (Node.Sloc_End.Line),
-               Name              => Node.Name,
-               Tree_Node         => Sem_Node_Holders.To_Holder (Node),
-               Block_Type        => Node.Category,
-               Color             => Null_RGBA);
+         if Update_Immediately then
+            Tree.Update;
          end if;
+
+         --  Take the first possible project. This should not impact block
+         --  computation, which does not need xref information
+         declare
+            Node : constant Semantic_Node'Class := Tree.Node_At
+              ((Line => Integer (Line), Column => Column, others => <>),
+               Filter);
+         begin
+            if Node = No_Semantic_Node then
+               return New_Block;
+            else
+               return Block_Record'
+                 (Indentation_Level => 0,
+                  Offset_Start      => Integer (Node.Sloc_Start.Column),
+                  Stored_Offset     => 0,
+                  First_Line      => Editable_Line_Type (Node.Sloc_Start.Line),
+                  Last_Line         => Editable_Line_Type (Node.Sloc_End.Line),
+                  Name              => Node.Name,
+                  Tree_Node         => Sem_Node_Holders.To_Holder (Node),
+                  Block_Type        => Node.Category,
+                  Color             => Null_RGBA);
+            end if;
+         end;
       end;
    end Get_Block;
 

@@ -1537,7 +1537,7 @@ package body Language.Libclang is
       return Unbounded_String_Array
    is
 
-      Kernel_Lang      : constant String :=
+      Kernel_Lang : constant String :=
         Kernel.Lang_Handler.Get_Language_From_File (File);
 
       function Lang return String;
