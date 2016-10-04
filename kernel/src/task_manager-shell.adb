@@ -60,6 +60,7 @@ package body Task_Manager.Shell is
       Kernel    : constant Kernel_Handle := Get_Kernel (Data);
       Task_Inst : Class_Instance;
       Manager   : constant Task_Manager_Access := Get_Task_Manager (Kernel);
+      Q         : Task_Queue_Access;
       C         : Command_Access;
       Progress  : Progress_Record;
       Id        : Integer;
@@ -139,14 +140,19 @@ package body Task_Manager.Shell is
 
       elsif Command = "name" then
          Task_Inst := Nth_Arg (Data, 1, Task_Class);
-         if Manager.Queues
-           (Get_Data (Task_Inst, Task_Class)).Queue.Is_Empty
-         then
-            Set_Return_Value (Data, String'(""));
+         Q := Manager.Queues (Get_Data (Task_Inst, Task_Class));
+         if Q.Queue.Is_Empty then
+            Data.Set_Return_Value (String'(""));
          else
-            C := Manager.Queues
-              (Get_Data (Task_Inst, Task_Class)).Queue.First_Element;
-            Set_Return_Value (Data, Commands.Name (C));
+            declare
+               N : constant String := Q.Queue.First_Element.Name;
+            begin
+               if N = "" then
+                  Data.Set_Return_Value (Q.Id.all);
+               else
+                  Data.Set_Return_Value (N);
+               end if;
+            end;
          end if;
       end if;
    end Task_Command_Handler;

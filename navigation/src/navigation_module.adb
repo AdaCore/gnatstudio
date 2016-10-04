@@ -152,6 +152,9 @@ package body Navigation_Module is
    --------------------------------------------
 
    type Runtime_Processor_Command is new Interactive_Command with record
+      Total_Files : Integer;
+      --  Total number of runtime files
+
       Files_To_Process : File_List.List;
       --  The runtime files left to process
 
@@ -1442,11 +1445,18 @@ package body Navigation_Module is
             for F of Files loop
                Command.Files_To_Process.Append (F);
             end loop;
+            Command.Total_Files := Integer (Command.Files_To_Process.Length);
          end;
       end if;
 
       while not Command.Files_To_Process.Is_Empty loop
          if Clock - Start > Max_Idle_Duration then
+            Command.Set_Progress
+              ((Activity => Running,
+                Current  => Command.Total_Files -
+                  Integer (Command.Files_To_Process.Length),
+                Total    => Command.Total_Files));
+
             --  We spent too much time already: come back at another time.
             return Execute_Again;
          end if;

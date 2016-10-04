@@ -140,7 +140,7 @@ package body Commands is
    function Name (Command : access Root_Command) return String is
       pragma Unreferenced (Command);
    begin
-      return "Generic command";
+      return "";
    end Name;
 
    --------------
