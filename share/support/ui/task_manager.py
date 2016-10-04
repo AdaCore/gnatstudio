@@ -116,7 +116,7 @@ class HUD_Widget():
 
     def refresh(self):
         """ Refresh the contents of the HUD """
-        tasks = filter(lambda x: x.visible == 'TRUE', GPS.Task.list())
+        tasks = filter(lambda x: x.visible, GPS.Task.list())
         if len(tasks) == 0:
             # No visible tasks
             self.label.set_text("")
@@ -174,8 +174,14 @@ class Tasks_View_Widget():
 
     """ A widget containing a task view """
 
-    def __init__(self):
+    def __init__(self, hide_nonblocking=False):
+        """
+        :param bool hide_nonblocking: if True, tasks that do not block
+           the exit dialog are not displayed
+        """
+
         self.box = Gtk.VBox()
+        self.hide_nonblocking = hide_nonblocking
         scroll = Gtk.ScrolledWindow()
         self.store = Gtk.ListStore(int, str, str, str, str)
         self.view = Gtk.TreeView(self.store)
@@ -216,9 +222,7 @@ class Tasks_View_Widget():
         # notifications for tasks that have started before it is created
 
         self.start_monitoring()
-
-        for t in GPS.Task.list():
-            self.__task_changed(t)
+        self.refresh()
 
     def __destroy(self, widget):
         if self.timeout:
@@ -236,27 +240,33 @@ class Tasks_View_Widget():
         if iter:
             self.store.remove(iter)
 
+    def __show_task(self, task):
+        """
+        Whether the given task should be displayed
+        """
+        return task.visible and \
+            (not self.hide_nonblocking or task.block_exit())
+
     def __task_changed(self, task):
         """
         Add one task to the tree view.
         :param task: a GPS.Task.
         """
-        if task.visible:
-            iter = self.__iter_from_task(task)
-            if not iter:
-                iter = self.store.append()
-            self.__update_row(iter, task)
+        iter = self.__iter_from_task(task)
+        if not iter:
+            iter = self.store.append()
+        self.__update_row(iter, task)
 
     def refresh(self):
         """ Refresh the view """
         # First refresh the status of all tasks
 
-        task_ids = []
-        tasks = GPS.Task.list()
+        task_ids = set()
 
-        for t in tasks:
-            self.__task_changed(t)
-            task_ids.append(str(id(t)))
+        for t in GPS.Task.list():
+            if self.__show_task(t):
+                self.__task_changed(t)
+                task_ids.add(str(id(t)))
 
         # And then remove tasks that are shown that are no longer running
 
@@ -271,7 +281,7 @@ class Tasks_View_Widget():
                 iter = self.store.iter_next(iter)
 
         # Stop monitoring if there are no tasks left
-        if not tasks:
+        if len(task_ids) == 0:
             self.timeout = None
             if self.on_empty:
                 self.on_empty()
@@ -377,7 +387,7 @@ class Tasks_View(Module):
         l.set_alignment(0.0, 0.0)
         d.get_content_area().pack_start(l, False, False, 10)
 
-        t = Tasks_View_Widget()
+        t = Tasks_View_Widget(hide_nonblocking=True)
         d.get_content_area().pack_start(t.box, True, True, 3)
 
         # If the list of tasks becomes empty, assume the user has clicked Quit
