@@ -25,11 +25,15 @@ with GNATCOLL.Traces;            use GNATCOLL.Traces;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
 
 package body GPS.Properties is
+
    Me : constant Trace_Handle := Create ("PROPERTIES");
 
    use Properties_Hash.String_Hash_Table;
 
-   Current_Extractor : Property_Extractor_Proc;
+   Current_Writer   : Writer;
+
+   Languages_Loaded : Boolean := False;
+   --  Have languages been loaded
 
    procedure Get_Resource_Property
      (Property : out Property_Record'Class;
@@ -133,6 +137,8 @@ package body GPS.Properties is
    is
       Data : constant String := Value.Get ("value");
    begin
+      Free (Property.Value);
+
       if Data /= "" then
          Property.Value := new String'(Data);
       end if;
@@ -189,17 +195,65 @@ package body GPS.Properties is
    is
       Descr : Property_Description_Access;
 
-   begin
-      Descr := Get (All_Properties, Key & Sep & Name);
+      procedure Append
+        (Key      : String;
+         Property : Property_Record'Class;
+         Found    : Boolean);
+      --  Append the property to the registry
 
-      if Descr = null then
-         --  Getting property the first time
-         Current_Extractor (Key, Name, Property, Found);
+      procedure Process (Key : String; Property : Property_Record'Class);
+      --  Process language for file
+
+      ------------
+      -- Append --
+      ------------
+
+      procedure Append
+        (Key      : String;
+         Property : Property_Record'Class;
+         Found    : Boolean) is
+      begin
          Descr := new Property_Description;
+
          if Found then
             Descr.Value := new Property_Record'Class'(Property);
          end if;
+
          Set (All_Properties, Key & Sep & Name, Descr);
+      end Append;
+
+      -------------
+      -- Process --
+      -------------
+
+      procedure Process (Key : String; Property : Property_Record'Class) is
+      begin
+         Append (Key, Property, True);
+      end Process;
+
+   begin
+      if not Languages_Loaded
+        and then Name = "language"
+      then
+         declare
+            P : String_Property;
+         begin
+            Current_Writer.Get_Values (Name, P, Process'Access);
+            Languages_Loaded := True;
+         end;
+      end if;
+
+      Descr := Get (All_Properties, Key & Sep & Name);
+
+      if Descr = null then
+         if Name = "language" then
+            Found := False;
+            return;
+         end if;
+
+         --  Getting property the first time
+         Current_Writer.Get_Value (Key, Name, Property, Found);
+         Append (Key, Property, Found);
 
       else
          if Descr.Value = null then
@@ -278,14 +332,14 @@ package body GPS.Properties is
       Get_Property (Property, To_String (Project), Name, Found);
    end Get_Property;
 
-   -------------------
-   -- Set_Extractor --
-   -------------------
+   ----------------
+   -- Set_Writer --
+   ----------------
 
-   procedure Set_Extractor (Extractor : Property_Extractor_Proc) is
+   procedure Set_Writer (Object : Writer) is
    begin
-      Current_Extractor := Extractor;
-   end Set_Extractor;
+      Current_Writer := Object;
+   end Set_Writer;
 
    -------------
    -- Restore --

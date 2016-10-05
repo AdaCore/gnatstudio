@@ -79,6 +79,13 @@ package body GPS.Kernel.Properties is
       Property : out Property_Record'Class;
       Found    : out Boolean);
 
+   overriding procedure Get_Values
+     (Self     : not null access Dummy_Writer_Record;
+      Name     : String;
+      Property : in out Property_Record'Class;
+      Callback : access procedure
+        (Key : String; Property : Property_Record'Class)) is null;
+
    overriding procedure Insert
      (Self     : not null access Dummy_Writer_Record;
       Key      : String;
@@ -115,6 +122,13 @@ package body GPS.Kernel.Properties is
          Name     : String;
          Property : out Property_Record'Class;
          Found    : out Boolean);
+
+      overriding procedure Get_Values
+        (Self     : not null access SQLite_Writer_Record;
+         Name     : String;
+         Property : in out Property_Record'Class;
+         Callback : access procedure
+           (Key : String; Property : Property_Record'Class));
 
       overriding procedure Insert
         (Self     : not null access SQLite_Writer_Record;
@@ -177,6 +191,12 @@ package body GPS.Kernel.Properties is
          Property_Id  : Integer);
       --  Delete unused Property and Resource
 
+      function Get_Id
+        (Self  : not null access SQLite_Writer_Record;
+         Query : Prepared_Statement;
+         Name  : String)
+         return Integer;
+
       procedure Get_Ids
         (Self         : not null access SQLite_Writer_Record;
          Key          : String;
@@ -204,8 +224,9 @@ package body GPS.Kernel.Properties is
    -- Open_Persistent_Properties_DB --
    -----------------------------------
 
-   procedure Open_Persistent_Properties_DB
+   function Open_Persistent_Properties_DB
      (Kernel : access Kernel_Handle_Record'Class)
+     return GPS.Properties.Writer
    is
       Object : constant Writer := SQLite_Writer.Constructor (Kernel);
    begin
@@ -217,6 +238,8 @@ package body GPS.Kernel.Properties is
       if Current_Writer = null then
          Current_Writer := new Dummy_Writer_Record;
       end if;
+
+      return GPS.Properties.Writer (Current_Writer);
    end Open_Persistent_Properties_DB;
 
    ------------------------------------
@@ -264,19 +287,6 @@ package body GPS.Kernel.Properties is
          end if;
       end if;
    end Set_Resource_Property;
-
-   ----------------------
-   -- Extract_Property --
-   ----------------------
-
-   procedure Extract_Property
-     (Key      : String;
-      Name     : String;
-      Property : out Property_Record'Class;
-      Found    : out Boolean) is
-   begin
-      Current_Writer.Get_Value (Key, Name, Property, Found);
-   end Extract_Property;
 
    ------------------------------
    -- Remove_Resource_Property --
@@ -659,7 +669,9 @@ package body GPS.Kernel.Properties is
               From   => Resources,
               Where  => Resources.Name = Text_Param (1),
               Limit  => 1),
-           On_Server => True, Name => "get_resource_id");
+           On_Server => True,
+           Use_Cache => True,
+           Name      => "get_resource_id");
       --  Retrieve the id of resource
 
       Query_Insert_Resource : constant Prepared_Statement :=
@@ -684,7 +696,9 @@ package body GPS.Kernel.Properties is
               From   => Database.Properties,
               Where  => Database.Properties.Name = Text_Param (1),
               Limit  => 1),
-           On_Server => True, Name => "get_property_id");
+           On_Server => True,
+           Use_Cache => True,
+           Name      => "get_property_id");
       --  Retrieve the id of resource
 
       Query_Insert_Property : constant Prepared_Statement :=
@@ -738,8 +752,21 @@ package body GPS.Kernel.Properties is
               From => Items,
               Where => Items.Resource = Integer_Param (1)
               and Items.Property = Integer_Param (2)),
-           On_Server => True, Name => "get_item");
+           On_Server => True,
+           Use_Cache => True,
+           Name      => "get_item");
       --  Retrive value
+
+      Query_Get_Values : constant Prepared_Statement :=
+        Prepare
+          (SQL_Select
+             ((Items.Resource & Items.Item),
+              From => Items,
+              Where => Items.Property = Integer_Param (1)),
+           On_Server => True,
+           Use_Cache => True,
+           Name      => "get_items");
+      --  Retrive values
 
       Query_Update_Value : constant Prepared_Statement :=
         Prepare
@@ -1052,6 +1079,27 @@ package body GPS.Kernel.Properties is
          when E : others => Trace (Me, E);
       end Finalize;
 
+      ------------
+      -- Get_Id --
+      ------------
+
+      function Get_Id
+        (Self  : not null access SQLite_Writer_Record;
+         Query : Prepared_Statement;
+         Name  : String)
+         return Integer
+      is
+         Cursor : Forward_Cursor;
+      begin
+         Cursor.Fetch (Self.Connection, Query, Params => (1 => +Name));
+
+         if Cursor.Has_Row then
+            return Cursor.Integer_Value (0);
+         else
+            return -1;
+         end if;
+      end Get_Id;
+
       -------------
       -- Get_Ids --
       -------------
@@ -1061,36 +1109,10 @@ package body GPS.Kernel.Properties is
          Key          : String;
          Name         : String;
          Resource_Id  : out Integer;
-         Property_Id  : out Integer)
-      is
-         function Get
-           (Query : Prepared_Statement;
-            Name  : String)
-            return Integer;
-
-         ------------
-         -- Get_Id --
-         ------------
-
-         function Get
-           (Query : Prepared_Statement;
-            Name  : String)
-            return Integer
-         is
-            Cursor : Forward_Cursor;
-         begin
-            Cursor.Fetch (Self.Connection, Query, Params => (1 => +Name));
-
-            if Cursor.Has_Row then
-               return Cursor.Integer_Value (0);
-            else
-               return -1;
-            end if;
-         end Get;
-
+         Property_Id  : out Integer) is
       begin
-         Resource_Id := Get (Query_Get_Resource_Id, Key);
-         Property_Id := Get (Query_Get_Property_Id, Name);
+         Resource_Id := Self.Get_Id (Query_Get_Resource_Id, Key);
+         Property_Id := Self.Get_Id (Query_Get_Property_Id, Name);
       end Get_Ids;
 
       ---------------
@@ -1126,11 +1148,45 @@ package body GPS.Kernel.Properties is
                2 => +Property_Id));
 
          if Cursor.Has_Row then
-
             Property.Restore (GNATCOLL.JSON.Read (Cursor.Value (0)), Found);
             Found := True;
          end if;
       end Get_Value;
+
+      ----------------
+      -- Get_Values --
+      ----------------
+
+      overriding procedure Get_Values
+        (Self     : not null access SQLite_Writer_Record;
+         Name     : String;
+         Property : in out Property_Record'Class;
+         Callback : access procedure
+           (Key : String; Property : Property_Record'Class))
+      is
+         Transaction : Transaction_Controller (Self.Connection);
+         Property_Id : constant Integer := Self.Get_Id
+           (Query_Get_Property_Id, Name);
+         Cursor      : Forward_Cursor;
+         Valid       : Boolean;
+      begin
+         if Property_Id = -1 then
+            return;
+         end if;
+
+         Cursor.Fetch
+           (Self.Connection,
+            Query_Get_Values,
+            Params => (1 => +Property_Id));
+
+         while Cursor.Has_Row loop
+            Property.Restore (GNATCOLL.JSON.Read (Cursor.Value (1)), Valid);
+            if Valid then
+               Callback (Cursor.Value (0), Property);
+            end if;
+            Cursor.Next;
+         end loop;
+      end Get_Values;
 
       ------------
       -- Remove --

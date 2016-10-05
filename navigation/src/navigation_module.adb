@@ -1330,15 +1330,15 @@ package body Navigation_Module is
         Kernel.Get_Abstract_Tree_For_File (File);
       Root   : constant Semantic_Node_Array'Class := Tree.Root_Nodes;
    begin
-      Unit_Name := No_Symbol;
+      Unit_Name       := No_Symbol;
       Unit_Visibility := Visibility_Private;
 
       for J in 1 .. Root.Length loop
          if Root.Get (J).Category in
            Cat_Package | Cat_Procedure | Cat_Function
          then
+            Unit_Name       := Root.Get (J).Name;
             Unit_Visibility := Root.Get (J).Visibility;
-            Unit_Name := Root.Get (J).Name;
             return;
          end if;
       end loop;
@@ -1385,8 +1385,8 @@ package body Navigation_Module is
             --  Otherwise, create the action now
 
             declare
-               Command : Open_File_Command_Access;
-               Name    : Symbol := No_Symbol;
+               Command    : Open_File_Command_Access;
+               Name       : Symbol := No_Symbol;
                Visibility : Construct_Visibility;
             begin
                Extract_Unit_Info (Kernel, File, Name, Visibility);

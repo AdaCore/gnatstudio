@@ -32,6 +32,8 @@
 --        Set_Property (File, "dummy", Prop, Persistent => True);
 --     end;
 
+with Ada.Finalization;
+
 with GNAT.Strings;
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;
@@ -212,18 +214,31 @@ package GPS.Properties is
    -- Internal --
    --------------
    --  This is a registry mechanism to avoid circular dependency.
-   --  Set_Extractor needs to be called before doing any of the operations
-   --  that require the extractor to be set. Kernel makes this setup on startup
+   --  Set_Writer needs to be called before doing any of the operations
+   --  that require the writer to be set. Kernel makes this setup on startup
 
-   type Property_Extractor_Proc is access procedure
-     (Key      : String;
+   type Writer_Record is
+     abstract new Ada.Finalization.Controlled with null record;
+   type Writer is access all Writer_Record'Class;
+   --  Base class to manage properties database
+
+   procedure Get_Value
+     (Self     : not null access Writer_Record;
+      Key      : String;
       Name     : String;
       Property : out Property_Record'Class;
-      Found    : out Boolean);
-   --  Callback to extract the property from storage.
+      Found    : out Boolean) is abstract;
 
-   procedure Set_Extractor (Extractor : Property_Extractor_Proc);
-   --  Set current extractor. Used internally by kernel.
+   procedure Get_Values
+     (Self     : not null access Writer_Record;
+      Name     : String;
+      Property : in out Property_Record'Class;
+      Callback : access procedure
+        (Key : String; Property : Property_Record'Class))
+   is abstract;
+
+   procedure Set_Writer (Object : Writer);
+   --  Set current writer. Used internally by kernel.
 
 private
 

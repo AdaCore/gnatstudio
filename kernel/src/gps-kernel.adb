@@ -399,8 +399,7 @@ package body GPS.Kernel is
             Create_From_Dir (Handle.Home_Dir, "histories.xml"));
       Set_Max_Length (Handle.History.all, History_Max_Length);
 
-      Open_Persistent_Properties_DB (Handle);
-      GPS.Properties.Set_Extractor (Extract_Property'Access);
+      GPS.Properties.Set_Writer (Open_Persistent_Properties_DB (Handle));
 
       Create_Clipboard (Handle);
 

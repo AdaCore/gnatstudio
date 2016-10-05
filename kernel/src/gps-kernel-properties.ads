@@ -33,9 +33,7 @@
 --     end;
 
 with GNATCOLL.Projects;
-with GPS.Properties; use GPS.Properties;
-
-private with Ada.Finalization;
+with GPS.Properties;     use GPS.Properties;
 
 package GPS.Kernel.Properties is
 
@@ -122,8 +120,9 @@ package GPS.Kernel.Properties is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Close DB. This subprogram should only be called by the kernel itself.
 
-   procedure Open_Persistent_Properties_DB
-     (Kernel : access Kernel_Handle_Record'Class);
+   function Open_Persistent_Properties_DB
+     (Kernel : access Kernel_Handle_Record'Class)
+     return Writer;
    --  Open DB. This subprogram should only be called by the kernel itself.
 
    procedure Reset_Properties
@@ -140,17 +139,6 @@ package GPS.Kernel.Properties is
      (Kernel : access Kernel_Handle_Record'Class);
    --  Register the script commands associated with this module
 
-   ----------------------
-   -- Extract_Property --
-   ----------------------
-
-   procedure Extract_Property
-     (Key      : String;
-      Name     : String;
-      Property : out Property_Record'Class;
-      Found    : out Boolean);
-   --  Extract property from database. Used internally by kernel.
-
 private
 
    -----------------
@@ -158,16 +146,8 @@ private
    -----------------
 
    type Writer_Record is
-     abstract new Ada.Finalization.Controlled with null record;
+     abstract new GPS.Properties.Writer_Record with null record;
    type Writer is access all Writer_Record'Class;
-   --  Base class to manage database
-
-   procedure Get_Value
-     (Self     : not null access Writer_Record;
-      Key      : String;
-      Name     : String;
-      Property : out Property_Record'Class;
-      Found    : out Boolean) is abstract;
 
    procedure Insert
      (Self     : not null access Writer_Record;
