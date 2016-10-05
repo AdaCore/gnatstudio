@@ -78,6 +78,10 @@ ifeq ($(OS),Windows_NT)
 	$(MV) share/plug-ins/_subversion_ share/plug-ins/subversion.py
 	$(RM) share/plug-ins/subversion_native_windows.py
 endif
+
+# Regenerate predefined_ada.xml before we install it
+	-${PYTHON} design/scripts/update_predefined_ada.py
+
 	(cd share; tar cf - plug-ins/spark/*.py) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - plug-ins/images/*.png) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - library/*.py) | (cd $(sharedir)/gps; tar xf -)
