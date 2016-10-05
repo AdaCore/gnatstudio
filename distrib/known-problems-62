@@ -37,6 +37,14 @@ KP-62-P928-013 GPS: Mismatch between GNATcoverage and GPS coverage percentages
 
   Workaround: None.
 
+KP-62-P923-022 GPS: 'NoneType' object has no attribute 'get_child'
+
+  Problem:    GPS very seldom writes this kind of error in Messages view.
+
+  Status:     This was fixed in 17.0 on 2016-09-26
+
+  Workaround: Just ignore the error.
+
 KP-62-P919-017 GB: GNAT project menus not working on linked GPR files.
 
   Problem:    Nothing occurs when running any sub-menu of "GNAT Project"
