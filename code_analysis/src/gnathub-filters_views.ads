@@ -18,7 +18,6 @@
 --  This package contains a view which allow to select criterias for
 --  filtering GNATHub messages.
 
-with GPS.Kernel;
 with GNAThub.Module;
 
 package GNAThub.Filters_Views is
@@ -31,5 +30,9 @@ package GNAThub.Filters_Views is
    procedure Close_View
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Close the filter's view
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
+   --  Registers module.
 
 end GNAThub.Filters_Views;

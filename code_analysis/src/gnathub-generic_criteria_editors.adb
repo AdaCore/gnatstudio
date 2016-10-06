@@ -173,6 +173,24 @@ package body GNAThub.Generic_Criteria_Editors is
       Initialize (Editor, Kernel, View, Title, History_Prefix, Items, Default);
    end Gtk_New;
 
+   ---------------
+   -- Highlight --
+   ---------------
+
+   procedure Highlight
+     (Self : access Criteria_Editor_Record'Class;
+      Item : Item_Access)
+   is
+      Path : Gtk.Tree_Model.Gtk_Tree_Path := Self.Model.Get_Path (Item);
+   begin
+      if Is_Visible /= null then
+         Path := Self.Filter.Convert_Child_Path_To_Path (Path);
+      end if;
+
+      Self.View.Get_Selection.Select_Path (Path);
+      Gtk.Tree_Model.Path_Free (Path);
+   end Highlight;
+
    ----------------
    -- Initialize --
    ----------------

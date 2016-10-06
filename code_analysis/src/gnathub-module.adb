@@ -335,6 +335,8 @@ package body GNAThub.Module is
       Kernel.Get_Messages_Container.Register_Filter
         (GPS.Kernel.Messages.Message_Filter_Access (Module.Filter));
       GPS.Kernel.Hooks.Project_Changed_Hook.Add (new On_Project_Changed);
+
+      GNAThub.Filters_Views.Register_Module (Kernel);
    end Register_Module;
 
 end GNAThub.Module;

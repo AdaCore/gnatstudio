@@ -38,6 +38,8 @@ with GNAThub.Module;                   use GNAThub.Module;
 
 with GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;
+with GPS.Kernel.Search;
+with GPS.Search.GUI;
 
 package body GNAThub.Filters_Views is
 
@@ -237,6 +239,79 @@ package body GNAThub.Filters_Views is
       return Boolean;
 
    GNAThub_Module : GNAThub_Module_Id;
+
+   ---------------------
+   -- Search_Provider --
+   ---------------------
+
+   package Search_Provider is
+
+      type Provider is abstract
+        new GPS.Kernel.Search.Kernel_Search_Provider with private;
+
+      overriding procedure Free (Self : in out Provider);
+      procedure Copy_Pattern
+        (Self    : not null access Provider;
+         Pattern : not null access GPS.Search.Search_Pattern'Class);
+
+      type Severities_Provider is new Provider with private;
+      overriding procedure Set_Pattern
+        (Self    : not null access Severities_Provider;
+         Pattern : not null access GPS.Search.Search_Pattern'Class;
+         Limit   : Natural := Natural'Last);
+      overriding procedure Next
+        (Self     : not null access Severities_Provider;
+         Result   : out GPS.Search.Search_Result_Access;
+         Has_Next : out Boolean);
+      overriding function Display_Name
+        (Self : not null access Severities_Provider) return String
+      is ("GNATHub severities");
+      overriding function Documentation
+        (Self : not null access Severities_Provider) return String
+      is ("Search for severeties in the GNATHub's filters");
+
+      type Rules_Provider is new Provider with private;
+      overriding procedure Set_Pattern
+        (Self    : not null access Rules_Provider;
+         Pattern : not null access GPS.Search.Search_Pattern'Class;
+         Limit   : Natural := Natural'Last);
+      overriding procedure Next
+        (Self     : not null access Rules_Provider;
+         Result   : out GPS.Search.Search_Result_Access;
+         Has_Next : out Boolean);
+      overriding function Display_Name
+        (Self : not null access Rules_Provider) return String
+      is ("GNATHub rules");
+      overriding function Documentation
+        (Self : not null access Rules_Provider) return String
+      is ("Search for rules in the GNATHub's filters");
+
+   private
+
+      -- Provider --
+      type Provider is abstract new GPS.Kernel.Search.Kernel_Search_Provider
+      with record
+         Pattern : GPS.Search.Search_Pattern_Access;
+         --  Current pattern, do not free.
+
+         Pattern_Needs_Free : Boolean := False;
+         --  True if Pattern has been allocated by the provider,
+         --  False otherwise.
+      end record;
+
+      -- Severities_Provider --
+      type Severities_Provider is new Provider with record
+         Cursor : GNAThub.Severities_Ordered_Sets.Cursor;
+      end record;
+
+      -- Rules_Provider --
+      type Rules_Provider is new Provider with record
+         Cursor : GNAThub.Rule_Sets.Cursor;
+      end record;
+
+   end Search_Provider;
+
+   package body Search_Provider is separate;
 
    -------------------
    -- Apply_Filters --
@@ -611,9 +686,9 @@ package body GNAThub.Filters_Views is
       return Boolean
    is
       C       : Severity_Natural_Maps.Cursor := Item.Count.First;
-      Filters : constant Views.View_Access := Views.View_Access (View);
+      Filters : constant Views.View_Access   := Views.View_Access (View);
    begin
-      if Is_Selected (Item.Tool, Views.View_Access (View)) then
+      if Is_Selected (Item.Tool, Filters) then
          while Severity_Natural_Maps.Has_Element (C) loop
             if Severity_Natural_Maps.Element (C) > 0
               and then Is_Selected
@@ -990,9 +1065,26 @@ package body GNAThub.Filters_Views is
    is
       View : Views.View_Access;
       pragma Unreferenced (View);
+
    begin
       GNAThub_Module := GNAThub_Module_Id (Module);
       View := Views.Get_Or_Create_View (Kernel);
    end Open_View;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      P : GPS.Kernel.Search.Kernel_Search_Provider_Access;
+
+   begin
+      P := new Search_Provider.Severities_Provider;
+      GPS.Search.GUI.Register_Provider_And_Action (Kernel, P);
+      P := new Search_Provider.Rules_Provider;
+      GPS.Search.GUI.Register_Provider_And_Action (Kernel, P);
+   end Register_Module;
 
 end GNAThub.Filters_Views;

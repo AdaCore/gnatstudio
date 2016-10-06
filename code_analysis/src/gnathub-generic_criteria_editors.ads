@@ -112,6 +112,11 @@ package GNAThub.Generic_Criteria_Editors is
       return Item_Access;
    --  Return Item by Path
 
+   procedure Highlight
+     (Self : access Criteria_Editor_Record'Class;
+      Item : Item_Access);
+   --  Hightlight item
+
    Signal_Criteria_Changed : constant Glib.Signal_Name;
    --  This signal emitted by the editor in the case of the criteria change
 

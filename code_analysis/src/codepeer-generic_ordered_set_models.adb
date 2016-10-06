@@ -104,10 +104,22 @@ package body CodePeer.Generic_Ordered_Set_Models is
      (Self : access Ordered_Set_Model_Record;
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Gtk.Tree_Model.Gtk_Tree_Path
    is
+   begin
+      return Self.Get_Path (Self.Item_At (Iter));
+   end Get_Path;
+
+   --------------
+   -- Get_Path --
+   --------------
+
+   function Get_Path
+     (Self : access Ordered_Set_Model_Record;
+      Item : Item_Access)
+      return Gtk.Tree_Model.Gtk_Tree_Path
+   is
       Result  : Gtk.Tree_Model.Gtk_Tree_Path;
       Index   : Natural := 0;
-      Current : Item_Sets.Cursor := Self.Items.Find (Self.Item_At (Iter));
-
+      Current : Item_Sets.Cursor := Self.Items.Find (Item);
    begin
       Gtk.Tree_Model.Gtk_New (Result);
       Current := Item_Sets.Previous (Current);

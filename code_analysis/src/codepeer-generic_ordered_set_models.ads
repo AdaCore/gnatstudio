@@ -55,6 +55,12 @@ package CodePeer.Generic_Ordered_Set_Models is
       Item : Item_Access);
    --  Emit "row_changed" signal
 
+   function Get_Path
+     (Self : access Ordered_Set_Model_Record;
+      Item : Item_Access)
+      return Gtk.Tree_Model.Gtk_Tree_Path;
+   --  Return item's path. Path sould be released by caller.
+
    --  GtkTreeModel operations
 
    overriding function Get_Iter
