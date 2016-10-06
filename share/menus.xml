@@ -450,6 +450,7 @@
          <menu label='Gprbuild'/>
          <menu label='XMLAda'/>
          <menu label='Python'/>
+         <menu label='SPARK'/>
          <menu label='A_bout'       action='about gps'/>
       </menu>
    </menubar>
