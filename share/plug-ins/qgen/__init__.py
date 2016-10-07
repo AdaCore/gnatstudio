@@ -593,74 +593,25 @@ class CLI(GPS.Process):
             GPS.Debugger.spawn(exe)
 
     @staticmethod
-    def log_values_in_file(diagrams, filename):
+    def delete_logfile_dialog(filename):
         """
-        This function retrieves all the values from the signals (items
-        with an 'auto' property) and stores them in the given logfile
-        in the output directory of the project.
-        :param diagrams: a list of QGEN_Diagram to look into
-        :param filename: the name of the logfile to write in
+        Spawns a dialog if the file named filename exists
+        and returns whether the file exists or not anymore
         """
-        ctxt = GPS.current_context()
-        with open(os.path.join(project_support.get_output_dir(
-                ctxt.file()), filename + '.html'), 'w+') as f:
-            # The output file contains an html table
-            # where each block is associated with its value
-            f.write("""<!DOCTYPE html>
-            <!--For the links to work this file has to be opened inside\
-the Matlab browser-->
-            <html>
-            <head>
-            <style>
-            table, td, th {
-            border: 1px solid #ddd;
-            }
-            table {
-            border-collapse: collapse;
-            width: 100%;
-            }
-            th, td {
-            text-align: left;
-            padding: 8px;
-            }
-            tr:nth-child(even){background-color: #f2f2f2}
-            th {
-            background-color: #ff9933;
-            color: black;
-            }
-            </style>
-            </head>
-            <body>
-            <table>
-            <thead>
-            <tr>
-            <th>Block</th>
-            <th>Value</th>
-            </tr>
-            </thead>
-            <tbody>""")
-            for diag, toplevel, it in QGEN_Module.forall_auto_items(diagrams):
-                if it.text == "":
-                    continue
-                parent = it.get_parent_with_id() or toplevel
-                # We remove the last part of the id because it has no meaning
-                # in the simulink diagram
-                # The block name is added as a matlab link to highlight it
-                # in the model
-                parent_name = parent.id.rsplit('/', 1)[0]
-                f.write("""<tr>
-                <td><a href="matlab:open_system('%s');\
-hilite_system('%s')">%s</a></td>
-                <td>%s</td>
-                </tr>
-                """ % (ctxt.file(), parent_name,  parent_name, it.text))
-            f.write("""</tbody>
-            </table>
-            </body>
-            </html>""")
-            GPS.Console().write(
-                "Logfile successfully written in %s, open it in the Matlab"
-                " web browser.\n" % f.name)
+        # Ask if we need to overwrite the file if this is the
+        # first signal to log
+        if not QGEN_Module.logged_signal and os.path.exists(filename):
+            res = GPS.MDI.yes_no_dialog(
+                "%s already exists, do you want to delete it?" % filename)
+            if res:
+                GPS.Console().write(
+                    "Logfile will be written in %s, open it in the Matlab"
+                    " web browser.\n" % filename)
+                os.remove(filename)
+            else:
+                return False
+
+        return True
 
     @staticmethod
     def log_subsystem_values():
@@ -672,25 +623,20 @@ hilite_system('%s')">%s</a></td>
         viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
 
         if viewer:
-            GPS.CommandWindow(prompt='Please enter the logfile name:',
-                              on_activate=lambda filename:
-                              CLI.log_values_in_file(
-                                  [viewer.diagram], filename))
+            v = GPS.MDI.input_dialog("Log current subsystem signals in",
+                                     "filename")
+            if v:
+                QGEN_Module.log_values_in_file([viewer.diagram], v[0])
 
     @staticmethod
-    def log_model_values():
+    def stop_logging_subsystem_values():
         """
-        Logs all values for signals of the model in relation to their
-        containing variables in an html file that should be
-        opened in the Matlab browser in order to have working links.
+        Stop logging values for signals of the current subsystem
         """
         viewer = QGEN_Diagram_Viewer.retrieve_active_qgen_viewer()
 
         if viewer:
-            GPS.CommandWindow(prompt='Please enter the logfile name:',
-                              on_activate=lambda filename:
-                              CLI.log_values_in_file(
-                                  viewer.diags.diagrams, filename))
+            QGEN_Module.stop_logging_values([viewer.diagram])
 
     @staticmethod
     def action_goto_previous_subsystem():
@@ -958,10 +904,11 @@ class Mapping_File(object):
         #   - `linerange`: a tuple (start, end)
         #   - `filename`: a string
 
-        self._blocks = {}   # block_id => set of (file,linerange)
-        self._files = {}    # filename => {line => blockid}
-        self._mdl = {}      # sourcefile => mdlfile
-        self._symbols = {}  # block_id => set(symbols)
+        self._blocks = {}    # block_id => set of (file,linerange)
+        self._files = {}     # filename => {line => blockid}
+        self._mdl = {}       # sourcefile => mdlfile
+        self._symbols = {}   # block_id => set(symbols)
+        self._funcinfo = {}  # funcname => (filename, endline)
 
     def load(self, mdlfile):
         """
@@ -993,6 +940,11 @@ class Mapping_File(object):
             b = self._files.setdefault(f.path, {})
 
             for blockid, blockinfo in blocks.iteritems():
+                if blockid == '@qgen_functions':
+                    for func_id, funcline in blockinfo.iteritems():
+                        self._funcinfo[func_id] = (filename, funcline)
+                    continue
+
                 a = self._blocks.setdefault(blockid, set())
                 for linerange in blockinfo.get('lines', []):
                     if isinstance(linerange, int):
@@ -1024,6 +976,12 @@ class Mapping_File(object):
         Returns the set of source code symbols (variables) for this block.
         """
         return self._symbols.get(blockid, set())
+
+    def get_end_of_func(self, funcname):
+        """
+        Returns the file and line where the function named funcname end
+        """
+        return self._funcinfo.get(funcname, (None, None))
 
     def get_block(self, file, line):
         """
@@ -1074,6 +1032,7 @@ else:
         # pair (id, status) for signals, if status is false
         # the signal is no longer watched and has to be reset
         watched_signal = set()
+        logged_signal = set()
         previous_breakpoints = []
         debugger = None
 
@@ -1102,6 +1061,10 @@ else:
                 QGEN_Module.watched_signal.remove((id, st))
                 QGEN_Module.watched_signal.add((id, False))
 
+            for id, st in QGEN_Module.logged_signal:
+                QGEN_Module.logged_signal.remove((id, st))
+                QGEN_Module.logged_signal.add((id, False))
+
             for viewer in QGEN_Diagram_Viewer.retrieve_qgen_viewers():
                 for diag in viewer.diags.diagrams:
                     diag.clear_selection()
@@ -1110,6 +1073,7 @@ else:
             QGEN_Module.previous_breakpoints = debugger.breakpoints
 
             QGEN_Module.watched_signal.clear()
+            QGEN_Module.logged_signal.clear()
             del QGEN_Module.previous_breakpoints[:]
 
         @staticmethod
@@ -1305,10 +1269,37 @@ else:
                 if item:
                     label = getattr(item, "label", None)
                     if st:
-                        viewer.diags.set_item_style(
-                            label, label.data.get('style_if_watchpoint'))
+                        if (itid, st) in QGEN_Module.logged_signal:
+                            viewer.diags.set_item_style(
+                                label, label.data.get(
+                                    'style_if_watchpoint_logpoint'))
+                        else:
+                            viewer.diags.set_item_style(
+                                label, label.data.get('style_if_watchpoint'))
+                            if (itid, False) in QGEN_Module.logged_signal:
+                                QGEN_Module.logged_signal.remove((itid, False))
                     else:
                         viewer.diags.set_item_style(label, None)
+
+            # We already treated signals that are also watchpoints
+            # so we call the difference between the two sets
+            for (itid, st) in QGEN_Module.logged_signal.difference(
+                    QGEN_Module.watched_signal):
+                item = diag.get_item(itid)
+                if item:
+                    label = getattr(item, "label", None)
+                    if st:
+                        viewer.diags.set_item_style(
+                            label, label.data.get('style_if_logpoint'))
+                    else:
+                        viewer.diags.set_item_style(label, None)
+
+            # Remove False elements from the lists
+            QGEN_Module.watched_signal = set(filter(
+                lambda x: x[1], QGEN_Module.watched_signal))
+
+            QGEN_Module.logged_signal = set(filter(
+                lambda x: x[1], QGEN_Module.logged_signal))
 
             # The clear method will reset the breakpoints after all the
             # diagrams have been processed
@@ -1335,6 +1326,81 @@ else:
         def __on_debugger_location_changed(debugger):
             debugger.send("qgen_breakpoint_action", output=False)
             QGEN_Module.__show_diagram_and_signal_values(debugger)
+
+        @staticmethod
+        def log_values_from_item(itid, filename, model_filename, debug):
+            """
+            Logs all symbols for the signal 'itid' in 'filename' by registering
+            it in the debugger 'debug'
+            """
+            for s in QGEN_Module.modeling_map.get_symbols(blockid=itid):
+                symbol = s.split('/')
+                context = symbol[0]
+                symbol = symbol[-1].strip()
+                src_file, line = QGEN_Module.modeling_map.get_end_of_func(
+                    context)
+
+                debug.send("qgen_logpoint %s %s '%s' %s '%s:%s' %s" % (
+                    symbol, context, itid, filename, src_file, line,
+                    model_filename), output=False)
+            QGEN_Module.logged_signal.add((itid, True))
+
+        @staticmethod
+        def stop_logging_value_for_item(itid, debug):
+            """
+            Removes the symbols for the signal 'itid' from the list of logged
+            signals and updates this information in the debugger 'debug'
+            """
+
+            for s in QGEN_Module.modeling_map.get_symbols(blockid=itid):
+                symbol = s.split('/')
+                context = symbol[0]
+                symbol = symbol[-1].strip()
+                debug.send("qgen_delete_logpoint %s %s" % (symbol, context),
+                           output=False)
+            QGEN_Module.logged_signal.remove((itid, True))
+            QGEN_Module.logged_signal.add((itid, False))
+
+        @staticmethod
+        def stop_logging_values(diagrams):
+            """
+            Stop logging all signal values in the given diagrams
+            """
+            ctxt = GPS.current_context()
+            debug = GPS.Debugger.get()
+
+            for diag, toplevel, it in QGEN_Module.forall_auto_items(diagrams):
+                parent = it.get_parent_with_id() or toplevel
+                if (parent.id, True) in QGEN_Module.logged_signal:
+                    QGEN_Module.stop_logging_value_for_item(parent.id, debug)
+
+            QGEN_Module.__show_diagram_and_signal_values(debug,
+                                                         force=True)
+
+        @staticmethod
+        def log_values_in_file(diagrams, filename):
+            """
+            This function retrieves all the values from the signals (items
+            with an 'auto' property), adds them to the list of logged
+            signal and forwards that information to gdb that will do the
+            logging
+            :param diagrams: a list of QGEN_Diagram to look into
+            :param filename: the name of the logfile to write in
+            """
+            ctxt = GPS.current_context()
+            debug = GPS.Debugger.get()
+            filename = os.path.join(project_support.get_output_dir(
+                ctxt.file()), filename + '.html')
+
+            if not CLI.delete_logfile_dialog(filename):
+                return
+
+            for diag, toplevel, it in QGEN_Module.forall_auto_items(diagrams):
+                parent = it.get_parent_with_id() or toplevel
+                QGEN_Module.log_values_from_item(parent.id, filename,
+                                                 ctxt.file(), debug)
+            QGEN_Module.__show_diagram_and_signal_values(debug,
+                                                         force=True)
 
         @staticmethod
         def __load_debug_script(debugger):
@@ -1503,6 +1569,31 @@ else:
             except:
                 return False
 
+        def __contextual_filter_debug_and_logpoint(self, context):
+            """
+            Whether the current context is a logged signal.
+            The debugger must have been started too.
+            """
+
+            try:
+                d = GPS.Debugger.get()   # or raise exception
+                it = context.modeling_item
+
+                return (it.id, True) in QGEN_Module.logged_signal
+            except:
+                return False
+
+        def __contextual_filter_debugger_active(self, context):
+            """
+            Whether the debugger has started or not.
+            """
+
+            try:
+                d = GPS.Debugger.get()   # or raise exception
+                return True
+            except:
+                return False
+
         def __contextual_filter_viewer_active(self, context):
             try:
                 return QGEN_Diagram_Viewer.retrieve_active_qgen_viewer() \
@@ -1550,6 +1641,37 @@ else:
 
             if added:
                 QGEN_Module.__show_diagram_and_signal_values(debug, force=True)
+
+        def __contextual_log_signal_value(self):
+            """
+            Adds the selected signal to the lists of logged signals
+            and forwards that information to gdb
+            """
+            ctx = GPS.contextual_context() or GPS.current_context()
+            it = ctx.modeling_item
+            debug = GPS.Debugger.get()
+
+            v = GPS.MDI.input_dialog("Log signal %s in" % it.id, "filename")
+
+            if v:
+                filename = os.path.join(project_support.get_output_dir(
+                    ctx.file()), v[0] + '.html')
+                if not CLI.delete_logfile_dialog(filename):
+                    return
+
+                QGEN_Module.log_values_from_item(
+                    it.id, filename, ctx.file(), debug)
+
+                QGEN_Module.__show_diagram_and_signal_values(debug,
+                                                             force=True)
+
+        def __contextual_disable_log_signal_value(self):
+            ctx = GPS.contextual_context() or GPS.current_context()
+            it = ctx.modeling_item
+            debug = GPS.Debugger.get()
+
+            QGEN_Module.stop_logging_value_for_item(it.id, debug)
+            QGEN_Module.__show_diagram_and_signal_values(debug, force=True)
 
         def __contextual_set_persistent_signal_value(self):
             ctx = GPS.contextual_context() or GPS.current_context()
@@ -1685,10 +1807,22 @@ else:
                 callback=self.__contextual_set_persistent_signal_value)
 
             gps_utils.make_interactive(
+                name='MDL log signal value',
+                contextual='Debug/Log this signal',
+                filter=self.__contextual_filter_debug_and_symbols,
+                callback=self.__contextual_log_signal_value)
+
+            gps_utils.make_interactive(
                 name='MDL disable persistent signal value',
                 contextual='Debug/Disable persistent value for signal',
                 filter=self.__contextual_filter_debug_and_watchpoint,
                 callback=self.__contextual_disable_persistent_signal_value)
+
+            gps_utils.make_interactive(
+                name='MDL disable log signal value',
+                contextual='Debug/Stop logging this signal',
+                filter=self.__contextual_filter_debug_and_logpoint,
+                callback=self.__contextual_disable_log_signal_value)
 
             gps_utils.make_interactive(
                 callback=CLI.action_goto_parent_subsystem,
@@ -1705,17 +1839,17 @@ else:
                 icon='gps-backward-symbolic')
 
             gps_utils.make_interactive(
-                callback=CLI.log_model_values,
-                name='Log model values',
+                callback=CLI.stop_logging_subsystem_values,
+                name='Stop logging subsystem values',
                 category='Browsers',
-                filter=self.__contextual_filter_viewer_active,
-                icon='gps-save-symbolic')
+                filter=self.__contextual_filter_debugger_active,
+                icon='gps-stop-save-symbolic')
 
             gps_utils.make_interactive(
                 callback=CLI.log_subsystem_values,
                 name='Log subsystem values',
                 category='Browsers',
-                filter=self.__contextual_filter_viewer_active,
+                filter=self.__contextual_filter_debugger_active,
                 icon='gps-save-symbolic')
 
             gps_utils.make_interactive(
