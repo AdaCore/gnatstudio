@@ -28,6 +28,7 @@ with Ada.Text_IO;               use Ada.Text_IO;
 with Interfaces.C;              use Interfaces.C;
 
 with GNAT.Command_Line;                use GNAT.Command_Line;
+with GNAT.Directory_Operations;        use GNAT.Directory_Operations;
 pragma Warnings (Off);
 with GNAT.Expect.TTY.Remote;           use GNAT.Expect.TTY.Remote;
 pragma Warnings (On);
@@ -944,6 +945,9 @@ procedure GPS.Main is
          GNATCOLL.Traces.Show_Configuration
            (Ada.Text_IO.Put_Line'Access);
          GPS_Command_Line.Do_Exit := True;
+
+      elsif Switch = "--pwd" then
+         GNAT.Directory_Operations.Change_Dir (ICS.Value (Value));
       end if;
 
       return 1;
@@ -1175,6 +1179,15 @@ procedure GPS.Main is
                          Description     => ICS.New_String
                            ("List all available debug streams"),
                          Arg_Description => ICS.Null_Ptr);
+      Opt_Pwd       : constant Glib.Option.GOption_Entry :=
+                        (Long_Name       => ICS.New_String ("pwd"),
+                         Short_Name      => To_Gchar (ASCII.NUL),
+                         Flags           => G_Option_Flag_Filename,
+                         Arg             => G_Option_Arg_Callback,
+                         Arg_Data        => On_Switch'Address,
+                         Description     => ICS.New_String
+                           ("Initial current directory"),
+                         Arg_Description => ICS.New_String ("PWD"));
 
       --  Config files
 
@@ -1238,6 +1251,7 @@ procedure GPS.Main is
                          Opt_Autoconf,
                          Opt_Configdb,
                          Opt_Remaining,
+                         Opt_Pwd,
                          Null_GOption_Entry);
 
       function Get_Gtk_Option_Group
