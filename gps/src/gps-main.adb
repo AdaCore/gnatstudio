@@ -948,6 +948,14 @@ procedure GPS.Main is
 
       elsif Switch = "--pwd" then
          GNAT.Directory_Operations.Change_Dir (ICS.Value (Value));
+
+      elsif Switch = "--path" then
+         declare
+            Current : String_Access := Getenv ("PATH");
+         begin
+            Setenv ("PATH", ICS.Value (Value) & Path_Separator & Current.all);
+            Free (Current);
+         end;
       end if;
 
       return 1;
@@ -1188,6 +1196,15 @@ procedure GPS.Main is
                          Description     => ICS.New_String
                            ("Initial current directory"),
                          Arg_Description => ICS.New_String ("PWD"));
+      Opt_Path      : constant Glib.Option.GOption_Entry :=
+                        (Long_Name       => ICS.New_String ("path"),
+                         Short_Name      => To_Gchar (ASCII.NUL),
+                         Flags           => G_Option_Flag_Filename,
+                         Arg             => G_Option_Arg_Callback,
+                         Arg_Data        => On_Switch'Address,
+                         Description     => ICS.New_String
+                           ("Prepend to PATH environment variable"),
+                         Arg_Description => ICS.New_String ("PATH"));
 
       --  Config files
 
@@ -1252,6 +1269,7 @@ procedure GPS.Main is
                          Opt_Configdb,
                          Opt_Remaining,
                          Opt_Pwd,
+                         Opt_Path,
                          Null_GOption_Entry);
 
       function Get_Gtk_Option_Group
