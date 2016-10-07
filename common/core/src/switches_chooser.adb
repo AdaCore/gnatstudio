@@ -976,7 +976,7 @@ package body Switches_Chooser is
                         Section       => To_String (S.Section),
                         Switch        => To_String (S.Switch),
                         Has_Parameter =>
-                          S.Typ = Switch_Field or else S.Typ = Switch_Spin);
+                          S.Typ in Switch_Field | Switch_Spin | Switch_Combo);
 
                      if S.Typ = Switch_Check
                        and then S.Switch_Unset /= Null_Unbounded_String
