@@ -920,7 +920,11 @@ package body Builder_Facility_Module is
       Shadow          : Boolean;
       Background      : Boolean)
    is
-      Console : Interactive_Console;
+      Console    : Interactive_Console;
+      Force_File : Virtual_File renames
+        Builder_Module_ID.Builder.Get_Last_Build.Force_File;
+      Unit_Part  : Unit_Parts;
+      Spec_File  : Virtual_File;
    begin
       if Clear_Console then
          Console := Get_Build_Console (Kernel, Shadow, Background, False);
@@ -932,12 +936,29 @@ package body Builder_Facility_Module is
 
       if Clear_Locations
         and then not Background
-      --  Do not remove previous results when compile one file
-      --  to save messages from other files
-        and then Builder_Module_ID.Builder.Get_Last_Build.Force_File = No_File
       then
-         Get_Messages_Container (Kernel).Remove_Category
-           (Category, Builder_Message_Flags);
+         if Force_File = No_File then
+            --  Do not remove previous results when compile one file
+            --  to save messages from other files
+            Get_Messages_Container (Kernel).Remove_Category
+              (Category, Builder_Message_Flags);
+
+         else
+            --  clear messages for spec file instead
+
+            Unit_Part := Kernel.Get_Project_Tree.Info (Force_File).Unit_Part;
+
+            if Unit_Part = Unit_Body
+              or else Unit_Part = Unit_Separate
+            then
+               Spec_File := Kernel.Get_Project_Tree.Other_File (Force_File);
+               if Spec_File /= No_File then
+                  Get_Messages_Container
+                    (Kernel).Remove_File
+                    (Category, Spec_File, Builder_Message_Flags);
+               end if;
+            end if;
+         end if;
       end if;
 
       Builder_Module_ID.Builder.Clear_Build_Output (Shadow, Background);
