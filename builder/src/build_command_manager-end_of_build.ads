@@ -40,6 +40,7 @@ package Build_Command_Manager.End_Of_Build is
    procedure Set
      (Self    : access Output_Parser_Fabric;
       Builder : Builder_Context);
+   --  ??? Missing comment
 
 private
 

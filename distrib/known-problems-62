@@ -25,6 +25,16 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 17.0 / GNATbench 17.0
 -------------------------------------------------
 
+KP-62-PA10-030 GPS: cannot execute new build targets
+
+  Problem:    If you create a new build target via /Build/Settings/Target, and
+              this target includes macros like "%F", then you cannot execute
+              them in GPS until it has been restarted.
+
+  Status:     This was fixed in 17.0 on 2016-010-10
+
+  Workaround: Restart GPS after creating the build target.
+
 KP-62-P928-013 GPS: Mismatch between GNATcoverage and GPS coverage percentages
 
   Problem:    Partially uncovered lines are not considered as uncovered when
