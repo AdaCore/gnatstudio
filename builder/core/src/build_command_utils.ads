@@ -142,17 +142,11 @@ package Build_Command_Utils is
      (Adapter : Abstract_Build_Command_Adapter)
         return Scenario_Variable_Array is abstract;
 
-   type Console_Message_Type is (Info, Error, Verbose);
-   --  We are dealing with 3 types of messages :
-   --   - Info for general information
-   --   - Error for signaling errors
-   --   - Verbose for detailed information
-
    procedure Console_Insert
      (Adapter : in out Abstract_Build_Command_Adapter;
       Text   : String;
       Add_LF : Boolean := True;
-      Mode   : Console_Message_Type := Info) is abstract;
+      Mode   : Message_Type := Info) is abstract;
 
    procedure Remove_Error_Builder_Message_From_File
      (Adapter : Abstract_Build_Command_Adapter;
@@ -209,16 +203,15 @@ package Build_Command_Utils is
    --  If Simulate is true, never fail on unknown parameters.
 
    procedure Initialize
-     (Adapter     : in out Abstract_Build_Command_Adapter'Class;
-      Kernel_Registry : Project_Registry_Access;
-      Scripts         : access Scripts_Repository_Record'Class := null;
-      Context_Project : Project_Type;
-      Context_Toolchains_Manager : Toolchain_Manager;
-      Context_File_Information : Virtual_File;
+     (Adapter                    : in out Abstract_Build_Command_Adapter'Class;
+      Kernel                     : not null access Core_Kernel_Record'Class;
+      Context_Project                 : Project_Type;
+      Context_Toolchains_Manager      : Toolchain_Manager;
+      Context_File_Information        : Virtual_File;
       Kernel_Macros_Special_Character : Character;
-      Trusted_Mode_Preference : Boolean;
-      Execute_Command_Preference : String;
-      Multi_Language_Builder : Multi_Language_Builder_Policy);
+      Trusted_Mode_Preference         : Boolean;
+      Execute_Command_Preference      : String;
+      Multi_Language_Builder          : Multi_Language_Builder_Policy);
    --  fills in one call all members handled by Abstract_Build_Command_Adapter
    --  getters.
 
@@ -387,7 +380,7 @@ package Build_Command_Utils is
 
    function Expand_Command_Line
      (Build_Registry   : Build_Config_Registry_Access;
-      Proj_Registry    : Project_Registry_Access;
+      Kernel           : not null access Core_Kernel_Record'Class;
       Proj_Type        : Project_Type;
       Toolchains       : Toolchain_Manager;
       Command_Line     : String;
@@ -406,9 +399,7 @@ package Build_Command_Utils is
 
 private
    type Abstract_Build_Command_Adapter is abstract tagged record
-
-      Kernel_Registry : Project_Registry_Access;
-      Scripts         : access Scripts_Repository_Record'Class;
+      Kernel          : access Core_Kernel_Record'Class;
 
       Context_Project : Project_Type;
       Context_Toolchains_Manager : Toolchain_Manager;

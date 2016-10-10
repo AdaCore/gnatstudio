@@ -58,8 +58,7 @@ package body Build_Command_Utils is
    end record;
    type Build_Command_Adapter_Access is access all Build_Command_Adapter;
 
-   overriding
-   function Get_Last_Main_For_Background_Target
+   overriding function Get_Last_Main_For_Background_Target
      (Adapter : Build_Command_Adapter;
       Target : Target_Access) return Virtual_File;
    --  Return the Main to use for building Target as a background build.
@@ -68,12 +67,10 @@ package body Build_Command_Utils is
    --  The full path to the target is returned.
    --  If the target is not found, "" is returned.
 
-   overriding
-   function Get_Background_Project_Full_Name
+   overriding function Get_Background_Project_Full_Name
      (Adapter : Build_Command_Adapter) return Filesystem_String;
 
-   overriding
-   function Substitute
+   overriding function Substitute
      (Adapter : Build_Command_Adapter;
       Param     : String;
       Quoted    : Boolean;
@@ -82,26 +79,22 @@ package body Build_Command_Utils is
       For_Shell : Boolean := False) return String;
    --  Wrapper around GPS.Kernel.Macros.Substitute
 
-   overriding
-   procedure Console_Insert
+   overriding procedure Console_Insert
      (Adapter : in out Build_Command_Adapter;
       Text   : String;
       Add_LF : Boolean := True;
-      Mode   : Console_Message_Type := Info);
+      Mode   : Message_Type := Info);
 
-   overriding
-   procedure Remove_Error_Builder_Message_From_File
+   overriding procedure Remove_Error_Builder_Message_From_File
      (Adapter : Build_Command_Adapter;
       File     : Virtual_File);
    --  Removes all messages for specified file in the error category.
    --  Do nothing when there is no such category or file.
 
-   overriding
-   function Get_Background_Environment_File
+   overriding function Get_Background_Environment_File
      (Adapter : Build_Command_Adapter) return Virtual_File;
 
-   overriding
-   function Get_Scenario_Variables
+   overriding function Get_Scenario_Variables
      (Adapter : Build_Command_Adapter) return Scenario_Variable_Array;
 
    Invalid_Argument : exception;
@@ -232,19 +225,17 @@ package body Build_Command_Utils is
    ----------------
 
    procedure Initialize
-     (Adapter     : in out Abstract_Build_Command_Adapter'Class;
-      Kernel_Registry : Project_Registry_Access;
-      Scripts         : access Scripts_Repository_Record'Class := null;
-      Context_Project : Project_Type;
-      Context_Toolchains_Manager : Toolchain_Manager;
-      Context_File_Information : Virtual_File;
+     (Adapter                    : in out Abstract_Build_Command_Adapter'Class;
+      Kernel                     : not null access Core_Kernel_Record'Class;
+      Context_Project                 : Project_Type;
+      Context_Toolchains_Manager      : Toolchain_Manager;
+      Context_File_Information        : Virtual_File;
       Kernel_Macros_Special_Character : Character;
-      Trusted_Mode_Preference : Boolean;
-      Execute_Command_Preference : String;
-      Multi_Language_Builder : Multi_Language_Builder_Policy) is
+      Trusted_Mode_Preference         : Boolean;
+      Execute_Command_Preference      : String;
+      Multi_Language_Builder          : Multi_Language_Builder_Policy) is
    begin
-      Adapter.Kernel_Registry := Kernel_Registry;
-      Adapter.Scripts := Scripts;
+      Adapter.Kernel := Kernel;
       Adapter.Context_Project := Context_Project;
       Adapter.Context_Toolchains_Manager := Context_Toolchains_Manager;
       Adapter.Context_File_Information := Context_File_Information;
@@ -291,7 +282,7 @@ package body Build_Command_Utils is
      (Adapter : Abstract_Build_Command_Adapter)
         return Project_Registry_Access is
    begin
-      return Adapter.Kernel_Registry;
+      return Adapter.Kernel.Registry;
    end Get_Kernel_Registry;
 
    -------------------------
@@ -460,7 +451,7 @@ package body Build_Command_Utils is
       --  Otherwise, return the file's full name without any replacing.
 
       Environment : Project_Environment_Access renames
-        Adapter.Kernel_Registry.Environment;
+        Adapter.Kernel.Registry.Environment;
 
       ---------------
       -- Get_Index --
@@ -868,13 +859,13 @@ package body Build_Command_Utils is
       elsif Starts_With (Arg, "%python(")
         and then Arg (Arg'Last) = ')'
         and then Arg'Length >= 9
-        and then Adapter.Scripts /= null
+        and then Adapter.Kernel.Scripts /= null
       then
          declare
             Cmd : constant String := Arg (Arg'First + 8 .. Arg'Last - 1);
             Old_Protect_Python : constant Boolean := Protect_Python;
-            Data : Callback_Data'Class :=
-              Create (Adapter.Scripts.Lookup_Scripting_Language ("python"), 0);
+            Data               : Callback_Data'Class := Create
+              (Adapter.Kernel.Scripts.Lookup_Scripting_Language ("python"), 0);
 
          begin
             --  Expand some macros recursively
@@ -1045,7 +1036,7 @@ package body Build_Command_Utils is
    overriding function Get_Scenario_Variables
      (Adapter : Build_Command_Adapter) return Scenario_Variable_Array is
    begin
-      return Adapter.Kernel_Registry.Tree.Scenario_Variables;
+      return Adapter.Kernel.Registry.Tree.Scenario_Variables;
    end Get_Scenario_Variables;
 
    ----------------
@@ -1076,13 +1067,16 @@ package body Build_Command_Utils is
    -- Console_Insert --
    --------------------
 
-   overriding
-   procedure Console_Insert
+   overriding procedure Console_Insert
      (Adapter : in out Build_Command_Adapter;
       Text   : String;
       Add_LF : Boolean := True;
-      Mode   : Console_Message_Type := Info) is
+      Mode   : Message_Type := Info) is
    begin
+      Adapter.Kernel.Messages_Window.Insert
+        (Text,
+         Add_LF => Add_LF,
+         Mode   => Mode);
       Trace (Me, Mode'Img & " : " & Text);
       if Mode = Error then
          Adapter.Status := Adapter.Status & Text;
@@ -1203,17 +1197,16 @@ package body Build_Command_Utils is
    begin
       Initialize
         (Adapter.all,
-         Builder.Kernel.Registry,
-         Builder.Kernel.Scripts,
+         Builder.Kernel,
          (if Main_Project = No_Project
           then Builder.Kernel.Registry.Tree.Root_Project
           else Main_Project),
          Builder.Kernel.Get_Toolchains_Manager,
-         Context_File_Information => No_File,
+         Context_File_Information        => No_File,
          Kernel_Macros_Special_Character => '%',
-         Trusted_Mode_Preference => True,
-         Execute_Command_Preference  => "",
-         Multi_Language_Builder => Gprbuild);
+         Trusted_Mode_Preference         => True,
+         Execute_Command_Preference      => "",
+         Multi_Language_Builder          => Gprbuild);
 
       Res := Expand_Command_Line
         (Abstract_Build_Command_Adapter_Access (Adapter), CL, Target, Server,
@@ -1604,7 +1597,7 @@ package body Build_Command_Utils is
 
    function Expand_Command_Line
      (Build_Registry   : Build_Config_Registry_Access;
-      Proj_Registry    : Project_Registry_Access;
+      Kernel           : not null access Core_Kernel_Record'Class;
       Proj_Type        : Project_Type;
       Toolchains       : Toolchain_Manager;
       Command_Line     : String;
@@ -1628,7 +1621,7 @@ package body Build_Command_Utils is
         T.Apply_Mode_Args (Mode_Name, CL_Args.all);
       Res       : Expansion_Result;
    begin
-      Initialize (Adapter.all, Proj_Registry, null, Proj_Type, Toolchains,
+      Initialize (Adapter.all, Kernel, Proj_Type, Toolchains,
                   Force_File, '%', Trusted_Mode, Execute_Command,
                   Multi_Language_Builder);
       Adapter.Project_File := Project_File;

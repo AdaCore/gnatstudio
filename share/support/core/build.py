@@ -274,10 +274,10 @@ XML = r"""<?xml version="1.0" ?>
    <is-run>TRUE</is-run>
    <iconname>gps-run-symbolic</iconname>
    <switches command="%(tool_name)s" columns="1">
-     <check label="Run in executables directory" switch="[exec_dir]"
-     before="true" />
+     <check label="Run in executables directory"
+            switch="[exec_dir]" before="true" />
      <check label="Run in an external terminal"
-    switch="%external" before="true" />
+            switch="%external" before="true" />
    </switches>
 </target-model>
 

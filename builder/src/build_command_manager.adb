@@ -42,8 +42,7 @@ package body Build_Command_Manager is
    end record;
    type Build_Command_Adapter_Access is access all Build_Command_Adapter;
 
-   overriding
-   function Get_Last_Main_For_Background_Target
+   overriding function Get_Last_Main_For_Background_Target
      (Adapter : Build_Command_Adapter;
       Target : Target_Access) return Virtual_File;
    --  Return the Main to use for building Target as a background build.
@@ -52,12 +51,10 @@ package body Build_Command_Manager is
    --  The full path to the target is returned.
    --  If the target is not found, "" is returned.
 
-   overriding
-   function Get_Background_Project_Full_Name
+   overriding function Get_Background_Project_Full_Name
      (Adapter : Build_Command_Adapter) return Filesystem_String;
 
-   overriding
-   function Substitute
+   overriding function Substitute
      (Adapter : Build_Command_Adapter;
       Param     : String;
       Quoted    : Boolean;
@@ -66,35 +63,30 @@ package body Build_Command_Manager is
       For_Shell : Boolean := False) return String;
    --  Wrapper around GPS.Kernel.Macros.Substitute
 
-   overriding
-   procedure Console_Insert
+   overriding procedure Console_Insert
      (Adapter : in out Build_Command_Adapter;
       Text   : String;
       Add_LF : Boolean := True;
-      Mode   : Console_Message_Type := Info);
+      Mode   : Message_Type := Info);
    --  Wrapper around GPS.Kernel.Console.Insert
 
-   overriding
-   procedure Remove_Error_Builder_Message_From_File
+   overriding procedure Remove_Error_Builder_Message_From_File
      (Adapter : Build_Command_Adapter;
       File     : Virtual_File);
    --  Removes all messages for specified file in the error category.
    --  Do nothing when there is no such category or file.
 
-   overriding
-   function Get_Background_Environment_File
+   overriding function Get_Background_Environment_File
      (Adapter : Build_Command_Adapter) return Virtual_File;
 
-   overriding
-   function Get_Scenario_Variables
+   overriding function Get_Scenario_Variables
      (Adapter : Build_Command_Adapter) return Scenario_Variable_Array;
 
    -----------------------------------------
    -- Get_Last_Main_For_Background_Target --
    -----------------------------------------
 
-   overriding
-   function Get_Last_Main_For_Background_Target
+   overriding function Get_Last_Main_For_Background_Target
      (Adapter : Build_Command_Adapter;
       Target : Target_Access) return Virtual_File
    is
@@ -158,8 +150,7 @@ package body Build_Command_Manager is
    -- Substitute --
    ----------------
 
-   overriding
-   function Substitute
+   overriding function Substitute
      (Adapter : Build_Command_Adapter;
       Param     : String;
       Quoted    : Boolean;
@@ -177,31 +168,20 @@ package body Build_Command_Manager is
    -- Console_Insert --
    --------------------
 
-   overriding
-   procedure Console_Insert
+   overriding procedure Console_Insert
      (Adapter : in out Build_Command_Adapter;
-      Text   : String;
-      Add_LF : Boolean := True;
-      Mode   : Console_Message_Type := Info) is
-      M : Message_Type;
+      Text    : String;
+      Add_LF  : Boolean := True;
+      Mode    : Message_Type := Info) is
    begin
-      case Mode is
-         when Info =>
-            M := Info;
-         when Error =>
-            M := Error;
-         when Verbose =>
-            M := Verbose;
-      end case;
-      Kernel_Handle (Adapter.Builder.Kernel).Insert (Text, Add_LF, M);
+      Kernel_Handle (Adapter.Builder.Kernel).Insert (Text, Add_LF, Mode);
    end Console_Insert;
 
    --------------------------------------------
    -- Remove_Error_Builder_Message_From_File --
    --------------------------------------------
 
-   overriding
-   procedure Remove_Error_Builder_Message_From_File
+   overriding procedure Remove_Error_Builder_Message_From_File
      (Adapter : Build_Command_Adapter;
       File     : Virtual_File)
    is
@@ -260,8 +240,7 @@ package body Build_Command_Manager is
 
       Initialize
         (Adapter.all,
-         Builder.Kernel.Registry,
-         Builder.Kernel.Scripts,
+         Builder.Kernel,
          Get_Project (Kernel),
          Kernel.Get_Toolchains_Manager,
          File_Information (Context),
