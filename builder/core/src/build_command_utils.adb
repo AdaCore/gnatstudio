@@ -685,8 +685,8 @@ package body Build_Command_Utils is
 
          else
             declare
-               Result : constant String := Substitute (Adapter.all, Param,
-                  Quoted, Done'Access, Server => Server);
+               Result : constant String := Adapter.Substitute
+                 (Param, Quoted, Done'Access, Server => Server);
             begin
                if Done then
                   return Result;
@@ -1197,11 +1197,12 @@ package body Build_Command_Utils is
    begin
       Initialize
         (Adapter.all,
-         Builder.Kernel,
-         (if Main_Project = No_Project
-          then Builder.Kernel.Registry.Tree.Root_Project
-          else Main_Project),
-         Builder.Kernel.Get_Toolchains_Manager,
+         Kernel                          => Builder.Kernel,
+         Context_Project                 =>
+           (if Main_Project = No_Project
+            then Builder.Kernel.Registry.Tree.Root_Project
+            else Main_Project),
+         Context_Toolchains_Manager   => Builder.Kernel.Get_Toolchains_Manager,
          Context_File_Information        => No_File,
          Kernel_Macros_Special_Character => '%',
          Trusted_Mode_Preference         => True,

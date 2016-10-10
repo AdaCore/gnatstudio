@@ -226,7 +226,6 @@ package body Commands.Builder is
            Get_Mode_Subdir (Builder.Registry, Mode);
       begin
          CL_Mode.Append_Switches (Result.Extra_Args.all);
-
          Result.Full := Expand_Command_Line
            (Builder      => Builder,
             CL           => CL_Mode,
@@ -250,10 +249,14 @@ package body Commands.Builder is
       --  Store last build information into Builder
       Builder.Set_Last_Build (Build);
 
+      --  This executes the Create primitive for each registered output
+      --  filter. These can impact the exact command line that will be run
+      --  (in particular the end_of_build filter will perform macro expansion)
       Output_Parser  :=
         New_Parser_Chain (Get_Properties (Build.Target).Parser_List);
+      --   ??? should we free Output_Parser
 
-      --  Retrive build information modified by parsers
+      --  Retrieve build information modified by parsers
       Result := Builder.Get_Last_Build;
 
       --  Do nothing if one of parsers requests canceling of Launch

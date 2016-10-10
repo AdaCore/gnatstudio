@@ -31,9 +31,7 @@ package body Build_Configurations is
    use GNAT.OS_Lib;
    use Target_List;
 
-   procedure Set_Parsers_For_Target
-     (Target : Target_Access;
-      Value  : String_Ptr);
+   procedure Set_Parsers_For_Target (Target : Target_Access; Value : String);
    --  Convert Value to list of strings and assign as Target's parser list
 
    function To_String
@@ -459,6 +457,12 @@ package body Build_Configurations is
       end if;
 
       Add_Target (Registry, Target);
+
+      --  ??? Should inherit list of output parsers from the model (if the
+      --  models could have parsers...)
+      Set_Parsers_For_Target
+        (Target,
+         To_String (Target.Properties.Parser_List));
    end Create_Target;
 
    ------------------
@@ -1370,7 +1374,11 @@ package body Build_Configurations is
          Child := Child.Next;
       end loop;
 
-      Set_Parsers_For_Target (Target, Output_Parsers);
+      if Output_Parsers = null then
+         Set_Parsers_For_Target (Target, "");
+      else
+         Set_Parsers_For_Target (Target, Output_Parsers.all);
+      end if;
 
       --  At this point, the target data has been updated. If this target is
       --  not from the user configuration, copy it to the original targets.
@@ -2041,7 +2049,7 @@ package body Build_Configurations is
 
    procedure Set_Parsers_For_Target
      (Target : Target_Access;
-      Value  : String_Ptr)
+      Value  : String)
    is
       function Has_Parser
         (Parsers       : String_List_Utils.String_List.List;
@@ -2117,12 +2125,12 @@ package body Build_Configurations is
       end To_Parser_List;
 
    begin
-      if Value = null then
+      if Value = "" then
          Target.Properties.Parser_List :=
            To_Parser_List (Default_Parser_Names (Is_Run (Target)), "");
       else
          Target.Properties.Parser_List :=
-           To_Parser_List (Value.all, Default_Parser_Names (Is_Run (Target)));
+           To_Parser_List (Value, Default_Parser_Names (Is_Run (Target)));
       end if;
 
       if not Has_Parser (Target.Properties.Parser_List, End_Of_Build_Name) then

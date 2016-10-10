@@ -69,7 +69,10 @@ package GPS.Tools_Output is
      (Self  : access Output_Parser_Fabric;
       Child : Tools_Output_Parser_Access)
       return Tools_Output_Parser_Access is abstract;
-   --  Create output parser object. Set Child as next item in the chain
+   --  Create output parser object. Set Child as next item in the chain.
+   --  This is called before the build target executes, and can be used to
+   --  change the command that will be executed by calling
+   --  Self.Builder.Set_Last_Build.
 
    procedure Register_Output_Parser
      (Fabric   : access Output_Parser_Fabric'Class;

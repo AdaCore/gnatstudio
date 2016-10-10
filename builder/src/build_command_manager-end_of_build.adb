@@ -36,17 +36,17 @@ with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 
 package body Build_Command_Manager.End_Of_Build is
 
-   procedure Expand_Command_Line
+   procedure Local_Expand_Command_Line
      (Builder : Builder_Context;
       Build   : in out Build_Information);
    --  Expand all macros using parameters from Build and assign result
    --  to Build.Full property.
 
-   -------------------------
-   -- Expand_Command_Line --
-   -------------------------
+   -------------------------------
+   -- Local_Expand_Command_Line --
+   -------------------------------
 
-   procedure Expand_Command_Line
+   procedure Local_Expand_Command_Line
      (Builder : Builder_Context;
       Build   : in out Build_Information)
    is
@@ -75,12 +75,10 @@ package body Build_Command_Manager.End_Of_Build is
            Argument_String_To_List_With_Triple_Quotes (CL);
          Mode_Args  : Command_Line :=
            Build.Target.Apply_Mode_Args (Mode, CL_Args.all);
-
          Res : Expansion_Result;
 
       begin
          Mode_Args.Append_Switches (Build.Extra_Args.all);
-
          Res := Expand_Command_Line
            (Builder,
             Mode_Args,
@@ -173,10 +171,12 @@ package body Build_Command_Manager.End_Of_Build is
               Build.Target.Apply_Mode_Args (Mode, Command_Line.all);
          begin
             CL_Mode.Append_Switches (Build.Extra_Args.all);
-
             Build.Full := Expand_Command_Line
-              (Builder, CL_Mode, Build.Target,
-               Server, Build.Force_File,
+              (Builder,
+               CL_Mode,
+               Build.Target,
+               Server,
+               Force_File     => Build.Force_File,
                Main           => Build.Main,
                Main_Project   => Build.Main_Project,
                Subdir         => Subdir,
@@ -231,7 +231,7 @@ package body Build_Command_Manager.End_Of_Build is
               Builder.Kernel.Registry.Tree.Root_Project.Project_Path.Dir;
          end if;
       end if;
-   end Expand_Command_Line;
+   end Local_Expand_Command_Line;
 
    ------------
    -- Create --
@@ -245,7 +245,7 @@ package body Build_Command_Manager.End_Of_Build is
       Build      : Build_Information := Self.Builder.Get_Last_Build;
       Force_File : Virtual_File;
    begin
-      Expand_Command_Line (Self.Builder, Build);
+      Local_Expand_Command_Line (Self.Builder, Build);
 
       if Build.Full.Args = Empty_Command_Line then
          Build.Launch := False;
