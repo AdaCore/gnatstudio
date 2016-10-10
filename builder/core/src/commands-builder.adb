@@ -266,6 +266,10 @@ package body Commands.Builder is
       --  expand command line for CLI tool.
       if Result.Full.Args = Empty_Command_Line then
          Expand_Command_Line (Result);
+
+         if Result.Full.Args = Empty_Command_Line then
+            return;
+         end if;
       end if;
 
       if not Build.Quiet then
