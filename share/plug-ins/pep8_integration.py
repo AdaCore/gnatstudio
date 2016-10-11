@@ -41,10 +41,15 @@ class Pep8_Module(Module):
                 if m.get_file() == file:
                     m.remove()
 
+            # is buffer opened yet
+            buf = GPS.EditorBuffer.get(file=file, open=False)
+            if buf is None:
+                return
+
             # parse text in buffer and catches stdout
-            s = GPS.EditorBuffer.get(file=file, open=False).get_chars()
-            if (GPS.Preference("Src-Editor-Strip-Trailing-Blanks").get()
-                    != "Never"):
+            s = buf.get_chars()
+            pref = GPS.Preference("Src-Editor-Strip-Trailing-Blanks")
+            if (pref.get() != "Never"):
                 source = [i.rstrip(" ") + "\n" for i in s.splitlines()]
             else:
                 source = [i + "\n" for i in s.splitlines()]
