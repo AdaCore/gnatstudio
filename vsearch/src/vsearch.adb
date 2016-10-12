@@ -254,10 +254,13 @@ package body Vsearch is
    --  module.
 
    function Get_Search_Module_From_Context
-     (Context      : Selection_Context;
+     (Vsearch      : not null access Vsearch_Record'Class;
+      Context      : Selection_Context;
       In_Selection : Boolean := False) return Search_Module;
-   --  Return the first search module that matches the given context, or the
-   --  default one if there is none.
+   --  Return the first search module that matches the given context.
+   --  If the context does not macth with any of registered search module,
+   --  return the currently used search module, if any, or the default one
+   --  otherwise.
 
    procedure Free (Module : Search_Module);
    --  Free the memory associated with Module
@@ -2232,7 +2235,8 @@ package body Vsearch is
          if Context = null then
             View.Set_Search_Module
               (Get_Search_Module_From_Context
-                 (Context      => Selected,
+                 (View,
+                  Context      => Selected,
                   In_Selection => Has_Multiline_Selection));
          else
             Dummy := View.Context_Combo.Set_Active_Id (Context.all);
@@ -2459,7 +2463,7 @@ package body Vsearch is
       Vsearch := Get_Or_Create_Vsearch
         (Get_Kernel (Context.Context),
          Raise_Widget  => True,
-         Reset_Entries => False,
+         Reset_Entries => True,
          Context       => Action.Context,
          Mode          => Find_And_Replace);
       return Success;
@@ -2577,8 +2581,9 @@ package body Vsearch is
    ------------------------------------
 
    function Get_Search_Module_From_Context
-     (Context       : Selection_Context;
-      In_Selection  : Boolean := False) return Search_Module
+     (Vsearch      : not null access Vsearch_Record'Class;
+      Context      : Selection_Context;
+      In_Selection : Boolean := False) return Search_Module
    is
       Id                  : constant Module_ID :=
                               Module_ID (Get_Creator (Context));
@@ -2616,9 +2621,19 @@ package body Vsearch is
          return Element (Last_Matching_Node);
       end if;
 
-      --  Return the default module to use when Id does not match any
-      --  registered search module.
-      return Vsearch_Module_Id.Default_Search_Module;
+      --  If the context does not match with any registered module, return the
+      --  one currently used, if any, or the default one otherwise.
+      return Module : Search_Module do
+         if Id.Module_Name = Search_Module_Name then
+            Module := Find_Module
+              (Vsearch.Kernel,
+               Label => Get_Active_Text (Vsearch.Context_Combo));
+         end if;
+
+         if Module = null then
+            Module := Vsearch_Module_Id.Default_Search_Module;
+         end if;
+      end return;
    end Get_Search_Module_From_Context;
 
    -----------------------
