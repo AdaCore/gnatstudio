@@ -621,6 +621,17 @@ package body Gtkada.Tree_View is
         (+Widget.Model, Row_Inserted_Callback'Access, Widget, After => False);
    end Initialize;
 
+   -----------------------------------
+   -- Set_Propagate_Filtered_Status --
+   -----------------------------------
+
+   procedure Set_Propagate_Filtered_Status
+     (Self      : not null access Tree_View_Record;
+      Propagate : Boolean := True) is
+   begin
+      Self.Propagate_Filtered_Status := Propagate;
+   end Set_Propagate_Filtered_Status;
+
    --------------
    -- Refilter --
    --------------
@@ -648,14 +659,16 @@ package body Gtkada.Tree_View is
          --  Since we are doing depth-first search, the children have already
          --  been computed. So we look at their status first
 
-         Child := Self.Model.Children (Iter);
-         while Child /= Null_Iter loop
-            if Get_Flag (Self, Child, Flag_Is_Visible) then
-               Set_Flag (Self, Iter, Flag_Is_Visible);
-               return False;  --  keep traversing
-            end if;
-            Self.Model.Next (Child);
-         end loop;
+         if Self.Propagate_Filtered_Status then
+            Child := Self.Model.Children (Iter);
+            while Child /= Null_Iter loop
+               if Get_Flag (Self, Child, Flag_Is_Visible) then
+                  Set_Flag (Self, Iter, Flag_Is_Visible);
+                  return False;  --  keep traversing
+               end if;
+               Self.Model.Next (Child);
+            end loop;
+         end if;
 
          --  None of the children is visible, but maybe the parent itself
          --  should be visible ?

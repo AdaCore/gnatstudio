@@ -17,7 +17,7 @@
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Containers.Doubly_Linked_Lists;
-with Ada.Containers.Hashed_Maps;
+with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Strings.Hash;
@@ -113,26 +113,18 @@ package body Project_Explorers is
    --  Filter --
    -------------
 
-   type Filter_Type is (Show_Direct, Show_Indirect, Hide);
-   --  The status of the filter for each node:
-   --  - show_direct is used when the node itself matches the filter.
-   --  - show_indirect is used when a child of the node must be displayed, but
-   --    the node itself does not match the filter.
-   --  - hide is used when the node should be hidden
-
-   package Filter_Maps is new Ada.Containers.Hashed_Maps
-     (Key_Type        => Virtual_File,
-      Hash            => GNATCOLL.VFS.Full_Name_Hash,
-      Element_Type    => Filter_Type,
-      Equivalent_Keys => "=");
-   use Filter_Maps;
+   package Filter_Sets is new Ada.Containers.Hashed_Sets
+     (Element_Type        => Virtual_File,
+      Hash                => GNATCOLL.VFS.Full_Name_Hash,
+      Equivalent_Elements => "=");
+   use Filter_Sets;
 
    type Explorer_Filter is record
       Pattern  : GPS.Search.Search_Pattern_Access;
       --  The pattern on which we filter.
 
-      Cache    : Filter_Maps.Map;
-      --  A cache of the filter. We do not manipulate the gtk model directlyy,
+      Visible  : Filter_Sets.Set;
+      --  A cache of the filter. We do not manipulate the gtk model directly,
       --  because it does not contain everything in general (the contents of
       --  nodes is added dynamically).
    end record;
@@ -143,18 +135,26 @@ package body Project_Explorers is
       Pattern : Search_Pattern_Access);
    --  Change the pattern and update the cache
 
-   function Is_Visible
-     (Self : Explorer_Filter; File : Virtual_File) return Filter_Type;
-   --  Whether the given file should be visible
+   ----------------------
+   -- Custom tree view --
+   ----------------------
+
+   type Explorer_Tree_View_Record is new Tree_View_Record with record
+      User_Filter : Explorer_Filter;
+   end record;
+   type Explorer_Tree_View is access all Explorer_Tree_View_Record'Class;
+
+   overriding function Is_Visible
+     (Self : not null access Explorer_Tree_View_Record;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean;
 
    ---------------------------------
    -- The project explorer widget --
    ---------------------------------
 
    type Project_Explorer_Record is new Generic_Views.View_Record with record
-      Tree        : Gtkada.Tree_View.Tree_View;
+      Tree        : Explorer_Tree_View;
       Text_Rend   : Gtk_Cell_Renderer_Text;
-      Filter      : Explorer_Filter;
       Expanding   : Boolean := False;
    end record;
    overriding procedure Create_Menu
@@ -192,16 +192,6 @@ package body Project_Explorers is
       Initialize         => Initialize);
    use Explorer_Views;
    subtype Project_Explorer is Explorer_Views.View_Access;
-
-   package Set_Visible_Funcs is new Set_Visible_Func_User_Data
-     (User_Data_Type => Project_Explorer);
-
-   function Is_Visible
-     (Child_Model : Gtk.Tree_Model.Gtk_Tree_Model;
-      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Self        : Project_Explorer) return Boolean;
-   --  Filter out some lines in the project view, based on the filter in the
-   --  toolbar.
 
    -----------------------
    -- Local subprograms --
@@ -650,13 +640,15 @@ package body Project_Explorers is
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
       Explorer.Pack_Start (Scrolled, Expand => True, Fill => True);
 
-      Gtk_New (Explorer.Tree, Columns_Types, Filtered => True);
+      Explorer.Tree := new Explorer_Tree_View_Record;
+      Explorer.Tree.Initialize
+        (Column_Types     => Columns_Types,
+         Filtered         => True,
+         Set_Visible_Func => True);
+      Explorer.Tree.Set_Propagate_Filtered_Status (False);
       Set_Headers_Visible (Explorer.Tree, False);
       Explorer.Tree.Set_Enable_Search (False);
       Set_Column_Types (Explorer);
-
-      Set_Visible_Funcs.Set_Visible_Func
-         (Explorer.Tree.Filter, Is_Visible'Access, Data => Explorer);
 
       Set_Name (Explorer.Tree, "Project Explorer Tree");  --  For testsuite
 
@@ -1002,24 +994,27 @@ package body Project_Explorers is
    -- Is_Visible --
    ----------------
 
-   function Is_Visible
-     (Child_Model : Gtk.Tree_Model.Gtk_Tree_Model;
-      Iter        : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Self        : Project_Explorer) return Boolean
+   overriding function Is_Visible
+     (Self : not null access Explorer_Tree_View_Record;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
    is
-      File   : Virtual_File;
+      File : Virtual_File;
    begin
-      case Get_Node_Type (-Child_Model, Iter) is
+      if Self.User_Filter.Pattern = null then
+         return True;
+      end if;
+
+      case Get_Node_Type (Self.Model, Iter) is
          when Project_Node_Types | File_Node =>
-            File := Get_File_From_Node (-Child_Model, Iter);
-            return Is_Visible (Self.Filter, File) /= Hide;
+            File := Get_File_From_Node (Self.Model, Iter);
+            return Self.User_Filter.Visible.Contains (File);
 
          when Directory_Node_Types =>
             if Show_Empty_Dirs.Get_Pref
-              or else Has_Child (Child_Model, Iter)
+              or else Has_Child (Self.Model, Iter)
             then
-               File := Get_File_From_Node (-Child_Model, Iter);
-               return Is_Visible (Self.Filter, File) /= Hide;
+               File := Get_File_From_Node (Self.Model, Iter);
+               return Self.User_Filter.Visible.Contains (File);
             else
                return False;
             end if;
@@ -1027,26 +1022,6 @@ package body Project_Explorers is
          when Category_Node | Entity_Node | Dummy_Node | Runtime_Node =>
             return True;
       end case;
-   end Is_Visible;
-
-   ----------------
-   -- Is_Visible --
-   ----------------
-
-   function Is_Visible
-     (Self : Explorer_Filter; File : Virtual_File) return Filter_Type
-   is
-      C : Filter_Maps.Cursor;
-   begin
-      if Self.Pattern = null then
-         return Show_Direct;
-      end if;
-
-      C := Self.Cache.Find (File);
-      if Has_Element (C) then
-         return Element (C);
-      end if;
-      return Hide;
    end Is_Visible;
 
    -----------------
@@ -1067,23 +1042,19 @@ package body Project_Explorers is
 
       procedure Mark_Project_And_Parents_Visible (P : Project_Type) is
          It : Project_Iterator;
-         C  : Filter_Maps.Cursor;
       begin
-         C := Self.Cache.Find (P.Project_Path);
-         if Has_Element (C) and then Element (C) /= Hide then
-            --  Already marked, nothing more to do
-            return;
-         end if;
+         --  Unless already marked, nothing more to do
+         if not Self.Visible.Contains (P.Project_Path) then
+            Self.Visible.Include (P.Project_Path);
 
-         Self.Cache.Include (P.Project_Path, Show_Indirect);
-
-         if not Flat_View then
-            It := P.Find_All_Projects_Importing
-              (Include_Self => False, Direct_Only => False);
-            while Current (It) /= No_Project loop
-               Mark_Project_And_Parents_Visible (Current (It));
-               Next (It);
-            end loop;
+            if not Flat_View then
+               It := P.Find_All_Projects_Importing
+                 (Include_Self => False, Direct_Only => False);
+               while Current (It) /= No_Project loop
+                  Mark_Project_And_Parents_Visible (Current (It));
+                  Next (It);
+               end loop;
+            end if;
          end if;
       end Mark_Project_And_Parents_Visible;
 
@@ -1091,12 +1062,12 @@ package body Project_Explorers is
       P     : Project_Type;
       Files : File_Array_Access;
       Found : Boolean;
-      Prj_Filter : Filter_Type;
+      Prj_Visible : Boolean;  --  has the project already been marked visible
    begin
       GPS.Search.Free (Self.Pattern);
       Self.Pattern := Pattern;
 
-      Self.Cache.Clear;
+      Self.Visible.Clear;
 
       if Pattern = null then
          --  No filter applied, make all visible
@@ -1110,11 +1081,10 @@ package body Project_Explorers is
          P := Current (PIter);
 
          if Self.Pattern.Start (P.Name) /= GPS.Search.No_Match then
-            Prj_Filter := Show_Direct;
+            Prj_Visible := True;
             Mark_Project_And_Parents_Visible (P);
-            Self.Cache.Include (P.Project_Path, Show_Direct);
          else
-            Prj_Filter := Hide;
+            Prj_Visible := False;
          end if;
 
          Files := P.Source_Files (Recursive => False);
@@ -1132,13 +1102,13 @@ package body Project_Explorers is
             end if;
 
             if Found then
-               if Prj_Filter = Hide then
-                  Prj_Filter := Show_Indirect;
+               if not Prj_Visible then
+                  Prj_Visible := True;
                   Mark_Project_And_Parents_Visible (P);
                end if;
 
-               Self.Cache.Include (Files (F).Dir, Show_Indirect);
-               Self.Cache.Include (Files (F), Show_Direct);
+               Self.Visible.Include (Files (F).Dir);
+               Self.Visible.Include (Files (F));
             end if;
          end loop;
          Unchecked_Free (Files);
@@ -1155,8 +1125,8 @@ package body Project_Explorers is
      (Self    : not null access Project_Explorer_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access) is
    begin
-      Set_Pattern (Self.Filter, Self.Kernel, Pattern);
-      Self.Tree.Filter.Refilter;
+      Set_Pattern (Self.Tree.User_Filter, Self.Kernel, Pattern);
+      Self.Tree.Refilter;
    end Filter_Changed;
 
    -------------------
@@ -1323,7 +1293,7 @@ package body Project_Explorers is
                   --  ??? When in a runtime mode, the path is not relative to
                   --  any project, so we are always displaying the full path.
 
-                  Set (Exp.Tree.Model, It, Display_Name_Column,
+                  Exp.Tree.Model.Set (It, Display_Name_Column,
                        Directory_Node_Text
                          (Show_Abs_Paths => Show_Abs_Paths,
                           Show_Base      => Show_Base,
@@ -1357,18 +1327,18 @@ package body Project_Explorers is
    procedure Update_View
      (Explorer : access Gtk_Widget_Record'Class)
    is
-      Tree : constant Project_Explorer := Project_Explorer (Explorer);
-      Pattern : Search_Pattern_Access := Tree.Filter.Pattern;
+      Self : constant Project_Explorer := Project_Explorer (Explorer);
+      Pattern : Search_Pattern_Access := Self.Tree.User_Filter.Pattern;
    begin
       --  Temporary clear the filter before rebuilding Tree.Model to avoid
       --  Storage_Error on Tree.Model.Clear call
-      Tree.Filter.Cache.Clear;
-      Tree.Filter.Pattern := null;
-      Tree.Tree.Filter.Refilter;
-      Tree.Tree.Model.Clear;
+      Self.Tree.User_Filter.Visible.Clear;
+      Self.Tree.User_Filter.Pattern := null;
+      Self.Tree.Refilter;
+      Self.Tree.Model.Clear;
       Refresh (Explorer);
       --  Restore applied filter after Tree.Model rebuild
-      Filter_Changed (Tree, Pattern);
+      Filter_Changed (Self, Pattern);
    end Update_View;
 
    ---------------------
@@ -1905,7 +1875,6 @@ package body Project_Explorers is
          Self.Tree.Model.Remove (C);
       end Remove_If_Obsolete;
 
-      Filter  : Filter_Type;
       Path    : Gtk_Tree_Path;
       Success : Boolean;
       pragma Unreferenced (Success);
@@ -1919,14 +1888,8 @@ package body Project_Explorers is
                   Include_Extended => True);
             begin
                while Current (Iter) /= No_Project loop
-                  Filter := Is_Visible
-                    (Self.Filter, Current (Iter).Project_Path);
-
-                  if Filter = Show_Direct then
-                     Child := Create_Or_Reuse_Project
-                       (Current (Iter), Add_Dummy => True);
-                  end if;
-
+                  Child := Create_Or_Reuse_Project
+                    (Current (Iter), Add_Dummy => True);
                   Next (Iter);
                end loop;
             end;
@@ -1942,6 +1905,7 @@ package body Project_Explorers is
          end if;
 
          Create_Or_Reuse_Runtime;
+         Self.Tree.Refilter;
          return;
       end if;
 
@@ -1964,13 +1928,8 @@ package body Project_Explorers is
          begin
             while Current (Iter) /= No_Project loop
                if Current (Iter) /= Project then
-                  Filter := Is_Visible
-                    (Self.Filter, Current (Iter).Project_Path);
-
-                  if Filter /= Hide then
-                     Child := Create_Or_Reuse_Project
-                       (Current (Iter), Add_Dummy => True);
-                  end if;
+                  Child := Create_Or_Reuse_Project
+                    (Current (Iter), Add_Dummy => True);
                end if;
 
                Next (Iter);
@@ -2072,6 +2031,7 @@ package body Project_Explorers is
       end if;
 
       Unchecked_Free (Files);
+      Self.Tree.Refilter;
    end Refresh_Project_Node;
 
    --------------------
@@ -2161,9 +2121,11 @@ package body Project_Explorers is
       --  If the target node is not visible due to the current filter
       --  setting, clear the filter before jumping.
 
-      if Is_Visible (View.Filter, File) = Hide then
+      if View.Tree.User_Filter.Pattern /= null
+        and then not View.Tree.User_Filter.Visible.Contains (File)
+      then
          View.Set_Filter ("");
-         View.Tree.Filter.Refilter;
+         View.Tree.Refilter;
 
          --  We use the "execute_again" mechanism here because the filter is
          --  applied not immediately but in an idle callback.

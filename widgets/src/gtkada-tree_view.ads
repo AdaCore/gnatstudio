@@ -60,26 +60,7 @@ with Glib;                  use Glib;
 
 package Gtkada.Tree_View is
 
-   type Tree_View_Record is new Gtk_Tree_View_Record with record
-      Model : Gtk_Tree_Store;
-      --  The data model.
-
-      Filter : Gtk_Tree_Model_Filter;
-      --  Optional view filter
-
-      Column_Extra : Glib.Gint := -1;
-      --  The extra column added to the model, which stores information like
-      --  whether a node was expanded or filtered by the model.
-
-      Lock : Boolean := False;
-      --  Whether the expand callbacks should do anything.
-      --  It's useful to set this lock to True when the user wants to
-      --  control expansion himself.
-
-      Filter_Disabled : Boolean := False;
-      --  If true, filtering is temporarily disabled. This is necessary during
-      --  a drag-and-drop operation.
-   end record;
+   type Tree_View_Record is new Gtk_Tree_View_Record with private;
    type Tree_View is access all Tree_View_Record'Class;
 
    procedure Gtk_New
@@ -103,6 +84,16 @@ package Gtkada.Tree_View is
    --
    --  ??? This function creates both model and view, so can't easily create
    --  multiple views of the same model.
+
+   function Model
+     (Self : not null access Tree_View_Record) return Gtk_Tree_Store
+     with Inline;
+   --  The data model
+
+   function Filter
+     (Self : not null access Tree_View_Record) return Gtk_Tree_Model_Filter
+     with Inline;
+   --  Optional view filter
 
    ---------------
    -- Expansion --
@@ -171,11 +162,26 @@ package Gtkada.Tree_View is
    --  This procedure needs to be called every time the model is repopulated if
    --  a filter pattern is currently applied to the view.
 
+   procedure Set_Propagate_Filtered_Status
+     (Self      : not null access Tree_View_Record;
+      Propagate : Boolean := True);
+   --  By default, filtering is done by calling Is_Visible on each child node,
+   --  and if any of them is kept visible, then the parent is also kept
+   --  visible. But this propagation to the parent might be slow depending on
+   --  the depth of the tree.
+   --  When you combine filtering with lazy contents, you will have to
+   --  independently compute whether a node should be visible (since the tree
+   --  view does not know which children will eventually be added). In such a
+   --  case, propagating the visibility to the parent is just wasted time, and
+   --  can be disabled via this procedure.
+   --  After changing this, you might need to call Refilter.
+
    function Is_Visible
      (Self    : not null access Tree_View_Record;
       Iter    : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean is (True);
    --  Whether the given row in the model should be made visible (along with
    --  its parents)
+   --  Iter applies to Self.Model
 
    -------------------
    -- Lazy contents --
@@ -184,7 +190,7 @@ package Gtkada.Tree_View is
    procedure Set_Might_Have_Children
      (Self    : not null access Tree_View_Record'Class;
       Iter    : Gtk.Tree_Model.Gtk_Tree_Iter);
-   --  Indicates that the row might have children, so can be expended by the
+   --  Indicates that the row might have children, so can be expanded by the
    --  user. When it is actually expanded, Add_Children_Lazily will be called
    --  to insert the actual children.
    --  This has no effect if children were already inserted (and thus
@@ -234,5 +240,37 @@ package Gtkada.Tree_View is
       return Gtk.Tree_Model.Gtk_Tree_Path;
    --  Converts model store iter into model filter path
    --  Returned value must be freed by caller
+
+private
+   type Tree_View_Record is new Gtk_Tree_View_Record with record
+      Model : Gtk_Tree_Store;
+      --  The data model.
+
+      Filter : Gtk_Tree_Model_Filter;
+      --  Optional view filter
+
+      Column_Extra : Glib.Gint := -1;
+      --  The extra column added to the model, which stores information like
+      --  whether a node was expanded or filtered by the model.
+
+      Lock  : Boolean := False;
+      --  Whether the expand callbacks should do anything.
+      --  It's useful to set this lock to True when the user wants to
+      --  control expansion himself.
+
+      Filter_Disabled : Boolean := False;
+      --  If true, filtering is temporarily disabled. This is necessary during
+      --  a drag-and-drop operation.
+
+      Propagate_Filtered_Status : Boolean := True;
+      --  See Set_Propagate_Filtered_Status
+   end record;
+
+   function Model
+     (Self : not null access Tree_View_Record) return Gtk_Tree_Store
+     is (Self.Model);
+   function Filter
+     (Self : not null access Tree_View_Record) return Gtk_Tree_Model_Filter
+     is (Self.Filter);
 
 end Gtkada.Tree_View;
