@@ -24,13 +24,46 @@ the Matlab browser-->
             <head>
             <meta name="viewport" content="width=device-width,\
  initial-scale=1">
-            <link rel="stylesheet" \
-href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-            <script src=\
-"https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-            <script src=\
-"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
             <style>
+            input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            }
+            input[type="checkbox"]:focus + label {
+            color: black;
+            background-color: wheat;
+            }
+
+            label {
+            position: relative;
+            display: block;
+            cursor: pointer;
+            background: #c69;
+            color: white;
+            padding: .5em;
+            border-bottom: 1px solid white;
+            }
+
+            section {
+            height: 0;
+            transition: .3s all;
+            overflow: hidden;
+            }
+
+            input[type=checkbox]:checked + label + section{
+            height: auto;
+            }
+
+            p {
+            padding: 0 2em;
+            }
+
+            .togglebox {
+            margin: 0 auto;
+            width: 50%;
+            border: 1px solid #c69;
+            }
+
             table, td, th {
             border: 1px solid #ddd;
             }
@@ -278,11 +311,7 @@ class Qgen_Logpoint (gdb.Breakpoint):
                 with open(filename, 'a') as f:
                     f.write("""         </tbody>
             </table>
-          </div>
-         </div>
-        </div>
-       </div>
-      </div>
+          </section>
 """)
 
         for symbol, (blockname,
@@ -294,16 +323,10 @@ class Qgen_Logpoint (gdb.Breakpoint):
                 open_table = processed_logfiles.get(filename, False)
                 if not open_table:
                     f.write("""
-<div class="container">
-  <div class="panel-group">
-    <div class="panel panel-default">
-      <div class="panel-heading">
-        <h4 class="panel-title">
-          <a data-toggle="collapse" href="#collapse%d">Iteration %d</a>
-        </h4>
-      </div>
-      <div id="collapse%d" class="panel-collapse collapse">
-        <div class="panel-body">
+<div class="togglelist">
+  <input id="toggle%d" type="checkbox" name="toggle" />
+  <label for="toggle%d">Iteration %d</label>
+  <section id=:"content%d">
             <table>
             <thead>
             <tr>
@@ -311,13 +334,14 @@ class Qgen_Logpoint (gdb.Breakpoint):
             <th>Value</th>
             </tr>
             </thead>
-            <tbody>""" % (global_log_hit, global_log_hit, global_log_hit))
+            <tbody>""" % (global_log_hit, global_log_hit,
+                          global_log_hit, global_log_hit))
                 if filename not in logfiles_hit:
                     processed_logfiles[filename] = True
                     logfiles_hit.append(filename)
                 f.write("""<tr>
                     <td><a href="matlab:open_system('%s');\
-                    hilite_system('%s')">%s</a></td>
+ hilite_system('%s')">%s</a></td>
                     <td>%s</td>
                     </tr>
                     """ % (model_name, blockname, blockname,
