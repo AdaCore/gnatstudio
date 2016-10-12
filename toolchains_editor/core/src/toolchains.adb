@@ -2386,6 +2386,7 @@ package body Toolchains is
                begin
                   while Cur_Path /= No_File
                     and then Cur_Path.Base_Dir_Name /= "lib"
+                    and then Cur_Path /= Cur_Path.Get_Parent
                   loop
                      Cur_Path := Cur_Path.Get_Parent;
                   end loop;
