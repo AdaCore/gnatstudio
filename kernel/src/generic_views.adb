@@ -73,11 +73,11 @@ package body Generic_Views is
    No_Transient_Views : constant Trace_Handle :=
      Create ("Views.No_Transient_Views", Default => Off);
 
-   function Has_Toolbar_Separator
+   function Has_Right_Expander
      (Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
       return Gint;
-   --  Return the index of the separator that right aligns items, or -1 if
-   --  there is none.
+   --  Return the index of the item or separator that right aligns items, or -1
+   --  if there is none.
 
    function Report_Filter_Changed_Idle
      (View : Abstract_View_Access) return Boolean;
@@ -623,9 +623,9 @@ package body Generic_Views is
          Class_Init   => Filter_Panel_Class_Init'Access);
 
       G_New (F, Filter_Class_Record.The_Type);
-      Self.Append_Toolbar (Toolbar, F, Right_Align => True);
       F.Set_Expand (True);
       F.Set_Homogeneous (False);
+      Self.Append_Toolbar (Toolbar, F, Right_Align => True);
 
       Self.Filter.On_Destroy (On_Destroy_Filter'Access);
 
@@ -734,11 +734,11 @@ package body Generic_Views is
       return Self.Kernel;
    end Kernel;
 
-   ---------------------------
-   -- Has_Toolbar_Separator --
-   ---------------------------
+   ------------------------
+   -- Has_Right_Expander --
+   ------------------------
 
-   function Has_Toolbar_Separator
+   function Has_Right_Expander
      (Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
       return Gint
    is
@@ -747,14 +747,12 @@ package body Generic_Views is
    begin
       for J in reverse 0 .. Count - 1 loop
          Item := Toolbar.Get_Nth_Item (J);
-         if Item.all in Gtk_Separator_Tool_Item_Record'Class
-           and then Gtk_Separator_Tool_Item (Item).Get_Expand
-         then
+         if Item.Get_Expand then
             return J;
          end if;
       end loop;
       return -1;
-   end Has_Toolbar_Separator;
+   end Has_Right_Expander;
 
    --------------------
    -- Append_Toolbar --
@@ -772,17 +770,19 @@ package body Generic_Views is
       Loc : Gint;
    begin
       if Right_Align then
-         if Has_Toolbar_Separator (Toolbar) = -1 then
+         if not Item.Get_Expand
+            and then Has_Right_Expander (Toolbar) = -1
+         then
             Gtk_New (Sep);
             Sep.Set_Draw (False);
-            Sep.Set_Expand (False);
+            Sep.Set_Expand (True);
             Toolbar.Insert (Sep);
          end if;
 
          Toolbar.Insert (Item);
 
       else
-         Loc := Has_Toolbar_Separator (Toolbar);
+         Loc := Has_Right_Expander (Toolbar);
          if Loc /= -1 then
             --  Insert before the item, to left align
             Toolbar.Insert (Item, Pos => Loc - 1);
