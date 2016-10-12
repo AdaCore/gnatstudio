@@ -23,6 +23,7 @@ with Gtk.Combo_Box_Text;
 with Gtk.Text_Iter;
 with Gtk.Text_Mark;         use Gtk.Text_Mark;
 with Gtk.Widget;
+with Gtkada.MDI;            use Gtkada.MDI;
 
 with Basic_Types;           use Basic_Types;
 with Files_Extra_Info_Pkg;
@@ -60,11 +61,30 @@ package Src_Contexts is
    --  Warning: do not change the contents or order of this type without
    --  synchronizing with vsearch.glade and Scan_Buffer.
 
+   type Source_Search_Occurrence_Record is
+     new Search_Occurrence_Record with private;
+   type Source_Search_Occurrence is
+     access all Source_Search_Occurrence_Record'Class;
+   --  Type used to represent a search occurence for source files
+
    ------------------
    -- File context --
    ------------------
 
    type File_Search_Context is abstract new Root_Search_Context with private;
+
+   type Current_File_Search_Module is
+     new Search_Module_Type with private;
+
+   overriding function Create_Context
+     (Module          : not null access Current_File_Search_Module;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences : Boolean;
+      Selector        : Scope_Selector)
+      return Root_Search_Context_Access;
+   --  Factory for "Current File". A Files_Project_Context is returned if
+   --  searching for All_Occurrences
+   --  This only works from the GUI, and shouldn't be used for text mode
 
    type Current_File_Context is new File_Search_Context with private;
    type Current_File_Context_Access is access all Current_File_Context'Class;
@@ -74,15 +94,6 @@ package Src_Contexts is
    overriding function Context_Look_In
      (Self : Current_File_Context) return String;
    --  See inherited documentation
-
-   function Current_File_Factory
-     (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences   : Boolean;
-      Selector : Scope_Selector)
-      return Root_Search_Context_Access;
-   --  Factory for "Current File". A Files_Project_Context is returned if
-   --  searching for All_Occurrences
-   --  This only works from the GUI, and shouldn't be used for text mode
 
    function Current_File_Factory
      (Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -132,8 +143,7 @@ package Src_Contexts is
    --  Failure_Response is used to select which type of response is displayed
    --  in case of failure.
 
-   overriding
-   function Get_Terminate_Message
+   overriding function Get_Terminate_Message
      (Context : access Current_File_Context;
       Kind    : Operation_Kind) return String;
 
@@ -141,16 +151,27 @@ package Src_Contexts is
    --  Current Selection Context --
    --------------------------------
 
+   type Current_Selection_Search_Module is
+     new Current_File_Search_Module with private;
+
+   overriding function Create_Context
+     (Module          : not null access Current_Selection_Search_Module;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences : Boolean;
+      Selector        : Scope_Selector)
+      return Root_Search_Context_Access;
+   --  Factory for "Current Selection".
+
    type Current_Selection_Context is new Current_File_Context with private;
 
-   overriding procedure Search
+   overriding function Search
      (Context              : access Current_Selection_Context;
       Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward      : Boolean;
       From_Selection_Start : Boolean;
       Give_Focus           : Boolean;
       Found                : out Boolean;
-      Continue             : out Boolean);
+      Continue             : out Boolean) return Search_Occurrence;
    --  Search function for "Current Selection"
 
    overriding function Replace
@@ -163,13 +184,6 @@ package Src_Contexts is
 
    overriding function Context_Look_In
      (Self : Current_Selection_Context) return String;
-
-   function Current_Selection_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
-      return Root_Search_Context_Access;
-   --  Factory for "Current Selection".
 
    ----------------------------
    -- Abstract files context --
@@ -216,6 +230,17 @@ package Src_Contexts is
    -- Files context --
    -------------------
 
+   type Files_Search_Module is
+     new Search_Module_Type with private;
+
+   overriding function Create_Context
+     (Module          : not null access Files_Search_Module;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences : Boolean;
+      Selector        : Scope_Selector)
+      return Root_Search_Context_Access;
+   --  Factory for "Files..."
+
    type Files_Context is new Abstract_Files_Context with private;
    type Files_Context_Access is access all Files_Context'Class;
    --  A special context for searching in a specific list of files
@@ -236,13 +261,6 @@ package Src_Contexts is
    --  Set the list of files to search
 
    function Files_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
-      return Root_Search_Context_Access;
-   --  Factory for "Files..."
-
-   function Files_Factory
      (All_Occurrences : Boolean;
       Scope           : Search_Scope) return Files_Context_Access;
    --  Same as above, but independent from a GUI. This is mostly used for the
@@ -258,9 +276,28 @@ package Src_Contexts is
    -- Files From Project context --
    --------------------------------
 
+   type Files_From_Project_Search_Module
+   is new Search_Module_Type with private;
+
+   overriding function Create_Context
+     (Module        : not null access Files_From_Project_Search_Module;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences : Boolean;
+      Selector        : Scope_Selector)
+      return Root_Search_Context_Access;
+   --  Factory for "Files From Project".
+   --  The list of files is automatically set to the files of the root project
+   --  and its imported projects
+
    type Files_Project_Context is new Abstract_Files_Context with private;
    type Files_Project_Context_Access is access all Files_Project_Context'Class;
    --  Context used to search in all files from the project
+
+   function Files_From_Project_Factory
+     (Scope           : Search_Scope;
+      All_Occurrences : Boolean) return Files_Project_Context_Access;
+   --  Same as calling Create_Context, but suitable for use outside the GUI.
+   --  No file is set, you need to call Set_File_List explicitely
 
    overriding function Context_Look_In
      (Self : Files_Project_Context) return String;
@@ -281,23 +318,12 @@ package Src_Contexts is
    --  No copy of Files is made, and it will be freed when the context no
    --  longer needs it.
 
-   function Files_From_Project_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
-      return Root_Search_Context_Access;
-   --  Factory for "Files From Project".
-   --  The list of files is automatically set to the files of the root project
-   --  and its imported projects
+   type Files_From_Root_Project_Search_Module is
+     new Search_Module_Type with private;
 
-   function Files_From_Project_Factory
-     (Scope           : Search_Scope;
-      All_Occurrences : Boolean) return Files_Project_Context_Access;
-   --  Same as above, but suitable for use outside the GUI.
-   --  No file is set, you need to call Set_File_List explicitely
-
-   function Files_From_Root_Project_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+   overriding function Create_Context
+     (Module          : not null access Files_From_Root_Project_Search_Module;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
       Selector        : Scope_Selector)
       return Root_Search_Context_Access;
@@ -314,13 +340,12 @@ package Src_Contexts is
    -- Runtime Files context --
    ---------------------------
 
-   type Runtime_Files_Context is new Files_Project_Context with private;
+   type Runtime_Files_Search_Module
+   is new Search_Module_Type with private;
 
-   overriding function Context_Look_In
-     (Self : Runtime_Files_Context) return String;
-
-   function Files_From_Runtime_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+   overriding function Create_Context
+     (Module          : not null access Runtime_Files_Search_Module;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
       Selector        : Scope_Selector)
       return Root_Search_Context_Access;
@@ -328,9 +353,26 @@ package Src_Contexts is
    --  The list of files is automatically set to the *.ads files from
    --  Predefined_Source_Path
 
+   type Runtime_Files_Context is new Files_Project_Context with private;
+
+   overriding function Context_Look_In
+     (Self : Runtime_Files_Context) return String;
+
    ------------------------
    -- Open Files context --
    ------------------------
+
+   type Open_Files_Search_Module
+   is new Search_Module_Type with private;
+
+   overriding function Create_Context
+     (Module          : not null access Open_Files_Search_Module;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences : Boolean;
+      Selector        : Scope_Selector)
+      return Root_Search_Context_Access;
+   --  Factory for "Open Files".
+   --  The list of files is automatically set to the currently opend files
 
    type Open_Files_Context is new Abstract_Files_Context with private;
    type Open_Files_Context_Access is access all Open_Files_Context'Class;
@@ -355,14 +397,6 @@ package Src_Contexts is
    --  No copy of Files is made, and it will be freed when the context no
    --  longer needs it.
 
-   function Open_Files_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences : Boolean;
-      Selector        : Scope_Selector)
-      return Root_Search_Context_Access;
-   --  Factory for "Open Files".
-   --  The list of files is automatically set to the currently opend files
-
    overriding
    function Get_Terminate_Message
      (Context : access Open_Files_Context;
@@ -370,14 +404,26 @@ package Src_Contexts is
 
 private
 
-   overriding procedure Search
+   type Source_Search_Occurrence_Record is new Search_Occurrence_Record with
+   record
+      Editor_Child : MDI_Child;
+      --  The editor in which the occurrence has been matched
+
+      Match_From   : Editor_Coordinates;
+      --  The editor coordinates for the match's start
+
+      Match_Up_To  : Editor_Coordinates;
+      --  The editor coordinates for the match's end
+   end record;
+
+   overriding function Search
      (Context              : access Current_File_Context;
       Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward      : Boolean;
       From_Selection_Start : Boolean;
       Give_Focus           : Boolean;
       Found                : out Boolean;
-      Continue             : out Boolean);
+      Continue             : out Boolean) return Search_Occurrence;
    --  Search function for "Current File"
 
    overriding function Replace
@@ -388,6 +434,10 @@ private
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean;
    --  Replace function for "Current File"
+
+   overriding procedure Highlight_Occurrence
+     (Module     : not null access Current_File_Search_Module;
+      Occurrence : not null access Search_Occurrence_Record'Class);
 
    type Recognized_Lexical_States is
      (Statements, Strings, Mono_Comments, Multi_Comments);
@@ -434,6 +484,9 @@ private
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  See inherited documentation
 
+   type Current_File_Search_Module is
+     new Search_Module_Type with null record;
+
    type Current_File_Context is new File_Search_Context with record
       Current_File : Ada.Strings.Unbounded.Unbounded_String;
    end record;
@@ -451,14 +504,14 @@ private
       Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  See inherited documentation
 
-   overriding procedure Search
+   overriding function Search
      (Context              : access Abstract_Files_Context;
       Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward      : Boolean;
       From_Selection_Start : Boolean;
       Give_Focus           : Boolean;
       Found                : out Boolean;
-      Continue             : out Boolean);
+      Continue             : out Boolean) return Search_Occurrence;
    --  Search function for "Files From Project" and "Open_Files"
 
    overriding function Replace
@@ -469,6 +522,9 @@ private
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean;
    --  Replace function for "Files From Project" and "Open_Files"
+
+   type Files_Search_Module is
+     new Search_Module_Type with null record;
 
    type Files_Context is new Abstract_Files_Context with record
       Files_Pattern : GNAT.Regexp.Regexp;
@@ -485,10 +541,19 @@ private
       Current_Dir   : Natural := 0;
    end record;
 
+   type Files_From_Project_Search_Module
+   is new Search_Module_Type with null record;
+
+   type Files_From_Root_Project_Search_Module is
+     new Search_Module_Type with null record;
+
    type Files_Project_Context is new Abstract_Files_Context with record
       Files        : GNATCOLL.VFS.File_Array_Access;
       Current_File : Integer;
    end record;
+
+   type Open_Files_Search_Module
+   is new Search_Module_Type with null record;
 
    type Open_Files_Context is new Abstract_Files_Context with record
       Files        : GNATCOLL.VFS.File_Array_Access := null;
@@ -545,7 +610,13 @@ private
      (Selector : not null access Files_Extra_Scope_Record)
       return Gtk.Widget.Gtk_Widget;
 
+   type Runtime_Files_Search_Module is
+     new Search_Module_Type with null record;
+
    type Runtime_Files_Context is new Files_Project_Context with null record;
+
+   type Current_Selection_Search_Module is
+     new Current_File_Search_Module with null record;
 
    type Current_Selection_Context is new Current_File_Context with record
       Selection_From : Gtk_Text_Mark;

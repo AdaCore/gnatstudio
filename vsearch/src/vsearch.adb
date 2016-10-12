@@ -99,6 +99,10 @@ package body Vsearch is
    Replace_Hist_Key   : constant History_Key := "search_replace";
    --  The key for the histories.
 
+   Pattern_Child_Key : constant String := "pattern_child";
+   Replace_Child_Key  : constant String := "replace_child";
+   --  Keys used to identify the pattern/replace entry widgets
+
    Last_Function_In_Module_Key : constant History_Key := "search_function_";
    --  The prefix used to store the name of the last search function used for
    --  each module. The name of the module is appended to form the real key.
@@ -171,6 +175,14 @@ package body Vsearch is
       --  Unused for "Search All" and "Replace All", so that we can run
       --  multiple such commands in parallel, and these commands can outlive
       --  the widget.
+
+      Locked                  : Boolean := False;
+      --  Used to lock the search view when the search pattern changes in
+      --  incremental mode.
+
+      Search_Has_Failed       : Boolean := False;
+      --  Used to know if the last search operation has failed.
+      --  This is needed for the 'backspace' feature of the incremental mode.
    end record;
 
    overriding procedure Create_Toolbar
@@ -192,6 +204,11 @@ package body Vsearch is
       Mode : Vsearch_Mode);
    --  Set the mode of the given search mode, hiding or showing the widgets
    --  related with replacing depending on With_Replace.
+
+   function Is_In_Incremental_Mode
+     (Self : not null access Vsearch_Record'Class) return Boolean;
+   --  Return True if the incremental mode preference is enabled and the
+   --  currently selected search module supports it. Return False otherwise.
 
    package Search_Views is new Generic_Views.Simple_Views
      (Module_Name            => Search_Module_Name,
@@ -224,53 +241,29 @@ package body Vsearch is
       return Gtk.Editable.Gtk_Editable
       renames Implements_Editable.To_Interface;
 
-   type Search_Module_Data is record
-      Mask         : Search_Options_Mask;
-      Factory      : Module_Search_Context_Factory;
-
-      Selector     : Scope_Selector;
-      --  Store the scope selector, which holds a reference to the scope
-      --  selection widgets.
-      --  We could have factories instead, but that means it would be harder
-      --  to preserve the current extra information when users switch between
-      --  contexts.
-
-      Id           : Module_ID;
-      Label        : GNAT.Strings.String_Access;
-      In_Selection : Boolean;
-   end record;
-
-   No_Search : constant Search_Module_Data :=
-     (Label             => null,
-      Mask              => 0,
-      Factory           => null,
-      Id                => null,
-      Selector => null,
-      In_Selection      => False);
-
    procedure Set_Search_Module
-     (Self          : not null access Vsearch_Record'Class;
-      Search_Module : Search_Module_Data);
+     (Self   : not null access Vsearch_Record'Class;
+      Module : Search_Module);
    --  Set the the current search module used by the Search view
 
    procedure Set_Last_Of_Module
-     (Handle      : access Kernel_Handle_Record'Class;
-      Search_Data : Search_Module_Data);
-   --  The Search_Data given in parameter is set as being the last one selected
+     (Handle : access Kernel_Handle_Record'Class;
+      Module : Search_Module);
+   --  The Module given in parameter is set as being the last one selected
    --  by the user, and will be the next one shown for the corresponding
    --  module.
 
    function Get_Search_Module_From_Context
      (Context      : Selection_Context;
-      In_Selection : Boolean := False) return Search_Module_Data;
+      In_Selection : Boolean := False) return Search_Module;
    --  Return the first search module that matches the given context, or the
    --  default one if there is none.
 
-   procedure Free (Data : in out Search_Module_Data);
-   --  Free the memory associated with Data
+   procedure Free (Module : Search_Module);
+   --  Free the memory associated with Module
 
    package Search_Modules_List is new Ada.Containers.Doubly_Linked_Lists
-     (Search_Module_Data);
+     (Search_Module);
    use Search_Modules_List;
 
    type Vsearch_Module_Record is new Module_ID_Record with record
@@ -278,7 +271,7 @@ package body Vsearch is
       --  Global variable that contains the list of all registered search
       --  functions.
 
-      Default_Search_Module : Search_Module_Data := No_Search;
+      Default_Search_Module : Search_Module;
       --  The default search module to use when no one matches with the current
       --  context.
 
@@ -427,13 +420,13 @@ package body Vsearch is
    --  scratch.
 
    function Key_Press
-     (Vsearch : access Gtk_Widget_Record'Class;
-      Event   : Gdk_Event) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
    --  Called when a key is pressed in the pattern field.
 
    function Key_Press_Replace
-     (Vsearch : access Gtk_Widget_Record'Class;
-      Event   : Gdk_Event) return Boolean;
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
    --  Called when a key is pressed in the replacement field.
 
    procedure Register_Default_Search
@@ -442,13 +435,13 @@ package body Vsearch is
 
    function Get_Nth_Search_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Num    : Positive) return Search_Module_Data;
+      Num    : Positive) return Search_Module;
    --  Return the Num-th registered module, or No_Search if there is no such
    --  module.
 
    function Find_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Label  : String) return Search_Module_Data;
+      Label  : String) return Search_Module;
    --  Search the list of registered search functions for a matching module.
    --  No_Search is returned if no such module was found.
 
@@ -592,17 +585,17 @@ package body Vsearch is
    -- Free --
    ----------
 
-   procedure Free (Data : in out Search_Module_Data) is
+   procedure Free (Module : Search_Module)
+   is
+      Selector : constant Scope_Selector := Module.Get_Scope_Selector;
    begin
-      if Data.Selector /= null then
-         Unref (Gtk_Widget (Data.Selector.Get_Scope_Combo));
+      if Selector /= null then
+         Unref (Gtk_Widget (Selector.Get_Scope_Combo));
 
-         if Data.Selector.Get_Optional_Widget /= null then
-            Unref (Data.Selector.Get_Optional_Widget);
+         if Selector.Get_Optional_Widget /= null then
+            Unref (Selector.Get_Optional_Widget);
          end if;
       end if;
-
-      Free (Data.Label);
    end Free;
 
    -------------
@@ -788,7 +781,7 @@ package body Vsearch is
       return Find_Utils.Root_Search_Context_Access
    is
       use Widget_List;
-      Data           : constant Search_Module_Data :=
+      Module         : constant Search_Module :=
                          Find_Module
                            (Vsearch.Kernel,
                             Get_Active_Id (Vsearch.Context_Combo));
@@ -807,8 +800,8 @@ package body Vsearch is
                              Full_Text);
       Ctxt : Root_Search_Context_Access;
    begin
-      if Data.Factory /= null and then Pattern /= "" then
-         Ctxt := Data.Factory
+      if Module /= null and then Pattern /= "" then
+         Ctxt := Module.Create_Context
            (Vsearch.Kernel,
             All_Occurrences,
             Vsearch.Selector);
@@ -833,19 +826,10 @@ package body Vsearch is
          Case_Sensitive => Case_Sensitive,
          Regexp         => Kind = Regexp);
 
-      --  It sometimes happens that another entry is selected, for some
-      --  reason. This also resets the options to the unwanted selection,
-      --  so we also need to override them.
-      Set_Active_Text (Vsearch.Pattern_Combo, Pattern);
-      Vsearch.Case_Toggle.Set_Active (Case_Sensitive);
-      Vsearch.Whole_Word_Toggle.Set_Active (Whole_Word);
-      Vsearch.Regexp_Toggle.Set_Active (Kind = Regexp);
-
       Add_Unique_Combo_Entry
         (Vsearch.Replace_Combo, Replace_Text, Prepend => True);
       Add_To_History
         (Get_History (Vsearch.Kernel).all, Replace_Hist_Key, Replace_Text);
-      Set_Active_Text (Vsearch.Replace_Combo, Replace_Text);
 
       return Ctxt;
    end Create_Context;
@@ -876,17 +860,16 @@ package body Vsearch is
       Is_Incremental  : Boolean := False;
       Replace         : Boolean := False)
    is
-      Data     : constant Search_Module_Data :=
-                   Find_Module
-                     (Vsearch.Kernel, Get_Active_Id (Vsearch.Context_Combo));
-      Toplevel : Gtk_Widget;
-      Found    : Boolean;
-      Has_Next : Boolean;
-      Dummy    : Message_Dialog_Buttons;
-      Ctxt     : Root_Search_Context_Access;
-
-      Pattern  : constant String := Get_Active_Text (Vsearch.Pattern_Combo);
-      C        : access Search_Command;
+      Module     : constant Search_Module :=
+                     Find_Module
+                       (Vsearch.Kernel, Get_Active_Id (Vsearch.Context_Combo));
+      Occurrence : Search_Occurrence;
+      Found      : Boolean;
+      Has_Next   : Boolean;
+      Dummy      : Message_Dialog_Buttons;
+      Ctxt       : Root_Search_Context_Access;
+      Pattern    : constant String := Get_Active_Text (Vsearch.Pattern_Combo);
+      C          : access Search_Command;
       Search_Category : constant String :=
         -"Search for: " & Vsearch.Pattern_Combo.Get_Active_Text;
    begin
@@ -918,28 +901,43 @@ package body Vsearch is
             C := new Search_Command'
               (Interactive_Command with
                Select_Editor_On_Match => Select_On_Match.Get_Pref,
-               Kernel            => Vsearch.Kernel,
-               Search_Backward   => False,
-               Context           => Ctxt,
-               Context_Is_Owned  => True,  --  command will free context
-               Found             => False);
+               Kernel                 => Vsearch.Kernel,
+               Search_Backward        => False,
+               Context                => Ctxt,
+               Context_Is_Owned       => True,  --  command will free context
+               Found                  => False);
             Launch_Background_Command
               (Vsearch.Kernel, C, True, True, Search_Category);
 
          else
-            Search
-              (Ctxt,
-               Vsearch.Kernel,
+            Occurrence := Ctxt.Search
+              (Kernel               => Vsearch.Kernel,
                Search_Backward      => False,
                From_Selection_Start => Is_Incremental,
                Give_Focus           => Select_On_Match.Get_Pref,
                Found                => Found,
                Continue             => Has_Next);
 
+            --  Push the occurrence in the module's search occurrences stack
+            --  if it supports the incremental search mode. Free it otherwise.
+            if Occurrence /= null then
+               if Vsearch.Is_In_Incremental_Mode then
+                  Module.Push_Occurrence (Occurrence);
+               else
+                  Free (Occurrence);
+               end if;
+
+               --  Remove any displayed information since a match has been
+               --  found.
+               Remove_Information_On_Child
+                 (Vsearch.Main_View,
+                  Child_Key => Pattern_Child_Key);
+            end if;
+
             Vsearch.Replace_Button.Set_Sensitive
-              (Found and then (Data.Mask and Supports_Replace) /= 0);
+              (Found and then Module.Is_Option_Supported (Supports_Replace));
             Vsearch.Replace_Search_Button.Set_Sensitive
-              (Found and then (Data.Mask and Supports_Replace) /= 0);
+              (Found and then Module.Is_Option_Supported (Supports_Replace));
 
             --  Give a visual feedback that the search is terminated.
             if not Found
@@ -947,20 +945,14 @@ package body Vsearch is
               and then not Get_End_Notif_Done (Ctxt.all)
             then
                Stop_Macro_Action_Hook.Run (Vsearch.Kernel);
-
-               Toplevel := Vsearch.Get_Toplevel;
-               if Gtk_Widget (Vsearch) = Toplevel then
-                  Toplevel := Gtk_Widget (Vsearch.Kernel.Get_Main_Window);
-               end if;
-
-               Dummy := Message_Dialog
-                 (Msg     => (-"No occurrences of '") & Pattern &
-                  (-"' found in") & ASCII.LF
-                  & Ctxt.Context_Look_In,
-                  Title   => -"Search",
-                  Buttons => Button_OK,
-                  Parent  => Gtk_Window (Toplevel));
+               Display_Information_On_Child
+                 (Vsearch.Main_View,
+                  Child_Key => Pattern_Child_Key,
+                  Message   => "No occurrences of '" & Pattern & "' found in "
+                  & Context_Look_In (Ctxt.all),
+                  Is_Error  => True);
                Ctxt.Set_End_Notif_Done (True);
+               Vsearch.Search_Has_Failed := True;
             end if;
 
             --  We keep the "Next" mode until a new context is created by
@@ -1169,13 +1161,8 @@ package body Vsearch is
      (Object : access Gtk_Widget_Record'Class)
    is
       Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
-      Data    : constant Search_Module_Data :=
-                  Find_Module
-                    (Vsearch.Kernel, Get_Active_Id (Vsearch.Context_Combo));
    begin
-      if Incremental_Search.Get_Pref
-        and then (Data.Mask and Supports_Incremental) /= 0
-      then
+      if not Vsearch.Locked and then Vsearch.Is_In_Incremental_Mode then
          Reset_Interactive_Context (Vsearch);
          Internal_Search
            (Vsearch,
@@ -1194,41 +1181,46 @@ package body Vsearch is
    is
       use Widget_List;
 
-      Vsearch : constant Vsearch_Access := Vsearch_Access (Object);
-      Data    : constant Search_Module_Data :=
-                  Find_Module
-                    (Vsearch.Kernel, Get_Active_Id (Vsearch.Context_Combo));
-      Replace : Boolean;
-      Child   : MDI_Child;
-
+      Vsearch             : constant Vsearch_Access := Vsearch_Access (Object);
+      Module              : constant Search_Module :=
+                              Find_Module
+                                (Vsearch.Kernel,
+                                 Get_Active_Id (Vsearch.Context_Combo));
+      Selector            : constant Scope_Selector :=
+                              (if Module /= null then
+                                  Module.Get_Scope_Selector
+                               else
+                                  null);
+      Has_Replace         : Boolean;
+      Has_Case_Sensitive  : Boolean;
+      Has_All_Occurrences : Boolean;
+      Has_Whole_Word      : Boolean;
+      Has_Backward        : Boolean;
+      Child               : MDI_Child;
    begin
-      if Data /= No_Search then
-         Set_Last_Of_Module (Vsearch.Kernel, Data);
-         Replace := (Data.Mask and Supports_Replace) /= 0;
-         Set_Sensitive (Vsearch.Replace_Combo, Replace);
-         Set_Sensitive (Vsearch.Replace_All_Button, Replace);
+      if Module /= null then
+         Set_Last_Of_Module (Vsearch.Kernel, Module);
 
-         if (Data.Mask and All_Occurrences) = 0 then
-            Set_Sensitive (Vsearch.Replace_All_Button, False);
-            Set_Sensitive (Vsearch.Search_All_Button, False);
-         else
-            Set_Sensitive (Vsearch.Search_All_Button, True);
-         end if;
+         --  Set the widgets' sensitivity/sate according to the options
+         --  supported by the newly selected search module.
+         Has_Replace := Module.Is_Option_Supported (Supports_Replace);
+         Has_Case_Sensitive := Module.Is_Option_Supported (Case_Sensitive);
+         Has_All_Occurrences := Module.Is_Option_Supported (All_Occurrences);
+         Has_Whole_Word := Module.Is_Option_Supported (Whole_Word);
+         Has_Backward := Module.Is_Option_Supported (Search_Backward);
 
-         if (Data.Mask and Case_Sensitive) = 0 then
-            Set_Active (Vsearch.Case_Toggle, False);
-         end if;
+         Vsearch.Replace_Combo.Set_Sensitive (Has_Replace);
+         Vsearch.Replace_All_Button.Set_Sensitive
+           (Has_Replace and Has_All_Occurrences);
+         Vsearch.Search_All_Button.Set_Sensitive (Has_All_Occurrences);
+         Vsearch.Case_Toggle.Set_Sensitive (Has_Case_Sensitive);
+         Vsearch.Whole_Word_Toggle.Set_Sensitive (Has_Whole_Word);
+         Vsearch.Search_Previous_Button.Set_Sensitive (Has_Backward);
 
-         if (Data.Mask and Whole_Word) = 0 then
-            Set_Active (Vsearch.Whole_Word_Toggle, False);
-         end if;
-
-         Set_Sensitive
-           (Vsearch.Case_Toggle, (Data.Mask and Case_Sensitive) /= 0);
-         Set_Sensitive
-           (Vsearch.Whole_Word_Toggle, (Data.Mask and Whole_Word) /= 0);
-         Set_Sensitive (Vsearch.Search_Previous_Button,
-                        (Data.Mask and Search_Backward) /= 0);
+         Vsearch.Case_Toggle.Set_Active
+           (Vsearch.Case_Toggle.Get_Active and then Has_Case_Sensitive);
+         Vsearch.Whole_Word_Toggle.Set_Active
+           (Vsearch.Whole_Word_Toggle.Get_Active and then Has_Whole_Word);
 
          --  We remove the scope selector widgets, but there is still one
          --  reference hold by the module, so they don't get destroyed.
@@ -1248,12 +1240,10 @@ package body Vsearch is
          Vsearch.Scope_Selector_Combo := null;
          Vsearch.Scope_Selector_Optional := null;
 
-         if Data.Selector /= null then
-            Vsearch.Selector := Data.Selector;
-            Vsearch.Scope_Selector_Combo :=
-              Data.Selector.Get_Scope_Combo;
-            Vsearch.Scope_Selector_Optional :=
-              Data.Selector.Get_Optional_Widget;
+         if Selector /= null then
+            Vsearch.Selector := Selector;
+            Vsearch.Scope_Selector_Combo := Selector.Get_Scope_Combo;
+            Vsearch.Scope_Selector_Optional := Selector.Get_Optional_Widget;
 
             Gtk_New (Vsearch.Scope_Separator_Label, "In");
             Vsearch.Scope_Selector_Box.Pack_End
@@ -1283,6 +1273,9 @@ package body Vsearch is
             Vsearch.Set_Size_Request (-1, -1);
             Vsearch.Queue_Resize;
          end if;
+
+         --  Clear the module's search occurrences stack
+         Module.Clear_Occurrences;
       end if;
    end On_Context_Combo_Changed;
 
@@ -1356,9 +1349,18 @@ package body Vsearch is
       --  We might be in the process of destroying GPS (for instance, the
       --  current search context detects that the current MDI_Child was
       --  destroyed, and resets the context).
+
       if View /= null then
          Set_First_Next_Mode (View, Find_Next => False);
-         Reset_Interactive_Context (View);
+
+         --  Do not reset the interactive context when we are in incremental
+         --  mode and if the currently selected search module supports it
+         --  since the interactive search context is systematically reset in
+         --  this case (see On_Patter_Combo_Changed).
+
+         if not View.Is_In_Incremental_Mode then
+            Reset_Interactive_Context (View);
+         end if;
       end if;
    end Execute;
 
@@ -1380,30 +1382,90 @@ package body Vsearch is
    ---------------
 
    function Key_Press
-     (Vsearch : access Gtk_Widget_Record'Class;
-      Event   : Gdk_Event) return Boolean
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
    is
-      Ext : constant Vsearch_Access := Vsearch_Access (Vsearch);
+      Vsearch             : constant Vsearch_Access := Vsearch_Access (Widget);
+      Module              : constant Search_Module :=
+                              Find_Module
+                                (Vsearch.Kernel,
+                                 Get_Active_Id (Vsearch.Context_Combo));
+      In_Incremental_Mode : constant Boolean := Vsearch.Is_In_Incremental_Mode;
    begin
       if Get_Key_Val (Event) = GDK_Return
         or else Get_Key_Val (Event) = GDK_KP_Enter
       then
-         if Is_Sensitive (Ext.Search_Next_Button) then
+         if Is_Sensitive (Vsearch.Search_Next_Button) then
 
             --  Don't give the focus to the search/next button when we are in
-            --  the interactive mode so that the user can still modify the
+            --  the incremental mode so that the user can still modify the
             --  entry after pressing the Enter/Return key.
-            if not Incremental_Search.Get_Pref then
-               Grab_Focus (Ext.Search_Next_Button);
+            if not In_Incremental_Mode then
+               Grab_Focus (Vsearch.Search_Next_Button);
             end if;
 
             On_Search (Vsearch);
          else
-            Grab_Focus (Ext.Replace_Search_Button);
-            On_Replace (Ext);
+            Grab_Focus (Vsearch.Replace_Search_Button);
+            On_Replace (Vsearch);
          end if;
+
          return True;
+      elsif In_Incremental_Mode
+        and then Get_Key_Val (Event) = GDK_BackSpace
+      then
+         declare
+            Occurrence    : Search_Occurrence;
+            Start_Pos     : Gint;
+            End_Pos       : Gint;
+            Has_Selection : Boolean;
+         begin
+            Get_Selection_Bounds (Gtk_Entry (Vsearch.Pattern_Combo.Get_Child),
+                                  Start_Pos     => Start_Pos,
+                                  End_Pos       => End_Pos,
+                                  Has_Selection => Has_Selection);
+
+            --  If some text is selected in the search pattern entry, return
+            --  False directly so that the text gets deleted.
+            if Has_Selection then
+               return False;
+            end if;
+
+            --  Pop the last saved occurence and use the one just after, so
+            --  that we don't go to the same occurrence every time.
+            if not Vsearch.Search_Has_Failed then
+               Occurrence := Module.Pop_Occurrence;
+               Free (Occurrence);
+            else
+               Vsearch.Search_Has_Failed := False;
+            end if;
+
+            Occurrence := Module.Get_Last_Occurrence;
+
+            if Occurrence /= null then
+               Vsearch.Locked := True;
+
+               --  Remove any displayed information since and set the
+               --  sensitivity of the 'Replace' and 'Replace and Find'
+               --  buttons since a match has been found.
+               Remove_Information_On_Child
+                 (Vsearch.Main_View,
+                  Child_Key => Pattern_Child_Key);
+               Vsearch.Replace_Button.Set_Sensitive (True);
+               Vsearch.Replace_Search_Button.Set_Sensitive (True);
+
+               Set_Active_Text (Vsearch.Pattern_Combo, Occurrence.Get_Pattern);
+               Gtk_Entry
+                 (Vsearch.Pattern_Combo.Get_Child).Select_Region (0, -1);
+               Module.Highlight_Occurrence (Occurrence);
+
+               Vsearch.Locked := False;
+
+               return True;
+            end if;
+         end;
       end if;
+
       return False;
    end Key_Press;
 
@@ -1412,16 +1474,16 @@ package body Vsearch is
    -----------------------
 
    function Key_Press_Replace
-     (Vsearch : access Gtk_Widget_Record'Class;
-      Event   : Gdk_Event) return Boolean
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
    is
-      Ext : constant Vsearch_Access := Vsearch_Access (Vsearch);
+      Vsearch : constant Vsearch_Access := Vsearch_Access (Widget);
    begin
       if Get_Key_Val (Event) = GDK_Return
         or else Get_Key_Val (Event) = GDK_KP_Enter
       then
-         Grab_Focus (Ext.Replace_Search_Button);
-         On_Replace_Search (Ext);
+         Grab_Focus (Vsearch.Replace_Search_Button);
+         On_Replace_Search (Vsearch);
          return True;
       end if;
 
@@ -1518,19 +1580,19 @@ package body Vsearch is
    begin
       loop
          declare
-            Data : constant Search_Module_Data :=
-              Get_Nth_Search_Module (Kernel, Num);
+            Module : constant Search_Module :=
+                       Get_Nth_Search_Module (Kernel, Num);
          begin
-            exit when Data = No_Search;
+            exit when Module = null;
 
             Found := False;
             Iter := Store.Get_Iter_First;
             while Iter /= Null_Iter loop
                --  The id is the un-substituted label
-               if Get_String (Store, Iter, Id_Col) = Data.Label.all then
+               if Get_String (Store, Iter, Id_Col) = Module.Get_Label then
                   --  Update the text, after substituting macros.
                   Store.Set
-                    (Iter, 0, Substitute_Label (Kernel, Data.Label.all));
+                    (Iter, 0, Substitute_Label (Kernel, Module.Get_Label));
                   Found := True;
                   exit;
                end if;
@@ -1539,8 +1601,8 @@ package body Vsearch is
 
             if not Found then
                Vsearch.Context_Combo.Append
-                 (Id   => Data.Label.all,
-                  Text => Substitute_Label (Kernel, Data.Label.all));
+                 (Id   => Module.Get_Label,
+                  Text => Substitute_Label (Kernel, Module.Get_Label));
             end if;
 
             Num := Num + 1;
@@ -1717,9 +1779,10 @@ package body Vsearch is
 
       Group_Widget.Create_Child
         (Self.Pattern_Combo,
-         Label  => "Find",
-         Expand => True,
-         Fill   => True);
+         Label     => "Find",
+         Child_Key => Pattern_Child_Key,
+         Expand    => True,
+         Fill      => True);
 
       Gtk.List_Store.Gtk_New (Model, (0 .. 0 => GType_String));
       Gtk_New_With_Model_And_Entry (Self.Replace_Combo, +Model);
@@ -1743,7 +1806,7 @@ package body Vsearch is
       Replace_Row := Group_Widget.Create_Child
         (Self.Replace_Combo,
          Label     => "Replace",
-         Child_Key => "replace_combo");
+         Child_Key => Replace_Child_Key);
       Replace_Row.Set_No_Show_All (True);
 
       --  Context specific search
@@ -1899,7 +1962,7 @@ package body Vsearch is
          New_Entry => Mode'Image);
 
       Self.Main_View.Set_Child_Visible
-        (Child_Key => "replace_combo",
+        (Child_Key => Replace_Child_Key,
          Visible   => Show_Replace_Widgets);
       Self.Replace_Button.Set_Visible (Show_Replace_Widgets);
       Self.Replace_All_Button.Set_Visible (Show_Replace_Widgets);
@@ -1907,6 +1970,22 @@ package body Vsearch is
       Self.Search_Previous_Button.Set_Visible (not Show_Replace_Widgets);
       Self.Search_All_Button.Set_Visible (not Show_Replace_Widgets);
    end Set_Vsearch_Mode;
+
+   ----------------------------
+   -- Is_In_Incremental_Mode --
+   ----------------------------
+
+   function Is_In_Incremental_Mode
+     (Self : not null access Vsearch_Record'Class) return Boolean
+   is
+      Module : constant Search_Module :=
+                 Find_Module
+                   (Self.Kernel, Label => Get_Active_Id (Self.Context_Combo));
+   begin
+      return (Module /= null
+              and then Module.Is_Option_Supported (Supports_Incremental)
+              and then Incremental_Search.Get_Pref);
+   end Is_In_Incremental_Mode;
 
    ------------------
    -- Receive_Text --
@@ -2380,7 +2459,7 @@ package body Vsearch is
       Vsearch := Get_Or_Create_Vsearch
         (Get_Kernel (Context.Context),
          Raise_Widget  => True,
-         Reset_Entries => True,
+         Reset_Entries => False,
          Context       => Action.Context,
          Mode          => Find_And_Replace);
       return Success;
@@ -2391,47 +2470,36 @@ package body Vsearch is
    ------------------------------
 
    procedure Register_Search_Function
-     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Label        : String;
-      Factory      : Find_Utils.Module_Search_Context_Factory;
-      Selector     : access Scope_Selector_Interface'Class := null;
-      Id           : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
-      Mask         : Search_Options_Mask := All_Options;
-      In_Selection : Boolean := False;
-      Is_Default   : Boolean := False)
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Module        : not null access Search_Module_Type'Class;
+      Is_Default    : Boolean := False)
    is
-      Data : constant Search_Module_Data :=
-        Search_Module_Data'
-          (Label         => new String'(Label),
-           Factory       => Factory,
-           Selector      => Selector,
-           Id            => Module_ID (Id),
-           Mask          => Mask,
-           In_Selection  => In_Selection);
+      Id    : constant Module_ID := Module.Get_Id;
+      Label : constant String := Module.Get_Label;
    begin
       if Id /= null then
          Create_New_Key_If_Necessary
            (Get_History (Kernel).all,
-            Last_Function_In_Module_Key & History_Key (Get_Name (Data.Id)),
+            Last_Function_In_Module_Key & History_Key (Get_Name (Id)),
             Key_Type => Strings);
          Set_Max_Length
            (Get_History (Kernel).all,
             1,   --  Only the last one is interesting
-            Last_Function_In_Module_Key & History_Key (Get_Name (Data.Id)));
+            Last_Function_In_Module_Key & History_Key (Get_Name (Id)));
       end if;
 
-      Prepend (Vsearch_Module_Id.Search_Modules, Data);
+      Prepend (Vsearch_Module_Id.Search_Modules, Module);
 
       if Is_Default then
-         Vsearch_Module_Id.Default_Search_Module := Data;
+         Vsearch_Module_Id.Default_Search_Module := Search_Module (Module);
       end if;
 
-      if Data.Selector /= null then
+      if Module.Get_Scope_Selector /= null then
          declare
             Scope_Combo    : constant Gtk_Widget := Gtk_Widget
-              (Data.Selector.Get_Scope_Combo);
+              (Module.Get_Scope_Selector.Get_Scope_Combo);
             Scope_Optional : constant Gtk_Widget :=
-                               Data.Selector.Get_Optional_Widget;
+                               Module.Get_Scope_Selector.Get_Optional_Widget;
          begin
             --  Make sure the extra information is not destroyed for the
             --  duration of GPS, even when the search window is destroyed
@@ -2468,7 +2536,7 @@ package body Vsearch is
 
    function Get_Nth_Search_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Num    : Positive) return Search_Module_Data
+      Num    : Positive) return Search_Module
    is
       pragma Unreferenced (Kernel);
       Node : Search_Modules_List.Cursor :=
@@ -2482,7 +2550,7 @@ package body Vsearch is
          return Element (Node);
       end if;
 
-      return No_Search;
+      return null;
    end Get_Nth_Search_Module;
 
    -----------------
@@ -2491,16 +2559,17 @@ package body Vsearch is
 
    function Find_Module
      (Kernel : access Kernel_Handle_Record'Class;
-      Label  : String) return Search_Module_Data
+      Label  : String) return Search_Module
    is
       pragma Unreferenced (Kernel);
    begin
-      for M of Vsearch_Module_Id.Search_Modules loop
-         if M.Label.all = Label then
-            return M;
+      for Module of Vsearch_Module_Id.Search_Modules loop
+         if Module.Get_Label = Label then
+            return Module;
          end if;
       end loop;
-      return No_Search;
+
+      return null;
    end Find_Module;
 
    ------------------------------------
@@ -2509,7 +2578,7 @@ package body Vsearch is
 
    function Get_Search_Module_From_Context
      (Context       : Selection_Context;
-      In_Selection  : Boolean := False) return Search_Module_Data
+      In_Selection  : Boolean := False) return Search_Module
    is
       Id                  : constant Module_ID :=
                               Module_ID (Get_Creator (Context));
@@ -2521,19 +2590,19 @@ package body Vsearch is
         Get_History (Get_History (Get_Kernel (Context)).all, Key);
    begin
       while Has_Element (List) loop
-         if Element (List).Id = Id
-           and Element (List).In_Selection = In_Selection
+         if Element (List).Get_Id = Id
+           and Element (List).Get_In_Selection = In_Selection
          then
             Last_Matching_Node := List;
 
             if not Get_Pref (Keep_Previous_Search_Context)
               or else Last_Selected = null
               or else Last_Selected (Last_Selected'First).all =
-                 Element (List).Label.all
+                 Element (List).Get_Label
             then
                if Active (Me) then
                   Trace (Me, "Get last search function for module "
-                         & String (Key) & ": " & Element (List).Label.all);
+                         & String (Key) & ": " & Element (List).Get_Label);
                end if;
 
                return Element (List);
@@ -2557,14 +2626,13 @@ package body Vsearch is
    -----------------------
 
    procedure Set_Search_Module
-     (Self          : not null access Vsearch_Record'Class;
-      Search_Module : Search_Module_Data)
+     (Self   : not null access Vsearch_Record'Class;
+      Module : Search_Module)
    is
       Dummy : Boolean;
    begin
-      if Search_Module /= No_Search then
-         Dummy := Self.Context_Combo.Set_Active_Id
-           (Search_Module.Label.all);
+      if Module /= null then
+         Dummy := Self.Context_Combo.Set_Active_Id (Module.Get_Label);
       end if;
    end Set_Search_Module;
 
@@ -2573,25 +2641,25 @@ package body Vsearch is
    ------------------------
 
    procedure Set_Last_Of_Module
-     (Handle      : access Kernel_Handle_Record'Class;
-      Search_Data : Search_Module_Data) is
+     (Handle : access Kernel_Handle_Record'Class;
+      Module : Search_Module) is
    begin
       if not Get_Pref (Keep_Previous_Search_Context)
-        or else Search_Data.Id = null
+        or else Module.Get_Id = null
       then
          return;
       end if;
 
       if Active (Me) then
          Trace (Me, "Set last search function for module "
-                & Get_Name (Search_Data.Id)
-                & " to " & Search_Data.Label.all);
+                & Get_Name (Module.Get_Id)
+                & " to " & Module.Get_Label);
       end if;
 
       Add_To_History
         (Get_History (Handle).all,
-         Last_Function_In_Module_Key & History_Key (Get_Name (Search_Data.Id)),
-         Search_Data.Label.all);
+         Last_Function_In_Module_Key & History_Key (Get_Name (Module.Get_Id)),
+         Module.Get_Label);
    end Set_Last_Of_Module;
 
    -----------------------------

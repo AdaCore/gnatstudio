@@ -46,7 +46,6 @@ with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Window;                 use Gtk.Window;
 
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
-with Gtkada.MDI;                 use Gtkada.MDI;
 
 with Files_Extra_Info_Pkg;       use Files_Extra_Info_Pkg;
 with GPS.Default_Styles;         use GPS.Default_Styles;
@@ -251,7 +250,8 @@ package body Src_Contexts is
       Start_Line           : Editable_Line_Type := 1;
       Start_Column         : Character_Offset_Type := 1;
       End_Line             : Editable_Line_Type := 0;
-      End_Column           : Character_Offset_Type := 0) return Boolean;
+      End_Column           : Character_Offset_Type := 0)
+      return Source_Search_Occurrence;
    --  Auxiliary function, factorizes code between Search and Replace.
    --  Return True in case of success.
    --  When From_Selection_Start is True, the search begins at the beginning of
@@ -1354,20 +1354,22 @@ package body Src_Contexts is
       end if;
    end Set_File_List;
 
-   --------------------------
-   -- Current_File_Factory --
-   --------------------------
+   --------------------
+   -- Create_Context --
+   --------------------
 
-   function Current_File_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+   overriding function Create_Context
+     (Module          : not null access Current_File_Search_Module;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
       Selector        : Scope_Selector)
       return Root_Search_Context_Access is
+      pragma Unreferenced (Module);
    begin
       return Current_File_Factory
         (Kernel, All_Occurrences,
          Scope => Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active));
-   end Current_File_Factory;
+   end Create_Context;
 
    --------------------------
    -- Current_File_Factory --
@@ -1392,16 +1394,18 @@ package body Src_Contexts is
       return Root_Search_Context_Access (Context);
    end Current_File_Factory;
 
-   -------------------------------
-   -- Current_Selection_Factory --
-   -------------------------------
+   --------------------
+   -- Create_Context --
+   --------------------
 
-   function Current_Selection_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+   overriding function Create_Context
+     (Module          : not null access Current_Selection_Search_Module;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
       Selector        : Scope_Selector)
       return Root_Search_Context_Access
    is
+      pragma Unreferenced (Module);
       Scope  : constant Search_Scope :=
                  Search_Scope'Val (Selector.Get_Scope_Combo.Get_Active);
       Result : Current_Selection_Context_Access;
@@ -1414,7 +1418,7 @@ package body Src_Contexts is
       Result.Scope := Scope;
 
       return Root_Search_Context_Access (Result);
-   end Current_Selection_Factory;
+   end Create_Context;
 
    ---------------------
    -- Focus_To_Editor --
@@ -1430,14 +1434,14 @@ package body Src_Contexts is
    -- Search --
    ------------
 
-   overriding procedure Search
+   overriding function Search
      (Context              : access Current_Selection_Context;
       Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward      : Boolean;
       From_Selection_Start : Boolean;
       Give_Focus           : Boolean;
       Found                : out Boolean;
-      Continue             : out Boolean)
+      Continue             : out Boolean) return Search_Occurrence
    is
       function Interactive_Callback
         (Match : GPS.Search.Search_Context;
@@ -1446,13 +1450,13 @@ package body Src_Contexts is
       --  ??? This should be factorized somehow with the Search fonction
       --  from the Abstract_File_Context.
 
-      Child  : constant MDI_Child := Find_Current_Editor (Kernel);
-      Editor : Source_Editor_Box;
-
-      Begin_Line           : Editable_Line_Type;
-      Begin_Column         : Character_Offset_Type;
-      End_Line             : Editable_Line_Type;
-      End_Column           : Character_Offset_Type;
+      Child        : constant MDI_Child := Find_Current_Editor (Kernel);
+      Editor       : Source_Editor_Box;
+      Occurrence   : Source_Search_Occurrence;
+      Begin_Line   : Editable_Line_Type;
+      Begin_Column : Character_Offset_Type;
+      End_Line     : Editable_Line_Type;
+      End_Column   : Character_Offset_Type;
 
       --------------------------
       -- Interactive_Callback --
@@ -1492,6 +1496,15 @@ package body Src_Contexts is
                Interactive => not Context.All_Occurrences);
          end if;
 
+         Occurrence := new Source_Search_Occurrence_Record'
+           (Search_Occurrence_Record with
+            Editor_Child => Child,
+            Match_From   =>
+              (Editable_Line_Type (Match.Start.Line), Match.Start.Column),
+            Match_Up_To  =>
+              (Editable_Line_Type (Match.Finish.Line), Match.Finish.Column));
+         Initialize (Occurrence, Pattern => Text);
+
          return True;
       end Interactive_Callback;
 
@@ -1500,7 +1513,7 @@ package body Src_Contexts is
 
       if Child = null then
          Continue := False;
-         return;
+         return null;
       end if;
 
       Editor := Get_Source_Box_From_MDI (Child);
@@ -1526,9 +1539,10 @@ package body Src_Contexts is
            Character_Offset_Type (Get_Line_Offset (Range_End) + 1);
 
          if not Context.All_Occurrences then
-            Found := Auxiliary_Search
+            Occurrence := Auxiliary_Search
               (Context, Editor, Kernel, Search_Backward, From_Selection_Start,
                Begin_Line, Begin_Column, End_Line, End_Column);
+            Found := Occurrence /= null;
 
             if not Found then
                Buffer.Select_Range (Range_Start, Range_End);
@@ -1554,12 +1568,14 @@ package body Src_Contexts is
             end;
          end if;
       end;
+
+      return Search_Occurrence (Occurrence);
    exception
       when E : others =>
          Trace (Me, E);
          Found := False;
          Continue := False;
-         return;
+         return null;
    end Search;
 
    -------------
@@ -1653,16 +1669,18 @@ package body Src_Contexts is
          return False;
    end Replace;
 
-   --------------------------------
-   -- Files_From_Project_Factory --
-   --------------------------------
+   --------------------
+   -- Create_Context --
+   --------------------
 
-   function Files_From_Project_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+   overriding function Create_Context
+     (Module          : not null access Files_From_Project_Search_Module;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
       Selector        : Scope_Selector)
       return Root_Search_Context_Access
    is
+      pragma Unreferenced (Module);
       Context : constant Files_Project_Context_Access :=
                   new Files_Project_Context;
    begin
@@ -1671,7 +1689,7 @@ package body Src_Contexts is
       Context.Current         := GPS.Search.No_Match;
       Set_File_List (Context, Get_Project (Kernel).Source_Files (True));
       return Root_Search_Context_Access (Context);
-   end Files_From_Project_Factory;
+   end Create_Context;
 
    --------------------------------
    -- Files_From_Project_Factory --
@@ -1690,16 +1708,18 @@ package body Src_Contexts is
       return Context;
    end Files_From_Project_Factory;
 
-   -------------------------------------
-   -- Files_From_Root_Project_Factory --
-   -------------------------------------
+   --------------------
+   -- Create_Context --
+   --------------------
 
-   function Files_From_Root_Project_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+   overriding function Create_Context
+     (Module          : not null access Files_From_Root_Project_Search_Module;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
       Selector        : Scope_Selector)
       return Root_Search_Context_Access
    is
+      pragma Unreferenced (Module);
       Project  : constant Standard.Projects.Project_Type_Array :=
         Vsearch.Get_Selected_Project (Kernel);
       Context  : constant Files_Project_Context_Access :=
@@ -1719,18 +1739,20 @@ package body Src_Contexts is
       end if;
 
       return Root_Search_Context_Access (Context);
-   end Files_From_Root_Project_Factory;
+   end Create_Context;
 
-   --------------------------------
-   -- Files_From_Runtime_Factory --
-   --------------------------------
+   --------------------
+   -- Create_Context --
+   --------------------
 
-   function Files_From_Runtime_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+   overriding function Create_Context
+     (Module          : not null access Runtime_Files_Search_Module;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
       Selector        : Scope_Selector)
       return Root_Search_Context_Access
    is
+      pragma Unreferenced (Module);
       Files   : GNATCOLL.VFS.File_Array :=
         Get_Registry (Kernel).Environment.Predefined_Source_Files;
       Last    : Natural := Files'First - 1;
@@ -1751,7 +1773,7 @@ package body Src_Contexts is
       Context.Current         := GPS.Search.No_Match;
       Set_File_List (Context, new File_Array'(Files (Files'First .. Last)));
       return Root_Search_Context_Access (Context);
-   end Files_From_Runtime_Factory;
+   end Create_Context;
 
    ---------------------------
    -- Get_Terminate_Message --
@@ -1771,16 +1793,18 @@ package body Src_Contexts is
       end case;
    end Get_Terminate_Message;
 
-   ------------------------
-   -- Open_Files_Factory --
-   ------------------------
+   --------------------
+   -- Create_Context --
+   --------------------
 
-   function Open_Files_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+   overriding function Create_Context
+     (Module          : not null access Open_Files_Search_Module;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
       Selector        : Scope_Selector)
       return Root_Search_Context_Access
    is
+      pragma Unreferenced (Module);
       Context : constant Open_Files_Context_Access := new Open_Files_Context;
    begin
       --  GPS.Kernel.Open_Files returns a File_Array, but Set_File_List
@@ -1793,7 +1817,7 @@ package body Src_Contexts is
       Context.Current         := GPS.Search.No_Match;
       Set_File_List (Context, Kernel.Open_Files.all);
       return Root_Search_Context_Access (Context);
-   end Open_Files_Factory;
+   end Create_Context;
 
    ---------------------------
    -- Get_Terminate_Message --
@@ -1829,17 +1853,18 @@ package body Src_Contexts is
       return Context;
    end Files_Factory;
 
-   -------------------
-   -- Files_Factory --
-   -------------------
+   --------------------
+   -- Create_Context --
+   --------------------
 
-   function Files_Factory
-     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+   overriding function Create_Context
+     (Module          : not null access Files_Search_Module;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
       All_Occurrences : Boolean;
       Selector        : Scope_Selector)
       return Root_Search_Context_Access
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Kernel, Module);
 
       Context        : Files_Context_Access;
       Extra          : constant Files_Extra_Scope := Files_Extra_Scope
@@ -1873,7 +1898,7 @@ package body Src_Contexts is
    exception
       when Error_In_Regexp =>
          return null;
-   end Files_Factory;
+   end Create_Context;
 
    ---------------------------
    -- Get_Terminate_Message --
@@ -2004,11 +2029,13 @@ package body Src_Contexts is
       Start_Line           : Editable_Line_Type := 1;
       Start_Column         : Character_Offset_Type := 1;
       End_Line             : Editable_Line_Type := 0;
-      End_Column           : Character_Offset_Type := 0) return Boolean
+      End_Column           : Character_Offset_Type := 0)
+      return Source_Search_Occurrence
    is
       Selection_Start : Gtk_Text_Iter;
       Selection_End   : Gtk_Text_Iter;
       Dummy           : Boolean;
+      Occurrence      : Source_Search_Occurrence;
       Match_From      : Editor_Coordinates;
       Match_Up_To     : Editor_Coordinates;
       Found           : Boolean;
@@ -2033,6 +2060,13 @@ package body Src_Contexts is
          End_Column      => End_Column);
 
       if Found then
+         Occurrence := new Source_Search_Occurrence_Record'
+           (Search_Occurrence_Record with
+            Editor_Child => Find_Child (Kernel, Editor),
+            Match_From   => Match_From,
+            Match_Up_To  => Match_Up_To);
+         Initialize (Occurrence, Pattern => Context_Look_For (Context));
+
          Push_Current_Editor_Location_In_History (Kernel);
 
          Editor.Set_Cursor_Location
@@ -2048,28 +2082,28 @@ package body Src_Contexts is
             Match_Up_To.Line, Match_Up_To.Col);
 
          Center_Cursor (Get_View (Editor));
-         return True;
-      else
-         return False;
       end if;
+
+      return Occurrence;
    end Auxiliary_Search;
 
    ------------
    -- Search --
    ------------
 
-   overriding procedure Search
+   overriding function Search
      (Context              : access Current_File_Context;
       Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward      : Boolean;
       From_Selection_Start : Boolean;
       Give_Focus           : Boolean;
       Found                : out Boolean;
-      Continue             : out Boolean)
+      Continue             : out Boolean) return Search_Occurrence
    is
-      Child  : constant MDI_Child := Find_Current_Editor (Kernel);
-      Editor : Source_Editor_Box;
-      Buffer : Source_Buffer;
+      Child      : constant MDI_Child := Find_Current_Editor (Kernel);
+      Occurrence : Source_Search_Occurrence;
+      Editor     : Source_Editor_Box;
+      Buffer     : Source_Buffer;
 
       function Interactive_Callback
         (Match : GPS.Search.Search_Context;
@@ -2088,6 +2122,7 @@ package body Src_Contexts is
       is
       begin
          Found := True;
+
          if Get_Filename (Editor) /= GNATCOLL.VFS.No_File then
             Highlight_Result
               (Kernel      => Kernel,
@@ -2108,6 +2143,15 @@ package body Src_Contexts is
                Interactive => not Context.All_Occurrences);
          end if;
 
+         Occurrence := new Source_Search_Occurrence_Record'
+           (Search_Occurrence_Record with
+            Editor_Child => Child,
+            Match_From   =>
+              (Editable_Line_Type (Match.Start.Line), Match.Start.Column),
+            Match_Up_To  =>
+              (Editable_Line_Type (Match.Finish.Line), Match.Finish.Column));
+         Initialize (Occurrence, Pattern => Text);
+
          return True;
       end Interactive_Callback;
 
@@ -2117,7 +2161,7 @@ package body Src_Contexts is
 
       if Child = null then
          Continue := False;
-         return;
+         return null;
       end if;
 
       Editor := Get_Source_Box_From_MDI (Child);
@@ -2131,12 +2175,14 @@ package body Src_Contexts is
       end if;
 
       if not Context.All_Occurrences then
-         Found := Auxiliary_Search
+         Occurrence := Auxiliary_Search
            (Context,
             Editor,
             Kernel,
             Search_Backward,
             From_Selection_Start);
+         Found := Occurrence /= null;
+
          Continue := False; --  ??? Dummy boolean.
       else
          Search_From_Editor
@@ -2147,12 +2193,14 @@ package body Src_Contexts is
             Continue,
             Dummy_Boolean);
       end if;
+
+      return Search_Occurrence (Occurrence);
    exception
       when E : others =>
          Trace (Me, E);
          Found := False;
          Continue := False;
-         return;
+         return  null;
    end Search;
 
    ---------------------
@@ -2512,6 +2560,42 @@ package body Src_Contexts is
    end Replace;
 
    ------------------------
+   -- Highlight_Occurrence --
+   ------------------------
+
+   overriding procedure Highlight_Occurrence
+     (Module     : not null access Current_File_Search_Module;
+      Occurrence : not null access Search_Occurrence_Record'Class)
+   is
+      pragma Unreferenced (Module);
+      Source_Occurrence : constant Source_Search_Occurrence :=
+                            Source_Search_Occurrence (Occurrence);
+      Editor            : Source_Editor_Box;
+   begin
+      if Source_Occurrence.Editor_Child = null then
+         return;
+      end if;
+
+      Editor := Get_Source_Box_From_MDI (Source_Occurrence.Editor_Child);
+
+      Editor.Set_Cursor_Location
+        (Line             => Source_Occurrence.Match_From.Line,
+         Column           => Source_Occurrence.Match_From.Col,
+         Force_Focus      => False,
+         Centering        => GPS.Editors.Minimal,
+         Extend_Selection => False);
+
+      Select_Region
+        (Get_Buffer (Editor),
+         Source_Occurrence.Match_From.Line,
+         Source_Occurrence.Match_From.Col,
+         Source_Occurrence.Match_Up_To.Line,
+         Source_Occurrence.Match_Up_To.Col);
+
+      Center_Cursor (Get_View (Editor));
+   end Highlight_Occurrence;
+
+   ------------------------
    -- Search_From_Editor --
    ------------------------
 
@@ -2738,19 +2822,21 @@ package body Src_Contexts is
    -- Search --
    ------------
 
-   overriding procedure Search
+   overriding function Search
      (Context              : access Abstract_Files_Context;
       Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
       Search_Backward      : Boolean;
       From_Selection_Start : Boolean;
       Give_Focus           : Boolean;
       Found                : out Boolean;
-      Continue             : out Boolean)
+      Continue             : out Boolean) return Search_Occurrence
    is
       pragma Unreferenced (From_Selection_Start);
       C : constant Abstract_Files_Context_Access :=
         Abstract_Files_Context_Access (Context);
       --  For dispatching purposes
+
+      Occurrence : Source_Search_Occurrence;
 
       function Interactive_Callback
         (Match : GPS.Search.Search_Context;
@@ -2763,23 +2849,36 @@ package body Src_Contexts is
 
       function Interactive_Callback
         (Match : GPS.Search.Search_Context;
-         Text  : String) return Boolean is
+         Text  : String) return Boolean
+      is
+         File : constant GNATCOLL.VFS.Virtual_File := Current_File (C);
       begin
          Found := True;
          Highlight_Result
            (Kernel      => Kernel,
-            File_Name   => Current_File (C),
+            File_Name   => File,
             Look_For    => Context_Look_For (C),
             Match       => Match,
             Text        => Text,
             Give_Focus  => Give_Focus,
             Interactive => not Context.All_Occurrences);
+
+         Occurrence := new Source_Search_Occurrence_Record'
+           (Search_Occurrence_Record with
+            Editor_Child => Find_Editor (Kernel, File, No_Project),
+            Match_From   =>
+              (Editable_Line_Type (Match.Start.Line), Match.Start.Column),
+            Match_Up_To  =>
+              (Editable_Line_Type (Match.Finish.Line), Match.Finish.Column));
+         Initialize (Occurrence, Pattern => Text);
+
          return True;
       end Interactive_Callback;
 
    begin
       Found := False;
       Continue := False;
+
       if not Search_Backward then
          Continue := Search
            (Context,
@@ -2787,6 +2886,8 @@ package body Src_Contexts is
             Kernel_Handle (Kernel),
             Interactive_Callback'Unrestricted_Access);
       end if;
+
+      return Search_Occurrence (Occurrence);
    end Search;
 
    -------------

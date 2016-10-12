@@ -194,6 +194,65 @@ package body Find_Utils is
       end if;
    end Free;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Occurrence : not null access Search_Occurrence_Record'Class;
+      Pattern    : String) is
+   begin
+      Occurrence.Pattern := To_Unbounded_String (Pattern);
+   end Initialize;
+
+   -----------------
+   -- Get_Pattern --
+   -----------------
+
+   function Get_Pattern
+     (Occurrence : not null access Search_Occurrence_Record'Class)
+     return String
+   is
+      (To_String (Occurrence.Pattern));
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Occurrence : in out Search_Occurrence) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Search_Occurrence_Record'Class, Search_Occurrence);
+   begin
+      if Occurrence /= null then
+         Unchecked_Free (Occurrence);
+      end if;
+   end Free;
+
+   ------------
+   -- Search --
+   ------------
+
+   procedure Search
+     (Context              : access Root_Search_Context'Class;
+      Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward      : Boolean;
+      From_Selection_Start : Boolean;
+      Give_Focus           : Boolean;
+      Found                : out Boolean;
+      Continue             : out Boolean)
+   is
+      Occurrence : Search_Occurrence;
+   begin
+      Occurrence := Context.Search
+        (Kernel               => Kernel,
+         Search_Backward      => Search_Backward,
+         From_Selection_Start => From_Selection_Start,
+         Give_Focus           => Give_Focus,
+         Found                => Found,
+         Continue             => Continue);
+      Free (Occurrence);
+   end Search;
+
    -------------
    -- Replace --
    -------------
@@ -303,5 +362,125 @@ package body Find_Utils is
       --  Only used in Find_Closest_Match
       return -"file";
    end Context_Look_In;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Module       : not null access Search_Module_Type;
+      Label        : String;
+      Selector     : access Scope_Selector_Interface'Class := null;
+      Id           : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
+      Mask         : Search_Options_Mask := All_Options;
+      In_Selection : Boolean := False) is
+   begin
+      Module.Label := To_Unbounded_String (Label);
+      Module.Selector := Selector;
+      Module.Id := Module_ID (Id);
+      Module.Mask := Mask;
+      Module.In_Selection := In_Selection;
+   end Initialize;
+
+   ---------------------
+   -- Push_Occurrence --
+   ---------------------
+
+   procedure Push_Occurrence
+     (Module     : not null access Search_Module_Type;
+      Occurrence : not null access Search_Occurrence_Record'Class) is
+   begin
+      Module.Search_Occurrences_Stack.Prepend (Occurrence);
+   end Push_Occurrence;
+
+   --------------------
+   -- Pop_Occurrence --
+   --------------------
+
+   function Pop_Occurrence
+     (Module : not null access Search_Module_Type)
+      return Search_Occurrence
+   is
+      Occurrence : Search_Occurrence;
+   begin
+      if not Module.Search_Occurrences_Stack.Is_Empty then
+         Occurrence := Module.Search_Occurrences_Stack.First_Element;
+         Module.Search_Occurrences_Stack.Delete_First;
+      end if;
+
+      return Occurrence;
+   end Pop_Occurrence;
+
+   -------------------------
+   -- Get_Last_Occurrence --
+   -------------------------
+
+   function Get_Last_Occurrence
+     (Module : not null access Search_Module_Type)
+      return Search_Occurrence
+   is
+     (if Module.Search_Occurrences_Stack.Is_Empty then
+         null
+      else
+         Module.Search_Occurrences_Stack.First_Element);
+
+   -----------------------
+   -- Clear_Occurrences --
+   -----------------------
+
+   procedure Clear_Occurrences (Module : not null access Search_Module_Type) is
+   begin
+      for Occurrence of Module.Search_Occurrences_Stack loop
+         Free (Occurrence);
+      end loop;
+
+      Module.Search_Occurrences_Stack.Clear;
+   end Clear_Occurrences;
+
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   function Get_Label
+     (Module : not null access Search_Module_Type) return String
+   is
+      (To_String (Module.Label));
+
+   ------------------------
+   -- Get_Scope_Selector --
+   ------------------------
+
+   function Get_Scope_Selector
+     (Module : not null access Search_Module_Type) return Scope_Selector
+   is
+     (Module.Selector);
+
+   ------------
+   -- Get_Id --
+   ------------
+
+   function Get_Id
+     (Module : not null access Search_Module_Type) return Module_ID
+   is
+      (Module.Id);
+
+   ----------------------
+   -- Get_In_Selection --
+   ----------------------
+
+   function Get_In_Selection
+     (Module : not null access Search_Module_Type) return Boolean
+   is
+     (Module.In_Selection);
+
+   -------------------------
+   -- Is_Option_Supported --
+   -------------------------
+
+   function Is_Option_Supported
+     (Module : not null access Search_Module_Type;
+      Option : Search_Options_Mask) return Boolean
+   is
+      ((Module.Mask and Option) /= 0);
 
 end Find_Utils;

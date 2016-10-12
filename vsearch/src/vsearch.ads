@@ -35,55 +35,14 @@ package Vsearch is
    -- Search contexts --
    ---------------------
 
-   type Search_Options_Mask is mod 256;
-   Case_Sensitive       : constant Search_Options_Mask := 2 ** 1;
-   Whole_Word           : constant Search_Options_Mask := 2 ** 2;
-   All_Occurrences      : constant Search_Options_Mask := 2 ** 3;
-   Search_Backward      : constant Search_Options_Mask := 2 ** 4;
-   Supports_Replace     : constant Search_Options_Mask := 2 ** 5;
-   Supports_Incremental : constant Search_Options_Mask := 2 ** 6;
-   All_Options          : constant Search_Options_Mask := 255;
-   --  Which options are supported by which contextual search
-
    procedure Register_Search_Function
-     (Kernel       : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Label        : String;
-      Factory      : Find_Utils.Module_Search_Context_Factory;
-      Selector     : access Scope_Selector_Interface'Class := null;
-      Id           : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
-      Mask         : Search_Options_Mask := All_Options;
-      In_Selection : Boolean := False;
-      Is_Default   : Boolean := False);
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Module     : not null access Search_Module_Type'Class;
+      Is_Default : Boolean := False);
    --  Register a new search function.
    --  This will be available under the title Label in the search combo box.
    --  This procedure immediately emits the kernel signal
    --  "search_functions_changed".
-   --
-   --  The Label an include %p for the current project (as understood by the
-   --  search dialog).
-   --
-   --  If Selector is not null, then its associated widgets will be displayed
-   --  every time this label is selected. It can be used for instance to ask
-   --  for more information like a list of files to search.
-   --  Whenever the data in the Selector widgets changes, or for some reason
-   --  the current status of GPS no longer permits the search, you should raise
-   --  the kernel signal Search_Reset_Signal (or call Reset_Search below).
-   --
-   --  When the user then selects "Find", the function Factory is called to
-   --  create the factory. The options and searched string or regexp will be
-   --  set automatically on return of Factory, so you do not need to handle
-   --  this.
-   --
-   --  Mask indicates what options are relevant for that module. Options that
-   --  are not set will be greyed out. If Supports_Replace if false, then the
-   --  button will be greyed out.
-   --
-   --  Id can be left null. If not null, it will be used to set the default
-   --  search context when the search dialog is popped up (the first
-   --  search_module_data that matches the current module is used).
-
-   --  When Id is not null and In_Selection = True it will be used to set the
-   --  default search context when there multiline selection in an editor.
    --
    --  When Is_Default is True, the search function will be used by default
    --  when no module has been found when creating the dialog (e.g: when the

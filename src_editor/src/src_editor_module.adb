@@ -49,8 +49,8 @@ with Commands.Interactive;              use Commands, Commands.Interactive;
 with Completion_Module;                 use Completion_Module;
 with Config;                            use Config;
 with Default_Preferences;               use Default_Preferences;
-with File_Utils;                        use File_Utils;
 with Find_Utils;                        use Find_Utils;
+with File_Utils;                        use File_Utils;
 with GPS.Default_Styles;                use GPS.Default_Styles;
 with GPS.Intl;                          use GPS.Intl;
 with GPS.Editors;                       use GPS.Editors;
@@ -1984,6 +1984,7 @@ package body Src_Editor_Module is
    is
       UR                       : constant Undo_Redo :=
                                    new Undo_Redo_Information;
+      Module                   : Search_Module;
       Selector                 : Simple_Scope_Selector;
       Extra                    : Files_Extra_Scope;
       Default_Options_Mask     : constant Search_Options_Mask :=
@@ -2366,7 +2367,7 @@ package body Src_Editor_Module is
         (Kernel, new Src_Editor_Buffer_Factory'
            (Src_Editor_Module.Editors.Create (Kernel_Handle (Kernel))));
 
-      --  Register the search functions
+      --  Register the search modules
 
       Selector := new Simple_Scope_Selector_Record;
       Initialize (Selector, Kernel);
@@ -2374,57 +2375,79 @@ package body Src_Editor_Module is
       Extra := new Files_Extra_Scope_Record;
       Initialize (Extra, Kernel);
 
+      Module := new Files_From_Project_Search_Module;
+      Initialize
+        (Module,
+         Label    => -"Files From Projects",
+         Selector => Selector,
+         Id       => Src_Editor_Module_Id,
+         Mask     => Default_Options_Mask);
+
       Register_Search_Function
-        (Kernel            => Kernel,
-         Label             => -"Files From Projects",
-         Factory           => Files_From_Project_Factory'Access,
-         Selector          => Selector,
-         Id                => Src_Editor_Module_Id,
-         Mask              => Default_Options_Mask,
-         Is_Default        => True);
-      Register_Search_Function
-        (Kernel            => Kernel,
-         Label             => -"Files From Runtime",
-         Factory           => Files_From_Runtime_Factory'Access,
-         Selector          => Selector,
-         Id                => Src_Editor_Module_Id,
-         Mask              => Default_Options_Mask);
-      Register_Search_Function
-        (Kernel            => Kernel,
-         Label             => -"Files From Project '%p'",
-         Factory           => Files_From_Root_Project_Factory'Access,
-         Selector          => Selector,
-         Id                => Src_Editor_Module_Id,
-         Mask              => Default_Options_Mask);
-      Register_Search_Function
-        (Kernel            => Kernel,
-         Label             => -"Files...",
-         Factory           => Files_Factory'Access,
-         Selector          => Extra,
-         Id                => Src_Editor_Module_Id,
-         Mask              => Default_Options_Mask);
+        (Kernel     => Kernel,
+         Module     => Module,
+         Is_Default => True);
+
+      Module := new Runtime_Files_Search_Module;
+      Initialize
+        (Module,
+         Label    => -"Files From Runtime",
+         Selector => Selector,
+         Id       => Src_Editor_Module_Id,
+         Mask     => Default_Options_Mask);
+
       Register_Search_Function
         (Kernel => Kernel,
-         Label             => -"Open Files",
-         Factory           => Open_Files_Factory'Access,
-         Selector          => Selector,
-         Id                => Src_Editor_Module_Id,
-         Mask              => Default_Options_Mask);
-      Register_Search_Function
-        (Kernel            => Kernel,
-         Label             => -"Current Selection",
-         Factory           => Current_Selection_Factory'Access,
-         Selector          => Selector,
-         Id                => Src_Editor_Module_Id,
-         Mask              => All_Options and not Supports_Incremental,
-         In_Selection      => True);
+         Module => Module);
+
+      Module := new Files_Search_Module;
+      Initialize
+        (Module,
+         Label    => -"Files...",
+         Selector => Extra,
+         Id       => Src_Editor_Module_Id,
+         Mask     => Default_Options_Mask);
+
       Register_Search_Function
         (Kernel => Kernel,
-         Label             => -"Current File",
-         Factory           => Current_File_Factory'Access,
-         Selector          => Selector,
-         Id                => Src_Editor_Module_Id,
-         Mask              => All_Options);
+         Module => Module);
+
+      Module := new Open_Files_Search_Module;
+      Initialize
+        (Module,
+         Label     => -"Open Files",
+         Selector  => Selector,
+         Id        => Src_Editor_Module_Id,
+         Mask      => Default_Options_Mask);
+
+      Register_Search_Function
+        (Kernel => Kernel,
+         Module => Module);
+
+      Module := new Current_Selection_Search_Module;
+      Initialize
+        (Module,
+         Label        => -"Current Selection",
+         Selector     => Selector,
+         Id           => Src_Editor_Module_Id,
+         Mask         => All_Options and not Supports_Incremental,
+         In_Selection => True);
+
+      Register_Search_Function
+        (Kernel => Kernel,
+         Module => Module);
+
+      Module := new Current_File_Search_Module;
+      Initialize
+        (Module,
+         Label    => -"Current File",
+         Selector => Selector,
+         Id       => Src_Editor_Module_Id,
+         Mask     => All_Options);
+
+      Register_Search_Function
+        (Kernel => Kernel,
+         Module => Module);
 
       --  Register the aliases special entities
 
