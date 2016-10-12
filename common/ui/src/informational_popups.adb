@@ -15,12 +15,15 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Cairo;           use Cairo;
+with Gdk;             use Gdk;
+with Gdk.Screen;      use Gdk.Screen;
+with Gdk.Window;      use Gdk.Window;
 with Glib;            use Glib;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Image;       use Gtk.Image;
 with Gtk.Revealer;    use Gtk.Revealer;
 with Gtk.Widget;      use Gtk.Widget;
-with Gdk.Window;      use Gdk.Window;
 
 with Gtkada.Handlers; use Gtkada.Handlers;
 
@@ -29,6 +32,12 @@ package body Informational_Popups is
    Informational_Popup_Display_Time : constant Guint := 1_000;
    --  The amount of time during which an informational popup is displayed, in
    --  milliseconds.
+
+   function On_Draw
+     (Self : access Gtk_Widget_Record'Class;
+      Cr   : Cairo.Cairo_Context) return Boolean;
+   --  Called when an informational popup is about to be drawn.
+   --  Used to set the transparency of the informational popup.
 
    procedure On_Child_Revealed (Widget : access Gtk_Widget_Record'Class);
    --  Called when the 'child-revealed' property of the given Gtk_Revealer
@@ -52,6 +61,29 @@ package body Informational_Popups is
       end if;
    end On_Child_Revealed;
 
+   -------------
+   -- On_Draw --
+   -------------
+
+   function On_Draw
+     (Self : access Gtk_Widget_Record'Class;
+      Cr   : Cairo.Cairo_Context) return Boolean
+   is
+      pragma Unreferenced (Self);
+   begin
+      Set_Source_Rgba
+        (Cr,
+         Red   => 0.0,
+         Green => 0.0,
+         Blue  => 0.0,
+         Alpha => 0.0);
+
+      Set_Operator (Cr, Op => Cairo_Operator_Source);
+      Paint (Cr);
+
+      return False;
+   end On_Draw;
+
    ---------------------------------
    -- Display_Informational_Popup --
    ---------------------------------
@@ -66,10 +98,13 @@ package body Informational_Popups is
    begin
       Gtk_New (Info_Popup);
       Info_Popup.Set_Decorated (False);
-      Info_Popup.Set_Resizable (False);
-      Info_Popup.Set_Type_Hint (Window_Type_Hint_Notification);
       Info_Popup.Set_Transient_For (Parent);
       Info_Popup.Set_Position (Win_Pos_Center_On_Parent);
+      Info_Popup.Set_Accept_Focus (False);
+      Info_Popup.Set_App_Paintable (True);
+      Info_Popup.On_Draw (On_Draw'Access);
+
+      Info_Popup.Set_Visual (Get_Rgba_Visual (Info_Popup.Get_Screen));
 
       Gtk_New_From_Icon_Name
         (Icon,
