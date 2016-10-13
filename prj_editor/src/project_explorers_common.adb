@@ -15,10 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers;            use Ada.Containers;
-with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Strings.Hash;
-
 with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
@@ -34,15 +30,11 @@ with Gtk.Target_List;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 
-with Basic_Types;               use Basic_Types;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Language.Icons;            use Language.Icons;
-with Language_Handlers;         use Language_Handlers;
-with Language_Utils;
 with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 
@@ -64,13 +56,6 @@ package body Project_Explorers_Common is
       Last    : in out Gint);
    --  Increase Last and set File value and column index on Last's position.
 
-   procedure Add_Column_Type
-     (Kind     : Node_Types;
-      Columns  : in out Glib.Gint_Array;
-      Values   : in out Glib.Values.GValue_Array;
-      Last     : in out Gint);
-   --  Increase Last and set Kind value and column index on Last's position.
-
    procedure Add_Column_Type_Icon
      (Kind     : Node_Types;
       Expanded : Boolean;
@@ -87,20 +72,6 @@ package body Project_Explorers_Common is
       Last     : in out Gint);
    --  Increase Last and set Icon value and column index on Last's position.
 
-   procedure Add_Column_Line
-     (Line     : Gint;
-      Columns  : in out Glib.Gint_Array;
-      Values   : in out Glib.Values.GValue_Array;
-      Last     : in out Gint);
-   --  Increase Last and set Line value and column index on Last's position.
-
-   procedure Add_Column_Column
-     (Column   : Gint;
-      Columns  : in out Glib.Gint_Array;
-      Values   : in out Glib.Values.GValue_Array;
-      Last     : in out Gint);
-   --  Increase Last and set Column value and column index on Last's position.
-
    procedure Set
      (Model    : Gtk_Tree_Store;
       Iter     : Gtk_Tree_Iter;
@@ -109,22 +80,6 @@ package body Project_Explorers_Common is
       Expanded : Boolean;
       File     : Virtual_File);
    --  Set values of columns
-
-   -----------------------
-   -- Add_Column_Column --
-   -----------------------
-
-   procedure Add_Column_Column
-     (Column   : Gint;
-      Columns  : in out Glib.Gint_Array;
-      Values   : in out Glib.Values.GValue_Array;
-      Last     : in out Gint) is
-   begin
-      Last := Last + 1;
-      Columns (Integer (Last)) := Column_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_Int);
-      Glib.Values.Set_Int (Values (Last), Column);
-   end Add_Column_Column;
 
    ---------------------
    -- Add_Column_File --
@@ -159,22 +114,6 @@ package body Project_Explorers_Common is
    end Add_Column_Icon;
 
    ---------------------
-   -- Add_Column_Line --
-   ---------------------
-
-   procedure Add_Column_Line
-     (Line     : Gint;
-      Columns  : in out Glib.Gint_Array;
-      Values   : in out Glib.Values.GValue_Array;
-      Last     : in out Gint) is
-   begin
-      Last := Last + 1;
-      Columns (Integer (Last)) := Line_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_Int);
-      Glib.Values.Set_Int (Values (Last), Line);
-   end Add_Column_Line;
-
-   ---------------------
    -- Add_Column_Name --
    ---------------------
 
@@ -189,22 +128,6 @@ package body Project_Explorers_Common is
       Glib.Values.Init (Values (Last), Glib.GType_String);
       Glib.Values.Set_String (Values (Last), Name);
    end Add_Column_Name;
-
-   ---------------------
-   -- Add_Column_Type --
-   ---------------------
-
-   procedure Add_Column_Type
-     (Kind     : Node_Types;
-      Columns  : in out Glib.Gint_Array;
-      Values   : in out Glib.Values.GValue_Array;
-      Last     : in out Gint) is
-   begin
-      Last := Last + 1;
-      Columns (Integer (Last)) := Node_Type_Column;
-      Glib.Values.Init (Values (Last), Glib.GType_Int);
-      Glib.Values.Set_Int (Values (Last), Gint (Node_Types'Pos (Kind)));
-   end Add_Column_Type;
 
    --------------------------
    -- Add_Column_Type_Icon --
@@ -221,13 +144,9 @@ package body Project_Explorers_Common is
       Columns (Integer (Last)) := Node_Type_Column;
       Glib.Values.Init (Values (Last), Glib.GType_Int);
       Glib.Values.Set_Int (Values (Last), Gint (Node_Types'Pos (Kind)));
-
-      if Kind not in Category_Node .. Entity_Node then
-         Add_Column_Icon
-           (Stock_For_Node
-              (Kind, Expanded => Expanded),
-            Columns, Values, Last);
-      end if;
+      Add_Column_Icon
+        (Stock_For_Node (Kind, Expanded => Expanded),
+         Columns, Values, Last);
    end Add_Column_Type_Icon;
 
    -------------------
@@ -240,10 +159,7 @@ package body Project_Explorers_Common is
         (Icon_Column          => GType_String,
          File_Column          => Get_Virtual_File_Type,
          Display_Name_Column  => GType_String,
-         Node_Type_Column     => GType_Int,
-         Line_Column          => GType_Int,
-         Column_Column        => GType_Int,
-         Entity_Base_Column   => GType_String);
+         Node_Type_Column     => GType_Int);
    end Columns_Types;
 
    --------------------
@@ -313,72 +229,8 @@ package body Project_Explorers_Common is
 
          when File_Node =>
             return "gps-emblem-file-unmodified";
-
-         when Category_Node =>
-            return "gps-emblem-category";
-
-         when Entity_Node =>
-            return "";
       end case;
    end Stock_For_Node;
-
-   --------------------------
-   -- Append_Category_Node --
-   --------------------------
-
-   function Append_Category_Node
-     (Model         : Gtk_Tree_Store;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Category      : Language_Category;
-      Category_Name : GNATCOLL.Symbols.Symbol;
-      Parent_Iter   : Gtk_Tree_Iter;
-      Sorted        : Boolean) return Gtk_Tree_Iter
-   is
-      Name    : constant String :=
-                  Language.Category_Name (Category, Category_Name);
-      N       : Gtk_Tree_Iter;
-      Sibling : Gtk_Tree_Iter := Null_Iter;
-
-   begin
-      if Sorted then
-         Sibling := Children (Model, Parent_Iter);
-         while Sibling /= Null_Iter
-           and then Get_String (Model, Sibling, Display_Name_Column) <= Name
-         loop
-            Next (Model, Sibling);
-         end loop;
-      end if;
-
-      if Sibling = Null_Iter then
-         Append (Model, N, Parent_Iter);
-      else
-         Insert_Before (Model, N, Parent_Iter, Sibling);
-      end if;
-
-      declare
-         Columns : Glib.Gint_Array (1 .. 4);
-         Values  : Glib.Values.GValue_Array (1 .. 4);
-         Last    : Gint := 0;
-      begin
-         Add_Column_Type (Category_Node, Columns, Values, Last);
-         Add_Column_Name (Locale_To_UTF8 (Name), Columns, Values, Last);
-         Add_Column_File (File, Columns, Values, Last);
-         Add_Column_Icon
-           (Stock_From_Category
-              (Is_Declaration => False,
-               Visibility     => Visibility_Public,
-               Category       => Category),
-            Columns, Values, Last);
-
-         Set (Model, N, Columns, Values);
-
-         for Index in 1 .. Last loop
-            Glib.Values.Unset (Values (Index));
-         end loop;
-      end;
-
-      return N;
-   end Append_Category_Node;
 
    --------------------
    -- Entity_Name_Of --
@@ -451,194 +303,6 @@ package body Project_Explorers_Common is
          Visibility     => Construct.Visibility,
          Category       => Construct.Category);
    end Entity_Icon_Of;
-
-   ------------------------
-   -- Append_Entity_Node --
-   ------------------------
-
-   function Append_Entity_Node
-     (Model       : Gtk_Tree_Store;
-      File        : GNATCOLL.VFS.Virtual_File;
-      Construct   : Construct_Information;
-      Parent_Iter : Gtk_Tree_Iter;
-      Sorted      : Boolean) return Gtk_Tree_Iter
-   is
-      N       : Gtk_Tree_Iter;
-      Sibling : Gtk_Tree_Iter := Null_Iter;
-
-   begin
-      if Sorted then
-         Sibling := Children (Model, Parent_Iter);
-         while Sibling /= Null_Iter
-           and then Get_String (Model, Sibling, Display_Name_Column)
-           <= Get (Construct.Info.Name).all
-         loop
-            Next (Model, Sibling);
-         end loop;
-      end if;
-
-      if Sibling = Null_Iter then
-         Append (Model, N, Parent_Iter);
-      else
-         Insert_Before (Model, N, Parent_Iter, Sibling);
-      end if;
-
-      declare
-         Columns : Glib.Gint_Array (1 .. 7);
-         Values  : Glib.Values.GValue_Array (1 .. 7);
-         Last    : Gint := 0;
-      begin
-         Add_Column_Name
-           (Entity_Name_Of (Construct, True), Columns, Values, Last);
-         Add_Column_Type (Entity_Node, Columns, Values, Last);
-         Add_Column_Icon (Entity_Icon_Of (Construct), Columns, Values, Last);
-         Add_Column_File (File, Columns, Values, Last);
-
-         if Construct.Info.Sloc_Entity.Line /= 0 then
-            Add_Column_Line
-              (Gint (Construct.Info.Sloc_Entity.Line), Columns, Values, Last);
-            Add_Column_Column
-              (Gint (Construct.Info.Sloc_Entity.Column),
-               Columns, Values, Last);
-         else
-            Add_Column_Line
-              (Gint (Construct.Info.Sloc_Start.Line), Columns, Values, Last);
-            Add_Column_Column
-              (Gint (Construct.Info.Sloc_Start.Column), Columns, Values, Last);
-         end if;
-
-         Last := Last + 1;
-         Columns (Integer (Last)) := Entity_Base_Column;
-         Glib.Values.Init (Values (Last), Glib.GType_String);
-         Glib.Values.Set_String
-           (Values (Last), Reduce (Get (Construct.Info.Name).all));
-
-         Set (Model, N, Columns, Values);
-
-         for Index in 1 .. Last loop
-            Glib.Values.Unset (Values (Index));
-         end loop;
-      end;
-
-      return N;
-   end Append_Entity_Node;
-
-   ----------------------
-   -- Append_File_Info --
-   ----------------------
-
-   procedure Append_File_Info
-     (Kernel    : Kernel_Handle;
-      Model     : Gtk_Tree_Store;
-      Node      : Gtk_Tree_Iter;
-      File_Name : GNATCOLL.VFS.Virtual_File;
-      Sorted    : Boolean)
-   is
-      package Iter_Map is new Ada.Containers.Indefinite_Hashed_Maps
-        (Key_Type        => String,
-         Element_Type    => Gtk_Tree_Iter,
-         Hash            => Ada.Strings.Hash,
-         Equivalent_Keys => "=");
-      use Iter_Map;
-
-      Languages  : constant Language_Handler := Get_Language_Handler (Kernel);
-      N          : Gtk_Tree_Iter;
-      Iter       : Gtk_Tree_Iter;
-      Lang       : Language_Access;
-      Constructs : Construct_List;
-      Category   : Language_Category;
-      Node_Appended : Boolean := False;
-      Categories    : Iter_Map.Map;
-      pragma Unreferenced (N);
-
-   begin
-      --  Remove any previous information for this file
-
-      Remove_Child_Nodes (Model, Parent => Node);
-
-      Lang := Get_Language_From_File (Languages, File_Name);
-
-      if Lang /= null then
-         Language_Utils.Parse_File_Constructs
-           (Lang, File_Name, Constructs);
-
-         Constructs.Current := Constructs.First;
-
-         while Constructs.Current /= null loop
-            if Constructs.Current.Info.Name /= No_Symbol then
-               Category := Filter_Category (Constructs.Current.Info.Category);
-
-               if Category /= Cat_Unknown
-                 and then Category /= Cat_Parameter
-                 and then Category /= Cat_Field
-               then
-                  declare
-                     Name     : constant String := Category_Name
-                       (Category, Constructs.Current.Info.Category_Name);
-                     Cursor   : Iter_Map.Cursor;
-                     New_Iter : Gtk_Tree_Iter;
-
-                  begin
-                     Cursor := Iter_Map.Find (Categories, Name);
-
-                     if Cursor = No_Element then
-                        New_Iter :=
-                           Append_Category_Node
-                             (Model,
-                              File_Name,
-                              Category      => Category,
-                              Category_Name =>
-                                Constructs.Current.Info.Category_Name,
-                              Parent_Iter   => Node,
-                              Sorted        => Sorted);
-                        Insert (Categories, Name, New_Iter);
-
-                     else
-                        New_Iter := Element (Cursor);
-                     end if;
-
-                     N := Append_Entity_Node
-                       (Model, File_Name, Constructs.Current.all, New_Iter,
-                        Sorted => Sorted);
-                  end;
-
-                  Node_Appended := True;
-               end if;
-            end if;
-
-            Constructs.Current := Constructs.Current.Next;
-         end loop;
-
-         --  If no node was appended, add a "no entity" node
-
-         if not Node_Appended then
-            Append (Model, Iter, Node);
-            declare
-               Columns : Glib.Gint_Array (1 .. 2);
-               Values  : Glib.Values.GValue_Array (1 .. 2);
-               Last    : Gint := 0;
-            begin
-               Add_Column_Type (Category_Node, Columns, Values, Last);
-               Add_Column_Name
-                 ("<span foreground=""#555555"">"
-                  & (-"(no entity)")
-                  & "</span>",
-                  Columns, Values, Last);
-
-               Set (Model, Iter, Columns, Values);
-
-               for Index in 1 .. Last loop
-                  Glib.Values.Unset (Values (Index));
-               end loop;
-            end;
-         end if;
-
-         Free (Constructs);
-      else
-         Trace (Me, "No known language for " & Display_Full_Name (File_Name));
-      end if;
-   end Append_File_Info;
-
    -----------------
    -- Create_Node --
    -----------------
@@ -851,7 +515,6 @@ package body Project_Explorers_Common is
       Iter         : Gtk_Tree_Iter;  --  applies to Model
       Path         : Gtk_Tree_Path;
       Filter_Path  : Gtk_Tree_Path;
-      Line, Column : Gint;
       Project      : Project_Type;
       File         : Virtual_File;
       Col          : Gtk_Tree_View_Column;
@@ -881,8 +544,8 @@ package body Project_Explorers_Common is
          case Get_Node_Type (Tree.Model, Iter) is
             when Directory_Node_Types
                | Project_Node_Types
-               | Category_Node
                | Runtime_Node =>
+
                Cancel_Child_Drag (Child);
 
                if Event.The_Type = Gdk_2button_Press then
@@ -902,7 +565,6 @@ package body Project_Explorers_Common is
                      Path_Free (Path);
                   end;
                end if;
-
                return False;
 
             when File_Node =>
@@ -976,25 +638,6 @@ package body Project_Explorers_Common is
                else
                   Cancel_Child_Drag (Child);
                end if;
-
-            when Entity_Node =>
-               Cancel_Child_Drag (Child);
-
-               if Event.The_Type = Button_Release then
-                  Line := Tree.Model.Get_Int (Iter, Line_Column);
-                  Column := Tree.Model.Get_Int (Iter, Column_Column);
-                  File   := Get_File_From_Node (Tree.Model, Iter);
-                  Project := Get_Project_From_Node
-                    (Tree.Model, Kernel, Iter, Importing => False);
-
-                  Open_File_Action_Hook.Run
-                    (Kernel,
-                     File,
-                     Project => Project,
-                     Line    => Natural (Line),
-                     Column  => Visible_Column_Type (Column));
-               end if;
-               return False;
          end case;
       end if;
 
@@ -1013,7 +656,6 @@ package body Project_Explorers_Common is
       use type Gdk.Types.Gdk_Key_Type;
 
       Iter         : Gtk_Tree_Iter;
-      Line, Column : Gint;
       Model        : Gtk_Tree_Model;
       File         : Virtual_File;
       Project      : Project_Type;
@@ -1039,20 +681,6 @@ package body Project_Explorers_Common is
                Project => Project,
                Line    => 0,
                Column  => 0);
-
-         when Entity_Node =>
-            Line   := Get_Int (Model, Iter, Line_Column);
-            Column := Get_Int (Model, Iter, Column_Column);
-            File   := Get_File (Gtk_Tree_Store'(-Model), Iter, File_Column);
-            Project := Get_Project_From_Node
-              (Gtk_Tree_Store'(-Model), Kernel, Iter, Importing => False);
-
-            Open_File_Action_Hook.Run
-              (Kernel,
-               File,
-               Project => Project,
-               Line    => Natural (Line),
-               Column  => Visible_Column_Type (Column));
 
          when others =>
             null;
@@ -1192,46 +820,13 @@ package body Project_Explorers_Common is
       Model   : Gtk_Tree_Store;
       Iter    : Gtk_Tree_Iter)
    is
-      function Entity_Base (Name : String) return String;
-      --  Return the "basename" for the entity, ie convert "parent.name" to
-      --  "name", in the case of Ada parent packages.
-      --  ??? Should this be done by the parser itself
-
-      -----------------
-      -- Entity_Base --
-      -----------------
-
-      function Entity_Base (Name : String) return String is
-      begin
-         --  ??? Should use standard UTF8 subprogams
-         for C in reverse Name'Range loop
-            if Name (C) = '.' then
-               return Name (C + 1 .. Name'Last);
-            end if;
-         end loop;
-         return Name;
-      end Entity_Base;
-
       Node_Type : Node_Types;
-      L         : Integer := 0;
-
    begin
-      if Iter /= Null_Iter then
-         Node_Type := Get_Node_Type (Model, Iter);
-      else
+      if Iter = Null_Iter then
          return;
       end if;
 
-      if Node_Type = Entity_Node then
-         Set_Entity_Information
-           (Context       => Context,
-            Entity_Name   =>
-              Entity_Base (Get_String (Model, Iter, Entity_Base_Column)),
-            Entity_Column => Visible_Column_Type
-              (Get_Int (Model, Iter, Column_Column)));
-         L := Integer (Get_Int (Model, Iter, Line_Column));
-      end if;
-
+      Node_Type := Get_Node_Type (Model, Iter);
       if Node_Type in Project_Node_Types then
          Set_File_Information
            (Context           => Context,
@@ -1248,7 +843,7 @@ package body Project_Explorers_Common is
               Get_Project_From_Node (Model, Kernel, Iter, False),
             Importing_Project =>
               Get_Project_From_Node (Model, Kernel, Iter, True),
-            Line         => L);
+            Line         => 0);
       end if;
    end Context_Factory;
 

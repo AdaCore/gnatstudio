@@ -79,7 +79,6 @@ with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Projects;                  use Projects;
 with Project_Explorers_Common;  use Project_Explorers_Common;
-with String_Utils;              use String_Utils;
 with Tooltips;
 
 package body Project_Explorers is
@@ -876,13 +875,6 @@ package body Project_Explorers is
                when others =>
                   return Alphabetical;
             end case;
-
-         when others =>
-            if B_Type = A_Type then
-               return Alphabetical;
-            else
-               return B_Before_A;
-            end if;
       end case;
    end Sort_Func;
 
@@ -1009,7 +1001,7 @@ package body Project_Explorers is
                return Self.User_Filter.Visible.Contains (File);
             end if;
 
-         when Category_Node | Entity_Node | Runtime_Node =>
+         when Runtime_Node =>
             return True;
       end case;
    end Is_Visible;
@@ -1251,8 +1243,7 @@ package body Project_Explorers is
                Prj := Get_Project_From_Node
                  (Exp.Tree.Model, Exp.Kernel, Iter, False);
 
-            when Directory_Node_Types
-               | File_Node | Category_Node | Entity_Node | Runtime_Node =>
+            when Directory_Node_Types | File_Node | Runtime_Node =>
                null;
          end case;
 
@@ -1309,7 +1300,7 @@ package body Project_Explorers is
       Cell_X,
       Cell_Y     : Gint;
       Row_Found  : Boolean := False;
-      Par, Filter_Iter, Iter  : Gtk_Tree_Iter;
+      Filter_Iter, Iter  : Gtk_Tree_Iter;
       Node_Type  : Node_Types;
       File         : Virtual_File;
       Area       : Gdk_Rectangle;
@@ -1372,25 +1363,6 @@ package body Project_Explorers is
                      Iter, Importing => False)));
             Label.Set_Use_Markup (True);
 
-         when Entity_Node =>
-            --  Entity (parameters) declared at Filename:line
-            --  Get grand-parent node which is the filename node
-            Par := Parent
-              (Tooltip.Explorer.Tree.Model,
-               Parent (Tooltip.Explorer.Tree.Model, Iter));
-
-            Gtk_New (Label);
-            Label.Set_Markup
-              (Get_String
-                 (Tooltip.Explorer.Tree.Model, Iter, Display_Name_Column)
-               & ASCII.LF &
-               (-"declared at ") &
-               Get_String (Tooltip.Explorer.Tree.Model, Par,
-                 Display_Name_Column)
-               & ':' &
-               Image (Integer
-                 (Get_Int (Tooltip.Explorer.Tree.Model, Iter, Line_Column))));
-
          when others =>
             null;
       end case;
@@ -1414,17 +1386,11 @@ package body Project_Explorers is
               (Self, Store_Iter, Flat_View => Show_Flat_View.Get_Pref);
             Self.Refilter;
 
-         when File_Node =>
-            Append_File_Info
-              (Self.Kernel, Self.Model, Store_Iter,
-               Get_File_From_Node (Self.Model, Store_Iter),
-               Sorted => False);
-
          when Runtime_Node =>
             --  Following does nothing if info is aleeady there
             Append_Runtime_Info (Self.Kernel, Self.Model, Store_Iter);
 
-         when Directory_Node_Types | Category_Node | Entity_Node =>
+         when File_Node | Directory_Node_Types =>
             null;   --  nothing to do
       end case;
    end Add_Children;
@@ -1466,17 +1432,6 @@ package body Project_Explorers is
          Iter := E.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path);
          N_Type := Get_Node_Type (E.Tree.Model, Iter);
          Set_Node_Type (E.Tree.Model, Iter, N_Type, Expanded => False);
-
-         case N_Type is
-            when File_Node =>
-               --  Closing a file node should force a refresh of its
-               --  contents the next time it is opened
-               Remove_Child_Nodes (E.Tree.Model, Parent => Iter);
-               E.Tree.Set_Might_Have_Children (Iter);
-
-            when others =>
-               null;   --  nothing to do
-         end case;
       end if;
    end Collapse_Row_Cb;
 
@@ -1830,7 +1785,7 @@ package body Project_Explorers is
          Dir         : Dirs_Files_Hash.Cursor := Dirs.First;
          Show_Hidden : constant Boolean := Show_Hidden_Dirs.Get_Pref;
          Previous    : Directory_Info := (No_File, Runtime_Node);
-         Iter        : Gtk_Tree_Iter;
+         Dummy       : Gtk_Tree_Iter;
       begin
          while Has_Element (Dir) loop
             if Show_Hidden or else not Is_Hidden (Key (Dir).Directory) then
@@ -1842,8 +1797,7 @@ package body Project_Explorers is
 
                if Show_Dirs then
                   for F of Dirs (Dir) loop
-                     Iter := Create_File (Self.Model, Child, F);
-                     Self.Set_Might_Have_Children (Iter);
+                     Dummy := Create_File (Self.Model, Child, F);
                   end loop;
                end if;
             end if;
@@ -1855,7 +1809,6 @@ package body Project_Explorers is
       if not Show_Dirs then
          for F in Files'Range loop
             Child := Create_File (Self.Model, Node, Files (F));
-            Self.Set_Might_Have_Children (Child);
          end loop;
       end if;
 
@@ -2016,8 +1969,6 @@ package body Project_Explorers is
                                 new Directory_Node_Filter_Record;
       File_Node_Filter      : constant Action_Filter :=
                                 new File_Node_Filter_Record;
-      Entity_Node_Filter    : constant Action_Filter :=
-                                new Entity_Node_Filter_Record;
    begin
       Explorer_Views.Register_Module (Kernel => Kernel);
 
@@ -2129,10 +2080,6 @@ package body Project_Explorers is
         (Kernel,
          Filter => File_Node_Filter,
          Name   => "Explorer_File_Node");
-      Register_Filter
-        (Kernel,
-         Filter => Entity_Node_Filter,
-         Name   => "Explorer_Entity_Node");
    end Register_Module;
 
    ----------

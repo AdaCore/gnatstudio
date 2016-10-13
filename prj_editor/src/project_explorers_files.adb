@@ -352,14 +352,8 @@ package body Project_Explorers_Files is
                File := Get_File_From_Node (Explorer.Tree.Model, Iter);
                Set_File_Information (Context, (1 => File));
 
-            when Entity_Node =>
-               --  ??? No entity information was set before, but isn't this
-               --  strange ?
-               null;
-
             when others =>
                null;
-
          end case;
       end if;
       return Context;
@@ -769,7 +763,6 @@ package body Project_Explorers_Files is
            and then D.Files (J).Is_Regular_File
          then
             Iter := Create_File (D.Tree.Model, D.Base, D.Files (J));
-            D.Tree.Set_Might_Have_Children (Iter);
          end if;
       end loop;
 
@@ -1052,14 +1045,7 @@ package body Project_Explorers_Files is
             File := Get_File_From_Node (Self.Model, Store_Iter);
             File_Append_Directory (Self, File, Store_Iter, 1);
 
-         when File_Node =>
-            File := Get_File_From_Node (Self.Model, Store_Iter);
-            Append_File_Info
-              (Self.Kernel, Self.Model, Store_Iter, File, Sorted => False);
-
-         when Category_Node | Entity_Node
-            | Obj_Directory_Node | Exec_Directory_Node
-            | Lib_Directory_Node | Project_Node_Types | Runtime_Node =>
+         when others =>
             null;
       end case;
    end Add_Children;
@@ -1458,7 +1444,6 @@ package body Project_Explorers_Files is
 
             else
                Iter := Create_File (View.Tree.Model, Iter, File);
-               View.Tree.Set_Might_Have_Children (Iter);
             end if;
 
             Ignore := Expand_Row (View.Tree, Path, False);

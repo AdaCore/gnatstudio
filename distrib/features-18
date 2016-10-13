@@ -23,3 +23,9 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 18.0 / GNATbench 18.0
 -----------------------------------------
 
+NF-18-PA12-040 GPS: remove entity information in Project view (2016-10-13)
+
+  We no longer display the list of entities defined in a file, in the
+  Project view. This information is already available in the Outline,
+  whenever a file is selected in the Project view. Removing it allowed us
+  to speed up the display of the tree view.

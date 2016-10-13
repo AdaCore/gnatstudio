@@ -62,9 +62,6 @@ package Project_Explorers_Common is
    Display_Name_Column  : constant := 1;
    File_Column          : constant := 2;
    Node_Type_Column     : constant := 3;
-   Line_Column          : constant := 4;
-   Column_Column        : constant := 5;
-   Entity_Base_Column   : constant := 6;
 
    ----------------------
    -- Node definitions --
@@ -80,9 +77,7 @@ package Project_Explorers_Common is
       Obj_Directory_Node,
       Lib_Directory_Node,
       Exec_Directory_Node,
-      File_Node,
-      Category_Node,
-      Entity_Node);
+      File_Node);
    subtype Project_Node_Types
      is Node_Types range Project_Node .. Modified_Project_Node;
    subtype Directory_Node_Types
@@ -129,31 +124,6 @@ package Project_Explorers_Common is
       Dir    : Gtk_Tree_Iter;
       File   : Virtual_File) return Gtk_Tree_Iter;
    --  Create a file node at the end of the children of Dir
-
-   function Append_Category_Node
-     (Model         : Gtk_Tree_Store;
-      File          : GNATCOLL.VFS.Virtual_File;
-      Category      : Language_Category;
-      Category_Name : GNATCOLL.Symbols.Symbol;
-      Parent_Iter   : Gtk_Tree_Iter;
-      Sorted        : Boolean) return Gtk_Tree_Iter;
-   --  Add a category node in the model
-
-   function Append_Entity_Node
-     (Model       : Gtk_Tree_Store;
-      File        : GNATCOLL.VFS.Virtual_File;
-      Construct   : Construct_Information;
-      Parent_Iter : Gtk_Tree_Iter;
-      Sorted      : Boolean) return Gtk_Tree_Iter;
-   --  Add an entity node in the model
-
-   procedure Append_File_Info
-     (Kernel    : Kernel_Handle;
-      Model     : Gtk_Tree_Store;
-      Node      : Gtk_Tree_Iter;
-      File_Name : GNATCOLL.VFS.Virtual_File;
-      Sorted    : Boolean);
-   --  Add info to a file node in the model
 
    procedure Append_Runtime_Info
      (Kernel    : Kernel_Handle;
