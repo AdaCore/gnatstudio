@@ -842,6 +842,14 @@ package body Src_Contexts is
          Text  : String) return Boolean;
       --  Stop at the first match encountered
 
+      function From_Beginning_Callback
+        (Match : GPS.Search.Search_Context;
+         Text  : String) return Boolean;
+      --  Used to restart the search from the beginning of the file.
+      --
+      --  Display an informational popup telling that the search restarted from
+      --  the beginning if a match was encountered.
+
       function Backward_Callback
         (Match : GPS.Search.Search_Context;
          Text  : String) return Boolean;
@@ -860,6 +868,27 @@ package body Src_Contexts is
          Result := Match;
          return False;
       end Stop_At_First_Callback;
+
+      -----------------------------
+      -- From_Beginning_Callback --
+      -----------------------------
+
+      function From_Beginning_Callback
+        (Match : GPS.Search.Search_Context;
+         Text  : String) return Boolean
+      is
+         pragma Unreferenced (Text);
+      begin
+         Result := Match;
+
+         if Result /= GPS.Search.No_Match then
+            Display_Informational_Popup
+              (Get_Main_Window (Kernel),
+               Icon_Name => "gps-undo-symbolic");
+         end if;
+
+         return False;
+      end From_Beginning_Callback;
 
       -----------------------
       -- Backward_Callback --
@@ -918,10 +947,6 @@ package body Src_Contexts is
 
                return Buttons = Button_Yes;
             when Informational_Popup =>
-               Display_Informational_Popup
-                 (Parent    => Get_Current_Window (Kernel),
-                  Icon_Name => "gps-undo-symbolic");
-
                return True;
             when None =>
                return False;
@@ -1016,7 +1041,7 @@ package body Src_Contexts is
                  (Text,
                   Start_Column,
                   Context,
-                  Stop_At_First_Callback'Unrestricted_Access, Scope,
+                  From_Beginning_Callback'Unrestricted_Access, Scope,
                   Lexical_State, Lang,
                   Was_Partial => Was_Partial,
                   Ref         => Ref);
