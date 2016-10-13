@@ -31,7 +31,6 @@ with Glib.Values;
 with Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Target_List;
-with Gtk.Tree_Model_Filter;     use Gtk.Tree_Model_Filter;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 
@@ -41,7 +40,6 @@ with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
-with Language.Unknown;          use Language.Unknown;
 with Language.Icons;            use Language.Icons;
 with Language_Handlers;         use Language_Handlers;
 with Language_Utils;
@@ -319,114 +317,10 @@ package body Project_Explorers_Common is
          when Category_Node =>
             return "gps-emblem-category";
 
-         when Dummy_Node | Entity_Node =>
+         when Entity_Node =>
             return "";
       end case;
    end Stock_For_Node;
-
-   -----------------
-   -- Append_File --
-   -----------------
-
-   procedure Append_File
-     (Kernel : Kernel_Handle;
-      Model  : Gtk_Tree_Store;
-      Base   : Gtk_Tree_Iter;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Sorted : Boolean := False)
-   is
-      Iter  : Gtk_Tree_Iter;
-      Iter2 : Gtk_Tree_Iter;
-      Lang  : Language_Access;
-      Done  : Boolean;
-   begin
-      if Sorted then
-         Iter := Children (Model, Base);
-         Done := False;
-
-         while Iter /= Null_Iter loop
-            Iter2 := Iter;
-
-            if Get_Node_Type (Model, Iter) = File_Node then
-               declare
-                  Name : constant Filesystem_String :=
-                           Get_Base_Name (Model, Iter);
-               begin
-                  if File.Base_Name < Name then
-                     Insert_Before (Model, Iter2, Base, Iter);
-                     Iter := Iter2;
-                     Done := True;
-
-                     exit;
-                  end if;
-               end;
-            end if;
-
-            Next (Model, Iter);
-         end loop;
-
-         if not Done then
-            Append (Model, Iter, Base);
-         end if;
-      else
-         Append (Model, Iter, Base);
-      end if;
-
-      Set (Model, Iter, Display_Base_Name (File), File_Node, False, File);
-
-      Lang := Get_Language_From_File (Get_Language_Handler (Kernel), File);
-
-      if Lang /= Unknown_Lang then
-         Append_Dummy_Iter (Model, Iter);
-      end if;
-   end Append_File;
-
-   -----------------------
-   -- Append_Dummy_Iter --
-   -----------------------
-
-   procedure Append_Dummy_Iter
-     (Model : Gtk_Tree_Store;
-      Base  : Gtk_Tree_Iter)
-   is
-      Iter : Gtk_Tree_Iter;
-   begin
-      Append (Model, Iter, Base);
-      Set_Node_Type (Model, Iter, Dummy_Node, Expanded => False);
-   end Append_Dummy_Iter;
-
-   --------------------
-   -- Has_Dummy_Iter --
-   --------------------
-
-   function Has_Dummy_Iter
-     (Model  : Gtk_Tree_Store;
-      Parent : Gtk_Tree_Iter) return Boolean
-   is
-      Iter : Gtk_Tree_Iter;
-   begin
-      Iter := Model.Nth_Child (Parent, 0);
-      return Iter /= Null_Iter
-        and then Get_Node_Type (Model, Iter) = Dummy_Node;
-   end Has_Dummy_Iter;
-
-   -----------------------
-   -- Remove_Dummy_Iter --
-   -----------------------
-
-   procedure Remove_Dummy_Iter
-     (Model  : Gtk_Tree_Store;
-      Parent : Gtk_Tree_Iter)
-   is
-      Iter : Gtk_Tree_Iter;
-   begin
-      Iter := Model.Nth_Child (Parent, 0);
-      if Iter /= Null_Iter
-        and then Get_Node_Type (Model, Iter) = Dummy_Node
-      then
-         Model.Remove (Iter);
-      end if;
-   end Remove_Dummy_Iter;
 
    --------------------------
    -- Append_Category_Node --
@@ -754,18 +648,12 @@ package body Project_Explorers_Common is
       Parent : Gtk_Tree_Iter;
       Kind   : Node_Types;
       Name   : String;
-      File   : Virtual_File;
-      Add_Dummy : Boolean := False) return Gtk_Tree_Iter
+      File   : Virtual_File) return Gtk_Tree_Iter
    is
       Iter : Gtk_Tree_Iter := Null_Iter;
    begin
       Model.Append (Iter => Iter, Parent => Parent);
       Set (Model, Iter, Name, Kind, False, File);
-
-      if Add_Dummy then
-         Append_Dummy_Iter (Model, Iter);
-      end if;
-
       return Iter;
    end Create_Node;
 
@@ -778,8 +666,7 @@ package body Project_Explorers_Common is
       Parent : Gtk_Tree_Iter;
       Kind   : Node_Types;
       Name   : String;
-      File   : Virtual_File;
-      Add_Dummy : Boolean := False) return Gtk_Tree_Iter
+      File   : Virtual_File) return Gtk_Tree_Iter
    is
       Iter : Gtk_Tree_Iter := Null_Iter;
       T    : Node_Types;
@@ -806,54 +693,41 @@ package body Project_Explorers_Common is
          Model.Next (Iter);
       end loop;
 
-      return Create_Node (Model, Parent, Kind, Name, File, Add_Dummy);
+      return Create_Node (Model, Parent, Kind, Name, File);
    end Create_Or_Reuse_Node;
 
    --------------------------
    -- Create_Or_Reuse_File --
    --------------------------
 
-   procedure Create_Or_Reuse_File
+   function Create_Or_Reuse_File
      (Model  : Gtk_Tree_Store;
-      Kernel : not null access Kernel_Handle_Record'Class;
       Dir    : Gtk_Tree_Iter;
-      File   : Virtual_File)
-   is
-      Child : Gtk_Tree_Iter;
-      Lang : constant Language_Access := Get_Language_From_File
-        (Get_Language_Handler (Kernel), File);
-      pragma Unreferenced (Child);
+      File   : Virtual_File) return Gtk_Tree_Iter is
    begin
-      Child := Create_Or_Reuse_Node
+      return Create_Or_Reuse_Node
         (Model  => Model,
          Parent => Dir,
          Kind   => File_Node,
          File   => File,
-         Name   => File.Display_Base_Name,
-         Add_Dummy => Lang /= null);
+         Name   => File.Display_Base_Name);
    end Create_Or_Reuse_File;
 
    -----------------
    -- Create_File --
    -----------------
 
-   procedure Create_File
+   function Create_File
      (Model  : Gtk_Tree_Store;
-      Kernel : not null access Kernel_Handle_Record'Class;
       Dir    : Gtk_Tree_Iter;
-      File   : Virtual_File)
-   is
-      Lang : constant Language_Access := Get_Language_From_File
-        (Get_Language_Handler (Kernel), File);
-      Ignored : Gtk_Tree_Iter;
+      File   : Virtual_File) return Gtk_Tree_Iter is
    begin
-      Ignored := Create_Node
+      return Create_Node
         (Model  => Model,
          Parent => Dir,
          Kind   => File_Node,
          File   => File,
-         Name   => File.Display_Base_Name,
-         Add_Dummy => Lang /= null);
+         Name   => File.Display_Base_Name);
    end Create_File;
 
    -------------------------
@@ -865,38 +739,25 @@ package body Project_Explorers_Common is
       Model     : Gtk_Tree_Store;
       Node      : Gtk_Tree_Iter)
    is
-      Dir, It : Gtk_Tree_Iter;
-      pragma Unreferenced (It);
+      Dir, Dummy : Gtk_Tree_Iter;
       Previous : Virtual_File;
+      Files    : constant File_Array :=
+        Get_Registry (Kernel).Environment.Predefined_Source_Files;
    begin
-      if not Has_Dummy_Iter (Model, Node) then
-         --  already added
-         return;
-      end if;
+      for F in Files'Range loop
+         --  minor optimization to reuse previous dir if possible
+         if Previous /= Files (F).Dir then
+            Previous := Files (F).Dir;
+            Dir := Create_Or_Reuse_Node
+              (Model  => Model,
+               Parent => Node,
+               Kind   => Directory_Node,
+               File   => Previous,
+               Name   => Previous.Display_Full_Name);
+         end if;
 
-      declare
-         Files : constant File_Array :=
-           Get_Registry (Kernel).Environment.Predefined_Source_Files;
-      begin
-         for F in Files'Range loop
-            --  minor optimization to reuse previous dir if possible
-            if Previous /= Files (F).Dir then
-               Previous := Files (F).Dir;
-               Dir := Create_Or_Reuse_Node
-                 (Model  => Model,
-                  Parent => Node,
-                  Kind   => Directory_Node,
-                  File   => Previous,
-                  Name   => Previous.Display_Full_Name);
-            end if;
-
-            Append_File
-              (Kernel  => Kernel,
-               Model   => Model,
-               Base    => Dir,
-               File    => Files (F));
-         end loop;
-      end;
+         Dummy := Create_File (Model, Dir, Files (F));
+      end loop;
    end Append_Runtime_Info;
 
    ---------------------
@@ -984,10 +845,8 @@ package body Project_Explorers_Common is
    function On_Button_Press
      (Kernel    : Kernel_Handle;
       Child     : access MDI_Explorer_Child_Record'Class;
-      Tree      : access Gtk_Tree_View_Record'Class;
-      Model     : Gtk_Tree_Store;
-      Event     : Gdk_Event_Button;
-      Add_Dummy : Boolean) return Boolean
+      Tree      : not null access Tree_View_Record'Class;
+      Event     : Gdk_Event_Button) return Boolean
    is
       Iter         : Gtk_Tree_Iter;  --  applies to Model
       Path         : Gtk_Tree_Path;
@@ -1002,7 +861,6 @@ package body Project_Explorers_Common is
    begin
       if Event.Button = 1 then
          declare
-            Filter_M     : constant Gtk_Tree_Model := Get_Model (Tree);
             Filter_Iter  : Gtk_Tree_Iter;  --  applies to Filter_M
          begin
             Filter_Iter := Find_Iter_For_Event (Tree, Event);
@@ -1010,24 +868,17 @@ package body Project_Explorers_Common is
                return False;
             end if;
 
-            if Filter_M /= +Model then
-               Convert_Iter_To_Child_Iter
-                 (Gtk_Tree_Model_Filter'(-Filter_M),
-                  Child_Iter  => Iter,
-                  Filter_Iter => Filter_Iter);
-            else
-               Iter := Filter_Iter;
-            end if;
+            Iter := Tree.Convert_To_Store_Iter (Filter_Iter);
          end;
 
          if Event.The_Type /= Button_Release then
             --  Set cursor to pointed position before open menu, etc
-            Path := Get_Path (Model, Iter);
+            Path := Tree.Get_Filter_Path_For_Store_Iter (Iter);
             Set_Cursor (Tree, Path, null, False);
             Path_Free (Path);
          end if;
 
-         case Get_Node_Type (Model, Iter) is
+         case Get_Node_Type (Tree.Model, Iter) is
             when Directory_Node_Types
                | Project_Node_Types
                | Category_Node
@@ -1040,15 +891,11 @@ package body Project_Explorers_Common is
                      Ignore  : Boolean;
                      pragma Unreferenced (Ignore);
                   begin
-                     Path := Get_Path (Model, Iter);
+                     Path := Tree.Get_Filter_Path_For_Store_Iter (Iter);
 
                      if Row_Expanded (Tree, Path) then
                         Ignore := Collapse_Row (Tree, Path);
-
                      else
-                        if Add_Dummy then
-                           Append_Dummy_Iter (Model, Iter);
-                        end if;
                         Ignore := Expand_Row (Tree, Path, False);
                      end if;
 
@@ -1059,9 +906,9 @@ package body Project_Explorers_Common is
                return False;
 
             when File_Node =>
-               File    := Get_File (Model, Iter, File_Column);
+               File    := Get_File (Tree.Model, Iter, File_Column);
                Project := Get_Project_From_Node
-                 (Model, Kernel, Iter, Importing => False);
+                 (Tree.Model, Kernel, Iter, Importing => False);
 
                if Event.The_Type = Gdk_2button_Press
                  or else Event.The_Type = Gdk_3button_Press
@@ -1134,11 +981,11 @@ package body Project_Explorers_Common is
                Cancel_Child_Drag (Child);
 
                if Event.The_Type = Button_Release then
-                  Line := Get_Int (Model, Iter, Line_Column);
-                  Column := Get_Int (Model, Iter, Column_Column);
-                  File   := Get_File (Model, Iter, File_Column);
+                  Line := Tree.Model.Get_Int (Iter, Line_Column);
+                  Column := Tree.Model.Get_Int (Iter, Column_Column);
+                  File   := Get_File_From_Node (Tree.Model, Iter);
                   Project := Get_Project_From_Node
-                    (Model, Kernel, Iter, Importing => False);
+                    (Tree.Model, Kernel, Iter, Importing => False);
 
                   Open_File_Action_Hook.Run
                     (Kernel,
@@ -1147,9 +994,6 @@ package body Project_Explorers_Common is
                      Line    => Natural (Line),
                      Column  => Visible_Column_Type (Column));
                end if;
-               return False;
-
-            when Dummy_Node =>
                return False;
          end case;
       end if;
@@ -1163,7 +1007,7 @@ package body Project_Explorers_Common is
 
    function On_Key_Press
      (Kernel : Kernel_Handle;
-      Tree   : access Gtk_Tree_View_Record'Class;
+      Tree   : not null access Tree_View_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
       use type Gdk.Types.Gdk_Key_Type;
@@ -1176,19 +1020,18 @@ package body Project_Explorers_Common is
 
    begin
       Get_Selected (Get_Selection (Tree), Model, Iter);
+      Iter := Tree.Convert_To_Store_Iter (Iter);
 
       if Iter = Null_Iter then
          return False;
       end if;
 
       if Get_Key_Val (Event) = GDK_Return then
-         case Node_Types'Val
-           (Integer (Get_Int (Model, Iter, Node_Type_Column))) is
-
+         case Get_Node_Type (Tree.Model, Iter) is
          when File_Node =>
-            File    := Get_File (Gtk_Tree_Store'(-Model), Iter, File_Column);
+            File    := Get_File_From_Node (Tree.Model, Iter);
             Project := Get_Project_From_Node
-              (Gtk_Tree_Store'(-Model), Kernel, Iter, Importing => False);
+              (Tree.Model, Kernel, Iter, Importing => False);
 
             Open_File_Action_Hook.Run
               (Kernel,
@@ -1255,28 +1098,6 @@ package body Project_Explorers_Common is
       end loop;
    end Set_Node_Type;
 
-   -------------------
-   -- Get_Base_Name --
-   -------------------
-
-   function Get_Base_Name
-     (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return Filesystem_String is
-   begin
-      return Get_File (Model, Node, File_Column).Base_Name;
-   end Get_Base_Name;
-
-   -----------------------
-   -- Get_Absolute_Name --
-   -----------------------
-
-   function Get_Absolute_Name
-     (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return Virtual_File is
-   begin
-      return Get_File (Model, Node, File_Column);
-   end Get_Absolute_Name;
-
    ------------------------
    -- Get_File_From_Node --
    ------------------------
@@ -1300,9 +1121,7 @@ package body Project_Explorers_Common is
    begin
       if F = GNATCOLL.VFS.No_File then
          return F;
-      end if;
-
-      if Get_Node_Type (Model, Node) = Directory_Node then
+      elsif Get_Node_Type (Model, Node) = Directory_Node then
          return F;
       else
          return F.Get_Parent;

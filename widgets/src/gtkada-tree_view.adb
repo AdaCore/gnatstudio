@@ -454,16 +454,17 @@ package body Gtkada.Tree_View is
       Store_Iter : Gtk_Tree_Iter;
       Path       : Gtk_Tree_Path;
       Dummy      : Boolean;
-      M          : constant Gtk_Tree_Model :=
-        (if Tree.Filter /= null then +Tree.Filter else +Tree.Model);
+      Sort_Col   : Gint;
 
    begin
       if Tree.Lock or else Filter_Iter = Null_Iter then
          return;
       end if;
 
-      Store_Iter := Tree.Convert_To_Store_Iter (Filter_Iter);
+      Store_Iter := Tree.Get_Store_Iter_For_Filter_Path (Filter_Path);
       Set_Flag (Tree, Store_Iter, Flag_Is_Expanded);
+
+      Sort_Col := Freeze_Sort (Tree.Model);
 
       --  Replace dummy child nodes if needed.
       --  We always assume the dummy child (if any) is the first child
@@ -480,20 +481,23 @@ package body Gtkada.Tree_View is
          else
             --  Re-expand existing child nodes as needed
 
-            Iter := Children (M, Filter_Iter);
+            Iter := Children (Tree.Model, Store_Iter);
             while Iter /= Null_Iter loop
-               Store_Iter := Tree.Convert_To_Store_Iter (Iter);
-
-               if Get_Flag (Tree, Store_Iter, Flag_Is_Expanded) then
-                  Path := Get_Path (M, Iter);
+               if Get_Flag (Tree, Iter, Flag_Is_Expanded) then
+                  Path := Tree.Get_Filter_Path_For_Store_Iter (Iter);
                   Dummy := Expand_Row (Tree, Path, False);
                   Path_Free (Path);
                end if;
-
-               Next (M, Iter);
+               Next (Tree.Model, Iter);
             end loop;
          end if;
       end if;
+
+      Thaw_Sort (Tree.Model, Sort_Col);
+
+   exception
+      when others =>
+         Thaw_Sort (Tree.Model, Sort_Col);
    end Row_Expanded_Callback;
 
    ----------------------------
@@ -737,7 +741,8 @@ package body Gtkada.Tree_View is
 
       procedure Set_Expansion_Status
         (Self   : not null access Tree_Record'Class;
-         Status : Expansion_Status)
+         Status : Expansion_Status;
+         Collapse_All_First : Boolean := True)
       is
          function Expand_Node
            (Model : Gtk_Tree_Model;
@@ -758,7 +763,10 @@ package body Gtkada.Tree_View is
          end Expand_Node;
 
       begin
-         Self.Collapse_All;
+         if Collapse_All_First then
+            Self.Collapse_All;
+         end if;
+
          Self.Model.Foreach (Expand_Node'Unrestricted_Access);
 
          if Status.Has_Scroll_Info then

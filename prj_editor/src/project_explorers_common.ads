@@ -23,9 +23,9 @@ with Gdk.Event;      use Gdk.Event;
 with Glib;           use Glib;
 with Gtk.Tree_Model; use Gtk.Tree_Model;
 with Gtk.Tree_Store; use Gtk.Tree_Store;
-with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.Widget;     use Gtk.Widget;
 with Gtkada.MDI;     use Gtkada.MDI;
+with Gtkada.Tree_View; use Gtkada.Tree_View;
 
 with GPS.Kernel;     use GPS.Kernel;
 with GPS.Kernel.MDI; use GPS.Kernel.MDI;
@@ -82,8 +82,7 @@ package Project_Explorers_Common is
       Exec_Directory_Node,
       File_Node,
       Category_Node,
-      Entity_Node,
-      Dummy_Node);
+      Entity_Node);
    subtype Project_Node_Types
      is Node_Types range Project_Node .. Modified_Project_Node;
    subtype Directory_Node_Types
@@ -106,19 +105,15 @@ package Project_Explorers_Common is
       Parent : Gtk_Tree_Iter;
       Kind   : Node_Types;
       Name   : String;
-      File   : Virtual_File;
-      Add_Dummy : Boolean := False) return Gtk_Tree_Iter;
+      File   : Virtual_File) return Gtk_Tree_Iter;
    --  Check if Parent already has a child with the correct kind and name,
    --  and returns it. If not, creates a new node, where Name is set for the
    --  Display_Name_Column.
-   --  If Add_Dummy is true and a new node is created, a dummy child is
-   --  added to it so that the user can expand the node.
 
-   procedure Create_Or_Reuse_File
+   function Create_Or_Reuse_File
      (Model  : Gtk_Tree_Store;
-      Kernel : not null access Kernel_Handle_Record'Class;
       Dir    : Gtk_Tree_Iter;
-      File   : Virtual_File);
+      File   : Virtual_File) return Gtk_Tree_Iter;
    --  Create a new file node, or reuse one if it already exists
 
    function Create_Node
@@ -126,38 +121,14 @@ package Project_Explorers_Common is
       Parent : Gtk_Tree_Iter;
       Kind   : Node_Types;
       Name   : String;
-      File   : Virtual_File;
-      Add_Dummy : Boolean := False) return Gtk_Tree_Iter;
+      File   : Virtual_File) return Gtk_Tree_Iter;
    --  Create a new node. Name is set for the Display_Name_Column.
-   --  If Add_Dummy is true and a new node is created, a dummy child is
-   --  added to it so that the user can expand the node.
 
-   procedure Create_File
+   function Create_File
      (Model  : Gtk_Tree_Store;
-      Kernel : not null access Kernel_Handle_Record'Class;
       Dir    : Gtk_Tree_Iter;
-      File   : Virtual_File);
+      File   : Virtual_File) return Gtk_Tree_Iter;
    --  Create a file node at the end of the children of Dir
-
-   procedure Append_File
-     (Kernel : Kernel_Handle;
-      Model  : Gtk_Tree_Store;
-      Base   : Gtk_Tree_Iter;
-      File   : GNATCOLL.VFS.Virtual_File;
-      Sorted : Boolean := False);
-   --  Append a file node to Base in the model.
-   --  File must be an absolute file name.
-
-   procedure Append_Dummy_Iter
-     (Model : Gtk_Tree_Store;
-      Base  : Gtk_Tree_Iter);
-   function Has_Dummy_Iter
-     (Model  : Gtk_Tree_Store;
-      Parent : Gtk_Tree_Iter) return Boolean;
-   procedure Remove_Dummy_Iter
-     (Model  : Gtk_Tree_Store;
-      Parent : Gtk_Tree_Iter);
-   --  Append an empty iter to Base
 
    function Append_Category_Node
      (Model         : Gtk_Tree_Store;
@@ -201,17 +172,6 @@ package Project_Explorers_Common is
       N_Type   : Node_Types;
       Expanded : Boolean);
    --  Set the Node type and the pixmap accordingly
-
-   function Get_Base_Name
-     (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return Filesystem_String;
-   --  Return the base name for Node.
-   --  Returns a UTF8-encoded string.
-
-   function Get_Absolute_Name
-     (Model : Gtk_Tree_Store;
-      Node  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
-   --  Return the absolute name for Node
 
    function Get_Directory_From_Node
      (Model : Gtk_Tree_Store;
@@ -262,21 +222,14 @@ package Project_Explorers_Common is
    function On_Button_Press
      (Kernel    : Kernel_Handle;
       Child     : access MDI_Explorer_Child_Record'Class;
-      Tree      : access Gtk_Tree_View_Record'Class;
-      Model     : Gtk_Tree_Store;
-      Event     : Gdk_Event_Button;
-      Add_Dummy : Boolean) return Boolean;
+      Tree      : not null access Tree_View_Record'Class;
+      Event     : Gdk_Event_Button) return Boolean;
    --  If the Event is a button click, expand the node or jump to the
    --  location accordingly, and return whether the event should be propagated.
-   --  If Add_Dummy is true, a dummy node will be added to nodes collapsed
-   --  by this call.
-   --  Model is the model where the insertion of dummy nodes should take place.
-   --  This might not be the same as Tree.Get_Model, in case there is a filter
-   --  model.
 
    function On_Key_Press
      (Kernel : Kernel_Handle;
-      Tree   : access Gtk_Tree_View_Record'Class;
+      Tree   : not null access Tree_View_Record'Class;
       Event  : Gdk_Event) return Boolean;
    --  React to key press event on the tree
 

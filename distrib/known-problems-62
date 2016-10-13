@@ -31,7 +31,7 @@ KP-62-PA10-030 GPS: cannot execute new build targets
               this target includes macros like "%F", then you cannot execute
               them in GPS until it has been restarted.
 
-  Status:     This was fixed in 17.0 on 2016-010-10
+  Status:     This was fixed in 17.0 on 2016-10-10
 
   Workaround: Restart GPS after creating the build target.
 

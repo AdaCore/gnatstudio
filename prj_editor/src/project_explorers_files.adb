@@ -36,7 +36,6 @@ with Gdk.Rectangle;              use Gdk.Rectangle;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Check_Menu_Item;        use Gtk.Check_Menu_Item;
 with Gtk.Dnd;                    use Gtk.Dnd;
-with Gtk.Handlers;               use Gtk.Handlers;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
@@ -53,6 +52,7 @@ with Gdk.Types;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.MDI;                 use Gtkada.MDI;
 with Gtkada.Handlers;            use Gtkada.Handlers;
+with Gtkada.Tree_View;           use Gtkada.Tree_View;
 
 with Commands.Interactive;       use Commands, Commands.Interactive;
 with Default_Preferences;        use Default_Preferences;
@@ -92,20 +92,23 @@ package body Project_Explorers_Files is
    package Virtual_Files_Lists is new Ada.Containers.Doubly_Linked_Lists
      (Virtual_File);
 
+   type Files_Tree_View_Record is new Tree_View_Record with record
+      Kernel : Kernel_Handle;
+
+      Scroll_To_Directory : Boolean := False;
+      Fill_Timeout_Ids    : Timeout_Id_List.List;
+      --  ??? This is implemented as a list of handlers instead of just one
+      --  handler, in case the fill function should call itself recursively:
+      --  to be investigated.
+   end record;
+   type Files_Tree_View is access all Files_Tree_View_Record'Class;
+   overriding procedure Add_Children
+     (Self       : not null access Files_Tree_View_Record;
+      Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter);
+
    type Project_Explorer_Files_Record is new Generic_Views.View_Record with
       record
-         File_Tree           : Gtk.Tree_View.Gtk_Tree_View;
-         File_Model          : Gtk.Tree_Store.Gtk_Tree_Store;
-         Expanding           : Boolean := False;
-
-         Scroll_To_Directory : Boolean := False;
-         Path                : Gtk.Tree_Model.Gtk_Tree_Path;
-         Realize_Cb_Id       : Gtk.Handlers.Handler_Id;
-
-         Fill_Timeout_Ids    : Timeout_Id_List.List;
-         --  ??? This is implemented as a list of handlers instead of just one
-         --  handler, in case the fill function should call itself recursively
-         --  : to be investigated.
+         Tree                : Files_Tree_View;
       end record;
    overriding procedure Create_Menu
      (View    : not null access Project_Explorer_Files_Record;
@@ -138,7 +141,7 @@ package body Project_Explorers_Files is
    subtype Project_Explorer_Files is Explorer_Files_Views.View_Access;
 
    type Append_Directory_Idle_Data is record
-      Explorer      : Project_Explorer_Files;
+      Tree          : Files_Tree_View;
       Dir           : Virtual_File;
       Norm_Dest     : Virtual_File;
       Depth         : Integer := 0;
@@ -154,11 +157,12 @@ package body Project_Explorers_Files is
    procedure Free is new Unchecked_Deallocation
      (Append_Directory_Idle_Data, Append_Directory_Idle_Data_Access);
 
-   procedure Set_Column_Types (Tree : Gtk_Tree_View);
+   procedure Set_Column_Types
+     (Tree : not null access Gtk_Tree_View_Record'Class);
    --  Sets the types of columns to be displayed in the tree_view
 
    procedure File_Append_Directory
-     (Explorer      : access Project_Explorer_Files_Record'Class;
+     (Self          : not null access Files_Tree_View_Record'Class;
       Dir           : Virtual_File;
       Base          : Gtk_Tree_Iter;
       Depth         : Integer := 0;
@@ -169,23 +173,18 @@ package body Project_Explorers_Files is
    --  If Append_To_Dir is not No_File, and is a sub-directory of Dir, then
    --  the path is expanded recursively all the way to Append_To_Dir.
 
-   procedure File_Tree_Expand_Row_Cb
-     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Iter     : Gtk_Tree_Iter;
-      Path     : Gtk_Tree_Path);
+   procedure Tree_Expand_Row_Cb
+     (Explorer    : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Filter_Iter : Gtk_Tree_Iter;
+      Filter_Path : Gtk_Tree_Path);
    --  Called every time a node is expanded in the file view.
    --  It is responsible for automatically adding the children of the current
    --  node if they are not there already.
 
-   function Expose_Event_Cb
-     (Explorer : access Glib.Object.GObject_Record'Class;
-      Values   : GValues) return Boolean;
-   --  Scroll the explorer to the current directory
-
-   procedure File_Tree_Collapse_Row_Cb
-     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Iter     : Gtk_Tree_Iter;
-      Path     : Gtk_Tree_Path);
+   procedure Tree_Collapse_Row_Cb
+     (Explorer    : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Filter_Iter : Gtk_Tree_Iter;
+      Filter_Path : Gtk_Tree_Path);
    --  Called every time a node is collapsed in the file view
 
    procedure On_File_Destroy
@@ -210,11 +209,6 @@ package body Project_Explorers_Files is
    procedure File_Selection_Changed
      (Explorer : access Gtk_Widget_Record'Class);
    --  Callback for the "button_press" event on the file view
-
-   procedure Free_Children
-     (T    : Project_Explorer_Files;
-      Iter : Gtk_Tree_Iter);
-   --  Free all the children of iter Iter in the file view
 
    function Read_Directory
      (D : Append_Directory_Idle_Data_Access) return Boolean;
@@ -340,24 +334,22 @@ package body Project_Explorers_Files is
       Explorer     : constant Project_Explorer_Files :=
         Project_Explorer_Files (GPS_MDI_Child (Self).Get_Actual_Widget);
       Iter      : constant Gtk_Tree_Iter :=
-        Find_Iter_For_Event (Explorer.File_Tree, Event);
+        Find_Iter_For_Event (Explorer.Tree, Event);
       Path      : Gtk_Tree_Path;
       File      : Virtual_File;
       Node_Type : Node_Types;
    begin
       if Iter /= Null_Iter then
          if Event /= null then
-            Path := Get_Path (Explorer.File_Model, Iter);
-            Set_Cursor (Explorer.File_Tree, Path, null, False);
+            Path := Get_Path (Explorer.Tree.Model, Iter);
+            Set_Cursor (Explorer.Tree, Path, null, False);
             Path_Free (Path);
          end if;
 
-         Node_Type := Node_Types'Val
-           (Integer (Get_Int (Explorer.File_Model, Iter, Node_Type_Column)));
-
+         Node_Type := Get_Node_Type (Explorer.Tree.Model, Iter);
          case Node_Type is
             when Directory_Node | File_Node =>
-               File := Get_File (Explorer.File_Model, Iter, File_Column);
+               File := Get_File_From_Node (Explorer.Tree.Model, Iter);
                Set_File_Information (Context, (1 => File));
 
             when Entity_Node =>
@@ -548,9 +540,9 @@ package body Project_Explorers_Files is
             --  than from a timeout/idle callback
             return;
          end if;
-         C := D.Explorer.Fill_Timeout_Ids.Find (D.This_Timeout_ID);
+         C := D.Tree.Fill_Timeout_Ids.Find (D.This_Timeout_ID);
          if C /= No_Element then
-            D.Explorer.Fill_Timeout_Ids.Delete (C);
+            D.Tree.Fill_Timeout_Ids.Delete (C);
          end if;
       end Clear_Timeout_Id;
 
@@ -564,7 +556,7 @@ package body Project_Explorers_Files is
       --  absolute path to the directory.
 
       if D.Base = Null_Iter then
-         Append (D.Explorer.File_Model, Iter, D.Base);
+         D.Tree.Model.Append (Iter, D.Base);
 
          Values (1 .. 3) :=
            (1 => As_File   (D.Dir),
@@ -574,16 +566,16 @@ package body Project_Explorers_Files is
          if D.Physical_Read then
             Glib.Values.Init_Set_String
               (Values (4), Stock_For_Node (Directory_Node, Expanded => True));
-            Set_And_Clear (D.Explorer.File_Model, Iter, Columns, Values);
+            Set_And_Clear (D.Tree.Model, Iter, Columns, Values);
 
             D.Base := Iter;
 
          else
-            Append_Dummy_Iter (D.Explorer.File_Model, Iter);
+            D.Tree.Set_Might_Have_Children (Iter);
 
             Glib.Values.Init_Set_String
               (Values (4), Stock_For_Node (Directory_Node, Expanded => False));
-            Set_And_Clear (D.Explorer.File_Model, Iter, Columns, Values);
+            Set_And_Clear (D.Tree.Model, Iter, Columns, Values);
 
             Clear_Timeout_Id;
 
@@ -608,7 +600,7 @@ package body Project_Explorers_Files is
 
          elsif File_View_Shows_Only_Project.Get_Pref then
             if Is_Directory (D.Files (D.File_Index)) then
-               if not Get_Registry (D.Explorer.Kernel).Tree.
+               if not Get_Registry (D.Tree.Kernel).Tree.
                  Directory_Belongs_To_Project
                  (D.Files (D.File_Index).Full_Name,
                   Direct_Only => False)
@@ -620,14 +612,14 @@ package body Project_Explorers_Files is
             else
                declare
                   File : constant Virtual_File :=
-                    Get_Registry (D.Explorer.Kernel).Tree.Create
+                    Get_Registry (D.Tree.Kernel).Tree.Create
                     (Name => D.Files (D.File_Index).Base_Dir_Name);
 
                   --  First matching project, since we have nothing else to
                   --  base our guess on
                   F_Info : constant File_Info'Class :=
                     File_Info'Class
-                      (Get_Registry (D.Explorer.Kernel).Tree
+                      (Get_Registry (D.Tree.Kernel).Tree
                        .Info_Set (File).First_Element);
                   P      : constant Project_Type    := F_Info.Project;
                begin
@@ -642,7 +634,7 @@ package body Project_Explorers_Files is
 
          elsif Dirs_From_Project.Get_Pref then
             if Is_Directory (D.Files (D.File_Index)) then
-               if not Get_Registry (D.Explorer.Kernel).Tree.
+               if not Get_Registry (D.Tree.Kernel).Tree.
                  Directory_Belongs_To_Project
                  (D.Files (D.File_Index).Full_Name,
                   Direct_Only => False)
@@ -655,7 +647,7 @@ package body Project_Explorers_Files is
                declare
                   Dir : constant Virtual_File := D.Files (D.File_Index).Dir;
                begin
-                  if not Get_Registry (D.Explorer.Kernel).Tree.
+                  if not Get_Registry (D.Tree.Kernel).Tree.
                     Directory_Belongs_To_Project
                        (Dir.Full_Name, Direct_Only => True)
                   then
@@ -684,7 +676,7 @@ package body Project_Explorers_Files is
       end loop;
 
       if Empty then
-         Set (D.Explorer.File_Model, D.Base, Icon_Column,
+         Set (D.Tree.Model, D.Base, Icon_Column,
               Stock_For_Node (Directory_Node, Expanded => False));
       end if;
 
@@ -692,7 +684,7 @@ package body Project_Explorers_Files is
          if D.Files (J) /= No_File
            and then D.Files (J).Is_Directory
          then
-            Append (D.Explorer.File_Model, Iter, D.Base);
+            Append (D.Tree.Model, Iter, D.Base);
 
             Values (1 .. 3) :=
               (1 => As_File   (D.Files (J)),
@@ -701,7 +693,7 @@ package body Project_Explorers_Files is
 
             if D.Depth = 0 then
                Set_And_Clear
-                 (D.Explorer.File_Model, Iter,
+                 (D.Tree.Model, Iter,
                   Columns (1 .. 3), Values (1 .. 3));
                exit;
             end if;
@@ -718,15 +710,11 @@ package body Project_Explorers_Files is
                   pragma Unreferenced (Ignore);
 
                   Path      : Gtk_Tree_Path;
-                  Expanding : constant Boolean := D.Explorer.Expanding;
                begin
-                  Path := Get_Path (D.Explorer.File_Model, D.Base);
+                  Path := Get_Path (D.Tree.Model, D.Base);
+                  Ignore := Expand_Row (D.Tree, Path, False);
 
-                  D.Explorer.Expanding := True;
-                  Ignore := Expand_Row (D.Explorer.File_Tree, Path, False);
-                  D.Explorer.Expanding := Expanding;
-
-                  D.Explorer.File_Model.Set
+                  D.Tree.Model.Set
                     (D.Base, Icon_Column,
                      Stock_For_Node (Directory_Node, Expanded => True));
 
@@ -737,56 +725,41 @@ package body Project_Explorers_Files is
 
                if D.Norm_Dest = D.Files (J) then
                   declare
-                     Ignore    : Boolean;
-                     pragma Unreferenced (Ignore);
+                     Ignore      : Boolean;
+                     Target_Path : Gtk.Tree_Model.Gtk_Tree_Path;
 
-                     Expanding : constant Boolean := D.Explorer.Expanding;
                   begin
-                     D.Explorer.Path := Get_Path (D.Explorer.File_Model, Iter);
-
+                     Target_Path := Get_Path (D.Tree.Model, Iter);
                      File_Append_Directory
-                       (D.Explorer, D.Files (J),
+                       (D.Tree, D.Files (J),
                         Iter, D.Depth, D.Norm_Dest, False);
-
-                     D.Explorer.Expanding := True;
-                     Ignore := Expand_Row
-                       (D.Explorer.File_Tree,
-                        D.Explorer.Path, False);
-                     D.Explorer.Expanding := Expanding;
-
-                     Select_Path
-                       (Get_Selection (D.Explorer.File_Tree),
-                        D.Explorer.Path);
+                     Ignore := Expand_Row (D.Tree, Target_Path, False);
+                     Select_Path (Get_Selection (D.Tree), Target_Path);
+                     Path_Free (Target_Path);
 
                      Glib.Values.Init_Set_String
                        (Values (4), Stock_For_Node (Directory_Node, True));
                      Set_And_Clear
-                       (D.Explorer.File_Model, Iter, Columns, Values);
+                       (D.Tree.Model, Iter, Columns, Values);
 
-                     D.Explorer.Scroll_To_Directory := True;
-                     D.Explorer.Realize_Cb_Id :=
-                       Gtkada.Handlers.Object_Return_Callback.Object_Connect
-                         (D.Explorer.File_Tree, Signal_Draw,
-                          Expose_Event_Cb'Access, D.Explorer, True);
+                     D.Tree.Scroll_To_Directory := True;
                   end;
 
                else
                   Set_And_Clear
-                    (D.Explorer.File_Model, Iter,
+                    (D.Tree.Model, Iter,
                      Columns (1 .. 3), Values (1 .. 3));
 
                   File_Append_Directory
-                    (D.Explorer, D.Files (J),
+                    (D.Tree, D.Files (J),
                      Iter, D.Depth, D.Norm_Dest, D.Idle);
                end if;
 
             else
-               Append_Dummy_Iter (D.Explorer.File_Model, Iter);
-
+               D.Tree.Set_Might_Have_Children (Iter);
                Glib.Values.Init_Set_String
                  (Values (4), Stock_For_Node (Directory_Node, False));
-               Set_And_Clear
-                 (D.Explorer.File_Model, Iter, Columns, Values);
+               Set_And_Clear (D.Tree.Model, Iter, Columns, Values);
             end if;
          end if;
       end loop;
@@ -795,11 +768,8 @@ package body Project_Explorers_Files is
          if D.Files (J) /= No_File
            and then D.Files (J).Is_Regular_File
          then
-            Append_File
-              (D.Explorer.Kernel,
-               D.Explorer.File_Model,
-               D.Base,
-               D.Files (J));
+            Iter := Create_File (D.Tree.Model, D.Base, D.Files (J));
+            D.Tree.Set_Might_Have_Children (Iter);
          end if;
       end loop;
 
@@ -836,7 +806,7 @@ package body Project_Explorers_Files is
    ---------------------------
 
    procedure File_Append_Directory
-     (Explorer      : access Project_Explorer_Files_Record'Class;
+     (Self          : not null access Files_Tree_View_Record'Class;
       Dir           : Virtual_File;
       Base          : Gtk_Tree_Iter;
       Depth         : Integer := 0;
@@ -854,7 +824,7 @@ package body Project_Explorers_Files is
       D.Norm_Dest     := Append_To_Dir;
       D.Depth         := Depth;
       D.Base          := Base;
-      D.Explorer      := Project_Explorer_Files (Explorer);
+      D.Tree          := Files_Tree_View (Self);
       D.Idle          := Idle;
       D.Physical_Read := Physical_Read;
 
@@ -867,8 +837,7 @@ package body Project_Explorers_Files is
               File_Append_Directory_Timeout.Timeout_Add
                 (1, Read_Directory'Access, D);
             Timeout_Id_List.Append
-              (Explorer.Fill_Timeout_Ids,
-               D.This_Timeout_ID);
+              (Self.Fill_Timeout_Ids, D.This_Timeout_ID);
          end if;
 
       else
@@ -882,7 +851,9 @@ package body Project_Explorers_Files is
    -- Set_Column_Types --
    ----------------------
 
-   procedure Set_Column_Types (Tree : Gtk_Tree_View) is
+   procedure Set_Column_Types
+     (Tree : not null access Gtk_Tree_View_Record'Class)
+   is
       Col         : Gtk_Tree_View_Column;
       Text_Rend   : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
@@ -920,71 +891,71 @@ package body Project_Explorers_Files is
       Explorer.Pack_Start (Scrolled, Expand => True, Fill => True);
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
 
-      Gtk_New (Explorer.File_Model, Columns_Types);
-      Gtk_New (Explorer.File_Tree, Explorer.File_Model);
-      Set_Name (Explorer.File_Tree, "File Explorer Tree");
+      Explorer.Tree := new Files_Tree_View_Record;
+      Explorer.Tree.Kernel := Explorer.Kernel;
+      Explorer.Tree.Initialize
+        (Column_Types   => Columns_Types,
+         Filtered       => False);
+      Set_Name (Explorer.Tree, "File Explorer Tree");
 
-      --  The model should be destroyed as soon as the tree view is destroyed
-      Unref (Explorer.File_Model);
+      Scrolled.Add (Explorer.Tree);
 
-      Scrolled.Add (Explorer.File_Tree);
+      Set_Headers_Visible (Explorer.Tree, False);
 
-      Set_Headers_Visible (Explorer.File_Tree, False);
-
-      Explorer.File_Tree.On_Button_Press_Event
+      Explorer.Tree.On_Button_Press_Event
         (File_Button_Press'Access, Explorer);
-      Explorer.File_Tree.On_Button_Release_Event
+      Explorer.Tree.On_Button_Release_Event
         (File_Button_Press'Access, Explorer);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
-        (Explorer.File_Tree,
+        (Explorer.Tree,
          Signal_Key_Press_Event,
          Gtkada.Handlers.Return_Callback.To_Marshaller (File_Key_Press'Access),
          Slot_Object => Explorer,
          After       => False);
 
       Widget_Callback.Object_Connect
-        (Get_Selection (Explorer.File_Tree),
+        (Get_Selection (Explorer.Tree),
          Signal_Changed,
          File_Selection_Changed'Access,
          Slot_Object => Explorer,
          After       => True);
 
-      Set_Column_Types (Explorer.File_Tree);
+      Set_Column_Types (Explorer.Tree);
 
       Setup_Contextual_Menu
         (Kernel          => Explorer.Kernel,
-         Event_On_Widget => Explorer.File_Tree);
+         Event_On_Widget => Explorer.Tree);
 
       Refresh (Explorer);
 
       Widget_Callback.Object_Connect
-        (Explorer.File_Tree,
+        (Explorer.Tree,
          Signal_Row_Expanded,
-         Widget_Callback.To_Marshaller (File_Tree_Expand_Row_Cb'Access),
+         Widget_Callback.To_Marshaller (Tree_Expand_Row_Cb'Access),
          Explorer,
          False);
 
       Widget_Callback.Object_Connect
-        (Explorer.File_Tree,
+        (Explorer.Tree,
          Signal_Row_Collapsed,
-         Widget_Callback.To_Marshaller (File_Tree_Collapse_Row_Cb'Access),
+         Widget_Callback.To_Marshaller (Tree_Collapse_Row_Cb'Access),
          Explorer,
          False);
 
       Widget_Callback.Object_Connect
-        (Explorer.File_Tree, Signal_Destroy,
+        (Explorer.Tree, Signal_Destroy,
          On_File_Destroy'Access, Explorer, False);
 
       Gtk.Dnd.Dest_Set
-        (Explorer.File_Tree, Dest_Default_All, Target_Table_Url, Action_Any);
+        (Explorer.Tree, Dest_Default_All, Target_Table_Url, Action_Any);
       Kernel_Callback.Connect
-        (Explorer.File_Tree, Signal_Drag_Data_Received,
+        (Explorer.Tree, Signal_Drag_Data_Received,
          Drag_Data_Received'Access, Explorer.Kernel);
-      Explorer.File_Tree.Enable_Model_Drag_Source
+      Explorer.Tree.Enable_Model_Drag_Source
         (Gdk.Types.Button1_Mask, Target_Table_Url, Action_Any);
       Kernel_Callback.Connect
-        (Explorer.File_Tree, Signal_Drag_Data_Get,
+        (Explorer.Tree, Signal_Drag_Data_Get,
          Drag_Data_Get'Access, Explorer.Kernel);
 
       File_Deleted_Hook.Add (new On_Deleted, Watch => Explorer);
@@ -997,9 +968,9 @@ package body Project_Explorers_Files is
 
       Tooltip := new Explorer_Tooltips;
       Tooltip.Explorer := Project_Explorer_Files (Explorer);
-      Tooltip.Set_Tooltip (Explorer.File_Tree);
+      Tooltip.Set_Tooltip (Explorer.Tree);
 
-      return Gtk_Widget (Explorer.File_Tree);
+      return Gtk_Widget (Explorer.Tree);
    end Initialize;
 
    -----------------
@@ -1024,11 +995,11 @@ package body Project_Explorers_Files is
    is
       use Timeout_Id_List;
    begin
-      for Id of Explorer.Fill_Timeout_Ids loop
+      for Id of Explorer.Tree.Fill_Timeout_Ids loop
          Glib.Main.Remove (Id);
       end loop;
 
-      Explorer.Fill_Timeout_Ids.Clear;
+      Explorer.Tree.Fill_Timeout_Ids.Clear;
    end File_Remove_Idle_Calls;
 
    ---------------------
@@ -1046,114 +1017,72 @@ package body Project_Explorers_Files is
    end On_File_Destroy;
 
    -------------------------------
-   -- File_Tree_Collapse_Row_Cb --
+   -- Tree_Collapse_Row_Cb --
    -------------------------------
 
-   procedure File_Tree_Collapse_Row_Cb
-     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Iter     : Gtk_Tree_Iter;
-      Path     : Gtk_Tree_Path)
+   procedure Tree_Collapse_Row_Cb
+     (Explorer    : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Filter_Iter : Gtk_Tree_Iter;
+      Filter_Path : Gtk_Tree_Path)
    is
-      pragma Unreferenced (Path);
-
-      T    : constant Project_Explorer_Files :=
-               Project_Explorer_Files (Explorer);
-      File : constant Virtual_File :=
-               Get_File (T.File_Model, Iter, File_Column);
-
+      pragma Unreferenced (Filter_Iter);
+      T : constant Project_Explorer_Files := Project_Explorer_Files (Explorer);
+      Iter : Gtk_Tree_Iter;
    begin
-      if File.Is_Directory then
-         T.File_Model.Set
+      Iter := T.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path);
+      if Get_Node_Type (T.Tree.Model, Iter) = Directory_Node then
+         T.Tree.Model.Set
            (Iter, Icon_Column, Stock_For_Node (Directory_Node, False));
       end if;
+   end Tree_Collapse_Row_Cb;
 
-   exception
-      when E : others => Trace (Me, E);
-   end File_Tree_Collapse_Row_Cb;
+   ------------------
+   -- Add_Children --
+   ------------------
 
-   ---------------------
-   -- Expose_Event_Cb --
-   ---------------------
-
-   function Expose_Event_Cb
-     (Explorer : access Glib.Object.GObject_Record'Class;
-      Values   : GValues) return Boolean
+   overriding procedure Add_Children
+     (Self       : not null access Files_Tree_View_Record;
+      Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter)
    is
-      pragma Unreferenced (Values);
+      File    : Virtual_File;
+      N_Type  : constant Node_Types := Get_Node_Type (Self.Model, Store_Iter);
+   begin
+      case N_Type is
+         when Directory_Node =>
+            File := Get_File_From_Node (Self.Model, Store_Iter);
+            File_Append_Directory (Self, File, Store_Iter, 1);
+
+         when File_Node =>
+            File := Get_File_From_Node (Self.Model, Store_Iter);
+            Append_File_Info
+              (Self.Kernel, Self.Model, Store_Iter, File, Sorted => False);
+
+         when Category_Node | Entity_Node
+            | Obj_Directory_Node | Exec_Directory_Node
+            | Lib_Directory_Node | Project_Node_Types | Runtime_Node =>
+            null;
+      end case;
+   end Add_Children;
+
+   -----------------------------
+   -- Tree_Expand_Row_Cb --
+   -----------------------------
+
+   procedure Tree_Expand_Row_Cb
+     (Explorer    : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Filter_Iter : Gtk_Tree_Iter;
+      Filter_Path : Gtk_Tree_Path)
+   is
+      pragma Unreferenced (Filter_Iter);
       T : constant Project_Explorer_Files := Project_Explorer_Files (Explorer);
-
+      Iter    : Gtk_Tree_Iter;
    begin
-      if T.Scroll_To_Directory then
-         Scroll_To_Cell
-           (T.File_Tree,
-            T.Path, null, True,
-            0.1, 0.1);
-         Disconnect (T.File_Tree, T.Realize_Cb_Id);
-         T.Scroll_To_Directory := False;
+      Iter   := T.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path);
+      if Get_Node_Type (T.Tree.Model, Iter) = Directory_Node then
+         T.Tree.Model.Set
+           (Iter, Icon_Column, Stock_For_Node (Directory_Node, True));
       end if;
-
-      return True;
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return True;
-   end Expose_Event_Cb;
-
-   -----------------------------
-   -- File_Tree_Expand_Row_Cb --
-   -----------------------------
-
-   procedure File_Tree_Expand_Row_Cb
-     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Iter     : Gtk_Tree_Iter;
-      Path     : Gtk_Tree_Path)
-   is
-      T       : constant Project_Explorer_Files :=
-                  Project_Explorer_Files (Explorer);
-      Ignore  : Boolean;
-      pragma Unreferenced (Ignore);
-
-   begin
-      if T.Expanding then
-         return;
-      end if;
-
-      T.Expanding := True;
-
-      declare
-         File      : constant Virtual_File :=
-           Get_File (T.File_Model, Iter, File_Column);
-         N_Type    : constant Node_Types := Node_Types'Val
-           (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
-
-      begin
-         case N_Type is
-            when Directory_Node =>
-               Free_Children (T, Iter);
-               T.File_Model.Set
-                 (Iter, Icon_Column, Stock_For_Node (Directory_Node, True));
-               File_Append_Directory (T, File, Iter, 1);
-
-            when File_Node =>
-               Free_Children (T, Iter);
-               Append_File_Info (T.Kernel, T.File_Model, Iter, File,
-                                 Sorted => True);
-
-            when Category_Node | Entity_Node | Dummy_Node
-               | Obj_Directory_Node | Exec_Directory_Node
-               | Lib_Directory_Node | Project_Node_Types | Runtime_Node =>
-               null;
-         end case;
-      end;
-
-      Ignore := Expand_Row (T.File_Tree, Path, False);
-      Scroll_To_Cell (T.File_Tree, Path, null, True, 0.1, 0.1);
-
-      T.Expanding := False;
-
-   exception
-      when E : others => Trace (Me, E);
-   end File_Tree_Expand_Row_Cb;
+   end Tree_Expand_Row_Cb;
 
    ----------------------------
    -- File_Selection_Changed --
@@ -1182,7 +1111,7 @@ package body Project_Explorers_Files is
       return On_Button_Press
         (T.Kernel,
          MDI_Explorer_Child (Explorer_Files_Views.Child_From_View (T)),
-         T.File_Tree, T.File_Model, Event, Add_Dummy => True);
+         T.Tree, Event);
    end File_Button_Press;
 
    --------------------
@@ -1195,7 +1124,7 @@ package body Project_Explorers_Files is
    is
       T : constant Project_Explorer_Files := Project_Explorer_Files (Explorer);
    begin
-      return On_Key_Press (T.Kernel, T.File_Tree, Event);
+      return On_Key_Press (T.Kernel, T.Tree, Event);
    end File_Key_Press;
 
    -------------
@@ -1227,24 +1156,24 @@ package body Project_Explorers_Files is
          Dummy : Boolean;
       begin
          if File.Full_Name.all = "/" then
-            Iter := V.File_Model.Get_Iter_First;
+            Iter := V.Tree.Model.Get_Iter_First;
          else
             Iter := Find_Node (File.Get_Parent, Expand => True);
-            Iter := V.File_Model.Children (Iter);
+            Iter := V.Tree.Model.Children (Iter);
          end if;
 
          while Iter /= Null_Iter loop
-            F := Get_File (V.File_Model, Iter, File_Column);
+            F := Get_File (V.Tree.Model, Iter, File_Column);
             if File = F then
                if Expand then
-                  Path := V.File_Model.Get_Path (Iter);
-                  Dummy := V.File_Tree.Expand_Row (Path, Open_All => False);
-                  Iter := V.File_Model.Get_Iter (Path);
+                  Path := V.Tree.Model.Get_Path (Iter);
+                  Dummy := V.Tree.Expand_Row (Path, Open_All => False);
+                  Iter := V.Tree.Model.Get_Iter (Path);
                   Path_Free (Path);
                end if;
                return Iter;
             end if;
-            V.File_Model.Next (Iter);
+            V.Tree.Model.Next (Iter);
          end loop;
 
          return Null_Iter;
@@ -1255,10 +1184,10 @@ package body Project_Explorers_Files is
    begin
       Iter := Find_Node (File_Information (Context.Context), Expand => False);
       if Iter /= Null_Iter then
-         V.File_Tree.Get_Selection.Select_Iter (Iter);
-         Path := V.File_Model.Get_Path (Iter);
-         V.File_Tree.Scroll_To_Cell
-           (Path, V.File_Tree.Get_Column (0),
+         V.Tree.Get_Selection.Select_Iter (Iter);
+         Path := V.Tree.Model.Get_Path (Iter);
+         V.Tree.Scroll_To_Cell
+           (Path, V.Tree.Get_Column (0),
             Use_Align => False, Row_Align => 0.0, Col_Align => 0.0);
          Path_Free (Path);
       end if;
@@ -1302,7 +1231,7 @@ package body Project_Explorers_Files is
          for File of Files loop
             if not Added_Drives.Contains (File.Get_Root) then
                File_Append_Directory
-                 (Explorer      => Explorer,
+                 (Self          => Explorer.Tree,
                   Dir           => File.Get_Root,
                   Base          => Null_Iter,
                   Depth         => 1,
@@ -1315,7 +1244,7 @@ package body Project_Explorers_Files is
       end Add_Drives_From_Files;
 
    begin
-      Clear (Explorer.File_Model);
+      Clear (Explorer.Tree.Model);
       File_Remove_Idle_Calls (Explorer);
 
       if File_View_Shows_Only_Project.Get_Pref
@@ -1331,7 +1260,7 @@ package body Project_Explorers_Files is
          begin
             if Common_Path /= No_File then
                File_Append_Directory
-                 (Explorer      => Explorer,
+                 (Self          => Explorer.Tree,
                   Dir           => Common_Path,
                   Base          => Null_Iter,
                   Depth         => 1,
@@ -1349,13 +1278,13 @@ package body Project_Explorers_Files is
             for J in Drives'Range loop
                if Drives (J).Is_Parent (Cur_Dir) then
                   File_Append_Directory
-                    (Explorer, Drives (J),
+                    (Explorer.Tree, Drives (J),
                      Null_Iter, 1, Cur_Dir, True);
                   Dir_Inserted := True;
 
                else
                   File_Append_Directory
-                    (Explorer, Drives (J),
+                    (Explorer.Tree, Drives (J),
                      Null_Iter, 0, No_File, False, False);
                end if;
             end loop;
@@ -1363,25 +1292,11 @@ package body Project_Explorers_Files is
 
          if not Dir_Inserted then
             File_Append_Directory
-              (Explorer, Cur_Dir.Get_Root,
+              (Explorer.Tree, Cur_Dir.Get_Root,
                Null_Iter, 1, Cur_Dir, True);
          end if;
       end if;
-
-   exception
-      when E : others => Trace (Me, E);
    end Refresh;
-
-   -------------------
-   -- Free_Children --
-   -------------------
-
-   procedure Free_Children
-     (T    : Project_Explorer_Files;
-      Iter : Gtk_Tree_Iter) is
-   begin
-      Remove_Child_Nodes (T.File_Model, Iter);
-   end Free_Children;
 
    -----------------
    -- Remove_File --
@@ -1395,33 +1310,33 @@ package body Project_Explorers_Files is
       Next_Iter : Gtk.Tree_Model.Gtk_Tree_Iter;
       Path      : Gtk_Tree_Path;
    begin
-      Iter := Get_Iter_First (View.File_Model);
+      Iter := Get_Iter_First (View.Tree.Model);
 
       while Iter /= Null_Iter loop
-         if Get_File (View.File_Model, Iter, File_Column) = File then
+         if Get_File (View.Tree.Model, Iter, File_Column) = File then
             --  First select the parent and set the 'scroll to dir' state
-            Path := Get_Path (View.File_Model, Parent (View.File_Model, Iter));
-            Set_Cursor (View.File_Tree, Path, null, False);
-            View.Scroll_To_Directory := True;
+            Path := Get_Path (View.Tree.Model, Parent (View.Tree.Model, Iter));
+            Set_Cursor (View.Tree, Path, null, False);
+            View.Tree.Scroll_To_Directory := True;
 
             --  Now remove the node, this will invoke the expose event, that
             --  will scroll to the parent directory.
-            Remove (View.File_Model, Iter);
+            Remove (View.Tree.Model, Iter);
             exit;
          end if;
 
          --  We look through the tree: first dir node, then children,
          --  then parent's next item.
-         if Has_Child (View.File_Model, Iter) then
-            Iter := Children (View.File_Model, Iter);
+         if Has_Child (View.Tree.Model, Iter) then
+            Iter := Children (View.Tree.Model, Iter);
 
          else
             loop
                Next_Iter := Iter;
-               Next (View.File_Model, Next_Iter);
+               Next (View.Tree.Model, Next_Iter);
 
                if Next_Iter = Null_Iter then
-                  Iter := Parent (View.File_Model, Iter);
+                  Iter := Parent (View.Tree.Model, Iter);
                   exit when Iter = Null_Iter;
                else
                   Iter := Next_Iter;
@@ -1450,20 +1365,20 @@ package body Project_Explorers_Files is
       pragma Unreferenced (Ignore);
 
    begin
-      Iter := Get_Iter_First (View.File_Model);
+      Iter := Get_Iter_First (View.Tree.Model);
 
       if Is_Directory (File) then
          Dir := GNATCOLL.VFS.Get_Parent (File);
       end if;
 
       while Iter /= Null_Iter loop
-         if Get_File (View.File_Model, Iter, File_Column) = Dir then
+         if Get_File (View.Tree.Model, Iter, File_Column) = Dir then
             --  We found the file's directory
 
-            Path := Get_Path (View.File_Model, Iter);
+            Path := Get_Path (View.Tree.Model, Iter);
 
-            if not Row_Expanded (View.File_Tree, Path)
-              and then Children (View.File_Model, Iter) /= Null_Iter
+            if not Row_Expanded (View.Tree, Path)
+              and then Children (View.Tree.Model, Iter) /= Null_Iter
             then
                --  File's directory is not expanded. Return now
 
@@ -1476,96 +1391,93 @@ package body Project_Explorers_Files is
             end if;
 
             --  file's directory is expanded. Let's look at the children
-            Next_Iter := Children (View.File_Model, Iter);
+            Next_Iter := Children (View.Tree.Model, Iter);
 
             while Next_Iter /= Null_Iter loop
-               if Get_File (View.File_Model, Next_Iter, File_Column) =
+               if Get_File (View.Tree.Model, Next_Iter, File_Column) =
                  File
                then
                   --  File already present. Do nothing
                   return;
                end if;
 
-               Next (View.File_Model, Next_Iter);
+               Next (View.Tree.Model, Next_Iter);
             end loop;
 
             --  If we are here, then this means that the saved file is not
             --  present in the view. Let's insert it.
 
             if Is_Directory (File) then
-               Next_Iter := Children (View.File_Model, Iter);
+               Next_Iter := Children (View.Tree.Model, Iter);
                Done := False;
 
                while Next_Iter /= Null_Iter loop
 
-                  if Get_Node_Type (View.File_Model, Next_Iter) =
+                  if Get_Node_Type (View.Tree.Model, Next_Iter) =
                     Directory_Node
                   then
                      declare
                         Name : constant Filesystem_String :=
-                                 Get_Base_Name (View.File_Model, Next_Iter);
+                          Get_File_From_Node (View.Tree.Model, Next_Iter)
+                          .Base_Name;
                      begin
                         if Name > File.Base_Dir_Name then
                            Insert_Before
-                             (View.File_Model, Iter2, Iter, Next_Iter);
+                             (View.Tree.Model, Iter2, Iter, Next_Iter);
                            Done := True;
 
                            exit;
                         end if;
                      end;
 
-                  elsif Get_Node_Type (View.File_Model, Next_Iter) =
+                  elsif Get_Node_Type (View.Tree.Model, Next_Iter) =
                     File_Node
                   then
                      Insert_Before
-                       (View.File_Model, Iter2, Iter, Next_Iter);
+                       (View.Tree.Model, Iter2, Iter, Next_Iter);
                      Done := True;
 
                      exit;
                   end if;
 
-                  Next (View.File_Model, Next_Iter);
+                  Next (View.Tree.Model, Next_Iter);
                end loop;
 
                if not Done then
-                  Append (View.File_Model, Iter2, Iter);
+                  Append (View.Tree.Model, Iter2, Iter);
                end if;
 
                Set_And_Clear
-                 (View.File_Model, Iter2,
+                 (View.Tree.Model, Iter2,
                   (File_Column, Display_Name_Column),
                   (1 => As_File   (File),
                    2 => As_String (File.Display_Base_Dir_Name)));
 
-               Set_Node_Type (View.File_Model, Iter2, Directory_Node, False);
-               File_Append_Directory (View, File, Iter2);
+               Set_Node_Type (View.Tree.Model, Iter2, Directory_Node, False);
+               File_Append_Directory (View.Tree, File, Iter2);
 
             else
-               Append_File
-                 (View.Kernel,
-                  View.File_Model,
-                  Iter,
-                  File,
-                  Sorted => True);
+               Iter := Create_File (View.Tree.Model, Iter, File);
+               View.Tree.Set_Might_Have_Children (Iter);
             end if;
 
-            Ignore := Expand_Row (View.File_Tree, Path, False);
+            Ignore := Expand_Row (View.Tree, Path, False);
 
             return;
          end if;
 
          --  We look through the tree: first dir node, then children,
          --  then parent's next item.
-         if Has_Child (View.File_Model, Iter) then
-            Iter := Children (View.File_Model, Iter);
+         if Has_Child (View.Tree.Model, Iter) then
+            Iter := Children (View.Tree.Model, Iter);
 
          else
             loop
                Next_Iter := Iter;
-               Next (View.File_Model, Next_Iter);
+               Next (View.Tree.Model, Next_Iter);
 
                if Next_Iter = Null_Iter then
-                  Iter := Parent (View.File_Model, Iter);
+                  Iter := Parent (View.Tree.Model, Iter);
                   exit when Iter = Null_Iter;
                else
                   Iter := Next_Iter;
@@ -1586,21 +1498,18 @@ package body Project_Explorers_Files is
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Widget);
-      Tree : constant Gtk.Tree_View.Gtk_Tree_View :=
-        Tooltip.Explorer.File_Tree;
-      Model : constant Gtk_Tree_Store := -Get_Model (Tree);
       Iter : Gtk_Tree_Iter;
       Label : Gtk_Label;
       Area : Gdk_Rectangle;
 
    begin
-      Initialize_Tooltips (Tree, X, Y, Area, Iter);
+      Initialize_Tooltips (Tooltip.Explorer.Tree, X, Y, Area, Iter);
 
       if Iter /= Null_Iter then
          Tooltip.Set_Tip_Area (Area);
          declare
             File : constant Virtual_File :=
-              Get_File (Model, Iter, File_Column);
+              Get_File_From_Node (Tooltip.Explorer.Tree.Model, Iter);
             Dir  : constant Virtual_File := Get_Parent (File);
          begin
             Gtk_New (Label,
@@ -1691,7 +1600,7 @@ package body Project_Explorers_Files is
    begin
       if Explorer /= null then
          Set_Font_And_Colors
-           (Explorer.File_Tree, Fixed_Font => True, Pref => Pref);
+           (Explorer.Tree, Fixed_Font => True, Pref => Pref);
 
          if Pref = null
            or else Pref = Preference (File_View_Shows_Only_Project)

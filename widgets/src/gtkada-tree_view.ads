@@ -120,7 +120,8 @@ package Gtkada.Tree_View is
          Status : out Expansion_Status);
       procedure Set_Expansion_Status
         (Self   : not null access Tree_Record'Class;
-         Status : Expansion_Status);
+         Status : Expansion_Status;
+         Collapse_All_First : Boolean := True);
       --  Retrieve, in the opaque Expansion_Status structure, the list of
       --  expanded nodes, and apply it again later on.
       --  This is useful when you need to update the contents of a tree:

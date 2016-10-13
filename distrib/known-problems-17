@@ -25,3 +25,11 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 18.0 / GNATbench 18.0
 -------------------------------------------------
 
+KP-17-PA12-010 GPS: slow display of Project with large projects
+
+  Problem:    For very large projects, displaying the Project view might
+              take a long time.
+
+  Status:     This was fixed in 18.0 on 2016-10-13
+
+  Workaround: Use the Files view
