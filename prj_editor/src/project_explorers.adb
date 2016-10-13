@@ -20,7 +20,6 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Containers.Hashed_Sets;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Indefinite_Ordered_Maps;
-with Ada.Strings.Hash;
 
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Traces;           use GNATCOLL.Traces;
@@ -222,16 +221,6 @@ package body Project_Explorers is
       Context : Commands.Interactive.Interactive_Command_Context)
       return Commands.Command_Return_Type;
 
-   function Hash (Key : Filesystem_String) return Ada.Containers.Hash_Type;
-   pragma Inline (Hash);
-
-   package Filename_Node_Hash is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => Filesystem_String,
-      Element_Type    => Gtk_Tree_Iter,
-      Hash            => Hash,
-      Equivalent_Keys => "=");
-   use Filename_Node_Hash;
-
    package File_Node_Hash is new Ada.Containers.Indefinite_Hashed_Maps
      (Key_Type        => Virtual_File,
       Element_Type    => Gtk_Tree_Iter,
@@ -416,8 +405,6 @@ package body Project_Explorers is
       with null record;
    type File_Node_Filter_Record is new Action_Filter_Record
       with null record;
-   type Entity_Node_Filter_Record is new Action_Filter_Record
-      with null record;
    overriding function Filter_Matches_Primitive
      (Context : access Project_View_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
@@ -429,9 +416,6 @@ package body Project_Explorers is
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
    overriding function Filter_Matches_Primitive
      (Context : access File_Node_Filter_Record;
-      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
-   overriding function Filter_Matches_Primitive
-     (Context : access Entity_Node_Filter_Record;
       Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
 
    -------------------------------
@@ -524,20 +508,6 @@ package body Project_Explorers is
       return Module_ID (Get_Creator (Ctxt)) = Explorer_Views.Get_Module
         and then Has_File_Information (Ctxt)
         and then not Has_Entity_Name_Information (Ctxt);
-   end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
-     (Context : access Entity_Node_Filter_Record;
-      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Context);
-   begin
-      return Module_ID (Get_Creator (Ctxt)) = Explorer_Views.Get_Module
-        and then Has_Entity_Name_Information (Ctxt);
    end Filter_Matches_Primitive;
 
    ----------------------
@@ -2081,14 +2051,5 @@ package body Project_Explorers is
          Filter => File_Node_Filter,
          Name   => "Explorer_File_Node");
    end Register_Module;
-
-   ----------
-   -- Hash --
-   ----------
-
-   function Hash (Key : Filesystem_String) return Ada.Containers.Hash_Type is
-   begin
-      return Ada.Strings.Hash (+Key);
-   end Hash;
 
 end Project_Explorers;
