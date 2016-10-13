@@ -604,13 +604,13 @@ class CLI(GPS.Process):
             res = GPS.MDI.yes_no_dialog(
                 "%s already exists, do you want to delete it?" % filename)
             if res:
-                GPS.Console().write(
-                    "Logfile will be written in %s, open it in the Matlab"
-                    " web browser.\n" % filename)
                 os.remove(filename)
             else:
                 return False
 
+        GPS.Console().write(
+            "Logfile will be written in %s, open it in the Matlab"
+            " web browser.\n" % filename)
         return True
 
     @staticmethod
