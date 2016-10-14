@@ -94,9 +94,12 @@ package body Vsearch is
 
    Search_Module_Name : constant String := "Search";
 
-   Mode_Hist_Key      : constant History_Key := "search_mode";
-   Pattern_Hist_Key   : constant History_Key := "search_patterns";
-   Replace_Hist_Key   : constant History_Key := "search_replace";
+   Mode_Hist_Key           : constant History_Key := "search_mode";
+   Pattern_Hist_Key        : constant History_Key := "search_patterns";
+   Replace_Hist_Key        : constant History_Key := "search_replace";
+   Case_Sensitive_Hist_Key : constant History_Key := "case_sensitive_search";
+   Whole_Word_Hist_Key     : constant History_Key := "whole_word_search";
+   Regexp_Search_Hist_Key  : constant History_Key := "regexp_search";
    --  The key for the histories.
 
    Pattern_Child_Key : constant String := "pattern_child";
@@ -526,13 +529,40 @@ package body Vsearch is
    overriding function Execute
      (Command : access Find_Next_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Callback for menu Edit->Search Next
+   --  Command used to find the next occurrence of the search pattern
 
    type Find_Previous_Command is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Find_Previous_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
-   --  Callback for menu Edit->Search Previous
+   --  Command used to find the previous occurrence of the search pattern
+
+   type Find_All_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Find_All_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Command used to find all the occurrence of the search pattern
+
+   type Replace_Current_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Replace_Current_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Command used to replace the current occurence of the search pattern by
+   --  the replace pattern
+
+   type Replace_And_Find_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Replace_And_Find_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Callback used replace the next occurrence of the search pattern by
+   --  the replace pattern and find the next occurrence right after.
+
+   type Replace_All_Command is new Interactive_Command with null record;
+   overriding function Execute
+     (Command : access Replace_All_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Command used to replace all the occurrences of the search pattern by the
+   --  replace pattern.
 
    type New_Predefined_Regexp is new Simple_Hooks_Function with null record;
    overriding procedure Execute
@@ -788,20 +818,24 @@ package body Vsearch is
                          Find_Module
                            (Vsearch.Kernel,
                             Get_Active_Id (Vsearch.Context_Combo));
+      History        : constant History_Record :=
+                         Get_History (Vsearch.Kernel).all;
       Pattern        : constant String :=
                          Get_Active_Text (Vsearch.Pattern_Combo);
       Replace_Text   : constant String :=
                          Get_Active_Text (Vsearch.Replace_Combo);
       Whole_Word     : constant Boolean :=
-                         Get_Active (Vsearch.Whole_Word_Toggle);
+                         Get_History (History, Key => Whole_Word_Hist_Key);
       Case_Sensitive : constant Boolean :=
-                         Get_Active (Vsearch.Case_Toggle);
+                         Get_History (History, Key => Case_Sensitive_Hist_Key);
       Kind           : constant GPS.Search.Search_Kind :=
-                         (if Get_Active (Vsearch.Regexp_Toggle) then
+                         (if Get_History
+                            (History, Key => Regexp_Search_Hist_Key)
+                          then
                              Regexp
                           else
                              Full_Text);
-      Ctxt : Root_Search_Context_Access;
+      Ctxt           : Root_Search_Context_Access;
    begin
       if Module /= null and then Pattern /= "" then
          Ctxt := Module.Create_Context
@@ -2015,18 +2049,17 @@ package body Vsearch is
 
    overriding procedure Create_Toolbar
      (View    : not null access Vsearch_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
-
+      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class) is
    begin
       Gtk_New (View.Regexp_Toggle);
       View.Regexp_Toggle.Set_Icon_Name ("gps-regexp-symbolic");
       View.Regexp_Toggle.Set_Tooltip_Text
         (-"The pattern is a regular expression");
       Create_New_Boolean_Key_If_Necessary
-        (Get_History (View.Kernel).all, "regexp_search", False);
+        (Get_History (View.Kernel).all, Regexp_Search_Hist_Key, False);
       Associate
-        (Get_History (View.Kernel).all, "regexp_search", View.Regexp_Toggle,
+        (Get_History (View.Kernel).all, Regexp_Search_Hist_Key,
+         View.Regexp_Toggle,
          Default => False);
       Kernel_Callback.Connect
         (View.Regexp_Toggle,
@@ -2041,9 +2074,9 @@ package body Vsearch is
         (-("Select this to differenciate upper from lower casing in search"
          & " results"));
       Create_New_Boolean_Key_If_Necessary
-        (Get_History (View.Kernel).all, "case_sensitive_search", False);
+        (Get_History (View.Kernel).all, Case_Sensitive_Hist_Key, False);
       Associate
-        (Get_History (View.Kernel).all, "case_sensitive_search",
+        (Get_History (View.Kernel).all, Case_Sensitive_Hist_Key,
          View.Case_Toggle, Default => False);
       Kernel_Callback.Connect
         (View.Case_Toggle,
@@ -2058,9 +2091,9 @@ package body Vsearch is
         (-("Select this if the pattern should only match a whole word, never"
          & " part of a word"));
       Create_New_Boolean_Key_If_Necessary
-        (Get_History (View.Kernel).all, "whole_word_search", False);
+        (Get_History (View.Kernel).all, Whole_Word_Hist_Key, False);
       Associate
-        (Get_History (View.Kernel).all, "whole_word_search",
+        (Get_History (View.Kernel).all, Whole_Word_Hist_Key,
          View.Whole_Word_Toggle, Default => False);
       Kernel_Callback.Connect
         (View.Whole_Word_Toggle,
@@ -2415,6 +2448,78 @@ package body Vsearch is
    begin
       if View /= null then
          On_Search_Previous (View);
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Find_All_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View : constant Vsearch_Access := Search_Views.Retrieve_View
+        (Get_Kernel (Context.Context));
+   begin
+      if View /= null and then View.Is_Visible then
+         On_Search_All (View);
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Replace_Current_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View : constant Vsearch_Access := Search_Views.Retrieve_View
+        (Get_Kernel (Context.Context));
+   begin
+      if View /= null then
+         On_Replace (View);
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Replace_And_Find_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View : constant Vsearch_Access := Search_Views.Retrieve_View
+        (Get_Kernel (Context.Context));
+   begin
+      if View /= null then
+         On_Replace_Search (View);
+      end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Replace_All_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View : constant Vsearch_Access := Search_Views.Retrieve_View
+        (Get_Kernel (Context.Context));
+   begin
+      if View /= null and then View.Replace_All_Button.Get_Sensitive then
+         On_Replace_Search (View);
       end if;
       return Commands.Success;
    end Execute;
@@ -2799,14 +2904,46 @@ package body Vsearch is
 
       Filter  := new Has_Search_Filter;
       Register_Action
-        (Kernel, "find next", new Find_Next_Command,
+        (Kernel, "find next",
+         new Find_Next_Command,
          Description => -"Find the next occurrence of the search pattern",
-         Filter      => Filter);
+         Filter      => Filter,
+         Category    => -"Search");
 
       Register_Action
-        (Kernel, "find previous", new Find_Previous_Command,
+        (Kernel, "find previous",
+         new Find_Previous_Command,
          Description => -"Find the previous occurrence of the search pattern",
-         Filter      => Filter);
+         Filter      => Filter,
+         Category    => -"Search");
+
+      Register_Action
+        (Kernel, "find all",
+         new Find_All_Command,
+         Description => -"Find all the occurrences of the search pattern",
+         Category    => -"Search");
+
+      Register_Action
+        (Kernel, "replace current",
+         new Replace_Current_Command,
+         Description => -"Replace the current matched occurrence, if any, " &
+           "with the replace pattern",
+         Filter      => Filter,
+         Category    => -"Search");
+
+      Register_Action
+        (Kernel, "replace and find",
+         new Replace_And_Find_Command,
+         Description => -("Replace the current matched occurrence, if any, " &
+             "with the replace pattern and find the next occurrence"),
+         Category    => -"Search");
+
+      Register_Action
+        (Kernel, "replace all",
+         new Replace_All_Command,
+         Description => -("Replace all the occurrences of the search pattern "
+           & "by the replace pattern"),
+         Category    => -"Search");
 
       --  Register the default search functions
 
