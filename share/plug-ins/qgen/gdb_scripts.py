@@ -33,7 +33,9 @@ the Matlab browser-->
             color: black;
             background-color: wheat;
             }
-
+            input[type="checkbox"]:hover + label {
+            background-color: wheat;
+            }
             label {
             position: relative;
             display: block;
@@ -46,11 +48,14 @@ the Matlab browser-->
 
             section {
             height: 0;
-            transition: .3s all;
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform .2s all;
             overflow: hidden;
             }
 
             input[type=checkbox]:checked + label + section{
+            transform: scaleY(1);
             height: auto;
             }
 
