@@ -283,7 +283,7 @@ XML = r"""<?xml version="1.0"?>
       </on-failure>
       <shell>delete "%2"</shell>
       <shell>dump "%2" TRUE</shell>
-      <shell lang="python" output="">import subversion; subversion.status_from_commit("%1")</shell>
+      <shell lang="python" output="">import vcs.subversion; vcs.subversion.status_from_commit("%1")</shell>
       <shell>delete "%2"</shell>
       <shell>Hook "file_changed_on_disk"</shell>
       <shell>Hook.run %1 null</shell>
