@@ -300,7 +300,8 @@ class ProcessWrapper(object):
 
     """
 
-    def __init__(self, cmdargs=[], spawn_console=False):
+    def __init__(self, cmdargs=[], spawn_console=False, directory=None,
+                 regexp='.+'):
         """
         Initialize and run a process with no promises,
         no user-defined pattern to match,
@@ -342,7 +343,8 @@ class ProcessWrapper(object):
         # Launch the command
         self.__process = GPS.Process(
             command=self.__command,
-            regexp=".+",
+            directory=directory,
+            regexp=regexp,
             on_match=self.__on_match,
             on_exit=self.__on_exit)
 
@@ -388,13 +390,10 @@ class ProcessWrapper(object):
         # check if user has issued some pattern to match
         if self.__current_pattern:
             p = re.search(self.__current_pattern, self.__output)
-
-            # if the pattern is found, update the output to remaining and
-            # answer the promise with True-->found it
             if p:
                 self.__current_answered = True
-                self.__output = self.__output[p.span()[1]::]
-                self.__current_promise.resolve((True, self.__output))
+                self.__current_promise.resolve(p.group(0))
+                self.__output = ""
 
     def __on_exit(self, process, status, remaining_output):
         """
@@ -411,7 +410,7 @@ class ProcessWrapper(object):
         # check if there's unanswered match promises
         # if there is --> pattern has never been found, answer with False
         if self.__current_promise and not self.__current_answered:
-            self.__current_promise.resolve((False, ""))
+            self.__current_promise.resolve(None)
 
         # check if I had made a promise to finish the process
         # if there is, answer with whatever the exit status is
@@ -437,8 +436,10 @@ class ProcessWrapper(object):
         Called by user. Make a promise to them that:
         I'll let you know when the pattern is matched/never matches and return
         the remaining output if the pattern matched.
-        * Promise made here will be answered with a tuple:
-            (True/False, remaining_output)
+        Matching is only attempted of the text output since the last call to
+        wait_until_match.
+        Promise made here will be resolved with either a string (the current
+        output) or None (when the process has terminated.
         """
         # process has already terminated, return nothing
         if self.finished:
@@ -460,8 +461,8 @@ class ProcessWrapper(object):
         """
         Called by user. Make a promise to them that:
         I'll let you know when the process is finished
-        * Promise made here will be answered with a tuple:
-            (exit status, output)
+        Promise made here will be resolved with either a string (the current
+        output) or None (when the process has terminated.
         """
 
         # process has already terminated, return nothing
@@ -482,7 +483,7 @@ class ProcessWrapper(object):
             self.__current_pattern = None
             self.__current_answered = True
             # answer the promise with False
-            self.__current_promise.resolve((False, ""))
+            self.__current_promise.resolve(None)
         return False
 
     def terminate(self):

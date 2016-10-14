@@ -9386,6 +9386,130 @@ class VCS(object):
 
 
 ###########################################################
+# VCS2
+###########################################################
+
+class VCS2(object):
+    """
+    An interface to a version control engine.
+
+    One project is always associated with at most one version control,
+    which is used for all of its sources.
+
+    However, in a given tree of projects, there can be multiple such
+    engines, if different repositories are used for the sources (for
+    instance a third-party repository is imported), possibly for different
+    implementations of version control (one for git, one for subversion...)
+
+    As a result, for a given source file you first need to find the
+    relevant engine, via a call to `GPS.VCS2.get`.
+
+    For efficiency, GPS caches the status of files locally, and only refreshes
+    at specific points. To get the status of a file as currently cached, use
+    `GPS.VCS2.get_file_status`. This will always return a valid status, even if
+    the cache has never been initialized by querying the actual VCS on the
+    disk. To do this, call one of `GPS.VCS2.ensure_status_for_*` methods. These
+    methods will eventually run the `vcs_file_status_update` hook to let you
+    know that the status has changed. This is all implemented asynchronously
+    though, since such a query might take time.
+
+    This class provides the user view for VCS engines.
+
+    In practice, it is further derived in the code, to provide support for
+    various VCS engines like git, CVS, subversion, clearcase,... The hierarchy
+    is::
+
+                   GPS.VCS2
+                      |
+                   vcs2.VCS   (abstract)
+                      |
+                +-----+-----+
+                |     |     |
+              Git   CVS    Subversion
+    """
+
+    @staticmethod
+    def _register(name, klassname, find_repo):
+        """
+        Register support for a new Version Control System.
+        This function is not meant to be called directly. Instead, check the
+        vcs/__init__.py plugin.
+
+        :param str name: the name of the system, as it should be set in
+           the project properties IDE.VCS_Kind attribute.
+        :param str klassname: the name of the class that implements this VCS.
+           Must derive from vcs.VCS_Engine.
+        :param find_repo: a function that takes a :class:`GPS.File`, and
+           returns a string. This function tries to guess the repository for
+           the given file.
+        """
+
+    @staticmethod
+    def get(project):
+        """
+        Return the VCS to use for the files in a given project.
+        Each project can have its own VCS, if for instance it is imported
+        from another repository.
+
+        :param GPS.Project project:
+        :returntype: `GPS.VCS2`
+        """
+
+    @property
+    def name(self):
+        """
+        Return the name of the VCS (as could be set in the project's
+        IDE.VCS_Kind attribute). This is always lower-cased.
+
+        :type: str
+        """
+
+    def ensure_status_for_file(self, file):
+        """
+        Make sure that `file` has a known status in self's cache.
+        :param GPS.File file:
+        """
+
+    def ensure_status_for_project(self, project):
+        """
+        Make sure that all source files of the project have a known status
+        in self's cache.
+        :param GPS.Project project:
+        """
+
+    def ensure_status_for_all_files(self):
+        """
+        Ensure that all source files in any of the loaded project have a
+        known status in self's cache.
+        """
+
+    def get_file_status(self, file):
+        """
+        Return the file status, as seen in self'cache.
+
+        :param GPS.File file:
+        """
+
+    def invalidate_status_cache(self):
+        """
+        Mark all entries in self's cache as no longer valid. This will force
+        a refresh next time one of the `ensure_status_*` method is called.
+        """
+
+    def set_file_status(self, file, status, version, repo_version):
+        """
+        Modifies self's cache.
+        This function is meant to be called only by the implementation of
+        specific VCS engines.
+
+        :param GPS.file file:
+        :param GPS.VCS2.Status status:
+        :param str version:
+        :param str repo_version:
+        """
+
+
+###########################################################
 # Vdiff
 ###########################################################
 

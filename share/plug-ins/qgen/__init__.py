@@ -52,7 +52,7 @@ import os_utils
 import re
 import workflows
 import constructs
-from workflows.promises import Promise, ProcessWrapper, TargetWrapper
+from workflows.promises import Promise, TargetWrapper
 
 
 logger = GPS.Logger('MODELING')

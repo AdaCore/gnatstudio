@@ -248,9 +248,16 @@ def run_as_workflow(workflow):
     Decorator used to run a function as a worfklow.
 
     :param workflow: the function to be run as a workflow.
+       The workflow has potentially not finished running when this function
+       returns.
+       This also works for standard functions
     """
     def internal_run_as_wf(*args, **kwargs):
-        return driver(workflow(*args, **kwargs))
+        r = workflow(*args, **kwargs)
+        if isinstance(r, types.GeneratorType):
+            return driver(r)
+        else:
+            return r
 
     return internal_run_as_wf
 

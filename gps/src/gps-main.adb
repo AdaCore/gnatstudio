@@ -178,6 +178,7 @@ with Startup_Module;
 with Switches_Chooser.Scripts;
 with Toolchains_Editor;
 with VCS_Module;
+with VCS2.Module;
 with VFS_Module;
 with Vdiff2_Module;
 with Vsearch;
@@ -220,6 +221,8 @@ procedure GPS.Main is
                      Create ("MODULE.Files_Explorer", GNATCOLL.Traces.On);
    VCS_Trace              : constant Trace_Handle :=
                      Create ("MODULE.VCS", GNATCOLL.Traces.On);
+   VCS2_Trace             : constant Trace_Handle :=
+                     Create ("MODULE.VCS2", GNATCOLL.Traces.On);
    Custom_Trace           : constant Trace_Handle :=
                      Create ("MODULE.Custom", GNATCOLL.Traces.On);
    Project_Templates_Trace : constant Trace_Handle :=
@@ -2122,6 +2125,10 @@ procedure GPS.Main is
 
       if Active (VCS_Trace) then
          VCS_Module.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (VCS2_Trace) then
+         VCS2.Module.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (VFS_Trace) then

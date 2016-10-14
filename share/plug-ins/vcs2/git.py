@@ -1,0 +1,57 @@
+import GPS
+import vcs2
+import os
+import types
+import workflows
+from workflows.promises import ProcessWrapper
+
+
+@vcs2.register_vcs
+class Git(vcs2.VCS):
+
+    def __init__(self, repo):
+        self.repo = repo
+
+    @staticmethod
+    def find_repo(file):
+        return vcs2.find_admin_directory(file, '.git')
+
+    @workflows.run_as_workflow
+    def async_fetch_status_for_all_files(self):
+        sources = GPS.Project.root().sources(recursive=True)
+        with self.set_status_for_all_files(sources) as s:
+            p = ProcessWrapper(
+                ['git', 'status', '--porcelain', '--ignored'],
+                directory=os.path.join(self.repo, '..'))
+
+            while True:
+                line = yield p.wait_until_match('^.+$')
+                if line is None:
+                    break
+
+                if line[0:2] in ('DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU'):
+                    status = GPS.VCS2.Status.CONFLICT
+                else:
+                    status = 0
+
+                    if line[0] == 'M':
+                        status = GPS.VCS2.Status.STAGED_MODIFIED
+                    elif line[0] == 'A':
+                        status = GPS.VCS2.Status.STAGED_ADDED
+                    elif line[0] == 'D':
+                        status = GPS.VCS2.Status.STAGED_DELETED
+                    elif line[0] == 'R':
+                        status = GPS.VCS2.Status.STAGED_RENAMED
+                    elif line[0] == 'C':
+                        status = GPS.VCS2.Status.STAGED_COPIED
+                    elif line[0] == '?':
+                        status = GPS.VCS2.Status.UNTRACKED
+                    elif line[0] == '!':
+                        status = GPS.VCS2.Status.IGNORED
+
+                    if line[1] == 'M':
+                        status = status | GPS.VCS2.Status.MODIFIED
+                    elif line[1] == 'D':
+                        status = status | GPS.VCS2.Status.DELETED
+
+                s.set_status(GPS.File(line[3:]), status)
