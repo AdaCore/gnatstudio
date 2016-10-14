@@ -16,6 +16,7 @@
 */config.log
 */config.status
 */obj/*
+*/*/obj/codepeer/*
 !gps/obj/gps-gdb.py
 .#*
 ./Makefile
@@ -44,6 +45,7 @@ docs/programmers_guide/_build/
 docs/users_guide/_build/
 docs/tutorial/_build/
 docs/release_notes/build/
+docs/release_notes_17/build/
 docs/users_guide/GPS/generated_hooks.py
 docs/gps-welcome.html
 docs/gps-welcome-public.html
@@ -61,6 +63,7 @@ docs/gps.txt
 docs/gps.vr
 gnat/*
 gnat_src
+gnatdoc/docs/users_guide/_build/
 gps/gmon.out*
 po/Makefile
 scripts/sortxml
