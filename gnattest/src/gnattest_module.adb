@@ -277,44 +277,39 @@ package body GNATTest_Module is
    is
       use GNATCOLL.Projects;
 
-      function Original_Project (Project : Project_Type) return Project_Type;
-      --  Guess original project - source for gnattest to generate given one
+      function Origin_Project (Project : Project_Type) return Project_Type;
+      --  Guess origin project - source for gnattest to generate given one
 
-      ----------------------
-      -- Original_Project --
-      ----------------------
+      --------------------
+      -- Origin_Project --
+      --------------------
 
-      function Original_Project (Project : Project_Type) return Project_Type is
-         Kid : Project_Iterator;
-         Top : Project_Iterator :=
-           Project.Start (Recursive => True, Direct_Only => True);
+      function Origin_Project
+        (Project : Project_Type)
+         return Project_Type
+      is
+         use GNATCOLL.Projects;
 
+         File : Virtual_File;
       begin
-         if Is_Harness_Project (Project) then
-            loop
-               exit when Current (Top) = No_Project;
+         if Is_Harness_Project (Project)
+           and then Project.Has_Attribute (Origin_Project_Attribute)
+         then
+            File := Create
+              (+Project.Attribute_Value (Origin_Project_Attribute));
 
-               if Current (Top).Name /= "AUnit" then
-                  Kid := Current (Top).Start
-                    (Recursive => True, Direct_Only => True);
+            if not File.Is_Absolute_Path then
+               File := Project.Project_Path.Dir_Name / File;
+               File.Normalize_Path;
+            end if;
 
-                  loop
-                     exit when Current (Kid) = No_Project;
-
-                     if Current (Kid).Name /= "AUnit" then
-                        return Current (Kid);
-                     end if;
-
-                     Next (Kid);
-                  end loop;
-               end if;
-
-               Next (Top);
-            end loop;
+            return Project_From_Path
+              (GPS.Kernel.Project.Get_Project_Tree (Get_Kernel (Data)).all,
+               File);
+         else
+            return No_Project;
          end if;
-
-         return No_Project;
-      end Original_Project;
+      end Origin_Project;
 
    begin
       if Command = "is_harness_project" then
@@ -331,7 +326,7 @@ package body GNATTest_Module is
          begin
             Set_Return_Value
               (Data,
-               Create_Project (Data.Get_Script, Original_Project (Project)));
+               Create_Project (Data.Get_Script, Origin_Project (Project)));
          end;
       end if;
    end Command_Handler;
