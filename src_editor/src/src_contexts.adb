@@ -2620,6 +2620,36 @@ package body Src_Contexts is
       Center_Cursor (Get_View (Editor));
    end Highlight_Occurrence;
 
+   ------------------------------
+   -- Give_Focus_To_Occurrence --
+   ------------------------------
+
+   overriding procedure Give_Focus_To_Occurrence
+     (Module     : not null access Current_File_Search_Module;
+      Occurrence : not null access Search_Occurrence_Record'Class) is
+      pragma Unreferenced (Module);
+      Source_Occurrence : constant Source_Search_Occurrence :=
+                            Source_Search_Occurrence (Occurrence);
+      Editor            : Source_Editor_Box;
+   begin
+      if Source_Occurrence.Editor_Child = null then
+         return;
+      end if;
+
+      Focus_To_Editor (Source_Occurrence.Editor_Child);
+
+      Editor := Get_Source_Box_From_MDI (Source_Occurrence.Editor_Child);
+
+      Editor.Set_Cursor_Location
+        (Line             => Source_Occurrence.Match_Up_To.Line,
+         Column           => Source_Occurrence.Match_Up_To.Col,
+         Force_Focus      => False,
+         Centering        => GPS.Editors.Minimal,
+         Extend_Selection => False);
+
+      Center_Cursor (Get_View (Editor));
+   end Give_Focus_To_Occurrence;
+
    ------------------------
    -- Search_From_Editor --
    ------------------------

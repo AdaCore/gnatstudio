@@ -379,6 +379,15 @@ package Find_Utils is
    --  to display a particular search occurrence (i.e: highlight the given
    --  search occurrence by selecting it in the currently selected editor).
 
+   procedure Give_Focus_To_Occurrence
+     (Module     : not null access Search_Module_Type;
+      Occurrence : not null access Search_Occurrence_Record'Class) is null;
+   --  Give the focus to the given search occcurrence.
+   --  This procedure needs to be overridden by any search module that is able
+   --  to give the focus to a particular search occurrence (i.e: give the focus
+   --  to the given search occurrence by giving the focus to the editor that
+   --  contains it and set the editor's cursor to the occurrence's location).
+
    function Get_Label
      (Module : not null access Search_Module_Type) return String;
    function Get_Scope_Selector

@@ -845,7 +845,6 @@ package body Vsearch is
       end if;
 
       if Ctxt = null then
-         Insert (Vsearch.Kernel, -"Invalid search context specified");
          return null;
       end if;
 
@@ -1497,6 +1496,17 @@ package body Vsearch is
                Module.Highlight_Occurrence (Occurrence);
 
                Vsearch.Locked := False;
+
+               return True;
+            end if;
+         end;
+      elsif Get_Key_Val (Event) = GDK_Escape then
+         declare
+            Occurrence : constant Search_Occurrence :=
+                           Module.Get_Last_Occurrence;
+         begin
+            if Occurrence /= null then
+               Module.Give_Focus_To_Occurrence (Occurrence);
 
                return True;
             end if;
@@ -2729,7 +2739,7 @@ package body Vsearch is
       --  If the context does not match with any registered module, return the
       --  one currently used, if any, or the default one otherwise.
       return Module : Search_Module do
-         if Id.Module_Name = Search_Module_Name then
+         if Id /= null and then Id.Module_Name = Search_Module_Name then
             Module := Find_Module
               (Vsearch.Kernel,
                Label => Get_Active_Text (Vsearch.Context_Combo));

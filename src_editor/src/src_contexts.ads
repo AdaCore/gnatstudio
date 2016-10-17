@@ -438,6 +438,9 @@ private
    overriding procedure Highlight_Occurrence
      (Module     : not null access Current_File_Search_Module;
       Occurrence : not null access Search_Occurrence_Record'Class);
+   overriding procedure Give_Focus_To_Occurrence
+     (Module     : not null access Current_File_Search_Module;
+      Occurrence : not null access Search_Occurrence_Record'Class);
 
    type Recognized_Lexical_States is
      (Statements, Strings, Mono_Comments, Multi_Comments);
