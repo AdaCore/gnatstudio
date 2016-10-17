@@ -280,7 +280,12 @@ def __on_compilation_finished(category, target_name="",
     if status:
         return
 
-    v = GPS.XMLViewer.create_metric("Metrics")
+    # Try to reuse existing view, if any
+    v = GPS.XMLViewer.get_existing("Metrics")
+
+    if not v:
+        v = GPS.XMLViewer.create_metric("Metrics")
+
     metrix = get_metrix_file()
     if metrix:
         v.parse(metrix)

@@ -56,29 +56,6 @@ with GNATCOLL.Arg_Lists;        use GNATCOLL.Arg_Lists;
 package body XML_Viewer is
    Me : constant Trace_Handle := Create ("XML");
 
-   Name_Cst      : aliased constant String := "name";
-   Filename_Cst  : aliased constant String := "filename";
-   Str_Cst       : aliased constant String := "str";
-   Columns_Cst   : aliased constant String := "columns";
-   Parser_Cst    : aliased constant String := "parser";
-   On_Click_Cst  : aliased constant String := "on_click";
-   On_Select_Cst : aliased constant String := "on_select";
-   Sorted_Cst    : aliased constant String := "sorted";
-
-   XML_Constructor_Params : constant Cst_Argument_List  :=
-                              (1 => Name_Cst'Access,
-                               2 => Columns_Cst'Access,
-                               3 => Parser_Cst'Access,
-                               4 => On_Click_Cst'Access,
-                               5 => On_Select_Cst'Access,
-                               6 => Sorted_Cst'Access);
-   XML_Metrics_Params : constant Cst_Argument_List :=
-                          (1 => Name_Cst'Access);
-   Parse_Params : constant Cst_Argument_List :=
-                     (1 => Filename_Cst'Access);
-   Parse_String_Params : constant Cst_Argument_List :=
-                           (1 => Str_Cst'Access);
-
    type XML_Viewer_Record is abstract new Abstract_XML_Viewer_Record with
       record
          Child          : GPS_MDI_Child;
@@ -742,11 +719,10 @@ package body XML_Viewer is
       Kernel           : constant Kernel_Handle := Get_Kernel (Data);
       XML_Viewer_Class : constant Class_Type :=
                            New_Class (Kernel, "XMLViewer");
-      Inst             : Class_Instance;
+      Inst             : Class_Instance := No_Class_Instance;
       View             : XML_Viewer;
    begin
       if Command = Constructor_Method then
-         Name_Parameters (Data, XML_Constructor_Params);
          Inst := Nth_Arg (Data, 1, XML_Viewer_Class);
          View := new Custom_XML_Viewer_Record;
          Custom_XML_Viewer_Record (View.all).Parser := Nth_Arg (Data, 4, null);
@@ -762,8 +738,26 @@ package body XML_Viewer is
             Columns => Custom_XML_Viewer_Record (View.all).Columns);
          Set_Data (Inst, Widget => GObject (View));
 
+      elsif Command = "get_existing" then
+         declare
+            Name  : constant String := Nth_Arg (Data, 1);
+            Child : constant MDI_Child :=
+                      Find_MDI_Child_By_Name (Get_MDI (Kernel), Name);
+         begin
+            if Child /= null then
+               View := XML_Viewer (Child.Get_Widget);
+               Inst := Get_Instance (Get_Script (Data), Widget => View);
+            end if;
+
+            Data.Set_Return_Value (Inst);
+         exception
+            when others =>
+               --  Return No_Class_Instance if the widget corresponding to
+               --  the found MDI child is not an XML_Viewer.
+               Data.Set_Return_Value (No_Class_Instance);
+         end;
+
       elsif Command = "create_metric" then
-         Name_Parameters (Data, XML_Metrics_Params);
          View := new Metrix_XML_Viewer_Record;
          View.Sorted := True;
          Initialize_XML_Viewer (View, Kernel, Nth_Arg (Data, 1), 2);
@@ -775,7 +769,6 @@ package body XML_Viewer is
          Set_Return_Value (Data, Inst);
 
       elsif Command = "parse" then
-         Name_Parameters (Data, Parse_Params);
          Inst := Nth_Arg (Data, 1, XML_Viewer_Class);
          View := XML_Viewer (GObject'(Get_Data (Inst)));
          declare
@@ -788,7 +781,6 @@ package body XML_Viewer is
          end;
 
       elsif Command = "parse_string" then
-         Name_Parameters (Data, Parse_String_Params);
          Inst := Nth_Arg (Data, 1, XML_Viewer_Class);
          View := XML_Viewer (GObject'(Get_Data (Inst)));
          declare
@@ -810,34 +802,43 @@ package body XML_Viewer is
       XML_Viewer_Class : constant Class_Type :=
                            New_Class (Kernel, "XMLViewer");
    begin
-      Register_Command
-        (Kernel, Constructor_Method,
-         Class        => XML_Viewer_Class,
-         Minimum_Args => 1,
-         Maximum_Args => 6,
-         Handler      => XML_Commands_Handler'Access);
+      Kernel.Scripts.Register_Command
+        (Constructor_Method,
+         Class   => XML_Viewer_Class,
+         Params  =>
+           (1 => Param ("name"),
+            2 => Param ("columns", Optional => True),
+            3 => Param ("parser", Optional => True),
+            4 => Param ("on_click", Optional => True),
+            5 => Param ("on_select", Optional => True),
+            6 => Param ("sorted", Optional => True)),
+         Handler => XML_Commands_Handler'Access);
 
-      Register_Command
-        (Kernel, "create_metric",
-         Class         => XML_Viewer_Class,
-         Static_Method => True,
-         Minimum_Args  => 1,
-         Maximum_Args  => 1,
-         Handler       => XML_Commands_Handler'Access);
+      Kernel.Scripts.Register_Command
+         ("get_existing",
+          Class         => XML_Viewer_Class,
+          Params        => (1 => Param ("name")),
+          Static_Method => True,
+          Handler       => XML_Commands_Handler'Access);
 
-      Register_Command
-        (Kernel, "parse",
-         Class        => XML_Viewer_Class,
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Handler      => XML_Commands_Handler'Access);
+      Kernel.Scripts.Register_Command
+         ("create_metric",
+          Class         => XML_Viewer_Class,
+          Params        => (1 => Param ("name")),
+          Static_Method => True,
+          Handler       => XML_Commands_Handler'Access);
 
-      Register_Command
-        (Kernel, "parse_string",
-         Class        => XML_Viewer_Class,
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Handler      => XML_Commands_Handler'Access);
+      Kernel.Scripts.Register_Command
+         ("parse",
+          Params  => (1 => Param ("filename")),
+          Class   => XML_Viewer_Class,
+          Handler => XML_Commands_Handler'Access);
+
+      Kernel.Scripts.Register_Command
+         ("parse_string",
+          Params  => (1 => Param ("str")),
+          Class   => XML_Viewer_Class,
+          Handler => XML_Commands_Handler'Access);
    end Register_Commands;
 
 end XML_Viewer;

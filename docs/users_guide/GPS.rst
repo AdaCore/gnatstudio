@@ -1997,6 +1997,8 @@ Classes
 
    .. automethod:: GPS.XMLViewer.create_metric
 
+   .. automethod:: GPS.XMLViewer.get_existing
+
    .. automethod:: GPS.XMLViewer.parse
 
    .. automethod:: GPS.XMLViewer.parse_string
