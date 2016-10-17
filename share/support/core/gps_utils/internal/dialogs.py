@@ -361,11 +361,12 @@ class Search(Dialog):
     """
 
     Context = gps_utils.enum(
-        CURRENT_FILE=0,
-        OPEN_FILES=2,
-        FILES=3,
-        FILES_FROM_PROJECT=4,
-        FROM_PROJECT=6)
+        CURRENT_FILE="Current File",
+        CURRENT_SELECTION="Current Selection",
+        OPEN_FILES="Open Files",
+        FILES="Files...",
+        FROM_FROM_RUNTIME="Files From Runtime",
+        FILES_FROM_PROJECT="Files From Projects")
 
     def open_and_yield(self):
         """
@@ -419,7 +420,7 @@ class Search(Dialog):
         if isinstance(name, str):
             select_combo(self.scope, name)
         else:
-            self.look_in.set_active(name)
+            self.look_in.set_active_text(name)
 
     def yield_find(self):
         # Could open a modal dialog to warn that we reached the end
