@@ -6,7 +6,6 @@ import GPS
 from gi.repository import Gtk
 from menu import TestContextual
 from asserts import gps_assert, gps_not_null, gps_assert_menu
-from gps_utils.internal.utils import gps_fatal_error
 import pygps.tree
 
 
@@ -14,6 +13,7 @@ def find_in_tree(tree, column, key, iter=None):
     """obsolete: use the Tree class instead"""
     result = pygps.tree.find_in_tree(tree, column, key, iter)
     if not result:
+        from gps_utils.internal.utils import gps_fatal_error
         gps_fatal_error('Row not found in tree: %s' % (key, ))
     return result
 
