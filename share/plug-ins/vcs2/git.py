@@ -11,15 +11,37 @@ class Git(vcs2.VCS):
 
     def __init__(self, repo):
         self.repo = repo
+        self.all_files = None
+
+    def setup(self):
+        self._override_status_display(
+            GPS.VCS2.Status.STAGED_MODIFIED,
+            'modified (staged)', 'gps-emblem-vcs-modified')
 
     @staticmethod
-    def find_repo(file):
+    def discover_repo(file):
         return vcs2.find_admin_directory(file, '.git')
+
+    def __compute_all_files(self):
+        """
+        Compute all files under version control
+        """
+        if self.all_files is None:
+            self.all_files = set()
+            p = ProcessWrapper(
+                ['git', 'ls-tree', '-r', 'HEAD', '--name-only'],
+                directory=os.path.join(self.repo, '..'))
+            while True:
+                line = yield p.wait_until_match('^.*$')
+                if line is None:
+                    break
+                self.all_files.add(GPS.File(line))
 
     @workflows.run_as_workflow
     def async_fetch_status_for_all_files(self):
-        sources = GPS.Project.root().sources(recursive=True)
-        with self.set_status_for_all_files(sources) as s:
+        yield self.__compute_all_files()
+
+        with self.set_status_for_all_files(self.all_files) as s:
             p = ProcessWrapper(
                 ['git', 'status', '--porcelain', '--ignored'],
                 directory=os.path.join(self.repo, '..'))

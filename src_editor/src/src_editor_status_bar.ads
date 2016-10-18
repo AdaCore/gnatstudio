@@ -69,6 +69,7 @@ private
       Function_Label       : Gtk.Label.Gtk_Label;
       Read_Only            : Gtk_Tool_Button;
       Cursor_Loc           : Gtk_Tool_Button;
+      VCS_Status           : Gtk_Tool_Button;
       Toolbar              : Gtk_Toolbar;
 
       Current_Line         : Editable_Line_Type;

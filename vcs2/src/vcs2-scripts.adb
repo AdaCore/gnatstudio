@@ -74,6 +74,51 @@ package body VCS2.Scripts is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all script functions
 
+   procedure Call_Method
+     (Self   : not null access Script_Engine'Class;
+      Method : String) with Inline;
+   procedure Call_Method
+     (Self   : not null access Script_Engine'Class;
+      Method : String;
+      Data   : in out Callback_Data'Class);
+   --  Call a python method of self.
+   --  Free Data
+
+   -----------------
+   -- Call_Method --
+   -----------------
+
+   procedure Call_Method
+     (Self   : not null access Script_Engine'Class;
+      Method : String)
+   is
+      D : Callback_Data'Class := Create (Self.Script, 0);
+   begin
+      Call_Method (Self, Method, D);
+   end Call_Method;
+
+   -----------------
+   -- Call_Method --
+   -----------------
+
+   procedure Call_Method
+     (Self   : not null access Script_Engine'Class;
+      Method : String;
+      Data   : in out Callback_Data'Class)
+   is
+      Inst  : constant Class_Instance :=
+        Engine_Proxies.Get_Or_Create_Instance
+          (Self.Inst, VCS_Engine_Access (Self), Self.Script);
+      F     : Subprogram_Type := Get_Method (Inst, Method);
+      Dummy : Boolean;
+   begin
+      if F /= null then
+         Dummy := F.Execute (Data);
+         Free (F);
+      end if;
+      Free (Data);
+   end Call_Method;
+
    ----------
    -- Free --
    ----------
@@ -102,17 +147,10 @@ package body VCS2.Scripts is
      (Self    : not null access Script_Engine;
       File    : Virtual_File)
    is
-      Inst  : constant Class_Instance :=
-        Engine_Proxies.Get_Or_Create_Instance
-          (Self.Inst, VCS_Engine_Access (Self), Self.Script);
-      F : Subprogram_Type := Get_Method (Inst, "async_fetch_status_for_file");
-      D : Callback_Data'Class := Create (F.Get_Script, 1);
-      Dummy : Boolean;
+      D : Callback_Data'Class := Create (Self.Script, 1);
    begin
-      D.Set_Nth_Arg (1, Create_File (F.Get_Script, File));
-      Dummy := F.Execute (D);
-      Free (F);
-      Free (D);
+      D.Set_Nth_Arg (1, Create_File (Self.Script, File));
+      Call_Method (Self, "async_fetch_status_for_file", D);
    end Async_Fetch_Status_For_File;
 
    ------------------------------------
@@ -123,18 +161,10 @@ package body VCS2.Scripts is
      (Self    : not null access Script_Engine;
       Project : Project_Type)
    is
-      Inst  : constant Class_Instance :=
-        Engine_Proxies.Get_Or_Create_Instance
-          (Self.Inst, VCS_Engine_Access (Self), Self.Script);
-      F     : Subprogram_Type :=
-        Get_Method (Inst, "async_fetch_status_for_project");
-      D     : Callback_Data'Class := Create (F.Get_Script, 1);
-      Dummy : Boolean;
+      D : Callback_Data'Class := Create (Self.Script, 1);
    begin
-      D.Set_Nth_Arg (1, Create_Project (F.Get_Script, Project));
-      Dummy := F.Execute (D);
-      Free (F);
-      Free (D);
+      D.Set_Nth_Arg (1, Create_Project (Self.Script, Project));
+      Call_Method (Self, "async_fetch_status_for_project", D);
    end Async_Fetch_Status_For_Project;
 
    --------------------------------------
@@ -142,19 +172,9 @@ package body VCS2.Scripts is
    --------------------------------------
 
    overriding procedure Async_Fetch_Status_For_All_Files
-     (Self    : not null access Script_Engine)
-   is
-      Inst  : constant Class_Instance :=
-        Engine_Proxies.Get_Or_Create_Instance
-          (Self.Inst, VCS_Engine_Access (Self), Self.Script);
-      F     : Subprogram_Type :=
-        Get_Method (Inst, "async_fetch_status_for_all_files");
-      D     : Callback_Data'Class := Create (F.Get_Script, 0);
-      Dummy : Boolean;
+     (Self    : not null access Script_Engine) is
    begin
-      Dummy := F.Execute (D);
-      Free (D);
-      Free (F);
+      Call_Method (Self, "async_fetch_status_for_all_files");
    end Async_Fetch_Status_For_All_Files;
 
    -------------------
@@ -168,17 +188,23 @@ package body VCS2.Scripts is
    is
       R : constant access Script_Engine := new Script_Engine;
       Script : constant Scripting_Language := Self.Construct.Get_Script;
-      Data : Callback_Data'Class := Script.Create (1);
+      Data   : Callback_Data'Class := Script.Create (1);
+      Inst   : Class_Instance;
+
    begin
       Data.Set_Nth_Arg (1, Repo);
-      Engine_Proxies.Store_In_Instance
-        (R.Inst,
-         Inst => Self.Construct.Execute (Data),
-         Obj  => VCS_Engine_Access (R));
+      Inst := Self.Construct.Execute (Data);  -- create the pyton instance
       Free (Data);
+
+      Engine_Proxies.Store_In_Instance    --  set binding with Ada
+        (R.Inst,
+         Inst => Inst,
+         Obj  => VCS_Engine_Access (R));
 
       R.Factory := Self;
       R.Script  := Script;
+
+      Call_Method (R, "setup");
       return R;
    end Create_Engine;
 
@@ -214,13 +240,15 @@ package body VCS2.Scripts is
          Data.Set_Return_Value (VCS.Name);
 
       elsif Command = "ensure_status_for_file" then
-         VCS.Ensure_Status_For_File (Nth_Arg (Data, 2));
+         Data.Set_Return_Value
+           (VCS.Ensure_Status_For_File (Nth_Arg (Data, 2)));
 
       elsif Command = "ensure_status_for_project" then
-         VCS.Ensure_Status_For_Project (Get_Data (Data, 2));
+         Data.Set_Return_Value
+           (VCS.Ensure_Status_For_Project (Get_Data (Data, 2)));
 
-      elsif Command = "ensure_status_for_all_files" then
-         VCS.Ensure_Status_For_All_Files;
+      elsif Command = "ensure_status_for_all_source_files" then
+         Data.Set_Return_Value (VCS.Ensure_Status_For_All_Source_Files);
 
       elsif Command = "get_file_status" then
          declare
@@ -231,17 +259,24 @@ package body VCS2.Scripts is
               (VCS_File_Status'Pos (Props.Status));
          end;
 
-      elsif Command = "set_file_status" then
+      elsif Command = "_set_file_status" then
          VCS.Set_File_Status_In_Cache
            (File  => Nth_Arg (Data, 2),
             Props =>
-              (Status  => VCS_File_Status'Val
-                  (Data.Nth_Arg (3, VCS_File_Status'Pos (Status_Unmodified))),
+              (Status  => VCS_File_Status
+                  (Integer'(Data.Nth_Arg (3, Integer (Status_Unmodified)))),
                Version      => To_Unbounded_String (Data.Nth_Arg (4, "")),
                Repo_Version => To_Unbounded_String (Data.Nth_Arg (5, ""))));
 
       elsif Command = "invalidate_status_cache" then
          VCS.Invalidate_File_Status_Cache;
+
+      elsif Command = "_override_status_display" then
+         VCS.Override_Display
+           (Status    => VCS_File_Status (Integer'(Data.Nth_Arg (2))),
+            Display   =>
+              (Label     => To_Unbounded_String (Data.Nth_Arg (3, "")),
+               Icon_Name => To_Unbounded_String (Data.Nth_Arg (4, ""))));
       end if;
    end VCS_Handler;
 
@@ -293,7 +328,7 @@ package body VCS2.Scripts is
         ("_register",
          Params        => (1 => Param ("name"),
                            2 => Param ("construct"),
-                           3 => Param ("find_repo")),
+                           3 => Param ("discover_repo")),
          Static_Method => True,
          Class         => VCS,
          Handler       => Static_VCS_Handler'Access);
@@ -319,7 +354,7 @@ package body VCS2.Scripts is
          Class         => VCS,
          Handler       => VCS_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("ensure_status_for_all_files",
+        ("ensure_status_for_all_source_files",
          Class         => VCS,
          Handler       => VCS_Handler'Access);
       Kernel.Scripts.Register_Command
@@ -332,11 +367,18 @@ package body VCS2.Scripts is
          Class         => VCS,
          Handler       => VCS_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("set_file_status",
+        ("_set_file_status",
          Params        => (1 => Param ("file"),
                            2 => Param ("status", Optional => True),
                            3 => Param ("version",    Optional => True),
                            4 => Param ("repo_version", Optional => True)),
+         Class         => VCS,
+         Handler       => VCS_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("_override_status_display",
+         Params        => (1 => Param ("status"),
+                           2 => Param ("label"),
+                           3 => Param ("icon_name")),
          Class         => VCS,
          Handler       => VCS_Handler'Access);
    end Register_Scripts;

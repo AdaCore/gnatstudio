@@ -1980,7 +1980,7 @@ Classes
    .. autoattribute:: GPS.VCS2.name
 
 
-   .. automethod:: GPS.VCS2.ensure_status_for_all_files
+   .. automethod:: GPS.VCS2.ensure_status_for_all_source_files
 
    .. automethod:: GPS.VCS2.ensure_status_for_file
 
@@ -1991,8 +1991,6 @@ Classes
    .. automethod:: GPS.VCS2.get_file_status
 
    .. automethod:: GPS.VCS2.invalidate_status_cache
-
-   .. automethod:: GPS.VCS2.set_file_status
 
 :class:`GPS.Vdiff`
 ^^^^^^^^^^^^^^^^^^

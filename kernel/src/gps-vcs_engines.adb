@@ -26,6 +26,31 @@ package body GPS.VCS_Engines is
 
    use Name_To_Factory;
 
+   Default_Display_Unmodified : constant Status_Display :=
+     (Label     => To_Unbounded_String ("Up to date"),
+      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-up-to-date"));
+   Default_Display_Modified : constant Status_Display :=
+     (Label     => To_Unbounded_String ("Modified"),
+      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-modified"));
+   Default_Display_Deleted  : constant Status_Display :=
+     (Label     => To_Unbounded_String ("Removed"),
+      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-removed"));
+   Default_Display_Untracked : constant Status_Display :=
+     (Label     => To_Unbounded_String ("Untracked"),
+      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-not-registered"));
+   Default_Display_Ignored : constant Status_Display :=
+     (Label     => To_Unbounded_String ("Ignored"),
+      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-unknown"));  --  ???
+   Default_Display_Added : constant Status_Display :=
+     (Label     => To_Unbounded_String ("Added"),
+      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-added"));
+   Default_Display_Staged : constant Status_Display :=
+     (Label     => To_Unbounded_String ("Staged"),
+      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-needs-merge")); --  ???
+   Default_Display_Conflict : constant Status_Display :=
+     (Label     => To_Unbounded_String ("Conflict"),
+      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-has-conflicts"));
+
    package Project_To_Engine is new Ada.Containers.Hashed_Maps
      (Key_Type        => Virtual_File,
       Element_Type    => VCS_Engine_Access,
@@ -217,46 +242,68 @@ package body GPS.VCS_Engines is
    -- Ensure_Status_For_File --
    ----------------------------
 
-   procedure Ensure_Status_For_File
+   function Ensure_Status_For_File
      (Self    : not null access VCS_Engine'Class;
-      File    : Virtual_File) is
+      File    : Virtual_File) return Boolean
+   is
+      N : constant Boolean := Need_Update_For_Files (Self, (1 => File));
    begin
-      if Need_Update_For_Files (Self, (1 => File)) then
+      if N then
          Self.Async_Fetch_Status_For_File (File);
       end if;
+      return not N;
    end Ensure_Status_For_File;
 
    -------------------------------
    -- Ensure_Status_For_Project --
    -------------------------------
 
-   procedure Ensure_Status_For_Project
+   function Ensure_Status_For_Project
      (Self    : not null access VCS_Engine'Class;
-      Project : Project_Type)
+      Project : Project_Type) return Boolean
    is
       S : File_Array_Access := Project.Source_Files (Recursive => False);
+      N : constant Boolean := Need_Update_For_Files (Self, S.all);
    begin
-      if Need_Update_For_Files (Self, S.all) then
+      if N then
          Self.Async_Fetch_Status_For_Project (Project);
       end if;
       Unchecked_Free (S);
+      return not N;
    end Ensure_Status_For_Project;
 
-   ---------------------------------
-   -- Ensure_Status_For_All_Files --
-   ---------------------------------
+   ----------------------------------------
+   -- Ensure_Status_For_All_Source_Files --
+   ----------------------------------------
 
-   procedure Ensure_Status_For_All_Files
-     (Self    : not null access VCS_Engine'Class)
+   function Ensure_Status_For_All_Source_Files
+     (Self    : not null access VCS_Engine'Class) return Boolean
    is
-      S : File_Array_Access :=
-        Get_Project (Self.Kernel).Source_Files (Recursive => True);
+      Iter : Project_Iterator :=
+        Get_Project (Self.Kernel).Start (Recursive => True);
+      N    : Boolean := False;
+      P    : Project_Type;
+      F    : File_Array_Access;
    begin
-      if Need_Update_For_Files (Self, S.all) then
+      loop
+         P := Current (Iter);
+         exit when P = No_Project;
+
+         if Get_VCS (Self.Kernel, P) = Self then
+            --  Need to call this for all projects to initialize table
+            F := P.Source_Files (Recursive => False);
+            N := Need_Update_For_Files (Self, F.all) or N;
+            Unchecked_Free (F);
+         end if;
+
+         Next (Iter);
+      end loop;
+
+      if N then
          Self.Async_Fetch_Status_For_All_Files;
       end if;
-      Unchecked_Free (S);
-   end Ensure_Status_For_All_Files;
+      return not N;
+   end Ensure_Status_For_All_Source_Files;
 
    --------------------------------
    -- File_Properties_From_Cache --
@@ -298,23 +345,78 @@ package body GPS.VCS_Engines is
       Props        : VCS_File_Properties := Default_Properties)
    is
       C : constant VCS_File_Cache.Cursor := Self.Cache.Find (File);
-      Need_Update : constant Boolean :=
-        not Has_Element (C) or else Props /= Element (C).Props;
+      Need_Update : Boolean;
+      Need_Hook   : Boolean;
    begin
+      if Has_Element (C) then
+         Need_Update := Props /= Element (C).Props;
+         Need_Hook := Need_Update;
+      else
+         Need_Update := True;
+         Need_Hook := Props /= Default_Properties;
+      end if;
+
       if Need_Update then
          Self.Cache.Include
            (File,
             (Need_Update  => False,
              Props        => Props));
 
-         Vcs_File_Status_Update_Hook.Run
-           (Self.Kernel,
-            File          => File,
-            Status        => Props.Status,
-            Revision      => To_String (Props.Version),
-            Repo_Revision => To_String (Props.Repo_Version));
+         if Need_Hook then
+            Vcs_File_Status_Changed_Hook.Run (Self.Kernel, File => File);
+         end if;
       end if;
    end Set_File_Status_In_Cache;
+
+   -----------------
+   -- Get_Display --
+   -----------------
+
+   function Get_Display
+     (Self   : not null access VCS_Engine'Class;
+      Status : VCS_File_Status) return Status_Display
+   is
+      C : constant VCS_Status_Displays.Cursor := Self.Displays.Find (Status);
+   begin
+      --  Has the VCS defined specific display for this combination of flags ?
+      if Has_Element (C) then
+         return Element (C);
+      else
+         --  Fallbacks by looking at a subset of the flags
+         if (Status and Status_Modified) /= 0 then
+            return Default_Display_Modified;
+         elsif (Status and (Status_Deleted or Status_Staged_Deleted)) /= 0 then
+            return Default_Display_Deleted;
+         elsif (Status and Status_Untracked) /= 0 then
+            return Default_Display_Untracked;
+         elsif (Status and Status_Ignored) /= 0 then
+            return Default_Display_Ignored;
+         elsif (Status and Status_Staged_Added) /= 0 then
+            return Default_Display_Added;
+         elsif (Status and (Status_Staged_Modified
+                           or Status_Staged_Renamed
+                           or Status_Staged_Copied)) /= 0
+         then
+            return Default_Display_Staged;
+         elsif (Status and Status_Conflict) /= 0 then
+            return Default_Display_Conflict;
+         else
+            return Default_Display_Unmodified;
+         end if;
+      end if;
+   end Get_Display;
+
+   ----------------------
+   -- Override_Display --
+   ----------------------
+
+   procedure Override_Display
+     (Self    : not null access VCS_Engine'Class;
+      Status  : VCS_File_Status;
+      Display : Status_Display) is
+   begin
+      Self.Displays.Include (Status, Display);
+   end Override_Display;
 
    --------------
    -- Finalize --

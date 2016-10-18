@@ -22,14 +22,18 @@ with Glib.Object;                     use Glib.Object;
 with Glib.Values;
 with Glib;                            use Glib;
 with GNAT.Strings;                    use GNAT.Strings;
+with GNATCOLL.Projects;               use GNATCOLL.Projects;
 with GNATCOLL.Symbols;                use GNATCOLL.Symbols;
 with GNATCOLL.Utils;                  use GNATCOLL.Utils;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with GPS.Intl;                        use GPS.Intl;
 with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
+with GPS.Kernel.Hooks;                use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
 with GPS.Kernel;                      use GPS.Kernel;
 with GPS.Stock_Icons;                 use GPS.Stock_Icons;
+with GPS.VCS;                         use GPS.VCS;
+with GPS.VCS_Engines;                 use GPS.VCS_Engines;
 with Gtk.Arguments;                   use Gtk.Arguments;
 with Gtk.Enums;                       use Gtk.Enums;
 with Gtk.Handlers;                    use Gtk.Handlers;
@@ -94,6 +98,14 @@ package body Src_Editor_Status_Bar is
    procedure Destroy_Info_Frames
      (Bar : access Source_Editor_Status_Bar_Record'Class);
    --  Destroy Box.Buffer_Info_Frames
+
+   type On_VCS_Status_Changed is new File_Hooks_Function with record
+      Bar : Source_Editor_Status_Bar;
+   end record;
+   overriding procedure Execute
+     (Self          : On_VCS_Status_Changed;
+      Kernel        : not null access Kernel_Handle_Record'Class;
+      File          : GNATCOLL.VFS.Virtual_File);
 
    -------------------------
    -- Destroy_Info_Frames --
@@ -353,6 +365,39 @@ package body Src_Editor_Status_Bar is
    end Cursor_Position_Changed_Handler;
 
    -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self          : On_VCS_Status_Changed;
+      Kernel        : not null access Kernel_Handle_Record'Class;
+      File          : GNATCOLL.VFS.Virtual_File)
+   is
+      Bar : constant Source_Editor_Status_Bar := Self.Bar;
+   begin
+      if File = Bar.Buffer.Get_Filename then
+         declare
+            Engine : constant not null VCS_Engine_Access :=
+              Get_VCS (Kernel, Get_Project (Bar.View));
+            Props  : constant VCS_File_Properties :=
+              Engine.File_Properties_From_Cache (File);
+            D : constant Status_Display := Engine.Get_Display (Props.Status);
+         begin
+            if Bar.VCS_Status = null then
+               Gtk_New (Bar.VCS_Status);
+               Bar.Toolbar.Insert (Bar.VCS_Status, Extra_Info_Pos);
+               Bar.VCS_Status.Show_All;
+            end if;
+
+            Bar.VCS_Status.Set_Icon_Name (To_String (D.Icon_Name));
+            Bar.VCS_Status.Set_Tooltip_Markup
+              ("Status for <b>" & Engine.Name & "</b>: "
+               & To_String (D.Label));
+         end;
+      end if;
+   end Execute;
+
+   -------------
    -- Gtk_New --
    -------------
 
@@ -362,6 +407,9 @@ package body Src_Editor_Status_Bar is
       View   : Source_View;
       Buffer : Source_Buffer)
    is
+      H : access On_VCS_Status_Changed;
+      Kernel : constant Kernel_Handle := Get_Kernel (Buffer);
+      P : constant Project_Type := Get_Project (View);
    begin
       Bar := new Source_Editor_Status_Bar_Record;
       Initialize_Hbox (Bar, Homogeneous => False);
@@ -408,6 +456,14 @@ package body Src_Editor_Status_Bar is
          Buffer_Information_Handler'Access,
          User_Data => Bar,
          After     => True);
+
+      --  Monitor changes to VCS status (and get the initial status for the
+      --  file)
+      H := new On_VCS_Status_Changed'(File_Hooks_Function with Bar => Bar);
+      Vcs_File_Status_Changed_Hook.Add (H, Watch => Bar);  --  will update
+      if Get_VCS (Kernel, P).Ensure_Status_For_File (Buffer.Get_Filename) then
+         H.Execute (Kernel, Buffer.Get_Filename);  --  display initial value
+      end if;
 
       Show_Cursor_Position (Bar, Line => 1, Column => 1);
       Get_Style_Context (Bar).Add_Class ("gps-editor-status-bar");

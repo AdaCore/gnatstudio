@@ -89,7 +89,7 @@ class Promise(object):
 
         :param failure: a function called when the promise is rejected
            (or immediately if the promise has already been rejected).
-           If receives as a parameter the value passed when calling
+           It receives as a parameter the value passed when calling
            `self.reject()`
            `failure` is called at most once (and never if the promise is
            resolved).
@@ -448,6 +448,7 @@ class ProcessWrapper(object):
         # keep the pattern info and return my promise
         self.__current_pattern = pattern
         self.__current_promise = Promise()
+        self.__current_answered = False
 
         # if user defines a timeout, set up to
         # close output check after that timeout

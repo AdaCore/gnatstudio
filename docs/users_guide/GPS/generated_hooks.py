@@ -940,17 +940,15 @@ class Predefined_Hooks:
       :param str name:
         """
 
-    # vcs_file_status_update = 'vcs_file_status_update'
-    def vcs_file_status_update(file,status,revision,repo_revision):
+    # vcs_file_status_changed = 'vcs_file_status_changed'
+    def vcs_file_status_changed(name,file):
         """
       Emitted when the VCS status of a file has been recomputed. The file might now
       be up to date, staged for commit, locally modified,... It might also have a
       different version number, for file-based systems.
 
+      :param str name:
       :param GPS.File file:
-      :param int status:
-      :param str revision:
-      :param str repo_revision:
         """
 
     # word_added = 'word_added'

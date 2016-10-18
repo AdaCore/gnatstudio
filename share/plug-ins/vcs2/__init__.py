@@ -19,11 +19,24 @@ class VCS(GPS.VCS2):
         """
         Instances are created in `register` below. If you need additional
         parameters, they need to be given to `register.
-        :param str repo: the location of the repo, computed from `find_repo`
+        When __init__ is called, `self` is not fully setup and in particular
+        you cannot call any of the functions exported by GPS. Do this from
+        `setup` instead.
+
+        :param str repo: the location of the repo, computed from
+          `discover_repo`
+        """
+
+    def setup(self):
+        """
+        Called after `self` has been constructed (via __init__) and all
+        functions exported by GPS are available.
+        In particular, this can be used to override how statuses are displayed
+        via `GPS.VCS2._override_status_display`
         """
 
     @staticmethod
-    def find_repo(file):
+    def discover_repo(file):
         """
         Starting from file, check whether it could belong to a working
         directory for the engine. Often implemented using
@@ -110,11 +123,11 @@ class VCS(GPS.VCS2):
                 :param str repo_version:
                 """
                 self._files.discard(file)
-                vcs.set_file_status(file, status, version, repo_version)
+                vcs._set_file_status(file, status, version, repo_version)
 
             def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
                 for f in self._files:
-                    vcs.set_file_status(f, GPS.VCS2.Status.UNMODIFIED, "", "")
+                    vcs._set_file_status(f, GPS.VCS2.Status.UNMODIFIED, "", "")
 
                 return False   # do not suppress exceptions
 
@@ -131,7 +144,7 @@ def register_vcs(klass, name="", *args, **kwargs):
     GPS.VCS2._register(
         name or klass.__name__,
         construct=lambda repo: klass(repo, *args, **kwargs),
-        find_repo=klass.find_repo)
+        discover_repo=klass.discover_repo)
 
 
 def find_admin_directory(file, basename):

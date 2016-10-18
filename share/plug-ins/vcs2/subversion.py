@@ -6,5 +6,5 @@ import os
 class Subversion(vcs2.VCS):
 
     @staticmethod
-    def find_repo(file):
+    def discover_repo(file):
         return vcs2.find_admin_directory(file, '.svn')

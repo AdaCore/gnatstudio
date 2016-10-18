@@ -103,6 +103,11 @@ package GPS.VCS_Engines is
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Location : Virtual_File)
       return not null VCS_Engine_Access;
+   function Get_VCS
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Project  : Project_Type)
+      return not null VCS_Engine_Access
+     is (Get_VCS (Kernel, Project.Project_Path));
    --  Sets or return the VCS to use for a given project.
    --  This can be used two ways:
    --  - Location can be a project file, and this will be used by Get_VCS
@@ -142,18 +147,27 @@ package GPS.VCS_Engines is
    --  changed.
    --  Should not be called directly, consider Ensure_Status_* instead
 
-   procedure Ensure_Status_For_File
+   function Ensure_Status_For_File
      (Self    : not null access VCS_Engine'Class;
-      File    : Virtual_File);
-   procedure Ensure_Status_For_Project
+      File    : Virtual_File) return Boolean;
+   function Ensure_Status_For_Project
      (Self    : not null access VCS_Engine'Class;
-      Project : Project_Type);
-   procedure Ensure_Status_For_All_Files
-     (Self    : not null access VCS_Engine'Class);
+      Project : Project_Type) return Boolean;
+   function Ensure_Status_For_All_Source_Files
+     (Self    : not null access VCS_Engine'Class) return Boolean;
    --  If any of the files in the set does not have a valid cache entry, then
    --  the corresponding Async_Fetch_Status_* operation will be called.
    --  Otherwise, these procedures assume the cache is up-to-date and do not
    --  recompute anything.
+   --  These functions return True if some status is already available in the
+   --  cache (it might not be up-to-date with regards to the disk), and False
+   --  if a background command was spawned to compute the initial status.
+   --
+   --  Ensure_Status_For_All_Source_Files is for all source files of projects
+   --  that use Self as their VCS engine. This function does not force the
+   --  computation for files outside of the project, even if they are under
+   --  version control, although in general it is expected that Self will
+   --  compute their status anyway.
 
    function File_Properties_From_Cache
      (Self    : not null access VCS_Engine'Class;
@@ -188,6 +202,32 @@ package GPS.VCS_Engines is
    --  VCS_File_Status_Changed hook if needed. This should only be called
    --  when you write your own VCS engine. Other code should use one of the
    --  Async_Fetch_Status_* subprograms instead.
+
+   ----------------------
+   -- Labels and icons --
+   ----------------------
+   --  This section provides subprograms that let VCS engines configure how
+   --  things are displayed to the user. As much as possible, the vocabulary
+   --  of the VCS should be used, even though default versions are provided
+
+   type Status_Display is record
+      Label     : Unbounded_String;
+      Icon_Name : Unbounded_String;
+   end record;
+   --  Display properties for a given status
+
+   function Get_Display
+     (Self   : not null access VCS_Engine'Class;
+      Status : VCS_File_Status) return Status_Display;
+   --  How to display the status
+
+   procedure Override_Display
+     (Self    : not null access VCS_Engine'Class;
+      Status  : VCS_File_Status;
+      Display : Status_Display);
+   --  Override the label and icon to use for a status.
+   --  Status should be one of the values possibly returned by Async_Fetch_*
+   --  (the possible combinations depend on Self).
 
    ----------
    -- Misc --
@@ -225,9 +265,19 @@ private
       Equivalent_Keys => "=");
    use VCS_File_Cache;
 
+   function Identity (Self : VCS_File_Status) return Ada.Containers.Hash_Type
+     is (Ada.Containers.Hash_Type (Self));
+   package VCS_Status_Displays is new Ada.Containers.Hashed_Maps
+     (Key_Type        => VCS_File_Status,
+      Element_Type    => Status_Display,
+      Hash            => Identity,
+      Equivalent_Keys => "=");
+   use VCS_Status_Displays;
+
    type VCS_Engine is abstract tagged record
-      Kernel : Kernel_Handle;
-      Cache  : VCS_File_Cache.Map;
+      Kernel   : Kernel_Handle;
+      Cache    : VCS_File_Cache.Map;
+      Displays : VCS_Status_Displays.Map;
    end record;
 
    type Dummy_VCS_Engine is new VCS_Engine with null record;

@@ -212,13 +212,6 @@ types = {
         topython='GPS.Debuggers.To_String (%(ada)s)',
         toada='GPS.Debuggers.From_String (Data.Nth_Arg (%(idx)d))',
         withs=['GPS.Debuggers']),
-         
-    'VCS_Status': Mapping(
-        ada='GPS.VCS.VCS_File_Status',
-        python='int',
-        topython='Integer (%(ada)s)',
-        toada='GPS.VCS.VCS_File_Status (Integer\'(Data.Nth_Arg (%(idx)d)))',
-        withs=['GPS.VCS']),
 }
 
 # The following describe hook types (the various hook families with
@@ -426,13 +419,6 @@ Shadow builds''', inpython=False),
          Param('str',       'String')],
         returns='String',
         return_default='""'),  # Stop when one returns non-empty string
-              
-    'vcs_file_hooks': Hook_Type(
-        [Param('file',          'File'),
-         Param('status',        'VCS_Status'),
-         Param('revision',      'String'),
-         Param('repo_revision', 'String')
-         ]),
 }
 
 # The following describe all specific hooks. They all belong to one
@@ -888,7 +874,7 @@ Emitted when the cross-reference information has been updated.'''),
     Hook('semantic_tree_updated', 'file_hooks', descr='''
 Emitted when the semantic_tree for a file has been updated.'''),
          
-    Hook('vcs_file_status_update', 'vcs_file_hooks', descr='''
+    Hook('vcs_file_status_changed', 'file_hooks', descr='''
 Emitted when the VCS status of a file has been recomputed. The file might now
 be up to date, staged for commit, locally modified,... It might also have a
 different version number, for file-based systems.'''),
