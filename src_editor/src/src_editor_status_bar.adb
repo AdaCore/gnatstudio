@@ -15,47 +15,43 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with GNAT.Strings;              use GNAT.Strings;
-with GNATCOLL.Symbols;          use GNATCOLL.Symbols;
-with GNATCOLL.Traces;           use GNATCOLL.Traces;
-with GNATCOLL.Utils;            use GNATCOLL.Utils;
-with GNATCOLL.VFS;              use GNATCOLL.VFS;
-with GPS.Intl;                  use GPS.Intl;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Stock_Icons;           use GPS.Stock_Icons;
+with Ada.Strings.Unbounded;           use Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
 with Glib.Convert;
-with Glib.Object;               use Glib.Object;
+with Glib.Object;                     use Glib.Object;
 with Glib.Values;
-with Glib; use Glib;
-with Gtk.Arguments; use Gtk.Arguments;
-with Gtk.Enums; use Gtk.Enums;
-with Gtk.Handlers; use Gtk.Handlers;
-with Gtk.Image; use Gtk.Image;
-with Gtk.Label; use Gtk.Label;
-with Gtk.Separator; use Gtk.Separator;
-with Gtk.Style_Context; use Gtk.Style_Context;
-with Gtk.Text_Iter;     use Gtk.Text_Iter;
-with Gtk.Widget; use Gtk.Widget;
+with Glib;                            use Glib;
+with GNAT.Strings;                    use GNAT.Strings;
+with GNATCOLL.Symbols;                use GNATCOLL.Symbols;
+with GNATCOLL.Utils;                  use GNATCOLL.Utils;
+with GNATCOLL.VFS;                    use GNATCOLL.VFS;
+with GPS.Intl;                        use GPS.Intl;
+with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
+with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
+with GPS.Kernel;                      use GPS.Kernel;
+with GPS.Stock_Icons;                 use GPS.Stock_Icons;
+with Gtk.Arguments;                   use Gtk.Arguments;
+with Gtk.Enums;                       use Gtk.Enums;
+with Gtk.Handlers;                    use Gtk.Handlers;
+with Gtk.Label;                       use Gtk.Label;
+with Gtk.Style_Context;               use Gtk.Style_Context;
+with Gtk.Text_Iter;                   use Gtk.Text_Iter;
 with Gtkada.Handlers;
-with Gtkada.MDI; use Gtkada.MDI;
-with Language; use Language;
-with Pango.Layout; use Pango.Layout;
-with Src_Editor_Box; use Src_Editor_Box;
-with Src_Editor_Module.Commands; use Src_Editor_Module.Commands;
-with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
-with Src_Editor_Module; use Src_Editor_Module;
-with String_Utils; use String_Utils;
+with Gtkada.MDI;                      use Gtkada.MDI;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
+with Language;                        use Language;
+with Pango.Layout;                    use Pango.Layout;
+with Src_Editor_Box;                  use Src_Editor_Box;
+with Src_Editor_Module.Commands;      use Src_Editor_Module.Commands;
+with Src_Editor_Module.Markers;       use Src_Editor_Module.Markers;
+with Src_Editor_Module;               use Src_Editor_Module;
+with String_Utils;                    use String_Utils;
 
 package body Src_Editor_Status_Bar is
 
-   Me : constant Trace_Handle := Create ("Src_Editor_Status_Bar");
-
-   Show_Modified_Unmodified_In_Status_Bar : constant Boolean := False;
-   --  Whether to show the modified/unmodified/saved status in the status bar.
+   Extra_Info_Pos : constant := 1;
+   --  Position in the toolbar of the extra items that are inserted for VCS
+   --  status.
 
    procedure Setup (Data : Source_Editor_Status_Bar; Id : Handler_Id);
    package Bar_Callback is new Gtk.Handlers.User_Callback_With_Setup
@@ -77,8 +73,7 @@ package body Src_Editor_Status_Bar is
       Column : Character_Offset_Type);
    --  Redraw the cursor position in the Line/Column areas of the status bar
 
-   function On_Read_Only_Pressed
-     (Ob : access GObject_Record'Class) return Boolean;
+   procedure On_Read_Only_Pressed (Ob : access GObject_Record'Class);
    --  Toggle read-only/writable state of a given box
 
    function On_Subprogram_Link
@@ -87,15 +82,8 @@ package body Src_Editor_Status_Bar is
    --  Called when the user clicks on one of the links in the subprogram box in
    --  the status bar.
 
-   function On_Goto_Line_Func
-     (Ob : access GObject_Record'Class) return Boolean;
+   procedure On_Goto_Line_Func (Ob : access GObject_Record'Class);
    --  Callback when clicking on the line number in the status bar
-
-   procedure On_Bar_Destroy
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Bar    : Source_Editor_Status_Bar);
-   --  Callback for the "destroy" signal
 
    procedure Buffer_Information_Handler
      (Ob     : access Glib.Object.GObject_Record'Class;
@@ -112,11 +100,14 @@ package body Src_Editor_Status_Bar is
    -------------------------
 
    procedure Destroy_Info_Frames
-     (Bar : access Source_Editor_Status_Bar_Record'Class) is
+     (Bar : access Source_Editor_Status_Bar_Record'Class)
+   is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Frames_Array, Frames_Array_Access);
    begin
       if Bar.Buffer_Info_Frames /= null then
-         for J in Bar.Buffer_Info_Frames'Range loop
-            Remove (Bar.Info_Box, Bar.Buffer_Info_Frames (J).Label);
+         for J of Bar.Buffer_Info_Frames.all loop
+            Bar.Toolbar.Remove (J);
          end loop;
 
          Unchecked_Free (Bar.Buffer_Info_Frames);
@@ -133,12 +124,8 @@ package body Src_Editor_Status_Bar is
       Bar    : Source_Editor_Status_Bar)
    is
       pragma Unreferenced (Ob, Params);
-
       Info  : constant Extra_Information_Array_Access :=
         Get_Extra_Information (Bar.Buffer);
-      Label : Gtk_Label;
-      Image : Gtk_Image;
-
    begin
       Destroy_Info_Frames (Bar);
 
@@ -149,57 +136,29 @@ package body Src_Editor_Status_Bar is
       Bar.Buffer_Info_Frames := new Frames_Array (Info'Range);
 
       for J in Bar.Buffer_Info_Frames'Range loop
+         Gtk_New (Bar.Buffer_Info_Frames (J));
+
          if Info (J).Icon.all /= "" then
-            Gtk_New_From_Icon_Name
-               (Image, Icon_Name => Info (J).Icon.all,
-                Size => Icon_Size_Menu);
-            Bar.Buffer_Info_Frames (J).Label := Gtk_Widget (Image);
-         else
-            if Info (J).Info.Text /= Null_Unbounded_String then
-               Gtk_New (Label, To_String (Info (J).Info.Text));
-            else
-               Gtk_New (Label);
-            end if;
-            Bar.Buffer_Info_Frames (J).Label := Gtk_Widget (Label);
+            Bar.Buffer_Info_Frames (J).Set_Icon_Name (Info (J).Icon.all);
+         end if;
+
+         if Info (J).Info.Text /= Null_Unbounded_String then
+            Bar.Buffer_Info_Frames (J).Set_Label
+              (To_String (Info (J).Info.Text));
          end if;
 
          if Info (J).Tooltip /= null
            and then Info (J).Tooltip.all /= ""
          then
-            Bar.Buffer_Info_Frames (J).Label.Set_Tooltip_Markup
+            Bar.Buffer_Info_Frames (J).Set_Tooltip_Markup
               (Info (J).Tooltip.all);
-         else
-            Bar.Buffer_Info_Frames (J).Label.Set_Tooltip_Markup ("");
          end if;
 
-         Pack_End
-           (Bar.Info_Box,
-            Bar.Buffer_Info_Frames (J).Label,
-            Expand  => False,
-            Fill    => True,
-            Padding => 0);
+         Bar.Toolbar.Insert (Bar.Buffer_Info_Frames (J), Extra_Info_Pos);
       end loop;
 
-      Show_All (Bar);
+      Bar.Show_All;
    end Buffer_Information_Handler;
-
-   --------------------
-   -- On_Bar_Destroy --
-   --------------------
-
-   procedure On_Bar_Destroy
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Bar    : Source_Editor_Status_Bar)
-   is
-      pragma Unreferenced (Object, Params);
-   begin
-      Disconnect (Bar.Buffer, Bar.Cursor_Handler);
-      Disconnect (Bar.Buffer, Bar.Buffer_Info_Handler);
-   exception
-      when E : others =>
-         Trace (Me, E);
-   end On_Bar_Destroy;
 
    ----------------------------
    -- Update_Subprogram_Name --
@@ -214,8 +173,8 @@ package body Src_Editor_Status_Bar is
       Val   : Unbounded_String;
    begin
       if Display_Subprogram_Names.Get_Pref then
-         Block := Get_Subprogram_Block (Bar.Buffer, Bar.Current_Line,
-                                        Update_Tree);
+         Block := Get_Subprogram_Block
+           (Bar.Buffer, Bar.Current_Line, Update_Tree);
          if Block.Block_Type /= Cat_Unknown
            and then Block.Name /= No_Symbol
          then
@@ -253,76 +212,23 @@ package body Src_Editor_Status_Bar is
    is
       Child : constant MDI_Child := Find_Child
         (Get_Kernel (Bar.Buffer), Source_Editor_Box (Bar.Box));
-      Icon_Size : constant := 16;
    begin
-      case Get_Status (Bar.Buffer) is
-         when Unmodified =>
-            if Show_Modified_Unmodified_In_Status_Bar then
-               Bar.Modified_Label.Set_Tooltip_Text (-"Unmodified");
-               Bar.Modified_Label.Set_From_Icon_Name
-                  (File_Pixbuf, Icon_Size);
-            end if;
-
-            if Child /= null then
+      if Child /= null then
+         case Get_Status (Bar.Buffer) is
+            when Unmodified | Readonly | Saved =>
                Child.Set_Icon_Name (File_Pixbuf);
-            end if;
-
-         when Readonly =>
-            if Show_Modified_Unmodified_In_Status_Bar then
-               Bar.Modified_Label.Set_Tooltip_Text (-"Read only");
-               Bar.Modified_Label.Set_From_Icon_Name
-                  (File_Pixbuf, Icon_Size);
-            end if;
-
-            if Child /= null then
-               Child.Set_Icon_Name (File_Pixbuf);
-            end if;
-
-         when Unsaved =>
-            if Show_Modified_Unmodified_In_Status_Bar then
-               Bar.Modified_Label.Set_Tooltip_Text (-"Unsaved");
-               Bar.Modified_Label.Set_From_Icon_Name
-                  (File_Unsaved_Pixbuf, Icon_Size);
-            end if;
-
-            if Child /= null then
-               Child.Set_Icon_Name (File_Unsaved_Pixbuf);
-            end if;
-
-         when Saved =>
-            if Show_Modified_Unmodified_In_Status_Bar then
-               Bar.Modified_Label.Set_Tooltip_Text (-"Saved");
-               Bar.Modified_Label.Set_From_Icon_Name
-                  (File_Pixbuf, Icon_Size);
-            end if;
-
-            if Child /= null then
-               Child.Set_Icon_Name (File_Pixbuf);
-            end if;
-
-         when Modified =>
-            if Show_Modified_Unmodified_In_Status_Bar then
-               Bar.Modified_Label.Set_Tooltip_Text (-"Modified");
-               Bar.Modified_Label.Set_From_Icon_Name
-                  (File_Modified_Pixbuf, Icon_Size);
-            end if;
-
-            if Child /= null then
-               Child.Set_Icon_Name (File_Modified_Pixbuf);
-            end if;
-      end case;
+            when Unsaved    => Child.Set_Icon_Name (File_Unsaved_Pixbuf);
+            when Modified   => Child.Set_Icon_Name (File_Modified_Pixbuf);
+         end case;
+      end if;
 
       if Get_Writable (Bar.Buffer) then
-         Set_From_Icon_Name
-            (Bar.Read_Only_Label, "gps-unlock-symbolic",
-             Icon_Size_Local_Toolbar);
-         Bar.Read_Only_Label.Set_Tooltip_Text (-"Writable");
+         Bar.Read_Only.Set_Icon_Name ("gps-unlock-symbolic");
+         Bar.Read_Only.Set_Tooltip_Text (-"Writable");
          Get_Style_Context (Bar.View).Remove_Class ("read-only");
       else
-         Set_From_Icon_Name
-            (Bar.Read_Only_Label, "gps-lock-symbolic",
-             Icon_Size_Local_Toolbar);
-         Bar.Read_Only_Label.Set_Tooltip_Text (-"Read Only");
+         Bar.Read_Only.Set_Icon_Name ("gps-lock-symbolic");
+         Bar.Read_Only.Set_Tooltip_Text (-"Read Only");
          Get_Style_Context (Bar.View).Add_Class ("read-only");
       end if;
    end Update_Status;
@@ -331,16 +237,10 @@ package body Src_Editor_Status_Bar is
    -- On_Goto_Line_Func --
    -----------------------
 
-   function On_Goto_Line_Func
-     (Ob : access GObject_Record'Class) return Boolean
-   is
+   procedure On_Goto_Line_Func (Ob : access GObject_Record'Class) is
       Bar : constant Source_Editor_Status_Bar := Source_Editor_Status_Bar (Ob);
    begin
-      --  ??? Not nice to get a context here
-      On_Goto_Line
-        (Bar.Box,
-         Get_Kernel (Bar.Buffer));
-      return True;
+      On_Goto_Line (Bar.Box, Get_Kernel (Bar.Buffer));
    end On_Goto_Line_Func;
 
    ------------------------
@@ -366,21 +266,11 @@ package body Src_Editor_Status_Bar is
    -- On_Read_Only_Pressed --
    --------------------------
 
-   function On_Read_Only_Pressed
-     (Ob : access GObject_Record'Class) return Boolean
-   is
+   procedure On_Read_Only_Pressed (Ob : access GObject_Record'Class) is
       Bar : constant Source_Editor_Status_Bar := Source_Editor_Status_Bar (Ob);
    begin
-      Set_Writable
-        (Source_Editor_Box (Bar.Box),
-         not Get_Writable (Bar.Buffer), Explicit => True);
-
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
-         return False;
+      Source_Editor_Box (Bar.Box).Set_Writable
+        (not Get_Writable (Bar.Buffer), Explicit => True);
    end On_Read_Only_Pressed;
 
    -----------
@@ -412,12 +302,12 @@ package body Src_Editor_Status_Bar is
       if Result then
          Lines := Get_Line (The_End) - Get_Line (Start) + 1;
          Offset := Get_Offset (The_End) - Get_Offset (Start);
-         Bar.Cursor_Loc_Label.Set_Text
+         Bar.Cursor_Loc.Set_Label
             ("("
              & Image (Integer (Lines), Min_Width => 1) & " lines,"
              & Offset'Img & " chars) " & Pos);
       else
-         Bar.Cursor_Loc_Label.Set_Text (Pos);
+         Bar.Cursor_Loc.Set_Label (Pos);
       end if;
    end Show_Cursor_Position;
 
@@ -460,10 +350,6 @@ package body Src_Editor_Status_Bar is
             Column => Character_Offset_Type
               (Values.Get_Int (Values.Nth (Params, 2))));
       end if;
-
-   exception
-      when E : others =>
-         Trace (Me, E);
    end Cursor_Position_Changed_Handler;
 
    -------------
@@ -478,25 +364,8 @@ package body Src_Editor_Status_Bar is
    is
    begin
       Bar := new Source_Editor_Status_Bar_Record;
-      Initialize (Bar, Box, View, Buffer);
-   end Gtk_New;
+      Initialize_Hbox (Bar, Homogeneous => False);
 
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Bar    : not null access Source_Editor_Status_Bar_Record'Class;
-      Box    : Gtk_Event_Box;
-      View   : Source_View;
-      Buffer : Source_Buffer)
-   is
-      Event_Box      : Gtk_Event_Box;
-      Separator      : Gtk_Vseparator;
-   begin
-      Gtk.Event_Box.Initialize (Bar);
-      Gtk_New_Hbox (Bar.HBox);
-      Bar.Add (Bar.HBox);
       Bar.View := View;
       Bar.Buffer := Buffer;
       Bar.Box := Box;
@@ -504,73 +373,44 @@ package body Src_Editor_Status_Bar is
       --  Avoid resizing the main window whenever a label is changed
       Bar.Set_Resize_Mode (Resize_Queue);
 
-      --  Function location area
       Gtk_New (Bar.Function_Label);
       Bar.Function_Label.Set_Ellipsize (Ellipsize_Start);
       Bar.Function_Label.Set_Alignment (0.0, 0.5);
-      Bar.HBox.Pack_Start (Bar.Function_Label, Expand => True, Fill => True);
+      Bar.Pack_Start (Bar.Function_Label, Expand => True, Fill => True);
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Bar.Function_Label,
          Gtk.Label.Signal_Activate_Link, On_Subprogram_Link'Access, Bar);
 
-      --  Line:Column number area...
-      Gtk_New (Event_Box);
-      Bar.HBox.Pack_Start
-        (Event_Box, Expand => False, Fill => True, Padding => 5);
-      Gtk_New (Bar.Cursor_Loc_Label, "1:1");
-      Event_Box.Add (Bar.Cursor_Loc_Label);
-      Object_Return_Callback.Object_Connect
-        (Event_Box, Signal_Button_Press_Event, On_Goto_Line_Func'Access, Bar);
+      Gtk_New (Bar.Toolbar);
+      Bar.Toolbar.Set_Icon_Size (Icon_Size_Local_Toolbar);
+      Bar.Pack_End (Bar.Toolbar, Expand => False);
 
-      Gtk_New_Vseparator (Separator);
-      Pack_Start (Bar.HBox, Separator, Expand => False, Fill => False);
+      Gtk_New (Bar.Cursor_Loc, Label => "1:1");
+      Bar.Cursor_Loc.Set_Homogeneous (False);
+      Bar.Toolbar.Insert (Bar.Cursor_Loc);
+      Bar.Cursor_Loc.On_Clicked (On_Goto_Line_Func'Access, Bar);
 
-      --  Modified file area...
-      if Show_Modified_Unmodified_In_Status_Bar then
-         Gtk_New (Bar.Modified_Label);
-         Bar.HBox.Pack_Start
-           (Bar.Modified_Label, Expand => False, Fill => False);
-      end if;
+      Gtk_New (Bar.Read_Only);
+      Bar.Read_Only.Set_Homogeneous (False);
+      Bar.Read_Only.On_Clicked (On_Read_Only_Pressed'Access, Bar);
+      Bar.Toolbar.Insert (Bar.Read_Only);
 
-      Gtk_New_Hbox (Bar.Info_Box, Homogeneous => False);
-      Bar.HBox.Pack_Start (Bar.Info_Box, Expand => False, Fill => False);
-
-      --  Read only file area...
-      --  Leave this to the right of the info_box area, since the latter
-      --  is displayed after a delay, and people trying to click on the lock
-      --  icon too early might end up clicking on the info_box area
-      --  instead.
-      Gtk_New (Bar.Read_Only_Label);
-      Gtk_New (Event_Box);
-      Event_Box.Add (Bar.Read_Only_Label);
-      Bar.HBox.Pack_Start (Event_Box, Expand => False, Fill => False);
-      Object_Return_Callback.Object_Connect
-        (Event_Box, Signal_Button_Press_Event,
-         On_Read_Only_Pressed'Access, Bar);
-
-      Bar.Cursor_Handler := Bar_Callback.Connect
+      Bar_Callback.Connect
         (Bar.Buffer,
          Signal_Cursor_Position_Changed,
          Cursor_Position_Changed_Handler'Access,
-         User_Data => Source_Editor_Status_Bar (Bar),
+         User_Data => Bar,
          After     => True);
 
-      Bar.Buffer_Info_Handler := Bar_Callback.Connect
+      Bar_Callback.Connect
         (Bar.Buffer,
          Signal_Buffer_Information_Changed,
          Buffer_Information_Handler'Access,
-         User_Data => Source_Editor_Status_Bar (Bar),
+         User_Data => Bar,
          After     => True);
 
       Show_Cursor_Position (Bar, Line => 1, Column => 1);
-
-      Bar_Callback.Connect
-        (Bar.View,
-         Signal_Destroy,
-         On_Bar_Destroy'Access,
-         User_Data => Source_Editor_Status_Bar (Bar));
-
       Get_Style_Context (Bar).Add_Class ("gps-editor-status-bar");
-   end Initialize;
+   end Gtk_New;
 
 end Src_Editor_Status_Bar;

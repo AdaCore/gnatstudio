@@ -17,34 +17,25 @@
 
 --  This package handles the editor status bar
 
-with Ada.Unchecked_Deallocation;
-
-with Gtk.Box;       use Gtk.Box;
-with Gtk.Event_Box; use Gtk.Event_Box;
-
 with Basic_Types;       use Basic_Types;
+with GPS.Editors;       use GPS.Editors;
+with Gtk.Box;           use Gtk.Box;
+with Gtk.Event_Box;     use Gtk.Event_Box;
+with Gtk.Label;
+with Gtk.Tool_Button;   use Gtk.Tool_Button;
+with Gtk.Toolbar;       use Gtk.Toolbar;
+with Gtk.Widget;        use Gtk.Widget;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
 with Src_Editor_View;   use Src_Editor_View;
-with Gtk.Label;
-with Gtk.Image;
-with Gtk.Handlers;
-with Gtk.Widget;
-with GPS.Editors;      use GPS.Editors;
 
 package Src_Editor_Status_Bar is
 
-   type Source_Editor_Status_Bar_Record is
-     new Gtk.Event_Box.Gtk_Event_Box_Record with private;
+   type Source_Editor_Status_Bar_Record is new Gtk_Box_Record with private;
    type Source_Editor_Status_Bar is access all
      Source_Editor_Status_Bar_Record'Class;
 
    procedure Gtk_New
      (Bar    : out Source_Editor_Status_Bar;
-      Box    : Gtk_Event_Box;
-      View   : Source_View;
-      Buffer : Source_Buffer);
-   procedure Initialize
-     (Bar    : not null access Source_Editor_Status_Bar_Record'Class;
       Box    : Gtk_Event_Box;
       View   : Source_View;
       Buffer : Source_Buffer);
@@ -63,46 +54,25 @@ package Src_Editor_Status_Bar is
 
 private
 
-   type Frame_Separator is record
-      Label     : Gtk.Widget.Gtk_Widget;  --  label or image
-   end record;
-
-   type Frames_Array is array (Natural range <>) of Frame_Separator;
+   type Frames_Array is array (Natural range <>) of Gtk_Tool_Button;
    type Frames_Array_Access is access Frames_Array;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Frames_Array, Frames_Array_Access);
-
-   type Source_Editor_Status_Bar_Record is
-     new Gtk.Event_Box.Gtk_Event_Box_Record
-   with record
-      HBox          : Gtk_Hbox;
+   type Source_Editor_Status_Bar_Record is new Gtk_Box_Record with record
       View          : Src_Editor_View.Source_View;
       Buffer        : Src_Editor_Buffer.Source_Buffer;
+      Box           : Gtk_Event_Box;   --  Source_Editor_Box
 
-      Box    : Gtk_Event_Box;
-
-      Info_Box : Gtk_Box;
-      --  Will contain extra information displayed in the status bar, like
-      --  the VCS status.
+      Buffer_Info_Frames   : Frames_Array_Access := null;
+      --  Extra information displayed in the status bar, like the VCS-version1
+      --  status.
 
       Function_Label       : Gtk.Label.Gtk_Label;
-      Read_Only_Label      : Gtk.Image.Gtk_Image;
-      Modified_Label       : Gtk.Image.Gtk_Image;
-      Cursor_Loc_Label     : Gtk.Label.Gtk_Label;
+      Read_Only            : Gtk_Tool_Button;
+      Cursor_Loc           : Gtk_Tool_Button;
+      Toolbar              : Gtk_Toolbar;
 
       Current_Line         : Editable_Line_Type;
       --  Cache for the current line
-
-      Cursor_Handler       : Gtk.Handlers.Handler_Id;
-      --  Handler connected to the signal "cursor_position_changed" in
-      --  the Source_Buffer.
-
-      Buffer_Info_Handler  : Gtk.Handlers.Handler_Id;
-      --  Handler connected to the signal "buffer_information_changed" from the
-      --  source buffer.
-
-      Buffer_Info_Frames   : Frames_Array_Access := null;
 
    end record;
 
