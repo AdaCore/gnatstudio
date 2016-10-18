@@ -915,6 +915,7 @@ class Mapping_File(object):
         self._mdl = {}       # sourcefile => mdlfile
         self._symbols = {}   # block_id => set(symbols)
         self._funcinfo = {}  # funcname => (filename, endline)
+        self._fileinfo = {}  # filename => [(funcname, startline-endline)]
 
     def load(self, mdlfile):
         """
@@ -948,7 +949,14 @@ class Mapping_File(object):
             for blockid, blockinfo in blocks.iteritems():
                 if blockid == '@qgen_functions':
                     for func_id, funcline in blockinfo.iteritems():
-                        self._funcinfo[func_id] = (filename, funcline)
+                        lines = funcline.split('-')
+                        if filename not in self._fileinfo:
+                            self._fileinfo[filename] = [
+                                (func_id, (int(lines[0]), int(lines[1])))]
+                        else:
+                            self._fileinfo[filename].append((func_id, (
+                                int(lines[0]), int(lines[1]))))
+                        self._funcinfo[func_id] = (filename, lines)
                     continue
 
                 a = self._blocks.setdefault(blockid, set())
@@ -970,6 +978,13 @@ class Mapping_File(object):
                 for symbol in blockinfo.get('symbols', []):
                     a.add(symbol)
 
+    def get_file_funcinfos(self, filename):
+        """
+        Returns the list of (function_name, [line_start, line_end]) for the
+        given filename
+        """
+        return self._fileinfo.get(filename, [])
+
     def get_source_ranges(self, blockid):
         """
         Returns the set of (filename, linerange) tuples for the source lines
@@ -983,9 +998,10 @@ class Mapping_File(object):
         """
         return self._symbols.get(blockid, set())
 
-    def get_end_of_func(self, funcname):
+    def get_func_bounds(self, funcname):
         """
-        Returns the file and line where the function named funcname end
+        Returns the file and lines where the function named funcname
+        starts and ends
         """
         return self._funcinfo.get(funcname, (None, None))
 
@@ -1343,11 +1359,11 @@ else:
                 symbol = s.split('/')
                 context = symbol[0]
                 symbol = symbol[-1].strip()
-                src_file, line = QGEN_Module.modeling_map.get_end_of_func(
+                src_file, lines = QGEN_Module.modeling_map.get_func_bounds(
                     context)
 
                 debug.send("qgen_logpoint %s %s '%s' %s '%s:%s' %s" % (
-                    symbol, context, itid, filename, src_file, line,
+                    symbol, context, itid, filename, src_file, lines[1],
                     model_filename), output=False)
                 sig_obj = QGEN_Module.signal_attributes.get(itid, None)
                 if sig_obj is None:
@@ -1774,13 +1790,29 @@ else:
             """
             ctx = GPS.contextual_context() or GPS.current_context()
             it = self.get_item_with_sources(ctx.modeling_item)
+            init = False
+            # Return the first line corresponding to that item that
+            # is in the comp function, or if none is available
+            # the first referenced line
             for file, rg in self.block_source_ranges(it.id):
+                if not init:
+                    line = rg[0]
+                    init = True
+                for f, b in QGEN_Module.modeling_map.get_file_funcinfos(
+                        os.path.basename(file.path)):
+                    if f.endswith('comp'):
+                        for l in rg:
+                            if l >= b[0] and l <= b[1]:
+                                line = l
+                                break
+                        break
+
+            if init:
                 buffer = GPS.EditorBuffer.get(file)
                 view = buffer.current_view()
-                view.goto(buffer.at(rg[0], 1))
+                view.goto(buffer.at(line, 1))
                 view.center()
                 GPS.MDI.get_by_child(view).raise_window()
-                break
 
         def setup(self):
             """
