@@ -6,6 +6,7 @@ import GPS
 from gi.repository import Gtk
 from menu import TestContextual
 from asserts import gps_assert, gps_not_null, gps_assert_menu
+from gps_utils.internal.utils import gps_fatal_error
 import pygps.tree
 
 
