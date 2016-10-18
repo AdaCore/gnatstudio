@@ -600,7 +600,13 @@ class CLI(GPS.Process):
         """
         # Ask if we need to overwrite the file if this is the
         # first signal to log
-        if not QGEN_Module.logged_signal and os.path.exists(filename):
+        ask_overwrite = True
+        for itid, sig in QGEN_Module.signal_attributes.iteritems():
+            if sig.logged:
+                ask_overwrite = False
+                break
+
+        if ask_overwrite and os.path.exists(filename):
             res = GPS.MDI.yes_no_dialog(
                 "%s already exists, do you want to delete it?" % filename)
             if res:
@@ -1016,6 +1022,33 @@ class Mapping_File(object):
         return self._mdl.get(file.path, None)
 
 
+class Signal(object):
+    """
+    A class describing a signal element and its styling attributes
+    """
+
+    def __init__(self, id):
+        self.id = id
+        self.watched = False
+        self.logged = False
+        self.style = ''
+
+    def compute_style(self):
+        """
+        Creates the name of the style to apply to the signal. The corresponding
+        style will be described in mdl2json.tmplt
+        """
+        self.style = ''
+
+        if self.watched:
+            self.style = '_watchpoint'
+        if self.logged:
+            self.style += '_logpoint'
+
+    def reset(self):
+        self.logged = False
+        self.watched = False
+
 project_support = Project_Support()
 MDL_Language.register()   # available before project is loaded
 
@@ -1029,10 +1062,9 @@ else:
 
         modeling_map = None   # a Mapping_File instance
 
-        # pair (id, status) for signals, if status is false
-        # the signal is no longer watched and has to be reset
-        watched_signal = set()
-        logged_signal = set()
+        # id => Signal object
+        signal_attributes = {}
+
         previous_breakpoints = []
         debugger = None
 
@@ -1057,13 +1089,8 @@ else:
             """
             Resets the diagram display when a new debugger is used
             """
-            for id, st in QGEN_Module.watched_signal:
-                QGEN_Module.watched_signal.remove((id, st))
-                QGEN_Module.watched_signal.add((id, False))
-
-            for id, st in QGEN_Module.logged_signal:
-                QGEN_Module.logged_signal.remove((id, st))
-                QGEN_Module.logged_signal.add((id, False))
+            for id, sig in QGEN_Module.signal_attributes.iteritems():
+                sig.reset()
 
             for viewer in QGEN_Diagram_Viewer.retrieve_qgen_viewers():
                 for diag in viewer.diags.diagrams:
@@ -1072,8 +1099,7 @@ else:
 
             QGEN_Module.previous_breakpoints = debugger.breakpoints
 
-            QGEN_Module.watched_signal.clear()
-            QGEN_Module.logged_signal.clear()
+            QGEN_Module.signal_attributes.clear()
             del QGEN_Module.previous_breakpoints[:]
 
         @staticmethod
@@ -1264,42 +1290,22 @@ else:
             for b in QGEN_Module.previous_breakpoints:
                 __set_block_style(b)
 
-            for (itid, st) in QGEN_Module.watched_signal:
+            for itid, sig in QGEN_Module.signal_attributes.iteritems():
                 item = diag.get_item(itid)
                 if item:
                     label = getattr(item, "label", None)
-                    if st:
-                        if (itid, st) in QGEN_Module.logged_signal:
-                            viewer.diags.set_item_style(
-                                label, label.data.get(
-                                    'style_if_watchpoint_logpoint'))
-                        else:
-                            viewer.diags.set_item_style(
-                                label, label.data.get('style_if_watchpoint'))
-                            if (itid, False) in QGEN_Module.logged_signal:
-                                QGEN_Module.logged_signal.remove((itid, False))
-                    else:
-                        viewer.diags.set_item_style(label, None)
-
-            # We already treated signals that are also watchpoints
-            # so we call the difference between the two sets
-            for (itid, st) in QGEN_Module.logged_signal.difference(
-                    QGEN_Module.watched_signal):
-                item = diag.get_item(itid)
-                if item:
-                    label = getattr(item, "label", None)
-                    if st:
+                    sig.compute_style()
+                    if sig.style is not None:
                         viewer.diags.set_item_style(
-                            label, label.data.get('style_if_logpoint'))
+                                label, label.data.get(
+                                    'style_if' + sig.style))
                     else:
                         viewer.diags.set_item_style(label, None)
 
             # Remove False elements from the lists
-            QGEN_Module.watched_signal = set(filter(
-                lambda x: x[1], QGEN_Module.watched_signal))
-
-            QGEN_Module.logged_signal = set(filter(
-                lambda x: x[1], QGEN_Module.logged_signal))
+            QGEN_Module.signal_attributes = {
+                k: sig for k, sig in QGEN_Module.signal_attributes.iteritems()
+                if sig.style is not None}
 
             # The clear method will reset the breakpoints after all the
             # diagrams have been processed
@@ -1343,7 +1349,13 @@ else:
                 debug.send("qgen_logpoint %s %s '%s' %s '%s:%s' %s" % (
                     symbol, context, itid, filename, src_file, line,
                     model_filename), output=False)
-            QGEN_Module.logged_signal.add((itid, True))
+                sig_obj = QGEN_Module.signal_attributes.get(itid, None)
+                if sig_obj is None:
+                    sig_obj = Signal(itid)
+                    sig_obj.logged = True
+                    QGEN_Module.signal_attributes[itid] = sig_obj
+                else:
+                    sig_obj.logged = True
 
         @staticmethod
         def stop_logging_value_for_item(itid, debug):
@@ -1358,8 +1370,9 @@ else:
                 symbol = symbol[-1].strip()
                 debug.send("qgen_delete_logpoint %s %s" % (symbol, context),
                            output=False)
-            QGEN_Module.logged_signal.remove((itid, True))
-            QGEN_Module.logged_signal.add((itid, False))
+
+            sig_obj = QGEN_Module.signal_attributes.get(itid, None)
+            sig_obj.logged = False
 
         @staticmethod
         def stop_logging_values(diagrams):
@@ -1371,11 +1384,11 @@ else:
 
             for diag, toplevel, it in QGEN_Module.forall_auto_items(diagrams):
                 parent = it.get_parent_with_id() or toplevel
-                if (parent.id, True) in QGEN_Module.logged_signal:
+                sig_obj = QGEN_Module.signal_attributes.get(parent.id, None)
+                if sig_obj is not None and sig_obj.logged:
                     QGEN_Module.stop_logging_value_for_item(parent.id, debug)
 
-            QGEN_Module.__show_diagram_and_signal_values(debug,
-                                                         force=True)
+            QGEN_Module.__show_diagram_and_signal_values(debug, force=True)
 
         @staticmethod
         def log_values_in_file(diagrams, filename):
@@ -1564,8 +1577,9 @@ else:
             try:
                 d = GPS.Debugger.get()   # or raise exception
                 it = context.modeling_item
+                sig_obj = QGEN_Module.signal_attributes.get(it.id, None)
 
-                return (it.id, True) in QGEN_Module.watched_signal
+                return sig_obj.watched
             except:
                 return False
 
@@ -1578,8 +1592,9 @@ else:
             try:
                 d = GPS.Debugger.get()   # or raise exception
                 it = context.modeling_item
+                sig_obj = QGEN_Module.signal_attributes.get(it.id, None)
 
-                return (it.id, True) in QGEN_Module.logged_signal
+                return sig_obj.logged
             except:
                 return False
 
@@ -1689,7 +1704,12 @@ else:
                                output=False)
 
             if added:
-                QGEN_Module.watched_signal.add((it.id, True))
+                sig_obj = QGEN_Module.signal_attributes.get(it.id, None)
+                if sig_obj is None:
+                    sig_obj = Signal(it.id)
+                    QGEN_Module.signal_attributes[it.id] = sig_obj
+                sig_obj.watched = True
+
                 QGEN_Module.__show_diagram_and_signal_values(debug, force=True)
 
         def __contextual_disable_persistent_signal_value(self):
@@ -1703,8 +1723,8 @@ else:
                 debug.send("qgen_delete_watchpoint %s" % s, output=False)
 
             if removed:
-                QGEN_Module.watched_signal.remove((it.id, True))
-                QGEN_Module.watched_signal.add((it.id, False))
+                sig_obj = QGEN_Module.signal_attributes.get(it.id, None)
+                sig_obj.watched = False
                 QGEN_Module.__show_diagram_and_signal_values(debug, force=True)
 
         def __contextual_set_breakpoint(self):
