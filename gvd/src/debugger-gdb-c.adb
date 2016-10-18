@@ -312,6 +312,13 @@ package body Debugger.Gdb.C is
             --  field of a struct or union "enum name;".
 
             if Looking_At (Type_Str, Index, "enum ") then
+               if Type_Str (Index + 5) = '{' then
+                  --  We are in the "enum {....}" case
+                  Result := New_Enum_Type;
+                  Set_Type_Name (Result, "");
+                  return;
+               end if;
+
                Index := Index + 5;
                Skip_CPP_Token (Type_Str, Index);  --  skips enum name
                Index := Index + 1;
