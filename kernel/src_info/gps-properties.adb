@@ -214,6 +214,7 @@ package body GPS.Properties is
          Found    : Boolean) is
       begin
          Descr := new Property_Description;
+         Descr.Persistent := True;
 
          if Found then
             Descr.Value := new Property_Record'Class'(Property);
