@@ -23,6 +23,12 @@ If no tag is specified, the entry is relevant to all IDEs.
 New features in GPS 18.0 / GNATbench 18.0
 -----------------------------------------
 
+NF-18-PA19-020 GPS: resize Debugger Data items when pref changes (2016-10-19)
+
+  When the preferences that control the maximum size of items are changed in
+  the Preferences/Debugger dialog, this immediately impacts already displayed
+  items in the Debugger Data view.
+
 NF-18-PA12-040 GPS: remove entity information in Project view (2016-10-13)
 
   We no longer display the list of entities defined in a file, in the

@@ -715,6 +715,20 @@ package body GVD.Canvas is
          Display_Item (Item).Update_Display;
       end On_Item;
 
+      procedure Resize_Item
+         (Item : not null access Abstract_Item_Record'Class);
+      procedure Resize_Item
+         (Item : not null access Abstract_Item_Record'Class)
+      is
+      begin
+         if Item.all in Display_Item_Record'Class then
+            Display_Item (Item).Set_Width_Range
+              (Max => (Unit_Pixels, Gdouble (Max_Item_Width.Get_Pref)));
+            Display_Item (Item).Set_Height_Range
+              (Max => (Unit_Pixels, Gdouble (Max_Item_Height.Get_Pref)));
+         end if;
+      end Resize_Item;
+
    begin
       Canvas.Modified := Gtk_New
         (Stroke  => Null_RGBA,
@@ -736,6 +750,14 @@ package body GVD.Canvas is
          if Get_Process (Canvas) /= null then
             Change_Detect_Aliases (Canvas);
          end if;
+      end if;
+
+      if Pref = null
+         or else Pref = Preference (Max_Item_Width)
+         or else Pref = Preference (Max_Item_Height)
+      then
+         Canvas.Get_View.Model.For_Each_Item
+           (Resize_Item'Access, Filter => Kind_Item);
       end if;
    end Execute;
 
@@ -1932,7 +1954,6 @@ package body GVD.Canvas is
 
       Item.Update_Display;
 
-      --  ??? Should be changed when preferences are changed
       Item.Set_Width_Range
         (Max => (Unit_Pixels, Gdouble (Max_Item_Width.Get_Pref)));
       Item.Set_Height_Range
