@@ -666,24 +666,23 @@ xml_gnatprove = """<?xml version="1.0"?>
 <combo
 label="Proof level"
 switch="--level"
-noswitch="0"
 separator="="
 tip="Set the proof level from 0 = faster to 4 = more powerful" >
     <combo-entry label="0 (fast, one prover)" value="0"
                  tip="Equivalent to --prover=cvc4 --proof=per_check
- --steps=100"/>
+ --timeout=1"/>
     <combo-entry label="1 (fast, all provers)" value="1"
                  tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
- --steps=100"/>
+ --timeout=1"/>
     <combo-entry label="2 (all provers)" value="2"
                  tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
- --steps=1000"/>
+ --timeout=5"/>
     <combo-entry label="3 (slower, all provers)" value="3"
                  tip="Equivalent to --prover=cvc4,z3,altergo
- --proof=progressive --steps=1000"/>
+ --proof=progressive --timeout=5"/>
     <combo-entry label="4 (slowest, all provers)" value="4"
                  tip="Equivalent to --prover=cvc4,z3,altergo
- --proof=progressive --steps=10000"/>
+ --proof=progressive --timeout=10"/>
 </combo>
 <combo
 label="Proof strategy"
@@ -785,25 +784,24 @@ tip="Select analysis mode" >
 <combo
 label="Proof level"
 switch="--level"
-noswitch="0"
 separator="="
 column="2"
 tip="Set the proof level from 0 = faster to 4 = more powerful" >
     <combo-entry label="0 (fast, one prover)" value="0"
                  tip="Equivalent to --prover=cvc4 --proof=per_check
- --steps=100"/>
+ --timeout=1"/>
     <combo-entry label="1 (fast, all provers)" value="1"
                  tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
- --steps=100"/>
+ --timeout=1"/>
     <combo-entry label="2 (all provers)" value="2"
                  tip="Equivalent to --prover=cvc4,z3,altergo --proof=per_check
- --steps=1000"/>
+ --timeout=5"/>
     <combo-entry label="3 (slower, all provers)" value="3"
                  tip="Equivalent to --prover=cvc4,z3,altergo
- --proof=progressive --steps=1000"/>
+ --proof=progressive --timeout=5"/>
     <combo-entry label="4 (slowest, all provers)" value="4"
                  tip="Equivalent to --prover=cvc4,z3,altergo
- --proof=progressive --steps=10000"/>
+ --proof=progressive --timeout=10"/>
 </combo>
          <check label="Automatic timeout" switch="--timeout=auto" column="2"
                 tip="Adjust timeout to the proof level"
@@ -988,6 +986,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>--level=0</arg>
           <arg>--ide-progress-bar</arg>
        </command-line>
        <output-parsers>
@@ -1033,6 +1032,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>gnatprove</arg>
           <arg>-P%PP</arg>
           <arg>%X</arg>
+          <arg>--level=0</arg>
           <arg>--ide-progress-bar</arg>
           <arg>-U</arg>
        </command-line>
@@ -1082,6 +1082,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
+          <arg>--level=0</arg>
           <arg>-u</arg>
           <arg>%fp</arg>
        </command-line>
@@ -1131,6 +1132,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
+          <arg>--level=0</arg>
        </command-line>
        <output-parsers>
          output_chopper
@@ -1177,6 +1179,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
+          <arg>--level=0</arg>
           <arg>--limit-line=%f:%l</arg>
        </command-line>
        <output-parsers>
@@ -1224,6 +1227,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
+          <arg>--level=0</arg>
        </command-line>
        <output-parsers>
          output_chopper
@@ -1294,6 +1298,7 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
           <arg>-P%PP</arg>
           <arg>%X</arg>
           <arg>--ide-progress-bar</arg>
+          <arg>--level=0</arg>
        </command-line>
        <output-parsers>
          output_chopper
