@@ -25,6 +25,37 @@ If no tag is specified, the entry is relevant to all IDEs.
 Known problems fixed in GPS 18.0 / GNATbench 18.0
 -------------------------------------------------
 
+KP-17-PA19-024 GPS: missing "detect aliases" setting in Debugger Data
+
+  Problem:    There is no menu to disable alias detection in the Data
+              window. It is always enabled
+
+  Status:     This was fixed in 17.1 on 2016-10-19
+
+  Workaround: In the Preferences dialog, select "Show Advanced Preferences"
+              in the local configuration menu, then search for the Detect
+              Aliases preference.
+
+KP-17-PA19-013 GPS: clear Debugger Data window still shows items
+
+  Problem:    If you remove all items from the Debugger Data window, and
+              then restart GPS, the items that were there previously are
+              displayed again.
+
+  Status:     This was fixed in 17.1 on 2016-10-19
+
+  Workaround: Remove all items but one.
+
+KP-17-PA18-050 GPS: missing prompt in debugger after "graph display"
+
+  Problem:    After selecting a contextual menu that displays some information
+              in the Debugger Data window, the debugger console shows the
+              command that was executed, but is missing the prompt.
+
+  Status:     This was fixed in 17.1 on 2016-10-19
+
+  Workaround: You can type as usual, even without the prompt.
+
 KP-17-PA12-010 GPS: slow display of Project with large projects
 
   Problem:    For very large projects, displaying the Project view might
@@ -32,4 +63,4 @@ KP-17-PA12-010 GPS: slow display of Project with large projects
 
   Status:     This was fixed in 18.0 on 2016-10-13
 
-  Workaround: Use the Files view
+  Workaround: Use the Files view.
