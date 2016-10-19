@@ -42,6 +42,7 @@ with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;    use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
 with GPS.Kernel.Properties;    use GPS.Kernel.Properties;
 with GPS.Properties;           use GPS.Properties;
 with Gtk.Box;                  use Gtk.Box;
@@ -1200,6 +1201,8 @@ package body GVD.Canvas is
 
       Gtk_New (Sep);
       Menu.Append (Sep);
+
+      Append_Menu (Menu, View.Kernel, Detect_Aliases);
    end Create_Menu;
 
    ---------------------------
