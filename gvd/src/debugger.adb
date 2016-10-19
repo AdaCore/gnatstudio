@@ -760,6 +760,9 @@ package body Debugger is
                    Str      => Cmd (First .. Last - 1));
             begin
                if Tmp = Command_Intercepted then
+                  if Mode >= Visible then
+                     Process.Debugger.Display_Prompt;
+                  end if;
                   return;
 
                elsif Tmp /= "" then
