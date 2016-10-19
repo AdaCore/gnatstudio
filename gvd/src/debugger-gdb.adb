@@ -3343,13 +3343,16 @@ package body Debugger.Gdb is
          Last        : Integer;
          Current     : in out Breakpoint_Data;
          Has_Matched : out Boolean);
-      --  Match in S (First .. Last) file name, exception name and subprogram
-      --  name associated with the current breakpoint.
+      --  Match in S (First .. Last - 2) file name, exception name and
+      --  subprogram name associated with the current breakpoint.
 
       procedure Match_Extra_Breakpoint_Info
         (First   : Integer;
-         Last    : in out Integer;
+         Last    : Integer;
          Current : in out Breakpoint_Data);
+      --  Match in S (First .. Last - 2) extra information like commands,
+      --  condition,... The string represents a single line of the output, so
+      --  should add any extra info to the breakpoint, not override
 
       -----------------------
       -- Fill_Scope_Action --
@@ -3476,45 +3479,34 @@ package body Debugger.Gdb is
 
       procedure Match_Extra_Breakpoint_Info
         (First   : Integer;
-         Last    : in out Integer;
+         Last    : Integer;
          Current : in out Breakpoint_Data)
       is
          Matched : Match_Array (0 .. 10);
-         M       : Boolean := False;
+         Index, Index2   : Integer;
       begin
          Match (Condition_In_Breakpoint, S (First .. Last - 2), Matched);
          if Matched (0) /= No_Match then
-            Current.Condition := To_Unbounded_String
+            Append (Current.Condition,
+                    S (Matched (1).First .. Matched (1).Last));
+            return;
+         end if;
+
+         Match (Ignore_In_Breakpoint, S (First .. Last - 2), Matched);
+         if Matched (0) /= No_Match then
+            Current.Ignore := Natural'Value
               (S (Matched (1).First .. Matched (1).Last));
-            M := True;
+            return;
          end if;
 
-         if not M then
-            Match (Ignore_In_Breakpoint, S (First .. Last - 2), Matched);
-            if Matched (0) /= No_Match then
-               Current.Ignore := Natural'Value
-                 (S (Matched (1).First .. Matched (1).Last));
-               M := True;
-            end if;
-         end if;
-
-         if not M then
-            --  List of commands:
-            if First + 7 <= S'Last
-              and then S (First .. First + 7) = "        "
-            then
-               while Last + 7 <= S'Last
-                 and then S (Last .. Last + 7) = "        "
-               loop
-                  Skip_To_Char (S, Last, ASCII.LF);
-                  Last := Last + 1;
-               end loop;
-
-               if First /= Last then
-                  Current.Commands := To_Unbounded_String
-                    (S (First .. Last - 2));
-               end if;
-            end if;
+         --  List of commands:
+         if First + 7 <= S'Last
+           and then S (First .. First + 7) = "        "
+         then
+            Index := First + 8;
+            Index2 := Index;
+            Skip_To_Char (S, Index2, ASCII.LF);
+            Append (Current.Commands, S (Index .. Index2 - 1) & ASCII.LF);
          end if;
       end Match_Extra_Breakpoint_Info;
 
@@ -3653,6 +3645,7 @@ package body Debugger.Gdb is
                end if;
 
                if not Multiple then
+                  --  For each extra line in the breakpoint info
                   while Index <= S'Last
                     and then not (S (Index) in '0' .. '9')
                   loop
@@ -3672,6 +3665,7 @@ package body Debugger.Gdb is
                      if not M then
                         Match_Extra_Breakpoint_Info (Tmp, Index, B);
                      end if;
+
                   end loop;
                end if;
 
