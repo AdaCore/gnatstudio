@@ -72,9 +72,6 @@
   <key action="Move to next tab">control-alt-Right</key>
   <key action="Move to previous tab">control-alt-Left</key>
 
-  <key action="browser zoom out">minus</key>
-  <key action="browser zoom in">equal</key>
-
   <key action="Global Search in context: File Names">shift-F3</key>
 
   <key action="Complete identifier">control-slash</key>

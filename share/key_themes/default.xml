@@ -45,9 +45,6 @@
 
   <key action="Remove message">alt-Delete</key>
 
-  <key action="browser zoom out">minus</key>
-  <key action="browser zoom in">equal</key>
-
   <key action="Global Search" >control-u</key>
   <key action="Global Search in context: Entities">control-t</key>
 

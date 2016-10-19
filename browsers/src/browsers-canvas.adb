@@ -152,12 +152,6 @@ package body Browsers.Canvas is
      (Command : access Select_All_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   type Is_In_Browser is new Action_Filter_Record with null record;
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Is_In_Browser;
-      Context : Selection_Context) return Boolean;
-   --  Whether the focus is currently on a browser
-
    type Is_Writable_Filter is new Action_Filter_Record with null record;
    overriding function Filter_Matches_Primitive
      (Filter  : access Is_Writable_Filter;
@@ -1050,7 +1044,9 @@ package body Browsers.Canvas is
          if Zoom_Levels (J) <= Z
            and then Z < Zoom_Levels (J + 1)
          then
-            B.View.Set_Scale (Zoom_Levels (J + 1));
+            B.View.Scale_To_Fit
+               (Min_Scale => Zoom_Levels (J + 1),
+                Max_Scale => Zoom_Levels (J + 1));
          end if;
       end loop;
       return Commands.Success;
@@ -1074,7 +1070,9 @@ package body Browsers.Canvas is
          if Zoom_Levels (J - 1) < Z
            and then Z <= Zoom_Levels (J)
          then
-            B.View.Set_Scale (Zoom_Levels (J - 1));
+            B.View.Scale_To_Fit
+               (Min_Scale => Zoom_Levels (J - 1),
+                Max_Scale => Zoom_Levels (J - 1));
          end if;
       end loop;
       return Commands.Success;
@@ -1192,63 +1190,58 @@ package body Browsers.Canvas is
    ----------------------
 
    procedure Register_Actions (Kernel : access Kernel_Handle_Record'Class) is
-      Filter : constant Action_Filter := new Is_In_Browser;
       Is_Writable : constant Action_Filter := new Is_Writable_Filter;
    begin
       Register_Action
         (Kernel, "browser select all", new Select_All_Command,
          -"Select all items in a browser",
          Icon_Name => "gps-select-all-symbolic",
-         Filter   => Filter,
          Category => "Browsers");
 
       Register_Action
         (Kernel, "browser zoom out", new Zoom_Out_Command,
          -"Zoom out",
          Icon_Name => "gps-zoom-out-symbolic",
-         Category  => -"Browsers",
-         Filter    => Filter);
+         Category  => -"Browsers");
 
       Register_Action
         (Kernel, "browser zoom in", new Zoom_In_Command,
          -"Zoom in",
          Icon_Name => "gps-zoom-in-symbolic",
-         Category  => -"Browsers",
-         Filter    => Filter);
+         Category  => -"Browsers");
 
       Register_Action
         (Kernel, "browser toggle links", new Toggle_Links,
          -"Toggle display of links for the selected items",
          Icon_Name => "gps-toggle-links-symbolic",
-         Filter   => Filter,
          Category => -"Browsers");
 
       Register_Action
         (Kernel, "browser refresh", new Refresh_Command,
          -"Refresh layout",
          Icon_Name => "gps-refresh-symbolic",
-         Filter   => Filter and Is_Writable,
+         Filter   => Is_Writable,
          Category => -"Browsers");
 
       Register_Action
         (Kernel, "browser clear", new Clear_Command,
          -"Clear the contents of the browser",
          Icon_Name => "gps-clear-symbolic",
-         Filter   => Filter and Is_Writable,
+         Filter   => Is_Writable,
          Category => -"Browsers");
 
       Register_Action
         (Kernel, "browser remove unselected", new Remove_Unselected_Command,
          -"Remove unselected items",
          Icon_Name => "gps-remove-unselected-symbolic",
-         Filter   => Filter and Is_Writable,
+         Filter   => Is_Writable,
          Category => -"Browsers");
 
       Register_Action
         (Kernel, "browser remove selected", new Remove_Selected_Command,
          -"Remove selected items",
          Icon_Name => "gps-remove-symbolic",
-         Filter   => Filter and Is_Writable,
+         Filter   => Is_Writable,
          Category => -"Browsers");
    end Register_Actions;
 
@@ -1305,27 +1298,15 @@ package body Browsers.Canvas is
    ------------------------------
 
    overriding function Filter_Matches_Primitive
-     (Filter  : access Is_In_Browser;
-      Context : Selection_Context) return Boolean
-   is
-      pragma Unreferenced (Filter);
-   begin
-      return Get_Creator (Context) /= null
-        and then Browser_From_Context (Context) /= null;
-   end Filter_Matches_Primitive;
-
-   ------------------------------
-   -- Filter_Matches_Primitive --
-   ------------------------------
-
-   overriding function Filter_Matches_Primitive
      (Filter  : access Is_Writable_Filter;
       Context : Selection_Context) return Boolean
    is
       pragma Unreferenced (Filter);
+      B : constant General_Browser := Browser_From_Context (Context);
    begin
       return Get_Creator (Context) /= null
-        and then not Browser_From_Context (Context).Get_View.Read_Only;
+        and then B /= null
+        and then not B.Get_View.Read_Only;
    end Filter_Matches_Primitive;
 
    --------------------
