@@ -1,0 +1,7 @@
+Code-Review+1: CI Builder <ci-builder@adacore.com>
+Code-Review+2: Emmanuel Briot <briot@adacore.com>
+Submitted-by: Emmanuel Briot <briot@adacore.com>
+Submitted-at: Wed, 19 Oct 2016 12:44:43 +0200
+Reviewed-on: https://git.adacore.com/18098
+Project: gps
+Branch: refs/heads/topic/search_ui
