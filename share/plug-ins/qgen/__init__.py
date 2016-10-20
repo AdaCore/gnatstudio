@@ -217,7 +217,7 @@ class Project_Support(object):
               name="Output_Dir"
               editor_page="QGen"
               label="Output directory"
-              description="The location of all generated source code files."
+              description="Location of all generated source code files."
               hide_in="wizard library_wizard">
                 <string type="directory"/>
              </project_attribute>

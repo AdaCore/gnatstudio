@@ -1462,7 +1462,7 @@ package body KeyManager_Module.GUI is
       Shortcuts_Only := Manager.Create_Invisible_Pref
         ("shortcuts-only", False,
          Label => -"Shortcuts only",
-         Doc => -("If enabled, only actions with a shortcut are displayed."));
+         Doc   => -"Display only actions with a key shortcut.");
       Categories_Pref := Manager.Create_Invisible_Pref
         ("shortcuts-categories", True,
          Label => -"Show categories",

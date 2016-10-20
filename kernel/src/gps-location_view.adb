@@ -1462,8 +1462,7 @@ package body GPS.Location_View is
       Auto_Close := Kernel.Get_Preferences.Create_Invisible_Pref
         ("locations-auto-close", False,
          Label => -"Auto close Locations",
-         Doc =>
-           -("Close automatically the Locations when it becomes empty."));
+         Doc   => -"Close automatically Locations when it becomes empty.");
       Sort_Files_Alphabetical := Kernel.Get_Preferences.Create_Invisible_Pref
         ("locations-sort-Files-alphabetical", False,
          Label => -"Sort files alphabetically",

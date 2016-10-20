@@ -1421,8 +1421,7 @@ package body Language.Libclang is
         (Manager      => Kernel.Get_Preferences,
          Name         => "Libclang-LRU-Size",
          Label        => "Cache size",
-         Doc          =>
-           "The number of compilation units clang will keep in memory.",
+         Doc          => "Number of compilation units kept in memory.",
          Path         => "Editor/C & C++:Clang advanced settings",
          Default      => 8, Minimum => 1, Maximum => 128);
 
@@ -1430,8 +1429,7 @@ package body Language.Libclang is
         (Manager      => Kernel.Get_Preferences,
          Name         => "Libclang-Nb-Parsing-Tasks",
          Label        => "Parsing tasks count",
-         Doc          =>
-           "The number of concurrent tasks GPS will use to parse files.",
+         Doc          => "Number of concurrent tasks to parse files.",
          Path         => "Editor/C & C++:Clang advanced settings",
 
          Default      => Natural'Max

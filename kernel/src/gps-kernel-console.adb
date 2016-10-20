@@ -447,9 +447,7 @@ package body GPS.Kernel.Console is
       Wrap_Lines := Console.Kernel.Get_Preferences.Create_Invisible_Pref
         ("messages-wrap-line", True,
          Label => -"Wrap lines",
-         Doc   =>
-            -("Wrap long lines in the console. When disabled, scrolling is "
-            & "used instead."));
+         Doc   => -"Wrap long lines in the console.");
 
       Initialize
         (Console,

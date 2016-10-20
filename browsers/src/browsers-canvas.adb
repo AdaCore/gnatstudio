@@ -394,10 +394,10 @@ package body Browsers.Canvas is
         ("browsers-align-on-grid", True, Label => -"Align On Grid");
       Draw_Grid := Browser.Kernel.Get_Preferences.Create_Invisible_Pref
         ("browsers-display-grid", False, Label => -"Draw grid",
-         Doc => -"Draw a grid in the background.");
+         Doc => -"Draw a grid on background.");
       Vertical := Browser.Kernel.Get_Preferences.Create_Invisible_Pref
         ("browsers-vertical", False, Label => -"Vertical layout",
-         Doc => -("General orientation of the layout: either from left"
+         Doc => -("General orientation of the layout: from left"
            & " to right, or from top to bottom."));
       Add_Waypoints := Browser.Kernel.Get_Preferences.Create_Invisible_Pref
         ("browsers-add-waypoints", False, Label => -"Use waypoints",
