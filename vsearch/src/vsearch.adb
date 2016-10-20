@@ -102,6 +102,9 @@ package body Vsearch is
    Regexp_Search_Hist_Key  : constant History_Key := "regexp_search";
    --  The key for the histories.
 
+   Max_Nb_History_Entries  : constant Positive := 5;
+   --  Maximum number of entries in history for search/replace patterns
+
    Pattern_Child_Key : constant String := "pattern_child";
    Replace_Child_Key  : constant String := "replace_child";
    --  Keys used to identify the pattern/replace entry widgets
@@ -308,6 +311,7 @@ package body Vsearch is
    Column_Case_Sensitive : constant Gint := 2;
    Column_Is_Regexp      : constant Gint := 3;
    Column_Whole_Word     : constant Gint := 4;
+   Column_Is_Separator   : constant Gint := 5;
 
    type Search_Specific_Context is new Interactive_Command with record
       Context : GNAT.Strings.String_Access;
@@ -375,6 +379,12 @@ package body Vsearch is
       Label  : String) return String;
    --  Substitute macros in the label of the search contexts.
 
+   function Is_Separator_Row_Func
+     (Model : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean;
+   --  Used to know if the given row should be displayed as a separator in the
+   --  search pattern combo box.
+
    function On_Button_Press
      (Self  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event_Button) return Boolean;
@@ -434,10 +444,6 @@ package body Vsearch is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
    --  Called when a key is pressed in the replacement field.
-
-   procedure Register_Default_Search
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register the default search function
 
    function Get_Nth_Search_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
@@ -761,7 +767,7 @@ package body Vsearch is
          then
             Iter := Add_Unique_List_Entry
               (Model, Value (Value'First .. Value'Last - 4),
-               Prepend => False,
+               Prepend => True,
                Col     => Column_Text);
             Model.Set
               (Iter, Column_Pattern, Value (Value'First .. Value'Last - 4));
@@ -773,12 +779,15 @@ package body Vsearch is
               (Iter, Column_Case_Sensitive, Value (Value'Last - 1) = '*');
          else
             Iter := Add_Unique_List_Entry
-              (Model, Value, Prepend => False, Col => Column_Text);
+              (Model, Value, Prepend => True, Col => Column_Text);
             Model.Set (Iter, Column_Pattern, Value);
             Model.Set (Iter, Column_Case_Sensitive, False);
             Model.Set (Iter, Column_Is_Regexp, False);
             Model.Set (Iter, Column_Whole_Word, False);
          end if;
+
+         Model.Set
+           (Iter, Column_Is_Separator, False);
       end if;
    end Add_History_To_Combo;
 
@@ -1585,29 +1594,39 @@ package body Vsearch is
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
-      Search : constant Vsearch_Access := Search_Views.Retrieve_View (Kernel);
-      Item    : Gtk_Tree_Iter;
-      List    : Gtk_List_Store;
-      Casing     : constant Boolean := Get_Active (Search.Case_Toggle);
-      Whole_Word : constant Boolean := Get_Active (Search.Whole_Word_Toggle);
-      Regexp     : constant Boolean := Get_Active (Search.Regexp_Toggle);
+      Vsearch    : constant Vsearch_Access :=
+                     Search_Views.Retrieve_View (Kernel);
+      Model      : constant Gtk_List_Store :=
+                     -Get_Model (Vsearch.Pattern_Combo);
+      Item       : Gtk_Tree_Iter;
+      Casing     : constant Boolean := Get_Active (Vsearch.Case_Toggle);
+      Whole_Word : constant Boolean := Get_Active (Vsearch.Whole_Word_Toggle);
+      Regexp     : constant Boolean := Get_Active (Vsearch.Regexp_Toggle);
 
    begin
+      --  Add a separator row to distinguish prefefined regexps from the
+      --  patterns typed by the user.
+
+      Item := Add_Unique_List_Entry (Model, Text => "", Col => Column_Text);
+      Model.Set (Item, Column_Is_Separator, True);
+
+      --  Add an entry for each registered prefedined regexp
+
       for R of Vsearch_Module_Id.Search_Regexps.all loop
-         Item := Add_Unique_Combo_Entry (Search.Pattern_Combo, R.Name.all);
-         List := -Get_Model (Search.Pattern_Combo);
-         List.Set (Item, Column_Pattern,        R.Regexp.all);
-         List.Set (Item, Column_Case_Sensitive, R.Case_Sensitive);
-         List.Set (Item, Column_Is_Regexp,      R.Is_Regexp);
-         List.Set (Item, Column_Whole_Word,     False);
+         Item := Add_Unique_Combo_Entry (Vsearch.Pattern_Combo, R.Name.all);
+         Model.Set (Item, Column_Pattern,        R.Regexp.all);
+         Model.Set (Item, Column_Case_Sensitive, R.Case_Sensitive);
+         Model.Set (Item, Column_Is_Regexp,      R.Is_Regexp);
+         Model.Set (Item, Column_Whole_Word,     False);
+         Model.Set (Item, Column_Is_Separator,   False);
       end loop;
 
       --  Restore the options as before (they might have changed depending
       --  on the last predefined regexp we inserted)
 
-      Set_Active (Search.Case_Toggle, Casing);
-      Set_Active (Search.Whole_Word_Toggle, Whole_Word);
-      Set_Active (Search.Regexp_Toggle, Regexp);
+      Set_Active (Vsearch.Case_Toggle, Casing);
+      Set_Active (Vsearch.Whole_Word_Toggle, Whole_Word);
+      Set_Active (Vsearch.Regexp_Toggle, Regexp);
    end Execute;
 
    ---------------------------
@@ -1692,6 +1711,16 @@ package body Vsearch is
       return False;
    end On_Button_Release;
 
+   ---------------------------
+   -- Is_Separator_Row_Func --
+   ---------------------------
+
+   function Is_Separator_Row_Func
+     (Model : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
+   is
+      (Get_Boolean (Model, Iter, Column_Is_Separator));
+
    ---------------------
    -- On_Button_Press --
    ---------------------
@@ -1741,9 +1770,10 @@ package body Vsearch is
       procedure Disable_Button_Focus (Combo_Box : Gtk_Combo_Box);
       --  Disable focus on internal button in given Combo_Box
 
-      procedure Set_Mode_From_History;
-      --  If the vsearch mode is Unknown, set it from its corresponding history
-      --  key.
+      procedure Initialize_From_History;
+      --  Create all the history keys needed by the search view and try to get
+      --  content from it to initialize the search view (e.g: get the last
+      --  saved search patterns).
 
       --------------------------
       -- Disable_Button_Focus --
@@ -1758,26 +1788,83 @@ package body Vsearch is
          Combo_Box.Set_Focus_Chain (Focus_Chain);
       end Disable_Button_Focus;
 
-      ---------------------------
-      -- Set_Mode_From_History --
-      ---------------------------
+      -----------------------------
+      -- Initialize_From_History --
+      -----------------------------
 
-      procedure Set_Mode_From_History is
+      procedure Initialize_From_History is
+         History   : History_Record := Get_History (Self.Kernel).all;
          Last_Mode : constant String_List_Access :=
-                       Get_History
-                         (Get_History (Self.Kernel).all, Mode_Hist_Key);
+                       Get_History (History, Key => Mode_Hist_Key);
+         Patterns  : constant String_List_Access :=
+                       Get_History (History, Pattern_Hist_Key);
       begin
+         --  Create a new key in the history to save the replace patterms and
+         --  fill the replace combo first, so that the selection remains in the
+         --  pattern combo.
+
+         Create_New_Key_If_Necessary
+           (History,
+            Key      => Replace_Hist_Key,
+            Key_Type => Strings);
+         Set_Max_Length
+           (History,
+            Num => Max_Nb_History_Entries,
+            Key => Replace_Hist_Key);
+
+         Get_History
+           (History,
+            Key         => Replace_Hist_Key,
+            Combo       => Self.Replace_Combo,
+            Clear_Combo => False,
+            Prepend     => True);
+
+         --  Create a new key in the history to save the typed search patterns
+         --  and fill the search pattern combo if some values are found in
+         --  history.
+
+         Create_New_Key_If_Necessary
+           (History,
+            Key      => Pattern_Hist_Key,
+            Key_Type => Strings);
+         Set_Max_Length
+           (History,
+            Num => Max_Nb_History_Entries,
+            Key => Pattern_Hist_Key);
+
+         if Patterns /= null then
+            for I in reverse Patterns'Range loop
+               Add_History_To_Combo (Self, Patterns (I).all);
+            end loop;
+
+            Self.Pattern_Combo.Set_Active (0);
+            Gtk_Entry (Self.Pattern_Combo.Get_Child).Select_Region (0, -1);
+         else
+            Set_Active_Text (Self.Pattern_Combo, "");
+         end if;
+
+         --  Create a key in the history to save the last used vsearch mode and
+         --  retrieve it if it already exists.
+
+         Create_New_Key_If_Necessary
+           (History,
+            Key       => Mode_Hist_Key,
+            Key_Type  => Strings);
+         Set_Max_Length
+           (History,
+            Num => 1,
+            Key => Mode_Hist_Key);
+
          if Last_Mode /= null and then Self.Mode = Unknown then
             Self.Set_Vsearch_Mode
               (Mode => Vsearch_Mode'Value (Last_Mode (Last_Mode'Last).all));
          end if;
-      end Set_Mode_From_History;
+      end Initialize_From_History;
 
       Group_Widget : Dialog_Group_Widget;
       Replace_Row  : Gtk_Widget;
       Layout       : Gtk_Cell_Layout;
       Renderer     : Gtk_Cell_Renderer_Text;
-      Value        : String_List_Access;
       Model        : Gtk_List_Store;
    begin
       Gtk.Box.Initialize_Vbox (Self);
@@ -1802,7 +1889,8 @@ package body Vsearch is
           Guint (Column_Pattern)        => GType_String,
           Guint (Column_Case_Sensitive) => GType_Boolean,
           Guint (Column_Is_Regexp)      => GType_Boolean,
-          Guint (Column_Whole_Word)     => GType_Boolean));
+          Guint (Column_Whole_Word)     => GType_Boolean,
+          Guint (Column_Is_Separator)   => GType_Boolean));
       Gtk_New_With_Model_And_Entry (Self.Pattern_Combo, +Model);
       Self.Pattern_Combo.Set_Entry_Text_Column (Column_Pattern);
       Layout := +Self.Pattern_Combo;
@@ -1810,6 +1898,7 @@ package body Vsearch is
       Widget_Callback.Object_Connect
         (Self.Pattern_Combo, Gtk.Combo_Box.Signal_Changed,
          On_Pattern_Combo_Changed'Access, Self);
+      Self.Pattern_Combo.Set_Row_Separator_Func (Is_Separator_Row_Func'Access);
       Self.Pattern_Combo.Get_Child.On_Button_Press_Event
         (On_Button_Press'Access, After => False);
       Self.Pattern_Combo.Get_Child.On_Button_Release_Event
@@ -1950,36 +2039,8 @@ package body Vsearch is
         (Self.Context_Combo, Gtk.Combo_Box.Signal_Changed,
          Reset_Search'Access, Self.Kernel);
 
-      --  Fill the replace combo first, so that the selection remains in
-      --  the pattern combo
-      Get_History
-        (Get_History (Self.Kernel).all, Replace_Hist_Key, Self.Replace_Combo,
-         Clear_Combo => False, Prepend => True);
-
-      Value := Get_History (Get_History (Self.Kernel).all, Pattern_Hist_Key);
-
-      if Value /= null then
-         for V in Value'Range loop
-            Add_History_To_Combo (Self, Value (V).all);
-         end loop;
-
-         Self.Pattern_Combo.Set_Active (0);
-         Gtk_Entry (Self.Pattern_Combo.Get_Child).Select_Region (0, -1);
-      else
-         Set_Active_Text (Self.Pattern_Combo, "");
-      end if;
-
-      --  Create a key in the history to save the last used vsearch mode and
-      --  retrieve it if it already exists.
-      Create_New_Key_If_Necessary
-        (Get_History (Self.Kernel).all,
-         Key       => Mode_Hist_Key,
-         Key_Type  => Strings);
-      Set_Max_Length
-        (Get_History (Self.Kernel).all,
-         Num  => 1,
-         Key  => Mode_Hist_Key);
-      Set_Mode_From_History;
+      --  Initialize the widgets that may have saved items in history
+      Initialize_From_History;
 
       Search_Reset_Hook.Add (new Set_First_Next_Mode_Cb);
       Search_Functions_Changed_Hook.Add (new Search_Functions_Changed);
@@ -2793,27 +2854,6 @@ package body Vsearch is
    end Set_Last_Of_Module;
 
    -----------------------------
-   -- Register_Default_Search --
-   -----------------------------
-
-   procedure Register_Default_Search
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
-   begin
-      Register_Search_Pattern
-        (Kernel,
-         Name           => -"Simple string",
-         Regexp         => "",
-         Case_Sensitive => False,
-         Is_Regexp      => False);
-      Register_Search_Pattern
-        (Kernel,
-         Name           => -"Regular expression",
-         Regexp         => "",
-         Case_Sensitive => False,
-         Is_Regexp      => True);
-   end Register_Default_Search;
-
-   -----------------------------
    -- Register_Search_Pattern --
    -----------------------------
 
@@ -2954,10 +2994,6 @@ package body Vsearch is
          Description => -("Replace all the occurrences of the search pattern "
            & "by the replace pattern"),
          Category    => -"Search");
-
-      --  Register the default search functions
-
-      Register_Default_Search (Kernel);
 
       Register_Preferences (Kernel);
    end Register_Module;
