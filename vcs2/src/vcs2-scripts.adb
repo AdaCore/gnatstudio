@@ -21,7 +21,6 @@ with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
-with GPS.Scripts;           use GPS.Scripts;
 with GPS.VCS;               use GPS.VCS;
 with GPS.VCS_Engines;       use GPS.VCS_Engines;
 
@@ -41,27 +40,15 @@ package body VCS2.Scripts is
      (Self  : not null access Script_Engine_Factory;
       File  : Virtual_File) return String;
 
-   VCS_Class_Name        : constant String := "VCS2";
-
-   type Engine_Proxy is new Script_Proxy with null record;
-   overriding function Class_Name
-     (Self : Engine_Proxy) return String is (VCS_Class_Name);
-
-   package Engine_Proxies is new Script_Proxies
-     (Element_Type => VCS_Engine_Access,
-      Proxy        => Engine_Proxy);
-
    type Script_Engine is new VCS_Engine with record
       Factory : access VCS_Engine_Factory'Class;
       Script  : Scripting_Language;
-      Inst    : Engine_Proxy;    --  instance of GPS.VCS
    end record;
-   overriding procedure Free (Self : in out Script_Engine);
    overriding function Name
      (Self : not null access Script_Engine) return String;
-   overriding procedure Async_Fetch_Status_For_File
+   overriding procedure Async_Fetch_Status_For_Files
      (Self    : not null access Script_Engine;
-      File    : Virtual_File);
+      Files   : File_Array);
    overriding procedure Async_Fetch_Status_For_Project
      (Self    : not null access Script_Engine;
       Project : Project_Type);
@@ -107,8 +94,7 @@ package body VCS2.Scripts is
       Data   : in out Callback_Data'Class)
    is
       Inst  : constant Class_Instance :=
-        Engine_Proxies.Get_Or_Create_Instance
-          (Self.Inst, VCS_Engine_Access (Self), Self.Script);
+        Create_VCS_Instance (Self.Script, Self);
       F     : Subprogram_Type := Get_Method (Inst, Method);
       Dummy : Boolean;
    begin
@@ -120,16 +106,6 @@ package body VCS2.Scripts is
    end Call_Method;
 
    ----------
-   -- Free --
-   ----------
-
-   overriding procedure Free (Self : in out Script_Engine) is
-   begin
-      Free (Self.Inst);
-      Free (VCS_Engine (Self));   --  inherited
-   end Free;
-
-   ----------
    -- Name --
    ----------
 
@@ -139,19 +115,26 @@ package body VCS2.Scripts is
       return Self.Factory.Name;
    end Name;
 
-   ---------------------------------
-   -- Async_Fetch_Status_For_File --
-   ---------------------------------
+   ----------------------------------
+   -- Async_Fetch_Status_For_Files --
+   ----------------------------------
 
-   overriding procedure Async_Fetch_Status_For_File
+   overriding procedure Async_Fetch_Status_For_Files
      (Self    : not null access Script_Engine;
-      File    : Virtual_File)
+      Files   : File_Array)
    is
       D : Callback_Data'Class := Create (Self.Script, 1);
+      L : List_Instance'Class := New_List (Self.Script);
    begin
-      D.Set_Nth_Arg (1, Create_File (Self.Script, File));
-      Call_Method (Self, "async_fetch_status_for_file", D);
-   end Async_Fetch_Status_For_File;
+      for F in Files'Range loop
+         L.Set_Nth_Arg
+           (F + 1 - Files'First, Create_File (Self.Script, Files (F)));
+      end loop;
+
+      D.Set_Nth_Arg (1, L);
+      Call_Method (Self, "async_fetch_status_for_files", D);
+      Free (L);
+   end Async_Fetch_Status_For_Files;
 
    ------------------------------------
    -- Async_Fetch_Status_For_Project --
@@ -196,10 +179,7 @@ package body VCS2.Scripts is
       Inst := Self.Construct.Execute (Data);  -- create the pyton instance
       Free (Data);
 
-      Engine_Proxies.Store_In_Instance    --  set binding with Ada
-        (R.Inst,
-         Inst => Inst,
-         Obj  => VCS_Engine_Access (R));
+      Set_VCS_Instance (R, Inst);  --  set binding with Ada
 
       R.Factory := Self;
       R.Script  := Script;
@@ -234,14 +214,23 @@ package body VCS2.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Inst : constant Class_Instance := Data.Nth_Arg (1);
-      VCS  : constant VCS_Engine_Access := Engine_Proxies.From_Instance (Inst);
+      VCS  : constant not null VCS_Engine_Access :=
+        VCS_Engine_Access (Get_VCS (Inst));
    begin
       if Command = "name" then
          Data.Set_Return_Value (VCS.Name);
 
-      elsif Command = "ensure_status_for_file" then
-         Data.Set_Return_Value
-           (VCS.Ensure_Status_For_File (Nth_Arg (Data, 2)));
+      elsif Command = "ensure_status_for_files" then
+         declare
+            List : constant List_Instance := Data.Nth_Arg (2);
+            Files : File_Array (1 .. List.Number_Of_Arguments);
+         begin
+            for F in Files'Range loop
+               Files (F) := Nth_Arg (List, F);
+            end loop;
+
+            Data.Set_Return_Value (VCS.Ensure_Status_For_Files (Files));
+         end;
 
       elsif Command = "ensure_status_for_project" then
          Data.Set_Return_Value
@@ -307,10 +296,7 @@ package body VCS2.Scripts is
               Get_VCS (Kernel, P.Project_Path);
          begin
             Data.Set_Return_Value
-              (Engine_Proxies.Get_Or_Create_Instance
-                 (Script_Engine (F.all).Inst,
-                  Obj    => F,
-                  Script => Get_Script (Data)));
+              (Create_VCS_Instance (Get_Script (Data), F));
          end;
       end if;
    end Static_VCS_Handler;
@@ -344,8 +330,8 @@ package body VCS2.Scripts is
          Class         => VCS,
          Getter        => VCS_Handler'Access);
       Kernel.Scripts.Register_Command
-        ("ensure_status_for_file",
-         Params        => (1 => Param ("file")),
+        ("ensure_status_for_files",
+         Params        => (1 => Param ("files")),
          Class         => VCS,
          Handler       => VCS_Handler'Access);
       Kernel.Scripts.Register_Command

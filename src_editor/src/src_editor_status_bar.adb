@@ -99,13 +99,15 @@ package body Src_Editor_Status_Bar is
      (Bar : access Source_Editor_Status_Bar_Record'Class);
    --  Destroy Box.Buffer_Info_Frames
 
-   type On_VCS_Status_Changed is new File_Hooks_Function with record
+   type On_VCS_Status_Changed is new Vcs_File_Status_Hooks_Function with record
       Bar : Source_Editor_Status_Bar;
    end record;
    overriding procedure Execute
      (Self          : On_VCS_Status_Changed;
       Kernel        : not null access Kernel_Handle_Record'Class;
-      File          : GNATCOLL.VFS.Virtual_File);
+      Vcs           : not null access Abstract_VCS_Engine'Class;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Status        : VCS_File_Status);
 
    -------------------------
    -- Destroy_Info_Frames --
@@ -371,17 +373,17 @@ package body Src_Editor_Status_Bar is
    overriding procedure Execute
      (Self          : On_VCS_Status_Changed;
       Kernel        : not null access Kernel_Handle_Record'Class;
-      File          : GNATCOLL.VFS.Virtual_File)
+      Vcs           : not null access Abstract_VCS_Engine'Class;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Status        : VCS_File_Status)
    is
+      pragma Unreferenced (Kernel);
       Bar : constant Source_Editor_Status_Bar := Self.Bar;
    begin
       if File = Bar.Buffer.Get_Filename then
          declare
-            Engine : constant not null VCS_Engine_Access :=
-              Get_VCS (Kernel, Get_Project (Bar.View));
-            Props  : constant VCS_File_Properties :=
-              Engine.File_Properties_From_Cache (File);
-            D : constant Status_Display := Engine.Get_Display (Props.Status);
+            D : constant Status_Display :=
+              VCS_Engine_Access (Vcs).Get_Display (Status);
          begin
             if Bar.VCS_Status = null then
                Gtk_New (Bar.VCS_Status);
@@ -391,7 +393,7 @@ package body Src_Editor_Status_Bar is
 
             Bar.VCS_Status.Set_Icon_Name (To_String (D.Icon_Name));
             Bar.VCS_Status.Set_Tooltip_Markup
-              ("Status for <b>" & Engine.Name & "</b>: "
+              ("Status for <b>" & VCS_Engine_Access (Vcs).Name & "</b>: "
                & To_String (D.Label));
          end;
       end if;
@@ -407,9 +409,10 @@ package body Src_Editor_Status_Bar is
       View   : Source_View;
       Buffer : Source_Buffer)
    is
-      H : access On_VCS_Status_Changed;
+      H      : access On_VCS_Status_Changed;
       Kernel : constant Kernel_Handle := Get_Kernel (Buffer);
-      P : constant Project_Type := Get_Project (View);
+      P      : constant Project_Type := Get_Project (View);
+      VCS    : VCS_Engine_Access;
    begin
       Bar := new Source_Editor_Status_Bar_Record;
       Initialize_Hbox (Bar, Homogeneous => False);
@@ -459,10 +462,18 @@ package body Src_Editor_Status_Bar is
 
       --  Monitor changes to VCS status (and get the initial status for the
       --  file)
-      H := new On_VCS_Status_Changed'(File_Hooks_Function with Bar => Bar);
+      H := new On_VCS_Status_Changed'
+        (Vcs_File_Status_Hooks_Function with Bar => Bar);
       Vcs_File_Status_Changed_Hook.Add (H, Watch => Bar);  --  will update
-      if Get_VCS (Kernel, P).Ensure_Status_For_File (Buffer.Get_Filename) then
-         H.Execute (Kernel, Buffer.Get_Filename);  --  display initial value
+
+      VCS := Get_VCS (Kernel, P);
+
+      if VCS.Ensure_Status_For_Files ((1 => Buffer.Get_Filename)) then
+         H.Execute        --  display initial value
+           (Kernel,
+            VCS,
+            Buffer.Get_Filename,
+            VCS.File_Properties_From_Cache (Buffer.Get_Filename).Status);
       end if;
 
       Show_Cursor_Position (Bar, Line => 1, Column => 1);

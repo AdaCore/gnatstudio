@@ -79,6 +79,15 @@ package body VCS2.Module is
                Trace (Me, "  New engine " & Repo);
                Engine := F.Create_Engine (Repo);
                Set_VCS (Kernel, R, Engine);
+
+               --  if Repo is of the form 'root/.git' or 'root/CVS',... we also
+               --  want to register 'root' itself for this VCS even if it does
+               --  not contain project sources. This is needed for
+               --  Guess_VCS_For_Directory
+
+               if R.Is_Directory then
+                  Set_VCS (Kernel, R.Get_Parent, Engine);
+               end if;
             else
                Trace (Me, "  Shared engine " & Repo);
             end if;

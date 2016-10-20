@@ -165,6 +165,28 @@ package body GPS.VCS_Engines is
       end if;
    end Get_VCS;
 
+   -----------------------------
+   -- Guess_VCS_For_Directory --
+   -----------------------------
+
+   function Guess_VCS_For_Directory
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Directory : Virtual_File) return not null VCS_Engine_Access
+   is
+      VCS : VCS_Engine_Access;
+      Dir : Virtual_File := Directory;
+   begin
+      while Dir.Full_Name.all /= "/" loop
+         VCS := Get_VCS (Kernel, Dir);
+         if VCS /= Global_Data.No_VCS_Engine then
+            return VCS;
+         end if;
+         Dir := Dir.Get_Parent;
+      end loop;
+
+      return Global_Data.No_VCS_Engine;
+   end Guess_VCS_For_Directory;
+
    -------------
    -- Set_VCS --
    -------------
@@ -242,31 +264,36 @@ package body GPS.VCS_Engines is
    -- Ensure_Status_For_File --
    ----------------------------
 
-   function Ensure_Status_For_File
-     (Self    : not null access VCS_Engine'Class;
-      File    : Virtual_File) return Boolean
+   function Ensure_Status_For_Files
+     (Self    : not null access VCS_Engine;
+      Files   : File_Array) return Boolean
    is
-      N : constant Boolean := Need_Update_For_Files (Self, (1 => File));
+      N : constant Boolean := Need_Update_For_Files (Self, Files);
    begin
+      Trace (Me, "Ensure status for a set of files");
       if N then
-         Self.Async_Fetch_Status_For_File (File);
+         VCS_Engine_Access (Self).Async_Fetch_Status_For_Files (Files);
       end if;
       return not N;
-   end Ensure_Status_For_File;
+   end Ensure_Status_For_Files;
 
    -------------------------------
    -- Ensure_Status_For_Project --
    -------------------------------
 
    function Ensure_Status_For_Project
-     (Self    : not null access VCS_Engine'Class;
+     (Self    : not null access VCS_Engine;
       Project : Project_Type) return Boolean
    is
       S : File_Array_Access := Project.Source_Files (Recursive => False);
       N : constant Boolean := Need_Update_For_Files (Self, S.all);
    begin
+      if Active (Me) then
+         Trace (Me, "Ensure status for project " & Project.Name
+                & " => " & N'Img);
+      end if;
       if N then
-         Self.Async_Fetch_Status_For_Project (Project);
+         VCS_Engine_Access (Self).Async_Fetch_Status_For_Project (Project);
       end if;
       Unchecked_Free (S);
       return not N;
@@ -277,7 +304,7 @@ package body GPS.VCS_Engines is
    ----------------------------------------
 
    function Ensure_Status_For_All_Source_Files
-     (Self    : not null access VCS_Engine'Class) return Boolean
+     (Self    : not null access VCS_Engine) return Boolean
    is
       Iter : Project_Iterator :=
         Get_Project (Self.Kernel).Start (Recursive => True);
@@ -285,6 +312,7 @@ package body GPS.VCS_Engines is
       P    : Project_Type;
       F    : File_Array_Access;
    begin
+      Trace (Me, "Ensure status for all source files");
       loop
          P := Current (Iter);
          exit when P = No_Project;
@@ -300,7 +328,7 @@ package body GPS.VCS_Engines is
       end loop;
 
       if N then
-         Self.Async_Fetch_Status_For_All_Files;
+         VCS_Engine_Access (Self).Async_Fetch_Status_For_All_Files;
       end if;
       return not N;
    end Ensure_Status_For_All_Source_Files;
@@ -310,7 +338,7 @@ package body GPS.VCS_Engines is
    --------------------------------
 
    function File_Properties_From_Cache
-     (Self    : not null access VCS_Engine'Class;
+     (Self    : not null access VCS_Engine;
       File    : Virtual_File)
       return VCS_File_Properties
    is
@@ -363,7 +391,11 @@ package body GPS.VCS_Engines is
              Props        => Props));
 
          if Need_Hook then
-            Vcs_File_Status_Changed_Hook.Run (Self.Kernel, File => File);
+            Vcs_File_Status_Changed_Hook.Run
+              (Self.Kernel,
+               Vcs    => Self,
+               File   => File,
+               Status => Props.Status);
          end if;
       end if;
    end Set_File_Status_In_Cache;

@@ -1982,7 +1982,7 @@ Classes
 
    .. automethod:: GPS.VCS2.ensure_status_for_all_source_files
 
-   .. automethod:: GPS.VCS2.ensure_status_for_file
+   .. automethod:: GPS.VCS2.ensure_status_for_files
 
    .. automethod:: GPS.VCS2.ensure_status_for_project
 

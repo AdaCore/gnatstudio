@@ -9464,11 +9464,11 @@ class VCS2(object):
         :type: str
         """
 
-    def ensure_status_for_file(self, file):
+    def ensure_status_for_files(self, files):
         """
-        Make sure that `file` has a known status in self's cache.
+        Make sure that all files has a known status in self's cache.
 
-        :param GPS.File file:
+        :param List[GPS.File] files:
         :returntype: bool
            True if there was already a status in the cache, False if a
            background computation was started.

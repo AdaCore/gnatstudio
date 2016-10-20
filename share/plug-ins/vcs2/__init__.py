@@ -47,13 +47,13 @@ class VCS(GPS.VCS2):
         :return: a string
         """
 
-    def async_fetch_status_for_file(self, file):
+    def async_fetch_status_for_files(self, files):
         """
         Fetch status information for `file`.
         Use `set_status_for_all_files`.
 
         :param GPS.VCS2 repo: the specific repository
-        :param GPS.File file:
+        :param List[GPS.File] files:
         """
         self.async_fetch_status_for_all_files()
 

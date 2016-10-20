@@ -28,7 +28,7 @@ with GPS.VCS;                    use GPS.VCS;
 
 package GPS.VCS_Engines is
 
-   type VCS_Engine is abstract tagged private;
+   type VCS_Engine is abstract new Abstract_VCS_Engine with private;
    type VCS_Engine_Access is access all VCS_Engine'Class;
 
    procedure Finalize (Kernel : not null access Kernel_Handle_Record'Class);
@@ -122,6 +122,20 @@ package GPS.VCS_Engines is
    --  A given engine might be shared by multiple projects
    --  Engine will be freed automatically when no other project references it
 
+   function Guess_VCS_For_Directory
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Directory : Virtual_File) return not null VCS_Engine_Access;
+   --  For now, we assume there is a single VCS for a given directory (one
+   --  possibly use case for multiple VCS is to have a local vcs and a
+   --  remote one, but this is handled by local_history.py instead).
+   --
+   --  We cannot assume that any of the files in the directory is also a
+   --  project source, so we can't use Get_VCS above.
+   --  Instead, we check whether Directory or any of its parents has a result
+   --  for Get_VCS. This kinda assume that a directory either contains
+   --  project sources, or is beneath the directory that contains the VCS
+   --  repo (root/.git for instance).
+
    function No_VCS_Engine
      (Kernel   : not null access Kernel_Handle_Record'Class)
       return not null access VCS_Engine'Class;
@@ -131,14 +145,14 @@ package GPS.VCS_Engines is
    -- File statuses --
    -------------------
 
-   procedure Async_Fetch_Status_For_File
-     (Self    : not null access VCS_Engine;
-      File    : Virtual_File) is null;
+   procedure Async_Fetch_Status_For_Files
+     (Self      : not null access VCS_Engine;
+      Files     : File_Array) is null;
    procedure Async_Fetch_Status_For_Project
-     (Self    : not null access VCS_Engine;
-      Project : Project_Type) is null;
+     (Self      : not null access VCS_Engine;
+      Project   : Project_Type) is null;
    procedure Async_Fetch_Status_For_All_Files
-     (Self    : not null access VCS_Engine) is null;
+     (Self      : not null access VCS_Engine) is null;
    --  Force the computation of the current statuses of files.
    --  This does not check the cache status.
    --  Fetching is asynchronous, since it can take a long time depending on
@@ -147,14 +161,14 @@ package GPS.VCS_Engines is
    --  changed.
    --  Should not be called directly, consider Ensure_Status_* instead
 
-   function Ensure_Status_For_File
-     (Self    : not null access VCS_Engine'Class;
-      File    : Virtual_File) return Boolean;
+   function Ensure_Status_For_Files
+     (Self      : not null access VCS_Engine;
+      Files     : File_Array) return Boolean;
    function Ensure_Status_For_Project
-     (Self    : not null access VCS_Engine'Class;
-      Project : Project_Type) return Boolean;
+     (Self      : not null access VCS_Engine;
+      Project   : Project_Type) return Boolean;
    function Ensure_Status_For_All_Source_Files
-     (Self    : not null access VCS_Engine'Class) return Boolean;
+     (Self      : not null access VCS_Engine) return Boolean;
    --  If any of the files in the set does not have a valid cache entry, then
    --  the corresponding Async_Fetch_Status_* operation will be called.
    --  Otherwise, these procedures assume the cache is up-to-date and do not
@@ -170,7 +184,7 @@ package GPS.VCS_Engines is
    --  compute their status anyway.
 
    function File_Properties_From_Cache
-     (Self    : not null access VCS_Engine'Class;
+     (Self    : not null access VCS_Engine;
       File    : Virtual_File)
      return VCS_File_Properties;
    --  Return the current known status of the file.
@@ -192,7 +206,7 @@ package GPS.VCS_Engines is
    --  therefore trigger queries to the actual VCS engine to refresh the cache.
 
    Default_Properties : constant VCS_File_Properties :=
-     (Status_Unmodified, Null_Unbounded_String, Null_Unbounded_String);
+     (Status_Untracked, Null_Unbounded_String, Null_Unbounded_String);
 
    procedure Set_File_Status_In_Cache
      (Self         : not null access VCS_Engine'Class;
@@ -241,9 +255,6 @@ package GPS.VCS_Engines is
       return not null Kernel_Handle;
    --  Return the kernel.
 
-   procedure Free (Self : in out VCS_Engine) is null;
-   --  Free memory associated with Self, including all cached data.
-
    type Dummy_VCS_Engine is new VCS_Engine with private;
    --  An engine that does nothing, used when the project is not setup for
    --  VCS operations
@@ -274,7 +285,7 @@ private
       Equivalent_Keys => "=");
    use VCS_Status_Displays;
 
-   type VCS_Engine is abstract tagged record
+   type VCS_Engine is abstract new Abstract_VCS_Engine with record
       Kernel   : Kernel_Handle;
       Cache    : VCS_File_Cache.Map;
       Displays : VCS_Status_Displays.Map;
@@ -284,6 +295,18 @@ private
 
    overriding function Name
      (Self : not null access Dummy_VCS_Engine) return String is ("unknown");
+   overriding function Ensure_Status_For_Files
+     (Self      : not null access Dummy_VCS_Engine;
+      Files     : File_Array) return Boolean is (True);
+   overriding function Ensure_Status_For_Project
+     (Self      : not null access Dummy_VCS_Engine;
+      Project   : Project_Type) return Boolean is (True);
+   overriding function Ensure_Status_For_All_Source_Files
+     (Self      : not null access Dummy_VCS_Engine) return Boolean is (True);
+   overriding function File_Properties_From_Cache
+     (Self    : not null access Dummy_VCS_Engine;
+      File    : Virtual_File)
+     return VCS_File_Properties is (Default_Properties);
 
    function Kernel
      (Self : not null access VCS_Engine'Class)

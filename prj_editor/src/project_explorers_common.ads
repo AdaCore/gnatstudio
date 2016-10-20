@@ -27,9 +27,11 @@ with Gtk.Widget;     use Gtk.Widget;
 with Gtkada.MDI;     use Gtkada.MDI;
 with Gtkada.Tree_View; use Gtkada.Tree_View;
 
-with GPS.Kernel;     use GPS.Kernel;
-with GPS.Kernel.MDI; use GPS.Kernel.MDI;
-with Language;       use Language;
+with GPS.Kernel;       use GPS.Kernel;
+with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;   use GPS.Kernel.MDI;
+with GPS.VCS;          use GPS.VCS;
+with Language;         use Language;
 
 package Project_Explorers_Common is
 
@@ -43,6 +45,10 @@ package Project_Explorers_Common is
    overriding procedure Child_Drag_Finished
      (Child  : access MDI_Explorer_Child_Record);
    --  See inherited documentation
+
+   type Base_Explorer_Tree_Record is new Tree_View_Record with record
+      Kernel : Kernel_Handle;
+   end record;
 
    ------------------------
    -- Column definitions --
@@ -96,7 +102,7 @@ package Project_Explorers_Common is
    --  has been initialized with the columns described above.
 
    function Create_Or_Reuse_Node
-     (Model  : Gtk_Tree_Store;
+     (Self      : not null access Base_Explorer_Tree_Record'Class;
       Parent : Gtk_Tree_Iter;
       Kind   : Node_Types;
       Name   : String;
@@ -106,61 +112,83 @@ package Project_Explorers_Common is
    --  Display_Name_Column.
 
    function Create_Or_Reuse_File
-     (Model  : Gtk_Tree_Store;
+     (Self      : not null access Base_Explorer_Tree_Record'Class;
       Dir    : Gtk_Tree_Iter;
       File   : Virtual_File) return Gtk_Tree_Iter;
    --  Create a new file node, or reuse one if it already exists
 
    function Create_Node
-     (Model  : Gtk_Tree_Store;
-      Parent : Gtk_Tree_Iter;
-      Kind   : Node_Types;
-      Name   : String;
-      File   : Virtual_File) return Gtk_Tree_Iter;
+     (Self      : not null access Base_Explorer_Tree_Record'Class;
+      Parent    : Gtk_Tree_Iter;
+      Kind      : Node_Types;
+      Name      : String;
+      File      : Virtual_File;
+      Icon_Name : String := "") return Gtk_Tree_Iter;
    --  Create a new node. Name is set for the Display_Name_Column.
+   --  The icon_name will be computed from Kind if none is specified as
+   --  argument.
 
    function Create_File
-     (Model  : Gtk_Tree_Store;
-      Dir    : Gtk_Tree_Iter;
-      File   : Virtual_File) return Gtk_Tree_Iter;
+     (Self      : not null access Base_Explorer_Tree_Record'Class;
+      Dir       : Gtk_Tree_Iter;
+      File      : Virtual_File;
+      Icon_Name : String := "gps-emblem-file-unmodified") return Gtk_Tree_Iter;
    --  Create a file node at the end of the children of Dir
 
    procedure Append_Runtime_Info
-     (Kernel    : Kernel_Handle;
-      Model     : Gtk_Tree_Store;
+     (Self      : not null access Base_Explorer_Tree_Record'Class;
       Node      : Gtk_Tree_Iter);
    --  Add runtime information
 
    function Get_Node_Type
      (Model : Gtk_Tree_Store;
       Node  : Gtk_Tree_Iter) return Node_Types;
+   function Get_Node_Type
+     (Self  : not null access Base_Explorer_Tree_Record'Class;
+      Node  : Gtk_Tree_Iter) return Node_Types
+     is (Get_Node_Type (Self.Model, Node));
    --  Return the type of Node
 
    procedure Set_Node_Type
-     (Model    : Gtk_Tree_Store;
+     (Self     : not null access Base_Explorer_Tree_Record'Class;
       Node     : Gtk_Tree_Iter;
       N_Type   : Node_Types;
       Expanded : Boolean);
    --  Set the Node type and the pixmap accordingly
 
    function Get_Directory_From_Node
-     (Model : Gtk_Tree_Store;
+     (Self  : not null access Base_Explorer_Tree_Record'Class;
       Node  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
    --  Return the name of the directory to which Node belongs.
 
    function Get_File_From_Node
-     (Model : Gtk_Tree_Store;
+     (Self  : not null access Base_Explorer_Tree_Record'Class;
       Node  : Gtk_Tree_Iter) return GNATCOLL.VFS.Virtual_File;
-   --  Return the name of the file containing Node (or, in case Node is an
-   --  Entity_Node, the name of the file that contains the entity).
+   --  Return the name of the file containing Node
 
    function Get_Project_From_Node
-     (Model     : Gtk_Tree_Store;
-      Kernel    : access GPS.Kernel.Kernel_Handle_Record'Class;
+     (Self      : not null access Base_Explorer_Tree_Record'Class;
       Node      : Gtk_Tree_Iter;
       Importing : Boolean) return Project_Type;
    --  Return the name of the project that Node belongs to. If Importing is
    --  True, we return the importing project, not the one associated with Node.
+
+   ---------
+   -- VCS --
+   ---------
+
+   type On_VCS_Status_Changed is new Vcs_File_Status_Hooks_Function with record
+      Tree     : access Base_Explorer_Tree_Record'Class;
+   end record;
+   overriding procedure Execute
+     (Self          : On_VCS_Status_Changed;
+      Kernel        : not null access Kernel_Handle_Record'Class;
+      Vcs           : not null access Abstract_VCS_Engine'Class;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Status        : VCS_File_Status);
+   --  Should be set for the Vcs_File_Status_Changed_Hook.
+   --  It will automatically update the icons for all displayed files in the
+   --  tree
 
    ----------
    -- Misc --
@@ -190,23 +218,20 @@ package Project_Explorers_Common is
    --  or remove unwanted categories (in which case Cat_Unknown is returned).
 
    function On_Button_Press
-     (Kernel    : Kernel_Handle;
-      Child     : access MDI_Explorer_Child_Record'Class;
-      Tree      : not null access Tree_View_Record'Class;
+     (Child     : access MDI_Explorer_Child_Record'Class;
+      Tree      : not null access Base_Explorer_Tree_Record'Class;
       Event     : Gdk_Event_Button) return Boolean;
    --  If the Event is a button click, expand the node or jump to the
    --  location accordingly, and return whether the event should be propagated.
 
    function On_Key_Press
-     (Kernel : Kernel_Handle;
-      Tree   : not null access Tree_View_Record'Class;
+     (Tree   : not null access Base_Explorer_Tree_Record'Class;
       Event  : Gdk_Event) return Boolean;
    --  React to key press event on the tree
 
    procedure Context_Factory
-     (Context : in out Selection_Context;
-      Kernel  : Kernel_Handle;
-      Model   : Gtk_Tree_Store;
+     (Self    : not null access Base_Explorer_Tree_Record'Class;
+      Context : in out Selection_Context;
       Iter    : Gtk_Tree_Iter);
    --  Return the context to use for the contextual menu
 

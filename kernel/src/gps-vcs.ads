@@ -20,8 +20,37 @@
 --  do not force a whole recompilation of the project.
 
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
+with GPS.Scripts;            use GPS.Scripts;
 
 package GPS.VCS is
+
+   type Abstract_VCS_Engine is abstract tagged private;
+   type Abstract_VCS_Engine_Access is access all Abstract_VCS_Engine'Class;
+   --  Always derived in GPS.VCS_Engines
+   --  For now kept is so that changes to the latter do not force a full
+   --  recompilation because of the hooks
+
+   procedure Free (Self : in out Abstract_VCS_Engine);
+   --  Free the memory used by Self
+
+   -------------
+   -- Scripts --
+   -------------
+
+   VCS_Class_Name        : constant String := "VCS2";
+
+   function Create_VCS_Instance
+     (Script : access Scripting_Language_Record'Class;
+      VCS    : not null access Abstract_VCS_Engine'Class)
+      return Class_Instance;
+   function Get_VCS
+     (Inst   : Class_Instance)
+      return not null access Abstract_VCS_Engine'Class;
+   procedure Set_VCS_Instance
+     (VCS    : not null access Abstract_VCS_Engine'Class;
+      Inst   : Class_Instance);
+   --  Convert between Ada and python types
 
    -------------------
    -- File statuses --
@@ -85,5 +114,19 @@ package GPS.VCS is
       Repo_Version : Unbounded_String;
    end record;
    --  Version and Repo_Version are only set for file-based VCS systems.
+
+private
+
+   type Engine_Proxy is new Script_Proxy with null record;
+   overriding function Class_Name
+     (Self : Engine_Proxy) return String is (VCS_Class_Name);
+
+   package Engine_Proxies is new Script_Proxies
+     (Element_Type => Abstract_VCS_Engine_Access,
+      Proxy        => Engine_Proxy);
+
+   type Abstract_VCS_Engine is abstract tagged record
+      Instances    : Engine_Proxy;    --  instance of GPS.VCS
+   end record;
 
 end GPS.VCS;
