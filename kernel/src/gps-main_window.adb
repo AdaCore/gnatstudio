@@ -260,8 +260,17 @@ package body GPS.Main_Window is
       (Win   : access Gtk_Window_Record'Class;
        Event : Gdk_Event;
        Data  : Delete_Event_Data) return Boolean;
-   --  Called when a window is resized, to store its size in the properties
+   --  Called when a window is deleted, to store its size in the properties
    --  and be able to restore it later on.
+
+   package Hide_Events is new Gtk.Handlers.User_Callback
+      (Widget_Type => Gtk_Window_Record,
+       User_Type   => Delete_Event_Data);
+   procedure On_Hide
+      (Win   : access Gtk_Window_Record'Class;
+       Data  : Delete_Event_Data);
+   --  Called when a window is hidden, to store its size in the properties
+   --  and be able to restore ir later on.
 
    --------------------------
    -- For_All_Open_Windows --
@@ -1646,10 +1655,31 @@ package body GPS.Main_Window is
        Data  : Delete_Event_Data) return Boolean
    is
       pragma Unreferenced (Event);
-      Prop : access Window_Size_Property;
+   begin
+      --  Call the On_Hide procedure which will actually save the size of the
+      --  window, but only when the window is still visible, to avoid saving
+      --  wrong sizes.
+
+      if Win.Is_Visible then
+         On_Hide (Win, Data => Data);
+      end if;
+
+      return False;
+   end On_Delete;
+
+   -------------
+   -- On_Hide --
+   -------------
+
+   procedure On_Hide
+      (Win   : access Gtk_Window_Record'Class;
+       Data  : Delete_Event_Data)
+   is
+      Prop          : access Window_Size_Property;
       Width, Height : Gint;
    begin
       Win.Get_Size (Width, Height);
+
       if Active (Me) then
          Trace (Me, "Storing new size for window "
             & To_String (Data.Name)
@@ -1667,8 +1697,7 @@ package body GPS.Main_Window is
           Name       => "size",
           Property   => Prop,
           Persistent => True);
-      return False;
-   end On_Delete;
+   end On_Hide;
 
    -----------------------------------
    -- Set_Default_Size_From_History --
@@ -1712,14 +1741,17 @@ package body GPS.Main_Window is
          Win.Set_Default_Size (Width, Height);
       end if;
 
-      --  Start monitoring resizes of the window, so that we can store the
-      --  size in the properties file
+      --  Start monitoring delete and hide events of the window so that we
+      --  can store the size in the properties file.
 
       Data.Kernel := Kernel;
       Data.Name   := To_Unbounded_String (Name);
       Delete_Events.Connect
          (Win, Gtk.Widget.Signal_Delete_Event,
           Delete_Events.To_Marshaller (On_Delete'Access), Data);
+      Hide_Events.Connect
+         (Win, Gtk.Widget.Signal_Hide,
+          Hide_Events.To_Marshaller (On_Hide'Access), Data);
    end Set_Default_Size_From_History;
 
    ----------
