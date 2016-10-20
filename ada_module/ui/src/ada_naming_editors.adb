@@ -390,7 +390,7 @@ package body Ada_Naming_Editors is
                     2 => To_Unbounded_String (".2.ada"),
                     3 => To_Unbounded_String (".ada")),
          Doc    => "Choose a suffix for file names that contain subunits "
-         & "(separate bodies)");
+         & "(separate bodies).");
 
       --  Create the 'Exceptions' group widget
       Group_Widget := new Dialog_Group_Widget_Record;

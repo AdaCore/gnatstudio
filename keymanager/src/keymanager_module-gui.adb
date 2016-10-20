@@ -1462,15 +1462,15 @@ package body KeyManager_Module.GUI is
       Shortcuts_Only := Manager.Create_Invisible_Pref
         ("shortcuts-only", False,
          Label => -"Shortcuts only",
-         Doc => -("If enabled, only actions with a shortcut are displayed"));
+         Doc => -("If enabled, only actions with a shortcut are displayed."));
       Categories_Pref := Manager.Create_Invisible_Pref
         ("shortcuts-categories", True,
          Label => -"Show categories",
-         Doc => -"Whether to group actions by categories");
+         Doc => -"Group actions by categories.");
       Show_Empty_Cat := Manager.Create_Invisible_Pref
         ("shortcuts-show-empty-cat", False,
          Label => -"Show all categories",
-         Doc => -("Whether to show actions with no category."
+         Doc => -("Show actions with no category."
            & ASCII.LF
            & "These actions are typically internal to GPS, and are generally"
            & " not bound to a key shortcut. However, it might occasionally be"

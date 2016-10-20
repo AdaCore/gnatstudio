@@ -67,7 +67,7 @@ if gnatdist_tool != "":
     editor_section="DSA configuration"
     label="DSA configuration file name"
     hide_in="library_wizard"
-    description="DSA configuration file to use for this project">
+    description="DSA configuration file to use for this project.">
     <string type="file"/>
   </project_attribute>
 

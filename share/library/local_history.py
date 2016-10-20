@@ -59,7 +59,7 @@ to specify your preferred format for diff""",
 
 Preference("Plugins/local_history/when_no_prj").create(
     "When no project", "boolean",
-    """Whether files outside of a project should also have a local history.
+    """Have a local history for files outside of a project.
 In such a case, the local history will be put in a local_rcs_dir subdirectory
 of the directory that contains the file. When the file belongs to a project,
 the local history goes to the object directory of the project.""",
@@ -229,8 +229,8 @@ class LocalHistory:
             os.chdir(dirname(self.file))
             diff_switches = Preference(
                 "Plugins/local_history/diff_switches").get()
-            proc = Process("rcsdiff " + diff_switches
-                           + " -r" + revision + " " + self.rcs_file)
+            proc = Process("rcsdiff " + diff_switches +
+                           " -r" + revision + " " + self.rcs_file)
             diff = proc.get_result()
             os.chdir(pwd)
             Console("Local History").clear()

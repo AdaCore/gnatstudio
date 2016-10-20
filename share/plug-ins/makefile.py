@@ -323,7 +323,7 @@ parse_xml("""
     editor_page="Build/Make"
     editor_section="Make"
     hide_in="wizard library_wizard"
-    description="Makefile to use for this project">
+    description="Makefile to use for this project.">
     <string type="file"/>
   </project_attribute>
   <project_attribute
@@ -332,7 +332,7 @@ parse_xml("""
     editor_page="Build/Make"
     editor_section="Make"
     hide_in="wizard library_wizard properties"
-    description="Deprecated, will be ignored">
+    description="Deprecated, will be ignored.">
     <string type=""/>
   </project_attribute>
   <project_attribute
@@ -356,7 +356,7 @@ if os_utils.locate_exec_on_path("ant"):
     editor_page="Build/Ant"
     editor_section="Ant"
     hide_in="wizard library_wizard"
-    description="Ant build file to use for this project">
+    description="Ant build file to use for this project.">
     <string type="file"/>
   </project_attribute>
   <project_attribute

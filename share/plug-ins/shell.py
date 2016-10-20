@@ -94,7 +94,7 @@ GPS.Preference("Plugins/shell/contextual").create(
     True)
 GPS.Preference("Plugins/shell/stty").create(
     "Send stty setup", "boolean",
-    """"Whether to send the 'stty echo' command automatically. This command
+    """"Send the 'stty echo' command automatically. This command
 is needed in some shells to see the keys typed on the keyboard.
 This is only applicable to Unix shells.""",
     True)

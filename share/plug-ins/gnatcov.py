@@ -129,7 +129,7 @@ class GNATcovPlugin(object):
             editor_page='GNATcov',
             editor_section='Run',
             hide_in='wizard library_wizard',
-            description='Extra build switches to pass to gnatcov run',
+            description='Extra build switches to pass to gnatcov run.',
         ).children(X('string')),
 
         X(
@@ -157,7 +157,7 @@ class GNATcovPlugin(object):
             editor_page='GNATcov',
             editor_section='Coverage',
             hide_in='wizard library_wizard',
-            description='Extra build switches to pass to gnatcov coverage',
+            description='Extra build switches to pass to gnatcov coverage.',
         ).children(X('string')),
     ]
 

@@ -1,5 +1,5 @@
 """
-This script adds an incremental-search capability to GPS
+ adds an incremental-search capability to GPS
 
 This is similar to what Emacs does
 When you select the menu /Navigate/Find Incremental (or bind a key
@@ -62,9 +62,9 @@ from gps_utils import interactive
 Preference('Plugins/isearch/highlightnext').create(
     'Highlight next matches',
     'boolean',
-    "Whether GPS should highlight the next matches."
-    + " This highlighting will be visible until the next isearch command."
-    + " To cancel, start an isearch and press Esc immediately",
+    "Highlight the next matches in the editor." +
+    " This highlighting will be visible until the next isearch command." +
+    " To cancel, start an isearch and press Esc immediately",
     True)
 
 Preference('Plugins/isearch/nextmatchcolor').create(
@@ -85,8 +85,8 @@ isearch_backward_action_name = 'isearch backward'
 # Changing the name of menus should be reflected in emacs.xml
 
 try:
-   # If we have PyGTK installed, we'll do the highlighting of the next
-   # matches in the background, which makes the interface more responsive
+    # If we have PyGTK installed, we'll do the highlighting of the next
+    # matches in the background, which makes the interface more responsive
     from gi.repository import GLib
     has_pygtk = 1
 except:
@@ -315,9 +315,9 @@ class Isearch(CommandWindow):
         if not self.locked and input != '':
             # Automatic case sensitivity: when we have an upper case, switch to
             # case sensitive
-            if (not self.explicit_case_sensitive
-                    and not self.case_sensitive
-                    and input.lower() != input):
+            if (not self.explicit_case_sensitive and not
+                    not self.case_sensitive and
+                    input.lower() != input):
                 self.case_sensitive = True
                 self.set_prompt(self.prompt())
             Isearch.last_case_sensitive = self.case_sensitive

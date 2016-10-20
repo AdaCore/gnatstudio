@@ -16,7 +16,7 @@ EDITOR_LOCATIONS, EDITOR, DISABLED = (
 show_diags_pref = GPS.Preference("Editor/C & C++:Clang/Show diagnostics")
 show_diags_pref.create(
     "Show clang live diagnostics", "enum",
-    "How to show clang live diagnostics in GPS, for C/C++",
+    "How to show clang live diagnostics in GPS, for C/C++.",
     0, EDITOR_LOCATIONS, EDITOR, DISABLED
 )
 

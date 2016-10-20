@@ -2853,9 +2853,8 @@ package body GPS.Kernel.Messages is
       Locations_Save_In_Desktop := Kernel.Get_Preferences.Create_Invisible_Pref
         ("locations-save-in-desktop", False,
          Label => -"Save locations on exit",
-         Doc => -(
-           -("Whether the contents of the Locations view should be saved"
-             & " and restored when GPS is restarted.")));
+         Doc => -("Save and restore the contents of the Locations among each "
+                  & "GPS session."));
    end Register_Module;
 
 end GPS.Kernel.Messages;

@@ -523,7 +523,7 @@ package body Browsers.Entities is
       Show_Qualified_Name := Kernel.Get_Preferences.Create_Invisible_Pref
         ("browser-entities-qualified-names", False,
          Label => -"Show qualified names",
-         Doc  => -"Whether the title bars should show a fully qualified name");
+         Doc  => -"Show a fully qualified name for title bars.");
 
       Register_Action
         (Kernel, "Browser: examine entity",

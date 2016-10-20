@@ -394,17 +394,17 @@ package body Browsers.Canvas is
         ("browsers-align-on-grid", True, Label => -"Align On Grid");
       Draw_Grid := Browser.Kernel.Get_Preferences.Create_Invisible_Pref
         ("browsers-display-grid", False, Label => -"Draw grid",
-         Doc => -"Whether to draw a grid in the background");
+         Doc => -"Draw a grid in the background.");
       Vertical := Browser.Kernel.Get_Preferences.Create_Invisible_Pref
         ("browsers-vertical", False, Label => -"Vertical layout",
          Doc => -("General orientation of the layout: either from left"
-           & " to right, or from top to bottom"));
+           & " to right, or from top to bottom."));
       Add_Waypoints := Browser.Kernel.Get_Preferences.Create_Invisible_Pref
         ("browsers-add-waypoints", False, Label => -"Use waypoints",
          Doc =>
-           (-("Whether to insert waypoints in long edges when performing the"
+           (-("Insert waypoints in long edges when performing the"
             & " layout of the graph. This might result in less edge crossings"
-            & " but is sometimes harder to use interactively")));
+            & " but is sometimes harder to use interactively.")));
 
       --  Set css style for scrollbars
       Get_Style_Context

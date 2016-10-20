@@ -23,7 +23,7 @@ project_attributes = """
    label="Debug port"
    editor_page="GNATemulator"
    hide_in="wizard library_wizard"
-   description="Port used by GNATemulator to debug"
+   description="Port used by GNATemulator to debug."
   >
     <string/>
   </project_attribute>

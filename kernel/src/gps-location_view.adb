@@ -1449,27 +1449,26 @@ package body GPS.Location_View is
         ("locations-auto-jump-to-first", True,
          Label => -"Jump to first location",
          Doc =>
-           -("Whether GPS should automatically jump to the first location"
+            -("Jump to the first location"
             & " when entries are added to the Location window (error"
             & " messages, find results, ...)"));
       Locations_Wrap := Kernel.Get_Preferences.Create_Invisible_Pref
         ("locations-wrap", True,
          Label => -"Wrap around on next/previous",
          Doc =>
-           -("Whether using the Next Tag and Previous Tag actions "
-            & " should wrap around to the beginning when reaching the end of "
-            & " the category."));
+            -("Wrap around to the beginning when reaching the end of "
+            & " the category when using the Next Tag and Previous"
+            & "Tag actions."));
       Auto_Close := Kernel.Get_Preferences.Create_Invisible_Pref
         ("locations-auto-close", False,
          Label => -"Auto close Locations",
          Doc =>
-           -("Whether the Locations view should be closed "
-            & "automatically when it becomes empty."));
+           -("Close automatically the Locations when it becomes empty."));
       Sort_Files_Alphabetical := Kernel.Get_Preferences.Create_Invisible_Pref
         ("locations-sort-Files-alphabetical", False,
          Label => -"Sort files alphabetically",
          Doc =>
-           -("Force sorting of files alphabetically, and ignore the default"
+            -("Force sorting of files alphabetically, and ignore the default"
             & " sort order (which depends on the category)"));
 
       Register_Action

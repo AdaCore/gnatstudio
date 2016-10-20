@@ -226,8 +226,8 @@ XML = r"""<?xml version="1.0" ?>
     editor_page="GNATtest"
     editor_section="Directories"
     label="Harness Directory"
-    description="is used to specify the directory in which to """ \
-    """place harness packages and project file for the test driver"
+    description="Used to specify the directory in which to """ \
+    """place harness packages and project file for the test driver."
     hide_in="wizard library_wizard"
     >
     <string type="directory" default="gnattest/harness"/>
@@ -240,7 +240,7 @@ XML = r"""<?xml version="1.0" ?>
     disable_if_not_set="true"
     disable="gnattest.tests_root gnattest.subdir"
     label="Tests Directory"
-    description="Test files are put in given directory"
+    description="Directory in which Test Files are put."
     hide_in="wizard library_wizard"
     >
     <string default="gnatest/tests"/>
@@ -265,7 +265,7 @@ XML = r"""<?xml version="1.0" ?>
     disable_if_not_set="true"
     disable="gnattest.tests_dir gnattest.tests_root"
     label="Stub Subdir"
-    description="Test packages are placed in subdirectories"
+    description="Place the Test Packages in subdirectories."
     hide_in="wizard library_wizard"
     >
   </project_attribute>

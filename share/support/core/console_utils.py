@@ -21,7 +21,7 @@ def cu_create_preference(num):
     cu_regexp.create(
         "Regexp to highlight",
         "string",
-        "Enter a regular expression to highlight in the Messages View",
+        "Enter a regular expression to highlight in the Messages View.",
         "")
     cu_style.create_style(
         label="Regexp style",

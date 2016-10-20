@@ -1742,7 +1742,7 @@ package body Project_Properties is
         (Widget    => Self.Name,
          Label     => "Name",
          Doc       =>  "Name of the project. " &
-           "Only applies to the project you selected initially");
+           "Only applies to the project you selected initially.");
 
       --  Path
 
@@ -1764,7 +1764,7 @@ package body Project_Properties is
          Doc       =>
            "Directory containing the project file. Changing this field"
          & " will move the project file. This field only applies to"
-         & " the project you selected initially");
+         & " the project you selected initially.");
 
       --  Relative paths
 
@@ -1779,7 +1779,7 @@ package body Project_Properties is
          & " the project (source and build directories, dependencies"
          & " between projects,...) will be stored as paths relative"
          & " to the location of the project file. It will thus be"
-         & " easier to move the project file to another directory");
+         & " easier to move the project file to another directory.");
    end Initialize;
 
    ------------------------------

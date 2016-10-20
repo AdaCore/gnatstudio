@@ -1047,7 +1047,7 @@ package body GPS.Kernel.Preferences is
         (Manager => Kernel.Preferences,
          Name    => "Search-Src-Highlight-Color",
          Label   => -"Search highlighting",
-         Doc     => -"Color for search results",
+         Doc     => -"Color for search results.",
          Default => "#BDD7FF",
          Path    => -"Messages:GPS & Editors");
 

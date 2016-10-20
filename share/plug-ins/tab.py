@@ -21,8 +21,9 @@ if not GPS.Logger("PREVENT_ALIGN_ON_TAB").active:
     tabs_align_selection = GPS.Preference("Editor/tabs_align_selection")
     tabs_align_selection.create(
         "Align selection on tab", "boolean",
-        "Whether <tab> should also align arrows, use clauses and "
-        "assignments (:=) when multiple lines are selected.",
+        "Align arrows, use clauses and "
+        "assignments (:=) when pressing <tab> while multiple lines "
+        "are selected.",
         True)
 
 

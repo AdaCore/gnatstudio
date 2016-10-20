@@ -22,7 +22,7 @@ XML = r"""<?xml version="1.0" ?>
         editor_section="Source directories"
         list="true"
         ordered="true"
-        description="List of directories that contain the source files. You can specify that a directory and all its subdirectories should be included by checking the Recursive checkbox"
+        description="List of directories that contain the source files. You can specify that a directory and all its subdirectories should be included by checking the Recursive checkbox."
         label="">
         <string type="directory" default="." />
     </project_attribute>
@@ -61,7 +61,7 @@ XML = r"""<?xml version="1.0" ?>
         label="files"
         editor_page="Sources/Files"
         editor_section="Locally removed files"
-        description="List of source files from the extended project that should no longer be visible to the compiler when compiling the extending project. This can be used for instance when a source file has become obsolete due to other changes in the project"
+        description="List of source files from the extended project that should no longer be visible to the compiler when compiling the extending project. This can be used for instance when a source file has become obsolete due to other changes in the project."
         disable_if_not_set="true"
         hide_in="library_wizard wizard"
         list="true"
@@ -74,7 +74,7 @@ XML = r"""<?xml version="1.0" ?>
        editor_page=""
        editor_section="Languages"
        label=""
-       description="List of languages for the source files of this project"
+       description="List of languages for the source files of this project."
        hide_in="properties"
        list="true">
        <shell default="Ada">supported_languages</shell>
@@ -110,7 +110,7 @@ XML = r"""<?xml version="1.0" ?>
        package="IDE"
        editor_page="Embedded"
        editor_section="Communication Settings"
-       description="Name or IP address of the embedded target. This field should be left blank if you are not working on an embedded application"
+       description="Name or IP address of the embedded target. This field should be left blank if you are not working on an embedded application."
        hide_in="wizard library_wizard"
        label="Program host">
        <string />
@@ -121,7 +121,7 @@ XML = r"""<?xml version="1.0" ?>
        package="IDE"
        editor_page="Embedded"
        editor_section="Communication Settings"
-       description="Protocol used to connect to the embedded target. This field should be left blank if you are not working on an embedded application"
+       description="Protocol used to connect to the embedded target. This field should be left blank if you are not working on an embedded application."
        hide_in="wizard library_wizard"
        label="Protocol">
        <choice>wtx</choice>
@@ -136,7 +136,7 @@ XML = r"""<?xml version="1.0" ?>
        package="IDE"
        editor_page=""
        editor_section="Tools"
-       description="The command to compile the source files for a given language"
+       description="The command to compile the source files for a given language."
        hide_in="all"
        label="compiler">
        <index attribute="Languages">
@@ -150,7 +150,7 @@ XML = r"""<?xml version="1.0" ?>
    <project_attribute
        name="Xref_Database"
        package="IDE"
-       description="Location of the xref database"
+       description="Location of the xref database."
        hide_in="all"
        label="xref database">
    </project_attribute>
@@ -160,7 +160,7 @@ XML = r"""<?xml version="1.0" ?>
        package="IDE"
        editor_page=""
        editor_section="Tools"
-       description="The gnatls command used to find where the Ada run time files are installed (including optional arguments, e.g. gnatls --RTS=sjlj)"
+       description="The gnatls command used to find where the Ada run time files are installed (including optional arguments, e.g. gnatls --RTS=sjlj)."
        hide_in="all"
        label="Gnatls">
        <choice default="true" >gnatls</choice>
@@ -172,7 +172,7 @@ XML = r"""<?xml version="1.0" ?>
        package="IDE"
        editor_page=""
        editor_section="Tools"
-       description="The gnat driver used to run the various commands associated with the GNAT toolchain"
+       description="The gnat driver used to run the various commands associated with the GNAT toolchain."
        hide_in="all"
        label="Gnat">
        <choice default="true" >gnat</choice>
@@ -184,7 +184,7 @@ XML = r"""<?xml version="1.0" ?>
        package="IDE"
        editor_page=""
        editor_section="Tools"
-       description="The command line to use when debugging applications (including optional arguments). Only gdb and its variants are currently supported"
+       description="The command line to use when debugging applications (including optional arguments). Only gdb and its variants are currently supported."
        hide_in="all"
        label="Debugger">
        <choice default="true" >gdb</choice>
@@ -196,7 +196,7 @@ XML = r"""<?xml version="1.0" ?>
        package="Builder"
        editor_page="Build"
        editor_section="External configuration"
-       description="External file that contains the configuration pragmas to use for Ada sources. This file will be used both for this project and all its imported projects"
+       description="External file that contains the configuration pragmas to use for Ada sources. This file will be used both for this project and all its imported projects."
        label="Global pragmas"
        hide_in="wizard library_wizard">
        <string type="file" />
@@ -207,7 +207,7 @@ XML = r"""<?xml version="1.0" ?>
        package="Compiler"
        editor_page="Build"
        editor_section="External configuration"
-       description="External file that contains the configuration pragmas to use for Ada sources in this project. This is the combined with the pragmas found in the Global pragmas attribute of the root project"
+       description="External file that contains the configuration pragmas to use for Ada sources in this project. This is the combined with the pragmas found in the Global pragmas attribute of the root project."
        label="Local pragmas"
        hide_in="wizard library_wizard">
        <string type="file" />
@@ -218,7 +218,7 @@ XML = r"""<?xml version="1.0" ?>
        package="Builder"
        editor_page="Build"
        editor_section="External configuration"
-       description="List of compiler switches to use when compiling any source file in the project hierarchy"
+       description="List of compiler switches to use when compiling any source file in the project hierarchy."
        label="Global Compilation Switches"
        list="true"
        hide_in="wizard library_wizard">
@@ -234,7 +234,7 @@ XML = r"""<?xml version="1.0" ?>
        package="IDE"
        editor_page="Version Control"
        editor_section="System"
-       description="Name of the version control system that you are using"
+       description="Name of the version control system that you are using."
        label="System">
        <shell default="None" >VCS.supported_systems</shell>
    </project_attribute>
@@ -244,7 +244,7 @@ XML = r"""<?xml version="1.0" ?>
        package="IDE"
        editor_page="Version Control"
        editor_section="Actions"
-       description="Application run on the log file/revision history just before commiting a file. If it returns anything other than 0, the commit will not be performed. The only parameter to this script is the name of the log file"
+       description="Application run on the log file/revision history just before commiting a file. If it returns anything other than 0, the commit will not be performed. The only parameter to this script is the name of the log file."
        label="Log checker">
        <string />
    </project_attribute>
@@ -254,7 +254,7 @@ XML = r"""<?xml version="1.0" ?>
        package="IDE"
        editor_page="Version Control"
        editor_section="Actions"
-       description="Application run on the source file just before commiting a file. If it returns anything other than 0, the commit will not be performed. The only parameter to this script is the name of the source file"
+       description="Application run on the source file just before commiting a file. If it returns anything other than 0, the commit will not be performed. The only parameter to this script is the name of the source file."
        label="File checker">
        <string />
     </project_attribute>
@@ -264,7 +264,7 @@ XML = r"""<?xml version="1.0" ?>
        package="IDE"
        editor_page="Version Control"
        editor_section="Path"
-       description="The repository root path"
+       description="The repository root path."
        label="Repository">
        <string />
     </project_attribute>
@@ -294,7 +294,7 @@ XML = r"""<?xml version="1.0" ?>
         name="exec_dir"
         editor_page="Build/Directories"
         editor_section="Build Directories"
-        description="Directory in which the executable will be copied. By default, this is the same as the object directory, and doesn't need to be further specified"
+        description="Directory in which the executable will be copied. By default, this is the same as the object directory, and doesn't need to be further specified."
         label="Exec directory"
         omit_if_default="true">
         <string type="directory" default="(same as build directory)" allow_empty="False" />
@@ -305,7 +305,7 @@ XML = r"""<?xml version="1.0" ?>
         package="IDE"
         editor_page="Build/Directories"
         editor_section="Documentation Directories"
-        description="Directory in which the documentation will be generated. By default, this is a subdirectory 'doc' in the object directory, and doesn't need to be further specified"
+        description="Directory in which the documentation will be generated. By default, this is a subdirectory 'doc' in the object directory, and doesn't need to be further specified."
         label="Doc directory"
         omit_if_default="true">
         <string type="directory" default="(subdir doc in build directory)" allow_empty="False" />
@@ -318,7 +318,7 @@ XML = r"""<?xml version="1.0" ?>
         editor_page="Sources/Main"
         editor_section="Main files"
         list="true"
-        description="List of source files that contain the application's entry point. These units will appear in the Build menu, so that you can easily share a single project hierarchy to build a whole set of applications"
+        description="List of source files that contain the application's entry point. These units will appear in the Build menu, so that you can easily share a single project hierarchy to build a whole set of applications."
         label=""
         base_name_only="true" >
         <string type="file" filter="project" />
@@ -339,7 +339,7 @@ XML = r"""<?xml version="1.0" ?>
        package="Builder"
        editor_page="Sources/Main"
        editor_section="Executable names"
-       description="Name of the executable generated when compiling each of the main units"
+       description="Name of the executable generated when compiling each of the main units."
        case_sensitive_index="file"
        label="">
        <index attribute="main">
@@ -363,7 +363,7 @@ XML = r"""<?xml version="1.0" ?>
        editor_section="General"
        label="Library Directory"
        hide_in="wizard"
-       description="Directory in which the library will be copied as a result of the compilation. Some extra files will be copied in this directory as well, for instance the ALI file for Ada sources. This directory must be different from the object directory">
+       description="Directory in which the library will be copied as a result of the compilation. Some extra files will be copied in this directory as well, for instance the ALI file for Ada sources. This directory must be different from the object directory.">
        <string type="directory"/>
    </project_attribute>
 
@@ -373,7 +373,7 @@ XML = r"""<?xml version="1.0" ?>
        editor_section="General"
        label="Library ALI Directory"
        hide_in="wizard"
-       description="Directory in which the ALI files needed by the GNAT compiler will be copied when the library is installed. By default, this will be the same as the Library Directory. This attribute requires a recent version of GNAT">
+       description="Directory in which the ALI files needed by the GNAT compiler will be copied when the library is installed. By default, this will be the same as the Library Directory. This attribute requires a recent version of GNAT.">
        <string type="directory"/>
    </project_attribute>
 
@@ -383,7 +383,7 @@ XML = r"""<?xml version="1.0" ?>
        editor_section="General"
        label="Library Kind"
        hide_in="wizard"
-       description="The kind of library that should be built. If you need to build different kinds of libraries, it is recommend to select a different library directory for each, since the object files might need to be compiled differently in each case">
+       description="The kind of library that should be built. If you need to build different kinds of libraries, it is recommend to select a different library directory for each, since the object files might need to be compiled differently in each case.">
        <choice default="true">static</choice>
        <choice>dynamic</choice>
    </project_attribute>
@@ -417,7 +417,7 @@ XML = r"""<?xml version="1.0" ?>
        label="Externally Built"
        hide_in="wizard"
        description="Set this attribute to True if the compiler should not check whether the library is up-to-date. As a result, the sources do not need to be
-available, apart of course for the spec files and the bodies of generic packages">
+available, apart of course for the spec files and the bodies of generic packages.">
        <choice default="true">False</choice>
        <choice>True</choice>
    </project_attribute>
@@ -462,7 +462,7 @@ available, apart of course for the spec files and the bodies of generic packages
        editor_section="Standalone library"
        label="Source directory"
        hide_in="wizard"
-       description="The directory in which the sources required for Ada clients of the library will be copied. This include public interfaces, as well as bodies for inline subprograms,... This directory can be the same as the library directory, but must be different from the object directory">
+       description="The directory in which the sources required for Ada clients of the library will be copied. This include public interfaces, as well as bodies for inline subprograms,... This directory can be the same as the library directory, but must be different from the object directory.">
        <string type="directory" />
    </project_attribute>
 </GPS>

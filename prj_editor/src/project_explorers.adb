@@ -1972,8 +1972,7 @@ package body Project_Explorers is
           ("explorer-show-projects-first", False,
            Label => -"Projects before directories",
            Doc =>
-             -("Whether imported projects should occur before or after source"
-             & " directories"));
+             -("Show imported projects before directories."));
 
       Show_Object_Dirs := Kernel.Get_Preferences.Create_Invisible_Pref
         ("explorer-show-object-dirs", True,

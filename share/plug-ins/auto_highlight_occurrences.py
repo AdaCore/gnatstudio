@@ -36,19 +36,19 @@ import re
 GPS.Preference(
     "Plugins/auto_highlight_occurrences/highlight_entities").create(
     "Highlight entities", "boolean",
-    "Whether this plugin should highlight occurrences of the current entity.",
+    "Highlight occurrences of the current entity.",
     True)
 
 GPS.Preference(
     "Plugins/auto_highlight_occurrences/highlight_selection").create(
     "Highlight selection", "boolean",
-    "Whether to attempt highlighting of the current selection.",
+    "Attempt to highlight the current selection.",
     True)
 
 GPS.Preference(
     "Plugins/auto_highlight_occurrences/highlight_word").create(
     "Highlight current word", "boolean",
-    "Whether to attempt highlighting of the word under the cursor.",
+    "Attempt to highlight the word under the cursor.",
     False)
 
 

@@ -217,7 +217,7 @@ class Project_Support(object):
               name="Output_Dir"
               editor_page="QGen"
               label="Output directory"
-              description="The location of all generated source code files"
+              description="The location of all generated source code files."
               hide_in="wizard library_wizard">
                 <string type="directory"/>
              </project_attribute>
@@ -251,7 +251,7 @@ class Project_Support(object):
               name="Debug_Args"
               editor_page="QGen"
               label="Debug arguments"
-              description="Launch arguments for generated debug session"
+              description="Launch arguments for generated debug session."
               hide_in="wizard library_wizard">
                 <string />
              </project_attribute>

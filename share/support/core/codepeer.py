@@ -235,7 +235,7 @@ xml_codepeer = """<?xml version="1.0"?>
       editor_section="CodePeer configuration"
       label="Output directory"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="CodePeer output directory to use for this project">
+      description="CodePeer output directory to use for this project.">
       <string type="directory"/>
     </project_attribute>
 
@@ -246,7 +246,7 @@ xml_codepeer = """<?xml version="1.0"?>
       editor_section="CodePeer configuration"
       label="Database directory"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="CodePeer database directory to use for this project">
+      description="CodePeer database directory to use for this project.">
       <string type="directory"/>
     </project_attribute>
 
@@ -257,7 +257,7 @@ xml_codepeer = """<?xml version="1.0"?>
       editor_section="CodePeer configuration"
       label="Include CWE ids"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="Whether to include CWE ids in output">
+      description="Include CWE ids in output.">
       <choice default="true">False</choice>
       <choice>True</choice>
     </project_attribute>
@@ -269,7 +269,7 @@ xml_codepeer = """<?xml version="1.0"?>
       editor_section="CodePeer configuration"
       label="Message patterns"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="Alternate MessagePatterns.xml file to use for this project">
+      description="Alternate MessagePatterns.xml file used for this project.">
       <string type="file"/>
     </project_attribute>
 
@@ -281,7 +281,7 @@ xml_codepeer = """<?xml version="1.0"?>
       label="Additional patterns"
       hide_in="wizard gnatname_wizard library_wizard"
       description="Extra MessagePatterns.xml file to use in addition to the
-default patterns file">
+default patterns file.">
       <string type="file"/>
     </project_attribute>
 
@@ -292,7 +292,7 @@ default patterns file">
       editor_section="CodePeer configuration"
       label="Switches"
       hide_in="wizard gnatname_wizard library_wizard"
-      description="List of additional switches always used for this project"
+      description="List of additional switches always used for this project."
       list="true">
       <string/>
     </project_attribute>
@@ -305,7 +305,7 @@ default patterns file">
       label="Excluded source files"
       hide_in="wizard gnatname_wizard library_wizard"
       description="List of project source file (as base names) which should be
-excluded from CodePeer's analysis"
+excluded from CodePeer's analysis."
       list="true">
       <string type="file"/>
     </project_attribute>
