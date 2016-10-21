@@ -54,7 +54,8 @@ package body Default_Preferences.GUI is
       Self.Create_Child (Widget    => Pref.Edit (Manager),
                          Label     => Label,
                          Doc       => Doc,
-                         Child_Key => Pref.Get_Name);
+                         Child_Key => Pref.Get_Name,
+                         Expand    => False);
    end Create_Pref_Row;
 
    -----------

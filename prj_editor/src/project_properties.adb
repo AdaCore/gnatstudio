@@ -1742,7 +1742,8 @@ package body Project_Properties is
         (Widget    => Self.Name,
          Label     => "Name",
          Doc       =>  "Name of the project. " &
-           "Only applies to the project you selected initially.");
+           "Only applies to the project you selected initially.",
+         Expand    => False);
 
       --  Path
 
@@ -2556,7 +2557,7 @@ package body Project_Properties is
 
       if Is_List then
          List_View := new Dialog_View_With_Button_Box_Record;
-         Initialize (List_View, Orientation => Orientation_Vertical);
+         Initialize (List_View, Position => Pos_Left);
          Editor.Pack_Start (List_View, Expand => True, Fill => True);
 
          Gtk_New (Scrolled);
@@ -4283,7 +4284,8 @@ package body Project_Properties is
             Group_Name           => Section.Get_Name);
          Section_Group_Widget.Create_Child
            (Widget => Radio_Box,
-            Doc    => Section.Get_Description);
+            Doc    => Section.Get_Description,
+            Expand => False);
       end Create_Mutually_Exclusive_Section_Widget;
 
    begin

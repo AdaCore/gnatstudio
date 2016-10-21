@@ -81,6 +81,13 @@ package Dialog_Utils is
      (Self : not null access Dialog_View_Record'Class);
    --  Remove all the children that have been appended to the dialog view
 
+   procedure Set_Child_Visible
+     (Self      : not null access Dialog_View_Record'Class;
+      Child_Key : String;
+      Visible   : Boolean);
+   --  Set the visibility of the dialog view child associated with Child_Key.
+   --  Do nothing if there is no association for the given Child_Key.
+
    procedure Set_Child_Highlighted
      (Self      : not null access Dialog_View_Record'Class;
       Child_Key : String;
@@ -116,11 +123,10 @@ package Dialog_Utils is
    --  Type representing a dialog view with its associated button box.
 
    procedure Initialize
-     (Self        : not null access Dialog_View_With_Button_Box_Record'Class;
-      Orientation : Gtk_Orientation);
-   --  Initialize the dialog view and its associated button box.
-   --  The button box is put on the right-side of the dialog view or at the
-   --  bottom depending on Orientation.
+     (Self     : not null access Dialog_View_With_Button_Box_Record'Class;
+      Position : Gtk_Position_Type);
+   --  Initialize the dialog view and its associated button box, placing it at
+   --  the given Position.
 
    procedure Append_Button
      (Self   : not null access Dialog_View_With_Button_Box_Record'Class;
@@ -163,7 +169,9 @@ package Dialog_Utils is
       Button    : access Gtk_Button_Record'Class := null;
       Label     : String := "";
       Doc       : String := "";
-      Child_Key : String := "") return Gtk_Widget;
+      Child_Key : String := "";
+      Expand    : Boolean := True;
+      Fill      : Boolean := True) return Gtk_Widget;
    --  Create a new child in the group widget containing the given Widget,
    --  associating it with an optional Child_Key.
    --
@@ -186,6 +194,9 @@ package Dialog_Utils is
    --
    --  The function returns the widget corresponding to the entire newly
    --  created child.
+   --
+   --  The Expand and Fill properties have the same role as in the
+   --  Gtk.Box.Pack_Start procedure.
 
    function Create_Child
      (Self         : not null access Dialog_Group_Widget_Record'Class;
@@ -193,7 +204,9 @@ package Dialog_Utils is
       Button       : access Gtk_Button_Record'Class := null;
       Label_Widget : access Gtk_Widget_Record'Class;
       Doc          : String := "";
-      Child_Key    : String := "") return Gtk_Widget;
+      Child_Key    : String := "";
+      Expand       : Boolean := True;
+      Fill         : Boolean := True) return Gtk_Widget;
    --  Same as above, but allowing to add a custom label widget
    --  (e.g : a check box).
 
@@ -203,14 +216,18 @@ package Dialog_Utils is
       Button    : access Gtk_Button_Record'Class := null;
       Label     : String := "";
       Doc       : String := "";
-      Child_Key : String := "");
+      Child_Key : String := "";
+      Expand    : Boolean := True;
+      Fill      : Boolean := True);
    procedure Create_Child
      (Self         : not null access Dialog_Group_Widget_Record'Class;
       Widget       : not null access Gtk_Widget_Record'Class;
       Button       : access Gtk_Button_Record'Class := null;
       Label_Widget : access Gtk_Widget_Record'Class;
       Doc          : String := "";
-      Child_Key    : String := "");
+      Child_Key    : String := "";
+      Expand       : Boolean := True;
+      Fill         : Boolean := True);
    --  Same as above, but without returning the newly created child
 
    procedure Append_Child

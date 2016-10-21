@@ -287,7 +287,8 @@ package body Ada_Naming_Editors is
          Group_Widget.Create_Child
            (Widget    => Combo,
             Label     => Label,
-            Doc       => Doc);
+            Doc       => Doc,
+            Expand    => False);
 
          for Value of Values loop
             Combo.Append_Text (To_String (Value));
@@ -404,7 +405,7 @@ package body Ada_Naming_Editors is
       Self.Exception_List_View := new Dialog_View_With_Button_Box_Record;
       Initialize
         (Self.Exception_List_View,
-         Orientation => Orientation_Vertical);
+         Position => Pos_Left);
       Group_Widget.Append_Child
         (Widget    => Self.Exception_List_View,
          Expand    => True,

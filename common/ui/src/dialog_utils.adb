@@ -59,11 +59,18 @@ package body Dialog_Utils is
    ----------------
 
    procedure Initialize
-     (Self        : not null access Dialog_View_With_Button_Box_Record'Class;
-      Orientation : Gtk_Orientation)
+     (Self     : not null access Dialog_View_With_Button_Box_Record'Class;
+      Position : Gtk_Position_Type)
    is
-      Box     : Gtk_Box;
-      Sep     : Gtk_Separator;
+      Box         : Gtk_Box;
+      Sep         : Gtk_Separator;
+      Orientation : constant Gtk_Orientation :=
+                      (if Position in Pos_Left .. Pos_Right then
+                          Orientation_Vertical
+                       else
+                          Orientation_Horizontal);
+      At_Start    : constant Boolean :=
+                      Position = Pos_Left or else Position = Pos_Top;
    begin
       Gtk.Scrolled_Window.Initialize (Self);
       Self.Set_Policy (Policy_Automatic, Policy_Automatic);
@@ -89,15 +96,30 @@ package body Dialog_Utils is
       Self.Button_Box.Set_Layout (Buttonbox_Start);
       Get_Style_Context (Self.Button_Box).Add_Class
         ("dialog-views-button-boxes");
-      Box.Pack_Start (Self.Button_Box, Expand => False);
+
+      if At_Start then
+         Box.Pack_Start (Self.Button_Box, Expand => False);
+      else
+         Box.Pack_End (Self.Button_Box, Expand => False);
+      end if;
 
       --  Add a separator
       Gtk_New (Sep, Orientation => Orientation);
-      Box.Pack_Start (Sep, Expand => False);
+
+      if At_Start then
+         Box.Pack_Start (Sep, Expand => False);
+      else
+         Box.Pack_End (Sep, Expand => False);
+      end if;
 
       --  Create the main box
       Gtk_New_Vbox (Self.Main_Box, Homogeneous => False);
-      Box.Pack_Start (Self.Main_Box, Expand => True, Fill => True);
+
+      if At_Start then
+         Box.Pack_Start (Self.Main_Box, Expand => True, Fill => True);
+      else
+         Box.Pack_End (Self.Main_Box, Expand => True, Fill => True);
+      end if;
    end Initialize;
 
    ------------
@@ -140,6 +162,33 @@ package body Dialog_Utils is
       Self.Children_Map.Clear;
       Self.Number_Of_Children := 0;
    end Remove_All_Children;
+
+   -----------------------
+   -- Set_Child_Visible --
+   -----------------------
+
+   procedure Set_Child_Visible
+     (Self      : not null access Dialog_View_Record'Class;
+      Child_Key : String;
+      Visible   : Boolean)
+   is
+      Child : Gtk_Widget;
+   begin
+      --  Do nothing if the map does not contain any association for Row_Key
+      if not Self.Children_Map.Contains (Child_Key) then
+         return;
+      end if;
+
+      Child := Self.Children_Map (Child_Key);
+
+      if Visible then
+         --  Show all the row's children too
+         Child.Set_No_Show_All (False);
+         Child.Show_All;
+      else
+         Child.Hide;
+      end if;
+   end Set_Child_Visible;
 
    -------------------------
    -- Set_Row_Highlighted --
@@ -280,7 +329,9 @@ package body Dialog_Utils is
       Button    : access Gtk_Button_Record'Class := null;
       Label     : String := "";
       Doc       : String := "";
-      Child_Key : String := "") return Gtk_Widget
+      Child_Key : String := "";
+      Expand    : Boolean := True;
+      Fill      : Boolean := True) return Gtk_Widget
    is
       Label_Widget : Gtk_Label;
    begin
@@ -296,7 +347,9 @@ package body Dialog_Utils is
          Button       => Button,
          Label_Widget => Label_Widget,
          Doc          => Doc,
-         Child_Key    => Child_Key);
+         Child_Key    => Child_Key,
+         Expand       => Expand,
+         Fill         => Fill);
    end Create_Child;
 
    ------------------
@@ -309,12 +362,15 @@ package body Dialog_Utils is
       Button       : access Gtk_Button_Record'Class := null;
       Label_Widget : access Gtk_Widget_Record'Class;
       Doc          : String := "";
-      Child_Key    : String := "") return Gtk_Widget
+      Child_Key    : String := "";
+      Expand       : Boolean := True;
+      Fill         : Boolean := True) return Gtk_Widget
    is
-      Child_Box    : Gtk_Box;
-      Padding      : constant Guint := (if Label_Widget = null then 0 else 5);
+      Child_Box : Gtk_Box;
+      Spacing   : constant Gint := 5;
    begin
       Gtk_New_Hbox (Child_Box, Homogeneous => False);
+      Child_Box.Set_Spacing (Spacing);
 
       if Label_Widget /= null then
          Self.Parent_View.Label_Size_Group.Add_Widget (Label_Widget);
@@ -322,11 +378,14 @@ package body Dialog_Utils is
       end if;
 
       Self.Parent_View.Widget_Size_Group.Add_Widget (Widget);
-      Child_Box.Pack_Start (Widget, Expand => False, Padding => Padding);
+      Child_Box.Pack_Start
+        (Widget,
+         Expand  => Expand,
+         Fill    => Fill);
 
       if Button /= null then
          Self.Parent_View.Button_Size_Group.Add_Widget (Button);
-         Child_Box.Pack_Start (Button, Expand => False, Padding => Padding);
+         Child_Box.Pack_Start (Button, Expand => False);
       end if;
 
       if Doc /= "" then
@@ -375,7 +434,9 @@ package body Dialog_Utils is
       Button    : access Gtk_Button_Record'Class := null;
       Label     : String := "";
       Doc       : String := "";
-      Child_Key : String := "")
+      Child_Key : String := "";
+      Expand    : Boolean := True;
+      Fill      : Boolean := True)
    is
       Row : constant Gtk_Widget :=
               Create_Child
@@ -384,7 +445,9 @@ package body Dialog_Utils is
                  Button    => Button,
                  Label     => Label,
                  Doc       => Doc,
-                 Child_Key => Child_Key);
+                 Child_Key => Child_Key,
+                 Expand    => Expand,
+                 Fill      => Fill);
       pragma Unreferenced (Row);
    begin
       null;
@@ -400,7 +463,9 @@ package body Dialog_Utils is
       Button       : access Gtk_Button_Record'Class := null;
       Label_Widget : access Gtk_Widget_Record'Class;
       Doc          : String := "";
-      Child_Key    : String := "")
+      Child_Key    : String := "";
+      Expand       : Boolean := True;
+      Fill         : Boolean := True)
    is
       Row : constant Gtk_Widget :=
               Create_Child
@@ -409,7 +474,9 @@ package body Dialog_Utils is
                  Button       => Button,
                  Label_Widget => Label_Widget,
                  Doc          => Doc,
-                 Child_Key    => Child_Key);
+                 Child_Key    => Child_Key,
+                 Expand       => Expand,
+                 Fill         => Fill);
       pragma Unreferenced (Row);
    begin
       null;

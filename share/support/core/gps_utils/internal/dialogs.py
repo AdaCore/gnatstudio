@@ -395,11 +395,12 @@ class Search(Dialog):
     """
 
     Context = gps_utils.enum(
-        CURRENT_FILE=0,
-        OPEN_FILES=2,
-        FILES=3,
-        FILES_FROM_PROJECT=4,
-        FROM_PROJECT=6)
+        CURRENT_FILE="Current File",
+        CURRENT_SELECTION="Current Selection",
+        OPEN_FILES="Open Files",
+        FILES="Files...",
+        FROM_FROM_RUNTIME="Files From Runtime",
+        FILES_FROM_PROJECT="Files From Projects")
 
     def open_and_yield(self):
         """
@@ -420,7 +421,9 @@ class Search(Dialog):
             self.next = self.find   # This is in fact the same button
 
             self.replace = get_button_from_label("Replace", self.dialog)
-            self.replace_all = get_button_from_label("Repl All", self.dialog)
+            self.replace_all = get_button_from_label(
+                "Replace All",
+                self.dialog)
             self.close = get_button_from_label("Close", self.dialog)
             self.replace_and_find = get_button_from_label(
                 "Replace & Find", self.dialog)
@@ -428,16 +431,13 @@ class Search(Dialog):
                 "search scope combo", self.dialog)
             self.pattern = combos[0].get_child()
             self.replace_text = combos[1].get_child()
-            self.look_in = combos[2]
+            self.look_in = combos[3] if len(combos) >= 4 else combos[2]
             self.previous = get_button_from_label("Previous", self.dialog)
 
-            checks = get_widgets_by_type(Gtk.CheckButton, self.dialog)
-            self.regexp = checks[5]
-            self.whole_word = checks[4]
-            self.case = checks[3]
-            self.select_on_match = checks[2]
-            self.case_preserving = checks[1]
-            self.close_on_match = checks[0]
+            toggle_buttons = get_widgets_by_type(Gtk.ToggleButton, self.dialog)
+            self.regexp = toggle_buttons[0]
+            self.case = toggle_buttons[1]
+            self.whole_word = toggle_buttons[2]
 
     def current_scope(self):
         """
@@ -454,7 +454,7 @@ class Search(Dialog):
         if isinstance(name, str):
             select_combo(self.scope, name)
         else:
-            self.look_in.set_active(name)
+            self.look_in.set_active_text(name)
 
     def yield_find(self):
         # Could open a modal dialog to warn that we reached the end

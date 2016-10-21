@@ -44,10 +44,16 @@
 --    undefined behavior.
 --  * Allowed chars in a word are found in g-regpat.ads.
 
-with GPS.Kernel;
-with GPS.Search;    use GPS.Search;
+with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Strings.Unbounded;              use Ada.Strings.Unbounded;
+
+with Gtk.Combo_Box_Text;
 with Gtk.Widget;
-with Basic_Types; use Basic_Types;
+
+with Basic_Types;                        use Basic_Types;
+with GPS.Kernel;
+with GPS.Kernel.Modules;                 use GPS.Kernel.Modules;
+with GPS.Search;                         use GPS.Search;
 
 package Find_Utils is
 
@@ -180,22 +186,60 @@ package Find_Utils is
    --  Called whenever a new search will start (as opposed to continuing the
    --  current one through the Next button).
 
-   procedure Search
-     (Context         : access Root_Search_Context;
-      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Give_Focus      : Boolean;
-      Found           : out Boolean;
-      Continue        : out Boolean) is abstract;
+   type Search_Occurrence_Record is abstract tagged private;
+   type Search_Occurrence is access all Search_Occurrence_Record'Class;
+   --  Type representing search occurrences.
+   --
+   --  This can be used to keep track of all the occurrences that have been
+   --  found until now and to display one in particular (see the
+   --  Highlight_Occurrence subprogram).
+
+   procedure Initialize
+     (Occurrence : not null access Search_Occurrence_Record'Class;
+      Pattern    : String);
+   --  Initialize the search occurrence with the search pattern used to match
+   --  it.
+
+   function Get_Pattern
+     (Occurrence : not null access Search_Occurrence_Record'Class)
+      return String;
+   --  Get the search pattern used to match this given search occurrence.
+
+   procedure Free (Occurrence : in out Search_Occurrence);
+   --  Free the memory associated with the given search occurrence
+
+   function Search
+     (Context              : access Root_Search_Context;
+      Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward      : Boolean;
+      From_Selection_Start : Boolean;
+      Give_Focus           : Boolean;
+      Found                : out Boolean;
+      Continue             : out Boolean) return Search_Occurrence is abstract;
    --  This subprogram should search for the next occurrence of Context.
+   --
    --  Found tells whether an occurrence of the context was found.
+   --
    --  Continue is set to False if there is no other search to be performed and
    --  to True if a call to this function might lead to another occurrence of
    --  the search string.
+   --
    --  If Give_Focus is true, then the widget that contains the match, in case
    --  the user was looking for a single match, should gain the focus.
    --  Otherwise, the focus shouldn't be changed and should remain on the
    --  search window
+   --
+   --  Return the search occurrence that has been found or null otherwise.
+
+   procedure Search
+     (Context              : access Root_Search_Context'Class;
+      Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Search_Backward      : Boolean;
+      From_Selection_Start : Boolean;
+      Give_Focus           : Boolean;
+      Found                : out Boolean;
+      Continue             : out Boolean);
+   --  Same as above, but does not return a search occurrence instead.
 
    function Replace
      (Context         : access Root_Search_Context;
@@ -216,16 +260,86 @@ package Find_Utils is
    --  Free the memory both for the pointer and for the internal fields. It
    --  dispatches to calls to Free for Files_Context
 
-   ---------------
-   -- Searching --
-   ---------------
+   --------------------
+   -- Search Modules --
+   --------------------
 
-   type Module_Search_Context_Factory is access function
-     (Kernel             : access GPS.Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences    : Boolean;
-      Extra_Information  : Gtk.Widget.Gtk_Widget)
-      return Root_Search_Context_Access;
+   type Scope_Selector_Interface is interface;
+   type Scope_Selector is access all Scope_Selector_Interface'Class;
+   --  Interface defining a common API for both simple scope selectors and
+   --  the advanced ones (e.g: the ones asking for a specific set of files).
+
+   procedure Initialize
+     (Selector : not null access Scope_Selector_Interface;
+      Kernel   : not null access GPS.Kernel.Kernel_Handle_Record'Class)
+   is abstract;
+   --  Initialize the Selector's widgets
+
+   function Get_Scope_Combo
+     (Selector : not null access Scope_Selector_Interface)
+      return Gtk.Combo_Box_Text.Gtk_Combo_Box_Text is abstract;
+   --  Return the Selector's scope combo widget
+
+   function Get_Optional_Widget
+     (Selector : not null access Scope_Selector_Interface)
+      return Gtk.Widget.Gtk_Widget is abstract;
+   --  Return the Selector's optional widget container
+
+   type Search_Module_Type is abstract tagged private;
+   type Search_Module is
+     access all Search_Module_Type'Class;
+   --  Type used to represent modules that can be used for searching and/or
+   --  replacing purposes.
+
+   type Search_Options_Mask is mod 256;
+   Case_Sensitive       : constant Search_Options_Mask := 2 ** 1;
+   Whole_Word           : constant Search_Options_Mask := 2 ** 2;
+   All_Occurrences      : constant Search_Options_Mask := 2 ** 3;
+   Search_Backward      : constant Search_Options_Mask := 2 ** 4;
+   Supports_Replace     : constant Search_Options_Mask := 2 ** 5;
+   Supports_Incremental : constant Search_Options_Mask := 2 ** 6;
+   All_Options          : constant Search_Options_Mask := 255;
+   --  Used to know which options are supported by a given search module
+
+   procedure Initialize
+     (Module       : not null access Search_Module_Type;
+      Label        : String;
+      Selector     : access Scope_Selector_Interface'Class := null;
+      Id           : access GPS.Kernel.Abstract_Module_ID_Record'Class := null;
+      Mask         : Search_Options_Mask := All_Options;
+      In_Selection : Boolean := False);
+   --  Initialize the given search module.
+   --
+   --  Label is used to display the search module when listing the different
+   --  search modules to the user. It can include %p for the current project
+   --  (as understood by the search view).
+   --
+   --  If Selector is not null, then its associated widgets will be displayed
+   --  every time this label is selected. It can be used for instance to ask
+   --  for more information like a list of files to search.
+   --  Whenever the data in the Selector widgets changes, or for some reason
+   --  the current status of GPS no longer permits the search, you should raise
+   --  the kernel signal Search_Reset_Signal (or call Reset_Search below).
+   --
+   --  Mask indicates what options are relevant for that module. Options that
+   --  are not set will be greyed out. If Supports_Replace if false, then the
+   --  button will be greyed out.
+   --
+   --  Id can be left null. If not null, it will be used to set the default
+   --  search context when the search dialog is popped up (the first
+   --  search_module_data that matches the current module is used).
+
+   --  When Id is not null and In_Selection = True it will be used to set the
+   --  default search context when there multiline selection in an editor.
+
+   function Create_Context
+     (Module          : not null access Search_Module_Type;
+      Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences : Boolean;
+      Selector        : Scope_Selector)
+      return Root_Search_Context_Access is abstract;
    --  Function called to create the search context.
+   --
    --  It should return null if it couldn't create the context, and thus if the
    --  search/replace won't be performed.
    --  The memory will be freed automatically by GPS.
@@ -235,6 +349,57 @@ package Find_Utils is
    --
    --  It shouldn't set the general information like the pattern and the
    --  replacement pattern, since these are set automatically.
+
+   procedure Push_Occurrence
+     (Module     : not null access Search_Module_Type;
+      Occurrence : not null access Search_Occurrence_Record'Class);
+   --  Push the given search occurrence into the search module's search
+   --  occurrences stack..
+
+   function Pop_Occurrence
+     (Module : not null access Search_Module_Type)
+      return Search_Occurrence;
+   --  Pop the top element of the search module's search occurrences stack.
+
+   function Get_Last_Occurrence
+     (Module : not null access Search_Module_Type)
+      return Search_Occurrence;
+   --  Get the last search occurrence pushed into the module's search
+   --  occurrences stack, without popping it.
+
+   procedure Clear_Occurrences (Module : not null access Search_Module_Type);
+   --  Clear the module's search occurrences stack, freeing the memory
+   --  associated with the contained search occurrences.
+
+   procedure Highlight_Occurrence
+     (Module     : not null access Search_Module_Type;
+      Occurrence : not null access Search_Occurrence_Record'Class) is null;
+   --  Highlight the given search occurrence.
+   --  This procedure needs to be overridden by any search module that is able
+   --  to display a particular search occurrence (i.e: highlight the given
+   --  search occurrence by selecting it in the currently selected editor).
+
+   procedure Give_Focus_To_Occurrence
+     (Module     : not null access Search_Module_Type;
+      Occurrence : not null access Search_Occurrence_Record'Class) is null;
+   --  Give the focus to the given search occcurrence.
+   --  This procedure needs to be overridden by any search module that is able
+   --  to give the focus to a particular search occurrence (i.e: give the focus
+   --  to the given search occurrence by giving the focus to the editor that
+   --  contains it and set the editor's cursor to the occurrence's location).
+
+   function Get_Label
+     (Module : not null access Search_Module_Type) return String;
+   function Get_Scope_Selector
+     (Module : not null access Search_Module_Type) return Scope_Selector;
+   function Get_Id
+     (Module : not null access Search_Module_Type) return Module_ID;
+   function Get_In_Selection
+     (Module : not null access Search_Module_Type) return Boolean;
+   function Is_Option_Supported
+     (Module : not null access Search_Module_Type;
+      Option : Search_Options_Mask) return Boolean;
+   --  Getters
 
 private
 
@@ -248,6 +413,33 @@ private
       --  be done in various places during the search project, but implementers
       --  should always check that is has not already been given before making
       --  it.
+   end record;
+
+   type Search_Occurrence_Record is abstract tagged record
+      Pattern : Unbounded_String;
+      --  The search pattern used to match this occurrence
+   end record;
+
+   package Search_Occurrences_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Search_Occurrence, "=");
+
+   type Search_Module_Type is abstract tagged record
+      Mask         : Search_Options_Mask;
+
+      Selector     : Scope_Selector;
+      --  Store the scope selector, which holds a reference to the scope
+      --  selection widgets.
+      --  We could have factories instead, but that means it would be harder
+      --  to preserve the current extra information when users switch between
+      --  contexts.
+
+      Id           : Module_ID;
+      Label        : Unbounded_String;
+      In_Selection : Boolean;
+
+      Search_Occurrences_Stack : Search_Occurrences_Lists.List;
+      --  Search occurrences stack. Used to navigate in the module's search
+      --  history.
    end record;
 
 end Find_Utils;

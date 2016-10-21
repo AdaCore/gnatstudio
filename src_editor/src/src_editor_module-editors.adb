@@ -2862,7 +2862,7 @@ package body Src_Editor_Module.Editors is
             Match_From        => From,
             Match_Up_To       => To,
             Search_Backward   => Backward,
-            Dialog_On_Failure => Dialog_On_Failure,
+            Failure_Response  => (if Dialog_On_Failure then Dialog else None),
             Found             => Success);
 
          if Success then

@@ -128,7 +128,8 @@
       </menu>
 
       <menu label='_Navigate'>
-         <menu label='_Find Or Replace...'       action='search'/>
+         <menu label='_Find...'                  action='search'/>
+         <menu label='_Replace...'               action='replace'/>
          <menu label='Find _Previous'            action='find previous'/>
          <menu label='Find _Next'                action='find next'/>
          <menu label='Find Previous Incremental' action='isearch backward' optional='true'/>
