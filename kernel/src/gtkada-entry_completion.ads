@@ -22,6 +22,7 @@ with Gdk.Device;
 with Gdk.RGBA;
 with Glib.Main;
 with Gtk.Box;
+with Gtk.Toggle_Button;
 with Gtk.Check_Button;
 with Gtk.Combo_Box_Text;
 with Gtk.Scrolled_Window;
@@ -155,6 +156,12 @@ private
       --  Color to use for the "=> Locations" text
 
       Settings                : Gtk.Box.Gtk_Box;
+      Settings_Area           : Gtk.Box.Gtk_Box;
+      --  The area where the settings are to be displayed
+
+      Settings_Toggle         : Gtk.Toggle_Button.Gtk_Toggle_Button;
+      --  The button that toggles the settings on/off
+
       Settings_Case_Sensitive : Gtk.Check_Button.Gtk_Check_Button;
       Settings_Whole_Word     : Gtk.Check_Button.Gtk_Check_Button;
       Settings_Kind           : Gtk.Combo_Box_Text.Gtk_Combo_Box_Text;

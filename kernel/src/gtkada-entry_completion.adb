@@ -36,11 +36,11 @@ with Glib.Properties;            use Glib.Properties;
 with Glib.Values;                use Glib.Values;
 with Gtk.Alignment;              use Gtk.Alignment;
 with Gtk.Box;                    use Gtk.Box;
-with Gtk.Button;                 use Gtk.Button;
 with Gtk.Cell_Renderer;          use Gtk.Cell_Renderer;
 with Gtk.Cell_Renderer_Text;     use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;           use Gtk.Check_Button;
 with Gtk.Combo_Box_Text;         use Gtk.Combo_Box_Text;
+with Gtk.Toggle_Button;          use Gtk.Toggle_Button;
 with Gtk.Dialog;                 use Gtk.Dialog;
 with Gtk.Editable;               use Gtk.Editable;
 with Gtk.Enums;                  use Gtk.Enums;
@@ -52,7 +52,6 @@ with Gtk.List_Store;             use Gtk.List_Store;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Separator;              use Gtk.Separator;
 with Gtk.Spin_Button;            use Gtk.Spin_Button;
-with Gtk.Stock;                  use Gtk.Stock;
 with Gtk.Style_Context;          use Gtk.Style_Context;
 with Gtk.Tree_Model;             use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;      use Gtk.Tree_Model_Filter;
@@ -72,7 +71,6 @@ with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Search;          use GPS.Kernel.Search;
 with GPS.Kernel.Task_Manager;    use GPS.Kernel.Task_Manager;
-with GPS.Main_Window;            use GPS.Main_Window;
 with GPS.Search;                 use GPS.Search;
 with GUI_Utils;                  use GUI_Utils;
 with Histories;                  use Histories;
@@ -228,8 +226,11 @@ package body Gtkada.Entry_Completion is
    --  The role for the provider column on the given row.
    --  Model and Iter apply to the filter model.
 
-   procedure Show_Settings (Self : access GObject_Record'Class);
-   --  Display the settings dialog
+   procedure Toggle_Settings (Self : access GObject_Record'Class);
+   --  Toggle the settings dialog
+
+   procedure Create_Settings (Self : access GObject_Record'Class);
+   --  Create the settings GUI elements
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Search_Result_Access);
@@ -504,7 +505,6 @@ package body Gtkada.Entry_Completion is
       Dummy  : Boolean;
       Color  : Gdk_RGBA;
       Filter : Comp_Filter_Model;
-      Button : Gtk_Button;
       Frame  : Gtk_Frame;
       Popup  : Gtk_Window;
       Image  : Gtk_Image;
@@ -657,13 +657,20 @@ package body Gtkada.Entry_Completion is
       Gtk_New_Hbox (Self.Settings, Homogeneous => False);
       Box.Pack_Start (Self.Settings, Expand => False);
 
+      Gtk_New_Vbox (Self.Settings_Area, Homogeneous => False);
+      Box.Pack_Start (Self.Settings_Area, Expand => False);
+
+      Create_Settings (Self);
+      Self.Settings_Area.Set_No_Show_All (True);
+
       Gtk_New (Self.Settings_Case_Sensitive, -"Case Sensitive");
       Self.Settings_Case_Sensitive.Set_Name ("global-search-case-sensitive");
       Associate (Get_History (Kernel).all,
                  Name & "-case_sensitive",
                  Self.Settings_Case_Sensitive,
                  Default => Case_Sensitive);
-      Self.Settings.Pack_Start (Self.Settings_Case_Sensitive, Expand => False);
+      Self.Settings.Pack_Start
+        (Self.Settings_Case_Sensitive, Expand => False, Padding => 3);
 
       Gtk_New (Self.Settings_Whole_Word, -"Whole Word");
       Self.Settings_Whole_Word.Set_Name ("global-search-whole-word");
@@ -696,10 +703,11 @@ package body Gtkada.Entry_Completion is
 
       Gtk_New_From_Icon_Name
          (Image, "gps-settings-symbolic", Size => Icon_Size_Menu);
-      Gtk_New (Button);
-      Button.Add (Image);
-      Self.Settings.Pack_Start (Button, Expand => False);
-      Button.On_Clicked (Show_Settings'Access, Self);
+      Gtk_New (Self.Settings_Toggle);
+      Self.Settings_Toggle.Add (Image);
+      Self.Settings.Pack_Start (Self.Settings_Toggle, Expand => False);
+      Self.Settings_Toggle.On_Toggled
+        (Toggle_Settings'Access, Self, After => True);
 
       Self.Settings_Case_Sensitive.On_Toggled
          (On_Settings_Changed'Access, Self);
@@ -1467,13 +1475,11 @@ package body Gtkada.Entry_Completion is
       K : constant Search_Kind := Search_Kind'Value (T);
       Size : Gint;
    begin
-      if S.Settings_Width /= null then
-         Size := Gint (S.Settings_Width.Get_Value);
-         S.GEntry.Set_Width_Chars (Size);
-         S.GEntry.Queue_Resize;
-         Add_To_History
-           (Get_History (S.Kernel).all, S.Name.all & "-width", Size'Img);
-      end if;
+      Size := Gint (S.Settings_Width.Get_Value);
+      S.GEntry.Set_Width_Chars (Size);
+      S.GEntry.Queue_Resize;
+      Add_To_History
+        (Get_History (S.Kernel).all, S.Name.all & "-width", Size'Img);
 
       S.Settings_Whole_Word.Set_Sensitive (K = Regexp);
       S.Settings_Whole_Word.Set_Visible (K = Regexp);
@@ -1616,35 +1622,44 @@ package body Gtkada.Entry_Completion is
    -- Show_Settings --
    -------------------
 
-   procedure Show_Settings (Self : access GObject_Record'Class) is
-      S      : constant Gtkada_Entry := Gtkada_Entry (Self);
-      Win    : Gtk_Dialog;
-      Resp   : Gtk_Response_Type;
-      Button : Gtk_Widget;
-      pragma Unreferenced (Resp, Button);
+   procedure Toggle_Settings (Self : access GObject_Record'Class) is
+      S : constant Gtkada_Entry := Gtkada_Entry (Self);
+   begin
+      if S.Settings_Toggle.Get_Active then
+         S.Settings_Area.Set_No_Show_All (False);
+         S.Settings_Area.Show_All;
+      else
+         S.Settings_Area.Set_No_Show_All (True);
+         S.Settings_Area.Hide;
+      end if;
+   end Toggle_Settings;
+
+   ---------------------
+   -- Create_Settings --
+   ---------------------
+
+   procedure Create_Settings (Self : access GObject_Record'Class) is
+      S       : constant Gtkada_Entry := Gtkada_Entry (Self);
       Preview : Gtk_Check_Button;
       Label   : Gtk_Label;
       Box     : Gtk_Box;
+      H       : Gtk_Hbox;
+
+      Settings_Box : Gtk_Vbox;
    begin
-      Gtk_New
-        (Win,
-         Title  => -"Search settings",
-         Parent => Get_Main_Window (S.Kernel),
-         Flags  => Modal or Destroy_With_Parent
-            or Use_Header_Bar_From_Settings (Get_Main_Window (S.Kernel)));
-      Set_Default_Size_From_History
-         (Win, "omnisearch-settings", S.Kernel, 500, 480);
+      Gtk_New_Hbox (H, Homogeneous => True);
+      S.Settings_Area.Pack_Start (H, False, False, 3);
 
       Gtk_New (Preview, -"Preview");
       Associate (Get_History (S.Kernel).all,
                  S.Name.all & "-preview",
                  Preview,
                  Default => True);
-      Win.Get_Content_Area.Pack_Start (Preview, Expand => False);
+      H.Pack_Start (Preview, Expand => False, Padding => 3);
       Preview.On_Toggled (On_Settings_Changed'Access, Self);
 
       Gtk_New_Hbox (Box, Homogeneous => False);
-      Win.Get_Content_Area.Pack_Start (Box, Expand => False);
+      H.Pack_Start (Box, Expand => False);
 
       Gtk_New (Label, -"Field width: ");
       Box.Pack_Start (Label, Expand => False);
@@ -1657,16 +1672,11 @@ package body Gtkada.Entry_Completion is
       S.Settings_Width.On_Value_Changed (On_Settings_Changed'Access, Self);
       Box.Pack_Start (S.Settings_Width, Expand => False, Fill => True);
 
+      Gtk_New_Vbox (Settings_Box, Homogeneous => False);
+      S.Settings_Area.Pack_Start (Settings_Box, False, False, 3);
+
       Kernel_Search_Provider_Access (S.Completion).Edit_Settings
-        (Win.Get_Content_Area, Self, On_Settings_Changed'Access);
-
-      Button := Win.Add_Button (Stock_Ok, Gtk_Response_OK);
-
-      Win.Show_All;
-      Resp := Win.Run;
-
-      S.Settings_Width := null;
-      Win.Destroy;
-   end Show_Settings;
+        (Settings_Box, Self, On_Settings_Changed'Access);
+   end Create_Settings;
 
 end Gtkada.Entry_Completion;
