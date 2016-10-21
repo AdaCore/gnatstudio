@@ -695,6 +695,8 @@ package body GPS.Search.GUI is
       Spin     : Gtk_Spin_Button;
       Label    : Gtk_Label;
       B        : Gtk_Box;
+      H        : Gtk_Hbox;
+      V        : Gtk_Vbox;
       P        : Integer;
       Provider : Kernel_Search_Provider_Access;
       Colnum   : Gint;
@@ -709,14 +711,20 @@ package body GPS.Search.GUI is
       Relative : Gtk_Check_Button;
       pragma Unreferenced (Colnum);
    begin
+      Gtk_New_Hbox (H, Homogeneous => True);
+      Box.Pack_Start (H, Expand => False);
+
+      Gtk_New_Vbox (V, Homogeneous => False);
+      H.Pack_Start (V, Expand => False, Padding => 3);
+
       Gtk_New_Hbox (B, Homogeneous => False);
-      Box.Pack_Start (B, Expand => False);
+      V.Pack_Start (B, Expand => False);
 
       Gtk_New (Relative, -"Display relative paths");
       Relative.Set_Tooltip_Text
         (-("Whether to display paths of project's sources as relative" &
            " to the project file."));
-      Box.Pack_Start (Relative, Expand => False);
+      V.Pack_Start (Relative, Expand => False);
       Associate (Get_History (Self.Kernel).all,
                  Key_Search_Displays_Relative_Paths,
                  Relative,
@@ -741,13 +749,12 @@ package body GPS.Search.GUI is
 
       Gtk_New (Frame);
       Frame.Set_Label (-"Categories");
-      Box.Pack_End (Frame, Expand => True, Fill => True);
+      H.Pack_Start (Frame, Expand => True, Fill => True);
 
       Gtk_New_Vbox (B, Homogeneous => False);
       Frame.Add (B);
 
-      Gtk_New
-        (Label, "Drag categories to change the order in which results appear");
+      Gtk_New (Label, "Drag categories to change the order");
       Label.Set_Padding (5, 10);
       Label.Set_Alignment (0.0, 0.5);
       B.Pack_Start (Label, Expand => False);
@@ -809,7 +816,7 @@ package body GPS.Search.GUI is
       loop
          Provider := Kernel_Search_Provider_Access (Self.Registry.Get (P));
          exit when Provider = null;
-         Provider.Edit_Settings (Box, Data, On_Change);
+         Provider.Edit_Settings (V, Data, On_Change);
          P := P + 1;
       end loop;
    end Edit_Settings;
