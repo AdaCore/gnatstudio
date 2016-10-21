@@ -654,3 +654,25 @@ class Custom_Build_Dialog(Dialog):
 
     def get_command_line_entry(self):
         return get_widgets_by_type(Gtk.Entry, self.dialog)[0]
+
+
+###################
+# Editor_Properties
+###################
+
+class Editor_Properties_Dialog(Dialog):
+    def open_and_yield(self, file):
+        yield self._open_and_yield("edit file properties")
+        self.dialog = get_window_by_title("Properties for %s" % file)
+
+    def get_combobox_by_label(self, text):
+        label = [label for label in get_widgets_by_type(Gtk.Label, self.dialog)
+                 if label.get_label() == text][0]
+
+        return label.get_parent().get_children()[1]
+
+    def get_language_entry(self):
+        return self.get_combobox_by_label("Language: ")
+
+    def get_character_set_entry(self):
+        return self.get_combobox_by_label("Character set: ")
