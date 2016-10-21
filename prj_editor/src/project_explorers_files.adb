@@ -33,11 +33,9 @@ with Glib_Values_Utils;          use Glib_Values_Utils;
 with Gdk.Dnd;                    use Gdk.Dnd;
 with Gdk.Drag_Contexts;          use Gdk.Drag_Contexts;
 with Gdk.Event;                  use Gdk.Event;
-with Gdk.Rectangle;              use Gdk.Rectangle;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Check_Menu_Item;        use Gtk.Check_Menu_Item;
 with Gtk.Dnd;                    use Gtk.Dnd;
-with Gtk.Label;                  use Gtk.Label;
 with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Tree_Selection;         use Gtk.Tree_Selection;
 with Gtk.Tree_Store;             use Gtk.Tree_Store;
@@ -292,20 +290,6 @@ package body Project_Explorers_Files is
       Args   : Glib.Values.GValues;
       Kernel : GPS.Kernel.Kernel_Handle);
    --  Accept drag&drop data in File View's Tree
-
-   --------------
-   -- Tooltips --
-   --------------
-
-   type Explorer_Tooltips is new Tooltips.Tooltips with record
-      Explorer : Project_Explorer_Files;
-   end record;
-   type Explorer_Tooltips_Access is access all Explorer_Tooltips'Class;
-   overriding function Create_Contents
-     (Tooltip  : not null access Explorer_Tooltips;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
-   --  See inherited documentatoin
 
    ------------------------------
    -- Filter_Matches_Primitive --
@@ -972,10 +956,8 @@ package body Project_Explorers_Files is
       Project_View_Changed_Hook.Add
          (new On_Project_View_Changed, Watch => Explorer);
 
-      --  Initialize tooltips
-
       Tooltip := new Explorer_Tooltips;
-      Tooltip.Explorer := Project_Explorer_Files (Explorer);
+      Tooltip.Tree := Explorer.Tree;
       Tooltip.Set_Tooltip (Explorer.Tree);
 
       Vcs_File_Status_Changed_Hook.Add
@@ -1484,38 +1466,6 @@ package body Project_Explorers_Files is
          end if;
       end loop;
    end Add_File;
-
-   ---------------------
-   -- Create_Contents --
-   ---------------------
-
-   overriding function Create_Contents
-     (Tooltip  : not null access Explorer_Tooltips;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
-   is
-      pragma Unreferenced (Widget);
-      Iter : Gtk_Tree_Iter;
-      Label : Gtk_Label;
-      Area : Gdk_Rectangle;
-
-   begin
-      Initialize_Tooltips (Tooltip.Explorer.Tree, X, Y, Area, Iter);
-
-      if Iter /= Null_Iter then
-         Tooltip.Set_Tip_Area (Area);
-         declare
-            File : constant Virtual_File :=
-              Tooltip.Explorer.Tree.Get_File_From_Node (Iter);
-            Dir  : constant Virtual_File := Get_Parent (File);
-         begin
-            Gtk_New (Label,
-                     File.Display_Base_Dir_Name & ASCII.LF & "in "
-                     & Dir.Display_Full_Name);
-         end;
-      end if;
-      return Gtk_Widget (Label);
-   end Create_Contents;
 
    -------------
    -- Execute --

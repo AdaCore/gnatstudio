@@ -16,7 +16,6 @@
 ------------------------------------------------------------------------------
 
 with GNATCOLL.Projects; use GNATCOLL.Projects;
-with GNATCOLL.Symbols;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 with Gdk.Event;      use Gdk.Event;
@@ -32,6 +31,7 @@ with GPS.Kernel.Hooks; use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;   use GPS.Kernel.MDI;
 with GPS.VCS;          use GPS.VCS;
 with Language;         use Language;
+with Tooltips;         use Tooltips;
 
 package Project_Explorers_Common is
 
@@ -189,6 +189,20 @@ package Project_Explorers_Common is
    --  Should be set for the Vcs_File_Status_Changed_Hook.
    --  It will automatically update the icons for all displayed files in the
    --  tree
+
+   --------------
+   -- Tooltips --
+   --------------
+
+   type Explorer_Tooltips is new Tooltips.Tooltips with record
+      Tree     : access Base_Explorer_Tree_Record'Class;
+   end record;
+   type Explorer_Tooltips_Access is access all Explorer_Tooltips'Class;
+   overriding function Create_Contents
+     (Self     : not null access Explorer_Tooltips;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
+   --  See inherited documentatoin
 
    ----------
    -- Misc --

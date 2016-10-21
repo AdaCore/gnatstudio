@@ -35,13 +35,11 @@ with Glib.Values;               use Glib.Values;
 with Gdk;                       use Gdk;
 with Gdk.Dnd;                   use Gdk.Dnd;
 with Gdk.Event;                 use Gdk.Event;
-with Gdk.Rectangle;             use Gdk.Rectangle;
 with Gdk.Window;                use Gdk.Window;
 
 with Gtk.Dnd;                   use Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Box;                   use Gtk.Box;
-with Gtk.Label;                 use Gtk.Label;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter;     use Gtk.Tree_Model_Filter;
@@ -273,20 +271,6 @@ package body Project_Explorers is
       (Self     : not null access Explorer_Tree_View_Record'Class;
        Project  : Project_Type) return Node_Types;
    --  The node type to use for a project
-
-   --------------
-   -- Tooltips --
-   --------------
-
-   type Explorer_Tooltips is new Tooltips.Tooltips with record
-      Explorer : Project_Explorer;
-   end record;
-   type Explorer_Tooltips_Access is access all Explorer_Tooltips'Class;
-   overriding function Create_Contents
-     (Tooltip  : not null access Explorer_Tooltips;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
-   --  See inherited documentatoin
 
    -----------------------
    -- Local subprograms --
@@ -668,10 +652,8 @@ package body Project_Explorers is
       Set_Sort_Column_Id
         (+Explorer.Tree.Model, Display_Name_Column, Sort_Ascending);
 
-      --  Initialize tooltips
-
       Tooltip := new Explorer_Tooltips;
-      Tooltip.Explorer := Project_Explorer (Explorer);
+      Tooltip.Tree := Explorer.Tree;
       Tooltip.Set_Tooltip (Explorer.Tree);
 
       P := new On_Pref_Changed;
@@ -1251,90 +1233,6 @@ package body Project_Explorers is
 
       Thaw_Sort (Exp.Tree.Model, Sort);
    end Update_Absolute_Paths;
-
-   ---------------------
-   -- Create_Contents --
-   ---------------------
-
-   overriding function Create_Contents
-     (Tooltip  : not null access Explorer_Tooltips;
-      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
-      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
-   is
-      pragma Unreferenced (Widget);
-      Kernel     : constant access Kernel_Handle_Record'Class :=
-        Tooltip.Explorer.Kernel;
-      Filter_Path : Gtk_Tree_Path;
-      Column     : Gtk_Tree_View_Column;
-      Cell_X,
-      Cell_Y     : Gint;
-      Row_Found  : Boolean := False;
-      Filter_Iter, Iter  : Gtk_Tree_Iter;
-      Node_Type  : Node_Types;
-      File         : Virtual_File;
-      Area       : Gdk_Rectangle;
-      Label      : Gtk_Label;
-   begin
-      Get_Path_At_Pos
-        (Tooltip.Explorer.Tree, X, Y, Filter_Path,
-         Column, Cell_X, Cell_Y, Row_Found);
-
-      if not Row_Found then
-         return null;
-
-      else
-         --  Now check that the cursor is over a text
-
-         Filter_Iter :=
-           Get_Iter (Tooltip.Explorer.Tree.Get_Model, Filter_Path);
-         if Filter_Iter = Null_Iter then
-            return null;
-         end if;
-      end if;
-
-      Tooltip.Explorer.Tree.Filter.Convert_Iter_To_Child_Iter
-        (Child_Iter => Iter, Filter_Iter => Filter_Iter);
-
-      Get_Cell_Area (Tooltip.Explorer.Tree, Filter_Path, Column, Area);
-      Path_Free (Filter_Path);
-
-      Tooltip.Set_Tip_Area (Area);
-
-      Node_Type := Tooltip.Explorer.Tree.Get_Node_Type (Iter);
-
-      case Node_Type is
-         when Project_Node_Types =>
-            --  Project or extended project full pathname
-            File := Get_File (Tooltip.Explorer.Tree.Model, Iter, File_Column);
-            Gtk_New (Label, File.Display_Full_Name);
-
-         when Directory_Node_Types =>
-            Gtk_New
-              (Label,
-               Get_Tooltip_For_Directory
-                 (Kernel    => Kernel,
-                  Directory => Get_File
-                    (Tooltip.Explorer.Tree.Model, Iter, File_Column),
-                  Project   => Tooltip.Explorer.Tree.Get_Project_From_Node
-                    (Iter, Importing => False)));
-            Label.Set_Use_Markup (True);
-
-         when File_Node =>
-            Gtk_New
-              (Label,
-               Get_Tooltip_For_File
-                 (Kernel    => Kernel,
-                  File      => Tooltip.Explorer.Tree.Get_File_From_Node (Iter),
-                  Project   => Tooltip.Explorer.Tree.Get_Project_From_Node
-                    (Iter, Importing => False)));
-            Label.Set_Use_Markup (True);
-
-         when others =>
-            null;
-      end case;
-
-      return Gtk_Widget (Label);
-   end Create_Contents;
 
    ------------------
    -- Add_Children --

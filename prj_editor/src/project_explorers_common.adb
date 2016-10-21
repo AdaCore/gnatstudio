@@ -27,6 +27,7 @@ with Glib.Convert;              use Glib.Convert;
 with Glib.Values;
 with Gtk.Dnd;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Target_List;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
@@ -873,6 +874,64 @@ package body Project_Explorers_Common is
          Glib.Values.Unset (Values (Index));
       end loop;
    end Set;
+
+   ---------------------
+   -- Create_Contents --
+   ---------------------
+
+   overriding function Create_Contents
+     (Self     : not null access Explorer_Tooltips;
+      Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
+      X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Widget);
+      Kernel             : constant access Kernel_Handle_Record'Class :=
+        Self.Tree.Kernel;
+      Iter                : Gtk_Tree_Iter;
+      Node_Type          : Node_Types;
+      File               : Virtual_File;
+      Area               : Gdk_Rectangle;
+      Label              : Gtk_Label;
+   begin
+      Initialize_Tooltips (Self.Tree, X, Y, Area, Iter);
+
+      if Iter /= Null_Iter then
+         Self.Set_Tip_Area (Area);
+         Node_Type := Self.Tree.Get_Node_Type (Iter);
+
+         case Node_Type is
+         when Project_Node_Types =>
+            --  Project or extended project full pathname
+            File := Get_File (Self.Tree.Model, Iter, File_Column);
+            Gtk_New (Label, File.Display_Full_Name);
+
+         when Directory_Node_Types =>
+            Gtk_New
+              (Label,
+               Get_Tooltip_For_Directory
+                 (Kernel    => Kernel,
+                  Directory => Get_File (Self.Tree.Model, Iter, File_Column),
+                  Project   => Self.Tree.Get_Project_From_Node
+                    (Iter, Importing => False)));
+            Label.Set_Use_Markup (True);
+
+         when File_Node =>
+            Gtk_New
+              (Label,
+               Get_Tooltip_For_File
+                 (Kernel    => Kernel,
+                  File      => Self.Tree.Get_File_From_Node (Iter),
+                  Project   => Self.Tree.Get_Project_From_Node
+                    (Iter, Importing => False)));
+            Label.Set_Use_Markup (True);
+
+         when others =>
+            null;
+         end case;
+      end if;
+
+      return Gtk_Widget (Label);
+   end Create_Contents;
 
    -------------
    -- Execute --
