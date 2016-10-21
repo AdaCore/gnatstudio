@@ -95,6 +95,8 @@ package body Informational_Popups is
       Info_Popup : Gtk_Window;
       Icon       : Gtk_Image;
       Revealer   : Gtk_Revealer;
+      Screen     : Gdk_Screen;
+      Visual     : Gdk_Visual;
    begin
       Gtk_New (Info_Popup);
       Info_Popup.Set_Decorated (False);
@@ -104,7 +106,15 @@ package body Informational_Popups is
       Info_Popup.Set_App_Paintable (True);
       Info_Popup.On_Draw (On_Draw'Access);
 
-      Info_Popup.Set_Visual (Get_Rgba_Visual (Info_Popup.Get_Screen));
+      Screen := Info_Popup.Get_Screen;
+      if Screen = null then
+         Screen := Get_Default;
+      end if;
+
+      Visual := Get_Rgba_Visual (Screen);
+      if Visual /= null then
+         Info_Popup.Set_Visual (Visual);
+      end if;
 
       Gtk_New_From_Icon_Name
         (Icon,
