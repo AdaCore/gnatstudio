@@ -280,14 +280,6 @@ package GPS.Kernel.Preferences is
    Selected_Item_Color       : Color_Preference;
    Title_Color               : Color_Preference;
 
-   -- VCS --
-   Implicit_Status           : Boolean_Preference;
-   Hide_Up_To_Date           : Boolean_Preference;
-   Hide_Not_Registered       : Boolean_Preference;
-   CVS_Command               : String_Preference;
-   ClearCase_Command         : String_Preference;
-   Default_VCS               : String_Preference;
-
    Doc_Search_Before_First   : Boolean_Preference;
    --  Whether we should look for the documentation of entities first in the
    --  comments before (and fallback to the comments after), or the opposite

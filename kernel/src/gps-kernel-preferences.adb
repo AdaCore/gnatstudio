@@ -1250,52 +1250,6 @@ package body GPS.Kernel.Preferences is
          Label   => -"Title font",
          Path    => ":Fonts & Colors");
 
-      -- VCS --
-
-      Implicit_Status := Kernel.Preferences.Create
-        (Name    => "VCS-Implicit-Status",
-         Default => True,
-         Doc     =>
-            -("Requires explicit status checks commands. These might be too"
-              & " costly to run systematically as part of other commands."),
-         Label   => -"Implicit status",
-         Path    => -"VCS:General");
-
-      Hide_Up_To_Date := Kernel.Preferences.Create
-        (Name    => "VCS-Hide-Up-To-Date",
-         Default => False,
-         Path    => "VCS:Explorer",
-         Doc     => -"Hide up-to-date files in VCS explorer.",
-         Label   => -"Hide up-to-date files");
-
-      Hide_Not_Registered := Kernel.Preferences.Create
-        (Name    => "VCS-Hide-Not-Registered",
-         Default => False,
-         Path    => "VCS:Explorer",
-         Doc     => -"Hide unknown files in VCS explorer.",
-         Label   => -"Hide unknown files");
-
-      Default_VCS := Kernel.Preferences.Create
-        (Name    => "Default-VCS",
-         Default => "Auto",
-         Path    => -"VCS:General",
-         Doc     => -"Default VCS to use when none is defined in the project.",
-         Label   => -"Default VCS");
-
-      CVS_Command := Kernel.Preferences.Create
-        (Name    => "CVS-Command",
-         Default => "cvs",
-         Doc     => -"General CVS command",
-         Path    => ":VCS",
-         Label   => -"CVS command");
-
-      ClearCase_Command := Kernel.Preferences.Create
-        (Name    => "ClearCase-Command",
-         Default => "cleartool",
-         Doc     => -"General ClearCase command",
-         Path    => ":VCS",
-         Label   => -"ClearCase command");
-
       -- External Commands --
 
       List_Processes := Kernel.Preferences.Create
