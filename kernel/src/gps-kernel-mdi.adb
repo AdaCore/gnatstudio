@@ -71,6 +71,8 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.Dialogs;               use GPS.Dialogs;
+with GPS.VCS;                   use GPS.VCS;
+with GPS.VCS_Engines;           use GPS.VCS_Engines;
 
 with GPS.Editors;               use GPS.Editors;
 with GPS.Editors.GtkAda;
@@ -2207,19 +2209,45 @@ package body GPS.Kernel.MDI is
    function Get_Tooltip_For_File
      (Kernel  : not null access Kernel_Handle_Record'Class;
       File    : GNATCOLL.VFS.Virtual_File;
-      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project)
+      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project;
+      With_VCS : Boolean := True)
       return String
    is
+      function Get_VCS return String;
+      function Get_VCS return String is
+         VCS    : VCS_Engine_Access;
+         Status : VCS_File_Status;
+      begin
+         if Project = No_Project then
+            VCS := Guess_VCS_For_Directory (Kernel, File.Dir);
+         else
+            VCS := Get_VCS (Kernel, Project);
+         end if;
+
+         Status := VCS.File_Properties_From_Cache (File).Status;
+         if Status /= Status_Untracked then
+            return ASCII.LF & "<b>" & VCS.Name & " status</b>" & ASCII.LF
+              & "  " & To_String (VCS.Get_Display (Status).Label);
+         else
+            return "";
+         end if;
+      end Get_VCS;
+
    begin
+      if File = No_File then
+         return "";
+      end if;
+
       return
         File.Display_Base_Name & ASCII.LF
         & "<b>Absolute:</b>" & ASCII.LF
-        & File.Dir.Display_Full_Name & ASCII.LF
+        & "  " & File.Dir.Display_Full_Name & ASCII.LF
         & "<b>Relative to root:</b>" & ASCII.LF
-        & (+File.Dir.Relative_Path
-           (Get_Project (Kernel).Project_Path.Dir)) & ASCII.LF
+        & "  " & (+File.Dir.Relative_Path
+           (Get_Project (Kernel).Project_Path.Dir))
         & (if Project = No_Project
-           then "" else "<b>In project:</b> " & Project.Name);
+           then "" else ASCII.LF & "<b>In project:</b> " & Project.Name)
+        & (if With_VCS then Get_VCS else "");
    end Get_Tooltip_For_File;
 
    -------------------------------

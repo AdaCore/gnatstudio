@@ -331,11 +331,13 @@ package GPS.Kernel.MDI is
    function Get_Tooltip_For_File
      (Kernel  : not null access Kernel_Handle_Record'Class;
       File    : GNATCOLL.VFS.Virtual_File;
-      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project)
+      Project : GNATCOLL.Projects.Project_Type := GNATCOLL.Projects.No_Project;
+      With_VCS : Boolean := True)
       return String;
    --  Return the tooltip text for a file (which belongs to a specific
    --  project, possibly looked up dynamically if unspecified and
    --  unambiguous).
+   --  Information on VCS status is included if With_VCS is true.
    --  This is markup text (including <b> special markup)
 
    function Get_Tooltip_For_Directory

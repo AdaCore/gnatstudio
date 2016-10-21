@@ -174,15 +174,25 @@ package body GPS.VCS_Engines is
       Directory : Virtual_File) return not null VCS_Engine_Access
    is
       VCS : VCS_Engine_Access;
+      D   : Virtual_File;
       Dir : Virtual_File := Directory;
    begin
-      while Dir.Full_Name.all /= "/" loop
-         VCS := Get_VCS (Kernel, Dir);
-         if VCS /= Global_Data.No_VCS_Engine then
-            return VCS;
-         end if;
-         Dir := Dir.Get_Parent;
-      end loop;
+      if Directory /= No_File then
+         loop
+            VCS := Get_VCS (Kernel, Dir);
+            if VCS /= Global_Data.No_VCS_Engine then
+               return VCS;
+            end if;
+            D := Dir.Get_Parent;
+
+            --  Avoid corner cases, for instance when Dir only contains
+            --  file information with no directory
+            if D = No_File or else D = Dir then
+               exit;
+            end if;
+            Dir := D;
+         end loop;
+      end if;
 
       return Global_Data.No_VCS_Engine;
    end Guess_VCS_For_Directory;

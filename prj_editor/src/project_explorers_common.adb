@@ -887,13 +887,14 @@ package body Project_Explorers_Common is
       pragma Unreferenced (Widget);
       Kernel             : constant access Kernel_Handle_Record'Class :=
         Self.Tree.Kernel;
-      Iter                : Gtk_Tree_Iter;
+      Filter_Iter, Iter  : Gtk_Tree_Iter;
       Node_Type          : Node_Types;
       File               : Virtual_File;
       Area               : Gdk_Rectangle;
       Label              : Gtk_Label;
    begin
-      Initialize_Tooltips (Self.Tree, X, Y, Area, Iter);
+      Initialize_Tooltips (Self.Tree, X, Y, Area, Filter_Iter);
+      Iter := Self.Tree.Convert_To_Store_Iter (Filter_Iter);
 
       if Iter /= Null_Iter then
          Self.Set_Tip_Area (Area);

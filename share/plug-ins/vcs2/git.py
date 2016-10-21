@@ -51,29 +51,30 @@ class Git(vcs2.VCS):
                 if line is None:
                     break
 
-                if line[0:2] in ('DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU'):
-                    status = GPS.VCS2.Status.CONFLICT
-                else:
-                    status = 0
+                if len(line) > 3:
+                    if line[0:2] in ('DD', 'AU', 'UD', 'UA', 'DU', 'AA', 'UU'):
+                        status = GPS.VCS2.Status.CONFLICT
+                    else:
+                        status = 0
 
-                    if line[0] == 'M':
-                        status = GPS.VCS2.Status.STAGED_MODIFIED
-                    elif line[0] == 'A':
-                        status = GPS.VCS2.Status.STAGED_ADDED
-                    elif line[0] == 'D':
-                        status = GPS.VCS2.Status.STAGED_DELETED
-                    elif line[0] == 'R':
-                        status = GPS.VCS2.Status.STAGED_RENAMED
-                    elif line[0] == 'C':
-                        status = GPS.VCS2.Status.STAGED_COPIED
-                    elif line[0] == '?':
-                        status = GPS.VCS2.Status.UNTRACKED
-                    elif line[0] == '!':
-                        status = GPS.VCS2.Status.IGNORED
+                        if line[0] == 'M':
+                            status = GPS.VCS2.Status.STAGED_MODIFIED
+                        elif line[0] == 'A':
+                            status = GPS.VCS2.Status.STAGED_ADDED
+                        elif line[0] == 'D':
+                            status = GPS.VCS2.Status.STAGED_DELETED
+                        elif line[0] == 'R':
+                            status = GPS.VCS2.Status.STAGED_RENAMED
+                        elif line[0] == 'C':
+                            status = GPS.VCS2.Status.STAGED_COPIED
+                        elif line[0] == '?':
+                            status = GPS.VCS2.Status.UNTRACKED
+                        elif line[0] == '!':
+                            status = GPS.VCS2.Status.IGNORED
 
-                    if line[1] == 'M':
-                        status = status | GPS.VCS2.Status.MODIFIED
-                    elif line[1] == 'D':
-                        status = status | GPS.VCS2.Status.DELETED
+                        if line[1] == 'M':
+                            status = status | GPS.VCS2.Status.MODIFIED
+                        elif line[1] == 'D':
+                            status = status | GPS.VCS2.Status.DELETED
 
-                s.set_status(GPS.File(line[3:]), status)
+                    s.set_status(GPS.File(line[3:]), status)
