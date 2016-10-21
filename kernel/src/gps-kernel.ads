@@ -316,10 +316,9 @@ package GPS.Kernel is
 
    function Is_Hidden
      (Kernel    : access Kernel_Handle_Record;
-      Base_Name : Filesystem_String) return Boolean;
-   --  Return whether File or Directory identified by its Base_Name should be
-   --  considered as hidden for all GUI purposes, such as the Project/File
-   --  explorer or the VCS operations.
+      File      : GNATCOLL.VFS.Virtual_File) return Boolean;
+   --  Whether the file or directory should considered hidden in the GUI, for
+   --  instance in the Projects and Files view.
 
    --------------
    -- Contexts --

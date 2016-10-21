@@ -449,14 +449,14 @@ package body GPS.Kernel is
       pragma Unreferenced (Self);
    begin
       if Pref = null
-        or else Pref = Preference (Hidden_Directories_Pattern)
+        or else Pref = Preference (Hidden_Files_Pattern)
       then
          if Kernel.Hidden_File_Matcher /= null then
             Unchecked_Free (Kernel.Hidden_File_Matcher);
          end if;
 
          declare
-            Pattern : constant String := Hidden_Directories_Pattern.Get_Pref;
+            Pattern : constant String := Hidden_Files_Pattern.Get_Pref;
          begin
             if Pattern /= "" then
                Kernel.Hidden_File_Matcher :=
@@ -599,10 +599,12 @@ package body GPS.Kernel is
 
    function Is_Hidden
      (Kernel    : access Kernel_Handle_Record;
-      Base_Name : Filesystem_String) return Boolean is
+      File      : GNATCOLL.VFS.Virtual_File) return Boolean
+   is
    begin
-      return Kernel.Hidden_File_Matcher /= null
-        and then Match (Kernel.Hidden_File_Matcher.all, +Base_Name);
+      return not Show_Hidden_Files.Get_Pref
+        and then Kernel.Hidden_File_Matcher /= null
+        and then Match (Kernel.Hidden_File_Matcher.all, +File.Base_Dir_Name);
    end Is_Hidden;
 
    ---------------------

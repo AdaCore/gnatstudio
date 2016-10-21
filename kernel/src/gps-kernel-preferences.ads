@@ -256,7 +256,9 @@ package GPS.Kernel.Preferences is
    Automatic_Xrefs_Load            : Boolean_Preference;
    --  Only when using the old xref engine, null otherwise
 
-   Hidden_Directories_Pattern      : String_Preference;
+   Hidden_Files_Pattern            : String_Preference;
+   Show_Hidden_Files               : Boolean_Preference;
+   --  Whether to hide some files in explorers and other contexts
 
    -- Refactoring --
 

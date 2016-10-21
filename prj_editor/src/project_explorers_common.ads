@@ -202,7 +202,7 @@ package Project_Explorers_Common is
      (Self     : not null access Explorer_Tooltips;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
-   --  See inherited documentatoin
+   --  See inherited documentation
 
    ----------
    -- Misc --

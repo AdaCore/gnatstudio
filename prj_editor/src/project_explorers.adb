@@ -88,7 +88,6 @@ package body Project_Explorers is
    Show_Ellipsis       : Boolean_Preference;
    Show_Flat_View      : Boolean_Preference;
    Show_Directories    : Boolean_Preference;
-   Show_Hidden_Dirs    : Boolean_Preference;
    Show_Object_Dirs    : Boolean_Preference;
    Show_Empty_Dirs     : Boolean_Preference;
    Projects_Before_Directories : Boolean_Preference;
@@ -864,12 +863,13 @@ package body Project_Explorers is
       if Pref = null
         or else Pref = Preference (Show_Flat_View)
         or else Pref = Preference (Show_Directories)
-        or else Pref = Preference (Show_Hidden_Dirs)
+        or else Pref = Preference (Show_Hidden_Files)
         or else Pref = Preference (Show_Object_Dirs)
         or else Pref = Preference (Show_Empty_Dirs)
         or else Pref = Preference (Show_Runtime)
         or else Pref = Preference (Show_Ellipsis)
         or else Pref = Preference (Projects_Before_Directories)
+        or else Pref = Preference (Hidden_Files_Pattern)
       then
          Refresh (Self.Explorer);
       end if;
@@ -916,7 +916,7 @@ package body Project_Explorers is
       Menu.Append (Gtk_Menu_Item_New);
       Append_Menu (Menu, K, Show_Flat_View);
       Append_Menu (Menu, K, Show_Directories);
-      Append_Menu (Menu, K, Show_Hidden_Dirs);
+      Append_Menu (Menu, K, Show_Hidden_Files);
       Append_Menu (Menu, K, Show_Object_Dirs);
       Append_Menu (Menu, K, Show_Empty_Dirs);
       Append_Menu (Menu, K, Projects_Before_Directories);
@@ -1468,10 +1468,6 @@ package body Project_Explorers is
         (Dir : Directory_Info; Parent : Gtk_Tree_Iter) return Gtk_Tree_Iter;
       --  Create a new project node, or reuse one if it exists
 
-      function Is_Hidden (Dir : Virtual_File) return Boolean;
-      --  Return true if Dir contains an hidden directory (a directory matching
-      --  the global GUI regexp for hidden directories).
-
       procedure Create_Or_Reuse_Runtime;
       --  Create a new runtime node, or reuse one if it exists.
 
@@ -1488,17 +1484,6 @@ package body Project_Explorers is
       Project : Project_Type;
       Dirs    : Dirs_Files_Hash.Map;
       VCS     : VCS_Engine_Access;
-
-      ---------------
-      -- Is_Hidden --
-      ---------------
-
-      function Is_Hidden (Dir : Virtual_File) return Boolean is
-      begin
-         return Is_Hidden
-           (Self.Kernel, +Directory_Node_Text
-              (Show_Abs_Paths, Show_Base, Project, Dir));
-      end Is_Hidden;
 
       -----------------------------
       -- Create_Or_Reuse_Project --
@@ -1651,6 +1636,8 @@ package body Project_Explorers is
 
       Files := Project.Source_Files (Recursive => False);
 
+      Trace (Me, "MANU Refresh_Project_Node");
+
       if Show_Dirs then
          for Dir of Project.Source_Dirs loop
             Dirs.Include ((Dir, Directory_Node), Files_List.Empty_List);
@@ -1667,12 +1654,15 @@ package body Project_Explorers is
 
       declare
          Dir         : Dirs_Files_Hash.Cursor := Dirs.First;
-         Show_Hidden : constant Boolean := Show_Hidden_Dirs.Get_Pref;
          Previous    : Directory_Info := (No_File, Runtime_Node);
          Dummy       : Gtk_Tree_Iter;
       begin
          while Has_Element (Dir) loop
-            if Show_Hidden or else not Is_Hidden (Key (Dir).Directory) then
+            Trace (Me, "MANU dir is hidden ? "
+               & Key (Dir).Directory.Display_Full_Name
+               & " => "
+               & Boolean'Image (Self.Kernel.Is_Hidden (Key (Dir).Directory)));
+            if not Self.Kernel.Is_Hidden (Key (Dir).Directory) then
                --  minor optimization, reuse dir if same as previous file
                if Key (Dir) /= Previous then
                   Previous := (Key (Dir).Directory, Key (Dir).Kind);
@@ -1681,7 +1671,9 @@ package body Project_Explorers is
 
                if Show_Dirs then
                   for F of Dirs (Dir) loop
-                     Add_File (Child, F);
+                     if not Self.Kernel.Is_Hidden (F) then
+                        Add_File (Child, F);
+                     end if;
                   end loop;
                end if;
             end if;
@@ -1692,7 +1684,9 @@ package body Project_Explorers is
 
       if not Show_Dirs then
          for F of Files.all loop
-            Add_File (Node, F);
+            if not Self.Kernel.Is_Hidden (F) then
+               Add_File (Node, F);
+            end if;
          end loop;
       end if;
 
@@ -1868,10 +1862,6 @@ package body Project_Explorers is
              " the disk. If unset, names are displayed relative to" &
              " the location of the project file." & ASCII.LF &
              "This option has no effect if you select Show Basenames."));
-
-      Show_Hidden_Dirs := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("explorer-show-hidden-directories", False,
-         Label => -"Show hidden directories");
 
       Show_Empty_Dirs := Kernel.Get_Preferences.Create_Invisible_Pref
         ("explorer-show-empty-directories", True,

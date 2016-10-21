@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation; use Ada;
+with Ada.Calendar;               use Ada.Calendar;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 
@@ -495,10 +496,16 @@ package body Project_Explorers_Files is
    function Read_Directory
      (D : Append_Directory_Idle_Data_Access) return Boolean
    is
+      Max_Idle_Duration : constant Duration := 0.04;
+      --  Maximum time one iteration in this background loop should take.
+      --  Since we are doing system calls, we might easily spend too much time
+      --  filling the view otherwise.
+
+      Start : constant Time := Clock;
+
       Path_Found : Boolean := False;
       Iter       : Gtk_Tree_Iter;
       Empty      : Boolean := True;
-      New_D      : Append_Directory_Idle_Data_Access;
       VCS        : VCS_Engine_Access;
 
       Values  : Glib.Values.GValue_Array (1 .. 4);
@@ -512,7 +519,8 @@ package body Project_Explorers_Files is
 
       procedure Clear_Timeout_Id is
          use Timeout_Id_List;
-         C : Cursor;
+         New_D      : Append_Directory_Idle_Data_Access;
+         C          : Cursor;
       begin
          if D.This_Timeout_ID = No_Source_Id then
             --  This can happen when we are calling this synchronously rather
@@ -523,7 +531,37 @@ package body Project_Explorers_Files is
          if C /= No_Element then
             D.Tree.Fill_Timeout_Ids.Delete (C);
          end if;
+
+         New_D := D;
+         Free (New_D);
       end Clear_Timeout_Id;
+
+      function File_Is_In_Project (F : Virtual_File) return Boolean;
+      --  Whether the file belongs to any loaded project
+
+      function File_Is_In_Project (F : Virtual_File) return Boolean is
+         T : constant Project_Tree_Access := Get_Registry (D.Tree.Kernel).Tree;
+      begin
+         if F.Is_Directory then
+            return T.Directory_Belongs_To_Project
+              (F.Full_Name, Direct_Only => False);
+
+         else
+            declare
+               File : constant Virtual_File :=
+                 T.Create (Name => F.Base_Dir_Name);
+
+               --  First matching project, since we have nothing else
+               --  to base our guess on
+               F_Info : constant File_Info'Class :=
+                 File_Info'Class (T.Info_Set (File).First_Element);
+               P      : constant Project_Type    := F_Info.Project;
+            begin
+               --  If not part of a project, then we remove the file
+               return P /= No_Project and then File = F;
+            end;
+         end if;
+      end File_Is_In_Project;
 
    begin
       if D = null then
@@ -535,7 +573,7 @@ package body Project_Explorers_Files is
       --  absolute path to the directory.
 
       if D.Base = Null_Iter then
-         D.Tree.Model.Append (Iter, D.Base);
+         D.Tree.Model.Append (Iter, Parent => D.Base);
 
          Values (1 .. 3) :=
            (1 => As_File   (D.Dir),
@@ -557,95 +595,83 @@ package body Project_Explorers_Files is
             Set_And_Clear (D.Tree.Model, Iter, Columns, Values);
 
             Clear_Timeout_Id;
-
-            New_D := D;
-            Free (New_D);
-
-            return False;
+            return False;  --  Stop background loop
          end if;
       end if;
+
+      --  Prepare the list of files.
+      --  We might need multiple iterations of the background loop to create
+      --  and filter this list.
 
       if D.Files = null then
          D.Files := D.Dir.Read_Dir;
          D.File_Index := D.Files'First;
          Sort (D.Files.all);
+
+         --  Eliminate hidden files
+         for F in D.Files'Range loop
+            if D.Tree.Kernel.Is_Hidden (D.Files (F)) then
+               D.Files (F) := No_File;
+            end if;
+         end loop;
       end if;
 
-      if D.Depth >= 0
-        and then D.File_Index <= D.Files'Last
-      then
-         if D.Files (D.File_Index) = No_File then
-            null;
+      if D.Depth >= 0 then
+         declare
+            Shows_Only_From_Project : constant Boolean :=
+              File_View_Shows_Only_Project.Get_Pref;
+         begin
+            while D.File_Index <= D.Files'Last loop
 
-         elsif File_View_Shows_Only_Project.Get_Pref then
-            if Is_Directory (D.Files (D.File_Index)) then
-               if not Get_Registry (D.Tree.Kernel).Tree.
-                 Directory_Belongs_To_Project
-                 (D.Files (D.File_Index).Full_Name,
-                  Direct_Only => False)
-               then
-                  --  Remove from the list
-                  D.Files (D.File_Index) := No_File;
+               if Clock - Start > Max_Idle_Duration then
+                  return True;  --  will continue at next iteration
                end if;
 
-            else
-               declare
-                  File : constant Virtual_File :=
-                    Get_Registry (D.Tree.Kernel).Tree.Create
-                    (Name => D.Files (D.File_Index).Base_Dir_Name);
+               if D.Files (D.File_Index) = No_File then
+                  null;
 
-                  --  First matching project, since we have nothing else to
-                  --  base our guess on
-                  F_Info : constant File_Info'Class :=
-                    File_Info'Class
-                      (Get_Registry (D.Tree.Kernel).Tree
-                       .Info_Set (File).First_Element);
-                  P      : constant Project_Type    := F_Info.Project;
-               begin
-                  --  If not part of a project, then we remove the file
-                  if P = No_Project
-                    or else File /= D.Files (D.File_Index)
-                  then
+               elsif Shows_Only_From_Project then
+                  if not File_Is_In_Project (D.Files (D.File_Index)) then
                      D.Files (D.File_Index) := No_File;
                   end if;
-               end;
-            end if;
 
-         elsif Dirs_From_Project.Get_Pref then
-            if Is_Directory (D.Files (D.File_Index)) then
-               if not Get_Registry (D.Tree.Kernel).Tree.
-                 Directory_Belongs_To_Project
-                 (D.Files (D.File_Index).Full_Name,
-                  Direct_Only => False)
-               then
-                  --  Remove from the list
-                  D.Files (D.File_Index) := No_File;
+               elsif Dirs_From_Project.Get_Pref then
+                  if Is_Directory (D.Files (D.File_Index)) then
+                     if not Get_Registry (D.Tree.Kernel).Tree.
+                       Directory_Belongs_To_Project
+                         (D.Files (D.File_Index).Full_Name,
+                          Direct_Only => False)
+                     then
+                        --  Remove from the list
+                        D.Files (D.File_Index) := No_File;
+                     end if;
+
+                  else
+                     declare
+                        Dir : constant Virtual_File :=
+                          D.Files (D.File_Index).Dir;
+                     begin
+                        if not Get_Registry (D.Tree.Kernel).Tree.
+                          Directory_Belongs_To_Project
+                            (Dir.Full_Name, Direct_Only => True)
+                        then
+                           --  Remove from the list
+                           D.Files (D.File_Index) := No_File;
+                        end if;
+                     end;
+                  end if;
                end if;
 
-            else
-               declare
-                  Dir : constant Virtual_File := D.Files (D.File_Index).Dir;
-               begin
-                  if not Get_Registry (D.Tree.Kernel).Tree.
-                    Directory_Belongs_To_Project
-                       (Dir.Full_Name, Direct_Only => True)
-                  then
-                     --  Remove from the list
-                     D.Files (D.File_Index) := No_File;
-                  end if;
-               end;
+               D.File_Index := D.File_Index + 1;
+            end loop;
+
+            if D.Depth = 0 then
+               D.Depth := -1;  --  Won't try to cleanup list of files again
             end if;
-         end if;
-
-         if D.Depth = 0 then
-            D.Depth := -1;
-         end if;
-
-         D.File_Index := D.File_Index + 1;
-
-         --  give the hand to gtk main until next file is analysed
-         return True;
+         end;
       end if;
+
+      --  Now insert all files
 
       for J in D.Files'Range loop
          if D.Files (J) /= No_File then
@@ -657,6 +683,8 @@ package body Project_Explorers_Files is
       if Empty then
          Set (D.Tree.Model, D.Base, Icon_Column,
               Stock_For_Node (Directory_Node, Expanded => False));
+         Clear_Timeout_Id;
+         return False;  --  done processing this directory
       end if;
 
       for J in D.Files'Range loop
@@ -670,13 +698,6 @@ package body Project_Explorers_Files is
                2 => As_String (D.Files (J).Display_Base_Dir_Name),
                3 => As_Int    (Gint (Node_Types'Pos (Directory_Node))));
 
-            if D.Depth = 0 then
-               Set_And_Clear
-                 (D.Tree.Model, Iter,
-                  Columns (1 .. 3), Values (1 .. 3));
-               exit;
-            end if;
-
             --  Are we on the path to the target directory ?
 
             if not Path_Found
@@ -685,18 +706,14 @@ package body Project_Explorers_Files is
                Path_Found := True;
 
                declare
-                  Ignore    : Boolean;
-                  pragma Unreferenced (Ignore);
-
+                  Ignore    : Boolean with Unreferenced;
                   Path      : Gtk_Tree_Path;
                begin
                   Path := Get_Path (D.Tree.Model, D.Base);
                   Ignore := Expand_Row (D.Tree, Path, False);
-
                   D.Tree.Model.Set
                     (D.Base, Icon_Column,
                      Stock_For_Node (Directory_Node, Expanded => True));
-
                   Path_Free (Path);
                end;
 
@@ -748,6 +765,8 @@ package body Project_Explorers_Files is
                  (Values (4), Stock_For_Node (Directory_Node, False));
                Set_And_Clear (D.Tree.Model, Iter, Columns, Values);
             end if;
+
+            D.Files (J) := No_File;  --  already inserted
          end if;
       end loop;
 
@@ -757,14 +776,13 @@ package body Project_Explorers_Files is
                 & VCS.Name);
       end if;
 
-      --  For now, refreshes on a file-basis. We do not have support for
-      --  directories.
+      --  Ensure that all files will eventually get some VCS info
       if VCS.Ensure_Status_For_Files (D.Files.all) then
          null;
       end if;
 
       for J of D.Files.all loop
-         if J /= No_File and then J.Is_Regular_File then
+         if J /= No_File then
             Iter := Create_File
               (D.Tree, D.Base, J,
                Icon_Name => To_String
@@ -777,26 +795,16 @@ package body Project_Explorers_Files is
       Unchecked_Free (D.Files);
 
       Clear_Timeout_Id;
-
-      New_D := D;
-      Free (New_D);
-
       return False;
 
    exception
       when VFS_Directory_Error =>
          --  The directory couldn't be open, probably because of permissions
-
          Clear_Timeout_Id;
-
-         New_D := D;
-         Free (New_D);
-
          return False;
 
       when E : others =>
          Trace (Me, E);
-
          Clear_Timeout_Id;
          return False;
    end Read_Directory;
@@ -987,6 +995,7 @@ package body Project_Explorers_Files is
    begin
       Append_Menu (Menu, View.Kernel, File_View_Shows_Only_Project);
       Append_Menu (Menu, View.Kernel, Dirs_From_Project);
+      Append_Menu (Menu, View.Kernel, Show_Hidden_Files);
    end Create_Menu;
 
    ----------------------------
@@ -1091,7 +1100,9 @@ package body Project_Explorers_Files is
       Child : constant GPS_MDI_Child :=
         Explorer_Files_Views.Child_From_View (T);
    begin
-      T.Kernel.Context_Changed (Child.Build_Context);
+      if Child /= null then
+         T.Kernel.Context_Changed (Child.Build_Context);
+      end if;
    end File_Selection_Changed;
 
    -----------------------
@@ -1358,6 +1369,10 @@ package body Project_Explorers_Files is
       pragma Unreferenced (Ignore);
 
    begin
+      if View.Kernel.Is_Hidden (File) then
+         return;
+      end if;
+
       Iter := Get_Iter_First (View.Tree.Model);
 
       if Is_Directory (File) then
@@ -1560,6 +1575,8 @@ package body Project_Explorers_Files is
          if Pref = null
            or else Pref = Preference (File_View_Shows_Only_Project)
            or else Pref = Preference (Dirs_From_Project)
+           or else Pref = Preference (Show_Hidden_Files)
+           or else Pref = Preference (Hidden_Files_Pattern)
          then
             Refresh (Explorer);
          end if;
