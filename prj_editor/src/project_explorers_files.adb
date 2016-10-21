@@ -729,6 +729,14 @@ package body Project_Explorers_Files is
                         Iter, D.Depth, D.Norm_Dest, False);
                      Ignore := Expand_Row (D.Tree, Target_Path, False);
                      Select_Path (Get_Selection (D.Tree), Target_Path);
+
+                     D.Tree.Scroll_To_Cell
+                       (Target_Path,
+                        Column    => null,
+                        Use_Align => False,
+                        Row_Align => 0.0,
+                        Col_Align => 0.0);
+
                      Path_Free (Target_Path);
 
                      Glib.Values.Init_Set_String
