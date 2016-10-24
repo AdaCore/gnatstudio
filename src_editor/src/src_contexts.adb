@@ -55,6 +55,7 @@ with GPS.Kernel.Hooks;           use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;             use GPS.Kernel.MDI;
 with GPS.Kernel.Messages;        use GPS.Kernel.Messages;
 with GPS.Kernel.Messages.Markup; use GPS.Kernel.Messages.Markup;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Search;                 use GPS.Search;
@@ -884,7 +885,8 @@ package body Src_Contexts is
          if Result /= GPS.Search.No_Match then
             Display_Informational_Popup
               (Get_Main_Window (Kernel),
-               Icon_Name => "gps-undo-symbolic");
+               Icon_Name             => "gps-undo-symbolic",
+               No_Transparency_Color => Default_Style.Get_Pref_Bg);
          end if;
 
          return False;

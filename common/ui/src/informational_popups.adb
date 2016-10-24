@@ -17,6 +17,7 @@
 
 with Cairo;           use Cairo;
 with Gdk;             use Gdk;
+with Gdk.Cairo;       use Gdk.Cairo;
 with Gdk.Screen;      use Gdk.Screen;
 with Gdk.Window;      use Gdk.Window;
 with Glib;            use Glib;
@@ -32,6 +33,17 @@ package body Informational_Popups is
    Informational_Popup_Display_Time : constant Guint := 1_000;
    --  The amount of time during which an informational popup is displayed, in
    --  milliseconds.
+
+   type Informational_Popup_Record is new Gtk_Window_Record with record
+      Supports_Transparency : Boolean;
+      --  True if the screen's visual supports transparency, False otherwise.
+
+      No_Transparency_Color : Gdk_RGBA;
+      --  Color used for the informational popup's background when transparency
+      --  is not supported.
+   end record;
+   type Informational_Popup is access all Informational_Popup_Record'Class;
+   --  Type representing informational popups
 
    function On_Draw
      (Self : access Gtk_Widget_Record'Class;
@@ -69,17 +81,26 @@ package body Informational_Popups is
      (Self : access Gtk_Widget_Record'Class;
       Cr   : Cairo.Cairo_Context) return Boolean
    is
-      pragma Unreferenced (Self);
+      pragma Unreferenced (Cr);
+      Info_Popup : constant Informational_Popup := Informational_Popup (Self);
+      New_Cr     : constant Cairo.Cairo_Context := Create (Self.Get_Window);
+      Alpha      : constant Gdouble :=
+                     (if Info_Popup.Supports_Transparency then
+                         0.0
+                      else
+                         1.0);
    begin
       Set_Source_Rgba
-        (Cr,
-         Red   => 0.0,
-         Green => 0.0,
-         Blue  => 0.0,
-         Alpha => 0.0);
+        (New_Cr,
+         Red   => Info_Popup.No_Transparency_Color.Red,
+         Green => Info_Popup.No_Transparency_Color.Green,
+         Blue  => Info_Popup.No_Transparency_Color.Blue,
+         Alpha => Alpha);
 
-      Set_Operator (Cr, Op => Cairo_Operator_Source);
-      Paint (Cr);
+      Set_Operator (New_Cr, Op => Cairo_Operator_Source);
+      Paint (New_Cr);
+
+      Destroy (New_Cr);
 
       return False;
    end On_Draw;
@@ -89,16 +110,19 @@ package body Informational_Popups is
    ---------------------------------
 
    procedure Display_Informational_Popup
-     (Parent     : not null access Gtk_Window_Record'Class;
-      Icon_Name  : String)
+     (Parent                : not null access Gtk_Window_Record'Class;
+      Icon_Name             : String;
+      No_Transparency_Color : Gdk_RGBA := Black_RGBA)
    is
-      Info_Popup : Gtk_Window;
+      Info_Popup : Informational_Popup;
       Icon       : Gtk_Image;
       Revealer   : Gtk_Revealer;
       Screen     : Gdk_Screen;
       Visual     : Gdk_Visual;
    begin
-      Gtk_New (Info_Popup);
+      Info_Popup := new Informational_Popup_Record;
+      Info_Popup.No_Transparency_Color := No_Transparency_Color;
+      Initialize (Info_Popup);
       Info_Popup.Set_Decorated (False);
       Info_Popup.Set_Transient_For (Parent);
       Info_Popup.Set_Position (Win_Pos_Center_On_Parent);
@@ -112,6 +136,8 @@ package body Informational_Popups is
       end if;
 
       Visual := Get_Rgba_Visual (Screen);
+      Info_Popup.Supports_Transparency := Visual /= null;
+
       if Visual /= null then
          Info_Popup.Set_Visual (Visual);
       end if;
