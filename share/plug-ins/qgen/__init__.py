@@ -53,6 +53,10 @@ import re
 import workflows
 import constructs
 from workflows.promises import Promise, ProcessWrapper, TargetWrapper
+from project_support import Project_Support
+from . import mapping
+from sig_utils import Signal
+from diagram_utils import Diagram_Utils
 
 
 logger = GPS.Logger('MODELING')
@@ -201,206 +205,6 @@ class MDL_Language(GPS.Language):
                     sloc_entity=sloc_start)
 
 
-class Project_Support(object):
-    """
-    This class provides an interface to the project facilities, to be
-    used by QGen.
-    """
-
-    def register_tool(self):
-        """Register the QGENC tool and its switches"""
-
-        GPS.parse_xml("""<?xml version='1.0' ?>
-           <GPS>
-             <project_attribute
-              package="QGen"
-              name="Output_Dir"
-              editor_page="QGen"
-              label="Output directory"
-              description="Location of all generated source code files."
-              hide_in="wizard library_wizard">
-                <string type="directory"/>
-             </project_attribute>
-
-             <project_attribute
-              package="QGen"
-              name="Switches"
-              editor_page="QGen"
-              list="true"
-              label="Switches"
-              hide_in="wizard library_wizard">
-                <index attribute='Languages'>
-                   <string />
-                </index>
-             </project_attribute>
-
-             <project_attribute
-              package="QGen"
-              name="Target"
-              editor_page="QGen"
-              list="true"
-              label="Target"
-              hide_in="wizard library_wizard">
-                <index attribute='Languages'>
-                   <string />
-                </index>
-             </project_attribute>
-
-             <project_attribute
-              package="QGen"
-              name="Debug_Args"
-              editor_page="QGen"
-              label="Debug arguments"
-              description="Launch arguments for generated debug session."
-              hide_in="wizard library_wizard">
-                <string />
-             </project_attribute>
-
-             <target-model name="QGenc" category="">
-               <description>Generic launch of QGen</description>
-               <iconname>gps-build-all-symbolic</iconname>
-               <switches>
-               </switches>
-             </target-model>
-
-             <target model="QGenc" category="_File_" name="QGen for file">
-               <in-toolbar>FALSE</in-toolbar>
-               <in-menu>FALSE</in-menu>
-               <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
-               <read-only>TRUE</read-only>
-               <command-line>
-                 <arg>qgenc</arg>
-                 <arg>--trace</arg>
-                 <arg>-i</arg>
-                 <arg>-l</arg>
-                 <arg>ada</arg>
-               </command-line>
-             </target>
-
-             <tool
-              name="QGENC"
-              package="QGen"
-              index="Simulink">
-               <language>Simulink</language>
-               <switches>
-                 <title line="1">Files</title>
-                 <title line="2">Generation</title>
-                 <title line="3">Output</title>
-
-                 <field
-                  line="1"
-                  label="Matlab file"
-                  switch="-m"
-                  separator=" "
-                  as-file="true"
-                 tip="Provides variable declarations of the Matlab workspace"/>
-                 <field
-                  line="1"
-                  label="Typing file"
-                  switch="-t"
-                  separator=" "
-                  as-file="true"
-                  tip="Provides Simulink block typing information"/>
-                 <field
-                  line="1"
-                  label="Library directory"
-                  switch="-b"
-                  separator=" "
-                  as-directory="true"
-                  tip=""/>
-
-                 <combo
-                  line="2"
-                  label="Target language"
-                  switch="-l"
-                  separator=" "
-             tip="The language used by QGENC to produce the generated files">
-                    <combo-entry label="Ada" value="ada"/>
-                    <combo-entry label="C" value="c"/>
-                 </combo>
-                 <check
-                  line="2"
-                  label="Flatten model"
-                  switch="--full-flattening"
-                  tip=""/>
-
-                 <radio line="3">
-                   <radio-entry
-                    label="Delete"
-                    switch="-c"
-             tip="Delete contents of output directory between compilations"/>
-                   <radio-entry
-                    label="Preserve"
-                    switch="-i"
-             tip="Preserve contents of output directory between compilations"/>
-                 </radio>
-               </switches>
-             </tool>
-           </GPS>""")
-
-    def get_output_dir(self, file):
-        """
-        Return the output directory to use when generating code for file.
-        It default to the project's object directory.
-
-        :param GPS.File file: the .mdl file
-        """
-        if file is None:
-            return None
-
-        p = file.project()
-        dir = p.get_attribute_as_string(
-            package='QGen', attribute='Output_Dir')
-        if dir:
-            # Get absolute directory from Output_Dir
-            dir = os.path.join(os.path.dirname(p.file().path), dir)
-        else:
-            try:
-                return p.object_dirs()[0]
-            except:
-                return GPS.Project.root().object_dirs()[0]
-        return dir
-
-    def get_models(self, filename):
-        """
-        Return the models to generated code for
-        for a specific target
-        :param string filename: the target file
-        :return GPS.File list: the list of model files
-        """
-        f = GPS.File(filename)
-        models_files = []
-        try:
-            models = f.project().get_attribute_as_list(
-                attribute='Target', package='QGen',
-                index=os.path.basename(filename))
-            for mod in models:
-                models_files.append(GPS.File(mod))
-        except:
-            models_files = []
-
-        return models_files
-
-    def get_switches(self, file):
-        """
-        Return the wswitches to use for a specific file
-        :param GPS.File file: the .mdl file
-        :return str: the list of switches
-        """
-        try:
-            switches = file.project().get_attribute_as_string(
-                attribute='Switches', package='QGen',
-                index=os.path.basename(file.path))
-            if not switches:
-                switches = file.project().get_attribute_as_string(
-                    attribute='Switches', package='QGen',
-                    index='simulink')
-        except:
-            switches = ''
-
-        return switches
-
-
 class CLI(GPS.Process):
     """
     An interface to the qgenc executable. This is responsible for
@@ -434,9 +238,9 @@ class CLI(GPS.Process):
 
         filepath = file.path
         typefile = os.path.splitext(filepath)[0]
-        switches = project_support.get_switches(
+        switches = Project_Support.get_switches(
             file) + " -t %s_types.txt" % typefile
-        outdir = project_support.get_output_dir(file)
+        outdir = Project_Support.get_output_dir(file)
 
         result_path = os.path.join(
             outdir, '.' + os.path.basename(filepath) + '_mdl2json')
@@ -502,10 +306,10 @@ class CLI(GPS.Process):
             if CLI.is_model_file(f):
                 typefile = os.path.splitext(f.path)[0]
                 switches = [
-                    "-o", project_support.get_output_dir(f),
+                    "-o", Project_Support.get_output_dir(f),
                     "-t", "%s_types.txt" % typefile, "--with-gui"]
-                switches = (' '.join(switches) +
-                            ' ' + project_support.get_switches(f) +
+                switches = (' '.join(switches) + ' ' +
+                            Project_Support.get_switches(f) +
                             ' ' + f.path)
                 w = TargetWrapper(target_name='QGen for file')
                 st = yield w.wait_on_execute(file=f, extra_args=switches)
@@ -542,7 +346,7 @@ class CLI(GPS.Process):
         This is a workflow, and should be used via the functions in
         workflows.py.
         """
-        models = project_support.get_models(main_name)
+        models = Project_Support.get_models(main_name)
 
         if not models:
             GPS.Console().write(
@@ -576,7 +380,7 @@ class CLI(GPS.Process):
                 for debugger in debuggers_to_close:
                     debugger.close()
 
-        models = project_support.get_models(main_name)
+        models = Project_Support.get_models(main_name)
 
         if not models:
             GPS.Console().write(
@@ -891,188 +695,13 @@ class QGEN_Diagram_Viewer(GPS.Browsers.View):
         context.modeling_item = item
         context.modeling_topitem = topitem
 
-
-class Mapping_File(object):
-    """
-    Support for the mapping file generated by qgen, which maps from source
-    lines to blocks, and back. The format of this mapping file is:
-       { "filename.adb": {   # repeated for each file
-              "block1": {    # repeated for each block
-                  "line": ["1-10", "65-70"], # lines impacted by this block
-                  "symbol": ["s1", "s2"]   # variables from this block
-              }
-       }
-    """
-
-    def __init__(self, filename=None):
-        # In the following:
-        #   - `file`:  an instance of `GPS.File`
-        #   - `linerange`: a tuple (start, end)
-        #   - `filename`: a string
-
-        self._blocks = {}    # block_id => set of (file,linerange)
-        self._files = {}     # filename => {line => blockid}
-        self._mdl = {}       # sourcefile => mdlfile
-        self._symbols = {}   # block_id => set(symbols)
-        self._funcinfo = {}  # funcname => (filename, endline)
-        self._fileinfo = {}  # filename => [(funcname, startline-endline)]
-
-    def load(self, mdlfile):
-        """
-        Load a mapping file from the disk. This cumulates with existing
-        information already loaded.
-        :param GPS.File mdlfile: the MDL file we start from
-        """
-        filename = os.path.join(
-            project_support.get_output_dir(mdlfile),
-            '%s.json' % os.path.basename(mdlfile.path))
-
-        try:
-            f = open(filename)
-        except IOError:
-            # Do not print an error: this is the normal case when no code
-            # has been generated yet
-            return
-
-        try:
-            js = json.load(f)
-        except:
-            GPS.Console().write('Invalid json in %s\n' % filename)
-            return
-
-        for filename, blocks in js.iteritems():
-            f = GPS.File(filename)
-            self._mdl[f.path] = mdlfile
-
-            b = self._files.setdefault(f.path, {})
-
-            for blockid, blockinfo in blocks.iteritems():
-                if blockid == '@qgen_functions':
-                    for func_id, funcline in blockinfo.iteritems():
-                        lines = funcline.split('-')
-                        if filename not in self._fileinfo:
-                            self._fileinfo[filename] = [
-                                (func_id, (int(lines[0]), int(lines[1])))]
-                        else:
-                            self._fileinfo[filename].append((func_id, (
-                                int(lines[0]), int(lines[1]))))
-                        self._funcinfo[func_id] = (filename, lines)
-                    continue
-
-                a = self._blocks.setdefault(blockid, set())
-                for linerange in blockinfo.get('lines', []):
-                    if isinstance(linerange, int):
-                        rg = (linerange, linerange)
-                    elif '-' in linerange:
-                        s = linerange.split('-')
-                        rg = (int(s[0]), int(s[1]))
-                    else:
-                        rg = (int(linerange), int(linerange))
-
-                    a.add((f, rg))
-
-                    for line in range(rg[0], rg[1] + 1):
-                        b[line] = blockid
-
-                a = self._symbols.setdefault(blockid, set())
-                for symbol in blockinfo.get('symbols', []):
-                    a.add(symbol)
-
-    def get_file_funcinfos(self, filename):
-        """
-        Returns the list of (function_name, [line_start, line_end]) for the
-        given filename
-        """
-        return self._fileinfo.get(filename, [])
-
-    def get_source_ranges(self, blockid):
-        """
-        Returns the set of (filename, linerange) tuples for the source lines
-        generated from that block.
-        """
-        return self._blocks.get(blockid, set())
-
-    def get_symbols(self, blockid):
-        """
-        Returns the set of source code symbols (variables) for this block.
-        """
-        return self._symbols.get(blockid, set())
-
-    def get_func_bounds(self, funcname):
-        """
-        Returns the file and lines where the function named funcname
-        starts and ends
-        """
-        return self._funcinfo.get(funcname, (None, None))
-
-    def get_block(self, file, line):
-        """
-        The block name corresponding to a given source line
-        :param GPS.File filename:
-        """
-        a = self._files.get(file.path, {})
-        return a.get(line, None)
-
-    def get_diagram_for_item(self, diags, block):
-        """
-        A block will have an id of the form diagram/blockid
-        that allows to compute the diagram to fetch and look for
-        the item inside it, instead of fetching all diagrams
-        using Browsers.get_diagram_for_item
-        :param JSON_Diagram_File diags: The file to search in
-        :param string block: The block to search for
-        """
-        diag = diags.get(block.rsplit('/', 1)[0])
-        if diag:
-            it = diag.get_item(block)
-            return (diag, it)
-
-        return None
-
-    def get_mdl_file(self, file):
-        """
-        Return the name of the MDL file used to generate the given file
-        :param GPS.File file: the source file
-        :return: a `GPS.File`
-        """
-        return self._mdl.get(file.path, None)
-
-
-class Signal(object):
-    """
-    A class describing a signal element and its styling attributes
-    """
-
-    def __init__(self, id):
-        self.id = id
-        self.watched = False
-        self.logged = False
-        self.style = ''
-
-    def compute_style(self):
-        """
-        Creates the name of the style to apply to the signal. The corresponding
-        style will be described in mdl2json.tmplt
-        """
-        self.style = ''
-
-        if self.watched:
-            self.style = '_watchpoint'
-        if self.logged:
-            self.style += '_logpoint'
-
-    def reset(self):
-        self.logged = False
-        self.watched = False
-
-project_support = Project_Support()
 MDL_Language.register()   # available before project is loaded
 
 if not CLI.is_available():
     logger.log('qgenc not found')
 
 else:
-    project_support.register_tool()
+    Project_Support.register_tool()
 
     class QGEN_Module(modules.Module):
 
@@ -1095,7 +724,7 @@ else:
             source associated with a block.
             """
 
-            QGEN_Module.modeling_map = Mapping_File()
+            QGEN_Module.modeling_map = mapping.Mapping_File()
             for f in GPS.Project.root().sources(recursive=True):
                 if CLI.is_model_file(f):
                     QGEN_Module.modeling_map.load(f)
@@ -1173,7 +802,7 @@ else:
 
                         try:
                             if (len(value) >= 7 or
-                               float(value) != int(value)):
+                                    float(value) != int(value)):
                                 value = '%.2e' % float(value)
                         except ValueError:
                             if len(value) >= 7:
@@ -1187,55 +816,6 @@ else:
 
             else:
                 item_parent.hide()
-
-        @staticmethod
-        def forall_auto_items(diagrams):
-            """
-            Return the list of all items with an "auto" property (i.e. whose
-            value should be displayed in the browser).
-            :param diagrams: a sequence of `GPS.Browsers.Diagram`
-            :return: a sequence of tuples (diagram, toplevel_item, item)
-            """
-
-            if diagrams:
-                for d in diagrams:
-                    for item in d.items:
-                        for it in item.recurse():
-                            if hasattr(it, "data") and \
-                               it.data.get('auto') == "true":
-                                yield (d, item, it)
-
-        @staticmethod
-        def update_priority_style(viewer, diagrams, exclude_list=[]):
-            """
-            Browses all items and updates their style when they have a lower
-            priority than their containing diagram, meaning they were
-            processed.
-            :param viewer: a QGEN_Diagram_Viewer
-            :param diagrams: a list of QGEN_Diagram
-            :param exclude_list: a list of items that do not have to be
-            processed
-            """
-            if diagrams:
-                for d in diagrams:
-                    for item in d.items:
-                            for it in item.recurse():
-                                if it not in exclude_list:
-                                    if hasattr(it, "data"):
-                                        prio = it.data.get('priority')
-                                        if prio is not None:
-                                            if prio > 0\
-                                               and prio < d.current_priority:
-                                                # If the current block is
-                                                # processed, fade its colors by
-                                                # updating the style
-                                                viewer.diags.set_item_style(
-                                                    it, it.data.get(
-                                                        'style_if_processed'))
-                                            elif d.reset_priority:
-                                                viewer.diags.set_item_style(
-                                                    it, None)
-                    d.reset_priority = False
 
         @staticmethod
         def on_diagram_changed(viewer, diag, clear=False):
@@ -1256,7 +836,7 @@ else:
                 debugger = None
 
             # Compute the value for all items with an "auto" property
-            for diag, toplevel, it in QGEN_Module.forall_auto_items([diag]):
+            for diag, toplevel, it in Diagram_Utils.forall_auto_items([diag]):
                 QGEN_Module.compute_item_values(
                     debugger, diag, toplevel=toplevel, item=it)
 
@@ -1269,54 +849,11 @@ else:
             # from the update
             bp_blocks = []
 
-            def __set_block_style(bp, style=None):
-                """
-                Update the style field of an item to the given style name
-                or reset it if no style is supplied
-                :param bp: a DebuggerBreakpoint object
-                :param style: a string representing the key containing
-                the style to set
-                """
-                if bp.type == "breakpoint":
-                    blockid = map.get_block(file=bp.file, line=bp.line)
-                    item = diag.get_item(blockid)
-                    if item:
-                        for it in item.recurse():
-                            try:
-                                id = getattr(it, "id", None)
-                                if style:
-                                    bp_blocks.append(it)
-                                    prio = it.data.get('priority')
-                                    if prio is not None and prio > 0 \
-                                       and prio < diag.current_priority:
-                                        viewer.diags.set_item_style(
-                                            it, it.data.get(
-                                                style + '_processed')
-                                        )
-                                    else:
-                                        viewer.diags.set_item_style(
-                                            it, it.data.get(style)
-                                        )
-                                else:
-                                    viewer.diags.set_item_style(it, None)
-                            except:
-                                # No corresponding style defined
-                                pass
-
             for b in QGEN_Module.previous_breakpoints:
-                __set_block_style(b)
+                Diagram_Utils.set_block_style(viewer, diag, map, b, bp_blocks)
 
-            for itid, sig in QGEN_Module.signal_attributes.iteritems():
-                item = diag.get_item(itid)
-                if item:
-                    label = getattr(item, "label", None)
-                    sig.compute_style()
-                    if sig.style is not None:
-                        viewer.diags.set_item_style(
-                                label, label.data.get(
-                                    'style_if' + sig.style))
-                    else:
-                        viewer.diags.set_item_style(label, None)
+            Diagram_Utils.update_signal_style(
+                QGEN_Module.signal_attributes, viewer, diag)
 
             # Remove False elements from the lists
             QGEN_Module.signal_attributes = {
@@ -1328,7 +865,7 @@ else:
             if clear or not debugger:
                 diag.reset_priority = True
                 diag.current_priority = 0
-                QGEN_Module.update_priority_style(viewer, [diag], bp_blocks)
+                Diagram_Utils.update_priority_style(viewer, [diag], bp_blocks)
                 # Update the display
                 diag.changed()
                 return
@@ -1336,11 +873,11 @@ else:
             if debugger:
                 QGEN_Module.previous_breakpoints = debugger.breakpoints
 
-            # Highlights current blocks with breakpoints
-            for b in QGEN_Module.previous_breakpoints:
-                __set_block_style(b, 'style_if_breakpoint')
+            Diagram_Utils.highlight_breakpoints(
+                viewer, diag, map,
+                bp_blocks, QGEN_Module.previous_breakpoints)
 
-            QGEN_Module.update_priority_style(viewer, [diag], bp_blocks)
+            Diagram_Utils.update_priority_style(viewer, [diag], bp_blocks)
             diag.changed()
 
         @staticmethod
@@ -1398,8 +935,8 @@ else:
             ctxt = GPS.current_context()
             debug = GPS.Debugger.get()
 
-            for diag, toplevel, it in QGEN_Module.forall_auto_items(diagrams):
-                parent = it.get_parent_with_id() or toplevel
+            for diag, toplvl, it in Diagram_Utils.forall_auto_items(diagrams):
+                parent = it.get_parent_with_id() or toplvl
                 sig_obj = QGEN_Module.signal_attributes.get(parent.id, None)
                 if sig_obj is not None and sig_obj.logged:
                     QGEN_Module.stop_logging_value_for_item(parent.id, debug)
@@ -1418,14 +955,15 @@ else:
             """
             ctxt = GPS.current_context()
             debug = GPS.Debugger.get()
-            filename = os.path.join(project_support.get_output_dir(
-                ctxt.file()), filename + '.html')
+            filename = os.path.join(
+                Project_Support.get_output_dir(
+                    ctxt.file()), filename + '.html')
 
             if not CLI.delete_logfile_dialog(filename):
                 return
 
-            for diag, toplevel, it in QGEN_Module.forall_auto_items(diagrams):
-                parent = it.get_parent_with_id() or toplevel
+            for diag, toplvl, it in Diagram_Utils.forall_auto_items(diagrams):
+                parent = it.get_parent_with_id() or toplvl
                 QGEN_Module.log_values_from_item(parent.id, filename,
                                                  ctxt.file(), debug)
             QGEN_Module.__show_diagram_and_signal_values(debug,
@@ -1685,8 +1223,9 @@ else:
             v = GPS.MDI.input_dialog("Log signal %s in" % it.id, "filename")
 
             if v:
-                filename = os.path.join(project_support.get_output_dir(
-                    ctx.file()), v[0] + '.html')
+                filename = os.path.join(
+                    Project_Support.get_output_dir(
+                        ctx.file()), v[0] + '.html')
                 if not CLI.delete_logfile_dialog(filename):
                     return
 
