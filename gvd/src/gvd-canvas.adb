@@ -1688,7 +1688,7 @@ package body GVD.Canvas is
       if Item.Component = null then
          Item.Item.For_Each_Child (On_Child'Access);
       else
-         Set_Visibility (Item.Component.Component, False, Recursive => True);
+         Set_Visibility (Item.Component.Component, True, Recursive => True);
       end if;
       Item.Item.Update_Display;
 
