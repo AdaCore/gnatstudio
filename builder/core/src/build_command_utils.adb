@@ -161,38 +161,50 @@ package body Build_Command_Utils is
                Use_Extended => True);
 
             if M /= null then
-               for Basename of M.all loop
-                  if Basename.all /= "" then
+               declare
+                  This_Project : Project_And_Main_Array (1 .. M'Length);
+                  This_Index   : Natural := 1;
+               begin
+                  for Basename of M.all loop
+                     if Basename.all /= "" then
 
-                     --  Resolve to full path
+                        --  Resolve to full path
 
-                     if GNAT.Directory_Operations.File_Extension
-                       (Basename.all) = ""
-                     then
-                        --  The project files used to support the form
-                        --     for Main use ("basename");
-                        --  If this is the case here, add ".adb" to get the
-                        --  real name of  the source unit.
-                        File := Registry.Tree.Create
-                          (Filesystem_String (Basename.all & ".adb"),
-                           Use_Object_Path => False);
-                     else
-                        File := Registry.Tree.Create
-                          (Name            => Filesystem_String (Basename.all),
-                           Use_Object_Path => False);
+                        if GNAT.Directory_Operations.File_Extension
+                          (Basename.all) = ""
+                        then
+                           --  The project files used to support the form
+                           --     for Main use ("basename");
+                           --  If this is the case here, add ".adb" to get the
+                           --  real name of  the source unit.
+                           File := Registry.Tree.Create
+                             (Filesystem_String (Basename.all & ".adb"),
+                              Use_Object_Path => False);
+                        else
+                           File := Registry.Tree.Create
+                             (Name            => Filesystem_String
+                                (Basename.all),
+                              Use_Object_Path => False);
+                        end if;
+
+                        if File = GNATCOLL.VFS.No_File then
+                           File := Create_From_Base (+Basename.all);
+                        end if;
+
+                        This_Project (This_Index) :=
+                          (Project => The_Project, Main => File);
+                        This_Index := This_Index + 1;
                      end if;
 
-                     if File = GNATCOLL.VFS.No_File then
-                        File := Create_From_Base (+Basename.all);
-                     end if;
+                  end loop;
 
-                     Result (Index) :=
-                       (Project => The_Project, Main => File);
-                     Index := Index - 1;
-
-                     exit when Index < Result'First;
-                  end if;
-               end loop;
+                  --  Do this gymnastics so that we list projects in reverse
+                  --  from the iterator, but the target order is preserved
+                  --  within one project.
+                  Result (Index - This_Index + 2 .. Index) := This_Project
+                    (1 .. This_Index - 1);
+                  Index := Index - This_Index + 1;
+               end;
 
                Free (M);
             end if;
