@@ -803,9 +803,6 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
                  tip="Equivalent to --prover=cvc4,z3,altergo
  --proof=progressive --timeout=10"/>
 </combo>
-         <check label="Automatic timeout" switch="--timeout=auto" column="2"
-                tip="Adjust timeout to the proof level"
-         />
          <check label="CodePeer Static Analysis"
                 switch="--codepeer=on" column="2"
                 tip="Enable CodePeer analysis in addition to provers" />
@@ -871,6 +868,10 @@ tip="Set the proof level from 0 = faster to 4 = more powerful" >
                 default="0" min="0" max="3600"
                 tip="Set the prover timeout (in sec) for individual proofs
  (0 for no timeout)" />
+         <spin label="Prover step limit" switch="--steps=" column="2"
+                default="100" min="0" max="1000000"
+                tip="Set the number of internal step for individual proofs
+ (0 for no step limit)" />
          <field label="Alternate provers" switch="--prover=" column="2"
                 tip="Alternate provers to use, instead of CVC4
  followed by Alt-Ergo" />
