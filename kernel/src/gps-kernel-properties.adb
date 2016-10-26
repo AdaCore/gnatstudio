@@ -760,9 +760,10 @@ package body GPS.Kernel.Properties is
       Query_Get_Values : constant Prepared_Statement :=
         Prepare
           (SQL_Select
-             ((Items.Resource & Items.Item),
-              From => Items,
-              Where => Items.Property = Integer_Param (1)),
+             ((Items.Item & Resources.Name),
+              From => Items & Resources,
+              Where => Items.Property = Integer_Param (1)
+              and Items.Resource = Resources.Id),
            On_Server => True,
            Use_Cache => True,
            Name      => "get_items");
@@ -1180,9 +1181,9 @@ package body GPS.Kernel.Properties is
             Params => (1 => +Property_Id));
 
          while Cursor.Has_Row loop
-            Property.Restore (GNATCOLL.JSON.Read (Cursor.Value (1)), Valid);
+            Property.Restore (GNATCOLL.JSON.Read (Cursor.Value (0)), Valid);
             if Valid then
-               Callback (Cursor.Value (0), Property);
+               Callback (Cursor.Value (1), Property);
             end if;
             Cursor.Next;
          end loop;
