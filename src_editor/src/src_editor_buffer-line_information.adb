@@ -2480,6 +2480,7 @@ package body Src_Editor_Buffer.Line_Information is
         (Start_Line,
          Start_Line + Editable_Line_Type (Number_Of_Lines_Unfolded));
    end Unhide_Lines;
+
    --------------
    -- Fold_All --
    --------------
