@@ -19,7 +19,6 @@ project Testsuite_Drivers is
    end Binder;
 
    for Main use (--  common
-                 "test_arrays.adb",
                  "test_htables.adb",
                  "test_strings.adb",
                  "test_trie.adb",
