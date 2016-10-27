@@ -315,7 +315,7 @@ package body Debugger.Gdb.C is
                if Type_Str (Index + 5) = '{' then
                   --  We are in the "enum {....}" case
                   Result := New_Enum_Type;
-                  Set_Type_Name (Result, "");
+                  Set_Type_Name (Result, "enum");
                   return;
                end if;
 
