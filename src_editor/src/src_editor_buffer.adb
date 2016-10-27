@@ -4377,6 +4377,7 @@ package body Src_Editor_Buffer is
          if Name_Changed then
             --  Force an update of the persistent properties if need be
             Set_Charset  (Buffer, Get_Charset (Buffer));
+            Set_Language (Buffer, Get_Language (Buffer));
 
             --  ??? The following is expensive, it would be nice to have a
             --  simpler way to report a possible change in the list of sources
