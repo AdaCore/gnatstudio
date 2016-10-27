@@ -28,7 +28,7 @@ package body GPS.Properties is
 
    Me : constant Trace_Handle := Create ("PROPERTIES");
 
-   use Properties_Hash.String_Hash_Table;
+   use Properties_Indefinite_Hashed_Maps;
 
    Current_Writer   : Writer;
 
@@ -220,7 +220,7 @@ package body GPS.Properties is
             Descr.Value := new Property_Record'Class'(Property);
          end if;
 
-         Set (All_Properties, Key & Sep & Name, Descr);
+         Insert (All_Properties, Key & Sep & Name, Descr);
       end Append;
 
       -------------
@@ -232,6 +232,7 @@ package body GPS.Properties is
          Append (Key, Property, True);
       end Process;
 
+      C : Cursor;
    begin
       if not Languages_Loaded
         and then Name = "language"
@@ -244,9 +245,9 @@ package body GPS.Properties is
          end;
       end if;
 
-      Descr := Get (All_Properties, Key & Sep & Name);
+      C := Find (All_Properties, Key & Sep & Name);
 
-      if Descr = null then
+      if not Has_Element (C) then
          if Name = "language" then
             Found := False;
             return;
@@ -257,12 +258,13 @@ package body GPS.Properties is
          Append (Key, Property, Found);
 
       else
+         Descr := Element (C);
          if Descr.Value = null then
             --  Already looked up and not found last time
             Found := False;
          else
             Property := Descr.Value.all;
-            Found := True;
+            Found    := True;
          end if;
       end if;
 

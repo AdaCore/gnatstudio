@@ -30,7 +30,7 @@ with GPS.Kernel.Properties.Database;
 
 package body GPS.Kernel.Properties is
 
-   use Properties_Hash.String_Hash_Table;
+   use Properties_Indefinite_Hashed_Maps;
 
    Me   : constant Trace_Handle := Create ("Properties");
    Dump : constant Trace_Handle := Create ("TESTSUITE.DUMP_PROPERTIES", Off);
@@ -267,15 +267,21 @@ package body GPS.Kernel.Properties is
       pragma Unreferenced (Kernel);
 
       Descr     : Property_Description_Access;
-      New_Value : Boolean;
+      New_Value : Boolean := True;
+      C         : Cursor;
    begin
-      if Property.Persistent then
-         Descr := Get (All_Properties, Key & Sep & Name);
-         New_Value := Descr = null or else Descr.Value = null;
-      end if;
+      C := Find (All_Properties, Key & Sep & Name);
+      if Has_Element (C) then
+         Descr     := Element (C);
+         New_Value := Descr.Value = null;
+         Replace_Element (All_Properties,
+                          C, new Property_Description'(Property));
+         Free (Descr);
 
-      Set (All_Properties, Key & Sep & Name,
-           new Property_Description'(Property));
+      else
+         Insert (All_Properties,
+                 Key & Sep & Name, new Property_Description'(Property));
+      end if;
 
       if Property.Value /= null
         and then Property.Persistent
@@ -300,18 +306,23 @@ package body GPS.Kernel.Properties is
       pragma Unreferenced (Kernel);
 
       Descr : Property_Description_Access;
+      C     : Cursor;
 
    begin
-      Descr := Get (All_Properties, Key & Sep & Name);
-      if Descr /= null
-        and then Descr.Value /= null
-      then
-         if Descr.Persistent then
-            Current_Writer.Remove (Key, Name);
-         end if;
+      C := Find (All_Properties, Key & Sep & Name);
+      if not Has_Element (C) then
+         return;
       end if;
 
-      Remove (All_Properties, Key & Sep & Name);
+      Descr := Element (C);
+      if Descr.Value /= null
+        and then Descr.Persistent
+      then
+         Current_Writer.Remove (Key, Name);
+      end if;
+
+      Delete (All_Properties, C);
+      Free (Descr);
    end Remove_Resource_Property;
 
    ------------------
@@ -424,8 +435,17 @@ package body GPS.Kernel.Properties is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Kernel);
+
+      C     : Cursor := First (All_Properties);
+      Descr : Property_Description_Access;
    begin
-      Reset (All_Properties);
+      while Has_Element (C) loop
+         Descr := Element (C);
+         Free (Descr);
+         Next (C);
+      end loop;
+
+      Clear (All_Properties);
    end Reset_Properties;
 
    ----------------------------
@@ -918,8 +938,6 @@ package body GPS.Kernel.Properties is
       overriding procedure Dump_Database
         (Self : not null access SQLite_Writer_Record)
       is
-         use Properties_Hash.String_Hash_Table;
-
          File : Writable_File := Write_File
            (Get_Properties_Filename (Self.Kernel, True));
 

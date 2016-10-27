@@ -32,13 +32,14 @@
 --        Set_Property (File, "dummy", Prop, Persistent => True);
 --     end;
 
+with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Finalization;
+with Ada.Strings.Hash;
 
 with GNAT.Strings;
 with GNATCOLL.JSON;
 with GNATCOLL.Projects;
 with GNATCOLL.VFS;
-with String_Hash;
 
 package GPS.Properties is
 
@@ -188,13 +189,14 @@ package GPS.Properties is
 
    procedure Free (Description : in out Property_Description_Access);
 
-   package Properties_Hash is new String_Hash
-     (Data_Type      => Property_Description_Access,
-      Free_Data      => Free,
-      Null_Ptr       => null,
-      Case_Sensitive => True);
+   package Properties_Indefinite_Hashed_Maps is
+     new Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Property_Description_Access,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=");
 
-   All_Properties : Properties_Hash.String_Hash_Table.Instance;
+   All_Properties : Properties_Indefinite_Hashed_Maps.Map;
    --  Global variable storing all the current properties for the current
    --  project.
    --  Indexes a made of both the Resource_Key (ie the file or project name for
