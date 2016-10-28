@@ -3789,8 +3789,9 @@ package body Project_Properties is
       --  section.
       if Active and then Data.Section.Mutually_Exclusive then
          for Attr of Data.Section.Attributes loop
-            if Data.Attr = null
-              or else Attr.Get_Full_Name /= Data.Attr.Get_Full_Name
+            if Editable_Attribute_Description_Access (Attr).Editor /= null
+              and then (Data.Attr = null
+                        or else Attr.Get_Full_Name /= Data.Attr.Get_Full_Name)
             then
                Set_Attribute_Editor_Accessible
                  (Editable_Attribute_Description_Access (Attr).Editor,
