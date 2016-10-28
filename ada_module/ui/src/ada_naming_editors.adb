@@ -485,9 +485,19 @@ package body Ada_Naming_Editors is
      (Self      : not null access Ada_Naming_Editor_Record;
       Languages : GNAT.Strings.String_List) return Boolean
    is
-      pragma Unreferenced (Self);
+      Visible : constant Boolean := In_List ("ada", Languages);
    begin
-      return In_List ("ada", Languages);
+      --  When the Ada language is not used in the project yet, set the GNAT
+      --  naming scheme as the default one: this will allow to have it by
+      --  default if the user selects to incorporate the Ada language in
+      --  the project via the Project Properties editor.
+      if not Visible
+        and then Self.Standard_Scheme.Get_Active = Custom_Naming_Scheme
+      then
+         Self.Standard_Scheme.Set_Active (Gnat_Naming_Scheme);
+      end if;
+
+      return Visible;
    end Is_Visible;
 
    ---------------------------
