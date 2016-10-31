@@ -1859,12 +1859,14 @@ else:
                 callback=self.__contextual_show_source_code)
 
             workflows.create_target_from_workflow(
+                parent_menu='/Build/MDL generate & build/',
                 target_name="MDL Generate code then build",
                 workflow_name="generate-from-mdl-then-build",
                 workflow=CLI.workflow_generate_from_mdl_then_build,
                 icon_name="gps-build-mdl-symbolic")
 
             workflows.create_target_from_workflow(
+                parent_menu='/Build/MDL generate, build & debug/',
                 target_name="MDL Generate code then build then debug",
                 workflow_name="generate-from-mdl-then-build-then-debug",
                 workflow=CLI.workflow_generate_from_mdl_then_build_then_debug,

@@ -59,7 +59,8 @@ class GNATemulator(Module):
 
             for target in targets_def:
                 workflows.create_target_from_workflow(
-                    target[0], target[1], target[2], target[3])
+                    target[0], target[1], target[2], target[3],
+                    parent_menu='/Build/Emulator/%s/' % target[0])
                 self.__buildTargets.append(GPS.BuildTarget(target[0]))
 
         if active:
