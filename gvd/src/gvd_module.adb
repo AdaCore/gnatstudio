@@ -1202,7 +1202,13 @@ package body GVD_Module is
       Ignore : Visual_Debugger;
       pragma Unreferenced (Ignore);
    begin
-      Ignore := Spawn (Kernel, Debugger_Kind.Get_Pref, File, Project, Args);
+      Ignore := Spawn
+         (Kernel          => Kernel,
+          Kind            => Debugger_Kind.Get_Pref,
+          File            => File,
+          Project         => Project,
+          Args            => Args,
+          Load_Executable => Load_Executable_On_Init.Get_Pref);
       Kernel.Refresh_Context;
    end Debug_Init;
 

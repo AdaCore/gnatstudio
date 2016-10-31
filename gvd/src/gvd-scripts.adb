@@ -394,6 +394,7 @@ package body GVD.Scripts is
             File            : constant Virtual_File := Get_Data (File_Inst);
             Remote_Target   : constant String := Nth_Arg (Data, 3, "");
             Remote_Protocol : constant String := Nth_Arg (Data, 4, "");
+            Load_Executable : constant Boolean := Nth_Arg (Data, 5, False);
          begin
             Process := Spawn
               (Kernel          => Kernel,
@@ -402,7 +403,8 @@ package body GVD.Scripts is
                Project         => Get_Project (Kernel),
                Args            => Nth_Arg (Data, 2, ""),
                Remote_Target   => Remote_Target,
-               Remote_Protocol => Remote_Protocol);
+               Remote_Protocol => Remote_Protocol,
+               Load_Executable => Load_Executable);
             Set_Return_Value
               (Data, Get_Or_Create_Instance (Get_Script (Data), Process));
          end;
@@ -501,7 +503,8 @@ package body GVD.Scripts is
            (1 => Param ("executable"),
             2 => Param ("args", Optional => True),
             3 => Param ("remote_target", Optional => True),
-            4 => Param ("remote_protocol", Optional => True)),
+            4 => Param ("remote_protocol", Optional => True),
+            5 => Param ("load_executable", Optional => True)),
          Handler       => Shell_Handler'Access,
          Class         => Class,
          Static_Method => True);

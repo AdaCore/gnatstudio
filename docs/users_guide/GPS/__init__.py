@@ -2456,7 +2456,11 @@ class Debugger(object):
         pass  # implemented in Ada
 
     @staticmethod
-    def spawn(executable, args='', remote_target='', remote_protocol=''):
+    def spawn(executable,
+              args='',
+              remote_target='',
+              remote_protocol='',
+              load_executable=False):
         """
         Starts a new debugger. It will debug ``executable``. When the program
         is executed, the extra arguments args are passed.
@@ -2467,10 +2471,14 @@ class Debugger(object):
         ``IDE'Program_Host`` and ``IDE'Communication_Protocol`` are used
         if present in the .gpr project file.
 
+        When ``load_executable`` is True, GPS will try to load ``executable``
+        on the specified remote target, if any.
+
         :param executable: An instance of GPS.File
         :param args: A string
         :param remote_target: A string
         :param remote_protocol: A string
+        :param load_executable: A boolean
         :return: An instance of :class:`GPS.Debugger`
         """
         pass  # implemented in Ada
