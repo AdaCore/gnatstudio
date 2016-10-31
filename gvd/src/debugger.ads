@@ -398,6 +398,12 @@ package Debugger is
    --  Load symbols from a specified module into the debugger.
    --  GDB_COMMAND: "add-symbol-file"
 
+   procedure Load_Current_Executable
+      (Debugger : access Debugger_Root;
+       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   --  Load the current debugged executable to the remote target, if any.
+   --  GDB_COMMAND: "load"
+
    procedure Run
      (Debugger  : access Debugger_Root;
       Arguments : String := "";

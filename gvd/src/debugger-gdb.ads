@@ -142,6 +142,10 @@ package Debugger.Gdb is
       Address  : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   overriding procedure Load_Current_Executable
+      (Debugger : access Gdb_Debugger;
+       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
    overriding procedure Run
      (Debugger  : access Gdb_Debugger;
       Arguments : String := "";
