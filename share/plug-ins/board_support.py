@@ -336,6 +336,7 @@ class BoardLoader(Module):
         # if not created yet.
         if not self.__buildTargets and active:
             workflows.create_target_from_workflow(
+                parent_menu='/Build/Bareboard/Flash to Board/',
                 target_name="Flash to Board",
                 workflow_name="flash-to-board",
                 workflow=self.__flash_wf,
@@ -343,6 +344,7 @@ class BoardLoader(Module):
             self.__buildTargets.append(GPS.BuildTarget("Flash to Board"))
 
             workflows.create_target_from_workflow(
+                parent_menu='/Build/Bareboard/Debug on Board/',
                 target_name="Debug on Board",
                 workflow_name="debug-on-board",
                 workflow=self.__debug_wf,
@@ -350,7 +352,8 @@ class BoardLoader(Module):
             self.__buildTargets.append(GPS.BuildTarget("Debug on Board"))
 
             workflows.create_target_from_workflow(
-                target_name="Flash &lt;current file&gt; to Board",
+                parent_menu='/Build/Bareboard/',
+                target_name="Flash <current file> to Board",
                 workflow_name="flash-current-to-board",
                 workflow=self.__flash_wf,
                 icon_name="gps-boardloading-flash-symbolic",
@@ -360,7 +363,8 @@ class BoardLoader(Module):
                 GPS.BuildTarget("Flash <current file> to Board"))
 
             workflows.create_target_from_workflow(
-                target_name="Debug &lt;current file&gt; on Board",
+                parent_menu='/Build/Bareboard/',
+                target_name="Debug <current file> on Board",
                 workflow_name="debug-current-on-board",
                 workflow=self.__debug_wf,
                 icon_name="gps-boardloading-debug-symbolic",

@@ -258,7 +258,9 @@ def run_as_workflow(workflow):
 def create_target_from_workflow(target_name, workflow_name, workflow,
                                 icon_name="gps-print-symbolic",
                                 in_toolbar=True,
-                                main_arg="%TT"):
+                                main_arg="%TT",
+                                category='_Workflow_',
+                                parent_menu='/Build/Workflow/'):
     """
     Create a Target under the category Workflow from a given workflow.
     Executing this target runs the workflow.
@@ -266,8 +268,20 @@ def create_target_from_workflow(target_name, workflow_name, workflow,
     You can modify `main_arg` to receive the argument of your choice, by
     specifying a GPS macro.
 
-    target_name, workflow_name and main_arg are strings
+    :param str target_name: The name of the target. Also the name of the
+        menu item.
+    :param str workflow_name:
+    :param str main_arg:
+    :param str category: The category, as seen in the target editing dialog
+    :param str parent_menu: path to the menu item. The menu item itself
+        is `category`, unless the category starts and ends with
+        an underscore character. It should end with a slash.
     """
+
+    def xml_quote(str):
+        """return an XML safe version of str"""
+        return str.replace('&', '&amp;').replace(
+            '<', '&lt;').replace('>', '&gt;')
 
     # going to store the feeded workflow in a global variable
     global registered_workflows
@@ -277,7 +291,7 @@ def create_target_from_workflow(target_name, workflow_name, workflow,
     workflows_target_name_set.add(target_name)
 
     xml1 = """
-<target model="python" category="Workflow" name="%s">
+<target model="python" category="%s" name="%s" menu='%s'>
 <in-toolbar>%s</in-toolbar>
 <iconname>%s</iconname>
 <launch-mode>MANUALLY_WITH_NO_DIALOG</launch-mode>
@@ -286,12 +300,14 @@ def create_target_from_workflow(target_name, workflow_name, workflow,
 <do-not-save>FALSE</do-not-save>
 <command-line>
     <arg>workflows.run_registered_workflows("%s", "%s", "</arg>
-    """ % (target_name,
+    """ % (xml_quote(category),
+           xml_quote(target_name),
+           xml_quote(parent_menu),
            "TRUE" if in_toolbar else "FALSE",
            icon_name,
            "main" if main_arg == "%TT" else "",
-           workflow_name,
-           target_name)
+           xml_quote(workflow_name),
+           xml_quote(target_name))
 
     xml2 = """
     <arg>%s</arg>
