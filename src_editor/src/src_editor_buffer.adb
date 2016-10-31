@@ -489,10 +489,6 @@ package body Src_Editor_Buffer is
    --  Return the location category corresponding to errors when converting
    --  to Charset.
 
-   procedure On_Paste_Done (Buffer : access Source_Buffer_Record'Class);
-   --  Disable the "paste-done" signal introduced in gtk+ 2.18, which breaks
-   --  the handling of multiple views
-
    procedure Update_Logical_Timestamp
      (Buffer : access Source_Buffer_Record'Class);
    pragma Inline (Update_Logical_Timestamp);
@@ -3224,15 +3220,6 @@ package body Src_Editor_Buffer is
       Recalculate_Side_Column_Width (Buffer);
    end Initialize_Hook;
 
-   -------------------
-   -- On_Paste_Done --
-   -------------------
-
-   procedure On_Paste_Done (Buffer : access Source_Buffer_Record'Class) is
-   begin
-      Emit_Stop_By_Name (Buffer, "paste-done");
-   end On_Paste_Done;
-
    ----------------
    -- Initialize --
    ----------------
@@ -3332,24 +3319,6 @@ package body Src_Editor_Buffer is
       --  Initialize the queue for editor commands
 
       Buffer.Queue := New_Queue;
-
-      --  Workaround a bug in gtk+ 2.18: when a paste was completed, the
-      --  paste-done signal is emitted, and results in scrolling _all_ views
-      --  to the cursor location (which breaks the handling of multiple views).
-      --  The simplest workaround is simply to not emit that signal at all
-      --  (GPS takes care of the scrolling for the active view anyway).
-      --  The RH for this signal in gtk+ is:
-      --      Add a "paste-done" signal and use it to properly scroll the
-      --      view at the end of the pasted text in the case of an async paste
-
-      if Glib.Object.Lookup
-        (Get_Type (Buffer), "paste-done") /= Null_Signal_Id
-      then
-         Buffer_Callback.Connect
-           (Buffer, "paste-done",
-            Marsh => Buffer_Callback.To_Marshaller (On_Paste_Done'Access),
-            After => False);
-      end if;
 
       --  And finally, connect ourselves to the interesting signals
 
