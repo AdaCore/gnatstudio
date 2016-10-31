@@ -1010,6 +1010,19 @@ package body Debugger.Gdb_MI is
       end if;
    end Load_Core_File;
 
+   -----------------------------
+   -- Load_Current_Executable --
+   -----------------------------
+
+   overriding procedure Load_Current_Executable
+      (Debugger : access Gdb_MI_Debugger;
+       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      if Debugger.Is_Connected_To_Target then
+         Send (Debugger, "-target-download", Mode => Mode);
+      end if;
+   end Load_Current_Executable;
+
    -----------------
    -- Add_Symbols --
    -----------------

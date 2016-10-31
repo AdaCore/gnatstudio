@@ -1526,6 +1526,23 @@ package body Debugger.Gdb is
       end if;
    end Add_Symbols;
 
+   -----------------------------
+   -- Load_Current_Executable --
+   -----------------------------
+
+   overriding procedure Load_Current_Executable
+      (Debugger : access Gdb_Debugger;
+       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      if Debugger.Is_Connected_To_Target then
+         Send (Debugger, "load", Mode => Mode);
+
+         if Mode in Visible_Command then
+            Wait_User_Command (Debugger);
+         end if;
+      end if;
+   end Load_Current_Executable;
+
    --------------------
    -- Attach_Process --
    --------------------

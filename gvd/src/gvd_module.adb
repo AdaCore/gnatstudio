@@ -940,6 +940,10 @@ package body GVD_Module is
 
          if S /= No_File then
             Set_Executable (Process.Debugger, S, Mode => Hidden);
+
+            --  Load the excutable to the remote target if we are connected
+            --  remotely.
+            Load_Current_Executable (Process.Debugger, Mode => Visible);
          end if;
 
       exception
