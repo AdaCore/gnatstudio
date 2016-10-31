@@ -158,14 +158,17 @@ package GVD.Process is
       Project         : Project_Type;
       Args            : String;
       Remote_Target   : String := "";
-      Remote_Protocol : String := "") return Visual_Debugger;
+      Remote_Protocol : String := "";
+      Load_Executable : Boolean := False) return Visual_Debugger;
    --  Spawn a new debugger on File (taking into account the settings from
    --  Project). Args are passed to the executable File.
    --
    --  If non-empty, Remote_Target and Remote_Protocol are used to initialize
    --  a remote connection instead of using the attributes defined in the IDE
    --  package for this purpose (i.e: respectively IDE'Program_Host and
-   --  IDE'Communication_Protocol).
+   --  IDE'Communication_Protocol). Load_Executable is then used to know
+   --  whether GPS should automatically load the debugged executable on the
+   --  remote target.
 
    procedure Close_Debugger (Process : access Visual_Debugger_Record);
    --  Close the given debugger and terminate the debugging session if this

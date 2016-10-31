@@ -1045,7 +1045,6 @@ package body Debugger.Gdb is
 
       if Debugger.Executable /= GNATCOLL.VFS.No_File then
          Set_Executable (Debugger, Debugger.Executable, Mode => Visible);
-
       else
          --  Connect to the target, if needed. This is normally done by
          --  Set_Executable, but GPS should also connect immediately if

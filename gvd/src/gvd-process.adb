@@ -877,13 +877,14 @@ package body GVD.Process is
    -----------
 
    function Spawn
-     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Kind    : GVD.Types.Debugger_Type;
-      File    : GNATCOLL.VFS.Virtual_File;
-      Project : Project_Type;
-      Args    : String;
+     (Kernel          : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Kind            : GVD.Types.Debugger_Type;
+      File            : GNATCOLL.VFS.Virtual_File;
+      Project         : Project_Type;
+      Args            : String;
       Remote_Target   : String := "";
-      Remote_Protocol : String := "") return Visual_Debugger
+      Remote_Protocol : String := "";
+      Load_Executable : Boolean := False) return Visual_Debugger
    is
       Top          : constant GPS_Window :=
                        GPS_Window (Get_Main_Window (Kernel));
@@ -1073,6 +1074,12 @@ package body GVD.Process is
          and then GNAT.TTY.TTY_Supported);
 
       Raise_Child (Find_MDI_Child (Get_MDI (Kernel), Process.Debugger_Text));
+
+      --  When True, Load the executable on the target, if any
+
+      if Load_Executable then
+         Load_Current_Executable (Process.Debugger, Mode => Visible);
+      end if;
 
       --  Force the creation of the project if needed
       Load_Project_From_Executable (Kernel, Process);

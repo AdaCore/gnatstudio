@@ -65,6 +65,16 @@ package body GVD.Preferences is
               & " when debugging the same executable."),
          Default    => True);
 
+      Load_Executable_On_Init := Create
+        (Manager   => Prefs,
+         Name      => "Debugger-Load-On-Init",
+         Path      => -"Debugger:Startup & Exit",
+         Label     => -"Load excutable on init",
+         Doc       =>
+            -("Load the currently debugged executable to the target when " &
+               "initializing a remote debugging session."),
+         Default   => False);
+
       Debugger_Kind := Debugger_Kind_Preferences.Create
         (Manager => Prefs,
          Name    => "GPS6-Debugger-Debugger-Kind",
