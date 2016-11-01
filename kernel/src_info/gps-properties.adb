@@ -201,7 +201,8 @@ package body GPS.Properties is
          Found    : Boolean);
       --  Append the property to the registry
 
-      procedure Process (Key : String; Property : Property_Record'Class);
+      procedure Process
+        (Key : String; Property : in out Property_Record'Class);
       --  Process language for file
 
       ------------
@@ -227,9 +228,11 @@ package body GPS.Properties is
       -- Process --
       -------------
 
-      procedure Process (Key : String; Property : Property_Record'Class) is
+      procedure Process
+        (Key : String; Property : in out Property_Record'Class) is
       begin
          Append (Key, Property, True);
+         String_Property (Property).Value := null;
       end Process;
 
       C : Cursor;

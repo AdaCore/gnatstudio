@@ -84,7 +84,7 @@ package body GPS.Kernel.Properties is
       Name     : String;
       Property : in out Property_Record'Class;
       Callback : access procedure
-        (Key : String; Property : Property_Record'Class)) is null;
+        (Key : String; Property : in out Property_Record'Class)) is null;
 
    overriding procedure Insert
      (Self     : not null access Dummy_Writer_Record;
@@ -128,7 +128,7 @@ package body GPS.Kernel.Properties is
          Name     : String;
          Property : in out Property_Record'Class;
          Callback : access procedure
-           (Key : String; Property : Property_Record'Class));
+           (Key : String; Property : in out Property_Record'Class));
 
       overriding procedure Insert
         (Self     : not null access SQLite_Writer_Record;
@@ -306,10 +306,9 @@ package body GPS.Kernel.Properties is
       pragma Unreferenced (Kernel);
 
       Descr : Property_Description_Access;
-      C     : Cursor;
+      C     : Cursor := Find (All_Properties, Key & Sep & Name);
 
    begin
-      C := Find (All_Properties, Key & Sep & Name);
       if not Has_Element (C) then
          return;
       end if;
@@ -1168,7 +1167,6 @@ package body GPS.Kernel.Properties is
 
          if Cursor.Has_Row then
             Property.Restore (GNATCOLL.JSON.Read (Cursor.Value (0)), Found);
-            Found := True;
          end if;
       end Get_Value;
 
@@ -1181,7 +1179,7 @@ package body GPS.Kernel.Properties is
          Name     : String;
          Property : in out Property_Record'Class;
          Callback : access procedure
-           (Key : String; Property : Property_Record'Class))
+           (Key : String; Property : in out Property_Record'Class))
       is
          Transaction : Transaction_Controller (Self.Connection);
          Property_Id : constant Integer := Self.Get_Id
