@@ -236,7 +236,7 @@ package GPS.Properties is
       Name     : String;
       Property : in out Property_Record'Class;
       Callback : access procedure
-        (Key : String; Property : Property_Record'Class))
+        (Key : String; Property : in out Property_Record'Class))
    is abstract;
 
    procedure Set_Writer (Object : Writer);

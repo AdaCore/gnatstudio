@@ -913,13 +913,12 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record;
       Value  : Boolean)
    is
-      Prop : GPS.Properties.String_Property_Access;
+      Prop : GPS.Properties.Boolean_Property_Access;
    begin
       Buffer.Strip_Trailing_Blanks := Value;
 
       if Buffer.Filename /= GNATCOLL.VFS.No_File then
-         Prop := new GPS.Properties.String_Property'
-           (Value => new String'(Boolean'Image (Value)));
+         Prop := new GPS.Properties.Boolean_Property'(Value => Value);
 
          Set_Property
            (Buffer.Kernel,
@@ -948,13 +947,12 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record;
       Value  : Boolean)
    is
-      Prop : GPS.Properties.String_Property_Access;
+      Prop : GPS.Properties.Boolean_Property_Access;
    begin
       Buffer.Strip_Trailing_Lines := Value;
 
       if Buffer.Filename /= GNATCOLL.VFS.No_File then
-         Prop := new GPS.Properties.String_Property'
-           (Value => new String'(Boolean'Image (Value)));
+         Prop := new GPS.Properties.Boolean_Property'(Value => Value);
 
          Set_Property
            (Buffer.Kernel,
@@ -3587,7 +3585,7 @@ package body Src_Editor_Buffer is
       Trailing_Spaces_Found : Boolean)
    is
       Found   : Boolean;
-      Prop    : GPS.Properties.String_Property;
+      Prop    : GPS.Properties.Boolean_Property;
       Default : constant Strip_Trailing_Blanks_Policy :=
         Strip_Blanks.Get_Pref;
    begin
@@ -3596,8 +3594,7 @@ package body Src_Editor_Buffer is
            (Prop, File, Strip_Blanks_Property_Name, Found);
 
          if Found then
-            Buffer.Strip_Trailing_Blanks :=
-              Boolean'Value (Prop.Value.all);
+            Buffer.Strip_Trailing_Blanks := Prop.Value;
 
             return;
          end if;
@@ -3624,7 +3621,7 @@ package body Src_Editor_Buffer is
       Trailing_Lines_Found : Boolean)
    is
       Found   : Boolean;
-      Prop    : GPS.Properties.String_Property;
+      Prop    : GPS.Properties.Boolean_Property;
       Default : constant Strip_Trailing_Blanks_Policy :=
         Strip_Lines.Get_Pref;
    begin
@@ -3633,8 +3630,7 @@ package body Src_Editor_Buffer is
            (Prop, File, Strip_Lines_Property_Name, Found);
 
          if Found then
-            Buffer.Strip_Trailing_Lines :=
-              Boolean'Value (Prop.Value.all);
+            Buffer.Strip_Trailing_Lines := Prop.Value;
             return;
          end if;
       end if;
