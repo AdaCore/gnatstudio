@@ -67,6 +67,10 @@ XML = r"""<?xml version="1.0" ?>
     <debugger/>
   </toolchain>
 
+  <toolchain name="powerpc64-wrs-vxworks7">
+    <debugger/>
+  </toolchain>
+
   <toolchain name="powerpc-wrs-linux"/>
 
   <toolchain name="powerpc-sysgo-pikeos"/>
