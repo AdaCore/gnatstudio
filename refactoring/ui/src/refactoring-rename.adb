@@ -218,6 +218,13 @@ package body Refactoring.Rename is
       Current_File : Virtual_File := No_File;
       Current_Loc  : General_Location;
 
+      Group_File : Virtual_File := No_File;
+      --  The file on which an undo/redo group is currently running;
+      --  No_File if there is no undo/redo group.
+      --  Defense against mismatched of start/finish pairs:
+      --    - make sure only one group is created for this renaming
+      --    - make sure we close the group in case we encounter an exception
+
       procedure Terminate_File (File : Virtual_File);
       --  Finish the processing for a given file
 
@@ -227,7 +234,12 @@ package body Refactoring.Rename is
 
       procedure Terminate_File (File : Virtual_File) is
       begin
-         Finish_Undo_Group (Kernel, File);
+         --  Close the undo/redo group for this file
+         if Group_File /= No_File then
+            Finish_Undo_Group (Kernel, Group_File);
+            Group_File := No_File;
+         end if;
+
          if Factory.Auto_Save then
             Get_Buffer_Factory (Kernel).Get (File).Save (Interactive => False);
             if not Was_Open then
@@ -258,7 +270,30 @@ package body Refactoring.Rename is
                  (File  => Current_File,
                   Force => False, Open_View => False) /= Nil_Editor_Buffer;
 
-               Start_Undo_Group (Kernel, Current_File);
+               --  Create an undo/redo group for this file
+
+               if Group_File = No_File then
+                  --  Start the new group
+                  Start_Undo_Group (Kernel, Current_File);
+                  Group_File := Current_File;
+               else
+                  --  There is an undo/redo group going
+
+                  if Group_File = Current_File then
+                     --  The undo/redo group is running for this file: nothing
+                     --  to do
+                     null;
+                  else
+                     --  An undo/redo group was created for another file than
+                     --  this and is still open: this is not supposed to
+                     --  happen, but close the group for safety nonetheless...
+                     Finish_Undo_Group (Kernel, Group_File);
+
+                     --  ... and start the new group.
+                     Start_Undo_Group (Kernel, Current_File);
+                     Group_File := Current_File;
+                  end if;
+               end if;
             end if;
 
             if Current_Loc = Loc then
@@ -371,6 +406,15 @@ package body Refactoring.Rename is
             end;
          end if;
       end if;
+   exception
+      when E : others =>
+         --  An exception occurred: make sure to close the undo/redo group
+         if Group_File /= No_File then
+            Finish_Undo_Group (Kernel, Group_File);
+            Group_File := No_File;
+         end if;
+
+         Trace (Me, E);
    end Execute;
 
    -------------
