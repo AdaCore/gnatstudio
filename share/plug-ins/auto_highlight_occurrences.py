@@ -210,10 +210,16 @@ class Current_Entity_Highlighter(Location_Highlighter):
         context = GPS.current_context()
         start_loc = None
         end_loc = None
+        location = None
 
         try:
-            location = context.location()
-            buffer = GPS.EditorBuffer.get(location.file(), open=False)
+            # Get the lcoation from the current editor instead of getting it
+            # from the context. This is needed to highlight occurrences when
+            # the context is not the current editor (e.g: Search view).
+
+            buffer = GPS.EditorBuffer.get(open=False)
+            context = GPS.current_context()
+            location = buffer.current_view().cursor()
         except:
             buffer = None
 
@@ -223,7 +229,6 @@ class Current_Entity_Highlighter(Location_Highlighter):
             if buffer:
                 start_loc = buffer.selection_start()
                 end_loc = buffer.selection_end()
-
                 if start_loc != end_loc:
                     end_loc = end_loc.forward_char(-1)
                     word = buffer.get_chars(start_loc, end_loc).strip()
@@ -239,16 +244,10 @@ class Current_Entity_Highlighter(Location_Highlighter):
 
         # No entity found, highlight the current text
 
-        if not entity and not word:
-            try:
-                location = context.location()
-            except:
-                location = None
-
-            if location and buffer:
-                location = GPS.EditorLocation(
-                    buffer, location.line(), location.column())
-                word, _, _ = location.get_word()
+        if not entity and not word and location and buffer:
+            location = GPS.EditorLocation(
+                buffer, location.line(), location.column())
+            word, _, _ = location.get_word()
 
         # Exit if we are highlighting the word or the entity that we were
         # already highlighting.
