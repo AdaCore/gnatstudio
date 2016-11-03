@@ -170,6 +170,10 @@ package Commands is
    procedure End_Group (Q : Command_Queue);
    --  Ends grouping of commands
 
+   procedure Change_Group (Queue : Command_Queue);
+   --  Change the current group, so that following actions are not grouped
+   --  in the same undo/redo group.
+
    procedure Enqueue
      (Queue         : Command_Queue;
       Action        : access Root_Command);
@@ -301,8 +305,7 @@ private
       --  are independant, >0 indicates that the commands being added to the
       --  queue are part of a group.
 
-      Current_Group_Number     : Natural := 1;
-      Last_Group_Number        : Natural := 0;
+      Current_Group_Number     : Natural := 0;
       --  Indicates the number of the current group. This is used to
       --  distinguish between possible consecutive groups.
    end record;

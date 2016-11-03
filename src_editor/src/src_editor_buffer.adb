@@ -1792,11 +1792,14 @@ package body Src_Editor_Buffer is
             Remove_All_Slave_Cursors (Source_Buffer (Buffer));
          end if;
 
+         --  If we are not currently in an undo/redo group, moving the
+         --  cursor should break the grouping of actions. This way, if you
+         --  are typing 'a' then clicking then typing 'b', GPS should require
+         --  two undos to remove 'a' then 'b'.
          if Buffer.Insert_In_Current_Group = 0
            and then not Buffer.Inserting
          then
-            End_Group (Buffer.Queue);
-            Start_Group (Buffer.Queue);
+            Change_Group (Buffer.Queue);
          end if;
 
          Emit_New_Cursor_Position (Buffer);

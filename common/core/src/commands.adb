@@ -36,10 +36,6 @@ package body Commands is
    procedure Execute_Next_Action (Queue : Command_Queue);
    --  Execute the next action in the queue, or do nothing if there is none
 
-   procedure Change_Group (Queue : Command_Queue);
-   --  Change the current group, so that following actions are not grouped
-   --  in the same undo/redo group.
-
    ---------------
    -- New_Queue --
    ---------------
@@ -508,11 +504,19 @@ package body Commands is
 
    procedure Start_Group (Q : Command_Queue) is
    begin
-      if Q /= null then
-         Q.Group_Level := Q.Group_Level + 1;
-         Change_Group (Q);
-         Q.Current_Group_Number := Q.Last_Group_Number;
+      if Q = null then
+         return;
       end if;
+
+      --  Change the group number if we are starting a group at the
+      --  first level. On the other hand, if we are nesting a group within a
+      --  group, we want all nested actions to be considered as part of the
+      --  top group, so we do not change the group number in this case.
+      if Q.Group_Level = 0 then
+         Change_Group (Q);
+      end if;
+
+      Q.Group_Level := Q.Group_Level + 1;
    end Start_Group;
 
    ---------------
@@ -521,8 +525,14 @@ package body Commands is
 
    procedure End_Group (Q : Command_Queue) is
    begin
-      if Q /= null and then Q.Group_Level > 0 then
+      if Q = null then
+         return;
+      end if;
+
+      if Q.Group_Level > 0 then
          Q.Group_Level := Q.Group_Level - 1;
+      else
+         Change_Group (Q);
       end if;
    end End_Group;
 
@@ -532,10 +542,10 @@ package body Commands is
 
    procedure Change_Group (Queue : Command_Queue) is
    begin
-      if Queue.Last_Group_Number = Natural'Last then
-         Queue.Last_Group_Number := 1;
+      if Queue.Current_Group_Number = Natural'Last then
+         Queue.Current_Group_Number := 1;
       else
-         Queue.Last_Group_Number := Queue.Last_Group_Number + 1;
+         Queue.Current_Group_Number := Queue.Current_Group_Number + 1;
       end if;
    end Change_Group;
 
