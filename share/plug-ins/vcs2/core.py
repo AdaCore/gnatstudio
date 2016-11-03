@@ -29,8 +29,8 @@ class VCS(GPS.VCS2):
     """
     To create a new engine, extend this class, and then call:
 
-        @vcs2.register_vcs
-        class MyVCS(vcs2.VCS):
+        @core.register_vcs
+        class MyVCS(core.VCS):
             pass
     """
 
@@ -45,6 +45,7 @@ class VCS(GPS.VCS2):
         :param str repo: the location of the repo, computed from
           `discover_repo`
         """
+        self.repo = repo
 
     def setup(self):
         """
@@ -153,6 +154,35 @@ class VCS(GPS.VCS2):
                 return False   # do not suppress exceptions
 
         return _CM(files)
+
+
+class File_Based_VCS(VCS):
+    """
+    Abstract base class for file-based vcs systems.
+    """
+
+    def _compute_status(self, all_files, args=[]):
+        """
+        Run a "status" command with extra args
+
+        :param List(GPS.File) all_files: all files for which a status
+           should be set.
+        :param List(str) args: extra arguments to 'cvs/svn/... status'
+        """
+
+    def async_fetch_status_for_files(self, files):
+        self._compute_status(
+            all_files=files,
+            args=[f.path for f in files])
+
+    def async_fetch_status_for_project(self, project):
+        self._compute_status(
+            all_files=project.sources(recursive=False),
+            args=[d for d in project.source_dirs(recursive=False)])
+
+    def async_fetch_status_for_all_files(self):
+        self._compute_status(
+            all_files=GPS.Project.root().sources(recursive=True))
 
 
 def register_vcs(klass, name="", *args, **kwargs):

@@ -509,4 +509,32 @@ package body GPS.VCS_Engines is
       Global_Data.Factories.Clear;
    end Finalize;
 
+   --------------------------
+   -- Get_Tooltip_For_File --
+   --------------------------
+
+   function Get_Tooltip_For_File
+     (VCS     : not null access VCS_Engine'Class;
+      File    : GNATCOLL.VFS.Virtual_File)
+     return String
+   is
+      Props : constant VCS_File_Properties :=
+         VCS.File_Properties_From_Cache (File);
+   begin
+      if Props.Status /= Status_Untracked then
+         return "<b>" & VCS.Name & " status</b>: "
+           & To_String (VCS.Get_Display (Props.Status).Label)
+           & (if Props.Version /= ""
+              then ASCII.LF & "<b>" & VCS.Label_Version & "</b>: "
+                 & To_String (Props.Version)
+              else "")
+           & (if Props.Repo_Version /= ""
+              then ASCII.LF & "<b>" & VCS.Label_Repo_Version & "</b>: "
+                 & To_String (Props.Repo_Version)
+              else "");
+      else
+         return "";
+      end if;
+   end Get_Tooltip_For_File;
+
 end GPS.VCS_Engines;

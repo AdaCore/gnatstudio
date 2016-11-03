@@ -392,17 +392,7 @@ package body Src_Editor_Status_Bar is
             end if;
 
             Bar.VCS_Status.Set_Icon_Name (To_String (D.Icon_Name));
-            Bar.VCS_Status.Set_Tooltip_Markup
-              ("Status for <b>" & V.Name & "</b>: "
-               & To_String (D.Label)
-               & (if Props.Version /= ""
-                  then ASCII.LF & "<b>" & V.Label_Version & "</b>:"
-                     & To_String (Props.Version)
-                  else "")
-               & (if Props.Repo_Version /= ""
-                  then ASCII.LF & "<b>" & V.Label_Repo_Version & "</b>:"
-                     & To_String (Props.Repo_Version)
-                  else ""));
+            Bar.VCS_Status.Set_Tooltip_Markup (V.Get_Tooltip_For_File (File));
          end;
       end if;
    end Execute;

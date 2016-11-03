@@ -1,10 +1,85 @@
 from . import core
+import GPS
+import re
 import os
+import workflows
+from workflows.promises import ProcessWrapper
 
 
 @core.register_vcs
-class Subversion(core.VCS):
+class Subversion(core.File_Based_VCS):
+
+    __re_status = re.compile(
+        '^(?P<status>....... .)\s+(?P<rev>\S+)\s+' +
+        '(?P<lastcommit>\S+)\s+(?P<author>\S+)\s+(?P<file>.+)$')
 
     @staticmethod
     def discover_repo(file):
         return core.find_admin_directory(file, '.svn')
+
+    @workflows.run_as_workflow
+    def _compute_status(self, all_files, args=[]):
+        with self.set_status_for_all_files(
+                all_files, GPS.VCS2.Status.UNTRACKED) as s:
+
+            p = ProcessWrapper(
+                ['svn', 'status', '-v',
+                 '-u'] +   # Compare with server (slower but more helpful)
+                args,
+                directory=os.path.join(self.repo, '..'))
+
+            while True:
+                line = yield p.wait_until_match('^.+$')
+                if line is None:
+                    break
+
+                m = self.__re_status.search(line)
+                if m:
+                    f = os.path.join(self.repo, '..', m.group('file'))
+                    rev = m.group('rev')   # current checkout
+                    rrev = m.group('lastcommit')  # only if we use '-u'
+
+                    if line[0] == ' ':
+                        status = GPS.VCS2.Status.UNMODIFIED
+                    elif line[0] == 'A':
+                        status = GPS.VCS2.Status.STAGED_ADDED
+                    elif line[0] == 'D':
+                        status = GPS.VCS2.Status.STAGED_DELETED
+                    elif line[0] == 'M':
+                        status = GPS.VCS2.Status.MODIFIED
+                    elif line[0] == 'C':
+                        status = GPS.VCS2.Status.CONFLICT
+                    elif line[0] == 'X':
+                        status = GPS.VCS2.Status.UNTRACKED
+                    elif line[0] == 'I':
+                        status = GPS.VCS2.Status.IGNORED
+                    elif line[0] == '?':
+                        status = GPS.VCS2.Status.UNTRACKED
+                    elif line[0] == '!':
+                        status = GPS.VCS2.Status.DELETED
+                    elif line[0] == '-':
+                        status = GPS.VCS2.Status.CONFLICT
+                    else:
+                        status = 0
+
+                    # Properties
+                    if line[1] == 'M':
+                        status = status | GPS.VCS2.Status.MODIFIED
+                    elif line[1] == 'C':
+                        status = status | GPS.VCS2.Status.CONFLICT
+
+                    if line[2] == 'L':
+                        status = status | GPS.VCS2.Status.LOCAL_LOCKED
+
+                    if line[5] == 'K':
+                        status = status | GPS.VCS2.Status.LOCAL_LOCKED
+                    elif line[5] in ('O', 'T'):
+                        status = status | GPS.VCS2.Status.LOCKED_BY_OTHER
+
+                    if line[6] == 'C':
+                        status = status | GPS.VCS2.Status.CONFLICT
+
+                    if line[7] == '*':   # Only if we use -u
+                        status = status | GPS.VCS2.Status.NEEDS_UPDATE
+
+                    s.set_status(GPS.File(f), status, rev, rrev)

@@ -10,7 +10,7 @@ from workflows.promises import ProcessWrapper
 class Git(core.VCS):
 
     def __init__(self, repo):
-        self.repo = repo
+        super(self.__class__, self).__init__(repo)
         self.all_files = None
 
     def setup(self):

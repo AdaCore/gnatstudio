@@ -20,32 +20,22 @@ STATUSES = {
 
 
 @core.register_vcs
-class CVS(core.VCS):
+class CVS(core.File_Based_VCS):
 
-    def __init__(self, repo):
-        self.repo = repo
-        self.__re_status = re.compile(
-            '^(?:' +
-            '(?:cvs status: Examining (?P<dir>.+))|' +
-            '(?:File: (?P<file>\S+)\s+Status: (?P<status>.+))|' +
-            '(?:\s+Working revision:\s*(?P<rev>[\d.]+).*)|' +
-            '(?:\s+Repository revision:\s*(?P<rrev>[\d.]+).*)' +
-            ')$')
+    __re_status = re.compile(
+        '^(?:' +
+        '(?:cvs status: Examining (?P<dir>.+))|' +
+        '(?:File: (?P<file>\S+)\s+Status: (?P<status>.+))|' +
+        '(?:\s+Working revision:\s*(?P<rev>[\d.]+).*)|' +
+        '(?:\s+Repository revision:\s*(?P<rrev>[\d.]+).*)' +
+        ')$')
 
     @staticmethod
     def discover_repo(file):
         return core.find_admin_directory(file, 'CVS')
 
     @workflows.run_as_workflow
-    def __compute_status(self, all_files, args=[]):
-        """
-        Run a "cvs status" command with extra args
-
-        :param List(GPS.File) all_files: all files for which a status
-           should be set.
-        :param List(str) args: extra arguments to 'cvs status'
-        """
-
+    def _compute_status(self, all_files, args=[]):
         with self.set_status_for_all_files(
                 all_files, GPS.VCS2.Status.UNTRACKED) as s:
 
@@ -93,19 +83,3 @@ class CVS(core.VCS):
 
             if current_file is not None:
                 s.set_status(current_file, status, rev, repo_rev)
-
-    def async_fetch_status_for_files(self, files):
-        self.__compute_status(
-            all_files=files,
-            args=[f.path for f in files])
-
-    @workflows.run_as_workflow
-    def async_fetch_status_for_project(self, project):
-        self.__compute_status(
-            all_files=project.sources(recursive=False),
-            args=[d for d in project.source_dirs(recursive=False)])
-
-    @workflows.run_as_workflow
-    def async_fetch_status_for_all_files(self):
-        self.__compute_status(
-            all_files=GPS.Project.root().sources(recursive=True))

@@ -245,11 +245,18 @@ package GPS.VCS_Engines is
 
    function Label_Version
      (Self : not null access VCS_Engine) return String
-     is ("Version");
+     is ("Revision");
    function Label_Repo_Version
      (Self : not null access VCS_Engine) return String
-     is ("Repository Version");
+     is ("Repository Revision");
    --  Labels to use when displaying versions in the GUI
+
+   function Get_Tooltip_For_File
+     (VCS     : not null access VCS_Engine'Class;
+      File    : GNATCOLL.VFS.Virtual_File)
+     return String;
+   --  Return a description of the file's properties, suitable for display
+   --  in tooltips.
 
    ----------
    -- Misc --
