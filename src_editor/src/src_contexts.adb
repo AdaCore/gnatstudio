@@ -882,7 +882,9 @@ package body Src_Contexts is
       begin
          Result := Match;
 
-         if Result /= GPS.Search.No_Match then
+         if Failure_Response = Informational_Popup
+           and then Result /= GPS.Search.No_Match
+         then
             Display_Informational_Popup
               (Get_Main_Window (Kernel),
                Icon_Name             => "gps-undo-symbolic",
@@ -923,6 +925,7 @@ package body Src_Contexts is
          end if;
 
          Result := Match;
+
          return True;
       end Backward_Callback;
 
@@ -970,12 +973,15 @@ package body Src_Contexts is
          begin
             Ref := (Text'First, Integer (Start_Line), 1, 1);
             Scan_Buffer
-              (Text,
-               Start_Column, Context,
-               Backward_Callback'Unrestricted_Access, Scope,
-               Lexical_State, Lang,
-               Was_Partial => Was_Partial,
-               Ref         => Ref);
+              (Buffer        => Text,
+               From          => Start_Column,
+               Context       => Context,
+               Callback      => Backward_Callback'Unrestricted_Access,
+               Scope         => Scope,
+               Lexical_State => Lexical_State,
+               Lang          => Lang,
+               Was_Partial   => Was_Partial,
+               Ref           => Ref);
          end;
 
          --  Start from the end if necessary.
@@ -990,6 +996,21 @@ package body Src_Contexts is
             return;
          end if;
 
+         --  If a match was found after the current one, it means that the
+         --  search restarted from the end of the file. In this case, display
+         --  an informational popup to notify the user that the search
+         --  restarted.
+
+         if Failure_Response = Informational_Popup
+           and then (Result.Start.Line > Integer (Current_Line)
+                     or else (Result.Start.Line = Integer (Current_Line)
+                              and then Result.Start.Column >= Current_Column))
+         then
+            Display_Informational_Popup
+              (Get_Main_Window (Kernel),
+               Icon_Name             => "gps-redo-symbolic",
+               No_Transparency_Color => Default_Style.Get_Pref_Bg);
+         end if;
       else
          if Current_Line > Begin_Line or else
            (Current_Line = Begin_Line and Current_Column > Begin_Column)
