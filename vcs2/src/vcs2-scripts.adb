@@ -125,10 +125,13 @@ package body VCS2.Scripts is
    is
       D : Callback_Data'Class := Create (Self.Script, 1);
       L : List_Instance'Class := New_List (Self.Script);
+      Index : Positive := 1;
    begin
-      for F in Files'Range loop
-         L.Set_Nth_Arg
-           (F + 1 - Files'First, Create_File (Self.Script, Files (F)));
+      for F of Files loop
+         if F /= No_File then
+            L.Set_Nth_Arg (Index, Create_File (Self.Script, F));
+            Index := Index + 1;
+         end if;
       end loop;
 
       D.Set_Nth_Arg (1, L);

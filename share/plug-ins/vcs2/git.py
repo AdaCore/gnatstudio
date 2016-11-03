@@ -41,7 +41,8 @@ class Git(core.VCS):
     def async_fetch_status_for_all_files(self):
         yield self.__compute_all_files()
 
-        with self.set_status_for_all_files(self.all_files) as s:
+        with self.set_status_for_all_files(
+                self.all_files, GPS.VCS2.Status.UNMODIFIED) as s:
             p = ProcessWrapper(
                 ['git', 'status', '--porcelain', '--ignored'],
                 directory=os.path.join(self.repo, '..'))

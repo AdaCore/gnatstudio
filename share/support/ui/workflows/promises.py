@@ -381,7 +381,7 @@ class ProcessWrapper(object):
 
         # Update all output returned by the process
         # and store it as a private buffer
-        self.__output += match + unmatch
+        self.__output += unmatch + match
 
         # Display the output on the spawned console, if any
         if self.__console:
@@ -389,7 +389,7 @@ class ProcessWrapper(object):
 
         # check if user has issued some pattern to match
         if self.__current_pattern:
-            p = re.search(self.__current_pattern, self.__output)
+            p = self.__current_pattern.search(self.__output)
             if p:
                 self.__current_answered = True
                 self.__current_promise.resolve(p.group(0))
@@ -440,13 +440,21 @@ class ProcessWrapper(object):
         wait_until_match.
         Promise made here will be resolved with either a string (the current
         output) or None (when the process has terminated.
+
+        :param str|re.Pattern pattern: the regular expression to match on
+           the output of `self.
+        :param int timeout: give up matching pattern after this many
+           milliseconds, or wait for ever if 0.
         """
         # process has already terminated, return nothing
         if self.finished:
             return None
 
-        # keep the pattern info and return my promise
-        self.__current_pattern = pattern
+        if isinstance(pattern, str):
+            self.__current_pattern = re.compile(pattern, re.MULTILINE)
+        else:
+            self.__current_pattern = pattern
+
         self.__current_promise = Promise()
         self.__current_answered = False
 

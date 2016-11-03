@@ -4,9 +4,10 @@ Base type to implement support for new VCS engines in GPS
 
 import GPS
 import os
+import gps_utils
 
 
-GPS.VCS2.Status = enum(
+GPS.VCS2.Status = gps_utils.enum(
         UNMODIFIED=2**0,
         MODIFIED=2**1,
         STAGED_MODIFIED=2**2,
@@ -19,7 +20,8 @@ GPS.VCS2.Status = enum(
         IGNORED=2**9,
         CONFLICT=2**10,
         LOCAL_LOCKED=2**11,
-        LOCKED_BY_OTHER=2**12)
+        LOCKED_BY_OTHER=2**12,
+        NEEDS_UPDATE=2**13)
 # Valid statuses for files (they can be combined)
 
 
@@ -93,7 +95,7 @@ class VCS(GPS.VCS2):
         """
         pass
 
-    def set_status_for_all_files(self, files=[]):
+    def set_status_for_all_files(self, files, default_status):
         """
         A proxy that lets you set statuses of individual files, and on
         exit automatically set the status of remaining files to unmodified::
@@ -112,6 +114,8 @@ class VCS(GPS.VCS2):
 
         :param GPS.VCS2 repo: the specific repository
         :param List(GPS.File): the list of files to update
+        :param GPS.VCS2.Status default_status: the default status for all
+           files for which `set_status` wasn't called.
         """
 
         vcs = self
@@ -128,7 +132,7 @@ class VCS(GPS.VCS2):
 
             def set_status(
                     self, file,
-                    status=GPS.VCS2.Status.UNMODIFIED,
+                    status,
                     version="",
                     repo_version=""):
                 """
@@ -144,7 +148,7 @@ class VCS(GPS.VCS2):
 
             def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
                 for f in self._files:
-                    vcs._set_file_status(f, GPS.VCS2.Status.UNMODIFIED, "", "")
+                    vcs._set_file_status(f, default_status, "", "")
 
                 return False   # do not suppress exceptions
 
