@@ -510,7 +510,7 @@ messages. Full: same as normal, plus run-time checks related messages">
        </command-line>
     </target>
 
-    <target model="generate_scil" category="CodePeer" name="Run CodePeer File"
+    <target model="codepeer" category="CodePeer" name="Run CodePeer File"
             messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
@@ -527,7 +527,7 @@ messages. Full: same as normal, plus run-time checks related messages">
        </command-line>
     </target>
 
-    <target model="generate_scil" category="CodePeer"
+    <target model="codepeer" category="CodePeer"
             name="Run CodePeer File By File" messages_category="CodePeer">
        <in-toolbar>FALSE</in-toolbar>
        <in-menu>FALSE</in-menu>
