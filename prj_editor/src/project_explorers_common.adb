@@ -943,7 +943,7 @@ package body Project_Explorers_Common is
       Kernel        : not null access Kernel_Handle_Record'Class;
       Vcs           : not null access Abstract_VCS_Engine'Class;
       File          : GNATCOLL.VFS.Virtual_File;
-      Status        : VCS_File_Status)
+      Props         : VCS_File_Properties)
    is
       pragma Unreferenced (Kernel);
       Tree  : constant not null access Base_Explorer_Tree_Record'Class :=
@@ -971,7 +971,8 @@ package body Project_Explorers_Common is
             Model.Set
               (Iter, Icon_Column,
                UTF8_String'(To_String
-                 (VCS_Engine_Access (Vcs).Get_Display (Status).Icon_Name)));
+                 (VCS_Engine_Access (Vcs).Get_Display
+                    (Props.Status).Icon_Name)));
          end if;
          return False;  --  continue traversing
       end On_Node;

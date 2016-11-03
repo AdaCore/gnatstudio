@@ -169,11 +169,13 @@ types = {
         toada='GPS.VCS.Get_VCS (Data.Nth_Arg (%(idx)d, Allow_Null => False))',
         withs=['GPS.VCS']),
                           
-    'VCS_File_Status': Mapping(
-        ada='GPS.VCS.VCS_File_Status',
+    'VCS_File_Properties': Mapping(
+        ada='GPS.VCS.VCS_File_Properties',
         python='int',
-        topython='Integer (%(ada)s)',
-        toada='GPS.VCS.VCS_File_Status (Integer\'(Data.Nth_Arg (%(idx)d)))',
+        topython='Integer (%(ada)s.Status)',
+        toada='GPS.VCS.VCS_File_Properties\'' +
+            '(Status => GPS.VCS.VCS_File_Status ' +
+              '(Integer\'(Data.Nth_Arg (%(idx)d))), others => <>)',
         withs=['GPS.VCS']),
          
     'Project': Mapping(
@@ -437,7 +439,7 @@ Shadow builds''', inpython=False),
     'vcs_file_status_hooks': Hook_Type(
         [Param('VCS',       'VCS_Engine'),
          Param('file',      'File'),
-         Param('status',    'VCS_File_Status')]),                                       
+         Param('props',     'VCS_File_Properties')]),                                       
 }
 
 # The following describe all specific hooks. They all belong to one

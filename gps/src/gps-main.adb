@@ -222,7 +222,7 @@ procedure GPS.Main is
    VCS_Trace              : constant Trace_Handle :=
                      Create ("MODULE.VCS", GNATCOLL.Traces.On);
    VCS2_Trace             : constant Trace_Handle :=
-                     Create ("MODULE.VCS2", GNATCOLL.Traces.On);
+                     Create ("MODULE.VCS2", GNATCOLL.Traces.Off);
    Custom_Trace           : constant Trace_Handle :=
                      Create ("MODULE.Custom", GNATCOLL.Traces.On);
    Project_Templates_Trace : constant Trace_Handle :=

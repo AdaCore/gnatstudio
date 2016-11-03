@@ -1,10 +1,10 @@
-import vcs2
+from . import core
 import os
 
 
 @vcs2.register_vcs
-class CVS(vcs2.VCS):
+class CVS(core.VCS):
 
     @staticmethod
     def discover_repo(file):
-        return vcs2.find_admin_directory(file, 'CVS')
+        return core.find_admin_directory(file, 'CVS')

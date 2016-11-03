@@ -1636,8 +1636,6 @@ package body Project_Explorers is
 
       Files := Project.Source_Files (Recursive => False);
 
-      Trace (Me, "MANU Refresh_Project_Node");
-
       if Show_Dirs then
          for Dir of Project.Source_Dirs loop
             Dirs.Include ((Dir, Directory_Node), Files_List.Empty_List);
@@ -1658,10 +1656,6 @@ package body Project_Explorers is
          Dummy       : Gtk_Tree_Iter;
       begin
          while Has_Element (Dir) loop
-            Trace (Me, "MANU dir is hidden ? "
-               & Key (Dir).Directory.Display_Full_Name
-               & " => "
-               & Boolean'Image (Self.Kernel.Is_Hidden (Key (Dir).Directory)));
             if not Self.Kernel.Is_Hidden (Key (Dir).Directory) then
                --  minor optimization, reuse dir if same as previous file
                if Key (Dir) /= Previous then

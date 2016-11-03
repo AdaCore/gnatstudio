@@ -185,7 +185,7 @@ package Project_Explorers_Common is
       Kernel        : not null access Kernel_Handle_Record'Class;
       Vcs           : not null access Abstract_VCS_Engine'Class;
       File          : GNATCOLL.VFS.Virtual_File;
-      Status        : VCS_File_Status);
+      Props         : VCS_File_Properties);
    --  Should be set for the Vcs_File_Status_Changed_Hook.
    --  It will automatically update the icons for all displayed files in the
    --  tree

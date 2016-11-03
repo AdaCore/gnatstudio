@@ -481,9 +481,12 @@ package VCS is
    --  is useful when the external VCS does not correspond to the native
    --  platform (like Cygwin on Windows based OS).
 
-   Added_Stock : aliased String := "gps-emblem-vcs-added";
-   Removed_Stock : aliased String := "gps-emblem-vcs-removed";
-   Modified_Stock : aliased String := "gps-emblem-vcs-modified";
+   Added_Stock          : aliased String := "gps-emblem-vcs-added";
+   Removed_Stock        : aliased String := "gps-emblem-vcs-removed";
+   Modified_Stock       : aliased String := "gps-emblem-vcs-modified";
+   Needs_Merge_Stock    : aliased String := "gps-emblem-vcs-needs-merge";
+   Needs_Update_Stock   : aliased String := "gps-emblem-vcs-needs-update";
+   Not_Registered_Stock : aliased String := "gps-emblem-vcs-not-registered";
 
 private
 
@@ -522,19 +525,16 @@ private
    --  for editing.
 
    Needs_Merge_Label : aliased String := "Needs merge";
-   Needs_Merge_Stock : aliased String := "gps-emblem-vcs-needs-merge";
    Needs_Merge : VCS_File_Status :=
      (Needs_Merge_Label'Access, Needs_Merge_Stock'Access);
    --  The file has been modified locally and on the repository
 
    Needs_Update_Label : aliased String := "Needs update";
-   Needs_Update_Stock : aliased String := "gps-emblem-vcs-needs-update";
    Needs_Update : VCS_File_Status :=
      (Needs_Update_Label'Access, Needs_Update_Stock'Access);
    --  The file has been modified in the repository but not locally
 
    Not_Registered_Label : aliased String := "Not registered";
-   Not_Registered_Stock : aliased String := "gps-emblem-vcs-not-registered";
    Not_Registered : VCS_File_Status :=
      (Not_Registered_Label'Access, Not_Registered_Stock'Access);
    --  The file is unknown of the VCS repository

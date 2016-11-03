@@ -74,23 +74,6 @@ GPS.Browsers.Link.Side = enum(
 GPS.Browsers.View.Background = enum(NONE=0, COLOR=1, GRID=2, DOTS=3)
 
 
-GPS.VCS2.Status = enum(
-    UNMODIFIED=2**0,
-    MODIFIED=2**1,
-    STAGED_MODIFIED=2**2,
-    STAGED_ADDED=2**3,
-    DELETED=2**4,
-    STAGED_DELETED=2**5,
-    STAGED_RENAMED=2**6,
-    STAGED_COPIED=2**7,
-    UNTRACKED=2**8,
-    IGNORED=2**9,
-    CONFLICT=2**10,
-    LOCAL_LOCKED=2**11,
-    LOCKED_BY_OTHER=2**12)
-# Valid statuses for files (they can be combined)
-
-
 def get_focused_widget():
     current = GPS.MDI.current()
 

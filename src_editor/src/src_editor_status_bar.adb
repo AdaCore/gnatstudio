@@ -107,7 +107,7 @@ package body Src_Editor_Status_Bar is
       Kernel        : not null access Kernel_Handle_Record'Class;
       Vcs           : not null access Abstract_VCS_Engine'Class;
       File          : GNATCOLL.VFS.Virtual_File;
-      Status        : VCS_File_Status);
+      Props         : VCS_File_Properties);
 
    -------------------------
    -- Destroy_Info_Frames --
@@ -375,15 +375,15 @@ package body Src_Editor_Status_Bar is
       Kernel        : not null access Kernel_Handle_Record'Class;
       Vcs           : not null access Abstract_VCS_Engine'Class;
       File          : GNATCOLL.VFS.Virtual_File;
-      Status        : VCS_File_Status)
+      Props         : VCS_File_Properties)
    is
       pragma Unreferenced (Kernel);
       Bar : constant Source_Editor_Status_Bar := Self.Bar;
    begin
       if File = Bar.Buffer.Get_Filename then
          declare
-            D : constant Status_Display :=
-              VCS_Engine_Access (Vcs).Get_Display (Status);
+            V : constant VCS_Engine_Access := VCS_Engine_Access (Vcs);
+            D : constant Status_Display := V.Get_Display (Props.Status);
          begin
             if Bar.VCS_Status = null then
                Gtk_New (Bar.VCS_Status);
@@ -393,8 +393,16 @@ package body Src_Editor_Status_Bar is
 
             Bar.VCS_Status.Set_Icon_Name (To_String (D.Icon_Name));
             Bar.VCS_Status.Set_Tooltip_Markup
-              ("Status for <b>" & VCS_Engine_Access (Vcs).Name & "</b>: "
-               & To_String (D.Label));
+              ("Status for <b>" & V.Name & "</b>: "
+               & To_String (D.Label)
+               & (if Props.Version /= ""
+                  then ASCII.LF & "<b>" & V.Label_Version & "</b>:"
+                     & To_String (Props.Version)
+                  else "")
+               & (if Props.Repo_Version /= ""
+                  then ASCII.LF & "<b>" & V.Label_Repo_Version & "</b>:"
+                     & To_String (Props.Repo_Version)
+                  else ""));
          end;
       end if;
    end Execute;
@@ -473,7 +481,7 @@ package body Src_Editor_Status_Bar is
            (Kernel,
             VCS,
             Buffer.Get_Filename,
-            VCS.File_Properties_From_Cache (Buffer.Get_Filename).Status);
+            VCS.File_Properties_From_Cache (Buffer.Get_Filename));
       end if;
 
       Show_Cursor_Position (Bar, Line => 1, Column => 1);

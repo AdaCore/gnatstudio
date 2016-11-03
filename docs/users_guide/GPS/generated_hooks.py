@@ -941,7 +941,7 @@ class Predefined_Hooks:
         """
 
     # vcs_file_status_changed = 'vcs_file_status_changed'
-    def vcs_file_status_changed(VCS,file,status):
+    def vcs_file_status_changed(VCS,file,props):
         """
       Emitted when the VCS status of a file has been recomputed. The file might now
       be up to date, staged for commit, locally modified,... It might also have a
@@ -952,7 +952,7 @@ class Predefined_Hooks:
 
       :param GPS.VCS VCS:
       :param GPS.File file:
-      :param int status:
+      :param int props:
         """
 
     # word_added = 'word_added'

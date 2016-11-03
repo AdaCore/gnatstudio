@@ -243,6 +243,14 @@ package GPS.VCS_Engines is
    --  Status should be one of the values possibly returned by Async_Fetch_*
    --  (the possible combinations depend on Self).
 
+   function Label_Version
+     (Self : not null access VCS_Engine) return String
+     is ("Version");
+   function Label_Repo_Version
+     (Self : not null access VCS_Engine) return String
+     is ("Repository Version");
+   --  Labels to use when displaying versions in the GUI
+
    ----------
    -- Misc --
    ----------

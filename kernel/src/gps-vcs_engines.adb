@@ -50,6 +50,9 @@ package body GPS.VCS_Engines is
    Default_Display_Conflict : constant Status_Display :=
      (Label     => To_Unbounded_String ("Conflict"),
       Icon_Name => To_Unbounded_String ("gps-emblem-vcs-has-conflicts"));
+   Default_Display_Needs_Update : constant Status_Display :=
+     (Label     => To_Unbounded_String ("Needs update"),
+      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-needs-update"));
 
    package Project_To_Engine is new Ada.Containers.Hashed_Maps
      (Key_Type        => Virtual_File,
@@ -138,10 +141,10 @@ package body GPS.VCS_Engines is
 
    function No_VCS_Engine
      (Kernel   : not null access Kernel_Handle_Record'Class)
-      return not null access VCS_Engine'Class
-   is
-      pragma Unreferenced (Kernel);
+      return not null access VCS_Engine'Class is
    begin
+      --  In case it wasn't initialized before
+      Global_Data.No_VCS_Engine.Kernel := Kernel_Handle (Kernel);
       return Global_Data.No_VCS_Engine;
    end No_VCS_Engine;
 
@@ -405,7 +408,7 @@ package body GPS.VCS_Engines is
               (Self.Kernel,
                Vcs    => Self,
                File   => File,
-               Status => Props.Status);
+               Props  => Props);
          end if;
       end if;
    end Set_File_Status_In_Cache;
@@ -442,6 +445,8 @@ package body GPS.VCS_Engines is
             return Default_Display_Staged;
          elsif (Status and Status_Conflict) /= 0 then
             return Default_Display_Conflict;
+         elsif (Status and Status_Needs_Update) /= 0 then
+            return Default_Display_Needs_Update;
          else
             return Default_Display_Unmodified;
          end if;

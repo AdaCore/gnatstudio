@@ -104,9 +104,13 @@ package GPS.VCS is
    --  Some systems need to lock the file to make it writable.
 
    Status_Locked_By_Other : constant VCS_File_Status := 2 ** 12;
-   --  the file is locked in the repository, and will not be updated. If both
+   --  The file is locked in the repository, and will not be updated. If both
    --  Local_Locked and Locked_By_Other are set, then the lock has been stolen
    --  or broken, and is invalid
+
+   Status_Needs_Update    : constant VCS_File_Status := 2 ** 13;
+   --  A more recent version of the file exists in the repository.
+   --  This only applies to file-based repositories
 
    type VCS_File_Properties is record
       Status       : VCS_File_Status;

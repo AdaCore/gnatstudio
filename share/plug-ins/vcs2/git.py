@@ -1,13 +1,13 @@
 import GPS
-import vcs2
+from . import core
 import os
 import types
 import workflows
 from workflows.promises import ProcessWrapper
 
 
-@vcs2.register_vcs
-class Git(vcs2.VCS):
+@core.register_vcs
+class Git(core.VCS):
 
     def __init__(self, repo):
         self.repo = repo
@@ -20,7 +20,7 @@ class Git(vcs2.VCS):
 
     @staticmethod
     def discover_repo(file):
-        return vcs2.find_admin_directory(file, '.git')
+        return core.find_admin_directory(file, '.git')
 
     def __compute_all_files(self):
         """
