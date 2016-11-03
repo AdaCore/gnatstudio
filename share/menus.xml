@@ -209,10 +209,11 @@
          <separator />
          <menu label='_Properties...' optional='true' hide='true'
                action='open project properties'/>
-         <menu label='R_eload'                        action='reload project'/>
+         <menu label='Add Complex File Naming Conventions...' action='run gnatname'/>
+         <menu label='R_eload'                                action='reload project'/>
          <menu label='Edit File Switches...' optional='true' hide='true'
                action='open switches editor'/> <!-- duplicate-->
-         <menu label='Project view'                   action='open project'/> <!-- duplicate-->
+         <menu label='Project view'                           action='open project'/> <!-- duplicate-->
       </menu>
 
       <menu label='_Build'>

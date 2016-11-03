@@ -319,9 +319,9 @@ package body Dialog_Utils is
    is
       (Self.Number_Of_Children);
 
-   ----------------
-   -- Create_Row --
-   ----------------
+   ------------------
+   -- Create_Child --
+   ------------------
 
    function Create_Child
      (Self      : not null access Dialog_Group_Widget_Record'Class;
@@ -424,9 +424,9 @@ package body Dialog_Utils is
       return Child_Box.Get_Parent;
    end Create_Child;
 
-   ----------------
-   -- Create_Row --
-   ----------------
+   ------------------
+   -- Create_Child --
+   ------------------
 
    procedure Create_Child
      (Self      : not null access Dialog_Group_Widget_Record'Class;

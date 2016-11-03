@@ -55,13 +55,14 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Css_Provider;          use Gtk.Css_Provider;
 with Gtk.Text_View;
 with Gtk.Text_Buffer;
-with Gtk.Scrolled_Window;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Style;
 
+with Pango.Enums;               use Pango.Enums;
 with Pango.Font;                use Pango.Font;
 
 with Config;
@@ -1343,10 +1344,14 @@ package body GPS.Main_Window is
             use Gtk.Text_View;
             use Gtk.Text_Buffer;
 
-            Dialog : Gtk_Dialog;
-            Label  : Gtk_Label;
-            Group  : Gtk_Size_Group;
-            Button : Gtk_Widget;
+            Dialog   : Gtk_Dialog;
+            Vbox     : Gtk_Vbox;
+            Hbox     : Gtk_Hbox;
+            Label    : Gtk_Label;
+            Group    : Gtk_Size_Group;
+            Button   : Gtk_Widget;
+            Message  : constant String := Data.Nth_Arg (1);
+            Padding  : constant := 5;
 
             type Ent_Array
                is array (2 .. Number_Of_Arguments (Data)) of Gtk_Entry;
@@ -1374,7 +1379,7 @@ package body GPS.Main_Window is
                Hbox  : Gtk_Hbox;
             begin
                Gtk_New_Hbox (Hbox, Homogeneous => False);
-               Pack_Start (Get_Content_Area (Dialog), Hbox, Padding => 3);
+               Vbox.Pack_Start (Hbox, Padding => Padding);
 
                while Index <= Arg'Last loop
                   exit when Arg (Index) = '=';
@@ -1397,13 +1402,16 @@ package body GPS.Main_Window is
 
                   Set_Alignment (Label, 0.0, 0.5);
                   Add_Widget (Group, Label);
-                  Pack_Start (Hbox, Label, Expand => False, Padding => 3);
+                  Hbox.Pack_Start
+                    (Label,
+                     Expand  => False,
+                     Padding => Padding);
                end if;
 
                if Is_Multiline then
                   declare
                      Buffer   : Gtk_Text_Buffer;
-                     Scrolled : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+                     Scrolled : Gtk_Scrolled_Window;
                   begin
                      Gtk_New (Buffer);
                      Gtk_New (Text (N), Buffer);
@@ -1412,33 +1420,44 @@ package body GPS.Main_Window is
                      Scrolled.Add (Text (N));
                      Scrolled.Set_Policy (Policy_Never, Policy_Automatic);
                      Scrolled.Set_Shadow_Type (Shadow_In);
-                     Pack_Start (Hbox, Scrolled, Padding => 10);
+                     Hbox.Pack_Start (Scrolled, Expand => True);
                   end;
                else
                   Gtk_New (Ent (N));
-                  Set_Text (Ent (N), Arg (Index + 1 .. Arg'Last));
+                  Ent (N).Set_Text (Arg (Index + 1 .. Arg'Last));
+                  Ent (N).Set_Activates_Default (True);
 
-                  Set_Activates_Default (Ent (N),  True);
-                  Pack_Start (Hbox, Ent (N), Padding => 10);
+                  Hbox.Pack_Start (Ent (N), Expand => True);
                end if;
             end Create_Entry;
 
          begin
             Name_Parameters (Data, Input_Dialog_Cmd_Parameters);
 
-            Gtk_New (Label);
-            Set_Markup (Label, Nth_Arg (Data, 1));
-
             Gtk_New
               (Dialog,
-               Title  => Get_Text (Label),
+               Title  => Message,
                Parent => Get_Current_Window (Kernel),
                Flags  => Modal);
+            Set_Default_Size_From_History
+              (Dialog,
+               Name   => Message,
+               Kernel => Kernel,
+               Width  => 300,
+               Height => 150);
 
-            Set_Alignment (Label, 0.0, 0.5);
-            Pack_Start
-              (Get_Content_Area (Dialog),
-               Label, Expand => True, Padding => 10);
+            Gtk_New_Vbox (Vbox, Homogeneous => False);
+            Dialog.Get_Content_Area.Pack_Start (Vbox);
+
+            Gtk_New_Hbox (Hbox, Homogeneous => False);
+            Vbox.Pack_Start (Hbox, Expand => False, Padding => Padding);
+
+            Gtk_New (Label);
+            Label.Set_Alignment (0.0, 0.5);
+            Label.Set_Line_Wrap (True);
+            Label.Set_Line_Wrap_Mode (Pango_Wrap_Word);
+            Label.Set_Markup (Message);
+            Hbox.Pack_Start (Label, Expand => False, Padding => Padding);
 
             Gtk_New (Group);
 
