@@ -738,21 +738,21 @@ package body GPS.Kernel.Entities is
    begin
       if All_From_Same_File then
          return -"Entities imported from "
-           & Krunch (+Decl.File.Base_Name)
+           & (+Decl.File.Base_Name)
            & (-" into ")
-           & Krunch (+Local_File.Base_Name);
+           & (+Local_File.Base_Name);
 
       elsif Local_Only then
          return -"Local references for "
            & Get_Name (Entity)
-           & " ("  & Krunch (+Decl.File.Base_Name)
+           & " ("  & (+Decl.File.Base_Name)
            & ":" & Image (Decl.Line) & ") " & (-"in ")
-           & Krunch (+Local_File.Base_Name);
+           & (+Local_File.Base_Name);
 
       else
          return -"References for "
            & Get_Name (Entity)
-           & " ("  & Krunch (+Decl.File.Base_Name)
+           & " ("  & (+Decl.File.Base_Name)
            & ":" & Image (Decl.Line) & ")";
       end if;
    end All_Refs_Category;
