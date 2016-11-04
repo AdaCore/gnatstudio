@@ -200,8 +200,10 @@ package GPS.VCS_Engines is
    --        --  monitor the hook to update the displayed status
 
    procedure Invalidate_File_Status_Cache
-     (Self    : not null access VCS_Engine'Class);
-   --  Mark all entries in the cache as not being up-to-date.
+     (Self    : not null access VCS_Engine'Class;
+      File    : Virtual_File := No_File);
+   --  Mark th entry for file (or all entries if No_File) in the cache as
+   --  not being up-to-date.
    --  The next call to one of the Async_Fetch_Status_* procedures will
    --  therefore trigger queries to the actual VCS engine to refresh the cache.
 

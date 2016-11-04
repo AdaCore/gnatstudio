@@ -4271,6 +4271,7 @@ package body Src_Editor_Buffer is
             Buffer.Filename := Filename;
          end if;
 
+         Trace (Me, "MANU From Internal_Save_To_File");
          File_Saved_Hook.Run (Buffer.Kernel, Filename);
 
          for J in 1 .. Buffer.Last_Editable_Line loop

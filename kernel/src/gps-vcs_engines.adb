@@ -485,11 +485,29 @@ package body GPS.VCS_Engines is
    ----------------------------------
 
    procedure Invalidate_File_Status_Cache
-     (Self    : not null access VCS_Engine'Class) is
+     (Self    : not null access VCS_Engine'Class;
+      File    : Virtual_File := No_File)
+   is
+      C : VCS_File_Cache.Cursor;
    begin
-      for F of Self.Cache loop
-         F.Need_Update := True;
-      end loop;
+      if File = No_File then
+         for F of Self.Cache loop
+            F.Need_Update := True;
+         end loop;
+
+         --  ??? Would be nice to refresh, but we don't know what info
+         --  is needed.
+
+      else
+         C := Self.Cache.Find (File);
+         if Has_Element (C) then
+            Self.Cache.Reference (C).Need_Update := True;
+
+            --  Force a refresh immediately in this case since we
+            --  know what needs refreshing
+            Self.Ensure_Status_For_Files ((1 => File));
+         end if;
+      end if;
    end Invalidate_File_Status_Cache;
 
    ------------------------------

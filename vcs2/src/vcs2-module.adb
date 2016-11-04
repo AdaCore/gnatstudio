@@ -36,6 +36,12 @@ package body VCS2.Module is
    --  This looks for what VCS engine to use for each project. It tries to
    --  reuse existing engines when possible, to benefit from their caches.
 
+   type On_File_Saved is new File_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_File_Saved;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File);
+
    -------------
    -- Execute --
    -------------
@@ -192,6 +198,23 @@ package body VCS2.Module is
       end loop;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_File_Saved;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      File   : Virtual_File)
+   is
+      pragma Unreferenced (Self);
+      Info    : constant File_Info'Class := File_Info'Class
+         (Get_Registry (Kernel).Tree.Info_Set (File).First_Element);
+      Project : constant Project_Type := Info.Project (True);
+   begin
+      Get_VCS (Kernel, Project).Invalidate_File_Status_Cache (File);
+   end Execute;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -202,6 +225,7 @@ package body VCS2.Module is
    begin
       VCS2.Scripts.Register_Scripts (Kernel);
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
+      File_Saved_Hook.Add (new On_File_Saved);
    end Register_Module;
 
 end VCS2.Module;
