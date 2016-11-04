@@ -573,8 +573,8 @@ Image_Dir of the Documentation package::
 Documentation pattern
 ---------------------
 
-The pattern for recognizing doc comments can be specified via the string
-attribute Doc_Pattern of the Documentation package::
+The regular expression for recognizing doc comments can be specified via the
+string attribute Doc_Pattern of the Documentation package::
 
    package Documentation is
       for Doc_Pattern use "^<";
