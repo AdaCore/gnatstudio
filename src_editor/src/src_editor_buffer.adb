@@ -1796,9 +1796,7 @@ package body Src_Editor_Buffer is
          --  cursor should break the grouping of actions. This way, if you
          --  are typing 'a' then clicking then typing 'b', GPS should require
          --  two undos to remove 'a' then 'b'.
-         if Buffer.Insert_In_Current_Group = 0
-           and then not Buffer.Inserting
-         then
+         if not Buffer.Inserting then
             Change_Group (Buffer.Queue);
          end if;
 
@@ -1934,9 +1932,8 @@ package body Src_Editor_Buffer is
       if Buffer.Cursors_Sync.Mode = Auto then
          declare
             Iter : Gtk_Text_Iter;
+            G : Group_Block := Current_Group (Buffer.Queue);
          begin
-            Buffer.Enter_Current_Group;
-
             for C of Get_Cursors (Source_Buffer (Buffer)) loop
                if not C.Is_Main_Cursor then
                   --  Perform insertion for the multi cursor
@@ -1947,7 +1944,6 @@ package body Src_Editor_Buffer is
             end loop;
 
             Set_Cursors_Auto_Sync (Source_Buffer (Buffer));
-            Buffer.Leave_Current_Group;
 
             declare
                Iter_Acc : constant access Gtk_Text_Iter :=
@@ -1956,7 +1952,6 @@ package body Src_Editor_Buffer is
             begin
                Buffer.Get_Iter_At_Mark (Iter_Acc.all, Buffer.Insert_Mark);
             end;
-
          end;
       end if;
 
@@ -2282,8 +2277,8 @@ package body Src_Editor_Buffer is
       then
          declare
             Iter_1, Iter_2 : Gtk_Text_Iter;
+            G : Group_Block := Current_Group (Buffer.Queue);
          begin
-            Buffer.Enter_Current_Group;
             for C of Get_Cursors (Source_Buffer (Buffer)) loop
                if not C.Is_Main_Cursor then
                   Set_Manual_Sync (C);
@@ -2295,7 +2290,6 @@ package body Src_Editor_Buffer is
                end if;
             end loop;
             Set_Cursors_Auto_Sync (Source_Buffer (Buffer));
-            Buffer.Leave_Current_Group;
          end;
       end if;
 
@@ -5592,11 +5586,7 @@ package body Src_Editor_Buffer is
       Redo (Buffer.Queue);
 
       --  Undo and Redo clear the current group: start a new group
-
-      --  Reset all high-level grouping when doing undo/redo
-      Buffer.Insert_In_Current_Group := 0;
-
-      Start_Group (Buffer.Queue);
+      Change_Group (Buffer.Queue);
    end Redo;
 
    ----------
@@ -5614,11 +5604,7 @@ package body Src_Editor_Buffer is
       Undo (Buffer.Queue);
 
       --  Undo and Redo clear the current group: start a new group
-
-      --  Reset all high-level grouping when doing undo/redo
-      Buffer.Insert_In_Current_Group := 0;
-
-      Start_Group (Buffer.Queue);
+      Change_Group (Buffer.Queue);
    end Undo;
 
    -------------
@@ -5639,11 +5625,8 @@ package body Src_Editor_Buffer is
       Buffer.Current_Command := null;
 
       --  Decide whether we should group this action with the previous actions
-      if Buffer.Insert_In_Current_Group = 0
-        and then (User_Action /= Buffer.Last_User_Action)
-      then
-         End_Group (Buffer.Queue);
-         Start_Group (Buffer.Queue);
+      if User_Action /= Buffer.Last_User_Action then
+         Change_Group (Buffer.Queue);
       end if;
 
       if User_Action in No_Action .. Delete_Line then
@@ -6486,18 +6469,19 @@ package body Src_Editor_Buffer is
                  Gint (Replace'Length - (End_Column - Start_Column));
             end if;
 
-            Enter_Current_Group (Buffer);
-
-            Create
-              (Replace_Cmd,
-               Buffer,
-               Editable_Line_Type (Line),
-               Start_Column,
-               Editable_Line_Type (Line),
-               End_Column,
-               Replace);
-            Enqueue (Buffer, Command_Access (Replace_Cmd), External);
-            Leave_Current_Group (Buffer);
+            declare
+               G : Group_Block := New_Group (Buffer.Queue);
+            begin
+               Create
+                 (Replace_Cmd,
+                  Buffer,
+                  Editable_Line_Type (Line),
+                  Start_Column,
+                  Editable_Line_Type (Line),
+                  End_Column,
+                  Replace);
+               Enqueue (Buffer, Command_Access (Replace_Cmd), External);
+            end;
          end if;
       end Replace_Text;
 
@@ -6600,98 +6584,100 @@ package body Src_Editor_Buffer is
 
       End_Action (Buffer);
 
-      if Buffer.Insert_In_Current_Group = 0 then
-         Start_Group (Buffer.Queue);
-      end if;
+      declare
+         G : Group_Block := New_Group (Buffer.Queue);
+      begin
+         if Lines_Are_Real (Buffer) then
+            if Offset_Line /= 0 then
+               C_Str := Get_Slice
+                 (Buffer,
+                  Gint (Offset_Line) - 1, 0, Line, Get_Line_Offset (End_Pos));
+               Slice := To_Unchecked_String (C_Str);
+               Local_Format_Buffer
+                 (Lang,
+                  Slice (1 .. Integer (Strlen (C_Str))),
+                  Replace_Text'Unrestricted_Access,
+                  Integer (Current_Line - Gint (Offset_Line - 1) + 1),
+                  Integer (Line - Gint (Offset_Line - 1) + 1),
+                  Indent_Params);
 
-      if Lines_Are_Real (Buffer) then
-         if Offset_Line /= 0 then
-            C_Str := Get_Slice
-              (Buffer,
-               Gint (Offset_Line) - 1, 0, Line, Get_Line_Offset (End_Pos));
-            Slice := To_Unchecked_String (C_Str);
-            Local_Format_Buffer
-              (Lang,
-               Slice (1 .. Integer (Strlen (C_Str))),
-               Replace_Text'Unrestricted_Access,
-               Integer (Current_Line - Gint (Offset_Line - 1) + 1),
-               Integer (Line - Gint (Offset_Line - 1) + 1),
-               Indent_Params);
+            else
+               C_Str := Get_Slice (Buffer, 0, 0, Line,
+                                   Get_Line_Offset (End_Pos));
+               Slice := To_Unchecked_String (C_Str);
+               Len   := Integer (Strlen (C_Str));
+
+               if Is_End (End_Pos) then
+                  --  Special case for end of buffer: we won't get an extra LF
+                  --  in this case, so need to add it manually. Note that it
+                  --  is fine to access Slice (Len + 1), since this is the
+                  --  location of the terminating ASCII.NUL character.
+
+                  Len := Len + 1;
+                  Slice (Len) := ASCII.LF;
+               end if;
+
+               Local_Format_Buffer
+                 (Lang,
+                  Slice (1 .. Len),
+                  Replace_Text'Unrestricted_Access,
+                  Integer (Current_Line + 1),
+                  Integer (Line + 1),
+                  Indent_Params);
+            end if;
+
+            g_free (C_Str);
 
          else
-            C_Str := Get_Slice (Buffer, 0, 0, Line, Get_Line_Offset (End_Pos));
-            Slice := To_Unchecked_String (C_Str);
-            Len   := Integer (Strlen (C_Str));
+            From_Line :=
+              Get_Editable_Line (Buffer, Buffer_Line_Type (Current_Line + 1));
+            To_Line := Get_Editable_Line
+              (Buffer, Buffer_Line_Type (Line + 1));
 
-            if Is_End (End_Pos) then
-               --  Special case for end of buffer: we won't get an extra
-               --  LF in this case, so need to add it manually.
-               --  Note that it is fine to access Slice (Len + 1), since
-               --  this is the location of the terminating ASCII.NUL character.
+            declare
+               Line_Cursor : Gint;
+            begin
+               Line_Cursor := Current_Line + 1;
+               while From_Line = 0 and then Line_Cursor < Line loop
+                  Line_Cursor := Line_Cursor + 1;
+                  From_Line :=
+                    Get_Editable_Line
+                      (Buffer, Buffer_Line_Type (Line_Cursor + 1));
+               end loop;
 
-               Len := Len + 1;
-               Slice (Len) := ASCII.LF;
+               Line_Cursor := Line + 1;
+               while To_Line = 0 and then Line_Cursor > Current_Line loop
+                  Line_Cursor := Line_Cursor - 1;
+                  To_Line :=
+                    Get_Editable_Line
+                      (Buffer, Buffer_Line_Type (Line_Cursor + 1));
+               end loop;
+            end;
+
+            if From_Line /= 0 and then To_Line /= 0 then
+               --  There is at least one editable line in the selection of
+               --  lines to be reformatted.
+
+               if Offset_Line /= 0 then
+                  Buffer_Text := Get_Buffer_Lines
+                    (Buffer, Offset_Line, To_Line);
+                  From_Line := From_Line - Offset_Line + 1;
+                  To_Line := To_Line - Offset_Line + 1;
+               else
+                  Buffer_Text := Get_Buffer_Lines (Buffer, 1, To_Line);
+               end if;
+
+               Local_Format_Buffer
+                 (Lang,
+                  Buffer_Text.all,
+                  Replace_Text'Unrestricted_Access,
+                  Integer (From_Line), Integer (To_Line), Indent_Params);
+               GNAT.Strings.Free (Buffer_Text);
             end if;
-
-            Local_Format_Buffer
-              (Lang,
-               Slice (1 .. Len),
-               Replace_Text'Unrestricted_Access,
-               Integer (Current_Line + 1),
-               Integer (Line + 1),
-               Indent_Params);
          end if;
 
-         g_free (C_Str);
-
-      else
-         From_Line :=
-           Get_Editable_Line (Buffer, Buffer_Line_Type (Current_Line + 1));
-         To_Line := Get_Editable_Line (Buffer, Buffer_Line_Type (Line + 1));
-
-         declare
-            Line_Cursor : Gint;
-         begin
-            Line_Cursor := Current_Line + 1;
-            while From_Line = 0 and then Line_Cursor < Line loop
-               Line_Cursor := Line_Cursor + 1;
-               From_Line :=
-                 Get_Editable_Line
-                   (Buffer, Buffer_Line_Type (Line_Cursor + 1));
-            end loop;
-
-            Line_Cursor := Line + 1;
-            while To_Line = 0 and then Line_Cursor > Current_Line loop
-               Line_Cursor := Line_Cursor - 1;
-               To_Line :=
-                 Get_Editable_Line
-                   (Buffer, Buffer_Line_Type (Line_Cursor + 1));
-            end loop;
-         end;
-
-         if From_Line /= 0 and then To_Line /= 0 then
-            --  There is at least one editable line in the selection of lines
-            --  to be reformatted.
-
-            if Offset_Line /= 0 then
-               Buffer_Text := Get_Buffer_Lines (Buffer, Offset_Line, To_Line);
-               From_Line := From_Line - Offset_Line + 1;
-               To_Line := To_Line - Offset_Line + 1;
-            else
-               Buffer_Text := Get_Buffer_Lines (Buffer, 1, To_Line);
-            end if;
-
-            Local_Format_Buffer
-              (Lang,
-               Buffer_Text.all,
-               Replace_Text'Unrestricted_Access,
-               Integer (From_Line), Integer (To_Line), Indent_Params);
-            GNAT.Strings.Free (Buffer_Text);
-         end if;
-      end if;
-
-      End_Action (Buffer);
-      End_Group (Buffer.Queue);
+         End_Action (Buffer);
+      end;
 
       --  If the cursor was located before the first non-blank character,
       --  move it to that character. This is more usual for Emacs users,
@@ -6714,8 +6700,6 @@ package body Src_Editor_Buffer is
       when E : others =>
          --  Stop propagation of exception, since doing nothing
          --  in this callback is harmless.
-
-         End_Group (Buffer.Queue);
 
          Buffer.Do_Not_Move_Cursor := False;
 
@@ -7604,35 +7588,35 @@ package body Src_Editor_Buffer is
          return False;
       end if;
 
-      Start_Group (Buffer.Queue);
-      Enter_Current_Group (Buffer);
+      declare
+         G : Group_Block := New_Group (Buffer.Queue);
+      begin
+         Setup_Comment_Regexps;
+         Find_Paragraph_Bounds (From_Line, To_Line);
 
-      Setup_Comment_Regexps;
-      Find_Paragraph_Bounds (From_Line, To_Line);
+         if Single_Line_BC_Pattern /= null
+           or else Multiple_Lines_BC_Pattern /= null
+         then
+            --  We have a known syntax for comments
+            Refill_Comments (From_Line, To_Line);
+         else
+            Refill_Plain_Text (From_Line, To_Line);
+         end if;
 
-      if Single_Line_BC_Pattern /= null
-        or else Multiple_Lines_BC_Pattern /= null
-      then
-         --  We have a known syntax for comments
-         Refill_Comments (From_Line, To_Line);
-      else
-         Refill_Plain_Text (From_Line, To_Line);
-      end if;
+         --  Free allocated memory
 
-      --  Free allocated memory
+         if Single_Line_BC_Pattern /= null then
+            Unchecked_Free (Single_Line_BC_Pattern);
+         end if;
 
-      if Single_Line_BC_Pattern /= null then
-         Unchecked_Free (Single_Line_BC_Pattern);
-      end if;
+         if Multiple_Lines_BC_Pattern /= null then
+            Unchecked_Free (Multiple_Lines_BC_Pattern);
+            Unchecked_Free (Multiple_Lines_EC_Pattern);
+         end if;
 
-      if Multiple_Lines_BC_Pattern /= null then
-         Unchecked_Free (Multiple_Lines_BC_Pattern);
-         Unchecked_Free (Multiple_Lines_EC_Pattern);
-      end if;
+         End_Action (Buffer);
+      end;
 
-      End_Action (Buffer);
-      End_Group (Buffer.Queue);
-      Leave_Current_Group (Buffer);
       return True;
    end Do_Refill;
 
@@ -8306,26 +8290,6 @@ package body Src_Editor_Buffer is
       Buffer.Prevent_CR_Insertion := Prevent;
    end Prevent_CR_Insertion;
 
-   -------------------------
-   -- Enter_Current_Group --
-   -------------------------
-
-   procedure Enter_Current_Group
-     (Buffer : access Source_Buffer_Record'Class) is
-   begin
-      Buffer.Insert_In_Current_Group := Buffer.Insert_In_Current_Group + 1;
-   end Enter_Current_Group;
-
-   -------------------------
-   -- Leave_Current_Group --
-   -------------------------
-
-   procedure Leave_Current_Group
-     (Buffer : access Source_Buffer_Record'Class) is
-   begin
-      Buffer.Insert_In_Current_Group := Buffer.Insert_In_Current_Group - 1;
-   end Leave_Current_Group;
-
    -----------------------
    -- Set_In_Completion --
    -----------------------
@@ -8551,7 +8515,6 @@ package body Src_Editor_Buffer is
    begin
       End_Action (Buffer);
       Start_Group (Buffer.Queue);
-      Enter_Current_Group (Buffer);
    end Start_Undo_Group;
 
    -----------------------
@@ -8562,7 +8525,6 @@ package body Src_Editor_Buffer is
    begin
       End_Action (Buffer);
       End_Group (Buffer.Queue);
-      Leave_Current_Group (Buffer);
    end Finish_Undo_Group;
 
    -------------------------

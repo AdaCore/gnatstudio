@@ -37,6 +37,8 @@
 with Ada.Strings.Unbounded;
 with Ada.Containers.Doubly_Linked_Lists;
 
+private with Ada.Finalization;
+
 package Commands is
 
    type Root_Command is abstract tagged limited private;
@@ -161,6 +163,33 @@ package Commands is
    procedure Empty_Queue (Q : Command_Queue);
    --  Free all done, undone and pending actions in Q
 
+   ----------------------
+   -- Command grouping --
+   ----------------------
+
+   --  A Queue contains a series of commands. Sometimes it is useful to
+   --  "group" a number of commands that follow each other, so that they
+   --  are all executed together when performing undo/redo.
+   --
+   --  For instance in this queue:
+   --
+   --       Command      C1 ->  C2 ->  C3 ->  C4
+   --       group         A      B      B      C
+   --
+   --  commands C2 and C3 are grouped together for the purposes of undo/redo.
+   --
+   --  By default, each command which is enqueued is given its own group.
+   --
+   --  There are two mechanisms for controlling how commands get grouped.
+   --  You can either
+   --       - manually create a new group, and enqueue a number of commands
+   --         in this group, knowing that these commands will be guaranteed
+   --         to be in a different group than commands before and commands
+   --         after the group. This is done by calling New_Group.
+   --
+   --       - enqueue a number of commands to the current group. This is done
+   --         by calling Current_Group.
+
    procedure Start_Group (Q : Command_Queue);
    --  Start a group of commands. The commands appended to the queue will be
    --  considered as part of a same group, until End_Group is called.
@@ -170,9 +199,31 @@ package Commands is
    procedure End_Group (Q : Command_Queue);
    --  Ends grouping of commands
 
+   type Group_Block is limited private
+     with Warnings => Off;
+   --  Deactivate warnings so we can use it as a declare block guard without
+   --  using it.
+
+   function New_Group (Q : Command_Queue) return Group_Block;
+   --  Creates a new undo/redo group controlled by a Group_Block.
+   --  The group is left when the Group_Block is finalized, so this can be
+   --  used this way:
+   --      declare
+   --          G : constant Group_Block := Group (Queue);
+   --      begin
+   --          (some actions appended to the queue, belonging to the group)
+   --      end; --  the block is released here
+
+   function Current_Group (Q : Command_Queue) return Group_Block;
+   --  Creates a new undo/redo group controlled by a Group_Block, similarly
+   --  to New_Group, except that, in this case, commands will be added to
+   --  the current group.
+
    procedure Change_Group (Queue : Command_Queue);
    --  Change the current group, so that following actions are not grouped
-   --  in the same undo/redo group.
+   --  in the same undo/redo group. This has no effect if the queue is inside
+   --  an undo/redo group (ie, if there is currently a Group_Block created by
+   --  New_Group or Current_Group.
 
    procedure Enqueue
      (Queue         : Command_Queue;
@@ -344,5 +395,16 @@ private
 
    pragma Inline (Undo_Queue_Empty);
    pragma Inline (Redo_Queue_Empty);
+
+   type Group_Block is new Ada.Finalization.Limited_Controlled with record
+      Queue              : Command_Queue;
+      Increments_Counter : Boolean := False;
+      --  Whether to increment the group counter at creation and finalization
+      --  of this block.
+
+      Already_Left       : Boolean := False;
+      --  Whether we have already finalized this block
+   end record;
+   overriding procedure Finalize (Self : in out Group_Block);
 
 end Commands;

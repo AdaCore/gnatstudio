@@ -393,17 +393,13 @@ package body Src_Editor_Buffer.Text_Handling is
               (Buffer, Line, First,
                Line, First + Character_Offset_Type (Length)) /= Replace
             then
-               Enter_Current_Group (Buffer);
+               declare
+                  G : Group_Block := Current_Group (Buffer.Queue);
                begin
                   Replace_Slice
                     (Buffer, Replace, Line, First,
                      Before => 0, After => Length);
-                  Leave_Current_Group (Buffer);
                   Text_Replaced := True;
-               exception
-                  when others =>
-                     Leave_Current_Group (Buffer);
-                     raise;
                end;
             end if;
 

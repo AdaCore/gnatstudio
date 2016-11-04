@@ -508,13 +508,7 @@ package body Commands is
          return;
       end if;
 
-      --  Change the group number if we are starting a group at the
-      --  first level. On the other hand, if we are nesting a group within a
-      --  group, we want all nested actions to be considered as part of the
-      --  top group, so we do not change the group number in this case.
-      if Q.Group_Level = 0 then
-         Change_Group (Q);
-      end if;
+      Change_Group (Q);
 
       Q.Group_Level := Q.Group_Level + 1;
    end Start_Group;
@@ -531,9 +525,9 @@ package body Commands is
 
       if Q.Group_Level > 0 then
          Q.Group_Level := Q.Group_Level - 1;
-      else
-         Change_Group (Q);
       end if;
+
+      Change_Group (Q);
    end End_Group;
 
    ------------------
@@ -542,10 +536,16 @@ package body Commands is
 
    procedure Change_Group (Queue : Command_Queue) is
    begin
-      if Queue.Current_Group_Number = Natural'Last then
-         Queue.Current_Group_Number := 1;
-      else
-         Queue.Current_Group_Number := Queue.Current_Group_Number + 1;
+      --  Change the group number if we are starting a group at the
+      --  first level. On the other hand, if we are nesting a group within a
+      --  group, we want all nested actions to be considered as part of the
+      --  top group, so we do not change the group number in this case.
+      if Queue.Group_Level = 0 then
+         if Queue.Current_Group_Number = Natural'Last then
+            Queue.Current_Group_Number := 1;
+         else
+            Queue.Current_Group_Number := Queue.Current_Group_Number + 1;
+         end if;
       end if;
    end Change_Group;
 
@@ -611,5 +611,50 @@ package body Commands is
          Unref (Command);
       end if;
    end Next;
+
+   -------------------
+   -- Current_Group --
+   -------------------
+
+   function Current_Group (Q : Command_Queue) return Group_Block is
+   begin
+      return G : Group_Block do
+         G.Queue := Q;
+         G.Increments_Counter := False;
+         Q.Group_Level := Q.Group_Level + 1;
+      end return;
+   end Current_Group;
+
+   ---------------
+   -- New_Group --
+   ---------------
+
+   function New_Group (Q : Command_Queue) return Group_Block is
+   begin
+      return G : Group_Block do
+         G.Queue := Q;
+         G.Increments_Counter := True;
+         Change_Group (Q);
+         Q.Group_Level := Q.Group_Level + 1;
+      end return;
+   end New_Group;
+
+   --------------
+   -- Finalize --
+   --------------
+
+   overriding procedure Finalize (Self : in out Group_Block) is
+   begin
+      if Self.Already_Left then
+         return;
+      end if;
+
+      Self.Already_Left := True;
+      Self.Queue.Group_Level := Self.Queue.Group_Level - 1;
+
+      if Self.Increments_Counter then
+         Change_Group (Self.Queue);
+      end if;
+   end Finalize;
 
 end Commands;
