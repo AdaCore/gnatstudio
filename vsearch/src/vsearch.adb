@@ -915,18 +915,24 @@ package body Vsearch is
       Is_Incremental  : Boolean := False;
       Replace         : Boolean := False)
    is
-      Module     : constant Search_Module :=
-                     Find_Module
-                       (Vsearch.Kernel, Get_Active_Id (Vsearch.Context_Combo));
-      Occurrence : Search_Occurrence;
-      Found      : Boolean;
-      Has_Next   : Boolean;
-      Dummy      : Message_Dialog_Buttons;
-      Ctxt       : Root_Search_Context_Access;
-      Pattern    : constant String := Get_Active_Text (Vsearch.Pattern_Combo);
-      C          : access Search_Command;
-      Search_Category : constant String :=
-        -"Search for: " & Vsearch.Pattern_Combo.Get_Active_Text;
+      Module              : constant Search_Module :=
+                              Find_Module
+                                (Vsearch.Kernel,
+                                 Get_Active_Id (Vsearch.Context_Combo));
+      Occurrence          : Search_Occurrence;
+      Found               : Boolean;
+      Has_Next            : Boolean;
+      Dummy               : Message_Dialog_Buttons;
+      Ctxt                : Root_Search_Context_Access;
+      Pattern             : constant String :=
+                              Get_Active_Text (Vsearch.Pattern_Combo);
+      C                   : access Search_Command;
+      Has_Select_On_Match : constant Boolean :=
+                              (not Vsearch.Is_In_Incremental_Mode
+                               and then Select_On_Match.Get_Pref);
+      Search_Category     : constant String :=
+                -"Search for: " & Vsearch.Pattern_Combo.Get_Active_Text;
+
    begin
       if All_Occurrences then
          --  If there is already a search going on for this category, do not
@@ -955,7 +961,7 @@ package body Vsearch is
          if All_Occurrences then
             C := new Search_Command'
               (Interactive_Command with
-               Select_Editor_On_Match => Select_On_Match.Get_Pref,
+               Select_Editor_On_Match => Has_Select_On_Match,
                Kernel                 => Vsearch.Kernel,
                Search_Backward        => False,
                Context                => Ctxt,
@@ -969,7 +975,7 @@ package body Vsearch is
               (Kernel               => Vsearch.Kernel,
                Search_Backward      => False,
                From_Selection_Start => Is_Incremental,
-               Give_Focus           => Select_On_Match.Get_Pref,
+               Give_Focus           => Has_Select_On_Match,
                Found                => Found,
                Continue             => Has_Next);
 
@@ -1061,7 +1067,8 @@ package body Vsearch is
             Vsearch.Kernel,
             Search_Backward      => True,
             From_Selection_Start => False,
-            Give_Focus           => Select_On_Match.Get_Pref,
+            Give_Focus           => (not Vsearch.Is_In_Incremental_Mode
+                                     and then Select_On_Match.Get_Pref),
             Found                => Found,
             Continue             => Has_Next);
 
@@ -1202,7 +1209,8 @@ package body Vsearch is
          Context                => Ctxt,
          Context_Is_Owned       => All_Occurrences,  --  command will free ctxt
          Kernel                 => Vsearch.Kernel,
-         Select_Editor_On_Match => Select_On_Match.Get_Pref,
+         Select_Editor_On_Match => (not Vsearch.Is_In_Incremental_Mode
+                                    and then Select_On_Match.Get_Pref),
          Found                  => False,
          Replace_With           =>
             new String'(Get_Active_Text (Vsearch.Replace_Combo)));
@@ -3076,7 +3084,8 @@ package body Vsearch is
            -"When a match is found, give the focus to the matching editor. If"
          & " unselected, the focus is left on the search window, which means"
          & " you can keep typing Enter to go to the next search, but can't"
-         & " modify the editor directly",
+         & " modify the editor directly. This option is ignored when the"
+         & " incremental mode is enabled.",
          Default => False);
 
       Close_On_Match := Create
