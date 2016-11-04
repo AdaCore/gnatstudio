@@ -45,7 +45,7 @@ class CVS(core.File_Based_VCS):
             current_file = None
             dir = None
             while True:
-                line = yield p.wait_until_match('^.+$')
+                line = yield p.wait_until_match('^.+\n')
                 if line is None:
                     break
 

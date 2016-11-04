@@ -261,11 +261,19 @@ package body GPS.VCS_Engines is
          if not Has_Element (C) then
             Self.Cache.Include
               (F, (Need_Update => False, Props => Default_Properties));
+            if not Need_Update and then Active (Me) then
+               Trace
+                  (Me, "Will fetch status because of " & F.Display_Full_Name);
+            end if;
             Need_Update := True;
 
          elsif Element (C).Need_Update then
             Self.Cache.Include
               (F, (Need_Update => False, Props => Element (C).Props));
+            if not Need_Update and then Active (Me) then
+               Trace
+                  (Me, "Will fetch status because of " & F.Display_Full_Name);
+            end if;
             Need_Update := True;
          end if;
       end loop;

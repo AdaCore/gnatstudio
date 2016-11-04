@@ -28,14 +28,15 @@ class Git(core.VCS):
         """
         if self.all_files is None:
             self.all_files = set()
+            dir = os.path.normpath(os.path.join(self.repo, '..'))
             p = ProcessWrapper(
                 ['git', 'ls-tree', '-r', 'HEAD', '--name-only'],
-                directory=os.path.join(self.repo, '..'))
+                directory=dir)
             while True:
-                line = yield p.wait_until_match('^.*$')
+                line = yield p.wait_until_match('^.+\n')
                 if line is None:
                     break
-                self.all_files.add(GPS.File(line))
+                self.all_files.add(GPS.File(os.path.join(dir, line[:-1])))
 
     @workflows.run_as_workflow
     def async_fetch_status_for_all_files(self):
@@ -48,7 +49,7 @@ class Git(core.VCS):
                 directory=os.path.join(self.repo, '..'))
 
             while True:
-                line = yield p.wait_until_match('^.+$')
+                line = yield p.wait_until_match('^.+\n')
                 if line is None:
                     break
 
@@ -78,4 +79,6 @@ class Git(core.VCS):
                         elif line[1] == 'D':
                             status = status | GPS.VCS2.Status.DELETED
 
-                    s.set_status(GPS.File(line[3:]), status)
+                    # Filter some obvious files to speed things up
+                    if line[-3:-1] != '.o' and line[-5:-1] != '.ali':
+                        s.set_status(GPS.File(line[3:-1]), status)

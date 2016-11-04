@@ -123,6 +123,12 @@ class Promise(object):
             self.__failure.append(__reject)
         return ret
 
+    def is_resolved_or_rejected(self):
+        """
+        Whether the promise has already been resolved or rejected
+        """
+        return self.__state in (Promise.RESOLVED, Promise.REJECTED)
+
     def resolve(self, result=None):
         """
         Set the value of the promise.
@@ -301,7 +307,7 @@ class ProcessWrapper(object):
     """
 
     def __init__(self, cmdargs=[], spawn_console=False, directory=None,
-                 regexp='.+'):
+                 regexp='.+', single_line_regexp=True):
         """
         Initialize and run a process with no promises,
         no user-defined pattern to match,
@@ -313,6 +319,10 @@ class ProcessWrapper(object):
         process output. This console also allows the user to relaunch
         the associated process with a "Relaunch" button in the console
         toolbar.
+
+        :param bool single_line_regexp: if True, then '.' in the regexp
+           will also match '\n'. This is useful to capture larger parts of
+           the output at once.
         """
 
         # __final_promise = about termination
@@ -324,14 +334,12 @@ class ProcessWrapper(object):
         # __current_pattern = regexp that user waiting for in the output
         self.__current_pattern = None
 
-        # __whether the __current_promise is answered
-        self.__current_answered = False
-
         # __output = a buffer for current output of self.__process
         self.__output = ""
 
         # __whether process has finished
         self.finished = False
+        self.__exit_status = 0
 
         # handler of process will be created -> start running
         self.__command = cmdargs
@@ -345,6 +353,7 @@ class ProcessWrapper(object):
             command=self.__command,
             directory=directory,
             regexp=regexp,
+            single_line_regexp=single_line_regexp,
             on_match=self.__on_match,
             on_exit=self.__on_exit)
 
@@ -376,24 +385,41 @@ class ProcessWrapper(object):
 
     def __on_match(self, process, match, unmatch):
         """
-        Called by GPS everytime there's output comming
+        Called by GPS everytime there's output coming
         """
-
-        # Update all output returned by the process
-        # and store it as a private buffer
         self.__output += unmatch + match
 
-        # Display the output on the spawned console, if any
         if self.__console:
             self.__console.write(unmatch + match)
 
-        # check if user has issued some pattern to match
-        if self.__current_pattern:
+        self.__check_pattern_and_resolve()
+
+    def __resolve_promise(self, value):
+        """
+        Resolve the current promise with the given value.
+        """
+        p = self.__current_promise
+        if p:
+            self.__current_promise = None  # garbage collect
+            p.resolve(value)
+
+    def __check_pattern_and_resolve(self):
+        """
+        Check whether the current pattern matches the already known output
+        of the tool, and resolve the promise if possible.
+        """
+        if self.__current_promise:
             p = self.__current_pattern.search(self.__output)
             if p:
-                self.__current_answered = True
-                self.__current_promise.resolve(p.group(0))
-                self.__output = ""
+                self.__output = self.__output[p.end(0):]
+                self.__resolve_promise(p.group(0))
+            elif self.finished:
+                # We will never be able to match anyway
+                self.__resolve_promise(None)
+        elif self.__final_promise and self.finished:
+            p = self.__final_promise
+            self.__final_promise = None
+            p.resolve((self.__exit_status, self.__output))
 
     def __on_exit(self, process, status, remaining_output):
         """
@@ -401,25 +427,14 @@ class ProcessWrapper(object):
            Final_promise will be solved with status
            Current_promise will be solved with False
         """
-        # get end timestamp
-        end_time = time.time()
-
-        # mark my process as finished
         self.finished = True
+        self.__exit_status = status
+        self.__output += remaining_output
 
-        # check if there's unanswered match promises
-        # if there is --> pattern has never been found, answer with False
-        if self.__current_promise and not self.__current_answered:
-            self.__current_promise.resolve(None)
-
-        # check if I had made a promise to finish the process
-        # if there is, answer with whatever the exit status is
-        if self.__final_promise:
-            self.__final_promise.resolve((status, remaining_output))
-
-        # output the exit status on the attached console, if any
         if self.__console:
-            output = "\n" + TimeDisplay.get_timestamp(end_time)
+            end_time = time.time()
+            output = remaining_output + \
+                "\n" + TimeDisplay.get_timestamp(end_time)
 
             if not status:
                 output += " process terminated successfully"
@@ -431,7 +446,9 @@ class ProcessWrapper(object):
 
             self.__console.write(output)
 
-    def wait_until_match(self, pattern=None, timeout=0):
+        self.__check_pattern_and_resolve()
+
+    def wait_until_match(self, pattern, timeout=0):
         """
         Called by user. Make a promise to them that:
         I'll let you know when the pattern is matched/never matches and return
@@ -442,7 +459,7 @@ class ProcessWrapper(object):
         output) or None (when the process has terminated.
 
         :param str|re.Pattern pattern: the regular expression to match on
-           the output of `self.
+           the output of `self`.
         :param int timeout: give up matching pattern after this many
            milliseconds, or wait for ever if 0.
         """
@@ -455,16 +472,17 @@ class ProcessWrapper(object):
         else:
             self.__current_pattern = pattern
 
-        self.__current_promise = Promise()
-        self.__current_answered = False
+        p = self.__current_promise = Promise()
 
-        # if user defines a timeout, set up to
-        # close output check after that timeout
+        # Can we resolve immediately ?
+        self.__check_pattern_and_resolve()
+        if self.__current_promise:
+            # if user defines a timeout, set up to
+            # close output check after that timeout
+            if timeout > 0:
+                GLib.timeout_add(timeout, self.__on_timeout)
 
-        if timeout > 0:
-            GLib.timeout_add(timeout, self.__on_timeout)
-
-        return self.__current_promise
+        return p
 
     def wait_until_terminate(self):
         """
@@ -486,13 +504,8 @@ class ProcessWrapper(object):
         """
         Called by GPS when it's timeout for a pattern to appear in output.
         """
-
-        # current promise unanswered --> too late, it fails
-        if not self.__current_answered:
-            self.__current_pattern = None
-            self.__current_answered = True
-            # answer the promise with False
-            self.__current_promise.resolve(None)
+        self.__resolve_promise(None)
+        self.__current_pattern = None
         return False
 
     def terminate(self):
