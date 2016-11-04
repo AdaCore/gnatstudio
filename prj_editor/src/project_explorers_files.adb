@@ -777,9 +777,7 @@ package body Project_Explorers_Files is
       end if;
 
       --  Ensure that all files will eventually get some VCS info
-      if VCS.Ensure_Status_For_Files (D.Files.all) then
-         null;
-      end if;
+      VCS.Ensure_Status_For_Files (D.Files.all);
 
       for J of D.Files.all loop
          if J /= No_File then

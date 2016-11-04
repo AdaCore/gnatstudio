@@ -9475,22 +9475,18 @@ class VCS2(object):
     def ensure_status_for_files(self, files):
         """
         Make sure that all files has a known status in self's cache.
+        This is computed asynhronously.
 
         :param List[GPS.File] files:
-        :returntype: bool
-           True if there was already a status in the cache, False if a
-           background computation was started.
         """
 
     def ensure_status_for_project(self, project):
         """
         Make sure that all source files of the project have a known status
         in self's cache.
+        This is computed asynhronously.
 
         :param GPS.Project project:
-        :returntype: bool
-           True if there was already a status in the cache, False if a
-           background computation was started.
         """
 
     def ensure_status_for_all_source_files(self):
@@ -9501,9 +9497,17 @@ class VCS2(object):
         sources is also computed, although in most cases the VCS engine
         will indeed compute them.
 
-        :returntype: bool
-           True if there was already a status in the cache, False if a
-           background computation was started.
+        This is computed asynhronously.
+        """
+
+    def set_run_in_background(self, background):
+        """
+        Should be called to let GPS know when background commands are
+        executing. This is used to queue commands instead of running
+        several of them in parallel.
+        Do not call this function directly. Instead, use the python
+        function vcs2.core.run_in_background which provides a higher-level
+        API for this purpose.
         """
 
     def get_file_status(self, file):

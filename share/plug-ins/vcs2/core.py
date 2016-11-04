@@ -5,6 +5,8 @@ Base type to implement support for new VCS engines in GPS
 import GPS
 import os
 import gps_utils
+import workflows
+import types
 
 
 GPS.VCS2.Status = gps_utils.enum(
@@ -23,6 +25,35 @@ GPS.VCS2.Status = gps_utils.enum(
         LOCKED_BY_OTHER=2**12,
         NEEDS_UPDATE=2**13)
 # Valid statuses for files (they can be combined)
+
+
+def run_in_background(func):
+    """
+    A decorator to be applied to a method of VCS (below), which monitors
+    whether background processing is being done. This is used to avoid
+    spawning multiple commands in the background in parallel, in particular
+    because the first one could already be computed information required by
+    the next one (for instance, with git, a user need status for file1.adb
+    and file2.adb -- but since git always compute the status for all files,
+    the second command is not needed).
+
+    Use this instead of workflows.run_as_workflow, as in::
+
+        class MyVCS(vcs2.core.VCS):
+
+            @vcs2.core.run_in_background
+            def async_fetch_status_for_files(self):
+                pass
+    """
+
+    def __func(self, *args, **kwargs):
+        r = func(self, *args, **kwargs)
+        if isinstance(r, types.GeneratorType):
+            self.set_run_in_background(True)
+            promise = workflows.driver(r)
+            promise.then(lambda x: self.set_run_in_background(False),
+                         lambda x: self.set_run_in_background(False))
+    return workflows.run_as_workflow(__func)
 
 
 class VCS(GPS.VCS2):

@@ -123,12 +123,6 @@ class Promise(object):
             self.__failure.append(__reject)
         return ret
 
-    def is_resolved_or_rejected(self):
-        """
-        Whether the promise has already been resolved or rejected
-        """
-        return self.__state in (Promise.RESOLVED, Promise.REJECTED)
-
     def resolve(self, result=None):
         """
         Set the value of the promise.

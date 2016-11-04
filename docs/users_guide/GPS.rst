@@ -1992,6 +1992,8 @@ Classes
 
    .. automethod:: GPS.VCS2.invalidate_status_cache
 
+   .. automethod:: GPS.VCS2.set_run_in_background
+
 :class:`GPS.Vdiff`
 ^^^^^^^^^^^^^^^^^^
 

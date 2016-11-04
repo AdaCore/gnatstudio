@@ -1593,9 +1593,7 @@ package body Project_Explorers is
       --  Compute (in background) VCS status for files, if not done yet
 
       VCS := Get_VCS (Self.Kernel, Project);
-      if VCS.Ensure_Status_For_Project (Project) then
-         null;
-      end if;
+      VCS.Ensure_Status_For_Project (Project);
 
       --  Insert non-expanded nodes for imported projects
 

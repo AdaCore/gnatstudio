@@ -232,15 +232,17 @@ package body VCS2.Scripts is
                Files (F) := Nth_Arg (List, F);
             end loop;
 
-            Data.Set_Return_Value (VCS.Ensure_Status_For_Files (Files));
+            VCS.Ensure_Status_For_Files (Files);
          end;
 
       elsif Command = "ensure_status_for_project" then
-         Data.Set_Return_Value
-           (VCS.Ensure_Status_For_Project (Get_Data (Data, 2)));
+         VCS.Ensure_Status_For_Project (Get_Data (Data, 2));
 
       elsif Command = "ensure_status_for_all_source_files" then
-         Data.Set_Return_Value (VCS.Ensure_Status_For_All_Source_Files);
+         VCS.Ensure_Status_For_All_Source_Files;
+
+      elsif Command = "set_run_in_background" then
+         VCS.Set_Run_In_Background (Data.Nth_Arg (2));
 
       elsif Command = "get_file_status" then
          declare
@@ -344,6 +346,11 @@ package body VCS2.Scripts is
          Handler       => VCS_Handler'Access);
       Kernel.Scripts.Register_Command
         ("ensure_status_for_all_source_files",
+         Class         => VCS,
+         Handler       => VCS_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("set_run_in_background",
+         Params        => (1 => Param ("background")),
          Class         => VCS,
          Handler       => VCS_Handler'Access);
       Kernel.Scripts.Register_Command

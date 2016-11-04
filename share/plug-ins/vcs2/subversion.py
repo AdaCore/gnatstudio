@@ -2,7 +2,6 @@ from . import core
 import GPS
 import re
 import os
-import workflows
 from workflows.promises import ProcessWrapper
 
 
@@ -17,7 +16,7 @@ class Subversion(core.File_Based_VCS):
     def discover_repo(file):
         return core.find_admin_directory(file, '.svn')
 
-    @workflows.run_as_workflow
+    @core.run_in_background
     def _compute_status(self, all_files, args=[]):
         with self.set_status_for_all_files(
                 all_files, GPS.VCS2.Status.UNTRACKED) as s:

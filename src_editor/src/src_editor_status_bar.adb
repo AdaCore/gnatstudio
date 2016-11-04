@@ -466,13 +466,12 @@ package body Src_Editor_Status_Bar is
 
       VCS := Get_VCS (Kernel, P);
 
-      if VCS.Ensure_Status_For_Files ((1 => Buffer.Get_Filename)) then
-         H.Execute        --  display initial value
-           (Kernel,
-            VCS,
-            Buffer.Get_Filename,
-            VCS.File_Properties_From_Cache (Buffer.Get_Filename));
-      end if;
+      VCS.Ensure_Status_For_Files ((1 => Buffer.Get_Filename));
+      H.Execute        --  display initial value
+        (Kernel,
+         VCS,
+         Buffer.Get_Filename,
+         VCS.File_Properties_From_Cache (Buffer.Get_Filename));
 
       Show_Cursor_Position (Bar, Line => 1, Column => 1);
       Get_Style_Context (Bar).Add_Class ("gps-editor-status-bar");

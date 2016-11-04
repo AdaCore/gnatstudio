@@ -2,7 +2,6 @@ import GPS
 from . import core
 import os
 import types
-import workflows
 from workflows.promises import ProcessWrapper
 
 
@@ -38,7 +37,7 @@ class Git(core.VCS):
                     break
                 self.all_files.add(GPS.File(os.path.join(dir, line[:-1])))
 
-    @workflows.run_as_workflow
+    @core.run_in_background
     def async_fetch_status_for_all_files(self):
         yield self.__compute_all_files()
 

@@ -74,6 +74,8 @@ package body GPS.VCS_Engines is
      (VCS_Engine'Class, VCS_Engine_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (VCS_Engine_Factory'Class, VCS_Engine_Factory_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (VCS_Command'Class, VCS_Command_Access);
 
    function Need_Update_For_Files
      (Self    : not null access VCS_Engine'Class;
@@ -84,6 +86,36 @@ package body GPS.VCS_Engines is
    --  Also mark all files as not needing update, so that multiple calls to
    --  Ensure_Status_* do not result in multiple parallel computation of the
    --  status.
+
+   type Cmd_Ensure_Status_For_Files (Size : Natural) is
+      new VCS_Command with record
+         Files : File_Array (1 .. Size);
+      end record;
+   overriding procedure Execute
+      (Self : not null access Cmd_Ensure_Status_For_Files;
+       VCS  : not null access VCS_Engine'Class);
+   --  Implementation for Ensure_Status_For_Files
+
+   type Cmd_Ensure_Status_For_Project is new VCS_Command with record
+      Project : Project_Type;
+   end record;
+   overriding procedure Execute
+      (Self : not null access Cmd_Ensure_Status_For_Project;
+       VCS  : not null access VCS_Engine'Class);
+   --  Implementation for Ensure_Status_For_Project
+
+   type Cmd_Ensure_Status_For_All_Files is new VCS_Command with
+      null record;
+   overriding procedure Execute
+      (Self : not null access Cmd_Ensure_Status_For_All_Files;
+       VCS  : not null access VCS_Engine'Class);
+   --  Implementation for Ensure_Status_For_All_Source_Files
+
+   procedure Queue
+      (Self    : not null access VCS_Engine'Class;
+       Command : VCS_Command_Access);
+   --  Queue a new command for VCS.
+   --  Free Command eventually.
 
    ----------------------
    -- Register_Factory --
@@ -285,50 +317,81 @@ package body GPS.VCS_Engines is
    -- Ensure_Status_For_File --
    ----------------------------
 
-   function Ensure_Status_For_Files
+   procedure Ensure_Status_For_Files
      (Self    : not null access VCS_Engine;
-      Files   : File_Array) return Boolean
-   is
-      N : constant Boolean := Need_Update_For_Files (Self, Files);
+      Files   : File_Array) is
+   begin
+      Queue (Self, new Cmd_Ensure_Status_For_Files'
+         (Size => Files'Length, Files => Files));
+   end Ensure_Status_For_Files;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+      (Self : not null access Cmd_Ensure_Status_For_Files;
+       VCS  : not null access VCS_Engine'Class) is
    begin
       Trace (Me, "Ensure status for a set of files");
-      if N then
-         VCS_Engine_Access (Self).Async_Fetch_Status_For_Files (Files);
+      if Need_Update_For_Files (VCS, Self.Files) then
+         VCS.Async_Fetch_Status_For_Files (Self.Files);
       end if;
-      return not N;
-   end Ensure_Status_For_Files;
+   end Execute;
 
    -------------------------------
    -- Ensure_Status_For_Project --
    -------------------------------
 
-   function Ensure_Status_For_Project
+   procedure Ensure_Status_For_Project
      (Self    : not null access VCS_Engine;
-      Project : Project_Type) return Boolean
+      Project : Project_Type) is
+   begin
+      Queue (Self, new Cmd_Ensure_Status_For_Project'(Project => Project));
+   end Ensure_Status_For_Project;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+      (Self : not null access Cmd_Ensure_Status_For_Project;
+       VCS  : not null access VCS_Engine'Class)
    is
-      S : File_Array_Access := Project.Source_Files (Recursive => False);
-      N : constant Boolean := Need_Update_For_Files (Self, S.all);
+      S : File_Array_Access := Self.Project.Source_Files (Recursive => False);
+      N : constant Boolean := Need_Update_For_Files (VCS, S.all);
    begin
       if Active (Me) then
-         Trace (Me, "Ensure status for project " & Project.Name
+         Trace (Me, "Ensure status for project " & Self.Project.Name
                 & " => " & N'Img);
       end if;
       if N then
-         VCS_Engine_Access (Self).Async_Fetch_Status_For_Project (Project);
+         VCS.Async_Fetch_Status_For_Project (Self.Project);
       end if;
       Unchecked_Free (S);
-      return not N;
-   end Ensure_Status_For_Project;
+   end Execute;
 
    ----------------------------------------
    -- Ensure_Status_For_All_Source_Files --
    ----------------------------------------
 
-   function Ensure_Status_For_All_Source_Files
-     (Self    : not null access VCS_Engine) return Boolean
+   procedure Ensure_Status_For_All_Source_Files
+     (Self    : not null access VCS_Engine) is
+   begin
+      Queue (Self, new Cmd_Ensure_Status_For_All_Files);
+   end Ensure_Status_For_All_Source_Files;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+      (Self : not null access Cmd_Ensure_Status_For_All_Files;
+       VCS  : not null access VCS_Engine'Class)
    is
+      pragma Unreferenced (Self);
       Iter : Project_Iterator :=
-        Get_Project (Self.Kernel).Start (Recursive => True);
+        Get_Project (VCS.Kernel).Start (Recursive => True);
       N    : Boolean := False;
       P    : Project_Type;
       F    : File_Array_Access;
@@ -338,10 +401,10 @@ package body GPS.VCS_Engines is
          P := Current (Iter);
          exit when P = No_Project;
 
-         if Get_VCS (Self.Kernel, P) = Self then
+         if Get_VCS (VCS.Kernel, P) = VCS then
             --  Need to call this for all projects to initialize table
             F := P.Source_Files (Recursive => False);
-            N := Need_Update_For_Files (Self, F.all) or N;
+            N := Need_Update_For_Files (VCS, F.all) or N;
             Unchecked_Free (F);
          end if;
 
@@ -349,10 +412,55 @@ package body GPS.VCS_Engines is
       end loop;
 
       if N then
-         VCS_Engine_Access (Self).Async_Fetch_Status_For_All_Files;
+         VCS.Async_Fetch_Status_For_All_Files;
       end if;
-      return not N;
-   end Ensure_Status_For_All_Source_Files;
+   end Execute;
+
+   -----------
+   -- Queue --
+   -----------
+
+   procedure Queue
+      (Self    : not null access VCS_Engine'Class;
+       Command : VCS_Command_Access)
+   is
+      Cmd : VCS_Command_Access;
+   begin
+      if Self.Run_In_Background then
+         --  Allow users to directly pass a "new " as parameter
+         Self.Queue.Append (Command.all'Unchecked_Access);
+      else
+         Command.Execute (Self);
+         Command.Free;
+         Cmd := Command;
+         Unchecked_Free (Cmd);
+      end if;
+   end Queue;
+
+   ---------------------------
+   -- Set_Run_In_Background --
+   ---------------------------
+
+   procedure Set_Run_In_Background
+      (Self       : not null access VCS_Engine'Class;
+       Background : Boolean)
+   is
+      Cmd : VCS_Command_Access;
+   begin
+      Self.Run_In_Background := Background;
+      if not Background then
+         --  Execute next command in queue
+
+         if not Self.Queue.Is_Empty then
+            Cmd := Self.Queue.First_Element;
+            Self.Queue.Delete_First;
+
+            Cmd.Execute (Self);
+            Cmd.Free;
+            Unchecked_Free (Cmd);
+         end if;
+      end if;
+   end Set_Run_In_Background;
 
    --------------------------------
    -- File_Properties_From_Cache --

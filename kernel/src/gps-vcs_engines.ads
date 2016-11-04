@@ -19,6 +19,7 @@
 
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Hashed_Maps;
+with Ada.Containers.Vectors;
 with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
@@ -161,21 +162,20 @@ package GPS.VCS_Engines is
    --  changed.
    --  Should not be called directly, consider Ensure_Status_* instead
 
-   function Ensure_Status_For_Files
+   procedure Ensure_Status_For_Files
      (Self      : not null access VCS_Engine;
-      Files     : File_Array) return Boolean;
-   function Ensure_Status_For_Project
+      Files     : File_Array);
+   procedure Ensure_Status_For_Project
      (Self      : not null access VCS_Engine;
-      Project   : Project_Type) return Boolean;
-   function Ensure_Status_For_All_Source_Files
-     (Self      : not null access VCS_Engine) return Boolean;
+      Project   : Project_Type);
+   procedure Ensure_Status_For_All_Source_Files
+     (Self      : not null access VCS_Engine);
    --  If any of the files in the set does not have a valid cache entry, then
    --  the corresponding Async_Fetch_Status_* operation will be called.
    --  Otherwise, these procedures assume the cache is up-to-date and do not
    --  recompute anything.
-   --  These functions return True if some status is already available in the
-   --  cache (it might not be up-to-date with regards to the disk), and False
-   --  if a background command was spawned to compute the initial status.
+   --  This is fully asynchronous, nothing might have been done or started
+   --  when these procedures return.
    --
    --  Ensure_Status_For_All_Source_Files is for all source files of projects
    --  that use Self as their VCS engine. This function does not force the
@@ -270,6 +270,18 @@ package GPS.VCS_Engines is
       return not null Kernel_Handle;
    --  Return the kernel.
 
+   procedure Set_Run_In_Background
+     (Self       : not null access VCS_Engine'Class;
+      Background : Boolean);
+   --  This should be called whenever some background processing is done for
+   --  Self. This is used internally to ensure that a single vcs command is
+   --  run at a given time, to avoid possible conflicts for VCS systems that
+   --  do not allow this, but also because GPS cannot know what information
+   --  will be retrieved.
+   --  For instance, with git, if we call Ensure_Status_For_Files for
+   --  file1.adb and then for file2.adb, the first call will in fact also
+   --  get the status for file2.adb. So the second command is useless.
+
    type Dummy_VCS_Engine is new VCS_Engine with private;
    --  An engine that does nothing, used when the project is not setup for
    --  VCS operations
@@ -300,24 +312,46 @@ private
       Equivalent_Keys => "=");
    use VCS_Status_Displays;
 
+   type VCS_Command is abstract tagged null record;
+   type VCS_Command_Access is access all VCS_Command'Class;
+   --  A command that is queue for execution in a specific VCS.
+   --  Does not use the Commands.Command from GPS since we do not compute
+   --  progress or name (these commands are always python based).
+
+   procedure Free (Self : in out VCS_Command) is null;
+   --  Free memory used by Self
+
+   procedure Execute
+      (Self   : not null access VCS_Command;
+       VCS    : not null access VCS_Engine'Class) is abstract;
+   --  Execute the command
+
+   package Command_Queues is new Ada.Containers.Vectors
+      (Positive, VCS_Command_Access);
+
    type VCS_Engine is abstract new Abstract_VCS_Engine with record
       Kernel   : Kernel_Handle;
       Cache    : VCS_File_Cache.Map;
       Displays : VCS_Status_Displays.Map;
+
+      Run_In_Background : Boolean := False;
+      Queue    : Command_Queues.Vector;
+      --  Queue of commands (see Set_Run_In_Background)
+
    end record;
 
    type Dummy_VCS_Engine is new VCS_Engine with null record;
 
    overriding function Name
      (Self : not null access Dummy_VCS_Engine) return String is ("unknown");
-   overriding function Ensure_Status_For_Files
+   overriding procedure Ensure_Status_For_Files
      (Self      : not null access Dummy_VCS_Engine;
-      Files     : File_Array) return Boolean is (True);
-   overriding function Ensure_Status_For_Project
+      Files     : File_Array) is null;
+   overriding procedure Ensure_Status_For_Project
      (Self      : not null access Dummy_VCS_Engine;
-      Project   : Project_Type) return Boolean is (True);
-   overriding function Ensure_Status_For_All_Source_Files
-     (Self      : not null access Dummy_VCS_Engine) return Boolean is (True);
+      Project   : Project_Type) is null;
+   overriding procedure Ensure_Status_For_All_Source_Files
+     (Self      : not null access Dummy_VCS_Engine) is null;
    overriding function File_Properties_From_Cache
      (Self    : not null access Dummy_VCS_Engine;
       File    : Virtual_File)
