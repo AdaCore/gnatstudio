@@ -796,6 +796,11 @@ package body Refactoring.Subprograms is
          end if;
 
          Buffer.Finish_Undo_Group;
+      exception
+         when E : others =>
+            Buffer.Finish_Undo_Group;
+            Trace (Me, E);
+            return Failure;
       end;
 
       return Result;
