@@ -1376,61 +1376,72 @@ package body Refactoring.Services is
          end;
       end if;
 
-      Editor.Start_Undo_Group;
+      declare
+      begin
+         Editor.Start_Undo_Group;
 
-      if Replaced_Length > 0 then
-         Editor.Delete (Loc_Start, Loc_End);
-      end if;
+         if Replaced_Length > 0 then
+            Editor.Delete (Loc_Start, Loc_End);
+         end if;
 
-      if Text = "" then
+         if Text = "" then
+            Editor.Finish_Undo_Group;
+            return True;
+         end if;
+
+         if Skip_Comments_Backward then
+            Loc_Start := Skip_Comments (Loc_Start, Direction => -1);
+         end if;
+
+         --  Insert the trailing space if needed
+         if Surround_With_Blank_Lines
+           and then
+             (Text'Length < 2
+                or else Text (Text'Last - 1 .. Text'Last) /=
+                      ASCII.LF & ASCII.LF)
+         then
+            declare
+               L : constant Editor_Location'Class :=
+                 Loc_Start.Beginning_Of_Line;
+            begin
+               if Editor.Get_Chars (L, L) /= "" & ASCII.LF then
+                  Editor.Insert (Loc_Start, "" & ASCII.LF);
+               end if;
+            end;
+         end if;
+
+         Editor.Insert (Loc_Start, Text);
+
+         --  Insert the leading space if needed
+
+         if Surround_With_Blank_Lines
+           and then Text (Text'First) /= ASCII.LF
+         then
+            declare
+               L : constant Editor_Location'Class :=
+                 Loc_Start.Forward_Line (-1).Beginning_Of_Line;
+            begin
+               if Editor.Get_Chars (L, L) /= "" & ASCII.LF then
+                  Editor.Insert (Loc_Start, "" & ASCII.LF);
+               end if;
+            end;
+         end if;
+
+         if Indent then
+            Editor.Indent
+              (Loc_Start,
+               Editor.New_Location_At_Line
+                 (Line + Lines_Count (Text) - 1).End_Of_Line);
+         end if;
+
          Editor.Finish_Undo_Group;
-         return True;
-      end if;
+      exception
+         when E : others =>
+            Editor.Finish_Undo_Group;
+            Trace (Me, E);
+            return False;
+      end;
 
-      if Skip_Comments_Backward then
-         Loc_Start := Skip_Comments (Loc_Start, Direction => -1);
-      end if;
-
-      --  Insert the trailing space if needed
-      if Surround_With_Blank_Lines
-        and then
-          (Text'Length < 2
-           or else Text (Text'Last - 1 .. Text'Last) /= ASCII.LF & ASCII.LF)
-      then
-         declare
-            L : constant Editor_Location'Class := Loc_Start.Beginning_Of_Line;
-         begin
-            if Editor.Get_Chars (L, L) /= "" & ASCII.LF then
-               Editor.Insert (Loc_Start, "" & ASCII.LF);
-            end if;
-         end;
-      end if;
-
-      Editor.Insert (Loc_Start, Text);
-
-      --  Insert the leading space if needed
-
-      if Surround_With_Blank_Lines
-        and then Text (Text'First) /= ASCII.LF
-      then
-         declare
-            L : constant Editor_Location'Class :=
-              Loc_Start.Forward_Line (-1).Beginning_Of_Line;
-         begin
-            if Editor.Get_Chars (L, L) /= "" & ASCII.LF then
-               Editor.Insert (Loc_Start, "" & ASCII.LF);
-            end if;
-         end;
-      end if;
-
-      if Indent then
-         Editor.Indent
-           (Loc_Start,
-            Editor.New_Location_At_Line
-              (Line + Lines_Count (Text) - 1).End_Of_Line);
-      end if;
-
-      Editor.Finish_Undo_Group;
       return True;
    end Insert_Text;
 
