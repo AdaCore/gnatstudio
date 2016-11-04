@@ -1396,12 +1396,13 @@ package body GPS.Location_View is
    is
       K     : constant Kernel_Handle := View.Kernel;
    begin
-      Append_Menu (Menu, K, Sort_By_Subcategory);  --  On_Change_Sort'Access
+      Append_Menu (Menu, K, Sort_By_Subcategory);     --  On_Change_Sort'Access
       Append_Menu (Menu, K, Sort_Files_Alphabetical); --  On_Change_Sort'Access
-      Append_Menu (Menu, K, Auto_Jump_To_First); --  On_Change_Sort'Access
+      Append_Menu (Menu, K, Auto_Jump_To_First);      --  On_Change_Sort'Access
       Append_Menu (Menu, K, Locations_Wrap);
       Append_Menu (Menu, K, Auto_Close);
       Append_Menu (Menu, K, Locations_Save_In_Desktop);
+      Append_Menu (Menu, K, Preserve_Messages);
    end Create_Menu;
 
    ----------------------------

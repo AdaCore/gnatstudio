@@ -1178,6 +1178,11 @@ package body GPS.Kernel.Preferences is
          Default => 2,
          Path => ":Compiler messages");
 
+      Preserve_Messages := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("locations-preserve-messages", True,
+         Label => -"Preserve messagse",
+         Doc => -"Keep build messages for files that are not being compiled");
+
       -- Project Editor --
 
       Default_Switches_Color := Kernel.Preferences.Create

@@ -188,6 +188,7 @@ package GPS.Kernel.Preferences is
    Style_Pattern_Index            : Integer_Preference;
    Warning_Pattern_Index          : Integer_Preference;
    Info_Pattern_Index             : Integer_Preference;
+   Preserve_Messages              : Boolean_Preference;
 
    -- Diff_Utils --
    Diff_Mode           : Vdiff_Modes_Prefs.Preference;

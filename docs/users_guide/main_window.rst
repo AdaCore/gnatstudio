@@ -703,6 +703,13 @@ The local settings menu contains the following entries:
   build errors have been fixed.  So you should not select this option if
   those conditions might apply.
 
+* :menuselection:`Preserve messagse`
+
+  Preserve more build errors after recompiling. When the Locations view
+  contains build errors, and one of the files is being recompiled, the
+  Locations view will now only update the entries for that file,
+  rather than removing all build errors.
+
 
 .. index:: menu; navigate --> previous tag
 .. index:: menu; navigate --> next tag

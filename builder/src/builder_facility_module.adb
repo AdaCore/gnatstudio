@@ -937,9 +937,11 @@ package body Builder_Facility_Module is
       if Clear_Locations
         and then not Background
       then
-         if Force_File = No_File then
-            --  Do not remove previous results when compile one file
-            --  to save messages from other files
+         --  Do not remove previous results when compile one file
+         --  to save messages from other files
+         if Force_File = No_File
+           or else not Preserve_Messages.Get_Pref
+         then
             Get_Messages_Container (Kernel).Remove_Category
               (Category, Builder_Message_Flags);
 
