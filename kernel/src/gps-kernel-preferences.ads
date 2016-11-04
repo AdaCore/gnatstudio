@@ -256,7 +256,9 @@ package GPS.Kernel.Preferences is
    Automatic_Xrefs_Load            : Boolean_Preference;
    --  Only when using the old xref engine, null otherwise
 
-   Hidden_Directories_Pattern      : String_Preference;
+   Hidden_Files_Pattern            : String_Preference;
+   Show_Hidden_Files               : Boolean_Preference;
+   --  Whether to hide some files in explorers and other contexts
 
    -- Refactoring --
 
@@ -277,14 +279,6 @@ package GPS.Kernel.Preferences is
    Browsers_Vertical_Layout  : Boolean_Preference;
    Selected_Item_Color       : Color_Preference;
    Title_Color               : Color_Preference;
-
-   -- VCS --
-   Implicit_Status           : Boolean_Preference;
-   Hide_Up_To_Date           : Boolean_Preference;
-   Hide_Not_Registered       : Boolean_Preference;
-   CVS_Command               : String_Preference;
-   ClearCase_Command         : String_Preference;
-   Default_VCS               : String_Preference;
 
    Doc_Search_Before_First   : Boolean_Preference;
    --  Whether we should look for the documentation of entities first in the

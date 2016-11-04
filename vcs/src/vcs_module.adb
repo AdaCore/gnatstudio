@@ -532,6 +532,24 @@ package body VCS_Module is
          Module_Name => "VCS_Explorer",
          Priority    => Default_Priority);
 
+      -- VCS --
+
+      Implicit_Status := Kernel.Get_Preferences.Create
+        (Name    => "VCS-Implicit-Status",
+         Default => True,
+         Doc     =>
+           -("Requires explicit status checks commands. These might be too"
+           & " costly to run systematically as part of other commands."),
+         Label   => -"Implicit status",
+         Path    => -"VCS:General");
+
+      Default_VCS := Kernel.Get_Preferences.Create
+        (Name    => "Default-VCS",
+         Default => "Auto",
+         Path    => -"VCS:General",
+         Doc     => -"Default VCS to use when none is defined in the project.",
+         Label   => -"Default VCS");
+
       Load_Activities (Kernel);
 
       Register_Desktop_Functions (Save_Desktop'Access, Load_Desktop'Access);

@@ -2079,7 +2079,7 @@ package body VCS_View_API is
    is
    begin
       --  Do not process hidden directories
-      if Is_Hidden (Kernel, Base_Dir_Name (Directory)) then
+      if Kernel.Is_Hidden (Directory) then
          return;
       end if;
 

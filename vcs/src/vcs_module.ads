@@ -26,6 +26,7 @@ with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with Gdk.Event;             use Gdk.Event;
 with Gtk.Widget;            use Gtk.Widget;
 
+with Default_Preferences;   use Default_Preferences;
 with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.MDI;        use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
@@ -38,6 +39,10 @@ with VCS_Status;            use VCS_Status;
 package VCS_Module is
 
    VCS_Module_Name : constant String := "VCS_Interface";
+
+   -- VCS --
+   Implicit_Status           : Boolean_Preference;
+   Default_VCS               : String_Preference;
 
    function Equiv_VCS (Left, Right : String) return Boolean;
 

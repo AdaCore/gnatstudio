@@ -4995,10 +4995,9 @@ pragma Inline;</DOC>
 
 pragma Inline_Always (NAME [, NAME]);
 
-Similar to pragma `Inline' except that inlining is unconditional.
-Inline_Always instructs the compiler to inline every direct call to the
-subprogram or else to emit a compilation error, independently of any
-option, in particular `-gnatn' or `-gnatN' or the optimization level.</DOC>
+Similar to pragma `Inline' except that inlining is not subject to the
+use of option `-gnatn' or `-gnatN' and the inlining happens regardless
+of whether these options are used.</DOC>
    </PRAGMA>
    <PRAGMA id="0" name="Inline_Generic" origin="GNAT RM">
       <DOC>Syntax:
@@ -5635,9 +5634,9 @@ pragma No_Elaboration_Code_All [(program_unit_NAME)];
 
 This is a program unit pragma (there is also an equivalent aspect of the
 same name) that establishes the restriction `No_Elaboration_Code' for
-the current unit and any extended main source units (body and subunits).
-It also has the effect of enforcing a transitive application of this
-aspect, so that if any unit is implicitly or explicitly with'ed by the
+the current unit and any extended main source units (body and subunits.
+It also has has the effect of enforcing a transitive application of this
+aspect, so that if any unit is implicitly or explicitly WITH'ed by the
 current unit, it must also have the No_Elaboration_Code_All aspect set.
 It may be applied to package or subprogram specs or their generic
 versions.</DOC>

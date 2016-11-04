@@ -24,22 +24,18 @@ with GNATCOLL.Projects;            use GNATCOLL.Projects;
 
 with Gtkada.MDI;                   use Gtkada.MDI;
 
-with GPS.Editors.Line_Information; use GPS.Editors.Line_Information;
 with GPS.Kernel.Contexts;          use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
+with GPS.VCS;
+with GPS.VCS_Engines;              use GPS.VCS_Engines;
 with Log_Utils;                    use Log_Utils;
-with VCS_Module;                   use VCS_Module;
 
 package body VCS_Utils is
    Me : constant Trace_Handle := Create ("VCS_UTILS");
 
    use type GNAT.Strings.String_Access;
-
-   Max_Rev_Length : constant := 10;
-   --  The maximum length of a revision string, in characters. Revisions longer
-   --  than this will be krunched when displayed in the editors.
 
    ---------------------------
    -- Display_Editor_Status --
@@ -50,65 +46,42 @@ package body VCS_Utils is
       Ref    : VCS_Access;
       Status : File_Status_Record)
    is
-      function Short_Revision return String;
-      --  If R is too long, return only the last digits
-
-      --------------------
-      -- Short_Revision --
-      --------------------
-
-      function Short_Revision return String is
-      begin
-         if Status.Working_Revision = null
-           or else Status.Working_Revision.all = "n/a"
-         then
-            return "";
-         elsif Status.Working_Revision'Length <= Max_Rev_Length then
-            return Status.Working_Revision.all;
-         else
-            return "[...]" & Status.Working_Revision
-              (Status.Working_Revision'Last - Max_Rev_Length ..
-                 Status.Working_Revision'Last);
-         end if;
-      end Short_Revision;
-
-      Label   : GNAT.Strings.String_Access;
-      Infos   : Line_Information_Data;
-
+      use type GPS.VCS.VCS_File_Status;
+      Props : GPS.VCS.VCS_File_Properties;
+      Stat  : GPS.VCS.VCS_File_Status;
    begin
-      if Ref = null then
-         return;
+      if Ref /= null then
+         if Status.Status.Icon_Name.all = Unknown_Stock then
+            Stat := 0;
+         elsif Status.Status.Icon_Name.all = Added_Stock then
+            Stat := GPS.VCS.Status_Staged_Added;
+         elsif Status.Status.Icon_Name.all = Removed_Stock then
+            Stat := GPS.VCS.Status_Staged_Deleted or GPS.VCS.Status_Deleted;
+         elsif Status.Status.Icon_Name.all = Modified_Stock then
+            Stat := GPS.VCS.Status_Staged_Modified or GPS.VCS.Status_Modified;
+         elsif Status.Status.Icon_Name.all = Needs_Merge_Stock then
+            Stat := GPS.VCS.Status_Conflict;
+         elsif Status.Status.Icon_Name.all = Needs_Update_Stock then
+            Stat := GPS.VCS.Status_Needs_Update;
+         else
+            Stat := GPS.VCS.Status_Untracked;
+         end if;
+
+         Props :=
+            (Status   => Stat,
+             Version  =>
+                (if Status.Working_Revision = null
+                    or else Status.Working_Revision.all = "n/a"
+                 then Null_Unbounded_String
+                 else To_Unbounded_String (Status.Working_Revision.all)),
+             Repo_Version =>
+                (if Status.Repository_Revision = null
+                    or else Status.Repository_Revision.all = "n/a"
+                 then Null_Unbounded_String
+                 else To_Unbounded_String (Status.Repository_Revision.all)));
+
+         No_VCS_Engine (Kernel).Set_File_Status_In_Cache (Status.File, Props);
       end if;
-
-      if Status.Status = VCS.Unknown
-        or else Status.Status.Label = null
-      then
-         Label := new String'("");
-      else
-         declare
-            R : constant String := Short_Revision;
-         begin
-            if R = "" then
-               Label := new String'(Status.Status.Label.all);
-            else
-               Label := new String'(R & " (" & Status.Status.Label.all & ")");
-            end if;
-         end;
-      end if;
-
-      Infos := new Line_Information_Array (-1 .. -1);
-      Infos (-1).Text := To_Unbounded_String (Label.all);
-
-      File_Line_Action_Hook.Run
-        (Kernel,
-         File => Status.File,
-         Identifier => VCS_Module_Name,
-         Info => Infos,
-         Tooltip => "Status for <b>" & Name (Ref) & "</b>: " & Label.all,
-         Icon_Name => Status.Status.Icon_Name.all);
-
-      Unchecked_Free (Infos);
-      GNAT.Strings.Free (Label);
    end Display_Editor_Status;
 
    ---------------------

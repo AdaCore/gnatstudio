@@ -44,8 +44,8 @@ and so on if we want to chain more than two actions. The power of this
 framework, though, is that it works for most GPS concepts: one could run
 any external process, wait for its completion, then execute a GPS target
 as we did above, then wait for a specific hook to be run by GPS, then
-execute an asynchronous python function,... All the while, the `my_workflow`
-remains sequential, and thus is easy to read and maintain.
+execute an asynchronous python function,... All the while, the code in
+`build_and_run` remains sequential, and thus is easy to read and maintain.
 
 Such workflows can be used like standard functions to create GPS actions.
 For instance:
@@ -69,6 +69,50 @@ with:
    def generate_build_and_run():
        yield ProcessWrapper(['generate_code', '--full']).wait_until_terminate()
        yield build_and_run()    # Calling our previous function
+
+Workflows vs generators
+-----------------------
+
+Workflows are not exactly the same as python generator, because of the values
+they can yield.
+
+Given the following code, where `func_returning_promise` is a function
+that returns an instance of `workflows.promises.Promise`, like a lot of
+functions do in the workflows package::
+
+    def foo():
+        a = yield func_returning_promise()
+        ... something else
+
+    def main():
+        yield foo()
+        func1()
+
+If you execute this function outside of the workflows driver, as in::
+
+    main()    # NOT WHAT YOU WANT, most likely
+    func2()
+
+then the following occurs: `func_returning_promise`, when called, immediately
+returns a promise, which `foo` yields. Then `main` also yields that promise,
+and `func2` executes. When that promise is eventually resolved (because
+some background processing done by `func_returning_promise` completes),
+nothing more happens because nobody is waiting on the promise.
+
+If on other hand you execute foo as part of the workflow driver, as in one of
+the following two alternatives::
+
+    workflows.driver(main)
+    # or add a @run_as_workflow decorator to main
+
+then the following occurs: `func_returning_promise` returns a promise, so
+`foo` stops executing; control is returned to `main`, which in turn yields
+that promise to the driver. The driver now waits (in the background) until
+the promise is eventually resolved. When that happens, `foo` resumes, `a`
+receives the value of the promise and the rest of `foo` is executed. When
+`foo` eventually finishes, `main` in turn continues executing, and `func`
+is executed.
+
 """
 
 import inspect
@@ -147,15 +191,36 @@ def driver(gen_inst):
 
     - You can yield promises. Those will be chained so that when the promise
       resolves, the execution of the workflow is resumed, and any eventual
-      result of the promise will be passed as result to the yield call.
+      result of the promise will be passed as result to the yield call. For
+      instance the call to `wait_idle` below returns a Promise
+
+          def foo():
+              ... do something
+              yield wait_idle() # both foo and bar suspend until GPS has time
+              ... do something now that GPS is available again
+
+          def bar():
+              ... do something before foo starts
+              yield foo()
+              ... do something after foo has finished
+
+          driver(bar)
 
     - You can yield other generators, in which case the driver will take care
       of consuming (executing) them, and then resume the execution of the
-      current generator.
+      current generator. For instance, the call to `yield foo()` above returns
+      a generator.
 
     Generators can throw exceptions: these will be propagated to the generator
     that spawned them.
+
+    :return: a promise, that will be resolved when the workflow has finished
+      executing. This can in general be ignored, since as described above
+      `driver` will automatically chain things. In some contexts it might be
+      useful to use this promise though.
     """
+
+    promise = promises.Promise()
 
     # Stack of generators, similar to a call stack. The first one is the
     # original generator and the last one is the most recently spawned one.
@@ -237,20 +302,54 @@ def driver(gen_inst):
             # This one is for automatic issue detection in testsuites. This
             # should also ring a bell while analysis post-mortem GPS logs.
             GPS.Logger('TESTSUITE.EXCEPTIONS').log(message)
+            promise.reject(message)
+        else:
+            promise.resolve(return_val)
 
     # We just created a new execution state (gen_stack), so technically we are
     # resuming it below.
     resume()
 
+    return promise
+
 
 def run_as_workflow(workflow):
     """
     Decorator used to run a function as a worfklow.
+    This is a way to make a function run in the background automatically.
+    For instance::
+
+        @run_as_workflow
+        def my_function():
+            p = ProcessWrapper([...])
+            while True:
+                # Here, code stops executing until p has some new output.
+                # In the meantime, the code after the call to my_function()
+                # keeps executing. When new data is available from p, the
+                # following code will resume executing.
+                line = yield p.wait_until_match('^.+$')
+                if line is None:
+                    break
+                ...
+
+        my_function()
+
+    will start running an external process and parse all its lines. But the
+    call to `my_function()` returns immediately, and thus GPS is not blocked.
 
     :param workflow: the function to be run as a workflow.
+       The workflow has potentially not finished running when this function
+       returns.
+       This also works for standard functions
+    :return: either the result of workflow, or a promise that will resolve
+       to that result eventually.
     """
     def internal_run_as_wf(*args, **kwargs):
-        return driver(workflow(*args, **kwargs))
+        r = workflow(*args, **kwargs)
+        if isinstance(r, types.GeneratorType):
+            return driver(r)
+        else:
+            return r
 
     return internal_run_as_wf
 

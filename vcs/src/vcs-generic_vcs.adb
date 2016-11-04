@@ -708,7 +708,7 @@ package body VCS.Generic_VCS is
 
          --  Filter the hidden directories
          for J in List'Range loop
-            if Is_Hidden (Rep.Kernel, Base_Dir_Name (List (J))) then
+            if Rep.Kernel.Is_Hidden (List (J)) then
                List (J) := No_File;
                Length := Length - 1;
             end if;

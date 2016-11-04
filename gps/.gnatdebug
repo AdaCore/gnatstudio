@@ -46,6 +46,7 @@ SYSTEM_MENUS = no
 --  MODULE.FILES_EXPLORER     = yes
 --  MODULE.EXTERNAL_EDITOR    = yes
 --  MODULE.VCS                = yes
+MODULE.VCS2               = no
 --  MODULE.CUSTOM             = yes
 --  MODULE.ACTION_EDITOR      = yes
 --  MODULE.CODEFIX            = yes
@@ -138,7 +139,7 @@ SEARCH.*=yes
 
 --  Active in development mode
 
-GPS.KERNEL.MODULES.UI=yes
+GPS.KERNEL.MODULES.UI=no
 
 SQL.SQLITE.GNADE=yes
 

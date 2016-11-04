@@ -341,6 +341,16 @@ GtkNotebook.noTabs {
 .gps-editor-status-bar {
    background: @local_toolbar_color;
 }
+.gps-editor-status-bar GtkToolbar {
+   background: @local_toolbar_color;
+}
+.gps-editor-status-bar GtkButton {
+   padding: 0px 2px;
+}
+.gps-editor-status-bar > * {
+   margin: 0px;
+   padding: 0px;
+}
 
 .gps-switches-editor GtkScrolledWindow {
    background: @theme_base_color;

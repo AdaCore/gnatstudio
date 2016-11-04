@@ -1965,6 +1965,33 @@ Classes
 
    .. automethod:: GPS.VCS.update_parse
 
+:class:`GPS.VCS2`
+^^^^^^^^^^^^^^^^^
+
+.. autoclass:: VCS2()
+
+
+
+
+   .. autoattribute:: GPS.VCS2.Status
+
+
+
+   .. autoattribute:: GPS.VCS2.name
+
+
+   .. automethod:: GPS.VCS2.ensure_status_for_all_source_files
+
+   .. automethod:: GPS.VCS2.ensure_status_for_files
+
+   .. automethod:: GPS.VCS2.ensure_status_for_project
+
+   .. automethod:: GPS.VCS2.get
+
+   .. automethod:: GPS.VCS2.get_file_status
+
+   .. automethod:: GPS.VCS2.invalidate_status_cache
+
 :class:`GPS.Vdiff`
 ^^^^^^^^^^^^^^^^^^
 

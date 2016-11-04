@@ -161,7 +161,23 @@ types = {
         toada='GPS.Kernel.Scripts.Get_Data (Data.Nth_Arg (%(idx)d, '
             'Get_File_Class (K), Allow_Null => True))',
         withs=['GNATCOLL.VFS']),
-
+         
+    'VCS_Engine': Mapping(
+        ada='not null access GPS.VCS.Abstract_VCS_Engine\'Class',
+        python='GPS.VCS',
+        topython='GPS.VCS.Create_VCS_Instance (Data.Get_Script, %(ada)s)',
+        toada='GPS.VCS.Get_VCS (Data.Nth_Arg (%(idx)d, Allow_Null => False))',
+        withs=['GPS.VCS']),
+                          
+    'VCS_File_Properties': Mapping(
+        ada='GPS.VCS.VCS_File_Properties',
+        python='int',
+        topython='Integer (%(ada)s.Status)',
+        toada='GPS.VCS.VCS_File_Properties\'' +
+            '(Status => GPS.VCS.VCS_File_Status ' +
+              '(Integer\'(Data.Nth_Arg (%(idx)d))), others => <>)',
+        withs=['GPS.VCS']),
+         
     'Project': Mapping(
         ada='GNATCOLL.Projects.Project_Type',
         python='GPS.Project',
@@ -419,6 +435,11 @@ Shadow builds''', inpython=False),
          Param('str',       'String')],
         returns='String',
         return_default='""'),  # Stop when one returns non-empty string
+
+    'vcs_file_status_hooks': Hook_Type(
+        [Param('VCS',       'VCS_Engine'),
+         Param('file',      'File'),
+         Param('props',     'VCS_File_Properties')]),                                       
 }
 
 # The following describe all specific hooks. They all belong to one
@@ -872,7 +893,15 @@ Emitted when a word has been added in an editor.\n
 Emitted when the cross-reference information has been updated.'''),
 
     Hook('semantic_tree_updated', 'file_hooks', descr='''
-Emitted when the semantic_tree for a file has been updated.''')
+Emitted when the semantic_tree for a file has been updated.'''),
+         
+    Hook('vcs_file_status_changed', 'vcs_file_status_hooks', descr='''
+Emitted when the VCS status of a file has been recomputed. The file might now
+be up to date, staged for commit, locally modified,... It might also have a
+different version number, for file-based systems.
+This hook is only called on actual change of the status, and provides basic
+information on the new status. Check GPS.VCS.file_status to get more
+details.'''),
 ]
 
 #########################################################################

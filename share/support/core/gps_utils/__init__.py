@@ -364,7 +364,6 @@ def make_interactive(callback, category="General", filter="", menu="", key="",
 
 # noinspection PyPep8Naming
 class interactive:
-
     """
     A decorator with the same behavior as make_interactive().
     This can be used to easily associate a function with an interactive
