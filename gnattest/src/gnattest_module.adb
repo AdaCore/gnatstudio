@@ -191,7 +191,7 @@ package body GNATTest_Module is
      (Widget    : access Gtk.Menu_Item.Gtk_Menu_Item_Record'Class;
       User_Data : Menu_Data);
 
-   type Testing_View_Record is new Generic_Views.View_Record with record
+   type Tests_View_Record is new Generic_Views.View_Record with record
       Tree_View     : Gtk_Tree_View;
       Tree_Model    : Tree_Models.Tree_Model;
       Icon_Column   : Gtk_Tree_View_Column;
@@ -200,24 +200,24 @@ package body GNATTest_Module is
    end record;
 
    function Initialize
-     (Self : access Testing_View_Record'Class) return Gtk_Widget;
-   --  Initialize the testing view widget
+     (Self : access Tests_View_Record'Class) return Gtk_Widget;
+   --  Initialize the tests view widget
 
    procedure On_Multipress
      (Self    : access Glib.Object.GObject_Record'Class;
       N_Press : Glib.Gint;
       X, Y    : Glib.Gdouble);
-   --  Called every time a row in Testing View is clicked
+   --  Called every time a row in Tests View is clicked
 
    function On_Key_Press
      (Self  : access GObject_Record'Class;
       Event : Gdk_Event_Key) return Boolean;
-   --  Handle key events in the Testing View
+   --  Handle key events in the Tests View
 
-   package Testing_MDI_Views is new Generic_Views.Simple_Views
-     (Module_Name               => "Testing_Views",
-      View_Name                 => "Testing View",
-      Formal_View_Record        => Testing_View_Record,
+   package Tests_MDI_Views is new Generic_Views.Simple_Views
+     (Module_Name               => "Tests_View",
+      View_Name                 => "Tests",
+      Formal_View_Record        => Tests_View_Record,
       Formal_MDI_Child          => GPS_MDI_Child_Record,
       Initialize                => Initialize,
       Areas                     => Gtkada.MDI.Sides_Only,
@@ -227,11 +227,11 @@ package body GNATTest_Module is
    -- Tooltips --
    --------------
 
-   type Testing_View_Tooltip is new Tooltips.Tooltips with record
-      View : Testing_MDI_Views.View_Access;
+   type Tests_View_Tooltip is new Tooltips.Tooltips with record
+      View : Tests_MDI_Views.View_Access;
    end record;
    overriding function Create_Contents
-     (Tooltip  : not null access Testing_View_Tooltip;
+     (Tooltip  : not null access Tests_View_Tooltip;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget;
 
@@ -380,7 +380,7 @@ package body GNATTest_Module is
    ---------------------
 
    overriding function Create_Contents
-     (Tooltip  : not null access Testing_View_Tooltip;
+     (Tooltip  : not null access Tests_View_Tooltip;
       Widget   : not null access Gtk.Widget.Gtk_Widget_Record'Class;
       X, Y     : Glib.Gint) return Gtk.Widget.Gtk_Widget
    is
@@ -648,14 +648,14 @@ package body GNATTest_Module is
       pragma Unreferenced (Self);
 
       File : Input_Sources.File.File_Input;
-      View : Testing_MDI_Views.View_Access;
+      View : Tests_MDI_Views.View_Access;
       pragma Unreferenced (View);
 
       Project       : constant GNATCOLL.Projects.Project_Type :=
          GPS.Kernel.Project.Get_Project (Kernel);
       Map_File_Name : constant String := Get_Mapping_File (Project);
    begin
-      Testing_MDI_Views.Close (Kernel);
+      Tests_MDI_Views.Close (Kernel);
       Map.Source_Map.Clear;
       Map.Test_Map.Clear;
       Map.Kernel := GPS.Kernel.Kernel_Handle (Kernel);
@@ -664,7 +664,7 @@ package body GNATTest_Module is
          Input_Sources.File.Open (Map_File_Name, File);
          Map.Parse (File);
          Input_Sources.File.Close (File);
-         View := Testing_MDI_Views.Get_Or_Create_View (Kernel);
+         View := Tests_MDI_Views.Get_Or_Create_View (Kernel);
       end if;
    end Execute;
 
@@ -673,7 +673,7 @@ package body GNATTest_Module is
    ----------------
 
    function Initialize
-     (Self : access Testing_View_Record'Class) return Gtk_Widget
+     (Self : access Tests_View_Record'Class) return Gtk_Widget
    is
 
       Icon_Renderer     : Gtk_Cell_Renderer_Pixbuf;
@@ -737,8 +737,8 @@ package body GNATTest_Module is
       Self.Tree_View.On_Key_Press_Event
         (On_Key_Press'Access, Slot => Self, After => False);
 
-      Tooltip := new Testing_View_Tooltip'
-        (Tooltips.Tooltips with View => Testing_MDI_Views.View_Access (Self));
+      Tooltip := new Tests_View_Tooltip'
+        (Tooltips.Tooltips with View => Tests_MDI_Views.View_Access (Self));
 
       Tooltip.Set_Tooltip (Self.Tree_View);
       --  No widget to focus
@@ -770,8 +770,8 @@ package body GNATTest_Module is
       Model       : Gtk_Tree_Model;
       Source      : Source_Entity;
       Destination : Test_Entity;
-      View        : constant Testing_MDI_Views.View_Access :=
-        Testing_MDI_Views.View_Access (Self);
+      View        : constant Tests_MDI_Views.View_Access :=
+        Tests_MDI_Views.View_Access (Self);
    begin
       View.Tree_View.Get_Selection.Get_Selected (Model, Iter);
 
@@ -815,8 +815,8 @@ package body GNATTest_Module is
    is
       use type Glib.Gint;
 
-      View : constant Testing_MDI_Views.View_Access :=
-        Testing_MDI_Views.View_Access (Self);
+      View : constant Tests_MDI_Views.View_Access :=
+        Tests_MDI_Views.View_Access (Self);
       Iter  : Gtk_Tree_Iter;
 
       Cell_X, Cell_Y  : Glib.Gint;
@@ -1019,7 +1019,7 @@ package body GNATTest_Module is
          Handler      => Command_Handler'Access);
 
       Project_View_Changed_Hook.Add (new On_Project_Changed);
-      Testing_MDI_Views.Register_Module (Kernel);
+      Tests_MDI_Views.Register_Module (Kernel);
    end Register_Module;
 
    -------------------
