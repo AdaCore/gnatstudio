@@ -66,6 +66,7 @@ package GNATTest_Module is
 
    type Test_Entity is record
       File_Name        : Virtual_File;
+      Subprogram_Name  : Unbounded_String;
       Line             : Natural;
       Column           : Natural;
       Stamp            : Ada.Calendar.Time;

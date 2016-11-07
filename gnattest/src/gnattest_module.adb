@@ -788,7 +788,8 @@ package body GNATTest_Module is
                   GNATCOLL.Projects.No_Project,
                   Destination.File_Name,
                   Destination.Line,
-                  Basic_Types.Visible_Column_Type (Destination.Column));
+                  Basic_Types.Visible_Column_Type (Destination.Column),
+                  To_String (Destination.Subprogram_Name));
             else
 
                Open_File
@@ -871,7 +872,8 @@ package body GNATTest_Module is
                      GNATCOLL.Projects.No_Project,
                      Destination.File_Name,
                      Destination.Line,
-                     Basic_Types.Visible_Column_Type (Destination.Column));
+                     Basic_Types.Visible_Column_Type (Destination.Column),
+                     To_String (Destination.Subprogram_Name));
                else
                   --  Click on the first icon on test level (tested unit)
 
@@ -896,7 +898,8 @@ package body GNATTest_Module is
                      GNATCOLL.Projects.No_Project,
                      Destination.File_Name,
                      Destination.Line,
-                     Basic_Types.Visible_Column_Type (Destination.Column));
+                     Basic_Types.Visible_Column_Type (Destination.Column),
+                     To_String (Destination.Subprogram_Name));
                end if;
             end if;
          else
@@ -916,7 +919,8 @@ package body GNATTest_Module is
                   GNATCOLL.Projects.No_Project,
                   Destination.File_Name,
                   Destination.Line,
-                  Basic_Types.Visible_Column_Type (Destination.Column));
+                  Basic_Types.Visible_Column_Type (Destination.Column),
+                  To_String (Destination.Subprogram_Name));
             end if;
          end if;
 
@@ -1040,7 +1044,7 @@ package body GNATTest_Module is
       function To_Time (Name : String) return Ada.Calendar.Time;
       function To_File (Name : String) return Virtual_File;
 
-      function Get_Attribute (Name : String) return String;
+      function Get_Attribute (Name : String) return Unbounded_String;
       --  Return value of attribute with given Name or empty string if no such
 
       procedure Add_Setup_Teardown;
@@ -1059,13 +1063,13 @@ package body GNATTest_Module is
          end if;
       end Add_Setup_Teardown;
 
-      function Get_Attribute (Name : String) return String is
+      function Get_Attribute (Name : String) return Unbounded_String is
          Index : constant Integer := Atts.Get_Index (Name);
       begin
          if Index < 0 then
-            return "";
+            return Null_Unbounded_String;
          else
-            return Atts.Get_Value (Index);
+            return To_Unbounded_String (Atts.Get_Value (Index));
          end if;
       end Get_Attribute;
 
@@ -1097,10 +1101,10 @@ package body GNATTest_Module is
          Day     => Ada.Calendar.Day_Number'First);
 
       function To_Time (Name : String) return Ada.Calendar.Time is
-         Image : constant String := Get_Attribute (Name);
+         Image : constant Unbounded_String := Get_Attribute (Name);
       begin
          if Image /= "" and Image /= "modified" then
-            return GNAT.Calendar.Time_IO.Value (Image);
+            return GNAT.Calendar.Time_IO.Value (To_String (Image));
          end if;
 
          return Null_Time;
@@ -1120,25 +1124,25 @@ package body GNATTest_Module is
          Self.First_Tested := True;
 
       elsif Local_Name = "tested" then
-         Self.Last_Source.Subprogram_Name :=
-           To_Unbounded_String (Atts.Get_Value ("name"));
+         Self.Last_Source.Subprogram_Name := Get_Attribute ("name");
          Self.Last_Source.Line := To_Integer ("line");
          Self.Last_Source.Column := To_Integer ("column");
          Self.Last_Source.Test_Case_Name := To_Unbounded_String ("test case");
          Self.First_Test := True;
 
       elsif Local_Name = "test_case" then
-         Self.Last_Source.Test_Case_Name :=
-           To_Unbounded_String (Atts.Get_Value ("name"));
+         Self.Last_Source.Test_Case_Name := Get_Attribute ("name");
 
       elsif Local_Name = "setup" then
          Self.Setup.File_Name := To_File ("file");
+         Self.Setup.Subprogram_Name := Get_Attribute ("name");
          Self.Setup.Line := To_Integer ("line");
          Self.Setup.Column := To_Integer ("column");
          Self.Setup.Stamp := Null_Time;
 
       elsif Local_Name = "teardown" then
          Self.Teardown.File_Name := To_File ("file");
+         Self.Teardown.Subprogram_Name := Get_Attribute ("name");
          Self.Teardown.Line := To_Integer ("line");
          Self.Teardown.Column := To_Integer ("column");
          Self.Setup.Stamp := Null_Time;
@@ -1148,6 +1152,7 @@ package body GNATTest_Module is
             Target : Test_Entity;
          begin
             Target.File_Name := To_File ("file");
+            Target.Subprogram_Name := Get_Attribute ("name");
             Target.Line := To_Integer ("line");
             Target.Column := To_Integer ("column");
             Target.Stamp := To_Time ("timestamp");
@@ -1166,8 +1171,7 @@ package body GNATTest_Module is
          Self.Stub_Unit.Setter := To_File ("setter_file");
 
       elsif Local_Name = "stubbed" then
-         Self.Last_Source.Subprogram_Name :=
-           To_Unbounded_String (Atts.Get_Value ("name"));
+         Self.Last_Source.Subprogram_Name := Get_Attribute ("name");
          Self.Last_Source.Line := To_Integer ("line");
          Self.Last_Source.Column := To_Integer ("column");
          Self.Last_Source.Test_Case_Name := To_Unbounded_String ("test case");
@@ -1217,10 +1221,11 @@ package body GNATTest_Module is
    begin
       Open_File
         (User_Data.Kernel,
-         Project => GNATCOLL.Projects.No_Project,  --  will use any project
-         File    => User_Data.Entity.File_Name,
-         Line    => User_Data.Entity.Line,
-         Column  => Basic_Types.Visible_Column_Type (User_Data.Entity.Column));
+         GNATCOLL.Projects.No_Project,  --  will use any project
+         User_Data.Entity.File_Name,
+         User_Data.Entity.Line,
+         Basic_Types.Visible_Column_Type (User_Data.Entity.Column),
+         To_String (User_Data.Entity.Subprogram_Name));
    end Test_Entity_Callback;
 
    ----------------------------
