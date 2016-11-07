@@ -264,19 +264,11 @@ package body Tooltips is
          X := X + 15;
          Y := Y + 15;
 
-         --  Do a first placement of the tooltip at the given coordinates,
-         --  in order not to display the window at 0,0. We will readjust
-         --  the coordinates below, to clamp to monitor dimensions.
-         Global_Tooltip.Move (X, Y);
+         --  Compute the future size of the tooltip, before we show it on
+         --  screen.
 
-         --  Widget is realized and shown to ensure that the width/height are
-         --  properly retrieved below.
-
-         Global_Tooltip.Realize;
-         Global_Tooltip.Show_All;
-
-         W := Global_Tooltip.Get_Allocated_Width;
-         H := Global_Tooltip.Get_Allocated_Height;
+         Widget.Show_All;  --  show contents to get right size
+         Global_Tooltip.Get_Size (W, H);
 
          --  If it goes outside the right of the screen, move it back
 
@@ -295,6 +287,7 @@ package body Tooltips is
          --  physical monitor offset.
 
          Global_Tooltip.Move (X + Geom.X, Y + Geom.Y);
+         Global_Tooltip.Show_All;
 
          --  Tooltip is visible again on screen, so reset timeout
          Global_Tooltip.Browse_Mode_Enabled := True;
