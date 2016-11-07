@@ -5,7 +5,7 @@ import types
 from workflows.promises import ProcessWrapper, join, wait_idle
 
 
-@core.register_vcs
+@core.register_vcs(default_status=GPS.VCS2.Status.UNMODIFIED)
 class Git(core.VCS):
 
     def __init__(self, repo):
@@ -91,7 +91,7 @@ class Git(core.VCS):
         :param List(GPS.File) extra_files: files for which we need to
            set the status eventually
         """
-        s = self.set_status_for_all_files(GPS.VCS2.Status.UNMODIFIED)
+        s = self.set_status_for_all_files()
         a = yield join(self.__git_ls_tree(), self.__git_status(s))
         GPS.Logger("GIT").log("set status for all remaining files extra=%s"
                               % (extra_files, ))

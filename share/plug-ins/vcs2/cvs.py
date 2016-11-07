@@ -18,7 +18,7 @@ STATUSES = {
 }
 
 
-@core.register_vcs
+@core.register_vcs(default_status=GPS.VCS2.Status.UNTRACKED)
 class CVS(core.File_Based_VCS):
 
     __re_status = re.compile(
@@ -35,8 +35,7 @@ class CVS(core.File_Based_VCS):
 
     @core.run_in_background
     def _compute_status(self, all_files, args=[]):
-        with self.set_status_for_all_files(
-                GPS.VCS2.Status.UNTRACKED, all_files) as s:
+        with self.set_status_for_all_files(all_files) as s:
 
             p = ProcessWrapper(
                 ['cvs', '-f', 'status'] + args,

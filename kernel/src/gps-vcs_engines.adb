@@ -284,6 +284,10 @@ package body GPS.VCS_Engines is
    is
       C : VCS_File_Cache.Cursor;
       Need_Update : Boolean := False;
+      Default : constant VCS_File_Properties :=
+         (Status       => Self.Default_File_Status,
+          Version      => Null_Unbounded_String,
+          Repo_Version => Null_Unbounded_String);
    begin
       --  Set temporary entry to prevent unneeded parallel computation.
       --  Do not call the hook though, this will be done by Async_Fetch
@@ -293,8 +297,7 @@ package body GPS.VCS_Engines is
          if F = No_File then
             null;
          elsif not Has_Element (C) then
-            Self.Cache.Include
-              (F, (Need_Update => False, Props => Default_Properties));
+            Self.Cache.Include (F, (Need_Update => False, Props => Default));
             if not Need_Update and then Active (Me) then
                Trace
                   (Me, "Will fetch status because " & F.Display_Full_Name
@@ -491,7 +494,10 @@ package body GPS.VCS_Engines is
       if Has_Element (C) then
          return Element (C).Props;
       else
-         return Default_Properties;
+         return
+            (Status       => VCS_Engine'Class (Self.all).Default_File_Status,
+             Version      => Null_Unbounded_String,
+             Repo_Version => Null_Unbounded_String);
       end if;
    end File_Properties_From_Cache;
 
@@ -532,7 +538,7 @@ package body GPS.VCS_Engines is
    procedure Set_File_Status_In_Cache
      (Self         : not null access VCS_Engine'Class;
       File         : Virtual_File;
-      Props        : VCS_File_Properties := Default_Properties)
+      Props        : VCS_File_Properties)
    is
       C : constant VCS_File_Cache.Cursor := Self.Cache.Find (File);
       Need_Update : Boolean;
@@ -543,7 +549,9 @@ package body GPS.VCS_Engines is
          Need_Hook := Need_Update;
       else
          Need_Update := True;
-         Need_Hook := Props /= Default_Properties;
+         Need_Hook := Props.Status /= Self.Default_File_Status
+            or else Props.Version /= ""
+            or else Props.Repo_Version /= "";
       end if;
 
       if Need_Update then

@@ -9437,7 +9437,7 @@ class VCS2(object):
     """
 
     @staticmethod
-    def _register(name, klassname, discover_repo):
+    def _register(name, klassname, default_status, discover_repo):
         """
         Register support for a new Version Control System.
         This function is not meant to be called directly. Instead, check the
@@ -9447,6 +9447,8 @@ class VCS2(object):
            the project properties IDE.VCS_Kind attribute.
         :param str klassname: the name of the class that implements this VCS.
            Must derive from vcs.VCS_Engine.
+        :param int default_status: the default status for files not in the
+           cache yet.
         :param discover_repo: a function that takes a :class:`GPS.File`, and
            returns a string. This function tries to guess the repository for
            the given file.
@@ -9529,7 +9531,7 @@ class VCS2(object):
         This function is meant to be called only by the implementation of
         specific VCS engines.
 
-        :param GPS.file file:
+        :param GPS.File|List(GPS.File) file:
         :param GPS.VCS2.Status status:
         :param str version:
         :param str repo_version:

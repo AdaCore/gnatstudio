@@ -183,6 +183,14 @@ package GPS.VCS_Engines is
    --  version control, although in general it is expected that Self will
    --  compute their status anyway.
 
+   function Default_File_Status
+     (Self    : not null access VCS_Engine)
+     return VCS_File_Status is (Status_Untracked);
+   --  The default status to use for files not in the cache yet.  This can make
+   --  a large difference on startup: if set to untracked, the GPS project
+   --  (git) needs 1.3s to set the initial cache. If set to Unmodified, it
+   --  takes 0.002s.
+
    function File_Properties_From_Cache
      (Self    : not null access VCS_Engine;
       File    : Virtual_File)
@@ -207,13 +215,10 @@ package GPS.VCS_Engines is
    --  The next call to one of the Async_Fetch_Status_* procedures will
    --  therefore trigger queries to the actual VCS engine to refresh the cache.
 
-   Default_Properties : constant VCS_File_Properties :=
-     (Status_Untracked, Null_Unbounded_String, Null_Unbounded_String);
-
    procedure Set_File_Status_In_Cache
      (Self         : not null access VCS_Engine'Class;
       File         : Virtual_File;
-      Props        : VCS_File_Properties := Default_Properties);
+      Props        : VCS_File_Properties);
    --  Update the file status in the cache, and emit the
    --  VCS_File_Status_Changed hook if needed. This should only be called
    --  when you write your own VCS engine. Other code should use one of the
@@ -347,6 +352,9 @@ private
 
    type Dummy_VCS_Engine is new VCS_Engine with null record;
 
+   Untracked_Properties : constant VCS_File_Properties :=
+     (Status_Untracked, Null_Unbounded_String, Null_Unbounded_String);
+
    overriding function Name
      (Self : not null access Dummy_VCS_Engine) return String is ("unknown");
    overriding procedure Ensure_Status_For_Files
@@ -360,7 +368,7 @@ private
    overriding function File_Properties_From_Cache
      (Self    : not null access Dummy_VCS_Engine;
       File    : Virtual_File)
-     return VCS_File_Properties is (Default_Properties);
+     return VCS_File_Properties is (Untracked_Properties);
 
    function Kernel
      (Self : not null access VCS_Engine'Class)

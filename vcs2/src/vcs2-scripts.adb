@@ -28,9 +28,10 @@ package body VCS2.Scripts is
    Me : constant Trace_Handle := Create ("VCS2.SCRIPT") with Unreferenced;
 
    type Script_Engine_Factory is new VCS_Engine_Factory with record
-      Kernel    : access Kernel_Handle_Record'Class;
-      Construct : Subprogram_Type;
-      Find_Repo : Subprogram_Type;
+      Kernel         : access Kernel_Handle_Record'Class;
+      Construct      : Subprogram_Type;
+      Find_Repo      : Subprogram_Type;
+      Default_Status : VCS_File_Status;
    end record;
    overriding function Create_Engine
      (Self : not null access Script_Engine_Factory;
@@ -41,7 +42,7 @@ package body VCS2.Scripts is
       File  : Virtual_File) return String;
 
    type Script_Engine is new VCS_Engine with record
-      Factory : access VCS_Engine_Factory'Class;
+      Factory : access Script_Engine_Factory'Class;
       Script  : Scripting_Language;
    end record;
    overriding function Name
@@ -54,6 +55,9 @@ package body VCS2.Scripts is
       Project : Project_Type);
    overriding procedure Async_Fetch_Status_For_All_Files
      (Self    : not null access Script_Engine);
+   overriding function Default_File_Status
+     (Self    : not null access Script_Engine)
+     return VCS_File_Status is (Self.Factory.Default_Status);
 
    procedure Static_VCS_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -254,13 +258,43 @@ package body VCS2.Scripts is
          end;
 
       elsif Command = "_set_file_status" then
-         VCS.Set_File_Status_In_Cache
-           (File  => Nth_Arg (Data, 2),
-            Props =>
-              (Status  => VCS_File_Status
-                  (Integer'(Data.Nth_Arg (3, Integer (Status_Unmodified)))),
-               Version      => To_Unbounded_String (Data.Nth_Arg (4, "")),
-               Repo_Version => To_Unbounded_String (Data.Nth_Arg (5, ""))));
+         declare
+            Status : constant VCS_File_Status := VCS_File_Status
+               (Integer'(Data.Nth_Arg (3, Integer (Status_Unmodified))));
+            Version : constant Unbounded_String :=
+               To_Unbounded_String (Data.Nth_Arg (4, ""));
+            Repo_Version : constant Unbounded_String :=
+               To_Unbounded_String (Data.Nth_Arg (5, ""));
+         begin
+
+            --  Did we have a single file ?
+            declare
+               F : constant Virtual_File := Nth_Arg (Data, 2);
+            begin
+               VCS.Set_File_Status_In_Cache
+                 (File  => F,
+                  Props =>
+                    (Status       => Status,
+                     Version      => Version,
+                     Repo_Version => Repo_Version));
+            end;
+
+         exception
+            when Invalid_Parameter =>
+               --  Or maybe a list of files ?
+               declare
+                  List : constant List_Instance := Data.Nth_Arg (2);
+               begin
+                  for Idx in 1 .. List.Number_Of_Arguments loop
+                     VCS.Set_File_Status_In_Cache
+                       (File  => Nth_Arg (List, Idx),
+                        Props =>
+                          (Status       => Status,
+                           Version      => Version,
+                           Repo_Version => Repo_Version));
+                  end loop;
+               end;
+         end;
 
       elsif Command = "invalidate_status_cache" then
          VCS.Invalidate_File_Status_Cache;
@@ -290,7 +324,8 @@ package body VCS2.Scripts is
          begin
             F.Kernel    := Kernel;
             F.Construct := Data.Nth_Arg (2);
-            F.Find_Repo := Data.Nth_Arg (3);
+            F.Default_Status := VCS_File_Status (Integer'(Data.Nth_Arg (3)));
+            F.Find_Repo := Data.Nth_Arg (4);
             Register_Factory (Get_Kernel (Data), Data.Nth_Arg (1), F);
          end;
 
@@ -319,7 +354,8 @@ package body VCS2.Scripts is
         ("_register",
          Params        => (1 => Param ("name"),
                            2 => Param ("construct"),
-                           3 => Param ("discover_repo")),
+                           3 => Param ("default_status"),
+                           4 => Param ("discover_repo")),
          Static_Method => True,
          Class         => VCS,
          Handler       => Static_VCS_Handler'Access);

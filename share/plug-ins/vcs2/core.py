@@ -137,8 +137,7 @@ class VCS(GPS.VCS2):
         """
         pass
 
-    def set_status_for_all_files(
-            self, default_status=GPS.VCS2.Status.UNMODIFIED, files=set()):
+    def set_status_for_all_files(self, files=set()):
         """
         A proxy that lets you set statuses of individual files, and on
         exit automatically set the status of remaining files to unmodified::
@@ -155,12 +154,12 @@ class VCS(GPS.VCS2):
             # does nothing when you are done, unless you call
             s.set_status_for_remaining_files(['file1.adb', 'file2.adb',...])
 
+        The default status comes from the call to `register_vcs`
+
         :param GPS.VCS2 repo: the specific repository
         :param Set(GPS.File): the set of files to update. This parameter is
            only used when using this function as a context manager (the 'with'
            statement in python).
-        :param GPS.VCS2.Status default_status: the default status for all
-           files for which `set_status` wasn't called.
         """
 
         vcs = self
@@ -198,8 +197,7 @@ class VCS(GPS.VCS2):
                 if not isinstance(files, set):
                     files = set(files)
                 files.difference_update(self._seen)
-                for f in files:
-                    vcs._set_file_status(f, default_status, "", "")
+                vcs._set_file_status(list(files))  # set the default status
 
             def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
                 self.set_status_for_remaining_files(files)
@@ -237,17 +235,31 @@ class File_Based_VCS(VCS):
             all_files=GPS.Project.root().sources(recursive=True))
 
 
-def register_vcs(klass, name="", *args, **kwargs):
+class register_vcs:
     """
     A decorator to register a new VCS engine
     :param str name: the name of the engine, as used in project properties
+    :param default_status: the VCS status to use for files not specifically
+       set from "status". See `set_status_for_all_files`. This is also the
+       status applied by GPS for files not in the cache yet. This value has
+       a significant impact on the initial loading of the status for all
+       files.
     :param args: passed to the class constructor
     :param kwargs: pass to the class constructor
     """
-    GPS.VCS2._register(
-        name or klass.__name__,
-        construct=lambda repo: klass(repo, *args, **kwargs),
-        discover_repo=klass.discover_repo)
+
+    def __init__(self, default_status, name="", *args, **kwargs):
+        self.default_status = default_status
+        self.name = name
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self, klass):
+        GPS.VCS2._register(
+            self.name or klass.__name__,
+            construct=lambda repo: klass(repo, *self.args, **self.kwargs),
+            default_status=self.default_status,
+            discover_repo=klass.discover_repo)
 
 
 def find_admin_directory(file, basename):
