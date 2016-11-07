@@ -314,26 +314,4 @@ package body Refactoring.Performers is
       Editor.Delete (Loc_Start, Loc_End);
    end Delete_Text;
 
-   ----------------------
-   -- Start_Undo_Group --
-   ----------------------
-
-   procedure Start_Undo_Group
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File) is
-   begin
-      Get_Buffer_Factory (Kernel).Get (File).Start_Undo_Group;
-   end Start_Undo_Group;
-
-   -----------------------
-   -- Finish_Undo_Group --
-   -----------------------
-
-   procedure Finish_Undo_Group
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : GNATCOLL.VFS.Virtual_File) is
-   begin
-      Get_Buffer_Factory (Kernel).Get (File).Finish_Undo_Group;
-   end Finish_Undo_Group;
-
 end Refactoring.Performers;

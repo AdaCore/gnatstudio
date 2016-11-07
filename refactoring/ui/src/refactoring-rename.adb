@@ -141,8 +141,8 @@ package body Refactoring.Rename is
       Pack_Start (Box, Label, Expand => False);
 
       Gtk_New (Dialog.New_Name);
-      Set_Text (Dialog.New_Name, Get_Name (Entity));
       Dialog.New_Name.Set_Name ("new_name");
+      Set_Text (Dialog.New_Name, Get_Name (Entity));
       Select_Region (Dialog.New_Name, 0, -1);
       Set_Activates_Default (Dialog.New_Name, True);
       Pack_Start (Box, Dialog.New_Name);
@@ -212,98 +212,32 @@ package body Refactoring.Rename is
       Stale_LI_List : Source_File_Set)
    is
       pragma Unreferenced (No_LI_List, Stale_LI_List);
-      Name : constant String := Get_Name (Entity);
-      Errors : Source_File_Set;
-      Was_Open : Boolean;
-      C : Location_Arrays.Cursor;
-      Current_File : Virtual_File := No_File;
-      Current_Loc  : General_Location;
+      Buffer_Factory : constant Editor_Buffer_Factory_Access :=
+        Get_Buffer_Factory (Kernel);
+      Name           : constant String := Get_Name (Entity);
+      Errors         : Source_File_Set;
 
-      Group_File : Virtual_File := No_File;
-      --  The file on which an undo/redo group is currently running;
-      --  No_File if there is no undo/redo group.
-      --  Defense against mismatched of start/finish pairs:
-      --    - make sure only one group is created for this renaming
-      --    - make sure we close the group in case we encounter an exception
+      procedure Process_Locations
+        (File : Virtual_File;
+         Locs : Location_Arrays.List);
+      --  Process a list of locations that are in the same file
 
-      procedure Terminate_File (File : Virtual_File);
-      --  Finish the processing for a given file
+      -----------------------
+      -- Process_Locations --
+      -----------------------
 
-      --------------------
-      -- Terminate_File --
-      --------------------
-
-      procedure Terminate_File (File : Virtual_File) is
+      procedure Process_Locations
+        (File : Virtual_File;
+         Locs : Location_Arrays.List)
+      is
+         Was_Open : constant Boolean := Buffer_Factory.Get
+           (File  => File,
+            Force => False, Open_View => False) /= Nil_Editor_Buffer;
+         Buffer   : constant Editor_Buffer'Class := Buffer_Factory.Get (File);
+         G        : constant Group_Block := Buffer.New_Undo_Group;
       begin
-         --  Close the undo/redo group for this file
-         if Group_File /= No_File then
-            Finish_Undo_Group (Kernel, Group_File);
-            Group_File := No_File;
-         end if;
-
-         if Factory.Auto_Save then
-            Get_Buffer_Factory (Kernel).Get (File).Save (Interactive => False);
-            if not Was_Open then
-               Get_Buffer_Factory (Kernel).Get (File).Close;
-            end if;
-         end if;
-      end Terminate_File;
-
-   begin
-      --  Replace first the last occurrences since we are about to modify
-      --  the file, and the locations would become invalid.
-
-      C := Refs.Last;
-      while Has_Element (C) loop
-         declare
-            Loc : constant General_Location := Element (C);
-         begin
-            if Current_File = No_File
-               or else Current_File /= Loc.File
-            then
-               if Current_File /= No_File then
-                  Terminate_File (Current_File);
-               end if;
-
-               Current_File := Loc.File;
-
-               Was_Open := Get_Buffer_Factory (Kernel).Get
-                 (File  => Current_File,
-                  Force => False, Open_View => False) /= Nil_Editor_Buffer;
-
-               --  Create an undo/redo group for this file
-
-               if Group_File = No_File then
-                  --  Start the new group
-                  Start_Undo_Group (Kernel, Current_File);
-                  Group_File := Current_File;
-               else
-                  --  There is an undo/redo group going
-
-                  if Group_File = Current_File then
-                     --  The undo/redo group is running for this file: nothing
-                     --  to do
-                     null;
-                  else
-                     --  An undo/redo group was created for another file than
-                     --  this and is still open: this is not supposed to
-                     --  happen, but close the group for safety nonetheless...
-                     Finish_Undo_Group (Kernel, Group_File);
-
-                     --  ... and start the new group.
-                     Start_Undo_Group (Kernel, Current_File);
-                     Group_File := Current_File;
-                  end if;
-               end if;
-            end if;
-
-            if Current_Loc = Loc then
-               --  Skip the same location. This could happen for subprogram
-               --  without separate declaration, when the location is reported
-               --  twice. Find_Next_Location promises that dublicates come one
-               --  after the other.
-               null;
-            elsif not Insert_Text
+         for Loc of Locs loop
+            if not Insert_Text
               (Kernel.Refactoring_Context,
                Loc.File,
                Loc.Line,
@@ -340,16 +274,72 @@ package body Refactoring.Rename is
                   0,
                   Side_And_Locations);
             end if;
+         end loop;
 
-            Current_Loc := Loc;
+         if Factory.Auto_Save then
+            Buffer.Save (Interactive => False);
+            if not Was_Open then
+               Buffer.Close;
+            end if;
+         end if;
+      end Process_Locations;
+
+      C : Location_Arrays.Cursor;
+      Current_File : Virtual_File := No_File;
+      Current_Loc  : General_Location;
+      Locations_In_Current_File : Location_Arrays.List;
+
+   begin
+      --  We process the list of locations:
+      --     - file by file, so that we create one undo/redo group per file
+      --     - in reverse order, so that we do not invalidate locations
+      --       during the renaming process
+      --  The loop below takes care of the grouping
+
+      C := Refs.Last;
+      while Has_Element (C) loop
+         declare
+            Loc : constant General_Location := Element (C);
+         begin
+            if Loc = Current_Loc then
+               --  Skip the same location. This could happen for subprogram
+               --  without separate declaration, when the location is
+               --  reported twice. Find_Next_Location promises that
+               --  duplicates come one after the other.
+               null;
+            else
+               --  Do we have a new file?
+               if Current_File = No_File
+                 or else Current_File /= Loc.File
+               then
+                  if Current_File /= No_File then
+                     --  We had a file before: process all locations on this
+                     --  previous current file
+                     Process_Locations
+                       (Current_File, Locations_In_Current_File);
+                     Locations_In_Current_File.Clear;
+                  end if;
+
+                  --  Bump the current file
+                  Current_File := Loc.File;
+               end if;
+
+               --  Add the location to the list of locs for the current file
+               Locations_In_Current_File.Append (Loc);
+               Current_Loc := Loc;
+            end if;
          end;
-
          Previous (C);
       end loop;
 
+      --  We need to catch the leftovers from the loop above
+
       if Current_File /= No_File then
-         Terminate_File (Current_File);
+         Process_Locations (Current_File, Locations_In_Current_File);
       end if;
+
+      --  The calls to Process_Locations above might have generated entries
+      --  in the Errors list. Process this now.
 
       if not Errors.Is_Empty then
          if not Dialog
@@ -398,15 +388,10 @@ package body Refactoring.Rename is
                      end if;
                   end if;
 
-                  --  Undo once for every buffer we have, except the ones
-                  --  where errors occurred: the insertion probably failed
-                  --  there, and, if so, we do not want to undo edition that
-                  --  was done by the user.
+                  --  Undo once for every buffer we have
 
                   for F in 1 .. First_Empty - 1 loop
-                     if not Errors.Contains (Filenames (F)) then
-                        Get_Buffer_Factory (Kernel).Get (Filenames (F)).Undo;
-                     end if;
+                     Buffer_Factory.Get (Filenames (F)).Undo;
                   end loop;
                end loop;
             end;
@@ -414,12 +399,6 @@ package body Refactoring.Rename is
       end if;
    exception
       when E : others =>
-         --  An exception occurred: make sure to close the undo/redo group
-         if Group_File /= No_File then
-            Finish_Undo_Group (Kernel, Group_File);
-            Group_File := No_File;
-         end if;
-
          Trace (Me, E);
    end Execute;
 
