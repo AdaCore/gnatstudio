@@ -4043,7 +4043,7 @@ package body Src_Editor_Buffer is
       end New_Line;
 
    begin
-      Trace (Me, "Save_To_File " & Filename.Display_Full_Name);
+      Trace (Me, "Internal_Save_To_File " & Filename.Display_Full_Name);
       Success := True;
 
       if not Internal then
@@ -4268,7 +4268,6 @@ package body Src_Editor_Buffer is
             Buffer.Filename := Filename;
          end if;
 
-         Trace (Me, "MANU From Internal_Save_To_File");
          File_Saved_Hook.Run (Buffer.Kernel, Filename);
 
          for J in 1 .. Buffer.Last_Editable_Line loop
@@ -4324,10 +4323,6 @@ package body Src_Editor_Buffer is
       Result            : Boolean;
       Original_Filename : constant Virtual_File := Buffer.Filename;
    begin
-      if Active (Me) then
-         Trace (Me, "Save to file " & Filename.Display_Full_Name);
-      end if;
-
       if not Internal then
          Remove_Completion;
       end if;

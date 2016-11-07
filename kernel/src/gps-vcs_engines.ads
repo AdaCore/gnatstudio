@@ -283,6 +283,9 @@ package GPS.VCS_Engines is
    --  For instance, with git, if we call Ensure_Status_For_Files for
    --  file1.adb and then for file2.adb, the first call will in fact also
    --  get the status for file2.adb. So the second command is useless.
+   --
+   --  This function can be called multiple times with a True parameter, and
+   --  will then need to be called an equal number of times with False.
 
    type Dummy_VCS_Engine is new VCS_Engine with private;
    --  An engine that does nothing, used when the project is not setup for
@@ -336,7 +339,7 @@ private
       Cache    : VCS_File_Cache.Map;
       Displays : VCS_Status_Displays.Map;
 
-      Run_In_Background : Boolean := False;
+      Run_In_Background : Integer := 0;
       Queue    : Command_Queues.Vector;
       --  Queue of commands (see Set_Run_In_Background)
 

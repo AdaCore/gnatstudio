@@ -290,12 +290,15 @@ package body GPS.VCS_Engines is
 
       for F of Sources loop
          C := Self.Cache.Find (F);
-         if not Has_Element (C) then
+         if F = No_File then
+            null;
+         elsif not Has_Element (C) then
             Self.Cache.Include
               (F, (Need_Update => False, Props => Default_Properties));
             if not Need_Update and then Active (Me) then
                Trace
-                  (Me, "Will fetch status because of " & F.Display_Full_Name);
+                  (Me, "Will fetch status because " & F.Display_Full_Name
+                   & " not in cache");
             end if;
             Need_Update := True;
 
@@ -304,7 +307,8 @@ package body GPS.VCS_Engines is
               (F, (Need_Update => False, Props => Element (C).Props));
             if not Need_Update and then Active (Me) then
                Trace
-                  (Me, "Will fetch status because of " & F.Display_Full_Name);
+                  (Me, "Will fetch status because " & F.Display_Full_Name
+                   & " needs update");
             end if;
             Need_Update := True;
          end if;
@@ -426,7 +430,7 @@ package body GPS.VCS_Engines is
    is
       Cmd : VCS_Command_Access;
    begin
-      if Self.Run_In_Background then
+      if Self.Run_In_Background > 0 then
          --  Allow users to directly pass a "new " as parameter
          Self.Queue.Append (Command.all'Unchecked_Access);
       else
@@ -447,8 +451,19 @@ package body GPS.VCS_Engines is
    is
       Cmd : VCS_Command_Access;
    begin
-      Self.Run_In_Background := Background;
-      if not Background then
+      if Background then
+         Self.Run_In_Background := Self.Run_In_Background + 1;
+      else
+         Self.Run_In_Background := Self.Run_In_Background - 1;
+      end if;
+
+      if Active (Me) then
+         Trace (Me, Self.Name & " in background" & Self.Run_In_Background'Img);
+      end if;
+
+      if Self.Run_In_Background <= 0 then
+         Self.Run_In_Background := 0;  --  just in case
+
          --  Execute next command in queue
 
          if not Self.Queue.Is_Empty then

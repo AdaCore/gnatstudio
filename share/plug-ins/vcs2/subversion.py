@@ -19,7 +19,7 @@ class Subversion(core.File_Based_VCS):
     @core.run_in_background
     def _compute_status(self, all_files, args=[]):
         with self.set_status_for_all_files(
-                all_files, GPS.VCS2.Status.UNTRACKED) as s:
+                GPS.VCS2.Status.UNTRACKED, all_files) as s:
 
             p = ProcessWrapper(
                 ['svn', 'status', '-v',

@@ -8,8 +8,10 @@ from time_utils import *
 
 import GPS
 import re
+import types
 from pygps import process_all_events
 from gi.repository import GLib
+import workflows
 
 
 class Promise(object):
@@ -158,6 +160,61 @@ class Promise(object):
 
             self.__success = None
             self.__failure = None
+
+
+def join(*args):
+    """
+    Return a promise that is resolved when all the promises given in argument
+    are also resolved. The returned promise is resolved with a list of the
+    values of all parameter promises::
+
+        a = Promise()   # or a function returning a promise
+        b = Promise()   # or a function returning a promise
+        p = join(a, b)
+        p.then(lambda(a1, b1): pass)  # a1 is the value of a, b1 of b
+
+    or perhaps, when using workflows:
+
+        @workflows.run_as_workflow
+        def func1():
+            yield 1
+            yield 2
+
+        def func2():    # directly a python generator
+            yield 3
+            yield 4
+
+        @workflows.run_as_workflow
+        def func3():
+            a = yield join(func1(), func2())
+            pass
+            # executed when func1 and func2 have both terminated.
+            # a == (2, 4)
+
+    :param List(Promise) *args: promises to wait on
+    """
+    p = Promise()
+
+    class _Resolver:
+        _count = 0
+        _result = [None] * len(args)
+
+        def __init__(self, idx):
+            self.idx = idx
+
+        def __call__(self, x):
+            """Called when the promise is resolved"""
+            self._result[self.idx] = x
+            _Resolver._count += 1
+            if _Resolver._count == len(args):
+                p.resolve(self._result)
+
+    for idx, a in enumerate(args):
+        if isinstance(a, types.GeneratorType):
+            a = workflows.driver(a)
+        a.then(_Resolver(idx))
+
+    return p
 
 
 def timeout(msecs):

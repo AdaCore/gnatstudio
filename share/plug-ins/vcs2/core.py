@@ -6,6 +6,7 @@ import GPS
 import os
 import gps_utils
 import workflows
+from workflows.promises import Promise
 import types
 
 
@@ -44,6 +45,11 @@ def run_in_background(func):
             @vcs2.core.run_in_background
             def async_fetch_status_for_files(self):
                 pass
+
+    :return: a function that when executed returns a promise that is resolved
+      to the return of `func`. Until this promise is resolved (in the
+      background), the VCS engine is marked as busy, and no other command will
+      be started.
     """
 
     def __func(self, *args, **kwargs):
@@ -53,7 +59,11 @@ def run_in_background(func):
             promise = workflows.driver(r)
             promise.then(lambda x: self.set_run_in_background(False),
                          lambda x: self.set_run_in_background(False))
-    return workflows.run_as_workflow(__func)
+        else:
+            promise = Promise()
+            promise.resolve(r)
+        return promise
+    return __func
 
 
 class VCS(GPS.VCS2):
@@ -127,7 +137,8 @@ class VCS(GPS.VCS2):
         """
         pass
 
-    def set_status_for_all_files(self, files, default_status):
+    def set_status_for_all_files(
+            self, default_status=GPS.VCS2.Status.UNMODIFIED, files=set()):
         """
         A proxy that lets you set statuses of individual files, and on
         exit automatically set the status of remaining files to unmodified::
@@ -135,17 +146,19 @@ class VCS(GPS.VCS2):
             with self.set_status_for_all_files(project.sources()) as s:
                 s.set_status(file1, ...)
                 s.set_status(file2, ...)
-            # on exit, automatically set status of remainingg files
+            # on exit, automatically set status of remaining files
 
         You can also use the returned value as a standard object:
 
             s = self.set_status_for_all_files()
-            s.set_status(file1, ...)
+            s.set_status('file1.adb', ...)
             # does nothing when you are done, unless you call
-            s.__exit__()
+            s.set_status_for_remaining_files(['file1.adb', 'file2.adb',...])
 
         :param GPS.VCS2 repo: the specific repository
-        :param List(GPS.File): the list of files to update
+        :param Set(GPS.File): the set of files to update. This parameter is
+           only used when using this function as a context manager (the 'with'
+           statement in python).
         :param GPS.VCS2.Status default_status: the default status for all
            files for which `set_status` wasn't called.
         """
@@ -153,11 +166,8 @@ class VCS(GPS.VCS2):
         vcs = self
 
         class _CM(object):
-            def __init__(self, files):
-                """
-                :param List(GPS.File) files:
-                """
-                self._files = set(files)
+            def __init__(self):
+                self._seen = set()
 
             def __enter__(self):
                 return self
@@ -175,16 +185,27 @@ class VCS(GPS.VCS2):
                 :param str version:
                 :param str repo_version:
                 """
-                self._files.discard(file)
+                self._seen.add(file)
                 vcs._set_file_status(file, status, version, repo_version)
 
-            def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
-                for f in self._files:
+            def set_status_for_remaining_files(self, files=set()):
+                """
+                Set the status for all files in `files` for which no status
+                has been set yet.
+
+                :param Set(GPS.File) files:
+                """
+                if not isinstance(files, set):
+                    files = set(files)
+                files.difference_update(self._seen)
+                for f in files:
                     vcs._set_file_status(f, default_status, "", "")
 
+            def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
+                self.set_status_for_remaining_files(files)
                 return False   # do not suppress exceptions
 
-        return _CM(files)
+        return _CM()
 
 
 class File_Based_VCS(VCS):
