@@ -54,7 +54,8 @@ BLOCKS_DEFS = {
     'CAT_PACKAGE': [r'end \2;', r'.*?package\s+(body\s+)?([^ \n]+).*'],
     'CAT_STRUCTURE': ['end record;', ''],
     'CAT_CLASS': ['end record;', ''],
-    'CAT_PROTECTED': [r'end \3;', r'\s*protected\s+((body|type)\s+)?([^ \n]+).*'],
+    'CAT_PROTECTED':
+        [r'end \3;', r'\s*protected\s+((body|type)\s+)?([^ \n]+).*'],
     'CAT_TASK': [r'end \3;', r'\s*task\s+((body|type)\s+)?([^ \n]+).*'],
     'CAT_ENTRY': [r'end \1;', r'\s*entry\s+([^ \n(]+).*']
 }
@@ -63,9 +64,12 @@ BLOCKS_DEFS = {
 def on_gps_started(hook_name):
     "Initializes this module."
     init = """<action name='%(action)s' category='Editor'>
-     <description>End the current Ada block, by providing the appropriate "end" statement</description>
-      <filter language="ada" error='%(action)s requires an Ada file' />
-      <shell lang="python" output="none">block_completion.block_complete("%%F");</shell>
+<description>
+   End the current Ada block, by providing the appropriate "end" statement
+</description>
+<filter language="ada" error='%(action)s requires an Ada file' />
+<shell lang="python"
+ output="none">block_completion.block_complete("%%F");</shell>
    </action>""" % {"action": action_name}
     GPS.parse_xml(init)
 
@@ -109,10 +113,9 @@ def block_complete_on_location(buffer, location):
             term = term.replace(r' \2', '')
             term = term.replace(r'\2', '')
 
-    buffer.start_undo_group()
-    buffer.insert(location, term)
-    buffer.indent(location, location)
-    buffer.finish_undo_group()
+    with buffer.new_undo_group():
+        buffer.insert(location, term)
+        buffer.indent(location, location)
 
 
 def block_complete(filename):

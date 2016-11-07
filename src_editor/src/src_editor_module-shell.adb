@@ -1990,10 +1990,10 @@ package body Src_Editor_Module.Shell is
          Data.Set_Return_Value
            (Get_Buffer (Data, 1).Has_Slave_Cursors);
 
-      elsif Command = "start_undo_group" then
+      elsif Command = "_start_undo_group" then
          Get_Buffer (Data, 1).Start_Undo_Group;
 
-      elsif Command = "finish_undo_group" then
+      elsif Command = "_finish_undo_group" then
          Get_Buffer (Data, 1).Finish_Undo_Group;
 
       elsif Command = "undo" then
@@ -2874,9 +2874,9 @@ package body Src_Editor_Module.Shell is
       Register_Command
         (Kernel, "refill", 0, 2, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "start_undo_group", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "_start_undo_group", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
-        (Kernel, "finish_undo_group", 0, 0, Buffer_Cmds'Access, EditorBuffer);
+        (Kernel, "_finish_undo_group", 0, 0, Buffer_Cmds'Access, EditorBuffer);
       Register_Command
         (Kernel, "set_read_only", 0, 1, Buffer_Cmds'Access, EditorBuffer);
       Register_Command

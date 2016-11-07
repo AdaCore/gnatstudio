@@ -251,12 +251,11 @@ class CmdLine(CommandWindow):
         buffer = loc.buffer()
         (cmd, loc, maxloc) = CmdLine.get_scope(CmdLine.history[0], loc, buffer)
 
-        buffer.start_undo_group()
-        if cmd[0] == "s":
-            CmdLine.do_replace(cmd[1:], loc, maxloc)
-        elif cmd[0] == "d":
-            CmdLine.do_delete_line(cmd[1:], loc, maxloc)
-        buffer.finish_undo_group()
+        with buffer.new_undo_group():
+            if cmd[0] == "s":
+                CmdLine.do_replace(cmd[1:], loc, maxloc)
+            elif cmd[0] == "d":
+                CmdLine.do_delete_line(cmd[1:], loc, maxloc)
 
     def on_cancel(self, input):
         """The user has cancelled the search"""

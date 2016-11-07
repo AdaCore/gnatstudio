@@ -86,7 +86,6 @@ def exit_alias_expand(editor):
     editor.alias_begin_mark = None
     Hook("character_added").remove(on_edit)
     Hook("location_changed").remove(on_move)
-    editor.finish_undo_group()
 
 
 @interactive("Editor", name="Expand alias under cursor")
@@ -101,14 +100,14 @@ def expand_alias_action():
 
     if is_in_alias_expansion(editor):
         return
-    editor.start_undo_group()
-    cursor_loc = editor.current_view().cursor().forward_char(-1)
-    start_loc = goto_word_start(cursor_loc)
-    alias_name = editor.get_chars(start_loc, cursor_loc)
-    editor.delete(start_loc, cursor_loc)
-    alias = Alias.get(alias_name)
-    if alias:
-        expand_alias(editor, alias)
+    with editor.new_undo_group():
+        cursor_loc = editor.current_view().cursor().forward_char(-1)
+        start_loc = goto_word_start(cursor_loc)
+        alias_name = editor.get_chars(start_loc, cursor_loc)
+        editor.delete(start_loc, cursor_loc)
+        alias = Alias.get(alias_name)
+        if alias:
+            expand_alias(editor, alias)
 
 
 @interactive("Editor", name="Toggle to next alias field")

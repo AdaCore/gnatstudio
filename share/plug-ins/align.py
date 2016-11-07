@@ -191,14 +191,14 @@ def range_align_on(top, bottom, sep, replace_with=None, sep_group=0):
                 if len(chars[matched.end(sep_group):]) == 1:
                     top.buffer().insert(
                         line,
-                        chars[:matched.start(sep_group)].rstrip()
-                        + (' ' * width) + sub + (' ' * width2)
-                        + chars[matched.end(sep_group):])
+                        chars[:matched.start(sep_group)].rstrip() +
+                        (' ' * width) + sub + (' ' * width2) +
+                        chars[matched.end(sep_group):])
                 else:
                     top.buffer().insert(
-                        line, chars[:matched.start(sep_group)].rstrip()
-                        + (' ' * width) + sub + (' ' * width2)
-                        + chars[matched.end(sep_group):].lstrip())
+                        line, chars[:matched.start(sep_group)].rstrip() +
+                        (' ' * width) + sub + (' ' * width2) +
+                        chars[matched.end(sep_group):].lstrip())
             prev = line
             line = line.forward_line()
             if prev == line:
@@ -256,11 +256,11 @@ def max_min(e1, e2):
 
 
 def in_rw_ada_file(context):
-    return (context.module_name == "Source_Editor"
-            and (in_ada_file(context) or
-                 EditorBuffer.get().file().language().lower() in (
-                     'project file',))
-            and is_writable(context))
+    return (context.module_name == "Source_Editor" and
+            (in_ada_file(context) or
+             EditorBuffer.get().file().language().lower() in (
+                     'project file',)) and
+            is_writable(context))
 
 
 @interactive("Ada", in_rw_ada_file, contextual="Align/Colons",
@@ -303,40 +303,38 @@ def align_commas():
         content = []
         data = []
         chars = ""
-        buffer.start_undo_group()
+        with buffer.new_undo_group():
+            line = top.beginning_of_line()
 
-        line = top.beginning_of_line()
+            while line <= bottom:
+                content.append(top.buffer().get_chars(
+                    line, line.end_of_line()))
+                line = line.forward_line()
 
-        while line <= bottom:
-            content.append(top.buffer().get_chars(line, line.end_of_line()))
-            line = line.forward_line()
+            for l in content:
+                data.append(get_commas(l))
+            mm = reduce(max_min, data)
 
-        for l in content:
-            data.append(get_commas(l))
-        mm = reduce(max_min, data)
+            for l in range(0, len(content)):
+                nl = ""
+                for c in range(0, mm[0] + 1):
+                    if c == 0:
+                        nl = nl + content[l][:data[l][c + 1] + 1]
+                        nl = nl + ' ' * (mm[c + 1] - len(nl) + 1)
+                    elif c == mm[0]:
+                        nl = nl + content[l][data[l][c] + 1:]
+                    else:
+                        nl = nl + content[l][data[l][c] + 1:data[l][c + 1] + 1]
+                        nl = nl + ' ' * (mm[c + 1] - len(nl) + 1)
+                chars = chars + nl
 
-        for l in range(0, len(content)):
-            nl = ""
-            for c in range(0, mm[0] + 1):
-                if c == 0:
-                    nl = nl + content[l][:data[l][c + 1] + 1]
-                    nl = nl + ' ' * (mm[c + 1] - len(nl) + 1)
-                elif c == mm[0]:
-                    nl = nl + content[l][data[l][c] + 1:]
-                else:
-                    nl = nl + content[l][data[l][c] + 1:data[l][c + 1] + 1]
-                    nl = nl + ' ' * (mm[c + 1] - len(nl) + 1)
-            chars = chars + nl
-
-        buffer.delete(top, bottom)
-        buffer.insert(top, chars)
-        tloc = buffer.get_mark("top").location()
-        bloc = buffer.get_mark("bottom").location()
-        buffer.select(tloc, bloc)
+            buffer.delete(top, bottom)
+            buffer.insert(top, chars)
+            tloc = buffer.get_mark("top").location()
+            bloc = buffer.get_mark("bottom").location()
+            buffer.select(tloc, bloc)
     except:
         GPS.Console().write(str(sys.exc_info()) + "\n")
-    finally:
-        top.buffer().finish_undo_group()
 
     return True
 
@@ -387,44 +385,42 @@ def align_arrows():
         GPS.MDI.dialog("You must first select the intended text")
         return
     try:
-        buffer.start_undo_group()
-        for lr in range(9):
-            try_indent(buffer, top, bottom)
-            top = buffer.get_mark("top").location()
-            bottom = buffer.get_mark("bottom").location()
-            chars = buffer.get_chars(top, bottom)
-            level = 0
-            for k in range(len(chars)):
-                if chars[k] == '(':
-                    level = level + 1
-                elif chars[k] == ')':
-                    level = level - 1
-                elif chars[k] == '\n':
-                    found = False
-                elif k + 4 < len(chars) and chars[k:k + 4] == "case":
-                    level = level + 1
-                elif k + 8 < len(chars) and chars[k:k + 8] == "end case":
-                    level = level - 1
-                elif (level == lr
-                      and k + 2 < len(chars)
-                      and chars[k:k + 2] == "=>"
-                      and not found):
-                    chars = chars[:k] + "@>" + chars[k + 2:]
-                    found = True
-            buffer.delete(top, bottom)
-            buffer.insert(top, chars)
-            tmark = top.create_mark("top")
-            bmark = bottom.create_mark("bottom")
-            top = buffer.get_mark("top").location()
-            bottom = buffer.get_mark("bottom").location()
-            range_align_on(top, bottom, sep="@>", replace_with=" => ")
-            top = buffer.get_mark("top").location()
-            bottom = buffer.get_mark("bottom").location()
-            buffer.select(top, bottom)
+        with buffer.new_undo_group():
+            for lr in range(9):
+                try_indent(buffer, top, bottom)
+                top = buffer.get_mark("top").location()
+                bottom = buffer.get_mark("bottom").location()
+                chars = buffer.get_chars(top, bottom)
+                level = 0
+                for k in range(len(chars)):
+                    if chars[k] == '(':
+                        level = level + 1
+                    elif chars[k] == ')':
+                        level = level - 1
+                    elif chars[k] == '\n':
+                        found = False
+                    elif k + 4 < len(chars) and chars[k:k + 4] == "case":
+                        level = level + 1
+                    elif k + 8 < len(chars) and chars[k:k + 8] == "end case":
+                        level = level - 1
+                    elif (level == lr and
+                          k + 2 < len(chars) and
+                          chars[k:k + 2] == "=>" and
+                          not found):
+                        chars = chars[:k] + "@>" + chars[k + 2:]
+                        found = True
+                buffer.delete(top, bottom)
+                buffer.insert(top, chars)
+                tmark = top.create_mark("top")
+                bmark = bottom.create_mark("bottom")
+                top = buffer.get_mark("top").location()
+                bottom = buffer.get_mark("bottom").location()
+                range_align_on(top, bottom, sep="@>", replace_with=" => ")
+                top = buffer.get_mark("top").location()
+                bottom = buffer.get_mark("bottom").location()
+                buffer.select(top, bottom)
     except:
         GPS.Console().write(str(sys.exc_info()) + "\n")
-    finally:
-        top.buffer().finish_undo_group()
 
 
 @interactive("Ada", in_rw_ada_file, contextual="Align/Assignment symbols",

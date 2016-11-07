@@ -124,8 +124,24 @@ class EditorView(object):
         return self.buffer().extend_existing_selection
 
 
+class _UndoRedoContext(object):
+    """Helper class to implement an undo/redo context manager.
+    """
+    def __init__(self, buffer):
+        self.buffer = buffer
+
+    def __enter__(self):
+        self.buffer._start_undo_group()
+
+    def __exit__(self, type, exc, tb):
+        self.buffer._finish_undo_group()
+
+
 @extend_gps
 class EditorBuffer(object):
+
+    __warned_about_undo_redo = False
+    # Whether we have already warned about the deprecated undo grouping API
 
     def insert(self, loc_or_text, text=None):
         """
@@ -158,6 +174,63 @@ class EditorBuffer(object):
         :rtype: :class:`GPS.Entity`
         """
         return self.main_cursor().location().entity()
+
+    def start_undo_group(self):
+        """This is deprecated. Use GPS.EditorBuffer.new_undo_group
+
+           This is done via a context manager:
+
+                with buffer.new_undo_group():
+                    action 1
+                    ...
+                    action N
+        """
+        if not GPS.EditorBuffer.__warned_about_undo_redo:
+            GPS.EditorBuffer.__warned_about_undo_redo = True
+            GPS.Console().write(
+                "GPS.EditorBuffer.start_undo_group is deprecated:"
+                " use GPS.EditorBuffer.new_undo_group instead:\n\n")
+            GPS.Console().write(self.new_undo_group.__doc__)
+        self._start_undo_group()
+        if hasattr(self, "undo_group"):
+            self.undo_group += 1
+        else:
+            self.undo_group = 1
+
+    def finish_undo_group(self):
+        """This is deprecated, use GPS.EditorBuffer.new_undo_group
+        """
+        global warned_about_undo_redo
+        if not warned_about_undo_redo:
+            warned_about_undo_redo = True
+            GPS.Console().write(
+                "GPS.EditorBuffer.finish_undo_group is deprecated:"
+                " use GPS.EditorBuffer.new_undo_group instead.\n")
+        if not hasattr(self, "undo_group"):
+            GPS.Console().write(
+                "Error: 'finish_undo_group' not matching 'start_undo_group'\n")
+        else:
+            self.undo_group -= 1
+            if self.undo_group >= 0:
+                self._finish_undo_group()
+            else:
+                GPS.Console().write(
+                    "Error: more calls to 'finish_undo_group'"
+                    " than to 'start_undo_group'\n")
+
+    def new_undo_group(self):
+        """Create a new undo group.
+
+           This returns an object which should be used as a context manager.
+           If you would like N actions to be considered as atomic for
+           undo/redo, use this:
+
+                 with buffer.new_undo_group():
+                     action 1
+                     ...
+                     action N
+        """
+        return _UndoRedoContext(self)
 
 
 @extend_gps

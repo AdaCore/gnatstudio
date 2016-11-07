@@ -3596,13 +3596,6 @@ class EditorBuffer(object):
         """
         pass  # implemented in Ada
 
-    def finish_undo_group(self):
-        """
-        Cancels the grouping of commands on the editor. See
-        :func:`GPS.EditorBuffer.start_undo_group`.
-        """
-        pass  # implemented in Ada
-
     @staticmethod
     def get(file='current editor', force=False, open=True):
         """
@@ -3897,14 +3890,6 @@ class EditorBuffer(object):
 
         .. seealso:: :func:`GPS.EditorBuffer.is_read_only`
 
-        """
-        pass  # implemented in Ada
-
-    def start_undo_group(self):
-        """
-        Starts grouping commands on the editor. All future editions are
-        considered as belonging to the same group. :func:`finish_undo_group`
-        should be called once for every call to :func:`start_undo_group`.
         """
         pass  # implemented in Ada
 

@@ -759,6 +759,8 @@ Classes
 
    .. automethod:: GPS.EditorBuffer.main_cursor
 
+   .. automethod:: GPS.EditorBuffer.new_undo_group
+
    .. automethod:: GPS.EditorBuffer.paste
 
    .. automethod:: GPS.EditorBuffer.redo

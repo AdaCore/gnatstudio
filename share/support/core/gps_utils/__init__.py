@@ -199,16 +199,14 @@ def save_excursion(f, args, kwargs, undo_group=True):
     start = buffer.selection_start().create_mark()
     end = buffer.selection_end().create_mark(left_gravity=False)
 
-    if undo_group:
-        buffer.start_undo_group()
-
     try:
-        return f(*args, **kwargs)
+        if undo_group:
+            with buffer.new_undo_group():
+                return f(*args, **kwargs)
+        else:
+            return f(*args, **kwargs)
 
     finally:
-        if undo_group:
-            buffer.finish_undo_group()
-
         try:
             # View might have been destroyed
             mdi.raise_window()

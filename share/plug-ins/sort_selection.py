@@ -63,7 +63,6 @@ def sort_selection(revert=False):
 
     if revert:
         lines.reverse()
-    ed.start_undo_group()
-    ed.delete(start, to)
-    ed.insert(start, "\n".join(lines) + "\n")
-    ed.finish_undo_group()
+    with ed.new_undo_group():
+        ed.delete(start, to)
+        ed.insert(start, "\n".join(lines) + "\n")

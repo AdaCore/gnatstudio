@@ -64,7 +64,9 @@ def rectangle_copy():
 @interactive("Editor", "Source editor")
 @with_save_excursion
 def rectangle_paste():
-    """Paste the last entry in the clipboard as a rectangle in the current editor"""
+    """Paste the last entry in the clipboard as a rectangle
+       in the current editor
+    """
     Rectangle.paste(loc=EditorBuffer.get().current_view().cursor())
 
 
@@ -157,7 +159,7 @@ class Rectangle(object):
         end = buffer.selection_end()
 
         if start.column() == end.column():
-         # An empty rectangle ?
+            # An empty rectangle ?
             return Rectangle(
                 buffer=buffer,
                 start_line=start.line(),
@@ -196,8 +198,8 @@ class Rectangle(object):
     def open(self):
         """Insert blank spaces to fill the selected rectangle.
          This pushes its text to the right"""
-        self.__apply(self.__insert_func, self.__open_line_func, ' '
-                     * (self.end_col - self.start_col + 1))
+        self.__apply(self.__insert_func, self.__open_line_func, ' ' *
+                     (self.end_col - self.start_col + 1))
 
     def copy(self):
         """Copy the selected rectangle into the clipboard"""
@@ -240,16 +242,15 @@ class Rectangle(object):
             start = loc
             selection = Clipboard.contents()[Clipboard.current()]
 
-            buffer.start_undo_group()
-            for line in selection.splitlines():
-                buffer.insert(start, line)
-                start = buffer.at(start.line() + 1,
-                                  start.column())
-            buffer.finish_undo_group()
+            with buffer.new_undo_group():
+                for line in selection.splitlines():
+                    buffer.insert(start, line)
+                    start = buffer.at(start.line() + 1,
+                                      start.column())
         except:
 
-            Logger('TESTSUITE').log('Unexpected exception: '
-                                    + traceback.format_exc())
+            Logger('TESTSUITE').log('Unexpected exception: ' +
+                                    traceback.format_exc())
 
     def __cut_func(self, start, end, in_clipboard, copy):
         if in_clipboard:
@@ -298,36 +299,35 @@ class Rectangle(object):
 
         try:
             line = self.start_line
-            self.buffer.start_undo_group()
-
-            while line <= self.end_line:
-                # Some lines might not include enough characters for the
-                # rectangle
-                eol = EditorLocation(self.buffer, line, 1).end_of_line()
-                if eol.column() > self.end_col:
-                    endcolumn = EditorLocation(self.buffer, line, self.end_col)
-                    current = EditorLocation(self.buffer, line, self.start_col)
-                    func(current, endcolumn, *args)
-                else:
-                    if eol.column() < self.start_col:
-                        if short_line_func:
-                            short_line_func(func, eol, *args)
+            with self.buffer.new_undo_group():
+                while line <= self.end_line:
+                    # Some lines might not include enough characters for the
+                    # rectangle
+                    eol = EditorLocation(self.buffer, line, 1).end_of_line()
+                    if eol.column() > self.end_col:
+                        endcolumn = EditorLocation(self.buffer,
+                                                   line, self.end_col)
+                        current = EditorLocation(self.buffer,
+                                                 line, self.start_col)
+                        func(current, endcolumn, *args)
                     else:
-                        current = EditorLocation(self.buffer, line,
-                                                 self.start_col)
-                        eol = current.end_of_line()
-                        if eol.column() != 1:
-                            func(current, eol - 1, *args)
+                        if eol.column() < self.start_col:
+                            if short_line_func:
+                                short_line_func(func, eol, *args)
                         else:
-                            func(current, eol, *args)
+                            current = EditorLocation(self.buffer, line,
+                                                     self.start_col)
+                            eol = current.end_of_line()
+                            if eol.column() != 1:
+                                func(current, eol - 1, *args)
+                            else:
+                                func(current, eol, *args)
 
-                line += 1
-
-            self.buffer.finish_undo_group()
+                    line += 1
 
         except:
-            Logger('TESTSUITE').log('Unexpected exception: '
-                                    + traceback.format_exc())
+            Logger('TESTSUITE').log('Unexpected exception: ' +
+                                    traceback.format_exc())
 
     def __sort_func(self, s1, s2):
         """Internal routine comparing s1 and s2 values for the column of the
@@ -360,17 +360,16 @@ class Rectangle(object):
         start = self.buffer.selection_start().beginning_of_line()
         to = self.buffer.selection_end().end_of_line()
 
-      # get all the lines
+        # get all the lines
         selection = self.buffer.get_chars(start, to)
 
         lines = string.split(selection, '\n')
-      # strip off extraneous trailing "" line
+        # strip off extraneous trailing "" line
         lines = lines[:-1]
         lines.sort(self.__sort_func)
 
         if revert:
             lines.reverse()
-        self.buffer.start_undo_group()
-        self.buffer.delete(start, to)
-        self.buffer.insert(start, '\n'.join(lines) + '\n')
-        self.buffer.finish_undo_group()
+        with self.buffer.new_undo_group():
+            self.buffer.delete(start, to)
+            self.buffer.insert(start, '\n'.join(lines) + '\n')

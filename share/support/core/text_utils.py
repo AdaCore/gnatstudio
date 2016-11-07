@@ -389,10 +389,9 @@ def move_block(chars=1):
                     break
             newtext += [line]
 
-    buffer.start_undo_group()
-    buffer.delete(beg_loc, end_loc)
-    buffer.insert(buffer.at(start_line, 1), "\n".join(newtext))
-    buffer.finish_undo_group()
+    with buffer.new_undo_group():
+        buffer.delete(beg_loc, end_loc)
+        buffer.insert(buffer.at(start_line, 1), "\n".join(newtext))
 
     if had_selection:
         # Reselect the range of lines
@@ -579,9 +578,8 @@ def delete_line():
     end = location.end_of_line()
 
     # Do the deletion
-    buffer.start_undo_group()
-    buffer.delete(start, end)
-    buffer.finish_undo_group()
+    with buffer.new_undo_group():
+        buffer.delete(start, end)
 
 
 def kill_line(location=None, count=1):
@@ -832,25 +830,26 @@ def delete(forward=True):
     ed = GPS.EditorBuffer.get()
     mc = ed.main_cursor()
 
-    if ed.has_slave_cursors():
-        ed.start_undo_group()
+    def do():
+        def _delete(s, e):
+            s, e = (s, e) if s < e else (e, s)
+            ed.delete(s, e.forward_char(-1))
 
-    def _delete(s, e):
-        s, e = (s, e) if s < e else (e, s)
-        ed.delete(s, e.forward_char(-1))
-
-    no_selection = mc.mark().location() == mc.sel_mark().location()
-    for c in ed.cursors():
-        if no_selection:
-            start = c.mark().location()
-            end = start.forward_char(1 if forward else -1)
-            if start != end:
-                _delete(start, end)
-        else:
-            _delete(c.mark().location(), c.sel_mark().location())
+        no_selection = mc.mark().location() == mc.sel_mark().location()
+        for c in ed.cursors():
+            if no_selection:
+                start = c.mark().location()
+                end = start.forward_char(1 if forward else -1)
+                if start != end:
+                    _delete(start, end)
+            else:
+                _delete(c.mark().location(), c.sel_mark().location())
 
     if ed.has_slave_cursors():
-        ed.finish_undo_group()
+        with ed.new_undo_group():
+            do()
+    else:
+        do()
 
 
 def is_space(char):
@@ -991,11 +990,10 @@ def transpose_chars():
     cursor = buffer.current_view().cursor()
     if cursor > buffer.beginning_of_buffer():
         c = cursor.get_char()
-        buffer.start_undo_group()
-        buffer.delete(cursor, cursor)
-        buffer.insert(cursor - 1, c)
-        buffer.current_view().goto(cursor + 1)
-        buffer.finish_undo_group()
+        with buffer.new_undo_group():
+            buffer.delete(cursor, cursor)
+            buffer.insert(cursor - 1, c)
+            buffer.current_view().goto(cursor + 1)
 
 
 @interactive("Editor", "Writable source editor", name="Transpose lines")
@@ -1008,14 +1006,13 @@ def transpose_lines(location=None):
         location = GPS.EditorBuffer.get().current_view().cursor()
     buffer = location.buffer()
     if location.line() < buffer.lines_count():
-        buffer.start_undo_group()
-        start = location.beginning_of_line()
-        end = location.end_of_line()
-        text = buffer.get_chars(start, end)
-        buffer.delete(start, end)
-        buffer.insert(start.forward_line(-1), text)
-        buffer.current_view().goto(start.end_of_line() + 1)
-        buffer.finish_undo_group()
+        with buffer.new_undo_group():
+            start = location.beginning_of_line()
+            end = location.end_of_line()
+            text = buffer.get_chars(start, end)
+            buffer.delete(start, end)
+            buffer.insert(start.forward_line(-1), text)
+            buffer.current_view().goto(start.end_of_line() + 1)
 
 
 @interactive("Editor", "Writable source editor", name="open line")
@@ -1034,13 +1031,12 @@ def join_line():
     """
     buffer = GPS.EditorBuffer.get()
     eol = buffer.current_view().cursor().end_of_line()
-    buffer.start_undo_group()
-    buffer.current_view().goto(eol)
-    buffer.delete(eol, eol)  # Newline character
-    delete_spaces(backward=False, forward=True, leave_one=False)
-    if not is_space(eol.forward_char(-1).get_char()):
-        buffer.insert(eol, " ")
-    buffer.finish_undo_group()
+    with buffer.new_undo_group():
+        buffer.current_view().goto(eol)
+        buffer.delete(eol, eol)  # Newline character
+        delete_spaces(backward=False, forward=True, leave_one=False)
+        if not is_space(eol.forward_char(-1).get_char()):
+            buffer.insert(eol, " ")
 
 
 def apply_func_to_word(func, location=None):
@@ -1052,11 +1048,10 @@ def apply_func_to_word(func, location=None):
     if not location:
         location = GPS.EditorBuffer.get().current_view().cursor()
     buffer = location.buffer()
-    buffer.start_undo_group()
-    end = location.forward_word()
-    text = func(buffer.get_chars(location, end))
-    replace(location, end, text)
-    buffer.finish_undo_group()
+    with buffer.new_undo_group():
+        end = location.forward_word()
+        text = func(buffer.get_chars(location, end))
+        replace(location, end, text)
 
 
 @interactive("Editor", "Writable source editor", name="Upper case word")
@@ -1087,41 +1082,40 @@ def center_line():
     location = buffer.current_view().cursor()
     initial = location.create_mark()
 
-    buffer.start_undo_group()
-    start = location.beginning_of_line()
-    end = location.end_of_line()
-    text = buffer.get_chars(start, end)
-    if text[0:2] == "--" or text[0:2] == "//" or text[0:2] == "##":
-        start = start + 2
+    with buffer.new_undo_group():
+        start = location.beginning_of_line()
+        end = location.end_of_line()
+        text = buffer.get_chars(start, end)
+        if text[0:2] == "--" or text[0:2] == "//" or text[0:2] == "##":
+            start = start + 2
 
-    if text[-3:] == "--\n" or text[-3:] == "//\n" or text[-3:] == "##\n":
-        # Use right comment characters to center the text
-        end = end - 3
-        text = buffer.get_chars(start, end).strip()
-        spaces = end.column() - start.column() + 1 - len(text)
-        before = spaces / 2
-        after = spaces / 2
-        if before + after != spaces:
-            after = after + 1
-        buffer.delete(start, end)
-        buffer.insert(start, ' ' * before + text + ' ' * after)
-    else:
-        # No right comment characters, use the highlight column to center the
-        # text
-        col = GPS.Preference("Src-Editor-Highlight-Column").get()
-        text = buffer.get_chars(start, end).strip()
-        spaces = int(col) - start.column() - len(text)
-        before = spaces / 2
-        buffer.delete(start, end - 1)
-        buffer.insert(start, ' ' * before + text)
+        if text[-3:] == "--\n" or text[-3:] == "//\n" or text[-3:] == "##\n":
+            # Use right comment characters to center the text
+            end = end - 3
+            text = buffer.get_chars(start, end).strip()
+            spaces = end.column() - start.column() + 1 - len(text)
+            before = spaces / 2
+            after = spaces / 2
+            if before + after != spaces:
+                after = after + 1
+            buffer.delete(start, end)
+            buffer.insert(start, ' ' * before + text + ' ' * after)
+        else:
+            # No right comment characters, use the highlight column to center
+            # the text
+            col = GPS.Preference("Src-Editor-Highlight-Column").get()
+            text = buffer.get_chars(start, end).strip()
+            spaces = int(col) - start.column() - len(text)
+            before = spaces / 2
+            buffer.delete(start, end - 1)
+            buffer.insert(start, ' ' * before + text)
 
-    # Move to next line
-    buffer.current_view().goto(GPS.EditorLocation
-                               (buffer,
-                                line=initial.location().forward_line(
-                                    1).line(),
-                                column=location.column()))
-    buffer.finish_undo_group()
+        # Move to next line
+        buffer.current_view().goto(GPS.EditorLocation
+                                   (buffer,
+                                    line=initial.location().forward_line(
+                                        1).line(),
+                                    column=location.column()))
 
 
 class BlockIterator:

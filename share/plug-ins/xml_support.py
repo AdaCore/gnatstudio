@@ -93,12 +93,11 @@ def quote_selection():
     if min == max:
         (min, max) = (buffer.current_view().cursor().beginning_of_line(),
                       buffer.current_view().cursor().end_of_line())
-    buffer.start_undo_group()
-    text = buffer.get_chars(min, max)
-    text = xml.sax.saxutils.escape(text)
-    buffer.delete(min, max)
-    buffer.insert(min, text)
-    buffer.finish_undo_group()
+    with buffer.new_undo_group():
+        text = buffer.get_chars(min, max)
+        text = xml.sax.saxutils.escape(text)
+        buffer.delete(min, max)
+        buffer.insert(min, text)
 
 
 @interactive('XML', filter=in_xml_file, name='xml view as tree')

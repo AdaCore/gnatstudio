@@ -30,7 +30,9 @@ import os_utils
 from gps_utils import *
 
 Preference("Plugins/pipe/bgcolor").create(
-    "Background color", "color", """Background color for the command window where you enter the command to execute""", "yellow")
+    "Background color", "color",
+    "Background color for the command window"
+    " where you enter the command to execute", "yellow")
 
 
 def sel_pipe(command, buffer=None):
@@ -55,17 +57,17 @@ def sel_pipe(command, buffer=None):
     proc.send(text)
     proc.send(chr(4))  # Close input
     output = proc.get_result()
-    buffer.start_undo_group()
-
-    if start != end:
-        buffer.delete(start, end)
-    buffer.insert(start, output.rstrip())
-    buffer.finish_undo_group()
+    with buffer.new_undo_group():
+        if start != end:
+            buffer.delete(start, end)
+        buffer.insert(start, output.rstrip())
 
 
 @interactive(name="Fmt selection")
 def fmt_selection():
-    """Process the current selection through the "fmt" command to reformat paragraphs"""
+    """Process the current selection
+       through the "fmt" command to reformat paragraphs
+    """
     width = Preference("Src-Editor-Highlight-Column").get()
     buffer = EditorBuffer.get()
     prefix = None
@@ -78,7 +80,7 @@ def fmt_selection():
         loc = loc + 1
 
     prefix = '-p """' + (' ' * (loc.column() - 1)) + prefix + '"""'
-    sel_pipe("fmt " + prefix + " -w " + `width`, buffer)
+    sel_pipe("fmt " + prefix + " -w " + repr(width), buffer)
 
 
 class ShellProcess (CommandWindow):
