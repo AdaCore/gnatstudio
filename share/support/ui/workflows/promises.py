@@ -535,6 +535,19 @@ class ProcessWrapper(object):
 
         return p
 
+    def wait_line(self):
+        """
+        Wait for the next line to be available, and return it. The line
+        does not include the trailing \n
+        See documentation for `wait_until_match`.
+
+        :return: a promise
+        """
+        p = Promise()
+        s = self.wait_until_match("^.+\n")
+        s.then(lambda line: p.resolve(line[:-1] if line else None))
+        return p
+
     def wait_until_terminate(self):
         """
         Called by user. Make a promise to them that:

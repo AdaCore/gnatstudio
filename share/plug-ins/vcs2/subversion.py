@@ -28,7 +28,7 @@ class Subversion(core.File_Based_VCS):
                 directory=os.path.join(self.repo, '..'))
 
             while True:
-                line = yield p.wait_until_match('^.+\n')
+                line = yield p.wait_line()
                 if line is None:
                     break
 

@@ -30,12 +30,12 @@ class Git(core.VCS):
             ['git', 'ls-tree', '-r', 'HEAD', '--name-only'],
             directory=dir)
         while True:
-            line = yield p.wait_until_match('^.+\n')
+            line = yield p.wait_line()
             if line is None:
                 GPS.Logger("GIT").log("finished ls-tree")
                 yield all_files
                 break
-            all_files.add(GPS.File(os.path.join(dir, line[:-1])))
+            all_files.add(GPS.File(os.path.join(dir, line)))
 
     def __git_status(self, s):
         """
@@ -47,7 +47,7 @@ class Git(core.VCS):
             ['git', 'status', '--porcelain', '--ignored'],
             directory=dir)
         while True:
-            line = yield p.wait_until_match('^.+\n')
+            line = yield p.wait_line()
             if line is None:
                 GPS.Logger("GIT").log("finished git-status")
                 break
@@ -79,9 +79,8 @@ class Git(core.VCS):
                         status = status | GPS.VCS2.Status.DELETED
 
                 # Filter some obvious files to speed things up
-                if line[-3:-1] != '.o' and line[-5:-1] != '.ali':
-                    s.set_status(
-                        GPS.File(os.path.join(dir, line[3:-1])), status)
+                if line[-3:] != '.o' and line[-5:] != '.ali':
+                    s.set_status(GPS.File(os.path.join(dir, line[3:])), status)
 
     def async_fetch_status_for_files(self, files):
         self.async_fetch_status_for_all_files(files)
