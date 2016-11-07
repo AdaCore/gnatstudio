@@ -25,6 +25,7 @@ with GNATCOLL.Scripts;  use GNATCOLL.Scripts;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GNATCOLL.Xref;     use GNATCOLL.Xref;
 with GPS.Markers;       use GPS.Markers;
+with Commands;          use Commands;
 with Language;          use Language;
 with System;
 with XML_Utils;
@@ -582,6 +583,17 @@ package GPS.Editors is
    --  Check whether there is a mark with that name in the buffer, and return
    --  it. A Nil_Editor_Mark is returned if there is no such mark
 
+   -------------------------
+   --  Undo/Redo handling --
+   -------------------------
+
+   --  There are two APIs for handling undo/redo:
+   --   - the Start_Undo_Group/Finish_Undo_Group pair: this should be called
+   --     only from
+   --        - the GPS Python API, to provide the high-level context manager
+   --        - GNATbench
+   --    - the rest of GPS should call Current_Undo_Group or New_Undo_Group
+
    procedure Start_Undo_Group (This : Editor_Buffer) is abstract;
    --  Starts grouping commands on the editor. All future editions will be
    --  considered as belonging to the same group. finish_undo_group should be
@@ -590,6 +602,20 @@ package GPS.Editors is
    procedure Finish_Undo_Group (This : Editor_Buffer) is abstract;
    --  ancels the grouping of commands on the editor. See
    --  GPS.EditorBuffer.start_undo_group
+
+   function Current_Undo_Group (This : Editor_Buffer) return Group_Block;
+   pragma Annotate (AJIS, Bind, Current_Undo_Group, False);
+   pragma Annotate (AJIS, Bind, Current_Undo_Group,
+                    "Allow_Java_Creation_And_Child_Types");
+   --  Enter the current undo/redo group. The group is in effect until
+   --  Group_Block is finalized: see documentation in Commands.
+
+   function New_Undo_Group (This : Editor_Buffer) return Group_Block;
+   pragma Annotate (AJIS, Bind, New_Undo_Group, False);
+   pragma Annotate (AJIS, Bind, New_Undo_Group,
+                    "Allow_Java_Creation_And_Child_Types");
+   --  Enter a new undo/redo group. The group is in effect until
+   --  Group_Block is finalized: see documentation in Commands.
 
    procedure Undo (This : Editor_Buffer) is abstract;
    procedure Redo (This : Editor_Buffer) is abstract;

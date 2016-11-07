@@ -71,6 +71,7 @@ with Src_Editor_Module.Markers;  use Src_Editor_Module.Markers;
 with Src_Editor_Module;          use Src_Editor_Module;
 with Src_Editor_View;            use Src_Editor_View;
 with UTF8_Utils;
+with Commands;                   use Commands;
 with Vsearch;                    use Vsearch;
 
 package body Src_Contexts is
@@ -2271,38 +2272,42 @@ package body Src_Contexts is
       --  columns
 
       Set_Avoid_Cursor_Move_On_Changes (Buffer, True);
-      Start_Undo_Group (Buffer);
-      Buffer.Disable_Highlighting;
 
-      for M of reverse Matches loop
-         if Is_Empty_Match (M) then
-            Insert
-              (Buffer,
-               Editable_Line_Type (M.Start.Line),
-               M.Start.Column,
-               Replacement.Replacement_Text (M, ""));
-         else
-            declare
-               Text : constant String := Get_Text
+      declare
+         G : Group_Block := Buffer.New_Undo_Group;
+      begin
+         Buffer.Disable_Highlighting;
+
+         for M of reverse Matches loop
+            if Is_Empty_Match (M) then
+               Insert
                  (Buffer,
                   Editable_Line_Type (M.Start.Line),
                   M.Start.Column,
-                  Editable_Line_Type (M.Finish.Line),
-                  M.Finish.Column + 1);
-            begin
-               Replace_Slice
-                 (Buffer,
-                  Editable_Line_Type (M.Start.Line),
-                  M.Start.Column,
-                  Editable_Line_Type (M.Finish.Line),
-                  M.Finish.Column + 1,
-                  Replacement.Replacement_Text (M, Text));
-            end;
-         end if;
-      end loop;
+                  Replacement.Replacement_Text (M, ""));
+            else
+               declare
+                  Text : constant String := Get_Text
+                    (Buffer,
+                     Editable_Line_Type (M.Start.Line),
+                     M.Start.Column,
+                     Editable_Line_Type (M.Finish.Line),
+                     M.Finish.Column + 1);
+               begin
+                  Replace_Slice
+                    (Buffer,
+                     Editable_Line_Type (M.Start.Line),
+                     M.Start.Column,
+                     Editable_Line_Type (M.Finish.Line),
+                     M.Finish.Column + 1,
+                     Replacement.Replacement_Text (M, Text));
+               end;
+            end if;
+         end loop;
 
-      Buffer.Enable_Highlighting;
-      Finish_Undo_Group (Buffer);
+         Buffer.Enable_Highlighting;
+      end;
+
       Set_Avoid_Cursor_Move_On_Changes (Buffer, False);
 
       Buffer.Get_Kernel.Get_Construct_Database.Update_Contents

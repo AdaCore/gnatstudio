@@ -46,6 +46,7 @@ with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Module.Markers; use Src_Editor_Module.Markers;
 with Src_Editor_Module.Shell;
 with Find_Utils;                use Find_Utils;
+with Commands;                  use Commands;
 with Language;                  use Language;
 with Language.Tree;
 with Src_Contexts;              use Src_Contexts;
@@ -501,6 +502,11 @@ package body Src_Editor_Module.Editors is
      (This : Src_Editor_Buffer; Extend : Boolean);
    overriding function Extend_Existing_Selection
      (This : Src_Editor_Buffer) return Boolean;
+
+   overriding function Current_Undo_Group
+     (This : Src_Editor_Buffer) return Group_Block;
+   overriding function New_Undo_Group
+     (This : Src_Editor_Buffer) return Group_Block;
 
    function Convert is new Ada.Unchecked_Conversion
      (Buffer_Reference_Access, System.Address);
@@ -2464,6 +2470,26 @@ package body Src_Editor_Module.Editors is
    begin
       This.Contents.Buffer.Set_Extend_Existing_Selection (Extend);
    end Set_Extend_Existing_Selection;
+
+   ------------------------
+   -- Current_Undo_Group --
+   ------------------------
+
+   overriding function Current_Undo_Group
+     (This : Src_Editor_Buffer) return Group_Block is
+   begin
+      return This.Contents.Buffer.Current_Undo_Group;
+   end Current_Undo_Group;
+
+   --------------------
+   -- New_Undo_Group --
+   --------------------
+
+   overriding function New_Undo_Group
+     (This : Src_Editor_Buffer) return Group_Block is
+   begin
+      return This.Contents.Buffer.New_Undo_Group;
+   end New_Undo_Group;
 
    -------------------
    -- Set_Read_Only --

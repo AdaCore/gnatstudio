@@ -611,11 +611,10 @@ package body Src_Editor_Buffer is
       From, To : Gtk_Text_Iter;
       Success : Boolean;
       pragma Unreferenced (Success);
+
+      G : Group_Block := New_Group (Buffer.Queue);
    begin
       --  This procedure is called from GPS.Kernel.Clipboard.Paste_Clipboard
-
-      Buffer.Start_Undo_Group;
-
       if Buffer.Has_MC_Clipboard then
          for C of Get_Cursors (Source_Buffer (Buffer)) loop
             if not C.Is_Main_Cursor then
@@ -643,8 +642,6 @@ package body Src_Editor_Buffer is
       end if;
 
       Set_Cursors_Auto_Sync (Source_Buffer (Buffer));
-
-      Buffer.Finish_Undo_Group;
    end Paste_Clipboard;
 
    -------------------
@@ -3918,55 +3915,56 @@ package body Src_Editor_Buffer is
                & From_File.Display_Full_Name, Mode => GPS.Kernel.Error);
          end if;
 
-         Buffer.Start_Undo_Group;
-
-         if not Is_Auto_Save then
-            if not File_Is_New then
-               Emit_By_Name (Get_Object (Buffer), Signal_Closed & ASCII.NUL);
-               File_Closed_Hook.Run (Buffer.Kernel, From_File);
-               Reset_Buffer (Buffer);
-            else
-               Buffer.Start_Inserting;  --  no undo should be available
-            end if;
-
-            if Lang_Autodetect then
-               Set_Language
-                 (Buffer, Get_Language_From_File
-                    (Get_Language_Handler (Buffer.Kernel), From_File));
-            end if;
-
-            Set_Charset (Buffer, Get_File_Charset (From_File));
-            Set_Trailing_Space_Policy
-              (Buffer, From_File, Props.Trailing_Spaces_Found);
-            Set_Trailing_Lines_Policy
-              (Buffer, From_File, Props.Trailing_Lines_Found);
-
-            if Props.CR_Found then
-               Buffer.Line_Terminator := CR_LF;
-            else
-               Buffer.Line_Terminator := LF;
-            end if;
-
-         else
-            Reset_Buffer (Buffer);
-         end if;
-
-         --  Insert the new text
-
+         declare
+            G : Group_Block := New_Group (Buffer.Queue);
          begin
-            Insert_At_Cursor (Buffer, UTF8, Gint (Length));
-         exception
-            when E : others =>
-               Trace (Me, E);
+            if not Is_Auto_Save then
+               if not File_Is_New then
+                  Emit_By_Name (Get_Object (Buffer),
+                                Signal_Closed & ASCII.NUL);
+                  File_Closed_Hook.Run (Buffer.Kernel, From_File);
+                  Reset_Buffer (Buffer);
+               else
+                  Buffer.Start_Inserting;  --  no undo should be available
+               end if;
+
+               if Lang_Autodetect then
+                  Set_Language
+                    (Buffer, Get_Language_From_File
+                       (Get_Language_Handler (Buffer.Kernel), From_File));
+               end if;
+
+               Set_Charset (Buffer, Get_File_Charset (From_File));
+               Set_Trailing_Space_Policy
+                 (Buffer, From_File, Props.Trailing_Spaces_Found);
+               Set_Trailing_Lines_Policy
+                 (Buffer, From_File, Props.Trailing_Lines_Found);
+
+               if Props.CR_Found then
+                  Buffer.Line_Terminator := CR_LF;
+               else
+                  Buffer.Line_Terminator := LF;
+               end if;
+
+            else
+               Reset_Buffer (Buffer);
+            end if;
+
+            --  Insert the new text
+
+            begin
+               Insert_At_Cursor (Buffer, UTF8, Gint (Length));
+            exception
+               when E : others =>
+                  Trace (Me, E);
+            end;
+
+            g_free (UTF8);
+
+            if not Is_Auto_Save and then File_Is_New then
+               Buffer.End_Inserting;  --  reenable undo
+            end if;
          end;
-
-         g_free (UTF8);
-
-         if not Is_Auto_Save and then File_Is_New then
-            Buffer.End_Inserting;  --  reenable undo
-         end if;
-
-         Buffer.Finish_Undo_Group;
 
          if Is_Auto_Save then
             Buffer.Saved_Position := 0;
@@ -6804,9 +6802,8 @@ package body Src_Editor_Buffer is
             Trace (Me, E);
       end Strip_Blanks;
 
+      G : Group_Block := New_Group (Buffer.Queue);
    begin
-      Buffer.Start_Undo_Group;
-
       if not As_Is then
          Word_Added (Source_Buffer (Buffer));
       end if;
@@ -6856,9 +6853,6 @@ package body Src_Editor_Buffer is
             Set_Cursors_Sync (+Buffer, Current_Sync_Mode);
          end;
       end if;
-
-      Buffer.Finish_Undo_Group;
-
    end Newline_And_Indent;
 
    ---------------
@@ -8560,6 +8554,28 @@ package body Src_Editor_Buffer is
       End_Action (Buffer);
       End_Group (Buffer.Queue);
    end Finish_Undo_Group;
+
+   ------------------------
+   -- Current_Undo_Group --
+   ------------------------
+
+   function Current_Undo_Group
+     (Buffer : access Source_Buffer_Record'Class) return Group_Block is
+   begin
+      End_Action (Buffer);
+      return Current_Group (Buffer.Queue);
+   end Current_Undo_Group;
+
+   --------------------
+   -- New_Undo_Group --
+   --------------------
+
+   function New_Undo_Group
+     (Buffer : access Source_Buffer_Record'Class) return Group_Block is
+   begin
+      End_Action (Buffer);
+      return New_Group (Buffer.Queue);
+   end New_Undo_Group;
 
    -------------------------
    -- Enable_Highlighting --

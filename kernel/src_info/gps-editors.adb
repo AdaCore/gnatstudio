@@ -666,4 +666,28 @@ package body GPS.Editors is
         (This).New_Location (Line, Visible_Column_Type'(1));
    end New_Location_At_Line;
 
+   ------------------------
+   -- Current_Undo_Group --
+   ------------------------
+
+   pragma Warnings (Off); --  Kill the "unreachable code" warning
+
+   function Current_Undo_Group (This : Editor_Buffer) return Group_Block is
+   begin
+      raise Program_Error; --  Intended: this should be overriden
+      return G : Group_Block do null; end return;
+   end Current_Undo_Group;
+
+   --------------------
+   -- New_Undo_Group --
+   --------------------
+
+   function New_Undo_Group (This : Editor_Buffer) return Group_Block is
+   begin
+      raise Program_Error; --  Intended: this should be overriden
+      return G : Group_Block do null; end return;
+   end New_Undo_Group;
+
+   pragma Warnings (On);
+
 end GPS.Editors;

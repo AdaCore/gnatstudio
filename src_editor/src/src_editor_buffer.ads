@@ -1194,6 +1194,21 @@ package Src_Editor_Buffer is
    procedure Start_Undo_Group (Buffer : access Source_Buffer_Record'Class);
    procedure Finish_Undo_Group (Buffer : access Source_Buffer_Record'Class);
    --  Start / Finish an undo group on this buffer.
+   --  This shouldn't be called except by GNATbench and by the Python
+   --  interfacing in GPS. From the Ada code in GPS, call Current_Undo_Group
+   --  and New_Undo_Group.
+
+   function Current_Undo_Group
+     (Buffer : access Source_Buffer_Record'Class) return Group_Block;
+   --  Enter the current undo/redo group: as long as we are in the scope
+   --  where Group_Block is valid, editor commands will go to the current
+   --  undo group.
+
+   function New_Undo_Group
+     (Buffer : access Source_Buffer_Record'Class) return Group_Block;
+   --  Enter a new undo/redo group: as long as we are in the scope
+   --  where Group_Block is valid, editor commands will go to a new
+   --  undo group, separate from the previous one and the following one.
 
    procedure Enable_Highlighting (Buffer : access Source_Buffer_Record'Class);
    procedure Disable_Highlighting (Buffer : access Source_Buffer_Record'Class);

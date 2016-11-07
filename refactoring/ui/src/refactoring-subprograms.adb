@@ -709,9 +709,9 @@ package body Refactoring.Subprograms is
       declare
          Buffer : constant Editor_Buffer'Class :=
            Context.Code.Context.Buffer_Factory.Get (Context.Code.File);
+         G      : constant Group_Block :=
+           Buffer.New_Undo_Group;
       begin
-         Buffer.Start_Undo_Group;
-
          Generate_Extracted_Method
            (Name        => Method_Name,
             Context     => Context,
@@ -794,13 +794,6 @@ package body Refactoring.Subprograms is
                    "Extract_Method: Couldn't compute body of new subprogram");
             Result := Failure;
          end if;
-
-         Buffer.Finish_Undo_Group;
-      exception
-         when E : others =>
-            Buffer.Finish_Undo_Group;
-            Trace (Me, E);
-            return Failure;
       end;
 
       return Result;

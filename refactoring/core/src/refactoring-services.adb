@@ -21,6 +21,7 @@ with Ada.Unchecked_Deallocation;
 with Refactoring.Buffer_Helpers; use Refactoring.Buffer_Helpers;
 
 with Basic_Types;                use Basic_Types;
+with Commands;                   use Commands;
 with GNAT.Strings;               use GNAT.Strings;
 with GPS.Editors;                use GPS.Editors;
 with Language;                   use Language;
@@ -1377,15 +1378,13 @@ package body Refactoring.Services is
       end if;
 
       declare
+         G : Group_Block := Editor.New_Undo_Group;
       begin
-         Editor.Start_Undo_Group;
-
          if Replaced_Length > 0 then
             Editor.Delete (Loc_Start, Loc_End);
          end if;
 
          if Text = "" then
-            Editor.Finish_Undo_Group;
             return True;
          end if;
 
@@ -1433,16 +1432,13 @@ package body Refactoring.Services is
                Editor.New_Location_At_Line
                  (Line + Lines_Count (Text) - 1).End_Of_Line);
          end if;
-
-         Editor.Finish_Undo_Group;
-      exception
-         when E : others =>
-            Editor.Finish_Undo_Group;
-            Trace (Me, E);
-            return False;
       end;
 
       return True;
+   exception
+         when E : others =>
+            Trace (Me, E);
+            return False;
    end Insert_Text;
 
    ----------------------------
