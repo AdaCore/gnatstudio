@@ -1237,14 +1237,23 @@ package body GPS.Kernel.Preferences is
          Label => -"Hidden files pattern",
          Doc   => -"Match basenames of files to hide in the GUI.",
          Default => "^((\.[^\.]+.*)|CVS)$",
-         Path    => -":Project view");
+         Path    => -":Views");
 
       Show_Hidden_Files := Kernel.Preferences.Create
         (Name   => "explorer-show-hidden-directories",
          Label  => -"Show hidden files",
          Doc    => -"Hide files that match the Hide Files Pattern preference",
          Default => False,
-         Path    => -":Project view");
+         Path    => -":Views");
+
+      Show_Ellipsis := Kernel.Preferences.Create
+        (Name    => "explorer-show-ellipsis",
+         Default => False,
+         Label   => -"Ellipsize long file names in views",
+         Doc     =>
+           -("Long file names are truncated to fit available space,"
+             & "  instead of using horizontal scrolling"),
+         Path    => -":Views");
 
       -- Wizards --
 

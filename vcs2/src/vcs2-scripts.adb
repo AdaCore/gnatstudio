@@ -34,12 +34,12 @@ package body VCS2.Scripts is
       Default_Status : VCS_File_Status;
    end record;
    overriding function Create_Engine
-     (Self : not null access Script_Engine_Factory;
-      Repo : String)
+     (Self        : not null access Script_Engine_Factory;
+      Working_Dir : Virtual_File)
      return not null VCS_Engine_Access;
-   overriding function Find_Repo
+   overriding function Find_Working_Directory
      (Self  : not null access Script_Engine_Factory;
-      File  : Virtual_File) return String;
+      File  : Virtual_File) return Virtual_File;
 
    type Script_Engine is new VCS_Engine with record
       Factory : access Script_Engine_Factory'Class;
@@ -172,9 +172,9 @@ package body VCS2.Scripts is
    -------------------
 
    overriding function Create_Engine
-     (Self : not null access Script_Engine_Factory;
-      Repo : String)
-     return not null VCS_Engine_Access
+     (Self        : not null access Script_Engine_Factory;
+      Working_Dir : Virtual_File)
+      return not null VCS_Engine_Access
    is
       R : constant access Script_Engine := new Script_Engine;
       Script : constant Scripting_Language := Self.Construct.Get_Script;
@@ -182,7 +182,7 @@ package body VCS2.Scripts is
       Inst   : Class_Instance;
 
    begin
-      Data.Set_Nth_Arg (1, Repo);
+      Data.Set_Nth_Arg (1, Working_Dir.Display_Full_Name);
       Inst := Self.Construct.Execute (Data);  -- create the pyton instance
       Free (Data);
 
@@ -199,19 +199,26 @@ package body VCS2.Scripts is
    -- Find_Repo --
    ---------------
 
-   overriding function Find_Repo
+   overriding function Find_Working_Directory
      (Self  : not null access Script_Engine_Factory;
-      File  : Virtual_File) return String
+      File  : Virtual_File) return Virtual_File
    is
       Script : constant Scripting_Language := Self.Find_Repo.Get_Script;
-      Data : Callback_Data'Class := Script.Create (1);
+      Data   : Callback_Data'Class := Script.Create (1);
    begin
       Data.Set_Nth_Arg (1, Create_File (Script, File));
 
-      return S : constant String := Self.Find_Repo.Execute (Data) do
+      declare
+         S : constant String := Self.Find_Repo.Execute (Data);
+      begin
          Free (Data);
-      end return;
-   end Find_Repo;
+         if S = "" then
+            return No_File;
+         else
+            return Create (+S);
+         end if;
+      end;
+   end Find_Working_Directory;
 
    -----------------
    -- VCS_Handler --
@@ -354,7 +361,7 @@ package body VCS2.Scripts is
          Params        => (1 => Param ("name"),
                            2 => Param ("construct"),
                            3 => Param ("default_status"),
-                           4 => Param ("discover_repo")),
+                           4 => Param ("discover_working_dir")),
          Static_Method => True,
          Class         => VCS,
          Handler       => Static_VCS_Handler'Access);

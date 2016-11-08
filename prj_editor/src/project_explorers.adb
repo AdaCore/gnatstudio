@@ -85,7 +85,6 @@ package body Project_Explorers is
 
    Show_Absolute_Paths : Boolean_Preference;
    Show_Basenames      : Boolean_Preference;
-   Show_Ellipsis       : Boolean_Preference;
    Show_Flat_View      : Boolean_Preference;
    Show_Directories    : Boolean_Preference;
    Show_Object_Dirs    : Boolean_Preference;
@@ -109,15 +108,15 @@ package body Project_Explorers is
    -------------
 
    type Project_View_Config is record
+      Hidden_Files_Pattern : Unbounded_String;
+      Initialized          : Boolean := False;
       Flat_View            : Boolean := False;
       Show_Directories     : Boolean := False;
       Show_Hidden_Files    : Boolean := False;
       Show_Object_Dirs     : Boolean := False;
       Show_Empty_Dirs      : Boolean := False;
       Show_Runtime         : Boolean := False;
-      Show_Ellipsis        : Boolean := False;
       Projects_Before_Dirs : Boolean := False;
-      Hidden_Files_Pattern : Unbounded_String;
    end record;
    --  The current config. This is used to detect whether a refresh is needed
    --  when preferences change.
@@ -651,7 +650,7 @@ package body Project_Explorers is
         (Explorer.Tree, Signal_Drag_Data_Received,
          Drag_Data_Received'Access, Explorer.Kernel);
 
-      --  Sorting is now alphabetic: directories come first, then files. Use
+      --  Sorting is not alphabetic: directories come first, then files. Use
       --  a custom sort function
 
       Set_Sort_Func
@@ -869,19 +868,20 @@ package body Project_Explorers is
             (if Show_Ellipsis.Get_Pref
              then Ellipsize_Middle else Ellipsize_None));
          Self.Explorer.Tree.Queue_Resize;
+         Self.Explorer.Tree.Queue_Draw;
       end if;
 
       Config :=
-         (Flat_View            => Show_Flat_View.Get_Pref,
-          Show_Directories     => Show_Directories.Get_Pref,
-          Show_Hidden_Files    => Show_Hidden_Files.Get_Pref,
-          Show_Object_Dirs     => Show_Object_Dirs.Get_Pref,
-          Show_Empty_Dirs      => Show_Empty_Dirs.Get_Pref,
-          Show_Runtime         => Show_Runtime.Get_Pref,
-          Show_Ellipsis        => Show_Ellipsis.Get_Pref,
-          Projects_Before_Dirs => Projects_Before_Directories.Get_Pref,
-          Hidden_Files_Pattern =>
-             To_Unbounded_String (Hidden_Files_Pattern.Get_Pref));
+        (Initialized          => True,
+         Flat_View            => Show_Flat_View.Get_Pref,
+         Show_Directories     => Show_Directories.Get_Pref,
+         Show_Hidden_Files    => Show_Hidden_Files.Get_Pref,
+         Show_Object_Dirs     => Show_Object_Dirs.Get_Pref,
+         Show_Empty_Dirs      => Show_Empty_Dirs.Get_Pref,
+         Show_Runtime         => Show_Runtime.Get_Pref,
+         Projects_Before_Dirs => Projects_Before_Directories.Get_Pref,
+         Hidden_Files_Pattern =>
+           To_Unbounded_String (Hidden_Files_Pattern.Get_Pref));
 
       if Config /= Self.Explorer.Tree.User_Filter.Config then
          Self.Explorer.Tree.User_Filter.Config := Config;
@@ -1089,13 +1089,13 @@ package body Project_Explorers is
       return Selection_Context
    is
       T         : constant Project_Explorer :=
-        Project_Explorer (GPS_MDI_Child (Self).Get_Actual_Widget);
+        Explorer_Views.View_From_Child (Self);
       Filter_Iter : constant Gtk_Tree_Iter :=
         Find_Iter_For_Event (T.Tree, Event);
       Iter        : Gtk_Tree_Iter;
       Filter_Path : Gtk_Tree_Path;
       Context : Selection_Context :=
-        GPS_MDI_Child_Record (Self.all).Build_Context (Event);
+        GPS_MDI_Child_Record (Self.all).Build_Context (Event);  --  inherited
    begin
       if Filter_Iter = Null_Iter then
          return Context;
@@ -1902,10 +1902,6 @@ package body Project_Explorers is
       Show_Empty_Dirs := Kernel.Get_Preferences.Create_Invisible_Pref
         ("explorer-show-empty-directories", True,
          Label => -"Show empty directories");
-
-      Show_Ellipsis := Kernel.Get_Preferences.Create_Invisible_Pref
-        ("explorer-show-ellipsis", False,
-         Label => -"Ellipsize long file names");
 
       Projects_Before_Directories :=
         Kernel.Get_Preferences.Create_Invisible_Pref

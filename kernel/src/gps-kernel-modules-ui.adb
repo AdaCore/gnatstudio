@@ -2133,18 +2133,22 @@ package body GPS.Kernel.Modules.UI is
 
       procedure Process_Toolbar (Descr : Toolbar_Description) is
          Sep     : Gtk_Separator_Tool_Item;
+         Is_First : Boolean := True;
       begin
          for B of Descr.Buttons loop
             if B.Is_Separator then
-               Gtk_New (Sep);
-               Sep.Set_Name (To_String (B.Start_Of_Section));
-               Toolbar.Insert (Sep);
+               if not Is_First then
+                  Gtk_New (Sep);
+                  Sep.Set_Name (To_String (B.Start_Of_Section));
+                  Toolbar.Insert (Sep);
+               end if;
             else
                Insert_Button
                  (Kernel, Toolbar, B,
                   Section         => "",  --  always append
                   Toolbar_Id      => Id);
             end if;
+            Is_First := False;
          end loop;
 
          if Descr.Inherit /= ""

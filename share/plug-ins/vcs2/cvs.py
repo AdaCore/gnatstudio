@@ -30,7 +30,7 @@ class CVS(core.File_Based_VCS):
         ')$')
 
     @staticmethod
-    def discover_repo(file):
+    def discover_working_dir(file):
         return core.find_admin_directory(file, 'CVS')
 
     @core.run_in_background
@@ -39,7 +39,7 @@ class CVS(core.File_Based_VCS):
 
             p = ProcessWrapper(
                 ['cvs', '-f', 'status'] + args,
-                directory=os.path.join(self.repo, '..'))
+                directory=self.working_dir)
             current_file = None
             dir = None
             while True:

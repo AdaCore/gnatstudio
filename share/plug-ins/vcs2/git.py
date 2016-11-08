@@ -8,16 +8,13 @@ from workflows.promises import ProcessWrapper, join, wait_idle
 @core.register_vcs(default_status=GPS.VCS2.Status.UNMODIFIED)
 class Git(core.VCS):
 
-    def __init__(self, repo):
-        super(self.__class__, self).__init__(repo)
-
     def setup(self):
         self._override_status_display(
             GPS.VCS2.Status.STAGED_MODIFIED,
             'modified (staged)', 'gps-emblem-vcs-modified')
 
     @staticmethod
-    def discover_repo(file):
+    def discover_working_dir(file):
         return core.find_admin_directory(file, '.git')
 
     def __git_ls_tree(self):
@@ -25,27 +22,25 @@ class Git(core.VCS):
         Compute all files under version control
         """
         all_files = set()
-        dir = os.path.normpath(os.path.join(self.repo, '..'))
         p = ProcessWrapper(
             ['git', 'ls-tree', '-r', 'HEAD', '--name-only'],
-            directory=dir)
+            directory=self.working_dir)
         while True:
             line = yield p.wait_line()
             if line is None:
                 GPS.Logger("GIT").log("finished ls-tree")
                 yield all_files
                 break
-            all_files.add(GPS.File(os.path.join(dir, line)))
+            all_files.add(GPS.File(os.path.join(self.working_dir, line)))
 
     def __git_status(self, s):
         """
         Run and parse "git status"
         :param s: the result of calling self.set_status_for_all_files
         """
-        dir = os.path.normpath(os.path.join(self.repo, '..'))
         p = ProcessWrapper(
             ['git', 'status', '--porcelain', '--ignored'],
-            directory=dir)
+            directory=self.working_dir)
         while True:
             line = yield p.wait_line()
             if line is None:
@@ -80,7 +75,9 @@ class Git(core.VCS):
 
                 # Filter some obvious files to speed things up
                 if line[-3:] != '.o' and line[-5:] != '.ali':
-                    s.set_status(GPS.File(os.path.join(dir, line[3:])), status)
+                    s.set_status(
+                        GPS.File(os.path.join(self.working_dir, line[3:])),
+                        status)
 
     def async_fetch_status_for_files(self, files):
         self.async_fetch_status_for_all_files(files)
@@ -93,9 +90,6 @@ class Git(core.VCS):
         """
         s = self.set_status_for_all_files()
         a = yield join(self.__git_ls_tree(), self.__git_status(s))
-        GPS.Logger("GIT").log("set status for all remaining files extra=%s"
-                              % (extra_files, ))
         f = a[0]
         f.update(extra_files)
         s.set_status_for_remaining_files(f)
-        GPS.Logger("GIT").log("done set status for all remaining files")

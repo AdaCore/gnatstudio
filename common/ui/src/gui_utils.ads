@@ -237,6 +237,14 @@ package GUI_Utils is
    --  Uneditable_Tag should be a tag belonging to View, whose property
    --  Editable_Property is set to False.
 
+   procedure Set_Placeholder
+     (View    : not null access Gtk.Text_View.Gtk_Text_View_Record'Class;
+      Message : String);
+   --  Add a placeholder in View.
+   --  This is a message that is displayed in italic gray in the view while it
+   --  is empty. As soon as the user gives the keyboard focus, the placeholder
+   --  is removed to let the user type new text.
+
    ---------------
    -- Tree view --
    ---------------

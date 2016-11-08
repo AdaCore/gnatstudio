@@ -297,6 +297,7 @@
             <menu label="Scenario"                  action="open scenario"/>
             <menu label="Tasks"                     action="open Tasks"/>
             <menu label="VCS _Activities"            action="VCS open activities window"/>
+            <menu label="VCS Commits"                action="open commits"/>
             <menu label="_VCS Explorer"              action="VCS open explorer"/> <!-- duplicate-->
             <menu label="_Windows"                   action="open windows"/>
          </menu>
@@ -595,6 +596,15 @@
    <toolbar id='Entity Browser' inherit='Browser'/>
    <toolbar id='Project Browser' inherit='Browser'/>
    <toolbar id='Debugger Data' inherit='Browser'/>
+
+   <toolbar id='Commits'>
+      <separator id='commits'/>
+      <button action='vcs commit staged files'/>
+      <button action='vcs commit and push staged files'/>
+      <separator id='stages'/>
+      <button action='vcs stage file'/>
+      <button action='vcs unstage file'/>
+   </toolbar>
 
    <toolbar id="MDL Browser" inherit='Browser'>
      <separator/>

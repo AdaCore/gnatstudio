@@ -45,23 +45,22 @@ package GPS.VCS_Engines is
    --  Return the name of the VCS system
 
    function Create_Engine
-     (Self : not null access VCS_Engine_Factory;
-      Repo : String)
+     (Self        : not null access VCS_Engine_Factory;
+      Working_Dir : Virtual_File)
      return not null VCS_Engine_Access
      is abstract;
    --  Create a new VCS engine for the given repo.
    --  The meaning of Repo depends on the type of VCS, and is what is returned
    --  by Find_Repo.
 
-   function Find_Repo
+   function Find_Working_Directory
      (Self  : not null access VCS_Engine_Factory;
       File  : Virtual_File)
-      return String
+      return Virtual_File
       is abstract;
-   --  Given a file, try to find its repository, either on the disk or via
-   --  environment variables.
-   --  This function should return the empty string when no repository could
-   --  be found.
+   --  Given a file, try to find its working directory, either on the disk or
+   --  via environment variables.
+   --  This function should return No_File when no repository could be found.
 
    procedure Register_Factory
      (Kernel  : not null access Kernel_Handle_Record'Class;
@@ -111,6 +110,12 @@ package GPS.VCS_Engines is
    --  for Get_VCS. This kinda assume that a directory either contains
    --  project sources, or is beneath the directory that contains the VCS
    --  repo (root/.git for instance).
+
+   procedure For_Each_VCS
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Callback  : not null access procedure
+        (VCS : not null access VCS_Engine'Class));
+   --  Executes Callback for each VCS engine in use for the project
 
    -------------------
    -- File statuses --
@@ -261,12 +266,42 @@ package GPS.VCS_Engines is
    --  Return a description of the file's properties, suitable for display
    --  in tooltips.
 
+   procedure For_Each_File_In_Cache
+     (Self     : not null access VCS_Engine'Class;
+      Callback : not null access procedure
+        (File  : GNATCOLL.VFS.Virtual_File;
+         Props : VCS_File_Properties));
+   --  For all files in the cache, execute the callbacks.
+   --  The contents of the cache might only be initialized after a call to
+   --  Ensure_* has finished executing in the background. So in general you
+   --  should always connect to the VCS_File_Status_Changed hook to monitor
+   --  changes to this cache while Ensure_* is running.
+   --  However, files that have the Self.Default_Status status will eventually
+   --  be inserted in the cache, but not result in a call to the hook, so if
+   --  they are not already in the cache when For_Each_File_In_Cache they might
+   --  never be seen by the caller. To handle this, the recommend approach is:
+   --
+   --      Ensure_Status_For_All_Files_In_All_Engines
+   --        (Kernel, new On_Complete);
+   --      procedure Execute (Self : not null access On_Complete;
+   --                         VCS  : not null access VCS_Engine'Class) is
+   --      begin
+   --          For_Each_File_In_Cache (VCS, ...);
+   --      end;
+
    ----------
    -- Misc --
    ----------
 
    function Name (Self : not null access VCS_Engine) return String is abstract;
    --  The name of the engine
+
+   procedure Set_Working_Directory
+     (Self        : not null access VCS_Engine'Class;
+      Working_Dir : Virtual_File);
+   function Working_Directory
+     (Self : not null access VCS_Engine'Class) return Virtual_File;
+   --  Return the root directory of the working directory.
 
    function Kernel
      (Self : not null access VCS_Engine'Class)
@@ -340,9 +375,10 @@ private
       (Positive, Queue_Item);
 
    type VCS_Engine is abstract new Abstract_VCS_Engine with record
-      Kernel   : Kernel_Handle;
-      Cache    : VCS_File_Cache.Map;
-      Displays : VCS_Status_Displays.Map;
+      Kernel      : Kernel_Handle;
+      Cache       : VCS_File_Cache.Map;
+      Displays    : VCS_Status_Displays.Map;
+      Working_Dir : Virtual_File;
 
       Run_In_Background : Integer := 0;
       Queue             : Command_Queues.Vector;
@@ -359,5 +395,8 @@ private
    function Kernel
      (Self : not null access VCS_Engine'Class)
       return not null Kernel_Handle is (Self.Kernel);
+   function Working_Directory
+     (Self : not null access VCS_Engine'Class)
+      return Virtual_File is (Self.Working_Dir);
 
 end GPS.VCS_Engines;

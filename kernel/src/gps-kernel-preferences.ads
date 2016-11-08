@@ -164,6 +164,9 @@ package GPS.Kernel.Preferences is
    Tip_Of_The_Day         : Boolean_Preference;
    System_Menus           : Boolean_Preference;
 
+   Show_Ellipsis       : Boolean_Preference;
+   --  Whether to use ellipsis for long filenames
+
    -- Messages --
    Message_Highlight              : Color_Preference;
    Error_Src_Highlight            : Color_Preference;

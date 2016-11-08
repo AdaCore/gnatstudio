@@ -75,7 +75,7 @@ class VCS(GPS.VCS2):
             pass
     """
 
-    def __init__(self, repo):
+    def __init__(self, working_dir):
         """
         Instances are created in `register` below. If you need additional
         parameters, they need to be given to `register.
@@ -83,10 +83,10 @@ class VCS(GPS.VCS2):
         you cannot call any of the functions exported by GPS. Do this from
         `setup` instead.
 
-        :param str repo: the location of the repo, computed from
-          `discover_repo`
+        :param str working_dir: the location of the working directory,
+           computed from `discover_working_dir`
         """
-        self.repo = repo
+        self.working_dir = working_dir
 
     def setup(self):
         """
@@ -97,7 +97,7 @@ class VCS(GPS.VCS2):
         """
 
     @staticmethod
-    def discover_repo(file):
+    def discover_working_dir(file):
         """
         Starting from file, check whether it could belong to a working
         directory for the engine. Often implemented using
@@ -113,7 +113,6 @@ class VCS(GPS.VCS2):
         Fetch status information for `file`.
         Use `set_status_for_all_files`.
 
-        :param GPS.VCS2 repo: the specific repository
         :param List[GPS.File] files:
         """
         self.async_fetch_status_for_all_files()
@@ -123,7 +122,6 @@ class VCS(GPS.VCS2):
         Fetch status information for all files in `project`.
         Use `set_status_for_all_files`.
 
-        :param GPS.VCS2 repo: the specific repository
         :param GPS.File file:
         """
         self.async_fetch_status_for_all_files()
@@ -132,8 +130,6 @@ class VCS(GPS.VCS2):
         """
         Fetch status for all files in the project tree.
         Use `set_status_for_all_files`.
-
-        :param GPS.VCS2 repo: the specific repository
         """
         pass
 
@@ -156,7 +152,6 @@ class VCS(GPS.VCS2):
 
         The default status comes from the call to `register_vcs`
 
-        :param GPS.VCS2 repo: the specific repository
         :param Set(GPS.File): the set of files to update. This parameter is
            only used when using this function as a context manager (the 'with'
            statement in python).
@@ -257,21 +252,26 @@ class register_vcs:
     def __call__(self, klass):
         GPS.VCS2._register(
             self.name or klass.__name__,
-            construct=lambda repo: klass(repo, *self.args, **self.kwargs),
+            construct=lambda working_dir: klass(
+                working_dir, *self.args, **self.kwargs),
             default_status=self.default_status,
-            discover_repo=klass.discover_repo)
+            discover_working_dir=klass.discover_working_dir)
 
 
 def find_admin_directory(file, basename):
     """
     Starting from the location of `file`, move up the directory tree to
     find a directory named `basename`.
+    Used for the implementation of discoved_working_dir
+
+    :return: A str
+      The parent directory `basename`, i.e. the root repository
     """
     parent = os.path.expanduser('~')
     dir = os.path.dirname(file.path)
     while dir != '/' and dir != parent:
         d = os.path.join(dir, basename)
         if os.path.isdir(d):
-            return d
+            return os.path.normpath(os.path.join(d, '..'))
         dir = os.path.dirname(dir)
     return ""

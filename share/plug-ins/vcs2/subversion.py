@@ -13,7 +13,7 @@ class Subversion(core.File_Based_VCS):
         '(?P<lastcommit>\S+)\s+(?P<author>\S+)\s+(?P<file>.+)$')
 
     @staticmethod
-    def discover_repo(file):
+    def discover_working_dir(file):
         return core.find_admin_directory(file, '.svn')
 
     @core.run_in_background
@@ -24,7 +24,7 @@ class Subversion(core.File_Based_VCS):
                 ['svn', 'status', '-v',
                  '-u'] +   # Compare with server (slower but more helpful)
                 args,
-                directory=os.path.join(self.repo, '..'))
+                directory=self.working_dir)
 
             while True:
                 line = yield p.wait_line()
@@ -33,7 +33,7 @@ class Subversion(core.File_Based_VCS):
 
                 m = self.__re_status.search(line)
                 if m:
-                    f = os.path.join(self.repo, '..', m.group('file'))
+                    f = os.path.join(self.working_dir, m.group('file'))
                     rev = m.group('rev')   # current checkout
                     rrev = m.group('lastcommit')  # only if we use '-u'
 

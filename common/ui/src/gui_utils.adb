@@ -76,6 +76,8 @@ with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 
+with Pango.Enums;               use Pango.Enums;
+
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
@@ -152,6 +154,16 @@ package body GUI_Utils is
    function Get_MDI_Windows
      (MDI : not null access Gtkada.MDI.MDI_Window_Record'Class)
       return Windows_Sets.Set;
+
+   package String_User_Data is new Glib.Object.User_Data (String);
+
+   function On_Focus_In
+     (View    : access Gtk_Widget_Record'Class;
+      Event   : Gdk_Event_Focus) return Boolean;
+   function On_Focus_Out
+     (View    : access Gtk_Widget_Record'Class;
+      Event   : Gdk_Event_Focus) return Boolean;
+   --  Handling of placeholders on text view
 
    ---------------------------
    -- Add_Unique_List_Entry --
@@ -2333,5 +2345,88 @@ package body GUI_Utils is
          Iter := Parent (Model, Iter);
       end if;
    end Move_Row;
+
+   -----------------
+   -- On_Focus_In --
+   -----------------
+
+   function On_Focus_In
+     (View    : access Gtk_Widget_Record'Class;
+      Event   : Gdk_Event_Focus) return Boolean
+   is
+      pragma Unreferenced (Event);
+      V            : constant Gtk_Text_View := Gtk_Text_View (View);
+      Buffer       : constant Gtk_Text_Buffer := V.Get_Buffer;
+      First, Last  : Gtk_Text_Iter;
+      Tag          : Gtk_Text_Tag;
+      Success      : Boolean;
+   begin
+      Tag := Buffer.Get_Tag_Table.Lookup ("placeholder");
+      if Tag /= null then
+         Buffer.Get_Start_Iter (First);
+         if Begins_Tag (First, Tag) then
+            Last := First;
+            Forward_To_Tag_Toggle (Last, Tag, Success);
+            if Success then
+               Buffer.Delete (First, Last);
+            end if;
+         end if;
+      end if;
+      return False;   --  propagate event
+   end On_Focus_In;
+
+   ------------------
+   -- On_Focus_Out --
+   ------------------
+
+   function On_Focus_Out
+     (View    : access Gtk_Widget_Record'Class;
+      Event   : Gdk_Event_Focus) return Boolean
+   is
+      pragma Unreferenced (Event);
+      V            : constant Gtk_Text_View := Gtk_Text_View (View);
+      Buffer       : constant Gtk_Text_Buffer := V.Get_Buffer;
+      First, Last  : Gtk_Text_Iter;
+      Tag          : Gtk_Text_Tag;
+   begin
+      Buffer.Get_Start_Iter (First);
+      Buffer.Get_End_Iter (Last);
+      if First = Last then
+         Tag := Buffer.Get_Tag_Table.Lookup ("placeholder");
+         if Tag = null then
+            Tag := Buffer.Create_Tag ("placeholder");
+            Gdk.RGBA.Set_Property
+              (Tag, Gtk.Text_Tag.Foreground_Rgba_Property,
+               (0.6, 0.6, 0.6, 1.0));
+            Set_Property
+              (Tag, Gtk.Text_Tag.Style_Property, Pango_Style_Italic);
+            Set_Property (Tag, Gtk.Text_Tag.Editable_Property, False);
+         end if;
+
+         declare
+            Message : constant String :=
+              String_User_Data.Get (View, Id => "placeholder", Default => "");
+         begin
+            Buffer.Insert_With_Tags (First, Message, Tag);
+         end;
+      end if;
+      return False;   --  propagate event
+   end On_Focus_Out;
+
+   ---------------------
+   -- Set_Placeholder --
+   ---------------------
+
+   procedure Set_Placeholder
+     (View    : not null access Gtk_Text_View_Record'Class;
+      Message : String)
+   is
+      Dummy : Boolean;
+   begin
+      String_User_Data.Set (View, Message, Id => "placeholder");
+      View.On_Focus_In_Event (On_Focus_In'Access);
+      View.On_Focus_Out_Event (On_Focus_Out'Access);
+      Dummy := On_Focus_Out (View, Gdk_Event_Focus'(others => <>));
+   end Set_Placeholder;
 
 end GUI_Utils;

@@ -112,6 +112,25 @@ package GPS.VCS is
    --  A more recent version of the file exists in the repository.
    --  This only applies to file-based repositories
 
+   Mask_Staged            : constant VCS_File_Status :=
+     Status_Staged_Modified
+     or Status_Staged_Added
+     or Status_Staged_Deleted
+     or Status_Staged_Renamed
+     or Status_Staged_Copied;
+   --  All statuses that indicate the file is staged for the next commit
+
+   Mask_Modified_Unstaged : constant VCS_File_Status :=
+     Status_Modified
+     or Status_Deleted
+     or Status_Conflict;
+   --  All statuses that indicate the file has some unstaged changes
+
+   Mask_Untracked         : constant VCS_File_Status :=
+     Status_Untracked;
+   --  All status that indicate the file is untracked (and thus needs to be
+   --  explicitly added or ignored).
+
    type VCS_File_Properties is record
       Status       : VCS_File_Status;
       Version      : Unbounded_String;

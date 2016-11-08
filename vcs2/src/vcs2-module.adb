@@ -21,6 +21,7 @@ with GPS.VCS_Engines;         use GPS.VCS_Engines;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with VCS2.Scripts;            use VCS2.Scripts;
+with VCS2.Commits;
 
 package body VCS2.Module is
 
@@ -77,8 +78,11 @@ package body VCS2.Module is
    is
    begin
       VCS2.Scripts.Register_Scripts (Kernel);
+
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
       File_Saved_Hook.Add (new On_File_Saved);
+
+      VCS2.Commits.Register_Module (Kernel);
    end Register_Module;
 
 end VCS2.Module;

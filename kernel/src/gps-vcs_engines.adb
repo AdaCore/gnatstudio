@@ -21,7 +21,6 @@ with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Hash;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
-with GNAT.Strings;            use GNAT.Strings;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;          use GPS.Kernel.Project;
 
@@ -314,50 +313,49 @@ package body GPS.VCS_Engines is
 
       function Repo_From_Project
         (F : not null access VCS_Engine_Factory'class;
-         P : Project_Type) return String;
+         P : Project_Type) return Virtual_File;
       --  Guess the repo for a given project.
 
-      function Engine_From_Repo
-        (F    : not null access VCS_Engine_Factory'class;
-         Repo : String) return not null VCS_Engine_Access;
+      function Engine_From_Working_Dir
+        (F           : not null access VCS_Engine_Factory'class;
+         Working_Dir : Virtual_File) return not null VCS_Engine_Access;
       --  Return the engine to use for a iven repository
 
-      ----------------------
-      -- Engine_From_Repo --
-      ----------------------
+      -----------------------------
+      -- Engine_From_Working_Dir --
+      -----------------------------
 
-      function Engine_From_Repo
-        (F    : not null access VCS_Engine_Factory'class;
-         Repo : String) return not null VCS_Engine_Access
+      function Engine_From_Working_Dir
+        (F           : not null access VCS_Engine_Factory'class;
+         Working_Dir : Virtual_File) return not null VCS_Engine_Access
       is
          Engine : VCS_Engine_Access;
-         R      : Virtual_File;
       begin
-         if Repo = "" then
+         if Working_Dir = No_File then
             return Global_Data.No_VCS_Engine;
          else
-            R := Create (+Repo);
-            Engine := Get_VCS (Kernel, R);
+            Engine := Get_VCS (Kernel, Working_Dir);
             if Engine.all in Dummy_VCS_Engine'Class then
-               Trace (Me, "  New engine " & Repo);
-               Engine := F.Create_Engine (Repo);
+               Trace (Me, "  New engine " & Working_Dir.Display_Full_Name);
+               Engine := F.Create_Engine (Working_Dir);
+               Engine.Set_Working_Directory (Working_Dir);
                Global_Data.All_Engines.Append (Engine);
-               Set_VCS (Kernel, R, Engine);
+               Set_VCS (Kernel, Working_Dir, Engine);
 
                --  if Repo is of the form 'root/.git' or 'root/CVS',... we also
                --  want to register 'root' itself for this VCS even if it does
                --  not contain project sources. This is needed for
                --  Guess_VCS_For_Directory
 
-               if R.Is_Directory then
-                  Set_VCS (Kernel, R.Get_Parent, Engine);
+               if Working_Dir.Is_Directory then
+                  Set_VCS (Kernel, Working_Dir.Get_Parent, Engine);
                end if;
-            else
-               Trace (Me, "  Shared engine " & Repo);
+            elsif Active (Me) then
+               Trace (Me, "  Shared engine " & Working_Dir.Display_Full_Name);
             end if;
             return Engine;
          end if;
-      end Engine_From_Repo;
+      end Engine_From_Working_Dir;
 
       -----------------------
       -- Repo_From_Project --
@@ -365,15 +363,17 @@ package body GPS.VCS_Engines is
 
       function Repo_From_Project
         (F : not null access VCS_Engine_Factory'class;
-         P : Project_Type) return String
+         P : Project_Type) return Virtual_File
       is
          S : File_Array_Access := P.Source_Files (Recursive => False);
       begin
          if S'Length = 0 then
             Unchecked_Free (S);
-            return "";
+            return No_File;
          else
-            return R : constant String := F.Find_Repo (S (S'First)) do
+            return R : constant Virtual_File :=
+              F.Find_Working_Directory (S (S'First))
+            do
                Unchecked_Free (S);
             end return;
          end if;
@@ -415,9 +415,11 @@ package body GPS.VCS_Engines is
                   Insert (Kernel, P.Project_Path.Display_Full_Name
                           & ": unknown VCS: " & Kind);
                else
-                  Engine := Engine_From_Repo
+                  Engine := Engine_From_Working_Dir
                     (F,
-                     (if Repo /= "" then Repo else Repo_From_Project (F, P)));
+                     (if Repo /= ""
+                      then Create (+Repo)
+                      else Repo_From_Project (F, P)));
                end if;
 
             else
@@ -429,26 +431,25 @@ package body GPS.VCS_Engines is
                Trace (Me, "Guessing engine for " & P.Name);
                declare
                   Longuest   : VCS_Engine_Factory_Access;
-                  Longuest_R : GNAT.Strings.String_Access;
+                  Longuest_R : Virtual_File := No_File;
                begin
                   for F of Global_Data.Factories loop
                      declare
-                        R : constant String := Repo_From_Project (F, P);
+                        R : constant Virtual_File := Repo_From_Project (F, P);
                      begin
-                        if R /= ""
-                          and then (Longuest_R = null
-                                   or else R'Length > Longuest_R'Length)
+                        if R /= No_File
+                           and then
+                             (Longuest_R = No_File
+                              or else Longuest_R.Is_Parent (R))
                         then
-                           Free (Longuest_R);
-                           Longuest_R := new String'(R);
+                           Longuest_R := R;
                            Longuest := F;
                         end if;
                      end;
                   end loop;
 
                   if Longuest /= null then
-                     Engine := Engine_From_Repo (Longuest, Longuest_R.all);
-                     Free (Longuest_R);
+                     Engine := Engine_From_Working_Dir (Longuest, Longuest_R);
                   end if;
                end;
             end if;
@@ -496,13 +497,32 @@ package body GPS.VCS_Engines is
          Cb := new Complete_After_Steps'
            (Refcount    => Integer (Global_Data.All_Engines.Length),
             Steps       => Integer (Global_Data.All_Engines.Length),
-            On_Complete => Task_Completed_Callback_Access (On_Complete));
+
+            --  Unchecked_Access to allow users a call to "new" directly in
+            --  the parameter
+            On_Complete => On_Complete.all'Unchecked_Access);
       end if;
 
       for E of Global_Data.All_Engines loop
          E.Ensure_Status_For_All_Source_Files (On_Complete => Cb);
       end loop;
    end Ensure_Status_For_All_Files_In_All_Engines;
+
+   ------------------C
+   -- For_Each_VCS --
+   ------------------
+
+   procedure For_Each_VCS
+     (Kernel    : not null access Kernel_Handle_Record'Class;
+      Callback  : not null access procedure
+        (VCS : not null access VCS_Engine'Class))
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      for E of Global_Data.All_Engines loop
+         Callback (E);
+      end loop;
+   end For_Each_VCS;
 
    -----------------------------
    -- Guess_VCS_For_Directory --
@@ -992,5 +1012,36 @@ package body GPS.VCS_Engines is
          return "";
       end if;
    end Get_Tooltip_For_File;
+
+   ----------------------------
+   -- For_Each_File_In_Cache --
+   ----------------------------
+
+   procedure For_Each_File_In_Cache
+     (Self     : not null access VCS_Engine'Class;
+      Callback : not null access procedure
+        (File  : GNATCOLL.VFS.Virtual_File;
+         Props : VCS_File_Properties))
+   is
+      C : VCS_File_Cache.Cursor := Self.Cache.First;
+   begin
+      while VCS_File_Cache.Has_Element (C) loop
+         Callback (VCS_File_Cache.Key (C),
+                   VCS_File_Cache.Element (C).Props);
+         VCS_File_Cache.Next (C);
+      end loop;
+   end For_Each_File_In_Cache;
+
+   ---------------------------
+   -- Set_Working_Directory --
+   ---------------------------
+
+   procedure Set_Working_Directory
+     (Self        : not null access VCS_Engine'Class;
+      Working_Dir : Virtual_File)
+   is
+   begin
+      Self.Working_Dir := Working_Dir;
+   end Set_Working_Directory;
 
 end GPS.VCS_Engines;
