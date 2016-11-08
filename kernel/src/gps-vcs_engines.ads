@@ -17,10 +17,8 @@
 
 --  An abstract definition of what VCS engines are.
 
-with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Hashed_Maps;
 with Ada.Containers.Vectors;
-with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
@@ -73,43 +71,20 @@ package GPS.VCS_Engines is
    --  Name is the value that should be used for the IDE'VCS_Kind project
    --  property.
 
-   package Name_To_Factory is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => VCS_Engine_Factory_Access,
-      Hash            => Ada.Strings.Hash,
-      Equivalent_Keys => "=");
-
-   function All_VCS_Factories
-     (Kernel   : not null access Kernel_Handle_Record'Class)
-      return access Name_To_Factory.Map;
-   --  Return the list of all registered factories.
-   --  Indexes are always lower-cased.
-   --  The returned value must not be freed.
-
-   function Get_VCS_Factory
-     (Kernel   : not null access Kernel_Handle_Record'Class;
-      Name     : String)
-      return access VCS_Engine_Factory'Class;
-   --  Return an engine for the given system (or null)
-
    -------------
    -- Engines --
    -------------
 
-   procedure Set_VCS
-     (Kernel   : not null access Kernel_Handle_Record'Class;
-      Location : Virtual_File;
-      Engine   : not null VCS_Engine_Access);
-   function Get_VCS
-     (Kernel   : not null access Kernel_Handle_Record'Class;
-      Location : Virtual_File)
-      return not null VCS_Engine_Access;
+   procedure Compute_VCS_Engines
+     (Kernel  : not null access Kernel_Handle_Record'Class);
+   --  Create (or reuse) the VCS engines necessary for the project.
+   --  All other engines are freed.
+
    function Get_VCS
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Project  : Project_Type)
-      return not null VCS_Engine_Access
-     is (Get_VCS (Kernel, Project.Project_Path));
-   --  Sets or return the VCS to use for a given project.
+      return not null VCS_Engine_Access;
+   --  Return the VCS to use for a given project.
    --  This can be used two ways:
    --  - Location can be a project file, and this will be used by Get_VCS
    --    to retrieve the VCS for that project.
@@ -136,11 +111,6 @@ package GPS.VCS_Engines is
    --  for Get_VCS. This kinda assume that a directory either contains
    --  project sources, or is beneath the directory that contains the VCS
    --  repo (root/.git for instance).
-
-   function No_VCS_Engine
-     (Kernel   : not null access Kernel_Handle_Record'Class)
-      return not null access VCS_Engine'Class;
-   --  An engine to be used when no other VCS could be found
 
    -------------------
    -- File statuses --
@@ -182,6 +152,11 @@ package GPS.VCS_Engines is
    --  computation for files outside of the project, even if they are under
    --  version control, although in general it is expected that Self will
    --  compute their status anyway.
+
+   procedure Ensure_Status_For_All_Files_In_All_Engines
+     (Kernel  : not null access Kernel_Handle_Record'Class);
+   --  For all VCS engines of the project, ensure that the status for all files
+   --  is known.
 
    function Default_File_Status
      (Self    : not null access VCS_Engine)
@@ -292,10 +267,6 @@ package GPS.VCS_Engines is
    --  This function can be called multiple times with a True parameter, and
    --  will then need to be called an equal number of times with False.
 
-   type Dummy_VCS_Engine is new VCS_Engine with private;
-   --  An engine that does nothing, used when the project is not setup for
-   --  VCS operations
-
 private
    type VCS_Engine_Factory is abstract tagged record
       Name : Unbounded_String;
@@ -348,27 +319,11 @@ private
       Queue    : Command_Queues.Vector;
       --  Queue of commands (see Set_Run_In_Background)
 
+      In_Use   : Boolean := True;
+      --  True if any file depends on this engine. In practice, engines no in
+      --  use are freed, so this is used as a temporary flag while computing
+      --  which engines to keep.
    end record;
-
-   type Dummy_VCS_Engine is new VCS_Engine with null record;
-
-   Untracked_Properties : constant VCS_File_Properties :=
-     (Status_Untracked, Null_Unbounded_String, Null_Unbounded_String);
-
-   overriding function Name
-     (Self : not null access Dummy_VCS_Engine) return String is ("unknown");
-   overriding procedure Ensure_Status_For_Files
-     (Self      : not null access Dummy_VCS_Engine;
-      Files     : File_Array) is null;
-   overriding procedure Ensure_Status_For_Project
-     (Self      : not null access Dummy_VCS_Engine;
-      Project   : Project_Type) is null;
-   overriding procedure Ensure_Status_For_All_Source_Files
-     (Self      : not null access Dummy_VCS_Engine) is null;
-   overriding function File_Properties_From_Cache
-     (Self    : not null access Dummy_VCS_Engine;
-      File    : Virtual_File)
-     return VCS_File_Properties is (Untracked_Properties);
 
    function Kernel
      (Self : not null access VCS_Engine'Class)

@@ -16,15 +16,17 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;     use Ada.Characters.Handling;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Strings.Hash;
 with Ada.Unchecked_Deallocation;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with GNAT.Strings;            use GNAT.Strings;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;          use GPS.Kernel.Project;
 
 package body GPS.VCS_Engines is
-   Me : constant Trace_Handle := Create ("VCS");
-
-   use Name_To_Factory;
+   Me : constant Trace_Handle := Create ("VCS2");
 
    Default_Display_Unmodified : constant Status_Display :=
      (Label     => To_Unbounded_String ("Up to date"),
@@ -61,8 +63,52 @@ package body GPS.VCS_Engines is
       Equivalent_Keys => "=");
    use Project_To_Engine;
 
+   package Engine_Lists is new Ada.Containers.Doubly_Linked_Lists
+     (Element_Type    => VCS_Engine_Access);
+
+   package Name_To_Factory is new Ada.Containers.Indefinite_Hashed_Maps
+     (Key_Type        => String,
+      Element_Type    => VCS_Engine_Factory_Access,
+      Hash            => Ada.Strings.Hash,
+      Equivalent_Keys => "=");
+   use Name_To_Factory;
+
+   function Get_VCS_Factory
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Name     : String)
+      return access VCS_Engine_Factory'Class;
+   --  Return an engine for the given system (or null)
+
+   procedure Set_VCS
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Location : Virtual_File;
+      Engine   : not null VCS_Engine_Access);
+   function Get_VCS
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Location : Virtual_File)
+      return not null VCS_Engine_Access;
+
+   type Dummy_VCS_Engine is new VCS_Engine with null record;
+   overriding function Name
+     (Self : not null access Dummy_VCS_Engine) return String is ("unknown");
+   overriding procedure Ensure_Status_For_Files
+     (Self      : not null access Dummy_VCS_Engine;
+      Files     : File_Array) is null;
+   overriding procedure Ensure_Status_For_Project
+     (Self      : not null access Dummy_VCS_Engine;
+      Project   : Project_Type) is null;
+   overriding procedure Ensure_Status_For_All_Source_Files
+     (Self      : not null access Dummy_VCS_Engine) is null;
+   overriding function File_Properties_From_Cache
+     (Self    : not null access Dummy_VCS_Engine;
+      File    : Virtual_File) return VCS_File_Properties
+   is ((Status_Untracked, Null_Unbounded_String, Null_Unbounded_String));
+   --  An engine that does nothing, used when the project is not setup for
+   --  VCS operations
+
    type Kernel_Data is record
-      Factories     : aliased Name_To_Factory.Map;
+      Factories     : Name_To_Factory.Map;
+      All_Engines   : Engine_Lists.List;
       VCS_Engines   : Project_To_Engine.Map;
       No_VCS_Engine : VCS_Engine_Access := new Dummy_VCS_Engine;
    end record;
@@ -134,19 +180,6 @@ package body GPS.VCS_Engines is
       Global_Data.Factories.Include (N, VCS_Engine_Factory_Access (Factory));
    end Register_Factory;
 
-   -----------------------
-   -- All_VCS_Factories --
-   -----------------------
-
-   function All_VCS_Factories
-     (Kernel   : not null access Kernel_Handle_Record'Class)
-      return access Name_To_Factory.Map
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      return Global_Data.Factories'Access;
-   end All_VCS_Factories;
-
    ---------------------
    -- Get_VCS_Factory --
    ---------------------
@@ -167,18 +200,15 @@ package body GPS.VCS_Engines is
       end if;
    end Get_VCS_Factory;
 
-   -------------------
-   -- No_VCS_Engine --
-   -------------------
+   -------------
+   -- Get_VCS --
+   -------------
 
-   function No_VCS_Engine
-     (Kernel   : not null access Kernel_Handle_Record'Class)
-      return not null access VCS_Engine'Class is
-   begin
-      --  In case it wasn't initialized before
-      Global_Data.No_VCS_Engine.Kernel := Kernel_Handle (Kernel);
-      return Global_Data.No_VCS_Engine;
-   end No_VCS_Engine;
+   function Get_VCS
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Project  : Project_Type)
+      return not null VCS_Engine_Access
+     is (Get_VCS (Kernel, Project.Project_Path));
 
    -------------
    -- Get_VCS --
@@ -189,16 +219,210 @@ package body GPS.VCS_Engines is
       Location : Virtual_File)
       return not null VCS_Engine_Access
    is
-      pragma Unreferenced (Kernel);
       C : constant Project_To_Engine.Cursor :=
         Global_Data.VCS_Engines.Find (Location);
    begin
       if Has_Element (C) then
          return Element (C);
       else
+         --  for when we use VCS1 and not VCS2. Can be removed eventually
+         Global_Data.No_VCS_Engine.Kernel := Kernel_Handle (Kernel);
          return Global_Data.No_VCS_Engine;
       end if;
    end Get_VCS;
+
+   -------------------------
+   -- Compute_VCS_Engines --
+   -------------------------
+
+   procedure Compute_VCS_Engines
+     (Kernel  : not null access Kernel_Handle_Record'Class)
+   is
+      Dummy : constant Block_Trace_Handle :=
+        Create (Me, "Computing VCS repositories for each project");
+
+      function Repo_From_Project
+        (F : not null access VCS_Engine_Factory'class;
+         P : Project_Type) return String;
+      --  Guess the repo for a given project.
+
+      function Engine_From_Repo
+        (F    : not null access VCS_Engine_Factory'class;
+         Repo : String) return not null VCS_Engine_Access;
+      --  Return the engine to use for a iven repository
+
+      ----------------------
+      -- Engine_From_Repo --
+      ----------------------
+
+      function Engine_From_Repo
+        (F    : not null access VCS_Engine_Factory'class;
+         Repo : String) return not null VCS_Engine_Access
+      is
+         Engine : VCS_Engine_Access;
+         R      : Virtual_File;
+      begin
+         if Repo = "" then
+            return Global_Data.No_VCS_Engine;
+         else
+            R := Create (+Repo);
+            Engine := Get_VCS (Kernel, R);
+            if Engine.all in Dummy_VCS_Engine'Class then
+               Trace (Me, "  New engine " & Repo);
+               Engine := F.Create_Engine (Repo);
+               Global_Data.All_Engines.Append (Engine);
+               Set_VCS (Kernel, R, Engine);
+
+               --  if Repo is of the form 'root/.git' or 'root/CVS',... we also
+               --  want to register 'root' itself for this VCS even if it does
+               --  not contain project sources. This is needed for
+               --  Guess_VCS_For_Directory
+
+               if R.Is_Directory then
+                  Set_VCS (Kernel, R.Get_Parent, Engine);
+               end if;
+            else
+               Trace (Me, "  Shared engine " & Repo);
+            end if;
+            return Engine;
+         end if;
+      end Engine_From_Repo;
+
+      -----------------------
+      -- Repo_From_Project --
+      -----------------------
+
+      function Repo_From_Project
+        (F : not null access VCS_Engine_Factory'class;
+         P : Project_Type) return String
+      is
+         S : File_Array_Access := P.Source_Files (Recursive => False);
+      begin
+         if S'Length = 0 then
+            Unchecked_Free (S);
+            return "";
+         else
+            return R : constant String := F.Find_Repo (S (S'First)) do
+               Unchecked_Free (S);
+            end return;
+         end if;
+      end Repo_From_Project;
+
+      Iter   : Project_Iterator;
+      P      : Project_Type;
+      Engine : VCS_Engine_Access;
+
+   begin
+      for E of Global_Data.All_Engines loop
+         E.In_Use := False;
+      end loop;
+      Global_Data.VCS_Engines.Clear;
+
+      Iter := Get_Project (Kernel).Start (Recursive => True);
+      loop
+         P := Current (Iter);
+         exit when P = No_Project;
+
+         Engine := Global_Data.No_VCS_Engine;
+
+         declare
+            Kind          : constant String := To_Lower
+              (P.Attribute_Value
+                 (VCS_Kind_Attribute,
+                  Default      => "auto",
+                  Use_Extended => True));
+            Repo          : constant String := P.Attribute_Value
+              (VCS_Repository_Root, Use_Extended => True);
+            F             : VCS_Engine_Factory_Access;
+
+         begin
+            if Kind /= "auto" then
+               Trace (Me, "Using VCS attribute for " & P.Name
+                      & " => " & Kind & " " & Repo);
+               F := Get_VCS_Factory (Kernel, Kind);
+               if F = null then
+                  Insert (Kernel, P.Project_Path.Display_Full_Name
+                          & ": unknown VCS: " & Kind);
+               else
+                  Engine := Engine_From_Repo
+                    (F,
+                     (if Repo /= "" then Repo else Repo_From_Project (F, P)));
+               end if;
+
+            else
+               --  Need to find the closest repo (if for instance we have a
+               --  CVS working dir nested in a git working dir, then CVS
+               --  should be used). We use the longuest path for this, even if
+               --  that won't work for systems using environment variables.
+
+               Trace (Me, "Guessing engine for " & P.Name);
+               declare
+                  Longuest   : VCS_Engine_Factory_Access;
+                  Longuest_R : GNAT.Strings.String_Access;
+               begin
+                  for F of Global_Data.Factories loop
+                     declare
+                        R : constant String := Repo_From_Project (F, P);
+                     begin
+                        if R /= ""
+                          and then (Longuest_R = null
+                                   or else R'Length > Longuest_R'Length)
+                        then
+                           Free (Longuest_R);
+                           Longuest_R := new String'(R);
+                           Longuest := F;
+                        end if;
+                     end;
+                  end loop;
+
+                  if Longuest /= null then
+                     Engine := Engine_From_Repo (Longuest, Longuest_R.all);
+                     Free (Longuest_R);
+                  end if;
+               end;
+            end if;
+         end;
+
+         Set_VCS (Kernel, P.Project_Path, Engine);
+         Next (Iter);
+      end loop;
+
+      --  Remove all engines that are not used anymore (coming from a previous
+      --  project for instance)
+
+      declare
+         C  : Engine_Lists.Cursor := Global_Data.All_Engines.First;
+         C2 : Engine_Lists.Cursor;
+         E  : VCS_Engine_Access;
+      begin
+         while Engine_Lists.Has_Element (C) loop
+            C2 := Engine_Lists.Next (C);
+            E := Engine_Lists.Element (C);
+            if not E.In_Use then
+               Trace (Me, "Freeing old engine " & E.Name);
+               Free (E.all);
+               Unchecked_Free (E);
+               Global_Data.All_Engines.Delete (C);
+            end if;
+
+            C := C2;
+         end loop;
+      end;
+   end Compute_VCS_Engines;
+
+   ------------------------------------------------
+   -- Ensure_Status_For_All_Files_In_All_Engines --
+   ------------------------------------------------
+
+   procedure Ensure_Status_For_All_Files_In_All_Engines
+     (Kernel  : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      for E of Global_Data.All_Engines loop
+         E.Ensure_Status_For_All_Source_Files;
+      end loop;
+   end Ensure_Status_For_All_Files_In_All_Engines;
 
    -----------------------------
    -- Guess_VCS_For_Directory --
@@ -239,28 +463,11 @@ package body GPS.VCS_Engines is
    procedure Set_VCS
      (Kernel   : not null access Kernel_Handle_Record'Class;
       Location : Virtual_File;
-      Engine   : not null VCS_Engine_Access)
-   is
-      Old : VCS_Engine_Access := Get_VCS (Kernel, Location);
-      Old_No_Longer_Used : Boolean := True;
+      Engine   : not null VCS_Engine_Access) is
    begin
       Engine.Kernel := Kernel_Handle (Kernel);
+      Engine.In_Use := True;
       Global_Data.VCS_Engines.Include (Location, Engine);
-
-      --  Should we free the old engine ?
-      if Old /= Global_Data.No_VCS_Engine then
-         for E of Global_Data.VCS_Engines loop
-            if E = Old then
-               Old_No_Longer_Used := False;
-               exit;
-            end if;
-         end loop;
-
-         if Old_No_Longer_Used then
-            Free (Old.all);
-            Unchecked_Free (Old);
-         end if;
-      end if;
    end Set_VCS;
 
    ----------
@@ -628,33 +835,17 @@ package body GPS.VCS_Engines is
 
    procedure Finalize (Kernel : not null access Kernel_Handle_Record'Class) is
       pragma Unreferenced (Kernel);
-      C1, C2 : Project_To_Engine.Cursor;
       E      : VCS_Engine_Access;
       F2     : VCS_Engine_Factory_Access;
-      Should_Free : Boolean;
    begin
-      C1 := Global_Data.VCS_Engines.First;
-      while Has_Element (C1) loop
-         E := Element (C1);
-
-         C2 := Next (C1);
-         Should_Free := True;
-         while Has_Element (C2) loop
-            if Element (C2) = E then
-               Should_Free := False;
-               exit;
-            end if;
-            Next (C2);
-         end loop;
-
-         if Should_Free then
-            Free (E.all);
-            Unchecked_Free (E);
-         end if;
-
-         Next (C1);
-      end loop;
       Global_Data.VCS_Engines.Clear;
+
+      while not Global_Data.All_Engines.Is_Empty loop
+         E := Global_Data.All_Engines.First_Element;
+         Free (E.all);
+         Unchecked_Free (E);
+         Global_Data.All_Engines.Delete_First;
+      end loop;
 
       Free (Global_Data.No_VCS_Engine.all);
       Unchecked_Free (Global_Data.No_VCS_Engine);

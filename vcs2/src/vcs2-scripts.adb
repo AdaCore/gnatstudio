@@ -332,8 +332,7 @@ package body VCS2.Scripts is
       elsif Command = "get" then
          declare
             P : constant Project_Type := Get_Data (Data, 1);
-            F : constant not null VCS_Engine_Access :=
-              Get_VCS (Kernel, P.Project_Path);
+            F : constant not null VCS_Engine_Access := Get_VCS (Kernel, P);
          begin
             Data.Set_Return_Value
               (Create_VCS_Instance (Get_Script (Data), F));

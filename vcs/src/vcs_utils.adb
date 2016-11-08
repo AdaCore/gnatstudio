@@ -80,7 +80,14 @@ package body VCS_Utils is
                  then Null_Unbounded_String
                  else To_Unbounded_String (Status.Repository_Revision.all)));
 
-         No_VCS_Engine (Kernel).Set_File_Status_In_Cache (Status.File, Props);
+         declare
+            T : constant Project_Tree_Access := Get_Project_Tree (Kernel.all);
+            Info : constant File_Info'Class :=
+              File_Info'Class (T.Info_Set (Status.File).First_Element);
+         begin
+            Get_VCS (Kernel, Project (Info, Root_If_Not_Found => True))
+              .Set_File_Status_In_Cache (Status.File, Props);
+         end;
       end if;
    end Display_Editor_Status;
 
