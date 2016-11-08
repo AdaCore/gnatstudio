@@ -93,12 +93,15 @@ package body GPS.VCS_Engines is
      (Self : not null access Dummy_VCS_Engine) return String is ("unknown");
    overriding procedure Ensure_Status_For_Files
      (Self      : not null access Dummy_VCS_Engine;
-      Files     : File_Array) is null;
+      Files     : File_Array;
+      On_Complete : access Task_Completed_Callback'Class := null) is null;
    overriding procedure Ensure_Status_For_Project
      (Self      : not null access Dummy_VCS_Engine;
-      Project   : Project_Type) is null;
+      Project   : Project_Type;
+      On_Complete : access Task_Completed_Callback'Class := null) is null;
    overriding procedure Ensure_Status_For_All_Source_Files
-     (Self      : not null access Dummy_VCS_Engine) is null;
+     (Self      : not null access Dummy_VCS_Engine;
+      On_Complete : access Task_Completed_Callback'Class := null) is null;
    overriding function File_Properties_From_Cache
      (Self    : not null access Dummy_VCS_Engine;
       File    : Virtual_File) return VCS_File_Properties
@@ -157,11 +160,79 @@ package body GPS.VCS_Engines is
        VCS  : not null access VCS_Engine'Class);
    --  Implementation for Ensure_Status_For_All_Source_Files
 
+   -------------------
+   -- Command queue --
+   -------------------
+
    procedure Queue
-      (Self    : not null access VCS_Engine'Class;
-       Command : VCS_Command_Access);
+     (Self        : not null access VCS_Engine'Class;
+      On_Complete : access Task_Completed_Callback'Class;
+      Command     : VCS_Command_Access);
    --  Queue a new command for VCS.
    --  Free Command eventually.
+
+   procedure Complete_Command (Self : not null access VCS_Engine'Class)
+     with Pre => not Self.Queue.Is_Empty;
+   --  Execute the On_Complete callback for the first command on the queue, if
+   --  needed. Then remove the command from the queue.
+
+   procedure Next_In_Queue (Self : not null access VCS_Engine'Class)
+     with Pre => Self.Run_In_Background = 0;
+   --  Execute the next command in the queue, if any
+
+   procedure Unref (Self : in out Task_Completed_Callback_Access);
+   --  Decrease refcount of Self, and free if needed
+
+   type Complete_After_Steps is new Task_Completed_Callback with record
+      Steps       : Natural := 0;
+      On_Complete : not null Task_Completed_Callback_Access;
+   end record;
+   overriding procedure Free (Self : in out Complete_After_Steps);
+   overriding procedure Execute
+     (Self  : not null access Complete_After_Steps;
+      VCS   : access VCS_Engine'Class);
+   --  A callbacks that executes On_Complete after it itself has been executed
+   --  Steps times.
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Self : in out Complete_After_Steps) is
+   begin
+      Unref (Self.On_Complete);
+   end Free;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self  : not null access Complete_After_Steps;
+      VCS   : access VCS_Engine'Class) is
+   begin
+      Self.On_Complete.Execute (VCS);
+
+      Self.Steps := Self.Steps - 1;
+      if Self.Steps = 0 then
+         Self.On_Complete.Execute (null);
+      end if;
+   end Execute;
+
+   -----------
+   -- Unref --
+   -----------
+
+   procedure Unref (Self : in out Task_Completed_Callback_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Task_Completed_Callback'Class, Task_Completed_Callback_Access);
+   begin
+      Self.Refcount := Self.Refcount - 1;
+      if Self.Refcount = 0 then
+         Self.Free;
+         Unchecked_Free (Self);
+      end if;
+   end Unref;
 
    ----------------------
    -- Register_Factory --
@@ -415,12 +486,21 @@ package body GPS.VCS_Engines is
    ------------------------------------------------
 
    procedure Ensure_Status_For_All_Files_In_All_Engines
-     (Kernel  : not null access Kernel_Handle_Record'Class)
+     (Kernel  : not null access Kernel_Handle_Record'Class;
+      On_Complete : access Task_Completed_Callback'Class := null)
    is
       pragma Unreferenced (Kernel);
+      Cb : access Complete_After_Steps;
    begin
+      if On_Complete /= null then
+         Cb := new Complete_After_Steps'
+           (Refcount    => Integer (Global_Data.All_Engines.Length),
+            Steps       => Integer (Global_Data.All_Engines.Length),
+            On_Complete => Task_Completed_Callback_Access (On_Complete));
+      end if;
+
       for E of Global_Data.All_Engines loop
-         E.Ensure_Status_For_All_Source_Files;
+         E.Ensure_Status_For_All_Source_Files (On_Complete => Cb);
       end loop;
    end Ensure_Status_For_All_Files_In_All_Engines;
 
@@ -533,10 +613,12 @@ package body GPS.VCS_Engines is
 
    procedure Ensure_Status_For_Files
      (Self    : not null access VCS_Engine;
-      Files   : File_Array) is
+      Files   : File_Array;
+      On_Complete : access Task_Completed_Callback'Class := null) is
    begin
-      Queue (Self, new Cmd_Ensure_Status_For_Files'
-         (Size => Files'Length, Files => Files));
+      Queue (Self, On_Complete,
+             new Cmd_Ensure_Status_For_Files'
+               (Size => Files'Length, Files => Files));
    end Ensure_Status_For_Files;
 
    -------------
@@ -559,9 +641,12 @@ package body GPS.VCS_Engines is
 
    procedure Ensure_Status_For_Project
      (Self    : not null access VCS_Engine;
-      Project : Project_Type) is
+      Project : Project_Type;
+      On_Complete : access Task_Completed_Callback'Class := null) is
+
    begin
-      Queue (Self, new Cmd_Ensure_Status_For_Project'(Project => Project));
+      Queue (Self, On_Complete,
+             new Cmd_Ensure_Status_For_Project'(Project => Project));
    end Ensure_Status_For_Project;
 
    -------------
@@ -590,9 +675,10 @@ package body GPS.VCS_Engines is
    ----------------------------------------
 
    procedure Ensure_Status_For_All_Source_Files
-     (Self    : not null access VCS_Engine) is
+     (Self    : not null access VCS_Engine;
+      On_Complete : access Task_Completed_Callback'Class := null) is
    begin
-      Queue (Self, new Cmd_Ensure_Status_For_All_Files);
+      Queue (Self, On_Complete, new Cmd_Ensure_Status_For_All_Files);
    end Ensure_Status_For_All_Source_Files;
 
    -------------
@@ -630,24 +716,62 @@ package body GPS.VCS_Engines is
       end if;
    end Execute;
 
+   ----------------------
+   -- Complete_Command --
+   ----------------------
+
+   procedure Complete_Command (Self : not null access VCS_Engine'Class) is
+      Item : Queue_Item := Self.Queue.First_Element;
+   begin
+      if Item.On_Complete /= null then
+         Item.On_Complete.Execute (Self);
+         Unref (Item.On_Complete);
+      end if;
+
+      Self.Queue.Delete_First;
+   end Complete_Command;
+
+   -------------------
+   -- Next_In_Queue --
+   -------------------
+
+   procedure Next_In_Queue
+     (Self    : not null access VCS_Engine'Class)
+   is
+      Item : Queue_Item;
+   begin
+      if not Self.Queue.Is_Empty then
+         Item := Self.Queue.First_Element;
+         Item.Command.Execute (Self);
+         Item.Command.Free;
+         Unchecked_Free (Item.Command);
+
+         --  If we haven't started a background command, terminate this
+         --  command. Otherwise, wait till Set_Run_In_Background is called.
+
+         if Self.Run_In_Background = 0 then
+            Complete_Command (Self);
+            Next_In_Queue (Self);
+         end if;
+      end if;
+   end Next_In_Queue;
+
    -----------
    -- Queue --
    -----------
 
    procedure Queue
-      (Self    : not null access VCS_Engine'Class;
-       Command : VCS_Command_Access)
-   is
-      Cmd : VCS_Command_Access;
+     (Self        : not null access VCS_Engine'Class;
+      On_Complete : access Task_Completed_Callback'Class;
+      Command     : VCS_Command_Access) is
    begin
-      if Self.Run_In_Background > 0 then
-         --  Allow users to directly pass a "new " as parameter
-         Self.Queue.Append (Command.all'Unchecked_Access);
-      else
-         Command.Execute (Self);
-         Command.Free;
-         Cmd := Command;
-         Unchecked_Free (Cmd);
+      --  Allow users to directly pass a "new " as parameter
+      Self.Queue.Append
+        ((Command.all'Unchecked_Access,
+         Task_Completed_Callback_Access (On_Complete)));
+
+      if Self.Run_In_Background = 0 then
+         Next_In_Queue (Self);
       end if;
    end Queue;
 
@@ -657,32 +781,16 @@ package body GPS.VCS_Engines is
 
    procedure Set_Run_In_Background
       (Self       : not null access VCS_Engine'Class;
-       Background : Boolean)
-   is
-      Cmd : VCS_Command_Access;
+       Background : Boolean) is
    begin
       if Background then
          Self.Run_In_Background := Self.Run_In_Background + 1;
       else
          Self.Run_In_Background := Self.Run_In_Background - 1;
-      end if;
-
-      if Active (Me) then
-         Trace (Me, Self.Name & " in background" & Self.Run_In_Background'Img);
-      end if;
-
-      if Self.Run_In_Background <= 0 then
-         Self.Run_In_Background := 0;  --  just in case
-
-         --  Execute next command in queue
-
-         if not Self.Queue.Is_Empty then
-            Cmd := Self.Queue.First_Element;
-            Self.Queue.Delete_First;
-
-            Cmd.Execute (Self);
-            Cmd.Free;
-            Unchecked_Free (Cmd);
+         Assert (Me, Self.Run_In_Background >= 0, "Invalid Set_In_Background");
+         if Self.Run_In_Background = 0 then
+            Complete_Command (Self);
+            Next_In_Queue (Self);
          end if;
       end if;
    end Set_Run_In_Background;

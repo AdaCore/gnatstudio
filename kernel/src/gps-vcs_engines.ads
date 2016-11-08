@@ -132,14 +132,26 @@ package GPS.VCS_Engines is
    --  changed.
    --  Should not be called directly, consider Ensure_Status_* instead
 
+   type Task_Completed_Callback is abstract tagged private;
+   type Task_Completed_Callback_Access is
+     access all Task_Completed_Callback'Class;
+   procedure Free (Self : in out Task_Completed_Callback) is null;
+   procedure Execute
+     (Self  : not null access Task_Completed_Callback;
+      VCS   : access VCS_Engine'Class) is abstract;
+   --  Called when a background task completes
+
    procedure Ensure_Status_For_Files
-     (Self      : not null access VCS_Engine;
-      Files     : File_Array);
+     (Self        : not null access VCS_Engine;
+      Files       : File_Array;
+      On_Complete : access Task_Completed_Callback'Class := null);
    procedure Ensure_Status_For_Project
-     (Self      : not null access VCS_Engine;
-      Project   : Project_Type);
+     (Self        : not null access VCS_Engine;
+      Project     : Project_Type;
+      On_Complete : access Task_Completed_Callback'Class := null);
    procedure Ensure_Status_For_All_Source_Files
-     (Self      : not null access VCS_Engine);
+     (Self        : not null access VCS_Engine;
+      On_Complete : access Task_Completed_Callback'Class := null);
    --  If any of the files in the set does not have a valid cache entry, then
    --  the corresponding Async_Fetch_Status_* operation will be called.
    --  Otherwise, these procedures assume the cache is up-to-date and do not
@@ -152,11 +164,16 @@ package GPS.VCS_Engines is
    --  computation for files outside of the project, even if they are under
    --  version control, although in general it is expected that Self will
    --  compute their status anyway.
+   --
+   --  On_Complete is automatically freed after having executed.
 
    procedure Ensure_Status_For_All_Files_In_All_Engines
-     (Kernel  : not null access Kernel_Handle_Record'Class);
+     (Kernel      : not null access Kernel_Handle_Record'Class;
+      On_Complete : access Task_Completed_Callback'Class := null);
    --  For all VCS engines of the project, ensure that the status for all files
    --  is known.
+   --  The callback is executed for each VCS that terminates its processing,
+   --  and then once with no VCS when all of them have been processed
 
    function Default_File_Status
      (Self    : not null access VCS_Engine)
@@ -233,6 +250,10 @@ package GPS.VCS_Engines is
      is ("Repository Revision");
    --  Labels to use when displaying versions in the GUI
 
+   -----------
+   -- Files --
+   -----------
+
    function Get_Tooltip_For_File
      (VCS     : not null access VCS_Engine'Class;
       File    : GNATCOLL.VFS.Virtual_File)
@@ -277,6 +298,10 @@ private
       Props        : VCS_File_Properties;
    end record;
 
+   type Task_Completed_Callback is abstract tagged record
+      Refcount : Natural := 1;
+   end record;
+
    package VCS_File_Cache is new Ada.Containers.Hashed_Maps
      (Key_Type        => Virtual_File,
       Element_Type    => VCS_File_Cache_Entry,
@@ -307,8 +332,12 @@ private
        VCS    : not null access VCS_Engine'Class) is abstract;
    --  Execute the command
 
+   type Queue_Item is record
+      Command     : VCS_Command_Access;
+      On_Complete : Task_Completed_Callback_Access;
+   end record;
    package Command_Queues is new Ada.Containers.Vectors
-      (Positive, VCS_Command_Access);
+      (Positive, Queue_Item);
 
    type VCS_Engine is abstract new Abstract_VCS_Engine with record
       Kernel   : Kernel_Handle;
@@ -316,8 +345,10 @@ private
       Displays : VCS_Status_Displays.Map;
 
       Run_In_Background : Integer := 0;
-      Queue    : Command_Queues.Vector;
+      Queue             : Command_Queues.Vector;
       --  Queue of commands (see Set_Run_In_Background)
+      --  When a background command is executing, the first item in the queue
+      --  is that command.
 
       In_Use   : Boolean := True;
       --  True if any file depends on this engine. In practice, engines no in
