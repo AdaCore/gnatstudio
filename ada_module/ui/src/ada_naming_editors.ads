@@ -34,6 +34,12 @@ package Ada_Naming_Editors is
    -- Ada Naming Editor --
    -----------------------
 
+   Default_Gnat_Dot_Replacement : constant String := "-";
+   Default_Gnat_Spec_Suffix     : constant String := ".ads";
+   Default_Gnat_Body_Suffix     : constant String := ".adb";
+   Default_Gnat_Separate_Suffix : constant String := ".adb";
+   --  Default settings for the GNAT naming scheme.
+
    type Ada_Naming_Editor_Record is
      new Project_Editor_Page_Record
        (Flags => Multiple_Projects or Multiple_Scenarios) with private;

@@ -62,12 +62,6 @@ package body Ada_Naming_Editors is
                                     Editable_Column => GType_Boolean);
    --  Column types used for the naming exceptions list tree view
 
-   Default_Gnat_Dot_Replacement : constant String := "-";
-   Default_Gnat_Spec_Suffix     : constant String := ".ads";
-   Default_Gnat_Body_Suffix     : constant String := ".adb";
-   Default_Gnat_Separate_Suffix : constant String := ".adb";
-   --  Default settings for the GNAT naming scheme.
-
    Gnat_Naming_Scheme   : constant := 0;
    Apex_Naming_Scheme   : constant := 1;
    Dec_Naming_Scheme    : constant := 2;

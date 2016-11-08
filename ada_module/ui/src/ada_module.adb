@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada_Module.Creators;
+
 with Default_Preferences;      use Default_Preferences;
 with Default_Preferences.Enums;
 with GPS.Kernel;               use GPS.Kernel;
@@ -280,6 +282,8 @@ package body Ada_Module is
 
       Register_Naming_Scheme_Editor
         (Kernel, "Ada", Naming_Scheme_Editor'Access);
+
+      Ada_Module.Creators.Register_Module (Kernel);
    end Register_Module;
 
 end Ada_Module;

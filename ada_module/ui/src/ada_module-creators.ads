@@ -15,14 +15,17 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  The Virtual File System module
+--  This package defines subprograms and actions related with the creation of
+--  Ada components for a given project (e.g: creating a new package and its
+--  associated specification and body files).
 
 with GPS.Kernel; use GPS.Kernel;
 
-package VFS_Module is
+package Ada_Module.Creators is
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
-   --  Register the VFS module in the list
+   --  Register the actions related with the creation of Ada components for
+   --  a given project.
 
-end VFS_Module;
+end Ada_Module.Creators;

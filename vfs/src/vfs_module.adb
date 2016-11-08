@@ -33,7 +33,6 @@ with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
 with GUI_Utils;                 use GUI_Utils;
 with GPS.Editors;               use GPS.Editors;
-with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Actions;        use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
@@ -99,8 +98,22 @@ package body VFS_Module is
       File_In  : GNATCOLL.VFS.Virtual_File) return Project_Type;
    --  Check if the file or directory File_In belongs to at least one of the
    --  projects in the tree (either as a source file, or as one of the source
-   --  directories). If it doesn, returning the first matching project.
+   --  directories). If it doesnt, returning the first matching project.
    --  Otherwise returns No_Project.
+
+   -------------
+   -- Filters --
+   -------------
+
+   type File_Filter_Record is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Context : access File_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+
+   type Dir_Filter_Record is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Context : access Dir_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
 
    --------------------------
    -- VFS_Command_Handler --
@@ -767,20 +780,6 @@ package body VFS_Module is
       return Commands.Success;
    end Execute;
 
-   -------------
-   -- Filters --
-   -------------
-
-   type File_Filter_Record is new Action_Filter_Record with null record;
-   type Dir_Filter_Record is new Action_Filter_Record with null record;
-
-   overriding function Filter_Matches_Primitive
-     (Context : access File_Filter_Record;
-      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
-   overriding function Filter_Matches_Primitive
-     (Context : access Dir_Filter_Record;
-      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
-
    ------------------------------
    -- Filter_Matches_Primitive --
    ------------------------------
@@ -834,6 +833,16 @@ package body VFS_Module is
          Kernel      => Kernel,
          Module_Name => VFS_Module_Name,
          Priority    => Default_Priority);
+
+      --  Register these filters to make them accessible from other modules
+      Register_Filter
+        (Kernel,
+         Filter => File_Filter,
+         Name   => "File_Filter");
+      Register_Filter
+        (Kernel,
+         Filter => Dir_Filter,
+         Name   => "Dir_Filter");
 
       --  ??? Can we use the command 'new file' instead ?
       Command := new Create_Command;
