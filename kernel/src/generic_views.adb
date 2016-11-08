@@ -991,6 +991,9 @@ package body Generic_Views is
             --  We are about to close the MDI child containing a view which
             --  has the flag Hide_Rather_Than_Close: save this view here.
             View.Ref;
+            if Abstract_View_Access (View).Config_Menu /= null then
+               Abstract_View_Access (View).Config_Menu.Popdown;
+            end if;
             Gtk_Container (View.Get_Parent).Remove (View);
             Global.Stored_View := View;
          end if;
