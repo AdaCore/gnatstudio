@@ -676,3 +676,36 @@ class Editor_Properties_Dialog(Dialog):
 
     def get_character_set_entry(self):
         return self.get_combobox_by_label("Character set: ")
+
+
+###############
+# Refactoring #
+###############
+
+class Refactoring_Rename(Dialog):
+    """The simple "rename" refactoring dialog.
+
+       To use, do something like this:
+
+          # Get a buffer
+          b = GPS.EditorBuffer.get()
+
+          # Position the cursor
+          b.current_view().goto(b.at(7, 12))
+
+          # Launch the dialog
+          d = Refactoring_Rename()
+          yield d.open_and_yield()
+
+          # Rename something and exit
+          d.set_new_name("XYZ")
+          yield d.ok()
+    """
+    def __init__(self):
+        pass
+
+    def open_and_yield(self):
+        yield self._open_and_yield("rename entity", timeout_ms=200)
+
+    def set_new_name(self, text):
+        e = pygps.get_widget_by_name("new_name").set_text(text)

@@ -142,6 +142,7 @@ package body Refactoring.Rename is
 
       Gtk_New (Dialog.New_Name);
       Set_Text (Dialog.New_Name, Get_Name (Entity));
+      Dialog.New_Name.Set_Name ("new_name");
       Select_Region (Dialog.New_Name, 0, -1);
       Set_Activates_Default (Dialog.New_Name, True);
       Pack_Start (Box, Dialog.New_Name);
