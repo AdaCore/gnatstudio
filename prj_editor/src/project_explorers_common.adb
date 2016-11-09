@@ -986,4 +986,31 @@ package body Project_Explorers_Common is
       Model.Foreach (On_Node'Unrestricted_Access);
    end Execute;
 
+   ------------
+   -- Get_Id --
+   ------------
+
+   function Get_Id
+      (Self   : not null access Base_Explorer_Tree_Record'Class;
+       Row    : Gtk_Tree_Iter) return Node_Id
+   is
+      P     : constant Gtk_Tree_Path := Self.Model.Get_Path (Row);
+      Depth : constant Gint := Get_Depth (P);
+   begin
+      Path_Free (P);
+      return (File  => Self.Get_File_From_Node (Row),
+              Depth => Integer (Depth));
+   end Get_Id;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (Self : Node_Id) return Ada.Containers.Hash_Type is
+      use Ada.Containers;
+   begin
+      return (GNATCOLL.VFS.Full_Name_Hash (Self.File) + Hash_Type (Self.Depth))
+         mod Hash_Type'Last;
+   end Hash;
+
 end Project_Explorers_Common;

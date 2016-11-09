@@ -25,8 +25,10 @@ with Gtk.Selection_Data;   use Gtk.Selection_Data;
 with Gtk.Tree_Drag_Dest;   use Gtk.Tree_Drag_Dest;
 with Gtk.Widget;           use Gtk.Widget;
 with System;               use System;
+with GNATCOLL.Traces;      use GNATCOLL.Traces;
 
 package body Gtkada.Tree_View is
+   Me : constant Trace_Handle := Create ("TREE_VIEW");
 
    ------------------
    -- Filter_Model --
@@ -440,6 +442,43 @@ package body Gtkada.Tree_View is
       end if;
    end Get_Store_Iter_For_Filter_Path;
 
+   ------------------------
+   -- Remove_Dummy_Child --
+   ------------------------
+
+   procedure Remove_Dummy_Child
+     (Self       : not null access Tree_View_Record'Class;
+      Store_Iter : Gtk_Tree_Iter)
+   is
+      Iter : Gtk_Tree_Iter;
+   begin
+      if Self.Model.Has_Child (Store_Iter) then
+         Iter := Self.Model.Children (Store_Iter);
+         if Get_Flag (Self, Iter, Flag_Is_Dummy) then
+            Self.Model.Remove (Iter);   --  remove dummy node
+         end if;
+      end if;
+   end Remove_Dummy_Child;
+
+   ----------------------
+   -- Add_Row_Children --
+   ----------------------
+
+   procedure Add_Row_Children
+      (Self       : not null access Tree_View_Record'Class;
+       Store_Iter : Gtk_Tree_Iter)
+   is
+      Iter : Gtk_Tree_Iter;
+   begin
+      if Self.Model.Has_Child (Store_Iter) then
+         Iter := Self.Model.Children (Store_Iter);
+         if Get_Flag (Self, Iter, Flag_Is_Dummy) then
+            Self.Model.Remove (Iter);   --  remove dummy node
+            Self.Add_Children (Store_Iter);
+         end if;
+      end if;
+   end Add_Row_Children;
+
    ---------------------------
    -- Row_Expanded_Callback --
    ---------------------------
@@ -454,7 +493,6 @@ package body Gtkada.Tree_View is
       Store_Iter : Gtk_Tree_Iter;
       Path       : Gtk_Tree_Path;
       Dummy      : Boolean;
-      Sort_Col   : Gint;
 
    begin
       if Tree.Lock or else Filter_Iter = Null_Iter then
@@ -464,40 +502,35 @@ package body Gtkada.Tree_View is
       Store_Iter := Tree.Get_Store_Iter_For_Filter_Path (Filter_Path);
       Set_Flag (Tree, Store_Iter, Flag_Is_Expanded);
 
-      Sort_Col := Freeze_Sort (Tree.Model);
-
       --  Replace dummy child nodes if needed.
       --  We always assume the dummy child (if any) is the first child
 
       if Tree.Model.Has_Child (Store_Iter) then
-         Iter := Tree.Model.Children (Store_Iter);
-         if Get_Flag (Tree, Iter, Flag_Is_Dummy) then
-            Tree.Model.Remove (Iter);   --  remove dummy node
-            Tree.Add_Children (Store_Iter);
+         Add_Row_Children (Tree, Store_Iter);
 
-            --  Make sure the parent is indeed expanded
-            Dummy := Tree.Expand_Row (Filter_Path, Open_All => False);
+         --  Make sure the parent is indeed expanded
 
-         else
-            --  Re-expand existing child nodes as needed
+         Dummy := Tree.Expand_Row (Filter_Path, Open_All => False);
 
-            Iter := Children (Tree.Model, Store_Iter);
-            while Iter /= Null_Iter loop
-               if Get_Flag (Tree, Iter, Flag_Is_Expanded) then
-                  Path := Tree.Get_Filter_Path_For_Store_Iter (Iter);
-                  Dummy := Expand_Row (Tree, Path, False);
-                  Path_Free (Path);
-               end if;
-               Next (Tree.Model, Iter);
-            end loop;
-         end if;
+         --  Re-expand existing child nodes as needed
+
+         Iter := Children (Tree.Model, Store_Iter);
+         while Iter /= Null_Iter loop
+            if Get_Flag (Tree, Iter, Flag_Is_Expanded) then
+               Path := Tree.Get_Filter_Path_For_Store_Iter (Iter);
+               Dummy := Expand_Row (Tree, Path, False);
+               Path_Free (Path);
+            end if;
+            Next (Tree.Model, Iter);
+         end loop;
+
+         --  Make sure the first child is visible
+
+         Path := Copy (Filter_Path);
+         Down (Path);
+         Tree.Scroll_To_Cell (Path, null, False, 0.0, 0.0);
+         Path_Free (Path);
       end if;
-
-      Thaw_Sort (Tree.Model, Sort_Col);
-
-   exception
-      when others =>
-         Thaw_Sort (Tree.Model, Sort_Col);
    end Row_Expanded_Callback;
 
    ----------------------------
@@ -729,10 +762,31 @@ package body Gtkada.Tree_View is
               (Get_Id (Self, Self.Get_Store_Iter_For_Filter_Path (Path)));
          end Do_Node;
 
+         procedure On_Selected
+           (Model : Gtk_Tree_Model;
+            Path  : Gtk_Tree_Path;
+            Iter  : Gtk_Tree_Iter);
+         --  Called for each selected row
+
+         procedure On_Selected
+           (Model : Gtk_Tree_Model;
+            Path  : Gtk_Tree_Path;
+            Iter  : Gtk_Tree_Iter)
+         is
+            pragma Unreferenced (Model, Iter);
+         begin
+            Status.Selection.Include
+              (Get_Id (Self, Self.Get_Store_Iter_For_Filter_Path (Path)));
+         end On_Selected;
+
          End_Path : Gtk_Tree_Path;
       begin
          Status.Expanded.Clear;
+         Status.Selection.Clear;
+
          Self.Map_Expanded_Rows (Do_Node'Unrestricted_Access);
+
+         Self.Get_Selection.Selected_Foreach (On_Selected'Unrestricted_Access);
 
          Self.Get_Visible_Range
            (Start_Path => Status.Scroll_Y,
@@ -763,10 +817,17 @@ package body Gtkada.Tree_View is
          is
             pragma Unreferenced (Model);
             Dummy : Boolean;
+            The_Id : constant Id := Get_Id (Self, Iter);
          begin
-            if Status.Expanded.Contains (Get_Id (Self, Iter)) then
+            if Status.Expanded.Contains (The_Id) then
                Dummy := Self.Expand_Row (Path, Open_All => False);
             end if;
+
+            if Status.Selection.Contains (The_Id) then
+               Self.Get_Selection.Select_Iter
+                 (Self.Convert_To_Filter_Iter (Iter));
+            end if;
+
             return False;  --  keep iterating
          end Expand_Node;
 
@@ -787,6 +848,71 @@ package body Gtkada.Tree_View is
             Path_Free (Status.Scroll_Y);
          end if;
       end Set_Expansion_Status;
+
+      ----------------------------
+      -- Detach_Model_From_View --
+      ----------------------------
+
+      function Detach_Model_From_View
+         (Self           : not null access Tree_Record'Class;
+          Freeze         : Boolean := True;
+          Save_Expansion : Boolean := True)
+         return Detached_Model is
+      begin
+         return D : Detached_Model do
+            D.Tree := Self;
+            D.Was_Detached := Self.Get_Model = Null_Gtk_Tree_Model;
+
+            if not D.Was_Detached then
+               Increase_Indent (Me, "Detach model from view");
+               if Freeze then
+                  D.Sort_Col := Freeze_Sort (Self.Model);
+               else
+                  D.Sort_Col := -1;
+               end if;
+
+               D.Save_Expansion := Save_Expansion;
+               if Save_Expansion then
+                  Get_Expansion_Status (Self, D.Expansion);
+               end if;
+
+               if Self.Filter /= null then
+                  Ref (Self.Filter);
+               else
+                  Ref (Self.Model);
+               end if;
+               Self.Set_Model (Null_Gtk_Tree_Model);
+            end if;
+         end return;
+      end Detach_Model_From_View;
+
+      --------------
+      -- Finalize --
+      --------------
+
+      overriding procedure Finalize (Self : in out Detached_Model) is
+      begin
+         if not Self.Was_Detached then
+            Decrease_Indent (Me, "Reattach model to view");
+            Self.Was_Detached := True;
+
+            if Self.Sort_Col /= -1 then
+               Thaw_Sort (Self.Tree.Model, Self.Sort_Col);
+            end if;
+
+            if Self.Tree.Filter /= null then
+               Self.Tree.Set_Model (+Self.Tree.Filter);
+               Unref (Self.Tree.Filter);
+            else
+               Self.Tree.Set_Model (+Self.Tree.Model);
+               Unref (Self.Tree.Model);
+            end if;
+
+            if Self.Save_Expansion then
+               Set_Expansion_Status (Self.Tree, Self.Expansion);
+            end if;
+         end if;
+      end Finalize;
 
    end Expansion_Support;
 

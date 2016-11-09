@@ -108,6 +108,20 @@ package body Project_Explorers is
    --  Filter --
    -------------
 
+   type Project_View_Config is record
+      Flat_View            : Boolean := False;
+      Show_Directories     : Boolean := False;
+      Show_Hidden_Files    : Boolean := False;
+      Show_Object_Dirs     : Boolean := False;
+      Show_Empty_Dirs      : Boolean := False;
+      Show_Runtime         : Boolean := False;
+      Show_Ellipsis        : Boolean := False;
+      Projects_Before_Dirs : Boolean := False;
+      Hidden_Files_Pattern : Unbounded_String;
+   end record;
+   --  The current config. This is used to detect whether a refresh is needed
+   --  when preferences change.
+
    package Filter_Sets is new Ada.Containers.Hashed_Sets
      (Element_Type        => Virtual_File,
       Hash                => GNATCOLL.VFS.Full_Name_Hash,
@@ -115,6 +129,8 @@ package body Project_Explorers is
    use Filter_Sets;
 
    type Explorer_Filter is record
+      Config      : Project_View_Config;
+
       Pattern  : GPS.Search.Search_Pattern_Access;
       --  The pattern on which we filter.
 
@@ -145,17 +161,6 @@ package body Project_Explorers is
    overriding procedure Add_Children
      (Self       : not null access Explorer_Tree_View_Record;
       Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter);
-
-   function Get_File
-     (Self : not null access Explorer_Tree_View_Record'Class;
-      Row  : Gtk_Tree_Iter) return Virtual_File
-     is (Self.Get_File_From_Node (Row));
-
-   package Explorer_Expansion is new Expansion_Support
-     (Tree_Record => Explorer_Tree_View_Record,
-      Id          => Virtual_File,
-      Get_Id      => Get_File,
-      Hash        => GNATCOLL.VFS.Full_Name_Hash);
 
    ---------------------------------
    -- The project explorer widget --
@@ -558,7 +563,12 @@ package body Project_Explorers is
       T : constant Project_Explorer := Project_Explorer (Explorer);
       Child : constant GPS_MDI_Child := Explorer_Views.Child_From_View (T);
    begin
-      T.Kernel.Context_Changed (Child.Build_Context);
+      --  Might be null during a call to Add_Children
+      if Child /= null
+         and then MDI_Child (Child) = Get_MDI (T.Kernel).Get_Focus_Child
+      then
+         T.Kernel.Context_Changed (Child.Build_Context);
+      end if;
    end Tree_Select_Row_Cb;
 
    ----------------
@@ -841,6 +851,7 @@ package body Project_Explorers is
       Pref   : Preference)
    is
       pragma Unreferenced (Kernel);
+      Config : Project_View_Config;
    begin
       if Self.Explorer = null then
          return;
@@ -860,17 +871,20 @@ package body Project_Explorers is
          Self.Explorer.Tree.Queue_Resize;
       end if;
 
-      if Pref = null
-        or else Pref = Preference (Show_Flat_View)
-        or else Pref = Preference (Show_Directories)
-        or else Pref = Preference (Show_Hidden_Files)
-        or else Pref = Preference (Show_Object_Dirs)
-        or else Pref = Preference (Show_Empty_Dirs)
-        or else Pref = Preference (Show_Runtime)
-        or else Pref = Preference (Show_Ellipsis)
-        or else Pref = Preference (Projects_Before_Directories)
-        or else Pref = Preference (Hidden_Files_Pattern)
-      then
+      Config :=
+         (Flat_View            => Show_Flat_View.Get_Pref,
+          Show_Directories     => Show_Directories.Get_Pref,
+          Show_Hidden_Files    => Show_Hidden_Files.Get_Pref,
+          Show_Object_Dirs     => Show_Object_Dirs.Get_Pref,
+          Show_Empty_Dirs      => Show_Empty_Dirs.Get_Pref,
+          Show_Runtime         => Show_Runtime.Get_Pref,
+          Show_Ellipsis        => Show_Ellipsis.Get_Pref,
+          Projects_Before_Dirs => Projects_Before_Directories.Get_Pref,
+          Hidden_Files_Pattern =>
+             To_Unbounded_String (Hidden_Files_Pattern.Get_Pref));
+
+      if Config /= Self.Explorer.Tree.User_Filter.Config then
+         Self.Explorer.Tree.User_Filter.Config := Config;
          Refresh (Self.Explorer);
       end if;
 
@@ -944,7 +958,7 @@ package body Project_Explorers is
             end if;
 
          when Directory_Node_Types =>
-            if not Show_Empty_Dirs.Get_Pref
+            if not Self.User_Filter.Config.Show_Empty_Dirs
               and then not Has_Child (Self.Model, Iter)
             then
                return False;
@@ -971,7 +985,7 @@ package body Project_Explorers is
    is
       Show_Abs_Paths : constant Boolean := Show_Absolute_Paths.Get_Pref;
       Show_Base      : constant Boolean := Show_Basenames.Get_Pref;
-      Flat_View : constant Boolean := Show_Flat_View.Get_Pref;
+      Flat_View      : constant Boolean := Self.Config.Flat_View;
 
       procedure Mark_Project_And_Parents_Visible (P : Project_Type);
       --  mark the given project node and all its parents as visible
@@ -1246,13 +1260,26 @@ package body Project_Explorers is
    begin
       case N_Type is
          when Project_Node_Types =>
-            Refresh_Project_Node
-              (Self, Store_Iter, Flat_View => Show_Flat_View.Get_Pref);
-            Self.Refilter;
+            declare
+               --  This has no effect when Add_Children is called from
+               --  Refresh, since we are already detached.
+               Dummy : constant Explorer_Expansion.Detached_Model :=
+                  Explorer_Expansion.Detach_Model_From_View (Self);
+            begin
+               Refresh_Project_Node
+                 (Self, Store_Iter,
+                  Flat_View => Self.User_Filter.Config.Flat_View);
+               Self.Refilter;
+            end;
 
          when Runtime_Node =>
             --  Following does nothing if info is aleeady there
-            Self.Append_Runtime_Info (Store_Iter);
+            declare
+               Dummy : constant Explorer_Expansion.Detached_Model :=
+                  Explorer_Expansion.Detach_Model_From_View (Self);
+            begin
+               Self.Append_Runtime_Info (Store_Iter);
+            end;
 
          when File_Node | Directory_Node_Types =>
             null;   --  nothing to do
@@ -1366,33 +1393,56 @@ package body Project_Explorers is
 
    procedure Refresh (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class) is
       T     : constant Project_Explorer := Project_Explorer (Explorer);
-      Id        : Gint;
-      Expansion : Explorer_Expansion.Expansion_Status;
    begin
       --  Cache the value for use in Sort_Func
       Boolean_User_Data.Set
         (T.Tree.Model,
-         Projects_Before_Directories.Get_Pref,
+         T.Tree.User_Filter.Config.Projects_Before_Dirs,
          User_Data_Projects_Before_Directories);
 
-      Explorer_Expansion.Get_Expansion_Status (T.Tree, Expansion);
+      declare
+         Dummy : constant Explorer_Expansion.Detached_Model :=
+            Explorer_Expansion.Detach_Model_From_View (T.Tree);
+      begin
+         T.Tree.Model.Clear;
 
-      T.Tree.Model.Clear;
+         if Get_Project (T.Kernel) = No_Project then
+            return;
+         end if;
 
-      if Get_Project (T.Kernel) = No_Project then
-         return;
-      end if;
+         Refresh_Project_Node
+           (Self      => T.Tree,
+            Node      => Null_Iter,
+            Flat_View => T.Tree.User_Filter.Config.Flat_View);
 
-      Id := Freeze_Sort (T.Tree.Model);
-      Refresh_Project_Node
-        (Self      => T.Tree,
-         Node      => Null_Iter,
-         Flat_View => Show_Flat_View.Get_Pref);
+         --  Add children for the root project. We can't simply expand the
+         --  node, since the view is detached (and reattaching would detach
+         --  it again to add the children, which is inefficient since we
+         --  need to restore the expansion status every time)
 
-      Explorer_Expansion.Set_Expansion_Status
-        (T.Tree, Expansion, Collapse_All_First => False);
-      T.Tree.Refilter;
-      Thaw_Sort (T.Tree.Model, Id);
+         T.Tree.Add_Row_Children (T.Tree.Model.Get_Iter_First);
+
+         --  Refilter only if needed
+         if not T.Tree.User_Filter.Config.Show_Empty_Dirs
+            or else T.Tree.User_Filter.Pattern /= null
+         then
+            Trace (Me, "Refilter");
+            T.Tree.Refilter;
+            Trace (Me, "Done Refilter");
+         end if;
+      end;
+
+      declare
+         Path : Gtk_Tree_Path;
+         Success : Boolean with Unreferenced;
+      begin
+         --  Expand the node for the root project. Its contents
+         --  has already been added, so this operation is fast.
+         Path := T.Tree.Get_Filter_Path_For_Store_Iter
+            (T.Tree.Model.Get_Iter_First);
+         Success := Expand_Row (T.Tree, Path, False);
+         Path_Free (Path);
+      end;
    end Refresh;
 
    -----------------------
@@ -1403,7 +1453,7 @@ package body Project_Explorers is
      (Self    : not null access Project_Explorer_Record'Class;
       Project : Project_Type) return Gtk_Tree_Iter
    is
-      Flat_View : constant Boolean := Show_Flat_View.Get_Pref;
+      Flat_View : constant Boolean := Self.Tree.User_Filter.Config.Flat_View;
       Node     : Gtk_Tree_Iter;
       P        : Project_Type;
    begin
@@ -1413,7 +1463,6 @@ package body Project_Explorers is
 
       if not Flat_View then
          Set_Pref (Show_Flat_View, Self.Kernel.Get_Preferences, True);
-         Refresh (Self);
       end if;
 
       Node := Self.Tree.Model.Get_Iter_First;
@@ -1476,8 +1525,10 @@ package body Project_Explorers is
 
       Show_Abs_Paths : constant Boolean := Show_Absolute_Paths.Get_Pref;
       Show_Base      : constant Boolean := Show_Basenames.Get_Pref;
-      Show_Obj_Dirs  : constant Boolean :=  Show_Object_Dirs.Get_Pref;
-      Show_Dirs      : constant Boolean := Show_Directories.Get_Pref;
+      Show_Obj_Dirs  : constant Boolean :=
+         Self.User_Filter.Config.Show_Object_Dirs;
+      Show_Dirs      : constant Boolean :=
+         Self.User_Filter.Config.Show_Directories;
 
       Child   : Gtk_Tree_Iter;
       Files   : File_Array_Access;
@@ -1531,15 +1582,12 @@ package body Project_Explorers is
 
       procedure Create_Or_Reuse_Runtime is
       begin
-         if Show_Runtime.Get_Pref then
+         if Self.User_Filter.Config.Show_Runtime then
             Child := Self.Create_Or_Reuse_Node
               (Parent => Null_Iter,  --  always at toplevel
                Kind   => Runtime_Node,
                File   => No_File,
                Name   => "runtime");
-
-            --  Will force a refresh
-            Remove_Child_Nodes (Self.Model, Parent => Child);
             Self.Set_Might_Have_Children (Child);
          end if;
       end Create_Or_Reuse_Runtime;
@@ -1558,9 +1606,6 @@ package body Project_Explorers is
                    (VCS.File_Properties_From_Cache (File).Status).Icon_Name));
       end Add_File;
 
-      Path    : Gtk_Tree_Path;
-      Success : Boolean with Unreferenced;
-
    begin
       Increase_Indent (Me, "Refresh project node");
       if Node = Null_Iter then
@@ -1578,13 +1623,10 @@ package body Project_Explorers is
          else
             --  Create and expand the node for the root project
             Child := Create_Or_Reuse_Project (Get_Project (Self.Kernel));
-            Path := Self.Get_Filter_Path_For_Store_Iter (Child);
-            Success := Expand_Row (Self, Path, False);
-            Path_Free (Path);
          end if;
 
          Create_Or_Reuse_Runtime;
-         Decrease_Indent (Me, "done Refresh project done");
+         Decrease_Indent (Me, "done Refresh project done after root");
          return;
       end if;
 
@@ -1644,37 +1686,39 @@ package body Project_Explorers is
          for F of Files.all loop
             Dirs ((F.Dir, Directory_Node)).Append (F);
          end loop;
-      end if;
 
-      --  Now insert directories and files (including object directories)
+         --  Now insert directories and files (including object directories).
+         --  This operation might take several seconds on very large projects
+         --  (10_000 files in the same directory for instance). Would be nice
+         --  to split that into small chunks eventually.
 
-      declare
-         Dir         : Dirs_Files_Hash.Cursor := Dirs.First;
-         Previous    : Directory_Info := (No_File, Runtime_Node);
-         Dummy       : Gtk_Tree_Iter;
-      begin
-         while Has_Element (Dir) loop
-            if not Self.Kernel.Is_Hidden (Key (Dir).Directory) then
-               --  minor optimization, reuse dir if same as previous file
-               if Key (Dir) /= Previous then
-                  Previous := (Key (Dir).Directory, Key (Dir).Kind);
-                  Child := Create_Or_Reuse_Directory (Key (Dir), Node);
+         declare
+            Dir         : Dirs_Files_Hash.Cursor := Dirs.First;
+            Previous    : Directory_Info := (No_File, Runtime_Node);
+            Dummy       : Gtk_Tree_Iter;
+         begin
+            while Has_Element (Dir) loop
+               if not Self.Kernel.Is_Hidden (Key (Dir).Directory) then
+                  --  minor optimization, reuse dir if same as previous file
+                  if Key (Dir) /= Previous then
+                     Previous := (Key (Dir).Directory, Key (Dir).Kind);
+                     Child := Create_Or_Reuse_Directory (Key (Dir), Node);
+                  end if;
+
+                  if Show_Dirs then
+                     for F of Dirs (Dir) loop
+                        if not Self.Kernel.Is_Hidden (F) then
+                           Add_File (Child, F);
+                        end if;
+                     end loop;
+                  end if;
                end if;
 
-               if Show_Dirs then
-                  for F of Dirs (Dir) loop
-                     if not Self.Kernel.Is_Hidden (F) then
-                        Add_File (Child, F);
-                     end if;
-                  end loop;
-               end if;
-            end if;
+               Next (Dir);
+            end loop;
+         end;
 
-            Next (Dir);
-         end loop;
-      end;
-
-      if not Show_Dirs then
+      else
          for F of Files.all loop
             if not Self.Kernel.Is_Hidden (F) then
                Add_File (Node, F);

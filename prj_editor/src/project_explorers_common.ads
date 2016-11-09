@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Deallocation;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
@@ -172,6 +173,32 @@ package Project_Explorers_Common is
       Importing : Boolean) return Project_Type;
    --  Return the name of the project that Node belongs to. If Importing is
    --  True, we return the importing project, not the one associated with Node.
+
+   ---------------
+   -- Expansion --
+   ---------------
+
+   type Node_Id is record
+      File  : Virtual_File;
+      Depth : Natural;
+   end record;
+   --  A unique ID for nodes, so that we can restore the expansion status.
+   --  We need to take the depth into account, because some files could be
+   --  duplicated in the project view (when not using flat view).
+
+   function Get_Id
+     (Self : not null access Base_Explorer_Tree_Record'Class;
+      Row  : Gtk_Tree_Iter) return Node_Id;
+   function Hash (Self : Node_Id) return Ada.Containers.Hash_Type;
+   package Explorer_Expansion is new Expansion_Support
+     (Tree_Record => Base_Explorer_Tree_Record,
+      Id          => Node_Id,
+      Get_Id      => Get_Id,
+      Hash        => Hash);
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Explorer_Expansion.Detached_Model'Class,
+      Explorer_Expansion.Detached_Model_Access);
 
    ---------
    -- VCS --

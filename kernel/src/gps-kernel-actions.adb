@@ -442,6 +442,7 @@ package body GPS.Kernel.Actions is
       if Act = null then
          Free (Args_In_Out);
          if Action (Action'First) = '/' then
+            Trace (Me, "Execute menu action " & Action);
             GPS.Kernel.Modules.UI.Execute_Menu
                (Kernel_Handle (Kernel), Action);
             return True;

@@ -16,14 +16,6 @@ import platform
 
 from workflows.promises import Promise, timeout
 
-# Make visible for tests that only to "from testsuite import *"
-from driver import *
-from dialogs import *
-from asserts import *
-from tree import *
-from menu import *
-from editor import *
-
 
 system_is_cygwin = ('uname' in os.__dict__ and
                     os.uname()[0].find('CYGWIN') != -1)
@@ -978,3 +970,12 @@ except:
 #     model     = tree.get_model()
 # This can also be done by getting the widget by its name:
 #     box = get_widget_by_name ("Project")
+
+
+# Make visible for tests that only to "from testsuite import *"
+from driver import *
+from dialogs import *
+from asserts import *
+from tree import *
+from menu import *
+from editor import *

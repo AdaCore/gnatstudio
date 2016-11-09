@@ -52,6 +52,7 @@
 --       operation.
 
 with Ada.Containers.Indefinite_Hashed_Sets;
+with Ada.Finalization;
 with Gtk.Tree_View;         use Gtk.Tree_View;
 with Gtk.Tree_Store;        use Gtk.Tree_Store;
 with Gtk.Tree_Model;        use Gtk.Tree_Model;
@@ -134,6 +135,30 @@ package Gtkada.Tree_View is
       --  across refresh of the model.
       --  This also preserves the current scrolling position
 
+      type Detached_Model is new Ada.Finalization.Limited_Controlled
+         with private;
+      type Detached_Model_Access is access all Detached_Model'Class;
+      overriding procedure Finalize (Self : in out Detached_Model);
+
+      function Detach_Model_From_View
+         (Self           : not null access Tree_Record'Class;
+          Freeze         : Boolean := True;
+          Save_Expansion : Boolean := True)
+         return Detached_Model;
+      --  Temporarily detach the model from the view.
+      --  This results in significant performance improvement when adding lots
+      --  of rows. When the resulting object goes out of scope, the view is
+      --  automatically reattached.
+      --  It is safe to nest calls (nested calls will have no effect).
+      --  Note that while detached, you cannot perform operations like
+      --  expanding a node for instance.
+      --
+      --  If Freeze is true, sorting is also suspended and restored.
+      --
+      --  When the model is reattached, the expansion status is lost. If
+      --  Save_Expansion is True, the nodes will be re-expanded as they were
+      --  before.
+
    private
       package Id_Sets is new Ada.Containers.Indefinite_Hashed_Sets
         (Element_Type        => Id,
@@ -142,12 +167,25 @@ package Gtkada.Tree_View is
          "="                 => "=");
 
       type Expansion_Status is record
-         Expanded : Id_Sets.Set;
+         Expanded      : Id_Sets.Set;
+         Selection     : Id_Sets.Set;
 
          Has_Scroll_Info : Boolean := False;
          Scroll_Y : Gtk_Tree_Path;
          --  Top visible row
       end record;
+
+      type Detached_Model is new Ada.Finalization.Limited_Controlled with
+      record
+         Tree           : access Tree_Record;
+         Was_Detached   : Boolean := True;
+         Sort_Col       : Gint := -1;
+
+         Save_Expansion : Boolean := False;
+         Expansion      : Expansion_Status;
+      end record
+      with Warnings => Off;  --  avoid warnings on unused instances
+
    end Expansion_Support;
 
    -------------
@@ -202,6 +240,23 @@ package Gtkada.Tree_View is
       Store_Iter : Gtk.Tree_Model.Gtk_Tree_Iter) is null;
    --  This procedure is called automatically when a row for which
    --  Set_Might_Have_Children was called is opened.
+   --  It will often be a good idea to use Detach_Model_From_View when
+   --  adding lots of children. This isn't done automatically since this also
+   --  prevents manually expanding rows.
+
+   procedure Add_Row_Children
+     (Self       : not null access Tree_View_Record'Class;
+      Store_Iter : Gtk_Tree_Iter);
+   --  Calls Add_Children on the row, if necessary (and if children are not
+   --  already known). The view doesn't need to be attached to the model.
+
+   procedure Remove_Dummy_Child
+     (Self       : not null access Tree_View_Record'Class;
+      Store_Iter : Gtk_Tree_Iter);
+   --  Remove a dummy child node if there's one.
+   --  Such nodes are inserted to make the parent node expandable.
+   --  In general, you don't need to call this function, call Add_Row_Children
+   --  instead (or let Add_Children be called automatically.
 
    ----------------
    -- Converters --

@@ -7,6 +7,7 @@ import sys
 from workflows import driver
 from editor import click_in_text
 from gi.repository import Gtk
+from gps_utils.internal.utils import simple_error
 
 # Some of the imports here are necessary for some of the tests
 from workflows.promises import hook, timeout, wait_tasks, wait_idle
