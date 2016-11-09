@@ -1690,6 +1690,9 @@ package body Src_Contexts is
          end;
 
          if not Matches.Is_Empty then
+            Context.Nb_Of_Replacements :=
+              Context.Nb_Of_Replacements + Natural (Matches.Length);
+
             Context.Replacement.Initialize
               (Replace_String  => Replace_String,
                Case_Preserving => Case_Preserving,
@@ -1829,13 +1832,14 @@ package body Src_Contexts is
 
    overriding function Get_Terminate_Message
      (Context : access Files_Project_Context;
-      Kind    : Operation_Kind) return String
-   is
-      pragma Unreferenced (Context);
+      Kind    : Operation_Kind) return String is
    begin
       case Kind is
          when Replace =>
-            return -"Finished replacing the string in files from project";
+            return -("Finished replacing the string in files from project "
+                     & '('
+                     & GNATCOLL.Utils.Image (Context.Nb_Of_Replacements, 1)
+                     & " occurrences)");
          when Search =>
             return "";
       end case;
@@ -1873,13 +1877,14 @@ package body Src_Contexts is
 
    overriding function Get_Terminate_Message
      (Context : access Open_Files_Context;
-      Kind    : Operation_Kind) return String
-   is
-      pragma Unreferenced (Context);
+      Kind    : Operation_Kind) return String is
    begin
       case Kind is
          when Replace =>
-            return -"Finished replacing the string in open files";
+            return -("Finished replacing the string in open files "
+                     & '('
+                     & GNATCOLL.Utils.Image (Context.Nb_Of_Replacements, 1)
+                     & " occurrences)");
          when Search =>
             return "";
       end case;
@@ -1954,13 +1959,14 @@ package body Src_Contexts is
 
    overriding function Get_Terminate_Message
      (Context : access Files_Context;
-      Kind    : Operation_Kind) return String
-   is
-      pragma Unreferenced (Context);
+      Kind    : Operation_Kind) return String is
    begin
       case Kind is
          when Replace =>
-            return -"Finished replacing the string in selected files";
+            return -("Finished replacing the string in selected files "
+                     & '('
+                     & GNATCOLL.Utils.Image (Context.Nb_Of_Replacements, 1)
+                     & " occurrences)");
          when Search =>
             return "";
       end case;
@@ -2052,13 +2058,14 @@ package body Src_Contexts is
 
    overriding function Get_Terminate_Message
      (Context : access Current_File_Context;
-      Kind    : Operation_Kind) return String
-   is
-      pragma Unreferenced (Context);
+      Kind    : Operation_Kind) return String is
    begin
       case Kind is
          when Replace =>
-            return -"Finished replacing the string in current file";
+            return -("Finished replacing the string in current file "
+                     & '('
+                     & GNATCOLL.Utils.Image (Context.Nb_Of_Replacements, 1)
+                     & " occurrences)");
          when Search =>
             return "";
       end case;
@@ -2349,6 +2356,9 @@ package body Src_Contexts is
                Result  => Matches);
 
             if not Matches.Is_Empty then
+               Context.Nb_Of_Replacements :=
+                 Context.Nb_Of_Replacements + Natural (Matches.Length);
+
                Replace_Matched
                  (Replacement => Context.Replacement,
                   Matches     => Matches,
@@ -2492,6 +2502,9 @@ package body Src_Contexts is
             Result  => Matches);
 
          if not Matches.Is_Empty then
+            Context.Nb_Of_Replacements :=
+              Context.Nb_Of_Replacements + Natural (Matches.Length);
+
             declare
                Buffer   : GNAT.Strings.String_Access;
                Last     : Positive := 1;
