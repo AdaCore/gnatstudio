@@ -398,10 +398,15 @@ package body Refactoring.Rename is
                      end if;
                   end if;
 
-                  --  Undo once for every buffer we have
+                  --  Undo once for every buffer we have, except the ones
+                  --  where errors occurred: the insertion probably failed
+                  --  there, and, if so, we do not want to undo edition that
+                  --  was done by the user.
 
                   for F in 1 .. First_Empty - 1 loop
-                     Get_Buffer_Factory (Kernel).Get (Filenames (F)).Undo;
+                     if not Errors.Contains (Filenames (F)) then
+                        Get_Buffer_Factory (Kernel).Get (Filenames (F)).Undo;
+                     end if;
                   end loop;
                end loop;
             end;
