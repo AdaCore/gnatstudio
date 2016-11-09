@@ -403,23 +403,26 @@ private
    package Directory_List is new Generic_List (Dir_Data_Access);
 
    type File_Search_Context is abstract new Root_Search_Context with record
-      Replace_Valid : Boolean := False;
+      Replace_Valid      : Boolean := False;
       --  Whether the current search item that the context refers to
       --  is acceptable for a replace operation.
 
-      Current : GPS.Search.Search_Context := GPS.Search.No_Match;
+      Current            : GPS.Search.Search_Context := GPS.Search.No_Match;
       --  Information about the last match
 
-      All_Occurrences : Boolean := False;
-      Scope           : Search_Scope := Whole;
+      All_Occurrences    : Boolean := False;
+      Scope              : Search_Scope := Whole;
 
-      Current_Lexical : Recognized_Lexical_States := Statements;
+      Current_Lexical    : Recognized_Lexical_States := Statements;
       --  The current scope when parsing the current file. This needs to be
       --  saved so that when we continue the search we restart in the proper
       --  state
 
-      Replacement     : Replacement_Pattern;
+      Replacement        : Replacement_Pattern;
       --  Cached replacement pattern
+
+      Nb_Of_Replacements : Natural := 0;
+      --  The number of replacements made with this context.
    end record;
 
    overriding procedure Reset
