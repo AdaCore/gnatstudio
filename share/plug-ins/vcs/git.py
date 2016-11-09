@@ -119,7 +119,7 @@ XML = r"""<?xml version="1.0" ?>
 
    <action name="generic_git_diff_head" show-command="false" output="none" category="">
       <shell output="">echo "Getting comparison for $1 ..."</shell>
-      <shell lang="python">git.from_git_root ("$1")</shell>
+      <shell lang="python">vcs.git.from_git_root ("$1")</shell>
       <external>git --no-pager show HEAD:%1</external>
       <shell>dump "%1" TRUE</shell>
       <external>diff --normal -p %1 $1</external>
@@ -200,7 +200,7 @@ XML = r"""<?xml version="1.0" ?>
 
    <action name="generic_git_revision" show-command="false" output="none" category="">
       <shell output="">echo "Getting $2 at revision $1"</shell>
-      <shell lang="python">git.from_git_root ("$2")</shell>
+      <shell lang="python">vcs.git.from_git_root ("$2")</shell>
       <external>git --no-pager show "$1:%1"</external>
       <shell>base_name "$2"</shell>
       <shell>dump "%2" FALSE</shell>
