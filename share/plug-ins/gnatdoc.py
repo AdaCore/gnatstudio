@@ -35,7 +35,7 @@ project_attributes = """
   <project_attribute
    name="Documentation_Dir"
    label="Documentation directory"
-   package="IDE"
+   package="Documentation"
    editor_page="GNATdoc"
    hide_in="wizard library_wizard"
    description="In which subdirectory of the object dir to generate the doc"
@@ -273,7 +273,7 @@ class GNATdoc_Module(modules.Module):
         if target_name.startswith("gnatdoc"):
             p = GPS.Project.root()
             doc_dir = p.get_attribute_as_string(
-                package="IDE", attribute="Documentation_Dir")
+                package="Documentation", attribute="Documentation_Dir")
 
             if not doc_dir:
                 object_dirs = p.object_dirs()

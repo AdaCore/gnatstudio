@@ -18,6 +18,5 @@ project Help is
    end Naming;
 
    package Compiler renames Shared.Compiler;
-   package IDE renames Shared.IDE;
 
 end Help;

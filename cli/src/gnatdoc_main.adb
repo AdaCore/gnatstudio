@@ -449,6 +449,19 @@ begin
 
    Project_File := Create (+Project_Name.all);
 
+   declare
+      Result : constant String :=
+        GNATCOLL.Projects.Register_New_Attribute
+          (Name    => Documentation_Dir_Name,
+           Pkg     => Pkg_Name);
+   begin
+      --  Log the reported error (if any)
+
+      if Result /= "" then
+         Trace (DOCGEN_V31, Result);
+      end if;
+   end;
+
    --  Register the package and attribute that can be used in the project
    --  files to specify a list of subprojects ignored by GNATdoc
 

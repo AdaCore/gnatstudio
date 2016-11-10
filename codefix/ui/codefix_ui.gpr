@@ -10,6 +10,4 @@ project Codefix_UI is
 
    package Compiler renames Shared.Compiler;
 
-   package Ide renames Shared.Ide;
-
 end Codefix_UI;

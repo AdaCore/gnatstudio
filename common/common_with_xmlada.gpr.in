@@ -25,8 +25,6 @@ project Common is
       end case;
    end Compiler;
 
-   package IDE renames Shared.IDE;
-
    package Binder is
        for Switches ("Ada") use ("-E");
    end Binder;

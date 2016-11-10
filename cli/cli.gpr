@@ -36,9 +36,10 @@ project CLI is
    package Compiler renames Shared.Compiler;
    package Binder renames Shared.Binder;
    package Linker renames Shared.Linker;
-   package IDE renames Shared.IDE;
 
    package Documentation is
+      for Documentation_Dir use Project'Object_Dir & "/html";
+
       for Ignored_Subprojects use (
          "gnatcoll",
          "gnatcoll_shared",

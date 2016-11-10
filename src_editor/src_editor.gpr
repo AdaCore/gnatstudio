@@ -29,6 +29,4 @@ project Src_Editor is
       end case;
    end Naming;
 
-   package IDE renames Shared.IDE;
-
 end Src_Editor;

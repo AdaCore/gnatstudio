@@ -14,6 +14,6 @@ project Docgen_Resources is
       for Driver ("html") use "";
    end Compiler;
 
-   package Ide renames Shared.Ide;
+   package Documentation renames Shared.Documentation;
 
 end Docgen_Resources;

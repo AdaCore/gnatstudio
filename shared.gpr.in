@@ -19,9 +19,9 @@ project Shared is
    for Object_Dir use Global_Objects_Root &  "obj";
    for Library_Dir use "lib";
 
-   package IDE is
+   package Documentation is
       for Documentation_Dir use Project'Object_Dir & "/html";
-   end IDE;
+   end Documentation;
 
    package Compiler is
       Common := ("-g", "-gnat12");

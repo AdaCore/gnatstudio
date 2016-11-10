@@ -37,6 +37,4 @@ project Prj_Editor is
       for Switches ("Ada") use ("-shared-libgcc");
    end Linker;
 
-   package IDE renames Shared.IDE;
-
 end Prj_Editor;

@@ -21,6 +21,6 @@ project Plugins is
       for Object_File_Suffix ("css") use "-";
    end Compiler;
 
-   package IDE renames Shared.IDE;
+   package Documentation renames Shared.Documentation;
 
 end Plugins;

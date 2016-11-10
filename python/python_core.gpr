@@ -10,6 +10,5 @@ project Python_Core is
    for Languages use ("Ada");
 
    package Compiler renames Shared.Compiler;
-   package IDE renames Shared.IDE;
 
 end Python_Core;

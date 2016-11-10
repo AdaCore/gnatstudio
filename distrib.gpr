@@ -17,6 +17,6 @@ project Distrib is
       for Driver ("text") use "";
    end Compiler;
 
-   package IDE renames Shared.IDE;
+   package Documentation renames Shared.Documentation;
 
 end Distrib;

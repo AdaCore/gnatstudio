@@ -11,6 +11,5 @@ project Ada_Module_Core is
    end Builder;
 
    package Compiler renames Shared.Compiler;
-   package IDE renames Shared.IDE;
 
 end Ada_Module_Core;

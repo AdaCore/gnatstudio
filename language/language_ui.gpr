@@ -13,6 +13,4 @@ project Language_UI is
         use Language.Compiler'Switches ("Ada");
    end Compiler;
 
-   package IDE renames Language.IDE;
-
 end Language_UI;
