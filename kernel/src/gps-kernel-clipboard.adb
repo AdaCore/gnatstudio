@@ -26,9 +26,7 @@ with Glib.Types;                 use Glib.Types;
 with Glib.Object;                use Glib.Object;
 with Gtk.Clipboard;              use Gtk.Clipboard;
 with Gtk.Editable;               use Gtk.Editable;
-with Gtk.Handlers;               use Gtk.Handlers;
 with Gtk.Text_View;              use Gtk.Text_View;
-with Gtk.Text_Buffer;            use Gtk.Text_Buffer;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Tree_View;              use Gtk.Tree_View;
 with Gtk.Widget;                 use Gtk.Widget;
@@ -83,15 +81,6 @@ package body GPS.Kernel.Clipboard is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles shell commands associated with the clipboard
 
-   package On_Paste_Done_Callback is new Gtk.Handlers.User_Callback
-      (Widget_Type => Gtk_Text_Buffer_Record,
-       User_Type   => Clipboard_Access);
-   procedure On_Paste_Done
-      (Self      : access Gtk_Text_Buffer_Record'Class;
-       Clipboard : Clipboard_Access);
-   --  Called when a paste has been done. Used to retrieve the text buffer
-   --  cursor's position.
-
    -------------
    -- Execute --
    -------------
@@ -121,12 +110,12 @@ package body GPS.Kernel.Clipboard is
    -------------------
 
    procedure On_Paste_Done
-      (Self      : access Gtk_Text_Buffer_Record'Class;
-       Clipboard : Clipboard_Access)
+     (Clipboard : not null access Clipboard_Record;
+      Buffer    : not null access Gtk_Text_Buffer_Record'Class)
    is
       Iter : Gtk_Text_Iter;
    begin
-      Get_Iter_At_Mark (Self, Iter, Get_Insert (Self));
+      Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
       Clipboard.Last_Position := Get_Offset (Iter);
    end On_Paste_Done;
 
@@ -477,16 +466,6 @@ package body GPS.Kernel.Clipboard is
             if Selection_Exists (Buffer) then
                Result := Delete_Selection (Buffer, False, False);
             end if;
-
-            --  Connect to the 'paste-done' signal to retrieve the cursor's
-            --  position after a paste.
-            On_Paste_Done_Callback.Object_Connect
-               (Buffer,
-                Name        => Gtk.Text_Buffer.Signal_Paste_Done,
-                Cb          => On_Paste_Done'Access,
-                Slot_Object => Buffer,
-                User_Data   => Clipboard_Access (Clipboard),
-                After       => True);
 
             Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
             Clipboard.First_Position := Get_Offset (Iter);

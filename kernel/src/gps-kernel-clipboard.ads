@@ -16,6 +16,7 @@
 ------------------------------------------------------------------------------
 
 with Glib.Object;
+with Gtk.Text_Buffer;     use Gtk.Text_Buffer;
 with Gtk.Widget;
 with GNAT.Strings;
 
@@ -98,6 +99,12 @@ package GPS.Kernel.Clipboard is
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
    --  Register shell commands associated with the clipboard
+
+   procedure On_Paste_Done
+     (Clipboard : not null access Clipboard_Record;
+      Buffer    : not null access Gtk_Text_Buffer_Record'Class);
+   --  Should be called when a paste has finished
+   --  Used to do setup the paste-previous
 
 private
    type Selection_List_Access is access Selection_List;
