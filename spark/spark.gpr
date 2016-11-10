@@ -6,7 +6,6 @@ project SPARK is
    for Object_Dir use Shared'Object_Dir;
    for Main use ("gnatspark.adb");
 
-   package IDE renames Shared.IDE;
    package Compiler renames Shared.Compiler;
 
    package Builder is

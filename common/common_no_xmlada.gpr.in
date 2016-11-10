@@ -24,8 +24,6 @@ project Common is
       end case;
    end Compiler;
 
-   package IDE renames Shared.IDE;
-
    package Naming is
       for Implementation ("xml_parsers") use "xml_parsers__gtk.adb";
    end Naming;

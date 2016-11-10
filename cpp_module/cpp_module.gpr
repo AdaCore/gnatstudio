@@ -8,6 +8,5 @@ project Cpp_Module is
    for Object_Dir use Shared'Object_Dir;
 
    package Compiler renames Shared.Compiler;
-   package IDE renames Shared.IDE;
 
 end Cpp_Module;

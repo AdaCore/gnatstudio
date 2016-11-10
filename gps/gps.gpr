@@ -64,7 +64,7 @@ project GPS is
 
    package Compiler renames Shared.Compiler;
    package Binder renames Shared.Binder;
-   package IDE renames Shared.IDE;
+   package Documentation renames Shared.Documentation;
 
    package Linker is
       case Shared.OS is

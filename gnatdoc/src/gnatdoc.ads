@@ -35,6 +35,7 @@ package GNATdoc is
    --  subprojects
 
    Pkg_Name                    : constant String := "documentation";
+   Documentation_Dir_Name      : constant String := "documentation_dir";
    Image_Dir_Name              : constant String := "image_dir";
    Doc_Pattern_Name            : constant String := "doc_pattern";
    Custom_Tags_Definition_Name : constant String := "custom_tags_definition";

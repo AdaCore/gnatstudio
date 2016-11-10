@@ -12,6 +12,4 @@ project Codefix_Core is
 
    package Compiler renames Shared.Compiler;
 
-   package Ide renames Shared.Ide;
-
 end Codefix_Core;

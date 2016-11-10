@@ -11,6 +11,5 @@ project Python is
    for Languages use ("Ada");
 
    package Compiler renames Shared.Compiler;
-   package IDE renames Shared.IDE;
 
 end Python;

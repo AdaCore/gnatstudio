@@ -14,6 +14,6 @@ project GNATdoc is
    end Builder;
 
    package Compiler renames Shared.Compiler;
-   package Ide renames Shared.Ide;
+   package Documentation renames Shared.Documentation;
 
 end GNATdoc;

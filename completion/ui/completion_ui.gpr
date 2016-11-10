@@ -16,7 +16,6 @@ project Completion_UI is
       for Switches ("ada") use ("-g", "-m");
    end Builder;
 
-   package IDE renames Shared.IDE;
    package Linker renames Shared.Linker;
    package Binder renames Shared.Binder;
 

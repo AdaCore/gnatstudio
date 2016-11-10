@@ -14,6 +14,4 @@ project Widgets is
         Shared.Compiler'Switches ("C") & GnatColl_Gtk.Gtk_Include;
    end Compiler;
 
-   package IDE renames Shared.IDE;
-
 end Widgets;

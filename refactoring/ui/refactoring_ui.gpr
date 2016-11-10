@@ -10,6 +10,5 @@ project Refactoring_UI is
    for Object_Dir use Shared'Object_Dir;
 
    package Compiler renames Shared.Compiler;
-   package IDE renames Shared.IDE;
 
 end Refactoring_UI;

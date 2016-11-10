@@ -10,6 +10,4 @@ project GNATTest is
 
    package Compiler renames Shared.Compiler;
 
-   package Ide renames Shared.Ide;
-
 end GNATTest;

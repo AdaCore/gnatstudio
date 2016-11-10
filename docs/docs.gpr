@@ -23,7 +23,7 @@ project Docs is
       for Object_File_Suffix ("rest") use "-";
    end Compiler;
 
-   package IDE renames Shared.IDE;
+   package Documentation renames Shared.Documentation;
 
 end Docs;
 

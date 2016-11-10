@@ -12,7 +12,6 @@ project Ada_Module_UI is
    for Object_Dir use Shared'Object_Dir;
 
    package Compiler renames Shared.Compiler;
-   package IDE renames Shared.IDE;
 
    package Binder is
       for Switches ("Ada") use ("-E");

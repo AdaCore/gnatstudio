@@ -19,6 +19,4 @@ project GVD is
       for Switches ("Ada") use ("-E");
    end Binder;
 
-   package IDE renames Shared.IDE;
-
 end GVD;
