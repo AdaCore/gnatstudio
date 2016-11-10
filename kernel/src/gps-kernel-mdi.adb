@@ -2051,7 +2051,7 @@ package body GPS.Kernel.MDI is
                      & ASCII.LF);
             Label.Set_Selectable (True);
             Label.Set_Alignment (0.0, 0.0);
-            Dialog.Get_Content_Area.Pack_Start (Label);
+            Dialog.Get_Content_Area.Pack_Start (Label, Expand => False);
 
             F := Modified.First;
             while Has_Element (F) loop
@@ -2063,7 +2063,7 @@ package body GPS.Kernel.MDI is
                   Initialize (Button, Button.File.Display_Full_Name);
                   Button.Set_Alignment (0.0, 0.5);
                   Button.Set_Active (True);
-                  Dialog.Get_Content_Area.Pack_Start (Button);
+                  Dialog.Get_Content_Area.Pack_Start (Button, Expand => False);
                end if;
 
                Next (F);
