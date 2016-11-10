@@ -212,7 +212,7 @@ class GNATcovPlugin(object):
                 X('arg').children('--recursive'),
                 X('arg').children('%target'),
                 X('arg').children('-c'),
-                X('arg').children("%attr(ide_coverage'level_coverage,stmt)"),
+                X('arg').children("%attr(ide_coverage'level_run,stmt)"),
                 X('arg').children('-o'),
                 X('arg').children('%TT.trace'),
                 X('arg').children('%E'),
