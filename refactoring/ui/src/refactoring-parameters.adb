@@ -171,6 +171,8 @@ package body Refactoring.Parameters is
       ------------------------
 
       function Is_Dotted_Notation return Boolean is
+         use type Ada.Containers.Count_Type;
+
          S_File : constant Structured_File_Access := Get_Or_Create
            (Db   => Kernel.Get_Construct_Database,
             File => File);
@@ -191,29 +193,21 @@ package body Refactoring.Parameters is
          --  We expect to have something like [id] [.] [call]. Otherwise, we're
          --  not on a prefixed notation
 
-         if Token_List.Length (Expression.Tokens) < 3 then
+         if Expression.Tokens.Length < 3 then
             Free (Expression);
             return False;
          end if;
 
-         Token_List.Remove_Nodes
-           (Expression.Tokens,
-            Token_List.Prev
-              (Expression.Tokens, Token_List.Last (Expression.Tokens)));
-
-         Entity_Token := Token_List.Data (Token_List.Last (Expression.Tokens));
+         Expression.Tokens.Delete_Last;
+         Entity_Token := Token_List.Element (Expression.Tokens.Last);
 
          if Entity_Token.Tok_Type /= Tok_Dot then
             Free (Expression);
             return False;
          end if;
 
-         Token_List.Remove_Nodes
-           (Expression.Tokens,
-            Token_List.Prev
-              (Expression.Tokens, Token_List.Last (Expression.Tokens)));
-
-         Entity_Token := Token_List.Data (Token_List.Last (Expression.Tokens));
+         Expression.Tokens.Delete_Last;
+         Entity_Token := Token_List.Element (Expression.Tokens.Last);
 
          if Entity_Token.Tok_Type /= Tok_Identifier then
             Free (Expression);

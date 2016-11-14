@@ -541,11 +541,11 @@ package body Ada_Semantic_Tree.Declarations is
       All_Name_Id            : Normalized_Symbol;
       Actual_From_Visibility : Visibility_Context;
       Analyzed_Expression    : Parsed_Expression;
-      First_Token            : Token_List.List_Node;
+      First_Token            : Token_List.Cursor;
 
       procedure Analyze_Token
-        (Previous_Token       : Token_List.List_Node;
-         Token                : Token_List.List_Node;
+        (Previous_Token       : Token_List.Cursor;
+         Token                : Token_List.Cursor;
          Previous_Declaration : Entity_View;
          Filter               : Entity_Filter;
          Result               : in out Entity_List);
@@ -555,8 +555,8 @@ package body Ada_Semantic_Tree.Declarations is
       -------------------
 
       procedure Analyze_Token
-        (Previous_Token       : Token_List.List_Node;
-         Token                : Token_List.List_Node;
+        (Previous_Token       : Token_List.Cursor;
+         Token                : Token_List.Cursor;
          Previous_Declaration : Entity_View;
          Filter               : Entity_Filter;
          Result               : in out Entity_List)
@@ -575,7 +575,7 @@ package body Ada_Semantic_Tree.Declarations is
             Tmp_It : Entity_Iterator;
 
             Partial_Id : constant Boolean :=
-              Next (Token) = Token_List.Null_Node
+              Next (Token) = Token_List.No_Element
               and then Is_Partial;
             --  Computes if this identifier is a partial one.
 
@@ -583,7 +583,7 @@ package body Ada_Semantic_Tree.Declarations is
             Tmp.From_Visibility := Actual_From_Visibility;
 
             if Token = First_Token
-              or else Data (Previous_Token).Tok_Type = Tok_Colon
+              or else Element (Previous_Token).Tok_Type = Tok_Colon
             then
                Get_Possible_Standard_Entities
                  (Db         => Db,
@@ -593,7 +593,7 @@ package body Ada_Semantic_Tree.Declarations is
             end if;
 
             if Token /= First_Token
-              and then Data (Previous_Token).Tok_Type = Tok_Raise
+              and then Element (Previous_Token).Tok_Type = Tok_Raise
             then
                Get_Possible_Standard_Exceptions
                  (Db         => Db,
@@ -604,13 +604,13 @@ package body Ada_Semantic_Tree.Declarations is
 
             if Token = First_Token
               or else
-                (Previous_Token /= Token_List.Null_Node
+                (Has_Element (Previous_Token)
                  and then
-                   (Data (Previous_Token).Tok_Type = Tok_Use
-                    or else Data (Previous_Token).Tok_Type = Tok_With
-                    or else Data (Previous_Token).Tok_Type = Tok_Colon
-                    or else Data (Previous_Token).Tok_Type = Tok_Accept
-                    or else Data (Previous_Token).Tok_Type = Tok_Raise))
+                   (Element (Previous_Token).Tok_Type = Tok_Use
+                    or else Element (Previous_Token).Tok_Type = Tok_With
+                    or else Element (Previous_Token).Tok_Type = Tok_Colon
+                    or else Element (Previous_Token).Tok_Type = Tok_Accept
+                    or else Element (Previous_Token).Tok_Type = Tok_Raise))
             then
                Get_Possibilities
                  (Id,
@@ -620,24 +620,24 @@ package body Ada_Semantic_Tree.Declarations is
                   Filter,
                   Tmp);
 
-            elsif Previous_Token /= Token_List.Null_Node
-              and then Data (Previous_Token).Tok_Type = Tok_Aspect
+            elsif Has_Element (Previous_Token)
+              and then Element (Previous_Token).Tok_Type = Tok_Aspect
             then
                Get_Possible_Aspects
                  (Db      => Db,
                   Prefix  => Get (Id).all,
                   Context => (others => True),
                   Result  => Tmp);
-            elsif Previous_Token /= Token_List.Null_Node
-              and then Data (Previous_Token).Tok_Type = Tok_Pragma
+            elsif Has_Element (Previous_Token)
+              and then Element (Previous_Token).Tok_Type = Tok_Pragma
             then
                Get_Possible_Pragmas
                  (Db      => Db,
                   Prefix  => Get (Id).all,
                   Context => (others => True),
                   Result  => Tmp);
-            elsif Previous_Token /= Token_List.Null_Node
-              and then Data (Previous_Token).Tok_Type = Tok_Tick
+            elsif Has_Element (Previous_Token)
+              and then Element (Previous_Token).Tok_Type = Tok_Tick
             then
                Get_Possible_Attributes
                  (Db      => Db,
@@ -656,7 +656,7 @@ package body Ada_Semantic_Tree.Declarations is
                return;
             end if;
 
-            if Next (Token) = Token_List.Null_Node then
+            if Next (Token) = Token_List.No_Element then
                Entity_List_Pckg.Concat
                  (Result.Contents, Tmp.Contents);
             else
@@ -744,7 +744,7 @@ package body Ada_Semantic_Tree.Declarations is
          end Is_Callable_Subprogram;
 
       begin
-         case Data (Token).Tok_Type is
+         case Element (Token).Tok_Type is
             when Tok_Dot =>
                if Previous_Declaration = null then
                   --  If we could not find any previous declaration, then
@@ -780,7 +780,7 @@ package body Ada_Semantic_Tree.Declarations is
                   return;
                end if;
 
-               if Next (Token) = Token_List.Null_Node then
+               if Next (Token) = Token_List.No_Element then
                   Fill_Children
                     (E               => Previous_Declaration,
                      Name            => "",
@@ -803,7 +803,7 @@ package body Ada_Semantic_Tree.Declarations is
             when Tok_Identifier =>
                Handle_Identifier
                  (Find_Normalized (Db.Symbols,
-                    Get_Name (Analyzed_Expression, Data (Token))));
+                    Get_Name (Analyzed_Expression, Element (Token))));
 
             when Tok_Open_Parenthesis =>
                if Previous_Declaration = null then
@@ -827,7 +827,7 @@ package body Ada_Semantic_Tree.Declarations is
                end if;
 
                declare
-                  Current_Token : Token_List.List_Node := Next (Token);
+                  Current_Token : Token_List.Cursor := Next (Token);
                   Success : Boolean := False;
                   Local_Declaration : Entity_View :=
                     Deep_Copy (Previous_Declaration);
@@ -854,14 +854,14 @@ package body Ada_Semantic_Tree.Declarations is
                   --  Perform the analysis of the actual parameters.
                   --  Reset any former value of the actual parameters.
 
-                  while Current_Token /= Token_List.Null_Node loop
-                     if Data (Current_Token).Tok_Type = Tok_Expression then
+                  while Has_Element (Current_Token) loop
+                     if Element (Current_Token).Tok_Type = Tok_Expression then
                         --  ??? It's a shame to have to recompute the actual
                         --  each time we go there.
                         New_Param := Get_Actual_Parameter
                           (Get_Buffer (Context.File),
-                           Data (Current_Token).Token_First,
-                           Data (Current_Token).Token_Last);
+                           Element (Current_Token).Token_First,
+                           Element (Current_Token).Token_Last);
 
                         Append_Actual
                           (Declaration_View_Record
@@ -902,7 +902,7 @@ package body Ada_Semantic_Tree.Declarations is
                            end if;
                         end if;
                      elsif
-                       Data (Current_Token).Tok_Type = Tok_Close_Parenthesis
+                       Element (Current_Token).Tok_Type = Tok_Close_Parenthesis
                      then
                         if Get_Construct
                           (Get_Entity (Previous_Declaration)).Category in
@@ -915,7 +915,7 @@ package body Ada_Semantic_Tree.Declarations is
                            --  if the subprogram profile matches, then do the
                            --  completion
 
-                           if Next (Current_Token) = Token_List.Null_Node then
+                           if Next (Current_Token) = Token_List.No_Element then
                               Append
                                 (Result.Contents,
                                  Unique_Declaration_List'
@@ -947,8 +947,8 @@ package body Ada_Semantic_Tree.Declarations is
                      Current_Token := Next (Current_Token);
                   end loop;
 
-                  if Current_Token = Token_List.Null_Node
-                    or else Data (Current_Token).Tok_Type
+                  if Current_Token = Token_List.No_Element
+                    or else Element (Current_Token).Tok_Type
                     /= Tok_Close_Parenthesis
                   then
                      --  In this case, we're still in the expression  list, for
@@ -967,7 +967,7 @@ package body Ada_Semantic_Tree.Declarations is
                      if Any_Named_Formal_Missing
                        (Get_Actual_Parameters (Local_Declaration).all)
                        and then
-                         (Data (Previous_Token).Tok_Type = Tok_Tick
+                         (Element (Previous_Token).Tok_Type = Tok_Tick
                           or else Get_Construct
                             (Get_Entity (Previous_Declaration)).Category not in
                             Type_Category)
@@ -991,7 +991,7 @@ package body Ada_Semantic_Tree.Declarations is
                   if Context.Context_Type = From_File then
                      Actual_From_Visibility.Filter := All_Accessible_Units;
 
-                     if Next (Token) /= Token_List.Null_Node then
+                     if Has_Element (Next (Token)) then
                         Analyze_Token
                           (Token,
                            Next (Token),
@@ -1005,7 +1005,7 @@ package body Ada_Semantic_Tree.Declarations is
                            (From_File,
                             Null_Instance_Info,
                             Context.File,
-                            Data (Token).Token_First - 1),
+                            Element (Token).Token_First - 1),
                            Actual_From_Visibility,
                            Filter,
                            Result);
@@ -1021,7 +1021,7 @@ package body Ada_Semantic_Tree.Declarations is
             when Tok_Aspect =>
                pragma Assert (Token = First_Token);
 
-               if Next (Token) /= Token_List.Null_Node then
+               if Has_Element (Next (Token)) then
                   Analyze_Token
                     (Token,
                      Next (Token),
@@ -1042,7 +1042,7 @@ package body Ada_Semantic_Tree.Declarations is
                if Context.Context_Type = From_File then
                   Actual_From_Visibility.Filter := Everything;
 
-                  if Next (Token) /= Token_List.Null_Node then
+                  if Has_Element (Next (Token)) then
                      Analyze_Token
                        (Token,
                         Next (Token),
@@ -1056,7 +1056,7 @@ package body Ada_Semantic_Tree.Declarations is
                         (From_File,
                          Null_Instance_Info,
                          Context.File,
-                         Data (Token).Token_First - 1),
+                         Element (Token).Token_First - 1),
                         Actual_From_Visibility,
                         Filter_Packages,
                         Result);
@@ -1070,7 +1070,7 @@ package body Ada_Semantic_Tree.Declarations is
             when Tok_Pragma =>
                pragma Assert (Token = First_Token);
 
-               if Next (Token) /= Token_List.Null_Node then
+               if Has_Element (Next (Token)) then
                   Analyze_Token
                     (Token,
                      Next (Token),
@@ -1086,7 +1086,7 @@ package body Ada_Semantic_Tree.Declarations is
                end if;
 
             when Tok_Tick =>
-               if Next (Token) /= Token_List.Null_Node then
+               if Has_Element (Next (Token)) then
                   Analyze_Token
                     (Token,
                      Next (Token),
@@ -1102,7 +1102,7 @@ package body Ada_Semantic_Tree.Declarations is
                end if;
 
             when Tok_Colon =>
-               if Next (Token) = Token_List.Null_Node then
+               if Next (Token) = Token_List.No_Element then
                   --  We don't return the list of types when no identifier
                   --  is given
                   return;
@@ -1119,7 +1119,7 @@ package body Ada_Semantic_Tree.Declarations is
                pragma Assert (Token = First_Token);
 
                if Context.Context_Type = From_File then
-                  if Next (Token) /= Token_List.Null_Node then
+                  if Has_Element (Next (Token)) then
                      Analyze_Token
                        (Token,
                         Next (Token),
@@ -1133,7 +1133,7 @@ package body Ada_Semantic_Tree.Declarations is
                         (From_File,
                          Null_Instance_Info,
                          Context.File,
-                         Data (Token).Token_First - 1),
+                         Element (Token).Token_First - 1),
                         Actual_From_Visibility,
                         Filter_Entries,
                         Result);
@@ -1149,7 +1149,7 @@ package body Ada_Semantic_Tree.Declarations is
                pragma Assert (Token = First_Token);
 
                if Context.Context_Type = From_File then
-                  if Next (Token) /= Token_List.Null_Node then
+                  if Has_Element (Next (Token)) then
                      Analyze_Token
                        (Token,
                         Next (Token),
@@ -1163,7 +1163,7 @@ package body Ada_Semantic_Tree.Declarations is
                         (From_File,
                          Null_Instance_Info,
                          Context.File,
-                         Data (Token).Token_First - 1),
+                         Element (Token).Token_First - 1),
                         Actual_From_Visibility,
                         Filter_Exceptions,
                         Result);
@@ -1234,7 +1234,7 @@ package body Ada_Semantic_Tree.Declarations is
       Result.From_Visibility := Actual_From_Visibility;
 
       declare
-         Analyzed_Token : Token_List.List_Node;
+         Analyzed_Token : Token_List.Cursor;
       begin
          --  Do a pre-analyzis of the expression - its beginning may not be
          --  relevant for our purpose.
@@ -1242,8 +1242,8 @@ package body Ada_Semantic_Tree.Declarations is
          First_Token := First (Analyzed_Expression.Tokens);
          Analyzed_Token := First_Token;
 
-         while Analyzed_Token /= Token_List.Null_Node loop
-            if Data (Analyzed_Token).Tok_Type = Tok_Arrow then
+         while Has_Element (Analyzed_Token) loop
+            if Element (Analyzed_Token).Tok_Type = Tok_Arrow then
                --  If the expression is like "Id => Exp", we only want to
                --  analyse Exp.
 
@@ -1253,9 +1253,9 @@ package body Ada_Semantic_Tree.Declarations is
             Analyzed_Token := Next (Analyzed_Token);
          end loop;
 
-         if First_Token /= Token_List.Null_Node then
+         if Has_Element (First_Token) then
             Analyze_Token
-              (Token_List.Null_Node,
+              (Token_List.No_Element,
                First_Token,
                Null_Entity_View,
                Filter,

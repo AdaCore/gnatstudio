@@ -187,14 +187,14 @@ procedure Completion.Test_Driver is
 
       Buffer : constant String_Access := Read_File (File);
 
-      procedure Display (List  : Token_List.List);
+      procedure Display (List  : Token_List.Vector);
       procedure Display (Token : Token_Record);
 
-      procedure Display (List : Token_List.List) is
-         Current : Token_List.List_Node := First (List);
+      procedure Display (List : Token_List.Vector) is
+         Current : Token_List.Cursor := List.First;
       begin
-         while Current /= Token_List.Null_Node loop
-            Display (Data (Current));
+         while Has_Element (Current) loop
+            Display (Element (Current));
             Current := Next (Current);
          end loop;
       end Display;

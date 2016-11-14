@@ -112,7 +112,7 @@ package body Ada_Semantic_Tree.Generics is
          if This.Refs <= 0 then
             Cur := This.Pre_Contexts.First;
 
-            while Cur /= No_Element loop
+            while Has_Element (Cur) loop
                Tmp := Element (Cur);
                Unref (Tmp);
 
@@ -121,7 +121,7 @@ package body Ada_Semantic_Tree.Generics is
 
             Cur := This.Post_Contexts.First;
 
-            while Cur /= No_Element loop
+            while Has_Element (Cur) loop
                Tmp := Element (Cur);
                Unref (Tmp);
 
@@ -278,7 +278,7 @@ package body Ada_Semantic_Tree.Generics is
    begin
       Cur := Info.Pre_Contexts.First;
 
-      while Cur /= No_Element loop
+      while Has_Element (Cur) loop
          Result := Get_Actual_For_Generic_Param (Element (Cur), Formal);
 
          if Result /= Null_Entity_Access then
@@ -350,7 +350,7 @@ package body Ada_Semantic_Tree.Generics is
 
       Cur := Info.Post_Contexts.First;
 
-      while Cur /= No_Element loop
+      while Has_Element (Cur) loop
          Result := Get_Actual_For_Generic_Param
            (Element (Cur), Formal);
 
@@ -512,14 +512,14 @@ package body Ada_Semantic_Tree.Generics is
 
       Cur := Instance.Pre_Contexts.First;
 
-      while Cur /= No_Element loop
+      while Has_Element (Cur) loop
          Result.Pre_Contexts.Append (To_Persistent (Element (Cur)));
          Cur := Next (Cur);
       end loop;
 
       Cur := Instance.Post_Contexts.First;
 
-      while Cur /= No_Element loop
+      while Has_Element (Cur) loop
          Result.Post_Contexts.Append (To_Persistent (Element (Cur)));
          Cur := Next (Cur);
       end loop;
@@ -569,14 +569,14 @@ package body Ada_Semantic_Tree.Generics is
 
       Cur := Instance.Pre_Contexts.First;
 
-      while Cur /= No_Element loop
+      while Has_Element (Cur) loop
          Prepend_Context (Result, To_Active (Element (Cur)));
          Cur := Next (Cur);
       end loop;
 
       Cur := Instance.Post_Contexts.First;
 
-      while Cur /= No_Element loop
+      while Has_Element (Cur) loop
          Append_Context (Result, To_Active (Element (Cur)));
          Cur := Next (Cur);
       end loop;
@@ -603,7 +603,7 @@ package body Ada_Semantic_Tree.Generics is
 
       Cur := This.Pre_Contexts.First;
 
-      while Cur /= No_Element loop
+      while Has_Element (Cur) loop
          if not Is_Up_To_Date (Element (Cur)) then
             return False;
          end if;
@@ -613,7 +613,7 @@ package body Ada_Semantic_Tree.Generics is
 
       Cur := This.Post_Contexts.First;
 
-      while Cur /= No_Element loop
+      while Has_Element (Cur) loop
          if not Is_Up_To_Date (Element (Cur)) then
             return False;
          end if;
@@ -644,7 +644,7 @@ package body Ada_Semantic_Tree.Generics is
 
       Cur := This.Pre_Contexts.First;
 
-      while Cur /= No_Element loop
+      while Has_Element (Cur) loop
          Info := Element (Cur);
          Free (Info);
          Cur := Next (Cur);
@@ -652,7 +652,7 @@ package body Ada_Semantic_Tree.Generics is
 
       Cur := This.Post_Contexts.First;
 
-      while Cur /= No_Element loop
+      while Has_Element (Cur) loop
          Info := Element (Cur);
          Free (Info);
          Cur := Next (Cur);

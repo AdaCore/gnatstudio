@@ -15,18 +15,21 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Vectors;
+
 with Basic_Types;     use Basic_Types;
-with Generic_List;
 with Glib;            use Glib;
 with GNATCOLL.Traces; use GNATCOLL.Traces;
 with Language;        use Language;
 
 package Cpp_Semantic_Tree is
 
-   package Token_List is new Generic_List (Token_Record, Free => Free);
+   pragma Suppress (Container_Checks);
+   package Token_List is
+     new Ada.Containers.Vectors (Positive, Token_Record);
 
    type Parsed_Expression is record
-      Tokens : Token_List.List := Token_List.Null_List;
+      Tokens : Token_List.Vector;
    end record;
 
    Null_Parsed_Expression : constant Parsed_Expression;
@@ -58,5 +61,5 @@ private
      Create ("Cpp_Semantic_Tree.Test", Off);
 
    Null_Parsed_Expression : constant Parsed_Expression :=
-     (Tokens => Token_List.Null_List);
+     (Tokens => Token_List.Empty_Vector);
 end Cpp_Semantic_Tree;

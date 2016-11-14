@@ -95,7 +95,7 @@ package body Cpp_Semantic_Tree is
 
    procedure Free (Expression : in out Parsed_Expression) is
    begin
-      Token_List.Free (Expression.Tokens);
+      Token_List.Clear (Expression.Tokens);
    end Free;
 
 end Cpp_Semantic_Tree;

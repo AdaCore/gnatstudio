@@ -862,9 +862,6 @@ package Language is
    --  that token. The buffer is available through the Parsed_Expression record
    --  below.
 
-   procedure Free (This : in out Token_Record) is null;
-   --  Used to instantiate the generic list, does not actually do anything
-
    procedure Parse_Tokens_Backwards
      (Lang              : access Language_Root;
       Buffer            : UTF8_String;

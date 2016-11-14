@@ -1443,6 +1443,8 @@ package body Completion_Module is
 
          if C = ' ' then
             declare
+               use type Ada.Containers.Count_Type;
+
                Exp      : Parsed_Expression;
                It       : Gtk_Text_Iter;
                Beg      : Gtk_Text_Iter;
@@ -1461,9 +1463,9 @@ package body Completion_Module is
                Exp := Parse_Expression_Backward
                  (The_Text, String_Index_Type (Get_Byte_Index (It)));
 
-               Ret := Token_List.Length (Exp.Tokens) = 1
+               Ret := Exp.Tokens.Length = 1
                  and then
-                   Token_List.Data
+                   Token_List.Element
                      (Token_List.First (Exp.Tokens)).Tok_Type in
                        Tok_With | Tok_Use | Tok_Pragma | Tok_Accept
                          | Tok_Raise | Tok_Aspect;

@@ -15,10 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Vectors;
+
 with GNATCOLL.Traces;         use GNATCOLL.Traces;
 
 with Basic_Types;             use Basic_Types;
-with Generic_List;
 with Language;                use Language;
 with Language.Tree;           use Language.Tree;
 with Language.Tree.Database;  use Language.Tree.Database;
@@ -235,11 +236,12 @@ package Ada_Semantic_Tree is
    --  Parsed expression --
    ------------------------
 
-   package Token_List is new Generic_List (Token_Record, Free => Free);
+   pragma Suppress (Container_Checks);
+   package Token_List is new Ada.Containers.Vectors (Positive, Token_Record);
 
    type Parsed_Expression is record
       Original_Buffer : access constant UTF8_String;
-      Tokens          : Token_List.List := Token_List.Null_List;
+      Tokens          : Token_List.Vector;
    end record;
    Null_Parsed_Expression : constant Parsed_Expression;
    --  An expression extracted from source code.
@@ -346,15 +348,14 @@ private
       From_Visibility : Visibility_Context := Null_Visibility_Context;
    end record;
 
-   procedure Free (This : in out Entity_Access) is null;
-   --  Used to instantiate the generic list, does not actually do anything
-
-   package Excluded_Entities is new Generic_List (Entity_Access, Free);
+   pragma Suppress (Container_Checks);
+   package Excluded_Entities is
+     new Ada.Containers.Vectors (Positive, Entity_Access);
 
    use Excluded_Entities;
 
    type Excluded_Stack_Type_Record is record
-      Entities : Excluded_Entities.List;
+      Entities : Excluded_Entities.Vector;
       Refs     : Integer := 0;
    end record;
 
@@ -366,7 +367,7 @@ private
      (Entity_List_Pckg.Null_Virtual_List, null, Null_Visibility_Context);
 
    Null_Parsed_Expression : constant Parsed_Expression :=
-     (null, Token_List.Null_List);
+     (null, Token_List.Empty_Vector);
 
    type Category_Map is array (Language_Category) of Boolean;
    pragma Pack (Category_Map);

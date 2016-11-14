@@ -387,7 +387,7 @@ package body Ada_Semantic_Tree is
 
    procedure Pop_Entity (Stack : in out Excluded_Stack_Type) is
    begin
-      Next (Stack.Entities);
+      Stack.Entities.Delete_First;
    end Pop_Entity;
 
    -----------------
@@ -407,17 +407,17 @@ package body Ada_Semantic_Tree is
    function Is_Excluded
      (Stack : Excluded_Stack_Type; Entity : Entity_Access) return Boolean
    is
-      Excluded : Excluded_Entities.List_Node;
+      Excluded : Cursor;
    begin
       if Stack = null then
          return False;
       end if;
 
-      Excluded := First (Stack.Entities);
+      Excluded := Stack.Entities.First;
 
-      while Excluded /= Null_Node loop
+      while Has_Element (Excluded) loop
          declare
-            Excluded_Entity : constant Entity_Access := Data (Excluded);
+            Excluded_Entity : constant Entity_Access := Element (Excluded);
          begin
             --  If the two entities are exactly on the same construct, or if
             --  they are parts of the same enitity, then we found an excluded
@@ -463,7 +463,7 @@ package body Ada_Semantic_Tree is
          Stack.Refs := Stack.Refs - 1;
 
          if Stack.Refs = 0 then
-            Free (Stack.Entities);
+            Clear (Stack.Entities);
             Free (Stack);
          end if;
       end if;
@@ -549,10 +549,7 @@ package body Ada_Semantic_Tree is
                   --  .all expression. In any other case, e.g. access all, we
                   --  just dismiss the all keyword and stop the analysis.
 
-                  Remove_Nodes
-                    (Result.Tokens,
-                     Token_List.Null_Node,
-                     First (Result.Tokens));
+                  Result.Tokens.Delete_First;
                   Stop := True;
 
                   return;
@@ -574,7 +571,7 @@ package body Ada_Semantic_Tree is
                when Tok_Identifier =>
                   if Last_Non_Blank_Token.Tok_Type = Tok_Identifier then
                      Stop := not Multiple_Operands;
-                  elsif Length (Result.Tokens) = 0
+                  elsif Result.Tokens.Is_Empty
                     and then Last_Token.Tok_Type = Tok_Blank
                   then
                      Stop := not Multiple_Operands;
@@ -804,26 +801,26 @@ package body Ada_Semantic_Tree is
    function To_String (Expression : Parsed_Expression) return String is
       use Token_List;
 
-      Length : Natural := 0;
-      Iter   : Token_List.List_Node := First (Expression.Tokens);
+      Length : Natural           := 0;
+      Iter   : Token_List.Cursor := Expression.Tokens.First;
    begin
-      while Iter /= Token_List.Null_Node loop
-         Length := Length + Get_Name (Expression, Data (Iter))'Length;
-         Iter := Next (Iter);
+      while Has_Element (Iter) loop
+         Length := Length + Get_Name (Expression, Element (Iter))'Length;
+         Next (Iter);
       end loop;
 
       return Result : String (1 .. Length) do
-         Iter := First (Expression.Tokens);
+         Iter   := First (Expression.Tokens);
          Length := Result'First;
 
-         while Iter /= Token_List.Null_Node loop
+         while Has_Element (Iter) loop
             declare
-               N : constant String := Get_Name (Expression, Data (Iter));
+               N : constant String := Get_Name (Expression, Element (Iter));
             begin
                Result (Length .. Length + N'Length - 1) := N;
                Length := Length + N'Length;
             end;
-            Iter := Next (Iter);
+            Next (Iter);
          end loop;
       end return;
    end To_String;
@@ -834,7 +831,7 @@ package body Ada_Semantic_Tree is
 
    procedure Free (Expression : in out Parsed_Expression) is
    begin
-      Token_List.Free (Expression.Tokens);
+      Token_List.Clear (Expression.Tokens);
    end Free;
 
 end Ada_Semantic_Tree;

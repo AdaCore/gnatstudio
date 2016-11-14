@@ -326,22 +326,22 @@ package body Ada_Semantic_Tree.List_Resolver is
       return Actual_Parameter_Resolver
    is
       Result : Actual_Parameter_Resolver (This.Length);
-      It     : Token_List.List_Node;
+      It     : Token_List.Cursor;
    begin
       Result.Profile := This.Profile;
       Result.Params_Set := This.Params_Set;
 
       for J in This.Actual_Params'Range loop
          Result.Actual_Params (J) := This.Actual_Params (J);
-         Result.Actual_Params (J).Expression.Tokens := Token_List.Null_List;
+         Result.Actual_Params (J).Expression.Tokens := Token_List.Empty_Vector;
 
          It := Token_List.First
            (This.Actual_Params (J).Expression.Tokens);
 
-         while It /= Token_List.Null_Node loop
+         while Has_Element (It) loop
             Token_List.Append
               (Result.Actual_Params (J).Expression.Tokens,
-               Token_List.Data (It));
+               Token_List.Element (It));
 
             It := Next (It);
          end loop;
@@ -374,19 +374,21 @@ package body Ada_Semantic_Tree.List_Resolver is
       Param_Start : String_Index_Type;
       Param_End   : String_Index_Type) return Actual_Parameter
    is
+      use type Ada.Containers.Count_Type;
+
       Result : Actual_Parameter;
-      It     : Token_List.List_Node;
+      It     : Token_List.Cursor;
    begin
       Result.Is_Named := False;
 
       Result.Expression := Parse_Expression_Backward
         (Buffer, Param_End, Param_Start, True);
 
-      if Length (Result.Expression.Tokens) >= 2 then
+      if Result.Expression.Tokens.Length >= 2 then
          It := First (Result.Expression.Tokens);
          It := Next (It);
 
-         if Data (It).Tok_Type = Tok_Arrow then
+         if Element (It).Tok_Type = Tok_Arrow then
             Result.Is_Named := True;
          end if;
       end if;
@@ -430,7 +432,7 @@ package body Ada_Semantic_Tree.List_Resolver is
                if Equal
                  (Get_Name
                     (Actual.Expression,
-                     Data (First (Actual.Expression.Tokens))),
+                     Element (Actual.Expression.Tokens.First)),
                   Get (Get_Construct
                     (To_Construct_Tree_Iterator
                        (Params.Profile.Params (J))).Name).all,

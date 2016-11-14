@@ -1037,50 +1037,48 @@ package body Ada_Semantic_Tree.Lang is
             Call_Index  : String_Index_Type := 0;
             Call_Entity : Entity_Access;
 
-            Call_Node   : Token_List.List_Node;
+            Call_Node   : Token_List.Cursor;
          begin
-            if First (Analyzed_Expression.Tokens) /= Token_List.Null_Node then
-               Call_Node := Token_List.First (Analyzed_Expression.Tokens);
+            if not Analyzed_Expression.Tokens.Is_Empty then
+               Call_Node := Analyzed_Expression.Tokens.First;
 
                --  First, look if we're in the pattern A'(Something. In this
                --  case, the Call node is the node before the '.
 
-               while Call_Node /= Token_List.Null_Node loop
-                  if Next (Call_Node) /= Token_List.Null_Node
-                    and then Token_List.Data
-                      (Token_List.Next (Call_Node)).Tok_Type = Tok_Tick
+               while Has_Element (Call_Node) loop
+                  if Has_Element (Next (Call_Node))
+                    and then Element (Next (Call_Node)).Tok_Type = Tok_Tick
                   then
                      exit;
                   end if;
 
-                  Call_Node := Token_List.Next (Call_Node);
+                  Next (Call_Node);
                end loop;
 
                --  If we didn't find a tick, then look for the previous token.
 
-               if Call_Node = Token_List.Null_Node then
+               if Call_Node = Token_List.No_Element then
                   Enclosing_Call :=
                     Parse_Expression_Backward
                       (Buffer            => Get_Buffer (File),
-                       Start_Offset      => Token_List.Data
-                         (Token_List.First
-                            (Analyzed_Expression.Tokens)).Token_First - 1);
+                       Start_Offset      => Element
+                         (Analyzed_Expression.Tokens.First).Token_First - 1);
 
                   Call_Node := Token_List.First (Enclosing_Call.Tokens);
                end if;
             else
-               Call_Node := Token_List.Null_Node;
+               Call_Node := Token_List.No_Element;
             end if;
 
-            while Call_Node /= Token_List.Null_Node loop
-               if Data (Call_Node).Tok_Type = Tok_Open_Parenthesis
-                 or else Data (Call_Node).Tok_Type = Tok_Tick
+            while Has_Element (Call_Node) loop
+               if Element (Call_Node).Tok_Type = Tok_Open_Parenthesis
+                 or else Element (Call_Node).Tok_Type = Tok_Tick
                then
                   exit;
                end if;
 
-               Call_Index := Data (Call_Node).Token_First;
-               Call_Node := Next (Call_Node);
+               Call_Index := Element (Call_Node).Token_First;
+               Next (Call_Node);
             end loop;
 
             if Call_Index /= 0 then
@@ -1105,7 +1103,7 @@ package body Ada_Semantic_Tree.Lang is
                        To_Lower
                          (Get_Name
                               (Analyzed_Expression,
-                               Data (Last (Analyzed_Expression.Tokens))));
+                               Element (Analyzed_Expression.Tokens.Last)));
                      Id : Normalized_Symbol;
                   begin
                      for J in Formals'Range loop

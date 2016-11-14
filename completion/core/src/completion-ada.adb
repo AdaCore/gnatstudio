@@ -42,11 +42,11 @@ package body Completion.Ada is
       Ada_Context_All.Expression := Parse_Expression_Backward
         (Context.Buffer, Context.Offset);
 
-      if Token_List.Length (Ada_Context_All.Expression.Tokens) > 0 then
+      if not Ada_Context_All.Expression.Tokens.Is_Empty then
          while It /= Completion_Resolver_List_Pckg.No_Element loop
             Get_Completion_Root
               (Resolver => Element (It),
-               Offset   => Token_List.Data
+               Offset   => Token_List.Element
                  (Token_List.First
                     (Ada_Context_All.Expression.Tokens)).Token_First - 1,
                Context  => Ada_Context,

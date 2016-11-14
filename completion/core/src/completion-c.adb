@@ -95,8 +95,8 @@ package body Completion.C is
 
          if New_Context_All.Expression /= Null_Parsed_Expression then
             Prev_Tok :=
-              Token_List.Data
-                (Token_List.Last (New_Context_All.Expression.Tokens));
+              Token_List.Element
+                (New_Context_All.Expression.Tokens.Last);
 
             It := First (Manager.Ordered_Resolvers);
             while It /= Completion_Resolver_List_Pckg.No_Element loop

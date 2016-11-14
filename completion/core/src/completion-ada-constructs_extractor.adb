@@ -529,8 +529,8 @@ package body Completion.Ada.Constructs_Extractor is
             if not Match
               (Get_Name
                  (Ada_Context.Expression,
-                  Token_List.Data
-                    (Token_List.Last (Ada_Context.Expression.Tokens))),
+                  Token_List.Element
+                    (Ada_Context.Expression.Tokens.Last)),
                Get_Item (Name, Length (Name)),
                Token_List.Length (Ada_Context.Expression.Tokens) = 1)
             then
@@ -673,13 +673,13 @@ package body Completion.Ada.Constructs_Extractor is
       if Context.all in Ada_Completion_Context then
          Expression := Ada_Completion_Context (Context.all).Expression;
 
-         if Token_List.Data
-           (Token_List.Last (Expression.Tokens)).Tok_Type = Tok_Identifier
+         if Token_List.Element
+           (Expression.Tokens.Last).Tok_Type = Tok_Identifier
          then
             Result.Searched_Identifier := new String'
               (Get_Name
                  (Expression,
-                  Token_List.Data (Token_List.Last (Expression.Tokens))));
+                  Token_List.Element (Expression.Tokens.Last)));
          else
             Result.Searched_Identifier := new String'("");
          end if;
@@ -702,9 +702,8 @@ package body Completion.Ada.Constructs_Extractor is
                Filter          => Null_Filter,
                Is_Partial      => True),
             Expression /= Null_Parsed_Expression
-            and then Token_List.Data
-              (Token_List.First (Expression.Tokens))
-      .Tok_Type = Tok_Accept));
+            and then Token_List.Element
+              (Expression.Tokens.First).Tok_Type = Tok_Accept));
 
       Append
         (Result.List,
@@ -721,8 +720,8 @@ package body Completion.Ada.Constructs_Extractor is
                Filter          => Null_Filter,
                Is_Partial      => True),
             Expression /= Null_Parsed_Expression
-            and then Token_List.Data
-              (Token_List.First (Expression.Tokens)).Tok_Type = Tok_Accept));
+            and then Token_List.Element
+              (Expression.Tokens.First).Tok_Type = Tok_Accept));
 
       Free (Expression);
    end Get_Completion_Root;

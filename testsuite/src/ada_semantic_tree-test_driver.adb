@@ -613,7 +613,7 @@ procedure Ada_Semantic_Tree.Test_Driver is
                Next (List_It);
             end loop;
 
-            Token_List.Free (Expression.Tokens);
+            Token_List.Clear (Expression.Tokens);
          end;
 
       elsif Buffer (Word_Begin .. Word_End) = "EXPORT" then
