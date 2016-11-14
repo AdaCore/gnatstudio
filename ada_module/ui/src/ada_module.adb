@@ -16,25 +16,33 @@
 ------------------------------------------------------------------------------
 
 with Ada_Module.Creators;
+with GNATCOLL.Projects;         use GNATCOLL.Projects;
+with GNATCOLL.Utils;            use GNATCOLL.Utils;
+with GNATCOLL.VFS;              use GNATCOLL.VFS;
 
-with Default_Preferences;      use Default_Preferences;
+with Default_Preferences;       use Default_Preferences;
 with Default_Preferences.Enums;
-with GPS.Kernel;               use GPS.Kernel;
-with GPS.Kernel.Hooks;         use GPS.Kernel.Hooks;
-with GPS.Kernel.Project;       use GPS.Kernel.Project;
-with GPS.Intl;                 use GPS.Intl;
-with GNATCOLL.Projects;        use GNATCOLL.Projects;
-with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
-with Language.Ada;             use Language.Ada;
-with Ada_Semantic_Tree.Lang;   use Ada_Semantic_Tree.Lang;
-with Language_Handlers;        use Language_Handlers;
-with Language;                 use Language;
-with Project_Viewers;          use Project_Viewers;
-with Ada_Naming_Editors;       use Ada_Naming_Editors;
-with Projects;                 use Projects;
-with Case_Handling;            use Case_Handling;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Intl;                  use GPS.Intl;
+
+with Language.Ada;              use Language.Ada;
+with Ada_Semantic_Tree.Lang;    use Ada_Semantic_Tree.Lang;
+with Language_Handlers;         use Language_Handlers;
+with Language;                  use Language;
+with Project_Viewers;           use Project_Viewers;
+with Ada_Naming_Editors;        use Ada_Naming_Editors;
+with Projects;                  use Projects;
+with Case_Handling;             use Case_Handling;
 
 package body Ada_Module is
+
+   -----------------
+   -- Preferences --
+   -----------------
 
    package Casing_Policy_Preferences is new
      Default_Preferences.Enums.Generics (Casing_Policy);
@@ -77,6 +85,26 @@ package body Ada_Module is
    --  Create the naming scheme editor page
 
    -------------
+   -- Filters --
+   -------------
+
+   type Ada_Body_Filter_Record is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Context : access Ada_Body_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+
+   type Ada_Spec_Filter_Record is new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Context : access Ada_Spec_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean;
+
+   type Has_Other_File_On_Disk_Filter_Record is
+     new Action_Filter_Record with null record;
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Other_File_On_Disk_Filter_Record;
+      Context : GPS.Kernel.Selection_Context) return Boolean;
+
+   -------------
    -- Execute --
    -------------
 
@@ -109,6 +137,100 @@ package body Ada_Module is
             Stick_Comments      => Ada_Stick_Comments.Get_Pref));
    end Execute;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Context : access Ada_Body_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Context);
+   begin
+      if Has_File_Information (Ctxt) then
+         declare
+            File        : constant Virtual_File := File_Information (Ctxt);
+            Lang        : constant String :=
+                            Get_Language_From_File
+                              (Get_Language_Handler (Get_Kernel (Ctxt)),
+                               File);
+            Is_Ada_File : constant Boolean :=
+                            Equal (Lang, "ada", Case_Sensitive => False);
+            Project     : constant Project_Type := Project_Information (Ctxt);
+            Body_Suffix : constant String :=
+                            Project.Attribute_Value
+                              (Impl_Suffix_Attribute,
+                               Index   => "ada",
+                               Default => Default_Gnat_Body_Suffix);
+         begin
+            return (Is_Ada_File
+                    and then Ends_With (File.Display_Full_Name, Body_Suffix));
+         end;
+      end if;
+
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Context : access Ada_Spec_Filter_Record;
+      Ctxt    : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Context);
+   begin
+      if Has_File_Information (Ctxt) then
+         declare
+            File        : constant Virtual_File := File_Information (Ctxt);
+            Lang        : constant String :=
+                            Get_Language_From_File
+                              (Get_Language_Handler (Get_Kernel (Ctxt)),
+                               File);
+            Is_Ada_File : constant Boolean :=
+                            Equal (Lang, "ada", Case_Sensitive => False);
+            Project     : constant Project_Type := Project_Information (Ctxt);
+            Spec_Suffix : constant String :=
+                            Project.Attribute_Value
+                              (Spec_Suffix_Attribute,
+                               Index   => "ada",
+                               Default => Default_Gnat_Spec_Suffix);
+         begin
+            return (Is_Ada_File
+                    and then Ends_With (File.Display_Full_Name, Spec_Suffix));
+         end;
+      end if;
+
+      return False;
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Has_Other_File_On_Disk_Filter_Record;
+      Context : GPS.Kernel.Selection_Context) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+   begin
+      if Has_File_Information (Context) then
+         declare
+            File       : constant Virtual_File := File_Information (Context);
+            Other_File : constant Virtual_File :=
+                           Get_Registry (Kernel).Tree.Other_File (File);
+         begin
+            return Other_File /= No_File
+              and then Other_File /= File
+              and then Other_File.Is_Regular_File;
+         end;
+      end if;
+
+      return False;
+   end Filter_Matches_Primitive;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -116,9 +238,60 @@ package body Ada_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
-      Handler : constant Language_Handler := Get_Language_Handler (Kernel);
+      Handler                 : constant Language_Handler :=
+                                Get_Language_Handler (Kernel);
+      Has_Other_File_Filter   : constant Action_Filter :=
+                                  new Has_Other_File_On_Disk_Filter_Record;
+      Is_Ada_Body_Filter      : constant Action_Filter :=
+                                  new Ada_Body_Filter_Record;
+      Is_Ada_Spec_Filter      : constant Action_Filter :=
+                                  new Ada_Spec_Filter_Record;
+      Body_Has_Spec_Filter    : constant Action_Filter :=
+                                  Is_Ada_Body_Filter and Has_Other_File_Filter;
+      Spec_Has_Body_Filter    : constant Action_Filter :=
+                                  Is_Ada_Spec_Filter and Has_Other_File_Filter;
+      Body_Has_No_Spec_Filter : constant Action_Filter :=
+                                  (Is_Ada_Body_Filter
+                                   and not Has_Other_File_Filter);
+      Spec_Has_No_Body_Filter : constant Action_Filter :=
+                                  (Is_Ada_Spec_Filter
+                                   and not Has_Other_File_Filter);
    begin
       Register_Language (Handler, Ada_Lang, Ada_Tree_Lang);
+
+      --  Register some general Ada-related filters so that they can be used
+      --  from other GPS parts.
+
+      Register_Filter
+        (Kernel,
+         Filter => Is_Ada_Body_Filter,
+         Name   => "Is_Ada_Body");
+      Register_Filter
+        (Kernel,
+         Filter => Is_Ada_Spec_Filter,
+         Name   => "Is_Ada_Spec");
+      Register_Filter
+        (Kernel,
+         Filter => Has_Other_File_Filter,
+         Name   => "Has_Other_File_On_Disk");
+      Register_Filter
+        (Kernel,
+         Filter => Body_Has_Spec_Filter,
+         Name   => "Body_Has_Spec");
+      Register_Filter
+        (Kernel,
+         Filter => Spec_Has_Body_Filter,
+         Name   => "Spec_Has_Body");
+      Register_Filter
+        (Kernel,
+         Filter => Body_Has_No_Spec_Filter,
+         Name   => "Body_Has_No_Spec");
+      Register_Filter
+        (Kernel,
+         Filter => Spec_Has_No_Body_Filter,
+         Name   => "Spec_Has_No_Body");
+
+      --  Register the default language extensions for Ada
 
       Register_Default_Language_Extension
         (Get_Registry (Kernel).Environment.all,
@@ -126,6 +299,8 @@ package body Ada_Module is
          Default_Spec_Suffix => ".ads",
          Default_Body_Suffix => ".adb",
          Obj_Suffix          => ".o");
+
+      --  Register the default Ada-related preferences
 
       Ada_Automatic_Indentation := Indentation_Kind_Preferences.Create
         (Get_Preferences (Kernel),

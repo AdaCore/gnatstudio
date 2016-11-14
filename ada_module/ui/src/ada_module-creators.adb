@@ -51,15 +51,15 @@ package body Ada_Module.Creators is
    Package_Spec_Template         : constant String :=
                                      "package <name> is"
                                      & ASCII.LF
-                                     & "end <name>";
+                                     & "end <name>;";
    Package_Body_Template         : constant String :=
                                      "package body <name> is"
                                      & ASCII.LF
-                                     & "end <name>";
+                                     & "end <name>;";
    Main_Unit_Template            : constant String :=
                                      "procedure <name> is"
                                      & ASCII.LF
-                                     & "end <name>";
+                                     & "end <name>;";
    --  The templates used to fill the created files
 
    type Ada_Component_Kind is

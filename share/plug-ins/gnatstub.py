@@ -7,6 +7,7 @@ This external tool creates the Ada body from an Ada spec.
 import GPS
 import gps_utils
 import os
+import os_utils
 
 
 class OnExit(object):
@@ -25,14 +26,26 @@ class OnExit(object):
             GPS.Locations.parse(output, "gnatstub")
 
 
+def __contextual_label_for_gnatstub(context):
+    """
+    Used to create the label for the gnatstub contextual menu.
+    """
+    fmt = "Generate Body of <b>{}</b>"
+    name = os.path.basename(context.file().path)
+    return fmt.format(os_utils.display_name(name))
+
+
 @gps_utils.interactive(
-    category="Editor",
-    filter=gps_utils.in_ada_file,
-    name="generate body")
+    category="Ada",
+    contextual=__contextual_label_for_gnatstub,
+    filter="Spec_Has_No_Body",
+    name="generate body",
+    description="Run gnatstub on the selected Ada specification to " +
+                "generate a matching body file.")
 def generate_body():
     """
-Run gnatstub on the current Ada spec to generate a matching
-body file.
+    Run gnatstub on the current Ada spec to generate a matching
+    body file.
     """
     GPS.MDI.save_all()
     proj = GPS.current_context().project()
