@@ -371,6 +371,11 @@ class ProcessWrapper(object):
         the associated process with a "Relaunch" button in the console
         toolbar.
 
+        :param bool|str spawn_console: whether to display the process and
+           its output to a console. If this is a boolean, then a new console
+           named like the process is opened. If it is a string, it is the
+           name of the console to use (the empty string reused GPS's
+           Messages window).
         :param bool single_line_regexp: if True, then '.' in the regexp
            will also match '\n'. This is useful to capture larger parts of
            the output at once.
@@ -393,35 +398,46 @@ class ProcessWrapper(object):
         self.__exit_status = 0
 
         # handler of process will be created -> start running
-        self.__command = cmdargs
+        # Remove empty command line arguments
+        self.__command = [c for c in cmdargs if c]
 
         # The console associated with the process.
         # Created only if spawn_console is set to True.
         self.__console = None
 
         # Launch the command
-        self.__process = GPS.Process(
-            command=self.__command,
-            directory=directory,
-            regexp=regexp,
-            single_line_regexp=single_line_regexp,
-            on_match=self.__on_match,
-            on_exit=self.__on_exit)
+        try:
+            self.__process = GPS.Process(
+                command=self.__command,
+                directory=directory,
+                regexp=regexp,
+                single_line_regexp=single_line_regexp,
+                on_match=self.__on_match,
+                on_exit=self.__on_exit)
+        except:
+            self.__process = None
+            return
 
         # Save the start time
         self.__start_time = time.time()
 
         # If requested, spawn a console to display the process output
-        if spawn_console:
-            toolbar_name = cmdargs[0] + '_toolbar'
+        if spawn_console is not False:
+            if isinstance(spawn_console, str):
+                console_name = spawn_console
+            else:
+                console_name = cmdargs[0]
 
+            toolbar_name = cmdargs[0] + '_toolbar'
             self.__console = GPS.Console(
-                name=cmdargs[0],
+                name=console_name,
                 accept_input=False,
                 on_destroy=self.__on_console_destroy,
                 toolbar_name=toolbar_name,
                 give_focus_on_create=False)
             self.__action = GPS.Action('launch ' + cmdargs[0])
+
+            self.__console.write("%s\n" % ' '.join(self.__command))
 
             # Create the associated action and relaunch button if it
             # does not exist yet.
@@ -441,7 +457,7 @@ class ProcessWrapper(object):
         self.__output += unmatch + match
 
         if self.__console:
-            self.__console.write(unmatch + match)
+            self.__console.write("%s%s\n" % (unmatch, match, ))
 
         self.__check_pattern_and_resolve()
 

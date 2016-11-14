@@ -9,45 +9,46 @@ This package integrates it into GPS:
 """
 
 import GPS
+import gps_utils
+import workflows
+from workflows.promises import ProcessWrapper
+
+
+@workflows.run_as_workflow
+def gnatpp(file):
+    """
+    Run gnatpp on a specific file.
+    Nothing is done if the file is not an Ada file.
+    """
+    if file.language().lower() != 'ada':
+        GPS.Logger("GNATPP").log("Not an Ada file: %s" % file.path)
+        return
+
+    p = ProcessWrapper(
+        [gps_utils.get_gnat_driver_cmd(),
+         'pretty',
+         '-rf',
+         '-P%s' % GPS.Project.root().file().path,
+         GPS.Project.scenario_variables_cmd_line('-X'),
+         file.path],
+        spawn_console='')
+    status, output = yield p.wait_until_terminate()
+
+    if status != 0:
+        GPS.Locations.parse(output, category='gnat pretty')
+    else:
+        GPS.EditorBuffer.get(file, force=True, open=True)
+
 
 XML = u"""<?xml version="1.0" ?>
 <GPS>
-   <action name="pretty print (force save)" output="none" category="Editor" >
-      <description>Reformat the current Ada source file, and reload the
-      reformated version. Specific formating options can be set in the project
-      file</description>
-      <!-- This action only applies to Ada files -->
-      <filter language="ada"
-              error="Pretty printing requires an Ada file" />
-
-      <shell>MDI.save_all true</shell>
-      <shell>Project.scenario_variables_cmd_line -X</shell>
-      <shell>Project.root</shell>
-      <external output=""
-       server="tools_server">%gnat pretty -rf %PPs %2 "%F"</external>
-      <on-failure>
-        <shell>Locations.parse "%1 " "Pretty printer"</shell>
-      </on-failure>
-      <shell>Editor.edit "%F" 0 0 0 true</shell>
-   </action>
-
    <action name="pretty print" output="none" category="Editor" >
       <description>Reformat the current Ada source file, and reload the
       reformated version. Specific formating options can be set in the project
       file</description>
-      <!-- This action only applies to Ada files -->
-      <filter language="ada"
-              error="Pretty printing requires an Ada file" />
-
-      <shell>MDI.save_all</shell>
-      <shell>Project.scenario_variables_cmd_line -X</shell>
-      <shell>Project.root</shell>
-      <external output=""
-       server="tools_server">%gnat pretty -rf %PPs %2 "%F"</external>
-      <on-failure>
-        <shell>Locations.parse "%1 " "Pretty printer"</shell>
-      </on-failure>
-      <shell>Editor.edit "%F" 0 0 0 true</shell>
+      <filter language="ada" error="Pretty printing requires an Ada file" />
+      <shell lang="python">GPS.MDI.save_all()</shell>
+      <shell lang="python">p = gnatpp.gnatpp(GPS.File("%F"))</shell>
    </action>
 
    <tool name="Pretty Printer" package="Pretty_Printer" index="Ada" >

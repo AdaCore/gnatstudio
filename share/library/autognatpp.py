@@ -6,11 +6,10 @@ so you may end up with multiple gnatpp processes running at the same time.
 """
 
 import GPS
+import gnatpp
+import gps_utils
 
 
-# Actions to be performed each time a file is saved
-def on_file_saved(hook, file):
-    GPS.execute_action("pretty print (force save)")
-
-# Register the callback on the "file_saved" hook
-GPS.Hook("file_saved").add(on_file_saved)
+@gps_utils.hook('file_saved')
+def on_file_saved(file):
+    gnatpp.gnatpp(file)

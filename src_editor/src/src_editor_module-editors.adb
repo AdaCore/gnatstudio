@@ -797,9 +797,7 @@ package body Src_Editor_Module.Editors is
       Child : MDI_Child;
       Box   : Source_Editor_Box;
       Buf   : Source_Buffer;
-      Dummy : Boolean;
       Success        : Boolean;
-      pragma Unreferenced (Dummy);
    begin
       if File /= GNATCOLL.VFS.No_File then
          Child := Find_Editor (This.Kernel, File, Project);
@@ -835,7 +833,10 @@ package body Src_Editor_Module.Editors is
          Box := Get_Source_Box_From_MDI (Child);
 
          if File /= GNATCOLL.VFS.No_File and Force then
-            Dummy := Check_Monitored_Files (This.Kernel, Interactive => False);
+            Box.Get_Buffer.Load_File (File, Success => Success);
+            if not Success then
+               Trace (Me, "Failed to reload " & File.Display_Full_Name);
+            end if;
          end if;
       end if;
 
