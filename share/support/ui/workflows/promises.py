@@ -323,16 +323,16 @@ def hook(hook_name):
     as if it were a function, and get the parameters of the hook as return
     values. For example:
 
-        _, file = yield hook("buffer_edited")
+        file = yield hook("buffer_edited")
 
     This will wait until the "buffer_edited" hook is triggered, and the file
     will be stored in the file variable.
     """
     p = Promise()
 
-    def hook_handler(hook_params):
+    def hook_handler(hook, *args):
         GPS.Hook(hook_name).remove(hook_handler)
-        p.resolve()
+        p.resolve(*args)
 
     GPS.Hook(hook_name).add(hook_handler)
     return p
