@@ -35,7 +35,6 @@ with System.Assertions;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.RGBA;                 use Gdk.RGBA;
 
-with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Glib.Types;               use Glib.Types;
 with Glib.Unicode;             use Glib.Unicode;
@@ -59,7 +58,6 @@ with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Paned;                use Gtk.Paned;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Separator;            use Gtk.Separator;
-with Gtk.Size_Group;           use Gtk.Size_Group;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
@@ -79,6 +77,7 @@ with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 
 with Commands.Interactive;     use Commands, Commands.Interactive;
+with Dialog_Utils;             use Dialog_Utils;
 with GPS.Customizable_Modules; use GPS.Customizable_Modules;
 with GPS.Intl;                 use GPS.Intl;
 with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
@@ -245,19 +244,6 @@ package body Aliases_Module is
    --  If no alias name was found, set First > Last.
    --  ??? Should accept unicode
 
-   function Expand_Alias
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Name          : String;
-      Cursor        : access Integer;
-      Must_Reindent : access Boolean;
-      Offset_Column : Gint)
-      return String;
-   --  Return the expanded version of Name.
-   --  Cursor is the index in the returned string for the cursor position.
-   --  The empty string is returned if there is no such alias.
-   --  Must_Reindent is set to True if the editor should be reindented after
-   --  insertion.
-
    procedure Parse_File
      (Kernel    : access Kernel_Handle_Record'Class;
       Filename  : Virtual_File;
@@ -314,11 +300,11 @@ package body Aliases_Module is
    --  variable.
 
    type Param_Substitution is record
-      Param   : Param_Record;
-      Edition : Gtk_Entry;
+      Param : Param_Record;
+      Ent   : Gtk_Entry;
    end record;
-   --  Widget used to store the current value for parameters: Edition contains
-   --  the widget used by the user to edit the value.
+   --  Widget used to store the current value for parameters: Ent contains the
+   --  widget used by the user to edit the value.
    package Params_Subst_List is new Ada.Containers.Doubly_Linked_Lists
      (Element_Type => Param_Substitution);
 
@@ -643,7 +629,7 @@ package body Aliases_Module is
       for P of Params loop
          Substrings (Count) :=
            (Name  => new String'(To_Str (P.Param.Name)),
-            Value => new String'(Get_Text (P.Edition)));
+            Value => new String'(Get_Text (P.Ent)));
          Count := Count + 1;
       end loop;
 
@@ -766,14 +752,13 @@ package body Aliases_Module is
         Aliases_Module_Id.Aliases.Find
           (To_UStr (Name));
 
-      Values  : Params_Subst_List.List;
-      Dialog  : GPS_Dialog;
-      Box     : Gtk_Box;
-      S       : Gtk_Size_Group;
-      Label   : Gtk_Label;
-      W       : Gtk_Widget;
-      Val     : String_Access;
-      Edition : Gtk_Entry;
+      Values       : Params_Subst_List.List;
+      Dialog       : GPS_Dialog;
+      Main_View    : Dialog_View;
+      Group_Widget : Dialog_Group_Widget;
+      Button       : Gtk_Widget;
+      Val          : String_Access;
+      Ent          : Gtk_Entry;
 
    begin
       Must_Reindent.all := False;
@@ -795,56 +780,52 @@ package body Aliases_Module is
                               Title  => -"Alias Parameter Selection",
                               Kernel => Kernel,
                               Flags  => Destroy_With_Parent);
-                     Gtk_New (S);
+                     Dialog.Set_Default_Size (300, 150);
 
-                     W := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-                     Grab_Default (W);
-                     W :=
-                       Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+                     Button := Dialog.Add_Button (Stock_Ok, Gtk_Response_OK);
+                     Grab_Default (Button);
+                     Button :=
+                       Dialog.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
 
-                     Gtk_New_Hbox (Box, Homogeneous => False);
-                     Pack_Start
-                       (Get_Content_Area (Dialog), Box, Expand => False);
+                     Main_View := new Dialog_View_Record;
+                     Dialog_Utils.Initialize (Main_View);
+                     Dialog.Get_Content_Area.Pack_Start (Main_View);
 
-                     Gtk_New (Label, -"Alias name: ");
-                     Add_Widget (S, Label);
-                     Set_Alignment (Label, 0.0, 0.5);
-                     Pack_Start (Box, Label, Expand => False);
-
-                     Gtk_New (Label, Name);
-                     Add_Widget (S, Label);
-                     Set_Alignment (Label, 0.0, 0.5);
-                     Pack_Start (Box, Label, Expand => False);
+                     Group_Widget := new Dialog_Group_Widget_Record;
+                     Initialize
+                       (Group_Widget,
+                        Parent_View         => Main_View,
+                        Group_Name          => "Parameters",
+                        Allow_Multi_Columns => True);
                   end if;
 
-                  Gtk_New_Hbox (Box, Homogeneous => False);
-                  Pack_Start (Get_Content_Area (Dialog), Box, Expand => False);
+                  Gtk_New (Ent);
+                  Ent.Set_Activates_Default (True);
 
-                  Gtk_New (Label, To_Str (P.Name) & ":   ");
-                  Pack_Start (Box, Label, Expand => False, Fill => True);
-                  Set_Alignment (Label, 0.0, 0.5);
-                  Add_Widget (S, Label);
-
-                  Gtk_New (Edition);
-                  Set_Activates_Default (Edition, True);
-                  Pack_Start
-                    (Box, Edition, Expand => True, Fill => True);
+                  Group_Widget.Create_Child
+                    (Widget => Ent,
+                     Label  => To_Str (P.Name));
 
                   if P.From_Env then
                      Val := Getenv (To_Str (P.Name));
-                     Set_Text (Edition, Val.all);
+                     Ent.Set_Text (Val.all);
                      Free (Val);
                   else
-                     Set_Text (Edition, To_Str (P.Initial));
+                     Ent.Set_Text (To_Str (P.Initial));
                   end if;
-                  Values.Append
-                    ((Param   => P,
-                      Edition => Edition));
+
+                  Values.Append ((Param => P, Ent => Ent));
                end loop;
 
                if Dialog /= null then
-                  Show_All (Dialog);
-                  if Run (Dialog) /= Gtk_Response_OK then
+                  Dialog.Show_All;
+
+                  --  Give the focus to the first entry, if any
+                  if not Values.Is_Empty then
+                     Values.First_Element.Ent.Grab_Focus;
+                  end if;
+
+                  if Dialog.Run /= Gtk_Response_OK then
                      Destroy (Dialog);
                      return "";
                   end if;
@@ -855,7 +836,7 @@ package body Aliases_Module is
                     (To_Str (Alias.Expansion), Values);
                begin
                   if Dialog /= null then
-                     Destroy (Dialog);
+                     Dialog.Destroy;
                   end if;
 
                   return Find_And_Replace_Cursor (Val);

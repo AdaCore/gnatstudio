@@ -15,8 +15,11 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;
 with Ada.Strings.Unbounded;
+
+with Glib;                  use Glib;
+
+with GPS.Kernel;
 
 package Aliases_Module is
    package SU renames Ada.Strings.Unbounded;
@@ -56,6 +59,19 @@ package Aliases_Module is
    --  Func is the function called to get the replacement text for Special.
    --  Description is used in the contextual menu in the aliases editor to
    --  describe this special character.
+
+   function Expand_Alias
+     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Name          : String;
+      Cursor        : access Integer;
+      Must_Reindent : access Boolean;
+      Offset_Column : Gint)
+      return String;
+   --  Return the expanded version of Name.
+   --  Cursor is the index in the returned string for the cursor position.
+   --  The empty string is returned if there is no such alias.
+   --  Must_Reindent is set to True if the editor should be reindented after
+   --  insertion.
 
    type Alias_Info is record
       Name : SU.Unbounded_String;
