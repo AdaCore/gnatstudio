@@ -45,7 +45,7 @@ package body Codefix.Errors_Manager is
 
    overriding function Next (This : Error_Id) return Error_Id is
    begin
-      return Error_Id (Next (Memorized_Corrections.List_Node (This)));
+      return Error_Id (Next (Cursor (This)));
    end Next;
 
    -------------------
@@ -54,7 +54,7 @@ package body Codefix.Errors_Manager is
 
    function Get_Solutions (This : Error_Id) return Solution_List is
    begin
-      return Data (Memorized_Corrections.List_Node (This)).Solutions;
+      return Element (This).Solutions;
    end Get_Solutions;
 
    -----------------------
@@ -63,7 +63,7 @@ package body Codefix.Errors_Manager is
 
    function Get_Error_Message (This : Error_Id) return Error_Message is
    begin
-      return Data (Memorized_Corrections.List_Node (This)).Message;
+      return Element (This).Message;
    end Get_Error_Message;
 
    ----------
@@ -83,7 +83,7 @@ package body Codefix.Errors_Manager is
 
    function Is_Fixed (This : Error_Id) return Boolean is
    begin
-      return Data (This).Fixed.all;
+      return Element (This).Fixed.all;
    end Is_Fixed;
 
    -------------------------
@@ -92,7 +92,7 @@ package body Codefix.Errors_Manager is
 
    function Get_Number_Of_Fixes (This : Error_Id) return Natural is
    begin
-      return Length (Data (This).Solutions);
+      return Length (Element (This).Solutions);
    end Get_Number_Of_Fixes;
 
    ----------
@@ -146,18 +146,11 @@ package body Codefix.Errors_Manager is
                loop
                   --  Remove previous from list
 
-                  Memorized_Corrections.Remove_Nodes
-                    (This.Potential_Corrections,
-                     Prev (This.Potential_Corrections,
-                       Last (This.Potential_Corrections)),
-                     Last (This.Potential_Corrections));
+                  This.Potential_Corrections.Delete_Last;
 
-                  if Memorized_Corrections.First (This.Potential_Corrections)
-                    /= Memorized_Corrections.Null_Node
-                  then
+                  if not This.Potential_Corrections.Is_Empty then
                      Previous_Message :=
-                       Data (Memorized_Corrections.Last
-                             (This.Potential_Corrections)).Message;
+                       Element (This.Potential_Corrections.Last).Message;
                   else
                      Previous_Message := Invalid_Error_Message;
                   end if;
@@ -217,7 +210,7 @@ package body Codefix.Errors_Manager is
          Current_Text,
          This.Error_Cb);
 
-      Data (Error).Fixed.all := True;
+      Element (Error).Fixed.all := True;
    end Validate_And_Commit;
 
    -------------------------
@@ -236,7 +229,7 @@ package body Codefix.Errors_Manager is
          Current_Text,
          This.Error_Cb);
 
-      Data (Error).Fixed.all := True;
+      Element (Error).Fixed.all := True;
    end Validate_And_Commit;
 
    ----------
@@ -245,7 +238,7 @@ package body Codefix.Errors_Manager is
 
    procedure Free (This : in out Correction_Manager) is
    begin
-      Free (This.Potential_Corrections);
+      Clear (This.Potential_Corrections);
       Free (This.Error_Cb);
    end Free;
 
@@ -282,7 +275,7 @@ package body Codefix.Errors_Manager is
 
    function Get_Number_Of_Errors (This : Correction_Manager) return Natural is
    begin
-      return Length (This.Potential_Corrections);
+      return Natural (This.Potential_Corrections.Length);
    end Get_Number_Of_Errors;
 
    ------------------
@@ -326,10 +319,9 @@ package body Codefix.Errors_Manager is
    -- Get_Previous_Error --
    ------------------------
 
-   function Get_Previous_Error
-     (This : Correction_Manager; Error : Error_Id) return Error_Id is
+   function Get_Previous_Error (Error : Error_Id) return Error_Id is
    begin
-      return Prev (This.Potential_Corrections, Error);
+      return Previous (Error);
    end Get_Previous_Error;
 
 end Codefix.Errors_Manager;

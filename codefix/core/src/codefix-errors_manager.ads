@@ -15,8 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Generic_List;
-
 with Codefix.Text_Manager;  use Codefix.Text_Manager;
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 with Codefix.Error_Lists;   use Codefix.Error_Lists;
@@ -24,6 +22,8 @@ with Codefix.Errors_Parser; use Codefix.Errors_Parser;
 with GNATCOLL.VFS;
 
 with Ada.Unchecked_Deallocation;
+
+private with Ada.Containers.Vectors;
 
 package Codefix.Errors_Manager is
 
@@ -122,8 +122,7 @@ package Codefix.Errors_Manager is
    --  Set the function that will be called when the execution of a command
    --  doesn't work.
 
-   function Get_Previous_Error
-     (This : Correction_Manager; Error : Error_Id) return Error_Id;
+   function Get_Previous_Error (Error : Error_Id) return Error_Id;
    --  Return the error that have been recorded before Error in This.
 
 private
@@ -139,16 +138,18 @@ private
 
    procedure Free (This : in out Error_Id_Record);
 
-   package Memorized_Corrections is new Generic_List (Error_Id_Record);
+   pragma Suppress (Container_Checks);
+   package Memorized_Corrections is
+     new Ada.Containers.Vectors (Positive, Error_Id_Record);
    use Memorized_Corrections;
 
-   type Error_Id is new Memorized_Corrections.List_Node;
+   type Error_Id is new Memorized_Corrections.Cursor;
 
    Null_Error_Id : constant Error_Id :=
-     Error_Id (Memorized_Corrections.Null_Node);
+     Error_Id (Memorized_Corrections.No_Element);
 
    type Correction_Manager is record
-      Potential_Corrections : Memorized_Corrections.List;
+      Potential_Corrections : Memorized_Corrections.Vector;
       Offset_Line           : Integer := 0;
       Error_Cb              : Execute_Corrupted;
    end record;

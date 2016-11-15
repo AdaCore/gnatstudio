@@ -23,8 +23,6 @@ with GPS.Kernel;             use GPS.Kernel;
 with GNATCOLL.VFS;
 
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
-with Codefix.Errors_Manager; use Codefix.Errors_Manager;
-with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 
 package Codefix.GPS_Io is
 
