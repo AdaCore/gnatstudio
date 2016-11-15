@@ -660,6 +660,14 @@ package body Gtkada.Tree_View is
             return False;  --  keep traversing
          end if;
 
+         --  A dummy node is always visible, so that its parent can be
+         --  expanded even when filters are active
+
+         if Get_Flag (Self, Iter, Flag_Is_Dummy) then
+            Set_Flag (Self, Iter, Flag_Is_Visible);
+            return False;  --  keep traversing
+         end if;
+
          --  Since we are doing depth-first search, the children have already
          --  been computed. So we look at their status first
 
