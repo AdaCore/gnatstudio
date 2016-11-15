@@ -523,11 +523,13 @@ package body Tooltips is
       Path           : Gtk_Tree_Path;
       Found          :  Boolean;
       Column         : Gtk_Tree_View_Column;
+      X2, Y2         : Gint;
    begin
       Area := (0, 0, 0, 0);
       Iter := Null_Iter;
 
-      Get_Path_At_Pos (Tree, X, Y, Path, Column, Cell_X, Cell_Y, Found);
+      Tree.Convert_Widget_To_Bin_Window_Coords (X, Y, X2, Y2);
+      Get_Path_At_Pos (Tree, X2, Y2, Path, Column, Cell_X, Cell_Y, Found);
       if not Found then
          return;
       end if;
