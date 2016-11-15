@@ -603,8 +603,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       Word         : Word_Cursor;
       Pkg_Info     : Simple_Construct_Information;
-      Clauses_List : Words_Lists.List;
-      Clause_Node  : Words_Lists.List_Node;
+      Clauses_List : Words_Lists.Vector;
       Last_With    : File_Cursor := Null_File_Cursor;
 
       Is_Instantiation : Boolean;
@@ -681,15 +680,14 @@ package body Codefix.Text_Manager.Ada_Commands is
       --  clauses for that unit and remove them as well.
 
       if This.Look_For_Use and then This.Category /= Cat_Use then
-         Clauses_List := Get_Use_Clauses
+         Get_Use_Clauses
            (To_String (Word.String_Match),
             Get_File (Word),
             Current_Text,
-            True);
+            True,
+            Clauses_List);
 
-         Clause_Node := First (Clauses_List);
-
-         while Clause_Node /= Words_Lists.Null_Node loop
+         for Item of Clauses_List loop
             declare
                Use_Pck : Ada_Statement;
             begin
@@ -699,30 +697,23 @@ package body Codefix.Text_Manager.Ada_Commands is
                   To_Location
                     (Get_Or_Create
                        (Get_Context (Current_Text).Db.Constructs, Word.File),
-                     Data (Clause_Node).Line,
-                     Data (Clause_Node).Col));
+                     Item.Line,
+                     Item.Col));
 
                Remove_Element
                  (Self => Use_Pck,
                   Mode => Erase,
                   Name => Find_Normalized
-                    (Symbols =>
-                       Get_Context (Current_Text).Db.Symbols,
-                     Name    => Data (Clause_Node).Get_Word));
+                    (Symbols => Get_Context (Current_Text).Db.Symbols,
+                     Name    => Item.Get_Word));
 
                Free (Use_Pck);
             end;
 
             if This.Destination /= GNATCOLL.VFS.No_File then
-               Append
-                 (Obj_List,
-                  "use " & Data (Clause_Node).String_Match & ";");
+               Append  (Obj_List, "use " & Item.String_Match & ";");
             end if;
-
-            Clause_Node := Next (Clause_Node);
          end loop;
-
-         Free (Clauses_List);
       end if;
 
       if This.Destination /= GNATCOLL.VFS.No_File then

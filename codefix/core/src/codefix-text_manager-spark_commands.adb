@@ -17,8 +17,6 @@
 
 with GNAT.Regpat;                      use GNAT.Regpat;
 
-with Codefix.Ada_Tools;                use Codefix.Ada_Tools;
-
 package body Codefix.Text_Manager.Spark_Commands is
 
    --  Move_Tilde_Or_Percent_Cmd

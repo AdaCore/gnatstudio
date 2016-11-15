@@ -18,24 +18,29 @@
 --  This package provides some tools that can be used in ada formal
 --  errors and commands.
 
+with Ada.Containers.Indefinite_Vectors;
 with Ada.Unchecked_Deallocation;
 
-with Generic_List;
 with GNATCOLL.VFS;
 
 with Codefix.Text_Manager;  use Codefix.Text_Manager;
 
+private with Ada.Containers.Vectors;
+
 package Codefix.Ada_Tools is
 
-   package Words_Lists is new Generic_List (Word_Cursor);
+   pragma Suppress (Container_Checks);
+   package Words_Lists is
+     new Ada.Containers.Indefinite_Vectors (Positive, Word_Cursor);
    use Words_Lists;
 
-   function Get_Use_Clauses
+   procedure Get_Use_Clauses
      (Clause_Name  : String;
       File_Name    : GNATCOLL.VFS.Virtual_File;
       Current_Text : Text_Navigator_Abstr'Class;
-      Exclusive    : Boolean := False) return Words_Lists.List;
-   --  Return all the use clauses that are related to a with or an
+      Exclusive    : Boolean := False;
+      Result       : out Words_Lists.Vector);
+   --  Return all the use clauses as Result that are related to a with or an
    --  instantiation name. If Exclusive is true, then only use clauses
    --  that are not linked to any other will be returned.
 
@@ -75,10 +80,12 @@ private
 
    procedure Free is new Ada.Unchecked_Deallocation (With_Type, Ptr_With);
 
-   package With_Lists is new Generic_List (Ptr_With);
+   pragma Suppress (Container_Checks);
+   package With_Lists is new Ada.Containers.Vectors (Positive, Ptr_With);
    use With_Lists;
 
-   package Use_Lists is new Generic_List (Ptr_Use);
+   pragma Suppress (Container_Checks);
+   package Use_Lists is new Ada.Containers.Vectors (Positive, Ptr_Use);
    use Use_Lists;
 
    function Get_Parts_Number (Str : String) return Positive;
@@ -92,19 +99,21 @@ private
    --  Make the link between With_Clause and Use_Clause if the use is a use of
    --  a package evocated in With_Clause.
 
-   function List_All_With
+   procedure List_All_With
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : GNATCOLL.VFS.Virtual_File) return With_Lists.List;
+      File_Name    : GNATCOLL.VFS.Virtual_File;
+      Result       : out With_Lists.Vector);
    --  List all the with clauses existing in File_Name.
 
-   function List_All_Use
+   procedure List_All_Use
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : GNATCOLL.VFS.Virtual_File) return Use_Lists.List;
+      File_Name    : GNATCOLL.VFS.Virtual_File;
+      Result       : out Use_Lists.Vector);
    --  List all the use clauses existing in File_Name.
 
    procedure Link_All_Clauses
-     (List_Of_With : in out With_Lists.List;
-      List_Of_Use  : in out Use_Lists.List);
+     (List_Of_With : in out With_Lists.Vector;
+      List_Of_Use  : in out Use_Lists.Vector);
    --  Link all with clauses to use clauses when possible.
 
 end Codefix.Ada_Tools;

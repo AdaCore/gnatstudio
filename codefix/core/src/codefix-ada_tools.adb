@@ -42,32 +42,31 @@ package body Codefix.Ada_Tools is
    --  ??? WARNING ! This function is not yet terminated, it doesn't work on
    --  instantiated packages, but only if the with appears !
 
-   function Get_Use_Clauses
+   procedure Get_Use_Clauses
      (Clause_Name  : String;
       File_Name    : GNATCOLL.VFS.Virtual_File;
       Current_Text : Text_Navigator_Abstr'Class;
-      Exclusive    : Boolean := False) return Words_Lists.List
+      Exclusive    : Boolean := False;
+      Result       : out Words_Lists.Vector)
    is
-      Lock : Update_Lock := Lock_Updates
+      Dummy : constant Update_Lock := Lock_Updates
         (Current_Text.Get_Structured_File (File_Name));
 
-      List_Of_With : With_Lists.List := List_All_With
-        (Current_Text, File_Name);
-      List_Of_Use  : Use_Lists.List := List_All_Use
-        (Current_Text, File_Name);
-      Seek_Node    : With_Lists.List_Node;
-      Result       : Words_Lists.List;
+      List_Of_With : With_Lists.Vector;
+      List_Of_Use  : Use_Lists.Vector;
 
    begin
-      Link_All_Clauses (List_Of_With, List_Of_Use);
-      Seek_Node := First (List_Of_With);
+      List_All_With (Current_Text, File_Name, List_Of_With);
+      List_All_Use  (Current_Text, File_Name, List_Of_Use);
 
-      while Seek_Node /= With_Lists.Null_Node loop
-         if Data (Seek_Node).Name_Str = Clause_Name then
-            for J in Data (Seek_Node).Clauses'Range loop
-               if Data (Seek_Node).Clauses (J) /= null
+      Link_All_Clauses (List_Of_With, List_Of_Use);
+
+      for Item of List_Of_With loop
+         if Item.Name_Str = Clause_Name then
+            for J in Item.Clauses'Range loop
+               if Item.Clauses (J) /= null
                  and then (not Exclusive
-                           or else Data (Seek_Node).Clauses (J).Nb_Ref = 1)
+                           or else Item.Clauses (J).Nb_Ref = 1)
                then
                   declare
                      Word_Used : Word_Cursor;
@@ -75,32 +74,15 @@ package body Codefix.Ada_Tools is
                      Set_File (Word_Used, File_Name);
                      Set_Location
                        (Word_Used,
-                        Line   =>
-                          Get_Line (Data (Seek_Node).Clauses (J).Position),
-                        Column =>
-                          Get_Column (Data (Seek_Node).Clauses (J).Position));
-                     Set_Word
-                       (Word_Used,
-                        Data (Seek_Node).Clauses (J).Name);
+                        Line   => Get_Line (Item.Clauses (J).Position),
+                        Column => Get_Column (Item.Clauses (J).Position));
+                     Set_Word (Word_Used, Item.Clauses (J).Name);
                      Append (Result, Word_Used);
                   end;
                end if;
             end loop;
-
-            Free (List_Of_With);
-            Free (List_Of_Use);
-
-            Lock.Unlock;
-
-            return Result;
          end if;
-
-         Seek_Node := Next (Seek_Node);
       end loop;
-
-      Lock.Unlock;
-
-      return Result;
    end Get_Use_Clauses;
 
    ----------------------
@@ -183,18 +165,18 @@ package body Codefix.Ada_Tools is
    -- List_All_With --
    -------------------
 
-   function List_All_With
+   procedure List_All_With
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : GNATCOLL.VFS.Virtual_File) return With_Lists.List
+      File_Name    : GNATCOLL.VFS.Virtual_File;
+      Result       : out With_Lists.Vector)
    is
-      Lock : Update_Lock := Lock_Updates
+      Dummy : constant Update_Lock := Lock_Updates
         (Current_Text.Get_Structured_File (File_Name));
 
       Tree  : constant Construct_Tree :=
         Get_Tree (Current_Text.Get_Structured_File (File_Name));
       Iterator   : Construct_Tree_Iterator := First (Tree);
       New_Clause : Ptr_With;
-      Result     : With_Lists.List;
    begin
       while Iterator /= Null_Construct_Tree_Iterator loop
          if Get_Construct (Iterator).Category = Cat_With then
@@ -209,28 +191,25 @@ package body Codefix.Ada_Tools is
 
          Iterator := Next (Tree, Iterator, Jump_Over);
       end loop;
-
-      Lock.Unlock;
-
-      return Result;
    end List_All_With;
 
    ------------------
    -- List_All_Use --
    ------------------
 
-   function List_All_Use
+   procedure List_All_Use
      (Current_Text : Text_Navigator_Abstr'Class;
-      File_Name    : GNATCOLL.VFS.Virtual_File) return Use_Lists.List
+      File_Name    : GNATCOLL.VFS.Virtual_File;
+      Result       : out Use_Lists.Vector)
    is
       Lock : Update_Lock := Lock_Updates
         (Current_Text.Get_Structured_File (File_Name));
+      pragma Warnings (Off, Lock); --  prevent unused varning
 
       Tree  : constant Construct_Tree :=
         Get_Tree (Current_Text.Get_Structured_File (File_Name));
       Iterator   : Construct_Tree_Iterator := First (Tree);
       New_Clause : Ptr_Use;
-      Result     : Use_Lists.List;
 
    begin
       while Iterator /= Null_Construct_Tree_Iterator loop
@@ -261,10 +240,6 @@ package body Codefix.Ada_Tools is
 
          Iterator := Next (Tree, Iterator, Jump_Into);
       end loop;
-
-      Lock.Unlock;
-
-      return Result;
    end List_All_Use;
 
    ----------------------
@@ -272,23 +247,13 @@ package body Codefix.Ada_Tools is
    ----------------------
 
    procedure Link_All_Clauses
-     (List_Of_With : in out With_Lists.List;
-      List_Of_Use  : in out Use_Lists.List)
-   is
-      With_Node : With_Lists.List_Node;
-      Use_Node  : Use_Lists.List_Node;
+     (List_Of_With : in out With_Lists.Vector;
+      List_Of_Use  : in out Use_Lists.Vector) is
    begin
-      Use_Node := First (List_Of_Use);
-
-      while Use_Node /= Use_Lists.Null_Node loop
-         With_Node := First (List_Of_With);
-
-         while With_Node /= With_Lists.Null_Node loop
-            Try_Link_Clauses (Data (With_Node), Data (Use_Node));
-            With_Node := Next (With_Node);
+      for Use_Item of List_Of_Use loop
+         for With_Item of List_Of_With loop
+            Try_Link_Clauses (With_Item, Use_Item);
          end loop;
-
-         Use_Node := Next (Use_Node);
       end loop;
    end Link_All_Clauses;
 
