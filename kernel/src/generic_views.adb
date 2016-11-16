@@ -1464,6 +1464,46 @@ package body Generic_Views is
          return View;
       end Retrieve_View;
 
+      -------------------
+      -- Reset_Toolbar --
+      -------------------
+
+      procedure Reset_Toolbar
+        (View       : not null access Formal_View_Record'Class;
+         Toolbar_Id : String := View_Name)
+      is
+         Toolbar : Gtk_Toolbar := View.Get_Toolbar;
+         Config  : Gtk_Toggle_Tool_Button;
+      begin
+         if Toolbar /= null then
+            Trace (Me, "Create toolbar, from id=" & Toolbar_Id);
+
+            Create_Toolbar (View.Kernel, Toolbar, Id => Toolbar_Id);
+            Toolbar.Set_Icon_Size (Icon_Size_Local_Toolbar);
+            Get_Style_Context (Toolbar).Add_Class ("gps-local-toolbar");
+
+            View.Create_Toolbar (Toolbar);
+            View.Set_Toolbar (Toolbar);
+
+            --  If View needs a local config menu, create it
+            if Local_Config then
+               Gtk_New (Config);
+               View_Record (View.all).Config := Config;
+               Config.Set_Icon_Name ("gps-config-menu-symbolic");
+               Config.Set_Name ("local-config");
+               Config.Set_Tooltip_Text (-"Configure this panel");
+               View.Append_Toolbar (Toolbar, Config, Right_Align => True);
+               Config.Get_Child.On_Button_Press_Event
+                 (On_Display_Local_Config_Access, View);
+            end if;
+
+            Toolbar.Show_All;
+
+            --  Force a refresh to recompute visibility of the toolbar buttons
+            View.Kernel.Context_Changed (View.Kernel.Get_Current_Context);
+         end if;
+      end Reset_Toolbar;
+
       ---------------------------
       -- Create_Finalized_View --
       ---------------------------
@@ -1474,7 +1514,6 @@ package body Generic_Views is
       is
          Box            : Gtk_Box;
          Toolbar        : Gtk_Toolbar;
-         Config         : Gtk_Toggle_Tool_Button;
       begin
          --  If no local toolbar is needed, either to contain a custom toolbar
          --  or for a local config menu, return View.
@@ -1487,33 +1526,16 @@ package body Generic_Views is
          Initialize_Vbox (Box);
          Toplevel_Box (Box.all).Initial := View_Access (View);
 
-         Trace (Me, "Create toolbar, from id=" & Toolbar_Id);
-         Toolbar := Create_Toolbar (View.Kernel, Id => Toolbar_Id);
-         Toolbar.Set_Icon_Size (Icon_Size_Local_Toolbar);
-         Toolbar.Set_Style (Toolbar_Icons);
-         Get_Style_Context (Toolbar).Add_Class ("gps-local-toolbar");
+         Gtk_New (Toolbar);
          Box.Pack_Start (Toolbar, Expand => False, Fill => False);
-
          Box.Pack_Start (View, Expand => True, Fill => True);
-         View.Create_Toolbar (Toolbar);
-         Toolbar.Show_All;
+
          View.Set_Toolbar (Toolbar);
+         Reset_Toolbar (View, Toolbar_Id);
 
          --  We need to propagate the delete event to the view
          Return_Callback.Connect
            (Box, Gtk.Widget.Signal_Delete_Event, On_Delete_Event_Access);
-
-         --  If View needs a local config menu, create it
-         if Local_Config then
-            Gtk_New (Config);
-            View_Record (View.all).Config := Config;
-            Config.Set_Icon_Name ("gps-config-menu-symbolic");
-            Config.Set_Name ("local-config");
-            Config.Set_Tooltip_Text (-"Configure this panel");
-            View.Append_Toolbar (Toolbar, Config, Right_Align => True);
-            Config.Get_Child.On_Button_Press_Event
-              (On_Display_Local_Config_Access, View);
-         end if;
 
          View.On_Destroy (On_Destroy_View'Access);
 

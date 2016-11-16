@@ -409,13 +409,15 @@ package GPS.Kernel.Modules.UI is
    --  toolbar. A toolbar starts on the first item after the separator with
    --  the name of the section, and ends just before the next separator.
 
-   function Create_Toolbar
+   procedure Create_Toolbar
      (Kernel          : not null access Kernel_Handle_Record'Class;
-      Id              : String)
-      return Gtk.Toolbar.Gtk_Toolbar;
-   --  Create a new toolbar with the given id.
-   --  Its contents is read from the XML file in Install_Menus. Any button
-   --  registered for it later on will be dynamically added to the toolbar.
+      Toolbar         : in out Gtk.Toolbar.Gtk_Toolbar;
+      Id              : String);
+   --  Populate Toolbar with the predefined actions defined from the XML in
+   --  Install_Menus.
+   --  Toolbar is created if null, or emptied otherwise and then reused.
+   --  Any button registered for it later on will be dynamically added to
+   --  the toolbar.
 
    procedure Declare_Toolbar
      (Kernel        : not null access Kernel_Handle_Record'Class;

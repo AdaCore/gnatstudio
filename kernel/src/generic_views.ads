@@ -319,6 +319,13 @@ package Generic_Views is
          return View_Access;
       --  Retrieve any of the existing views.
 
+      procedure Reset_Toolbar
+        (View       : not null access Formal_View_Record'Class;
+         Toolbar_Id : String := View_Name);
+      --  Recreate the toolbar from scratch.
+      --  This is only needed if you need to change the buttons that are
+      --  displayed there via your Create_Toolbar method.
+
       procedure Close
         (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
       --  Close the view

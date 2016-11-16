@@ -705,7 +705,7 @@ package body GPS.Main_Window is
       Get_Style_Context (Self.Toolbar_Box).Add_Class ("toolbar");
       Self.Toolbar_Box.On_Draw (On_Draw_Toolbar_Box'Access);
 
-      Self.Toolbar := Create_Toolbar (Self.Application.Kernel, Id => "main");
+      Create_Toolbar (Self.Application.Kernel, Self.Toolbar, Id => "main");
       Self.Toolbar_Box.Pack_Start (Self.Toolbar);
    end Setup_Menu_Bar;
 
