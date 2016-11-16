@@ -114,7 +114,8 @@ with GNAT.Regpat;            use GNAT.Regpat;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 with Codefix.Error_Lists;    use Codefix.Error_Lists;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
-private with Generic_List;
+
+private with Ada.Containers.Vectors;
 
 package Codefix.Errors_Parser is
 
@@ -188,11 +189,12 @@ package Codefix.Errors_Parser is
 
 private
 
-   package Parser_List is new Generic_List (Ptr_Parser, Free);
+   pragma Suppress (Container_Checks);
+   package Parser_List is new Ada.Containers.Vectors (Positive, Ptr_Parser);
    use Parser_List;
 
    type Fix_Processor is record
-      Parse_List : Parser_List.List;
+      Parse_List : Parser_List.Vector;
    end record;
 
 end Codefix.Errors_Parser;

@@ -32,16 +32,13 @@ package body Codefix.Errors_Parser is
       Options      : Fix_Options;
       Solutions    : out Solution_List)
    is
-      Current_Node : Parser_List.List_Node;
-      Success      : Boolean := False;
+      Success : Boolean := False;
 
    begin
-      Current_Node := First (Processor.Parse_List);
-
-      while Current_Node /= Parser_List.Null_Node loop
+      for Item of Processor.Parse_List loop
          begin
             Fix
-              (Data (Current_Node).all,
+              (Item.all,
                Current_Text,
                Message_It,
                Options,
@@ -55,8 +52,7 @@ package body Codefix.Errors_Parser is
                   It : Solution_List_Iterator := First (Solutions);
                begin
                   while not At_End (It) loop
-                     Set_Parser
-                       (It, Error_Parser_Access (Data (Current_Node)));
+                     Set_Parser (It, Error_Parser_Access (Item));
                      It := Next (It);
                   end loop;
                end;
@@ -72,8 +68,6 @@ package body Codefix.Errors_Parser is
          end;
 
          exit when Success;
-
-         Current_Node := Next (Current_Node);
       end loop;
 
    end Get_Solutions;
@@ -93,8 +87,14 @@ package body Codefix.Errors_Parser is
    ------------------
 
    procedure Free (Processor : in out Fix_Processor) is
+      Item : Ptr_Parser;
    begin
-      Free (Processor.Parse_List);
+      for I of Processor.Parse_List loop
+         Item := I;
+         Free (Item);
+      end loop;
+
+      Clear (Processor.Parse_List);
    end Free;
 
    ----------
@@ -114,13 +114,9 @@ package body Codefix.Errors_Parser is
    ------------------------
 
    procedure Initialize_Parsers (Processor : in out Fix_Processor) is
-      Current_Node : Parser_List.List_Node;
    begin
-      Current_Node := First (Processor.Parse_List);
-
-      while Current_Node /= Parser_List.Null_Node loop
-         Initialize (Data (Current_Node).all);
-         Current_Node := Next (Current_Node);
+      for Item of Processor.Parse_List loop
+         Initialize (Item.all);
       end loop;
    end Initialize_Parsers;
 
