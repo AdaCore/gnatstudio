@@ -682,7 +682,7 @@ procedure GPS.Main is
 
             File := Create_From_Dir (GPS_Home_Dir, "traces.cfg").Write_File;
             Write (File,
-                   ">log.$$" & ASCII.LF &
+                   ">log.$$.txt" & ASCII.LF &
                      "+" & ASCII.LF &
                      "*.EXCEPTIONS=yes" & ASCII.LF &
                      "DEBUG.COLORS=no" & ASCII.LF &
@@ -1526,9 +1526,9 @@ procedure GPS.Main is
 
       Increase_Indent (Me, "Shutdown");
 
-      Log_File := Create_From_Dir (Get_Home_Dir (Kernel), +"log");
+      Log_File := Create_From_Dir (Get_Home_Dir (Kernel), +"log.txt");
       Pid_File := Create_From_Dir
-        (Get_Home_Dir (Kernel), +("log." & Pid_Image));
+        (Get_Home_Dir (Kernel), +("log." & Pid_Image & ".txt"));
       Project  := Get_Project (Kernel);
 
       Set_Destruction_Flag (Kernel, True);
@@ -1550,7 +1550,7 @@ procedure GPS.Main is
       GPS_Main := null;
       GNATCOLL.Traces.Finalize;
 
-      --  In case of a normal exit, rename log.<pid> as log to avoid
+      --  In case of a normal exit, rename log.<pid>.txt as log.txt to avoid
       --  generating a new log file for each session; this way we still
       --  keep the log file in case of post mortem analysis.
       --  In case of unexpected exit, keep the log file under its original
