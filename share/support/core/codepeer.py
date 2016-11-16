@@ -404,6 +404,10 @@ analysis. See CodePeer documentation for more details."/>
 many cores as available on the machine)." />
          <check label="Root project only" switch="-root-only"
                 column="2" tip="Analyze root project only" />
+         <check label="Force analysis" switch="-f" column="2"
+          tip="Force analysis of all files, ignoring previous run.
+Also force the generation of all SCIL files."
+         />
          <hidden switch="-dbg-on" separator=" "/>
          <hidden switch="-dbg-off" separator=" "/>
        </switches>
