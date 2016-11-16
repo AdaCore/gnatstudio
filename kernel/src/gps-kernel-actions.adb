@@ -442,9 +442,13 @@ package body GPS.Kernel.Actions is
       if Act = null then
          Free (Args_In_Out);
          if Action (Action'First) = '/' then
-            Trace (Me, "Execute menu action " & Action);
-            GPS.Kernel.Modules.UI.Execute_Menu
-               (Kernel_Handle (Kernel), Action);
+            declare
+               B : constant Block_Trace_Handle :=
+                  Create (Me, "Execute menu action " & Action);
+            begin
+               GPS.Kernel.Modules.UI.Execute_Menu
+                  (Kernel_Handle (Kernel), Action);
+            end;
             return True;
          else
             Insert (Kernel, -"Action not defined : " & Action);
@@ -457,52 +461,53 @@ package body GPS.Kernel.Actions is
       end if;
 
       if Filter_Matches (Act, C) then
-         if Active (Me) then
-            Trace (Me, "Executing action " & Action & Repeat'Img & " times"
-               & " synchronous=" & Synchronous'Img);
-         end if;
+         declare
+            B : constant Block_Trace_Handle :=
+               Create (Me, "Execute action " & Action & Repeat'Img
+                  & " times synchronous=" & Synchronous'Img);
+         begin
+            --  For background commands, we do not use undo groups, since there
+            --  might be several such commands running in parallel anyway.
+            if Synchronous then
+               Undo_Group (Start => True);
+            end if;
 
-         --  For background commands, we do not use undo groups, since there
-         --  might be several such commands running in parallel anyway.
-         if Synchronous then
-            Undo_Group (Start => True);
-         end if;
+            for R in 1 .. Repeat loop
+               Custom := Create_Proxy
+                  (Act.Command,
+                   (Event       => Event,
+                    Context     => C,
+                    Synchronous => Synchronous,
+                    Dir         => No_File,
+                    Args        => Args_In_Out,
+                    Via_Menu    =>
+                      Via_Menu or else
+                      (Event /= null and then
+                        (Get_Event_Type (Event) = Button_Press or else
+                         Get_Event_Type (Event) = Button_Release or else
+                         Get_Event_Type (Event) = Key_Press or else
+                         Get_Event_Type (Event) = Key_Release)),
+                    Label       => new String'(Action),
+                   Repeat_Count => R,
+                    Remaining_Repeat => Repeat - R));
 
-         for R in 1 .. Repeat loop
-            Custom := Create_Proxy
-               (Act.Command,
-                (Event       => Event,
-                 Context     => C,
-                 Synchronous => Synchronous,
-                 Dir         => No_File,
-                 Args        => Args_In_Out,
-                 Via_Menu    =>
-                   Via_Menu or else
-                   (Event /= null and then
-                     (Get_Event_Type (Event) = Button_Press or else
-                      Get_Event_Type (Event) = Button_Release or else
-                      Get_Event_Type (Event) = Key_Press or else
-                      Get_Event_Type (Event) = Key_Release)),
-                 Label       => new String'(Action),
-                Repeat_Count => R,
-                 Remaining_Repeat => Repeat - R));
+               if Synchronous then
+                  Launch_Foreground_Command (Kernel, Custom);
+               else
+                  Launch_Background_Command
+                     (Kernel,
+                      Custom,
+                      Block_Exit      => Block_Exit,
+                      Active          => True,  --  immediately if possible
+                      Show_Bar        => Show_Bar,
+                      Queue_Id        => "");
+               end if;
+            end loop;
 
             if Synchronous then
-               Launch_Foreground_Command (Kernel, Custom);
-            else
-               Launch_Background_Command
-                  (Kernel,
-                   Custom,
-                   Block_Exit      => Block_Exit,
-                   Active          => True,  --  immediately if possible
-                   Show_Bar        => Show_Bar,
-                   Queue_Id        => "");
+               Undo_Group (Start => False);
             end if;
-         end loop;
-
-         if Synchronous then
-            Undo_Group (Start => False);
-         end if;
+         end;
 
          return True;
 
@@ -513,10 +518,9 @@ package body GPS.Kernel.Actions is
                "Could not execute """ & Action & "'"
                & (if M = "" then "" else ": " & To_String (M));
          begin
+            Trace (Me, Msg);
             if Error_Msg_In_Console then
                Insert (Kernel, Msg);
-            else
-               Trace (Me, Msg);
             end if;
          end;
 
