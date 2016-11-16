@@ -92,6 +92,7 @@ end %(name);</text>
   </alias>
 
   <alias name="declare" >
+    <param name="variables" />
     <text>declare
    %(variables)
 begin

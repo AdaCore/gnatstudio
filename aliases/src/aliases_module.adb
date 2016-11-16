@@ -49,10 +49,8 @@ with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Event_Box;            use Gtk.Event_Box;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
-with Gtk.Label;                use Gtk.Label;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Paned;                use Gtk.Paned;
@@ -201,7 +199,6 @@ package body Aliases_Module is
       Local_Aliases   : Aliases_Map.Map;
       Aliases         : Gtk_Tree_View;
       Aliases_Model   : Gtk_Tree_Store;
-      Current_Alias   : Gtk_Label;
       Variables       : Gtk_Tree_View;
       Variables_Model : Gtk_Tree_Store;
       Expansion       : Gtk_Text_View;
@@ -1139,7 +1136,6 @@ package body Aliases_Module is
             Name : constant String := Get_String (Ed.Aliases_Model, Iter, 0);
          begin
             Cursor := Get_Value (Ed, Name);
-            Set_Text (Ed.Current_Alias, Name);
             Ed.Current_Var := new String'(Name);
          end;
       end if;
@@ -1226,7 +1222,6 @@ package body Aliases_Module is
 
                   Free (Ed.Current_Var);
                   Ed.Current_Var := new String'(Name);
-                  Set_Text (Ed.Current_Alias, Name);
                end if;
             end;
          end if;
@@ -1618,9 +1613,7 @@ package body Aliases_Module is
       Toggle_Render    : Gtk_Cell_Renderer_Toggle;
       Col              : Gtk_Tree_View_Column;
       Number           : Gint;
-      Event            : Gtk_Event_Box;
       Frame            : Gtk_Frame;
-      Color            : Gdk_RGBA;
       C                : Gdk_RGBA;
       Expansion_Buffer : Gtk_Text_Buffer;
       Scrolled         : Gtk_Scrolled_Window;
@@ -1673,7 +1666,6 @@ package body Aliases_Module is
       Pack_Start (Editor.Alias_Col, Render, False);
       Add_Attribute (Editor.Alias_Col, Render, "text", 0);
       Add_Attribute (Editor.Alias_Col, Render, "editable", 1);
-
       Set_Editable_And_Callback (Editor.Aliases_Model, Render, 0);
 
       Widget_Callback.Object_Connect
@@ -1706,21 +1698,6 @@ package body Aliases_Module is
 
       Gtk_New_Vbox (Box, Homogeneous => False);
       Add (Frame, Box);
-
-      --  Name of current alias
-
-      Gtk_New (Event);
-      Pack_Start (Box, Event, Expand => False);
-      Parse (Color, "#0e79bd", Success);
-      --  ??? Should be shared with the preferences dialog and wizard
-      Event.Override_Background_Color (Gtk_State_Flag_Normal, Color);
-
-      Gtk_New (Editor.Current_Alias, "Current alias");
-      Set_Alignment (Editor.Current_Alias, 0.1, 0.5);
-      Add (Event, Editor.Current_Alias);
-
-      Gtk_New_Hseparator (Sep);
-      Pack_Start (Box, Sep, Expand => False);
 
       --  Parameters list
 
