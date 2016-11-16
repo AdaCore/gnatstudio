@@ -16,6 +16,8 @@
 */config.log
 */config.status
 */obj/*
+*/core/obj/*
+*/ui/obj/*
 */*/obj/codepeer/*
 !gps/obj/gps-gdb.py
 .#*
