@@ -29,12 +29,13 @@ with Ada.Containers.Doubly_Linked_Lists;
 with GNAT.Strings; use GNAT.Strings;
 with Basic_Types;  use Basic_Types;
 with Language;     use Language;
-with Generic_List;
 with Virtual_Lists;
 with Virtual_Lists.Extensive;
 
 with GNATCOLL.VFS;     use GNATCOLL.VFS;
 with Xref;
+
+private with Ada.Containers.Vectors;
 
 package Completion is
 
@@ -389,14 +390,16 @@ private
    use Completion_Resolver_Map_Pckg;
    use Completion_Resolver_List_Pckg;
 
-   package Context_List_Pckg is new Generic_List (Completion_Context);
+   pragma Suppress (Container_Checks);
+   package Context_List_Pckg is
+     new Ada.Containers.Vectors (Positive, Completion_Context);
 
    use Context_List_Pckg;
 
    type Completion_Manager is abstract tagged record
-      Resolvers : Completion_Resolver_Map_Pckg.Map;
+      Resolvers         : Completion_Resolver_Map_Pckg.Map;
       Ordered_Resolvers : Completion_Resolver_List_Pckg.List;
-      Contexts  : Context_List_Pckg.List;
+      Contexts          : Context_List_Pckg.Vector;
    end record;
 
    Null_File_Location : constant File_Location := (No_File, 0, 0);

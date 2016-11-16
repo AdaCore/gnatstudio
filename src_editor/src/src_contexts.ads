@@ -28,12 +28,13 @@ with Gtkada.MDI;            use Gtkada.MDI;
 with Basic_Types;           use Basic_Types;
 with Files_Extra_Info_Pkg;
 with Find_Utils;            use Find_Utils;
-with Generic_List;
 with GPS.Editors;           use GPS.Editors;
 with GPS.Kernel;
 with GPS.Search;
 with GPS.Search.Replaces;   use GPS.Search.Replaces;
 with Language_Handlers;
+
+private with Ada.Containers.Vectors;
 
 package Src_Contexts is
 
@@ -460,7 +461,9 @@ private
 
    procedure Free (D : in out Dir_Data_Access);
 
-   package Directory_List is new Generic_List (Dir_Data_Access);
+   pragma Suppress (Container_Checks);
+   package Directory_List is
+     new Ada.Containers.Vectors (Positive, Dir_Data_Access);
 
    type File_Search_Context is abstract new Root_Search_Context with record
       Replace_Valid      : Boolean := False;
@@ -535,7 +538,7 @@ private
    type Files_Context is new Abstract_Files_Context with record
       Files_Pattern : GNAT.Regexp.Regexp;
       Recurse       : Boolean                   := False;
-      Dirs          : Directory_List.List;
+      Dirs          : Directory_List.Vector;
       Current_File  : GNATCOLL.VFS.Virtual_File;
 
       Directory     : GNATCOLL.VFS.Virtual_File := GNATCOLL.VFS.No_File;

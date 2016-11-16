@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Containers.Vectors;     use Ada.Containers;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
@@ -1227,7 +1226,7 @@ package body Src_Contexts is
 
    overriding procedure Free (Context : in out Files_Context) is
    begin
-      Directory_List.Free (Context.Dirs);
+      Directory_List.Clear (Context.Dirs);
       Context.At_End := True;
       Free (Context.Replacement);
       Free (Root_Search_Context (Context));
@@ -2266,7 +2265,9 @@ package body Src_Contexts is
    procedure Replace_Matched
      (Replacement : Replacement_Pattern;
       Matches     : Match_Vectors.Vector;
-      Buffer      : Src_Editor_Buffer.Source_Buffer) is
+      Buffer      : Src_Editor_Buffer.Source_Buffer)
+   is
+      use type Ada.Containers.Count_Type;
    begin
       --  Replace starting from the end, so as to preserve lines and
       --  columns
@@ -3152,7 +3153,7 @@ package body Src_Contexts is
       --  ??? Can this function be called at any other place than when the end
       --  is reached ?
       Context.At_End := False;
-      Directory_List.Free (Context.Dirs);
+      Directory_List.Clear (Context.Dirs);
       Context.Current_Dir := 0;
       Move_To_Next_File (Context);
    end Move_To_First_File;
@@ -3174,7 +3175,7 @@ package body Src_Contexts is
          return;
       end if;
 
-      if Context.Dirs = Null_List then
+      if Context.Dirs.Is_Empty then
          Prepend
            (Context.Dirs,
             new Dir_Data'
@@ -3185,13 +3186,13 @@ package body Src_Contexts is
 
       while Context.Current_File = GNATCOLL.VFS.No_File loop
          declare
-            Data : Dir_Data_Access renames Head (Context.Dirs);
+            Data : Dir_Data_Access renames Context.Dirs.First_Element;
          begin
             if Data.F_Idx > Data.Files'Last then
-               Next (Context.Dirs);
+               Context.Dirs.Delete_First;
                Context.Current_Dir := Context.Current_Dir + 1;
 
-               if Context.Dirs = Null_List then
+               if Context.Dirs.Is_Empty then
                   --  No more searches
                   Context.At_End := True;
                   return;
