@@ -1,5 +1,6 @@
 with "gtkada";
 with "../kernel/kernel";
+with "../aliases/aliases";
 with "../widgets/widgets";
 with "../shared";
 with "../prj_editor/prj_editor";

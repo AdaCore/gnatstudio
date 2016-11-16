@@ -1063,40 +1063,54 @@ package body Aliases_Module is
       Start, Last : Gtk_Text_Iter;
       Params      : Params_List.List;
       Iter        : Gtk_Tree_Iter;
-
    begin
       if Editor.Current_Var /= null then
-         Iter := Get_Iter_First (Editor.Variables_Model);
+         declare
+            Alias_Name : constant SU.Unbounded_String :=
+                           To_UStr (Editor.Current_Var.all);
+            Read_Only  : constant Boolean :=
+                           (Aliases_Module_Id.Aliases.Contains (Alias_Name)
+                            and then Aliases_Module_Id.Aliases
+                              (Alias_Name).Read_Only);
+         begin
+            --  Don't save anything from the GUI if the selected alias is
+            --  read-only.
+            if Read_Only then
+               return;
+            end if;
 
-         while Iter /= Null_Iter loop
-            declare
-               Name     : constant String :=
-                 Get_String (Editor.Variables_Model, Iter, 0);
-               Initial  : constant String :=
-                 Get_String (Editor.Variables_Model, Iter, 1);
-               From_Env : constant Boolean :=
-                 Get_Boolean (Editor.Variables_Model, Iter, 3);
+            Iter := Get_Iter_First (Editor.Variables_Model);
 
-            begin
-               Params.Append
-                 ((Name     => To_UStr (Name),
-                   Initial  => To_UStr (Initial),
-                   From_Env => From_Env));
-            end;
+            while Iter /= Null_Iter loop
+               declare
+                  Name     : constant String :=
+                               Get_String (Editor.Variables_Model, Iter, 0);
+                  Initial  : constant String :=
+                               Get_String (Editor.Variables_Model, Iter, 1);
+                  From_Env : constant Boolean :=
+                               Get_Boolean (Editor.Variables_Model, Iter, 3);
 
-            Next (Editor.Variables_Model, Iter);
-         end loop;
+               begin
+                  Params.Append
+                    ((Name     => To_UStr (Name),
+                      Initial  => To_UStr (Initial),
+                      From_Env => From_Env));
+               end;
 
-         Get_Start_Iter (Buffer, Start);
-         Get_End_Iter   (Buffer, Last);
+               Next (Editor.Variables_Model, Iter);
+            end loop;
 
-         Editor.Local_Aliases.Include
-           (To_UStr (Editor.Current_Var.all),
-            (Name      => To_UStr (Editor.Current_Var.all),
-             Expansion => To_UStr (Get_Text (Buffer, Start, Last)),
-             Params    => Params,
-             Read_Only => False,
-             Must_Reindent => Get_Active (Editor.Must_Reindent)));
+            Get_Start_Iter (Buffer, Start);
+            Get_End_Iter   (Buffer, Last);
+
+            Editor.Local_Aliases.Include
+              (Alias_Name,
+               (Name          => Alias_Name,
+                Expansion     => To_UStr (Buffer.Get_Text (Start, Last)),
+                Params        => Params,
+                Read_Only     => False,
+                Must_Reindent => Get_Active (Editor.Must_Reindent)));
+         end;
       end if;
    end Save_Current_Var;
 
