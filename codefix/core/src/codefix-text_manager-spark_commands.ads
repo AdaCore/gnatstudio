@@ -45,9 +45,6 @@ package Codefix.Text_Manager.Spark_Commands is
 
 private
 
-   package Mark_List is new Generic_List (Word_Mark);
-   use Mark_List;
-
    type Move_Tilde_Or_Percent_Cmd is new Text_Command (Simple) with record
       Cursor : Ptr_Mark;
    end record;
