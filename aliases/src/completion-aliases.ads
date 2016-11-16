@@ -50,7 +50,7 @@ private
 
    type Alias_Completion_Proposal is new Simple_Completion_Proposal
    with record
-      Alias : Alias_Info;
+      Alias : Alias_Type;
    end record;
 
    overriding function Deep_Copy

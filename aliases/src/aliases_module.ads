@@ -15,9 +15,12 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Doubly_Linked_Lists;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;
 
-with Glib;                  use Glib;
+with Glib;                               use Glib;
 
 with GPS.Kernel;
 
@@ -27,6 +30,89 @@ package Aliases_Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
+
+   -------------
+   -- Aliases --
+   -------------
+
+   type Alias_Type is tagged private;
+   --  Type representing an alias
+
+   No_Alias : constant Alias_Type;
+
+   function Get_Name (Alias : Alias_Type) return String;
+   --  Return the given alias' name
+
+   function Get_Expansion (Alias : Alias_Type) return String;
+   --  Return the given alias' expansion text
+
+   package Alias_Parameter_Substitution_Map is
+     new Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => String,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=",
+        "="             => "=");
+   --  Used to associate alias parameters' names and their corresponding
+   --  values.
+
+   function Expand_Alias
+     (Alias                : Alias_Type;
+      Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Cursor               : out Integer;
+      Must_Reindent        : out Boolean;
+      Params_Substitutions : out Alias_Parameter_Substitution_Map.Map;
+      Offset_Column        : Gint := 0;
+      Dialog_Title         : String := "Alias Parameters Selection")
+      return String;
+   --  Return the expanded version of Alias, displaying, if needed, a dialog
+   --  asking the user to enter values for its parameters.
+   --
+   --  Cursor is the index in the returned string for the cursor position.
+   --
+   --  Must_Reindent is set to True if the editor should be reindented after
+   --  insertion.
+   --
+   --  Params_Substitutions is filled with the the values retrieved for each
+   --  alias parameter.
+   --
+   --  Dialog_Title is used to set the dialog's title.
+
+   function Expand_Alias
+     (Alias         : Alias_Type;
+      Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Cursor        : out Integer;
+      Must_Reindent : out Boolean;
+      Offset_Column : Gint := 0;
+      Dialog_Title  : String := "Alias Parameters Selection")
+      return String;
+   --  Same as above, but without the Params_Subsitutions parameter.
+
+   type Alias_List is array (Positive range <>) of Alias_Type;
+
+   function Get_Aliases_List return Alias_List;
+   --  Get the list of all the registered aliases
+
+   function Get_Alias (Name : String) return Alias_Type;
+   --  Get the alias corresponding to the given Name.
+   --  Return No_Alias if not found.
+
+   ------------------------
+   -- Aliases Parameters --
+   ------------------------
+
+   type Alias_Param_Type is tagged private;
+   --  Type representing an alias parameter
+
+   function Get_Name (Param : Alias_Param_Type) return String;
+   --  Return the given alias parameter's name
+
+   function Get_Description (Param : Alias_Param_Type) return String;
+   --  Return the given alias parameter's description
+
+   -----------------------
+   -- Aliases Expansion --
+   -----------------------
 
    Invalid_Expansion : constant String := "!@#$%";
 
@@ -60,29 +146,49 @@ package Aliases_Module is
    --  Description is used in the contextual menu in the aliases editor to
    --  describe this special character.
 
-   function Expand_Alias
-     (Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
-      Name          : String;
-      Cursor        : access Integer;
-      Must_Reindent : access Boolean;
-      Offset_Column : Gint)
-      return String;
-   --  Return the expanded version of Name.
-   --  Cursor is the index in the returned string for the cursor position.
-   --  The empty string is returned if there is no such alias.
-   --  Must_Reindent is set to True if the editor should be reindented after
-   --  insertion.
+private
 
-   type Alias_Info is record
-      Name : SU.Unbounded_String;
-      Expansion : SU.Unbounded_String;
+   type Alias_Param_Type is tagged record
+      Name        : SU.Unbounded_String;
+      --  The parameter's name
+
+      Description : SU.Unbounded_String;
+      --  The parameter's description
+
+      Initial     : SU.Unbounded_String;
+      --  The parameter's initial value
+
+      From_Env    : Boolean;
+      --  True if the parameter's value is retrieved from an environment
+      --  variable, False otherwise.
    end record;
-   No_Alias_Info : constant Alias_Info := (SU.Null_Unbounded_String,
-                                           SU.Null_Unbounded_String);
 
-   type Alias_Info_List is array (Positive range <>) of Alias_Info;
+   package Params_List is new Ada.Containers.Doubly_Linked_Lists
+     (Element_Type => Alias_Param_Type);
+   --  Used to store the list of parameters of a given alias
 
-   function Get_Aliases_List return Alias_Info_List;
-   function Get_Alias (Name : SU.Unbounded_String) return Alias_Info;
+   type Alias_Type is tagged record
+      Name          : SU.Unbounded_String;
+      --  The alias' name
+
+      Expansion     : SU.Unbounded_String;
+      --  The alias' expansion text
+
+      Params        : Params_List.List;
+      --  The alias' parameters' list
+
+      Read_Only     : Boolean;
+      --  True if the alias' should not be editable, False otherwise
+
+      Must_Reindent : Boolean;
+      --  Whether the editor should be reindented after insertion of the macro
+   end record;
+
+   No_Alias : constant Alias_Type :=
+                Alias_Type'(Name          => SU.Null_Unbounded_String,
+                            Expansion     => SU.Null_Unbounded_String,
+                            Params        => Params_List.Empty_List,
+                            Read_Only     => False,
+                            Must_Reindent => False);
 
 end Aliases_Module;

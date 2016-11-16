@@ -21,9 +21,9 @@ with Ada.Strings.Unbounded.Hash_Case_Insensitive;
 with Ada.Strings.Unbounded.Equal_Case_Insensitive;
 with Ada.Unchecked_Deallocation;
 with Ada.Containers.Hashed_Maps;
-with Ada.Containers.Doubly_Linked_Lists;
 
 with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
+with GNAT.Case_Util;           use GNAT.Case_Util;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GNATCOLL.Arg_Lists;       use GNATCOLL.Arg_Lists;
 with GNATCOLL.Templates;       use GNATCOLL.Templates;
@@ -140,27 +140,9 @@ package body Aliases_Module is
       Context : Interactive_Command_Context)
       return Command_Return_Type;
 
-   type Param_Record is record
-      Name     : SU.Unbounded_String;
-      Initial  : SU.Unbounded_String;
-      From_Env : Boolean;
-   end record;
-
-   package Params_List is new Ada.Containers.Doubly_Linked_Lists
-     (Element_Type => Param_Record);
-
-   type Alias_Record is record
-      Name          : SU.Unbounded_String;
-      Expansion     : SU.Unbounded_String;
-      Params        : Params_List.List;
-      Read_Only     : Boolean;
-      Must_Reindent : Boolean;
-      --  Whether the editor should be reindent after insertion of the macro
-   end record;
-
    package Aliases_Map is new Ada.Containers.Hashed_Maps
      (Key_Type        => SU.Unbounded_String,
-      Element_Type    => Alias_Record,
+      Element_Type    => Alias_Type,
       Hash            => SU.Hash_Case_Insensitive,
       Equivalent_Keys => SU.Equal_Case_Insensitive);
    use Aliases_Map;
@@ -301,7 +283,7 @@ package body Aliases_Module is
    --  variable.
 
    type Param_Substitution is record
-      Param : Param_Record;
+      Param : Alias_Param_Type;
       Ent   : Gtk_Entry;
    end record;
    --  Widget used to store the current value for parameters: Ent contains the
@@ -310,8 +292,11 @@ package body Aliases_Module is
      (Element_Type => Param_Substitution);
 
    function Substitute_Params
-     (Text : String; Params : Params_Subst_List.List) return String;
-   --  Compute the replacement string for Text, given the currnet parameter
+     (Text                 : String;
+      Params               : Params_Subst_List.List;
+      Params_Substitutions : out Alias_Parameter_Substitution_Map.Map)
+      return String;
+   --  Compute the replacement string for Text, given the current parameter
    --  values.
 
    procedure Expansion_Inserted
@@ -377,6 +362,38 @@ package body Aliases_Module is
       Level  : Customization_Level;
       Read_Only : Boolean);
    --  Called when a new customization in parsed
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Alias : Alias_Type) return String
+   is
+     (To_Str (Alias.Name));
+
+   -------------------
+   -- Get_Expansion --
+   -------------------
+
+   function Get_Expansion (Alias : Alias_Type) return String
+   is
+     (To_Str (Alias.Expansion));
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Param : Alias_Param_Type) return String
+   is
+     (To_Str (Param.Name));
+
+   ---------------------
+   -- Get_Description --
+   ---------------------
+
+   function Get_Description (Param : Alias_Param_Type) return String
+   is
+      (To_Str (Param.Description));
 
    ----------------
    -- Do_Nothing --
@@ -460,7 +477,7 @@ package body Aliases_Module is
       File, XML_Key, Child  : Node_Ptr;
       Iter              : Aliases_Map.Cursor :=
         Aliases_Module_Id.Aliases.First;
-      Value             : Alias_Record;
+      Value             : Alias_Type;
       Success           : Boolean;
 
       use Aliases_Map;
@@ -613,7 +630,10 @@ package body Aliases_Module is
    -----------------------
 
    function Substitute_Params
-     (Text : String; Params : Params_Subst_List.List) return String
+     (Text                 : String;
+      Params               : Params_Subst_List.List;
+      Params_Substitutions : out Alias_Parameter_Substitution_Map.Map)
+      return String
    is
       Count : Integer;
       Substrings : Substitution_Array (1 .. Integer (Params.Length) + 1);
@@ -630,7 +650,8 @@ package body Aliases_Module is
       for P of Params loop
          Substrings (Count) :=
            (Name  => new String'(To_Str (P.Param.Name)),
-            Value => new String'(Get_Text (P.Ent)));
+            Value => new String'(P.Ent.Get_Text));
+         Params_Substitutions.Include (To_Str (P.Param.Name), P.Ent.Get_Text);
          Count := Count + 1;
       end loop;
 
@@ -650,12 +671,17 @@ package body Aliases_Module is
    ------------------
 
    function Expand_Alias
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Name          : String;
-      Cursor        : access Integer;
-      Must_Reindent : access Boolean;
-      Offset_Column : Gint) return String
+     (Alias                : Alias_Type;
+      Kernel               : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Cursor               : out Integer;
+      Must_Reindent        : out Boolean;
+      Params_Substitutions : out Alias_Parameter_Substitution_Map.Map;
+      Offset_Column        : Gint := 0;
+      Dialog_Title         : String := "Alias Parameters Selection")
+      return String
    is
+      Name : constant String := Alias.Get_Name;
+
       function Find_And_Replace_Cursor (Str : String) return String;
       --  Find the position of the cursor in Str, and returns the new Str when
       --  the special entity has been removed
@@ -685,7 +711,7 @@ package body Aliases_Module is
          Boolean_Hash.String_Hash_Table.Set
            (Aliases_Module_Id.Expanded, Name, True);
 
-         Cursor.all := Str'Length;
+         Cursor := Str'Length;
 
          while S <= Str'Last - 1 loop
             if Str (S) = Special then
@@ -693,7 +719,7 @@ package body Aliases_Module is
                First := S + 2;
 
                if Str (S + 1) = '_' then
-                  Cursor.all := Ada.Strings.Unbounded.Length (Result);
+                  Cursor := Ada.Strings.Unbounded.Length (Result);
 
                elsif Str (S + 1) = Special then
                   Result := Result & Special;
@@ -749,10 +775,6 @@ package body Aliases_Module is
          return Ada.Strings.Unbounded.To_String (Result);
       end Find_And_Replace_Cursor;
 
-      Alias_Cursor  : constant Aliases_Map.Cursor :=
-        Aliases_Module_Id.Aliases.Find
-          (To_UStr (Name));
-
       Values       : Params_Subst_List.List;
       Dialog       : GPS_Dialog;
       Main_View    : Dialog_View;
@@ -762,89 +784,121 @@ package body Aliases_Module is
       Ent          : Gtk_Entry;
 
    begin
-      Must_Reindent.all := False;
+      Must_Reindent := False;
 
-      if Alias_Cursor = No_Element then
+      if Alias = No_Alias then
          return "";
       else
-         declare
-            Alias : constant Alias_Record
-              := Aliases_Map.Element (Alias_Cursor);
-         begin
-            Must_Reindent.all := Alias.Must_Reindent;
-            if Alias.Params.Is_Empty then
-               return Find_And_Replace_Cursor (To_Str (Alias.Expansion));
-            else
-               for P of Alias.Params loop
-                  if Dialog = null then
-                     Gtk_New (Dialog,
-                              Title  => -"Alias Parameter Selection",
-                              Kernel => Kernel,
-                              Flags  => Destroy_With_Parent);
-                     Dialog.Set_Default_Size (300, 150);
+         Must_Reindent := Alias.Must_Reindent;
+         if Alias.Params.Is_Empty then
+            return Find_And_Replace_Cursor (To_Str (Alias.Expansion));
+         else
+            for P of Alias.Params loop
+               if Dialog = null then
+                  Gtk_New (Dialog,
+                           Title  => Dialog_Title,
+                           Kernel => Kernel,
+                           Flags  => Destroy_With_Parent);
+                  Dialog.Set_Default_Size (300, 150);
 
-                     Button := Dialog.Add_Button (Stock_Ok, Gtk_Response_OK);
-                     Grab_Default (Button);
-                     Button :=
-                       Dialog.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
+                  Button := Dialog.Add_Button (Stock_Ok, Gtk_Response_OK);
+                  Grab_Default (Button);
+                  Button :=
+                    Dialog.Add_Button (Stock_Cancel, Gtk_Response_Cancel);
 
-                     Main_View := new Dialog_View_Record;
-                     Dialog_Utils.Initialize (Main_View);
-                     Dialog.Get_Content_Area.Pack_Start (Main_View);
+                  Main_View := new Dialog_View_Record;
+                  Dialog_Utils.Initialize (Main_View);
+                  Dialog.Get_Content_Area.Pack_Start (Main_View);
 
-                     Group_Widget := new Dialog_Group_Widget_Record;
-                     Initialize
-                       (Group_Widget,
-                        Parent_View         => Main_View,
-                        Group_Name          => "Parameters",
-                        Allow_Multi_Columns => True);
-                  end if;
-
-                  Gtk_New (Ent);
-                  Ent.Set_Activates_Default (True);
-
-                  Group_Widget.Create_Child
-                    (Widget => Ent,
-                     Label  => To_Str (P.Name));
-
-                  if P.From_Env then
-                     Val := Getenv (To_Str (P.Name));
-                     Ent.Set_Text (Val.all);
-                     Free (Val);
-                  else
-                     Ent.Set_Text (To_Str (P.Initial));
-                  end if;
-
-                  Values.Append ((Param => P, Ent => Ent));
-               end loop;
-
-               if Dialog /= null then
-                  Dialog.Show_All;
-
-                  --  Give the focus to the first entry, if any
-                  if not Values.Is_Empty then
-                     Values.First_Element.Ent.Grab_Focus;
-                  end if;
-
-                  if Dialog.Run /= Gtk_Response_OK then
-                     Destroy (Dialog);
-                     return "";
-                  end if;
+                  Group_Widget := new Dialog_Group_Widget_Record;
+                  Initialize
+                    (Group_Widget,
+                     Parent_View         => Main_View,
+                     Group_Name          => "Parameters",
+                     Allow_Multi_Columns => True);
                end if;
 
-               declare
-                  Val : constant String := Substitute_Params
-                    (To_Str (Alias.Expansion), Values);
-               begin
-                  if Dialog /= null then
-                     Dialog.Destroy;
-                  end if;
+               Gtk_New (Ent);
+               Ent.Set_Activates_Default (True);
 
-                  return Find_And_Replace_Cursor (Val);
+               declare
+                  Label : String := P.Get_Name;
+               begin
+                  To_Mixed (Label);
+                  Group_Widget.Create_Child
+                    (Widget => Ent,
+                     Label  => Label,
+                     Doc    => P.Get_Description);
                end;
+
+               if P.From_Env then
+                  Val := Getenv (To_Str (P.Name));
+                  Ent.Set_Text (Val.all);
+                  Free (Val);
+               else
+                  Ent.Set_Text (To_Str (P.Initial));
+               end if;
+
+               Values.Append ((Param => P, Ent => Ent));
+            end loop;
+
+            if Dialog /= null then
+               Dialog.Show_All;
+
+               --  Give the focus to the first entry, if any
+               if not Values.Is_Empty then
+                  Values.First_Element.Ent.Grab_Focus;
+               end if;
+
+               if Dialog.Run /= Gtk_Response_OK then
+                  Destroy (Dialog);
+                  return "";
+               end if;
             end if;
-         end;
+
+            declare
+               Val                  : constant String := Substitute_Params
+                 (Text                 => To_Str (Alias.Expansion),
+                  Params               => Values,
+                  Params_Substitutions => Params_Substitutions);
+            begin
+               if Dialog /= null then
+                  Dialog.Destroy;
+               end if;
+
+               return Find_And_Replace_Cursor (Val);
+            end;
+         end if;
       end if;
+   end Expand_Alias;
+
+   ------------------
+   -- Expand_Alias --
+   ------------------
+
+   function Expand_Alias
+     (Alias         : Alias_Type;
+      Kernel        : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Cursor        : out Integer;
+      Must_Reindent : out Boolean;
+      Offset_Column : Gint := 0;
+      Dialog_Title  : String := "Alias Parameters Selection")
+      return String
+   is
+      Params_Substitutions : Alias_Parameter_Substitution_Map.Map;
+   begin
+      return Expanded_Text : constant String :=
+        Expand_Alias
+          (Alias                => Alias,
+           Kernel               => Kernel,
+           Cursor               => Cursor,
+           Must_Reindent        => Must_Reindent,
+           Params_Substitutions => Params_Substitutions,
+           Offset_Column        => Offset_Column,
+           Dialog_Title         => Dialog_Title)
+      do
+         Params_Substitutions.Clear;
+      end return;
    end Expand_Alias;
 
    -------------
@@ -880,12 +934,13 @@ package body Aliases_Module is
                end if;
 
                declare
-                  Cursor  : aliased Integer;
-                  Must_Reindent : aliased Boolean;
+                  Cursor        : Integer;
+                  Must_Reindent : Boolean;
                   Replace : constant String := Expand_Alias
-                    (Kernel, Text (First .. Last - 1),
-                     Cursor'Unchecked_Access, Must_Reindent'Unchecked_Access,
-                     0);
+                    (Alias         => Get_Alias (Text (First .. Last - 1)),
+                     Kernel        => Kernel,
+                     Cursor        => Cursor,
+                     Must_Reindent => Must_Reindent);
                   F       : Gint := Gint (First - Text'First);
                   Back    : constant Glong := Glib.Unicode.UTF8_Strlen
                     (Replace (Cursor + 1 .. Replace'Last));
@@ -930,18 +985,19 @@ package body Aliases_Module is
                end loop;
 
                declare
-                  Cursor        : aliased Integer;
-                  Must_Reindent : aliased Boolean;
+                  Cursor        : Integer;
+                  Must_Reindent : Boolean;
                   Column        : constant Gint :=
                                     Get_Line_Offset (First_Iter);
                   Replace       : constant String :=
                                     Expand_Alias
-                                      (Kernel,
-                                       Get_Slice
-                                         (Buffer, First_Iter, Last_Iter),
-                                       Cursor'Unchecked_Access,
-                                       Must_Reindent'Unchecked_Access,
-                                       Column);
+                                      (Alias         =>
+                                         Get_Alias (Get_Slice
+                                         (Buffer, First_Iter, Last_Iter)),
+                                       Kernel        => Kernel,
+                                       Cursor        => Cursor,
+                                       Must_Reindent => Must_Reindent,
+                                       Offset_Column => Column);
                   Back          : constant Glong := Glib.Unicode.UTF8_Strlen
                                     (Replace (Cursor + 1 .. Replace'Last));
 
@@ -1069,10 +1125,10 @@ package body Aliases_Module is
          declare
             Alias_Name : constant SU.Unbounded_String :=
                            To_UStr (Editor.Current_Var.all);
+            Alias      : constant Alias_Type :=
+                           Get_Alias (Editor.Current_Var.all);
             Read_Only  : constant Boolean :=
-                           (Aliases_Module_Id.Aliases.Contains (Alias_Name)
-                            and then Aliases_Module_Id.Aliases
-                              (Alias_Name).Read_Only);
+                           (Alias /= No_Alias and then Alias.Read_Only);
          begin
             --  Don't save anything from the GUI if the selected alias is
             --  read-only.
@@ -1093,9 +1149,10 @@ package body Aliases_Module is
 
                begin
                   Params.Append
-                    ((Name     => To_UStr (Name),
-                      Initial  => To_UStr (Initial),
-                      From_Env => From_Env));
+                    ((Name        => To_UStr (Name),
+                      Description => SU.Null_Unbounded_String,
+                      Initial     => To_UStr (Initial),
+                      From_Env    => From_Env));
                end;
 
                Next (Editor.Variables_Model, Iter);
@@ -1161,7 +1218,7 @@ package body Aliases_Module is
          Ed.Expansion.Set_Editable (Ed.Is_New_Interactive);
       else
          declare
-            Alias : constant Alias_Record := Element (Cursor);
+            Alias : constant Alias_Type := Element (Cursor);
          begin
             Expansion_Buffer.Set_Text (To_Str (Alias.Expansion));
             Ed.Must_Reindent.Set_Active (Alias.Must_Reindent);
@@ -1263,11 +1320,13 @@ package body Aliases_Module is
       if Ed.Current_Var /= null then
          Cursor := Get_Value (Ed, Ed.Current_Var.all);
 
-         Ed.Local_Aliases.Include
-           (To_UStr ('_' & Ed.Current_Var.all),
-            Element (Cursor));
-         Ed.Local_Aliases.Exclude
-           (To_UStr (Ed.Current_Var.all));
+         if Cursor /= No_Element then
+            Ed.Local_Aliases.Include
+              (To_UStr ('_' & Ed.Current_Var.all),
+               Element (Cursor));
+            Ed.Local_Aliases.Exclude
+              (To_UStr (Ed.Current_Var.all));
+         end if;
 
          Free (Ed.Current_Var);
 
@@ -1881,7 +1940,7 @@ package body Aliases_Module is
 
    procedure Update_Contents (Editor : access Alias_Editor_Record'Class) is
       Cursor  : Aliases_Map.Cursor := Aliases_Module_Id.Aliases.First;
-      Value : Alias_Record;
+      Value : Alias_Type;
       It    : Gtk_Tree_Iter;
       use Aliases_Map;
    begin
@@ -1913,7 +1972,7 @@ package body Aliases_Module is
 
    procedure Update_Aliases (Editor : access Alias_Editor_Record'Class) is
       Cursor : Aliases_Map.Cursor := Editor.Local_Aliases.First;
-      Value  : Alias_Record;
+      Value  : Alias_Type;
    begin
 
       while Cursor /= No_Element loop
@@ -2018,12 +2077,14 @@ package body Aliases_Module is
             end if;
 
             declare
-               Cursor : aliased Integer;
-               Must_Reindent : aliased Boolean;
-               Replace : constant String := Expand_Alias
-                 (Kernel, Expansion (First .. Last - 1),
-                  Cursor'Unchecked_Access,
-                  Must_Reindent'Unchecked_Access, 0);
+               Cursor        : Integer;
+               Must_Reindent : Boolean;
+               Replace       : constant String := Expand_Alias
+                 (Alias         => Get_Alias (Expansion (First .. Last - 1)),
+                  Kernel        => Kernel,
+                  Cursor        => Cursor,
+                  Must_Reindent => Must_Reindent,
+                  Offset_Column => 0);
             begin
                if Replace /= "" then
                   return Expansion (Expansion'First .. First - 1) & Replace;
@@ -2083,7 +2144,8 @@ package body Aliases_Module is
       while N /= null loop
          if N.Tag.all = "alias" then
             declare
-               Name : constant String := Get_Attribute (N, "name");
+               Name          : constant String :=
+                                 Get_Attribute (N, "name");
                Must_Reindent : constant Boolean :=
                  Get_Attribute (N, "indent", "false") = "true";
             begin
@@ -2102,10 +2164,14 @@ package body Aliases_Module is
 
                   elsif Child.Tag.all = "param" then
                      Params.Append
-                       ((Name     => To_UStr (Get_Attribute (Child, "name")),
-                         Initial  => To_UStr (Child.Value.all),
-                         From_Env =>
-                           Get_Attribute (Child, "environment") = "true"));
+                       ((Name        =>
+                            To_UStr (Get_Attribute (Child, "name")),
+                         Description =>
+                            To_UStr (Get_Attribute (Child, "description")),
+                         Initial     =>
+                            To_UStr (Child.Value.all),
+                         From_Env    =>
+                            Get_Attribute (Child, "environment") = "true"));
 
                   else
                      Insert (Kernel,
@@ -2127,11 +2193,11 @@ package body Aliases_Module is
                then
                   Aliases_Module_Id.Aliases.Include
                     (To_UStr (Name),
-                     (Name      => To_UStr (Name),
-                      Expansion => To_UStr
+                     (Name          => To_UStr (Name),
+                      Expansion     => To_UStr
                         (if Expand = null then "" else Expand.all),
-                      Params    => Params,
-                      Read_Only => Read_Only,
+                      Params        => Params,
+                      Read_Only     => Read_Only,
                       Must_Reindent => Must_Reindent));
                end if;
             end;
@@ -2189,16 +2255,15 @@ package body Aliases_Module is
    -- Get_Aliases_List --
    ----------------------
 
-   function Get_Aliases_List return Alias_Info_List is
+   function Get_Aliases_List return Alias_List is
       use Aliases_Map;
       Nb_Aliases : constant Integer :=
         Integer (Aliases_Module_Id.Aliases.Length);
       J : Integer := 1;
    begin
-      return Aliases : Alias_Info_List (1 .. Nb_Aliases) do
+      return Aliases : Alias_List (1 .. Nb_Aliases) do
          for Alias of Aliases_Module_Id.Aliases loop
-            Aliases (J) := (Name      => Alias.Name,
-                            Expansion => Alias.Expansion);
+            Aliases (J) := Alias;
             J := J + 1;
          end loop;
       end return;
@@ -2208,14 +2273,13 @@ package body Aliases_Module is
    -- Get_Alias --
    ---------------
 
-   function Get_Alias (Name : SU.Unbounded_String) return Alias_Info is
-      Alias : Alias_Record;
+   function Get_Alias (Name : String) return Alias_Type is
+      U_Name : constant SU.Unbounded_String := To_UStr (Name);
    begin
-      if Aliases_Module_Id.Aliases.Contains (Name) then
-         Alias := Aliases_Module_Id.Aliases.Element (Name);
-         return (Name => Alias.Name, Expansion => Alias.Expansion);
+      if Aliases_Module_Id.Aliases.Contains (U_Name) then
+         return Aliases_Module_Id.Aliases.Element (U_Name);
       else
-         return No_Alias_Info;
+         return No_Alias;
       end if;
    end Get_Alias;
 

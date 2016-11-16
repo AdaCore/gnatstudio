@@ -1005,7 +1005,7 @@ arguments.  This code is useful when you are writing a full python script.
   (which is inserted as is in the command line), a list of strings (which
   are each passed as a separate argument), or a boolean. If it returns
   `False`, then the target is not executed at all.
-  
+
   The cmd itself can include other macros, which will be expanded. Not
   all macros are expanded though. For instance, a `%python()` cannot
   include another `%(python)`, nor any other function-like macros, like
@@ -2463,9 +2463,11 @@ The following child tags are supported:
 * :file:`<param>`
 
   One per alias parameter. It has one mandatory attribute, :file:`name`,
-  the name in :file:`%{name)` in the alias expansion text, and one optional
-  attribute, :file:`environment`, indicating whether or not the default
-  value must be read from the environment variables.
+  the name in :file:`%{name)` in the alias expansion text, and two optional
+  attributes: :file:`environment`, indicating whether or not the default
+  value must be read from the environment variables and :file:`description`,
+  a string that is displayed when asking the parameter's value while
+  expanding the alias.
 
 * :file:`<text>`
 
@@ -3750,7 +3752,7 @@ child tags:
   switches delimiting a section of a command line (such as
   :command:`-bargs -cargs -largs`).  See more details in
   :ref:`Defining_tool_switches`.
-  
+
   List of :file:`<arg>` tags, each containing one extra argument to append
   to the command line when launching targets while this mode is active.
   Optional attribute :file:`section` sets section of given argument.

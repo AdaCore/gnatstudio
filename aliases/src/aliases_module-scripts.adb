@@ -37,18 +37,18 @@ package body Aliases_Module.Scripts is
       Command : String)
    is
       pragma Unreferenced (Command);
-      Alias_Name : constant Unbounded_String := Nth_Arg (Data, 1);
-      Alias : constant Alias_Info := Get_Alias (Alias_Name);
-      Target_Class : constant Class_Type :=
+      Alias_Name     : constant String := Nth_Arg (Data, 1);
+      Alias          : constant Alias_Type := Get_Alias (Alias_Name);
+      Target_Class   : constant Class_Type :=
         Data.Get_Repository.New_Class (Alias_Class_Name);
       Alias_Instance : constant Class_Instance :=
         Data.Get_Script.New_Instance (Target_Class);
    begin
-      if Alias /= No_Alias_Info then
+      if Alias /= No_Alias then
          Set_Property
-           (Alias_Instance, "name", To_String (Alias.Name));
+           (Alias_Instance, "name", Alias.Get_Name);
          Set_Property
-           (Alias_Instance, "expansion", To_String (Alias.Expansion));
+           (Alias_Instance, "expansion", Alias.Get_Expansion);
          Set_Return_Value (Data, Alias_Instance);
       end if;
    end Aliases_Static_Get;

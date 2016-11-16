@@ -24,9 +24,6 @@ package body Completion.Aliases is
    function "=" (A, B : String) return Boolean
                  renames Ada.Strings.Fixed.Equal_Case_Insensitive;
 
-   function To_Str
-     (A : Unbounded_String) return String renames To_String;
-
    overriding function Deep_Copy
      (Proposal : Alias_Completion_Proposal)
       return Completion_Proposal'Class is
@@ -43,7 +40,7 @@ package body Completion.Aliases is
 
    overriding function Get_Documentation
      (Proposal : Alias_Completion_Proposal) return String
-   is ("<b>Alias</b> " & To_Str (Proposal.Alias.Expansion));
+   is ("<b>Alias</b> " & Proposal.Alias.Get_Expansion);
 
    overriding function Get_Custom_Icon_Name
      (Proposal : Alias_Completion_Proposal) return String
@@ -80,14 +77,14 @@ package body Completion.Aliases is
 
       for Alias of Get_Aliases_List loop
          declare
-            Name : constant String := To_Str (Alias.Name);
+            Name : constant String := Alias.Get_Name;
          begin
             if Name'Length >= Word'Length
               and then
                 Name (Name'First .. Name'First + Word'Length - 1) = Word
             then
                Proposal := (Resolver => Resolver,
-                            Name     => new String'(To_Str (Alias.Name)),
+                            Name     => new String'(Alias.Get_Name),
                             Category => Cat_Custom,
                             Alias    => Alias);
                Completion_List_Extensive_Pckg.Extensive_List_Pckg.Append
