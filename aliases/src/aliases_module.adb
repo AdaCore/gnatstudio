@@ -51,6 +51,7 @@ with Gtk.Editable;             use Gtk.Editable;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
+with Gtk.Handlers;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Paned;                use Gtk.Paned;
@@ -196,19 +197,22 @@ package body Aliases_Module is
    Aliases_Module_Id : Aliases_Module_Id_Access;
 
    type Alias_Editor_Record is new GPS_Dialog_Record with record
-      Local_Aliases   : Aliases_Map.Map;
-      Aliases         : Gtk_Tree_View;
-      Aliases_Model   : Gtk_Tree_Store;
-      Variables       : Gtk_Tree_View;
-      Variables_Model : Gtk_Tree_Store;
-      Expansion       : Gtk_Text_View;
-      Alias_Col       : Gtk_Tree_View_Column;
-      Show_Read_Only  : Gtk_Check_Button;
-      Must_Reindent   : Gtk_Check_Button;
-      Is_New_Interactive : Boolean := False;
+      Local_Aliases         : Aliases_Map.Map;
+      Aliases               : Gtk_Tree_View;
+      Aliases_Model         : Gtk_Tree_Store;
+      Variables             : Gtk_Tree_View;
+      Variables_Model       : Gtk_Tree_Store;
+      Expansion             : Gtk_Text_View;
+      Alias_Col             : Gtk_Tree_View_Column;
+      Show_Read_Only        : Gtk_Check_Button;
+      Must_Reindent         : Gtk_Check_Button;
+      Is_New_Interactive    : Boolean := False;
 
-      Current_Var     : String_Access;
-      Highlight_Tag   : Gtk_Text_Tag;
+      Current_Var           : String_Access;
+      Highlight_Tag         : Gtk_Text_Tag;
+
+      Expansion_Inserted_Cb : Gtk.Handlers.Handler_Id;
+      Expansion_Deleted_Cb  : Gtk.Handlers.Handler_Id;
    end record;
    type Alias_Editor is access all Alias_Editor_Record'Class;
 
@@ -1118,11 +1122,12 @@ package body Aliases_Module is
    procedure Alias_Selection_Changed
      (Editor : access Gtk_Widget_Record'Class)
    is
-      Ed          : constant Alias_Editor := Alias_Editor (Editor);
-      Model       : Gtk_Tree_Model;
-      Iter        : Gtk_Tree_Iter;
-      Cursor      : Aliases_Map.Cursor := No_Element;
-      Start, Last : Gtk_Text_Iter;
+      Ed               : constant Alias_Editor := Alias_Editor (Editor);
+      Model            : Gtk_Tree_Model;
+      Iter             : Gtk_Tree_Iter;
+      Expansion_Buffer : constant Gtk_Text_Buffer := Ed.Expansion.Get_Buffer;
+      Cursor           : Aliases_Map.Cursor := No_Element;
+      Start, Last      : Gtk_Text_Iter;
 
    begin
       Save_Current_Var (Ed);
@@ -1140,24 +1145,31 @@ package body Aliases_Module is
          end;
       end if;
 
+      --  Block temporarly the handlers on the expansion text view buffer since
+      --  we retrieve the alias parameters from the element that was found and
+      --  not from the text itself.
+      Gtk.Handlers.Handler_Block (Expansion_Buffer, Ed.Expansion_Inserted_Cb);
+      Gtk.Handlers.Handler_Block (Expansion_Buffer, Ed.Expansion_Deleted_Cb);
+
+      --  Clear the variable tree model before inserting the selected alias
+      --  parameters in it.
+      Ed.Variables_Model.Clear;
+
       if Cursor = No_Element then
-         Set_Text (Get_Buffer (Ed.Expansion), "");
-         Set_Active (Ed.Must_Reindent, False);
-         Set_Editable (Ed.Expansion, Ed.Is_New_Interactive);
-         Clear (Ed.Variables_Model);
+         Expansion_Buffer.Set_Text ("");
+         Ed.Must_Reindent.Set_Active (False);
+         Ed.Expansion.Set_Editable (Ed.Is_New_Interactive);
       else
          declare
             Alias : constant Alias_Record := Element (Cursor);
          begin
-            Set_Text (Get_Buffer (Ed.Expansion), To_Str (Alias.Expansion));
-            Clear (Ed.Variables_Model);
-            Set_Active (Ed.Must_Reindent, Alias.Must_Reindent);
-            Set_Editable (Ed.Expansion, not Alias.Read_Only);
+            Expansion_Buffer.Set_Text (To_Str (Alias.Expansion));
+            Ed.Must_Reindent.Set_Active (Alias.Must_Reindent);
+            Ed.Expansion.Set_Editable (not Alias.Read_Only);
 
             for P of Alias.Params loop
-               Set_Variable
-                 (Ed,
-                  Name     => To_Str (P.Name),
+               Ed.Set_Variable
+                 (Name     => To_Str (P.Name),
                   Default  => To_Str (P.Initial),
                   From_Env => P.From_Env,
                   Editable => not Alias.Read_Only);
@@ -1165,8 +1177,14 @@ package body Aliases_Module is
          end;
       end if;
 
-      Get_Bounds (Get_Buffer (Ed.Expansion), Start, Last);
-      Highlight_Expansion_Range (Ed, Start, Last);
+      Expansion_Buffer.Get_Bounds (Start, Last);
+      Ed.Highlight_Expansion_Range (Start, Last);
+
+      --  Unblock the handlers on the expansion text view buffer
+      Gtk.Handlers.Handler_Unblock
+        (Expansion_Buffer, Ed.Expansion_Inserted_Cb);
+      Gtk.Handlers.Handler_Unblock
+        (Expansion_Buffer, Ed.Expansion_Deleted_Cb);
 
    exception
       when E : others => Trace (Me, E);
@@ -1761,12 +1779,12 @@ package body Aliases_Module is
         (Widget       => Editor.Expansion,
          Menu_Create  => Contextual_Factory'Access);
 
-      Widget_Callback.Object_Connect
+      Editor.Expansion_Inserted_Cb := Widget_Callback.Object_Connect
         (Expansion_Buffer, Gtk.Text_Buffer.Signal_Insert_Text,
          Expansion_Inserted'Access, Editor,
          After => True);
-      Widget_Callback.Object_Connect
-        (Expansion_Buffer, Signal_Delete_Range,
+      Editor.Expansion_Deleted_Cb := Widget_Callback.Object_Connect
+        (Expansion_Buffer, Gtk.Text_Buffer.Signal_Delete_Range,
          Expansion_Deleted'Access, Editor,
          After => True);
 
