@@ -15,7 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with GPS.Kernel;  use GPS.Kernel;
+with GPS.Kernel;        use GPS.Kernel;
 
 package VCS2.Module is
 

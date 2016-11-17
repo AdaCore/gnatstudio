@@ -50,17 +50,19 @@ package body Gtkada.Combo_Tool_Button is
    ---------------
 
    type Menu_Item_Record is new Gtk_Menu_Item_Record with record
-      Icon_Name : Unbounded_String;
-      Label     : Gtk_Label;
-      Data      : User_Data;
+      Icon_Name  : Unbounded_String;
+      Short_Name : Unbounded_String;
+      Label      : Gtk_Label;
+      Data       : User_Data;
    end record;
    type Menu_Item is access all Menu_Item_Record'Class;
 
    procedure Gtk_New
-     (Item      : out Menu_Item;
-      Label     : String;
-      Icon_Name : String;
-      Data      : User_Data);
+     (Item       : out Menu_Item;
+      Label      : String;
+      Icon_Name  : String;
+      Short_Name : String;
+      Data       : User_Data);
 
    procedure Set_Highlight
      (Item  : access Menu_Item_Record'Class;
@@ -155,10 +157,11 @@ package body Gtkada.Combo_Tool_Button is
    -------------
 
    procedure Gtk_New
-     (Item      : out Menu_Item;
-      Label     : String;
-      Icon_Name : String;
-      Data      : User_Data)
+     (Item       : out Menu_Item;
+      Label      : String;
+      Icon_Name  : String;
+      Short_Name : String;
+      Data       : User_Data)
    is
       Icon : Gtk_Image;
       Hbox : Gtk_Hbox;
@@ -168,6 +171,7 @@ package body Gtkada.Combo_Tool_Button is
 
       Item.Data     := Data;
       Item.Icon_Name := To_Unbounded_String (Icon_Name);
+      Item.Short_Name := To_Unbounded_String (Short_Name);
 
       Gtk_New_Hbox (Hbox, Homogeneous => False, Spacing => 5);
       Item.Add (Hbox);
@@ -485,19 +489,21 @@ package body Gtkada.Combo_Tool_Button is
    --------------
 
    procedure Add_Item
-     (Widget   : access Gtkada_Combo_Tool_Button_Record;
-      Item     : String;
-      Icon_Name : String := "";
-      Data     : User_Data := null)
+     (Widget     : access Gtkada_Combo_Tool_Button_Record;
+      Item       : String;
+      Icon_Name  : String := "";
+      Data       : User_Data := null;
+      Short_Name : String := "")
    is
       First  : constant Boolean := Widget.Items.Is_Empty;
       M_Item : Menu_Item;
 
    begin
       if Icon_Name /= "" then
-         Gtk_New (M_Item, Item, Icon_Name, Data);
+         Gtk_New (M_Item, Item, Icon_Name, Short_Name, Data);
       else
-         Gtk_New (M_Item, Item, To_String (Widget.Icon_Name), Data);
+         Gtk_New
+           (M_Item, Item, To_String (Widget.Icon_Name), Short_Name, Data);
       end if;
 
       Widget.Menu.Add (M_Item);
@@ -571,8 +577,10 @@ package body Gtkada.Combo_Tool_Button is
             --  Change the toolbar icon
             if M_Item /= null and then M_Item.Icon_Name /= "" then
                Widget.Set_Icon_Name (To_String (M_Item.Icon_Name));
-            else
+            elsif Widget.Icon_Name /= "" then
                Widget.Set_Icon_Name (To_String (Widget.Icon_Name));
+            else
+               Widget.Set_Label (To_String (M_Item.Short_Name));
             end if;
 
             Widget_Callback.Emit_By_Name (Widget, Signal_Selection_Changed);

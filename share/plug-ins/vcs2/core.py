@@ -93,8 +93,9 @@ class VCS(GPS.VCS2):
         Called after `self` has been constructed (via __init__) and all
         functions exported by GPS are available.
         In particular, this can be used to override how statuses are displayed
-        via `GPS.VCS2._override_status_display`
+        via `GPS.VCS2._override_status_display`.
         """
+        vcs_action.register_all_vcs_actions(self)
 
     @staticmethod
     def discover_working_dir(file):
@@ -256,6 +257,7 @@ class register_vcs:
                 working_dir, *self.args, **self.kwargs),
             default_status=self.default_status,
             discover_working_dir=klass.discover_working_dir)
+        return klass
 
 
 def find_admin_directory(file, basename):
@@ -275,3 +277,79 @@ def find_admin_directory(file, basename):
             return os.path.normpath(os.path.join(d, '..'))
         dir = os.path.dirname(dir)
     return ""
+
+
+class vcs_action:
+    """
+    A decorator to create actions associated with a VCS.
+    These actions only exist while at least one instance of the VCS is in
+    use in the project, and are automatically unregistered otherwise::
+
+        @core.register_vcs(...)
+        class MyVCS(core.VCS):
+
+            @core.vcs_action(...)
+            def _mymethod(self):
+                pass
+
+    :param func: the function to execute for this action. It receives the
+       instance of klass as a parameter. This should thus in general be
+       a method of the class.
+    :param str name: name of the action.
+    :param klass: The action is only enabled when the selected VCS is
+       an instance of klass.
+    :param str toolbar: if set, this action will be added to the local
+       toolbar of the corresponding view.
+    :param str toolbar_section: what part of the toolbar this should be
+       added to.
+    """
+
+    _actions = set()  # all registered actions
+
+    def __init__(self, name, icon='', toolbar='Commits', toolbar_section=''):
+        self.name = name
+        self.icon = icon
+        self.toolbar = toolbar
+        self.toolbar_section = toolbar_section
+
+    def __call__(self, func):
+        func._vcs2_is_action = self  # Mark for later
+        return func
+
+    @staticmethod
+    def register_all_vcs_actions(inst):
+        """
+        Called internally by GPS.
+        This makes sure that all actions registered for a VCS class are active
+        only when a VCS is in use for the current project.
+
+        :param VCS inst: an instance of the VCS class
+        """
+        for name, method in inst.__class__.__dict__.iteritems():
+            if hasattr(method, "_vcs2_is_action"):
+                a = method._vcs2_is_action
+
+                if a.name not in vcs_action._actions:
+                    vcs_action._actions.add(a.name)
+
+                    class __Proxy:
+                        def __init__(self, method, inst):
+                            self.method = method
+                            self.vcs = inst
+
+                        def filter(self, context):
+                            return GPS.VCS2.active_vcs() == self.vcs
+
+                        def __call__(self):
+                            self.method(GPS.VCS2.active_vcs())
+
+                    p = __Proxy(method, inst)
+                    gps_utils.make_interactive(
+                        p, name=a.name, category='VCS2',
+                        icon=a.icon, filter=p.filter)
+
+                    if a.toolbar:
+                        act = GPS.Action(a.name)
+                        act.button(toolbar=a.toolbar,
+                                   section=a.toolbar_section,
+                                   hide=True)

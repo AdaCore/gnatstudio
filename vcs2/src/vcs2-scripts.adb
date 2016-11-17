@@ -57,7 +57,7 @@ package body VCS2.Scripts is
      (Self    : not null access Script_Engine);
    overriding function Default_File_Status
      (Self    : not null access Script_Engine)
-     return VCS_File_Status is (Self.Factory.Default_Status);
+      return VCS_File_Status is (Self.Factory.Default_Status);
 
    procedure Static_VCS_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -344,6 +344,29 @@ package body VCS2.Scripts is
             Data.Set_Return_Value
               (Create_VCS_Instance (Get_Script (Data), F));
          end;
+
+      elsif Command = "active_vcs" then
+         declare
+            V : constant VCS_Engine_Access := Active_VCS (Kernel);
+         begin
+            if V /= null then
+               Data.Set_Return_Value
+                 (Create_VCS_Instance (Get_Script (Data), V));
+            end if;
+         end;
+
+      elsif Command = "vcs_in_use" then
+         declare
+            procedure On_VCS (VCS : not null access VCS_Engine'Class);
+            procedure On_VCS (VCS : not null access VCS_Engine'Class) is
+            begin
+               Data.Set_Return_Value
+                 (Create_VCS_Instance (Get_Script (Data), VCS));
+            end On_VCS;
+         begin
+            Data.Set_Return_Value_As_List;
+            For_Each_VCS (Kernel, On_VCS'Access);
+         end;
       end if;
    end Static_VCS_Handler;
 
@@ -368,6 +391,16 @@ package body VCS2.Scripts is
       Kernel.Scripts.Register_Command
         ("get",
          Params        => (1 => Param ("project")),
+         Static_Method => True,
+         Class         => VCS,
+         Handler       => Static_VCS_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("vcs_in_use",
+         Static_Method => True,
+         Class         => VCS,
+         Handler       => Static_VCS_Handler'Access);
+      Kernel.Scripts.Register_Command
+        ("active_vcs",
          Static_Method => True,
          Class         => VCS,
          Handler       => Static_VCS_Handler'Access);

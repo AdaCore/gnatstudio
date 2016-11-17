@@ -52,6 +52,8 @@ with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.Widget;                  use Gtk.Widget;
+with Gtkada.Handlers;             use Gtkada.Handlers;
+with Gtkada.Combo_Tool_Button;    use Gtkada.Combo_Tool_Button;
 with Gtkada.MDI;                  use Gtkada.MDI;
 with Gtkada.Tree_View;            use Gtkada.Tree_View;
 with GUI_Utils;                   use GUI_Utils;
@@ -70,9 +72,10 @@ package body VCS2.Commits is
    Column_Foreground    : constant := 6;
    subtype All_Columns is Gint range Column_File .. Column_Foreground;
 
-   Color_Untracked : constant Gdk_RGBA := (0.6, 0.6, 0.6, 1.0);
-   Color_Normal    : constant Gdk_RGBA := (0.0, 0.0, 0.0, 1.0);
-   Color_Category  : constant Gdk_RGBA := (0.0, 0.0, 0.0, 1.0);
+   Color_Untracked    : constant Gdk_RGBA := (0.6, 0.6, 0.6, 1.0);
+   Color_Normal       : constant Gdk_RGBA := (0.0, 0.0, 0.0, 1.0);
+   Color_Category     : constant Gdk_RGBA := (0.0, 0.0, 0.0, 1.0);
+   Color_Inactive_VCS : constant Gdk_RGBA := (0.8, 0.8, 0.8, 1.0);
    --  Colors for text
 
    Show_Untracked_Files   : Boolean_Preference;
@@ -106,6 +109,9 @@ package body VCS2.Commits is
       Tree        : Commit_Tree_View;
       Text_Render : Gtk_Cell_Renderer_Text;
 
+      VCS_Count   : Natural := 0;
+      --  Number of VCS systems in the project
+
       Config      : Commit_View_Config;
       Commit      : Gtk_Text_View;
    end record;
@@ -128,6 +134,7 @@ package body VCS2.Commits is
       VCS          : not null access VCS_Engine'Class;
       File         : Virtual_File;
       Props        : VCS_File_Properties;
+      From_Active_VCS : Boolean;
       Parent       : Gtk_Tree_Iter := Null_Iter);
    function Create_Category_Node
      (Self         : not null access Commit_View_Record'Class;
@@ -197,6 +204,21 @@ package body VCS2.Commits is
       Context : Interactive_Command_Context) return Command_Return_Type
      is (Commands.Success);
 
+   type Kernel_Combo_Tool_Record is new Gtkada_Combo_Tool_Button_Record with
+      record
+         Kernel : Kernel_Handle;
+      end record;
+   type Kernel_Combo_Tool is access all Kernel_Combo_Tool_Record'Class;
+   procedure On_Active_VCS_Selected (Widget : access Gtk_Widget_Record'Class);
+   --  Called when a new active VCS is selected by the user in the toolbar.
+   --  This is *not* the same as the VCS_Active_Changed_Hook, which should be
+   --  monitored to react to actual changes
+
+   type On_Active_VCS_Changed is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Active_VCS_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class);
+
    -------------------
    -- Build_Context --
    -------------------
@@ -256,6 +278,30 @@ package body VCS2.Commits is
       return Gtk_Widget (Label);
    end Create_Contents;
 
+   ----------------------------
+   -- On_Active_VCS_Selected --
+   ----------------------------
+
+   procedure On_Active_VCS_Selected
+     (Widget : access Gtk_Widget_Record'Class)
+   is
+      Combo    : constant Kernel_Combo_Tool := Kernel_Combo_Tool (Widget);
+      Selected : constant String := Combo.Get_Selected_Item;
+
+      procedure On_VCS (VCS : not null access VCS_Engine'Class);
+      procedure On_VCS (VCS : not null access VCS_Engine'Class) is
+         N : constant String :=
+           VCS.Name & " (" & VCS.Working_Directory.Display_Full_Name & ")";
+      begin
+         if N = Selected then
+            Set_Active_VCS (Combo.Kernel, VCS);
+         end if;
+      end On_VCS;
+
+   begin
+      For_Each_VCS (Combo.Kernel, On_VCS'Access);
+   end On_Active_VCS_Selected;
+
    --------------------
    -- Create_Toolbar --
    --------------------
@@ -264,9 +310,34 @@ package body VCS2.Commits is
      (View    : not null access Commit_View_Record;
       Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
    is
-      pragma Unreferenced (View, Toolbar);
+      Combo : Kernel_Combo_Tool;
+
+      procedure On_VCS (VCS : not null access VCS_Engine'Class);
+      procedure On_VCS (VCS : not null access VCS_Engine'Class) is
+         N : constant String :=
+           VCS.Name & " (" & VCS.Working_Directory.Display_Full_Name & ")";
+      begin
+         Combo.Add_Item (N, Short_Name => VCS.Name);
+         if VCS = Active_VCS (View.Kernel) then
+            Combo.Select_Item (N);
+         end if;
+      end On_VCS;
+
    begin
-      null;
+      if View.VCS_Count > 1 then
+         Combo := new Kernel_Combo_Tool_Record;
+         Combo.Kernel := View.Kernel;
+         Initialize (Combo, Icon_Name => "");
+
+         Combo.Set_Tooltip_Text (-"Select the repository");
+         Toolbar.Insert (Combo, 0);
+
+         For_Each_VCS (View.Kernel, On_VCS'Access);
+
+         Widget_Callback.Connect
+           (Combo, Gtkada.Combo_Tool_Button.Signal_Selection_Changed,
+            On_Active_VCS_Selected'Access);
+      end if;
    end Create_Toolbar;
 
    -----------------
@@ -295,7 +366,8 @@ package body VCS2.Commits is
       VCS          : not null access VCS_Engine'Class;
       File         : Virtual_File;
       Props        : VCS_File_Properties;
-      Parent       : Gtk_Tree_Iter := Null_Iter)
+      From_Active_VCS : Boolean;
+      Parent          : Gtk_Tree_Iter := Null_Iter)
    is
       Iter     : Gtk_Tree_Iter;
       V        : Glib.Values.GValue_Array (All_Columns);
@@ -321,12 +393,18 @@ package body VCS2.Commits is
       end if;
 
       Init_Set_String (V (Column_Icon), To_String (Display.Icon_Name));
-      Init_Set_Boolean (V (Column_Check_Visible), True);
+      Init_Set_Boolean
+        (V (Column_Check_Visible),
+         From_Active_VCS or Untracked);
 
       Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
-      Gdk.RGBA.Set_Value
-        (V (Column_Foreground),
-         (if Untracked then Color_Untracked else Color_Normal));
+      if not From_Active_VCS then
+         Gdk.RGBA.Set_Value (V (Column_Foreground), Color_Inactive_VCS);
+      elsif Untracked and then not Self.Config.Group_By_Category then
+         Gdk.RGBA.Set_Value (V (Column_Foreground), Color_Untracked);
+      else
+         Gdk.RGBA.Set_Value (V (Column_Foreground), Color_Normal);
+      end if;
 
       Self.Tree.Model.Set (Iter, V);
    end Create_Node;
@@ -401,6 +479,21 @@ package body VCS2.Commits is
            (Kernel, On_Complete => new On_All_Files_Available_In_Cache'
               (Task_Completed_Callback with Kernel => Kernel));
       end if;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Active_VCS_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
+   begin
+      Ensure_Status_For_All_Files_In_All_Engines
+        (Kernel, On_Complete => new On_All_Files_Available_In_Cache'
+           (Task_Completed_Callback with Kernel => Kernel));
    end Execute;
 
    ----------------
@@ -508,6 +601,8 @@ package body VCS2.Commits is
       P.View := Commit_View (Self);
       Preferences_Changed_Hook.Add (P, Watch => Self);
       P.Execute (Self.Kernel, null);   --  also calls Refresh
+
+      Vcs_Active_Changed_Hook.Add (new On_Active_VCS_Changed, Watch => Self);
    end On_Create;
 
    -------------
@@ -523,6 +618,7 @@ package body VCS2.Commits is
       --  fetching in the background
 
       Local_VCS : access VCS_Engine'Class;
+      Is_Active : Boolean;
 
       Category_Staged    : Gtk_Tree_Path := Null_Gtk_Tree_Path;
       Category_Modified  : Gtk_Tree_Path := Null_Gtk_Tree_Path;
@@ -547,12 +643,14 @@ package body VCS2.Commits is
          if Is_Staged then
             View.Create_Node
               (Local_VCS, File, Props,
+               From_Active_VCS => Is_Active,
                Parent => View.Tree.Model.Get_Iter (Category_Staged));
          end if;
 
          if Is_Modified then
             View.Create_Node
               (Local_VCS, File, Props,
+               From_Active_VCS => Is_Active,
                Parent => View.Tree.Model.Get_Iter (Category_Modified));
          end if;
 
@@ -561,6 +659,7 @@ package body VCS2.Commits is
          then
             View.Create_Node
               (Local_VCS, File, Props,
+               From_Active_VCS => Is_Active,
                Parent => View.Tree.Model.Get_Iter (Category_Untracked));
          end if;
       end On_File;
@@ -569,7 +668,9 @@ package body VCS2.Commits is
       procedure On_VCS (VCS : not null access VCS_Engine'Class) is
       begin
          Trace (Me, "Got all files in cache for " & VCS.Name);
+         View.VCS_Count := View.VCS_Count + 1;
          Local_VCS := VCS;
+         Is_Active := VCS = Active_VCS (Self.Kernel);
          VCS.For_Each_File_In_Cache (On_File'Access);
       end On_VCS;
 
@@ -578,6 +679,9 @@ package body VCS2.Commits is
    begin
       --  When all engines have refreshed, do a global refresh
       if VCS = null and then View /= null then
+
+         View.VCS_Count := 0;
+
          declare
             Dummy : constant Expansion.Detached_Model :=
               Expansion.Detach_Model_From_View (View.Tree);
@@ -609,6 +713,8 @@ package body VCS2.Commits is
          if View.Config.Group_By_Category then
             View.Tree.Expand_All;
          end if;
+
+         Commit_Views.Reset_Toolbar (View);
       end if;
    end Execute;
 
@@ -643,14 +749,6 @@ package body VCS2.Commits is
          Command     => new Commit,
          Category    => "VCS2",
          Icon_Name   => "github-commit-symbolic");
-
-      Register_Action
-        (Kernel, "vcs commit and push staged files",
-         Description =>
-           -"Commit all staged files, then push to remote repository",
-         Command     => new Commit,
-         Category    => "VCS2",
-         Icon_Name   => "github-repo-push-symbolic");
 
       Register_Action
         (Kernel, "vcs stage file",

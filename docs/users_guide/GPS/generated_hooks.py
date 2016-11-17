@@ -940,6 +940,15 @@ class Predefined_Hooks:
       :param str name:
         """
 
+    # vcs_active_changed = 'vcs_active_changed'
+    def vcs_active_changed(name):
+        """
+      Emitted when the active VCS has changed. This is the VCS on which operations
+      like commit and log happen.
+
+      :param str name:
+        """
+
     # vcs_file_status_changed = 'vcs_file_status_changed'
     def vcs_file_status_changed(VCS,file,props):
         """

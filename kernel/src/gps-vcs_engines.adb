@@ -113,6 +113,10 @@ package body GPS.VCS_Engines is
       All_Engines   : Engine_Lists.List;
       VCS_Engines   : Project_To_Engine.Map;
       No_VCS_Engine : VCS_Engine_Access := new Dummy_VCS_Engine;
+
+      Active_VCS    : VCS_Engine_Access := null;
+      --  See the function Active_VCS
+
    end record;
    Global_Data : Kernel_Data;
    --  Data that will be stored in the kernel, once VCS2 is integrated.
@@ -467,6 +471,12 @@ package body GPS.VCS_Engines is
          C2 : Engine_Lists.Cursor;
          E  : VCS_Engine_Access;
       begin
+         if Global_Data.Active_VCS /= null
+           and then not Global_Data.Active_VCS.In_Use
+         then
+            Global_Data.Active_VCS := null;
+         end if;
+
          while Engine_Lists.Has_Element (C) loop
             C2 := Engine_Lists.Next (C);
             E := Engine_Lists.Element (C);
@@ -479,6 +489,12 @@ package body GPS.VCS_Engines is
 
             C := C2;
          end loop;
+
+         if Global_Data.Active_VCS = null
+           and then not Global_Data.All_Engines.Is_Empty
+         then
+            Set_Active_VCS (Kernel, Global_Data.All_Engines.First_Element);
+         end if;
       end;
    end Compute_VCS_Engines;
 
@@ -1043,5 +1059,33 @@ package body GPS.VCS_Engines is
    begin
       Self.Working_Dir := Working_Dir;
    end Set_Working_Directory;
+
+   ----------------
+   -- Active_VCS --
+   ----------------
+
+   function Active_VCS
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return GPS.VCS_Engines.VCS_Engine_Access
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      return Global_Data.Active_VCS;
+   end Active_VCS;
+
+   --------------------
+   -- Set_Active_VCS --
+   --------------------
+
+   procedure Set_Active_VCS
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      VCS    : not null access VCS_Engine'Class)
+   is
+   begin
+      if VCS /= Global_Data.Active_VCS then
+         Global_Data.Active_VCS := VCS_Engine_Access (VCS);
+         Vcs_Active_Changed_Hook.Run (Kernel);
+      end if;
+   end Set_Active_VCS;
 
 end GPS.VCS_Engines;

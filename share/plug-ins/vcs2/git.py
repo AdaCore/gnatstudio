@@ -9,6 +9,7 @@ from workflows.promises import ProcessWrapper, join, wait_idle
 class Git(core.VCS):
 
     def setup(self):
+        super(Git, self).setup()
         self._override_status_display(
             GPS.VCS2.Status.STAGED_MODIFIED,
             'modified (staged)', 'gps-emblem-vcs-modified')
@@ -16,6 +17,14 @@ class Git(core.VCS):
     @staticmethod
     def discover_working_dir(file):
         return core.find_admin_directory(file, '.git')
+
+    @core.vcs_action(icon='github-repo-push-symbolic',
+                     name='git commit and push staged files',
+                     toolbar='Commits', toolbar_section='commits')
+    def _commit_and_push(self):
+        """
+        Commit all staged files, and then push to the remote repository
+        """
 
     def __git_ls_tree(self):
         """

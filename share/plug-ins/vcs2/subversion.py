@@ -6,7 +6,7 @@ from workflows.promises import ProcessWrapper
 
 
 @core.register_vcs(default_status=GPS.VCS2.Status.UNTRACKED)
-class Subversion(core.File_Based_VCS):
+class SVN(core.File_Based_VCS):
 
     __re_status = re.compile(
         '^(?P<status>....... .)\s+(?P<rev>\S+)\s+' +

@@ -17,8 +17,8 @@
 
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
-with GPS.VCS_Engines;         use GPS.VCS_Engines;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
+with GPS.VCS_Engines;         use GPS.VCS_Engines;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with VCS2.Scripts;            use VCS2.Scripts;
 with VCS2.Commits;

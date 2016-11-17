@@ -600,7 +600,6 @@
    <toolbar id='Commits'>
       <separator id='commits'/>
       <button action='vcs commit staged files'/>
-      <button action='vcs commit and push staged files'/>
       <separator id='stages'/>
       <button action='vcs stage file'/>
       <button action='vcs unstage file'/>

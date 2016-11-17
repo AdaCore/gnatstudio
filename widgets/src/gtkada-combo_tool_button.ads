@@ -38,7 +38,8 @@ package Gtkada.Combo_Tool_Button is
    procedure Initialize
      (Self      : access Gtkada_Combo_Tool_Button_Record'Class;
       Icon_Name : String);
-   --  Create or initialize a button from a stock icon (see gtk-stock.ads)
+   --  Create or initialize a button from a stock icon (see gtk-stock.ads).
+   --  Leave Icon_Name to the empty string to display text instead.
 
    type User_Data_Record is abstract tagged null record;
    type User_Data is access all User_Data_Record'Class;
@@ -46,11 +47,16 @@ package Gtkada.Combo_Tool_Button is
    --  retrieved on the selected item.
 
    procedure Add_Item
-     (Widget    : access Gtkada_Combo_Tool_Button_Record;
-      Item      : String;
-      Icon_Name : String := "";
-      Data      : User_Data := null);
-   --  Add an item in the button items list
+     (Widget     : access Gtkada_Combo_Tool_Button_Record;
+      Item       : String;
+      Icon_Name  : String := "";
+      Data       : User_Data := null;
+      Short_Name : String := "");
+   --  Add an item in the button items list.
+   --
+   --  Short_Name will be displayed in the button when no icon is defined for
+   --  both the item and the button itself. It defaults to Item, but should be
+   --  short.
 
    procedure Select_Item
      (Widget : access Gtkada_Combo_Tool_Button_Record;

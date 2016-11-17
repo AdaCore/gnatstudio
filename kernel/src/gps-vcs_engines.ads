@@ -323,6 +323,15 @@ package GPS.VCS_Engines is
    --  This function can be called multiple times with a True parameter, and
    --  will then need to be called an equal number of times with False.
 
+   procedure Set_Active_VCS
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
+      VCS    : not null access VCS_Engine'Class);
+   function Active_VCS
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return VCS_Engine_Access;
+   --  Return the active VCS (or null)
+   --  This is the VCS to which operations like "commit", "log",... apply
+
 private
    type VCS_Engine_Factory is abstract tagged record
       Name : Unbounded_String;
