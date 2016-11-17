@@ -81,6 +81,7 @@ package body VCS2.Commits is
    Show_Untracked_Files   : Boolean_Preference;
    Relative_Names         : Boolean_Preference;
    Group_By_Category      : Boolean_Preference;
+   Hide_Other_VCS         : Boolean_Preference;
 
    type Commit_View_Config is record
       Hidden_Files_Pattern : Unbounded_String;
@@ -89,6 +90,7 @@ package body VCS2.Commits is
       Show_Untracked_Files : Boolean := False;
       Relative_Names       : Boolean := False;
       Group_By_Category    : Boolean := False;
+      Hide_Other_VCS       : Boolean := False;
    end record;
 
    subtype Commit_Tree_Record is Tree_View_Record;
@@ -329,7 +331,7 @@ package body VCS2.Commits is
          Combo.Kernel := View.Kernel;
          Initialize (Combo, Icon_Name => "");
 
-         Combo.Set_Tooltip_Text (-"Select the repository");
+         Combo.Set_Tooltip_Text (-"Right-click to select the repository");
          Toolbar.Insert (Combo, 0);
 
          For_Each_VCS (View.Kernel, On_VCS'Access);
@@ -355,6 +357,7 @@ package body VCS2.Commits is
       Append_Menu (Menu, K, Show_Untracked_Files);
       Append_Menu (Menu, K, Relative_Names);
       Append_Menu (Menu, K, Group_By_Category);
+      Append_Menu (Menu, K, Hide_Other_VCS);
    end Create_Menu;
 
    -----------------
@@ -471,7 +474,8 @@ package body VCS2.Commits is
          Show_Untracked_Files => Show_Untracked_Files.Get_Pref,
          Relative_Names       => Relative_Names.Get_Pref,
          Group_By_Category    => Group_By_Category.Get_Pref,
-         Show_Hidden_Files    => Show_Hidden_Files.Get_Pref);
+         Show_Hidden_Files    => Show_Hidden_Files.Get_Pref,
+         Hide_Other_VCS       => Hide_Other_VCS.Get_Pref);
 
       if Config /= Self.View.Config then
          Self.View.Config := Config;
@@ -626,17 +630,22 @@ package body VCS2.Commits is
 
       procedure On_File (File : Virtual_File; Props : VCS_File_Properties);
       procedure On_File (File : Virtual_File; Props : VCS_File_Properties) is
+         Show         : constant Boolean :=
+           Is_Active or else not View.Config.Hide_Other_VCS;
          Is_Staged    : Boolean;
          Is_Modified  : Boolean;
          Is_Untracked : Boolean;
       begin
-         Is_Staged := (Props.Status and Mask_Staged) /= 0;
+         Is_Staged := (Props.Status and Mask_Staged) /= 0
+           and then Show;
          Is_Modified := (Props.Status and Mask_Modified_Unstaged) /= 0
-           and then (not Is_Staged or else View.Config.Group_By_Category);
+           and then (not Is_Staged or else View.Config.Group_By_Category)
+           and then Show;
          Is_Untracked := View.Config.Show_Untracked_Files
            and then (Props.Status and Mask_Untracked) /= 0
            and then (not (Is_Staged or Is_Modified)
-                    or else View.Config.Group_By_Category);
+                    or else View.Config.Group_By_Category)
+           and then not Self.Kernel.Is_Hidden (File);
 
          --  A file could be in multiple categories
 
@@ -654,9 +663,7 @@ package body VCS2.Commits is
                Parent => View.Tree.Model.Get_Iter (Category_Modified));
          end if;
 
-         if Is_Untracked
-           and then not Self.Kernel.Is_Hidden (File)
-         then
+         if Is_Untracked then
             View.Create_Node
               (Local_VCS, File, Props,
                From_Active_VCS => Is_Active,
@@ -742,6 +749,11 @@ package body VCS2.Commits is
         ("commit-view-group-by-category",
          Default  => False,
          Label    => -"Group by category (staged, modified, untracked)");
+
+      Hide_Other_VCS := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("commit-view-hide-other-vcs",
+         Default  => False,
+         Label    => -"Hide files from VCS other than the active one");
 
       Register_Action
         (Kernel, "vcs commit staged files",
