@@ -103,7 +103,7 @@ package body Generic_Views is
       Event : Gdk_Event_Button);
    --  Creates the popup menu to configure the filter settings.
 
-   procedure On_Destroy_Filter (Self : access Gtk_Widget_Record'Class);
+   procedure On_Destroy_Filter (Self : access GObject_Record'Class);
    --  Called when a filter panel is destroyed
 
    function Build_Filter_Pattern
@@ -163,19 +163,21 @@ package body Generic_Views is
    -- On_Destroy_Filter --
    -----------------------
 
-   procedure On_Destroy_Filter (Self : access Gtk_Widget_Record'Class) is
-      Filter : constant Filter_Panel := Filter_Panel (Self);
+   procedure On_Destroy_Filter (Self : access GObject_Record'Class) is
+      View   : constant Abstract_View_Access := Abstract_View_Access (Self);
    begin
-      if Filter.Pattern_Config_Menu /= null then
-         Unref (Filter.Pattern_Config_Menu);
+      if View.Filter.Pattern_Config_Menu /= null then
+         Unref (View.Filter.Pattern_Config_Menu);
       end if;
 
-      Free (Filter.History_Prefix);
+      Free (View.Filter.History_Prefix);
 
-      if Filter.Timeout /= Glib.Main.No_Source_Id then
-         Glib.Main.Remove (Filter.Timeout);
-         Filter.Timeout := Glib.Main.No_Source_Id;
+      if View.Filter.Timeout /= Glib.Main.No_Source_Id then
+         Glib.Main.Remove (View.Filter.Timeout);
+         View.Filter.Timeout := Glib.Main.No_Source_Id;
       end if;
+
+      View.Filter := null;
    end On_Destroy_Filter;
 
    ----------------------------
@@ -627,7 +629,7 @@ package body Generic_Views is
       F.Set_Homogeneous (False);
       Self.Append_Toolbar (Toolbar, F, Right_Align => True);
 
-      Self.Filter.On_Destroy (On_Destroy_Filter'Access);
+      Self.Filter.On_Destroy (On_Destroy_Filter'Access, Self);
 
       Gtk_New (F.Pattern, Placeholder => Placeholder);
       Set_Font_And_Colors (F.Pattern, Fixed_Font => True);

@@ -21,7 +21,7 @@ with Default_Preferences;         use Default_Preferences;
 with Gdk.Event;                   use Gdk.Event;
 with Gdk.Rectangle;               use Gdk.Rectangle;
 with Gdk.RGBA;                    use Gdk.RGBA;
-with Generic_Views;
+with Generic_Views;               use Generic_Views;
 with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
 with Glib;                        use Glib;
@@ -35,6 +35,7 @@ with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Search;                  use GPS.Search;
 with GPS.VCS;                     use GPS.VCS;
 with GPS.VCS_Engines;             use GPS.VCS_Engines;
 with Gtkada.Multi_Paned;          use Gtkada.Multi_Paned;
@@ -93,8 +94,13 @@ package body VCS2.Commits is
       Hide_Other_VCS       : Boolean := False;
    end record;
 
-   subtype Commit_Tree_Record is Tree_View_Record;
-   subtype Commit_Tree_View is Tree_View;
+   type Commit_Tree_Record is new Tree_View_Record with record
+      User_Filter : GPS.Search.Search_Pattern_Access;
+   end record;
+   type Commit_Tree_View is access all Commit_Tree_Record'Class;
+   overriding function Is_Visible
+     (Self : not null access Commit_Tree_Record;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean;
 
    function Get_File_From_Node
      (Self : not null access Commit_Tree_Record'Class;
@@ -126,6 +132,9 @@ package body VCS2.Commits is
    overriding procedure On_Create
      (Self    : not null access Commit_View_Record;
       Child   : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class);
+   overriding procedure Filter_Changed
+     (Self    : not null access Commit_View_Record;
+      Pattern : in out GPS.Search.Search_Pattern_Access);
 
    function Initialize
      (Self : access Commit_View_Record'Class) return Gtk_Widget;
@@ -340,6 +349,14 @@ package body VCS2.Commits is
            (Combo, Gtkada.Combo_Tool_Button.Signal_Selection_Changed,
             On_Active_VCS_Selected'Access);
       end if;
+
+      View.Build_Filter
+        (Toolbar     => Toolbar,
+         Hist_Prefix => "commits",
+         Tooltip     => -"Filter the contents of the commits view",
+         Placeholder => -"filter",
+         Options     =>
+           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy);
    end Create_Toolbar;
 
    -----------------
@@ -545,14 +562,17 @@ package body VCS2.Commits is
          New_Child   => Scrolled,
          Orientation => Orientation_Vertical);
 
-      Gtk_New (Self.Tree,
-               (Column_File          => Get_Virtual_File_Type,
-                Column_Name          => GType_String,
-                Column_Icon          => GType_String,
-                Column_Inconsistent  => GType_Boolean,
-                Column_Foreground    => Gdk.RGBA.Get_Type,
-                Column_Check_Visible => GType_Boolean,
-                Column_Staged        => GType_Boolean));
+      Self.Tree := new Commit_Tree_Record;
+      Initialize (Self.Tree,
+                  (Column_File          => Get_Virtual_File_Type,
+                   Column_Name          => GType_String,
+                   Column_Icon          => GType_String,
+                   Column_Inconsistent  => GType_Boolean,
+                   Column_Foreground    => Gdk.RGBA.Get_Type,
+                   Column_Check_Visible => GType_Boolean,
+                   Column_Staged        => GType_Boolean),
+                  Filtered         => True,
+                  Set_Visible_Func => True);
       Self.Tree.Set_Headers_Visible (False);
       Scrolled.Add (Self.Tree);
 
@@ -608,6 +628,40 @@ package body VCS2.Commits is
 
       Vcs_Active_Changed_Hook.Add (new On_Active_VCS_Changed, Watch => Self);
    end On_Create;
+
+   --------------------
+   -- Filter_Changed --
+   --------------------
+
+   overriding procedure Filter_Changed
+     (Self    : not null access Commit_View_Record;
+      Pattern : in out GPS.Search.Search_Pattern_Access)
+   is
+   begin
+      GPS.Search.Free (Self.Tree.User_Filter);
+      Self.Tree.User_Filter := Pattern;
+      Self.Tree.Refilter;
+   end Filter_Changed;
+
+   ----------------
+   -- Is_Visible --
+   ----------------
+
+   overriding function Is_Visible
+     (Self : not null access Commit_Tree_Record;
+      Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean
+   is
+      F : constant Virtual_File := Get_File_From_Node (Self, Iter);
+   begin
+      if F = No_File then
+         return True;   --  categories
+      elsif Self.User_Filter = null then
+         return True;   --  no filter
+      else
+         return Self.User_Filter.Start
+           (F.Display_Base_Name) /= GPS.Search.No_Match;
+      end if;
+   end Is_Visible;
 
    -------------
    -- Execute --
