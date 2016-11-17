@@ -501,10 +501,12 @@ package body Gtkada.Combo_Tool_Button is
       end if;
 
       Widget.Menu.Add (M_Item);
-      Items_Callback.Connect
-        (M_Item, Gtk.Menu_Item.Signal_Activate,
-         On_Menu_Item_Activated'Access,
-         Gtkada_Combo_Tool_Button (Widget));
+      Add_Watch
+        (Items_Callback.Connect
+           (M_Item, Gtk.Menu_Item.Signal_Activate,
+            Items_Callback.To_Marshaller (On_Menu_Item_Activated'Access),
+            Gtkada_Combo_Tool_Button (Widget)),
+         Widget);
 
       Widget.Items.Append (To_Unbounded_String (Item));
 
