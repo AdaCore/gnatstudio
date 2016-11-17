@@ -381,7 +381,8 @@ class Action(object):
         """
         pass  # implemented in Ada
 
-    def button(self, toolbar='main', section='', group='', label='', icon=''):
+    def button(self, toolbar='main', section='', group='', label='', icon='',
+               hide=False):
         """
         Add a new button in some toolbars.
         When this button is clicked, it executes the action from self.
@@ -409,6 +410,10 @@ class Action(object):
 
         :param string icon: override the default icon registered for the
            action.
+
+        :param bool hide: if the action is disabled or not applicable to the
+           current context, the button will be hidden instead of simply be
+           disabled.
 
         .. code-block:: python
 

@@ -1462,6 +1462,7 @@ package body Custom_Module is
             Group_Name       : constant String := Data.Nth_Arg (4, "");
             Label_Name       : constant String := Data.Nth_Arg (5, "");
             Icon_Name        : constant String := Data.Nth_Arg (6, "");
+            Hide             : constant Boolean := Data.Nth_Arg (7, False);
             Actual_Icon_Name : constant String :=
                                  (if Icon_Name /= "" then Icon_Name
                                   else
@@ -1476,6 +1477,7 @@ package body Custom_Module is
                Section   => Section_Name,
                Group     => Group_Name,
                Label     => Label_Name,
+               Hide      => Hide,
                Icon_Name => Actual_Icon_Name);
          end;
       elsif Command = "contextual" then
@@ -1610,7 +1612,8 @@ package body Custom_Module is
                      2 => Param ("section", Optional => True),
                      3 => Param ("group",   Optional => True),
                      4 => Param ("label",   Optional => True),
-                     5 => Param ("icon",    Optional => True)),
+                     5 => Param ("icon",    Optional => True),
+                     6 => Param ("hide",    Optional => True)),
          Class   => Action_Class,
          Handler => Action_Handler'Access);
 
