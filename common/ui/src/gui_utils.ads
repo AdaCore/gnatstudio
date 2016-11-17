@@ -245,6 +245,17 @@ package GUI_Utils is
    --  is empty. As soon as the user gives the keyboard focus, the placeholder
    --  is removed to let the user type new text.
 
+   procedure Show_Placeholder_If_Needed
+     (View    : not null access Gtk.Text_View.Gtk_Text_View_Record'Class);
+   --  If the view is empty, display the placeholder.
+   --  This is only needed after programmatically setting the buffer's
+   --  contents. Done automatically on focus in/out events
+
+   function Get_Text_Without_Placeholder
+     (View    : not null access Gtk.Text_View.Gtk_Text_View_Record'Class)
+      return String;
+   --  Return the full text of the view, ignoring the placeholder text if any
+
    ---------------
    -- Tree view --
    ---------------

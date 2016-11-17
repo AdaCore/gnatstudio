@@ -2384,8 +2384,19 @@ package body GUI_Utils is
       Event   : Gdk_Event_Focus) return Boolean
    is
       pragma Unreferenced (Event);
-      V            : constant Gtk_Text_View := Gtk_Text_View (View);
-      Buffer       : constant Gtk_Text_Buffer := V.Get_Buffer;
+   begin
+      Show_Placeholder_If_Needed (Gtk_Text_View (View));
+      return False;   --  propagate event
+   end On_Focus_Out;
+
+   --------------------------------
+   -- Show_Placeholder_If_Needed --
+   --------------------------------
+
+   procedure Show_Placeholder_If_Needed
+     (View    : not null access Gtk.Text_View.Gtk_Text_View_Record'Class)
+   is
+      Buffer       : constant Gtk_Text_Buffer := View.Get_Buffer;
       First, Last  : Gtk_Text_Iter;
       Tag          : Gtk_Text_Tag;
    begin
@@ -2410,8 +2421,33 @@ package body GUI_Utils is
             Buffer.Insert_With_Tags (First, Message, Tag);
          end;
       end if;
-      return False;   --  propagate event
-   end On_Focus_Out;
+   end Show_Placeholder_If_Needed;
+
+   ----------------------------------
+   -- Get_Text_Without_Placeholder --
+   ----------------------------------
+
+   function Get_Text_Without_Placeholder
+     (View    : not null access Gtk.Text_View.Gtk_Text_View_Record'Class)
+     return String
+   is
+      Buffer       : constant Gtk_Text_Buffer := View.Get_Buffer;
+      First, Last  : Gtk_Text_Iter;
+      Tag          : Gtk_Text_Tag;
+   begin
+      Buffer.Get_Start_Iter (First);
+
+      Tag := Buffer.Get_Tag_Table.Lookup ("placeholder");
+      if Tag /= null then
+         if Begins_Tag (First, Tag) then
+            return "";
+         end if;
+      end if;
+
+      Buffer.Get_End_Iter (Last);
+
+      return Buffer.Get_Text (First, Last);
+   end Get_Text_Without_Placeholder;
 
    ---------------------
    -- Set_Placeholder --

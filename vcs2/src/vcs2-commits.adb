@@ -28,6 +28,7 @@ with Glib;                        use Glib;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
+with GNAT.Strings;                use GNAT.Strings;
 with GPS.Intl;                    use GPS.Intl;
 with GPS.Kernel.Actions;          use GPS.Kernel.Actions;
 with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
@@ -35,6 +36,8 @@ with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
 with GPS.Kernel.Modules.UI;       use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Properties;       use GPS.Kernel.Properties;
+with GPS.Properties;              use GPS.Properties;
 with GPS.Search;                  use GPS.Search;
 with GPS.VCS;                     use GPS.VCS;
 with GPS.VCS_Engines;             use GPS.VCS_Engines;
@@ -116,6 +119,10 @@ package body VCS2.Commits is
    type Commit_View_Record is new Generic_Views.View_Record with record
       Tree        : Commit_Tree_View;
       Text_Render : Gtk_Cell_Renderer_Text;
+
+      Active_VCS  : VCS_Engine_Access;
+      --  A cache for the active VCS. This is used to save the commit message
+      --  for the proper VCS.
 
       VCS_Count   : Natural := 0;
       --  Number of VCS systems in the project
@@ -229,6 +236,19 @@ package body VCS2.Commits is
    overriding procedure Execute
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
+
+   function On_Commit_Focus_Out
+     (View  : access GObject_Record'Class;
+      Event : Gdk_Event_Focus) return Boolean;
+   --  Called when the focus moves out of the Commit message.
+   --  Used to save it in the properties.
+
+   procedure Save_Commit_Message
+     (Self : not null access Commit_View_Record'Class);
+   --  Save the commit message in the properties
+
+   procedure Refresh (Self : not null access Commit_View_Record'Class);
+   --  Refresh the contents of the view.
 
    -------------------
    -- Build_Context --
@@ -468,6 +488,7 @@ package body VCS2.Commits is
       Kernel : not null access Kernel_Handle_Record'Class;
       Pref   : Preference)
    is
+      pragma Unreferenced (Kernel);
       Config : Commit_View_Config;
    begin
       Set_Font_And_Colors (Self.View.Tree, Fixed_Font => True, Pref => Pref);
@@ -496,11 +517,42 @@ package body VCS2.Commits is
 
       if Config /= Self.View.Config then
          Self.View.Config := Config;
-         Ensure_Status_For_All_Files_In_All_Engines
-           (Kernel, On_Complete => new On_All_Files_Available_In_Cache'
-              (Task_Completed_Callback with Kernel => Kernel));
+         Refresh (Self.View);
       end if;
    end Execute;
+
+   -------------
+   -- Refresh --
+   -------------
+
+   procedure Refresh (Self : not null access Commit_View_Record'Class) is
+      P     : String_Property;
+      Found : Boolean;
+   begin
+      Save_Commit_Message (Self);
+
+      Ensure_Status_For_All_Files_In_All_Engines
+        (Self.Kernel, On_Complete => new On_All_Files_Available_In_Cache'
+           (Task_Completed_Callback with Kernel => Self.Kernel));
+
+      Self.Active_VCS := Active_VCS (Self.Kernel);
+      Self.Commit.Get_Buffer.Set_Text ("");
+
+      if Self.Active_VCS /= null then
+         Get_Property
+           (P,
+            Key        =>
+              Self.Active_VCS.Name
+              & "--" & Self.Active_VCS.Working_Directory.Display_Full_Name,
+            Name       => "commit_msg",
+            Found      => Found);
+         if Found and then P.Value /= null then
+            Self.Commit.Get_Buffer.Set_Text (P.Value.all);
+         end if;
+      end if;
+
+      Show_Placeholder_If_Needed (Self.Commit);
+   end Refresh;
 
    -------------
    -- Execute --
@@ -511,11 +563,49 @@ package body VCS2.Commits is
       Kernel : not null access Kernel_Handle_Record'Class)
    is
       pragma Unreferenced (Self);
+      V    : constant Commit_View := Commit_Views.Retrieve_View (Kernel);
    begin
-      Ensure_Status_For_All_Files_In_All_Engines
-        (Kernel, On_Complete => new On_All_Files_Available_In_Cache'
-           (Task_Completed_Callback with Kernel => Kernel));
+      if V /= null then
+         Refresh (V);
+      end if;
    end Execute;
+
+   -------------------------
+   -- Save_Commit_Message --
+   -------------------------
+
+   procedure Save_Commit_Message
+     (Self : not null access Commit_View_Record'Class)
+   is
+      Text : constant String := Get_Text_Without_Placeholder (Self.Commit);
+      VCS  : constant VCS_Engine_Access := Self.Active_VCS;
+      P    : access String_Property;
+   begin
+      if VCS /= null then
+         P := new String_Property'
+           (Property_Record with Value => new String'(Text));
+         Set_Property
+           (Self.Kernel,
+            Key   => VCS.Name & "--" & VCS.Working_Directory.Display_Full_Name,
+            Name       => "commit_msg",
+            Property   => P,
+            Persistent => True);
+      end if;
+   end Save_Commit_Message;
+
+   -------------------------
+   -- On_Commit_Focus_Out --
+   -------------------------
+
+   function On_Commit_Focus_Out
+     (View  : access GObject_Record'Class;
+      Event : Gdk_Event_Focus) return Boolean
+   is
+      pragma Unreferenced (Event);
+   begin
+      Save_Commit_Message (Commit_View (View));
+      return False;
+   end On_Commit_Focus_Out;
 
    ----------------
    -- Initialize --
@@ -552,6 +642,7 @@ package body VCS2.Commits is
       Set_Placeholder
         (Self.Commit,
          -"Short review message" & ASCII.LF & ASCII.LF & "Details");
+      Self.Commit.On_Focus_Out_Event (On_Commit_Focus_Out'Access, Self);
 
       --  Bottom widget
 
