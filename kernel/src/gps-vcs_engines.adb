@@ -524,7 +524,21 @@ package body GPS.VCS_Engines is
       end loop;
    end Ensure_Status_For_All_Files_In_All_Engines;
 
-   ------------------C
+   ---------------------------
+   -- Invalidate_All_Caches --
+   ---------------------------
+
+   procedure Invalidate_All_Caches
+     (Kernel  : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      for E of Global_Data.All_Engines loop
+         E.Invalidate_File_Status_Cache;
+      end loop;
+   end Invalidate_All_Caches;
+
+   ------------------
    -- For_Each_VCS --
    ------------------
 

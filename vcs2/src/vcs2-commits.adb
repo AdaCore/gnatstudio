@@ -210,11 +210,10 @@ package body VCS2.Commits is
       Context : Interactive_Command_Context) return Command_Return_Type
      is (Commands.Success);
 
-   type Unstage_File is new Interactive_Command with null record;
+   type Reload_Status is new Interactive_Command with null record;
    overriding function Execute
-     (Command : access Unstage_File;
-      Context : Interactive_Command_Context) return Command_Return_Type
-     is (Commands.Success);
+     (Command : access Reload_Status;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Commit is new Interactive_Command with null record;
    overriding function Execute
@@ -870,6 +869,26 @@ package body VCS2.Commits is
       end if;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Reload_Status;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View : constant Commit_View :=
+        Commit_Views.Retrieve_View (Get_Kernel (Context.Context));
+   begin
+      Invalidate_All_Caches (Get_Kernel (Context.Context));
+
+      if View /= null then
+         Refresh (View);
+      end if;
+      return Commands.Success;
+   end Execute;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -908,21 +927,22 @@ package body VCS2.Commits is
          Icon_Name   => "github-commit-symbolic");
 
       Register_Action
-        (Kernel, "vcs stage file",
+        (Kernel, "vcs toggle stage file",
          Description =>
-           -"Stage the selected file, so that it is part of the next commit",
+           -("Stage or unstage the selected file, so that it is part of the"
+             & " next commit"),
          Command     => new Stage_File,
          Category    => "VCS2",
-         Icon_Name   => "gps-add-symbolic");
+         Icon_Name   => "github-check-symbolic");
 
       Register_Action
-        (Kernel, "vcs unstage file",
+        (Kernel, "vcs reload status",
          Description =>
-           -("Unstage the selected file, so that it is no longer part"
-             & "  of the next commit"),
-         Command     => new Unstage_File,
+           -("Reload the status of all files from the disk." & ASCII.LF
+           & "Use if you have performed operations outside of GPS."),
+         Command     => new Reload_Status,
          Category    => "VCS2",
-         Icon_Name   => "gps-remove-symbolic");
+         Icon_Name   => "gps-refresh-symbolic");
 
    end Register_Module;
 

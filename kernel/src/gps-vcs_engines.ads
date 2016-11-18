@@ -212,6 +212,11 @@ package GPS.VCS_Engines is
    --  The next call to one of the Async_Fetch_Status_* procedures will
    --  therefore trigger queries to the actual VCS engine to refresh the cache.
 
+   procedure Invalidate_All_Caches
+     (Kernel  : not null access Kernel_Handle_Record'Class);
+   --  Invalid all caches for all VCS, so that the next Ensure_* calls
+   --  will reload from the disk
+
    procedure Set_File_Status_In_Cache
      (Self         : not null access VCS_Engine'Class;
       File         : Virtual_File;

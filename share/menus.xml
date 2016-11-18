@@ -601,8 +601,8 @@
       <separator id='commits'/>
       <button action='vcs commit staged files'/>
       <separator id='stages'/>
-      <button action='vcs stage file'/>
-      <button action='vcs unstage file'/>
+      <button action='vcs toggle stage file'/>
+      <button action='vcs reload status'/>
    </toolbar>
 
    <toolbar id="MDL Browser" inherit='Browser'>
