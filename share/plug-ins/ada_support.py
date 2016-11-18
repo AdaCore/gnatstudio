@@ -59,6 +59,14 @@ begin
 end %(name);</text>
   </alias>
 
+  <alias name="main_unit" >
+    <param name="name"  description="The name of the Ada main unit."/>
+    <text>procedure %(name) is
+begin
+   %_
+end %(name);</text>
+  </alias>
+
   <alias name="task_body" >
     <param name="name"  />
     <text>task body %(name) is
@@ -154,7 +162,7 @@ end loop;</text>
   </alias>
 
   <alias name="package" >
-    <param name="name"  />
+    <param name="name" description="The name of the Ada package." />
     <text>package %(name) is
 
    %_
@@ -195,5 +203,21 @@ end;</text>
 </GPS>
 """
 
-
 GPS.parse_xml(XML)
+
+
+@hook('gps_started')
+def __on_gps_started():
+    GPS.FileTemplate.register(
+        alias_name="package",
+        label="Ada Package",
+        unit_param="name",
+        language="ada",
+        is_impl=False)
+
+    GPS.FileTemplate.register(
+        alias_name="main_unit",
+        label="Ada Main Unit",
+        unit_param="name",
+        language="ada",
+        is_impl=True)

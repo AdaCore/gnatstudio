@@ -16,6 +16,7 @@ not defined in this file.
 ###########################################################################
 
 import GPS
+from gps_utils import hook
 
 XML = r"""<?xml version="1.0" ?>
 <GPS>
@@ -205,7 +206,28 @@ XML = r"""<?xml version="1.0" ?>
      <name>C++ OBJECT-&gt;member(</name>
      <regexp>\b(\w+)\s*-&gt;\s*\w+\s*\(</regexp>
    </vsearch-pattern>
+
+  <alias name="c_main">
+    <param name="name" />
+    <param name="params" >int argc, char **argv</param>
+    <text>int main (%(params)) {
+  %_
+
+  return 0;
+}</text>
+  </alias>
 </GPS>
 """
 
 GPS.parse_xml(XML)
+
+
+@hook('gps_started')
+def __on_gps_started():
+
+    GPS.FileTemplate.register(
+        alias_name="c_main",
+        label="C Main File",
+        unit_param="name",
+        language="c",
+        is_impl=True)

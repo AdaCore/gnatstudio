@@ -15,7 +15,6 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada_Module.Creators;
 with GNATCOLL.Projects;         use GNATCOLL.Projects;
 with GNATCOLL.Utils;            use GNATCOLL.Utils;
 with GNATCOLL.VFS;              use GNATCOLL.VFS;
@@ -457,8 +456,6 @@ package body Ada_Module is
 
       Register_Naming_Scheme_Editor
         (Kernel, "Ada", Naming_Scheme_Editor'Access);
-
-      Ada_Module.Creators.Register_Module (Kernel);
    end Register_Module;
 
 end Ada_Module;
