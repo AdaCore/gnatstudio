@@ -41,41 +41,37 @@ package body Commands is
    ---------------
 
    function New_Queue return Command_Queue is
+      R  : Command_Queue;
+      QI : Queue_Internal;
    begin
-      return new Command_Queue_Record;
+      R.Ref.Set (QI);
+      return R;
    end New_Queue;
 
    ----------------
    -- Free_Queue --
    ----------------
 
-   procedure Free_Queue (Q : in out Command_Queue) is
-      procedure Free_Queue_Access is
-        new Unchecked_Deallocation (Command_Queue_Record, Command_Queue);
-
+   procedure Free_Queue (Q : in out Queue_Internal) is
       use Identifier_And_Command_List;
       C : Identifier_And_Command_List.Cursor;
       Command : Command_Access;
    begin
-      if Q /= null then
-         Free (Q.Undo_Queue);
-         Free (Q.Redo_Queue);
+      Free (Q.Undo_Queue);
+      Free (Q.Redo_Queue);
 
-         C := Q.Queue_Change_Hook.First;
-         while Has_Element (C) loop
-            Command := Element (C).Command;
-            Unref (Command);
+      C := Q.Queue_Change_Hook.First;
+      while Has_Element (C) loop
+         Command := Element (C).Command;
+         Unref (Command);
 
-            C := Next (C);
-         end loop;
-         Q.Queue_Change_Hook.Clear;
+         C := Next (C);
+      end loop;
+      Q.Queue_Change_Hook.Clear;
 
-         Free (Q.The_Queue);
+      Free (Q.The_Queue);
 
-         Q.Queue_Change_Hook.Clear;
-
-         Free_Queue_Access (Q);
-      end if;
+      Q.Queue_Change_Hook.Clear;
    end Free_Queue;
 
    -----------------
@@ -86,13 +82,13 @@ package body Commands is
       use Identifier_And_Command_List;
       Node : Identifier_And_Command_List.Cursor;
    begin
-      Free (Q.Undo_Queue);
-      Free (Q.Redo_Queue);
-      Free (Q.The_Queue);
+      Free (Q.Ref.Get.Undo_Queue);
+      Free (Q.Ref.Get.Redo_Queue);
+      Free (Q.Ref.Get.The_Queue);
 
       --  Execute the queue change hooks
 
-      Node := First (Q.Queue_Change_Hook);
+      Node := First (Q.Ref.Get.Queue_Change_Hook);
 
       while Has_Element (Node) loop
          Execute (Element (Node).Command);
@@ -175,7 +171,7 @@ package body Commands is
 
    procedure Enqueue
      (Queue         : Command_Queue;
-      Action        : access Root_Command) is
+      Action        : access Root_Command'Class) is
    begin
       Enqueue (Queue, Action, True);
    end Enqueue;
@@ -196,12 +192,12 @@ package body Commands is
       Action.Queue := Queue;
 
       if Modify_Group then
-         Action.Group := Queue.Current_Group_Number;
+         Action.Group := Queue.Ref.Get.Current_Group_Number;
       end if;
 
-      Append (Queue.The_Queue, Command_Access (Action));
+      Append (Queue.Ref.Get.The_Queue, Command_Access (Action));
 
-      if not Queue.Command_In_Progress then
+      if not Queue.Ref.Get.Command_In_Progress then
          Execute_Next_Action (Queue);
       end if;
    end Enqueue;
@@ -212,7 +208,7 @@ package body Commands is
 
    function Get_Position (Queue : Command_Queue) return Integer is
    begin
-      return Queue.Position;
+      return Queue.Ref.Get.Position;
    end Get_Position;
 
    -------------------------
@@ -223,27 +219,28 @@ package body Commands is
    begin
       --  If there is already a command running, then do nothing
 
-      if Queue.Command_In_Progress then
+      if Queue.Ref.Get.Command_In_Progress then
          return;
       end if;
 
       --  If the queue is empty, set its state accordingly
 
-      if Is_Empty (Queue.The_Queue) then
-         Queue.Command_In_Progress := False;
+      if Is_Empty (Queue.Ref.Get.The_Queue) then
+         Queue.Ref.Get.Command_In_Progress := False;
          return;
       end if;
 
-      Queue.Command_In_Progress := True;
+      Queue.Ref.Get.Command_In_Progress := True;
 
       declare
-         Action : constant Command_Access := Queue.The_Queue.First_Element;
+         Action : constant Command_Access :=
+           Queue.Ref.Get.The_Queue.First_Element;
          Ignore : Boolean;
          Ignore_Command : Command_Return_Type;
          pragma Unreferenced (Ignore, Ignore_Command);
 
       begin
-         Queue.The_Queue.Delete_First;
+         Queue.Ref.Get.The_Queue.Delete_First;
 
          case Action.Mode is
             when Normal | Undone =>
@@ -268,7 +265,7 @@ package body Commands is
       Node  : Identifier_And_Command_List.Cursor;
 
    begin
-      if Queue = null then
+      if Queue = Null_Command_Queue then
          --  If we are not calling the commands in "Queue" mode, do not execute
          --  the Next/Alternate command.
          return;
@@ -278,45 +275,45 @@ package body Commands is
          if Has_Element (Node) and then Element (Node).Command.Group_Fail then
             --  Next action still part of the group fail, record status and
             --  keep going.
-            Action.Queue.Stored_Status :=
-              Action.Queue.Stored_Status and then Success;
+            Action.Queue.Ref.Get.Stored_Status :=
+              Action.Queue.Ref.Get.Stored_Status and then Success;
             Success := True;
 
          else
             --  We reach the end of a group fail section, the status of the
             --  last action is set to false if one of the grouped action
             --  failed.
-            Success := Success and then Action.Queue.Stored_Status;
-            Action.Queue.Stored_Status := True;
+            Success := Success and then Action.Queue.Ref.Get.Stored_Status;
+            Action.Queue.Ref.Get.Stored_Status := True;
          end if;
       end if;
 
-      Queue.Command_In_Progress := False;
+      Queue.Ref.Get.Command_In_Progress := False;
 
       --  And release action from the current list
 
       case Action.Mode is
          when Normal =>
             Action.Mode := Done;
-            Prepend (Queue.Undo_Queue, Command_Access (Action));
+            Prepend (Queue.Ref.Get.Undo_Queue, Command_Access (Action));
             --  When a normal command is finished, purge the redo queue
-            Free (Queue.Redo_Queue);
-            Queue.Position := Queue.Position + 1;
+            Free (Queue.Ref.Get.Redo_Queue);
+            Queue.Ref.Get.Position := Queue.Ref.Get.Position + 1;
 
          when Done =>
             Action.Mode := Undone;
-            Prepend (Queue.Redo_Queue, Command_Access (Action));
-            Queue.Position := Queue.Position - 1;
+            Prepend (Queue.Ref.Get.Redo_Queue, Command_Access (Action));
+            Queue.Ref.Get.Position := Queue.Ref.Get.Position - 1;
 
          when Undone =>
             Action.Mode := Done;
-            Prepend (Queue.Undo_Queue, Command_Access (Action));
-            Queue.Position := Queue.Position + 1;
+            Prepend (Queue.Ref.Get.Undo_Queue, Command_Access (Action));
+            Queue.Ref.Get.Position := Queue.Ref.Get.Position + 1;
       end case;
 
       --  Execute the registered hooks
 
-      Node := First (Queue.Queue_Change_Hook);
+      Node := First (Queue.Ref.Get.Queue_Change_Hook);
 
       while Has_Element (Node) loop
          Execute (Element (Node).Command);
@@ -352,13 +349,13 @@ package body Commands is
       Hook_Node : Identifier_And_Command_List.Cursor;
       Previous_Command   : Command_Access;
    begin
-      Hook_Node := First (Queue.Queue_Change_Hook);
+      Hook_Node := First (Queue.Ref.Get.Queue_Change_Hook);
 
       while Has_Element (Hook_Node) loop
          if To_String (Element (Hook_Node).Identifier) = Identifier then
             Previous_Command := Element (Hook_Node).Command;
             Unref (Previous_Command);
-            Queue.Queue_Change_Hook.Replace_Element
+            Queue.Ref.Get.Queue_Change_Hook.Replace_Element
               (Hook_Node, (To_Unbounded_String (Identifier), Command));
             return;
          end if;
@@ -366,7 +363,7 @@ package body Commands is
          Hook_Node := Next (Hook_Node);
       end loop;
 
-      Append (Queue.Queue_Change_Hook,
+      Append (Queue.Ref.Get.Queue_Change_Hook,
               (To_Unbounded_String (Identifier), Command));
    end Add_Queue_Change_Hook;
 
@@ -388,8 +385,8 @@ package body Commands is
    function Get_Previous_Command
      (Queue : Command_Queue) return Command_Access is
    begin
-      if not Is_Empty (Queue.Undo_Queue) then
-         return First_Element (Queue.Undo_Queue);
+      if not Is_Empty (Queue.Ref.Get.Undo_Queue) then
+         return First_Element (Queue.Ref.Get.Undo_Queue);
       else
          return null;
       end if;
@@ -402,8 +399,8 @@ package body Commands is
    function Get_Next_Command
      (Queue : Command_Queue) return Command_Access is
    begin
-      if not Is_Empty (Queue.Redo_Queue) then
-         return First_Element (Queue.Redo_Queue);
+      if not Is_Empty (Queue.Ref.Get.Redo_Queue) then
+         return First_Element (Queue.Ref.Get.Redo_Queue);
       else
          return null;
       end if;
@@ -417,17 +414,17 @@ package body Commands is
       Action : Command_Access;
       Group  : Natural := 0;
    begin
-      while not Is_Empty (Queue.Undo_Queue) loop
-         Action := First_Element (Queue.Undo_Queue);
+      while not Is_Empty (Queue.Ref.Get.Undo_Queue) loop
+         Action := First_Element (Queue.Ref.Get.Undo_Queue);
 
          exit when Group /= 0 and then Group /= Action.Group;
 
-         Queue.Group_Level := 0;
+         Queue.Ref.Get.Group_Level := 0;
          Change_Group (Queue);
 
          Group := Action.Group;
 
-         Queue.Undo_Queue.Delete_First;
+         Queue.Ref.Get.Undo_Queue.Delete_First;
          Enqueue (Queue, Action, False);
 
          exit when Group = 0;
@@ -442,17 +439,17 @@ package body Commands is
       Action : Command_Access;
       Group  : Natural := 0;
    begin
-      while not Is_Empty (Queue.Redo_Queue) loop
-         Action := First_Element (Queue.Redo_Queue);
+      while not Is_Empty (Queue.Ref.Get.Redo_Queue) loop
+         Action := First_Element (Queue.Ref.Get.Redo_Queue);
 
          exit when Group /= 0 and then Group /= Action.Group;
 
-         Queue.Group_Level := 0;
+         Queue.Ref.Get.Group_Level := 0;
          Change_Group (Queue);
 
          Group := Action.Group;
 
-         Queue.Redo_Queue.Delete_First;
+         Queue.Ref.Get.Redo_Queue.Delete_First;
          Enqueue (Queue, Action, False);
 
          exit when Group = 0;
@@ -465,7 +462,7 @@ package body Commands is
 
    function Undo_Queue_Empty (Queue : Command_Queue) return Boolean is
    begin
-      return Is_Empty (Queue.Undo_Queue);
+      return Is_Empty (Queue.Ref.Get.Undo_Queue);
    end Undo_Queue_Empty;
 
    ----------------------
@@ -474,7 +471,7 @@ package body Commands is
 
    function Redo_Queue_Empty (Queue : Command_Queue) return Boolean is
    begin
-      return Is_Empty (Queue.Redo_Queue);
+      return Is_Empty (Queue.Ref.Get.Redo_Queue);
    end Redo_Queue_Empty;
 
    ------------------------
@@ -504,13 +501,13 @@ package body Commands is
 
    procedure Start_Group (Q : Command_Queue) is
    begin
-      if Q = null then
+      if Q = Null_Command_Queue then
          return;
       end if;
 
       Change_Group (Q);
 
-      Q.Group_Level := Q.Group_Level + 1;
+      Q.Ref.Get.Group_Level := Q.Ref.Get.Group_Level + 1;
    end Start_Group;
 
    ---------------
@@ -519,12 +516,12 @@ package body Commands is
 
    procedure End_Group (Q : Command_Queue) is
    begin
-      if Q = null then
+      if Q = Null_Command_Queue then
          return;
       end if;
 
-      if Q.Group_Level > 0 then
-         Q.Group_Level := Q.Group_Level - 1;
+      if Q.Ref.Get.Group_Level > 0 then
+         Q.Ref.Get.Group_Level := Q.Ref.Get.Group_Level - 1;
       end if;
 
       Change_Group (Q);
@@ -540,11 +537,12 @@ package body Commands is
       --  first level. On the other hand, if we are nesting a group within a
       --  group, we want all nested actions to be considered as part of the
       --  top group, so we do not change the group number in this case.
-      if Queue.Group_Level = 0 then
-         if Queue.Current_Group_Number = Natural'Last then
-            Queue.Current_Group_Number := 1;
+      if Queue.Ref.Get.Group_Level = 0 then
+         if Queue.Ref.Get.Current_Group_Number = Natural'Last then
+            Queue.Ref.Get.Current_Group_Number := 1;
          else
-            Queue.Current_Group_Number := Queue.Current_Group_Number + 1;
+            Queue.Ref.Get.Current_Group_Number :=
+              Queue.Ref.Get.Current_Group_Number + 1;
          end if;
       end if;
    end Change_Group;
@@ -556,7 +554,7 @@ package body Commands is
    function Debug_Get_Undo_Queue
      (Q : Command_Queue) return Command_Lists.List is
    begin
-      return Q.Undo_Queue;
+      return Q.Ref.Get.Undo_Queue;
    end Debug_Get_Undo_Queue;
 
    --------------------------
@@ -566,7 +564,7 @@ package body Commands is
    function Debug_Get_Redo_Queue
      (Q : Command_Queue) return Command_Lists.List is
    begin
-      return Q.Redo_Queue;
+      return Q.Ref.Get.Redo_Queue;
    end Debug_Get_Redo_Queue;
 
    ---------------------
@@ -621,7 +619,7 @@ package body Commands is
       return G : Group_Block do
          G.Queue := Q;
          G.Increments_Counter := False;
-         Q.Group_Level := Q.Group_Level + 1;
+         Q.Ref.Get.Group_Level := Q.Ref.Get.Group_Level + 1;
       end return;
    end Current_Group;
 
@@ -635,7 +633,7 @@ package body Commands is
          G.Queue := Q;
          G.Increments_Counter := True;
          Change_Group (Q);
-         Q.Group_Level := Q.Group_Level + 1;
+         Q.Ref.Get.Group_Level := Q.Ref.Get.Group_Level + 1;
       end return;
    end New_Group;
 
@@ -650,7 +648,7 @@ package body Commands is
       end if;
 
       Self.Already_Left := True;
-      Self.Queue.Group_Level := Self.Queue.Group_Level - 1;
+      Self.Queue.Ref.Get.Group_Level := Self.Queue.Ref.Get.Group_Level - 1;
 
       if Self.Increments_Counter then
          Change_Group (Self.Queue);

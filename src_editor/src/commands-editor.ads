@@ -93,8 +93,7 @@ package Commands.Editor is
 
    procedure Create
      (Item   : out Check_Modified_State;
-      Buffer : Source_Buffer;
-      Queue  : Command_Queue);
+      Buffer : Source_Buffer);
    --  Create a new Check_Modified_State command
 
    overriding function Execute

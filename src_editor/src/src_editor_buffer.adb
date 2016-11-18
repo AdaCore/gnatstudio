@@ -1705,7 +1705,6 @@ package body Src_Editor_Buffer is
          Remove_Controls (Buffer);
       end if;
 
-      Free_Queue (Buffer.Queue);
       Free_File_Information (Buffer);
 
       Free_Column_Info (Buffer.Editable_Line_Info_Columns);
@@ -3384,7 +3383,7 @@ package body Src_Editor_Buffer is
       --  Create the queue change hook that will be called every
       --  time the state of the queue associated to the buffer changes.
 
-      Create (Command, Source_Buffer (Buffer), Buffer.Queue);
+      Create (Command, Source_Buffer (Buffer));
 
       Add_Queue_Change_Hook
         (Buffer.Queue, Command_Access (Command), "State_Check");

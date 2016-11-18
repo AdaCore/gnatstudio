@@ -672,7 +672,8 @@ package body GPS.Editors is
 
    pragma Warnings (Off); --  Kill the "unreachable code" warning
 
-   function Current_Undo_Group (This : Editor_Buffer) return Group_Block is
+   function Current_Undo_Group
+     (This : Editor_Buffer) return Group_Block is
    begin
       raise Program_Error; --  Intended: this should be overriden
       return G : Group_Block do null; end return;

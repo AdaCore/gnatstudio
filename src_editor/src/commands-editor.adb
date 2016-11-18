@@ -44,12 +44,10 @@ package body Commands.Editor is
 
    procedure Create
      (Item   : out Check_Modified_State;
-      Buffer : Source_Buffer;
-      Queue  : Command_Queue) is
+      Buffer : Source_Buffer) is
    begin
       Item := new Check_Modified_State_Type;
       Item.Buffer := Buffer;
-      Item.Check_Queue := Queue;
    end Create;
 
    -------------

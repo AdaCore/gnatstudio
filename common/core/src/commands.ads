@@ -37,6 +37,8 @@
 with Ada.Strings.Unbounded;
 with Ada.Containers.Doubly_Linked_Lists;
 
+with GNATCOLL.Refcount;
+
 private with Ada.Finalization;
 
 package Commands is
@@ -157,9 +159,6 @@ package Commands is
    function New_Queue return Command_Queue;
    --  Create a new empty Command_Queue
 
-   procedure Free_Queue (Q : in out Command_Queue);
-   --  Free memory associated with Q
-
    procedure Empty_Queue (Q : Command_Queue);
    --  Free all done, undone and pending actions in Q
 
@@ -227,7 +226,7 @@ package Commands is
 
    procedure Enqueue
      (Queue         : Command_Queue;
-      Action        : access Root_Command);
+      Action        : access Root_Command'Class);
    --  Adds Action to the Queue, and start executing the command immediately
    --  if the queue is empty, or after all commands already in the queue.
    --  The execution is by default synchronous, ie this call will only return
@@ -323,7 +322,7 @@ private
    package Identifier_And_Command_List is new
      Ada.Containers.Doubly_Linked_Lists (Identifier_And_Command);
 
-   type Command_Queue_Record is record
+   type Queue_Internal is record
       Command_In_Progress : Boolean := False;
       Stored_Status       : Boolean := True;
       --  Status stored for a group fail set of actions
@@ -360,9 +359,20 @@ private
       --  Indicates the number of the current group. This is used to
       --  distinguish between possible consecutive groups.
    end record;
-   type Command_Queue is access Command_Queue_Record;
 
-   Null_Command_Queue : constant Command_Queue := null;
+   procedure Free_Queue (Q : in out Queue_Internal);
+   --  Free memory associated to Q
+
+   package Command_Queues is new GNATCOLL.Refcount.Shared_Pointers
+     (Element_Type => Queue_Internal,
+      Release      => Free_Queue);
+
+   type Command_Queue is record
+      Ref : Command_Queues.Ref;
+   end record;
+
+   Null_Command_Queue : constant Command_Queue :=
+     (Ref => Command_Queues.Null_Ref);
 
    type Command_Mode is (Normal, Done, Undone);
    --  Normal actions are enqueued normally. When they end, they are
