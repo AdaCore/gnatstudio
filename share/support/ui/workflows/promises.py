@@ -568,8 +568,8 @@ class ProcessWrapper(object):
         """
         Called by user. Make a promise to them that:
         I'll let you know when the process is finished
-        Promise made here will be resolved with either a string (the current
-        output) or None (when the process has terminated.
+        Promise made here will be resolved with a tuple:
+            (exit_status, full output since call to wait_until_terminate)
         """
 
         # process has already terminated, return nothing

@@ -33,14 +33,14 @@ class Git(core.VCS):
         all_files = set()
         p = ProcessWrapper(
             ['git', 'ls-tree', '-r', 'HEAD', '--name-only'],
-            directory=self.working_dir)
+            directory=self.working_dir.path)
         while True:
             line = yield p.wait_line()
             if line is None:
                 GPS.Logger("GIT").log("finished ls-tree")
                 yield all_files
                 break
-            all_files.add(GPS.File(os.path.join(self.working_dir, line)))
+            all_files.add(GPS.File(os.path.join(self.working_dir.path, line)))
 
     def __git_status(self, s):
         """
@@ -49,7 +49,7 @@ class Git(core.VCS):
         """
         p = ProcessWrapper(
             ['git', 'status', '--porcelain', '--ignored'],
-            directory=self.working_dir)
+            directory=self.working_dir.path)
         while True:
             line = yield p.wait_line()
             if line is None:
@@ -85,7 +85,8 @@ class Git(core.VCS):
                 # Filter some obvious files to speed things up
                 if line[-3:] != '.o' and line[-5:] != '.ali':
                     s.set_status(
-                        GPS.File(os.path.join(self.working_dir, line[3:])),
+                        GPS.File(os.path.join(
+                            self.working_dir.path, line[3:])),
                         status)
 
     def async_fetch_status_for_files(self, files):
@@ -102,3 +103,25 @@ class Git(core.VCS):
         f = a[0]
         f.update(extra_files)
         s.set_status_for_remaining_files(f)
+
+    @core.run_in_background
+    def stage_files(self, files):
+        p = ProcessWrapper(
+            ['git', 'add'] + [f.path for f in files],
+            directory=self.working_dir.path)
+        (status, output) = yield p.wait_until_terminate()
+        if status:
+            GPS.Console().write("git add: %s" % output)
+        else:
+            yield self.async_fetch_status_for_all_files()  # update statuses
+
+    @core.run_in_background
+    def unstage_files(self, files):
+        p = ProcessWrapper(
+            ['git', 'reset'] + [f.path for f in files],
+            directory=self.working_dir.path)
+        (status, output) = yield p.wait_until_terminate()
+        if status:
+            GPS.Console().write("git reset: %s" % output)
+        else:
+            yield self.async_fetch_status_for_all_files()  # update statuses

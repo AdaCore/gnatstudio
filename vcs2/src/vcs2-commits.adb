@@ -127,6 +127,17 @@ package body VCS2.Commits is
       VCS_Count   : Natural := 0;
       --  Number of VCS systems in the project
 
+      Computing_File_Status : Boolean := False;
+      --  Whether there is background work to recompute the status of all
+      --  files. During that time, we do not react to VCS_File_Status_Changed
+      --  hook to refresh the view, since it will be wiped out when the
+      --  background job finishes anyway.
+
+      Category_Staged    : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      Category_Modified  : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      Category_Untracked : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      --  The nodes for the categories (if they are displayed)
+
       Config      : Commit_View_Config;
       Commit      : Gtk_Text_View;
    end record;
@@ -147,17 +158,16 @@ package body VCS2.Commits is
      (Self : access Commit_View_Record'Class) return Gtk_Widget;
    --  Create a new view
 
-   procedure Create_Node
+   procedure Create_Nodes
      (Self         : not null access Commit_View_Record'Class;
-      VCS          : not null access VCS_Engine'Class;
       File         : Virtual_File;
       Props        : VCS_File_Properties;
-      From_Active_VCS : Boolean;
-      Parent       : Gtk_Tree_Iter := Null_Iter);
+      VCS          : not null access VCS_Engine'Class;
+      Select_Nodes : Boolean := False);
    function Create_Category_Node
      (Self         : not null access Commit_View_Record'Class;
       Name         : String) return Gtk_Tree_Iter;
-   --  Add a new node in the tree.
+   --  Add one or more new nodes in the tree.
 
    type Commit_Child_Record is new GPS_MDI_Child_Record with null record;
    overriding function Build_Context
@@ -207,8 +217,7 @@ package body VCS2.Commits is
    type Stage_File is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Stage_File;
-      Context : Interactive_Command_Context) return Command_Return_Type
-     is (Commands.Success);
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Reload_Status is new Interactive_Command with null record;
    overriding function Execute
@@ -248,6 +257,23 @@ package body VCS2.Commits is
 
    procedure Refresh (Self : not null access Commit_View_Record'Class);
    --  Refresh the contents of the view.
+
+   procedure On_Staged_Toggled
+     (Self : access GObject_Record'Class;
+      Path : String);
+   --  Called when the user clicks on one of the checkboxes
+
+   procedure On_Destroyed (View : access Gtk_Widget_Record'Class);
+   --  Called when the view is destroyed
+
+   type On_VCS_File_Status_Changed is new Vcs_File_Status_Hooks_Function
+     with null record;
+   overriding procedure Execute
+     (Self          : On_VCS_File_Status_Changed;
+      Kernel        : not null access Kernel_Handle_Record'Class;
+      Vcs           : not null access Abstract_VCS_Engine'Class;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Props         : VCS_File_Properties);
 
    -------------------
    -- Build_Context --
@@ -396,57 +422,107 @@ package body VCS2.Commits is
       Append_Menu (Menu, K, Hide_Other_VCS);
    end Create_Menu;
 
-   -----------------
-   -- Create_Node --
-   -----------------
+   ------------------
+   -- Create_Nodes --
+   ------------------
 
-   procedure Create_Node
+   procedure Create_Nodes
      (Self         : not null access Commit_View_Record'Class;
-      VCS          : not null access VCS_Engine'Class;
       File         : Virtual_File;
       Props        : VCS_File_Properties;
-      From_Active_VCS : Boolean;
-      Parent          : Gtk_Tree_Iter := Null_Iter)
+      VCS          : not null access VCS_Engine'Class;
+      Select_Nodes : Boolean := False)
    is
-      Iter     : Gtk_Tree_Iter;
-      V        : Glib.Values.GValue_Array (All_Columns);
-      Staged   : constant Boolean := (Props.Status and Mask_Staged) /= 0;
-      Unstaged : constant Boolean :=
+      Is_Active : constant Boolean := VCS = Self.Active_VCS;
+      Staged    : constant Boolean := (Props.Status and Mask_Staged) /= 0;
+      Unstaged  : constant Boolean :=
         (Props.Status and Mask_Modified_Unstaged) /= 0;
       Untracked : constant Boolean := (Props.Status and Mask_Untracked) /= 0;
       Display   : constant Status_Display := VCS.Get_Display (Props.Status);
+
+      procedure Internal (Parent : Gtk_Tree_Iter := Null_Iter);
+      --  Actual node creation
+
+      procedure Internal (Parent : Gtk_Tree_Iter := Null_Iter) is
+         Iter      : Gtk_Tree_Iter;
+         V         : Glib.Values.GValue_Array (All_Columns);
+      begin
+         Self.Tree.Model.Append (Iter, Parent => Parent);
+
+         Glib.Values.Init (V (Column_File), Get_Virtual_File_Type);
+         Set_File (V (Column_File), File);
+
+         Init_Set_Boolean (V (Column_Staged), Staged and not Unstaged);
+         Init_Set_Boolean (V (Column_Inconsistent), Staged and Unstaged);
+
+         if Self.Config.Relative_Names then
+            Init_Set_String
+              (V (Column_Name), +File.Relative_Path (VCS.Working_Directory));
+         else
+            Init_Set_String (V (Column_Name), File.Display_Full_Name);
+         end if;
+
+         Init_Set_String (V (Column_Icon), To_String (Display.Icon_Name));
+         Init_Set_Boolean (V (Column_Check_Visible), Is_Active or Untracked);
+
+         Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
+         if not Is_Active then
+            Gdk.RGBA.Set_Value (V (Column_Foreground), Color_Inactive_VCS);
+         elsif Untracked and then not Self.Config.Group_By_Category then
+            Gdk.RGBA.Set_Value (V (Column_Foreground), Color_Untracked);
+         else
+            Gdk.RGBA.Set_Value (V (Column_Foreground), Color_Normal);
+         end if;
+
+         Self.Tree.Model.Set (Iter, V);
+
+         if Select_Nodes then
+            Self.Tree.Get_Selection.Select_Iter
+              (Self.Tree.Convert_To_Filter_Iter (Iter));
+         end if;
+      end Internal;
+
+      Show         : constant Boolean :=
+        Is_Active or else not Self.Config.Hide_Other_VCS;
+      In_Staged    : Boolean;
+      In_Modified  : Boolean;
+      In_Untracked : Boolean;
+
    begin
-      Self.Tree.Model.Append (Iter, Parent => Parent);
+      In_Staged := (Props.Status and Mask_Staged) /= 0
+        and then Show;
+      In_Modified := (Props.Status and Mask_Modified_Unstaged) /= 0
+        and then (not In_Staged or else Self.Config.Group_By_Category)
+        and then Show;
+      In_Untracked := Self.Config.Show_Untracked_Files
+        and then (Props.Status and Mask_Untracked) /= 0
+        and then (not (In_Staged or In_Modified)
+                 or else Self.Config.Group_By_Category)
+        and then not Self.Kernel.Is_Hidden (File);
 
-      Glib.Values.Init (V (Column_File), Get_Virtual_File_Type);
-      Set_File (V (Column_File), File);
+      --  A file could be in multiple categories
 
-      Init_Set_Boolean (V (Column_Staged), Staged and not Unstaged);
-      Init_Set_Boolean (V (Column_Inconsistent), Staged and Unstaged);
-
-      if Self.Config.Relative_Names then
-         Init_Set_String
-           (V (Column_Name), +File.Relative_Path (VCS.Working_Directory));
-      else
-         Init_Set_String (V (Column_Name), File.Display_Full_Name);
+      if In_Untracked then
+         Internal
+           ((if Self.Category_Untracked = Null_Gtk_Tree_Path
+            then Null_Iter
+            else Self.Tree.Model.Get_Iter (Self.Category_Untracked)));
       end if;
 
-      Init_Set_String (V (Column_Icon), To_String (Display.Icon_Name));
-      Init_Set_Boolean
-        (V (Column_Check_Visible),
-         From_Active_VCS or Untracked);
-
-      Init (V (Column_Foreground), Gdk.RGBA.Get_Type);
-      if not From_Active_VCS then
-         Gdk.RGBA.Set_Value (V (Column_Foreground), Color_Inactive_VCS);
-      elsif Untracked and then not Self.Config.Group_By_Category then
-         Gdk.RGBA.Set_Value (V (Column_Foreground), Color_Untracked);
-      else
-         Gdk.RGBA.Set_Value (V (Column_Foreground), Color_Normal);
+      if In_Staged then
+         Internal
+           ((if Self.Category_Staged = Null_Gtk_Tree_Path
+            then Null_Iter
+            else Self.Tree.Model.Get_Iter (Self.Category_Staged)));
       end if;
 
-      Self.Tree.Model.Set (Iter, V);
-   end Create_Node;
+      if In_Modified then
+         Internal
+           ((if Self.Category_Modified = Null_Gtk_Tree_Path
+            then Null_Iter
+            else Self.Tree.Model.Get_Iter (Self.Category_Modified)));
+      end if;
+   end Create_Nodes;
 
    --------------------------
    -- Create_Category_Node --
@@ -528,12 +604,8 @@ package body VCS2.Commits is
       P     : String_Property;
       Found : Boolean;
    begin
+      --  Save and restore commit message
       Save_Commit_Message (Self);
-
-      Ensure_Status_For_All_Files_In_All_Engines
-        (Self.Kernel, On_Complete => new On_All_Files_Available_In_Cache'
-           (Task_Completed_Callback with Kernel => Self.Kernel));
-
       Self.Active_VCS := Active_VCS (Self.Kernel);
       Self.Commit.Get_Buffer.Set_Text ("");
 
@@ -542,7 +614,7 @@ package body VCS2.Commits is
            (P,
             Key        =>
               Self.Active_VCS.Name
-              & "--" & Self.Active_VCS.Working_Directory.Display_Full_Name,
+            & "--" & Self.Active_VCS.Working_Directory.Display_Full_Name,
             Name       => "commit_msg",
             Found      => Found);
          if Found and then P.Value /= null then
@@ -551,6 +623,13 @@ package body VCS2.Commits is
       end if;
 
       Show_Placeholder_If_Needed (Self.Commit);
+
+      --  Update all statuses in background
+
+      Self.Computing_File_Status := True;
+      Ensure_Status_For_All_Files_In_All_Engines
+        (Self.Kernel, On_Complete => new On_All_Files_Available_In_Cache'
+           (Task_Completed_Callback with Kernel => Self.Kernel));
    end Refresh;
 
    -------------
@@ -606,6 +685,85 @@ package body VCS2.Commits is
       return False;
    end On_Commit_Focus_Out;
 
+   -----------------------
+   -- On_Staged_Toggled --
+   -----------------------
+
+   procedure On_Staged_Toggled
+     (Self : access GObject_Record'Class;
+      Path : String)
+   is
+      View        : constant Commit_View := Commit_View (Self);
+      Filter_Path : constant Gtk_Tree_Path :=
+        Gtk_Tree_Path_New_From_String (Path);
+      Iter        : constant Gtk_Tree_Iter :=
+        View.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path);
+      File : constant Virtual_File := Get_File_From_Node (View.Tree, Iter);
+   begin
+      if View.Active_VCS /= null then
+         View.Tree.Get_Selection.Unselect_All;
+         if View.Tree.Model.Get_Boolean (Iter, Column_Staged) then
+            View.Active_VCS.Unstage_Files ((1 => File));
+         else
+            View.Active_VCS.Stage_Files ((1 => File));
+         end if;
+      end if;
+      Path_Free (Filter_Path);
+   end On_Staged_Toggled;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Stage_File;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View   : constant Commit_View :=
+        Commit_Views.Retrieve_View (Get_Kernel (Context.Context));
+      Files  : File_Array_Access;
+      Staged : Boolean;
+
+      procedure On_Selection
+        (Model : Gtk_Tree_Model;
+         Path  : Gtk_Tree_Path;
+         Iter  : Gtk_Tree_Iter);
+      procedure On_Selection
+        (Model : Gtk_Tree_Model;
+         Path  : Gtk_Tree_Path;
+         Iter  : Gtk_Tree_Iter)
+      is
+         pragma Unreferenced (Model, Path);
+         F : constant Virtual_File := Get_File_From_Node
+           (View.Tree, View.Tree.Convert_To_Store_Iter (Iter));
+      begin
+         if F /= No_File then
+            Append (Files, F);
+            Staged := View.Tree.Filter.Get_Boolean (Iter, Column_Staged);
+         end if;
+      end On_Selection;
+
+   begin
+      if View /= null then
+         View.Tree.Get_Selection.Selected_Foreach
+           (On_Selection'Unrestricted_Access);
+
+         if Files /= null then
+            View.Tree.Get_Selection.Unselect_All;
+
+            if Staged then
+               View.Active_VCS.Unstage_Files (Files.all);
+            else
+               View.Active_VCS.Stage_Files (Files.all);
+            end if;
+
+            Unchecked_Free (Files);
+         end if;
+      end if;
+      return Commands.Success;
+   end Execute;
+
    ----------------
    -- Initialize --
    ----------------
@@ -623,6 +781,7 @@ package body VCS2.Commits is
       Tooltip    : access Commit_Tooltips'Class;
    begin
       Initialize_Vbox (Self, Homogeneous => False);
+      Self.On_Destroy (On_Destroyed'Access);
 
       Gtk_New (Paned);
       Paned.Set_Opaque_Resizing (True);
@@ -664,6 +823,7 @@ package body VCS2.Commits is
                   Filtered         => True,
                   Set_Visible_Func => True);
       Self.Tree.Set_Headers_Visible (False);
+      Self.Tree.Get_Selection.Set_Mode (Selection_Multiple);
       Scrolled.Add (Self.Tree);
 
       --  Tree
@@ -671,6 +831,8 @@ package body VCS2.Commits is
       Gtk_New (Self.Text_Render);
       Gtk_New (Check);
       Gtk_New (Pixbuf);
+
+      Check.On_Toggled (On_Staged_Toggled'Access, Self);
 
       Gtk_New (Col);
       Col.Set_Expand (True);
@@ -717,7 +879,66 @@ package body VCS2.Commits is
       P.Execute (Self.Kernel, null);   --  also calls Refresh
 
       Vcs_Active_Changed_Hook.Add (new On_Active_VCS_Changed, Watch => Self);
+
+      Vcs_File_Status_Changed_Hook.Add
+        (new On_VCS_File_Status_Changed, Watch => Self);
    end On_Create;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self          : On_VCS_File_Status_Changed;
+      Kernel        : not null access Kernel_Handle_Record'Class;
+      Vcs           : not null access Abstract_VCS_Engine'Class;
+      File          : GNATCOLL.VFS.Virtual_File;
+      Props         : VCS_File_Properties)
+   is
+      pragma Unreferenced (Self);
+      View : constant Commit_View := Commit_Views.Retrieve_View (Kernel);
+
+      procedure Remove_Node_In_List (List : Gtk_Tree_Iter);
+      --  Remove the node for File in List and its siblings
+
+      procedure Remove_From_Tree;
+      --  Remove all nodes for File in the tree
+
+      procedure Remove_Node_In_List (List : Gtk_Tree_Iter) is
+         Iter : Gtk_Tree_Iter := List;
+      begin
+         while Iter /= Null_Iter loop
+            if Get_File_From_Node (View.Tree, Iter) = File then
+               View.Tree.Model.Remove (Iter);
+               return;
+            end if;
+            View.Tree.Model.Next (Iter);
+         end loop;
+      end Remove_Node_In_List;
+
+      procedure Remove_From_Tree is
+         Iter : Gtk_Tree_Iter;
+      begin
+         if View.Config.Group_By_Category then
+            Iter := View.Tree.Model.Get_Iter_First;
+            while Iter /= Null_Iter loop
+               Remove_Node_In_List (View.Tree.Model.Children (Iter));
+               View.Tree.Model.Next (Iter);
+            end loop;
+
+         else
+            Remove_Node_In_List (View.Tree.Model.Get_Iter_First);
+         end if;
+      end Remove_From_Tree;
+
+   begin
+      if not View.Computing_File_Status then
+         Remove_From_Tree;
+         View.Create_Nodes
+           (File, Props, VCS_Engine_Access (Vcs), Select_Nodes => True);
+         View.Tree.Expand_All;
+      end if;
+   end Execute;
 
    --------------------
    -- Filter_Changed --
@@ -766,53 +987,11 @@ package body VCS2.Commits is
       --  fetching in the background
 
       Local_VCS : access VCS_Engine'Class;
-      Is_Active : Boolean;
-
-      Category_Staged    : Gtk_Tree_Path := Null_Gtk_Tree_Path;
-      Category_Modified  : Gtk_Tree_Path := Null_Gtk_Tree_Path;
-      Category_Untracked : Gtk_Tree_Path := Null_Gtk_Tree_Path;
 
       procedure On_File (File : Virtual_File; Props : VCS_File_Properties);
       procedure On_File (File : Virtual_File; Props : VCS_File_Properties) is
-         Show         : constant Boolean :=
-           Is_Active or else not View.Config.Hide_Other_VCS;
-         Is_Staged    : Boolean;
-         Is_Modified  : Boolean;
-         Is_Untracked : Boolean;
       begin
-         Is_Staged := (Props.Status and Mask_Staged) /= 0
-           and then Show;
-         Is_Modified := (Props.Status and Mask_Modified_Unstaged) /= 0
-           and then (not Is_Staged or else View.Config.Group_By_Category)
-           and then Show;
-         Is_Untracked := View.Config.Show_Untracked_Files
-           and then (Props.Status and Mask_Untracked) /= 0
-           and then (not (Is_Staged or Is_Modified)
-                    or else View.Config.Group_By_Category)
-           and then not Self.Kernel.Is_Hidden (File);
-
-         --  A file could be in multiple categories
-
-         if Is_Staged then
-            View.Create_Node
-              (Local_VCS, File, Props,
-               From_Active_VCS => Is_Active,
-               Parent => View.Tree.Model.Get_Iter (Category_Staged));
-         end if;
-
-         if Is_Modified then
-            View.Create_Node
-              (Local_VCS, File, Props,
-               From_Active_VCS => Is_Active,
-               Parent => View.Tree.Model.Get_Iter (Category_Modified));
-         end if;
-
-         if Is_Untracked then
-            View.Create_Node
-              (Local_VCS, File, Props,
-               From_Active_VCS => Is_Active,
-               Parent => View.Tree.Model.Get_Iter (Category_Untracked));
-         end if;
+         View.Create_Nodes (File, Props, Local_VCS);
       end On_File;
 
       procedure On_VCS (VCS : not null access VCS_Engine'Class);
@@ -821,7 +1000,6 @@ package body VCS2.Commits is
          Trace (Me, "Got all files in cache for " & VCS.Name);
          View.VCS_Count := View.VCS_Count + 1;
          Local_VCS := VCS;
-         Is_Active := VCS = Active_VCS (Self.Kernel);
          VCS.For_Each_File_In_Cache (On_File'Access);
       end On_VCS;
 
@@ -832,42 +1010,65 @@ package body VCS2.Commits is
       if VCS = null and then View /= null then
 
          View.VCS_Count := 0;
+         View.Computing_File_Status := False;
 
          declare
             Dummy : constant Expansion.Detached_Model :=
               Expansion.Detach_Model_From_View (View.Tree);
          begin
             View.Tree.Model.Clear;
+            Path_Free (View.Category_Staged);
+            View.Category_Staged := Null_Gtk_Tree_Path;
+            Path_Free (View.Category_Modified);
+            View.Category_Modified := Null_Gtk_Tree_Path;
+            Path_Free (View.Category_Untracked);
+            View.Category_Untracked := Null_Gtk_Tree_Path;
 
             if View.Config.Group_By_Category then
                Iter := Create_Category_Node (View, -"Staged Files");
-               Category_Staged := View.Tree.Model.Get_Path (Iter);
+               View.Category_Staged := View.Tree.Model.Get_Path (Iter);
 
                Iter := Create_Category_Node (View, -"Modified Files");
-               Category_Modified := View.Tree.Model.Get_Path (Iter);
+               View.Category_Modified := View.Tree.Model.Get_Path (Iter);
 
                if View.Config.Show_Untracked_Files then
                   Iter := Create_Category_Node (View, -"Untracked Files");
-                  Category_Untracked := View.Tree.Model.Get_Path (Iter);
+                  View.Category_Untracked := View.Tree.Model.Get_Path (Iter);
                end if;
             end if;
 
             For_Each_VCS (Self.Kernel, On_VCS'Access);
-
-            if View.Config.Group_By_Category then
-               Path_Free (Category_Staged);
-               Path_Free (Category_Modified);
-               Path_Free (Category_Untracked);
-            end if;
          end;
 
          if View.Config.Group_By_Category then
             View.Tree.Expand_All;
+
+            --  Find the location of the category nodes, after sorting has
+            --  been done
+
+            Path_Free (View.Category_Staged);
+            Path_Free (View.Category_Modified);
+            Path_Free (View.Category_Untracked);
+            View.Category_Modified  := Gtk_Tree_Path_New_From_String ("0");
+            View.Category_Staged    := Gtk_Tree_Path_New_From_String ("1");
+            View.Category_Untracked := Gtk_Tree_Path_New_From_String ("2");
          end if;
 
          Commit_Views.Reset_Toolbar (View);
       end if;
    end Execute;
+
+   ------------------
+   -- On_Destroyed --
+   ------------------
+
+   procedure On_Destroyed (View : access Gtk_Widget_Record'Class) is
+      Self : constant Commit_View := Commit_View (View);
+   begin
+      Path_Free (Self.Category_Staged);
+      Path_Free (Self.Category_Modified);
+      Path_Free (Self.Category_Untracked);
+   end On_Destroyed;
 
    -------------
    -- Execute --

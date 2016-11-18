@@ -58,6 +58,12 @@ package body VCS2.Scripts is
    overriding function Default_File_Status
      (Self    : not null access Script_Engine)
       return VCS_File_Status is (Self.Factory.Default_Status);
+   overriding procedure Stage_Files
+     (Self    : not null access Script_Engine;
+      Files   : GNATCOLL.VFS.File_Array);
+   overriding procedure Unstage_Files
+     (Self    : not null access Script_Engine;
+      Files   : GNATCOLL.VFS.File_Array);
 
    procedure Static_VCS_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -74,6 +80,12 @@ package body VCS2.Scripts is
       Data   : in out Callback_Data'Class);
    --  Call a python method of self.
    --  Free Data
+
+   procedure Set_Nth_Arg
+     (Data  : in out Callback_Data'Class;
+      Nth   : Integer;
+      Files : File_Array);
+   --  Store a list of files as the nth argument
 
    -----------------
    -- Call_Method --
@@ -119,6 +131,29 @@ package body VCS2.Scripts is
       return Self.Factory.Name;
    end Name;
 
+   -----------------
+   -- Set_Nth_Arg --
+   -----------------
+
+   procedure Set_Nth_Arg
+     (Data  : in out Callback_Data'Class;
+      Nth   : Integer;
+      Files : File_Array)
+   is
+      L : List_Instance'Class := New_List (Data.Get_Script);
+      Index : Positive := 1;
+   begin
+      for F of Files loop
+         if F /= No_File then
+            L.Set_Nth_Arg (Index, Create_File (Data.Get_Script, F));
+            Index := Index + 1;
+         end if;
+      end loop;
+
+      Data.Set_Nth_Arg (Nth, L);
+      Free (L);   --  now owned by Data
+   end Set_Nth_Arg;
+
    ----------------------------------
    -- Async_Fetch_Status_For_Files --
    ----------------------------------
@@ -128,19 +163,9 @@ package body VCS2.Scripts is
       Files   : File_Array)
    is
       D : Callback_Data'Class := Create (Self.Script, 1);
-      L : List_Instance'Class := New_List (Self.Script);
-      Index : Positive := 1;
    begin
-      for F of Files loop
-         if F /= No_File then
-            L.Set_Nth_Arg (Index, Create_File (Self.Script, F));
-            Index := Index + 1;
-         end if;
-      end loop;
-
-      D.Set_Nth_Arg (1, L);
+      Set_Nth_Arg (D, 1, Files);
       Call_Method (Self, "async_fetch_status_for_files", D);
-      Free (L);
    end Async_Fetch_Status_For_Files;
 
    ------------------------------------
@@ -182,7 +207,8 @@ package body VCS2.Scripts is
       Inst   : Class_Instance;
 
    begin
-      Data.Set_Nth_Arg (1, Working_Dir.Display_Full_Name);
+      Ensure_Directory (Working_Dir);
+      Data.Set_Nth_Arg (1, Create_File (Script, Working_Dir));
       Inst := Self.Construct.Execute (Data);  -- create the pyton instance
       Free (Data);
 
@@ -195,9 +221,9 @@ package body VCS2.Scripts is
       return R;
    end Create_Engine;
 
-   ---------------
-   -- Find_Repo --
-   ---------------
+   ----------------------------
+   -- Find_Working_Directory --
+   ----------------------------
 
    overriding function Find_Working_Directory
      (Self  : not null access Script_Engine_Factory;
@@ -219,6 +245,34 @@ package body VCS2.Scripts is
          end if;
       end;
    end Find_Working_Directory;
+
+   -----------------
+   -- Stage_Files --
+   -----------------
+
+   overriding procedure Stage_Files
+     (Self    : not null access Script_Engine;
+      Files   : GNATCOLL.VFS.File_Array)
+   is
+      Data : Callback_Data'Class := Create (Self.Script, 1);
+   begin
+      Set_Nth_Arg (Data, 1, Files);
+      Call_Method (Self, "stage_files", Data);
+   end Stage_Files;
+
+   -------------------
+   -- Unstage_Files --
+   -------------------
+
+   overriding procedure Unstage_Files
+     (Self    : not null access Script_Engine;
+      Files   : GNATCOLL.VFS.File_Array)
+   is
+      Data : Callback_Data'Class := Create (Self.Script, 1);
+   begin
+      Set_Nth_Arg (Data, 1, Files);
+      Call_Method (Self, "unstage_files", Data);
+   end Unstage_Files;
 
    -----------------
    -- VCS_Handler --
@@ -260,8 +314,10 @@ package body VCS2.Scripts is
             Props : constant VCS_File_Properties :=
               VCS.File_Properties_From_Cache (Nth_Arg (Data, 2));
          begin
-            Data.Set_Return_Value
-              (VCS_File_Status'Pos (Props.Status));
+            Data.Set_Return_Value_As_List (Size => 3);
+            Data.Set_Return_Value (VCS_File_Status'Pos (Props.Status));
+            Data.Set_Return_Value (To_String (Props.Version));
+            Data.Set_Return_Value (To_String (Props.Repo_Version));
          end;
 
       elsif Command = "_set_file_status" then

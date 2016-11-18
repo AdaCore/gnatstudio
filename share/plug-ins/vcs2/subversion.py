@@ -1,4 +1,4 @@
-from . import core
+from . import core, core_staging
 import GPS
 import re
 import os
@@ -6,7 +6,8 @@ from workflows.promises import ProcessWrapper
 
 
 @core.register_vcs(default_status=GPS.VCS2.Status.UNTRACKED)
-class SVN(core.File_Based_VCS):
+class SVN(core_staging.Emulate_Staging,
+          core.File_Based_VCS):
 
     __re_status = re.compile(
         '^(?P<status>....... .)\s+(?P<rev>\S+)\s+' +
@@ -24,7 +25,7 @@ class SVN(core.File_Based_VCS):
                 ['svn', 'status', '-v',
                  '-u'] +   # Compare with server (slower but more helpful)
                 args,
-                directory=self.working_dir)
+                directory=self.working_dir.path)
 
             while True:
                 line = yield p.wait_line()
@@ -33,7 +34,7 @@ class SVN(core.File_Based_VCS):
 
                 m = self.__re_status.search(line)
                 if m:
-                    f = os.path.join(self.working_dir, m.group('file'))
+                    f = os.path.join(self.working_dir.path, m.group('file'))
                     rev = m.group('rev')   # current checkout
                     rrev = m.group('lastcommit')  # only if we use '-u'
 

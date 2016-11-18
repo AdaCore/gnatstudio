@@ -9427,7 +9427,7 @@ class VCS2(object):
     """
 
     @staticmethod
-    def _register(name, klassname, default_status, discover_repo):
+    def _register(name, construct, default_status, discover_repo):
         """
         Register support for a new Version Control System.
         This function is not meant to be called directly. Instead, check the
@@ -9435,8 +9435,8 @@ class VCS2(object):
 
         :param str name: the name of the system, as it should be set in
            the project properties IDE.VCS_Kind attribute.
-        :param str klassname: the name of the class that implements this VCS.
-           Must derive from vcs.VCS_Engine.
+        :param construct: a function that takes a GPS.File (the working
+           directory location) and returns an instance of GPS.VCS.
         :param int default_status: the default status for files not in the
            cache yet.
         :param discover_repo: a function that takes a :class:`GPS.File`, and
@@ -9507,6 +9507,8 @@ class VCS2(object):
         Return the file status, as seen in self'cache.
 
         :param GPS.File file:
+        :returntype: a tuple (GPS.VCS2.Status, str, str)
+           where the two strings are the version and the repository version
         """
 
     def invalidate_status_cache(self):

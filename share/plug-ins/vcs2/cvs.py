@@ -1,4 +1,4 @@
-from . import core
+from . import core, core_staging
 import GPS
 import os
 import re
@@ -19,7 +19,8 @@ STATUSES = {
 
 
 @core.register_vcs(default_status=GPS.VCS2.Status.UNTRACKED)
-class CVS(core.File_Based_VCS):
+class CVS(core_staging.Emulate_Staging,
+          core.File_Based_VCS):
 
     __re_status = re.compile(
         '^(?:' +
@@ -39,7 +40,7 @@ class CVS(core.File_Based_VCS):
 
             p = ProcessWrapper(
                 ['cvs', '-f', 'status'] + args,
-                directory=self.working_dir)
+                directory=self.working_dir.path)
             current_file = None
             dir = None
             while True:

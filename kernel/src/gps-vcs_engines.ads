@@ -294,6 +294,23 @@ package GPS.VCS_Engines is
    --          For_Each_File_In_Cache (VCS, ...);
    --      end;
 
+   ----------------
+   -- Operations --
+   ----------------
+
+   procedure Stage_Files
+     (Self    : not null access VCS_Engine;
+      Files   : GNATCOLL.VFS.File_Array) is abstract;
+   procedure Unstage_Files
+     (Self    : not null access VCS_Engine;
+      Files   : GNATCOLL.VFS.File_Array) is abstract;
+   --  Stage or unstage the files so that they are part of the next commit.
+   --  This is supported natively by some VCS (git), but is emulated for others
+   --  like subversion.
+   --  This function then updates the status for the Files, and emits the
+   --  appropriate hooks to report the change. This is done possibly
+   --  asynchronously.
+
    ----------
    -- Misc --
    ----------

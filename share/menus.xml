@@ -155,7 +155,7 @@
          <menu label='Forward'                    action='forward locations history'/>
       </menu>
 
-      <menu label='VCS'>
+      <menu label='VCS' optional='true'>
          <menu label='_Explorer'                  action='vcs open explorer'/>
          <menu label='_Activities'                action='vcs open activities window'/>
          <menu label='Update All _Projects'       action='vcs update all projects'/>
@@ -296,9 +296,11 @@
             <menu label="_Remote"                    action="open remote"/>
             <menu label="Scenario"                  action="open scenario"/>
             <menu label="Tasks"                     action="open Tasks"/>
-            <menu label="VCS _Activities"            action="VCS open activities window"/>
             <menu label="VCS Commits"                action="open commits"/>
-            <menu label="_VCS Explorer"              action="VCS open explorer"/> <!-- duplicate-->
+            <menu label="VCS _Activities"            action="VCS open activities window"
+                  optional='true' hide='true'/>
+            <menu label="_VCS Explorer"              action="VCS open explorer"
+                  optional='true' hide='true'/>
             <menu label="_Windows"                   action="open windows"/>
          </menu>
          <menu label="Browsers">

@@ -104,7 +104,14 @@ package body GPS.VCS_Engines is
    overriding function File_Properties_From_Cache
      (Self    : not null access Dummy_VCS_Engine;
       File    : Virtual_File) return VCS_File_Properties
-   is ((Status_Untracked, Null_Unbounded_String, Null_Unbounded_String));
+     is ((Status_Untracked, Null_Unbounded_String, Null_Unbounded_String));
+   overriding procedure Stage_Files
+     (Self    : not null access Dummy_VCS_Engine;
+      Files   : GNATCOLL.VFS.File_Array) is null;
+   overriding procedure Unstage_Files
+     (Self    : not null access Dummy_VCS_Engine;
+      Files   : GNATCOLL.VFS.File_Array) is null;
+
    --  An engine that does nothing, used when the project is not setup for
    --  VCS operations
 
@@ -838,7 +845,12 @@ package body GPS.VCS_Engines is
       else
          Self.Run_In_Background := Self.Run_In_Background - 1;
          Assert (Me, Self.Run_In_Background >= 0, "Invalid Set_In_Background");
-         if Self.Run_In_Background = 0 then
+
+         --  Queue could be empty if the command was executed directly from
+         --  python (and not via a call to Queue).
+         if Self.Run_In_Background = 0
+           and then not Self.Queue.Is_Empty
+         then
             Complete_Command (Self);
             Next_In_Queue (Self);
          end if;

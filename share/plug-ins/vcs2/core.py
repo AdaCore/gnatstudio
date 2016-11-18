@@ -75,7 +75,11 @@ class VCS(GPS.VCS2):
             pass
     """
 
-    def __init__(self, working_dir):
+    #######################
+    # Overridable methods #
+    #######################
+
+    def __init__(self, working_dir, default_status):
         """
         Instances are created in `register` below. If you need additional
         parameters, they need to be given to `register.
@@ -83,10 +87,13 @@ class VCS(GPS.VCS2):
         you cannot call any of the functions exported by GPS. Do this from
         `setup` instead.
 
-        :param str working_dir: the location of the working directory,
+        :param GPS.File working_dir: the location of the working directory,
            computed from `discover_working_dir`
+        :param GPS.VCS2.Status: the default assumed status of files.
+           See `register_vcs`
         """
         self.working_dir = working_dir
+        self.default_status = default_status
 
     def setup(self):
         """
@@ -134,6 +141,31 @@ class VCS(GPS.VCS2):
         """
         pass
 
+    def stage_files(self, files):
+        """
+        Mark all the files in the list to be part of the next commit.
+        Some VCS systems support this natively (git), while for others it
+        needs to be emulated.
+        Extend the vcs2.core_staging.Emulate_Staging class to emulate.
+
+        :param List(GPS.File) files: the list of files to stage
+        """
+
+    def unstage_files(self, files):
+        """
+        Unmark all the files in the list so that they are not part of the
+        next commit.
+        Some VCS systems support this natively (git), while for others it
+        needs to be emulated.
+        Extend the vcs2.core_staging.Emulate_Staging class to emulate.
+
+        :param List(GPS.File) files: the list of files to stage
+        """
+
+    ############
+    # Services #
+    ############
+
     def set_status_for_all_files(self, files=set()):
         """
         A proxy that lets you set statuses of individual files, and on
@@ -151,7 +183,12 @@ class VCS(GPS.VCS2):
             # does nothing when you are done, unless you call
             s.set_status_for_remaining_files(['file1.adb', 'file2.adb',...])
 
-        The default status comes from the call to `register_vcs`
+        The default status comes from the call to `register_vcs`.
+
+        This function takes into account emulated staging: when a VCS does not
+        natively support staging (like git does), GPS emulates it by saving
+        some data across session. This function takes into account this saved
+        data and modifies the status as needed.
 
         :param Set(GPS.File): the set of files to update. This parameter is
            only used when using this function as a context manager (the 'with'
@@ -193,7 +230,7 @@ class VCS(GPS.VCS2):
                 if not isinstance(files, set):
                     files = set(files)
                 files.difference_update(self._seen)
-                vcs._set_file_status(list(files))  # set the default status
+                vcs._set_file_status(list(files), vcs.default_status)
 
             def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
                 self.set_status_for_remaining_files(files)
@@ -254,7 +291,7 @@ class register_vcs:
         GPS.VCS2._register(
             self.name or klass.__name__,
             construct=lambda working_dir: klass(
-                working_dir, *self.args, **self.kwargs),
+                working_dir, self.default_status, *self.args, **self.kwargs),
             default_status=self.default_status,
             discover_working_dir=klass.discover_working_dir)
         return klass
