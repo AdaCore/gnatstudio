@@ -5967,6 +5967,45 @@ class FileLocation(object):
 
 
 ###########################################################
+# FileTemplate
+###########################################################
+
+class FileTemplate(object):
+
+    """
+    This class allows the user to create file templates from
+    registered aliases.
+    """
+
+    @staticmethod
+    def register(alias_name, label, unit_param, language, is_impl):
+        """
+        Register a new file template and create a 'New/create ``label``
+        contextual menu allowing users to create a new file from it for a given
+        directory.
+
+        A file template is associated with the registered alias retrieved from
+        ``alias_name``: when clicking on the file template's contextual menu,
+        a dialog asks the user to enter the alias parameters values and the
+        expanded text of the alias is then used to prefill the new file.
+
+        The base name of the newly created file is deduced from the
+        ``unit_param`` alias parameter value and the naming sheme deduced from
+        the given ``language``. Finally, the extension is computed from the
+        ``is_impl`` boolean parameter, which indicates if the file is an
+        implementation file or a specification file. The file is then placed
+        in the directory from which the contextual menu was spawned.
+
+        :param str alias_name: the name of the alias to use
+        :param str label: label used for displaying purposes
+        :param str unit_param: the alias parameter to use for naming
+        :param str language: the file template's language
+        :param bool is_impl: whether it's an implementation file or not
+        """
+        pass  # implemented in Ada
+
+
+###########################################################
 # HTML
 ###########################################################
 

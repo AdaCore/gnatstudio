@@ -159,6 +159,7 @@ with KeyManager_Module;
 with KeyManager_Module.Macros;
 with Toolchains_Module;
 with Ada_Semantic_Tree_Module;
+with Language_Handlers.Assistants;
 with Memory_Usage_Views;
 with Navigation_Module;
 with Outline_View;
@@ -2192,6 +2193,8 @@ procedure GPS.Main is
       Bookmark_Views.Register_Module (GPS_Main.Kernel);
 
       Buffer_Views.Register_Module (GPS_Main.Kernel);
+
+      Language_Handlers.Assistants.Register_Module (GPS_Main.Kernel);
 
       Memory_Usage_Views.Register_Module (GPS_Main.Kernel);
 

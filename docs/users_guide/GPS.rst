@@ -1116,6 +1116,15 @@ Classes
 
    .. automethod:: GPS.FileLocation.line
 
+:class:`GPS.FileTemplate`
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: FileTemplate()
+
+
+
+   .. automethod:: GPS.FileTemplate.register
+
 :class:`GPS.Filter`
 ^^^^^^^^^^^^^^^^^^^
 
