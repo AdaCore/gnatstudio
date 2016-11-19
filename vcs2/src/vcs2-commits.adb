@@ -227,8 +227,7 @@ package body VCS2.Commits is
    type Commit is new Interactive_Command with null record;
    overriding function Execute
      (Command : access Commit;
-      Context : Interactive_Command_Context) return Command_Return_Type
-     is (Commands.Success);
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Kernel_Combo_Tool_Record is new Gtkada_Combo_Tool_Button_Record with
       record
@@ -265,6 +264,10 @@ package body VCS2.Commits is
 
    procedure On_Destroyed (View : access Gtk_Widget_Record'Class);
    --  Called when the view is destroyed
+
+   function Get_Commit_Message
+     (VCS    : not null access VCS_Engine'Class) return String;
+   --  The commit message saved for the given VCS
 
    type On_VCS_File_Status_Changed is new Vcs_File_Status_Hooks_Function
      with null record;
@@ -596,30 +599,44 @@ package body VCS2.Commits is
       end if;
    end Execute;
 
+   ------------------------
+   -- Get_Commit_Message --
+   ------------------------
+
+   function Get_Commit_Message
+     (VCS    : not null access VCS_Engine'Class)
+      return String
+   is
+      P     : String_Property;
+      Found : Boolean;
+   begin
+      Get_Property
+        (P,
+         Key      => VCS.Name & "--" & VCS.Working_Directory.Display_Full_Name,
+         Name     => "commit_msg",
+         Found    => Found);
+      if Found and then P.Value /= null then
+         return P.Value.all;
+      else
+         return "";
+      end if;
+   end Get_Commit_Message;
+
    -------------
    -- Refresh --
    -------------
 
    procedure Refresh (Self : not null access Commit_View_Record'Class) is
-      P     : String_Property;
-      Found : Boolean;
    begin
       --  Save and restore commit message
       Save_Commit_Message (Self);
       Self.Active_VCS := Active_VCS (Self.Kernel);
-      Self.Commit.Get_Buffer.Set_Text ("");
 
       if Self.Active_VCS /= null then
-         Get_Property
-           (P,
-            Key        =>
-              Self.Active_VCS.Name
-            & "--" & Self.Active_VCS.Working_Directory.Display_Full_Name,
-            Name       => "commit_msg",
-            Found      => Found);
-         if Found and then P.Value /= null then
-            Self.Commit.Get_Buffer.Set_Text (P.Value.all);
-         end if;
+         Self.Commit.Get_Buffer.Set_Text
+           (Get_Commit_Message (Self.Active_VCS));
+      else
+         Self.Commit.Get_Buffer.Set_Text ("");
       end if;
 
       Show_Placeholder_If_Needed (Self.Commit);
@@ -761,6 +778,34 @@ package body VCS2.Commits is
             Unchecked_Free (Files);
          end if;
       end if;
+      return Commands.Success;
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding function Execute
+     (Command : access Commit;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
+      VCS : constant VCS_Engine_Access := Active_VCS (Kernel);
+   begin
+      if VCS /= null then
+         declare
+            Msg : constant String := Get_Commit_Message (VCS);
+         begin
+            if Msg /= "" then
+               VCS.Commit_Staged_Files (Msg);
+
+            else
+               Insert (Kernel, "No commit message specified", Mode => Error);
+            end if;
+         end;
+      end if;
+
       return Commands.Success;
    end Execute;
 

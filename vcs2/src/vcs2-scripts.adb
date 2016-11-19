@@ -64,6 +64,9 @@ package body VCS2.Scripts is
    overriding procedure Unstage_Files
      (Self    : not null access Script_Engine;
       Files   : GNATCOLL.VFS.File_Array);
+   overriding procedure Commit_Staged_Files
+     (Self    : not null access Script_Engine;
+      Message : String);
 
    procedure Static_VCS_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -273,6 +276,20 @@ package body VCS2.Scripts is
       Set_Nth_Arg (Data, 1, Files);
       Call_Method (Self, "unstage_files", Data);
    end Unstage_Files;
+
+   -------------------------
+   -- Commit_Staged_Files --
+   -------------------------
+
+   overriding procedure Commit_Staged_Files
+     (Self    : not null access Script_Engine;
+      Message : String)
+   is
+      Data : Callback_Data'Class := Create (Self.Script, 1);
+   begin
+      Set_Nth_Arg (Data, 1, Message);
+      Call_Method (Self, "commit_staged_files", Data);
+   end Commit_Staged_Files;
 
    -----------------
    -- VCS_Handler --

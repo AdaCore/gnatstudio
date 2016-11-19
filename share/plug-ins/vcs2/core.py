@@ -162,6 +162,12 @@ class VCS(GPS.VCS2):
         :param List(GPS.File) files: the list of files to stage
         """
 
+    def commit_staged_files(self, message):
+        """
+        Commit all staged files.
+        :param str message: the commit message
+        """
+
     ############
     # Services #
     ############

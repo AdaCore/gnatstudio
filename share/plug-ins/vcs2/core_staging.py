@@ -7,6 +7,7 @@ You only need to derive from this class to get staging emulation.
 
 import GPS
 import json
+from . import core
 
 
 class Emulate_Staging(object):
@@ -20,6 +21,22 @@ class Emulate_Staging(object):
 
     def unstage_files(self, files):
         self.__emulate_stage(files, stage=False)
+
+    @core.run_in_background
+    def _internal_commit_staged_files(self, args):
+        """
+        Execute the command `args` and pass all staged files.
+
+        :param List(str) args: the command and its arguments
+        """
+        files = self.__emulate_stage
+        p = ProcessWrapper(args + [f.path for f in files])
+        (status, output) = yield p.wait_until_terminate()
+        if status:
+            GPS.Console().write("%s %s" % (" ".join(args), output))
+        else:
+            self.unstage_files(files)
+            yield self.async_fetch_status_for_files(files)
 
     def _set_file_status(self, files, status, version="", repo_version=""):
         """Override Ada behavior"""

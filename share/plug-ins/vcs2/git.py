@@ -18,13 +18,13 @@ class Git(core.VCS):
     def discover_working_dir(file):
         return core.find_admin_directory(file, '.git')
 
-    @core.vcs_action(icon='github-repo-push-symbolic',
-                     name='git commit and push staged files',
-                     toolbar='Commits', toolbar_section='commits')
-    def _commit_and_push(self):
-        """
-        Commit all staged files, and then push to the remote repository
-        """
+    # @core.vcs_action(icon='github-repo-push-symbolic',
+    #                  name='git commit and push staged files',
+    #                  toolbar='Commits', toolbar_section='commits')
+    # def _commit_and_push(self):
+    #     """
+    #     Commit all staged files, and then push to the remote repository
+    #     """
 
     def __git_ls_tree(self):
         """
@@ -105,23 +105,25 @@ class Git(core.VCS):
         s.set_status_for_remaining_files(f)
 
     @core.run_in_background
-    def stage_files(self, files):
+    def __action_then_update_status(self, params, files=[]):
+        """
+        :param List(str) params: the "git ..." action to perform
+        :param List(GPS.File) files: list of files
+        """
         p = ProcessWrapper(
-            ['git', 'add'] + [f.path for f in files],
+            ['git'] + params + [f.path for f in files],
             directory=self.working_dir.path)
         (status, output) = yield p.wait_until_terminate()
         if status:
-            GPS.Console().write("git add: %s" % output)
+            GPS.Console().write("git %s: %s" % (" ".join(params), output))
         else:
             yield self.async_fetch_status_for_all_files()  # update statuses
 
-    @core.run_in_background
+    def stage_files(self, files):
+        self.__action_then_update_status(['add'], files)
+
     def unstage_files(self, files):
-        p = ProcessWrapper(
-            ['git', 'reset'] + [f.path for f in files],
-            directory=self.working_dir.path)
-        (status, output) = yield p.wait_until_terminate()
-        if status:
-            GPS.Console().write("git reset: %s" % output)
-        else:
-            yield self.async_fetch_status_for_all_files()  # update statuses
+        self.__action_then_update_status(['reset'], files)
+
+    def commit_staged_files(self, message):
+        self.__action_then_update_status(['commit', '-m', message])

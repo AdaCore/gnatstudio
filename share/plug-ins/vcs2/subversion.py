@@ -82,3 +82,6 @@ class SVN(core_staging.Emulate_Staging,
                         status = status | GPS.VCS2.Status.NEEDS_UPDATE
 
                     s.set_status(GPS.File(f), status, rev, rrev)
+
+    def commit_staged_filed(self, message):
+        self._internal_commit_staged_files(['svn', 'commit', '-m', message])

@@ -82,3 +82,6 @@ class CVS(core_staging.Emulate_Staging,
 
             if current_file is not None:
                 s.set_status(current_file, status, rev, repo_rev)
+
+    def commit_staged_files(self, message):
+        self._internal_commit_staged_files(['cvs', 'commit', '-m', message])

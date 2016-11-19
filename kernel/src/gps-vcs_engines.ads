@@ -311,6 +311,12 @@ package GPS.VCS_Engines is
    --  appropriate hooks to report the change. This is done possibly
    --  asynchronously.
 
+   procedure Commit_Staged_Files
+     (Self    : not null access VCS_Engine;
+      Message : String) is abstract;
+   --  Commit all staged files with the corresponding message, then refresh
+   --  the status of files (this is done asynchronously)
+
    ----------
    -- Misc --
    ----------

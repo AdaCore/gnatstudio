@@ -111,6 +111,9 @@ package body GPS.VCS_Engines is
    overriding procedure Unstage_Files
      (Self    : not null access Dummy_VCS_Engine;
       Files   : GNATCOLL.VFS.File_Array) is null;
+   overriding procedure Commit_Staged_Files
+     (Self    : not null access Dummy_VCS_Engine;
+      Message : String) is null;
 
    --  An engine that does nothing, used when the project is not setup for
    --  VCS operations
