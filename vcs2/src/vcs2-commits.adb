@@ -812,8 +812,14 @@ package body VCS2.Commits is
       VCS   : access VCS_Engine'Class)
    is
       pragma Unreferenced (Self);
+      View : constant Commit_View := Commit_Views.Retrieve_View (VCS.Kernel);
    begin
       Set_Commit_Message (VCS, "");
+      if View /= null then
+         View.Commit.Get_Buffer.Set_Text ("");
+         Show_Placeholder_If_Needed (View.Commit);
+      end if;
+
       Display_Informational_Popup
         (Parent    => Get_Main_Window (VCS.Kernel),
          Icon_Name => "github-commit-symbolic",
@@ -835,10 +841,11 @@ package body VCS2.Commits is
       if VCS /= null then
          declare
             Msg : constant String := Get_Commit_Message (VCS);
+            C   : access Task_Completed_Callback'Class;
          begin
             if Msg /= "" then
-               VCS.Async_Commit_Staged_Files
-                 (Msg, On_Complete => new On_Committed);
+               C := new On_Committed;
+               VCS.Async_Commit_Staged_Files (Msg, On_Complete => C);
             else
                Insert (Kernel, "No commit message specified", Mode => Error);
             end if;
