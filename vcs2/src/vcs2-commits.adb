@@ -60,6 +60,7 @@ with Gtkada.Combo_Tool_Button;    use Gtkada.Combo_Tool_Button;
 with Gtkada.MDI;                  use Gtkada.MDI;
 with Gtkada.Tree_View;            use Gtkada.Tree_View;
 with GUI_Utils;                   use GUI_Utils;
+with Informational_Popups;        use Informational_Popups;
 with Tooltips;                    use Tooltips;
 with Pango.Layout;                use Pango.Layout;
 with VCS2.Engines;                use VCS2.Engines;
@@ -229,6 +230,12 @@ package body VCS2.Commits is
      (Command : access Commit;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
+   type On_Committed is new Task_Completed_Callback with null record;
+   overriding procedure Execute
+     (Self  : not null access On_Committed;
+      VCS   : access VCS_Engine'Class);
+   --  Called when a commit has been completed
+
    type Kernel_Combo_Tool_Record is new Gtkada_Combo_Tool_Button_Record with
       record
          Kernel : Kernel_Handle;
@@ -267,6 +274,9 @@ package body VCS2.Commits is
 
    function Get_Commit_Message
      (VCS    : not null access VCS_Engine'Class) return String;
+   procedure Set_Commit_Message
+     (VCS    : not null access VCS_Engine'Class;
+      Msg    : String);
    --  The commit message saved for the given VCS
 
    type On_VCS_File_Status_Changed is new Vcs_File_Status_Hooks_Function
@@ -622,6 +632,26 @@ package body VCS2.Commits is
       end if;
    end Get_Commit_Message;
 
+   ------------------------
+   -- Set_Commit_Message --
+   ------------------------
+
+   procedure Set_Commit_Message
+     (VCS    : not null access VCS_Engine'Class;
+      Msg    : String)
+   is
+      P    : access String_Property;
+   begin
+      P := new String_Property'
+        (Property_Record with Value => new String'(Msg));
+      Set_Property
+        (VCS.Kernel,
+         Key      => VCS.Name & "--" & VCS.Working_Directory.Display_Full_Name,
+         Name       => "commit_msg",
+         Property   => P,
+         Persistent => True);
+   end Set_Commit_Message;
+
    -------------
    -- Refresh --
    -------------
@@ -674,17 +704,9 @@ package body VCS2.Commits is
    is
       Text : constant String := Get_Text_Without_Placeholder (Self.Commit);
       VCS  : constant VCS_Engine_Access := Self.Active_VCS;
-      P    : access String_Property;
    begin
       if VCS /= null then
-         P := new String_Property'
-           (Property_Record with Value => new String'(Text));
-         Set_Property
-           (Self.Kernel,
-            Key   => VCS.Name & "--" & VCS.Working_Directory.Display_Full_Name,
-            Name       => "commit_msg",
-            Property   => P,
-            Persistent => True);
+         Set_Commit_Message (VCS, Text);
       end if;
    end Save_Commit_Message;
 
@@ -785,6 +807,23 @@ package body VCS2.Commits is
    -- Execute --
    -------------
 
+   overriding procedure Execute
+     (Self  : not null access On_Committed;
+      VCS   : access VCS_Engine'Class)
+   is
+      pragma Unreferenced (Self);
+   begin
+      Set_Commit_Message (VCS, "");
+      Display_Informational_Popup
+        (Parent    => Get_Main_Window (VCS.Kernel),
+         Icon_Name => "github-commit-symbolic",
+         Text      => -"Committed");
+   end Execute;
+
+   -------------
+   -- Execute --
+   -------------
+
    overriding function Execute
      (Command : access Commit;
       Context : Interactive_Command_Context) return Command_Return_Type
@@ -798,8 +837,8 @@ package body VCS2.Commits is
             Msg : constant String := Get_Commit_Message (VCS);
          begin
             if Msg /= "" then
-               VCS.Commit_Staged_Files (Msg);
-
+               VCS.Async_Commit_Staged_Files
+                 (Msg, On_Complete => new On_Committed);
             else
                Insert (Kernel, "No commit message specified", Mode => Error);
             end if;

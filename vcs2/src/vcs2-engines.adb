@@ -166,12 +166,18 @@ package body VCS2.Engines is
        VCS  : not null access VCS_Engine'Class);
    --  Implementation for Ensure_Status_For_Project
 
-   type Cmd_Ensure_Status_For_All_Files is new VCS_Command with
-      null record;
+   type Cmd_Ensure_Status_For_All_Files is new VCS_Command with null record;
    overriding procedure Execute
       (Self : not null access Cmd_Ensure_Status_For_All_Files;
        VCS  : not null access VCS_Engine'Class);
    --  Implementation for Ensure_Status_For_All_Source_Files
+
+   type Cmd_Commit_Staged_Files is new VCS_Command with record
+      Msg : Unbounded_String;
+   end record;
+   overriding procedure Execute
+     (Self : not null access Cmd_Commit_Staged_Files;
+      VCS  : not null access VCS_Engine'Class);
 
    -------------------
    -- Command queue --
@@ -788,6 +794,35 @@ package body VCS2.Engines is
       if N then
          VCS.Async_Fetch_Status_For_All_Files;
       end if;
+   end Execute;
+
+   -------------------------------
+   -- Async_Commit_Staged_Files --
+   -------------------------------
+
+   procedure Async_Commit_Staged_Files
+     (Self        : not null access VCS_Engine'Class;
+      Message     : String;
+      On_Complete : access Task_Completed_Callback'Class := null)
+   is
+   begin
+      Queue
+        (Self,
+         On_Complete,
+         new Cmd_Commit_Staged_Files'
+           (Msg => To_Unbounded_String (Message)));
+   end Async_Commit_Staged_Files;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self : not null access Cmd_Commit_Staged_Files;
+      VCS  : not null access VCS_Engine'Class)
+   is
+   begin
+      VCS.Commit_Staged_Files (To_String (Self.Msg));
    end Execute;
 
    ----------------------

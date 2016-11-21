@@ -271,11 +271,15 @@ package VCS2.Engines is
    --  appropriate hooks to report the change. This is done possibly
    --  asynchronously.
 
+   procedure Async_Commit_Staged_Files
+     (Self        : not null access VCS_Engine'Class;
+      Message     : String;
+      On_Complete : access Task_Completed_Callback'Class := null);
    procedure Commit_Staged_Files
      (Self    : not null access VCS_Engine;
       Message : String) is abstract;
    --  Commit all staged files with the corresponding message, then refresh
-   --  the status of files (this is done asynchronously)
+   --  the status of files (this is done asynchronously).
 
    ----------
    -- Misc --
