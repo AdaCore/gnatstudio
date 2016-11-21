@@ -333,7 +333,7 @@ class vcs_action:
 
             @core.vcs_action(...)
             def _mymethod(self):
-                pass
+                pass   # standard method, or generator with yield statements
 
     :param func: the function to execute for this action. It receives the
        instance of klass as a parameter. This should thus in general be
@@ -377,7 +377,7 @@ class vcs_action:
 
                     class __Proxy:
                         def __init__(self, method, inst):
-                            self.method = method
+                            self.method = run_in_background(method)
                             self.vcs = inst
 
                         def filter(self, context):

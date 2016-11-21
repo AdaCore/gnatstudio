@@ -35,6 +35,7 @@ class Emulate_Staging(object):
         if status:
             GPS.Console().write("%s %s" % (" ".join(args), output))
         else:
+            GPS.Hook('vcs_commit_done').run(self)
             self.unstage_files(files)
             yield self.async_fetch_status_for_files(files)
 

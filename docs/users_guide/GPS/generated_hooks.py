@@ -949,6 +949,14 @@ class Predefined_Hooks:
       :param str name:
         """
 
+    # vcs_commit_done = 'vcs_commit_done'
+    def vcs_commit_done(VCS):
+        """
+      Emitted when a commit has been successfully performed.
+
+      :param GPS.VCS VCS:
+        """
+
     # vcs_file_status_changed = 'vcs_file_status_changed'
     def vcs_file_status_changed(VCS,file,props):
         """

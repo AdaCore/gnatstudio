@@ -230,10 +230,11 @@ package body VCS2.Commits is
      (Command : access Commit;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   type On_Committed is new Task_Completed_Callback with null record;
+   type On_Committed is new Vcs_Hooks_Function with null record;
    overriding procedure Execute
-     (Self  : not null access On_Committed;
-      VCS   : access VCS_Engine'Class);
+     (Self   : On_Committed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      VCS    : not null access Abstract_VCS_Engine'Class);
    --  Called when a commit has been completed
 
    type Kernel_Combo_Tool_Record is new Gtkada_Combo_Tool_Button_Record with
@@ -808,20 +809,22 @@ package body VCS2.Commits is
    -------------
 
    overriding procedure Execute
-     (Self  : not null access On_Committed;
-      VCS   : access VCS_Engine'Class)
+     (Self   : On_Committed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      VCS    : not null access Abstract_VCS_Engine'Class)
    is
       pragma Unreferenced (Self);
-      View : constant Commit_View := Commit_Views.Retrieve_View (VCS.Kernel);
+      View : constant Commit_View := Commit_Views.Retrieve_View (Kernel);
    begin
-      Set_Commit_Message (VCS, "");
+      Trace (Me, "Commit completed successfully");
+      Set_Commit_Message (VCS_Engine_Access (VCS), "");
       if View /= null then
          View.Commit.Get_Buffer.Set_Text ("");
          Show_Placeholder_If_Needed (View.Commit);
       end if;
 
       Display_Informational_Popup
-        (Parent    => Get_Main_Window (VCS.Kernel),
+        (Parent    => Get_Main_Window (Kernel),
          Icon_Name => "github-commit-symbolic",
          Text      => -"Committed");
    end Execute;
@@ -841,11 +844,9 @@ package body VCS2.Commits is
       if VCS /= null then
          declare
             Msg : constant String := Get_Commit_Message (VCS);
-            C   : access Task_Completed_Callback'Class;
          begin
             if Msg /= "" then
-               C := new On_Committed;
-               VCS.Async_Commit_Staged_Files (Msg, On_Complete => C);
+               VCS.Commit_Staged_Files (Msg);
             else
                Insert (Kernel, "No commit message specified", Mode => Error);
             end if;
@@ -1235,6 +1236,8 @@ package body VCS2.Commits is
          Command     => new Reload_Status,
          Category    => "VCS2",
          Icon_Name   => "gps-refresh-symbolic");
+
+      Vcs_Commit_Done_Hook.Add (new On_Committed);
 
    end Register_Module;
 

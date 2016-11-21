@@ -439,7 +439,10 @@ Shadow builds''', inpython=False),
     'vcs_file_status_hooks': Hook_Type(
         [Param('VCS',       'VCS_Engine'),
          Param('file',      'File'),
-         Param('props',     'VCS_File_Properties')]),                                       
+         Param('props',     'VCS_File_Properties')]),       
+              
+    'vcs_hooks': Hook_Type(
+        [Param('VCS',       'VCS_Engine')]),                                
 }
 
 # The following describe all specific hooks. They all belong to one
@@ -906,6 +909,9 @@ details.'''),
     Hook('vcs_active_changed', 'simple_hooks', descr='''
 Emitted when the active VCS has changed. This is the VCS on which operations
 like commit and log happen.'''),
+         
+    Hook('vcs_commit_done', 'vcs_hooks', descr='''
+Emitted when a commit has been successfully performed.'''),
 ]
 
 #########################################################################
