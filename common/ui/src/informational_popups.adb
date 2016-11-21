@@ -21,14 +21,21 @@ with Gdk.Cairo;       use Gdk.Cairo;
 with Gdk.Screen;      use Gdk.Screen;
 with Gdk.Window;      use Gdk.Window;
 with Glib;            use Glib;
+with Glib.Main;       use Glib.Main;
+with Glib.Properties; use Glib.Properties;
+with Gtk.Box;         use Gtk.Box;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Image;       use Gtk.Image;
+with Gtk.Label;       use Gtk.Label;
 with Gtk.Revealer;    use Gtk.Revealer;
+with Gtk.Settings;    use Gtk.Settings;
 with Gtk.Widget;      use Gtk.Widget;
+with GNATCOLL.Traces; use GNATCOLL.Traces;
 
 with Gtkada.Handlers; use Gtkada.Handlers;
 
 package body Informational_Popups is
+   Me : constant Trace_Handle := Create ("POPUPS");
 
    Informational_Popup_Display_Time : constant Guint := 1_000;
    --  The amount of time during which an informational popup is displayed, in
@@ -41,6 +48,9 @@ package body Informational_Popups is
       No_Transparency_Color : Gdk_RGBA;
       --  Color used for the informational popup's background when transparency
       --  is not supported.
+
+      Timeout               : G_Source_Id := No_Source_Id;
+      --  When gtk+ animations are disabled
    end record;
    type Informational_Popup is access all Informational_Popup_Record'Class;
    --  Type representing informational popups
@@ -56,6 +66,38 @@ package body Informational_Popups is
    --  widget has changed.
    --  Used to hide the child just after it has been revealed so that the
    --  informational is only displayed for a brief time.
+
+   procedure On_Destroyed (Widget : access Gtk_Widget_Record'Class);
+   --  Called when the widget is destroyed
+
+   function On_Timeout (Self : Informational_Popup) return Boolean;
+   --  Simulating the revealer
+
+   package Popup_Sources is new Generic_Sources (Informational_Popup);
+
+   ------------------
+   -- On_Destroyed --
+   ------------------
+
+   procedure On_Destroyed (Widget : access Gtk_Widget_Record'Class) is
+      Popup : constant Informational_Popup := Informational_Popup (Widget);
+   begin
+      if Popup.Timeout /= No_Source_Id then
+         Remove (Popup.Timeout);
+         Popup.Timeout := No_Source_Id;
+      end if;
+   end On_Destroyed;
+
+   ----------------
+   -- On_Timeout --
+   ----------------
+
+   function On_Timeout (Self : Informational_Popup) return Boolean is
+   begin
+      Self.Destroy;
+      Self.Timeout := No_Source_Id;
+      return False;  --  do not execute again
+   end On_Timeout;
 
    -----------------------
    -- On_Child_Revealed --
@@ -112,13 +154,16 @@ package body Informational_Popups is
    procedure Display_Informational_Popup
      (Parent                : not null access Gtk_Window_Record'Class;
       Icon_Name             : String;
-      No_Transparency_Color : Gdk_RGBA := Black_RGBA)
+      No_Transparency_Color : Gdk_RGBA := Black_RGBA;
+      Text                  : String := "")
    is
       Info_Popup : Informational_Popup;
       Icon       : Gtk_Image;
       Revealer   : Gtk_Revealer;
       Screen     : Gdk_Screen;
       Visual     : Gdk_Visual;
+      Box        : Gtk_Box;
+      Label      : Gtk_Label;
    begin
       Info_Popup := new Informational_Popup_Record;
       Info_Popup.No_Transparency_Color := No_Transparency_Color;
@@ -142,24 +187,46 @@ package body Informational_Popups is
          Info_Popup.Set_Visual (Visual);
       end if;
 
+      Gtk_New_Hbox (Box, Homogeneous => False);
+
       Gtk_New_From_Icon_Name
         (Icon,
          Icon_Name => Icon_Name,
          Size      => Icon_Size_Dialog);
+      Box.Pack_Start (Icon, Expand => False, Fill => False);
 
-      Gtk_New (Revealer);
-      Widget_Callback.Object_Connect
-        (Revealer,
-         Name        => "notify::child-revealed",
-         Cb          => On_Child_Revealed'Access,
-         Slot_Object => Revealer);
-      Info_Popup.Add (Revealer);
-      Revealer.Add (Icon);
-      Revealer.Set_Transition_Duration (Informational_Popup_Display_Time / 2);
-      Revealer.Set_Transition_Type (Revealer_Transition_Type_Crossfade);
+      if Text /= "" then
+         Gtk_New (Label, Text);
+         Box.Pack_Start (Label, Expand => False, Fill => False);
+      end if;
+
+      if Get_Property (Get_Settings (Parent),
+                       Gtk_Enable_Animations_Property)
+      then
+         Gtk_New (Revealer);
+         Widget_Callback.Object_Connect
+           (Revealer,
+            Name        => "notify::child-revealed",
+            Cb          => On_Child_Revealed'Access,
+            Slot_Object => Revealer);
+         Info_Popup.Add (Revealer);
+         Revealer.Add (Box);
+         Revealer.Set_Transition_Duration
+           (Informational_Popup_Display_Time / 2);
+         Revealer.Set_Transition_Type (Revealer_Transition_Type_Crossfade);
+         Revealer.Set_Reveal_Child (True);
+
+      else
+         Trace (Me, "Animations are disabled, using fallback");
+         Info_Popup.On_Destroy (On_Destroyed'Access);
+         Info_Popup.Add (Box);
+         Info_Popup.Timeout := Popup_Sources.Timeout_Add
+           (Informational_Popup_Display_Time,
+            On_Timeout'Access,
+            Info_Popup);
+      end if;
 
       Info_Popup.Show_All;
-      Revealer.Set_Reveal_Child (True);
    end Display_Informational_Popup;
 
 end Informational_Popups;

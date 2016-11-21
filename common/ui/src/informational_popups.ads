@@ -30,7 +30,8 @@ package Informational_Popups is
    procedure Display_Informational_Popup
      (Parent                : not null access Gtk_Window_Record'Class;
       Icon_Name             : String;
-      No_Transparency_Color : Gdk_RGBA := Black_RGBA);
+      No_Transparency_Color : Gdk_RGBA := Black_RGBA;
+      Text                  : String := "");
    --  Display for a brief time an infomational popup in the center of Parent,
    --  using Icon_Name to retrieve the icon that should be displayed.
    --
