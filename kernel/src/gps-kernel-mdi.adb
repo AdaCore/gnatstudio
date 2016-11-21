@@ -71,7 +71,7 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Main_Window;           use GPS.Main_Window;
 with GPS.Dialogs;               use GPS.Dialogs;
-with GPS.VCS_Engines;           use GPS.VCS_Engines;
+with GPS.VCS;                   use GPS.VCS;
 
 with GPS.Editors;               use GPS.Editors;
 with GPS.Editors.GtkAda;
@@ -2214,12 +2214,12 @@ package body GPS.Kernel.MDI is
    is
       function Get_VCS return String;
       function Get_VCS return String is
-         VCS    : VCS_Engine_Access;
+         VCS    : Abstract_VCS_Engine_Access;
       begin
          if Project = No_Project then
-            VCS := Guess_VCS_For_Directory (Kernel, File.Dir);
+            VCS := Kernel.VCS.Guess_VCS_For_Directory (File.Dir);
          else
-            VCS := Get_VCS (Kernel, Project);
+            VCS := Kernel.VCS.Get_VCS (Project);
          end if;
 
          return VCS.Get_Tooltip_For_File (File);

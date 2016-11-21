@@ -20,19 +20,45 @@
 --  do not force a whole recompilation of the project.
 
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
+with GNATCOLL.Projects;      use GNATCOLL.Projects;
 with GNATCOLL.Scripts;       use GNATCOLL.Scripts;
+with GNATCOLL.VFS;           use GNATCOLL.VFS;
 with GPS.Scripts;            use GPS.Scripts;
 
 package GPS.VCS is
 
    type Abstract_VCS_Engine is abstract tagged private;
    type Abstract_VCS_Engine_Access is access all Abstract_VCS_Engine'Class;
-   --  Always derived in GPS.VCS_Engines
    --  For now kept is so that changes to the latter do not force a full
    --  recompilation because of the hooks
 
-   procedure Free (Self : in out Abstract_VCS_Engine);
-   --  Free the memory used by Self
+   type Abstract_VCS_Repository is interface;
+   type Abstract_VCS_Repository_Access is
+      access all Abstract_VCS_Repository'Class;
+
+   function Get_VCS
+     (Self     : not null access Abstract_VCS_Repository;
+      Project  : Project_Type)
+      return not null Abstract_VCS_Engine_Access
+     is abstract;
+   --  Return the VCS to use for a given project.
+   --  A given engine might be shared by multiple projects
+   --  Engine will be freed automatically when no other project references it
+
+   function Guess_VCS_For_Directory
+     (Self      : not null access Abstract_VCS_Repository;
+      Directory : Virtual_File) return not null Abstract_VCS_Engine_Access
+     is abstract;
+   --  For now, we assume there is a single VCS for a given directory (one
+   --  possibly use case for multiple VCS is to have a local vcs and a
+   --  remote one, but this is handled by local_history.py instead).
+   --
+   --  We cannot assume that any of the files in the directory is also a
+   --  project source, so we can't use Get_VCS above.
+   --  Instead, we check whether Directory or any of its parents has a result
+   --  for Get_VCS. This kinda assume that a directory either contains
+   --  project sources, or is beneath the directory that contains the VCS
+   --  repo (root/.git for instance).
 
    -------------
    -- Scripts --
@@ -138,6 +164,72 @@ package GPS.VCS is
    end record;
    --  Version and Repo_Version are only set for file-based VCS systems.
 
+   -----------------
+   -- VCS Engines --
+   -----------------
+
+   procedure Free (Self : in out Abstract_VCS_Engine);
+   --  Free the memory used by Self
+
+   function Get_Tooltip_For_File
+     (VCS     : not null access Abstract_VCS_Engine;
+      File    : GNATCOLL.VFS.Virtual_File)
+     return String is ("");
+   --  Return a description of the file's properties, suitable for display
+   --  in tooltips.
+
+   function File_Properties_From_Cache
+     (Self    : not null access Abstract_VCS_Engine;
+      File    : Virtual_File)
+     return VCS_File_Properties
+     is ((Status_Untracked, Null_Unbounded_String, Null_Unbounded_String));
+   --  Return the current known status of the file.
+   --  By default, files are assumed to be "unmodified". Calling one of the
+   --  Async_Fetch_Status_* procedures above will ensure that the proper status
+   --  is eventually set in the cache, and returned by this function.
+   --  The typical workflow to show file status is therefore:
+   --
+   --        ... Connect to VCS_File_Status_Update_Hook
+   --        St := Eng.File_Status_From_Cache (File);
+   --        ... display the status as currently known
+   --        Eng.Async_Fetch_Status_For_File (File);
+   --        --  monitor the hook to update the displayed status
+
+   procedure Set_File_Status_In_Cache
+     (Self         : not null access Abstract_VCS_Engine;
+      File         : Virtual_File;
+      Props        : VCS_File_Properties) is null;
+   --  Update the file status in the cache, and emit the
+   --  VCS_File_Status_Changed hook if needed. This should only be called
+   --  when you write your own VCS engine. Other code should use one of the
+   --  Async_Fetch_Status_* subprograms instead.
+
+   type Status_Display is record
+      Label     : Unbounded_String;
+      Icon_Name : Unbounded_String;
+   end record;
+   --  Display properties for a given status
+
+   function Name
+     (Self : not null access Abstract_VCS_Engine) return String is ("");
+   --  The name of the engine
+
+   function Get_Display
+     (Self   : not null access Abstract_VCS_Engine;
+      Status : VCS_File_Status) return Status_Display
+     is ((Null_Unbounded_String, Null_Unbounded_String));
+   --  How to display the status
+
+   procedure Ensure_Status_For_Project
+     (Self        : not null access Abstract_VCS_Engine;
+      Project     : Project_Type) is null;
+   procedure Ensure_Status_For_Files
+     (Self        : not null access Abstract_VCS_Engine;
+      Files       : File_Array) is null;
+   --  Ensure that all files in the project have a known VCS status in the
+   --  cache. This is done asynchronously, and results in possibly calls
+   --  to the VCS_File_Status_Update_Hook.
+
 private
 
    type Engine_Proxy is new Script_Proxy with null record;
@@ -149,7 +241,6 @@ private
       Proxy        => Engine_Proxy);
 
    type Abstract_VCS_Engine is abstract tagged record
-      Instances    : Engine_Proxy;    --  instance of GPS.VCS
+      Instances   : Engine_Proxy;
    end record;
-
 end GPS.VCS;

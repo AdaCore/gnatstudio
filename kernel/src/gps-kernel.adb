@@ -505,6 +505,28 @@ package body GPS.Kernel is
       return Handle.Preferences;
    end Get_Preferences;
 
+   -------------
+   -- Set_VCS --
+   -------------
+
+   procedure Set_VCS
+      (Self : not null access Kernel_Handle_Record;
+       Repo : not null access GPS.VCS.Abstract_VCS_Repository'Class) is
+   begin
+      Self.VCS := GPS.VCS.Abstract_VCS_Repository_Access (Repo);
+   end Set_VCS;
+
+   ---------
+   -- VCS --
+   ---------
+
+   function VCS
+      (Self : not null access Kernel_Handle_Record)
+      return access GPS.VCS.Abstract_VCS_Repository'Class is
+   begin
+      return Self.VCS;
+   end VCS;
+
    ---------------------------
    -- Default_Language_Tree --
    ---------------------------

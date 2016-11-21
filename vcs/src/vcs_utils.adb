@@ -29,7 +29,6 @@ with GPS.Kernel.Hooks;             use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;               use GPS.Kernel.MDI;
 with GPS.Kernel.Preferences;       use GPS.Kernel.Preferences;
 with GPS.VCS;
-with GPS.VCS_Engines;              use GPS.VCS_Engines;
 with Log_Utils;                    use Log_Utils;
 
 package body VCS_Utils is
@@ -63,6 +62,8 @@ package body VCS_Utils is
             Stat := GPS.VCS.Status_Conflict;
          elsif Status.Status.Icon_Name.all = Needs_Update_Stock then
             Stat := GPS.VCS.Status_Needs_Update;
+         elsif Status.Status.Icon_Name.all = Up_To_Date_Stock then
+            Stat := GPS.VCS.Status_Unmodified;
          else
             Stat := GPS.VCS.Status_Untracked;
          end if;
@@ -85,7 +86,7 @@ package body VCS_Utils is
             Info : constant File_Info'Class :=
               File_Info'Class (T.Info_Set (Status.File).First_Element);
          begin
-            Get_VCS (Kernel, Project (Info, Root_If_Not_Found => True))
+            Kernel.VCS.Get_VCS (Project (Info, Root_If_Not_Found => True))
               .Set_File_Status_In_Cache (Status.File, Props);
          end;
       end if;

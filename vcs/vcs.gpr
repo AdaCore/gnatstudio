@@ -3,6 +3,7 @@ with "../kernel/kernel";
 with "../widgets/widgets";
 with "../templates_parser/templates_parser";
 with "../shared";
+with "../vcs2/vcs2";   --   Dependency until VCS module is retired
 
 project VCS is
 

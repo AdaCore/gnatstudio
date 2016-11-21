@@ -24,7 +24,7 @@ with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;          use GPS.Kernel.Project;
 
-package body GPS.VCS_Engines is
+package body VCS2.Engines is
    Me : constant Trace_Handle := Create ("VCS2");
 
    Default_Display_Unmodified : constant Status_Display :=
@@ -83,7 +83,7 @@ package body GPS.VCS_Engines is
       Location : Virtual_File;
       Engine   : not null VCS_Engine_Access);
    function Get_VCS
-     (Kernel   : not null access Kernel_Handle_Record'Class;
+     (Kernel  : not null access Kernel_Handle_Record'Class;
       Location : Virtual_File)
       return not null VCS_Engine_Access;
 
@@ -288,18 +288,19 @@ package body GPS.VCS_Engines is
    -- Get_VCS --
    -------------
 
-   function Get_VCS
-     (Kernel   : not null access Kernel_Handle_Record'Class;
+   overriding function Get_VCS
+     (self     : not null access VCS_Repository;
       Project  : Project_Type)
-      return not null VCS_Engine_Access
-     is (Get_VCS (Kernel, Project.Project_Path));
+      return not null Abstract_VCS_Engine_Access
+     is (Abstract_VCS_Engine_Access
+          (Get_VCS (Self.Kernel, Project.Project_Path)));
 
    -------------
    -- Get_VCS --
    -------------
 
    function Get_VCS
-     (Kernel   : not null access Kernel_Handle_Record'Class;
+     (Kernel  : not null access Kernel_Handle_Record'Class;
       Location : Virtual_File)
       return not null VCS_Engine_Access
    is
@@ -568,9 +569,9 @@ package body GPS.VCS_Engines is
    -- Guess_VCS_For_Directory --
    -----------------------------
 
-   function Guess_VCS_For_Directory
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Directory : Virtual_File) return not null VCS_Engine_Access
+   overriding function Guess_VCS_For_Directory
+     (Self      : not null access VCS_Repository;
+      Directory : Virtual_File) return not null Abstract_VCS_Engine_Access
    is
       VCS : VCS_Engine_Access;
       D   : Virtual_File;
@@ -578,9 +579,9 @@ package body GPS.VCS_Engines is
    begin
       if Directory /= No_File then
          loop
-            VCS := Get_VCS (Kernel, Dir);
+            VCS := Get_VCS (Self.Kernel, Dir);
             if VCS /= Global_Data.No_VCS_Engine then
-               return VCS;
+               return Abstract_VCS_Engine_Access (VCS);
             end if;
             D := Dir.Get_Parent;
 
@@ -593,7 +594,7 @@ package body GPS.VCS_Engines is
          end loop;
       end if;
 
-      return Global_Data.No_VCS_Engine;
+      return Abstract_VCS_Engine_Access (Global_Data.No_VCS_Engine);
    end Guess_VCS_For_Directory;
 
    -------------
@@ -674,11 +675,18 @@ package body GPS.VCS_Engines is
    procedure Ensure_Status_For_Files
      (Self    : not null access VCS_Engine;
       Files   : File_Array;
-      On_Complete : access Task_Completed_Callback'Class := null) is
+      On_Complete : access Task_Completed_Callback'Class) is
    begin
       Queue (Self, On_Complete,
              new Cmd_Ensure_Status_For_Files'
                (Size => Files'Length, Files => Files));
+   end Ensure_Status_For_Files;
+
+   overriding procedure Ensure_Status_For_Files
+     (Self    : not null access VCS_Engine;
+      Files   : File_Array) is
+   begin
+      Ensure_Status_For_Files (Self, Files, null);
    end Ensure_Status_For_Files;
 
    -------------
@@ -702,11 +710,17 @@ package body GPS.VCS_Engines is
    procedure Ensure_Status_For_Project
      (Self    : not null access VCS_Engine;
       Project : Project_Type;
-      On_Complete : access Task_Completed_Callback'Class := null) is
-
+      On_Complete : access Task_Completed_Callback'Class) is
    begin
       Queue (Self, On_Complete,
              new Cmd_Ensure_Status_For_Project'(Project => Project));
+   end Ensure_Status_For_Project;
+
+   overriding procedure Ensure_Status_For_Project
+     (Self    : not null access VCS_Engine;
+      Project : Project_Type) is
+   begin
+      Ensure_Status_For_Project (Self, Project, null);
    end Ensure_Status_For_Project;
 
    -------------
@@ -761,7 +775,7 @@ package body GPS.VCS_Engines is
          P := Current (Iter);
          exit when P = No_Project;
 
-         if Get_VCS (VCS.Kernel, P) = VCS then
+         if Get_VCS (VCS.Kernel, P.Project_Path) = VCS then
             --  Need to call this for all projects to initialize table
             F := P.Source_Files (Recursive => False);
             N := Need_Update_For_Files (VCS, F.all) or N;
@@ -864,7 +878,7 @@ package body GPS.VCS_Engines is
    -- File_Properties_From_Cache --
    --------------------------------
 
-   function File_Properties_From_Cache
+   overriding function File_Properties_From_Cache
      (Self    : not null access VCS_Engine;
       File    : Virtual_File)
       return VCS_File_Properties
@@ -915,8 +929,8 @@ package body GPS.VCS_Engines is
    -- Set_File_Status_In_Cache --
    ------------------------------
 
-   procedure Set_File_Status_In_Cache
-     (Self         : not null access VCS_Engine'Class;
+   overriding procedure Set_File_Status_In_Cache
+     (Self         : not null access VCS_Engine;
       File         : Virtual_File;
       Props        : VCS_File_Properties)
    is
@@ -954,8 +968,8 @@ package body GPS.VCS_Engines is
    -- Get_Display --
    -----------------
 
-   function Get_Display
-     (Self   : not null access VCS_Engine'Class;
+   overriding function Get_Display
+     (Self   : not null access VCS_Engine;
       Status : VCS_File_Status) return Status_Display
    is
       C : constant VCS_Status_Displays.Cursor := Self.Displays.Find (Status);
@@ -1034,8 +1048,8 @@ package body GPS.VCS_Engines is
    -- Get_Tooltip_For_File --
    --------------------------
 
-   function Get_Tooltip_For_File
-     (VCS     : not null access VCS_Engine'Class;
+   overriding function Get_Tooltip_For_File
+     (VCS     : not null access VCS_Engine;
       File    : GNATCOLL.VFS.Virtual_File)
      return String
    is
@@ -1095,7 +1109,7 @@ package body GPS.VCS_Engines is
 
    function Active_VCS
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
-      return GPS.VCS_Engines.VCS_Engine_Access
+      return VCS_Engine_Access
    is
       pragma Unreferenced (Kernel);
    begin
@@ -1117,4 +1131,4 @@ package body GPS.VCS_Engines is
       end if;
    end Set_Active_VCS;
 
-end GPS.VCS_Engines;
+end VCS2.Engines;

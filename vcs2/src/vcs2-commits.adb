@@ -40,7 +40,6 @@ with GPS.Kernel.Properties;       use GPS.Kernel.Properties;
 with GPS.Properties;              use GPS.Properties;
 with GPS.Search;                  use GPS.Search;
 with GPS.VCS;                     use GPS.VCS;
-with GPS.VCS_Engines;             use GPS.VCS_Engines;
 with Gtkada.Multi_Paned;          use Gtkada.Multi_Paned;
 with Gtk.Box;                     use Gtk.Box;
 with Gtk.Cell_Renderer_Pixbuf;    use Gtk.Cell_Renderer_Pixbuf;
@@ -63,6 +62,7 @@ with Gtkada.Tree_View;            use Gtkada.Tree_View;
 with GUI_Utils;                   use GUI_Utils;
 with Tooltips;                    use Tooltips;
 with Pango.Layout;                use Pango.Layout;
+with VCS2.Engines;                use VCS2.Engines;
 
 package body VCS2.Commits is
    Me : constant Trace_Handle := Create ("COMMITS");

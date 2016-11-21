@@ -25,7 +25,7 @@ with GNATCOLL.VFS;               use GNATCOLL.VFS;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.VCS;                    use GPS.VCS;
 
-package GPS.VCS_Engines is
+package VCS2.Engines is
 
    type VCS_Engine is abstract new Abstract_VCS_Engine with private;
    type VCS_Engine_Access is access all VCS_Engine'Class;
@@ -74,42 +74,22 @@ package GPS.VCS_Engines is
    -- Engines --
    -------------
 
+   type VCS_Repository is new Abstract_VCS_Repository with record
+      Kernel    : not null access Kernel_Handle_Record'Class;
+   end record;
+
    procedure Compute_VCS_Engines
-     (Kernel  : not null access Kernel_Handle_Record'Class);
+      (Kernel : not null access Kernel_Handle_Record'Class);
    --  Create (or reuse) the VCS engines necessary for the project.
    --  All other engines are freed.
 
-   function Get_VCS
-     (Kernel   : not null access Kernel_Handle_Record'Class;
-      Project  : Project_Type)
-      return not null VCS_Engine_Access;
-   --  Return the VCS to use for a given project.
-   --  This can be used two ways:
-   --  - Location can be a project file, and this will be used by Get_VCS
-   --    to retrieve the VCS for that project.
-   --  - Or the location could be that of a repository (a .git, .svn, .CVS,...)
-   --    to be shared amongst multiple projects. If you use this, the engine
-   --    will not be freed until GPS exists.
-   --
-   --  The location could in fact be a URL if this is how a working directory
-   --  finds its repository (for instance the value of an environment variable)
-   --
-   --  A given engine might be shared by multiple projects
-   --  Engine will be freed automatically when no other project references it
-
-   function Guess_VCS_For_Directory
-     (Kernel    : not null access Kernel_Handle_Record'Class;
-      Directory : Virtual_File) return not null VCS_Engine_Access;
-   --  For now, we assume there is a single VCS for a given directory (one
-   --  possibly use case for multiple VCS is to have a local vcs and a
-   --  remote one, but this is handled by local_history.py instead).
-   --
-   --  We cannot assume that any of the files in the directory is also a
-   --  project source, so we can't use Get_VCS above.
-   --  Instead, we check whether Directory or any of its parents has a result
-   --  for Get_VCS. This kinda assume that a directory either contains
-   --  project sources, or is beneath the directory that contains the VCS
-   --  repo (root/.git for instance).
+   overriding function Get_VCS
+     (Self      : not null access VCS_Repository;
+      Project   : Project_Type)
+      return not null Abstract_VCS_Engine_Access;
+   overriding function Guess_VCS_For_Directory
+     (Self      : not null access VCS_Repository;
+      Directory : Virtual_File) return not null Abstract_VCS_Engine_Access;
 
    procedure For_Each_VCS
      (Kernel    : not null access Kernel_Handle_Record'Class;
@@ -149,11 +129,11 @@ package GPS.VCS_Engines is
    procedure Ensure_Status_For_Files
      (Self        : not null access VCS_Engine;
       Files       : File_Array;
-      On_Complete : access Task_Completed_Callback'Class := null);
+      On_Complete : access Task_Completed_Callback'Class);
    procedure Ensure_Status_For_Project
      (Self        : not null access VCS_Engine;
       Project     : Project_Type;
-      On_Complete : access Task_Completed_Callback'Class := null);
+      On_Complete : access Task_Completed_Callback'Class);
    procedure Ensure_Status_For_All_Source_Files
      (Self        : not null access VCS_Engine;
       On_Complete : access Task_Completed_Callback'Class := null);
@@ -180,6 +160,25 @@ package GPS.VCS_Engines is
    --  The callback is executed for each VCS that terminates its processing,
    --  and then once with no VCS when all of them have been processed
 
+   overriding procedure Ensure_Status_For_Files
+     (Self        : not null access VCS_Engine;
+      Files       : File_Array);
+   overriding procedure Ensure_Status_For_Project
+     (Self        : not null access VCS_Engine;
+      Project     : Project_Type);
+   overriding function File_Properties_From_Cache
+     (Self    : not null access VCS_Engine;
+      File    : Virtual_File)
+     return VCS_File_Properties;
+   overriding procedure Set_File_Status_In_Cache
+     (Self         : not null access VCS_Engine;
+      File         : Virtual_File;
+      Props        : VCS_File_Properties);
+   overriding function Get_Tooltip_For_File
+     (VCS     : not null access VCS_Engine;
+      File    : GNATCOLL.VFS.Virtual_File)
+     return String;
+
    function Default_File_Status
      (Self    : not null access VCS_Engine)
      return VCS_File_Status is (Status_Untracked);
@@ -187,22 +186,6 @@ package GPS.VCS_Engines is
    --  a large difference on startup: if set to untracked, the GPS project
    --  (git) needs 1.3s to set the initial cache. If set to Unmodified, it
    --  takes 0.002s.
-
-   function File_Properties_From_Cache
-     (Self    : not null access VCS_Engine;
-      File    : Virtual_File)
-     return VCS_File_Properties;
-   --  Return the current known status of the file.
-   --  By default, files are assumed to be "unmodified". Calling one of the
-   --  Async_Fetch_Status_* procedures above will ensure that the proper status
-   --  is eventually set in the cache, and returned by this function.
-   --  The typical workflow to show file status is therefore:
-   --
-   --        ... Connect to VCS_File_Status_Update_Hook
-   --        St := Eng.File_Status_From_Cache (File);
-   --        ... display the status as currently known
-   --        Eng.Async_Fetch_Status_For_File (File);
-   --        --  monitor the hook to update the displayed status
 
    procedure Invalidate_File_Status_Cache
      (Self    : not null access VCS_Engine'Class;
@@ -217,15 +200,6 @@ package GPS.VCS_Engines is
    --  Invalid all caches for all VCS, so that the next Ensure_* calls
    --  will reload from the disk
 
-   procedure Set_File_Status_In_Cache
-     (Self         : not null access VCS_Engine'Class;
-      File         : Virtual_File;
-      Props        : VCS_File_Properties);
-   --  Update the file status in the cache, and emit the
-   --  VCS_File_Status_Changed hook if needed. This should only be called
-   --  when you write your own VCS engine. Other code should use one of the
-   --  Async_Fetch_Status_* subprograms instead.
-
    ----------------------
    -- Labels and icons --
    ----------------------
@@ -233,16 +207,9 @@ package GPS.VCS_Engines is
    --  things are displayed to the user. As much as possible, the vocabulary
    --  of the VCS should be used, even though default versions are provided
 
-   type Status_Display is record
-      Label     : Unbounded_String;
-      Icon_Name : Unbounded_String;
-   end record;
-   --  Display properties for a given status
-
-   function Get_Display
-     (Self   : not null access VCS_Engine'Class;
+   overriding function Get_Display
+     (Self   : not null access VCS_Engine;
       Status : VCS_File_Status) return Status_Display;
-   --  How to display the status
 
    procedure Override_Display
      (Self    : not null access VCS_Engine'Class;
@@ -263,13 +230,6 @@ package GPS.VCS_Engines is
    -----------
    -- Files --
    -----------
-
-   function Get_Tooltip_For_File
-     (VCS     : not null access VCS_Engine'Class;
-      File    : GNATCOLL.VFS.Virtual_File)
-     return String;
-   --  Return a description of the file's properties, suitable for display
-   --  in tooltips.
 
    procedure For_Each_File_In_Cache
      (Self     : not null access VCS_Engine'Class;
@@ -320,9 +280,6 @@ package GPS.VCS_Engines is
    ----------
    -- Misc --
    ----------
-
-   function Name (Self : not null access VCS_Engine) return String is abstract;
-   --  The name of the engine
 
    procedure Set_Working_Directory
      (Self        : not null access VCS_Engine'Class;
@@ -436,4 +393,4 @@ private
      (Self : not null access VCS_Engine'Class)
       return Virtual_File is (Self.Working_Dir);
 
-end GPS.VCS_Engines;
+end VCS2.Engines;

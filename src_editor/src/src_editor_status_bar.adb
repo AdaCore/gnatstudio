@@ -33,7 +33,6 @@ with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
 with GPS.Kernel;                      use GPS.Kernel;
 with GPS.Stock_Icons;                 use GPS.Stock_Icons;
 with GPS.VCS;                         use GPS.VCS;
-with GPS.VCS_Engines;                 use GPS.VCS_Engines;
 with Gtk.Arguments;                   use Gtk.Arguments;
 with Gtk.Enums;                       use Gtk.Enums;
 with Gtk.Handlers;                    use Gtk.Handlers;
@@ -382,8 +381,7 @@ package body Src_Editor_Status_Bar is
    begin
       if File = Bar.Buffer.Get_Filename then
          declare
-            V : constant VCS_Engine_Access := VCS_Engine_Access (Vcs);
-            D : constant Status_Display := V.Get_Display (Props.Status);
+            D : constant Status_Display := Vcs.Get_Display (Props.Status);
          begin
             if Bar.VCS_Status = null then
                Gtk_New (Bar.VCS_Status);
@@ -392,7 +390,8 @@ package body Src_Editor_Status_Bar is
             end if;
 
             Bar.VCS_Status.Set_Icon_Name (To_String (D.Icon_Name));
-            Bar.VCS_Status.Set_Tooltip_Markup (V.Get_Tooltip_For_File (File));
+            Bar.VCS_Status.Set_Tooltip_Markup
+               (Vcs.Get_Tooltip_For_File (File));
          end;
       end if;
    end Execute;
@@ -410,7 +409,7 @@ package body Src_Editor_Status_Bar is
       H      : access On_VCS_Status_Changed;
       Kernel : constant Kernel_Handle := Get_Kernel (Buffer);
       P      : constant Project_Type := Get_Project (View);
-      VCS    : VCS_Engine_Access;
+      VCS    : Abstract_VCS_Engine_Access;
    begin
       Bar := new Source_Editor_Status_Bar_Record;
       Initialize_Hbox (Bar, Homogeneous => False);
@@ -464,7 +463,7 @@ package body Src_Editor_Status_Bar is
         (Vcs_File_Status_Hooks_Function with Bar => Bar);
       Vcs_File_Status_Changed_Hook.Add (H, Watch => Bar);  --  will update
 
-      VCS := Get_VCS (Kernel, P);
+      VCS := Kernel.VCS.Get_VCS (P);
 
       VCS.Ensure_Status_For_Files ((1 => Buffer.Get_Filename));
       H.Execute        --  display initial value

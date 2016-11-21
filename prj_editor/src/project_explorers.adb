@@ -73,7 +73,7 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Search;                use GPS.Search;
-with GPS.VCS_Engines;           use GPS.VCS_Engines;
+with GPS.VCS;                   use GPS.VCS;
 with GPS.Intl;                  use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Projects;                  use Projects;
@@ -1534,7 +1534,7 @@ package body Project_Explorers is
       Files   : File_Array_Access;
       Project : Project_Type;
       Dirs    : Dirs_Files_Hash.Map;
-      VCS     : VCS_Engine_Access;
+      VCS     : Abstract_VCS_Engine_Access;
 
       -----------------------------
       -- Create_Or_Reuse_Project --
@@ -1634,7 +1634,7 @@ package body Project_Explorers is
 
       --  Compute (in background) VCS status for files, if not done yet
 
-      VCS := Get_VCS (Self.Kernel, Project);
+      VCS := Self.Kernel.VCS.Get_VCS (Project);
       VCS.Ensure_Status_For_Project (Project);
 
       --  Insert non-expanded nodes for imported projects

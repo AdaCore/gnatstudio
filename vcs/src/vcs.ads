@@ -487,6 +487,7 @@ package VCS is
    Needs_Merge_Stock    : aliased String := "gps-emblem-vcs-needs-merge";
    Needs_Update_Stock   : aliased String := "gps-emblem-vcs-needs-update";
    Not_Registered_Stock : aliased String := "gps-emblem-vcs-not-registered";
+   Up_To_Date_Stock     : aliased String := "gps-emblem-vcs-up-to-date";
 
 private
 
@@ -500,7 +501,6 @@ private
    --------------------------
 
    Up_To_Date_Label : aliased String := "Up to date";
-   Up_To_Date_Stock : aliased String := "gps-emblem-vcs-up-to-date";
    Up_To_Date : VCS_File_Status :=
      (Up_To_Date_Label'Access, Up_To_Date_Stock'Access);
    --  The file corresponds to the latest version in the corresponding

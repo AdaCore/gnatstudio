@@ -67,7 +67,7 @@ with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;         use GPS.Kernel.Project;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Intl;                   use GPS.Intl;
-with GPS.VCS_Engines;            use GPS.VCS_Engines;
+with GPS.VCS;                    use GPS.VCS;
 with Projects;                   use Projects;
 with File_Utils;
 with GUI_Utils;                  use GUI_Utils;
@@ -158,7 +158,7 @@ package body Project_Explorers_Files is
       Next_Iter     : Gtk_Tree_Iter;   --  Node to expand for the next level
       Next_File     : Virtual_File;    --  Directory to expand for next level
 
-      VCS           : VCS_Engine_Access;
+      VCS           : Abstract_VCS_Engine_Access;
       --  The VCS for the current directory
 
       Detached      : Explorer_Expansion.Detached_Model_Access;
@@ -713,7 +713,7 @@ package body Project_Explorers_Files is
 
             --  Ensure that all files will eventually get some VCS info
 
-            D.VCS := Guess_VCS_For_Directory (D.Tree.Kernel, D.Dir);
+            D.VCS := D.Tree.Kernel.VCS.Guess_VCS_For_Directory (D.Dir);
             if Active (Me) then
                Trace (Me, "VCS for " & D.Dir.Display_Full_Name & " is "
                       & D.VCS.Name);

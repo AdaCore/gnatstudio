@@ -72,6 +72,7 @@ with GPS.Process_Launchers;
 with GPS.Process_Launchers.Implementation;
 use GPS.Process_Launchers.Implementation;
 with GPS.Scripts;                     use GPS.Scripts;
+with GPS.VCS;
 with Language.Abstract_Language_Tree; use Language.Abstract_Language_Tree;
 
 package GPS.Kernel is
@@ -137,6 +138,14 @@ package GPS.Kernel is
    function Get_History
      (Handle : access Kernel_Handle_Record) return Histories.History;
    --  Return the history database
+
+   procedure Set_VCS
+      (Self : not null access Kernel_Handle_Record;
+       Repo : not null access GPS.VCS.Abstract_VCS_Repository'Class);
+   function VCS
+      (Self : not null access Kernel_Handle_Record)
+      return access GPS.VCS.Abstract_VCS_Repository'Class;
+   --  The VCS system
 
    procedure Add_To_History
      (Handle    : access Kernel_Handle_Record;
@@ -1079,6 +1088,8 @@ private
 
       Style_Manager : System.Address;
       --  A pointer to the color manager.
+
+      VCS   : GPS.VCS.Abstract_VCS_Repository_Access;
 
       ----------------------
       -- Context handling --

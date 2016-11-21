@@ -22,7 +22,7 @@ with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
 with GPS.VCS;               use GPS.VCS;
-with GPS.VCS_Engines;       use GPS.VCS_Engines;
+with VCS2.Engines;          use VCS2.Engines;
 
 package body VCS2.Scripts is
    Me : constant Trace_Handle := Create ("VCS2.SCRIPT") with Unreferenced;
@@ -412,7 +412,8 @@ package body VCS2.Scripts is
       elsif Command = "get" then
          declare
             P : constant Project_Type := Get_Data (Data, 1);
-            F : constant not null VCS_Engine_Access := Get_VCS (Kernel, P);
+            F : constant not null VCS_Engine_Access :=
+               VCS_Engine_Access (Kernel.VCS.Get_VCS (P));
          begin
             Data.Set_Return_Value
               (Create_VCS_Instance (Get_Script (Data), F));

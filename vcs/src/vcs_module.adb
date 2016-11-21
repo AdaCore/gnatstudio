@@ -39,6 +39,7 @@ with GPS.Kernel.Modules.UI;     use GPS.Kernel.Modules.UI;
 with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
+with GPS.VCS;                   use GPS.VCS;
 
 with VCS.Generic_VCS;           use VCS.Generic_VCS;
 with VCS.Unknown_VCS;           use VCS.Unknown_VCS;
@@ -47,6 +48,7 @@ with VCS_Activities_View_API;   use VCS_Activities_View_API;
 with VCS_Utils;                 use VCS_Utils;
 with VCS_View;                  use VCS_View;
 with VCS_View_API;              use VCS_View_API;
+with VCS2.Engines;              use VCS2.Engines;
 
 with VCS_Module.Actions;        use VCS_Module.Actions;
 
@@ -516,9 +518,13 @@ package body VCS_Module is
       VCS_Class            : constant Class_Type := New_Class (Kernel, "VCS");
       VCS_Activities_Class : constant Class_Type :=
                                New_Class (Kernel, "Activities");
+      V : constant access VCS_Repository := new VCS_Repository'
+         (Abstract_VCS_Repository with Kernel => Kernel);
    begin
       VCS_Module_ID := new VCS_Module_ID_Record;
       VCS_Explorer_Module_Id := new VCS_Explorer_Module_ID_Record;
+
+      Kernel.Set_VCS (V);
 
       Register_Module
         (Module      => Module_ID (VCS_Module_ID),

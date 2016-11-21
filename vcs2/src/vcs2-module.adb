@@ -17,9 +17,10 @@
 
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
+with GPS.VCS;                 use GPS.VCS;
 with GNATCOLL.Projects;       use GNATCOLL.Projects;
-with GPS.VCS_Engines;         use GPS.VCS_Engines;
 with GNATCOLL.VFS;            use GNATCOLL.VFS;
+with VCS2.Engines;            use VCS2.Engines;
 with VCS2.Scripts;            use VCS2.Scripts;
 with VCS2.Commits;
 
@@ -65,8 +66,10 @@ package body VCS2.Module is
       Info    : constant File_Info'Class := File_Info'Class
          (Get_Registry (Kernel).Tree.Info_Set (File).First_Element);
       Project : constant Project_Type := Info.Project (True);
+      V       : constant VCS_Engine_Access :=
+         VCS_Engine_Access (Kernel.VCS.Get_VCS (Project));
    begin
-      Get_VCS (Kernel, Project).Invalidate_File_Status_Cache (File);
+      V.Invalidate_File_Status_Cache (File);
    end Execute;
 
    ---------------------
@@ -76,7 +79,11 @@ package body VCS2.Module is
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
+      V : constant access VCS_Repository := new VCS_Repository'
+         (Abstract_VCS_Repository with Kernel => Kernel);
    begin
+      Kernel.Set_VCS (V);
+
       VCS2.Scripts.Register_Scripts (Kernel);
 
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);

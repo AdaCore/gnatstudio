@@ -34,7 +34,6 @@ with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 
 with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
-with GPS.VCS_Engines;           use GPS.VCS_Engines;
 with GUI_Utils;                 use GUI_Utils;
 with Language.Icons;            use Language.Icons;
 with Projects;                  use Projects;
@@ -971,8 +970,7 @@ package body Project_Explorers_Common is
             Model.Set
               (Iter, Icon_Column,
                UTF8_String'(To_String
-                 (VCS_Engine_Access (Vcs).Get_Display
-                    (Props.Status).Icon_Name)));
+                 (Vcs.Get_Display (Props.Status).Icon_Name)));
          end if;
          return False;  --  continue traversing
       end On_Node;
