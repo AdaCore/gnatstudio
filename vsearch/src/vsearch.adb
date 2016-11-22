@@ -438,6 +438,14 @@ package body Vsearch is
    --  source files might have changed and thus we need to restart from
    --  scratch.
 
+   type On_Pref_Changed is new Preferences_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference);
+   --  Called when the preferences have changed.
+   --  Used to update the font used by the search/replace entries if necessary.
+
    function Key_Press
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
@@ -1440,6 +1448,30 @@ package body Vsearch is
       Reset_Search (null, Kernel_Handle (Kernel));
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_Pref_Changed;
+      Kernel : not null access Kernel_Handle_Record'Class;
+      Pref   : Preference)
+   is
+      pragma Unreferenced (Self);
+      Vsearch : constant Vsearch_Access := Search_Views.Retrieve_View (Kernel);
+   begin
+      if Vsearch /= null then
+         Set_Font_And_Colors
+           (Widget     => Vsearch.Pattern_Combo,
+            Fixed_Font => True,
+            Pref       => Pref);
+         Set_Font_And_Colors
+           (Widget     => Vsearch.Replace_Combo,
+            Fixed_Font => True,
+            Pref       => Pref);
+      end if;
+   end Execute;
+
    ---------------
    -- Key_Press --
    ---------------
@@ -1910,6 +1942,7 @@ package body Vsearch is
           Guint (Column_Whole_Word)     => GType_Boolean,
           Guint (Column_Is_Separator)   => GType_Boolean));
       Gtk_New_With_Model_And_Entry (Self.Pattern_Combo, +Model);
+      Set_Font_And_Colors (Self.Pattern_Combo.Get_Child, Fixed_Font => True);
       Self.Pattern_Combo.Set_Entry_Text_Column (Column_Pattern);
       Layout := +Self.Pattern_Combo;
 
@@ -1940,6 +1973,7 @@ package body Vsearch is
 
       Gtk.List_Store.Gtk_New (Model, (0 .. 0 => GType_String));
       Gtk_New_With_Model_And_Entry (Self.Replace_Combo, +Model);
+      Set_Font_And_Colors (Self.Replace_Combo.Get_Child, Fixed_Font => True);
       Self.Replace_Combo.Set_Entry_Text_Column (0);
       Self.Replace_Combo.Set_Tooltip_Text
         (-("The text that will replace each match. Next special patterns are" &
@@ -2064,6 +2098,7 @@ package body Vsearch is
       Search_Functions_Changed_Hook.Add (new Search_Functions_Changed);
       Search_Regexps_Changed_Hook.Add (new New_Predefined_Regexp);
       Project_View_Changed_Hook.Add (new On_Project_View_Changed);
+      Preferences_Changed_Hook.Add (new On_Pref_Changed);
 
       --  ??? Should be changed when prefs are changed
       Set_Font_And_Colors (Self.Main_View, Fixed_Font => False);
