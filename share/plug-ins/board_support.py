@@ -431,7 +431,7 @@ class BoardLoader(Module):
             self.__error_exit("Could not launch executable %s" % (cmd[0]))
             return
 
-        output = yield con.wait_until_match("\.text")
+        output = yield con.wait_until_match("\.text .+")
         if output is None:
             self.__error_exit("%s returned an error." % (cmd[0]))
             return
@@ -451,8 +451,8 @@ class BoardLoader(Module):
             self.__error_exit("Could not launch executable %s." % (cmd[0]))
             return
 
-        output = yield con.wait_until_terminate()
-        if output is not None:
+        status, output = yield con.wait_until_terminate()
+        if status != 0:
             self.__error_exit("%s returned an error." % (cmd[0]))
             return
 
