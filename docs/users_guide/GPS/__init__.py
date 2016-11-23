@@ -7552,7 +7552,7 @@ class Process(Command):
                  progress_total=1, before_kill=None, remote_server='',
                  show_command=False, single_line_regexp=False,
                  case_sensitive_regexp=True, strip_cr=True, active=False,
-                 directory=""):
+                 directory="", block_exit=True):
         """
         Spawns ``command``, which can include triple-quoted strings, similar
         to Python, which are always preserved as one argument.
@@ -7613,20 +7613,6 @@ class Process(Command):
           a progress bar is displayed in the tasks view of GPS, and will
           allow users to monitor commands.
 
-          ``remote_server`` represents the server used to spawn the
-          process. By default, the GPS_Server is used, which is always the
-          local machine. See the section "Using GPS for Remote Development"
-          in the GPS documentation for more information on this field.
-
-          If ``show_command`` is set, the command line used to spawn the
-          new process is displayed in the :guilabel:`Messages` console.
-
-          If ``strip_cr`` is true, the output of the process will have all
-          its ASCII.CR removed before the string is passed to GPS and your
-          script. This, in general, provides better portability to Windows
-          systems, but might not be suitable for applications for which CR is
-          relevant (for example, those that drive an ANSI terminal).
-
           An exception is raised if the process could not be spawned.
 
           :param command: A string or list of strings.
@@ -7642,19 +7628,32 @@ class Process(Command):
           :param progress_current: An integer
           :param progress_total: An integer
           :param before_kill: A subprogram
-          :param remote_server: A string. Possible values are "GPS_Server",
+          :param str remote_server: Possible values are "GPS_Server",
              the empty string (equivalent to "GPS_Server"), "Build_Server",
              "Debug_Server", "Execution_Server" and "Tools_Server".
-          :param bool show_command:
+             This represents the server used to spawn the process. By
+             default, the GPS_Server is used, which is always the
+             local machine. See the section "Using GPS for Remote Development"
+             in the GPS documentation for more information on this field.
+          :param bool show_command: if True, the command line used to spawn
+             the new process is displayed in the :guilabel:`Messages` console.
           :param bool single_line_regexp:
           :param bool case_sensitive_regexp:
-          :param bool strip_cr:
+          :param bool strip_cr: If true, the output of the process will have
+             all its ASCII.CR removed before the string is passed to GPS and
+             your script. This, in general, provides better portability to
+             Windows systems, but might not be suitable for applications for
+             which CR is relevant (for example, those that drive an ANSI
+             terminal).
           :param bool active: Whether GPS should actively monitor the state
              of the process. This will require more CPU (and might make the
              GUI less reactive while the process runs), but ensures that
              events like on_exit will be called earlier.
           :param str directory: The directory in which the external process
              should be started.
+          :param bool block_exit: If true, then GPS will display a dialog
+             when the user wants to exit, asking whether to kill this
+             process.
 
           .. seealso:: :class:`GPS.Process`
         """

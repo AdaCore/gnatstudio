@@ -443,7 +443,8 @@ package body Expect_Interface is
                Show_In_Task_Manager => Data.Nth_Arg (6, True),
                Name_In_Task_Manager => Get_Command (CL),
                Synchronous          => False,
-               Strip_CR             => Data.Nth_Arg (16, True));
+               Block_Exit           => Data.Nth_Arg (18, True),
+               Strip_CR             => Data.Nth_Arg (15, True));
 
             if not Success then
                Data.Set_Error_Msg
@@ -575,7 +576,8 @@ package body Expect_Interface is
                     14 => Param ("case_sensitive_regexp", Optional => True),
                     15 => Param ("strip_cr",              Optional => True),
                     16 => Param ("active",                Optional => True),
-                    17 => Param ("directory",             Optional => True)),
+                    17 => Param ("directory",             Optional => True),
+                    18 => Param ("block_exit",            Optional => True)),
          Class        => Process_Class,
          Handler      => Custom_Spawn_Handler'Access);
       Kernel.Scripts.Register_Command

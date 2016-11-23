@@ -25,6 +25,7 @@ class SVN(core_staging.Emulate_Staging,
                 ['svn', 'status', '-v',
                  '-u'] +   # Compare with server (slower but more helpful)
                 args,
+                block_exit=False,
                 directory=self.working_dir.path)
 
             while True:

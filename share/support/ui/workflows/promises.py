@@ -358,7 +358,7 @@ class ProcessWrapper(object):
     """
 
     def __init__(self, cmdargs=[], spawn_console=False, directory=None,
-                 regexp='.+', single_line_regexp=True):
+                 regexp='.+', single_line_regexp=True, block_exit=True):
         """
         Initialize and run a process with no promises,
         no user-defined pattern to match,
@@ -379,6 +379,8 @@ class ProcessWrapper(object):
         :param bool single_line_regexp: if True, then '.' in the regexp
            will also match '\n'. This is useful to capture larger parts of
            the output at once.
+        :param bool block_exit: whether the user should be asked when GPS
+           exits and this process is still running.
         """
 
         # __final_promise = about termination
@@ -412,6 +414,7 @@ class ProcessWrapper(object):
                 directory=directory,
                 regexp=regexp,
                 single_line_regexp=single_line_regexp,
+                block_exit=block_exit,
                 on_match=self.__on_match,
                 on_exit=self.__on_exit)
         except:

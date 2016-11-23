@@ -40,6 +40,7 @@ class CVS(core_staging.Emulate_Staging,
 
             p = ProcessWrapper(
                 ['cvs', '-f', 'status'] + args,
+                block_exit=False,
                 directory=self.working_dir.path)
             current_file = None
             dir = None

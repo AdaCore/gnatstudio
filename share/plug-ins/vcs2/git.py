@@ -25,6 +25,7 @@ class Git(core.VCS):
         all_files = set()
         p = ProcessWrapper(
             ['git', 'ls-tree', '-r', 'HEAD', '--name-only'],
+            block_exit=False,
             directory=self.working_dir.path)
         while True:
             line = yield p.wait_line()
@@ -41,6 +42,7 @@ class Git(core.VCS):
         """
         p = ProcessWrapper(
             ['git', 'status', '--porcelain', '--ignored'],
+            block_exit=False,
             directory=self.working_dir.path)
         while True:
             line = yield p.wait_line()
@@ -104,6 +106,7 @@ class Git(core.VCS):
         """
         p = ProcessWrapper(
             ['git'] + params + [f.path for f in files],
+            block_exit=True,
             directory=self.working_dir.path)
         (status, output) = yield p.wait_until_terminate()
         if status:
@@ -134,5 +137,3 @@ class Git(core.VCS):
         yield self.__action_then_update_status(
             ['commit', '--amend', '--reuse-message=HEAD'])
         GPS.Hook('vcs_commit_done').run(self)
-
-
