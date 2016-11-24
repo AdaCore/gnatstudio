@@ -18,11 +18,13 @@
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Gdk.Drag_Contexts;    use Gdk.Drag_Contexts;
 with Glib.Object;          use Glib.Object;
+with Glib.Main;            use Glib.Main;
 with Glib.Types;           use Glib.Types;
 with Glib.Values;          use Glib.Values;
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Selection_Data;   use Gtk.Selection_Data;
 with Gtk.Tree_Drag_Dest;   use Gtk.Tree_Drag_Dest;
+with Gtk.Tree_Row_Reference; use Gtk.Tree_Row_Reference;
 with Gtk.Widget;           use Gtk.Widget;
 with System;               use System;
 with GNATCOLL.Traces;      use GNATCOLL.Traces;
@@ -70,6 +72,14 @@ package body Gtkada.Tree_View is
      (Gtk.Tree_Drag_Dest.Gtk_Tree_Drag_Dest,
       Gtkada_Tree_Model_Filter_Record,
       Gtkada_Tree_Model_Filter);
+
+   package Tree_Sources is new Glib.Main.Generic_Sources (Tree_View);
+   function On_Idle_Scroll (Self : Tree_View) return Boolean;
+   --  Scroll the tree in a timeout, to make Self.Target_Path_For_Scroll
+   --  visible.
+   --  This cannot be done immediately in case we have detached and then
+   --  reattached the view, since gtk+ cannot immediately compute the visible
+   --  area and thus ends up scrolling too much.
 
    ---------------
    -- Callbacks --
@@ -469,15 +479,40 @@ package body Gtkada.Tree_View is
        Store_Iter : Gtk_Tree_Iter)
    is
       Iter : Gtk_Tree_Iter;
+      Row  : Gtk_Tree_Row_Reference;
+      Path : Gtk_Tree_Path;
    begin
       if Self.Model.Has_Child (Store_Iter) then
          Iter := Self.Model.Children (Store_Iter);
          if Get_Flag (Self, Iter, Flag_Is_Dummy) then
-            Self.Model.Remove (Iter);   --  remove dummy node
+            Path := Self.Model.Get_Path (Iter);
+            Gtk_New (Row, +Self.Model, Path);
+            Path_Free (Path);
+
             Self.Add_Children (Store_Iter);
+
+            --  Remove the dummy node last, so that the expanded status of the
+            --  node doesn't change
+            Path := Get_Path (Row);
+            Iter := Self.Model.Get_Iter (Path);
+            Path_Free (Path);
+            Self.Model.Remove (Iter);
+            Row.Free;
          end if;
       end if;
    end Add_Row_Children;
+
+   --------------------
+   -- On_Idle_Scroll --
+   --------------------
+
+   function On_Idle_Scroll (Self : Tree_View) return Boolean is
+   begin
+      Self.Scroll_To_Cell (Self.Target_Path_For_Scroll, null, False, 0.0, 0.0);
+      Path_Free (Self.Target_Path_For_Scroll);
+      Self.Target_Path_For_Scroll := Null_Gtk_Tree_Path;
+      return False;   --  do not execute again
+   end On_Idle_Scroll;
 
    ---------------------------
    -- Row_Expanded_Callback --
@@ -488,29 +523,31 @@ package body Gtkada.Tree_View is
       Filter_Iter : Gtk_Tree_Iter;
       Filter_Path : Gtk_Tree_Path)
    is
+      pragma Unreferenced (Filter_Iter);
+
       Tree       : constant Tree_View := Tree_View (Widget);
       Iter       : Gtk_Tree_Iter;
       Store_Iter : Gtk_Tree_Iter;
       Path       : Gtk_Tree_Path;
       Dummy      : Boolean;
+      L          : constant Boolean := Tree.Lock;
+      Id         : G_Source_Id with Unreferenced;
 
    begin
-      if Tree.Lock or else Filter_Iter = Null_Iter then
+      if Tree.Lock then
          return;
       end if;
 
+      Tree.Lock := True;
+
       Store_Iter := Tree.Get_Store_Iter_For_Filter_Path (Filter_Path);
-      Set_Flag (Tree, Store_Iter, Flag_Is_Expanded);
 
       --  Replace dummy child nodes if needed.
       --  We always assume the dummy child (if any) is the first child
 
       if Tree.Model.Has_Child (Store_Iter) then
+         Set_Flag (Tree, Store_Iter, Flag_Is_Expanded);
          Add_Row_Children (Tree, Store_Iter);
-
-         --  Make sure the parent is indeed expanded
-
-         Dummy := Tree.Expand_Row (Filter_Path, Open_All => False);
 
          --  Re-expand existing child nodes as needed
 
@@ -524,13 +561,22 @@ package body Gtkada.Tree_View is
             Next (Tree.Model, Iter);
          end loop;
 
-         --  Make sure the first child is visible
+         --  Make sure the first child is visible.
+         --  We can't call Scroll_To_Cell directly after we detached and
+         --  reattached the view (which is likely to have happened in
+         --  Add_Children), because gtk+ can't compute the visible range.
+
+         if Tree.Target_Path_For_Scroll /= Null_Gtk_Tree_Path then
+            Path_Free (Tree.Target_Path_For_Scroll);
+         end if;
 
          Path := Copy (Filter_Path);
          Down (Path);
-         Tree.Scroll_To_Cell (Path, null, False, 0.0, 0.0);
-         Path_Free (Path);
+         Tree.Target_Path_For_Scroll := Path;
+         Id := Tree_Sources.Idle_Add (On_Idle_Scroll'Access, Tree);
       end if;
+
+      Tree.Lock := L;
    end Row_Expanded_Callback;
 
    ----------------------------
@@ -744,8 +790,9 @@ package body Gtkada.Tree_View is
       --------------------------
 
       procedure Get_Expansion_Status
-        (Self   : not null access Tree_Record'Class;
-         Status : out Expansion_Status)
+        (Self           : not null access Tree_Record'Class;
+         Status         : out Expansion_Status;
+         Save_Scrolling : Boolean := True)
       is
          procedure Do_Node
            (View : not null access Gtk_Tree_View_Record'Class;
@@ -788,12 +835,16 @@ package body Gtkada.Tree_View is
 
          Self.Get_Selection.Selected_Foreach (On_Selected'Unrestricted_Access);
 
-         Self.Get_Visible_Range
-           (Start_Path => Status.Scroll_Y,
-            End_Path   => End_Path,
-            Success    => Status.Has_Scroll_Info);
-         if Status.Has_Scroll_Info then
-            Path_Free (End_Path);
+         if Save_Scrolling then
+            Self.Get_Visible_Range
+              (Start_Path => Status.Scroll_Y,
+               End_Path   => End_Path,
+               Success    => Status.Has_Scroll_Info);
+            if Status.Has_Scroll_Info then
+               Path_Free (End_Path);
+            end if;
+         else
+            Status.Has_Scroll_Info := False;
          end if;
       end Get_Expansion_Status;
 
@@ -856,7 +907,8 @@ package body Gtkada.Tree_View is
       function Detach_Model_From_View
          (Self           : not null access Tree_Record'Class;
           Freeze         : Boolean := True;
-          Save_Expansion : Boolean := True)
+          Save_Expansion : Boolean := True;
+          Save_Scrolling : Boolean := True)
          return Detached_Model is
       begin
          return D : Detached_Model do
@@ -873,7 +925,8 @@ package body Gtkada.Tree_View is
 
                D.Save_Expansion := Save_Expansion;
                if Save_Expansion then
-                  Get_Expansion_Status (Self, D.Expansion);
+                  Get_Expansion_Status
+                    (Self, D.Expansion, Save_Scrolling => Save_Scrolling);
                end if;
 
                if Self.Filter /= null then

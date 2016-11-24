@@ -117,8 +117,9 @@ package Gtkada.Tree_View is
 
       type Expansion_Status is private;
       procedure Get_Expansion_Status
-        (Self   : not null access Tree_Record'Class;
-         Status : out Expansion_Status);
+        (Self           : not null access Tree_Record'Class;
+         Status         : out Expansion_Status;
+         Save_Scrolling : Boolean := True);
       procedure Set_Expansion_Status
         (Self   : not null access Tree_Record'Class;
          Status : Expansion_Status;
@@ -143,7 +144,8 @@ package Gtkada.Tree_View is
       function Detach_Model_From_View
          (Self           : not null access Tree_Record'Class;
           Freeze         : Boolean := True;
-          Save_Expansion : Boolean := True)
+          Save_Expansion : Boolean := True;
+          Save_Scrolling : Boolean := True)
          return Detached_Model;
       --  Temporarily detach the model from the view.
       --  This results in significant performance improvement when adding lots
@@ -308,6 +310,9 @@ private
       Column_Extra : Glib.Gint := -1;
       --  The extra column added to the model, which stores information like
       --  whether a node was expanded or filtered by the model.
+
+      Target_Path_For_Scroll : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      --  Ensure this path is visible, in an idle.
 
       Lock  : Boolean := False;
       --  Whether the expand callbacks should do anything.
