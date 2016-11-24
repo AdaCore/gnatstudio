@@ -415,37 +415,54 @@ package body Refactoring.Rename is
       Entity  : constant Root_Entity'Class := Get_Entity (Context.Context);
    begin
       if Entity /= No_Root_Entity then
-         Gtk_New (Dialog, Get_Kernel (Context.Context), Entity);
-         if Dialog = null then
-            return Failure;
+         if Get_Kernel (Context.Context).Databases.Is_Up_To_Date
+           (File_Information (Context.Context))
+         then
+            Gtk_New (Dialog, Get_Kernel (Context.Context), Entity);
+            if Dialog = null then
+               return Failure;
+            end if;
+
+            Show_All (Dialog);
+
+            if Run (Dialog) = Gtk_Response_OK then
+               declare
+                  Refactor : constant Renaming_Performer :=
+                    new Renaming_Performer_Record'
+                      (Refactor_Performer_Record with
+                       Old_Name        => To_Unbounded_String
+                         (Get_Name (Entity)),
+                       New_Name        => To_Unbounded_String
+                         (Get_Text (Dialog.New_Name)),
+                       Auto_Save       =>
+                         Get_Active (Dialog.Auto_Save));
+               begin
+                  Get_All_Locations
+                    (Kernel        => Get_Kernel (Context.Context),
+                     Entity        => Entity,
+                     On_Completion => Refactor,
+                     Overridden    => Get_Active (Dialog.Rename_Primitives),
+                     Make_Writable => Get_Active (Dialog.Make_Writable),
+                     Auto_Compile  => Get_Active (Dialog.Auto_Compile));
+               end;
+
+               Destroy (Dialog);
+            end if;
+
+         else
+            Create_Simple_Message
+              (Get_Messages_Container (Get_Kernel (Context.Context)),
+               (-"Refactoring - rename ") & Get_Name (Entity) & " failed",
+               File_Information (Context.Context),
+               0,
+               0,
+               -"The navigation information for this file is not up-to-date"
+               & " (recompile to regenerate it)",
+               0,
+               Side_And_Locations);
          end if;
-
-         Show_All (Dialog);
-
-         if Run (Dialog) = Gtk_Response_OK then
-            declare
-               Refactor : constant Renaming_Performer :=
-                            new Renaming_Performer_Record'
-                              (Refactor_Performer_Record with
-                               Old_Name        => To_Unbounded_String
-                                  (Get_Name (Entity)),
-                               New_Name        => To_Unbounded_String
-                                  (Get_Text (Dialog.New_Name)),
-                               Auto_Save       =>
-                                 Get_Active (Dialog.Auto_Save));
-            begin
-               Get_All_Locations
-                 (Kernel        => Get_Kernel (Context.Context),
-                  Entity        => Entity,
-                  On_Completion => Refactor,
-                  Overridden    => Get_Active (Dialog.Rename_Primitives),
-                  Make_Writable => Get_Active (Dialog.Make_Writable),
-                  Auto_Compile  => Get_Active (Dialog.Auto_Compile));
-            end;
-         end if;
-
-         Destroy (Dialog);
       end if;
+
       return Success;
 
    exception
