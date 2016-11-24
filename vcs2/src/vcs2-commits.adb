@@ -273,7 +273,7 @@ package body VCS2.Commits is
    procedure On_Destroyed (View : access Gtk_Widget_Record'Class);
    --  Called when the view is destroyed
 
-   function Get_Commit_Message
+   function Get_Commit_Message_From_Properties
      (VCS    : not null access VCS_Engine'Class) return String;
    procedure Set_Commit_Message
      (VCS    : not null access VCS_Engine'Class;
@@ -610,11 +610,11 @@ package body VCS2.Commits is
       end if;
    end Execute;
 
-   ------------------------
-   -- Get_Commit_Message --
-   ------------------------
+   ----------------------------------------
+   -- Get_Commit_Message_From_Properties --
+   ----------------------------------------
 
-   function Get_Commit_Message
+   function Get_Commit_Message_From_Properties
      (VCS    : not null access VCS_Engine'Class)
       return String
    is
@@ -631,7 +631,7 @@ package body VCS2.Commits is
       else
          return "";
       end if;
-   end Get_Commit_Message;
+   end Get_Commit_Message_From_Properties;
 
    ------------------------
    -- Set_Commit_Message --
@@ -665,7 +665,7 @@ package body VCS2.Commits is
 
       if Self.Active_VCS /= null then
          Self.Commit.Get_Buffer.Set_Text
-           (Get_Commit_Message (Self.Active_VCS));
+           (Get_Commit_Message_From_Properties (Self.Active_VCS));
       else
          Self.Commit.Get_Buffer.Set_Text ("");
       end if;
@@ -839,11 +839,19 @@ package body VCS2.Commits is
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
-      VCS : constant VCS_Engine_Access := Active_VCS (Kernel);
+      VCS    : constant VCS_Engine_Access := Active_VCS (Kernel);
+      View   : constant Commit_View := Commit_Views.Retrieve_View (Kernel);
    begin
       if VCS /= null then
          declare
-            Msg : constant String := Get_Commit_Message (VCS);
+            --  Get the commit message from the widget, not from the
+            --  properties, so that any change done by the user (but not saved
+            --  yet because the editor still has focus) is taken into account.
+
+            Msg : constant String :=
+              (if View /= null and then View.Active_VCS = VCS
+               then Get_Text_Without_Placeholder (View.Commit)
+               else Get_Commit_Message_From_Properties (VCS));
          begin
             if Msg /= "" then
                VCS.Commit_Staged_Files (Msg);
