@@ -897,14 +897,9 @@ package body Language.Libclang is
 
    function Get_Cache_File (Kernel : Core_Kernel) return Virtual_File
    is
-      Obj_Dir         : constant Virtual_File :=
-        Kernel.Get_Project_Tree.Root_Project.Object_Dir;
+      Project : constant Project_Type := Kernel.Get_Project_Tree.Root_Project;
    begin
-      if Obj_Dir = No_File then
-         return No_File;
-      else
-         return Obj_Dir / "clang_ref_cache.db";
-      end if;
+      return Project.Artifacts_Dir / (+"clang_ref_cache.db");
    end Get_Cache_File;
 
    --------------------------------

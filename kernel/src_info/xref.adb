@@ -2701,9 +2701,7 @@ package body Xref is
 
    function Xref_Database_Location
      (Self    : not null access General_Xref_Database_Record)
-      return GNATCOLL.VFS.Virtual_File
-   is
-      Dir  : Virtual_File;
+      return GNATCOLL.VFS.Virtual_File is
    begin
       if Self.Working_Xref_Db = GNATCOLL.VFS.No_File then
          declare
@@ -2720,22 +2718,12 @@ package body Xref is
                      Hash : constant String := GNAT.SHA1.Digest
                        (+Project.Project_Path.Full_Name (Normalize => True));
                   begin
-                     Self.Working_Xref_Db := Create_From_Dir
-                       (Dir  => Get_Tmp_Directory,
-                        Base_Name => +("gnatinspect-" & Hash & ".db"));
+                     Self.Working_Xref_Db :=
+                       Get_Tmp_Directory / (+("gnatinspect-" & Hash & ".db"));
                   end;
                else
-                  Dir    := Project.Object_Dir;
-
-                  if Dir = No_File then
-                     Trace (Me, "Object_Dir is unknown for the root project "
-                            & Project.Project_Path.Display_Full_Name);
-                     Dir := Project.Project_Path.Dir;
-                  end if;
-
-                  Self.Working_Xref_Db := Create_From_Dir
-                    (Dir        => Dir,
-                     Base_Name => +("gnatinspect.db"));
+                  Self.Working_Xref_Db :=
+                    Project.Artifacts_Dir / (+"gnatinspect.db");
                end if;
             else
                Self.Working_Xref_Db := Create_From_Base

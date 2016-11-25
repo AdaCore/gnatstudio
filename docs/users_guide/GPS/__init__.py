@@ -10610,12 +10610,17 @@ def thaw_prefs():
 
 def xref_db():
     """
-    Returns the location of the xref database.  This is an :program:`sqlite`
+    Returns the location of the xref database. This is an :program:`sqlite`
     database created by GPS when it parses the :file:`.ali` files generated
-    by the compiler.  Its location depends on both the location of the root
-    project (the database is in its object directory by default), and its
-    optional IDE'Xref_Database attribute, which can be used to specify an
-    alternate location.
+    by the compiler.
+
+    Its location depends mainly on the optional IDE'Artifacts_Dir
+    attribute, which defaults to the project's object directory if not
+    specified.
+
+    The location can also depend on the optional IDE'Xref_Database
+    attribute which specifies a complete path to the cross-references
+    database file.
 
     :return: a string
     """

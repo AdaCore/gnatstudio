@@ -1238,15 +1238,26 @@ package body GPS.Project_Properties is
      (Kernel : access Core_Kernel_Record'Class;
       Attr   : Attribute_Description_Access)
    is
-      Msg : constant String := Register_New_Attribute
-        (Name    => Attr.Name.all,
-         Pkg     => Attr.Pkg.all,
-         Is_List => Attr.Is_List,
-         Indexed => Attr.Indexed,
-         Case_Sensitive_Index => Attr.Case_Sensitive_Index);
+      Registered_Outside : constant Boolean := Attribute_Registered
+        (Name => Attr.Name.all,
+         Pkg  => Attr.Pkg.all);
    begin
-      if Msg /= "" then
-         Kernel.Messages_Window.Insert (Msg, Mode => Error);
+      --  Register project attributes only if not already registered in
+      --  GNATCOLL.
+
+      if not Registered_Outside then
+         declare
+            Msg : constant String := Register_New_Attribute
+              (Name    => Attr.Name.all,
+               Pkg     => Attr.Pkg.all,
+               Is_List => Attr.Is_List,
+               Indexed => Attr.Indexed,
+               Case_Sensitive_Index => Attr.Case_Sensitive_Index);
+         begin
+            if Msg /= "" then
+               Kernel.Messages_Window.Insert (Msg, Mode => Error);
+            end if;
+         end;
       end if;
    end Register_New_Attribute;
 

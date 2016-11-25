@@ -22,7 +22,7 @@ with Ada.Calendar;               use Ada.Calendar;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with Commands.Interactive;       use Commands, Commands.Interactive;
 with GNAT.Strings;               use GNAT.Strings;
-with GNATCOLL.Arg_Lists; use GNATCOLL.Arg_Lists;
+with GNATCOLL.Arg_Lists;         use GNATCOLL.Arg_Lists;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.Symbols;           use GNATCOLL.Symbols;
 with GNATCOLL.Scripts;           use GNATCOLL.Scripts;
@@ -517,17 +517,19 @@ package body Navigation_Module is
    procedure Load_History_Markers
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      M            : constant Navigation_Module :=
-                      Navigation_Module (Navigation_Module_ID);
-      Project_Tree : constant GNATCOLL.Projects.Project_Tree_Access :=
-        Get_Registry (Kernel).Tree;
-      Root_Project : constant Project_Type := Project_Tree.Root_Project;
-      Project_File : constant Virtual_File := Root_Project.Project_Path;
-      Directory    : Virtual_File;
-      Filename     : Virtual_File;
+      M             : constant Navigation_Module :=
+                        Navigation_Module (Navigation_Module_ID);
+      Project_Tree  : constant GNATCOLL.Projects.Project_Tree_Access :=
+                        Get_Registry (Kernel).Tree;
+
+      Root_Project  : constant Project_Type := Project_Tree.Root_Project;
+      Project_File  : constant Virtual_File := Root_Project.Project_Path;
+      Base_Name     : constant Filesystem_String :=
+                        Project_File.Base_Name (".gpr") & "-loc.xml";
+      Filename      : Virtual_File;
       File, Child, Project : Node_Ptr;
-      Marker       : Location_Marker;
-      Err          : GNAT.Strings.String_Access;
+      Marker        : Location_Marker;
+      Err           : GNAT.Strings.String_Access;
    begin
       --  Keep markers only for ordinary projects (not empty nor default)
 
@@ -536,14 +538,7 @@ package body Navigation_Module is
          return;
       end if;
 
-      Directory := Object_Dir (Root_Project);
-
-      if Directory = No_File then
-         Directory := Project_File.Dir;
-      end if;
-
-      Filename := Create_From_Dir
-        (Directory, Project_File.Base_Name (".gpr") & "-loc.xml");
+      Filename := Root_Project.Artifacts_Dir / Base_Name;
       M.Markers_File := Filename;
 
       if Is_Regular_File (Filename) then
