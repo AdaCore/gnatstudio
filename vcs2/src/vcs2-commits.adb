@@ -25,6 +25,7 @@ with Generic_Views;               use Generic_Views;
 with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
 with Glib;                        use Glib;
+with GNATCOLL.Projects;           use GNATCOLL.Projects;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GNATCOLL.VFS.GtkAda;         use GNATCOLL.VFS.GtkAda;
@@ -46,6 +47,7 @@ with Gtk.Cell_Renderer_Pixbuf;    use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Text;      use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Toggle;    use Gtk.Cell_Renderer_Toggle;
 with Gtk.Enums;                   use Gtk.Enums;
+with Gtk.Gesture_Multi_Press;     use Gtk.Gesture_Multi_Press;
 with Gtk.Label;                   use Gtk.Label;
 with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
@@ -139,6 +141,8 @@ package body VCS2.Commits is
       Category_Untracked : Gtk_Tree_Path := Null_Gtk_Tree_Path;
       --  The nodes for the categories (if they are displayed)
 
+      Multipress  : Gtk_Gesture_Multi_Press;
+
       Config      : Commit_View_Config;
       Commit      : Gtk_Text_View;
    end record;
@@ -189,6 +193,12 @@ package body VCS2.Commits is
       Initialize         => Initialize);
    use Commit_Views;
    subtype Commit_View is Commit_Views.View_Access;
+
+   procedure On_Multipress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      N_Press : Gint;
+      X, Y    : Gdouble);
+   --  Called every time a row is clicked
 
    type On_All_Files_Available_In_Cache is new Task_Completed_Callback with
       record
@@ -859,6 +869,46 @@ package body VCS2.Commits is
       return Commands.Success;
    end Execute;
 
+   -------------------
+   -- On_Multipress --
+   -------------------
+
+   procedure On_Multipress
+     (Self    : access Glib.Object.GObject_Record'Class;
+      N_Press : Gint;
+      X, Y    : Gdouble)
+   is
+      View           : constant Commit_View := Commit_View (Self);
+      File           : Virtual_File;
+      Filter_Path    : Gtk_Tree_Path;
+      Column         : Gtk_Tree_View_Column;
+      Success        : Boolean;
+      Cell_X, Cell_Y : Gint;
+   begin
+      if N_Press = 2 then
+         View.Tree.Get_Path_At_Pos
+           (Gint (X), Gint (Y), Filter_Path,
+            Column, Cell_X, Cell_Y, Success);
+         if Success then
+            --  Select the row that was clicked
+            View.Tree.Set_Cursor (Filter_Path, null, Start_Editing => False);
+            File := View.Tree.Get_File_From_Node
+              (View.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path));
+            if File /= No_File then
+               Open_File_Action_Hook.Run
+                 (View.Kernel,
+                  File,
+                  Project => GNATCOLL.Projects.No_Project,
+                  Line    => 0,
+                  Column  => 0);
+            end if;
+
+            Path_Free (Filter_Path);
+            View.Multipress.Set_State (Event_Sequence_Claimed);
+         end if;
+      end if;
+   end On_Multipress;
+
    ----------------
    -- Initialize --
    ----------------
@@ -953,6 +1003,10 @@ package body VCS2.Commits is
       Tooltip.Set_Tooltip (Self.Tree);
 
       Setup_Contextual_Menu (Self.Kernel, Self.Tree);
+
+      Gtk_New (Self.Multipress, Widget => Self.Tree);
+      Self.Multipress.On_Pressed (On_Multipress'Access, Slot => Self);
+      Self.Multipress.Watch (Self);
 
       return Gtk_Widget (Self.Tree);
    end Initialize;
