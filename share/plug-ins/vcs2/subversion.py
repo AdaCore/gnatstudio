@@ -84,5 +84,15 @@ class SVN(core_staging.Emulate_Staging,
 
                     s.set_status(GPS.File(f), status, rev, rrev)
 
-    def commit_staged_filed(self, message):
+    @core.run_in_background
+    def commit_staged_files(self, message):
+        for f in self._staged:
+            status, version, repo_version = self.get_file_status(f)
+            if status & GPS.VCS2.Status.STAGED_ADDED:
+                p = ProcessWrapper(['svn', 'add', f.path])
+                yield p.wait_until_terminate()
+            elif status & GPS.VCS2.Status.STAGED_DELETED:
+                p = ProcessWrapper(['svn', 'delete', f.path])
+                yield p.wait_until_terminate()
+
         self._internal_commit_staged_files(['svn', 'commit', '-m', message])

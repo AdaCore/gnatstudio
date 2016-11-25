@@ -141,25 +141,17 @@ class VCS(GPS.VCS2):
         """
         pass
 
-    def stage_files(self, files):
+    def stage_or_unstage_files(self, files, stage):
         """
-        Mark all the files in the list to be part of the next commit.
+        Mark all the files in the list to be part of the next commit (if
+        `stage` is True), or not part of the next commit (if `stage` is
+        False).
         Some VCS systems support this natively (git), while for others it
         needs to be emulated.
         Extend the vcs2.core_staging.Emulate_Staging class to emulate.
 
-        :param List(GPS.File) files: the list of files to stage
-        """
-
-    def unstage_files(self, files):
-        """
-        Unmark all the files in the list so that they are not part of the
-        next commit.
-        Some VCS systems support this natively (git), while for others it
-        needs to be emulated.
-        Extend the vcs2.core_staging.Emulate_Staging class to emulate.
-
-        :param List(GPS.File) files: the list of files to stage
+        :param List(GPS.File) files: The list of files to stage or unstage.
+        :param bool stage: whether to stage or unstage.
         """
 
     def commit_staged_files(self, message):
@@ -270,8 +262,7 @@ class File_Based_VCS(VCS):
             args=[d for d in project.source_dirs(recursive=False)])
 
     def async_fetch_status_for_all_files(self):
-        self._compute_status(
-            all_files=GPS.Project.root().sources(recursive=True))
+        self._compute_status([])  # all files
 
 
 class register_vcs:

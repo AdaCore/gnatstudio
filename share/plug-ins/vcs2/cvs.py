@@ -25,10 +25,23 @@ class CVS(core_staging.Emulate_Staging,
     __re_status = re.compile(
         '^(?:' +
         '(?:cvs status: Examining (?P<dir>.+))|' +
-        '(?:File: (?P<file>\S+)\s+Status: (?P<status>.+))|' +
+        '(?:File: (?P<deleted>no file )?(?P<file>\S+)\s+' +
+        'Status: (?P<status>.+))|' +
         '(?:\s+Working revision:\s*(?P<rev>[\d.]+).*)|' +
         '(?:\s+Repository revision:\s*(?P<rrev>[\d.]+).*)' +
         ')$')
+
+    def __cvs(self, args, block_exit=True):
+        """
+        Execute cvs with the given arguments.
+
+        :param List(str) args: list of arguments
+        :returntype: a ProcessWrapper
+        """
+        return ProcessWrapper(
+            ['cvs'] + args,
+            block_exit=block_exit,
+            directory=self.working_dir.path)
 
     @staticmethod
     def discover_working_dir(file):
@@ -37,11 +50,7 @@ class CVS(core_staging.Emulate_Staging,
     @core.run_in_background
     def _compute_status(self, all_files, args=[]):
         with self.set_status_for_all_files(all_files) as s:
-
-            p = ProcessWrapper(
-                ['cvs', '-f', 'status'] + args,
-                block_exit=False,
-                directory=self.working_dir.path)
+            p = self.__cvs(['-f', 'status'] + args, block_exit=False)
             current_file = None
             dir = None
             while True:
@@ -72,8 +81,12 @@ class CVS(core_staging.Emulate_Staging,
                     if all_files:
                         all_files.pop(0)
 
-                    status = STATUSES.get(
-                        m.group('status').lower(), GPS.VCS2.Status.UNMODIFIED)
+                    if m.group('deleted'):
+                        status = GPS.VCS2.Status.DELETED
+                    else:
+                        status = STATUSES.get(
+                            m.group('status').lower(),
+                            GPS.VCS2.Status.UNMODIFIED)
                     rev = None
                     repo_rev = None
                 elif m.group('rev'):
@@ -84,5 +97,15 @@ class CVS(core_staging.Emulate_Staging,
             if current_file is not None:
                 s.set_status(current_file, status, rev, repo_rev)
 
+    @core.run_in_background
     def commit_staged_files(self, message):
+        for f in self._staged:
+            status, version, repo_version = self.get_file_status(f)
+            if status & GPS.VCS2.Status.STAGED_ADDED:
+                p = self.__cvs(['add', f.path])
+                yield p.wait_until_terminate()
+            elif status & GPS.VCS2.Status.STAGED_DELETED:
+                p = self.__cvs(['remove', f.path])
+                yield p.wait_until_terminate()
+
         self._internal_commit_staged_files(['cvs', 'commit', '-m', message])

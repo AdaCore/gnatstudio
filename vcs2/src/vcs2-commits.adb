@@ -742,11 +742,9 @@ package body VCS2.Commits is
    begin
       if View.Active_VCS /= null then
          View.Tree.Get_Selection.Unselect_All;
-         if View.Tree.Model.Get_Boolean (Iter, Column_Staged) then
-            View.Active_VCS.Unstage_Files ((1 => File));
-         else
-            View.Active_VCS.Stage_Files ((1 => File));
-         end if;
+         View.Active_VCS.Stage_Or_Unstage_Files
+           ((1 => File),
+            Stage => not View.Tree.Model.Get_Boolean (Iter, Column_Staged));
       end if;
       Path_Free (Filter_Path);
    end On_Staged_Toggled;
@@ -791,13 +789,8 @@ package body VCS2.Commits is
 
          if Files /= null then
             View.Tree.Get_Selection.Unselect_All;
-
-            if Staged then
-               View.Active_VCS.Unstage_Files (Files.all);
-            else
-               View.Active_VCS.Stage_Files (Files.all);
-            end if;
-
+            View.Active_VCS.Stage_Or_Unstage_Files
+              (Files.all, Stage => not Staged);
             Unchecked_Free (Files);
          end if;
       end if;
@@ -859,6 +852,8 @@ package body VCS2.Commits is
                Insert (Kernel, "No commit message specified", Mode => Error);
             end if;
          end;
+      else
+         Trace (Me, "No VCS selected");
       end if;
 
       return Commands.Success;

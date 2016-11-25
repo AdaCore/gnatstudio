@@ -8,6 +8,7 @@ You only need to derive from this class to get staging emulation.
 import GPS
 import json
 from . import core
+from workflows.promises import ProcessWrapper
 
 
 class Emulate_Staging(object):
@@ -16,12 +17,6 @@ class Emulate_Staging(object):
         super(Emulate_Staging, self).__init__(*args, **kwargs)
         self.__load_staged_files()
 
-    def stage_files(self, files):
-        self.__emulate_stage(files, stage=True)
-
-    def unstage_files(self, files):
-        self.__emulate_stage(files, stage=False)
-
     @core.run_in_background
     def _internal_commit_staged_files(self, args):
         """
@@ -29,14 +24,17 @@ class Emulate_Staging(object):
 
         :param List(str) args: the command and its arguments
         """
-        files = self.__emulate_stage
-        p = ProcessWrapper(args + [f.path for f in files])
+        # Need to copy the list, since '_staged' will be changed below
+        files = list(self._staged)
+        p = ProcessWrapper(
+            args + [f.path for f in files],
+            directory=self.working_dir.path)
         (status, output) = yield p.wait_until_terminate()
         if status:
             GPS.Console().write("%s %s" % (" ".join(args), output))
         else:
             GPS.Hook('vcs_commit_done').run(self)
-            self.unstage_files(files)
+            self.stage_or_unstage_files(files, stage=False)
             yield self.async_fetch_status_for_files(files)
 
     def _set_file_status(self, files, status, version="", repo_version=""):
@@ -80,18 +78,12 @@ class Emulate_Staging(object):
             'staged_vcs', json.dumps([f.path for f in self._staged]),
             persistent=True)
 
-    def __emulate_stage(self, files, stage):
-        """
-        Emulate staging for VCS that do not support it
-        :param List(GPS.File) files:
-        :param bool stage: whether to stage or unstage
-        """
-
+    def stage_or_unstage_files(self, files, stage):
         for f in files:
             status, version, repo_version = self.get_file_status(f)
             if stage:
                 self._staged.add(f)
-            else:
+            elif f in self._staged:
                 self._staged.remove(f)
             new_status = self._override_status_for_file(f, status)
             if status != new_status:

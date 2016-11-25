@@ -149,7 +149,8 @@ package GPS.VCS is
    Mask_Modified_Unstaged : constant VCS_File_Status :=
      Status_Modified
      or Status_Deleted
-     or Status_Conflict;
+     or Status_Conflict
+     or Status_Needs_Update;
    --  All statuses that indicate the file has some unstaged changes
 
    Mask_Untracked         : constant VCS_File_Status :=

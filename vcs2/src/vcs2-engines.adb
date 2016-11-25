@@ -114,12 +114,10 @@ package body VCS2.Engines is
      (Self    : not null access Dummy_VCS_Engine;
       File    : Virtual_File) return VCS_File_Properties
      is ((Status_Untracked, Null_Unbounded_String, Null_Unbounded_String));
-   overriding procedure Stage_Files
+   overriding procedure Stage_Or_Unstage_Files
      (Self    : not null access Dummy_VCS_Engine;
-      Files   : GNATCOLL.VFS.File_Array) is null;
-   overriding procedure Unstage_Files
-     (Self    : not null access Dummy_VCS_Engine;
-      Files   : GNATCOLL.VFS.File_Array) is null;
+      Files   : GNATCOLL.VFS.File_Array;
+      Stage   : Boolean) is null;
    overriding procedure Commit_Staged_Files
      (Self    : not null access Dummy_VCS_Engine;
       Message : String) is null;
@@ -410,7 +408,6 @@ package body VCS2.Engines is
       for E of Global_Data.All_Engines loop
          E.In_Use := False;
       end loop;
-      Global_Data.VCS_Engines.Clear;
 
       Iter := Get_Project (Kernel).Start (Recursive => True);
       loop
@@ -494,6 +491,10 @@ package body VCS2.Engines is
            and then not Global_Data.Active_VCS.In_Use
          then
             Global_Data.Active_VCS := null;
+
+            --  Let listeners know: at this point, the VCS is still active, for
+            --  views that have cached it.
+            Set_Active_VCS (Kernel, Global_Data.All_Engines.First_Element);
          end if;
 
          while Engine_Lists.Has_Element (C) loop
@@ -778,7 +779,7 @@ package body VCS2.Engines is
       P    : Project_Type;
       F    : File_Array_Access;
    begin
-      Trace (Me, "Ensure status for all source files");
+      Trace (Me, "Ensure status for all source files " & VCS.Name);
       loop
          P := Current (Iter);
          exit when P = No_Project;
@@ -1078,18 +1079,19 @@ package body VCS2.Engines is
       File    : GNATCOLL.VFS.Virtual_File)
      return String
    is
+      V : constant VCS_Engine_Access := VCS_Engine_Access (VCS);
       Props : constant VCS_File_Properties :=
          VCS.File_Properties_From_Cache (File);
    begin
       if Props.Status /= Status_Untracked then
-         return "<b>" & VCS.Name & " status</b>: "
-           & To_String (VCS.Get_Display (Props.Status).Label)
+         return "<b>" & V.Name & " status</b>: "
+           & To_String (V.Get_Display (Props.Status).Label)
            & (if Props.Version /= ""
-              then ASCII.LF & "<b>" & VCS.Label_Version & "</b>: "
+              then ASCII.LF & "<b>" & V.Label_Version & "</b>: "
                  & To_String (Props.Version)
               else "")
            & (if Props.Repo_Version /= ""
-              then ASCII.LF & "<b>" & VCS.Label_Repo_Version & "</b>: "
+              then ASCII.LF & "<b>" & V.Label_Repo_Version & "</b>: "
                  & To_String (Props.Repo_Version)
               else "");
       else

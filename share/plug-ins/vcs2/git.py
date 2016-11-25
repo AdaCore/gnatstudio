@@ -108,11 +108,8 @@ class Git(core.VCS):
         else:
             yield self.async_fetch_status_for_all_files()  # update statuses
 
-    def stage_files(self, files):
-        self.__action_then_update_status(['add'], files)
-
-    def unstage_files(self, files):
-        self.__action_then_update_status(['reset'], files)
+    def stage_or_unstage_files(self, files, stage):
+        self.__action_then_update_status(['add' if stage else 'reset'], files)
 
     @core.run_in_background
     def commit_staged_files(self, message):

@@ -58,12 +58,10 @@ package body VCS2.Scripts is
    overriding function Default_File_Status
      (Self    : not null access Script_Engine)
       return VCS_File_Status is (Self.Factory.Default_Status);
-   overriding procedure Stage_Files
+   overriding procedure Stage_Or_Unstage_Files
      (Self    : not null access Script_Engine;
-      Files   : GNATCOLL.VFS.File_Array);
-   overriding procedure Unstage_Files
-     (Self    : not null access Script_Engine;
-      Files   : GNATCOLL.VFS.File_Array);
+      Files   : GNATCOLL.VFS.File_Array;
+      Stage   : Boolean);
    overriding procedure Commit_Staged_Files
      (Self    : not null access Script_Engine;
       Message : String);
@@ -249,33 +247,21 @@ package body VCS2.Scripts is
       end;
    end Find_Working_Directory;
 
-   -----------------
-   -- Stage_Files --
-   -----------------
+   ----------------------------
+   -- Stage_Or_Unstage_Files --
+   ----------------------------
 
-   overriding procedure Stage_Files
+   overriding procedure Stage_Or_Unstage_Files
      (Self    : not null access Script_Engine;
-      Files   : GNATCOLL.VFS.File_Array)
+      Files   : GNATCOLL.VFS.File_Array;
+      Stage   : Boolean)
    is
-      Data : Callback_Data'Class := Create (Self.Script, 1);
+      Data  : Callback_Data'Class := Create (Self.Script, 2);
    begin
       Set_Nth_Arg (Data, 1, Files);
-      Call_Method (Self, "stage_files", Data);
-   end Stage_Files;
-
-   -------------------
-   -- Unstage_Files --
-   -------------------
-
-   overriding procedure Unstage_Files
-     (Self    : not null access Script_Engine;
-      Files   : GNATCOLL.VFS.File_Array)
-   is
-      Data : Callback_Data'Class := Create (Self.Script, 1);
-   begin
-      Set_Nth_Arg (Data, 1, Files);
-      Call_Method (Self, "unstage_files", Data);
-   end Unstage_Files;
+      Data.Set_Nth_Arg (2, Stage);
+      Call_Method (Self, "stage_or_unstage_files", Data);
+   end Stage_Or_Unstage_Files;
 
    -------------------------
    -- Commit_Staged_Files --

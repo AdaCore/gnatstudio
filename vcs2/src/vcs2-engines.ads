@@ -258,12 +258,10 @@ package VCS2.Engines is
    -- Operations --
    ----------------
 
-   procedure Stage_Files
+   procedure Stage_Or_Unstage_Files
      (Self    : not null access VCS_Engine;
-      Files   : GNATCOLL.VFS.File_Array) is abstract;
-   procedure Unstage_Files
-     (Self    : not null access VCS_Engine;
-      Files   : GNATCOLL.VFS.File_Array) is abstract;
+      Files   : GNATCOLL.VFS.File_Array;
+      Stage   : Boolean) is abstract;
    --  Stage or unstage the files so that they are part of the next commit.
    --  This is supported natively by some VCS (git), but is emulated for others
    --  like subversion.
