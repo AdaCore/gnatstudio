@@ -751,7 +751,6 @@ package body VCS2.Commits is
       File : constant Virtual_File := Get_File_From_Node (View.Tree, Iter);
    begin
       if View.Active_VCS /= null then
-         View.Tree.Get_Selection.Unselect_All;
          View.Active_VCS.Stage_Or_Unstage_Files
            ((1 => File),
             Stage => not View.Tree.Model.Get_Boolean (Iter, Column_Staged));
@@ -798,7 +797,6 @@ package body VCS2.Commits is
            (On_Selection'Unrestricted_Access);
 
          if Files /= null then
-            View.Tree.Get_Selection.Unselect_All;
             View.Active_VCS.Stage_Or_Unstage_Files
               (Files.all, Stage => not Staged);
             Unchecked_Free (Files);
@@ -1082,9 +1080,18 @@ package body VCS2.Commits is
 
    begin
       if not View.Computing_File_Status then
-         Remove_From_Tree;
-         View.Create_Nodes
-           (File, Props, VCS_Engine_Access (Vcs), Select_Nodes => True);
+         --  Detached the view: it doesn't bring anything for performance, but
+         --  ensures that the selection is preserved while we move the file's
+         --  nodes around.
+         declare
+            Dummy : constant Expansion.Detached_Model :=
+              Expansion.Detach_Model_From_View (View.Tree);
+         begin
+            Remove_From_Tree;
+            View.Create_Nodes
+              (File, Props, VCS_Engine_Access (Vcs), Select_Nodes => False);
+         end;
+
          View.Tree.Expand_All;
       end if;
    end Execute;
