@@ -22,6 +22,16 @@ package body Database is
       return Self.Category_Id = Foreign.Id;
    end FK;
 
+   function FK (Self : T_Messages_Properties'Class; Foreign : T_Messages'Class) return SQL_Criteria is
+   begin
+      return Self.Message_Id = Foreign.Id;
+   end FK;
+
+   function FK (Self : T_Messages_Properties'Class; Foreign : T_Properties'Class) return SQL_Criteria is
+   begin
+      return Self.Property_Id = Foreign.Id;
+   end FK;
+
    function FK (Self : T_Resources_Messages'Class; Foreign : T_Messages'Class) return SQL_Criteria is
    begin
       return Self.Message_Id = Foreign.Id;
