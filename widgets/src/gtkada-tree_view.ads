@@ -58,6 +58,7 @@ with Gtk.Tree_Store;        use Gtk.Tree_Store;
 with Gtk.Tree_Model;        use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter; use Gtk.Tree_Model_Filter;
 with Glib;                  use Glib;
+with Glib.Main;             use Glib.Main;
 
 package Gtkada.Tree_View is
 
@@ -312,6 +313,7 @@ private
       --  whether a node was expanded or filtered by the model.
 
       Target_Path_For_Scroll : Gtk_Tree_Path := Null_Gtk_Tree_Path;
+      Background_Scroll_Id   : Glib.Main.G_Source_Id := No_Source_Id;
       --  Ensure this path is visible, in an idle.
 
       Lock  : Boolean := False;

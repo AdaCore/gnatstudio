@@ -18,7 +18,6 @@
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Gdk.Drag_Contexts;    use Gdk.Drag_Contexts;
 with Glib.Object;          use Glib.Object;
-with Glib.Main;            use Glib.Main;
 with Glib.Types;           use Glib.Types;
 with Glib.Values;          use Glib.Values;
 with Gtk.Enums;            use Gtk.Enums;
@@ -84,6 +83,9 @@ package body Gtkada.Tree_View is
    ---------------
    -- Callbacks --
    ---------------
+
+   procedure On_Destroy (Self : access Gtk_Widget_Record'Class);
+   --  Called when the tree view is being destroyed
 
    procedure Row_Expanded_Callback
      (Widget      : access Gtk_Tree_View_Record'Class;
@@ -508,11 +510,28 @@ package body Gtkada.Tree_View is
 
    function On_Idle_Scroll (Self : Tree_View) return Boolean is
    begin
-      Self.Scroll_To_Cell (Self.Target_Path_For_Scroll, null, False, 0.0, 0.0);
-      Path_Free (Self.Target_Path_For_Scroll);
-      Self.Target_Path_For_Scroll := Null_Gtk_Tree_Path;
+      if Self.Target_Path_For_Scroll /= Null_Gtk_Tree_Path then
+         Self.Scroll_To_Cell
+            (Self.Target_Path_For_Scroll, null, False, 0.0, 0.0);
+         Path_Free (Self.Target_Path_For_Scroll);
+         Self.Target_Path_For_Scroll := Null_Gtk_Tree_Path;
+      end if;
+      Self.Background_Scroll_Id := No_Source_Id;
       return False;   --  do not execute again
    end On_Idle_Scroll;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Self : access Gtk_Widget_Record'Class) is
+      Tree : constant Tree_View := Tree_View (Self);
+   begin
+      if Tree.Background_Scroll_Id /= No_Source_Id then
+         Remove (Tree.Background_Scroll_Id);
+         Tree.Background_Scroll_Id := No_Source_Id;
+      end if;
+   end On_Destroy;
 
    ---------------------------
    -- Row_Expanded_Callback --
@@ -531,7 +550,6 @@ package body Gtkada.Tree_View is
       Path       : Gtk_Tree_Path;
       Dummy      : Boolean;
       L          : constant Boolean := Tree.Lock;
-      Id         : G_Source_Id with Unreferenced;
 
    begin
       if Tree.Lock then
@@ -573,7 +591,11 @@ package body Gtkada.Tree_View is
          Path := Copy (Filter_Path);
          Down (Path);
          Tree.Target_Path_For_Scroll := Path;
-         Id := Tree_Sources.Idle_Add (On_Idle_Scroll'Access, Tree);
+
+         if Tree.Background_Scroll_Id = No_Source_Id then
+            Tree.Background_Scroll_Id :=
+               Tree_Sources.Idle_Add (On_Idle_Scroll'Access, Tree);
+         end if;
       end if;
 
       Tree.Lock := L;
@@ -697,6 +719,7 @@ package body Gtkada.Tree_View is
 
       Widget.On_Row_Expanded (Row_Expanded_Callback'Access, After => False);
       Widget.On_Row_Collapsed (Row_Collapsed_Callback'Access, After => False);
+      Widget.On_Destroy (On_Destroy'Access);
 
       --  Consider any newly inserted row as a collapsed row,
       --  set the flag accordingly and recompute its visibility.
