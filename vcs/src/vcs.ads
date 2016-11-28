@@ -157,7 +157,7 @@ package VCS is
    ---------------------
 
    Unknown_Label : aliased String := "Unknown";
-   Unknown_Stock : aliased String := "gps-emblem-vcs-unknown";
+   Unknown_Stock : aliased String := "vcs-unknown";
 
    Unknown : constant VCS_File_Status :=
      (Unknown_Label'Access, Unknown_Stock'Access);
@@ -481,13 +481,13 @@ package VCS is
    --  is useful when the external VCS does not correspond to the native
    --  platform (like Cygwin on Windows based OS).
 
-   Added_Stock          : aliased String := "gps-emblem-vcs-added";
-   Removed_Stock        : aliased String := "gps-emblem-vcs-removed";
-   Modified_Stock       : aliased String := "gps-emblem-vcs-modified";
-   Needs_Merge_Stock    : aliased String := "gps-emblem-vcs-needs-merge";
-   Needs_Update_Stock   : aliased String := "gps-emblem-vcs-needs-update";
-   Not_Registered_Stock : aliased String := "gps-emblem-vcs-not-registered";
-   Up_To_Date_Stock     : aliased String := "gps-emblem-vcs-up-to-date";
+   Added_Stock          : aliased String := "vcs-added";
+   Removed_Stock        : aliased String := "vcs-removed";
+   Modified_Stock       : aliased String := "vcs-modified";
+   Needs_Merge_Stock    : aliased String := "vcs-needs-merge";
+   Needs_Update_Stock   : aliased String := "vcs-needs-update";
+   Not_Registered_Stock : aliased String := "vcs-not-registered";
+   Up_To_Date_Stock     : aliased String := "vcs-up-to-date";
 
 private
 

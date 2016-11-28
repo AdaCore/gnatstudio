@@ -29,31 +29,40 @@ package body VCS2.Engines is
 
    Default_Display_Unmodified : constant Status_Display :=
      (Label     => To_Unbounded_String ("Up to date"),
-      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-up-to-date"));
+      Icon_Name => To_Unbounded_String ("vcs-up-to-date"));
    Default_Display_Modified : constant Status_Display :=
      (Label     => To_Unbounded_String ("Modified"),
-      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-modified"));
+      Icon_Name => To_Unbounded_String ("vcs-modified"));
    Default_Display_Deleted  : constant Status_Display :=
      (Label     => To_Unbounded_String ("Removed"),
-      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-removed"));
-   Default_Display_Untracked : constant Status_Display :=
-     (Label     => To_Unbounded_String ("Untracked"),
-      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-not-registered"));
+      Icon_Name => To_Unbounded_String ("vcs-removed"));
+   Default_Display_Deleted_Staged : constant Status_Display :=
+     (Label     => To_Unbounded_String ("Deleted (staged)"),
+      Icon_Name => To_Unbounded_String ("vcs-removed-staged"));
    Default_Display_Ignored : constant Status_Display :=
      (Label     => To_Unbounded_String ("Ignored"),
-      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-unknown"));  --  ???
+      Icon_Name => To_Unbounded_String ("vcs-not-registered"));
+   Default_Display_Untracked : constant Status_Display :=
+     (Label     => To_Unbounded_String ("Untracked"),
+      Icon_Name => To_Unbounded_String ("vcs-unknown"));
    Default_Display_Added : constant Status_Display :=
      (Label     => To_Unbounded_String ("Added"),
-      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-added"));
-   Default_Display_Staged : constant Status_Display :=
-     (Label     => To_Unbounded_String ("Staged"),
-      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-needs-merge")); --  ???
+      Icon_Name => To_Unbounded_String ("vcs-added"));
+   Default_Display_Modified_Staged : constant Status_Display :=
+     (Label     => To_Unbounded_String ("Modified (staged)"),
+      Icon_Name => To_Unbounded_String ("vcs-modified-staged"));
+   Default_Display_Modified_Staged_Unstaged : constant Status_Display :=
+     (Label     => To_Unbounded_String ("Modified (staged and unstaged)"),
+      Icon_Name => To_Unbounded_String ("vcs-modified-staged-unstaged"));
    Default_Display_Conflict : constant Status_Display :=
      (Label     => To_Unbounded_String ("Conflict"),
-      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-has-conflicts"));
+      Icon_Name => To_Unbounded_String ("vcs-has-conflicts"));
    Default_Display_Needs_Update : constant Status_Display :=
      (Label     => To_Unbounded_String ("Needs update"),
-      Icon_Name => To_Unbounded_String ("gps-emblem-vcs-needs-update"));
+      Icon_Name => To_Unbounded_String ("vcs-needs-update"));
+   Default_Display_Needs_Merge : constant Status_Display :=
+     (Label     => To_Unbounded_String ("Needs merge"),
+      Icon_Name => To_Unbounded_String ("vcs-needs-merge"));
 
    package Project_To_Engine is new Ada.Containers.Hashed_Maps
      (Key_Type        => Virtual_File,
@@ -972,27 +981,44 @@ package body VCS2.Engines is
       Status : VCS_File_Status) return Status_Display
    is
       C : constant VCS_Status_Displays.Cursor := Self.Displays.Find (Status);
+      Staged : Boolean;
    begin
       --  Has the VCS defined specific display for this combination of flags ?
       if Has_Element (C) then
          return Element (C);
       else
          --  Fallbacks by looking at a subset of the flags
+
+         Staged := (Status and (Status_Staged_Modified
+                                or Status_Staged_Renamed
+                                or Status_Staged_Added
+                                or Status_Staged_Deleted
+                                or Status_Staged_Copied)) /= 0;
+
          if (Status and Status_Modified) /= 0 then
-            return Default_Display_Modified;
-         elsif (Status and (Status_Deleted or Status_Staged_Deleted)) /= 0 then
+            if Staged then
+               return Default_Display_Modified_Staged_Unstaged;
+            elsif (Status and Status_Needs_Update) /= 0 then
+               return Default_Display_Needs_Merge;
+            else
+               return Default_Display_Modified;
+            end if;
+         elsif (Status and Status_Staged_Added) /= 0 then
+            return Default_Display_Added;
+         elsif (Status and Status_Staged_Deleted) /= 0 then
+            return Default_Display_Deleted_Staged;
+         elsif (Status and Status_Deleted) /= 0 then
             return Default_Display_Deleted;
+         elsif Staged then
+            if (Status and Status_Needs_Update) /= 0 then
+               return Default_Display_Needs_Merge;
+            else
+               return Default_Display_Modified_Staged;
+            end if;
          elsif (Status and Status_Untracked) /= 0 then
             return Default_Display_Untracked;
          elsif (Status and Status_Ignored) /= 0 then
             return Default_Display_Ignored;
-         elsif (Status and Status_Staged_Added) /= 0 then
-            return Default_Display_Added;
-         elsif (Status and (Status_Staged_Modified
-                           or Status_Staged_Renamed
-                           or Status_Staged_Copied)) /= 0
-         then
-            return Default_Display_Staged;
          elsif (Status and Status_Conflict) /= 0 then
             return Default_Display_Conflict;
          elsif (Status and Status_Needs_Update) /= 0 then

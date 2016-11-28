@@ -229,14 +229,14 @@ XML = r"""<?xml version="1.0" ?>
       <history_revision   action="generic_git_history_rev"/>
       <revision           action="generic_git_revision"/>
 
-      <status label="Up to date" stock="gps-emblem-vcs-up-to-date" />
-      <status label="Locally modified" stock="gps-emblem-vcs-modified" />
-      <status label="Property modified" stock="gps-emblem-vcs-modified" />
-      <status label="Needs merge" stock="gps-emblem-vcs-needs-merge" />
-      <status label="Needs update" stock="gps-emblem-vcs-needs-update" />
-      <status label="Contains merge conflicts" stock="gps-emblem-vcs-has-conflicts" />
-      <status label="Removed" stock="gps-emblem-vcs-removed" />
-      <status label="Added" stock="gps-emblem-vcs-added" />
+      <status label="Up to date" stock="vcs-up-to-date" />
+      <status label="Locally modified" stock="vcs-modified" />
+      <status label="Property modified" stock="vcs-modified" />
+      <status label="Needs merge" stock="vcs-needs-merge" />
+      <status label="Needs update" stock="vcs-needs-update" />
+      <status label="Contains merge conflicts" stock="vcs-has-conflicts" />
+      <status label="Removed" stock="vcs-removed" />
+      <status label="Added" stock="vcs-added" />
 
       <status_parser>
          <regexp>(^|\n)(.)( |\t)([^/\n]*/)*([^ \n]+)</regexp>

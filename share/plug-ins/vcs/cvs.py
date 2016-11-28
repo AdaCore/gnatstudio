@@ -517,13 +517,13 @@ XML = r"""<?xml version="1.0"?>
       <diff_tag           action="generic_cvs_diff_tag"         label="Compare against a tag/branch"/>
       <diff2              action="generic_cvs_diff2"            label="Compare two revisions"/>
 
-      <status label="Up to date" stock="gps-emblem-vcs-up-to-date" />
-      <status label="Locally modified" stock="gps-emblem-vcs-modified" />
-      <status label="Needs merge" stock="gps-emblem-vcs-needs-merge" />
-      <status label="Needs update" stock="gps-emblem-vcs-needs-update" />
-      <status label="Contains merge conflicts" stock="gps-emblem-vcs-has-conflicts" />
-      <status label="Removed" stock="gps-emblem-vcs-removed" />
-      <status label="Added" stock="gps-emblem-vcs-added" />
+      <status label="Up to date" stock="vcs-up-to-date" />
+      <status label="Locally modified" stock="vcs-modified" />
+      <status label="Needs merge" stock="vcs-needs-merge" />
+      <status label="Needs update" stock="vcs-needs-update" />
+      <status label="Contains merge conflicts" stock="vcs-has-conflicts" />
+      <status label="Removed" stock="vcs-removed" />
+      <status label="Added" stock="vcs-added" />
 
       <parent_revision regexp="(\d+(\.\d+)+)\.\d+\.\d+"/>
       <branch_root_revision regexp="(\d+(\.\d+)+)\.\d+"/>

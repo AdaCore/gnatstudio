@@ -86,6 +86,7 @@ endif
 	$(RM) $(sharedir)/gps/plug-ins/python_doc.pyc
 	$(RM) $(sharedir)/gps/shell_commands.xml
 	(cd share; tar cf - icons/)  | (cd $(sharedir)/gps; tar xf -)
+	$(RM) $(sharedir)/gps/icons/hicolor/scalable/*sketch
 	(cd share; tar cf - fonts/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - color_themes/)  | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - templates/)  | (cd $(sharedir)/gps; tar xf -)

@@ -8,12 +8,6 @@ from workflows.promises import ProcessWrapper, join, wait_idle
 @core.register_vcs(default_status=GPS.VCS2.Status.UNMODIFIED)
 class Git(core.VCS):
 
-    def setup(self):
-        super(Git, self).setup()
-        self._override_status_display(
-            GPS.VCS2.Status.STAGED_MODIFIED,
-            'modified (staged)', 'gps-emblem-vcs-modified')
-
     @staticmethod
     def discover_working_dir(file):
         return core.find_admin_directory(file, '.git')

@@ -2,7 +2,7 @@
 Name=Hicolor
 Comment=Fallback icon theme
 Hidden=true
-Directories=scalable/16x16,scalable/24x24,scalable/emblems,32x32/apps,24x24/apps
+Directories=scalable/16x16,scalable/256x256,scalable/emblems,32x32/apps,24x24/apps
 
 [scalable/16x16]
 MinSize=1
@@ -11,10 +11,10 @@ MaxSize=256
 Context=Actions
 Type=Scalable
 
-[scalable/24x24]
+[scalable/256x256]
 MinSize=1
-Size=24
-MaxSize=256
+Size=256
+MaxSize=2048
 Context=Actions
 Type=Scalable
 
