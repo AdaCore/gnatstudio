@@ -205,8 +205,8 @@ package body GNAThub.Loader is
       Session         : constant GNATCOLL.SQL.Sessions.Session_Type :=
                          GNATCOLL.SQL.Sessions.Get_New_Session;
       List            : Orm.Resource_Message_List :=
-                         Orm.All_Resources_Messages.Filter
-                           (Resource_Id => Resource_Id).Get (Session);
+                         Orm.Filter (Orm.All_Resources_Messages,
+                           Resource_Id => Resource_Id).Get (Session);
       R               : Orm.Resource_Message;
       M               : Orm.Message;
       Message         : GNAThub.Messages.Message_Access;
@@ -373,8 +373,8 @@ package body GNAThub.Loader is
    begin
       while List.Has_Row loop
          R := List.Element;
-         M :=
-           Orm.All_Messages.Filter (Id => R.Message_Id).Get (Session).Element;
+         M := Orm.Filter (Orm.All_Messages, Id => R.Message_Id)
+            .Get (Session).Element;
 
          if Self.Rules.Contains (M.Rule_Id) then
             --  This is message
@@ -482,8 +482,8 @@ package body GNAThub.Loader is
    procedure Load_Resources (Self : in out Loader'Class) is
       Session  : constant GNATCOLL.SQL.Sessions.Session_Type :=
                    GNATCOLL.SQL.Sessions.Get_New_Session;
-      List     : Orm.Resource_List :=
-                   Orm.All_Resources.Filter (Kind => 2).Get (Session);
+      List     : Orm.Resource_List := Orm.Filter
+         (Orm.All_Resources, Kind => 2).Get (Session);
       R        : Orm.Resource;
       Resource : Resource_Access;
 
@@ -548,7 +548,7 @@ package body GNAThub.Loader is
          T    := TL.Element;
          Tool := Self.Module.New_Tool (To_Unbounded_String (T.Name));
 
-         RL := T.Tool_Rules.Filter (Kind => 0).Get (Session);
+         RL := Orm.Filter (T.Tool_Rules, Kind => 0).Get (Session);
 
          while RL.Has_Row loop
             R := RL.Element;
