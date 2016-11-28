@@ -983,15 +983,17 @@ package body Refactoring.Services is
    begin
       if Sub /= No_Root_Entity then
          declare
-            Params : constant Xref.Parameter_Array := Parameters (Sub);
+            Params : Xref.Parameter_Array := Parameters (Sub);
          begin
             for P in Params'Range loop
-               if Params (P).Parameter = General_Entity (Entity) then
+               if Params (P).Parameter.all = Entity then
                   Is_Parameter := True;
                   PType        := Params (P).Kind;
+                  Free (Params);
                   return;
                end if;
             end loop;
+            Free (Params);
          end;
       end if;
 

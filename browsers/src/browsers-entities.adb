@@ -764,14 +764,14 @@ package body Browsers.Entities is
    procedure Add_Parameters (Item : access Type_Item_Record'Class) is
       B        : constant Type_Browser := Type_Browser (Item.Browser);
       S        : constant access Browser_Styles := B.Get_View.Get_Styles;
-      Params   : constant Parameter_Array := Item.Entity.Element.Parameters;
+      Params   : Parameter_Array := Item.Entity.Element.Parameters;
       Returned : constant Root_Entity'Class :=
         Item.Entity.Element.Returned_Type;
       Rect  : Rect_Item;
    begin
       for P in Params'Range loop
          declare
-            Parameter : constant Root_Entity'Class := Params (P).Parameter;
+            Parameter : constant Root_Entity'Class := Params (P).Parameter.all;
             Name      : constant String := Parameter.Get_Name;
          begin
             Rect := Gtk_New_Rect (S.Invisible);
@@ -803,6 +803,8 @@ package body Browsers.Entities is
 
          end;
       end loop;
+
+      Free (Params);
 
       if Returned /= No_Root_Entity then
          Rect := Gtk_New_Rect (S.Invisible);

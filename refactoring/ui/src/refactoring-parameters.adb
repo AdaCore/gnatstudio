@@ -115,7 +115,7 @@ package body Refactoring.Parameters is
       Nest_Count  : Integer := 1;
       Result : Unbounded_String;
 
-      Params : constant Parameter_Array := Xref.Parameters (Entity);
+      Params : Parameter_Array := Xref.Parameters (Entity);
       Iter   : Integer := Params'First;
 
       procedure Add_Parameter_Name;
@@ -159,7 +159,7 @@ package body Refactoring.Parameters is
             end if;
 
             Append (Result,
-                    Xref.Get_Name (Root_Entity'Class (Params (Iter).Parameter))
+                    Xref.Get_Name (Params (Iter).Parameter.all)
                     & " => ");
 
             Iter := Iter + 1;
@@ -257,11 +257,13 @@ package body Refactoring.Parameters is
         or else Chars (First) /= '('
       then
          Trace (Me, "Doesn't appear to be a subprogram call");
+         Free (Params);
          return Failure;
       end if;
 
       if Params'Length = 0 then
          Trace (Me, "No parameter for this subprogram");
+         Free (Params);
          return Failure;
       end if;
 
@@ -269,6 +271,7 @@ package body Refactoring.Parameters is
          Trace (Me, "Rename parameters: detected dotted notation");
          Iter := Iter + 1;
          if Params'Length = 1 then
+            Free (Params);
             return Success;
          end if;
       end if;
@@ -290,6 +293,8 @@ package body Refactoring.Parameters is
 
          First  := First + 1;
       end loop;
+
+      Free (Params);
 
       Result := Result & Chars (Last .. First);
       if Insert_Text

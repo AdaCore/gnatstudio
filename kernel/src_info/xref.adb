@@ -43,6 +43,9 @@ package body Xref is
    Constructs_Heuristics : constant Trace_Handle :=
      Create ("Entities.Constructs", On);
 
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Root_Entity'Class, Root_Entity_Access);
+
    ---------------------------
    --  Note for development --
    ---------------------------
@@ -1727,7 +1730,8 @@ package body Xref is
 
          All_Params (Count) :=
            (Kind => Curs.Element.Kind,
-            Parameter => From_New (Entity.Db, Curs.Element.Parameter));
+            Parameter => new General_Entity'
+               (From_New (Entity.Db, Curs.Element.Parameter)));
          Curs.Next;
       end loop;
 
@@ -1737,6 +1741,17 @@ package body Xref is
          Unchecked_Free (All_Params);
       end return;
    end Parameters;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Self : in out Parameter_Array) is
+   begin
+      for J in Self'Range loop
+         Unchecked_Free (Self (J).Parameter);
+      end loop;
+   end Free;
 
    ---------------------
    -- Is_Parameter_Of --
@@ -2786,8 +2801,6 @@ package body Xref is
    ----------
 
    procedure Free (X : in out Entity_Array) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Root_Entity'Class, Root_Entity_Access);
    begin
       for J in X'Range loop
          Unchecked_Free (X (J));

@@ -411,30 +411,6 @@ package GPS.Kernel is
    --  Makes the filter accessible from other parts of GPS via a name,
    --  including scripts.
 
-   type Base_Action_Filter_Record (<>)
-      is new Action_Filter_Record with private;
-   type Base_Action_Filter is access all Base_Action_Filter_Record'Class;
-
-   overriding procedure Register_Filter
-     (Kernel : access Kernel_Handle_Record'Class;
-      Filter : access Base_Action_Filter_Record;
-      Name   : String);
-   overriding function Filter_Matches_Primitive
-     (Filter  : access Base_Action_Filter_Record;
-      Context : Selection_Context) return Boolean;
-   --  See docs for inherited subprograms
-
-   function Create
-     (Language   : String := "";
-      Shell      : String := "";
-      Shell_Lang : String := "Shell";
-      Module     : String := "") return Action_Filter;
-   --  Create a new filter.
-   --  It does a logical AND for all its attributes specified as parameters.
-   --  The default values for the parameters indicate that no special filter
-   --  is done for this particular parameter.
-   --  It might return null if no criteria is specified.
-
    procedure Free (Filter : in out Action_Filter_Record) is null;
    --  Free the memory associated with the filter. This must never be called
    --  directly and is only needed for the kernel itself. But it needs to be
@@ -475,6 +451,30 @@ package GPS.Kernel is
       Name   : String) return Action_Filter;
    --  Lookup a filter by name. Return null if no such filter has been
    --  registered.
+
+   function Create
+     (Language   : String := "";
+      Shell      : String := "";
+      Shell_Lang : String := "Shell";
+      Module     : String := "") return Action_Filter;
+   --  Create a new filter.
+   --  It does a logical AND for all its attributes specified as parameters.
+   --  The default values for the parameters indicate that no special filter
+   --  is done for this particular parameter.
+   --  It might return null if no criteria is specified.
+
+   type Base_Action_Filter_Record (<>)
+      is new Action_Filter_Record with private;
+   type Base_Action_Filter is access all Base_Action_Filter_Record'Class;
+
+   overriding procedure Register_Filter
+     (Kernel : access Kernel_Handle_Record'Class;
+      Filter : access Base_Action_Filter_Record;
+      Name   : String);
+   overriding function Filter_Matches_Primitive
+     (Filter  : access Base_Action_Filter_Record;
+      Context : Selection_Context) return Boolean;
+   --  See docs for inherited subprograms
 
    -----------
    -- Hooks --

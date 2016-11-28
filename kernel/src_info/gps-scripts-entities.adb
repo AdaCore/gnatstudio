@@ -135,10 +135,10 @@ package body GPS.Scripts.Entities is
 
             if Subp /= No_Root_Entity then
                declare
-                  Params : constant Parameter_Array := Subp.Parameters;
+                  Params : Parameter_Array := Subp.Parameters;
                begin
                   for P in Params'Range loop
-                     if Root_Entity'Class (Params (P).Parameter) = Entity then
+                     if Params (P).Parameter.all = Entity then
                         case Params (P).Kind is
                            when In_Parameter =>
                               Set_Return_Value (Data, True);
@@ -159,6 +159,8 @@ package body GPS.Scripts.Entities is
                         exit;
                      end if;
                   end loop;
+
+                  Free (Params);
                end;
             end if;
          end;
@@ -262,14 +264,15 @@ package body GPS.Scripts.Entities is
 
       elsif Command = "parameters" then
          declare
-            Params : constant Parameter_Array := Parameters (Entity);
+            Params : Parameter_Array := Parameters (Entity);
          begin
             Set_Return_Value_As_List (Data);
             for P in Params'Range loop
                Set_Return_Value
                  (Data, Create_Entity
-                    (Get_Script (Data), Params (P).Parameter));
+                    (Get_Script (Data), Params (P).Parameter.all));
             end loop;
+            Free (Params);
          end;
 
       elsif Command = "methods" then

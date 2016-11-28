@@ -29,8 +29,8 @@ with Commands;
 with GPS.Kernel.Project;
 with GPS.Kernel.Task_Manager;
 
-with GNAThub.Messages;
 with Database.Orm;
+with GNAThub.Messages;
 with Language.Abstract_Language_Tree;
 
 package body GNAThub.Loader is
@@ -201,13 +201,13 @@ package body GNAThub.Loader is
       use type GNATCOLL.VFS.Virtual_File;
 
       File            : constant GNATCOLL.VFS.Virtual_File :=
-                          GNATCOLL.VFS.Create_From_UTF8 (Resource_Name);
+                         GNATCOLL.VFS.Create_From_UTF8 (Resource_Name);
       Session         : constant GNATCOLL.SQL.Sessions.Session_Type :=
-                          GNATCOLL.SQL.Sessions.Get_New_Session;
+                         GNATCOLL.SQL.Sessions.Get_New_Session;
       List            : Database.Orm.Resource_Message_List :=
-                          Database.Orm.Filter
-                            (Database.Orm.All_Resources_Messages,
-                             Resource_Id => Resource_Id).Get (Session);
+                         Database.Orm.Filter
+                          (Database.Orm.All_Resources_Messages,
+                           Resource_Id => Resource_Id).Get (Session);
       R               : Database.Orm.Resource_Message;
       M               : Database.Orm.Message;
       Message         : GNAThub.Messages.Message_Access;
@@ -506,7 +506,7 @@ package body GNAThub.Loader is
    procedure Load_Severities (Self : in out Loader'Class) is
       Session  : constant GNATCOLL.SQL.Sessions.Session_Type :=
                    GNATCOLL.SQL.Sessions.Get_New_Session;
-      List     : Database.Orm.Category_List :=
+      List     : Database.Orm.Category_List       :=
                    Database.Orm.All_Categories.Get (Session);
       S        : Database.Orm.Category;
       Severity : Severity_Access;

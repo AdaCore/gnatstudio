@@ -345,24 +345,6 @@ package Default_Preferences is
    procedure Free (Self : in out Preferences_Page_Record);
    --  Free the memory associated with the given page.
 
-   ------------------------------
-   -- Default_Preferences_Page --
-   ------------------------------
-
-   type Default_Preferences_Page_Record is new Preferences_Page_Record
-   with private;
-   type Default_Preferences_Page is
-     access all Default_Preferences_Page_Record'Class;
-   --  Default preferences pages. This type of pages is the default one in GPS:
-   --  pages of this type will be created when registering a preference that
-   --  resides in a page that has not been registered previously.
-
-   overriding function Get_Widget
-     (Self    : not null access Default_Preferences_Page_Record;
-      Manager : not null Preferences_Manager)
-      return Gtk.Widget.Gtk_Widget;
-   --  See inherited documentation.
-
    ----------------
    -- Preference --
    ----------------
@@ -430,8 +412,8 @@ package Default_Preferences is
    type String_Preference_Record  is new Preference_Record with private;
    type Color_Preference_Record   is new Preference_Record with private;
    type Font_Preference_Record    is new Preference_Record with private;
-   type Style_Preference_Record   is new Preference_Record with private;
-   type Variant_Preference_Record is new Style_Preference_Record with private;
+   type Style_Preference_Record is tagged;
+   type Variant_Preference_Record is tagged;
    type Enum_Preference_Record  is abstract new Preference_Record with private;
    type Theme_Preference_Record   is new Preference_Record with private;
 
@@ -599,6 +581,12 @@ package Default_Preferences is
      (Pref : access Font_Preference_Record)
       return Pango.Font.Pango_Font_Description;
 
+   -----------------------------
+   -- Style_Preference_Record --
+   -----------------------------
+
+   type Style_Preference_Record is new Preference_Record with private;
+
    overriding function Get_Pref
      (Pref : access Style_Preference_Record) return String;
    function Get_Pref_Font
@@ -611,9 +599,15 @@ package Default_Preferences is
      (Pref     : access Style_Preference_Record'Class)
       return Gdk.RGBA.Gdk_RGBA;
 
+   -------------------------------
+   -- Variant_Preference_Record --
+   -------------------------------
+
+   type Variant_Preference_Record is new Style_Preference_Record with private;
+
    overriding function Get_Pref
      (Pref : access Variant_Preference_Record) return String;
-   function Get_Pref_Font
+   overriding function Get_Pref_Font
      (Pref     : access Variant_Preference_Record)
       return Pango.Font.Pango_Font_Description;
    function Get_Pref_Fg_Color
@@ -736,6 +730,24 @@ package Default_Preferences is
    procedure Next (C : in out Preference_Cursor);
    function Get_Pref (Self : Preference_Cursor) return Preference;
    --  Iterate all over the registered preferences.
+
+   ------------------------------
+   -- Default_Preferences_Page --
+   ------------------------------
+
+   type Default_Preferences_Page_Record is
+     new Preferences_Page_Record with private;
+   type Default_Preferences_Page is
+     access all Default_Preferences_Page_Record'Class;
+   --  Default preferences pages. This type of pages is the default one in GPS:
+   --  pages of this type will be created when registering a preference that
+   --  resides in a page that has not been registered previously.
+
+   overriding function Get_Widget
+     (Self    : not null access Default_Preferences_Page_Record;
+      Manager : not null Preferences_Manager)
+      return Gtk.Widget.Gtk_Widget;
+   --  See inherited documentation.
 
    -------------------
    -- Editors views --

@@ -49,10 +49,58 @@ package Xref is
    No_Reference_Iterator : constant Root_Reference_Iterator'Class;
 
    type Root_Entity is abstract tagged null record;
+   type Root_Entity_Access is access all Root_Entity'Class;
    No_Root_Entity : aliased constant Root_Entity'Class;
    --  aliased is added to let AJIS make it accessible to GNATbench
 
-   type Root_Entity_Access is access all Root_Entity'Class;
+   type General_Parameter is record
+      Parameter : Root_Entity_Access;
+      Kind      : GNATCOLL.Xref.Parameter_Kind;
+   end record;
+   type Parameter_Array is array (Natural range <>) of General_Parameter;
+   No_Parameters : constant Parameter_Array;
+
+   procedure Free (Self : in out Parameter_Array);
+   --  Free memory used by the array
+
+   function Parameters
+     (Entity : Root_Entity) return Parameter_Array is abstract;
+   --  Return the list of parameters for a given subprogram.
+   --  Called must free the returned value
+
+   function Find_All_References
+     (Entity                : Root_Entity;
+      In_File               : GNATCOLL.VFS.Virtual_File :=
+        GNATCOLL.VFS.No_File;
+      In_Scope              : Root_Entity'Class := No_Root_Entity;
+      Include_Overriding    : Boolean := False;
+      Include_Overridden    : Boolean := False;
+      Include_Implicit      : Boolean := False;
+      Include_All           : Boolean := False;
+      Include_Renames       : Boolean := True;
+      Kind                  : String := "")
+      return Root_Reference_Iterator'Class is abstract;
+   --  Find all the references to the entity. This also return the location
+   --  for the declaration of the entity.
+   --  If In_File is specified, then only the references in that file will be
+   --  returned. This is also more efficient. Alternatively, In_Scope can be
+   --  specified to limit the list of references to the ones that appear
+   --  in the scope of In_Scope.
+   --  If Include_Overriding or Include_Overridden are True, then all
+   --  references to an overriding or Overridden subprogram will also be
+   --  returned. If Entity is a parameter of subprogram A, this will also
+   --  return the parameters of subprograms that override A.
+   --
+   --  If Include_Implicit is False, then implicit references will not be
+   --  returned.
+   --  If Include_All is True, then references like end-of-spec and other
+   --  information on the entity will be returned.
+   --  Kind can be used to filter the reference kinds that should be returned.
+   --  If it is specified, Include_Implicit and Include_All are ignored. It is
+   --  a list of comma-separated strings.
+   --
+   --  If Include_Renames is true, then this subprogram follows the "renames"
+   --  statement and returns the references to the renamed entities as well.
 
    function Id_Eq (L, R : Root_Entity_Access) return Boolean is
      (L.all = R.all);
@@ -523,6 +571,24 @@ package Xref is
    --  When you retrieve BI or AI, you can use Instance_Of to get access to
    --  resp. B and A.
 
+   type Abstract_Entities_Cursor is interface;
+   function At_End
+     (Iter : Abstract_Entities_Cursor) return Boolean is abstract;
+   function Get
+     (Iter : Abstract_Entities_Cursor) return Root_Entity'Class is abstract;
+   procedure Next (Iter : in out Abstract_Entities_Cursor) is abstract;
+   procedure Destroy (Iter : in out Abstract_Entities_Cursor) is abstract;
+
+   No_Entities_Cursor : constant Abstract_Entities_Cursor'Class;
+
+   function Get_All_Called_Entities
+     (Entity : Root_Entity) return Abstract_Entities_Cursor'Class is abstract;
+   --  Return all the entities that are found in the scope of Entity. This is
+   --  not necessarily a subprogram call, but can be many things.
+   --  All entities returned are unique. If you need to find the specific
+   --  reference(s) to that entity, you'll need to search for the references in
+   --  the right scope through the iterators above.
+
    ---------------
    --  Entities
    ---------------
@@ -533,19 +599,6 @@ package Xref is
 
    overriding function "=" (E1, E2 : General_Entity) return Boolean;
    --  Whether the two entities are the same
-
-   type General_Parameter is record
-      Parameter : General_Entity;
-      Kind      : GNATCOLL.Xref.Parameter_Kind;
-   end record;
-
-   type Parameter_Array is array (Natural range <>) of General_Parameter;
-
-   function Parameters
-     (Entity : Root_Entity) return Parameter_Array is abstract;
-   --  Return the list of parameters for a given subprogram
-
-   No_Parameters : constant Parameter_Array;
 
    -----------
    -- Files --
@@ -711,16 +764,6 @@ package Xref is
    -- Entities in file --
    ----------------------
 
-   type Abstract_Entities_Cursor is interface;
-   function At_End
-     (Iter : Abstract_Entities_Cursor) return Boolean is abstract;
-   function Get
-     (Iter : Abstract_Entities_Cursor) return Root_Entity'Class is abstract;
-   procedure Next (Iter : in out Abstract_Entities_Cursor) is abstract;
-   procedure Destroy (Iter : in out Abstract_Entities_Cursor) is abstract;
-
-   No_Entities_Cursor : constant Abstract_Entities_Cursor'Class;
-
    type Base_Entities_Cursor is new Abstract_Entities_Cursor with private;
 
    overriding function At_End
@@ -771,14 +814,6 @@ package Xref is
 
    type Calls_Iterator is new Base_Entities_Cursor with private;
 
-   function Get_All_Called_Entities
-     (Entity : Root_Entity) return Abstract_Entities_Cursor'Class is abstract;
-   --  Return all the entities that are found in the scope of Entity. This is
-   --  not necessarily a subprogram call, but can be many things.
-   --  All entities returned are unique. If you need to find the specific
-   --  reference(s) to that entity, you'll need to search for the references in
-   --  the right scope through the iterators above.
-
    overriding function At_End (Iter : Calls_Iterator) return Boolean;
    overriding function Get
      (Iter : Calls_Iterator) return Root_Entity'Class;
@@ -796,40 +831,6 @@ package Xref is
    --  sqlite backend.
 
    type Entity_Reference_Iterator is new Root_Reference_Iterator with private;
-
-   function Find_All_References
-     (Entity                : Root_Entity;
-      In_File               : GNATCOLL.VFS.Virtual_File :=
-        GNATCOLL.VFS.No_File;
-      In_Scope              : Root_Entity'Class := No_Root_Entity;
-      Include_Overriding    : Boolean := False;
-      Include_Overridden    : Boolean := False;
-      Include_Implicit      : Boolean := False;
-      Include_All           : Boolean := False;
-      Include_Renames       : Boolean := True;
-      Kind                  : String := "")
-      return Root_Reference_Iterator'Class is abstract;
-   --  Find all the references to the entity. This also return the location
-   --  for the declaration of the entity.
-   --  If In_File is specified, then only the references in that file will be
-   --  returned. This is also more efficient. Alternatively, In_Scope can be
-   --  specified to limit the list of references to the ones that appear
-   --  in the scope of In_Scope.
-   --  If Include_Overriding or Include_Overridden are True, then all
-   --  references to an overriding or Overridden subprogram will also be
-   --  returned. If Entity is a parameter of subprogram A, this will also
-   --  return the parameters of subprograms that override A.
-   --
-   --  If Include_Implicit is False, then implicit references will not be
-   --  returned.
-   --  If Include_All is True, then references like end-of-spec and other
-   --  information on the entity will be returned.
-   --  Kind can be used to filter the reference kinds that should be returned.
-   --  If it is specified, Include_Implicit and Include_All are ignored. It is
-   --  a list of comma-separated strings.
-   --
-   --  If Include_Renames is true, then this subprogram follows the "renames"
-   --  statement and returns the references to the renamed entities as well.
 
    subtype References_Sort is GNATCOLL.Xref.References_Sort;
    function Find_All_References

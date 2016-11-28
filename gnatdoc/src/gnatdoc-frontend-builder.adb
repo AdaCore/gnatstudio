@@ -1074,7 +1074,7 @@ package body GNATdoc.Frontend.Builder is
             Enter_Scope (E);
 
             declare
-               Formals : constant Xref.Parameter_Array :=
+               Formals : Xref.Parameter_Array :=
                            Parameters (LL.Get_Entity (E));
                Formal  : Entity_Id;
 
@@ -1086,20 +1086,17 @@ package body GNATdoc.Frontend.Builder is
                   --  also associated with one of its formals. It seems a bug
                   --  in the generated LI file. To be investigated???
 
-                  if General_Entity (LL.Get_Entity (E))
-                    = Formals (J).Parameter
-                  then
+                  if LL.Get_Entity (E) = Formals (J).Parameter.all then
                      null;
 
                   else
                      Get_Unique_Entity
-                       (Formal, Context, File, Formals (J).Parameter,
+                       (Formal, Context, File, Formals (J).Parameter.all,
                         Forced => True);
 
                      if Present (Formal) then
                         pragma Assert
-                          (General_Entity (LL.Get_Entity (Formal))
-                           = Formals (J).Parameter);
+                          (LL.Get_Entity (Formal) = Formals (J).Parameter.all);
 
                         --  Correct previous wrong decoration (done by
                         --  Atree.New_Internal_Entity).
@@ -1116,6 +1113,8 @@ package body GNATdoc.Frontend.Builder is
                      end if;
                   end if;
                end loop;
+
+               Free (Formals);
             end;
 
             Exit_Scope;
@@ -1526,7 +1525,7 @@ package body GNATdoc.Frontend.Builder is
             Enter_Scope (E);
 
             declare
-               Formals : constant Xref.Parameter_Array :=
+               Formals : Xref.Parameter_Array :=
                            Parameters (LL.Get_Entity (E));
                Formal  : Entity_Id;
 
@@ -1538,20 +1537,17 @@ package body GNATdoc.Frontend.Builder is
                   --  also associated with one of its formals. It seems a bug
                   --  in the generated LI file. To be investigated???
 
-                  if General_Entity (LL.Get_Entity (E)) =
-                    Formals (J).Parameter
-                  then
+                  if LL.Get_Entity (E) = Formals (J).Parameter.all then
                      null;
 
                   else
                      Get_Unique_Entity
-                       (Formal, Context, File, Formals (J).Parameter,
+                       (Formal, Context, File, Formals (J).Parameter.all,
                         Forced => True);
 
                      if Present (Formal) then
                         pragma Assert
-                          (General_Entity (LL.Get_Entity (Formal))
-                           = Formals (J).Parameter);
+                          (LL.Get_Entity (Formal) = Formals (J).Parameter.all);
 
                         --  Correct previous wrong decoration (done by
                         --  Atree.New_Internal_Entity).
@@ -1572,6 +1568,8 @@ package body GNATdoc.Frontend.Builder is
                      end if;
                   end if;
                end loop;
+
+               Free (Formals);
             end;
 
             Exit_Scope;

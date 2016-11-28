@@ -539,7 +539,7 @@ package body Completion.C.Constructs_Extractor is
          function All_Params_Text return String is
             Separator : constant String := "," & ASCII.LF;
             Spaces    : constant String := "  ";
-            Params    : constant Xref.Parameter_Array :=
+            Params    : Xref.Parameter_Array :=
               Parameters (Proposal.Entity_Info.Element);
 
             function Next_Params
@@ -557,7 +557,7 @@ package body Completion.C.Constructs_Extractor is
                       (P + 1,
                        Prev_Params
                        & Separator
-                       & Single_Param_Text (Params (P).Parameter)
+                       & Single_Param_Text (Params (P).Parameter.all)
                        & Spaces);
                end if;
             end Next_Params;
@@ -566,16 +566,21 @@ package body Completion.C.Constructs_Extractor is
 
          begin
             if Params'Length /= 0 then
-               return Next_Params
+               return A : constant String := Next_Params
                  (Params'First + 1,
                   Single_Param_Text
-                    (Params (Params'First).Parameter) & Spaces);
+                    (Params (Params'First).Parameter.all) & Spaces)
+               do
+                  Free (Params);
+               end return;
             else
-               return Next_Params
+               return A : constant String := Next_Params
                  (Params'First + 1,
-                  Single_Param_Text (No_Root_Entity) & Spaces);
+                  Single_Param_Text (No_Root_Entity) & Spaces)
+               do
+                  Free (Params);
+               end return;
             end if;
-
          end All_Params_Text;
 
          --  Start of processing for Get_Completion
@@ -857,7 +862,7 @@ package body Completion.C.Constructs_Extractor is
         (To_List : in out Extensive_List_Pckg.Vector;
          E       : Root_Entity'Class)
       is
-         Params : constant Xref.Parameter_Array := Parameters (E);
+         Params : Xref.Parameter_Array := Parameters (E);
 
       begin
          Append (To_List,
@@ -870,9 +875,11 @@ package body Completion.C.Constructs_Extractor is
             Append (To_List,
               New_C_Completion_Proposal
                 (Resolver => Resolver,
-                 Entity   => Params (P).Parameter,
+                 Entity   => Params (P).Parameter.all,
                  Is_Param => True));
          end loop;
+
+         Free (Params);
       end Append_Proposal_With_Params;
 
       -------------------------
