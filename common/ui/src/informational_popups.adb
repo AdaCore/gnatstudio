@@ -214,8 +214,9 @@ package body Informational_Popups is
          Revealer.Set_Transition_Duration
            (Informational_Popup_Display_Time / 2);
          Revealer.Set_Transition_Type (Revealer_Transition_Type_Crossfade);
-         Revealer.Set_Reveal_Child (True);
 
+         Info_Popup.Show_All;
+         Revealer.Set_Reveal_Child (True);
       else
          Trace (Me, "Animations are disabled, using fallback");
          Info_Popup.On_Destroy (On_Destroyed'Access);
@@ -224,9 +225,9 @@ package body Informational_Popups is
            (Informational_Popup_Display_Time,
             On_Timeout'Access,
             Info_Popup);
-      end if;
 
-      Info_Popup.Show_All;
+         Info_Popup.Show_All;
+      end if;
    end Display_Informational_Popup;
 
 end Informational_Popups;
