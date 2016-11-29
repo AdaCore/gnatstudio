@@ -317,7 +317,8 @@ package body Vsearch is
    Column_Is_Separator   : constant Gint := 5;
 
    type Search_Specific_Context is new Interactive_Command with record
-      Context : GNAT.Strings.String_Access;
+      Context     : GNAT.Strings.String_Access;
+      Incremental : Boolean := False;
    end record;
    overriding procedure Primitive_Free
      (Action : in out Search_Specific_Context);
@@ -2706,15 +2707,36 @@ package body Vsearch is
      (Action  : access Search_Specific_Context;
       Context : Interactive_Command_Context) return Command_Return_Type
    is
-      Vsearch : Vsearch_Access;
-      pragma Unreferenced (Vsearch);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Vsearch : Vsearch_Access := Search_Views.Retrieve_View
+        (Get_Kernel (Context.Context));
+      Dummy  : Boolean;
    begin
-      Vsearch := Get_Or_Create_Vsearch
-        (Get_Kernel (Context.Context),
-         Raise_Widget  => True,
-         Reset_Entries => True,
-         Context       => Action.Context,
-         Mode          => Find_Only);
+      if Action.Incremental then
+         Set_Pref
+           (Pref    => Incremental_Search,
+            Manager => Kernel.Get_Preferences,
+            Value   => True);
+      end if;
+
+      --  In incremental mode, we want users to be able to search for the next
+      --  occurence if the search entry has already the focus with the same
+      --  action to imitate what Emacs does.
+
+      if Vsearch /= null
+        and then Vsearch.Pattern_Combo.Get_Child.Has_Focus
+        and then Vsearch.Is_In_Incremental_Mode
+      then
+         On_Search (Vsearch);
+      else
+         Vsearch := Get_Or_Create_Vsearch
+           (Get_Kernel (Context.Context),
+            Raise_Widget  => True,
+            Reset_Entries => True,
+            Context       => Action.Context,
+            Mode          => Find_Only);
+      end if;
+
       return Success;
    end Execute;
 
@@ -2795,7 +2817,10 @@ package body Vsearch is
         (Kernel,
          Name        => -"Search in context: " & Label,
          Command     => new Search_Specific_Context'
-           (Interactive_Command with Context => new String'(Label)),
+           (Interactive_Command
+            with
+              Context     => new String'(Label),
+              Incremental => False),
          Description => -("Open the search dialog, and preset the ""Look In"""
            & " field to """ & Label & """"),
          Category    => -"Search");
@@ -3025,7 +3050,10 @@ package body Vsearch is
       Register_Action
         (Kernel, "Search",
          new Search_Specific_Context'
-           (Interactive_Command with Context => null),
+           (Interactive_Command
+            with
+              Context     => null,
+              Incremental => False),
          Description => -("Open the search dialog. If you have selected the"
            & " preference Search/Preserve Search Context, the same context"
            & " will be selected, otherwise the context is reset depending on"
@@ -3034,9 +3062,23 @@ package body Vsearch is
          Category    => -"Search");
 
       Register_Action
+        (Kernel, "incremental search",
+         new Search_Specific_Context'
+           (Interactive_Command
+            with
+              Context     => null,
+              Incremental => True),
+         Description => -("Open the search dialog in incremental mode."),
+         Icon_Name   => "gps-search-symbolic",
+         Category    => -"Search");
+
+      Register_Action
         (Kernel, "Replace",
          new Replace_Specific_Context'
-           (Interactive_Command with Context => null),
+           (Interactive_Command
+            with
+              Context     => null,
+              Incremental => False),
          Description => -("Open the search dialog in the replace mode."
            & " If you have selected the"
            & " preference Search/Preserve Search Context, the same context"

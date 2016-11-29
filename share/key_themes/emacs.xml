@@ -92,6 +92,6 @@
   <key action="rectangle_open">control-x r o</key>
   <key action="rectangle_string">control-x r t</key>
 
-  <key action="isearch">control-s</key>
-  <key action="isearch backward">control-r</key>
+  <key action="incremental search">control-s</key>
+  <key action="find previous">control-r</key>
 </GPS>
