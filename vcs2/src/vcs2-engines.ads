@@ -22,6 +22,7 @@ with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNATCOLL.Projects;          use GNATCOLL.Projects;
 with GNATCOLL.VFS;               use GNATCOLL.VFS;
+with GNAT.Strings;               use GNAT.Strings;
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.VCS;                    use GPS.VCS;
 
@@ -97,6 +98,11 @@ package VCS2.Engines is
         (VCS : not null access VCS_Engine'Class));
    --  Executes Callback for each VCS engine in use for the project
 
+   function VCS_Count
+     (Kernel   : not null access Kernel_Handle_Record'Class)
+      return Natural;
+   --  Return the number of VCS systems in use for the loaded project tree
+
    -------------------
    -- File statuses --
    -------------------
@@ -117,26 +123,28 @@ package VCS2.Engines is
    --  changed.
    --  Should not be called directly, consider Ensure_Status_* instead
 
-   type Task_Completed_Callback is abstract tagged private;
-   type Task_Completed_Callback_Access is
-     access all Task_Completed_Callback'Class;
-   procedure Free (Self : in out Task_Completed_Callback) is null;
-   procedure Execute
-     (Self  : not null access Task_Completed_Callback;
-      VCS   : access VCS_Engine'Class) is abstract;
-   --  Called when a background task completes
+   type Task_Visitor is abstract tagged private;
+   type Task_Visitor_Access is access all Task_Visitor'Class;
+   procedure Free (Self : in out Task_Visitor) is null;
+   procedure On_Terminate
+     (Self  : not null access Task_Visitor;
+      VCS   : access VCS_Engine'Class) is null;
+   --  An object called at various point during algorithms.
+   --  This base type only provides a standard callback for when a background
+   --  task terminates. Further derivation provide algorithm-specific
+   --  additional callbacks.
 
    procedure Ensure_Status_For_Files
      (Self        : not null access VCS_Engine;
       Files       : File_Array;
-      On_Complete : access Task_Completed_Callback'Class);
+      Visitor     : access Task_Visitor'Class);
    procedure Ensure_Status_For_Project
      (Self        : not null access VCS_Engine;
       Project     : Project_Type;
-      On_Complete : access Task_Completed_Callback'Class);
+      Visitor     : access Task_Visitor'Class);
    procedure Ensure_Status_For_All_Source_Files
      (Self        : not null access VCS_Engine;
-      On_Complete : access Task_Completed_Callback'Class := null);
+      Visitor     : access Task_Visitor'Class := null);
    --  If any of the files in the set does not have a valid cache entry, then
    --  the corresponding Async_Fetch_Status_* operation will be called.
    --  Otherwise, these procedures assume the cache is up-to-date and do not
@@ -153,8 +161,8 @@ package VCS2.Engines is
    --  On_Complete is automatically freed after having executed.
 
    procedure Ensure_Status_For_All_Files_In_All_Engines
-     (Kernel      : not null access Kernel_Handle_Record'Class;
-      On_Complete : access Task_Completed_Callback'Class := null);
+     (Kernel   : not null access Kernel_Handle_Record'Class;
+      Visitor  : access Task_Visitor'Class := null);
    --  For all VCS engines of the project, ensure that the status for all files
    --  is known.
    --  The callback is executed for each VCS that terminates its processing,
@@ -276,6 +284,36 @@ package VCS2.Engines is
    --  the status of files (this is done asynchronously).
    --  Must emit the VCS_Commit_Done_Hook.
 
+   type History_Visitor is new Task_Visitor with private;
+   type History_Visitor_Access is access all History_Visitor'Class;
+   procedure On_History_Line
+     (Self    : not null access History_Visitor;
+      ID      : String;
+      Author  : String;
+      Date    : String;
+      Subject : String;
+      Parents : in out GNAT.Strings.String_List_Access;
+      Names   : in out GNAT.Strings.String_List_Access) is null;
+   --  Called for every line in the history.
+   --  Subject should be the first line of the commit message.
+   --  Parents is a list of ID, the ancestor commits.
+   --  Names is a list of labels associated with this commit (typically branch
+   --  names or tags for instance).
+   --  Parents and Names must be freed by the caller, although this procedure
+   --  might reset them to null if it needs to store keep them.
+
+   procedure Async_Fetch_History
+     (Self        : not null access VCS_Engine;
+      Visitor     : not null access History_Visitor'Class) is abstract;
+   procedure Queue_Fetch_History
+     (Self        : not null access VCS_Engine'Class;
+      Visitor     : not null access History_Visitor'Class);
+   --  Fetch history for the whole repository.
+   --  Visitor is freed automatically when no longer needed.
+   --  Only call Queue_Fetch_History from your code, Async_Fetch_History is
+   --  the actual implementation but doesn't ensure that a single command runs
+   --  at a given time.
+
    ----------
    -- Misc --
    ----------
@@ -326,9 +364,11 @@ private
       Props        : VCS_File_Properties;
    end record;
 
-   type Task_Completed_Callback is abstract tagged record
+   type Task_Visitor is abstract tagged record
       Refcount : Natural := 1;
    end record;
+
+   type History_Visitor is new Task_Visitor with null record;
 
    package VCS_File_Cache is new Ada.Containers.Hashed_Maps
      (Key_Type        => Virtual_File,
@@ -346,9 +386,11 @@ private
       Equivalent_Keys => "=");
    use VCS_Status_Displays;
 
-   type VCS_Command is abstract tagged null record;
+   type VCS_Command is abstract tagged record
+      Visitor     : Task_Visitor_Access;
+   end record;
    type VCS_Command_Access is access all VCS_Command'Class;
-   --  A command that is queue for execution in a specific VCS.
+   --  A command that is queued for execution in a specific VCS.
    --  Does not use the Commands.Command from GPS since we do not compute
    --  progress or name (these commands are always python based).
 
@@ -362,7 +404,6 @@ private
 
    type Queue_Item is record
       Command     : VCS_Command_Access;
-      On_Complete : Task_Completed_Callback_Access;
    end record;
    package Command_Queues is new Ada.Containers.Vectors
       (Positive, Queue_Item);

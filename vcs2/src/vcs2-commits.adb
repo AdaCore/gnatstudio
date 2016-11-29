@@ -57,15 +57,13 @@ with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.Widget;                  use Gtk.Widget;
-with Gtkada.Handlers;             use Gtkada.Handlers;
-with Gtkada.Combo_Tool_Button;    use Gtkada.Combo_Tool_Button;
 with Gtkada.MDI;                  use Gtkada.MDI;
 with Gtkada.Tree_View;            use Gtkada.Tree_View;
 with GUI_Utils;                   use GUI_Utils;
 with Informational_Popups;        use Informational_Popups;
 with Tooltips;                    use Tooltips;
-with Pango.Layout;                use Pango.Layout;
 with VCS2.Engines;                use VCS2.Engines;
+with VCS2.Views;                  use VCS2.Views;
 
 package body VCS2.Commits is
    Me : constant Trace_Handle := Create ("COMMITS");
@@ -109,26 +107,20 @@ package body VCS2.Commits is
       Iter : Gtk.Tree_Model.Gtk_Tree_Iter) return Boolean;
 
    function Get_File_From_Node
-     (Self : not null access Commit_Tree_Record'Class;
+     (Self : not null access Tree_View_Record'Class;
       Iter : Gtk_Tree_Iter) return Virtual_File
      is (Get_File (Self.Model, Iter, Column_File));
 
    package Expansion is new Expansion_Support
-     (Tree_Record    => Commit_Tree_Record,
+     (Tree_Record    => Tree_View_Record,
       Id             => Virtual_File,
       Get_Id         => Get_File_From_Node,
       Hash           => GNATCOLL.VFS.Full_Name_Hash);
 
-   type Commit_View_Record is new Generic_Views.View_Record with record
-      Tree        : Commit_Tree_View;
-      Text_Render : Gtk_Cell_Renderer_Text;
-
+   type Commit_View_Record is new Base_VCS_View_Record with record
       Active_VCS  : VCS_Engine_Access;
       --  A cache for the active VCS. This is used to save the commit message
       --  for the proper VCS.
-
-      VCS_Count   : Natural := 0;
-      --  Number of VCS systems in the project
 
       Computing_File_Status : Boolean := False;
       --  Whether there is background work to recompute the status of all
@@ -146,9 +138,6 @@ package body VCS2.Commits is
       Config      : Commit_View_Config;
       Commit      : Gtk_Text_View;
    end record;
-   overriding procedure Create_Toolbar
-     (View    : not null access Commit_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class);
    overriding procedure Create_Menu
      (View    : not null access Commit_View_Record;
       Menu    : not null access Gtk.Menu.Gtk_Menu_Record'Class);
@@ -158,6 +147,11 @@ package body VCS2.Commits is
    overriding procedure Filter_Changed
      (Self    : not null access Commit_View_Record;
       Pattern : in out GPS.Search.Search_Pattern_Access);
+   overriding procedure On_Preferenced_Changed
+     (Self    : not null access Commit_View_Record;
+      Pref    : Preference);
+   overriding procedure Refresh
+     (Self : not null access Commit_View_Record);
 
    function Initialize
      (Self : access Commit_View_Record'Class) return Gtk_Widget;
@@ -200,22 +194,13 @@ package body VCS2.Commits is
       X, Y    : Gdouble);
    --  Called every time a row is clicked
 
-   type On_All_Files_Available_In_Cache is new Task_Completed_Callback with
+   type On_All_Files_Available_In_Cache is new Task_Visitor with
       record
          Kernel : not null access Kernel_Handle_Record'Class;
       end record;
-   overriding procedure Execute
+   overriding procedure On_Terminate
      (Self : not null access On_All_Files_Available_In_Cache;
       VCS  : access VCS_Engine'Class);
-
-   type On_Pref_Changed is new Preferences_Hooks_Function with record
-      View : Commit_View;
-   end record;
-   overriding procedure Execute
-     (Self   : On_Pref_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Preference);
-   --  Called when the preferences have changed
 
    type Commit_Tooltips is new Tooltips.Tooltips with record
       View   : access Commit_View_Record'Class;
@@ -247,16 +232,6 @@ package body VCS2.Commits is
       VCS    : not null access Abstract_VCS_Engine'Class);
    --  Called when a commit has been completed
 
-   type Kernel_Combo_Tool_Record is new Gtkada_Combo_Tool_Button_Record with
-      record
-         Kernel : Kernel_Handle;
-      end record;
-   type Kernel_Combo_Tool is access all Kernel_Combo_Tool_Record'Class;
-   procedure On_Active_VCS_Selected (Widget : access Gtk_Widget_Record'Class);
-   --  Called when a new active VCS is selected by the user in the toolbar.
-   --  This is *not* the same as the VCS_Active_Changed_Hook, which should be
-   --  monitored to react to actual changes
-
    type On_Active_VCS_Changed is new Simple_Hooks_Function with null record;
    overriding procedure Execute
      (Self   : On_Active_VCS_Changed;
@@ -271,9 +246,6 @@ package body VCS2.Commits is
    procedure Save_Commit_Message
      (Self : not null access Commit_View_Record'Class);
    --  Save the commit message in the properties
-
-   procedure Refresh (Self : not null access Commit_View_Record'Class);
-   --  Refresh the contents of the view.
 
    procedure On_Staged_Toggled
      (Self : access GObject_Record'Class;
@@ -358,76 +330,6 @@ package body VCS2.Commits is
       return Gtk_Widget (Label);
    end Create_Contents;
 
-   ----------------------------
-   -- On_Active_VCS_Selected --
-   ----------------------------
-
-   procedure On_Active_VCS_Selected
-     (Widget : access Gtk_Widget_Record'Class)
-   is
-      Combo    : constant Kernel_Combo_Tool := Kernel_Combo_Tool (Widget);
-      Selected : constant String := Combo.Get_Selected_Item;
-
-      procedure On_VCS (VCS : not null access VCS_Engine'Class);
-      procedure On_VCS (VCS : not null access VCS_Engine'Class) is
-         N : constant String :=
-           VCS.Name & " (" & VCS.Working_Directory.Display_Full_Name & ")";
-      begin
-         if N = Selected then
-            Set_Active_VCS (Combo.Kernel, VCS);
-         end if;
-      end On_VCS;
-
-   begin
-      For_Each_VCS (Combo.Kernel, On_VCS'Access);
-   end On_Active_VCS_Selected;
-
-   --------------------
-   -- Create_Toolbar --
-   --------------------
-
-   overriding procedure Create_Toolbar
-     (View    : not null access Commit_View_Record;
-      Toolbar : not null access Gtk.Toolbar.Gtk_Toolbar_Record'Class)
-   is
-      Combo : Kernel_Combo_Tool;
-
-      procedure On_VCS (VCS : not null access VCS_Engine'Class);
-      procedure On_VCS (VCS : not null access VCS_Engine'Class) is
-         N : constant String :=
-           VCS.Name & " (" & VCS.Working_Directory.Display_Full_Name & ")";
-      begin
-         Combo.Add_Item (N, Short_Name => VCS.Name);
-         if VCS = Active_VCS (View.Kernel) then
-            Combo.Select_Item (N);
-         end if;
-      end On_VCS;
-
-   begin
-      if View.VCS_Count > 1 then
-         Combo := new Kernel_Combo_Tool_Record;
-         Combo.Kernel := View.Kernel;
-         Initialize (Combo, Icon_Name => "");
-
-         Combo.Set_Tooltip_Text (-"Right-click to select the repository");
-         Toolbar.Insert (Combo, 0);
-
-         For_Each_VCS (View.Kernel, On_VCS'Access);
-
-         Widget_Callback.Connect
-           (Combo, Gtkada.Combo_Tool_Button.Signal_Selection_Changed,
-            On_Active_VCS_Selected'Access);
-      end if;
-
-      View.Build_Filter
-        (Toolbar     => Toolbar,
-         Hist_Prefix => "commits",
-         Tooltip     => -"Filter the contents of the commits view",
-         Placeholder => -"filter",
-         Options     =>
-           Has_Regexp or Has_Negate or Has_Whole_Word or Has_Fuzzy);
-   end Create_Toolbar;
-
    -----------------
    -- Create_Menu --
    -----------------
@@ -438,7 +340,7 @@ package body VCS2.Commits is
    is
       K : constant Kernel_Handle := View.Kernel;
    begin
-      Append_Menu (Menu, K, Show_Ellipsis);
+      Append_Menu (Menu, View.Kernel, Show_Ellipsis);
       Append_Menu (Menu, K, Show_Hidden_Files);
       Append_Menu (Menu, K, Show_Untracked_Files);
       Append_Menu (Menu, K, Relative_Names);
@@ -578,31 +480,17 @@ package body VCS2.Commits is
       return Iter;
    end Create_Category_Node;
 
-   -------------
-   -- Execute --
-   -------------
+   ----------------------------
+   -- On_Preferenced_Changed --
+   ----------------------------
 
-   overriding procedure Execute
-     (Self   : On_Pref_Changed;
-      Kernel : not null access Kernel_Handle_Record'Class;
-      Pref   : Preference)
+   overriding procedure On_Preferenced_Changed
+     (Self    : not null access Commit_View_Record;
+      Pref    : Preference)
    is
-      pragma Unreferenced (Kernel);
       Config : Commit_View_Config;
    begin
-      Set_Font_And_Colors (Self.View.Tree, Fixed_Font => True, Pref => Pref);
-
-      if Pref = null
-        or else Pref = Preference (Show_Ellipsis)
-      then
-         Set_Property
-           (Self.View.Text_Render,
-            Gtk.Cell_Renderer_Text.Ellipsize_Property,
-            (if Show_Ellipsis.Get_Pref
-             then Ellipsize_Middle else Ellipsize_None));
-         Self.View.Queue_Resize;
-         Self.View.Tree.Queue_Draw;
-      end if;
+      Base_VCS_View_Record (Self.all).On_Preferenced_Changed (Pref);
 
       Config :=
         (Initialized          => True,
@@ -614,11 +502,11 @@ package body VCS2.Commits is
          Show_Hidden_Files    => Show_Hidden_Files.Get_Pref,
          Hide_Other_VCS       => Hide_Other_VCS.Get_Pref);
 
-      if Config /= Self.View.Config then
-         Self.View.Config := Config;
-         Refresh (Self.View);
+      if Config /= Self.Config then
+         Self.Config := Config;
+         Refresh (Self);
       end if;
-   end Execute;
+   end On_Preferenced_Changed;
 
    ----------------------------------------
    -- Get_Commit_Message_From_Properties --
@@ -667,7 +555,8 @@ package body VCS2.Commits is
    -- Refresh --
    -------------
 
-   procedure Refresh (Self : not null access Commit_View_Record'Class) is
+   overriding procedure Refresh
+     (Self : not null access Commit_View_Record) is
    begin
       --  Save and restore commit message
       Save_Commit_Message (Self);
@@ -686,8 +575,8 @@ package body VCS2.Commits is
 
       Self.Computing_File_Status := True;
       Ensure_Status_For_All_Files_In_All_Engines
-        (Self.Kernel, On_Complete => new On_All_Files_Available_In_Cache'
-           (Task_Completed_Callback with Kernel => Self.Kernel));
+        (Self.Kernel, Visitor => new On_All_Files_Available_In_Cache'
+           (Task_Visitor with Kernel => Self.Kernel));
    end Refresh;
 
    -------------
@@ -890,8 +779,9 @@ package body VCS2.Commits is
          if Success then
             --  Select the row that was clicked
             View.Tree.Set_Cursor (Filter_Path, null, Start_Editing => False);
-            File := View.Tree.Get_File_From_Node
-              (View.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path));
+            File := Get_File_From_Node
+              (View.Tree,
+               View.Tree.Get_Store_Iter_For_Filter_Path (Filter_Path));
             if File /= No_File then
                Open_File_Action_Hook.Run
                  (View.Kernel,
@@ -933,7 +823,7 @@ package body VCS2.Commits is
       --  Top widget
 
       Gtk_New (Scrolled2);
-      Scrolled2.Set_Policy (Policy_Automatic, Policy_Always);
+      Scrolled2.Set_Policy (Policy_Automatic, Policy_Automatic);
       Paned.Add_Child
         (Scrolled2, Orientation => Orientation_Vertical);
       Paned.Set_Size (Scrolled2, Height => 10);
@@ -1015,15 +905,9 @@ package body VCS2.Commits is
 
    overriding procedure On_Create
      (Self    : not null access Commit_View_Record;
-      Child   : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class)
-   is
-      pragma Unreferenced (Child);
-      P : access On_Pref_Changed;
+      Child   : not null access GPS.Kernel.MDI.GPS_MDI_Child_Record'Class) is
    begin
-      P := new On_Pref_Changed;
-      P.View := Commit_View (Self);
-      Preferences_Changed_Hook.Add (P, Watch => Self);
-      P.Execute (Self.Kernel, null);   --  also calls Refresh
+      Base_VCS_View_Record (Self.all).On_Create (Child);   --  inherited
 
       Vcs_Active_Changed_Hook.Add (new On_Active_VCS_Changed, Watch => Self);
 
@@ -1105,8 +989,8 @@ package body VCS2.Commits is
       Pattern : in out GPS.Search.Search_Pattern_Access)
    is
    begin
-      GPS.Search.Free (Self.Tree.User_Filter);
-      Self.Tree.User_Filter := Pattern;
+      GPS.Search.Free (Commit_Tree_View (Self.Tree).User_Filter);
+      Commit_Tree_View (Self.Tree).User_Filter := Pattern;
       Self.Tree.Refilter;
    end Filter_Changed;
 
@@ -1130,11 +1014,11 @@ package body VCS2.Commits is
       end if;
    end Is_Visible;
 
-   -------------
-   -- Execute --
-   -------------
+   ------------------
+   -- On_Terminate --
+   ------------------
 
-   overriding procedure Execute
+   overriding procedure On_Terminate
      (Self : not null access On_All_Files_Available_In_Cache;
       VCS  : access VCS_Engine'Class)
    is
@@ -1154,7 +1038,6 @@ package body VCS2.Commits is
       procedure On_VCS (VCS : not null access VCS_Engine'Class) is
       begin
          Trace (Me, "Got all files in cache for " & VCS.Name);
-         View.VCS_Count := View.VCS_Count + 1;
          Local_VCS := VCS;
          VCS.For_Each_File_In_Cache (On_File'Access);
       end On_VCS;
@@ -1165,7 +1048,6 @@ package body VCS2.Commits is
       --  When all engines have refreshed, do a global refresh
       if VCS = null and then View /= null then
 
-         View.VCS_Count := 0;
          View.Computing_File_Status := False;
 
          declare
@@ -1212,7 +1094,7 @@ package body VCS2.Commits is
 
          Commit_Views.Reset_Toolbar (View);
       end if;
-   end Execute;
+   end On_Terminate;
 
    ------------------
    -- On_Destroyed --
@@ -1251,8 +1133,7 @@ package body VCS2.Commits is
    ---------------------
 
    procedure Register_Module
-     (Kernel : not null access Kernel_Handle_Record'Class)
-    is
+     (Kernel : not null access Kernel_Handle_Record'Class) is
    begin
       Commit_Views.Register_Module (Kernel);
 

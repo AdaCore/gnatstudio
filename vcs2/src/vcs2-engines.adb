@@ -102,14 +102,14 @@ package body VCS2.Engines is
    overriding procedure Ensure_Status_For_Files
      (Self      : not null access Dummy_VCS_Engine;
       Files     : File_Array;
-      On_Complete : access Task_Completed_Callback'Class := null) is null;
+      Visitor   : access Task_Visitor'Class := null) is null;
    overriding procedure Ensure_Status_For_Project
      (Self      : not null access Dummy_VCS_Engine;
       Project   : Project_Type;
-      On_Complete : access Task_Completed_Callback'Class := null) is null;
+      Visitor   : access Task_Visitor'Class := null) is null;
    overriding procedure Ensure_Status_For_All_Source_Files
      (Self      : not null access Dummy_VCS_Engine;
-      On_Complete : access Task_Completed_Callback'Class := null) is null;
+      Visitor   : access Task_Visitor'Class := null) is null;
    overriding function File_Properties_From_Cache
      (Self    : not null access Dummy_VCS_Engine;
       File    : Virtual_File) return VCS_File_Properties
@@ -121,6 +121,9 @@ package body VCS2.Engines is
    overriding procedure Commit_Staged_Files
      (Self    : not null access Dummy_VCS_Engine;
       Message : String) is null;
+   overriding procedure Async_Fetch_History
+     (Self    : not null access Dummy_VCS_Engine;
+      Visitor : not null access History_Visitor'Class) is null;
 
    --  An engine that does nothing, used when the project is not setup for
    --  VCS operations
@@ -179,13 +182,18 @@ package body VCS2.Engines is
        VCS  : not null access VCS_Engine'Class);
    --  Implementation for Ensure_Status_For_All_Source_Files
 
+   type Cmd_Fetch_History is new VCS_Command with null record;
+   overriding procedure Execute
+     (Self : not null access Cmd_Fetch_History;
+      VCS  : not null access VCS_Engine'Class);
+   --  Implementation for Async_Fetch_History
+
    -------------------
    -- Command queue --
    -------------------
 
    procedure Queue
      (Self        : not null access VCS_Engine'Class;
-      On_Complete : access Task_Completed_Callback'Class;
       Command     : VCS_Command_Access);
    --  Queue a new command for VCS.
    --  Free Command eventually.
@@ -199,19 +207,18 @@ package body VCS2.Engines is
      with Pre => Self.Run_In_Background = 0;
    --  Execute the next command in the queue, if any
 
-   procedure Unref (Self : in out Task_Completed_Callback_Access);
+   procedure Unref (Self : in out Task_Visitor_Access);
    --  Decrease refcount of Self, and free if needed
 
-   type Complete_After_Steps is new Task_Completed_Callback with record
-      Steps       : Natural := 0;
-      On_Complete : not null Task_Completed_Callback_Access;
+   type Complete_After_Steps is new Task_Visitor with record
+      Wrapped  : not null Task_Visitor_Access;
    end record;
    overriding procedure Free (Self : in out Complete_After_Steps);
-   overriding procedure Execute
+   overriding procedure On_Terminate
      (Self  : not null access Complete_After_Steps;
       VCS   : access VCS_Engine'Class);
-   --  A callbacks that executes On_Complete after it itself has been executed
-   --  Steps times.
+   --  A wrapper for another visitor, which executes the On_Complete callback
+   --  with a null parameter after it has itself completed Steps times.
 
    ----------
    -- Free --
@@ -219,32 +226,28 @@ package body VCS2.Engines is
 
    overriding procedure Free (Self : in out Complete_After_Steps) is
    begin
-      Unref (Self.On_Complete);
+      Self.Wrapped.On_Terminate (null);
+      Unref (Self.Wrapped);
    end Free;
 
-   -------------
-   -- Execute --
-   -------------
+   ------------------
+   -- On_Terminate --
+   ------------------
 
-   overriding procedure Execute
+   overriding procedure On_Terminate
      (Self  : not null access Complete_After_Steps;
       VCS   : access VCS_Engine'Class) is
    begin
-      Self.On_Complete.Execute (VCS);
-
-      Self.Steps := Self.Steps - 1;
-      if Self.Steps = 0 then
-         Self.On_Complete.Execute (null);
-      end if;
-   end Execute;
+      Self.Wrapped.On_Terminate (VCS);
+   end On_Terminate;
 
    -----------
    -- Unref --
    -----------
 
-   procedure Unref (Self : in out Task_Completed_Callback_Access) is
+   procedure Unref (Self : in out Task_Visitor_Access) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Task_Completed_Callback'Class, Task_Completed_Callback_Access);
+        (Task_Visitor'Class, Task_Visitor_Access);
    begin
       Self.Refcount := Self.Refcount - 1;
       if Self.Refcount = 0 then
@@ -524,23 +527,22 @@ package body VCS2.Engines is
 
    procedure Ensure_Status_For_All_Files_In_All_Engines
      (Kernel  : not null access Kernel_Handle_Record'Class;
-      On_Complete : access Task_Completed_Callback'Class := null)
+      Visitor : access Task_Visitor'Class := null)
    is
       pragma Unreferenced (Kernel);
       Cb : access Complete_After_Steps;
    begin
-      if On_Complete /= null then
+      if Visitor /= null then
          Cb := new Complete_After_Steps'
            (Refcount    => Integer (Global_Data.All_Engines.Length),
-            Steps       => Integer (Global_Data.All_Engines.Length),
 
             --  Unchecked_Access to allow users a call to "new" directly in
             --  the parameter
-            On_Complete => On_Complete.all'Unchecked_Access);
+            Wrapped => Visitor.all'Unchecked_Access);
       end if;
 
       for E of Global_Data.All_Engines loop
-         E.Ensure_Status_For_All_Source_Files (On_Complete => Cb);
+         E.Ensure_Status_For_All_Source_Files (Visitor => Cb);
       end loop;
    end Ensure_Status_For_All_Files_In_All_Engines;
 
@@ -573,6 +575,19 @@ package body VCS2.Engines is
          Callback (E);
       end loop;
    end For_Each_VCS;
+
+   ---------------
+   -- VCS_Count --
+   ---------------
+
+   function VCS_Count
+     (Kernel   : not null access Kernel_Handle_Record'Class)
+      return Natural
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      return Natural (Global_Data.All_Engines.Length);
+   end VCS_Count;
 
    -----------------------------
    -- Guess_VCS_For_Directory --
@@ -684,11 +699,16 @@ package body VCS2.Engines is
    procedure Ensure_Status_For_Files
      (Self    : not null access VCS_Engine;
       Files   : File_Array;
-      On_Complete : access Task_Completed_Callback'Class) is
+      Visitor : access Task_Visitor'Class) is
    begin
-      Queue (Self, On_Complete,
+      Queue (Self,
              new Cmd_Ensure_Status_For_Files'
-               (Size => Files'Length, Files => Files));
+               (Size    => Files'Length, Files => Files,
+
+                --  Allow callers to pass the result of "new ..." directly
+                Visitor =>
+                  (if Visitor = null then null
+                   else Visitor.all'Unchecked_Access)));
    end Ensure_Status_For_Files;
 
    overriding procedure Ensure_Status_For_Files
@@ -719,10 +739,16 @@ package body VCS2.Engines is
    procedure Ensure_Status_For_Project
      (Self    : not null access VCS_Engine;
       Project : Project_Type;
-      On_Complete : access Task_Completed_Callback'Class) is
+      Visitor : access Task_Visitor'Class) is
    begin
-      Queue (Self, On_Complete,
-             new Cmd_Ensure_Status_For_Project'(Project => Project));
+      Queue (Self,
+             new Cmd_Ensure_Status_For_Project'
+               (Project => Project,
+
+                --  Allow callers to pass the result of "new ..." directly
+                Visitor =>
+                  (if Visitor = null then null
+                   else Visitor.all'Unchecked_Access)));
    end Ensure_Status_For_Project;
 
    overriding procedure Ensure_Status_For_Project
@@ -759,9 +785,13 @@ package body VCS2.Engines is
 
    procedure Ensure_Status_For_All_Source_Files
      (Self    : not null access VCS_Engine;
-      On_Complete : access Task_Completed_Callback'Class := null) is
+      Visitor : access Task_Visitor'Class := null) is
    begin
-      Queue (Self, On_Complete, new Cmd_Ensure_Status_For_All_Files);
+      Queue (Self,
+             new Cmd_Ensure_Status_For_All_Files'
+               (Visitor =>
+                  (if Visitor = null then null
+                   else Visitor.all'Unchecked_Access)));
    end Ensure_Status_For_All_Source_Files;
 
    -------------
@@ -799,6 +829,31 @@ package body VCS2.Engines is
       end if;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self : not null access Cmd_Fetch_History;
+      VCS  : not null access VCS_Engine'Class)
+   is
+   begin
+      VCS.Async_Fetch_History (History_Visitor_Access (Self.Visitor));
+   end Execute;
+
+   -------------------------
+   -- Queue_Fetch_History --
+   -------------------------
+
+   procedure Queue_Fetch_History
+     (Self    : not null access VCS_Engine'Class;
+      Visitor : not null access History_Visitor'Class) is
+   begin
+      Queue
+        (Self,
+         new Cmd_Fetch_History'(Visitor => Visitor.all'Unchecked_Access));
+   end Queue_Fetch_History;
+
    ----------------------
    -- Complete_Command --
    ----------------------
@@ -806,10 +861,14 @@ package body VCS2.Engines is
    procedure Complete_Command (Self : not null access VCS_Engine'Class) is
       Item : Queue_Item := Self.Queue.First_Element;
    begin
-      if Item.On_Complete /= null then
-         Item.On_Complete.Execute (Self);
-         Unref (Item.On_Complete);
+      Item.Command.Free;
+
+      if Item.Command.Visitor /= null then
+         Item.Command.Visitor.On_Terminate (Self);
+         Unref (Item.Command.Visitor);
       end if;
+
+      Unchecked_Free (Item.Command);
 
       Self.Queue.Delete_First;
    end Complete_Command;
@@ -826,8 +885,6 @@ package body VCS2.Engines is
       if not Self.Queue.Is_Empty then
          Item := Self.Queue.First_Element;
          Item.Command.Execute (Self);
-         Item.Command.Free;
-         Unchecked_Free (Item.Command);
 
          --  If we haven't started a background command, terminate this
          --  command. Otherwise, wait till Set_Run_In_Background is called.
@@ -845,13 +902,10 @@ package body VCS2.Engines is
 
    procedure Queue
      (Self        : not null access VCS_Engine'Class;
-      On_Complete : access Task_Completed_Callback'Class;
       Command     : VCS_Command_Access) is
    begin
       --  Allow users to directly pass a "new " as parameter
-      Self.Queue.Append
-        ((Command.all'Unchecked_Access,
-         Task_Completed_Callback_Access (On_Complete)));
+      Self.Queue.Append ((Command => Command.all'Unchecked_Access));
 
       if Self.Run_In_Background = 0 then
          Next_In_Queue (Self);

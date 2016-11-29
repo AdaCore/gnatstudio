@@ -297,6 +297,7 @@
             <menu label="Scenario"                  action="open scenario"/>
             <menu label="Tasks"                     action="open Tasks"/>
             <menu label="VCS Commits"                action="open commits"/>
+            <menu label="VCS History"                action="open history"/>
             <menu label="VCS _Activities"            action="VCS open activities window"
                   optional='true' hide='true'/>
             <menu label="_VCS Explorer"              action="VCS open explorer"

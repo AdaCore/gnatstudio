@@ -160,6 +160,15 @@ class VCS(GPS.VCS2):
         :param str message: the commit message
         """
 
+    def async_fetch_history(self, visitor):
+        """
+        Fetch history for the whole repository asynchronously.
+        For each line in the history, should call `self._add_log_line`
+
+        :param GPS.VCS2_History_Visitor visitor: the object used to report
+           when new lines have been pared for the history.
+        """
+
     ############
     # Services #
     ############

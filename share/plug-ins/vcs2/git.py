@@ -128,3 +128,34 @@ class Git(core.VCS):
         yield self.__action_then_update_status(
             ['commit', '--amend', '--reuse-message=HEAD'])
         GPS.Hook('vcs_commit_done').run(self)
+
+    @core.run_in_background
+    def async_fetch_history(self, visitor):
+        p = ProcessWrapper(
+            ['git',
+             '--no-pager',  # do not require a terminal
+             'log', '--pretty=format:%H@@%P@@%an@@%d@@%ci@@%s',
+             '--branches', '--tags',  # show all except stashes
+             '--topo-order',  # children before parents
+             '--max-count=1000'
+            ],
+            block_exit=False,
+            directory=self.working_dir.path)
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                GPS.Logger("GIT").log("finished git-status")
+                break
+
+            id, parents, author, branches, date, subject = line.split('@@')
+            visitor.add_line(
+                id=id,
+                author=author,
+                date=date,
+                subject=subject,
+                parents=parents.split(),
+                names=None if not branches else branches.split(','))
+
+
+
+

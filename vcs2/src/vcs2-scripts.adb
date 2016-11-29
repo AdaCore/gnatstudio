@@ -20,12 +20,20 @@ with GNATCOLL.Projects;     use GNATCOLL.Projects;
 with GNATCOLL.Scripts;      use GNATCOLL.Scripts;
 with GNATCOLL.Traces;       use GNATCOLL.Traces;
 with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with GNAT.Strings;          use GNAT.Strings;
 with GPS.Kernel.Scripts;    use GPS.Kernel.Scripts;
 with GPS.VCS;               use GPS.VCS;
 with VCS2.Engines;          use VCS2.Engines;
 
 package body VCS2.Scripts is
    Me : constant Trace_Handle := Create ("VCS2.SCRIPT") with Unreferenced;
+
+   VCS2_History_Visitor_Class_Name : constant String :=
+     "VCS2_History_Visitor";
+
+   type History_Properties_Record is new Instance_Property_Record with record
+      Visitor : access History_Visitor'Class;
+   end record;
 
    type Script_Engine_Factory is new VCS_Engine_Factory with record
       Kernel         : access Kernel_Handle_Record'Class;
@@ -45,6 +53,7 @@ package body VCS2.Scripts is
       Factory : access Script_Engine_Factory'Class;
       Script  : Scripting_Language;
    end record;
+   type Script_Engine_Access is access all Script_Engine'Class;
    overriding function Name
      (Self : not null access Script_Engine) return String;
    overriding procedure Async_Fetch_Status_For_Files
@@ -65,10 +74,15 @@ package body VCS2.Scripts is
    overriding procedure Commit_Staged_Files
      (Self    : not null access Script_Engine;
       Message : String);
+   overriding procedure Async_Fetch_History
+     (Self    : not null access Script_Engine;
+      Visitor : not null access History_Visitor'Class);
 
    procedure Static_VCS_Handler
      (Data : in out Callback_Data'Class; Command : String);
    procedure VCS_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   procedure VCS_History_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles all script functions
 
@@ -193,6 +207,25 @@ package body VCS2.Scripts is
       Call_Method (Self, "async_fetch_status_for_all_files");
    end Async_Fetch_Status_For_All_Files;
 
+   -------------------------
+   -- Async_Fetch_History --
+   -------------------------
+
+   overriding procedure Async_Fetch_History
+     (Self    : not null access Script_Engine;
+      Visitor : not null access History_Visitor'Class)
+   is
+      D    : Callback_Data'Class := Create (Self.Script, 1);
+      Inst : Class_Instance;
+   begin
+      Inst := Self.Script.New_Instance
+        (Self.Kernel.Scripts.New_Class (VCS2_History_Visitor_Class_Name));
+      Set_Data (Inst, VCS2_History_Visitor_Class_Name,
+                History_Properties_Record'(Visitor => Visitor));
+      D.Set_Nth_Arg (1, Inst);
+      Call_Method (Self, "async_fetch_history", D);
+   end Async_Fetch_History;
+
    -------------------
    -- Create_Engine --
    -------------------
@@ -285,8 +318,8 @@ package body VCS2.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Inst : constant Class_Instance := Data.Nth_Arg (1);
-      VCS  : constant not null VCS_Engine_Access :=
-        VCS_Engine_Access (Get_VCS (Inst));
+      VCS  : constant not null Script_Engine_Access :=
+        Script_Engine_Access (Get_VCS (Inst));
    begin
       if Command = "name" then
          Data.Set_Return_Value (VCS.Name);
@@ -374,6 +407,60 @@ package body VCS2.Scripts is
       end if;
    end VCS_Handler;
 
+   -------------------------
+   -- VCS_History_Handler --
+   -------------------------
+
+   procedure VCS_History_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Inst    : constant Class_Instance := Data.Nth_Arg (1);
+      Prop    : Instance_Property;
+      Visitor : access History_Visitor'Class;
+   begin
+      Prop := Get_Data (Inst, VCS2_History_Visitor_Class_Name);
+      if Prop = null then
+         return;
+      end if;
+
+      Visitor := History_Properties_Record (Prop.all).Visitor;
+
+      if Command = "add_line" then
+         declare
+            Parents : constant List_Instance'Class := Data.Nth_Arg (6);
+            Names   : constant List_Instance'Class := Data.Nth_Arg (7);
+            P_Count : constant Natural := Parents.Number_Of_Arguments;
+            N_Count : constant Natural := Names.Number_Of_Arguments;
+            P       : String_List_Access;
+            N       : String_List_Access;
+         begin
+            if P_Count /= 0 then
+               P := new String_List (1 .. P_Count);
+               for A in 1 .. P_Count loop
+                  P (A) := new String'(Parents.Nth_Arg (A));
+               end loop;
+            end if;
+
+            if N_Count /= 0 then
+               N := new String_List (1 .. N_Count);
+               for A in 1 .. N_Count loop
+                  N (A) := new String'(Names.Nth_Arg (A));
+               end loop;
+            end if;
+
+            Visitor.On_History_Line
+              (ID       => Data.Nth_Arg (2),
+               Author   => Data.Nth_Arg (3),
+               Date     => Data.Nth_Arg (4),
+               Subject  => Data.Nth_Arg (5),
+               Parents  => P,
+               Names    => N);
+            Free (P);
+            Free (N);
+         end;
+      end if;
+   end VCS_History_Handler;
+
    ------------------------
    -- Static_VCS_Handler --
    ------------------------
@@ -438,6 +525,8 @@ package body VCS2.Scripts is
      (Kernel : not null access Kernel_Handle_Record'Class)
    is
       VCS : constant Class_Type := Kernel.Scripts.New_Class (VCS_Class_Name);
+      History_Visitor : constant Class_Type :=
+        Kernel.Scripts.New_Class (VCS2_History_Visitor_Class_Name);
    begin
       Kernel.Scripts.Register_Command
         ("_register",
@@ -512,6 +601,18 @@ package body VCS2.Scripts is
                            3 => Param ("icon_name")),
          Class         => VCS,
          Handler       => VCS_Handler'Access);
+
+      Kernel.Scripts.Register_Command
+        ("add_line",
+         Params        => (2 => Param ("id"),
+                           3 => Param ("author"),
+                           4 => Param ("date"),
+                           5 => Param ("subject"),
+                           6 => Param ("parents", Optional => True),
+                           7 => Param ("names",   Optional => True)),
+         Class         => History_Visitor,
+         Handler       => VCS_History_Handler'Access);
+
    end Register_Scripts;
 
 end VCS2.Scripts;

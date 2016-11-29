@@ -23,6 +23,7 @@ with GNATCOLL.VFS;            use GNATCOLL.VFS;
 with VCS2.Engines;            use VCS2.Engines;
 with VCS2.Scripts;            use VCS2.Scripts;
 with VCS2.Commits;
+with VCS2.History;
 
 package body VCS2.Module is
 
@@ -90,6 +91,7 @@ package body VCS2.Module is
       File_Saved_Hook.Add (new On_File_Saved);
 
       VCS2.Commits.Register_Module (Kernel);
+      VCS2.History.Register_Module (Kernel);
    end Register_Module;
 
 end VCS2.Module;

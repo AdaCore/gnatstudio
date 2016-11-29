@@ -9580,6 +9580,33 @@ class VCS2(object):
 
 
 ###########################################################
+# VCS2_History_Visitor
+###########################################################
+
+class VCS2_History_Visitor(object):
+    """
+    A class used in `GPS.VCS2.async_fetch_history`.
+    This is only used when writing your own support for VCS engines.
+    """
+
+    def add_line(
+        self, id, author, date, subject, parents, names):
+        """
+        Report when a new line for the VCS history was seen.
+
+        :param str id: the unique id for the commit
+        :param str author: the author of the commit
+        :param str date: the date of the commit
+        :param str subject: the first line of the commit message
+        :param List(str) parents: a list of commit ids, the parents
+           of the commit. There are multiple parents when this is
+           a merge commit.
+        :param List(str) names: a list of tag names or branch names
+           associated with this commit
+        """
+
+ 
+###########################################################
 # Vdiff
 ###########################################################
 

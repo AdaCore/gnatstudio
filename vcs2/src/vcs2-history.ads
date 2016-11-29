@@ -15,14 +15,14 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
---  The Commits view
+--  The History view
 
 with GPS.Kernel;     use GPS.Kernel;
 
-package VCS2.Commits is
+package VCS2.History is
 
    procedure Register_Module
      (Kernel : not null access Kernel_Handle_Record'Class);
    --  Create actions for this module
 
-end VCS2.Commits;
+end VCS2.History;
