@@ -1,4 +1,7 @@
 with GNATCOLL.SQL; use GNATCOLL.SQL;
+pragma Warnings (Off, "no entities of * are referenced");
+with GNATCOLL.SQL_Fields; use GNATCOLL.SQL_Fields;
+pragma Warnings (On, "no entities of * are referenced");
 with Database_Names; use Database_Names;
 package Database is
    pragma Style_Checks (Off);
@@ -11,7 +14,7 @@ package Database is
       --  Auto-generated id
 
       Label : SQL_Field_Text (Ta_Categories, Instance, N_Label, Index);
-      --  Categories' label
+      --  Categorie's label
 
       On_Side : SQL_Field_Boolean (Ta_Categories, Instance, N_On_Side, Index);
       --  Whether messages belonging to this category should be displayed on
@@ -31,16 +34,16 @@ package Database is
       --  Auto-generated id
 
       Name : SQL_Field_Text (Ta_Entities, Instance, N_Name, Index);
-      --  Entities' name
+      --  Entitie's name
 
       Line : SQL_Field_Integer (Ta_Entities, Instance, N_Line, Index);
-      --  Entities' line begin
+      --  Entitie's line begin
 
       Col_Begin : SQL_Field_Integer (Ta_Entities, Instance, N_Col_Begin, Index);
-      --  Entities' column begin
+      --  Entitie's column begin
 
       Col_End : SQL_Field_Integer (Ta_Entities, Instance, N_Col_End, Index);
-      --  Entities' column end
+      --  Entitie's column end
 
    end record;
 
@@ -56,10 +59,10 @@ package Database is
       --  Auto-generated id
 
       Entity_Id : SQL_Field_Integer (Ta_Entities_Messages, Instance, N_Entity_Id, Index);
-      --  Corresponding entity for message
+      --  Entitie's id
 
       Message_Id : SQL_Field_Integer (Ta_Entities_Messages, Instance, N_Message_Id, Index);
-      --  Entities' associated message
+      --  Message's id
 
    end record;
 
@@ -78,7 +81,8 @@ package Database is
       --  Messages' associated rule
 
       Data : SQL_Field_Text (Ta_Messages, Instance, N_Data, Index);
-      --  Categories' label
+      --  Value associated with the message, possibly a numeric value for
+      --  metrics
 
       Category_Id : SQL_Field_Integer (Ta_Messages, Instance, N_Category_Id, Index);
       --  Category of the rule
@@ -89,6 +93,44 @@ package Database is
       is new T_Abstract_Messages (Instance, -1) with null record;
    type T_Numbered_Messages (Index : Integer)
       is new T_Abstract_Messages (null, Index) with null record;
+
+   type T_Abstract_Messages_Properties (Instance : Cst_String_Access; Index : Integer)
+      is abstract new SQL_Table (Ta_Messages_Properties, Instance, Index) with
+   record
+      Id : SQL_Field_Integer (Ta_Messages_Properties, Instance, N_Id, Index);
+      --  Auto-generated id
+
+      Message_Id : SQL_Field_Integer (Ta_Messages_Properties, Instance, N_Message_Id, Index);
+      --  Message's id
+
+      Property_Id : SQL_Field_Integer (Ta_Messages_Properties, Instance, N_Property_Id, Index);
+      --  Propertie's id
+
+   end record;
+
+   type T_Messages_Properties (Instance : Cst_String_Access)
+      is new T_Abstract_Messages_Properties (Instance, -1) with null record;
+   type T_Numbered_Messages_Properties (Index : Integer)
+      is new T_Abstract_Messages_Properties (null, Index) with null record;
+
+   type T_Abstract_Properties (Instance : Cst_String_Access; Index : Integer)
+      is abstract new SQL_Table (Ta_Properties, Instance, Index) with
+   record
+      Id : SQL_Field_Integer (Ta_Properties, Instance, N_Id, Index);
+      --  Auto-generated id
+
+      Identifier : SQL_Field_Text (Ta_Properties, Instance, N_Identifier, Index);
+      --  Propertie's unique identifier
+
+      Name : SQL_Field_Text (Ta_Properties, Instance, N_Name, Index);
+      --  Propertie's name
+
+   end record;
+
+   type T_Properties (Instance : Cst_String_Access)
+      is new T_Abstract_Properties (Instance, -1) with null record;
+   type T_Numbered_Properties (Index : Integer)
+      is new T_Abstract_Properties (null, Index) with null record;
 
    type T_Abstract_Resource_Trees (Instance : Cst_String_Access; Index : Integer)
       is abstract new SQL_Table (Ta_Resource_Trees, Instance, Index) with
@@ -147,10 +189,10 @@ package Database is
       --  Corresponding line for message - zero means not associated to a line
 
       Col_Begin : SQL_Field_Integer (Ta_Resources_Messages, Instance, N_Col_Begin, Index);
-      --  Lines' column begin
+      --  Line's column begin
 
       Col_End : SQL_Field_Integer (Ta_Resources_Messages, Instance, N_Col_End, Index);
-      --  Lines' column end
+      --  Line's column end
 
    end record;
 
@@ -164,16 +206,16 @@ package Database is
    record
       Id : SQL_Field_Integer (Ta_Rules, Instance, N_Id, Index);
       Name : SQL_Field_Text (Ta_Rules, Instance, N_Name, Index);
-      --  Rules' name
+      --  Rule's name
 
       Identifier : SQL_Field_Text (Ta_Rules, Instance, N_Identifier, Index);
-      --  Rules' unique identifier
+      --  Rule's unique identifier
 
       Kind : SQL_Field_Integer (Ta_Rules, Instance, N_Kind, Index);
       --  Whether it is a rule or a metric. 0 for rule, 1 for metric
 
       Tool_Id : SQL_Field_Integer (Ta_Rules, Instance, N_Tool_Id, Index);
-      --  Rules' related tool
+      --  Rule's related tool
 
    end record;
 
@@ -189,7 +231,7 @@ package Database is
       --  Auto-generated id
 
       Name : SQL_Field_Text (Ta_Tools, Instance, N_Name, Index);
-      --  Tools' name
+      --  Tool's name
 
    end record;
 
@@ -202,6 +244,8 @@ package Database is
    function FK (Self : T_Entities_Messages'Class; Foreign : T_Messages'Class) return SQL_Criteria;
    function FK (Self : T_Messages'Class; Foreign : T_Rules'Class) return SQL_Criteria;
    function FK (Self : T_Messages'Class; Foreign : T_Categories'Class) return SQL_Criteria;
+   function FK (Self : T_Messages_Properties'Class; Foreign : T_Messages'Class) return SQL_Criteria;
+   function FK (Self : T_Messages_Properties'Class; Foreign : T_Properties'Class) return SQL_Criteria;
    function FK (Self : T_Resources_Messages'Class; Foreign : T_Messages'Class) return SQL_Criteria;
    function FK (Self : T_Resources_Messages'Class; Foreign : T_Resources'Class) return SQL_Criteria;
    function FK (Self : T_Rules'Class; Foreign : T_Tools'Class) return SQL_Criteria;
@@ -210,6 +254,8 @@ package Database is
    Entities : T_Entities (null);
    Entities_Messages : T_Entities_Messages (null);
    Messages : T_Messages (null);
+   Messages_Properties : T_Messages_Properties (null);
+   Properties : T_Properties (null);
    Resource_Trees : T_Resource_Trees (null);
    Resources : T_Resources (null);
    Resources_Messages : T_Resources_Messages (null);

@@ -9,6 +9,10 @@ package Database_Names is
    Ta_Entities_Messages : constant Cst_String_Access := TC_Entities_Messages'Access;
    TC_Messages : aliased constant String := "messages";
    Ta_Messages : constant Cst_String_Access := TC_Messages'Access;
+   TC_Messages_Properties : aliased constant String := "messages_properties";
+   Ta_Messages_Properties : constant Cst_String_Access := TC_Messages_Properties'Access;
+   TC_Properties : aliased constant String := "properties";
+   Ta_Properties : constant Cst_String_Access := TC_Properties'Access;
    TC_Resource_Trees : aliased constant String := "resource_trees";
    Ta_Resource_Trees : constant Cst_String_Access := TC_Resource_Trees'Access;
    TC_Resources : aliased constant String := "resources";
@@ -50,6 +54,8 @@ package Database_Names is
    N_On_Side : constant Cst_String_Access := NC_on_side'Access;
    NC_Parent_Id : aliased constant String := "parent_id";
    N_Parent_Id : constant Cst_String_Access := NC_parent_id'Access;
+   NC_Property_Id : aliased constant String := "property_id";
+   N_Property_Id : constant Cst_String_Access := NC_property_id'Access;
    NC_Resource_Id : aliased constant String := "resource_id";
    N_Resource_Id : constant Cst_String_Access := NC_resource_id'Access;
    NC_Rule_Id : aliased constant String := "rule_id";

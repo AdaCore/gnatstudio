@@ -5,7 +5,7 @@ with Ada.Unchecked_Deallocation;
 pragma Warnings (On);
 pragma Style_Checks (Off);
 
-package body Orm is
+package body Database.Orm is
    pragma Warnings (Off);
    use Sessions.Pointers;
 
@@ -17,6 +17,10 @@ package body Orm is
       ( Entity_Message_DDR, Entity_Message_Data);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
       ( Message_DDR, Message_Data);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+      ( Message_Property_DDR, Message_Property_Data);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+      ( Property_DDR, Property_Data);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
       ( Resource_DDR, Resource_Data);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -33,6 +37,8 @@ package body Orm is
      (Detached_Entity'Class, Detached_Entity_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Detached_Message'Class, Detached_Message_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Detached_Property'Class, Detached_Property_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Detached_Resource'Class, Detached_Resource_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -66,6 +72,17 @@ package body Orm is
    Upto_Messages_0 : constant Counts := ((4,4),(4,4),(4,4),(4,4));
    Upto_Messages_1 : constant Counts := ((4,4),(9,9),(11,11),(11,11));
    Alias_Messages : constant Alias_Array := (-1,3,6,-1,5,-1,-1);
+   F_Messages_Properties_Id          : constant := 0;
+   F_Messages_Properties_Message_Id  : constant := 1;
+   F_Messages_Properties_Property_Id : constant := 2;
+   Upto_Messages_Properties_0 : constant Counts := ((3,3),(3,3),(3,3),(3,3));
+   Upto_Messages_Properties_1 : constant Counts := ((3,3),(7,7),(12,15),(14,17));
+   Alias_Messages_Properties : constant Alias_Array := (-1,3,10,-1,6,9,-1,8,-1,-1,-1);
+   F_Properties_Id         : constant := 0;
+   F_Properties_Identifier : constant := 1;
+   F_Properties_Name       : constant := 2;
+   Counts_Properties : constant Counts := ((3,3),(3,3),(3,3),(3,3));
+   Alias_Properties : constant Alias_Array := (0 => -1);
    F_Resource_Trees_Id        : constant := 0;
    F_Resource_Trees_Child_Id  : constant := 1;
    F_Resource_Trees_Parent_Id : constant := 2;
@@ -101,8 +118,6 @@ package body Orm is
    Alias_Tools : constant Alias_Array := (0 => -1);
 
    pragma Warnings (On);
-   function Str_Or_Empty (Str : access String) return String;
-
    function Detach_No_Lookup
      (Self    : Category'Class;
       Session : Session_Type)
@@ -119,6 +134,14 @@ package body Orm is
      (Self    : Message'Class;
       Session : Session_Type)
      return Detached_Message'Class;
+   function Detach_No_Lookup
+     (Self    : Message_Property'Class;
+      Session : Session_Type)
+     return Detached_Message_Property'Class;
+   function Detach_No_Lookup
+     (Self    : Property'Class;
+      Session : Session_Type)
+     return Detached_Property'Class;
    function Detach_No_Lookup
      (Self    : Resource_Tree'Class;
       Session : Session_Type)
@@ -145,7 +168,9 @@ package body Orm is
    --  Same as Detach, but does not check the session cache Same as Detach, but
    --  does not check the session cache Same as Detach, but does not check the
    --  session cache Same as Detach, but does not check the session cache Same
-   --  as Detach, but does not check the session cache
+   --  as Detach, but does not check the session cache Same as Detach, but does
+   --  not check the session cache Same as Detach, but does not check the
+   --  session cache
 
    procedure Do_Query_Categories
      (Fields    : in out SQL_Field_List;
@@ -178,6 +203,26 @@ package body Orm is
       Pk_Only   : Boolean := False);
 
    procedure Do_Query_Messages
+     (Fields    : in out SQL_Field_List;
+      From      : out SQL_Table_List;
+      Criteria  : in out Sql_Criteria;
+      Base      : Natural;
+      Aliases   : Alias_Array;
+      Depth     : Natural;
+      Follow_LJ : Boolean;
+      Pk_Only   : Boolean := False);
+
+   procedure Do_Query_Messages_Properties
+     (Fields    : in out SQL_Field_List;
+      From      : out SQL_Table_List;
+      Criteria  : in out Sql_Criteria;
+      Base      : Natural;
+      Aliases   : Alias_Array;
+      Depth     : Natural;
+      Follow_LJ : Boolean;
+      Pk_Only   : Boolean := False);
+
+   procedure Do_Query_Properties
      (Fields    : in out SQL_Field_List;
       From      : out SQL_Table_List;
       Criteria  : in out Sql_Criteria;
@@ -370,6 +415,34 @@ package body Orm is
    -- "=" --
    ---------
 
+   function "=" (Op1 : Message_Property; Op2 : Message_Property) return Boolean
+   is
+   begin
+      return Integer'(Op1.Id) = Op2.Id;
+   end "=";
+
+   ---------
+   -- "=" --
+   ---------
+
+   function "="
+     (Op1 : Detached_Message_Property;
+      Op2 : Detached_Message_Property)
+     return Boolean is
+   begin
+      if Op1.Is_Null then
+         return Op2.Is_Null;
+      elsif Op2.Is_Null then
+         return False;
+      else
+         return Integer'(Op1.Id) = Op2.Id;
+      end if;
+   end "=";
+
+   ---------
+   -- "=" --
+   ---------
+
    function "=" (Op1 : Category; Op2 : Category) return Boolean is
    begin
       return Integer'(Op1.Id) = Op2.Id;
@@ -448,6 +521,33 @@ package body Orm is
    -- "=" --
    ---------
 
+   function "=" (Op1 : Property; Op2 : Property) return Boolean is
+   begin
+      return Integer'(Op1.Id) = Op2.Id;
+   end "=";
+
+   ---------
+   -- "=" --
+   ---------
+
+   function "="
+     (Op1 : Detached_Property;
+      Op2 : Detached_Property)
+     return Boolean is
+   begin
+      if Op1.Is_Null then
+         return Op2.Is_Null;
+      elsif Op2.Is_Null then
+         return False;
+      else
+         return Integer'(Op1.Id) = Op2.Id;
+      end if;
+   end "=";
+
+   ---------
+   -- "=" --
+   ---------
+
    function "=" (Op1 : Resource; Op2 : Resource) return Boolean is
    begin
       return Integer'(Op1.Id) = Op2.Id;
@@ -509,7 +609,7 @@ package body Orm is
             "Dynamic fetching disabled for Category_Id";
          end if;
 
-         return All_Categories.Filter (Id => Self.Category_Id)
+         return Filter (All_Categories, Id => Self.Category_Id)
          .Limit (1).Get (Self.Data.Session).Element;
       end if;
    end Category_Id;
@@ -577,7 +677,7 @@ package body Orm is
             "Dynamic fetching disabled for Child_Id";
          end if;
 
-         return All_Resources.Filter (Id => Self.Child_Id)
+         return Filter (All_Resources, Id => Self.Child_Id)
          .Limit (1).Get (Self.Data.Session).Element;
       end if;
    end Child_Id;
@@ -696,7 +796,7 @@ package body Orm is
 
    function Data (Self : Detached_Message) return String is
    begin
-      return Str_Or_Empty (Message_Data (Self.Unchecked_Get).ORM_Data);
+      return To_String (Message_Data (Self.Unchecked_Get).ORM_Data);
    end Data;
 
    ---------------
@@ -737,7 +837,7 @@ package body Orm is
             "Dynamic fetching disabled for Entity_Id";
          end if;
 
-         return All_Entities.Filter (Id => Self.Entity_Id)
+         return Filter (All_Entities, Id => Self.Entity_Id)
          .Limit (1).Get (Self.Data.Session).Element;
       end if;
    end Entity_Id;
@@ -777,7 +877,7 @@ package body Orm is
      (Self : Message'Class)
      return Resources_Messages_Managers is
    begin
-      return All_Resources_Messages.Filter(Message_Id => Self.Id);
+      return Filter (All_Resources_Messages, Message_Id => Self.Id);
    end Get_Message;
 
    -----------------
@@ -788,7 +888,7 @@ package body Orm is
      (Self : Detached_Message'Class)
      return Resources_Messages_Managers is
    begin
-      return All_Resources_Messages.Filter (Message_Id => Self.Id);
+      return Filter (All_Resources_Messages, Message_Id => Self.Id);
    end Get_Message;
 
    -----------------
@@ -813,7 +913,7 @@ package body Orm is
      (Self : Resource'Class)
      return Resources_Messages_Managers is
    begin
-      return All_Resources_Messages.Filter(Resource_Id => Self.Id);
+      return Filter (All_Resources_Messages, Resource_Id => Self.Id);
    end Get_Resource;
 
    ------------------
@@ -824,7 +924,7 @@ package body Orm is
      (Self : Detached_Resource'Class)
      return Resources_Messages_Managers is
    begin
-      return All_Resources_Messages.Filter (Resource_Id => Self.Id);
+      return Filter (All_Resources_Messages, Resource_Id => Self.Id);
    end Get_Resource;
 
    ------------------
@@ -935,6 +1035,24 @@ package body Orm is
    -- Id --
    --------
 
+   function Id (Self : Message_Property) return Integer is
+   begin
+      return Integer_Value (Self, F_Messages_Properties_Id);
+   end Id;
+
+   --------
+   -- Id --
+   --------
+
+   function Id (Self : Detached_Message_Property) return Integer is
+   begin
+      return Message_Property_Data (Self.Unchecked_Get).ORM_Id;
+   end Id;
+
+   --------
+   -- Id --
+   --------
+
    function Id (Self : Category) return Integer is
    begin
       return Integer_Value (Self, F_Categories_Id);
@@ -989,6 +1107,24 @@ package body Orm is
    -- Id --
    --------
 
+   function Id (Self : Property) return Integer is
+   begin
+      return Integer_Value (Self, F_Properties_Id);
+   end Id;
+
+   --------
+   -- Id --
+   --------
+
+   function Id (Self : Detached_Property) return Integer is
+   begin
+      return Property_Data (Self.Unchecked_Get).ORM_Id;
+   end Id;
+
+   --------
+   -- Id --
+   --------
+
    function Id (Self : Resource) return Integer is
    begin
       return Integer_Value (Self, F_Resources_Id);
@@ -1018,7 +1154,25 @@ package body Orm is
 
    function Identifier (Self : Detached_Rule) return String is
    begin
-      return Str_Or_Empty (Rule_Data (Self.Unchecked_Get).ORM_Identifier);
+      return To_String (Rule_Data (Self.Unchecked_Get).ORM_Identifier);
+   end Identifier;
+
+   ----------------
+   -- Identifier --
+   ----------------
+
+   function Identifier (Self : Property) return String is
+   begin
+      return String_Value (Self, F_Properties_Identifier);
+   end Identifier;
+
+   ----------------
+   -- Identifier --
+   ----------------
+
+   function Identifier (Self : Detached_Property) return String is
+   begin
+      return To_String (Property_Data (Self.Unchecked_Get).ORM_Identifier);
    end Identifier;
 
    ----------
@@ -1072,7 +1226,7 @@ package body Orm is
 
    function Label (Self : Detached_Category) return String is
    begin
-      return Str_Or_Empty (Category_Data (Self.Unchecked_Get).ORM_Label);
+      return To_String (Category_Data (Self.Unchecked_Get).ORM_Label);
    end Label;
 
    ----------
@@ -1149,7 +1303,7 @@ package body Orm is
             "Dynamic fetching disabled for Message_Id";
          end if;
 
-         return All_Messages.Filter (Id => Self.Message_Id)
+         return Filter (All_Messages, Id => Self.Message_Id)
          .Limit (1).Get (Self.Data.Session).Element;
       end if;
    end Message_Id;
@@ -1163,6 +1317,76 @@ package body Orm is
      return Detached_Message'Class
    is
       D : constant Resource_Message_Data := Resource_Message_Data (Self.Unchecked_Get);
+      S : Session_Type;
+   begin
+      if D.ORM_FK_Message_Id = null then
+         if not Dynamic_Fetching then
+            raise Field_Not_Available with
+            "Dynamic fetching disabled for Message_Id";
+         end if;
+         S := Session (Self);
+         if S = No_Session then
+            raise Field_Not_Available with
+            "Element is detached from any session";
+         end if;
+         D.ORM_FK_Message_Id := new Detached_Message'Class'
+           (Get_Message (S, Id => D.ORM_Message_Id));
+      end if;
+      return D.ORM_FK_Message_Id.all;
+   end Message_Id;
+
+   ----------------
+   -- Message_Id --
+   ----------------
+
+   function Message_Id (Self : Message_Property) return Integer is
+   begin
+      return Integer_Value (Self, F_Messages_Properties_Message_Id);
+   end Message_Id;
+
+   ----------------
+   -- Message_Id --
+   ----------------
+
+   function Message_Id (Self : Detached_Message_Property) return Integer is
+   begin
+      return Message_Property_Data (Self.Unchecked_Get).ORM_Message_Id;
+   end Message_Id;
+
+   ----------------
+   -- Message_Id --
+   ----------------
+
+   function Message_Id (Self : Message_Property) return Message'Class is
+   begin
+      if Current (Self.Current) /= Self.Index then
+         raise Cursor_Has_Moved;
+      end if;
+
+      if Self.Depth > 0 then
+         return I_Messages.Internal_Element
+           (Self,
+            Upto_Messages_Properties_0 (Self.Depth, Self.Data.Follow_LJ));
+      else
+         if not Dynamic_Fetching then
+            raise Field_Not_Available with
+            "Dynamic fetching disabled for Message_Id";
+         end if;
+
+         return Filter (All_Messages, Id => Self.Message_Id)
+         .Limit (1).Get (Self.Data.Session).Element;
+      end if;
+   end Message_Id;
+
+   ----------------
+   -- Message_Id --
+   ----------------
+
+   function Message_Id
+     (Self : Detached_Message_Property)
+     return Detached_Message'Class
+   is
+      D : constant Message_Property_Data := Message_Property_Data (Self.Unchecked_Get);
       S : Session_Type;
    begin
       if D.ORM_FK_Message_Id = null then
@@ -1219,7 +1443,7 @@ package body Orm is
             "Dynamic fetching disabled for Message_Id";
          end if;
 
-         return All_Messages.Filter (Id => Self.Message_Id)
+         return Filter (All_Messages, Id => Self.Message_Id)
          .Limit (1).Get (Self.Data.Session).Element;
       end if;
    end Message_Id;
@@ -1266,7 +1490,7 @@ package body Orm is
 
    function Name (Self : Detached_Rule) return String is
    begin
-      return Str_Or_Empty (Rule_Data (Self.Unchecked_Get).ORM_Name);
+      return To_String (Rule_Data (Self.Unchecked_Get).ORM_Name);
    end Name;
 
    ----------
@@ -1284,7 +1508,7 @@ package body Orm is
 
    function Name (Self : Detached_Entity) return String is
    begin
-      return Str_Or_Empty (Entity_Data (Self.Unchecked_Get).ORM_Name);
+      return To_String (Entity_Data (Self.Unchecked_Get).ORM_Name);
    end Name;
 
    ----------
@@ -1302,7 +1526,25 @@ package body Orm is
 
    function Name (Self : Detached_Tool) return String is
    begin
-      return Str_Or_Empty (Tool_Data (Self.Unchecked_Get).ORM_Name);
+      return To_String (Tool_Data (Self.Unchecked_Get).ORM_Name);
+   end Name;
+
+   ----------
+   -- Name --
+   ----------
+
+   function Name (Self : Property) return String is
+   begin
+      return String_Value (Self, F_Properties_Name);
+   end Name;
+
+   ----------
+   -- Name --
+   ----------
+
+   function Name (Self : Detached_Property) return String is
+   begin
+      return To_String (Property_Data (Self.Unchecked_Get).ORM_Name);
    end Name;
 
    ----------
@@ -1320,7 +1562,7 @@ package body Orm is
 
    function Name (Self : Detached_Resource) return String is
    begin
-      return Str_Or_Empty (Resource_Data (Self.Unchecked_Get).ORM_Name);
+      return To_String (Resource_Data (Self.Unchecked_Get).ORM_Name);
    end Name;
 
    -------------
@@ -1379,7 +1621,7 @@ package body Orm is
             "Dynamic fetching disabled for Parent_Id";
          end if;
 
-         return All_Resources.Filter (Id => Self.Parent_Id)
+         return Filter (All_Resources, Id => Self.Parent_Id)
          .Limit (1).Get (Self.Data.Session).Element;
       end if;
    end Parent_Id;
@@ -1410,6 +1652,76 @@ package body Orm is
       end if;
       return D.ORM_FK_Parent_Id.all;
    end Parent_Id;
+
+   -----------------
+   -- Property_Id --
+   -----------------
+
+   function Property_Id (Self : Message_Property) return Integer is
+   begin
+      return Integer_Value (Self, F_Messages_Properties_Property_Id);
+   end Property_Id;
+
+   -----------------
+   -- Property_Id --
+   -----------------
+
+   function Property_Id (Self : Detached_Message_Property) return Integer is
+   begin
+      return Message_Property_Data (Self.Unchecked_Get).ORM_Property_Id;
+   end Property_Id;
+
+   -----------------
+   -- Property_Id --
+   -----------------
+
+   function Property_Id (Self : Message_Property) return Property'Class is
+   begin
+      if Current (Self.Current) /= Self.Index then
+         raise Cursor_Has_Moved;
+      end if;
+
+      if Self.Depth > 0 then
+         return I_Properties.Internal_Element
+           (Self,
+            Upto_Messages_Properties_1 (Self.Depth, Self.Data.Follow_LJ));
+      else
+         if not Dynamic_Fetching then
+            raise Field_Not_Available with
+            "Dynamic fetching disabled for Property_Id";
+         end if;
+
+         return Filter (All_Properties, Id => Self.Property_Id)
+         .Limit (1).Get (Self.Data.Session).Element;
+      end if;
+   end Property_Id;
+
+   -----------------
+   -- Property_Id --
+   -----------------
+
+   function Property_Id
+     (Self : Detached_Message_Property)
+     return Detached_Property'Class
+   is
+      D : constant Message_Property_Data := Message_Property_Data (Self.Unchecked_Get);
+      S : Session_Type;
+   begin
+      if D.ORM_FK_Property_Id = null then
+         if not Dynamic_Fetching then
+            raise Field_Not_Available with
+            "Dynamic fetching disabled for Property_Id";
+         end if;
+         S := Session (Self);
+         if S = No_Session then
+            raise Field_Not_Available with
+            "Element is detached from any session";
+         end if;
+         D.ORM_FK_Property_Id := new Detached_Property'Class'
+           (Get_Property (S, Id => D.ORM_Property_Id));
+      end if;
+      return D.ORM_FK_Property_Id.all;
+   end Property_Id;
 
    -----------------
    -- Resource_Id --
@@ -1449,7 +1761,7 @@ package body Orm is
             "Dynamic fetching disabled for Resource_Id";
          end if;
 
-         return All_Resources.Filter (Id => Self.Resource_Id)
+         return Filter (All_Resources, Id => Self.Resource_Id)
          .Limit (1).Get (Self.Data.Session).Element;
       end if;
    end Resource_Id;
@@ -1519,7 +1831,7 @@ package body Orm is
             "Dynamic fetching disabled for Rule_Id";
          end if;
 
-         return All_Rules.Filter (Id => Self.Rule_Id)
+         return Filter (All_Rules, Id => Self.Rule_Id)
          .Limit (1).Get (Self.Data.Session).Element;
       end if;
    end Rule_Id;
@@ -1548,19 +1860,6 @@ package body Orm is
       end if;
       return D.ORM_FK_Rule_Id.all;
    end Rule_Id;
-
-   ------------------
-   -- Str_Or_Empty --
-   ------------------
-
-   function Str_Or_Empty (Str : access String) return String is
-   begin
-      if Str = null then
-         return "";
-      else
-         return Str.all;
-      end if;
-   end Str_Or_Empty;
 
    ---------------
    -- Timestamp --
@@ -1618,7 +1917,7 @@ package body Orm is
             "Dynamic fetching disabled for Tool_Id";
          end if;
 
-         return All_Tools.Filter (Id => Self.Tool_Id)
+         return Filter (All_Tools, Id => Self.Tool_Id)
          .Limit (1).Get (Self.Data.Session).Element;
       end if;
    end Tool_Id;
@@ -1655,7 +1954,7 @@ package body Orm is
    function Category_Messages (Self : Category'Class) return Messages_Managers
    is
    begin
-      return All_Messages.Filter(Category_Id => Self.Id);
+      return Filter (All_Messages, Category_Id => Self.Id);
    end Category_Messages;
 
    -----------------------
@@ -1666,7 +1965,7 @@ package body Orm is
      (Self : Detached_Category'Class)
      return Messages_Managers is
    begin
-      return All_Messages.Filter (Category_Id => Self.Id);
+      return Filter (All_Messages, Category_Id => Self.Id);
    end Category_Messages;
 
    -----------------------
@@ -1766,6 +2065,23 @@ package body Orm is
    -- Detach --
    ------------
 
+   function Detach
+     (Self : Message_Property'Class)
+     return Detached_Message_Property'Class
+   is
+      R : constant Detached_Message_Property'Class := From_Cache (Self.Data.Session, Self.Id);
+   begin
+      if R.Is_Null then
+         return Detach_No_Lookup (Self, Self.Data.Session);
+      else
+         return R;
+      end if;
+   end Detach;
+
+   ------------
+   -- Detach --
+   ------------
+
    function Detach (Self : Category'Class) return Detached_Category'Class
    is
       R : constant Detached_Category'Class := From_Cache (Self.Data.Session, Self.Id);
@@ -1813,6 +2129,21 @@ package body Orm is
    -- Detach --
    ------------
 
+   function Detach (Self : Property'Class) return Detached_Property'Class
+   is
+      R : constant Detached_Property'Class := From_Cache (Self.Data.Session, Self.Id);
+   begin
+      if R.Is_Null then
+         return Detach_No_Lookup (Self, Self.Data.Session);
+      else
+         return R;
+      end if;
+   end Detach;
+
+   ------------
+   -- Detach --
+   ------------
+
    function Detach (Self : Resource'Class) return Detached_Resource'Class
    is
       R : constant Detached_Resource'Class := From_Cache (Self.Data.Session, Self.Id);
@@ -1844,9 +2175,8 @@ package body Orm is
 
       Tmp := Category_Data (Result.Unchecked_Get);
 
-      Free (Tmp.ORM_Label);
       Tmp.ORM_Id         := Integer_Value (Self, F_Categories_Id);
-      Tmp.ORM_Label      := new String'(String_Value (Self, F_Categories_Label));
+      Tmp.ORM_Label      := To_Unbounded_String (String_Value (Self, F_Categories_Label));
       Tmp.ORM_On_Side    := Boolean_Value (Self, F_Categories_On_Side);
       Session.Persist (Result);
       return Result;
@@ -1872,12 +2202,11 @@ package body Orm is
 
       Tmp := Entity_Data (Result.Unchecked_Get);
 
-      Free (Tmp.ORM_Name);
       Tmp.ORM_Col_Begin    := Integer_Value (Self, F_Entities_Col_Begin);
       Tmp.ORM_Col_End      := Integer_Value (Self, F_Entities_Col_End);
       Tmp.ORM_Id           := Integer_Value (Self, F_Entities_Id);
       Tmp.ORM_Line         := Integer_Value (Self, F_Entities_Line);
-      Tmp.ORM_Name         := new String'(String_Value (Self, F_Entities_Name));
+      Tmp.ORM_Name         := To_Unbounded_String (String_Value (Self, F_Entities_Name));
       Session.Persist (Result);
       return Result;
    end Detach_No_Lookup;
@@ -1956,13 +2285,79 @@ package body Orm is
 
       end if;
 
-      Free (Tmp.ORM_Data);
       Tmp.ORM_Category_Id    := Integer_Value (Self, F_Messages_Category_Id);
-      Tmp.ORM_Data           := new String'(String_Value (Self, F_Messages_Data));
+      Tmp.ORM_Data           := To_Unbounded_String (String_Value (Self, F_Messages_Data));
       Tmp.ORM_FK_Category_Id := FK_Category_Id;
       Tmp.ORM_FK_Rule_Id     := FK_Rule_Id;
       Tmp.ORM_Id             := Integer_Value (Self, F_Messages_Id);
       Tmp.ORM_Rule_Id        := Integer_Value (Self, F_Messages_Rule_Id);
+      Session.Persist (Result);
+      return Result;
+   end Detach_No_Lookup;
+
+   ----------------------
+   -- Detach_No_Lookup --
+   ----------------------
+
+   function Detach_No_Lookup
+     (Self    : Message_Property'Class;
+      Session : Session_Type)
+     return Detached_Message_Property'Class
+   is
+      Default        : Detached_Message_Property;
+      Result         : Detached_Message_Property'Class := Detached_Message_Property'Class (Session.Factory (Self, Default));
+      Fk_Message_Id  : Detached_Message_Access;
+      Fk_Property_Id : Detached_Property_Access;
+      Lj             : constant Boolean := Self.Data.Follow_LJ;
+      Tmp            : Message_Property_Data;
+   begin
+      if Result.Is_Null then
+         Result.Set (Message_Property_DDR'
+              (Detached_Data with Field_Count => 5, others => <>));
+      end if;
+
+      Tmp := Message_Property_Data (Result.Unchecked_Get);
+      if Self.Depth > 0 then
+         FK_Message_Id := new Detached_Message'Class'(
+            I_Messages.Internal_Element
+              (Self, Upto_Messages_Properties_0 (Self.Depth, LJ)).Detach);
+         FK_Property_Id := new Detached_Property'Class'(
+            I_Properties.Internal_Element
+              (Self, Upto_Messages_Properties_1 (Self.Depth, LJ)).Detach);
+      end if;
+
+      Tmp.ORM_FK_Message_Id  := FK_Message_Id;
+      Tmp.ORM_FK_Property_Id := FK_Property_Id;
+      Tmp.ORM_Id             := Integer_Value (Self, F_Messages_Properties_Id);
+      Tmp.ORM_Message_Id     := Integer_Value (Self, F_Messages_Properties_Message_Id);
+      Tmp.ORM_Property_Id    := Integer_Value (Self, F_Messages_Properties_Property_Id);
+      Session.Persist (Result);
+      return Result;
+   end Detach_No_Lookup;
+
+   ----------------------
+   -- Detach_No_Lookup --
+   ----------------------
+
+   function Detach_No_Lookup
+     (Self    : Property'Class;
+      Session : Session_Type)
+     return Detached_Property'Class
+   is
+      Default : Detached_Property;
+      Result  : Detached_Property'Class := Detached_Property'Class (Session.Factory (Self, Default));
+      Tmp     : Property_Data;
+   begin
+      if Result.Is_Null then
+         Result.Set (Property_DDR'
+              (Detached_Data with Field_Count => 3, others => <>));
+      end if;
+
+      Tmp := Property_Data (Result.Unchecked_Get);
+
+      Tmp.ORM_Id            := Integer_Value (Self, F_Properties_Id);
+      Tmp.ORM_Identifier    := To_Unbounded_String (String_Value (Self, F_Properties_Identifier));
+      Tmp.ORM_Name          := To_Unbounded_String (String_Value (Self, F_Properties_Name));
       Session.Persist (Result);
       return Result;
    end Detach_No_Lookup;
@@ -2033,10 +2428,9 @@ package body Orm is
 
       Tmp := Resource_Data (Result.Unchecked_Get);
 
-      Free (Tmp.ORM_Name);
       Tmp.ORM_Id           := Integer_Value (Self, F_Resources_Id);
       Tmp.ORM_Kind         := Integer_Value (Self, F_Resources_Kind);
-      Tmp.ORM_Name         := new String'(String_Value (Self, F_Resources_Name));
+      Tmp.ORM_Name         := To_Unbounded_String (String_Value (Self, F_Resources_Name));
       Tmp.ORM_Timestamp    := Time_Value (Self, F_Resources_Timestamp);
       Session.Persist (Result);
       return Result;
@@ -2112,13 +2506,11 @@ package body Orm is
               (Self, Upto_Rules_0 (Self.Depth, LJ)).Detach);
       end if;
 
-      Free (Tmp.ORM_Identifier);
-      Free (Tmp.ORM_Name);
       Tmp.ORM_FK_Tool_Id    := FK_Tool_Id;
       Tmp.ORM_Id            := Integer_Value (Self, F_Rules_Id);
-      Tmp.ORM_Identifier    := new String'(String_Value (Self, F_Rules_Identifier));
+      Tmp.ORM_Identifier    := To_Unbounded_String (String_Value (Self, F_Rules_Identifier));
       Tmp.ORM_Kind          := Integer_Value (Self, F_Rules_Kind);
-      Tmp.ORM_Name          := new String'(String_Value (Self, F_Rules_Name));
+      Tmp.ORM_Name          := To_Unbounded_String (String_Value (Self, F_Rules_Name));
       Tmp.ORM_Tool_Id       := Integer_Value (Self, F_Rules_Tool_Id);
       Session.Persist (Result);
       return Result;
@@ -2144,9 +2536,8 @@ package body Orm is
 
       Tmp := Tool_Data (Result.Unchecked_Get);
 
-      Free (Tmp.ORM_Name);
       Tmp.ORM_Id      := Integer_Value (Self, F_Tools_Id);
-      Tmp.ORM_Name    := new String'(String_Value (Self, F_Tools_Name));
+      Tmp.ORM_Name    := To_Unbounded_String (String_Value (Self, F_Tools_Name));
       Session.Persist (Result);
       return Result;
    end Detach_No_Lookup;
@@ -2319,6 +2710,87 @@ package body Orm is
       end;
    end if;
    end Do_Query_Messages;
+
+   ----------------------------------
+   -- Do_Query_Messages_Properties --
+   ----------------------------------
+
+   procedure Do_Query_Messages_Properties
+     (Fields    : in out SQL_Field_List;
+      From      : out SQL_Table_List;
+      Criteria  : in out Sql_Criteria;
+      Base      : Natural;
+      Aliases   : Alias_Array;
+      Depth     : Natural;
+      Follow_LJ : Boolean;
+      Pk_Only   : Boolean := False)
+   is
+      Table : T_Numbered_Messages_Properties(Aliases(Base));
+      C2    : Sql_Criteria;
+      T     : SQL_Table_List;
+   begin
+      if PK_Only then
+         Fields := Fields & Table.Id;
+      else
+         Fields := Fields & Table.Id
+         & Table.Message_Id
+         & Table.Property_Id;
+      end if;
+      From := Empty_Table_List;
+      if Depth > 0 then
+
+         declare
+            FK1 : T_Numbered_Messages(Aliases(Aliases(Base + 1)));
+            FK2 : T_Numbered_Properties(Aliases(Aliases(Base + 2)));
+         begin Criteria := Criteria
+         and Table.Message_Id = FK1.Id
+         and Table.Property_Id = FK2.Id;
+         From := +Table;
+         C2 := No_Criteria;
+         Do_Query_Messages(Fields, T, C2,Aliases(Base + 1),
+            Aliases, Depth - 1, Follow_LJ);
+         if Depth > 1 then
+            Criteria := Criteria and C2;
+         end if;
+         From := From & T;
+
+         C2 := No_Criteria;
+         Do_Query_Properties(Fields, T, C2,Aliases(Base + 2),
+            Aliases, Depth - 1, Follow_LJ);
+         if Depth > 1 then
+            Criteria := Criteria and C2;
+         end if;
+         From := From & T;
+      end;
+   end if;
+   end Do_Query_Messages_Properties;
+
+   -------------------------
+   -- Do_Query_Properties --
+   -------------------------
+
+   procedure Do_Query_Properties
+     (Fields    : in out SQL_Field_List;
+      From      : out SQL_Table_List;
+      Criteria  : in out Sql_Criteria;
+      Base      : Natural;
+      Aliases   : Alias_Array;
+      Depth     : Natural;
+      Follow_LJ : Boolean;
+      Pk_Only   : Boolean := False)
+   is
+      pragma Unreferenced (Criteria, Depth, Follow_LJ);
+      Table : T_Numbered_Properties(Aliases(Base));
+   begin
+      if PK_Only then
+         Fields := Fields & Table.Id;
+      else
+         Fields := Fields & Table.Id
+         & Table.Identifier
+         & Table.Name;
+      end if;
+      From := Empty_Table_List;
+   end Do_Query_Properties;
 
    -----------------------------
    -- Do_Query_Resource_Trees --
@@ -2542,7 +3014,7 @@ package body Orm is
      (Self : Entity'Class)
      return Entities_Messages_Managers is
    begin
-      return All_Entities_Messages.Filter(Entity_Id => Self.Id);
+      return Filter (All_Entities_Messages, Entity_Id => Self.Id);
    end Entity_Messages;
 
    ---------------------
@@ -2553,7 +3025,7 @@ package body Orm is
      (Self : Detached_Entity'Class)
      return Entities_Messages_Managers is
    begin
-      return All_Entities_Messages.Filter (Entity_Id => Self.Id);
+      return Filter (All_Entities_Messages, Entity_Id => Self.Id);
    end Entity_Messages;
 
    ---------------------
@@ -2742,6 +3214,33 @@ package body Orm is
    ------------
 
    function Filter
+     (Self        : Messages_Properties_Managers'Class;
+      Id          : Integer := -1;
+      Message_Id  : Integer := -1;
+      Property_Id : Integer := -1)
+     return Messages_Properties_Managers
+   is
+      C      : Sql_Criteria := No_Criteria;
+      Result : Messages_Properties_Managers;
+   begin
+      if Id /= -1 then
+         C := C and DBA.Messages_Properties.Id = Id;
+      end if;
+      if Message_Id /= -1 then
+         C := C and DBA.Messages_Properties.Message_Id = Message_Id;
+      end if;
+      if Property_Id /= -1 then
+         C := C and DBA.Messages_Properties.Property_Id = Property_Id;
+      end if;
+      Copy(Self.Filter(C), Into => Result);
+      return Result;
+   end Filter;
+
+   ------------
+   -- Filter --
+   ------------
+
+   function Filter
      (Self    : Categories_Managers'Class;
       Id      : Integer := -1;
       Label   : String := No_Update;
@@ -2819,6 +3318,33 @@ package body Orm is
    ------------
 
    function Filter
+     (Self       : Properties_Managers'Class;
+      Id         : Integer := -1;
+      Identifier : String := No_Update;
+      Name       : String := No_Update)
+     return Properties_Managers
+   is
+      C      : Sql_Criteria := No_Criteria;
+      Result : Properties_Managers;
+   begin
+      if Id /= -1 then
+         C := C and DBA.Properties.Id = Id;
+      end if;
+      if Identifier /= No_Update then
+         C := C and DBA.Properties.Identifier = Identifier;
+      end if;
+      if Name /= No_Update then
+         C := C and DBA.Properties.Name = Name;
+      end if;
+      Copy(Self.Filter(C), Into => Result);
+      return Result;
+   end Filter;
+
+   ------------
+   -- Filter --
+   ------------
+
+   function Filter
      (Self      : Resources_Managers'Class;
       Id        : Integer := -1;
       Name      : String := No_Update;
@@ -2851,7 +3377,6 @@ package body Orm is
 
    overriding procedure Free (Self : in out Category_Ddr) is
    begin
-      Free (Self.ORM_Label);
       Free (Detached_Data (Self));
    end Free;
 
@@ -2861,8 +3386,6 @@ package body Orm is
 
    overriding procedure Free (Self : in out Entity_Ddr) is
    begin
-      Free (Self.ORM_Name);
-
       Free (Detached_Data (Self));
    end Free;
 
@@ -2887,7 +3410,27 @@ package body Orm is
       Unchecked_Free (Self.ORM_FK_Rule_Id);
       Unchecked_Free (Self.ORM_FK_Category_Id);
 
-      Free (Self.ORM_Data);
+      Free (Detached_Data (Self));
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Self : in out Message_Property_Ddr) is
+   begin
+      Unchecked_Free (Self.ORM_FK_Message_Id);
+      Unchecked_Free (Self.ORM_FK_Property_Id);
+
+      Free (Detached_Data (Self));
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free (Self : in out Property_Ddr) is
+   begin
       Free (Detached_Data (Self));
    end Free;
 
@@ -2909,8 +3452,6 @@ package body Orm is
 
    overriding procedure Free (Self : in out Resource_Ddr) is
    begin
-      Free (Self.ORM_Name);
-
       Free (Detached_Data (Self));
    end Free;
 
@@ -2934,9 +3475,6 @@ package body Orm is
    begin
       Unchecked_Free (Self.ORM_FK_Tool_Id);
 
-      Free (Self.ORM_Name);
-      Free (Self.ORM_Identifier);
-
       Free (Detached_Data (Self));
    end Free;
 
@@ -2946,7 +3484,6 @@ package body Orm is
 
    overriding procedure Free (Self : in out Tool_Ddr) is
    begin
-      Free (Self.ORM_Name);
       Free (Detached_Data (Self));
    end Free;
 
@@ -3017,6 +3554,18 @@ package body Orm is
    function From_Cache
      (Session : Session_Type;
       Id      : Integer)
+     return Detached_Message_Property'Class is
+   begin
+      return Detached_Message_Property'Class (Session.From_Cache ((10000000, Id), No_Detached_Message_Property));
+   end From_Cache;
+
+   ----------------
+   -- From_Cache --
+   ----------------
+
+   function From_Cache
+     (Session : Session_Type;
+      Id      : Integer)
      return Detached_Category'Class is
    begin
       return Detached_Category'Class (Session.From_Cache ((1000000, Id), No_Detached_Category));
@@ -3053,6 +3602,18 @@ package body Orm is
    function From_Cache
      (Session : Session_Type;
       Id      : Integer)
+     return Detached_Property'Class is
+   begin
+      return Detached_Property'Class (Session.From_Cache ((9000000, Id), No_Detached_Property));
+   end From_Cache;
+
+   ----------------
+   -- From_Cache --
+   ----------------
+
+   function From_Cache
+     (Session : Session_Type;
+      Id      : Integer)
      return Detached_Resource'Class is
    begin
       return Detached_Resource'Class (Session.From_Cache ((4000000, Id), No_Detached_Resource));
@@ -3076,8 +3637,9 @@ package body Orm is
       else
 
          declare
-            M : Categories_Managers := All_Categories.Filter
-              (Id => Id);
+            M : Categories_Managers := Filter
+              (All_Categories,
+               Id => Id);
             L : I_Categories.List;
          begin
             M.Select_Related
@@ -3119,8 +3681,9 @@ package body Orm is
       else
 
          declare
-            M : Entities_Managers := All_Entities.Filter
-              (Id => Id);
+            M : Entities_Managers := Filter
+              (All_Entities,
+               Id => Id);
             L : I_Entities.List;
          begin
             M.Select_Related
@@ -3162,8 +3725,9 @@ package body Orm is
       else
 
          declare
-            M : Entities_Messages_Managers := All_Entities_Messages.Filter
-              (Id => Id);
+            M : Entities_Messages_Managers := Filter
+              (All_Entities_Messages,
+               Id => Id);
             L : I_Entities_Messages.List;
          begin
             M.Select_Related
@@ -3205,8 +3769,9 @@ package body Orm is
       else
 
          declare
-            M : Messages_Managers := All_Messages.Filter
-              (Id => Id);
+            M : Messages_Managers := Filter
+              (All_Messages,
+               Id => Id);
             L : I_Messages.List;
          begin
             M.Select_Related
@@ -3230,6 +3795,94 @@ package body Orm is
       end if;
    end Get_Message;
 
+   --------------------------
+   -- Get_Message_Property --
+   --------------------------
+
+   function Get_Message_Property
+     (Session          : Session_Type;
+      Id               : Integer;
+      Depth            : Related_Depth := 0;
+      Follow_Left_Join : Boolean := False)
+     return Detached_Message_Property'Class
+   is
+      R : constant Detached_Message_Property'Class := From_Cache (Session, Id);
+   begin
+      if not R.Is_Null then
+         return R;
+      else
+
+         declare
+            M : Messages_Properties_Managers := Filter
+              (All_Messages_Properties,
+               Id => Id);
+            L : I_Messages_Properties.List;
+         begin
+            M.Select_Related
+              (Depth, Follow_Left_Join => Follow_Left_Join);
+            M.Limit (1);
+            L := M.Get(Session);
+            if not L.Has_Row then
+               return No_Detached_Message_Property;
+            else
+
+               declare
+                  E : constant Message_Property := L.Element;
+               begin
+                  --  Workaround bug in gnat which is missing a call
+                  --  to Finalize if we do not reset the list (K321-012)
+                  L := I_Messages_Properties.Empty_List;
+                  return E.Detach_No_Lookup (Session);
+               end;
+            end if;
+         end;
+      end if;
+   end Get_Message_Property;
+
+   ------------------
+   -- Get_Property --
+   ------------------
+
+   function Get_Property
+     (Session          : Session_Type;
+      Id               : Integer;
+      Depth            : Related_Depth := 0;
+      Follow_Left_Join : Boolean := False)
+     return Detached_Property'Class
+   is
+      R : constant Detached_Property'Class := From_Cache (Session, Id);
+   begin
+      if not R.Is_Null then
+         return R;
+      else
+
+         declare
+            M : Properties_Managers := Filter
+              (All_Properties,
+               Id => Id);
+            L : I_Properties.List;
+         begin
+            M.Select_Related
+              (Depth, Follow_Left_Join => Follow_Left_Join);
+            M.Limit (1);
+            L := M.Get(Session);
+            if not L.Has_Row then
+               return No_Detached_Property;
+            else
+
+               declare
+                  E : constant Property := L.Element;
+               begin
+                  --  Workaround bug in gnat which is missing a call
+                  --  to Finalize if we do not reset the list (K321-012)
+                  L := I_Properties.Empty_List;
+                  return E.Detach_No_Lookup (Session);
+               end;
+            end if;
+         end;
+      end if;
+   end Get_Property;
+
    ------------------
    -- Get_Resource --
    ------------------
@@ -3248,8 +3901,9 @@ package body Orm is
       else
 
          declare
-            M : Resources_Managers := All_Resources.Filter
-              (Id => Id);
+            M : Resources_Managers := Filter
+              (All_Resources,
+               Id => Id);
             L : I_Resources.List;
          begin
             M.Select_Related
@@ -3291,8 +3945,9 @@ package body Orm is
       else
 
          declare
-            M : Resources_Messages_Managers := All_Resources_Messages.Filter
-              (Id => Id);
+            M : Resources_Messages_Managers := Filter
+              (All_Resources_Messages,
+               Id => Id);
             L : I_Resources_Messages.List;
          begin
             M.Select_Related
@@ -3334,8 +3989,9 @@ package body Orm is
       else
 
          declare
-            M : Resource_Trees_Managers := All_Resource_Trees.Filter
-              (Id => Id);
+            M : Resource_Trees_Managers := Filter
+              (All_Resource_Trees,
+               Id => Id);
             L : I_Resource_Trees.List;
          begin
             M.Select_Related
@@ -3377,8 +4033,9 @@ package body Orm is
       else
 
          declare
-            M : Rules_Managers := All_Rules.Filter
-              (Id => Id);
+            M : Rules_Managers := Filter
+              (All_Rules,
+               Id => Id);
             L : I_Rules.List;
          begin
             M.Select_Related
@@ -3420,8 +4077,9 @@ package body Orm is
       else
 
          declare
-            M : Tools_Managers := All_Tools.Filter
-              (Id => Id);
+            M : Tools_Managers := Filter
+              (All_Tools,
+               Id => Id);
             L : I_Tools.List;
          begin
             M.Select_Related
@@ -3461,7 +4119,7 @@ package body Orm is
       R          : Forward_Cursor;
    begin
       if Mask (2) then
-         A := A & (DBA.Categories.Label = Str_Or_Empty (D.ORM_Label));
+         A := A & (DBA.Categories.Label = To_String (D.ORM_Label));
       end if;
       if Mask (3) then
          A := A & (DBA.Categories.On_Side = D.ORM_On_Side);
@@ -3495,7 +4153,7 @@ package body Orm is
       R          : Forward_Cursor;
    begin
       if Mask (2) then
-         A := A & (DBA.Entities.Name = Str_Or_Empty (D.ORM_Name));
+         A := A & (DBA.Entities.Name = To_String (D.ORM_Name));
       end if;
       if Mask (3) then
          A := A & (DBA.Entities.Line = D.ORM_Line);
@@ -3617,7 +4275,7 @@ package body Orm is
          end if;
       end if;
       if Mask (3) then
-         A := A & (DBA.Messages.Data = Str_Or_Empty (D.ORM_Data));
+         A := A & (DBA.Messages.Data = To_String (D.ORM_Data));
       end if;
       if Mask (4) then
          if D.ORM_Category_Id /= -1 then
@@ -3647,6 +4305,104 @@ package body Orm is
       if Missing_PK and then Success (Self.Session.DB) then
          PK_Modified := True;
          D.ORM_Id := R.Last_Id (Self.Session.DB, DBA.Messages.Id);
+      end if;
+   end Insert_Or_Update;
+
+   ----------------------
+   -- Insert_Or_Update --
+   ----------------------
+
+   overriding procedure Insert_Or_Update
+     (Self        : in out Detached_Message_Property;
+      Pk_Modified : in out Boolean;
+      Mask        : Dirty_Mask)
+   is
+      D          : constant Message_Property_Data := Message_Property_Data (Self.Unchecked_Get);
+      Q          : SQL_Query;
+      A          : Sql_Assignment := No_Assignment;
+      Missing_Pk : constant Boolean := D.ORM_Id = -1;
+      R          : Forward_Cursor;
+   begin
+      if Mask (2) then
+         if D.ORM_Message_Id /= -1 then
+            A := A & (DBA.Messages_Properties.Message_Id = D.ORM_Message_Id);
+         else
+
+            declare
+               D2 : constant Message_Data :=
+               Message_data (D.ORM_FK_Message_Id.Unchecked_Get);
+            begin
+               if D2.ORM_Id = -1 then
+                  Self.Session.Insert_Or_Update
+                    (D.ORM_FK_Message_Id.all);
+               end if;
+
+               A := A & (DBA.Messages_Properties.Message_Id = D2.ORM_Id);
+            end;
+         end if;
+      end if;
+      if Mask (3) then
+         if D.ORM_Property_Id /= -1 then
+            A := A & (DBA.Messages_Properties.Property_Id = D.ORM_Property_Id);
+         else
+
+            declare
+               D2 : constant Property_Data :=
+               Property_data (D.ORM_FK_Property_Id.Unchecked_Get);
+            begin
+               if D2.ORM_Id = -1 then
+                  Self.Session.Insert_Or_Update
+                    (D.ORM_FK_Property_Id.all);
+               end if;
+
+               A := A & (DBA.Messages_Properties.Property_Id = D2.ORM_Id);
+            end;
+         end if;
+      end if;
+      if Missing_PK then
+         Q := SQL_Insert (A);
+      else
+         Q := SQL_Update (DBA.Messages_Properties, A, DBA.Messages_Properties.Id = D.ORM_Id);
+      end if;
+      R.Fetch (Self.Session.DB, Q);
+
+      if Missing_PK and then Success (Self.Session.DB) then
+         PK_Modified := True;
+         D.ORM_Id := R.Last_Id (Self.Session.DB, DBA.Messages_Properties.Id);
+      end if;
+   end Insert_Or_Update;
+
+   ----------------------
+   -- Insert_Or_Update --
+   ----------------------
+
+   overriding procedure Insert_Or_Update
+     (Self        : in out Detached_Property;
+      Pk_Modified : in out Boolean;
+      Mask        : Dirty_Mask)
+   is
+      D          : constant Property_Data := Property_Data (Self.Unchecked_Get);
+      Q          : SQL_Query;
+      A          : Sql_Assignment := No_Assignment;
+      Missing_Pk : constant Boolean := D.ORM_Id = -1;
+      R          : Forward_Cursor;
+   begin
+      if Mask (2) then
+         A := A & (DBA.Properties.Identifier = To_String (D.ORM_Identifier));
+      end if;
+      if Mask (3) then
+         A := A & (DBA.Properties.Name = To_String (D.ORM_Name));
+      end if;
+      if Missing_PK then
+         Q := SQL_Insert (A);
+      else
+         Q := SQL_Update (DBA.Properties, A, DBA.Properties.Id = D.ORM_Id);
+      end if;
+      R.Fetch (Self.Session.DB, Q);
+
+      if Missing_PK and then Success (Self.Session.DB) then
+         PK_Modified := True;
+         D.ORM_Id := R.Last_Id (Self.Session.DB, DBA.Properties.Id);
       end if;
    end Insert_Or_Update;
 
@@ -3730,7 +4486,7 @@ package body Orm is
       R          : Forward_Cursor;
    begin
       if Mask (2) then
-         A := A & (DBA.Resources.Name = Str_Or_Empty (D.ORM_Name));
+         A := A & (DBA.Resources.Name = To_String (D.ORM_Name));
       end if;
       if Mask (3) then
          A := A & (DBA.Resources.Kind = D.ORM_Kind);
@@ -3840,10 +4596,10 @@ package body Orm is
       R          : Forward_Cursor;
    begin
       if Mask (2) then
-         A := A & (DBA.Rules.Name = Str_Or_Empty (D.ORM_Name));
+         A := A & (DBA.Rules.Name = To_String (D.ORM_Name));
       end if;
       if Mask (3) then
-         A := A & (DBA.Rules.Identifier = Str_Or_Empty (D.ORM_Identifier));
+         A := A & (DBA.Rules.Identifier = To_String (D.ORM_Identifier));
       end if;
       if Mask (4) then
          A := A & (DBA.Rules.Kind = D.ORM_Kind);
@@ -3895,7 +4651,7 @@ package body Orm is
       R          : Forward_Cursor;
    begin
       if Mask (2) then
-         A := A & (DBA.Tools.Name = Str_Or_Empty (D.ORM_Name));
+         A := A & (DBA.Tools.Name = To_String (D.ORM_Name));
       end if;
       if Missing_PK then
          Q := SQL_Insert (A);
@@ -3952,6 +4708,28 @@ package body Orm is
       D : constant Message_Data := Message_Data (Self.Unchecked_Get);
    begin
       Execute (Self.Session.DB, SQL_Delete (DBA.Messages, DBA.Messages.Id = D.ORM_Id));
+   end Internal_Delete;
+
+   ---------------------
+   -- Internal_Delete --
+   ---------------------
+
+   overriding procedure Internal_Delete (Self : Detached_Message_Property)
+   is
+      D : constant Message_Property_Data := Message_Property_Data (Self.Unchecked_Get);
+   begin
+      Execute (Self.Session.DB, SQL_Delete (DBA.Messages_Properties, DBA.Messages_Properties.Id = D.ORM_Id));
+   end Internal_Delete;
+
+   ---------------------
+   -- Internal_Delete --
+   ---------------------
+
+   overriding procedure Internal_Delete (Self : Detached_Property)
+   is
+      D : constant Property_Data := Property_Data (Self.Unchecked_Get);
+   begin
+      Execute (Self.Session.DB, SQL_Delete (DBA.Properties, DBA.Properties.Id = D.ORM_Id));
    end Internal_Delete;
 
    ---------------------
@@ -4072,6 +4850,38 @@ package body Orm is
       Do_Query_Messages(Fields, From, Criteria,
          0, Alias_Messages, Depth, Follow_LJ, PK_Only);
    end Internal_Query_Messages;
+
+   ----------------------------------------
+   -- Internal_Query_Messages_Properties --
+   ----------------------------------------
+
+   procedure Internal_Query_Messages_Properties
+     (Fields    : in out SQL_Field_List;
+      From      : out SQL_Table_List;
+      Criteria  : in out Sql_Criteria;
+      Depth     : Natural;
+      Follow_LJ : Boolean;
+      Pk_Only   : Boolean := False) is
+   begin
+      Do_Query_Messages_Properties(Fields, From, Criteria,
+         0, Alias_Messages_Properties, Depth, Follow_LJ, PK_Only);
+   end Internal_Query_Messages_Properties;
+
+   -------------------------------
+   -- Internal_Query_Properties --
+   -------------------------------
+
+   procedure Internal_Query_Properties
+     (Fields    : in out SQL_Field_List;
+      From      : out SQL_Table_List;
+      Criteria  : in out Sql_Criteria;
+      Depth     : Natural;
+      Follow_LJ : Boolean;
+      Pk_Only   : Boolean := False) is
+   begin
+      Do_Query_Properties(Fields, From, Criteria,
+         0, Alias_Properties, Depth, Follow_LJ, PK_Only);
+   end Internal_Query_Properties;
 
    -----------------------------------
    -- Internal_Query_Resource_Trees --
@@ -4209,6 +5019,32 @@ package body Orm is
    -- Key --
    ---------
 
+   overriding function Key (Self : Message_Property_Ddr) return Element_Key is
+   begin
+      if Self.ORM_Id = -1 then
+         return (10000000, No_Primary_Key);
+      else
+         return (10000000, Self.ORM_Id);
+      end if;
+   end Key;
+
+   ---------
+   -- Key --
+   ---------
+
+   overriding function Key (Self : Property_Ddr) return Element_Key is
+   begin
+      if Self.ORM_Id = -1 then
+         return (9000000, No_Primary_Key);
+      else
+         return (9000000, Self.ORM_Id);
+      end if;
+   end Key;
+
+   ---------
+   -- Key --
+   ---------
+
    overriding function Key (Self : Resource_Tree_Ddr) return Element_Key is
    begin
       if Self.ORM_Id = -1 then
@@ -4278,7 +5114,7 @@ package body Orm is
      (Self : Message'Class)
      return Entities_Messages_Managers is
    begin
-      return All_Entities_Messages.Filter(Message_Id => Self.Id);
+      return Filter (All_Entities_Messages, Message_Id => Self.Id);
    end Message_Entities;
 
    ----------------------
@@ -4289,7 +5125,7 @@ package body Orm is
      (Self : Detached_Message'Class)
      return Entities_Messages_Managers is
    begin
-      return All_Entities_Messages.Filter (Message_Id => Self.Id);
+      return Filter (All_Entities_Messages, Message_Id => Self.Id);
    end Message_Entities;
 
    ----------------------
@@ -4305,6 +5141,42 @@ package body Orm is
       return All_Entities_Messages.Filter
         (SQL_In(DBA.Entities_Messages.Message_Id, Q));
    end Message_Entities;
+
+   ------------------------
+   -- Message_Properties --
+   ------------------------
+
+   function Message_Properties
+     (Self : Message'Class)
+     return Messages_Properties_Managers is
+   begin
+      return Filter (All_Messages_Properties, Message_Id => Self.Id);
+   end Message_Properties;
+
+   ------------------------
+   -- Message_Properties --
+   ------------------------
+
+   function Message_Properties
+     (Self : Detached_Message'Class)
+     return Messages_Properties_Managers is
+   begin
+      return Filter (All_Messages_Properties, Message_Id => Self.Id);
+   end Message_Properties;
+
+   ------------------------
+   -- Message_Properties --
+   ------------------------
+
+   function Message_Properties
+     (Self : I_Messages_Managers'Class)
+     return Messages_Properties_Managers
+   is
+      Q : constant SQL_Query := I_Messages.Build_Query(Self, +DBA.Messages.Id);
+   begin
+      return All_Messages_Properties.Filter
+        (SQL_In(DBA.Messages_Properties.Message_Id, Q));
+   end Message_Properties;
 
    ------------------
    -- New_Category --
@@ -4357,6 +5229,32 @@ package body Orm is
       Result.Set (Data);
       return Result;
    end New_Message;
+
+   --------------------------
+   -- New_Message_Property --
+   --------------------------
+
+   function New_Message_Property return Detached_Message_Property'Class
+   is
+      Result : Detached_Message_Property;
+      Data   : Message_Property_Ddr;
+   begin
+      Result.Set (Data);
+      return Result;
+   end New_Message_Property;
+
+   ------------------
+   -- New_Property --
+   ------------------
+
+   function New_Property return Detached_Property'Class
+   is
+      Result : Detached_Property;
+      Data   : Property_Ddr;
+   begin
+      Result.Set (Data);
+      return Result;
+   end New_Property;
 
    ------------------
    -- New_Resource --
@@ -4463,6 +5361,24 @@ package body Orm is
    -- On_Persist --
    ----------------
 
+   overriding procedure On_Persist (Self : Detached_Message_Property)
+   is
+      D : constant Message_Property_Data := Message_Property_Data (Self.Unchecked_Get);
+   begin
+      if Persist_Cascade (Self.Session) then
+         if D.ORM_FK_Message_Id /= null then
+            Self.Session.Persist (D.ORM_FK_Message_Id.all);
+         end if;
+         if D.ORM_FK_Property_Id /= null then
+            Self.Session.Persist (D.ORM_FK_Property_Id.all);
+         end if;
+      end if;
+   end On_Persist;
+
+   ----------------
+   -- On_Persist --
+   ----------------
+
    overriding procedure On_Persist (Self : Detached_Resource_Tree)
    is
       D : constant Resource_Tree_Data := Resource_Tree_Data (Self.Unchecked_Get);
@@ -4511,6 +5427,42 @@ package body Orm is
    end On_Persist;
 
    -----------------------
+   -- Property_Messages --
+   -----------------------
+
+   function Property_Messages
+     (Self : Property'Class)
+     return Messages_Properties_Managers is
+   begin
+      return Filter (All_Messages_Properties, Property_Id => Self.Id);
+   end Property_Messages;
+
+   -----------------------
+   -- Property_Messages --
+   -----------------------
+
+   function Property_Messages
+     (Self : Detached_Property'Class)
+     return Messages_Properties_Managers is
+   begin
+      return Filter (All_Messages_Properties, Property_Id => Self.Id);
+   end Property_Messages;
+
+   -----------------------
+   -- Property_Messages --
+   -----------------------
+
+   function Property_Messages
+     (Self : I_Properties_Managers'Class)
+     return Messages_Properties_Managers
+   is
+      Q : constant SQL_Query := I_Properties.Build_Query(Self, +DBA.Properties.Id);
+   begin
+      return All_Messages_Properties.Filter
+        (SQL_In(DBA.Messages_Properties.Property_Id, Q));
+   end Property_Messages;
+
+   -----------------------
    -- Resource_Children --
    -----------------------
 
@@ -4518,7 +5470,7 @@ package body Orm is
      (Self : Resource'Class)
      return Resource_Trees_Managers is
    begin
-      return All_Resource_Trees.Filter(Child_Id => Self.Id);
+      return Filter (All_Resource_Trees, Child_Id => Self.Id);
    end Resource_Children;
 
    -----------------------
@@ -4529,7 +5481,7 @@ package body Orm is
      (Self : Detached_Resource'Class)
      return Resource_Trees_Managers is
    begin
-      return All_Resource_Trees.Filter (Child_Id => Self.Id);
+      return Filter (All_Resource_Trees, Child_Id => Self.Id);
    end Resource_Children;
 
    -----------------------
@@ -4554,7 +5506,7 @@ package body Orm is
      (Self : Resource'Class)
      return Resource_Trees_Managers is
    begin
-      return All_Resource_Trees.Filter(Parent_Id => Self.Id);
+      return Filter (All_Resource_Trees, Parent_Id => Self.Id);
    end Resource_Parent;
 
    ---------------------
@@ -4565,7 +5517,7 @@ package body Orm is
      (Self : Detached_Resource'Class)
      return Resource_Trees_Managers is
    begin
-      return All_Resource_Trees.Filter (Parent_Id => Self.Id);
+      return Filter (All_Resource_Trees, Parent_Id => Self.Id);
    end Resource_Parent;
 
    ---------------------
@@ -4588,7 +5540,7 @@ package body Orm is
 
    function Rule_Messages (Self : Rule'Class) return Messages_Managers is
    begin
-      return All_Messages.Filter(Rule_Id => Self.Id);
+      return Filter (All_Messages, Rule_Id => Self.Id);
    end Rule_Messages;
 
    -------------------
@@ -4598,7 +5550,7 @@ package body Orm is
    function Rule_Messages (Self : Detached_Rule'Class) return Messages_Managers
    is
    begin
-      return All_Messages.Filter (Rule_Id => Self.Id);
+      return Filter (All_Messages, Rule_Id => Self.Id);
    end Rule_Messages;
 
    -------------------
@@ -4737,8 +5689,7 @@ package body Orm is
    is
       D : constant Message_Data := Message_Data (Self.Unchecked_Get);
    begin
-      Free (D.ORM_Data);
-      D.ORM_Data := new String'(Value);
+      D.ORM_Data := To_Unbounded_String (Value);
       Self.Set_Modified (3);
    end Set_Data;
 
@@ -4783,9 +5734,20 @@ package body Orm is
    is
       D : constant Rule_Data := Rule_Data (Self.Unchecked_Get);
    begin
-      Free (D.ORM_Identifier);
-      D.ORM_Identifier := new String'(Value);
+      D.ORM_Identifier := To_Unbounded_String (Value);
       Self.Set_Modified (3);
+   end Set_Identifier;
+
+   --------------------
+   -- Set_Identifier --
+   --------------------
+
+   procedure Set_Identifier (Self : Detached_Property; Value : String)
+   is
+      D : constant Property_Data := Property_Data (Self.Unchecked_Get);
+   begin
+      D.ORM_Identifier := To_Unbounded_String (Value);
+      Self.Set_Modified (2);
    end Set_Identifier;
 
    --------------
@@ -4820,8 +5782,7 @@ package body Orm is
    is
       D : constant Category_Data := Category_Data (Self.Unchecked_Get);
    begin
-      Free (D.ORM_Label);
-      D.ORM_Label := new String'(Value);
+      D.ORM_Label := To_Unbounded_String (Value);
       Self.Set_Modified (2);
    end Set_Label;
 
@@ -4886,6 +5847,39 @@ package body Orm is
    -- Set_Message_Id --
    --------------------
 
+   procedure Set_Message_Id (Self : Detached_Message_Property; Value : Integer)
+   is
+      D : constant Message_Property_Data := Message_Property_Data (Self.Unchecked_Get);
+   begin
+      Unchecked_Free (D.ORM_FK_Message_Id);
+      D.ORM_Message_Id := Value;
+      Self.Set_Modified (2);
+   end Set_Message_Id;
+
+   --------------------
+   -- Set_Message_Id --
+   --------------------
+
+   procedure Set_Message_Id
+     (Self  : Detached_Message_Property;
+      Value : Detached_Message'Class)
+   is
+      D : constant Message_Property_Data := Message_Property_Data (Self.Unchecked_Get);
+   begin
+      Unchecked_Free (D.ORM_FK_Message_Id);
+      D.ORM_Message_Id := Value.Id;
+      D.ORM_FK_Message_Id := new Detached_Message'Class'(Value);
+
+      Self.Set_Modified (2);
+      if Persist_Cascade (Self.Session) then
+         Self.Session.Persist (D.ORM_FK_Message_Id.all);
+      end if;
+   end Set_Message_Id;
+
+   --------------------
+   -- Set_Message_Id --
+   --------------------
+
    procedure Set_Message_Id (Self : Detached_Entity_Message; Value : Integer)
    is
       D : constant Entity_Message_Data := Entity_Message_Data (Self.Unchecked_Get);
@@ -4923,8 +5917,7 @@ package body Orm is
    is
       D : constant Rule_Data := Rule_Data (Self.Unchecked_Get);
    begin
-      Free (D.ORM_Name);
-      D.ORM_Name := new String'(Value);
+      D.ORM_Name := To_Unbounded_String (Value);
       Self.Set_Modified (2);
    end Set_Name;
 
@@ -4936,8 +5929,7 @@ package body Orm is
    is
       D : constant Entity_Data := Entity_Data (Self.Unchecked_Get);
    begin
-      Free (D.ORM_Name);
-      D.ORM_Name := new String'(Value);
+      D.ORM_Name := To_Unbounded_String (Value);
       Self.Set_Modified (2);
    end Set_Name;
 
@@ -4949,9 +5941,20 @@ package body Orm is
    is
       D : constant Tool_Data := Tool_Data (Self.Unchecked_Get);
    begin
-      Free (D.ORM_Name);
-      D.ORM_Name := new String'(Value);
+      D.ORM_Name := To_Unbounded_String (Value);
       Self.Set_Modified (2);
+   end Set_Name;
+
+   --------------
+   -- Set_Name --
+   --------------
+
+   procedure Set_Name (Self : Detached_Property; Value : String)
+   is
+      D : constant Property_Data := Property_Data (Self.Unchecked_Get);
+   begin
+      D.ORM_Name := To_Unbounded_String (Value);
+      Self.Set_Modified (3);
    end Set_Name;
 
    --------------
@@ -4962,8 +5965,7 @@ package body Orm is
    is
       D : constant Resource_Data := Resource_Data (Self.Unchecked_Get);
    begin
-      Free (D.ORM_Name);
-      D.ORM_Name := new String'(Value);
+      D.ORM_Name := To_Unbounded_String (Value);
       Self.Set_Modified (2);
    end Set_Name;
 
@@ -5011,6 +6013,39 @@ package body Orm is
          Self.Session.Persist (D.ORM_FK_Parent_Id.all);
       end if;
    end Set_Parent_Id;
+
+   ---------------------
+   -- Set_Property_Id --
+   ---------------------
+
+   procedure Set_Property_Id (Self : Detached_Message_Property; Value : Integer)
+   is
+      D : constant Message_Property_Data := Message_Property_Data (Self.Unchecked_Get);
+   begin
+      Unchecked_Free (D.ORM_FK_Property_Id);
+      D.ORM_Property_Id := Value;
+      Self.Set_Modified (3);
+   end Set_Property_Id;
+
+   ---------------------
+   -- Set_Property_Id --
+   ---------------------
+
+   procedure Set_Property_Id
+     (Self  : Detached_Message_Property;
+      Value : Detached_Property'Class)
+   is
+      D : constant Message_Property_Data := Message_Property_Data (Self.Unchecked_Get);
+   begin
+      Unchecked_Free (D.ORM_FK_Property_Id);
+      D.ORM_Property_Id := Value.Id;
+      D.ORM_FK_Property_Id := new Detached_Property'Class'(Value);
+
+      Self.Set_Modified (3);
+      if Persist_Cascade (Self.Session) then
+         Self.Session.Persist (D.ORM_FK_Property_Id.all);
+      end if;
+   end Set_Property_Id;
 
    ---------------------
    -- Set_Resource_Id --
@@ -5125,7 +6160,7 @@ package body Orm is
 
    function Tool_Rules (Self : Tool'Class) return Rules_Managers is
    begin
-      return All_Rules.Filter(Tool_Id => Self.Id);
+      return Filter (All_Rules, Tool_Id => Self.Id);
    end Tool_Rules;
 
    ----------------
@@ -5134,7 +6169,7 @@ package body Orm is
 
    function Tool_Rules (Self : Detached_Tool'Class) return Rules_Managers is
    begin
-      return All_Rules.Filter (Tool_Id => Self.Id);
+      return Filter (All_Rules, Tool_Id => Self.Id);
    end Tool_Rules;
 
    ----------------
@@ -5148,5 +6183,5 @@ package body Orm is
       return All_Rules.Filter
         (SQL_In(DBA.Rules.Tool_Id, Q));
    end Tool_Rules;
-end Orm;
+end Database.Orm;
 
