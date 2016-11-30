@@ -115,7 +115,7 @@ with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 with Codefix.Error_Lists;    use Codefix.Error_Lists;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
 
-private with Ada.Containers.Vectors;
+private with GPS_Vectors;
 
 package Codefix.Errors_Parser is
 
@@ -189,9 +189,7 @@ package Codefix.Errors_Parser is
 
 private
 
-   pragma Suppress (Container_Checks);
-   package Parser_List is new Ada.Containers.Vectors (Positive, Ptr_Parser);
-   use Parser_List;
+   package Parser_List is new GPS_Vectors (Ptr_Parser);
 
    type Fix_Processor is record
       Parse_List : Parser_List.Vector;

@@ -23,7 +23,7 @@ with GNATCOLL.VFS;
 
 with Ada.Unchecked_Deallocation;
 
-private with Ada.Containers.Vectors;
+private with GPS_Vectors;
 
 package Codefix.Errors_Manager is
 
@@ -138,15 +138,12 @@ private
 
    procedure Free (This : in out Error_Id_Record);
 
-   pragma Suppress (Container_Checks);
-   package Memorized_Corrections is
-     new Ada.Containers.Vectors (Positive, Error_Id_Record);
+   package Memorized_Corrections is new GPS_Vectors (Error_Id_Record);
    use Memorized_Corrections;
 
-   type Error_Id is new Memorized_Corrections.Cursor;
+   type Error_Id is new Std_Vectors.Cursor;
 
-   Null_Error_Id : constant Error_Id :=
-     Error_Id (Memorized_Corrections.No_Element);
+   Null_Error_Id : constant Error_Id := Error_Id (Std_Vectors.No_Element);
 
    type Correction_Manager is record
       Potential_Corrections : Memorized_Corrections.Vector;

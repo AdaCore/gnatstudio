@@ -15,28 +15,75 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
-
 package body Virtual_Lists is
-
-   use Components_Pckg;
 
    ----------
    -- Free --
    ----------
 
-   procedure Free (This : in out Virtual_List) is
+   procedure Free (This : in out Virtual_List)
+   is
+      Current : List_Node;
+      Tmp     : List_Node;
    begin
-      Free (This.Contents);
+      if This.First = null
+        or else This.Last = null
+        or else This.Last.all = null
+      then
+         return;
+      end if;
+
+      Current := This.First.all;
+      This.First.all := null;
+      This.Last.all  := null;
+
+      while Current /= null loop
+         Tmp     := Current;
+         Current := Current.Next;
+
+         if Tmp.Element /= null then
+            Free (Tmp.Element.all);
+         end if;
+
+         Free_Element (Tmp.Element);
+         Free_Node (Tmp);
+      end loop;
+
+      Free_Node_Access (This.First);
+      Free_Node_Access (This.Last);
    end Free;
 
    ------------
    -- Concat --
    ------------
 
-   procedure Concat (This : in out Virtual_List; List : Virtual_List) is
+   procedure Concat (This : in out Virtual_List; List : Virtual_List)
+   is
+      F1 : List_Node_Access := List.First;
+      F2 : List_Node_Access := List.Last;
    begin
-      Concat (This.Contents, List.Contents);
+      if Is_Empty (List) then
+         return;
+      end if;
+
+      if This.Last = null then
+         This.Last := new List_Node'(Null_Node);
+      end if;
+
+      if This.First = null then
+         This.First := new List_Node'(Null_Node);
+      end if;
+
+      if Is_Empty (This) then
+         This.First.all := List.First.all;
+         This.Last.all  := List.Last.all;
+      else
+         This.Last.all.Next := List.First.all;
+         This.Last.all      := List.Last.all;
+      end if;
+
+      Free_Node_Access (F1);
+      Free_Node_Access (F2);
    end Concat;
 
    ------------
@@ -46,9 +93,42 @@ package body Virtual_Lists is
    procedure Append
      (List : in out Virtual_List; Component : Virtual_List_Component'Class) is
    begin
-      Append
-        (List.Contents, new Virtual_List_Component'Class'(Component));
+      if List.Last = null then
+         List.Last := new List_Node'(Null_Node);
+      end if;
+
+      if List.First = null then
+         List.First := new List_Node'(Null_Node);
+      end if;
+
+      if List.Last.all = null then
+         List.First.all := new List_Node_Record'
+           (Element => new Virtual_List_Component_Access'
+              (new Virtual_List_Component'Class'(Component)),
+            Next    => null);
+         List.Last.all := List.First.all;
+
+      else
+         List.Last.all.Next := new List_Node_Record'
+           (Element => new Virtual_List_Component_Access'
+              (new Virtual_List_Component'Class'(Component)),
+            Next    => null);
+         List.Last.all := List.Last.all.Next;
+      end if;
    end Append;
+
+   ----------
+   -- Data --
+   ----------
+
+   function Data (Node : List_Node) return Virtual_List_Component_Access is
+   begin
+      if Node = null or else Node.Element = null then
+         raise List_Empty;
+      else
+         return Node.Element.all;
+      end if;
+   end Data;
 
    -----------
    -- First --
@@ -57,21 +137,21 @@ package body Virtual_Lists is
    function First (List : Virtual_List) return Virtual_List_Iterator is
       It : Virtual_List_Iterator;
    begin
-      It.Current_Component := First (List.Contents);
+      It.Current_Component := First (List);
 
-      if It.Current_Component /= Components_Pckg.Null_Node then
+      if It.Current_Component /= Null_Node then
          It.Current_Iterator := new Virtual_List_Component_Iterator'Class'
            (First (Data (It.Current_Component).all));
       end if;
 
-      while It.Current_Component /= Components_Pckg.Null_Node
+      while It.Current_Component /= Null_Node
         and then At_End (It.Current_Iterator.all)
       loop
          Free (It.Current_Iterator);
 
          It.Current_Component := Next (It.Current_Component);
 
-         if It.Current_Component /= Components_Pckg.Null_Node then
+         if It.Current_Component /= Null_Node then
             It.Current_Iterator := new Virtual_List_Component_Iterator'Class'
               (First (Data (It.Current_Component).all));
          end if;
@@ -80,13 +160,26 @@ package body Virtual_Lists is
       return It;
    end First;
 
+   -----------
+   -- First --
+   -----------
+
+   function First (List : Virtual_List) return List_Node is
+   begin
+      if List.First = null then
+         return Null_Node;
+      else
+         return List.First.all;
+      end if;
+   end First;
+
    ------------
    -- At_End --
    ------------
 
    function At_End (It : Virtual_List_Iterator) return Boolean is
    begin
-      return It.Current_Component = Components_Pckg.Null_Node;
+      return It.Current_Component = Null_Node;
    end At_End;
 
    ----------
@@ -99,14 +192,14 @@ package body Virtual_Lists is
 
       Next (It.Current_Iterator.all);
 
-      while It.Current_Component /= Components_Pckg.Null_Node
+      while It.Current_Component /= Null_Node
         and then At_End (It.Current_Iterator.all)
       loop
          Free (It.Current_Iterator);
 
          It.Current_Component := Next (It.Current_Component);
 
-         if It.Current_Component /= Components_Pckg.Null_Node then
+         if It.Current_Component /= Null_Node then
             It.Current_Iterator := new Virtual_List_Component_Iterator'Class'
               (First (Data (It.Current_Component).all));
          end if;
@@ -157,5 +250,29 @@ package body Virtual_Lists is
          Internal_Free (This);
       end if;
    end Free;
+
+   --------------
+   -- Is_Empty --
+   --------------
+
+   function Is_Empty (This : Virtual_List) return Boolean is
+   begin
+      return This.First = null
+        or else This.First.all = null
+        or else This.First.all.Element = null;
+   end Is_Empty;
+
+   ----------
+   -- Next --
+   ----------
+
+   function Next (Node : List_Node) return List_Node is
+   begin
+      if Node = null then
+         raise List_Empty;
+      else
+         return Node.Next;
+      end if;
+   end Next;
 
 end Virtual_Lists;

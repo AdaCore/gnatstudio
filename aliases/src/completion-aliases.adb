@@ -66,7 +66,7 @@ package body Completion.Aliases is
       Result     : in out Completion_List)
    is
       Proposal : Alias_Completion_Proposal;
-      List     : Completion_List_Extensive_Pckg.Extensive_List_Pckg.List;
+      List     : Completion_List_Extensive_Pckg.Extensive_List_Pckg.Vector;
       Word     : UTF8_String
         (Natural (Offset) + 1 .. Natural (Context.Offset)) :=
            Context.Buffer (Natural (Offset) + 1 .. Natural (Context.Offset));

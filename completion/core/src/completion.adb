@@ -174,14 +174,8 @@ package body Completion is
       procedure Internal_Free is new
         Ada.Unchecked_Deallocation
           (Completion_Manager'Class, Completion_Manager_Access);
-      Item : Completion_Context;
    begin
-      for I of This.Contexts loop
-         Item := I;
-         Free (Item);
-      end loop;
-
-      Clear (This.Contexts);
+      This.Contexts.Clear;
       Internal_Free (This);
    end Free;
 

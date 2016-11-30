@@ -34,7 +34,7 @@ package body Completion.History is
       It : Proposal_Stack.Cursor := First (Resolver.Stack);
       It_Garbage : Proposal_Stack.Cursor := First (Resolver.Stack);
 
-      List : Completion_List_Extensive_Pckg.Extensive_List_Pckg.List;
+      List : Completion_List_Extensive_Pckg.Extensive_List_Pckg.Vector;
       Garbage_Element : Stored_Proposal_Access;
 
       procedure Free is new Ada.Unchecked_Deallocation

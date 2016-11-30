@@ -34,7 +34,7 @@ with GPS.Search;
 with GPS.Search.Replaces;   use GPS.Search.Replaces;
 with Language_Handlers;
 
-private with Ada.Containers.Vectors;
+private with GPS_Vectors;
 
 package Src_Contexts is
 
@@ -461,9 +461,7 @@ private
 
    procedure Free (D : in out Dir_Data_Access);
 
-   pragma Suppress (Container_Checks);
-   package Directory_List is
-     new Ada.Containers.Vectors (Positive, Dir_Data_Access);
+   package Directory_List is new GPS_Vectors (Dir_Data_Access);
 
    type File_Search_Context is abstract new Root_Search_Context with record
       Replace_Valid      : Boolean := False;

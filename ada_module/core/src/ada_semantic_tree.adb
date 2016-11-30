@@ -405,34 +405,24 @@ package body Ada_Semantic_Tree is
    -----------------
 
    function Is_Excluded
-     (Stack : Excluded_Stack_Type; Entity : Entity_Access) return Boolean
-   is
-      Excluded : Cursor;
+     (Stack : Excluded_Stack_Type; Entity : Entity_Access) return Boolean is
    begin
       if Stack = null then
          return False;
       end if;
 
-      Excluded := Stack.Entities.First;
+      for Item of Stack.Entities loop
+         --  If the two entities are exactly on the same construct, or if
+         --  they are parts of the same enitity, then we found an excluded
+         --  construct.
 
-      while Has_Element (Excluded) loop
-         declare
-            Excluded_Entity : constant Entity_Access := Element (Excluded);
-         begin
-            --  If the two entities are exactly on the same construct, or if
-            --  they are parts of the same enitity, then we found an excluded
-            --  construct.
-
-            if (Get_File (Excluded_Entity) = Get_File (Entity)
-              and then To_Construct_Tree_Iterator (Excluded_Entity)
-                = To_Construct_Tree_Iterator (Entity))
-              or else Are_Same_Entity (Excluded_Entity, Entity)
-            then
-               return True;
-            end if;
-         end;
-
-         Excluded := Next (Excluded);
+         if (Get_File (Item) = Get_File (Entity)
+             and then To_Construct_Tree_Iterator (Item) =
+               To_Construct_Tree_Iterator (Entity))
+           or else Are_Same_Entity (Item, Entity)
+         then
+            return True;
+         end if;
       end loop;
 
       return False;
@@ -463,7 +453,7 @@ package body Ada_Semantic_Tree is
          Stack.Refs := Stack.Refs - 1;
 
          if Stack.Refs = 0 then
-            Clear (Stack.Entities);
+            Stack.Entities.Clear;
             Free (Stack);
          end if;
       end if;
@@ -801,26 +791,22 @@ package body Ada_Semantic_Tree is
    function To_String (Expression : Parsed_Expression) return String is
       use Token_List;
 
-      Length : Natural           := 0;
-      Iter   : Token_List.Cursor := Expression.Tokens.First;
+      Length : Natural := 0;
    begin
-      while Has_Element (Iter) loop
-         Length := Length + Get_Name (Expression, Element (Iter))'Length;
-         Next (Iter);
+      for Item of Expression.Tokens loop
+         Length := Length + Get_Name (Expression, Item)'Length;
       end loop;
 
       return Result : String (1 .. Length) do
-         Iter   := First (Expression.Tokens);
          Length := Result'First;
 
-         while Has_Element (Iter) loop
+         for Item of Expression.Tokens loop
             declare
-               N : constant String := Get_Name (Expression, Element (Iter));
+               N : constant String := Get_Name (Expression, Item);
             begin
                Result (Length .. Length + N'Length - 1) := N;
                Length := Length + N'Length;
             end;
-            Next (Iter);
          end loop;
       end return;
    end To_String;
@@ -831,7 +817,7 @@ package body Ada_Semantic_Tree is
 
    procedure Free (Expression : in out Parsed_Expression) is
    begin
-      Token_List.Clear (Expression.Tokens);
+      Expression.Tokens.Clear;
    end Free;
 
 end Ada_Semantic_Tree;

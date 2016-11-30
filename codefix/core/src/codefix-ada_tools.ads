@@ -18,20 +18,16 @@
 --  This package provides some tools that can be used in ada formal
 --  errors and commands.
 
-with Ada.Containers.Indefinite_Vectors;
+with GPS_Vectors;
 with Ada.Unchecked_Deallocation;
 
 with GNATCOLL.VFS;
 
 with Codefix.Text_Manager;  use Codefix.Text_Manager;
 
-private with Ada.Containers.Vectors;
-
 package Codefix.Ada_Tools is
 
-   pragma Suppress (Container_Checks);
-   package Words_Lists is
-     new Ada.Containers.Indefinite_Vectors (Positive, Word_Cursor);
+   package Words_Lists is new GPS_Vectors (Word_Cursor);
    use Words_Lists;
 
    procedure Get_Use_Clauses
@@ -80,12 +76,10 @@ private
 
    procedure Free is new Ada.Unchecked_Deallocation (With_Type, Ptr_With);
 
-   pragma Suppress (Container_Checks);
-   package With_Lists is new Ada.Containers.Vectors (Positive, Ptr_With);
+   package With_Lists is new GPS_Vectors (Ptr_With);
    use With_Lists;
 
-   pragma Suppress (Container_Checks);
-   package Use_Lists is new Ada.Containers.Vectors (Positive, Ptr_Use);
+   package Use_Lists is new GPS_Vectors (Ptr_Use);
    use Use_Lists;
 
    function Get_Parts_Number (Str : String) return Positive;

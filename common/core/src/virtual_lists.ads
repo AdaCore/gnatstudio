@@ -21,7 +21,7 @@
 --  contained lists are not necessary actual lists, but can be viewed as
 --  structures providing an iterator.
 
-with Generic_List;
+private with Ada.Unchecked_Deallocation;
 
 generic
    type Data_Type (<>) is private;
@@ -31,6 +31,8 @@ package Virtual_Lists is
    type Virtual_List is private;
    --  This list, contains heterogeneous sub-list and provides a way to access
    --  to their elements in an homogeneous way.
+
+   List_Empty : exception;
 
    procedure Free (This : in out Virtual_List);
    --  Free the virtual list
@@ -117,14 +119,39 @@ private
    procedure Free (This : in out Virtual_List_Component_Access);
    --  Free the data associated to a Virtual_List_Component_Access.
 
-   package Components_Pckg is new Generic_List (Virtual_List_Component_Access);
+   type List_Node_Record;
+   type List_Node is access List_Node_Record;
+   type List_Node_Access is access List_Node;
+
+   Null_Node : constant List_Node := null;
 
    type Virtual_List is record
-      Contents : Components_Pckg.List;
+      First : List_Node_Access;
+      Last  : List_Node_Access;
    end record;
 
-   Null_Virtual_List : constant Virtual_List :=
-     (Contents => Components_Pckg.Null_List);
+   function Is_Empty (This : Virtual_List) return Boolean;
+   function First (List : Virtual_List) return List_Node;
+   function Data (Node : List_Node) return Virtual_List_Component_Access;
+   function Next (Node : List_Node) return List_Node;
+
+   Null_Virtual_List : constant Virtual_List := (null, null);
+
+   type Data_Access is access Virtual_List_Component_Access;
+
+   type List_Node_Record is record
+      Element : Data_Access;
+      Next    : List_Node;
+   end record;
+
+   procedure Free_Element is new
+     Ada.Unchecked_Deallocation (Virtual_List_Component_Access, Data_Access);
+
+   procedure Free_Node is new
+     Ada.Unchecked_Deallocation (List_Node_Record, List_Node);
+
+   procedure Free_Node_Access is new
+     Ada.Unchecked_Deallocation (List_Node, List_Node_Access);
 
    type Virtual_List_Component_Iterator_Access is access all
      Virtual_List_Component_Iterator'Class;
@@ -133,12 +160,12 @@ private
    --  Free the data associated to a Virtual_List_Component_Iterator_Access.
 
    type Virtual_List_Iterator is record
-      Current_Component : Components_Pckg.List_Node;
+      Current_Component : List_Node;
       Current_Iterator  : Virtual_List_Component_Iterator_Access;
    end record;
 
    Null_Virtual_List_Iterator : constant Virtual_List_Iterator :=
-     (Current_Component => Components_Pckg.Null_Node,
+     (Current_Component => Null_Node,
       Current_Iterator  => null);
 
 end Virtual_Lists;

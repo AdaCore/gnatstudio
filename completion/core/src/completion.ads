@@ -35,7 +35,7 @@ with Virtual_Lists.Extensive;
 with GNATCOLL.VFS;     use GNATCOLL.VFS;
 with Xref;
 
-private with Ada.Containers.Vectors;
+private with GPS_Vectors;
 
 package Completion is
 
@@ -390,9 +390,7 @@ private
    use Completion_Resolver_Map_Pckg;
    use Completion_Resolver_List_Pckg;
 
-   pragma Suppress (Container_Checks);
-   package Context_List_Pckg is
-     new Ada.Containers.Vectors (Positive, Completion_Context);
+   package Context_List_Pckg is new GPS_Vectors (Completion_Context);
 
    use Context_List_Pckg;
 

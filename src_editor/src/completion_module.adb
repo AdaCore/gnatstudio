@@ -1465,10 +1465,9 @@ package body Completion_Module is
 
                Ret := Exp.Tokens.Length = 1
                  and then
-                   Token_List.Element
-                     (Token_List.First (Exp.Tokens)).Tok_Type in
-                       Tok_With | Tok_Use | Tok_Pragma | Tok_Accept
-                         | Tok_Raise | Tok_Aspect;
+                   Exp.Tokens.First_Element.Tok_Type in
+                     Tok_With | Tok_Use | Tok_Pragma | Tok_Accept
+                       | Tok_Raise | Tok_Aspect;
 
                Free (The_Text);
                Free (Exp);

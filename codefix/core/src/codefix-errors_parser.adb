@@ -79,7 +79,7 @@ package body Codefix.Errors_Parser is
    procedure Add_Parser
      (Processor : in out Fix_Processor; New_Parser : Ptr_Parser) is
    begin
-      Append (Processor.Parse_List, New_Parser);
+      Processor.Parse_List.Append (New_Parser);
    end Add_Parser;
 
    ------------------
@@ -87,14 +87,8 @@ package body Codefix.Errors_Parser is
    ------------------
 
    procedure Free (Processor : in out Fix_Processor) is
-      Item : Ptr_Parser;
    begin
-      for I of Processor.Parse_List loop
-         Item := I;
-         Free (Item);
-      end loop;
-
-      Clear (Processor.Parse_List);
+      Processor.Parse_List.Clear;
    end Free;
 
    ----------

@@ -81,6 +81,11 @@ package body Codefix.Ada_Tools is
                   end;
                end if;
             end loop;
+
+            List_Of_With.Clear;
+            List_Of_Use.Clear;
+
+            return;
          end if;
       end loop;
    end Get_Use_Clauses;
@@ -202,9 +207,8 @@ package body Codefix.Ada_Tools is
       File_Name    : GNATCOLL.VFS.Virtual_File;
       Result       : out Use_Lists.Vector)
    is
-      Lock : Update_Lock := Lock_Updates
+      Dummy : Update_Lock := Lock_Updates
         (Current_Text.Get_Structured_File (File_Name));
-      pragma Warnings (Off, Lock); --  prevent unused varning
 
       Tree  : constant Construct_Tree :=
         Get_Tree (Current_Text.Get_Structured_File (File_Name));

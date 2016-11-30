@@ -18,12 +18,13 @@
 package body Virtual_Lists.Extensive is
 
    use Extensive_List_Pckg;
+   use Extensive_List_Pckg.Std_Vectors;
 
    -----------------------
    -- To_Extensive_List --
    -----------------------
 
-   function To_Extensive_List (L : Extensive_List_Pckg.List)
+   function To_Extensive_List (L : Extensive_List_Pckg.Vector)
       return Extensive_List_Component
    is
    begin
@@ -47,7 +48,7 @@ package body Virtual_Lists.Extensive is
 
    overriding function At_End (It : Extensive_List_Iterator) return Boolean is
    begin
-      return It.It = Null_Node;
+      return not Has_Element (It.It);
    end At_End;
 
    ----------
@@ -66,7 +67,7 @@ package body Virtual_Lists.Extensive is
    overriding function Get
      (It : in out Extensive_List_Iterator) return Data_Type
    is
-      Result : Data_Type := Data (It.It);
+      Result : Data_Type := Element (It.It);
    begin
       Copy_On_Get (Result);
 
@@ -79,7 +80,7 @@ package body Virtual_Lists.Extensive is
 
    overriding procedure Free (List : in out Extensive_List_Component) is
    begin
-      Free (List.Content);
+      List.Content.Clear;
    end Free;
 
 end Virtual_Lists.Extensive;

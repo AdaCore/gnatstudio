@@ -199,7 +199,7 @@ package body Refactoring.Parameters is
          end if;
 
          Expression.Tokens.Delete_Last;
-         Entity_Token := Token_List.Element (Expression.Tokens.Last);
+         Entity_Token := Expression.Tokens.Last_Element;
 
          if Entity_Token.Tok_Type /= Tok_Dot then
             Free (Expression);
@@ -207,7 +207,7 @@ package body Refactoring.Parameters is
          end if;
 
          Expression.Tokens.Delete_Last;
-         Entity_Token := Token_List.Element (Expression.Tokens.Last);
+         Entity_Token := Expression.Tokens.Last_Element;
 
          if Entity_Token.Tok_Type /= Tok_Identifier then
             Free (Expression);

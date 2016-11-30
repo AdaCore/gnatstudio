@@ -103,29 +103,17 @@ package body Ada_Semantic_Tree.Generics is
       procedure Free is new Ada.Unchecked_Deallocation
         (Instance_Info_Record, Instance_Info);
 
-      Cur : Generic_Info_List.Cursor;
-      Tmp : Instance_Info;
    begin
       if This /= null then
          This.Refs := This.Refs - 1;
 
          if This.Refs <= 0 then
-            Cur := This.Pre_Contexts.First;
-
-            while Has_Element (Cur) loop
-               Tmp := Element (Cur);
-               Unref (Tmp);
-
-               Cur := Next (Cur);
+            for Item of This.Pre_Contexts loop
+               Unref (Item);
             end loop;
 
-            Cur := This.Post_Contexts.First;
-
-            while Has_Element (Cur) loop
-               Tmp := Element (Cur);
-               Unref (Tmp);
-
-               Cur := Next (Cur);
+            for Item of This.Post_Contexts loop
+               Unref (Item);
             end loop;
 
             Free (This.Resolver);
@@ -274,18 +262,13 @@ package body Ada_Semantic_Tree.Generics is
       use Generic_Info_List;
 
       Result : Entity_Access := Null_Entity_Access;
-      Cur : Generic_Info_List.Cursor;
    begin
-      Cur := Info.Pre_Contexts.First;
-
-      while Has_Element (Cur) loop
-         Result := Get_Actual_For_Generic_Param (Element (Cur), Formal);
+      for Item of Info.Pre_Contexts loop
+         Result := Get_Actual_For_Generic_Param (Item, Formal);
 
          if Result /= Null_Entity_Access then
             return Result;
          end if;
-
-         Cur := Next (Cur);
       end loop;
 
       if Info.Resolver /= null then
@@ -348,17 +331,12 @@ package body Ada_Semantic_Tree.Generics is
          return Result;
       end if;
 
-      Cur := Info.Post_Contexts.First;
-
-      while Has_Element (Cur) loop
-         Result := Get_Actual_For_Generic_Param
-           (Element (Cur), Formal);
+      for Item of Info.Post_Contexts loop
+         Result := Get_Actual_For_Generic_Param (Item, Formal);
 
          if Result /= Null_Entity_Access then
             return Result;
          end if;
-
-         Cur := Next (Cur);
       end loop;
 
       return Null_Entity_Access;
@@ -536,8 +514,7 @@ package body Ada_Semantic_Tree.Generics is
    is
       use Persistent_Generic_Info_List;
 
-      Result : Instance_Info;
-      Cur : Persistent_Generic_Info_List.Cursor;
+      Result  : Instance_Info;
       Success : Boolean;
    begin
       if Instance = null then
@@ -567,18 +544,12 @@ package body Ada_Semantic_Tree.Generics is
             Success);
       end if;
 
-      Cur := Instance.Pre_Contexts.First;
-
-      while Has_Element (Cur) loop
-         Prepend_Context (Result, To_Active (Element (Cur)));
-         Cur := Next (Cur);
+      for Item of Instance.Pre_Contexts loop
+         Prepend_Context (Result, To_Active (Item));
       end loop;
 
-      Cur := Instance.Post_Contexts.First;
-
-      while Has_Element (Cur) loop
-         Append_Context (Result, To_Active (Element (Cur)));
-         Cur := Next (Cur);
+      for Item of Instance.Post_Contexts loop
+         Append_Context (Result, To_Active (Item));
       end loop;
 
       return Result;
@@ -592,8 +563,6 @@ package body Ada_Semantic_Tree.Generics is
      (This : Persistent_Instance_Info) return Boolean
    is
       use Persistent_Generic_Info_List;
-
-      Cur : Persistent_Generic_Info_List.Cursor;
    begin
       if not Exists (This.Instance_Package)
         or else not Exists (This.Generic_Package)
@@ -601,24 +570,16 @@ package body Ada_Semantic_Tree.Generics is
          return False;
       end if;
 
-      Cur := This.Pre_Contexts.First;
-
-      while Has_Element (Cur) loop
-         if not Is_Up_To_Date (Element (Cur)) then
+      for Item of This.Pre_Contexts loop
+         if not Is_Up_To_Date (Item) then
             return False;
          end if;
-
-         Cur := Next (Cur);
       end loop;
 
-      Cur := This.Post_Contexts.First;
-
-      while Has_Element (Cur) loop
-         if not Is_Up_To_Date (Element (Cur)) then
+      for Item of This.Post_Contexts loop
+         if not Is_Up_To_Date (Item) then
             return False;
          end if;
-
-         Cur := Next (Cur);
       end loop;
 
       return True;
@@ -631,9 +592,6 @@ package body Ada_Semantic_Tree.Generics is
    procedure Free (This : in out Persistent_Instance_Info) is
       use Persistent_Generic_Info_List;
 
-      Info : Persistent_Instance_Info;
-      Cur : Persistent_Generic_Info_List.Cursor;
-
       procedure Internal_Free is new Ada.Unchecked_Deallocation
         (Persistent_Instance_Info_Record,
          Persistent_Instance_Info);
@@ -642,20 +600,12 @@ package body Ada_Semantic_Tree.Generics is
          return;
       end if;
 
-      Cur := This.Pre_Contexts.First;
-
-      while Has_Element (Cur) loop
-         Info := Element (Cur);
-         Free (Info);
-         Cur := Next (Cur);
+      for Item of This.Pre_Contexts loop
+         Free (Item);
       end loop;
 
-      Cur := This.Post_Contexts.First;
-
-      while Has_Element (Cur) loop
-         Info := Element (Cur);
-         Free (Info);
-         Cur := Next (Cur);
+      for Item of This.Post_Contexts loop
+         Free (Item);
       end loop;
 
       Unref (This.Instance_Package);

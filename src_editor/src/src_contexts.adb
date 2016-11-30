@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Vectors;
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;      use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
@@ -1226,7 +1227,7 @@ package body Src_Contexts is
 
    overriding procedure Free (Context : in out Files_Context) is
    begin
-      Directory_List.Clear (Context.Dirs);
+      Context.Dirs.Clear;
       Context.At_End := True;
       Free (Context.Replacement);
       Free (Root_Search_Context (Context));
@@ -3153,7 +3154,7 @@ package body Src_Contexts is
       --  ??? Can this function be called at any other place than when the end
       --  is reached ?
       Context.At_End := False;
-      Directory_List.Clear (Context.Dirs);
+      Context.Dirs.Clear;
       Context.Current_Dir := 0;
       Move_To_Next_File (Context);
    end Move_To_First_File;

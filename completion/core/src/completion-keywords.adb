@@ -32,7 +32,7 @@ package body Completion.Keywords is
       Result     : in out Completion_List)
    is
       Proposal : Simple_Completion_Proposal;
-      List     : Completion_List_Extensive_Pckg.Extensive_List_Pckg.List;
+      List     : Completion_List_Extensive_Pckg.Extensive_List_Pckg.Vector;
       Keywords : constant String_List := Language.Keywords (Context.Lang);
       Word     : UTF8_String
         (Natural (Offset) + 1 .. Natural (Context.Offset)) :=

@@ -46,9 +46,8 @@ package body Completion.Ada is
          while It /= Completion_Resolver_List_Pckg.No_Element loop
             Get_Completion_Root
               (Resolver => Element (It),
-               Offset   => Token_List.Element
-                 (Token_List.First
-                    (Ada_Context_All.Expression.Tokens)).Token_First - 1,
+               Offset   => Ada_Context_All.Expression.Tokens.
+                 First_Element.Token_First - 1,
                Context  => Ada_Context,
                Result   => Result);
             It := Next (It);

@@ -1295,7 +1295,7 @@ package body Ada_Semantic_Tree.Declarations is
             C : Unit_Iterator := Get_Units
               (Get_Database (Context.File),
                Get (Identifier).all, Is_Partial);
-            List : Entity_List_Extensive_Pckg.Extensive_List_Pckg.List;
+            List : Entity_List_Extensive_Pckg.Extensive_List_Pckg.Vector;
             Construct_It : Construct_Tree_Iterator;
             Construct    : access Simple_Construct_Information;
 

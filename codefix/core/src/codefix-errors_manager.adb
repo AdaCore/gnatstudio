@@ -45,7 +45,7 @@ package body Codefix.Errors_Manager is
 
    overriding function Next (This : Error_Id) return Error_Id is
    begin
-      return Error_Id (Next (Cursor (This)));
+      return Error_Id (Std_Vectors.Next (Std_Vectors.Cursor (This)));
    end Next;
 
    -------------------
@@ -150,7 +150,8 @@ package body Codefix.Errors_Manager is
 
                   if not This.Potential_Corrections.Is_Empty then
                      Previous_Message :=
-                       Element (This.Potential_Corrections.Last).Message;
+                       Std_Vectors.Element
+                         (This.Potential_Corrections.Last).Message;
                   else
                      Previous_Message := Invalid_Error_Message;
                   end if;
@@ -238,7 +239,7 @@ package body Codefix.Errors_Manager is
 
    procedure Free (This : in out Correction_Manager) is
    begin
-      Clear (This.Potential_Corrections);
+      This.Potential_Corrections.Clear;
       Free (This.Error_Cb);
    end Free;
 
@@ -257,7 +258,7 @@ package body Codefix.Errors_Manager is
       New_Error_Record.Solutions := Solutions;
       New_Error_Record.Message := Clone (Message);
       Append (This.Potential_Corrections, New_Error_Record);
-      New_Error := Last (This.Potential_Corrections);
+      New_Error := Error_Id (This.Potential_Corrections.Last);
    end Add_Error;
 
    ---------------------
@@ -266,7 +267,7 @@ package body Codefix.Errors_Manager is
 
    function Get_First_Error (This : Correction_Manager) return Error_Id is
    begin
-      return First (This.Potential_Corrections);
+      return Error_Id (This.Potential_Corrections.First);
    end Get_First_Error;
 
    --------------------------

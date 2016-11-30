@@ -326,7 +326,6 @@ package body Ada_Semantic_Tree.List_Resolver is
       return Actual_Parameter_Resolver
    is
       Result : Actual_Parameter_Resolver (This.Length);
-      It     : Token_List.Cursor;
    begin
       Result.Profile := This.Profile;
       Result.Params_Set := This.Params_Set;
@@ -335,15 +334,8 @@ package body Ada_Semantic_Tree.List_Resolver is
          Result.Actual_Params (J) := This.Actual_Params (J);
          Result.Actual_Params (J).Expression.Tokens := Token_List.Empty_Vector;
 
-         It := Token_List.First
-           (This.Actual_Params (J).Expression.Tokens);
-
-         while Has_Element (It) loop
-            Token_List.Append
-              (Result.Actual_Params (J).Expression.Tokens,
-               Token_List.Element (It));
-
-            It := Next (It);
+         for Item of This.Actual_Params (J).Expression.Tokens loop
+            Result.Actual_Params (J).Expression.Tokens.Append (Item);
          end loop;
       end loop;
 

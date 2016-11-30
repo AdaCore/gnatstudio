@@ -65,21 +65,17 @@ package body Completion.C is
       New_Context_All : C_Completion_Context renames
                           C_Completion_Context (New_Context.all);
 
-      It       : Completion_Resolver_List_Pckg.Cursor;
       Result   : Completion_List;
       Prev_Tok : Token_Record;
 
    begin
       if Active (Clang_Support) then
-         It := First (Manager.Ordered_Resolvers);
-         while It /= Completion_Resolver_List_Pckg.No_Element loop
+         for Item of Manager.Ordered_Resolvers loop
             Get_Completion_Root
-              (Resolver => Element (It),
+              (Resolver => Item,
                Offset   => Context.Offset,
                Context  => New_Context,
                Result   => Result);
-
-            It := Next (It);
          end loop;
       else
          --  TODO ??? This branch of the code is obsolete and kept for legacy
@@ -94,19 +90,14 @@ package body Completion.C is
            Parse_Expression_Backward (Context.Buffer, Context.Offset);
 
          if New_Context_All.Expression /= Null_Parsed_Expression then
-            Prev_Tok :=
-              Token_List.Element
-                (New_Context_All.Expression.Tokens.Last);
+            Prev_Tok := New_Context_All.Expression.Tokens.Last_Element;
 
-            It := First (Manager.Ordered_Resolvers);
-            while It /= Completion_Resolver_List_Pckg.No_Element loop
+            for Item of Manager.Ordered_Resolvers loop
                Get_Completion_Root
-                 (Resolver => Element (It),
+                 (Resolver => Item,
                   Offset   => Prev_Tok.Token_First - 1,
                   Context  => New_Context,
                   Result   => Result);
-
-               It := Next (It);
             end loop;
          end if;
 

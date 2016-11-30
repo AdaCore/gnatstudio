@@ -18,6 +18,8 @@
 --  This package provide a simple-minded implementation of a virtual list
 --  component, using a generic list.
 
+with GPS_Indefinite_Vectors;
+
 generic
    with procedure Free (Data : in out Data_Type) is <>;
    --  Free the given data
@@ -31,7 +33,7 @@ package Virtual_Lists.Extensive is
    -- Extensive_List_Component --
    ------------------------------
 
-   package Extensive_List_Pckg is new Generic_List (Data_Type);
+   package Extensive_List_Pckg is new GPS_Indefinite_Vectors (Data_Type);
    --  May be used to create list for Data_Type.
 
    type Extensive_List_Component is new Virtual_List_Component with private;
@@ -39,7 +41,7 @@ package Virtual_Lists.Extensive is
    type Extensive_List_Iterator is new Virtual_List_Component_Iterator
    with private;
 
-   function To_Extensive_List (L : Extensive_List_Pckg.List)
+   function To_Extensive_List (L : Extensive_List_Pckg.Vector)
       return Extensive_List_Component;
    --  Return an extensive list corresponding to the list given in parameter.
    --  Note that no hard copy is done, so the two lists will share the same
@@ -64,12 +66,12 @@ package Virtual_Lists.Extensive is
 
 private
    type Extensive_List_Component is new Virtual_List_Component with record
-      Content : Extensive_List_Pckg.List;
+      Content : Extensive_List_Pckg.Vector;
    end record;
 
    type Extensive_List_Iterator is new Virtual_List_Component_Iterator with
       record
-         It : Extensive_List_Pckg.List_Node;
+         It : Extensive_List_Pckg.Std_Vectors.Cursor;
       end record;
 
 end Virtual_Lists.Extensive;
