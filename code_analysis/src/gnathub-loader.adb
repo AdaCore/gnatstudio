@@ -30,7 +30,7 @@ with GPS.Kernel.Project;
 with GPS.Kernel.Task_Manager;
 
 with GNAThub.Messages;
-with Orm;
+with Database.Orm;
 with Language.Abstract_Language_Tree;
 
 package body GNAThub.Loader is
@@ -201,14 +201,15 @@ package body GNAThub.Loader is
       use type GNATCOLL.VFS.Virtual_File;
 
       File            : constant GNATCOLL.VFS.Virtual_File :=
-                         GNATCOLL.VFS.Create_From_UTF8 (Resource_Name);
+                          GNATCOLL.VFS.Create_From_UTF8 (Resource_Name);
       Session         : constant GNATCOLL.SQL.Sessions.Session_Type :=
-                         GNATCOLL.SQL.Sessions.Get_New_Session;
-      List            : Orm.Resource_Message_List :=
-                         Orm.Filter (Orm.All_Resources_Messages,
-                           Resource_Id => Resource_Id).Get (Session);
-      R               : Orm.Resource_Message;
-      M               : Orm.Message;
+                          GNATCOLL.SQL.Sessions.Get_New_Session;
+      List            : Database.Orm.Resource_Message_List :=
+                          Database.Orm.Filter
+                            (Database.Orm.All_Resources_Messages,
+                             Resource_Id => Resource_Id).Get (Session);
+      R               : Database.Orm.Resource_Message;
+      M               : Database.Orm.Message;
       Message         : GNAThub.Messages.Message_Access;
       Visible         : Boolean;
       Rule            : GNAThub.Rule_Access;
@@ -373,8 +374,9 @@ package body GNAThub.Loader is
    begin
       while List.Has_Row loop
          R := List.Element;
-         M := Orm.Filter (Orm.All_Messages, Id => R.Message_Id)
-            .Get (Session).Element;
+         M := Database.Orm.Filter
+           (Database.Orm.All_Messages, Id => R.Message_Id)
+           .Get (Session).Element;
 
          if Self.Rules.Contains (M.Rule_Id) then
             --  This is message
@@ -400,7 +402,7 @@ package body GNAThub.Loader is
                  Self.Module.Get_Kernel.Get_Messages_Container,
                Severity  => Severity,
                Rule      => Rule,
-               Text      => To_Unbounded_String (Orm.Data (M)),
+               Text      => To_Unbounded_String (Database.Orm.Data (M)),
                File      => File,
                Line      => R.Line,
                Column    => Basic_Types.Visible_Column_Type (R.Col_Begin));
@@ -482,9 +484,9 @@ package body GNAThub.Loader is
    procedure Load_Resources (Self : in out Loader'Class) is
       Session  : constant GNATCOLL.SQL.Sessions.Session_Type :=
                    GNATCOLL.SQL.Sessions.Get_New_Session;
-      List     : Orm.Resource_List := Orm.Filter
-         (Orm.All_Resources, Kind => 2).Get (Session);
-      R        : Orm.Resource;
+      List     : Database.Orm.Resource_List := Database.Orm.Filter
+         (Database.Orm.All_Resources, Kind => 2).Get (Session);
+      R        : Database.Orm.Resource;
       Resource : Resource_Access;
 
    begin
@@ -504,8 +506,9 @@ package body GNAThub.Loader is
    procedure Load_Severities (Self : in out Loader'Class) is
       Session  : constant GNATCOLL.SQL.Sessions.Session_Type :=
                    GNATCOLL.SQL.Sessions.Get_New_Session;
-      List     : Orm.Category_List       := Orm.All_Categories.Get (Session);
-      S        : Orm.Category;
+      List     : Database.Orm.Category_List :=
+                   Database.Orm.All_Categories.Get (Session);
+      S        : Database.Orm.Category;
       Severity : Severity_Access;
 
    begin
@@ -535,10 +538,10 @@ package body GNAThub.Loader is
    procedure Load_Tools_And_Rules (Self : in out Loader'Class) is
       Session : constant GNATCOLL.SQL.Sessions.Session_Type :=
                   GNATCOLL.SQL.Sessions.Get_New_Session;
-      TL      : Orm.Tool_List := Orm.All_Tools.Get (Session);
-      T       : Orm.Tool;
-      RL      : Orm.Rule_List;
-      R       : Orm.Rule;
+      TL      : Database.Orm.Tool_List := Database.Orm.All_Tools.Get (Session);
+      T       : Database.Orm.Tool;
+      RL      : Database.Orm.Rule_List;
+      R       : Database.Orm.Rule;
 
       Tool    : Tool_Access;
       Rule    : Rule_Access;
@@ -548,7 +551,7 @@ package body GNAThub.Loader is
          T    := TL.Element;
          Tool := Self.Module.New_Tool (To_Unbounded_String (T.Name));
 
-         RL := Orm.Filter (T.Tool_Rules, Kind => 0).Get (Session);
+         RL := Database.Orm.Filter (T.Tool_Rules, Kind => 0).Get (Session);
 
          while RL.Has_Row loop
             R := RL.Element;

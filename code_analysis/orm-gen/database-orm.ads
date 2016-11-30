@@ -16,7 +16,7 @@ with System.Address_Image;
 pragma Warnings (On);
 pragma Style_Checks (Off);
 
-package Orm is
+package Database.Orm is
    package DBA renames Database;
    subtype Related_Depth is Integer range 0 .. 3;
 
@@ -727,18 +727,17 @@ package Orm is
       Follow_LJ : Boolean;
       Pk_Only   : Boolean := False);
 
-   --------------
-   -- Managers --
-   --------------
+   -------------------
+   -- Manager Types --
+   -------------------
 
    type I_Categories_Managers is abstract new Manager with null record;
    package I_Categories is new Generic_Managers
      (I_Categories_Managers, Category, Related_Depth, DBA.Categories,
       Internal_Query_Categories);
-   subtype Categories_Managers is I_Categories.Manager;
+   type Categories_Managers is new I_Categories.Manager with null record;
    subtype Categories_Stmt is I_Categories.ORM_Prepared_Statement;
 
-   All_Categories : constant Categories_Managers := I_Categories.All_Managers;
    subtype Category_List is I_Categories.List;
    subtype Direct_Category_List is I_Categories.Direct_List;
    Empty_Category_List : constant Category_List := I_Categories.Empty_List;
@@ -749,10 +748,9 @@ package Orm is
    package I_Entities is new Generic_Managers
      (I_Entities_Managers, Entity, Related_Depth, DBA.Entities,
       Internal_Query_Entities);
-   subtype Entities_Managers is I_Entities.Manager;
+   type Entities_Managers is new I_Entities.Manager with null record;
    subtype Entities_Stmt is I_Entities.ORM_Prepared_Statement;
 
-   All_Entities : constant Entities_Managers := I_Entities.All_Managers;
    subtype Entity_List is I_Entities.List;
    subtype Direct_Entity_List is I_Entities.Direct_List;
    Empty_Entity_List : constant Entity_List := I_Entities.Empty_List;
@@ -763,10 +761,9 @@ package Orm is
    package I_Entities_Messages is new Generic_Managers
      (I_Entities_Messages_Managers, Entity_Message, Related_Depth, DBA.Entities_Messages,
       Internal_Query_Entities_Messages);
-   subtype Entities_Messages_Managers is I_Entities_Messages.Manager;
+   type Entities_Messages_Managers is new I_Entities_Messages.Manager with null record;
    subtype Entities_Messages_Stmt is I_Entities_Messages.ORM_Prepared_Statement;
 
-   All_Entities_Messages : constant Entities_Messages_Managers := I_Entities_Messages.All_Managers;
    subtype Entity_Message_List is I_Entities_Messages.List;
    subtype Direct_Entity_Message_List is I_Entities_Messages.Direct_List;
    Empty_Entity_Message_List : constant Entity_Message_List := I_Entities_Messages.Empty_List;
@@ -777,10 +774,9 @@ package Orm is
    package I_Messages is new Generic_Managers
      (I_Messages_Managers, Message, Related_Depth, DBA.Messages,
       Internal_Query_Messages);
-   subtype Messages_Managers is I_Messages.Manager;
+   type Messages_Managers is new I_Messages.Manager with null record;
    subtype Messages_Stmt is I_Messages.ORM_Prepared_Statement;
 
-   All_Messages : constant Messages_Managers := I_Messages.All_Managers;
    subtype Message_List is I_Messages.List;
    subtype Direct_Message_List is I_Messages.Direct_List;
    Empty_Message_List : constant Message_List := I_Messages.Empty_List;
@@ -791,10 +787,9 @@ package Orm is
    package I_Messages_Properties is new Generic_Managers
      (I_Messages_Properties_Managers, Message_Property, Related_Depth, DBA.Messages_Properties,
       Internal_Query_Messages_Properties);
-   subtype Messages_Properties_Managers is I_Messages_Properties.Manager;
+   type Messages_Properties_Managers is new I_Messages_Properties.Manager with null record;
    subtype Messages_Properties_Stmt is I_Messages_Properties.ORM_Prepared_Statement;
 
-   All_Messages_Properties : constant Messages_Properties_Managers := I_Messages_Properties.All_Managers;
    subtype Message_Property_List is I_Messages_Properties.List;
    subtype Direct_Message_Property_List is I_Messages_Properties.Direct_List;
    Empty_Message_Property_List : constant Message_Property_List := I_Messages_Properties.Empty_List;
@@ -805,10 +800,9 @@ package Orm is
    package I_Properties is new Generic_Managers
      (I_Properties_Managers, Property, Related_Depth, DBA.Properties,
       Internal_Query_Properties);
-   subtype Properties_Managers is I_Properties.Manager;
+   type Properties_Managers is new I_Properties.Manager with null record;
    subtype Properties_Stmt is I_Properties.ORM_Prepared_Statement;
 
-   All_Properties : constant Properties_Managers := I_Properties.All_Managers;
    subtype Property_List is I_Properties.List;
    subtype Direct_Property_List is I_Properties.Direct_List;
    Empty_Property_List : constant Property_List := I_Properties.Empty_List;
@@ -819,10 +813,9 @@ package Orm is
    package I_Resource_Trees is new Generic_Managers
      (I_Resource_Trees_Managers, Resource_Tree, Related_Depth, DBA.Resource_Trees,
       Internal_Query_Resource_Trees);
-   subtype Resource_Trees_Managers is I_Resource_Trees.Manager;
+   type Resource_Trees_Managers is new I_Resource_Trees.Manager with null record;
    subtype Resource_Trees_Stmt is I_Resource_Trees.ORM_Prepared_Statement;
 
-   All_Resource_Trees : constant Resource_Trees_Managers := I_Resource_Trees.All_Managers;
    subtype Resource_Tree_List is I_Resource_Trees.List;
    subtype Direct_Resource_Tree_List is I_Resource_Trees.Direct_List;
    Empty_Resource_Tree_List : constant Resource_Tree_List := I_Resource_Trees.Empty_List;
@@ -833,10 +826,9 @@ package Orm is
    package I_Resources is new Generic_Managers
      (I_Resources_Managers, Resource, Related_Depth, DBA.Resources,
       Internal_Query_Resources);
-   subtype Resources_Managers is I_Resources.Manager;
+   type Resources_Managers is new I_Resources.Manager with null record;
    subtype Resources_Stmt is I_Resources.ORM_Prepared_Statement;
 
-   All_Resources : constant Resources_Managers := I_Resources.All_Managers;
    subtype Resource_List is I_Resources.List;
    subtype Direct_Resource_List is I_Resources.Direct_List;
    Empty_Resource_List : constant Resource_List := I_Resources.Empty_List;
@@ -847,10 +839,9 @@ package Orm is
    package I_Resources_Messages is new Generic_Managers
      (I_Resources_Messages_Managers, Resource_Message, Related_Depth, DBA.Resources_Messages,
       Internal_Query_Resources_Messages);
-   subtype Resources_Messages_Managers is I_Resources_Messages.Manager;
+   type Resources_Messages_Managers is new I_Resources_Messages.Manager with null record;
    subtype Resources_Messages_Stmt is I_Resources_Messages.ORM_Prepared_Statement;
 
-   All_Resources_Messages : constant Resources_Messages_Managers := I_Resources_Messages.All_Managers;
    subtype Resource_Message_List is I_Resources_Messages.List;
    subtype Direct_Resource_Message_List is I_Resources_Messages.Direct_List;
    Empty_Resource_Message_List : constant Resource_Message_List := I_Resources_Messages.Empty_List;
@@ -861,10 +852,9 @@ package Orm is
    package I_Rules is new Generic_Managers
      (I_Rules_Managers, Rule, Related_Depth, DBA.Rules,
       Internal_Query_Rules);
-   subtype Rules_Managers is I_Rules.Manager;
+   type Rules_Managers is new I_Rules.Manager with null record;
    subtype Rules_Stmt is I_Rules.ORM_Prepared_Statement;
 
-   All_Rules : constant Rules_Managers := I_Rules.All_Managers;
    subtype Rule_List is I_Rules.List;
    subtype Direct_Rule_List is I_Rules.Direct_List;
    Empty_Rule_List : constant Rule_List := I_Rules.Empty_List;
@@ -875,10 +865,9 @@ package Orm is
    package I_Tools is new Generic_Managers
      (I_Tools_Managers, Tool, Related_Depth, DBA.Tools,
       Internal_Query_Tools);
-   subtype Tools_Managers is I_Tools.Manager;
+   type Tools_Managers is new I_Tools.Manager with null record;
    subtype Tools_Stmt is I_Tools.ORM_Prepared_Statement;
 
-   All_Tools : constant Tools_Managers := I_Tools.All_Managers;
    subtype Tool_List is I_Tools.List;
    subtype Direct_Tool_List is I_Tools.Direct_List;
    Empty_Tool_List : constant Tool_List := I_Tools.Empty_List;
@@ -1191,6 +1180,44 @@ package Orm is
      return Resource_Trees_Managers;
 
    --------------
+   -- Managers --
+   --------------
+
+   All_Categories : constant Categories_Managers :=
+     (I_Categories.All_Managers with null record);
+
+   All_Entities : constant Entities_Managers :=
+     (I_Entities.All_Managers with null record);
+
+   All_Entities_Messages : constant Entities_Messages_Managers :=
+     (I_Entities_Messages.All_Managers with null record);
+
+   All_Messages : constant Messages_Managers :=
+     (I_Messages.All_Managers with null record);
+
+   All_Messages_Properties : constant Messages_Properties_Managers :=
+     (I_Messages_Properties.All_Managers with null record);
+
+   All_Properties : constant Properties_Managers :=
+     (I_Properties.All_Managers with null record);
+
+   All_Resource_Trees : constant Resource_Trees_Managers :=
+     (I_Resource_Trees.All_Managers with null record);
+
+   All_Resources : constant Resources_Managers :=
+     (I_Resources.All_Managers with null record);
+
+   All_Resources_Messages : constant Resources_Messages_Managers :=
+     (I_Resources_Messages.All_Managers with null record);
+
+   All_Rules : constant Rules_Managers :=
+     (I_Rules.All_Managers with null record);
+
+   All_Tools : constant Tools_Managers :=
+     (I_Tools.All_Managers with null record);
+
+
+   --------------
    -- Internal --
    --------------
 
@@ -1286,7 +1313,7 @@ private
 
     type Category_DDR is new Detached_Data (3) with record
        ORM_Id         : Integer := -1;
-       ORM_Label      : GNAT.Strings.String_Access := null;
+       ORM_Label      : Unbounded_String := Null_Unbounded_String;
        ORM_On_Side    : Boolean := False;
     end record;
     type Category_Data is access all Category_DDR;
@@ -1296,7 +1323,7 @@ private
        ORM_Col_End      : Integer := -1;
        ORM_Id           : Integer := -1;
        ORM_Line         : Integer := -1;
-       ORM_Name         : GNAT.Strings.String_Access := null;
+       ORM_Name         : Unbounded_String := Null_Unbounded_String;
     end record;
     type Entity_Data is access all Entity_DDR;
     
@@ -1311,7 +1338,7 @@ private
     
     type Message_DDR is new Detached_Data (6) with record
        ORM_Category_Id    : Integer := -1;
-       ORM_Data           : GNAT.Strings.String_Access := null;
+       ORM_Data           : Unbounded_String := Null_Unbounded_String;
        ORM_FK_Category_Id : Detached_Category_Access := null;
        ORM_FK_Rule_Id     : Detached_Rule_Access := null;
        ORM_Id             : Integer := -1;
@@ -1330,8 +1357,8 @@ private
     
     type Property_DDR is new Detached_Data (3) with record
        ORM_Id            : Integer := -1;
-       ORM_Identifier    : GNAT.Strings.String_Access := null;
-       ORM_Name          : GNAT.Strings.String_Access := null;
+       ORM_Identifier    : Unbounded_String := Null_Unbounded_String;
+       ORM_Name          : Unbounded_String := Null_Unbounded_String;
     end record;
     type Property_Data is access all Property_DDR;
     
@@ -1347,7 +1374,7 @@ private
     type Resource_DDR is new Detached_Data (4) with record
        ORM_Id           : Integer := -1;
        ORM_Kind         : Integer := -1;
-       ORM_Name         : GNAT.Strings.String_Access := null;
+       ORM_Name         : Unbounded_String := Null_Unbounded_String;
        ORM_Timestamp    : Ada.Calendar.Time := No_Time;
     end record;
     type Resource_Data is access all Resource_DDR;
@@ -1367,16 +1394,16 @@ private
     type Rule_DDR is new Detached_Data (6) with record
        ORM_FK_Tool_Id    : Detached_Tool_Access := null;
        ORM_Id            : Integer := -1;
-       ORM_Identifier    : GNAT.Strings.String_Access := null;
+       ORM_Identifier    : Unbounded_String := Null_Unbounded_String;
        ORM_Kind          : Integer := 0;
-       ORM_Name          : GNAT.Strings.String_Access := null;
+       ORM_Name          : Unbounded_String := Null_Unbounded_String;
        ORM_Tool_Id       : Integer := -1;
     end record;
     type Rule_Data is access all Rule_DDR;
     
     type Tool_DDR is new Detached_Data (2) with record
        ORM_Id      : Integer := -1;
-       ORM_Name    : GNAT.Strings.String_Access := null;
+       ORM_Name    : Unbounded_String := Null_Unbounded_String;
     end record;
     type Tool_Data is access all Tool_DDR;
     
@@ -1447,4 +1474,4 @@ private
     No_Detached_Tool : constant Detached_Tool :=
       (Sessions.Detached_Element with null record);
  
-end Orm;
+end Database.Orm;
