@@ -7,6 +7,7 @@ from gi.repository import Gtk
 from menu import TestContextual
 from asserts import gps_assert, gps_not_null, gps_assert_menu
 import pygps.tree
+from workflows.promises import Promise
 
 
 def find_in_tree(tree, column, key, iter=None):
@@ -103,3 +104,35 @@ class Tree(object):
             lambda: pygps.tree.click_in_tree(self.treeview, path=p, button=3))
         yield menu.open()
         menu.compare(expected)
+
+    def click(self, column, path=None, value=None, *args, **kwargs):
+        """
+        If path not given, then find the first node in the tree that contains
+        value in the given column. Click on the column in a row of the path.
+        Return promise to wait selection changed.
+        This function accepts other parameters to pass them to click_in_tree,
+        such as button, events, process_events, control, alt, shift, modifier.
+
+        Example:
+
+        yield my_tree.click (column=1, value="key", button=1)
+
+        :param int column: the model's column to check.
+        :param str path:   the path in the tree to click.
+        :param str value:  the value to find in the model, if path not set.
+        :return Promise:   the event of selection change.
+        """
+
+        if not path:
+            path = pygps.tree.find_in_tree(self.treeview,
+                                           column=column, key=value)
+
+        p = Promise()
+
+        def handler(selection):
+            p.resolve()
+
+        self.treeview.get_selection().connect("changed", handler)
+        pygps.tree.click_in_tree(self.treeview, path, *args, **kwargs)
+
+        return p
