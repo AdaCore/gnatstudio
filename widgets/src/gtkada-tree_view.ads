@@ -59,6 +59,8 @@ with Gtk.Tree_Model;        use Gtk.Tree_Model;
 with Gtk.Tree_Model_Filter; use Gtk.Tree_Model_Filter;
 with Glib;                  use Glib;
 with Glib.Main;             use Glib.Main;
+private with Glib.Object;
+private with System;
 
 package Gtkada.Tree_View is
 
@@ -142,6 +144,11 @@ package Gtkada.Tree_View is
       type Detached_Model_Access is access all Detached_Model'Class;
       overriding procedure Finalize (Self : in out Detached_Model);
 
+      function Tree (Self : Detached_Model) return access Tree_Record'Class
+        with Inline;
+      --  Return the tree associated with Self.
+      --  It returns null if the tree has been destroyed in between
+
       function Detach_Model_From_View
          (Self           : not null access Tree_Record'Class;
           Freeze         : Boolean := True;
@@ -161,6 +168,9 @@ package Gtkada.Tree_View is
       --  When the model is reattached, the expansion status is lost. If
       --  Save_Expansion is True, the nodes will be re-expanded as they were
       --  before.
+      --
+      --  This works even if the tree is destroyed while detached. In this case
+      --  it will simply never be reattached.
 
    private
       package Id_Sets is new Ada.Containers.Indefinite_Hashed_Sets
@@ -178,16 +188,33 @@ package Gtkada.Tree_View is
          --  Top visible row
       end record;
 
-      type Detached_Model is new Ada.Finalization.Limited_Controlled with
-      record
-         Tree           : access Tree_Record;
+      type Detached_Data is record
+         Tree           : access Tree_Record'Class;
          Was_Detached   : Boolean := True;
          Sort_Col       : Gint := -1;
 
          Save_Expansion : Boolean := False;
          Expansion      : Expansion_Status;
-      end record
+      end record;
+      type Detached_Data_Access is access Detached_Data;
+
+      type Detached_Model is new Ada.Finalization.Limited_Controlled with
+         record
+            Data : Detached_Data_Access;
+         end record
       with Warnings => Off;  --  avoid warnings on unused instances
+
+      function Tree (Self : Detached_Model) return access Tree_Record'Class
+        is (if Self.Data = null then null else Self.Data.Tree);
+
+      procedure On_Tree_Destroyed
+        (Data   : System.Address;
+         Tree   : System.Address);
+      pragma Convention (C, On_Tree_Destroyed);
+      On_Tree_Destroyed_Access : constant Glib.Object.Weak_Notify :=
+        On_Tree_Destroyed'Access;
+      --  Called when the tree is destroyed while it is detached from the
+      --  model.
 
    end Expansion_Support;
 

@@ -15,6 +15,8 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Gdk.Drag_Contexts;    use Gdk.Drag_Contexts;
 with Glib.Object;          use Glib.Object;
@@ -808,6 +810,9 @@ package body Gtkada.Tree_View is
 
    package body Expansion_Support is
 
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, Detached_Data_Access);
+
       --------------------------
       -- Get_Expansion_Status --
       --------------------------
@@ -923,6 +928,27 @@ package body Gtkada.Tree_View is
          end if;
       end Set_Expansion_Status;
 
+      -----------------------
+      -- On_Tree_Destroyed --
+      -----------------------
+
+      procedure On_Tree_Destroyed
+        (Data   : System.Address;
+         Tree   : System.Address)
+      is
+         pragma Unreferenced (Tree);
+         D : constant Detached_Data_Access := Convert (Data);
+      begin
+         if not D.Was_Detached then
+            if D.Tree.Filter /= null then
+               Unref (D.Tree.Filter);
+            else
+               Unref (D.Tree.Model);
+            end if;
+         end if;
+         D.Tree := null;
+      end On_Tree_Destroyed;
+
       ----------------------------
       -- Detach_Model_From_View --
       ----------------------------
@@ -932,33 +958,43 @@ package body Gtkada.Tree_View is
           Freeze         : Boolean := True;
           Save_Expansion : Boolean := True;
           Save_Scrolling : Boolean := True)
-         return Detached_Model is
+          return Detached_Model
+      is
+         Data : constant Detached_Data_Access := new Detached_Data;
       begin
-         return D : Detached_Model do
-            D.Tree := Self;
-            D.Was_Detached := Self.Get_Model = Null_Gtk_Tree_Model;
+         Data.Tree := Self;
+         Data.Was_Detached := Self.Get_Model = Null_Gtk_Tree_Model;
 
-            if not D.Was_Detached then
-               Increase_Indent (Me, "Detach model from view");
-               if Freeze then
-                  D.Sort_Col := Freeze_Sort (Self.Model);
-               else
-                  D.Sort_Col := -1;
-               end if;
+         if not Data.Was_Detached then
+            Increase_Indent (Me, "Detach model from view");
 
-               D.Save_Expansion := Save_Expansion;
-               if Save_Expansion then
-                  Get_Expansion_Status
-                    (Self, D.Expansion, Save_Scrolling => Save_Scrolling);
-               end if;
+            --  In case the tree is destroyed before we have to reattach.
+            --  Since we have a limited type, we can take its address, it
+            --  will not change.
+            Data.Tree.Weak_Ref (On_Tree_Destroyed_Access, Data.all'Address);
 
-               if Self.Filter /= null then
-                  Ref (Self.Filter);
-               else
-                  Ref (Self.Model);
-               end if;
-               Self.Set_Model (Null_Gtk_Tree_Model);
+            if Freeze then
+               Data.Sort_Col := Freeze_Sort (Self.Model);
+            else
+               Data.Sort_Col := -1;
             end if;
+
+            Data.Save_Expansion := Save_Expansion;
+            if Save_Expansion then
+               Get_Expansion_Status
+                 (Self, Data.Expansion, Save_Scrolling => Save_Scrolling);
+            end if;
+
+            if Self.Filter /= null then
+               Ref (Self.Filter);
+            else
+               Ref (Self.Model);
+            end if;
+            Self.Set_Model (Null_Gtk_Tree_Model);
+         end if;
+
+         return D : Detached_Model do
+            D.Data := Data;
          end return;
       end Detach_Model_From_View;
 
@@ -967,27 +1003,38 @@ package body Gtkada.Tree_View is
       --------------
 
       overriding procedure Finalize (Self : in out Detached_Model) is
+         procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+           (Detached_Data, Detached_Data_Access);
+         Data : Detached_Data_Access := Self.Data;
       begin
-         if not Self.Was_Detached then
+         Self.Data := null;   --  make finalize idempotent
+
+         if Data /= null
+           and then not Data.Was_Detached
+           and then Data.Tree /= null
+         then
             Decrease_Indent (Me, "Reattach model to view");
-            Self.Was_Detached := True;
 
-            if Self.Sort_Col /= -1 then
-               Thaw_Sort (Self.Tree.Model, Self.Sort_Col);
+            Data.Tree.Weak_Unref (On_Tree_Destroyed_Access, Data.all'Address);
+
+            if Data.Sort_Col /= -1 then
+               Thaw_Sort (Data.Tree.Model, Data.Sort_Col);
             end if;
 
-            if Self.Tree.Filter /= null then
-               Self.Tree.Set_Model (+Self.Tree.Filter);
-               Unref (Self.Tree.Filter);
+            if Data.Tree.Filter /= null then
+               Data.Tree.Set_Model (+Data.Tree.Filter);
+               Unref (Data.Tree.Filter);
             else
-               Self.Tree.Set_Model (+Self.Tree.Model);
-               Unref (Self.Tree.Model);
+               Data.Tree.Set_Model (+Data.Tree.Model);
+               Unref (Data.Tree.Model);
             end if;
 
-            if Self.Save_Expansion then
-               Set_Expansion_Status (Self.Tree, Self.Expansion);
+            if Data.Save_Expansion then
+               Set_Expansion_Status (Data.Tree, Data.Expansion);
             end if;
          end if;
+
+         Unchecked_Free (Data);
       end Finalize;
 
    end Expansion_Support;
