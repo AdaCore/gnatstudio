@@ -24,6 +24,7 @@ with Gdk.RGBA;                    use Gdk.RGBA;
 with Generic_Views;               use Generic_Views;
 with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
+with Glib_Values_Utils;           use Glib_Values_Utils;
 with Glib;                        use Glib;
 with GNATCOLL.Projects;           use GNATCOLL.Projects;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
@@ -400,7 +401,7 @@ package body VCS2.Commits is
             Gdk.RGBA.Set_Value (V (Column_Foreground), Color_Normal);
          end if;
 
-         Self.Tree.Model.Set (Iter, V);
+         Set_All_And_Clear (Self.Tree.Model, Iter, V);
 
          if Select_Nodes then
             Self.Tree.Get_Selection.Select_Iter
