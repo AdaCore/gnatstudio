@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Calendar;                use Ada.Calendar;
 with Ada.Containers;              use Ada.Containers;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Vectors;
@@ -28,6 +29,7 @@ with Gdk.RGBA;                    use Gdk.RGBA;
 with Generic_Views;               use Generic_Views;
 with Glib;                        use Glib;
 with Glib.Convert;                use Glib.Convert;
+with Glib.Main;                   use Glib.Main;
 with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
@@ -54,7 +56,6 @@ with VCS2.Views;                  use VCS2.Views;
 
 package body VCS2.History is
    Me : constant Trace_Handle := Create ("HISTORY");
---   pragma Unreferenced (Me);
 
    Column_ID      : constant := 0;
    Column_Author  : constant := 1;
@@ -118,9 +119,19 @@ package body VCS2.History is
       null;
    end record;
 
+   type History_Line is record
+      ID, Author, Date, Subject : GNAT.Strings.String_Access;
+      Parents                   : GNAT.Strings.String_List_Access;
+      Names                     : GNAT.Strings.String_List_Access;
+   end record;
+
+   package Line_Vectors is new Ada.Containers.Vectors
+     (Positive, History_Line);
+
    type History_Tree_Record is new Tree_View_Record with record
       User_Filter : GPS.Search.Search_Pattern_Access;
       Commits     : Commit_Map;
+      Graph       : Gtk_Drawing_Area;
    end record;
    type History_Tree is access all History_Tree_Record'Class;
 
@@ -139,7 +150,6 @@ package body VCS2.History is
 
    type History_View_Record is new Base_VCS_View_Record with record
       Config      : History_View_Config;
-      Graph       : Gtk_Drawing_Area;
       Details     : Gtk_Text_View;
    end record;
    overriding procedure Refresh
@@ -173,13 +183,22 @@ package body VCS2.History is
    procedure On_Scrolled (Self : access GObject_Record'Class);
    --  Called when the tree is scrolled
 
-   type Detached_Model_Access is access all Expansion.Detached_Model;
+   type Detached_Model_Access is access Expansion.Detached_Model;
+
+   type Layout_Idle_Data is record
+      Lines    : Line_Vectors.Vector;
+      Detached : Detached_Model_Access;
+      Is_Free  : Boolean_Vectors.Vector;
+      Current  : Natural;  --  in lines
+   end record;
+   type Layout_Idle_Data_Access is access all Layout_Idle_Data;
 
    type On_Line_Seen is new History_Visitor with record
       Kernel   : Kernel_Handle;
-      Detached : Detached_Model_Access;
-      Is_Free  : Boolean_Vectors.Vector;
-      --  During layout, computed to know which columns are in use
+
+      Data     : Layout_Idle_Data_Access;
+      --  The same data that will be used for layout once all lines have been
+      --  retrieved.
    end record;
    overriding procedure Free (Self : in out On_Line_Seen);
    overriding procedure On_History_Line
@@ -193,6 +212,12 @@ package body VCS2.History is
    --  Add a new log entry to the view
    --  Names are freed automatically by this procedure when needed.
    --  Parents is adopted by this procedure and must not be freed by the caller
+
+   procedure Free (Self : in out Layout_Idle_Data_Access);
+   function On_Layout_Idle (Data : Layout_Idle_Data_Access) return Boolean;
+   package Layout_Sources is new Glib.Main.Generic_Sources
+     (Layout_Idle_Data_Access);
+   --  Compute the layout for the tree and graph, and insert lines
 
    -------------------
    -- On_Draw_Graph --
@@ -393,7 +418,7 @@ package body VCS2.History is
    procedure On_Scrolled (Self : access GObject_Record'Class) is
       View : constant History_View := History_View (Self);
    begin
-      View.Graph.Queue_Draw;
+      History_Tree (View.Tree).Graph.Queue_Draw;
    end On_Scrolled;
 
    ----------------
@@ -409,8 +434,11 @@ package body VCS2.History is
       Col                 : Gtk_Tree_View_Column;
       Dummy               : Gint;
       Box                 : Gtk_Box;
+      T                   : History_Tree;
    begin
       Initialize_Vbox (Self, Homogeneous => False);
+
+      T := new History_Tree_Record;
 
       Gtk_New (Paned);
       Paned.Set_Opaque_Resizing (True);
@@ -419,10 +447,10 @@ package body VCS2.History is
       Gtk_New_Hbox (Box, Homogeneous => False);
       Paned.Add_Child (Box, Orientation => Orientation_Vertical);
 
-      Gtk_New (Self.Graph);
-      Self.Graph.Set_Size_Request (Graph_Width, -1);
-      Box.Pack_Start (Self.Graph, Expand => False);
-      Self.Graph.On_Draw (On_Draw_Graph'Access, Self);
+      Gtk_New (T.Graph);
+      T.Graph.Set_Size_Request (Graph_Width, -1);
+      Box.Pack_Start (T.Graph, Expand => False);
+      T.Graph.On_Draw (On_Draw_Graph'Access, Self);
 
       Gtk_New (Scrolled);
       Scrolled.Set_Policy (Policy_Automatic, Policy_Automatic);
@@ -437,7 +465,7 @@ package body VCS2.History is
          Orientation  => Orientation_Vertical,
          Height       => 15);
 
-      Self.Tree := new History_Tree_Record;
+      Self.Tree := Tree_View (T);
       Initialize (Self.Tree,
                   (Column_ID      => GType_String,
                    Column_Author  => GType_String,
@@ -545,7 +573,51 @@ package body VCS2.History is
       Parents : in out GNAT.Strings.String_List_Access;
       Names   : in out GNAT.Strings.String_List_Access)
    is
-      Tree   : constant History_Tree := History_Tree (Self.Detached.Tree);
+   begin
+      Self.Data.Lines.Append
+        ((ID       => new String'(ID),
+          Author   => new String'(Author),
+          Date     => new String'(Date),
+          Subject  => new String'(Subject),
+          Parents  => Parents,
+          Names    => Names));
+      Parents := null;  --  adopted
+      Names   := null;  --  adopted
+   end On_History_Line;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Self : in out Layout_Idle_Data_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Layout_Idle_Data, Layout_Idle_Data_Access);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Expansion.Detached_Model, Detached_Model_Access);
+   begin
+      Trace (Me, "Free layout_idle_data");
+      if Self /= null then
+         for L of Self.Lines loop
+            Free (L.ID);
+            Free (L.Author);
+            Free (L.Date);
+            Free (L.Subject);
+            --   ???  Free (L.Parents); still refed in View.Commits
+            Free (L.Names);
+         end loop;
+
+         Self.Lines.Clear;
+         Unchecked_Free (Self.Detached);
+         Unchecked_Free (Self);
+      end if;
+   end Free;
+
+   --------------------
+   -- On_Layout_Idle --
+   --------------------
+
+   function On_Layout_Idle (Data : Layout_Idle_Data_Access) return Boolean is
+      Tree   : constant History_Tree := History_Tree (Data.Detached.Tree);
       Iter   : Gtk_Tree_Iter;
       V      : Glib.Values.GValue_Array (All_Columns);
       Tmp    : Unbounded_String;
@@ -558,123 +630,144 @@ package body VCS2.History is
       function Next_Empty_Col return Graph_Column is
          C : Graph_Column;
       begin
-         for J in 1 .. Self.Is_Free.Length loop
-            if Self.Is_Free (Graph_Column (J)) then
+         for J in 1 .. Data.Is_Free.Length loop
+            if Data.Is_Free (Graph_Column (J)) then
                return Graph_Column (J);
             end if;
          end loop;
 
-         C := Graph_Column (Self.Is_Free.Length + 1);
-         Self.Is_Free.Set_Length (Ada.Containers.Count_Type (C));
+         C := Graph_Column (Data.Is_Free.Length + 1);
+         Data.Is_Free.Set_Length (Ada.Containers.Count_Type (C));
          return C;
       end Next_Empty_Col;
 
-      Child : GNAT.Strings.String_Access;
+      Child    : GNAT.Strings.String_Access;
+      Start    : constant Time := Clock;
    begin
+      --  If the tree was destroyed, nothing more to do
       if Tree = null then
-         return;   --  view has been destroyed in between, nothing to do
+         return False;
       end if;
 
-      --  Add in tree model, to preserve the order
+      while Data.Current <= Data.Lines.Last_Index loop
+         declare
+            Ref : constant Line_Vectors.Constant_Reference_Type :=
+              Data.Lines.Constant_Reference (Data.Current);
+         begin
+            --  Add in tree model, to preserve the order
 
-      Tree.Model.Append (Iter, Parent => Null_Iter);
+            Tree.Model.Append (Iter, Parent => Null_Iter);
+            Init_Set_String (V (Column_ID),      Ref.ID.all);
+            Init_Set_String (V (Column_Author),  Ref.Author.all);
+            Init_Set_String (V (Column_Date),    Ref.Date.all);
 
-      Init_Set_String (V (Column_ID),      ID);
-      Init_Set_String (V (Column_Author),  Author);
-      Init_Set_String (V (Column_Date),    Date);
-
-      if Names /= null then
-         for N of Names.all loop
-            Append
-              (Tmp, "<span background='#ffd195'>"
-               & Escape_Text (Trim (N.all, Both)) & " </span>");
-         end loop;
-      end if;
-
-      Append (Tmp, Escape_Text (Subject));
-      Init_Set_String (V (Column_Subject), To_String (Tmp));
-
-      Tree.Model.Set (Iter, V);
-
-      --  Compute the column. We might already know it the commit is the
-      --  parent for one of the existing commits
-
-      if Tree.Commits.Contains (ID) then
-         Col := Tree.Commits (ID).Col;
-
-         --  ??? Useless copy and map lookup
-
-         Child := new String'(Tree.Commits (ID).Child.all);
-      else
-         Child := null;
-         Col := Next_Empty_Col;
-      end if;
-
-      --  Store data
-
-      Tree.Commits.Include
-        (ID, Commit_Data'
-           (Col     => Col,
-            Child   => Child,
-            Parents => Parents));  --  will be freed later
-      Self.Is_Free (Col) := False;
-
-      --  Reserve columns for the parent commit
-
-      if Parents /= null then
-         C := Col;
-         Is_First := True;
-         for P in Parents'Range loop
-            --  If the parent already has a column do nothing
-            if Tree.Commits.Contains (Parents (P).all) then
-               null;
-
-            else
-               --  If this is the first parent for which we do not already
-               --  know the column, reuse the current column.
-               if Is_First then
-                  C := Col;
-               else
-                  C := Next_Empty_Col;
-               end if;
-
-               Is_First := False;
-               Tree.Commits.Include
-                 (Parents (P).all,
-                  Commit_Data'
-                    (Col     => C,
-                     Child   => new String'(ID),
-                     Parents => null));
-               Self.Is_Free (C) := False;
+            Tmp := Null_Unbounded_String;
+            if Ref.Names /= null then
+               for N of Ref.Names.all loop
+                  Append
+                    (Tmp, "<span background='#ffd195'>"
+                     & Escape_Text (Trim (N.all, Both)) & " </span>");
+               end loop;
             end if;
-         end loop;
+            Append (Tmp, Escape_Text (Ref.Subject.all));
+            Init_Set_String (V (Column_Subject), To_String (Tmp));
 
-         --  If we haven't reused the current column, that's because this
-         --  was the start of the branch. We can free the column for an
-         --  other branch
-         if Is_First then
-            Self.Is_Free (Col) := True;
+            Tree.Model.Set (Iter, V);
+
+            --  Compute the column. We might already know it the commit is the
+            --  parent for one of the existing commits
+
+            if Tree.Commits.Contains (Ref.ID.all) then
+               Col := Tree.Commits (Ref.ID.all).Col;
+
+               --  ??? Useless copy and map lookup
+
+               Child := new String'(Tree.Commits (Ref.ID.all).Child.all);
+            else
+               Child := null;
+               Col := Next_Empty_Col;
+            end if;
+
+            --  Store data
+
+            Tree.Commits.Include
+              (Ref.ID.all, Commit_Data'
+                 (Col     => Col,
+                  Child   => Child,
+                  Parents => Ref.Parents));  --  will be freed later
+            Data.Is_Free (Col) := False;
+
+            --  Reserve columns for the parent commit
+
+            if Ref.Parents /= null then
+               C := Col;
+               Is_First := True;
+               for P in Ref.Parents'Range loop
+                  --  If the parent already has a column do nothing
+                  if not Tree.Commits.Contains (Ref.Parents (P).all) then
+                     --  If this is the first parent for which we do not
+                     --  already know the column, reuse the current column.
+                     if Is_First then
+                        C := Col;
+                     else
+                        C := Next_Empty_Col;
+                     end if;
+
+                     Is_First := False;
+                     Tree.Commits.Include
+                       (Ref.Parents (P).all,
+                        Commit_Data'
+                          (Col     => C,
+                           Child   => new String'(Ref.ID.all),
+                           Parents => null));
+                     Data.Is_Free (C) := False;
+                  end if;
+               end loop;
+
+               --  If we haven't reused the current column, that's because this
+               --  was the start of the branch. We can free the column for an
+               --  other branch
+               if Is_First then
+                  Data.Is_Free (Col) := True;
+               end if;
+            end if;
+         end;
+
+         Data.Current := Data.Current + 1;
+
+         if Clock - Start >= 0.3 then
+            return True;  --  will try again later
          end if;
-      end if;
+      end loop;
 
-      Parents := null;   --  adopted
-   end On_History_Line;
+      --  Force redisplay of graph
+      Tree.Graph.Queue_Draw;
+      return False;  --  All done
+   end On_Layout_Idle;
 
    ----------
    -- Free --
    ----------
 
    overriding procedure Free (Self : in out On_Line_Seen) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Expansion.Detached_Model, Detached_Model_Access);
-      V : constant History_View := History_Views.Retrieve_View (Self.Kernel);
+      V  : constant History_View := History_Views.Retrieve_View (Self.Kernel);
+      Id : G_Source_Id with Unreferenced;
    begin
-      Trace (Me, "Finished fetching whole log");
-      Unchecked_Free (Self.Detached);
-
       if V /= null then
-         --  Force redisplay of graph
-         V.Queue_Draw;
+         Trace (Me, "Finished fetching whole log");
+
+         Self.Data.Detached := new Expansion.Detached_Model'
+           (Expansion.Detach_Model_From_View (V.Tree));
+         Self.Data.Current  := Self.Data.Lines.First_Index;
+
+         V.Tree.Model.Clear;
+         History_Tree (V.Tree).Commits.Clear;
+
+         Id := Layout_Sources.Idle_Add
+           (On_Layout_Idle'Access, Self.Data, Notify => Free'Access);
+         --  Do not free Self.Data, adopted by the background layout
+      else
+         Free (Self.Data);
       end if;
    end Free;
 
@@ -687,14 +780,9 @@ package body VCS2.History is
       Seen       : access On_Line_Seen;
    begin
       if VCS /= null then
-         Self.Tree.Model.Clear;
-         History_Tree (Self.Tree).Commits.Clear;
-
          Seen := new On_Line_Seen;
          Seen.Kernel := Self.Kernel;
-         Seen.Detached := new Expansion.Detached_Model'
-           (Expansion.Detach_Model_From_View (Self.Tree));
-
+         Seen.Data   := new Layout_Idle_Data;
          VCS.Queue_Fetch_History (Visitor => Seen);
       end if;
    end Refresh;

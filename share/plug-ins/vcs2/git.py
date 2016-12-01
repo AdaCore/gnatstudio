@@ -2,7 +2,7 @@ import GPS
 from . import core
 import os
 import types
-from workflows.promises import ProcessWrapper, join, wait_idle
+from workflows.promises import ProcessWrapper, join, wait_idle, timeout
 
 
 @core.register_vcs(default_status=GPS.VCS2.Status.UNMODIFIED)
@@ -136,11 +136,10 @@ class Git(core.VCS):
              '--no-pager',  # do not require a terminal
              'log', '--pretty=format:%H@@%P@@%an@@%d@@%ci@@%s',
              '--branches', '--tags',  # show all except stashes
-             '--topo-order',  # children before parents
-             '--max-count=1000'
-            ],
+             '--topo-order'],  # children before parents
             block_exit=False,
             directory=self.working_dir.path)
+        result = []
         while True:
             line = yield p.wait_line()
             if line is None:
@@ -148,14 +147,9 @@ class Git(core.VCS):
                 break
 
             id, parents, author, branches, date, subject = line.split('@@')
-            visitor.add_line(
-                id=id,
-                author=author,
-                date=date,
-                subject=subject,
-                parents=parents.split(),
-                names=None if not branches else branches.split(','))
+            result.append((id, author, date, subject, parents.split(),
+                           None if not branches else branches.split(',')))
 
-
-
-
+        GPS.Logger("GIT").log(
+            "done parsing git-log (%s lines)" % (len(result), ))
+        visitor.add_lines(result)

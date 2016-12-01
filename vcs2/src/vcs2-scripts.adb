@@ -425,38 +425,46 @@ package body VCS2.Scripts is
 
       Visitor := History_Properties_Record (Prop.all).Visitor;
 
-      if Command = "add_line" then
+      if Command = "add_lines" then
          declare
-            Parents : constant List_Instance'Class := Data.Nth_Arg (6);
-            Names   : constant List_Instance'Class := Data.Nth_Arg (7);
-            P_Count : constant Natural := Parents.Number_Of_Arguments;
-            N_Count : constant Natural := Names.Number_Of_Arguments;
-            P       : String_List_Access;
-            N       : String_List_Access;
+            List  : constant List_Instance'Class := Data.Nth_Arg (2);
+            Count : constant Natural := List.Number_Of_Arguments;
          begin
-            if P_Count /= 0 then
-               P := new String_List (1 .. P_Count);
-               for A in 1 .. P_Count loop
-                  P (A) := new String'(Parents.Nth_Arg (A));
-               end loop;
-            end if;
+            for L in 1 .. Count loop
+               declare
+                  Line    : constant List_Instance'Class := List.Nth_Arg (L);
+                  Parents : constant List_Instance'Class := Line.Nth_Arg (5);
+                  Names   : constant List_Instance'Class := Line.Nth_Arg (6);
+                  P_Count : constant Natural := Parents.Number_Of_Arguments;
+                  N_Count : constant Natural := Names.Number_Of_Arguments;
+                  P       : String_List_Access;
+                  N       : String_List_Access;
+               begin
+                  if P_Count /= 0 then
+                     P := new String_List (1 .. P_Count);
+                     for A in 1 .. P_Count loop
+                        P (A) := new String'(Parents.Nth_Arg (A));
+                     end loop;
+                  end if;
 
-            if N_Count /= 0 then
-               N := new String_List (1 .. N_Count);
-               for A in 1 .. N_Count loop
-                  N (A) := new String'(Names.Nth_Arg (A));
-               end loop;
-            end if;
+                  if N_Count /= 0 then
+                     N := new String_List (1 .. N_Count);
+                     for A in 1 .. N_Count loop
+                        N (A) := new String'(Names.Nth_Arg (A));
+                     end loop;
+                  end if;
 
-            Visitor.On_History_Line
-              (ID       => Data.Nth_Arg (2),
-               Author   => Data.Nth_Arg (3),
-               Date     => Data.Nth_Arg (4),
-               Subject  => Data.Nth_Arg (5),
-               Parents  => P,
-               Names    => N);
-            Free (P);
-            Free (N);
+                  Visitor.On_History_Line
+                    (ID       => Line.Nth_Arg (1),
+                     Author   => Line.Nth_Arg (2),
+                     Date     => Line.Nth_Arg (3),
+                     Subject  => Line.Nth_Arg (4),
+                     Parents  => P,
+                     Names    => N);
+                  Free (P);
+                  Free (N);
+               end;
+            end loop;
          end;
       end if;
    end VCS_History_Handler;
@@ -603,13 +611,8 @@ package body VCS2.Scripts is
          Handler       => VCS_Handler'Access);
 
       Kernel.Scripts.Register_Command
-        ("add_line",
-         Params        => (2 => Param ("id"),
-                           3 => Param ("author"),
-                           4 => Param ("date"),
-                           5 => Param ("subject"),
-                           6 => Param ("parents", Optional => True),
-                           7 => Param ("names",   Optional => True)),
+        ("add_lines",
+         Params        => (2 => Param ("lines")),
          Class         => History_Visitor,
          Handler       => VCS_History_Handler'Access);
 

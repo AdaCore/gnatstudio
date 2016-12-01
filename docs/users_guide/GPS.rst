@@ -2009,6 +2009,15 @@ Classes
 
    .. automethod:: GPS.VCS2.vcs_in_use
 
+:class:`GPS.VCS2_History_Visitor`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: VCS2_History_Visitor()
+
+
+
+   .. automethod:: GPS.VCS2_History_Visitor.add_lines
+
 :class:`GPS.Vdiff`
 ^^^^^^^^^^^^^^^^^^
 

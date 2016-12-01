@@ -564,7 +564,10 @@ class ProcessWrapper(object):
         """
         p = Promise()
         s = self.wait_until_match("^.+\n")
-        s.then(lambda line: p.resolve(line[:-1] if line else None))
+        if s is None:
+            p.resolve(None)
+        else:
+            s.then(lambda line: p.resolve(line[:-1] if line else None))
         return p
 
     def wait_until_terminate(self):

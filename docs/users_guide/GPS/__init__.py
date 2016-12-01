@@ -9589,10 +9589,16 @@ class VCS2_History_Visitor(object):
     This is only used when writing your own support for VCS engines.
     """
 
-    def add_line(
-        self, id, author, date, subject, parents, names):
+    def add_lines(self, list):
         """
         Report when a new line for the VCS history was seen.
+
+        :param List() list: a list of lines from the history.
+           This doesn't have to be the whole log, though, although it is
+           more efficient to send bigger chunks. Each element of the list
+           is a tuple (or list) with the following contents:
+               (id, author, date, subject, parents, names)
+           with:
 
         :param str id: the unique id for the commit
         :param str author: the author of the commit
@@ -9605,7 +9611,7 @@ class VCS2_History_Visitor(object):
            associated with this commit
         """
 
- 
+
 ###########################################################
 # Vdiff
 ###########################################################
