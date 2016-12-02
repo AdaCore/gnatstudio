@@ -65,8 +65,8 @@ package body VCS2.History is
    Column_Subject : constant := 3;
    subtype All_Columns is Gint range Column_ID .. Column_Subject;
 
-   Graph_Width      : constant Gint := 60;
    Inter_Row_Space  : constant Gint := 2;  --  hard-coded in gtk+
+   Column_Width     : constant Gdouble := 10.0;
 
    Color_Palettes : constant array (0 .. 9) of Gdk_RGBA :=
      (0   => (0.09, 0.46, 0.72, 1.0),
@@ -136,6 +136,8 @@ package body VCS2.History is
       Graph       : Gtk_Drawing_Area;
 
       Lines       : Line_Vectors.Vector;
+
+      Max_Columns : Natural := 0;  --  Number of columns in the graph
 
       Max_Lines   : Natural := 2000;
       --  Maximum number of lines to display
@@ -323,7 +325,7 @@ package body VCS2.History is
                   if Coordinate_Maps.Has_Element (Curs) then
                      C2 := Coordinate_Maps.Element (Curs);
                   else
-                     C2 := (X             => Gdouble (DP.Col) * 10.0,
+                     C2 := (X             => Gdouble (DP.Col) * Column_Width,
                             H             => 6.0,
                             Circle_Top    => 5000.0,   --  out of visible area
                             Circle_Center => 5000.0,
@@ -403,7 +405,7 @@ package body VCS2.History is
                   Coordinates.Include
                     (ID,
                      Coordinate'
-                       (X             => Gdouble (Data.Col) * 10.0,
+                       (X             => Gdouble (Data.Col) * Column_Width,
                         H             => H,
                         Circle_Top    => Y + H / 2.0 - Radius,
                         Circle_Center => Y + H / 2.0,
@@ -527,7 +529,7 @@ package body VCS2.History is
       Paned.Add_Child (Box, Orientation => Orientation_Vertical);
 
       Gtk_New (T.Graph);
-      T.Graph.Set_Size_Request (Graph_Width, -1);
+      T.Graph.Set_Size_Request (0, -1);   --  will grow when it has data
       Box.Pack_Start (T.Graph, Expand => False);
       T.Graph.On_Draw (On_Draw_Graph'Access, Self);
 
@@ -554,6 +556,7 @@ package body VCS2.History is
                   Set_Visible_Func => True);
       Self.Tree.Set_Headers_Visible (False);
       Self.Tree.Set_Fixed_Height_Mode (True);
+      Self.Tree.Set_Show_Expanders (False);
       Self.Tree.On_Button_Press_Event (On_Button_Press'Access, Self);
       Scrolled.Add (Self.Tree);
 
@@ -818,6 +821,7 @@ package body VCS2.History is
          end loop;
 
          Trace (Me, "done computing graph layout");
+         Tree.Max_Columns := Natural (Data.Is_Free.Length);
          Data.Step := Step_Insert;
          Data.Current := Tree.Lines.First_Index;
          return True;  --  Will run again for the actual insert
@@ -868,7 +872,10 @@ package body VCS2.History is
          end if;
 
          --  Force redisplay of graph
-         Trace (Me, "done inserting nodes");
+         Trace (Me, "done inserting nodes, max columns="
+                & Tree.Max_Columns'Img);
+         Tree.Graph.Set_Size_Request
+           (Gint (1 + Tree.Max_Columns) * Gint (Column_Width), -1);
          Tree.Graph.Queue_Draw;
          return False;  --  All done
       end case;
@@ -886,6 +893,8 @@ package body VCS2.History is
          Trace (Me, "Finished fetching whole log");
 
          Self.Data.Current  := History_Tree (V.Tree).Lines.First_Index;
+         Self.Data.Step     := Step_Compute;
+         History_Tree (V.Tree).Max_Columns := 0;
 
          V.Tree.Model.Clear;
          History_Tree (V.Tree).Commits.Clear;
