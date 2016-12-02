@@ -87,9 +87,10 @@ package body VCS2.History is
       9   => (0.00, 0.75, 0.82, 1.0));
    --  Color palette from d3js.org
 
-   Show_Author    : Boolean_Preference;
-   Show_ID        : Boolean_Preference;
-   Show_Date      : Boolean_Preference;
+   Show_Author             : Boolean_Preference;
+   Show_ID          : Boolean_Preference;
+   Show_Date            : Boolean_Preference;
+   Collapse_Simple_Commits : Boolean_Preference;
 
    subtype Graph_Column is Positive;
    subtype Line_Index is Positive;
@@ -108,10 +109,12 @@ package body VCS2.History is
 
    type History_View_Config is record
       Initialized  : Boolean := False;
-      Show_Author  : Boolean := True;
-      Show_Id      : Boolean := True;
-      Show_Date    : Boolean := True;
+      Collapse     : Boolean := False;
    end record;
+
+   type Visibility is new Natural;
+   Always_Visible : constant Visibility := 2;
+   --  See History_Line.Visible
 
    type History_Line is record
       ID, Author, Date, Subject : GNAT.Strings.String_Access;
@@ -124,6 +127,9 @@ package body VCS2.History is
       Circle_Center             : Gdouble;
       --  coordinate, depending on current scroll value
 
+      Visible                   : Visibility;
+      --  A node is visible when this field is Always_Visible or more.
+
       Has_Parent_In_Same_Col    : Boolean;
    end record;
    package Line_Vectors is new Ada.Containers.Vectors
@@ -134,6 +140,7 @@ package body VCS2.History is
 
    type History_Tree_Record is new Tree_View_Record with record
       User_Filter : GPS.Search.Search_Pattern_Access;
+      Config      : History_View_Config;
       Commits     : Commit_Maps.Map;
       Graph       : Gtk_Drawing_Area;
 
@@ -165,7 +172,6 @@ package body VCS2.History is
       Hash               => Ada.Strings.Hash);
 
    type History_View_Record is new Base_VCS_View_Record with record
-      Config      : History_View_Config;
       Details     : Gtk_Text_View;
    end record;
    overriding procedure Refresh
@@ -216,6 +222,7 @@ package body VCS2.History is
       Is_Free  : Boolean_Vectors.Vector;
       Current  : Natural;  --  in lines
       Step     : Layout_Step := Step_Compute;
+      Inserted : Natural;   --  number of items inserted in tree
    end record;
    type Layout_Idle_Data_Access is access all Layout_Idle_Data;
 
@@ -259,8 +266,16 @@ package body VCS2.History is
    procedure On_Destroy (Self : access Gtk_Widget_Record'Class);
    --  Called when the view is destroyed
 
-   procedure Reset_Layout (Self : not null access History_Tree_Record'Class);
-   --  Reset layout information
+   procedure Reset_Lines (Self : not null access History_Tree_Record'Class);
+   --  Reset all lines information
+
+   function Recompute_Layout
+     (Self          : not null access History_View_Record'Class;
+      Start_Running : Boolean)
+      return Layout_Idle_Data_Access;
+   --  Setup the background layout computation.
+   --  Start running it immediately if Start_Running is True.
+   --  the returned value must not be freed, it is owned by the idle loop
 
    -------------------
    -- On_Draw_Graph --
@@ -301,70 +316,103 @@ package body VCS2.History is
          PLine    : Line_Index;
          Is_Free  : array (1 .. Tree.Max_Columns) of Boolean :=
            (others => True);
+         Skipped  : Boolean;
 
       begin
          for Line in 1 .. Line_Start - 1 loop
             Data := Tree.Lines (Line);
-            Is_Free (Data.Col) := not Data.Has_Parent_In_Same_Col;
+            if Data.Visible >= Always_Visible then
+               Is_Free (Data.Col) := not Data.Has_Parent_In_Same_Col;
+            end if;
          end loop;
 
          Set_Line_Width (Cr, 2.0);
          for Line in Line_Start .. Line_End loop
             Data := Tree.Lines (Line);
-            X    := Gdouble (Data.Col) * Column_Width;
 
-            if not Is_Free (Data.Col) then
-               Move_To (Cr, X, 0.0);
-               Line_To (Cr, X, Data.Circle_Center - Radius);
-               Is_Free (Data.Col) := True;  --  not needed anymore
-            end if;
+            if Data.Visible >= Always_Visible then
+               X    := Gdouble (Data.Col) * Column_Width;
 
-            Arc (Cr,
-                 Xc     => X,
-                 Yc     => Data.Circle_Center,
-                 Radius => Radius,
-                 Angle1 => 0.0,
-                 Angle2 => 6.2831853072);
-            Set_Color (Data.Col);
-            Stroke (Cr);
+               if not Is_Free (Data.Col) then
+                  Move_To (Cr, X, 0.0);
+                  Line_To (Cr, X, Data.Circle_Center - Radius);
+                  Is_Free (Data.Col) := True;  --  not needed anymore
+               end if;
 
-            if Data.Parents /= null then
-               --  Reverse to show straight lines on top of curves
-               for P in reverse Data.Parents'Range loop
-                  if Tree.Commits.Contains (Data.Parents (P).all) then
-                     PLine := Tree.Commits (Data.Parents (P).all);
-                     if PLine > Line_End then
-                        DP := (Col           => Data.Col,
-                               Circle_Center => Outside_Graph,
-                               others        => <>);
-                     else
-                        DP := Tree.Lines (PLine);
-                     end if;
+               Arc (Cr,
+                    Xc     => X,
+                    Yc     => Data.Circle_Center,
+                    Radius => Radius,
+                    Angle1 => 0.0,
+                    Angle2 => 6.2831853072);
+               Set_Color (Data.Col);
+               Stroke (Cr);
 
-                     Move_To (Cr, X, Data.Circle_Center + Radius);
-
-                     if Data.Col = DP.Col then
-                        Line_To (Cr, X, DP.Circle_Center - Radius);
-                        Set_Color (Data.Col);
-                     else
-                        X2 := Gdouble (DP.Col) * Column_Width;
-                        Y2 := Tree.Lines (Line + 1).Circle_Center - Radius;
-                        Y3 := (Data.Circle_Center + Radius + Y2) / 2.0;
-                        Curve_To (Cr, X, Y3,  X2, Y3,  X2, Y2);
-
-                        if DP.Col < Data.Col then
-                           Set_Color (Data.Col);
-                           Stroke (Cr);
-                           Move_To (Cr, X2, Y2);
+               if Data.Parents /= null then
+                  --  Reverse to show straight lines on top of curves
+                  for P in reverse Data.Parents'Range loop
+                     if Tree.Commits.Contains (Data.Parents (P).all) then
+                        PLine := Tree.Commits (Data.Parents (P).all);
+                        if PLine > Line_End then
+                           DP := (Col           => Data.Col,
+                                  Circle_Center => Outside_Graph,
+                                  Visible       => Always_Visible,
+                                  others        => <>);
+                        else
+                           DP := Tree.Lines (PLine);
                         end if;
 
-                        Line_To (Cr, X2, DP.Circle_Center - Radius);
-                        Set_Color (DP.Col);
-                     end if;
+                        --  When collapsing, need to move up to first visible
+                        --  parent. We only look at the first parent, since a
+                        --  node with multiple parents is visible anyway
 
-                     Stroke (Cr);
-                  end if;
-               end loop;
+                        Skipped := False;
+                        if Tree.Config.Collapse then
+                           while DP.Visible < Always_Visible
+                             and then DP.Parents /= null
+                           loop
+                              DP := Tree.Lines
+                                (Tree.Commits
+                                   (DP.Parents (DP.Parents'First).all));
+                              Skipped := True;
+                           end loop;
+                        end if;
+
+                        Move_To (Cr, X, Data.Circle_Center + Radius);
+
+                        if Data.Col = DP.Col then
+                           Line_To (Cr, X, DP.Circle_Center - Radius);
+                           Set_Color (Data.Col);
+                        else
+                           X2 := Gdouble (DP.Col) * Column_Width;
+                           Y2 := Data.Circle_Center + Radius + 16.0;
+                           --  Tree.Lines (Line + 1).Circle_Center - Radius;
+                           Y3 := (Data.Circle_Center + Radius + Y2) / 2.0;
+                           Curve_To (Cr, X, Y3,  X2, Y3,  X2, Y2);
+
+                           if DP.Col < Data.Col then
+                              Set_Color (Data.Col);
+                           else
+                              Set_Color (DP.Col);
+                           end if;
+
+                           Stroke (Cr);
+                           Move_To (Cr, X2, Y2);
+                           Line_To (Cr, X2, DP.Circle_Center - Radius);
+                           Set_Color (DP.Col);
+                        end if;
+
+                        if Skipped then
+                           Save (Cr);
+                           Set_Dash (Cr, (3.0, 3.0), 0.0);
+                           Stroke (Cr);
+                           Restore (Cr);
+                        else
+                           Stroke (Cr);
+                        end if;
+                     end if;
+                  end loop;
+               end if;
             end if;
          end loop;
 
@@ -412,10 +460,12 @@ package body VCS2.History is
             --  Compute the coordinate for all nodes in current view layout
 
             for Line in Line_Start .. Line_End loop
-               Tree.Get_Cell_Area (Start, null, Rect);
-               Tree.Lines (Line).Circle_Center := Gdouble
-                 (Base_Y + Rect.Y + (Rect.Height + Inter_Row_Space) / 2);
-               Next (Start);
+               if Tree.Lines (Line).Visible >= Always_Visible then
+                  Tree.Get_Cell_Area (Start, null, Rect);
+                  Tree.Lines (Line).Circle_Center := Gdouble
+                    (Base_Y + Rect.Y + (Rect.Height + Inter_Row_Space) / 2);
+                  Next (Start);
+               end if;
             end loop;
 
             Path_Free (Start);
@@ -451,10 +501,9 @@ package body VCS2.History is
       Event  : Gdk_Event_Button) return Boolean
    is
       View : constant History_View := History_View (Self);
-      Id   : G_Source_Id with Unreferenced;
-      Data : Layout_Idle_Data_Access;
-      X, Y : Gint;
-      Found : Boolean;
+      Data           : Layout_Idle_Data_Access with Unreferenced;
+      X, Y           : Gint;
+      Found          : Boolean;
       Cell_X, Cell_Y : Gint;
       Column         : Gtk_Tree_View_Column;
       Path           : Gtk_Tree_Path;
@@ -472,15 +521,8 @@ package body VCS2.History is
          then
             History_Tree (View.Tree).Max_Lines :=
               History_Tree (View.Tree).Max_Lines + 2000;
-
-            Data := new Layout_Idle_Data;
-            Data.Detached := new Expansion.Detached_Model'
-              (Expansion.Detach_Model_From_View (View.Tree));
+            Data := Recompute_Layout (View, Start_Running => False);
             View.Tree.Model.Clear;
-            Data.Step := Step_Insert;
-            Data.Current := 1;
-            Id := Layout_Sources.Idle_Add
-              (On_Layout_Idle'Access, Data, Notify => Free'Access);
          end if;
 
          Path_Free (Path);
@@ -488,6 +530,40 @@ package body VCS2.History is
 
       return False;
    end On_Button_Press;
+
+   ----------------------
+   -- Recompute_Layout --
+   ----------------------
+
+   function Recompute_Layout
+     (Self : not null access History_View_Record'Class;
+      Start_Running : Boolean)
+     return Layout_Idle_Data_Access
+   is
+      Tree : constant History_Tree := History_Tree (Self.Tree);
+      Data : Layout_Idle_Data_Access;
+      Id   : G_Source_Id with Unreferenced;
+   begin
+      for L of History_Tree (Self.Tree).Lines loop
+         L.Col     := No_Graph_Column;
+         L.Visible := 0;
+         L.Has_Parent_In_Same_Col := False;
+      end loop;
+
+      Data := new Layout_Idle_Data;
+      Data.Detached := new Expansion.Detached_Model'
+        (Expansion.Detach_Model_From_View (Self.Tree));
+      Data.Step := Step_Compute;
+      Data.Inserted := 0;
+      Data.Current := 1;
+      Tree.Max_Columns := 0;
+
+      if Start_Running then
+         Id := Layout_Sources.Idle_Add
+           (On_Layout_Idle'Access, Data, Notify => Free'Access);
+      end if;
+      return Data;
+   end Recompute_Layout;
 
    -----------------
    -- Create_Menu --
@@ -501,6 +577,7 @@ package body VCS2.History is
       Append_Menu (Menu, View.Kernel, Show_ID);
       Append_Menu (Menu, View.Kernel, Show_Author);
       Append_Menu (Menu, View.Kernel, Show_Date);
+      Append_Menu (Menu, View.Kernel, Collapse_Simple_Commits);
    end Create_Menu;
 
    ----------------
@@ -605,8 +682,6 @@ package body VCS2.History is
 
       Self.On_Preferenced_Changed (null);
 
-      Refresh (Self);
-
       return Gtk_Widget (Self.Tree);
    end Initialize;
 
@@ -637,22 +712,19 @@ package body VCS2.History is
    begin
       Base_VCS_View_Record (Self.all).On_Preferenced_Changed (Pref);
 
+      T.Col_ID.Set_Visible (Show_ID.Get_Pref);
+      T.Col_Author.Set_Visible (Show_Author.Get_Pref);
+      T.Col_Date.Set_Visible (Show_Date.Get_Pref);
+      Self.Tree.Set_Headers_Visible
+        (Show_ID.Get_Pref or Show_Author.Get_Pref or Show_Date.Get_Pref);
+      T.Graph.Queue_Draw;   --  refresh graph
+
       Config :=
         (Initialized  => True,
-         Show_Id      => Show_ID.Get_Pref,
-         Show_Author  => Show_Author.Get_Pref,
-         Show_Date    => Show_Date.Get_Pref);
-      if Config /= Self.Config then
-         Self.Config := Config;
-
-         T.Col_ID.Set_Visible (Config.Show_Id);
-         T.Col_Author.Set_Visible (Config.Show_Author);
-         T.Col_Date.Set_Visible (Config.Show_Date);
-
-         Self.Tree.Set_Headers_Visible
-           (Config.Show_Id or Config.Show_Author or Config.Show_Date);
-
-         T.Graph.Queue_Draw;   --  refresh graph
+         Collapse     => Collapse_Simple_Commits.Get_Pref);
+      if Config /= T.Config then
+         T.Config := Config;
+         Refresh (Self);
       end if;
    end On_Preferenced_Changed;
 
@@ -696,6 +768,7 @@ package body VCS2.History is
              Parents  => Parents,
              Names    => Names,
              Has_Parent_In_Same_Col => False,
+             Visible                => 0,
              Circle_Center          => 0.0,
              Col                    => No_Graph_Column));
          Tree.Commits.Include (ID, Line_Index (Tree.Lines.Last_Index));
@@ -704,11 +777,11 @@ package body VCS2.History is
       end if;
    end On_History_Line;
 
-   ------------------
-   -- Reset_Layout --
-   ------------------
+   -----------------
+   -- Reset_Lines --
+   -----------------
 
-   procedure Reset_Layout (Self : not null access History_Tree_Record'Class) is
+   procedure Reset_Lines (Self : not null access History_Tree_Record'Class) is
    begin
       for L of Self.Lines loop
          Free (L.ID);
@@ -723,7 +796,7 @@ package body VCS2.History is
       Self.Commits.Clear;
 
       Self.Max_Columns := 0;
-   end Reset_Layout;
+   end Reset_Lines;
 
    ----------------
    -- On_Destroy --
@@ -732,7 +805,7 @@ package body VCS2.History is
    procedure On_Destroy (Self : access Gtk_Widget_Record'Class) is
       View : constant History_View := History_View (Self);
    begin
-      Reset_Layout (History_Tree (View.Tree));
+      Reset_Lines (History_Tree (View.Tree));
    end On_Destroy;
 
    ----------
@@ -801,6 +874,14 @@ package body VCS2.History is
 
                if Ref.Col = No_Graph_Column then
                   Ref.Col := Next_Empty_Col;
+
+                  --  Head of branches are always visible
+                  Ref.Visible := Always_Visible;
+               else
+                  --  Only visible if involved in a branch
+                  Ref.Visible :=
+                    (if Tree.Config.Collapse
+                     then Ref.Visible else Always_Visible);
                end if;
 
                Data.Is_Free (Ref.Col) := True;
@@ -809,6 +890,11 @@ package body VCS2.History is
                --  Reserve columns for the parent commit
 
                if Ref.Parents /= null then
+                  --  Always visible if there are multiple parents
+                  if Ref.Parents'Length > 1 then
+                     Ref.Visible := Always_Visible;
+                  end if;
+
                   Is_First := True;
                   for P of Ref.Parents.all loop
                      if Tree.Commits.Contains (P.all) then
@@ -816,6 +902,14 @@ package body VCS2.History is
                            PRef : constant Line_Vectors.Reference_Type :=
                              Tree.Lines.Reference (Tree.Commits (P.all));
                         begin
+                           if Ref.Parents'Length > 1 then
+                              --  Always visible before a merge
+                              PRef.Visible := Always_Visible;
+                           else
+                              --  If more than 1 child, should be visible
+                              PRef.Visible := PRef.Visible + 1;
+                           end if;
+
                            if PRef.Col = No_Graph_Column then
                               --  If this is the first parent for which we
                               --  do not already know the column, reuse the
@@ -833,6 +927,10 @@ package body VCS2.History is
                         end;
                      end if;
                   end loop;
+
+               else
+                  --  Last commit in a branch always visible
+                  Ref.Visible := Always_Visible;
                end if;
             end;
 
@@ -846,42 +944,49 @@ package body VCS2.History is
          Trace (Me, "done computing graph layout");
          Tree.Max_Columns := Natural (Data.Is_Free.Length);
          Data.Step := Step_Insert;
+         Data.Inserted := 0;
          Data.Current := Tree.Lines.First_Index;
          return True;  --  Will run again for the actual insert
 
       when Step_Insert =>
-         while Data.Current <= Tree.Lines.Last_Index
-           and then Data.Current <= Tree.Max_Lines
+         while Data.Inserted <= Tree.Max_Lines
+           and then Data.Current <= Tree.Lines.Last_Index
          loop
             declare
                Ref : constant Line_Vectors.Constant_Reference_Type :=
                  Tree.Lines.Constant_Reference (Data.Current);
             begin
-               Init_Set_String (V (Column_ID),      Ref.ID.all);
-               Init_Set_String (V (Column_Author),  Ref.Author.all);
-               Init_Set_String (V (Column_Date),    Ref.Date.all);
+               if Ref.Visible >= Always_Visible then
+                  Init_Set_String (V (Column_ID),      Ref.ID.all);
+                  Init_Set_String (V (Column_Author),  Ref.Author.all);
+                  Init_Set_String (V (Column_Date),    Ref.Date.all);
 
-               Tmp := Null_Unbounded_String;
-               if Ref.Names /= null then
-                  for N of Ref.Names.all loop
-                     Append
-                       (Tmp, "<span background='#ffd195'>"
-                        & Escape_Text (Trim (N.all, Both)) & " </span>");
-                  end loop;
-               end if;
-               Append (Tmp, Escape_Text (Ref.Subject.all));
-               Init_Set_String (V (Column_Subject), To_String (Tmp));
+                  Tmp := Null_Unbounded_String;
+                  if Ref.Names /= null then
+                     for N of Ref.Names.all loop
+                        Append
+                          (Tmp, "<span background='#ffd195'>"
+                           & Escape_Text (Trim (N.all, Both)) & " </span>");
+                     end loop;
+                  end if;
+                  Append (Tmp, Escape_Text (Ref.Subject.all));
+                  Init_Set_String (V (Column_Subject), To_String (Tmp));
 
-               Tree.Model.Append (Iter, Parent => Null_Iter);
-               Set_All_And_Clear (Tree.Model, Iter, V);
+                  Tree.Model.Append (Iter, Parent => Null_Iter);
+                  Set_All_And_Clear (Tree.Model, Iter, V);
 
-               Data.Current := Data.Current + 1;
+                  Data.Inserted := Data.Inserted + 1;
 
-               if Clock - Start >= 0.3 then
-                  return True;  --  will try again later
+                  if Clock - Start >= 0.3 then
+                     return True;  --  will try again later
+                  end if;
                end if;
             end;
+
+            Data.Current  := Data.Current + 1;
          end loop;
+
+         Trace (Me, "inserted" & Data.Inserted'Img & " nodes");
 
          Tree.Has_Show_Older := Data.Current < Tree.Lines.Last_Index;
          if Tree.Has_Show_Older then
@@ -914,15 +1019,10 @@ package body VCS2.History is
    begin
       if V /= null then
          Trace (Me, "Finished fetching whole log");
-
-         Self.Data.Current  := History_Tree (V.Tree).Lines.First_Index;
-         Self.Data.Step     := Step_Compute;
-
          V.Tree.Model.Clear;
-
          Id := Layout_Sources.Idle_Add
            (On_Layout_Idle'Access, Self.Data, Notify => Free'Access);
-         --  Do not free Self.Data, adopted by the background layout
+         --  Do not free Self.Data, owned by the idle loop
       else
          Free (Self.Data);
       end if;
@@ -939,13 +1039,11 @@ package body VCS2.History is
       Seen       : access On_Line_Seen;
    begin
       if VCS /= null then
-         Reset_Layout (History_Tree (Self.Tree));
+         Reset_Lines (History_Tree (Self.Tree));
 
          Seen := new On_Line_Seen;
          Seen.Kernel := Self.Kernel;
-         Seen.Data   := new Layout_Idle_Data;
-         Seen.Data.Detached := new Expansion.Detached_Model'
-           (Expansion.Detach_Model_From_View (Self.Tree));
+         Seen.Data   := Recompute_Layout (Self, Start_Running => False);
          VCS.Queue_Fetch_History (Visitor => Seen);
       end if;
    end Refresh;
@@ -973,6 +1071,12 @@ package body VCS2.History is
         ("vcs-history-show-date",
          Default => False,
          Label   => -"Show Date");
+
+      Collapse_Simple_Commits := Kernel.Get_Preferences.Create_Invisible_Pref
+        ("vcs-history-collapse",
+         Default  => False,
+         Label    => -"Hide non-branch related commits");
+
    end Register_Module;
 
 end VCS2.History;
