@@ -341,7 +341,7 @@ package body VCS2.Commits is
    is
       K : constant Kernel_Handle := View.Kernel;
    begin
-      Append_Menu (Menu, View.Kernel, Show_Ellipsis);
+      Append_Menu (Menu, K, Show_Ellipsis);
       Append_Menu (Menu, K, Show_Hidden_Files);
       Append_Menu (Menu, K, Show_Untracked_Files);
       Append_Menu (Menu, K, Relative_Names);

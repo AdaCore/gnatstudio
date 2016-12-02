@@ -13,6 +13,11 @@ class SVN(core_staging.Emulate_Staging,
         '^(?P<status>....... .)\s+(?P<rev>\S+)\s+' +
         '(?P<lastcommit>\S+)\s+(?P<author>\S+)\s+(?P<file>.+)$')
 
+    __re_log = re.compile(
+        '^r(?P<rev>\d+)' + '\s\|\s' +
+        '(?P<author>[^\|]+)' + '\s\|\s' +
+        '(?P<date>[^|]+)')
+
     @staticmethod
     def discover_working_dir(file):
         return core.find_admin_directory(file, '.svn')
@@ -96,3 +101,44 @@ class SVN(core_staging.Emulate_Staging,
                 yield p.wait_until_terminate()
 
         self._internal_commit_staged_files(['svn', 'commit', '-m', message])
+
+    @core.run_in_background
+    def async_fetch_history(self, visitor):
+        p = ProcessWrapper(
+            ['svn', 'log', '-rHEAD:1', '--non-interactive', '--stop-on-copy'],
+            block_exit=False,
+            directory=self.working_dir.path)
+        result = []
+        current = None
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                GPS.Logger("SVN").log("finished svn-log")
+                break
+
+            if line.startswith('--------------------------------------'):
+                if current is not None:
+                    current[3] = subject
+                    result.append(current)
+
+                current = None
+                subject = ''
+            else:
+                m = self.__re_log.search(line)
+                if m:
+                    rev = int(m.group('rev'))
+                    if rev == 1:
+                        parents = None
+                    else:
+                        parents = [str(rev - 1)]
+                    current = [m.group('rev'),
+                               m.group('author'),
+                               m.group('date'),
+                               '',    # subject
+                               parents,
+                               None]  # names
+
+                elif line and not subject:
+                    subject = line
+
+        visitor.add_lines(result)

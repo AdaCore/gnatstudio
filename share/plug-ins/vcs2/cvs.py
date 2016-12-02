@@ -31,6 +31,9 @@ class CVS(core_staging.Emulate_Staging,
         '(?:\s+Repository revision:\s*(?P<rrev>[\d.]+).*)' +
         ')$')
 
+    __re_log = re.compile(
+        '^date: (?P<date>[^;]+);\s+author: (?P<author>[^;]+)')
+
     def __cvs(self, args, block_exit=True):
         """
         Execute cvs with the given arguments.
@@ -109,3 +112,71 @@ class CVS(core_staging.Emulate_Staging,
                 yield p.wait_until_terminate()
 
         self._internal_commit_staged_files(['cvs', 'commit', '-m', message])
+
+    @core.run_in_background
+    def async_fetch_history(self, visitor):
+        p = ProcessWrapper(
+            ['cvs', 'log', '-N'],
+            block_exit=False,
+            directory=self.working_dir.path)
+        result = []
+        current = None
+        subject = ''
+        in_header = False
+        file = ''
+        names = None      # branch names
+        previous = None   # previous commit
+
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                GPS.Logger("CVS").log("finished cvs-log")
+                break
+
+            if line.startswith('RCS file: '):
+                file = os.path.basename(line[10:]).replace(',v', '')
+                names = [file]
+                previous = None
+
+            elif line.startswith('=========================='):
+                if current:
+                    current[3] = subject
+                    result.append(current)
+                    previous = current
+                    current = None
+                in_header = False
+
+            elif line.startswith('--------------'):
+                in_header = True
+                if current:
+                    current[3] = subject
+                    result.append(current)
+                    previous = current
+                    current = None
+
+            elif in_header:
+                if line.startswith('revision '):
+                    revision = '%s-%s' % (line[9:], file)
+
+                    if previous is not None:
+                        previous[4] = [revision]   # parents
+
+                else:
+                    m = self.__re_log.search(line)
+                    if m:
+                        current = [
+                            revision,
+                            m.group('author'),
+                            m.group('date'),
+                            '',
+                            None,   # parents
+                            names]
+
+                        in_header = False
+                        names = None
+                        subject = ''
+            elif not subject:
+                subject = line
+
+        GPS.Logger("CVS").log("history=%s" % (result, ))
+        visitor.add_lines(result)

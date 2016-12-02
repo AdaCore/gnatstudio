@@ -134,7 +134,9 @@ class Git(core.VCS):
         p = ProcessWrapper(
             ['git',
              '--no-pager',  # do not require a terminal
-             'log', '--pretty=format:%H@@%P@@%an@@%d@@%ci@@%s',
+             'log',
+             # use tformat to get final newline
+             '--pretty=tformat:%h@@%p@@%an@@%d@@%cD@@%s',
              '--branches', '--tags',  # show all except stashes
              '--topo-order'],  # children before parents
             block_exit=False,
