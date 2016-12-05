@@ -27,6 +27,7 @@ with GNATCOLL.Symbols;                use GNATCOLL.Symbols;
 with GNATCOLL.Utils;                  use GNATCOLL.Utils;
 with GNATCOLL.VFS;                    use GNATCOLL.VFS;
 with GPS.Intl;                        use GPS.Intl;
+with GPS.Kernel.Actions;              use GPS.Kernel.Actions;
 with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
 with GPS.Kernel.Hooks;                use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;          use GPS.Kernel.Preferences;
@@ -107,6 +108,9 @@ package body Src_Editor_Status_Bar is
       Vcs           : not null access Abstract_VCS_Engine'Class;
       File          : GNATCOLL.VFS.Virtual_File;
       Props         : VCS_File_Properties);
+
+   procedure On_VCS_Status_Clicked (Bar : access GObject_Record'Class);
+   --  Called when the user clicks on the VCS status icon
 
    -------------------------
    -- Destroy_Info_Frames --
@@ -365,6 +369,18 @@ package body Src_Editor_Status_Bar is
       end if;
    end Cursor_Position_Changed_Handler;
 
+   ---------------------------
+   -- On_VCS_Status_Clicked --
+   ---------------------------
+
+   procedure On_VCS_Status_Clicked (Bar : access GObject_Record'Class) is
+      B : constant Source_Editor_Status_Bar := Source_Editor_Status_Bar (Bar);
+      Kernel : constant Kernel_Handle := Get_Kernel (B.Buffer);
+      Dummy : Boolean;
+   begin
+      Dummy := Execute_Action (Kernel, "open Commits");
+   end On_VCS_Status_Clicked;
+
    -------------
    -- Execute --
    -------------
@@ -385,6 +401,7 @@ package body Src_Editor_Status_Bar is
          begin
             if Bar.VCS_Status = null then
                Gtk_New (Bar.VCS_Status);
+               Bar.VCS_Status.On_Clicked (On_VCS_Status_Clicked'Access, Bar);
                Bar.Toolbar.Insert (Bar.VCS_Status, Extra_Info_Pos);
                Bar.VCS_Status.Show_All;
             end if;
