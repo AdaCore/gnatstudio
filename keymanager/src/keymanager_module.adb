@@ -1667,9 +1667,9 @@ package body KeyManager_Module is
                   then
                      if Result /= Null_Unbounded_String then
                         if Use_Markup then
-                           Result := Result & " <b>or</b> ";
+                           Append (Result, " <b>or</b> ");
                         else
-                           Result := Result & " or ";
+                           Append (Result, " or ");
                         end if;
                      end if;
 
