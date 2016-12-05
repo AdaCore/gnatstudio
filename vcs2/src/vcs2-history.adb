@@ -953,7 +953,7 @@ package body VCS2.History is
          return True;  --  Will run again for the actual insert
 
       when Step_Insert =>
-         while Data.Inserted <= Tree.Max_Lines
+         while Data.Inserted < Tree.Max_Lines
            and then Data.Current <= Tree.Lines.Last_Index
          loop
             declare
