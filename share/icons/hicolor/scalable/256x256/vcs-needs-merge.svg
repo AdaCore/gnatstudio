@@ -1,40 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg width="256px" height="256px" viewBox="0 0 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <!-- Generator: Sketch 41.1 (35376) - http://www.bohemiancoding.com/sketch -->
+    <!-- Generator: Sketch 41.2 (35397) - http://www.bohemiancoding.com/sketch -->
     <title>256x256/vcs-needs-merge</title>
     <desc>Created with Sketch.</desc>
-    <defs>
-        <radialGradient cx="50%" cy="50.0000909%" fx="50%" fy="50.0000909%" r="50%" id="radialGradient-1">
-            <stop stop-color="#000000" offset="0%"></stop>
-            <stop stop-color="#000000" stop-opacity="0" offset="100%"></stop>
-        </radialGradient>
-        <linearGradient x1="9.04347826%" y1="80.2624684%" x2="91.1304348%" y2="79.4512946%" id="linearGradient-2">
-            <stop stop-color="#000000" offset="0%"></stop>
-            <stop stop-color="#000000" stop-opacity="0" offset="100%"></stop>
-        </linearGradient>
-        <linearGradient x1="41.0516852%" y1="57.4805539%" x2="51.0169856%" y2="67.6226233%" id="linearGradient-3">
-            <stop stop-color="#FCAF3E" offset="0%"></stop>
-            <stop stop-color="#CE5C00" offset="100%"></stop>
-        </linearGradient>
-        <linearGradient x1="21.4426699%" y1="96.8831613%" x2="18.7428441%" y2="99.630882%" id="linearGradient-4">
-            <stop stop-color="#CE5C00" offset="0%"></stop>
-            <stop stop-color="#CE5C00" offset="100%"></stop>
-        </linearGradient>
-    </defs>
-    <g id="VCS2" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="256x256/vcs-needs-merge">
-            <g id="back-forth" transform="translate(25.000000, 25.000000)" stroke-width="21" stroke="#43A125">
-                <polyline id="Path-3" points="0 136 158 136 92.2256082 171.218518"></polyline>
-                <polyline id="Path-3" transform="translate(127.000000, 61.609259) rotate(180.000000) translate(-127.000000, -61.609259) " points="48 44 206 44 140.225608 79.2185185"></polyline>
-            </g>
-            <g id="pencil-256" opacity="0.769881063" transform="translate(25.000000, 25.000000)">
-                <g id="Shape">
-                    <path d="M198.476404,178.709022 C198.476404,192.18692 154.352186,203.112914 99.9222051,203.112914 C45.4922239,203.112914 1.36800606,192.18692 1.36800606,178.709022 C1.36800553,169.990351 20.1523296,161.933967 50.6451052,157.574631 C81.1378807,153.215296 118.70653,153.215296 149.199305,157.574631 C179.692081,161.933967 198.476405,169.990351 198.476404,178.709022 L198.476404,178.709022 Z" fill="url(#radialGradient-1)" opacity="0.07000002"></path>
-                    <polygon fill="url(#linearGradient-2)" opacity="0.4" points="146.512967 135.276419 33.8796097 168.863033 32.9409984 169.349909 32.2370399 169.934176 11.587591 191.358377 67.4349641 185.028503 69.5468395 184.833722 70.9547565 184.249455 146.512967 164.101653 146.512967 135.276366 146.512967 135.276419 146.512967 135.276419"></polygon>
-                    <path d="M32.4716927,148.182324 L175.140612,5.51340493 C191.472817,8.21631266 198.303429,18.5204928 201.421729,31.7945217 L58.7528094,174.463441 L24.0908924,179.753492 L32.4716927,148.182324 L32.4716927,148.182324 L32.4716927,148.182324 L32.4716927,148.182324 Z" stroke="url(#linearGradient-4)" stroke-width="0.8514441" fill="url(#linearGradient-3)"></path>
-                    <path d="M39.2296791,151.93677 L178.127258,13.7900945 C186.310034,15.1299434 189.520205,21.2084578 193.145039,28.8078755 L54.9983642,167.705455 L30.219003,174.463464 L39.2296791,151.93677 L39.2296791,151.93677 L39.2296791,151.93677 L39.2296791,151.93677 Z" stroke="#FFFFFF" stroke-width="0.8514441" opacity="0.28235294"></path>
-                </g>
-            </g>
+    <defs></defs>
+    <g id="VCS2-Clement-Colored" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" font-size="272" font-family="ZapfDingbatsITC, Zapf Dingbats" font-weight="normal">
+        <g id="256x256/vcs-needs-merge" fill="#FFA75F">
+            <text id="➟">
+                <tspan x="28" y="221">➟</tspan>
+            </text>
         </g>
     </g>
 </svg>

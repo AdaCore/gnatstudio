@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg width="256px" height="256px" viewBox="0 0 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <!-- Generator: Sketch 41.2 (35397) - http://www.bohemiancoding.com/sketch -->
-    <title>256x256/vcs-has-conflicts</title>
+    <title>256x256/vcs-conflicts-staged</title>
     <desc>Created with Sketch.</desc>
     <defs></defs>
     <g id="VCS2-Clement-Colored" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="256x256/vcs-has-conflicts" stroke="#003232" stroke-width="5" fill="#005A5A">
+        <g id="256x256/vcs-conflicts-staged" stroke="#398EB6" stroke-width="5" fill="#59B2DC">
             <path d="M25,216.867587 L112.943446,32.0179227 C112.943446,32.0179227 125.507543,16.2275966 138.070212,32.0179227 C150.633834,47.8092511 223.796661,217.79584 223.796661,217.79584 C223.796661,217.79584 225.273866,227.085387 210.494199,227.085387 L38.3019861,227.085387 C38.3019861,227.085387 27.2169977,227.084385 25,216.867587 Z" id="path17"></path>
         </g>
     </g>
