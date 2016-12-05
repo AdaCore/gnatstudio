@@ -302,9 +302,15 @@ package VCS2.Engines is
    --  Parents and Names must be freed by the caller, although this procedure
    --  might reset them to null if it needs to store keep them.
 
+   procedure On_Commit_Details
+     (Self    : not null access History_Visitor;
+      ID      : String;
+      Details : String) is null;
+   --   Called when details for a specific commit are available.
+
    procedure Async_Fetch_History
      (Self        : not null access VCS_Engine;
-      Visitor     : not null access History_Visitor'Class) is abstract;
+      Visitor     : not null access History_Visitor'Class) is null;
    procedure Queue_Fetch_History
      (Self        : not null access VCS_Engine'Class;
       Visitor     : not null access History_Visitor'Class);
@@ -313,6 +319,18 @@ package VCS2.Engines is
    --  Only call Queue_Fetch_History from your code, Async_Fetch_History is
    --  the actual implementation but doesn't ensure that a single command runs
    --  at a given time.
+
+   procedure Async_Fetch_Commit_Details
+     (Self        : not null access VCS_Engine;
+      Ids         : not null GNAT.Strings.String_List_Access;
+      Visitor     : not null access History_Visitor'Class) is null;
+   procedure Queue_Fetch_Commit_Details
+     (Self        : not null access VCS_Engine'Class;
+      Ids         : not null GNAT.Strings.String_List_Access;
+      Visitor     : not null access History_Visitor'Class);
+   --  Asynchronously fetch detail information on the commits specified in Ids.
+   --  Ids is freed automatically when no longer needed.
+   --  Details are reported via Visitor.On_Commit_Details
 
    ----------
    -- Misc --

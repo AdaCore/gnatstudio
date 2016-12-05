@@ -563,7 +563,7 @@ class ProcessWrapper(object):
         :return: a promise
         """
         p = Promise()
-        s = self.wait_until_match("^.+\n")
+        s = self.wait_until_match("^.*\n")
         if s is None:
             p.resolve(None)
         else:

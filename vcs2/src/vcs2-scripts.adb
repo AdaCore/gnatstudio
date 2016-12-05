@@ -77,6 +77,10 @@ package body VCS2.Scripts is
    overriding procedure Async_Fetch_History
      (Self    : not null access Script_Engine;
       Visitor : not null access History_Visitor'Class);
+   overriding procedure Async_Fetch_Commit_Details
+     (Self        : not null access Script_Engine;
+      Ids         : not null GNAT.Strings.String_List_Access;
+      Visitor     : not null access History_Visitor'Class);
 
    procedure Static_VCS_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -225,6 +229,34 @@ package body VCS2.Scripts is
       D.Set_Nth_Arg (1, Inst);
       Call_Method (Self, "async_fetch_history", D);
    end Async_Fetch_History;
+
+   --------------------------------
+   -- Async_Fetch_Commit_Details --
+   --------------------------------
+
+   overriding procedure Async_Fetch_Commit_Details
+     (Self        : not null access Script_Engine;
+      Ids         : not null GNAT.Strings.String_List_Access;
+      Visitor     : not null access History_Visitor'Class)
+   is
+      D    : Callback_Data'Class := Create (Self.Script, 2);
+      Inst : Class_Instance;
+      L    : List_Instance'Class := New_List (Self.Script);
+   begin
+      for Id in Ids'Range loop
+         L.Set_Nth_Arg (Id - Ids'First + 1, Ids (Id).all);
+      end loop;
+      Set_Nth_Arg (D, 1, L);
+      Free (L);   --  adopted by D
+
+      Inst := Self.Script.New_Instance
+        (Self.Kernel.Scripts.New_Class (VCS2_History_Visitor_Class_Name));
+      Set_Data (Inst, VCS2_History_Visitor_Class_Name,
+                History_Properties_Record'(Visitor => Visitor));
+      D.Set_Nth_Arg (2, Inst);
+
+      Call_Method (Self, "async_fetch_commit_details", D);
+   end Async_Fetch_Commit_Details;
 
    -------------------
    -- Create_Engine --
@@ -466,6 +498,11 @@ package body VCS2.Scripts is
                end;
             end loop;
          end;
+
+      elsif Command = "set_details" then
+         Visitor.On_Commit_Details
+           (ID      => Data.Nth_Arg (2),
+            Details => Data.Nth_Arg (3));
       end if;
    end VCS_History_Handler;
 
@@ -615,7 +652,12 @@ package body VCS2.Scripts is
          Params        => (2 => Param ("lines")),
          Class         => History_Visitor,
          Handler       => VCS_History_Handler'Access);
-
+      Kernel.Scripts.Register_Command
+        ("set_details",
+         Params        => (2 => Param ("id"),
+                           3 => Param ("details")),
+         Class         => History_Visitor,
+         Handler       => VCS_History_Handler'Access);
    end Register_Scripts;
 
 end VCS2.Scripts;

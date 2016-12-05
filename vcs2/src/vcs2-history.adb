@@ -52,6 +52,7 @@ with Gtk.Drawing_Area;            use Gtk.Drawing_Area;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
+with Gtk.Text_Iter;               use Gtk.Text_Iter;
 with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
@@ -214,6 +215,9 @@ package body VCS2.History is
    procedure On_Scrolled (Self : access GObject_Record'Class);
    --  Called when the tree is scrolled
 
+   procedure On_Selection_Changed (View : access GObject_Record'Class);
+   --  Called when one or more files are selected
+
    type Detached_Model_Access is access Expansion.Detached_Model;
 
    type Layout_Step is (Step_Compute, Step_Insert);
@@ -245,6 +249,15 @@ package body VCS2.History is
    --  Add a new log entry to the view
    --  Names are freed automatically by this procedure when needed.
    --  Parents is adopted by this procedure and must not be freed by the caller
+
+   type On_Details is new History_Visitor with record
+      Kernel   : Kernel_Handle;
+   end record;
+   overriding procedure On_Commit_Details
+     (Self    : not null access On_Details;
+      ID      : String;
+      Details : String);
+   --  Visitor when getting the details for a set of commits
 
    procedure Free (Self : in out Layout_Idle_Data_Access);
    function On_Layout_Idle (Data : Layout_Idle_Data_Access) return Boolean;
@@ -580,6 +593,78 @@ package body VCS2.History is
       Append_Menu (Menu, View.Kernel, Collapse_Simple_Commits);
    end Create_Menu;
 
+   -----------------------
+   -- On_Commit_Details --
+   -----------------------
+
+   overriding procedure On_Commit_Details
+     (Self    : not null access On_Details;
+      ID      : String;
+      Details : String)
+   is
+      pragma Unreferenced (ID);
+      View : constant History_View :=
+        History_Views.Retrieve_View (Self.Kernel);
+      Iter : Gtk_Text_Iter;
+   begin
+      View.Details.Get_Buffer.Get_End_Iter (Iter);
+      View.Details.Get_Buffer.Insert (Iter, Details);
+
+      View.Details.Get_Buffer.Get_End_Iter (Iter);
+      View.Details.Get_Buffer.Insert (Iter, (1 .. 3 => ASCII.LF));
+   end On_Commit_Details;
+
+   --------------------------
+   -- On_Selection_Changed --
+   --------------------------
+
+   procedure On_Selection_Changed (View : access GObject_Record'Class) is
+      Self : constant History_View := History_View (View);
+      VCS  : constant VCS_Engine_Access := Active_VCS (Self.Kernel);
+      Seen : access On_Details;
+      Ids  : String_List_Access;
+      Count : Natural := 0;
+
+      procedure On_Selected
+        (Model : Gtk_Tree_Model;
+         Path  : Gtk_Tree_Path;
+         Iter  : Gtk_Tree_Iter);
+      --  Called for each selected row
+
+      -----------------
+      -- On_Selected --
+      -----------------
+
+      procedure On_Selected
+        (Model : Gtk_Tree_Model;
+         Path  : Gtk_Tree_Path;
+         Iter  : Gtk_Tree_Iter)
+      is
+         pragma Unreferenced (Path);
+      begin
+         Ids (Count) := new String'(Get_String (Model, Iter, Column_ID));
+         Count := Count + 1;
+      end On_Selected;
+
+   begin
+      if VCS /= null then
+         Seen := new On_Details;
+         Seen.Kernel := Self.Kernel;
+
+         Self.Details.Get_Buffer.Set_Text ("");
+         Count := Natural (Self.Tree.Get_Selection.Count_Selected_Rows);
+
+         if Count /= 0 then
+            Ids := new GNAT.Strings.String_List (1 .. Count);
+            Count := Ids'First;
+            Self.Tree.Get_Selection.Selected_Foreach
+              (On_Selected'Unrestricted_Access);
+
+            VCS.Queue_Fetch_Commit_Details (Ids => Ids, Visitor => Seen);
+         end if;
+      end if;
+   end On_Selection_Changed;
+
    ----------------
    -- Initialize --
    ----------------
@@ -637,6 +722,8 @@ package body VCS2.History is
       Self.Tree.Set_Fixed_Height_Mode (True);
       Self.Tree.Set_Show_Expanders (False);
       Self.Tree.On_Button_Press_Event (On_Button_Press'Access, Self);
+      Self.Tree.Get_Selection.Set_Mode (Selection_Multiple);
+      Self.Tree.Get_Selection.On_Changed (On_Selection_Changed'Access, Self);
       Scrolled.Add (Self.Tree);
 
       Gtk_New (Col);
@@ -679,6 +766,7 @@ package body VCS2.History is
 
       Gtk_New (Self.Details);
       Scrolled2.Add (Self.Details);
+      Self.Details.Set_Editable (False);
 
       Self.On_Preferenced_Changed (null);
 
@@ -711,6 +799,7 @@ package body VCS2.History is
       Config : History_View_Config;
    begin
       Base_VCS_View_Record (Self.all).On_Preferenced_Changed (Pref);
+      Set_Font_And_Colors (Self.Details, Fixed_Font => True, Pref => Pref);
 
       T.Col_ID.Set_Visible (Show_ID.Get_Pref);
       T.Col_Author.Set_Visible (Show_Author.Get_Pref);

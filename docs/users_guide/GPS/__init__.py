@@ -9611,6 +9611,13 @@ class VCS2_History_Visitor(object):
            associated with this commit
         """
 
+    def set_details(self, id, details):
+        """
+        :param str id: the commit for which we are reporting details
+        :param str details: a multi-string piece of information to
+            display in the History view.
+        """
+
 
 ###########################################################
 # Vdiff

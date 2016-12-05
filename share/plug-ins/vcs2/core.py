@@ -169,6 +169,18 @@ class VCS(GPS.VCS2):
            when new lines have been pared for the history.
         """
 
+    def async_fetch_commit_details(self, ids, visitor):
+        """
+        Fetch the details for each of the commits in the list.
+        These details are returned asynchronously to GPS by calling
+        `visitor.set_details`.
+
+        :param List(str) ids: the list of commits for which we want the
+          details.
+        :param GPS.VCS2_History_Visitory visitor: the object used to
+          report the details.
+        """
+
     ############
     # Services #
     ############

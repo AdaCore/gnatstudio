@@ -2018,6 +2018,8 @@ Classes
 
    .. automethod:: GPS.VCS2_History_Visitor.add_lines
 
+   .. automethod:: GPS.VCS2_History_Visitor.set_details
+
 :class:`GPS.Vdiff`
 ^^^^^^^^^^^^^^^^^^
 

@@ -121,9 +121,6 @@ package body VCS2.Engines is
    overriding procedure Commit_Staged_Files
      (Self    : not null access Dummy_VCS_Engine;
       Message : String) is null;
-   overriding procedure Async_Fetch_History
-     (Self    : not null access Dummy_VCS_Engine;
-      Visitor : not null access History_Visitor'Class) is null;
 
    --  An engine that does nothing, used when the project is not setup for
    --  VCS operations
@@ -187,6 +184,15 @@ package body VCS2.Engines is
      (Self : not null access Cmd_Fetch_History;
       VCS  : not null access VCS_Engine'Class);
    --  Implementation for Async_Fetch_History
+
+   type Cmd_Fetch_Commit_Details is new VCS_Command with record
+      Ids  : String_List_Access;
+   end record;
+   overriding procedure Execute
+     (Self : not null access Cmd_Fetch_Commit_Details;
+      VCS  : not null access VCS_Engine'Class);
+   overriding procedure Free
+     (Self : in out Cmd_Fetch_Commit_Details);
 
    -------------------
    -- Command queue --
@@ -853,6 +859,46 @@ package body VCS2.Engines is
         (Self,
          new Cmd_Fetch_History'(Visitor => Visitor.all'Unchecked_Access));
    end Queue_Fetch_History;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self : not null access Cmd_Fetch_Commit_Details;
+      VCS  : not null access VCS_Engine'Class)
+   is
+   begin
+      VCS.Async_Fetch_Commit_Details
+        (Self.Ids, History_Visitor_Access (Self.Visitor));
+   end Execute;
+
+   ----------
+   -- Free --
+   ----------
+
+   overriding procedure Free
+     (Self : in out Cmd_Fetch_Commit_Details) is
+   begin
+      Free (Self.Ids);
+      Free (VCS_Command (Self));  --  inherited
+   end Free;
+
+   --------------------------------
+   -- Queue_Fetch_Commit_Details --
+   --------------------------------
+
+   procedure Queue_Fetch_Commit_Details
+     (Self        : not null access VCS_Engine'Class;
+      Ids         : not null GNAT.Strings.String_List_Access;
+      Visitor     : not null access History_Visitor'Class) is
+   begin
+      Queue
+        (Self,
+         new Cmd_Fetch_Commit_Details'
+           (Ids     => Ids,
+            Visitor => Visitor.all'Unchecked_Access));
+   end Queue_Fetch_Commit_Details;
 
    ----------------------
    -- Complete_Command --

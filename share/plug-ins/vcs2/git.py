@@ -155,3 +155,33 @@ class Git(core.VCS):
         GPS.Logger("GIT").log(
             "done parsing git-log (%s lines)" % (len(result), ))
         visitor.add_lines(result)
+
+    @core.run_in_background
+    def async_fetch_commit_details(self, ids, visitor):
+        p = ProcessWrapper(
+            ['git',
+             '--no-pager',
+             'show',
+             '--notes',   # show notes
+             '--pretty=fuller',
+             '--no-patch'] + ids,
+            block_exit=False,
+            directory=self.working_dir.path)
+
+        id = ""
+        current = []
+        while True:
+            line = yield p.wait_line()
+            if line is None:
+                if id:
+                    visitor.set_details(id, '\n'.join(current))
+                break
+
+            if line.startswith('commit '):
+                if id:
+                    visitor.set_details(id, '\n'.join(current))
+                id = line[7:]
+                current = [line]
+
+            else:
+                current.append(line)
