@@ -887,6 +887,10 @@ package body VCS2.History is
                Data.Is_Free (Ref.Col) := True;
                Ref.Has_Parent_In_Same_Col := False;
 
+               if Ref.Names /= null then
+                  Ref.Visible := Always_Visible;
+               end if;
+
                --  Reserve columns for the parent commit
 
                if Ref.Parents /= null then
