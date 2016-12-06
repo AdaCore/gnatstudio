@@ -440,6 +440,10 @@ package body VFS_Module is
                  ((-"Cannot remove file: ") &
                   Display_Full_Name (File),
                   Mode => Error);
+            else
+               Vcs_Refresh_Hook.Run (Kernel);
+
+               --  ??? Should we recompute the project view instead ?
             end if;
          else
             Success := False;

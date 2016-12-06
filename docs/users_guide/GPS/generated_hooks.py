@@ -972,6 +972,16 @@ class Predefined_Hooks:
       :param int props:
         """
 
+    # vcs_refresh = 'vcs_refresh'
+    def vcs_refresh(name):
+        """
+      Run this hook to force a refresh of all VCS-related views. They will
+      resynchronize their contents from the disk, rather than rely on cached
+      information
+
+      :param str name:
+        """
+
     # word_added = 'word_added'
     def word_added(name,file):
         """

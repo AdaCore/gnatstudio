@@ -238,6 +238,11 @@ package body VCS2.Commits is
      (Self   : On_Active_VCS_Changed;
       Kernel : not null access Kernel_Handle_Record'Class);
 
+   type On_VCS_Refresh is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_VCS_Refresh;
+      Kernel : not null access Kernel_Handle_Record'Class);
+
    function On_Commit_Focus_Out
      (View  : access GObject_Record'Class;
       Event : Gdk_Event_Focus) return Boolean;
@@ -551,6 +556,22 @@ package body VCS2.Commits is
          Property   => P,
          Persistent => True);
    end Set_Commit_Message;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_VCS_Refresh;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
+      View : constant Commit_View := Commit_Views.Retrieve_View (Kernel);
+   begin
+      if View /= null then
+         Refresh (View);
+      end if;
+   end Execute;
 
    -------------
    -- Refresh --
@@ -910,8 +931,8 @@ package body VCS2.Commits is
    begin
       Base_VCS_View_Record (Self.all).On_Create (Child);   --  inherited
 
+      Vcs_Refresh_Hook.Add (new On_VCS_Refresh, Watch => Self);
       Vcs_Active_Changed_Hook.Add (new On_Active_VCS_Changed, Watch => Self);
-
       Vcs_File_Status_Changed_Hook.Add
         (new On_VCS_File_Status_Changed, Watch => Self);
    end On_Create;
@@ -1118,14 +1139,10 @@ package body VCS2.Commits is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      View : constant Commit_View :=
-        Commit_Views.Retrieve_View (Get_Kernel (Context.Context));
+      Kernel : constant Kernel_Handle := Get_Kernel (Context.Context);
    begin
-      Invalidate_All_Caches (Get_Kernel (Context.Context));
-
-      if View /= null then
-         Refresh (View);
-      end if;
+      Invalidate_All_Caches (Kernel);
+      Vcs_Refresh_Hook.Run (Kernel);
       return Commands.Success;
    end Execute;
 

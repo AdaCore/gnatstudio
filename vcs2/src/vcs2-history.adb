@@ -271,6 +271,11 @@ package body VCS2.History is
       Kernel : not null access Kernel_Handle_Record'Class);
    --  Called when the active VCS changes
 
+   type On_VCS_Refresh is new Simple_Hooks_Function with null record;
+   overriding procedure Execute
+     (Self   : On_VCS_Refresh;
+      Kernel : not null access Kernel_Handle_Record'Class);
+
    function On_Button_Press
      (Self   : access GObject_Record'Class;
       Event  : Gdk_Event_Button) return Boolean;
@@ -611,7 +616,7 @@ package body VCS2.History is
       View.Details.Get_Buffer.Insert (Iter, Details);
 
       View.Details.Get_Buffer.Get_End_Iter (Iter);
-      View.Details.Get_Buffer.Insert (Iter, (1 .. 3 => ASCII.LF));
+      View.Details.Get_Buffer.Insert (Iter, (1 .. 1 => ASCII.LF));
    end On_Commit_Details;
 
    --------------------------
@@ -785,6 +790,7 @@ package body VCS2.History is
       Base_VCS_View_Record (Self.all).On_Create (Child);  --  inherited
 
       Vcs_Active_Changed_Hook.Add (new On_Active_VCS_Changed, Watch => Self);
+      Vcs_Refresh_Hook.Add (new On_VCS_Refresh, Watch => Self);
    end On_Create;
 
    ----------------------------
@@ -1122,6 +1128,20 @@ package body VCS2.History is
 
       History_Visitor (Self).Free;  --  inherited
    end Free;
+
+   -------------
+   -- Execute --
+   -------------
+
+   overriding procedure Execute
+     (Self   : On_VCS_Refresh;
+      Kernel : not null access Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Self);
+      View : constant History_View := History_Views.Retrieve_View (Kernel);
+   begin
+      Refresh (View);
+   end Execute;
 
    -------------
    -- Refresh --

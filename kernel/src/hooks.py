@@ -442,7 +442,7 @@ Shadow builds''', inpython=False),
          Param('props',     'VCS_File_Properties')]),       
               
     'vcs_hooks': Hook_Type(
-        [Param('VCS',       'VCS_Engine')]),                                
+        [Param('VCS',       'VCS_Engine')]),          
 }
 
 # The following describe all specific hooks. They all belong to one
@@ -912,6 +912,12 @@ like commit and log happen.'''),
          
     Hook('vcs_commit_done', 'vcs_hooks', descr='''
 Emitted when a commit has been successfully performed.'''),
+         
+    Hook('vcs_refresh', 'simple_hooks', descr='''
+Run this hook to force a refresh of all VCS-related views. They will
+resynchronize their contents from the disk, rather than rely on cached
+information'''),
+         
 ]
 
 #########################################################################
