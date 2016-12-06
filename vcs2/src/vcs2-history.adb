@@ -58,6 +58,7 @@ with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.Widget;                  use Gtk.Widget;
+with GUI_Utils;                   use GUI_Utils;
 with VCS2.Engines;                use VCS2.Engines;
 with VCS2.Views;                  use VCS2.Views;
 
@@ -294,6 +295,19 @@ package body VCS2.History is
    --  Setup the background layout computation.
    --  Start running it immediately if Start_Running is True.
    --  the returned value must not be freed, it is owned by the idle loop
+
+   procedure Clear_View (Self : not null access History_Tree_Record'Class);
+   ---  Clear all views
+
+   ----------------
+   -- Clear_View --
+   ----------------
+
+   procedure Clear_View (Self : not null access History_Tree_Record'Class) is
+   begin
+      Self.Model.Clear;
+      Self.Graph.Queue_Draw;
+   end Clear_View;
 
    -------------------
    -- On_Draw_Graph --
@@ -540,7 +554,6 @@ package body VCS2.History is
             History_Tree (View.Tree).Max_Lines :=
               History_Tree (View.Tree).Max_Lines + 2000;
             Data := Recompute_Layout (View, Start_Running => False);
-            View.Tree.Model.Clear;
          end if;
 
          Path_Free (Path);
@@ -575,6 +588,8 @@ package body VCS2.History is
       Data.Inserted := 0;
       Data.Current := 1;
       Tree.Max_Columns := 0;
+
+      Clear_View (Tree);
 
       if Start_Running then
          Id := Layout_Sources.Idle_Add
@@ -617,6 +632,8 @@ package body VCS2.History is
 
       View.Details.Get_Buffer.Get_End_Iter (Iter);
       View.Details.Get_Buffer.Insert (Iter, (1 .. 1 => ASCII.LF));
+
+      Show_Placeholder_If_Needed (View.Details);
    end On_Commit_Details;
 
    --------------------------
@@ -666,6 +683,8 @@ package body VCS2.History is
               (On_Selected'Unrestricted_Access);
 
             VCS.Queue_Fetch_Commit_Details (Ids => Ids, Visitor => Seen);
+         else
+            Show_Placeholder_If_Needed (Self.Details);
          end if;
       end if;
    end On_Selection_Changed;
@@ -770,6 +789,9 @@ package body VCS2.History is
       T.Col_Date.Add_Attribute (Text, "text", Column_Date);
 
       Gtk_New (Self.Details);
+      Set_Placeholder
+        (Self.Details,
+         -"Select one or more lines to view details");
       Scrolled2.Add (Self.Details);
       Self.Details.Set_Editable (False);
 
@@ -1118,7 +1140,7 @@ package body VCS2.History is
    begin
       if V /= null then
          Trace (Me, "Finished fetching whole log");
-         V.Tree.Model.Clear;
+         Clear_View (History_Tree (V.Tree));
          Id := Layout_Sources.Idle_Add
            (On_Layout_Idle'Access, Self.Data, Notify => Free'Access);
          --  Do not free Self.Data, owned by the idle loop
