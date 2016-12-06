@@ -31,9 +31,6 @@ class CVS(core_staging.Emulate_Staging,
         '(?:\s+Repository revision:\s*(?P<rrev>[\d.]+).*)' +
         ')$')
 
-    __re_log = re.compile(
-        '^date: (?P<date>[^;]+);\s+author: (?P<author>[^;]+)')
-
     def __cvs(self, args, block_exit=True):
         """
         Execute cvs with the given arguments.
@@ -113,70 +110,103 @@ class CVS(core_staging.Emulate_Staging,
 
         self._internal_commit_staged_files(['cvs', 'commit', '-m', message])
 
+    def _build_unique_id(self, rev, file):
+        return '%s-%s' % (rev, file)
+
+    def _parse_unique_id(self, id):
+        return id.split('-')
+
+    def _log_stream(self, args=[]):
+        """
+        Run 'cvs log', and calls onblock for each revision in the output
+        """
+        cvs = self
+        base = self.working_dir.path
+
+        class line_to_block:
+            def __init__(self):
+                self.file = ''
+                self.in_header = False
+                self.revision = ''
+                self.current = None
+                self.__re_log = re.compile(
+                    '^date: (?P<date>[^;]+);\s+author: (?P<author>[^;]+)')
+
+            def emit_previous(self, out_stream):
+                if self.previous:
+                    out_stream.emit(self.previous)
+                    self.previous = None
+
+            def __call__(self, out_stream, line):
+                if line.startswith('Working file: '):
+                    self.file = line[14:]
+                    self.previous = None  # previous commit
+                    self.current = None
+
+                elif line.startswith('=========================='):
+                    self.emit_previous(out_stream)
+                    self.previous = self.current
+                    self.current = None
+                    self.emit_previous(out_stream)
+                    # self.current[3] = subject
+
+                elif line.startswith('--------------'):
+                    self.in_header = True
+                    self.emit_previous(out_stream)
+                    self.previous = self.current
+                    self.current = None
+
+                elif self.in_header:
+                    if line.startswith('revision '):
+                        self.revision = cvs._build_unique_id(
+                            line[9:], self.file)
+                        if self.previous is not None:
+                            self.previous[4] = [self.revision]   # parents
+
+                    else:
+                        m = self.__re_log.search(line)
+                        if m:
+                            self.current = [
+                                self.revision,
+                                m.group('author'),
+                                m.group('date'),
+                                '',     # subject
+                                None,   # parents
+                                [self.file]]  # names
+
+                            self.in_header = False
+                            self.subject = ''
+                elif self.current:
+                    if self.current[3]:
+                        self.current[3] += '\n'
+                    self.current[3] += line   # subject
+
+            def onexit(self, out_stream, status):
+                self.emit_previous(out_stream)
+
+        p = ProcessWrapper(
+            ['cvs', 'log', '-N'] + args,
+            block_exit=False,
+            directory=base)
+        return p.lines.flatMap(line_to_block())
+
     @core.run_in_background
     def async_fetch_history(self, visitor):
-        p = ProcessWrapper(
-            ['cvs', 'log', '-N'],
-            block_exit=False,
-            directory=self.working_dir.path)
         result = []
-        current = None
-        subject = ''
-        in_header = False
-        file = ''
-        names = None      # branch names
-        previous = None   # previous commit
 
-        while True:
-            line = yield p.wait_line()
-            if line is None:
-                GPS.Logger("CVS").log("finished cvs-log")
-                break
-
-            if line.startswith('RCS file: '):
-                file = os.path.basename(line[10:]).replace(',v', '')
-                names = [file]
-                previous = None
-
-            elif line.startswith('=========================='):
-                if current:
-                    current[3] = subject
-                    result.append(current)
-                    previous = current
-                    current = None
-                in_header = False
-
-            elif line.startswith('--------------'):
-                in_header = True
-                if current:
-                    current[3] = subject
-                    result.append(current)
-                    previous = current
-                    current = None
-
-            elif in_header:
-                if line.startswith('revision '):
-                    revision = '%s-%s' % (line[9:], file)
-
-                    if previous is not None:
-                        previous[4] = [revision]   # parents
-
-                else:
-                    m = self.__re_log.search(line)
-                    if m:
-                        current = [
-                            revision,
-                            m.group('author'),
-                            m.group('date'),
-                            '',
-                            None,   # parents
-                            names]
-
-                        in_header = False
-                        names = None
-                        subject = ''
-            elif not subject:
-                subject = line
-
-        GPS.Logger("CVS").log("history=%s" % (result, ))
+        def add_log(log):
+            log[3] = log[3].split('\n', 1)[0]  # first line only
+            result.append(log)
+        yield self._log_stream([]).subscribe(add_log)
         visitor.add_lines(result)
+
+    @core.run_in_background
+    def async_fetch_commit_details(self, ids, visitor):
+        def display_log(log):
+            visitor.set_details(
+                log[0],  # id
+                'Author: %s\nDate: %s\n\n%s' % (log[1], log[2], log[3]))
+
+        for id in ids:
+            rev, file = self._parse_unique_id(id)
+            yield self._log_stream(['-r%s' % rev, file]).subscribe(display_log)

@@ -71,7 +71,7 @@ class Promise(object):
         self.__success = []  # Called when the promise is resolved
         self.__failure = []  # Called when the promise is rejected
         self.__result = None   # The result of the promise
-        self.__state = Promise.PENDING
+        self._state = Promise.PENDING
 
     def then(self, success=None, failure=None):
         """
@@ -116,9 +116,9 @@ class Promise(object):
         def __reject(reason):
             ret.reject(failure(reason) if failure else reason)
 
-        if self.__state == Promise.RESOLVED:
+        if self._state == Promise.RESOLVED:
             __fullfill(self.__result)
-        elif self.__state == Promise.REJECTED:
+        elif self._state == Promise.REJECTED:
             __reject(self.__result)
         else:
             self.__success.append(__fullfill)
@@ -132,11 +132,11 @@ class Promise(object):
         :param result: any type
            This is the result of the promise, and is passed to the callback.
         """
-        if self.__state == Promise.PENDING:
+        if self._state == Promise.PENDING:
             if isinstance(result, Promise):
                 result.then(self.resolve, self.reject)
             else:
-                self.__state = Promise.RESOLVED
+                self._state = Promise.RESOLVED
                 self.__result = result  # in case we call then() later
                 for s in self.__success:
                     s(result)
@@ -152,14 +152,100 @@ class Promise(object):
         The promise cannot be fullfilled after all, so call the appropriate
         callbacks. `reason` should not be a Promise.
         """
-        if self.__state == Promise.PENDING:
-            self.__state = Promise.REJECTED
+        if self._state == Promise.PENDING:
+            self._state = Promise.REJECTED
             self.__result = reason
             for s in self.__failure:
                 s(reason)
 
             self.__success = None
             self.__failure = None
+
+
+class Stream(Promise):
+    """
+    A stream is a promise which emits zero or more events during its lifetime,
+    in addition to the usual `resolve` and `reject` behavior.
+    Such a stream should be used when a function can return multiple values
+    in its lifetime. At the same time, it acts like a promise so that it is
+    compatible with the workflow framework.
+    """
+
+    def __init__(self):
+        super(Stream, self).__init__()
+        self._onnext = []
+
+    def subscribe(self, onnext=None, onerror=None, oncompleted=None):
+        """
+        Subscribe to events emitted by this stream.
+
+        :param onnext: a function that receives one value in argument
+        :param onerror: a function called when the stream has been
+           rejected. Receives a string, the reason for the failure.
+        :param oncompleted: a function called when the stream has been
+           resolved. Receives the exit value.
+        """
+        if self._state == Promise.PENDING:
+            if onnext is not None:
+                self._onnext.append(onnext)
+
+        self.then(success=oncompleted, failure=onerror)
+
+        return self   # for chaining
+
+    def emit(self, value):
+        """
+        Emit one more event
+        """
+        for cb in self._onnext:
+            cb(value)
+
+    def resolve(self, result=None):
+        self._onnext = []
+        super(Stream, self).resolve(result)
+
+    def reject(self, reason=None):
+        self._onnext = []
+        super(Stream, self).reject(reason)
+
+    def map(self, transform):
+        """
+        A function that transforms a stream into another stream.
+
+        :param transform: a function that converts a value emitted
+           by `self` into another value emitted by the result stream.
+           This does not apply to the result of `resolve` or `reject`
+        :returntype: a Stream
+        """
+        out = Stream()
+        self.subscribe(lambda value: out.emit(transform(value))).then(
+            success=lambda value: out.resolve(value),
+            failure=lambda reason: out.reject(reason))
+        return out
+
+    def flatMap(self, transform):
+        """
+        A function that aggregates one or more items emitted by `self`,
+        and emits them (or another set of items) on another observable.
+
+        :param transform: a function that receives the output observable
+           and a value emitted by self, and optionally calls `out.emit`.
+           Alternatively, this can be a class instance, where __call__ is
+           executed for each value from `self`, and `onexit` is executed
+           when `self` terminates
+        :returntype: a Stream
+        """
+        out = Stream()
+
+        def onexit(value):
+            if hasattr(transform, "onexit"):
+                transform.onexit(out, value)
+            out.resolve(value)
+
+        self.subscribe(lambda value: transform(out, value)).then(
+            success=onexit,
+            failure=lambda reason: out.reject(reason))
+        return out
 
 
 def join(*args):
@@ -383,11 +469,11 @@ class ProcessWrapper(object):
            exits and this process is still running.
         """
 
-        # __final_promise = about termination
-        self.__final_promise = None
-
         # __current_promise = about on waiting wish for match something
         self.__current_promise = None
+
+        # the stream that includes all output from the process
+        self.__stream = Stream()
 
         # __current_pattern = regexp that user waiting for in the output
         self.__current_pattern = None
@@ -397,7 +483,6 @@ class ProcessWrapper(object):
 
         # __whether process has finished
         self.finished = False
-        self.__exit_status = 0
 
         # handler of process will be created -> start running
         # Remove empty command line arguments
@@ -453,15 +538,27 @@ class ProcessWrapper(object):
                     toolbar=toolbar_name,
                     label='Relaunch')
 
+            def __show_console_on_exit(status):
+                end_time = time.time()
+                output = "\n" + TimeDisplay.get_timestamp(end_time)
+                if not status:
+                    output += " process terminated successfully"
+                else:
+                    output += " process exited with status " + str(status)
+                output += ", elapsed time: " + TimeDisplay.get_elapsed(
+                    self.__start_time, end_time) + "\n"
+                self.__console.write(output)
+
+            self.__stream.subscribe(
+                lambda out: self.__console.write("%s\n" % out))
+            self.__stream.then(__show_console_on_exit)
+
     def __on_match(self, process, match, unmatch):
         """
         Called by GPS everytime there's output coming
         """
         self.__output += unmatch + match
-
-        if self.__console:
-            self.__console.write("%s%s\n" % (unmatch, match, ))
-
+        self.__stream.emit(unmatch + match)
         self.__check_pattern_and_resolve()
 
     def __resolve_promise(self, value):
@@ -486,10 +583,6 @@ class ProcessWrapper(object):
             elif self.finished:
                 # We will never be able to match anyway
                 self.__resolve_promise(None)
-        elif self.__final_promise and self.finished:
-            p = self.__final_promise
-            self.__final_promise = None
-            p.resolve((self.__exit_status, self.__output))
 
     def __on_exit(self, process, status, remaining_output):
         """
@@ -498,23 +591,10 @@ class ProcessWrapper(object):
            Current_promise will be solved with False
         """
         self.finished = True
-        self.__exit_status = status
         self.__output += remaining_output
 
-        if self.__console:
-            end_time = time.time()
-            output = remaining_output + \
-                "\n" + TimeDisplay.get_timestamp(end_time)
-
-            if not status:
-                output += " process terminated successfully"
-            else:
-                output += " process exited with status " + str(status)
-
-            output += ", elapsed time: " + TimeDisplay.get_elapsed(
-                self.__start_time, end_time) + "\n"
-
-            self.__console.write(output)
+        self.__stream.emit(remaining_output)
+        self.__stream.resolve(status)
 
         self.__check_pattern_and_resolve()
 
@@ -570,6 +650,83 @@ class ProcessWrapper(object):
             s.then(lambda line: p.resolve(line[:-1] if line else None))
         return p
 
+    @property
+    def stream(self):
+        """
+        Return the internal stream of output.
+        Events are emitted every time some output becomes available. This
+        output is not grouped into lines or other pattern matching a
+        regular expression.
+        The result stream is resolved when the process terminates, and
+        resolves with the exit status of the process::
+
+            def on_output(output):
+                pass   # do something with the output
+
+            @run_as_workflow
+            def run_bg():
+                p = ProcessWrapper(...)
+                yield p.stream.subscribe(on_output)
+        """
+        return self.__stream
+
+    @property
+    def lines(self):
+        """
+        A stream that emits one event for each line in the output::
+
+            def online(line):
+                pass   # do something with the line
+
+            @run_as_workflow
+            def execute():
+                p = ProcessWrapper(...)
+                yield p.lines.subscribe(online)  # wait until p terminates
+                pass  # executes when p has terminated
+
+        A similar pattern can be used to aggregate the lines into higher-level
+        blocks.
+
+            def transform(out_stream, line):
+                # aggregate one or more lines into a block, then call
+                out_stream.emit(line)
+
+            def blocks():
+                p = ProcessWrapper(...)
+                return p.lines.flatMap(transform)
+
+            def onblock(block):
+                pass  # do something with the block
+
+            blocks.subscribe(onblock)
+
+        :returntype: a stream. If you yield it from a function with a
+           @run_as_workflow decorator, the function will suspend until
+           the process terminates.
+           You can also subscribe to this stream to receive each line of
+           the output.
+        """
+
+        class map_to_line:
+            def __init__(self):
+                self.buffer = ""
+                self.__re = re.compile('^.*\n')
+
+            def __call__(self, out_stream, output):
+                self.buffer += output
+                while True:
+                    p = self.__re.search(self.buffer)
+                    if not p:
+                        break
+                    out_stream.emit(p.group(0)[:-1])
+                    self.buffer = self.buffer[p.end(0):]
+
+            def onexit(self, out_stream, status):
+                if self.buffer:
+                    out_stream.emit(self.buffer)
+
+        return self.__stream.flatMap(map_to_line())
+
     def wait_until_terminate(self):
         """
         Called by user. Make a promise to them that:
@@ -577,14 +734,11 @@ class ProcessWrapper(object):
         Promise made here will be resolved with a tuple:
             (exit_status, full output since call to wait_until_terminate)
         """
-
-        # process has already terminated, return nothing
-        if self.finished:
-            return None
-
-        # process is still running, return my promise
-        self.__final_promise = Promise()
-        return self.__final_promise
+        p = Promise()
+        output = []
+        self.__stream.subscribe(lambda out: output.append(out)).then(
+            lambda status: p.resolve((status, "\n".join(output))))
+        return p
 
     def __on_timeout(self):
         """
