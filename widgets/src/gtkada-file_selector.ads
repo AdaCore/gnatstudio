@@ -70,10 +70,11 @@ with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Window;          use Gtk.Window;
 
 with Directory_Tree;      use Directory_Tree;
-with Generic_List;
 with Generic_Stack;
 with Histories;
 with GNATCOLL.VFS;
+
+private with GPS_Vectors;
 
 package Gtkada.File_Selector is
 
@@ -255,7 +256,7 @@ private
 
    procedure Free (Filter : in out File_Filter);
 
-   package Filter_List is new Generic_List (File_Filter, Free);
+   package Filter_List is new GPS_Vectors (File_Filter);
    use Filter_List;
 
    package File_Selector_Idle is new Glib.Main.Generic_Sources
@@ -296,7 +297,7 @@ private
       Current_Filter         : File_Filter;
       --  The filter that is currently used for displaying files
 
-      Filters                : Filter_List.List;
+      Filters                : Filter_List.Vector;
       --  A list of all registered filters
 
       Highlighted_Color      : Gdk_RGBA := Null_RGBA;

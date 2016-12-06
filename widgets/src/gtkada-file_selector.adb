@@ -1041,15 +1041,12 @@ package body Gtkada.File_Selector is
       declare
          S : constant String :=
                Locale_From_UTF8 (Get_Active_Text (Win.Filter_Combo));
-         C : Filter_List.List_Node := First (Win.Filters);
       begin
-         while C /= Filter_List.Null_Node loop
-            if Data (C).Label.all = S then
-               Filter := Data (C);
+         for Item of Win.Filters loop
+            if Item.Label.all = S then
+               Filter := Item;
                exit;
             end if;
-
-            C := Next (C);
          end loop;
       end;
 
@@ -1460,7 +1457,7 @@ package body Gtkada.File_Selector is
       Clear (Win.Future_History);
 
       Win.Files.Clear;
-      Free (Win.Filters);
+      Win.Filters.Clear;
 
       if Win.Display_Idle_Handler /= 0 then
          Remove (Win.Display_Idle_Handler);

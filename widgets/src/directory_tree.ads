@@ -37,10 +37,11 @@ with Gtk.Tree_View;
 with Gtk.Tree_Store;
 with Gtk.Scrolled_Window;
 
-with Generic_List;
 with Gtk.Tree_Selection;
 
 with GNATCOLL.VFS;
+
+private with Ada.Containers.Vectors;
 
 package Directory_Tree is
 
@@ -146,9 +147,8 @@ private
    package File_Append_Directory_Timeout is
       new Glib.Main.Generic_Sources (Append_Directory_Idle_Data_Access);
 
-   procedure Free (D : in out Glib.Main.G_Source_Id) is null;
-
-   package Timeout_Id_List is new Generic_List (Glib.Main.G_Source_Id);
+   package Timeout_Id_List is new Ada.Containers.Vectors
+     (Positive, Glib.Main.G_Source_Id, "=" => Glib.Main."=");
 
    type Dir_Tree_Record is new
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record
@@ -163,7 +163,7 @@ private
 
       Current_Dir         : GNATCOLL.VFS.Virtual_File;
 
-      Fill_Timeout_Ids : Timeout_Id_List.List;
+      Fill_Timeout_Ids : Timeout_Id_List.Vector;
    end record;
 
    type Directory_Selector_Record is new Gtk.Paned.Gtk_Paned_Record with record

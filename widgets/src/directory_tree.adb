@@ -96,8 +96,7 @@ package body Directory_Tree is
       File  : Virtual_File);
    --  Set model's values.
 
-   procedure Do_Nothing (File : in out Virtual_File) is null;
-   package Dir_List is new Generic_List (Virtual_File, Free => Do_Nothing);
+   package Dir_List is new Ada.Containers.Vectors (Positive, Virtual_File);
    use Dir_List;
 
    type Append_Directory_Idle_Data is record
@@ -106,7 +105,7 @@ package body Directory_Tree is
       Norm_Dir      : Virtual_File;
       Depth         : Integer := 0;
       Base          : Gtk_Tree_Iter;
-      Dirs          : Dir_List.List;
+      Dirs          : Dir_List.Vector;
       Idle          : Boolean := False;
       Physical_Read : Boolean := True;
    end record;
@@ -279,7 +278,7 @@ package body Directory_Tree is
       procedure Unchecked_Free is new Unchecked_Deallocation
         (Append_Directory_Idle_Data, Append_Directory_Idle_Data_Access);
    begin
-      Dir_List.Free (Data.Dirs);
+      Data.Dirs.Clear;
       Unchecked_Free (Data);
    end Free;
 
@@ -1114,7 +1113,7 @@ package body Directory_Tree is
 
       while not Is_Empty (D.Dirs) loop
          declare
-            Dir   : constant Virtual_File := Head (D.Dirs);
+            Dir   : constant Virtual_File := D.Dirs.First_Element;
          begin
             Append (D.Explorer.File_Model, Iter, D.Base);
 
@@ -1202,7 +1201,7 @@ package body Directory_Tree is
             end if;
 
             --  Frees first element in the list
-            Next (D.Dirs);
+            D.Dirs.Delete_First;
          end;
       end loop;
 
@@ -1430,9 +1429,9 @@ package body Directory_Tree is
    procedure File_Remove_Idle_Calls
      (Explorer : access Dir_Tree_Record'Class) is
    begin
-      while not Timeout_Id_List.Is_Empty (Explorer.Fill_Timeout_Ids) loop
-         Glib.Main.Remove (Timeout_Id_List.Head (Explorer.Fill_Timeout_Ids));
-         Timeout_Id_List.Next (Explorer.Fill_Timeout_Ids);
+      while not Explorer.Fill_Timeout_Ids.Is_Empty loop
+         Glib.Main.Remove (Explorer.Fill_Timeout_Ids.First_Element);
+         Explorer.Fill_Timeout_Ids.Delete_First;
       end loop;
    end File_Remove_Idle_Calls;
 
