@@ -118,7 +118,8 @@ class CVS(core_staging.Emulate_Staging,
 
     def _log_stream(self, args=[]):
         """
-        Run 'cvs log', and calls onblock for each revision in the output
+        Run 'cvs log', and return a stream that emits one event for
+        each commit message.
         """
         cvs = self
         base = self.working_dir.path

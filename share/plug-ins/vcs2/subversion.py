@@ -13,11 +13,6 @@ class SVN(core_staging.Emulate_Staging,
         '^(?P<status>....... .)\s+(?P<rev>\S+)\s+' +
         '(?P<lastcommit>\S+)\s+(?P<author>\S+)\s+(?P<file>.+)$')
 
-    __re_log = re.compile(
-        '^r(?P<rev>\d+)' + '\s\|\s' +
-        '(?P<author>[^\|]+)' + '\s\|\s' +
-        '(?P<date>[^|]+)')
-
     @staticmethod
     def discover_working_dir(file):
         return core.find_admin_directory(file, '.svn')
@@ -102,43 +97,70 @@ class SVN(core_staging.Emulate_Staging,
 
         self._internal_commit_staged_files(['svn', 'commit', '-m', message])
 
-    @core.run_in_background
-    def async_fetch_history(self, visitor):
+    def _log_stream(self, args=[]):
+        """
+        Run 'svn log' and return a stream that emits one event for each commit.
+        """
+
+        _re_log = re.compile(
+            '^r(?P<rev>\d+)' + '\s\|\s' +
+            '(?P<author>[^\|]+)' + '\s\|\s' +
+            '(?P<date>[^|]+)')
+
+        class line_to_block:
+            def __init__(self):
+                self.current = None
+
+            def __call__(self, out_stream, line):
+                if line.startswith('--------------------------------------'):
+                    if self.current:
+                        out_stream.emit(self.current)
+                    self.current = None
+                else:
+                    m = _re_log.search(line)
+                    if m:
+                        rev = int(m.group('rev'))
+                        if rev == 1:
+                            parents = None
+                        else:
+                            parents = [str(rev - 1)]
+
+                        self.current = [m.group('rev'),
+                                        m.group('author'),
+                                        m.group('date'),
+                                        '',    # subject
+                                        parents,
+                                        None]  # names
+                    elif self.current:
+                        if self.current[3]:
+                            self.current[3] += '\n'
+                        self.current[3] += line   # subject
+
         p = ProcessWrapper(
-            ['svn', 'log', '-rHEAD:1', '--non-interactive', '--stop-on-copy'],
+            ['svn', 'log', '--non-interactive'] + args,
             block_exit=False,
             directory=self.working_dir.path)
+        return p.lines.flatMap(line_to_block())
+
+    @core.run_in_background
+    def async_fetch_history(self, visitor):
         result = []
-        current = None
-        while True:
-            line = yield p.wait_line()
-            if line is None:
-                GPS.Logger("SVN").log("finished svn-log")
-                break
 
-            if line.startswith('--------------------------------------'):
-                if current is not None:
-                    current[3] = subject
-                    result.append(current)
+        def add_log(log):
+            log[3] = log[3].split('\n', 1)[0]  # first line only
+            result.append(log)
 
-                current = None
-                subject = ''
-            else:
-                m = self.__re_log.search(line)
-                if m:
-                    rev = int(m.group('rev'))
-                    if rev == 1:
-                        parents = None
-                    else:
-                        parents = [str(rev - 1)]
-                    current = [m.group('rev'),
-                               m.group('author'),
-                               m.group('date'),
-                               '',    # subject
-                               parents,
-                               None]  # names
-
-                elif line and not subject:
-                    subject = line
-
+        yield self._log_stream(['-rHEAD:1', '--stop-on-copy']).subscribe(
+            add_log)
         visitor.add_lines(result)
+
+    @core.run_in_background
+    def async_fetch_commit_details(self, ids, visitor):
+        def display(log):
+            visitor.set_details(
+                log[0],  # id
+                'Revision: r%s\nAuthor: %s\nDate: %s\n\n%s' % (
+                    log[0], log[1], log[2], log[3]))
+
+        for id in ids:
+            yield self._log_stream(['-r%s' % id, '-v']).subscribe(display)
