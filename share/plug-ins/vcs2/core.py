@@ -115,6 +115,7 @@ class VCS(GPS.VCS2):
         :param GPS.File file:
         :return: a string
         """
+        return ''
 
     def async_fetch_status_for_files(self, files):
         """

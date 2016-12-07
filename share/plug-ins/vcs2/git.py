@@ -1,8 +1,7 @@
 import GPS
 from . import core
 import os
-import types
-from workflows.promises import ProcessWrapper, join, wait_idle, timeout
+from workflows.promises import ProcessWrapper, join
 
 
 @core.register_vcs(default_status=GPS.VCS2.Status.UNMODIFIED)

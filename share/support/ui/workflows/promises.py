@@ -505,6 +505,8 @@ class ProcessWrapper(object):
                 on_match=self.__on_match,
                 on_exit=self.__on_exit)
         except:
+            GPS.Logger("PROMISES").log(
+                "Failed to spawn %s" % (self.__command, ))
             self.__process = None
             return
 

@@ -934,8 +934,12 @@ package body VCS2.Engines is
 
          --  If we haven't started a background command, terminate this
          --  command. Otherwise, wait till Set_Run_In_Background is called.
+         --  The queue might have become empty if the command has terminated
+         --  immediately (and Set_Run_In_Background has been called).
 
-         if Self.Run_In_Background = 0 then
+         if Self.Run_In_Background = 0
+           and then not Self.Queue.Is_Empty
+         then
             Complete_Command (Self);
             Next_In_Queue (Self);
          end if;
@@ -971,6 +975,7 @@ package body VCS2.Engines is
       else
          Self.Run_In_Background := Self.Run_In_Background - 1;
          Assert (Me, Self.Run_In_Background >= 0, "Invalid Set_In_Background");
+         Trace (Me, "Set run in background: " & Self.Run_In_Background'Img);
 
          --  Queue could be empty if the command was executed directly from
          --  python (and not via a call to Queue).

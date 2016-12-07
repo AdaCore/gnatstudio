@@ -251,7 +251,7 @@ def driver(gen_inst):
                 # its parent generator.
                 gen_stack.pop()
 
-            except BaseException:
+            except BaseException as e:
                 # The current generator aborted because of an uncaught
                 # exception: discard it and let the next round propagate the
                 # exception to its "caller".
@@ -261,6 +261,9 @@ def driver(gen_inst):
                 # the end, the user can have a traceback that is focused on its
                 # generators.
                 exc_type, exc_value, exc_tb = sys.exc_info()
+                GPS.Logger("WORKFLOW").log(
+                    "Unexpected exception in workflow: %s %s" % (e, exc_tb))
+
                 # Strip the traceback to only keep the user part. Be careful
                 # about currentframe: on some implementations it can return
                 # None.
