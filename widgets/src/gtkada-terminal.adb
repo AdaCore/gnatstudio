@@ -128,7 +128,9 @@ package body Gtkada.Terminal is
       Disable_Line_Wrap,
       Set_Char_Attribute,
       Reset_Char_Attribute,
-      Display_In_Status_Line);
+      Display_In_Status_Line,
+      Cursor_Horizontal_Absolute  -- CHA
+     );
 
    type FSM_State is record
       Callback       : Capability;
@@ -473,6 +475,8 @@ package body Gtkada.Terminal is
                     & ASCII.ESC & "[?51",        Visible_Bell);
 
       Add_Sequence (FSM, ASCII.ESC & "[l",       Memory_Lock);
+      Add_Sequence (FSM, ASCII.ESC & "[G",       Cursor_Horizontal_Absolute);
+      Add_Sequence (FSM, ASCII.ESC & "[%dG",     Cursor_Horizontal_Absolute);
 
       --  No meaning in GUI mode (?)
       --  do=^J            Cursor down one line
@@ -1140,11 +1144,6 @@ package body Gtkada.Terminal is
             when Display_In_Status_Line =>
                On_Set_Title (Term, To_String (Str_Arg_First, Str_Arg_Last));
 
-               --  bash resend full line after a Status_Line,
-               --  so set cursor to the begin of line for replacing
-               Set_Line_Offset (Iter.all, 0);
-               Place_Cursor (Term, Iter.all);
-
             when Start_Alternative_Charset =>
                Term.Alternate_Charset := True;
             when End_Alternative_Charset =>
@@ -1210,6 +1209,14 @@ package body Gtkada.Terminal is
                  (Term, Iter.all, Term.State.Arg (1), Term.State.Arg (2));
             when Cursor_Home =>
                On_Move_Cursor (Term, Iter.all, 1, 1);
+
+            when Cursor_Horizontal_Absolute =>
+               if Term.State.Current_Arg = 1 then
+                  Set_Line_Offset (Iter.all, 0);
+               else
+                  Set_Line_Offset (Iter.all, Gint (Term.State.Arg (1) - 1));
+               end if;
+               Place_Cursor (Term, Iter.all);
 
             when Set_Char_Attribute =>
                for A in 1 .. Term.State.Current_Arg - 1 loop

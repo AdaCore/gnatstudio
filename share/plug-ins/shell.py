@@ -42,7 +42,7 @@ class Unix_Shell(ANSI_Console_Process):
         os.environ["GPSSHELL"] = "1"
         ANSI_Console_Process.__init__(self, process, args)
         if GPS.Preference("Plugins/shell/stty").get():
-            self.send("stty echo; clear")
+            self.send('stty echo; PS1="\[\e[1G\]$PS1"; clear')
         os.environ["TERM"] = oldterm
 
 
