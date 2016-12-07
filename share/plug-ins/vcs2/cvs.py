@@ -111,10 +111,10 @@ class CVS(core_staging.Emulate_Staging,
         self._internal_commit_staged_files(['cvs', 'commit', '-m', message])
 
     def _build_unique_id(self, rev, file):
-        return '%s-%s' % (rev, file)
+        return '%s %s' % (rev, file)
 
     def _parse_unique_id(self, id):
-        return id.split('-')
+        return id.split(' ', 1)
 
     def _log_stream(self, args=[]):
         """
@@ -182,7 +182,7 @@ class CVS(core_staging.Emulate_Staging,
                         self.current[3] += '\n'
                     self.current[3] += line   # subject
 
-            def onexit(self, out_stream, status):
+            def oncompleted(self, out_stream, status):
                 self.emit_previous(out_stream)
 
         p = ProcessWrapper(
@@ -203,11 +203,13 @@ class CVS(core_staging.Emulate_Staging,
 
     @core.run_in_background
     def async_fetch_commit_details(self, ids, visitor):
-        def display_log(log):
+        def _emit(log):
             visitor.set_details(
                 log[0],  # id
-                'Author: %s\nDate: %s\n\n%s' % (log[1], log[2], log[3]))
+                'Revision r%s\nAuthor: %s\nDate: %s' % (
+                    log[0], log[1], log[2]),
+                '\n%s\n' % log[3])
 
         for id in ids:
             rev, file = self._parse_unique_id(id)
-            yield self._log_stream(['-r%s' % rev, file]).subscribe(display_log)
+            yield self._log_stream(['-r%s' % rev, file]).subscribe(_emit)

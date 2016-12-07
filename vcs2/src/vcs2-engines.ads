@@ -305,7 +305,8 @@ package VCS2.Engines is
    procedure On_Commit_Details
      (Self    : not null access History_Visitor;
       ID      : String;
-      Details : String) is null;
+      Header  : String;
+      Message : String) is null;
    --   Called when details for a specific commit are available.
 
    procedure Async_Fetch_History

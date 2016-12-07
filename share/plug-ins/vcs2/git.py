@@ -162,26 +162,42 @@ class Git(core.VCS):
             ['git',
              '--no-pager',
              'show',
+             '-p' if len(ids) == 1 else '--name-only',
+             '--stat' if len(ids) == 1 else '',
              '--notes',   # show notes
-             '--pretty=fuller',
-             '--no-patch'] + ids,
+             '--pretty=fuller'] + ids,
             block_exit=False,
             directory=self.working_dir.path)
 
         id = ""
-        current = []
+        message = []
+        header = []
+        in_header = False
+
+        def _emit():
+            if id:
+                visitor.set_details(
+                    id, '\n'.join(header), '\n'.join(message))
+
         while True:
             line = yield p.wait_line()
             if line is None:
-                if id:
-                    visitor.set_details(id, '\n'.join(current))
+                _emit()
                 break
 
             if line.startswith('commit '):
-                if id:
-                    visitor.set_details(id, '\n'.join(current))
+                _emit()
                 id = line[7:]
-                current = [line]
+                message = []
+                header = [line]
+                in_header = True
+
+            elif in_header:
+                if not line:
+                    in_header = False
+                    message = ['']
+                else:
+                    header.append(line)
 
             else:
-                current.append(line)
+                message.append(line)

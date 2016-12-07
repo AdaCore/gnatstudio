@@ -218,9 +218,10 @@ class Stream(Promise):
         :returntype: a Stream
         """
         out = Stream()
-        self.subscribe(lambda value: out.emit(transform(value))).then(
-            success=lambda value: out.resolve(value),
-            failure=lambda reason: out.reject(reason))
+        self.subscribe(
+            onnext=lambda value: out.emit(transform(value)),
+            oncompleted=lambda value: out.resolve(value),
+            onerror=lambda reason: out.reject(reason))
         return out
 
     def flatMap(self, transform):
@@ -231,20 +232,21 @@ class Stream(Promise):
         :param transform: a function that receives the output observable
            and a value emitted by self, and optionally calls `out.emit`.
            Alternatively, this can be a class instance, where __call__ is
-           executed for each value from `self`, and `onexit` is executed
-           when `self` terminates
+           executed for each value from `self`, and `oncompleted` is executed
+           when `self` terminates.
         :returntype: a Stream
         """
         out = Stream()
 
-        def onexit(value):
-            if hasattr(transform, "onexit"):
-                transform.onexit(out, value)
+        def oncompleted(value):
+            if hasattr(transform, "oncompleted"):
+                transform.oncompleted(out, value)
             out.resolve(value)
 
-        self.subscribe(lambda value: transform(out, value)).then(
-            success=onexit,
-            failure=lambda reason: out.reject(reason))
+        self.subscribe(
+            onnext=lambda value: transform(out, value),
+            oncompleted=oncompleted,
+            onerror=lambda reason: out.reject(reason))
         return out
 
 
@@ -721,7 +723,7 @@ class ProcessWrapper(object):
                     out_stream.emit(p.group(0)[:-1])
                     self.buffer = self.buffer[p.end(0):]
 
-            def onexit(self, out_stream, status):
+            def oncompleted(self, out_stream, status):
                 if self.buffer:
                     out_stream.emit(self.buffer)
 
@@ -736,8 +738,9 @@ class ProcessWrapper(object):
         """
         p = Promise()
         output = []
-        self.__stream.subscribe(lambda out: output.append(out)).then(
-            lambda status: p.resolve((status, "\n".join(output))))
+        self.__stream.subscribe(
+            onnext=lambda out: output.append(out),
+            oncompleted=lambda status: p.resolve((status, "\n".join(output))))
         return p
 
     def __on_timeout(self):

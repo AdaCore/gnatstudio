@@ -36,6 +36,7 @@ with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
 with Glib_Values_Utils;           use Glib_Values_Utils;
 with GNATCOLL.Traces;             use GNATCOLL.Traces;
+with GNATCOLL.Utils;              use GNATCOLL.Utils;
 with GNAT.Strings;                use GNAT.Strings;
 with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
@@ -52,13 +53,16 @@ with Gtk.Drawing_Area;            use Gtk.Drawing_Area;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
+with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
 with Gtk.Text_Iter;               use Gtk.Text_Iter;
+with Gtk.Text_Tag;                use Gtk.Text_Tag;
 with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Tree_Model;              use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;        use Gtk.Tree_View_Column;
 with Gtk.Widget;                  use Gtk.Widget;
 with GUI_Utils;                   use GUI_Utils;
+with Pango.Enums;                 use Pango.Enums;
 with VCS2.Engines;                use VCS2.Engines;
 with VCS2.Views;                  use VCS2.Views;
 
@@ -257,7 +261,8 @@ package body VCS2.History is
    overriding procedure On_Commit_Details
      (Self    : not null access On_Details;
       ID      : String;
-      Details : String);
+      Header  : String;
+      Message : String);
    --  Visitor when getting the details for a set of commits
 
    procedure Free (Self : in out Layout_Idle_Data_Access);
@@ -620,18 +625,121 @@ package body VCS2.History is
    overriding procedure On_Commit_Details
      (Self    : not null access On_Details;
       ID      : String;
-      Details : String)
+      Header  : String;
+      Message : String)
    is
       pragma Unreferenced (ID);
       View : constant History_View :=
         History_Views.Retrieve_View (Self.Kernel);
+      Buffer : constant Gtk_Text_Buffer := View.Details.Get_Buffer;
       Iter : Gtk_Text_Iter;
-   begin
-      View.Details.Get_Buffer.Get_End_Iter (Iter);
-      View.Details.Get_Buffer.Insert (Iter, Details);
+      Grey, Bold, Diff, Block, Added, Removed  : Gtk_Text_Tag;
 
-      View.Details.Get_Buffer.Get_End_Iter (Iter);
-      View.Details.Get_Buffer.Insert (Iter, (1 .. 1 => ASCII.LF));
+      Header_Bg : constant Gdk_RGBA := (0.95, 0.95, 0.95, 1.0);
+
+   begin
+      Grey := Buffer.Create_Tag;
+      Gdk.RGBA.Set_Property
+        (Grey, Gtk.Text_Tag.Paragraph_Background_Rgba_Property,
+         Header_Bg);
+
+      Bold := Buffer.Create_Tag;
+      Set_Property (Bold, Gtk.Text_Tag.Weight_Property, Pango_Weight_Bold);
+      Gdk.RGBA.Set_Property
+        (Bold, Gtk.Text_Tag.Paragraph_Background_Rgba_Property,
+         Header_Bg);
+      Gdk.RGBA.Set_Property
+        (Bold, Gtk.Text_Tag.Foreground_Rgba_Property,
+         (0.0, 0.0, 0.9, 1.0));
+
+      Diff := Buffer.Create_Tag;
+      Set_Property (Diff, Gtk.Text_Tag.Weight_Property, Pango_Weight_Bold);
+      Gdk.RGBA.Set_Property
+        (Diff, Gtk.Text_Tag.Foreground_Rgba_Property,
+         (0.0, 0.0, 0.6, 1.0));
+
+      Block := Buffer.Create_Tag;
+      Gdk.RGBA.Set_Property
+        (Block, Gtk.Text_Tag.Foreground_Rgba_Property, (0.2, 0.8, 0.7, 1.0));
+
+      Added := Buffer.Create_Tag;
+      Gdk.RGBA.Set_Property
+        (Added, Gtk.Text_Tag.Foreground_Rgba_Property, (0.2, 0.6, 0.0, 1.0));
+
+      Removed := Buffer.Create_Tag;
+      Gdk.RGBA.Set_Property
+        (Removed, Gtk.Text_Tag.Foreground_Rgba_Property,
+         (1.0, 0.29, 0.32, 1.0));
+
+      Buffer.Get_End_Iter (Iter);
+
+      if Header /= "" then
+         declare
+            List : String_List_Access :=
+              Split (Header, ASCII.LF, Omit_Empty_Lines => False);
+            B    : Natural;
+         begin
+            for L of List.all loop
+               B := L'First;
+               while B <= L'Last loop
+                  if L (B) = ':' then
+                     Buffer.Insert_With_Tags (Iter, L (L'First .. B), Bold);
+                     Buffer.Insert (Iter, L (B + 1 .. L'Last));
+                     exit;
+                  end if;
+
+                  B := B + 1;
+               end loop;
+
+               if B > L'Last then
+                  Buffer.Insert_With_Tags (Iter, L.all, Grey);
+               end if;
+
+               --  Add spaces so that the gray background extends to the right
+               --  reasonably.
+               Buffer.Insert (Iter,
+                              (1 .. 80 => ' ',
+                               81      => ASCII.LF));
+            end loop;
+
+            Free (List);
+            Buffer.Insert (Iter, (1 .. 1 => ASCII.LF));
+         end;
+      end if;
+
+      if Message /= "" then
+         declare
+            List : String_List_Access :=
+              Split (Message, ASCII.LF, Omit_Empty_Lines => False);
+         begin
+            for L of List.all loop
+               if L'Length > 5
+                 and then L (L'First .. L'First + 4) = "diff "
+               then
+                  Buffer.Insert_With_Tags (Iter, L.all, Diff);
+
+               elsif L'Length > 2
+                 and then L (L'First .. L'First + 2) = "@@ "
+               then
+                  Buffer.Insert_With_Tags (Iter, L.all, Block);
+
+               elsif L'Length >= 1 and then L (L'First) = '-' then
+                  Buffer.Insert_With_Tags (Iter, L.all, Removed);
+
+               elsif L'Length >= 1 and then L (L'First) = '+' then
+                  Buffer.Insert_With_Tags (Iter, L.all, Added);
+
+               else
+                  Buffer.Insert (Iter, L.all);
+               end if;
+
+               Buffer.Insert (Iter, (1 .. 1 => ASCII.LF));
+            end loop;
+
+            Free (List);
+            Buffer.Insert (Iter, (1 .. 1 => ASCII.LF));
+         end;
+      end if;
 
       Show_Placeholder_If_Needed (View.Details);
    end On_Commit_Details;

@@ -9611,11 +9611,14 @@ class VCS2_History_Visitor(object):
            associated with this commit
         """
 
-    def set_details(self, id, details):
+    def set_details(self, id, header, message):
         """
         :param str id: the commit for which we are reporting details
-        :param str details: a multi-string piece of information to
-            display in the History view.
+        :param str header: a multi-string piece of information to
+            display in the History view. This should show the commit
+            id, the date and author of the commit,...
+        :param str message: a multi-string description of the commit
+            message, and possibly a diff of what has changed.
         """
 
 

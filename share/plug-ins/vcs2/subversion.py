@@ -156,11 +156,15 @@ class SVN(core_staging.Emulate_Staging,
 
     @core.run_in_background
     def async_fetch_commit_details(self, ids, visitor):
-        def display(log):
+        def _emit(log):
             visitor.set_details(
                 log[0],  # id
-                'Revision: r%s\nAuthor: %s\nDate: %s\n\n%s' % (
-                    log[0], log[1], log[2], log[3]))
+                'Revision r%s\nAuthor: %s\nDate: %s' % (
+                    log[0], log[1], log[2]),
+                '\n%s\n' % log[3])
 
         for id in ids:
-            yield self._log_stream(['-r%s' % id, '-v']).subscribe(display)
+            yield self._log_stream(
+                ['-r%s' % id, '-v',
+                 '--diff' if len(ids) == 1 else '']
+                ).subscribe(_emit)

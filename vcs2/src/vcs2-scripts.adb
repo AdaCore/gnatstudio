@@ -502,7 +502,8 @@ package body VCS2.Scripts is
       elsif Command = "set_details" then
          Visitor.On_Commit_Details
            (ID      => Data.Nth_Arg (2),
-            Details => Data.Nth_Arg (3));
+            Header  => Data.Nth_Arg (3),
+            Message => Data.Nth_Arg (4));
       end if;
    end VCS_History_Handler;
 
@@ -655,7 +656,8 @@ package body VCS2.Scripts is
       Kernel.Scripts.Register_Command
         ("set_details",
          Params        => (2 => Param ("id"),
-                           3 => Param ("details")),
+                           3 => Param ("header"),
+                           4 => Param ("message")),
          Class         => History_Visitor,
          Handler       => VCS_History_Handler'Access);
    end Register_Scripts;
