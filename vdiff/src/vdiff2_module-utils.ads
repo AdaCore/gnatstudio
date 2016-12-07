@@ -92,13 +92,13 @@ package Vdiff2_Module.Utils is
 
    function Get_Diff_Node
      (Selected_File : GNATCOLL.VFS.Virtual_File;
-      List          : Diff_Head_List.List)
-      return Diff_Head_List.List_Node;
+      List          : Diff_Head_List.Vector)
+      return Diff_Head_List.Std_Vectors.Cursor;
    --  Return the first Diff that contains Selected_File.
 
    function Is_In_3Diff_List
      (Selected_File : GNATCOLL.VFS.Virtual_File;
-      List          : Diff_Head_List.List)
+      List          : Diff_Head_List.Vector)
       return Boolean;
    --  Return true if Selected_File is used in a 3 files visual diff.
    --  Return False otherwise.

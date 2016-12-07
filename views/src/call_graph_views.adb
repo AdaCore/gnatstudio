@@ -15,6 +15,7 @@
 -- of the license.                                                          --
 ------------------------------------------------------------------------------
 
+with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;       use Ada.Strings.Unbounded;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
@@ -72,8 +73,6 @@ with Histories;                   use Histories;
 with String_Utils;                use String_Utils;
 with XML_Utils;                   use XML_Utils;
 with Xref;                        use Xref;
-
-with Generic_List;
 
 package body Call_Graph_Views is
 
@@ -147,13 +146,11 @@ package body Call_Graph_Views is
       Through_Dispatching : Boolean;
    end record;
 
-   procedure Free (X : in out Reference_Record) is null;
-   --  Free memory associated to X
-
-   package Reference_List is new Generic_List (Reference_Record, Free);
+   package Reference_List is
+     new Ada.Containers.Vectors (Positive, Reference_Record);
    use Reference_List;
 
-   type List_Access is access List;
+   type List_Access is access Vector;
 
    function To_Reference_List is new Ada.Unchecked_Conversion
      (System.Address, List_Access);
@@ -342,7 +339,7 @@ package body Call_Graph_Views is
       use type System.Address;
 
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (List, List_Access);
+        (Vector, List_Access);
 
    begin
       if Iter /= Null_Iter then
@@ -763,8 +760,6 @@ package body Call_Graph_Views is
       Decl          : General_Entity_Declaration;
 
       Value         : GValue;
-      N             : List_Node;
-      R             : Reference_Record;
       T             : Gtk_Tree_Iter;
       Address       : System.Address;
       Appended      : Boolean := False;
@@ -815,11 +810,7 @@ package body Call_Graph_Views is
          if Address /= System.Null_Address then
             L := To_Reference_List (Address);
 
-            N := First (L.all);
-
-            while N /= Null_Node loop
-               R := Data (N);
-
+            for R of L.all loop
                Append (V.Locations_Model, T);
                Appended := True;
 
@@ -841,8 +832,6 @@ package body Call_Graph_Views is
                   Set (V.Locations_Model, T, Location_String_Column,
                        "    " & Display_Base_Name (R.File));
                end if;
-
-               N := Next (N);
             end loop;
          end if;
 
@@ -1132,7 +1121,7 @@ package body Call_Graph_Views is
          return To_Reference_List (Addr);
 
       elsif Create then
-         L := new List;
+         L := new Vector;
          Addr := To_Address (L);
          Init (L_Value, GType_Pointer);
          Set_Address (L_Value, Addr);
@@ -1170,7 +1159,6 @@ package body Call_Graph_Views is
          Iter   : Gtk_Tree_Iter;
          N      : Node_Ptr;
          L      : List_Access;
-         Node   : List_Node;
          Path   : Gtk_Tree_Path;
 
       begin
@@ -1225,12 +1213,8 @@ package body Call_Graph_Views is
                L := Get_Locations_List (View, Iter, False);
 
                if L /= null then
-                  Node := First (L.all);
-
-                  while Node /= Null_Node loop
-                     XML_Utils.Add_Child
-                       (N, To_XML (Data (Node)), True);
-                     Node := Next (Node);
+                  for Item of L.all loop
+                     XML_Utils.Add_Child (N, To_XML (Item), True);
                   end loop;
                end if;
 
@@ -1599,7 +1583,7 @@ package body Call_Graph_Views is
             --  Create a new list if neeeded
 
             if Address = System.Null_Address then
-               L := new List;
+               L := new Vector;
             else
                L := To_Reference_List (Address);
             end if;

@@ -197,11 +197,9 @@ package body Vdiff2_Module.Utils is
       File              : Virtual_File;
       Line              : Natural)
    is
-      Hor_List     : Diff_List;
-      Curr_Node    : Diff_Chunk_List.List_Node;
-      Diff         : Diff_Chunk;
-      First        : Natural := 0;
-      Last         : Natural := 0;
+      Hor_List : Diff_List;
+      First    : Natural := 0;
+      Last     : Natural := 0;
    begin
       if Current_Line_Dest'Length = 0
         or else Current_Line_Source'Length = 0
@@ -211,10 +209,8 @@ package body Vdiff2_Module.Utils is
 
       Hor_List :=
         Horizontal_Diff (Kernel, Current_Line_Dest, Current_Line_Source);
-      Curr_Node := Diff_Chunk_List.First (Hor_List);
 
-      while Curr_Node /= Diff_Chunk_List.Null_Node loop
-         Diff := Data (Curr_Node).all;
+      for Diff of Hor_List loop
          First := Diff.Range1.First;
          Last := Diff.Range1.Last;
 
@@ -230,8 +226,6 @@ package body Vdiff2_Module.Utils is
 
          Highlight_Range
            (Kernel, File, Fine_Change_Style, Line, First, Last);
-
-         Curr_Node := Next (Curr_Node);
       end loop;
    end Fine_Highlight_Line;
 
@@ -316,8 +310,6 @@ package body Vdiff2_Module.Utils is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item   : access Diff_Head)
    is
-      Curr_Node  : Diff_List_Node;
-      Curr_Chunk : Diff_Chunk_Access;
 
       procedure Remove_Blank_And_Special (D : in out Diff_Range);
       --  Remove blank and special lines associated with D.
@@ -351,14 +343,10 @@ package body Vdiff2_Module.Utils is
       end Remove_Blank_And_Special;
 
    begin
-      Curr_Node := First (Item.List);
-
-      while Curr_Node /= Diff_Chunk_List.Null_Node loop
-         Curr_Chunk := Data (Curr_Node);
+      for Curr_Chunk of Item.List loop
          Remove_Blank_And_Special (Curr_Chunk.Range1);
          Remove_Blank_And_Special (Curr_Chunk.Range2);
          Remove_Blank_And_Special (Curr_Chunk.Range3);
-         Curr_Node := Next (Curr_Node);
       end loop;
 
       for J in T_VFile'Range loop
@@ -384,19 +372,21 @@ package body Vdiff2_Module.Utils is
 
    function Is_In_3Diff_List
      (Selected_File : GNATCOLL.VFS.Virtual_File;
-      List          : Diff_Head_List.List) return Boolean
+      List          : Diff_Head_List.Vector) return Boolean
    is
-      Node : constant Diff_Head_List.List_Node :=
+      use Diff_Head_List.Std_Vectors;
+
+      Node : constant Diff_Head_List.Std_Vectors.Cursor :=
                Get_Diff_Node (Selected_File, List);
    begin
-      if Node = Diff_Head_List.Null_Node
-        or else Diff_Head_List.Data (Node) = null
+      if not Has_Element (Node)
+        or else Element (Node) = null
       then
          return False;
       end if;
 
       declare
-         Diff : constant Diff_Head := Diff_Head_List.Data (Node).all;
+         Diff : constant Diff_Head := Element (Node).all;
       begin
          for J in Diff.Files'Range loop
             if Diff.Files (J) = No_File then
@@ -414,17 +404,20 @@ package body Vdiff2_Module.Utils is
 
    function Get_Diff_Node
      (Selected_File : Virtual_File;
-      List          : Diff_Head_List.List) return Diff_Head_List.List_Node
+      List          : Diff_Head_List.Vector)
+      return Diff_Head_List.Std_Vectors.Cursor
    is
-      Curr_Node : Diff_Head_List.List_Node := First (List);
+      use Diff_Head_List.Std_Vectors;
+
+      Curr_Node : Diff_Head_List.Std_Vectors.Cursor := List.First;
       Diff      : Diff_Head;
    begin
-      while Curr_Node /= Diff_Head_List.Null_Node loop
-         Diff := Data (Curr_Node).all;
+      while Has_Element (Curr_Node) loop
+         Diff := Element (Curr_Node).all;
          exit when Diff.Files (1) = Selected_File
            or else Diff.Files (2) = Selected_File
            or else Diff.Files (3) = Selected_File;
-         Curr_Node := Next (Curr_Node);
+         Next (Curr_Node);
       end loop;
 
       return Curr_Node;
@@ -435,17 +428,19 @@ package body Vdiff2_Module.Utils is
    -----------------
 
    procedure Move_Mark (Source, Dest : Diff_List) is
-      Curr_Node_Source  : Diff_List_Node := First (Source);
+      use Diff_Chunk_List.Std_Vectors;
+
+      Curr_Node_Source  : Diff_List_Node := Source.First;
       Curr_Chunk_Source : Diff_Chunk_Access;
-      Curr_Node_Dest    : Diff_List_Node := First (Dest);
+      Curr_Node_Dest    : Diff_List_Node := Dest.First;
       Curr_Chunk_Dest   : Diff_Chunk_Access;
 
    begin
-      while Curr_Node_Source /= Diff_Chunk_List.Null_Node
-        and then Curr_Node_Dest /= Diff_Chunk_List.Null_Node
+      while Has_Element (Curr_Node_Source)
+        and then Has_Element (Curr_Node_Dest)
       loop
-         Curr_Chunk_Source := Data (Curr_Node_Source);
-         Curr_Chunk_Dest := Data (Curr_Node_Dest);
+         Curr_Chunk_Source := Element (Curr_Node_Source);
+         Curr_Chunk_Dest   := Element (Curr_Node_Dest);
 
          Curr_Chunk_Dest.Range1.Blank_Lines_Mark :=
            Curr_Chunk_Source.Range1.Blank_Lines_Mark;
@@ -456,8 +451,8 @@ package body Vdiff2_Module.Utils is
          Curr_Chunk_Dest.Range3.Blank_Lines_Mark :=
            Curr_Chunk_Source.Range3.Blank_Lines_Mark;
 
-         Curr_Node_Source := Next (Curr_Node_Source);
-         Curr_Node_Dest := Next (Curr_Node_Dest);
+         Next (Curr_Node_Source);
+         Next (Curr_Node_Dest);
       end loop;
    end Move_Mark;
 
@@ -470,16 +465,17 @@ package body Vdiff2_Module.Utils is
       Item      : Diff_Head;
       Diff_List : Diff_Head_List_Access) return Diff_Head_Access
    is
+      use Diff_Head_List.Std_Vectors;
+
       Item_Access : Diff_Head_Access;
    begin
-      if Get_Diff_Node
-          (Item.Files (1), Diff_List.all) = Diff_Head_List.Null_Node
-        and then Get_Diff_Node
-          (Item.Files (2), Diff_List.all) = Diff_Head_List.Null_Node
+      if not Has_Element (Get_Diff_Node (Item.Files (1), Diff_List.all))
+        and then not Has_Element
+          (Get_Diff_Node (Item.Files (2), Diff_List.all))
       then
          if Item.Files (3) = GNATCOLL.VFS.No_File
-           or else Get_Diff_Node
-             (Item.Files (3), Diff_List.all) = Diff_Head_List.Null_Node
+           or else not Has_Element
+             (Get_Diff_Node (Item.Files (3), Diff_List.all))
          then
             Item_Access := new Diff_Head'(Item);
             Diff_Head_List.Append (Diff_List.all, Item_Access);
@@ -544,8 +540,6 @@ package body Vdiff2_Module.Utils is
       Item   : access Diff_Head)
    is
       List       : constant Diff_List := Item.List;
-      Curr_Node  : Diff_List_Node := First (List);
-      Curr_Chunk : Diff_Chunk_Access;
       Offset1    : Natural;
       Offset2    : Natural;
       VStyle     : T_VStr;
@@ -606,6 +600,8 @@ package body Vdiff2_Module.Utils is
          return Execute_GPS_Shell_Command (Kernel, CL) /= "null";
       end Is_Ref_Editor_Opened;
 
+      use Diff_Chunk_List.Std_Vectors;
+
    begin
       Trace (Me, "Show_Differences");
 
@@ -662,9 +658,7 @@ package body Vdiff2_Module.Utils is
          Identifier => Id_Col_Vdiff,
          Every_Line => True);
 
-      while Curr_Node /= Diff_Chunk_List.Null_Node loop
-         Curr_Chunk := Data (Curr_Node);
-
+      for Curr_Chunk of List loop
          case Curr_Chunk.Range2.Action is
             when Append =>
                Modification := "appended";
@@ -798,7 +792,6 @@ package body Vdiff2_Module.Utils is
          end if;
 
          Free (VStyle);
-         Curr_Node := Next (Curr_Node);
       end loop;
    end Show_Differences;
 
@@ -811,11 +804,11 @@ package body Vdiff2_Module.Utils is
       Item   : access Diff_Head)
    is
       use Ada.Strings.Unbounded;
+      use Diff_Chunk_List.Std_Vectors;
 
       Ref        : constant T_Loc := Item.Ref_File;
       File       : constant Virtual_File := Item.Files (3 - Ref);
       List       : constant Diff_List := Item.List;
-      Curr_Node  : Diff_List_Node := First (List);
       Curr_Chunk : Diff_Chunk_Access;
       Buf        : constant GPS_Editor_Buffer'Class :=
         GPS_Editor_Buffer'Class
@@ -960,8 +953,8 @@ package body Vdiff2_Module.Utils is
         (Kernel, File => Item.Files (3 - Ref), Identifier => Id_Col_Vdiff,
          Every_Line => True);
 
-      while Curr_Node /= Diff_Chunk_List.Null_Node loop
-         Curr_Chunk := Data (Curr_Node);
+      for Item of List loop
+         Curr_Chunk := Item;
 
          case Curr_Chunk.Range2.Action is
             when Append =>
@@ -976,8 +969,6 @@ package body Vdiff2_Module.Utils is
 
             when Nothing => null;
          end case;
-
-         Curr_Node := Next (Curr_Node);
       end loop;
    end Show_Unified_Differences;
 
@@ -989,10 +980,8 @@ package body Vdiff2_Module.Utils is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item   : access Diff_Head)
    is
-      Res        : Diff_List;
-      Curr_Node  : Diff_List_Node;
-      Curr_Chunk : Diff_Chunk_Access;
-      Info       : T_VLine_Information;
+      Res  : Diff_List;
+      Info : T_VLine_Information;
 
    begin
       Register_Highlighting (Kernel);
@@ -1040,12 +1029,9 @@ package body Vdiff2_Module.Utils is
          (Kernel, Item.Files (3), Id_Col_Vdiff, Every_Line => True);
 
       Res := Simplify (Item.List, Item.Ref_File);
-      Curr_Node := First (Res);
 
-      while Curr_Node /= Diff_Chunk_List.Null_Node loop
-         Curr_Chunk := Data (Curr_Node);
+      for Curr_Chunk of Res loop
          Show_Diff_Chunk (Kernel, Item, Curr_Chunk, Info);
-         Curr_Node := Next (Curr_Node);
       end loop;
 
       Add_Line_Information
@@ -1055,8 +1041,7 @@ package body Vdiff2_Module.Utils is
       Add_Line_Information
         (Kernel, Item.Files (3), Id_Col_Vdiff, Info => Info (3).all);
       Move_Mark (Res, Item.List);
-      Free (Res);
-      Free (Res);
+      Res.Clear;
       Trace (Me, "End Show_Differences3");
 
       Unchecked_Free (Info (1));
@@ -1329,7 +1314,7 @@ package body Vdiff2_Module.Utils is
          Result := Diff (Kernel, File1, File2);
       end if;
 
-      if Result = Diff_Chunk_List.Null_List then
+      if Result.Is_Empty then
          Kernel.Insert (-"No differences found.");
          return null;
       end if;
@@ -1382,7 +1367,7 @@ package body Vdiff2_Module.Utils is
    begin
       Result := Diff (Kernel, Orig_File, New_File, Diff_File, Revert);
 
-      if Result = Diff_Chunk_List.Null_List then
+      if Result.Is_Empty then
          Kernel.Insert (-"No differences found.");
          return null;
       end if;
@@ -1408,8 +1393,10 @@ package body Vdiff2_Module.Utils is
       File2 : Virtual_File := GNATCOLL.VFS.No_File;
       File3 : Virtual_File := GNATCOLL.VFS.No_File) return Diff_Head_Access
    is
+      use Diff_Head_List.Std_Vectors;
+
       Vdiff_List : constant Diff_Head_List_Access := Get_Vdiff_List;
-      Vdiff_Node : Diff_Head_List.List_Node;
+      Vdiff_Node : Diff_Head_List.Std_Vectors.Cursor;
       Vdiff      : Diff_Head_Access;
    begin
       if Vdiff_List = null then
@@ -1418,11 +1405,11 @@ package body Vdiff2_Module.Utils is
 
       Vdiff_Node := Get_Diff_Node (File1, Vdiff_List.all);
 
-      if Vdiff_Node = Diff_Head_List.Null_Node then
+      if not Has_Element (Vdiff_Node) then
          return null;
       end if;
 
-      Vdiff := Data (Vdiff_Node);
+      Vdiff := Element (Vdiff_Node);
 
       if (File2 /= GNATCOLL.VFS.No_File
           and then File2 /= Vdiff.Files (1)

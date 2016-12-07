@@ -37,7 +37,7 @@ package Vdiff2_Command_Line is
       Action    : Handler_Action_Line;
       File      : Virtual_File;
       Line      : Natural;
-      Head      : Diff_Head_List.List_Node;
+      Head      : Diff_Head_List.Std_Vectors.Cursor;
    end record;
 
    type Diff_Command_Line_Access is access all Diff_Command_Line;
@@ -67,7 +67,7 @@ package Vdiff2_Command_Line is
      (Selected_File : Virtual_File;
       Item          : Diff_Head;
       Line          : Natural)
-      return Diff_Chunk_List.List_Node;
+      return Diff_Chunk_List.Std_Vectors.Cursor;
    --  Search in diff list the node corresponding to Item
 
    procedure Move_On_Ref_File

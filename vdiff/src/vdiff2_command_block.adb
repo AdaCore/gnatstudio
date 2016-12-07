@@ -91,9 +91,11 @@ package body Vdiff2_Command_Block is
    overriding function Execute
      (Command : access Diff_Command_Block) return Command_Return_Type
    is
+      use Diff_Head_List.Std_Vectors;
+
       Context       : constant Selection_Context :=
                         Get_Current_Context (Command.Kernel);
-      Curr_Node     : Diff_Head_List.List_Node;
+      Curr_Node     : Diff_Head_List.Std_Vectors.Cursor;
       Diff          : Diff_Head_Access;
       Selected_File : Virtual_File;
    begin
@@ -103,8 +105,8 @@ package body Vdiff2_Command_Block is
          Selected_File := File_Information (Context);
          Curr_Node := Get_Diff_Node (Selected_File, Command.List_Diff.all);
 
-         if Curr_Node /= Diff_Head_List.Null_Node then
-            Diff := Diff_Head_List.Data (Curr_Node);
+         if Has_Element (Curr_Node) then
+            Diff := Element (Curr_Node);
          else
             Diff := Command.Last_Active_Diff;
          end if;
@@ -115,11 +117,8 @@ package body Vdiff2_Command_Block is
       if Diff /= null then
          Command.Action (Command.Kernel, Diff);
 
-         if Diff.List = Diff_Chunk_List.Null_List then
-            Remove_Nodes
-              (Command.List_Diff.all,
-               Prev (Command.List_Diff.all, Curr_Node),
-               Curr_Node);
+         if Diff.List.Is_Empty then
+            Command.List_Diff.Delete (Curr_Node);
          end if;
       end if;
 
@@ -147,7 +146,7 @@ package body Vdiff2_Command_Block is
          Tmp := Diff3 (Kernel, Item.Files (1), Item.Files (2), Item.Files (3));
       end if;
 
-      if Tmp = Diff_Chunk_List.Null_List then
+      if Tmp.Is_Empty then
          Kernel.Insert (-"No differences found.", Mode => Info);
       end if;
 
@@ -218,7 +217,7 @@ package body Vdiff2_Command_Block is
       Diff   : access Diff_Head) is
    begin
       Unhighlight_Difference (Kernel, Diff);
-      Free (Diff.List);
+      Diff.List.Clear;
    end Remove_Difference;
 
    ---------------------

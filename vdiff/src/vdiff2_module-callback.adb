@@ -430,8 +430,10 @@ package body Vdiff2_Module.Callback is
       File    : Virtual_File)
    is
       pragma Unreferenced (Self);
+      use Diff_Head_List.Std_Vectors;
+
       Diff : Diff_Head_Access;
-      Node : Diff_Head_List.List_Node;
+      Node : Diff_Head_List.Std_Vectors.Cursor;
    begin
       if Vdiff_Module_ID = null then
          return;
@@ -440,11 +442,11 @@ package body Vdiff2_Module.Callback is
       Node :=
         Get_Diff_Node (File, VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
-      if Node = Diff_Head_List.Null_Node then
+      if not Has_Element (Node) then
          return;
       end if;
 
-      Diff := Diff_Head_List.Data (Node);
+      Diff := Element (Node);
 
       if not Diff.In_Destruction then
          Diff.In_Destruction := True;
@@ -469,10 +471,7 @@ package body Vdiff2_Module.Callback is
             end if;
          end loop;
 
-         Remove_Nodes
-           (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
-            Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all, Node),
-            Node);
+         VDiff2_Module (Vdiff_Module_ID).List_Diff.Delete (Node);
       end if;
    end Execute;
 
@@ -486,17 +485,12 @@ package body Vdiff2_Module.Callback is
       Pref   : Preference)
    is
       pragma Unreferenced (Pref, Self);
-      Diff      : Diff_Head_Access;
-      Curr_Node : Diff_Head_List.List_Node :=
-                    First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
    begin
       Register_Highlighting (Kernel);
 
-      while Curr_Node /= Diff_Head_List.Null_Node loop
-         Diff := Diff_Head_List.Data (Curr_Node);
+      for Diff of VDiff2_Module (Vdiff_Module_ID).List_Diff.all loop
          Hide_Differences (Kernel, Diff);
          Show_Differences3 (Kernel, Diff);
-         Curr_Node := Next (Curr_Node);
       end loop;
    end Execute;
 
@@ -509,7 +503,8 @@ package body Vdiff2_Module.Callback is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Node          : Diff_Head_List.List_Node;
+
+      Node          : Diff_Head_List.Std_Vectors.Cursor;
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
       Diff          : Diff_Head_Access;
@@ -526,7 +521,7 @@ package body Vdiff2_Module.Callback is
       Node := Get_Diff_Node
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
-      Diff := Data (Node);
+      Diff := Diff_Head_List.Std_Vectors.Element (Node);
       Ref_File := Diff.Ref_File;
 
       for J in T_VFile_Index loop
@@ -553,7 +548,7 @@ package body Vdiff2_Module.Callback is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Node          : Diff_Head_List.List_Node;
+      Node          : Diff_Head_List.Std_Vectors.Cursor;
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
 
@@ -570,7 +565,7 @@ package body Vdiff2_Module.Callback is
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
-      Unchecked_Execute (Cmd, Data (Node));
+      Unchecked_Execute (Cmd, Diff_Head_List.Std_Vectors.Element (Node));
       Unref (Command_Access (Cmd));
       return Commands.Success;
    end Execute;
@@ -584,7 +579,9 @@ package body Vdiff2_Module.Callback is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Node          : Diff_Head_List.List_Node;
+      use Diff_Head_List.Std_Vectors;
+
+      Node          : Diff_Head_List.Std_Vectors.Cursor;
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
    begin
@@ -600,16 +597,16 @@ package body Vdiff2_Module.Callback is
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
-      Unchecked_Execute (Cmd, Data (Node));
+      Unchecked_Execute (Cmd, Element (Node));
 
       --  Remove all virtual buffers created during diff operations
 
-      for J in Data (Node).Files'Range loop
+      for J in Element (Node).Files'Range loop
          declare
             Editor : constant Editor_Buffer'Class :=
               Get_Buffer_Factory
                 (Get_Kernel (Vdiff_Module_ID.all)).Get
-              (Data (Node).Files (J), Open_View => False);
+              (Element (Node).Files (J), Open_View => False);
          begin
             if Editor.Current_View = Nil_Editor_View then
                Editor.Close;
@@ -617,10 +614,7 @@ package body Vdiff2_Module.Callback is
          end;
       end loop;
 
-      Remove_Nodes
-        (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
-         Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all, Node),
-         Node);
+      VDiff2_Module (Vdiff_Module_ID).List_Diff.Delete (Node);
 
       Unref (Command_Access (Cmd));
       return Commands.Success;
@@ -635,7 +629,9 @@ package body Vdiff2_Module.Callback is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Node          : Diff_Head_List.List_Node;
+      use Diff_Head_List.Std_Vectors;
+
+      Node          : Diff_Head_List.Std_Vectors.Cursor;
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
       Success       : Boolean;
@@ -654,10 +650,10 @@ package body Vdiff2_Module.Callback is
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
-      for J in Data (Node).Files'Range loop
-         if Data (Node).Files (J) /= GNATCOLL.VFS.No_File then
+      for J in Element (Node).Files'Range loop
+         if Element (Node).Files (J) /= GNATCOLL.VFS.No_File then
             declare
-               File     : constant Virtual_File := Data (Node).Files (J);
+               File : constant Virtual_File := Element (Node).Files (J);
             begin
                if not Is_Regular_File (File) then
                   To_Delete (J) := True;
@@ -676,11 +672,11 @@ package body Vdiff2_Module.Callback is
          end if;
       end loop;
 
-      Unchecked_Execute (Cmd, Data (Node));
+      Unchecked_Execute (Cmd, Element (Node));
 
       for J in To_Delete'Range loop
          if To_Delete (J) then
-            GNATCOLL.VFS.Delete (Data (Node).Files (J), Success);
+            GNATCOLL.VFS.Delete (Element (Node).Files (J), Success);
          end if;
       end loop;
 
@@ -697,7 +693,7 @@ package body Vdiff2_Module.Callback is
       Context : Interactive_Command_Context) return Command_Return_Type
    is
       pragma Unreferenced (Command);
-      Node          : Diff_Head_List.List_Node;
+      Node          : Diff_Head_List.Std_Vectors.Cursor;
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
 
@@ -714,7 +710,7 @@ package body Vdiff2_Module.Callback is
         (Selected_File,
          VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
-      Unchecked_Execute (Cmd, Data (Node));
+      Unchecked_Execute (Cmd, Diff_Head_List.Std_Vectors.Element (Node));
       Unref (Command_Access (Cmd));
 
       return Commands.Success;

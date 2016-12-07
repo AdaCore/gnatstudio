@@ -192,26 +192,19 @@ package body Vdiff2_Module is
       elsif Command = "list" then
          declare
             Vdiff_List : constant Diff_Head_List_Access := Get_Vdiff_List;
-            Vdiff_Node : Diff_Head_List.List_Node;
-            Vdiff      : Diff_Head_Access;
          begin
             Set_Return_Value_As_List (Data);
 
             if Vdiff_List = null
-              or else Vdiff_List.all = Null_List
-              or else Is_Empty (Vdiff_List.all)
+              or else Vdiff_List.Is_Empty
             then
                return;
             end if;
 
-            Vdiff_Node := First (Vdiff_List.all);
-
-            while Vdiff_Node /= Null_Node loop
-               Vdiff := Diff_Head_List.Data (Vdiff_Node);
+            for Vdiff of Vdiff_List.all loop
                Data.Set_Return_Value
                  (Diff_Script_Proxies.Get_Or_Create_Instance
                     (Vdiff.Instances, Vdiff, Data.Get_Script));
-               Vdiff_Node := Next (Vdiff_Node);
             end loop;
          end;
 
@@ -249,7 +242,7 @@ package body Vdiff2_Module is
       Filter_3_Files : Action_Filter;
    begin
       Vdiff_Module_ID := new VDiff2_Module_Record;
-      VDiff2_Module (Vdiff_Module_ID).List_Diff := new Diff_Head_List.List;
+      VDiff2_Module (Vdiff_Module_ID).List_Diff := new Diff_Head_List.Vector;
 
       File_Closed_Hook.Add (new On_File_Closed);
 
@@ -386,10 +379,10 @@ package body Vdiff2_Module is
       if Has_File_Information (Context)
         and then Has_Directory_Information (Context)
       then
-         return Get_Diff_Node
-           (File_Information (Context),
-            VDiff2_Module (Vdiff_Module_ID).List_Diff.all) /=
-           Diff_Head_List.Null_Node;
+         return Std_Vectors.Has_Element
+           (Get_Diff_Node
+              (File_Information (Context),
+               VDiff2_Module (Vdiff_Module_ID).List_Diff.all));
       end if;
       return False;
    end Filter_Matches_Primitive;

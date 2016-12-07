@@ -48,18 +48,20 @@ package body Vdiff2_Command_Line is
    overriding function Execute
      (Command : access Diff_Command_Line) return Command_Return_Type
    is
+      use Diff_Head_List.Std_Vectors;
+
       Diff : Diff_Head_Access;
    begin
 
-      if Command.Head /= Diff_Head_List.Null_Node
+      if Has_Element (Command.Head)
         and Command.Line > 0
         and Command.Action /= null
       then
-         Diff := Data (Command.Head);
+         Diff := Element (Command.Head);
          Diff.Current_Node := Is_In_Diff_Chunk_List
            (Command.File, Diff.all, Command.Line);
 
-         if Diff.Current_Node /= Diff_Chunk_List.Null_Node then
+         if Diff_Chunk_List.Std_Vectors.Has_Element (Diff.Current_Node) then
             Command.Action
               (Command.Kernel, Diff,
                Command.Line, Command.File);
@@ -103,17 +105,17 @@ package body Vdiff2_Command_Line is
      (Selected_File : Virtual_File;
       Item          : Diff_Head;
       Line          : Natural)
-      return Diff_Chunk_List.List_Node
+      return Diff_Chunk_List.Std_Vectors.Cursor
    is
-      List      : constant Diff_Chunk_List.List := Item.List;
-      Curr_Node : Diff_Chunk_List.List_Node := First (List);
+      use Diff_Chunk_List.Std_Vectors;
+
+      List      : constant Diff_Chunk_List.Vector := Item.List;
+      Curr_Node : Diff_Chunk_List.Std_Vectors.Cursor := List.First;
       Diff      : Diff_Chunk_Access;
 
    begin
-
-      while Curr_Node /= Diff_Chunk_List.Null_Node
-      loop
-         Diff := Data (Curr_Node);
+      while Has_Element (Curr_Node) loop
+         Diff := Element (Curr_Node);
 
          if Selected_File = Item.Files (1) then
             exit when Diff.Range1.First <= Line
@@ -130,7 +132,7 @@ package body Vdiff2_Command_Line is
               and then Diff.Range3.Last >= Line;
          end if;
 
-         Curr_Node := Next (Curr_Node);
+         Next (Curr_Node);
       end loop;
 
       return Curr_Node;
@@ -153,11 +155,11 @@ package body Vdiff2_Command_Line is
       pragma Unreferenced (Line);
 
    begin
-      Diff1 := Data (Diff.Current_Node);
+      Diff1 := Diff_Chunk_List.Std_Vectors.Element (Diff.Current_Node);
 
-      VRange (1) := Data (Diff.Current_Node).Range1;
-      VRange (2) := Data (Diff.Current_Node).Range2;
-      VRange (3) := Data (Diff.Current_Node).Range3;
+      VRange (1) := Diff1.Range1;
+      VRange (2) := Diff1.Range2;
+      VRange (3) := Diff1.Range3;
       VFile      := Diff.Files;
 
       for J in VFile'Range loop
@@ -211,11 +213,11 @@ package body Vdiff2_Command_Line is
       pragma Unreferenced (Line);
 
    begin
-      Diff1 := Data (Diff.Current_Node);
+      Diff1 := Diff_Chunk_List.Std_Vectors.Element (Diff.Current_Node);
 
-      VRange (1) := Data (Diff.Current_Node).Range1;
-      VRange (2) := Data (Diff.Current_Node).Range2;
-      VRange (3) := Data (Diff.Current_Node).Range3;
+      VRange (1) := Diff1.Range1;
+      VRange (2) := Diff1.Range2;
+      VRange (3) := Diff1.Range3;
       VFile      := Diff.Files;
 
       for J in VFile'Range loop

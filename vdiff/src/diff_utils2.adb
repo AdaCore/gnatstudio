@@ -293,7 +293,7 @@ package body Diff_Utils2 is
       when E : others =>
          Trace (Me, E);
          Close (Descriptor);
-         return Diff_Chunk_List.Null_List;
+         return Diff_Chunk_List.Empty_Vector;
    end Diff;
 
    ----------
@@ -396,7 +396,7 @@ package body Diff_Utils2 is
       when E : others =>
          Trace (Me, E);
          Close (File);
-         return Diff_Chunk_List.Null_List;
+         return Diff_Chunk_List.Empty_Vector;
    end Diff;
 
    -----------
@@ -407,7 +407,7 @@ package body Diff_Utils2 is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Item   : in out Diff_Head) is
    begin
-      Free (Item.List);
+      Item.List.Clear;
 
       if Item.Files (1) /= No_File and Item.Files (2) /= No_File then
          if Item.Files (3) /= GNATCOLL.VFS.No_File then
@@ -524,7 +524,7 @@ package body Diff_Utils2 is
       when E : others =>
          Trace (Me, E);
          Close (Descriptor);
-         return Diff_Chunk_List.Null_List;
+         return Diff_Chunk_List.Empty_Vector;
    end Diff3;
 
    --------------
@@ -536,16 +536,13 @@ package body Diff_Utils2 is
       Ref_File : T_Loc) return Diff_List
    is
       Ref        : constant T_Loc := Ref_File;
-      Curr_Node  : Diff_List_Node;
       Curr_Chunk : Diff_Chunk_Access;
       VRange     : array (1 .. 3) of Diff_Range;
       Res        : Diff_List;
 
    begin
-      Curr_Node := First (Diff);
-
-      while Curr_Node /= Diff_Chunk_List.Null_Node loop
-         Curr_Chunk := new Diff_Chunk'(Data (Curr_Node).all);
+      for Item of Diff loop
+         Curr_Chunk := new Diff_Chunk'(Item.all);
          VRange     :=
            (Curr_Chunk.Range1,
             Curr_Chunk.Range2,
@@ -608,7 +605,6 @@ package body Diff_Utils2 is
          Curr_Chunk.Range2 := VRange (2);
          Curr_Chunk.Range3 := VRange (3);
          Append (Res, Curr_Chunk);
-         Curr_Node := Next (Curr_Node);
       end loop;
 
       return Res;
@@ -709,7 +705,7 @@ package body Diff_Utils2 is
 
    procedure Free_List (Link : in out Diff_List) is
    begin
-      Free (Link, True);
+      Link.Clear;
    end Free_List;
 
    ----------
@@ -757,9 +753,9 @@ package body Diff_Utils2 is
    procedure Free (Vdiff_List : in out Diff_Head_List_Access) is
       procedure Unchecked_Free is
         new Ada.Unchecked_Deallocation
-          (Diff_Head_List.List, Diff_Head_List_Access);
+          (Diff_Head_List.Vector, Diff_Head_List_Access);
    begin
-      Free (Vdiff_List.all);
+      Vdiff_List.Clear;
       Unchecked_Free (Vdiff_List);
    end Free;
 

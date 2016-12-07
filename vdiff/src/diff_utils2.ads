@@ -20,12 +20,12 @@
 
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;                 use GNAT.OS_Lib;
-with Generic_List;
 with GPS.Kernel;                  use GPS.Kernel;
 with GNATCOLL.VFS;                use GNATCOLL.VFS;
 with GPS.Editors;                 use GPS.Editors;
 with GPS.Kernel.Preferences;
 with GPS.Scripts;                 use GPS.Scripts;
+with GPS_Vectors;
 
 package Diff_Utils2 is
 
@@ -75,10 +75,10 @@ package Diff_Utils2 is
       new Ada.Unchecked_Deallocation (Diff_Chunk, Diff_Chunk_Access);
    --  Free the memory associated with the head of the list Link
 
-   package Diff_Chunk_List is new Generic_List (Diff_Chunk_Access, Free);
-   subtype Diff_List is Diff_Chunk_List.List;
+   package Diff_Chunk_List is new GPS_Vectors (Diff_Chunk_Access, Free);
+   subtype Diff_List is Diff_Chunk_List.Vector;
    --  Linked list of diff occurrences
-   subtype Diff_List_Node is Diff_Chunk_List.List_Node;
+   subtype Diff_List_Node is Diff_Chunk_List.Std_Vectors.Cursor;
    procedure Free_List (Link : in out Diff_List);
    --  Free the memory associated with each node of the list Link
 
@@ -111,9 +111,9 @@ package Diff_Utils2 is
    --  Execute diff on Item
 
    Null_Head : constant Diff_Head :=
-                 (List           => Diff_Chunk_List.Null_List,
+                 (List           => Diff_Chunk_List.Empty_Vector,
                   Files          => (others => GNATCOLL.VFS.No_File),
-                  Current_Node   => Diff_Chunk_List.Null_Node,
+                  Current_Node   => Diff_Chunk_List.Std_Vectors.No_Element,
                   Ref_File       => 2,
                   In_Destruction => False,
                   Instances      => <>,
@@ -122,8 +122,8 @@ package Diff_Utils2 is
    procedure Free (Vdiff : in out Diff_Head_Access);
    --  Free the memory associated with the head of the list Link
 
-   package Diff_Head_List is new Generic_List (Diff_Head_Access, Free);
-   type Diff_Head_List_Access is access all Diff_Head_List.List;
+   package Diff_Head_List is new GPS_Vectors (Diff_Head_Access, Free);
+   type Diff_Head_List_Access is access all Diff_Head_List.Vector;
 
    procedure Free (Vdiff_List : in out Diff_Head_List_Access);
    --  Free the memory associated with a list of Vdiff
